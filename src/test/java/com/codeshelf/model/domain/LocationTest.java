@@ -78,4 +78,41 @@ public class LocationTest extends MockDaoTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
+	
+	@Test
+	public final void getLocationUsage() {
+		this.getTenantPersistenceService().beginTransaction();
+
+		Facility facility = createFacilityWithOutboundOrders();
+		
+		Location aisle = facility.findLocationById("A1");
+		Location bay = aisle.findLocationById("B1");
+
+		//Verify that neither location is PutWall
+		Assert.assertEquals(false, aisle.isPutWallLocation());
+		Assert.assertEquals(false, bay.isPutWallLocation());
+		
+		//Set bay to PutWall, and verify that only it is such
+		bay.setAsPutWallLocation(true);
+		Assert.assertEquals(false, aisle.isPutWallLocation());
+		Assert.assertEquals(true, bay.isPutWallLocation());
+		Assert.assertEquals("", aisle.getPutWallUi());
+		Assert.assertEquals("Yes", bay.getPutWallUi());
+
+
+		//Revert to both off
+		bay.setAsPutWallLocation(false);
+		Assert.assertEquals(false, aisle.isPutWallLocation());
+		Assert.assertEquals(false, bay.isPutWallLocation());
+
+		//Set aisle to PutWall, and veryfy that both locations are not PutWall
+		aisle.togglePutWallLocation();
+		Assert.assertEquals(true, aisle.isPutWallLocation());
+		Assert.assertEquals(true, bay.isPutWallLocation());
+		Assert.assertEquals("Yes", aisle.getPutWallUi());
+		Assert.assertEquals("(Yes)", bay.getPutWallUi());
+
+		this.getTenantPersistenceService().commitTransaction();
+	}
+
 }
