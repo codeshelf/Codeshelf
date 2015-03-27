@@ -275,7 +275,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	}
 
 	private void eraseAllTenantData(Tenant tenant) {
-		if(!DatabaseUtils.getSQLSyntax(tenant).equals(SQLSyntax.H2_MEMORY)) {
+		if(DatabaseUtils.getSQLSyntax(tenant).equals(SQLSyntax.H2_MEMORY)) {
 			String sql = "SET REFERENTIAL_INTEGRITY FALSE;";
 			for (String tableName : getTableNames(tenant)) {
 				sql += "TRUNCATE TABLE " + tenant.getSchemaName() + "." + tableName + ";";
@@ -598,6 +598,10 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		try {
 			DatabaseUtils.executeSQL(cred,"DROP SCHEMA " + schemaName
 					+ ((DatabaseUtils.getSQLSyntax(cred) == DatabaseUtils.SQLSyntax.H2_MEMORY) ? "" : " CASCADE"));
+			
+			// in case schema is recreated later, forget that we initialized it earlier
+			TenantPersistenceService.getInstance().forgetInitialActions(schemaName);
+			TenantPersistenceService.getInstance().forgetSchemaInitialization(schemaName);
 		} catch (SQLException e) {
 			LOGGER.error("Caught SQL exception trying to remove schema", e);
 		}

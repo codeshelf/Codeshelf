@@ -53,8 +53,11 @@ public abstract class PersistenceService extends AbstractCodeshelfIdleService im
 
 	SessionFactory sessionFactory;
 	
-	ConcurrentHashSet<String> initializingTenantIdentifiers = new ConcurrentHashSet<String>();
-	ConcurrentHashSet<String> initializedTenantIdentifiers = new ConcurrentHashSet<String>();
+	ConcurrentHashSet<String> initializingDataTenantIdentifiers = new ConcurrentHashSet<String>();
+	ConcurrentHashSet<String> initializedDataTenantIdentifiers = new ConcurrentHashSet<String>();
+	
+	ConcurrentHashSet<String> initializingSchemaTenantIdentifiers = new ConcurrentHashSet<String>();
+	ConcurrentHashSet<String> initializedSchemaTenantIdentifiers = new ConcurrentHashSet<String>();
 	
 	@Getter
 	EventListenerIntegrator eventListenerIntegrator;
@@ -68,8 +71,7 @@ public abstract class PersistenceService extends AbstractCodeshelfIdleService im
 	public Session getSession() {
 		// initialize database schema before returning a session, if necessary
 		String tenantIdentifier = this.getCurrentTenantIdentifier();
-		if(!initializedTenantIdentifiers.contains(tenantIdentifier)) {
-			
+		if(!this.initializedSchemaTenantIdentifiers.contains(tenantIdentifier)) {
 			// NOTE: putting tenant initialization in this block means multiple threads 
 			// accessing the same tenant will block while one does the init.
 
@@ -78,15 +80,28 @@ public abstract class PersistenceService extends AbstractCodeshelfIdleService im
 			
 			// note that if initializeTenant attempts to obtain additional sessions on
 			// this thread, they will be obtained though initialization is not complete.
-			synchronized(this.initializingTenantIdentifiers) {
-				if(!this.initializingTenantIdentifiers.contains(tenantIdentifier)) {
-					this.initializingTenantIdentifiers.add(tenantIdentifier);
-
+			
+			synchronized(this.initializingSchemaTenantIdentifiers) {
+				if(!this.initializingSchemaTenantIdentifiers.contains(tenantIdentifier)) {
+					this.initializingSchemaTenantIdentifiers.add(tenantIdentifier);
+					
 					initializeTenantSchema(tenantIdentifier);
 					
+					this.initializedSchemaTenantIdentifiers.add(tenantIdentifier);
+				}
+			}
+			
+		}
+
+		if(!initializedDataTenantIdentifiers.contains(tenantIdentifier)) {
+			
+			synchronized(this.initializingDataTenantIdentifiers) {
+				if(!this.initializingDataTenantIdentifiers.contains(tenantIdentifier)) {
+					this.initializingDataTenantIdentifiers.add(tenantIdentifier);
+
 					initializeTenantData();
 					
-					initializedTenantIdentifiers.add(tenantIdentifier);
+					initializedDataTenantIdentifiers.add(tenantIdentifier);
 				}
 			}
 		}
@@ -118,11 +133,6 @@ public abstract class PersistenceService extends AbstractCodeshelfIdleService im
 			LOGGER.warn("Will not attempt to apply Liquibase updates to unknown syntax");
 		}
 		
-	}
-	@Override
-	public void forgetInitialActions(String tenantIdentifier) {
-		this.initializedTenantIdentifiers.remove(tenantIdentifier);
-		this.initializingTenantIdentifiers.remove(tenantIdentifier);
 	}
 
 	protected static Transaction beginTransaction(Session session) {
@@ -355,6 +365,17 @@ public abstract class PersistenceService extends AbstractCodeshelfIdleService im
 			return false;
 		} //else
 		return true;
+	}
+
+	@Override
+	public void forgetInitialActions(String tenantIdentifier) {
+		this.initializedDataTenantIdentifiers.remove(tenantIdentifier);
+		this.initializingDataTenantIdentifiers.remove(tenantIdentifier);
+	}
+	@Override
+	public void forgetSchemaInitialization(String tenantIdentifier) {
+		this.initializedSchemaTenantIdentifiers.remove(tenantIdentifier);
+		this.initializingSchemaTenantIdentifiers.remove(tenantIdentifier);		
 	}
 
 }

@@ -25,4 +25,5 @@ public interface IPersistenceService extends CodeshelfService {
 	public Session getSessionWithTransaction();
 
 	void forgetInitialActions(String tenantIdentifier);
+	void forgetSchemaInitialization(String tenantIdentifier);
 }

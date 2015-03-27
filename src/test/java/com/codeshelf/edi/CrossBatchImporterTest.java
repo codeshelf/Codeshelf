@@ -352,7 +352,7 @@ public class CrossBatchImporterTest extends ServerTest {
 
 		// check the new order detail.
 		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C777", ediProcessTime));
-		Assert.assertNotNull(order);
+		Assert.assertNotNull(order); // got one unrepeated error here on 3/26/15
 		OrderDetail orderDetail = order.getOrderDetail("I777.5");
 		Assert.assertNotNull(orderDetail);
 		Assert.assertEquals(orderDetail.getQuantity().intValue(), 500);

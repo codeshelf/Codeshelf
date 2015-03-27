@@ -189,4 +189,9 @@ public class MockTenantPersistenceService implements ITenantPersistenceService {
 		
 	}
 
+	@Override
+	public void forgetSchemaInitialization(String tenantIdentifier) {
+		
+	}
+
 }
