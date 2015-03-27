@@ -7,6 +7,7 @@ import org.mockito.Mockito;
 import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
 import com.codeshelf.model.domain.UserType;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.util.ConverterProvider;
@@ -32,7 +33,7 @@ public class LoginTest extends HibernateTest {
 
 	@Test
 	public final void testLoginSucceed() {
-		this.getTenantPersistenceService().beginTransaction();
+		CodeshelfSecurityManager.removeContextIfPresent();
 		
 		// Create a user for the organization.
 		String password = "password";
@@ -50,7 +51,6 @@ public class LoginTest extends HibernateTest {
 		Assert.assertEquals(ResponseStatus.Success, loginResponse.getStatus());
 		Assert.assertEquals(user.getUsername(), loginResponse.getUser().getUsername());
 		
-		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@SuppressWarnings("unused")

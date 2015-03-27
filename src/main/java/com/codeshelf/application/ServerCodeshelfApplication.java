@@ -6,9 +6,6 @@
 
 package com.codeshelf.application;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.mgt.SecurityManager;
 import org.slf4j.Logger;
@@ -17,14 +14,10 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.edi.EdiProcessorService;
 import com.codeshelf.manager.ITenantManagerService;
 import com.codeshelf.manager.ManagerPersistenceService;
-import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.codeshelf.metrics.DropboxServiceHealthCheck;
 import com.codeshelf.metrics.IMetricsService;
-import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.Path;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.security.AuthProviderService;
@@ -119,32 +112,11 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 *	Reset some of the persistent object fields to a base state at start-up.
-	 */
+	@Override
 	protected void doInitializeApplicationData() {
-		// Recompute path positions
+		// TODO Auto-generated method stub
 		
-		//Collection<Tenant> tenants = TenantManagerService.getInstance().getTenants();
-		Collection<Tenant> tenants = new ArrayList<Tenant>(1);
-		tenants.add(TenantManagerService.getInstance().getDefaultTenant());
-
-		for(Tenant tenant : tenants) {
-			try {
-				TenantPersistenceService.getInstance().beginTransaction(tenant);
-				for (Facility facility : Facility.staticGetDao().getAll()) {
-					for (Path path : facility.getPaths()) {
-						// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
-						facility.recomputeLocationPathDistances(path);
-					}
-				}
-				TenantPersistenceService.getInstance().commitTransaction(tenant);
-			} catch(Exception e) {
-				TenantPersistenceService.getInstance().rollbackTransaction(tenant);
-				throw e;
-			}
-		}
 	}
+
 
 }

@@ -8,7 +8,6 @@ import java.sql.Timestamp;
 import org.junit.Assert;
 
 import com.codeshelf.flyweight.command.NetGuid;
-import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -21,17 +20,14 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Tier;
 
 public class VirtualSlottedFacilityGenerator {
-	Tenant tenant;
-
 	private final ICsvAislesFileImporter aisleImporter;
 	private final ICsvLocationAliasImporter	locationAliasImporter;
 	private final ICsvOrderImporter	orderImporter;
 
-	public VirtualSlottedFacilityGenerator(Tenant tenant,
+	public VirtualSlottedFacilityGenerator(
 				ICsvAislesFileImporter aisleFileImporter,
 				ICsvLocationAliasImporter locationAliasImporter,
 				ICsvOrderImporter orderImporter) {
-		this.tenant = tenant;
 		this.aisleImporter = aisleFileImporter;
 		this.locationAliasImporter = locationAliasImporter;
 		this.orderImporter = orderImporter;

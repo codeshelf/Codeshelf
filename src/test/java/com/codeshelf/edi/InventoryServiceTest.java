@@ -36,7 +36,7 @@ public class InventoryServiceTest extends ServerTest {
 	@Before
 	public void initTest() throws IOException {
 		TenantPersistenceService.getInstance().beginTransaction();
-		VirtualSlottedFacilityGenerator generator = new VirtualSlottedFacilityGenerator(getDefaultTenant(),createAisleFileImporter(), createLocationAliasImporter(), createOrderImporter());
+		VirtualSlottedFacilityGenerator generator = new VirtualSlottedFacilityGenerator(createAisleFileImporter(), createLocationAliasImporter(), createOrderImporter());
 		Facility facility = generator.generateFacilityForVirtualSlotting(testName.getMethodName());
 		generator.setupOrders(facility);
 		

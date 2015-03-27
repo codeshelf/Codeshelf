@@ -1,47 +1,101 @@
 package com.codeshelf.manager;
 
+import lombok.Getter;
+
+import org.hibernate.cfg.Configuration;
+
+import com.codeshelf.platform.persistence.DatabaseCredentials;
 import com.codeshelf.platform.persistence.EventListenerIntegrator;
 import com.codeshelf.platform.persistence.PersistenceService;
-import com.codeshelf.platform.persistence.PersistenceServiceImpl;
 
-public class ManagerPersistenceService extends PersistenceServiceImpl<ManagerSchema> {
-	private static PersistenceService<ManagerSchema> theInstance = null;
-
-	private ManagerSchema managerSchema = new ManagerSchema();
+public class ManagerPersistenceService extends PersistenceService implements DatabaseCredentials {
+	private static final String MASTER_CHANGELOG_NAME = "liquibase/mgr.changelog-master.xml";
+	
+	@Getter
+	private String url;
+	@Getter
+	private String username;
+	@Getter
+	private String password;
+	@Getter
+	private String schemaName;
+	
+	private static PersistenceService theInstance = null;
 
 	private ManagerPersistenceService() {
 		super();
 	}
 	
-	public final synchronized static PersistenceService<ManagerSchema> getMaybeRunningInstance() {
+	public final synchronized static PersistenceService getMaybeRunningInstance() {
 		if (theInstance == null) {
 			theInstance = new ManagerPersistenceService();
 		}
 		return theInstance;
 	}
-	public final synchronized static PersistenceService<ManagerSchema> getNonRunningInstance() {
+	public final synchronized static PersistenceService getNonRunningInstance() {
 		if(!getMaybeRunningInstance().state().equals(State.NEW)) {
 			throw new RuntimeException("Can't get non-running instance of already-started service: "+theInstance.serviceName());
 		}
 		return theInstance;
 	}
-	public final static PersistenceService<ManagerSchema> getInstance() {
+	public final static PersistenceService getInstance() {
 		getMaybeRunningInstance().awaitRunningOrThrow();		
 		return theInstance;
 	}
 
 	@Override
-	public ManagerSchema getDefaultSchema() {
-		return this.managerSchema;
-	}
-
-	@Override
-	protected void initialize(ManagerSchema schema) {
-		return;
-	}
-
-	@Override
-	protected EventListenerIntegrator generateEventListenerIntegrator() {
+	public EventListenerIntegrator generateEventListenerIntegrator() {
 		return null;
+	}
+
+	@Override
+	public synchronized Configuration getHibernateConfiguration() {
+		// put together hibernate configuration from XML and properties file
+		String hibernateConfigurationFilename = this.getHibernateConfigurationFilename();		
+		Configuration hibernateConfiguration = new Configuration().configure(hibernateConfigurationFilename);
+		hibernateConfiguration.setProperty("hibernate.connection.url", url);
+		hibernateConfiguration.setProperty("hibernate.connection.username", username);
+		hibernateConfiguration.setProperty("hibernate.connection.password", password);
+		hibernateConfiguration.setProperty("hibernate.default_schema", schemaName);
+	
+		return hibernateConfiguration;
+	}
+
+	public String getHibernateConfigurationFilename() {
+		return "hibernate/"+System.getProperty("manager.hibernateconfig");
+	}
+
+	@Override
+	public String getMasterChangeLogFilename() {
+		return MASTER_CHANGELOG_NAME;
+	}
+
+	@Override
+	protected void startUp() throws Exception {
+		url = System.getProperty("manager.db.url");
+		username = System.getProperty("manager.db.username");
+		password = System.getProperty("manager.db.password");		
+		schemaName = System.getProperty("manager.db.schema");
+		
+		super.startUp();
+	}
+
+	@Override
+	public void initializeTenantData() {
+	}
+
+	@Override
+	public String getCurrentTenantIdentifier() {
+		return "";
+	}
+
+	@Override
+	protected DatabaseCredentials getDatabaseCredentials(String tenantIdentifier) {
+		return this;
+	}
+
+	@Override
+	protected DatabaseCredentials getSuperDatabaseCredentials(String tenantIdentifier) {
+		return this;
 	}
 }

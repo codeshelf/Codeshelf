@@ -25,11 +25,12 @@ public class InsertBroadcastListener implements PostCommitInsertEventListener {
 	@Override
 	public void onPostInsert(PostInsertEvent event) {
 		Object entity = event.getEntity();
+		String tenantIdentifier = event.getSession().getTenantIdentifier();
 		if (entity instanceof DomainObjectABC) {
 			DomainObjectABC domainObject = (DomainObjectABC) entity;
 			@SuppressWarnings("unchecked")
 			Class<? extends IDomainObject> clazz = Hibernate.getClass(domainObject);
-			this.objectChangeBroadcaster.broadcastAdd(clazz, domainObject.getPersistentId());
+			this.objectChangeBroadcaster.broadcastAdd(tenantIdentifier,clazz, domainObject.getPersistentId());
 		}
 	}
 

@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
@@ -25,10 +26,11 @@ import com.codeshelf.ws.jetty.io.JsonDecoder;
 import com.codeshelf.ws.jetty.io.JsonEncoder;
 import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
 import com.codeshelf.ws.jetty.protocol.request.RequestABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 
-@ServerEndpoint(value="/",encoders={JsonEncoder.class},decoders={JsonDecoder.class})
+@ServerEndpoint(value="/",encoders={JsonEncoder.class},decoders={JsonDecoder.class},configurator=WebSocketConfigurator.class)
 public class CsServerEndPoint {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(CsServerEndPoint.class);
@@ -56,33 +58,46 @@ public class CsServerEndPoint {
 	
 	@OnOpen
     public void onOpen(Session session, EndpointConfig ec) {
+		//String url = session.getRequestURI().toASCIIString();
 		WebSocketConnection conn = webSocketManagerService.getWebSocketConnectionForSession(session);
 		if(conn != null) {
-			User user = conn.getUser();
-			if(user != null) {
-				throw new RuntimeException("onOpen session already had a user "+user.getId());
+			LOGGER.error("onOpen webSocketManager already had a connection for this session");
+			User user = conn.getCurrentUser();
+			Tenant tenant = conn.getCurrentTenant();
+			String lastTenantId = conn.getLastTenantIdentifier();
+			if(user != null || tenant != null || lastTenantId != null) {
+				throw new RuntimeException("onOpen connection had unexpected authentication information associated:"
+						+" user:"+(user==null?"null":user.getUsername())
+						+" tenant:"+(user==null?"null":tenant.getId())
+						+" tenantId:"+(lastTenantId==null?"null":lastTenantId)
+					);
 			}
 		}
 		session.setMaxIdleTimeout(1000*60*idleTimeOut);
 		LOGGER.info("WS Session Started: " + session.getId()+", timeout: "+session.getMaxIdleTimeout());
-		webSocketManagerService.sessionStarted(session);
+		
+		webSocketManagerService.sessionStarted(session); // this will create WebSocketConnection for session
     }
 
     @OnMessage(maxMessageSize=JsonEncoder.WEBSOCKET_MAX_MESSAGE_SIZE)
     public void onMessage(Session session, MessageABC message) {
     	messageCounter.inc();
     	User setUserContext = null;
-    	this.getTenantPersistenceService().beginTransaction();
+    	Tenant setTenantContext = null;
     	try{
         	WebSocketConnection csSession = webSocketManagerService.getWebSocketConnectionForSession(session);
-        	setUserContext = csSession.getUser();
-        	if(setUserContext != null) {
-            	CodeshelfSecurityManager.setCurrentUser(csSession.getUser());
-        		LOGGER.info("Got message {}", message.getClass().getSimpleName());
+        	setUserContext = csSession.getCurrentUser();
+        	setTenantContext = csSession.getCurrentTenant();
+        	if(setUserContext == null) {
+        		LOGGER.info("Got message {} and user is null (tenant exists = {})", message.getClass().getSimpleName(), (setTenantContext!=null));
+        	} else if(setTenantContext == null) {
+        		LOGGER.error("Got message {} from user {} but no tenant context", message.getClass().getSimpleName(), setUserContext.getUsername());
         	} else {
-        		LOGGER.info("Got message {} and csSession is null", message.getClass().getSimpleName());
-        	}
-
+        		// ok
+            	CodeshelfSecurityManager.setContext(setUserContext,setTenantContext);
+        		LOGGER.info("Got message {} from user {} on tenant {}", message.getClass().getSimpleName(),setUserContext.getUsername(),setTenantContext.getId());
+        	} 
+        	
         	webSocketManagerService.messageReceived(session);
         	if (message instanceof ResponseABC) {
         		ResponseABC response = (ResponseABC) message;
@@ -90,44 +105,51 @@ public class CsServerEndPoint {
                 iMessageProcessor.handleResponse(csSession, response);
         	}
         	else if (message instanceof RequestABC) {
-        		RequestABC request = (RequestABC) message;
-                LOGGER.debug("Received request on session "+csSession+": " + request);
-               // pass request to processor to execute command
-                ResponseABC response = iMessageProcessor.handleRequest(csSession, request);
-                if (response!=null) {
-                	// send response to client
-                	LOGGER.debug("Sending response "+response+" for request "+request);
-                	csSession.sendMessage(response);
-                }
-                else {
-                	LOGGER.warn("No response generated for request "+request);
-                }    	
+        		boolean needTransaction = !(message instanceof LoginRequest);
+        		
+        		if(needTransaction) TenantPersistenceService.getInstance().beginTransaction();
+        		try {
+            		RequestABC request = (RequestABC) message;
+                    LOGGER.debug("Received request on session "+csSession+": " + request);
+                   // pass request to processor to execute command
+                    ResponseABC response = iMessageProcessor.handleRequest(csSession, request);
+                    if (response!=null) {
+                    	// send response to client
+                    	LOGGER.debug("Sending response "+response+" for request "+request);
+                    	csSession.sendMessage(response);
+                    }
+                    else {
+                    	LOGGER.warn("No response generated for request "+request);
+                    }    	
+            		if(needTransaction) TenantPersistenceService.getInstance().commitTransaction();
+            		needTransaction=false;
+        		} finally {
+            		if(needTransaction) TenantPersistenceService.getInstance().rollbackTransaction();
+        		}        		
+        	
         	}  
         	else {
         		// handle all other messages
             	LOGGER.debug("Received message on session "+csSession+": "+message);
             	iMessageProcessor.handleMessage(csSession, message);
         	}
-			this.getTenantPersistenceService().commitTransaction();
 		} catch (RuntimeException e) {
-			this.getTenantPersistenceService().rollbackTransaction();
-			LOGGER.error("Unable to persist during message handling: " + message, e);
-		}
-    	finally {
-    		if(setUserContext != null) {
-    			CodeshelfSecurityManager.removeCurrentUser();
+			LOGGER.error("Unexpected exception during message handling: " + message, e);
+		} finally {
+    		if(setUserContext != null || setTenantContext != null) {
+    			CodeshelfSecurityManager.removeContext();
     		}
 		}
     }
     
 	@OnClose
     public void onClose(Session session, CloseReason reason) {
-		User user = webSocketManagerService.getWebSocketConnectionForSession(session).getUser();
+		User user = webSocketManagerService.getWebSocketConnectionForSession(session).getCurrentUser();
 		try {
-	    	LOGGER.info(String.format("WS Session %s for user %s closed because of %s", session.getId(), user.toString(), reason));
+	    	LOGGER.info(String.format("WS Session %s for user %s closed because of %s", session.getId(), user, reason));
 			webSocketManagerService.sessionEnded(session);		
 		} finally {
-			CodeshelfSecurityManager.removeCurrentUserIfPresent();
+			CodeshelfSecurityManager.removeContextIfPresent();
 		}
     }
     

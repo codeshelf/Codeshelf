@@ -16,6 +16,8 @@ import com.codeshelf.model.domain.IDomainObject;
  */
 public interface IDaoListener {
 	
+	//String getTenantIdentifier();
+	
 	void objectAdded(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId);
 	
 	void objectUpdated(Class<? extends IDomainObject> domainClass, final UUID domainPersistentId, Set<String> inChangedProperties);

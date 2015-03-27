@@ -13,6 +13,7 @@ import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Organization;
 import com.codeshelf.model.domain.SiteController;
+import com.codeshelf.platform.persistence.PersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.security.AuthResponse;
 import com.codeshelf.security.AuthResponse.Status;
@@ -55,9 +56,11 @@ public class LoginCommand extends CommandABC {
 				User authUser = authResponse.getUser();
 				// successfully authenticated user with password
 				Tenant tenant = TenantManagerService.getInstance().getTenantByUser(authUser);				
-				wsConnection.authenticated(authUser);
-				CodeshelfSecurityManager.setCurrentUser(authUser);
+				wsConnection.authenticated(authUser,tenant);
+				CodeshelfSecurityManager.setContext(authUser,tenant);
 				try {
+					TenantPersistenceService.getInstance().beginTransaction();
+					
 					LOGGER.info("User " + username + " of " + tenant.getName() + " authenticated on session "
 							+ wsConnection.getSessionId());
 
@@ -65,7 +68,14 @@ public class LoginCommand extends CommandABC {
 					SiteController sitecon = SiteController.staticGetDao().findByDomainId(null, username);
 					CodeshelfNetwork network = null;
 					if (sitecon != null) {
-						network = TenantPersistenceService.<CodeshelfNetwork>deproxify(sitecon.getParent());
+						network = sitecon.getParent();
+						
+						// ensure all collections are loaded, because hibernate session 
+						// will already be closed when response is serialized
+						network.getChes().size();
+						network.getLedControllers().size();
+						network.getSiteControllers().size();
+						network = PersistenceService.<CodeshelfNetwork>deproxify(network);
 					
 						// send all network updates to this session for this network 
 						NetworkChangeListener.registerWithSession(this.objectChangeBroadcaster, wsConnection, network);
@@ -108,7 +118,8 @@ public class LoginCommand extends CommandABC {
 					}
 
 				} finally {
-					CodeshelfSecurityManager.removeCurrentUser();
+					TenantPersistenceService.getInstance().commitTransaction();
+					CodeshelfSecurityManager.removeContext();
 				}
 			} else {
 				LOGGER.warn("Authentication failed: " + username);

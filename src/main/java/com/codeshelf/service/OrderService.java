@@ -32,6 +32,7 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.ProductivitySummaryList.StatusSummary;
 import com.google.common.collect.ImmutableMap;
 import com.sun.jersey.api.NotFoundException;
@@ -153,8 +154,9 @@ public class OrderService implements IApiService {
 	}
 
 	public int archiveAllOrders(String facilityUUID) {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		ITenantPersistenceService persistence = TenantPersistenceService.getInstance(); // convenience
-		String schema = persistence.getDefaultSchema().getSchemaName();
+		String schema = tenant.getSchemaName();
 		Session session = persistence.getSession();
 		UUID uuid = UUID.fromString(facilityUUID);
 
@@ -243,11 +245,13 @@ public class OrderService implements IApiService {
 	}
 
 	@SuppressWarnings("unchecked")
-	public ProductivitySummaryList getProductivitySummary(Tenant tenant, UUID facilityId, boolean skipSQL) throws Exception {
+	public ProductivitySummaryList getProductivitySummary(UUID facilityId, boolean skipSQL) throws Exception {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+		
 		Facility facility = null;
 		List<Object[]> picksPerHour = null;
 		ProductivitySummaryList productivitySummary = null;
-		Session session = TenantPersistenceService.getInstance().getSession(tenant);
+		Session session = TenantPersistenceService.getInstance().getSession();
 		facility = Facility.staticGetDao().findByPersistentId(facilityId);
 		if (facility == null) {
 			throw new NotFoundException("Facility " + facilityId + " does not exist");

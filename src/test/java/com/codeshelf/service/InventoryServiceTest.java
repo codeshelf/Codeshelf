@@ -29,10 +29,10 @@ public class InventoryServiceTest extends ServerTest {
 	public void doBefore() {
 		super.doBefore();
 		this.getTenantPersistenceService().beginTransaction();
-		facilityGenerator = new FacilityGenerator(getDefaultTenant());
+		facilityGenerator = new FacilityGenerator();
 
 		VirtualSlottedFacilityGenerator facilityGenerator =
-					new VirtualSlottedFacilityGenerator(getDefaultTenant(),
+					new VirtualSlottedFacilityGenerator(
 														createAisleFileImporter(),
 														createLocationAliasImporter(),
 														createOrderImporter());

@@ -23,9 +23,9 @@ import com.google.common.util.concurrent.Service;
 public class MockTenantManagerService implements ITenantManagerService {
 	Tenant defaultTenant;
 	User defaultUser;
-	MockTenantManagerService(Tenant defaultTenant) {
-		this.defaultTenant = defaultTenant;
+	MockTenantManagerService() {
 		
+		this.defaultTenant = Mockito.mock(Tenant.class);	
 		defaultUser = new User();
 		defaultUser.setId(0);
 		defaultUser.setTenant(defaultTenant);
@@ -112,11 +112,15 @@ public class MockTenantManagerService implements ITenantManagerService {
 		return this.defaultTenant;
 	}
 	@Override
-	public Tenant createTenant(String name, String shardName, String dbUsername) {
+	public Tenant createTenant(String name, String schemaName, String shardName) {
 		return this.defaultTenant;
 	}
 	@Override
-	public Tenant getDefaultTenant() {
+	public Tenant createTenant(String name, String schemaName) {
+		return this.defaultTenant;
+	}
+	@Override
+	public Tenant getInitialTenant() {
 		return this.defaultTenant;
 	}
 	@Override
@@ -238,5 +242,9 @@ public class MockTenantManagerService implements ITenantManagerService {
 	public void deletePermission(UserPermission permission) {
 		// TODO Auto-generated method stub
 		
+	}
+	@Override
+	public Tenant getTenantBySchemaName(String schemaName) {
+		return this.getInitialTenant();
 	}
 }

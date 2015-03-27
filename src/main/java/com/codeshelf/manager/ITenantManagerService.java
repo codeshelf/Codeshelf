@@ -31,9 +31,11 @@ public interface ITenantManagerService extends CodeshelfService {
 	Tenant getTenant(Integer id);
 	Tenant getTenantByUser(User user);
 	Tenant getTenantByName(String name);
-	Tenant createTenant(String name,String shardName,String dbUsername);
+	Tenant getTenantBySchemaName(String schemaName);
+	Tenant createTenant(String name,String schemaName, String shardName);
+	Tenant createTenant(String name,String schemaName); // on default shard
 	Tenant updateTenant(Tenant tenant);
-	Tenant getDefaultTenant();
+	Tenant getInitialTenant();
 	List<Tenant> getTenants();
 	void deleteTenant(Tenant tenant); // needed for testing
 
@@ -55,7 +57,5 @@ public interface ITenantManagerService extends CodeshelfService {
 	
 	// misc
 	void setShutdownCleanupRequest(TenantManagerService.ShutdownCleanupReq request);
-
-
 
 }

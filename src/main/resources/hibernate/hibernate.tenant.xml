@@ -11,7 +11,6 @@
         <!-- Database connection settings -->
         <property name="connection.driver_class">org.postgresql.Driver</property>
         <property name="dialect">org.hibernate.dialect.PostgreSQL9Dialect</property>
-        <property name="hbm2ddl.auto">validate</property>
 
         <!-- JDBC connection pool -->
 		<property name="hibernate.c3p0.min_size">5</property>
@@ -26,6 +25,11 @@
         <property name="hibernate.cache.use_query_cache">true</property>
         <property name="net.sf.ehcache.configurationResourceName">hibernate/ehcache.xml</property>
         
+  		<!-- Multitenant -->
+  		<property name="hibernate.multiTenancy">SCHEMA</property>
+		<property name="hibernate.multi_tenant_connection_provider">com.codeshelf.platform.persistence.CsMultiTenantConnectionProvider</property>
+		<property name="hibernate.tenant_identifier_resolver">com.codeshelf.platform.persistence.CsCurrentTenantIdentifierResolver</property>
+		
         <!-- Echo all executed SQL to stdout -->
         <property name="show_sql">false</property>
         

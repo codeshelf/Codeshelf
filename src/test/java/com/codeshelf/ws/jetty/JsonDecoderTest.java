@@ -44,7 +44,7 @@ public class JsonDecoderTest extends MinimalTest {
 		JsonPojo pojo = new JsonPojo();
 		
 		ObjectMapper mapper = new ObjectMapper();
-		mapper.addMixInAnnotations(Object.class, ObjectMixIn.class);
+		mapper.addMixIn(Object.class, ObjectMixIn.class);
 		mapper.registerSubtypes(JsonPojo.class);
 		
 		String jsonString = "";
@@ -71,7 +71,7 @@ public class JsonDecoderTest extends MinimalTest {
 		Point point = new Point(PositionTypeEnum.GPS,123d,232d,0d);
 		
 		ObjectMapper mapper = new ObjectMapper();
-		mapper.addMixInAnnotations(Object.class, ObjectMixIn.class);
+		mapper.addMixIn(Object.class, ObjectMixIn.class);
 		mapper.registerSubtypes(Point.class);
 		mapper.registerSubtypes(PathSegment.class);
 		

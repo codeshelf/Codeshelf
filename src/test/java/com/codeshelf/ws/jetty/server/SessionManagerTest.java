@@ -2,6 +2,7 @@ package com.codeshelf.ws.jetty.server;
 
 import java.util.ArrayList;
 
+import javax.websocket.RemoteEndpoint.Basic;
 import javax.websocket.Session;
 
 import org.junit.After;
@@ -50,13 +51,14 @@ public class SessionManagerTest extends MinimalTest {
 	public void findUserSession() {
 		Session session = Mockito.mock(Session.class);
 		Mockito.when(session.getId()).thenReturn("123");
+		Mockito.when(session.getBasicRemote()).thenReturn(Mockito.mock(Basic.class));
 		
 		Tenant tenant = Mockito.mock(Tenant.class);
 		Assert.assertEquals(tenant, tenant);
 
 		User user = mockUser(tenant, 1, "testuser");
 		WebSocketConnection csSession = sessionManager.sessionStarted(session);
-		csSession.authenticated(user);
+		csSession.authenticated(user,tenant);
 
 		User userToSend = mockUser(tenant, 1, "testuser");
 		Assert.assertEquals(user, userToSend);

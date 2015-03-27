@@ -3,6 +3,7 @@ package com.codeshelf.metrics;
 import java.sql.SQLException;
 
 import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.platform.persistence.DatabaseUtils;
 
 public class DatabaseConnectionHealthCheck extends CodeshelfHealthCheck {
 
@@ -14,7 +15,7 @@ public class DatabaseConnectionHealthCheck extends CodeshelfHealthCheck {
     protected Result check() throws Exception {
     	SQLException ex = null;
     	try {
-			TenantManagerService.getInstance().getDefaultTenant().executeSQL("SELECT 1;");
+			DatabaseUtils.executeSQL(TenantManagerService.getInstance().getInitialTenant(),"SELECT 1;");
 		} catch (SQLException e) {
 			ex = e;
 		}
