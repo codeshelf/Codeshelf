@@ -28,7 +28,7 @@ import com.codeshelf.model.LedRange;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.util.StringUIConverter;
 import com.codeshelf.util.UomNormalizer;
 import com.codeshelf.validation.ErrorCode;

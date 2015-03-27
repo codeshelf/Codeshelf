@@ -45,7 +45,7 @@ import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.LedRange;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.util.StringUIConverter;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;

@@ -30,8 +30,7 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.platform.persistence.ITenantPersistenceService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.ProductivitySummaryList.StatusSummary;
 import com.google.common.collect.ImmutableMap;
@@ -155,7 +154,7 @@ public class OrderService implements IApiService {
 
 	public int archiveAllOrders(String facilityUUID) {
 		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
-		ITenantPersistenceService persistence = TenantPersistenceService.getInstance(); // convenience
+		TenantPersistenceService persistence = TenantPersistenceService.getInstance(); // convenience
 		String schema = tenant.getSchemaName();
 		Session session = persistence.getSession();
 		UUID uuid = UUID.fromString(facilityUUID);

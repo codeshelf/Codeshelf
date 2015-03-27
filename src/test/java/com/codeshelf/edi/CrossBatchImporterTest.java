@@ -25,7 +25,7 @@ import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.UomMaster;
-import com.codeshelf.platform.persistence.ITenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.testframework.ServerTest;
 
 /**
@@ -218,7 +218,7 @@ public class CrossBatchImporterTest extends ServerTest {
 
 	@Test
 	public final void testResendCrossBatchRemoveItem() {
-		ITenantPersistenceService tenantPersistenceService=this.getTenantPersistenceService();
+		TenantPersistenceService tenantPersistenceService=this.getTenantPersistenceService();
 		tenantPersistenceService.beginTransaction();
 
 		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);

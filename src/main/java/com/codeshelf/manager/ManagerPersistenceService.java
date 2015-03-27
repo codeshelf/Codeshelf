@@ -4,11 +4,11 @@ import lombok.Getter;
 
 import org.hibernate.cfg.Configuration;
 
-import com.codeshelf.platform.persistence.DatabaseCredentials;
-import com.codeshelf.platform.persistence.EventListenerIntegrator;
-import com.codeshelf.platform.persistence.PersistenceService;
+import com.codeshelf.persistence.AbstractPersistenceService;
+import com.codeshelf.persistence.DatabaseCredentials;
+import com.codeshelf.persistence.EventListenerIntegrator;
 
-public class ManagerPersistenceService extends PersistenceService implements DatabaseCredentials {
+public class ManagerPersistenceService extends AbstractPersistenceService implements DatabaseCredentials {
 	private static final String MASTER_CHANGELOG_NAME = "liquibase/mgr.changelog-master.xml";
 	
 	@Getter
@@ -20,25 +20,25 @@ public class ManagerPersistenceService extends PersistenceService implements Dat
 	@Getter
 	private String schemaName;
 	
-	private static PersistenceService theInstance = null;
+	private static AbstractPersistenceService theInstance = null;
 
 	private ManagerPersistenceService() {
 		super();
 	}
 	
-	public final synchronized static PersistenceService getMaybeRunningInstance() {
+	public final synchronized static AbstractPersistenceService getMaybeRunningInstance() {
 		if (theInstance == null) {
 			theInstance = new ManagerPersistenceService();
 		}
 		return theInstance;
 	}
-	public final synchronized static PersistenceService getNonRunningInstance() {
+	public final synchronized static AbstractPersistenceService getNonRunningInstance() {
 		if(!getMaybeRunningInstance().state().equals(State.NEW)) {
 			throw new RuntimeException("Can't get non-running instance of already-started service: "+theInstance.serviceName());
 		}
 		return theInstance;
 	}
-	public final static PersistenceService getInstance() {
+	public final static AbstractPersistenceService getInstance() {
 		getMaybeRunningInstance().awaitRunningOrThrow();		
 		return theInstance;
 	}

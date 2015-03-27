@@ -1,9 +1,6 @@
 package com.codeshelf.testframework;
 
 import java.util.Map;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -16,12 +13,10 @@ import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.domain.IDomainObject;
-import com.codeshelf.platform.persistence.EventListenerIntegrator;
-import com.codeshelf.platform.persistence.ITenantPersistenceService;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Service;
+import com.codeshelf.persistence.EventListenerIntegrator;
+import com.codeshelf.persistence.TenantPersistenceService;
 
-public class MockTenantPersistenceService implements ITenantPersistenceService {
+public class MockTenantPersistenceService extends TenantPersistenceService {
 	Tenant defaultTenant = Mockito.mock(Tenant.class);
 	Map<Class<? extends IDomainObject>,ITypedDao<?>> mockDaos;
 	
@@ -73,71 +68,6 @@ public class MockTenantPersistenceService implements ITenantPersistenceService {
 
 	@Override
 	public void awaitTerminatedOrThrow() {
-	}
-
-	@Override
-	public ListenableFuture<State> start() {
-		return null;
-	}
-
-	@Override
-	public State startAndWait() {
-		return State.RUNNING;
-	}
-
-	@Override
-	public Service startAsync() {
-		return this;
-	}
-
-	@Override
-	public boolean isRunning() {
-		return true;
-	}
-
-	@Override
-	public State state() {
-		return State.RUNNING;
-	}
-
-	@Override
-	public ListenableFuture<State> stop() {
-		return null;
-	}
-
-	@Override
-	public State stopAndWait() {
-		return State.RUNNING;
-	}
-
-	@Override
-	public Service stopAsync() {
-		return this;
-	}
-
-	@Override
-	public void awaitRunning() {
-	}
-
-	@Override
-	public void awaitRunning(long timeout, TimeUnit unit) throws TimeoutException {
-	}
-
-	@Override
-	public void awaitTerminated() {
-	}
-
-	@Override
-	public void awaitTerminated(long timeout, TimeUnit unit) throws TimeoutException {
-	}
-
-	@Override
-	public Throwable failureCause() {
-		return null;
-	}
-
-	@Override
-	public void addListener(Listener listener, Executor executor) {
 	}
 
 	@Override

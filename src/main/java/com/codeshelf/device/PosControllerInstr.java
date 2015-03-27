@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.Validatable;
-import com.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.ws.protocol.message.MessageABC;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;

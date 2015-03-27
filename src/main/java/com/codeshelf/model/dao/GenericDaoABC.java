@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.util.ConverterProvider;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;

@@ -11,9 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.service.AbstractCodeshelfScheduledService;
-import com.codeshelf.ws.jetty.client.CsClientEndpoint;
-import com.codeshelf.ws.jetty.protocol.message.KeepAlive;
-import com.codeshelf.ws.jetty.server.WebSocketConnection;
+import com.codeshelf.ws.client.CsClientEndpoint;
+import com.codeshelf.ws.protocol.message.KeepAlive;
+import com.codeshelf.ws.server.WebSocketConnection;
 
 public class ClientConnectionManagerService extends AbstractCodeshelfScheduledService {
 

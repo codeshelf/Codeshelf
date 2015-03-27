@@ -3,7 +3,6 @@ package com.codeshelf.integration;
 import java.io.IOException;
 import java.io.StringReader;
 import java.sql.Timestamp;
-import java.util.concurrent.Callable;
 import java.util.List;
 
 import org.junit.Assert;
@@ -26,7 +25,6 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.testframework.IntegrationTest;
 import com.codeshelf.testframework.ServerTest;
 
 public class CheProcessPutWall extends ServerTest {
@@ -104,6 +102,7 @@ public class CheProcessPutWall extends ServerTest {
 		theService.lightLocation(facility.getPersistentId().toString(), "P11");
 		*/
 
+		@SuppressWarnings("unused")
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 1); // will return null if blank, so use the object Byte.
 		this.getTenantPersistenceService().commitTransaction();
 	}

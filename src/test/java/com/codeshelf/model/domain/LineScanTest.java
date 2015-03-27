@@ -21,12 +21,12 @@ import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.MethodArgumentException;
-import com.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
-import com.codeshelf.ws.jetty.protocol.response.GetOrderDetailWorkResponse;
-import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
-import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.WebSocketConnection;
+import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
+import com.codeshelf.ws.protocol.response.GetOrderDetailWorkResponse;
+import com.codeshelf.ws.protocol.response.ResponseABC;
+import com.codeshelf.ws.protocol.response.ResponseStatus;
+import com.codeshelf.ws.server.ServerMessageProcessor;
+import com.codeshelf.ws.server.WebSocketConnection;
 
 public class LineScanTest extends ServerTest {
 	@SuppressWarnings("unused")

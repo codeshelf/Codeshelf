@@ -45,7 +45,7 @@ import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.ServiceStatusHealthCheck;
 import com.codeshelf.security.AuthFilter;
 import com.codeshelf.security.AuthServlet;
-import com.codeshelf.ws.jetty.server.CsServerEndPoint;
+import com.codeshelf.ws.server.CsServerEndPoint;
 import com.google.inject.Inject;
 import com.google.inject.servlet.GuiceFilter;
 import com.sun.jersey.api.core.PackagesResourceConfig;

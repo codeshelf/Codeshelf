@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.LotHandlingEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.ASCIIAlphanumericComparator;
 import com.codeshelf.util.UomNormalizer;

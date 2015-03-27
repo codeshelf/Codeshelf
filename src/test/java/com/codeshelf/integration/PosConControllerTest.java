@@ -28,7 +28,7 @@ import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.testframework.IntegrationTest;
 import com.codeshelf.testframework.ServerTest;
 
