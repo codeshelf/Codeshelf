@@ -24,11 +24,13 @@ import com.codeshelf.device.PosControllerInstrList;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.manager.User;
 import com.codeshelf.model.LedRange;
+import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.ws.jetty.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
@@ -56,42 +58,8 @@ public class LightService implements IApiService {
 	public LightService(WebSocketManagerService webSocketManagerService) {
 		this.webSocketManagerService = webSocketManagerService;
 	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Light one item. Any subsequent activity on the aisle controller will wipe this away.
-	 */
-	public void lightItem(final String facilityPersistentId, final String inItemPersistentId) {
-		// checkFacility calls checkNotNull, which throws NPE. ok. Should always have facility.
-		Facility facility = checkFacility(facilityPersistentId);
-		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
-
-		lightItemSpecificColor(facilityPersistentId, inItemPersistentId, color);
-	}
 	
 	// --------------------------------------------------------------------------
-	/**
-	 * Light one item. Any subsequent activity on the aisle controller will wipe this away.
-	 */
-	public void lightItemSpecificColor(final String facilityPersistentId, final String inItemPersistentId, ColorEnum color) {
-		// checkFacility calls checkNotNull, which throws NPE. ok. Should always have facility.
-		Facility facility = checkFacility(facilityPersistentId);
-
-		// should we throw if item not found? No. We can error and move on. This is called directly by the UI message processing.
-		Item theItem = Item.staticGetDao().findByPersistentId(inItemPersistentId);
-		if (theItem == null) {
-			LOGGER.error("persistented id for item not found: " + inItemPersistentId);
-			return;
-		}
-
-		if (theItem.isLightable()) {
-			LightLedsInstruction instrcutions = toLedsInstruction(facility, defaultLedsToLight, color, theItem);
-			sendMessage(facility.getSiteControllerUsers(), new LedInstrListMessage(instrcutions));
-		} else {
-			LOGGER.warn("The item is not lightable: " + theItem);
-		}
-	}
-
 	public void lightLocation(final String facilityPersistentId, final String inLocationNominalId) {
 
 		final Facility facility = checkFacility(facilityPersistentId);
@@ -103,17 +71,17 @@ public class LightService implements IApiService {
 		//Light the POS range
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 		getInstructionsForPosConRange(facility, null, theLocation, instructions);
-		final PosControllerInstrList message = new PosControllerInstrList(instructions);
-		sendMessage(facility.getSiteControllerUsers(), message);
+		final PosControllerInstrList posMessage = new PosControllerInstrList(instructions);
+		sendMessage(facility.getSiteControllerUsers(), posMessage);
 		//Modify all POS commands to clear their POSs instead.
 		new Timer().schedule(new TimerTask() {
 			@Override
 			public void run() {
 				LOGGER.info("AisleDeviceLogic expire timer fired.");
-				for (PosControllerInstr instructions : message.getInstructions()){
+				for (PosControllerInstr instructions : posMessage.getInstructions()){
 					instructions.getRemovePos().add(instructions.getPosition());
 				}
-				sendMessage(facility.getSiteControllerUsers(), message);
+				sendMessage(facility.getSiteControllerUsers(), posMessage);
 			}
 		}, 20000);
 	}
@@ -121,11 +89,40 @@ public class LightService implements IApiService {
 	public void lightInventory(final String facilityPersistentId, final String inLocationNominalId) {
 		Facility facility = checkFacility(facilityPersistentId);
 		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
-
 		Location theLocation = checkLocation(facility, inLocationNominalId);
+		List<Item> items = theLocation.getInventoryInWorkingOrder();
+		lightItemsSpecificColor(facilityPersistentId, items, color);
+	}
 
+	/**
+	 * Light one item. Any subsequent activity on the aisle controller will wipe this away.
+	 */
+	public void lightItem(final String facilityPersistentId, final String inItemPersistentId) {
+		Facility facility = checkFacility(facilityPersistentId);
+		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
+		lightItemSpecificColor(facilityPersistentId, inItemPersistentId, color);
+	}
+
+	/**
+	 * Light one item. Any subsequent activity on the aisle controller will wipe this away.
+	 */
+	public void lightItemSpecificColor(final String facilityPersistentId, final String inItemPersistentId, ColorEnum color) {
+		// should we throw if item not found? No. We can error and move on. This is called directly by the UI message processing.
+		Item theItem = Item.staticGetDao().findByPersistentId(inItemPersistentId);
+		if (theItem == null) {
+			LOGGER.error("persistented id for item not found: " + inItemPersistentId);
+			return;
+		}
+		List<Item> itemList = Lists.newArrayList();
+		itemList.add(theItem);
+		lightItemsSpecificColor(facilityPersistentId, itemList, color);
+	}
+
+	public void lightItemsSpecificColor(final String facilityPersistentId, final List<Item> items, ColorEnum color) {
+		// checkFacility calls checkNotNull, which throws NPE. ok. Should always have facility.
+		Facility facility = checkFacility(facilityPersistentId);
 		List<LightLedsInstruction> instructions = Lists.newArrayList();
-		for (Item item : theLocation.getInventoryInWorkingOrder()) {
+		for (Item item : items) {
 			try {
 				if (item.isLightable()) {
 					LightLedsInstruction instruction = toLedsInstruction(facility, defaultLedsToLight, color, item);
@@ -138,28 +135,8 @@ public class LightService implements IApiService {
 
 			}
 		}
+		instructions = groupByControllerAndChanel(instructions);
 		LedInstrListMessage message = new LedInstrListMessage(instructions);
-		sendMessage(facility.getSiteControllerUsers(), message);
-	}
-
-	public void lightItemsSpecificColor(final String facilityPersistentId, final List<Item> items, ColorEnum color) {
-		Facility facility = checkFacility(facilityPersistentId);
-
-		List<LightLedsInstruction> messages = Lists.newArrayList();
-		for (Item item : items) {
-			try {
-				if (item.isLightable()) {
-					LightLedsInstruction message = toLedsInstruction(facility, defaultLedsToLight, color, item);
-					messages.add(message);
-				} else {
-					LOGGER.warn("unable to light item: " + item);
-				}
-			} catch (Exception e) {
-				LOGGER.warn("unable to light item: " + item, e);
-
-			}
-		}
-		LedInstrListMessage message = new LedInstrListMessage(messages);
 		sendMessage(facility.getSiteControllerUsers(), message);
 	}
 
@@ -202,23 +179,24 @@ public class LightService implements IApiService {
 
 	// --------------------------------------------------------------------------
 	
-	void lightChildLocations(final Facility facility, final Location theLocation, ColorEnum color) {
-		List<Location> leaves = Lists.newArrayList(); 
-		getAllLedLightableLeaves(theLocation, leaves);
+	void lightChildLocations(final Facility facility, final Location location, ColorEnum color) {
+		List<Location> leaves = Lists.newArrayList();
+		//Do not light slots when lighting an aisle
+		getAllLedLightableLeaves(location, leaves, !location.isAisle());
 		List<LightLedsInstruction> instructions = lightAllAtOnce(facility, defaultLedsToLight, color, leaves);
 		LedInstrListMessage message = new LedInstrListMessage(instructions);
 		sendMessage(facility.getSiteControllerUsers(), message);
 	}
 	
-	private void getAllLedLightableLeaves(final Location theLocation, List<Location> leaves) {
-		List<Location> children = theLocation.getActiveChildren();
-		if (children.isEmpty()) {
-			if (theLocation.isLightableAisleController()) {
-				leaves.add(theLocation);
+	private void getAllLedLightableLeaves(final Location location, List<Location> leaves, boolean lightSlots) {
+		List<Location> children = location.getActiveChildren();
+		if (children.isEmpty() || (!lightSlots && location.isTier())) {
+			if (location.isLightableAisleController()) {
+				leaves.add(location);
 			}
 		} else {
 			for (Location child : children) {
-				getAllLedLightableLeaves(child, leaves);
+				getAllLedLightableLeaves(child, leaves, lightSlots);
 			}
 		}
 	}
@@ -244,23 +222,14 @@ public class LightService implements IApiService {
 		LightLedsInstruction instruction = getLedCmdGroupListForRange(facility, inColor, inLocation, theRange);
 		return instruction;
 	}
-
+	
 	private List<LightLedsInstruction> lightAllAtOnce(Facility facility, int numLeds, ColorEnum diagnosticColor, List<Location> children) {
-		Map<ControllerChannelKey, LightLedsInstruction> byControllerChannel = Maps.newHashMap();
+		List<LightLedsInstruction> instructions = Lists.newArrayList();
 		for (Location child : children) {
 			try {
 				if (child.isLightableAisleController()) {
 					LightLedsInstruction instruction = toLedsInstruction(facility, numLeds, diagnosticColor, child);
-					ControllerChannelKey key = new ControllerChannelKey(instruction.getNetGuidStr(), instruction.getChannel());
-
-					//merge messages per controller and key
-					LightLedsInstruction instructionForKey = byControllerChannel.get(key);
-					if (instructionForKey != null) {
-						instruction = instructionForKey.merge(instruction);
-
-					}
-
-					byControllerChannel.put(key, instruction);
+					instructions.add(instruction);
 				} else {
 					LOGGER.warn("Unable to light location: " + child);
 				}
@@ -268,7 +237,20 @@ public class LightService implements IApiService {
 				LOGGER.warn("Unable to light location: " + child, e);
 			}
 		}
+		return groupByControllerAndChanel(instructions);
+	}
 
+	private List<LightLedsInstruction> groupByControllerAndChanel(List<LightLedsInstruction> instructions) {
+		Map<ControllerChannelKey, LightLedsInstruction> byControllerChannel = Maps.newHashMap();
+		for (LightLedsInstruction instruction : instructions) {
+			ControllerChannelKey key = new ControllerChannelKey(instruction.getNetGuidStr(), instruction.getChannel());
+			//merge messages per controller and key
+			LightLedsInstruction instructionForKey = byControllerChannel.get(key);
+			if (instructionForKey != null) {
+				instruction = instructionForKey.merge(instruction);
+			}
+			byControllerChannel.put(key, instruction);
+		}
 		return new ArrayList<LightLedsInstruction>(byControllerChannel.values());
 	}
 

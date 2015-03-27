@@ -716,8 +716,7 @@ public class CsDeviceManager implements
 					// but may not be later when we have our multi-controller implementation.
 					LOGGER.debug("unknown GUID in lightSomeLeds");
 				}
-
-			}			
+			}
 		}
 	}
 

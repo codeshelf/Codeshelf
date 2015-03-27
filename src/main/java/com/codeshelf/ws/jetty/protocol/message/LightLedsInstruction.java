@@ -1,6 +1,8 @@
 package com.codeshelf.ws.jetty.protocol.message;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -11,6 +13,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
+import com.codeshelf.device.LedSample;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
@@ -60,7 +63,35 @@ public class LightLedsInstruction {
 		List<LedCmdGroup> combinedGroup = Lists.newArrayList();
 		combinedGroup.addAll(thisLedCmdGroups);
 		combinedGroup.addAll(otherLedCmdGroups);
-		return new LightLedsInstruction(this.netGuidStr, this.channel, this.durationSeconds, combinedGroup);
+		LightLedsInstruction newInstruction = new LightLedsInstruction(this.netGuidStr, this.channel, this.durationSeconds, combinedGroup);
+		newInstruction.removeDuplicates();
+		return newInstruction;
 	}
 
+	private void removeDuplicates(){
+		List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(ledCommands);
+		List<LedCmdGroup> groupsToRemove = Lists.newArrayList();
+		Set<LedSample> uniqueSamples = new HashSet<LedSample>(); 
+		for (LedCmdGroup cmdGroup : ledCmdGroups) {
+			List<LedSample> sampleList = cmdGroup.getLedSampleList();
+			List<LedSample> samplesToRemove = Lists.newArrayList();
+			for (LedSample sample : sampleList) {
+				if (uniqueSamples.contains(sample)) {
+					samplesToRemove.add(sample);
+				} else {
+					uniqueSamples.add(sample);
+				}
+			}
+			for (LedSample sample : samplesToRemove) {
+				sampleList.remove(sample);
+			}
+			if (sampleList.isEmpty()) {
+				groupsToRemove.add(cmdGroup);
+			}
+		}
+		for (LedCmdGroup group : groupsToRemove) {
+			ledCmdGroups.remove(group);
+		}
+		setLedCommands(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroups));
+	}
 }
