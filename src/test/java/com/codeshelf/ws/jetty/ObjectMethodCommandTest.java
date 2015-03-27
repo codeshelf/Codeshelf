@@ -21,7 +21,6 @@ import com.codeshelf.ws.jetty.protocol.response.ObjectMethodResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ObjectMethodCommandTest extends MockDaoTest {

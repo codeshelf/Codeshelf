@@ -63,7 +63,6 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.SingleWorkItem;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.util.CompareNullChecker;
 import com.codeshelf.util.UomNormalizer;
 import com.codeshelf.validation.BatchResult;

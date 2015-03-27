@@ -26,6 +26,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.security.UserContext;
 import com.codeshelf.service.AbstractCodeshelfScheduledService;
 import com.google.inject.Inject;
 
@@ -90,6 +91,7 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 
 		LOGGER.trace("Begin EDI process.");
 
+		CodeshelfSecurityManager.removeContextIfPresent(); // shared thread, maybe other was aborted
 		for (Tenant tenant : TenantManagerService.getInstance().getTenants()) {
 			doEdiForTenant(tenant);
 		}
@@ -98,11 +100,12 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 	private void doEdiForTenant(Tenant tenant) {
 		boolean completed = false;
 		int numChecked = 0;
-		LOGGER.trace("Begin EDI process for tenant {}", tenant.getName());
-		final Timer.Context context = ediProcessingTimer.time();
-
+		final Timer.Context timerContext = ediProcessingTimer.time();
+		
 		try {
-			CodeshelfSecurityManager.setContext(null, tenant);
+			UserContext systemUser = CodeshelfSecurityManager.getUserContextSYSTEM();
+			CodeshelfSecurityManager.setContext(systemUser, tenant);
+			LOGGER.trace("Begin EDI process for tenant {}", tenant.getName());
 			TenantPersistenceService.getInstance().beginTransaction();
 
 			// Loop through each facility to make sure that it's EDI service processes any queued EDI.
@@ -134,13 +137,12 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 		} catch (RuntimeException e) {
 			LOGGER.error("Unable to process edi for tenant "+tenant.getId(), e);
 		} finally {
-			CodeshelfSecurityManager.removeContext();
-			if(context != null) 
-				context.stop();
+			if(timerContext != null) 
+				timerContext.stop();
 			
-			if(completed) {
-				LOGGER.info("Checked for updates from {} EDI services for tenant {}",numChecked,tenant.getName());
-			} else {
+			LOGGER.info("Checked for updates from {} EDI services for tenant {}",numChecked,tenant.getName());
+			CodeshelfSecurityManager.removeContext();
+			if(!completed) {
 				TenantPersistenceService.getInstance().rollbackTransaction();
 				LOGGER.warn("EDI process did not complete successfully for tenant {}",tenant.getName());
 			}

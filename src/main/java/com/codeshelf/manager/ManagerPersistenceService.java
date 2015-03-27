@@ -81,7 +81,7 @@ public class ManagerPersistenceService extends PersistenceService implements Dat
 	}
 
 	@Override
-	public void initializeTenant() {
+	public void initializeTenantData() {
 	}
 
 	@Override
@@ -96,6 +96,6 @@ public class ManagerPersistenceService extends PersistenceService implements Dat
 
 	@Override
 	protected DatabaseCredentials getSuperDatabaseCredentials(String tenantIdentifier) {
-		return null;
+		return this;
 	}
 }

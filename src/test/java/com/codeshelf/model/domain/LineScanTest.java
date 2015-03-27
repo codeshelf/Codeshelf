@@ -74,7 +74,6 @@ public class LineScanTest extends ServerTest {
 		Che che = Che.staticGetDao().getAll().get(0);
 		
 		ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "11.1");
-		this.getTenantPersistenceService().commitTransaction();
 
 		ResponseABC response = processor.handleRequest(this.getMockWsConnection(), request);
 		Assert.assertTrue(response instanceof GetOrderDetailWorkResponse);
@@ -86,6 +85,7 @@ public class LineScanTest extends ServerTest {
 		Assert.assertEquals(instruction.getItemId(), "SKU0003");
 		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.NEW);
 		
+		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	
@@ -110,13 +110,9 @@ public class LineScanTest extends ServerTest {
 		Che che = Che.staticGetDao().getAll().get(0);
 
 		ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "11.1");
-		this.getTenantPersistenceService().commitTransaction();
-		
 		
 		GetOrderDetailWorkResponse response = (GetOrderDetailWorkResponse)processor.handleRequest(this.getMockWsConnection(), request);
 		
-		this.getTenantPersistenceService().beginTransaction();		
-		che = Che.staticGetDao().reload(che);
 		List<WorkInstruction> instructions = response.getWorkInstructions();
 		WorkInstruction instruction = instructions.get(0);
 		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.NEW);

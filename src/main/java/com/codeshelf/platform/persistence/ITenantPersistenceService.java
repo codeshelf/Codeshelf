@@ -1,6 +1,5 @@
 package com.codeshelf.platform.persistence;
 
-import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.IDomainObject;
 

@@ -3,7 +3,6 @@ package com.codeshelf.platform.persistence;
 import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
 
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.User;
 import com.codeshelf.security.CodeshelfSecurityManager;
 
 public class CsCurrentTenantIdentifierResolver implements CurrentTenantIdentifierResolver {
@@ -14,7 +13,7 @@ public class CsCurrentTenantIdentifierResolver implements CurrentTenantIdentifie
 		if(tenant == null) {
 			throw new RuntimeException("Tenant resolver: No current tenant");
 		}
-		return tenant.getSchemaName();
+		return tenant.getTenantIdentifier();
 	}
 
 	@Override

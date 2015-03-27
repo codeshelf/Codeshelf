@@ -1,7 +1,6 @@
 package com.codeshelf.manager;
 
 import java.nio.charset.Charset;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -9,6 +8,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import lombok.Setter;
 
@@ -16,13 +16,14 @@ import org.hibernate.Criteria;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.criterion.Restrictions;
-import org.hibernate.tool.hbm2ddl.SchemaExport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.UserType;
+import com.codeshelf.platform.persistence.DatabaseCredentials;
 import com.codeshelf.platform.persistence.DatabaseUtils;
+import com.codeshelf.platform.persistence.DatabaseUtils.SQLSyntax;
 import com.codeshelf.platform.persistence.PersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.security.AuthProviderService;
@@ -41,12 +42,12 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 
 	private static final Logger					LOGGER					= LoggerFactory.getLogger(TenantManagerService.class);
 	public static final String					DEFAULT_SHARD_NAME		= "default";
-	public static final String					DEFAULT_TENANT_NAME		= "default";
+	public static final String					INITIAL_TENANT_NAME		= "default";
 	private static final String					DEFAULT_APPUSER_PASS	= "testme";
 	//@Getter
 	//int defaultShardId = -1;
 
-	private Tenant								defaultTenant			= null;
+	private Tenant								initialTenant			= null;
 
 	@Setter
 	ShutdownCleanupReq							shutdownCleanupRequest	= ShutdownCleanupReq.NONE;
@@ -141,13 +142,13 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	}
 
 	private Tenant initDefaultTenant(Session session, Shard shard) {
-		Tenant tenant = this.getTenantByName(DEFAULT_TENANT_NAME);
+		Tenant tenant = this.getTenantByName(INITIAL_TENANT_NAME);
 		if (tenant == null) {
 			String dbSchemaName = System.getProperty("tenant.default.schema");
 			String dbUsername = System.getProperty("tenant.default.username");
 			String dbPassword = System.getProperty("tenant.default.password");
 
-			tenant = shard.createTenant(DEFAULT_TENANT_NAME, dbSchemaName, dbUsername, dbPassword);
+			tenant = shard.createTenant(INITIAL_TENANT_NAME, dbSchemaName, dbUsername, dbPassword);
 		}
 		return tenant;
 	}
@@ -242,9 +243,9 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 
 	@Override
 	public void resetTenant(Tenant tenant) {
+		LOGGER.info("Resetting schema and users");
 		eraseAllTenantData(tenant);
 
-		LOGGER.warn("Resetting schema and users for " + tenant.toString());
 		try {
 			Session session = managerPersistenceService.getSessionWithTransaction();
 
@@ -274,25 +275,19 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	}
 
 	private void eraseAllTenantData(Tenant tenant) {
-		String sql = "SET REFERENTIAL_INTEGRITY FALSE;";
-		for (String tableName : getTableNames(tenant)) {
-			sql += "TRUNCATE TABLE " + tenant.getSchemaName() + "." + tableName + ";";
-		}
-		sql += "SET REFERENTIAL_INTEGRITY TRUE";
-		try {
-			DatabaseUtils.executeSQL(tenant,sql);
-		} catch (SQLException e) {
-			LOGGER.error("Truncate of tenant tables failed, falling back on SchemaExport", e);
-			// reset schema old way, hbm2ddl
-			Connection conn;
-			try {
-				conn = DatabaseUtils.getConnection(tenant);
-			} catch (SQLException e2) {
-				LOGGER.error("Failed to get connection to tenant schema, cannot continue.",e2);
-				throw new RuntimeException(e2);
+		if(!DatabaseUtils.getSQLSyntax(tenant).equals(SQLSyntax.H2_MEMORY)) {
+			String sql = "SET REFERENTIAL_INTEGRITY FALSE;";
+			for (String tableName : getTableNames(tenant)) {
+				sql += "TRUNCATE TABLE " + tenant.getSchemaName() + "." + tableName + ";";
 			}
-			SchemaExport se = new SchemaExport(TenantPersistenceService.getInstance().getHibernateConfiguration(),conn);
-			se.create(false, true);
+			sql += "SET REFERENTIAL_INTEGRITY TRUE";
+			try {
+				DatabaseUtils.executeSQL(tenant,sql);
+			} catch (SQLException e) {
+				LOGGER.error("Truncate of tenant tables failed, falling back on SchemaExport", e);
+				// reset schema old way, hbm2ddl
+				DatabaseUtils.Hbm2DdlSchemaExport(TenantPersistenceService.getInstance().getHibernateConfiguration(),tenant);
+			}
 		}
 	}
 
@@ -377,7 +372,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 				}
 			}
 		} finally {
-			managerPersistenceService.commitTransaction();
+			managerPersistenceService.rollbackTransaction();
 		}
 		return userList;
 	}
@@ -509,9 +504,14 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	}
 
 	@Override
-	public Tenant createTenant(String name, String shardName, String dbUsername) {
-		// use username as schemaname when creating tenant
-		String schemaName = dbUsername;
+	public Tenant createTenant(String name, String schemaName) {
+		return createTenant(name,schemaName,this.getDefaultShard().getName());
+	}
+
+	@Override
+	public Tenant createTenant(String name, String schemaName, String shardName) {
+		// use schemaname as username when creating tenant
+		String dbUsername = schemaName;
 
 		Tenant result = null;
 
@@ -519,7 +519,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		if (shard == null) {
 			LOGGER.error("failed to create tenant because couldn't find shard {}", shardName);
 		} else {
-			result = shard.createTenant(name, schemaName, dbUsername, this.getDefaultTenant().getPassword());
+			result = shard.createTenant(name, schemaName, dbUsername, UUID.randomUUID().toString());
 		}
 		return result;
 	}
@@ -544,16 +544,16 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	}
 
 	@Override
-	public Tenant getDefaultTenant() {
-		if (this.defaultTenant == null)
-			this.defaultTenant = getTenantByName(TenantManagerService.DEFAULT_TENANT_NAME);
-		return this.defaultTenant;
+	public Tenant getInitialTenant() {
+		if (this.initialTenant == null)
+			this.initialTenant = getTenantByName(TenantManagerService.INITIAL_TENANT_NAME);
+		return this.initialTenant;
 	}
 
 	private void deleteDefaultOrdersWis() {
-		if (defaultTenant != null) {
+		if (initialTenant != null) {
 			try {
-				Tenant tenant = defaultTenant;
+				Tenant tenant = initialTenant;
 				String schemaName = tenant.getSchemaName();
 				LOGGER.warn("Deleting all orders and work instructions from schema " + schemaName);
 				DatabaseUtils.executeSQL(tenant,"UPDATE " + schemaName + ".order_header SET container_use_persistentid=null");
@@ -571,9 +571,9 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	}
 
 	private void deleteDefaultOrdersWisInventory() {
-		if (defaultTenant != null) {
+		if (initialTenant != null) {
 			try {
-				Tenant tenant = defaultTenant;
+				Tenant tenant = initialTenant;
 				String schemaName = tenant.getSchemaName();
 				this.deleteDefaultOrdersWis();
 				LOGGER.warn("Deleting itemMasters and gtin maps ");
@@ -587,19 +587,33 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	}
 
 	private void dropDefaultSchema() {
-		if (defaultTenant != null) {
-			dropSchema(defaultTenant);
+		if (initialTenant != null) {
+			dropSchema(initialTenant.getSchemaName(), 
+				initialTenant);
 		}
 	}
 
-	private void dropSchema(Tenant tenant) {
+	private void dropSchema(String schemaName, DatabaseCredentials cred) {
+		LOGGER.debug("Deleting tenant schema " + schemaName);
 		try {
-			String schemaName = tenant.getSchemaName();
-			LOGGER.warn("Deleting tenant schema " + schemaName);
-			DatabaseUtils.executeSQL(tenant,"DROP SCHEMA " + schemaName
-					+ ((DatabaseUtils.getSQLSyntax(tenant) == DatabaseUtils.SQLSyntax.H2) ? "" : " CASCADE"));
+			DatabaseUtils.executeSQL(cred,"DROP SCHEMA " + schemaName
+					+ ((DatabaseUtils.getSQLSyntax(cred) == DatabaseUtils.SQLSyntax.H2_MEMORY) ? "" : " CASCADE"));
 		} catch (SQLException e) {
-			LOGGER.error("Caught SQL exception trying to do database cleanup", e);
+			LOGGER.error("Caught SQL exception trying to remove schema", e);
+		}
+	}
+
+	private void dropSchemaUser(String username, DatabaseCredentials superuser) {
+		LOGGER.debug("Deleting role " + username);
+		try {
+			if(DatabaseUtils.getSQLSyntax(superuser) == DatabaseUtils.SQLSyntax.POSTGRES) {
+				DatabaseUtils.executeSQL(superuser,"DROP OWNED BY " + username);
+				DatabaseUtils.executeSQL(superuser,"DROP ROLE " + username);
+			} else if(DatabaseUtils.getSQLSyntax(superuser) == DatabaseUtils.SQLSyntax.H2_MEMORY) {
+				DatabaseUtils.executeSQL(superuser,"DROP USER " + username);
+			}
+		} catch (SQLException e) {
+			LOGGER.error("Caught SQL exception trying to remove schema", e);
 		}
 	}
 
@@ -677,13 +691,13 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 
 	@Override
 	public void deleteTenant(Tenant tenant) {
-		if (tenant.equals(this.getDefaultTenant())) {
+		if (tenant.equals(this.getInitialTenant())) {
 			throw new UnsupportedOperationException("cannot destroy default tenant");
 		}
-		// delete all users for this tenant, then drop its schema, then delete it
+		// delete all users for this tenant, then delete it, then drop its schema
 		Session session = managerPersistenceService.getSessionWithTransaction();
 		try {
-			LOGGER.warn("DESTROYING tenant {} including users and schema", tenant);
+			LOGGER.info("DELETING tenant {} including users and schema and schema-user", tenant.getSchemaName());
 			tenant = (Tenant) session.load(Tenant.class, tenant.getId());
 			for (User user : tenant.getUsers()) {
 				user = (User) session.load(User.class, user.getId());
@@ -699,7 +713,8 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 			session.delete(tenant);
 			session.save(shard);
 
-			this.dropSchema(tenant);
+			this.dropSchema(tenant.getSchemaName(),shard);
+			this.dropSchemaUser(tenant.getUsername(),shard);
 			tenant = null;
 		} catch(Exception e) {
 			LOGGER.error("unexpected exception deleting tenant",e);

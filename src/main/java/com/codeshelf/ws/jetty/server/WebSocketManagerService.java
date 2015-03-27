@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
@@ -138,17 +139,18 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 		return this.activeConnections.get(sessionId);
 	}
 	
-	private WebSocketConnection getWebSocketConnectionForUser(User user) {
+	private List<WebSocketConnection> getWebSocketConnectionForUser(User user) {
+		List<WebSocketConnection> result = new ArrayList<WebSocketConnection>();
 		if(this.state() != State.RUNNING) {
 			LOGGER.warn("getSession(User) called while service state is {}",this.state().toString());
 			return null; // called while shutting down or resetting - this should only happen in tests
 		}
 		for (WebSocketConnection session : this.getWebSocketConnections()) {
-			if(session.getUser() != null && session.getUser().equals(user)) {
-				return session;
+			if(session.getCurrentUser() != null && session.getCurrentUser().equals(user)) {
+				result.add(session);
 			}
 		}
-		return null;
+		return result;
 	}
 	
 	public final Collection<WebSocketConnection> getWebSocketConnections() {
@@ -214,24 +216,26 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 		}
 	}
 
+	// returns how many distinct users the message was sent to, not how many sessions
 	public int sendMessage(Set<User> users, MessageABC message) {
 		List<User> sent = new ArrayList<User>();
 		for (User user : users) {
-			if (sendMessage(user, message)) {
+			if (sendMessage(user, message)>0) {
 				sent.add(user);
 			}
 		} 
 		return sent.size();
 	}
 
-	private boolean sendMessage(User user, MessageABC message) {
-		WebSocketConnection session = getWebSocketConnectionForUser(user);
-		if (session != null) {
-			session.sendMessage(message);
-			return true;
-		} else {
-			return false;
+	// returns how many sessions the message was sent to
+	private int sendMessage(User user, MessageABC message) {
+		List<WebSocketConnection> sessions = getWebSocketConnectionForUser(user);
+		int sent=0;
+		for(WebSocketConnection session : sessions) {
+			if(session.sendMessage(message))
+				sent++;
 		}
+		return sent;
 	}
 
 	private void updateWebSocketConnectionState(WebSocketConnection wsConnection) {
@@ -241,9 +245,9 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 			if (timeSinceLastSent>keepAliveInterval) {
 				if (wsConnection.getLastState()==WebSocketConnection.State.INACTIVE) {
 					// don't send keep-alives on inactive sessions
-					LOGGER.warn("WS connection is INACTIVE, not sending keepalives - ",wsConnection.getSessionId());
+					LOGGER.warn("WS connection {} is INACTIVE, not sending keepalives",wsConnection.getSessionId());
 				} else {
-					LOGGER.debug("Sending keep-alive on WS connection "+wsConnection.getSessionId());
+					LOGGER.debug("Sending keep-alive on WS connection {} ",wsConnection.getSessionId());
 					try {
 						wsConnection.sendMessage(new KeepAlive());
 					} catch (Exception e) {
@@ -254,15 +258,17 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 		} // else suppressing keepalives
 
 		// regardless of keepalive setting, monitor session activity state
-		WebSocketConnection.State newSessionState = determineConnectionState(wsConnection);
-		if(newSessionState != wsConnection.getLastState()) {
-			LOGGER.info("WS connection state on "+wsConnection.getSessionId()+" changed from "+wsConnection.getLastState().toString()+" to "+newSessionState.toString());
-			wsConnection.setLastState(newSessionState);
-			
-			if(killIdle && newSessionState == WebSocketConnection.State.INACTIVE) {
-				// kill idle session on state change, if configured to do so
-				LOGGER.warn("WS connection timed out with "+wsConnection.getSessionId()+".  Closing connection.");
-				wsConnection.disconnect(new CloseReason(CloseCodes.GOING_AWAY, "Timeout"));
+		if(wsConnection.getSessionId() != null ) {
+			WebSocketConnection.State newSessionState = determineConnectionState(wsConnection);
+			if(newSessionState != wsConnection.getLastState()) {
+				LOGGER.info("WS connection state on "+wsConnection.getSessionId()+" changed from "+wsConnection.getLastState().toString()+" to "+newSessionState.toString());
+				wsConnection.setLastState(newSessionState);
+				
+				if(killIdle && newSessionState == WebSocketConnection.State.INACTIVE) {
+					// kill idle session on state change, if configured to do so
+					LOGGER.warn("WS connection timed out with "+wsConnection.getSessionId()+".  Closing connection.");
+					wsConnection.disconnect(new CloseReason(CloseCodes.GOING_AWAY, "Timeout"));
+				}
 			}
 		}
 
@@ -344,10 +350,13 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 				// check status, send keepalive etc on all open connections
 				Collection<WebSocketConnection> connections = this.getWebSocketConnections();
 				for (WebSocketConnection connection : connections) {
-					User contextUser = connection.getUser();
-					if(contextUser != null) {
-				    	CodeshelfSecurityManager.setContext(contextUser,connection.getTenant());
-					} // might not be logged in yet, we will still ping
+					User contextUser = connection.getCurrentUser();
+					Tenant contextTenant = connection.getCurrentTenant();
+					if(contextUser != null && contextTenant != null) {
+						// the security manager requires only a tenant - but we require both for websockets
+				    	CodeshelfSecurityManager.setContext(contextUser,contextTenant);
+					} 
+					// might not be logged in yet, we will still ping
 					try {
 						// send ping periodically to measure latency
 						if (connection.isSiteController() && System.currentTimeMillis()-connection.getLastPingSent()>pingInterval) {
@@ -361,7 +370,7 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 						}
 						updateWebSocketConnectionState(connection);
 					} finally {
-						if(contextUser != null) 
+						if(contextUser != null || contextTenant != null) 
 							CodeshelfSecurityManager.removeContext();
 					}
 					// check if keep alive needs to be sent

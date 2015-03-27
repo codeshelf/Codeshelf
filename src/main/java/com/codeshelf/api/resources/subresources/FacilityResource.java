@@ -71,8 +71,7 @@ public class FacilityResource {
 		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		try {
 			Session session = persistenceService.getSession();
-			return BaseResponse.buildResponse(this.orderService.orderDetailsNoLocation(tenant, session, mUUIDParam.getUUID()));
-		} catch (Exception e) {
+			return BaseResponse.buildResponse(this.orderService.orderDetailsNoLocation(tenant, session, facility.getPersistentId()));		} catch (Exception e) {
 			ErrorResponse errors = new ErrorResponse();
 			errors.processException(e);
 			return errors.buildResponse();
@@ -110,7 +109,7 @@ public class FacilityResource {
 	@Path("/productivity")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getProductivitySummary() throws Exception {
-		ProductivitySummaryList summary = orderService.getProductivitySummary(mUUIDParam.getUUID(), false);
+		ProductivitySummaryList summary = orderService.getProductivitySummary(facility.getPersistentId(), false);
 		return BaseResponse.buildResponse(summary);
 	}
 

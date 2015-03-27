@@ -115,13 +115,12 @@ public class Shard implements DatabaseCredentials {
 	private boolean createSchemaAndUser(Tenant newTenant) {
 		boolean result = false;
 		try {
-			if (DatabaseUtils.getSQLSyntax(this) == DatabaseUtils.SQLSyntax.H2) {
+			if (DatabaseUtils.getSQLSyntax(this) == DatabaseUtils.SQLSyntax.H2_MEMORY) {
 				// use H2 syntax
 				DatabaseUtils.executeSQL(this,"CREATE SCHEMA " + newTenant.getSchemaName());
 				DatabaseUtils.executeSQL(this,"CREATE USER " + newTenant.getUsername() + " PASSWORD '" + newTenant.getPassword() + "'");
 				DatabaseUtils.executeSQL(this,"ALTER USER " + newTenant.getUsername() + " ADMIN TRUE");
-			} else {
-				// assuming postgres syntax
+			} else if (DatabaseUtils.getSQLSyntax(this) == DatabaseUtils.SQLSyntax.POSTGRES) {
 				DatabaseUtils.executeSQL(this,"CREATE SCHEMA IF NOT EXISTS " + newTenant.getSchemaName());
 				try {
 					DatabaseUtils.executeSQL(this,"CREATE USER " + newTenant.getUsername() + " PASSWORD '" + newTenant.getPassword() + "'");
@@ -134,6 +133,8 @@ public class Shard implements DatabaseCredentials {
 					}
 				}
 				DatabaseUtils.executeSQL(this,"GRANT ALL ON SCHEMA " + newTenant.getSchemaName() + " TO " + newTenant.getUsername());
+			} else {
+				throw new UnsupportedOperationException("unsupported database type for new tenant "+newTenant.getId()+" "+newTenant.getUrl());
 			}
 			result = true;
 		} catch (SQLException e) {

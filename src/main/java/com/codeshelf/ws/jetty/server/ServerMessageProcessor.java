@@ -2,11 +2,13 @@ package com.codeshelf.ws.jetty.server;
 
 import org.apache.commons.beanutils.ConvertUtilsBean;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.hibernate.HibernateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsGroup;
@@ -136,20 +138,19 @@ public class ServerMessageProcessor implements IMessageProcessor {
         // process message...
     	final Timer.Context timerContext = requestProcessingTimer.time();
     	// TODO: get rid of message type handling using if statements and type casts...
-		User user = csSession.getUser();
-		if(user == null) {
-			if (request instanceof LoginRequest) {
-				LoginRequest loginRequest = (LoginRequest) request;
-				command = new LoginCommand(csSession, loginRequest, getObjectChangeBroadcaster(), this.sessionManager);
-				loginCounter.inc();
-				applicationRequestCounter.inc();
-			}
-			else if (request instanceof EchoRequest) {
-				command = new EchoCommand(csSession,(EchoRequest) request);
-				echoCounter.inc();
-			} else {
-				LOGGER.error("invalid request {} with no user logged in",request.getClass().getSimpleName());
-			}
+		User user = csSession.getCurrentUser();
+		Tenant tenant = csSession.getCurrentTenant();
+		if (user == null && tenant != null) {
+			throw new IllegalArgumentException("got request with tenant "+tenant.getId()+" but no user!");
+		}
+		if(user == null && request instanceof LoginRequest) {
+			LoginRequest loginRequest = (LoginRequest) request;
+			command = new LoginCommand(csSession, loginRequest, getObjectChangeBroadcaster(), this.sessionManager);
+			loginCounter.inc();
+			applicationRequestCounter.inc();
+		} else if (request instanceof EchoRequest) {
+			command = new EchoCommand(csSession,(EchoRequest) request);
+			echoCounter.inc();		
 		} else if (request instanceof CompleteWorkInstructionRequest) {
 			command = new CompleteWorkInstructionCommand(csSession,(CompleteWorkInstructionRequest) request, serviceFactory.getServiceInstance(WorkService.class));
 			completeWiCounter.inc();
@@ -223,7 +224,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			LOGGER.error("invalid message {} for user {}",request.getClass().getSimpleName(),user.getUsername());
 		}
 		try {
-			if(user != null) TenantPersistenceService.getInstance().beginTransaction();
+			//if(user != null) TenantPersistenceService.getInstance().beginTransaction();
  
 			// check if matching command was found
 			if (command==null) {
@@ -245,12 +246,12 @@ public class ServerMessageProcessor implements IMessageProcessor {
 					missingResponseCounter.inc();
 				}
 			}
-			if(user != null) TenantPersistenceService.getInstance().commitTransaction();
+			//if(user != null) TenantPersistenceService.getInstance().commitTransaction();
     	} catch (Exception e) {
-			if(user != null) TenantPersistenceService.getInstance().rollbackTransaction();
+			//if(user != null) TenantPersistenceService.getInstance().rollbackTransaction();
 			String message = ExceptionUtils.getMessage(e);
-    		if(e instanceof NullPointerException) {
-    			LOGGER.error("NPE in ServerMessageProcessor",e);
+    		if(e instanceof NullPointerException || e instanceof HibernateException) {
+    			LOGGER.error("Unexpected exception in ServerMessageProcessor",e);
     		} else {
     			LOGGER.warn("Error processing {} request: {}",request.getClass().getSimpleName(),message);
     		}

@@ -14,7 +14,6 @@ import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.domain.IDomainObject;
-import com.codeshelf.platform.persistence.DatabaseCredentials;
 import com.codeshelf.platform.persistence.EventListenerIntegrator;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -183,11 +182,6 @@ public class MockTenantPersistenceService implements ITenantPersistenceService {
 	@Override
 	public EventListenerIntegrator generateEventListenerIntegrator() {
 		return null;
-	}
-
-	@Override
-	public void applyLiquibaseSchemaUpdates(DatabaseCredentials cred,DatabaseCredentials cred2) {
-
 	}
 
 	@Override

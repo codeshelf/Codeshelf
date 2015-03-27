@@ -170,6 +170,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 	private WebSocketConnection	mockWsConnection;
 	
 	private Integer												port;
+	private Tenant	defaultMockTenant = Mockito.mock(Tenant.class);
+	private User	defaultMockUser = Mockito.mock(User.class);
 
 	public static Injector setupInjector() {
 		Injector injector = Guice.createInjector(new AbstractModule() {
@@ -472,7 +474,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 			
 			// create default tenant schema
 			// TODO: use Liquibase instead?
-			Tenant tenant = realTenantManagerService.getDefaultTenant();
+			Tenant tenant = getDefaultTenant();
 			Connection conn;
 			try {
 				conn = DatabaseUtils.getConnection(tenant);
@@ -485,15 +487,15 @@ public abstract class FrameworkTest implements IntegrationTest {
 			
 		} else {
 			// not 1st persistence run. need to reset
-			Tenant realDefaultTenant = realTenantManagerService.getDefaultTenant();
+			Tenant realDefaultTenant = realTenantManagerService.getInitialTenant();
 			// destroy any non-default tenants we created
 			List<Tenant> tenants = realTenantManagerService.getTenants();
 			for(Tenant tenant : tenants) {
 				if(!tenant.equals(realDefaultTenant)) {
 					realTenantManagerService.deleteTenant(tenant);
 				}
+				realTenantPersistenceService.forgetInitialActions(tenant.getTenantIdentifier());
 			}
-			realTenantPersistenceService.forgetInitialActions(realDefaultTenant.getSchemaName());
 			realTenantManagerService.resetTenant(realDefaultTenant);
 			List<UserRole> roles = realTenantManagerService.getRoles();
 			for(UserRole role : roles) {
@@ -505,7 +507,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 			}
 		}
 
-		defaultTenantId = realTenantManagerService.getDefaultTenant().getSchemaName();
+		defaultTenantId = getDefaultTenant().getTenantIdentifier();
 }
 
 	private void startServer() {
@@ -595,6 +597,12 @@ public abstract class FrameworkTest implements IntegrationTest {
 	}
 
 	protected final Facility generateTestFacility() {
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+		Tenant defaultTenant = this.getDefaultTenant();
+		if(!tenant.equals(defaultTenant))
+			Assert.fail("tried to call generateTestFacility out of default context"); 
+			// maybe support this in the future?
+		
 		String useFacilityId;
 		if (this.facilitiesGenerated > 0) {
 			useFacilityId = facilityId + Integer.toString(facilitiesGenerated);
@@ -657,13 +665,13 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 	public Tenant getDefaultTenant() {
 		if(realTenantManagerService.isRunning()) {
-			return realTenantManagerService.getDefaultTenant();
+			return realTenantManagerService.getInitialTenant();
 		} // else 
-		return Mockito.mock(Tenant.class);
+		return defaultMockTenant;
 	}
 
 	public User getMockDefaultUser() {
-		User user = Mockito.mock(User.class);
+		User user = defaultMockUser ;
 		Mockito.when(user.getTenant()).thenReturn(getDefaultTenant());
 		return user;
 	}
@@ -672,7 +680,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 		User user = setDefaultUserAndTenant();
 
 		this.mockWsConnection = Mockito.mock(WebSocketConnection.class);
-		Mockito.when(mockWsConnection.getUser()).thenReturn(user);
+		Mockito.when(mockWsConnection.getCurrentUser()).thenReturn(user);
+		Mockito.when(mockWsConnection.getCurrentTenant()).thenReturn(this.getDefaultTenant());
 
 		// TODO: more advanced user connection setups for tests (real/mock, roles etc)                     
 	}

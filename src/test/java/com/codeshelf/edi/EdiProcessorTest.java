@@ -29,6 +29,7 @@ import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.IEdiService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.validation.BatchResult;
 import com.google.common.util.concurrent.Service;
@@ -351,6 +352,8 @@ public class EdiProcessorTest extends MockDaoTest {
 		this.ephemeralServices = new ArrayList<Service>();
 		ephemeralServices.add(ediProcessorService);
 		ephemeralServices.add(metrics);
+		CodeshelfSecurityManager.removeContext();
+
 		this.initializeEphemeralServiceManager();
 
 		try {

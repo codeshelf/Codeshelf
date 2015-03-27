@@ -1,5 +1,6 @@
 package com.codeshelf.ws.jetty.server;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -8,11 +9,9 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import javax.websocket.CloseReason;
 import javax.websocket.CloseReason.CloseCodes;
@@ -22,6 +21,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import org.apache.mina.util.ConcurrentHashSet;
+import org.eclipse.jetty.websocket.api.WebSocketException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,10 +32,13 @@ import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.dao.IDaoListener;
+import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.UserType;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.google.common.util.concurrent.Service;
 
 public class WebSocketConnection implements IDaoListener {
 	public enum State {
@@ -52,10 +55,13 @@ public class WebSocketConnection implements IDaoListener {
 	String										sessionId;
 
 	@Getter
-	User										user;
+	User										currentUser;
 
 	@Getter
-	Tenant										tenant;
+	Tenant										currentTenant;
+
+	@Getter
+	String										lastTenantIdentifier; // even after disconnection
 
 	@Getter
 	Date										sessionStart				= new Date();
@@ -88,77 +94,101 @@ public class WebSocketConnection implements IDaoListener {
 	private ConcurrentMap<String, ObjectEventListener>	eventListeners				= new ConcurrentHashMap<String, ObjectEventListener>();
 
 	private ExecutorService						executorService;
-	Set<Future<?>> pendingFutures = new ConcurrentHashSet<Future<?>>();
+	
+	// track individual tasks
+	Set<Future<?>> 								pendingFutures = new ConcurrentHashSet<Future<?>>();
+	private static final int 					NUM_FUTURES_CLEANUP_THRESHOLD = 5;
 
 	public WebSocketConnection(Session session, ExecutorService sharedExecutor) {
 		this.wsSession = session;
 		this.executorService = sharedExecutor;
 	}
 
-	public void sendMessage(final MessageABC message) {
-    	//CodeshelfSecurityManager.setCurrentUser(this.getUser());
+	public String getCurrentTenantIdentifier() {
+		if(this.currentTenant == null)
+			return null;
+		return this.currentTenant.getTenantIdentifier();
+	}	
+
+	public boolean sendMessage(final MessageABC message) {
+		boolean sent = false;
 		try {
 			if (this.wsSession != null) {
 				this.wsSession.getBasicRemote().sendObject(message);
 				this.messageSent();
+				sent = true;
 			}
+		} catch (IOException e) {
+			LOGGER.warn("Failed to send "+message.getClass().getSimpleName()+" message on session {}: {}", this.getSessionId(), e.getMessage());
+		} catch (WebSocketException e) {
+			LOGGER.warn("Failed to send "+message.getClass().getSimpleName()+" message on session {}: {}", this.getSessionId(), e.getMessage());
 		} catch (Exception e) {
-			LOGGER.warn("Failed to send message: {}", e.getMessage());
-		} finally {
-	    	//CodeshelfSecurityManager.removeCurrentUser();
+			LOGGER.error("Unexpected exception encoding/sending "+message.getClass().getSimpleName()+" message",e);
 		}
+		return sent;
 	}
 
 	public boolean isAuthenticated() {
-		return (user != null);
+		return (currentUser != null);
 	}
 
 	public boolean isSiteController() {
 		if (!this.isAuthenticated())
 			return false;
-		return this.user.getType().equals(UserType.SITECON);
+		return this.currentUser.getType().equals(UserType.SITECON);
 	}
 
 	public boolean isAppUser() {
 		if (!this.isAuthenticated())
 			return false;
-		return this.user.getType().equals(UserType.APPUSER);
+		return this.currentUser.getType().equals(UserType.APPUSER);
 	}
 
 	@Override
 	public void objectAdded(final Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
 		if(executorService.isShutdown()) {
-			LOGGER.warn("objectAdded called after executorService shutdown");
+			LOGGER.warn("objectAdded called after executorService shutdown: {} {} {}",domainClass.getSimpleName(),domainPersistentId,this.getSessionId());
 			return;
 		}
-		this.cleanupFutures();
-		Future<?> future = this.executorService.submit(new Runnable() {
+		this.cleanupFuturesList();
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+		if(tenant == null) {
+			LOGGER.error("null tenant context trying to notify on add object {} {}",domainClass.getSimpleName(),domainPersistentId);
+		} else if(!tenant.equals(this.currentTenant)) {
+			LOGGER.error("inconsistent tenant context {} (expected {}) trying to notify on add object {} {}",tenant,this.currentTenant,domainClass.getSimpleName(),domainPersistentId);
+		} else {
+			Future<?> future = this.executorService.submit(new Runnable() {
 
-			@Override
-			public void run() {
-				try {
-					TenantPersistenceService.getInstance().beginTransaction();
-					List<MessageABC> responses = new ArrayList<MessageABC>();
-					synchronized(eventListeners) {
-						Collection<ObjectEventListener> listeners = eventListeners.values();
-						for (ObjectEventListener listener : listeners) {
-							MessageABC response = listener.processObjectAdd(domainClass, domainPersistentId);
-							if (response != null) {
-								responses.add(response);
+				@Override
+				public void run() {
+					CodeshelfSecurityManager.removeContextIfPresent();
+					CodeshelfSecurityManager.setContext(CodeshelfSecurityManager.getUserContextSYSTEM(), currentTenant);
+					try {
+						TenantPersistenceService.getInstance().beginTransaction();
+						List<MessageABC> responses = new ArrayList<MessageABC>();
+						synchronized(eventListeners) {
+							Collection<ObjectEventListener> listeners = eventListeners.values();
+							for (ObjectEventListener listener : listeners) {
+								MessageABC response = listener.processObjectAdd(domainClass, domainPersistentId);
+								if (response != null) {
+									responses.add(response);
+								}
 							}
 						}
+						for(MessageABC response : responses) {
+							sendMessage(response);
+						}
+						TenantPersistenceService.getInstance().commitTransaction();
+					} catch (Exception e) {
+						TenantPersistenceService.getInstance().rollbackTransaction();
+						LOGGER.error("Unable to handle object add messages", e);
+					} finally {
+						CodeshelfSecurityManager.removeContext();
 					}
-					for(MessageABC response : responses) {
-						sendMessage(response);
-					}
-					TenantPersistenceService.getInstance().commitTransaction();
-				} catch (Exception e) {
-					TenantPersistenceService.getInstance().rollbackTransaction();
-					LOGGER.error("Unable to handle object add messages", e);
 				}
-			}
-		});
-		this.pendingFutures.add(future);
+			});
+			this.pendingFutures.add(future);
+		}
 	}
 
 	@Override
@@ -170,36 +200,46 @@ public class WebSocketConnection implements IDaoListener {
 			LOGGER.warn("objectUpdated called after executorService shutdown");
 			return;
 		}
-		this.cleanupFutures();
-		Future<?> future = this.executorService.submit(new Runnable() {
-
-			@Override
-			public void run() {
-				try {
-					TenantPersistenceService.getInstance().beginTransaction();
-					List<MessageABC> responses = new ArrayList<MessageABC>();
-					synchronized(eventListeners) {
-						Collection<ObjectEventListener> listeners = eventListeners.values();
-						for (ObjectEventListener listener : listeners) {
-							MessageABC response = listener.processObjectUpdate(domainClass, domainPersistentId, inChangedProperties);
-							if (response != null) {
-								responses.add(response);
+		this.cleanupFuturesList();
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+		if(tenant == null) {
+			LOGGER.error("null tenant context trying to notify on update object {} {}",domainClass.getSimpleName(),domainPersistentId);
+		} else if(!tenant.equals(this.currentTenant)) {
+			LOGGER.error("inconsistent tenant context {} (expected {}) trying to notify on update object {} {}",tenant,this.currentTenant,domainClass.getSimpleName(),domainPersistentId);
+		} else {
+			Future<?> future = this.executorService.submit(new Runnable() {
+	
+				@Override
+				public void run() {
+					CodeshelfSecurityManager.removeContextIfPresent();
+					CodeshelfSecurityManager.setContext(CodeshelfSecurityManager.getUserContextSYSTEM(), currentTenant);
+					try {
+						TenantPersistenceService.getInstance().beginTransaction();
+						List<MessageABC> responses = new ArrayList<MessageABC>();
+						synchronized(eventListeners) {
+							Collection<ObjectEventListener> listeners = eventListeners.values();
+							for (ObjectEventListener listener : listeners) {
+								MessageABC response = listener.processObjectUpdate(domainClass, domainPersistentId, inChangedProperties);
+								if (response != null) {
+									responses.add(response);
+								}
+	
 							}
-
 						}
+						for(MessageABC response : responses) {
+							sendMessage(response);						
+						}
+						TenantPersistenceService.getInstance().commitTransaction();
+					} catch (Exception e) {
+						TenantPersistenceService.getInstance().rollbackTransaction();
+						LOGGER.error("Unable to handle object update", e);
+					} finally {
+						CodeshelfSecurityManager.removeContext();
 					}
-					for(MessageABC response : responses) {
-						sendMessage(response);						
-					}
-					TenantPersistenceService.getInstance().commitTransaction();
-				} catch (Exception e) {
-					TenantPersistenceService.getInstance().rollbackTransaction();
-					LOGGER.error("Unable to handle object update", e);
 				}
-			}
-		});
-		this.pendingFutures.add(future);
-
+			});
+			this.pendingFutures.add(future);
+		}
 	}
 
 	@Override
@@ -209,36 +249,45 @@ public class WebSocketConnection implements IDaoListener {
 			LOGGER.warn("objectDeleted called after executorService shutdown");
 			return;
 		}
-		this.cleanupFutures();
-		Future<?> future = this.executorService.submit(new Runnable() {
-
-			@Override
-			public void run() {
-				try {
-					TenantPersistenceService.getInstance().beginTransaction();
-					List<MessageABC> responses = new ArrayList<MessageABC>();
-					synchronized(eventListeners) {
-						Collection<ObjectEventListener> listeners = eventListeners.values();
-						for (ObjectEventListener listener : listeners) {
-							MessageABC response = listener.processObjectDelete(domainClass, domainPersistentId, parentClass, parentId);
-							if (response != null) {
-								responses.add(response);
+		this.cleanupFuturesList();
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+		if(tenant == null) {
+			LOGGER.error("null tenant context trying to notify on deleted object {} {}",domainClass.getSimpleName(),domainPersistentId);
+		} else if(!tenant.equals(this.currentTenant)) {
+			LOGGER.error("inconsistent tenant context {} (expected {}) trying to notify on deleted object {} {}",tenant,this.currentTenant,domainClass.getSimpleName(),domainPersistentId);
+		} else {
+			Future<?> future = this.executorService.submit(new Runnable() {
+	
+				@Override
+				public void run() {
+					CodeshelfSecurityManager.removeContextIfPresent();
+					CodeshelfSecurityManager.setContext(CodeshelfSecurityManager.getUserContextSYSTEM(), currentTenant);
+					try {
+						TenantPersistenceService.getInstance().beginTransaction();
+						List<MessageABC> responses = new ArrayList<MessageABC>();
+						synchronized(eventListeners) {
+							Collection<ObjectEventListener> listeners = eventListeners.values();
+							for (ObjectEventListener listener : listeners) {
+								MessageABC response = listener.processObjectDelete(domainClass, domainPersistentId, parentClass, parentId);
+								if (response != null) {
+									responses.add(response);
+								}
 							}
 						}
+						for(MessageABC response : responses) {
+							sendMessage(response);
+						}
+						TenantPersistenceService.getInstance().commitTransaction();
+					} catch (Exception e) {
+						TenantPersistenceService.getInstance().rollbackTransaction();
+						LOGGER.error("Unable to handle object delete", e);
+					} finally {
+						CodeshelfSecurityManager.removeContext();
 					}
-					for(MessageABC response : responses) {
-						sendMessage(response);
-					}
-					TenantPersistenceService.getInstance().commitTransaction();
-				} catch (Exception e) {
-					TenantPersistenceService.getInstance().rollbackTransaction();
-					LOGGER.error("Unable to handle object delete", e);
 				}
-			}
-		});
-		this.pendingFutures.add(future);
-
-
+			});
+			this.pendingFutures.add(future);
+		}
 	}
 
 	public void registerObjectEventListener(ObjectEventListener listener) {
@@ -268,7 +317,10 @@ public class WebSocketConnection implements IDaoListener {
 	}
 
 	public void disconnect(CloseReason reason) {
+
 		/*
+		 * can't do this because the executor is shared and cannot be restarted
+		 * 
 		List<Runnable> executorPendingTasks = this.executorService.shutdownNow();
 		LOGGER.warn("when stopping UserSession executor, tasks were pending: ",executorPendingTasks.toString());
 		try {
@@ -277,13 +329,13 @@ public class WebSocketConnection implements IDaoListener {
 			LOGGER.error("timeout trying to stop UserSession executor");
 		}
 		*/
-		this.waitForFutures();
+		// wait for all listener threads to stop
+		this.cancelFutures();
 
 		this.lastState = State.CLOSED;
-		if (this.user != null)
-			this.user = null;
-		if (this.sessionId != null)
-			this.sessionId = null;
+		this.currentUser = null;
+		this.currentTenant = null;
+		this.sessionId = null;
 		if (this.wsSession != null) {
 			try {
 				this.wsSession.close(reason);
@@ -292,41 +344,44 @@ public class WebSocketConnection implements IDaoListener {
 			}
 			this.wsSession = null;
 		}
-		// don't try to unregister listeners if we are shutting down or no user is attached
-		if(TenantPersistenceService.getMaybeRunningInstance().state().equals(com.google.common.util.concurrent.Service.State.RUNNING) && this.getUser() != null) {
+		// don't try to unregister listeners if service is shutting down, or if there's never been an authenticated user
+		if(TenantPersistenceService.getMaybeRunningInstance().state().equals(Service.State.RUNNING)
+				|| this.lastTenantIdentifier == null) {
 			//TODO these are registered by RegisterListenerCommands. This dependency should be inverted
-			String tenantIdentifier = this.getUser().getTenant().getSchemaName();
-			TenantPersistenceService.getInstance().getEventListenerIntegrator().getChangeBroadcaster().unregisterDAOListener(tenantIdentifier,this);
+			ObjectChangeBroadcaster ocb = TenantPersistenceService.getInstance().getEventListenerIntegrator().getChangeBroadcaster();
+			ocb.unregisterDAOListener(this.lastTenantIdentifier,this);
 		}
 	}
-	
-	private void cleanupFutures() {
-		Future<?>[] futures = new Future<?>[this.pendingFutures.size()];
-		for(Future future : this.pendingFutures.toArray(futures)) {
-			if(future.isDone())
-				pendingFutures.remove(future);
-		}
+
+	private synchronized void cleanupFuturesList() {
+		int numFutures = this.pendingFutures.size();
+		if(numFutures > NUM_FUTURES_CLEANUP_THRESHOLD) {
+			ConcurrentHashSet<Future<?>> remainingFutures = new ConcurrentHashSet<Future<?>>();
+			for(Future<?> future : this.pendingFutures) {
+				if(!future.isDone())
+					remainingFutures.add(future);
+			}
+			this.pendingFutures = remainingFutures;
+		} // else don't bother
 	}
 	
-	private void waitForFutures() {
+	private void cancelFutures() {
 		Future<?>[] futures = new Future<?>[this.pendingFutures.size()];
-		for(Future future : this.pendingFutures.toArray(futures)) {
+		for(Future<?> future : this.pendingFutures.toArray(futures)) {
 			if(!future.isDone()) {
-				try {
-					future.get(10, TimeUnit.SECONDS);
-				} catch (InterruptedException e) {
-				} catch (ExecutionException e) {
-					LOGGER.error("Exception waiting for in-flight futures to return", e);
-				} catch (TimeoutException e) {
-					LOGGER.error("Timeout waiting for in-flight futures to return", e);
-				}
+				future.cancel(true);
 			}
 		}
 	}
 
 	public void authenticated(User user, Tenant tenant) {
-		this.user = user;
-		this.tenant = tenant;
+		if(user == null) 
+			throw new NullPointerException("authenticated user may not be null"); 
+		if(tenant == null) 
+			throw new NullPointerException("authenticated tenant may not be null"); 
+		this.currentUser = user;
+		this.currentTenant = tenant;
+		this.lastTenantIdentifier = tenant.getTenantIdentifier();
 		if (isSiteController()) {
 			pingTimer = MetricsService.getInstance().createTimer(MetricsGroup.WSS, "ping-" + user.getUsername());
 		}

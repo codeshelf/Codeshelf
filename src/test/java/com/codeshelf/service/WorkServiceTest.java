@@ -54,7 +54,6 @@ import com.codeshelf.ws.jetty.protocol.request.ServiceMethodRequest;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ServiceMethodResponse;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.WebSocketConnection;
 import com.google.common.collect.ImmutableList;
 
 public class WorkServiceTest extends ServerTest {

@@ -36,7 +36,7 @@ public class CsMultiTenantConnectionProvider
     
     @Override
 	protected ConnectionProvider getAnyConnectionProvider() {
-    	String defaultSchemaName = TenantManagerService.getInstance().getDefaultTenant().getSchemaName();
+    	String defaultSchemaName = TenantManagerService.getInstance().getInitialTenant().getTenantIdentifier();
 		return selectConnectionProvider(defaultSchemaName);
 	}
 

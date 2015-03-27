@@ -259,7 +259,7 @@ public class UsersResource {
 					if (authProviderService.passwordMeetsRequirements(password)) {
 						Tenant tenant;
 						if(tenantId == null)
-							tenant = manager.getDefaultTenant();
+							tenant = manager.getInitialTenant();
 						else 
 							tenant = manager.getTenant(tenantId);
 						

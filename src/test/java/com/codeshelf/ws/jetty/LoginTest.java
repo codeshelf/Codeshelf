@@ -37,7 +37,7 @@ public class LoginTest extends HibernateTest {
 		
 		// Create a user for the organization.
 		String password = "password";
-		User user = TenantManagerService.getInstance().createUser(tenantManagerService.getDefaultTenant(), "user1@example.com", password, UserType.APPUSER, null);
+		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, UserType.APPUSER, null);
 
 		LoginRequest request = new LoginRequest();
 		request.setUserId(user.getUsername());
@@ -60,7 +60,7 @@ public class LoginTest extends HibernateTest {
 
 		// Create a user for the organization.
 		String password = "password";
-		User user = TenantManagerService.getInstance().createUser(tenantManagerService.getDefaultTenant(), "user1@example.com", password, UserType.APPUSER, null);
+		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, UserType.APPUSER, null);
 		
 		LoginRequest request = new LoginRequest();
 		request.setUserId("user@invalid.com");
@@ -82,7 +82,7 @@ public class LoginTest extends HibernateTest {
 
 		// Create a user for the organization.
 		String password = "password";
-		User user = TenantManagerService.getInstance().createUser(tenantManagerService.getDefaultTenant(), "user1@example.com", password, UserType.APPUSER, null);
+		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, UserType.APPUSER, null);
 		
 		LoginRequest request = new LoginRequest();
 		request.setUserId(user.getUsername());

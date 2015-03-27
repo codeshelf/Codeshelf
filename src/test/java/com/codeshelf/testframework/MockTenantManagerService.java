@@ -112,11 +112,15 @@ public class MockTenantManagerService implements ITenantManagerService {
 		return this.defaultTenant;
 	}
 	@Override
-	public Tenant createTenant(String name, String shardName, String dbUsername) {
+	public Tenant createTenant(String name, String schemaName, String shardName) {
 		return this.defaultTenant;
 	}
 	@Override
-	public Tenant getDefaultTenant() {
+	public Tenant createTenant(String name, String schemaName) {
+		return this.defaultTenant;
+	}
+	@Override
+	public Tenant getInitialTenant() {
 		return this.defaultTenant;
 	}
 	@Override
@@ -241,6 +245,6 @@ public class MockTenantManagerService implements ITenantManagerService {
 	}
 	@Override
 	public Tenant getTenantBySchemaName(String schemaName) {
-		return this.getDefaultTenant();
+		return this.getInitialTenant();
 	}
 }

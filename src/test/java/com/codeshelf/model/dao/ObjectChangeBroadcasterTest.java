@@ -187,6 +187,7 @@ public class ObjectChangeBroadcasterTest extends HibernateTest {
 			objectsDeleted++;
 			LOGGER.debug("Object deleted: "+domainPersistentId);
 		}
+
 	}
 
 }

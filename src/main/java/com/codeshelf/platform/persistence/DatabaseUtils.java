@@ -9,9 +9,16 @@ import liquibase.database.Database;
 import liquibase.exception.DatabaseException;
 import liquibase.integration.commandline.CommandLineUtils;
 
+import org.hibernate.cfg.Configuration;
+import org.hibernate.tool.hbm2ddl.SchemaExport;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class DatabaseUtils {
+	static final private Logger	LOGGER						= LoggerFactory.getLogger(DatabaseUtils.class);
+
 	public enum SQLSyntax {
-		H2,POSTGRES,OTHER;
+		H2_MEMORY,POSTGRES,OTHER;
 	}
 
 	private DatabaseUtils() {}
@@ -20,7 +27,7 @@ public class DatabaseUtils {
 		if(url.startsWith("jdbc:postgresql:")) {
 			return DatabaseUtils.SQLSyntax.POSTGRES;
 		} else if(url.startsWith("jdbc:h2:mem")) {
-			return DatabaseUtils.SQLSyntax.H2;
+			return DatabaseUtils.SQLSyntax.H2_MEMORY;
 		} else {
 			return DatabaseUtils.SQLSyntax.OTHER;
 		}
@@ -49,7 +56,7 @@ public class DatabaseUtils {
 				null,null,
 				null,null);
 		} catch (DatabaseException e1) {
-			PersistenceService.LOGGER.error("Database exception evaluating app database configuration", e1);
+			LOGGER.error("Database exception evaluating app database configuration", e1);
 			return null;
 		} 
 		return appDatabase;
@@ -58,12 +65,23 @@ public class DatabaseUtils {
 	public static void executeSQL(DatabaseCredentials cred, String sql) throws SQLException {
 		Connection conn = getConnection(cred);
 		Statement stmt = conn.createStatement();
-		PersistenceService.LOGGER.trace("Executing explicit SQL: "+sql);
+		LOGGER.trace("Executing explicit SQL: "+sql);
 		stmt.execute(sql);
 		stmt.close();
 		conn.close();
 	}
 
+	public static void Hbm2DdlSchemaExport(Configuration configuration, DatabaseCredentials tenant) {
+		Connection conn;
+		try {
+			conn = getConnection(tenant);
+		} catch (SQLException e2) {
+			LOGGER.error("Failed to get connection for schema export, cannot continue.",e2);
+			throw new RuntimeException(e2);
+		}
+		SchemaExport se = new SchemaExport(configuration,conn);
+		se.create(false, true);
+	}
 	
 	
 }

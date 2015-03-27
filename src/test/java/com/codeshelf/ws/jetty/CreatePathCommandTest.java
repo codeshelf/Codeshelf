@@ -14,7 +14,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 
 import com.codeshelf.filter.Filter;
@@ -117,13 +116,10 @@ public class CreatePathCommandTest extends HibernateTest {
 		request.setMethodArgs(args);
 		
 		ServerMessageProcessor processor = new ServerMessageProcessor(mockServiceFactory, new ConverterProvider().get(), this.webSocketManagerService);
-		this.getTenantPersistenceService().commitTransaction();
 
 		ResponseABC response = processor.handleRequest(this.getMockWsConnection(), request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
 		
-		this.getTenantPersistenceService().beginTransaction();
-		testFacility = Facility.staticGetDao().reload(testFacility);
 		List<Path> pathList = testFacility.getPaths();
 		Path createdPath1 = pathList.get(0);
 		// Why is facility F1? Passed in DOMID above.

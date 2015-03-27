@@ -4,26 +4,19 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.Callable;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.device.AisleDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
-import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.flyweight.command.NetGuid;
-import com.codeshelf.flyweight.controller.INetworkDevice;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
-import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
@@ -32,11 +25,6 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
-import com.codeshelf.service.InventoryService;
-import com.codeshelf.service.LightService;
-import com.codeshelf.service.ServiceFactory;
-import com.codeshelf.testframework.IntegrationTest;
 import com.codeshelf.testframework.ServerTest;
 
 public class CheProcessPutWall extends ServerTest {

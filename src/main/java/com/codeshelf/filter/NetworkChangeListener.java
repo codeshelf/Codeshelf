@@ -81,7 +81,7 @@ public class NetworkChangeListener implements ObjectEventListener {
 		// register network change listener
 		NetworkChangeListener listener = new NetworkChangeListener(network,"network-change-listener");
 		session.registerObjectEventListener(listener);
-		String tenantIdentifier = session.getUser().getTenant().getSchemaName();
+		String tenantIdentifier = session.getCurrentTenantIdentifier();
 		// register DAOs
 		objectChangeBroadcaster.registerDAOListener(tenantIdentifier,session, Che.class);
 		objectChangeBroadcaster.registerDAOListener(tenantIdentifier,session, LedController.class);

@@ -512,7 +512,7 @@ public class CrossBatchImporterTest extends ServerTest {
 		
 		// Make sure we created an order with the container's ID.
 		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", ediProcessTime));
-		Assert.assertNotNull(order);
+		Assert.assertNotNull(order); // got a random failure here on 3/26/15, did not repeat
 		Assert.assertEquals(order.getOrderType(), OrderTypeEnum.CROSS);
 
 		// Make sure there's a container use and that its ID matches the order.

@@ -119,7 +119,7 @@ public class TenantPersistenceService extends PersistenceService implements ITen
 	}
 
 	@Override
-	public void initializeTenant() {
+	public void initializeTenantData() {
 		Transaction t = this.beginTransaction();
 
 		List<Facility> facilities = Facility.staticGetDao().getAll();
@@ -140,7 +140,7 @@ public class TenantPersistenceService extends PersistenceService implements ITen
 
 	@Override
 	public String getCurrentTenantIdentifier() {
-		return CodeshelfSecurityManager.getCurrentTenant().getSchemaName();
+		return CodeshelfSecurityManager.getCurrentTenant().getTenantIdentifier();
 	}
 
 	@Override

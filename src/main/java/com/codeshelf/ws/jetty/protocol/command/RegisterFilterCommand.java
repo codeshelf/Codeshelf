@@ -69,7 +69,7 @@ public class RegisterFilterCommand extends CommandABC {
 			@SuppressWarnings("unchecked")
 			Class<? extends IDomainObject> classObject = (Class<? extends IDomainObject>) Class.forName(objectClassName);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
-				this.objectChangeBroadcaster.registerDAOListener(wsConnection.getUser().getTenant().getSchemaName(), wsConnection, classObject);
+				this.objectChangeBroadcaster.registerDAOListener(wsConnection.getCurrentTenantIdentifier(), wsConnection, classObject);
 
 				ITypedDao<? extends IDomainObject> dao = TenantPersistenceService.getInstance().getDao(classObject);
 				// create listener

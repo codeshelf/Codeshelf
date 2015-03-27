@@ -35,18 +35,17 @@ import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.manager.Tenant;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 
 public abstract class PersistenceService extends AbstractCodeshelfIdleService implements IPersistenceService {
-	static final Logger LOGGER	= LoggerFactory.getLogger(PersistenceService.class);
+	static final private Logger LOGGER	= LoggerFactory.getLogger(PersistenceService.class);
 
 	abstract public EventListenerIntegrator generateEventListenerIntegrator(); // can be null
 	abstract public Configuration getHibernateConfiguration(); // TODO: stop using deprecated Configuration object
 	abstract public String getHibernateConfigurationFilename(); // liquibase uses this filename
 	abstract public String getMasterChangeLogFilename(); // liquibase
 	
-	abstract public void initializeTenant(); // optional startup init
+	abstract public void initializeTenantData(); // optional startup init after schema prepared
 
 	abstract public String getCurrentTenantIdentifier(); // might get from thread context
 	abstract protected DatabaseCredentials getDatabaseCredentials(String tenantIdentifier); // lookup
@@ -83,9 +82,9 @@ public abstract class PersistenceService extends AbstractCodeshelfIdleService im
 				if(!this.initializingTenantIdentifiers.contains(tenantIdentifier)) {
 					this.initializingTenantIdentifiers.add(tenantIdentifier);
 
-					applyLiquibaseSchemaUpdates(this.getDatabaseCredentials(tenantIdentifier), this.getSuperDatabaseCredentials(tenantIdentifier));
-
-					initializeTenant();
+					initializeTenantSchema(tenantIdentifier);
+					
+					initializeTenantData();
 					
 					initializedTenantIdentifiers.add(tenantIdentifier);
 				}
@@ -96,6 +95,30 @@ public abstract class PersistenceService extends AbstractCodeshelfIdleService im
 		return session;
 	}
 	
+	private void initializeTenantSchema(String tenantIdentifier) {
+		DatabaseCredentials cred = this.getDatabaseCredentials(tenantIdentifier);
+		DatabaseCredentials superCred = this.getSuperDatabaseCredentials(tenantIdentifier);
+
+		if(DatabaseUtils.getSQLSyntax(cred) == DatabaseUtils.SQLSyntax.POSTGRES) {
+			// create schema automatically for dev environments
+			try {
+				DatabaseUtils.executeSQL(superCred,"CREATE SCHEMA IF NOT EXISTS "+cred.getSchemaName());
+			} catch (SQLException e) {
+				throw new RuntimeException("Cannot start, failed to verify/create schema (check db admin rights)",e);
+			}
+
+			// liquibase -> postgres
+			applyLiquibaseSchemaUpdates(cred);
+		} else if(DatabaseUtils.getSQLSyntax(cred) == DatabaseUtils.SQLSyntax.H2_MEMORY) {
+			// for automated tests, schema needs to have been created explicitly
+
+			// this is faster than liquibase although maybe we should test with liquibase
+			DatabaseUtils.Hbm2DdlSchemaExport(this.getHibernateConfiguration(),cred);
+		} else {
+			LOGGER.warn("Will not attempt to apply Liquibase updates to unknown syntax");
+		}
+		
+	}
 	@Override
 	public void forgetInitialActions(String tenantIdentifier) {
 		this.initializedTenantIdentifiers.remove(tenantIdentifier);
@@ -232,22 +255,7 @@ public abstract class PersistenceService extends AbstractCodeshelfIdleService im
 		this.eventListenerIntegrator = null;
 	}
 	
-	@Override
-	public void applyLiquibaseSchemaUpdates(DatabaseCredentials cred, DatabaseCredentials superCred) {
-		if(DatabaseUtils.getSQLSyntax(cred) != DatabaseUtils.SQLSyntax.POSTGRES) {
-			LOGGER.debug("Will not attempt to apply Liquibase updates to non-Postgres schema");
-			return;
-		}
-	
-		
-		if(superCred != null) {
-			try {
-				DatabaseUtils.executeSQL(superCred,"CREATE SCHEMA IF NOT EXISTS "+cred.getSchemaName());
-			} catch (SQLException e) {
-				throw new RuntimeException("Cannot start, failed to verify/create schema (check db admin rights)",e);
-			}
-		}
-	
+	private void applyLiquibaseSchemaUpdates(DatabaseCredentials cred) {
 		Database appDatabase = DatabaseUtils.getAppDatabase(cred);
 		if(appDatabase==null) {
 			throw new RuntimeException("Failed to access app database, cannot continue");

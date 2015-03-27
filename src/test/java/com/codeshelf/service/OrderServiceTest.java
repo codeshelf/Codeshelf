@@ -31,7 +31,7 @@ public class OrderServiceTest extends ServerTest{
 		this.getTenantPersistenceService().beginTransaction();
 		OrderService orderService = new OrderService();
 		Session session = this.getTenantPersistenceService().getSession();
-		Collection<OrderDetailView> orderDetails = orderService.orderDetailsNoLocation(tenantManagerService.getDefaultTenant(),session, facility.getPersistentId());
+		Collection<OrderDetailView> orderDetails = orderService.orderDetailsNoLocation(getDefaultTenant(),session, facility.getPersistentId());
 		Assert.assertEquals(3, orderDetails.size());
 		int totalQuantity = 0;
 		for (OrderDetailView orderDetailView : orderDetails) {

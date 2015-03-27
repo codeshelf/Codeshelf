@@ -32,9 +32,10 @@ public interface ITenantManagerService extends CodeshelfService {
 	Tenant getTenantByUser(User user);
 	Tenant getTenantByName(String name);
 	Tenant getTenantBySchemaName(String schemaName);
-	Tenant createTenant(String name,String shardName,String dbUsername);
+	Tenant createTenant(String name,String schemaName, String shardName);
+	Tenant createTenant(String name,String schemaName); // on default shard
 	Tenant updateTenant(Tenant tenant);
-	Tenant getDefaultTenant();
+	Tenant getInitialTenant();
 	List<Tenant> getTenants();
 	void deleteTenant(Tenant tenant); // needed for testing
 

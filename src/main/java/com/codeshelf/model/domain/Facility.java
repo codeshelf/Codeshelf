@@ -21,7 +21,6 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
-import javax.validation.Validation;
 
 import lombok.Getter;
 
@@ -47,7 +46,6 @@ import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.service.PropertyService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 // --------------------------------------------------------------------------
@@ -343,6 +341,10 @@ public class Facility extends Location {
 
 	public  List<ItemMaster> getItemMasters() {
 		return new ArrayList<ItemMaster>(itemMasters.values());
+	}
+
+	public  List<UomMaster> getUomMasters() {
+		return new ArrayList<UomMaster>(uomMasters.values());
 	}
 
 	public void addOrderGroup(OrderGroup inOrderGroup) {

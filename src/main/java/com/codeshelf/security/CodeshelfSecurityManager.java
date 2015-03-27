@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import lombok.Getter;
+
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -32,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.User;
 import com.google.inject.Inject;
 
 import edu.emory.mathcs.backport.java.util.Arrays;
@@ -40,6 +41,20 @@ import edu.emory.mathcs.backport.java.util.Arrays;
 public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 	static final private Logger	LOGGER						= LoggerFactory.getLogger(CodeshelfSecurityManager.class);
 
+	@Getter
+	private static UserContext userContextSYSTEM; 
+	static {
+		userContextSYSTEM = new UserContext() {
+			@Override
+			public String getUsername() {
+				return "SYSTEM";
+			}
+			@Override
+			public Integer getId() {
+				return -1;
+			}};		
+	}
+	
 	Realm oneRealm;
     protected SubjectFactory subjectFactory;
 	public static final String	THREAD_CONTEXT_USER_KEY	= "user";
@@ -69,7 +84,7 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 	@Override
 	public Subject createSubject(SubjectContext context) {
 		Subject subject = null;
-		User user = getCurrentUser();
+		UserContext user = getCurrentUserContext();
 		if(user != null) {
 			PrincipalCollection principals = new SimplePrincipalCollection(user.getId(),oneRealm.getName());
 			context.setSecurityManager(this);
@@ -94,14 +109,14 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 		return null;
 	}
 
-	public static User getCurrentUser() {
-		User user = null;
+	public static UserContext getCurrentUserContext() {
+		UserContext user = null;
 		Object uObj = ThreadContext.get(THREAD_CONTEXT_USER_KEY);
 		if(uObj != null) {
-			if(uObj instanceof User) {
-				user = (User) uObj;
+			if(uObj instanceof UserContext) {
+				user = (UserContext) uObj;
 			} else {
-				LOGGER.error("Value {} on ThreadContext was not a User but a {}",THREAD_CONTEXT_USER_KEY,
+				LOGGER.error("Value {} on ThreadContext was not a UserContext but a {}",THREAD_CONTEXT_USER_KEY,
 					uObj.getClass().getCanonicalName());
 			}
 		}
@@ -122,7 +137,9 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 		return tenant;
 	}
 
-	public static void setContext(User user, Tenant tenant) {
+	public static void setContext(UserContext user, Tenant tenant) {
+		if(user == null)
+			throw new NullPointerException("Attempt to set current user context to null");
 		if(tenant == null)
 			throw new NullPointerException("Attempt to set current tenant to null");
 		
@@ -131,9 +148,9 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 		
 		// Shiro will call the SecurityManager to get the current subject, which will determine it from this key
 		// Also used for context logging.
-		User oldUser=getCurrentUser();
+		UserContext oldUser=getCurrentUserContext();
 		if(oldUser != null && !oldUser.equals(user)) {
-			LOGGER.error("setContext {} called but there was already a current user {}",user,oldUser.getId());
+			LOGGER.error("setContext {} called but there was already a current user {}",user,oldUser);
 		}
 		Tenant oldTenant = getCurrentTenant();
 		if(oldTenant != null && !oldTenant.equals(tenant)) {
@@ -148,20 +165,20 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 
 	public static void removeContext() {
 		// Remove both the User and Shiro Subject from ThreadContext.
-		// It is an error if there is no Tenant present (but OK if no user)
+		// It is an error if there is no UserContext or Tenant 
 		
 		if(getCurrentTenant() == null) {
 			LOGGER.error("removeContext called but no current tenant existed");
 		}
-		ThreadContext.remove(ThreadContext.SUBJECT_KEY); // TODO: merge User and Subject somehow
-		ThreadContext.remove(THREAD_CONTEXT_USER_KEY);
-		ThreadContext.remove(THREAD_CONTEXT_TENANT_KEY);
-		org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_USER_KEY);
+		if(getCurrentUserContext() == null) {
+			LOGGER.error("removeContext called but no user context existed");
+		}
+		removeContextIfPresent();
 	}
 
 	public static void removeContextIfPresent() {
 		// Remove both the User and Shiro Subject from ThreadContext if present.
-		ThreadContext.remove(ThreadContext.SUBJECT_KEY);
+		ThreadContext.remove(ThreadContext.SUBJECT_KEY); // TODO: merge User and Subject somehow
 		ThreadContext.remove(THREAD_CONTEXT_USER_KEY);
 		ThreadContext.remove(THREAD_CONTEXT_TENANT_KEY);
 		org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_USER_KEY);

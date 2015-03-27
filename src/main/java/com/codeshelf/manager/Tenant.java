@@ -2,7 +2,6 @@ package com.codeshelf.manager;
 
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -105,7 +104,7 @@ public class Tenant implements DatabaseCredentials {
 	@Getter
 	@NonNull
 	@Column(nullable=false,length=36,name="password")
-	String password = UUID.randomUUID().toString();
+	String password;
 
 	@ManyToOne(optional = false, fetch=FetchType.EAGER)
 	@Getter
@@ -154,7 +153,7 @@ public class Tenant implements DatabaseCredentials {
 		String url = shard.getUrl();
 
 		// schema setting for H2
-		if(DatabaseUtils.getSQLSyntax(url).equals(SQLSyntax.H2)) {
+		if(DatabaseUtils.getSQLSyntax(url).equals(SQLSyntax.H2_MEMORY)) {
 			url += ";schema="+this.getSchemaName();
 		}
 
@@ -167,5 +166,10 @@ public class Tenant implements DatabaseCredentials {
 		
 		Matcher matcher = Tenant.SCHEMA_NAME_PATTERN.matcher(name);
 		return matcher.matches();
+	}
+	
+	public String getTenantIdentifier() {
+		// defined as schema name which is required to be unique
+		return this.getSchemaName();
 	}
 }
