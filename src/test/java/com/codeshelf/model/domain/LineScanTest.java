@@ -74,7 +74,8 @@ public class LineScanTest extends ServerTest {
 		Che che = Che.staticGetDao().getAll().get(0);
 		
 		ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "11.1");
-		ResponseABC response = processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
+
+		ResponseABC response = processor.handleRequest(this.getMockWsConnection(), request);
 		Assert.assertTrue(response instanceof GetOrderDetailWorkResponse);
 		Assert.assertEquals(ResponseStatus.Success, response.getStatus());
 		
@@ -109,7 +110,9 @@ public class LineScanTest extends ServerTest {
 		Che che = Che.staticGetDao().getAll().get(0);
 
 		ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "11.1");
-		GetOrderDetailWorkResponse response = (GetOrderDetailWorkResponse)processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
+		
+		GetOrderDetailWorkResponse response = (GetOrderDetailWorkResponse)processor.handleRequest(this.getMockWsConnection(), request);
+		
 		List<WorkInstruction> instructions = response.getWorkInstructions();
 		WorkInstruction instruction = instructions.get(0);
 		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.NEW);
@@ -118,11 +121,12 @@ public class LineScanTest extends ServerTest {
 		instruction.setCompleted(new Timestamp(System.currentTimeMillis()));
 		instruction.setType(WorkInstructionTypeEnum.ACTUAL);
 		instruction.setStatus(WorkInstructionStatusEnum.COMPLETE);
+		
 		workService.completeWorkInstruction(che.getPersistentId(), instruction);
 
 		response = workService.getWorkInstructionsForOrderDetail(che, "11.1"); 
 		instructions = response.getWorkInstructions();
-		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.COMPLETE);
+		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, instruction.getStatus());
 		this.getTenantPersistenceService().commitTransaction();
 	}
 	

@@ -17,13 +17,13 @@ import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.testframework.HibernateTest;
 
 public class ObjectChangeBroadcasterTest extends HibernateTest {
-
+	
 	@Test
 	public void usesDifferentThreads() {
 		this.getTenantPersistenceService().beginTransaction();
 		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getEventListenerIntegrator().getChangeBroadcaster();
 		IDaoListener listener = new DaoTestListener();
-		broadcaster.registerDAOListener(listener, Facility.class);
+		broadcaster.registerDAOListener(getDefaultTenantId(), listener, Facility.class);
 		Facility facility = createFacility();
 		facility.setDomainId("A");
 		this.getTenantPersistenceService().getSession().save(facility);
@@ -35,7 +35,7 @@ public class ObjectChangeBroadcasterTest extends HibernateTest {
 		// register event listener
 		DaoTestListener l = new DaoTestListener();
 		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getEventListenerIntegrator().getChangeBroadcaster();
-		broadcaster.registerDAOListener(l, Facility.class);
+		broadcaster.registerDAOListener(getDefaultTenantId(),l, Facility.class);
 		try {
 			Assert.assertEquals(0, l.getObjectsAdded());
 			// store new organization
@@ -53,7 +53,7 @@ public class ObjectChangeBroadcasterTest extends HibernateTest {
 			Assert.assertNotNull(id);
 			Assert.assertEquals(1, l.getObjectsAdded());
 		} finally {
-			broadcaster.unregisterDAOListener(l);
+			broadcaster.unregisterDAOListener(getDefaultTenantId(),l);
 		}
 	}
 
@@ -62,7 +62,7 @@ public class ObjectChangeBroadcasterTest extends HibernateTest {
 		DaoTestListener l = new DaoTestListener();
 		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getEventListenerIntegrator().getChangeBroadcaster();
 		try {
-			broadcaster.registerDAOListener(l, Facility.class);
+			broadcaster.registerDAOListener(getDefaultTenantId(),l, Facility.class);
 			
 			Assert.assertEquals(0, l.getObjectsUpdated());
 			Assert.assertNull(l.getLastObjectUpdated());
@@ -104,7 +104,7 @@ public class ObjectChangeBroadcasterTest extends HibernateTest {
 			this.getTenantPersistenceService().commitTransaction();
 			Thread.sleep(1000); //shame on me
 		} finally {
-			broadcaster.unregisterDAOListener(l);
+			broadcaster.unregisterDAOListener(getDefaultTenantId(),l);
 		}
 	}
 
@@ -112,7 +112,7 @@ public class ObjectChangeBroadcasterTest extends HibernateTest {
 	public final void testDeleteNotification() throws InterruptedException {
 		DaoTestListener l = new DaoTestListener();
 		ObjectChangeBroadcaster broadcaster = this.getTenantPersistenceService().getEventListenerIntegrator().getChangeBroadcaster();
-		broadcaster.registerDAOListener(l, Facility.class);
+		broadcaster.registerDAOListener(getDefaultTenantId(),l, Facility.class);
 		try {
 			Assert.assertEquals(0, l.getObjectsDeleted());
 			
@@ -144,7 +144,7 @@ public class ObjectChangeBroadcasterTest extends HibernateTest {
 			Assert.assertNull(foundOrganization);
 			t.commit();
 		} finally {
-			broadcaster.unregisterDAOListener(l);
+			broadcaster.unregisterDAOListener(getDefaultTenantId(),l);
 		}
 	}
 	
@@ -187,6 +187,7 @@ public class ObjectChangeBroadcasterTest extends HibernateTest {
 			objectsDeleted++;
 			LOGGER.debug("Object deleted: "+domainPersistentId);
 		}
+
 	}
 
 }

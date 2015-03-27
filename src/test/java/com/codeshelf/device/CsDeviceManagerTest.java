@@ -24,8 +24,6 @@ import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 import com.codeshelf.generators.FacilityGenerator;
-import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.testframework.MockDaoTest;
@@ -38,7 +36,7 @@ public class CsDeviceManagerTest extends MockDaoTest {
 		this.getTenantPersistenceService().beginTransaction();
 
 		IRadioController mockRadioController = mock(IRadioController.class);
-		CsDeviceManager attachedDeviceManager = produceAttachedDeviceManager(TenantManagerService.getInstance().getDefaultTenant(),mockRadioController);		
+		CsDeviceManager attachedDeviceManager = produceAttachedDeviceManager(mockRadioController);		
 
 		attachedDeviceManager.disconnected();
 		
@@ -57,7 +55,7 @@ public class CsDeviceManagerTest extends MockDaoTest {
 		this.getTenantPersistenceService().beginTransaction();
 
 		IRadioController mockRadioController = mock(IRadioController.class);
-		CsDeviceManager attachedDeviceManager = produceAttachedDeviceManager(TenantManagerService.getInstance().getDefaultTenant(),mockRadioController);
+		CsDeviceManager attachedDeviceManager = produceAttachedDeviceManager(mockRadioController);
 
 		attachedDeviceManager.disconnected();
 		
@@ -69,7 +67,7 @@ public class CsDeviceManagerTest extends MockDaoTest {
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
-	private CsDeviceManager produceAttachedDeviceManager(Tenant tenant,IRadioController mockRadioController) throws DeploymentException, IOException {
+	private CsDeviceManager produceAttachedDeviceManager(IRadioController mockRadioController) throws DeploymentException, IOException {
 		WebSocketContainer container = mock(WebSocketContainer.class);
 		Session mockSession = mock(Session.class);
 		when(mockSession.isOpen()).thenReturn(true);
@@ -82,7 +80,7 @@ public class CsDeviceManagerTest extends MockDaoTest {
 		
 		deviceManager.connected();
 		
-		FacilityGenerator facilityGenerator = new FacilityGenerator(tenant);
+		FacilityGenerator facilityGenerator = new FacilityGenerator();
 		Facility facility = facilityGenerator.generateValid();
 
 		CodeshelfNetwork network=facility.getNetworks().get(0);

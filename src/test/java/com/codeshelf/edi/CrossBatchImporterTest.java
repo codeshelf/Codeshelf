@@ -275,7 +275,7 @@ public class CrossBatchImporterTest extends ServerTest {
 
 		// Make sure that first cross batch order is inactive and contains order detail I555.3 but it's inactive
 		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C555", firstEdiProcessTime));
-		Assert.assertNotNull(order);
+		Assert.assertNotNull(order); // got assertion fail here on 3/25/15 but usually succeeds
 		Assert.assertEquals(false, order.getActive());
 		OrderDetail orderDetail = order.getOrderDetail("I555.3");
 		Assert.assertNotNull(orderDetail);
@@ -283,7 +283,7 @@ public class CrossBatchImporterTest extends ServerTest {
 
 		// Make sure the second cross batch order is active and doesn't contain I555.3
 		order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C555", secondEdiProcessTime));
-		Assert.assertNotNull(order);
+		Assert.assertNotNull(order); // got assertion fail here on 3/26/15 but not reproducible
 		Assert.assertEquals(true, order.getActive());
 		orderDetail = order.getOrderDetail("I555.3");
 		Assert.assertNull(orderDetail);
@@ -352,7 +352,7 @@ public class CrossBatchImporterTest extends ServerTest {
 
 		// check the new order detail.
 		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C777", ediProcessTime));
-		Assert.assertNotNull(order);
+		Assert.assertNotNull(order); // got one unrepeated error here on 3/26/15
 		OrderDetail orderDetail = order.getOrderDetail("I777.5");
 		Assert.assertNotNull(orderDetail);
 		Assert.assertEquals(orderDetail.getQuantity().intValue(), 500);
@@ -512,7 +512,7 @@ public class CrossBatchImporterTest extends ServerTest {
 		
 		// Make sure we created an order with the container's ID.
 		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", ediProcessTime));
-		Assert.assertNotNull(order);
+		Assert.assertNotNull(order); // got a random failure here on 3/26/15, did not repeat
 		Assert.assertEquals(order.getOrderType(), OrderTypeEnum.CROSS);
 
 		// Make sure there's a container use and that its ID matches the order.

@@ -99,6 +99,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	// For Put wall
 	protected static final String		SCAN_PUTWALL_ORDER_MSG					= cheLine("SCAN ORDER FOR");
 	protected static final String		SCAN_PUTWALL_LOCATION_MSG				= cheLine("SCAN LOCATION IN");
+	protected static final String		SCAN_PUTWALL_ITEM_MSG					= cheLine("SCAN ITEM/UPC FOR");
 	protected static final String		SCAN_PUTWALL_LINE2_MSG					= cheLine("THE PUT WALL");
 
 	public static final String			STARTWORK_COMMAND						= "START";
@@ -902,7 +903,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	}
 
 	/**
-	 * Setup the CHE by clearing all the datastructures
+	 * Setup the CHE by clearing all the data structures
 	 */
 	protected void setupChe() {
 		clearAllPositionControllers();
@@ -970,28 +971,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Sort the WIs by their distance along the path.
-	private class WiDistanceComparator implements Comparator<WorkInstruction> {
-
-		public int compare(WorkInstruction inWi1, WorkInstruction inWi2) {
-			int value = CompareNullChecker.compareNulls(inWi1, inWi2);
-			if (value != 0)
-				return value;
-
-			Double wi1Pos = inWi1.getPosAlongPath();
-			Double wi2Pos = inWi2.getPosAlongPath();
-			value = CompareNullChecker.compareNulls(wi1Pos, wi2Pos);
-			if (value != 0)
-				return value;
-
-			return wi1Pos.compareTo(wi2Pos);
-		}
-	};
-	 */
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Is this useful linescan?  If not, move as private function to SetupOrdersDeviceLogic
+	 * Is this useful to linescan?  If not, move as private function to SetupOrdersDeviceLogic
 	 */
 	protected void processPickComplete() {
 		// There are no more WIs, so the pick is complete.
@@ -1423,12 +1403,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			getUserId(),
 			getMyGuidStr());
 	}
-	
-	protected void notifyScan(String theScan){
-		LOGGER.info("*Scan {} by picker:{} device:{}",
-			theScan,
-			getUserId(),
-			getMyGuidStr());
+
+	protected void notifyScan(String theScan) {
+		LOGGER.info("*Scan {} by picker:{} device:{}", theScan, getUserId(), getMyGuidStr());
 	}
 
 	// --------------------------------------------------------------------------

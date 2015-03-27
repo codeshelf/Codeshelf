@@ -26,20 +26,23 @@ import com.codeshelf.api.HardwareRequest;
 import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
 import com.codeshelf.api.HardwareRequest.LightRequest;
 import com.codeshelf.device.LedCmdGroup;
+import com.codeshelf.device.LedInstrListMessage;
 import com.codeshelf.device.LedSample;
 import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.platform.persistence.ITenantPersistenceService;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.OrderService;
 import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.jetty.protocol.message.CheDisplayMessage;
-import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
+import com.codeshelf.ws.jetty.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.jetty.server.WebSocketManagerService;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -66,10 +69,10 @@ public class FacilityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getBlockedWorkNoLocation() {
 		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		try {
 			Session session = persistenceService.getSession();
-			return BaseResponse.buildResponse(this.orderService.orderDetailsNoLocation(persistenceService.getDefaultSchema(), session, facility.getPersistentId()));
-		} catch (Exception e) {
+			return BaseResponse.buildResponse(this.orderService.orderDetailsNoLocation(tenant, session, facility.getPersistentId()));		} catch (Exception e) {
 			ErrorResponse errors = new ErrorResponse();
 			errors.processException(e);
 			return errors.buildResponse();
@@ -107,8 +110,7 @@ public class FacilityResource {
 	@Path("/productivity")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getProductivitySummary() throws Exception {
-		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
-		ProductivitySummaryList summary = orderService.getProductivitySummary(persistenceService.getDefaultSchema(), facility.getPersistentId(), false);
+		ProductivitySummaryList summary = orderService.getProductivitySummary(facility.getPersistentId(), false);
 		return BaseResponse.buildResponse(summary);
 	}
 
@@ -145,7 +147,8 @@ public class FacilityResource {
 	@Path("/statussummary/{aggregate}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getOrderStatusSummary(@PathParam("aggregate") String aggregate, @QueryParam("filterName") String filterName) {
-		//ErrorResponse errors = new ErrorResponse();
+		@SuppressWarnings("unused")
+		ErrorResponse errors = new ErrorResponse();
 		if (Strings.isNullOrEmpty(filterName)) {
 			//errors.addParameterError("filterName", ErrorCode.FIELD_REQUIRED);
 		}
@@ -177,7 +180,8 @@ public class FacilityResource {
 				}
 
 				LedCmdGroup ledCmdGroup = new LedCmdGroup(req.getLightController(), req.getLightChannel(), (short)0, ledSamples);
-				LightLedsMessage lightMessage = new LightLedsMessage(req.getLightController(), req.getLightChannel(), req.getLightDuration(), ImmutableList.of(ledCmdGroup));
+				LightLedsInstruction instruction = new LightLedsInstruction(req.getLightController(), req.getLightChannel(), req.getLightDuration(), ImmutableList.of(ledCmdGroup));
+				LedInstrListMessage lightMessage = new LedInstrListMessage(instruction);
 				webSocketManagerService.sendMessage(users, lightMessage);
 			}
 

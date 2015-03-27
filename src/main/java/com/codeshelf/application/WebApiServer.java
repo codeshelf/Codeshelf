@@ -224,6 +224,7 @@ public class WebApiServer {
 		FilterHolder jerseyGuiceFilter = new FilterHolder(new GuiceFilter());
 		restApiContext.addFilter(CORSFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		restApiContext.addFilter(APICallFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+		restApiContext.addFilter(AuthFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		restApiContext.addFilter(TransactionFilter.class , "/*", EnumSet.allOf(DispatcherType.class));
 		restApiContext.addFilter(jerseyGuiceFilter , "/*", EnumSet.allOf(DispatcherType.class));
 		restApiContext.addServlet(DefaultServlet.class, "/");  //filter needs to front an actual servlet so put a basic servlet in place
@@ -238,7 +239,6 @@ public class WebApiServer {
 		context.setContextPath("/mgr");
 		// can't seem to inject both APIs, Guice gets confused.. hm
 		//FilterHolder jerseyGuiceFilter = new FilterHolder(new GuiceFilter());
-		context.addFilter(CORSFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		context.addFilter(APICallFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		context.addFilter(AuthFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		//context.addFilter(jerseyGuiceFilter , "/*", EnumSet.allOf(DispatcherType.class));
@@ -255,6 +255,7 @@ public class WebApiServer {
 	private Handler createAuthHandler() {
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);		
 		context.setContextPath("/auth");
+		context.addFilter(APICallFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		context.addServlet(new ServletHolder(new AuthServlet()),"/");
 		return context;
 	}

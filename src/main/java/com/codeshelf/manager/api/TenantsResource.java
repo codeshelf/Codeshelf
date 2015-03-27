@@ -184,9 +184,7 @@ public class TenantsResource {
 			if(tenantName != null) {
 				if(Tenant.isValidSchemaName(schemaName)) {
 					if(manager.canCreateTenant(tenantName,schemaName)) {
-						newTenant = manager.createTenant(tenantName, 
-							manager.getDefaultShard().getName(), 
-							schemaName);
+						newTenant = manager.createTenant(tenantName, schemaName);
 						if(newTenant == null) 
 							LOGGER.warn("failed to create tenant {}",tenantName);
 					} else {

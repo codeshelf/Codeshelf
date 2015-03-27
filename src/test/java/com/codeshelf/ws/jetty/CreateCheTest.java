@@ -25,14 +25,11 @@ import com.codeshelf.ws.jetty.protocol.response.ObjectUpdateResponse;
 import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
 import com.codeshelf.ws.jetty.protocol.response.ResponseStatus;
 import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.WebSocketConnection;
 
 // example che update message:
 // "ObjectUpdateRequest":{"className":"Che","persistentId":"66575760-00b8-11e4-ba3a-48d705ccef0f","properties":{"description":"1123"},"messageId":"cid_6"}
 
 public class CreateCheTest extends MockDaoTest {
-	WebSocketConnection mSession;
-	
 	private ServerMessageProcessor	processor;
 
 	@Before
@@ -108,7 +105,7 @@ public class CreateCheTest extends MockDaoTest {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-		ResponseABC response = processor.handleRequest(mSession, req);
+		ResponseABC response = processor.handleRequest(this.getMockWsConnection(), req);
 
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		
@@ -155,7 +152,7 @@ public class CreateCheTest extends MockDaoTest {
 		req.setProperties(properties);
 		
 
-		ResponseABC response = processor.handleRequest(mSession, req);
+		ResponseABC response = processor.handleRequest(this.getMockWsConnection(), req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		
 		ObjectUpdateResponse updateResponse = (ObjectUpdateResponse) response;
@@ -196,7 +193,7 @@ public class CreateCheTest extends MockDaoTest {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-		ResponseABC response = processor.handleRequest(mSession, req);
+		ResponseABC response = processor.handleRequest(this.getMockWsConnection(), req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		
 		ObjectUpdateResponse updateResponse = (ObjectUpdateResponse) response;
@@ -212,9 +209,7 @@ public class CreateCheTest extends MockDaoTest {
 	
 	@Test
 	public final void testInvalidClass() {	
-		WebSocketConnection session = Mockito.mock(WebSocketConnection.class);
-		session.setSessionId("test-session");
-	
+
 		ObjectUpdateRequest req = new ObjectUpdateRequest();
 		req.setClassName("Foobar");
 		req.setPersistentId("bogus-id");
@@ -223,7 +218,7 @@ public class CreateCheTest extends MockDaoTest {
 		properties.put("foo", "bar");
 		req.setProperties(properties);
 		
-		ResponseABC response = processor.handleRequest(session, req);
+		ResponseABC response = processor.handleRequest(this.getMockWsConnection(), req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		
 		ObjectUpdateResponse updateResponse = (ObjectUpdateResponse) response;
@@ -262,7 +257,7 @@ public class CreateCheTest extends MockDaoTest {
 		properties.put("description", description2);
 		req.setProperties(properties);
 		
-		ResponseABC response = processor.handleRequest(mSession, req);
+		ResponseABC response = processor.handleRequest(this.getMockWsConnection(), req);
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);
 		
 		ObjectUpdateResponse updateResponse = (ObjectUpdateResponse) response;

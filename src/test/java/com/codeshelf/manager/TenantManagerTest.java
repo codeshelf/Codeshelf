@@ -16,8 +16,8 @@ import com.codeshelf.manager.api.TenantsResource;
 import com.codeshelf.manager.api.UsersResource;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.UserType;
-import com.codeshelf.security.AuthResponse.Status;
 import com.codeshelf.security.AuthResponse;
+import com.codeshelf.security.AuthResponse.Status;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.testframework.HibernateTest;
 import com.google.common.collect.Sets;
@@ -38,8 +38,8 @@ public class TenantManagerTest extends HibernateTest {
 
 	@Test
 	public void defaultTenantExists() {
-		Tenant tenant = this.tenantManagerService.getDefaultTenant();
-		Assert.assertEquals(TenantManagerService.DEFAULT_TENANT_NAME, tenant.getName());
+		Tenant tenant = this.tenantManagerService.getInitialTenant();
+		Assert.assertEquals(TenantManagerService.INITIAL_TENANT_NAME, tenant.getName());
 		
 		Shard shard = this.tenantManagerService.getDefaultShard();
 		Assert.assertEquals(TenantManagerService.DEFAULT_SHARD_NAME, shard.getName());
@@ -67,7 +67,7 @@ public class TenantManagerTest extends HibernateTest {
 		
 		// THROWS if you try
 		try {
-			Assert.assertNull(this.tenantManagerService.createUser(this.getDefaultTenant(), existingUsername, "passw0rD!", UserType.SITECON, null));
+			Assert.assertNull(this.tenantManagerService.createUser(getDefaultTenant(), existingUsername, "passw0rD!", UserType.SITECON, null));
 			Assert.fail("should have thrown");
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
@@ -82,7 +82,7 @@ public class TenantManagerTest extends HibernateTest {
 		// (note: don't alter site controller user for this test, could have side effects)
 		
 		// can create new user		
-		User newUser = this.tenantManagerService.createUser(this.getDefaultTenant(), "testuser", "goodpassword", UserType.APPUSER, null);		
+		User newUser = this.tenantManagerService.createUser(getDefaultTenant(), "testuser", "goodpassword", UserType.APPUSER, null);		
 
 		// can look up by id or name or list
 		Assert.assertTrue(this.tenantManagerService.getUser(newUser.getId()).equals(newUser));
@@ -105,21 +105,21 @@ public class TenantManagerTest extends HibernateTest {
 		
 		// can change password
 		newUser.setHashedPassword(authProviderService.hashPassword("newpassword"));
-		newUser = this.tenantManagerService.updateUser(newUser);
+		newUser = tenantManagerService.updateUser(newUser);
 		Assert.assertEquals(Status.BAD_CREDENTIALS,this.authProviderService.authenticate(newUser.getUsername(),"goodpassword").getStatus());
 		Assert.assertEquals(Status.ACCEPTED,this.authProviderService.authenticate(newUser.getUsername(),"newpassword").getStatus());
 		
 		// can look up via REST API several ways
 		List<User> users = (List<User>) this.usersResource.get(null,null).getEntity();
 		Assert.assertTrue(users.contains(newUser));
-		Assert.assertEquals(this.getDefaultTenant().getId(), users.get(users.indexOf(newUser)).getTenant().getId());
+		Assert.assertEquals(getDefaultTenant().getId(), users.get(users.indexOf(newUser)).getTenant().getId());
 
 		String htpasswd = (String) this.usersResource.getHtpasswd().getEntity();
 		Assert.assertTrue(htpasswd.indexOf(newUser.getUsername()+":") >= 0);
 
 		users = (List<User>) this.usersResource.get(null,newUser.getTenant().getId()).getEntity();
 		Assert.assertTrue(users.contains(newUser));
-		Assert.assertEquals(this.getDefaultTenant().getName(), users.get(users.indexOf(newUser)).getTenant().getName());
+		Assert.assertEquals(getDefaultTenant().getName(), users.get(users.indexOf(newUser)).getTenant().getName());
 
 		User user = (User) this.usersResource.get(existingUsername,null).getEntity();
 		Assert.assertTrue(user.getUsername().equals(existingUsername));
@@ -132,7 +132,7 @@ public class TenantManagerTest extends HibernateTest {
 		params.putSingle("username", "apiuser");
 		params.putSingle("password", "goodpassword");
 		params.putSingle("type", "APPUSER");
-		params.putSingle("tenantid", Integer.toString(this.getDefaultTenant().getId()));
+		params.putSingle("tenantid", Integer.toString(getDefaultTenant().getId()));
 		User apiUser = (User) this.usersResource.createUser(params).getEntity();
 		Assert.assertTrue(apiUser.getUsername().equals("apiuser"));
 		// TODO: secure auth over REST
@@ -184,13 +184,13 @@ public class TenantManagerTest extends HibernateTest {
 	public void manipulateTenants() {
 		String shardName = TenantManagerService.DEFAULT_SHARD_NAME;
 		// cannot create tenant that already exists
-		Assert.assertFalse(this.tenantManagerService.canCreateTenant(TenantManagerService.DEFAULT_TENANT_NAME, "whatever"));
+		Assert.assertFalse(this.tenantManagerService.canCreateTenant(TenantManagerService.INITIAL_TENANT_NAME, "whatever"));
 		
 		// fails cleanly if you try
-		Assert.assertNull(this.tenantManagerService.createTenant(TenantManagerService.DEFAULT_TENANT_NAME, shardName, "bob"));
+		Assert.assertNull(this.tenantManagerService.createTenant(TenantManagerService.INITIAL_TENANT_NAME, "bob", shardName));
 		
 		// can create new tenant
-		Tenant newTenant = this.tenantManagerService.createTenant("New Tenant", shardName, "alice");
+		Tenant newTenant = this.tenantManagerService.createTenant("New Tenant", "alice");
 		Assert.assertNotNull(newTenant);
 		// with user
 		User newUser = this.tenantManagerService.createUser(newTenant, "tenantuser", "goodpassword", UserType.APPUSER, null);		
@@ -296,6 +296,8 @@ public class TenantManagerTest extends HibernateTest {
 	
 	@Test
 	public void rolesAndPermissions() {
+		CodeshelfSecurityManager.removeContext();
+		
 		User user = this.tenantManagerService.createUser(getDefaultTenant(), "u", "passw0rd!", UserType.APPUSER, null);		
 		UserPermission view = this.tenantManagerService.createPermission("view");
 		UserPermission edit = this.tenantManagerService.createPermission("edit");
@@ -322,7 +324,7 @@ public class TenantManagerTest extends HibernateTest {
 		this.tenantManagerService.updateUser(user);
 
 		// permissions can be checked by Shiro
-		CodeshelfSecurityManager.setCurrentUser(user);
+		CodeshelfSecurityManager.setContext(user,getDefaultTenant());
 		Subject subject = SecurityUtils.getSubject();
 
 		try {
@@ -347,7 +349,7 @@ public class TenantManagerTest extends HibernateTest {
 		} catch(AuthorizationException e) {
 			Assert.fail("should not have thrown");
 		}
-		CodeshelfSecurityManager.removeCurrentUser();
+		CodeshelfSecurityManager.removeContext();
 
 		// ought to have REST API call checks and check behavior of renaming roles and editing permissions here!
 	}

@@ -6,8 +6,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.hibernate.Session;
-import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+import org.hibernate.cfg.Configuration;
+import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
+import org.hibernate.service.spi.ServiceRegistryImplementor;
 import org.mockito.Mockito;
 
 import com.codeshelf.manager.Tenant;
@@ -28,32 +30,8 @@ public class MockTenantPersistenceService implements ITenantPersistenceService {
 	}
 	
 	@Override
-	public Tenant getDefaultSchema() {
-		return defaultTenant;
-	}
-
-	@Override
-	public Session getSession(Tenant schema) {
-		return Mockito.mock(Session.class);
-	}
-
-	@Override
-	public SessionFactory getSessionFactory(Tenant schema) {
-		return Mockito.mock(SessionFactory.class);
-	}
-
-	@Override
-	public EventListenerIntegrator getEventListenerIntegrator(Tenant schema) {
+	public EventListenerIntegrator getEventListenerIntegrator() {
 		return new EventListenerIntegrator(Mockito.mock(ObjectChangeBroadcaster.class));
-	}
-
-	@Override
-	public void forgetInitialActions(Tenant schema) {
-	}
-
-	@Override
-	public boolean hasActiveTransaction(Tenant schema) {
-		return false;
 	}
 
 	@Override
@@ -64,24 +42,6 @@ public class MockTenantPersistenceService implements ITenantPersistenceService {
 	@Override
 	public boolean rollbackAnyActiveTransactions() {
 		return false;
-	}
-
-	@Override
-	public Session getSessionWithTransaction(Tenant schema) {
-		return Mockito.mock(Session.class);
-	}
-
-	@Override
-	public Transaction beginTransaction(Tenant schema) {
-		return Mockito.mock(Transaction.class);
-	}
-
-	@Override
-	public void commitTransaction(Tenant schema) {
-	}
-
-	@Override
-	public void rollbackTransaction(Tenant schema) {
 	}
 
 	@Override
@@ -105,16 +65,6 @@ public class MockTenantPersistenceService implements ITenantPersistenceService {
 	@Override
 	public Session getSessionWithTransaction() {
 		return Mockito.mock(Session.class);
-	}
-
-	@Override
-	public SessionFactory getSessionFactory() {
-		return Mockito.mock(SessionFactory.class);
-	}
-
-	@Override
-	public EventListenerIntegrator getEventListenerIntegrator() {
-		return new EventListenerIntegrator(Mockito.mock(ObjectChangeBroadcaster.class));
 	}
 
 	@Override
@@ -219,6 +169,40 @@ public class MockTenantPersistenceService implements ITenantPersistenceService {
 	@Override
 	public <T extends IDomainObject> void setDaoForTest(Class<T> domainType, ITypedDao<T> testDao) {
 		this.mockDaos.put(domainType, testDao);
+	}
+
+	@Override
+	public Configuration getHibernateConfiguration() {
+		return null;
+	}
+
+	@Override
+	public String getMasterChangeLogFilename() {
+		return null;
+	}
+
+	@Override
+	public EventListenerIntegrator generateEventListenerIntegrator() {
+		return null;
+	}
+
+	@Override
+	public void forgetInitialActions(String tenantId) {
+		
+	}
+
+	@Override
+	public void forgetSchemaInitialization(String tenantIdentifier) {
+		
+	}
+
+	@Override
+	public ConnectionProvider getConnectionProvider(String tenantIdentifier, ServiceRegistryImplementor serviceRegistry) {
+		return Mockito.mock(ConnectionProvider.class);
+	}
+
+	@Override
+	public void forgetConnectionProvider(String tenantIdentifier) {
 	}
 
 }

@@ -28,8 +28,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import org.hibernate.Session;
 import org.hibernate.Query;
+import org.hibernate.Session;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
@@ -526,7 +526,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		String queryString = "update OrderDetail od SET od.active = false WHERE od.update != :processTime";
 		Query q = session.createQuery(queryString);
 		Date date = new Date();
-		date.parse(inProcessTime);
+		date.parse(inProcessTime);  // maybe this should be com.codeshelf.util.DateTimeParser
 		q.setTimestamp("processTime", date);
 		int numUpdated = q.executeUpdate();
 		

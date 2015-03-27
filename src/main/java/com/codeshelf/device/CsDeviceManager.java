@@ -37,6 +37,7 @@ import com.codeshelf.util.PcapRingBuffer;
 import com.codeshelf.util.TwoKeyMap;
 import com.codeshelf.ws.jetty.client.CsClientEndpoint;
 import com.codeshelf.ws.jetty.client.WebSocketEventListener;
+import com.codeshelf.ws.jetty.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
@@ -700,14 +701,22 @@ public class CsDeviceManager implements
 		// TODO - huffa DEV644
 	}
 
-	public void lightSomeLeds(NetGuid inGuid, int inSeconds, String inCommands) {
-		INetworkDevice aDevice = getDeviceByGuid(inGuid);
-		if (aDevice != null && aDevice instanceof AisleDeviceLogic) {
-			((AisleDeviceLogic) aDevice).lightExtraLeds(inSeconds, inCommands);
-		} else {
-			// By design, the LightLedsMessage broadcast to all site controllers for this facility. If this site controller does not have the mentioned device, it is an error today
-			// but may not be later when we have our multi-controller implementation.
-			LOGGER.debug("unknown GUID in lightSomeLeds");
+	public void lightSomeLeds(final List<LightLedsInstruction> instructions) {
+		for (LightLedsInstruction instruction : instructions) {
+			if (!LightLedsInstruction.verifyCommandString(instruction.getLedCommands())) {
+				LOGGER.error("handleOtherMessage found bad LightLedsMessage");
+			} else {
+				LOGGER.info("Processing LightLedsInstructions");
+				NetGuid deviceGuid = new NetGuid(instruction.getNetGuidStr());
+				INetworkDevice aDevice = getDeviceByGuid(deviceGuid);
+				if (aDevice != null && aDevice instanceof AisleDeviceLogic) {
+					((AisleDeviceLogic) aDevice).lightExtraLeds(instruction.getDurationSeconds(), instruction.getLedCommands());
+				} else {
+					// By design, the LedInstrListMessage broadcast to all site controllers for this facility. If this site controller does not have the mentioned device, it is an error today
+					// but may not be later when we have our multi-controller implementation.
+					LOGGER.debug("unknown GUID in lightSomeLeds");
+				}
+			}
 		}
 	}
 

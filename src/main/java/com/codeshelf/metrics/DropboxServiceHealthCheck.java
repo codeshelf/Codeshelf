@@ -2,9 +2,11 @@ package com.codeshelf.metrics;
 
 import java.util.List;
 
+import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.model.domain.DropboxService;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.google.common.collect.Lists;
 
 public class DropboxServiceHealthCheck extends CodeshelfHealthCheck {
@@ -17,9 +19,13 @@ public class DropboxServiceHealthCheck extends CodeshelfHealthCheck {
 	protected Result check() throws Exception {
 		List<Facility> failedFacilities = Lists.newArrayList();
 		
-		TenantPersistenceService.getInstance().beginTransaction();
+		// checks initial tenant only
+		CodeshelfSecurityManager.setContext(CodeshelfSecurityManager.getUserContextSYSTEM(), 
+			TenantManagerService.getInstance().getInitialTenant());
+		
 		int numFacilities = -1;
 		try {
+			TenantPersistenceService.getInstance().beginTransaction();
 			List<Facility> allFacilities = Facility.staticGetDao().getAll();
 			for (Facility facility : allFacilities) {
 				DropboxService service = facility.getDropboxService();
@@ -31,7 +37,8 @@ public class DropboxServiceHealthCheck extends CodeshelfHealthCheck {
 			}
 			numFacilities = allFacilities.size();
 		} finally {
-			TenantPersistenceService.getInstance().commitTransaction();
+			TenantPersistenceService.getInstance().rollbackTransaction();
+			CodeshelfSecurityManager.removeContext();
 		}
 		
 		if(failedFacilities.isEmpty()) {

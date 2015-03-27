@@ -244,7 +244,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		if (inMilliseconds > mExpectedExpireMilliseconds)
 			mExpectedExpireMilliseconds = inMilliseconds;
 	}
-
+/*
 	private void clearLightsIfThisLooksLikeLastExpiry() {
 		// This is flawed. Therefore not referenced.
 		long currentMillis = System.currentTimeMillis();
@@ -257,7 +257,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 			LOGGER.info("clearLightsIfThisLooksLikeLastExpiry  does not look like last.");	
 		}
 	}
-
+*/
 	// --------------------------------------------------------------------------
 	/**
 	 * This should fire once after the input duration seconds. On firing, clear out extra LED lights and refresh the aisle lights.

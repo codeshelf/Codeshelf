@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
+import com.codeshelf.device.LedInstrListMessage;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.LedRange;
 import com.codeshelf.model.OrderStatusEnum;
@@ -46,7 +47,7 @@ import com.codeshelf.platform.persistence.TenantPersistenceService;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.ws.jetty.io.JsonDecoder;
 import com.codeshelf.ws.jetty.io.JsonEncoder;
-import com.codeshelf.ws.jetty.protocol.message.LightLedsMessage;
+import com.codeshelf.ws.jetty.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.jetty.protocol.message.MessageABC;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
@@ -66,7 +67,7 @@ public class InventoryImporterTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 
 		VirtualSlottedFacilityGenerator facilityGenerator =
-					new VirtualSlottedFacilityGenerator(getDefaultTenant(),
+					new VirtualSlottedFacilityGenerator(
 														createAisleFileImporter(),
 														createLocationAliasImporter(),
 														createOrderImporter());
@@ -887,12 +888,13 @@ public class InventoryImporterTest extends ServerTest {
 		LedController theController = location.getEffectiveLedController();
 		if (theController != null) {
 			String theGuidStr = theController.getDeviceGuidStr();
-			LightLedsMessage theMessage = new LightLedsMessage(theGuidStr, (short)1, 5, ledCmdGroupList);
+			LightLedsInstruction instruction = new LightLedsInstruction(theGuidStr, (short)1, 5, ledCmdGroupList);
+			LedInstrListMessage message = new LedInstrListMessage(instruction);
 			// check encode and decode of the message similar to how the jetty socket does it.
 			JsonEncoder encoder = new JsonEncoder();
 			String messageString = "";
 			try {
-				messageString = encoder.encode(theMessage);
+				messageString = encoder.encode(message);
 			} catch (EncodeException e) {
 				LOGGER.error("testSameProductPick Json encode", e);
 			}
@@ -904,9 +906,11 @@ public class InventoryImporterTest extends ServerTest {
 			} catch (DecodeException e) {
 				LOGGER.error("testSameProductPick Json decode", e);
 			}
-			Assert.assertTrue(decodedMessage instanceof LightLedsMessage);
-			String djsonLedCmdGroupsString = ((LightLedsMessage)decodedMessage).getLedCommands();			
-			Assert.assertTrue(LightLedsMessage.verifyCommandString(djsonLedCmdGroupsString));
+			Assert.assertTrue(decodedMessage instanceof LedInstrListMessage);
+			message = (LedInstrListMessage)decodedMessage;
+			instruction = message.getInstructions().get(0);
+			String djsonLedCmdGroupsString = instruction.getLedCommands();
+			Assert.assertTrue(LightLedsInstruction.verifyCommandString(djsonLedCmdGroupsString));
 		}
 		
 		this.getTenantPersistenceService().commitTransaction();

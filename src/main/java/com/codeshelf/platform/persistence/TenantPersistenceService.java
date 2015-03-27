@@ -1,9 +1,14 @@
 package com.codeshelf.platform.persistence;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.hibernate.Transaction;
+import org.hibernate.c3p0.internal.C3P0ConnectionProvider;
+import org.hibernate.cfg.Configuration;
+import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
+import org.hibernate.service.spi.ServiceRegistryImplementor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,19 +18,26 @@ import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.DomainObjectABC;
+import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.model.domain.Path;
+import com.codeshelf.platform.persistence.DatabaseUtils.SQLSyntax;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.google.inject.Inject;
 
-public class TenantPersistenceService extends PersistenceServiceImpl<Tenant> implements ITenantPersistenceService {
+public class TenantPersistenceService extends PersistenceService implements ITenantPersistenceService {
+	private static final String TENANT_CHANGELOG_FILENAME= "liquibase/db.changelog-master.xml";
 
-	@SuppressWarnings("unused")
 	private static final Logger LOGGER	= LoggerFactory.getLogger(TenantPersistenceService.class);
 	
 	@Inject
 	private static ITenantPersistenceService theInstance;
-	
+
+	Configuration hibernateConfiguration;
 	private Map<Class<? extends IDomainObject>,ITypedDao<?>> daos;
 
+	private Map<String,ConnectionProvider> connectionProviders = new HashMap<String,ConnectionProvider>();
+	
 	@Inject
 	private TenantPersistenceService() {
 		super();
@@ -58,19 +70,7 @@ public class TenantPersistenceService extends PersistenceServiceImpl<Tenant> imp
 	}
 	
 	@Override
-	public Tenant getDefaultSchema() {
-		return TenantManagerService.getInstance().getDefaultTenant();
-	}
-
-	@Override
-	protected void initialize(Tenant schema) {
-		Transaction t = this.beginTransaction(schema);
-		PropertyDao.getInstance().syncPropertyDefaults();
-        t.commit();		
-	}
-	
-	@Override
-	protected EventListenerIntegrator generateEventListenerIntegrator() {
+	public EventListenerIntegrator generateEventListenerIntegrator() {
 		return new EventListenerIntegrator(new ObjectChangeBroadcaster());
 	}
 
@@ -102,4 +102,116 @@ public class TenantPersistenceService extends PersistenceServiceImpl<Tenant> imp
 	public <T extends IDomainObject> void setDaoForTest(Class<T> domainType, ITypedDao<T> testDao) {
 		this.daos.put(domainType,testDao);
 	}
+
+	@Override
+	public Configuration getHibernateConfiguration() {
+		if(hibernateConfiguration == null) {
+			
+			hibernateConfiguration = new Configuration().configure(getHibernateConfigurationFilename());
+			// not tenant specific - our connection provider will add database URL and credentials
+		}
+		return hibernateConfiguration;
+	}
+
+	@Override
+	public String getMasterChangeLogFilename() {
+		return TENANT_CHANGELOG_FILENAME;
+	}
+
+	@Override
+	public String getHibernateConfigurationFilename() {
+		return "hibernate/"+System.getProperty("tenant.hibernateconfig");
+	}
+
+	@Override
+	public void initializeTenantData() {
+		Transaction t = this.beginTransaction();
+
+		List<Facility> facilities = Facility.staticGetDao().getAll();
+		
+		for (Facility facility : facilities) {
+			for (Path path : facility.getPaths()) {
+				// TODO: Remove once we have a tool for linking path segments to locations (aisles usually).
+				facility.recomputeLocationPathDistances(path);
+			}
+		}
+        t.commit();
+
+        t = this.beginTransaction();
+        // create or update tenant default settings
+        PropertyDao.getInstance().syncPropertyDefaults();
+        t.commit();
+	}
+
+	@Override
+	public String getCurrentTenantIdentifier() {
+		return CodeshelfSecurityManager.getCurrentTenant().getTenantIdentifier();
+	}
+
+	@Override
+	protected DatabaseCredentials getDatabaseCredentials(String tenantIdentifier) {
+		return TenantManagerService.getInstance().getTenantBySchemaName(tenantIdentifier);
+	}
+
+	@Override
+	protected DatabaseCredentials getSuperDatabaseCredentials(String tenantIdentifier) {
+		Tenant tenant = TenantManagerService.getInstance().getTenantBySchemaName(tenantIdentifier);
+		return tenant.getShard();
+	}
+	
+
+	private ConnectionProvider createConnectionProvider(Tenant tenant, ServiceRegistryImplementor serviceRegistry) {
+	    // in synchronized, do not do long actions here
+
+		// create connection provider for this tenant
+		C3P0ConnectionProvider cp = new C3P0ConnectionProvider();
+	    cp.injectServices(serviceRegistry);
+	    
+	    // configure the provider (we might be in init, trust that we can at least get a hibernate config)
+	    Configuration genericConfiguration = TenantPersistenceService.getMaybeRunningInstance().getHibernateConfiguration();
+	    Map<Object,Object> properties = new HashMap<Object,Object>(genericConfiguration.getProperties());
+	    
+	    String dbUrl = tenant.getUrl();
+	    // in H2 (testing) setting the schema name is not necessary as defaults have schemaname = username
+	    if(DatabaseUtils.getSQLSyntax(tenant).equals(SQLSyntax.POSTGRES)) {
+	    	dbUrl += "?currentSchema="+tenant.getSchemaName();
+	    } 
+	    
+	    properties.put("hibernate.connection.url", dbUrl);
+	    properties.put("hibernate.connection.username", tenant.getUsername());
+	    properties.put("hibernate.connection.password", tenant.getPassword());
+	    //nope
+	    //properties.put("hibernate.default_schema", tenant.getSchemaName());
+	    //nope
+	    //properties.put("c3p0.extensions.initSql","SET SCHEMA '"+tenant.getSchemaName()+"'");
+	    
+	    cp.configure(properties);
+	    	    
+	    return cp;
+	}
+
+	@Override
+	public synchronized ConnectionProvider getConnectionProvider(String tenantIdentifier, ServiceRegistryImplementor serviceRegistry) {
+		ConnectionProvider cp = connectionProviders.get(tenantIdentifier); 
+		if(cp == null) {
+			LOGGER.info("Creating connection to tenant {}",tenantIdentifier);
+			Tenant tenant = TenantManagerService.getInstance().getTenantBySchemaName(tenantIdentifier);
+			cp = createConnectionProvider(tenant,serviceRegistry);
+			connectionProviders.put(tenantIdentifier, cp);
+		}		
+		return cp;
+	}
+
+	@Override
+	public void forgetConnectionProvider(String tenantIdentifier) {
+		// this is only called from main thread during multi test runs, not much worry about concurrency
+		ConnectionProvider cp = this.connectionProviders.get(tenantIdentifier);
+		if(cp != null) {
+			if(cp instanceof C3P0ConnectionProvider) {
+				((C3P0ConnectionProvider)cp).stop();	
+			}
+			this.connectionProviders.remove(tenantIdentifier);
+		}
+	}
+
 }

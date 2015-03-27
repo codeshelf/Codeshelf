@@ -15,8 +15,8 @@ import javax.ws.rs.core.Response;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.manager.User;
 import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.security.UserContext;
 
 @Path("/")
 public class RootResource {
@@ -33,7 +33,7 @@ public class RootResource {
 	@Produces(MediaType.TEXT_PLAIN)
 	public Response getSecurity() {
 		// echo currently authenticated user for debugging
-		User user = CodeshelfSecurityManager.getCurrentUser();
+		UserContext user = CodeshelfSecurityManager.getCurrentUserContext();
 		String response;
 		if(user != null) {
 			response = user.toString();
