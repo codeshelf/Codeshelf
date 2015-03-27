@@ -9,7 +9,6 @@
         <!-- In-memory H2 database -->
         <property name="connection.driver_class">org.postgresql.Driver</property>
         <property name="dialect">org.hibernate.dialect.PostgreSQL9Dialect</property>
-        <property name="hbm2ddl.auto">validate</property>
 
         <!-- JDBC connection pool -->
 		<property name="hibernate.c3p0.min_size">5</property>
