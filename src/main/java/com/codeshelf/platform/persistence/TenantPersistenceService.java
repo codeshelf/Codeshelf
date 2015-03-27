@@ -21,6 +21,7 @@ import com.codeshelf.model.domain.DomainObjectABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.Path;
+import com.codeshelf.platform.persistence.DatabaseUtils.SQLSyntax;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.google.inject.Inject;
 
@@ -170,13 +171,22 @@ public class TenantPersistenceService extends PersistenceService implements ITen
 	    Configuration genericConfiguration = TenantPersistenceService.getMaybeRunningInstance().getHibernateConfiguration();
 	    Map<Object,Object> properties = new HashMap<Object,Object>(genericConfiguration.getProperties());
 	    
-	    properties.put("hibernate.connection.url", tenant.getUrl());
+	    String dbUrl = tenant.getUrl();
+	    // in H2 (testing) setting the schema name is not necessary as defaults have schemaname = username
+	    if(DatabaseUtils.getSQLSyntax(tenant).equals(SQLSyntax.POSTGRES)) {
+	    	dbUrl += "?currentSchema="+tenant.getSchemaName();
+	    } 
+	    
+	    properties.put("hibernate.connection.url", dbUrl);
 	    properties.put("hibernate.connection.username", tenant.getUsername());
 	    properties.put("hibernate.connection.password", tenant.getPassword());
-	    properties.put("hibernate.default_schema", tenant.getSchemaName());
+	    //nope
+	    //properties.put("hibernate.default_schema", tenant.getSchemaName());
+	    //nope
+	    //properties.put("c3p0.extensions.initSql","SET SCHEMA '"+tenant.getSchemaName()+"'");
 	    
 	    cp.configure(properties);
-	    
+	    	    
 	    return cp;
 	}
 

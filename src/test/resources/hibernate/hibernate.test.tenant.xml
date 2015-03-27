@@ -22,7 +22,8 @@
   		<property name="hibernate.multiTenancy">SCHEMA</property>
 		<property name="hibernate.multi_tenant_connection_provider">com.codeshelf.platform.persistence.CsMultiTenantConnectionProvider</property>
 		<property name="hibernate.tenant_identifier_resolver">com.codeshelf.platform.persistence.CsCurrentTenantIdentifierResolver</property>
-
+		<property name="connectionCustomizerClassName">com.codeshelf.platform.persistence.CsConnectionCustomizer</property>	
+		
         <!-- Enable Hibernate's automatic session context management -->
         <property name="current_session_context_class">thread</property>
 

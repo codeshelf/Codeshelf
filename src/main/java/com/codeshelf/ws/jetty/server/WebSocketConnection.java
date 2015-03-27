@@ -372,6 +372,7 @@ public class WebSocketConnection implements IDaoListener {
 				future.cancel(true);
 			}
 		}
+		this.pendingFutures.clear();
 	}
 
 	public void authenticated(User user, Tenant tenant) {
