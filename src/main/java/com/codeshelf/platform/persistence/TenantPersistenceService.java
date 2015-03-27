@@ -3,9 +3,7 @@ package com.codeshelf.platform.persistence;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.mina.util.ConcurrentHashSet;
 import org.hibernate.Transaction;
 import org.hibernate.c3p0.internal.C3P0ConnectionProvider;
 import org.hibernate.cfg.Configuration;
@@ -29,7 +27,6 @@ import com.google.inject.Inject;
 public class TenantPersistenceService extends PersistenceService implements ITenantPersistenceService {
 	private static final String TENANT_CHANGELOG_FILENAME= "liquibase/db.changelog-master.xml";
 
-	@SuppressWarnings("unused")
 	private static final Logger LOGGER	= LoggerFactory.getLogger(TenantPersistenceService.class);
 	
 	@Inject
@@ -38,8 +35,7 @@ public class TenantPersistenceService extends PersistenceService implements ITen
 	Configuration hibernateConfiguration;
 	private Map<Class<? extends IDomainObject>,ITypedDao<?>> daos;
 
-	private ConcurrentHashMap<String,ConnectionProvider> connectionProviders = new ConcurrentHashMap<String,ConnectionProvider>();
-	private ConcurrentHashSet<String> initalizingConnectionProviders = new ConcurrentHashSet<String>();
+	private Map<String,ConnectionProvider> connectionProviders = new HashMap<String,ConnectionProvider>();
 	
 	@Inject
 	private TenantPersistenceService() {
@@ -185,25 +181,20 @@ public class TenantPersistenceService extends PersistenceService implements ITen
 	}
 
 	@Override
-	public ConnectionProvider getConnectionProvider(String tenantIdentifier, ServiceRegistryImplementor serviceRegistry) {
-		if(!connectionProviders.containsKey(tenantIdentifier)) {
-			synchronized(this.initalizingConnectionProviders) {
-				if(!this.initalizingConnectionProviders.contains(tenantIdentifier)) {
-					this.initalizingConnectionProviders.add(tenantIdentifier);
-
-					LOGGER.info("Creating connection to tenant {}",tenantIdentifier);
-					Tenant tenant = TenantManagerService.getInstance().getTenantBySchemaName(tenantIdentifier);
-					connectionProviders.put(tenantIdentifier, createConnectionProvider(tenant,serviceRegistry));
-				} else {
-					throw new RuntimeException("This shouldn't happen - not recursive and other threads should block");
-				}
-			}			
+	public synchronized ConnectionProvider getConnectionProvider(String tenantIdentifier, ServiceRegistryImplementor serviceRegistry) {
+		ConnectionProvider cp = connectionProviders.get(tenantIdentifier); 
+		if(cp == null) {
+			LOGGER.info("Creating connection to tenant {}",tenantIdentifier);
+			Tenant tenant = TenantManagerService.getInstance().getTenantBySchemaName(tenantIdentifier);
+			cp = createConnectionProvider(tenant,serviceRegistry);
+			connectionProviders.put(tenantIdentifier, cp);
 		}		
-		return connectionProviders.get(tenantIdentifier);
+		return cp;
 	}
 
 	@Override
 	public void forgetConnectionProvider(String tenantIdentifier) {
+		// this is only called from main thread during multi test runs, not much worry about concurrency
 		ConnectionProvider cp = this.connectionProviders.get(tenantIdentifier);
 		if(cp != null) {
 			if(cp instanceof C3P0ConnectionProvider) {
@@ -211,7 +202,6 @@ public class TenantPersistenceService extends PersistenceService implements ITen
 			}
 			this.connectionProviders.remove(tenantIdentifier);
 		}
-		this.initalizingConnectionProviders.remove(tenantIdentifier);
 	}
 
 }

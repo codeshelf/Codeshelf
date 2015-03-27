@@ -2,7 +2,9 @@ package com.codeshelf.platform.persistence;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -22,7 +24,6 @@ import liquibase.resource.ClassLoaderResourceAccessor;
 import liquibase.resource.ResourceAccessor;
 import lombok.Getter;
 
-import org.apache.mina.util.ConcurrentHashSet;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -53,11 +54,8 @@ public abstract class PersistenceService extends AbstractCodeshelfIdleService im
 
 	SessionFactory sessionFactory;
 	
-	ConcurrentHashSet<String> initializingDataTenantIdentifiers = new ConcurrentHashSet<String>();
-	ConcurrentHashSet<String> initializedDataTenantIdentifiers = new ConcurrentHashSet<String>();
-	
-	ConcurrentHashSet<String> initializingSchemaTenantIdentifiers = new ConcurrentHashSet<String>();
-	ConcurrentHashSet<String> initializedSchemaTenantIdentifiers = new ConcurrentHashSet<String>();
+	Set<String> initializedDataTenantIdentifiers = new HashSet<String>();
+	Set<String> initializedSchemaTenantIdentifiers = new HashSet<String>();
 	
 	@Getter
 	EventListenerIntegrator eventListenerIntegrator;
@@ -71,38 +69,17 @@ public abstract class PersistenceService extends AbstractCodeshelfIdleService im
 	public Session getSession() {
 		// initialize database schema before returning a session, if necessary
 		String tenantIdentifier = this.getCurrentTenantIdentifier();
-		if(!this.initializedSchemaTenantIdentifiers.contains(tenantIdentifier)) {
-			// NOTE: putting tenant initialization in this block means multiple threads 
-			// accessing the same tenant will block while one does the init.
-
-			// it *also* means that only one tenant can initialize at a time, which may
-			// or may not be desirable.
-			
-			// note that if initializeTenant attempts to obtain additional sessions on
-			// this thread, they will be obtained though initialization is not complete.
-			
-			synchronized(this.initializingSchemaTenantIdentifiers) {
-				if(!this.initializingSchemaTenantIdentifiers.contains(tenantIdentifier)) {
-					this.initializingSchemaTenantIdentifiers.add(tenantIdentifier);
-					
-					initializeTenantSchema(tenantIdentifier);
-					
-					this.initializedSchemaTenantIdentifiers.add(tenantIdentifier);
-				}
+		synchronized(this.initializedSchemaTenantIdentifiers) {
+			// update schema if needed
+			if(!this.initializedSchemaTenantIdentifiers.contains(tenantIdentifier)) {
+				this.initializedSchemaTenantIdentifiers.add(tenantIdentifier);
+				initializeTenantSchema(tenantIdentifier);				
 			}
-			
-		}
-
-		if(!initializedDataTenantIdentifiers.contains(tenantIdentifier)) {
-			
-			synchronized(this.initializingDataTenantIdentifiers) {
-				if(!this.initializingDataTenantIdentifiers.contains(tenantIdentifier)) {
-					this.initializingDataTenantIdentifiers.add(tenantIdentifier);
-
-					initializeTenantData();
-					
-					initializedDataTenantIdentifiers.add(tenantIdentifier);
-				}
+			// initialize data for tenant if needed
+			if(!this.initializedDataTenantIdentifiers.contains(tenantIdentifier)) {
+				initializedDataTenantIdentifiers.add(tenantIdentifier);
+				// mark as initialized first, in case initializeTenantData calls getSession()
+				initializeTenantData();
 			}
 		}
 		Session session = this.sessionFactory.getCurrentSession();
@@ -145,7 +122,7 @@ public abstract class PersistenceService extends AbstractCodeshelfIdleService im
 			if (tx.isActive()) {
 				LOGGER.error("tried to begin transaction, but was already in active transaction");
 				return tx;
-		}
+			}
 		} // else we will begin new transaction
 		Transaction txBegun = session.beginTransaction();
 		return txBegun;
@@ -370,12 +347,10 @@ public abstract class PersistenceService extends AbstractCodeshelfIdleService im
 	@Override
 	public void forgetInitialActions(String tenantIdentifier) {
 		this.initializedDataTenantIdentifiers.remove(tenantIdentifier);
-		this.initializingDataTenantIdentifiers.remove(tenantIdentifier);
 	}
 	@Override
 	public void forgetSchemaInitialization(String tenantIdentifier) {
 		this.initializedSchemaTenantIdentifiers.remove(tenantIdentifier);
-		this.initializingSchemaTenantIdentifiers.remove(tenantIdentifier);		
 	}
 
 }
