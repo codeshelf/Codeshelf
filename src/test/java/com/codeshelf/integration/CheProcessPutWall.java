@@ -104,6 +104,7 @@ public class CheProcessPutWall extends ServerTest {
 		theService.lightLocation(facility.getPersistentId().toString(), "P11");
 		*/
 
+		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 1); // will return null if blank, so use the object Byte.
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
@@ -138,7 +139,7 @@ public class CheProcessPutWall extends ServerTest {
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
 
 		LOGGER.info("2: P14 is in WALL1. P15 and P16 are in WALL2. Set up slow mover CHE for that SKU pick");
-		
+
 		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
 		picker2.login("Picker #2");
 		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
@@ -152,9 +153,7 @@ public class CheProcessPutWall extends ServerTest {
 		logWiList(theWiList);
 		// DEV-711 ComputeWorkInstructions will achieve this.
 
-
 	}
-
 
 	@Test
 	public final void putWallFlowState() throws IOException {
@@ -255,8 +254,8 @@ public class CheProcessPutWall extends ServerTest {
 		// P14 is at poscon index 4. Count should be 3
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
 		// Assert.assertEquals((Byte) (byte) 3, displayValue);
-		Assert.assertNull( displayValue);
-		
+		Assert.assertNull(displayValue);
+
 		// button from the put wall
 		posman.buttonPress(4, 3);
 
@@ -269,11 +268,11 @@ public class CheProcessPutWall extends ServerTest {
 		// after DEV-713 
 		// we get two plans. For this test, handle singly. DEV-714 is about lighting two or more put wall locations at time.
 		// By that time, we should have implemented something to not all button press from CHE poscon, especially if more than one WI.
-		
+
 		// Counts are 4 and 5
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 5);
 		// Assert.assertEquals((Byte) (byte) 4, displayValue);
-		Assert.assertNull( displayValue);
+		Assert.assertNull(displayValue);
 
 	}
 
@@ -465,7 +464,7 @@ public class CheProcessPutWall extends ServerTest {
 				+ "\r\n,USF314,COSTCO,11113,11113.1,11113,1555,Sku1555,2,each,F23"
 				+ "\r\n,USF314,COSTCO,11114,11114.1,11114,1514,Sku1514,3,each,S12"
 				+ "\r\n,USF314,COSTCO,11115,11115.1,11115,1515,Sku1515,4,each,S13"
-				+ "\r\n,USF314,COSTCO,11116,11116.1,11116,1515,Sku1515,4,each,S13";
+				+ "\r\n,USF314,COSTCO,11116,11116.1,11116,1515,Sku1515,5,each,S13";
 
 		importOrdersData(getFacility(), orderCsvString);
 	}
