@@ -253,6 +253,12 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	@Setter
 	@JsonProperty
 	private String				usage;
+	
+	@Column(nullable = true,name="tape_id")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Integer tapeId;
 
 	public Location() {
 		active = true;
