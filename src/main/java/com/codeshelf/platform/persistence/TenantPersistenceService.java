@@ -204,7 +204,13 @@ public class TenantPersistenceService extends PersistenceService implements ITen
 
 	@Override
 	public void forgetConnectionProvider(String tenantIdentifier) {
-		this.connectionProviders.remove(tenantIdentifier);
+		ConnectionProvider cp = this.connectionProviders.get(tenantIdentifier);
+		if(cp != null) {
+			if(cp instanceof C3P0ConnectionProvider) {
+				((C3P0ConnectionProvider)cp).stop();	
+			}
+			this.connectionProviders.remove(tenantIdentifier);
+		}
 		this.initalizingConnectionProviders.remove(tenantIdentifier);
 	}
 
