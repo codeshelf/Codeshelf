@@ -137,21 +137,23 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		
         // process message...
     	final Timer.Context timerContext = requestProcessingTimer.time();
-    	// TODO: get rid of message type handling using if statements and type casts...
 		User user = csSession.getCurrentUser();
 		Tenant tenant = csSession.getCurrentTenant();
 		if (user == null && tenant != null) {
 			throw new IllegalArgumentException("got request with tenant "+tenant.getId()+" but no user!");
 		}
-		if(user == null && request instanceof LoginRequest) {
+    	// TODO: get rid of message type handling using if statements and type casts...
+		if(request instanceof LoginRequest) {
 			LoginRequest loginRequest = (LoginRequest) request;
 			command = new LoginCommand(csSession, loginRequest, getObjectChangeBroadcaster(), this.sessionManager);
 			loginCounter.inc();
 			applicationRequestCounter.inc();
-		} else if (request instanceof EchoRequest) {
+		} 
+		else if (request instanceof EchoRequest) {
 			command = new EchoCommand(csSession,(EchoRequest) request);
 			echoCounter.inc();		
-		} else if (request instanceof CompleteWorkInstructionRequest) {
+		} 
+		else if (request instanceof CompleteWorkInstructionRequest) {
 			command = new CompleteWorkInstructionCommand(csSession,(CompleteWorkInstructionRequest) request, serviceFactory.getServiceInstance(WorkService.class));
 			completeWiCounter.inc();
 			applicationRequestCounter.inc();

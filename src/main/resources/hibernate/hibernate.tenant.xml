@@ -29,6 +29,7 @@
   		<property name="hibernate.multiTenancy">SCHEMA</property>
 		<property name="hibernate.multi_tenant_connection_provider">com.codeshelf.platform.persistence.CsMultiTenantConnectionProvider</property>
 		<property name="hibernate.tenant_identifier_resolver">com.codeshelf.platform.persistence.CsCurrentTenantIdentifierResolver</property>
+		<property name="connectionCustomizerClassName">com.codeshelf.platform.persistence.CsConnectionCustomizer</property>	
 		
         <!-- Echo all executed SQL to stdout -->
         <property name="show_sql">false</property>
