@@ -26,9 +26,6 @@ public class CsMultiTenantConnectionProvider
 	
 	private ServiceRegistryImplementor	serviceRegistry = null; // provided by Hibernate framework
 
-	private ConcurrentHashMap<String,ConnectionProvider> connectionProviders = new ConcurrentHashMap<String,ConnectionProvider>();
-	private ConcurrentHashSet<String> initalizingConnectionProviders = new ConcurrentHashSet<String>();
-
     @Override
     public void injectServices(ServiceRegistryImplementor serviceRegistry) {
         this.serviceRegistry  = serviceRegistry;
@@ -42,41 +39,9 @@ public class CsMultiTenantConnectionProvider
 
 	@Override
 	protected ConnectionProvider selectConnectionProvider(String tenantIdentifier) {
-		if(!connectionProviders.containsKey(tenantIdentifier)) {
-			synchronized(this.initalizingConnectionProviders) {
-				if(!this.initalizingConnectionProviders.contains(tenantIdentifier)) {
-					this.initalizingConnectionProviders.add(tenantIdentifier);
-
-					LOGGER.info("Creating connection to tenant {}",tenantIdentifier);
-					Tenant tenant = TenantManagerService.getInstance().getTenantBySchemaName(tenantIdentifier);
-					connectionProviders.put(tenantIdentifier, createConnectionProvider(tenant));
-				} else {
-					throw new RuntimeException("This shouldn't happen - not recursive and other threads should block");
-				}
-			}			
-		}		
-		return connectionProviders.get(tenantIdentifier);
-	}
-
-	private ConnectionProvider createConnectionProvider(Tenant tenant) {
-	    // in synchronized, do not do long actions here
-
-		// create connection provider for this tenant
-		C3P0ConnectionProvider cp = new C3P0ConnectionProvider();
-	    cp.injectServices(this.serviceRegistry);
-	    
-	    // configure the provider (we might be in init, trust that we can at least get a hibernate config)
-	    Configuration genericConfiguration = TenantPersistenceService.getMaybeRunningInstance().getHibernateConfiguration();
-	    Map<Object,Object> properties = new HashMap<Object,Object>(genericConfiguration.getProperties());
-	    
-	    properties.put("hibernate.connection.url", tenant.getUrl());
-	    properties.put("hibernate.connection.username", tenant.getUsername());
-	    properties.put("hibernate.connection.password", tenant.getPassword());
-	    properties.put("hibernate.default_schema", tenant.getSchemaName());
-	    
-	    cp.configure(properties);
-	    
-	    return cp;
+		// called during tenant persistence initialization
+		// so just assume tenant persistence is running or at least started up enough to do this
+		return TenantPersistenceService.getMaybeRunningInstance().getConnectionProvider(tenantIdentifier,serviceRegistry);
 	}
 
 }

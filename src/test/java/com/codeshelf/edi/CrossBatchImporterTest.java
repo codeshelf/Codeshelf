@@ -283,7 +283,7 @@ public class CrossBatchImporterTest extends ServerTest {
 
 		// Make sure the second cross batch order is active and doesn't contain I555.3
 		order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C555", secondEdiProcessTime));
-		Assert.assertNotNull(order);
+		Assert.assertNotNull(order); // got assertion fail here on 3/26/15 but not reproducible
 		Assert.assertEquals(true, order.getActive());
 		orderDetail = order.getOrderDetail("I555.3");
 		Assert.assertNull(orderDetail);

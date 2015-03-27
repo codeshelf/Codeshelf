@@ -8,6 +8,8 @@ import java.util.concurrent.TimeoutException;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
+import org.hibernate.service.spi.ServiceRegistryImplementor;
 import org.mockito.Mockito;
 
 import com.codeshelf.manager.Tenant;
@@ -192,6 +194,15 @@ public class MockTenantPersistenceService implements ITenantPersistenceService {
 	@Override
 	public void forgetSchemaInitialization(String tenantIdentifier) {
 		
+	}
+
+	@Override
+	public ConnectionProvider getConnectionProvider(String tenantIdentifier, ServiceRegistryImplementor serviceRegistry) {
+		return Mockito.mock(ConnectionProvider.class);
+	}
+
+	@Override
+	public void forgetConnectionProvider(String tenantIdentifier) {
 	}
 
 }

@@ -3,6 +3,8 @@ package com.codeshelf.manager;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.engine.jdbc.connections.spi.ConnectionProvider;
+
 import com.codeshelf.model.domain.UserType;
 import com.codeshelf.service.CodeshelfService;
 
@@ -57,7 +59,5 @@ public interface ITenantManagerService extends CodeshelfService {
 	
 	// misc
 	void setShutdownCleanupRequest(TenantManagerService.ShutdownCleanupReq request);
-
-
 
 }

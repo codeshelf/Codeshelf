@@ -587,6 +587,10 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	}
 
 	private void dropDefaultSchema() {
+		// this is only supposed to be a dev/test/demo feature, not used in tests
+		if (DatabaseUtils.getSQLSyntax(initialTenant).equals(SQLSyntax.H2_MEMORY)) 
+			throw new RuntimeException("dropDefaultSchema called during test");
+		
 		if (initialTenant != null) {
 			dropSchema(initialTenant.getSchemaName(), 
 				initialTenant);
@@ -602,6 +606,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 			// in case schema is recreated later, forget that we initialized it earlier
 			TenantPersistenceService.getInstance().forgetInitialActions(schemaName);
 			TenantPersistenceService.getInstance().forgetSchemaInitialization(schemaName);
+			TenantPersistenceService.getInstance().forgetConnectionProvider(schemaName);
 		} catch (SQLException e) {
 			LOGGER.error("Caught SQL exception trying to remove schema", e);
 		}
