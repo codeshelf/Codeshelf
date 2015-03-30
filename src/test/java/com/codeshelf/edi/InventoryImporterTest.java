@@ -43,12 +43,12 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.testframework.ServerTest;
-import com.codeshelf.ws.jetty.io.JsonDecoder;
-import com.codeshelf.ws.jetty.io.JsonEncoder;
-import com.codeshelf.ws.jetty.protocol.message.LightLedsInstruction;
-import com.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.ws.io.JsonDecoder;
+import com.codeshelf.ws.io.JsonEncoder;
+import com.codeshelf.ws.protocol.message.LightLedsInstruction;
+import com.codeshelf.ws.protocol.message.MessageABC;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 

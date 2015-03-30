@@ -34,16 +34,15 @@ import com.codeshelf.manager.User;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.platform.persistence.ITenantPersistenceService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.OrderService;
 import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
 import com.codeshelf.service.WorkService;
-import com.codeshelf.ws.jetty.protocol.message.CheDisplayMessage;
-import com.codeshelf.ws.jetty.protocol.message.LightLedsInstruction;
-import com.codeshelf.ws.jetty.server.WebSocketManagerService;
+import com.codeshelf.ws.protocol.message.CheDisplayMessage;
+import com.codeshelf.ws.protocol.message.LightLedsInstruction;
+import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
@@ -68,7 +67,7 @@ public class FacilityResource {
 	@Path("/blockedwork/nolocation")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getBlockedWorkNoLocation() {
-		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		try {
 			Session session = persistenceService.getSession();
@@ -92,7 +91,7 @@ public class FacilityResource {
 	@Path("/work/topitems")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getWorkByItem() {
-		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		Session session = persistenceService.getSession();
 		return BaseResponse.buildResponse(this.orderService.itemsInQuantityOrder(session, facility.getPersistentId()));
 	}
@@ -101,7 +100,7 @@ public class FacilityResource {
 	@Path("/blockedwork/shorts")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getBlockedWorkShorts() {
-		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		Session session = persistenceService.getSession();
 		return BaseResponse.buildResponse(this.orderService.orderDetailsByStatus(session, facility.getPersistentId(), OrderStatusEnum.SHORT));
 	}
@@ -137,7 +136,7 @@ public class FacilityResource {
 	@Path("filters")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getFilterNames() {
-		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		Session session = persistenceService.getSession();
 		Set<String> filterNames = orderService.getFilterNames(session);
 		return BaseResponse.buildResponse(filterNames);
@@ -152,7 +151,7 @@ public class FacilityResource {
 		if (Strings.isNullOrEmpty(filterName)) {
 			//errors.addParameterError("filterName", ErrorCode.FIELD_REQUIRED);
 		}
-		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		Session session = persistenceService.getSession();
 		ProductivitySummaryList.StatusSummary summary = orderService.statusSummary(session, facility.getPersistentId(), aggregate, filterName);
 

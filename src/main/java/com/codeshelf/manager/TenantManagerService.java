@@ -21,11 +21,11 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.UserType;
-import com.codeshelf.platform.persistence.DatabaseCredentials;
-import com.codeshelf.platform.persistence.DatabaseUtils;
-import com.codeshelf.platform.persistence.DatabaseUtils.SQLSyntax;
-import com.codeshelf.platform.persistence.PersistenceService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.AbstractPersistenceService;
+import com.codeshelf.persistence.DatabaseCredentials;
+import com.codeshelf.persistence.DatabaseUtils;
+import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.DatabaseUtils.SQLSyntax;
 import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 import com.codeshelf.service.ServiceUtility;
@@ -56,7 +56,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	private static ITenantManagerService		theInstance;
 	
 	private AuthProviderService					authProviderService;
-	private PersistenceService					managerPersistenceService;
+	private AbstractPersistenceService					managerAbstractPersistenceService;
 
 	@Inject
 	private TenantManagerService(AuthProviderService authProviderService) {
@@ -95,7 +95,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		boolean initDefaultTenant = false;
 		Shard shard = null;
 
-		Session session = managerPersistenceService.getSessionWithTransaction();
+		Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 		try {
 			Criteria criteria = session.createCriteria(Shard.class);
 			criteria.add(Restrictions.eq("name", DEFAULT_SHARD_NAME));
@@ -117,9 +117,9 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 			} // else 1 default shard, continue
 		} finally {
 			if (initDefaultTenant)
-				managerPersistenceService.commitTransaction();
+				managerAbstractPersistenceService.commitTransaction();
 			else
-				managerPersistenceService.rollbackTransaction();
+				managerAbstractPersistenceService.rollbackTransaction();
 		}
 
 		if (initDefaultTenant) {
@@ -199,10 +199,10 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 
 		boolean result = false;
 		try {
-			Session session = managerPersistenceService.getSessionWithTransaction();
+			Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 			result = isUsernameAvailable(session, username);
 		} finally {
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 		}
 		return result;
 	}
@@ -217,7 +217,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 
 		User result = null;
 		try {
-			Session session = managerPersistenceService.getSessionWithTransaction();
+			Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 			if (!isUsernameAvailable(session, username)) {
 				throw new IllegalArgumentException("Tried to create duplicate username " + username + " (caller must prevalidate)");
 			}
@@ -236,7 +236,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 			result = user;
 			LOGGER.info("Created user {} for tenant {}", username, tenant.getName());
 		} finally {
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 		}
 		return result;
 	}
@@ -247,7 +247,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		eraseAllTenantData(tenant);
 
 		try {
-			Session session = managerPersistenceService.getSessionWithTransaction();
+			Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 
 			// reload detached tenant (might've added more users)
 			tenant = (Tenant) session.load(Tenant.class, tenant.getId());
@@ -267,7 +267,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 			session.save(tenant);
 
 		} finally {
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 		}
 
 		// resetTenant for testing - not necessary to recreate default users here
@@ -306,13 +306,13 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		User result = null;
 
 		try {
-			Session session = managerPersistenceService.getSessionWithTransaction();
+			Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 			result = (User) session.get(User.class, id);
 			if (result == null) {
 				LOGGER.warn("user not found by id = " + id);
 			}
 		} finally {
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 		}
 		return result;
 	}
@@ -322,7 +322,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		User result = null;
 
 		try {
-			Session session = managerPersistenceService.getSessionWithTransaction();
+			Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 			User user = getUser(session, username);
 			if (user != null) {
 				result = user;
@@ -346,14 +346,14 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 				LOGGER.warn("user not found: " + username);
 			}
 		} finally {
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 		}
 		return result;
 	}
 
 	@Override
 	public List<User> getUsers(Tenant tenant) {
-		Session session = managerPersistenceService.getSessionWithTransaction();
+		Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 		List<User> userList = null;
 		try {
 			if (tenant == null) {
@@ -372,7 +372,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 				}
 			}
 		} finally {
-			managerPersistenceService.rollbackTransaction();
+			managerAbstractPersistenceService.rollbackTransaction();
 		}
 		return userList;
 	}
@@ -398,10 +398,10 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		Tenant result = null;
 
 		try {
-			Session session = managerPersistenceService.getSessionWithTransaction();
+			Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 			result = (Tenant) session.get(Tenant.class, id);
 		} finally {
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 		}
 		if (result == null) {
 			LOGGER.warn("failed to get tenant {}", id);
@@ -414,13 +414,13 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		Tenant result = null;
 
 		try {
-			Session session = managerPersistenceService.getSessionWithTransaction();
+			Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 			user = (User) session.load(User.class, user.getId());
 			if (user != null) {
 				result = inflate(user.getTenant());
 			}
 		} finally {
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 		}
 		if (result == null) {
 			LOGGER.warn("failed to get tenant for user {}", user.getUsername());
@@ -433,7 +433,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		Tenant result = null;
 
 		try {
-			Session session = managerPersistenceService.getSessionWithTransaction();
+			Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 			Criteria criteria = session.createCriteria(Tenant.class);
 			criteria.add(Restrictions.eq("name", name));
 
@@ -444,7 +444,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 				result = inflate(tenantList.get(0));
 			}
 		} finally {
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 		}
 		return result;
 	}
@@ -455,7 +455,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		Tenant result = null;
 
 		try {
-			Session session = managerPersistenceService.getSessionWithTransaction();
+			Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 			Criteria criteria = session.createCriteria(Tenant.class);
 			criteria.add(Restrictions.eq("schemaName", schemaName));
 
@@ -466,7 +466,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 				result = inflate(tenantList.get(0));
 			}
 		} finally {
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 		}
 		return result;
 	}
@@ -480,7 +480,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		Shard result = null;
 
 		try {
-			Session session = managerPersistenceService.getSessionWithTransaction();
+			Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 			Criteria criteria = session.createCriteria(Shard.class);
 			criteria.add(Restrictions.eq("name", name));
 
@@ -498,7 +498,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 				result = ManagerPersistenceService.<Shard> deproxify(shardList.get(0));
 			}
 		} finally {
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 		}
 		return result;
 	}
@@ -530,7 +530,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		List<Tenant> results = null;
 
 		try {
-			Session session = managerPersistenceService.getSessionWithTransaction();
+			Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 			Criteria criteria = session.createCriteria(Tenant.class);
 			Collection<Tenant> list = criteria.list();
 			results = new ArrayList<Tenant>(list.size());
@@ -538,7 +538,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 				results.add(inflate(tenant));
 			}
 		} finally {
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 		}
 		return results;
 	}
@@ -628,7 +628,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 
 	@Override
 	protected void startUp() throws Exception {
-		this.managerPersistenceService = ManagerPersistenceService.getInstance();
+		this.managerAbstractPersistenceService = ManagerPersistenceService.getInstance();
 		initDefaultShard();
 	}
 
@@ -654,15 +654,15 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	@Override
 	public User updateUser(User user) {
 		// assume input is an existing detached User
-		Session session = managerPersistenceService.getSessionWithTransaction();
+		Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 		User persistentUser = null;
 		try {
 			User mergeResult = (User) session.merge(user);
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 			persistentUser = mergeResult;
 		} finally {
 			if (persistentUser == null)
-				managerPersistenceService.rollbackTransaction();
+				managerAbstractPersistenceService.rollbackTransaction();
 		}
 		return persistentUser;
 	}
@@ -670,15 +670,15 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	@Override
 	public Tenant updateTenant(Tenant tenant) {
 		// assume input is an existing detached Tenant
-		Session session = managerPersistenceService.getSessionWithTransaction();
+		Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 		Tenant persistentTenant = null;
 		try {
 			Tenant mergeResult = (Tenant) session.merge(tenant);
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 			persistentTenant = mergeResult;
 		} finally {
 			if (persistentTenant == null)
-				managerPersistenceService.rollbackTransaction();
+				managerAbstractPersistenceService.rollbackTransaction();
 		}
 		return persistentTenant;
 	}
@@ -704,7 +704,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 			throw new UnsupportedOperationException("cannot destroy default tenant");
 		}
 		// delete all users for this tenant, then delete it, then drop its schema
-		Session session = managerPersistenceService.getSessionWithTransaction();
+		Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 		try {
 			LOGGER.info("DELETING tenant {} including users and schema and schema-user", tenant.getSchemaName());
 			tenant = (Tenant) session.load(Tenant.class, tenant.getId());
@@ -742,7 +742,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		List<UserRole> results = null;
 
 		try {
-			Session session = managerPersistenceService.getSessionWithTransaction();
+			Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 			Criteria criteria = session.createCriteria(UserRole.class);
 			@SuppressWarnings("unchecked")
 			Collection<UserRole> list = criteria.list();
@@ -751,7 +751,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 				results.add(role);
 			}
 		} finally {
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 		}
 		return results;
 	}
@@ -761,10 +761,10 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		UserRole result = null;
 
 		try {
-			Session session = managerPersistenceService.getSessionWithTransaction();
+			Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 			result = (UserRole) session.get(UserRole.class, id);
 		} finally {
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 		}
 		if (result == null) {
 			LOGGER.warn("failed to get UserRole {}", id);
@@ -776,7 +776,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	public UserRole getRoleByName(String name) {
 		UserRole result = null;
 		try {
-			Session session = managerPersistenceService.getSessionWithTransaction();
+			Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 			Criteria criteria = session.createCriteria(UserRole.class);
 			criteria.add(Restrictions.eq("name", name));
 
@@ -787,7 +787,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 				result = roles.get(0);
 			}
 		} finally {
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 		}
 		return result;
 	}
@@ -802,16 +802,16 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		UserRole result = null;
 		UserRole newRole = new UserRole();
 		newRole.setName(name);
-		Session session = managerPersistenceService.getSessionWithTransaction();
+		Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 		try {
 			session.save(newRole);
 			LOGGER.info("created role {}",newRole.getName());
 			result = newRole;
 		} finally {
 			if (result == null)
-				managerPersistenceService.rollbackTransaction();
+				managerAbstractPersistenceService.rollbackTransaction();
 			else
-				managerPersistenceService.commitTransaction();
+				managerAbstractPersistenceService.commitTransaction();
 		}
 		return result;
 	}
@@ -819,16 +819,16 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	@Override
 	public UserRole updateRole(UserRole role) {
 		// assume input is an existing detached role
-		Session session = managerPersistenceService.getSessionWithTransaction();
+		Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 		UserRole persistentRole = null;
 		try {
 			UserRole mergeResult = (UserRole) session.merge(role);
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 			LOGGER.info("saved changes to role {} {}",role.getId(),role.getName());
 			persistentRole = mergeResult;
 		} finally {
 			if (persistentRole == null)
-				managerPersistenceService.rollbackTransaction();
+				managerAbstractPersistenceService.rollbackTransaction();
 		}
 		return persistentRole;
 	}
@@ -840,18 +840,18 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		role = this.updateRole(role);
 
 		// assume input is an existing detached role
-		Session session = managerPersistenceService.getSessionWithTransaction();
+		Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 		boolean deleted = false;
 		
 		try {
 			UserRole loadResult = (UserRole) session.load(UserRole.class, role.getId());
 			session.delete(loadResult);
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 			LOGGER.info("deleted role {} {}",role.getId(),role.getName());
 			deleted = true;
 		} finally {
 			if (!deleted)
-				managerPersistenceService.rollbackTransaction();
+				managerAbstractPersistenceService.rollbackTransaction();
 		}
 	}
 
@@ -860,7 +860,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		List<UserPermission> results = null;
 
 		try {
-			Session session = managerPersistenceService.getSessionWithTransaction();
+			Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 			Criteria criteria = session.createCriteria(UserPermission.class);
 			@SuppressWarnings("unchecked")
 			Collection<UserPermission> list = criteria.list();
@@ -869,7 +869,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 				results.add(permission);
 			}
 		} finally {
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 		}
 		return results;
 	}
@@ -879,10 +879,10 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		UserPermission result = null;
 
 		try {
-			Session session = managerPersistenceService.getSessionWithTransaction();
+			Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 			result = (UserPermission) session.get(UserPermission.class, id);
 		} finally {
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 		}
 		if (result == null) {
 			LOGGER.warn("failed to get UserRole {}", id);
@@ -894,7 +894,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	public UserPermission getPermissionByDescriptor(String descriptor) {
 		UserPermission result = null;
 		try {
-			Session session = managerPersistenceService.getSessionWithTransaction();
+			Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 			Criteria criteria = session.createCriteria(UserPermission.class);
 			criteria.add(Restrictions.eq("descriptor", descriptor));
 
@@ -905,7 +905,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 				result = permissions.get(0);
 			}
 		} finally {
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 		}
 		return result;
 	}
@@ -920,16 +920,16 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		UserPermission result = null;
 		UserPermission newPermission = new UserPermission();
 		newPermission.setDescriptor(descriptor);
-		Session session = managerPersistenceService.getSessionWithTransaction();
+		Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 		try {
 			session.save(newPermission);
 			LOGGER.info("created permission {}",newPermission.getDescriptor());
 			result = newPermission;
 		} finally {
 			if (result == null)
-				managerPersistenceService.rollbackTransaction();
+				managerAbstractPersistenceService.rollbackTransaction();
 			else
-				managerPersistenceService.commitTransaction();
+				managerAbstractPersistenceService.commitTransaction();
 		}
 		return result;
 	}
@@ -937,16 +937,16 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	@Override
 	public UserPermission updatePermission(UserPermission permission) {
 		// assume input is an existing detached permission
-		Session session = managerPersistenceService.getSessionWithTransaction();
+		Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 		UserPermission persistentRole = null;
 		try {
 			UserPermission mergeResult = (UserPermission) session.merge(permission);
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 			LOGGER.info("saved changes to permission {} {}",permission.getId(),permission.getDescriptor());
 			persistentRole = mergeResult;
 		} finally {
 			if (persistentRole == null)
-				managerPersistenceService.rollbackTransaction();
+				managerAbstractPersistenceService.rollbackTransaction();
 		}
 		return persistentRole;
 	}
@@ -954,17 +954,17 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	@Override
 	public void deletePermission(UserPermission permission) {
 		// assume input is an existing detached permission
-		Session session = managerPersistenceService.getSessionWithTransaction();
+		Session session = managerAbstractPersistenceService.getSessionWithTransaction();
 		boolean deleted = false;
 		try {
 			UserPermission loadResult = (UserPermission) session.load(UserPermission.class, permission.getId());
 			session.delete(loadResult);
-			managerPersistenceService.commitTransaction();
+			managerAbstractPersistenceService.commitTransaction();
 			LOGGER.info("deleted permission {} {}",permission.getId(),permission.getDescriptor());
 			deleted = true;
 		} finally {
 			if (!deleted)
-				managerPersistenceService.rollbackTransaction();
+				managerAbstractPersistenceService.rollbackTransaction();
 		}
 	}
 

@@ -47,7 +47,7 @@ import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.util.StringUIConverter;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -261,6 +261,12 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	@Setter
 	@JsonProperty
 	private String				usage;
+	
+	@Column(nullable = true,name="tape_id")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Integer tapeId;
 
 	public Location() {
 		active = true;

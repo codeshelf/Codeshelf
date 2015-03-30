@@ -42,7 +42,7 @@ import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.testframework.MockDaoTest;
-import com.codeshelf.ws.jetty.client.CsClientEndpoint;
+import com.codeshelf.ws.client.CsClientEndpoint;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;

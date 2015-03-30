@@ -18,12 +18,12 @@ import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.codeshelf.metrics.DropboxServiceHealthCheck;
 import com.codeshelf.metrics.IMetricsService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.WorkService;
-import com.codeshelf.ws.jetty.server.WebSocketManagerService;
+import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.inject.Inject;
 
 public final class ServerCodeshelfApplication extends CodeshelfApplication {

@@ -71,7 +71,7 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@Getter
 	@Setter
 	@JsonProperty
-	@Type(type="com.codeshelf.platform.persistence.DialectUUIDType")
+	@Type(type="com.codeshelf.persistence.DialectUUIDType")
 	private UUID persistentId = UUID.randomUUID();
 
 	// The domain ID

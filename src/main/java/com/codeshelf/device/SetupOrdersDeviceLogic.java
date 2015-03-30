@@ -215,6 +215,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					sendDisplayCommand(SCAN_PUTWALL_LOCATION_MSG, SCAN_PUTWALL_LINE2_MSG);
 					break;
 
+				case PUT_WALL_SCAN_ITEM:
+					sendDisplayCommand(SCAN_PUTWALL_ITEM_MSG, SCAN_PUTWALL_LINE2_MSG);
+					break;
+
+				case DO_PUT:
+					showActivePicks();
+					break;
+
 				default:
 					break;
 			}
@@ -306,6 +314,24 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	protected void putWallCommandReceived() {
 		// state sensitive. Only allow at start and finish for now.
+		// state sensitive. Only allow at start and finish for now.
+		switch (mCheStateEnum) {
+			case CONTAINER_SELECT:
+				// only if no container/orders at all have been set up
+				if (mPositionToContainerMap.size() == 0) {
+					setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
+				} else {
+					LOGGER.warn("User: {} attempted to do PUT_WALL after having some pick orders set up", this.getUserId());
+				}
+				break;
+
+			case PICK_COMPLETE:
+				setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
+				break;
+
+			default:
+				break;
+		}
 
 	}
 
@@ -359,13 +385,24 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case PUT_WALL_SCAN_ORDER:
 			case PUT_WALL_SCAN_LOCATION:
-				// DEV-708 specification. We want to return the state we started from: CONTAINER_SELECT or PICK_COMPLETE
+			case PUT_WALL_SCAN_ITEM:
+				// DEV-708, 712 specification. We want to return the state we started from: CONTAINER_SELECT or PICK_COMPLETE
 				// Perhaps will need a member variable, but for now we can tell by the state of the container map
 				if (mPositionToContainerMap.size() == 0) {
 					setState(CheStateEnum.CONTAINER_SELECT);
 				} else {
 					setState(CheStateEnum.PICK_COMPLETE);
 				}
+				break;
+
+			case DO_PUT:
+				// DEV-713 : more to do. This situation is on a job, and the user wants to abandon it.
+				// Allow at all? set to PUT_WALL_SCAN_ITEM implies that. Or do nothing to force worker to complete or short it.
+				
+					setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
+					// If allowing, we would want to clear and refresh the poscon display, and clear activeWis.
+					// Also a notifyXX()
+					// Would be nice to send message to server to delete the work instruction, but we leave lots of wis hanging around.
 				break;
 
 			default:
@@ -1058,6 +1095,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processPutWallOrderScan(inScanPrefixStr, inContent);
 				break;
 
+			case PUT_WALL_SCAN_ITEM:
+				processPutWallItemScan(inScanPrefixStr, inContent);
+				break;
+
 			default:
 				break;
 		}
@@ -1570,6 +1611,27 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		LOGGER.info("to do: send put wall setup msg {} at {}", orderId, locationName);
 		
 		notifyOrderToPutWall(orderId, locationName);		
+	}
+	
+	protected void processPutWallItemScan (final String inScanPrefixStr, final String inScanStr) {
+		
+		// DEV-713 This is incorrect. Change to  new GET_PUT_INSTRUCTION state
+		setState(CheStateEnum.DO_PUT);
+		// The response then returns the work instruction, and transitions to DO_PUT state. Cheating for now before the request is done.
+		// Note: if the response is "bad", want to be back in PUT_WALL_SCAN_ITEM state, with a meaningful response
+		// such as "could not find item", or "no order in put wall needs that item"
+		
+		sendWallItemMessage(inScanStr);
+		
+		// no notifyXXX here, as there is not result yet.
+		// do the notify on a good response, as work instruction(s) were made.
+	}
+
+	private void sendWallItemMessage(String itemOrUpc){
+		// This will form the command and send to server. .
+		LOGGER.info("to do: send get put wall instruction for {}", itemOrUpc);
+		// DEV-713 to implement this
+		
 	}
 
 	// --------------------------------------------------------------------------

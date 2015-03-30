@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import com.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.ws.protocol.message.MessageABC;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 

@@ -57,10 +57,9 @@ import com.codeshelf.model.domain.DomainObjectABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.Point;
-import com.codeshelf.platform.persistence.DatabaseUtils;
-import com.codeshelf.platform.persistence.ITenantPersistenceService;
-import com.codeshelf.platform.persistence.PersistenceService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.AbstractPersistenceService;
+import com.codeshelf.persistence.DatabaseUtils;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.security.CodeshelfRealm;
 import com.codeshelf.security.CodeshelfSecurityManager;
@@ -71,13 +70,13 @@ import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.ServiceUtility;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ThreadUtils;
-import com.codeshelf.ws.jetty.client.CsClientEndpoint;
-import com.codeshelf.ws.jetty.client.MessageCoordinator;
-import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
-import com.codeshelf.ws.jetty.server.CsServerEndPoint;
-import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.WebSocketConnection;
-import com.codeshelf.ws.jetty.server.WebSocketManagerService;
+import com.codeshelf.ws.client.CsClientEndpoint;
+import com.codeshelf.ws.client.MessageCoordinator;
+import com.codeshelf.ws.protocol.message.IMessageProcessor;
+import com.codeshelf.ws.server.CsServerEndPoint;
+import com.codeshelf.ws.server.ServerMessageProcessor;
+import com.codeshelf.ws.server.WebSocketConnection;
+import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Service.State;
@@ -118,7 +117,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	private static AuthProviderService							staticAuthProviderService;
 
 	// real non-mock instances
-	private static ITenantPersistenceService					realTenantPersistenceService;
+	private static TenantPersistenceService					realTenantPersistenceService;
 	private static ITenantManagerService						realTenantManagerService;
 	private boolean												resetRealPersistenceDaos;
 
@@ -145,7 +144,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	protected WebApiServer										apiServer;
 
 	@Getter
-	protected ITenantPersistenceService							tenantPersistenceService;
+	protected TenantPersistenceService							tenantPersistenceService;
 	protected ITenantManagerService								tenantManagerService;
 
 	@Getter
@@ -182,7 +181,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 				bind(IMessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);
 
 				requestStaticInjection(TenantPersistenceService.class);
-				bind(ITenantPersistenceService.class).to(TenantPersistenceService.class).in(Singleton.class);
+				bind(TenantPersistenceService.class).in(Singleton.class);
 
 				requestStaticInjection(TenantManagerService.class);
 				bind(ITenantManagerService.class).to(TenantManagerService.class).in(Singleton.class);
@@ -410,7 +409,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	private void setDummyPersistence() {
 		Map<Class<? extends IDomainObject>, ITypedDao<?>> mockDaos = this.createMockDaos();
 
-		tenantPersistenceService = new MockTenantPersistenceService(mockDaos);
+		tenantPersistenceService = new MockTenantPersistenceService(mockDaos);	
 		TenantPersistenceService.setInstance(tenantPersistenceService);
 
 		tenantManagerService = new MockTenantManagerService();
@@ -456,7 +455,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 			// initialize server for the first time
 			List<Service> services = new ArrayList<Service>();
-			PersistenceService mps = ManagerPersistenceService.getMaybeRunningInstance();
+			AbstractPersistenceService mps = ManagerPersistenceService.getMaybeRunningInstance();
 
 			if (!mps.isRunning())
 				services.add(mps);

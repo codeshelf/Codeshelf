@@ -2,9 +2,9 @@ package com.codeshelf.metrics;
 
 import java.util.Collection;
 
-import com.codeshelf.ws.jetty.server.WebSocketConnection;
-import com.codeshelf.ws.jetty.server.WebSocketConnection.State;
-import com.codeshelf.ws.jetty.server.WebSocketManagerService;
+import com.codeshelf.ws.server.WebSocketConnection;
+import com.codeshelf.ws.server.WebSocketManagerService;
+import com.codeshelf.ws.server.WebSocketConnection.State;
 
 public class ActiveSiteControllerHealthCheck extends CodeshelfHealthCheck {
 

@@ -49,7 +49,7 @@ public class DomainObjectPropertyDefault {
 	@Column(name = "persistentid", nullable = false)
 	@Getter
 	@JsonProperty
-	@Type(type="com.codeshelf.platform.persistence.DialectUUIDType")
+	@Type(type="com.codeshelf.persistence.DialectUUIDType")
 	private UUID persistentId = UUID.randomUUID();
 
 	@Getter

@@ -28,8 +28,8 @@ import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.platform.persistence.DatabaseCredentials;
-import com.codeshelf.platform.persistence.DatabaseUtils;
+import com.codeshelf.persistence.DatabaseCredentials;
+import com.codeshelf.persistence.DatabaseUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity

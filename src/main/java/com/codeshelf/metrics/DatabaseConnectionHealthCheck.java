@@ -3,7 +3,7 @@ package com.codeshelf.metrics;
 import java.sql.SQLException;
 
 import com.codeshelf.manager.TenantManagerService;
-import com.codeshelf.platform.persistence.DatabaseUtils;
+import com.codeshelf.persistence.DatabaseUtils;
 
 public class DatabaseConnectionHealthCheck extends CodeshelfHealthCheck {
 

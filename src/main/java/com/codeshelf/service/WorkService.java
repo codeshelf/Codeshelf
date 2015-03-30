@@ -69,7 +69,7 @@ import com.codeshelf.validation.BatchResult;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 import com.codeshelf.validation.MethodArgumentException;
-import com.codeshelf.ws.jetty.protocol.response.GetOrderDetailWorkResponse;
+import com.codeshelf.ws.protocol.response.GetOrderDetailWorkResponse;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
