@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.User;
+import com.google.common.base.Strings;
 
 @SuppressWarnings("serial")
 public class AuthServlet extends HttpServlet {
@@ -45,7 +46,7 @@ public class AuthServlet extends HttpServlet {
 		URI retryUri = uri(req.getParameter("retry"));
 		boolean authSuccess = false;
 		
-		if (username != null && password != null) {
+		if (!Strings.isNullOrEmpty(username) && !Strings.isNullOrEmpty(password)) {
 			AuthResponse auth = HmacAuthService.getInstance().authenticate(username, password);
 			if (auth.getStatus().equals(AuthResponse.Status.ACCEPTED)) {
 				User user = auth.getUser();
@@ -58,12 +59,12 @@ public class AuthServlet extends HttpServlet {
 				if(nextUri != null) {
 					resp.sendRedirect(nextUri.toASCIIString());
 				} else {
-					resp.sendRedirect("/");
+					resp.setStatus(Status.OK.getStatusCode());
 				}
 				authSuccess=true;
 			} // else authenticate logged reason if failed
 		} else {
-			LOGGER.warn("Login failed: information not submitted");
+			LOGGER.warn("Login failed: 'u' and/or 'p' parameters not submitted");
 		}
 		if(!authSuccess) { // TODO: clear token cookie here
 			if(retryUri != null) {
@@ -90,7 +91,8 @@ public class AuthServlet extends HttpServlet {
 
     private URI uri(String s) {
     	URI uri = null;
-    	if(s!=null) {
+    	
+    	if(!Strings.isNullOrEmpty(s)) {
         	try {
     			uri = new URI(s);
     		} catch (URISyntaxException e) {
