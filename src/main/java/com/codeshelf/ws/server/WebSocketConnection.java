@@ -398,6 +398,13 @@ public class WebSocketConnection implements IDaoListener {
 		double elapsedSec = ((double) delta) / 1000;
 		LOGGER.debug("Ping roundtrip on session " + this.sessionId + " in " + elapsedSec + "s");
 	}
+
+	public void close() throws IOException {
+		Session session = getWsSession();
+		if (session != null) {
+			session.close(new CloseReason(CloseCodes.GOING_AWAY,""));
+		}
+	}
 	/*
 	public Tenant getTenant() {
 		if(this.user == null)

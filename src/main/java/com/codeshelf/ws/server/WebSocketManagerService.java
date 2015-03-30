@@ -1,5 +1,6 @@
 package com.codeshelf.ws.server;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -332,7 +333,11 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 		LOGGER.info("shutting down WS connection manager with {} active sessions",this.activeConnections.size());
 		Collection<WebSocketConnection> sessions = this.activeConnections.values();
 		for(WebSocketConnection session : sessions) {
-			session.getWsSession().close(new CloseReason(CloseCodes.GOING_AWAY,""));
+			try {
+				session.close();
+			}catch(IOException e) {
+				LOGGER.warn("Failure when closing session {}", session);
+			}
 		}
 		this.activeConnections = null;
 		this.sharedExecutor.shutdown();
