@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -258,7 +259,7 @@ public class InventoryService implements IApiService {
 		
 		// Check if location already has an associated tapeId
 		if (location.getTapeId() != null) {
-			LOGGER.warn("Location: {} is already associated with tapeId: {}", location.getDomainId(), inTapeId);
+			LOGGER.warn("Location: {} is already associated with tapeId: {}. It will be dissociated.", location.getDomainId(), inTapeId);
 		}
 		
 		// Associate with new location
@@ -267,23 +268,27 @@ public class InventoryService implements IApiService {
 	}
 	
 	/**
-	 * Finds the location that a tapeId is associated with. 
+	 * Finds the location that a tapeId is associated with.
+	 * There should only ever be a single location associated with a tapeId
 	 * 
 	 * @param inFacility	The facility
 	 * @param inTapeId		The tapeId to search for
 	 * @return Location		Returns null if tapeId is not associated to a location
 	 */
 	private Location findLocationForTapeId(Facility inFacility,int inTapeId) {
-
-		List<Location> allLocations = inFacility.getChildren();
 		
-		for(Location location : allLocations){
-			if(location.getTapeId() == inTapeId){
-				return location;
-			}
+		Session session = TenantPersistenceService.getInstance().getSession();
+		
+		@SuppressWarnings("unchecked")
+		List<Location> locations = session.createCriteria(Location.class)
+			    .add(Restrictions.like("tapeId", inTapeId))
+			    .list();
+		
+		if (locations.isEmpty()) {
+			return null;
+		} else {
+			return locations.get(0);
 		}
-		
-		return null;
 	}
 	
 	
