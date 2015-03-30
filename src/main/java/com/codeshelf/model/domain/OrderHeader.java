@@ -29,6 +29,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.hibernate.Query;
+import org.hibernate.Session;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
@@ -573,4 +575,25 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		return theGroup.getDomainId();
 	}
 
+	
+	/**
+	 * Archives orderHeaders based on inProcessTime.
+	 * 
+	 * Note: This will archive all orderHeaders that have no orderDetails.
+	 * 
+	 * @param inProcessTime	Time to compare orderHeaders against.
+	 * @return Returns number of orderHeaders archived
+	 */
+	public static int archiveOrderHeaders(Timestamp inProcessTime){
+		Session session = TenantPersistenceService.getInstance().getSession();
+
+		String queryString = "UPDATE OrderHeader oh set oh.active = false WHERE oh.active = true AND oh NOT IN"
+				+ "(SELECT od.parent.persistentId FROM OrderDetail od WHERE od.active = true GROUP BY od.parent.persistentId HAVING count(od.active) > 0)";
+		
+		Query q = session.createQuery(queryString);
+		int numArchived = 0;
+		numArchived = q.executeUpdate();
+		LOGGER.info("Archived: {} OrderHeaders ", numArchived);
+		return numArchived;
+	}
 }

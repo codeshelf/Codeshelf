@@ -181,47 +181,15 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 	private void archiveCheckAllOrders(final Facility inFacility, final Timestamp inProcessTime, final boolean undefinedGroupUpdated) {
 		LOGGER.debug("Archive unreferenced order data");
 		
-		// Iterate all of the order headers in this order group to see if they're still active.
-		for (OrderHeader order : inFacility.getOrderHeaders()) {
-			//Skip all orders from groups not updated during the current order import
-			OrderGroup group = order.getOrderGroup();
-			if (!shouldOldOrbersBeArchivedInThisGroup(group, inProcessTime, undefinedGroupUpdated)) {
-				continue;
-			}
-			try {
-				if (order.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
-					Boolean orderHeaderIsActive = false;
-
-					// Iterate all of the order details in this order header to see if they're still active.
-					for (OrderDetail orderDetail : order.getOrderDetails()) {
-						try {
-							if (orderDetail.getUpdated().equals(inProcessTime)) {
-								orderHeaderIsActive = true;
-							} else {
-								LOGGER.trace("Archive old order detail: " + orderDetail.getOrderDetailId());
-								orderDetail.setActive(false);
-								// orderDetail.setQuantity(0);
-								// orderDetail.setMinQuantity(0);
-								// orderDetail.setMaxQuantity(0);
-								OrderDetail.staticGetDao().store(orderDetail);
-							}
-						} catch (RuntimeException e) {
-							LOGGER.warn("Unable to archive order detail: " + orderDetail, e);
-							throw e;
-						}
-					}
-
-					if (!orderHeaderIsActive) {
-						LOGGER.trace("Archive old order header: " + order.getOrderId());
-						order.setActive(false);
-						OrderHeader.staticGetDao().store(order);
-					}
-				}
-			} catch (RuntimeException e) {
-				LOGGER.warn("Unable to archive order: " + order, e);
-				throw e;
-			}
-		}
+		long startOD = System.currentTimeMillis();
+		OrderDetail.archiveOrderDetails(inProcessTime, undefinedGroupUpdated);
+		long endOD = System.currentTimeMillis();
+		long startOH = System.currentTimeMillis();
+		OrderHeader.archiveOrderHeaders(inProcessTime);
+		long endOH = System.currentTimeMillis();
+		
+		LOGGER.debug("Archive OrderDetails took: "+(endOD-startOD)/1000+" seconds");
+		LOGGER.debug("Archive OrderHeaders took: "+(endOH-startOH)/1000+" seconds");
 	}
 	
 	/**
