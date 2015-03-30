@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
@@ -15,12 +16,16 @@ import com.codeshelf.edi.InventorySlottedCsvBean;
 import com.codeshelf.event.EventProducer;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.model.DeviceType;
+import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Che.ProcessMode;
+import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
+import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.UomMaster;
@@ -217,5 +222,45 @@ public class UiUpdateService implements IApiService {
 		filterParams.add(Restrictions.eq("parent", facility));
 		List<Aisle> aisled = Aisle.staticGetDao().findByFilter(filterParams);
 		return (aisled.isEmpty()) ? ProcessMode.LINE_SCAN : ProcessMode.SETUP_ORDERS;
+	}
+	
+	/**
+	 * Create a new LED or PosCon controller
+	 */
+	public UUID addController(
+		final String facilityPersistentId,
+		final String inNewControllerId,
+		final String inNewDeviceType) {
+		
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityPersistentId);
+		CodeshelfNetwork network = facility.getNetworks().get(0);
+		NetGuid guid = new NetGuid(inNewControllerId);
+		String domainId = guid.getHexStringNoPrefix();
+		
+		LedController controller = network.findOrCreateLedController(domainId, guid);
+		if (inNewDeviceType!=null) {
+			DeviceType deviceType = DeviceType.valueOf(inNewDeviceType);
+			controller.setDeviceType(deviceType);
+			controller.getDao().store(controller);
+		}
+		return controller.getPersistentId();
+	}
+	
+	/**
+	 * Delete an LED or PosCon controller
+	 */
+	public void deleteController(final UUID controllerId) {
+		ITypedDao<LedController> ledDao = LedController.staticGetDao();
+		LedController controller = ledDao.findByPersistentId(controllerId);
+		if (controller == null) {return;}
+		ITypedDao<Location> locationDao = Location.staticGetLocationDao();
+		Criteria crit = locationDao.createCriteria();
+		crit.add(Restrictions.eq("ledController", controller));
+		List<Location> locations = locationDao.findByCriteriaQuery(crit);
+		for (Location location : locations) {
+			location.setLedController(null);
+			location.setLedChannel(null);
+		}
+		ledDao.delete(controller);
 	}
 }

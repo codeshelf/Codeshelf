@@ -61,10 +61,9 @@ public class LightService implements IApiService {
 	
 	// --------------------------------------------------------------------------
 	public void lightLocation(final String facilityPersistentId, final String inLocationNominalId) {
-
+		//Light LEDs
 		final Facility facility = checkFacility(facilityPersistentId);
 		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
-
 		Location theLocation = checkLocation(facility, inLocationNominalId);
 		lightChildLocations(facility, theLocation, color);
 		
@@ -303,73 +302,7 @@ public class LightService implements IApiService {
 			inLocationNominalId);
 		return theLocation;
 	}
-	
-	/* 
-		/*
-		public void lightAllControllers(final String inColorStr, final String facilityPersistentId, final String inLocationNominalId) {
-			
-			ColorEnum theColor = ColorEnum.valueOf(inColorStr);
-			if (theColor == ColorEnum.INVALID) {
-				LOGGER.error("lightOneLocation called with unknown color");
-				return;
-			}
 
-			Facility facility = Facility.staticGetDao().findByPersistentId(facilityPersistentId);
-			if (facility == null) {
-				LOGGER.error("lightAllControllers called with unknown facility");
-				return;
-			}
-
-			
-			LocationABC theLocation = facility.findSubLocationById(inLocationNominalId);
-			if (theLocation == null || theLocation.isFacility()) {
-				LOGGER.error("lightAllControllers called with unknown location");
-				return;
-			}
-
-			HashMap<ControllerChannelBayKey, Tier> lastLocationWithinBay = new HashMap<ControllerChannelBayKey, Tier>();
-			List<Tier> tiers = theLocation.getActiveChildrenAtLevel(Tier.class);
-			if (tiers.isEmpty()) {
-				LOGGER.error("lightAllControllers called with location with no tiers");
-				return;
-			}
-			
-			//Last tier within bay per controller
-			for (Tier tier : tiers) {
-				ControllerChannelBayKey key = new ControllerChannelBayKey(tier.getEffectiveLedController(), tier.getEffectiveLedChannel(), (Bay) tier.getParent());
-				LocationABC lastLocation = lastLocationWithinBay.get(key);
-
-				if (lastLocation == null || lastLocation.getLastLedNumAlongPath() < tier.getLastLedNumAlongPath()) {
-					lastLocationWithinBay.put(key, tier);
-				}
-			}
-			
-			List<Tier> sortedTiers = Lists.newArrayList(lastLocationWithinBay.values());
-			Collections.sort(sortedTiers, new LocationABC.LocationWorkingOrderComparator());
-		
-			lightLocations(theColor, facility.getPersistentId(), sortedTiers);
-		}
-		
-		private final List<LightLedsMessage> toLedMessages(List<LedCmdGroup> ledCmdGroupList) {
-			List<LightLedsMessage> ledMessages = Lists.newArrayList();
-			
-			ArrayListMultimap<String, LedCmdGroup> byLedController = ArrayListMultimap.<String, LedCmdGroup>create();
-			for (LedCmdGroup ledCmdGroup : ledCmdGroupList) {
-				byLedController.put(ledCmdGroup.getControllerId(), ledCmdGroup);
-			}
-			
-			for (String theGuidStr : byLedController.keys()) {
-				List<LedCmdGroup> ledCmdGroups = byLedController.get(theGuidStr);
-				
-				String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroups);
-				LightLedsMessage theMessage = new LightLedsMessage(theGuidStr, getLightDurationSeconds(), theLedCommands);
-				ledMessages.add(theMessage);
-			}
-			return ledMessages;
-		}
-		
-		
-	*/
 	@EqualsAndHashCode
 	private static class ControllerChannelKey {
 
