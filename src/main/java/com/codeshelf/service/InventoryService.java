@@ -4,6 +4,7 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
@@ -19,6 +20,7 @@ import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.UomMaster;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
@@ -181,34 +183,6 @@ public class InventoryService implements IApiService {
 		return response;
 	}
 	
-	private ItemMaster createItemMaster(final String inItemId,
-		final Facility inFacility,
-		final Timestamp inEdiProcessTime,
-		final UomMaster inUomMaster) {
-		
-		ItemMaster result = null;
-		result = new ItemMaster();
-		
-		// If we were able to get/create an item master then update it.
-		if (result != null) {
-			
-			result.setDomainId(inItemId);
-			result.setItemId(inItemId);
-			inFacility.addItemMaster(result);
-			result.setStandardUom(inUomMaster);
-			
-			try {
-				result.setActive(true);
-				result.setUpdated(inEdiProcessTime);
-				ItemMaster.staticGetDao().store(result);
-			} catch (DaoException e) {
-				LOGGER.error("Error saving ItemMaster: {}", e);
-			}
-		}
-		
-		return result;
-	}
-	
 	public UomMaster upsertUomMaster(final String inUomId, final Facility inFacility) {
 		DefaultErrors errors = new DefaultErrors(UomMaster.class);
 		if (Strings.emptyToNull(inUomId) == null) {
@@ -240,7 +214,89 @@ public class InventoryService implements IApiService {
 		return result;
 	}
 	
-	private String guessUomForItem(String inGtin, Facility inFacility){
+	/**
+	 * Sets the tapeId of a location (aisle, bay, tier, slot).
+	 * 
+	 * A tapeId can only be associated with a single location. If
+	 * the inTapeId is already associated with a location it will be dissociated
+	 * from its current location and associated with inLocation.
+	 * This will produce a warning in the log.
+	 * 
+	 * If the inLocation does not exist the inTapeId will not be associated to anything.
+	 * 
+	 * If the inLocation already has an associated tapeId it will be dissociated and
+	 * the inTapeId will be associated with the inLocation.
+	 * 
+	 * @param inFacility	The facility
+	 * @param inTapeId		The tapeId to associate
+	 * @param inLocation	The alias of the location to associate the tape
+	 * @return void
+	 * 
+	 */
+	public void setLocationTapeId(Facility inFacility, int inTapeId, String inLocation) {
+		// tapeId is associated with a location
+		// location already has a tapeId
+		
+		// Find location
+		Location location = findLocation(inFacility, inLocation);
+		if (location.equals(inFacility)) {
+			LOGGER.warn("Could not find location: {}. TapeId: {} will not be associated.", inLocation, inTapeId);
+			return;
+		}
+		
+		// Find location that tapeId is already associated with
+		Location oldLocation = findLocationForTapeId(inFacility, inTapeId);
+		if (oldLocation != null) {
+			LOGGER.warn("TapeId: {} is already associated with location: {}.", inTapeId, oldLocation.getDomainId());
+			oldLocation.setTapeId(null);
+			LOGGER.warn("TapeId: {} dissociated from location: {}", inTapeId, oldLocation.getDomainId());
+			
+			if (!location.isActive()) {
+				LOGGER.warn("Location: {} is not active", location.getDomainId());
+			}
+		}
+		
+		// Check if location already has an associated tapeId
+		if (location.getTapeId() != null) {
+			LOGGER.warn("Location: {} is already associated with tapeId: {}", location.getDomainId(), inTapeId);
+		}
+		
+		// Associate with new location
+		location.setTapeId(inTapeId);
+		LOGGER.info("TapeId: {} associated with location: {}", inTapeId, location.getDomainId());
+	}
+	
+	/**
+	 * Finds the location that a tapeId is associated with. 
+	 * 
+	 * @param inFacility	The facility
+	 * @param inTapeId		The tapeId to search for
+	 * @return Location		Returns null if tapeId is not associated to a location
+	 */
+	private Location findLocationForTapeId(Facility inFacility,int inTapeId) {
+
+		List<Location> allLocations = inFacility.getChildren();
+		
+		for(Location location : allLocations){
+			if(location.getTapeId() == inTapeId){
+				return location;
+			}
+		}
+		
+		return null;
+	}
+	
+	
+	
+	/**
+	 * Guesses the unit of measure for an item based on the GTIN and the facility.
+	 * 
+	 * @param inGtin		The GTIN of item to guess uom for.
+	 * @param inFacility	The facility.
+	 * @return String		The guessed UOM for the specified GTIN in specified facility.
+	 * 
+	 */
+	private String guessUomForItem(String inGtin, Facility inFacility) {
 		return "EA";
 	}
 	
@@ -262,4 +318,33 @@ public class InventoryService implements IApiService {
 		
 		return location;
 	}
+	
+	private ItemMaster createItemMaster(final String inItemId,
+		final Facility inFacility,
+		final Timestamp inEdiProcessTime,
+		final UomMaster inUomMaster) {
+		
+		ItemMaster result = null;
+		result = new ItemMaster();
+		
+		// If we were able to get/create an item master then update it.
+		if (result != null) {
+			
+			result.setDomainId(inItemId);
+			result.setItemId(inItemId);
+			inFacility.addItemMaster(result);
+			result.setStandardUom(inUomMaster);
+			
+			try {
+				result.setActive(true);
+				result.setUpdated(inEdiProcessTime);
+				ItemMaster.staticGetDao().store(result);
+			} catch (DaoException e) {
+				LOGGER.error("Error saving ItemMaster: {}", e);
+			}
+		}
+		
+		return result;
+	}
+	
 }
