@@ -158,7 +158,7 @@ public class IronMqService extends EdiServiceABC {
 			try {
 				Optional<Queue> queue = getWorkInstructionQueue();
 				if (queue.isPresent()) {
-					queue.get().getSize();
+					queue.get().getInfoAboutQueue();
 					setServiceState(EdiServiceStateEnum.LINKED);
 					LOGGER.warn("IronMqService is linked, will export work instructions");
 				}
