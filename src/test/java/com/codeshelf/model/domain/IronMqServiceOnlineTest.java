@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.codeshelf.generators.FacilityGenerator;
@@ -15,6 +16,7 @@ import com.codeshelf.model.EdiProviderEnum;
 import com.codeshelf.testframework.MockDaoTest;
 
 // TODO: should use mock DAO 
+@Ignore //Temporarily to see if service comes back online 
 public class IronMqServiceOnlineTest extends MockDaoTest {
 
 	private Map<String, String> tempPropertyRestore  = new HashMap<String, String>();
