@@ -26,7 +26,8 @@ import com.codeshelf.ws.protocol.command.ComputeWorkCommand;
 import com.codeshelf.ws.protocol.command.CreatePathCommand;
 import com.codeshelf.ws.protocol.command.EchoCommand;
 import com.codeshelf.ws.protocol.command.GetWorkCommand;
-import com.codeshelf.ws.protocol.command.InventoryLightCommand;
+import com.codeshelf.ws.protocol.command.InventoryLightItemCommand;
+import com.codeshelf.ws.protocol.command.InventoryLightLocationCommand;
 import com.codeshelf.ws.protocol.command.InventoryUpdateCommand;
 import com.codeshelf.ws.protocol.command.LoginCommand;
 import com.codeshelf.ws.protocol.command.ObjectDeleteCommand;
@@ -46,7 +47,8 @@ import com.codeshelf.ws.protocol.request.CreatePathRequest;
 import com.codeshelf.ws.protocol.request.DeviceRequest;
 import com.codeshelf.ws.protocol.request.EchoRequest;
 import com.codeshelf.ws.protocol.request.GetWorkRequest;
-import com.codeshelf.ws.protocol.request.InventoryLightRequest;
+import com.codeshelf.ws.protocol.request.InventoryLightItemRequest;
+import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
 import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.protocol.request.LoginRequest;
 import com.codeshelf.ws.protocol.request.ObjectDeleteRequest;
@@ -84,7 +86,8 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	private final Counter applicationRequestCounter;
 	private final Counter systemRequestCounter;
 	private final Counter inventoryUpdateRequestCounter;
-	private final Counter inventoryLightRequestCounter;
+	private final Counter inventoryLightItemRequestCounter;
+	private final Counter inventoryLightLocationRequestCounter;
 	private final Timer requestProcessingTimer;
 	
 	private ServiceFactory	serviceFactory;
@@ -118,7 +121,8 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		applicationRequestCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.application");
 		systemRequestCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.system");
 		inventoryUpdateRequestCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.inventory-update");
-		inventoryLightRequestCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.inventory-light");
+		inventoryLightItemRequestCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.inventory-light-item");
+		inventoryLightLocationRequestCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.inventory-light-location");
 		requestProcessingTimer = metricsService.createTimer(MetricsGroup.WSS,"requests.processing-time");
 		
 	}
@@ -218,11 +222,17 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			inventoryUpdateRequestCounter.inc();
 			applicationRequestCounter.inc();
 		}
-		else if (request instanceof InventoryLightRequest) {
-			command = new InventoryLightCommand(csSession, (InventoryLightRequest) request, serviceFactory.getServiceInstance(InventoryService.class));
-			inventoryLightRequestCounter.inc();
+		else if (request instanceof InventoryLightItemRequest) {
+			command = new InventoryLightItemCommand(csSession, (InventoryLightItemRequest) request, serviceFactory.getServiceInstance(InventoryService.class));
+			inventoryLightItemRequestCounter.inc();
 			applicationRequestCounter.inc();
-		} else {
+		} 
+		else if (request instanceof InventoryLightLocationRequest) {
+			command = new InventoryLightLocationCommand(csSession, (InventoryLightLocationRequest) request, serviceFactory.getServiceInstance(InventoryService.class));
+			inventoryLightLocationRequestCounter.inc();
+			applicationRequestCounter.inc();
+		}
+		else {
 			LOGGER.error("invalid message {} for user {}",request.getClass().getSimpleName(),user.getUsername());
 		}
 		try {

@@ -59,6 +59,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					LOCATION_PREFIX							= "L%";
 	protected static final String					ITEMID_PREFIX							= "I%";
 	protected static final String					POSITION_PREFIX							= "P%";
+	protected static final String		TAPE_PREFIX								= "%";
 
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 20 characters.
@@ -190,14 +191,27 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	private String									lastPutWallOrderScan;
 
 	protected void processGtinScan(final String inScanPrefixStr, final String inScanStr) {
-
+		boolean isTape = false;
+		
 		if (LOCATION_PREFIX.equals(inScanPrefixStr) && lastScanedGTIN != null) {
+			// Updating location of an item
 			notifyScanInventoryUpdate(inScanStr, lastScanedGTIN);
 			mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, lastScanedGTIN);
-		} else if (USER_PREFIX.equals(inScanPrefixStr)) {
+		} 
+		else if (LOCATION_PREFIX.equals(inScanPrefixStr) && lastScanedGTIN == null) {
+			// Lighting a location based on location
+			mDeviceManager.inventoryLightLocationScan(getPersistentId(), inScanStr, isTape);
+		} 
+		else if (TAPE_PREFIX.equals(inScanPrefixStr) && lastScanedGTIN == null) {
+			// Lighting a location based on tape
+			isTape = true;
+			mDeviceManager.inventoryLightLocationScan(getPersistentId(), inScanStr, isTape);
+		}
+		else if (USER_PREFIX.equals(inScanPrefixStr)) {
 			LOGGER.warn("Recieved invalid USER scan: {}. Expected location or GTIN.", inScanStr);
-		} else {
-			mDeviceManager.inventoryLightScan(this.getPersistentId(), inScanStr);
+		} 
+		else {
+			mDeviceManager.inventoryLightItemScan(this.getPersistentId(), inScanStr);
 			lastScanedGTIN = inScanStr;
 		}
 		setState(CheStateEnum.SCAN_GTIN);
