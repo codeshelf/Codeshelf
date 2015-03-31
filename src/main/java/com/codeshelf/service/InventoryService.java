@@ -25,7 +25,7 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
-import com.codeshelf.ws.protocol.response.InventoryLightResponse;
+import com.codeshelf.ws.protocol.response.InventoryLightItemResponse;
 import com.codeshelf.ws.protocol.response.InventoryUpdateResponse;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.google.common.base.Strings;
@@ -149,8 +149,8 @@ public class InventoryService implements IApiService {
 	}
 	
 	
-	public InventoryLightResponse lightInventoryByGtin(String inGtin, UUID inChePersistentId){
-		InventoryLightResponse response = new InventoryLightResponse();
+	public InventoryLightItemResponse lightInventoryByGtin(String inGtin, UUID inChePersistentId){
+		InventoryLightItemResponse response = new InventoryLightItemResponse();
 		
 		Che che = Che.staticGetDao().findByPersistentId(inChePersistentId);
 		if (che == null) {
