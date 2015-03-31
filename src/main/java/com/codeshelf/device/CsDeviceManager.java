@@ -209,6 +209,26 @@ public class CsDeviceManager implements
 	}
 
 	// --------------------------------------------------------------------------
+	/* 
+	 * Public convenience function for put wall button press. Need to easily find the CheDeviceLogic that asked the position to be lit.
+	 */
+	public final CheDeviceLogic getCheDeviceByControllerId(String controllerId) {
+		if (controllerId == null)
+			return null;
+		
+		NetGuid theGuid = new NetGuid(controllerId);
+		INetworkDevice theDevice =  mDeviceMap.get(theGuid);
+		if (theDevice == null)
+			return null;
+		else if (theDevice instanceof CheDeviceLogic)
+			return (CheDeviceLogic) theDevice;
+		else {
+			LOGGER.error("unexpected device type for {} in getCheDeviceByControllerId", controllerId);
+			return null;
+		}
+	}
+
+	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.codeshelf.flyweight.controller.IRadioControllerEventListener#canNetworkDeviceAssociate(com.codeshelf.flyweight.command.NetGuid)
 	 */

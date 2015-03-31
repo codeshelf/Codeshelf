@@ -177,6 +177,11 @@ public class PosControllerInstr extends MessageABC implements Validatable{
 		mControllerId = inControllerId;
 	}
 
+	public PosControllerInstr(final String inControllerId, final String inSourceId, final byte inPosition, final byte inReqQty, final byte inMinQty, final byte inMaxQty, final byte inFreq, final byte inDutyCycle) {
+		this(inPosition, inReqQty, inMinQty, inMaxQty, inFreq, inDutyCycle);
+		mControllerId = inControllerId;
+		mSourceId = inSourceId;
+	}
 	public void processRemoveField(){
 		if (mRemove == null) {return;}
 		if ("all".equalsIgnoreCase(mRemove)){
