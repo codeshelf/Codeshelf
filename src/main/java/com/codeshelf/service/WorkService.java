@@ -100,7 +100,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 	private IEdiExportServiceProvider	exportServiceProvider;
 	private final LightService			lightService;
-	
+
 	@Transient
 	private WorkInstructionCSVExporter	wiCSVExporter;
 
@@ -428,11 +428,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * Only set if the scanned location resolved
 	 */
 	private void saveCheLastScannedLocation(final Che inChe, final String inScannedLocationId) {
-		if (inScannedLocationId == null){
+		if (inScannedLocationId == null) {
 			return;
 		}
 		// need to exclude these?
-		if (CheDeviceLogic.STARTWORK_COMMAND.equalsIgnoreCase(inScannedLocationId) || CheDeviceLogic.REVERSE_COMMAND.equalsIgnoreCase(inScannedLocationId)) {
+		if (CheDeviceLogic.STARTWORK_COMMAND.equalsIgnoreCase(inScannedLocationId)
+				|| CheDeviceLogic.REVERSE_COMMAND.equalsIgnoreCase(inScannedLocationId)) {
 			LOGGER.error("unexpected value in saveCheLastScannedLocation");
 			return;
 		}
@@ -937,9 +938,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					resultWi.setPlanMaxQuantity(0);
 					WorkInstruction.staticGetDao().store(resultWi);
 				}
-				resultWork.setInstruction(resultWi);
+				resultWork.addInstruction(resultWi);
 			} else {
-				resultWork.setDetail(inOrderDetail);
+				resultWork.addDetail(inOrderDetail);
 			}
 		} else {
 			resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
@@ -949,7 +950,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				inChe,
 				location,
 				inTime);
-			resultWork.setInstruction(resultWi);
+			resultWork.addInstruction(resultWi);
 
 		}
 		return resultWork;
