@@ -260,11 +260,7 @@ public class Che extends WirelessDeviceABC {
 	 * the CHE's active path is the path of the getLastScannedLocation()
 	 */
 	public Path getActivePath() {
-		String lastLocationName = this.getLastScannedLocation();
-		if (lastLocationName == null || lastLocationName.isEmpty())
-			return null;
-		Facility facility = this.getFacility();
-		Location loc = facility.findSubLocationById(lastLocationName);
+		Location loc = getLocationOfLastScan();
 		if (loc != null && loc.isActive()) {
 			PathSegment segment = loc.getAssociatedPathSegment();
 			if (segment != null)
@@ -272,6 +268,15 @@ public class Che extends WirelessDeviceABC {
 		}
 		return null;
 	}
+
+	public Location getLocationOfLastScan() {
+		String lastLocationName = this.getLastScannedLocation();
+		if (lastLocationName == null || lastLocationName.isEmpty())
+			return null;
+		Facility facility = this.getFacility();
+		return facility.findSubLocationById(lastLocationName);
+	}
+
 	public String getActivePathUi() {
 		String returnStr = "";
 		Path path = getActivePath();
@@ -282,7 +287,8 @@ public class Che extends WirelessDeviceABC {
 	}
 
 	public String getActiveWorkAreaUi() {
-		// Stub for later use. Work area is a collection of paths.
+		// Stub for later use. Work area is a collection of paths. No Che UX field for this yet.
+		// Existing CHE UX Work Area field needs to change, or come to this.
 		String returnStr = "";
 		Path path = getActivePath();
 		if (path != null){
