@@ -61,21 +61,28 @@ public class Che extends WirelessDeviceABC {
 	}
 
 	private static final Logger		LOGGER				= LoggerFactory.getLogger(Che.class);
-	
+
 	@NotNull
 	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
 	@JsonProperty
 	private ColorEnum				color;
-	
-	@Column(name="processmode")
+
+	@Column(name = "processmode")
 	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
 	@JsonProperty
 	private ProcessMode				processMode;
-	
+
+	// lastScannedLocation.
+	@Column(nullable = true, name = "last_scanned_location")
+	@Getter
+	@Setter
+	@JsonProperty
+	private String					lastScannedLocation;
+
 	@OneToMany(mappedBy = "currentChe")
 	@Getter
 	private List<ContainerUse>		uses				= new ArrayList<ContainerUse>();
@@ -151,7 +158,7 @@ public class Che extends WirelessDeviceABC {
 					+ " because it isn't found in children", new Exception());
 		}
 	}
-	
+
 	public void clearChe() {
 		// This will produce immediate shorts. See cleanup in deleteExistingShortWiToFacility()
 
@@ -231,18 +238,60 @@ public class Che extends WirelessDeviceABC {
 		}
 		return returnStr;
 	}
-	
+
 	public enum ProcessMode {
-		SETUP_ORDERS, LINE_SCAN;
-		
+		SETUP_ORDERS,
+		LINE_SCAN;
+
 		public static ProcessMode getMode(String str) {
-			if ("setup_orders".equalsIgnoreCase(str)){
+			if ("setup_orders".equalsIgnoreCase(str)) {
 				return SETUP_ORDERS;
-			} else if ("line_scan".equalsIgnoreCase(str)){
+			} else if ("line_scan".equalsIgnoreCase(str)) {
 				return LINE_SCAN;
 			}
 			return null;
 		}
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Functions related to remembering a CHE's current path and work area. For DEV-721
+	 * By our definition in https://codeshelf.atlassian.net/wiki/display/TD/CD_0064B+Work+Area+Concepts
+	 * the CHE's active path is the path of the getLastScannedLocation()
+	 */
+	public Path getActivePath() {
+		String lastLocationName = this.getLastScannedLocation();
+		if (lastLocationName == null || lastLocationName.isEmpty())
+			return null;
+		Facility facility = this.getFacility();
+		Location loc = facility.findSubLocationById(lastLocationName);
+		if (loc != null && loc.isActive()) {
+			PathSegment segment = loc.getAssociatedPathSegment();
+			if (segment != null)
+				return segment.getParent();
+		}
+		return null;
+	}
+	public String getActivePathUi() {
+		String returnStr = "";
+		Path path = getActivePath();
+		if (path != null){
+			returnStr = path.getDomainId();
+		}
+		return returnStr;
+	}
+
+	public String getActiveWorkAreaUi() {
+		// Stub for later use. Work area is a collection of paths.
+		String returnStr = "";
+		Path path = getActivePath();
+		if (path != null){
+			WorkArea area = path.getWorkArea();
+			if (area != null) {
+				returnStr = area.getWorkAreaId();
+			}
+		}
+		return returnStr;
 	}
 
 }
