@@ -34,6 +34,7 @@ import com.google.inject.Inject;
 
 public class InventoryService implements IApiService {
 
+	int TAPEID_LENGTH = 12;
 	LightService lightService;
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(LineScanDeviceLogic.class);
 	
@@ -229,7 +230,7 @@ public class InventoryService implements IApiService {
 	 * the inTapeId will be associated with the inLocation.
 	 * 
 	 * @param inFacility	The facility
-	 * @param inTapeId		The tapeId to associate
+	 * @param inTapeId		The tapeId to associate (Should not include distance offset)
 	 * @param inLocation	The alias of the location to associate the tape
 	 * @return void
 	 * 
@@ -265,6 +266,18 @@ public class InventoryService implements IApiService {
 		// Associate with new location
 		location.setTapeId(inTapeId);
 		LOGGER.info("TapeId: {} associated with location: {}", inTapeId, location.getDomainId());
+	}
+	
+	/**
+	 * Lights a location by either location alias or tapeId
+	 * 
+	 * @param inLocation	location alias or tapeId
+	 * @param isTape		is this a tapeId or a location alias
+	 * @param inChePersistentId	persistentId of che making call
+	 * @return void
+	 */
+	public void lightLocationByAliasOrTapeId(String inLocation, boolean isTape, UUID inChePersistentId) {
+
 	}
 	
 	/**
