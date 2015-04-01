@@ -18,6 +18,7 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
@@ -247,6 +248,8 @@ public class CheProcessPutWall extends ServerTest {
 		LOGGER.info("2: As if the slow movers came out of system, just scan those SKUs to place into put wall");
 
 		picker1.scanCommand("PUT_WALL");
+		// TODO
+		// Work flow wrong here. Should need to scan the container as another state-step. Otherwise, scan "Sku1514" may lead to work instructions in multiple walls.
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, 4000);
 		picker1.scanSomething("Sku1514");
 		picker1.waitForCheState(CheStateEnum.DO_PUT, 4000);
@@ -300,7 +303,10 @@ public class CheProcessPutWall extends ServerTest {
 		Assert.assertNotNull(posman);
 		
 		CheDeviceLogic theDevice = picker.getCheDeviceLogic();
+		
+		// A diversion. This could be in non-integration unit test.
 		theDevice.testOffChePosconWorkInstructions();
+		
 		
 
 		LOGGER.info("1a: set up a one-pick order");
@@ -311,6 +317,24 @@ public class CheProcessPutWall extends ServerTest {
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
 		picker.scanLocation("P11");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		
+		// A diversion. Check the last scanned location behavior
+		this.getTenantPersistenceService().beginTransaction();
+		Che che = Che.staticGetDao().findByPersistentId(this.che1PersistentId);
+		String lastScan = che.getLastScannedLocation();
+		// TODO remove comment
+		// Assert.assertEquals("P11", lastScan);
+		
+		// cheat as the backend protocol change is not done yet.
+		che.setLastScannedLocation("P11");
+		lastScan = che.getLastScannedLocation();
+		Assert.assertEquals("P11", lastScan);
+
+		String pathOfLastScan = che.getActivePathUi();
+		Assert.assertEquals("F1.4", pathOfLastScan); // put wall on the 4th path made in setUpFacilityWithPutWall
+
+		this.getTenantPersistenceService().commitTransaction();
+
 
 		LOGGER.info("1b: This should result in the poscon lighting");
 		// P12 is at poscon index 2. Count should be 4
