@@ -322,19 +322,10 @@ public class CheProcessPutWall extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		Che che = Che.staticGetDao().findByPersistentId(this.che1PersistentId);
 		String lastScan = che.getLastScannedLocation();
-		// TODO remove comment
-		// Assert.assertEquals("P11", lastScan);
-		
-		// cheat as the backend protocol change is not done yet.
-		che.setLastScannedLocation("P11");
-		lastScan = che.getLastScannedLocation();
 		Assert.assertEquals("P11", lastScan);
-
 		String pathOfLastScan = che.getActivePathUi();
 		Assert.assertEquals("F1.4", pathOfLastScan); // put wall on the 4th path made in setUpFacilityWithPutWall
-
 		this.getTenantPersistenceService().commitTransaction();
-
 
 		LOGGER.info("1b: This should result in the poscon lighting");
 		// P12 is at poscon index 2. Count should be 4

@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Timer;
+import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.edi.IEdiExportServiceProvider;
 import com.codeshelf.edi.WorkInstructionCSVExporter;
 import com.codeshelf.metrics.MetricsGroup;
@@ -80,12 +81,12 @@ import com.google.common.collect.Lists;
 
 public class WorkService extends AbstractCodeshelfExecutionThreadService implements IApiService {
 
-	public static final long			DEFAULT_RETRY_DELAY			= 10000L;
+	public static final long			DEFAULT_RETRY_DELAY	= 10000L;
 	private static final String			SHUTDOWN_MESSAGE	= "*****SHUTDOWN*****";
-	public static final int				DEFAULT_CAPACITY			= Integer.MAX_VALUE;
-	private static Double				BAY_ALIGNMENT_FUDGE			= 0.25;
+	public static final int				DEFAULT_CAPACITY	= Integer.MAX_VALUE;
+	private static Double				BAY_ALIGNMENT_FUDGE	= 0.25;
 
-	private static final Logger			LOGGER						= LoggerFactory.getLogger(WorkService.class);
+	private static final Logger			LOGGER				= LoggerFactory.getLogger(WorkService.class);
 	private BlockingQueue<WIMessage>	completedWorkInstructions;
 
 	@Getter
@@ -143,15 +144,13 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	public final List<WorkInstruction> getWorkResults(final UUID facilityUUID, final Date startDate, final Date endDate) {
 		//select persistentid, type, status, picker_id, completed, actual_quantity from capella.work_instruction where 
 		// type = 'ACTUAL' and date_trunc('day', completed) = timestamp '2015-03-11' order by completed
-		return WorkInstruction.staticGetDao().findByFilter(ImmutableList.<Criterion>of(
-				Restrictions.eq("type", WorkInstructionTypeEnum.ACTUAL),
-				Restrictions.eq("parent.persistentId", facilityUUID),
-				Restrictions.ge("completed", new Timestamp(startDate.getTime())),
-				Restrictions.lt("completed", new Timestamp(endDate.getTime()))),
+		return WorkInstruction.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("type",
+			WorkInstructionTypeEnum.ACTUAL), Restrictions.eq("parent.persistentId", facilityUUID), Restrictions.ge("completed",
+			new Timestamp(startDate.getTime())), Restrictions.lt("completed", new Timestamp(endDate.getTime()))),
 			ImmutableList.of(Order.asc("completed")));
-			
+
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Compute work instructions for a CHE that's at the listed location with the listed container IDs.
@@ -192,7 +191,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					newCntrUses.add(thisUse); // DEV-492 bit
 					Che previousChe = thisUse.getCurrentChe();
 					if (previousChe != null) {
-			//			changedChes.add(previousChe);
+						//			changedChes.add(previousChe);
 					}
 					if (previousChe == null) {
 						inChe.addContainerUse(thisUse);
@@ -256,7 +255,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		Timestamp theTime = new Timestamp(System.currentTimeMillis());
 		return theTime;
 	}
-
 
 	// just a call through to facility, but convenient for the UI
 	public final void fakeSetupUpContainersOnChe(UUID cheId, String inContainers) {
@@ -364,10 +362,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		LOGGER.info("getWorkInstructionsForOrderDetail request for " + inChe.getDomainId() + " detail:" + inScannedOrderDetailId);
 
-		Map<String, Object> filterArgs = ImmutableMap.<String,Object>of(
-			"facilityId", inChe.getFacility().getPersistentId(),
-			"domainId", inScannedOrderDetailId
-		);
+		Map<String, Object> filterArgs = ImmutableMap.<String, Object> of("facilityId",
+			inChe.getFacility().getPersistentId(),
+			"domainId",
+			inScannedOrderDetailId);
 		List<OrderDetail> orderDetails = OrderDetail.staticGetDao().findByFilter("orderDetailByFacilityAndDomainId", filterArgs);
 
 		if (orderDetails.isEmpty()) {
@@ -427,6 +425,30 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	/**
 	 * @param inChe
 	 * @param inScannedLocationId
+	 * Only set if the scanned location resolved
+	 */
+	private void saveCheLastScannedLocation(final Che inChe, final String inScannedLocationId) {
+		if (inScannedLocationId == null){
+			return;
+		}
+		// need to exclude these?
+		if (CheDeviceLogic.STARTWORK_COMMAND.equalsIgnoreCase(inScannedLocationId) || CheDeviceLogic.REVERSE_COMMAND.equalsIgnoreCase(inScannedLocationId)) {
+			LOGGER.error("unexpected value in saveCheLastScannedLocation");
+			return;
+		}
+
+		Facility facility = inChe.getFacility();
+		Location cheLocation = facility.findSubLocationById(inScannedLocationId);
+		if (cheLocation != null) {
+			inChe.setLastScannedLocation(inScannedLocationId);
+			Che.staticGetDao().store(inChe);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inChe
+	 * @param inScannedLocationId
 	 * @return
 	 * Provides the list of work instruction beyond the current scan location. Implicitly assumes only one path, or more precisely, any work instructions
 	 * for that CHE are assumed be on the path of the scanned location.
@@ -436,9 +458,14 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		return getWorkInstructions(inChe, inScannedLocationId, false, false);
 	}
 
-	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId, Boolean reversePickOrder, Boolean reverseOrderFromLastTime) {
+	public final List<WorkInstruction> getWorkInstructions(final Che inChe,
+		final String inScannedLocationId,
+		Boolean reversePickOrder,
+		Boolean reverseOrderFromLastTime) {
 		long startTimestamp = System.currentTimeMillis();
 		Facility facility = inChe.getFacility();
+
+		saveCheLastScannedLocation(inChe, inScannedLocationId);
 
 		//boolean start = CheDeviceLogic.STARTWORK_COMMAND.equalsIgnoreCase(inScannedLocationId);
 		//boolean reverse = CheDeviceLogic.REVERSE_COMMAND.equalsIgnoreCase(inScannedLocationId);
@@ -467,7 +494,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			List<WorkInstruction> preferredInstructions = new ArrayList<WorkInstruction>();
 			for (WorkInstruction instruction : completeRouteWiList) {
 				OrderDetail detail = instruction.getOrderDetail();
-				if (detail.isPreferredDetail()){
+				if (detail.isPreferredDetail()) {
 					preferredInstructions.add(instruction);
 				}
 			}
@@ -484,7 +511,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		// Get all of the PLAN WIs assigned to this CHE beyond the specified position
 		List<WorkInstruction> wiListFromStartLocation = findCheInstructionsFromPosition(inChe, startingPathPos, reversePickOrder);
-
 
 		// Make sure sorted correctly. The query just got the work instructions.
 		Collections.sort(wiListFromStartLocation, new GroupAndSortCodeComparator());
@@ -742,9 +768,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 									}
 								}
 							}
-						}
-						catch(DaoException e) {
-							LOGGER.error("Unable to create work instruction for che: {}, orderDetail: {}, container: {}", inChe, orderDetail, container, e);
+						} catch (DaoException e) {
+							LOGGER.error("Unable to create work instruction for che: {}, orderDetail: {}, container: {}",
+								inChe,
+								orderDetail,
+								container,
+								e);
 						}
 					}
 					if (orderDetailChanged) {
@@ -793,7 +822,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 						setWiPickInstruction(wi, work.getOutboundOrderDetail().getParent());
 						wiList.add(wi);
 					}
-				} catch(DaoException e) {
+				} catch (DaoException e) {
 					LOGGER.error("Unable to create work instruction for: {}", work, e);
 				}
 			}
@@ -860,10 +889,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					location = inFacility.findLocationById(preferredLocationStr);
 					if (location == null) {
 						location = inFacility.getUnspecifiedLocation();
-					} else if (!location.isActive()){
+					} else if (!location.isActive()) {
 						LOGGER.warn("Unexpected inactive location for preferred Location: {}", location);
 						location = inFacility.getUnspecifiedLocation();
-					}					
+					}
 				} else {
 					LOGGER.warn("Wanted workSequence mode but need locationId for detail: {}", inOrderDetail);
 				}
@@ -886,9 +915,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			}
 		}
 
-
 		if (location == null) {
-
 
 			// Need to improve? Do we already have a short WI for this order detail? If so, do we really want to make another?
 			// This should be moderately rare, although it happens in our test case over and over. User has to scan order/container to cart to make this happen.
@@ -922,13 +949,13 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				inChe,
 				location,
 				inTime);
-				resultWork.setInstruction(resultWi);
+			resultWork.setInstruction(resultWi);
 
 		}
 		return resultWork;
 	}
 
-	private boolean doAutoShortInstructions(){
+	private boolean doAutoShortInstructions() {
 		return false;
 	}
 
@@ -1087,13 +1114,14 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * @param inWiList
 	 * May return empty list, but never null
 	 */
-	private List<WorkInstruction> findCheInstructionsFromPosition(final Che inChe, final Double inFromStartingPosition, final Boolean getBeforePosition) {
+	private List<WorkInstruction> findCheInstructionsFromPosition(final Che inChe,
+		final Double inFromStartingPosition,
+		final Boolean getBeforePosition) {
 		List<WorkInstruction> cheWorkInstructions = new ArrayList<>();
 		if (inChe == null || inFromStartingPosition == null) {
 			LOGGER.error("null input to queryAddCheInstructionsToList");
 			return cheWorkInstructions;
 		}
-
 
 		Collection<WorkInstructionTypeEnum> wiTypes = new ArrayList<WorkInstructionTypeEnum>(3);
 		wiTypes.add(WorkInstructionTypeEnum.PLAN);
@@ -1184,9 +1212,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					exportMessage = completedWorkInstructions.take();
 				} catch (InterruptedException e1) {
 				}
-				if(exportMessage != null) {
-					if(exportMessage.messageBody.equals(SHUTDOWN_MESSAGE)) {
-						shutdownRequested=true;
+				if (exportMessage != null) {
+					if (exportMessage.messageBody.equals(SHUTDOWN_MESSAGE)) {
+						shutdownRequested = true;
 					} else {
 						processExportMessage(exportMessage);
 					}
@@ -1222,7 +1250,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 	@Override
 	protected void triggerShutdown() {
-		WIMessage poison = new WorkService.WIMessage(null,WorkService.SHUTDOWN_MESSAGE);
+		WIMessage poison = new WorkService.WIMessage(null, WorkService.SHUTDOWN_MESSAGE);
 		this.completedWorkInstructions.offer(poison);
 	}
 
@@ -1233,7 +1261,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	}
 
 	public boolean willOrderDetailGetWi(OrderDetail inOrderDetail) {
-		String sequenceKind = PropertyService.getInstance().getPropertyFromConfig(inOrderDetail.getFacility(), DomainObjectProperty.WORKSEQR);
+		String sequenceKind = PropertyService.getInstance().getPropertyFromConfig(inOrderDetail.getFacility(),
+			DomainObjectProperty.WORKSEQR);
 		WorkInstructionSequencerType sequenceKindEnum = WorkInstructionSequencerType.parse(sequenceKind);
 
 		OrderTypeEnum myParentType = inOrderDetail.getParentOrderType();
@@ -1253,19 +1282,18 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		} else { // No cross detail. Assume outbound pick. Only need inventory on the path. Not checking path/work area now.
 			String inventoryLocs = inOrderDetail.getItemLocations();
 
-			if (inOrderDetail.getPreferredLocation() != null &&
-					!inOrderDetail.getPreferredLocation().isEmpty()) {
+			if (inOrderDetail.getPreferredLocation() != null && !inOrderDetail.getPreferredLocation().isEmpty()) {
 
-				if ( sequenceKindEnum.equals(WorkInstructionSequencerType.BayDistance)) {
+				if (sequenceKindEnum.equals(WorkInstructionSequencerType.BayDistance)) {
 					// If preferred location is set but it is not modeled return false
 					// We need to the location to be modeled to compute bay distance
 					Location preferredLocation = inOrderDetail.getPreferredLocObject();
 
-					if ( preferredLocation != null
-							&& ( preferredLocation.getPathSegment() != null
-								|| preferredLocation.getParent().getPathSegment() != null
-								|| preferredLocation.getParent().getParent().getPathSegment() != null )
-							) {
+					if (preferredLocation != null
+							&& (preferredLocation.getPathSegment() != null
+									|| preferredLocation.getParent().getPathSegment() != null || preferredLocation.getParent()
+								.getParent()
+								.getPathSegment() != null)) {
 						return true;
 					} else {
 						// Check if item is on any valid path
@@ -1273,26 +1301,26 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 						ItemMaster itemMaster = inOrderDetail.getItemMaster();
 						List<Location> itemLocations = new ArrayList<Location>();
 
-						for(Path p : allPaths){
+						for (Path p : allPaths) {
 							String uomStr = inOrderDetail.getUomMasterId();
 							Item item = itemMaster.getFirstActiveItemMatchingUomOnPath(p, uomStr);
 
-							if (item != null){
+							if (item != null) {
 								Location itemLocation = item.getStoredLocation();
 								itemLocations.add(itemLocation);
 								break;
 							}
 						}
 
-						if (!itemLocations.isEmpty()){
+						if (!itemLocations.isEmpty()) {
 							return true;
 						} else {
 							return false;
 						}
 					}
 
-				} else if ( sequenceKindEnum.equals(WorkInstructionSequencerType.WorkSequence)) {
-					if ( inOrderDetail.getWorkSequence() != null ) {
+				} else if (sequenceKindEnum.equals(WorkInstructionSequencerType.WorkSequence)) {
+					if (inOrderDetail.getWorkSequence() != null) {
 						return true;
 					} else {
 						return false;
