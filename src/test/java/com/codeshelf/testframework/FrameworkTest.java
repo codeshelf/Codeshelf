@@ -66,6 +66,7 @@ import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.HmacAuthService;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.InventoryService;
+import com.codeshelf.service.LightService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.ServiceUtility;
 import com.codeshelf.service.WorkService;
@@ -592,7 +593,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	}
 
 	protected WorkService generateWorkService() {
-		return new WorkService();
+		return new WorkService(new LightService(staticWebSocketManagerService));
 	}
 
 	protected final Facility generateTestFacility() {

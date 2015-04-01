@@ -78,6 +78,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 
 public class WorkService extends AbstractCodeshelfExecutionThreadService implements IApiService {
 
@@ -98,7 +99,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	private int							capacity;
 
 	private IEdiExportServiceProvider	exportServiceProvider;
-
+	private final LightService			lightService;
+	
 	@Transient
 	private WorkInstructionCSVExporter	wiCSVExporter;
 
@@ -121,8 +123,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 	}
 
-	public WorkService() {
-		this(new IEdiExportServiceProvider() {
+	@Inject
+	public WorkService(LightService lightService) {
+		this(lightService, new IEdiExportServiceProvider() {
 			@Override
 			public IEdiService getWorkInstructionExporter(Facility facility) {
 				return facility.getEdiExportService();
@@ -130,11 +133,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		});
 	}
 
-	public WorkService(IEdiExportServiceProvider exportServiceProvider) {
-		init(exportServiceProvider);
-	}
-
-	private void init(IEdiExportServiceProvider exportServiceProvider) {
+	public WorkService(LightService lightService, IEdiExportServiceProvider exportServiceProvider) {
+		this.lightService = lightService;
 		this.exportServiceProvider = exportServiceProvider;
 		this.wiCSVExporter = new WorkInstructionCSVExporter();
 		this.retryDelay = DEFAULT_RETRY_DELAY;

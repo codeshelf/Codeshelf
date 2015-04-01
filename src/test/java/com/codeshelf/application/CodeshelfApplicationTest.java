@@ -62,7 +62,7 @@ public class CodeshelfApplicationTest extends ServerTest {
 			pickDocumentGenerator,
 			adminServer,
 			this.tenantManagerService,
-			new WorkService(),
+			this.workService,
 			this.metricsService,
 			this.webSocketManagerService,
 			new DummyPropertyService(),
