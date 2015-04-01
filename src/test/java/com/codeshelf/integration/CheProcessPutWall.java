@@ -279,8 +279,8 @@ public class CheProcessPutWall extends ServerTest {
 	@Test
 	public final void putWallButton() throws IOException {
 		// This is for DEV-727. This "cheats" by not doing a putwall transaction at all. Just a simple pick from a location with poscons
-		// The picker/Che guid is "0x00009991"
-		// The posman guid is "00001991"
+		// The picker/Che guid is "00009991"
+		// The posman guid is "00001881"
 
 		this.getTenantPersistenceService().beginTransaction();
 		setUpFacilityWithPutWall();
@@ -315,10 +315,10 @@ public class CheProcessPutWall extends ServerTest {
 		LOGGER.info("1b: This should result in the poscon lighting");
 		// P12 is at poscon index 2. Count should be 4
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 2);
-		Assert.assertEquals((Byte) (byte) 4, displayValue); // bug
-
+		Assert.assertEquals((Byte) (byte) 4, displayValue); 
 		// button from the put wall
 		posman.buttonPress(2, 4);
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 3000);
 
 		// after DEV-713 
 		// we get two plans. For this test, handle singly. DEV-714 is about lighting two or more put wall locations at time.

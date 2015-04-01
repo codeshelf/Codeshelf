@@ -829,8 +829,23 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	/* 
 	 * We call this when posting a poscon lighting message for an active WI.
 	 * Note: may want to save the persistentID or something on the WI and not the reference itself.
+	 * By convention, we are remembering the representation without the 0x (Change if necessary.)
 	 */
 	private void rememberOffChePosconWorkInstruction(String controllerId, int posconIndex, WorkInstruction inFirstWi) {
+		if (controllerId == null || inFirstWi == null){
+			LOGGER.error(" null input to rememberOffChePosconWorkInstruction");
+			return;
+		}
+		if (controllerId.length() < 2){ // not enough for a real business case, but avoids stringOutOfRange exception
+			LOGGER.error(" bad input to rememberOffChePosconWorkInstruction");
+			return;
+		}
+		String theSub = controllerId.substring(0,2);
+		if ("0x".equals(controllerId.substring(0,2))) {
+			LOGGER.error("Probable coding error. See comments in rememberOffChePosconWorkInstruction()");
+			// By convention, use the non- Ox form, but continue
+		}
+		
 		WorkInstruction existingWi = mWiNonChePoscons.get(controllerId, posconIndex);
 		if (existingWi == null) {
 			mWiNonChePoscons.put(controllerId, posconIndex, inFirstWi);
@@ -841,6 +856,15 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	}
 
 	private WorkInstruction retrieveOffChePosconWorkInstruction(String controllerId, int posconIndex) {
+		 // By convention, we are remembering/retrieving the representation without the 0x. (Change if necessary.)
+		if (controllerId == null || controllerId.length() < 2){
+			LOGGER.error(" bad input to retrieveOffChePosconWorkInstruction");
+			return null;
+		}
+		if ("0x".equals(controllerId.substring(0,2))) {
+			LOGGER.error("Probable coding error. See comments in retrieveOffChePosconWorkInstruction()");
+			// By convention, use the non- Ox form, but continue
+		}
 		return mWiNonChePoscons.get(controllerId, posconIndex);
 	}
 
@@ -895,7 +919,29 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (!wi4.equals(testWi)) {
 			LOGGER.error("FAIL testOffChePosconWorkInstructions 7");
 		}
-	
+		LOGGER.info("intentional error cases in rememberOffChePosconWorkInstruction/retrieveOffChePosconWorkInstruction");
+		rememberOffChePosconWorkInstruction(null, 4, wi2);
+		testWi = retrieveOffChePosconWorkInstruction(null, 4);
+		if (testWi != null) {
+			LOGGER.error("FAIL testOffChePosconWorkInstructions 8");
+		}
+		rememberOffChePosconWorkInstruction("", 4, wi2);
+		testWi = retrieveOffChePosconWorkInstruction("", 4);
+		if (testWi != null) {
+			LOGGER.error("FAIL testOffChePosconWorkInstructions 9");
+		}
+		rememberOffChePosconWorkInstruction(controller1, 9, null);
+		testWi = retrieveOffChePosconWorkInstruction(controller1, 9);
+		if (testWi != null) {
+			LOGGER.error("FAIL testOffChePosconWorkInstructions 10");
+		}
+		rememberOffChePosconWorkInstruction("0x1234", 9, wi2); // logs probable error, but works
+		testWi = retrieveOffChePosconWorkInstruction("0x1234", 9); // logs probable error, but works
+		if (testWi == null) {
+			LOGGER.error("FAIL testOffChePosconWorkInstructions 11");
+		}			
+		rememberOffChePosconWorkInstruction("0x", 9, wi2); // Just checking that we avoid the string range exception
+		rememberOffChePosconWorkInstruction("0", 9, wi2); // Just checking that we avoid the string range exception
 
 		LOGGER.info("END testOffChePosconWorkInstructions");
 	}
@@ -1376,15 +1422,15 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			String controllerId = instruction.getControllerId();
 			int posconIndex = instruction.getPosition();
 			NetGuid thisGuid = new NetGuid(controllerId);
+			String thisGuidStr = thisGuid.getHexStringNoPrefix();
 			INetworkDevice device = mDeviceManager.getDeviceByGuid(thisGuid);
 			if (device instanceof PosManagerDeviceLogic) {
 				PosManagerDeviceLogic controller = (PosManagerDeviceLogic) device;
 				controller.addPosConInstrFor(cheGuid, instruction);
 				// As this is the point of adding the information to the PosManagerDeviceLogic, this should be the point of 
 				// remembering and associating this send to a specific active WI.
-				notifyNonChePosconLight(controllerId, posconIndex, inFirstWi);
+				notifyNonChePosconLight(thisGuidStr, posconIndex, inFirstWi);
 				
-				String thisGuidStr = thisGuid.getHexStringNoPrefix();
 				// LOGGER.info("remember {} {}", thisGuidStr, posconIndex); // useful debug
 				rememberOffChePosconWorkInstruction(thisGuidStr, posconIndex, inFirstWi);
 
