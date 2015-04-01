@@ -251,7 +251,11 @@ public class CrossBatchImporterTest extends ServerTest {
 		Assert.assertEquals(6, theCounts.mActiveDetails);
 		Assert.assertEquals(2, theCounts.mActiveCntrUses);
 
-
+		// from 3/15/2015 new transaction before doing the reimport.
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		
 		// Now re-import the interchange with one order missing a single item.
 		csvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ "G1,C555,I555.1,100,ea\r\n" //
@@ -275,7 +279,10 @@ public class CrossBatchImporterTest extends ServerTest {
 
 		// Make sure that first cross batch order is inactive and contains order detail I555.3 but it's inactive
 		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C555", firstEdiProcessTime));
-		Assert.assertNotNull(order); // got assertion fail here on 3/25/15 but usually succeeds
+		
+		// JR got assertion fail here on 3/25/15 and 3/31/15 but usually succeeded.
+		// From 3/31/15, changed test to do the second import in a separate transaction, which more closely mimics production.
+		Assert.assertNotNull(order); 
 		Assert.assertEquals(false, order.getActive());
 		OrderDetail orderDetail = order.getOrderDetail("I555.3");
 		Assert.assertNotNull(orderDetail);

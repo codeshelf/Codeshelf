@@ -216,9 +216,12 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 	}
 
 	public final void updatePosCons(boolean updateUnassociated) {
+		/*
 		if (!isDeviceAssociated() && !updateUnassociated) {
 			return;
 		}
+		*/
+		
 		clearAllPositionControllers();
 		Map<Byte, PosControllerInstr> latestInstructionsForPosition = new HashMap<Byte, PosControllerInstr>();
 		List<Map<Byte, PosControllerInstr>> instructionsBySourceList = new ArrayList<Map<Byte, PosControllerInstr>>(mPosInstructionBySource.values());

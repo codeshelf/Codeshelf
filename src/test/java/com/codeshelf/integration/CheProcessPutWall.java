@@ -315,18 +315,16 @@ public class CheProcessPutWall extends ServerTest {
 		LOGGER.info("1b: This should result in the poscon lighting");
 		// P12 is at poscon index 2. Count should be 4
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 2);
-		// Assert.assertEquals((Byte) (byte) 3, displayValue); // bug
-		Assert.assertNull(displayValue);
+		Assert.assertEquals((Byte) (byte) 4, displayValue); // bug
 
 		// button from the put wall
 		posman.buttonPress(2, 4);
 
 		// after DEV-713 
 		// we get two plans. For this test, handle singly. DEV-714 is about lighting two or more put wall locations at time.
-		// By that time, we should have implemented something to not all button press from CHE poscon, especially if more than one WI.
+		// By that time, we should have implemented something to not allow button press from CHE poscon, especially if more than one WI.
 
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 2);
-		// Assert.assertEquals((Byte) (byte) 4, displayValue);
 		Assert.assertNull(displayValue);
 
 	}
