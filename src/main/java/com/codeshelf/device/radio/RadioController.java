@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.application.ContextLogging;
 import com.codeshelf.device.radio.protocol.IRadioPacketHandler;
 import com.codeshelf.device.radio.protocol.RadioPacketHandler_v0;
+import com.codeshelf.device.radio.protocol.RadioPacketHandler_v1;
 import com.codeshelf.flyweight.command.AckStateEnum;
 import com.codeshelf.flyweight.command.CommandNetMgmtCheck;
 import com.codeshelf.flyweight.command.CommandNetMgmtSetup;
@@ -151,6 +152,18 @@ public class RadioController implements IRadioController {
 
 		//Version 0
 		mProtocolVersionToPacketHandlerMap.put((byte) 0, new RadioPacketHandler_v0(broadcastAddress,
+			mPendingAcksMap,
+			mDeviceNetAddrMap,
+			broadcastNetworkId,
+			broadcastAddress,
+			mChannelSelected,
+			mEventListeners,
+			mChannelInfo,
+			mDeviceGuidMap,
+			packetIOService));
+
+		//Version 1
+		mProtocolVersionToPacketHandlerMap.put((byte) 0, new RadioPacketHandler_v1(broadcastAddress,
 			mPendingAcksMap,
 			mDeviceNetAddrMap,
 			broadcastNetworkId,

@@ -41,21 +41,21 @@ import com.codeshelf.flyweight.controller.IRadioControllerEventListener;
 import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 
 public class RadioPacketHandler_v0 implements IRadioPacketHandler {
-	private static final Logger										LOGGER			= LoggerFactory.getLogger(RadioPacketHandler_v0.class);
+	private static final Logger											LOGGER			= LoggerFactory.getLogger(RadioPacketHandler_v0.class);
 	// Ack Id must start from 1
-	private final AtomicInteger										mAckId			= new AtomicInteger(1);
-	private static final int										ACK_QUEUE_SIZE	= 200;
+	protected final AtomicInteger										mAckId			= new AtomicInteger(1);
+	protected static final int											ACK_QUEUE_SIZE	= 200;
 
-	private final NetAddress										mServerAddress;
-	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	mPendingAcksMap;
-	private final Map<NetAddress, INetworkDevice>					mDeviceNetAddrMap;
-	private final NetworkId											broadcastNetworkId;
-	private final NetAddress										broadcastAddress;
-	private final AtomicBoolean										mChannelSelected;
-	private final List<IRadioControllerEventListener>				mEventListeners;
-	private final ChannelInfo[]										mChannelInfo;
-	private final Map<String, INetworkDevice>						mDeviceGuidMap;
-	private final RadioControllerPacketIOService					packetIOService;
+	protected final NetAddress											mServerAddress;
+	protected final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	mPendingAcksMap;
+	protected final Map<NetAddress, INetworkDevice>						mDeviceNetAddrMap;
+	protected final NetworkId											broadcastNetworkId;
+	protected final NetAddress											broadcastAddress;
+	protected final AtomicBoolean										mChannelSelected;
+	protected final List<IRadioControllerEventListener>					mEventListeners;
+	protected final ChannelInfo[]										mChannelInfo;
+	protected final Map<String, INetworkDevice>							mDeviceGuidMap;
+	protected final RadioControllerPacketIOService						packetIOService;
 
 	public RadioPacketHandler_v0(NetAddress mServerAddress,
 		ConcurrentMap<NetAddress, BlockingQueue<IPacket>> mPendingAcksMap,
