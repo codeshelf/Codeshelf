@@ -12,8 +12,7 @@ import javax.servlet.ServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.platform.persistence.ITenantPersistenceService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 
 public class TransactionFilter implements Filter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(TransactionFilter.class);
@@ -26,7 +25,7 @@ public class TransactionFilter implements Filter {
 
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
-		ITenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		try {
 			persistenceService.beginTransaction();
 			filterChain.doFilter(request, response);

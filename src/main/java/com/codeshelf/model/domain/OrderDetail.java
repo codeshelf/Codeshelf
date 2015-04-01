@@ -40,7 +40,7 @@ import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ASCIIAlphanumericComparator;
 import com.codeshelf.util.UomNormalizer;
@@ -519,19 +519,37 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		}
 	}
 	
-	public static int archiveOrderDetails(String inProcessTime){
-		TenantPersistenceService.getInstance().beginTransaction();
+	public static int archiveOrderDetails(Timestamp inProcessTime, boolean undefinedGroupUpdated){		
 		Session session = TenantPersistenceService.getInstance().getSession();
+
+		int numArchived = 0;
+
 		
-		String queryString = "update OrderDetail od SET od.active = false WHERE od.update != :processTime";
-		Query q = session.createQuery(queryString);
-		Date date = new Date();
-		date.parse(inProcessTime);  // maybe this should be com.codeshelf.util.DateTimeParser
-		q.setTimestamp("processTime", date);
-		int numUpdated = q.executeUpdate();
+		String hasNoGroupQueryStr = "UPDATE OrderDetail od SET od.active = false WHERE od.active = true AND od IN"
+				+ "(SELECT odd FROM OrderDetail odd WHERE odd.parent.orderType = 'OUTBOUND' "
+				+ "AND odd.active = true "
+				+ "AND odd.updated <> :processTime "
+				+ "AND odd.parent.orderGroup = null )";
+	
 		
-		TenantPersistenceService.getInstance().commitTransaction();
+		String hasGroupQueryStr = "UPDATE OrderDetail od SET od.active = false WHERE od.active = true AND od IN"
+				+ "(SELECT odd FROM OrderDetail odd WHERE odd.parent.orderType = 'OUTBOUND' "
+				+ "AND odd.active = true "
+				+ "AND odd.updated <> :processTime "
+				+ "AND odd.parent.orderGroup <> null "
+				+ "AND odd.parent.orderGroup.updated = :processTime )";
+	
+		Query hasGroupQuery = session.createQuery(hasGroupQueryStr);
+		hasGroupQuery.setTimestamp("processTime", inProcessTime);
+		numArchived = hasGroupQuery.executeUpdate();
 		
-		return numUpdated;
+		if (undefinedGroupUpdated) {	
+			Query hasNoGroupQuery = session.createQuery(hasNoGroupQueryStr);
+			hasNoGroupQuery.setTimestamp("processTime", inProcessTime);
+			numArchived += hasNoGroupQuery.executeUpdate();		
+		}
+		
+		LOGGER.info("Archived: {} OrderDetails", numArchived);
+		return numArchived;
 	}
 }

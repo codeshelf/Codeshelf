@@ -1,6 +1,6 @@
 package com.codeshelf.metrics;
 
-import com.codeshelf.ws.jetty.client.CsClientEndpoint;
+import com.codeshelf.ws.client.CsClientEndpoint;
 
 public class ConnectedToServerHealthCheck extends CodeshelfHealthCheck {
 	

@@ -45,7 +45,9 @@ import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.LedRange;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.model.dao.GenericDaoABC;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.util.StringUIConverter;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -75,6 +77,12 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(Location.class);
 	
 	public static final String			PUTWALL_USAGE		= "putwall";
+	
+	public static class LocationDao extends GenericDaoABC<Location> implements ITypedDao<Location> {
+		public final Class<Location> getDaoClass() {
+			return Location.class;
+		}
+	}
 
 	// The position type (GPS, METERS, etc.).
 	@Column(nullable = false, name = "anchor_pos_type")
@@ -253,6 +261,12 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	@Setter
 	@JsonProperty
 	private String				usage;
+	
+	@Column(nullable = true,name="tape_id")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Integer tapeId;
 
 	public Location() {
 		active = true;
@@ -265,6 +279,10 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		active = true;
 		setAnchorPoint(inAnchorPoint);
 		this.setPickFaceEndPoint(Point.getZeroPoint());
+	}
+	
+	public static ITypedDao<Location> staticGetLocationDao() {
+		return TenantPersistenceService.getInstance().getDao(Location.class);
 	}
 
 	public boolean isFacility() {

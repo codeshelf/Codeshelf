@@ -39,7 +39,9 @@ import com.codeshelf.util.ThreadUtils;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Table;
 
 /**
  * CheDeviceLogic is now an abstract base class for CHE programs with different state machines.
@@ -49,151 +51,167 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	// This code runs on the site controller, not the CHE.
 	// The goal is to convert data and instructions to something that the CHE controller can consume and act on with minimal logic.
 
-	private static final Logger			LOGGER									= LoggerFactory.getLogger(CheDeviceLogic.class);
+	private static final Logger						LOGGER									= LoggerFactory.getLogger(CheDeviceLogic.class);
 
-	protected static final String		COMMAND_PREFIX							= "X%";
-	protected static final String		USER_PREFIX								= "U%";
-	protected static final String		CONTAINER_PREFIX						= "C%";
-	protected static final String		LOCATION_PREFIX							= "L%";
-	protected static final String		ITEMID_PREFIX							= "I%";
-	protected static final String		POSITION_PREFIX							= "P%";
+	protected static final String					COMMAND_PREFIX							= "X%";
+	protected static final String					USER_PREFIX								= "U%";
+	protected static final String					CONTAINER_PREFIX						= "C%";
+	protected static final String					LOCATION_PREFIX							= "L%";
+	protected static final String					ITEMID_PREFIX							= "I%";
+	protected static final String					POSITION_PREFIX							= "P%";
+	protected static final String		TAPE_PREFIX								= "%";
 
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 20 characters.
 	// "SCAN START LOCATION" is at the 20 limit. If you change to "SCAN STARTING LOCATION", you get very bad behavior. The class loader will not find the CheDeviceLogic. Repeating throws.	
-	protected static final String		EMPTY_MSG								= cheLine("");
-	protected static final String		INVALID_SCAN_MSG						= cheLine("INVALID");
-	protected static final String		SCAN_USERID_MSG							= cheLine("SCAN BADGE");
-	protected static final String		SCAN_LOCATION_MSG						= cheLine("SCAN START LOCATION");
-	protected static final String		OR_START_WORK_MSG						= cheLine("OR START WORK");
-	protected static final String		SELECT_POSITION_MSG						= cheLine("SELECT POSITION");
-	protected static final String		SHORT_PICK_CONFIRM_MSG					= cheLine("CONFIRM SHORT");
-	protected static final String		PICK_COMPLETE_MSG						= cheLine("ALL WORK COMPLETE");
-	public static final String			YES_NO_MSG								= cheLine("SCAN YES OR NO");						// public for test
-	protected static final String		NO_CONTAINERS_SETUP_MSG					= cheLine("NO SETUP CONTAINERS");
-	protected static final String		POSITION_IN_USE_MSG						= cheLine("POSITION IN USE");
-	protected static final String		FINISH_SETUP_MSG						= cheLine("PLS SETUP CONTAINERS");
-	protected static final String		COMPUTE_WORK_MSG						= cheLine("COMPUTING WORK");
-	protected static final String		GET_WORK_MSG							= cheLine("GETTING WORK");
-	protected static final String		NO_WORK_MSG								= cheLine("NO WORK TO DO");
-	protected static final String		LOCATION_SELECT_REVIEW_MSG_LINE_1		= cheLine("REVIEW MISSING WORK");
-	protected static final String		LOCATION_SELECT_REVIEW_MSG_LINE_2		= cheLine("OR SCAN LOCATION");
-	protected static final String		LOCATION_SELECT_REVIEW_MSG_LINE_3		= cheLine("TO CONTINUE AS IS");
-	protected static final String		SHOWING_ORDER_IDS_MSG					= cheLine("SHOWING ORDER IDS");
-	protected static final String		SHOWING_WI_COUNTS						= cheLine("SHOWING WI COUNTS");
+	protected static final String					EMPTY_MSG								= cheLine("");
+	protected static final String					INVALID_SCAN_MSG						= cheLine("INVALID");
+	protected static final String					SCAN_USERID_MSG							= cheLine("SCAN BADGE");
+	protected static final String					SCAN_LOCATION_MSG						= cheLine("SCAN START LOCATION");
+	protected static final String					OR_START_WORK_MSG						= cheLine("OR START WORK");
+	protected static final String					SELECT_POSITION_MSG						= cheLine("SELECT POSITION");
+	protected static final String					SHORT_PICK_CONFIRM_MSG					= cheLine("CONFIRM SHORT");
+	protected static final String					PICK_COMPLETE_MSG						= cheLine("ALL WORK COMPLETE");
+	public static final String						YES_NO_MSG								= cheLine("SCAN YES OR NO");						// public for test
+	protected static final String					NO_CONTAINERS_SETUP_MSG					= cheLine("NO SETUP CONTAINERS");
+	protected static final String					POSITION_IN_USE_MSG						= cheLine("POSITION IN USE");
+	protected static final String					FINISH_SETUP_MSG						= cheLine("PLS SETUP CONTAINERS");
+	protected static final String					COMPUTE_WORK_MSG						= cheLine("COMPUTING WORK");
+	protected static final String					GET_WORK_MSG							= cheLine("GETTING WORK");
+	protected static final String					NO_WORK_MSG								= cheLine("NO WORK TO DO");
+	protected static final String					LOCATION_SELECT_REVIEW_MSG_LINE_1		= cheLine("REVIEW MISSING WORK");
+	protected static final String					LOCATION_SELECT_REVIEW_MSG_LINE_2		= cheLine("OR SCAN LOCATION");
+	protected static final String					LOCATION_SELECT_REVIEW_MSG_LINE_3		= cheLine("TO CONTINUE AS IS");
+	protected static final String					SHOWING_ORDER_IDS_MSG					= cheLine("SHOWING ORDER IDS");
+	protected static final String					SHOWING_WI_COUNTS						= cheLine("SHOWING WI COUNTS");
 
-	protected static final String		INVALID_POSITION_MSG					= cheLine("INVALID POSITION");
-	protected static final String		INVALID_CONTAINER_MSG					= cheLine("INVALID CONTAINER");
-	protected static final String		CLEAR_ERROR_MSG_LINE_1					= cheLine("CLEAR ERROR TO");
-	protected static final String		CLEAR_ERROR_MSG_LINE_2					= cheLine("CONTINUE");
+	protected static final String					INVALID_POSITION_MSG					= cheLine("INVALID POSITION");
+	protected static final String					INVALID_CONTAINER_MSG					= cheLine("INVALID CONTAINER");
+	protected static final String					CLEAR_ERROR_MSG_LINE_1					= cheLine("CLEAR ERROR TO");
+	protected static final String					CLEAR_ERROR_MSG_LINE_2					= cheLine("CONTINUE");
 
-	protected static final String		SCAN_GTIN								= cheLine("SCAN GTIN");
-	protected static final String		SCAN_GTIN_OR_LOCATION					= cheLine("SCAN GTIN/LOCATION");
+	protected static final String					SCAN_GTIN								= cheLine("SCAN GTIN");
+	protected static final String					SCAN_GTIN_OR_LOCATION					= cheLine("SCAN GTIN/LOCATION");
 
 	// Newer messages only used in Line_Scan mode. Some portion of the above are used for both Setup_Orders and Line_Scan, so keeping them all here.
-	protected static final String		SCAN_LINE_MSG							= cheLine("SCAN ORDER LINE");
-	protected static final String		GO_TO_LOCATION_MSG						= cheLine("GO TO LOCATION");
-	protected static final String		ABANDON_CHECK_MSG						= cheLine("ABANDON CURRENT JOB");
-	protected static final String		ONE_JOB_MSG								= cheLine("DO THIS JOB (FIXME)");					// remove this later
+	protected static final String					SCAN_LINE_MSG							= cheLine("SCAN ORDER LINE");
+	protected static final String					GO_TO_LOCATION_MSG						= cheLine("GO TO LOCATION");
+	protected static final String					ABANDON_CHECK_MSG						= cheLine("ABANDON CURRENT JOB");
+	protected static final String					ONE_JOB_MSG								= cheLine("DO THIS JOB (FIXME)");					// remove this later
 
 	// For Put wall
-	protected static final String		SCAN_PUTWALL_ORDER_MSG					= cheLine("SCAN ORDER FOR");
-	protected static final String		SCAN_PUTWALL_LOCATION_MSG				= cheLine("SCAN LOCATION IN");
-	protected static final String		SCAN_PUTWALL_ITEM_MSG					= cheLine("SCAN ITEM/UPC FOR");
-	protected static final String		SCAN_PUTWALL_LINE2_MSG					= cheLine("THE PUT WALL");
+	protected static final String					SCAN_PUTWALL_ORDER_MSG					= cheLine("SCAN ORDER FOR");
+	protected static final String					SCAN_PUTWALL_LOCATION_MSG				= cheLine("SCAN LOCATION IN");
+	protected static final String					SCAN_PUTWALL_ITEM_MSG					= cheLine("SCAN ITEM/UPC FOR");
+	protected static final String					SCAN_PUTWALL_LINE2_MSG					= cheLine("THE PUT WALL");
 
-	public static final String			STARTWORK_COMMAND						= "START";
-	public static final String			REVERSE_COMMAND							= "REVERSE";
-	protected static final String		SETUP_COMMAND							= "SETUP";
-	protected static final String		SHORT_COMMAND							= "SHORT";
-	protected static final String		LOGOUT_COMMAND							= "LOGOUT";
-	protected static final String		YES_COMMAND								= "YES";
-	protected static final String		NO_COMMAND								= "NO";
-	protected static final String		CLEAR_ERROR_COMMAND						= "CLEAR";
-	protected static final String		INVENTORY_COMMAND						= "INVENTORY";
-	protected static final String		ORDER_WALL_COMMAND						= "ORDER_WALL";
-	protected static final String		PUT_WALL_COMMAND						= "PUT_WALL";
+	public static final String						STARTWORK_COMMAND						= "START";
+	public static final String						REVERSE_COMMAND							= "REVERSE";
+	protected static final String					SETUP_COMMAND							= "SETUP";
+	protected static final String					SHORT_COMMAND							= "SHORT";
+	protected static final String					LOGOUT_COMMAND							= "LOGOUT";
+	protected static final String					YES_COMMAND								= "YES";
+	protected static final String					NO_COMMAND								= "NO";
+	protected static final String					CLEAR_ERROR_COMMAND						= "CLEAR";
+	protected static final String					INVENTORY_COMMAND						= "INVENTORY";
+	protected static final String					ORDER_WALL_COMMAND						= "ORDER_WALL";
+	protected static final String					PUT_WALL_COMMAND						= "PUT_WALL";
 
 	// With WORKSEQR = "WorkSequence", work may scan start instead of scanning a location. 
 	// LOCATION_SELECT, we want "SCAN START LOCATION" "OR SCAN START"
 	// LOCATION_SELECT_REVIEW, we want "REVIEW MISSING WORK" "OR SCAN LOCATION" "OR SCAN START"
-	protected static final String		OR_SCAN_START							= cheLine("OR SCAN START");
-	protected static final String		OR_SCAN_LOCATION						= cheLine("OR SCAN LOCATION");
+	protected static final String					OR_SCAN_START							= cheLine("OR SCAN START");
+	protected static final String					OR_SCAN_LOCATION						= cheLine("OR SCAN LOCATION");
 
 	// If used to check if the user wants to skip SCANPICK UPC/SKU/LCN verification
-	protected static final String		SCAN_SKIP								= "SCANSKIP";
-	protected static final String		SKIP_SCAN								= "SKIPSCAN";
+	protected static final String					SCAN_SKIP								= "SCANSKIP";
+	protected static final String					SKIP_SCAN								= "SKIPSCAN";
 
-	protected static final Integer		maxCountForPositionControllerDisplay	= 99;
+	protected static final Integer					maxCountForPositionControllerDisplay	= 99;
 
-	protected static boolean			kLogAsWarn								= true;
-	protected static boolean			kLogAsInfo								= false;
+	protected static boolean						kLogAsWarn								= true;
+	protected static boolean						kLogAsInfo								= false;
 
 	// The CHE's current state.
 	@Accessors(prefix = "m")
 	@Getter
-	protected CheStateEnum				mCheStateEnum;
+	protected CheStateEnum							mCheStateEnum;
 
 	// The CHE's current user.
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	protected String					mUserId;
+	protected String								mUserId;
 
 	// All WIs for all containers on the CHE.
 	@Accessors(prefix = "m")
 	@Getter
-	protected List<WorkInstruction>		mAllPicksWiList;
+	protected List<WorkInstruction>					mAllPicksWiList;
 
 	// Remember the first string in last display message sent
 	@Accessors(prefix = "m")
-	ArrayList<String>					mLastScreenDisplayLines;
+	ArrayList<String>								mLastScreenDisplayLines;
 
 	// The active pick WIs.
 	@Accessors(prefix = "m")
 	@Getter
-	protected List<WorkInstruction>		mActivePickWiList;
+	protected List<WorkInstruction>					mActivePickWiList;
+
+	private Table<String, Integer, WorkInstruction>	mWiNonChePoscons;
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	boolean								mOkToStartWithoutLocation				= true;
+	boolean											mOkToStartWithoutLocation				= true;
 
-	private NetGuid						mLastLedControllerGuid;
-	private boolean						mMultipleLastLedControllerGuids;
+	private NetGuid									mLastLedControllerGuid;
+	private boolean									mMultipleLastLedControllerGuids;
 
-	protected WorkInstruction			mShortPickWi;
-	protected Integer					mShortPickQty;
+	protected WorkInstruction						mShortPickWi;
+	protected Integer								mShortPickQty;
 
-	protected boolean					connectedToServer						= true;
+	protected boolean								connectedToServer						= true;
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	protected int						mSetStateStackCount						= 0;
+	protected int									mSetStateStackCount						= 0;
 
-	protected ScanNeededToVerifyPick	mScanNeededToVerifyPick;
-
-	@Getter
-	@Setter
-	protected Boolean					mReversePickOrder						= false;
+	protected ScanNeededToVerifyPick				mScanNeededToVerifyPick;
 
 	@Getter
 	@Setter
-	protected String					lastScanedGTIN;
+	protected Boolean								mReversePickOrder						= false;
 
 	@Getter
 	@Setter
-	private String						lastPutWallOrderScan;
+	protected String								lastScanedGTIN;
+
+	@Getter
+	@Setter
+	private String									lastPutWallOrderScan;
 
 	protected void processGtinScan(final String inScanPrefixStr, final String inScanStr) {
-
+		boolean isTape = false;
+		
 		if (LOCATION_PREFIX.equals(inScanPrefixStr) && lastScanedGTIN != null) {
+			// Updating location of an item
 			notifyScanInventoryUpdate(inScanStr, lastScanedGTIN);
 			mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, lastScanedGTIN);
-		} else if (USER_PREFIX.equals(inScanPrefixStr)) {
+		} 
+		else if (LOCATION_PREFIX.equals(inScanPrefixStr) && lastScanedGTIN == null) {
+			// Lighting a location based on location
+			mDeviceManager.inventoryLightLocationScan(getPersistentId(), inScanStr, isTape);
+		} 
+		else if (TAPE_PREFIX.equals(inScanPrefixStr) && lastScanedGTIN == null) {
+			// Lighting a location based on tape
+			isTape = true;
+			mDeviceManager.inventoryLightLocationScan(getPersistentId(), inScanStr, isTape);
+		}
+		else if (USER_PREFIX.equals(inScanPrefixStr)) {
 			LOGGER.warn("Recieved invalid USER scan: {}. Expected location or GTIN.", inScanStr);
-		} else {
-			mDeviceManager.inventoryLightScan(this.getPersistentId(), inScanStr);
+		} 
+		else {
+			mDeviceManager.inventoryLightItemScan(this.getPersistentId(), inScanStr);
 			lastScanedGTIN = inScanStr;
 		}
 		setState(CheStateEnum.SCAN_GTIN);
@@ -275,6 +293,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		for (int n = 0; n <= 3; n++) {
 			mLastScreenDisplayLines.add(" ");
 		}
+		mWiNonChePoscons = HashBasedTable.create();
 	}
 
 	@Override
@@ -802,6 +821,168 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 	}
 
+	protected void processNormalPick(WorkInstruction inWi, Integer inQuantity) {
+		LOGGER.error("processNormalPick needs override");
+	}
+
+	// --------------------------------------------------------------------------
+	/* 
+	 * We call this when posting a poscon lighting message for an active WI.
+	 * Note: may want to save the persistentID or something on the WI and not the reference itself.
+	 * By convention, we are remembering the representation without the 0x (Change if necessary.)
+	 */
+	private void rememberOffChePosconWorkInstruction(String controllerId, int posconIndex, WorkInstruction inFirstWi) {
+		if (controllerId == null || inFirstWi == null){
+			LOGGER.error(" null input to rememberOffChePosconWorkInstruction");
+			return;
+		}
+		if (controllerId.length() < 2){ // not enough for a real business case, but avoids stringOutOfRange exception
+			LOGGER.error(" bad input to rememberOffChePosconWorkInstruction");
+			return;
+		}
+		String theSub = controllerId.substring(0,2);
+		if ("0x".equals(controllerId.substring(0,2))) {
+			LOGGER.error("Probable coding error. See comments in rememberOffChePosconWorkInstruction()");
+			// By convention, use the non- Ox form, but continue
+		}
+		
+		WorkInstruction existingWi = mWiNonChePoscons.get(controllerId, posconIndex);
+		if (existingWi == null) {
+			mWiNonChePoscons.put(controllerId, posconIndex, inFirstWi);
+		} else if (!existingWi.equals(inFirstWi)) {
+			mWiNonChePoscons.remove(controllerId, posconIndex);
+			mWiNonChePoscons.put(controllerId, posconIndex, inFirstWi);
+		}
+	}
+
+	private WorkInstruction retrieveOffChePosconWorkInstruction(String controllerId, int posconIndex) {
+		 // By convention, we are remembering/retrieving the representation without the 0x. (Change if necessary.)
+		if (controllerId == null || controllerId.length() < 2){
+			LOGGER.error(" bad input to retrieveOffChePosconWorkInstruction");
+			return null;
+		}
+		if ("0x".equals(controllerId.substring(0,2))) {
+			LOGGER.error("Probable coding error. See comments in retrieveOffChePosconWorkInstruction()");
+			// By convention, use the non- Ox form, but continue
+		}
+		return mWiNonChePoscons.get(controllerId, posconIndex);
+	}
+
+	// --------------------------------------------------------------------------
+	/* 
+	 * Test method callable by unit test
+	 * But the functions we want to test are private. That is why this mess is here.
+	 */
+	public void testOffChePosconWorkInstructions() {
+		LOGGER.info("START testOffChePosconWorkInstructions");
+		if (mWiNonChePoscons == null) {
+			LOGGER.error("FAIL testOffChePosconWorkInstructions 1");
+			return;
+		}
+
+		final String controller1 = "0x00006661";
+		final String controller2 = "0x00006662";
+		WorkInstruction wi1 = new WorkInstruction();
+		WorkInstruction wi2 = new WorkInstruction();
+		WorkInstruction wi3 = new WorkInstruction();
+		WorkInstruction wi4 = new WorkInstruction();
+
+		WorkInstruction testWi = retrieveOffChePosconWorkInstruction(controller1, 4);
+		if (testWi != null)
+			LOGGER.error("FAIL testOffChePosconWorkInstructions 2");
+
+		rememberOffChePosconWorkInstruction(controller1, 4, wi1);
+		testWi = retrieveOffChePosconWorkInstruction(controller1, 4);
+		if (!wi1.equals(testWi)) {
+			LOGGER.error("FAIL testOffChePosconWorkInstructions 3");
+		}
+		// setting a second  to same keys should remove the first and add the second
+		rememberOffChePosconWorkInstruction(controller1, 4, wi2);
+		testWi = retrieveOffChePosconWorkInstruction(controller1, 4);
+		if (!wi2.equals(testWi)) {
+			LOGGER.error("FAIL testOffChePosconWorkInstructions 4a");
+		}
+		if (wi1.equals(testWi)) {
+			LOGGER.error("FAIL testOffChePosconWorkInstructions 4b");
+		}
+		rememberOffChePosconWorkInstruction(controller1, 5, wi3);
+		rememberOffChePosconWorkInstruction(controller2, 2, wi4);
+		testWi = retrieveOffChePosconWorkInstruction(controller2, 5);
+		if (testWi != null) {
+			LOGGER.error("FAIL testOffChePosconWorkInstructions 5");
+		}
+		testWi = retrieveOffChePosconWorkInstruction(controller1, 5);
+		if (!wi3.equals(testWi)) {
+			LOGGER.error("FAIL testOffChePosconWorkInstructions 6");
+		}
+		testWi = retrieveOffChePosconWorkInstruction(controller2, 2);
+		if (!wi4.equals(testWi)) {
+			LOGGER.error("FAIL testOffChePosconWorkInstructions 7");
+		}
+		LOGGER.info("intentional error cases in rememberOffChePosconWorkInstruction/retrieveOffChePosconWorkInstruction");
+		rememberOffChePosconWorkInstruction(null, 4, wi2);
+		testWi = retrieveOffChePosconWorkInstruction(null, 4);
+		if (testWi != null) {
+			LOGGER.error("FAIL testOffChePosconWorkInstructions 8");
+		}
+		rememberOffChePosconWorkInstruction("", 4, wi2);
+		testWi = retrieveOffChePosconWorkInstruction("", 4);
+		if (testWi != null) {
+			LOGGER.error("FAIL testOffChePosconWorkInstructions 9");
+		}
+		rememberOffChePosconWorkInstruction(controller1, 9, null);
+		testWi = retrieveOffChePosconWorkInstruction(controller1, 9);
+		if (testWi != null) {
+			LOGGER.error("FAIL testOffChePosconWorkInstructions 10");
+		}
+		rememberOffChePosconWorkInstruction("0x1234", 9, wi2); // logs probable error, but works
+		testWi = retrieveOffChePosconWorkInstruction("0x1234", 9); // logs probable error, but works
+		if (testWi == null) {
+			LOGGER.error("FAIL testOffChePosconWorkInstructions 11");
+		}			
+		rememberOffChePosconWorkInstruction("0x", 9, wi2); // Just checking that we avoid the string range exception
+		rememberOffChePosconWorkInstruction("0", 9, wi2); // Just checking that we avoid the string range exception
+
+		LOGGER.info("END testOffChePosconWorkInstructions");
+	}
+
+	// --------------------------------------------------------------------------
+	/* 
+	 * An "off-CHE" button press came from a poscon in a location. It was routed to this CheDeviceLogic because we think this was being lit by an
+	 * active work instruction for this CheDeviceLogic
+	 */
+	public void processOffCheButtonPress(String sourceGuid, CommandControlButton inButtonCommand) {
+		if (connectedToServer) {
+
+			WorkInstruction wi = null;
+			// TODO how do we find the work instruction this button was displaying?							
+
+			int posconIndex = inButtonCommand.getPosNum();
+			int quantity = inButtonCommand.getValue();
+			notifyOffCheButton(posconIndex, quantity, sourceGuid); // This merely logs
+
+			// LOGGER.info("retrieve {} {}", sourceGuid, posconIndex); // useful to debug
+			wi = retrieveOffChePosconWorkInstruction(sourceGuid, posconIndex);
+
+			if (wi != null) {
+				if (quantity >= wi.getPlanMinQuantity()) {
+					processNormalPick(wi, quantity);
+				} else {
+					// More kludge for count > 99 case
+					Integer planQuantity = wi.getPlanQuantity();
+					if (quantity == maxCountForPositionControllerDisplay && planQuantity > maxCountForPositionControllerDisplay)
+						processNormalPick(wi, planQuantity); // Assume all were picked. No way for user to tell if more than 98 given.
+					else {
+						processShortPick(wi, quantity);
+					}
+				}
+			}
+
+		} else {
+			LOGGER.debug("NotConnectedToServer: Ignoring off-CHE button command: " + inButtonCommand);
+		}
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inScanStr
@@ -1231,12 +1412,32 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		NetGuid cheGuid = getGuid();
 		List<PosControllerInstr> instructions = PosConInstrGroupSerializer.deserializePosConInstrString(wiCmdString);
 		HashSet<PosManagerDeviceLogic> controllers = new HashSet<>();
+		int instructionCount = 0;
+		int controllerCount = 0;
 		for (PosControllerInstr instruction : instructions) {
+			instructionCount++;
+			if (instructionCount > 1) {
+				LOGGER.warn("More than one poscon instruction for a single WI");
+			}
 			String controllerId = instruction.getControllerId();
-			INetworkDevice device = mDeviceManager.getDeviceByGuid(new NetGuid(controllerId));
+			int posconIndex = instruction.getPosition();
+			NetGuid thisGuid = new NetGuid(controllerId);
+			String thisGuidStr = thisGuid.getHexStringNoPrefix();
+			INetworkDevice device = mDeviceManager.getDeviceByGuid(thisGuid);
 			if (device instanceof PosManagerDeviceLogic) {
 				PosManagerDeviceLogic controller = (PosManagerDeviceLogic) device;
 				controller.addPosConInstrFor(cheGuid, instruction);
+				// As this is the point of adding the information to the PosManagerDeviceLogic, this should be the point of 
+				// remembering and associating this send to a specific active WI.
+				notifyNonChePosconLight(thisGuidStr, posconIndex, inFirstWi);
+				
+				// LOGGER.info("remember {} {}", thisGuidStr, posconIndex); // useful debug
+				rememberOffChePosconWorkInstruction(thisGuidStr, posconIndex, inFirstWi);
+
+				controllerCount++;
+				if (controllerCount > 1) {
+					LOGGER.warn("More than one poscon controller for a single WI");
+				}
 				controllers.add(controller);
 			}
 		}
@@ -1400,6 +1601,29 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.info("*Button #{} pressed with quantity {} by picker:{} device:{}",
 			buttonNum,
 			showingQuantity,
+			getUserId(),
+			getMyGuidStr());
+	}
+
+	protected void notifyOffCheButton(int buttonNum, int showingQuantity, String fromGuidId) {
+		LOGGER.info("*Wall Button #{} device:{} pressed with quantity {}. Inferred picker:{} inferred device:{}",
+			buttonNum,
+			fromGuidId,
+			showingQuantity,
+			getUserId(),
+			getMyGuidStr());
+	}
+
+	private void notifyNonChePosconLight(String controllerId, int posconIndex, WorkInstruction wi) {
+		if (wi == null) {
+			LOGGER.error("null work instruction in notifyNonChePosconLight");
+			return;
+		}
+		int displayCount = wi.getPlanQuantity();
+		LOGGER.info("*Wall Button #{} device:{} will show count:{}. Active job for picker:{} device:{}",
+			posconIndex,
+			controllerId,
+			displayCount,
 			getUserId(),
 			getMyGuidStr());
 	}

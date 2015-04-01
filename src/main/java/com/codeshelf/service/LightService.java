@@ -24,17 +24,16 @@ import com.codeshelf.device.PosControllerInstrList;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.manager.User;
 import com.codeshelf.model.LedRange;
-import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
-import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.ws.jetty.protocol.message.LightLedsInstruction;
-import com.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.codeshelf.ws.jetty.server.WebSocketManagerService;
+import com.codeshelf.ws.protocol.message.LightLedsInstruction;
+import com.codeshelf.ws.protocol.message.MessageABC;
+import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -44,7 +43,7 @@ public class LightService implements IApiService {
 
 	private static final Logger				LOGGER						= LoggerFactory.getLogger(LightService.class);
 
-	private final WebSocketManagerService			webSocketManagerService;
+	private final WebSocketManagerService	webSocketManagerService;
 
 	private final static ColorEnum			defaultColor				= ColorEnum.RED;
 	private final static int				defaultLightDurationSeconds	= 20;
@@ -52,22 +51,21 @@ public class LightService implements IApiService {
 	// Originally 4 leds. The aisle file read and UI indicates 4 leds.  Was changed to 3 leds before aisle controller message splitting to allow more simultaneous lighting.
 	// Should not longer be necessary. Between v6 and v10 there was some inconsistency between 3 and 4. Now consistent.  Ideally no configuration parameter for this because if set
 	// otherwise, the UI still show 4. See DEV-411
-	private final static int				defaultLedsToLight			= 4; 	// IMPORTANT. This should be synched with WIFactory.maxLedsToLight
+	private final static int				defaultLedsToLight			= 4;											// IMPORTANT. This should be synched with WIFactory.maxLedsToLight
 
 	@Inject
 	public LightService(WebSocketManagerService webSocketManagerService) {
 		this.webSocketManagerService = webSocketManagerService;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	public void lightLocation(final String facilityPersistentId, final String inLocationNominalId) {
-
+		//Light LEDs
 		final Facility facility = checkFacility(facilityPersistentId);
 		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
-
 		Location theLocation = checkLocation(facility, inLocationNominalId);
 		lightChildLocations(facility, theLocation, color);
-		
+
 		//Light the POS range
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 		getInstructionsForPosConRange(facility, null, theLocation, instructions);
@@ -78,7 +76,7 @@ public class LightService implements IApiService {
 			@Override
 			public void run() {
 				LOGGER.info("AisleDeviceLogic expire timer fired.");
-				for (PosControllerInstr instructions : posMessage.getInstructions()){
+				for (PosControllerInstr instructions : posMessage.getInstructions()) {
 					instructions.getRemovePos().add(instructions.getPosition());
 				}
 				sendMessage(facility.getSiteControllerUsers(), posMessage);
@@ -140,16 +138,20 @@ public class LightService implements IApiService {
 		sendMessage(facility.getSiteControllerUsers(), message);
 	}
 
-	public static void getInstructionsForPosConRange(final Facility facility, final WorkInstruction wi, final Location theLocation, List<PosControllerInstr> instructions){
-		if (theLocation == null) {return;}
+	public static void getInstructionsForPosConRange(final Facility facility,
+		final WorkInstruction wi,
+		final Location theLocation,
+		List<PosControllerInstr> instructions) {
+		if (theLocation == null) {
+			return;
+		}
 		if (theLocation.isLightablePoscon()) {
 			LedController controller = theLocation.getEffectiveLedController();
 			String posConController = controller == null ? "" : controller.getDeviceGuidStr();
 			int posConIndex = theLocation.getPosconIndex();
 			PosControllerInstr message = null;
 			if (wi == null) {
-				 message = new PosControllerInstr(
-					posConController,
+				message = new PosControllerInstr(posConController,
 					(byte) posConIndex,
 					PosControllerInstr.BITENCODED_SEGMENTS_CODE,
 					PosControllerInstr.BITENCODED_TRIPLE_DASH,
@@ -157,20 +159,22 @@ public class LightService implements IApiService {
 					PosControllerInstr.BLINK_FREQ,
 					PosControllerInstr.BRIGHT_DUTYCYCLE);
 			} else {
-				message = new PosControllerInstr(
-					posConController,
+				Che che = wi.getAssignedChe();
+				String sourceGuid = che == null ? "" : che.getDeviceGuidStr();
+				message = new PosControllerInstr(posConController,
+					sourceGuid,
 					(byte) posConIndex,
 					wi.getPlanQuantity().byteValue(),
 					wi.getPlanMinQuantity().byteValue(),
 					wi.getPlanMaxQuantity().byteValue(),
 					PosControllerInstr.SOLID_FREQ,
 					PosControllerInstr.BRIGHT_DUTYCYCLE);
- 
+
 			}
 			instructions.add(message);
 		}
 		List<Location> children = theLocation.getActiveChildren();
-		if (!children.isEmpty()){
+		if (!children.isEmpty()) {
 			for (Location child : children) {
 				getInstructionsForPosConRange(facility, wi, child, instructions);
 			}
@@ -178,7 +182,7 @@ public class LightService implements IApiService {
 	}
 
 	// --------------------------------------------------------------------------
-	
+
 	void lightChildLocations(final Facility facility, final Location location, ColorEnum color) {
 		List<Location> leaves = Lists.newArrayList();
 		//Do not light slots when lighting an aisle
@@ -187,7 +191,7 @@ public class LightService implements IApiService {
 		LedInstrListMessage message = new LedInstrListMessage(instructions);
 		sendMessage(facility.getSiteControllerUsers(), message);
 	}
-	
+
 	private void getAllLedLightableLeaves(final Location location, List<Location> leaves, boolean lightSlots) {
 		List<Location> children = location.getActiveChildren();
 		if (children.isEmpty() || (!lightSlots && location.isTier())) {
@@ -217,13 +221,19 @@ public class LightService implements IApiService {
 		}
 	}
 
-	private LightLedsInstruction toLedsInstruction(Facility facility, int maxNumLeds, final ColorEnum inColor, final Location inLocation) {
+	private LightLedsInstruction toLedsInstruction(Facility facility,
+		int maxNumLeds,
+		final ColorEnum inColor,
+		final Location inLocation) {
 		LedRange theRange = inLocation.getFirstLastLedsForLocation().capLeds(maxNumLeds);
 		LightLedsInstruction instruction = getLedCmdGroupListForRange(facility, inColor, inLocation, theRange);
 		return instruction;
 	}
-	
-	private List<LightLedsInstruction> lightAllAtOnce(Facility facility, int numLeds, ColorEnum diagnosticColor, List<Location> children) {
+
+	private List<LightLedsInstruction> lightAllAtOnce(Facility facility,
+		int numLeds,
+		ColorEnum diagnosticColor,
+		List<Location> children) {
 		List<LightLedsInstruction> instructions = Lists.newArrayList();
 		for (Location child : children) {
 			try {
@@ -253,7 +263,6 @@ public class LightService implements IApiService {
 		}
 		return new ArrayList<LightLedsInstruction>(byControllerChannel.values());
 	}
-
 
 	/**
 	 * Utility function to create LED command group. Will return a list, which may be empty if there is nothing to send. Caller should check for empty list.
@@ -289,87 +298,24 @@ public class LightService implements IApiService {
 			ledSamples.add(ledSample);
 		}
 		LedCmdGroup ledCmdGroup = new LedCmdGroup(controller.getDeviceGuidStr(), controllerChannel, firstLedPosNum, ledSamples);
-		return new LightLedsInstruction(controller.getDeviceGuidStr(), controllerChannel, lightDuration, ImmutableList.of(ledCmdGroup));
+		return new LightLedsInstruction(controller.getDeviceGuidStr(),
+			controllerChannel,
+			lightDuration,
+			ImmutableList.of(ledCmdGroup));
 	}
 
 	private Facility checkFacility(final String facilityPersistentId) {
-		return checkNotNull(Facility.staticGetDao().findByPersistentId(facilityPersistentId), "Unknown facility: %s", facilityPersistentId);
+		return checkNotNull(Facility.staticGetDao().findByPersistentId(facilityPersistentId),
+			"Unknown facility: %s",
+			facilityPersistentId);
 	}
 
 	private Location checkLocation(Facility facility, final String inLocationNominalId) {
 		Location theLocation = facility.findSubLocationById(inLocationNominalId);
-		checkArgument(theLocation != null && !(theLocation.isFacility()),
-			"Location nominalId unknown: %s",
-			inLocationNominalId);
+		checkArgument(theLocation != null && !(theLocation.isFacility()), "Location nominalId unknown: %s", inLocationNominalId);
 		return theLocation;
 	}
-	
-	/* 
-		/*
-		public void lightAllControllers(final String inColorStr, final String facilityPersistentId, final String inLocationNominalId) {
-			
-			ColorEnum theColor = ColorEnum.valueOf(inColorStr);
-			if (theColor == ColorEnum.INVALID) {
-				LOGGER.error("lightOneLocation called with unknown color");
-				return;
-			}
 
-			Facility facility = Facility.staticGetDao().findByPersistentId(facilityPersistentId);
-			if (facility == null) {
-				LOGGER.error("lightAllControllers called with unknown facility");
-				return;
-			}
-
-			
-			LocationABC theLocation = facility.findSubLocationById(inLocationNominalId);
-			if (theLocation == null || theLocation.isFacility()) {
-				LOGGER.error("lightAllControllers called with unknown location");
-				return;
-			}
-
-			HashMap<ControllerChannelBayKey, Tier> lastLocationWithinBay = new HashMap<ControllerChannelBayKey, Tier>();
-			List<Tier> tiers = theLocation.getActiveChildrenAtLevel(Tier.class);
-			if (tiers.isEmpty()) {
-				LOGGER.error("lightAllControllers called with location with no tiers");
-				return;
-			}
-			
-			//Last tier within bay per controller
-			for (Tier tier : tiers) {
-				ControllerChannelBayKey key = new ControllerChannelBayKey(tier.getEffectiveLedController(), tier.getEffectiveLedChannel(), (Bay) tier.getParent());
-				LocationABC lastLocation = lastLocationWithinBay.get(key);
-
-				if (lastLocation == null || lastLocation.getLastLedNumAlongPath() < tier.getLastLedNumAlongPath()) {
-					lastLocationWithinBay.put(key, tier);
-				}
-			}
-			
-			List<Tier> sortedTiers = Lists.newArrayList(lastLocationWithinBay.values());
-			Collections.sort(sortedTiers, new LocationABC.LocationWorkingOrderComparator());
-		
-			lightLocations(theColor, facility.getPersistentId(), sortedTiers);
-		}
-		
-		private final List<LightLedsMessage> toLedMessages(List<LedCmdGroup> ledCmdGroupList) {
-			List<LightLedsMessage> ledMessages = Lists.newArrayList();
-			
-			ArrayListMultimap<String, LedCmdGroup> byLedController = ArrayListMultimap.<String, LedCmdGroup>create();
-			for (LedCmdGroup ledCmdGroup : ledCmdGroupList) {
-				byLedController.put(ledCmdGroup.getControllerId(), ledCmdGroup);
-			}
-			
-			for (String theGuidStr : byLedController.keys()) {
-				List<LedCmdGroup> ledCmdGroups = byLedController.get(theGuidStr);
-				
-				String theLedCommands = LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroups);
-				LightLedsMessage theMessage = new LightLedsMessage(theGuidStr, getLightDurationSeconds(), theLedCommands);
-				ledMessages.add(theMessage);
-			}
-			return ledMessages;
-		}
-		
-		
-	*/
 	@EqualsAndHashCode
 	private static class ControllerChannelKey {
 

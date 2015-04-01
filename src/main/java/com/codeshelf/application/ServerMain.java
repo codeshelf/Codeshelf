@@ -28,8 +28,7 @@ import com.codeshelf.manager.ITenantManagerService;
 import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
-import com.codeshelf.platform.persistence.ITenantPersistenceService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
 import com.codeshelf.security.AuthProviderService;
@@ -40,10 +39,10 @@ import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ConverterProvider;
-import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
-import com.codeshelf.ws.jetty.server.CsServerEndPoint;
-import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
-import com.codeshelf.ws.jetty.server.WebSocketManagerService;
+import com.codeshelf.ws.protocol.message.IMessageProcessor;
+import com.codeshelf.ws.server.CsServerEndPoint;
+import com.codeshelf.ws.server.ServerMessageProcessor;
+import com.codeshelf.ws.server.WebSocketManagerService;
 import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -112,7 +111,7 @@ public final class ServerMain {
 				bind(ITenantManagerService.class).to(TenantManagerService.class).in(Singleton.class);
 				
 				requestStaticInjection(TenantPersistenceService.class);
-				bind(ITenantPersistenceService.class).to(TenantPersistenceService.class).in(Singleton.class);
+				bind(TenantPersistenceService.class).in(Singleton.class);
 
 				requestStaticInjection(MetricsService.class);
 				bind(IMetricsService.class).to(MetricsService.class).in(Singleton.class);

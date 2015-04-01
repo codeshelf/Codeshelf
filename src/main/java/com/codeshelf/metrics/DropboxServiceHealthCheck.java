@@ -5,7 +5,7 @@ import java.util.List;
 import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.model.domain.DropboxService;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.google.common.collect.Lists;
 

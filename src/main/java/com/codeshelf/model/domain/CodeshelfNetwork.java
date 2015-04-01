@@ -30,7 +30,7 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -300,30 +300,5 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 			LOGGER.error("Tried to create Site Controller "+username+" but it already exists");
 		}
 
-		// create site controller user (or use found)
-		
-		/* not implemented anymore. 
-		 * tenant manager will create "default" site controller user
-		 * others must be created manually separate from domain object site controller
-		User user = TenantManagerService.getInstance().getUser(username);
-		if(user != null) {
-			// already exists?
-			if(user.tenantEquals(tenant)) {
-				LOGGER.info("Site controller user already exists, not creating");
-			} else {
-				if(TenantManagerService.class.isAssignableFrom(TenantManagerService.getInstance().getClass()))
-					// ignore for testing mock 
-					LOGGER.error("Cannot create site controller user since it already exists with another tenant");
-			}
-		} else if(sitecon == null) {
-			LOGGER.error("Will not create Site Controller user after failure to create Site Controller");
-		} else {
-			// try to create user
-			if(null == TenantManagerService.getInstance().createUser(tenant, username, password, UserType.SITECON)) {
-				LOGGER.error("Failed to create user for new site controller "+username);
-			}
-		}
-		 */
- 
 	}
 }

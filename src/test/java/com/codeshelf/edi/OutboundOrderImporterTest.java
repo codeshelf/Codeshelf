@@ -427,6 +427,10 @@ public class OutboundOrderImporterTest extends ServerTest {
 		importer = createOrderImporter();
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
@@ -952,6 +956,9 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\nUSF314,COSTCO,456,456,456.5,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
 		importCsvString(facility, secondCsvString);
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		// See, works same as if matching the group
 		HeaderCounts theCounts3 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts3.mTotalHeaders == 3);
@@ -965,6 +972,10 @@ public class OutboundOrderImporterTest extends ServerTest {
 		String fourthCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\nUSF314,COSTCO,123,123,123.3,10706962,Authentic Pizza Sauces,0,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importCsvString(facility, fourthCsvString);
+		
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		// This looks buggy. Orders and 6 details still present. What two orderDetails went away. Looks like all other cntrUses got inactivated, and new one made.
 		HeaderCounts theCounts4 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts4.mTotalHeaders == 3);
@@ -979,6 +990,10 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\nUSF314,COSTCO,123,123,123.2,10706952,Italian Homemade Style Basil Pesto,3,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 
 		importCsvString(facility, fifthCsvString);
+		
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		// Well, yes. Looks like that detail was cleanly updated without bothering anything else.
 		HeaderCounts theCounts5 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts5.mTotalHeaders == 3);
@@ -995,6 +1010,10 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\nUSF314,COSTCO,456,456,456.3,10706962,Authentic Pizza Sauces,4,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
 		importCsvString(facility, sixthCsvString);
+		
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		// Buggy? Not sure. Hard to understand anyway. All other details except 1 were made inactive.  That led to two more inactive container uses (ok, if the detail inactive is correct).
 		HeaderCounts theCounts6 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts6.mTotalHeaders == 3);
@@ -1271,7 +1290,11 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" +
 				"\r\n4,4,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1";
 		importCsvString(facility, secondCsvString);
-
+		
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		
 		HashMap<String, Boolean> groupExpectations = new HashMap<String, Boolean>();
 		groupExpectations.put("Group1", true);
 		HashMap<String, Boolean> headerExpectations = new HashMap<String, Boolean>();
@@ -1304,6 +1327,10 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n4,4,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a";
 		importCsvString(facility, secondCsvString);
 
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		
 		HashMap<String, Boolean> groupExpectations = new HashMap<String, Boolean>();
 		groupExpectations.put("Group1", true);
 		HashMap<String, Boolean> headerExpectations = new HashMap<String, Boolean>();
@@ -1338,6 +1365,10 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n5,5,350,12/03/14 12:00,12/31/14 12:00,Item8,,50,a,Group2";
 		importCsvString(facility, secondCsvString);
 
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		
 		HashMap<String, Boolean> groupExpectations = new HashMap<String, Boolean>();
 		groupExpectations.put("Group1", true);
 		groupExpectations.put("Group2", true);

@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.manager.TenantManagerService.ShutdownCleanupReq;
 
 @SuppressWarnings("serial")
 public class ServiceControlServlet extends HttpServlet {
@@ -56,18 +57,18 @@ public class ServiceControlServlet extends HttpServlet {
         if(action!=null) {
             if(action.equals("stop")) {
             	out.println("APP SERVER SHUTDOWN. Service will stop in "+ACTION_DELAY_SECONDS+" seconds");
-            	stop(TenantManagerService.ShutdownCleanupReq.NONE);
+            	stop(ShutdownCleanupReq.NONE);
             } else if(enableSchemaManagement) {
             	// schema actions
             	if(action.equals("dropschema")) {
                 	out.println("DROP SCHEMA. Service will stop in "+ACTION_DELAY_SECONDS+" seconds");
-            		stop(TenantManagerService.ShutdownCleanupReq.DROP_SCHEMA);
+            		stop(ShutdownCleanupReq.DROP_SCHEMA);
             	} else if(action.equals("deleteorderswis")) {
                 	out.println("DELETE ORDERS AND WORK INSTRUCTIONS. Service will stop in "+ACTION_DELAY_SECONDS+" seconds");
-            		stop(TenantManagerService.ShutdownCleanupReq.DELETE_ORDERS_WIS);
+            		stop(ShutdownCleanupReq.DELETE_ORDERS_WIS);
             	} else if(action.equals("deleteorderswisinventory")) {
                 	out.println("DELETE ORDERS AND WORK INSTRUCTIONS AND INVENTORY. Service will stop in "+ACTION_DELAY_SECONDS+" seconds");
-            		stop(TenantManagerService.ShutdownCleanupReq.DELETE_ORDERS_WIS_INVENTORY);
+            		stop(ShutdownCleanupReq.DELETE_ORDERS_WIS_INVENTORY);
             	} else {
             		out.println("Invalid command.");
             	}
@@ -88,10 +89,10 @@ public class ServiceControlServlet extends HttpServlet {
         out.println("</body></html>");        
     }
 
-    private void stop(final TenantManagerService.ShutdownCleanupReq cleanup) {
+    private void stop(final ShutdownCleanupReq cleanup) {
     	Runnable stopper = new Runnable() {
     		public void run() {
-    			if(!cleanup.equals(TenantManagerService.ShutdownCleanupReq.NONE)) {
+    			if(!cleanup.equals(ShutdownCleanupReq.NONE)) {
     				TenantManagerService.getInstance().setShutdownCleanupRequest(cleanup);
     			}
     			application.stopApplication();

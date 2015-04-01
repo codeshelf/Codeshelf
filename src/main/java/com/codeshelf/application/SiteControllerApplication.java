@@ -17,7 +17,7 @@ import com.codeshelf.metrics.ConnectedToServerHealthCheck;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.RadioOnHealthCheck;
-import com.codeshelf.ws.jetty.client.CsClientEndpoint;
+import com.codeshelf.ws.client.CsClientEndpoint;
 import com.google.inject.Inject;
 
 public final class SiteControllerApplication extends CodeshelfApplication {

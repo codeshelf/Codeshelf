@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
 @Entity
@@ -38,7 +38,7 @@ public class DomainObjectProperty extends DomainObjectABC {
 	@Getter
 	@NonNull
 	@Column(name = "objectid", nullable = false)
-	@Type(type = "com.codeshelf.platform.persistence.DialectUUIDType")
+	@Type(type = "com.codeshelf.persistence.DialectUUIDType")
 	private UUID									objectId			= null;
 
 	@Getter

@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.Validatable;
-import com.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.ws.protocol.message.MessageABC;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
@@ -177,6 +177,11 @@ public class PosControllerInstr extends MessageABC implements Validatable{
 		mControllerId = inControllerId;
 	}
 
+	public PosControllerInstr(final String inControllerId, final String inSourceId, final byte inPosition, final byte inReqQty, final byte inMinQty, final byte inMaxQty, final byte inFreq, final byte inDutyCycle) {
+		this(inPosition, inReqQty, inMinQty, inMaxQty, inFreq, inDutyCycle);
+		mControllerId = inControllerId;
+		mSourceId = inSourceId;
+	}
 	public void processRemoveField(){
 		if (mRemove == null) {return;}
 		if ("all".equalsIgnoreCase(mRemove)){

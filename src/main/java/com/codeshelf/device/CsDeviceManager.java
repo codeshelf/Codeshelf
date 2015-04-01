@@ -35,17 +35,18 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.util.PcapRecord;
 import com.codeshelf.util.PcapRingBuffer;
 import com.codeshelf.util.TwoKeyMap;
-import com.codeshelf.ws.jetty.client.CsClientEndpoint;
-import com.codeshelf.ws.jetty.client.WebSocketEventListener;
-import com.codeshelf.ws.jetty.protocol.message.LightLedsInstruction;
-import com.codeshelf.ws.jetty.protocol.request.CompleteWorkInstructionRequest;
-import com.codeshelf.ws.jetty.protocol.request.ComputeDetailWorkRequest;
-import com.codeshelf.ws.jetty.protocol.request.ComputeWorkRequest;
-import com.codeshelf.ws.jetty.protocol.request.GetWorkRequest;
-import com.codeshelf.ws.jetty.protocol.request.InventoryLightRequest;
-import com.codeshelf.ws.jetty.protocol.request.InventoryUpdateRequest;
-import com.codeshelf.ws.jetty.protocol.request.LoginRequest;
-import com.codeshelf.ws.jetty.protocol.response.FailureResponse;
+import com.codeshelf.ws.client.CsClientEndpoint;
+import com.codeshelf.ws.client.WebSocketEventListener;
+import com.codeshelf.ws.protocol.message.LightLedsInstruction;
+import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
+import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
+import com.codeshelf.ws.protocol.request.ComputeWorkRequest;
+import com.codeshelf.ws.protocol.request.GetWorkRequest;
+import com.codeshelf.ws.protocol.request.InventoryLightItemRequest;
+import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
+import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
+import com.codeshelf.ws.protocol.request.LoginRequest;
+import com.codeshelf.ws.protocol.response.FailureResponse;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 
@@ -209,6 +210,26 @@ public class CsDeviceManager implements
 	}
 
 	// --------------------------------------------------------------------------
+	/* 
+	 * Public convenience function for put wall button press. Need to easily find the CheDeviceLogic that asked the position to be lit.
+	 */
+	public final CheDeviceLogic getCheDeviceByControllerId(String controllerId) {
+		if (controllerId == null)
+			return null;
+		
+		NetGuid theGuid = new NetGuid(controllerId);
+		INetworkDevice theDevice =  mDeviceMap.get(theGuid);
+		if (theDevice == null)
+			return null;
+		else if (theDevice instanceof CheDeviceLogic)
+			return (CheDeviceLogic) theDevice;
+		else {
+			LOGGER.error("unexpected device type for {} in getCheDeviceByControllerId", controllerId);
+			return null;
+		}
+	}
+
+	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.codeshelf.flyweight.controller.IRadioControllerEventListener#canNetworkDeviceAssociate(com.codeshelf.flyweight.command.NetGuid)
 	 */
@@ -307,11 +328,21 @@ public class CsDeviceManager implements
 	/* (non-Javadoc)
 	 * @see com.codeshelf.device.CsDeviceManager#inventoryScan(final String inCheId, final UUID inPersistentId, final String inLocationId, final String inGtin)
 	 */
-	public void inventoryLightScan(final UUID inPersistentId, final String inGtin) {
-		LOGGER.debug("Inventory light request: Che={};  GTIN={};", inPersistentId, inGtin);
-		InventoryLightRequest req = new InventoryLightRequest(inPersistentId.toString(), inGtin);
+	public void inventoryLightItemScan(final UUID inPersistentId, final String inGtin) {
+		LOGGER.debug("Inventory light location request: Che={};  GTIN={};", inPersistentId, inGtin);
+		InventoryLightItemRequest req = new InventoryLightItemRequest(inPersistentId.toString(), inGtin);
 		clientEndpoint.sendMessage(req);
 	}
+	
+	// --------------------------------------------------------------------------
+		/* (non-Javadoc)
+		 * @see com.codeshelf.device.CsDeviceManager#inventoryLightLocationScan(final String inCheId, final UUID inPersistentId, final String inLocation)
+		 */
+		public void inventoryLightLocationScan(final UUID inPersistentId, final String inLocation, boolean isTape) {
+			LOGGER.debug("Inventory light location request: Che={};  Location={};", inPersistentId, inLocation);
+			InventoryLightLocationRequest req = new InventoryLightLocationRequest(inPersistentId.toString(), inLocation, isTape);
+			clientEndpoint.sendMessage(req);
+		}
 
 	/**
 	 * Websocket connects then this authenticates and receives the network it should use

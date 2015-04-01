@@ -49,11 +49,11 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.validation.InputValidationException;
-import com.codeshelf.ws.jetty.protocol.message.IMessageProcessor;
-import com.codeshelf.ws.jetty.protocol.request.ServiceMethodRequest;
-import com.codeshelf.ws.jetty.protocol.response.ResponseABC;
-import com.codeshelf.ws.jetty.protocol.response.ServiceMethodResponse;
-import com.codeshelf.ws.jetty.server.ServerMessageProcessor;
+import com.codeshelf.ws.protocol.message.IMessageProcessor;
+import com.codeshelf.ws.protocol.request.ServiceMethodRequest;
+import com.codeshelf.ws.protocol.response.ResponseABC;
+import com.codeshelf.ws.protocol.response.ServiceMethodResponse;
+import com.codeshelf.ws.server.ServerMessageProcessor;
 import com.google.common.collect.ImmutableList;
 
 public class WorkServiceTest extends ServerTest {

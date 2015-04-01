@@ -52,13 +52,13 @@ configuration:
     - name: com.codeshelf.metrics.MetricsService
       level: warn
       
-    - name: org.eclipse.jetty.server.NetworkTrafficServerConnector
+    - name: org.eclipse.server.NetworkTrafficServerConnector
       level: warn
       
-    - name: org.eclipse.jetty.server.Server
+    - name: org.eclipse.server.Server
       level: warn
     
-    - name: com.codeshelf.ws.jetty.server.ServerWatchdogThread
+    - name: com.codeshelf.ws.server.ServerWatchdogThread
       level: info # 
     
     - name: org.hibernate.engine.internal.StatefulPersistenceContext

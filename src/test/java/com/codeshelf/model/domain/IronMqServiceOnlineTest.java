@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.codeshelf.generators.FacilityGenerator;

@@ -4,7 +4,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.codeshelf.model.domain.IDomainObject;
-import com.codeshelf.ws.jetty.protocol.message.MessageABC;
+import com.codeshelf.ws.protocol.message.MessageABC;
 
 public interface ObjectEventListener {
 

@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.DomainObjectPropertyDefault;
 import com.codeshelf.model.domain.IDomainObject;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 
 public class PropertyDao extends GenericDaoABC<DomainObjectProperty> {
 

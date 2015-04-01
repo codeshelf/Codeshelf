@@ -27,7 +27,7 @@ import com.codeshelf.generators.FacilityGenerator;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.testframework.MockDaoTest;
-import com.codeshelf.ws.jetty.client.CsClientEndpoint;
+import com.codeshelf.ws.client.CsClientEndpoint;
 
 public class CsDeviceManagerTest extends MockDaoTest {
 	

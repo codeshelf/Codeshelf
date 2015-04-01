@@ -29,14 +29,13 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LocationAlias;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
-import com.codeshelf.platform.persistence.ITenantPersistenceService;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.service.WorkService;
 import com.google.inject.Inject;
 
 @Path("/test")
 public class TestingResource {
-	private ITenantPersistenceService persistence = TenantPersistenceService.getInstance();
+	private TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 	private WorkService workService;
 
 	@Inject

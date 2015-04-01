@@ -15,10 +15,10 @@ import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.SiteController;
 import com.codeshelf.model.domain.WirelessDeviceABC;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
-import com.codeshelf.ws.jetty.protocol.message.MessageABC;
-import com.codeshelf.ws.jetty.protocol.message.NetworkStatusMessage;
-import com.codeshelf.ws.jetty.server.WebSocketConnection;
+import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.ws.protocol.message.MessageABC;
+import com.codeshelf.ws.protocol.message.NetworkStatusMessage;
+import com.codeshelf.ws.server.WebSocketConnection;
 
 public class NetworkChangeListener implements ObjectEventListener {
 	

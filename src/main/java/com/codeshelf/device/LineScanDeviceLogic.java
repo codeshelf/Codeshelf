@@ -445,7 +445,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 * @param inWi
 	 * @param inQuantity
 	 */
-	private void processNormalPick(WorkInstruction inWi, Integer inQuantity) {
+	@Override
+	protected void processNormalPick(WorkInstruction inWi, Integer inQuantity) {
 
 		inWi.setActualQuantity(inQuantity);
 		inWi.setPickerId(mUserId);

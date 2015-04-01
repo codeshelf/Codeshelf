@@ -37,7 +37,7 @@ import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.platform.persistence.TenantPersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
@@ -158,7 +158,7 @@ public class IronMqService extends EdiServiceABC {
 			try {
 				Optional<Queue> queue = getWorkInstructionQueue();
 				if (queue.isPresent()) {
-					queue.get().getSize();
+					queue.get().getInfoAboutQueue();
 					setServiceState(EdiServiceStateEnum.LINKED);
 					LOGGER.warn("IronMqService is linked, will export work instructions");
 				}

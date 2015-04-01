@@ -82,7 +82,7 @@ dependencies {
 
 			'org.postgresql:postgresql:9.3-1100-jdbc41',
 
-			'ironmq:ironmq:0.0.10',
+			'io.iron.ironmq:ironmq:0.0.19',
 			'com.google.code.gson:gson:2.2.4', //note this is here to satisfy ironmq 0.0.10 dependency. Upgrade ironmq soon
 
 			'com.fasterxml.jackson.core:jackson-annotations:2.4.1',
