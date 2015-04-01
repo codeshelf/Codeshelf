@@ -36,6 +36,7 @@ import com.codeshelf.security.CodeshelfRealm;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.HmacAuthService;
 import com.codeshelf.service.IPropertyService;
+import com.codeshelf.service.LightService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.util.ConverterProvider;
@@ -118,7 +119,9 @@ public final class ServerMain {
 
 				requestStaticInjection(PropertyService.class);
 				bind(IPropertyService.class).to(PropertyService.class).in(Singleton.class);
-
+				bind(WorkService.class).in(Singleton.class);
+				bind(WebSocketManagerService.class).in(Singleton.class);
+				
 				bind(GuiceFilter.class);
 				
 				bind(ICodeshelfApplication.class).to(ServerCodeshelfApplication.class);
@@ -144,21 +147,7 @@ public final class ServerMain {
 				requestStaticInjection(HmacAuthService.class);
 				bind(AuthProviderService.class).to(HmacAuthService.class).in(Singleton.class);
 			}
-			
-			@Provides
-			@Singleton
-			public WorkService createWorkService() {
-				WorkService workService = new WorkService();
-				return workService;				
-			}
-
-			@Provides
-			@Singleton
-			public WebSocketManagerService createWebSocketManagerService() {
-				WebSocketManagerService webSocketManagerService = new WebSocketManagerService();
-				return webSocketManagerService;				
-			}
-			
+					
 		}, /*createShiroModule(),*/ createGuiceServletModuleForApi() /*, createGuiceServletModuleForManager()*/);
 
 		return injector;
