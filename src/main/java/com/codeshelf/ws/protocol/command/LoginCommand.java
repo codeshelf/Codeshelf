@@ -29,6 +29,7 @@ import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 import com.codeshelf.ws.server.WebSocketManagerService;
+import com.google.common.base.Strings;
 
 public class LoginCommand extends CommandABC {
 
@@ -37,7 +38,7 @@ public class LoginCommand extends CommandABC {
 	private LoginRequest			loginRequest;
 
 	private ObjectChangeBroadcaster	objectChangeBroadcaster;
-	
+
 	private WebSocketManagerService sessionManager;
 
 	public LoginCommand(WebSocketConnection wsConnection, LoginRequest loginRequest, ObjectChangeBroadcaster objectChangeBroadcaster, WebSocketManagerService sessionManager) {
@@ -51,10 +52,16 @@ public class LoginCommand extends CommandABC {
 	public ResponseABC exec() {
 		LoginResponse response = new LoginResponse();
 		try {
+			String cstoken = loginRequest.getCstoken();
 			String username = loginRequest.getUserId();
 			String password = loginRequest.getPassword();
 			if (wsConnection != null) {
-				AuthResponse authResponse = HmacAuthService.getInstance().authenticate(username, password);
+				AuthResponse authResponse = null;
+				if (!Strings.isNullOrEmpty(cstoken)) {
+					authResponse = HmacAuthService.getInstance().checkToken(cstoken);
+				} else {
+					authResponse = HmacAuthService.getInstance().authenticate(username, password);
+	            }
 				if (authResponse.getStatus().equals(Status.ACCEPTED)) {
 					User authUser = authResponse.getUser();
 					// successfully authenticated user with password
