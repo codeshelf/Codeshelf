@@ -35,6 +35,7 @@ import com.codeshelf.ws.protocol.command.ObjectGetCommand;
 import com.codeshelf.ws.protocol.command.ObjectMethodCommand;
 import com.codeshelf.ws.protocol.command.ObjectPropertiesCommand;
 import com.codeshelf.ws.protocol.command.ObjectUpdateCommand;
+import com.codeshelf.ws.protocol.command.PutWallPlacementCommand;
 import com.codeshelf.ws.protocol.command.RegisterFilterCommand;
 import com.codeshelf.ws.protocol.command.ServiceMethodCommand;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
@@ -56,6 +57,7 @@ import com.codeshelf.ws.protocol.request.ObjectGetRequest;
 import com.codeshelf.ws.protocol.request.ObjectMethodRequest;
 import com.codeshelf.ws.protocol.request.ObjectPropertiesRequest;
 import com.codeshelf.ws.protocol.request.ObjectUpdateRequest;
+import com.codeshelf.ws.protocol.request.PutWallPlacementRequest;
 import com.codeshelf.ws.protocol.request.RegisterFilterRequest;
 import com.codeshelf.ws.protocol.request.RequestABC;
 import com.codeshelf.ws.protocol.request.ServiceMethodRequest;
@@ -88,6 +90,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	private final Counter inventoryUpdateRequestCounter;
 	private final Counter inventoryLightItemRequestCounter;
 	private final Counter inventoryLightLocationRequestCounter;
+	private final Counter putWallPlacementCounter;
 	private final Timer requestProcessingTimer;
 	
 	private ServiceFactory	serviceFactory;
@@ -123,6 +126,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		inventoryUpdateRequestCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.inventory-update");
 		inventoryLightItemRequestCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.inventory-light-item");
 		inventoryLightLocationRequestCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.inventory-light-location");
+		putWallPlacementCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.put-wall-placement");
 		requestProcessingTimer = metricsService.createTimer(MetricsGroup.WSS,"requests.processing-time");
 		
 	}
@@ -164,8 +168,8 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		}
 		else if (request instanceof ComputeWorkRequest) {
 			command = new ComputeWorkCommand(csSession,(ComputeWorkRequest) request, serviceFactory.getServiceInstance(WorkService.class));
-				computeWorkCounter.inc();
-				applicationRequestCounter.inc();
+			computeWorkCounter.inc();
+			applicationRequestCounter.inc();
 		}
 		else if (request instanceof ComputeDetailWorkRequest) {
 			command = new ComputeDetailWorkCommand(csSession,(ComputeDetailWorkRequest) request, serviceFactory.getServiceInstance(WorkService.class));
@@ -230,6 +234,11 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		else if (request instanceof InventoryLightLocationRequest) {
 			command = new InventoryLightLocationCommand(csSession, (InventoryLightLocationRequest) request, serviceFactory.getServiceInstance(InventoryService.class));
 			inventoryLightLocationRequestCounter.inc();
+			applicationRequestCounter.inc();
+		}
+		else if (request instanceof PutWallPlacementRequest) {
+			command = new PutWallPlacementCommand(csSession, (PutWallPlacementRequest) request, serviceFactory.getServiceInstance(WorkService.class));
+			putWallPlacementCounter.inc();
 			applicationRequestCounter.inc();
 		}
 		else {

@@ -31,6 +31,7 @@ import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.util.CompareNullChecker;
+import com.codeshelf.ws.protocol.request.PutWallPlacementRequest;
 
 /**
  * @author jonranstrom
@@ -1603,6 +1604,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 	
 	protected void processPutWallLocationScan(final String inScanPrefixStr, final String inScanStr) {
+		String orderId = getLastPutWallOrderScan();
+		PutWallPlacementRequest message = new PutWallPlacementRequest(getPersistentId().toString(), orderId, inScanStr);
+		mDeviceManager.clientEndpoint.sendMessage(message);
 		sendOrderPlacementMessage(getLastPutWallOrderScan(), inScanStr);
 		setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
 	}

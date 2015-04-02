@@ -93,7 +93,7 @@ public class RadioController implements IRadioController {
 	private static final long										BROADCAST_RATE_MILLIS			= 750;
 
 	private static final int										MAX_CHANNEL_VALUE				= 255;
-	private static final long										PACKET_SPACING_MILLIS			= 20;
+	private static final long										PACKET_SPACING_MILLIS			= 40;
 	private static final int										ACK_QUEUE_SIZE					= 200;
 
 	@Getter

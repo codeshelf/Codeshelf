@@ -77,6 +77,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 
 public class WorkService extends AbstractCodeshelfExecutionThreadService implements IApiService {
 
@@ -87,6 +88,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 	private static final Logger			LOGGER						= LoggerFactory.getLogger(WorkService.class);
 	private BlockingQueue<WIMessage>	completedWorkInstructions;
+	@Inject
+	private LightService lightService;
 
 	@Getter
 	@Setter
@@ -1308,5 +1311,26 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		// See facility.determineWorkForContainer(Container container) which returns batch results but only for crossbatch situation. That and this should share code.
 
 		return false;
+	}
+	
+	public boolean processPutWallPlacement(Che che, String orderId, String locationId) {
+		Facility facility = che.getFacility();
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
+		Location location = facility.findSubLocationById(locationId);
+		if (order == null) {
+			LOGGER.warn("Could not find order " + orderId);
+			return false;
+		}
+		if (location == null) {
+			LOGGER.warn("Could not find location " + locationId);
+			return false;
+		}
+		lightService.lightLocation(facility.getPersistentId().toString(), locationId);
+		List<OrderLocation> locations = order.getOrderLocations();
+		for (OrderLocation foundLocation : locations) {
+			foundLocation.setActive(false);
+		}
+		order.addOrderLocation(location);
+		return true;
 	}
 }
