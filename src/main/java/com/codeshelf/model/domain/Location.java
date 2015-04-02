@@ -624,6 +624,10 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 */
 	public Location findSubLocationById(final String inLocationId) {
 		Location result = null;
+		if (inLocationId == null) {
+			LOGGER.error("null input to findSubLocationById"); // If we see this, we might want to add and exception to the error line to get the stack trace
+			return null;
+		}
 
 		Integer firstDotPos = inLocationId.indexOf(".");
 		if (firstDotPos < 0) {
