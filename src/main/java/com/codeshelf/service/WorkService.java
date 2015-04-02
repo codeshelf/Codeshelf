@@ -862,11 +862,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 	// --------------------------------------------------------------------------
 	/**
-	 *Utility function for outbound order WI generation
-	 * @param inChe
-	 * @param inContainer
-	 * @param inTime
-	 * @return
+	 * Utility function for outbound order WI generation
+	 * The result is a SingleWorkItem, which has the WI created, or reference to OrderDetail it could not make an order for.
+	 * From DEV-724, give out work from the path the CHE is on only.
 	 */
 	private SingleWorkItem makeWIForOutbound(final OrderDetail inOrderDetail,
 		final Che inChe,
@@ -899,10 +897,14 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				}
 			}
 		} else { //Bay Distance
+			// If there is preferred location, try to use it
+			// TODO DEV-724 don't use the location if not on CHE path
 			Location preferredLocation = inOrderDetail.getPreferredLocObject();
 			if (preferredLocation != null && preferredLocation.getAssociatedPathSegment() != null) {
 				location = preferredLocation;
 			} else {
+				
+			// otherwise, search for inventory on the CHE path
 				for (Path path : paths) {
 					String uomStr = inOrderDetail.getUomMasterId();
 					Item item = itemMaster.getFirstActiveItemMatchingUomOnPath(path, uomStr);
@@ -941,6 +943,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				resultWork.addInstruction(resultWi);
 			} else {
 				resultWork.addDetail(inOrderDetail);
+				// later enhancement. Different adds for detail in my work area, and unknown or different work area.
 			}
 		} else {
 			resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,

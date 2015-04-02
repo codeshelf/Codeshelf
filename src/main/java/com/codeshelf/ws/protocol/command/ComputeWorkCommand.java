@@ -113,7 +113,7 @@ public class ComputeWorkCommand extends CommandABC {
 				count = new WorkInstructionCount();
 				containerToWorkInstructCountMap.put(containerId, count);
 			}
-			containerToWorkInstructCountMap.get(containerId).incrementNonFoundDetails();
+			containerToWorkInstructCountMap.get(containerId).incrementDetailsNoWiMade();
 		}
 		return containerToWorkInstructCountMap;
 	}

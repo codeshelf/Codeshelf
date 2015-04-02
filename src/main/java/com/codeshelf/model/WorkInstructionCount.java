@@ -33,7 +33,11 @@ public class WorkInstructionCount {
 	
 	@Getter
 	@Setter
-	private int	nonFoundDetails = 0;
+	private int	detailsNoWiMade = 0;
+	/* Later enhancement will like needly two detail fields. One for not on my current path, but in my work area. 
+	And the other for unknown path or path in other area. 
+	Usually would not get one on my current path as it would have auto-shorted instead */
+
 
 	public WorkInstructionCount(int goodCount,
 		int unknownOrderIdCount,
@@ -65,7 +69,7 @@ public class WorkInstructionCount {
 	 * @return immediateShortCount > 0 || invalidOrUnknownStatusCount > 0
 	 */
 	public boolean hasBadCounts() {
-		return shortCount > 0 || invalidOrUnknownStatusCount > 0 || nonFoundDetails > 0;
+		return shortCount > 0 || invalidOrUnknownStatusCount > 0 || detailsNoWiMade > 0;
 	}
 
 	public void incrementGoodCount() {
@@ -84,8 +88,8 @@ public class WorkInstructionCount {
 		invalidOrUnknownStatusCount++;
 	}
 	
-	public void incrementNonFoundDetails(){
-		nonFoundDetails++;
+	public void incrementDetailsNoWiMade(){
+		detailsNoWiMade++;
 	}
 
 	@Override

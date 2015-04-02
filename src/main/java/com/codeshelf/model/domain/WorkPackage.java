@@ -12,7 +12,7 @@ public class WorkPackage {
 
 	/**
 	 * SingleWorkItem represents a single good work instruction, short work instruction, or order detail for which a work instruction could not be made.
-	 * Later enhancement will like need two detail fields. One for not on my current path, but in my work area. And the other for unknown path or path in other area.
+	 * Later enhancement will likely need two detail fields. One for not on my current path, but in my work area. And the other for unknown path or path in other area.
 	 */
 	public static class SingleWorkItem {
 		private static final Logger	LOGGER	= LoggerFactory.getLogger(SingleWorkItem.class);
@@ -37,7 +37,7 @@ public class WorkPackage {
 	}
 
 	/**
-	 * Later enhancement will like need two detail lists. One for not on my current path, but in my work area. And the other for unknown path or path in other area.
+	 * Later enhancement will like needly two detail lists. One for not on my current path, but in my work area. And the other for unknown path or path in other area.
 	 */
 	public static class WorkList {
 		@Getter
