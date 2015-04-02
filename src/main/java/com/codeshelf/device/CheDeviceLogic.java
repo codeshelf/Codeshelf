@@ -743,10 +743,24 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		} else {
 			byte count = (byte) wiCount.getGoodCount();
 			LOGGER.info("Position Feedback: Poscon {} -- {}", position, wiCount);
-			if (count == 0) {
-				//0 good WI's means dim display
-				if (wiCount.hasBadCounts()) {
+			if (count == 0) { // nothing else to do from this cart setup.
+				// Indicate short this path, work other paths, or both.
+				if (wiCount.hasShortsThisPath() && wiCount.hasWorkOtherPaths()) {
 					//If there any bad counts then we are "done for now" - dim, solid, dashes
+					return new PosControllerInstr(position,
+						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+						PosControllerInstr.BITENCODED_TRIPLE_DASH,
+						PosControllerInstr.BITENCODED_TRIPLE_DASH,
+						PosControllerInstr.SOLID_FREQ.byteValue(),
+						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
+				} else if (wiCount.hasShortsThisPath()) {
+					return new PosControllerInstr(position,
+						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+						PosControllerInstr.BITENCODED_TOP_BOTTOM,
+						PosControllerInstr.BITENCODED_TOP_BOTTOM,
+						PosControllerInstr.SOLID_FREQ.byteValue(),
+						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
+				} else if (wiCount.hasWorkOtherPaths()) {
 					return new PosControllerInstr(position,
 						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
 						PosControllerInstr.BITENCODED_LED_DASH,

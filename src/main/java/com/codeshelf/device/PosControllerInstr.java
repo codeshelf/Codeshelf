@@ -57,6 +57,7 @@ public class PosControllerInstr extends MessageABC implements Validatable{
 	public static final Byte	BITENCODED_LED_C				= 0x58;
 	public static final Byte	BITENCODED_LED_E				= 0x79;
 	public static final Byte	BITENCODED_TRIPLE_DASH			= 0x49;
+	public static final Byte	BITENCODED_TOP_BOTTOM			= 0x09;
 
 	//Any array mapping digits to their BITENCODED_LED bytes. Digit 9 is at the end of the array.
 	public static final byte[]	BITENCODED_DIGITS				= new byte[] { 0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07,
