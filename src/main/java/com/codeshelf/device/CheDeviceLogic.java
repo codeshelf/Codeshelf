@@ -854,6 +854,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			LOGGER.error(" bad input to rememberOffChePosconWorkInstruction");
 			return;
 		}
+		@SuppressWarnings("unused")
 		String theSub = controllerId.substring(0,2);
 		if ("0x".equals(controllerId.substring(0,2))) {
 			LOGGER.error("Probable coding error. See comments in rememberOffChePosconWorkInstruction()");

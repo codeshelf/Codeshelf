@@ -23,7 +23,8 @@ public interface PersistenceService extends CodeshelfService {
 	public void rollbackTransaction();
 	public Session getSession();
 	public Session getSessionWithTransaction();
-
+	
 	void forgetInitialActions(String tenantIdentifier);
 	void forgetSchemaInitialization(String tenantIdentifier);
+
 }

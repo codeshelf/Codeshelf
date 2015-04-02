@@ -18,7 +18,6 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.MockModel;
 import com.codeshelf.testframework.HibernateTest;
-import com.codeshelf.ws.protocol.command.ObjectUpdateCommand;
 import com.codeshelf.ws.protocol.request.ObjectUpdateRequest;
 import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;

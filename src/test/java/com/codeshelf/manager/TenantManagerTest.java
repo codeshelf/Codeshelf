@@ -315,12 +315,12 @@ public class TenantManagerTest extends HibernateTest {
 
 		// basic assignment, reassignment and retrieval 
 		user.setRoles(Sets.newHashSet(admin,local,guest));
-		Assert.assertEquals(Sets.newHashSet("view","edit","control","print"),user.getPermissions());
+		Assert.assertEquals(Sets.newHashSet("view","edit","control","print"),user.getPermissionStrings());
 		user.setRoles(Sets.newHashSet(guest,local));
-		Assert.assertEquals(Sets.newHashSet("view","print"),user.getPermissions());
+		Assert.assertEquals(Sets.newHashSet("view","print"),user.getPermissionStrings());
 		Assert.assertEquals(Sets.newHashSet(local,guest),user.getRoles());
 		user.setRoles(Sets.newHashSet(admin));
-		Assert.assertEquals(Sets.newHashSet("view","edit","control"),user.getPermissions());
+		Assert.assertEquals(Sets.newHashSet("view","edit","control"),user.getPermissionStrings());
 		this.tenantManagerService.updateUser(user);
 
 		// permissions can be checked by Shiro

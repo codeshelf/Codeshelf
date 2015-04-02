@@ -82,6 +82,7 @@ public class ManagerPersistenceService extends AbstractPersistenceService implem
 
 	@Override
 	public void initializeTenantData() {
+		DefaultRolesPermissions.sync();
 	}
 
 	@Override

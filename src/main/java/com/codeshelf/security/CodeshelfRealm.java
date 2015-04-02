@@ -41,7 +41,7 @@ public class CodeshelfRealm extends AuthorizingRealm {
 			roles.addAll(user.getRoleNames());
 			
 			info = new SimpleAuthorizationInfo();
-			info.setStringPermissions(user.getPermissions());
+			info.setStringPermissions(user.getPermissionStrings());
 			info.setRoles(roles);
 		} // else getUser logged error
 		

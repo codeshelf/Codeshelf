@@ -1,0 +1,26 @@
+# Default users for default tenant
+#   At TenantManager startup, these users will exist
+#   and will have exactly these roles assigned to them
+#
+# If a user is created, its password will be set to "testme"
+#   or to the default site controller password, 
+#   and it will be given access to the initial tenant
+
+"configure@example.com":
+  - Admin
+  - Configure
+"a@example.com":
+  - Browse
+"view@example.com":
+  - Companion
+"simulate@example.com":
+  - CsDeveloper
+  - CsSupport
+"che@example.com":
+  - Browse
+  - CsDeveloper
+"work@example.com":
+  - Maintenance
+  - Inventory
+"5000":
+  - SiteController

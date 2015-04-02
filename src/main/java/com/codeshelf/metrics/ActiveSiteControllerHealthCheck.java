@@ -3,8 +3,8 @@ package com.codeshelf.metrics;
 import java.util.Collection;
 
 import com.codeshelf.ws.server.WebSocketConnection;
-import com.codeshelf.ws.server.WebSocketManagerService;
 import com.codeshelf.ws.server.WebSocketConnection.State;
+import com.codeshelf.ws.server.WebSocketManagerService;
 
 public class ActiveSiteControllerHealthCheck extends CodeshelfHealthCheck {
 

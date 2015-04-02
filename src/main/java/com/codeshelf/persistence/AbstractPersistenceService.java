@@ -352,5 +352,5 @@ public abstract class AbstractPersistenceService extends AbstractCodeshelfIdleSe
 	public void forgetSchemaInitialization(String tenantIdentifier) {
 		this.initializedSchemaTenantIdentifiers.remove(tenantIdentifier);
 	}
-
+	
 }
