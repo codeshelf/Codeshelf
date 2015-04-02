@@ -89,8 +89,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(WorkService.class);
 	private BlockingQueue<WIMessage>	completedWorkInstructions;
-	@Inject
-	private LightService lightService;
+	
+	private final LightService 				lightService;
 
 	@Getter
 	@Setter
@@ -101,7 +101,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	private int							capacity;
 
 	private IEdiExportServiceProvider	exportServiceProvider;
-	private final LightService			lightService;
 
 	@Transient
 	private WorkInstructionCSVExporter	wiCSVExporter;
