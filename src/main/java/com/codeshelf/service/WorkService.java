@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -30,8 +31,10 @@ import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Timer;
 import com.codeshelf.device.CheDeviceLogic;
+import com.codeshelf.device.OrderLocationFeedbackMessage;
 import com.codeshelf.edi.IEdiExportServiceProvider;
 import com.codeshelf.edi.WorkInstructionCSVExporter;
+import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.HousekeepingInjector;
@@ -71,6 +74,7 @@ import com.codeshelf.validation.BatchResult;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 import com.codeshelf.validation.MethodArgumentException;
+import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.response.GetOrderDetailWorkResponse;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
@@ -90,8 +94,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(WorkService.class);
 	private BlockingQueue<WIMessage>	completedWorkInstructions;
-	
-	private final LightService 				lightService;
+
+	private final LightService			lightService;
 
 	@Getter
 	@Setter
@@ -297,16 +301,71 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		return null;
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Find and return the OrderLocation, only if it is a put wall location.
+	 * Not checked, but if multiple, returns the first found.
+	 * (Later enhancement: restrict to same work area as the wi location.)
+	 */
+	private OrderLocation getPutWallOrderLocation(WorkInstruction incomingWI) {
+		OrderHeader order = null;
+		OrderDetail detail = incomingWI.getOrderDetail();
+		if (detail != null)
+			order = detail.getParent();
+		if (order != null) {
+			List<OrderLocation> olList = order.getOrderLocations();
+			// our model allows for multiple order locations. May need that eventually to have active putwalls in multiple areas for same order.
+			// For now, expect only one.
+			for (OrderLocation ol : olList) {
+				Location loc = ol.getLocation();
+				if (loc != null && loc.isActive()) {
+					if (loc.isPutWallLocation()) {
+						return ol;
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	private int sendMessage(Set<User> users, MessageABC message) {
+		// TODO
+		return 0;
+	}
+
+	private void computeAndSendOrderFeedback(WorkInstruction incomingWI) {
+		if (incomingWI == null) {
+			LOGGER.error("null input to computeAndSendOrderFeedback");
+			return;
+		}
+		try {
+			OrderLocation ol = getPutWallOrderLocation(incomingWI);
+			if (ol != null) {
+				Facility facility = ol.getFacility();
+				final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(ol);
+				sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
+			}
+		}
+
+		finally {
+
+		}
+	}
+
 	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
 		Che che = Che.staticGetDao().findByPersistentId(cheId);
 		if (che != null) {
+			WorkInstruction storedWi = null;
 			try {
-				final WorkInstruction storedWi = persistWorkInstruction(incomingWI);
+				storedWi = persistWorkInstruction(incomingWI);
 				exportWorkInstruction(storedWi);
 			} catch (DaoException e) {
 				LOGGER.error("Unable to record work instruction: " + incomingWI, e);
 			} catch (IOException e) {
 				LOGGER.error("Unable to export work instruction: " + incomingWI, e);
+			}
+			if (storedWi != null) {
+				computeAndSendOrderFeedback(storedWi);
 			}
 		} else {
 			throw new IllegalArgumentException("Could not find che for id: " + cheId);
@@ -905,8 +964,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			if (preferredLocation != null && preferredLocation.getAssociatedPathSegment() != null) {
 				location = preferredLocation;
 			} else {
-				
-			// otherwise, search for inventory on the CHE path
+
+				// otherwise, search for inventory on the CHE path
 				for (Path path : paths) {
 					String uomStr = inOrderDetail.getUomMasterId();
 					Item item = itemMaster.getFirstActiveItemMatchingUomOnPath(path, uomStr);
@@ -1343,7 +1402,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		return false;
 	}
-	
+
 	/**
 	 * This function attempts to place an Order into a provided Location
 	 * It is used during a Put Wall setup

@@ -21,8 +21,11 @@ import com.codeshelf.flyweight.controller.IRadioController;
 public class PosManagerDeviceLogic extends PosConDeviceABC {
 	private static final Logger							LOGGER					= LoggerFactory.getLogger(PosManagerDeviceLogic.class);
 
-	//Instructions can come from other site controller (getGuid()) or from other devices (CHEs)
+	// Instructions can come from other site controller (getGuid()) or from other devices (CHEs)
 	private Map<NetGuid, Map<Byte, PosControllerInstr>>	mPosInstructionBySource	= new HashMap<NetGuid, Map<Byte, PosControllerInstr>>();
+	
+	// Order feedback displays by slot. The source GUID is irrelevant, although it might be nice to know the orderID.
+	private Map<String, PosControllerInstr>	mOrderFeedbackByLocation	= new HashMap<String, PosControllerInstr>();
 
 	public PosManagerDeviceLogic(UUID inPersistentId,
 		NetGuid inGuid,
@@ -185,8 +188,6 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 		for (Map<Byte, PosControllerInstr> x :mPosInstructionBySource.values()){
 			PosControllerInstr y = x.get(whichPoscon);
 			if (y != null)
-				
-				// mPosInstructionBySource.
 				return y.getSourceId();
 		}
 		
@@ -216,17 +217,14 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 	}
 
 	public final void updatePosCons(boolean updateUnassociated) {
-		/*
-		if (!isDeviceAssociated() && !updateUnassociated) {
-			return;
-		}
-		*/
-		
+		// This likely needs to be made much more efficient.
 		clearAllPositionControllers();
+		
+		// Add in all active work instructions. Modeled from mPosInstructionBySource
 		Map<Byte, PosControllerInstr> latestInstructionsForPosition = new HashMap<Byte, PosControllerInstr>();
 		List<Map<Byte, PosControllerInstr>> instructionsBySourceList = new ArrayList<Map<Byte, PosControllerInstr>>(mPosInstructionBySource.values());
 
-		//Find the latest instruction posted to each PosCon
+		// Find the latest instruction posted to each PosCon
 		for (Map<Byte, PosControllerInstr> instructionsFromSingleSource : instructionsBySourceList) {
 			List<PosControllerInstr> instructionList = new ArrayList<PosControllerInstr>(instructionsFromSingleSource.values());
 			for (PosControllerInstr instruction : instructionList) {
@@ -238,10 +236,36 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 				}
 			}
 		}
+		// Add in feedback instructions on poscons that did not get an active instruction
+		for ( PosControllerInstr instruction: mOrderFeedbackByLocation.values()){
+			Byte posconIndex = instruction.getPosition();
+			if (!latestInstructionsForPosition.containsKey(posconIndex)){
+				latestInstructionsForPosition.put(posconIndex, instruction);		
+			}
+			
+		}
 
 		//Display latest instructions on PosCons
 		List<PosControllerInstr> latestCommandsList = new ArrayList<PosControllerInstr>(latestInstructionsForPosition.values());
 		sendPositionControllerInstructions(latestCommandsList);
+	}
+	
+	/**
+	 * Has an active work instruction, represented in mPosInstructionBySource. Order feedback does not count.
+	 * Do we need this. Done inside of updatePosCons() above
+	 */
+	private boolean posconHasActiveInstruction(final Byte posconIndex){
+		return false;
+	}
+	
+	private void addFeedbackInstruction(final String locationName, final PosControllerInstr feedbackInstruction){
+		removeFeedbackInstructionFromLocation(locationName); // silently ok if nothing there
+		mOrderFeedbackByLocation.put(locationName, feedbackInstruction);
+	}
+	private void removeFeedbackInstructionFromLocation(final String locationName){
+		if (mOrderFeedbackByLocation.containsKey(locationName)) {		
+			mOrderFeedbackByLocation.remove(locationName);
+		}
 	}
 
 }
