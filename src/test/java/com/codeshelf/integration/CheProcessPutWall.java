@@ -25,6 +25,8 @@ import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
@@ -141,6 +143,12 @@ public class CheProcessPutWall extends ServerTest {
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
 
 		LOGGER.info("2: P14 is in WALL1. P15 and P16 are in WALL2. Set up slow mover CHE for that SKU pick");
+		// Verify that orders 11114, 11115, and 11116 are having order locations in put wall
+		this.getTenantPersistenceService().beginTransaction();
+		assertOrderLocation("11114", "P14");
+		assertOrderLocation("11115", "P15");
+		assertOrderLocation("11116", "P16");
+		this.getTenantPersistenceService().commitTransaction();
 
 		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
 		picker2.login("Picker #2");
@@ -243,8 +251,14 @@ public class CheProcessPutWall extends ServerTest {
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
 		picker1.scanCommand("CLEAR");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
-
-		// Once DEV-709 is done, the above will result in orders 11114, 11115, and 11116 having order locations in put wall
+		
+		// Verify that orders 11114, 11115, and 11116 are having order locations in put wall
+		this.getTenantPersistenceService().beginTransaction();
+		assertOrderLocation("11114", "P14");
+		assertOrderLocation("11115", "P15");
+		assertOrderLocation("11116", "P16");
+		this.getTenantPersistenceService().commitTransaction();
+		
 
 		LOGGER.info("2: As if the slow movers came out of system, just scan those SKUs to place into put wall");
 
@@ -344,6 +358,19 @@ public class CheProcessPutWall extends ServerTest {
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 2);
 		Assert.assertNull(displayValue);
 
+	}
+	
+	private void assertOrderLocation(String orderId, String locationId) {
+		Facility facility = getFacility();
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
+		Assert.assertNotNull(order);
+		Location location = facility.findSubLocationById(locationId);
+		Assert.assertNotNull(location);
+		List<OrderLocation> locations = order.getOrderLocations();
+		Assert.assertEquals(1, locations.size());
+		OrderLocation savedOrderLocation = locations.get(0);
+		Location savedLocation = savedOrderLocation.getLocation();
+		Assert.assertEquals(location, savedLocation);
 	}
 
 	/**

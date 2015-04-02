@@ -46,6 +46,7 @@ import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
+import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
@@ -1343,8 +1344,13 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		return false;
 	}
 	
+	/**
+	 * This function attempts to place an Order into a provided Location
+	 * It is used during a Put Wall setup
+	 */
 	public boolean processPutWallPlacement(Che che, String orderId, String locationId) {
 		Facility facility = che.getFacility();
+		//Try to retrieve OrderHeader and Location that were specified. Exit function if either was not found
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
 		Location location = facility.findSubLocationById(locationId);
 		if (order == null) {
@@ -1355,11 +1361,17 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			LOGGER.warn("Could not find location " + locationId);
 			return false;
 		}
+		//Light up the selected location. In the future, if the location has a PosCon, it shall display a portion of Order id.
+		//At the moment, the Location shall simply blink
 		lightService.lightLocation(facility.getPersistentId().toString(), locationId);
+		//Delete old order locations
 		List<OrderLocation> locations = order.getOrderLocations();
+		ITypedDao<OrderLocation> orderLocationDao = OrderLocation.staticGetDao();
 		for (OrderLocation foundLocation : locations) {
-			foundLocation.setActive(false);
+			order.removeOrderLocation(foundLocation);
+			orderLocationDao.delete(foundLocation);
 		}
+		//Create a new order location in the put wall
 		order.addOrderLocation(location);
 		return true;
 	}
