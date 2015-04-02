@@ -23,6 +23,7 @@ import com.codeshelf.ws.protocol.response.GetOrderDetailWorkResponse;
 import com.codeshelf.ws.protocol.response.GetWorkResponse;
 import com.codeshelf.ws.protocol.response.InventoryUpdateResponse;
 import com.codeshelf.ws.protocol.response.LoginResponse;
+import com.codeshelf.ws.protocol.response.PutWallPlacementResponce;
 import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
@@ -130,6 +131,9 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				this.deviceManager.processInventoryScanRespose(inventoryScanResponse.getStatusMessage());
 			}
 		}
+		
+		else if (response instanceof PutWallPlacementResponce) {
+		}		
 		
 		// Handle server-side errors
 		else if (response instanceof FailureResponse) {

@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
+import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.flyweight.command.NetGuid;
@@ -256,8 +257,10 @@ public class CheProcessPutWall extends ServerTest {
 		// after DEV-713 we will get a plan, display to the put wall, etc.
 		// P14 is at poscon index 4. Count should be 3
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
-		// Assert.assertEquals((Byte) (byte) 3, displayValue);
-		Assert.assertNull(displayValue);
+		//Assert.assertEquals((Byte) (byte) 3, displayValue);
+		//Assert.assertNull(displayValue);
+		//We have not yet implemented displaying needed quantities on PosCons. So, by this point in the process, they are still blinking from Order Location setup
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
 
 		// button from the put wall
 		posman.buttonPress(4, 3);
@@ -274,9 +277,10 @@ public class CheProcessPutWall extends ServerTest {
 
 		// Counts are 4 and 5
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 5);
-		// Assert.assertEquals((Byte) (byte) 4, displayValue);
-		Assert.assertNull(displayValue);
-
+		//Assert.assertEquals((Byte) (byte) 4, displayValue);
+		//Assert.assertNull(displayValue);
+		//We have not yet implemented displaying needed quantities on PosCons. So, by this point in the process, they are still blinking from Order Location setup
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
 	}
 
 	@Test
@@ -287,13 +291,13 @@ public class CheProcessPutWall extends ServerTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 		setUpFacilityWithPutWall();
-		
+
 		// just these two orders set up as picks from P area.
 		String orderCsvString = "orderGroupId,shipmentId,customerId,orderId,orderDetailId,preAssignedContainerId,itemId,description,quantity,uom, locationId"
 				+ "\r\n,USF314,COSTCO,11117,11117.1,11117,1515,Sku1515,4,each,P12"
 				+ "\r\n,USF314,COSTCO,11118,11118.1,11118,1515,Sku1515,5,each,P13";
 
-		importOrdersData(getFacility(), orderCsvString);		
+		importOrdersData(getFacility(), orderCsvString);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
@@ -301,13 +305,11 @@ public class CheProcessPutWall extends ServerTest {
 
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
 		Assert.assertNotNull(posman);
-		
+
 		CheDeviceLogic theDevice = picker.getCheDeviceLogic();
-		
+
 		// A diversion. This could be in non-integration unit test.
 		theDevice.testOffChePosconWorkInstructions();
-		
-		
 
 		LOGGER.info("1a: set up a one-pick order");
 		picker.login("Picker #1");
@@ -317,7 +319,7 @@ public class CheProcessPutWall extends ServerTest {
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
 		picker.scanLocation("P11");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-		
+
 		// A diversion. Check the last scanned location behavior
 		this.getTenantPersistenceService().beginTransaction();
 		Che che = Che.staticGetDao().findByPersistentId(this.che1PersistentId);
@@ -330,7 +332,7 @@ public class CheProcessPutWall extends ServerTest {
 		LOGGER.info("1b: This should result in the poscon lighting");
 		// P12 is at poscon index 2. Count should be 4
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 2);
-		Assert.assertEquals((Byte) (byte) 4, displayValue); 
+		Assert.assertEquals((Byte) (byte) 4, displayValue);
 		// button from the put wall
 		posman.buttonPress(2, 4);
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 3000);
