@@ -8,7 +8,6 @@ package com.codeshelf.device;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +40,6 @@ import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest;
-import com.codeshelf.ws.protocol.request.GetWorkRequest;
 import com.codeshelf.ws.protocol.request.InventoryLightItemRequest;
 import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
 import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
@@ -275,14 +273,10 @@ public class CsDeviceManager implements
 	 * @see com.codeshelf.device.CsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
 	public void computeCheWork(final String inCheId, final UUID inPersistentId, 
-			final List<String> inContainerIdList, final Boolean reverse) {
-		LOGGER.debug("Compute work: Che={}; Container={}", inCheId, inContainerIdList);
+			final Map<String, String> positionToContainerMap, final Boolean reverse) {
+		LOGGER.debug("Compute work: Che={}; Container={}", inCheId, positionToContainerMap);
 		String cheId = inPersistentId.toString();
-		LinkedList<String> containerIds = new LinkedList<String>();
-		for (String containerId : inContainerIdList) {
-			containerIds.add(containerId);
-		}
-		ComputeWorkRequest req = new ComputeWorkRequest(cheId, containerIds, reverse);
+		ComputeWorkRequest req = new ComputeWorkRequest(cheId, positionToContainerMap, reverse);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -300,7 +294,7 @@ public class CsDeviceManager implements
 	public void getCheWork(final String inCheId, final UUID inPersistentId, final String inLocationId, final Boolean reversePickOrder, final Boolean reverseOrderFromLastTime) {
 		LOGGER.debug("Get work: Che={}; Loc={}", inCheId, inLocationId);
 		String cheId = inPersistentId.toString();
-		GetWorkRequest req = new GetWorkRequest(cheId, inLocationId, reversePickOrder, reverseOrderFromLastTime);
+		ComputeWorkRequest req = new ComputeWorkRequest(cheId, inLocationId, reversePickOrder, reverseOrderFromLastTime);
 		clientEndpoint.sendMessage(req);
 	}
 

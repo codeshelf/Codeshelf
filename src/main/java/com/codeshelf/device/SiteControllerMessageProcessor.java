@@ -14,13 +14,13 @@ import com.codeshelf.ws.protocol.message.CheDisplayMessage;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.message.NetworkStatusMessage;
+import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
 import com.codeshelf.ws.protocol.request.PingRequest;
 import com.codeshelf.ws.protocol.request.RequestABC;
 import com.codeshelf.ws.protocol.response.CompleteWorkInstructionResponse;
 import com.codeshelf.ws.protocol.response.ComputeWorkResponse;
 import com.codeshelf.ws.protocol.response.FailureResponse;
 import com.codeshelf.ws.protocol.response.GetOrderDetailWorkResponse;
-import com.codeshelf.ws.protocol.response.GetWorkResponse;
 import com.codeshelf.ws.protocol.response.InventoryUpdateResponse;
 import com.codeshelf.ws.protocol.response.LoginResponse;
 import com.codeshelf.ws.protocol.response.PutWallPlacementResponce;
@@ -87,21 +87,19 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			}
 		}
 		//////////////////////////////////////////
-		// Handler for Compute Work
+		// Handler for Compute Work and Get Work
 		else if (response instanceof ComputeWorkResponse) {
 			ComputeWorkResponse computeWorkResponse = (ComputeWorkResponse) response;
-			if (response.getStatus() == ResponseStatus.Success) {
-				this.deviceManager.processComputeWorkResponse(computeWorkResponse.getNetworkGuid(),
-					computeWorkResponse.getTotalGoodWorkInstructions(),
-					computeWorkResponse.getContainerToWorkInstructionCountMap());
-			}
-		}
-		//////////////////////////////////////////
-		// Handler for Get Work
-		else if (response instanceof GetWorkResponse) {
-			GetWorkResponse workResponse = (GetWorkResponse) response;
-			if (response.getStatus() == ResponseStatus.Success) {
-				this.deviceManager.processGetWorkResponse(workResponse.getNetworkGuid(), workResponse.getWorkInstructions(), workResponse.getStatusMessage());
+			if (computeWorkResponse.getPurpose() == ComputeWorkPurpose.COMPUTE_WORK){
+				if (response.getStatus() == ResponseStatus.Success) {
+					this.deviceManager.processComputeWorkResponse(computeWorkResponse.getNetworkGuid(),
+						computeWorkResponse.getTotalGoodWorkInstructions(),
+						computeWorkResponse.getContainerToWorkInstructionCountMap());
+				}
+			} else {
+				if (response.getStatus() == ResponseStatus.Success) {
+					this.deviceManager.processGetWorkResponse(computeWorkResponse.getNetworkGuid(), computeWorkResponse.getWorkInstructions(), computeWorkResponse.getStatusMessage());
+				}				
 			}
 		}
 		//////////////////////////////////////////

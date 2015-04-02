@@ -1412,8 +1412,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		clearAllPositionControllers();
 		mContainerInSetup = "";
-		List<String> containerIdList = new ArrayList<String>(mPositionToContainerMap.values());
-		mDeviceManager.computeCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), containerIdList, isReverse);
+		//Duplicate map to avoid later changes
+		Map<String, String> positionToContainerMapCopy = new HashMap<String,String>(mPositionToContainerMap);
+		mDeviceManager.computeCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), positionToContainerMapCopy, isReverse);
 		setState(CheStateEnum.COMPUTE_WORK);
 	}
 

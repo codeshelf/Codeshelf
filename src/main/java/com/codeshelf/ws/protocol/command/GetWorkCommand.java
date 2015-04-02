@@ -8,8 +8,9 @@ import org.apache.shiro.authz.annotation.RequiresRoles;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.WorkService;
-import com.codeshelf.ws.protocol.request.GetWorkRequest;
-import com.codeshelf.ws.protocol.response.GetWorkResponse;
+import com.codeshelf.ws.protocol.request.ComputeWorkRequest;
+import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
+import com.codeshelf.ws.protocol.response.ComputeWorkResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
@@ -17,10 +18,10 @@ import com.codeshelf.ws.server.WebSocketConnection;
 @RequiresRoles("SITECON")
 public class GetWorkCommand extends CommandABC {
 
-	GetWorkRequest request;
+	ComputeWorkRequest request;
 	WorkService workService;
 	
-	public GetWorkCommand(WebSocketConnection connection, GetWorkRequest request, WorkService workService) {
+	public GetWorkCommand(WebSocketConnection connection, ComputeWorkRequest request, WorkService workService) {
 		super(connection);
 		this.request = request;
 		this.workService = workService;
@@ -28,7 +29,8 @@ public class GetWorkCommand extends CommandABC {
 
 	@Override
 	public ResponseABC exec() {
-		GetWorkResponse response = new GetWorkResponse();
+		ComputeWorkResponse response = new ComputeWorkResponse();
+		response.setPurpose(ComputeWorkPurpose.GET_WORK);
 		String cheId = request.getDeviceId();
 		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
 		if (che!=null) {
@@ -37,7 +39,7 @@ public class GetWorkCommand extends CommandABC {
 			// Figure out the CHE's work area by its scanned location.
 			// Facility facility = che.getParent().getParent();
 			// Get the work instructions for this CHE at this location for the given containers.
-			List<WorkInstruction> wiList = workService.getWorkInstructions(che, locationId, request.getReversePickOrder(), request.getReverseOrderFromLastTime());
+			List<WorkInstruction> wiList = workService.getWorkInstructions(che, locationId, request.getReversePickOrder(), request.getReversePickOrderFromLastTime());
 			// ~bhe: check for null/empty list + handle exception?
 			response.setWorkInstructions(wiList);
 			response.setNetworkGuid(networkGuid);
