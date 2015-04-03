@@ -65,6 +65,7 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.Path;
+import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.SingleWorkItem;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
@@ -174,8 +175,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	}
 
 	public final WorkList computeWorkInstructions(final Che inChe, final List<String> inContainerIdList, final Boolean reverse) {
-		//List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
-
 		inChe.clearChe();
 
 		Facility facility = inChe.getFacility();
@@ -517,13 +516,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * For testing: if scan location, then just return all work instructions assigned to the CHE. (Assumes no negative positions on path.)
 	 */
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId) {
-		return getWorkInstructions(inChe, inScannedLocationId, false, false);
+		return getWorkInstructions(inChe, inScannedLocationId, false);
 	}
 
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe,
 		final String inScannedLocationId,
-		Boolean reversePickOrder,
-		Boolean reverseOrderFromLastTime) {
+		Boolean reversePickOrder) {
 		long startTimestamp = System.currentTimeMillis();
 		Facility facility = inChe.getFacility();
 
@@ -533,7 +531,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		//boolean reverse = CheDeviceLogic.REVERSE_COMMAND.equalsIgnoreCase(inScannedLocationId);
 
 		//Get current complete list of WIs
-		List<WorkInstruction> completeRouteWiList = findCheInstructionsFromPosition(inChe, 0.0, false);
+		List<WorkInstruction> completeRouteWiList = findCheInstructionsFromPosition(inChe, 0.0, false); 
 
 		//We could have existing HK WIs if we've already retrieved the work instructions once but scanned a new location.
 		//In that case, we must make sure we remove all existing HK WIs so that we can properly add them back in at the end.
@@ -561,9 +559,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				}
 			}
 			Collections.sort(preferredInstructions, new GroupAndSortCodeComparator());
-			if (reverseOrderFromLastTime) {
-				preferredInstructions = Lists.reverse(preferredInstructions);
-			}
 			if (preferredInstructions.size() > 0) {
 				preferredInstructions = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, preferredInstructions);
 			}
@@ -602,9 +597,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			}
 		}
 
-		if (reverseOrderFromLastTime) {
-			wrappedRouteWiList = Lists.reverse(wrappedRouteWiList);
-		}
 		// Now our wrappedRouteWiList is ordered correctly but is missing HouseKeepingInstructions
 		if (wrappedRouteWiList.size() > 0) {
 			wrappedRouteWiList = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, wrappedRouteWiList);
@@ -1216,14 +1208,22 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			// so far, wi must have a location. Even housekeeping and shorts
 			if (loc == null)
 				LOGGER.error("getWorkInstructions found active work instruction with null location"); // new log message from v8. Don't expect any null.
-			else if (loc.isActive()) //unlikely that location got deleted between complete work instructions and scan location
-				cheWorkInstructions.add(wi);
-			else
+			else if (loc.isActive()) { //unlikely that location got deleted between complete work instructions and scan location
+				Path chePath = inChe.getActivePath();
+				if (chePath == null || isLocatioOnPath(loc, inChe.getActivePath()))
+					cheWorkInstructions.add(wi);
+			} else
 				LOGGER.warn("getWorkInstructions found active work instruction in deleted locations"); // new from v8
 		}
 		return cheWorkInstructions;
 	}
 
+	private boolean isLocatioOnPath(Location inLocation, Path inPath) {
+		PathSegment locationSegment = inLocation.getAssociatedPathSegment();
+		if (locationSegment == null) {return false;}
+		return inPath == locationSegment.getParent();
+	}
+	
 	/**
 	 * Support method to force an exception for testing
 	 */

@@ -40,6 +40,7 @@ import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest;
+import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
 import com.codeshelf.ws.protocol.request.InventoryLightItemRequest;
 import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
 import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
@@ -276,7 +277,7 @@ public class CsDeviceManager implements
 			final Map<String, String> positionToContainerMap, final Boolean reverse) {
 		LOGGER.debug("Compute work: Che={}; Container={}", inCheId, positionToContainerMap);
 		String cheId = inPersistentId.toString();
-		ComputeWorkRequest req = new ComputeWorkRequest(cheId, positionToContainerMap, reverse);
+		ComputeWorkRequest req = new ComputeWorkRequest(ComputeWorkPurpose.COMPUTE_WORK, cheId, null, positionToContainerMap, reverse);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -291,10 +292,10 @@ public class CsDeviceManager implements
 	/* (non-Javadoc)
 	 * @see com.codeshelf.device.CsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
-	public void getCheWork(final String inCheId, final UUID inPersistentId, final String inLocationId, final Boolean reversePickOrder, final Boolean reverseOrderFromLastTime) {
+	public void getCheWork(final String inCheId, final UUID inPersistentId, final String inLocationId, final Map<String, String> positionToContainerMap, final Boolean reversePickOrder, final Boolean reverseOrderFromLastTime) {
 		LOGGER.debug("Get work: Che={}; Loc={}", inCheId, inLocationId);
 		String cheId = inPersistentId.toString();
-		ComputeWorkRequest req = new ComputeWorkRequest(cheId, inLocationId, reversePickOrder, reverseOrderFromLastTime);
+		ComputeWorkRequest req = new ComputeWorkRequest(ComputeWorkPurpose.GET_WORK, cheId, inLocationId, positionToContainerMap, reversePickOrder);
 		clientEndpoint.sendMessage(req);
 	}
 

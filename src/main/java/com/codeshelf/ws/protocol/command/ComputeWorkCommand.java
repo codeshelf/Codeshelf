@@ -37,6 +37,7 @@ public class ComputeWorkCommand extends CommandABC {
 	@Override
 	public ResponseABC exec() {
 		ComputeWorkResponse response = new ComputeWorkResponse();
+		response.setPurpose(request.getPurpose());
 		String cheId = request.getDeviceId();
 		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
 		if (che != null) {
@@ -45,12 +46,15 @@ public class ComputeWorkCommand extends CommandABC {
 			List<String> containerIdList = new ArrayList<String>(positionToContainerMap.values());
 			// Get the work instructions for this CHE at this location for the given containers.
 			WorkList workList = workService.computeWorkInstructions(che, containerIdList, request.getReversePickOrder());
-
+						
+			// Get work instructions with housekeeping
+			List<WorkInstruction> instructionsWithHousekeeping = workService.getWorkInstructions(che, request.getLocationId(), request.getReversePickOrder());
+			
 			//Get the counts
-			Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(workList);
+			Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(instructionsWithHousekeeping, workList.getDetails());
 			
 			// ~bhe: should we check for null/zero and return a different status?
-			response.setWorkInstructions(workList.getInstructions());
+			response.setWorkInstructions(instructionsWithHousekeeping);
 			response.setContainerToWorkInstructionCountMap(containerToCountMap);
 			response.setTotalGoodWorkInstructions(getTotalGoodWorkInstructionsCount(containerToCountMap));
 			response.setNetworkGuid(networkGuid);
@@ -65,8 +69,7 @@ public class ComputeWorkCommand extends CommandABC {
 	/**
 	 * Compute work instruction counts by containerId
 	 */
-	public static final Map<String, WorkInstructionCount> computeContainerWorkInstructionCounts(WorkList workList) {
-		List<WorkInstruction> workInstructions = workList.getInstructions();
+	public static final Map<String, WorkInstructionCount> computeContainerWorkInstructionCounts(List<WorkInstruction> workInstructions, List<OrderDetail> details) {
 		Map<String, WorkInstructionCount> containerToWorkInstructCountMap = new HashMap<String, WorkInstructionCount>();
 		for (WorkInstruction wi : workInstructions) {
 			//Grab count reference
@@ -108,16 +111,17 @@ public class ComputeWorkCommand extends CommandABC {
 			}
 		}
 
-		List<OrderDetail> details = workList.getDetails();
-		WorkInstructionCount count = null;
-		for (OrderDetail detail : details) {
-			String containerId = detail.getParent().getContainerId();
-			count = containerToWorkInstructCountMap.get(containerId);
-			if (count == null) {
-				count = new WorkInstructionCount();
-				containerToWorkInstructCountMap.put(containerId, count);
+		if (details != null) {
+			WorkInstructionCount count = null;
+			for (OrderDetail detail : details) {
+				String containerId = detail.getParent().getContainerId();
+				count = containerToWorkInstructCountMap.get(containerId);
+				if (count == null) {
+					count = new WorkInstructionCount();
+					containerToWorkInstructCountMap.put(containerId, count);
+				}
+				containerToWorkInstructCountMap.get(containerId).incrementDetailsNoWiMade();
 			}
-			containerToWorkInstructCountMap.get(containerId).incrementDetailsNoWiMade();
 		}
 		return containerToWorkInstructCountMap;
 	}
