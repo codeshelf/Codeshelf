@@ -19,13 +19,13 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
 
 public class PosManagerDeviceLogic extends PosConDeviceABC {
-	private static final Logger							LOGGER					= LoggerFactory.getLogger(PosManagerDeviceLogic.class);
+	private static final Logger							LOGGER						= LoggerFactory.getLogger(PosManagerDeviceLogic.class);
 
 	// Instructions can come from other site controller (getGuid()) or from other devices (CHEs)
-	private Map<NetGuid, Map<Byte, PosControllerInstr>>	mPosInstructionBySource	= new HashMap<NetGuid, Map<Byte, PosControllerInstr>>();
-	
+	private Map<NetGuid, Map<Byte, PosControllerInstr>>	mPosInstructionBySource		= new HashMap<NetGuid, Map<Byte, PosControllerInstr>>();
+
 	// Order feedback displays by slot. The source GUID is irrelevant, although it might be nice to know the orderID.
-	private Map<String, PosControllerInstr>	mOrderFeedbackByLocation	= new HashMap<String, PosControllerInstr>();
+	private Map<String, PosControllerInstr>				mOrderFeedbackByLocation	= new HashMap<String, PosControllerInstr>();
 
 	public PosManagerDeviceLogic(UUID inPersistentId,
 		NetGuid inGuid,
@@ -184,13 +184,13 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 
 	private String getSourceControllerIdForPosconPosition(Byte whichPoscon) {
 		// not so sure the data structures are ideal. For now, just iterate to find it.
-		
-		for (Map<Byte, PosControllerInstr> x :mPosInstructionBySource.values()){
+
+		for (Map<Byte, PosControllerInstr> x : mPosInstructionBySource.values()) {
 			PosControllerInstr y = x.get(whichPoscon);
 			if (y != null)
 				return y.getSourceId();
 		}
-		
+
 		return null;
 	}
 
@@ -206,9 +206,8 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 		CheDeviceLogic displaySource = mDeviceManager.getCheDeviceByControllerId(controllerId);
 		if (displaySource != null) {
 			displaySource.processOffCheButtonPress(getMyGuidStr(), inButtonCommand);
-		}
-		else {
-			LOGGER.error("Button from {}, but unknown CHE device logic",controllerId);
+		} else {
+			LOGGER.error("Button from {}, but unknown CHE device logic", controllerId);
 		}
 	}
 
@@ -219,7 +218,7 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 	public final void updatePosCons(boolean updateUnassociated) {
 		// This likely needs to be made much more efficient.
 		clearAllPositionControllers();
-		
+
 		// Add in all active work instructions. Modeled from mPosInstructionBySource
 		Map<Byte, PosControllerInstr> latestInstructionsForPosition = new HashMap<Byte, PosControllerInstr>();
 		List<Map<Byte, PosControllerInstr>> instructionsBySourceList = new ArrayList<Map<Byte, PosControllerInstr>>(mPosInstructionBySource.values());
@@ -237,35 +236,75 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 			}
 		}
 		// Add in feedback instructions on poscons that did not get an active instruction
-		for ( PosControllerInstr instruction: mOrderFeedbackByLocation.values()){
+		for (PosControllerInstr instruction : mOrderFeedbackByLocation.values()) {
 			Byte posconIndex = instruction.getPosition();
-			if (!latestInstructionsForPosition.containsKey(posconIndex)){
-				latestInstructionsForPosition.put(posconIndex, instruction);		
+			if (!latestInstructionsForPosition.containsKey(posconIndex)) {
+				latestInstructionsForPosition.put(posconIndex, instruction);
 			}
-			
+
 		}
 
 		//Display latest instructions on PosCons
 		List<PosControllerInstr> latestCommandsList = new ArrayList<PosControllerInstr>(latestInstructionsForPosition.values());
 		sendPositionControllerInstructions(latestCommandsList);
 	}
-	
+
 	/**
 	 * Has an active work instruction, represented in mPosInstructionBySource. Order feedback does not count.
 	 * Do we need this. Done inside of updatePosCons() above
 	 */
-	private boolean posconHasActiveInstruction(final Byte posconIndex){
+	private boolean posconHasActiveInstruction(final Byte posconIndex) {
 		return false;
 	}
-	
-	private void addFeedbackInstruction(final String locationName, final PosControllerInstr feedbackInstruction){
+
+	private void addFeedbackInstruction(final String locationName, final PosControllerInstr feedbackInstruction) {
 		removeFeedbackInstructionFromLocation(locationName); // silently ok if nothing there
 		mOrderFeedbackByLocation.put(locationName, feedbackInstruction);
 	}
-	private void removeFeedbackInstructionFromLocation(final String locationName){
-		if (mOrderFeedbackByLocation.containsKey(locationName)) {		
+
+	private void removeFeedbackInstructionFromLocation(final String locationName) {
+		if (mOrderFeedbackByLocation.containsKey(locationName)) {
 			mOrderFeedbackByLocation.remove(locationName);
 		}
 	}
+
+	/**
+	 * From the meaningful OrderLocationFeedbackMessage, compute and store PosControllerInstr
+	 * Although returned null could be from an error, null also means no feedback for that location
+	 */
+	public void processFeedback(OrderLocationFeedbackMessage instruction) {
+		PosControllerInstr theInstruction = constructMsgFromFeedback(instruction);
+		String locationName = instruction.getLocationName();
+		if (theInstruction != null) {
+			addFeedbackInstruction(locationName, theInstruction);
+		} else {
+			removeFeedbackInstructionFromLocation(locationName);
+		}
+		updatePosCons();
+	}
+
+	/**
+	 * Return null if the location should show nothing.
+	 * Otherwise, return the display message.
+	 */
+	private PosControllerInstr constructMsgFromFeedback(OrderLocationFeedbackMessage instruction) {
+		Byte position = instruction.getPosition();
+		if (!instruction.getHasAnyOrderAtAll())
+			return null;
+		// choices are oc and --
+		Byte thirdByte = PosControllerInstr.BITENCODED_LED_DASH;
+		Byte fourthByte = PosControllerInstr.BITENCODED_LED_DASH;
+		if (instruction.getOrderFullyComplete()) {
+			thirdByte = PosControllerInstr.BITENCODED_LED_C;
+			fourthByte = PosControllerInstr.BITENCODED_LED_O;
+		}
+
+		return (new PosControllerInstr(position,
+			PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+			thirdByte,
+			fourthByte,
+			PosControllerInstr.SOLID_FREQ.byteValue(),
+			PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
+	};
 
 }

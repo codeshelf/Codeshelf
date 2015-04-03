@@ -16,7 +16,6 @@ import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.DomainObjectPropertyDefault;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.testframework.HibernateTest;
-import com.codeshelf.ws.protocol.command.ObjectPropertiesCommand;
 import com.codeshelf.ws.protocol.request.ObjectPropertiesRequest;
 import com.codeshelf.ws.protocol.response.ObjectPropertiesResponse;
 import com.codeshelf.ws.protocol.response.ResponseStatus;

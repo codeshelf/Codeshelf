@@ -118,9 +118,9 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 			activeConnections.remove(sessionId);
 			LOGGER.debug("WS Connection "+session.getId()+" ended"); // reason should be logged by endpoint
 			updateCounters();
-		}
+		} 
 		else {
-			LOGGER.warn("Unable to unregister session: Session with ID "+sessionId+" not found");
+			LOGGER.warn("sessionEnded: session id "+sessionId+" not found");
 		}
 	}
 	
@@ -363,6 +363,7 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 					WebSocketConnection connection = this.activeConnections.get(connectionId);
 					if(connection != null && connection.getLastState().equals(WebSocketConnection.State.CLOSED)) {
 						this.activeConnections.remove(connectionId);
+						LOGGER.warn("WebSocketManager reaped a closed connection. sessionEnded did not complete for {}",connectionId);
 					}
 				}
 				

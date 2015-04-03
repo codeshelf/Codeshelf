@@ -27,13 +27,14 @@ import lombok.NonNull;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.hibernate.annotations.NaturalId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.persistence.DatabaseCredentials;
 import com.codeshelf.persistence.DatabaseUtils;
-import com.codeshelf.persistence.EventListenerIntegrator;
 import com.codeshelf.persistence.DatabaseUtils.SQLSyntax;
+import com.codeshelf.persistence.EventListenerIntegrator;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -94,6 +95,7 @@ public class Tenant implements DatabaseCredentials {
 	@NonNull
 	@Column(unique=true, nullable=false,length=SCHEMA_NAME_MAX_LENGTH,name="schema_name")
 	@JsonProperty
+	@NaturalId
 	String schemaName;
 
 	@Getter

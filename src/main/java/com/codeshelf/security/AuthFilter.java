@@ -37,12 +37,12 @@ public class AuthFilter implements Filter {
 		HttpServletResponse response = (HttpServletResponse) servletResponse; 
 
 		Cookie[] cookies = request.getCookies();
+		boolean authenticated = false;
 		AuthResponse authResponse = authProviderService.checkAuthCookie(cookies);
 		if(authResponse != null) {
 			if(authResponse.getStatus().equals(AuthResponse.Status.ACCEPTED)) {
 				
-				//User is on the thread, not in the request context
-				//request.setAttribute(REQUEST_ATTR, authResponse.getUser());
+				authenticated = true;
 
 				String newToken = authResponse.getNewToken(); // auto refresh if enabled
 				if(newToken != null) {
@@ -59,7 +59,9 @@ public class AuthFilter implements Filter {
 		} else {
 			LOGGER.warn("no valid auth cookie, access denied");
 		}
-		response.setStatus(Status.FORBIDDEN.getStatusCode());
+		
+		if(!authenticated)
+			response.setStatus(Status.FORBIDDEN.getStatusCode());
 	}
 
 	@Override

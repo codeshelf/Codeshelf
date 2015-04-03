@@ -133,6 +133,12 @@ configuration:
     
     - name: com.codeshelf.ws.server.ServerWatchdogThread
       level: info # 
+ 
+    - name: com.codeshelf.ws.client.CsClientEndpoint
+      level: info # most KeepAlives log at debug
+    
+    - name: com.codeshelf.ws.server.CsServerEndpoint
+      level: info # most KeepAlives log at debug
     
     - name: org.hibernate.engine.internal.StatefulPersistenceContext
       level: error # don't log about "Narrowing proxy to class"
