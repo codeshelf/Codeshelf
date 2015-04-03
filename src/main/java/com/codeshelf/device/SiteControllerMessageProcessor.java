@@ -31,17 +31,17 @@ import com.google.inject.Inject;
 
 public class SiteControllerMessageProcessor implements IMessageProcessor {
 
-	private static final Logger		LOGGER	= LoggerFactory.getLogger(SiteControllerMessageProcessor.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(SiteControllerMessageProcessor.class);
 
-	CsClientEndpoint clientEndpoint;
-	
-	private CsDeviceManager			deviceManager;
+	CsClientEndpoint			clientEndpoint;
+
+	private CsDeviceManager		deviceManager;
 
 	@Inject
-	public SiteControllerMessageProcessor(CsDeviceManager deviceManager,CsClientEndpoint clientEndpoint) {
+	public SiteControllerMessageProcessor(CsDeviceManager deviceManager, CsClientEndpoint clientEndpoint) {
 		this.deviceManager = deviceManager;
 		this.clientEndpoint = clientEndpoint;
-		
+
 		CsClientEndpoint.setMessageProcessor(this);
 	}
 
@@ -61,7 +61,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				if (network != null) {
 					LOGGER.info("Attached to network " + network.getDomainId());
 					attached = true;
-					
+
 					// DEV-582 hook up to AUTOSHRT parameter
 					deviceManager.setAutoShortValue(loginResponse.isAutoShortValue());
 					deviceManager.setPickInfoValue(loginResponse.getPickInfoValue());
@@ -90,7 +90,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 		// Handler for Compute Work and Get Work
 		else if (response instanceof ComputeWorkResponse) {
 			ComputeWorkResponse computeWorkResponse = (ComputeWorkResponse) response;
-			if (computeWorkResponse.getPurpose() == ComputeWorkPurpose.COMPUTE_WORK){
+			if (computeWorkResponse.getPurpose() == ComputeWorkPurpose.COMPUTE_WORK) {
 				if (response.getStatus() == ResponseStatus.Success) {
 					this.deviceManager.processComputeWorkResponse(computeWorkResponse.getNetworkGuid(),
 						computeWorkResponse.getTotalGoodWorkInstructions(),
@@ -98,8 +98,10 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				}
 			} else {
 				if (response.getStatus() == ResponseStatus.Success) {
-					this.deviceManager.processGetWorkResponse(computeWorkResponse.getNetworkGuid(), computeWorkResponse.getWorkInstructions(), computeWorkResponse.getStatusMessage());
-				}				
+					this.deviceManager.processGetWorkResponse(computeWorkResponse.getNetworkGuid(),
+						computeWorkResponse.getWorkInstructions(),
+						computeWorkResponse.getStatusMessage());
+				}
 			}
 		}
 		//////////////////////////////////////////
@@ -116,7 +118,9 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			GetOrderDetailWorkResponse workResponse = (GetOrderDetailWorkResponse) response;
 			if (response.getStatus() == ResponseStatus.Success) {
 				LOGGER.info("GetOrderDetailWorkResponse received: success. Passing through to deviceManager");
-				this.deviceManager.processOrderDetailWorkResponse(workResponse.getNetworkGuid(), workResponse.getWorkInstructions(), workResponse.getStatusMessage());
+				this.deviceManager.processOrderDetailWorkResponse(workResponse.getNetworkGuid(),
+					workResponse.getWorkInstructions(),
+					workResponse.getStatusMessage());
 			} else {
 				LOGGER.info("GetOrderDetailWorkResponse received: not success. No action.");
 			}
@@ -129,16 +133,15 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				this.deviceManager.processInventoryScanRespose(inventoryScanResponse.getStatusMessage());
 			}
 		}
-		
+
 		else if (response instanceof PutWallPlacementResponce) {
-		}		
-		
+		}
+
 		// Handle server-side errors
 		else if (response instanceof FailureResponse) {
 			FailureResponse failureResponse = (FailureResponse) response;
 			this.deviceManager.processFailureResponse(failureResponse);
 		}
-		
 
 		else {
 			LOGGER.warn("Failed to handle response " + response);
@@ -161,11 +164,14 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			NetGuid theGuid = new NetGuid(guidStr);
 			this.deviceManager.processDisplayCheMessage(theGuid, msg.getLine1(), msg.getLine2(), msg.getLine3(), msg.getLine4());
 		} else if (message instanceof PosControllerInstr) {
-			PosControllerInstr msg = (PosControllerInstr)message;
+			PosControllerInstr msg = (PosControllerInstr) message;
 			this.deviceManager.processPosConControllerMessage(msg, false);
 		} else if (message instanceof PosControllerInstrList) {
-			PosControllerInstrList msg = (PosControllerInstrList)message;
+			PosControllerInstrList msg = (PosControllerInstrList) message;
 			this.deviceManager.processPosConControllerListMessage(msg);
+		} else if (message instanceof OrderLocationFeedbackMessage) {
+			OrderLocationFeedbackMessage msg = (OrderLocationFeedbackMessage) message;
+			this.deviceManager.processOrderLocationFeedbackMessage(msg);
 		}
 	}
 
