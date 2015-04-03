@@ -273,10 +273,10 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 	 * Although returned null could be from an error, null also means no feedback for that location
 	 */
 	public void processFeedback(OrderLocationFeedbackMessage instruction) {
-		PosControllerInstr theInstruction = constructMsgFromFeedback(instruction);
+		PosControllerInstr posInstruction = constructMsgFromFeedback(instruction);
 		String locationName = instruction.getLocationName();
-		if (theInstruction != null) {
-			addFeedbackInstruction(locationName, theInstruction);
+		if (posInstruction != null) {
+			addFeedbackInstruction(locationName, posInstruction);
 		} else {
 			removeFeedbackInstructionFromLocation(locationName);
 		}
