@@ -303,11 +303,11 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Find and return the OrderLocation, only if it is a put wall location.
+	 * Find and return the OrderLocation, only if it is a put wall location that has poscons that may display order feedback.
 	 * Not checked, but if multiple, returns the first found.
 	 * (Later enhancement: restrict to same work area as the wi location.)
 	 */
-	private OrderLocation getPutWallOrderLocation(WorkInstruction incomingWI) {
+	private OrderLocation getPutWallOrderLocationNeedsLighting(WorkInstruction incomingWI) {
 		OrderHeader order = null;
 		OrderDetail detail = incomingWI.getOrderDetail();
 		if (detail != null)
@@ -320,7 +320,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				Location loc = ol.getLocation();
 				if (loc != null && loc.isActive()) {
 					if (loc.isPutWallLocation()) {
-						return ol;
+						if (loc.isLightablePoscon())
+							return ol;
 					}
 				}
 			}
@@ -328,9 +329,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		return null;
 	}
 
-	private int sendMessage(Set<User> users, MessageABC message) {
-		// TODO
-		return 0;
+	private int sendMessage(Set<User> users, MessageABC message) { // TODO
+		// See this comment in LightService: "Use the light service API as our general sendMessage API"
+		return lightService.sendMessage(users, message);
 	}
 
 	private void computeAndSendOrderFeedback(WorkInstruction incomingWI) {
@@ -339,7 +340,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			return;
 		}
 		try {
-			OrderLocation ol = getPutWallOrderLocation(incomingWI);
+			OrderLocation ol = getPutWallOrderLocationNeedsLighting(incomingWI);
 			if (ol != null) {
 				Facility facility = ol.getFacility();
 				final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(ol);

@@ -205,7 +205,13 @@ public class LightService implements IApiService {
 		}
 	}
 
-	private int sendMessage(Set<User> users, MessageABC message) {
+	/**
+	 * This looks bizarre. Use the light service API as our general sendMessage API. Why?
+	 * Discussion with Ivan. Definitely do not want static getInstance on a singleton factory for the webSocketManagerService.
+	 * WorkService uses this API. The alternative is ok but has much more code duplication: inject the webSocketManagerService in many more
+	 * class constructors, and modify tests that use those classes.
+	*/
+	public int sendMessage(Set<User> users, MessageABC message) {
 		return webSocketManagerService.sendMessage(users, message);
 	}
 
