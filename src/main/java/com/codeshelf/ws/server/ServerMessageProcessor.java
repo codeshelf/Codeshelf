@@ -25,7 +25,6 @@ import com.codeshelf.ws.protocol.command.ComputeDetailWorkCommand;
 import com.codeshelf.ws.protocol.command.ComputeWorkCommand;
 import com.codeshelf.ws.protocol.command.CreatePathCommand;
 import com.codeshelf.ws.protocol.command.EchoCommand;
-import com.codeshelf.ws.protocol.command.GetWorkCommand;
 import com.codeshelf.ws.protocol.command.InventoryLightItemCommand;
 import com.codeshelf.ws.protocol.command.InventoryLightLocationCommand;
 import com.codeshelf.ws.protocol.command.InventoryUpdateCommand;
@@ -44,7 +43,6 @@ import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest;
-import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
 import com.codeshelf.ws.protocol.request.CreatePathRequest;
 import com.codeshelf.ws.protocol.request.DeviceRequest;
 import com.codeshelf.ws.protocol.request.EchoRequest;
@@ -78,7 +76,6 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	private final Counter echoCounter;
 	private final Counter completeWiCounter;
 	private final Counter computeWorkCounter;
-	private final Counter getWorkCounter;
 	private final Counter objectGetCounter;
 	private final Counter objectUpdateCounter;
 	private final Counter objectDeleteCounter;
@@ -114,7 +111,6 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		echoCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.echo");
 		completeWiCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.complete-workinstruction");
 		computeWorkCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.compute-work");
-		getWorkCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.get-work");
 		objectGetCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.object-get");
 		objectUpdateCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.object-update");
 		objectDeleteCounter = metricsService.createCounter(MetricsGroup.WSS,"requests.object-delete");
@@ -168,15 +164,9 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		}
 		else if (request instanceof ComputeWorkRequest) {
 			ComputeWorkRequest req = (ComputeWorkRequest) request;
-			if (req.getPurpose() == ComputeWorkPurpose.COMPUTE_WORK) {
-				command = new ComputeWorkCommand(csSession, req, serviceFactory.getServiceInstance(WorkService.class));
-				computeWorkCounter.inc();
-				applicationRequestCounter.inc();
-			} else {
-				command = new GetWorkCommand(csSession, req, serviceFactory.getServiceInstance(WorkService.class));
-				getWorkCounter.inc();
-				applicationRequestCounter.inc();				
-			}
+			command = new ComputeWorkCommand(csSession, req, serviceFactory.getServiceInstance(WorkService.class));
+			computeWorkCounter.inc();
+			applicationRequestCounter.inc();
 		}
 		else if (request instanceof ComputeDetailWorkRequest) {
 			command = new ComputeDetailWorkCommand(csSession,(ComputeDetailWorkRequest) request, serviceFactory.getServiceInstance(WorkService.class));

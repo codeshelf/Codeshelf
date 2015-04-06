@@ -82,7 +82,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(WorkInstruction.class);
 
 	// The parent is the facility
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Getter
 	@Setter
 	private Facility					parent;
@@ -104,24 +104,24 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	private WorkInstructionStatusEnum	status;
 
 	// The container.
-	@ManyToOne(optional = true, fetch=FetchType.LAZY)
+	@ManyToOne(optional = true, fetch = FetchType.LAZY)
 	@Getter
 	private Container					container;
 
 	// Denormalized for serialized WIs at the site controller.
-	@Column(nullable = false,name="container_id")
+	@Column(nullable = false, name = "container_id")
 	@Getter
 	@JsonProperty
 	private String						containerId;
 
 	// The itemMaster.
-	@ManyToOne(optional = true, fetch=FetchType.LAZY)
-	@JoinColumn(name="item_master_persistentid")
+	@ManyToOne(optional = true, fetch = FetchType.LAZY)
+	@JoinColumn(name = "item_master_persistentid")
 	@Getter
 	private ItemMaster					itemMaster;
 
 	// Denormalized for serialized WIs at the site controller.
-	@Column(nullable = false,name="item_id")
+	@Column(nullable = false, name = "item_id")
 	@Getter
 	@JsonProperty
 	private String						itemId;
@@ -134,83 +134,83 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	private String						description;
 
 	// The pick instruction (cooked item ID to pick).
-	@Column(nullable = false,name="pick_instruction")
+	@Column(nullable = false, name = "pick_instruction")
 	@Getter
 	@Setter
 	@JsonProperty
 	private String						pickInstruction;
 
 	// The nominal planned pick quantity.
-	@Column(nullable = false,name="plan_quantity")
+	@Column(nullable = false, name = "plan_quantity")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Integer						planQuantity;
 
 	// The min planned pick quantity.
-	@Column(nullable = false,name="plan_min_quantity")
+	@Column(nullable = false, name = "plan_min_quantity")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Integer						planMinQuantity;
 
 	// The  max planned pick quantity.
-	@Column(nullable = false,name="plan_max_quantity")
+	@Column(nullable = false, name = "plan_max_quantity")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Integer						planMaxQuantity;
 
 	// The pick quantity.
-	@Column(nullable = true,name="actual_quantity")
+	@Column(nullable = true, name = "actual_quantity")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Integer						actualQuantity;
 
 	// From location.
-	@ManyToOne(optional = false,fetch=FetchType.LAZY)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Getter
 	private Location					location;
 
 	// Denormalized for serialized WIs at the site controller.
-	@Column(nullable = false,name="location_id")
+	@Column(nullable = false, name = "location_id")
 	@Getter
 	@Setter
 	@JsonProperty
 	private String						locationId;
 
 	// Picker ID.
-	@Column(nullable = true,name="picker_id")
-	@Getter 
+	@Column(nullable = true, name = "picker_id")
+	@Getter
 	@Setter
 	@JsonProperty
 	private String						pickerId;
 
 	// Assigned CHE
 	@Setter
-	@ManyToOne(optional = true,fetch=FetchType.LAZY)
-	@JoinColumn(name="assigned_che_persistentid")
+	@ManyToOne(optional = true, fetch = FetchType.LAZY)
+	@JoinColumn(name = "assigned_che_persistentid")
 	@Getter
 	private Che							assignedChe;
 
 	// LED command/processing stream.
 	// A formatted stream of LED processing commands that tells the site gateway how to lights LEDs for this WI.
 	// See LedStreamProcessor
-	@Column(nullable = true,name="led_cmd_stream",columnDefinition="TEXT")
+	@Column(nullable = true, name = "led_cmd_stream", columnDefinition = "TEXT")
 	@Getter
 	@Setter
 	@JsonProperty
 	private String						ledCmdStream;
 
-	@Column(nullable = true,name="poscon_cmd_stream",columnDefinition="TEXT")
+	@Column(nullable = true, name = "poscon_cmd_stream", columnDefinition = "TEXT")
 	@Getter
 	@Setter
 	@JsonProperty
 	private String						posConCmdStream;
 
 	// The remote gateway controller will sort and group by this code, and then only send out one group to the radio network at a time.
-	@Column(nullable = true,name="group_and_sort_code")
+	@Column(nullable = true, name = "group_and_sort_code")
 	@Getter
 	@Setter
 	@JsonProperty
@@ -219,7 +219,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	@Column(nullable = true,name="pos_along_path")
+	@Column(nullable = true, name = "pos_along_path")
 	private Double						posAlongPath;
 
 	@Column(nullable = true)
@@ -247,8 +247,8 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	private Timestamp					completed;
 
 	// The parent order detail item.
-	@ManyToOne(optional = true,fetch=FetchType.LAZY)
-	@JoinColumn(name="order_detail_persistentid")
+	@ManyToOne(optional = true, fetch = FetchType.LAZY)
+	@JoinColumn(name = "order_detail_persistentid")
 	@Getter
 	@Setter
 	private OrderDetail					orderDetail;
@@ -257,7 +257,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	public WorkInstruction() {
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<WorkInstruction> getDao() {
 		return staticGetDao();
@@ -521,7 +521,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		else
 			return getItemIdIfMasterNull();
 	}
-	
+
 	public String getStatusString() {
 		// getStatus works fine, except when the status is null. As in logging WI on the site controller side. Just don't throw if null.
 		WorkInstructionStatusEnum theStatus = this.getStatus();
@@ -530,18 +530,17 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		else
 			return "";
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * A simple wrapper that does not interfere with Json serialization
 	 */
-	public void doSetPickInstruction(String inPickInstruction){
+	public void doSetPickInstruction(String inPickInstruction) {
 		this.setPickInstruction(inPickInstruction);
 		// Common caller is the WiFactory.createWorkInstruction() , which is overloaded, calling each other.
 		// pickInstruction field is not nullable. Therefore, must be set to at least blank. But often, first set to blank
 		// then corrected later.  Would be nice to know if the final correction still had this as blank and report an error
 	}
-
 
 	// --------------------------------------------------------------------------
 	/**
@@ -576,15 +575,20 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			return null;
 		}
 	}
-	
-	public String getGtinId(){
+
+	public String getGtinId() {
+		// remember, house keeping WIs may not have order detail. It is nullable. Other kinds of work instruction also may not.
 		ItemMaster im = getItemMaster();
-		UomMaster um = orderDetail.getUomMaster();
+		OrderDetail od = getOrderDetail();
+		if (im == null || od == null)
+			return "";
+
+		UomMaster um = od.getUomMaster();
 		Gtin gtin = null;
-		
+
 		if (im != null && um != null) {
 			gtin = im.getGtinForUom(um);
-			
+
 			if (gtin != null) {
 				return gtin.getDomainId();
 			} else {

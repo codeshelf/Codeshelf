@@ -269,7 +269,8 @@ public class PickSimulator {
 		for (WorkInstruction wi : inList) {
 			UUID theId = wi.getPersistentId();
 			WorkInstruction fullWi = WorkInstruction.staticGetDao().findByPersistentId(theId);
-			currentList.add(fullWi);
+			if (fullWi != null)
+				currentList.add(fullWi);
 		}
 		return currentList;
 	}

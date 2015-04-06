@@ -1007,10 +1007,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private void requestWorkAndSetGetWorkState(final String inLocationStr, final Boolean reverseOrderFromLastTime) {
 		clearAllPositionControllers();
 		this.mLocationId = inLocationStr;
-
+		Map<String, String> positionToContainerMapCopy = new HashMap<String,String>(mPositionToContainerMap);
+		
 		mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(),
 			getPersistentId(),
 			inLocationStr,
+			positionToContainerMapCopy,
 			getMReversePickOrder(),
 			reverseOrderFromLastTime);
 		setState(CheStateEnum.GET_WORK);
