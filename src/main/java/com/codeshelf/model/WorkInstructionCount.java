@@ -35,6 +35,10 @@ public class WorkInstructionCount {
 	@Setter
 	private int	detailsNoWiMade				= 0;
 
+	@Getter
+	@Setter
+	private int	uncompletedInstructionsOnOtherPaths		= 0;
+
 	/* Later enhancement will like needly two detail fields. One for not on my current path, but in my work area. 
 	And the other for unknown path or path in other area. 
 	Usually would not get one on my current path as it would have auto-shorted instead */
@@ -74,7 +78,7 @@ public class WorkInstructionCount {
 	}
 
 	public boolean hasWorkOtherPaths() {
-		return invalidOrUnknownStatusCount > 0 || detailsNoWiMade > 0;
+		return invalidOrUnknownStatusCount > 0 || detailsNoWiMade > 0 || uncompletedInstructionsOnOtherPaths > 0;
 	}
 
 	public void incrementGoodCount() {
@@ -95,6 +99,10 @@ public class WorkInstructionCount {
 
 	public void incrementDetailsNoWiMade() {
 		detailsNoWiMade++;
+	}
+	
+	public void incrementUncompletedInstructionsOnOtherPaths() {
+		uncompletedInstructionsOnOtherPaths++;
 	}
 
 	@Override
@@ -125,14 +133,15 @@ public class WorkInstructionCount {
 			return false;
 		if (invalidOrUnknownStatusCount != other.invalidOrUnknownStatusCount)
 			return false;
+		if (uncompletedInstructionsOnOtherPaths != other.uncompletedInstructionsOnOtherPaths)
+			return false;
 		return true;
 	}
 
 	@Override
 	public String toString() {
-		return "WorkInstructionCount [goodCount=" + goodCount + ", immediateShortCount=" + shortCount + ", completeCount="
-				+ completeCount + ", invalidOrUnknownStatusCount=" + invalidOrUnknownStatusCount + ", detailsNoWiMade="
-				+ detailsNoWiMade + "]";
+		return String.format("WorkInstructionCount [goodCount=%d, immediateShortCount=%d, completeCount=%d, invalidOrUnknownStatusCount=%d, detailsNoWiMade=%d, uncompletedInstructionsOnOtherPaths=%d]",
+			goodCount, shortCount, completeCount, invalidOrUnknownStatusCount, detailsNoWiMade, uncompletedInstructionsOnOtherPaths);
 	}
 
 }

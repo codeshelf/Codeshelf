@@ -26,6 +26,7 @@ import lombok.ToString;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
+import org.omg.CORBA.BooleanHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -529,6 +530,16 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			Che.staticGetDao().store(inChe);
 		}
 	}
+	
+	private boolean detectPossiblePathChange(final Che che, final String inScannedLocationId, final BooleanHolder pathChanged) {
+		if (inScannedLocationId == null || "".equals(inScannedLocationId)){return false;}
+		Path oldPath = che.getActivePath();
+		if (oldPath == null) {return false;}
+		Location newLocation = che.getFacility().findSubLocationById(inScannedLocationId);
+		if (newLocation == null) {return false;}
+		Path newPath = newLocation.getAssociatedPathSegment().getParent();
+		return newPath != oldPath;
+	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -540,15 +551,14 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * For testing: if scan location, then just return all work instructions assigned to the CHE. (Assumes no negative positions on path.)
 	 */
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId) {
-		return getWorkInstructions(inChe, inScannedLocationId, false);
+		return getWorkInstructions(inChe, inScannedLocationId, false, new BooleanHolder(false));
 	}
 
-	public final List<WorkInstruction> getWorkInstructions(final Che inChe,
-		final String inScannedLocationId,
-		Boolean reversePickOrder) {
+	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId, final Boolean reversePickOrder, final BooleanHolder pathChanged) {
 		long startTimestamp = System.currentTimeMillis();
 		Facility facility = inChe.getFacility();
 
+		pathChanged.value = detectPossiblePathChange(inChe, inScannedLocationId, pathChanged);
 		saveCheLastScannedLocation(inChe, inScannedLocationId);
 
 		//boolean start = CheDeviceLogic.STARTWORK_COMMAND.equalsIgnoreCase(inScannedLocationId);
@@ -1148,8 +1158,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		if (inScannedLocationId == null || inScannedLocationId.isEmpty())
 			return reverse ? -0.01 : 0.0;
 
-		Location cheLocation = null;
-		cheLocation = facility.findSubLocationById(inScannedLocationId);
+		Location cheLocation = facility.findSubLocationById(inScannedLocationId);
 		if (cheLocation == null) {
 			LOGGER.warn("Unknown CHE scan location={}; This may due to a misconfigured site or bad barcode at the facility.",
 				inScannedLocationId);

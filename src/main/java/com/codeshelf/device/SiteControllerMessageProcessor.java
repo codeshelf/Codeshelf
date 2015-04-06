@@ -90,7 +90,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 		// Handler for Compute Work and Get Work
 		else if (response instanceof ComputeWorkResponse) {
 			ComputeWorkResponse computeWorkResponse = (ComputeWorkResponse) response;
-			if (computeWorkResponse.getPurpose() == ComputeWorkPurpose.COMPUTE_WORK) {
+			if (computeWorkResponse.getPurpose() == ComputeWorkPurpose.COMPUTE_WORK || computeWorkResponse.getPathChanged()) {
 				if (response.getStatus() == ResponseStatus.Success) {
 					this.deviceManager.processComputeWorkResponse(computeWorkResponse.getNetworkGuid(),
 						computeWorkResponse.getTotalGoodWorkInstructions(),

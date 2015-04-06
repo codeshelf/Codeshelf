@@ -16,7 +16,6 @@ import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.testframework.MinimalTest;
 
 public class ComputeWorkCommandTest extends MinimalTest {

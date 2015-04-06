@@ -199,7 +199,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
 					this.showCartSetupFeedback();
 					break;
-
+				case NO_WORK_CURR_PATH:
+					sendDisplayCommand(NO_WORK_MSG, ON_CURR_PATH, SCAN_LOCATION_MSG, SHOWING_WI_COUNTS);
+					this.showCartSetupFeedback();
+					break;
 				case SCAN_GTIN:
 					if (lastScanedGTIN == null) {
 						sendDisplayCommand(SCAN_GTIN, EMPTY_MSG);
@@ -1043,6 +1046,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processIdleStateScan(inScanPrefixStr, inContent);
 				break;
 			case NO_WORK:
+			case NO_WORK_CURR_PATH:
 				processLocationScan(inScanPrefixStr, inContent);
 				break;
 			case LOCATION_SELECT:
@@ -1206,9 +1210,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			} else {
 				setState(CheStateEnum.LOCATION_SELECT);
 			}
-
 		} else {
-			setState(CheStateEnum.NO_WORK);
+			WorkInstructionCount[] counts = containerToWorkInstructionCountMap.values().toArray(new WorkInstructionCount[0]);
+			int uncompletedInstructionsOnOtherPathsCounter = 0;
+			for (WorkInstructionCount count : counts) {
+				uncompletedInstructionsOnOtherPathsCounter += count.getUncompletedInstructionsOnOtherPaths();
+			}
+			if (uncompletedInstructionsOnOtherPathsCounter == 0) {
+				setState(CheStateEnum.NO_WORK);
+			} else {
+				setState(CheStateEnum.NO_WORK_CURR_PATH);
+			}
 		}
 	}
 
@@ -1240,7 +1252,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				LOGGER.info("Position Feedback_2: Poscon {} -- {}", position, wiCount);
 				if (count == 0) {
 					//0 good WI's
-					if (wiCount.hasBadCounts()) {
+					if (wiCount.hasBadCounts() || wiCount.hasWorkOtherPaths()) {
 						//If there any bad counts then we are "done for now" - dim, solid dashes
 						instructions.add(new PosControllerInstr(position,
 							PosControllerInstr.BITENCODED_SEGMENTS_CODE,
