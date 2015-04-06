@@ -975,15 +975,13 @@ public class OutboundOrderImporterTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
-		// active details should be decreased by 2 and inactive increased by 2
-		// 
 		HeaderCounts theCounts4 = facility.countOutboundOrders();
 		Assert.assertEquals(theCounts4.mTotalHeaders,3);
-		Assert.assertEquals(theCounts4.mActiveHeaders,3);
-		Assert.assertEquals(theCounts4.mActiveDetails,8);
-		Assert.assertEquals(theCounts4.mInactiveDetailsOnActiveOrders,3);
+		Assert.assertEquals(theCounts4.mActiveHeaders,2);
+		Assert.assertEquals(theCounts4.mActiveDetails,7);
+		Assert.assertEquals(theCounts4.mInactiveDetailsOnActiveOrders,0);
 		Assert.assertEquals(theCounts4.mInactiveCntrUsesOnActiveOrders,0);
-		Assert.assertEquals(theCounts4.mActiveCntrUses,3);
+		Assert.assertEquals(theCounts4.mActiveCntrUses,2);
 
 		// So, can a customer update the count on a single item? 123.2 going to 3.
 		String fifthCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"

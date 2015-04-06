@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -24,11 +25,8 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.InputStreamBody;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpParams;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -155,13 +153,13 @@ public class OrderBatchPerformanceTest {
 		long startTime = System.currentTimeMillis();
 		int numProcessed = 0;
 		for (String fileName : fileNames) {
+			BufferedReader br = null;
 			try {
 				String orderInputFile = orderInputDirectory+File.separator+fileName;
+				br = new BufferedReader(new FileReader(orderInputFile));
 				
 				LOGGER.info("Processing order file "+orderInputFile);
 				
-				BufferedReader br = new BufferedReader(new FileReader(orderInputFile));
-				ClassLoader classloader = Thread.currentThread().getContextClassLoader();
 				// TODO: get facility ID from API
 				String facilityId = "03ca8eb9-42f8-49a0-8e4a-ac0e2c1b1258";			
 				String baseUrl = "http://localhost:"+Integer.getInteger("api.port")+"/";
@@ -173,6 +171,15 @@ public class OrderBatchPerformanceTest {
 			} catch (Exception e) {
 				LOGGER.error("Exception while running performance test", e);
 				break;
+			}
+			finally {
+				try {
+					if (br!=null) {
+						br.close();
+					}
+				} catch (IOException e) {
+					LOGGER.error("Failed to close stream", e);
+				}
 			}
 			numProcessed++;
 			LOGGER.info(numProcessed+" files processed in "+(System.currentTimeMillis()-startTime)/60000+" mins");

@@ -219,16 +219,35 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		}
 		*/
 		
+		// init empty order map
+		Map<String,Boolean> isEmptyOrder = new HashMap<String,Boolean>();
+		for (OrderHeader order : this.orderHeaderCache.getAll()) {
+			isEmptyOrder.put(order.getOrderId(), true);
+		}
+		
 		// loop through order items and deactivate items that have not been touched by this batch
+		// also set empty order flag to false, if order has non-zero item quantities
 		Collection<Map<String, OrderDetail>> allOrderLines = orderlineMap.values();
 		for (Map<String, OrderDetail> orderlines : allOrderLines) {
 			for (OrderDetail line : orderlines.values()) {
+				// deactivate out-dated items
 				if (line.getActive()==true && !line.getUpdated().equals(inProcessTime)) {
-					// item is out-dated -> deactivate
 					line.setActive(false);
 					OrderDetail.staticGetDao().store(line);
 					LOGGER.info("Deactivating order item "+line);
 				}
+				// reset empty order flag
+				if (line.getActive() && line.getQuantity()!=null && line.getQuantity()>0) {
+					isEmptyOrder.put(line.getOrderId(), false);					
+				}
+			}
+		}
+		
+		// deactivate empty orders
+		for (OrderHeader order : this.orderHeaderCache.getAll()) {
+			if (isEmptyOrder.get(order.getOrderId())==true) {
+				order.setActive(false);
+				OrderHeader.staticGetDao().store(order);
 			}
 		}
 		
@@ -258,44 +277,8 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		return batchResult;
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inOrderIdList
-	 * @param inProcessTime
-	 */
-	private void archiveCheckOneOrder(OrderHeader order, Timestamp inProcessTime) {
-		for (OrderDetail orderDetail : order.getOrderDetails()) {
-			if (!Objects.equal(orderDetail.getUpdated(), inProcessTime)) {
-				LOGGER.trace("Archive old order detail: " + orderDetail.getOrderDetailId());
-				orderDetail.setActive(false);
-				//orderDetail.setQuantity(0);
-				//orderDetail.setMinQuantity(0);
-				//orderDetail.setMaxQuantity(0);
-				OrderDetail.staticGetDao().store(orderDetail);
-			}
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inFacility
-	 * @param inProcessTime
-	 */
-	private void archiveCheckAllOrders(final Facility inFacility, final Timestamp inProcessTime, final boolean undefinedGroupUpdated) {
-		LOGGER.debug("Archive unreferenced order data");
-		
-		long startOD = System.currentTimeMillis();
-		OrderDetail.archiveOrderDetails(inProcessTime, undefinedGroupUpdated);
-		long endOD = System.currentTimeMillis();
-		long startOH = System.currentTimeMillis();
-		OrderHeader.archiveOrderHeaders(inProcessTime);
-		long endOH = System.currentTimeMillis();
-		
-		LOGGER.debug("Archive OrderDetails took: "+(endOD-startOD)/1000+" seconds");
-		LOGGER.debug("Archive OrderHeaders took: "+(endOH-startOH)/1000+" seconds");
-	}
-	
 	private void archiveEmptyGroups(UUID inFacilityId){
+		// TODO: replace by single query and remove to background process
 		Facility facility = Facility.staticGetDao().findByPersistentId(inFacilityId);
 		for (OrderGroup group : facility.getOrderGroups()) {
 			boolean archiveGroup = true;
@@ -999,7 +982,12 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			LOGGER.warn("bad or missing value in min or max quantity field for " + detailId);
 		}
 
-		result.setActive(true);
+		if (result.getQuantity()==null || result.getQuantity()<=0) {
+			result.setActive(false);			
+		}
+		else {
+			result.setActive(true);
+		}
 		result.setUpdated(inEdiProcessTime);
 
 		//The order detail's id might have changed. Make sure the order header has it under the new id 
