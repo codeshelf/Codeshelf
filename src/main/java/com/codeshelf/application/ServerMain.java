@@ -23,7 +23,7 @@ import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.LocationAliasCsvImporter;
 import com.codeshelf.edi.OrderLocationCsvImporter;
-import com.codeshelf.edi.OutboundOrderCsvImporter;
+import com.codeshelf.edi.OutboundOrderPrefetchCsvImporter;
 import com.codeshelf.manager.ITenantManagerService;
 import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.metrics.IMetricsService;
@@ -126,7 +126,8 @@ public final class ServerMain {
 	
 				bind(IPickDocumentGenerator.class).to(PickDocumentGenerator.class);
 				
-				bind(ICsvOrderImporter.class).to(OutboundOrderCsvImporter.class);
+				//bind(ICsvOrderImporter.class).to(OutboundOrderCsvImporter.class);
+				bind(ICsvOrderImporter.class).to(OutboundOrderPrefetchCsvImporter.class);
 				bind(ICsvInventoryImporter.class).to(InventoryCsvImporter.class);
 				bind(ICsvLocationAliasImporter.class).to(LocationAliasCsvImporter.class);
 				bind(ICsvOrderLocationImporter.class).to(OrderLocationCsvImporter.class);

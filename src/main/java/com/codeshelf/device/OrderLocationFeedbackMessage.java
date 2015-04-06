@@ -1,7 +1,5 @@
 package com.codeshelf.device;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +14,6 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
 
 public class OrderLocationFeedbackMessage extends MessageABC {
 
