@@ -894,7 +894,11 @@ public class CheProcessTestPick extends ServerTest {
 		picker.pick(button, quant);
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
-		Assert.assertEquals(3, picker.countRemainingJobs());
+		
+		//After the v15 release, jumping to a new position during a pick restores all previously shorted instructions
+		Assert.assertEquals(5, picker.countRemainingJobs());
+		//Skip a first instruction to mainain an older test that expected the shorted instructions to stay hidden
+		pickItemAuto(picker);
 
 		wi = picker.nextActiveWi();
 		button = picker.buttonFor(wi);
@@ -2325,6 +2329,13 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_C);
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);
 
+	}
+	
+	private void pickItemAuto(PickSimulator picker){
+		WorkInstruction wi = picker.getActivePick();
+		int button = picker.buttonFor(wi);
+		int quantity = wi.getPlanQuantity();
+		picker.pick(button, quantity);
 	}
 
 }

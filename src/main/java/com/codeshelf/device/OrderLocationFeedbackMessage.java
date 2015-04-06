@@ -14,6 +14,7 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
 
 public class OrderLocationFeedbackMessage extends MessageABC {
 

@@ -1233,8 +1233,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			if (loc == null)
 				LOGGER.error("getWorkInstructions found active work instruction with null location"); // new log message from v8. Don't expect any null.
 			else if (loc.isActive()) { //unlikely that location got deleted between complete work instructions and scan location
-				//Path chePath = inChe.getActivePath();
-				//if (chePath == null || isLocatioOnPath(loc, inChe.getActivePath()))
+				Path chePath = inChe.getActivePath();
+				if (chePath == null || isLocatioOnPath(loc, inChe.getActivePath()))
 					cheWorkInstructions.add(wi);
 			} else
 				LOGGER.warn("getWorkInstructions found active work instruction in deleted locations"); // new from v8
