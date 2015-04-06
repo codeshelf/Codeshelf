@@ -1,8 +1,10 @@
 package com.codeshelf.model.dao;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import lombok.Getter;
@@ -26,6 +28,9 @@ public class DomainObjectCache<T extends DomainObjectABC> {
 	@Getter @Setter
 	int maxPrefetchSize = 10000;
 
+	@Getter @Setter
+	boolean fetchOnMiss = true;
+	
 	Map<String,T> objectCache =  new HashMap<String,T>();
 	
 	final ITypedDao<T> dao;
@@ -49,10 +54,19 @@ public class DomainObjectCache<T extends DomainObjectABC> {
 	}
 	
 	public void load(IDomainObject parent) {
+		load(parent,null);
+	}
+
+	public void load(IDomainObject parent, Set<String> domainIds) {
+		if (domainIds==null || domainIds.size()==0) {
+			// nothing to load
+			return;
+		}
 		this.parent = parent;
 		UUID persistentId = parent.getPersistentId();
 		Criteria crit = this.dao.createCriteria();
 		crit.add(Restrictions.eq("parent.persistentId", persistentId));
+		crit.add(Restrictions.in("domainId", domainIds));
 		// little bit of a hack: sort by update time stamp for item
 		// master to implement LRU prefetching.  would be better to have 
 		// update time stamp on all domain objects.
@@ -64,11 +78,11 @@ public class DomainObjectCache<T extends DomainObjectABC> {
 		for (T item : list) {
 			objectCache.put(item.getDomainId(), item);
 		}
-	}
+	}	
 	
 	public T get(String domainId) {
 		T obj = this.objectCache.get(domainId); 
-		if (obj==null) {
+		if (obj==null && this.fetchOnMiss) {
 			// try to retrieve from database on miss
 			obj = this.dao.findByDomainId(this.parent, domainId);
 			if (obj!=null) {
@@ -89,6 +103,10 @@ public class DomainObjectCache<T extends DomainObjectABC> {
 	
 	public void reset() {
 		this.objectCache.clear();
+	}
+	
+	public Collection<T> getAll() {
+		return this.objectCache.values();
 	}
 
 }

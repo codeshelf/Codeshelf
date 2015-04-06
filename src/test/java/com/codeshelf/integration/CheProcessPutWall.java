@@ -277,7 +277,7 @@ public class CheProcessPutWall extends ServerTest {
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
 
 		// button from the put wall
-		posman.buttonPress(4, 3);
+		// posman.buttonPress(4, 3);
 
 		// this should complete the plan, and return to PUT_WALL_SCAN_ITEM.  More DEV-713 work
 		picker1.scanCommand("CLEAR");

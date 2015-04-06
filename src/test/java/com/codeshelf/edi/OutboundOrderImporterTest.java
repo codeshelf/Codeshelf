@@ -410,7 +410,6 @@ public class OutboundOrderImporterTest extends ServerTest {
 		String secondOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalapeno Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalapeno Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
@@ -433,18 +432,16 @@ public class OutboundOrderImporterTest extends ServerTest {
 		
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
-		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
-		Assert.assertTrue(theCounts2.mActiveDetails == 8);
-		Assert.assertTrue(theCounts2.mActiveCntrUses == 2);
-		// Unused details are actually deleted
-		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 0);
-		// But container 789 was not deleted. Just went inactive.
-		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders == 1);
+		Assert.assertTrue(theCounts2.mActiveHeaders == 3);
+		Assert.assertTrue(theCounts2.mActiveDetails == 9);
+		Assert.assertTrue(theCounts2.mActiveCntrUses == 3);
+		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 2);
+		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders == 0);
 
-		// Order 789 should exist and be inactive.
+		// Order 789 should exist and not be inactive.
 		OrderHeader order = facility.getOrderHeader("789");
 		Assert.assertNotNull(order);
-		Assert.assertEquals(false, order.getActive());
+		Assert.assertEquals(true, order.getActive());
 
 		// Line item 10722222 from order 456 should be inactive.
 		order = facility.getOrderHeader("456");
@@ -467,11 +464,13 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		String firstOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10711111,Napa Valley Bistro Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 		importCsvString(facility, firstOrderBatchCsv);
-
+		this.getTenantPersistenceService().commitTransaction();
+		
+		this.getTenantPersistenceService().beginTransaction();
 		HeaderCounts theCounts = facility.countOutboundOrders();
 		Assert.assertEquals(3, theCounts.mTotalHeaders);
 		Assert.assertEquals(3, theCounts.mActiveHeaders);
@@ -480,18 +479,20 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		// Now import a smaller list of orders, but more than one.
 		String secondOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
-
 		importCsvString(facility, secondOrderBatchCsv);
-
+		this.getTenantPersistenceService().commitTransaction();
+		
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
-		Assert.assertEquals(3, theCounts2.mTotalHeaders);
-		Assert.assertEquals(3, theCounts2.mActiveHeaders);
-		Assert.assertEquals(4, theCounts2.mActiveDetails);
-		Assert.assertEquals(1, theCounts2.mActiveCntrUses);
-		Assert.assertEquals(0, theCounts2.mInactiveDetailsOnActiveOrders);
-		Assert.assertEquals(2, theCounts2.mInactiveCntrUsesOnActiveOrders);
+		Assert.assertEquals(theCounts2.mTotalHeaders,3);
+		Assert.assertEquals(theCounts2.mActiveHeaders,3);
+		Assert.assertEquals(theCounts2.mActiveDetails,4);
+		Assert.assertEquals(theCounts2.mActiveCntrUses,3);
+		Assert.assertEquals(theCounts2.mInactiveDetailsOnActiveOrders,0);
+		Assert.assertEquals(theCounts2.mInactiveCntrUsesOnActiveOrders,0);
 
 		// Order 789 should exist and be active.
 		OrderHeader order = facility.getOrderHeader("789");
@@ -510,7 +511,6 @@ public class OutboundOrderImporterTest extends ServerTest {
 			}
 		}
 		this.getTenantPersistenceService().commitTransaction();
-
 	}
 
 	@Test
@@ -726,7 +726,6 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
 		byte[] secondCsvArray = secondCsvString.getBytes();
@@ -759,16 +758,14 @@ public class OutboundOrderImporterTest extends ServerTest {
 		orderDetail = order.getOrderDetail("10722222-each");
 		Assert.assertNotNull(orderDetail);
 
-		// And what about order 789, missing altogether in second file? Answer is the header went inactive, along with its 2 details and 1 cntrUse
-
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
-		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
-		Assert.assertTrue(theCounts2.mActiveDetails == 9);
-		Assert.assertTrue(theCounts2.mActiveCntrUses == 2);
+		Assert.assertTrue(theCounts2.mActiveHeaders == 3);
+		Assert.assertTrue(theCounts2.mActiveDetails == 10);
+		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 1);
+		Assert.assertTrue(theCounts2.mActiveCntrUses == 3);
 
 		this.getTenantPersistenceService().commitTransaction();
-
 	}
 
 	@Test
@@ -925,7 +922,9 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\nUSF314,COSTCO,789,789,789.1,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\nUSF314,COSTCO,789,789,789.2,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 		importCsvString(facility, firstCsvString);
-
+		this.getTenantPersistenceService().commitTransaction();
+		
+		this.getTenantPersistenceService().beginTransaction();
 		HeaderCounts theCounts = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts.mActiveHeaders == 3);
@@ -962,11 +961,11 @@ public class OutboundOrderImporterTest extends ServerTest {
 		// See, works same as if matching the group
 		HeaderCounts theCounts3 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts3.mTotalHeaders == 3);
-		Assert.assertTrue(theCounts3.mActiveHeaders == 2);
-		Assert.assertTrue(theCounts3.mActiveDetails == 8);
-		Assert.assertTrue(theCounts3.mInactiveDetailsOnActiveOrders == 0);
-		Assert.assertTrue(theCounts3.mInactiveCntrUsesOnActiveOrders == 1);
-		Assert.assertTrue(theCounts3.mActiveCntrUses == 2);
+		Assert.assertEquals(theCounts3.mActiveHeaders,3);
+		Assert.assertEquals(theCounts3.mActiveDetails,10);
+		Assert.assertEquals(theCounts3.mInactiveDetailsOnActiveOrders,1);
+		Assert.assertEquals(theCounts3.mInactiveCntrUsesOnActiveOrders,0);
+		Assert.assertEquals(theCounts3.mActiveCntrUses,3);
 
 		// Can a customer update a single order or detail by setting the count to zero
 		String fourthCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -976,14 +975,15 @@ public class OutboundOrderImporterTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
-		// This looks buggy. Orders and 6 details still present. What two orderDetails went away. Looks like all other cntrUses got inactivated, and new one made.
+		// active details should be decreased by 2 and inactive increased by 2
+		// 
 		HeaderCounts theCounts4 = facility.countOutboundOrders();
-		Assert.assertTrue(theCounts4.mTotalHeaders == 3);
-		Assert.assertTrue(theCounts4.mActiveHeaders == 2);
-		Assert.assertTrue(theCounts4.mActiveDetails == 6);
-		Assert.assertTrue(theCounts4.mInactiveDetailsOnActiveOrders == 0);
-		Assert.assertTrue(theCounts4.mInactiveCntrUsesOnActiveOrders == 4);
-		Assert.assertTrue(theCounts4.mActiveCntrUses == 1);
+		Assert.assertEquals(theCounts4.mTotalHeaders,3);
+		Assert.assertEquals(theCounts4.mActiveHeaders,3);
+		Assert.assertEquals(theCounts4.mActiveDetails,8);
+		Assert.assertEquals(theCounts4.mInactiveDetailsOnActiveOrders,3);
+		Assert.assertEquals(theCounts4.mInactiveCntrUsesOnActiveOrders,0);
+		Assert.assertEquals(theCounts4.mActiveCntrUses,3);
 
 		// So, can a customer update the count on a single item? 123.2 going to 3.
 		String fifthCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -996,14 +996,14 @@ public class OutboundOrderImporterTest extends ServerTest {
 		facility = Facility.staticGetDao().reload(facility);
 		// Well, yes. Looks like that detail was cleanly updated without bothering anything else.
 		HeaderCounts theCounts5 = facility.countOutboundOrders();
-		Assert.assertTrue(theCounts5.mTotalHeaders == 3);
-		Assert.assertTrue(theCounts5.mActiveHeaders == 2);
-		Assert.assertTrue(theCounts5.mActiveDetails == 6);
-		Assert.assertTrue(theCounts5.mInactiveDetailsOnActiveOrders == 0);
-		Assert.assertTrue(theCounts5.mInactiveCntrUsesOnActiveOrders == 4);
-		Assert.assertTrue(theCounts5.mActiveCntrUses == 1);
+		Assert.assertEquals(theCounts5.mTotalHeaders,3);
+		Assert.assertEquals(theCounts5.mActiveHeaders,3);
+		Assert.assertEquals(theCounts5.mActiveDetails,8);
+		Assert.assertEquals(theCounts5.mInactiveDetailsOnActiveOrders,3);
+		Assert.assertEquals(theCounts5.mInactiveCntrUsesOnActiveOrders,0);
+		Assert.assertEquals(theCounts5.mActiveCntrUses,3);
 
-		// So, here is a count update for three items. Will this doesthe updates, or will this be interpreted as full new file, needing to delete others?
+		// re-submit order with three items instead of five
 		String sixthCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\nUSF314,COSTCO,456,456,456.1,10711111,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,4,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\nUSF314,COSTCO,456,456,456.2,10722222,Italian Homemade Style Basil Pesto,4,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
@@ -1014,17 +1014,17 @@ public class OutboundOrderImporterTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
-		// Buggy? Not sure. Hard to understand anyway. All other details except 1 were made inactive.  That led to two more inactive container uses (ok, if the detail inactive is correct).
+		// inactive detail count should increase by 2 to 5 and active detail count go from 6 to 6
+		// other counts remain the same
 		HeaderCounts theCounts6 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts6.mTotalHeaders == 3);
-		Assert.assertTrue(theCounts6.mActiveHeaders == 2);
-		Assert.assertTrue(theCounts6.mActiveDetails == 4);
-		Assert.assertTrue(theCounts6.mInactiveDetailsOnActiveOrders == 0);
-		Assert.assertTrue(theCounts6.mInactiveCntrUsesOnActiveOrders == 6);
-		Assert.assertTrue(theCounts6.mActiveCntrUses == 1);
+		Assert.assertTrue(theCounts6.mActiveHeaders == 3);
+		Assert.assertTrue(theCounts6.mActiveDetails == 6);
+		Assert.assertTrue(theCounts6.mInactiveDetailsOnActiveOrders == 5);
+		Assert.assertTrue(theCounts6.mInactiveCntrUsesOnActiveOrders == 0);
+		Assert.assertTrue(theCounts6.mActiveCntrUses == 3);
 
 		this.getTenantPersistenceService().commitTransaction();
-
 	}
 
 	@Test
@@ -1279,13 +1279,14 @@ public class OutboundOrderImporterTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 
-
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" +
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1" +
 				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1";
 		importCsvString(facility, firstCsvString);
+		this.getTenantPersistenceService().commitTransaction();
 
+		this.getTenantPersistenceService().beginTransaction();
 		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
 				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" +
 				"\r\n4,4,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1";
@@ -1298,8 +1299,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		HashMap<String, Boolean> groupExpectations = new HashMap<String, Boolean>();
 		groupExpectations.put("Group1", true);
 		HashMap<String, Boolean> headerExpectations = new HashMap<String, Boolean>();
-		headerExpectations.put("1", false);
-		headerExpectations.put("2", false);
+		headerExpectations.put("1", true);
+		headerExpectations.put("2", true);
 		headerExpectations.put("3", true);
 		headerExpectations.put("4", true);
 		assertArchiveStatuses(groupExpectations, headerExpectations);
@@ -1308,20 +1309,20 @@ public class OutboundOrderImporterTest extends ServerTest {
 	}
 
 	/**
-	 * Same as testAcriveTestOneGroup, but without specifying a group
+	 * Same as testArchiveNoGroup, but without specifying a group
 	 */
 	@Test
 	public final void testArchiveNoGroup() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 
-
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom" +
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a" +
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a" +
 				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a";
 		importCsvString(facility, firstCsvString);
-
+		this.getTenantPersistenceService().commitTransaction();
+		this.getTenantPersistenceService().beginTransaction();
 		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom" +
 				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a" +
 				"\r\n4,4,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a";
@@ -1334,8 +1335,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		HashMap<String, Boolean> groupExpectations = new HashMap<String, Boolean>();
 		groupExpectations.put("Group1", true);
 		HashMap<String, Boolean> headerExpectations = new HashMap<String, Boolean>();
-		headerExpectations.put("1", false);
-		headerExpectations.put("2", false);
+		headerExpectations.put("1", true);
+		headerExpectations.put("2", true);
 		headerExpectations.put("3", true);
 		headerExpectations.put("4", true);
 		assertArchiveStatuses(groupExpectations, headerExpectations);
@@ -1343,16 +1344,10 @@ public class OutboundOrderImporterTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
-	/**
-	 * This is a test for my modification of the Archiving behavior.
-	 * Currently, importing orders will archive all older orders, even in other groups.
-	 * In the new behavior, only old orders from the newly imported groups will be archived
-	 */
 	@Test
 	public final void testArchiveTwoGroups() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
-
 
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" +
@@ -1375,7 +1370,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		HashMap<String, Boolean> headerExpectations = new HashMap<String, Boolean>();
 		headerExpectations.put("1", true);
 		headerExpectations.put("2", true);
-		headerExpectations.put("3", false);
+		headerExpectations.put("3", true);
 		headerExpectations.put("4", true);
 		headerExpectations.put("5", true);
 		assertArchiveStatuses(groupExpectations, headerExpectations);

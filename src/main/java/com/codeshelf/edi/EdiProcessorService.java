@@ -101,6 +101,7 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 		boolean completed = false;
 		int numChecked = 0;
 		final Timer.Context timerContext = ediProcessingTimer.time();
+		long startTime = System.currentTimeMillis();
 		
 		try {
 			UserContext systemUser = CodeshelfSecurityManager.getUserContextSYSTEM();
@@ -137,12 +138,11 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 		} catch (RuntimeException e) {
 			LOGGER.error("Unable to process edi for tenant "+tenant.getId(), e);
 		} finally {
-			if(timerContext != null) 
-				timerContext.stop();
-			
-			LOGGER.info("Checked for updates from {} EDI services for tenant {}",numChecked,tenant.getName());
+			long endTime = System.currentTimeMillis();
+			if (timerContext != null) timerContext.stop();
+			LOGGER.info("Checked for updates from {} EDI services for tenant {} in {}s",numChecked,tenant.getName(),(endTime-startTime)/1000);
 			CodeshelfSecurityManager.removeContext();
-			if(!completed) {
+			if (!completed) {
 				TenantPersistenceService.getInstance().rollbackTransaction();
 				LOGGER.warn("EDI process did not complete successfully for tenant {}",tenant.getName());
 			}

@@ -1,7 +1,5 @@
 package com.codeshelf.device;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,12 +23,14 @@ public class OrderLocationFeedbackMessage extends MessageABC {
 	@Getter
 	@Setter
 	@Expose
+	@SerializedName(value = "controllerId")
 	private String				mControllerId;
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
 	@Expose
+	@SerializedName(value = "position")
 	private Byte				mPosition;
 	// as a Byte, similar to PosControllerInstr. Someday might change to an Integer
 
@@ -38,31 +38,38 @@ public class OrderLocationFeedbackMessage extends MessageABC {
 	@Getter
 	@Setter
 	@Expose
+	@SerializedName(value = "locationName")
 	private String				mLocationName;
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
 	@Expose
+	@SerializedName(value = "orderId")
 	private String				mOrderId;																// not initially used. Just seems like site controller could use it.
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
 	@Expose
+	@SerializedName(value = "hasAnyOrderAtAl")
 	private Boolean				mHasAnyOrderAtAll;
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
 	@Expose
+	@SerializedName(value = "orderFullyComplete")
 	private Boolean				mOrderFullyComplete;
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
 	@Expose
+	@SerializedName(value = "orderCompleteThisArea")
 	private Boolean				mOrderCompleteThisArea;													// not initially used. 
+
+	public OrderLocationFeedbackMessage() {}
 
 	public OrderLocationFeedbackMessage(OrderLocation ol) {
 		Location loc = ol.getLocation();

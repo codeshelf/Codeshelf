@@ -1196,7 +1196,7 @@ public class Facility extends Location {
 						if (orderDetail.getActive())
 							activeDetails++;
 						else
-							inactiveCntrUsesOnActiveOrders++;
+							inactiveDetailsOnActiveOrders++;
 						// if we were doing outbound orders, we might count WI here
 					}
 				}

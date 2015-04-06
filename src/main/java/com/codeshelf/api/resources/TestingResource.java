@@ -20,7 +20,7 @@ import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.InventoryCsvImporter;
-import com.codeshelf.edi.OutboundOrderCsvImporter;
+import com.codeshelf.edi.OutboundOrderPrefetchCsvImporter;
 import com.codeshelf.event.EventProducer;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
@@ -158,7 +158,7 @@ public class TestingResource {
 		InputStreamReader reader2 = new InputStreamReader(stream2);
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = new OutboundOrderCsvImporter(new EventProducer());
+		ICsvOrderImporter importer2 = new OutboundOrderPrefetchCsvImporter(new EventProducer());
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
 	}
 }
