@@ -8,7 +8,6 @@ package com.codeshelf.device;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +40,6 @@ import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest;
-import com.codeshelf.ws.protocol.request.GetWorkRequest;
 import com.codeshelf.ws.protocol.request.InventoryLightItemRequest;
 import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
 import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
@@ -54,10 +52,7 @@ import com.google.inject.Inject;
  * @author jeffw
  *
  */
-public class CsDeviceManager implements
-	IRadioControllerEventListener,
-	WebSocketEventListener,
-	PacketCaptureListener {
+public class CsDeviceManager implements IRadioControllerEventListener, WebSocketEventListener, PacketCaptureListener {
 
 	private static final Logger							LOGGER						= LoggerFactory.getLogger(CsDeviceManager.class);
 
@@ -79,16 +74,16 @@ public class CsDeviceManager implements
 	private String										password;
 
 	/* Device Manager owns websocket configuration too */
-//	@Getter
-//	private URI											mUri;
+	//	@Getter
+	//	private URI											mUri;
 
 	@Getter
 	private long										lastNetworkUpdate			= 0;
 
 	private boolean										isAttachedToServer			= false;
 
-	private boolean										autoShortValue				= true;	// log on set (below)
-	private boolean										pickMultValue				= false; // log on set (below)
+	private boolean										autoShortValue				= true;											// log on set (below)
+	private boolean										pickMultValue				= false;											// log on set (below)
 
 	@Getter
 	@Setter
@@ -107,8 +102,8 @@ public class CsDeviceManager implements
 	private String										sequenceKind				= "BayDistance";
 
 	@Getter
-	CsClientEndpoint clientEndpoint;
-	
+	CsClientEndpoint									clientEndpoint;
+
 	@Inject
 	public CsDeviceManager(final IRadioController inRadioController, final CsClientEndpoint clientEndpoint) {
 		this.clientEndpoint = clientEndpoint;
@@ -139,14 +134,16 @@ public class CsDeviceManager implements
 	public boolean getPickMultValue() {
 		return this.pickMultValue;
 	}
+
 	public void setPickMultValue(boolean inValue) {
 		pickMultValue = inValue;
 		LOGGER.info("Site controller setting PICKMULT value = {}", inValue);
 	}
-	
+
 	public boolean getAutoShortValue() {
 		return this.autoShortValue;
-	}	
+	}
+
 	public void setAutoShortValue(boolean inValue) {
 		autoShortValue = inValue;
 		LOGGER.info("Site controller setting AUTOSHRT value = {}", inValue);
@@ -176,7 +173,7 @@ public class CsDeviceManager implements
 		}
 		return aList;
 	}
-	
+
 	public final List<PosManagerDeviceLogic> getPosConControllers() {
 		ArrayList<PosManagerDeviceLogic> aList = new ArrayList<PosManagerDeviceLogic>();
 		for (INetworkDevice theDevice : mDeviceMap.values()) {
@@ -216,15 +213,35 @@ public class CsDeviceManager implements
 	public final CheDeviceLogic getCheDeviceByControllerId(String controllerId) {
 		if (controllerId == null)
 			return null;
-		
+
 		NetGuid theGuid = new NetGuid(controllerId);
-		INetworkDevice theDevice =  mDeviceMap.get(theGuid);
+		INetworkDevice theDevice = mDeviceMap.get(theGuid);
 		if (theDevice == null)
 			return null;
 		else if (theDevice instanceof CheDeviceLogic)
 			return (CheDeviceLogic) theDevice;
 		else {
 			LOGGER.error("unexpected device type for {} in getCheDeviceByControllerId", controllerId);
+			return null;
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/* 
+	 * Public convenience function
+	 */
+	public final PosManagerDeviceLogic getPosManagerDeviceByControllerId(String controllerId) {
+		if (controllerId == null)
+			return null;
+
+		NetGuid theGuid = new NetGuid(controllerId);
+		INetworkDevice theDevice = mDeviceMap.get(theGuid);
+		if (theDevice == null)
+			return null;
+		else if (theDevice instanceof PosManagerDeviceLogic)
+			return (PosManagerDeviceLogic) theDevice;
+		else {
+			LOGGER.error("unexpected device type for {} in getPosManagerDeviceByControllerId", controllerId);
 			return null;
 		}
 	}
@@ -260,12 +277,12 @@ public class CsDeviceManager implements
 			} else {
 				((CheDeviceLogic) inNetworkDevice).disconnectedFromServer();
 			}
-		} else if (inNetworkDevice instanceof PosManagerDeviceLogic){
+		} else if (inNetworkDevice instanceof PosManagerDeviceLogic) {
 			if (isAttachedToServer) {
 				((PosManagerDeviceLogic) inNetworkDevice).connectedToServer();
 			} else {
 				((PosManagerDeviceLogic) inNetworkDevice).disconnectedFromServer();
-			}			
+			}
 		}
 
 	}
@@ -274,15 +291,13 @@ public class CsDeviceManager implements
 	/* (non-Javadoc)
 	 * @see com.codeshelf.device.CsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
-	public void computeCheWork(final String inCheId, final UUID inPersistentId, 
-			final List<String> inContainerIdList, final Boolean reverse) {
-		LOGGER.debug("Compute work: Che={}; Container={}", inCheId, inContainerIdList);
+	public void computeCheWork(final String inCheId,
+		final UUID inPersistentId,
+		final Map<String, String> positionToContainerMap,
+		final Boolean reverse) {
+		LOGGER.debug("Compute work: Che={}; Container={}", inCheId, positionToContainerMap);
 		String cheId = inPersistentId.toString();
-		LinkedList<String> containerIds = new LinkedList<String>();
-		for (String containerId : inContainerIdList) {
-			containerIds.add(containerId);
-		}
-		ComputeWorkRequest req = new ComputeWorkRequest(cheId, containerIds, reverse);
+		ComputeWorkRequest req = new ComputeWorkRequest(cheId, positionToContainerMap, reverse);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -297,10 +312,14 @@ public class CsDeviceManager implements
 	/* (non-Javadoc)
 	 * @see com.codeshelf.device.CsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
-	public void getCheWork(final String inCheId, final UUID inPersistentId, final String inLocationId, final Boolean reversePickOrder, final Boolean reverseOrderFromLastTime) {
+	public void getCheWork(final String inCheId,
+		final UUID inPersistentId,
+		final String inLocationId,
+		final Boolean reversePickOrder,
+		final Boolean reverseOrderFromLastTime) {
 		LOGGER.debug("Get work: Che={}; Loc={}", inCheId, inLocationId);
 		String cheId = inPersistentId.toString();
-		GetWorkRequest req = new GetWorkRequest(cheId, inLocationId, reversePickOrder, reverseOrderFromLastTime);
+		ComputeWorkRequest req = new ComputeWorkRequest(cheId, inLocationId, reversePickOrder, reverseOrderFromLastTime);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -313,7 +332,7 @@ public class CsDeviceManager implements
 		CompleteWorkInstructionRequest req = new CompleteWorkInstructionRequest(inPersistentId.toString(), inWorkInstruction);
 		clientEndpoint.sendMessage(req);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.codeshelf.device.CsDeviceManager#inventoryScan(final UUID inCheId, final UUID inPersistentId, final String inLocationId, final String inGtin)
@@ -323,7 +342,7 @@ public class CsDeviceManager implements
 		InventoryUpdateRequest req = new InventoryUpdateRequest(inPersistentId.toString(), inGtin, inLocationId);
 		clientEndpoint.sendMessage(req);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.codeshelf.device.CsDeviceManager#inventoryScan(final String inCheId, final UUID inPersistentId, final String inLocationId, final String inGtin)
@@ -333,16 +352,16 @@ public class CsDeviceManager implements
 		InventoryLightItemRequest req = new InventoryLightItemRequest(inPersistentId.toString(), inGtin);
 		clientEndpoint.sendMessage(req);
 	}
-	
+
 	// --------------------------------------------------------------------------
-		/* (non-Javadoc)
-		 * @see com.codeshelf.device.CsDeviceManager#inventoryLightLocationScan(final String inCheId, final UUID inPersistentId, final String inLocation)
-		 */
-		public void inventoryLightLocationScan(final UUID inPersistentId, final String inLocation, boolean isTape) {
-			LOGGER.debug("Inventory light location request: Che={};  Location={};", inPersistentId, inLocation);
-			InventoryLightLocationRequest req = new InventoryLightLocationRequest(inPersistentId.toString(), inLocation, isTape);
-			clientEndpoint.sendMessage(req);
-		}
+	/* (non-Javadoc)
+	 * @see com.codeshelf.device.CsDeviceManager#inventoryLightLocationScan(final String inCheId, final UUID inPersistentId, final String inLocation)
+	 */
+	public void inventoryLightLocationScan(final UUID inPersistentId, final String inLocation, boolean isTape) {
+		LOGGER.debug("Inventory light location request: Che={};  Location={};", inPersistentId, inLocation);
+		InventoryLightLocationRequest req = new InventoryLightLocationRequest(inPersistentId.toString(), inLocation, isTape);
+		clientEndpoint.sendMessage(req);
+	}
 
 	/**
 	 * Websocket connects then this authenticates and receives the network it should use
@@ -377,9 +396,9 @@ public class CsDeviceManager implements
 	}
 
 	public void unattached() {
-		if(!isAttachedToServer)
+		if (!isAttachedToServer)
 			return; // don't get stuck in a loop if device manager is requesting disconnection
-		
+
 		LOGGER.info("Unattached from server");
 		isAttachedToServer = false;
 		for (INetworkDevice networkDevice : mDeviceMap.values()) {
@@ -390,7 +409,7 @@ public class CsDeviceManager implements
 				((PosManagerDeviceLogic) networkDevice).disconnectedFromServer();
 			}
 		}
-		if(clientEndpoint.isConnected()) {
+		if (clientEndpoint.isConnected()) {
 			try {
 				clientEndpoint.disconnect();
 			} catch (IOException e) {
@@ -603,7 +622,7 @@ public class CsDeviceManager implements
 			try {
 				UUID id = ledController.getPersistentId();
 				NetGuid deviceGuid = new NetGuid(ledController.getDeviceGuid());
-				if (ledController.getDeviceType() == DeviceType.Poscons){
+				if (ledController.getDeviceType() == DeviceType.Poscons) {
 					doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_POS_CON_CTRL);
 				} else {
 					doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_LED);
@@ -688,17 +707,17 @@ public class CsDeviceManager implements
 			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
 		}
 	}
-	
+
 	public PosManagerDeviceLogic processPosConControllerMessage(PosControllerInstr instruction, boolean skipUpdate) {
 		NetGuid controllerGuid = new NetGuid(instruction.getControllerId());
 		String sourceStr = instruction.getSourceId();
-		NetGuid sourceGuid = (sourceStr==null) ? controllerGuid : new NetGuid(sourceStr);
-		PosManagerDeviceLogic device = (PosManagerDeviceLogic)mDeviceMap.get(controllerGuid);
+		NetGuid sourceGuid = (sourceStr == null) ? controllerGuid : new NetGuid(sourceStr);
+		PosManagerDeviceLogic device = (PosManagerDeviceLogic) mDeviceMap.get(controllerGuid);
 		if (device != null) {
 			LOGGER.info("processPosConControllerMessage calling display function");
-			if (instruction.isRemoveAll()){
+			if (instruction.isRemoveAll()) {
 				device.removePosConInstrsForSource(sourceGuid);
-			} else if (!instruction.getRemovePos().isEmpty()){
+			} else if (!instruction.getRemovePos().isEmpty()) {
 				device.removePosConInstrsForSourceAndPositions(sourceGuid, instruction.getRemovePos());
 			} else {
 				device.addPosConInstrFor(sourceGuid, instruction);
@@ -711,7 +730,7 @@ public class CsDeviceManager implements
 		}
 		return device;
 	}
-	
+
 	public void processPosConControllerListMessage(PosControllerInstrList instructionList) {
 		HashSet<PosManagerDeviceLogic> controllers = new HashSet<>();
 		for (PosControllerInstr instruction : instructionList.getInstructions()) {
@@ -722,11 +741,23 @@ public class CsDeviceManager implements
 		}
 	}
 
+	public PosManagerDeviceLogic processOrderLocationFeedbackMessage(OrderLocationFeedbackMessage instruction) {
+		String controllerId = instruction.getControllerId();
+		NetGuid controllerGuid = new NetGuid(instruction.getControllerId());
+		PosManagerDeviceLogic device = getPosManagerDeviceByControllerId(controllerId);
+		if (device != null) {
+			LOGGER.info("processOrderLocationFeedbackMessage calling display function");
+			device.processFeedback(instruction);
+		} else {
+			LOGGER.warn("Unable to assign work to PosCon controller id={}. Device not found", controllerGuid);
+		}
+		return device;
+	}
 
 	public void processWorkInstructionCompletedResponse(UUID workInstructionId) {
 		// do nothing
 	}
-	
+
 	public void processInventoryScanRespose(String inResponseMessage) {
 		LOGGER.info("Got inventoryscan response: {}", inResponseMessage);
 		// TODO - huffa DEV644

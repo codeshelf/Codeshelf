@@ -40,6 +40,7 @@ import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.flyweight.controller.TcpServerInterface;
+import com.codeshelf.manager.DefaultRolesPermissions;
 import com.codeshelf.manager.ITenantManagerService;
 import com.codeshelf.manager.ManagerPersistenceService;
 import com.codeshelf.manager.Tenant;
@@ -66,6 +67,7 @@ import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.HmacAuthService;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.InventoryService;
+import com.codeshelf.service.LightService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.ServiceUtility;
 import com.codeshelf.service.WorkService;
@@ -498,11 +500,15 @@ public abstract class FrameworkTest implements IntegrationTest {
 			realTenantManagerService.resetTenant(realDefaultTenant);
 			List<UserRole> roles = realTenantManagerService.getRoles();
 			for(UserRole role : roles) {
-				realTenantManagerService.deleteRole(role);
+				if(!DefaultRolesPermissions.isDefaultRole(role.getName())) {
+					realTenantManagerService.deleteRole(role);
+				}
 			}
 			List<UserPermission> permissions = realTenantManagerService.getPermissions();
 			for(UserPermission perm : permissions) {
-				realTenantManagerService.deletePermission(perm);
+				if(!DefaultRolesPermissions.isDefaultPermission(perm.getDescriptor())) {
+					realTenantManagerService.deletePermission(perm);
+				}
 			}
 		}
 
@@ -592,7 +598,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	}
 
 	protected WorkService generateWorkService() {
-		return new WorkService();
+		return new WorkService(new LightService(staticWebSocketManagerService));
 	}
 
 	protected final Facility generateTestFacility() {

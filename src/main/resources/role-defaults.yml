@@ -1,0 +1,55 @@
+# Default global roles and permissions
+#   At TenantManager startup, these roles and permissions will exist 
+#   and the roles will contain exactly these sets of permissions 
+
+SiteController:
+  - "ws:login"
+Cart:
+  - "che:pick"
+  - "che:setup"
+Inventory:
+  - "che:inventory"
+  - "inventory:edit"
+Maintenance:
+  - "ws:login"
+  - "che:*"
+  - "paths:*"
+  - "lights:*"
+Upload:
+  - "order:import"
+  - "inventory:import"
+Companion:
+  - "companion:view"
+Browse:
+  - "ws:login"
+Admin:
+  - "ws:login"
+  - "companion:*"
+  - "che:create,edit,delete"
+  - "params:*"
+  - "facility:edit"
+  - "paths:*"
+  - "lights:*"
+  - "inventory:edit"
+Configure:
+  - "ws:login"
+  - "companion:*"
+  - "che:create,edit,delete"
+  - "params:edit"
+  - "paths:*"
+  - "lights:*"
+CsDeveloper:
+  - "simulate:*"
+CsSupport:
+  - "ws:login"
+  - "companion:*"
+  - "che:create,edit,delete"
+  - "params:*"
+  - "facility:edit"
+  - "paths:*"
+  - "lights:*"
+  - "order:import"
+  - "inventory:edit"
+  - "inventory:import"
+CsSuperuser:
+  - "*"

@@ -19,8 +19,6 @@ import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.domain.UserType;
 import com.codeshelf.testframework.MinimalTest;
 import com.codeshelf.ws.protocol.message.MessageABC;
-import com.codeshelf.ws.server.WebSocketConnection;
-import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;

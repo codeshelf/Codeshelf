@@ -10,7 +10,7 @@ import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.LocationAliasCsvImporter;
 import com.codeshelf.edi.OrderLocationCsvImporter;
-import com.codeshelf.edi.OutboundOrderCsvImporter;
+import com.codeshelf.edi.OutboundOrderPrefetchCsvImporter;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
@@ -513,7 +513,8 @@ public abstract class MockDaoTest extends MinimalTest {
 		return new LocationAliasCsvImporter(this.eventProducer);
 	}
 	protected ICsvOrderImporter createOrderImporter() {
-		return new OutboundOrderCsvImporter(this.eventProducer);
+		//return new OutboundOrderCsvImporter(this.eventProducer);
+		return new OutboundOrderPrefetchCsvImporter(this.eventProducer);
 	}
 	
 	protected void beginTransaction() {

@@ -142,7 +142,7 @@ public class WorkServiceTest extends ServerTest {
 	
 	@Test
 	public void shortedWorkInstructionShortsOrderDetail() {
-		this.workService = new WorkService();
+		this.workService = new WorkService(mock(LightService.class));
 		this.initializeEphemeralServiceManager();
 		
 		this.getTenantPersistenceService().beginTransaction();
@@ -209,7 +209,7 @@ public class WorkServiceTest extends ServerTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void summariesAreSorted() {
-		this.workService = new WorkService();
+		this.workService = new WorkService(mock(LightService.class));
 		this.initializeEphemeralServiceManager();
 		
 		this.getTenantPersistenceService().beginTransaction();
@@ -475,7 +475,7 @@ public class WorkServiceTest extends ServerTest {
 		IEdiExportServiceProvider provider = mock(IEdiExportServiceProvider.class);
 		when(provider.getWorkInstructionExporter(any(Facility.class))).thenReturn(ediService);
 
-		this.workService = new WorkService(provider);
+		this.workService = new WorkService(mock(LightService.class), provider);
 		this.workService.setCapacity(capacity);
 		this.workService.setRetryDelay(retryDelay);		
 		

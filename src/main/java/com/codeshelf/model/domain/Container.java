@@ -66,24 +66,23 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private Boolean				active;
+	private Boolean active;
 
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private Timestamp			updated;
+	private Timestamp updated;
 
 	// The parent facility.
 	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	@Getter
-	private Facility			parent;
+	private Facility parent;
 
-	// For a network this is a list of all of the users that belong in the set.
 	@OneToMany(mappedBy = "parent")
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
-	private List<ContainerUse>	uses	= new ArrayList<ContainerUse>();
+	private List<ContainerUse>	uses = new ArrayList<ContainerUse>();
 
 	public Container() {
 	}

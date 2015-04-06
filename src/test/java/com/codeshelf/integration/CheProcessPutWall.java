@@ -12,17 +12,21 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
+import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
@@ -139,6 +143,12 @@ public class CheProcessPutWall extends ServerTest {
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
 
 		LOGGER.info("2: P14 is in WALL1. P15 and P16 are in WALL2. Set up slow mover CHE for that SKU pick");
+		// Verify that orders 11114, 11115, and 11116 are having order locations in put wall
+		this.getTenantPersistenceService().beginTransaction();
+		assertOrderLocation("11114", "P14");
+		assertOrderLocation("11115", "P15");
+		assertOrderLocation("11116", "P16");
+		this.getTenantPersistenceService().commitTransaction();
 
 		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
 		picker2.login("Picker #2");
@@ -241,23 +251,33 @@ public class CheProcessPutWall extends ServerTest {
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
 		picker1.scanCommand("CLEAR");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
-
-		// Once DEV-709 is done, the above will result in orders 11114, 11115, and 11116 having order locations in put wall
+		
+		// Verify that orders 11114, 11115, and 11116 are having order locations in put wall
+		this.getTenantPersistenceService().beginTransaction();
+		assertOrderLocation("11114", "P14");
+		assertOrderLocation("11115", "P15");
+		assertOrderLocation("11116", "P16");
+		this.getTenantPersistenceService().commitTransaction();
+		
 
 		LOGGER.info("2: As if the slow movers came out of system, just scan those SKUs to place into put wall");
 
 		picker1.scanCommand("PUT_WALL");
+		// TODO
+		// Work flow wrong here. Should need to scan the container as another state-step. Otherwise, scan "Sku1514" may lead to work instructions in multiple walls.
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, 4000);
 		picker1.scanSomething("Sku1514");
 		picker1.waitForCheState(CheStateEnum.DO_PUT, 4000);
 		// after DEV-713 we will get a plan, display to the put wall, etc.
 		// P14 is at poscon index 4. Count should be 3
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
-		// Assert.assertEquals((Byte) (byte) 3, displayValue);
-		Assert.assertNull(displayValue);
+		//Assert.assertEquals((Byte) (byte) 3, displayValue);
+		//Assert.assertNull(displayValue);
+		//We have not yet implemented displaying needed quantities on PosCons. So, by this point in the process, they are still blinking from Order Location setup
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
 
 		// button from the put wall
-		posman.buttonPress(4, 3);
+		// posman.buttonPress(4, 3);
 
 		// this should complete the plan, and return to PUT_WALL_SCAN_ITEM.  More DEV-713 work
 		picker1.scanCommand("CLEAR");
@@ -271,9 +291,10 @@ public class CheProcessPutWall extends ServerTest {
 
 		// Counts are 4 and 5
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 5);
-		// Assert.assertEquals((Byte) (byte) 4, displayValue);
-		Assert.assertNull(displayValue);
-
+		//Assert.assertEquals((Byte) (byte) 4, displayValue);
+		//Assert.assertNull(displayValue);
+		//We have not yet implemented displaying needed quantities on PosCons. So, by this point in the process, they are still blinking from Order Location setup
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
 	}
 
 	@Test
@@ -284,13 +305,13 @@ public class CheProcessPutWall extends ServerTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 		setUpFacilityWithPutWall();
-		
+
 		// just these two orders set up as picks from P area.
 		String orderCsvString = "orderGroupId,shipmentId,customerId,orderId,orderDetailId,preAssignedContainerId,itemId,description,quantity,uom, locationId"
 				+ "\r\n,USF314,COSTCO,11117,11117.1,11117,1515,Sku1515,4,each,P12"
 				+ "\r\n,USF314,COSTCO,11118,11118.1,11118,1515,Sku1515,5,each,P13";
 
-		importOrdersData(getFacility(), orderCsvString);		
+		importOrdersData(getFacility(), orderCsvString);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
@@ -298,10 +319,11 @@ public class CheProcessPutWall extends ServerTest {
 
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
 		Assert.assertNotNull(posman);
-		
+
 		CheDeviceLogic theDevice = picker.getCheDeviceLogic();
+
+		// A diversion. This could be in non-integration unit test.
 		theDevice.testOffChePosconWorkInstructions();
-		
 
 		LOGGER.info("1a: set up a one-pick order");
 		picker.login("Picker #1");
@@ -312,10 +334,19 @@ public class CheProcessPutWall extends ServerTest {
 		picker.scanLocation("P11");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
+		// A diversion. Check the last scanned location behavior
+		this.getTenantPersistenceService().beginTransaction();
+		Che che = Che.staticGetDao().findByPersistentId(this.che1PersistentId);
+		String lastScan = che.getLastScannedLocation();
+		Assert.assertEquals("P11", lastScan);
+		String pathOfLastScan = che.getActivePathUi();
+		Assert.assertEquals("F1.4", pathOfLastScan); // put wall on the 4th path made in setUpFacilityWithPutWall
+		this.getTenantPersistenceService().commitTransaction();
+
 		LOGGER.info("1b: This should result in the poscon lighting");
 		// P12 is at poscon index 2. Count should be 4
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 2);
-		Assert.assertEquals((Byte) (byte) 4, displayValue); 
+		Assert.assertEquals((Byte) (byte) 4, displayValue);
 		// button from the put wall
 		posman.buttonPress(2, 4);
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 3000);
@@ -327,6 +358,19 @@ public class CheProcessPutWall extends ServerTest {
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 2);
 		Assert.assertNull(displayValue);
 
+	}
+	
+	private void assertOrderLocation(String orderId, String locationId) {
+		Facility facility = getFacility();
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
+		Assert.assertNotNull(order);
+		Location location = facility.findSubLocationById(locationId);
+		Assert.assertNotNull(location);
+		List<OrderLocation> locations = order.getOrderLocations();
+		Assert.assertEquals(1, locations.size());
+		OrderLocation savedOrderLocation = locations.get(0);
+		Location savedLocation = savedOrderLocation.getLocation();
+		Assert.assertEquals(location, savedLocation);
 	}
 
 	/**

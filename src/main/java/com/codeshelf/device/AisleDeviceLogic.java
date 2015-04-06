@@ -324,7 +324,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		// Looks like it does not really work yet for multiple channels. Does this need to figure out each channel, then send separate commands? Probably.
 		final Integer kMaxLedCmdToLog = 25;
 		final Integer kMaxLedCmdSendAtATime = 12;
-		final Integer kDelayMillisBetweenPartialSends = 5;
+		final Integer kDelayMillisBetweenPartialSends = 40;
 		//final Boolean splitLargeLedSendsIntoPartials = true; // became true at V7
 		String myGuidStr = getMyGuidStr();
 

@@ -9,7 +9,6 @@ import com.codeshelf.model.domain.Item;
 import com.codeshelf.testframework.MinimalTest;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
-import com.codeshelf.ws.protocol.response.ObjectMethodResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

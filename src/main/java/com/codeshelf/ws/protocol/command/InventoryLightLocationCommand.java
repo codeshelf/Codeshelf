@@ -7,7 +7,6 @@ import com.codeshelf.service.InventoryService;
 import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
 import com.codeshelf.ws.protocol.response.InventoryLightLocationResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
-import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
 public class InventoryLightLocationCommand extends CommandABC {

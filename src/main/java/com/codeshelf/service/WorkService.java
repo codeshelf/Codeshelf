@@ -11,6 +11,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -29,8 +30,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Timer;
+import com.codeshelf.device.CheDeviceLogic;
+import com.codeshelf.device.OrderLocationFeedbackMessage;
 import com.codeshelf.edi.IEdiExportServiceProvider;
 import com.codeshelf.edi.WorkInstructionCSVExporter;
+import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.HousekeepingInjector;
@@ -45,6 +49,7 @@ import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
+import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
@@ -69,6 +74,7 @@ import com.codeshelf.validation.BatchResult;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 import com.codeshelf.validation.MethodArgumentException;
+import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.response.GetOrderDetailWorkResponse;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
@@ -77,16 +83,19 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 
 public class WorkService extends AbstractCodeshelfExecutionThreadService implements IApiService {
 
-	public static final long			DEFAULT_RETRY_DELAY			= 10000L;
+	public static final long			DEFAULT_RETRY_DELAY	= 10000L;
 	private static final String			SHUTDOWN_MESSAGE	= "*****SHUTDOWN*****";
-	public static final int				DEFAULT_CAPACITY			= Integer.MAX_VALUE;
-	private static Double				BAY_ALIGNMENT_FUDGE			= 0.25;
+	public static final int				DEFAULT_CAPACITY	= Integer.MAX_VALUE;
+	private static Double				BAY_ALIGNMENT_FUDGE	= 0.25;
 
-	private static final Logger			LOGGER						= LoggerFactory.getLogger(WorkService.class);
+	private static final Logger			LOGGER				= LoggerFactory.getLogger(WorkService.class);
 	private BlockingQueue<WIMessage>	completedWorkInstructions;
+
+	private final LightService			lightService;
 
 	@Getter
 	@Setter
@@ -120,8 +129,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 	}
 
-	public WorkService() {
-		this(new IEdiExportServiceProvider() {
+	@Inject
+	public WorkService(LightService lightService) {
+		this(lightService, new IEdiExportServiceProvider() {
 			@Override
 			public IEdiService getWorkInstructionExporter(Facility facility) {
 				return facility.getEdiExportService();
@@ -129,11 +139,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		});
 	}
 
-	public WorkService(IEdiExportServiceProvider exportServiceProvider) {
-		init(exportServiceProvider);
-	}
-
-	private void init(IEdiExportServiceProvider exportServiceProvider) {
+	public WorkService(LightService lightService, IEdiExportServiceProvider exportServiceProvider) {
+		this.lightService = lightService;
 		this.exportServiceProvider = exportServiceProvider;
 		this.wiCSVExporter = new WorkInstructionCSVExporter();
 		this.retryDelay = DEFAULT_RETRY_DELAY;
@@ -143,15 +150,13 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	public final List<WorkInstruction> getWorkResults(final UUID facilityUUID, final Date startDate, final Date endDate) {
 		//select persistentid, type, status, picker_id, completed, actual_quantity from capella.work_instruction where 
 		// type = 'ACTUAL' and date_trunc('day', completed) = timestamp '2015-03-11' order by completed
-		return WorkInstruction.staticGetDao().findByFilter(ImmutableList.<Criterion>of(
-				Restrictions.eq("type", WorkInstructionTypeEnum.ACTUAL),
-				Restrictions.eq("parent.persistentId", facilityUUID),
-				Restrictions.ge("completed", new Timestamp(startDate.getTime())),
-				Restrictions.lt("completed", new Timestamp(endDate.getTime()))),
+		return WorkInstruction.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("type",
+			WorkInstructionTypeEnum.ACTUAL), Restrictions.eq("parent.persistentId", facilityUUID), Restrictions.ge("completed",
+			new Timestamp(startDate.getTime())), Restrictions.lt("completed", new Timestamp(endDate.getTime()))),
 			ImmutableList.of(Order.asc("completed")));
-			
+
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Compute work instructions for a CHE that's at the listed location with the listed container IDs.
@@ -192,7 +197,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					newCntrUses.add(thisUse); // DEV-492 bit
 					Che previousChe = thisUse.getCurrentChe();
 					if (previousChe != null) {
-			//			changedChes.add(previousChe);
+						//			changedChes.add(previousChe);
 					}
 					if (previousChe == null) {
 						inChe.addContainerUse(thisUse);
@@ -257,7 +262,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		return theTime;
 	}
 
-
 	// just a call through to facility, but convenient for the UI
 	public final void fakeSetupUpContainersOnChe(UUID cheId, String inContainers) {
 		final boolean doThrowInstead = false;
@@ -297,16 +301,95 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		return null;
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Find and return the OrderLocation, only if it is a put wall location that has poscons that may display order feedback.
+	 * Not checked, but if multiple, returns the first found.
+	 * (Later enhancement: restrict to same work area as the wi location.)
+	 */
+	private OrderLocation getPutWallOrderLocationNeedsLighting(WorkInstruction incomingWI) {
+		OrderHeader order = null;
+		OrderDetail detail = incomingWI.getOrderDetail();
+		if (detail != null)
+			order = detail.getParent();
+		if (order != null) {
+			List<OrderLocation> olList = order.getOrderLocations();
+			// our model allows for multiple order locations. May need that eventually to have active putwalls in multiple areas for same order.
+			// For now, expect only one.
+			for (OrderLocation ol : olList) {
+				Location loc = ol.getLocation();
+				if (loc != null && loc.isActive()) {
+					if (loc.isPutWallLocation()) {
+						if (loc.isLightablePoscon())
+							return ol;
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	private int sendMessage(Set<User> users, MessageABC message) { // TODO
+		// See this comment in LightService: "Use the light service API as our general sendMessage API"
+		return lightService.sendMessage(users, message);
+	}
+
+	private void computeAndSendOrderFeedback(WorkInstruction incomingWI) {
+		if (incomingWI == null) {
+			LOGGER.error("null input to computeAndSendOrderFeedback");
+			return;
+		}
+		try {
+			OrderLocation ol = getPutWallOrderLocationNeedsLighting(incomingWI);
+			if (ol != null) {
+				Facility facility = ol.getFacility();
+				final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(ol);
+				sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
+			}
+		}
+
+		finally {
+
+		}
+	}
+
+	private void computeAndSendOrderFeedback(OrderLocation orderLocation) {
+		if (orderLocation == null) {
+			LOGGER.error("null input to computeAndSendOrderFeedback");
+			return;
+		}
+		try {
+			Location loc = orderLocation.getLocation();
+			if (loc != null && loc.isActive()) {
+				if (loc.isPutWallLocation()) {
+					if (loc.isLightablePoscon()) {
+						Facility facility = orderLocation.getFacility();
+						final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(orderLocation);
+						sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
+					}
+				}
+			}
+		}
+
+		finally {
+
+		}
+	}
+
 	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
 		Che che = Che.staticGetDao().findByPersistentId(cheId);
 		if (che != null) {
+			WorkInstruction storedWi = null;
 			try {
-				final WorkInstruction storedWi = persistWorkInstruction(incomingWI);
+				storedWi = persistWorkInstruction(incomingWI);
 				exportWorkInstruction(storedWi);
 			} catch (DaoException e) {
 				LOGGER.error("Unable to record work instruction: " + incomingWI, e);
 			} catch (IOException e) {
 				LOGGER.error("Unable to export work instruction: " + incomingWI, e);
+			}
+			if (storedWi != null) {
+				computeAndSendOrderFeedback(storedWi);
 			}
 		} else {
 			throw new IllegalArgumentException("Could not find che for id: " + cheId);
@@ -364,10 +447,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		LOGGER.info("getWorkInstructionsForOrderDetail request for " + inChe.getDomainId() + " detail:" + inScannedOrderDetailId);
 
-		Map<String, Object> filterArgs = ImmutableMap.<String,Object>of(
-			"facilityId", inChe.getFacility().getPersistentId(),
-			"domainId", inScannedOrderDetailId
-		);
+		Map<String, Object> filterArgs = ImmutableMap.<String, Object> of("facilityId",
+			inChe.getFacility().getPersistentId(),
+			"domainId",
+			inScannedOrderDetailId);
 		List<OrderDetail> orderDetails = OrderDetail.staticGetDao().findByFilter("orderDetailByFacilityAndDomainId", filterArgs);
 
 		if (orderDetails.isEmpty()) {
@@ -427,6 +510,31 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	/**
 	 * @param inChe
 	 * @param inScannedLocationId
+	 * Only set if the scanned location resolved
+	 */
+	private void saveCheLastScannedLocation(final Che inChe, final String inScannedLocationId) {
+		if (inScannedLocationId == null) {
+			return;
+		}
+		// need to exclude these?
+		if (CheDeviceLogic.STARTWORK_COMMAND.equalsIgnoreCase(inScannedLocationId)
+				|| CheDeviceLogic.REVERSE_COMMAND.equalsIgnoreCase(inScannedLocationId)) {
+			LOGGER.error("unexpected value in saveCheLastScannedLocation");
+			return;
+		}
+
+		Facility facility = inChe.getFacility();
+		Location cheLocation = facility.findSubLocationById(inScannedLocationId);
+		if (cheLocation != null) {
+			inChe.setLastScannedLocation(inScannedLocationId);
+			Che.staticGetDao().store(inChe);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @param inChe
+	 * @param inScannedLocationId
 	 * @return
 	 * Provides the list of work instruction beyond the current scan location. Implicitly assumes only one path, or more precisely, any work instructions
 	 * for that CHE are assumed be on the path of the scanned location.
@@ -436,9 +544,14 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		return getWorkInstructions(inChe, inScannedLocationId, false, false);
 	}
 
-	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId, Boolean reversePickOrder, Boolean reverseOrderFromLastTime) {
+	public final List<WorkInstruction> getWorkInstructions(final Che inChe,
+		final String inScannedLocationId,
+		Boolean reversePickOrder,
+		Boolean reverseOrderFromLastTime) {
 		long startTimestamp = System.currentTimeMillis();
 		Facility facility = inChe.getFacility();
+
+		saveCheLastScannedLocation(inChe, inScannedLocationId);
 
 		//boolean start = CheDeviceLogic.STARTWORK_COMMAND.equalsIgnoreCase(inScannedLocationId);
 		//boolean reverse = CheDeviceLogic.REVERSE_COMMAND.equalsIgnoreCase(inScannedLocationId);
@@ -467,7 +580,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			List<WorkInstruction> preferredInstructions = new ArrayList<WorkInstruction>();
 			for (WorkInstruction instruction : completeRouteWiList) {
 				OrderDetail detail = instruction.getOrderDetail();
-				if (detail.isPreferredDetail()){
+				if (detail.isPreferredDetail()) {
 					preferredInstructions.add(instruction);
 				}
 			}
@@ -484,7 +597,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		// Get all of the PLAN WIs assigned to this CHE beyond the specified position
 		List<WorkInstruction> wiListFromStartLocation = findCheInstructionsFromPosition(inChe, startingPathPos, reversePickOrder);
-
 
 		// Make sure sorted correctly. The query just got the work instructions.
 		Collections.sort(wiListFromStartLocation, new GroupAndSortCodeComparator());
@@ -742,9 +854,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 									}
 								}
 							}
-						}
-						catch(DaoException e) {
-							LOGGER.error("Unable to create work instruction for che: {}, orderDetail: {}, container: {}", inChe, orderDetail, container, e);
+						} catch (DaoException e) {
+							LOGGER.error("Unable to create work instruction for che: {}, orderDetail: {}, container: {}",
+								inChe,
+								orderDetail,
+								container,
+								e);
 						}
 					}
 					if (orderDetailChanged) {
@@ -793,7 +908,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 						setWiPickInstruction(wi, work.getOutboundOrderDetail().getParent());
 						wiList.add(wi);
 					}
-				} catch(DaoException e) {
+				} catch (DaoException e) {
 					LOGGER.error("Unable to create work instruction for: {}", work, e);
 				}
 			}
@@ -832,11 +947,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 	// --------------------------------------------------------------------------
 	/**
-	 *Utility function for outbound order WI generation
-	 * @param inChe
-	 * @param inContainer
-	 * @param inTime
-	 * @return
+	 * Utility function for outbound order WI generation
+	 * The result is a SingleWorkItem, which has the WI created, or reference to OrderDetail it could not make an order for.
+	 * From DEV-724, give out work from the path the CHE is on only.
 	 */
 	private SingleWorkItem makeWIForOutbound(final OrderDetail inOrderDetail,
 		final Che inChe,
@@ -860,19 +973,23 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					location = inFacility.findLocationById(preferredLocationStr);
 					if (location == null) {
 						location = inFacility.getUnspecifiedLocation();
-					} else if (!location.isActive()){
+					} else if (!location.isActive()) {
 						LOGGER.warn("Unexpected inactive location for preferred Location: {}", location);
 						location = inFacility.getUnspecifiedLocation();
-					}					
+					}
 				} else {
 					LOGGER.warn("Wanted workSequence mode but need locationId for detail: {}", inOrderDetail);
 				}
 			}
 		} else { //Bay Distance
+			// If there is preferred location, try to use it
+			// TODO DEV-724 don't use the location if not on CHE path
 			Location preferredLocation = inOrderDetail.getPreferredLocObject();
 			if (preferredLocation != null && preferredLocation.getAssociatedPathSegment() != null) {
 				location = preferredLocation;
 			} else {
+
+				// otherwise, search for inventory on the CHE path
 				for (Path path : paths) {
 					String uomStr = inOrderDetail.getUomMasterId();
 					Item item = itemMaster.getFirstActiveItemMatchingUomOnPath(path, uomStr);
@@ -886,9 +1003,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			}
 		}
 
-
 		if (location == null) {
-
 
 			// Need to improve? Do we already have a short WI for this order detail? If so, do we really want to make another?
 			// This should be moderately rare, although it happens in our test case over and over. User has to scan order/container to cart to make this happen.
@@ -910,9 +1025,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					resultWi.setPlanMaxQuantity(0);
 					WorkInstruction.staticGetDao().store(resultWi);
 				}
-				resultWork.setInstruction(resultWi);
+				resultWork.addInstruction(resultWi);
 			} else {
-				resultWork.setDetail(inOrderDetail);
+				resultWork.addDetail(inOrderDetail);
+				// later enhancement. Different adds for detail in my work area, and unknown or different work area.
 			}
 		} else {
 			resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
@@ -922,13 +1038,13 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				inChe,
 				location,
 				inTime);
-				resultWork.setInstruction(resultWi);
+			resultWork.addInstruction(resultWi);
 
 		}
 		return resultWork;
 	}
 
-	private boolean doAutoShortInstructions(){
+	private boolean doAutoShortInstructions() {
 		return false;
 	}
 
@@ -1087,13 +1203,14 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * @param inWiList
 	 * May return empty list, but never null
 	 */
-	private List<WorkInstruction> findCheInstructionsFromPosition(final Che inChe, final Double inFromStartingPosition, final Boolean getBeforePosition) {
+	private List<WorkInstruction> findCheInstructionsFromPosition(final Che inChe,
+		final Double inFromStartingPosition,
+		final Boolean getBeforePosition) {
 		List<WorkInstruction> cheWorkInstructions = new ArrayList<>();
 		if (inChe == null || inFromStartingPosition == null) {
 			LOGGER.error("null input to queryAddCheInstructionsToList");
 			return cheWorkInstructions;
 		}
-
 
 		Collection<WorkInstructionTypeEnum> wiTypes = new ArrayList<WorkInstructionTypeEnum>(3);
 		wiTypes.add(WorkInstructionTypeEnum.PLAN);
@@ -1184,9 +1301,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					exportMessage = completedWorkInstructions.take();
 				} catch (InterruptedException e1) {
 				}
-				if(exportMessage != null) {
-					if(exportMessage.messageBody.equals(SHUTDOWN_MESSAGE)) {
-						shutdownRequested=true;
+				if (exportMessage != null) {
+					if (exportMessage.messageBody.equals(SHUTDOWN_MESSAGE)) {
+						shutdownRequested = true;
 					} else {
 						processExportMessage(exportMessage);
 					}
@@ -1222,7 +1339,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 	@Override
 	protected void triggerShutdown() {
-		WIMessage poison = new WorkService.WIMessage(null,WorkService.SHUTDOWN_MESSAGE);
+		WIMessage poison = new WorkService.WIMessage(null, WorkService.SHUTDOWN_MESSAGE);
 		this.completedWorkInstructions.offer(poison);
 	}
 
@@ -1233,7 +1350,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	}
 
 	public boolean willOrderDetailGetWi(OrderDetail inOrderDetail) {
-		String sequenceKind = PropertyService.getInstance().getPropertyFromConfig(inOrderDetail.getFacility(), DomainObjectProperty.WORKSEQR);
+		String sequenceKind = PropertyService.getInstance().getPropertyFromConfig(inOrderDetail.getFacility(),
+			DomainObjectProperty.WORKSEQR);
 		WorkInstructionSequencerType sequenceKindEnum = WorkInstructionSequencerType.parse(sequenceKind);
 
 		OrderTypeEnum myParentType = inOrderDetail.getParentOrderType();
@@ -1253,19 +1371,18 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		} else { // No cross detail. Assume outbound pick. Only need inventory on the path. Not checking path/work area now.
 			String inventoryLocs = inOrderDetail.getItemLocations();
 
-			if (inOrderDetail.getPreferredLocation() != null &&
-					!inOrderDetail.getPreferredLocation().isEmpty()) {
+			if (inOrderDetail.getPreferredLocation() != null && !inOrderDetail.getPreferredLocation().isEmpty()) {
 
-				if ( sequenceKindEnum.equals(WorkInstructionSequencerType.BayDistance)) {
+				if (sequenceKindEnum.equals(WorkInstructionSequencerType.BayDistance)) {
 					// If preferred location is set but it is not modeled return false
 					// We need to the location to be modeled to compute bay distance
 					Location preferredLocation = inOrderDetail.getPreferredLocObject();
 
-					if ( preferredLocation != null
-							&& ( preferredLocation.getPathSegment() != null
-								|| preferredLocation.getParent().getPathSegment() != null
-								|| preferredLocation.getParent().getParent().getPathSegment() != null )
-							) {
+					if (preferredLocation != null
+							&& (preferredLocation.getPathSegment() != null
+									|| preferredLocation.getParent().getPathSegment() != null || preferredLocation.getParent()
+								.getParent()
+								.getPathSegment() != null)) {
 						return true;
 					} else {
 						// Check if item is on any valid path
@@ -1273,26 +1390,26 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 						ItemMaster itemMaster = inOrderDetail.getItemMaster();
 						List<Location> itemLocations = new ArrayList<Location>();
 
-						for(Path p : allPaths){
+						for (Path p : allPaths) {
 							String uomStr = inOrderDetail.getUomMasterId();
 							Item item = itemMaster.getFirstActiveItemMatchingUomOnPath(p, uomStr);
 
-							if (item != null){
+							if (item != null) {
 								Location itemLocation = item.getStoredLocation();
 								itemLocations.add(itemLocation);
 								break;
 							}
 						}
 
-						if (!itemLocations.isEmpty()){
+						if (!itemLocations.isEmpty()) {
 							return true;
 						} else {
 							return false;
 						}
 					}
 
-				} else if ( sequenceKindEnum.equals(WorkInstructionSequencerType.WorkSequence)) {
-					if ( inOrderDetail.getWorkSequence() != null ) {
+				} else if (sequenceKindEnum.equals(WorkInstructionSequencerType.WorkSequence)) {
+					if (inOrderDetail.getWorkSequence() != null) {
 						return true;
 					} else {
 						return false;
@@ -1308,5 +1425,50 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		// See facility.determineWorkForContainer(Container container) which returns batch results but only for crossbatch situation. That and this should share code.
 
 		return false;
+	}
+
+	/**
+	 * This function attempts to place an Order into a provided Location
+	 * It is used during a Put Wall setup
+	 */
+	public boolean processPutWallPlacement(Che che, String orderId, String locationId) {
+		Facility facility = che.getFacility();
+		//Try to retrieve OrderHeader and Location that were specified. Exit function if either was not found
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
+		Location location = facility.findSubLocationById(locationId);
+		if (order == null) {
+			LOGGER.warn("Could not find order " + orderId);
+			return false;
+		}
+		if (location == null) {
+			LOGGER.warn("Could not find location " + locationId);
+			return false;
+		}
+
+		// Just to avoid churn, lets not delete and make new if we would only replicate what is there.
+		boolean skipDeleteNew = false;
+		OrderLocation ol = null;
+		List<OrderLocation> locations = order.getOrderLocations();
+		if (locations.size() == 1) {
+			ol = locations.get(0);
+			if (location.equals(ol.getLocation())) {
+				skipDeleteNew = true;
+			}
+		}
+
+		if (!skipDeleteNew) {
+			//Delete old order locations
+			ITypedDao<OrderLocation> orderLocationDao = OrderLocation.staticGetDao();
+			for (OrderLocation foundLocation : locations) {
+				order.removeOrderLocation(foundLocation);
+				orderLocationDao.delete(foundLocation);
+			}
+			//Create a new order location in the put wall
+			ol = order.addOrderLocation(location);
+		}
+
+		//Light up the selected location. Send even if just a redo
+		computeAndSendOrderFeedback(ol);
+		return true;
 	}
 }

@@ -5,7 +5,6 @@ import java.sql.Timestamp;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.codeshelf.model.dao.DomainObjectCache;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.UomMaster;

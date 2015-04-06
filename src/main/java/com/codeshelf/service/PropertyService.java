@@ -1,5 +1,8 @@
 package com.codeshelf.service;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -7,6 +10,7 @@ import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
@@ -14,6 +18,8 @@ import com.google.inject.Inject;
 
 public class PropertyService extends AbstractPropertyService {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PropertyService.class);
+	
+	ConcurrentHashMap<String,ConcurrentMap<String,DomainObjectProperty>> propertyCache = new ConcurrentHashMap<String,ConcurrentMap<String,DomainObjectProperty>>();
 	
 	@Inject
 	private static IPropertyService theInstance = null;
@@ -60,6 +66,18 @@ public class PropertyService extends AbstractPropertyService {
 			LOGGER.error("getProperty object was null");
 			return null;
 		}
+		// try to get property from cache
+		/*
+		String tenantId = CodeshelfSecurityManager.getCurrentTenant().getTenantIdentifier();
+		ConcurrentMap<String, DomainObjectProperty> tenantProperties = this.propertyCache.get(tenantId);
+		if (tenantProperties!=null) {
+			DomainObjectProperty prop = tenantProperties.get(getCacheKey(object,name));
+			if (prop!=null) {
+				// return cached property
+				return prop;
+			}
+		}
+		*/
 		PropertyDao theDao = PropertyDao.getInstance();
 		if (theDao == null) {
 			LOGGER.error("getPropertyObject called before DAO exists");
@@ -70,9 +88,21 @@ public class PropertyService extends AbstractPropertyService {
 			LOGGER.error("Unknown property {} in getPropertyObject()",name);
 			return null;
 		}
+		// update cache
+		/* 
+		if (tenantProperties==null) {
+			tenantProperties = new ConcurrentHashMap<String, DomainObjectProperty>();
+			this.propertyCache.put(tenantId,tenantProperties);
+		}
+		tenantProperties.put(getCacheKey(object,name),prop);
+		*/
 		return prop;
 	}
 
+	private static String getCacheKey(IDomainObject object, String name) {
+		return object.getDomainId()+":"+name;
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Internal API to update one property. 
@@ -104,6 +134,17 @@ public class PropertyService extends AbstractPropertyService {
 		// storing the string version, so type does not matter. We assume all validation happened so the value is ok to go to the database.
 		theProperty.setValue(canonicalForm);
 		theDao.store(theProperty);
+		
+		// update cache
+		/*
+		String tenantId = CodeshelfSecurityManager.getCurrentTenant().getTenantIdentifier();
+		ConcurrentMap<String, DomainObjectProperty> tenantProperties = this.propertyCache.get(tenantId);
+		if (tenantProperties==null) {
+			tenantProperties = new ConcurrentHashMap<String, DomainObjectProperty>();
+			this.propertyCache.put(tenantId,tenantProperties);
+		}
+		tenantProperties.put(getCacheKey(inFacility,inPropertyName),theProperty);
+		*/
 	}
 
 }

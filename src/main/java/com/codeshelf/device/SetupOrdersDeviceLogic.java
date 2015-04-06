@@ -31,6 +31,7 @@ import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.util.CompareNullChecker;
+import com.codeshelf.ws.protocol.request.PutWallPlacementRequest;
 
 /**
  * @author jonranstrom
@@ -1411,8 +1412,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		clearAllPositionControllers();
 		mContainerInSetup = "";
-		List<String> containerIdList = new ArrayList<String>(mPositionToContainerMap.values());
-		mDeviceManager.computeCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), containerIdList, isReverse);
+		//Duplicate map to avoid later changes
+		Map<String, String> positionToContainerMapCopy = new HashMap<String,String>(mPositionToContainerMap);
+		mDeviceManager.computeCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), positionToContainerMapCopy, isReverse);
 		setState(CheStateEnum.COMPUTE_WORK);
 	}
 
@@ -1603,6 +1605,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 	
 	protected void processPutWallLocationScan(final String inScanPrefixStr, final String inScanStr) {
+		String orderId = getLastPutWallOrderScan();
+		PutWallPlacementRequest message = new PutWallPlacementRequest(getPersistentId().toString(), orderId, inScanStr);
+		mDeviceManager.clientEndpoint.sendMessage(message);
 		sendOrderPlacementMessage(getLastPutWallOrderScan(), inScanStr);
 		setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
 	}

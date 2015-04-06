@@ -23,7 +23,7 @@ import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.LocationAliasCsvImporter;
 import com.codeshelf.edi.OrderLocationCsvImporter;
-import com.codeshelf.edi.OutboundOrderCsvImporter;
+import com.codeshelf.edi.OutboundOrderPrefetchCsvImporter;
 import com.codeshelf.manager.ITenantManagerService;
 import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.metrics.IMetricsService;
@@ -47,7 +47,6 @@ import com.fasterxml.jackson.jaxrs.json.JacksonJsonProvider;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 import com.google.inject.servlet.GuiceFilter;
@@ -118,14 +117,17 @@ public final class ServerMain {
 
 				requestStaticInjection(PropertyService.class);
 				bind(IPropertyService.class).to(PropertyService.class).in(Singleton.class);
-
+				bind(WorkService.class).in(Singleton.class);
+				bind(WebSocketManagerService.class).in(Singleton.class);
+				
 				bind(GuiceFilter.class);
 				
 				bind(ICodeshelfApplication.class).to(ServerCodeshelfApplication.class);
 	
 				bind(IPickDocumentGenerator.class).to(PickDocumentGenerator.class);
 				
-				bind(ICsvOrderImporter.class).to(OutboundOrderCsvImporter.class);
+				//bind(ICsvOrderImporter.class).to(OutboundOrderCsvImporter.class);
+				bind(ICsvOrderImporter.class).to(OutboundOrderPrefetchCsvImporter.class);
 				bind(ICsvInventoryImporter.class).to(InventoryCsvImporter.class);
 				bind(ICsvLocationAliasImporter.class).to(LocationAliasCsvImporter.class);
 				bind(ICsvOrderLocationImporter.class).to(OrderLocationCsvImporter.class);
@@ -144,21 +146,7 @@ public final class ServerMain {
 				requestStaticInjection(HmacAuthService.class);
 				bind(AuthProviderService.class).to(HmacAuthService.class).in(Singleton.class);
 			}
-			
-			@Provides
-			@Singleton
-			public WorkService createWorkService() {
-				WorkService workService = new WorkService();
-				return workService;				
-			}
-
-			@Provides
-			@Singleton
-			public WebSocketManagerService createWebSocketManagerService() {
-				WebSocketManagerService webSocketManagerService = new WebSocketManagerService();
-				return webSocketManagerService;				
-			}
-			
+					
 		}, /*createShiroModule(),*/ createGuiceServletModuleForApi() /*, createGuiceServletModuleForManager()*/);
 
 		return injector;

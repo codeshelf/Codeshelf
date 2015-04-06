@@ -18,7 +18,6 @@ import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.testframework.MinimalTest;
-import com.codeshelf.ws.protocol.command.ComputeWorkCommand;
 
 public class ComputeWorkCommandTest extends MinimalTest {
 

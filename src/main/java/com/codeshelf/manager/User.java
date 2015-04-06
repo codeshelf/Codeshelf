@@ -37,6 +37,7 @@ import lombok.Setter;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.NaturalId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -109,6 +110,7 @@ public class User implements UserContext {
 	@Getter
 	@Setter
 	@JsonProperty
+	@NaturalId
 	private String				username;
 
 	// The hashed password including salt in APR1 format (NGINX/HTTPD compatible)
@@ -173,12 +175,21 @@ public class User implements UserContext {
 		}
 		return roleNames;
 	}
-	public Set<String> getPermissions() {
+	
+	public Set<String> getPermissionStrings() {
 		Set<String> permissionStrings = new HashSet<String>();
 		for(UserRole role : this.getRoles()) {
 			permissionStrings.addAll(role.getPermissionStrings());
 		}
 		return permissionStrings;
+	}
+
+	public Set<UserPermission> getPermissions() {
+		Set<UserPermission> permissions = new HashSet<UserPermission>();
+		for(UserRole role : this.getRoles()) {
+			permissions.addAll(role.getPermissions());
+		}
+		return permissions;
 	}
 
 }

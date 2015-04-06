@@ -118,9 +118,9 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 			activeConnections.remove(sessionId);
 			LOGGER.debug("WS Connection "+session.getId()+" ended"); // reason should be logged by endpoint
 			updateCounters();
-		}
+		} 
 		else {
-			LOGGER.warn("Unable to unregister session: Session with ID "+sessionId+" not found");
+			LOGGER.warn("sessionEnded: session id "+sessionId+" not found");
 		}
 	}
 	
@@ -258,10 +258,13 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 			}
 		} // else suppressing keepalives
 
+
 		// regardless of keepalive setting, monitor session activity state
-		if(wsConnection.getSessionId() != null ) {
+		WebSocketConnection.State lastState = wsConnection.getLastState();
+		if(wsConnection.getSessionId() != null 
+				&& !lastState.equals(WebSocketConnection.State.CLOSED)) {
 			WebSocketConnection.State newSessionState = determineConnectionState(wsConnection);
-			if(newSessionState != wsConnection.getLastState()) {
+			if(newSessionState != lastState) {
 				LOGGER.info("WS connection state on "+wsConnection.getSessionId()+" changed from "+wsConnection.getLastState().toString()+" to "+newSessionState.toString());
 				wsConnection.setLastState(newSessionState);
 				
@@ -269,6 +272,7 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 					// kill idle session on state change, if configured to do so
 					LOGGER.warn("WS connection timed out with "+wsConnection.getSessionId()+".  Closing connection.");
 					wsConnection.disconnect(new CloseReason(CloseCodes.GOING_AWAY, "Timeout"));
+					
 				}
 			}
 		}
@@ -352,6 +356,17 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 		try {
 			if(this.activeConnections != null) { // service is not shutting down or resetting
 				int pings = 0;
+				
+				// remove any closed connections
+				List<String> connectionIds = new ArrayList<String>(this.activeConnections.keySet());
+				for (String connectionId : connectionIds) {
+					WebSocketConnection connection = this.activeConnections.get(connectionId);
+					if(connection != null && connection.getLastState().equals(WebSocketConnection.State.CLOSED)) {
+						this.activeConnections.remove(connectionId);
+						LOGGER.warn("WebSocketManager reaped a closed connection. sessionEnded did not complete for {}",connectionId);
+					}
+				}
+				
 				// check status, send keepalive etc on all open connections
 				Collection<WebSocketConnection> connections = this.getWebSocketConnections();
 				for (WebSocketConnection connection : connections) {
@@ -376,7 +391,8 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 						updateWebSocketConnectionState(connection);
 					} finally {
 						if(contextUser != null || contextTenant != null) 
-							CodeshelfSecurityManager.removeContext();
+							// a call to OnClose might have already removed context, it is ok if not present here
+							CodeshelfSecurityManager.removeContextIfPresent();
 					}
 					// check if keep alive needs to be sent
 				}

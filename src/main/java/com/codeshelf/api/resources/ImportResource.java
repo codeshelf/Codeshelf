@@ -20,9 +20,8 @@ import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.LocationAliasCsvImporter;
 import com.codeshelf.edi.OrderLocationCsvImporter;
-import com.codeshelf.edi.OutboundOrderCsvImporter;
+import com.codeshelf.edi.OutboundOrderPrefetchCsvImporter;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.validation.BatchResult;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
@@ -34,18 +33,17 @@ public class ImportResource {
 
 	@Context
 	private ResourceContext resourceContext;	
-	private TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 	private AislesFileCsvImporter	aislesFileCsvImporter;
 	//private OrderLocationCsvImporter orderLocationImporter;
 	private LocationAliasCsvImporter locationAliasImporter;
-	private OutboundOrderCsvImporter outboundOrderImporter;
+	private OutboundOrderPrefetchCsvImporter outboundOrderImporter;
 	private InventoryCsvImporter inventoryImporter;
 	
 	@Inject
 	public ImportResource(AislesFileCsvImporter aislesFileCsvImporter, 
 		OrderLocationCsvImporter orderLocationImporter, 
 		LocationAliasCsvImporter locationAliasImporter,  
-		OutboundOrderCsvImporter outboundOrderImporter,
+		OutboundOrderPrefetchCsvImporter outboundOrderImporter,
 		InventoryCsvImporter inventoryImporter) {
 		this.aislesFileCsvImporter = aislesFileCsvImporter;
 		//this.orderLocationImporter = orderLocationImporter;
@@ -63,7 +61,6 @@ public class ImportResource {
         @FormDataParam("file") InputStream fileInputStream,
         @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
 		try {
-			persistence.beginTransaction();
 			// make sure facility exists
 			Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 			if (facility==null) {
@@ -83,9 +80,6 @@ public class ImportResource {
 			errors.processException(e);
 			return errors.buildResponse();
 		} 
-		finally {
-			persistence.commitTransaction();
-		}
 	}
 	
 	@POST
@@ -98,7 +92,6 @@ public class ImportResource {
         @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
 
 		try {
-			persistence.beginTransaction();
 			// make sure facility exists
 			Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 			if (facility==null) {
@@ -117,9 +110,6 @@ public class ImportResource {
 			errors.processException(e);
 			return errors.buildResponse();
 		} 
-		finally {
-			persistence.commitTransaction();
-		}
 	}
 
 	@SuppressWarnings("unused")
@@ -133,7 +123,6 @@ public class ImportResource {
         @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
 
 		try {
-			persistence.beginTransaction();
 			// make sure facility exists
 			Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 			if (facility==null) {
@@ -149,9 +138,6 @@ public class ImportResource {
 			errors.processException(e);
 			return errors.buildResponse();
 		} 
-		finally {
-			persistence.commitTransaction();
-		}
 	}
 	
 	@POST
@@ -164,7 +150,6 @@ public class ImportResource {
         @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
 
 		try {
-			persistence.beginTransaction();
 			// make sure facility exists
 			Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 			if (facility==null) {
@@ -182,9 +167,6 @@ public class ImportResource {
 			ErrorResponse errors = new ErrorResponse();
 			errors.processException(e);
 			return errors.buildResponse();
-		} 
-		finally {
-			persistence.commitTransaction();
 		}
 	}
 }

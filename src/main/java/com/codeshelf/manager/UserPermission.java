@@ -21,6 +21,7 @@ import lombok.Setter;
 import org.apache.shiro.authz.Permission;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.NaturalId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,6 +74,7 @@ public class UserPermission implements Permission {
 	@Setter
 	@Column(nullable = false, name="descriptor", unique=true)
 	@JsonProperty
+	@NaturalId
 	String descriptor;
 
 	@Override

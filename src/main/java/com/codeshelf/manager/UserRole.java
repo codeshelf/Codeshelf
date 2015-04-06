@@ -27,6 +27,7 @@ import lombok.Setter;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.NaturalId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,6 +79,7 @@ public class UserRole {
 	@Getter
 	@Column(nullable = false, name="name", unique=true)
 	@JsonProperty
+	@NaturalId
 	String name;
 
 	@ManyToMany(targetEntity=UserPermission.class, fetch=FetchType.EAGER)
