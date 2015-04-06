@@ -353,6 +353,29 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 	}
 
+	private void computeAndSendOrderFeedback(OrderLocation orderLocation) {
+		if (orderLocation == null) {
+			LOGGER.error("null input to computeAndSendOrderFeedback");
+			return;
+		}
+		try {
+			Location loc = orderLocation.getLocation();
+			if (loc != null && loc.isActive()) {
+				if (loc.isPutWallLocation()) {
+					if (loc.isLightablePoscon()) {
+						Facility facility = orderLocation.getFacility();
+						final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(orderLocation);
+						sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
+					}
+				}
+			}
+		}
+
+		finally {
+
+		}
+	}
+
 	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
 		Che che = Che.staticGetDao().findByPersistentId(cheId);
 		if (che != null) {
@@ -1421,18 +1444,31 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			LOGGER.warn("Could not find location " + locationId);
 			return false;
 		}
-		//Light up the selected location. In the future, if the location has a PosCon, it shall display a portion of Order id.
-		//At the moment, the Location shall simply blink
-		lightService.lightLocation(facility.getPersistentId().toString(), locationId);
-		//Delete old order locations
+
+		// Just to avoid churn, lets not delete and make new if we would only replicate what is there.
+		boolean skipDeleteNew = false;
+		OrderLocation ol = null;
 		List<OrderLocation> locations = order.getOrderLocations();
-		ITypedDao<OrderLocation> orderLocationDao = OrderLocation.staticGetDao();
-		for (OrderLocation foundLocation : locations) {
-			order.removeOrderLocation(foundLocation);
-			orderLocationDao.delete(foundLocation);
+		if (locations.size() == 1) {
+			ol = locations.get(0);
+			if (location.equals(ol.getLocation())) {
+				skipDeleteNew = true;
+			}
 		}
-		//Create a new order location in the put wall
-		order.addOrderLocation(location);
+
+		if (!skipDeleteNew) {
+			//Delete old order locations
+			ITypedDao<OrderLocation> orderLocationDao = OrderLocation.staticGetDao();
+			for (OrderLocation foundLocation : locations) {
+				order.removeOrderLocation(foundLocation);
+				orderLocationDao.delete(foundLocation);
+			}
+			//Create a new order location in the put wall
+			ol = order.addOrderLocation(location);
+		}
+
+		//Light up the selected location. Send even if just a redo
+		computeAndSendOrderFeedback(ol);
 		return true;
 	}
 }
