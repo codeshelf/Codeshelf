@@ -51,7 +51,8 @@ public class ComputeWorkCommand extends CommandABC {
 			List<WorkInstruction> instructionsWithHousekeeping = workService.getWorkInstructions(che, request.getLocationId(), request.getReversePickOrder());
 			
 			//Get the counts
-			Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(instructionsWithHousekeeping, workList.getDetails());
+			//Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(instructionsWithHousekeeping, workList.getDetails());
+			Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(workList.getInstructions(), workList.getDetails());
 			
 			// ~bhe: should we check for null/zero and return a different status?
 			response.setWorkInstructions(instructionsWithHousekeeping);
