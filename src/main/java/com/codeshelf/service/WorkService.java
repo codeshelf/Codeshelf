@@ -549,7 +549,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		//Scanning "start" used to send a "" location here, to getWorkInstructions().
 		//Now, we pass "start" or "reverse", instead, but still need to pass "" to the getStartingPathDistance() function below.
 		//String locationIdCleaned = (start || reverse) ? "" : inScannedLocationId;
-		Double startingPathPos = getStartingPathDistance(facility, inScannedLocationId);
+		Double startingPathPos = getStartingPathDistance(facility, inScannedLocationId, reversePickOrder);
 
 		if (startingPathPos == null) {
 			List<WorkInstruction> preferredInstructions = new ArrayList<WorkInstruction>();
@@ -1121,9 +1121,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * @param inScannedLocationId
 	 * Returns null and logs errors for bad input situation
 	 */
-	private Double getStartingPathDistance(final Facility facility, final String inScannedLocationId) {
+	private Double getStartingPathDistance(final Facility facility, final String inScannedLocationId, final Boolean reverse) {
 		if (inScannedLocationId == null || inScannedLocationId.isEmpty())
-			return 0.0;
+			return reverse ? -0.01 : 0.0;
 
 		Location cheLocation = null;
 		cheLocation = facility.findSubLocationById(inScannedLocationId);
@@ -1210,8 +1210,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			if (loc == null)
 				LOGGER.error("getWorkInstructions found active work instruction with null location"); // new log message from v8. Don't expect any null.
 			else if (loc.isActive()) { //unlikely that location got deleted between complete work instructions and scan location
-				Path chePath = inChe.getActivePath();
-				if (chePath == null || isLocatioOnPath(loc, inChe.getActivePath()))
+				//Path chePath = inChe.getActivePath();
+				//if (chePath == null || isLocatioOnPath(loc, inChe.getActivePath()))
 					cheWorkInstructions.add(wi);
 			} else
 				LOGGER.warn("getWorkInstructions found active work instruction in deleted locations"); // new from v8
