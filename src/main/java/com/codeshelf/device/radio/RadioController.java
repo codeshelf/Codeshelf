@@ -85,6 +85,7 @@ public class RadioController implements IRadioController {
 	private volatile boolean										mShouldRun							= true;
 
 	private final NetAddress										mServerAddress						= new NetAddress(IPacket.GATEWAY_ADDRESS);
+	private final NetAddress										mBroadcastAddress					= new NetAddress(IPacket.BROADCAST_ADDRESS);
 
 	// We iterate over this list often, but write almost never. It needs to be thread-safe so we chose to make writes slow and reads lock-free.
 	private final List<IRadioControllerEventListener>				mEventListeners						= new CopyOnWriteArrayList<>();
@@ -133,7 +134,6 @@ public class RadioController implements IRadioController {
 		}
 
 		NetworkId broadcastNetworkId = new NetworkId(IPacket.BROADCAST_NETWORK_ID);
-		NetAddress broadcastAddress = new NetAddress(IPacket.BROADCAST_ADDRESS);
 
 		// Create Services
 		this.packetHandlerService = new RadioControllerPacketHandlerService(mProtocolVersionToPacketHandlerMap,
@@ -141,21 +141,21 @@ public class RadioController implements IRadioController {
 			mDeviceGuidMap);
 		this.packetIOService = new RadioControllerPacketIOService(inGatewayInterface,
 			packetHandlerService,
-			broadcastAddress,
+			mBroadcastAddress,
 			PACKET_SPACING_MILLIS);
 		this.broadcastService = new RadioControllerBroadcastService(broadcastNetworkId,
-			broadcastAddress,
+			mBroadcastAddress,
 			this,
 			BROADCAST_RATE_MILLIS);
 
 		//Protocol to handler map
 
 		//Version 0
-		mProtocolVersionToPacketHandlerMap.put((byte) 0, new RadioPacketHandler_v0(broadcastAddress,
+		mProtocolVersionToPacketHandlerMap.put((byte) 0, new RadioPacketHandler_v0(mServerAddress,
 			mPendingAcksMap,
 			mDeviceNetAddrMap,
 			broadcastNetworkId,
-			broadcastAddress,
+			mBroadcastAddress,
 			mChannelSelected,
 			mEventListeners,
 			mChannelInfo,
@@ -163,11 +163,11 @@ public class RadioController implements IRadioController {
 			packetIOService));
 
 		//Version 1
-		mProtocolVersionToPacketHandlerMap.put((byte) 0, new RadioPacketHandler_v1(broadcastAddress,
+		mProtocolVersionToPacketHandlerMap.put((byte) 0, new RadioPacketHandler_v1(mServerAddress,
 			mPendingAcksMap,
 			mDeviceNetAddrMap,
 			broadcastNetworkId,
-			broadcastAddress,
+			mBroadcastAddress,
 			mChannelSelected,
 			mEventListeners,
 			mChannelInfo,
@@ -490,14 +490,14 @@ public class RadioController implements IRadioController {
 			IPacket packet = new Packet(inCommand, inNetworkId, mServerAddress, inDstAddr, inAckRequested);
 			inCommand.setPacket(packet);
 
-			if (inDstAddr.getValue() == (IPacket.BROADCAST_ADDRESS)) {
+			if (inDstAddr == mBroadcastAddress) {
 				//If we're broadcasting just send it out
 				packetIOService.handleOutboundPacket(packet);
 			} else {
 				//Now we can lookup the INetworkDevice from the NetAddr
 				//Make sure device is registered
 				if (device == null) {
-					LOGGER.warn("Cannot send packet to unregistered (null) packet={}", packet);
+					LOGGER.warn("Cannot send packet to unregistered device=(null) packet={}", packet);
 					return;
 				}
 

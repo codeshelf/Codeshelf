@@ -115,7 +115,7 @@ public class RadioControllerPacketHandlerService {
 					//Make sure device is registered
 					INetworkDevice device = guidToDeviceMap.get(assocCmd.getGUID());
 					if (device == null) {
-						LOGGER.info("Ignoring AssocRequest from unregistered GUID assocCmd={}", assocCmd);
+						LOGGER.debug("Ignoring AssocRequest from unregistered GUID assocCmd={}", assocCmd);
 						return;
 					}
 
@@ -130,7 +130,7 @@ public class RadioControllerPacketHandlerService {
 						IRadioPacketHandler handler = protocolVersionToPacketHandlerMap.get(radioProtocolVersion);
 
 						if (handler == null) {
-							LOGGER.warn("Ignoring AssocRequest with unsupported radio protocol version. rpVersion={}; assocReq={}",
+							LOGGER.info("Ignoring AssocRequest with unsupported radio protocol version. rpVersion={}; assocReq={}",
 								radioProtocolVersion,
 								assocReq);
 							return;
@@ -144,7 +144,7 @@ public class RadioControllerPacketHandlerService {
 						Byte radioProtocolVersion = device.getRadioProtocolVersion();
 
 						if (radioProtocolVersion == null) {
-							LOGGER.info("Ignoring AssocCmd from device that has not yet registered its radio protocol version with a AssocReq. Cmd={}",
+							LOGGER.debug("Ignoring AssocCmd from device that has not yet registered its radio protocol version with a AssocReq. Cmd={}",
 								assocCmd);
 							return;
 						}
@@ -152,7 +152,7 @@ public class RadioControllerPacketHandlerService {
 						IRadioPacketHandler handler = protocolVersionToPacketHandlerMap.get(radioProtocolVersion);
 
 						if (handler == null) {
-							LOGGER.warn("Ignoring AssocRequest with unsupported radio protocol version. rpVersion={}; assocReq={}",
+							LOGGER.info("Ignoring AssocCmd with unsupported radio protocol version. rpVersion={}; assocReq={}",
 								radioProtocolVersion,
 								assocCmd);
 							return;
@@ -168,7 +168,7 @@ public class RadioControllerPacketHandlerService {
 					//Make sure device is registered
 					INetworkDevice device = netAddrToDeviceMap.get(packet.getSrcAddr());
 					if (device == null) {
-						LOGGER.info("Ignoring Packet from unregistered device packet={}", packet);
+						LOGGER.debug("Ignoring Packet from unregistered device packet={}", packet);
 						return;
 					}
 
