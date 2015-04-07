@@ -5,14 +5,14 @@
 SiteController:
   - "ws:login"
 Cart:
-  - "che:pick"
-  - "che:setup"
+  - "che:pick,setup"
 Inventory:
   - "che:inventory"
   - "inventory:edit"
 Maintenance:
   - "ws:login"
-  - "che:*"
+  - "ux:*" 
+  - "che:create,edit,delete"
   - "paths:*"
   - "lights:*"
 Upload:
@@ -22,8 +22,10 @@ Companion:
   - "companion:view"
 Browse:
   - "ws:login"
+  - "ux:*" 
 Admin:
   - "ws:login"
+  - "ux:*" 
   - "companion:*"
   - "che:create,edit,delete"
   - "params:*"
@@ -33,15 +35,17 @@ Admin:
   - "inventory:edit"
 Configure:
   - "ws:login"
+  - "ux:*" 
   - "companion:*"
   - "che:create,edit,delete"
   - "params:edit"
   - "paths:*"
   - "lights:*"
 CsDeveloper:
-  - "simulate:*"
+  - "che:simulate"
 CsSupport:
   - "ws:login"
+  - "ux:*" 
   - "companion:*"
   - "che:create,edit,delete"
   - "params:*"

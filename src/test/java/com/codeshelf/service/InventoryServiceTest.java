@@ -52,7 +52,7 @@ public class InventoryServiceTest extends ServerTest {
 	
 	@Test
 	public void testInventoryService() {
-		LightService ls = new LightService(this.webSocketManagerService);
+		LightService ls = new LightService();
 		this.inventoryService = new InventoryService(ls);
 		this.initializeEphemeralServiceManager();
 		
@@ -122,7 +122,7 @@ public class InventoryServiceTest extends ServerTest {
 	
 	@Test
 	public void testAssignLocationTapeId(){
-		LightService ls = new LightService(this.webSocketManagerService);
+		LightService ls = new LightService();
 		this.inventoryService = new InventoryService(ls);
 		this.initializeEphemeralServiceManager();
 		
