@@ -46,12 +46,10 @@ import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.DateTimeParser;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.validation.InputValidationException;
-import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
-@Singleton
 public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderCsvBean> implements ICsvOrderImporter {
 
 	private static final Logger		LOGGER					= LoggerFactory.getLogger(OutboundOrderPrefetchCsvImporter.class);
@@ -107,15 +105,16 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			return batchResult;
 		}
 		ArrayList<OrderHeader> orderSet = new ArrayList<OrderHeader>();
-		boolean undefinedGroupUpdated = false;
 
 		LOGGER.debug("Begin order import.");
 		
 		long startTime = System.currentTimeMillis();
 
+		// scan order lines and extract relevant data to initialize order processing
 		Set<String> itemIds = new HashSet<String>();
 		Set<String> orderIds = new HashSet<String>();
 		Set<String> containerIds = new HashSet<String>();
+		Set<String> orderGroupIds = new HashSet<String>();
 		for (OutboundOrderCsvBean b : list) {
 			String itemId = b.getItemId();
 			itemIds.add(itemId);
@@ -123,8 +122,27 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			orderIds.add(orderId);
 			String containerId = b.getPreAssignedContainerId();
 			containerIds.add(containerId);
+			String orderGroupId = b.getOrderGroupId();
+			orderGroupIds.add(orderGroupId);
 		}
 		LOGGER.info(itemIds.size()+" distinct items found in order file");
+		
+		// add all existing orders from specified order groups, so they can be retired if needed
+		if (orderGroupIds.size()>0) {
+			LOGGER.info("Adding orders for "+orderGroupIds.size()+" order groups");
+			for (String orderGroupId : orderGroupIds) {
+				OrderGroup og = inFacility.getOrderGroup(orderGroupId);
+				if (og!=null) {
+					// add order headers to batch
+					for (OrderHeader order : og.getOrderHeaders()) {
+						String orderId = order.getOrderId();
+						if (!orderIds.contains(orderId)) {
+							orderIds.add(order.getOrderId());
+						}
+					}
+				}
+			}
+		}
 		
 		// cache item master
 		itemMasterCache.reset();
@@ -198,9 +216,6 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 				}
 				batchResult.add(orderBean);
 				produceRecordSuccessEvent(orderBean);
-				if (order.getOrderGroup() == null) {
-					undefinedGroupUpdated = true;
-				}
 			} catch (Exception e) {
 				LOGGER.error("unable to import order line: " + orderBean, e);
 				batchResult.addLineViolation(lineCount, orderBean, e);

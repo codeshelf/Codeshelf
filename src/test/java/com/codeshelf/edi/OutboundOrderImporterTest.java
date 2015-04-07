@@ -432,16 +432,16 @@ public class OutboundOrderImporterTest extends ServerTest {
 		
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
-		Assert.assertTrue(theCounts2.mActiveHeaders == 3);
-		Assert.assertTrue(theCounts2.mActiveDetails == 9);
-		Assert.assertTrue(theCounts2.mActiveCntrUses == 3);
+		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts2.mActiveDetails == 7);
+		Assert.assertTrue(theCounts2.mActiveCntrUses == 2);
 		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 2);
 		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders == 0);
 
 		// Order 789 should exist and not be inactive.
 		OrderHeader order = facility.getOrderHeader("789");
 		Assert.assertNotNull(order);
-		Assert.assertEquals(true, order.getActive());
+		Assert.assertEquals(false, order.getActive());
 
 		// Line item 10722222 from order 456 should be inactive.
 		order = facility.getOrderHeader("456");
@@ -488,16 +488,16 @@ public class OutboundOrderImporterTest extends ServerTest {
 		facility = Facility.staticGetDao().reload(facility);
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
 		Assert.assertEquals(theCounts2.mTotalHeaders,3);
-		Assert.assertEquals(theCounts2.mActiveHeaders,3);
-		Assert.assertEquals(theCounts2.mActiveDetails,4);
-		Assert.assertEquals(theCounts2.mActiveCntrUses,3);
+		Assert.assertEquals(theCounts2.mActiveHeaders,1);
+		Assert.assertEquals(theCounts2.mActiveDetails,2);
+		Assert.assertEquals(theCounts2.mActiveCntrUses,1);
 		Assert.assertEquals(theCounts2.mInactiveDetailsOnActiveOrders,0);
 		Assert.assertEquals(theCounts2.mInactiveCntrUsesOnActiveOrders,0);
 
 		// Order 789 should exist and be active.
 		OrderHeader order = facility.getOrderHeader("789");
 		Assert.assertNotNull(order);
-		Assert.assertEquals(true, order.getActive());
+		Assert.assertEquals(false, order.getActive());
 
 		// Line item 10722222 from order 456 should be inactive.
 		order = facility.getOrderHeader("456");
@@ -760,10 +760,10 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
-		Assert.assertTrue(theCounts2.mActiveHeaders == 3);
-		Assert.assertTrue(theCounts2.mActiveDetails == 10);
+		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts2.mActiveDetails == 8);
 		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 1);
-		Assert.assertTrue(theCounts2.mActiveCntrUses == 3);
+		Assert.assertTrue(theCounts2.mActiveCntrUses == 2);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -1297,8 +1297,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		HashMap<String, Boolean> groupExpectations = new HashMap<String, Boolean>();
 		groupExpectations.put("Group1", true);
 		HashMap<String, Boolean> headerExpectations = new HashMap<String, Boolean>();
-		headerExpectations.put("1", true);
-		headerExpectations.put("2", true);
+		headerExpectations.put("1", false);
+		headerExpectations.put("2", false);
 		headerExpectations.put("3", true);
 		headerExpectations.put("4", true);
 		assertArchiveStatuses(groupExpectations, headerExpectations);
@@ -1368,7 +1368,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		HashMap<String, Boolean> headerExpectations = new HashMap<String, Boolean>();
 		headerExpectations.put("1", true);
 		headerExpectations.put("2", true);
-		headerExpectations.put("3", true);
+		headerExpectations.put("3", false);
 		headerExpectations.put("4", true);
 		headerExpectations.put("5", true);
 		assertArchiveStatuses(groupExpectations, headerExpectations);
