@@ -61,7 +61,7 @@ public class AuthFilter implements Filter {
 		}
 		
 		if(!authenticated)
-			response.setStatus(Status.FORBIDDEN.getStatusCode());
+			response.setStatus(Status.UNAUTHORIZED.getStatusCode());
 	}
 
 	@Override

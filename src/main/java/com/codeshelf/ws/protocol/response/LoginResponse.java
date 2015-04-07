@@ -39,6 +39,10 @@ public class LoginResponse extends ResponseABC {
 	@Getter
 	@Setter
 	String					pickMultValue;
+	
+	@Getter
+	@Setter
+	String[]				permissions;
 
 
 	public LoginResponse() {
