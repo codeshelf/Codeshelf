@@ -341,6 +341,7 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 	 *            received.)
 	 */
 	private void processAssocCmd(CommandAssocABC inCommand, NetAddress inSrcAddr) {
+		LOGGER.info("ASSSCCOCC");
 
 		// Figure out what kind of associate sub-command we have.
 		ContextLogging.setNetGuid(inCommand.getGUID());
@@ -401,7 +402,7 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 			// Happens all the time, especially in the office
 			// Could keep a counter on these.
 		} else {
-			INetworkDevice foundDevice = mDeviceGuidMap.get(inCommand.getGUID());
+			INetworkDevice foundDevice = mDeviceGuidMap.get(inCommand.getGUID().toLowerCase());
 
 			if (foundDevice != null) {
 				ContextLogging.setNetGuid(foundDevice.getGuid());
@@ -457,7 +458,7 @@ public class RadioPacketHandler_v0 implements IRadioPacketHandler {
 	 * @param inCommand
 	 */
 	private void processAssocCheckCommand(CommandAssocCheck inCommand, NetAddress inSrcAddr) {
-		INetworkDevice foundDevice = mDeviceGuidMap.get(inCommand.getGUID());
+		INetworkDevice foundDevice = mDeviceGuidMap.get(inCommand.getGUID().toLowerCase());
 
 		if (foundDevice != null) {
 			ContextLogging.setNetGuid(foundDevice.getGuid());

@@ -14,6 +14,7 @@ import com.codeshelf.device.radio.protocol.IRadioPacketHandler;
 import com.codeshelf.flyweight.command.CommandAssocABC;
 import com.codeshelf.flyweight.command.CommandAssocReq;
 import com.codeshelf.flyweight.command.CommandGroupEnum;
+import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.controller.INetworkDevice;
@@ -109,11 +110,12 @@ public class RadioControllerPacketHandlerService {
 
 			try {
 				// Handle packet -- TODO perhaps move this to the radio controller? It might be more appropriate there
-				if (CommandGroupEnum.ASSOC.equals(packet.getCommand().getCommandTypeEnum())) {
-					CommandAssocABC assocCmd = (CommandAssocABC) packet.getCommand();
+				ICommand cmd = packet.getCommand();
+				if (cmd != null && CommandGroupEnum.ASSOC.equals(cmd.getCommandTypeEnum())) {
+					CommandAssocABC assocCmd = (CommandAssocABC) cmd;
 
 					//Make sure device is registered
-					INetworkDevice device = guidToDeviceMap.get(assocCmd.getGUID());
+					INetworkDevice device = guidToDeviceMap.get(assocCmd.getGUID().toLowerCase());
 					if (device == null) {
 						LOGGER.debug("Ignoring AssocRequest from unregistered GUID assocCmd={}", assocCmd);
 						return;
@@ -121,6 +123,7 @@ public class RadioControllerPacketHandlerService {
 
 					if (CommandAssocABC.ASSOC_REQ_COMMAND == assocCmd.getExtendedCommandID().getValue()) {
 						CommandAssocReq assocReq = (CommandAssocReq) assocCmd;
+						LOGGER.info("Handling AssocReq assocCmd={}", assocCmd);
 
 						//Update the radio protocol version for the GUID from the version in the assoc req
 						byte radioProtocolVersion = assocReq.getRadioProtocolVersion();
@@ -140,11 +143,13 @@ public class RadioControllerPacketHandlerService {
 						handler.handleInboundPacket(packet);
 
 					} else {
+						LOGGER.info("Handling AssocCmd assocCmd={}", assocCmd);
+
 						//This is a different AssocCmd.
 						Byte radioProtocolVersion = device.getRadioProtocolVersion();
 
 						if (radioProtocolVersion == null) {
-							LOGGER.debug("Ignoring AssocCmd from device that has not yet registered its radio protocol version with a AssocReq. Cmd={}",
+							LOGGER.info("Ignoring AssocCmd from device that has not yet registered its radio protocol version with a AssocReq. Cmd={}",
 								assocCmd);
 							return;
 						}

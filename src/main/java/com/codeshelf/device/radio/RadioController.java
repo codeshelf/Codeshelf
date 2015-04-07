@@ -25,6 +25,7 @@ import com.codeshelf.application.ContextLogging;
 import com.codeshelf.device.radio.protocol.IRadioPacketHandler;
 import com.codeshelf.device.radio.protocol.RadioPacketHandler_v0;
 import com.codeshelf.device.radio.protocol.RadioPacketHandler_v1;
+import com.codeshelf.device.radio.protocol.RadioPacketHandler_v2;
 import com.codeshelf.flyweight.command.AckStateEnum;
 import com.codeshelf.flyweight.command.CommandNetMgmtCheck;
 import com.codeshelf.flyweight.command.CommandNetMgmtSetup;
@@ -163,7 +164,19 @@ public class RadioController implements IRadioController {
 			packetIOService));
 
 		//Version 1
-		mProtocolVersionToPacketHandlerMap.put((byte) 0, new RadioPacketHandler_v1(mServerAddress,
+		mProtocolVersionToPacketHandlerMap.put((byte) 1, new RadioPacketHandler_v1(mServerAddress,
+			mPendingAcksMap,
+			mDeviceNetAddrMap,
+			broadcastNetworkId,
+			mBroadcastAddress,
+			mChannelSelected,
+			mEventListeners,
+			mChannelInfo,
+			mDeviceGuidMap,
+			packetIOService));
+
+		//Version 2
+		mProtocolVersionToPacketHandlerMap.put((byte) 2, new RadioPacketHandler_v2(mServerAddress,
 			mPendingAcksMap,
 			mDeviceNetAddrMap,
 			broadcastNetworkId,
@@ -587,7 +600,7 @@ public class RadioController implements IRadioController {
 				// inNetworkDevice.setAddress(new NetAddress(mNextAddress++));
 			}
 
-			mDeviceGuidMap.put(inNetworkDevice.getGuid().getHexStringNoPrefix(), inNetworkDevice);
+			mDeviceGuidMap.put(inNetworkDevice.getGuid().getHexStringNoPrefix().toLowerCase(), inNetworkDevice);
 			mDeviceNetAddrMap.put(inNetworkDevice.getAddress(), inNetworkDevice);
 
 		} finally {
@@ -608,7 +621,7 @@ public class RadioController implements IRadioController {
 	public synchronized final void removeNetworkDevice(INetworkDevice inNetworkDevice) {
 		ContextLogging.setNetGuid(inNetworkDevice.getGuid());
 		try {
-			mDeviceGuidMap.remove(inNetworkDevice.getGuid().getHexStringNoPrefix());
+			mDeviceGuidMap.remove(inNetworkDevice.getGuid().getHexStringNoPrefix().toLowerCase());
 			mDeviceNetAddrMap.remove(inNetworkDevice.getAddress());
 		} finally {
 			ContextLogging.clearNetGuid();

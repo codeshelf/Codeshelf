@@ -213,6 +213,7 @@ public class RadioControllerPacketIOService {
 	 */
 	public synchronized void sendOutboundPacket(IPacket packet) {
 		// Send packet
+
 		packet.incrementSendCount();
 		gatewayInterface.sendPacket(packet);
 		packet.setSentTimeMillis(System.currentTimeMillis());
