@@ -83,7 +83,7 @@ public class WebSocketConnection implements IDaoListener {
 
 	@Getter
 	@Setter
-	long												nextPutWallRefresh				= -1;
+	long												nextPutWallRefresh				= System.currentTimeMillis() + 15 * 1000; // wait 15 seconds after connection to initialize
 
 	@Getter
 	@Setter
