@@ -5,10 +5,7 @@
  *******************************************************************************/
 package com.codeshelf.integration;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,9 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.CheStateEnum;
-import com.codeshelf.edi.AislesFileCsvImporter;
-import com.codeshelf.edi.ICsvLocationAliasImporter;
-import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.domain.Aisle;
@@ -69,16 +63,8 @@ public class CheProcessTestCrossBatch extends ServerTest {
 				+ "Bay,B2,112,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Tier,T2,,5,32,120,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
 		Facility facility = getFacility();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		// Get the aisles
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
@@ -135,15 +121,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 				+ "A2.B2.T1.S3, D-38\r\n" //
 				+ "A2.B2.T1.S2, D-39\r\n" //
 				+ "A2.B2.T1.S1, D-40\r\n"; //
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
+		importLocationAliasesData(facility, csvString2);
 
 		CodeshelfNetwork network = getNetwork();
 
@@ -192,15 +170,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,888,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,999,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
-
-		byte orderCsvArray[] = orderCsvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(orderCsvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ordersEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter orderImporter = createOrderImporter();
-		orderImporter.importOrdersFromCsvStream(reader, inFacility, ordersEdiProcessTime);
+		importOrdersData(inFacility, orderCsvString);
 
 		// Slotting file
 

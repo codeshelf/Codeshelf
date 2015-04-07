@@ -5,10 +5,7 @@
  *******************************************************************************/
 package com.codeshelf.edi;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 
@@ -75,19 +72,10 @@ public class CrossBatchRunTest extends ServerTest {
 				+ "Bay,B2,112,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Tier,T2,,5,32,120,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		String fName = "F-" + inOrganizationName;
 		Facility facility = Facility.createFacility(fName, "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
-
+		importAislesData(facility, csvString);
+		
 		// Get the aisles
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
@@ -143,15 +131,7 @@ public class CrossBatchRunTest extends ServerTest {
 				+ "A2.B2.T1.S3, D-38\r\n" //
 				+ "A2.B2.T1.S2, D-39\r\n" //
 				+ "A2.B2.T1.S1, D-40\r\n"; //
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
+		importLocationAliasesData(facility, csvString2);
 
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		Che che1 = network.getChe("CHE1");
@@ -190,15 +170,7 @@ public class CrossBatchRunTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,,789,10706962,Authentic Pizza Sauces,2,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,789,10100250,Organic Fire-Roasted Red Bell Peppers,3,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
-
-		byte orderCsvArray[] = orderCsvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(orderCsvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ordersEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter orderImporter = createOrderImporter();
-		orderImporter.importOrdersFromCsvStream(reader, inFacility, ordersEdiProcessTime);
+		importOrdersData(inFacility, orderCsvString);
 
 		// Slotting file
 

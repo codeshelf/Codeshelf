@@ -4,9 +4,6 @@
  *******************************************************************************/
 package com.codeshelf.edi;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStreamReader;
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
 import java.util.SortedSet;
@@ -59,18 +56,9 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,5,80,50,,\r\n" //
 				+ "Tier,T2,,6,80,100,,\r\n" //
 				+ "Tier,T3,,4,80,150,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-AISLE9", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
-
+		importAislesData(facility, csvString);
+		
 		// Check the aisle
 		Location aisle = facility.findLocationById("A9");
 		Assert.assertNotNull(aisle);
@@ -215,17 +203,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,6,60,0,,\r\n" //
 				+ "Bay,B2,244,,,,,\r\n" //
 				+ "Tier,T1,,6,60,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-AISLE10", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		/* getLocationIdToParentLevel gives "" for this. You might argue it should give "F1". 
 		 * Originally NPE this case, so determinant result is good. 
@@ -340,10 +319,8 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertTrue(xValue == 4.88);
 
 		// Reread. We had a last bay and last aisle vertices bug on re-read
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		// new reader, because cannot reset the old reader without handling a possible exception. Same stream, though.
-		InputStreamReader reader2 = new InputStreamReader(stream);
-		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
+		importAislesData(facility, csvString);
 
 		// just check second aisle. Need to get it again after the reread as our old reference may not be current
 		aisle20 = Aisle.staticGetDao().findByDomainId(facility, "A20");
@@ -401,17 +378,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,1,6,0,,\r\n" //
 				+ "Bay,B12,24,,,,,\r\n" //
 				+ "Tier,T1,,1,6,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-AISLE11", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		// Check what we got
 		Aisle aisle = Aisle.staticGetDao().findByDomainId(facility, "A11");
@@ -519,17 +487,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T3,,5,10,0,,\r\n" //
 				+ "Tier,T4,,5,12,0,,\r\n" //
 				+ "Tier,T5,,5,8,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-SPARSE91", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		// Check what we got
 		Aisle aisle = Aisle.staticGetDao().findByDomainId(facility, "A91");
@@ -632,18 +591,9 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Tier,T2,,5,32,0,,\r\n" //
 				+ "Tier,T3,,5,32,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-AISLE12", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
-
+		importAislesData(facility, csvString);
+		
 		// Check what we got
 		Aisle aisle = Aisle.staticGetDao().findByDomainId(facility, "A12");
 		Assert.assertNotNull(aisle);
@@ -711,17 +661,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Tier,T2,,5,32,0,,\r\n" //
 				+ "Tier,T3,,5,32,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-AISLE13", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		// Check what we got
 		Aisle aisle = Aisle.staticGetDao().findByDomainId(facility, "A13");
@@ -836,17 +777,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B2,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Tier,T2,,5,32,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-AISLE2X", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		// Check what we got
 		Aisle aisle = Aisle.staticGetDao().findByDomainId(facility, "A21");
@@ -916,17 +848,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Aisle,A9,,,,,zigzagNotB1S1Side,12.85,43.45,Y,120,\r\n" // ok
 				+ "Bay,B1,115,,,,,\r\n"; // ok, even with no tiers
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-AISLE14", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		// Check what we got from this bad file
 		Aisle aisle = Aisle.staticGetDao().findByDomainId(facility, "A14");
@@ -968,15 +891,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B1,,,,,,\r\n" //
 				+ "Tier,T1,,,,,,\r\n"
 				+ "Aisle,A52,CLONE(A51),,,,,,,,\r\n"; //
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
+		importAislesData(facility, csvString2);
 		
 		Aisle A512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(A512);
@@ -1004,17 +919,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,3,40,0,,\r\n" //
 				+ "Bay,B2,115,,,,,\r\n" //
 				+ "Tier,T1,,3,40,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-AISLE15", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		// Check what we got
 		Aisle aisle = Aisle.staticGetDao().findByDomainId(facility, "A15");
@@ -1042,16 +948,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B2,122,,,,,\r\n" //
 				+ "Tier,T1,,6,50,0,,\r\n" //
 				+ "Tier,T2,,6,50,0.8,,\r\n"; //
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer2 = createAisleFileImporter();
-		importer2.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
-
+		importAislesData(facility, csvString2);
+		
 		aisle = Aisle.staticGetDao().findByDomainId(facility, "A15");
 		Assert.assertNotNull(aisle);
 
@@ -1096,15 +994,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Aisle,A15,,,,,tierB1S1Side,12.85,43.45,Y,120,\r\n" //
 				+ "Bay,B1,110,,,,,\r\n" //
 				+ "Tier,T1,,4,50,0,,\r\n"; //
-
-		byte[] csvArray3 = csvString3.getBytes();
-
-		ByteArrayInputStream stream3 = new ByteArrayInputStream(csvArray3);
-		InputStreamReader reader3 = new InputStreamReader(stream3);
-
-		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer3 = createAisleFileImporter();
-		importer3.importAislesFileFromCsvStream(reader3, facility, ediProcessTime3);
+		importAislesData(facility, csvString3);
 
 		// Check what we got
 		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(facility, "A15");
@@ -1152,17 +1042,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,5,40,0,,\r\n" //
 				+ "Bay,B2,115,,,,,\r\n" //
 				+ "Tier,T1,,5,40,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-AISLE16", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		// Get the objects we will use
 		Aisle aisle16 = Aisle.staticGetDao().findByDomainId(facility, "A16");
@@ -1319,17 +1200,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,1,0,0,,\r\n" //
 				+ "Tier,T2,,1,0,0,,\r\n" //
 				+ "Tier,T3,,1,0,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-AISLE21", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		// Check what we got
 		Aisle aisle21 = Aisle.staticGetDao().findByDomainId(facility, "A21");
@@ -1436,18 +1308,9 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-AISLE5X", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
-
+		importAislesData(facility, csvString);
+		
 		// Get A31
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle51);
@@ -1508,17 +1371,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-AISLE5X", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 		
 		// Check aisles exist
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
@@ -1581,15 +1435,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; //
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
+		importAislesData(facility, csvString2);
 		
 		// Check aisles exist
 		Aisle aisle512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
@@ -1658,17 +1504,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 		
 		// Check aisles exist
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
@@ -1731,15 +1568,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; //
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
+		importAislesData(facility, csvString2);
 		
 		// Check aisles exist
 		Aisle aisle512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
@@ -1808,17 +1637,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 		
 		// Check aisles exist
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
@@ -1881,15 +1701,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; // 
-		
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
+		importAislesData(facility, csvString2);
 		
 		// Check aisles exist
 		Aisle aisle512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
@@ -1958,17 +1770,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; // */
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 		
 		// Check aisles exist
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
@@ -2032,15 +1835,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; // */
-		
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
+		importAislesData(facility, csvString2);
 		
 		// Check aisles exist
 		Aisle aisle512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
@@ -2104,17 +1899,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,Y,120\r\n"; //
-		
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-		
 		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle51);
@@ -2136,15 +1922,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,200\r\n"; //
-		
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-		
-		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime);
+		importAislesData(facility, csvString2);
 		
 		Aisle aisle512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle512);
@@ -2163,15 +1941,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,zigzagNotB1S1Side,12.85,48.45,X,200\r\n"; //
-		
-		byte[] csvArray3 = csvString3.getBytes();
-
-		ByteArrayInputStream stream3 = new ByteArrayInputStream(csvArray3);
-		InputStreamReader reader3 = new InputStreamReader(stream3);
-		
-		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader3, facility, ediProcessTime);
+		importAislesData(facility, csvString3);
 		
 		Aisle aisle513 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle513);
@@ -2189,17 +1959,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		// Get A51
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
@@ -2249,16 +2010,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T3,,2,40,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
 				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"; //
-		
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-		
-		facility = Facility.staticGetDao().reload(facility);
-		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime);
+		importAislesData(facility, csvString2);
 		
 		// Get A51
 		Aisle aisle512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
@@ -2318,15 +2070,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
 				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"; //
-		
-		byte[] csvArray3 = csvString3.getBytes();
-
-		ByteArrayInputStream stream3 = new ByteArrayInputStream(csvArray3);
-		InputStreamReader reader3 = new InputStreamReader(stream3);
-		
-		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader3, facility, ediProcessTime);
+		importAislesData(facility, csvString3);
 		
 		// Get A51
 		Aisle aisle513 = Aisle.staticGetDao().findByDomainId(facility, "A51");
@@ -2355,15 +2099,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Aisle,A54,Clone(A51),,,,,12.85,58.45,X,120\r\n"; //
-		
-		byte[] csvArray4 = csvString4.getBytes();
-
-		ByteArrayInputStream stream4 = new ByteArrayInputStream(csvArray4);
-		InputStreamReader reader4 = new InputStreamReader(stream4);
-		
-		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader4, facility, ediProcessTime);
+		importAislesData(facility, csvString4);
 		
 		// Get A51
 		Aisle aisle514 = Aisle.staticGetDao().findByDomainId(facility, "A51");
@@ -2395,17 +2131,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 		
 		Aisle A52 = Aisle.staticGetDao().findByDomainId(facility, "A52");
 		Assert.assertNull(A52);
@@ -2419,15 +2146,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B2,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"; //
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
+		importAislesData(facility, csvString2);
 		
 		Aisle A512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(A512);
@@ -2445,15 +2164,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Aisle,A51,Clone(A51),,,,,12.85,48.45,X,120\r\n";
-
-		byte[] csvArray3 = csvString3.getBytes();
-
-		ByteArrayInputStream stream3 = new ByteArrayInputStream(csvArray3);
-		InputStreamReader reader3 = new InputStreamReader(stream3);
-
-		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
-		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader3, facility, ediProcessTime3);
+		importAislesData(facility, csvString3);
 		
 		this.getTenantPersistenceService().commitTransaction();
 		
@@ -2474,17 +2185,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Bay,B2,Clone(B1),,,,,12.85,48.45,X,120\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"; // Should not be able to clone.
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 		
 		Aisle A51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(A51);
@@ -2511,15 +2213,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B2,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Aisle,A53,Clone(A52),,,,,12.85,48.45,X,120\r\n"; //
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader2, facility, ediProcessTime2);
+		importAislesData(facility, csvString2);
 		
 		Aisle A512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(A512);
@@ -2541,17 +2235,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,1,32,0,,\r\n" //
 				+ "Tier,T2,,2,32,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"; //
-		
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		// Get A51
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
@@ -2615,17 +2300,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B2,CLONE(B1),,,,,\r\n" //
 				+ "Bay,B3,CLONE(B1),,,,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"; //
-		
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		// Get aisle A51 and check
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
@@ -2713,17 +2389,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,2,40,0,,\r\n" //
 				+ "Bay,B4,CLONE(B1),,,,,\r\n" // Everything after here should be dropped
 				+ "Bay,B2,CLONE(B4),,,,,\r\n"; //
-		
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		// Get aisle A51 and check
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
@@ -2746,15 +2413,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,2,40,0,,\r\n" //
 				+ "Bay,B2,CLONE(B1),,,,,\r\n" //
 				+ "Bay,B3,CLONE(B4),,,,,\r\n";	//
-		
-		byte[] csvArray2 = csvString2.getBytes();
-		
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		reader = new InputStreamReader(stream2);
-
-		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString2);
 		
 		Aisle aisleA512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisleA512);
@@ -2774,15 +2433,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,2,40,0,,\r\n" //
 				+ "Bay,B1,CLONE(B1),,,,,\r\n" //
 				+ "Bay,B2,CLONE(B1),,,,,\r\n";	//
-		
-		byte[] csvArray3 = csvString3.getBytes();
-		
-		ByteArrayInputStream stream3 = new ByteArrayInputStream(csvArray3);
-		reader = new InputStreamReader(stream3);
-
-		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString3);
 		
 		this.getTenantPersistenceService().commitTransaction();
 		
@@ -2801,17 +2452,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,1,32,0,,\r\n" //
 				+ "Bay,B4,CLONE(B1),,,,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"; //
-		
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 	
 		// Check all the aisles exist
 		Aisle aisleA51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
@@ -2880,15 +2522,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,2,40,0,,\r\n" //
 				+ "Bay,B2,CLONE(B1),,,,,\r\n" //
 				+ "Bay,B3,CLONE(B2),,,,,\r\n";	//
-		
-		byte[] csvArray2 = csvString2.getBytes();
-		
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		reader = new InputStreamReader(stream2);
-
-		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString2);
 		
 		// Check if cloning a cloned bay works
 		Aisle aisleA512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
@@ -2955,17 +2589,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Bay,B2,115,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F3X", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		// Get A31
 		Aisle aisle31 = Aisle.staticGetDao().findByDomainId(facility, "A31");
@@ -3138,17 +2763,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,0,32,0,,\r\n" //
 				+ "\r\n" //
 				+ "\r\n"; // extra blank lines, just to see if they cause trouble
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-AISLE6X", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		// Get the aisle
 		Aisle aisle61 = Aisle.staticGetDao().findByDomainId(facility, "A61");
@@ -3232,18 +2848,9 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,5,40,0,,\r\n" //
 				+ "Bay,B2,115,,,,,\r\n" //
 				+ "Tier,T1,,5,40,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-AISLE29", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
-
+		importAislesData(facility, csvString);
+		
 		// Get the objects we will use
 		Aisle aisle29 = Aisle.staticGetDao().findByDomainId(facility, "A29");
 		Assert.assertNotNull(aisle29);
@@ -3336,18 +2943,9 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,5,40,0,,\r\n" //
 				+ "Bay,B2,115,,,,,\r\n" //
 				+ "Tier,T1,,5,40,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-AISLE31", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
-
+		importAislesData(facility, csvString);
+		
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();

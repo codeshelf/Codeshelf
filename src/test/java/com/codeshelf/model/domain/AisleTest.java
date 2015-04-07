@@ -6,9 +6,6 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStreamReader;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,7 +16,6 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.EdiFileReadException;
 import com.codeshelf.model.dao.IDaoListener;
 import com.codeshelf.testframework.HibernateTest;
@@ -171,17 +167,8 @@ public class AisleTest extends HibernateTest { // TODO: maybe split associatepat
 				+ "Tier,T1,,5,40,0,,\r\n" //
 				+ "Bay,B2,115,,,,,\r\n" //
 				+ "Tier,T1,,5,40,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		Facility facility = Facility.createFacility("F-AISLE30", "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		this.getTenantPersistenceService().commitTransaction();
 

@@ -8,7 +8,6 @@ package com.codeshelf.edi;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.sql.Timestamp;
 
 import org.junit.Assert;
@@ -89,10 +88,7 @@ public class OrderLocationImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,,01111,01111.1,10700589,Napa Valley Bistro - Jalape��o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,,02222,,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,,03333,,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
-
-		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer4 = createOrderImporter();
-		importer4.importOrdersFromCsvStream(new StringReader(csvString4), facility, ediProcessTime4);
+		importOrdersData(facility, csvString4);
 
 		order1111 = facility.getOrderHeader("01111");
 		Assert.assertNotNull(order1111);
@@ -598,7 +594,7 @@ public class OrderLocationImporterTest extends ServerTest {
 				+ "Aisle,A9,,,,,TierLeft,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,244,,,,,\r\n" //
 				+ "Tier,T1,,8,80,0,,\r\n"; //
-		Assert.assertTrue(importAisles(facility, aisleCsv));;
+		Assert.assertTrue(importAislesData(facility, aisleCsv));;
 		Aisle aisle = Aisle.staticGetDao().findByDomainId(facility, "A9");
 		Assert.assertNotNull(aisle);
 		Location location = facility.findSubLocationById("A9.B1.T1.S1");
@@ -618,7 +614,7 @@ public class OrderLocationImporterTest extends ServerTest {
 				+ "A9.B1.T1.S6, D-26\r\n"; //
 		// Leaving S7 and S8 unknown
 		
-		Assert.assertTrue(importLocationAliases(facility, locationAliasCsv));
+		Assert.assertTrue(importLocationAliasesData(facility, locationAliasCsv));
 		Location locationByAlias = facility.findSubLocationById("D-21");
 		Assert.assertNotNull(locationByAlias);
 	}
@@ -656,8 +652,7 @@ public class OrderLocationImporterTest extends ServerTest {
 				+ "Bay,B1,244,,,,,\r\n" //
 				+ "Tier,T1,,8,80,0,,\r\n"; //
 		
-
-		Assert.assertTrue(importAisles(facility, aisleCsv));
+		Assert.assertTrue(importAislesData(facility, aisleCsv));
 		
 		String locationsCsv = "mappedLocationId,locationAlias\r\n" //
 				+ "A9, D\r\n" //
@@ -666,26 +661,9 @@ public class OrderLocationImporterTest extends ServerTest {
 				+ "A9.B1.T1.S1, D-21\r\n" //
 				+ "A9.B1.T1.S2, D-22\r\n" //
 				+ "A9.B1.T1.S3, D-23\r\n"; //
-		Assert.assertTrue(importLocationAliases(facility, locationsCsv));
+		Assert.assertTrue(importLocationAliasesData(facility, locationsCsv));
 	}
 	
-	private boolean importAisles(Facility facility, String csvString) {
-		// **************
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		return importer.importAislesFileFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-		
-	}
-	
-	private boolean importLocationAliases(Facility facility, String csvString) {
-
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer = createLocationAliasImporter();
-		boolean result = importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-		return result;
-	}
-
 	private Facility getTestFacility(String orgId, String facilityId) {
 		Facility facility = Facility.createFacility(facilityId, "TEST", Point.getZeroPoint());
 		return facility;

@@ -358,15 +358,16 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		}
 	}
+
 	private void computeAndSendEmptyOrderFeedback(Location loc) {
 		if (loc == null) {
 			LOGGER.error("null input to computeAndSendOrderFeedback");
 			return;
 		}
 		try {
-				Facility facility = loc.getFacility();
-				final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(loc);
-				sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
+			Facility facility = loc.getFacility();
+			final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(loc);
+			sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
 		}
 
 		finally {
@@ -410,13 +411,13 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * DEV-729
 	 */
 	public void reinitPutWallFeedback(SiteController siteController) {
-		// 1a find our facility
-		Facility facility = siteController.getFacility();
-		
-		// part 1 assemble what needs to be sent
+
+		// Part 1 assemble what needs to be sent
 		List<OrderLocation> orderLocationsToSend = new ArrayList<OrderLocation>();
 		List<Location> emptyLocationsToSend = new ArrayList<Location>();
 
+		// 1a find our facility
+		Facility facility = siteController.getFacility();
 		List<Aisle> aisleList = new ArrayList<Aisle>();
 		// 1b Find all put walls in this facility.
 		List<Location> probablyAisles = facility.getChildren();
@@ -425,7 +426,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				aisleList.add((Aisle) loc);
 			}
 		}
-		// 2 Find all order locations that need to be sent. Keep a map by location
+		// 1c Find all order locations that need to be sent. Keep a map by location
 		Map<String, OrderLocation> orderLocationByLocation = new HashMap<String, OrderLocation>();
 
 		Map<String, Object> filterArgs = ImmutableMap.<String, Object> of("facilityId", facility.getPersistentId());
@@ -436,8 +437,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				orderLocationByLocation.put(loc.getLocationNameForMap(), ol);
 				orderLocationsToSend.add(ol);
 			}
-		}		
-		// 3 iterate through all slots in those aisles. If not already sending, send an empty location
+		}
+		// 1d iterate through all slots in those aisles. If not already sending, send an empty location
 		for (Aisle aisle : aisleList) {
 			List<Slot> slots = aisle.getActiveChildrenAtLevel(Slot.class);
 			for (Slot slot : slots) {
@@ -446,12 +447,18 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				}
 			}
 		}
-		
-		// part 2. Send
-		for (OrderLocation ol :orderLocationsToSend){
+
+		// Part 2. Send
+		int olToSend = orderLocationsToSend.size();
+		if (olToSend > 0)
+			LOGGER.info("sending {} order location feedback instructions", olToSend);
+		for (OrderLocation ol : orderLocationsToSend) {
 			computeAndSendOrderFeedback(ol);
 		}
-		for (Location loc :emptyLocationsToSend){
+		int locToSend = emptyLocationsToSend.size();
+		if (locToSend > 0)
+			LOGGER.info("sending {} putwall clear slot instructions", locToSend);
+		for (Location loc : emptyLocationsToSend) {
 			computeAndSendEmptyOrderFeedback(loc);
 		}
 
@@ -611,13 +618,19 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			Che.staticGetDao().store(inChe);
 		}
 	}
-	
+
 	private boolean detectPossiblePathChange(final Che che, final String inScannedLocationId, final BooleanHolder pathChanged) {
-		if (inScannedLocationId == null || "".equals(inScannedLocationId)){return false;}
+		if (inScannedLocationId == null || "".equals(inScannedLocationId)) {
+			return false;
+		}
 		Path oldPath = che.getActivePath();
-		if (oldPath == null) {return false;}
+		if (oldPath == null) {
+			return false;
+		}
 		Location newLocation = che.getFacility().findSubLocationById(inScannedLocationId);
-		if (newLocation == null) {return false;}
+		if (newLocation == null) {
+			return false;
+		}
 		Path newPath = newLocation.getAssociatedPathSegment().getParent();
 		return newPath != oldPath;
 	}
@@ -635,7 +648,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		return getWorkInstructions(inChe, inScannedLocationId, false, new BooleanHolder(false));
 	}
 
-	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId, final Boolean reversePickOrder, final BooleanHolder pathChanged) {
+	public final List<WorkInstruction> getWorkInstructions(final Che inChe,
+		final String inScannedLocationId,
+		final Boolean reversePickOrder,
+		final BooleanHolder pathChanged) {
 		long startTimestamp = System.currentTimeMillis();
 		Facility facility = inChe.getFacility();
 

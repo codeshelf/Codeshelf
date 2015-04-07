@@ -1,14 +1,11 @@
 package com.codeshelf.ws;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.sql.Timestamp;
 import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Bay;
@@ -118,11 +115,7 @@ public class CreateControllerTest extends HibernateTest{
 				"Tier,T1,50,4,4,0,,,,,\n" + 
 				"Bay,B4,50,,,,,,,,\n" + 
 				"Tier,T1,50,4,4,0,,,,,\n"; //
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(new StringReader(aislesCsvString), getFacility(), ediProcessTime);
-		
+		importAislesData(getFacility(), aislesCsvString);
 		return getFacility();
 	}
 }

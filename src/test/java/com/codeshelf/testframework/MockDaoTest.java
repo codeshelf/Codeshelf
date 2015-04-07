@@ -1,5 +1,7 @@
 package com.codeshelf.testframework;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.sql.Timestamp;
 
 import com.codeshelf.edi.AislesFileCsvImporter;
@@ -515,6 +517,36 @@ public abstract class MockDaoTest extends MinimalTest {
 	protected ICsvOrderImporter createOrderImporter() {
 		//return new OutboundOrderCsvImporter(this.eventProducer);
 		return new OutboundOrderPrefetchCsvImporter(this.eventProducer);
+	}
+	
+	protected boolean importAislesData(Facility facility, String aislesCsvString) {
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		AislesFileCsvImporter importer = createAisleFileImporter();
+		return importer.importAislesFileFromCsvStream(new StringReader(aislesCsvString), facility, ediProcessTime);
+	}
+	
+	protected boolean importLocationAliasesData(Facility facility, String locationsCsvString) {
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvLocationAliasImporter locationAliasImporter = createLocationAliasImporter();
+		return locationAliasImporter.importLocationAliasesFromCsvStream(new StringReader(locationsCsvString), facility, ediProcessTime);
+	}
+
+	protected void importInventoryData(Facility facility, String csvString) {
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvInventoryImporter importer = createInventoryImporter();
+		importer.importSlottedInventoryFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+	}
+
+	protected void importOrdersData(Facility facility, String csvString) throws IOException {
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer = createOrderImporter();
+		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+	}
+
+	protected boolean importSlotting(Facility facility, String csvString) {
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderLocationImporter importer = createOrderLocationImporter();
+		return importer.importOrderLocationsFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 	}
 	
 	protected void beginTransaction() {

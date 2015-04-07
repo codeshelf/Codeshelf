@@ -1,8 +1,6 @@
 package com.codeshelf.testframework;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.List;
@@ -12,13 +10,8 @@ import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.CrossBatchCsvImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
-import com.codeshelf.edi.ICsvInventoryImporter;
-import com.codeshelf.edi.ICsvLocationAliasImporter;
-import com.codeshelf.edi.ICsvOrderImporter;
-import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.integration.PickSimulator;
 import com.codeshelf.model.WorkInstructionSequencerType;
@@ -97,15 +90,7 @@ public abstract class ServerTest extends HibernateTest {
 				+ "Tier,T1,,0,80,80,,\r\n" //
 				+ "Bay,B3,230,,,,,\r\n" //
 				+ "Tier,T1,,0,80,160,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, getFacility(), ediProcessTime);
+		importAislesData(getFacility(), csvString);
 
 		// Get the aisle
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
@@ -142,16 +127,8 @@ public abstract class ServerTest extends HibernateTest {
 				+ "A3.B1.T1, D501\r\n" //
 				+ "A3.B2.T1, D502\r\n" //
 				+ "A3.B3.T1, D503\r\n";//
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(reader2, getFacility(), ediProcessTime2);
-
+		importLocationAliasesData(getFacility(), csvString2);
+		
 		CodeshelfNetwork network = getNetwork();
 
 		LedController controller1 = network.findOrCreateLedController("1", new NetGuid("0x00000011"));
@@ -207,10 +184,7 @@ public abstract class ServerTest extends HibernateTest {
 				"Tier,T1,50,0,16,0,,,,,\r\n" + 
 				"Bay,B4,50,,,,,,,,\r\n" + 
 				"Tier,T1,50,0,16,0,,,,,\r\n"; //
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(new StringReader(aislesCsvString), getFacility(), ediProcessTime);
+		importAislesData(getFacility(), aislesCsvString);
 
 		// Get the aisle
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
@@ -227,11 +201,8 @@ public abstract class ServerTest extends HibernateTest {
 				"A1.B2.T1,LocX25\r\n" + 
 				"A1.B3.T1,LocX26\r\n" + 
 				"A1.B4.T1,LocX27\r\n";//
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter locationAliasImporter = createLocationAliasImporter();
-		locationAliasImporter.importLocationAliasesFromCsvStream(new StringReader(csvLocationAliases), getFacility(), ediProcessTime2);
-
+		importLocationAliasesData(getFacility(), csvLocationAliases);
+		
 		CodeshelfNetwork network = getNetwork();
 
 		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
@@ -312,33 +283,12 @@ public abstract class ServerTest extends HibernateTest {
 		return importer;
 	}
 
-	
-	
-	protected void importInventoryData(Facility facility, String csvString) {
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-	}
-
-	protected void importOrdersData(Facility facility, String csvString) throws IOException {
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer = createOrderImporter();
-		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-	}
-
-	protected boolean importSlotting(Facility facility, String csvString) {
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderLocationImporter importer = createOrderLocationImporter();
-		return importer.importOrderLocationsFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-	}
-	
 	protected int importBatchData(Facility facility, String csvString) {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvCrossBatchImporter importer = createCrossBatchImporter();
 		return importer.importCrossBatchesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-
 	}
-	
+
 	protected List<WorkInstruction> startWorkFromBeginning(Facility facility, String cheName, String containers) {
 		// Now ready to run the cart
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);

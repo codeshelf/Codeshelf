@@ -8,8 +8,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -30,9 +28,7 @@ import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.LedInstrListMessage;
 import com.codeshelf.device.LedSample;
-import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.AislesFileCsvImporter.ControllerLayout;
-import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.InventoryGenerator;
 import com.codeshelf.edi.VirtualSlottedFacilityGenerator;
@@ -373,10 +369,7 @@ public class LightServiceTest extends ServerTest {
 
 		String fName = "F-" + inOrganizationName;
 		Facility facility= Facility.createFacility(fName, "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		// Get the aisles
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
@@ -433,10 +426,7 @@ public class LightServiceTest extends ServerTest {
 				+ "A2.B2.T1.S3, D-38\r\n" //
 				+ "A2.B2.T1.S2, D-39\r\n" //
 				+ "A2.B2.T1.S1, D-40\r\n"; //
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(new StringReader(csvLocationAlias), facility, ediProcessTime2);
+		importLocationAliasesData(facility, csvLocationAlias);
 
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		Che che1 = network.getChe("CHE1");
