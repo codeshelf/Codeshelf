@@ -110,7 +110,7 @@ public class WebApiServer {
 		        if(staticContentPath != null) {
 					ResourceHandler resourceHandler = new ResourceHandler();
 					resourceHandler.setDirectoriesListed(false);
-					resourceHandler.setWelcomeFiles(new String[] { "codeshelf.html", "index.html" });
+					resourceHandler.setWelcomeFiles(new String[] { "index.html", "codeshelf.html" });
 					resourceHandler.setResourceBase(staticContentPath);
 					ContextHandler resourceContextHandler=new ContextHandler("/");
 					resourceContextHandler.setHandler(resourceHandler);
