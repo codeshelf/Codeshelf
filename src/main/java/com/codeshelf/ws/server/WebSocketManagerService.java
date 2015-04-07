@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Counter;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
+import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.domain.Facility;
@@ -34,6 +35,7 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.AbstractCodeshelfScheduledService;
+import com.codeshelf.service.ServiceUtility;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.protocol.message.KeepAlive;
 import com.codeshelf.ws.protocol.message.MessageABC;
@@ -96,10 +98,29 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 	boolean												resetting				= false;
 	WorkService											workService;
 
+	private IMetricsService	metricsService;
+	
 	@Inject
-	public WebSocketManagerService(WorkService injectedWorkService) {
-		this.workService = injectedWorkService;
+	private static WebSocketManagerService theInstance = null;
+	
+	@Inject 
+	WebSocketManagerService(IMetricsService metricsService, WorkService workService) {
+		this.metricsService = metricsService;
+		this.workService = workService;
+		
+		initialize();
 	}
+	
+	public static WebSocketManagerService getInstance() {
+		// assume running/usable, initialized in constructor
+		//ServiceUtility.awaitRunningOrThrow(theInstance);
+		return theInstance;
+	}
+	public static void setInstance(WebSocketManagerService instance) {
+		// for test only
+		theInstance = instance;
+	}
+
 
 	public synchronized WebSocketConnection sessionStarted(Session session) {
 		if (this.activeConnections == null) {
@@ -327,14 +348,14 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 
 	@Override
 	protected synchronized void startUp() throws Exception {
-		initialize();
+		//initialize(); done in constructor
 	}
 
 	private void initialize() {
-		activeSessionsCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS, "sessions.active");
-		activeSiteControllerSessionsCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS,
+		activeSessionsCounter = this.metricsService.createCounter(MetricsGroup.WSS, "sessions.active");
+		activeSiteControllerSessionsCounter = this.metricsService.createCounter(MetricsGroup.WSS,
 			"sessions.sitecontrollers");
-		totalSessionsCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS, "sessions.total");
+		totalSessionsCounter = this.metricsService.createCounter(MetricsGroup.WSS, "sessions.total");
 
 		ThreadFactoryBuilder builder = new ThreadFactoryBuilder();
 		builder.setNameFormat("UserSession %s");

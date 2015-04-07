@@ -185,6 +185,9 @@ public abstract class FrameworkTest implements IntegrationTest {
 				requestStaticInjection(TenantPersistenceService.class);
 				bind(TenantPersistenceService.class).in(Singleton.class);
 
+				requestStaticInjection(WebSocketManagerService.class);
+				bind(WebSocketManagerService.class).in(Singleton.class);
+
 				requestStaticInjection(TenantManagerService.class);
 				bind(ITenantManagerService.class).to(TenantManagerService.class).in(Singleton.class);
 
@@ -202,13 +205,6 @@ public abstract class FrameworkTest implements IntegrationTest {
 				// Shiro modules
 				bind(SecurityManager.class).to(CodeshelfSecurityManager.class);
 				bind(Realm.class).to(CodeshelfRealm.class);
-			}
-
-			@Provides
-			@Singleton
-			public WebSocketManagerService createWebSocketManagerService(WorkService workService) {
-				WebSocketManagerService webSocketManagerService = new WebSocketManagerService(workService);
-				return webSocketManagerService;
 			}
 
 			@Provides
@@ -262,12 +258,14 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 		// reset all services to defaults 
 		webSocketManagerService = staticWebSocketManagerService;
+		WebSocketManagerService.setInstance(webSocketManagerService);
 		propertyService = staticPropertyService;
 		PropertyService.setInstance(propertyService);
 		metricsService = staticMetricsService;
 		MetricsService.setInstance(metricsService);
 		authProviderService = staticAuthProviderService;
 		HmacAuthService.setInstance(staticAuthProviderService);
+		
 		SecurityUtils.setSecurityManager(new CodeshelfSecurityManager(new CodeshelfRealm()));
 		
 		// remove user/subject from main threadcontext 
@@ -598,7 +596,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	}
 
 	protected WorkService generateWorkService() {
-		return new WorkService(new LightService(staticWebSocketManagerService));
+		return new WorkService(new LightService());
 	}
 
 	protected final Facility generateTestFacility() {

@@ -117,7 +117,10 @@ public final class ServerMain {
 
 				requestStaticInjection(PropertyService.class);
 				bind(IPropertyService.class).to(PropertyService.class).in(Singleton.class);
+				
 				bind(WorkService.class).in(Singleton.class);
+
+				requestStaticInjection(WebSocketManagerService.class);
 				bind(WebSocketManagerService.class).in(Singleton.class);
 				
 				bind(GuiceFilter.class);

@@ -34,19 +34,23 @@ public class MetricsService extends AbstractCodeshelfIdleService implements IMet
 
 	@Inject
 	private MetricsService() {
+		metricsRegistry	= new MetricRegistry();
+		healthCheckRegistry	= new HealthCheckRegistry();
+		try {
+			this.hostName = InetAddress.getLocalHost().getHostName();
+		} catch (Exception e) {
+			LOGGER.error("Failed to determine host name: " + e.getMessage() + ".  Trying to fall back on host address.");
+			try {
+				this.hostName = InetAddress.getLocalHost().getHostAddress() + " ";
+			} catch (Exception ex) {
+				LOGGER.error("Failed to determine host address: " + e.getMessage());
+				this.hostName = "unknown";
+			}
+		}
 	}
 
-	public final static IMetricsService getMaybeRunningInstance() {
-		return theInstance;
-	}
-	public final static IMetricsService getNonRunningInstance() {
-		if(!getMaybeRunningInstance().state().equals(State.NEW)) {
-			throw new RuntimeException("Can't get non-running instance of already-started metrics service");
-		}
-		return theInstance;
-	}
 	public final static IMetricsService getInstance() {
-		ServiceUtility.awaitRunningOrThrow(theInstance);
+		//ServiceUtility.awaitRunningOrThrow(theInstance);
 		return theInstance;
 	}
 	public final static void setInstance(IMetricsService instance) { 
@@ -170,19 +174,7 @@ public class MetricsService extends AbstractCodeshelfIdleService implements IMet
 
 	@Override
 	protected void startUp() throws Exception {
-		metricsRegistry	= new MetricRegistry();
-		healthCheckRegistry	= new HealthCheckRegistry();
-		try {
-			this.hostName = InetAddress.getLocalHost().getHostName();
-		} catch (Exception e) {
-			LOGGER.error("Failed to determine host name: " + e.getMessage() + ".  Trying to fall back on host address.");
-			try {
-				this.hostName = InetAddress.getLocalHost().getHostAddress() + " ";
-			} catch (Exception ex) {
-				LOGGER.error("Failed to determine host address: " + e.getMessage());
-				this.hostName = "unknown";
-			}
-		}
+		// all in constructor
 	}
 
 	@Override
