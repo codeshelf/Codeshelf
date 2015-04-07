@@ -102,9 +102,7 @@ public class OrderLocationFeedbackMessage extends MessageABC {
 		setPosition(index.byteValue());
 
 		// Location name in a uniform way, so the map in PosManagerDeviceLogic can set and clear.
-		String locName = loc.getPrimaryAliasId();
-		if (locName.isEmpty())
-			locName = loc.getNominalLocationIdExcludeBracket();
+		String locName = loc.getLocationNameForMap();
 		setLocationName(locName);
 	}
 

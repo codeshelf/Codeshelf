@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -32,8 +33,10 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Timer;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.OrderLocationFeedbackMessage;
+import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.edi.IEdiExportServiceProvider;
 import com.codeshelf.edi.WorkInstructionCSVExporter;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
@@ -50,6 +53,7 @@ import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
@@ -66,6 +70,8 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
+import com.codeshelf.model.domain.SiteController;
+import com.codeshelf.model.domain.Slot;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.SingleWorkItem;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
@@ -351,6 +357,33 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		}
 	}
+	private void computeAndSendEmptyOrderFeedback(Location loc) {
+		if (loc == null) {
+			LOGGER.error("null input to computeAndSendOrderFeedback");
+			return;
+		}
+		try {
+				Facility facility = loc.getFacility();
+				final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(loc);
+				sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
+		}
+
+		finally {
+
+		}
+	}
+
+	private boolean orderLocationDeservesFeedback(OrderLocation orderLocation) {
+		Location loc = orderLocation.getLocation();
+		if (loc != null && loc.isActive()) {
+			if (loc.isPutWallLocation()) {
+				if (loc.isLightablePoscon()) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 
 	private void computeAndSendOrderFeedback(OrderLocation orderLocation) {
 		if (orderLocation == null) {
@@ -358,21 +391,69 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			return;
 		}
 		try {
-			Location loc = orderLocation.getLocation();
-			if (loc != null && loc.isActive()) {
-				if (loc.isPutWallLocation()) {
-					if (loc.isLightablePoscon()) {
-						Facility facility = orderLocation.getFacility();
-						final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(orderLocation);
-						sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
-					}
-				}
+			if (orderLocationDeservesFeedback(orderLocation)) {
+				Facility facility = orderLocation.getFacility();
+				final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(orderLocation);
+				sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
 			}
 		}
 
 		finally {
 
 		}
+	}
+
+	/**
+	 * Find all put walls, then the value for each slot in the put wall.
+	 * For now, separate messages but they could go out as lists of updates in a combined message.
+	 * DEV-729
+	 */
+	public void reinitPutWallFeedback(SiteController siteController) {
+		// 1a find our facility
+		Facility facility = siteController.getFacility();
+		
+		// part 1 assemble what needs to be sent
+		List<OrderLocation> orderLocationsToSend = new ArrayList<OrderLocation>();
+		List<Location> emptyLocationsToSend = new ArrayList<Location>();
+
+		List<Aisle> aisleList = new ArrayList<Aisle>();
+		// 1b Find all put walls in this facility.
+		List<Location> probablyAisles = facility.getChildren();
+		for (Location loc : probablyAisles) {
+			if (loc.isPutWallLocation() && loc instanceof Aisle) {
+				aisleList.add((Aisle) loc);
+			}
+		}
+		// 2 Find all order locations that need to be sent. Keep a map by location
+		Map<String, OrderLocation> orderLocationByLocation = new HashMap<String, OrderLocation>();
+
+		Map<String, Object> filterArgs = ImmutableMap.<String, Object> of("facilityId", facility.getPersistentId());
+		List<OrderLocation> orderLocations = OrderLocation.staticGetDao().findByFilter("orderLocationByFacility", filterArgs);
+		for (OrderLocation ol : orderLocations) {
+			if (orderLocationDeservesFeedback(ol)) {
+				Location loc = ol.getLocation();
+				orderLocationByLocation.put(loc.getLocationNameForMap(), ol);
+				orderLocationsToSend.add(ol);
+			}
+		}		
+		// 3 iterate through all slots in those aisles. If not already sending, send an empty location
+		for (Aisle aisle : aisleList) {
+			List<Slot> slots = aisle.getActiveChildrenAtLevel(Slot.class);
+			for (Slot slot : slots) {
+				if (!orderLocationByLocation.containsKey(slot.getLocationNameForMap())) {
+					emptyLocationsToSend.add(slot);
+				}
+			}
+		}
+		
+		// part 2. Send
+		for (OrderLocation ol :orderLocationsToSend){
+			computeAndSendOrderFeedback(ol);
+		}
+		for (Location loc :emptyLocationsToSend){
+			computeAndSendEmptyOrderFeedback(loc);
+		}
+
 	}
 
 	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
@@ -555,7 +636,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		//boolean reverse = CheDeviceLogic.REVERSE_COMMAND.equalsIgnoreCase(inScannedLocationId);
 
 		//Get current complete list of WIs
-		List<WorkInstruction> completeRouteWiList = findCheInstructionsFromPosition(inChe, 0.0, false); 
+		List<WorkInstruction> completeRouteWiList = findCheInstructionsFromPosition(inChe, 0.0, false);
 
 		//We could have existing HK WIs if we've already retrieved the work instructions once but scanned a new location.
 		//In that case, we must make sure we remove all existing HK WIs so that we can properly add them back in at the end.
@@ -1244,10 +1325,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 	private boolean isLocatioOnPath(Location inLocation, Path inPath) {
 		PathSegment locationSegment = inLocation.getAssociatedPathSegment();
-		if (locationSegment == null) {return false;}
+		if (locationSegment == null) {
+			return false;
+		}
 		return inPath == locationSegment.getParent();
 	}
-	
+
 	/**
 	 * Support method to force an exception for testing
 	 */

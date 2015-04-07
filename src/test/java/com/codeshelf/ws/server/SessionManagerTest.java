@@ -17,6 +17,7 @@ import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.domain.UserType;
+import com.codeshelf.service.WorkService;
 import com.codeshelf.testframework.MinimalTest;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.google.common.collect.ImmutableSet;
@@ -29,7 +30,7 @@ public class SessionManagerTest extends MinimalTest {
 	
 	@Before
 	public void doBefore() {	
-		sessionManager = new WebSocketManagerService();
+		sessionManager = new WebSocketManagerService(Mockito.mock(WorkService.class));
 		IMetricsService metrics = new DummyMetricsService();
 		MetricsService.setInstance(metrics);
 

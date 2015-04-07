@@ -206,8 +206,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 			@Provides
 			@Singleton
-			public WebSocketManagerService createWebSocketManagerService() {
-				WebSocketManagerService webSocketManagerService = new WebSocketManagerService();
+			public WebSocketManagerService createWebSocketManagerService(WorkService workService) {
+				WebSocketManagerService webSocketManagerService = new WebSocketManagerService(workService);
 				return webSocketManagerService;
 			}
 

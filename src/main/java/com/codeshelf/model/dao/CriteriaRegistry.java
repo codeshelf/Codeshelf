@@ -157,6 +157,11 @@ public class CriteriaRegistry {
 		indexedCriteria.put("gtinsByFacility",
 			new TypedCriteria("from Gtin where parent.parent.persistentId = :facilityId",
 				"facilityId", UUID.class));
+		
+		indexedCriteria.put("orderLocationByFacility", 
+			new TypedCriteria("from OrderLocation where active = true and parent.parent.persistentId = :facilityId", 
+				"facilityId", UUID.class)); // could check that the location is active.		
+
 	}
 
 	public TypedCriteria findByName(String name, Class<?> selectClass) {
