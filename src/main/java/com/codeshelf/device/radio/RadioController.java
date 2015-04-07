@@ -484,6 +484,8 @@ public class RadioController implements IRadioController {
 		if (device != null) {
 			ContextLogging.setNetGuid(device.getGuid());
 		}
+		;
+
 		try {
 			IPacket packet = new Packet(inCommand, inNetworkId, mServerAddress, inDstAddr, inAckRequested);
 			inCommand.setPacket(packet);

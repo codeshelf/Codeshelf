@@ -154,13 +154,13 @@ public interface INetworkDevice {
 	 */
 	public String getDeviceType();
 
-	public short getHardwareVersion();
+	public String getHardwareVersion();
 
-	public void setHardwareVersion(short hardwareVersion);
+	public void setHardwareVersion(String hardwareVersion);
 
-	public short getFirmwareVersion();
+	public String getFirmwareVersion();
 
-	public void setFirmwareVersion(short firmwareVersion);
+	public void setFirmwareVersion(String firmwareVersion);
 
 	public Byte getRadioProtocolVersion();
 

@@ -103,10 +103,8 @@ public class RadioControllerPacketHandlerService {
 		@Override
 		public void run() {
 			// We do not need to use synchronize because we aren't actually
-			// modifying the queue
-			// We peek because if we poll, we would cause the queue to be empty
-			// which could submit another task for this
-			// NetAddr in parallel
+			// modifying the queue. We peek because if we poll, we would cause the queue to be empty
+			// which could submit another task for this NetAddr in parallel
 			IPacket packet = queue.peek();
 
 			try {

@@ -41,8 +41,8 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 
 	private static final long	CTRL_START_DELAY_MILLIS	= 200;
 
-	private static final byte	HARDWARE_VERSION		= 0x01;
-	private static final byte	FIRMWARE_VERSION		= 0x01;
+	private static final String	HARDWARE_VERSION		= "0.0";
+	private static final String	FIRMWARE_VERSION		= "0.0";
 	private static final byte	RADIOPROTOCOL_VERSION	= 0x01;
 
 	private static final byte	RESET_REASON_POWERON	= 0x00;

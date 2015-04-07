@@ -28,12 +28,12 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private short					mHardwareVersion;
+	private String					mHardwareVersion;
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private short					mFirmwareVersion;
+	private String					mFirmwareVersion;
 
 	@Accessors(prefix = "m")
 	@Getter
