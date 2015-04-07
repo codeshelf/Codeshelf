@@ -72,12 +72,12 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 	// This really should somehow include the space between the bay if there are gaps in a long row with certain kinds of LED strips.
 	// For example, the current strips are spaced exactly 3.125cm apart.
-	public static final Double			METERS_PER_LED_POS	= 0.03125;
+	public static final Double	METERS_PER_LED_POS	= 0.03125;
 
-	private static final Logger			LOGGER				= LoggerFactory.getLogger(Location.class);
-	
-	public static final String			PUTWALL_USAGE		= "putwall";
-	
+	private static final Logger	LOGGER				= LoggerFactory.getLogger(Location.class);
+
+	public static final String	PUTWALL_USAGE		= "putwall";
+
 	public static class LocationDao extends GenericDaoABC<Location> implements ITypedDao<Location> {
 		public final Class<Location> getDaoClass() {
 			return Location.class;
@@ -175,7 +175,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	@OneToMany(mappedBy = "parent")
 	@Getter
 	@Setter
-	private List<Vertex>				vertices			= new ArrayList<Vertex>();
+	private List<Vertex>				vertices		= new ArrayList<Vertex>();
 
 	// The child locations.
 	@OneToMany(mappedBy = "parent")
@@ -183,90 +183,91 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
 	@Setter
-	private Map<String, Location>		locations			= new HashMap<String, Location>();
+	private Map<String, Location>		locations		= new HashMap<String, Location>();
 
 	// The location aliases for this location.
 	@OneToMany(mappedBy = "mappedLocation")
 	@Getter
 	@Setter
-	private List<LocationAlias>			aliases				= new ArrayList<LocationAlias>();
+	private List<LocationAlias>			aliases			= new ArrayList<LocationAlias>();
 
 	// The items stored in this location.
 	@OneToMany(mappedBy = "storedLocation")
 	@MapKey(name = "domainId")
 	@Getter
 	@Setter
-	private Map<String, Item>			storedItems			= new HashMap<String, Item>();
+	private Map<String, Item>			storedItems		= new HashMap<String, Item>();
 
 	// The DDC groups stored in this location.
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	@Getter
 	@Setter
-	private Map<String, ItemDdcGroup>	itemDdcGroups		= new HashMap<String, ItemDdcGroup>();
+	private Map<String, ItemDdcGroup>	itemDdcGroups	= new HashMap<String, ItemDdcGroup>();
 
 	// For this location, is the lower led on the anchor side?
 	@Column(nullable = true, name = "lower_led_near_anchor")
 	@Getter
 	@Setter
-	private Boolean	lowerLedNearAnchor;
+	private Boolean						lowerLedNearAnchor;
 
 	// Is this location active?
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	private Boolean						active;
-	
+
 	// The owning location.
-	@ManyToOne(optional=true,fetch=FetchType.LAZY)
+	@ManyToOne(optional = true, fetch = FetchType.LAZY)
 	@Getter
 	@Setter
-	private Location parent;
+	private Location					parent;
 
-	@Column(nullable = false,name="pick_face_end_pos_type")
+	@Column(nullable = false, name = "pick_face_end_pos_type")
 	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
 	@JsonProperty
-	private PositionTypeEnum	pickFaceEndPosType;
+	private PositionTypeEnum			pickFaceEndPosType;
 
 	// X pos of pick face end (pick face starts at anchor pos).
-	@Column(nullable = false,name="pick_face_end_pos_x")
+	@Column(nullable = false, name = "pick_face_end_pos_x")
 	@Getter
 	@Setter
 	@JsonProperty
-	private Double				pickFaceEndPosX;
+	private Double						pickFaceEndPosX;
 
 	// Y pos of pick face end (pick face starts at anchor pos).
-	@Column(nullable = false,name="pick_face_end_pos_y")
+	@Column(nullable = false, name = "pick_face_end_pos_y")
 	@Getter
 	@Setter
 	@JsonProperty
-	private Double				pickFaceEndPosY;
+	private Double						pickFaceEndPosY;
 
 	// Z pos of pick face end (pick face starts at anchor pos).
-	@Column(nullable = false,name="pick_face_end_pos_z")
+	@Column(nullable = false, name = "pick_face_end_pos_z")
 	@Getter
 	@Setter
 	@JsonProperty
-	private Double				pickFaceEndPosZ;
-	
-	@Getter @Setter
-	@JsonProperty
-	@Column(name="poscon_index")
-	private Integer posconIndex = null;
+	private Double						pickFaceEndPosZ;
 
-	@Column(nullable = true,name="usage")
 	@Getter
 	@Setter
 	@JsonProperty
-	private String				usage;
-	
-	@Column(nullable = true,name="tape_id")
+	@Column(name = "poscon_index")
+	private Integer						posconIndex		= null;
+
+	@Column(nullable = true, name = "usage")
 	@Getter
 	@Setter
 	@JsonProperty
-	private Integer tapeId;
+	private String						usage;
+
+	@Column(nullable = true, name = "tape_id")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Integer						tapeId;
 
 	public Location() {
 		active = true;
@@ -280,7 +281,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		setAnchorPoint(inAnchorPoint);
 		this.setPickFaceEndPoint(Point.getZeroPoint());
 	}
-	
+
 	public static ITypedDao<Location> staticGetLocationDao() {
 		return TenantPersistenceService.getInstance().getDao(Location.class);
 	}
@@ -296,15 +297,15 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	public boolean isBay() {
 		return false;
 	}
-	
+
 	public boolean isTier() {
 		return false;
 	}
-	
+
 	public boolean isSlot() {
 		return false;
 	}
-	
+
 	public void updateAnchorPoint(Double x, Double y, Double z) {
 		anchorPosX = x;
 		anchorPosY = y;
@@ -389,7 +390,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			if (Hibernate.getClass(child).equals(inClassWanted)) {
 				// If the child is the kind we want then add it to the list.
 				// Hibernate: troublesome to cast without first deproxifying
-				result.add(TenantPersistenceService.<T>deproxify((T) child));
+				result.add(TenantPersistenceService.<T> deproxify((T) child));
 			} else {
 				// If the child is not the kind we want the recurse.
 				result.addAll((List<T>) child.getActiveChildrenAtLevel(inClassWanted));
@@ -502,7 +503,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			if (Hibernate.getClass(checkParent).equals(inClassWanted)) {
 				// Hibernate: casting doesn't work right if the parent is a proxy object!
 				//result = (T) checkParent;
-				result = TenantPersistenceService.<T>deproxify((T) checkParent);
+				result = TenantPersistenceService.<T> deproxify((T) checkParent);
 			} else {
 				if (checkParent.isFacility()) {
 					result = null;
@@ -590,9 +591,9 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 				return alias.getMappedLocation();
 			}
 		} // else
-		
+
 		// Hibernate: This result is going to get cast, so deproxify here to avoid problems.
-		return TenantPersistenceService.<Location>deproxify(locations.get(inLocationId));
+		return TenantPersistenceService.<Location> deproxify(locations.get(inLocationId));
 	}
 
 	// --------------------------------------------------------------------------
@@ -642,12 +643,12 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 				result = firstPartLocation.findSubLocationById(secondPart);
 			}
 		}
-		if (result!=null && !result.isActive()) {
+		if (result != null && !result.isActive()) {
 			LOGGER.warn("findSubLocationById succeeded with an inactive location. Is this business case intentional?");
 		}
 		return result;
 	}
-	
+
 	public PathSegment getAssociatedPathSegment() {
 		if (isFacility()) {
 			return null;
@@ -1097,7 +1098,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 	public Boolean isLeftSideTowardsAnchor() {
 		// As you face the pickface, is the left toward the anchor (where the B1/S1 side is)
-		Aisle theAisle = this.<Aisle>getParentAtLevel(Aisle.class);
+		Aisle theAisle = this.<Aisle> getParentAtLevel(Aisle.class);
 		if (theAisle == null) {
 			return false;
 		} else {
@@ -1146,12 +1147,12 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		if (!DeviceType.Poscons.equals(controller.getDeviceType())) {
 			return false;
 		}
-		if (this.posconIndex!=null && this.posconIndex>0) {
+		if (this.posconIndex != null && this.posconIndex > 0) {
 			return true;
 		}
 		return false;
 	}
-	
+
 	@JsonIgnore
 	public boolean isLightableAisleController() {
 		LedController controller = this.getEffectiveLedController();
@@ -1165,35 +1166,35 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		Short firstLocLed = getFirstLedNumAlongPath();
 		Short lastLocLed = getLastLedNumAlongPath();
 		if (firstLocLed == null || lastLocLed == null) {
-            LOGGER.warn("Cannot calculate LedRange for {}, firstLed: {} , lastLed {} ", this, firstLocLed, lastLocLed);
+			LOGGER.warn("Cannot calculate LedRange for {}, firstLed: {} , lastLed {} ", this, firstLocLed, lastLocLed);
 			return false;
 		} else if (firstLocLed == 0 && lastLocLed == 0) {
 			return false;
 		}
 		return true;
 	}
-	
+
 	public LedRange getFirstLastLedsForLocation() {
-        if (!isLightable()) {
-            return LedRange.zero(); // was initialized to give values of 0,0
-        }
-        
-        // This often returns the stated leds for slots. But if the span is large, returns the central 4 leds.
-        // to compute, we need the locations first and last led positions
-        Short firstLocLed = getFirstLedNumAlongPath();
-        Short lastLocLed = getLastLedNumAlongPath();
-        if (firstLocLed == null || lastLocLed == null) {
-            LOGGER.warn("Cannot calculate LedRange for {}, firstLed: {} , lastLed {} ", this, firstLocLed, lastLocLed);
-            return LedRange.zero();
-        }
+		if (!isLightable()) {
+			return LedRange.zero(); // was initialized to give values of 0,0
+		}
 
-        boolean lowerLedNearAnchor = this.isLowerLedNearAnchor();
+		// This often returns the stated leds for slots. But if the span is large, returns the central 4 leds.
+		// to compute, we need the locations first and last led positions
+		Short firstLocLed = getFirstLedNumAlongPath();
+		Short lastLocLed = getLastLedNumAlongPath();
+		if (firstLocLed == null || lastLocLed == null) {
+			LOGGER.warn("Cannot calculate LedRange for {}, firstLed: {} , lastLed {} ", this, firstLocLed, lastLocLed);
+			return LedRange.zero();
+		}
 
-        LedRange theLedRange = LedRange.computeLedsToLightForLocationNoOffset(firstLocLed, lastLocLed, lowerLedNearAnchor);
+		boolean lowerLedNearAnchor = this.isLowerLedNearAnchor();
 
-        return theLedRange;
-    }
-	
+		LedRange theLedRange = LedRange.computeLedsToLightForLocationNoOffset(firstLocLed, lastLocLed, lowerLedNearAnchor);
+
+		return theLedRange;
+	}
+
 	private class InventoryPositionComparator implements Comparator<Item> {
 		// We want this to sort from low to high
 		public int compare(Item item1, Item item2) {
@@ -1388,26 +1389,26 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return getPickFaceEndPosY() == 0.0;
 	}
 
-	public boolean isPutWallLocation(){
+	public boolean isPutWallLocation() {
 		if (isImmediatePutWallLocation()) {
 			return true;
 		}
 		Location parent = getParent();
-		return (parent == null)? false : parent.isPutWallLocation();
+		return (parent == null) ? false : parent.isPutWallLocation();
 	}
-	
-	private boolean isImmediatePutWallLocation(){
+
+	private boolean isImmediatePutWallLocation() {
 		return PUTWALL_USAGE.equalsIgnoreCase(usage);
 	}
-	
+
 	public void setAsPutWallLocation(boolean isPutWall) {
 		setUsage(isPutWall ? PUTWALL_USAGE : null);
 	}
-	
+
 	public void togglePutWallLocation() {
 		setAsPutWallLocation(!isImmediatePutWallLocation());
 	}
-	
+
 	public String getPutWallUi() {
 		//Check if this location is PutWall
 		if (isImmediatePutWallLocation()) {
@@ -1418,7 +1419,6 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return isPutWallLocation() ? "(Yes)" : null;
 	}
 
-	
 	// UI fields
 	public String getAnchorPosXui() {
 		return StringUIConverter.doubleToTwoDecimalsString(getAnchorPosX());
@@ -1450,6 +1450,14 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 	public String toString() {
 		return getNominalLocationId();
+	}
+
+	public String getLocationNameForMap() {
+		// Location name in a uniform way, so the map in PosManagerDeviceLogic and WorkService can set and clear.
+		String locName = getPrimaryAliasId();
+		if (locName.isEmpty())
+			locName = getNominalLocationIdExcludeBracket();
+		return locName;
 	}
 
 }

@@ -1,6 +1,7 @@
 package com.codeshelf.ws.server;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.websocket.RemoteEndpoint.Basic;
 import javax.websocket.Session;
@@ -17,6 +18,8 @@ import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.domain.UserType;
+import com.codeshelf.service.ServiceUtility;
+import com.codeshelf.service.WorkService;
 import com.codeshelf.testframework.MinimalTest;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.google.common.collect.ImmutableSet;
@@ -24,29 +27,27 @@ import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 
 public class SessionManagerTest extends MinimalTest {
-	ServiceManager serviceManager;
 	WebSocketManagerService sessionManager;
-	
-	@Before
-	public void doBefore() {	
-		sessionManager = new WebSocketManagerService();
+
+	@Override
+	public boolean ephemeralServicesShouldStartAutomatically() {
+		return true;
+	}
+
+	@Override
+	protected List<Service> generateEphemeralServices() {
 		IMetricsService metrics = new DummyMetricsService();
 		MetricsService.setInstance(metrics);
+		sessionManager = new WebSocketManagerService(metrics, Mockito.mock(WorkService.class)); //this.webSocketManagerService;
+		WebSocketManagerService.setInstance(sessionManager);
 
 		ArrayList<Service> services = new ArrayList<Service>();
 		services.add(sessionManager);
 		services.add(metrics);
-		serviceManager = new ServiceManager(services);
-		serviceManager.startAsync();
-		serviceManager.awaitHealthy(); 
+		
+		return services;
 	}
 
-	@After
-	public void doAfter() {
-		serviceManager.stopAsync();
-		serviceManager.awaitStopped();
-	}
-	
 	@Test
 	public void findUserSession() {
 		Session session = Mockito.mock(Session.class);

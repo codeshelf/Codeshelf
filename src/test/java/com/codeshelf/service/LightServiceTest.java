@@ -97,7 +97,6 @@ public class LightServiceTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 		
 		LOGGER.info("4: mockProp.getPropertyAsColor");
-		WebSocketManagerService webSocketManagerService = mock(WebSocketManagerService.class);
 		IPropertyService mockProp = Mockito.spy(new DummyPropertyService());
 		ArrayList<Service> services = new ArrayList<Service>(1);
 		services.add(mockProp);
@@ -113,7 +112,9 @@ public class LightServiceTest extends ServerTest {
 		});
 		
 		LOGGER.info("5: new LightService");
-		LightService lightService = new LightService(webSocketManagerService);
+		LightService lightService = new LightService();
+		WebSocketManagerService webSocketManagerService = mock(WebSocketManagerService.class);
+		WebSocketManagerService.setInstance(webSocketManagerService);
 
 		LOGGER.info("6: lightService.lightInventory. This is the slow step: 23 seconds");
 		// To speed up: fewer inventory items? 2250 ms per item. Or lightService could pass in or get config value to set that lower.
@@ -291,9 +292,11 @@ public class LightServiceTest extends ServerTest {
 	@SuppressWarnings("unchecked")
 	private List<MessageABC> captureLightMessages(Facility facility, Location parent) throws InterruptedException, ExecutionException {
 		WebSocketManagerService webSocketManagerService = mock(WebSocketManagerService.class);
+		WebSocketManagerService.setInstance(webSocketManagerService);
+		
 		ColorEnum color = ColorEnum.RED;
 		
-		LightService lightService = new LightService(webSocketManagerService);
+		LightService lightService = new LightService();
 		lightService.lightChildLocations(facility, parent, color);
 		
 		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);

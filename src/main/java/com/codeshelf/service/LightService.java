@@ -43,8 +43,6 @@ public class LightService implements IApiService {
 
 	private static final Logger				LOGGER						= LoggerFactory.getLogger(LightService.class);
 
-	private final WebSocketManagerService	webSocketManagerService;
-
 	private final static ColorEnum			defaultColor				= ColorEnum.RED;
 	private final static int				defaultLightDurationSeconds	= 20;
 
@@ -54,8 +52,7 @@ public class LightService implements IApiService {
 	private final static int				defaultLedsToLight			= 4;											// IMPORTANT. This should be synched with WIFactory.maxLedsToLight
 
 	@Inject
-	public LightService(WebSocketManagerService webSocketManagerService) {
-		this.webSocketManagerService = webSocketManagerService;
+	public LightService() {
 	}
 
 	// --------------------------------------------------------------------------
@@ -212,7 +209,7 @@ public class LightService implements IApiService {
 	 * class constructors, and modify tests that use those classes.
 	*/
 	public int sendMessage(Set<User> users, MessageABC message) {
-		return webSocketManagerService.sendMessage(users, message);
+		return WebSocketManagerService.getInstance().sendMessage(users, message);
 	}
 
 	private LightLedsInstruction toLedsInstruction(Facility facility, int maxNumLeds, final ColorEnum inColor, final Item inItem) {
