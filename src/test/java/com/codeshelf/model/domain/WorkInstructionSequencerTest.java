@@ -5,19 +5,12 @@
  *******************************************************************************/
 package com.codeshelf.model.domain;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.sql.Timestamp;
 import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.codeshelf.edi.AislesFileCsvImporter;
-import com.codeshelf.edi.ICsvInventoryImporter;
-import com.codeshelf.edi.ICsvLocationAliasImporter;
-import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.testframework.ServerTest;
 import com.eaio.uuid.UUID;
@@ -52,19 +45,10 @@ public class WorkInstructionSequencerTest extends ServerTest {
 				+ "Tier,T1,,0,80,0,,\r\n" //
 				+ "Tier,T2,,0,80,0,,\r\n" //
 				+ "Tier,T3,,0,80,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		String fName = "F-" + inOrganizationName;
 		Facility facility = Facility.createFacility(fName, "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
-
+		importAislesData(facility, csvString);
+		
 		// Get the aisle
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
@@ -89,15 +73,7 @@ public class WorkInstructionSequencerTest extends ServerTest {
 				+ "A1.B2.T1, D201\r\n" //
 				+ "A1.B2.T2, D202\r\n" //
 				+ "A1.B2.T3, D203\r\n"; //
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
+		importLocationAliasesData(facility, csvString2);
 		
 		return facility;
 	}	
@@ -118,15 +94,7 @@ public class WorkInstructionSequencerTest extends ServerTest {
 				+ "1126,D201,PARK RANGER Doll,2,each,6/25/14 12:00,0\r\n" //
 				+ "1127,D202,SJJ BPP,1,each,6/25/14 12:00,00\r\n" //
 				+ "1128,D203,SJJ BPP,10,each,6/25/14 12:00,0\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		importInventoryData(facility, csvString);
 
 		Location locationD101 = facility.findSubLocationById("D101");
 		Location locationD102 = facility.findSubLocationById("D102");
@@ -148,16 +116,8 @@ public class WorkInstructionSequencerTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,12345,12345,1125,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1126,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1128,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
-
+		importOrdersData(facility, csvString2);
+		
 		// We should have one order with 4 details 
 		OrderHeader order = facility.getOrderHeader("12345");
 		Assert.assertNotNull(order);

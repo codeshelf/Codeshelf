@@ -138,9 +138,7 @@ public class LocationAliasImporterTest extends MockDaoTest {
 		Bay bay2 = aisleA2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		Bay.staticGetDao().store(bay2);
 
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer = createLocationAliasImporter();
-		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		importLocationAliasesData(facility, csvString);
 
 		this.getTenantPersistenceService().commitTransaction();
 		
@@ -226,9 +224,7 @@ public class LocationAliasImporterTest extends MockDaoTest {
 				+ "A1.B1, D139x\r\n" //
 				+ "A2.B2, B34x\r\n" //
 				+ "A3, AisleC\r\n";
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
+		importLocationAliasesData(facility, csvString2);
 		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("4: Normal lookups by the new alias found. Old not");
@@ -280,9 +276,7 @@ public class LocationAliasImporterTest extends MockDaoTest {
 				+ "A1.B1, B34x\r\n" //
 				+ "A2.B2, D139x\r\n" //
 				+ "A3, AisleC\r\n";
-		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer4 = createLocationAliasImporter();
-		importer4.importLocationAliasesFromCsvStream(new StringReader(csvString4), facility, ediProcessTime4);
+		importLocationAliasesData(facility, csvString4);
 		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("8: See that the swapped aliases resolve correctly");

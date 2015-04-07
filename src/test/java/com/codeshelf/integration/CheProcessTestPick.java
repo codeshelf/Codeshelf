@@ -9,8 +9,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -27,8 +25,6 @@ import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.PosControllerInstr;
-import com.codeshelf.edi.AislesFileCsvImporter;
-import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.OrderStatusEnum;
@@ -100,10 +96,7 @@ public class CheProcessTestPick extends ServerTest {
 				+ "Tier,T3,,5,32,40,\r\n" //
 				+ "Tier,T4,,5,32,60,\r\n" //
 				+ "Tier,T5,,5,32,80,\r\n";//
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(new StringReader(csvAisles), getFacility(), ediProcessTime);
+		importAislesData(getFacility(), csvAisles);
 
 		// Get the aisle
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
@@ -172,10 +165,7 @@ public class CheProcessTestPick extends ServerTest {
 				+ "A2.B2.T5.S2	D-4\r\n" + "A2.B2.T5.S3	D-3\r\n" + "A2.B2.T5.S4	D-2\r\n"
 				*/
 				+ "A2.B2.T5.S5	D-1\r\n";
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(new StringReader(csvAliases), getFacility(), ediProcessTime2);
+		importLocationAliasesData(getFacility(), csvAliases);
 
 		CodeshelfNetwork network = getNetwork();
 

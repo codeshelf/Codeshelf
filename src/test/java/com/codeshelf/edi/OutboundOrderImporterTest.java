@@ -1694,10 +1694,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "Tier,T1,,1,1,0,,\r\n"//
 				+ "Aisle,A2,,,,,tierNotB1S1Side,12.0,43.0,X,120,\r\n" + "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,1,1,0,,\r\n"; //
-
-		Timestamp ediProcessTime1 = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer1 = createAisleFileImporter();
-		importer1.importAislesFileFromCsvStream(new StringReader(csvString1), inFacility, ediProcessTime1);
+		importAislesData(inFacility, csvString1);
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleA\r\n" //
@@ -1705,9 +1702,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "A1.B1, D34\r\n" //
 				+ "A1.B2, D35\r\n" //
 				+ "A2.B1, D13\r\n"; //
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(new StringReader(csvString2), inFacility, ediProcessTime2);
+		importLocationAliasesData(inFacility, csvString2);
 	}
 
 	private BatchResult<Object> importCsvString(Facility facility, String csvString) throws IOException {

@@ -7,8 +7,6 @@ package com.codeshelf.model.domain;
 
 import static org.mockito.Mockito.mock;
 
-import java.io.StringReader;
-import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +24,6 @@ import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.device.PosControllerInstr.Brightness;
 import com.codeshelf.device.PosControllerInstr.Frequency;
 import com.codeshelf.device.PosManagerDeviceLogic;
-import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.AislesFileCsvImporter.ControllerLayout;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
@@ -74,9 +71,8 @@ public class PutwallTest extends MockDaoTest {
 		// initial data setup
 		this.getTenantPersistenceService().beginTransaction();		
 		Facility facility= Facility.createFacility(fName, "TEST", Point.getZeroPoint());
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		importAislesData(facility, csvString);
+		
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		LedController controller1 = network.findOrCreateLedController(fName, new NetGuid("0x00000011"));
 		String uuid1 = controller1.getPersistentId().toString();

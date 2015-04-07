@@ -5,9 +5,7 @@
  *******************************************************************************/
 package com.codeshelf.edi;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.text.MessageFormat;
 import java.util.UUID;
@@ -459,13 +457,7 @@ public class CrossBatchImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
-
-
-		InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(orderCsvString.getBytes()));
-
-		Timestamp ordersEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter orderImporter = createOrderImporter();
-		orderImporter.importOrdersFromCsvStream(reader, facility, ordersEdiProcessTime);
+		importOrdersData(facility, orderCsvString);
 
 		// Make sure we imported the outbound order.
 		OrderHeader order = facility.getOrderHeader("123");

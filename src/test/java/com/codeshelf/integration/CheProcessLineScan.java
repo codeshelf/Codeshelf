@@ -6,8 +6,6 @@
 package com.codeshelf.integration;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.sql.Timestamp;
 import java.util.List;
 
 import org.junit.Assert;
@@ -17,9 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.CsDeviceManager;
-import com.codeshelf.edi.AislesFileCsvImporter;
-import com.codeshelf.edi.ICsvLocationAliasImporter;
-import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
@@ -95,10 +90,7 @@ public class CheProcessLineScan extends ServerTest {
 				+ "Tier,T1,,0,80,80,,\r\n" //
 				+ "Bay,B3,230,,,,,\r\n" //
 				+ "Tier,T1,,0,80,160,,\r\n"; //
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(new StringReader(csvAisles), getFacility(), ediProcessTime);
+		importAislesData(getFacility(), csvAisles);
 
 		// Get the aisle
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
@@ -135,10 +127,7 @@ public class CheProcessLineScan extends ServerTest {
 				+ "A3.B1.T1, D501\r\n" //
 				+ "A3.B2.T1, D502\r\n" //
 				+ "A3.B3.T1, D503\r\n";//
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter locationAliasImporter = createLocationAliasImporter();
-		locationAliasImporter.importLocationAliasesFromCsvStream(new StringReader(csvAliases), getFacility(), ediProcessTime2);
+		importLocationAliasesData(getFacility(), csvAliases);
 
 		CodeshelfNetwork network = getNetwork();
 
@@ -200,10 +189,7 @@ public class CheProcessLineScan extends ServerTest {
 				+ "\r\n,USF314,COSTCO,11111,11111.3,1523,SJJ BPP,1,each, D602"
 				+ "\r\n,USF314,COSTCO,11111,11111.4,1124,8 oz Bowls -PLA Compostable,1,each, D603"
 				+ "\r\n,USF314,COSTCO,11111,11111.5,1555,paper towel,2,each, D604";
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter orderImporter = createOrderImporter();
-		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
+		importOrdersData(inFacility, csvOrders);
 	}
 	
 	private void setUpLineScanOrdersWithCntr(Facility inFacility) throws IOException {
@@ -218,10 +204,7 @@ public class CheProcessLineScan extends ServerTest {
 				+ "\r\n,USF314,COSTCO,11111,11111,11111.3,1523,SJJ BPP,1,each, D602"
 				+ "\r\n,USF314,COSTCO,11111,11111,11111.4,1124,8 oz Bowls -PLA Compostable,1,each, D603"
 				+ "\r\n,USF314,COSTCO,11111,11111,11111.5,1555,paper towel,2,each, D604";
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter orderImporter = createOrderImporter();
-		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
+		importOrdersData(inFacility, csvOrders);
 	}
 	
 	private void setUpLineScanOrdersNoCntrWithGtin(Facility inFacility) throws IOException {
@@ -237,10 +220,7 @@ public class CheProcessLineScan extends ServerTest {
 				+ "\r\n105,USF314,COSTCO,11111,11111.3,1523,SJJ BPP,1,each, D403"
 				+ "\r\n106,USF314,COSTCO,11111,11111.4,1124,8 oz Bowls -PLA Compostable,1,each, D501"
 				+ "\r\n107,USF314,COSTCO,11111,11111.5,1555,paper towel,2,each, D502";
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter orderImporter = createOrderImporter();
-		orderImporter.importOrdersFromCsvStream(new StringReader(csvOrders), inFacility, ediProcessTime);
+		importOrdersData(inFacility, csvOrders);
 	}
 
 	/**
