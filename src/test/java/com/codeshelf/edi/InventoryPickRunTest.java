@@ -5,11 +5,7 @@
  *******************************************************************************/
 package com.codeshelf.edi;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.sql.Timestamp;
 import java.util.List;
 
 import org.junit.Assert;
@@ -80,18 +76,9 @@ public class InventoryPickRunTest extends ServerTest {
 				+ "Tier,T2,,0,80,120,,\r\n" //
 				+ "Tier,T3,,0,80,240,,\r\n"; //
 
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
 		String fName = "F-" + inOrganizationName;
 		Facility facility = Facility.createFacility(fName, "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
-
+		importAislesData(facility, csvString);
 		// Get the aisles
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
@@ -119,16 +106,8 @@ public class InventoryPickRunTest extends ServerTest {
 				+ "A1.B2.T3, D-72\r\n" //
 				+ "A2.B1.T3, D-73\r\n" //
 				+ "A2.B2.T3, D-74\r\n"; //
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
-
+		importLocationAliasesData(facility, csvString2);
+		
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 
 		Che che1 = network.getChe("CHE1");
@@ -171,15 +150,7 @@ public class InventoryPickRunTest extends ServerTest {
 				+ "\r\n,USF314,TARGET,12000,12000,1523,Tshirt-med,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03"
 				+ "\r\n,USF314,TARGET,12000,12000,1524,Tshirt-large,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03"
 				+ "\r\n,USF314,TARGET,12000,12000,1525,Tshirt-xl,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03" + "\n";
-
-		byte[] csvArray2 = csvString2.getBytes();
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
-
+		importOrdersData(inFacility, csvString2);
 	}
 	
 	private void readOrdersForBayDistance(Facility inFacility) throws IOException {
@@ -195,15 +166,7 @@ public class InventoryPickRunTest extends ServerTest {
 				+ "\r\n,USF314,TARGET,12000,12000,1124,12 oz Bowl Lids,1,each,104"		// Should get work instruction
 				+ "\r\n,USF314,TARGET,12000,12000,1125,16 oz Bowl Lids,1,each,105"
 				+ "\r\n,USF314,TARGET,12000,12000,1126,24 oz Bowl Lids,1,each,106" + "\n";
-
-		byte[] csvArray2 = csvString2.getBytes();
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
-
+		importOrdersData(inFacility, csvString2);
 	}
 	
 	private void readOrdersForWorkSequence(Facility inFacility) throws IOException {
@@ -219,15 +182,7 @@ public class InventoryPickRunTest extends ServerTest {
 				+ "\r\n,USF314,TARGET,12000,12000,1124,12 oz Bowl Lids,1,each,104"	// item has location, no workSequence, no preferred, should not get wi
 				+ "\r\n,USF314,TARGET,12000,12000,1125,16 oz Bowl Lids,1,each,105"
 				+ "\r\n,USF314,TARGET,12000,12000,1126,24 oz Bowl Lids,1,each,106" + "\n";
-
-		byte[] csvArray2 = csvString2.getBytes();
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, inFacility, ediProcessTime2);
-
+		importOrdersData(inFacility, csvString2);
 	}
 
 	private void readInventoryWithoutTop(Facility inFacility) throws IOException {
@@ -251,15 +206,7 @@ public class InventoryPickRunTest extends ServerTest {
 				+ "1525,D-28,Tshirt-xl,1,each,6/25/14 12:00,82\r\n"//
 				+ "1831,D-27,Shorts-xl,1,each,6/25/14 12:00,82\r\n"//
 				+ "1830,D-27,Shorts-large,1,each,6/25/14 12:00,182\r\n";//
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, inFacility, ediProcessTime);
+		importInventoryData(inFacility, csvString);
 	}
 
 	private void readInventoryWithTop(Facility inFacility) throws IOException {
@@ -289,15 +236,7 @@ public class InventoryPickRunTest extends ServerTest {
 				+ "1525,D-28,Tshirt-xl,1,each,6/25/14 12:00,82\r\n"//
 				+ "1831,D-27,Shorts-xl,1,each,6/25/14 12:00,82\r\n"//
 				+ "1830,D-27,Shorts-large,1,each,6/25/14 12:00,182\r\n";//
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, inFacility, ediProcessTime);
+		importInventoryData(inFacility, csvString);
 	}
 	
 	private void readInventoryBayDistance(Facility inFacility) throws IOException {
@@ -327,15 +266,7 @@ public class InventoryPickRunTest extends ServerTest {
 				+ "1525,D-28,Tshirt-xl,1,each,6/25/14 12:00,82\r\n"//
 				+ "1831,,Shorts-xl,1,each,6/25/14 12:00,82\r\n"//
 				+ "1830,,Shorts-large,1,each,6/25/14 12:00,182\r\n";//
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, inFacility, ediProcessTime);
+		importInventoryData(inFacility, csvString);
 	}
 
 	@SuppressWarnings("unused")
@@ -535,10 +466,7 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 				+ "\r\n10,10,10.2,SKU0002,16 oz Clear Cup,2,CS,,pick,D-28,43"
 				+ "\r\n11,11,11.1,SKU0003,Spoon 6in.,1,CS,,pick,D-21,"
 				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshell,2,EA,,pick,D-71,";
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer = createOrderImporter();
-		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		importOrdersData(facility, csvString);
 
 		this.getTenantPersistenceService().commitTransaction();
 		// This should give us inventory at D-27, D-28, and D-71, but not at D-21
@@ -549,7 +477,7 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		facility = Facility.staticGetDao().reload(facility);
 		propertyService.turnOffHK(facility);
 		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
-List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
+		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
 		logWiList(wiList);
 		Integer theSize = wiList.size();
 		Assert.assertEquals((Integer) 3, theSize);
@@ -560,9 +488,7 @@ List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11")
 		String csvString2 = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "SKU0003,D-33,Spoon 6in.,80,Cs,6/25/14 12:00,\r\n"; //
 
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer2 = createInventoryImporter();
-		importer2.importSlottedInventoryFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
+		importInventoryData(facility, csvString2);
 		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("6: Set up CHE again for orders 10 and 11. Now should get 4 jobs");
@@ -580,9 +506,7 @@ List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11")
 		String csvString3 = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "SKU0004,D-74,9 Three Compartment Unbleached Clamshell,,Ea,6/25/14 12:00,\r\n"; //
 
-		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer3 = createInventoryImporter();
-		importer3.importSlottedInventoryFromCsvStream(new StringReader(csvString3), facility, ediProcessTime3);
+		importInventoryData(facility, csvString3);
 		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("8: Set up CHE again for orders 10 and 11. Should still get 4 jobs");

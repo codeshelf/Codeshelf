@@ -33,7 +33,9 @@ public enum CheStateEnum {
 	PICK_COMPLETE(CheStateNum.PICK_COMPLETE, "PICK_COMPLETE"),
 	// @EnumValue("NO_WORK")
 	NO_WORK(CheStateNum.NO_WORK, "NO_WORK"),
-	// @EnumValue("LOCATION_SELECT_REVIEW")
+	// @EnumValue("NO_WORK_CURR_PATH")
+	NO_WORK_CURR_PATH(CheStateNum.NO_WORK_CURR_PATH, "NO_WORK_CURR_PATH"),
+	// @EnumValue("LOCATION_SELECT_REVIEW")	
 	LOCATION_SELECT_REVIEW(CheStateNum.LOCATION_SELECT_REVIEW, "LOCATION_SELECT_REVIEW"),
 	// @EnumValue("CONTAINER_POSITION_INVALID")
 	CONTAINER_POSITION_INVALID(CheStateNum.CONTAINER_POSITION_INVALID, "CONTAINER_POSITION_INVALID"),
@@ -178,6 +180,7 @@ public enum CheStateEnum {
 		static final byte	SHORT_PICK					= 7;
 		static final byte	PICK_COMPLETE				= 8;
 		static final byte	NO_WORK						= 9;
+		static final byte	NO_WORK_CURR_PATH			= 28;	//Added Apr 6, 2015
 		static final byte	SHORT_PICK_CONFIRM			= 10;	//Added Oct. 2014
 		static final byte	LOCATION_SELECT_REVIEW		= 11;	//Added Dec 12 2014
 

@@ -51,6 +51,11 @@ import com.google.common.base.Strings;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+/* 
+ * This class is not used currently and has been replaced by OutboundOrderPrefetchCsvImporter.
+ * It is currently left in the code base for reference and will likely be removed in the future.
+ */
+
 @Singleton
 public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> implements ICsvOrderImporter {
 

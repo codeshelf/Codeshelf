@@ -5,19 +5,12 @@
  *******************************************************************************/
 package com.codeshelf.application;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.sql.Timestamp;
 import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.codeshelf.edi.AislesFileCsvImporter;
-import com.codeshelf.edi.ICsvInventoryImporter;
-import com.codeshelf.edi.ICsvLocationAliasImporter;
-import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
@@ -73,17 +66,8 @@ public class PickSimulaneousWis extends ServerTest {
 				+ "Tier,T1,,0,80,0,,\r\n"//
 				+ "Bay,B2,230,,,,,\r\n" //
 				+ "Tier,T1,,0,80,0,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-
-		importer.importAislesFileFromCsvStream(reader, facility, ediProcessTime);
-
+		importAislesData(facility, csvString);
+		
 		// Get the aisle
 		Aisle aisle1 = facility.getAisle("A1");// Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
@@ -118,16 +102,8 @@ public class PickSimulaneousWis extends ServerTest {
 				+ "A2.B2.T1, D403\r\n"//
 				+ "A3.B1.T1, D502\r\n" //
 				+ "A3.B2.T1, D503\r\n";//
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(reader2, facility, ediProcessTime2);
-
+		importLocationAliasesData(facility, csvString2);
+		
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		Che che1 = network.createChe("CHE3", new NetGuid("0x00000001"));
 		Che che2 = network.createChe("CHE4", new NetGuid("0x00000002"));
@@ -190,15 +166,7 @@ public class PickSimulaneousWis extends ServerTest {
 				+ "1155,D402,12 oz Bowl -PLA Compostable,10,EA,6/25/14 12:00,95\r\n" //
 				+ "1493,D402,PARK RANGER Doll,20,EA,6/25/14 12:00,66\r\n" //
 				+ "1522,D402,SJJ BPP,10,each,6/25/14 12:00,30\r\n";//
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, facility, ediProcessTime);
+		importInventoryData(facility, csvString);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -222,15 +190,7 @@ public class PickSimulaneousWis extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,12003,12003,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12004,12004,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12005,12005,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+		importOrdersData(facility, csvString2);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();

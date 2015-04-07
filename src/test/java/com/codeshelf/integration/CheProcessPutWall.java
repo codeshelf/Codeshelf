@@ -1,8 +1,6 @@
 package com.codeshelf.integration;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.sql.Timestamp;
 import java.util.List;
 
 import org.junit.Assert;
@@ -13,8 +11,6 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.PosControllerInstr;
-import com.codeshelf.edi.AislesFileCsvImporter;
-import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.WorkInstructionSequencerType;
@@ -389,11 +385,8 @@ public class CheProcessPutWall extends ServerTest {
 				+ "Aisle,A4,,,,,tierB1S1Side,20,20,X,20\n" + "Bay,B1,50,,,,,,,,\n"//
 				+ "Tier,T1,50,4,0,0,,,,,\n"//
 				+ "Bay,B2,CLONE(B1)\n"; //
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(new StringReader(aislesCsvString), getFacility(), ediProcessTime);
-
+		importAislesData(getFacility(), aislesCsvString);
+		
 		// Get the aisles
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
 		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getFacility(), "A2");
@@ -464,12 +457,7 @@ public class CheProcessPutWall extends ServerTest {
 				+ "A4.B2.T1.S2,P16\n"//
 				+ "A4.B2.T1.S3,P17\n"//
 				+ "A4.B2.T1.S4,P18\n";//
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter locationAliasImporter = createLocationAliasImporter();
-		locationAliasImporter.importLocationAliasesFromCsvStream(new StringReader(csvLocationAliases),
-			getFacility(),
-			ediProcessTime2);
+		importLocationAliasesData(getFacility(), csvLocationAliases);
 
 		CodeshelfNetwork network = getNetwork();
 

@@ -23,7 +23,6 @@ import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
 import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.service.DummyPropertyService;
-import com.codeshelf.service.WorkService;
 import com.codeshelf.testframework.ServerTest;
 
 /**

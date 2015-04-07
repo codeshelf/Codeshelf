@@ -5,10 +5,7 @@
  *******************************************************************************/
 package com.codeshelf.edi;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.sql.Timestamp;
 import java.util.List;
 
 import org.junit.Assert;
@@ -145,15 +142,7 @@ public class LocationDeleteTest extends ServerTest {
 				+ "A2.B2.T1.S2, D-39\r\n" //
 				+ "A9.B9.T9.S9, X-999\r\n" //
 				+ "A2.B2.T1.S1, D-40\r\n"; //
-
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(reader2, inFacility, ediProcessTime2);		
+		importLocationAliasesData(inFacility, csvString2);
 	}
 
 	private void readStandardAisleFile(Facility inFacility) {
@@ -172,15 +161,7 @@ public class LocationDeleteTest extends ServerTest {
 				+ "Bay,B2,112,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Tier,T2,,5,32,120,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, inFacility, ediProcessTime);
+		importAislesData(inFacility, csvString);
 	}
 
 	private void readSmallerAisleFile(Facility inFacility) {
@@ -200,15 +181,7 @@ public class LocationDeleteTest extends ServerTest {
 				+ "Bay,B1,112,,,,,\r\n" //
 				+ "Tier,T1,,5,32,0,,\r\n" //
 				+ "Tier,T2,,5,32,120,,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(reader, inFacility, ediProcessTime);
+		importAislesData(inFacility, csvString);
 	}
 
 	private void readInventory(Facility inFacility) {
@@ -218,15 +191,7 @@ public class LocationDeleteTest extends ServerTest {
 				+ "9923,D-26,12/16 oz Bowl Lids -PLA Compostable,6,CS,6/25/14 12:00,\r\n" //
 				+ "9937,X-999,8 oz Paper Bowl Lids - Comp Case of 1000,3,CS,6/25/14 12:00,\r\n" //
 				+ "9993,D-6,PARK RANGER Doll,40,EA,6/25/14 12:00,\r\n"; //
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(reader, inFacility, ediProcessTime);
+		importInventoryData(inFacility, csvString);
 	}
 
 	@SuppressWarnings("unused")
@@ -245,18 +210,9 @@ public class LocationDeleteTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,789,10100250,Organic Fire-Roasted Red Bell Peppers,3,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
-
-		byte orderCsvArray[] = orderCsvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(orderCsvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ordersEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter orderImporter = createOrderImporter();
-		orderImporter.importOrdersFromCsvStream(reader, inFacility, ordersEdiProcessTime);
-
+		importOrdersData(inFacility, orderCsvString);
+		
 		// Slotting file
-
 		String csvString2 = "orderId,locationId\r\n" //
 				+ "123,D-2\r\n" // in A1.B1
 				+ "456,D-25\r\n" // in A1.B2

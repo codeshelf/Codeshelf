@@ -570,9 +570,7 @@ public class InventoryImporterTest extends ServerTest {
 	}
 
 	private Facility setupInventoryData(Facility facility, String csvString) {
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		importInventoryData(facility, csvString);
 		return facility.getDao().findByPersistentId(facility.getPersistentId());
 	}
 
@@ -805,10 +803,7 @@ public class InventoryImporterTest extends ServerTest {
 				+ "\r\n1,USF314,PENNYS,12010,12010,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0" + "\n";
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
+		importOrdersData(facility, csvString2);
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);

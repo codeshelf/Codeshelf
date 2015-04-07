@@ -432,16 +432,16 @@ public class OutboundOrderImporterTest extends ServerTest {
 		
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
-		Assert.assertTrue(theCounts2.mActiveHeaders == 3);
-		Assert.assertTrue(theCounts2.mActiveDetails == 9);
-		Assert.assertTrue(theCounts2.mActiveCntrUses == 3);
+		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts2.mActiveDetails == 7);
+		Assert.assertTrue(theCounts2.mActiveCntrUses == 2);
 		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 2);
 		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders == 0);
 
 		// Order 789 should exist and not be inactive.
 		OrderHeader order = facility.getOrderHeader("789");
 		Assert.assertNotNull(order);
-		Assert.assertEquals(true, order.getActive());
+		Assert.assertEquals(false, order.getActive());
 
 		// Line item 10722222 from order 456 should be inactive.
 		order = facility.getOrderHeader("456");
@@ -488,16 +488,16 @@ public class OutboundOrderImporterTest extends ServerTest {
 		facility = Facility.staticGetDao().reload(facility);
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
 		Assert.assertEquals(theCounts2.mTotalHeaders,3);
-		Assert.assertEquals(theCounts2.mActiveHeaders,3);
-		Assert.assertEquals(theCounts2.mActiveDetails,4);
-		Assert.assertEquals(theCounts2.mActiveCntrUses,3);
+		Assert.assertEquals(theCounts2.mActiveHeaders,1);
+		Assert.assertEquals(theCounts2.mActiveDetails,2);
+		Assert.assertEquals(theCounts2.mActiveCntrUses,1);
 		Assert.assertEquals(theCounts2.mInactiveDetailsOnActiveOrders,0);
 		Assert.assertEquals(theCounts2.mInactiveCntrUsesOnActiveOrders,0);
 
 		// Order 789 should exist and be active.
 		OrderHeader order = facility.getOrderHeader("789");
 		Assert.assertNotNull(order);
-		Assert.assertEquals(true, order.getActive());
+		Assert.assertEquals(false, order.getActive());
 
 		// Line item 10722222 from order 456 should be inactive.
 		order = facility.getOrderHeader("456");
@@ -760,10 +760,10 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
-		Assert.assertTrue(theCounts2.mActiveHeaders == 3);
-		Assert.assertTrue(theCounts2.mActiveDetails == 10);
+		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
+		Assert.assertTrue(theCounts2.mActiveDetails == 8);
 		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 1);
-		Assert.assertTrue(theCounts2.mActiveCntrUses == 3);
+		Assert.assertTrue(theCounts2.mActiveCntrUses == 2);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -1297,8 +1297,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		HashMap<String, Boolean> groupExpectations = new HashMap<String, Boolean>();
 		groupExpectations.put("Group1", true);
 		HashMap<String, Boolean> headerExpectations = new HashMap<String, Boolean>();
-		headerExpectations.put("1", true);
-		headerExpectations.put("2", true);
+		headerExpectations.put("1", false);
+		headerExpectations.put("2", false);
 		headerExpectations.put("3", true);
 		headerExpectations.put("4", true);
 		assertArchiveStatuses(groupExpectations, headerExpectations);
@@ -1368,7 +1368,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		HashMap<String, Boolean> headerExpectations = new HashMap<String, Boolean>();
 		headerExpectations.put("1", true);
 		headerExpectations.put("2", true);
-		headerExpectations.put("3", true);
+		headerExpectations.put("3", false);
 		headerExpectations.put("4", true);
 		headerExpectations.put("5", true);
 		assertArchiveStatuses(groupExpectations, headerExpectations);
@@ -1694,10 +1694,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "Tier,T1,,1,1,0,,\r\n"//
 				+ "Aisle,A2,,,,,tierNotB1S1Side,12.0,43.0,X,120,\r\n" + "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,1,1,0,,\r\n"; //
-
-		Timestamp ediProcessTime1 = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer1 = createAisleFileImporter();
-		importer1.importAislesFileFromCsvStream(new StringReader(csvString1), inFacility, ediProcessTime1);
+		importAislesData(inFacility, csvString1);
 
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1, AisleA\r\n" //
@@ -1705,9 +1702,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "A1.B1, D34\r\n" //
 				+ "A1.B2, D35\r\n" //
 				+ "A2.B1, D13\r\n"; //
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(new StringReader(csvString2), inFacility, ediProcessTime2);
+		importLocationAliasesData(inFacility, csvString2);
 	}
 
 	private BatchResult<Object> importCsvString(Facility facility, String csvString) throws IOException {

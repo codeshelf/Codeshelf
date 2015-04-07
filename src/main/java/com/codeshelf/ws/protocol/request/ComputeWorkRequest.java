@@ -20,25 +20,14 @@ public class ComputeWorkRequest extends DeviceRequest {
 	@Getter @Setter
 	private Boolean reversePickOrder = false;
 	
-	@Getter @Setter
-	private Boolean reversePickOrderFromLastTime = false;
-	
 	public ComputeWorkRequest() {
 	}
 	
-	public ComputeWorkRequest(String cheId, Map<String, String>	positionToContainerMap, Boolean reversePickOrder) {
-		this.purpose = ComputeWorkPurpose.COMPUTE_WORK;
+	public ComputeWorkRequest(ComputeWorkPurpose purpose, String cheId, String locationId, Map<String, String> positionToContainerMap, Boolean reversePickOrder) {
+		this.purpose = purpose;
 		setDeviceId(cheId);
+		this.locationId = locationId;
 		this.positionToContainerMap = positionToContainerMap;
 		this.reversePickOrder = reversePickOrder;
 	}
-	
-	public ComputeWorkRequest(String cheId, String locationId, Boolean reversePickOrder, Boolean reversePickOrderFromLastTime) {
-		this.purpose = ComputeWorkPurpose.GET_WORK;
-		setDeviceId(cheId);
-		this.locationId = locationId;
-		this.reversePickOrder = reversePickOrder;
-		this.reversePickOrderFromLastTime = reversePickOrderFromLastTime;
-	}
-
 }

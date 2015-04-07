@@ -5,15 +5,19 @@ import lombok.Setter;
 
 public class LoginRequest extends RequestABC {
 
+
 	@Getter @Setter
-	String userId;
-	
+	private String cstoken;
+
 	@Getter @Setter
-	String password;
+	private String userId;
+
+	@Getter @Setter
+	private String password;
 
 	public LoginRequest() {
 	}
-	
+
 	public LoginRequest(String userId, String password) {
 		this.userId = userId;
 		this.password = password;

@@ -8,8 +8,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -30,9 +28,7 @@ import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.LedInstrListMessage;
 import com.codeshelf.device.LedSample;
-import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.AislesFileCsvImporter.ControllerLayout;
-import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.InventoryGenerator;
 import com.codeshelf.edi.VirtualSlottedFacilityGenerator;
@@ -97,7 +93,6 @@ public class LightServiceTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 		
 		LOGGER.info("4: mockProp.getPropertyAsColor");
-		WebSocketManagerService webSocketManagerService = mock(WebSocketManagerService.class);
 		IPropertyService mockProp = Mockito.spy(new DummyPropertyService());
 		ArrayList<Service> services = new ArrayList<Service>(1);
 		services.add(mockProp);
@@ -113,7 +108,9 @@ public class LightServiceTest extends ServerTest {
 		});
 		
 		LOGGER.info("5: new LightService");
-		LightService lightService = new LightService(webSocketManagerService);
+		LightService lightService = new LightService();
+		WebSocketManagerService webSocketManagerService = mock(WebSocketManagerService.class);
+		WebSocketManagerService.setInstance(webSocketManagerService);
 
 		LOGGER.info("6: lightService.lightInventory. This is the slow step: 23 seconds");
 		// To speed up: fewer inventory items? 2250 ms per item. Or lightService could pass in or get config value to set that lower.
@@ -291,9 +288,11 @@ public class LightServiceTest extends ServerTest {
 	@SuppressWarnings("unchecked")
 	private List<MessageABC> captureLightMessages(Facility facility, Location parent) throws InterruptedException, ExecutionException {
 		WebSocketManagerService webSocketManagerService = mock(WebSocketManagerService.class);
+		WebSocketManagerService.setInstance(webSocketManagerService);
+		
 		ColorEnum color = ColorEnum.RED;
 		
-		LightService lightService = new LightService(webSocketManagerService);
+		LightService lightService = new LightService();
 		lightService.lightChildLocations(facility, parent, color);
 		
 		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
@@ -370,10 +369,7 @@ public class LightServiceTest extends ServerTest {
 
 		String fName = "F-" + inOrganizationName;
 		Facility facility= Facility.createFacility(fName, "TEST", Point.getZeroPoint());
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		importAislesData(facility, csvString);
 
 		// Get the aisles
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
@@ -430,10 +426,7 @@ public class LightServiceTest extends ServerTest {
 				+ "A2.B2.T1.S3, D-38\r\n" //
 				+ "A2.B2.T1.S2, D-39\r\n" //
 				+ "A2.B2.T1.S1, D-40\r\n"; //
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer2 = createLocationAliasImporter();
-		importer2.importLocationAliasesFromCsvStream(new StringReader(csvLocationAlias), facility, ediProcessTime2);
+		importLocationAliasesData(facility, csvLocationAlias);
 
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		Che che1 = network.getChe("CHE1");

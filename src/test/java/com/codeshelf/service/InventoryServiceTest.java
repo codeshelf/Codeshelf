@@ -1,7 +1,5 @@
 package com.codeshelf.service;
 
-import java.io.StringReader;
-import java.sql.Timestamp;
 import java.util.UUID;
 
 import org.junit.Assert;
@@ -9,7 +7,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.OutboundOrderImporterTest;
 import com.codeshelf.edi.VirtualSlottedFacilityGenerator;
 import com.codeshelf.flyweight.command.ColorEnum;
@@ -55,7 +52,7 @@ public class InventoryServiceTest extends ServerTest {
 	
 	@Test
 	public void testInventoryService() {
-		LightService ls = new LightService(this.webSocketManagerService);
+		LightService ls = new LightService();
 		this.inventoryService = new InventoryService(ls);
 		this.initializeEphemeralServiceManager();
 		
@@ -125,7 +122,7 @@ public class InventoryServiceTest extends ServerTest {
 	
 	@Test
 	public void testAssignLocationTapeId(){
-		LightService ls = new LightService(this.webSocketManagerService);
+		LightService ls = new LightService();
 		this.inventoryService = new InventoryService(ls);
 		this.initializeEphemeralServiceManager();
 		
@@ -179,9 +176,7 @@ public class InventoryServiceTest extends ServerTest {
 	}
 	
 	private Facility setupInventoryData(Facility facility, String csvString) {
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvInventoryImporter importer = createInventoryImporter();
-		importer.importSlottedInventoryFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		importInventoryData(facility, csvString);
 		return facility.getDao().findByPersistentId(facility.getPersistentId());
 	}
 }

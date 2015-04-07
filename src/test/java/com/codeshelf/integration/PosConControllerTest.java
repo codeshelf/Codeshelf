@@ -1,8 +1,6 @@
 package com.codeshelf.integration;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -14,8 +12,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.AisleDeviceLogic;
-import com.codeshelf.edi.AislesFileCsvImporter;
-import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.INetworkDevice;
 import com.codeshelf.model.DeviceType;
@@ -128,11 +124,8 @@ public class PosConControllerTest extends ServerTest{
 				"Tier,T1,50,4,4,0,,,,,\n" + 
 				"Bay,B4,50,,,,,,,,\n" + 
 				"Tier,T1,50,4,4,0,,,,,\n"; //
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		AislesFileCsvImporter importer = createAisleFileImporter();
-		importer.importAislesFileFromCsvStream(new StringReader(aislesCsvString), getFacility(), ediProcessTime);
-
+		importAislesData(getFacility(), aislesCsvString);
+		
 		// Get the aisle
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
 		Assert.assertNotNull(aisle1);
@@ -161,10 +154,7 @@ public class PosConControllerTest extends ServerTest{
 				"A1.B4.T1.S2,LocP14\n" + 
 				"A1.B4.T1.S3,LocP15\n" + 
 				"A1.B4.T1.S4,LocP16";//
-
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter locationAliasImporter = createLocationAliasImporter();
-		locationAliasImporter.importLocationAliasesFromCsvStream(new StringReader(csvLocationAliases), getFacility(), ediProcessTime2);
+		importLocationAliasesData(getFacility(), csvLocationAliases);
 
 		CodeshelfNetwork network = getNetwork();
 

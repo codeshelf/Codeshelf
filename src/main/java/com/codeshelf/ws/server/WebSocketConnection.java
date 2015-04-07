@@ -48,56 +48,60 @@ public class WebSocketConnection implements IDaoListener {
 		CLOSED
 	};
 
-	private static final Logger					LOGGER						= LoggerFactory.getLogger(WebSocketConnection.class);
+	private static final Logger							LOGGER							= LoggerFactory.getLogger(WebSocketConnection.class);
 
 	@Getter
 	@Setter
-	String										sessionId;
+	String												sessionId;
 
 	@Getter
-	User										currentUser;
+	User												currentUser;
 
 	@Getter
-	Tenant										currentTenant;
+	Tenant												currentTenant;
 
 	@Getter
-	String										lastTenantIdentifier; // even after disconnection
+	String												lastTenantIdentifier;																	// even after disconnection
 
 	@Getter
-	Date										sessionStart				= new Date();
+	Date												sessionStart					= new Date();
 
 	@Getter
-	private Session								wsSession					= null;
-
-	@Getter
-	@Setter
-	long										lastPingSent				= 0;
+	private Session										wsSession						= null;
 
 	@Getter
 	@Setter
-	long										lastPondRoundtripDuration	= 0;
+	long												lastPingSent					= 0;
 
 	@Getter
 	@Setter
-	long										lastMessageSent				= System.currentTimeMillis();
+	long												lastPondRoundtripDuration		= 0;
 
 	@Getter
 	@Setter
-	long										lastMessageReceived			= System.currentTimeMillis();
+	long												lastMessageSent					= System.currentTimeMillis();
 
 	@Getter
 	@Setter
-	State										lastState					= State.ACTIVE;
+	long												nextPutWallRefresh				= System.currentTimeMillis() + 15 * 1000; // wait 15 seconds after connection to initialize
 
-	private Timer								pingTimer					= null;
+	@Getter
+	@Setter
+	long												lastMessageReceived				= System.currentTimeMillis();
 
-	private ConcurrentMap<String, ObjectEventListener>	eventListeners				= new ConcurrentHashMap<String, ObjectEventListener>();
+	@Getter
+	@Setter
+	State												lastState						= State.ACTIVE;
 
-	private ExecutorService						executorService;
-	
+	private Timer										pingTimer						= null;
+
+	private ConcurrentMap<String, ObjectEventListener>	eventListeners					= new ConcurrentHashMap<String, ObjectEventListener>();
+
+	private ExecutorService								executorService;
+
 	// track individual tasks
-	Set<Future<?>> 								pendingFutures = new ConcurrentHashSet<Future<?>>();
-	private static final int 					NUM_FUTURES_CLEANUP_THRESHOLD = 5;
+	Set<Future<?>>										pendingFutures					= new ConcurrentHashSet<Future<?>>();
+	private static final int							NUM_FUTURES_CLEANUP_THRESHOLD	= 5;
 
 	public WebSocketConnection(Session session, ExecutorService sharedExecutor) {
 		this.wsSession = session;
@@ -105,10 +109,10 @@ public class WebSocketConnection implements IDaoListener {
 	}
 
 	public String getCurrentTenantIdentifier() {
-		if(this.currentTenant == null)
+		if (this.currentTenant == null)
 			return null;
 		return this.currentTenant.getTenantIdentifier();
-	}	
+	}
 
 	public boolean sendMessage(final MessageABC message) {
 		boolean sent = false;
@@ -119,11 +123,15 @@ public class WebSocketConnection implements IDaoListener {
 				sent = true;
 			}
 		} catch (IOException e) {
-			LOGGER.warn("Failed to send "+message.getClass().getSimpleName()+" message on session {}: {}", this.getSessionId(), e.getMessage());
+			LOGGER.warn("Failed to send " + message.getClass().getSimpleName() + " message on session {}: {}",
+				this.getSessionId(),
+				e.getMessage());
 		} catch (WebSocketException e) {
-			LOGGER.warn("Failed to send "+message.getClass().getSimpleName()+" message on session {}: {}", this.getSessionId(), e.getMessage());
+			LOGGER.warn("Failed to send " + message.getClass().getSimpleName() + " message on session {}: {}",
+				this.getSessionId(),
+				e.getMessage());
 		} catch (Exception e) {
-			LOGGER.error("Unexpected exception encoding/sending "+message.getClass().getSimpleName()+" message",e);
+			LOGGER.error("Unexpected exception encoding/sending " + message.getClass().getSimpleName() + " message", e);
 		}
 		return sent;
 	}
@@ -146,16 +154,25 @@ public class WebSocketConnection implements IDaoListener {
 
 	@Override
 	public void objectAdded(final Class<? extends IDomainObject> domainClass, final UUID domainPersistentId) {
-		if(executorService.isShutdown()) {
-			LOGGER.warn("objectAdded called after executorService shutdown: {} {} {}",domainClass.getSimpleName(),domainPersistentId,this.getSessionId());
+		if (executorService.isShutdown()) {
+			LOGGER.warn("objectAdded called after executorService shutdown: {} {} {}",
+				domainClass.getSimpleName(),
+				domainPersistentId,
+				this.getSessionId());
 			return;
 		}
 		this.cleanupFuturesList();
 		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
-		if(tenant == null) {
-			LOGGER.error("null tenant context trying to notify on add object {} {}",domainClass.getSimpleName(),domainPersistentId);
-		} else if(!tenant.equals(this.currentTenant)) {
-			LOGGER.error("inconsistent tenant context {} (expected {}) trying to notify on add object {} {}",tenant,this.currentTenant,domainClass.getSimpleName(),domainPersistentId);
+		if (tenant == null) {
+			LOGGER.error("null tenant context trying to notify on add object {} {}",
+				domainClass.getSimpleName(),
+				domainPersistentId);
+		} else if (!tenant.equals(this.currentTenant)) {
+			LOGGER.error("inconsistent tenant context {} (expected {}) trying to notify on add object {} {}",
+				tenant,
+				this.currentTenant,
+				domainClass.getSimpleName(),
+				domainPersistentId);
 		} else {
 			Future<?> future = this.executorService.submit(new Runnable() {
 
@@ -166,7 +183,7 @@ public class WebSocketConnection implements IDaoListener {
 					try {
 						TenantPersistenceService.getInstance().beginTransaction();
 						List<MessageABC> responses = new ArrayList<MessageABC>();
-						synchronized(eventListeners) {
+						synchronized (eventListeners) {
 							Collection<ObjectEventListener> listeners = eventListeners.values();
 							for (ObjectEventListener listener : listeners) {
 								MessageABC response = listener.processObjectAdd(domainClass, domainPersistentId);
@@ -175,7 +192,7 @@ public class WebSocketConnection implements IDaoListener {
 								}
 							}
 						}
-						for(MessageABC response : responses) {
+						for (MessageABC response : responses) {
 							sendMessage(response);
 						}
 						TenantPersistenceService.getInstance().commitTransaction();
@@ -196,19 +213,25 @@ public class WebSocketConnection implements IDaoListener {
 		final UUID domainPersistentId,
 		final Set<String> inChangedProperties) {
 
-		if(executorService.isShutdown()) {
+		if (executorService.isShutdown()) {
 			LOGGER.warn("objectUpdated called after executorService shutdown");
 			return;
 		}
 		this.cleanupFuturesList();
 		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
-		if(tenant == null) {
-			LOGGER.error("null tenant context trying to notify on update object {} {}",domainClass.getSimpleName(),domainPersistentId);
-		} else if(!tenant.equals(this.currentTenant)) {
-			LOGGER.error("inconsistent tenant context {} (expected {}) trying to notify on update object {} {}",tenant,this.currentTenant,domainClass.getSimpleName(),domainPersistentId);
+		if (tenant == null) {
+			LOGGER.error("null tenant context trying to notify on update object {} {}",
+				domainClass.getSimpleName(),
+				domainPersistentId);
+		} else if (!tenant.equals(this.currentTenant)) {
+			LOGGER.error("inconsistent tenant context {} (expected {}) trying to notify on update object {} {}",
+				tenant,
+				this.currentTenant,
+				domainClass.getSimpleName(),
+				domainPersistentId);
 		} else {
 			Future<?> future = this.executorService.submit(new Runnable() {
-	
+
 				@Override
 				public void run() {
 					CodeshelfSecurityManager.removeContextIfPresent();
@@ -216,18 +239,20 @@ public class WebSocketConnection implements IDaoListener {
 					try {
 						TenantPersistenceService.getInstance().beginTransaction();
 						List<MessageABC> responses = new ArrayList<MessageABC>();
-						synchronized(eventListeners) {
+						synchronized (eventListeners) {
 							Collection<ObjectEventListener> listeners = eventListeners.values();
 							for (ObjectEventListener listener : listeners) {
-								MessageABC response = listener.processObjectUpdate(domainClass, domainPersistentId, inChangedProperties);
+								MessageABC response = listener.processObjectUpdate(domainClass,
+									domainPersistentId,
+									inChangedProperties);
 								if (response != null) {
 									responses.add(response);
 								}
-	
+
 							}
 						}
-						for(MessageABC response : responses) {
-							sendMessage(response);						
+						for (MessageABC response : responses) {
+							sendMessage(response);
 						}
 						TenantPersistenceService.getInstance().commitTransaction();
 					} catch (Exception e) {
@@ -243,21 +268,29 @@ public class WebSocketConnection implements IDaoListener {
 	}
 
 	@Override
-	public void objectDeleted(final Class<? extends IDomainObject> domainClass, final UUID domainPersistentId,
-			final Class<? extends IDomainObject> parentClass, final UUID parentId) {
-		if(executorService.isShutdown()) {
+	public void objectDeleted(final Class<? extends IDomainObject> domainClass,
+		final UUID domainPersistentId,
+		final Class<? extends IDomainObject> parentClass,
+		final UUID parentId) {
+		if (executorService.isShutdown()) {
 			LOGGER.warn("objectDeleted called after executorService shutdown");
 			return;
 		}
 		this.cleanupFuturesList();
 		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
-		if(tenant == null) {
-			LOGGER.error("null tenant context trying to notify on deleted object {} {}",domainClass.getSimpleName(),domainPersistentId);
-		} else if(!tenant.equals(this.currentTenant)) {
-			LOGGER.error("inconsistent tenant context {} (expected {}) trying to notify on deleted object {} {}",tenant,this.currentTenant,domainClass.getSimpleName(),domainPersistentId);
+		if (tenant == null) {
+			LOGGER.error("null tenant context trying to notify on deleted object {} {}",
+				domainClass.getSimpleName(),
+				domainPersistentId);
+		} else if (!tenant.equals(this.currentTenant)) {
+			LOGGER.error("inconsistent tenant context {} (expected {}) trying to notify on deleted object {} {}",
+				tenant,
+				this.currentTenant,
+				domainClass.getSimpleName(),
+				domainPersistentId);
 		} else {
 			Future<?> future = this.executorService.submit(new Runnable() {
-	
+
 				@Override
 				public void run() {
 					CodeshelfSecurityManager.removeContextIfPresent();
@@ -265,16 +298,19 @@ public class WebSocketConnection implements IDaoListener {
 					try {
 						TenantPersistenceService.getInstance().beginTransaction();
 						List<MessageABC> responses = new ArrayList<MessageABC>();
-						synchronized(eventListeners) {
+						synchronized (eventListeners) {
 							Collection<ObjectEventListener> listeners = eventListeners.values();
 							for (ObjectEventListener listener : listeners) {
-								MessageABC response = listener.processObjectDelete(domainClass, domainPersistentId, parentClass, parentId);
+								MessageABC response = listener.processObjectDelete(domainClass,
+									domainPersistentId,
+									parentClass,
+									parentId);
 								if (response != null) {
 									responses.add(response);
 								}
 							}
 						}
-						for(MessageABC response : responses) {
+						for (MessageABC response : responses) {
 							sendMessage(response);
 						}
 						TenantPersistenceService.getInstance().commitTransaction();
@@ -291,7 +327,7 @@ public class WebSocketConnection implements IDaoListener {
 	}
 
 	public void registerObjectEventListener(ObjectEventListener listener) {
-		if(executorService.isShutdown()) {
+		if (executorService.isShutdown()) {
 			LOGGER.warn("registerObjectEventListener called after executorService shutdown");
 			return;
 		}
@@ -345,30 +381,32 @@ public class WebSocketConnection implements IDaoListener {
 			this.wsSession = null;
 		}
 		// don't try to unregister listeners if service is shutting down, or if there's never been an authenticated user
-		if(TenantPersistenceService.getMaybeRunningInstance().state().equals(Service.State.RUNNING)
+		if (TenantPersistenceService.getMaybeRunningInstance().state().equals(Service.State.RUNNING)
 				|| this.lastTenantIdentifier == null) {
 			//TODO these are registered by RegisterListenerCommands. This dependency should be inverted
-			ObjectChangeBroadcaster ocb = TenantPersistenceService.getInstance().getEventListenerIntegrator().getChangeBroadcaster();
-			ocb.unregisterDAOListener(this.lastTenantIdentifier,this);
+			ObjectChangeBroadcaster ocb = TenantPersistenceService.getInstance()
+				.getEventListenerIntegrator()
+				.getChangeBroadcaster();
+			ocb.unregisterDAOListener(this.lastTenantIdentifier, this);
 		}
 	}
 
 	private synchronized void cleanupFuturesList() {
 		int numFutures = this.pendingFutures.size();
-		if(numFutures > NUM_FUTURES_CLEANUP_THRESHOLD) {
+		if (numFutures > NUM_FUTURES_CLEANUP_THRESHOLD) {
 			ConcurrentHashSet<Future<?>> remainingFutures = new ConcurrentHashSet<Future<?>>();
-			for(Future<?> future : this.pendingFutures) {
-				if(!future.isDone())
+			for (Future<?> future : this.pendingFutures) {
+				if (!future.isDone())
 					remainingFutures.add(future);
 			}
 			this.pendingFutures = remainingFutures;
 		} // else don't bother
 	}
-	
+
 	private void cancelFutures() {
 		Future<?>[] futures = new Future<?>[this.pendingFutures.size()];
-		for(Future<?> future : this.pendingFutures.toArray(futures)) {
-			if(!future.isDone()) {
+		for (Future<?> future : this.pendingFutures.toArray(futures)) {
+			if (!future.isDone()) {
 				future.cancel(true);
 			}
 		}
@@ -376,10 +414,10 @@ public class WebSocketConnection implements IDaoListener {
 	}
 
 	public void authenticated(User user, Tenant tenant) {
-		if(user == null) 
-			throw new NullPointerException("authenticated user may not be null"); 
-		if(tenant == null) 
-			throw new NullPointerException("authenticated tenant may not be null"); 
+		if (user == null)
+			throw new NullPointerException("authenticated user may not be null");
+		if (tenant == null)
+			throw new NullPointerException("authenticated tenant may not be null");
 		this.currentUser = user;
 		this.currentTenant = tenant;
 		this.lastTenantIdentifier = tenant.getTenantIdentifier();
@@ -402,7 +440,7 @@ public class WebSocketConnection implements IDaoListener {
 	public void close() throws IOException {
 		Session session = getWsSession();
 		if (session != null) {
-			session.close(new CloseReason(CloseCodes.GOING_AWAY,""));
+			session.close(new CloseReason(CloseCodes.GOING_AWAY, ""));
 		}
 	}
 	/*

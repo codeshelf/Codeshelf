@@ -79,6 +79,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					COMPUTE_WORK_MSG						= cheLine("COMPUTING WORK");
 	protected static final String					GET_WORK_MSG							= cheLine("GETTING WORK");
 	protected static final String					NO_WORK_MSG								= cheLine("NO WORK TO DO");
+	protected static final String					ON_CURR_PATH							= cheLine("ON CURRENT PATH");
 	protected static final String					LOCATION_SELECT_REVIEW_MSG_LINE_1		= cheLine("REVIEW MISSING WORK");
 	protected static final String					LOCATION_SELECT_REVIEW_MSG_LINE_2		= cheLine("OR SCAN LOCATION");
 	protected static final String					LOCATION_SELECT_REVIEW_MSG_LINE_3		= cheLine("TO CONTINUE AS IS");

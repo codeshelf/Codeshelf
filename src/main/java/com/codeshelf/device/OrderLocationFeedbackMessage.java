@@ -70,9 +70,16 @@ public class OrderLocationFeedbackMessage extends MessageABC {
 	@SerializedName(value = "orderCompleteThisArea")
 	private Boolean				mOrderCompleteThisArea;													// not initially used. 
 
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	@Expose
+	@SerializedName(value = "lastMsgOfGroup")
+	private Boolean				mLastMsgOfGroup;
+
 	public OrderLocationFeedbackMessage() {}
 
-	public OrderLocationFeedbackMessage(OrderLocation ol) {
+	public OrderLocationFeedbackMessage(OrderLocation ol, boolean lastMsgOfGroup) {
 		Location loc = ol.getLocation();
 		setLocationDependentFields(loc);
 		setHasAnyOrderAtAll(true);
@@ -80,15 +87,17 @@ public class OrderLocationFeedbackMessage extends MessageABC {
 		setOrderId(oh.getDomainId());
 		setOrderFullyComplete(OrderStatusEnum.COMPLETE.equals(oh.getStatus()));
 		setOrderCompleteThisArea(getOrderFullyComplete()); // fix later
+		setLastMsgOfGroup(lastMsgOfGroup);
 	}
 
-	public OrderLocationFeedbackMessage(Location loc) {
+	public OrderLocationFeedbackMessage(Location loc, boolean lastMsgOfGroup) {
 		// Use this constructor to intentionally tell site controller there is nothing for this slot.
 		setLocationDependentFields(loc);
 		setHasAnyOrderAtAll(false);
 		setOrderId("");
 		setOrderFullyComplete(false);
 		setOrderCompleteThisArea(false);
+		setLastMsgOfGroup(lastMsgOfGroup);
 	}
 
 	private void setLocationDependentFields(Location loc) {
@@ -102,9 +111,7 @@ public class OrderLocationFeedbackMessage extends MessageABC {
 		setPosition(index.byteValue());
 
 		// Location name in a uniform way, so the map in PosManagerDeviceLogic can set and clear.
-		String locName = loc.getPrimaryAliasId();
-		if (locName.isEmpty())
-			locName = loc.getNominalLocationIdExcludeBracket();
+		String locName = loc.getLocationNameForMap();
 		setLocationName(locName);
 	}
 

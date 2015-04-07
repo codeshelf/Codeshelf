@@ -440,6 +440,9 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			return "";
 		return theGroup.getDomainId();
 	}
+	public String getOrderLocationAliasIds() {
+		return parent.getOrderLocationAliasIds();
+	}
 
 	public Location getPreferredLocObject() {
 		Facility facility = getParent().getFacility();

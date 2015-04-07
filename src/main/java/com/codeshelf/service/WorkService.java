@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +27,7 @@ import lombok.ToString;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
+import org.omg.CORBA.BooleanHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +52,7 @@ import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
@@ -65,6 +68,9 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.Path;
+import com.codeshelf.model.domain.PathSegment;
+import com.codeshelf.model.domain.SiteController;
+import com.codeshelf.model.domain.Slot;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.SingleWorkItem;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
@@ -174,8 +180,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	}
 
 	public final WorkList computeWorkInstructions(final Che inChe, final List<String> inContainerIdList, final Boolean reverse) {
-		//List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
-
 		inChe.clearChe();
 
 		Facility facility = inChe.getFacility();
@@ -343,7 +347,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			OrderLocation ol = getPutWallOrderLocationNeedsLighting(incomingWI);
 			if (ol != null) {
 				Facility facility = ol.getFacility();
-				final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(ol);
+				final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(ol, true); // this single feedback message is last of the group.
 				sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
 			}
 		}
@@ -353,27 +357,119 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 	}
 
-	private void computeAndSendOrderFeedback(OrderLocation orderLocation) {
+	private void computeAndSendEmptyOrderFeedback(Location loc, boolean isLastOfGroup) {
+		if (loc == null) {
+			LOGGER.error("null input to computeAndSendOrderFeedback");
+			return;
+		}
+		try {
+			Facility facility = loc.getFacility();
+			final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(loc, isLastOfGroup);
+			sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
+		}
+
+		finally {
+
+		}
+	}
+
+	private boolean orderLocationDeservesFeedback(OrderLocation orderLocation) {
+		Location loc = orderLocation.getLocation();
+		if (loc != null && loc.isActive()) {
+			if (loc.isPutWallLocation()) {
+				if (loc.isLightablePoscon()) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	private void computeAndSendOrderFeedback(OrderLocation orderLocation, boolean isLastOfGroup) {
 		if (orderLocation == null) {
 			LOGGER.error("null input to computeAndSendOrderFeedback");
 			return;
 		}
 		try {
-			Location loc = orderLocation.getLocation();
-			if (loc != null && loc.isActive()) {
-				if (loc.isPutWallLocation()) {
-					if (loc.isLightablePoscon()) {
-						Facility facility = orderLocation.getFacility();
-						final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(orderLocation);
-						sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
-					}
-				}
+			if (orderLocationDeservesFeedback(orderLocation)) {
+				Facility facility = orderLocation.getFacility();
+				final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(orderLocation, isLastOfGroup);
+				sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
 			}
 		}
 
 		finally {
 
 		}
+	}
+
+	/**
+	 * Find all put walls, then the value for each slot in the put wall.
+	 * For now, separate messages but they could go out as lists of updates in a combined message.
+	 * DEV-729
+	 */
+	public void reinitPutWallFeedback(SiteController siteController) {
+
+		// Part 1 assemble what needs to be sent
+		List<OrderLocation> orderLocationsToSend = new ArrayList<OrderLocation>();
+		List<Location> emptyLocationsToSend = new ArrayList<Location>();
+
+		// 1a find our facility
+		Facility facility = siteController.getFacility();
+		List<Aisle> aisleList = new ArrayList<Aisle>();
+		// 1b Find all put walls in this facility.
+		List<Location> probablyAisles = facility.getChildren();
+		for (Location loc : probablyAisles) {
+			if (loc.isPutWallLocation() && loc instanceof Aisle) {
+				aisleList.add((Aisle) loc);
+			}
+		}
+		// 1c Find all order locations that need to be sent. Keep a map by location
+		Map<String, OrderLocation> orderLocationByLocation = new HashMap<String, OrderLocation>();
+
+		Map<String, Object> filterArgs = ImmutableMap.<String, Object> of("facilityId", facility.getPersistentId());
+		List<OrderLocation> orderLocations = OrderLocation.staticGetDao().findByFilter("orderLocationByFacility", filterArgs);
+		for (OrderLocation ol : orderLocations) {
+			if (orderLocationDeservesFeedback(ol)) {
+				Location loc = ol.getLocation();
+				orderLocationByLocation.put(loc.getLocationNameForMap(), ol);
+				orderLocationsToSend.add(ol);
+			}
+		}
+		// 1d iterate through all slots in those aisles. If not already sending, send an empty location
+		for (Aisle aisle : aisleList) {
+			List<Slot> slots = aisle.getActiveChildrenAtLevel(Slot.class);
+			for (Slot slot : slots) {
+				if (!orderLocationByLocation.containsKey(slot.getLocationNameForMap())) {
+					emptyLocationsToSend.add(slot);
+				}
+			}
+		}
+
+		// Part 2. Send.  This is a little tricky. This is one "group" of messages. 
+		// We need to mark the last one sent among the two lists as last in the group.
+		int olToSend = orderLocationsToSend.size();
+		int locToSend = emptyLocationsToSend.size();
+		int specialOlMessage = 0;
+		if (locToSend == 0)
+			specialOlMessage = olToSend; // if no loc message, then last ol message is the last of group.
+		int specialLocMessage = locToSend; // normally, last loc message is last of group.
+		
+		if (olToSend > 0)
+			LOGGER.info("sending {} order location feedback instructions", olToSend);
+		int olCount = 0;
+		for (OrderLocation ol : orderLocationsToSend) {
+			olCount++;
+			computeAndSendOrderFeedback(ol, specialOlMessage == olCount);
+		}
+		if (locToSend > 0)
+			LOGGER.info("sending {} putwall clear slot instructions", locToSend);
+		int locCount = 0;
+		for (Location loc : emptyLocationsToSend) {
+			locCount++;
+			computeAndSendEmptyOrderFeedback(loc, specialLocMessage == locCount);
+		}
+
 	}
 
 	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
@@ -531,6 +627,22 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 	}
 
+	private boolean detectPossiblePathChange(final Che che, final String inScannedLocationId, final BooleanHolder pathChanged) {
+		if (inScannedLocationId == null || "".equals(inScannedLocationId)) {
+			return false;
+		}
+		Path oldPath = che.getActivePath();
+		if (oldPath == null) {
+			return false;
+		}
+		Location newLocation = che.getFacility().findSubLocationById(inScannedLocationId);
+		if (newLocation == null) {
+			return false;
+		}
+		Path newPath = newLocation.getAssociatedPathSegment().getParent();
+		return newPath != oldPath;
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inChe
@@ -541,16 +653,17 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * For testing: if scan location, then just return all work instructions assigned to the CHE. (Assumes no negative positions on path.)
 	 */
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId) {
-		return getWorkInstructions(inChe, inScannedLocationId, false, false);
+		return getWorkInstructions(inChe, inScannedLocationId, false, new BooleanHolder(false));
 	}
 
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe,
 		final String inScannedLocationId,
-		Boolean reversePickOrder,
-		Boolean reverseOrderFromLastTime) {
+		final Boolean reversePickOrder,
+		final BooleanHolder pathChanged) {
 		long startTimestamp = System.currentTimeMillis();
 		Facility facility = inChe.getFacility();
 
+		pathChanged.value = detectPossiblePathChange(inChe, inScannedLocationId, pathChanged);
 		saveCheLastScannedLocation(inChe, inScannedLocationId);
 
 		//boolean start = CheDeviceLogic.STARTWORK_COMMAND.equalsIgnoreCase(inScannedLocationId);
@@ -574,7 +687,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		//Scanning "start" used to send a "" location here, to getWorkInstructions().
 		//Now, we pass "start" or "reverse", instead, but still need to pass "" to the getStartingPathDistance() function below.
 		//String locationIdCleaned = (start || reverse) ? "" : inScannedLocationId;
-		Double startingPathPos = getStartingPathDistance(facility, inScannedLocationId);
+		Double startingPathPos = getStartingPathDistance(facility, inScannedLocationId, reversePickOrder);
 
 		if (startingPathPos == null) {
 			List<WorkInstruction> preferredInstructions = new ArrayList<WorkInstruction>();
@@ -585,9 +698,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				}
 			}
 			Collections.sort(preferredInstructions, new GroupAndSortCodeComparator());
-			if (reverseOrderFromLastTime) {
-				preferredInstructions = Lists.reverse(preferredInstructions);
-			}
 			if (preferredInstructions.size() > 0) {
 				preferredInstructions = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, preferredInstructions);
 			}
@@ -626,9 +736,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			}
 		}
 
-		if (reverseOrderFromLastTime) {
-			wrappedRouteWiList = Lists.reverse(wrappedRouteWiList);
-		}
 		// Now our wrappedRouteWiList is ordered correctly but is missing HouseKeepingInstructions
 		if (wrappedRouteWiList.size() > 0) {
 			wrappedRouteWiList = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, wrappedRouteWiList);
@@ -1152,12 +1259,11 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * @param inScannedLocationId
 	 * Returns null and logs errors for bad input situation
 	 */
-	private Double getStartingPathDistance(final Facility facility, final String inScannedLocationId) {
+	private Double getStartingPathDistance(final Facility facility, final String inScannedLocationId, final Boolean reverse) {
 		if (inScannedLocationId == null || inScannedLocationId.isEmpty())
-			return 0.0;
+			return reverse ? -0.01 : 0.0;
 
-		Location cheLocation = null;
-		cheLocation = facility.findSubLocationById(inScannedLocationId);
+		Location cheLocation = facility.findSubLocationById(inScannedLocationId);
 		if (cheLocation == null) {
 			LOGGER.warn("Unknown CHE scan location={}; This may due to a misconfigured site or bad barcode at the facility.",
 				inScannedLocationId);
@@ -1240,12 +1346,22 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			// so far, wi must have a location. Even housekeeping and shorts
 			if (loc == null)
 				LOGGER.error("getWorkInstructions found active work instruction with null location"); // new log message from v8. Don't expect any null.
-			else if (loc.isActive()) //unlikely that location got deleted between complete work instructions and scan location
-				cheWorkInstructions.add(wi);
-			else
+			else if (loc.isActive()) { //unlikely that location got deleted between complete work instructions and scan location
+				Path chePath = inChe.getActivePath();
+				if (chePath == null || isLocatioOnPath(loc, inChe.getActivePath()))
+					cheWorkInstructions.add(wi);
+			} else
 				LOGGER.warn("getWorkInstructions found active work instruction in deleted locations"); // new from v8
 		}
 		return cheWorkInstructions;
+	}
+
+	private boolean isLocatioOnPath(Location inLocation, Path inPath) {
+		PathSegment locationSegment = inLocation.getAssociatedPathSegment();
+		if (locationSegment == null) {
+			return false;
+		}
+		return inPath == locationSegment.getParent();
 	}
 
 	/**
@@ -1468,7 +1584,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 
 		//Light up the selected location. Send even if just a redo
-		computeAndSendOrderFeedback(ol);
+		computeAndSendOrderFeedback(ol, true); // single message is last of the group
 		return true;
 	}
 }

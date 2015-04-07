@@ -31,7 +31,7 @@ public class ComputeWorkResponse extends ResponseABC {
 	private List<WorkInstruction> workInstructions;
 	
 	@Getter @Setter
-	private Boolean pathChange = false;
+	private Boolean pathChanged = false;
 
 	public void addWorkInstructionCount(String containerId, WorkInstructionCount workInstructionCount) {
 		containerToWorkInstructionCountMap.put(containerId, workInstructionCount);
