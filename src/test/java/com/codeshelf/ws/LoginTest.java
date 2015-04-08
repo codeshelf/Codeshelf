@@ -6,7 +6,6 @@ import org.mockito.Mockito;
 
 import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
-import com.codeshelf.model.domain.UserType;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.testframework.HibernateTest;
@@ -37,7 +36,7 @@ public class LoginTest extends HibernateTest {
 		
 		// Create a user for the organization.
 		String password = "password";
-		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, UserType.APPUSER, null);
+		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, null);
 
 		LoginRequest request = new LoginRequest();
 		request.setUserId(user.getUsername());
@@ -60,7 +59,7 @@ public class LoginTest extends HibernateTest {
 
 		// Create a user for the organization.
 		String password = "password";
-		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, UserType.APPUSER, null);
+		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, null);
 		
 		LoginRequest request = new LoginRequest();
 		request.setUserId("user@invalid.com");
@@ -82,7 +81,7 @@ public class LoginTest extends HibernateTest {
 
 		// Create a user for the organization.
 		String password = "password";
-		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, UserType.APPUSER, null);
+		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, null);
 		
 		LoginRequest request = new LoginRequest();
 		request.setUserId(user.getUsername());

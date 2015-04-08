@@ -4,6 +4,10 @@
 
 SiteController:
   - "ws:login"
+  - "wi:*"
+  - "light:use"
+  - "che:pick,setup"
+  - "che:inventory"
 Cart:
   - "che:pick,setup"
 Inventory:
@@ -13,8 +17,8 @@ Maintenance:
   - "ws:login"
   - "ux:*" 
   - "che:create,edit,delete"
-  - "paths:*"
-  - "lights:*"
+  - "path:*"
+  - "light:*"
 Upload:
   - "order:import"
   - "inventory:import"
@@ -28,19 +32,19 @@ Admin:
   - "ux:*" 
   - "companion:*"
   - "che:create,edit,delete"
-  - "params:*"
+  - "param:*"
   - "facility:edit"
-  - "paths:*"
-  - "lights:*"
+  - "path:*"
+  - "light:*"
   - "inventory:edit"
 Configure:
   - "ws:login"
   - "ux:*" 
   - "companion:*"
   - "che:create,edit,delete"
-  - "params:edit"
-  - "paths:*"
-  - "lights:*"
+  - "param:edit"
+  - "path:*"
+  - "light:*"
 CsDeveloper:
   - "che:simulate"
 CsSupport:
@@ -48,12 +52,12 @@ CsSupport:
   - "ux:*" 
   - "companion:*"
   - "che:create,edit,delete"
-  - "params:*"
+  - "param:*"
   - "facility:edit"
-  - "paths:*"
-  - "lights:*"
+  - "path:*"
+  - "light:*"
   - "order:import"
   - "inventory:edit"
   - "inventory:import"
 CsSuperuser:
-  - "*"
+  - "*"  # includes such checked permissions as tenant:*, user:*, role:*, perm:*

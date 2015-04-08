@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.manager.api.TenantsResource;
 import com.codeshelf.manager.api.UsersResource;
 import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.model.domain.UserType;
 import com.codeshelf.security.AuthResponse;
 import com.codeshelf.security.AuthResponse.Status;
 import com.codeshelf.security.CodeshelfSecurityManager;
@@ -67,7 +66,7 @@ public class TenantManagerTest extends HibernateTest {
 		
 		// THROWS if you try
 		try {
-			Assert.assertNull(this.tenantManagerService.createUser(getDefaultTenant(), existingUsername, "passw0rD!", UserType.SITECON, null));
+			Assert.assertNull(this.tenantManagerService.createUser(getDefaultTenant(), existingUsername, "passw0rD!", null));
 			Assert.fail("should have thrown");
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
@@ -82,7 +81,7 @@ public class TenantManagerTest extends HibernateTest {
 		// (note: don't alter site controller user for this test, could have side effects)
 		
 		// can create new user		
-		User newUser = this.tenantManagerService.createUser(getDefaultTenant(), "testuser", "goodpassword", UserType.APPUSER, null);		
+		User newUser = this.tenantManagerService.createUser(getDefaultTenant(), "testuser", "goodpassword", null);		
 
 		// can look up by id or name or list
 		Assert.assertTrue(this.tenantManagerService.getUser(newUser.getId()).equals(newUser));
@@ -131,7 +130,6 @@ public class TenantManagerTest extends HibernateTest {
 		MultivaluedMap<String,String> params = new MultivaluedMapImpl();
 		params.putSingle("username", "apiuser");
 		params.putSingle("password", "goodpassword");
-		params.putSingle("type", "APPUSER");
 		params.putSingle("tenantid", Integer.toString(getDefaultTenant().getId()));
 		User apiUser = (User) this.usersResource.createUser(params).getEntity();
 		Assert.assertTrue(apiUser.getUsername().equals("apiuser"));
@@ -143,9 +141,9 @@ public class TenantManagerTest extends HibernateTest {
 		
 		// create fails if duplicate parameter
 		params.putSingle("username", "apiuser2");
-		params.add("type","SITECON");
+		params.add("username","apiuserxyz");
 		Assert.assertNull(this.usersResource.createUser(params).getEntity());
-		params.putSingle("type","SITECON");
+		params.putSingle("username", "apiuser2");
 		
 		// create fails if unrecognized parameter
 		params.putSingle("garbage", "wakkawakka");
@@ -193,7 +191,7 @@ public class TenantManagerTest extends HibernateTest {
 		Tenant newTenant = this.tenantManagerService.createTenant("New Tenant", "alice");
 		Assert.assertNotNull(newTenant);
 		// with user
-		User newUser = this.tenantManagerService.createUser(newTenant, "tenantuser", "goodpassword", UserType.APPUSER, null);		
+		User newUser = this.tenantManagerService.createUser(newTenant, "tenantuser", "goodpassword", null);		
 		// can authenticate 
 		Assert.assertEquals(Status.ACCEPTED,this.authProviderService.authenticate("tenantuser", "goodpassword").getStatus());
 
@@ -229,7 +227,7 @@ public class TenantManagerTest extends HibernateTest {
 		Tenant apiTenant = (Tenant) this.tenantsResource.createTenant(params).getEntity();
 		Assert.assertTrue(apiTenant.getName().equals("mytenant"));
 		// TODO: create user by API 
-		newUser = this.tenantManagerService.createUser(apiTenant, "apiuser", "goodpassword", UserType.APPUSER, null);		
+		newUser = this.tenantManagerService.createUser(apiTenant, "apiuser", "goodpassword", null);		
 		// can authenticate 
 		Assert.assertNotNull(this.authProviderService.authenticate("apiuser", "goodpassword"));
 
@@ -298,7 +296,7 @@ public class TenantManagerTest extends HibernateTest {
 	public void rolesAndPermissions() {
 		CodeshelfSecurityManager.removeContext();
 		
-		User user = this.tenantManagerService.createUser(getDefaultTenant(), "u", "passw0rd!", UserType.APPUSER, null);		
+		User user = this.tenantManagerService.createUser(getDefaultTenant(), "u", "passw0rd!", null);		
 		UserPermission view = this.tenantManagerService.createPermission("view");
 		UserPermission edit = this.tenantManagerService.createPermission("edit");
 		UserPermission control = this.tenantManagerService.createPermission("control");

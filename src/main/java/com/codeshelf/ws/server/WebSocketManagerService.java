@@ -18,7 +18,6 @@ import javax.websocket.Session;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,15 +26,11 @@ import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsGroup;
-import com.codeshelf.metrics.MetricsService;
-import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.SiteController;
-import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.AbstractCodeshelfScheduledService;
-import com.codeshelf.service.ServiceUtility;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.protocol.message.KeepAlive;
 import com.codeshelf.ws.protocol.message.MessageABC;
@@ -67,10 +62,6 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 	@Getter
 	@Setter
 	int													siteControllerTimeout	= 60 * 1000;												// 1 min
-
-	@Getter
-	@Setter
-	int													webAppTimeout			= 5 * 60 * 1000;											// 5 mins
 
 	@Getter
 	@Setter
@@ -188,7 +179,7 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 			return null; // called while shutting down or resetting - this should only happen in tests
 		}
 		for (WebSocketConnection session : this.getWebSocketConnections()) {
-			if (session.getCurrentUser() != null && session.getCurrentUser().equals(user)) {
+			if (session.getCurrentUserContext() != null && session.getCurrentUserContext().getUsername().equals(user.getUsername())) {
 				result.add(session);
 			}
 		}
@@ -242,7 +233,8 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 		for (WebSocketConnection session : activeConnections.values()) {
 			if ((session.getLastState() == WebSocketConnection.State.ACTIVE || session.getLastState() == WebSocketConnection.State.IDLE_WARNING)) {
 				numActiveSessions++;
-				if (session.isSiteController()) {
+				UserContext user = session.getCurrentUserContext();
+				if (user != null && user.isSiteController()) {
 					activeSiteController++;
 				}
 			}
@@ -320,8 +312,9 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 	private WebSocketConnection.State determineConnectionState(WebSocketConnection session) {
 		long timeSinceLastReceived = System.currentTimeMillis() - session.getLastMessageReceived();
 
-		if ((session.isSiteController() && timeSinceLastReceived > siteControllerTimeout)
-				|| (session.isAppUser() && timeSinceLastReceived > webAppTimeout) || (timeSinceLastReceived > defaultTimeout)) {
+		if ((session.getCurrentUserContext() != null && session.getCurrentUserContext().isSiteController() 
+				&& timeSinceLastReceived > siteControllerTimeout)
+			|| (timeSinceLastReceived > defaultTimeout)) {
 			return WebSocketConnection.State.INACTIVE;
 		}//else 
 		if (timeSinceLastReceived > idleWarningTimeout) {
@@ -409,16 +402,16 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 				// check status, send keepalive etc on all open connections
 				Collection<WebSocketConnection> connections = this.getWebSocketConnections();
 				for (WebSocketConnection connection : connections) {
-					User contextUser = connection.getCurrentUser();
-					Tenant contextTenant = connection.getCurrentTenant();
-					if (contextUser != null && contextTenant != null) {
+					UserContext user = connection.getCurrentUserContext();
+					Tenant tenant = connection.getCurrentTenant();
+					if (user != null && tenant != null) {
 						// the security manager requires only a tenant - but we require both for websockets
-						CodeshelfSecurityManager.setContext(contextUser, contextTenant);
+						CodeshelfSecurityManager.setContext(user, tenant);
 					}
 					// might not be logged in yet, we will still ping
 					try {
 						// send ping periodically to measure latency
-						if (connection.isSiteController()
+						if (user!=null && user.isSiteController()
 								&& System.currentTimeMillis() - connection.getLastPingSent() > pingInterval) {
 							// send ping
 							PingRequest request = new PingRequest();
@@ -431,12 +424,12 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 						updateWebSocketConnectionState(connection);
 
 						// DEV-728 site controller needs a set of initialization messages for putwall status. And the same solution may correct any drift.
-						if (connection.isSiteController() && connection.getNextPutWallRefresh() >= 0
+						if (user != null && user.isSiteController() && connection.getNextPutWallRefresh() >= 0
 								&& connection.getLastState() == WebSocketConnection.State.ACTIVE
 								&& System.currentTimeMillis() > connection.getNextPutWallRefresh()) {
 							try {
 
-								reinitSiteController(connection, contextUser, contextTenant);
+								reinitSiteController(connection, user, tenant);
 
 							} catch (Exception e) {
 								LOGGER.error("caught trying to initialize or refresh putwall to site controller", e);
@@ -447,7 +440,7 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 						}
 
 					} finally {
-						if (contextUser != null || contextTenant != null)
+						if (user != null || tenant != null)
 							// a call to OnClose might have already removed context, it is ok if not present here
 							CodeshelfSecurityManager.removeContextIfPresent();
 					}
@@ -508,7 +501,7 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 		}
 	}
 
-	private void reinitSiteController(WebSocketConnection connection, User contextUser, Tenant contextTenant) {
+	private void reinitSiteController(WebSocketConnection connection, UserContext contextUser, Tenant contextTenant) {
 		// DEV-728 This is a site controller connection. For now, only one, but even later, we do not which site controller has which put wall. 
 		// So just send all put wall init messages to this site controller.
 

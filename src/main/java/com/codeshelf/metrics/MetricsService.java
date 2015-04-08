@@ -13,7 +13,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
-import com.codeshelf.service.ServiceUtility;
 import com.google.inject.Inject;
 
 public class MetricsService extends AbstractCodeshelfIdleService implements IMetricsService {

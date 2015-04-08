@@ -15,8 +15,6 @@ import java.util.Set;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -41,7 +39,6 @@ import org.hibernate.annotations.NaturalId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.model.domain.UserType;
 import com.codeshelf.security.UserContext;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -65,7 +62,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")
 @JsonIgnoreProperties({"className"})
-@EqualsAndHashCode(of={"username","type"})
+@EqualsAndHashCode(of={"username"})
 public class User implements UserContext {
 
 	@SuppressWarnings("unused")
@@ -120,14 +117,6 @@ public class User implements UserContext {
 	//not JSON
 	private String				hashedPassword;
 
-	// sitecon, webapp, system user etc
-	@Column(nullable = false)
-	@Getter
-	@Setter
-	@Enumerated(value = EnumType.STRING)
-	@JsonProperty
-	private UserType			type;
-
 	// Is it active.
 	@Getter
 	@Setter
@@ -168,6 +157,7 @@ public class User implements UserContext {
 		}
 	}
 	
+	@Override
 	public Collection<String> getRoleNames() {
 		List<String> roleNames = new ArrayList<String>(this.getRoles().size());
 		for(UserRole role : this.getRoles()) {
@@ -176,6 +166,7 @@ public class User implements UserContext {
 		return roleNames;
 	}
 	
+	@Override
 	public Set<String> getPermissionStrings() {
 		Set<String> permissionStrings = new HashSet<String>();
 		for(UserRole role : this.getRoles()) {
@@ -190,6 +181,12 @@ public class User implements UserContext {
 			permissions.addAll(role.getPermissions());
 		}
 		return permissions;
+	}
+	
+	@Override
+	@JsonIgnore
+	public boolean isSiteController() {
+		return this.getRoleNames().contains(DefaultRolesPermissions.SITE_CONTROLLER_ROLE);
 	}
 
 }

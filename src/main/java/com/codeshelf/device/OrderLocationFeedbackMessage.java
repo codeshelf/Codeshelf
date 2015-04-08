@@ -1,11 +1,11 @@
 package com.codeshelf.device;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.LedController;

@@ -2,6 +2,8 @@ package com.codeshelf.ws.protocol.command;
 
 import java.util.UUID;
 
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.protocol.request.PutWallPlacementRequest;
@@ -10,6 +12,7 @@ import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
+@RequiresPermissions("che:pick")
 public class PutWallPlacementCommand extends CommandABC{
 	private PutWallPlacementRequest request;
 	

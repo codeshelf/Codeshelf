@@ -16,6 +16,7 @@ import javax.ws.rs.core.Response;
 
 import lombok.Setter;
 
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.hibernate.Session;
 
 import com.codeshelf.api.BaseResponse;
@@ -64,6 +65,7 @@ public class FacilityResource {
 	}
 
 	@GET
+	@RequiresPermissions("companion:view")
 	@Path("/blockedwork/nolocation")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getBlockedWorkNoLocation() {
@@ -80,6 +82,7 @@ public class FacilityResource {
 
     @GET
 	@Path("/work/results")
+	@RequiresPermissions("companion:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getWorkResults(@QueryParam("startTimestamp") StartDateParam startTimestamp, @QueryParam("endTimestamp") EndDateParam endTimestamp) {
     	List<WorkInstruction> results = this.workService.getWorkResults(facility.getPersistentId(), startTimestamp.getValue(), endTimestamp.getValue());
@@ -89,6 +92,7 @@ public class FacilityResource {
 
 	@GET
 	@Path("/work/topitems")
+	@RequiresPermissions("companion:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getWorkByItem() {
 		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
@@ -98,6 +102,7 @@ public class FacilityResource {
 
 	@GET
 	@Path("/blockedwork/shorts")
+	@RequiresPermissions("companion:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getBlockedWorkShorts() {
 		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
@@ -107,6 +112,7 @@ public class FacilityResource {
 
 	@GET
 	@Path("/productivity")
+	@RequiresPermissions("companion:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getProductivitySummary() throws Exception {
 		ProductivitySummaryList summary = orderService.getProductivitySummary(facility.getPersistentId(), false);
@@ -115,6 +121,7 @@ public class FacilityResource {
 
 	@GET
 	@Path("/chesummary")
+	@RequiresPermissions("companion:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getCheSummary() {
 		List<WorkInstruction> instructions = WorkInstruction.staticGetDao().getAll();
@@ -126,6 +133,7 @@ public class FacilityResource {
 
 	@GET
 	@Path("/groupinstructions")
+	@RequiresPermissions("companion:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getGroupInstructions(@QueryParam("group") String groupName) {
 		List<WorkInstruction> instructions = orderService.getGroupShortInstructions(facility.getPersistentId(), groupName);
@@ -134,6 +142,7 @@ public class FacilityResource {
 
 	@GET
 	@Path("filters")
+	@RequiresPermissions("companion:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getFilterNames() {
 		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
@@ -144,6 +153,7 @@ public class FacilityResource {
 
 	@GET
 	@Path("/statussummary/{aggregate}")
+	@RequiresPermissions("companion:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getOrderStatusSummary(@PathParam("aggregate") String aggregate, @QueryParam("filterName") String filterName) {
 		@SuppressWarnings("unused")
@@ -160,6 +170,7 @@ public class FacilityResource {
 
 	@PUT
 	@Path("hardware")
+	@RequiresPermissions("companion:view")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response performHardwareAction(HardwareRequest req) {

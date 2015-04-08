@@ -1,5 +1,6 @@
 package com.codeshelf.ws.protocol.command;
 
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,6 +10,7 @@ import com.codeshelf.ws.protocol.response.InventoryLightLocationResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.server.WebSocketConnection;
 
+@RequiresPermissions("light:use")
 public class InventoryLightLocationCommand extends CommandABC {
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ComputeWorkCommand.class);

@@ -18,6 +18,7 @@ import com.google.common.collect.Multimap;
 
 public class DefaultRolesPermissions {
 	final public static String				ROLE_DEFAULTS_FILENAME	= "role-defaults.yml";
+	final public static String 				SITE_CONTROLLER_ROLE = "SiteController";
 
 	private static Multimap<String, String>	multimap;
 
@@ -39,6 +40,7 @@ public class DefaultRolesPermissions {
 		DefaultRolesPermissions.multimap = ArrayListMultimap.<String, String> create();
 		Yaml yaml = new Yaml();
 		Object loaded = yaml.load(defaultsFileContents);
+		boolean siteControllerRoleExists = false;
 		if (loaded instanceof Map) {
 			Map<?, ?> roleMap = (Map<?, ?>) loaded;
 			Set<?> roleSet = (roleMap).keySet();
@@ -48,6 +50,9 @@ public class DefaultRolesPermissions {
 					List<?> permissions = (List<?>) permList;
 					for (Object permission : permissions) {
 						multimap.put(role.toString(), permission.toString());
+						if(role.toString().equals(SITE_CONTROLLER_ROLE)) {
+							siteControllerRoleExists = true;
+						}
 					}
 				} else {
 					throw new RuntimeException("Invalid format in roles defaults");
@@ -55,6 +60,9 @@ public class DefaultRolesPermissions {
 			}
 		} else {
 			throw new RuntimeException("Invalid format in roles defaults");
+		}
+		if(!siteControllerRoleExists) {
+			throw new RuntimeException("Invalid default roles: Did not find a role called "+SITE_CONTROLLER_ROLE);
 		}
 	}
 

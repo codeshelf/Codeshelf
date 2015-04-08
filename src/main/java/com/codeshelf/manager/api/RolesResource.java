@@ -16,6 +16,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,6 +26,7 @@ import com.codeshelf.manager.UserPermission;
 import com.codeshelf.manager.UserRole;
 
 @Path("/roles")
+@RequiresPermissions("role")
 public class RolesResource {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(RolesResource.class);
 	
@@ -36,6 +38,7 @@ public class RolesResource {
 
 	
 	@GET
+	@RequiresPermissions("role:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response get() {
 		try {
@@ -48,6 +51,7 @@ public class RolesResource {
 	}
 
 	@POST
+	@RequiresPermissions("role:create")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public Response createRole(MultivaluedMap<String, String> roleParams) {
@@ -65,6 +69,7 @@ public class RolesResource {
 
 	@Path("{id}")
 	@GET
+	@RequiresPermissions("role:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getRole(@PathParam("id") Integer id) {
 		try {
@@ -81,6 +86,7 @@ public class RolesResource {
 
 	@Path("{id}")
 	@POST
+	@RequiresPermissions("role:edit")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public Response updateRole(@PathParam("id") Integer id, MultivaluedMap<String, String> roleParams) {
@@ -102,6 +108,7 @@ public class RolesResource {
 
 	@Path("{id}")
 	@DELETE
+	@RequiresPermissions("role:delete")
 	public Response deleteRole(@PathParam("id") Integer id) {
 		try {
 			UserRole role = TenantManagerService.getInstance().getRole(id);

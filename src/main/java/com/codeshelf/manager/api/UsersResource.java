@@ -17,7 +17,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import org.apache.shiro.authz.annotation.RequiresRoles;
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,13 +26,14 @@ import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.UserRole;
-import com.codeshelf.model.domain.UserType;
 import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.security.HmacAuthService;
+import com.codeshelf.util.FormUtility;
 
 // note:
 // it is intentional that the reasons for errors are only logged and not returned to the client
 @Path("/users")
+@RequiresPermissions("user")
 public class UsersResource {
 	AuthProviderService authProviderService;
 	
@@ -44,11 +45,9 @@ public class UsersResource {
 		validCreateUserFields.add("tenantid");
 		validCreateUserFields.add("username");
 		validCreateUserFields.add("password");
-		validCreateUserFields.add("type");
 		validCreateUserFields.add("roles");
 		validUpdateUserFields.add("password");
 		validUpdateUserFields.add("active");
-		validUpdateUserFields.add("type");
 		validUpdateUserFields.add("roles");
 	}
 	
@@ -57,6 +56,7 @@ public class UsersResource {
 	}
 	
 	@GET
+	@RequiresPermissions("user:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response get(@QueryParam("username") String username, 
 				@QueryParam("tenantid") Integer tenantId) {
@@ -68,13 +68,14 @@ public class UsersResource {
 	
 	@GET
 	@Path("htpasswd")
+	@RequiresPermissions("user:htpasswd")
 	@Produces(MediaType.TEXT_PLAIN)
-	@RequiresRoles("SUPER")
 	public Response getHtpasswd() {
 		return Response.ok(new String(TenantManagerService.getInstance().getHtpasswd())).build();
 	}
 
 	@POST
+	@RequiresPermissions("user:create")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public Response createUser(MultivaluedMap<String, String> userParams) {
@@ -92,6 +93,7 @@ public class UsersResource {
 
 	@Path("{id}")
 	@GET
+	@RequiresPermissions("user:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getUser(@PathParam("id") Integer id) {
 		try {
@@ -108,6 +110,7 @@ public class UsersResource {
 
 	@Path("{id}")
 	@POST
+	@RequiresPermissions("user:edit")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public Response updateUser(@PathParam("id") Integer id, MultivaluedMap<String, String> userParams) {
@@ -189,13 +192,6 @@ public class UsersResource {
 				user.setActive(active);
 			} // else ignore if no change
 			success = true;
-		} else if (key.equals("type")) {
-			UserType type = UserType.valueOf(value);
-			if (!user.getType().equals(type)) {
-				LOGGER.info("update user {} - set type = {}", user.getUsername(),type);
-				user.setType(type);
-			} // else ignore if no change
-			success = true;
 		} else if (key.equals("roles")) {
 			Set<UserRole> roles = userRoles(value);
 			if(roles != null) {
@@ -234,18 +230,11 @@ public class UsersResource {
 		ITenantManagerService manager = TenantManagerService.getInstance();
 		User newUser = null;
 
-		Map<String, String> cleanInput = RootResource.validFieldsOnly(userParams, validCreateUserFields);
+		Map<String, String> cleanInput = FormUtility.getValidFieldsOrThrow(userParams, validCreateUserFields);
 		if (cleanInput != null) {
 			String username = cleanInput.get("username");
 			String tenantIdString = cleanInput.get("tenantid");
 			String password = cleanInput.get("password");
-			String typeString = cleanInput.get("type");
-			UserType type = null;
-			try {
-				type = UserType.valueOf(typeString);
-			} catch (Exception e) {
-				LOGGER.warn("could not convert value to UserType: {}", typeString);
-			}
 			Integer tenantId = null;
 			try {
 				tenantId = Integer.valueOf(tenantIdString);
@@ -254,7 +243,7 @@ public class UsersResource {
 			}
 			Set<UserRole> roles = userRoles(cleanInput.get("roles"));
 
-			if (username != null && password != null && type != null && roles != null) {
+			if (username != null && password != null && roles != null) {
 				if (manager.canCreateUser(username)) {
 					if (authProviderService.passwordMeetsRequirements(password)) {
 						Tenant tenant;
@@ -264,7 +253,7 @@ public class UsersResource {
 							tenant = manager.getTenant(tenantId);
 						
 						if(tenant != null) {
-							newUser = manager.createUser(tenant, username, password, type, roles);
+							newUser = manager.createUser(tenant, username, password, roles);
 							if (newUser == null)
 								LOGGER.warn("failed to create user {}", username);
 							// else success

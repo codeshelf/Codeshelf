@@ -28,15 +28,14 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Timer;
 import com.codeshelf.filter.ObjectEventListener;
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.dao.IDaoListener;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.domain.IDomainObject;
-import com.codeshelf.model.domain.UserType;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.security.UserContext;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.google.common.util.concurrent.Service;
 
@@ -55,7 +54,7 @@ public class WebSocketConnection implements IDaoListener {
 	String												sessionId;
 
 	@Getter
-	User												currentUser;
+	UserContext											currentUserContext;
 
 	@Getter
 	Tenant												currentTenant;
@@ -137,19 +136,7 @@ public class WebSocketConnection implements IDaoListener {
 	}
 
 	public boolean isAuthenticated() {
-		return (currentUser != null);
-	}
-
-	public boolean isSiteController() {
-		if (!this.isAuthenticated())
-			return false;
-		return this.currentUser.getType().equals(UserType.SITECON);
-	}
-
-	public boolean isAppUser() {
-		if (!this.isAuthenticated())
-			return false;
-		return this.currentUser.getType().equals(UserType.APPUSER);
+		return (currentUserContext != null);
 	}
 
 	@Override
@@ -369,7 +356,7 @@ public class WebSocketConnection implements IDaoListener {
 		this.cancelFutures();
 
 		this.lastState = State.CLOSED;
-		this.currentUser = null;
+		this.currentUserContext = null;
 		this.currentTenant = null;
 		this.sessionId = null;
 		if (this.wsSession != null) {
@@ -413,15 +400,15 @@ public class WebSocketConnection implements IDaoListener {
 		this.pendingFutures.clear();
 	}
 
-	public void authenticated(User user, Tenant tenant) {
+	public void authenticated(UserContext user, Tenant tenant) {
 		if (user == null)
 			throw new NullPointerException("authenticated user may not be null");
 		if (tenant == null)
 			throw new NullPointerException("authenticated tenant may not be null");
-		this.currentUser = user;
+		this.currentUserContext = user;
 		this.currentTenant = tenant;
 		this.lastTenantIdentifier = tenant.getTenantIdentifier();
-		if (isSiteController()) {
+		if (user.isSiteController()) {
 			pingTimer = MetricsService.getInstance().createTimer(MetricsGroup.WSS, "ping-" + user.getUsername());
 		}
 
