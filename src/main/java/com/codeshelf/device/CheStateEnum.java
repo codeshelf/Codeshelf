@@ -207,7 +207,7 @@ public enum CheStateEnum {
 		static final byte	PUT_WALL_SCAN_LOCATION		= 25;
 		static final byte	PUT_WALL_SCAN_ITEM			= 26;
 		static final byte	DO_PUT						= 27;
-		static final byte	PUT_WALL_SCAN_WALL			= 28;
+		static final byte	PUT_WALL_SCAN_WALL			= 29;
 
 		private CheStateNum() {
 		};
