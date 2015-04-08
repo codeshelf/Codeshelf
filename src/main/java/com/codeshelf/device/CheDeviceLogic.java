@@ -59,7 +59,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					LOCATION_PREFIX							= "L%";
 	protected static final String					ITEMID_PREFIX							= "I%";
 	protected static final String					POSITION_PREFIX							= "P%";
-	protected static final String		TAPE_PREFIX								= "%";
+	protected static final String					TAPE_PREFIX								= "%";
 
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 20 characters.
@@ -79,12 +79,15 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					COMPUTE_WORK_MSG						= cheLine("COMPUTING WORK");
 	protected static final String					GET_WORK_MSG							= cheLine("GETTING WORK");
 	protected static final String					NO_WORK_MSG								= cheLine("NO WORK TO DO");
-	protected static final String					ON_CURR_PATH							= cheLine("ON CURRENT PATH");
+	protected static final String					ON_CURR_PATH_MSG						= cheLine("ON CURRENT PATH");
 	protected static final String					LOCATION_SELECT_REVIEW_MSG_LINE_1		= cheLine("REVIEW MISSING WORK");
 	protected static final String					LOCATION_SELECT_REVIEW_MSG_LINE_2		= cheLine("OR SCAN LOCATION");
 	protected static final String					LOCATION_SELECT_REVIEW_MSG_LINE_3		= cheLine("TO CONTINUE AS IS");
 	protected static final String					SHOWING_ORDER_IDS_MSG					= cheLine("SHOWING ORDER IDS");
 	protected static final String					SHOWING_WI_COUNTS						= cheLine("SHOWING WI COUNTS");
+	protected static final String					PATH_COMPLETE_MSG						= cheLine("PATH COMPLETE");
+	protected static final String					SCAN_NEW_LOCATION_MSG					= cheLine("SCAN NEW LOCATION");
+	protected static final String					OR_SETUP_NEW_CART_MSG					= cheLine("OR SETUP NEW CART");
 
 	protected static final String					INVALID_POSITION_MSG					= cheLine("INVALID POSITION");
 	protected static final String					INVALID_CONTAINER_MSG					= cheLine("INVALID CONTAINER");
@@ -1171,7 +1174,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	/**
 	 * Is this useful to linescan?  If not, move as private function to SetupOrdersDeviceLogic
 	 */
-	protected void processPickComplete() {
+	protected void processPickComplete(boolean isWorkOnOtherPaths) {
 		// There are no more WIs, so the pick is complete.
 
 		// Clear the existing LEDs.
@@ -1182,8 +1185,12 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		// CD_0041 is there a need for this?
 		ledControllerShowLeds(getGuid());
-
-		setState(CheStateEnum.PICK_COMPLETE);
+		
+		if (isWorkOnOtherPaths) {
+			setState(CheStateEnum.PICK_COMPLETE_CURR_PATH);
+		} else {
+			setState(CheStateEnum.PICK_COMPLETE);
+		}
 	}
 
 	// --------------------------------------------------------------------------

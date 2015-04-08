@@ -30,7 +30,10 @@ public enum CheStateEnum {
 	SHORT_PICK(CheStateNum.SHORT_PICK, "SHORT_PICK"),
 	//@EnumValue("SHORT_PICK_CONFIRM")
 	SHORT_PICK_CONFIRM(CheStateNum.SHORT_PICK_CONFIRM, "SHORT_PICK_CONFIRM"),
+	//@EnumValue("PICK_COMPLETE")
 	PICK_COMPLETE(CheStateNum.PICK_COMPLETE, "PICK_COMPLETE"),
+	//@EnumValue("PICK_COMPLETE_CURR_PATH")
+	PICK_COMPLETE_CURR_PATH(CheStateNum.PICK_COMPLETE_CURR_PATH, "PICK_COMPLETE_CURR_PATH"),
 	// @EnumValue("NO_WORK")
 	NO_WORK(CheStateNum.NO_WORK, "NO_WORK"),
 	// @EnumValue("NO_WORK_CURR_PATH")
@@ -183,6 +186,7 @@ public enum CheStateEnum {
 		static final byte	DO_PICK						= 6;
 		static final byte	SHORT_PICK					= 7;
 		static final byte	PICK_COMPLETE				= 8;
+		static final byte	PICK_COMPLETE_CURR_PATH		= 31;	//Added Apr 8, 2015
 		static final byte	NO_WORK						= 9;
 		static final byte	NO_WORK_CURR_PATH			= 28;	//Added Apr 6, 2015
 		static final byte	SHORT_PICK_CONFIRM			= 10;	//Added Oct. 2014

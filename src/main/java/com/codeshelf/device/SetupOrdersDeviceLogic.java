@@ -201,12 +201,19 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					sendDisplayCommand(PICK_COMPLETE_MSG, EMPTY_MSG);
 					break;
 
+				case PICK_COMPLETE_CURR_PATH:
+					if (isSameState) {
+						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
+					}
+					sendDisplayCommand(PATH_COMPLETE_MSG, SCAN_NEW_LOCATION_MSG, OR_SETUP_NEW_CART_MSG, EMPTY_MSG);
+					break;
+
 				case NO_WORK:
 					sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
 					this.showCartSetupFeedback();
 					break;
 				case NO_WORK_CURR_PATH:
-					sendDisplayCommand(NO_WORK_MSG, ON_CURR_PATH, SCAN_LOCATION_MSG, SHOWING_WI_COUNTS);
+					sendDisplayCommand(NO_WORK_MSG, ON_CURR_PATH_MSG, SCAN_LOCATION_MSG, SHOWING_WI_COUNTS);
 					this.showCartSetupFeedback();
 					break;
 				case SCAN_GTIN:
@@ -321,6 +328,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case PICK_COMPLETE:
+			case PICK_COMPLETE_CURR_PATH:
 				setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
 				break;
 
@@ -344,6 +352,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case PICK_COMPLETE:
+			case PICK_COMPLETE_CURR_PATH:
 				setState(CheStateEnum.PUT_WALL_SCAN_WALL);
 				break;
 
@@ -630,10 +639,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					setState(CheStateEnum.DO_PICK); // This will cause showActivePicks();
 				// showActivePicks();
 			} else {
-				processPickComplete();
+				int uncompletedInstructionsOnOtherPathsSum = getUncompletedInstructionsOnOtherPathsSum();
+				processPickComplete(uncompletedInstructionsOnOtherPathsSum > 0);
 			}
 		}
 	}
+	
 
 	// --------------------------------------------------------------------------
 	/**
@@ -1043,6 +1054,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
+			ledControllerClearLeds();
 			requestWorkAndSetGetWorkState(inScanStr, false);
 		} else {
 			LOGGER.info("Not a location ID: " + inScanStr);
@@ -1069,6 +1081,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case LOCATION_SELECT_REVIEW:
+				processLocationScan(inScanPrefixStr, inContent);
+				break;
+
+			case PICK_COMPLETE_CURR_PATH:
 				processLocationScan(inScanPrefixStr, inContent);
 				break;
 
@@ -1207,22 +1223,22 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		this.mContainerToWorkInstructionCountMap = containerToWorkInstructionCountMap;
 
 		// The back-end returned the work instruction count.
-		if (totalWorkInstructionCount > 0 && containerToWorkInstructionCountMap != null
-				&& !containerToWorkInstructionCountMap.isEmpty()) {
+		if (totalWorkInstructionCount > 0 && mContainerToWorkInstructionCountMap != null
+				&& !mContainerToWorkInstructionCountMap.isEmpty()) {
 			//Use the map to determine if we need to go to location_select or review
 
 			//Check to see if we have any unknown containerIds. We must have a count for every container
-			boolean doesNeedReview = !(mPositionToContainerMap.size() == containerToWorkInstructionCountMap.size());
+			boolean doesNeedReview = !(mPositionToContainerMap.size() == mContainerToWorkInstructionCountMap.size());
 
 			if (!doesNeedReview) {
-				for (WorkInstructionCount wiCount : containerToWorkInstructionCountMap.values()) {
+				for (WorkInstructionCount wiCount : mContainerToWorkInstructionCountMap.values()) {
 					if (wiCount.getGoodCount() == 0 || wiCount.hasBadCounts()) {
 						doesNeedReview = true;
 						break;
 					}
 				}
 			}
-			LOGGER.info("Got Counts {}", containerToWorkInstructionCountMap);
+			LOGGER.info("Got Counts {}", mContainerToWorkInstructionCountMap);
 
 			if (doesNeedReview) {
 				setState(CheStateEnum.LOCATION_SELECT_REVIEW);
@@ -1230,17 +1246,22 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.LOCATION_SELECT);
 			}
 		} else {
-			WorkInstructionCount[] counts = containerToWorkInstructionCountMap.values().toArray(new WorkInstructionCount[0]);
-			int uncompletedInstructionsOnOtherPathsCounter = 0;
-			for (WorkInstructionCount count : counts) {
-				uncompletedInstructionsOnOtherPathsCounter += count.getUncompletedInstructionsOnOtherPaths();
-			}
-			if (uncompletedInstructionsOnOtherPathsCounter == 0) {
+			int uncompletedInstructionsOnOtherPathsSum = getUncompletedInstructionsOnOtherPathsSum();
+			if (uncompletedInstructionsOnOtherPathsSum == 0) {
 				setState(CheStateEnum.NO_WORK);
 			} else {
 				setState(CheStateEnum.NO_WORK_CURR_PATH);
 			}
 		}
+	}
+	
+	private int getUncompletedInstructionsOnOtherPathsSum(){
+		WorkInstructionCount[] counts = mContainerToWorkInstructionCountMap.values().toArray(new WorkInstructionCount[0]);
+		int uncompletedInstructionsOnOtherPathsCounter = 0;
+		for (WorkInstructionCount count : counts) {
+			uncompletedInstructionsOnOtherPathsCounter += count.getUncompletedInstructionsOnOtherPaths();
+		}
+		return uncompletedInstructionsOnOtherPathsCounter;
 	}
 
 	/** Shows the count feedback on the position controller

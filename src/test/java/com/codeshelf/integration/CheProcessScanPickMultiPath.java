@@ -28,7 +28,7 @@ import com.codeshelf.testframework.ServerTest;
 
 public class CheProcessScanPickMultiPath extends ServerTest {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(CheProcessScanPickMultiPath.class);
-	private static final int WAIT_TIME = 4000;
+	private static final int WAIT_TIME = 400000;
 	
 	private PickSimulator setupTestPicker(String cheLastScannedLocation) throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
@@ -436,7 +436,8 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		pickItemAuto(picker);
 		
 		//Very "All Work Complete" message and "--" on poscon
-		verifyCheDisplay(picker, "ALL WORK COMPLETE", "", "", "");
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE_CURR_PATH, WAIT_TIME);
+		verifyCheDisplay(picker, "PATH COMPLETE", "SCAN NEW LOCATION", "OR SETUP NEW CART", "");
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, picker.getLastSentPositionControllerDisplayValue((byte) 1));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_DASH, picker.getLastSentPositionControllerMinQty((byte) 1));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_DASH, picker.getLastSentPositionControllerMaxQty((byte) 1));
