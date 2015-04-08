@@ -311,8 +311,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * Find and return the OrderLocation, only if it is a put wall location that has poscons that may display order feedback.
 	 * Not checked, but if multiple, returns the first found.
 	 * (Later enhancement: restrict to same work area as the wi location.)
+	 * Important note: some work instructions with order location may be lighting the location still, and not the order location
+	 * This code returns the orderLocation if it should be recomputed and re-lit. Even if it was not showing the count for an active WI, it might
+	 * need to be recomputed.
 	 */
 	private OrderLocation getPutWallOrderLocationNeedsLighting(WorkInstruction incomingWI) {
+		// BUG here. There is no good way to tell the "purpose" of 
 		OrderHeader order = null;
 		OrderDetail detail = incomingWI.getOrderDetail();
 		if (detail != null)
@@ -325,8 +329,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				Location loc = ol.getLocation();
 				if (loc != null && loc.isActive()) {
 					if (loc.isPutWallLocation()) {
-						if (loc.isLightablePoscon())
+						if (loc.isLightablePoscon()) {
 							return ol;
+						}
 					}
 				}
 			}
@@ -455,7 +460,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		if (locToSend == 0)
 			specialOlMessage = olToSend; // if no loc message, then last ol message is the last of group.
 		int specialLocMessage = locToSend; // normally, last loc message is last of group.
-		
+
 		if (olToSend > 0)
 			LOGGER.info("sending {} order location feedback instructions", olToSend);
 		int olCount = 0;
@@ -643,11 +648,11 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		Path newPath = newLocation.getAssociatedPathSegment().getParent();
 		return newPath != oldPath;
 	}
-	
-	private String getFirstGoodAisleLocation(List<WorkInstruction> completeRouteWiList){
+
+	private String getFirstGoodAisleLocation(List<WorkInstruction> completeRouteWiList) {
 		for (WorkInstruction instruction : completeRouteWiList) {
 			String locationId = instruction.getLocation().getLocationIdToParentLevel(Aisle.class);
-			if (locationId != null && !"".equals(locationId)){
+			if (locationId != null && !"".equals(locationId)) {
 				return locationId;
 			}
 		}
@@ -679,7 +684,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		//Get current complete list of WIs. If CHE doesn't yet have a last_scanned_location set, this will retrieve items on all paths
 		List<WorkInstruction> completeRouteWiList = findCheInstructionsFromPosition(inChe, 0.0, false);
-		
+
 		if (inChe.getActivePath() == null && !completeRouteWiList.isEmpty()) {
 			Collections.sort(completeRouteWiList, new GroupAndSortCodeComparator());
 			String locationId = getFirstGoodAisleLocation(completeRouteWiList);
@@ -1368,11 +1373,11 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				Path chePath = inChe.getActivePath();
 				boolean locatioOnPath = isLocatioOnPath(loc, inChe.getActivePath());
 				boolean preferredDetail = wi.getOrderDetail().isPreferredDetail();
-				boolean unspecifiedLoc = loc == unspecifiedMaster; 
+				boolean unspecifiedLoc = loc == unspecifiedMaster;
 				if (chePath == null || locatioOnPath) {
 					//If a CHE is not on a path (new CHE generating work) or the location is on the current path, use this WI 
 					cheWorkInstructions.add(wi);
-				} else if (preferredDetail && unspecifiedLoc){
+				} else if (preferredDetail && unspecifiedLoc) {
 					//If a "locationId" is provided, but can't be found in the system, use this WI.
 					//(If a "locationId" is provided, but it exists on the other path, don't use this WI)
 					cheWorkInstructions.add(wi);

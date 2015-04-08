@@ -27,6 +27,7 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.testframework.ServerTest;
+import com.codeshelf.util.ThreadUtils;
 
 public class CheProcessPutWall extends ServerTest {
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(CheProcessPutWall.class);
@@ -412,10 +413,22 @@ public class CheProcessPutWall extends ServerTest {
 		// Here is the point of this test. On this pick, what location do we tell the worker to pick from?
 		// And does the put wall slot still show "--", or does it show the count and allow button press.
 		// Did the LEDs light?
-
 		Assert.assertEquals("F14", picker1.getLastCheDisplayString(1));
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 3);
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+		Assert.assertEquals(posman.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
+		// Apparent in the log: the source LED did light. Proven just above, the put wall poscon did not light. And the source shows on CHE display.
+		
+		// If we complete this pick, do we get a recalculation for the put wall position? We should. It is "oc" now.
+		WorkInstruction wi = picker1.nextActiveWi();
+		int button = picker1.buttonFor(wi);
+		int quant = wi.getPlanQuantity();
+		picker1.pick(button, quant);
+		picker1.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
+		// will this have intermittent failure? Server complete led to new message back to update the posman display. There is no state to wait for.
+		ThreadUtils.sleep(2000);
+		Assert.assertEquals(posman.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_O);
+		
 
 	}
 

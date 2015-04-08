@@ -598,4 +598,5 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			return "";
 		}
 	}
+
 }
