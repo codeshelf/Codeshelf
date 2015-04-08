@@ -43,6 +43,7 @@ import com.codeshelf.model.HousekeepingInjector;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.WiFactory;
+import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.WiSetSummary;
 import com.codeshelf.model.WiSummarizer;
 import com.codeshelf.model.WorkInstructionSequencerABC;
@@ -1022,7 +1023,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 						work.getContainer(),
 						inChe,
 						work.getFirstLocationOnPath(),
-						inTime);
+						inTime,
+						WiPurpose.WiPurposeCrossBatchPut);
 
 					// If we created a WI then add it to the list.
 					if (wi != null) {
@@ -1139,7 +1141,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					inContainer,
 					inChe,
 					inFacility,
-					inTime);
+					inTime,
+					WiPurpose.WiPurposeOutboundPick);
 				if (resultWi != null) {
 					resultWi.setPlanQuantity(0);
 					resultWi.setPlanMinQuantity(0);
@@ -1158,7 +1161,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				inContainer,
 				inChe,
 				location,
-				inTime);
+				inTime,
+				WiPurpose.WiPurposeOutboundPick);
 			resultWork.addInstruction(resultWi);
 
 		}

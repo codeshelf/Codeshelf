@@ -16,6 +16,7 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.generators.WorkInstructionGenerator;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.WiFactory;
+import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.WiSetSummary;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
@@ -192,11 +193,11 @@ public class ProductivityReportingTest extends ServerTest {
 		OrderDetail detail = createOrderDetail(header, itemMaster);
 
 		WorkInstruction wi = null;
-		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.COMPLETE, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l));
-		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.COMPLETE, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l));
-		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INPROGRESS, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l));
-		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INPROGRESS, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l));
-		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.REVERT, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l));
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.COMPLETE, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l), WiPurpose.WiPurposeOutboundPick);
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.COMPLETE, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l), WiPurpose.WiPurposeOutboundPick);
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INPROGRESS, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l), WiPurpose.WiPurposeOutboundPick);
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INPROGRESS, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l), WiPurpose.WiPurposeOutboundPick);
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.REVERT, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l), WiPurpose.WiPurposeOutboundPick);
 
 		return facility;
 	}
@@ -224,12 +225,12 @@ public class ProductivityReportingTest extends ServerTest {
 
 		WorkInstruction wi = null;
 		//Run 1
-		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.COMPLETE, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l));
-		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INVALID, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l));
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.COMPLETE, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l), WiPurpose.WiPurposeOutboundPick);
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INVALID, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419291960000l), WiPurpose.WiPurposeOutboundPick);
 		//Run 2
-		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INPROGRESS, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419363620000l));
-		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419363620000l));
-		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419363620000l));
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INPROGRESS, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419363620000l), WiPurpose.WiPurposeOutboundPick);
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419363620000l), WiPurpose.WiPurposeOutboundPick);
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW, WorkInstructionTypeEnum.ACTUAL, detail, container, che, facility, new Timestamp(1419363620000l), WiPurpose.WiPurposeOutboundPick);
 
 		return facility;
 	}
@@ -248,16 +249,16 @@ public class ProductivityReportingTest extends ServerTest {
 		//Group 1 (undefined)
 		OrderHeader header1 = createOrderHeader("OH1", OrderTypeEnum.OUTBOUND, facility, null);
 		OrderDetail detail1 = createOrderDetail(header1, itemMaster);
-		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.COMPLETE, WorkInstructionTypeEnum.ACTUAL, detail1, container, che, facility, new Timestamp(1419291960000l));
-		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INVALID, WorkInstructionTypeEnum.ACTUAL, detail1, container, che, facility, new Timestamp(1419291960000l));
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.COMPLETE, WorkInstructionTypeEnum.ACTUAL, detail1, container, che, facility, new Timestamp(1419291960000l), WiPurpose.WiPurposeOutboundPick);
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INVALID, WorkInstructionTypeEnum.ACTUAL, detail1, container, che, facility, new Timestamp(1419291960000l), WiPurpose.WiPurposeOutboundPick);
 
 		//Group 2
 		OrderGroup orderGroup1 = createOrderGroup("GROUP1", facility);
 		OrderHeader header2 = createOrderHeader("OH2", OrderTypeEnum.OUTBOUND, facility, orderGroup1);
 		OrderDetail detail2 = createOrderDetail(header2, itemMaster);
-		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INPROGRESS, WorkInstructionTypeEnum.ACTUAL, detail2, container, che, facility, new Timestamp(1419363620000l));
-		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW, WorkInstructionTypeEnum.ACTUAL, detail2, container, che, facility, new Timestamp(1419363620000l));
-		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW, WorkInstructionTypeEnum.ACTUAL, detail2, container, che, facility, new Timestamp(1419363620000l));
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INPROGRESS, WorkInstructionTypeEnum.ACTUAL, detail2, container, che, facility, new Timestamp(1419363620000l), WiPurpose.WiPurposeOutboundPick);
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW, WorkInstructionTypeEnum.ACTUAL, detail2, container, che, facility, new Timestamp(1419363620000l), WiPurpose.WiPurposeOutboundPick);
+		wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW, WorkInstructionTypeEnum.ACTUAL, detail2, container, che, facility, new Timestamp(1419363620000l), WiPurpose.WiPurposeOutboundPick);
 
 		return facility;
 	}

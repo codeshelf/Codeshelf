@@ -249,14 +249,13 @@ public class CheProcessPutWall extends ServerTest {
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
 		picker1.scanCommand("CLEAR");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
-		
+
 		// Verify that orders 11114, 11115, and 11116 are having order locations in put wall
 		this.getTenantPersistenceService().beginTransaction();
 		assertOrderLocation("11114", "P14");
 		assertOrderLocation("11115", "P15");
 		assertOrderLocation("11116", "P16");
 		this.getTenantPersistenceService().commitTransaction();
-		
 
 		LOGGER.info("2: As if the slow movers came out of system, just scan those SKUs to place into put wall");
 
@@ -359,7 +358,67 @@ public class CheProcessPutWall extends ServerTest {
 		Assert.assertNull(displayValue);
 
 	}
-	
+
+	@Test
+	public final void putWallLightingConfusion() throws IOException {
+		// This explores the ambiguous situation of ORDER_WALL being set up, but still doing a normal orders pick
+
+		this.getTenantPersistenceService().beginTransaction();
+		setUpFacilityWithPutWall();
+		setUpOrders1(getFacility());
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSiteController();
+		PickSimulator picker1 = new PickSimulator(this, cheGuid1);
+
+		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
+		Assert.assertNotNull(posman);
+
+		LOGGER.info("1: Set up some orders for the put wall before doing any picks");
+		LOGGER.info(" : P12 is in WALL1. P15 and P16 are in WALL2.");
+		picker1.login("Picker #1");
+		picker1.scanCommand("ORDER_WALL");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker1.scanSomething("11117");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
+		picker1.scanSomething("P13");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker1.scanSomething("11115");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
+		picker1.scanSomething("P15");
+		picker1.scanSomething("11116");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
+		picker1.scanSomething("P16");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker1.scanCommand("CLEAR");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+
+		// P13 is at poscon index 3. Should show "--" as there is more work for that order.
+		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 3);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+
+		LOGGER.info("2: Set up order 11117 for pick");
+		picker1.scanSomething("11117");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_POSITION, 4000);
+		picker1.scanSomething("P%1");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.LOCATION_SELECT, 4000);
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		List<WorkInstruction> activeWis = picker1.getActivePickList();
+		this.logWiList(activeWis);
+
+		// Here is the point of this test. On this pick, what location do we tell the worker to pick from?
+		// And does the put wall slot still show "--", or does it show the count and allow button press.
+		// Did the LEDs light?
+
+		Assert.assertEquals("F14", picker1.getLastCheDisplayString(1));
+		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 3);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+
+	}
+
 	private void assertOrderLocation(String orderId, String locationId) {
 		Facility facility = getFacility();
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
@@ -390,7 +449,7 @@ public class CheProcessPutWall extends ServerTest {
 				+ "Tier,T1,50,4,0,0,,,,,\n"//
 				+ "Bay,B2,CLONE(B1)\n"; //
 		importAislesData(getFacility(), aislesCsvString);
-		
+
 		// Get the aisles
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
 		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getFacility(), "A2");
@@ -553,7 +612,8 @@ public class CheProcessPutWall extends ServerTest {
 				+ "\r\n,USF314,COSTCO,11113,11113.1,11113,1555,Sku1555,2,each,F23"
 				+ "\r\n,USF314,COSTCO,11114,11114.1,11114,1514,Sku1514,3,each,S12"
 				+ "\r\n,USF314,COSTCO,11115,11115.1,11115,1515,Sku1515,4,each,S13"
-				+ "\r\n,USF314,COSTCO,11116,11116.1,11116,1515,Sku1515,5,each,S13";
+				+ "\r\n,USF314,COSTCO,11116,11116.1,11116,1515,Sku1515,5,each,S13"
+				+ "\r\n,USF314,COSTCO,11117,11117.1,11117,1515,Sku1515,5,each,F14";
 
 		importOrdersData(getFacility(), orderCsvString);
 	}

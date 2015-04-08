@@ -11,6 +11,7 @@ import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.WiFactory;
+import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.Aisle;
@@ -78,7 +79,7 @@ public class WorkInstructionGenerator {
 		//Che che1 = Che.staticGetDao().findByDomainId(facility.getNetworks().get(0), "CHE1");
 		Che che1 = Che.staticGetDao().findByDomainId(null, "CHE1");
 		
-		WorkInstruction workInstruction = WiFactory.createWorkInstruction(statusEnum, typeEnum, orderDetail, container, che1, aisle, assignedTime);
+		WorkInstruction workInstruction = WiFactory.createWorkInstruction(statusEnum, typeEnum, orderDetail, container, che1, aisle, assignedTime, WiPurpose.WiPurposeOutboundPick);
 		
 		
 		workInstruction.setStarted(  new Timestamp(System.currentTimeMillis()-5000));

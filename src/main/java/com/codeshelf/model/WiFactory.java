@@ -42,6 +42,18 @@ import com.google.common.base.Strings;
  */
 public class WiFactory {
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(WiFactory.class);
+	
+	// For now, a public enum, but not stored on the WI. Just passed along in create methods so that we know what the location and/or order location mean.
+	public enum WiPurpose {
+		WiPurposeUnknown,
+		WiPurposeHousekeep,
+		WiPurposeOutboundPick, // this is still multipurpose: SKU-pick, detail-pick, and pick-to-order.
+		WiPurposePutWallPut,
+		WiPurposeCrossBatchPut,
+		WiPurposeReplenishPut,
+		WiPurposeRestockPut
+	}
+
 
 	// IMPORTANT. This should be synched with LightService.defaultLedsToLight
 	private static final int	maxLedsToLight	= 4;
@@ -156,7 +168,8 @@ public class WiFactory {
 		Container inContainer,
 		Che inChe,
 		Location inLocation,
-		final Timestamp inTime) throws DaoException {
+		final Timestamp inTime,
+		WiPurpose purpose) throws DaoException {
 
 		WorkInstruction resultWi = createWorkInstruction(inStatus, inType, inOrderDetail, inChe, inTime);
 		if (resultWi == null) { //no more work to do
@@ -183,7 +196,6 @@ public class WiFactory {
 			// But not if it is a short WI (made to the facility location)
 		} else {
 			if (inOrderDetail.getParent().getOrderType().equals(OrderTypeEnum.CROSS)) {
-
 				// We currently have no use case that gets here. We never make direct work instruction from Cross order (which is a vendor put away).
 				setCrossWorkInstructionLedPattern(resultWi,
 					inOrderDetail.getItemMasterId(),
@@ -191,15 +203,17 @@ public class WiFactory {
 					inOrderDetail.getUomMasterId(),
 					cheColor);
 				setPosConInstructions(resultWi, inLocation);
-			} else {
-				// This might be a cross batch case! The work instruction came from cross batch order, but position and leds comes from the outbound order.
-				// We could (should?) add a parameter to createWorkInstruction. Called from makeWIForOutbound() for normal outbound pick, and generateCrossWallInstructions().
-				OrderHeader passedInDetailParent = inOrderDetail.getParent();
-
-				// This test might be fragile. If it was a cross batch situation, then the orderHeader will have one or more locations.
-				// If no order locations, then it must be a pick order. We want the leds for the inventory item.
-				// getOrderLocations or getActiveOrderLocations? Let's assume if any orderlocations at all for this order header, then crossbatch
-				if (passedInDetailParent.getOrderLocations().size() == 0) {
+				LOGGER.error("unexpected call to code that should be dead."); // If we see this, investigate and build a unit test.
+			} else {				
+				// This might be a cross batch case, or a put wall put. Position and leds come from the outbound order.			
+				if (purpose == WiPurpose.WiPurposeCrossBatchPut || purpose == WiPurpose.WiPurposePutWallPut) {
+					// Then the location and lights come from order location
+					OrderHeader passedInDetailParent = inOrderDetail.getParent();
+					setWorkInstructionLedPatternFromOrderLocations(resultWi, passedInDetailParent, cheColor);
+					setPosConInstructions(resultWi, passedInDetailParent.getActiveOrderLocations());
+				}
+				// for now, assume a pick. As of April 2015 and v15, no replenish or restock.
+				else {
 					isInventoryPickInstruction = true;
 					setOutboundWorkInstructionLedPatternAndPosAlongPathFromInventoryItem(resultWi,
 						inLocation,
@@ -207,11 +221,7 @@ public class WiFactory {
 						inOrderDetail.getUomMasterId(),
 						cheColor);
 					setPosConInstructions(resultWi, inLocation);
-				} else {
-					// The cross batch situation. We want the leds for the order location(s)
-					setWorkInstructionLedPatternFromOrderLocations(resultWi, passedInDetailParent, cheColor);
-					setPosConInstructions(resultWi, passedInDetailParent.getActiveOrderLocations());
-				}
+				} 
 			}
 		}
 		Facility facility = inOrderDetail.getParent().getFacility();
