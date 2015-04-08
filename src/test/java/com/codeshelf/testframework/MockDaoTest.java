@@ -3,6 +3,10 @@ package com.codeshelf.testframework;
 import java.io.IOException;
 import java.io.StringReader;
 import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.List;
+
+import org.junit.Assert;
 
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
@@ -38,6 +42,7 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.UomMaster;
+import com.codeshelf.model.domain.WorkInstruction;
 
 public abstract class MockDaoTest extends MinimalTest {
 
@@ -549,6 +554,27 @@ public abstract class MockDaoTest extends MinimalTest {
 		return importer.importOrderLocationsFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 	}
 	
+	protected void compareInstructionsList(List<WorkInstruction> instructions, String[] expectations) {
+		Assert.assertEquals(expectations.length, instructions.size());
+		for (int i = 0; i < expectations.length; i++) {
+			WorkInstruction instruction = instructions.get(i);
+			if (!expectations[i].equals(instruction.getItemId())){
+				Assert.fail(String.format("Mismatch in item %d. Expected list %s, got [%s]", i, Arrays.toString(expectations), instructionsListToString(instructions)));
+			}
+		}
+	}
+	
+	private String instructionsListToString(List<WorkInstruction> instructions) {
+		StringBuilder result = new StringBuilder();
+		for (int i = 0; i < instructions.size(); i++) {
+			result.append(instructions.get(i).getItemId());
+			if (i < instructions.size() - 1) {
+				result.append(",");
+			}
+		}
+		return result.toString();
+	}
+
 	protected void beginTransaction() {
 		tenantPersistenceService.beginTransaction();
 	}

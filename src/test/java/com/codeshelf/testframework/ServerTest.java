@@ -364,4 +364,11 @@ public abstract class ServerTest extends HibernateTest {
 			return null;
 		}
 	}
+	
+	protected void pickItemAuto(PickSimulator picker){
+		WorkInstruction wi = picker.getActivePick();
+		int button = picker.buttonFor(wi);
+		int quantity = wi.getPlanQuantity();
+		picker.pick(button, quantity);
+	}
 }

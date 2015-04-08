@@ -18,7 +18,6 @@ import javax.websocket.Session;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,15 +26,11 @@ import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsGroup;
-import com.codeshelf.metrics.MetricsService;
-import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.SiteController;
-import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.AbstractCodeshelfScheduledService;
-import com.codeshelf.service.ServiceUtility;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.protocol.message.KeepAlive;
 import com.codeshelf.ws.protocol.message.MessageABC;

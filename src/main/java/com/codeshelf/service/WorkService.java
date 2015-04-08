@@ -34,10 +34,8 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Timer;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.OrderLocationFeedbackMessage;
-import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.edi.IEdiExportServiceProvider;
 import com.codeshelf.edi.WorkInstructionCSVExporter;
-import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
@@ -634,6 +632,16 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		Path newPath = newLocation.getAssociatedPathSegment().getParent();
 		return newPath != oldPath;
 	}
+	
+	private String getFirstGoodAisleLocation(List<WorkInstruction> completeRouteWiList){
+		for (WorkInstruction instruction : completeRouteWiList) {
+			String locationId = instruction.getLocation().getLocationIdToParentLevel(Aisle.class);
+			if (locationId != null && !"".equals(locationId)){
+				return locationId;
+			}
+		}
+		return null;
+	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -658,11 +666,15 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		pathChanged.value = detectPossiblePathChange(inChe, inScannedLocationId, pathChanged);
 		saveCheLastScannedLocation(inChe, inScannedLocationId);
 
-		//boolean start = CheDeviceLogic.STARTWORK_COMMAND.equalsIgnoreCase(inScannedLocationId);
-		//boolean reverse = CheDeviceLogic.REVERSE_COMMAND.equalsIgnoreCase(inScannedLocationId);
-
-		//Get current complete list of WIs
+		//Get current complete list of WIs. If CHE doesn't yet have a last_scanned_location set, this will retrieve items on all paths
 		List<WorkInstruction> completeRouteWiList = findCheInstructionsFromPosition(inChe, 0.0, false);
+		
+		if (inChe.getActivePath() == null && !completeRouteWiList.isEmpty()) {
+			Collections.sort(completeRouteWiList, new GroupAndSortCodeComparator());
+			String locationId = getFirstGoodAisleLocation(completeRouteWiList);
+			saveCheLastScannedLocation(inChe, locationId);
+			completeRouteWiList = findCheInstructionsFromPosition(inChe, 0.0, false);
+		}
 
 		//We could have existing HK WIs if we've already retrieved the work instructions once but scanned a new location.
 		//In that case, we must make sure we remove all existing HK WIs so that we can properly add them back in at the end.
@@ -1329,7 +1341,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		// Hibernate version has test failing with database lock here, so pull out the query
 		List<WorkInstruction> filterWiList = WorkInstruction.staticGetDao().findByFilter(filterParams);
-
+		Location unspecifiedMaster = inChe.getFacility().getUnspecifiedLocation();
 		for (WorkInstruction wi : filterWiList) {
 			// Very unlikely. But if some wLocationABCs were deleted between start work and scan starting location, let's not give out the "deleted" wis
 			// Note: puts may have had multiple order locations, now quite denormalized on WI fields and hard to decompose.  We just take the first as the WI location.
@@ -1340,8 +1352,17 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				LOGGER.error("getWorkInstructions found active work instruction with null location"); // new log message from v8. Don't expect any null.
 			else if (loc.isActive()) { //unlikely that location got deleted between complete work instructions and scan location
 				Path chePath = inChe.getActivePath();
-				if (chePath == null || isLocatioOnPath(loc, inChe.getActivePath()))
+				boolean locatioOnPath = isLocatioOnPath(loc, inChe.getActivePath());
+				boolean preferredDetail = wi.getOrderDetail().isPreferredDetail();
+				boolean unspecifiedLoc = loc == unspecifiedMaster; 
+				if (chePath == null || locatioOnPath) {
+					//If a CHE is not on a path (new CHE generating work) or the location is on the current path, use this WI 
 					cheWorkInstructions.add(wi);
+				} else if (preferredDetail && unspecifiedLoc){
+					//If a "locationId" is provided, but can't be found in the system, use this WI.
+					//(If a "locationId" is provided, but it exists on the other path, don't use this WI)
+					cheWorkInstructions.add(wi);
+				}
 			} else
 				LOGGER.warn("getWorkInstructions found active work instruction in deleted locations"); // new from v8
 		}

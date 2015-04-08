@@ -2320,12 +2320,4 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);
 
 	}
-	
-	private void pickItemAuto(PickSimulator picker){
-		WorkInstruction wi = picker.getActivePick();
-		int button = picker.buttonFor(wi);
-		int quantity = wi.getPlanQuantity();
-		picker.pick(button, quantity);
-	}
-
 }

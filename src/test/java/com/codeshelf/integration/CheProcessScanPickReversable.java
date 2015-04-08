@@ -1,7 +1,6 @@
 package com.codeshelf.integration;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Assert;
@@ -59,33 +58,11 @@ public class CheProcessScanPickReversable extends ServerTest {
 		return picker;
 	}
 	
-	private void compareList(List<WorkInstruction> instructions, String[] expectations) {
-		Assert.assertEquals(expectations.length, instructions.size());
-		for (int i = 0; i < expectations.length; i++) {
-			WorkInstruction instruction = instructions.get(i);
-			if (!expectations[i].equals(instruction.getItemId())){
-				Assert.fail(String.format("Mismatch in item %d. Expected list %s, got [%s]", i, Arrays.toString(expectations), printInstructionsList(instructions)));
-			}
-		}
-	}
-	
-	private String printInstructionsList(List<WorkInstruction> instructions) {
-		StringBuilder result = new StringBuilder();
-		for (int i = 0; i < instructions.size(); i++) {
-			result.append(instructions.get(i).getItemId());
-			if (i < instructions.size() - 1) {
-				result.append(",");
-			}
-		}
-		return result.toString();
-	}
-	
 	private void pickNextAndCompare(PickSimulator picker, String expectedItem){
 		WorkInstruction wi = picker.nextActiveWi();
 		Assert.assertEquals(expectedItem, wi.getItemId());
 		picker.pick(picker.buttonFor(wi), wi.getPlanQuantity());
 	}
-
 	
 	/**
 	 * This is a simple setup -> start -> start test.
@@ -109,7 +86,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 
 		List<WorkInstruction> scWiList = picker.getRemainingPicksWiList();
 		String[] expectations = {"Item2","Item3","Item5","Item7","Item9","Item11","Item15"};
-		compareList(scWiList, expectations);
+		compareInstructionsList(scWiList, expectations);
 	}
 	
 	/**
@@ -134,7 +111,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 
 		List<WorkInstruction> scWiList = picker.getRemainingPicksWiList();
 		String[] expectations = {"Item15","Item11","Item9","Item7","Item5","Item3","Item2"};
-		compareList(scWiList, expectations);
+		compareInstructionsList(scWiList, expectations);
 	}
 	
 	/**
@@ -159,7 +136,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 
 		List<WorkInstruction> scWiList = picker.getRemainingPicksWiList();
 		String[] expectations = {"Item15","Item11","Item9","Item7","Item5","Item3","Item2"};
-		compareList(scWiList, expectations);
+		compareInstructionsList(scWiList, expectations);
 	}
 
 	/**
@@ -184,7 +161,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 
 		List<WorkInstruction> scWiList = picker.getRemainingPicksWiList();
 		String[] expectations = {"Item2","Item3","Item5","Item7","Item9","Item11","Item15"};
-		compareList(scWiList, expectations);
+		compareInstructionsList(scWiList, expectations);
 	}
 	
 	/**
@@ -207,7 +184,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		List<WorkInstruction> scWiList = picker.getRemainingPicksWiList();
 		String[] expectations1 = {"Item15","Item11","Item9","Item7","Item5","Item3","Item2"};
-		compareList(scWiList, expectations1);
+		compareInstructionsList(scWiList, expectations1);
 		
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
@@ -215,7 +192,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		scWiList = picker.getRemainingPicksWiList();
 		String[] expectations2 = {"Item2","Item3","Item5","Item7","Item9","Item11","Item15"};
-		compareList(scWiList, expectations2);
+		compareInstructionsList(scWiList, expectations2);
 		
 		picker.scanCommand(CheDeviceLogic.REVERSE_COMMAND);
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
@@ -223,7 +200,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		scWiList = picker.getRemainingPicksWiList();
 		String[] expectations3 = {"Item15","Item11","Item9","Item7","Item5","Item3","Item2"};
-		compareList(scWiList, expectations3);
+		compareInstructionsList(scWiList, expectations3);
 	}
 	
 	/**
@@ -247,7 +224,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 
 		List<WorkInstruction> scWiList = picker.getRemainingPicksWiList();
 		String[] expectations = {"Item9","Item11","Item15","Item2","Item3","Item5","Item7"};
-		compareList(scWiList, expectations);
+		compareInstructionsList(scWiList, expectations);
 	}
 
 	/**
@@ -272,7 +249,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 
 		List<WorkInstruction> scWiList = picker.getRemainingPicksWiList();
 		String[] expectations = {"Item7","Item5","Item3","Item2","Item15","Item11","Item9"};
-		compareList(scWiList, expectations);
+		compareInstructionsList(scWiList, expectations);
 	}
 
 	/**
@@ -301,7 +278,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		
 		List<WorkInstruction> scWiList = picker.getRemainingPicksWiList();
 		String[] expectations1 = {"Item9","Item11","Item15","Item2","Item3","Item5","Item7"};
-		compareList(scWiList, expectations1);
+		compareInstructionsList(scWiList, expectations1);
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
 
@@ -322,7 +299,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		
 		scWiList = picker.getRemainingPicksWiList();
 		String[] expectations2 = {"Item9","Item11","Item15","Item2","Item3","Item5","Item7"};
-		compareList(scWiList, expectations2);
+		compareInstructionsList(scWiList, expectations2);
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
 
@@ -354,7 +331,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 
 		List<WorkInstruction> scWiList = picker.getRemainingPicksWiList();
 		String[] expectations1 = {"Item7","Item5","Item3","Item2","Item15","Item11","Item9"};
-		compareList(scWiList, expectations1);
+		compareInstructionsList(scWiList, expectations1);
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
 
@@ -375,7 +352,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 
 		scWiList = picker.getRemainingPicksWiList();
 		String[] expectations2 = {"Item7","Item5","Item3","Item2","Item15","Item11","Item9"};
-		compareList(scWiList, expectations2);
+		compareInstructionsList(scWiList, expectations2);
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
 	}
@@ -403,7 +380,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 
 		List<WorkInstruction> scWiList = picker.getRemainingPicksWiList();
 		String[] expectations1 = {"Item2","Item3","Item5","Item7","Item9","Item11","Item15"};
-		compareList(scWiList, expectations1);
+		compareInstructionsList(scWiList, expectations1);
 		
 		//Pick some items
 		pickNextAndCompare(picker, "Item2");
@@ -413,7 +390,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		//Check the remaining list
 		scWiList = picker.getRemainingPicksWiList();
 		String[] expectations2 = {"Item5","Item7","Item9","Item11","Item15"};
-		compareList(scWiList, expectations2);
+		compareInstructionsList(scWiList, expectations2);
 		
 		//Go reverse
 		picker.scanCommand(CheDeviceLogic.REVERSE_COMMAND);
@@ -423,7 +400,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 
 		scWiList = picker.getRemainingPicksWiList();
 		String[] expectations3 = {"Item15","Item11","Item9","Item7","Item5"};
-		compareList(scWiList, expectations3);
+		compareInstructionsList(scWiList, expectations3);
 		
 		//Pick item
 		pickNextAndCompare(picker, "Item15");
@@ -437,6 +414,6 @@ public class CheProcessScanPickReversable extends ServerTest {
 
 		scWiList = picker.getRemainingPicksWiList();
 		String[] expectations4 = {"Item9","Item11","Item5","Item7"};
-		compareList(scWiList, expectations4);
+		compareInstructionsList(scWiList, expectations4);
 	}
 }

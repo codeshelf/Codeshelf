@@ -106,11 +106,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					SCAN_PUTWALL_ITEM_MSG					= cheLine("SCAN ITEM/UPC FOR");
 	protected static final String					SCAN_PUTWALL_LINE2_MSG					= cheLine("THE PUT WALL");
 
-	public static final String						STARTWORK_COMMAND						= "START";
-	public static final String						REVERSE_COMMAND							= "REVERSE";
+	public 	  static final String					STARTWORK_COMMAND						= "START";
+	public    static final String					REVERSE_COMMAND							= "REVERSE";
 	protected static final String					SETUP_COMMAND							= "SETUP";
 	protected static final String					SHORT_COMMAND							= "SHORT";
-	protected static final String					LOGOUT_COMMAND							= "LOGOUT";
+	public	  static final String					LOGOUT_COMMAND							= "LOGOUT";
 	protected static final String					YES_COMMAND								= "YES";
 	protected static final String					NO_COMMAND								= "NO";
 	protected static final String					CLEAR_ERROR_COMMAND						= "CLEAR";

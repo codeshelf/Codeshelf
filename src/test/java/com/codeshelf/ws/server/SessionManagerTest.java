@@ -6,9 +6,7 @@ import java.util.List;
 import javax.websocket.RemoteEndpoint.Basic;
 import javax.websocket.Session;
 
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -18,13 +16,11 @@ import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.domain.UserType;
-import com.codeshelf.service.ServiceUtility;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.testframework.MinimalTest;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.util.concurrent.Service;
-import com.google.common.util.concurrent.ServiceManager;
 
 public class SessionManagerTest extends MinimalTest {
 	WebSocketManagerService sessionManager;

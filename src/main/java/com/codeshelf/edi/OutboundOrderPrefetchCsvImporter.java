@@ -48,7 +48,6 @@ import com.codeshelf.validation.BatchResult;
 import com.codeshelf.validation.InputValidationException;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderCsvBean> implements ICsvOrderImporter {
 

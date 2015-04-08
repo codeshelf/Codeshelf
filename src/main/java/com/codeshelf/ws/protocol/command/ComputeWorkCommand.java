@@ -56,8 +56,6 @@ public class ComputeWorkCommand extends CommandABC {
 			List<WorkInstruction> instructionsOnPath = workService.getWorkInstructions(che, request.getLocationId(), request.getReversePickOrder(), pathChanged);
 			
 			//Get the counts
-			//Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(instructionsWithHousekeeping, workList.getDetails());
-			//Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(workList.getInstructions(), workList.getDetails());
 			Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(allWorkList, instructionsOnPath);
 			
 			// ~bhe: should we check for null/zero and return a different status?
@@ -73,7 +71,10 @@ public class ComputeWorkCommand extends CommandABC {
 		response.setStatus(ResponseStatus.Fail);
 		return response;
 	}
-
+	
+	/**
+	 * Compute work instruction counts by containerId
+	 */
 	public static final Map<String, WorkInstructionCount> computeContainerWorkInstructionCounts(WorkList allWork, List<WorkInstruction> instructionsOnPath) {
 		Map<String, WorkInstructionCount> containerToWorkInstructCountMap = new HashMap<String, WorkInstructionCount>();
 		WorkInstructionCount count = null;
@@ -143,66 +144,6 @@ public class ComputeWorkCommand extends CommandABC {
 				containerToWorkInstructCountMap.put(containerId, count);
 			}
 			containerToWorkInstructCountMap.get(containerId).incrementDetailsNoWiMade();
-		}
-		return containerToWorkInstructCountMap;
-	}
-	
-	/**
-	 * Compute work instruction counts by containerId
-	 */
-	public static final Map<String, WorkInstructionCount> computeContainerWorkInstructionCounts(List<WorkInstruction> workInstructions, List<OrderDetail> details) {
-		Map<String, WorkInstructionCount> containerToWorkInstructCountMap = new HashMap<String, WorkInstructionCount>();
-		for (WorkInstruction wi : workInstructions) {
-			//Grab count reference
-			String containerId = wi.getContainerId();
-			WorkInstructionCount count = containerToWorkInstructCountMap.get(containerId);
-			if (count == null) {
-				count = new WorkInstructionCount();
-				containerToWorkInstructCountMap.put(containerId, count);
-			}
-			if (wi.getStatus() == null) {
-				//This should never happen. Log for now. We need to have a count for this because it is work instruction that will
-				//be represented in the total count
-				LOGGER.error("WorkInstruction status is null or invalid. Wi={}", wi);
-				count.incrementInvalidOrUnknownStatusCount();
-			} else {
-				switch (wi.getStatus()) {
-					case COMPLETE:
-						count.incrementCompleteCount();
-						break;
-					case INPROGRESS:
-						count.incrementGoodCount();
-						break;
-					case INVALID:
-						count.incrementInvalidOrUnknownStatusCount();
-						break;
-					case NEW:
-						//Ignore Housekeeping
-						if (!wi.isHousekeeping()) {
-							count.incrementGoodCount();
-						}
-						break;
-					case REVERT:
-						count.incrementInvalidOrUnknownStatusCount();
-						break;
-					case SHORT:
-						count.incrementImmediateShortCount();
-						break;
-				}
-			}
-		}
-
-		if (details != null) {
-			WorkInstructionCount count = null;
-			for (OrderDetail detail : details) {
-				String containerId = detail.getParent().getContainerId();
-				count = containerToWorkInstructCountMap.get(containerId);
-				if (count == null) {
-					count = new WorkInstructionCount();
-					containerToWorkInstructCountMap.put(containerId, count);
-				}
-				containerToWorkInstructCountMap.get(containerId).incrementDetailsNoWiMade();
-			}
 		}
 		return containerToWorkInstructCountMap;
 	}
