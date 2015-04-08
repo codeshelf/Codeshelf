@@ -20,7 +20,7 @@ public class ActiveSiteControllerHealthCheck extends CodeshelfHealthCheck {
     	Collection<WebSocketConnection> sessions = sessionManager.getWebSocketConnections();
     	int c=0;
     	for (WebSocketConnection session : sessions) {
-    		if (session.getLastState()==State.ACTIVE && session.isSiteController()) {
+    		if (session.getLastState()==State.ACTIVE && session.isAuthenticated() && session.getCurrentUserContext().isSiteController()) {
     			c++;
     		}
     	}

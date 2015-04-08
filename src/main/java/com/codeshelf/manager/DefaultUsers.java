@@ -13,7 +13,6 @@ import org.hibernate.Session;
 import org.yaml.snakeyaml.Yaml;
 
 import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.model.domain.UserType;
 import com.codeshelf.security.AuthProviderService;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -88,10 +87,8 @@ public class DefaultUsers {
 			user = new User();
 			user.setUsername(username);
 			if (username.equals(CodeshelfNetwork.DEFAULT_SITECON_USERNAME)) {
-				user.setType(UserType.SITECON);
 				user.setHashedPassword(authProviderService.hashPassword(CodeshelfNetwork.DEFAULT_SITECON_PASS));
 			} else {
-				user.setType(UserType.APPUSER);
 				user.setHashedPassword(authProviderService.hashPassword(DEFAULT_APPUSER_PASS));
 			}
 			initTenant = (Tenant) session.get(Tenant.class, initTenant.getId());

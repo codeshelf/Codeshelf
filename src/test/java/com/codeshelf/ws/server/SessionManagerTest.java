@@ -15,7 +15,6 @@ import com.codeshelf.manager.User;
 import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
-import com.codeshelf.model.domain.UserType;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.testframework.MinimalTest;
 import com.codeshelf.ws.protocol.message.MessageABC;
@@ -66,7 +65,6 @@ public class SessionManagerTest extends MinimalTest {
 	
 	private User mockUser(Tenant tenant, int userId, String username) {
 		User user = new User();
-		user.setType(UserType.SITECON);
 		user.setId(userId);
 		user.setUsername(username);
 		return user;

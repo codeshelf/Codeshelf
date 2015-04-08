@@ -3,6 +3,7 @@ package com.codeshelf.ws.protocol.command;
 import java.lang.reflect.InvocationTargetException;
 import java.util.UUID;
 
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,6 +17,7 @@ import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
+@RequiresPermissions("ux:get")
 public class ObjectGetCommand extends CommandABC {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(ObjectGetCommand.class);

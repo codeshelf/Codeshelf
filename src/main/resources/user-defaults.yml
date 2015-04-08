@@ -22,5 +22,7 @@
 "work@example.com":
   - Maintenance
   - Inventory
+"admin":
+  - CsSuperuser
 "5000":
   - SiteController

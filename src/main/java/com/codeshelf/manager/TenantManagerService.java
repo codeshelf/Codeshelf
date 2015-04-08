@@ -19,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.model.domain.UserType;
 import com.codeshelf.persistence.AbstractPersistenceService;
 import com.codeshelf.persistence.DatabaseCredentials;
 import com.codeshelf.persistence.DatabaseUtils;
@@ -170,7 +169,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	}
 
 	@Override
-	public User createUser(Tenant tenant, String username, String password, UserType type, Set<UserRole> roles) {
+	public User createUser(Tenant tenant, String username, String password, Set<UserRole> roles) {
 		if(!authProviderService.usernameMeetsRequirements(username))
 			throw new IllegalArgumentException("tried to create user with invalid username (caller must prevalidate)");
 		if(!authProviderService.passwordMeetsRequirements(password))
@@ -189,7 +188,6 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 			User user = new User();
 			user.setUsername(username);
 			user.setHashedPassword(authProviderService.hashPassword(password));
-			user.setType(type);
 			if(roles != null)
 				user.setRoles(roles);
 			tenant.addUser(user);
@@ -214,14 +212,12 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 			// reload detached tenant (might've added more users)
 			tenant = (Tenant) session.load(Tenant.class, tenant.getId());
 
-			// remove all users except site controller
+			// remove all users except default site controller
 			List<User> users = new ArrayList<User>();
 			users.addAll(tenant.getUsers());
 			for (User u : users) {
 				u = (User) session.load(User.class, u.getId());
-				//u.setRoles(Sets.<UserRole>newHashSet());
-				//session.save(u);
-				if (u.getType() != UserType.SITECON || !u.getUsername().equals(CodeshelfNetwork.DEFAULT_SITECON_USERNAME)) {
+				if (!u.isSiteController() || !u.getUsername().equals(CodeshelfNetwork.DEFAULT_SITECON_USERNAME)) {
 					tenant.removeUser(u);
 					session.delete(u);
 				}

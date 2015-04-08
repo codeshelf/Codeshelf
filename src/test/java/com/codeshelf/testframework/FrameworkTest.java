@@ -65,6 +65,7 @@ import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.security.CodeshelfRealm;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.HmacAuthService;
+import com.codeshelf.security.UserContext;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.InventoryService;
 import com.codeshelf.service.LightService;
@@ -80,6 +81,7 @@ import com.codeshelf.ws.server.ServerMessageProcessor;
 import com.codeshelf.ws.server.WebSocketConnection;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Service.State;
 import com.google.common.util.concurrent.ServiceManager;
@@ -660,8 +662,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 		return generateTestFacility();
 	}
 
-	public User setDefaultUserAndTenant() {
-		User user = getMockDefaultUser();
+	public UserContext setDefaultUserAndTenant() {
+		UserContext user = getMockDefaultUserContext();
 		CodeshelfSecurityManager.setContext(user,this.getDefaultTenant());
 		return user;
 	}
@@ -673,17 +675,17 @@ public abstract class FrameworkTest implements IntegrationTest {
 		return defaultMockTenant;
 	}
 
-	public User getMockDefaultUser() {
-		User user = defaultMockUser ;
-		Mockito.when(user.getTenant()).thenReturn(getDefaultTenant());
+	public UserContext getMockDefaultUserContext() {
+		UserContext user = defaultMockUser ;
+		Mockito.when(user.getPermissionStrings()).thenReturn(Sets.newHashSet("*"));
 		return user;
 	}
 
 	private void createMockWsConnection() {
-		User user = setDefaultUserAndTenant();
+		UserContext user = setDefaultUserAndTenant();
 
 		this.mockWsConnection = Mockito.mock(WebSocketConnection.class);
-		Mockito.when(mockWsConnection.getCurrentUser()).thenReturn(user);
+		Mockito.when(mockWsConnection.getCurrentUserContext()).thenReturn(user);
 		Mockito.when(mockWsConnection.getCurrentTenant()).thenReturn(this.getDefaultTenant());
 
 		// TODO: more advanced user connection setups for tests (real/mock, roles etc)                     

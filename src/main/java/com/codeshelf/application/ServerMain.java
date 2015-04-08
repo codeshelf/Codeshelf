@@ -6,9 +6,13 @@ CodeshelfWebSocketServer *  CodeShelf
 
 package com.codeshelf.application;
 
+import javax.servlet.ServletContext;
+
 import org.apache.commons.beanutils.ConvertUtilsBean;
+import org.apache.shiro.guice.web.ShiroWebModule;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.realm.Realm;
+import org.apache.shiro.web.mgt.WebSecurityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,6 +53,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import com.google.inject.binder.AnnotatedBindingBuilder;
 import com.google.inject.servlet.GuiceFilter;
 import com.google.inject.servlet.ServletModule;
 import com.sun.jersey.api.core.PackagesResourceConfig;
@@ -154,30 +159,32 @@ public final class ServerMain {
 
 		return injector;
 	}
-/*	
-	private static ShiroModule createShiroModule() {
-		return new ShiroModule() {
+	
+	class CodeshelfShiroWebModule extends ShiroWebModule {
+		CodeshelfShiroWebModule(ServletContext sc) {
+			super(sc);
+		}
 
-			@Override
-			protected void configureShiro() {
-				bindRealm().to(CodeshelfRealm.class).asEagerSingleton();
-			}
+		@Override
+		protected void configureShiroWeb() {
+			bindRealm().to(CodeshelfRealm.class).asEagerSingleton();
+		}
 
-			@Override
-			protected void bindSecurityManager(AnnotatedBindingBuilder<? super SecurityManager> bind) {
-	            bind.to(CodeshelfSecurityManager.class).asEagerSingleton();
-			}
-			
-		};
+		@Override
+		protected void bindWebSecurityManager(AnnotatedBindingBuilder<? super WebSecurityManager> bind) {
+			bind.to(CodeshelfSecurityManager.class).asEagerSingleton();
+		}
+		
 	}
-	*/
+	
 	private static ServletModule createGuiceServletModuleForApi() {
 		return new ServletModule() {
 		    @Override
 		    protected void configureServlets() {
 		        // bind resource classes here
 		    	ResourceConfig rc = new PackagesResourceConfig( "com.codeshelf.api.resources" );
-		    	for ( Class<?> resource : rc.getClasses() ) {
+
+				for ( Class<?> resource : rc.getClasses() ) {
 		    		bind( resource );	
 		    	}
 		    	

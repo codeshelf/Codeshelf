@@ -8,11 +8,13 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.EventListener;
 import java.util.List;
 
 import javax.servlet.DispatcherType;
 import javax.websocket.server.ServerContainer;
 
+import org.apache.shiro.web.servlet.ShiroFilter;
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
 import org.eclipse.jetty.annotations.ServletContainerInitializersStarter;
@@ -106,11 +108,11 @@ public class WebApiServer {
 			        wscontainer.addEndpoint(CsServerEndPoint.class);
 				}
 
-		        // embedded static content web server
+		        // embedded static content web server (enabled in dev environment only)
 		        if(staticContentPath != null) {
 					ResourceHandler resourceHandler = new ResourceHandler();
 					resourceHandler.setDirectoriesListed(false);
-					resourceHandler.setWelcomeFiles(new String[] { "codeshelf.html", "index.html" });
+					resourceHandler.setWelcomeFiles(new String[] { "index.html", "codeshelf.html" });
 					resourceHandler.setResourceBase(staticContentPath);
 					ContextHandler resourceContextHandler=new ContextHandler("/");
 					resourceContextHandler.setHandler(resourceHandler);
@@ -220,16 +222,19 @@ public class WebApiServer {
 
 	private Handler createRestApiHandler() {
 		ServletContextHandler restApiContext = new ServletContextHandler(ServletContextHandler.SESSIONS); // why sessions? -ivan
+		//restApiContext.setInitParameter(ResourceConfig.PROPERTY_RESOURCE_FILTER_FACTORIES, "org.secnod.shiro.jersey.ShiroResourceFilterFactory");
+		//EventListener[] listeners = new EventListener[1];
+		//listeners[0] = new org.apache.shiro.web.env.EnvironmentLoaderListener();
+		//restApiContext.setEventListeners(listeners);
 		restApiContext.setContextPath("/api");
 		FilterHolder jerseyGuiceFilter = new FilterHolder(new GuiceFilter());
 		restApiContext.addFilter(CORSFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
-		restApiContext.addFilter(APICallFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		restApiContext.addFilter(AuthFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+		restApiContext.addFilter(APICallFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+		//restApiContext.addFilter(ShiroFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		restApiContext.addFilter(TransactionFilter.class , "/*", EnumSet.allOf(DispatcherType.class));
 		restApiContext.addFilter(jerseyGuiceFilter , "/*", EnumSet.allOf(DispatcherType.class));
 		restApiContext.addServlet(DefaultServlet.class, "/");  //filter needs to front an actual servlet so put a basic servlet in place
-		//restApiContext.setSecurityHandler(createRestApiSecurityHandler());
-
 		return restApiContext;
 	}
 	
@@ -239,8 +244,9 @@ public class WebApiServer {
 		context.setContextPath("/mgr");
 		// can't seem to inject both APIs, Guice gets confused.. hm
 		//FilterHolder jerseyGuiceFilter = new FilterHolder(new GuiceFilter());
-		context.addFilter(APICallFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+		context.addFilter(CORSFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		context.addFilter(AuthFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+		context.addFilter(APICallFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		//context.addFilter(jerseyGuiceFilter , "/*", EnumSet.allOf(DispatcherType.class));
 		//context.addServlet(DefaultServlet.class, "/");  //filter needs to front an actual servlet so put a basic servlet in place
 
@@ -256,39 +262,10 @@ public class WebApiServer {
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);		
 		context.setContextPath("/auth");
 		context.addFilter(APICallFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
-		context.addServlet(new ServletHolder(new AuthServlet()),"/");
+		context.addFilter(CORSFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+				context.addServlet(new ServletHolder(new AuthServlet()),"/");
 		return context;
 	}
-	
-	/*
-	private SecurityHandler createRestApiSecurityHandler() {
-		ConstraintSecurityHandler security = new ConstraintSecurityHandler();
-
-		
-        Constraint constraint = new Constraint();
-        constraint.setName("auth");
-        constraint.setAuthenticate( true );
-        constraint.setRoles(new String[]{"user", "admin"});
- 
-        // Binds a url pattern with the previously created constraint. The roles for this constraing mapping are
-        // mined from the Constraint itself although methods exist to declare and bind roles separately as well.
-        ConstraintMapping mapping = new ConstraintMapping();
-        mapping.setPathSpec( "/*" );
-        mapping.setConstraint( constraint );
- 
-        // First you see the constraint mapping being applied to the handler as a singleton list,
-        // however you can passing in as many security constraint mappings as you like so long as they follow the
-        // mapping requirements of the servlet api. Next we set a BasicAuthenticator instance which is the object
-        // that actually checks the credentials followed by the LoginService which is the store of known users, etc.
-        security.setConstraintMappings(Collections.singletonList(mapping));
-		
-		HashLoginService loginService = new HashLoginService();
-		loginService.update("a@example.com", new Password("testme"), new String[]{"user"});
-		security.setLoginService(loginService);
-
-		security.setAuthenticator(new BasicAuthenticator());
-		return security;
-	}*/
 
 	public final void stop() {
 		try {

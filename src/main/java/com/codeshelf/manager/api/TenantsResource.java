@@ -16,14 +16,17 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.ITenantManagerService;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.util.FormUtility;
 
 @Path("/tenants")
+@RequiresPermissions("tenant")
 public class TenantsResource {
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(TenantsResource.class);
 	private static final Set<String>	validCreateTenantFields	= new HashSet<String>();
@@ -36,6 +39,7 @@ public class TenantsResource {
 	}
 
 	@GET
+	@RequiresPermissions("tenant:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response get() {
 		try {
@@ -48,6 +52,7 @@ public class TenantsResource {
 	}
 	
 	@POST
+	@RequiresPermissions("tenant:create")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public Response createTenant(MultivaluedMap<String,String> tenantParams) {
@@ -65,6 +70,7 @@ public class TenantsResource {
 	
 	@Path("{id}")
 	@GET
+	@RequiresPermissions("tenant:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getTenant(@PathParam("id") Integer id) {
 		try {
@@ -81,6 +87,7 @@ public class TenantsResource {
 	
 	@Path("{id}")
 	@POST
+	@RequiresPermissions("tenant:edit")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public Response updateTenant(@PathParam("id") Integer id, MultivaluedMap<String,String> tenantParams) {
@@ -176,7 +183,7 @@ public class TenantsResource {
 		ITenantManagerService manager = TenantManagerService.getInstance();
 		Tenant newTenant = null;
 		
-		Map<String,String> validFields = RootResource.validFieldsOnly(tenantParams, validCreateTenantFields);
+		Map<String,String> validFields = FormUtility.getValidFieldsOrThrow(tenantParams, validCreateTenantFields);
 		if(validFields != null) {
 			String tenantName = validFields.get("name");
 			String schemaName = validFields.get("schemaname");

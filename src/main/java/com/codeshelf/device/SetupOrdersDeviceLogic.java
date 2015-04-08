@@ -56,6 +56,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Accessors(prefix = "m")
 	@Getter
 	private String								mLocationId;
+	
+	// If the CHE is in PUT_WALL process, the wall currently getting work instructions for
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private String mPutWallName;
 
 	@Getter
 	@Setter
@@ -223,6 +229,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					sendDisplayCommand(SCAN_PUTWALL_ITEM_MSG, SCAN_PUTWALL_LINE2_MSG);
 					break;
 
+				case PUT_WALL_SCAN_WALL:
+					sendDisplayCommand(SCAN_PUTWALL_NAME_MSG, EMPTY_MSG);
+					break;
+
+				case GET_PUT_INSTRUCTION:
+					sendDisplayCommand(GET_WORK_MSG, EMPTY_MSG);
+					break;
+
 				case DO_PUT:
 					showActivePicks();
 					break;
@@ -323,14 +337,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CONTAINER_SELECT:
 				// only if no container/orders at all have been set up
 				if (mPositionToContainerMap.size() == 0) {
-					setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
+					setState(CheStateEnum.PUT_WALL_SCAN_WALL);
 				} else {
 					LOGGER.warn("User: {} attempted to do PUT_WALL after having some pick orders set up", this.getUserId());
 				}
 				break;
 
 			case PICK_COMPLETE:
-				setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
+				setState(CheStateEnum.PUT_WALL_SCAN_WALL);
 				break;
 
 			default:
@@ -390,6 +404,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case PUT_WALL_SCAN_ORDER:
 			case PUT_WALL_SCAN_LOCATION:
 			case PUT_WALL_SCAN_ITEM:
+			case PUT_WALL_SCAN_WALL:
 				// DEV-708, 712 specification. We want to return the state we started from: CONTAINER_SELECT or PICK_COMPLETE
 				// Perhaps will need a member variable, but for now we can tell by the state of the container map
 				if (mPositionToContainerMap.size() == 0) {
@@ -1106,6 +1121,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processPutWallItemScan(inScanPrefixStr, inContent);
 				break;
 
+			case PUT_WALL_SCAN_WALL:
+				processPutWallScanWall(inScanPrefixStr, inContent);
+				break;
+
 			default:
 				break;
 		}
@@ -1641,15 +1660,21 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// Note: if the response is "bad", want to be back in PUT_WALL_SCAN_ITEM state, with a meaningful response
 		// such as "could not find item", or "no order in put wall needs that item"
 		
-		sendWallItemMessage(inScanStr);
+		sendWallItemMessage(inScanStr, getPutWallName());
 		
 		// no notifyXXX here, as there is not result yet.
 		// do the notify on a good response, as work instruction(s) were made.
 	}
+	
+	protected void processPutWallScanWall (final String inScanPrefixStr, final String inScanStr) {
+		// The goal here is to remember the wall name that was scanned, then transition to PUT_WALL_SCAN_ITEM
+		setPutWallName(inScanStr);		
+		setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
+	}
 
-	private void sendWallItemMessage(String itemOrUpc){
+	private void sendWallItemMessage(String itemOrUpc, String putWallName){
 		// This will form the command and send to server. .
-		LOGGER.info("to do: send get put wall instruction for {}", itemOrUpc);
+		LOGGER.info("to do: send get put wall instruction for {} to wall {}", itemOrUpc, putWallName );
 		// DEV-713 to implement this
 		
 	}

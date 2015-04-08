@@ -55,6 +55,8 @@ public class AuthFilter implements Filter {
 				} finally {
 					CodeshelfSecurityManager.removeContext();
 				}
+			} else {
+				LOGGER.info("authentication failed: {}",authResponse.getStatus().toString());
 			}
 		} else {
 			LOGGER.warn("no valid auth cookie, access denied");

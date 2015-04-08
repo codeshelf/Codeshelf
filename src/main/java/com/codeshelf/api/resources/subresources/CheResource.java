@@ -10,6 +10,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+
 import lombok.Setter;
 
 import com.codeshelf.api.BaseResponse;
@@ -35,6 +37,7 @@ public class CheResource {
 	
 	@GET
 	@Path("/computeinstructions")
+	@RequiresPermissions("wi:compute")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response computeWorkInstructions(@QueryParam("containers") List<String> containers) {
 		ErrorResponse errors = new ErrorResponse();

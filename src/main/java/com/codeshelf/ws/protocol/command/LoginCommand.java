@@ -29,6 +29,7 @@ import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 import com.codeshelf.ws.server.WebSocketManagerService;
+import com.google.common.base.Strings;
 
 public class LoginCommand extends CommandABC {
 
@@ -37,7 +38,7 @@ public class LoginCommand extends CommandABC {
 	private LoginRequest			loginRequest;
 
 	private ObjectChangeBroadcaster	objectChangeBroadcaster;
-	
+
 	private WebSocketManagerService sessionManager;
 
 	public LoginCommand(WebSocketConnection wsConnection, LoginRequest loginRequest, ObjectChangeBroadcaster objectChangeBroadcaster, WebSocketManagerService sessionManager) {
@@ -51,10 +52,18 @@ public class LoginCommand extends CommandABC {
 	public ResponseABC exec() {
 		LoginResponse response = new LoginResponse();
 		try {
+			String cstoken = loginRequest.getCstoken();
 			String username = loginRequest.getUserId();
 			String password = loginRequest.getPassword();
 			if (wsConnection != null) {
-				AuthResponse authResponse = HmacAuthService.getInstance().authenticate(username, password);
+				AuthResponse authResponse = null;
+				boolean authByToken = false;
+				if (!Strings.isNullOrEmpty(cstoken)) {
+					authResponse = HmacAuthService.getInstance().checkToken(cstoken);
+					authByToken = true;
+				} else {
+					authResponse = HmacAuthService.getInstance().authenticate(username, password);
+	            }
 				if (authResponse.getStatus().equals(Status.ACCEPTED)) {
 					User authUser = authResponse.getUser();
 					// successfully authenticated user with password
@@ -64,7 +73,7 @@ public class LoginCommand extends CommandABC {
 					try {
 						TenantPersistenceService.getInstance().beginTransaction();
 						
-						LOGGER.info("User " + username + " of " + tenant.getName() + " authenticated on session "
+						LOGGER.info("User " + authUser.getUsername() + " of " + tenant.getName() + " authenticated on session "
 								+ wsConnection.getSessionId());
 	
 						// determine if site controller
@@ -128,7 +137,7 @@ public class LoginCommand extends CommandABC {
 						CodeshelfSecurityManager.removeContext();
 					}
 				} else {
-					LOGGER.warn("Authentication failed: " + username);
+					LOGGER.info("Auth failed: {}",authResponse.getStatus().toString());
 					response.setStatus(ResponseStatus.Authentication_Failed);
 				}
 			} else {

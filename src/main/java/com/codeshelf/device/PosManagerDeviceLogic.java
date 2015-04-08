@@ -246,6 +246,14 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 
 		//Display latest instructions on PosCons
 		List<PosControllerInstr> latestCommandsList = new ArrayList<PosControllerInstr>(latestInstructionsForPosition.values());
+
+		// make sure we wait the 5 millis after the clear sent above.
+		if (latestCommandsList.size() > 0) {
+			try {
+				Thread.sleep(5);
+			} catch (InterruptedException e) {
+			}
+		}
 		sendPositionControllerInstructions(latestCommandsList);
 	}
 
@@ -273,6 +281,7 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 	 * Although returned null could be from an error, null also means no feedback for that location
 	 */
 	public void processFeedback(OrderLocationFeedbackMessage instruction) {
+		boolean lastOfGroup = instruction.getLastMsgOfGroup();
 		PosControllerInstr posInstruction = constructMsgFromFeedback(instruction);
 		String locationName = instruction.getLocationName();
 		if (posInstruction != null) {
@@ -280,7 +289,8 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 		} else {
 			removeFeedbackInstructionFromLocation(locationName);
 		}
-		updatePosCons();
+		if (lastOfGroup)
+			updatePosCons();
 	}
 
 	/**

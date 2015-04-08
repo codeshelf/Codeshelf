@@ -16,11 +16,11 @@ import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.security.UserContext;
 import com.codeshelf.ws.io.JsonDecoder;
 import com.codeshelf.ws.io.JsonEncoder;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
@@ -60,7 +60,7 @@ public class CsServerEndPoint {
 		WebSocketConnection conn = webSocketManagerService.getWebSocketConnectionForSession(session);
 		if (conn != null) {
 			LOGGER.error("onOpen webSocketManager already had a connection for this session");
-			User user = conn.getCurrentUser();
+			UserContext user = conn.getCurrentUserContext();
 			Tenant tenant = conn.getCurrentTenant();
 			String lastTenantId = conn.getLastTenantIdentifier();
 			if (user != null || tenant != null || lastTenantId != null) {
@@ -78,11 +78,11 @@ public class CsServerEndPoint {
 	@OnMessage(maxMessageSize = JsonEncoder.WEBSOCKET_MAX_MESSAGE_SIZE)
 	public void onMessage(Session session, MessageABC message) {
 		messageCounter.inc();
-		User setUserContext = null;
+		UserContext setUserContext = null;
 		Tenant setTenantContext = null;
 		try {
 			WebSocketConnection csSession = webSocketManagerService.getWebSocketConnectionForSession(session);
-			setUserContext = csSession.getCurrentUser();
+			setUserContext = csSession.getCurrentUserContext();
 			setTenantContext = csSession.getCurrentTenant();
 			String msgName = message.getClass().getSimpleName();
 			if (setUserContext == null) {
@@ -151,7 +151,7 @@ public class CsServerEndPoint {
 
 	@OnClose
 	public void onClose(Session session, CloseReason reason) {
-		User user = webSocketManagerService.getWebSocketConnectionForSession(session).getCurrentUser();
+		UserContext user = webSocketManagerService.getWebSocketConnectionForSession(session).getCurrentUserContext();
 		try {
 			LOGGER.info(String.format("WS Session %s for user %s closed because of %s", session.getId(), user, reason));
 			webSocketManagerService.sessionEnded(session);

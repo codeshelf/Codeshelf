@@ -347,7 +347,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			OrderLocation ol = getPutWallOrderLocationNeedsLighting(incomingWI);
 			if (ol != null) {
 				Facility facility = ol.getFacility();
-				final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(ol);
+				final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(ol, true); // this single feedback message is last of the group.
 				sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
 			}
 		}
@@ -357,14 +357,14 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 	}
 
-	private void computeAndSendEmptyOrderFeedback(Location loc) {
+	private void computeAndSendEmptyOrderFeedback(Location loc, boolean isLastOfGroup) {
 		if (loc == null) {
 			LOGGER.error("null input to computeAndSendOrderFeedback");
 			return;
 		}
 		try {
 			Facility facility = loc.getFacility();
-			final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(loc);
+			final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(loc, isLastOfGroup);
 			sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
 		}
 
@@ -385,7 +385,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		return false;
 	}
 
-	private void computeAndSendOrderFeedback(OrderLocation orderLocation) {
+	private void computeAndSendOrderFeedback(OrderLocation orderLocation, boolean isLastOfGroup) {
 		if (orderLocation == null) {
 			LOGGER.error("null input to computeAndSendOrderFeedback");
 			return;
@@ -393,7 +393,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		try {
 			if (orderLocationDeservesFeedback(orderLocation)) {
 				Facility facility = orderLocation.getFacility();
-				final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(orderLocation);
+				final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(orderLocation, isLastOfGroup);
 				sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
 			}
 		}
@@ -446,18 +446,28 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			}
 		}
 
-		// Part 2. Send
+		// Part 2. Send.  This is a little tricky. This is one "group" of messages. 
+		// We need to mark the last one sent among the two lists as last in the group.
 		int olToSend = orderLocationsToSend.size();
+		int locToSend = emptyLocationsToSend.size();
+		int specialOlMessage = 0;
+		if (locToSend == 0)
+			specialOlMessage = olToSend; // if no loc message, then last ol message is the last of group.
+		int specialLocMessage = locToSend; // normally, last loc message is last of group.
+		
 		if (olToSend > 0)
 			LOGGER.info("sending {} order location feedback instructions", olToSend);
+		int olCount = 0;
 		for (OrderLocation ol : orderLocationsToSend) {
-			computeAndSendOrderFeedback(ol);
+			olCount++;
+			computeAndSendOrderFeedback(ol, specialOlMessage == olCount);
 		}
-		int locToSend = emptyLocationsToSend.size();
 		if (locToSend > 0)
 			LOGGER.info("sending {} putwall clear slot instructions", locToSend);
+		int locCount = 0;
 		for (Location loc : emptyLocationsToSend) {
-			computeAndSendEmptyOrderFeedback(loc);
+			locCount++;
+			computeAndSendEmptyOrderFeedback(loc, specialLocMessage == locCount);
 		}
 
 	}
@@ -1597,7 +1607,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 
 		//Light up the selected location. Send even if just a redo
-		computeAndSendOrderFeedback(ol);
+		computeAndSendOrderFeedback(ol, true); // single message is last of the group
 		return true;
 	}
 }

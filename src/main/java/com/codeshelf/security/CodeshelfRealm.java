@@ -16,9 +16,6 @@ import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 
-import com.codeshelf.manager.TenantManagerService;
-import com.codeshelf.manager.User;
-
 /**
  * @author jeffw
  *
@@ -31,17 +28,16 @@ public class CodeshelfRealm extends AuthorizingRealm {
 	@Override
 	protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principals) {
 		// look up user
-		Integer userId = (Integer)principals.getPrimaryPrincipal();
-		User user = TenantManagerService.getInstance().getUser(userId);
+		//User user = TenantManagerService.getInstance().getUser(userId);
+		UserContext userContext = (UserContext)principals.getPrimaryPrincipal();
 		
 		SimpleAuthorizationInfo info = null;
-		if(user != null) {
+		if(userContext != null) {
 			Set<String> roles = new HashSet<String>();
-			roles.add(user.getType().toString()); // temporarily, UserType = default role
-			roles.addAll(user.getRoleNames());
+			roles.addAll(userContext.getRoleNames());
 			
 			info = new SimpleAuthorizationInfo();
-			info.setStringPermissions(user.getPermissionStrings());
+			info.setStringPermissions(userContext.getPermissionStrings());
 			info.setRoles(roles);
 		} // else getUser logged error
 		

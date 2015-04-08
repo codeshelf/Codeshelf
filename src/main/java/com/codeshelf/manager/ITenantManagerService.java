@@ -3,7 +3,6 @@ package com.codeshelf.manager;
 import java.util.List;
 import java.util.Set;
 
-import com.codeshelf.model.domain.UserType;
 import com.codeshelf.service.CodeshelfService;
 
 /**
@@ -18,7 +17,7 @@ public interface ITenantManagerService extends CodeshelfService {
 	
 	// users
 	boolean canCreateUser(String username);	
-	User createUser(Tenant tenant,String username,String password,UserType type, Set<UserRole> roles);
+	User createUser(Tenant tenant,String username,String password,Set<UserRole> roles);
 	User getUser(Integer id);
 	User getUser(String username);
 	User updateUser(User user);

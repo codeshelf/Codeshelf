@@ -14,6 +14,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.edi.AislesFileCsvImporter;
@@ -54,6 +56,7 @@ public class ImportResource {
 	
 	@POST
 	@Path("/site/{facilityId}")
+	@RequiresPermissions("facility:edit")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response uploadSite(
@@ -84,6 +87,7 @@ public class ImportResource {
 	
 	@POST
 	@Path("/locations/{facilityId}")
+	@RequiresPermissions("facility:edit")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response uploadLocations(
@@ -115,6 +119,7 @@ public class ImportResource {
 	@SuppressWarnings("unused")
 	@POST
 	@Path("/orders/{facilityId}")
+	@RequiresPermissions("order:import")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response uploadOrders(
@@ -142,6 +147,7 @@ public class ImportResource {
 	
 	@POST
 	@Path("/inventory/{facilityId}")
+	@RequiresPermissions("inventory:import")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response uploadInventory(

@@ -32,7 +32,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 	}
 
 	protected void sendPositionControllerInstructions(List<PosControllerInstr> inInstructions) {
-		LOGGER.info("Sending PosCon Instructions {}", inInstructions);
+		LOGGER.info("{}: Sending PosCon Instructions {}", this.getMyGuidStr(), inInstructions);
 		if (inInstructions.isEmpty()) {return;}
 		
 		//Update the last sent posControllerInstr for the position 
@@ -60,9 +60,9 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 
 	protected void clearOnePositionController(Byte inPosition) {
 		if (inPosition == PosControllerInstr.POSITION_ALL)
-			LOGGER.info("Sending Clear PosCon command for ALL");
+			LOGGER.info("{}: Sending Clear PosCon command for ALL", this.getMyGuidStr());
 		else
-			LOGGER.info("Sending Clear PosCon command for {}", inPosition);
+			LOGGER.info("{}: Sending Clear PosCon command for {}", this.getMyGuidStr(), inPosition);
 
 		//Remove lastSent Set Instr from map to indicate the clear
 		if (PosControllerInstr.POSITION_ALL.equals(inPosition)) {

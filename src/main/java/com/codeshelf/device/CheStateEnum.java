@@ -68,11 +68,15 @@ public enum CheStateEnum {
 	// @EnumValue("PUT_WALL_SCAN_ORDER")
 	PUT_WALL_SCAN_ORDER(CheStateNum.PUT_WALL_SCAN_ORDER, "PUT_WALL_SCAN_ORDER"),
 
-	// states used for put wall DEV-712
+	// states used for put wall DEV-712, DEV-713
+	// @EnumValue("PUT_WALL_SCAN_WALL")
+	PUT_WALL_SCAN_WALL(CheStateNum.PUT_WALL_SCAN_WALL, "PUT_WALL_SCAN_WALL"),
 	// @EnumValue("PUT_WALL_SCAN_ITEM")
 	PUT_WALL_SCAN_ITEM(CheStateNum.PUT_WALL_SCAN_ITEM, "PUT_WALL_SCAN_ITEM"),
 	// @EnumValue("DO_PUT")
-	DO_PUT(CheStateNum.DO_PUT, "DO_PUT");
+	DO_PUT(CheStateNum.DO_PUT, "DO_PUT"),
+	// @EnumValue("GET_PUT_INSTRUCTION")
+	GET_PUT_INSTRUCTION(CheStateNum.GET_PUT_INSTRUCTION, "GET_PUT_INSTRUCTION");
 
 	private int		mValue;
 	private String	mName;
@@ -205,6 +209,8 @@ public enum CheStateEnum {
 		static final byte	PUT_WALL_SCAN_LOCATION		= 25;
 		static final byte	PUT_WALL_SCAN_ITEM			= 26;
 		static final byte	DO_PUT						= 27;
+		static final byte	PUT_WALL_SCAN_WALL			= 29;
+		static final byte	GET_PUT_INSTRUCTION			= 30;
 
 		private CheStateNum() {
 		};

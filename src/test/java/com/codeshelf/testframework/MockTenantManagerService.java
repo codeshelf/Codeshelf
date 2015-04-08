@@ -16,7 +16,6 @@ import com.codeshelf.manager.TenantManagerService.ShutdownCleanupReq;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.UserPermission;
 import com.codeshelf.manager.UserRole;
-import com.codeshelf.model.domain.UserType;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 
@@ -29,7 +28,6 @@ public class MockTenantManagerService implements ITenantManagerService {
 		defaultUser = new User();
 		defaultUser.setId(0);
 		defaultUser.setTenant(defaultTenant);
-		defaultUser.setType(UserType.SUPER);
 		defaultUser.setUsername("mock");
 		defaultTenant.addUser(defaultUser); // tenant is possibly a mock and this doesn't do anything
 	}
@@ -93,7 +91,7 @@ public class MockTenantManagerService implements ITenantManagerService {
 		return false;
 	}
 	@Override
-	public User createUser(Tenant tenant, String username, String password, UserType type, Set<UserRole> roles) {
+	public User createUser(Tenant tenant, String username, String password, Set<UserRole> roles) {
 		return defaultUser;
 	}
 	@Override

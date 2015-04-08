@@ -9,13 +9,13 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.User;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.security.UserContext;
 import com.codeshelf.service.InventoryService;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.service.WorkService;
@@ -141,7 +141,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		
         // process message...
     	final Timer.Context timerContext = requestProcessingTimer.time();
-		User user = csSession.getCurrentUser();
+		UserContext user = csSession.getCurrentUserContext();
 		Tenant tenant = csSession.getCurrentTenant();
 		if (user == null && tenant != null) {
 			throw new IllegalArgumentException("got request with tenant "+tenant.getId()+" but no user!");
@@ -262,10 +262,12 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			//if(user != null) TenantPersistenceService.getInstance().commitTransaction();
     	} catch (Exception e) {
 			//if(user != null) TenantPersistenceService.getInstance().rollbackTransaction();
-			String message = ExceptionUtils.getMessage(e);
+			String message;
     		if(e instanceof NullPointerException || e instanceof HibernateException) {
+    			message = "Exception"; // do not return detail on this type of exception to caller
     			LOGGER.error("Unexpected exception in ServerMessageProcessor",e);
     		} else {
+    			message = ExceptionUtils.getMessage(e);
     			LOGGER.warn("Error processing {} request: {}",request.getClass().getSimpleName(),message);
     		}
     		response = new FailureResponse(message);

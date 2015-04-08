@@ -161,13 +161,13 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 							// session is still active
 							if (ageSeconds > this.sessionMinIdleMinutes * 60) {
 								// if token is valid but getting old, offer an updated one
-								LOGGER.info("refreshing cookie for user {}", userId);
+								LOGGER.info("renewing token for {}", user.getUsername());
 								refreshToken = this.createToken(userId, tenantId, now, sessionStart, sessionFlags);
 							}
 						}
 						response = new AuthResponse(Status.ACCEPTED, user, tenant, timestamp, sessionStart, sessionFlags, refreshToken);
 					} else {
-						LOGGER.warn("session timed out for user {} timestamp {} sessionStart {}", userId, timestamp, sessionStart);
+						LOGGER.info("expired token for user {} (timestamp {}, sessionStart {})", userId, timestamp, sessionStart);
 						response = new AuthResponse(Status.SESSION_IDLE_TIMEOUT, user, tenant, timestamp, sessionStart, sessionFlags, null);
 					}
 				} else {
@@ -178,7 +178,7 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 					response = new AuthResponse(Status.INVALID_TIMESTAMP, user, tenant, timestamp, sessionStart, sessionFlags, null);
 				}
 			} else {
-				LOGGER.error("ALERT - login not allowed for user {}", userId);
+				LOGGER.error("ALERT - login not allowed for user {}", user.getUsername());
 				response = new AuthResponse(Status.LOGIN_NOT_ALLOWED, user);
 			}
 		} else {
@@ -258,7 +258,7 @@ public class HmacAuthService extends AbstractCodeshelfIdleService implements Aut
 			if (user.getTenant().isActive()) {
 				if (user.isLoginAllowed()) {
 					if (passwordValid) {
-						LOGGER.debug("Password valid for user {}", user);
+						LOGGER.info("Creating token for user {}", user);
 						long timestamp = System.currentTimeMillis();
 						Tenant tenant = user.getTenant();
 						String token = this.createToken(user.getId(), tenant.getId(), timestamp, timestamp, null); // create default token for new session

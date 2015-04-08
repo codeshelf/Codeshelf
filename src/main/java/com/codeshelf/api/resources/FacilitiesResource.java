@@ -11,6 +11,8 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.resources.subresources.FacilityResource;
@@ -24,6 +26,7 @@ public class FacilitiesResource {
 	private ResourceContext resourceContext;
 	
 	@Path("{id}")
+	@RequiresPermissions("companion:view")
 	public FacilityResource getManufacturer(@PathParam("id") UUIDParam uuidParam) throws Exception {
 		Facility facility = Facility.staticGetDao().findByPersistentId(uuidParam.getValue());
 		if (facility == null) {
@@ -35,6 +38,7 @@ public class FacilitiesResource {
 	}
 	
 	@GET
+	@RequiresPermissions("companion:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getAllFacilities() {
 		List<Facility> facilities = Facility.staticGetDao().getAll();

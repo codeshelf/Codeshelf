@@ -14,6 +14,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,10 +22,12 @@ import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.UserPermission;
 
 @Path("/permissions")
+@RequiresPermissions("perm")
 public class PermissionsResource {
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(PermissionsResource.class);
 
 	@GET
+	@RequiresPermissions("perm:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response get() {
 		try {
@@ -37,6 +40,7 @@ public class PermissionsResource {
 	}
 
 	@POST
+	@RequiresPermissions("perm:create")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public Response createPermission(MultivaluedMap<String,String> permissionParams) {
@@ -54,6 +58,7 @@ public class PermissionsResource {
 	
 	@Path("{id}")
 	@GET
+	@RequiresPermissions("perm:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getPermission(@PathParam("id") Integer id) {
 		try {
@@ -70,6 +75,7 @@ public class PermissionsResource {
 	
 	@Path("{id}")
 	@POST
+	@RequiresPermissions("perm:edit")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public Response updatePermission(@PathParam("id") Integer id, MultivaluedMap<String,String> permissionParams) {
@@ -91,6 +97,7 @@ public class PermissionsResource {
 
 	@Path("{id}")
 	@DELETE
+	@RequiresPermissions("perm:delete")
 	public Response deletePermission(@PathParam("id") Integer id) {
 		try {
 			UserPermission permission = TenantManagerService.getInstance().getPermission(id);

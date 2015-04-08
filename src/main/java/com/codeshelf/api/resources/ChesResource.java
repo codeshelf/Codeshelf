@@ -6,6 +6,8 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 
+import org.apache.shiro.authz.annotation.RequiresPermissions;
+
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.resources.subresources.CheResource;
 import com.codeshelf.model.domain.Che;
@@ -17,6 +19,7 @@ public class ChesResource {
 	private ResourceContext resourceContext;
 
 	@Path("{id}")
+	@RequiresPermissions("companion:view")
 	public CheResource findChe(@PathParam("id") UUIDParam uuidParam) throws Exception {
 		Che che = Che.staticGetDao().findByPersistentId(uuidParam.getValue());
 		if (che == null) {

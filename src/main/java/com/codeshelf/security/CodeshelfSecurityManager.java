@@ -2,7 +2,9 @@ package com.codeshelf.security;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import lombok.Getter;
 
@@ -30,15 +32,17 @@ import org.apache.shiro.subject.SimplePrincipalCollection;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.subject.SubjectContext;
 import org.apache.shiro.util.ThreadContext;
+import org.apache.shiro.web.mgt.WebSecurityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.Tenant;
+import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 
 import edu.emory.mathcs.backport.java.util.Arrays;
 
-public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
+public class CodeshelfSecurityManager extends AuthorizingSecurityManager implements WebSecurityManager {
 	static final private Logger	LOGGER						= LoggerFactory.getLogger(CodeshelfSecurityManager.class);
 
 	@Getter
@@ -52,6 +56,18 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 			@Override
 			public Integer getId() {
 				return -1;
+			}
+			@Override
+			public boolean isSiteController() {
+				return false;
+			}
+			@Override
+			public Collection<? extends String> getRoleNames() {
+				return Collections.<String>emptySet();
+			}
+			@Override
+			public Set<String> getPermissionStrings() {
+				return Sets.<String>newHashSet("*");
 			}};		
 	}
 	
@@ -86,13 +102,13 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 		Subject subject = null;
 		UserContext user = getCurrentUserContext();
 		if(user != null) {
-			PrincipalCollection principals = new SimplePrincipalCollection(user.getId(),oneRealm.getName());
+			PrincipalCollection principals = new SimplePrincipalCollection(user,oneRealm.getName());
 			context.setSecurityManager(this);
 			context.setAuthenticated(true);
 			context.setPrincipals(principals);
 			context.setSessionCreationEnabled(false);
 			subject = this.subjectFactory.createSubject(context);
-			LOGGER.debug("created subject {}",user.getId());
+			LOGGER.debug("created subject {} [{}]",user.getUsername(),user.getId());
 		} else {
 			LOGGER.debug("failed to create subject, no current user");
 		}
@@ -184,23 +200,34 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
 		org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_USER_KEY);
 	}
 
-	public static void authorizeAnnotatedClass(Class<?> clazz) throws AuthorizationException {		
+	public static boolean authorizeAnnotatedClass(Class<?> clazz) throws AuthorizationException {
+		boolean annotated = false;
         Subject subject = SecurityUtils.getSubject();
 
         // authentication checks
-        if ((subject == null || !subject.isAuthenticated()) && clazz.isAnnotationPresent(RequiresAuthentication.class)) {
-            throw new UnauthenticatedException("Authentication required");
+        if(clazz.isAnnotationPresent(RequiresAuthentication.class)) {
+        	annotated = true;
+            if ((subject == null || !subject.isAuthenticated())) {
+                throw new UnauthenticatedException("Authentication required");
+            }
         }
-        if ((subject != null && subject.getPrincipal() != null) && clazz.isAnnotationPresent(RequiresGuest.class)) {
-            throw new UnauthenticatedException("Guest required");
+        if(clazz.isAnnotationPresent(RequiresGuest.class)) {
+        	annotated = true;
+            if ((subject != null && subject.getPrincipal() != null)) {
+                throw new UnauthenticatedException("Guest required");
+            }
         }
-        if ((subject == null || subject.getPrincipal() == null) && clazz.isAnnotationPresent(RequiresUser.class)) {
-            throw new UnauthenticatedException("User required");
+        if(clazz.isAnnotationPresent(RequiresUser.class)) {
+        	annotated = true;
+            if ((subject == null || subject.getPrincipal() == null)) {
+                throw new UnauthenticatedException("User required");
+            }
         }
 
         // role checks
         RequiresRoles roles = clazz.getAnnotation(RequiresRoles.class);
         if (roles != null) {
+        	annotated = true;
         	if(subject == null) {
         		throw new AuthorizationException("Roles required, but no subject available");
         	}
@@ -212,6 +239,7 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
         // permission checks
         RequiresPermissions permissions = clazz.getAnnotation(RequiresPermissions.class);
         if (permissions != null) {
+        	annotated = true;
         	if(subject == null) {
         		throw new AuthorizationException("Permissions required, but no subject available");
         	}
@@ -219,6 +247,12 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager {
         }
 
         // passed all checks
+        return annotated;
+	}
+
+	@Override
+	public boolean isHttpSessionMode() {
+		return false;
 	}
 
 }
