@@ -28,7 +28,7 @@ import com.codeshelf.testframework.ServerTest;
 
 public class CheProcessScanPickMultiPath extends ServerTest {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(CheProcessScanPickMultiPath.class);
-	private static final int WAIT_TIME = 400000;
+	private static final int WAIT_TIME = 4000;
 	
 	private PickSimulator setupTestPicker(String cheLastScannedLocation) throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
@@ -466,6 +466,93 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		wiList = picker.getRemainingPicksWiList();
 		String[] expectations2 = {"Item10","Item14","Item15"};
 		compareInstructionsList(wiList, expectations2);
+		
+		//Finish the other path
+		pickItemAuto(picker);
+		pickItemAuto(picker);
+		pickItemAuto(picker);
+		
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+		verifyCheDisplay(picker, "ALL WORK COMPLETE", "", "", "");
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, picker.getLastSentPositionControllerDisplayValue((byte) 1));
+		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_C, picker.getLastSentPositionControllerMinQty((byte) 1));
+		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_O, picker.getLastSentPositionControllerMaxQty((byte) 1));
+	}
+	
+	@Test
+	public void testIncompleteWorkSinglePath() throws IOException{
+		this.startSiteController();
+		//Set Che on the second path
+		PickSimulator picker = setupTestPicker("Loc1A");
+				
+		containerSetup(picker);
+		
+		//Scan START
+		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);		
+		//Scan START to begin pick
+		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
+		//Pick all items on this path
+		pickItemAuto(picker);
+		pickItemAuto(picker);
+		pickItemAuto(picker);
+		pickItemAuto(picker);
+		pickItemAuto(picker);
+		
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE_CURR_PATH, WAIT_TIME);
+		
+		//Scan location on a different path.
+		picker.scanLocation("Loc2A");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		
+		//Start pick on the new path.
+		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		
+		//Finish the other path
+		pickItemAuto(picker);
+		pickItemAuto(picker);
+		picker.pick(1, 0);
+		picker.scanCommand("YES");
+		
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+		verifyCheDisplay(picker, "ALL WORK COMPLETE", "", "", "");
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, picker.getLastSentPositionControllerDisplayValue((byte) 1));
+		Assert.assertEquals(PosControllerInstr.BITENCODED_TOP_BOTTOM, picker.getLastSentPositionControllerMinQty((byte) 1));
+		Assert.assertEquals(PosControllerInstr.BITENCODED_TOP_BOTTOM, picker.getLastSentPositionControllerMaxQty((byte) 1));
+	}
+	
+	@Test
+	public void testIncompleteWorkMultiPath() throws IOException{
+		this.startSiteController();
+		//Set Che on the second path
+		PickSimulator picker = setupTestPicker("Loc1A");
+				
+		containerSetup(picker);
+		
+		//Scan START
+		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);		
+		//Scan START to begin pick
+		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+
+		//Pick all items on this path
+		pickItemAuto(picker);
+		pickItemAuto(picker);
+		pickItemAuto(picker);
+		pickItemAuto(picker);
+		picker.pick(1, 0);			//Short the last item
+		picker.scanCommand("YES");
+		
+		//At this point, there are unfinished items on both paths
+		//(Shorted items on this and all items on another)
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE_CURR_PATH, WAIT_TIME);
+		verifyCheDisplay(picker, "PATH COMPLETE", "SCAN NEW LOCATION", "OR SETUP NEW CART", "");
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, picker.getLastSentPositionControllerDisplayValue((byte) 1));
+		Assert.assertEquals(PosControllerInstr.BITENCODED_TRIPLE_DASH, picker.getLastSentPositionControllerMinQty((byte) 1));
+		Assert.assertEquals(PosControllerInstr.BITENCODED_TRIPLE_DASH, picker.getLastSentPositionControllerMaxQty((byte) 1));		
 	}
 }
