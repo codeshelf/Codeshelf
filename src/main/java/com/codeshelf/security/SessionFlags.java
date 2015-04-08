@@ -32,15 +32,15 @@ public class SessionFlags {
 	}
 
 	public boolean get(Flag flag) {
-		boolean value = (((byte)0xfe & (packed >> flag.bit)) == 1);
-		return value ^ flag.isInverted();
+		boolean value = (((byte)0x01 & (packed >> flag.bit)) == 1);
+		return (value != flag.isInverted());
 	}
 
 	void set(Flag flag, boolean value) {
-		if (value ^ flag.isInverted()) {
+		if (value != flag.isInverted()) {
 			packed |= (1 << flag.getBit()); // turn on bit
 		} else {
-			packed &= ((byte)0xff & (0xfeff >> (8 - flag.getBit()))); // turn off bit
+			packed &= ((byte)0xff ^ (1 << flag.getBit())); // turn off bit
 		}
 	}
 

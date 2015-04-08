@@ -57,8 +57,10 @@ public class LoginCommand extends CommandABC {
 			String password = loginRequest.getPassword();
 			if (wsConnection != null) {
 				AuthResponse authResponse = null;
+				boolean authByToken = false;
 				if (!Strings.isNullOrEmpty(cstoken)) {
 					authResponse = HmacAuthService.getInstance().checkToken(cstoken);
+					authByToken = true;
 				} else {
 					authResponse = HmacAuthService.getInstance().authenticate(username, password);
 	            }
@@ -71,7 +73,7 @@ public class LoginCommand extends CommandABC {
 					try {
 						TenantPersistenceService.getInstance().beginTransaction();
 						
-						LOGGER.info("User " + username + " of " + tenant.getName() + " authenticated on session "
+						LOGGER.info("User " + authUser.getUsername() + " of " + tenant.getName() + " authenticated on session "
 								+ wsConnection.getSessionId());
 	
 						// determine if site controller
@@ -135,7 +137,7 @@ public class LoginCommand extends CommandABC {
 						CodeshelfSecurityManager.removeContext();
 					}
 				} else {
-					LOGGER.warn("Authentication failed: " + username);
+					LOGGER.info("Auth failed: {}",authResponse.getStatus().toString());
 					response.setStatus(ResponseStatus.Authentication_Failed);
 				}
 			} else {

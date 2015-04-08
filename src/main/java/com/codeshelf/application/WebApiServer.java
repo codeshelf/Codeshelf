@@ -108,7 +108,7 @@ public class WebApiServer {
 			        wscontainer.addEndpoint(CsServerEndPoint.class);
 				}
 
-		        // embedded static content web server
+		        // embedded static content web server (enabled in dev environment only)
 		        if(staticContentPath != null) {
 					ResourceHandler resourceHandler = new ResourceHandler();
 					resourceHandler.setDirectoriesListed(false);
@@ -228,9 +228,9 @@ public class WebApiServer {
 		//restApiContext.setEventListeners(listeners);
 		restApiContext.setContextPath("/api");
 		FilterHolder jerseyGuiceFilter = new FilterHolder(new GuiceFilter());
-		restApiContext.addFilter(APICallFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		restApiContext.addFilter(CORSFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		restApiContext.addFilter(AuthFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+		restApiContext.addFilter(APICallFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		//restApiContext.addFilter(ShiroFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		restApiContext.addFilter(TransactionFilter.class , "/*", EnumSet.allOf(DispatcherType.class));
 		restApiContext.addFilter(jerseyGuiceFilter , "/*", EnumSet.allOf(DispatcherType.class));
@@ -244,9 +244,9 @@ public class WebApiServer {
 		context.setContextPath("/mgr");
 		// can't seem to inject both APIs, Guice gets confused.. hm
 		//FilterHolder jerseyGuiceFilter = new FilterHolder(new GuiceFilter());
-		context.addFilter(APICallFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		context.addFilter(CORSFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		context.addFilter(AuthFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+		context.addFilter(APICallFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
 		//context.addFilter(jerseyGuiceFilter , "/*", EnumSet.allOf(DispatcherType.class));
 		//context.addServlet(DefaultServlet.class, "/");  //filter needs to front an actual servlet so put a basic servlet in place
 
