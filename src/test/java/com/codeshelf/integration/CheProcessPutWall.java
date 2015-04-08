@@ -176,12 +176,14 @@ public class CheProcessPutWall extends ServerTest {
 		LOGGER.info("1: prove PUT_WALL and clear works from start and finish, but not after setup or during pick");
 		picker.login("Picker #1");
 		picker.scanCommand("PUT_WALL");
-		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, 4000);
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, 4000);
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
 
 		LOGGER.info("1b: progress futher before clearing. Scan the order ID");
 		picker.scanCommand("PUT_WALL");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, 4000);
+		picker.scanSomething("L%Wall1");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, 4000);
 		picker.scanSomething("Sku1514");
 		picker.waitForCheState(CheStateEnum.DO_PUT, 4000); // getting work, then DO_PUT DEV-713 will do this right.
@@ -208,7 +210,7 @@ public class CheProcessPutWall extends ServerTest {
 
 		LOGGER.info("1e: PUT_WALL from complete state");
 		picker.scanCommand("PUT_WALL");
-		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, 4000);
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, 4000);
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
 
@@ -261,6 +263,8 @@ public class CheProcessPutWall extends ServerTest {
 		picker1.scanCommand("PUT_WALL");
 		// TODO
 		// Work flow wrong here. Should need to scan the container as another state-step. Otherwise, scan "Sku1514" may lead to work instructions in multiple walls.
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, 4000);
+		picker1.scanSomething("L%Wall1");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, 4000);
 		picker1.scanSomething("Sku1514");
 		picker1.waitForCheState(CheStateEnum.DO_PUT, 4000);
