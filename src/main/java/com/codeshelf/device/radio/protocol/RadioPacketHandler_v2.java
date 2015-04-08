@@ -62,7 +62,7 @@ public class RadioPacketHandler_v2 extends RadioPacketHandler_v1 {
 
 			device.setLastAckId(inAckId);
 
-			//The difference between v0 and v1 is that we're sending device.getGuid().getHexStringNoPrefix() on an ACK instead of all 0's 
+			//The difference between v1 and v2 is that we're sending device.getGuid().getHexStringNoPrefix() on an ACK instead of all 0's 
 			CommandAssocAck ackCmd = new CommandAssocAck(device.getGuid().getHexStringNoPrefix(),
 				new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, (byte) 0));
 
