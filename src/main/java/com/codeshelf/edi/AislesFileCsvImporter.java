@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,8 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Slot;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.Vertex;
+import com.codeshelf.persistence.PersistenceService;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.validation.InputValidationException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -265,27 +268,6 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		}
 	}
 
-	private class SlotNameComparable implements Comparator<Slot> {
-		// Just order slots S1, S2, S3, etc. 
-		public int compare(Slot inLoc1, Slot inLoc2) {
-
-			if ((inLoc1 == null) && (inLoc2 == null)) {
-				return 0;
-			} else if (inLoc2 == null) {
-				return -1;
-			} else if (inLoc1 == null) {
-				return 1;
-			} else {
-				// We need to sort S1 - S9, S10- S19, etc. Not S1, S10, S11, ... S2
-				String slotOneNumerals = inLoc1.getDomainId().substring(1); // Strip off the S
-				String slotTwoNumerals = inLoc2.getDomainId().substring(1); // Strip off the S
-				Integer slotOneValue = Integer.valueOf(slotOneNumerals);
-				Integer slotTwoValue = Integer.valueOf(slotTwoNumerals);
-				return slotOneValue.compareTo(slotTwoValue);
-			}
-		}
-	}
-
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inTier
@@ -307,13 +289,13 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 
 		List<? extends Location> locationList = inTier.getActiveChildren();
 
-		@SuppressWarnings("unchecked")
-		Collection<? extends Slot> slotCollection = (Collection<? extends Slot>) locationList;
-
-		slotList.addAll(slotCollection);
+		for(Location probableSlot : locationList) { 			
+			slotList.add(TenantPersistenceService.<Location,Slot>deproxify(Slot.class,probableSlot));
+		}
+		//slotList.addAll(slotCollection);
 
 		// sort the slots in the direction the led count will increase		
-		Collections.sort(slotList, new SlotNameComparable());
+		Collections.sort(slotList, new SlotNameComparator());
 		if (!inSlotLedsIncrease)
 			Collections.reverse(slotList);
 
