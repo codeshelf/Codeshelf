@@ -372,8 +372,7 @@ public abstract class MockDaoTest extends MinimalTest {
 		result.setKind(inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND));
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
-		
-		inFacility.addContainer(result);
+		result.setParent(inFacility);
 		
 		Container.staticGetDao().store(result);
 

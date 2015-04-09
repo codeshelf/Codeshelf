@@ -65,7 +65,7 @@ public class ContainerUseTest extends HibernateTest {
 		int headerCount = headerList.size();
 		Assert.assertEquals(13, headerCount);
 
-		List<Container> containerList = facility.getContainers();
+		List<Container> containerList = Container.staticGetDao().findByParent(facility);
 		int cntrCount = containerList.size();
 		Assert.assertEquals(6, cntrCount);
 

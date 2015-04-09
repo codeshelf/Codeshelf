@@ -109,7 +109,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 		LOGGER.debug("Archive unreferenced put batch data");
 
 		// Inactivate the WONDERWALL order detail that don't match the import timestamp.
-		// TODO: this method should not loop through all orders. replace with database query.
+		// FIXME: this method should not loop through all orders. replace with database query.
 		List<OrderHeader> orders = OrderHeader.staticGetDao().findByParent(inFacility);
 		//List<OrderHeader> orders = inFacility.getOrderHeaders();
 		for (OrderHeader order : orders) {
@@ -353,13 +353,12 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 		Container result = null;
 
 		if ((inCsvBean.getContainerId() != null) && (inCsvBean.getContainerId().length() > 0)) {
-			result = inFacility.getContainer(inCsvBean.getContainerId());
-
+			result = Container.staticGetDao().findByDomainId(inFacility, inCsvBean.getContainerId()); 
 			if (result == null) {
 				result = new Container();
 				result.setContainerId(inCsvBean.getContainerId());
+				result.setParent(inFacility);
 				result.setKind(inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND));
-				inFacility.addContainer(result);
 			}
 
 			result.setUpdated(inEdiProcessTime);

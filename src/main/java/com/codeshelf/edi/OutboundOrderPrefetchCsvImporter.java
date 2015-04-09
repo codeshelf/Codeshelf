@@ -315,13 +315,14 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	 * @param inFacility
 	 * @param inProcessTime
 	 */
+	// this code is no longer used functionality should be moved to a background process
 	private void archiveCheckAllContainers(final Facility inFacility, final Timestamp inProcessTime) {
 		LOGGER.debug("Archive unreferenced container data");
 		
 		// bhe: code below should be replaced by database query
 
 		// Iterate all of the containers to see if they're still active.
-		for (Container container : inFacility.getContainers()) {
+		for (Container container : Container.staticGetDao().findByParent(inFacility)) {
 			Boolean shouldInactivateContainer = true;
 
 			for (ContainerUse containerUse : container.getUses()) {
@@ -350,7 +351,6 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 				Container.staticGetDao().store(container);
 			}
 		}
-
 	}
 
 	private void addItemToEvaluationList(Item inItem) {

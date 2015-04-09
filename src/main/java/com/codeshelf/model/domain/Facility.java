@@ -80,10 +80,12 @@ public class Facility extends Location {
 
 	private static final Logger				LOGGER				= LoggerFactory.getLogger(Facility.class);
 
+	/*
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	private Map<String, Container>			containers			= new HashMap<String, Container>();
-
+	*/
+	
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	private Map<String, ContainerKind>		containerKinds		= new HashMap<String, ContainerKind>();
@@ -213,36 +215,6 @@ public class Facility extends Location {
 			paths.remove(inPathId);
 		} else {
 			LOGGER.error("cannot remove Path " + inPathId + " from " + this.getDomainId() + " because it isn't found in children");
-		}
-	}
-
-	public void addContainer(Container inContainer) {
-		Facility previousFacility = inContainer.getParent();
-		if (previousFacility == null) {
-			containers.put(inContainer.getDomainId(), inContainer);
-			inContainer.setParent(this);
-		} else if (!previousFacility.equals(this)) {
-			LOGGER.error("cannot add Container " + inContainer.getDomainId() + " to " + this.getDomainId()
-					+ " because it has not been removed from " + previousFacility.getDomainId());
-		}
-	}
-
-	public Container getContainer(String inContainerId) {
-		return containers.get(inContainerId);
-	}
-
-	public List<Container> getContainers() {
-		return new ArrayList<Container>(containers.values());
-	}
-
-	public void removeContainer(String inContainerId) {
-		Container container = this.getContainer(inContainerId);
-		if (container != null) {
-			container.setParent(null);
-			containers.remove(inContainerId);
-		} else {
-			LOGGER.error("cannot remove Container " + inContainerId + " from " + this.getDomainId()
-					+ " because it isn't found in children");
 		}
 	}
 
@@ -1150,25 +1122,27 @@ public class Facility extends Location {
 		int inactiveDetailsOnActiveOrders = 0;
 		int inactiveCntrUsesOnActiveOrders = 0;
 		List<OrderHeader> orderHeaders = OrderHeader.staticGetDao().findByParent(this);
-		for (OrderHeader order : orderHeaders) {
-			if (order.getOrderType().equals(inOrderTypeEnum)) {
-				totalCrossHeaders++;
-				if (order.getActive()) {
-					activeHeaders++;
-
-					ContainerUse cntrUse = order.getContainerUse();
-					if (cntrUse != null)
-						if (cntrUse.getActive())
-							activeCntrUses++;
-						else
-							inactiveCntrUsesOnActiveOrders++;
-
-					for (OrderDetail orderDetail : order.getOrderDetails()) {
-						if (orderDetail.getActive())
-							activeDetails++;
-						else
-							inactiveDetailsOnActiveOrders++;
-						// if we were doing outbound orders, we might count WI here
+		if (orderHeaders!=null) {
+			for (OrderHeader order : orderHeaders) {
+				if (order.getOrderType().equals(inOrderTypeEnum)) {
+					totalCrossHeaders++;
+					if (order.getActive()) {
+						activeHeaders++;
+	
+						ContainerUse cntrUse = order.getContainerUse();
+						if (cntrUse != null)
+							if (cntrUse.getActive())
+								activeCntrUses++;
+							else
+								inactiveCntrUsesOnActiveOrders++;
+	
+						for (OrderDetail orderDetail : order.getOrderDetails()) {
+							if (orderDetail.getActive())
+								activeDetails++;
+							else
+								inactiveDetailsOnActiveOrders++;
+							// if we were doing outbound orders, we might count WI here
+						}
 					}
 				}
 			}

@@ -234,7 +234,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		LOGGER.debug("Archive unreferenced container data");
 
 		// Iterate all of the containers to see if they're still active.
-		for (Container container : inFacility.getContainers()) {
+		for (Container container : Container.staticGetDao().findByParent(inFacility)) {
 			Boolean shouldInactivateContainer = true;
 
 			for (ContainerUse containerUse : container.getUses()) {
@@ -530,14 +530,13 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		Container result = null;
 
 		if ((inCsvBean.getPreAssignedContainerId() != null) && (inCsvBean.getPreAssignedContainerId().length() > 0)) {
-			result = inFacility.getContainer(inCsvBean.getPreAssignedContainerId());
-
+			result = Container.staticGetDao().findByDomainId(inFacility, inCsvBean.getPreAssignedContainerId());
 			if (result == null) {
 				result = new Container();
 				result.setContainerId(inCsvBean.getPreAssignedContainerId());
 				ContainerKind kind = inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND);
 				result.setKind(kind);
-				inFacility.addContainer(result);
+				result.setParent(inFacility);
 			}
 
 			result.setUpdated(inEdiProcessTime);

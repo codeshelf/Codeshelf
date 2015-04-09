@@ -73,7 +73,7 @@ public class WorkInstructionGenerator {
 				new Container("CONTID",
 							  facility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND),
 							  true);
-		facility.addContainer(container);
+		container.setParent(facility);
 		Container.staticGetDao().store(container);
 
 		//Che che1 = Che.staticGetDao().findByDomainId(facility.getNetworks().get(0), "CHE1");
