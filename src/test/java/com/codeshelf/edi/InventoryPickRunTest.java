@@ -302,6 +302,10 @@ public class InventoryPickRunTest extends ServerTest {
 		propertyService.turnOffHK(facility);
 		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "12000");
 
 		Integer theSize = wiList.size();
@@ -357,13 +361,16 @@ public class InventoryPickRunTest extends ServerTest {
 		for (OrderDetail detail : order.getOrderDetails()) {
 			String theUiField = detail.getWillProduceWiUi(workService);
 		}
+		propertyService.turnOffHK(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		this.getTenantPersistenceService().commitTransaction();
 
 		// Now ready to run the cart
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Che theChe = theNetwork.getChe("CHE1");
 
-		propertyService.turnOffHK(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
 		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "12000");
 		Integer theSize = wiList.size();
@@ -585,7 +592,9 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 
 		// Orders
 		readOrdersForWorkSequence(facility);
+		this.getTenantPersistenceService().commitTransaction();
 		
+		this.getTenantPersistenceService().beginTransaction();
 		OrderHeader orderHeader = OrderHeader.staticGetDao().findByDomainId(facility, "12000");
 
 		Assert.assertNotNull(orderHeader);
