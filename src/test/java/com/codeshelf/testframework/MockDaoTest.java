@@ -449,8 +449,8 @@ public abstract class MockDaoTest extends MinimalTest {
 		result.setDueDate(new Timestamp(System.currentTimeMillis()));
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
+		result.setParent(inFacility);
 		OrderHeader.staticGetDao().store(result);
-		inFacility.addOrderHeader(result);
 		if (inOrderGroup != null) {
 			inOrderGroup.addOrderHeader(result);
 		}

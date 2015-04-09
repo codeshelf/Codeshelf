@@ -205,7 +205,7 @@ public class DropboxRealTest extends ServerTest {
 			LOGGER.info("finish second call to getUpdatesFromHost");
 
 			// We should have one order with 3 details.
-			OrderHeader order = facility.getOrderHeader("12345");
+			OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
 			Assert.assertNotNull(order);
 			Integer detailCount = order.getOrderDetails().size();
 			Assert.assertEquals((Integer) 3, detailCount);
@@ -316,7 +316,7 @@ public class DropboxRealTest extends ServerTest {
 			LOGGER.info("FINISH dbx getUpdatesFromHost for DBX02. Did the file move to processed?");
 
 			// We should have one order with 3 details. (The 4th detail is now in the file, but was not as it processed into beans.)
-			OrderHeader order = facility.getOrderHeader("12345");
+			OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
 			Assert.assertNotNull(order);
 			Integer detailCount = order.getOrderDetails().size();
 			Assert.assertEquals((Integer) 3, detailCount);
@@ -339,7 +339,8 @@ public class DropboxRealTest extends ServerTest {
 			LOGGER.info("FINISH getUpdatesFromHost. Moved .processing to processed folder, then rename. File of that name exists so should get a different file name");
 
 			// The 4th detail should have been read now)
-			order = facility.getOrderHeader("12345");
+			order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
+
 			Assert.assertNotNull(order);
 			detailCount = order.getOrderDetails().size();
 			Assert.assertEquals((Integer) 4, detailCount);
@@ -409,7 +410,8 @@ public class DropboxRealTest extends ServerTest {
 			LOGGER.info("FINISH dbx getUpdatesFromHost for DBX03. The .processing file hould have movedto processed and renamed as normal");
 
 			// We should have one order with 3 details.
-			OrderHeader order = facility.getOrderHeader("12345");
+			OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
+
 			Assert.assertNotNull(order);
 			Integer detailCount = order.getOrderDetails().size();
 			Assert.assertEquals((Integer) 3, detailCount);
@@ -440,7 +442,8 @@ public class DropboxRealTest extends ServerTest {
 			LOGGER.info("FINISH getUpdatesFromHost. Nothing should have happened");
 
 			// Still only 3 details)
-			order = facility.getOrderHeader("12345");
+			order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
+
 			Assert.assertNotNull(order);
 			detailCount = order.getOrderDetails().size();
 			Assert.assertEquals((Integer) 3, detailCount);

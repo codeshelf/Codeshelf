@@ -351,7 +351,8 @@ public class InventoryPickRunTest extends ServerTest {
 		readOrdersForA1(facility);
 
 		// Just check a UI field. Basically looking for NPE
-		OrderHeader order = facility.getOrderHeader("12000");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "12000");
+
 		Assert.assertNotNull(order);
 		for (OrderDetail detail : order.getOrderDetails()) {
 			String theUiField = detail.getWillProduceWiUi(workService);
@@ -541,7 +542,8 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		// Orders
 		readOrdersForBayDistance(facility);
 		
-		OrderHeader orderHeader = facility.getOrderHeader("12000");
+		OrderHeader orderHeader = OrderHeader.staticGetDao().findByDomainId(facility, "12000");
+
 		Assert.assertNotNull(orderHeader);
 		
 		LOGGER.info("1. OrderDetail 101 does not have an inventory location, does have a good preferred location");
@@ -584,7 +586,8 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		// Orders
 		readOrdersForWorkSequence(facility);
 		
-		OrderHeader orderHeader = facility.getOrderHeader("12000");
+		OrderHeader orderHeader = OrderHeader.staticGetDao().findByDomainId(facility, "12000");
+
 		Assert.assertNotNull(orderHeader);
 		
 		LOGGER.info("1. OrderDetail 101 does not have an inventory location, does have a good preferred location, has sequence");

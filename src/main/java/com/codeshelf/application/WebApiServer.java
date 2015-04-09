@@ -8,13 +8,11 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.EventListener;
 import java.util.List;
 
 import javax.servlet.DispatcherType;
 import javax.websocket.server.ServerContainer;
 
-import org.apache.shiro.web.servlet.ShiroFilter;
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
 import org.eclipse.jetty.annotations.ServletContainerInitializersStarter;

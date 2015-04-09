@@ -80,7 +80,6 @@ public class Facility extends Location {
 
 	private static final Logger				LOGGER				= LoggerFactory.getLogger(Facility.class);
 
-
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	private Map<String, Container>			containers			= new HashMap<String, Container>();
@@ -106,9 +105,11 @@ public class Facility extends Location {
 	@MapKey(name = "domainId")
 	private Map<String, OrderGroup>			orderGroups			= new HashMap<String, OrderGroup>();
 
+	/*
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	private Map<String, OrderHeader>		orderHeaders		= new HashMap<String, OrderHeader>();
+	*/
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
@@ -375,36 +376,6 @@ public class Facility extends Location {
 
 	public List<OrderGroup> getOrderGroups() {
 		return new ArrayList<OrderGroup>(orderGroups.values());
-	}
-
-	public void addOrderHeader(OrderHeader inOrderHeader) {
-		Facility previousFacility = inOrderHeader.getParent();
-		if (previousFacility != null && !previousFacility.equals(this)) {
-			LOGGER.error("cannot add OrderHeader " + inOrderHeader.getDomainId() + " to " + this.getDomainId()
-					+ " because it has not been removed from " + previousFacility.getDomainId());
-		} else {
-			orderHeaders.put(inOrderHeader.getDomainId(), inOrderHeader);
-			inOrderHeader.setParent(this);
-		}
-	}
-
-	public OrderHeader getOrderHeader(String inOrderHeaderId) {
-		return orderHeaders.get(inOrderHeaderId);
-	}
-
-	public void removeOrderHeader(String inOrderHeaderId) {
-		OrderHeader orderHeader = this.getOrderHeader(inOrderHeaderId);
-		if (orderHeader != null) {
-			orderHeader.setParent(null);
-			orderHeaders.remove(inOrderHeaderId);
-		} else {
-			LOGGER.error("cannot remove OrderHeader " + inOrderHeaderId + " from " + this.getDomainId()
-					+ " because it isn't found in children");
-		}
-	}
-
-	public List<OrderHeader> getOrderHeaders() {
-		return new ArrayList<OrderHeader>(orderHeaders.values());
 	}
 
 	public void addUomMaster(UomMaster inUomMaster) {
@@ -1178,8 +1149,8 @@ public class Facility extends Location {
 		int activeCntrUses = 0;
 		int inactiveDetailsOnActiveOrders = 0;
 		int inactiveCntrUsesOnActiveOrders = 0;
-
-		for (OrderHeader order : getOrderHeaders()) {
+		List<OrderHeader> orderHeaders = OrderHeader.staticGetDao().findByParent(this);
+		for (OrderHeader order : orderHeaders) {
 			if (order.getOrderType().equals(inOrderTypeEnum)) {
 				totalCrossHeaders++;
 				if (order.getActive()) {

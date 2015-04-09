@@ -598,13 +598,15 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		final OrderGroup inOrderGroup) {
 		OrderHeader result = null;
 
-		result = inFacility.getOrderHeader(inCsvBean.getOrderId());
+		result = OrderHeader.staticGetDao().findByDomainId(inFacility,inCsvBean.getOrderId());
+		// result = inFacility.getOrderHeader(inCsvBean.getOrderId());
 
 		if (result == null) {
 			LOGGER.debug("Creating new OrderHeader instance for " + inCsvBean.getOrderId() + " , for facility: " + inFacility);
 			result = new OrderHeader();
 			result.setDomainId(inCsvBean.getOrderId());
-			inFacility.addOrderHeader(result);
+			result.setParent(inFacility);
+			//inFacility.addOrderHeader(result);
 		}
 
 		result.setOrderType(OrderTypeEnum.OUTBOUND);

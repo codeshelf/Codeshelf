@@ -109,7 +109,10 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 		LOGGER.debug("Archive unreferenced put batch data");
 
 		// Inactivate the WONDERWALL order detail that don't match the import timestamp.
-		for (OrderHeader order : inFacility.getOrderHeaders()) {
+		// TODO: this method should not loop through all orders. replace with database query.
+		List<OrderHeader> orders = OrderHeader.staticGetDao().findByParent(inFacility);
+		//List<OrderHeader> orders = inFacility.getOrderHeaders();
+		for (OrderHeader order : orders) {
 			if (order.getOrderType().equals(OrderTypeEnum.CROSS)) {
 				Boolean shouldArchiveOrder = true;
 				// Make this more robust if the beans are not quite consistent. We do not want to totally fail out of EDI just because we cannot fully investigate
@@ -252,13 +255,15 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 		final OrderGroup inOrderGroup) {
 		OrderHeader result = null;
 
-		result = inFacility.getOrderHeader(OrderHeader.computeCrossOrderId(inCsvBean.getContainerId(), inEdiProcessTime));
+		String domainId = OrderHeader.computeCrossOrderId(inCsvBean.getContainerId(), inEdiProcessTime);
+		result = OrderHeader.staticGetDao().findByDomainId(inFacility, domainId);
+		// result = inFacility.getOrderHeader(OrderHeader.computeCrossOrderId(inCsvBean.getContainerId(), inEdiProcessTime));
 
 		if (result == null) {
 			result = new OrderHeader();
 			result.setDomainId(OrderHeader.computeCrossOrderId(inCsvBean.getContainerId(), inEdiProcessTime));
 			result.setStatus(OrderStatusEnum.RELEASED);
-			inFacility.addOrderHeader(result);
+			result.setParent(inFacility);
 		}
 
 		try {

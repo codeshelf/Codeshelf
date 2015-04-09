@@ -119,7 +119,7 @@ public class WorkInstructionSequencerTest extends ServerTest {
 		importOrdersData(facility, csvString2);
 		
 		// We should have one order with 4 details 
-		OrderHeader order = facility.getOrderHeader("12345");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
 		Assert.assertNotNull(order);
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 4, detailCount);

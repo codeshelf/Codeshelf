@@ -61,8 +61,7 @@ public class ContainerUseTest extends HibernateTest {
 		String facilityId = bay.getLocationIdToParentLevel(Facility.class);
 		Assert.assertEquals(facilityId, facility.getDomainId()+".A1.B1");
 
-
-		List<OrderHeader> headerList = facility.getOrderHeaders();
+		List<OrderHeader> headerList = OrderHeader.staticGetDao().findByParent(facility);
 		int headerCount = headerList.size();
 		Assert.assertEquals(13, headerCount);
 

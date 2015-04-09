@@ -201,6 +201,11 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 		throw new NotImplementedException();
 	}
 
+	@Override
+	public List<T> findByParent(IDomainObject inParentObject) {
+		throw new NotImplementedException();
+	}
+
 
 
 }

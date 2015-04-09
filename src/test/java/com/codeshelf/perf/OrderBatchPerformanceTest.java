@@ -161,7 +161,7 @@ public class OrderBatchPerformanceTest {
 				LOGGER.info("Processing order file "+orderInputFile);
 				
 				// TODO: get facility ID from API
-				String facilityId = "db495d37-8a99-4cc5-9514-a1f91475bd81";			
+				String facilityId = "03ca8eb9-42f8-49a0-8e4a-ac0e2c1b1258";			
 				String baseUrl = "http://localhost:"+Integer.getInteger("api.port")+"/";
 				
 				// post first order file

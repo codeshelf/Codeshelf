@@ -207,7 +207,7 @@ public class CrossBatchRunTest extends ServerTest {
 		// Before this test, let's check our setup. We should have
 		// Inventory master for 10700589 and others, Container use for 11 and others, Outbound order headers for 123, 456, and 789
 		// Order 123 should have 4 details.
-		OrderHeader order = facility.getOrderHeader("123");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "123");
 		Assert.assertNotNull(order);
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 5, detailCount); // 4 good ones, and the "unknown item"

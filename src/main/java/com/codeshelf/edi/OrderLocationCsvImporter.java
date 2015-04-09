@@ -94,7 +94,8 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 
 		// Inactivate the locations aliases that don't match the import timestamp.
 		try {
-			for (OrderHeader order : inFacility.getOrderHeaders()) {
+			List<OrderHeader> orders = OrderHeader.staticGetDao().findByParent(inFacility);
+			for (OrderHeader order : orders) {
 				for (OrderLocation orderLocation : order.getOrderLocations()) {
 					if (!orderLocation.getUpdated().equals(inProcessTime)) {
 						LOGGER.debug("Archive old orderLocation: " + orderLocation.getDomainId());
@@ -172,7 +173,8 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 		}
 		// Normal case. Notice that if slotting file came before orders, we createEmptyOrderHeader to backfill later.
 		else {
-			OrderHeader order = inFacility.getOrderHeader(orderId);
+			OrderHeader order = OrderHeader.staticGetDao().findByDomainId(inFacility, orderId);
+
 			if (order == null) {
 				order = OrderHeader.createEmptyOrderHeader(inFacility, orderId); // I have not yet figured out why FindBugs flags this -ic
 			}
@@ -208,7 +210,8 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 	 */
 	private void deleteOrderLocations(final String inOrderId, final Facility inFacility, final Timestamp inEdiProcessTime) {
 
-		OrderHeader order = inFacility.getOrderHeader(inOrderId);
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(inFacility, inOrderId);
+
 		if (order != null) {
 			// For every OrderLocation on this order, set it to inactive.
 			Iterator<OrderLocation> iter = order.getOrderLocations().iterator();
@@ -230,7 +233,8 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 
 		Location location = inFacility.findSubLocationById(inLocationId);
 
-		for (OrderHeader order : inFacility.getOrderHeaders()) {
+		List<OrderHeader> orders = OrderHeader.staticGetDao().findByParent(inFacility);
+		for (OrderHeader order : orders) {
 			// For every OrderLocation on this order, set it to inactive.
 			Iterator<OrderLocation> iter = order.getOrderLocations().iterator();
 			while (iter.hasNext()) {

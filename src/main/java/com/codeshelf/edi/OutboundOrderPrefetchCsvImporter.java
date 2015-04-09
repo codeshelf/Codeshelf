@@ -122,7 +122,9 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			String containerId = b.getPreAssignedContainerId();
 			containerIds.add(containerId);
 			String orderGroupId = b.getOrderGroupId();
-			orderGroupIds.add(orderGroupId);
+			if (orderGroupId!=null) {
+				orderGroupIds.add(orderGroupId);
+			}
 		}
 		LOGGER.info(itemIds.size()+" distinct items found in order file");
 		
@@ -617,8 +619,10 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 				container.setContainerId(containerId);
 				ContainerKind kind = inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND);
 				container.setKind(kind);
-				inFacility.addContainer(container);
 				this.containerMap.put(containerId, container);
+				// code below taken out to improve performance. it's safe as long as 
+				// containers are not retrieved via facility in this transaction.
+				// inFacility.addContainer(container);
 			}
 			// update container
 			container.setUpdated(inEdiProcessTime);
@@ -691,9 +695,11 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			LOGGER.debug("Creating new OrderHeader instance for " + inCsvBean.getOrderId() + " , for facility: " + inFacility);
 			result = new OrderHeader();
 			result.setDomainId(inCsvBean.getOrderId());
-			inFacility.addOrderHeader(result);
-			// update cache
 			this.orderHeaderCache.put(result);
+			// code below taken out to improve performance. it's safe as long as 
+			// orders are not retrieved via facility in this transaction.
+			//inFacility.addOrderHeader(result);
+			result.setParent(inFacility);
 		}
 
 		result.setOrderType(OrderTypeEnum.OUTBOUND);
@@ -1004,11 +1010,16 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		}
 		result.setUpdated(inEdiProcessTime);
 
-		//The order detail's id might have changed. Make sure the order header has it under the new id 
-		if (result.getParent() != null) {
-			inOrder.removeOrderDetail(oldDetailId);
+		// The order detail's id might have changed. Make sure the order header has it under the new id
+		if (result.getParent()==null) {
+			inOrder.addOrderDetail(result);			
 		}
-		inOrder.addOrderDetail(result);
+		else {
+			if (!result.getOrderDetailId().equals(oldDetailId)) {
+				inOrder.removeOrderDetail(oldDetailId);
+				inOrder.addOrderDetail(result);				
+			}
+		}
 		OrderDetail.staticGetDao().store(result);
 		return result;
 	}

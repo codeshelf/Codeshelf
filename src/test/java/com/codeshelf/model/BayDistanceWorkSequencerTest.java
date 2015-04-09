@@ -165,7 +165,8 @@ public class BayDistanceWorkSequencerTest extends ServerTest {
 				+ "1,G1,1,104,I4,Test Item 4,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,"+preffernces[3]+"\r\n";
 		importOrdersData(facility, csvString2);
 
-		OrderHeader header = facility.getOrderHeader("1");
+		OrderHeader header = OrderHeader.staticGetDao().findByDomainId(facility, "1");
+		// facility.getOrderHeader("1");
 		
 		OrderDetail detail1 = header.getOrderDetail("101");
 		WorkInstruction workInstruction1 = new WorkInstruction();

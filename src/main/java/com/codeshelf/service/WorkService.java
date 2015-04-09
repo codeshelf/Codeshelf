@@ -1049,7 +1049,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		BatchResult<Work> batchResult = new BatchResult<Work>();
 		OrderHeader crossOrder = container.getCurrentOrderHeader();
 		if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderType().equals(OrderTypeEnum.CROSS))) {
-			List<OrderHeader> allOrders = facility.getOrderHeaders();
+			// refactor to not load all orders
+			List<OrderHeader> allOrders = OrderHeader.staticGetDao().findByParent(facility);
 			List<OrderDetail> matchingOrderDetails = toAllMatchingOutboundOrderDetails(allOrders, crossOrder);
 			for (OrderDetail matchingOutboundOrderDetail : matchingOrderDetails) {
 				List<Path> allPaths = facility.getPaths();

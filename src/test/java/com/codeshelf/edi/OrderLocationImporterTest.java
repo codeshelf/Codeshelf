@@ -46,8 +46,11 @@ public class OrderLocationImporterTest extends ServerTest {
 		doSingleSlotOrder(facility, "01111", singleSlot);
 		doSingleSlotOrder(facility, "02222", singleSlot);
 		
-		assertOrderHasLocation(facility, facility.getOrderHeader("01111"), singleSlot);
-		assertOrderHasLocation(facility, facility.getOrderHeader("02222"), singleSlot);
+		OrderHeader order1 = OrderHeader.staticGetDao().findByDomainId(facility, "01111");
+		OrderHeader order2 = OrderHeader.staticGetDao().findByDomainId(facility, "02222");
+
+		assertOrderHasLocation(facility, order1, singleSlot);
+		assertOrderHasLocation(facility, order2, singleSlot);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -74,11 +77,12 @@ public class OrderLocationImporterTest extends ServerTest {
 		Assert.assertTrue("Should have been 'successful' if something was imported", importSlotting(facility, slottingCsv)); //One of the order slots could be updated
 		// At this point we would like order number 01111 and 03333 to exist as dummy outbound orders.
 		// Not sure about 02222
-		OrderHeader order1111 = facility.getOrderHeader("01111");
+		OrderHeader order1111 = OrderHeader.staticGetDao().findByDomainId(facility, "01111");
+
 		Assert.assertNotNull(order1111); // after fix, will have a header
 		Assert.assertEquals(2, order1111.getOrderLocations().size());
 
-		OrderHeader order3333 = facility.getOrderHeader("03333");
+		OrderHeader order3333 = OrderHeader.staticGetDao().findByDomainId(facility, "03333");
 		Assert.assertNotNull("Should have still processed the other lines after an error", order3333); // after fix, will have a header
 		Assert.assertEquals("Should have still processed the other lines after an error",1, order3333.getOrderLocations().size());
 
@@ -90,7 +94,8 @@ public class OrderLocationImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,,03333,,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvString4);
 
-		order1111 = facility.getOrderHeader("01111");
+		order1111 = OrderHeader.staticGetDao().findByDomainId(facility, "01111");
+
 		Assert.assertNotNull(order1111);
 		// make sure order details got updated
 		String cust = order1111.getCustomerId();
@@ -127,7 +132,8 @@ public class OrderLocationImporterTest extends ServerTest {
 				+ "01111, D-22\r\n"; //
 		Assert.assertTrue(importSlotting(facility, singleSlotUpdateCsv));
 		
-		OrderHeader order = facility.getOrderHeader("01111");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "01111");
+
 		Assert.assertEquals(1, order.getOrderLocations().size());
 		assertOrderHasLocation(facility, order, "D-22");
 
@@ -157,7 +163,7 @@ public class OrderLocationImporterTest extends ServerTest {
 		Assert.assertTrue("Failed to import slotting file", importSlotting(facility, initialSlotFile));
 
 		String orderId = "01111";
-		OrderHeader order = facility.getOrderHeader(orderId);
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
 		Assert.assertNotNull("OrderHeader: " + orderId + " not found", order);
 		assertOrderHasLocation(facility, order, "D-21");
 		
@@ -180,7 +186,8 @@ public class OrderLocationImporterTest extends ServerTest {
 		Assert.assertTrue(importSlotting(facility, rotateAgain));
 
 		facility = Facility.staticGetDao().findByPersistentId(facility.getPersistentId());
-		OrderHeader orderAfterReduction = facility.getOrderHeader("01111");
+		OrderHeader orderAfterReduction = OrderHeader.staticGetDao().findByDomainId(facility, "01111");
+
 		Assert.assertEquals(1, orderAfterReduction.getOrderLocations().size());
 		assertOrderHasLocation(facility, orderAfterReduction, "D-22");
 
@@ -202,12 +209,14 @@ public class OrderLocationImporterTest extends ServerTest {
 				+ "01111, D-21\r\n"; //
 		Assert.assertTrue(importSlotting(facility, multiOrderSlotUpdateCsv));
 		
-		OrderHeader order = facility.getOrderHeader("01111");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "01111");
+
 		Assert.assertEquals(2, order.getOrderLocations().size());
 		assertOrderHasLocation(facility, order, "D-21");
 		assertOrderHasLocation(facility, order, "D-22");
 		
-		OrderHeader order02222 = facility.getOrderHeader("02222");
+		OrderHeader order02222 = OrderHeader.staticGetDao().findByDomainId(facility, "02222");
+
 		Assert.assertEquals(1, order02222.getOrderLocations().size());
 		assertOrderHasLocation(facility, order02222, "D-23");
 
@@ -233,7 +242,8 @@ public class OrderLocationImporterTest extends ServerTest {
 				+ "01111, D-21\r\n"; //
 		Assert.assertTrue(importSlotting(facility, singleSlotCsv));
 		
-		Assert.assertEquals(1, facility.getOrderHeader("01111").getOrderLocations().size());
+		OrderHeader o1 = OrderHeader.staticGetDao().findByDomainId(facility, "01111");
+		Assert.assertEquals(1, o1.getOrderLocations().size());
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -257,7 +267,8 @@ public class OrderLocationImporterTest extends ServerTest {
 				+ "01111, D-23\r\n"; //
 		Assert.assertTrue(importSlotting(facility, singleSlotCsv));
 		
-		Assert.assertEquals(1, facility.getOrderHeader("01111").getOrderLocations().size());
+		OrderHeader o1 = OrderHeader.staticGetDao().findByDomainId(facility, "01111");
+		Assert.assertEquals(1, o1.getOrderLocations().size());
 		
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -285,7 +296,7 @@ public class OrderLocationImporterTest extends ServerTest {
 		order1111.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1111.setActive(true);
 		order1111.setUpdated(new Timestamp(System.currentTimeMillis()));
-		facility.addOrderHeader(order1111);
+		order1111.setParent(facility);
 		OrderHeader.staticGetDao().store(order1111);
 
 		OrderHeader order2222 = new OrderHeader();
@@ -296,7 +307,7 @@ public class OrderLocationImporterTest extends ServerTest {
 		order2222.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order2222.setActive(true);
 		order2222.setUpdated(new Timestamp(System.currentTimeMillis()));
-		facility.addOrderHeader(order2222);
+		order2222.setParent(facility);
 		OrderHeader.staticGetDao().store(order2222);
 
 		OrderHeader order3333 = new OrderHeader();
@@ -307,7 +318,7 @@ public class OrderLocationImporterTest extends ServerTest {
 		order3333.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order3333.setActive(true);
 		order3333.setUpdated(new Timestamp(System.currentTimeMillis()));
-		facility.addOrderHeader(order3333);
+		order3333.setParent(facility);
 		OrderHeader.staticGetDao().store(order3333);
 
 		OrderHeader order4444 = new OrderHeader();
@@ -318,7 +329,7 @@ public class OrderLocationImporterTest extends ServerTest {
 		order4444.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order4444.setActive(true);
 		order4444.setUpdated(new Timestamp(System.currentTimeMillis()));
-		facility.addOrderHeader(order4444);
+		order4444.setParent(facility);
 		OrderHeader.staticGetDao().store(order4444);
 
 		Aisle aisleA1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
@@ -433,7 +444,7 @@ public class OrderLocationImporterTest extends ServerTest {
 		order1111.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order1111.setActive(true);
 		order1111.setUpdated(new Timestamp(System.currentTimeMillis()));
-		facility.addOrderHeader(order1111);
+		order1111.setParent(facility);
 		OrderHeader.staticGetDao().store(order1111);
 
 		OrderHeader order2222 = new OrderHeader();
@@ -444,7 +455,7 @@ public class OrderLocationImporterTest extends ServerTest {
 		order2222.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order2222.setActive(true);
 		order2222.setUpdated(new Timestamp(System.currentTimeMillis()));
-		facility.addOrderHeader(order2222);
+		order2222.setParent(facility);
 		OrderHeader.staticGetDao().store(order2222);
 
 		OrderHeader order3333 = new OrderHeader();
@@ -455,7 +466,7 @@ public class OrderLocationImporterTest extends ServerTest {
 		order3333.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order3333.setActive(true);
 		order3333.setUpdated(new Timestamp(System.currentTimeMillis()));
-		facility.addOrderHeader(order3333);
+		order3333.setParent(facility);
 		OrderHeader.staticGetDao().store(order3333);
 
 		OrderHeader order4444 = new OrderHeader();
@@ -466,7 +477,7 @@ public class OrderLocationImporterTest extends ServerTest {
 		order4444.setDueDate(new Timestamp(System.currentTimeMillis()));
 		order4444.setActive(true);
 		order4444.setUpdated(new Timestamp(System.currentTimeMillis()));
-		facility.addOrderHeader(order4444);
+		order4444.setParent(facility);
 		OrderHeader.staticGetDao().store(order4444);
 
 		Aisle aisleA1 = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
@@ -619,19 +630,18 @@ public class OrderLocationImporterTest extends ServerTest {
 		Assert.assertNotNull(locationByAlias);
 	}
 
-
 	private void doMultiSlotOrder(Facility facility, String orderId, String... locations) {
 		doLocationSetup(facility);
 		
 		String multiSlotCsv = "orderId,locationId\r\n"; //
-				for (int i = 0; i < locations.length; i++) {
-					String locationId = locations[i];
-					multiSlotCsv += orderId + ", " + locationId + "\r\n"; 
-				}
-		
+		for (int i = 0; i < locations.length; i++) {
+			String locationId = locations[i];
+			multiSlotCsv += orderId + ", " + locationId + "\r\n"; 
+		}
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
 		Assert.assertTrue(importSlotting(facility, multiSlotCsv));
-		Assert.assertNotNull("OrderHeader: " + orderId + "not found", facility.getOrderHeader(orderId));
-		Assert.assertEquals(locations.length, facility.getOrderHeader(orderId).getOrderLocations().size());
+		Assert.assertNotNull("OrderHeader: " + orderId + "not found", order);
+		Assert.assertEquals(locations.length, order.getOrderLocations().size());
 	}
 	
 	private void doSingleSlotOrder(Facility facility, String orderId, String locationId) {
@@ -640,9 +650,10 @@ public class OrderLocationImporterTest extends ServerTest {
 		String doubleSlotCsv = "orderId,locationId\r\n" //
 				+ orderId + ", " + locationId + "\r\n"; //
 		
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
 		Assert.assertTrue(importSlotting(facility, doubleSlotCsv));
-		Assert.assertNotNull("OrderHeader: " + orderId + "not found", facility.getOrderHeader(orderId));
-		Assert.assertEquals(1, facility.getOrderHeader(orderId).getOrderLocations().size());
+		Assert.assertNotNull("OrderHeader: " + orderId + "not found", order);
+		Assert.assertEquals(1, order.getOrderLocations().size());
 	}
 
 	private void doLocationSetup(Facility facility) {

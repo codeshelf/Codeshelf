@@ -81,7 +81,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		header.setPickStrategy(PickStrategyEnum.SERIAL);
 		header.setActive(Boolean.TRUE);
 		header.setUpdated(new Timestamp(System.currentTimeMillis()));
-		inFacility.addOrderHeader(header);
+		header.setParent(inFacility);
 		OrderHeader.staticGetDao().store(header);
 		return header;
 	}
