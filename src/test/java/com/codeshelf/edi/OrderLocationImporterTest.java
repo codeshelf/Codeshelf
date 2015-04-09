@@ -654,9 +654,12 @@ public class OrderLocationImporterTest extends ServerTest {
 		
 		String doubleSlotCsv = "orderId,locationId\r\n" //
 				+ orderId + ", " + locationId + "\r\n"; //
-		
-		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
 		Assert.assertTrue(importSlotting(facility, doubleSlotCsv));
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
 		Assert.assertNotNull("OrderHeader: " + orderId + "not found", order);
 		Assert.assertEquals(1, order.getOrderLocations().size());
 	}
