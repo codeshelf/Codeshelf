@@ -413,6 +413,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case PUT_WALL_SCAN_ORDER:
 			case PUT_WALL_SCAN_LOCATION:
 			case PUT_WALL_SCAN_ITEM:
+			case GET_PUT_INSTRUCTION: // should never happen. State is transitory unless the server failed to respond
 			case PUT_WALL_SCAN_WALL:
 				// DEV-708, 712 specification. We want to return the state we started from: CONTAINER_SELECT or PICK_COMPLETE
 				// Perhaps will need a member variable, but for now we can tell by the state of the container map
@@ -1681,7 +1682,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// Note: if the response is "bad", want to be back in PUT_WALL_SCAN_ITEM state, with a meaningful response
 		// such as "could not find item", or "no order in put wall needs that item"
 		
-		sendWallItemMessage(inScanStr, getPutWallName());
+		sendWallItemWiRequest(inScanStr, getPutWallName());
 		
 		// no notifyXXX here, as there is not result yet.
 		// do the notify on a good response, as work instruction(s) were made.
@@ -1693,10 +1694,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
 	}
 
-	private void sendWallItemMessage(String itemOrUpc, String putWallName){
-		// This will form the command and send to server. .
-		LOGGER.info("to do: send get put wall instruction for {} to wall {}", itemOrUpc, putWallName );
-		// DEV-713 to implement this
+	private void sendWallItemWiRequest(String itemOrUpc, String putWallName){
+		// DEV-713
+		LOGGER.info("sendWallItemWiRequest for {} in wall {}", itemOrUpc, putWallName);
+		
+		mDeviceManager.computePutWallInstruction(getGuid().getHexStringNoPrefix(), getPersistentId(), itemOrUpc, putWallName);
+		// sends a command. Ultimately returns back the work instruction list for assign work
 		
 	}
 

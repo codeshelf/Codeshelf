@@ -39,6 +39,7 @@ import com.codeshelf.ws.client.WebSocketEventListener;
 import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
+import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
 import com.codeshelf.ws.protocol.request.InventoryLightItemRequest;
@@ -306,6 +307,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		LOGGER.debug("Compute work: Che={}; DetailId={}", inCheId, orderDetailId);
 		String cheId = inPersistentId.toString();
 		ComputeDetailWorkRequest req = new ComputeDetailWorkRequest(cheId, orderDetailId);
+		clientEndpoint.sendMessage(req);
+	}
+
+	public void computePutWallInstruction(final String inCheId, final UUID inPersistentId, String itemOrUpc, String putWallName) {
+		LOGGER.debug("computePutWallInstruction: Che={}; ", inCheId);
+		String cheId = inPersistentId.toString();
+		ComputePutWallInstructionRequest req = new ComputePutWallInstructionRequest(cheId, itemOrUpc, putWallName);
 		clientEndpoint.sendMessage(req);
 	}
 

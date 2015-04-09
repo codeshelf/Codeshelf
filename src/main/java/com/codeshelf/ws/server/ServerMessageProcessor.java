@@ -22,6 +22,7 @@ import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.protocol.command.CommandABC;
 import com.codeshelf.ws.protocol.command.CompleteWorkInstructionCommand;
 import com.codeshelf.ws.protocol.command.ComputeDetailWorkCommand;
+import com.codeshelf.ws.protocol.command.ComputePutWallInstructionCommand;
 import com.codeshelf.ws.protocol.command.ComputeWorkCommand;
 import com.codeshelf.ws.protocol.command.CreatePathCommand;
 import com.codeshelf.ws.protocol.command.EchoCommand;
@@ -42,6 +43,7 @@ import com.codeshelf.ws.protocol.message.KeepAlive;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
+import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest;
 import com.codeshelf.ws.protocol.request.CreatePathRequest;
 import com.codeshelf.ws.protocol.request.DeviceRequest;
@@ -170,6 +172,11 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		}
 		else if (request instanceof ComputeDetailWorkRequest) {
 			command = new ComputeDetailWorkCommand(csSession,(ComputeDetailWorkRequest) request, serviceFactory.getServiceInstance(WorkService.class));
+			computeWorkCounter.inc();
+			applicationRequestCounter.inc();
+		}			
+		else if (request instanceof ComputePutWallInstructionRequest) {
+			command = new ComputePutWallInstructionCommand(csSession,(ComputePutWallInstructionRequest) request, serviceFactory.getServiceInstance(WorkService.class));
 			computeWorkCounter.inc();
 			applicationRequestCounter.inc();
 		}			

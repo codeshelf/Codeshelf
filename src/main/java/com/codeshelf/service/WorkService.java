@@ -83,6 +83,7 @@ import com.codeshelf.validation.InputValidationException;
 import com.codeshelf.validation.MethodArgumentException;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.response.GetOrderDetailWorkResponse;
+import com.codeshelf.ws.protocol.response.GetPutWallInstructionResponse;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -603,6 +604,34 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				}
 			}
 		}
+
+		response.setWorkInstructions(wiResultList);
+		return response;
+	}
+
+	/**
+	 * Provides the list of actual work instruction for the scanned orderdetail
+	 * @param inChe
+	 * @param inScannedOrderDetailId
+	 * @return
+	 */
+	public GetPutWallInstructionResponse getPutWallInstructionsForItem(final Che inChe, final String itemOrUpc, final String putWallName) {
+		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
+		GetPutWallInstructionResponse response = new GetPutWallInstructionResponse();
+		if (inChe == null) {
+			throw new MethodArgumentException(0,"Che missing", ErrorCode.FIELD_REQUIRED);
+		}
+		if (itemOrUpc == null) {
+			throw new MethodArgumentException(1, "itemOrUpc missing", ErrorCode.FIELD_REQUIRED);
+		}
+		if (putWallName == null) {
+			throw new MethodArgumentException(2, "putWallName missing", ErrorCode.FIELD_REQUIRED);
+		}
+
+		LOGGER.info("GetPutWallInstructionResponse request for {} item:{} wall:{}", inChe.getDomainId() , itemOrUpc, putWallName);
+
+
+		Facility inFacility = inChe.getFacility();
 
 		response.setWorkInstructions(wiResultList);
 		return response;
