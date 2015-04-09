@@ -35,6 +35,11 @@ import com.codeshelf.application.JvmProperties;
 
 public class OrderBatchPerformanceTest {
 	
+	final private static String BASE_URL = "http://localhost:8181/";
+	final private static String USERNAME = "simulate@example.com";
+	final private static String PASSWORD = "testme";
+	final private static String FACILITY = "9345a902-ac24-4d2d-a049-54f68c2112a2";
+	
 	static {
 		JvmProperties.load("server");
 	}
@@ -54,13 +59,11 @@ public class OrderBatchPerformanceTest {
 	}
 	
     public boolean authenticate() throws Exception {
-    	String authUrl = "http://localhost:8181/auth/";
-    	String name = "simulate@example.com";
-    	String password = "testme";
+    	String authUrl = BASE_URL + "auth/";
     	
     	List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new BasicNameValuePair("u", name));
-        params.add(new BasicNameValuePair("p", password));
+        params.add(new BasicNameValuePair("u", USERNAME));
+        params.add(new BasicNameValuePair("p", PASSWORD));
 
         HttpPost postRequest = new HttpPost(authUrl);
         postRequest.setEntity(new UrlEncodedFormEntity(params));
@@ -161,11 +164,11 @@ public class OrderBatchPerformanceTest {
 				LOGGER.info("Processing order file "+orderInputFile);
 				
 				// TODO: get facility ID from API
-				String facilityId = "db495d37-8a99-4cc5-9514-a1f91475bd81";			
-				String baseUrl = "http://localhost:"+Integer.getInteger("api.port")+"/";
+				//String facilityId = "db495d37-8a99-4cc5-9514-a1f91475bd81";			
+				//String baseUrl = "http://localhost:"+Integer.getInteger("api.port")+"/";
 				
 				// post first order file
-				String url = baseUrl+"api/import/orders/"+facilityId;			
+				String url = BASE_URL +"api/import/orders/"+ FACILITY;			
 				FileInputStream is = new FileInputStream(orderInputFile);
 				test.postFile(url, is);
 			} catch (Exception e) {

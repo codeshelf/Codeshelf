@@ -6,13 +6,10 @@ CodeshelfWebSocketServer *  CodeShelf
 
 package com.codeshelf.application;
 
-import javax.servlet.ServletContext;
-
 import org.apache.commons.beanutils.ConvertUtilsBean;
-import org.apache.shiro.guice.web.ShiroWebModule;
+import org.apache.shiro.guice.aop.ShiroAopModule;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.realm.Realm;
-import org.apache.shiro.web.mgt.WebSecurityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +50,6 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import com.google.inject.binder.AnnotatedBindingBuilder;
 import com.google.inject.servlet.GuiceFilter;
 import com.google.inject.servlet.ServletModule;
 import com.sun.jersey.api.core.PackagesResourceConfig;
@@ -155,26 +151,11 @@ public final class ServerMain {
 				bind(AuthProviderService.class).to(HmacAuthService.class).in(Singleton.class);
 			}
 					
-		}, /*createShiroModule(),*/ createGuiceServletModuleForApi() /*, createGuiceServletModuleForManager()*/);
+		}, 
+			new ShiroAopModule(), // enable shiro annotations on guice-jersey api 
+			createGuiceServletModuleForApi());
 
 		return injector;
-	}
-	
-	class CodeshelfShiroWebModule extends ShiroWebModule {
-		CodeshelfShiroWebModule(ServletContext sc) {
-			super(sc);
-		}
-
-		@Override
-		protected void configureShiroWeb() {
-			bindRealm().to(CodeshelfRealm.class).asEagerSingleton();
-		}
-
-		@Override
-		protected void bindWebSecurityManager(AnnotatedBindingBuilder<? super WebSecurityManager> bind) {
-			bind.to(CodeshelfSecurityManager.class).asEagerSingleton();
-		}
-		
 	}
 	
 	private static ServletModule createGuiceServletModuleForApi() {
@@ -199,24 +180,4 @@ public final class ServerMain {
 		};
 	}
 
-/*	private static ServletModule createGuiceServletModuleForManager() {
-		return new ServletModule() {
-		    @Override
-		    protected void configureServlets() {
-		        // bind resource classes here
-		    	ResourceConfig rc = new PackagesResourceConfig( "com.codeshelf.manager.api" );
-		    	for ( Class<?> resource : rc.getClasses() ) {
-		    		bind( resource );	
-		    	}
-		    	
-		        // hook JerseyContainer into Guice Servlet
-		        bind(GuiceContainer.class);
-
-		        // hook Jackson into Jersey as the POJO <-> JSON mapper
-		        bind(JacksonJsonProvider.class).in(Scopes.SINGLETON);
-
-		        serve("/*").with(GuiceContainer.class);
-		    }
-		};
-	}*/
 }

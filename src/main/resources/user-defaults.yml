@@ -8,7 +8,6 @@
 
 "configure@example.com":
   - Admin
-  - Configure
 "a@example.com":
   - Browse
 "view@example.com":
