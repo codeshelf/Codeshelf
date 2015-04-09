@@ -512,7 +512,6 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				LOGGER.error("updateOptionalOrderGroup", e);
 			}
 		}
-
 		return result;
 	}
 
@@ -579,9 +578,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			} catch (DaoException e) {
 				LOGGER.error("updateContainer storing ContainerUse", e);
 			}
-
 		}
-
 		return result;
 	}
 
