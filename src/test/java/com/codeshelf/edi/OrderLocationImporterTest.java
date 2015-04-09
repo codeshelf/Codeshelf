@@ -632,14 +632,19 @@ public class OrderLocationImporterTest extends ServerTest {
 
 	private void doMultiSlotOrder(Facility facility, String orderId, String... locations) {
 		doLocationSetup(facility);
-		
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();		
 		String multiSlotCsv = "orderId,locationId\r\n"; //
 		for (int i = 0; i < locations.length; i++) {
 			String locationId = locations[i];
 			multiSlotCsv += orderId + ", " + locationId + "\r\n"; 
 		}
-		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
 		Assert.assertTrue(importSlotting(facility, multiSlotCsv));
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();		
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
 		Assert.assertNotNull("OrderHeader: " + orderId + "not found", order);
 		Assert.assertEquals(locations.length, order.getOrderLocations().size());
 	}
