@@ -269,15 +269,15 @@ public class CrossBatchRunTest extends ServerTest {
 		Facility facility = setUpSimpleSlottedFacility("XB03");
 
 		setUpGroup1OrdersAndSlotting(facility);
+		// Make sure housekeeping is on
+		propertyService.restoreHKDefaults(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		// Set up a cart for containers 15 and 14, which should generate 4 work normal instructions.
 		// However, as we are coming from the same container for subsequent ones, there will be housekeeping WIs inserted.
-
 		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		LOGGER.info("basicHousekeeping.  Set up CHE for 15,14");
-		// Make sure housekeeping is on
-		propertyService.restoreHKDefaults(facility);
 
 		// Important to realize. theChe.getWorkInstruction() just gives all work instructions in an arbitrary order.
 		List<WorkInstruction> aList = startWorkFromBeginning(facility, "CHE1", "15,14"); // This returns them in working order.
