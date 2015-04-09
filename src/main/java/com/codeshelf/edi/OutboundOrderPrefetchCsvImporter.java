@@ -619,6 +619,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 				container.setContainerId(containerId);
 				ContainerKind kind = inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND);
 				container.setKind(kind);
+				container.setParent(inFacility);
 				this.containerMap.put(containerId, container);
 				// code below taken out to improve performance. it's safe as long as 
 				// containers are not retrieved via facility in this transaction.
