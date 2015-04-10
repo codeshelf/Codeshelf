@@ -1525,6 +1525,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Almost the same as assignWork(), but some state transitions differ
 	 */
 	public void assignWallPuts(final List<WorkInstruction> inWorkItemList, String message) {
+		LOGGER.info("assignWallPuts() given {} work instructions", inWorkItemList.size());
 		if (inWorkItemList == null || inWorkItemList.size() == 0) {
 			setState(CheStateEnum.NO_PUT_WORK);
 		} else {
@@ -1715,11 +1716,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	protected void processPutWallItemScan(final String inScanPrefixStr, final String inScanStr) {
 
-		// DEV-713 This is incorrect. Change to  new GET_PUT_INSTRUCTION state
-		setState(CheStateEnum.DO_PUT);
-		// The response then returns the work instruction, and transitions to DO_PUT state. Cheating for now before the request is done.
-		// Note: if the response is "bad", want to be back in PUT_WALL_SCAN_ITEM state, with a meaningful response
-		// such as "could not find item", or "no order in put wall needs that item"
+			setState(CheStateEnum.GET_PUT_INSTRUCTION);
+		// The response then returns the work instruction, and transitions to DO_PUT state. 
+		// Note: or NO_PUT_WORK
 
 		notifyPutWallItem(inScanStr, getPutWallName());
 

@@ -89,7 +89,7 @@ public class CheProcessPutWall extends ServerTest {
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
 		picker.scanSomething("11112");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
-		picker.scanSomething("P12");
+		picker.scanSomething("L%P12");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
@@ -128,14 +128,15 @@ public class CheProcessPutWall extends ServerTest {
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
 		picker1.scanSomething("11114");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
-		picker1.scanSomething("P14");
+		picker1.scanSomething("L%P14");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
 		picker1.scanSomething("11115");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
-		picker1.scanSomething("P15");
+		picker1.scanSomething("L%P15");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
 		picker1.scanSomething("11116");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
-		picker1.scanSomething("P16");
+		picker1.scanSomething("L%P16");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
 		picker1.scanCommand("CLEAR");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
@@ -188,15 +189,15 @@ public class CheProcessPutWall extends ServerTest {
 		LOGGER.info("1b: progress futher before clearing. Scan the order ID");
 		picker.scanCommand("PUT_WALL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, 4000);
-		picker.scanSomething("L%Wall1");
+		picker.scanSomething("L%WALL1");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, 4000);
-		picker.scanSomething("Sku1514");
-		// picker.waitForCheState(CheStateEnum.DO_PUT, 4000); // getting work, then DO_PUT DEV-713 will do this right.
+		picker.scanSomething("BadSku");
 		picker.waitForCheState(CheStateEnum.NO_PUT_WORK, 4000);
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, 4000);
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		// TODO get on a real job
 
 		LOGGER.info("1c: cannot PUT_WALL after one order is set");
 		picker.setupContainer("11112", "4");
@@ -244,14 +245,15 @@ public class CheProcessPutWall extends ServerTest {
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
 		picker1.scanSomething("11114");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
-		picker1.scanSomething("P14");
+		picker1.scanSomething("L%P14");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
 		picker1.scanSomething("11115");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
-		picker1.scanSomething("P15");
+		picker1.scanSomething("L%P15");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
 		picker1.scanSomething("11116");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
-		picker1.scanSomething("P16");
+		picker1.scanSomething("L%P16");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
 		picker1.scanCommand("CLEAR");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
@@ -267,13 +269,19 @@ public class CheProcessPutWall extends ServerTest {
 
 		picker1.scanCommand("PUT_WALL");
 		// TODO
-		// Work flow wrong here. Should need to scan the container as another state-step. Otherwise, scan "Sku1514" may lead to work instructions in multiple walls.
+		// Work flow wrong here. Should need to scan the container as another state-step. Otherwise, scan "1514" may lead to work instructions in multiple walls.
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, 4000);
-		picker1.scanSomething("L%Wall1");
+		picker1.scanSomething("L%WALL1");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, 4000);
-		picker1.scanSomething("Sku1514");
-		// picker1.waitForCheState(CheStateEnum.DO_PUT, 4000);
+		picker1.scanSomething("BadItemId");
 		picker1.waitForCheState(CheStateEnum.NO_PUT_WORK, 4000);
+		
+		picker1.scanCommand("CLEAR");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, 4000);	
+		picker1.scanSomething("1514");			
+		// picker1.waitForCheState(CheStateEnum.DO_PUT, 4000);
+		picker1.waitForCheState(CheStateEnum.NO_PUT_WORK, 4000); // BUG. Log shows server created and sent 1 work instruction, but site controller received 0.
+		
 		// after DEV-713 we will get a plan, display to the put wall, etc.
 		// P14 is at poscon index 4. Count should be 3
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
@@ -389,14 +397,15 @@ public class CheProcessPutWall extends ServerTest {
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
 		picker1.scanSomething("11117");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
-		picker1.scanSomething("P13");
+		picker1.scanSomething("L%P13");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
 		picker1.scanSomething("11115");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
-		picker1.scanSomething("P15");
+		picker1.scanSomething("L%P15");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
 		picker1.scanSomething("11116");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
-		picker1.scanSomething("P16");
+		picker1.scanSomething("L%P16");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
 		picker1.scanCommand("CLEAR");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);

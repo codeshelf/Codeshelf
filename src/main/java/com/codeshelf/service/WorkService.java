@@ -691,12 +691,13 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			OrderHeader oh = detail.getParent();
 			OrderLocation ol = oh.getFirstOrderLocationOnPath(null);
 
-			WorkInstruction wi = getWiForPutWallDetailAndLocation(detail, ol);
+			WorkInstruction wi = getWiForPutWallDetailAndLocation(inChe, detail, ol);
 			if (wi != null) {
 				wiResultList.add(wi);
 			}
 		}
 
+		LOGGER.info("getPutWallInstructionsForItem() return {} work instructions", wiResultList.size());
 		return response;
 
 	}
@@ -707,8 +708,18 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * and has an OrderLocation in the put wall. It is possible, but very unlikely that this calling context returns true for ItemMaster match
 	 * but wrong UOM.
 	 */
-	private WorkInstruction getWiForPutWallDetailAndLocation(OrderDetail detail, OrderLocation orderLocation) {
-		return null;
+	private WorkInstruction getWiForPutWallDetailAndLocation(Che che, OrderDetail detail, OrderLocation orderLocation) {
+		Location loc = orderLocation.getLocation();
+		WorkInstruction wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
+			WorkInstructionTypeEnum.PLAN,
+			detail,
+			null,
+			che,
+			loc,
+			null,
+			WiPurpose.WiPurposePutWallPut);
+		return wi;
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -742,14 +753,14 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		if (itemMaster != null) {
 			return itemMaster;
 		}
-		
+
 		//  TODO If not found directly by Sku, lets look for UPC/GTIN. Need a filter.
-			if (itemMaster == null) {
+		if (itemMaster == null) {
 			// itemMaster = gtin.getParent();
 		}
 		// TODO Or search by itemId. Need a filter.
 		if (itemMaster == null) {
-			}
+		}
 
 		return itemMaster;
 	}
