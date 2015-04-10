@@ -740,11 +740,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	private ItemMaster getItemMasterFromScanValue(Facility facility, String itemIdOrUpc) {
 		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, itemIdOrUpc);
 		if (itemMaster != null) {
-			if ("Sku1514".equals(itemIdOrUpc) || "Sku1515".equals(itemIdOrUpc)) {
-				LOGGER.error("temporary test error message");
-			}
-			
-			
 			return itemMaster;
 		}
 		
