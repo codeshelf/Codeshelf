@@ -202,7 +202,7 @@ public class CheProcessPutWall extends ServerTest {
 		picker.scanSomething("L%Wall1");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		picker.scanSomething("Sku1514");
-		picker.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME); // getting work, then DO_PUT DEV-713 will do this right.
+		picker.waitForCheState(CheStateEnum.NO_PUT_WORK, WAIT_TIME);
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		picker.scanCommand("CLEAR");
@@ -282,7 +282,7 @@ public class CheProcessPutWall extends ServerTest {
 		picker1.scanSomething("L%Wall1");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		picker1.scanSomething("Sku1514");
-		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
+		picker1.waitForCheState(CheStateEnum.NO_PUT_WORK, WAIT_TIME);
 		// after DEV-713 we will get a plan, display to the put wall, etc.
 		// P14 is at poscon index 4. Count should be 3
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
@@ -299,7 +299,7 @@ public class CheProcessPutWall extends ServerTest {
 
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		picker1.scanSomething("Sku1515");
-		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
+		picker1.waitForCheState(CheStateEnum.NO_PUT_WORK, WAIT_TIME);
 		// after DEV-713 
 		// we get two plans. For this test, handle singly. DEV-714 is about lighting two or more put wall locations at time.
 		// By that time, we should have implemented something to not all button press from CHE poscon, especially if more than one WI.

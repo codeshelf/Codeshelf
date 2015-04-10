@@ -13,7 +13,7 @@ import org.hibernate.Session;
 import org.yaml.snakeyaml.Yaml;
 
 import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.security.AuthProviderService;
+import com.codeshelf.security.TokenSessionService;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
@@ -60,12 +60,12 @@ public class DefaultUsers {
 		}
 	}
 
-	public static void sync(Tenant initTenant, AuthProviderService authProviderService) {
+	public static void sync(Tenant initTenant, TokenSessionService tokenSessionService) {
 		Session session = ManagerPersistenceService.getInstance().getSessionWithTransaction();
 		boolean completed = false;
 		try {
 			for (String username : multimap.keySet()) {
-				syncUser(session, username, multimap.get(username), initTenant, authProviderService);
+				syncUser(session, username, multimap.get(username), initTenant, tokenSessionService);
 			}
 			completed = true;
 		} finally {
@@ -80,16 +80,16 @@ public class DefaultUsers {
 		String username,
 		Collection<String> roleNames,
 		Tenant initTenant,
-		AuthProviderService authProviderService) {
+		TokenSessionService tokenSessionService) {
 		
 		User user = (User) session.bySimpleNaturalId(User.class).load(username);
 		if (user == null) {
 			user = new User();
 			user.setUsername(username);
 			if (username.equals(CodeshelfNetwork.DEFAULT_SITECON_USERNAME)) {
-				user.setHashedPassword(authProviderService.hashPassword(CodeshelfNetwork.DEFAULT_SITECON_PASS));
+				user.setHashedPassword(tokenSessionService.hashPassword(CodeshelfNetwork.DEFAULT_SITECON_PASS));
 			} else {
-				user.setHashedPassword(authProviderService.hashPassword(DEFAULT_APPUSER_PASS));
+				user.setHashedPassword(tokenSessionService.hashPassword(DEFAULT_APPUSER_PASS));
 			}
 			initTenant = (Tenant) session.get(Tenant.class, initTenant.getId());
 			initTenant.addUser(user);

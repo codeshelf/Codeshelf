@@ -35,6 +35,11 @@ import com.codeshelf.application.JvmProperties;
 
 public class OrderBatchPerformanceTest {
 	
+	final private static String BASE_URL = "http://localhost:8181/";
+	final private static String USERNAME = "simulate@example.com";
+	final private static String PASSWORD = "testme";
+	final private static String FACILITY = "5b36debe-4931-4221-9fc4-7af41187cf38";
+	
 	static {
 		JvmProperties.load("server");
 	}
@@ -54,13 +59,11 @@ public class OrderBatchPerformanceTest {
 	}
 	
     public boolean authenticate() throws Exception {
-    	String authUrl = "http://localhost:8181/auth/";
-    	String name = "simulate@example.com";
-    	String password = "testme";
+    	String authUrl = BASE_URL + "auth/";
     	
     	List<NameValuePair> params = new ArrayList<NameValuePair>();
-        params.add(new BasicNameValuePair("u", name));
-        params.add(new BasicNameValuePair("p", password));
+        params.add(new BasicNameValuePair("u", USERNAME));
+        params.add(new BasicNameValuePair("p", PASSWORD));
 
         HttpPost postRequest = new HttpPost(authUrl);
         postRequest.setEntity(new UrlEncodedFormEntity(params));
@@ -91,8 +94,6 @@ public class OrderBatchPerformanceTest {
                 .build();        
         postRequest.setEntity(reqEntity);
         
-       //  System.out.println(context.getCookieStore().getCookies());
-
         //Send request
         HttpResponse response = client.execute(postRequest,context);
         HttpEntity entity = response.getEntity();
@@ -100,7 +101,7 @@ public class OrderBatchPerformanceTest {
                  
         if (response != null) {
         	int status = response.getStatusLine().getStatusCode();
-        	if (status==403) {
+        	if (status==403 || status==401) {
         		if (!authenticate()) {
         			LOGGER.error("Failed to re-authenticate");
         			System.exit(0);
@@ -114,15 +115,24 @@ public class OrderBatchPerformanceTest {
         			System.exit(0);     	
                 }
         	}
+        	else if (status==404) {
+    			LOGGER.error("Post failed:  Valid facility id?");
+    			System.exit(0);        		
+        	}
             LOGGER.info("Post complete: "+status);
         }
-    }	
+    }
 	
 	public static void main(String[] args) {
 		
 		List<String> fileNames = new ArrayList<String>();
 		String orderInputDirectory = args[0];
 		File[] files = new File(orderInputDirectory).listFiles();
+		
+		if (files==null) {
+			LOGGER.info("No files found in "+args[0]);
+			System.exit(0);
+		}
 
 		for (File file : files) {
 		    if (file.isFile()) {
@@ -156,16 +166,10 @@ public class OrderBatchPerformanceTest {
 			BufferedReader br = null;
 			try {
 				String orderInputFile = orderInputDirectory+File.separator+fileName;
-				br = new BufferedReader(new FileReader(orderInputFile));
-				
+				br = new BufferedReader(new FileReader(orderInputFile));				
 				LOGGER.info("Processing order file "+orderInputFile);
-				
-				// TODO: get facility ID from API
-				String facilityId = "db495d37-8a99-4cc5-9514-a1f91475bd81";			
-				String baseUrl = "http://localhost:"+Integer.getInteger("api.port")+"/";
-				
 				// post first order file
-				String url = baseUrl+"api/import/orders/"+facilityId;			
+				String url = BASE_URL +"api/import/orders/"+ FACILITY;			
 				FileInputStream is = new FileInputStream(orderInputFile);
 				test.postFile(url, is);
 			} catch (Exception e) {

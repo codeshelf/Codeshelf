@@ -42,11 +42,12 @@ public class PutWallOrderGenerator {
 		Facility facility = che.getFacility();
 		Timestamp now = new Timestamp(System.currentTimeMillis());
 
-		OrderHeader combinedOrder = facility.getOrderHeader(orderId);
+		OrderHeader combinedOrder = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
+		//OrderHeader combinedOrder = facility.getOrderHeader(orderId);
 		if (combinedOrder == null) {
 			combinedOrder = new OrderHeader();
 			combinedOrder.setDomainId(orderId);
-			facility.addOrderHeader(combinedOrder);
+			//facility.addOrderHeader(combinedOrder);
 		}
 		combinedOrder.setOrderType(OrderTypeEnum.OUTBOUND);
 		combinedOrder.setStatus(OrderStatusEnum.RELEASED);
@@ -75,17 +76,15 @@ public class PutWallOrderGenerator {
 			containerUse.setUpdated(now);
 			containerUse.setActive(true);
 			combinedOrder.addHeadersContainerUse(containerUse);
-			//String containerId = combinedOrder.getDomainId();
-			//String containerId = combinedOrder.getDomainId();
 			ContainerKind kind = facility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND);
 			Container container = new Container(wallId, kind, true);
 			container.setUpdated(now);
-			facility.addContainer(container);
+			//facility.addContainer(container);
 			container.addContainerUse(containerUse);
 			Container.staticGetDao().store(container);
 			ContainerUse.staticGetDao().store(containerUse);
 		}
-
+		OrderHeader.staticGetDao().store(combinedOrder);
 		return combinedOrder;
 	}
 	

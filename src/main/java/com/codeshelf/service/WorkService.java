@@ -60,6 +60,7 @@ import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerUse;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
@@ -83,6 +84,8 @@ import com.codeshelf.validation.InputValidationException;
 import com.codeshelf.validation.MethodArgumentException;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.response.GetOrderDetailWorkResponse;
+import com.codeshelf.ws.protocol.response.GetPutWallInstructionResponse;
+import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -190,9 +193,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		ArrayList<ContainerUse> newCntrUses = new ArrayList<ContainerUse>();
 
 		// Set new uses on the CHE.
+		// FIXME: retrieve all containers in one shot from the database
 		List<Container> containerList = new ArrayList<Container>();
 		for (String containerId : inContainerIdList) {
-			Container container = facility.getContainer(containerId);
+			Container container = Container.staticGetDao().findByDomainId(facility, containerId);
 			if (container != null) {
 				// add to the list that will generate work instructions
 				containerList.add(container);
@@ -610,6 +614,165 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		response.setWorkInstructions(wiResultList);
 		return response;
+	}
+
+	/**
+	 * DEV-713 Provides the list of actual work instruction for the scanned item for a put wall
+	 */
+	public GetPutWallInstructionResponse getPutWallInstructionsForItem(final Che inChe,
+		final String itemOrUpc,
+		final String putWallName) {
+		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
+		GetPutWallInstructionResponse response = new GetPutWallInstructionResponse();
+		if (inChe == null) {
+			throw new MethodArgumentException(0, "Che missing", ErrorCode.FIELD_REQUIRED);
+		}
+		if (itemOrUpc == null) {
+			throw new MethodArgumentException(1, "itemOrUpc missing", ErrorCode.FIELD_REQUIRED);
+		}
+		if (putWallName == null) {
+			throw new MethodArgumentException(2, "putWallName missing", ErrorCode.FIELD_REQUIRED);
+		}
+		LOGGER.info("GetPutWallInstructionResponse request for {} item:{} wall:{}", inChe.getDomainId(), itemOrUpc, putWallName);
+
+		Facility facility = inChe.getFacility();
+		// The algorithm is
+		// 1a) find the itemMaster for the item id or upc
+		// 1b) find the location and determine it is a put wall.
+		// 2) find or iterate all slots/tiers that are children of the put wall location.
+		// 3) Find all order locations for any of those slots/tiers
+		// 4) If the order (from the order location) is active, find any order details for it that match the item
+		// 5) make the work instruction to the orderlocation location. (There may be several work instructions for the request.)
+
+		// As we find the details, we want to call as
+		// 		SingleWorkItem workItem = makeWIForOutbound(orderDetail, inChe, null, null, inFacility, inFacility.getPaths());
+
+		// 1
+		ItemMaster master = getItemMasterFromScanValue(itemOrUpc);
+		if (master == null) {
+			LOGGER.warn("Did not find item master from {}", itemOrUpc);
+			response.setStatus(ResponseStatus.Fail);
+			return response;
+		}
+		Location putWallLoc = facility.findSubLocationById(putWallName);
+		if (putWallLoc == null || !putWallLoc.isPutWallLocation()) {
+			LOGGER.warn("Location {} not resolved or not a put wall", putWallName);
+			response.setStatus(ResponseStatus.Fail);
+			return response;
+		}
+		// 2 putWallLoc is probably a bay, but could be an aisle or in weird cases tier or slot. Could putwall "slots" be tiers or bays? assume not for now.
+		List<Location> putWallSlots = putWallLoc.getActiveChildrenAtLevel(Slot.class);
+
+		// 3 assemble a list of order locations with locations in the put wall. This will perform very badly if there are lots of order locations left about in the system.
+		// It is impossible to do this with a simple filter.
+		List<OrderLocation> orderLocationsInWall = new ArrayList<OrderLocation>();
+		List<OrderLocation> orderLocations = OrderLocation.staticGetDao().getAll(); // might filter by active. That is all
+		for (OrderLocation ol : orderLocations) {
+			if (ol.getActive()) {
+				Location oneLoc = ol.getLocation(); // not nullable. Should be good.
+				if (putWallSlots.contains(oneLoc)) {
+					OrderHeader oh = ol.getParent();
+					if (oh.getActive() && oh.getStatus() != OrderStatusEnum.COMPLETE) {
+						orderLocationsInWall.add(ol);
+					}
+				}
+			}
+		}
+
+		// 4 find details for the wall and item
+		List<OrderDetail> activeDetailsForWallItem = new ArrayList<OrderDetail>();
+		for (OrderLocation ol : orderLocationsInWall) {
+			OrderHeader oh = ol.getParent();
+			for (OrderDetail detail : oh.getOrderDetails()) {
+				if (detailNeedsPlanForMaster(detail, master)) {
+					activeDetailsForWallItem.add(detail);
+				}
+			}
+		}
+
+		// 5 make the work instruction. The specific slot location comes from the OrderLocation of of the detail's header.
+		for (OrderDetail detail : activeDetailsForWallItem) {
+			OrderHeader oh = detail.getParent();
+			OrderLocation ol = oh.getFirstOrderLocationOnPath(null);
+
+			WorkInstruction wi = getWiForPutWallDetailAndLocation(detail, ol);
+			if (wi != null) {
+				wiResultList.add(wi);
+			}
+		}
+
+		return response;
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Utility function. In the first put wall calling context, we already know and assume the detail's OrderHeader is not complete
+	 * and has an OrderLocation in the put wall. It is possible, but very unlikely that this calling context returns true for ItemMaster match
+	 * but wrong UOM.
+	 */
+	private WorkInstruction getWiForPutWallDetailAndLocation(OrderDetail detail, OrderLocation orderLocation) {
+		return null;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Utility function. In the first put wall calling context, we already know and assume the detail's OrderHeader is not complete
+	 * and has an OrderLocation in the put wall. It is possible, but very unlikely that this calling context returns true for ItemMaster match
+	 * but wrong UOM.
+	 */
+	private boolean detailNeedsPlanForMaster(OrderDetail detail, ItemMaster master) {
+		if (detail == null || master == null) {
+			LOGGER.error("detailNeedsPlanForMaster");
+			return false;
+		}
+		if (!master.equals(detail.getItemMaster())) {
+			return false;
+		}
+		OrderStatusEnum detailStatus = detail.getStatus();
+		if (detailStatus.equals(OrderStatusEnum.COMPLETE) || detailStatus.equals(OrderStatusEnum.INVALID)) {
+			return false;
+		}
+		return true;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The user scanned something. In the end, we need an ItemMaster and UOM.
+	 * Does this belong in InventoryService instead?
+	 */
+	private ItemMaster getItemMasterFromScanValue(String itemIdOrUpc) {
+		// Let's first look for UPC/GTIN
+		List<Gtin> gtins = Gtin.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("domainId", itemIdOrUpc)));
+		ItemMaster itemMaster = null;
+		// UomMaster uomMaster = null;
+		Gtin gtin = null;
+
+		if (!gtins.isEmpty()) {
+			gtin = gtins.get(0);
+			itemMaster = gtin.getParent();
+			// uomMaster = gtin.getUomMaster();
+		}
+		// Or search by itemId
+		if (itemMaster == null) {
+			List<Item> items = Item.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("domainId",
+				itemIdOrUpc)));
+			Item item = null;
+			if (!items.isEmpty()) {
+				item = items.get(0);
+				itemMaster = item.getParent();
+				// uomMaster = item.getUomMaster();
+			}
+		}
+		if (itemMaster == null) {
+			List<ItemMaster> masters = ItemMaster.staticGetDao()
+				.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("domainId", itemIdOrUpc)));
+			if (!masters.isEmpty()) {
+				itemMaster = masters.get(0);
+			}
+		}
+
+		return itemMaster;
 	}
 
 	// --------------------------------------------------------------------------
@@ -1053,7 +1216,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		BatchResult<Work> batchResult = new BatchResult<Work>();
 		OrderHeader crossOrder = container.getCurrentOrderHeader();
 		if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderType().equals(OrderTypeEnum.CROSS))) {
-			List<OrderHeader> allOrders = facility.getOrderHeaders();
+			// refactor to not load all orders
+			List<OrderHeader> allOrders = OrderHeader.staticGetDao().findByParent(facility);
 			List<OrderDetail> matchingOrderDetails = toAllMatchingOutboundOrderDetails(allOrders, crossOrder);
 			for (OrderDetail matchingOutboundOrderDetail : matchingOrderDetails) {
 				List<Path> allPaths = facility.getPaths();

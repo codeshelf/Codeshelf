@@ -349,7 +349,7 @@ public class InventoryService implements IApiService {
 			
 			result.setDomainId(inItemId);
 			result.setItemId(inItemId);
-			inFacility.addItemMaster(result);
+			result.setParent(inFacility);
 			result.setStandardUom(inUomMaster);
 			
 			try {

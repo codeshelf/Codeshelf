@@ -169,7 +169,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 	public void setItemLocationAlias(String inLocationAliasId) {
-		LocationAlias alias = getParent().getParent().getLocationAlias(inLocationAliasId);
+		LocationAlias alias = LocationAlias.staticGetDao().findByDomainId(getParent().getParent(), inLocationAliasId);
 		if (alias == null) {
 			throw new DaoException("could not find location with alias: " + inLocationAliasId);
 		}

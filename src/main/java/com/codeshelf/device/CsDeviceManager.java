@@ -39,6 +39,7 @@ import com.codeshelf.ws.client.WebSocketEventListener;
 import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
+import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
 import com.codeshelf.ws.protocol.request.InventoryLightItemRequest;
@@ -306,6 +307,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		LOGGER.debug("Compute work: Che={}; DetailId={}", inCheId, orderDetailId);
 		String cheId = inPersistentId.toString();
 		ComputeDetailWorkRequest req = new ComputeDetailWorkRequest(cheId, orderDetailId);
+		clientEndpoint.sendMessage(req);
+	}
+
+	public void computePutWallInstruction(final String inCheId, final UUID inPersistentId, String itemOrUpc, String putWallName) {
+		LOGGER.debug("computePutWallInstruction: Che={}; ", inCheId);
+		String cheId = inPersistentId.toString();
+		ComputePutWallInstructionRequest req = new ComputePutWallInstructionRequest(cheId, itemOrUpc, putWallName);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -669,6 +677,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		}
 	}
 
+	// Works the same as processGetWorkResponse? Good
 	public void processOrderDetailWorkResponse(String networkGuid, List<WorkInstruction> workInstructions, String message) {
 		NetGuid cheId = new NetGuid("0x" + networkGuid);
 		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
@@ -681,6 +690,20 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		}
 	}
 
+	// Works the same as processGetWorkResponse? Good
+	public void processPutWallInstructionResponse(String networkGuid, List<WorkInstruction> workInstructions, String message) {
+		NetGuid cheId = new NetGuid("0x" + networkGuid);
+		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
+		if (cheDevice != null) {
+			// Although not done yet, may be useful to return information such as WI already completed, or it shorted, or ....
+			LOGGER.info("processOrderDetailWorkResponse calling cheDevie.assignWork()");
+			cheDevice.assignWallPuts(workInstructions, message); // will initially use assignWork override, but probably need to add parameters.			
+		} else {
+			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
+		}
+	}
+	
+	
 	public void processFailureResponse(FailureResponse failure) {
 		String cheGuidStr = failure.getCheId();
 		if (cheGuidStr != null) {

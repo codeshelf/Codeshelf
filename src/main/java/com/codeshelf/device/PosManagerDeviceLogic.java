@@ -257,14 +257,6 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 		sendPositionControllerInstructions(latestCommandsList);
 	}
 
-	/**
-	 * Has an active work instruction, represented in mPosInstructionBySource. Order feedback does not count.
-	 * Do we need this. Done inside of updatePosCons() above
-	 */
-	private boolean posconHasActiveInstruction(final Byte posconIndex) {
-		return false;
-	}
-
 	private void addFeedbackInstruction(final String locationName, final PosControllerInstr feedbackInstruction) {
 		removeFeedbackInstructionFromLocation(locationName); // silently ok if nothing there
 		mOrderFeedbackByLocation.put(locationName, feedbackInstruction);

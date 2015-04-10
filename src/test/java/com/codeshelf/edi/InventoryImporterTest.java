@@ -623,7 +623,8 @@ public class InventoryImporterTest extends ServerTest {
 		importer2.importOrdersFromCsvStream(new StringReader(csvOrders), facility, ediProcessTime2);
 
 		// We should have one order with 3 details. Only 2 of which are fulfillable.
-		OrderHeader order = facility.getOrderHeader("12345");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
+
 		Assert.assertNotNull(order);
 		Assert.assertEquals(3, order.getOrderDetails().size());
 

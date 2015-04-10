@@ -85,7 +85,9 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 		LOGGER.debug("Archive unreferenced location alias data");
 
 		// Inactivate the locations aliases that don't match the import timestamp.
-		for (LocationAlias locationAlias : inFacility.getLocationAliases()) {
+		// FIXME: replace with database query
+		List<LocationAlias> las = LocationAlias.staticGetDao().findByParent(inFacility);
+		for (LocationAlias locationAlias : las) {
 			if (!locationAlias.getUpdated().equals(inProcessTime)) {
 				LOGGER.debug("Archive old locationAlias: " + locationAlias.getAlias());
 				locationAlias.setActive(false);
@@ -114,7 +116,7 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 
 		// Get or create the item at the specified location.
 		String locationAliasId = inCsvBean.getLocationAlias();
-		LocationAlias result = inFacility.getLocationAlias(locationAliasId);
+		LocationAlias result = LocationAlias.staticGetDao().findByDomainId(inFacility, locationAliasId);
 		String mappedLocationId = inCsvBean.getMappedLocationId();
 		Location mappedLocation = inFacility.findSubLocationById(mappedLocationId);
 
@@ -133,7 +135,7 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 			// create a new alias
 			result = new LocationAlias();
 			result.setDomainId(locationAliasId);
-			inFacility.addLocationAlias(result);
+			result.setParent(inFacility);
 			isNewAlias = true;
 		}
 

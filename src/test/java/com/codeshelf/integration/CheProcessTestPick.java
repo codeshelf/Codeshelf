@@ -231,7 +231,8 @@ public class CheProcessTestPick extends ServerTest {
 				+ "5/26/14,1016dry,50916c6dd136890200000311,blackjet Crack*a*Roons,17,cookies\r\n"; //
 		importOrdersData(inFacility, csvOrders);
 
-		OrderHeader order = inFacility.getOrderHeader("1001dry");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(inFacility, "1001dry");
+		// inFacility.getOrderHeader("1001dry");
 		Assert.assertNotNull(order);
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 1, detailCount);
@@ -485,7 +486,8 @@ public class CheProcessTestPick extends ServerTest {
 		facility = Facility.staticGetDao().reload(facility);
 
 		// We should have one order with 3 details. Only 2 of which are fulfillable.
-		OrderHeader order = facility.getOrderHeader("12345");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
+		//facility.getOrderHeader("12345");
 		Assert.assertNotNull(order);
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 3, detailCount);
@@ -624,7 +626,8 @@ public class CheProcessTestPick extends ServerTest {
 		facility = Facility.staticGetDao().reload(facility);
 
 		// We should have one order with 3 details. Only 2 of which are fulfillable.
-		OrderHeader order = facility.getOrderHeader("12345");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
+		//OrderHeader order = facility.getOrderHeader("12345");
 		Assert.assertNotNull(order);
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 3, detailCount);
@@ -711,7 +714,7 @@ public class CheProcessTestPick extends ServerTest {
 		// perform pick operations
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
-		List<Container> containers = facility.getContainers();
+		List<Container> containers = Container.staticGetDao().findByParent(facility);
 		Assert.assertEquals(2, containers.size());
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -1230,7 +1233,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		// Start setting up cart etc
-		List<Container> containers = facility.getContainers();
+		List<Container> containers = Container.staticGetDao().findByParent(facility);
 		//Make sure we have 4 orders/containers
 		Assert.assertEquals(5, containers.size());
 
@@ -1550,7 +1553,7 @@ public class CheProcessTestPick extends ServerTest {
 		// Start setting up cart etc
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
-		List<Container> containers = facility.getContainers();
+		List<Container> containers = Container.staticGetDao().findByParent(facility);
 		//Make sure we have 4 orders/containers
 		Assert.assertEquals(4, containers.size());
 

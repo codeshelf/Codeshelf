@@ -8,17 +8,17 @@ import org.junit.Test;
 
 import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
-import com.codeshelf.security.AuthResponse.Status;
+import com.codeshelf.security.TokenSession.Status;
 import com.codeshelf.testframework.MockDaoTest;
 
-public class AuthProviderServiceTest extends MockDaoTest {
+public class TokenSessionServiceTest extends MockDaoTest {
 	@Test
 	public void cryptoCookieTest() {
-		AuthProviderService auth = new HmacAuthService().initialize();
+		TokenSessionService auth = new TokenSessionService().initialize();
 		User user = TenantManagerService.getInstance().getUser(0); // we are in mock dao, this should work
 		
 		// can create auth cookie
-		String token = auth.createToken(0,0);
+		String token = auth.testCreateToken(0,0);
 		Cookie authCookie = auth.createAuthCookie(token);
 		Assert.assertNotNull(authCookie);
 		
@@ -29,7 +29,7 @@ public class AuthProviderServiceTest extends MockDaoTest {
 		cookies[1] = authCookie;
 		
 		// can find and validate auth cookie
-		AuthResponse resp = auth.checkAuthCookie(cookies);
+		TokenSession resp = auth.checkAuthCookie(cookies);
 		Assert.assertNotNull(resp);
 		Assert.assertEquals(Status.ACCEPTED,resp.getStatus());
 		Assert.assertEquals(user,resp.getUser());
@@ -39,7 +39,7 @@ public class AuthProviderServiceTest extends MockDaoTest {
 		Assert.assertTrue(resp.getTokenTimestamp() > System.currentTimeMillis()-1000);
 
 		// fail to validate if more than one
-		String token2 = auth.createToken(0,0);
+		String token2 = auth.testCreateToken(0,0);
 		cookies[0] = auth.createAuthCookie(token2);
 		resp = auth.checkAuthCookie(cookies);
 		Assert.assertNull(resp);
@@ -60,7 +60,7 @@ public class AuthProviderServiceTest extends MockDaoTest {
 	
 	@Test
 	public void passwordHashTest() {
-		AuthProviderService auth = new HmacAuthService().initialize();
+		TokenSessionService auth = new TokenSessionService().initialize();
 
 		String password = "goodpassword";
 		Assert.assertTrue(auth.passwordMeetsRequirements(password));

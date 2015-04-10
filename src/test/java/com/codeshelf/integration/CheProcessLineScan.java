@@ -243,7 +243,8 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertNotNull(facility);
 
 		// Prove that our orders file is working. D401 is a modeled location (alias for a Tier)
-		OrderHeader order1 = facility.getOrderHeader("11111");
+		OrderHeader order1 = OrderHeader.staticGetDao().findByDomainId(facility, "11111");
+		// facility.getOrderHeader("11111");
 		Assert.assertNotNull(order1);
 		OrderDetail detail1_1 = order1.getOrderDetail("11111.1");
 		Assert.assertNotNull(detail1_1);
@@ -386,7 +387,8 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertNotNull(facility);
 
 		// Prove that our orders file is working. D601 is an unmodeled location
-		OrderHeader order5 = facility.getOrderHeader("12345");
+		OrderHeader order5 = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
+		//facility.getOrderHeader("12345");
 		Assert.assertNotNull(order5);
 		OrderDetail detail5_3 = order5.getOrderDetail("12345.3");
 		Assert.assertNotNull(detail5_3);

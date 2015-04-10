@@ -208,7 +208,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		facility = Facility.staticGetDao().findByPersistentId(facId);
 		Assert.assertNotNull(facility);
 
-		List<Container> containers = facility.getContainers();
+		List<Container> containers = Container.staticGetDao().findByParent(facility);
 		int containerCount = containers.size(); // This can throw if  we did not re-get the facility in the new transaction boundary. Just testing that.
 		Assert.assertTrue(containerCount == 7);
 		this.getTenantPersistenceService().commitTransaction();

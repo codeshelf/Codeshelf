@@ -111,7 +111,7 @@ public class WiFactory {
 		resultWi.setOrderDetail(null);
 		resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 		resultWi.setLedCmdStream("[]"); // empty array
-		inFacility.addWorkInstruction(resultWi);
+		resultWi.setParent(inFacility);
 		setWorkInstructionLedPatternForHK(resultWi, inType, inPrevWi);
 
 		long seq = SequenceNumber.generate();
@@ -132,14 +132,12 @@ public class WiFactory {
 		resultWi.setPlanMinQuantity(0);
 		resultWi.setPlanMaxQuantity(0);
 		resultWi.setActualQuantity(0);
+		resultWi.setParent(inFacility);
 
 		// The container provides our map to the position controller. That is the only way the user can acknowledge the housekeeping command.
 		resultWi.setContainer(ourCntr);
 		resultWi.setAssigned(assignTime);
 		ourChe.addWorkInstruction(resultWi);
-
-		ourChe.addWorkInstruction(resultWi);
-		inFacility.addWorkInstruction(resultWi);
 
 		try {
 			WorkInstruction.staticGetDao().store(resultWi);
@@ -283,9 +281,9 @@ public class WiFactory {
 				resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 				resultWi.setLedCmdStream("[]"); // empty array
 				resultWi.setStatus(WorkInstructionStatusEnum.NEW);
+				resultWi.setParent(facility);
 				inOrderDetail.addWorkInstruction(resultWi);
 				inChe.addWorkInstruction(resultWi);
-				facility.addWorkInstruction(resultWi);
 				isNewWi = true;
 			}
 

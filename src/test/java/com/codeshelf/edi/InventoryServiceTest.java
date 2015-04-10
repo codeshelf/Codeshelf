@@ -85,7 +85,7 @@ public class InventoryServiceTest extends ServerTest {
 		
 		String testUom = "EA";
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
-		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, "10700589");
 		Assert.assertNotNull(itemMaster);
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		Assert.assertNotNull(locationAlias);
@@ -107,7 +107,7 @@ public class InventoryServiceTest extends ServerTest {
 		eachmultProp = propDao.getPropertyWithDefault(facility, DomainObjectProperty.EACHMULT);
 		eachmultProp.setValue(true);
 		propDao.store(eachmultProp);
-		itemMaster = facility.getItemMaster("10700589");
+		itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, "10700589");
 		List<Item> items = itemMaster.getItemsOfUom(testUom);
 		Assert.assertEquals(1,items.size());
 		this.getTenantPersistenceService().commitTransaction();	
@@ -116,7 +116,7 @@ public class InventoryServiceTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 
-		itemMaster = facility.getItemMaster("10700589");
+		itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, "10700589");
 		Assert.assertNotNull(itemMaster);
 
 		Tier newItemLocation2 = (Tier) facility.findSubLocationById("A1.B1.T1");
@@ -150,7 +150,7 @@ public class InventoryServiceTest extends ServerTest {
 		Integer testCmFromLeft = 10;
 		
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
-		ItemMaster itemMaster = facility.getItemMaster(sku);
+		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, sku);
 		String locationAlias = tier.getAliases().get(0).getAlias();
 
 
@@ -185,7 +185,7 @@ public class InventoryServiceTest extends ServerTest {
 		Integer testCmFromLeft = 10;
 		
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
-		ItemMaster itemMaster = facility.getItemMaster(sku);
+		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, sku);
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		
 		Item createdItem = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, String.valueOf(testCmFromLeft - 1), "1", testUom, null);
@@ -201,7 +201,7 @@ public class InventoryServiceTest extends ServerTest {
 	
 	private void testMove(Facility facility,String testUomUserInput) throws IOException {
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
-		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, "10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		
 		Item createdItem = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "1", testUomUserInput, null);
@@ -224,7 +224,7 @@ public class InventoryServiceTest extends ServerTest {
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
-		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, "10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		
 		try {
@@ -246,7 +246,7 @@ public class InventoryServiceTest extends ServerTest {
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
-		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, "10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		try {
 			uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), "", "1", "1", uomMaster.getUomMasterId(), null);
@@ -267,7 +267,7 @@ public class InventoryServiceTest extends ServerTest {
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		Assert.assertNotNull(tier);
 		UomMaster uomMaster = facility.getUomMaster("each");
-		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, "10700589");
 		List<LocationAlias> aliases = tier.getAliases();
 		Assert.assertTrue(aliases.size()>0);
 		String locationAlias = tier.getAliases().get(0).getAlias();
@@ -290,7 +290,7 @@ public class InventoryServiceTest extends ServerTest {
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
-		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, "10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
 
 		try {
@@ -312,7 +312,7 @@ public class InventoryServiceTest extends ServerTest {
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
-		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, "10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
 
 		try {
@@ -334,7 +334,7 @@ public class InventoryServiceTest extends ServerTest {
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
-		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, "10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
 
 		try {
@@ -355,7 +355,7 @@ public class InventoryServiceTest extends ServerTest {
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
-		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, "10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		Item item = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "", "1", uomMaster.getUomMasterId(), null);
 		Assert.assertEquals(0, item.getCmFromLeft().intValue());
@@ -370,7 +370,7 @@ public class InventoryServiceTest extends ServerTest {
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
-		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, "10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		Item item = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, null, "1", uomMaster.getUomMasterId(), null);
 		Assert.assertEquals(0, item.getCmFromLeft().intValue());
@@ -386,7 +386,7 @@ public class InventoryServiceTest extends ServerTest {
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
-		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, "10700589");
 		String locationAlias = tier.getAliases().get(0).getAlias();
 
 		try {
@@ -408,7 +408,7 @@ public class InventoryServiceTest extends ServerTest {
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
-		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, "10700589");
 		Item item = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), tier.getNominalLocationId(), "1", "1", "EACH", null);
 		Assert.assertEquals(tier, item.getStoredLocation());
 
@@ -422,7 +422,7 @@ public class InventoryServiceTest extends ServerTest {
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
-		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, "10700589");
 
 		
 		Item item = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), tier.getNominalLocationId(), "1", "1", uomMaster.getUomMasterId(), null);
@@ -438,7 +438,7 @@ public class InventoryServiceTest extends ServerTest {
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
 		UomMaster uomMaster = facility.getUomMaster("each");
-		ItemMaster itemMaster = facility.getItemMaster("10700589");
+		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, "10700589");
 
 		String locationAlias = tier.getAliases().get(0).getAlias();
 		Item item = uiUpdate.storeItem(facility.getPersistentId().toString(), itemMaster.getItemId(), locationAlias, "1", "1", uomMaster.getUomMasterId(), null);

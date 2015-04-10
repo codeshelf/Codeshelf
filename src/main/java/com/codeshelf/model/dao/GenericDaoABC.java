@@ -81,6 +81,34 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	/* (non-Javadoc)
 	 * @see com.codeshelf.model.dao.IGenericDao#findById(java.lang.String)
 	 */
+	public List<T> findByParent(final IDomainObject parentObject) {
+		try {
+			Session session = getCurrentSession();
+	        Criteria criteria = session.createCriteria(getDaoClass());
+			if (parentObject != null) {
+				Class<T> clazz = getDaoClass();
+				if (clazz.equals(Facility.class)) {
+					criteria
+						.add(Restrictions.eq(IDomainObject.PARENT_ORG_PROPERTY,parentObject.getPersistentId()));
+				} 
+				else {
+					criteria
+						.add(Restrictions.eq(IDomainObject.PARENT_PROPERTY,parentObject.getPersistentId()));
+				}
+			} 
+			criteria.setCacheable(true);
+			List<T> results = criteria.list();
+			return results;
+		} catch (PersistenceException e) {
+			LOGGER.error("Failed to find object by domain ID", e);
+			return null;
+		}
+	}	
+	
+	// --------------------------------------------------------------------------
+	/* (non-Javadoc)
+	 * @see com.codeshelf.model.dao.IGenericDao#findById(java.lang.String)
+	 */
 	public T findByDomainId(final IDomainObject parentObject, final String domainId) {
 		String effectiveId = domainId;
 		try {

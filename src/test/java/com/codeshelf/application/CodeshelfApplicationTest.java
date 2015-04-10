@@ -21,7 +21,7 @@ import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.model.dao.Result;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
-import com.codeshelf.security.AuthProviderService;
+import com.codeshelf.security.TokenSessionService;
 import com.codeshelf.service.DummyPropertyService;
 import com.codeshelf.testframework.ServerTest;
 
@@ -65,7 +65,7 @@ public class CodeshelfApplicationTest extends ServerTest {
 			this.metricsService,
 			this.webSocketManagerService,
 			new DummyPropertyService(),
-			mock(AuthProviderService.class),
+			new TokenSessionService(),
 			mock(AuthorizingSecurityManager.class));
 
 		final Result checkAppRunning = new Result();

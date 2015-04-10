@@ -337,7 +337,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 			result = new ItemMaster();
 			result.setDomainId(inItemId);
 			result.setItemId(inItemId);
-			inFacility.addItemMaster(result);
+			result.setParent(inFacility);
 		}
 
 		// If we were able to get/create an item master then update it.

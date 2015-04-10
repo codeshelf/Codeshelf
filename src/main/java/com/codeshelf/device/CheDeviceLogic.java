@@ -1294,6 +1294,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.error("Inappropriate call to assignWork()");
 
 	}
+	public void assignWallPuts(final List<WorkInstruction> inWorkItemList, final String message) {
+		LOGGER.error("Inappropriate call to assignWallPuts()");
+
+	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -1609,6 +1613,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.info("*Put order/cntr:{} into put wall location:{} by picker:{} device:{}",
 			orderId,
 			locationName,
+			getUserId(),
+			getMyGuidStr());
+	}
+
+	protected void notifyPutWallItem(String itemOrUpd, String wallname) {
+		LOGGER.info("*Request plans for item:{} in put wall:{} by picker:{} device:{}",
+			itemOrUpd,
+			wallname,
 			getUserId(),
 			getMyGuidStr());
 	}

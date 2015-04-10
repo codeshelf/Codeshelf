@@ -20,10 +20,10 @@ public class AuthFilter implements Filter {
 
 	static final private Logger	LOGGER						= LoggerFactory.getLogger(AuthFilter.class);
 	
-	AuthProviderService authProviderService;
+	TokenSessionService tokenSessionService;
 	
 	public AuthFilter() {
-		this.authProviderService = HmacAuthService.getInstance();
+		this.tokenSessionService = TokenSessionService.getInstance();
 	}
 	
 	@Override
@@ -38,25 +38,25 @@ public class AuthFilter implements Filter {
 
 		Cookie[] cookies = request.getCookies();
 		boolean authenticated = false;
-		AuthResponse authResponse = authProviderService.checkAuthCookie(cookies);
-		if(authResponse != null) {
-			if(authResponse.getStatus().equals(AuthResponse.Status.ACCEPTED)) {
+		TokenSession tokenSession = tokenSessionService.checkAuthCookie(cookies);
+		if(tokenSession != null) {
+			if(tokenSession.getStatus().equals(TokenSession.Status.ACCEPTED)) {
 				
 				authenticated = true;
 
-				String newToken = authResponse.getNewToken(); // auto refresh if enabled
+				String newToken = tokenSession.getNewToken(); // auto refresh if enabled
 				if(newToken != null) {
 					// offer updated token to keep session active
-					response.addCookie(authProviderService.createAuthCookie(newToken));
+					response.addCookie(tokenSessionService.createAuthCookie(newToken));
 				}
-				CodeshelfSecurityManager.setContext(authResponse.getUser(),authResponse.getTenant());
+				CodeshelfSecurityManager.setContext(tokenSession.getUser(),tokenSession.getTenant());
 				try {
 					chain.doFilter(request, response);
 				} finally {
 					CodeshelfSecurityManager.removeContext();
 				}
 			} else {
-				LOGGER.info("authentication failed: {}",authResponse.getStatus().toString());
+				LOGGER.info("authentication failed: {}",tokenSession.getStatus().toString());
 			}
 		} else {
 			LOGGER.warn("no valid auth cookie, access denied");

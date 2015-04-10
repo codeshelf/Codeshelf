@@ -111,7 +111,7 @@ public class TestingResource {
 	}
 
 	private void importInventory(Facility facility) throws Exception{
-		List<LocationAlias> aliases = facility.getLocationAliases();
+		List<LocationAlias> aliases = LocationAlias.staticGetDao().findByParent(facility);
 		if (aliases == null || aliases.isEmpty()) {
 			throw new Exception("Please add at least one location alias to the facility");
 		}

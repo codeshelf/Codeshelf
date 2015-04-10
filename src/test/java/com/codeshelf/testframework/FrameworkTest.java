@@ -61,10 +61,9 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.persistence.AbstractPersistenceService;
 import com.codeshelf.persistence.DatabaseUtils;
 import com.codeshelf.persistence.TenantPersistenceService;
-import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.security.CodeshelfRealm;
 import com.codeshelf.security.CodeshelfSecurityManager;
-import com.codeshelf.security.HmacAuthService;
+import com.codeshelf.security.TokenSessionService;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.InventoryService;
@@ -103,78 +102,78 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 	public abstract boolean ephemeralServicesShouldStartAutomatically(); // return true for WorkService
 
-	private static Logger										LOGGER; // = need to set up logging before creating the logger
+	private static Logger							LOGGER; // = need to set up logging before creating the logger
 	@Getter
 	@Rule
-	public TestName												testName					= new TestName();
+	public TestName									testName					= new TestName();
 
 	// service managers for the various test types. for complete server test all of these will be used.
-	private static ServiceManager								serverServiceManager		= null;
-	private static ServiceManager								persistenceServiceManager	= null;
-	private static ServiceManager								siteconServiceManager		= null;
+	private static ServiceManager					serverServiceManager		= null;
+	private static ServiceManager					persistenceServiceManager	= null;
+	private static ServiceManager					siteconServiceManager		= null;
 
 	// app server static (reused) services
-	private static WebSocketManagerService						staticWebSocketManagerService;
-	private static IMetricsService								staticMetricsService;
-	private static IPropertyService								staticPropertyService;
-	private static ServerMessageProcessor						staticServerMessageProcessor;
-	private static AuthProviderService							staticAuthProviderService;
+	private static WebSocketManagerService			staticWebSocketManagerService;
+	private static IMetricsService					staticMetricsService;
+	private static IPropertyService					staticPropertyService;
+	private static ServerMessageProcessor			staticServerMessageProcessor;
+	private static TokenSessionService				staticTokenSessionService;
 
 	// real non-mock instances
-	private static TenantPersistenceService					realTenantPersistenceService;
-	private static ITenantManagerService						realTenantManagerService;
-	private boolean												resetRealPersistenceDaos;
+	private static TenantPersistenceService			realTenantPersistenceService;
+	private static ITenantManagerService			realTenantManagerService;
+	private boolean									resetRealPersistenceDaos;
 
 	// default IDs to use when generating facility
-	protected static String										facilityId					= "F1";
-	protected static String										networkId					= CodeshelfNetwork.DEFAULT_NETWORK_NAME;
-	protected static String										cheId1						= "CHE1";
+	protected static String							facilityId					= "F1";
+	protected static String							networkId					= CodeshelfNetwork.DEFAULT_NETWORK_NAME;
+	protected static String							cheId1						= "CHE1";
 	@Getter
-	protected static NetGuid									cheGuid1					= new NetGuid("0x00009991");
-	protected static String										cheId2						= "CHE2";
+	protected static NetGuid						cheGuid1					= new NetGuid("0x00009991");
+	protected static String							cheId2						= "CHE2";
 	@Getter
-	protected static NetGuid									cheGuid2					= new NetGuid("0x00009992");
+	protected static NetGuid						cheGuid2					= new NetGuid("0x00009992");
 
 	// site controller services
-	private static CsClientEndpoint								staticClientEndpoint;
-	private static ClientConnectionManagerService				staticClientConnectionManagerService;
-	private static WebSocketContainer							staticWebSocketContainer;
+	private static CsClientEndpoint					staticClientEndpoint;
+	private static ClientConnectionManagerService	staticClientConnectionManagerService;
+	private static WebSocketContainer				staticWebSocketContainer;
 
 	// instance services
-	protected ServiceManager									ephemeralServiceManager;
-	protected WorkService										workService;
-	protected InventoryService									inventoryService;
-	protected EventProducer										eventProducer				= new EventProducer();
-	protected WebApiServer										apiServer;
+	protected ServiceManager						ephemeralServiceManager;
+	protected WorkService							workService;
+	protected InventoryService						inventoryService;
+	protected EventProducer							eventProducer				= new EventProducer();
+	protected WebApiServer							apiServer;
 
 	@Getter
-	protected TenantPersistenceService							tenantPersistenceService;
-	protected ITenantManagerService								tenantManagerService;
+	protected TenantPersistenceService				tenantPersistenceService;
+	protected ITenantManagerService					tenantManagerService;
 
 	@Getter
-	protected CsDeviceManager									deviceManager;
-	protected WebSocketManagerService								webSocketManagerService;
-	protected IPropertyService									propertyService;
-	protected IMetricsService									metricsService;
-	protected AuthProviderService										authProviderService;
+	protected CsDeviceManager						deviceManager;
+	protected WebSocketManagerService				webSocketManagerService;
+	protected IPropertyService						propertyService;
+	protected IMetricsService						metricsService;
+	protected TokenSessionService					tokenSessionService;
 
-	protected IRadioController									radioController;
+	protected IRadioController						radioController;
 
 	// auto created facility details
-	int															facilitiesGenerated;	// automatic serial naming
-	private Facility											facility;
-	protected UUID												networkPersistentId;
-	protected UUID												che1PersistentId;
-	protected UUID												che2PersistentId;
+	int												facilitiesGenerated; // automatic serial naming
+	private Facility								facility;
+	protected UUID									networkPersistentId;
+	protected UUID									che1PersistentId;
+	protected UUID									che2PersistentId;
 
 	@Getter
-	private String defaultTenantId;
+	private String									defaultTenantId;
 	@Getter
-	private WebSocketConnection	mockWsConnection;
-	
-	private Integer												port;
-	private Tenant	defaultMockTenant = Mockito.mock(Tenant.class);
-	private User	defaultMockUser = Mockito.mock(User.class);
+	private WebSocketConnection						mockWsConnection;
+
+	private Integer									port;
+	private Tenant									defaultMockTenant			= Mockito.mock(Tenant.class);
+	private User									defaultMockUser				= Mockito.mock(User.class);
 
 	public static Injector setupInjector() {
 		Injector injector = Guice.createInjector(new AbstractModule() {
@@ -200,10 +199,10 @@ public abstract class FrameworkTest implements IntegrationTest {
 				bind(IPropertyService.class).to(PropertyService.class).in(Singleton.class);
 
 				bind(WebSocketContainer.class).toInstance(ContainerProvider.getWebSocketContainer());
-				
-				requestStaticInjection(HmacAuthService.class);
-				bind(AuthProviderService.class).to(HmacAuthService.class).in(Singleton.class);
-				
+
+				requestStaticInjection(TokenSessionService.class);
+				bind(TokenSessionService.class).in(Singleton.class);
+
 				// Shiro modules
 				bind(SecurityManager.class).to(CodeshelfSecurityManager.class);
 				bind(Realm.class).to(CodeshelfRealm.class);
@@ -224,19 +223,19 @@ public abstract class FrameworkTest implements IntegrationTest {
 		LOGGER = LoggerFactory.getLogger(FrameworkTest.class);
 
 		Injector injector = setupInjector();
-		
+
 		//staticSecurityManagerService = injector.getInstance(SecurityManager.class);
 		//SecurityUtils.setSecurityManager(staticSecurityManagerService);
-		
+
 		realTenantPersistenceService = TenantPersistenceService.getMaybeRunningInstance();
 		realTenantManagerService = TenantManagerService.getMaybeRunningInstance();
 
 		staticMetricsService = injector.getInstance(IMetricsService.class);
 		staticMetricsService.startAsync(); // always running, outside of service manager
-		ServiceUtility.awaitRunningOrThrow(staticMetricsService); 
-		staticAuthProviderService = injector.getInstance(AuthProviderService.class);
-		staticAuthProviderService.startAsync();
-		ServiceUtility.awaitRunningOrThrow(staticAuthProviderService); 
+		ServiceUtility.awaitRunningOrThrow(staticMetricsService);
+		staticTokenSessionService = injector.getInstance(TokenSessionService.class);
+		staticTokenSessionService.startAsync();
+		ServiceUtility.awaitRunningOrThrow(staticTokenSessionService);
 
 		staticPropertyService = injector.getInstance(IPropertyService.class);
 
@@ -265,18 +264,18 @@ public abstract class FrameworkTest implements IntegrationTest {
 		PropertyService.setInstance(propertyService);
 		metricsService = staticMetricsService;
 		MetricsService.setInstance(metricsService);
-		authProviderService = staticAuthProviderService;
-		HmacAuthService.setInstance(staticAuthProviderService);
-		
+		tokenSessionService = staticTokenSessionService;
+		TokenSessionService.setInstance(staticTokenSessionService);
+
 		SecurityUtils.setSecurityManager(new CodeshelfSecurityManager(new CodeshelfRealm()));
-		
+
 		// remove user/subject from main threadcontext 
 		// we cannot access other threads' contexts so we hope they cleaned up!
 		CodeshelfSecurityManager.removeContextIfPresent();
-		
+
 		radioController = null;
 		deviceManager = null;
-		apiServer = null;		
+		apiServer = null;
 		mockWsConnection = null;
 
 		// reset default facility
@@ -304,7 +303,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 			initializeEphemeralServiceManager();
 
 		createMockWsConnection();
-		
+
 		LOGGER.info("------------------- Running test: " + this.testName.getMethodName() + " -------------------");
 	}
 
@@ -314,17 +313,18 @@ public abstract class FrameworkTest implements IntegrationTest {
 			LOGGER.info("------------------- Cleanup after test: " + this.testName.getMethodName() + " -------------------");
 
 		if (this.getFrameworkType().equals(Type.HIBERNATE) || this.getFrameworkType().equals(Type.COMPLETE_SERVER)) {
-			if(CodeshelfSecurityManager.getCurrentTenant() == null) {
+			if (CodeshelfSecurityManager.getCurrentTenant() == null) {
 				LOGGER.warn("Tenant context was not present when cleaning up test, using default context to search for open transactions");
 				setDefaultUserAndTenant();
 			}
 			Assert.assertFalse(realTenantPersistenceService.rollbackAnyActiveTransactions());
 		}
-		
+
 		if (staticClientConnectionManagerService != null) {
 			staticClientConnectionManagerService.setDisconnected();
-			for(int i=0;i<500 && staticWebSocketManagerService.hasAnySessions();i++) {
-				ThreadUtils.sleep(2);;
+			for (int i = 0; i < 500 && staticWebSocketManagerService.hasAnySessions(); i++) {
+				ThreadUtils.sleep(2);
+				;
 			}
 		}
 		if (radioController != null) {
@@ -341,8 +341,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 			apiServer.stop();
 			apiServer = null;
 		}
-		
-		if(staticWebSocketManagerService.isRunning()) {
+
+		if (staticWebSocketManagerService.isRunning()) {
 			staticWebSocketManagerService.reset();
 		}
 
@@ -364,9 +364,9 @@ public abstract class FrameworkTest implements IntegrationTest {
 		webSocketManagerService = null;
 		propertyService = null;
 		metricsService = null;
-		authProviderService = null;
+		tokenSessionService = null;
 
-		if(resetRealPersistenceDaos) {
+		if (resetRealPersistenceDaos) {
 			realTenantPersistenceService.resetDaosForTest();
 			resetRealPersistenceDaos = false;
 		}
@@ -375,8 +375,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 	}
 
 	public <T extends IDomainObject> void useCustomDao(Class<T> domainType, ITypedDao<T> testDao) {
-		this.tenantPersistenceService.setDaoForTest(domainType,testDao);
-		if(this.getFrameworkType().equals(Type.HIBERNATE) || this.getFrameworkType().equals(Type.COMPLETE_SERVER)) {
+		this.tenantPersistenceService.setDaoForTest(domainType, testDao);
+		if (this.getFrameworkType().equals(Type.HIBERNATE) || this.getFrameworkType().equals(Type.COMPLETE_SERVER)) {
 			resetRealPersistenceDaos = true;
 		}
 	}
@@ -389,11 +389,9 @@ public abstract class FrameworkTest implements IntegrationTest {
 	}
 
 	private Map<Class<? extends IDomainObject>, ITypedDao<?>> createMockDaos() {
-		Map<Class<? extends IDomainObject>, Class<? extends ITypedDao<? extends IDomainObject>>> daoClasses
-			= DomainObjectABC.getDaoClasses();
-				
-		Map<Class<? extends IDomainObject>, ITypedDao<?>> daos 
-			= new HashMap<Class<? extends IDomainObject>, ITypedDao<?>>();
+		Map<Class<? extends IDomainObject>, Class<? extends ITypedDao<? extends IDomainObject>>> daoClasses = DomainObjectABC.getDaoClasses();
+
+		Map<Class<? extends IDomainObject>, ITypedDao<?>> daos = new HashMap<Class<? extends IDomainObject>, ITypedDao<?>>();
 		for (Class<? extends IDomainObject> clazz : daoClasses.keySet()) {
 			daos.put(clazz, new MockDao<>(clazz));
 		}
@@ -411,7 +409,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	private void setDummyPersistence() {
 		Map<Class<? extends IDomainObject>, ITypedDao<?>> mockDaos = this.createMockDaos();
 
-		tenantPersistenceService = new MockTenantPersistenceService(mockDaos);	
+		tenantPersistenceService = new MockTenantPersistenceService(mockDaos);
 		TenantPersistenceService.setInstance(tenantPersistenceService);
 
 		tenantManagerService = new MockTenantManagerService();
@@ -472,7 +470,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 			} catch (TimeoutException e1) {
 				throw new RuntimeException("Could not start test services (persistence)", e1);
 			}
-			
+
 			// create default tenant schema
 			// TODO: use Liquibase instead?
 			Tenant tenant = getDefaultTenant();
@@ -480,40 +478,40 @@ public abstract class FrameworkTest implements IntegrationTest {
 			try {
 				conn = DatabaseUtils.getConnection(tenant);
 			} catch (SQLException e2) {
-				LOGGER.error("Failed to get connection to default tenant schema, cannot continue.",e2);
+				LOGGER.error("Failed to get connection to default tenant schema, cannot continue.", e2);
 				throw new RuntimeException(e2);
 			}
-			SchemaExport se = new SchemaExport(this.tenantPersistenceService.getHibernateConfiguration(),conn);
+			SchemaExport se = new SchemaExport(this.tenantPersistenceService.getHibernateConfiguration(), conn);
 			se.create(false, true);
-			
+
 		} else {
 			// not 1st persistence run. need to reset
 			Tenant realDefaultTenant = realTenantManagerService.getInitialTenant();
 			// destroy any non-default tenants we created
 			List<Tenant> tenants = realTenantManagerService.getTenants();
-			for(Tenant tenant : tenants) {
-				if(!tenant.equals(realDefaultTenant)) {
+			for (Tenant tenant : tenants) {
+				if (!tenant.equals(realDefaultTenant)) {
 					realTenantManagerService.deleteTenant(tenant);
 				}
 				realTenantPersistenceService.forgetInitialActions(tenant.getTenantIdentifier());
 			}
 			realTenantManagerService.resetTenant(realDefaultTenant);
 			List<UserRole> roles = realTenantManagerService.getRoles();
-			for(UserRole role : roles) {
-				if(!DefaultRolesPermissions.isDefaultRole(role.getName())) {
+			for (UserRole role : roles) {
+				if (!DefaultRolesPermissions.isDefaultRole(role.getName())) {
 					realTenantManagerService.deleteRole(role);
 				}
 			}
 			List<UserPermission> permissions = realTenantManagerService.getPermissions();
-			for(UserPermission perm : permissions) {
-				if(!DefaultRolesPermissions.isDefaultPermission(perm.getDescriptor())) {
+			for (UserPermission perm : permissions) {
+				if (!DefaultRolesPermissions.isDefaultPermission(perm.getDescriptor())) {
 					realTenantManagerService.deletePermission(perm);
 				}
 			}
 		}
 
 		defaultTenantId = getDefaultTenant().getTenantIdentifier();
-}
+	}
 
 	private void startServer() {
 		if (serverServiceManager == null) {
@@ -577,7 +575,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 			try {
 				this.ephemeralServiceManager.startAsync().awaitHealthy(10, TimeUnit.SECONDS);
 			} catch (TimeoutException e) {
-				Assert.fail("timeout starting ephemeralServiceManager: "+ e.getMessage());
+				Assert.fail("timeout starting ephemeralServiceManager: " + e.getMessage());
 			}
 		}
 	}
@@ -604,10 +602,10 @@ public abstract class FrameworkTest implements IntegrationTest {
 	protected final Facility generateTestFacility() {
 		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		Tenant defaultTenant = this.getDefaultTenant();
-		if(!tenant.equals(defaultTenant))
-			Assert.fail("tried to call generateTestFacility out of default context"); 
-			// maybe support this in the future?
-		
+		if (!tenant.equals(defaultTenant))
+			Assert.fail("tried to call generateTestFacility out of default context");
+		// maybe support this in the future?
+
 		String useFacilityId;
 		if (this.facilitiesGenerated > 0) {
 			useFacilityId = facilityId + Integer.toString(facilitiesGenerated);
@@ -622,7 +620,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 		Facility facility = Facility.staticGetDao().findByDomainId(null, useFacilityId);
 		if (facility == null) {
-			facility = Facility.createFacility( useFacilityId, "", Point.getZeroPoint());
+			facility = Facility.createFacility(useFacilityId, "", Point.getZeroPoint());
 			Facility.staticGetDao().store(facility);
 		}
 
@@ -664,19 +662,19 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 	public UserContext setDefaultUserAndTenant() {
 		UserContext user = getMockDefaultUserContext();
-		CodeshelfSecurityManager.setContext(user,this.getDefaultTenant());
+		CodeshelfSecurityManager.setContext(user, this.getDefaultTenant());
 		return user;
 	}
 
 	public Tenant getDefaultTenant() {
-		if(realTenantManagerService.isRunning()) {
+		if (realTenantManagerService.isRunning()) {
 			return realTenantManagerService.getInitialTenant();
 		} // else 
 		return defaultMockTenant;
 	}
 
 	public UserContext getMockDefaultUserContext() {
-		UserContext user = defaultMockUser ;
+		UserContext user = defaultMockUser;
 		Mockito.when(user.getPermissionStrings()).thenReturn(Sets.newHashSet("*"));
 		return user;
 	}

@@ -65,7 +65,7 @@ public class UiUpdateService implements IApiService {
 		InventoryCsvImporter importer = new InventoryCsvImporter(new EventProducer());
 		UomMaster uomMaster = importer.upsertUomMaster(inUomId, facility);
 
-		ItemMaster itemMaster = facility.getItemMaster(itemId);
+		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, itemId);
 		InventorySlottedCsvBean itemBean = new InventorySlottedCsvBean();
 		itemBean.setItemId(itemId);
 		itemBean.setLocationId(storedLocationId);

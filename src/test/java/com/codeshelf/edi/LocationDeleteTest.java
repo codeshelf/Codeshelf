@@ -235,11 +235,12 @@ public class LocationDeleteTest extends ServerTest {
 		// Make sure  no throws as those things are accessed.
 		// Bring it back
 		this.getTenantPersistenceService().beginTransaction();
-
 		Facility facility = setUpSimpleSlottedFacility("LD01", LARGER_FACILITY);
 		setUpGroup1OrdersAndSlotting(facility);
+		this.getTenantPersistenceService().commitTransaction();
 
-		// Let's find our CHE
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Assert.assertNotNull(theNetwork);
 		Che theChe = theNetwork.getChe("CHE1");
@@ -248,7 +249,8 @@ public class LocationDeleteTest extends ServerTest {
 		// Before this test, let's check our setup. We should have
 		// Inventory master for 10700589 and others, Container use for 11 and others, Outbound order headers for 123, 456, and 789
 		// Order 123 should have 4 details.
-		OrderHeader order = facility.getOrderHeader("123");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "123");
+
 		Assert.assertNotNull(order);
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 4, detailCount);

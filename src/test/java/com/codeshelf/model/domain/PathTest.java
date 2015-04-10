@@ -55,7 +55,7 @@ public class PathTest extends HibernateTest {
 		Assert.assertNotNull(facility);
 		Path path = facility.getPath(Path.DEFAULT_FACILITY_PATH_ID);
 		Assert.assertNotNull("Path is undefined",path);
-		OrderHeader order = facility.getOrderHeader("CROSS1");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "CROSS1");
 		Assert.assertNotNull("Order header is undefined",order);
 
 		Assert.assertTrue(path.isOrderOnPath(order));

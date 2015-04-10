@@ -234,7 +234,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		LOGGER.debug("Archive unreferenced container data");
 
 		// Iterate all of the containers to see if they're still active.
-		for (Container container : inFacility.getContainers()) {
+		for (Container container : Container.staticGetDao().findByParent(inFacility)) {
 			Boolean shouldInactivateContainer = true;
 
 			for (ContainerUse containerUse : container.getUses()) {
@@ -512,7 +512,6 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 				LOGGER.error("updateOptionalOrderGroup", e);
 			}
 		}
-
 		return result;
 	}
 
@@ -531,14 +530,13 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		Container result = null;
 
 		if ((inCsvBean.getPreAssignedContainerId() != null) && (inCsvBean.getPreAssignedContainerId().length() > 0)) {
-			result = inFacility.getContainer(inCsvBean.getPreAssignedContainerId());
-
+			result = Container.staticGetDao().findByDomainId(inFacility, inCsvBean.getPreAssignedContainerId());
 			if (result == null) {
 				result = new Container();
 				result.setContainerId(inCsvBean.getPreAssignedContainerId());
 				ContainerKind kind = inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND);
 				result.setKind(kind);
-				inFacility.addContainer(result);
+				result.setParent(inFacility);
 			}
 
 			result.setUpdated(inEdiProcessTime);
@@ -579,9 +577,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			} catch (DaoException e) {
 				LOGGER.error("updateContainer storing ContainerUse", e);
 			}
-
 		}
-
 		return result;
 	}
 
@@ -598,13 +594,15 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		final OrderGroup inOrderGroup) {
 		OrderHeader result = null;
 
-		result = inFacility.getOrderHeader(inCsvBean.getOrderId());
+		result = OrderHeader.staticGetDao().findByDomainId(inFacility,inCsvBean.getOrderId());
+		// result = inFacility.getOrderHeader(inCsvBean.getOrderId());
 
 		if (result == null) {
 			LOGGER.debug("Creating new OrderHeader instance for " + inCsvBean.getOrderId() + " , for facility: " + inFacility);
 			result = new OrderHeader();
 			result.setDomainId(inCsvBean.getOrderId());
-			inFacility.addOrderHeader(result);
+			result.setParent(inFacility);
+			//inFacility.addOrderHeader(result);
 		}
 
 		result.setOrderType(OrderTypeEnum.OUTBOUND);
@@ -691,7 +689,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 			result = new ItemMaster();
 			result.setDomainId(inItemId);
 			result.setItemId(inItemId);
-			inFacility.addItemMaster(result);
+			result.setParent(inFacility);
 			this.itemMasterCache.put(result);
 		}
 
@@ -829,7 +827,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		String preferredLocation = inCsvBean.getLocationId();
 		if (preferredLocation != null) {
 			// check that location is valid
-			LocationAlias locationAlias = inFacility.getLocationAlias(preferredLocation);
+			LocationAlias locationAlias = LocationAlias.staticGetDao().findByDomainId(inFacility, preferredLocation);
 			if (locationAlias == null) {
 				// LOGGER.warn("location alias not found for preferredLocation: " + inCsvBean); // not much point to this warning. Will happen all the time.
 				// preferredLocation = "";

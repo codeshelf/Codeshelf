@@ -27,6 +27,8 @@ public interface ITypedDao<T> {
 	
 	T reload(T domainObject);
 
+	List<T> findByParent(IDomainObject inParentObject);
+
 	T findByDomainId(IDomainObject inParentObject, String inDomainId);
 
 	List<T> findByPersistentIdList(List<UUID> inPersistentIdList);

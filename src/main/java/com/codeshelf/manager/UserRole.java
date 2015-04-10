@@ -87,7 +87,14 @@ public class UserRole {
 	@Getter
 	@JsonProperty
 	Set<UserPermission> permissions = new HashSet<UserPermission>();
-		
+	
+	public UserRole() {
+	}
+	
+	public UserRole(String name) {
+		this.name = name;
+	}
+	
 	public void setName(String newName) {
 		if(nameIsValid(newName)) {
 			this.name = newName;

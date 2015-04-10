@@ -31,6 +31,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
+import com.codeshelf.model.domain.LocationAlias;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
@@ -113,12 +114,12 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertNotNull(orderGroup);
 		Assert.assertEquals(OrderStatusEnum.RELEASED, orderGroup.getStatus());
 
-		OrderHeader order = facility.getOrderHeader("123");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "123");
 		Assert.assertNotNull(order);
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 4, detailCount); // 4 details for order header 123. They would get the default name
 
-		OrderHeader order931 = facility.getOrderHeader("931");
+		OrderHeader order931 = OrderHeader.staticGetDao().findByDomainId(facility, "931");
 		Assert.assertNotNull(order931);
 		Integer detail931Count = order931.getOrderDetails().size();
 		Assert.assertEquals((Integer) 1, detail931Count); // 4 details for order header 123. They would get the default name
@@ -186,7 +187,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
-		OrderHeader order = facility.getOrderHeader("1");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "1");
+
 		Assert.assertNotNull(order);
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 5, detailCount); // 5 details for order header 1.
@@ -210,7 +212,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		// just looking. How many locations?
 		int aisleCount = facility.getChildren().size();
 		Assert.assertEquals(0, aisleCount);
-		int aliasCount = facility.getLocationAliases().size();
+		List<LocationAlias> las = LocationAlias.staticGetDao().findByParent(facility);
+		int aliasCount = las.size();
 		Assert.assertEquals(0, aliasCount);
 
 		this.getTenantPersistenceService().commitTransaction();
@@ -243,11 +246,13 @@ public class OutboundOrderImporterTest extends ServerTest {
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		// If not specified, default to serial
-		OrderHeader order = facility.getOrderHeader("123");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "123");
+
 		Assert.assertNotNull(order);
 		Assert.assertEquals(order.getPickStrategy(), PickStrategyEnum.SERIAL);
 
-		order = facility.getOrderHeader("789");
+		order = OrderHeader.staticGetDao().findByDomainId(facility, "789");
+
 		Assert.assertNotNull(order);
 		Assert.assertEquals(order.getPickStrategy(), PickStrategyEnum.PARALLEL);
 
@@ -268,10 +273,13 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 
-		Assert.assertEquals("TRUCKA", facility.getOrderHeader("123").getShipperId());
-		Assert.assertEquals("FEDEX", facility.getOrderHeader("456").getShipperId());
+		OrderHeader o123 = OrderHeader.staticGetDao().findByDomainId(facility, "123");
+		OrderHeader o456 = OrderHeader.staticGetDao().findByDomainId(facility, "456");
+		OrderHeader o789 = OrderHeader.staticGetDao().findByDomainId(facility, "789");
+		Assert.assertEquals("TRUCKA", o123.getShipperId());
+		Assert.assertEquals("FEDEX", o456.getShipperId());
 		//not required
-		Assert.assertEquals("", facility.getOrderHeader("789").getShipperId());
+		Assert.assertEquals("", o789.getShipperId());
 
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -303,7 +311,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
-		OrderHeader order = facility.getOrderHeader("789");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "789");
+
 		Assert.assertNotNull(order);
 
 		Container container = Container.staticGetDao().findByDomainId(facility, "CONTAINER1");
@@ -351,7 +360,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
 		// We should find order 123
-		OrderHeader order = facility.getOrderHeader("123");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "123");
+
 		Assert.assertNotNull(order);
 
 		// Also find order detail item 1. Used to not because there is no due date, but now that field is nullable in the schema.
@@ -439,12 +449,13 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders == 0);
 
 		// Order 789 should exist and not be inactive.
-		OrderHeader order = facility.getOrderHeader("789");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "789");
+
 		Assert.assertNotNull(order);
 		Assert.assertEquals(false, order.getActive());
 
 		// Line item 10722222 from order 456 should be inactive.
-		order = facility.getOrderHeader("456");
+		order = OrderHeader.staticGetDao().findByDomainId(facility, "456");
 		for (OrderDetail detail : order.getOrderDetails()) {
 			if (detail.getOrderDetailId().equals("10722222-each")) {
 				Assert.assertEquals(false, detail.getActive());
@@ -495,12 +506,14 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertEquals(theCounts2.mInactiveCntrUsesOnActiveOrders,0);
 
 		// Order 789 should exist and be active.
-		OrderHeader order = facility.getOrderHeader("789");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "789");
+
 		Assert.assertNotNull(order);
 		Assert.assertEquals(false, order.getActive());
 
 		// Line item 10722222 from order 456 should be inactive.
-		order = facility.getOrderHeader("456");
+		order = OrderHeader.staticGetDao().findByDomainId(facility, "456");
+
 		for (OrderDetail detail : order.getOrderDetails()) {
 			if (detail.getOrderDetailId().equals("10722222")) {
 				Assert.assertEquals(false, detail.getActive());
@@ -539,7 +552,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
-		OrderHeader order = facility.getOrderHeader("123");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "123");
 		Assert.assertNotNull(order);
 
 		OrderDetail orderDetail = order.getOrderDetail("10700589-each");
@@ -576,8 +589,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "123");
 
-		OrderHeader order = facility.getOrderHeader("123");
 		Assert.assertNotNull(order);
 		OrderDetail orderDetail = order.getOrderDetail("10700589-each");
 		Assert.assertNotNull(orderDetail);
@@ -599,7 +612,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
 
-		OrderHeader order2 = facility.getOrderHeader("222");
+		OrderHeader order2 = OrderHeader.staticGetDao().findByDomainId(facility, "222");
+
 		// normal case with min and max supplied
 		OrderDetail orderDetail700001 = order2.getOrderDetail("10700001-each");
 		Assert.assertEquals((Integer) 1, orderDetail700001.getMinQuantity());
@@ -654,7 +668,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
-		OrderHeader order = facility.getOrderHeader("123");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "123");
+
 		Assert.assertNotNull(order);
 		OrderDetail orderDetail = order.getOrderDetail("10700589-each");
 		Assert.assertNotNull(orderDetail);
@@ -691,12 +706,14 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
-		OrderHeader order = facility.getOrderHeader("123");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "123");
+
 		Assert.assertNotNull(order);
 		OrderDetail orderDetail = order.getOrderDetail("123.1");
 		Assert.assertNotNull(orderDetail);
 
-		order = facility.getOrderHeader("456");
+		order = OrderHeader.staticGetDao().findByDomainId(facility, "456");
+
 		Assert.assertNotNull(order);
 		Assert.assertEquals(OrderStatusEnum.RELEASED, order.getStatus());
 		orderDetail = order.getOrderDetail("456.1");
@@ -741,7 +758,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		//123.1 should no longer exist. Instead, there should be 10700589-each
-		order = facility.getOrderHeader("123");
+		order = OrderHeader.staticGetDao().findByDomainId(facility, "123");
+
 		Assert.assertNotNull(order);
 		orderDetail = order.getOrderDetail("123.1");
 		Assert.assertNull(orderDetail);
@@ -749,7 +767,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertNotNull(orderDetail);
 
 		// Find inactive 456.1 and new active 10711111 and 10722222
-		order = facility.getOrderHeader("456");
+		order = OrderHeader.staticGetDao().findByDomainId(facility, "456");
+
 		Assert.assertNotNull(order);
 		orderDetail = order.getOrderDetail("456.1");
 		Assert.assertNull(orderDetail);
@@ -858,7 +877,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		//Reimporting the subset again would cause class cast exception or the details would be empty and DAOException would occur because we would attempt to create an already existing detail
 		result = importOrdersResource(foundFacility, "largeset/subset.orders.csv");
 		Assert.assertTrue(result.toString(), result.isSuccessful());
-		for (OrderHeader orderHeader : foundFacility.getOrderHeaders()) {
+		List<OrderHeader> orders = OrderHeader.staticGetDao().findByParent(foundFacility);
+		for (OrderHeader orderHeader : orders) {
 			Assert.assertNotNull(orderHeader.getOrderDetails());
 		}
 		this.getTenantPersistenceService().commitTransaction();
@@ -1053,7 +1073,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
 
-		OrderHeader order10 = facility.getOrderHeader("10");
+		OrderHeader order10 = OrderHeader.staticGetDao().findByDomainId(facility, "10");
+
 		Assert.assertNotNull(order10);
 		Integer detailCount = order10.getOrderDetails().size();
 		Assert.assertEquals((Integer) 2, detailCount);
@@ -1071,7 +1092,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertNotNull("Preferred location is undefined", prefLoc102);
 		Assert.assertEquals("D34", prefLoc102);
 
-		OrderHeader order11 = facility.getOrderHeader("11");
+		OrderHeader order11 = OrderHeader.staticGetDao().findByDomainId(facility, "11");
+
 		OrderDetail detail111 = order11.getOrderDetail("11.1");
 		String prefLoc111 = detail111.getPreferredLocation();
 		// from v12, even unresolved preferredLocation should be on the order detail
@@ -1081,7 +1103,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		String prefLoc112 = detail112.getPreferredLocation();
 		Assert.assertEquals("D13", prefLoc112);
 
-		ItemMaster theMaster = facility.getItemMaster("SKU0001");
+		ItemMaster theMaster = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0001");
 		Assert.assertNotNull("ItemMaster should be created", theMaster);
 		List<Item> items = theMaster.getItems();
 		Assert.assertEquals(0, items.size()); // No inventory created
@@ -1106,7 +1128,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader4, facility, ediProcessTime4);
 
-		ItemMaster theMaster2 = facility.getItemMaster("SKU0001");
+		ItemMaster theMaster2 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0001");
 		Assert.assertNotNull("ItemMaster should be found", theMaster2);
 		List<Item> items2 = theMaster2.getItems();
 		Assert.assertEquals(1, items2.size()); // Inventory should be created since LOCAPICK is true
@@ -1146,16 +1168,16 @@ public class OutboundOrderImporterTest extends ServerTest {
 		importer.importOrdersFromCsvStream(new StringReader(csvString1), facility, ediProcessTime1);
 
 		LOGGER.info("4: Check that we got item locations for SKU0001, and SKU0004, but not SKU0003 which had unknown alias location");
-		ItemMaster master1 = facility.getItemMaster("SKU0001");
+		ItemMaster master1 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0001");
 		Assert.assertNotNull(master1);
 		List<Item> items1 = master1.getItems();
 		Assert.assertEquals(1, items1.size()); // Inventory should be created since LOCAPICK is true
 
-		ItemMaster master3 = facility.getItemMaster("SKU0003");
+		ItemMaster master3 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0003");
 		List<Item> items3 = master3.getItems();
 		Assert.assertEquals(0, items3.size());
 
-		ItemMaster master4 = facility.getItemMaster("SKU0004");
+		ItemMaster master4 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0004");
 		List<Item> items4 = master4.getItems();
 		Assert.assertEquals(1, items4.size());
 
@@ -1168,13 +1190,13 @@ public class OutboundOrderImporterTest extends ServerTest {
 		facility = Facility.staticGetDao().reload(facility);
 
 		// Checking precondition, and remembering the persistentId of the items.
-		master1 = facility.getItemMaster("SKU0001");
+		master1 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0001");
 		List<Item> itemsList1a = master1.getItemsOfUom("CS");
 		Assert.assertEquals(1, itemsList1a.size());
 		Assert.assertEquals(1, master1.getItems().size());
 		Item items1a = itemsList1a.get(0);
 		UUID persist1a = items1a.getPersistentId();
-		master4 = facility.getItemMaster("SKU0004");
+		master4 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0004");
 		List<Item> itemsList4a = master4.getItemsOfUom("EA");
 		Assert.assertEquals(1, itemsList4a.size());
 		Item items4a = itemsList4a.get(0);
@@ -1190,14 +1212,14 @@ public class OutboundOrderImporterTest extends ServerTest {
 		importer.importOrdersFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
 
 		LOGGER.info("6: Check that we got new item locations for SKU0001, and moved the old one for SKU0004, ");
-		master1 = facility.getItemMaster("SKU0001");
+		master1 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0001");
 		items1 = master1.getItems();
 
 		Assert.assertEquals(1, items1.size()); // Should have created new, and deleted the old
 		Item items1b = items1.get(0);
 		UUID persist1b = items1b.getPersistentId();
 
-		master4 = facility.getItemMaster("SKU0004");
+		master4 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0004");
 		items4 = master4.getItems();
 		Assert.assertEquals(1, items4.size());
 		Item items4b = items4.get(0);
@@ -1221,7 +1243,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(new StringReader(csvString3), facility, ediProcessTime3);
 
-		master1 = facility.getItemMaster("SKU0001");
+		master1 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0001");
 		items1 = master1.getItems();
 		Assert.assertEquals(2, items1.size());
 
@@ -1238,7 +1260,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(new StringReader(csvString4), facility, ediProcessTime4);
 
-		master1 = facility.getItemMaster("SKU0001");
+		master1 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0001");
 		items1 = master1.getItems();
 		Assert.assertEquals(3, items1.size());
 
@@ -1387,7 +1409,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1";
 		importCsvString(facility, firstCsvString);
 
-		OrderHeader header1a = facility.getOrderHeader("1");
+		OrderHeader header1a = OrderHeader.staticGetDao().findByDomainId(facility, "1");
+
 		OrderGroup group1a = header1a.getOrderGroup();
 
 		LOGGER.info("2: As if the orders were pushed to later group, same orders except for group2.");
@@ -1396,7 +1419,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2";
 		importCsvString(facility, secondCsvString);
 
-		OrderHeader header1b = facility.getOrderHeader("1");
+		OrderHeader header1b = OrderHeader.staticGetDao().findByDomainId(facility, "1");
+
 		OrderGroup group1b = header1b.getOrderGroup();
 		OrderGroup group2 = facility.getOrderGroup("Group2");
 		// Is it the same header?
@@ -1442,15 +1466,15 @@ public class OutboundOrderImporterTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 
-		OrderHeader header1a = facility.getOrderHeader("1");
+		OrderHeader header1a = OrderHeader.staticGetDao().findByDomainId(facility, "1");
 		OrderDetail detail1_1a = header1a.getOrderDetail("1.1");
 		Assert.assertNotNull(detail1_1a);
 
 		OrderDetail detail1_2a = header1a.getOrderDetail("1.2");
 		Assert.assertNotNull(detail1_2a);
-		OrderHeader header2a = facility.getOrderHeader("2");
+		OrderHeader header2a = OrderHeader.staticGetDao().findByDomainId(facility, "2");
 		Assert.assertNotNull(header2a);
-		OrderHeader header3a = facility.getOrderHeader("3");
+		OrderHeader header3a = OrderHeader.staticGetDao().findByDomainId(facility, "3"); 
 		OrderDetail detail3_1a = header3a.getOrderDetail("3.1");
 
 		LOGGER.info("2: Partially complete order 1. Fully complete order 3. Leave order 2 uncompleted.");
@@ -1466,14 +1490,14 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		OrderGroup orderGroup1b = facility.getOrderGroup("Group1");
 		OrderGroup orderGroup2b = facility.getOrderGroup("Group2");
-		OrderHeader header1b = facility.getOrderHeader("1");
+		OrderHeader header1b = OrderHeader.staticGetDao().findByDomainId(facility, "1"); 
 		OrderDetail detail1_1b = header1b.getOrderDetail("1.1");
 		Assert.assertNotNull(detail1_1b);
 		OrderDetail detail1_2b = header1b.getOrderDetail("1.2");
 		Assert.assertNotNull(detail1_2b);
-		OrderHeader header2b = facility.getOrderHeader("2");
+		OrderHeader header2b = OrderHeader.staticGetDao().findByDomainId(facility, "2"); 
 		Assert.assertNotNull(header2b);
-		OrderHeader header3b = facility.getOrderHeader("3");
+		OrderHeader header3b = OrderHeader.staticGetDao().findByDomainId(facility, "3"); 
 		OrderDetail detail3_1b = header3b.getOrderDetail("3.1");
 		Assert.assertNotNull(detail3_1b);
 
@@ -1512,12 +1536,12 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n2,2,,12/03/14 12:00,12/31/14 12:00,Item2,,90,each,Group1";
 		importCsvString(facility, firstCsvString);
 
-		OrderHeader h1 = facility.getOrderHeader("1");
+		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1"); 
 		OrderDetail d1_1 = h1.getOrderDetail("101");
 		assertActiveOrderDetail(d1_1);
 		OrderDetail d1_2 = h1.getOrderDetail("Item2-each");
 		assertActiveOrderDetail(d1_2);
-		OrderHeader h2 = facility.getOrderHeader("2");
+		OrderHeader h2 = OrderHeader.staticGetDao().findByDomainId(facility, "2"); 
 		OrderDetail d2_1 = h2.getOrderDetail("101");
 		assertActiveOrderDetail(d2_1);
 		OrderDetail d2_2 = h2.getOrderDetail("Item2-each");
@@ -1546,7 +1570,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n2,2,,12/03/14 12:00,12/31/14 12:00,Item4,,10,each,Group1";
 		importCsvString(facility, firstCsvString);
 
-		OrderHeader h1 = facility.getOrderHeader("1");
+		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1"); 
 
 		OrderDetail d1_1 = h1.getOrderDetail("101");
 		assertActiveOrderDetail(d1_1);
@@ -1559,7 +1583,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		OrderDetail d1_3 = h1.getOrderDetail("Item4-cs");
 		assertActiveOrderDetail(d1_2);
 
-		OrderHeader h2 = facility.getOrderHeader("2");
+		OrderHeader h2 = OrderHeader.staticGetDao().findByDomainId(facility, "2"); 
 
 		OrderDetail d2_1 = h2.getOrderDetail("101");
 		assertActiveOrderDetail(d2_1);
@@ -1580,13 +1604,13 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n2,2,202,12/03/14 12:00,12/31/14 12:00,Item2,,90,each,Group1,2";
 		importCsvString(facility, firstCsvString);
 
-		OrderHeader h1 = facility.getOrderHeader("1");
+		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1"); 
 		OrderDetail d1_1 = h1.getOrderDetail("101");
 		Assert.assertEquals(d1_1.getWorkSequence(), (Integer)1);
 		OrderDetail d1_2 = h1.getOrderDetail("102");
 		Assert.assertEquals(d1_2.getWorkSequence(), (Integer)2);
 
-		OrderHeader h2 = facility.getOrderHeader("2");
+		OrderHeader h2 = OrderHeader.staticGetDao().findByDomainId(facility, "2"); 
 		OrderDetail d2_1 = h2.getOrderDetail("201");
 		Assert.assertNull(d2_1.getWorkSequence());
 		OrderDetail d2_2 = h2.getOrderDetail("202");
@@ -1615,7 +1639,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n2,2,205,12/03/14 12:00,12/31/14 12:00,Item5,,90,cs,Group1,6";		// Create new gtin for new UOM
 		importCsvString(facility, firstCsvString);
 
-		OrderHeader h1 = facility.getOrderHeader("1");
+		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1"); 
 		OrderDetail d1_1 = h1.getOrderDetail("101");
 		Gtin d1_1_gtin = d1_1.getItemMaster().getGtinForUom(d1_1.getUomMaster());
 		Assert.assertEquals("1", d1_1_gtin.getDomainId());
@@ -1630,7 +1654,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertEquals("2", d1_2_gtin.getDomainId());
 		*/
 		
-		OrderHeader h2 = facility.getOrderHeader("2");
+		OrderHeader h2 = OrderHeader.staticGetDao().findByDomainId(facility, "2"); 
 		OrderDetail d2_1 = h2.getOrderDetail("201");
 		Gtin d2_1_gtin = d2_1.getItemMaster().getGtinForUom(d2_1.getUomMaster());
 		Assert.assertEquals("4", d2_1_gtin.getDomainId());
