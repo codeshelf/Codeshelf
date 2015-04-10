@@ -49,6 +49,7 @@ public class PutWallOrderGenerator {
 			combinedOrder.setDomainId(orderId);
 			//facility.addOrderHeader(combinedOrder);
 		}
+		combinedOrder.setParent(facility);
 		combinedOrder.setOrderType(OrderTypeEnum.OUTBOUND);
 		combinedOrder.setStatus(OrderStatusEnum.RELEASED);
 		combinedOrder.setPickStrategy(PickStrategyEnum.SERIAL);
@@ -78,6 +79,7 @@ public class PutWallOrderGenerator {
 			combinedOrder.addHeadersContainerUse(containerUse);
 			ContainerKind kind = facility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND);
 			Container container = new Container(wallId, kind, true);
+			container.setParent(facility);
 			container.setUpdated(now);
 			//facility.addContainer(container);
 			container.addContainerUse(containerUse);
@@ -96,16 +98,16 @@ public class PutWallOrderGenerator {
 		OrderDetail combinedDetail = OutboundOrderCsvImporter.findOrder(combinedOrder, detailDomainId, itemMaster, uomMaster);
 		if (combinedDetail == null) {
 			combinedDetail = new OrderDetail();
+			combinedDetail.setOrderDetailId(detailDomainId);
+			combinedDetail.setPreferredLocation(detail.getPreferredLocation());
+			combinedDetail.setStatus(detail.getStatus());
+			combinedDetail.setItemMaster(itemMaster);
+			combinedDetail.setUomMaster(uomMaster);
 		}
-		combinedDetail.setOrderDetailId(detailDomainId);
 		combinedDetail.setActive(true);
-		combinedDetail.setPreferredLocation(detail.getPreferredLocation());
-		combinedDetail.setStatus(detail.getStatus());
-		combinedDetail.setItemMaster(itemMaster);
-		combinedDetail.setUomMaster(uomMaster);
-		combinedDetail.setQuantities(detail.getQuantity() + detail.getQuantity());
-		combinedDetail.setMinQuantity(detail.getMinQuantity() + detail.getMinQuantity());
-		combinedDetail.setMaxQuantity(detail.getMaxQuantity() + detail.getMaxQuantity());
+		combinedDetail.setQuantities(add(combinedDetail.getQuantity(), detail.getQuantity()));
+		combinedDetail.setMinQuantity(add(combinedDetail.getMinQuantity(), detail.getMinQuantity()));
+		combinedDetail.setMaxQuantity(add(combinedDetail.getMaxQuantity(), detail.getMaxQuantity()));
 		combinedDetail.setUpdated(new Timestamp(System.currentTimeMillis()));
 		combinedOrder.addOrderDetail(combinedDetail);
 		OrderDetail.staticGetDao().store(combinedDetail);
@@ -149,5 +151,9 @@ public class PutWallOrderGenerator {
 		if (location == null) {return false;}
 		if (location == ancestor) {return true;}
 		return doesLocationHaveAncestorRecursive(location.getParent(), ancestor);
+	}
+	
+	private static Integer add(Integer a, Integer b) {
+		return (a == null?0:a) + (b == null?0:b);
 	}
 }

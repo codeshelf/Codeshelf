@@ -31,7 +31,7 @@ import com.codeshelf.util.ThreadUtils;
 
 public class CheProcessPutWall extends ServerTest {
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(CheProcessPutWall.class);
-	private static final int	WAIT_TIME		= 4000;
+	private static final int	WAIT_TIME		= 400000;
 	private String				CONTROLLER_1_ID	= "00001881";
 	private String				CONTROLLER_2_ID	= "00001882";
 	private String				CONTROLLER_3_ID	= "00001883";
@@ -172,9 +172,9 @@ public class CheProcessPutWall extends ServerTest {
 		WorkInstruction wi1 = wiList.get(0);
 		WorkInstruction wi2 = wiList.get(1);
 		Assert.assertEquals("Item mismatch", "1514", wi1.getItemId());
-		Assert.assertEquals("Quantity mismatch", new Integer(6), wi1.getPlanQuantity());
+		Assert.assertEquals("Quantity mismatch", new Integer(3), wi1.getPlanQuantity());
 		Assert.assertEquals("Item mismatch", "1515", wi2.getItemId());
-		Assert.assertEquals("Quantity mismatch", new Integer(10), wi2.getPlanQuantity());
+		Assert.assertEquals("Quantity mismatch", new Integer(9), wi2.getPlanQuantity());
 	}
 
 	@Test
