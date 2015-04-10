@@ -26,7 +26,12 @@
 	/>
 
 	<cache 
-		name="com.codeshelf.model.domain.User" 
+		name="com.codeshelf.model.domain.WorkInstruction" 
+		maxElementsInMemory="1000"
+	/>
+	
+	<cache 
+		name="com.codeshelf.manager.User" 
 		maxEntriesLocalHeap="20" 
 		timeToIdleSeconds="600" 
 		timeToLiveSeconds="3600"
