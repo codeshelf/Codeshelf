@@ -786,7 +786,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			itemMaster = new ItemMaster();
 			itemMaster.setDomainId(inItemId);
 			itemMaster.setItemId(inItemId);
-			inFacility.addItemMaster(itemMaster);
+			itemMaster.setParent(inFacility);
 			this.itemMasterCache.put(itemMaster);
 		}
 
@@ -937,7 +937,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		String preferredLocation = inCsvBean.getLocationId();
 		if (preferredLocation != null) {
 			// check that location is valid
-			LocationAlias locationAlias = inFacility.getLocationAlias(preferredLocation);
+			LocationAlias locationAlias = LocationAlias.staticGetDao().findByDomainId(inFacility, preferredLocation);
 			if (locationAlias == null) {
 				// LOGGER.warn("location alias not found for preferredLocation: " + inCsvBean); // not much point to this warning. Will happen all the time.
 				// preferredLocation = "";

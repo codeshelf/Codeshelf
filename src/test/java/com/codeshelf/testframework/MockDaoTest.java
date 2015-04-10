@@ -491,7 +491,7 @@ public abstract class MockDaoTest extends MinimalTest {
 		result.setStandardUom(inUomMaster);
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
-		inFacility.addItemMaster(result);
+		result.setParent(inFacility);
 		ItemMaster.staticGetDao().store(result);
 
 		return result;

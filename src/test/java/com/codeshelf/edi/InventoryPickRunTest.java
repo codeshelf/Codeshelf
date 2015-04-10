@@ -403,8 +403,8 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		readOrdersForA1(facility);
 
 		// Delete two of the items, which will cause immediate short upon cart setup
-		ItemMaster master1123 = facility.getItemMaster("1123");
-		ItemMaster master1124 = facility.getItemMaster("1124");
+		ItemMaster master1123 = ItemMaster.staticGetDao().findByDomainId(facility, "1123");
+		ItemMaster master1124 = ItemMaster.staticGetDao().findByDomainId(facility, "1124");
 		Item item1123 = master1123.getItemsOfUom("EA").get(0);
 		Item item1124 = master1124.getItemsOfUom("EA").get(0);
 		Assert.assertNotNull(item1123);

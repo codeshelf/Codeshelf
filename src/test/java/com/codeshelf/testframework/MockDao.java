@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -28,6 +29,8 @@ import org.hibernate.criterion.Order;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.IDaoListener;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.domain.DomainObjectABC;
+import com.codeshelf.model.domain.DomainObjectTreeABC;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.IDomainObjectTree;
 import com.eaio.uuid.UUIDGen;
@@ -49,27 +52,22 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	}
 
 	public final void registerDAOListener(IDaoListener inListener) {
-
 	}
 
 	public final void unregisterDAOListener(IDaoListener inListener) {
-
 	}
 
 	public final void removeDAOListeners() {
-
 	}
 
 	@SuppressWarnings("rawtypes")
 	private String getFullDomainId(IDomainObject inDomainObject) {
 		String result = "";
-
 		if (inDomainObject instanceof IDomainObjectTree) {
 			result = ((IDomainObjectTree) inDomainObject).getFullDomainId();
 		} else {
 			result = inDomainObject.getDomainId();
 		}
-
 		return result;
 	}
 
@@ -88,7 +86,6 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 
 	public final List<T> findByPersistentIdList(List<UUID> inPersistentIdList) {
 		throw new NotImplementedException();
-
 	}
 
 	public final List<T> findByFilter(List<Criterion> inFilter) {
@@ -203,9 +200,16 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 
 	@Override
 	public List<T> findByParent(IDomainObject inParentObject) {
-		throw new NotImplementedException();
+		//throw new NotImplementedException();
+		List<T> result = new LinkedList<T>();
+		for (T e : this.storageByPersistentId.values()) {
+			@SuppressWarnings("unchecked")
+			DomainObjectTreeABC<T> dom = (DomainObjectTreeABC<T>) e;
+			if (dom.getParent().equals(inParentObject)) {
+				result.add(e);
+			}
+		}
+		return result;
 	}
-
-
 
 }

@@ -31,6 +31,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
+import com.codeshelf.model.domain.LocationAlias;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
@@ -211,7 +212,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		// just looking. How many locations?
 		int aisleCount = facility.getChildren().size();
 		Assert.assertEquals(0, aisleCount);
-		int aliasCount = facility.getLocationAliases().size();
+		List<LocationAlias> las = LocationAlias.staticGetDao().findByParent(facility);
+		int aliasCount = las.size();
 		Assert.assertEquals(0, aliasCount);
 
 		this.getTenantPersistenceService().commitTransaction();
@@ -1101,7 +1103,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		String prefLoc112 = detail112.getPreferredLocation();
 		Assert.assertEquals("D13", prefLoc112);
 
-		ItemMaster theMaster = facility.getItemMaster("SKU0001");
+		ItemMaster theMaster = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0001");
 		Assert.assertNotNull("ItemMaster should be created", theMaster);
 		List<Item> items = theMaster.getItems();
 		Assert.assertEquals(0, items.size()); // No inventory created
@@ -1126,7 +1128,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader4, facility, ediProcessTime4);
 
-		ItemMaster theMaster2 = facility.getItemMaster("SKU0001");
+		ItemMaster theMaster2 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0001");
 		Assert.assertNotNull("ItemMaster should be found", theMaster2);
 		List<Item> items2 = theMaster2.getItems();
 		Assert.assertEquals(1, items2.size()); // Inventory should be created since LOCAPICK is true
@@ -1166,16 +1168,16 @@ public class OutboundOrderImporterTest extends ServerTest {
 		importer.importOrdersFromCsvStream(new StringReader(csvString1), facility, ediProcessTime1);
 
 		LOGGER.info("4: Check that we got item locations for SKU0001, and SKU0004, but not SKU0003 which had unknown alias location");
-		ItemMaster master1 = facility.getItemMaster("SKU0001");
+		ItemMaster master1 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0001");
 		Assert.assertNotNull(master1);
 		List<Item> items1 = master1.getItems();
 		Assert.assertEquals(1, items1.size()); // Inventory should be created since LOCAPICK is true
 
-		ItemMaster master3 = facility.getItemMaster("SKU0003");
+		ItemMaster master3 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0003");
 		List<Item> items3 = master3.getItems();
 		Assert.assertEquals(0, items3.size());
 
-		ItemMaster master4 = facility.getItemMaster("SKU0004");
+		ItemMaster master4 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0004");
 		List<Item> items4 = master4.getItems();
 		Assert.assertEquals(1, items4.size());
 
@@ -1188,13 +1190,13 @@ public class OutboundOrderImporterTest extends ServerTest {
 		facility = Facility.staticGetDao().reload(facility);
 
 		// Checking precondition, and remembering the persistentId of the items.
-		master1 = facility.getItemMaster("SKU0001");
+		master1 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0001");
 		List<Item> itemsList1a = master1.getItemsOfUom("CS");
 		Assert.assertEquals(1, itemsList1a.size());
 		Assert.assertEquals(1, master1.getItems().size());
 		Item items1a = itemsList1a.get(0);
 		UUID persist1a = items1a.getPersistentId();
-		master4 = facility.getItemMaster("SKU0004");
+		master4 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0004");
 		List<Item> itemsList4a = master4.getItemsOfUom("EA");
 		Assert.assertEquals(1, itemsList4a.size());
 		Item items4a = itemsList4a.get(0);
@@ -1210,14 +1212,14 @@ public class OutboundOrderImporterTest extends ServerTest {
 		importer.importOrdersFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
 
 		LOGGER.info("6: Check that we got new item locations for SKU0001, and moved the old one for SKU0004, ");
-		master1 = facility.getItemMaster("SKU0001");
+		master1 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0001");
 		items1 = master1.getItems();
 
 		Assert.assertEquals(1, items1.size()); // Should have created new, and deleted the old
 		Item items1b = items1.get(0);
 		UUID persist1b = items1b.getPersistentId();
 
-		master4 = facility.getItemMaster("SKU0004");
+		master4 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0004");
 		items4 = master4.getItems();
 		Assert.assertEquals(1, items4.size());
 		Item items4b = items4.get(0);
@@ -1241,7 +1243,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(new StringReader(csvString3), facility, ediProcessTime3);
 
-		master1 = facility.getItemMaster("SKU0001");
+		master1 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0001");
 		items1 = master1.getItems();
 		Assert.assertEquals(2, items1.size());
 
@@ -1258,7 +1260,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(new StringReader(csvString4), facility, ediProcessTime4);
 
-		master1 = facility.getItemMaster("SKU0001");
+		master1 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0001");
 		items1 = master1.getItems();
 		Assert.assertEquals(3, items1.size());
 

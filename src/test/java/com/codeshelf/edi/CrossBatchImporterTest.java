@@ -65,7 +65,7 @@ public class CrossBatchImporterTest extends ServerTest {
 		result.setStandardUom(uomMaster);
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
-		inFacility.addItemMaster(result);
+		result.setParent(inFacility);
 		ItemMaster.staticGetDao().store(result);
 
 		return result;
@@ -610,6 +610,7 @@ public class CrossBatchImporterTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		// Make sure we created an order with the container's ID.
 		String orderId = OrderHeader.computeCrossOrderId("C111", firstEdiProcessTime);
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);

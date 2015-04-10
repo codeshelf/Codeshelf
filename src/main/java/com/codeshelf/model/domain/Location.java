@@ -586,7 +586,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	public Location findLocationById(String inLocationId) {
 		if (Hibernate.getClass(this).equals(Facility.class)) {
 			Facility facility = (Facility) this;
-			LocationAlias alias = facility.getLocationAlias(inLocationId);
+			LocationAlias alias = LocationAlias.staticGetDao().findByDomainId(facility, inLocationId);
 			if ((alias != null) && (alias.getActive())) {
 				return alias.getMappedLocation();
 			}

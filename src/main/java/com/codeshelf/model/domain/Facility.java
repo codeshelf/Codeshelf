@@ -80,12 +80,6 @@ public class Facility extends Location {
 
 	private static final Logger				LOGGER				= LoggerFactory.getLogger(Facility.class);
 
-	/*
-	@OneToMany(mappedBy = "parent")
-	@MapKey(name = "domainId")
-	private Map<String, Container>			containers			= new HashMap<String, Container>();
-	*/
-	
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	private Map<String, ContainerKind>		containerKinds		= new HashMap<String, ContainerKind>();
@@ -97,21 +91,11 @@ public class Facility extends Location {
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, ItemMaster>			itemMasters			= new HashMap<String, ItemMaster>();
-
-	@OneToMany(mappedBy = "parent")
-	@MapKey(name = "domainId")
 	private Map<String, CodeshelfNetwork>	networks			= new HashMap<String, CodeshelfNetwork>();
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	private Map<String, OrderGroup>			orderGroups			= new HashMap<String, OrderGroup>();
-
-	/*
-	@OneToMany(mappedBy = "parent")
-	@MapKey(name = "domainId")
-	private Map<String, OrderHeader>		orderHeaders		= new HashMap<String, OrderHeader>();
-	*/
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
@@ -120,15 +104,7 @@ public class Facility extends Location {
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
 	private Map<String, UomMaster>			uomMasters			= new HashMap<String, UomMaster>();
-
-	@OneToMany(mappedBy = "parent")
-	@MapKey(name = "domainId")
-	private Map<String, LocationAlias>		locationAliases		= new HashMap<String, LocationAlias>();
-
-	@OneToMany(mappedBy = "parent")
-	@Getter
-	private List<WorkInstruction>			workInstructions	= new ArrayList<WorkInstruction>();
-
+	
 	public Facility() {
 		super();
 	}
@@ -265,57 +241,6 @@ public class Facility extends Location {
 		}
 	}
 
-	public void addWorkInstruction(WorkInstruction wi) {
-		Facility previousFacility = wi.getParent();
-		if (previousFacility == null) {
-			getWorkInstructions().add(wi);
-			wi.setParent(this);
-		} else if (!previousFacility.equals(this)) {
-			LOGGER.error("cannot add WorkInstruction " + wi.getPersistentId() + " to " + this.getDomainId()
-					+ " because it has not been removed from " + previousFacility.getDomainId(), new Exception());
-		}
-	}
-
-	public void removeWorkInstruction(WorkInstruction wi) {
-		if (this.workInstructions.contains(wi)) {
-			wi.setParent(null);
-			workInstructions.remove(wi);
-		} else {
-			LOGGER.error("cannot remove WorkInstruction " + wi.getPersistentId() + " from " + this.getDomainId()
-					+ " because it isn't found in children", new Exception());
-		}
-	}
-
-	public void addItemMaster(ItemMaster inItemMaster) {
-		Facility previousFacility = inItemMaster.getParent();
-		if (previousFacility == null) {
-			itemMasters.put(inItemMaster.getDomainId(), inItemMaster);
-			inItemMaster.setParent(this);
-		} else if (!previousFacility.equals(this)) {
-			LOGGER.error("cannot add ItemMaster " + inItemMaster.getDomainId() + " to " + this.getDomainId()
-					+ " because it has not been removed from " + previousFacility.getDomainId(), new Exception());
-		}
-	}
-
-	public ItemMaster getItemMaster(String inItemMasterId) {
-		return itemMasters.get(inItemMasterId);
-	}
-
-	public void removeItemMaster(String inItemMasterId) {
-		ItemMaster itemMaster = this.getItemMaster(inItemMasterId);
-		if (itemMaster != null) {
-			itemMaster.setParent(null);
-			itemMasters.remove(inItemMasterId);
-		} else {
-			LOGGER.error("cannot remove ItemMaster " + inItemMasterId + " from " + this.getDomainId()
-					+ " because it isn't found in children");
-		}
-	}
-
-	public  List<ItemMaster> getItemMasters() {
-		return new ArrayList<ItemMaster>(itemMasters.values());
-	}
-
 	public  List<UomMaster> getUomMasters() {
 		return new ArrayList<UomMaster>(uomMasters.values());
 	}
@@ -404,38 +329,6 @@ public class Facility extends Location {
 
 	public List<CodeshelfNetwork> getNetworks() {
 		return new ArrayList<CodeshelfNetwork>(networks.values());
-	}
-
-	public void addLocationAlias(LocationAlias inLocationAlias) {
-		Facility previousFacility = inLocationAlias.getParent();
-		if (previousFacility == null) {
-
-			locationAliases.put(inLocationAlias.getDomainId(), inLocationAlias);
-			inLocationAlias.setParent(this);
-		} else if (!previousFacility.equals(this)) {
-			LOGGER.error("cannot add LocationAlias " + inLocationAlias.getDomainId() + " to " + this.getDomainId()
-					+ " because it has not been removed from " + previousFacility.getDomainId());
-		}
-	}
-
-	public LocationAlias getLocationAlias(String inLocationAliasId) {
-		return locationAliases.get(inLocationAliasId);
-	}
-
-	public void removeLocationAlias(LocationAlias inLocationAlias) {
-		String locationAliasId = inLocationAlias.getDomainId();
-		LocationAlias locationAlias = this.getLocationAlias(locationAliasId);
-		if (locationAlias != null) {
-			locationAlias.setParent(null);
-			locationAliases.remove(locationAliasId);
-		} else {
-			LOGGER.error("cannot remove LocationAlias " + locationAliasId + " from " + this.getDomainId()
-					+ " because it isn't found in children");
-		}
-	}
-
-	public List<LocationAlias> getLocationAliases() {
-		return new ArrayList<LocationAlias>(locationAliases.values());
 	}
 
 	@Override
@@ -1021,8 +914,10 @@ public class Facility extends Location {
 	 */
 	private List<ItemMaster> getDccItemMasters() {
 		LOGGER.debug("DDC get items");
+		// FIXME: replace with database query instead of cycling through all item masters
+		List<ItemMaster> allItemMasters = ItemMaster.staticGetDao().findByParent(this);
 		List<ItemMaster> ddcItemMasters = new ArrayList<ItemMaster>();
-		for (ItemMaster itemMaster : getItemMasters()) {
+		for (ItemMaster itemMaster : allItemMasters) {
 			if ((itemMaster.getDdcId() != null) && (itemMaster.getActive())) {
 				ddcItemMasters.add(itemMaster);
 			}
@@ -1220,7 +1115,7 @@ public class Facility extends Location {
 			itemMaster.setDomainId(inDomainId);
 			itemMaster.setDescription(description);
 			itemMaster.setStandardUom(uomMaster);
-			this.addItemMaster(itemMaster);
+			itemMaster.setParent(this);			
 		} else {
 			LOGGER.error("can't create ItemMaster " + inDomainId + " with UomMaster " + uomMaster.getDomainId() + " under "
 					+ this.getDomainId() + " because UomMaster parent is " + uomMaster.getParentFullDomainId());

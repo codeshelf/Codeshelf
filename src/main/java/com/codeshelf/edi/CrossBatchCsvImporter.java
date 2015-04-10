@@ -185,7 +185,7 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 				errors.bindViolation("quantity", inCsvBean.getQuantity(), Integer.class);
 			}
 
-			ItemMaster itemMaster = inFacility.getItemMaster(inCsvBean.getItemId());
+			ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(inFacility, inCsvBean.getItemId());
 			if (itemMaster == null) {
 				errors.rejectValue("itemId", inCsvBean.getItemId(), ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 			}

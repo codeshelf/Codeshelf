@@ -141,7 +141,7 @@ public class WorkInstructionTest extends HibernateTest {
 		OrderDetail orderDetail = createOrderDetail(order1, itemMaster);
 
 		WorkInstruction wi = new WorkInstruction();
-		facility.addWorkInstruction(wi);
+		wi.setParent(facility);
 		wi.setOrderDetail(orderDetail);
 		wi.setCreated(new Timestamp(System.currentTimeMillis()));
 

@@ -19,7 +19,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +42,6 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Slot;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.Vertex;
-import com.codeshelf.persistence.PersistenceService;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.validation.InputValidationException;
 import com.google.inject.Inject;
