@@ -734,39 +734,27 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 	// --------------------------------------------------------------------------
 	/**
-	 * The user scanned something. In the end, we need an ItemMaster and UOM.
+	 * The user scanned something. In the end, we need an ItemMaster and UOM. User might have scanned SKU, or UPC, or itemId
 	 * Does this belong in InventoryService instead?
 	 */
 	private ItemMaster getItemMasterFromScanValue(Facility facility, String itemIdOrUpc) {
-		// Let's first look for UPC/GTIN
-		List<Gtin> gtins = Gtin.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("domainId", itemIdOrUpc)));
 		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, itemIdOrUpc);
-		// UomMaster uomMaster = null;
-		Gtin gtin = null;
-
-		if (!gtins.isEmpty()) {
-			gtin = gtins.get(0);
-			itemMaster = gtin.getParent();
-			// uomMaster = gtin.getUomMaster();
-		}
-		// Or search by itemId
-		if (itemMaster == null) {
-			List<Item> items = Item.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("domainId",
-				itemIdOrUpc)));
-			Item item = null;
-			if (!items.isEmpty()) {
-				item = items.get(0);
-				itemMaster = item.getParent();
-				// uomMaster = item.getUomMaster();
+		if (itemMaster != null) {
+			if ("Sku1514".equals(itemIdOrUpc) || "Sku1515".equals(itemIdOrUpc)) {
+				LOGGER.error("temporary test error message");
 			}
+			
+			
+			return itemMaster;
 		}
+		
+		//  TODO If not found directly by Sku, lets look for UPC/GTIN. Need a filter.
+			if (itemMaster == null) {
+			// itemMaster = gtin.getParent();
+		}
+		// TODO Or search by itemId. Need a filter.
 		if (itemMaster == null) {
-			List<ItemMaster> masters = ItemMaster.staticGetDao()
-				.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("domainId", itemIdOrUpc)));
-			if (!masters.isEmpty()) {
-				itemMaster = masters.get(0);
 			}
-		}
 
 		return itemMaster;
 	}

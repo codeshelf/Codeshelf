@@ -143,11 +143,12 @@ public class CheProcessPutWall extends ServerTest {
 		LOGGER.info("2: P14 is in WALL1. P15 and P16 are in WALL2. Set up slow mover CHE for that SKU pick");
 		// Verify that orders 11114, 11115, and 11116 are having order locations in put wall
 		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = Facility.staticGetDao().reload(getFacility());
 		assertOrderLocation("11114", "P14");
 		assertOrderLocation("11115", "P15");
 		assertOrderLocation("11116", "P16");
-		// assertItemMaster("Sku1514");
-		// assertItemMaster("Sku1515");
+		assertItemMaster(facility, "1514");
+		assertItemMaster(facility, "1515");
 		this.getTenantPersistenceService().commitTransaction();
 
 		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
@@ -288,7 +289,7 @@ public class CheProcessPutWall extends ServerTest {
 		picker1.scanCommand("CLEAR");
 
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, 4000);
-		picker1.scanSomething("Sku1515");
+		picker1.scanSomething("1515"); // the sku
 		//picker1.waitForCheState(CheStateEnum.DO_PUT, 4000);
 		picker1.waitForCheState(CheStateEnum.NO_PUT_WORK, 4000);
 		// after DEV-713 
@@ -451,8 +452,7 @@ public class CheProcessPutWall extends ServerTest {
 		Assert.assertEquals(location, savedLocation);
 	}
 	
-	private void assertItemMaster(String sku) {
-		Facility facility = getFacility();		
+	private void assertItemMaster(Facility facility, String sku) {
 		ItemMaster master = ItemMaster.staticGetDao().findByDomainId(facility, sku);
 		Assert.assertNotNull(master);
 	}
@@ -640,7 +640,11 @@ public class CheProcessPutWall extends ServerTest {
 				+ "\r\n,USF314,COSTCO,11116,11116.1,11116,1515,Sku1515,5,each,S13"
 				+ "\r\n,USF314,COSTCO,11117,11117.1,11117,1515,Sku1515,5,each,F14";
 
-		importOrdersData(getFacility(), orderCsvString);
+		Facility facility = getFacility();
+		importOrdersData(facility, orderCsvString);
+		ItemMaster theMaster = ItemMaster.staticGetDao().findByDomainId(facility, "1515");
+		Assert.assertNotNull("ItemMaster should be created", theMaster);
+
 	}
 
 }
