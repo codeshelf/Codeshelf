@@ -644,7 +644,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		// 		SingleWorkItem workItem = makeWIForOutbound(orderDetail, inChe, null, null, inFacility, inFacility.getPaths());
 
 		// 1
-		ItemMaster master = getItemMasterFromScanValue(itemOrUpc);
+		ItemMaster master = getItemMasterFromScanValue(facility, itemOrUpc);
 		if (master == null) {
 			LOGGER.warn("Did not find item master from {}", itemOrUpc);
 			response.setStatus(ResponseStatus.Fail);
@@ -737,10 +737,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * The user scanned something. In the end, we need an ItemMaster and UOM.
 	 * Does this belong in InventoryService instead?
 	 */
-	private ItemMaster getItemMasterFromScanValue(String itemIdOrUpc) {
+	private ItemMaster getItemMasterFromScanValue(Facility facility, String itemIdOrUpc) {
 		// Let's first look for UPC/GTIN
 		List<Gtin> gtins = Gtin.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("domainId", itemIdOrUpc)));
-		ItemMaster itemMaster = null;
+		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, itemIdOrUpc);
 		// UomMaster uomMaster = null;
 		Gtin gtin = null;
 
