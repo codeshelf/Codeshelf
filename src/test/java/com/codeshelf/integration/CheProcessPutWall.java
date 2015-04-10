@@ -19,6 +19,7 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderHeader;
@@ -145,6 +146,8 @@ public class CheProcessPutWall extends ServerTest {
 		assertOrderLocation("11114", "P14");
 		assertOrderLocation("11115", "P15");
 		assertOrderLocation("11116", "P16");
+		// assertItemMaster("Sku1514");
+		// assertItemMaster("Sku1515");
 		this.getTenantPersistenceService().commitTransaction();
 
 		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
@@ -446,6 +449,12 @@ public class CheProcessPutWall extends ServerTest {
 		OrderLocation savedOrderLocation = locations.get(0);
 		Location savedLocation = savedOrderLocation.getLocation();
 		Assert.assertEquals(location, savedLocation);
+	}
+	
+	private void assertItemMaster(String sku) {
+		Facility facility = getFacility();		
+		ItemMaster master = ItemMaster.staticGetDao().findByDomainId(facility, sku);
+		Assert.assertNotNull(master);
 	}
 
 	/**
