@@ -222,18 +222,6 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 				batchResult.addLineViolation(lineCount, orderBean, e);
 			}
 		}
-
-		/*
-		if (orderSet.size() == 0) {
-			// Do nothing.
-		} else if (orderSet.size() == 1) {
-			// If we've only imported one order then don't change the status of other orders.
-			archiveCheckOneOrder(orderSet.get(0), inProcessTime);
-		} else {
-			// If we've imported more than one order then do a full archive.
-			archiveCheckAllOrders(inFacility, inProcessTime, undefinedGroupUpdated);
-		}
-		*/
 		
 		// init empty order map
 		Map<String,Boolean> isEmptyOrder = new HashMap<String,Boolean>();
@@ -294,7 +282,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	}
 
 	private void archiveEmptyGroups(UUID inFacilityId){
-		// TODO: replace by single query and remove to background process
+		// TODO: replace by single query
 		Facility facility = Facility.staticGetDao().findByPersistentId(inFacilityId);
 		for (OrderGroup group : facility.getOrderGroups()) {
 			boolean archiveGroup = true;
