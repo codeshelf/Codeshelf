@@ -8,9 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.service.WorkService;
-import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
-import com.codeshelf.ws.protocol.response.GetOrderDetailWorkResponse;
 import com.codeshelf.ws.protocol.response.GetPutWallInstructionResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;

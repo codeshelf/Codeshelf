@@ -1294,6 +1294,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.error("Inappropriate call to assignWork()");
 
 	}
+	public void assignWallPuts(final List<WorkInstruction> inWorkItemList, final String message) {
+		LOGGER.error("Inappropriate call to assignWallPuts()");
+
+	}
 
 	// --------------------------------------------------------------------------
 	/**

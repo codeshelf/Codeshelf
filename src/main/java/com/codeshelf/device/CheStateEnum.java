@@ -79,7 +79,9 @@ public enum CheStateEnum {
 	// @EnumValue("DO_PUT")
 	DO_PUT(CheStateNum.DO_PUT, "DO_PUT"),
 	// @EnumValue("GET_PUT_INSTRUCTION")
-	GET_PUT_INSTRUCTION(CheStateNum.GET_PUT_INSTRUCTION, "GET_PUT_INSTRUCTION");
+	GET_PUT_INSTRUCTION(CheStateNum.GET_PUT_INSTRUCTION, "GET_PUT_INSTRUCTION"),
+	// @EnumValue("NO_PUT_WORK")
+	NO_PUT_WORK(CheStateNum.NO_PUT_WORK, "NO_PUT_WORK");
 
 	private int		mValue;
 	private String	mName;
@@ -215,6 +217,7 @@ public enum CheStateEnum {
 		static final byte	DO_PUT						= 27;
 		static final byte	PUT_WALL_SCAN_WALL			= 29;
 		static final byte	GET_PUT_INSTRUCTION			= 30;
+		static final byte	NO_PUT_WORK = 31;
 
 		private CheStateNum() {
 		};

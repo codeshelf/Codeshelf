@@ -21,6 +21,7 @@ import com.codeshelf.ws.protocol.response.CompleteWorkInstructionResponse;
 import com.codeshelf.ws.protocol.response.ComputeWorkResponse;
 import com.codeshelf.ws.protocol.response.FailureResponse;
 import com.codeshelf.ws.protocol.response.GetOrderDetailWorkResponse;
+import com.codeshelf.ws.protocol.response.GetPutWallInstructionResponse;
 import com.codeshelf.ws.protocol.response.InventoryUpdateResponse;
 import com.codeshelf.ws.protocol.response.LoginResponse;
 import com.codeshelf.ws.protocol.response.PutWallPlacementResponce;
@@ -123,6 +124,19 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 					workResponse.getStatusMessage());
 			} else {
 				LOGGER.info("GetOrderDetailWorkResponse received: not success. No action.");
+			}
+		}
+		//////////////////////////////////////////
+		// Handler for Get Order Detail Work-- LINE_SCAN work flow
+		else if (response instanceof GetPutWallInstructionResponse) {
+			GetPutWallInstructionResponse workResponse = (GetPutWallInstructionResponse) response;
+			if (response.getStatus() == ResponseStatus.Success) {
+				LOGGER.info("GetOrderDetailWorkResponse received: success. Passing through to deviceManager");
+				this.deviceManager.processPutWallInstructionResponse(workResponse.getNetworkGuid(),
+					workResponse.getWorkInstructions(),
+					workResponse.getStatusMessage());
+			} else {
+				LOGGER.info("GetPutWallInstructionResponse received: not success. No action.");
 			}
 		}
 		//////////////////////////////////////////

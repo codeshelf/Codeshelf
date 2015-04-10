@@ -410,6 +410,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.CONTAINER_SELECT);
 				break;
 
+			case NO_PUT_WORK:
+				setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
+				break;
+				
 			case PUT_WALL_SCAN_ORDER:
 			case PUT_WALL_SCAN_LOCATION:
 			case PUT_WALL_SCAN_ITEM:
@@ -645,6 +649,30 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		}
 	}
+	
+	// --------------------------------------------------------------------------
+		/**  doNextPick has a major side effect of setState(DO_PICK) if there is more work.
+		 *   Then setState(DO_PICK) calls showActivePicks()
+		 */
+		private void doNextWallPut() {
+			LOGGER.debug(this + "doNextWallPut");
+
+			if (mActivePickWiList.size() > 0) {
+				// There are still picks in the active list.
+				LOGGER.error("Unexpected case in doNextWallPut");
+				showActivePicks();
+				// each caller to doNextPick already checked mActivePickWiList.size(). Therefore new situation if found
+
+			} else {
+
+				if (selectNextActivePicks()) {
+						setState(CheStateEnum.DO_PICK); // This will cause showActivePicks();
+				} else {
+					processPickComplete(false);
+				}
+			}
+		}
+		
 	
 
 	// --------------------------------------------------------------------------
@@ -1478,8 +1506,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Give the CHE the work it needs to do for a container.
 	 * This is recomputed at the server for ALL containers on the CHE and returned in work-order.
 	 * Whatever the CHE thought it needed to do before is now invalid and is replaced by what we send here.
-	 * @param inContainerId
-	 * @param inWorkItemList
 	 * Only not final because we let CsDeviceManager call this generically.
 	 */
 	public void assignWork(final List<WorkInstruction> inWorkItemList, String message) {
@@ -1493,6 +1519,22 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			mAllPicksWiList.clear();
 			mAllPicksWiList.addAll(inWorkItemList);
 			doNextPick();
+			// doNextPick will set the state.
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Almost the same as assignWork(), but some state transitions differ
+	 */
+	public void assignWallPuts(final List<WorkInstruction> inWorkItemList, String message) {
+		if (inWorkItemList == null || inWorkItemList.size() == 0) {
+			setState(CheStateEnum.NO_PUT_WORK);
+		} else {
+			mActivePickWiList.clear();
+			mAllPicksWiList.clear();
+			mAllPicksWiList.addAll(inWorkItemList);
+			doNextWallPut();
 			// doNextPick will set the state.
 		}
 	}

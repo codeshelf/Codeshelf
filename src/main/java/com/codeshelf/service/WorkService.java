@@ -627,11 +627,17 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		if (putWallName == null) {
 			throw new MethodArgumentException(2, "putWallName missing", ErrorCode.FIELD_REQUIRED);
 		}
-
 		LOGGER.info("GetPutWallInstructionResponse request for {} item:{} wall:{}", inChe.getDomainId() , itemOrUpc, putWallName);
 
-
-		Facility inFacility = inChe.getFacility();
+		Facility facility = inChe.getFacility();
+		// The algorithm is
+		// 1a) find the itemMaster for the item id or upc
+		// 1b) find the location and determine it is a put wall.
+		// 2) find or iterate all slots/tiers that are children of the put wall location.
+		// 3) Find all order locations for any of those slots/tiers
+		// 4) If the order (from the order location) is active, find any order details for it that match the item
+		// 5) make the work instruction to the orderlocation location. (There may be several work instructions for the request.)
+		
 
 		response.setWorkInstructions(wiResultList);
 		return response;
