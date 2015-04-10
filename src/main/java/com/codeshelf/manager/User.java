@@ -27,6 +27,7 @@ import javax.persistence.PreUpdate;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.persistence.Transient;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -61,7 +62,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")
-@JsonIgnoreProperties({"className"})
+@JsonIgnoreProperties({"className","tenantId"})
 @EqualsAndHashCode(of={"username"})
 public class User implements UserContext {
 
@@ -80,13 +81,13 @@ public class User implements UserContext {
 	@Getter
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(nullable = false,name="created")
-	@JsonProperty
+	@JsonIgnore
 	Date created;
 	//
 	@Getter
 	@Temporal(TemporalType.TIMESTAMP)
 	@Column(nullable = false,name="last_modified")
-	@JsonProperty
+	@JsonIgnore
 	Date lastModified;
 	//
 	@PrePersist
@@ -99,7 +100,7 @@ public class User implements UserContext {
 	@ManyToOne(optional = false,fetch=FetchType.EAGER)
 	@Getter
 	@Setter
-	@JsonProperty
+	@JsonIgnore
 	private Tenant				tenant;
 	
 	@Column(nullable = false,name="username")
@@ -124,17 +125,20 @@ public class User implements UserContext {
 	@JsonProperty
 	private boolean				active;
 	
+	@Transient
+	private Set<String>			permissionsFromDeserialization = null;
+	
 	// roles assigned to user
 	@ManyToMany(targetEntity=UserRole.class, fetch=FetchType.EAGER)
 	@JoinTable(name="users_roles")
 	@Getter
-	@JsonProperty
 	Set<UserRole> roles = new HashSet<UserRole>();
 
 	public User() {
 		active = true;
 	}
 	
+	@JsonIgnore
 	protected String getHtpasswdEntry() {
 		return this.getUsername()+":"+this.hashedPassword;
 	}
@@ -158,6 +162,7 @@ public class User implements UserContext {
 	}
 	
 	@Override
+	@JsonProperty("roles")
 	public Collection<String> getRoleNames() {
 		List<String> roleNames = new ArrayList<String>(this.getRoles().size());
 		for(UserRole role : this.getRoles()) {
@@ -167,14 +172,24 @@ public class User implements UserContext {
 	}
 	
 	@Override
+	@JsonProperty("permissions")
 	public Set<String> getPermissionStrings() {
+		if(this.permissionsFromDeserialization != null)
+			return this.permissionsFromDeserialization;
+		
 		Set<String> permissionStrings = new HashSet<String>();
 		for(UserRole role : this.getRoles()) {
 			permissionStrings.addAll(role.getPermissionStrings());
 		}
 		return permissionStrings;
 	}
+	
+	@JsonProperty("permissions")
+	public void setPermissionsFromDeserialization(Set<String> permissionStrings) {
+		this.permissionsFromDeserialization = permissionStrings;
+	}
 
+	@JsonIgnore
 	public Set<UserPermission> getPermissions() {
 		Set<UserPermission> permissions = new HashSet<UserPermission>();
 		for(UserRole role : this.getRoles()) {
@@ -188,5 +203,9 @@ public class User implements UserContext {
 	public boolean isSiteController() {
 		return this.getRoleNames().contains(DefaultRolesPermissions.SITE_CONTROLLER_ROLE);
 	}
-
+	
+	@JsonProperty("tenantId")
+	public int getTenantId() {
+		return this.getTenant().getId();
+	}	
 }

@@ -26,8 +26,7 @@ import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.UserRole;
-import com.codeshelf.security.AuthProviderService;
-import com.codeshelf.security.HmacAuthService;
+import com.codeshelf.security.TokenSessionService;
 import com.codeshelf.util.FormUtility;
 
 // note:
@@ -35,7 +34,7 @@ import com.codeshelf.util.FormUtility;
 @Path("/users")
 @RequiresPermissions("user")
 public class UsersResource {
-	AuthProviderService authProviderService;
+	TokenSessionService tokenSessionService;
 	
 	private static final Logger			LOGGER					= LoggerFactory.getLogger(UsersResource.class);
 	private static final Set<String>	validCreateUserFields	= new HashSet<String>();
@@ -52,7 +51,7 @@ public class UsersResource {
 	}
 	
 	public UsersResource() {
-		this.authProviderService = HmacAuthService.getInstance();
+		this.tokenSessionService = TokenSessionService.getInstance();
 	}
 	
 	@GET
@@ -178,9 +177,9 @@ public class UsersResource {
 
 		boolean success = false;
 		if (key.equals("password")) {
-			if (authProviderService.passwordMeetsRequirements(value)) {
+			if (tokenSessionService.passwordMeetsRequirements(value)) {
 				LOGGER.info("update user {} - change password requested", user.getUsername());
-				user.setHashedPassword(authProviderService.hashPassword(value));
+				user.setHashedPassword(tokenSessionService.hashPassword(value));
 				success = true;
 			} else {
 				LOGGER.warn("update user {} - invalid password specified", user.getUsername());
@@ -245,7 +244,7 @@ public class UsersResource {
 
 			if (username != null && password != null && roles != null) {
 				if (manager.canCreateUser(username)) {
-					if (authProviderService.passwordMeetsRequirements(password)) {
+					if (tokenSessionService.passwordMeetsRequirements(password)) {
 						Tenant tenant;
 						if(tenantId == null)
 							tenant = manager.getInitialTenant();
