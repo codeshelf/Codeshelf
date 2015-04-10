@@ -56,12 +56,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Accessors(prefix = "m")
 	@Getter
 	private String								mLocationId;
-	
+
 	// If the CHE is in PUT_WALL process, the wall currently getting work instructions for
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private String mPutWallName;
+	private String								mPutWallName;
 
 	@Getter
 	@Setter
@@ -223,7 +223,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 						sendDisplayCommand(SCAN_GTIN_OR_LOCATION, EMPTY_MSG);
 					}
 					break;
-					
+
 				case PUT_WALL_SCAN_ORDER:
 					sendDisplayCommand(SCAN_PUTWALL_ORDER_MSG, SCAN_PUTWALL_LINE2_MSG);
 					break;
@@ -413,7 +413,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case NO_PUT_WORK:
 				setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
 				break;
-				
+
 			case PUT_WALL_SCAN_ORDER:
 			case PUT_WALL_SCAN_LOCATION:
 			case PUT_WALL_SCAN_ITEM:
@@ -431,11 +431,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case DO_PUT:
 				// DEV-713 : more to do. This situation is on a job, and the user wants to abandon it.
 				// Allow at all? set to PUT_WALL_SCAN_ITEM implies that. Or do nothing to force worker to complete or short it.
-				
-					setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
-					// If allowing, we would want to clear and refresh the poscon display, and clear activeWis.
-					// Also a notifyXX()
-					// Would be nice to send message to server to delete the work instruction, but we leave lots of wis hanging around.
+
+				setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
+				// If allowing, we would want to clear and refresh the poscon display, and clear activeWis.
+				// Also a notifyXX()
+				// Would be nice to send message to server to delete the work instruction, but we leave lots of wis hanging around.
 				break;
 
 			default:
@@ -649,30 +649,28 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		}
 	}
-	
+
 	// --------------------------------------------------------------------------
-		/**  doNextWallPut side effects
-		 */
-		private void doNextWallPut() {
-			LOGGER.debug(this + "doNextWallPut");
+	/**  doNextWallPut side effects
+	 */
+	private void doNextWallPut() {
+		LOGGER.debug(this + "doNextWallPut");
 
-			if (mActivePickWiList.size() > 0) {
-				// There are still picks in the active list.
-				LOGGER.error("Unexpected case in doNextWallPut");
-				showActivePicks();
-				// each caller to doNextPick already checked mActivePickWiList.size(). Therefore new situation if found
+		if (mActivePickWiList.size() > 0) {
+			// There are still picks in the active list.
+			LOGGER.error("Unexpected case in doNextWallPut");
+			showActivePicks();
+			// each caller to doNextPick already checked mActivePickWiList.size(). Therefore new situation if found
 
+		} else {
+
+			if (selectNextActivePicks()) {
+				setState(CheStateEnum.DO_PICK); // This will cause showActivePicks();
 			} else {
-
-				if (selectNextActivePicks()) {
-						setState(CheStateEnum.DO_PICK); // This will cause showActivePicks();
-				} else {
-					processPickComplete(false);
-				}
+				processPickComplete(false);
 			}
 		}
-		
-	
+	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -1064,8 +1062,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private void requestWorkAndSetGetWorkState(final String inLocationStr, final Boolean reverseOrderFromLastTime) {
 		clearAllPositionControllers();
 		this.mLocationId = inLocationStr;
-		Map<String, String> positionToContainerMapCopy = new HashMap<String,String>(mPositionToContainerMap);
-		
+		Map<String, String> positionToContainerMapCopy = new HashMap<String, String>(mPositionToContainerMap);
+
 		mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(),
 			getPersistentId(),
 			inLocationStr,
@@ -1282,8 +1280,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		}
 	}
-	
-	private int getUncompletedInstructionsOnOtherPathsSum(){
+
+	private int getUncompletedInstructionsOnOtherPathsSum() {
 		WorkInstructionCount[] counts = mContainerToWorkInstructionCountMap.values().toArray(new WorkInstructionCount[0]);
 		int uncompletedInstructionsOnOtherPathsCounter = 0;
 		for (WorkInstructionCount count : counts) {
@@ -1495,7 +1493,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		clearAllPositionControllers();
 		mContainerInSetup = "";
 		//Duplicate map to avoid later changes
-		Map<String, String> positionToContainerMapCopy = new HashMap<String,String>(mPositionToContainerMap);
+		Map<String, String> positionToContainerMapCopy = new HashMap<String, String>(mPositionToContainerMap);
 		mDeviceManager.computeCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), positionToContainerMapCopy, isReverse);
 		setState(CheStateEnum.COMPUTE_WORK);
 	}
@@ -1657,7 +1655,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (wi == null) {
 				// Simply ignore button presses when there is no work instruction.
 			} else {
-				notifyButton(inButtonNum,inQuantity);
+				notifyButton(inButtonNum, inQuantity);
 				if (inQuantity >= wi.getPlanMinQuantity()) {
 					processNormalPick(wi, inQuantity);
 				} else {
@@ -1695,11 +1693,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		super.processShortPick(inWi, inQuantity);
 	}
 
-	protected void processPutWallOrderScan (final String inScanPrefixStr, final String inScanStr) {
+	protected void processPutWallOrderScan(final String inScanPrefixStr, final String inScanStr) {
 		setLastPutWallOrderScan(inScanStr);
 		setState(CheStateEnum.PUT_WALL_SCAN_LOCATION);
 	}
-	
+
 	protected void processPutWallLocationScan(final String inScanPrefixStr, final String inScanStr) {
 		String orderId = getLastPutWallOrderScan();
 		PutWallPlacementRequest message = new PutWallPlacementRequest(getPersistentId().toString(), orderId, inScanStr);
@@ -1707,41 +1705,41 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		sendOrderPlacementMessage(getLastPutWallOrderScan(), inScanStr);
 		setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
 	}
-	
-	private void sendOrderPlacementMessage(String orderId, String locationName){
+
+	private void sendOrderPlacementMessage(String orderId, String locationName) {
 		// This will form the command and send to server. If successful, the putwall poscon feedback will be apparent.
 		LOGGER.info("to do: send put wall setup msg {} at {}", orderId, locationName);
-		
-		notifyOrderToPutWall(orderId, locationName);		
+
+		notifyOrderToPutWall(orderId, locationName);
 	}
-	
-	protected void processPutWallItemScan (final String inScanPrefixStr, final String inScanStr) {
-		
+
+	protected void processPutWallItemScan(final String inScanPrefixStr, final String inScanStr) {
+
 		// DEV-713 This is incorrect. Change to  new GET_PUT_INSTRUCTION state
 		setState(CheStateEnum.DO_PUT);
 		// The response then returns the work instruction, and transitions to DO_PUT state. Cheating for now before the request is done.
 		// Note: if the response is "bad", want to be back in PUT_WALL_SCAN_ITEM state, with a meaningful response
 		// such as "could not find item", or "no order in put wall needs that item"
-		
-		notifyPutWallItem(inScanStr, getPutWallName());		
+
+		notifyPutWallItem(inScanStr, getPutWallName());
 
 		sendWallItemWiRequest(inScanStr, getPutWallName());
-		
+
 	}
-	
-	protected void processPutWallScanWall (final String inScanPrefixStr, final String inScanStr) {
+
+	protected void processPutWallScanWall(final String inScanPrefixStr, final String inScanStr) {
 		// The goal here is to remember the wall name that was scanned, then transition to PUT_WALL_SCAN_ITEM
-		setPutWallName(inScanStr);		
+		setPutWallName(inScanStr);
 		setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
 	}
 
-	private void sendWallItemWiRequest(String itemOrUpc, String putWallName){
+	private void sendWallItemWiRequest(String itemOrUpc, String putWallName) {
 		// DEV-713
 		LOGGER.info("sendWallItemWiRequest for {} in wall {}", itemOrUpc, putWallName);
-		
+
 		mDeviceManager.computePutWallInstruction(getGuid().getHexStringNoPrefix(), getPersistentId(), itemOrUpc, putWallName);
 		// sends a command. Ultimately returns back the work instruction list for assign work
-		
+
 	}
 
 	// --------------------------------------------------------------------------
