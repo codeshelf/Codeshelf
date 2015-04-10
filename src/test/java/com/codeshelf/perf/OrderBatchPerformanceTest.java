@@ -38,7 +38,7 @@ public class OrderBatchPerformanceTest {
 	final private static String BASE_URL = "http://localhost:8181/";
 	final private static String USERNAME = "simulate@example.com";
 	final private static String PASSWORD = "testme";
-	final private static String FACILITY = "9345a902-ac24-4d2d-a049-54f68c2112a2";
+	final private static String FACILITY = "5b36debe-4931-4221-9fc4-7af41187cf38";
 	
 	static {
 		JvmProperties.load("server");
@@ -128,6 +128,11 @@ public class OrderBatchPerformanceTest {
 		List<String> fileNames = new ArrayList<String>();
 		String orderInputDirectory = args[0];
 		File[] files = new File(orderInputDirectory).listFiles();
+		
+		if (files==null) {
+			LOGGER.info("No files found in "+args[0]);
+			System.exit(0);
+		}
 
 		for (File file : files) {
 		    if (file.isFile()) {
@@ -161,14 +166,8 @@ public class OrderBatchPerformanceTest {
 			BufferedReader br = null;
 			try {
 				String orderInputFile = orderInputDirectory+File.separator+fileName;
-				br = new BufferedReader(new FileReader(orderInputFile));
-				
+				br = new BufferedReader(new FileReader(orderInputFile));				
 				LOGGER.info("Processing order file "+orderInputFile);
-				
-				// TODO: get facility ID from API
-				String facilityId = "5b36debe-4931-4221-9fc4-7af41187cf38";			
-				String baseUrl = "http://localhost:"+Integer.getInteger("api.port")+"/";
-				
 				// post first order file
 				String url = BASE_URL +"api/import/orders/"+ FACILITY;			
 				FileInputStream is = new FileInputStream(orderInputFile);
