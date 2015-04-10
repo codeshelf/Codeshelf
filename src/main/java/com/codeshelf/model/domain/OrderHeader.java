@@ -89,13 +89,13 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	private static final Logger			LOGGER			= LoggerFactory.getLogger(OrderHeader.class);
 
 	// The parent facility.
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Getter
 	@Setter
 	private Facility					parent;
 
 	// The order type.
-	@Column(nullable = false,name="order_type")
+	@Column(nullable = false, name = "order_type")
 	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
@@ -111,7 +111,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	private OrderStatusEnum				status;
 
 	// The pick strategy.
-	@Column(nullable = false,name="pick_strategy")
+	@Column(nullable = false, name = "pick_strategy")
 	@Enumerated(value = EnumType.STRING)
 	@Getter
 	@Setter
@@ -119,15 +119,15 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	private PickStrategyEnum			pickStrategy;
 
 	// The parent order group.
-	@ManyToOne(optional = true,fetch=FetchType.LAZY)
-	@JoinColumn(name="order_group_persistentid")
+	@ManyToOne(optional = true, fetch = FetchType.LAZY)
+	@JoinColumn(name = "order_group_persistentid")
 	@Getter
 	@Setter
 	private OrderGroup					orderGroup;
 
 	// The customerID for this order.
 	// Lower numbers work first.
-	@Column(nullable = true,name="customer_id")
+	@Column(nullable = true, name = "customer_id")
 	@Getter
 	@Setter
 	@JsonProperty
@@ -135,29 +135,29 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	// Reference to the shipment for this order.
 	// Lower numbers work first.
-	@Column(nullable = true,name="shipper_id")
+	@Column(nullable = true, name = "shipper_id")
 	@Getter
 	@Setter
 	@JsonProperty
 	private String						shipperId;
 
 	// Order date.
-	@Column(nullable = true,name="order_date")
+	@Column(nullable = true, name = "order_date")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Timestamp					orderDate;
 
 	// Due date.
-	@Column(nullable = true,name="due_date")
+	@Column(nullable = true, name = "due_date")
 	@Getter
 	@Setter
 	@JsonProperty
 	private Timestamp					dueDate;
 
 	// The container use for this order.
-	@OneToOne(optional = true,fetch=FetchType.LAZY)
-	@JoinColumn(name="container_use_persistentid")
+	@OneToOne(optional = true, fetch = FetchType.LAZY)
+	@JoinColumn(name = "container_use_persistentid")
 	@Getter
 	@Setter
 	private ContainerUse				containerUse;
@@ -176,7 +176,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	@Cache(usage=CacheConcurrencyStrategy.READ_WRITE)
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	private Map<String, OrderDetail>	orderDetails	= new HashMap<String, OrderDetail>();
 
 	@OneToMany(mappedBy = "parent")
@@ -196,7 +196,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		pickStrategy = PickStrategyEnum.SERIAL;
 		updated = new Timestamp(System.currentTimeMillis());
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<OrderHeader> getDao() {
 		return staticGetDao();
@@ -266,18 +266,17 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 			return false;
 		return previousHeadersUse.equals(inUse);
 	}
-	
+
 	private final boolean thisHeaderAlreadyConsistentWithUse() {
 		ContainerUse previousUse = getContainerUse();
 		if (previousUse == null)
-			return false;	
+			return false;
 		OrderHeader previousUseHeader = previousUse.getOrderHeader();
 		if (previousUseHeader == null)
 			return false;
 		return previousUseHeader.equals(this);
 	}
 
-	
 	public void addHeadersContainerUse(ContainerUse inContainerUse) {
 		if (inContainerUse == null) {
 			LOGGER.error("null input to OrderHeader.addHeadersContainerUse");
@@ -287,19 +286,19 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		// However, as the fields in both directions persist, update anyway on inconsistent data. Otherwise an orphan relationship could never be cleaned up 
 		if (containerUseAlreadyConsistentWithHeader(inContainerUse)) {
 			LOGGER.error("did not add ContainerUse " + inContainerUse.getContainerName() + " to " + this.getDomainId()
-				+ " because it already has a consistent relationship with an order header ");
+					+ " because it already has a consistent relationship with an order header ");
 			return;
 		}
 		if (thisHeaderAlreadyConsistentWithUse()) {
 			LOGGER.error("did not add ContainerUse " + inContainerUse.getContainerName() + " to " + this.getDomainId()
-				+ " because this OrderHeader already has a consistent relationship with an ContainerUse ");
+					+ " because this OrderHeader already has a consistent relationship with an ContainerUse ");
 			return;
 		}
-		
+
 		// Keep it simple for now. Just do the sets. Don't try to clean up inconsistency if one of the objects has inconsistent one-way relationship.
 		setContainerUse(inContainerUse);
 		inContainerUse.setOrderHeader(this);
-				
+
 	}
 
 	public void removeHeadersContainerUse(ContainerUse inContainerUse) {
@@ -397,7 +396,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 			status = inStatus;
 		}
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Reevaluate the order status based on the status of child order details
@@ -405,7 +404,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	public void reevaluateStatus() {
 		setStatus(OrderStatusEnum.COMPLETE);
 		for (OrderDetail detail : getOrderDetails()) {
-			if (!detail.getActive()){
+			if (!detail.getActive()) {
 				continue;
 			}
 			if (detail.getStatus().equals(OrderStatusEnum.SHORT)) {
@@ -422,7 +421,6 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 			LOGGER.error("Failed to update order status", e);
 		}
 	}
-
 
 	// --------------------------------------------------------------------------
 	/**
@@ -507,25 +505,38 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	 * Locations for some orders were deleted as getActiveOrderLocations() excludes those.
 	 * @param inPath
 	 * @return
+	 * A new case from DEV-713 put wall. We do not care about the path, and usually have only one order location.
+	 * So, pass in null for path to get the one and only.
 	 */
 	public OrderLocation getFirstOrderLocationOnPath(final Path inPath) {
 		OrderLocation result = null;
-		for (OrderLocation orderLoc : getActiveOrderLocations()) {
-			Location location = orderLoc.getLocation();
-			if (location==null) {
-				continue;
+		List<OrderLocation> olList = getActiveOrderLocations();
+
+		if (inPath == null) {
+			int olCount = olList.size();
+			if (olCount == 1) {
+				result = olList.get(0);
+			} else{
+				LOGGER.error("looks like misunderstanding of getFirstOrderLocationOnPath(null)");
 			}
-			PathSegment segment = location.getAssociatedPathSegment(); 
-			if (segment==null) {
-				continue;
-			}
-			Path path = segment.getParent();
-			if (path==null) {
-				continue;
-			}
-			if (path.equals(inPath)) {
-				if ((result == null) || (orderLoc.getLocation().getPosAlongPath() < result.getLocation().getPosAlongPath())) {
-					result = orderLoc;
+		} else {
+			for (OrderLocation orderLoc : olList) {
+				Location location = orderLoc.getLocation();
+				if (location == null) {
+					continue;
+				}
+				PathSegment segment = location.getAssociatedPathSegment();
+				if (segment == null) {
+					continue;
+				}
+				Path path = segment.getParent();
+				if (path == null) {
+					continue;
+				}
+				if (path.equals(inPath)) {
+					if ((result == null) || (orderLoc.getLocation().getPosAlongPath() < result.getLocation().getPosAlongPath())) {
+						result = orderLoc;
+					}
 				}
 			}
 		}
@@ -575,7 +586,6 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		return theGroup.getDomainId();
 	}
 
-	
 	/**
 	 * Archives orderHeaders based on inProcessTime.
 	 * 
@@ -584,12 +594,12 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	 * @param inProcessTime	Time to compare orderHeaders against.
 	 * @return Returns number of orderHeaders archived
 	 */
-	public static int archiveOrderHeaders(Timestamp inProcessTime){
+	public static int archiveOrderHeaders(Timestamp inProcessTime) {
 		Session session = TenantPersistenceService.getInstance().getSession();
 
 		String queryString = "UPDATE OrderHeader oh set oh.active = false WHERE oh.active = true AND oh NOT IN"
 				+ "(SELECT od.parent.persistentId FROM OrderDetail od WHERE od.active = true GROUP BY od.parent.persistentId HAVING count(od.active) > 0)";
-		
+
 		Query q = session.createQuery(queryString);
 		int numArchived = 0;
 		numArchived = q.executeUpdate();
