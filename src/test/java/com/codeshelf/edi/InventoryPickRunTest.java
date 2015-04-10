@@ -302,6 +302,10 @@ public class InventoryPickRunTest extends ServerTest {
 		propertyService.turnOffHK(facility);
 		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "12000");
 
 		Integer theSize = wiList.size();
@@ -351,18 +355,22 @@ public class InventoryPickRunTest extends ServerTest {
 		readOrdersForA1(facility);
 
 		// Just check a UI field. Basically looking for NPE
-		OrderHeader order = facility.getOrderHeader("12000");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "12000");
+
 		Assert.assertNotNull(order);
 		for (OrderDetail detail : order.getOrderDetails()) {
 			String theUiField = detail.getWillProduceWiUi(workService);
 		}
+		propertyService.turnOffHK(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		this.getTenantPersistenceService().commitTransaction();
 
 		// Now ready to run the cart
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Che theChe = theNetwork.getChe("CHE1");
 
-		propertyService.turnOffHK(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
 		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "12000");
 		Integer theSize = wiList.size();
@@ -395,8 +403,8 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		readOrdersForA1(facility);
 
 		// Delete two of the items, which will cause immediate short upon cart setup
-		ItemMaster master1123 = facility.getItemMaster("1123");
-		ItemMaster master1124 = facility.getItemMaster("1124");
+		ItemMaster master1123 = ItemMaster.staticGetDao().findByDomainId(facility, "1123");
+		ItemMaster master1124 = ItemMaster.staticGetDao().findByDomainId(facility, "1124");
 		Item item1123 = master1123.getItemsOfUom("EA").get(0);
 		Item item1124 = master1124.getItemsOfUom("EA").get(0);
 		Assert.assertNotNull(item1123);
@@ -541,7 +549,8 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		// Orders
 		readOrdersForBayDistance(facility);
 		
-		OrderHeader orderHeader = facility.getOrderHeader("12000");
+		OrderHeader orderHeader = OrderHeader.staticGetDao().findByDomainId(facility, "12000");
+
 		Assert.assertNotNull(orderHeader);
 		
 		LOGGER.info("1. OrderDetail 101 does not have an inventory location, does have a good preferred location");
@@ -583,8 +592,11 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 
 		// Orders
 		readOrdersForWorkSequence(facility);
+		this.getTenantPersistenceService().commitTransaction();
 		
-		OrderHeader orderHeader = facility.getOrderHeader("12000");
+		this.getTenantPersistenceService().beginTransaction();
+		OrderHeader orderHeader = OrderHeader.staticGetDao().findByDomainId(facility, "12000");
+
 		Assert.assertNotNull(orderHeader);
 		
 		LOGGER.info("1. OrderDetail 101 does not have an inventory location, does have a good preferred location, has sequence");

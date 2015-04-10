@@ -11,6 +11,7 @@ import org.junit.Test;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.LocationAlias;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
@@ -165,27 +166,28 @@ public class BayDistanceWorkSequencerTest extends ServerTest {
 				+ "1,G1,1,104,I4,Test Item 4,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,"+preffernces[3]+"\r\n";
 		importOrdersData(facility, csvString2);
 
-		OrderHeader header = facility.getOrderHeader("1");
+		OrderHeader header = OrderHeader.staticGetDao().findByDomainId(facility, "1");
+		// facility.getOrderHeader("1");
 		
 		OrderDetail detail1 = header.getOrderDetail("101");
 		WorkInstruction workInstruction1 = new WorkInstruction();
 		workInstruction1.setOrderDetail(detail1);
-		workInstruction1.setLocation(facility.getLocationAlias("D301").getMappedLocation());
+		workInstruction1.setLocation(LocationAlias.staticGetDao().findByDomainId(facility, "D301").getMappedLocation());
 		
 		OrderDetail detail2 = header.getOrderDetail("102");
 		WorkInstruction workInstruction2 = new WorkInstruction();
 		workInstruction2.setOrderDetail(detail2);
-		workInstruction2.setLocation(facility.getLocationAlias("D302").getMappedLocation());
+		workInstruction2.setLocation(LocationAlias.staticGetDao().findByDomainId(facility, "D302").getMappedLocation());
 
 		OrderDetail detail3 = header.getOrderDetail("103");
 		WorkInstruction workInstruction3 = new WorkInstruction();
 		workInstruction3.setOrderDetail(detail3);
-		workInstruction3.setLocation(facility.getLocationAlias("D303").getMappedLocation());
+		workInstruction3.setLocation(LocationAlias.staticGetDao().findByDomainId(facility, "D303").getMappedLocation());
 		
 		OrderDetail detail4 = header.getOrderDetail("104");
 		WorkInstruction workInstruction4 = new WorkInstruction();
 		workInstruction4.setOrderDetail(detail4);
-		workInstruction4.setLocation(facility.getLocationAlias("D401").getMappedLocation());
+		workInstruction4.setLocation(LocationAlias.staticGetDao().findByDomainId(facility, "D401").getMappedLocation());
 
 		List<WorkInstruction> instructions = new ArrayList<WorkInstruction>();
 		instructions.add(workInstruction1);

@@ -119,7 +119,7 @@ public class WorkInstructionSequencerTest extends ServerTest {
 		importOrdersData(facility, csvString2);
 		
 		// We should have one order with 4 details 
-		OrderHeader order = facility.getOrderHeader("12345");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
 		Assert.assertNotNull(order);
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 4, detailCount);
@@ -128,6 +128,10 @@ public class WorkInstructionSequencerTest extends ServerTest {
 		propertyService.turnOffHK(facility);
 		// Set up a cart for order 12345, which will generate work instructions
 		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		this.getTenantPersistenceService().commitTransaction();
+		
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		List<WorkInstruction> aList = startWorkFromBeginning(facility, "CHE1", "12345");
 		int wiCount = aList.size();
 		Assert.assertEquals(4, wiCount);

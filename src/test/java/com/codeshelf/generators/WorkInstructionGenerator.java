@@ -73,7 +73,7 @@ public class WorkInstructionGenerator {
 				new Container("CONTID",
 							  facility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND),
 							  true);
-		facility.addContainer(container);
+		container.setParent(facility);
 		Container.staticGetDao().store(container);
 
 		//Che che1 = Che.staticGetDao().findByDomainId(facility.getNetworks().get(0), "CHE1");
@@ -102,7 +102,7 @@ public class WorkInstructionGenerator {
 		OrderGroup.staticGetDao().store(orderGroup);
 		
 		OrderHeader orderHeader = new OrderHeader("OH1", OrderTypeEnum.OUTBOUND);
-		facility.addOrderHeader(orderHeader);
+		orderHeader.setParent(facility);
 		
 		orderGroup.addOrderHeader(orderHeader);
 		OrderHeader.staticGetDao().store(orderHeader);
@@ -114,8 +114,7 @@ public class WorkInstructionGenerator {
 		detail.setItemMaster(itemMaster);
 		detail.setUomMaster(uom);
 		orderHeader.addOrderDetail(detail);
-		return detail;
-		
+		return detail;	
 	}
 	
 }

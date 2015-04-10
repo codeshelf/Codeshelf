@@ -164,7 +164,7 @@ public class MTOrderProcessingTest extends ServerTest {
 				// verify order data
 				tenantPersistenceService.beginTransaction();
 				facility = Facility.staticGetDao().reload(facility);
-				List<OrderHeader> orders = facility.getOrderHeaders();
+				List<OrderHeader> orders = OrderHeader.staticGetDao().findByParent(facility);
 				Assert.assertNotNull(orders);
 				Assert.assertEquals(1, orders.size());
 				OrderHeader order = orders.get(0);

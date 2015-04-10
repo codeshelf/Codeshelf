@@ -191,9 +191,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		ArrayList<ContainerUse> newCntrUses = new ArrayList<ContainerUse>();
 
 		// Set new uses on the CHE.
+		// FIXME: retrieve all containers in one shot from the database
 		List<Container> containerList = new ArrayList<Container>();
 		for (String containerId : inContainerIdList) {
-			Container container = facility.getContainer(containerId);
+			Container container = Container.staticGetDao().findByDomainId(facility, containerId);
 			if (container != null) {
 				// add to the list that will generate work instructions
 				containerList.add(container);
@@ -1084,7 +1085,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		BatchResult<Work> batchResult = new BatchResult<Work>();
 		OrderHeader crossOrder = container.getCurrentOrderHeader();
 		if ((crossOrder != null) && (crossOrder.getActive()) && (crossOrder.getOrderType().equals(OrderTypeEnum.CROSS))) {
-			List<OrderHeader> allOrders = facility.getOrderHeaders();
+			// refactor to not load all orders
+			List<OrderHeader> allOrders = OrderHeader.staticGetDao().findByParent(facility);
 			List<OrderDetail> matchingOrderDetails = toAllMatchingOutboundOrderDetails(allOrders, crossOrder);
 			for (OrderDetail matchingOutboundOrderDetail : matchingOrderDetails) {
 				List<Path> allPaths = facility.getPaths();

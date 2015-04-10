@@ -94,8 +94,6 @@ public class OrderBatchPerformanceTest {
                 .build();        
         postRequest.setEntity(reqEntity);
         
-       //  System.out.println(context.getCookieStore().getCookies());
-
         //Send request
         HttpResponse response = client.execute(postRequest,context);
         HttpEntity entity = response.getEntity();
@@ -103,7 +101,7 @@ public class OrderBatchPerformanceTest {
                  
         if (response != null) {
         	int status = response.getStatusLine().getStatusCode();
-        	if (status==403) {
+        	if (status==403 || status==401) {
         		if (!authenticate()) {
         			LOGGER.error("Failed to re-authenticate");
         			System.exit(0);
@@ -117,9 +115,13 @@ public class OrderBatchPerformanceTest {
         			System.exit(0);     	
                 }
         	}
+        	else if (status==404) {
+    			LOGGER.error("Post failed:  Valid facility id?");
+    			System.exit(0);        		
+        	}
             LOGGER.info("Post complete: "+status);
         }
-    }	
+    }
 	
 	public static void main(String[] args) {
 		
@@ -164,8 +166,8 @@ public class OrderBatchPerformanceTest {
 				LOGGER.info("Processing order file "+orderInputFile);
 				
 				// TODO: get facility ID from API
-				//String facilityId = "db495d37-8a99-4cc5-9514-a1f91475bd81";			
-				//String baseUrl = "http://localhost:"+Integer.getInteger("api.port")+"/";
+				String facilityId = "5b36debe-4931-4221-9fc4-7af41187cf38";			
+				String baseUrl = "http://localhost:"+Integer.getInteger("api.port")+"/";
 				
 				// post first order file
 				String url = BASE_URL +"api/import/orders/"+ FACILITY;			

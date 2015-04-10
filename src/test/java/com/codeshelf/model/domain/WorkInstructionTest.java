@@ -108,7 +108,7 @@ public class WorkInstructionTest extends HibernateTest {
 
 		Container container = new Container();
 		container.setDomainId("C1");
-		facility.addContainer(container);
+		container.setParent(facility);
 		container.setKind(facility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND));
 		container.setActive(true);
 		container.setUpdated(new Timestamp(System.currentTimeMillis()));
@@ -141,7 +141,7 @@ public class WorkInstructionTest extends HibernateTest {
 		OrderDetail orderDetail = createOrderDetail(order1, itemMaster);
 
 		WorkInstruction wi = new WorkInstruction();
-		facility.addWorkInstruction(wi);
+		wi.setParent(facility);
 		wi.setOrderDetail(orderDetail);
 		wi.setCreated(new Timestamp(System.currentTimeMillis()));
 

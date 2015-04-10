@@ -89,7 +89,7 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 		super(domainId);
 		this.parent = facility;
 		this.mappedLocation = mappedLocation;
-		parent.addLocationAlias(this);
+		this.parent = facility;
 	}
 
 	@SuppressWarnings("unchecked")

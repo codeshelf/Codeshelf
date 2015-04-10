@@ -65,7 +65,7 @@ public class CrossBatchImporterTest extends ServerTest {
 		result.setStandardUom(uomMaster);
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
-		inFacility.addItemMaster(result);
+		result.setParent(inFacility);
 		ItemMaster.staticGetDao().store(result);
 
 		return result;
@@ -166,7 +166,9 @@ public class CrossBatchImporterTest extends ServerTest {
 
 
 		// Make sure we created an order with the container's ID.
-		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", ediProcessTime));
+		//OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", ediProcessTime));		
+		String orderId = OrderHeader.computeCrossOrderId("C111", ediProcessTime);
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
 		Assert.assertNotNull(order);
 		Assert.assertEquals(order.getOrderType(), OrderTypeEnum.CROSS);
 
@@ -274,10 +276,10 @@ public class CrossBatchImporterTest extends ServerTest {
 		Assert.assertEquals(5, theCounts2.mActiveDetails);
 		Assert.assertEquals(2, theCounts2.mActiveCntrUses);
 
-
 		// Make sure that first cross batch order is inactive and contains order detail I555.3 but it's inactive
-		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C555", firstEdiProcessTime));
-		
+		String orderId = OrderHeader.computeCrossOrderId("C555", firstEdiProcessTime);
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
+		//OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C555", firstEdiProcessTime));
 		// JR got assertion fail here on 3/25/15 and 3/31/15 but usually succeeded.
 		// From 3/31/15, changed test to do the second import in a separate transaction, which more closely mimics production.
 		Assert.assertNotNull(order); 
@@ -287,16 +289,15 @@ public class CrossBatchImporterTest extends ServerTest {
 		Assert.assertEquals(false, orderDetail.getActive());
 
 		// Make sure the second cross batch order is active and doesn't contain I555.3
-		order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C555", secondEdiProcessTime));
+		orderId = OrderHeader.computeCrossOrderId("C555", secondEdiProcessTime);
+		order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
+		// order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C555", secondEdiProcessTime));
 		Assert.assertNotNull(order); // got assertion fail here on 3/26/15 but not reproducible
 		Assert.assertEquals(true, order.getActive());
 		orderDetail = order.getOrderDetail("I555.3");
 		Assert.assertNull(orderDetail);
-
-
 		
 		this.getTenantPersistenceService().commitTransaction();
-
 	}
 
 	@Test
@@ -356,7 +357,9 @@ public class CrossBatchImporterTest extends ServerTest {
 
 
 		// check the new order detail.
-		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C777", ediProcessTime));
+		// OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C777", ediProcessTime));
+		String orderId = OrderHeader.computeCrossOrderId("C777", ediProcessTime);
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
 		Assert.assertNotNull(order); // got one unrepeated error here on 3/26/15
 		OrderDetail orderDetail = order.getOrderDetail("I777.5");
 		Assert.assertNotNull(orderDetail);
@@ -406,7 +409,9 @@ public class CrossBatchImporterTest extends ServerTest {
 		Assert.assertEquals(6, count);
 
 		// Make sure that order detail item I999.3 still exists, but has quantity 0.
-		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C999", ediProcessTime));
+		// OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C999", ediProcessTime));
+		String orderId = OrderHeader.computeCrossOrderId("C999", ediProcessTime);
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
 		Assert.assertNotNull(order);
 		OrderDetail orderDetail = order.getOrderDetail("I999.3");
 		Assert.assertNotNull(orderDetail);
@@ -444,7 +449,9 @@ public class CrossBatchImporterTest extends ServerTest {
 		Timestamp crossBatchEdiProcessTime = new Timestamp(System.currentTimeMillis());
 		int count = importBatchData(facility, csvString);
 		Assert.assertEquals(6, count);
-		
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();		
 		String orderCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalapeño Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -460,11 +467,12 @@ public class CrossBatchImporterTest extends ServerTest {
 		importOrdersData(facility, orderCsvString);
 
 		// Make sure we imported the outbound order.
-		OrderHeader order = facility.getOrderHeader("123");
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "123");		
 		Assert.assertNotNull(order);
 
 		// Now make sure that all of the cross batch orders are still valid.
-		order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", crossBatchEdiProcessTime));
+		String orderId = OrderHeader.computeCrossOrderId("C111", crossBatchEdiProcessTime);
+		order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
 		Assert.assertNotNull(order);
 		Assert.assertEquals(order.getOrderType(), OrderTypeEnum.CROSS);
 		Assert.assertEquals(true, order.getActive());
@@ -510,7 +518,9 @@ public class CrossBatchImporterTest extends ServerTest {
 		Assert.assertEquals(6,  count);
 		
 		// Make sure we created an order with the container's ID.
-		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", ediProcessTime));
+		String orderId = OrderHeader.computeCrossOrderId("C111", ediProcessTime);
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
+
 		Assert.assertNotNull(order); // got a random failure here on 3/26/15, did not repeat
 		Assert.assertEquals(order.getOrderType(), OrderTypeEnum.CROSS);
 
@@ -597,18 +607,19 @@ public class CrossBatchImporterTest extends ServerTest {
 		Timestamp firstEdiProcessTime = new Timestamp(System.currentTimeMillis());
 		int count = importBatchData(facility, firstCsvString);
 		Assert.assertEquals(6,  count);
-
 		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
 
-		
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		// Make sure we created an order with the container's ID.
-		OrderHeader order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", firstEdiProcessTime));
+		String orderId = OrderHeader.computeCrossOrderId("C111", firstEdiProcessTime);
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
+	
 		Assert.assertNotNull(order);
 		Assert.assertEquals(order.getOrderType(), OrderTypeEnum.CROSS);
 		Assert.assertEquals(true, order.getActive());
 
-		// Make sure there's a contianer use and that its ID matches the order.
+		// Make sure there's a container use and that its ID matches the order.
 		ContainerUse use = order.getContainerUse();
 		Assert.assertNotNull(use);
 		Assert.assertEquals(use.getParent().getContainerId(), "C111");
@@ -638,7 +649,9 @@ public class CrossBatchImporterTest extends ServerTest {
 		Assert.assertEquals(6,  secondCount);
 
 		// Make sure we created an order with the container's ID.
-		order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C111", firstEdiProcessTime));
+		orderId = OrderHeader.computeCrossOrderId("C111", firstEdiProcessTime);
+		order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
+		
 		Assert.assertNotNull(order);
 		Assert.assertEquals(order.getOrderType(), OrderTypeEnum.CROSS);
 		Assert.assertEquals(true, order.getActive());
@@ -652,7 +665,9 @@ public class CrossBatchImporterTest extends ServerTest {
 		Assert.assertEquals(order.getOrderDetails().size(), 4);
 
 		// Make sure we created an order with the container's ID.
-		order = facility.getOrderHeader(OrderHeader.computeCrossOrderId("C333", secondEdiProcessTime));
+		orderId = OrderHeader.computeCrossOrderId("C333", secondEdiProcessTime);
+		order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
+		
 		Assert.assertNotNull(order);
 		Assert.assertEquals(order.getOrderType(), OrderTypeEnum.CROSS);
 		Assert.assertEquals(true, order.getActive());

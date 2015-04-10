@@ -198,7 +198,8 @@ public abstract class AbstractPersistenceService extends AbstractCodeshelfIdleSe
 	public static <T>T deproxify(T object) {
 		if (object==null) {
 			return null;
-		} if (object instanceof HibernateProxy) {
+		} 
+		if (object instanceof HibernateProxy) {
 	        Hibernate.initialize(object);
 	        @SuppressWarnings("unchecked")
 			T realDomainObject = (T) ((HibernateProxy) object)
@@ -207,6 +208,31 @@ public abstract class AbstractPersistenceService extends AbstractCodeshelfIdleSe
 	        return (T)realDomainObject;
 	    }
 		return object;
+	}
+	
+	public static <T,SUBT extends T>SUBT deproxify(Class<SUBT> targetClass, T object) {
+		if (object==null) {
+			return null;
+		} 
+		if (object instanceof HibernateProxy) {
+			Class<?> objectClass = Hibernate.getClass(object);
+			if(targetClass.isAssignableFrom(objectClass)) {
+		        Hibernate.initialize(object);
+		        @SuppressWarnings("unchecked")
+				SUBT realDomainObject = (SUBT) ((HibernateProxy) object)
+		                  .getHibernateLazyInitializer()
+		                  .getImplementation();
+		        return realDomainObject;
+			} else {
+				throw new ClassCastException("Tried to cast proxy for "+objectClass.getSimpleName()+" to "+targetClass.getSimpleName());
+			}
+	    }
+		if(targetClass.isAssignableFrom(object.getClass())) {
+			@SuppressWarnings("unchecked")
+			SUBT recast = (SUBT)object;
+			return recast;
+		}
+		throw new ClassCastException("Tried to cast (not a proxy) "+object.getClass()+" to "+targetClass.getSimpleName());
 	}
 	
 	@Override

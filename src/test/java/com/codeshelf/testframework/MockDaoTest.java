@@ -372,8 +372,7 @@ public abstract class MockDaoTest extends MinimalTest {
 		result.setKind(inFacility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND));
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
-		
-		inFacility.addContainer(result);
+		result.setParent(inFacility);
 		
 		Container.staticGetDao().store(result);
 
@@ -449,8 +448,8 @@ public abstract class MockDaoTest extends MinimalTest {
 		result.setDueDate(new Timestamp(System.currentTimeMillis()));
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
+		result.setParent(inFacility);
 		OrderHeader.staticGetDao().store(result);
-		inFacility.addOrderHeader(result);
 		if (inOrderGroup != null) {
 			inOrderGroup.addOrderHeader(result);
 		}
@@ -492,7 +491,7 @@ public abstract class MockDaoTest extends MinimalTest {
 		result.setStandardUom(inUomMaster);
 		result.setActive(true);
 		result.setUpdated(new Timestamp(System.currentTimeMillis()));
-		inFacility.addItemMaster(result);
+		result.setParent(inFacility);
 		ItemMaster.staticGetDao().store(result);
 
 		return result;
