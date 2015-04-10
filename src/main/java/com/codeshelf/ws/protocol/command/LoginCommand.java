@@ -17,10 +17,10 @@ import com.codeshelf.model.domain.Organization;
 import com.codeshelf.model.domain.SiteController;
 import com.codeshelf.persistence.AbstractPersistenceService;
 import com.codeshelf.persistence.TenantPersistenceService;
-import com.codeshelf.security.AuthResponse;
-import com.codeshelf.security.AuthResponse.Status;
 import com.codeshelf.security.CodeshelfSecurityManager;
-import com.codeshelf.security.HmacAuthService;
+import com.codeshelf.security.TokenSession;
+import com.codeshelf.security.TokenSession.Status;
+import com.codeshelf.security.TokenSessionService;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.ws.protocol.request.LoginRequest;
@@ -56,16 +56,16 @@ public class LoginCommand extends CommandABC {
 			String username = loginRequest.getUserId();
 			String password = loginRequest.getPassword();
 			if (wsConnection != null) {
-				AuthResponse authResponse = null;
+				TokenSession tokenSession = null;
 				boolean authByToken = false;
 				if (!Strings.isNullOrEmpty(cstoken)) {
-					authResponse = HmacAuthService.getInstance().checkToken(cstoken);
+					tokenSession = TokenSessionService.getInstance().checkToken(cstoken);
 					authByToken = true;
 				} else {
-					authResponse = HmacAuthService.getInstance().authenticate(username, password);
+					tokenSession = TokenSessionService.getInstance().authenticate(username, password);
 	            }
-				if (authResponse.getStatus().equals(Status.ACCEPTED)) {
-					User authUser = authResponse.getUser();
+				if (tokenSession.getStatus().equals(Status.ACCEPTED)) {
+					User authUser = tokenSession.getUser();
 					// successfully authenticated user with password
 					Tenant tenant = TenantManagerService.getInstance().getTenantByUser(authUser);				
 					wsConnection.authenticated(authUser,tenant);
@@ -137,7 +137,7 @@ public class LoginCommand extends CommandABC {
 						CodeshelfSecurityManager.removeContext();
 					}
 				} else {
-					LOGGER.info("Auth failed: {}",authResponse.getStatus().toString());
+					LOGGER.info("Auth failed: {}",tokenSession.getStatus().toString());
 					response.setStatus(ResponseStatus.Authentication_Failed);
 				}
 			} else {

@@ -20,7 +20,7 @@ import com.codeshelf.metrics.DropboxServiceHealthCheck;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
-import com.codeshelf.security.AuthProviderService;
+import com.codeshelf.security.TokenSessionService;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.server.WebSocketManagerService;
@@ -45,7 +45,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 			final IMetricsService metricsService,
 			final WebSocketManagerService webSocketManagerService,
 			final IPropertyService propertyService,
-			final AuthProviderService authService,
+			final TokenSessionService authService,
 			final SecurityManager securityManager) {
 			
 		super(inWebApiServer);

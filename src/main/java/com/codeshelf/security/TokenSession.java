@@ -9,7 +9,7 @@ import com.codeshelf.manager.User;
 
 @ToString
 @EqualsAndHashCode(of={"status","user","tokenTimestamp","newToken"})
-public class AuthResponse {
+public class TokenSession {
 	public static enum Status {
 		ACCEPTED,
 		LOGIN_NOT_ALLOWED,
@@ -34,7 +34,7 @@ public class AuthResponse {
 	@Getter
 	private String newToken = null;
 	
-	public AuthResponse(Status status, User user, Tenant tenant, Long tokenTimestamp, Long sessionStartTimestamp, SessionFlags sessionFlags, String newToken) {
+	public TokenSession(Status status, User user, Tenant tenant, Long tokenTimestamp, Long sessionStartTimestamp, SessionFlags sessionFlags, String newToken) {
 		if(user != null) {
 			if(!user.getTenant().equals(tenant)) { // validate that user can access tenant
 				throw new RuntimeException("Token validation error: user "+user.getUsername()+" cannot access tenant "+tenant.getId());
@@ -49,13 +49,13 @@ public class AuthResponse {
 		this.newToken = newToken;
 	}
 	
-	public AuthResponse(Status status,User user) {
+	public TokenSession(Status status,User user) {
 		notAccepted(status);
 		this.status = status;
 		this.user = user;
 	}
 	
-	public AuthResponse(Status status) {
+	public TokenSession(Status status) {
 		notAccepted(status);
 		this.status = status;
 	}

@@ -2,8 +2,6 @@ package com.codeshelf.security;
 
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
@@ -16,6 +14,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.User;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.google.common.base.Strings;
 
 @SuppressWarnings("serial")
@@ -23,55 +23,46 @@ public class AuthServlet extends HttpServlet {
 
 	private static final Logger	LOGGER						= LoggerFactory.getLogger(AuthServlet.class);
 	
-	private static final String CONTENT_TYPE_HTML = "text/html";
+	private static final String CONTENT_TYPE_JSON = "application/json";
 	private static final String CACHE_CONTROL_HEADER = "Cache-Control";
     private static final String NO_CACHE = "must-revalidate,no-cache,no-store";
 
-    private static final String DEV_LOGIN_HTML = "<html><head><title>login</title></head><body>"
-			+ "<form method=post action=/auth/>u: <input type=text name=u><br>p: <input type=password name=p>"
-			+ "<br><input type=hidden name=next value=/mgr/security><input type=submit></form></body></html>";
-
-	AuthProviderService authProviderService;
+    TokenSessionService tokenSessionService;
 	
 	public AuthServlet() {
-		this.authProviderService = HmacAuthService.getInstance();
+		this.tokenSessionService = TokenSessionService.getInstance();
 	}
 
 	@Override
 	protected void doPost(HttpServletRequest req,
 					HttpServletResponse resp) throws ServletException, IOException {
-		String username = req.getParameter("u");
+        resp.setHeader(CACHE_CONTROL_HEADER, NO_CACHE);
+        resp.setContentType(CONTENT_TYPE_JSON);
+
+        String username = req.getParameter("u");
 		String password = req.getParameter("p");
-		URI nextUri = uri(req.getParameter("next"));
-		URI retryUri = uri(req.getParameter("retry"));
 		boolean authSuccess = false;
 		
 		if (!Strings.isNullOrEmpty(username) && !Strings.isNullOrEmpty(password)) {
-			AuthResponse auth = HmacAuthService.getInstance().authenticate(username, password);
-			if (auth.getStatus().equals(AuthResponse.Status.ACCEPTED)) {
-				User user = auth.getUser();
-				// auth succeeds, generate token
-				String token = authProviderService.createToken(user.getId(), user.getTenant().getId());
-				Cookie cookie = authProviderService.createAuthCookie(token);
-				// redirect to requested location
+			// authenticate method will log success/failure of attempt
+			TokenSession auth = TokenSessionService.getInstance().authenticate(username, password);
+			if (auth.getStatus().equals(TokenSession.Status.ACCEPTED)) {
+				resp.setStatus(Status.OK.getStatusCode());
+
+				// put token into a cookie
+				Cookie cookie = tokenSessionService.createAuthCookie(auth.getNewToken());
 				resp.addCookie(cookie);
 				
-				if(nextUri != null) {
-					resp.sendRedirect(nextUri.toASCIIString());
-				} else {
-					resp.setStatus(Status.OK.getStatusCode());
-				}
+				// send user as body of response
+				sendUser(auth.getUser(),resp);
+				
 				authSuccess=true;
-			} // else authenticate logged reason if failed
+			}  
 		} else {
 			LOGGER.warn("Login failed: 'u' and/or 'p' parameters not submitted");
 		}
 		if(!authSuccess) { // TODO: clear token cookie here
-			if(retryUri != null) {
-				resp.sendRedirect(retryUri.toASCIIString());
-			} else {
-				resp.setStatus(Status.FORBIDDEN.getStatusCode());
-			}
+			resp.setStatus(Status.FORBIDDEN.getStatusCode());
 		}
 	}
     
@@ -79,26 +70,26 @@ public class AuthServlet extends HttpServlet {
     protected void doGet(HttpServletRequest req,
                          HttpServletResponse resp) throws ServletException, IOException {
 
-    	resp.setStatus(HttpServletResponse.SC_OK);
         resp.setHeader(CACHE_CONTROL_HEADER, NO_CACHE);
-        resp.setContentType(CONTENT_TYPE_HTML);
+        resp.setContentType(CONTENT_TYPE_JSON);
     
-        // TODO: look at relogin cookie 
-        PrintWriter out = resp.getWriter();
-		out.print(DEV_LOGIN_HTML);
-        out.close();
+    	TokenSession tokenSession = TokenSessionService.getInstance().checkAuthCookie(req.getCookies());
+    	if(tokenSession.getStatus().equals(TokenSession.Status.ACCEPTED)) {
+        	resp.setStatus(Status.OK.getStatusCode());
+        	sendUser(tokenSession.getUser(),resp);    		
+    	} else {
+    		resp.setStatus(Status.FORBIDDEN.getStatusCode());
+    	}
     }
 
-    private URI uri(String s) {
-    	URI uri = null;
-    	
-    	if(!Strings.isNullOrEmpty(s)) {
-        	try {
-    			uri = new URI(s);
-    		} catch (URISyntaxException e) {
-    		}
-    	}    	
-		return uri;
+	private void sendUser(User user, HttpServletResponse resp) throws IOException {
+		ObjectMapper mapper = new ObjectMapper(); // TODO: should reuse and share globally per jackson documentation -ic
+		mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+		String jsonUser = mapper.writeValueAsString(user);
+
+        PrintWriter out = resp.getWriter();
+		out.print(jsonUser);
+        out.close();
 	}
 
 }

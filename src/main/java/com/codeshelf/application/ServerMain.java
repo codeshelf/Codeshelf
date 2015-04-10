@@ -32,10 +32,9 @@ import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
-import com.codeshelf.security.AuthProviderService;
 import com.codeshelf.security.CodeshelfRealm;
 import com.codeshelf.security.CodeshelfSecurityManager;
-import com.codeshelf.security.HmacAuthService;
+import com.codeshelf.security.TokenSessionService;
 import com.codeshelf.service.IPropertyService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.WorkService;
@@ -147,8 +146,8 @@ public final class ServerMain {
 				bind(SecurityManager.class).to(CodeshelfSecurityManager.class);
 				bind(Realm.class).to(CodeshelfRealm.class);
 
-				requestStaticInjection(HmacAuthService.class);
-				bind(AuthProviderService.class).to(HmacAuthService.class).in(Singleton.class);
+				requestStaticInjection(TokenSessionService.class);
+				bind(TokenSessionService.class).in(Singleton.class);
 			}
 					
 		}, 
