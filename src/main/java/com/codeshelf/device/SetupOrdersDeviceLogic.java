@@ -651,8 +651,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 	
 	// --------------------------------------------------------------------------
-		/**  doNextPick has a major side effect of setState(DO_PICK) if there is more work.
-		 *   Then setState(DO_PICK) calls showActivePicks()
+		/**  doNextWallPut side effects
 		 */
 		private void doNextWallPut() {
 			LOGGER.debug(this + "doNextWallPut");
@@ -1724,10 +1723,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// Note: if the response is "bad", want to be back in PUT_WALL_SCAN_ITEM state, with a meaningful response
 		// such as "could not find item", or "no order in put wall needs that item"
 		
+		notifyPutWallItem(inScanStr, getPutWallName());		
+
 		sendWallItemWiRequest(inScanStr, getPutWallName());
 		
-		// no notifyXXX here, as there is not result yet.
-		// do the notify on a good response, as work instruction(s) were made.
 	}
 	
 	protected void processPutWallScanWall (final String inScanPrefixStr, final String inScanStr) {

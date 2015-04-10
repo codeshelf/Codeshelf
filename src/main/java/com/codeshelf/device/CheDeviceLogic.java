@@ -1617,6 +1617,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			getMyGuidStr());
 	}
 
+	protected void notifyPutWallItem(String itemOrUpd, String wallname) {
+		LOGGER.info("*Request plans for item:{} in put wall:{} by picker:{} device:{}",
+			itemOrUpd,
+			wallname,
+			getUserId(),
+			getMyGuidStr());
+	}
+
 	protected void notifyScanInventoryUpdate(String locationStr, String itemOrGtin) {
 		LOGGER.info("*Inventory update for item/gtin:{} to location:{} by picker:{} device:{}",
 			itemOrGtin,
