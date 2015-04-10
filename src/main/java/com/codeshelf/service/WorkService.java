@@ -163,7 +163,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			ImmutableList.of(Order.asc("completed")));
 
 	}
-
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Compute work instructions for a CHE that's at the listed location with the listed container IDs.
@@ -238,6 +238,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					LOGGER.error("", e);
 				}
 			}
+		}
+		
+		if (containerList.isEmpty() && !inContainerIdList.isEmpty()) {
+			PutWallOrderGenerator.attemptToGenerateWallOrders(inChe, containerList, inContainerIdList);
 		}
 
 		Timestamp theTime = now();
