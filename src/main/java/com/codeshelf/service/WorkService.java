@@ -697,7 +697,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			}
 		}
 
-		LOGGER.info("getPutWallInstructionsForItem() return {} work instructions", wiResultList.size());
+		LOGGER.info("Temp: getPutWallInstructionsForItem() returning {} work instructions", wiResultList.size());
+		response.setWorkInstructions(wiResultList);
 		return response;
 
 	}

@@ -49,6 +49,7 @@ public class ComputePutWallInstructionCommand extends CommandABC {
 
 			response.setNetworkGuid(networkGuid);
 			response.setStatus(ResponseStatus.Success);
+			response.logTheCount();
 			return response;
 		}
 		response = new GetPutWallInstructionResponse();

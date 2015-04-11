@@ -279,27 +279,23 @@ public class CheProcessPutWall extends ServerTest {
 		picker1.scanCommand("CLEAR");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, 4000);	
 		picker1.scanSomething("1514");			
-		// picker1.waitForCheState(CheStateEnum.DO_PUT, 4000);
-		picker1.waitForCheState(CheStateEnum.NO_PUT_WORK, 4000); // BUG. Log shows server created and sent 1 work instruction, but site controller received 0.
+		picker1.waitForCheState(CheStateEnum.DO_PUT, 4000);
 		
 		// after DEV-713 we will get a plan, display to the put wall, etc.
 		// P14 is at poscon index 4. Count should be 3
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
-		//Assert.assertEquals((Byte) (byte) 3, displayValue);
-		//Assert.assertNull(displayValue);
-		//We have not yet implemented displaying needed quantities on PosCons. So, by this point in the process, they are still blinking from Order Location setup
-		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+		Assert.assertEquals((Byte) (byte) 3, displayValue);
 
 		// button from the put wall
-		// posman.buttonPress(4, 3);
+		posman.buttonPress(4, 3);
 
 		// this should complete the plan, and return to PUT_WALL_SCAN_ITEM.  More DEV-713 work
-		picker1.scanCommand("CLEAR");
+		// picker1.scanCommand("CLEAR");
 
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, 4000);
 		picker1.scanSomething("1515"); // the sku
 		//picker1.waitForCheState(CheStateEnum.DO_PUT, 4000);
-		picker1.waitForCheState(CheStateEnum.NO_PUT_WORK, 4000);
+		picker1.waitForCheState(CheStateEnum.NO_PUT_WORK, 4000); // BUG.
 		// after DEV-713 
 		// we get two plans. For this test, handle singly. DEV-714 is about lighting two or more put wall locations at time.
 		// By that time, we should have implemented something to not all button press from CHE poscon, especially if more than one WI.
