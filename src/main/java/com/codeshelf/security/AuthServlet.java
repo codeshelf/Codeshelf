@@ -74,7 +74,7 @@ public class AuthServlet extends HttpServlet {
         resp.setContentType(CONTENT_TYPE_JSON);
     
     	TokenSession tokenSession = TokenSessionService.getInstance().checkAuthCookie(req.getCookies());
-    	if(tokenSession.getStatus().equals(TokenSession.Status.ACCEPTED)) {
+    	if(tokenSession != null && tokenSession.getStatus().equals(TokenSession.Status.ACCEPTED)) {
         	resp.setStatus(Status.OK.getStatusCode());
         	sendUser(tokenSession.getUser(),resp);    		
     	} else {
