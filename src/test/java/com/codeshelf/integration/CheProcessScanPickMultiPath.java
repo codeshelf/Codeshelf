@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
-import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionSequencerType;
