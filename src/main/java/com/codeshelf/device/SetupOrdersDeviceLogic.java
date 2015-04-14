@@ -665,9 +665,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		} else {
 
 			if (selectNextActivePicks()) {
-				setState(CheStateEnum.DO_PICK); // This will cause showActivePicks();
+				setState(CheStateEnum.DO_PUT); // This will cause showActivePicks();
 			} else {
-				processPickComplete(false);
+				// no side effects needed? processPickComplete() is the corrolary
+				setState(CheStateEnum.PUT_WALL_SCAN_ITEM); 
 			}
 		}
 	}
@@ -711,8 +712,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		String firstItemId = null;
 		Collections.sort(mAllPicksWiList, new WiGroupSortComparator());
 		for (WorkInstruction wi : mAllPicksWiList) {
-			if (getPosconIndexOfWi(wi) == 0) {
-				LOGGER.error("{} not in container map", wi.getContainerId());
+
+			// This check is valid for batch order pick. Invalid for put wall put.			
+			CheStateEnum state = this.getCheStateEnum();
+			if (state != CheStateEnum.GET_PUT_INSTRUCTION && state != CheStateEnum.DO_PUT && getPosconIndexOfWi(wi) == 0) {
+				LOGGER.error("{} not in container map. State is {}", wi.getContainerId(), state);
 				break;
 			}
 
@@ -1525,14 +1529,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Almost the same as assignWork(), but some state transitions differ
 	 */
 	public void assignWallPuts(final List<WorkInstruction> inWorkItemList, String message) {
+		notifyPutWallResponse(inWorkItemList);
 		if (inWorkItemList == null || inWorkItemList.size() == 0) {
 			setState(CheStateEnum.NO_PUT_WORK);
 		} else {
 			mActivePickWiList.clear();
 			mAllPicksWiList.clear();
 			mAllPicksWiList.addAll(inWorkItemList);
-			doNextWallPut();
-			// doNextPick will set the state.
+			doNextWallPut(); // should set the state
 		}
 	}
 
@@ -1554,16 +1558,22 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		mActivePickWiList.remove(inWi);
 
-		//Decrement count if this is a non-HK WI
-		if (!inWi.isHousekeeping()) {
-			String containerId = inWi.getContainerId();
-			WorkInstructionCount count = this.mContainerToWorkInstructionCountMap.get(containerId);
-			count.decrementGoodCountAndIncrementCompleteCount();
+		CheStateEnum state = getCheStateEnum();
 
-			Byte position = getPosconIndexOfContainerId(containerId);
-			// TODO unnecessary?
-			if (!position.equals(0)) {
-				this.showCartRunFeedbackIfNeeded(position); // handles the CHE poscons, including clearing this specific on if no feedback
+		if (state == CheStateEnum.DO_PICK || state == CheStateEnum.SHORT_PICK) {
+			// maintain the CHE feedback, but not for put wall puts. Not DO_PUT. And later likely need to add SHORT_PUT state. Not there either.
+
+			//Decrement count if this is a non-HK WI
+			if (!inWi.isHousekeeping()) {
+				String containerId = inWi.getContainerId();
+				WorkInstructionCount count = this.mContainerToWorkInstructionCountMap.get(containerId);
+				count.decrementGoodCountAndIncrementCompleteCount();
+
+				Byte position = getPosconIndexOfContainerId(containerId);
+				// TODO unnecessary?
+				if (!position.equals(0)) {
+					this.showCartRunFeedbackIfNeeded(position); // handles the CHE poscons, including clearing this specific on if no feedback
+				}
 			}
 		}
 
@@ -1580,7 +1590,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			showActivePicks();
 		} else {
 			// There's no more active picks, so move to the next set.
-			doNextPick();
+			if (state == CheStateEnum.DO_PUT)
+				doNextWallPut();
+			else
+				doNextPick();
 		}
 	}
 
@@ -1715,11 +1728,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	protected void processPutWallItemScan(final String inScanPrefixStr, final String inScanStr) {
 
-		// DEV-713 This is incorrect. Change to  new GET_PUT_INSTRUCTION state
-		setState(CheStateEnum.DO_PUT);
-		// The response then returns the work instruction, and transitions to DO_PUT state. Cheating for now before the request is done.
-		// Note: if the response is "bad", want to be back in PUT_WALL_SCAN_ITEM state, with a meaningful response
-		// such as "could not find item", or "no order in put wall needs that item"
+		setState(CheStateEnum.GET_PUT_INSTRUCTION);
+		// The response then returns the work instruction, and transitions to DO_PUT state. 
+		// Note: or NO_PUT_WORK
 
 		notifyPutWallItem(inScanStr, getPutWallName());
 
@@ -1787,27 +1798,43 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 
 	/**
-	 * Determine if the mActivePickWiList represents a housekeeping move. If so, display it and return true
+	 * What do we show on the CHE for put wall put? Note that we have variable context. If slow move CHE came to do the put, user might like the 
+	 * appropriate container corresponding to a wall to light somehow. (What count if displaying multiples?) If multiple, we definitely cannot allow
+	 * button press on the CHE
 	 */
+	protected void doPosConDisplaysforActivePutWis() {
+		// for now, nothing
+	}
+
+	/**
+	* Make poscons reflect the current active wis. For MULTPICK, this may be several
+	*/
 	@Override
 	protected void doPosConDisplaysforActiveWis() {
 
-		// Housekeeping moves will result in a single work instruction in the active pickes. Enum tells if housekeeping.
-		if (!sendHousekeepingDisplay()) {
+		CheStateEnum state = getCheStateEnum();
 
-			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+		if (state == CheStateEnum.DO_PUT) {
+			doPosConDisplaysforActivePutWis();
+		} else {
 
-			for (WorkInstruction wi : mActivePickWiList) {
-				Byte theIndex = getPosconIndexOfWi(wi);
-				if (theIndex > 0) {
-					PosControllerInstr instruction = getPosInstructionForWiAtIndex(wi, getPosconIndexOfWi(wi));
-					instructions.add(instruction);
-				} else
-					LOGGER.error("unexpected missing poscon index for work instruction");
+			// Housekeeping moves will result in a single work instruction in the active pickes. Enum tells if housekeeping.
+			if (!sendHousekeepingDisplay()) {
+
+				List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+
+				for (WorkInstruction wi : mActivePickWiList) {
+					Byte theIndex = getPosconIndexOfWi(wi);
+					if (theIndex > 0) {
+						PosControllerInstr instruction = getPosInstructionForWiAtIndex(wi, getPosconIndexOfWi(wi));
+						instructions.add(instruction);
+					} else
+						LOGGER.error("unexpected missing poscon index for work instruction. State is {}", state);
+				}
+
+				sendPositionControllerInstructions(instructions);
+
 			}
-
-			sendPositionControllerInstructions(instructions);
-
 		}
 	}
 

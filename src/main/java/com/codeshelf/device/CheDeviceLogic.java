@@ -110,11 +110,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					SCAN_PUTWALL_LINE2_MSG					= cheLine("THE PUT WALL");
 	protected static final String					SCAN_PUTWALL_NAME_MSG					= cheLine("SCAN PUT WALL NAME");
 
-	public 	  static final String					STARTWORK_COMMAND						= "START";
-	public    static final String					REVERSE_COMMAND							= "REVERSE";
+	public static final String						STARTWORK_COMMAND						= "START";
+	public static final String						REVERSE_COMMAND							= "REVERSE";
 	protected static final String					SETUP_COMMAND							= "SETUP";
 	protected static final String					SHORT_COMMAND							= "SHORT";
-	public	  static final String					LOGOUT_COMMAND							= "LOGOUT";
+	public static final String						LOGOUT_COMMAND							= "LOGOUT";
 	protected static final String					YES_COMMAND								= "YES";
 	protected static final String					NO_COMMAND								= "NO";
 	protected static final String					CLEAR_ERROR_COMMAND						= "CLEAR";
@@ -197,25 +197,21 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	protected void processGtinScan(final String inScanPrefixStr, final String inScanStr) {
 		boolean isTape = false;
-		
+
 		if (LOCATION_PREFIX.equals(inScanPrefixStr) && lastScanedGTIN != null) {
 			// Updating location of an item
 			notifyScanInventoryUpdate(inScanStr, lastScanedGTIN);
 			mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, lastScanedGTIN);
-		} 
-		else if (LOCATION_PREFIX.equals(inScanPrefixStr) && lastScanedGTIN == null) {
+		} else if (LOCATION_PREFIX.equals(inScanPrefixStr) && lastScanedGTIN == null) {
 			// Lighting a location based on location
 			mDeviceManager.inventoryLightLocationScan(getPersistentId(), inScanStr, isTape);
-		} 
-		else if (TAPE_PREFIX.equals(inScanPrefixStr) && lastScanedGTIN == null) {
+		} else if (TAPE_PREFIX.equals(inScanPrefixStr) && lastScanedGTIN == null) {
 			// Lighting a location based on tape
 			isTape = true;
 			mDeviceManager.inventoryLightLocationScan(getPersistentId(), inScanStr, isTape);
-		}
-		else if (USER_PREFIX.equals(inScanPrefixStr)) {
+		} else if (USER_PREFIX.equals(inScanPrefixStr)) {
 			LOGGER.warn("Recieved invalid USER scan: {}. Expected location or GTIN.", inScanStr);
-		} 
-		else {
+		} else {
 			mDeviceManager.inventoryLightItemScan(this.getPersistentId(), inScanStr);
 			lastScanedGTIN = inScanStr;
 		}
@@ -851,21 +847,21 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * By convention, we are remembering the representation without the 0x (Change if necessary.)
 	 */
 	private void rememberOffChePosconWorkInstruction(String controllerId, int posconIndex, WorkInstruction inFirstWi) {
-		if (controllerId == null || inFirstWi == null){
+		if (controllerId == null || inFirstWi == null) {
 			LOGGER.error(" null input to rememberOffChePosconWorkInstruction");
 			return;
 		}
-		if (controllerId.length() < 2){ // not enough for a real business case, but avoids stringOutOfRange exception
+		if (controllerId.length() < 2) { // not enough for a real business case, but avoids stringOutOfRange exception
 			LOGGER.error(" bad input to rememberOffChePosconWorkInstruction");
 			return;
 		}
 		@SuppressWarnings("unused")
-		String theSub = controllerId.substring(0,2);
-		if ("0x".equals(controllerId.substring(0,2))) {
+		String theSub = controllerId.substring(0, 2);
+		if ("0x".equals(controllerId.substring(0, 2))) {
 			LOGGER.error("Probable coding error. See comments in rememberOffChePosconWorkInstruction()");
 			// By convention, use the non- Ox form, but continue
 		}
-		
+
 		WorkInstruction existingWi = mWiNonChePoscons.get(controllerId, posconIndex);
 		if (existingWi == null) {
 			mWiNonChePoscons.put(controllerId, posconIndex, inFirstWi);
@@ -876,12 +872,12 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	}
 
 	private WorkInstruction retrieveOffChePosconWorkInstruction(String controllerId, int posconIndex) {
-		 // By convention, we are remembering/retrieving the representation without the 0x. (Change if necessary.)
-		if (controllerId == null || controllerId.length() < 2){
+		// By convention, we are remembering/retrieving the representation without the 0x. (Change if necessary.)
+		if (controllerId == null || controllerId.length() < 2) {
 			LOGGER.error(" bad input to retrieveOffChePosconWorkInstruction");
 			return null;
 		}
-		if ("0x".equals(controllerId.substring(0,2))) {
+		if ("0x".equals(controllerId.substring(0, 2))) {
 			LOGGER.error("Probable coding error. See comments in retrieveOffChePosconWorkInstruction()");
 			// By convention, use the non- Ox form, but continue
 		}
@@ -959,7 +955,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		testWi = retrieveOffChePosconWorkInstruction("0x1234", 9); // logs probable error, but works
 		if (testWi == null) {
 			LOGGER.error("FAIL testOffChePosconWorkInstructions 11");
-		}			
+		}
 		rememberOffChePosconWorkInstruction("0x", 9, wi2); // Just checking that we avoid the string range exception
 		rememberOffChePosconWorkInstruction("0", 9, wi2); // Just checking that we avoid the string range exception
 
@@ -1185,7 +1181,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		// CD_0041 is there a need for this?
 		ledControllerShowLeds(getGuid());
-		
+
 		if (isWorkOnOtherPaths) {
 			setState(CheStateEnum.PICK_COMPLETE_CURR_PATH);
 		} else {
@@ -1294,6 +1290,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.error("Inappropriate call to assignWork()");
 
 	}
+
 	public void assignWallPuts(final List<WorkInstruction> inWorkItemList, final String message) {
 		LOGGER.error("Inappropriate call to assignWallPuts()");
 
@@ -1458,7 +1455,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				// As this is the point of adding the information to the PosManagerDeviceLogic, this should be the point of 
 				// remembering and associating this send to a specific active WI.
 				notifyNonChePosconLight(thisGuidStr, posconIndex, inFirstWi);
-				
+
 				// LOGGER.info("remember {} {}", thisGuidStr, posconIndex); // useful debug
 				rememberOffChePosconWorkInstruction(thisGuidStr, posconIndex, inFirstWi);
 
@@ -1507,8 +1504,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			// Send the CHE a display command (any of the WIs has the info we need).
 			CheStateEnum currentState = getCheStateEnum();
 			if (currentState != CheStateEnum.DO_PICK && currentState != CheStateEnum.SHORT_PICK
-					&& currentState != CheStateEnum.SCAN_SOMETHING) {
-				LOGGER.error("unanticipated state in showActivePicks");
+					&& currentState != CheStateEnum.SCAN_SOMETHING && currentState != CheStateEnum.DO_PUT) {
+				LOGGER.error("unanticipated state in showActivePicks: {}", currentState);
 				setState(CheStateEnum.DO_PICK);
 				//return because setting state to DO_PICK will call this function again
 				return;
@@ -1617,7 +1614,17 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			getMyGuidStr());
 	}
 
-	protected void notifyPutWallItem(String itemOrUpd, String wallname) {
+protected void notifyPutWallResponse(final List<WorkInstruction> inWorkItemList){
+	int listsize = 0;
+	if (inWorkItemList != null)
+		listsize = inWorkItemList.size();
+	LOGGER.info("*{} work instructions in put wall response:{} by picker:{} device:{}",
+		listsize,
+		getUserId(),
+		getMyGuidStr());	
+}
+
+protected void notifyPutWallItem(String itemOrUpd, String wallname) {
 		LOGGER.info("*Request plans for item:{} in put wall:{} by picker:{} device:{}",
 			itemOrUpd,
 			wallname,

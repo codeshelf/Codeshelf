@@ -31,10 +31,40 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		mPosToLastSetIntrMap = new HashMap<Byte, PosControllerInstr>();
 	}
 
+	protected String getConciseInstructionsSummary() {
+		return null;
+	}
+
 	protected void sendPositionControllerInstructions(List<PosControllerInstr> inInstructions) {
-		LOGGER.info("{}: Sending PosCon Instructions {}", this.getMyGuidStr(), inInstructions);
-		if (inInstructions.isEmpty()) {return;}
-		
+
+		if (inInstructions.isEmpty()) {
+			LOGGER.error("sendPositionControllerInstructions called for empty instructions");
+			return;
+		}
+
+	
+		// If we are logging these, lets do so in a way that is useful
+		String header = String.format("%s: Sending PosCon Instructions", this.getMyGuidStr());
+		final int logGroupSize = 3;
+		int intructionCount = 0;
+		int totalCount = inInstructions.size();
+		String toLogStr = "";
+		for (PosControllerInstr instr : inInstructions) {
+			intructionCount++;
+			if (intructionCount == 1) {
+				toLogStr = String.format("%s %s", header, instr.conciseDescription());
+			} else {
+				toLogStr = String.format("%s %s", toLogStr, instr.conciseDescription());
+			}
+			if ((intructionCount == totalCount) || (intructionCount % logGroupSize == 0)) {
+				LOGGER.info(toLogStr);
+				toLogStr = "";
+			}
+		}
+
+		// Doesn't the following look simpler than all of the aboive? Horrible in the logs, though.
+		// LOGGER.info("{}: Sending PosCon Instructions {}", this.getMyGuidStr(), inInstructions);
+
 		//Update the last sent posControllerInstr for the position 
 		for (PosControllerInstr instr : inInstructions) {
 			if (PosControllerInstr.POSITION_ALL.equals(instr.getPosition())) {
@@ -50,7 +80,10 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 			ICommand command = new CommandControlSetPosController(NetEndpoint.PRIMARY_ENDPOINT, batch);
 			mRadioController.sendCommand(command, getAddress(), true);
 			batchStart += batchSize;
-			try {Thread.sleep(5);} catch (InterruptedException e) {}
+			try {
+				Thread.sleep(5);
+			} catch (InterruptedException e) {
+			}
 		}
 	}
 
@@ -74,7 +107,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		ICommand command = new CommandControlClearPosController(NetEndpoint.PRIMARY_ENDPOINT, inPosition);
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
-	
+
 	public void simulateButtonPress(int inPosition, int inQuantity) {
 		// Caller's responsibility to get the quantity correct. Normally match the planQuantity. Normally only lower after SHORT command.
 		CommandControlButton buttonCommand = new CommandControlButton();
@@ -82,8 +115,8 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		buttonCommand.setValue((byte) inQuantity);
 		this.buttonCommandReceived(buttonCommand);
 	}
-	
-	public Byte getLastSentPositionControllerDisplayValue(byte position) {		
+
+	public Byte getLastSentPositionControllerDisplayValue(byte position) {
 		if (getPosToLastSetIntrMap().containsKey(position)) {
 			return getPosToLastSetIntrMap().get(position).getReqQty();
 		} else if (getPosToLastSetIntrMap().containsKey(PosControllerInstr.POSITION_ALL)) {
@@ -132,6 +165,5 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 			return null;
 		}
 	}
-
 
 }

@@ -26,15 +26,18 @@ public class TransactionFilter implements Filter {
 	@Override
 	public void doFilter(ServletRequest request, ServletResponse response, FilterChain filterChain) throws IOException, ServletException {
 		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		boolean threw=false;
 		try {
 			persistenceService.beginTransaction();
 			filterChain.doFilter(request, response);
 		} catch(Exception e) {
 			LOGGER.warn("Rolling back transaction for exception: " + e);
+			threw=true;
 			persistenceService.rollbackTransaction();
 			throw e;
 		} finally {
-			persistenceService.commitTransaction();
+			if(!threw)
+				persistenceService.commitTransaction();
 		}
 	}
 }

@@ -129,12 +129,12 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 		//////////////////////////////////////////
 		// Handler for Get Order Detail Work-- LINE_SCAN work flow
 		else if (response instanceof GetPutWallInstructionResponse) {
-			GetPutWallInstructionResponse workResponse = (GetPutWallInstructionResponse) response;
-			if (response.getStatus() == ResponseStatus.Success) {
-				LOGGER.info("GetOrderDetailWorkResponse received: success. Passing through to deviceManager");
-				this.deviceManager.processPutWallInstructionResponse(workResponse.getNetworkGuid(),
-					workResponse.getWorkInstructions(),
-					workResponse.getStatusMessage());
+			GetPutWallInstructionResponse wallResponse = (GetPutWallInstructionResponse) response;
+			if (wallResponse.getStatus() == ResponseStatus.Success) {
+				LOGGER.info("GetPutWallInstructionResponse received: success. Passing through to deviceManager");
+				this.deviceManager.processPutWallInstructionResponse(wallResponse.getNetworkGuid(),
+					wallResponse.getWorkInstructions(),
+					wallResponse.getStatusMessage());
 			} else {
 				LOGGER.info("GetPutWallInstructionResponse received: not success. No action.");
 			}

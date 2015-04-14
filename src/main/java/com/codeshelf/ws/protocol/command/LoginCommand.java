@@ -57,10 +57,8 @@ public class LoginCommand extends CommandABC {
 			String password = loginRequest.getPassword();
 			if (wsConnection != null) {
 				TokenSession tokenSession = null;
-				boolean authByToken = false;
 				if (!Strings.isNullOrEmpty(cstoken)) {
 					tokenSession = TokenSessionService.getInstance().checkToken(cstoken);
-					authByToken = true;
 				} else {
 					tokenSession = TokenSessionService.getInstance().authenticate(username, password);
 	            }

@@ -650,7 +650,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		// 		SingleWorkItem workItem = makeWIForOutbound(orderDetail, inChe, null, null, inFacility, inFacility.getPaths());
 
 		// 1
-		ItemMaster master = getItemMasterFromScanValue(itemOrUpc);
+		ItemMaster master = getItemMasterFromScanValue(facility, itemOrUpc);
 		if (master == null) {
 			LOGGER.warn("Did not find item master from {}", itemOrUpc);
 			response.setStatus(ResponseStatus.Fail);
@@ -697,12 +697,13 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			OrderHeader oh = detail.getParent();
 			OrderLocation ol = oh.getFirstOrderLocationOnPath(null);
 
-			WorkInstruction wi = getWiForPutWallDetailAndLocation(detail, ol);
+			WorkInstruction wi = getWiForPutWallDetailAndLocation(inChe, detail, ol);
 			if (wi != null) {
 				wiResultList.add(wi);
 			}
 		}
 
+		response.setWorkInstructions(wiResultList);
 		return response;
 
 	}
@@ -713,8 +714,18 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * and has an OrderLocation in the put wall. It is possible, but very unlikely that this calling context returns true for ItemMaster match
 	 * but wrong UOM.
 	 */
-	private WorkInstruction getWiForPutWallDetailAndLocation(OrderDetail detail, OrderLocation orderLocation) {
-		return null;
+	private WorkInstruction getWiForPutWallDetailAndLocation(Che che, OrderDetail detail, OrderLocation orderLocation) {
+		Location loc = orderLocation.getLocation();
+		WorkInstruction wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
+			WorkInstructionTypeEnum.PLAN,
+			detail,
+			null,
+			che,
+			loc,
+			null,
+			WiPurpose.WiPurposePutWallPut);
+		return wi;
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -729,6 +740,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			return false;
 		}
 		if (!master.equals(detail.getItemMaster())) {
+			ItemMaster detailMaster = detail.getItemMaster();
+			LOGGER.info("mismatch master:{}, detailMaster: {}", master.getDomainId(), detailMaster.getDomainId());
+			
 			return false;
 		}
 		OrderStatusEnum detailStatus = detail.getStatus();
@@ -740,40 +754,19 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 	// --------------------------------------------------------------------------
 	/**
-	 * The user scanned something. In the end, we need an ItemMaster and UOM.
+	 * The user scanned something. In the end, we need an ItemMaster and UOM. User might have scanned SKU, or UPC. Should not be itemId as items have a location also.
 	 * Does this belong in InventoryService instead?
 	 */
-	private ItemMaster getItemMasterFromScanValue(String itemIdOrUpc) {
-		// Let's first look for UPC/GTIN
-		List<Gtin> gtins = Gtin.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("domainId", itemIdOrUpc)));
-		ItemMaster itemMaster = null;
-		// UomMaster uomMaster = null;
-		Gtin gtin = null;
-
-		if (!gtins.isEmpty()) {
-			gtin = gtins.get(0);
+	private ItemMaster getItemMasterFromScanValue(Facility facility, String itemIdOrUpc) {
+		ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, itemIdOrUpc);
+		if (itemMaster != null) {
+			return itemMaster;
+		}
+		// If not found directly by Sku, lets look for UPC/GTIN. Need a filter.
+		Gtin gtin = Gtin.getGtinForFacility(facility, itemIdOrUpc);
+		if (gtin != null) {
 			itemMaster = gtin.getParent();
-			// uomMaster = gtin.getUomMaster();
 		}
-		// Or search by itemId
-		if (itemMaster == null) {
-			List<Item> items = Item.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("domainId",
-				itemIdOrUpc)));
-			Item item = null;
-			if (!items.isEmpty()) {
-				item = items.get(0);
-				itemMaster = item.getParent();
-				// uomMaster = item.getUomMaster();
-			}
-		}
-		if (itemMaster == null) {
-			List<ItemMaster> masters = ItemMaster.staticGetDao()
-				.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("domainId", itemIdOrUpc)));
-			if (!masters.isEmpty()) {
-				itemMaster = masters.get(0);
-			}
-		}
-
 		return itemMaster;
 	}
 

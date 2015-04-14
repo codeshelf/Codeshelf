@@ -74,14 +74,12 @@ public class InventoryService implements IApiService {
 			response.appendStatusMessage("moveOrCreateInventory WARN: Could not find location: " + inLocation + ". Using facility.");
 		}
 
-		List<Gtin> gtins = Gtin.staticGetDao().findByFilter(ImmutableList.<Criterion>of(Restrictions.eq("domainId", inGtin)));
-		
-		Timestamp createTime = null;
 		ItemMaster itemMaster = null;
+		Timestamp createTime = null;
 		UomMaster uomMaster = null;
-		Gtin gtin = null;
+		Gtin gtin = Gtin.getGtinForFacility(facility, inGtin);
 		
-		if (gtins.isEmpty()) {
+		if (gtin == null) {
 			// Creating a new item if we cannot find GTIN
 			LOGGER.info("GTIN {} was not found.", inGtin);
 			response.appendStatusMessage(" Could not find GTIN: " + inGtin + ". Attempting to create GTIN: " + inGtin);
@@ -109,7 +107,6 @@ public class InventoryService implements IApiService {
 			}
 
 		} else {
-			gtin = gtins.get(0);
 			itemMaster = gtin.getParent();
 			uomMaster = gtin.getUomMaster();
 			response.setFoundGtin(true);

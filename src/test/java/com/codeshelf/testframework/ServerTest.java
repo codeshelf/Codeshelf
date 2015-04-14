@@ -283,10 +283,13 @@ public abstract class ServerTest extends HibernateTest {
 		return importer;
 	}
 
-	protected int importBatchData(Facility facility, String csvString) {
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+	protected int importBatchData(Facility facility, String csvString, Timestamp ediProcessTime) {
 		ICsvCrossBatchImporter importer = createCrossBatchImporter();
 		return importer.importCrossBatchesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+	}
+	
+	protected int importBatchData(Facility facility, String csvString) {
+		return importBatchData(facility,csvString,new Timestamp(System.currentTimeMillis()));
 	}
 
 	protected List<WorkInstruction> startWorkFromBeginning(Facility facility, String cheName, String containers) {

@@ -29,7 +29,6 @@ import org.hibernate.criterion.Order;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.IDaoListener;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.model.domain.DomainObjectABC;
 import com.codeshelf.model.domain.DomainObjectTreeABC;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.IDomainObjectTree;

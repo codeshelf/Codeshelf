@@ -26,7 +26,7 @@ public class TokenSessionService extends AbstractCookieSessionService {
 	int					sessionMinIdleMinutes;
 
 	// cookie settings
-	static final String	COOKIE_NAME							= "CSTOK";
+	static final public String	COOKIE_NAME							= "CSTOK";
 	private static final int	COOKIE_DEFAULT_MAX_AGE_HOURS		= 24;
 	private static final String	COOKIE_DEFAULT_DOMAIN				= "";
 	@Getter

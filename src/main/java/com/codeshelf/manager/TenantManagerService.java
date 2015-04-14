@@ -530,7 +530,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 				String schemaName = tenant.getSchemaName();
 				this.deleteDefaultOrdersWis();
 				LOGGER.warn("Deleting itemMasters and gtin maps ");
-				DatabaseUtils.executeSQL(tenant, "DELETE FROM " + schemaName + ".gtin_map");
+				DatabaseUtils.executeSQL(tenant, "DELETE FROM " + schemaName + ".gtin");
 				DatabaseUtils.executeSQL(tenant, "DELETE FROM " + schemaName + ".item");
 				DatabaseUtils.executeSQL(tenant, "DELETE FROM " + schemaName + ".item_master");
 			} catch (SQLException e) {

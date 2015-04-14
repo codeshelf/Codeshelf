@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -14,6 +13,7 @@ import java.util.List;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
@@ -58,7 +58,7 @@ public class OrderBatchPerformanceTest {
         client = HttpClients.custom().setDefaultRequestConfig(config).setDefaultCookieStore(cookieStore).build();
 	}
 	
-    public boolean authenticate() throws Exception {
+    private boolean authenticate() throws Exception {
     	String authUrl = BASE_URL + "auth/";
     	
     	List<NameValuePair> params = new ArrayList<NameValuePair>();
@@ -85,19 +85,8 @@ public class OrderBatchPerformanceTest {
         return false;
     }
     
-    public void postFile(String urlString, InputStream is) throws Exception {
-        HttpPost postRequest = new HttpPost(urlString);
-        InputStreamBody isb = new InputStreamBody(is,ContentType.TEXT_PLAIN);
-        HttpEntity reqEntity = MultipartEntityBuilder
-        		.create()
-        		.addPart("file", isb)
-                .build();        
-        postRequest.setEntity(reqEntity);
-        
-        //Send request
-        HttpResponse response = client.execute(postRequest,context);
-        HttpEntity entity = response.getEntity();
-        EntityUtils.consume(entity);
+    private void postFile(String urlString, String fileToPost) throws Exception {
+    	HttpResponse response = doPost(urlString,fileToPost);
                  
         if (response != null) {
         	int status = response.getStatusLine().getStatusCode();
@@ -107,10 +96,8 @@ public class OrderBatchPerformanceTest {
         			System.exit(0);
         		}
         		// retry
-                response = client.execute(postRequest,context);
-                entity = response.getEntity();
-                EntityUtils.consume(entity);
-                if (response.getStatusLine().getStatusCode()!=200) {
+        		response = doPost(urlString,fileToPost);
+                if (response == null || response.getStatusLine().getStatusCode()!=200) {
         			LOGGER.error("Retry failed");
         			System.exit(0);     	
                 }
@@ -123,6 +110,24 @@ public class OrderBatchPerformanceTest {
         }
     }
 	
+	private HttpResponse doPost(String urlString, String fileToPost) throws ClientProtocolException, IOException {
+    	FileInputStream is = new FileInputStream(fileToPost);
+    	HttpPost postRequest = new HttpPost(urlString);
+        InputStreamBody isb = new InputStreamBody(is,ContentType.TEXT_PLAIN);
+        HttpEntity reqEntity = MultipartEntityBuilder
+        		.create()
+        		.addPart("file", isb)
+                .build();        
+        postRequest.setEntity(reqEntity);
+        
+        //Send request
+        HttpResponse response = client.execute(postRequest,context);
+        HttpEntity entity = response.getEntity();
+        EntityUtils.consume(entity);
+        
+        return response;
+	}
+
 	public static void main(String[] args) {
 		
 		List<String> fileNames = new ArrayList<String>();
@@ -170,8 +175,8 @@ public class OrderBatchPerformanceTest {
 				LOGGER.info("Processing order file "+orderInputFile);
 				// post first order file
 				String url = BASE_URL +"api/import/orders/"+ FACILITY;			
-				FileInputStream is = new FileInputStream(orderInputFile);
-				test.postFile(url, is);
+				
+				test.postFile(url, orderInputFile);
 			} catch (Exception e) {
 				LOGGER.error("Exception while running performance test", e);
 				break;
