@@ -146,9 +146,9 @@ public class CheProcessPutWall extends ServerTest {
 		// Verify that orders 11114, 11115, and 11116 are having order locations in put wall
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = Facility.staticGetDao().reload(getFacility());
-		assertOrderLocation("11114", "P14");
-		assertOrderLocation("11115", "P15");
-		assertOrderLocation("11116", "P16");
+		assertOrderLocation("11114", "P14", "WALL1 - P14");
+		assertOrderLocation("11115", "P15", "WALL2 - P15");
+		assertOrderLocation("11116", "P16", "WALL2 - P16");
 		assertItemMaster(facility, "1514");
 		assertItemMaster(facility, "1515");
 		this.getTenantPersistenceService().commitTransaction();
@@ -275,9 +275,10 @@ public class CheProcessPutWall extends ServerTest {
 
 		// Verify that orders 11114, 11115, and 11116 are having order locations in put wall
 		this.getTenantPersistenceService().beginTransaction();
-		assertOrderLocation("11114", "P14");
-		assertOrderLocation("11115", "P15");
-		assertOrderLocation("11116", "P16");
+		assertOrderLocation("11114", "P14", "WALL1 - P14");
+		assertOrderLocation("11115", "P15", "WALL2 - P15");
+		assertOrderLocation("11116", "P16", "WALL2 - P16");
+		assertOrderLocation("11111", "", "");
 		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("2: As if the slow movers came out of system, just scan those SKUs to place into put wall");
@@ -309,7 +310,7 @@ public class CheProcessPutWall extends ServerTest {
 
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		picker1.scanSomething("1515"); // the sku
-		//picker1.waitForCheState(CheStateEnum.DO_PUT, 4000);
+		//picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
 		picker1.waitForCheState(CheStateEnum.NO_PUT_WORK, WAIT_TIME); // BUG.
 		// after DEV-713 
 		// we get two plans. For this test, handle singly. DEV-714 is about lighting two or more put wall locations at time.
@@ -458,17 +459,31 @@ public class CheProcessPutWall extends ServerTest {
 
 	}
 
-	private void assertOrderLocation(String orderId, String locationId) {
+	/**
+	 * Will fail (null) if orderId is null or does not resolve to an order.
+	 * If locationId is provided, that should be the name of the order location on the order.
+	 * Always checks the rather complicated putWallUiField field, which is blank if no order location or not in put wall.
+	 */
+	private void assertOrderLocation(String orderId, String locationId, String putWallUiField) {
 		Facility facility = getFacility();
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
 		Assert.assertNotNull(order);
-		Location location = facility.findSubLocationById(locationId);
-		Assert.assertNotNull(location);
-		List<OrderLocation> locations = order.getOrderLocations();
-		Assert.assertEquals(1, locations.size());
-		OrderLocation savedOrderLocation = locations.get(0);
-		Location savedLocation = savedOrderLocation.getLocation();
-		Assert.assertEquals(location, savedLocation);
+
+		if (!locationId.isEmpty()) {
+			Location location = facility.findSubLocationById(locationId);
+			Assert.assertNotNull(location);
+			List<OrderLocation> locations = order.getOrderLocations();
+			Assert.assertEquals(1, locations.size());
+			OrderLocation savedOrderLocation = locations.get(0);
+			Location savedLocation = savedOrderLocation.getLocation();
+			Assert.assertEquals(location, savedLocation);
+		} else {
+			List<OrderLocation> locations = order.getOrderLocations();
+			Assert.assertEquals(0, locations.size());
+		}
+
+		// getPutWallUi is what shows in the WebApp
+		Assert.assertEquals(putWallUiField, order.getPutWallUi());
 	}
 
 	private void assertItemMaster(Facility facility, String sku) {

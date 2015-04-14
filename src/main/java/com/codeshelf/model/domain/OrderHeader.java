@@ -516,7 +516,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 			int olCount = olList.size();
 			if (olCount == 1) {
 				result = olList.get(0);
-			} else{
+			} else {
 				LOGGER.error("looks like misunderstanding of getFirstOrderLocationOnPath(null)");
 			}
 		} else {
@@ -577,6 +577,27 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		}
 
 		return result;
+	}
+
+	/**
+	 * For put wall case, assume only one order location.
+	 * Ideally, this will show both the wall name, and the specific wall slot.
+	 */
+	public String getPutWallUi() {
+		List<OrderLocation> orderLocations = this.getActiveOrderLocations();
+		int count = orderLocations.size();
+		if (count == 0)
+			return "";
+		Location loc = orderLocations.get(0).getLocation();
+		// should never be null, but safe...
+		if (loc != null) {
+			if (loc.isImmediatePutWallLocation())
+				return loc.getPutWallUi(); // could indicate something if more than one, but that would be an odd case. ORDER_WALL deletes old and makes a new one.
+			else {
+				return loc.getPutWallUi() + " - " + loc.getBestUsableLocationName();
+			}
+		}
+		return "";
 	}
 
 	public String getGroupUi() {

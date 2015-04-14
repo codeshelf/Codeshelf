@@ -1397,7 +1397,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return (parent == null) ? false : parent.isPutWallLocation();
 	}
 
-	private boolean isImmediatePutWallLocation() {
+	public boolean isImmediatePutWallLocation() {
 		return PUTWALL_USAGE.equalsIgnoreCase(usage);
 	}
 
@@ -1409,14 +1409,48 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		setAsPutWallLocation(!isImmediatePutWallLocation());
 	}
 
+	/**
+	 *  Gives the alias name if there is one. Otherwise the nominal.
+	 */
+	public String getBestUsableLocationName() {
+		String returnString = this.getPrimaryAliasId();
+		if (returnString.isEmpty())
+			returnString = this.getNominalLocationId();
+		return returnString;
+	}
+
+	/**
+	 * We want to provide the most useful information possible to the user. That is the name of the put wall ancestor for this location.
+	 * However, it is likely that the aisle is defined, but the users are using the bay names. So this is not really knowable.
+	 * We generally want to return the alias name if a put wall, and blank if not.
+	 */
 	public String getPutWallUi() {
 		//Check if this location is PutWall
 		if (isImmediatePutWallLocation()) {
-			return "Yes";
+			return getBestUsableLocationName();
 		}
-		//Check if any parents are PutWall 
-		//(the isPutWallLocation() looks at this location too, but we've already established that it isn't PutWall) 
-		return isPutWallLocation() ? "(Yes)" : null;
+		// If parents are PutWall, let's assume bay or aisle are used, and not the tier. (Can change later if needed). 
+		// If the bay has an alias name and the aisle does not, let's return only the bay name.
+		// If neither bay nor alias has alias, then return the bay nominal name. If both have alias, show both.
+		if (isPutWallLocation()) {
+			Location bay = this.getParentAtLevel(Bay.class);
+			Location aisle = this.getParentAtLevel(Aisle.class);
+			String bayAlias = "";
+			if (bay != null) {
+				bayAlias = bay.getPrimaryAliasId();
+			}
+			String aisleAlias = "";
+			if (aisle != null)
+				aisleAlias = aisle.getPrimaryAliasId();
+
+			if (bay != null && aisleAlias.isEmpty())
+				return bay.getBestUsableLocationName();
+			else if (aisle != null && bayAlias.isEmpty())
+				return aisle.getBestUsableLocationName();
+			else
+				return String.format("%s / %s", bayAlias, aisleAlias);
+		}
+		return ""; // return blank if not a put wall
 	}
 
 	// UI fields
