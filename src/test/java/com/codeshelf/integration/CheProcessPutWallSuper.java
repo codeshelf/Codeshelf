@@ -186,7 +186,7 @@ public class CheProcessPutWallSuper extends ServerTest{
 
 		return getFacility();
 	}
-	
+
 	protected void setUpOrders1(Facility inFacility) throws IOException {
 		// Outbound orders. No group. Using 5 digit order number and .N detail ID. No preassigned container number.
 		// With preassigned container number and preferredLocation. No inventory. All preferredLocations resolve
@@ -215,7 +215,7 @@ public class CheProcessPutWallSuper extends ServerTest{
 		ItemMaster theMaster = ItemMaster.staticGetDao().findByDomainId(facility, "1515");
 		Assert.assertNotNull("ItemMaster should be created", theMaster);
 
-	}
+	}	
 
 	protected void assertOrderLocation(String orderId, String locationId) {
 		Facility facility = getFacility();
@@ -229,10 +229,9 @@ public class CheProcessPutWallSuper extends ServerTest{
 		Location savedLocation = savedOrderLocation.getLocation();
 		Assert.assertEquals(location, savedLocation);
 	}
-	
+
 	protected void assertItemMaster(Facility facility, String sku) {
 		ItemMaster master = ItemMaster.staticGetDao().findByDomainId(facility, sku);
 		Assert.assertNotNull(master);
 	}
-
 }
