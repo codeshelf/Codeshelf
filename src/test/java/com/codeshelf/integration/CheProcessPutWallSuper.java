@@ -214,8 +214,7 @@ public class CheProcessPutWallSuper extends ServerTest{
 		importOrdersData(facility, orderCsvString);
 		ItemMaster theMaster = ItemMaster.staticGetDao().findByDomainId(facility, "1515");
 		Assert.assertNotNull("ItemMaster should be created", theMaster);
-
-	}	
+	}
 
 	protected void assertOrderLocation(String orderId, String locationId) {
 		Facility facility = getFacility();
