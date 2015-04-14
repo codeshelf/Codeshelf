@@ -896,8 +896,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			return;
 		}
 
-		final String controller1 = "0x00006661";
-		final String controller2 = "0x00006662";
+		final String controller1 = "00006661"; // by convention, we are storing the form without leading "0x in the map.
+		final String controller2 = "00006662";
+		final String controller3 = "0x00006663"; // this will induce and ERROR in log.
 		WorkInstruction wi1 = new WorkInstruction();
 		WorkInstruction wi2 = new WorkInstruction();
 		WorkInstruction wi3 = new WorkInstruction();
@@ -956,6 +957,12 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (testWi == null) {
 			LOGGER.error("FAIL testOffChePosconWorkInstructions 11");
 		}
+		rememberOffChePosconWorkInstruction(controller3, 7, wi3); // logs probable error, but works
+		testWi = retrieveOffChePosconWorkInstruction(controller3, 7); // logs probable error, but works
+		if (testWi == null) {
+			LOGGER.error("FAIL testOffChePosconWorkInstructions 12");
+		}
+
 		rememberOffChePosconWorkInstruction("0x", 9, wi2); // Just checking that we avoid the string range exception
 		rememberOffChePosconWorkInstruction("0", 9, wi2); // Just checking that we avoid the string range exception
 
