@@ -253,8 +253,8 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 				Thread.sleep(5);
 			} catch (InterruptedException e) {
 			}
+			sendPositionControllerInstructions(latestCommandsList);
 		}
-		sendPositionControllerInstructions(latestCommandsList);
 	}
 
 	private void addFeedbackInstruction(final String locationName, final PosControllerInstr feedbackInstruction) {
