@@ -290,12 +290,12 @@ public class CheProcessPutWall extends ServerTest {
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		picker1.scanSomething("BadItemId");
 		picker1.waitForCheState(CheStateEnum.NO_PUT_WORK, WAIT_TIME);
-		
+
 		picker1.scanCommand("CLEAR");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);	
-		picker1.scanSomething("1514");			
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+		picker1.scanSomething("1514");
 		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
-		
+
 		// after DEV-713 we will get a plan, display to the put wall, etc.
 		// P14 is at poscon index 4. Count should be 3
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
@@ -470,7 +470,7 @@ public class CheProcessPutWall extends ServerTest {
 		Location savedLocation = savedOrderLocation.getLocation();
 		Assert.assertEquals(location, savedLocation);
 	}
-	
+
 	private void assertItemMaster(Facility facility, String sku) {
 		ItemMaster master = ItemMaster.staticGetDao().findByDomainId(facility, sku);
 		Assert.assertNotNull(master);
