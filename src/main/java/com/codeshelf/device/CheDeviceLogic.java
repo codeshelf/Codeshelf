@@ -1614,7 +1614,17 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			getMyGuidStr());
 	}
 
-	protected void notifyPutWallItem(String itemOrUpd, String wallname) {
+protected void notifyPutWallResponse(final List<WorkInstruction> inWorkItemList){
+	int listsize = 0;
+	if (inWorkItemList != null)
+		listsize = inWorkItemList.size();
+	LOGGER.info("*{} work instructions in put wall response:{} by picker:{} device:{}",
+		listsize,
+		getUserId(),
+		getMyGuidStr());	
+}
+
+protected void notifyPutWallItem(String itemOrUpd, String wallname) {
 		LOGGER.info("*Request plans for item:{} in put wall:{} by picker:{} device:{}",
 			itemOrUpd,
 			wallname,

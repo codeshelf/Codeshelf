@@ -1529,14 +1529,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Almost the same as assignWork(), but some state transitions differ
 	 */
 	public void assignWallPuts(final List<WorkInstruction> inWorkItemList, String message) {
+		notifyPutWallResponse(inWorkItemList);
 		if (inWorkItemList == null || inWorkItemList.size() == 0) {
 			setState(CheStateEnum.NO_PUT_WORK);
 		} else {
 			mActivePickWiList.clear();
 			mAllPicksWiList.clear();
 			mAllPicksWiList.addAll(inWorkItemList);
-			doNextWallPut();
-			// doNextPick will set the state.
+			doNextWallPut(); // should set the state
 		}
 	}
 

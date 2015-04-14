@@ -60,6 +60,7 @@ import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerUse;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
@@ -733,6 +734,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			return false;
 		}
 		if (!master.equals(detail.getItemMaster())) {
+			ItemMaster detailMaster = detail.getItemMaster();
+			LOGGER.info("mismatch master:{}, detailMaster: {}", master.getDomainId(), detailMaster.getDomainId());
+			
 			return false;
 		}
 		OrderStatusEnum detailStatus = detail.getStatus();
@@ -744,7 +748,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 	// --------------------------------------------------------------------------
 	/**
-	 * The user scanned something. In the end, we need an ItemMaster and UOM. User might have scanned SKU, or UPC, or itemId
+	 * The user scanned something. In the end, we need an ItemMaster and UOM. User might have scanned SKU, or UPC. Should not be itemId as items have a location also.
 	 * Does this belong in InventoryService instead?
 	 */
 	private ItemMaster getItemMasterFromScanValue(Facility facility, String itemIdOrUpc) {
@@ -752,15 +756,11 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		if (itemMaster != null) {
 			return itemMaster;
 		}
-
-		//  TODO If not found directly by Sku, lets look for UPC/GTIN. Need a filter.
-		if (itemMaster == null) {
-			// itemMaster = gtin.getParent();
+		// If not found directly by Sku, lets look for UPC/GTIN. Need a filter.
+		Gtin gtin = Gtin.getGtinForFacility(facility, itemIdOrUpc);
+		if (gtin != null) {
+			itemMaster = gtin.getParent();
 		}
-		// TODO Or search by itemId. Need a filter.
-		if (itemMaster == null) {
-		}
-
 		return itemMaster;
 	}
 
