@@ -216,17 +216,31 @@ public class CheProcessPutWallSuper extends ServerTest{
 		Assert.assertNotNull("ItemMaster should be created", theMaster);
 	}
 
-	protected void assertOrderLocation(String orderId, String locationId) {
+	/**
+	 * Will fail (null) if orderId is null or does not resolve to an order.
+	 * If locationId is provided, that should be the name of the order location on the order.
+	 * Always checks the rather complicated putWallUiField field, which is blank if no order location or not in put wall.
+	 */
+	protected void assertOrderLocation(String orderId, String locationId, String putWallUiField) {
 		Facility facility = getFacility();
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
 		Assert.assertNotNull(order);
-		Location location = facility.findSubLocationById(locationId);
-		Assert.assertNotNull(location);
-		List<OrderLocation> locations = order.getOrderLocations();
-		Assert.assertEquals(1, locations.size());
-		OrderLocation savedOrderLocation = locations.get(0);
-		Location savedLocation = savedOrderLocation.getLocation();
-		Assert.assertEquals(location, savedLocation);
+
+		if (!locationId.isEmpty()) {
+			Location location = facility.findSubLocationById(locationId);
+			Assert.assertNotNull(location);
+			List<OrderLocation> locations = order.getOrderLocations();
+			Assert.assertEquals(1, locations.size());
+			OrderLocation savedOrderLocation = locations.get(0);
+			Location savedLocation = savedOrderLocation.getLocation();
+			Assert.assertEquals(location, savedLocation);
+		} else {
+			List<OrderLocation> locations = order.getOrderLocations();
+			Assert.assertEquals(0, locations.size());
+		}
+
+		// getPutWallUi is what shows in the WebApp
+		Assert.assertEquals(putWallUiField, order.getPutWallUi());
 	}
 
 	protected void assertItemMaster(Facility facility, String sku) {

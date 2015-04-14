@@ -18,7 +18,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 	private static final int	WAIT_TIME		= 4000;
 	
 	@Test
-	public final void slowMoverWorkInstructions() throws IOException {
+	public final void slowMoverWorkInstructionsGood() throws IOException {
 		// This is for DEV-711
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -31,6 +31,9 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 
 		LOGGER.info("1: Just set up some orders to the put wall. Intentionally choose order with inventory location in the slow mover area.");
 		picker1.login("Picker #1");
+		String ordersAndPositions[][] = {{"1114", "L%P14"},{"1115", "L%P15"},{"1116", "L%P16"}};
+		//assignOrdersToPutWall(picker1, ordersAndPositions);
+		
 		picker1.scanCommand("ORDER_WALL");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanSomething("11114");
@@ -47,14 +50,14 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanCommand("CLEAR");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
-
+		
 		LOGGER.info("2: P14 is in WALL1. P15 and P16 are in WALL2. Set up slow mover CHE for that SKU pick");
 		// Verify that orders 11114, 11115, and 11116 are having order locations in put wall
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = Facility.staticGetDao().reload(getFacility());
-		assertOrderLocation("11114", "P14");
-		assertOrderLocation("11115", "P15");
-		assertOrderLocation("11116", "P16");
+		assertOrderLocation("11114", "P14", "WALL1 - P14");
+		assertOrderLocation("11115", "P15", "WALL2 - P15");
+		assertOrderLocation("11116", "P16", "WALL2 - P16");
 		assertItemMaster(facility, "1514");
 		assertItemMaster(facility, "1515");
 		this.getTenantPersistenceService().commitTransaction();
@@ -86,6 +89,23 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		Assert.assertEquals("Quantity mismatch", new Integer(3), wi1.getPlanQuantity());
 		Assert.assertEquals("Item mismatch", "1515", wi2.getItemId());
 		Assert.assertEquals("Quantity mismatch", new Integer(9), wi2.getPlanQuantity());
+	}
+	
+	private void assignOrdersToPutWall(PickSimulator picker, String ordersAndPositions[][]){
+		if (ordersAndPositions == null) {
+			return;
+		}
+		picker.scanCommand("ORDER_WALL");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		for (String assignment[] : ordersAndPositions){
+			picker.scanSomething(assignment[0]);
+			picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+			picker.scanSomething(assignment[1]);
+			picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		}
+		picker.scanCommand("CLEAR");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+
 	}
 
 }

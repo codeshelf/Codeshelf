@@ -444,31 +444,4 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Assert.assertEquals(posman.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_O);
 
 	}
-
-	/**
-	 * Will fail (null) if orderId is null or does not resolve to an order.
-	 * If locationId is provided, that should be the name of the order location on the order.
-	 * Always checks the rather complicated putWallUiField field, which is blank if no order location or not in put wall.
-	 */
-	private void assertOrderLocation(String orderId, String locationId, String putWallUiField) {
-		Facility facility = getFacility();
-		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
-		Assert.assertNotNull(order);
-
-		if (!locationId.isEmpty()) {
-			Location location = facility.findSubLocationById(locationId);
-			Assert.assertNotNull(location);
-			List<OrderLocation> locations = order.getOrderLocations();
-			Assert.assertEquals(1, locations.size());
-			OrderLocation savedOrderLocation = locations.get(0);
-			Location savedLocation = savedOrderLocation.getLocation();
-			Assert.assertEquals(location, savedLocation);
-		} else {
-			List<OrderLocation> locations = order.getOrderLocations();
-			Assert.assertEquals(0, locations.size());
-		}
-
-		// getPutWallUi is what shows in the WebApp
-		Assert.assertEquals(putWallUiField, order.getPutWallUi());
-	}
 }
