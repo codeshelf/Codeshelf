@@ -922,7 +922,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		return domainMatch;
 	}
 	
-	public static String genItemUomKey(ItemMaster item, UomMaster uom) {
+	private static String genItemUomKey(ItemMaster item, UomMaster uom) {
 		if (item == null) {return null;}
 		return item.getDomainId() + ((uom==null || uom.getDomainId().isEmpty())?"":"-"+uom.getDomainId());
 	}

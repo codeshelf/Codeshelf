@@ -197,7 +197,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		List<Container> containerList = new ArrayList<Container>();
 		for (String containerId : inContainerIdList) {
 			Container container = Container.staticGetDao().findByDomainId(facility, containerId);
-			if (container != null) {
+			if (container != null){
 				// add to the list that will generate work instructions
 				containerList.add(container);
 				// Set the CHE on the containerUse
@@ -244,10 +244,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			}
 		}
 		
-		if (containerList.isEmpty() && !inContainerIdList.isEmpty()) {
-			PutWallOrderGenerator.attemptToGenerateWallOrders(inChe, containerList, inContainerIdList);
-		}
-
 		Timestamp theTime = now();
 
 		// Get all of the OUTBOUND work instructions.
@@ -258,6 +254,11 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		//wiResultList.addAll(generateCrossWallInstructions(facility, inChe, containerList, theTime));
 		List<WorkInstruction> crossInstructions = generateCrossWallInstructions(facility, inChe, containerList, theTime);
 		workList.getInstructions().addAll(crossInstructions);
+
+		if (workList.getInstructions().isEmpty() && workList.getDetails().isEmpty()){
+			List<WorkInstruction> slowPutWallInstructions = PutWallOrderGenerator.attemptToGenerateWallOrders(inChe, inContainerIdList, theTime);
+			workList.getInstructions().addAll(slowPutWallInstructions);
+		}
 
 		//Filter,Sort, and save actionsable WI's
 		//TODO Consider doing this in getWork?
@@ -590,7 +591,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			aWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
 				WorkInstructionTypeEnum.PLAN,
 				orderDetail,
-				inChe,
+				inChe, 
+				true,
 				null); // Could be normal WI, or a short WI
 		} else {
 			aWi = workItem.getInstruction();
@@ -1540,7 +1542,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			else if (loc.isActive()) { //unlikely that location got deleted between complete work instructions and scan location
 				Path chePath = inChe.getActivePath();
 				boolean locatioOnPath = isLocatioOnPath(loc, inChe.getActivePath());
-				boolean preferredDetail = wi.getOrderDetail().isPreferredDetail();
+				OrderDetail detail = wi.getOrderDetail();
+				boolean preferredDetail = detail == null ? false : detail.isPreferredDetail();
 				boolean unspecifiedLoc = loc == unspecifiedMaster;
 				if (chePath == null || locatioOnPath) {
 					//If a CHE is not on a path (new CHE generating work) or the location is on the current path, use this WI 
