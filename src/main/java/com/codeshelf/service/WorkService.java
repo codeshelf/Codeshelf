@@ -164,7 +164,13 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			WorkInstructionTypeEnum.ACTUAL), Restrictions.eq("parent.persistentId", facilityUUID), Restrictions.ge("completed",
 			new Timestamp(startDate.getTime())), Restrictions.lt("completed", new Timestamp(endDate.getTime()))),
 			ImmutableList.of(Order.asc("completed")));
-
+	}
+	
+	/**
+	 * Seems a bit silly, but we do not have a good means to get hold of services. Test framework has the work service, so this is the best kludge.
+	 */
+	public LightService getLightService(){
+		return this.lightService;
 	}
 	
 	// --------------------------------------------------------------------------

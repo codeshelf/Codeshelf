@@ -15,6 +15,7 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.service.LightService;
 import com.codeshelf.util.ThreadUtils;
 
 public class CheProcessPutWall extends CheProcessPutWallSuper {
@@ -82,18 +83,25 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
 		Assert.assertNotNull(posman);
 
-		this.getTenantPersistenceService().beginTransaction();
-		// Facility facility = getFacility();
-
-		/* LightService theService = ServiceFactory.getServiceInstance(LightService.class);
-		theService.lightLocation(facility.getPersistentId().toString(), "P11");
-		*/
-
-		@SuppressWarnings("unused")
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 1); // will return null if blank, so use the object Byte.
-		this.getTenantPersistenceService().commitTransaction();
-	}
+		Assert.assertNull(displayValue); // This slot is not lit.
 
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = getFacility();
+		LightService lightService = workService.getLightService();
+		lightService.lightLocation(facility.getPersistentId().toString(), "P11");
+		this.getTenantPersistenceService().commitTransaction();
+
+		// will this have intermittent failure? lightLocation() led to new message back to update the posman display. There is no state to wait for.
+		ThreadUtils.sleep(2000);
+		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 1); 
+		Assert.assertNotNull(displayValue); // Poscon is lit. Just to have it in one test case, let's sanctify all the values.
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+		Assert.assertEquals(posman.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_TRIPLE_DASH);
+		Assert.assertEquals(posman.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_TRIPLE_DASH);	
+		// could check flashing and brightness, but seem pointless.
+	}
+ 
 	@Test
 	public final void slowMoverWorkInstructions() throws IOException {
 		// This is for DEV-711
@@ -261,7 +269,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		assertOrderLocation("11114", "P14", "WALL1 - P14");
 		assertOrderLocation("11115", "P15", "WALL2 - P15");
 		assertOrderLocation("11116", "P16", "WALL2 - P16");
-		assertOrderLocation("11111", "", "");
+		assertOrderLocation("11111", "", ""); // always good to test the NOT case. 
 		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("2: As if the slow movers came out of system, just scan those SKUs to place into put wall");
@@ -280,7 +288,6 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker1.scanSomething("1514");
 		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
 
-		// after DEV-713 we will get a plan, display to the put wall, etc.
 		// P14 is at poscon index 4. Count should be 3
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
 		Assert.assertEquals((Byte) (byte) 3, displayValue);

@@ -21,11 +21,11 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.testframework.ServerTest;
 
-public class CheProcessPutWallSuper extends ServerTest{
-	protected String				CONTROLLER_1_ID	= "00001881";
-	protected String				CONTROLLER_2_ID	= "00001882";
-	protected String				CONTROLLER_3_ID	= "00001883";
-	protected String				CONTROLLER_4_ID	= "00001884";
+public class CheProcessPutWallSuper extends ServerTest {
+	protected String	CONTROLLER_1_ID	= "00001881";
+	protected String	CONTROLLER_2_ID	= "00001882";
+	protected String	CONTROLLER_3_ID	= "00001883";
+	protected String	CONTROLLER_4_ID	= "00001884";
 
 	/**
 	 * The goal is a small version of our model put wall facility. Two fast mover areas on different paths. A slow mover area on different path.
@@ -188,27 +188,27 @@ public class CheProcessPutWallSuper extends ServerTest{
 	}
 
 	protected void setUpOrders1(Facility inFacility) throws IOException {
-		// Outbound orders. No group. Using 5 digit order number and .N detail ID. No preassigned container number.
-		// With preassigned container number and preferredLocation. No inventory. All preferredLocations resolve
+		// Outbound orders. No group. Using 5 digit order number and .N detail ID. The preassigned container number matches the order.
+		// With preferredLocation. No inventory. All preferredLocations resolve. There is GTIN/UPC for each item.
 		// Order 12345 has two items in fast, and one is slow
 		// Order 11111 has four items in other fast area, and one is slow
 		// Some extra singleton orders just to get to completion states.
 
-		String orderCsvString = "orderGroupId,shipmentId,customerId,orderId,orderDetailId,preAssignedContainerId,itemId,description,quantity,uom, locationId"
-				+ "\r\n,USF314,COSTCO,12345,12345.1,12345,1123,Sku1123,1,each,F11"
-				+ "\r\n,USF314,COSTCO,12345,12345.2,12345,1493,Sku1493,1,each,F12"
-				+ "\r\n,USF314,COSTCO,12345,12345.3,12345,1522,Sku1522,3,each,S11"
-				+ "\r\n,USF314,COSTCO,11111,11111.1,11111,1122,Sku1122,2,each,F24"
-				+ "\r\n,USF314,COSTCO,11111,11111.2,11111,1522,Sku1522,1,each,S11"
-				+ "\r\n,USF314,COSTCO,11111,11111.3,11111,1523,Sku1523,1,each,F21"
-				+ "\r\n,USF314,COSTCO,11111,11111.4,11111,1124,Sku1124,1,each,F22"
-				+ "\r\n,USF314,COSTCO,11111,11111.5,11111,1555,Sku1555,2,each,F23"
-				+ "\r\n,USF314,COSTCO,11112,11112.1,11112,1555,Sku1555,2,each,F23"
-				+ "\r\n,USF314,COSTCO,11113,11113.1,11113,1555,Sku1555,2,each,F23"
-				+ "\r\n,USF314,COSTCO,11114,11114.1,11114,1514,Sku1514,3,each,S12"
-				+ "\r\n,USF314,COSTCO,11115,11115.1,11115,1515,Sku1515,4,each,S13"
-				+ "\r\n,USF314,COSTCO,11116,11116.1,11116,1515,Sku1515,5,each,S13"
-				+ "\r\n,USF314,COSTCO,11117,11117.1,11117,1515,Sku1515,5,each,F14";
+		String orderCsvString = "orderGroupId,shipmentId,customerId,orderId,orderDetailId,preAssignedContainerId,itemId,description,quantity,uom, locationId, gtin"
+				+ "\r\n,USF314,COSTCO,12345,12345.1,12345,1123,Sku1123,1,each,F11,gtin1123"
+				+ "\r\n,USF314,COSTCO,12345,12345.2,12345,1493,Sku1493,1,each,F12,gtin1493"
+				+ "\r\n,USF314,COSTCO,12345,12345.3,12345,1522,Sku1522,3,each,S11,gtin1522"
+				+ "\r\n,USF314,COSTCO,11111,11111.1,11111,1122,Sku1122,2,each,F24,gtin1122"
+				+ "\r\n,USF314,COSTCO,11111,11111.2,11111,1522,Sku1522,1,each,S11,gtin1522"
+				+ "\r\n,USF314,COSTCO,11111,11111.3,11111,1523,Sku1523,1,each,F21,gtin1523"
+				+ "\r\n,USF314,COSTCO,11111,11111.4,11111,1124,Sku1124,1,each,F22,gtin1124"
+				+ "\r\n,USF314,COSTCO,11111,11111.5,11111,1555,Sku1555,2,each,F23,gtin1555"
+				+ "\r\n,USF314,COSTCO,11112,11112.1,11112,1555,Sku1555,2,each,F23,gtin1555"
+				+ "\r\n,USF314,COSTCO,11113,11113.1,11113,1555,Sku1555,2,each,F23,gtin1555"
+				+ "\r\n,USF314,COSTCO,11114,11114.1,11114,1514,Sku1514,3,each,S12,gtin1514"
+				+ "\r\n,USF314,COSTCO,11115,11115.1,11115,1515,Sku1515,4,each,S13,gtin1515"
+				+ "\r\n,USF314,COSTCO,11116,11116.1,11116,1515,Sku1515,5,each,S13,gtin1515"
+				+ "\r\n,USF314,COSTCO,11117,11117.1,11117,1515,Sku1515,5,each,F14,gtin1515";
 
 		Facility facility = getFacility();
 		importOrdersData(facility, orderCsvString);
