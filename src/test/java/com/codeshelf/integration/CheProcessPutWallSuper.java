@@ -208,7 +208,10 @@ public class CheProcessPutWallSuper extends ServerTest {
 				+ "\r\n,USF314,COSTCO,11114,11114.1,11114,1514,Sku1514,3,each,S12,gtin1514"
 				+ "\r\n,USF314,COSTCO,11115,11115.1,11115,1515,Sku1515,4,each,S13,gtin1515"
 				+ "\r\n,USF314,COSTCO,11116,11116.1,11116,1515,Sku1515,5,each,S13,gtin1515"
-				+ "\r\n,USF314,COSTCO,11117,11117.1,11117,1515,Sku1515,5,each,F14,gtin1515";
+				+ "\r\n,USF314,COSTCO,11117,11117.1,11117,1515,Sku1515,5,each,F14,gtin1515"
+				+ "\r\n,USF314,COSTCO,11118,11118.1,11118,1515,Sku1515,3,each,S11,gtin1515"
+				+ "\r\n,USF314,COSTCO,11118,11118.2,11118,1521,Sku1521,3,each,S11,gtin1521";
+
 
 		Facility facility = getFacility();
 		importOrdersData(facility, orderCsvString);

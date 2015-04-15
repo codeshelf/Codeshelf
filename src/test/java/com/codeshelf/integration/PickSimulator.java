@@ -25,7 +25,6 @@ public class PickSimulator {
 	@Getter
 	CheDeviceLogic				cheDeviceLogic;
 
-	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PickSimulator.class);
 
 	public PickSimulator(IntegrationTest test, NetGuid cheGuid) {
@@ -111,13 +110,26 @@ public class PickSimulator {
 		waitForCheState(CheStateEnum.IDLE, 1000);
 	}
 
+	/**
+	 * This helps the test writer scanSomething may well include the % to simulate a command. But the test writer may have included extra in scanCommand, scanLocation, etc.
+	 */
+	private void checkExtraPercent(String inCommand){
+		if (inCommand != null && inCommand.length() > 2) {
+			if (inCommand.charAt(1) == '%'){
+				LOGGER.error("Did you mean to use scanSomething() instead?");
+			}
+		}
+	}
+
 	// Extremely primitive commands here, useful for testing the state machine for error conditions, as well as using in high-level commands.
 	public void scanCommand(String inCommand) {
 		// Valid commands currently are only START, SETUP, LOGOUT, SHORT, YES, NO, See https://codeshelf.atlassian.net/wiki/display/TD/Bar+Codes+in+Codeshelf+Application
+		checkExtraPercent(inCommand);
 		cheDeviceLogic.scanCommandReceived("X%" + inCommand);
 	}
 
 	public void scanLocation(String inLocation) {
+		checkExtraPercent(inLocation);
 		cheDeviceLogic.scanCommandReceived("L%" + inLocation);
 	}
 
@@ -125,6 +137,7 @@ public class PickSimulator {
 	 * Adds the C% to conform with Codeshelf scan specification
 	 */
 	public void scanContainer(String inContainerId) {
+		checkExtraPercent(inContainerId);
 		cheDeviceLogic.scanCommandReceived("C%" + inContainerId);
 	}
 
@@ -312,11 +325,11 @@ public class PickSimulator {
 		return cheDeviceLogic.getLastSentPositionControllerMaxQty(position);
 	}
 
-	/**
-	 * Intentionally incomplete. Could parameterize for each line, but initially only remember the first line.
-	 */
 	public String getLastCheDisplayString(int lineIndex) {
 		return cheDeviceLogic.getRecentCheDisplayString(lineIndex);
+	}
+	public void logCheDisplay() {
+		LOGGER.info("Line1:{} Line2:{} Line3:{} Line4:{}",getLastCheDisplayString(1),getLastCheDisplayString(2),getLastCheDisplayString(3),getLastCheDisplayString(4));
 	}
 
 	public void forceDeviceToMatchManagerConfiguration() {
