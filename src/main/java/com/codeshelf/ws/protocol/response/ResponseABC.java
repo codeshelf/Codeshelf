@@ -2,8 +2,6 @@ package com.codeshelf.ws.protocol.response;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
-
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

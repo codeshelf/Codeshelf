@@ -14,9 +14,6 @@ import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.Location;
-import com.codeshelf.model.domain.OrderHeader;
-import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.util.ThreadUtils;
 
