@@ -9,9 +9,10 @@
 "configure@example.com":
   - Admin
 "a@example.com":
-  - Browse
+  - Companion
 "view@example.com":
   - Companion
+  - Browse
 "simulate@example.com":
   - CsDeveloper
   - CsSupport
