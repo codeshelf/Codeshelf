@@ -668,7 +668,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.DO_PUT); // This will cause showActivePicks();
 			} else {
 				// no side effects needed? processPickComplete() is the corrolary
-				setState(CheStateEnum.PUT_WALL_SCAN_ITEM); 
+				setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
 			}
 		}
 	}
@@ -1161,6 +1161,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case PUT_WALL_SCAN_ORDER:
 				processPutWallOrderScan(inScanPrefixStr, inContent);
+				break;
+
+			case NO_PUT_WORK:
+				// If one item scan did not work, let user scan another directly without first having to CLEAR.
+				// If user scans another location, let's assume it was a put wall change attempt.
+				if ("L%".equals(inScanPrefixStr)) {
+					processPutWallScanWall(inScanPrefixStr, inContent);
+				} else {
+					processPutWallItemScan(inScanPrefixStr, inContent);
+				}
 				break;
 
 			case PUT_WALL_SCAN_ITEM:
