@@ -1,5 +1,6 @@
 package com.codeshelf.api.resources.subresources;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -30,13 +31,14 @@ public class WorkerResource {
 	@RequiresPermissions("worker:edit")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getUpdateWorker(Worker updatedWorker) {
+	public Response updateWorker(Worker updatedWorker) {
 		ErrorResponse errors = new ErrorResponse();
 		try {
 			//Set fields in the new objects for validation
 			updatedWorker.setPersistentId(worker.getPersistentId());
 			updatedWorker.setFacility(worker.getFacility());
 			if (!updatedWorker.isValid(errors)){
+				errors.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				return errors.buildResponse();
 			}
 			//Update old object with new values

@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -136,8 +137,6 @@ public class FacilityResource {
 		return BaseResponse.buildResponse(summary);
 	}
 
-
-
 	@GET
 	@Path("/groupinstructions")
 	@RequiresPermissions("companion:view")
@@ -201,6 +200,7 @@ public class FacilityResource {
 			}
 			worker.setUpdated(new Timestamp(System.currentTimeMillis()));
 			if (!worker.isValid(errors)){
+				errors.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 				return errors.buildResponse();
 			}
 			UUID id = worker.getPersistentId();

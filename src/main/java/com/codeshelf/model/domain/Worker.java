@@ -49,38 +49,37 @@ public class Worker extends DomainObjectABC implements Validatable{
 	private Facility						facility;
 	
 	@Column(nullable = false)
-	@Getter
-	@Setter
+	@Getter @Setter
 	@JsonProperty
 	private Boolean							active;
 	
 	@Column(nullable = false, name = "first_name")
-	@Getter
+	@Getter @Setter
 	@JsonProperty
 	private String							firstName;
 
 	@Column(nullable = false, name = "last_name")
-	@Getter
+	@Getter @Setter
 	@JsonProperty
 	private String							lastName;
 	
 	@Column(nullable = true, name = "middle_initial")
-	@Getter
+	@Getter @Setter
 	@JsonProperty
 	private String							middleInitial;
 
 	@Column(nullable = false, name = "badge_id")
-	@Getter
+	@Getter @Setter
 	@JsonProperty
 	private String							badgeId;
 
 	@Column(nullable = true, name = "group_name")
-	@Getter
+	@Getter @Setter
 	@JsonProperty
 	private String							groupName;
 
 	@Column(nullable = true, name = "hr_id")
-	@Getter
+	@Getter @Setter
 	@JsonProperty
 	private String							hrId;
 	
