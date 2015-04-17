@@ -1,5 +1,7 @@
 package com.codeshelf.security.api;
 
+import java.util.Map;
+
 import javax.ws.rs.Consumes;
 import javax.ws.rs.CookieParam;
 import javax.ws.rs.FormParam;
@@ -21,6 +23,7 @@ import com.codeshelf.manager.User;
 import com.codeshelf.security.TokenSession;
 import com.codeshelf.security.TokenSessionService;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 
 @Path("/")
 public class AuthResource {
@@ -28,7 +31,11 @@ public class AuthResource {
 	private TokenSessionService	tokenSessionService;
 
 	public AuthResource() {
-		this.tokenSessionService = TokenSessionService.getInstance();
+		this(TokenSessionService.getInstance());
+	}
+	
+	AuthResource(TokenSessionService tokenSessionService) {
+		this.tokenSessionService = tokenSessionService;
 	}
 
 	@POST
@@ -38,11 +45,11 @@ public class AuthResource {
 
 		if (!Strings.isNullOrEmpty(username) && !Strings.isNullOrEmpty(password)) {
 			// authenticate method will log success/failure of attempt
-			TokenSession auth = tokenSessionService.authenticate(username, password);
-			if (auth.getStatus().equals(TokenSession.Status.ACCEPTED)) {
+			TokenSession tokenSession = tokenSessionService.authenticate(username, password);
+			if (tokenSession != null && tokenSession.getStatus().equals(TokenSession.Status.ACCEPTED)) {
 				// put token into a cookie
-				NewCookie cookie = tokenSessionService.createAuthNewCookie(auth.getNewToken());
-				return Response.ok(auth.getUser()).cookie(cookie).build();
+				NewCookie cookie = tokenSessionService.createAuthNewCookie(tokenSession.getNewToken());
+				return Response.ok(toUserResponse(tokenSession)).cookie(cookie).build();
 			}
 		} else {
 			LOGGER.warn("Login failed: 'u' and/or 'p' parameters not submitted");
@@ -56,7 +63,7 @@ public class AuthResource {
 
 		TokenSession tokenSession = tokenSessionService.checkAuthCookie(authCookie);
 		if (tokenSession != null && tokenSession.getStatus().equals(TokenSession.Status.ACCEPTED)) {
-			return Response.ok(tokenSession.getUser()).build();
+			return Response.ok(toUserResponse(tokenSession)).build();
 		}
 		return Response.status(Status.FORBIDDEN.getStatusCode()).build();
 	}
@@ -107,4 +114,10 @@ public class AuthResource {
 		return Response.status(Status.FORBIDDEN.getStatusCode()).build();
 	}
 
+	private Map<String,Object> toUserResponse(TokenSession session) {
+		return ImmutableMap.of("tenant", ImmutableMap.of("name", session.getTenant().getName()),
+							   "user", session.getUser());
+	}
+
 }
+
