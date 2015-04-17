@@ -55,8 +55,8 @@ final class TierIds {
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Tier extends Location {
 
-	public static final String		THIS_TIER_ONLY		= "";
-	public static final String		ALL_TIERS_IN_AISLE	= "aisle";
+	public static final String	THIS_TIER_ONLY		= "";
+	public static final String	ALL_TIERS_IN_AISLE	= "aisle";
 
 	public static class TierDao extends GenericDaoABC<Tier> implements ITypedDao<Tier> {
 		public final Class<Tier> getDaoClass() {
@@ -79,15 +79,16 @@ public class Tier extends Location {
 	private boolean				mTransientLedsIncrease;
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Tier.class);
-/*
-	public Tier(Bay bay, String domainId, final Point inAnchorPoint, final Point inPickFaceEndPoint) {
-		super(bay, domainId, inAnchorPoint, inPickFaceEndPoint);
-	}
-	*/
+
+	/*
+		public Tier(Bay bay, String domainId, final Point inAnchorPoint, final Point inPickFaceEndPoint) {
+			super(bay, domainId, inAnchorPoint, inPickFaceEndPoint);
+		}
+		*/
 	public Tier() {
 		super();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<Tier> getDao() {
 		return staticGetDao();
@@ -106,12 +107,12 @@ public class Tier extends Location {
 		theTierIds.bayName = "";
 		theTierIds.aisleName = "";
 		theTierIds.tierName = this.getDomainId();
-		Bay bayLocation = this.<Bay>getParentAtLevel(Bay.class);
+		Bay bayLocation = this.<Bay> getParentAtLevel(Bay.class);
 		Aisle aisleLocation = null;
 
 		if (bayLocation != null) {
 			theTierIds.bayName = bayLocation.getDomainId();
-			aisleLocation = bayLocation.<Aisle>getParentAtLevel(Aisle.class);
+			aisleLocation = bayLocation.<Aisle> getParentAtLevel(Aisle.class);
 		}
 		if (aisleLocation != null) {
 			theTierIds.aisleName = aisleLocation.getDomainId();
@@ -131,7 +132,6 @@ public class Tier extends Location {
 		TierIds theTierIds = getTierIds();
 		return (theTierIds.aisleName + "-" + theTierIds.tierName + "-" + theTierIds.bayName);
 	}
-
 
 	public String getAisleTierBayForComparable() {
 		// this is for a sort comparable.
@@ -171,6 +171,27 @@ public class Tier extends Location {
 		}
 	};
 
+	public String getSlotPosconRange() {
+
+		List<Slot> slotList = this.getActiveChildrenAtLevel(Slot.class);
+		int highest = 0;
+		int lowest = 0;
+		for (Slot slot : slotList) {
+			Integer index = slot.getPosconIndex();
+			if (index != null){
+				if (index > highest)
+					highest = index;
+				if (lowest == 0 || index < lowest)
+					lowest = index;
+			}
+		}
+		if (highest == 0 || lowest == 0)
+			return "";
+		else if (highest == lowest)
+			return Integer.toString(highest);
+		else return String.format("%d - %d", lowest, highest);
+	}
+
 	public String getSlotAliasRange() {
 		// for a meta field. If none of the slots have aliases yet, then blank
 		// if some but not all, then "xxx" (cap X will give a compiler warning)
@@ -188,7 +209,7 @@ public class Tier extends Location {
 			String tierAlias = this.getPrimaryAliasId();
 			return tierAlias;
 		}
-		
+
 		// We definitely have to sort these. Not guaranteed to come in order.
 		Collections.sort(slotList, new SlotIDComparator());
 
@@ -216,6 +237,35 @@ public class Tier extends Location {
 		return resultStr;
 	}
 
+	@Override
+	protected void doSetControllerChannel(String inControllerPersistentIDStr, String inChannelStr) {
+		super.doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);
+		// Following our normal pattern, if we are setting for the tier, let's be sure to clear for the slots. 
+		// Coding error from v13 or so set on slots. But we might add other functionality later. We still would want to clear slot controller. DEV-764)
+		
+		boolean shouldClearSlotPoscons = false;
+		// Rarely needed. If changing from poscons to lights, clear out the old poscon indices.
+		LedController ledController = this.getLedController();
+		if (ledController != null && ledController.getDeviceType() != DeviceType.Poscons) {
+			shouldClearSlotPoscons = true;
+		}
+
+		List<Location> slots = this.getActiveChildrenAtLevel(Slot.class);
+		for (Location slot : slots) {
+			if (shouldClearSlotPoscons) {
+				if (slot.getPosconIndex() != null) {
+					slot.setPosconIndex(null);
+					Slot.staticGetDao().store(slot);
+				}
+			}
+			LedController oldController = slot.getLedController();
+			if (oldController != null) {
+				oldController.removeLocation(slot);
+				slot.clearControllerChannel(); // this does the DAO.store()
+			}
+		}
+	}
+
 	public void setControllerChannel(String inControllerPersistentIDStr, String inChannelStr, String inTiersStr) {
 		// this is for callMethod from the UI
 		// This, or all of this tier in aisle
@@ -224,8 +274,8 @@ public class Tier extends Location {
 		// if "aisle", then the rest of tiers at same level
 		if (allTiers) {
 			// The goal is to get to the aisle, then ask for all tiers. Filter those to the subset with the same domainID (like "T2")
-			Bay bayParent = this.<Bay>getParentAtLevel(Bay.class);
-			Aisle aisleParent = bayParent.<Aisle>getParentAtLevel(Aisle.class);
+			Bay bayParent = this.<Bay> getParentAtLevel(Bay.class);
+			Aisle aisleParent = bayParent.<Aisle> getParentAtLevel(Aisle.class);
 			List<Tier> locationList = aisleParent.getActiveChildrenAtLevel(Tier.class);
 
 			String thisDomainId = this.getDomainId();
@@ -248,71 +298,71 @@ public class Tier extends Location {
 	public void setPoscons(int startingIndex) {
 		setPoscons(startingIndex, false);
 	}
-	
+
 	public void setPoscons(int startingIndex, boolean reverseOrder) {
 		LedController ledController = this.getLedController();
-		if (ledController==null) {
-			LOGGER.warn("Failed to set poscons on "+this+": Tier has no LedController.");
+		if (ledController == null) {
+			LOGGER.warn("Failed to set poscons on " + this + ": Tier has no LedController.");
 			return;
 		}
-		if (ledController.getDeviceType()!=DeviceType.Poscons) {
-			LOGGER.warn("Failed to set poscons on "+this+": LedController "+ledController+" is not of device type Poscon.");
+		if (ledController.getDeviceType() != DeviceType.Poscons) {
+			LOGGER.warn("Failed to set poscons on " + this + ": LedController " + ledController + " is not of device type Poscon.");
 			return;
 		}
-		
+
 		List<Slot> slotList = this.getActiveChildrenAtLevel(Slot.class);
 		if (slotList.size() == 0) {
 			return;
 		}
-		
+
 		// We definitely have to sort these. Not guaranteed to come in order.
 		Collections.sort(slotList, new SlotIDComparator());
-		
+
 		// reverse slot list, if required
 		if (reverseOrder) {
 			Collections.reverse(slotList);
 		}
-				
+
 		// set position controller index and led controller
 		ListIterator<Slot> li = null;
 		li = slotList.listIterator();
 		int posconIndex = startingIndex;
 		while (li.hasNext()) {
 			Slot slot = (Slot) li.next();
-			slot.setLedController(ledController);
+			// do not set the led controller on the slot itself. Let it inherit up to the tier.
 			slot.setPosconIndex(posconIndex);
 			Slot.staticGetDao().store(slot);
-			posconIndex++;	
+			posconIndex++;
 		}
 	}
-	
+
 	public Slot createSlot(String inSlotId, Point inAnchorPoint, Point inPickFaceEndPoint) {
-		Slot slot=new Slot();
+		Slot slot = new Slot();
 		slot.setDomainId(inSlotId);
 		slot.setAnchorPoint(inAnchorPoint);
 		slot.setPickFaceEndPoint(inPickFaceEndPoint);
-		
+
 		this.addLocation(slot);
-		
+
 		return slot;
 	}
-	
+
 	@Override
 	public boolean isTier() {
 		return true;
 	}
-	
+
 	public static Tier as(Location location) {
-		if (location==null) {
+		if (location == null) {
 			return null;
 		}
 		if (location.isTier()) {
-	    	return (Tier) location;
-	    }
-		throw new RuntimeException("Location is not a tier: "+location);
+			return (Tier) location;
+		}
+		throw new RuntimeException("Location is not a tier: " + location);
 	}
 
 	public static void sortByDomainId(List<Tier> tiers) {
 		java.util.Collections.sort(tiers, new TierBayComparable());
-	}	
+	}
 }

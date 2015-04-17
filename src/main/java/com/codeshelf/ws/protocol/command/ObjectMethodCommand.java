@@ -26,21 +26,21 @@ import com.codeshelf.ws.server.WebSocketConnection;
 @RequiresPermissions("ux:method")
 public class ObjectMethodCommand extends CommandABC {
 
-	private static final Logger	LOGGER = LoggerFactory.getLogger(ObjectMethodCommand.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(ObjectMethodCommand.class);
 
 	private ObjectMethodRequest	request;
-	
+
 	public ObjectMethodCommand(WebSocketConnection connection, ObjectMethodRequest request) {
 		super(connection);
 		this.request = request;
 	}
-	
+
 	@Override
 	public ResponseABC exec() {
 		ObjectMethodResponse response = new ObjectMethodResponse();
-		
+
 		String className = request.getClassName();
-		if (className==null) {
+		if (className == null) {
 			LOGGER.error("Object method command failed: Class name is undefined");
 
 			response.setStatus(ResponseStatus.Fail);
@@ -48,7 +48,7 @@ public class ObjectMethodCommand extends CommandABC {
 			return response;
 		}
 		String methodName = request.getMethodName();
-		if (methodName==null) {
+		if (methodName == null) {
 			response.setStatus(ResponseStatus.Fail);
 			response.setStatusMessage("Method name is undefined");
 			return response;
@@ -59,7 +59,7 @@ public class ObjectMethodCommand extends CommandABC {
 		if (className.equals("Organization")) {
 			// special... ignore ID
 			try {
-				return executeObjectMethodRequest(Organization.class,new Organization(),methodName,methodArgs);
+				return executeObjectMethodRequest(Organization.class, new Organization(), methodName, methodArgs);
 			} catch (NoSuchMethodException | ClassNotFoundException e) {
 				LOGGER.error("Failed to execute Organization method", e);
 			}
@@ -75,31 +75,35 @@ public class ObjectMethodCommand extends CommandABC {
 			@SuppressWarnings("unchecked")
 			Class<? extends IDomainObject> classObject = (Class<? extends IDomainObject>) Class.forName(className);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
-				ITypedDao<? extends IDomainObject> dao = TenantPersistenceService.getInstance().getDao(classObject);				
+				ITypedDao<? extends IDomainObject> dao = TenantPersistenceService.getInstance().getDao(classObject);
 				// First locate an instance of the parent class.
 				IDomainObject targetObject = dao.findByPersistentId(objectId);
 
 				if (targetObject != null) {
+					LOGGER.info("calling {}.{}()", classObject.getSimpleName(), methodName);
 					return executeObjectMethodRequest(classObject, targetObject, methodName, methodArgs);
 				} else {
 					response.setStatus(ResponseStatus.Fail);
-					response.setStatusMessage("Instance " + objectId + " of type " + classObject+" not found");
+					response.setStatusMessage("Instance " + objectId + " of type " + classObject + " not found");
 					return response;
 				}
 			}
 		} catch (NoSuchMethodException e) {
-			LOGGER.error("Method "+methodName+" does not exist on "+className, e);
+			LOGGER.error("Method " + methodName + " does not exist on " + className, e);
 			response.setStatusMessage("Method does not exist");
 		} catch (Exception e) {
-			LOGGER.error("Failed to invoke "+methodName+" on "+className, e);
+			LOGGER.error("Failed to invoke " + methodName + " on " + className, e);
 		}
 		response.setStatus(ResponseStatus.Fail);
 		return response;
 	}
-	
-	ObjectMethodResponse executeObjectMethodRequest(Class<?> classObject, Object targetObject, String methodName, List<ArgsClass> methodArgs) throws NoSuchMethodException, ClassNotFoundException {
+
+	ObjectMethodResponse executeObjectMethodRequest(Class<?> classObject,
+		Object targetObject,
+		String methodName,
+		List<ArgsClass> methodArgs) throws NoSuchMethodException, ClassNotFoundException {
 		ObjectMethodResponse response = new ObjectMethodResponse();
-		
+
 		// Loop over all the arguments, setting each one.
 		List<Class<?>> signatureClasses = new ArrayList<Class<?>>();
 		List<Object> cookedArguments = new ArrayList<Object>();
@@ -109,22 +113,24 @@ public class ObjectMethodCommand extends CommandABC {
 			//Class classType = Class.forName(arg.getClassType());
 			Class<?> classType = ClassUtils.getClass(arg.getClassType());
 			signatureClasses.add(classType);
-			if (Double.class.isAssignableFrom(classType)){
-				if (argumentValue==null) {
-					LOGGER.error("Failed to invoke "+classObject.getSimpleName()+"."+methodName + ": Argument "+arg.getName()+" is undefined.");
+			if (Double.class.isAssignableFrom(classType)) {
+				if (argumentValue == null) {
+					LOGGER.error("Failed to invoke " + classObject.getSimpleName() + "." + methodName + ": Argument "
+							+ arg.getName() + " is undefined.");
 					response.setStatus(ResponseStatus.Fail);
 					return response;
 				}
 				argumentValue = Double.valueOf(argumentValue.toString());
-			} else if (int.class.isAssignableFrom(classType)){
-				if (argumentValue==null) {
-					LOGGER.error("Failed to invoke "+classObject.getSimpleName()+"."+methodName + ": Argument "+arg.getName()+" is undefined.");
+			} else if (int.class.isAssignableFrom(classType)) {
+				if (argumentValue == null) {
+					LOGGER.error("Failed to invoke " + classObject.getSimpleName() + "." + methodName + ": Argument "
+							+ arg.getName() + " is undefined.");
 					response.setStatus(ResponseStatus.Fail);
 					return response;
 				}
 				argumentValue = Integer.valueOf(argumentValue.toString());
 			}
-			cookedArguments.add(argumentValue);		
+			cookedArguments.add(argumentValue);
 		}
 
 		Object methodResult = null;
@@ -136,27 +142,29 @@ public class ObjectMethodCommand extends CommandABC {
 				response.setResults(methodResult);
 				response.setStatus(ResponseStatus.Success);
 				return response;
-			} catch (InvocationTargetException e ) {
+			} catch (InvocationTargetException e) {
 				Throwable targetException = e.getTargetException();
 				if (targetException instanceof InputValidationException) {
-					LOGGER.error("Failed to invoke "+classObject.getSimpleName()+"."+method + ", with arguments: " + cookedArguments, targetException);
-					errors.addAllErrors(((InputValidationException)targetException).getErrors());
+					LOGGER.error("Failed to invoke " + classObject.getSimpleName() + "." + method + ", with arguments: "
+							+ cookedArguments, targetException);
+					errors.addAllErrors(((InputValidationException) targetException).getErrors());
 					response.setStatus(ResponseStatus.Fail);
 					response.setStatusMessage(errors.toString());
 					response.setErrors(errors);
 					return response;
-					
-				}
-				else{
-					LOGGER.error("Failed to invoke "+classObject.getSimpleName()+"."+method + ", with arguments: " + cookedArguments, targetException);
+
+				} else {
+					LOGGER.error("Failed to invoke " + classObject.getSimpleName() + "." + method + ", with arguments: "
+							+ cookedArguments, targetException);
 					errors.reject(ErrorCode.GENERAL, targetException.toString());
 					response.setStatus(ResponseStatus.Fail);
 					response.setStatusMessage(errors.toString());
 					response.setErrors(errors);
-					return response;						
+					return response;
 				}
 			} catch (Exception e) {
-				LOGGER.error("Failed to invoke "+classObject.getSimpleName()+"."+method + ", with arguments: " + cookedArguments,e);
+				LOGGER.error("Failed to invoke " + classObject.getSimpleName() + "." + method + ", with arguments: "
+						+ cookedArguments, e);
 				errors.reject(ErrorCode.GENERAL, e.toString());
 				response.setStatus(ResponseStatus.Fail);
 				response.setErrors(errors);
@@ -166,5 +174,5 @@ public class ObjectMethodCommand extends CommandABC {
 		response.setStatus(ResponseStatus.Fail);
 		return response;
 	}
-	
+
 }
