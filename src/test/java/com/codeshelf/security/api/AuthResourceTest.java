@@ -9,7 +9,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
-import java.util.Map;
 
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.Response;
@@ -19,10 +18,8 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.codeshelf.security.TokenSessionService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
 
 public class AuthResourceTest {
 
