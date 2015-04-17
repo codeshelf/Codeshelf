@@ -76,6 +76,7 @@ import com.codeshelf.model.domain.Slot;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.SingleWorkItem;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
+import com.codeshelf.model.domain.Worker;
 import com.codeshelf.util.CompareNullChecker;
 import com.codeshelf.util.UomNormalizer;
 import com.codeshelf.validation.BatchResult;
@@ -1788,5 +1789,42 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		//Light up the selected location. Send even if just a redo
 		computeAndSendOrderFeedback(ol, true); // single message is last of the group
 		return true;
+	}
+	
+	public boolean badgeVerifiesOK(Che che, String badge) {
+		Facility facility = che.getFacility();
+		//Get global Authentication property value
+		String badgeAuthStr = PropertyService.getInstance().getPropertyFromConfig(facility, DomainObjectProperty.BADGEAUTH);
+		boolean badgeAuth = badgeAuthStr == null ? false : Boolean.parseBoolean(badgeAuthStr);
+		//Get active Worker with a matching badge id
+		Worker worker = Worker.findWorker(facility, badge);
+		
+		if (badgeAuth) {
+			if (worker == null) {
+				//Authentication + unknown worker = failed
+				LOGGER.warn("Badge verification failed for unknown badge " + badge);
+				return false;
+			} else {
+				//Authentication + known worker = succeeded
+				return true;
+			}
+		} else {
+			if (worker == null) {
+				//No authentication + unknown worker = succeeded + new worker
+				worker = new Worker();
+				worker.setFacility(facility);
+				worker.setActive(true);
+				worker.setLastName(badge);
+				worker.setBadgeId(badge);
+				worker.generateDomainId();
+				worker.setUpdated(new Timestamp(System.currentTimeMillis()));
+				Worker.staticGetDao().store(worker);
+				LOGGER.info("During badge verification created new Worker " + badge);
+				return true;
+			} else {
+				//No authentication + known worker = succeeded
+				return true;
+			}
+		}
 	}
 }

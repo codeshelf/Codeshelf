@@ -6,7 +6,7 @@ SiteController:
   - "ws:login"
   - "wi:*"
   - "light:use"
-  - "che:pick,setup"
+  - "che:pick,setup,verifybadge"
   - "che:inventory"
 Cart:
   - "che:pick,setup"

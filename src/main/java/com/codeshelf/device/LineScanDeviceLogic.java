@@ -143,12 +143,27 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		if (USER_PREFIX.equals(inScanPrefixStr)) {
 			setReadyMsg("");
 			this.setUserId(inScanStr);
-			setState(CheStateEnum.READY);
+			mDeviceManager.verifyBadge(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
+			setState(CheStateEnum.VERIFYING_BADGE);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
 			setReadyMsg("Invalid scan");
 		}
 	}
+	
+	@Override
+	public void processResultOfVerifyBadge(Boolean verified) {
+		if (mCheStateEnum == CheStateEnum.VERIFYING_BADGE) {
+			if (verified) {
+				clearAllPositionControllers();
+				setState(CheStateEnum.READY);
+			} else {
+				setState(CheStateEnum.IDLE);
+				invalidScanMsg(UNKNOWN_BADGE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+			}
+		}
+	}
+
 
 	/**
 	 * The CHE is in the GET_WORK state. 
@@ -615,6 +630,10 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			switch (inCheState) {
 				case IDLE:
 					sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
+					break;
+
+				case VERIFYING_BADGE:
+					sendDisplayCommand(VERIFYING_BADGE_MSG, EMPTY_MSG);
 					break;
 
 				case READY:

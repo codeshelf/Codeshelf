@@ -46,6 +46,7 @@ import com.codeshelf.ws.protocol.request.InventoryLightItemRequest;
 import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
 import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.protocol.request.LoginRequest;
+import com.codeshelf.ws.protocol.request.VerifyBadgeRequest;
 import com.codeshelf.ws.protocol.response.FailureResponse;
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
@@ -307,6 +308,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		LOGGER.debug("Compute work: Che={}; DetailId={}", inCheId, orderDetailId);
 		String cheId = inPersistentId.toString();
 		ComputeDetailWorkRequest req = new ComputeDetailWorkRequest(cheId, orderDetailId);
+		clientEndpoint.sendMessage(req);
+	}
+
+	public void verifyBadge(final String inCheId, final UUID inPersistentId, final String badge) {
+		LOGGER.debug("Verify badge: Che={}; badge={}", inCheId, badge);
+		String cheId = inPersistentId.toString();
+		VerifyBadgeRequest req = new VerifyBadgeRequest(cheId, badge);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -653,6 +661,19 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		}
 		this.lastNetworkUpdate = System.currentTimeMillis();
 		LOGGER.debug("Network updated: {} active devices, {} removed", updateDevices.size(), deleteDevices.size());
+	}
+
+	public void processVerifyBadgeResponse(String networkGuid, Boolean verified) {
+		NetGuid cheId = new NetGuid("0x" + networkGuid);
+		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
+		if (cheDevice != null) {
+			if (verified == null) {
+				verified = false;
+			}
+			cheDevice.processResultOfVerifyBadge(verified);
+		} else {
+			LOGGER.warn("Unable to process Verify Badge response for CHE id={} CHE not found", cheId);
+		}
 	}
 
 	public void processComputeWorkResponse(String networkGuid,

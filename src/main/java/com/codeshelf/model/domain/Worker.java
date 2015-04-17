@@ -3,6 +3,7 @@ package com.codeshelf.model.domain;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
@@ -53,7 +54,7 @@ public class Worker extends DomainObjectABC implements Validatable{
 	@JsonProperty
 	private Boolean							active;
 	
-	@Column(nullable = false, name = "first_name")
+	@Column(nullable = true, name = "first_name")
 	@Getter @Setter
 	@JsonProperty
 	private String							firstName;
@@ -106,17 +107,17 @@ public class Worker extends DomainObjectABC implements Validatable{
 	}
 	
 	public void generateDomainId(){
-		setDomainId(String.format("%s-%s-%s", getDefaultDomainIdPrefix(), getLastName(), getFirstName()));
+		String domainId = getDefaultDomainIdPrefix() + "-" + lastName;
+		if (firstName != null) {
+			domainId += "-" + firstName;
+		}
+		setDomainId(domainId);
 	}
 	
 	@Override
 	public boolean isValid(ErrorResponse errors) {
 		getDomainId();
 		boolean allOK = true;
-		if (firstName == null || "".equals(firstName)){
-			errors.addErrorMissingBodyParam("firstName");
-			allOK = false;
-		}
 		if (lastName == null || "".equals(lastName)){
 			errors.addErrorMissingBodyParam("lastName");
 			allOK = false;
@@ -156,16 +157,27 @@ public class Worker extends DomainObjectABC implements Validatable{
 			return true;
 		}
 		//Try to find another active worker with the same badge
+		Worker matchingWorker = findWorker(facility, badgeId, getPersistentId());
+		return matchingWorker == null;
+	}
+	
+	public static Worker findWorker(Facility facility, String badgeId) {
+		return findWorker(facility, badgeId, null);
+	}
+	
+	public static Worker findWorker(Facility facility, String badgeId, UUID skipWorker) {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("facility", facility));
 		filterParams.add(Restrictions.eq("badgeId", badgeId));
 		filterParams.add(Restrictions.eq("active", true));
-		//Ignore this Worker itself (if it is already saved in the DB)
-		filterParams.add(Restrictions.ne("persistentId", getPersistentId()));
+		if (skipWorker != null) {
+			//Ignore provided Worker when needed
+			filterParams.add(Restrictions.ne("persistentId", skipWorker));
+		}
 		List<Worker> workers = staticGetDao().findByFilter(filterParams);
 		if (workers == null || workers.isEmpty()) {
-			return true;
+			return null;
 		}
-		return false;
+		return workers.get(0);
 	}
 }

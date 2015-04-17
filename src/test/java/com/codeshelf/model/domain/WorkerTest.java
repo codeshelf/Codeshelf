@@ -62,9 +62,8 @@ public class WorkerTest extends HibernateTest {
 		Assert.assertEquals(HttpServletResponse.SC_BAD_REQUEST, response.getStatus());
 		ErrorResponse errorResponse = (ErrorResponse)response.getEntity();
 		ArrayList<String> errors = errorResponse.getErrors();
-		Assert.assertEquals("Missing body param 'firstName'", errors.get(0));
-		Assert.assertEquals("Missing body param 'lastName'", errors.get(1));
-		Assert.assertEquals("Missing body param 'badgeId'", errors.get(2));
+		Assert.assertEquals("Missing body param 'lastName'", errors.get(0));
+		Assert.assertEquals("Missing body param 'badgeId'", errors.get(1));
 		
 		this.getTenantPersistenceService().commitTransaction();		
 	}
@@ -133,9 +132,8 @@ public class WorkerTest extends HibernateTest {
 		Assert.assertEquals(HttpServletResponse.SC_BAD_REQUEST, response.getStatus());
 		ErrorResponse errorResponse = (ErrorResponse)response.getEntity();
 		ArrayList<String> errors = errorResponse.getErrors();
-		Assert.assertEquals("Missing body param 'firstName'", errors.get(0));
-		Assert.assertEquals("Missing body param 'lastName'", errors.get(1));
-		Assert.assertEquals("Missing body param 'badgeId'", errors.get(2));
+		Assert.assertEquals("Missing body param 'lastName'", errors.get(0));
+		Assert.assertEquals("Missing body param 'badgeId'", errors.get(1));
 
 		this.getTenantPersistenceService().commitTransaction();
 	}

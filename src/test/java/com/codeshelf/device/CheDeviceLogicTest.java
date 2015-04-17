@@ -71,6 +71,8 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		cheDeviceLogic.startDevice();
 
 		cheDeviceLogic.scanCommandReceived("U%PICKER1");
+		
+		cheDeviceLogic.processResultOfVerifyBadge(true);
 
 		cheDeviceLogic.scanCommandReceived("C%" + containerId);
 
@@ -300,10 +302,10 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		ArgumentCaptor<CommandControlDisplayMessage> commandCaptor = forClass(CommandControlDisplayMessage.class);
 		verify(radioController, atLeast(1)).sendCommand(commandCaptor.capture(), any(NetAddress.class), eq(true));
 		List<CommandControlDisplayMessage> reverseOrder = Lists.reverse(commandCaptor.getAllValues());
-
+		
 		//In reverse order
 		CommandControlDisplayMessage scanContainer = reverseOrder.remove(0);
-		Assert.assertEquals("Last message was: " + scanContainer, "SCAN ORDER", scanContainer.getLine1MessageStr());
+		Assert.assertEquals("Last message was: " + scanContainer, "VERIFYING BADGE", scanContainer.getLine1MessageStr());
 
 		//skip position controller clear
 		reverseOrder.remove(0);

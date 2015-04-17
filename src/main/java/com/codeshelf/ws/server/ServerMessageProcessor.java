@@ -38,6 +38,7 @@ import com.codeshelf.ws.protocol.command.ObjectUpdateCommand;
 import com.codeshelf.ws.protocol.command.PutWallPlacementCommand;
 import com.codeshelf.ws.protocol.command.RegisterFilterCommand;
 import com.codeshelf.ws.protocol.command.ServiceMethodCommand;
+import com.codeshelf.ws.protocol.command.VerifyBadgeCommand;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.protocol.message.KeepAlive;
 import com.codeshelf.ws.protocol.message.MessageABC;
@@ -61,6 +62,7 @@ import com.codeshelf.ws.protocol.request.PutWallPlacementRequest;
 import com.codeshelf.ws.protocol.request.RegisterFilterRequest;
 import com.codeshelf.ws.protocol.request.RequestABC;
 import com.codeshelf.ws.protocol.request.ServiceMethodRequest;
+import com.codeshelf.ws.protocol.request.VerifyBadgeRequest;
 import com.codeshelf.ws.protocol.response.FailureResponse;
 import com.codeshelf.ws.protocol.response.PingResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
@@ -163,6 +165,11 @@ public class ServerMessageProcessor implements IMessageProcessor {
 				(CompleteWorkInstructionRequest) request,
 				serviceFactory.getServiceInstance(WorkService.class));
 			completeWiCounter.inc();
+			applicationRequestCounter.inc();
+		} else if (request instanceof VerifyBadgeRequest) {
+			VerifyBadgeRequest req = (VerifyBadgeRequest) request;
+			command = new VerifyBadgeCommand(csSession, req, serviceFactory.getServiceInstance(WorkService.class));
+			computeWorkCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof ComputeWorkRequest) {
 			ComputeWorkRequest req = (ComputeWorkRequest) request;
