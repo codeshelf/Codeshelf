@@ -92,12 +92,12 @@ public class LocationTest extends MockDaoTest {
 		Assert.assertEquals(false, aisle.isPutWallLocation());
 		Assert.assertEquals(false, bay.isPutWallLocation());
 		
-		//Set bay to PutWall, and verify that only it is such
+		//Set bay to PutWall, and verify that only it is such. (This is odd case. Normally the aisle is set. CheProcess tests do normal cases.)
 		bay.setAsPutWallLocation(true);
 		Assert.assertEquals(false, aisle.isPutWallLocation());
 		Assert.assertEquals(true, bay.isPutWallLocation());
-		Assert.assertEquals(null, aisle.getPutWallUi());
-		Assert.assertEquals("Yes", bay.getPutWallUi());
+		Assert.assertEquals("", aisle.getPutWallUi()); // aisle not a put wall
+		Assert.assertEquals("A1.B1", bay.getPutWallUi()); // bay is a put wall. No alias, so shows the nominal ID.
 
 
 		//Revert to both off
@@ -105,12 +105,12 @@ public class LocationTest extends MockDaoTest {
 		Assert.assertEquals(false, aisle.isPutWallLocation());
 		Assert.assertEquals(false, bay.isPutWallLocation());
 
-		//Set aisle to PutWall, and veryfy that both locations are not PutWall
+		//Set aisle to PutWall, and verify that both locations are PutWall
 		aisle.togglePutWallLocation();
 		Assert.assertEquals(true, aisle.isPutWallLocation());
 		Assert.assertEquals(true, bay.isPutWallLocation());
-		Assert.assertEquals("Yes", aisle.getPutWallUi());
-		Assert.assertEquals("(Yes)", bay.getPutWallUi());
+		Assert.assertEquals("A1", aisle.getPutWallUi()); // is putwall; no alias
+		Assert.assertEquals("A1.B1", bay.getPutWallUi());
 
 		this.getTenantPersistenceService().commitTransaction();
 	}

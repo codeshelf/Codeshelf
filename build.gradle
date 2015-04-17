@@ -103,6 +103,8 @@ dependencies {
 			'org.apache.shiro:shiro-guice:1.+',
 			'com.dropbox.core:dropbox-core-sdk:1.7.6',
 
+			'com.sun.mail:javax.mail:1.5.2',
+
 			'com.eaio.uuid:uuid:3.2',
 			'org.projectlombok:lombok:1.14.8',
 

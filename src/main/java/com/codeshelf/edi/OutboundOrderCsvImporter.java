@@ -893,7 +893,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		return result;
 	}
 	
-	private OrderDetail findOrder(OrderHeader header, String domainId, ItemMaster item, UomMaster uom) {
+	public static OrderDetail findOrder(OrderHeader header, String domainId, ItemMaster item, UomMaster uom) {
 		OrderDetail domainMatch = header.getOrderDetail(domainId);
 		if (item == null) {
 			return domainMatch;
@@ -910,7 +910,7 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		return domainMatch;
 	}
 	
-	private String genItemUomKey(ItemMaster item, UomMaster uom) {
+	private static String genItemUomKey(ItemMaster item, UomMaster uom) {
 		if (item == null) {return null;}
 		return item.getDomainId() + ((uom==null || uom.getDomainId().isEmpty())?"":"-"+uom.getDomainId());
 	}

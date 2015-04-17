@@ -167,9 +167,33 @@ public class WiFactory {
 		Che inChe,
 		Location inLocation,
 		final Timestamp inTime,
-		WiPurpose purpose) throws DaoException {
+		WiPurpose purpose
+		) throws DaoException {
+		return createWorkInstruction(inStatus, inType, inOrderDetail, inContainer, inChe, inLocation, inTime, purpose, true);
+	}
+	
+	/**
+	 * Create a work instruction for and order item quantity picked into a container at a location.
+	 * @param inStatus
+	 * @param inType
+	 * @param inOrderDetail
+	 * @param inContainer
+	 * @param inChe
+	 * @param inLocation
+	 * @param inTime
+	 * @return
+	 */
+	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
+		WorkInstructionTypeEnum inType,
+		OrderDetail inOrderDetail,
+		Container inContainer,
+		Che inChe,
+		Location inLocation,
+		final Timestamp inTime,
+		WiPurpose purpose,
+		boolean linkInstructionToDetail) throws DaoException {
 
-		WorkInstruction resultWi = createWorkInstruction(inStatus, inType, inOrderDetail, inChe, inTime);
+		WorkInstruction resultWi = createWorkInstruction(inStatus, inType, inOrderDetail, inChe, linkInstructionToDetail, inTime);
 		if (resultWi == null) { //no more work to do
 			return null;
 		}
@@ -247,6 +271,7 @@ public class WiFactory {
 		WorkInstructionTypeEnum inType,
 		OrderDetail inOrderDetail,
 		Che inChe,
+		boolean linkInstructionToDetail,
 		final Timestamp inTime) throws DaoException {
 		Facility facility = inOrderDetail.getFacility();
 		Integer qtyToPick = inOrderDetail.getQuantity();
@@ -282,7 +307,9 @@ public class WiFactory {
 				resultWi.setLedCmdStream("[]"); // empty array
 				resultWi.setStatus(WorkInstructionStatusEnum.NEW);
 				resultWi.setParent(facility);
-				inOrderDetail.addWorkInstruction(resultWi);
+				if (linkInstructionToDetail){
+					inOrderDetail.addWorkInstruction(resultWi);
+				}
 				inChe.addWorkInstruction(resultWi);
 				isNewWi = true;
 			}

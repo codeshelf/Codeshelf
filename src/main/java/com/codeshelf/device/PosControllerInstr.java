@@ -31,9 +31,9 @@ import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 
 @Data
-@EqualsAndHashCode(callSuper=false)
+@EqualsAndHashCode(callSuper = false)
 @Accessors(prefix = "m")
-public class PosControllerInstr extends MessageABC implements Validatable{
+public class PosControllerInstr extends MessageABC implements Validatable {
 
 	public static final Byte	POSITION_ALL					= 0;
 
@@ -42,7 +42,7 @@ public class PosControllerInstr extends MessageABC implements Validatable{
 	public static final Byte	ZERO_QTY						= (byte) 0;
 
 	//Status Codes
-	public static final Byte	BAY_COMPLETE_CODE				= (byte) 254;	// sort of fake quantities for now
+	public static final Byte	BAY_COMPLETE_CODE				= (byte) 254;											// sort of fake quantities for now
 	public static final Byte	DEFAULT_POSITION_ASSIGNED_CODE	= (byte) 253;
 	public static final Byte	REPEAT_CONTAINER_CODE			= (byte) 252;
 
@@ -73,7 +73,7 @@ public class PosControllerInstr extends MessageABC implements Validatable{
 	public static final Byte	MED_DUTYCYCLE					= (byte) 0xF0;
 	public static final Byte	BRIGHT_DUTYCYCLE				= (byte) 0x40;
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(PosControllerInstr.class);
+	private static final Logger	LOGGER							= LoggerFactory.getLogger(PosControllerInstr.class);
 
 	@Accessors(prefix = "m")
 	@Getter
@@ -116,55 +116,67 @@ public class PosControllerInstr extends MessageABC implements Validatable{
 	@SerializedName(value = "dutyCycle")
 	@Expose
 	private Byte				mDutyCycle;
-	
+
 	@Accessors(prefix = "m")
-	@Getter @Setter
-	private long mPostedToPosConController = 0;
-	
+	@Getter
+	@Setter
+	private long				mPostedToPosConController		= 0;
+
 	//----------------------------------------------------
 	@Accessors(prefix = "m")
-	@Getter @Setter @Expose
+	@Getter
+	@Setter
+	@Expose
 	@SerializedName(value = "controllerId")
-	private String			mControllerId;
-	
+	private String				mControllerId;
+
 	@Accessors(prefix = "m")
-	@Getter @Setter @Expose
+	@Getter
+	@Setter
+	@Expose
 	@SerializedName(value = "sourceId")
-	private String			mSourceId;
-	
+	private String				mSourceId;
+
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
 	@SerializedName(value = "frequency")
 	@Expose
-	private Frequency				mFrequency = Frequency.SOLID;
+	private Frequency			mFrequency						= Frequency.SOLID;
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
 	@SerializedName(value = "brightness")
 	@Expose
-	private Brightness				mBrightness = Brightness.BRIGHT;
+	private Brightness			mBrightness						= Brightness.BRIGHT;
 
 	@Accessors(prefix = "m")
-	@Getter @Setter @Expose
+	@Getter
+	@Setter
+	@Expose
 	@SerializedName(value = "remove")
-	private String mRemove;
+	private String				mRemove;
 
 	@Accessors(prefix = "m")
 	@Getter
-	private boolean mRemoveAll = false;
-	
+	private boolean				mRemoveAll						= false;
+
 	@Accessors(prefix = "m")
 	@Getter
-	private List<Byte> mRemovePos = new ArrayList<Byte>();
+	private List<Byte>			mRemovePos						= new ArrayList<Byte>();
 
-	private String mRemoveError = null;
+	private String				mRemoveError					= null;
 
+	public PosControllerInstr() {
+	}
 
-	public PosControllerInstr() {}
-	
-	public PosControllerInstr(final byte inPosition, final byte inReqQty, final byte inMinQty, final byte inMaxQty, final byte inFreq, final byte inDutyCycle) {
+	public PosControllerInstr(final byte inPosition,
+		final byte inReqQty,
+		final byte inMinQty,
+		final byte inMaxQty,
+		final byte inFreq,
+		final byte inDutyCycle) {
 		mPosition = inPosition;
 		mReqQty = inReqQty;
 		mMinQty = inMinQty;
@@ -172,20 +184,36 @@ public class PosControllerInstr extends MessageABC implements Validatable{
 		mFreq = inFreq;
 		mDutyCycle = inDutyCycle;
 	}
-	
-	public PosControllerInstr(final String inControllerId, final byte inPosition, final byte inReqQty, final byte inMinQty, final byte inMaxQty, final byte inFreq, final byte inDutyCycle) {
+
+	public PosControllerInstr(final String inControllerId,
+		final byte inPosition,
+		final byte inReqQty,
+		final byte inMinQty,
+		final byte inMaxQty,
+		final byte inFreq,
+		final byte inDutyCycle) {
 		this(inPosition, inReqQty, inMinQty, inMaxQty, inFreq, inDutyCycle);
 		mControllerId = inControllerId;
 	}
 
-	public PosControllerInstr(final String inControllerId, final String inSourceId, final byte inPosition, final byte inReqQty, final byte inMinQty, final byte inMaxQty, final byte inFreq, final byte inDutyCycle) {
+	public PosControllerInstr(final String inControllerId,
+		final String inSourceId,
+		final byte inPosition,
+		final byte inReqQty,
+		final byte inMinQty,
+		final byte inMaxQty,
+		final byte inFreq,
+		final byte inDutyCycle) {
 		this(inPosition, inReqQty, inMinQty, inMaxQty, inFreq, inDutyCycle);
 		mControllerId = inControllerId;
 		mSourceId = inSourceId;
 	}
-	public void processRemoveField(){
-		if (mRemove == null) {return;}
-		if ("all".equalsIgnoreCase(mRemove)){
+
+	public void processRemoveField() {
+		if (mRemove == null) {
+			return;
+		}
+		if ("all".equalsIgnoreCase(mRemove)) {
 			mRemoveAll = true;
 			return;
 		}
@@ -229,49 +257,78 @@ public class PosControllerInstr extends MessageABC implements Validatable{
 		}
 		return valid;
 	}
-	
+
 	public void prepareObject() {
-		if (mMinQty == null) {mMinQty = mReqQty;}
-		if (mMaxQty == null) {mMaxQty = mReqQty;}
-		if (mFrequency != null) {mFreq = mFrequency.toByte();}
-		if (mBrightness != null) {mDutyCycle = mBrightness.toByte();}
+		if (mMinQty == null) {
+			mMinQty = mReqQty;
+		}
+		if (mMaxQty == null) {
+			mMaxQty = mReqQty;
+		}
+		if (mFrequency != null) {
+			mFreq = mFrequency.toByte();
+		}
+		if (mBrightness != null) {
+			mDutyCycle = mBrightness.toByte();
+		}
 	}
 
 	public enum Brightness {
-		BRIGHT, MEDIUM, DIM;
-		
-		public Byte toByte(){
+		BRIGHT,
+		MEDIUM,
+		DIM;
+
+		public Byte toByte() {
 			if (this == BRIGHT) {
 				return PosControllerInstr.BRIGHT_DUTYCYCLE;
-			} else if (this == MEDIUM){
+			} else if (this == MEDIUM) {
 				return PosControllerInstr.MED_DUTYCYCLE;
-			} else if (this == DIM){
+			} else if (this == DIM) {
 				return PosControllerInstr.DIM_DUTYCYCLE;
 			}
 			return null;
 		}
 	}
-	
+
 	public enum Frequency {
-		SOLID, BLINK;
-		
-		public Byte toByte(){
+		SOLID,
+		BLINK;
+
+		public Byte toByte() {
 			if (this == SOLID) {
 				return PosControllerInstr.SOLID_FREQ;
-			} else if (this == BLINK){
+			} else if (this == BLINK) {
 				return PosControllerInstr.BLINK_FREQ;
 			}
 			return null;
 		}
 	}
-	
+
+	/**
+	 * Very concise, human interpretable description of contents for one poscon. Not json.
+	 * This is about what goes out to the site controller, so we would never show the source field, for example. We would add color when that is implemented.
+	 * freq and duty should the raw numbers sent. May be slightly hard to interpret. freq 0 = SOLID. duty 64 = BRIGHT, etc.
+	 * value = 240 is BITENCODED_SEGMENTS_CODE, which then use the hex codes from min and max for the two LEDs.
+	 */
+	public String conciseDescription() {
+		String desc = String.format("[pos:%d value:%d min:%d, max:%d, freq:%d, duty:%d]",
+			getPosition(),
+			getReqQty(),
+			getMinQty(),
+			getMaxQty(),
+			getFreq(),
+			getDutyCycle());
+		return desc;
+	}
+
 	public static class PosConInstrGroupSerializer {
 		/**
 		 * Duplicated from LedCmdGroupSerializer
 		 */
-		
+
 		// Don't expose a constructor.
-		private PosConInstrGroupSerializer() {}
+		private PosConInstrGroupSerializer() {
+		}
 
 		// --------------------------------------------------------------------------
 		public static String serializePosConInstrString(final List<PosControllerInstr> inPosConInstrGroupList) {
@@ -293,20 +350,20 @@ public class PosControllerInstr extends MessageABC implements Validatable{
 			Type collectionType = new TypeToken<Collection<PosControllerInstr>>() {
 			}.getType();
 			result = mGson.fromJson(inInstrString, collectionType);
-			
+
 			for (PosControllerInstr instr : result) {
 				instr.prepareObject();
 			}
-			
+
 			return result;
 		}
-		
+
 		// Just a utility checker.
-		public static boolean verifyPosConInstrGroupList(final List<PosControllerInstr> inPosConInstrGroupList){
+		public static boolean verifyPosConInstrGroupList(final List<PosControllerInstr> inPosConInstrGroupList) {
 			boolean allOk = true;
 			for (PosControllerInstr posConInstrGroup : inPosConInstrGroupList) {
 				ErrorResponse errors = new ErrorResponse();
-				if (!posConInstrGroup.isValid(errors)){
+				if (!posConInstrGroup.isValid(errors)) {
 					allOk = false;
 				}
 				List<String> errorList = errors.getErrors();

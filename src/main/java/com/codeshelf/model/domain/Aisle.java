@@ -176,40 +176,7 @@ public class Aisle extends Location {
 
 		return bay;
 	}
-	
-	public void setPoscons(int startingIndex) {
-		List<Bay> bays = this.getActiveChildrenAtLevel(Bay.class); 
-		Bay.sortByDomainId(bays);
-		int posconIndex = startingIndex;
-		for (Bay bay : bays) {
-			List<Tier> tiers = bay.getActiveChildrenAtLevel(Tier.class); 
-			Tier.sortByDomainId(tiers);
-			for (Tier tier  : tiers) {
-				List<Slot> slots = tier.getActiveChildrenAtLevel(Slot.class); 				
-				Slot.sortByDomainId(slots);
-				for (Slot slot  : slots) {
-					slot.setPosconIndex(posconIndex);
-					Slot.staticGetDao().store(slot);
-					posconIndex++;	
-				}
-			}
-		}		
-	}
-	
-	public void resetPoscons() {
-		List<Bay> bays = this.getActiveChildrenAtLevel(Bay.class); 
-		for (Bay bay : bays) {
-			List<Tier> tiers = bay.getActiveChildrenAtLevel(Tier.class); 
-			for (Tier tier  : tiers) {
-				List<Slot> slots = tier.getActiveChildrenAtLevel(Slot.class); 				
-				for (Slot slot  : slots) {
-					slot.setPosconIndex(null);
-					Slot.staticGetDao().store(slot);
-				}
-			}
-		}		
-	}
-	
+		
 	@Override
 	public boolean isAisle() {
 		return true;

@@ -668,7 +668,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.DO_PUT); // This will cause showActivePicks();
 			} else {
 				// no side effects needed? processPickComplete() is the corrolary
-				setState(CheStateEnum.PUT_WALL_SCAN_ITEM); 
+				setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
 			}
 		}
 	}
@@ -1163,6 +1163,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processPutWallOrderScan(inScanPrefixStr, inContent);
 				break;
 
+			case NO_PUT_WORK:
+				// If one item scan did not work, let user scan another directly without first having to CLEAR.
+				// If user scans another location, let's assume it was a put wall change attempt.
+				if ("L%".equals(inScanPrefixStr)) {
+					processPutWallScanWall(inScanPrefixStr, inContent);
+				} else {
+					processPutWallItemScan(inScanPrefixStr, inContent);
+				}
+				break;
+
 			case PUT_WALL_SCAN_ITEM:
 				processPutWallItemScan(inScanPrefixStr, inContent);
 				break;
@@ -1529,15 +1539,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Almost the same as assignWork(), but some state transitions differ
 	 */
 	public void assignWallPuts(final List<WorkInstruction> inWorkItemList, String message) {
-		LOGGER.info("Temp: assignWallPuts() given {} work instructions", inWorkItemList.size());
+		notifyPutWallResponse(inWorkItemList);
 		if (inWorkItemList == null || inWorkItemList.size() == 0) {
 			setState(CheStateEnum.NO_PUT_WORK);
 		} else {
 			mActivePickWiList.clear();
 			mAllPicksWiList.clear();
 			mAllPicksWiList.addAll(inWorkItemList);
-			doNextWallPut();
-			// doNextPick will set the state.
+			doNextWallPut(); // should set the state
 		}
 	}
 
@@ -1561,8 +1570,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		CheStateEnum state = getCheStateEnum();
 
-		if (state == CheStateEnum.DO_PICK) {
-			// maintain the CHE feedback, but not for put wall puts.
+		if (state == CheStateEnum.DO_PICK || state == CheStateEnum.SHORT_PICK) {
+			// maintain the CHE feedback, but not for put wall puts. Not DO_PUT. And later likely need to add SHORT_PUT state. Not there either.
 
 			//Decrement count if this is a non-HK WI
 			if (!inWi.isHousekeeping()) {

@@ -1,11 +1,15 @@
 package com.codeshelf.api.resources.subresources;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -18,6 +22,8 @@ import lombok.Setter;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.hibernate.Session;
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Restrictions;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.EndDateParam;
@@ -35,6 +41,7 @@ import com.codeshelf.manager.User;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.Worker;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.OrderService;
@@ -73,7 +80,8 @@ public class FacilityResource {
 		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		try {
 			Session session = persistenceService.getSession();
-			return BaseResponse.buildResponse(this.orderService.orderDetailsNoLocation(tenant, session, facility.getPersistentId()));		} catch (Exception e) {
+			return BaseResponse.buildResponse(this.orderService.orderDetailsNoLocation(tenant, session, facility.getPersistentId()));		
+		} catch (Exception e) {
 			ErrorResponse errors = new ErrorResponse();
 			errors.processException(e);
 			return errors.buildResponse();
@@ -129,8 +137,6 @@ public class FacilityResource {
 		return BaseResponse.buildResponse(summary);
 	}
 
-
-
 	@GET
 	@Path("/groupinstructions")
 	@RequiresPermissions("companion:view")
@@ -166,6 +172,45 @@ public class FacilityResource {
 		ProductivitySummaryList.StatusSummary summary = orderService.statusSummary(session, facility.getPersistentId(), aggregate, filterName);
 
 		return BaseResponse.buildResponse(summary);
+	}
+
+	@GET
+	@Path("/workers")
+	@RequiresPermissions("worker:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getAllWorkersInFacility() {
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("facility", facility));
+		List<Worker> workers = Worker.staticGetDao().findByFilter(filterParams);
+		return BaseResponse.buildResponse(workers);
+	}
+
+	@POST
+	@Path("/workers")
+	@RequiresPermissions("worker:edit")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response createWorker(Worker worker) {
+		ErrorResponse errors = new ErrorResponse();
+		try {
+			worker.setFacility(facility);
+			worker.generateDomainId();
+			if (worker.getActive() == null){
+				worker.setActive(true);
+			}
+			worker.setUpdated(new Timestamp(System.currentTimeMillis()));
+			if (!worker.isValid(errors)){
+				errors.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				return errors.buildResponse();
+			}
+			UUID id = worker.getPersistentId();
+			Worker.staticGetDao().store(worker);
+			Worker createdWorker = Worker.staticGetDao().findByPersistentId(id);
+			return BaseResponse.buildResponse(createdWorker);
+		} catch (Exception e) {
+			errors.processException(e);
+			return errors.buildResponse();
+		}
 	}
 
 	@PUT

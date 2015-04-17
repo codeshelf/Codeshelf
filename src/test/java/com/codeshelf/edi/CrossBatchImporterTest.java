@@ -12,6 +12,8 @@ import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.HeaderCounts;
 import com.codeshelf.model.OrderTypeEnum;
@@ -31,7 +33,8 @@ import com.codeshelf.testframework.ServerTest;
  * 
  */
 public class CrossBatchImporterTest extends ServerTest {
-	
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(CrossBatchImporterTest.class);
+
 	private UUID facilityId;
 	
 	@Override
@@ -154,7 +157,7 @@ public class CrossBatchImporterTest extends ServerTest {
 		createItemMaster("I222.2", "ea", facility);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		int count = importBatchData(facility, csvString);
+		int count = importBatchData(facility, csvString, ediProcessTime);
 
 		Assert.assertEquals(6, count);
 		// With cross batches, we get one header per unique container, and one detail per unique item in container
@@ -205,7 +208,7 @@ public class CrossBatchImporterTest extends ServerTest {
 		createItemMaster("I444.1", "ea", facility);
 		createItemMaster("I444.2", "ea", facility);
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		int count = importBatchData(facility, csvString);
+		int count = importBatchData(facility, csvString, ediProcessTime);
 		Assert.assertEquals(6, count);
 		OrderGroup group = facility.getOrderGroup("G1");
 		Assert.assertNotNull(group);
@@ -241,7 +244,7 @@ public class CrossBatchImporterTest extends ServerTest {
 		createItemMaster("I666.2", "ea", facility);
 
 		Timestamp firstEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		int count = importBatchData(facility, csvString);
+		int count = importBatchData(facility, csvString, firstEdiProcessTime);
 		Assert.assertEquals(6, count);
 		
 		// With cross batches, we get one header per unique container, and one detail per unique item in container
@@ -265,7 +268,7 @@ public class CrossBatchImporterTest extends ServerTest {
 				+ "G1,C666,I666.2,400,ea\r\n";
 
 		Timestamp secondEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		int secondCount = importBatchData(facility, csvString);
+		int secondCount = importBatchData(facility, csvString, secondEdiProcessTime);
 		Assert.assertEquals(5, secondCount);
 		
 		// The reimport resulted in inactivation of previous order headers for those containers
@@ -323,7 +326,7 @@ public class CrossBatchImporterTest extends ServerTest {
 		createItemMaster("I888.2", "ea", facility);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		int count = importBatchData(facility, csvString);
+		int count = importBatchData(facility, csvString, ediProcessTime);
 		Assert.assertEquals(6, count);
 		
 		// With cross batches, we get one header per unique container, and one detail per unique item in container
@@ -346,7 +349,7 @@ public class CrossBatchImporterTest extends ServerTest {
 				+ "G1,C888,I888.2,200,ea\r\n";
 
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		count = importBatchData(facility, csvString);
+		count = importBatchData(facility, csvString, ediProcessTime);
 		Assert.assertEquals(7, count);
 		
 		HeaderCounts theCounts2 = facility.countCrossOrders();
@@ -392,7 +395,7 @@ public class CrossBatchImporterTest extends ServerTest {
 		createItemMaster("IAAA.2", "ea", facility);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		int count = importBatchData(facility, csvString);
+		int count = importBatchData(facility, csvString, ediProcessTime);
 		Assert.assertEquals(6, count);
 
 		// Now re-import the interchange changing the count on item 3.
@@ -405,7 +408,7 @@ public class CrossBatchImporterTest extends ServerTest {
 				+ "G1,CAAA,IAAA.2,200,ea\r\n";
 
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		count = importBatchData(facility, csvString);
+		count = importBatchData(facility, csvString, ediProcessTime);
 		Assert.assertEquals(6, count);
 
 		// Make sure that order detail item I999.3 still exists, but has quantity 0.
@@ -447,7 +450,7 @@ public class CrossBatchImporterTest extends ServerTest {
 		createItemMaster("I222.2", "ea", facility);
 
 		Timestamp crossBatchEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		int count = importBatchData(facility, csvString);
+		int count = importBatchData(facility, csvString, crossBatchEdiProcessTime);
 		Assert.assertEquals(6, count);
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -514,7 +517,7 @@ public class CrossBatchImporterTest extends ServerTest {
 		createItemMaster("I222.2", "ea", facility);
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		int count = importBatchData(facility, csvString);
+		int count = importBatchData(facility, csvString, ediProcessTime);
 		Assert.assertEquals(6,  count);
 		
 		// Make sure we created an order with the container's ID.
@@ -547,7 +550,7 @@ public class CrossBatchImporterTest extends ServerTest {
 				+ "xx,C222,I222.2,200,ea\r\n";
 
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		count = importBatchData(facility, csvStringRemoval);
+		count = importBatchData(facility, csvStringRemoval, ediProcessTime);
 		Assert.assertEquals(5,  count);
 		
 		HeaderCounts theCounts2 = facility.countCrossOrders();
@@ -567,7 +570,7 @@ public class CrossBatchImporterTest extends ServerTest {
 				+ "xx,C222,I222.2,200,cs\r\n";
 
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		count = importBatchData(facility, csvStringUomChange);
+		count = importBatchData(facility, csvStringUomChange, ediProcessTime);
 		Assert.assertEquals(6,  count);
 
 		// JR for DEV-278. Just making it pass now.
@@ -605,7 +608,7 @@ public class CrossBatchImporterTest extends ServerTest {
 				+ ",C222,I222.2,200,ea\r\n";
 
 		Timestamp firstEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		int count = importBatchData(facility, firstCsvString);
+		int count = importBatchData(facility, firstCsvString, firstEdiProcessTime);
 		Assert.assertEquals(6,  count);
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -645,7 +648,7 @@ public class CrossBatchImporterTest extends ServerTest {
 
 
 		Timestamp secondEdiProcessTime = new Timestamp(System.currentTimeMillis());
-		int secondCount = importBatchData(facility, secondCsvString);
+		int secondCount = importBatchData(facility, secondCsvString, secondEdiProcessTime);
 		Assert.assertEquals(6,  secondCount);
 
 		// Make sure we created an order with the container's ID.

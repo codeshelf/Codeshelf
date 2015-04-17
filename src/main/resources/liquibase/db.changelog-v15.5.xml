@@ -1,45 +1,47 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
-    <changeSet author="bhe (generated)" id="1428960695887-6">
-        <createTable tableName="import_receipt">
-            <column name="persistentid" type="UUID">
+<databaseChangeLog 
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog" 
+	logicalFilePath="db.changelog-v15.4.xml"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+    <changeSet author="ilya (generated)" id="1429126028404-4">
+        <createTable tableName="worker">
+			<column name="persistentid" type="UUID">
+				<constraints nullable="false" />
+			</column>
+            <column name="facility_persistentid" type="UUID">
+                <constraints nullable="false"/>
+            </column>			
+            <column name="domainid" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="domainid" type="VARCHAR(255)">
+            <column name="active" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="first_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="middle_initial" type="VARCHAR(255)"/>
+            <column name="last_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>            
+            <column name="badge_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="group_name" type="VARCHAR(255)"/>
+            <column name="hr_id" type="VARCHAR(255)"/>
+            <column name="updated" type="timestamp">
                 <constraints nullable="false"/>
             </column>
             <column name="version" type="INT8">
                 <constraints nullable="false"/>
-            </column>
-            <column name="completed" type="INT8">
-                <constraints nullable="false"/>
-            </column>
-            <column name="lines_processed" type="INT4"/>
-            <column name="orders_processed" type="INT4"/>
-            <column name="received" type="INT8">
-                <constraints nullable="false"/>
-            </column>
-            <column name="started" type="INT8">
-                <constraints nullable="false"/>
-            </column>
-            <column name="type" type="VARCHAR(20)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="parent_persistentid" type="UUID">
-                <constraints nullable="false"/>
-            </column>
+            </column>            
         </createTable>
     </changeSet>
-    <changeSet author="bhe (generated)" id="1428960695887-7">
-        <addPrimaryKey columnNames="persistentid" constraintName="import_receipPK" tableName="import_receipt"/>
+    <changeSet author="ilya (generated)" id="1429126028404-5">
+        <addPrimaryKey columnNames="persistentid" constraintName="workerPK" tableName="worker"/>
     </changeSet>
-    <changeSet author="bhe (generated)" id="1428960695887-8">
-        <addForeignKeyConstraint baseColumnNames="parent_persistentid" baseTableName="import_receipt" constraintName="FK_c1i4q9k3dh2bd4x10bofp5x0o" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="location"/>
-    </changeSet>
-    <changeSet author="bhe (generated)" id="1428960695887-9">
-        <dropForeignKeyConstraint baseTableName="edi_document_locator" constraintName="FK_l5fchay8q4kwv9lgirm2kj65x"/>
-    </changeSet>
-    <changeSet author="bhe (generated)" id="1428960695887-10">
-        <dropTable tableName="edi_document_locator"/>
+    <changeSet author="ilya (generated)" id="1429126028404-6">
+        <addForeignKeyConstraint baseColumnNames="facility_persistentid" baseTableName="worker" constraintName="FK_fa0yrm3aqyxe4qdbo0r097y1l" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="location"/>
     </changeSet>
 </databaseChangeLog>

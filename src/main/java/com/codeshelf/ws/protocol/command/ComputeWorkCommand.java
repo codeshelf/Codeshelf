@@ -50,12 +50,13 @@ public class ComputeWorkCommand extends CommandABC {
 			Map<String, String> positionToContainerMap = request.getPositionToContainerMap();
 			List<String> containerIdList = new ArrayList<String>(positionToContainerMap.values());
 			BooleanHolder pathChanged = new BooleanHolder(false);
+			Boolean reverse = request.getReversePickOrder();
 			
 			// Get the work instructions for this CHE at this location for the given containers.
-			WorkList allWorkList = workService.computeWorkInstructions(che, containerIdList, request.getReversePickOrder());
+			WorkList allWorkList = workService.computeWorkInstructions(che, containerIdList, reverse);
 						
 			// Get work instructions with housekeeping
-			List<WorkInstruction> instructionsOnPath = workService.getWorkInstructions(che, request.getLocationId(), request.getReversePickOrder(), pathChanged);
+			List<WorkInstruction> instructionsOnPath = workService.getWorkInstructions(che, request.getLocationId(), reverse, pathChanged);
 			
 			//Get the counts
 			Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(allWorkList, instructionsOnPath);

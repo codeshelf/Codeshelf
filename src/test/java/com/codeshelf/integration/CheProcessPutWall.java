@@ -12,30 +12,15 @@ import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.NetGuid;
-import com.codeshelf.model.DeviceType;
-import com.codeshelf.model.WorkInstructionSequencerType;
-import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.ItemMaster;
-import com.codeshelf.model.domain.LedController;
-import com.codeshelf.model.domain.Location;
-import com.codeshelf.model.domain.OrderHeader;
-import com.codeshelf.model.domain.OrderLocation;
-import com.codeshelf.model.domain.Path;
-import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.testframework.ServerTest;
+import com.codeshelf.service.LightService;
 import com.codeshelf.util.ThreadUtils;
 
-public class CheProcessPutWall extends ServerTest {
-	private static final Logger	LOGGER			= LoggerFactory.getLogger(CheProcessPutWall.class);
-	private String				CONTROLLER_1_ID	= "00001881";
-	private String				CONTROLLER_2_ID	= "00001882";
-	private String				CONTROLLER_3_ID	= "00001883";
-	private String				CONTROLLER_4_ID	= "00001884";
+public class CheProcessPutWall extends CheProcessPutWallSuper {
+	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessPutWall.class);
+	private static final int	WAIT_TIME	= 4000;
 
 	@Test
 	public final void putWallOrderSetup() throws IOException {
@@ -50,64 +35,71 @@ public class CheProcessPutWall extends ServerTest {
 		LOGGER.info("1: prove ORDER_WALL and clear works from start and finish, but not after setup or during pick");
 		picker.login("Picker #1");
 		picker.scanCommand("ORDER_WALL");
-		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker.scanCommand("CLEAR");
-		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		LOGGER.info("1b: progress futher before clearing. Scan the order ID");
 		picker.scanCommand("ORDER_WALL");
-		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker.scanSomething("11112");
-		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker.scanCommand("CLEAR");
-		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		LOGGER.info("1c: cannot ORDER_WALL after one order is set");
 		picker.setupContainer("11112", "4");
 		picker.scanCommand("ORDER_WALL");
-		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		LOGGER.info("1d: pick to completion");
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
 		picker.scanLocation("F21");
-		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		WorkInstruction wi = picker.nextActiveWi();
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
 		picker.pick(button, quant);
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
 
 		LOGGER.info("1e: ORDER_WALL from complete state");
 		picker.scanCommand("ORDER_WALL");
-		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker.scanCommand("CLEAR");
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
 
 		LOGGER.info("1g: Do simple actual order setup to put wall");
 		picker.scanCommand("ORDER_WALL");
-		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker.scanSomething("11112");
-		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker.scanSomething("L%P12");
-		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker.scanCommand("CLEAR");
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
 
 		LOGGER.info("2: Demonstrate what a put wall picker object can do.");
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
 		Assert.assertNotNull(posman);
 
-		this.getTenantPersistenceService().beginTransaction();
-		// Facility facility = getFacility();
-
-		/* LightService theService = ServiceFactory.getServiceInstance(LightService.class);
-		theService.lightLocation(facility.getPersistentId().toString(), "P11");
-		*/
-
-		@SuppressWarnings("unused")
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 1); // will return null if blank, so use the object Byte.
+		Assert.assertNull(displayValue); // This slot is not lit.
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = getFacility();
+		LightService lightService = workService.getLightService();
+		lightService.lightLocation(facility.getPersistentId().toString(), "P11");
 		this.getTenantPersistenceService().commitTransaction();
+
+		// will this have intermittent failure? lightLocation() led to new message back to update the posman display. There is no state to wait for.
+		ThreadUtils.sleep(2000);
+		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 1);
+		Assert.assertNotNull(displayValue); // Poscon is lit. Just to have it in one test case, let's sanctify all the values.
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+		Assert.assertEquals(posman.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_TRIPLE_DASH);
+		Assert.assertEquals(posman.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_TRIPLE_DASH);
+		// could check flashing and brightness, but seem pointless.
 	}
 
 	@Test
@@ -125,46 +117,60 @@ public class CheProcessPutWall extends ServerTest {
 		LOGGER.info("1: Just set up some orders to the put wall. Intentionally choose order with inventory location in the slow mover area.");
 		picker1.login("Picker #1");
 		picker1.scanCommand("ORDER_WALL");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanSomething("11114");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P14");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanSomething("11115");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P15");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanSomething("11116");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P16");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanCommand("CLEAR");
-		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		LOGGER.info("2: P14 is in WALL1. P15 and P16 are in WALL2. Set up slow mover CHE for that SKU pick");
 		// Verify that orders 11114, 11115, and 11116 are having order locations in put wall
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = Facility.staticGetDao().reload(getFacility());
-		assertOrderLocation("11114", "P14");
-		assertOrderLocation("11115", "P15");
-		assertOrderLocation("11116", "P16");
+		assertOrderLocation("11114", "P14", "WALL1 - P14");
+		assertOrderLocation("11115", "P15", "WALL2 - P15");
+		assertOrderLocation("11116", "P16", "WALL2 - P16");
 		assertItemMaster(facility, "1514");
 		assertItemMaster(facility, "1515");
 		this.getTenantPersistenceService().commitTransaction();
 
 		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
 		picker2.login("Picker #2");
-		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker2.setupOrderIdAsContainer("WALL1", "1");
 		picker2.setupOrderIdAsContainer("WALL2", "2");
 
-		// picker2.startAndSkipReview("S11", 3000, 3000);
+		// picker2.startAndSkipReview("S11", WAIT_TIME, WAIT_TIME);
 		picker2.scanCommand("START");
-		LOGGER.info("3: The result should be only two work instructions, as orders 11115 and 11116 are for the same SKU on the same wall.");
-		List<WorkInstruction> theWiList = picker2.getAllPicksList();
-		logWiList(theWiList);
-		// DEV-711 ComputeWorkInstructions will achieve this.
+		picker2.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);
+		Byte posConValue2 = picker2.getLastSentPositionControllerDisplayValue((byte) 2);
+		Assert.assertEquals(new Byte("1"), posConValue1);
+		Assert.assertEquals(new Byte("1"), posConValue2);
 
+		LOGGER.info("3: The result should be only two work instructions, as orders 11115 and 11116 are for the same SKU on the same wall.");
+		picker2.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
+		picker2.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+
+		// DEV-711 ComputeWorkInstructions will achieve this.
+		List<WorkInstruction> wiList = picker2.getAllPicksList();
+		Assert.assertEquals(2, wiList.size());
+		WorkInstruction wi1 = wiList.get(0);
+		WorkInstruction wi2 = wiList.get(1);
+		Assert.assertEquals("Item mismatch", "1514", wi1.getItemId());
+		Assert.assertEquals("Quantity mismatch", new Integer(3), wi1.getPlanQuantity());
+		Assert.assertEquals("Item mismatch", "1515", wi2.getItemId());
+		Assert.assertEquals("Quantity mismatch", new Integer(9), wi2.getPlanQuantity());
 	}
 
 	@Test
@@ -182,44 +188,66 @@ public class CheProcessPutWall extends ServerTest {
 		LOGGER.info("1: prove PUT_WALL and clear works from start and finish, but not after setup or during pick");
 		picker.login("Picker #1");
 		picker.scanCommand("PUT_WALL");
-		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, 4000);
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
 		picker.scanCommand("CLEAR");
-		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		LOGGER.info("1b: progress futher before clearing. Scan the order ID");
 		picker.scanCommand("PUT_WALL");
-		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, 4000);
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
 		picker.scanSomething("L%WALL1");
-		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, 4000);
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		picker.scanSomething("BadSku");
-		picker.waitForCheState(CheStateEnum.NO_PUT_WORK, 4000);
+		picker.waitForCheState(CheStateEnum.NO_PUT_WORK, WAIT_TIME);
 		picker.scanCommand("CLEAR");
-		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, 4000);
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		picker.scanCommand("CLEAR");
-		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
-		// TODO get on a real job
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
-		LOGGER.info("1c: cannot PUT_WALL after one order is set");
+		LOGGER.info("1c: progress even futher before clearing. Get onto a real put job");
+		// need to put an order on the wall to get there.
+		picker.scanCommand("ORDER_WALL");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker.scanSomething("11114");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker.scanSomething("L%P14");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker.scanCommand("CLEAR");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		// now back to the main story
+		picker.scanCommand("PUT_WALL");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
+		picker.scanSomething("L%WALL1");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+		picker.scanSomething("gtin1514");
+		picker.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
+		picker.scanCommand("CLEAR");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+		picker.scanCommand("CLEAR");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		// This left a work instruction that we did not clean up
+
+		LOGGER.info("1d: cannot PUT_WALL after one order is set");
 		picker.setupContainer("11112", "4");
 		picker.scanCommand("PUT_WALL");
-		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
-		LOGGER.info("1d: pick to completion");
+		LOGGER.info("1e: pick to completion");
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
 		picker.scanLocation("F21");
-		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		WorkInstruction wi = picker.nextActiveWi();
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
 		picker.pick(button, quant);
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
 
-		LOGGER.info("1e: PUT_WALL from complete state");
+		LOGGER.info("1f: PUT_WALL from complete state");
 		picker.scanCommand("PUT_WALL");
-		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, 4000);
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
 		picker.scanCommand("CLEAR");
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
 
 	}
 
@@ -242,70 +270,106 @@ public class CheProcessPutWall extends ServerTest {
 		LOGGER.info(" : P14 is in WALL1. P15 and P16 are in WALL2. Set up slow mover CHE for that SKU pick");
 		picker1.login("Picker #1");
 		picker1.scanCommand("ORDER_WALL");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
-		picker1.scanSomething("11114");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanSomething("11118");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P14");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanSomething("11115");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P15");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanSomething("11116");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P16");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanCommand("CLEAR");
-		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		// Verify that orders 11114, 11115, and 11116 are having order locations in put wall
 		this.getTenantPersistenceService().beginTransaction();
-		assertOrderLocation("11114", "P14");
-		assertOrderLocation("11115", "P15");
-		assertOrderLocation("11116", "P16");
+		assertOrderLocation("11118", "P14", "WALL1 - P14");
+		assertOrderLocation("11115", "P15", "WALL2 - P15");
+		assertOrderLocation("11116", "P16", "WALL2 - P16");
+		assertOrderLocation("11111", "", ""); // always good to test the NOT case. 
 		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("2: As if the slow movers came out of system, just scan those SKUs to place into put wall");
 
 		picker1.scanCommand("PUT_WALL");
-		// TODO
-		// Work flow wrong here. Should need to scan the container as another state-step. Otherwise, scan "1514" may lead to work instructions in multiple walls.
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, 4000);
+		// 11118 is in wall 1 with two detail lines for 1515 and 1521
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
 		picker1.scanSomething("L%WALL1");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		picker1.scanSomething("BadItemId");
-		picker1.waitForCheState(CheStateEnum.NO_PUT_WORK, 4000);
-		
+		picker1.waitForCheState(CheStateEnum.NO_PUT_WORK, WAIT_TIME);
+
 		picker1.scanCommand("CLEAR");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, 4000);	
-		picker1.scanSomething("1514");			
-		picker1.waitForCheState(CheStateEnum.DO_PUT, 4000);
-		
-		// after DEV-713 we will get a plan, display to the put wall, etc.
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+		// This is scan of the SKU, the ItemMaster's domainId
+		picker1.scanSomething("1515");
+		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
+
 		// P14 is at poscon index 4. Count should be 3
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
 		Assert.assertEquals((Byte) (byte) 3, displayValue);
 
 		// button from the put wall
 		posman.buttonPress(4, 3);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 
-		// this should complete the plan, and return to PUT_WALL_SCAN_ITEM.  More DEV-713 work
-		// picker1.scanCommand("CLEAR");
+		// Scan 1515 again. As the order detail is done, no work
+		picker1.scanSomething("1515");
+		picker1.waitForCheState(CheStateEnum.NO_PUT_WORK, WAIT_TIME);
 
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, 4000);
-		picker1.scanSomething("1515"); // the sku
-		//picker1.waitForCheState(CheStateEnum.DO_PUT, 4000);
-		picker1.waitForCheState(CheStateEnum.NO_PUT_WORK, 4000); // BUG.
-		// after DEV-713 
-		// we get two plans. For this test, handle singly. DEV-714 is about lighting two or more put wall locations at time.
-		// By that time, we should have implemented something to not all button press from CHE poscon, especially if more than one WI.
+		// Item 1515 is still needed for orders 11115, 11116, 11117. As 15 and 16 are for wall2, should get no work for wall 1.
+		// Let's scan the gtin/upc instead. Should get the same result.
+		picker1.scanSomething("gtin1515");
+		picker1.waitForCheState(CheStateEnum.NO_PUT_WORK, WAIT_TIME);
+		// Order detail 11118.2 in wall 1 needs item 21. See that it direct scan from NO_PUT_WORK is ok.
+		picker1.scanSomething("gtin1521");
+		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
+		// complete this job
+		posman.buttonPress(4, 3);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 
-		// Counts are 4 and 5
+		// Let's scan 1515 again. Still in wall1, so will fail
+		picker1.scanSomething("gtin1515");
+		picker1.waitForCheState(CheStateEnum.NO_PUT_WORK, WAIT_TIME);
+		// Worker needs to change to wall 2. Worker might scan the wall directly, rather than clearing back
+		picker1.scanSomething("L%WALL2");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+		picker1.scanSomething("gtin1515");
+		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
+		// we should have two plans now
+		List<WorkInstruction> wiList = picker1.getAllPicksList();
+		Assert.assertEquals(2, wiList.size());
+		this.logWiList(wiList);
+		picker1.logCheDisplay();
+		// Plan to P15 has count 4; P16 count 5.
+		// Should the screen show the single work instruction count, or the combined count? Currently, the single.
+		Assert.assertEquals("QTY 4", picker1.getLastCheDisplayString(3));
+
+		// the poscon at P15 shows 4 count. P16 should still show the "--"
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 5);
-		//Assert.assertEquals((Byte) (byte) 4, displayValue);
-		//Assert.assertNull(displayValue);
-		//We have not yet implemented displaying needed quantities on PosCons. So, by this point in the process, they are still blinking from Order Location setup
+		Assert.assertEquals((Byte) (byte) 4, displayValue);
+		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 6);
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+
+		// complete this job. Should immediately show the next. No need to scan again.
+		posman.buttonPress(5, 4);
+		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
+		picker1.logCheDisplay();
+		// check the displays. The P15 slot has order feedback. P16 slot show the 5 count
+		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 5);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 6);
+		Assert.assertEquals((Byte) (byte) 5, displayValue);
+
+		// complete this job. That is all for this SKU in this wall. Therefore, need to scan again.
+		posman.buttonPress(6, 5);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+
 	}
 
 	@Test
@@ -339,11 +403,11 @@ public class CheProcessPutWall extends ServerTest {
 		LOGGER.info("1a: set up a one-pick order");
 		picker.login("Picker #1");
 		picker.setupContainer("11117", "4");
-		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
 		picker.scanLocation("P11");
-		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
 		// A diversion. Check the last scanned location behavior
 		this.getTenantPersistenceService().beginTransaction();
@@ -360,7 +424,7 @@ public class CheProcessPutWall extends ServerTest {
 		Assert.assertEquals((Byte) (byte) 4, displayValue);
 		// button from the put wall
 		posman.buttonPress(2, 4);
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 3000);
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
 
 		// after DEV-713 
 		// we get two plans. For this test, handle singly. DEV-714 is about lighting two or more put wall locations at time.
@@ -390,21 +454,21 @@ public class CheProcessPutWall extends ServerTest {
 		LOGGER.info(" : P12 is in WALL1. P15 and P16 are in WALL2.");
 		picker1.login("Picker #1");
 		picker1.scanCommand("ORDER_WALL");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanSomething("11117");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P13");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanSomething("11115");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P15");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanSomething("11116");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P16");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, 4000);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanCommand("CLEAR");
-		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		// P13 is at poscon index 3. Should show "--" as there is more work for that order.
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 3);
@@ -412,13 +476,13 @@ public class CheProcessPutWall extends ServerTest {
 
 		LOGGER.info("2: Set up order 11117 for pick");
 		picker1.scanSomething("11117");
-		picker1.waitForCheState(CheStateEnum.CONTAINER_POSITION, 4000);
+		picker1.waitForCheState(CheStateEnum.CONTAINER_POSITION, WAIT_TIME);
 		picker1.scanSomething("P%1");
-		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker1.scanCommand("START");
-		picker1.waitForCheState(CheStateEnum.LOCATION_SELECT, 4000);
+		picker1.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
 		picker1.scanCommand("START");
-		picker1.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		List<WorkInstruction> activeWis = picker1.getActivePickList();
 		this.logWiList(activeWis);
 
@@ -430,226 +494,16 @@ public class CheProcessPutWall extends ServerTest {
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
 		Assert.assertEquals(posman.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
 		// Apparent in the log: the source LED did light. Proven just above, the put wall poscon did not light. And the source shows on CHE display.
-		
+
 		// If we complete this pick, do we get a recalculation for the put wall position? We should. It is "oc" now.
 		WorkInstruction wi = picker1.nextActiveWi();
 		int button = picker1.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
 		picker1.pick(button, quant);
-		picker1.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
+		picker1.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
 		// will this have intermittent failure? Server complete led to new message back to update the posman display. There is no state to wait for.
 		ThreadUtils.sleep(2000);
 		Assert.assertEquals(posman.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_O);
-		
 
 	}
-
-	private void assertOrderLocation(String orderId, String locationId) {
-		Facility facility = getFacility();
-		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
-		Assert.assertNotNull(order);
-		Location location = facility.findSubLocationById(locationId);
-		Assert.assertNotNull(location);
-		List<OrderLocation> locations = order.getOrderLocations();
-		Assert.assertEquals(1, locations.size());
-		OrderLocation savedOrderLocation = locations.get(0);
-		Location savedLocation = savedOrderLocation.getLocation();
-		Assert.assertEquals(location, savedLocation);
-	}
-	
-	private void assertItemMaster(Facility facility, String sku) {
-		ItemMaster master = ItemMaster.staticGetDao().findByDomainId(facility, sku);
-		Assert.assertNotNull(master);
-	}
-
-	/**
-	 * The goal is a small version of our model put wall facility. Two fast mover areas on different paths. A slow mover area on different path.
-	 * And a put wall on separate path.
-	 */
-	private Facility setUpFacilityWithPutWall() throws IOException {
-		//Import aisles. A4 is the put wall. No LEDs
-		String aislesCsvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\n"
-				+ "Aisle,A1,,,,,tierB1S1Side,2.85,10,X,20\n"
-				+ "Bay,B1,50,,,,,,,,\n"
-				+ "Tier,T1,50,4,20,0,,,,,\n"
-				+ "Bay,B2,CLONE(B1)\n" //
-				+ "Aisle,A2,CLONE(A1),,,,tierB1S1Side,2.85,20,X,20\n"
-				+ "Aisle,A3,CLONE(A1),,,,tierB1S1Side,2.85,60,X,20\n"
-				+ "Aisle,A4,,,,,tierB1S1Side,20,20,X,20\n" + "Bay,B1,50,,,,,,,,\n"//
-				+ "Tier,T1,50,4,0,0,,,,,\n"//
-				+ "Bay,B2,CLONE(B1)\n"; //
-		importAislesData(getFacility(), aislesCsvString);
-
-		// Get the aisles
-		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
-		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getFacility(), "A2");
-		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(getFacility(), "A3");
-		Aisle aisle4 = Aisle.staticGetDao().findByDomainId(getFacility(), "A4");
-		Assert.assertNotNull(aisle1);
-
-		//Make separate paths and asssign to aisle
-		Path path1 = createPathForTest(getFacility());
-		PathSegment segment0 = addPathSegmentForTest(path1, 0, 3d, 6d, 5d, 6d);
-		String persistStr = segment0.getPersistentId().toString();
-		aisle1.associatePathSegment(persistStr);
-
-		Path path2 = createPathForTest(getFacility());
-		segment0 = addPathSegmentForTest(path2, 0, 3d, 16d, 5d, 16d);
-		persistStr = segment0.getPersistentId().toString();
-		aisle2.associatePathSegment(persistStr);
-
-		Path path3 = createPathForTest(getFacility());
-		segment0 = addPathSegmentForTest(path3, 0, 3d, 36d, 5d, 36d);
-		persistStr = segment0.getPersistentId().toString();
-		aisle3.associatePathSegment(persistStr);
-
-		Path path4 = createPathForTest(getFacility());
-		segment0 = addPathSegmentForTest(path4, 0, 15d, 6d, 20d, 6d);
-		persistStr = segment0.getPersistentId().toString();
-		aisle4.associatePathSegment(persistStr);
-
-		aisle4.togglePutWallLocation();
-		Assert.assertTrue(aisle4.isPutWallLocation());
-
-		//Import location aliases
-		// A1 and A2 are fast mover blocks. F11-F18 and F21-F28
-		// A3 is slow mover. S11-S18
-		// A4 is put wall. P11-P18, but with bays having alias names WALL1 and WALL2
-		String csvLocationAliases = "mappedLocationId,locationAlias\n" //
-				+ "A1.B1.T1.S1,F11\n"//
-				+ "A1.B1.T1.S2,F12\n"//
-				+ "A1.B1.T1.S3,F13\n"// 
-				+ "A1.B1.T1.S4,F14\n"//
-				+ "A1.B2.T1.S1,F15\n"//
-				+ "A1.B2.T1.S2,F16\n"//
-				+ "A1.B2.T1.S3,F17\n"//
-				+ "A1.B2.T1.S4,F18\n"//
-				+ "A2.B1.T1.S1,F21\n"//
-				+ "A2.B1.T1.S2,F22\n"//
-				+ "A2.B1.T1.S3,F23\n"// 
-				+ "A2.B1.T1.S4,F24\n"//
-				+ "A2.B2.T1.S1,F25\n"//
-				+ "A2.B2.T1.S2,F26\n"//
-				+ "A2.B2.T1.S3,F27\n"//
-				+ "A2.B2.T1.S4,F28\n"//
-				+ "A3.B1.T1.S1,S11\n"//
-				+ "A3.B1.T1.S2,S12\n"//
-				+ "A3.B1.T1.S3,S13\n"// 
-				+ "A3.B1.T1.S4,S14\n"//
-				+ "A3.B2.T1.S1,S15\n"//
-				+ "A3.B2.T1.S2,S16\n"//
-				+ "A3.B2.T1.S3,S17\n"//
-				+ "A3.B2.T1.S4,S18\n"//
-				+ "A4.B1,WALL1\n"//
-				+ "A4.B1.T1.S1,P11\n"//
-				+ "A4.B1.T1.S2,P12\n"//
-				+ "A4.B1.T1.S3,P13\n"// 
-				+ "A4.B1.T1.S4,P14\n"//
-				+ "A4.B2,WALL2\n"//
-				+ "A4.B2.T1.S1,P15\n"//
-				+ "A4.B2.T1.S2,P16\n"//
-				+ "A4.B2.T1.S3,P17\n"//
-				+ "A4.B2.T1.S4,P18\n";//
-		importLocationAliasesData(getFacility(), csvLocationAliases);
-
-		CodeshelfNetwork network = getNetwork();
-
-		//Set up a PosManager
-		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid(CONTROLLER_1_ID));
-		controller1.updateFromUI(CONTROLLER_1_ID, "Poscons");
-		Assert.assertEquals(DeviceType.Poscons, controller1.getDeviceType());
-
-		//Assign PosCon controller and indices to slots
-		Location wall1Tier = getFacility().findSubLocationById("A4.B1.T1");
-		controller1.addLocation(wall1Tier);
-		wall1Tier.setLedChannel((short) 1);
-		wall1Tier.getDao().store(wall1Tier);
-		Location wall2Tier = getFacility().findSubLocationById("A4.B2.T1");
-		controller1.addLocation(wall2Tier);
-		wall2Tier.setLedChannel((short) 1);
-		wall2Tier.getDao().store(wall2Tier);
-
-		String[] slotNames = { "P11", "P12", "P13", "P14", "P15", "P16", "P17", "P18" };
-		int posconIndex = 1;
-		for (String slotName : slotNames) {
-			Location slot = getFacility().findSubLocationById(slotName);
-			slot.setPosconIndex(posconIndex);
-			slot.getDao().store(slot);
-			posconIndex += 1;
-		}
-
-		//Set up a LED controllers for  the fast and slow movers
-		LedController controller2 = network.findOrCreateLedController("LED2", new NetGuid(CONTROLLER_2_ID));
-		LedController controller3 = network.findOrCreateLedController("LED2", new NetGuid(CONTROLLER_3_ID));
-		LedController controller4 = network.findOrCreateLedController("LED2", new NetGuid(CONTROLLER_4_ID));
-		Location aisle = getFacility().findSubLocationById("A1");
-		controller2.addLocation(aisle);
-		aisle.setLedChannel((short) 1);
-		aisle = getFacility().findSubLocationById("A2");
-		controller3.addLocation(aisle);
-		aisle.setLedChannel((short) 1);
-		aisle = getFacility().findSubLocationById("A3");
-		controller4.addLocation(aisle);
-		aisle.setLedChannel((short) 1);
-
-		// Check our lighting configuration
-		Location slot = getFacility().findSubLocationById("P12");
-		Assert.assertTrue(slot.isLightablePoscon());
-		Assert.assertTrue(slot.isLightable());
-		Assert.assertFalse(slot.isLightableAisleController());
-		slot = getFacility().findSubLocationById("P17");
-		Assert.assertTrue(slot.isLightablePoscon());
-		Assert.assertTrue(slot.isLightable());
-		Assert.assertFalse(slot.isLightableAisleController());
-
-		slot = getFacility().findSubLocationById("F11");
-		Assert.assertFalse(slot.isLightablePoscon());
-		Assert.assertTrue(slot.isLightable());
-		Assert.assertTrue(slot.isLightableAisleController());
-		slot = getFacility().findSubLocationById("F23");
-		Assert.assertFalse(slot.isLightablePoscon());
-		Assert.assertTrue(slot.isLightable());
-		Assert.assertTrue(slot.isLightableAisleController());
-		slot = getFacility().findSubLocationById("S17");
-		Assert.assertFalse(slot.isLightablePoscon());
-		Assert.assertTrue(slot.isLightable());
-		Assert.assertTrue(slot.isLightableAisleController());
-
-		propertyService.changePropertyValue(getFacility(),
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.BayDistance.toString());
-
-		return getFacility();
-	}
-
-	private void setUpOrders1(Facility inFacility) throws IOException {
-		// Outbound orders. No group. Using 5 digit order number and .N detail ID. No preassigned container number.
-		// With preassigned container number and preferredLocation. No inventory. All preferredLocations resolve
-		// Order 12345 has two items in fast, and one is slow
-		// Order 11111 has four items in other fast area, and one is slow
-		// Some extra singleton orders just to get to completion states.
-
-		String orderCsvString = "orderGroupId,shipmentId,customerId,orderId,orderDetailId,preAssignedContainerId,itemId,description,quantity,uom, locationId"
-				+ "\r\n,USF314,COSTCO,12345,12345.1,12345,1123,Sku1123,1,each,F11"
-				+ "\r\n,USF314,COSTCO,12345,12345.2,12345,1493,Sku1493,1,each,F12"
-				+ "\r\n,USF314,COSTCO,12345,12345.3,12345,1522,Sku1522,3,each,S11"
-				+ "\r\n,USF314,COSTCO,11111,11111.1,11111,1122,Sku1122,2,each,F24"
-				+ "\r\n,USF314,COSTCO,11111,11111.2,11111,1522,Sku1522,1,each,S11"
-				+ "\r\n,USF314,COSTCO,11111,11111.3,11111,1523,Sku1523,1,each,F21"
-				+ "\r\n,USF314,COSTCO,11111,11111.4,11111,1124,Sku1124,1,each,F22"
-				+ "\r\n,USF314,COSTCO,11111,11111.5,11111,1555,Sku1555,2,each,F23"
-				+ "\r\n,USF314,COSTCO,11112,11112.1,11112,1555,Sku1555,2,each,F23"
-				+ "\r\n,USF314,COSTCO,11113,11113.1,11113,1555,Sku1555,2,each,F23"
-				+ "\r\n,USF314,COSTCO,11114,11114.1,11114,1514,Sku1514,3,each,S12"
-				+ "\r\n,USF314,COSTCO,11115,11115.1,11115,1515,Sku1515,4,each,S13"
-				+ "\r\n,USF314,COSTCO,11116,11116.1,11116,1515,Sku1515,5,each,S13"
-				+ "\r\n,USF314,COSTCO,11117,11117.1,11117,1515,Sku1515,5,each,F14";
-
-		Facility facility = getFacility();
-		importOrdersData(facility, orderCsvString);
-		ItemMaster theMaster = ItemMaster.staticGetDao().findByDomainId(facility, "1515");
-		Assert.assertNotNull("ItemMaster should be created", theMaster);
-
-	}
-
 }

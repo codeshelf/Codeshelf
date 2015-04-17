@@ -60,6 +60,7 @@ import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerUse;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
@@ -163,9 +164,15 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			WorkInstructionTypeEnum.ACTUAL), Restrictions.eq("parent.persistentId", facilityUUID), Restrictions.ge("completed",
 			new Timestamp(startDate.getTime())), Restrictions.lt("completed", new Timestamp(endDate.getTime()))),
 			ImmutableList.of(Order.asc("completed")));
-
 	}
-
+	
+	/**
+	 * Seems a bit silly, but we do not have a good means to get hold of services. Test framework has the work service, so this is the best kludge.
+	 */
+	public LightService getLightService(){
+		return this.lightService;
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Compute work instructions for a CHE that's at the listed location with the listed container IDs.
@@ -196,7 +203,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		List<Container> containerList = new ArrayList<Container>();
 		for (String containerId : inContainerIdList) {
 			Container container = Container.staticGetDao().findByDomainId(facility, containerId);
-			if (container != null) {
+			if (container != null){
 				// add to the list that will generate work instructions
 				containerList.add(container);
 				// Set the CHE on the containerUse
@@ -242,7 +249,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				}
 			}
 		}
-
+		
 		Timestamp theTime = now();
 
 		// Get all of the OUTBOUND work instructions.
@@ -253,6 +260,11 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		//wiResultList.addAll(generateCrossWallInstructions(facility, inChe, containerList, theTime));
 		List<WorkInstruction> crossInstructions = generateCrossWallInstructions(facility, inChe, containerList, theTime);
 		workList.getInstructions().addAll(crossInstructions);
+
+		if (workList.getInstructions().isEmpty() && workList.getDetails().isEmpty()){
+			List<WorkInstruction> slowPutWallInstructions = PutWallOrderGenerator.attemptToGenerateWallOrders(inChe, inContainerIdList, theTime);
+			workList.getInstructions().addAll(slowPutWallInstructions);
+		}
 
 		//Filter,Sort, and save actionsable WI's
 		//TODO Consider doing this in getWork?
@@ -585,7 +597,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			aWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
 				WorkInstructionTypeEnum.PLAN,
 				orderDetail,
-				inChe,
+				inChe, 
+				true,
 				null); // Could be normal WI, or a short WI
 		} else {
 			aWi = workItem.getInstruction();
@@ -696,7 +709,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			}
 		}
 
-		LOGGER.info("Temp: getPutWallInstructionsForItem() returning {} work instructions", wiResultList.size());
 		response.setWorkInstructions(wiResultList);
 		return response;
 
@@ -734,6 +746,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			return false;
 		}
 		if (!master.equals(detail.getItemMaster())) {
+			ItemMaster detailMaster = detail.getItemMaster();
+			LOGGER.info("mismatch master:{}, detailMaster: {}", master.getDomainId(), detailMaster.getDomainId());
+			
 			return false;
 		}
 		OrderStatusEnum detailStatus = detail.getStatus();
@@ -745,7 +760,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 	// --------------------------------------------------------------------------
 	/**
-	 * The user scanned something. In the end, we need an ItemMaster and UOM. User might have scanned SKU, or UPC, or itemId
+	 * The user scanned something. In the end, we need an ItemMaster and UOM. User might have scanned SKU, or UPC. Should not be itemId as items have a location also.
 	 * Does this belong in InventoryService instead?
 	 */
 	private ItemMaster getItemMasterFromScanValue(Facility facility, String itemIdOrUpc) {
@@ -753,15 +768,11 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		if (itemMaster != null) {
 			return itemMaster;
 		}
-
-		//  TODO If not found directly by Sku, lets look for UPC/GTIN. Need a filter.
-		if (itemMaster == null) {
-			// itemMaster = gtin.getParent();
+		// If not found directly by Sku, lets look for UPC/GTIN. Need a filter.
+		Gtin gtin = Gtin.getGtinForFacility(facility, itemIdOrUpc);
+		if (gtin != null) {
+			itemMaster = gtin.getParent();
 		}
-		// TODO Or search by itemId. Need a filter.
-		if (itemMaster == null) {
-		}
-
 		return itemMaster;
 	}
 
@@ -1530,7 +1541,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			else if (loc.isActive()) { //unlikely that location got deleted between complete work instructions and scan location
 				Path chePath = inChe.getActivePath();
 				boolean locatioOnPath = isLocatioOnPath(loc, inChe.getActivePath());
-				boolean preferredDetail = wi.getOrderDetail().isPreferredDetail();
+				OrderDetail detail = wi.getOrderDetail();
+				boolean preferredDetail = detail == null ? false : detail.isPreferredDetail();
 				boolean unspecifiedLoc = loc == unspecifiedMaster;
 				if (chePath == null || locatioOnPath) {
 					//If a CHE is not on a path (new CHE generating work) or the location is on the current path, use this WI 

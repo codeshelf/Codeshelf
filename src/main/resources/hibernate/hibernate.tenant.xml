@@ -73,6 +73,7 @@
         <mapping class="com.codeshelf.model.domain.WorkArea"/>
         <mapping class="com.codeshelf.model.domain.Gtin"/>
         <mapping class="com.codeshelf.model.domain.DataImportReceipt"/>
+        <mapping class="com.codeshelf.model.domain.Worker"/>
 
     </session-factory>
 </hibernate-configuration>

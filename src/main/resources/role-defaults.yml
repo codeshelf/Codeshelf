@@ -37,6 +37,7 @@ Admin:
   - "path:*"
   - "light:*"
   - "inventory:edit"
+  - "worker:*"
 Configure:
   - "ws:login"
   - "ux:*" 
@@ -45,6 +46,7 @@ Configure:
   - "param:edit"
   - "path:*"
   - "light:*"
+  - "worker:*"
 CsDeveloper:
   - "che:simulate"
 CsSupport:

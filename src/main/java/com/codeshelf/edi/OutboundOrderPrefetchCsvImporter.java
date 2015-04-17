@@ -11,7 +11,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -315,28 +314,6 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		itsLocation.removeStoredItem(inItem);
 
 		Item.staticGetDao().delete(inItem);
-	}
-
-	/**
-	 * Helper function. Pass in values from Item that are most efficient to evaluate.
-	 * Would be more direct to pass the item, but an outer loop fetches this data once for many calls.
-	 */
-	private boolean detailMatchesItemValues(OrderDetail inDetail,
-		ItemMaster inItemsMaster,
-		UomMaster inItemsUom,
-		String inItemsLocAlias) {
-		if (!inDetail.getActive())
-			return false;
-		String preferredLoc = inDetail.getPreferredLocation();
-		if (preferredLoc == null || preferredLoc.isEmpty())
-			return false;
-		if (!inDetail.getItemMaster().equals(inItemsMaster))
-			return false;
-		if (!inDetail.getUomMaster().equals(inItemsUom))
-			return false;
-		if (preferredLoc.equals(inItemsLocAlias))
-			return true;
-		return false;
 	}
 
 	// --------------------------------------------------------------------------
