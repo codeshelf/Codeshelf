@@ -17,7 +17,6 @@ import com.codeshelf.ws.server.WebSocketConnection;
 
 @RequiresPermissions("wi:get")
 public class ComputePutWallInstructionCommand extends CommandABC {
-	@SuppressWarnings("unused")
 	private static final Logger					LOGGER	= LoggerFactory.getLogger(ComputeWorkCommand.class);
 
 	private ComputePutWallInstructionRequest	request;

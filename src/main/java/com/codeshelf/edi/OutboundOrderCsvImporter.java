@@ -197,18 +197,6 @@ public class OutboundOrderCsvImporter extends CsvImporter<OutboundOrderCsvBean> 
 		LOGGER.debug("Archive OrderHeaders took: "+(endOH-startOH)/1000+" seconds");
 	}
 	
-	/**
-	 * This method looks at an OrderGroup and determines whether any old orders in it should be archived.
-	 * If the group is "undefined" (null), check if the current order import process contained any orders without a group. If yes - it's OK to archive old orders
-	 * If it is a regular group, check if it had been updated by the import. If yes - archive non-updated orders. If no - do not modify this group.  
-	 */
-	private boolean shouldOldOrbersBeArchivedInThisGroup(OrderGroup examinedGroup, Timestamp inProcessTime, boolean undefinedGroupUpdated){
-		if (examinedGroup == null) {
-			return undefinedGroupUpdated;
-		}
-		return examinedGroup.getUpdated().equals(inProcessTime);
-	}
-	
 	private void archiveEmptyGroups(UUID inFacilityId){
 		Facility facility = Facility.staticGetDao().findByPersistentId(inFacilityId);
 		for (OrderGroup group : facility.getOrderGroups()) {

@@ -236,6 +236,10 @@ public class LocationDeleteTest extends ServerTest {
 		// Bring it back
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSimpleSlottedFacility("LD01", LARGER_FACILITY);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		setUpGroup1OrdersAndSlotting(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -335,21 +339,28 @@ public class LocationDeleteTest extends ServerTest {
 		// The idea is to setup, then redo "smaller" aisle file that results in deleted bays, tiers, and slots.
 		// Bring it back with original
 		this.getTenantPersistenceService().beginTransaction();
-
-
 		LOGGER.info("DeleteLocation Test 2. Start by setting up standard aisles A1 and A2");
 		Facility facility = setUpSimpleSlottedFacility("LD02", LARGER_FACILITY);
 		setUpGroup1OrdersAndSlotting(facility);
+		this.getTenantPersistenceService().commitTransaction();
 
+		this.getTenantPersistenceService().beginTransaction();
 		LOGGER.info("Reread same aisles file again. Just to see that there is no throw.");
 		readStandardAisleFile(facility);
+		this.getTenantPersistenceService().commitTransaction();
 
+		this.getTenantPersistenceService().beginTransaction();
 		LOGGER.info("And another reread."); // Reread case is covered in AisleImporterTest
 		readStandardAisleFile(facility);
+		this.getTenantPersistenceService().commitTransaction();
 
+		this.getTenantPersistenceService().beginTransaction();
 		LOGGER.info("reading aisles file that should remove bay, tier, and slot");
 		readSmallerAisleFile(facility);
-
+		this.getTenantPersistenceService().commitTransaction();
+		
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		LOGGER.info("A1.B2.T1.S5 should be inactive now. findSubLocationById succeeds, but should warn");
 		Location locationA1B2T1S5 = facility.findSubLocationById("A1.B2.T1.S5");
 		Assert.assertNotNull(locationA1B2T1S5);
@@ -398,6 +409,10 @@ public class LocationDeleteTest extends ServerTest {
 		setUpGroup1OrdersAndSlotting(facility);
 
 		readInventory(facility);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		/*
 		 item 9923 at D-26, CS.  Present in large facility only.
 		 item 9937 at X-999, CS Not present in either

@@ -31,6 +31,7 @@ import com.codeshelf.model.dao.DomainObjectCache;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerKind;
 import com.codeshelf.model.domain.ContainerUse;
+import com.codeshelf.model.domain.DataImportReceipt;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
@@ -74,6 +75,11 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 
 	private HashMap<String, ContainerUse>	containerUseMap;
 	
+	long startTime;
+	long endTime;
+	int numOrders; 
+	int numLines;
+	
 	@Inject
 	public OutboundOrderPrefetchCsvImporter(final EventProducer inProducer) {
 		super(inProducer);
@@ -107,7 +113,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 
 		LOGGER.debug("Begin order import.");
 		
-		long startTime = System.currentTimeMillis();
+		this.startTime = System.currentTimeMillis();
 
 		// scan order lines and extract relevant data to initialize order processing
 		Set<String> itemIds = new HashSet<String>();
@@ -125,6 +131,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			if (orderGroupId!=null) {
 				orderGroupIds.add(orderGroupId);
 			}
+			this.numLines++;
 		}
 		LOGGER.info(itemIds.size()+" distinct items found in order file");
 		
@@ -266,79 +273,22 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			}
 		}
 		
-		// replaced with code above
-		// archiveCheckAllContainers(inFacility, inProcessTime);
-
-		// TODO: move to background process
-		archiveEmptyGroups(inFacility.getPersistentId());
-
-		long endTime = System.currentTimeMillis();
-		LOGGER.info("Imported "+allOrderLines.size()+" orders in "+(endTime-startTime)/1000+" seconds");
-
+		this.endTime = System.currentTimeMillis();
+		this.numOrders = allOrderLines.size();
+		LOGGER.info("Imported "+numOrders+" orders in "+(endTime-startTime)/1000+" seconds");
 		LOGGER.debug("End order import.");
-
-		evaluateMovedItems();
-		return batchResult;
-	}
-
-	private void archiveEmptyGroups(UUID inFacilityId){
-		// TODO: replace by single query
-		Facility facility = Facility.staticGetDao().findByPersistentId(inFacilityId);
-		for (OrderGroup group : facility.getOrderGroups()) {
-			boolean archiveGroup = true;
-			for (OrderHeader header : group.getOrderHeaders()) {
-				if (header.getActive()) {
-					archiveGroup = false;
-				}
-			}
-			if (archiveGroup) {
-				group.setActive(false);
-				OrderGroup.staticGetDao().store(group);
-			}
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inFacility
-	 * @param inProcessTime
-	 */
-	// this code is no longer used functionality should be moved to a background process
-	private void archiveCheckAllContainers(final Facility inFacility, final Timestamp inProcessTime) {
-		LOGGER.debug("Archive unreferenced container data");
 		
-		// bhe: code below should be replaced by database query
+		DataImportReceipt receipt = new DataImportReceipt();
+		receipt.setReceived(startTime);
+		receipt.setStarted(startTime);
+		receipt.setCompleted(endTime);
+		receipt.setOrdersProcessed(numOrders);
+		receipt.setLinesProcessed(numLines);
+		receipt.setParent(inFacility);
+		receipt.setDomainId("Import-"+startTime);
+		DataImportReceipt.staticGetDao().store(receipt);
 
-		// Iterate all of the containers to see if they're still active.
-		for (Container container : Container.staticGetDao().findByParent(inFacility)) {
-			Boolean shouldInactivateContainer = true;
-
-			for (ContainerUse containerUse : container.getUses()) {
-				// ContainerUse.getOrderHeader() can be null if the EDI is not fully consistent. Don't NPE. Don't fail to archive.
-				OrderHeader header = containerUse.getOrderHeader();
-				if (header == null) {
-					shouldInactivateContainer = false; // Should the container be inactivated? If this is the only use for the container, perhaps.
-					// neglect this case for now.
-					containerUse.setActive(false);
-					ContainerUse.staticGetDao().store(containerUse);
-				} else 
-				if (!header.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
-					shouldInactivateContainer = false;
-				} else {
-					if (containerUse.getUpdated().equals(inProcessTime)) {
-						shouldInactivateContainer = false;
-					} else {
-						containerUse.setActive(false);
-						ContainerUse.staticGetDao().store(containerUse);
-					}
-				}
-			}
-
-			if (shouldInactivateContainer) {
-				container.setActive(false);
-				Container.staticGetDao().store(container);
-			}
-		}
+		return batchResult;
 	}
 
 	private void addItemToEvaluationList(Item inItem) {
@@ -387,59 +337,6 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		if (preferredLoc.equals(inItemsLocAlias))
 			return true;
 		return false;
-	}
-
-	/**
-	 * mEvaluationList has a list it items that used to be referenced by orderDetail, but the orderDetail update resulted in new item.
-	 * Therefore, it is list of candidate items to delete if no other orderDetail refers to it.
-	 */
-	private void evaluateMovedItems() {
-		if (mEvaluationList.size() == 0)
-			return;
-
-		LOGGER.warn("Querying and evaluating moved items");
-		Long startTimestamp = System.currentTimeMillis();
-
-		Integer evaluationSize = mEvaluationList.size(); // remember the starting size because we will remove part of the list later.
-
-		// For each moved item, determine if any active order details still need to go there.
-		// Let's do one query, however painful.
-		List<OrderDetail> detailList = OrderDetail.staticGetDao().getAll(); // improve! we only want active, this facility, and not complete status. findByFilter()
-		/*
-		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("assignedChe.persistentId", inChe.getPersistentId()));
-		filterParams.add(Restrictions.in("type", wiTypes));
-		List<OrderDetail> detailList = OrderDetail.staticGetDao().findByFilter(filterParams);
-		*/
-
-		// if an item is not referred to by any detail, then it is a candidate for archive or delete
-		ArrayList<Item> referencedItems = new ArrayList<Item>();
-
-		for (Item item : mEvaluationList) {
-			// get the itemValues we need for the comparison
-			ItemMaster itemsMaster = item.getParent();
-			UomMaster itemsUom = item.getUomMaster();
-			String itemsLocAlias = item.getItemLocationAlias();
-
-			for (OrderDetail detail : detailList) {
-				if (detailMatchesItemValues(detail, itemsMaster, itemsUom, itemsLocAlias)) {
-					referencedItems.add(item);
-					break; // break out of detail loop
-				}
-			}
-		}
-
-		mEvaluationList.removeAll(referencedItems);
-		// Now we can delete or archive the rest
-		for (Item item : mEvaluationList) {
-			safelyDeleteItem(item);
-		}
-
-		//Log time if over 1 seconds
-		Long queryDurationMs = System.currentTimeMillis() - startTimestamp;
-		if (queryDurationMs > 300) {
-			LOGGER.warn("evaluateMovedItems() took {} ms; totalItems= {};", queryDurationMs, evaluationSize);
-		}
 	}
 
 	// --------------------------------------------------------------------------

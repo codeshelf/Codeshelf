@@ -60,7 +60,6 @@ import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerUse;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;

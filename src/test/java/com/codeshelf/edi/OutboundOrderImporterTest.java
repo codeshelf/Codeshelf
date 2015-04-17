@@ -186,7 +186,10 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
-
+		this.getTenantPersistenceService().commitTransaction();
+		
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "1");
 
 		Assert.assertNotNull(order);
@@ -889,46 +892,59 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 	@Test
 	public final void testImportEmptyQuantityAsZero() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-
+		// create facility
+		getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();
+		this.getTenantPersistenceService().commitTransaction();
+		
+		// import files
+		getTenantPersistenceService().beginTransaction();
 		Timestamp firstEdiProcessTime = new Timestamp(System.currentTimeMillis() - 30000);
-
 		String withOneEmptyQuantity = "preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n123,123,123.1,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,\"\",each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		BatchResult<Object> results = importCsvString(facility, withOneEmptyQuantity, firstEdiProcessTime);
+		this.getTenantPersistenceService().commitTransaction();
+
+		// verify data
+		getTenantPersistenceService().beginTransaction();
 		List<OrderDetail> orderDetails = OrderDetail.staticGetDao().getAll();
 		Assert.assertEquals(1, orderDetails.size());
 		Assert.assertTrue(results.isSuccessful());
 		Assert.assertEquals(0, orderDetails.get(0).getQuantity().intValue());
-
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public final void testImportAlphaQuantityAsZero() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-
+		getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();
 		Timestamp firstEdiProcessTime = new Timestamp(System.currentTimeMillis() - 30000);
+		getTenantPersistenceService().commitTransaction();
 
+		this.getTenantPersistenceService().beginTransaction();
 		String withOneEmptyQuantity = "preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n123,123,123.1,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,\"A\",each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		BatchResult<Object> results = importCsvString(facility, withOneEmptyQuantity, firstEdiProcessTime);
+		getTenantPersistenceService().commitTransaction();
+
+		getTenantPersistenceService().beginTransaction();
 		List<OrderDetail> orderDetails = OrderDetail.staticGetDao().getAll();
 		Assert.assertEquals(1, orderDetails.size());
 		Assert.assertTrue(results.isSuccessful());
 		Assert.assertEquals(0, orderDetails.get(0).getQuantity().intValue());
-
-		this.getTenantPersistenceService().commitTransaction();
+		getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public final void testReimportOutboundOrderNoGroup() throws IOException {
+		// set up facility
 		this.getTenantPersistenceService().beginTransaction();
-
 		Facility facility = Facility.createFacility("F-ORD2.1", "TEST", Point.getZeroPoint());
+		this.getTenantPersistenceService().commitTransaction();
 
+		// import order files
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		String firstCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\nUSF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\nUSF314,COSTCO,123,123,123.2,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -944,16 +960,19 @@ public class OutboundOrderImporterTest extends ServerTest {
 		importCsvString(facility, firstCsvString);
 		this.getTenantPersistenceService().commitTransaction();
 		
+		// check order stats
 		this.getTenantPersistenceService().beginTransaction();
 		HeaderCounts theCounts = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts.mActiveHeaders == 3);
 		Assert.assertTrue(theCounts.mActiveDetails == 11);
 		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
-
-		// Import exact same file again
+		// and import exact same file again
 		importCsvString(facility, firstCsvString);
-
+		this.getTenantPersistenceService().commitTransaction();
+		
+		// check order stats again
+		this.getTenantPersistenceService().beginTransaction();
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts2.mActiveHeaders == 3);
@@ -961,9 +980,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 0);
 		Assert.assertTrue(theCounts2.mInactiveCntrUsesOnActiveOrders == 0);
 		Assert.assertTrue(theCounts2.mActiveCntrUses == 3);
-
 		// Try the kinds of things we did before with group ID. Remove detail 123.4  And remove 789 altogether. (Dates are the same.)
-
 		String secondCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\nUSF314,COSTCO,123,123,123.1,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\nUSF314,COSTCO,123,123,123.2,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -1041,7 +1058,6 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertTrue(theCounts6.mInactiveDetailsOnActiveOrders == 5);
 		Assert.assertTrue(theCounts6.mInactiveCntrUsesOnActiveOrders == 0);
 		Assert.assertTrue(theCounts6.mActiveCntrUses == 3);
-
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
@@ -1180,7 +1196,6 @@ public class OutboundOrderImporterTest extends ServerTest {
 		ItemMaster master4 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0004");
 		List<Item> items4 = master4.getItems();
 		Assert.assertEquals(1, items4.size());
-
 		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("5: Read a revised orders file. This is testing two things");
@@ -1210,12 +1225,15 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
-
+		this.getTenantPersistenceService().commitTransaction();
+		
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		LOGGER.info("6: Check that we got new item locations for SKU0001, and moved the old one for SKU0004, ");
 		master1 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0001");
 		items1 = master1.getItems();
 
-		Assert.assertEquals(1, items1.size()); // Should have created new, and deleted the old
+		Assert.assertEquals(2, items1.size()); // Should have created new
 		Item items1b = items1.get(0);
 		UUID persist1b = items1b.getPersistentId();
 
@@ -1225,7 +1243,6 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Item items4b = items4.get(0);
 		UUID persist4b = items4b.getPersistentId();
 
-		Assert.assertNotEquals(persist1a, persist1b); // made new. Deleted old. So different persistent Id
 		Assert.assertEquals(persist4a, persist4b);  // just moved the EA item since EACHMULT is false.
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -1408,19 +1425,25 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" +
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1";
 		importCsvString(facility, firstCsvString);
+		getTenantPersistenceService().commitTransaction();
 
+		getTenantPersistenceService().beginTransaction();
 		OrderHeader header1a = OrderHeader.staticGetDao().findByDomainId(facility, "1");
-
 		OrderGroup group1a = header1a.getOrderGroup();
-
+		Assert.assertNotNull(group1a);
+		Assert.assertEquals("Group1", group1a.getDomainId());
+		
 		LOGGER.info("2: As if the orders were pushed to later group, same orders except for group2.");
 		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group2" +
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2";
 		importCsvString(facility, secondCsvString);
+		getTenantPersistenceService().commitTransaction();
 
+		getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		group1a = OrderGroup.staticGetDao().reload(group1a);
 		OrderHeader header1b = OrderHeader.staticGetDao().findByDomainId(facility, "1");
-
 		OrderGroup group1b = header1b.getOrderGroup();
 		OrderGroup group2 = facility.getOrderGroup("Group2");
 		// Is it the same header?
@@ -1429,6 +1452,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertNotEquals(group1a, group1b);
 		Assert.assertEquals(group1b, group2); // just proving what we expect
 
+		/*  this is no longer a valid assumption, since groups are deactivated via a background process
 		LOGGER.info("3: We expect to find that Group1 is inactive. Group2 is active with its orders.");
 		HashMap<String, Boolean> groupExpectations = new HashMap<String, Boolean>();
 		groupExpectations.put("Group1", false);
@@ -1438,7 +1462,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		headerExpectations.put("2", true);
 		headerExpectations.put("99", true); // just showing  the limit of the test function. Order 99 does not exist. No error reported.
 		assertArchiveStatuses(groupExpectations, headerExpectations);
-
+	    */
+		
 		LOGGER.info("  We showed that the orders are the same objects. They changed owner groups.");
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -1481,12 +1506,19 @@ public class OutboundOrderImporterTest extends ServerTest {
 		detail1_1a.setStatus(OrderStatusEnum.COMPLETE);
 		detail3_1a.setStatus(OrderStatusEnum.COMPLETE);
 		header3a.setStatus(OrderStatusEnum.COMPLETE);
+		this.getTenantPersistenceService().commitTransaction();
 
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		LOGGER.info("3: As if remaining work is reassigned to a later wave, push what is left to group2.");
 		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
 				"\r\n1,1,1.2,12/03/14 12:00,12/31/14 12:00,Item16,,90,a,Group2" +
 				"\r\n2,2,2.1,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2";
 		importCsvString(facility, secondCsvString);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 
 		OrderGroup orderGroup1b = facility.getOrderGroup("Group1");
 		OrderGroup orderGroup2b = facility.getOrderGroup("Group2");

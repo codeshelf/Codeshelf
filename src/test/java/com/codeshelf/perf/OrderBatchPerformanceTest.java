@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -39,7 +38,7 @@ public class OrderBatchPerformanceTest {
 	final private static String BASE_URL = "http://localhost:8181/";
 	final private static String USERNAME = "simulate@example.com";
 	final private static String PASSWORD = "testme";
-	final private static String FACILITY = "5b36debe-4931-4221-9fc4-7af41187cf38";
+	final private static String FACILITY = "cd2f359a-c5a0-4547-bf53-f31fff10ba2f";
 	
 	static {
 		JvmProperties.load("server");

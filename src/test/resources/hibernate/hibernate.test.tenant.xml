@@ -80,7 +80,7 @@
         <mapping class="com.codeshelf.model.domain.OrderLocation"/>
         <mapping class="com.codeshelf.model.domain.WorkInstruction"/>
         <mapping class="com.codeshelf.model.domain.WorkArea"/>
-        <mapping class="com.codeshelf.model.domain.EdiDocumentLocator"/>
+        <mapping class="com.codeshelf.model.domain.DataImportReceipt"/>
         <mapping class="com.codeshelf.model.domain.Gtin"/>
 
     </session-factory>
