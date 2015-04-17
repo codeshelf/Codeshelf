@@ -1051,7 +1051,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	private void processIdleStateScan(final String inScanPrefixStr, final String inScanStr) {
 
-		if (USER_PREFIX.equals(inScanPrefixStr)) {
+		if (USER_PREFIX.equals(inScanPrefixStr) || "".equals(inScanPrefixStr) || inScanPrefixStr == null) {
 			clearAllPositionControllers();
 			this.setUserId(inScanStr);
 			mDeviceManager.verifyBadge(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);

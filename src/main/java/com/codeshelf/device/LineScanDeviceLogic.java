@@ -140,7 +140,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 */
 	private void processIdleStateScan(final String inScanPrefixStr, final String inScanStr) {
 
-		if (USER_PREFIX.equals(inScanPrefixStr)) {
+		if (USER_PREFIX.equals(inScanPrefixStr) || "".equals(inScanPrefixStr) || inScanPrefixStr == null) {
 			setReadyMsg("");
 			this.setUserId(inScanStr);
 			mDeviceManager.verifyBadge(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
@@ -303,6 +303,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 */
 	@Override
 	protected void clearErrorCommandReceived() {
+		clearAllPositionControllers();
 		// needs implementation
 		CheStateEnum currentState = getCheStateEnum();
 		switch (currentState) {

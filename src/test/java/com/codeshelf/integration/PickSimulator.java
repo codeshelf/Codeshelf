@@ -43,7 +43,7 @@ public class PickSimulator {
 	public void loginAndCheckState(String pickerId, CheStateEnum inState) {
 		// This is the "scan badge" scan
 		cheDeviceLogic.scanCommandReceived("U%" + pickerId);
-		waitForCheState(inState, 1000);
+		waitForCheState(inState, 2000);
 	}
 
 	public String getProcessType() {
