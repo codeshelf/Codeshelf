@@ -14,6 +14,7 @@ import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.LightService;
 import com.codeshelf.util.ThreadUtils;
@@ -142,6 +143,10 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		assertOrderLocation("11116", "P16", "WALL2 - P16");
 		assertItemMaster(facility, "1514");
 		assertItemMaster(facility, "1515");
+		// let's see how P16 thinks it should light.
+		Location loc = facility.findSubLocationById("P16");
+		Assert.assertFalse(loc.isLightableAisleController());
+		Assert.assertTrue(loc.isLightablePoscon());		
 		this.getTenantPersistenceService().commitTransaction();
 
 		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
@@ -197,8 +202,15 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
 		picker.scanSomething("L%WALL1");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+		// check on feedback here. Screen will show "FOR WALL1" on line 2
+		Assert.assertEquals("FOR WALL1", picker.getLastCheDisplayString(2));
 		picker.scanSomething("BadSku");
 		picker.waitForCheState(CheStateEnum.NO_PUT_WORK, WAIT_TIME);
+		// check on feedback here. Screen will show "NO WORK FOR BadSku IN WALL1  SCAN ITEM OR CLEAR
+		Assert.assertEquals("NO WORK FOR", picker.getLastCheDisplayString(1));
+		Assert.assertEquals("BadSku", picker.getLastCheDisplayString(2));
+		Assert.assertEquals("IN WALL1", picker.getLastCheDisplayString(3));
+		Assert.assertEquals("SCAN ITEM OR CLEAR", picker.getLastCheDisplayString(4));
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		picker.scanCommand("CLEAR");

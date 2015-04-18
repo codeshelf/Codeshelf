@@ -51,7 +51,12 @@ public enum CheStateEnum {
 	PUT_WALL_SCAN_ITEM(CheStateNum.PUT_WALL_SCAN_ITEM, "PUT_WALL_SCAN_ITEM"),
 	DO_PUT(CheStateNum.DO_PUT, "DO_PUT"),
 	GET_PUT_INSTRUCTION(CheStateNum.GET_PUT_INSTRUCTION, "GET_PUT_INSTRUCTION"),
-	NO_PUT_WORK(CheStateNum.NO_PUT_WORK, "NO_PUT_WORK");
+	// @EnumValue("NO_PUT_WORK")
+	NO_PUT_WORK(CheStateNum.NO_PUT_WORK, "NO_PUT_WORK"),
+	// @EnumValue("SHORT_PUT")
+	SHORT_PUT(CheStateNum.SHORT_PUT, "SHORT_PUT"),
+	// @EnumValue("SHORT_PUT_CONFIRM")
+	SHORT_PUT_CONFIRM(CheStateNum.SHORT_PUT_CONFIRM, "SHORT_PUT_CONFIRM");
 
 	private int		mValue;
 	private String	mName;
@@ -192,7 +197,9 @@ public enum CheStateEnum {
 		static final byte	DO_PUT						= 27;
 		static final byte	PUT_WALL_SCAN_WALL			= 29;
 		static final byte	GET_PUT_INSTRUCTION			= 30;
-		static final byte	NO_PUT_WORK = 31;
+		static final byte	NO_PUT_WORK					= 31;
+		static final byte	SHORT_PUT					= 32;
+		static final byte	SHORT_PUT_CONFIRM			= 33;
 
 		private CheStateNum() {
 		};
