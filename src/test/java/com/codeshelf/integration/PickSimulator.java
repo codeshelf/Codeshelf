@@ -37,7 +37,7 @@ public class PickSimulator {
 	public void login(String pickerId) {
 		// This is the original "scan badge" scan for setuporders process that assumes transition to Container_Select state.
 		cheDeviceLogic.scanCommandReceived("U%" + pickerId);
-		waitForCheState(CheStateEnum.CONTAINER_SELECT, 2000);
+		waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
 	}
 
 	public void loginAndCheckState(String pickerId, CheStateEnum inState) {
