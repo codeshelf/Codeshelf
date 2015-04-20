@@ -27,6 +27,7 @@ import com.codeshelf.ws.protocol.response.LoginResponse;
 import com.codeshelf.ws.protocol.response.PutWallPlacementResponce;
 import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
+import com.codeshelf.ws.protocol.response.VerifyBadgeResponse;
 import com.codeshelf.ws.server.WebSocketConnection;
 import com.google.inject.Inject;
 
@@ -86,6 +87,12 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 					LOGGER.error("Failed to disconnect client", e);
 				}
 			}
+		}
+		//////////////////////////////////////////
+		// Handler for Verify Badge
+		else if (response instanceof VerifyBadgeResponse) {
+			VerifyBadgeResponse verifyBadgeResponse = (VerifyBadgeResponse) response;
+			deviceManager.processVerifyBadgeResponse(verifyBadgeResponse.getNetworkGuid(), verifyBadgeResponse.getVerified());
 		}
 		//////////////////////////////////////////
 		// Handler for Compute Work and Get Work

@@ -10,77 +10,47 @@ package com.codeshelf.device;
  *  @author jeffw
  */
 public enum CheStateEnum {
-	// @EnumValue("INVALID")
 	INVALID(CheStateNum.INVALID, "INVALID"),
-	// @EnumValue("IDLE")
 	IDLE(CheStateNum.IDLE, "IDLE"),
-	// @EnumValue("COMPUTE_WORK")
+	VERIFYING_BADGE(CheStateNum.VERIFYING_BADGE, "VERIFYING_BADGE"),
 	COMPUTE_WORK(CheStateNum.COMPUTE_WORK, "COMPUTE_WORK"),
-	// @EnumValue("GET_WORK")
 	GET_WORK(CheStateNum.GET_WORK, "GET_WORK"),
-	// @EnumValue("LOCATION_SELECT")
 	LOCATION_SELECT(CheStateNum.LOCATION_SELECT, "LOCATION_SELECT"),
-	// @EnumValue("CONTAINER_SELECT")
 	CONTAINER_SELECT(CheStateNum.CONTAINER_SELECT, "CONTAINER_SELECT"),
-	// @EnumValue("CONTAINER_POSITION")
 	CONTAINER_POSITION(CheStateNum.CONTAINER_POSITION, "CONTAINER_POSITION"),
-	// @EnumValue("DO_PICK")
 	DO_PICK(CheStateNum.DO_PICK, "DO_PICK"),
-	// @EnumValue("SHORT_PICK")
 	SHORT_PICK(CheStateNum.SHORT_PICK, "SHORT_PICK"),
-	//@EnumValue("SHORT_PICK_CONFIRM")
 	SHORT_PICK_CONFIRM(CheStateNum.SHORT_PICK_CONFIRM, "SHORT_PICK_CONFIRM"),
-	//@EnumValue("PICK_COMPLETE")
 	PICK_COMPLETE(CheStateNum.PICK_COMPLETE, "PICK_COMPLETE"),
-	//@EnumValue("PICK_COMPLETE_CURR_PATH")
 	PICK_COMPLETE_CURR_PATH(CheStateNum.PICK_COMPLETE_CURR_PATH, "PICK_COMPLETE_CURR_PATH"),
-	// @EnumValue("NO_WORK")
 	NO_WORK(CheStateNum.NO_WORK, "NO_WORK"),
-	// @EnumValue("NO_WORK_CURR_PATH")
-	NO_WORK_CURR_PATH(CheStateNum.NO_WORK_CURR_PATH, "NO_WORK_CURR_PATH"),
-	// @EnumValue("LOCATION_SELECT_REVIEW")	
+	NO_WORK_CURR_PATH(CheStateNum.NO_WORK_CURR_PATH, "NO_WORK_CURR_PATH"),	
 	LOCATION_SELECT_REVIEW(CheStateNum.LOCATION_SELECT_REVIEW, "LOCATION_SELECT_REVIEW"),
-	// @EnumValue("CONTAINER_POSITION_INVALID")
 	CONTAINER_POSITION_INVALID(CheStateNum.CONTAINER_POSITION_INVALID, "CONTAINER_POSITION_INVALID"),
-	// @EnumValue("CONTAINER_SELECTION_INVALID")
 	CONTAINER_SELECTION_INVALID(CheStateNum.CONTAINER_SELECTION_INVALID, "CONTAINER_SELECTION_INVALID"),
-	// @EnumValue("CONTAINER_POSITION_IN_USE")
 	CONTAINER_POSITION_IN_USE(CheStateNum.CONTAINER_POSITION_IN_USE, "CONTAINER_POSITION_IN_USE"),
-	// @EnumValue("NO_CONTAINERS_SETUP")
 	NO_CONTAINERS_SETUP(CheStateNum.NO_CONTAINERS_SETUP, "NO_CONTAINERS_SETUP"),
 
 	// new states only used in Line_Scan mode. Many are used in both line_scan and Setup_Orders, so keeping all together.
-	// @EnumValue("READY")
 	READY(CheStateNum.READY, "READY"),
-	// @EnumValue("ABANDON_CHECK")
 	ABANDON_CHECK(CheStateNum.ABANDON_CHECK, "ABANDON_CHECK"),
 
 	// states used in Setup_Orders mode if SCANPICK parameter is set.
-	// @EnumValue("SCAN_SOMETHING")
 	SCAN_SOMETHING(CheStateNum.SCAN_SOMETHING, "SCAN_SOMETHING"),
-	// @EnumValue("SCAN_SOMTHING_SHORT")
 	SCAN_SOMETHING_SHORT(CheStateNum.SCAN_SOMETHING_SHORT, "SCAN_SOMETHING_SHORT"),
 
 	// states used for inventory scan DEV-644
-	// @EnumValue("SCAN_GTIN")
 	SCAN_GTIN(CheStateNum.SCAN_GTIN, "SCAN_GTIN"),
 
 	// states used for put wall DEV-708
-	// @EnumValue("PUT_WALL_SCAN_LOCATION")
 	PUT_WALL_SCAN_LOCATION(CheStateNum.PUT_WALL_SCAN_LOCATION, "PUT_WALL_SCAN_LOCATION"),
-	// @EnumValue("PUT_WALL_SCAN_ORDER")
 	PUT_WALL_SCAN_ORDER(CheStateNum.PUT_WALL_SCAN_ORDER, "PUT_WALL_SCAN_ORDER"),
 
 	// states used for put wall DEV-712, DEV-713
-	// @EnumValue("PUT_WALL_SCAN_WALL")
 	PUT_WALL_SCAN_WALL(CheStateNum.PUT_WALL_SCAN_WALL, "PUT_WALL_SCAN_WALL"),
-	// @EnumValue("PUT_WALL_SCAN_ITEM")
 	PUT_WALL_SCAN_ITEM(CheStateNum.PUT_WALL_SCAN_ITEM, "PUT_WALL_SCAN_ITEM"),
-	// @EnumValue("DO_PUT")
 	DO_PUT(CheStateNum.DO_PUT, "DO_PUT"),
-	// @EnumValue("GET_PUT_INSTRUCTION")
 	GET_PUT_INSTRUCTION(CheStateNum.GET_PUT_INSTRUCTION, "GET_PUT_INSTRUCTION"),
-	// @EnumValue("NO_PUT_WORK")
 	NO_PUT_WORK(CheStateNum.NO_PUT_WORK, "NO_PUT_WORK");
 
 	private int		mValue;
@@ -97,6 +67,10 @@ public enum CheStateEnum {
 		switch (inProtocolNum) {
 			case CheStateNum.IDLE:
 				result = CheStateEnum.IDLE;
+				break;
+
+			case CheStateNum.VERIFYING_BADGE:
+				result = CheStateEnum.VERIFYING_BADGE;
 				break;
 
 			case CheStateNum.COMPUTE_WORK:
@@ -180,34 +154,35 @@ public enum CheStateEnum {
 
 		static final byte	INVALID						= -1;
 		static final byte	IDLE						= 0;
-		static final byte	COMPUTE_WORK				= 1;
-		static final byte	GET_WORK					= 2;
-		static final byte	LOCATION_SELECT				= 3;
-		static final byte	CONTAINER_SELECT			= 4;
-		static final byte	CONTAINER_POSITION			= 5;
-		static final byte	DO_PICK						= 6;
-		static final byte	SHORT_PICK					= 7;
-		static final byte	PICK_COMPLETE				= 8;
-		static final byte	PICK_COMPLETE_CURR_PATH		= 31;	//Added Apr 8, 2015
-		static final byte	NO_WORK						= 9;
-		static final byte	NO_WORK_CURR_PATH			= 28;	//Added Apr 6, 2015
-		static final byte	SHORT_PICK_CONFIRM			= 10;	//Added Oct. 2014
-		static final byte	LOCATION_SELECT_REVIEW		= 11;	//Added Dec 12 2014
+		static final byte	VERIFYING_BADGE				= 1;
+		static final byte	COMPUTE_WORK				= 2;
+		static final byte	GET_WORK					= 3;
+		static final byte	LOCATION_SELECT				= 4;
+		static final byte	CONTAINER_SELECT			= 5;
+		static final byte	CONTAINER_POSITION			= 6;
+		static final byte	DO_PICK						= 7;
+		static final byte	SHORT_PICK					= 8;
+		static final byte	PICK_COMPLETE				= 9;
+		static final byte	PICK_COMPLETE_CURR_PATH		= 10;	//Added Apr 8, 2015
+		static final byte	NO_WORK						= 11;
+		static final byte	NO_WORK_CURR_PATH			= 12;	//Added Apr 6, 2015
+		static final byte	SHORT_PICK_CONFIRM			= 13;	//Added Oct. 2014
+		static final byte	LOCATION_SELECT_REVIEW		= 14;	//Added Dec 12 2014
 
 		//Error States
 
 		//Container Setup Error States
-		static final byte	CONTAINER_POSITION_INVALID	= 12;	//Added Dec 29 2014
-		static final byte	CONTAINER_SELECTION_INVALID	= 14;	//Addec Dec 30 2014
-		static final byte	CONTAINER_POSITION_IN_USE	= 15;	//Added Dec 30 2014
-		static final byte	NO_CONTAINERS_SETUP			= 16;	//Added Jan 2 2015
+		static final byte	CONTAINER_POSITION_INVALID	= 15;	//Added Dec 29 2014
+		static final byte	CONTAINER_SELECTION_INVALID	= 16;	//Addec Dec 30 2014
+		static final byte	CONTAINER_POSITION_IN_USE	= 17;	//Added Dec 30 2014
+		static final byte	NO_CONTAINERS_SETUP			= 18;	//Added Jan 2 2015
 
 		// new states only used in Line_Scan mode. Many are used in both line_scan and Setup_Orders, so keeping all together.
-		static final byte	READY						= 17;
-		static final byte	ABANDON_CHECK				= 18;
+		static final byte	READY						= 19;
+		static final byte	ABANDON_CHECK				= 20;
 		// states used in Setup_Orders mode if SCANPICK parameter is set.
-		static final byte	SCAN_SOMETHING				= 19;
-		static final byte	SCAN_SOMETHING_SHORT		= 20;
+		static final byte	SCAN_SOMETHING				= 21;
+		static final byte	SCAN_SOMETHING_SHORT		= 22;
 		// states used for inventory scan
 		static final byte	SCAN_GTIN					= 23;
 		// states for put wall

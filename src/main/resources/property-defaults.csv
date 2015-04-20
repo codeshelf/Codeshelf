@@ -12,3 +12,4 @@ Facility;CNTRTYPE;Order;"The content of the CHE containers. This affects the mes
 Facility;SCANPICK;Disabled;"Enabling will require the picker to scan the picked item before placing in a container. Specify if the picker should scan the item SKU or UPC. Valid values: Disabled, SKU, UPC."
 Facility;PICKMULT;false;"If true, get simultaneous pick instructions to several position controllers for a single SKU/location. Valid values: true, false"
 Facility;INVTMENU;false;"If true the UI will have a menu for viewing and managing inventory. Valid values: true, false"
+Facility;BADGEAUTH;false;"If true, only registered Workers will be able to log into CHEs. If false, creates default accounts for new badges. Valid values: true, false"

@@ -100,6 +100,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				case IDLE:
 					sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
 					break;
+					
+				case VERIFYING_BADGE:
+					sendDisplayCommand(VERIFYING_BADGE_MSG, EMPTY_MSG);
+					break;
 
 				case COMPUTE_WORK:
 					sendDisplayCommand(COMPUTE_WORK_MSG, EMPTY_MSG);
@@ -1050,10 +1054,24 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (USER_PREFIX.equals(inScanPrefixStr)) {
 			clearAllPositionControllers();
 			this.setUserId(inScanStr);
-			setState(CheStateEnum.CONTAINER_SELECT);
+			mDeviceManager.verifyBadge(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
+			setState(CheStateEnum.VERIFYING_BADGE);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
 			invalidScanMsg(CheStateEnum.IDLE);
+		}
+	}
+	
+	@Override
+	public void processResultOfVerifyBadge(Boolean verified) {
+		if (mCheStateEnum == CheStateEnum.VERIFYING_BADGE) {
+			if (verified) {
+				clearAllPositionControllers();
+				setState(CheStateEnum.CONTAINER_SELECT);
+			} else {
+				setState(CheStateEnum.IDLE);
+				invalidScanMsg(UNKNOWN_BADGE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+			}
 		}
 	}
 
@@ -1444,13 +1462,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		boolean reverse = REVERSE_COMMAND.equalsIgnoreCase(inScanStr);
 		//Split it out by state
 		switch (mCheStateEnum) {
-
-		//In the error states we must go to CLEAR_ERROR_SCAN_INVALID
+			//In the error states we must go to CLEAR_ERROR_SCAN_INVALID
 			case CONTAINER_POSITION_IN_USE:
 			case CONTAINER_POSITION_INVALID:
 			case CONTAINER_SELECTION_INVALID:
 			case NO_CONTAINERS_SETUP:
 				//Do nothing. Only a "Clear Error" will get you out 
+				break;
+
+			case VERIFYING_BADGE:
+				//Do nothing while still verifying badge
 				break;
 
 			case CONTAINER_POSITION:

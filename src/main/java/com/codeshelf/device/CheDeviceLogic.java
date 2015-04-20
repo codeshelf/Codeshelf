@@ -88,6 +88,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					PATH_COMPLETE_MSG						= cheLine("PATH COMPLETE");
 	protected static final String					SCAN_NEW_LOCATION_MSG					= cheLine("SCAN NEW LOCATION");
 	protected static final String					OR_SETUP_NEW_CART_MSG					= cheLine("OR SETUP NEW CART");
+	protected static final String					VERIFYING_BADGE_MSG						= cheLine("VERIFYING BADGE");
+	protected static final String					UNKNOWN_BADGE_MSG						= cheLine("UNKNOWN BADGE");
 
 	protected static final String					INVALID_POSITION_MSG					= cheLine("INVALID POSITION");
 	protected static final String					INVALID_CONTAINER_MSG					= cheLine("INVALID CONTAINER");
@@ -1773,4 +1775,7 @@ protected void notifyPutWallItem(String itemOrUpd, String wallname) {
 		return existingState;
 	}
 
+	public void processResultOfVerifyBadge(Boolean verified){
+		// To be overridden by SetupOrderDeviceLogic and LineScanDeviceLogic
+	}
 }
