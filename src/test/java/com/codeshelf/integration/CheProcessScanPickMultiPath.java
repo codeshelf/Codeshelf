@@ -158,16 +158,16 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		//Do not set last_scanned_location on the CHE
 		PickSimulator picker = setupCheOnPathAndReturnPicker(null);
 
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
-		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
-		picker.setupContainer("1", "1");
-		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		containerSetup(picker);
 
+		//Start work without specifying path
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
+		//If CHE doesn't have a saved path, it will pick one with a required item closest to the beginning of the path (i.e. - pretty arbitrary)
+		//Verify the number of items on the auto-chosen path
 		List<WorkInstruction> wiList = picker.getRemainingPicksWiList();
 		String[] expectations = { "Item10", "Item14", "Item15" };
 		compareInstructionsList(wiList, expectations);
@@ -178,19 +178,20 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 	 */
 	@Test
 	public void testStartStartPath1() throws IOException {
-		//Set Che on the first path
+		//Set Che on the first path 
+		//In this case, the path is "1"; we scan "B" (the middle of the path "1"), to verify that work is still calculated from the beginning of the path 
 		PickSimulator picker = setupCheOnPathAndReturnPicker("Loc1B");
 
 		containerSetup(picker);
 
-		//Scan START, review displays
+		//Scan START, verify the number of items on the CHE's path
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
 		verifyCheDisplay(picker, "SCAN START LOCATION", "OR SCAN START", "", "SHOWING WI COUNTS");
 		Byte posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("5"), posConValue);
 
-		//Scan START to begin pick, review results
+		//Scan START to begin pick, review the first and the remaining items on the path
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		verifyCheDisplay(picker, "Loc1A", "Item1", "QTY 11", "");
@@ -209,14 +210,14 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 
 		containerSetup(picker);
 
-		//Scan START, review displays
+		//Scan START, verify the number of items on the CHE's path
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
 		verifyCheDisplay(picker, "SCAN START LOCATION", "OR SCAN START", "", "SHOWING WI COUNTS");
 		Byte posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("3"), posConValue);
 
-		//Scan START to begin pick, review results
+		//Scan START to begin pick, review the first and the remaining items on the path
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		verifyCheDisplay(picker, "Loc2A", "Item10", "QTY 22", "");
@@ -243,7 +244,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		Byte posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("5"), posConValue);
 
-		//Scan location on the same path, but not in the beginning
+		//Scan location on the same path, but not in the beginning. Make sure work starts from the middle of the path
 		picker.scanLocation("Loc1B");
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		verifyCheDisplay(picker, "Loc1B", "Item5", "QTY 33", "");
@@ -441,7 +442,8 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_O, picker.getLastSentPositionControllerMaxQty((byte) 1));
 	}
 
-	// @Test restore this test, maybe.
+	@Test
+	//restore this test, maybe.
 	// Ilya, I suspect handling of unexpected scans is incomplete.
 	public void testIncompleteWorkSinglePath() throws IOException {
 		//Set Che on the second path
@@ -455,8 +457,11 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		//Scan START to begin pick
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		//Verify that there are 5 items on the first path
+		List<WorkInstruction> wiList = picker.getRemainingPicksWiList();
+		Assert.assertEquals(5, wiList.size());
 
-		//Pick all items on this path
+		//Pick all 5 items on this path
 		pickItemAuto(picker);
 		pickItemAuto(picker);
 		pickItemAuto(picker);
@@ -472,15 +477,16 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		//Start pick on the new path.
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
-		
-		// how did this work? 3 more picks shown next. Looks like bad test.
-		List<WorkInstruction> wiList = picker.getActivePickList();
-		this.logWiList(wiList);
+
+		//Verify that there are 3 items on the second path
+		wiList = picker.getRemainingPicksWiList();
 		Assert.assertEquals(3, wiList.size());
 
-		//Finish the other path
+		//Pick 2 items on the other path
 		pickItemAuto(picker);
 		pickItemAuto(picker);
+		//Short the last item
+		picker.scanCommand("SHORT");
 		picker.pick(1, 0);
 		picker.scanCommand("YES");
 
@@ -491,8 +497,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		Assert.assertEquals(PosControllerInstr.BITENCODED_TOP_BOTTOM, picker.getLastSentPositionControllerMaxQty((byte) 1));
 	}
 
-	// @Test restore this test, maybe.
-	// Ilya, I suspect handling of unexpected scans from PICK_COMPLETE_CURR_PATH is incomplete.
+	@Test
 	public void testIncompleteWorkMultiPath() throws IOException {
 		//Set Che on the second path
 		PickSimulator picker = setupCheOnPathAndReturnPicker("Loc1A");
@@ -505,17 +510,17 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		//Scan START to begin pick
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
-		
+
 		// how did this work? 5 picks shown next. Looks like bad test.
-		List<WorkInstruction> wiList = picker.getActivePickList();
-		this.logWiList(wiList);
+		List<WorkInstruction> wiList = picker.getRemainingPicksWiList();
 		Assert.assertEquals(5, wiList.size());
 
-		//Pick all items on this path
+		//Pick 4 items on this path and short the last one
 		pickItemAuto(picker);
 		pickItemAuto(picker);
 		pickItemAuto(picker);
 		pickItemAuto(picker);
+		picker.scanCommand("SHORT");
 		picker.pick(1, 0); //Short the last item
 		picker.scanCommand("YES");
 
