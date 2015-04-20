@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,7 +66,7 @@ public class LightService implements IApiService {
 
 		//Light the POS range
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-		getInstructionsForPosConRange(facility, null, theLocation, instructions);
+		getInstructionsForPosConRange(facility, null, theLocation, instructions, null);
 		final PosControllerInstrList posMessage = new PosControllerInstrList(instructions);
 		sendMessage(facility.getSiteControllerUsers(), posMessage);
 		//Modify all POS commands to clear their POSs instead.
@@ -135,12 +136,23 @@ public class LightService implements IApiService {
 		sendMessage(facility.getSiteControllerUsers(), message);
 	}
 
+	/**
+	 * @param facility current facility
+	 * @param wi specifies CHE source and quantity to display. If null is provided, the PosCon simply blinks tripple bars
+	 * @param theLocation location to light
+	 * @param instructions provide an empty list to gather renerated instructions
+	 * @param clearedControllers provide an empty list if you'd like to remove all previous commands from the same source on the specified PosCon controller. Provide null otherwise. 
+	 */
 	public static void getInstructionsForPosConRange(final Facility facility,
 		final WorkInstruction wi,
 		final Location theLocation,
-		List<PosControllerInstr> instructions) {
+		List<PosControllerInstr> instructions,
+		HashSet<String> clearedControllers) {
 		if (theLocation == null) {
 			return;
+		}
+		if (clearedControllers == null) {
+			clearedControllers = new HashSet<String>();
 		}
 		if (theLocation.isLightablePoscon()) {
 			LedController controller = theLocation.getEffectiveLedController();
@@ -148,6 +160,16 @@ public class LightService implements IApiService {
 			int posConIndex = theLocation.getPosconIndex();
 			PosControllerInstr message = null;
 			if (wi == null) {
+				//If just trying to illuminate PosCons, remove all previous illumination instruction
+				if (!clearedControllers.contains(posConController)) {
+					PosControllerInstr messageClear = new PosControllerInstr();
+					messageClear.setControllerId(posConController);
+					messageClear.setRemove("all");
+					messageClear.processRemoveField();
+					instructions.add(messageClear);
+					clearedControllers.add(posConController);
+				}
+				//If work instruction is not provided, light location with triple bars
 				message = new PosControllerInstr(posConController,
 					(byte) posConIndex,
 					PosControllerInstr.BITENCODED_SEGMENTS_CODE,
@@ -173,7 +195,7 @@ public class LightService implements IApiService {
 		List<Location> children = theLocation.getActiveChildren();
 		if (!children.isEmpty()) {
 			for (Location child : children) {
-				getInstructionsForPosConRange(facility, wi, child, instructions);
+				getInstructionsForPosConRange(facility, wi, child, instructions, clearedControllers);
 			}
 		}
 	}

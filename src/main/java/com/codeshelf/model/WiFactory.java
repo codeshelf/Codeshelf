@@ -402,7 +402,7 @@ public class WiFactory {
 	private static void setPosConInstructions(WorkInstruction wi, List<OrderLocation> locations) {
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 		for (OrderLocation location : locations) {
-			LightService.getInstructionsForPosConRange(wi.getParent(), wi, location.getLocation(), instructions);
+			LightService.getInstructionsForPosConRange(wi.getParent(), wi, location.getLocation(), instructions, null);
 		}
 		setPosConInstructionsHelper(wi, instructions);
 	}
@@ -410,7 +410,7 @@ public class WiFactory {
 	private static void setPosConInstructions(WorkInstruction wi, Location location) {
 		if (location.isLightablePoscon()) {
 			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-			LightService.getInstructionsForPosConRange(wi.getParent(), wi, location, instructions);
+			LightService.getInstructionsForPosConRange(wi.getParent(), wi, location, instructions, null);
 			setPosConInstructionsHelper(wi, instructions);
 		}
 	}
