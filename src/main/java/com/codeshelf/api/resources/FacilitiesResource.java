@@ -2,7 +2,10 @@ package com.codeshelf.api.resources;
 
 import java.util.List;
 
+import javax.ws.rs.Consumes;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -18,6 +21,7 @@ import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.resources.subresources.FacilityResource;
 import com.codeshelf.api.responses.FacilityShort;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Point;
 import com.sun.jersey.api.core.ResourceContext;
 
 @Path("/facilities")
@@ -44,5 +48,14 @@ public class FacilitiesResource {
 		List<Facility> facilities = Facility.staticGetDao().getAll();
 		List<FacilityShort> facilitiesShort = FacilityShort.generateList(facilities);
 		return BaseResponse.buildResponse(facilitiesShort);
+	}
+	
+	@POST
+	@RequiresPermissions("facility:edit")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	public Response addFacility(@FormParam("domainId") String domainId, @FormParam("description") String description) {
+		Facility facility = Facility.createFacility(domainId, description, Point.getZeroPoint());
+		return BaseResponse.buildResponse(facility);
 	}
 }
