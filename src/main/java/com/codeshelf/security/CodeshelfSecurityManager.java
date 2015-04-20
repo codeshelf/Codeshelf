@@ -161,7 +161,6 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager impleme
 		
 		// TODO: require that user not be null - use "system" user
 		
-		
 		// Shiro will call the SecurityManager to get the current subject, which will determine it from this key
 		// Also used for context logging.
 		UserContext oldUser=getCurrentUserContext();

@@ -31,7 +31,6 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
-import com.codeshelf.model.EdiDocumentStatusEnum;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
@@ -260,8 +259,6 @@ public class DropboxService extends EdiServiceABC {
 						inCsvLocationAliasImporter,
 						inCsvCrossBatchImporter,
 						inCsvAislesFileImporter);
-				} else {
-					result &= removeEntry(inClient, entry);
 				}
 			} catch (RuntimeException e) {
 				LOGGER.error("", e);
@@ -269,24 +266,6 @@ public class DropboxService extends EdiServiceABC {
 				// No - it could end up in a permanent loop.
 				// We need out-of-band notification here.
 				// result = false;
-			}
-		}
-
-		return result;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inPath
-	 * @return
-	 */
-	private final EdiDocumentLocator getDocumentLocatorByPath(String inPath) {
-		EdiDocumentLocator result = null;
-
-		for (EdiDocumentLocator locator : getDocumentLocators()) {
-			if (locator.getDocumentPath().equals(inPath)) {
-				result = locator;
-				break;
 			}
 		}
 
@@ -490,8 +469,6 @@ public class DropboxService extends EdiServiceABC {
 		ICsvAislesFileImporter inCsvAislesFileImporter) {
 		boolean result = true;
 
-		boolean shouldUpdateEntry = false;
-
 		if (inEntry.lcPath.startsWith(getFacilityImportPath())) {
 			if (inEntry.metadata.isFile()) {
 				handleImport(inClient,
@@ -502,30 +479,8 @@ public class DropboxService extends EdiServiceABC {
 					inCsvLocationAliasImporter,
 					inCsvCrossBatchImporter,
 					inCsvAislesFileImporter);
-				shouldUpdateEntry = true;
 			}
 		}
-
-		if (shouldUpdateEntry) {
-			EdiDocumentLocator locator = EdiDocumentLocator.staticGetDao().findByDomainId(this, inEntry.lcPath);
-			if (locator == null) {
-				locator = new EdiDocumentLocator();
-				locator.setReceived(new Timestamp(System.currentTimeMillis()));
-				locator.setDocumentStateEnum(EdiDocumentStatusEnum.NEW);
-				locator.setDomainId(inEntry.lcPath);
-				locator.setDocumentPath(inEntry.metadata.asFile().path);
-				locator.setDocumentName(inEntry.metadata.asFile().name);
-
-				addEdiDocumentLocator(locator);
-				try {
-					EdiDocumentLocator.staticGetDao().store(locator);
-				} catch (DaoException e) {
-					LOGGER.error("", e);
-					result = false;
-				}
-			}
-		}
-
 		return result;
 	}
 
@@ -800,26 +755,6 @@ public class DropboxService extends EdiServiceABC {
 			}
 		}
 		return toPath;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inEntry
-	 */
-	private boolean removeEntry(DbxClient inClient, DbxDelta.Entry<DbxEntry> inEntry) {
-		boolean result = true;
-
-		EdiDocumentLocator locator = getDocumentLocatorByPath(inEntry.lcPath);
-		if (locator != null) {
-			try {
-				EdiDocumentLocator.staticGetDao().delete(locator);
-			} catch (DaoException e) {
-				LOGGER.error("", e);
-				result = false;
-			}
-		}
-
-		return result;
 	}
 
 	// --------------------------------------------------------------------------

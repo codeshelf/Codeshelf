@@ -98,9 +98,11 @@ public class PropertyService extends AbstractPropertyService {
 		return prop;
 	}
 
+	/*
 	private static String getCacheKey(IDomainObject object, String name) {
 		return object.getDomainId()+":"+name;
 	}
+	*/
 	
 	// --------------------------------------------------------------------------
 	/**

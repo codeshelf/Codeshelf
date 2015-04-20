@@ -5,9 +5,6 @@
  *******************************************************************************/
 package com.codeshelf.model.domain;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
@@ -19,7 +16,6 @@ import javax.persistence.FetchType;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -93,11 +89,6 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	@JsonProperty
 	private String						providerCredentials;
 
-	// For a network this is a list of all of the control groups that belong in the set.
-	@OneToMany(mappedBy = "parent")
-	@Getter
-	private List<EdiDocumentLocator>	documentLocators	= new ArrayList<EdiDocumentLocator>();
-
 	public EdiServiceABC() {
 
 	}
@@ -114,22 +105,4 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	@JsonProperty
 	public abstract boolean getHasCredentials();
 	
-	public void addEdiDocumentLocator(EdiDocumentLocator inEdiDocumentLocator) {
-		EdiServiceABC previousEdiService = inEdiDocumentLocator.getParent();
-		if(previousEdiService == null) {
-			documentLocators.add(inEdiDocumentLocator);
-			inEdiDocumentLocator.setParent(this);
-		} else if(!previousEdiService.equals(this)) {
-			LOGGER.error("cannot add EdiDocumentLocator "+inEdiDocumentLocator.getDomainId()+" to "+this.getDomainId()+" because it has not been removed from "+previousEdiService.getDomainId());
-		}	
-	}
-
-	public void removeEdiDocumentLocator(EdiDocumentLocator inEdiDocumentLocator) {
-		if(this.documentLocators.contains(inEdiDocumentLocator)) {
-			inEdiDocumentLocator.setParent(null);
-			documentLocators.remove(inEdiDocumentLocator);
-		} else {
-			LOGGER.error("cannot remove EdiDocumentLocator "+inEdiDocumentLocator.getDomainId()+" from "+this.getDomainId()+" because it isn't found in children");
-		}
-	}
 }

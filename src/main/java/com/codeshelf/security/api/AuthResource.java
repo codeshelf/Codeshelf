@@ -54,7 +54,7 @@ public class AuthResource {
 		} else {
 			LOGGER.warn("Login failed: 'u' and/or 'p' parameters not submitted");
 		}
-		return Response.status(Status.FORBIDDEN.getStatusCode()).build();
+		return Response.status(Status.UNAUTHORIZED.getStatusCode()).build();
 	}
 
 	@GET
@@ -65,7 +65,7 @@ public class AuthResource {
 		if (tokenSession != null && tokenSession.getStatus().equals(TokenSession.Status.ACCEPTED)) {
 			return Response.ok(toUserResponse(tokenSession)).build();
 		}
-		return Response.status(Status.FORBIDDEN.getStatusCode()).build();
+		return Response.status(Status.UNAUTHORIZED.getStatusCode()).build();
 	}
 
 	@GET

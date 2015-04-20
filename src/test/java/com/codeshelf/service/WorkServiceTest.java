@@ -372,8 +372,10 @@ public class WorkServiceTest extends ServerTest {
 		workService.exportWorkInstruction(wi);
 
 		verify(mockEdiExportService, Mockito.timeout((int)(expectedRetryDelay * 1000L)).times(3)).sendWorkInstructionsToHost(eq(testMessage));
-		long previousTimestamp = timings.remove(0);
-		for (Long timestamp : timings) {
+		List<Long> timingsCopy = new ArrayList<Long>(timings);//copy as the calls may still modify timings if delayed
+		long previousTimestamp = timingsCopy.remove(0);
+		
+		for (Long timestamp : timingsCopy) {
 			long diff = timestamp - previousTimestamp;
 			// change from diff > expectedRetryDelay to diff >= expectedRetryDelay. Not necessarily accurate to the ms, but JRs Mac caught this a lot.
 			Assert.assertTrue("The delay between calls was not greater than " + expectedRetryDelay + "ms but was: " + diff, diff >= expectedRetryDelay);

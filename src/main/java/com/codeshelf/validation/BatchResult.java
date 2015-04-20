@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
 /**
@@ -15,6 +16,12 @@ public class BatchResult<T> {
 	
 	@Getter
 	private List<T> result;
+	
+	@Getter
+	long startTime = System.currentTimeMillis();
+	
+	@Getter @Setter
+	long endTime = System.currentTimeMillis();
 	
 	@Getter
 	private List<FieldError> violations;
@@ -50,5 +57,10 @@ public class BatchResult<T> {
 	
 	private String getRootObjectName() {
 		return "";
+	}
+
+	public void setStartTime(long startTime) {
+		// TODO Auto-generated method stub
+		
 	}
 }

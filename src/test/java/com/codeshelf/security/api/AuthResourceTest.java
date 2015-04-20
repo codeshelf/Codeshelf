@@ -33,7 +33,7 @@ public class AuthResourceTest {
 		
 		when(service.authenticate(anyString(), anyString())).thenReturn(testSession);
 		Response response = subject.authenticate("any", "any");
-		Assert.assertEquals(403, response.getStatus());
+		Assert.assertEquals(401, response.getStatus());
 	}
 	
 	@Test	
