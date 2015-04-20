@@ -108,9 +108,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	// For Put wall
 	protected static final String					SCAN_PUTWALL_ORDER_MSG					= cheLine("SCAN ORDER FOR");
 	protected static final String					SCAN_PUTWALL_LOCATION_MSG				= cheLine("SCAN LOCATION IN");
-	protected static final String					SCAN_PUTWALL_ITEM_MSG					= cheLine("SCAN ITEM/UPC FOR");
-	protected static final String					SCAN_PUTWALL_LINE2_MSG					= cheLine("THE PUT WALL");
+	protected static final String					PUT_WALL_MSG							= cheLine("PUT WALL");
+	protected static final String					SCAN_PUTWALL_ITEM_MSG					= cheLine("SCAN ITEM/UPC");
 	protected static final String					SCAN_PUTWALL_NAME_MSG					= cheLine("SCAN PUT WALL NAME");
+	protected static final String					NO_WORK_FOR								= cheLine("NO WORK FOR");
+	protected static final String					SCAN_ITEM_OR_CLEAR						= cheLine("SCAN ITEM OR CLEAR");
 
 	public static final String						STARTWORK_COMMAND						= "START";
 	public static final String						REVERSE_COMMAND							= "REVERSE";
@@ -597,7 +599,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	protected String getFourthLineDisplay() {
 		String returnString = "";
-		if (CheStateEnum.SHORT_PICK == mCheStateEnum) {
+		if (CheStateEnum.SHORT_PICK == mCheStateEnum || CheStateEnum.SHORT_PUT == mCheStateEnum) {
 			returnString = "DECREMENT POSITION";
 		}
 		// kind of funny. States are uniformly defined, so this works even from wrong object
@@ -998,7 +1000,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 					if (quantity == maxCountForPositionControllerDisplay && planQuantity > maxCountForPositionControllerDisplay)
 						processNormalPick(wi, planQuantity); // Assume all were picked. No way for user to tell if more than 98 given.
 					else {
-						processShortPick(wi, quantity);
+						processShortPickOrPut(wi, quantity);
 					}
 				}
 			}
@@ -1269,8 +1271,19 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * @param inWi
 	 * @param inQuantity
 	 */
-	protected void processShortPick(WorkInstruction inWi, Integer inQuantity) {
-		setState(CheStateEnum.SHORT_PICK_CONFIRM);
+	protected void processShortPickOrPut(WorkInstruction inWi, Integer inQuantity) {
+		CheStateEnum state = getCheStateEnum();
+		if (state == CheStateEnum.SHORT_PICK )
+			setState(CheStateEnum.SHORT_PICK_CONFIRM);
+		else if (state == CheStateEnum.SHORT_PUT )
+			setState(CheStateEnum.SHORT_PUT_CONFIRM);
+		else if (state == CheStateEnum.SHORT_PICK_CONFIRM || state == CheStateEnum.SHORT_PUT_CONFIRM){
+			LOGGER.info("extra button press without confirmation in state {}", state);
+			setState(state); // forces out the usual side effects, if any. None so far, beyond redoing the CHE display and che poscons.
+		}
+		else {
+			LOGGER.error("unanticipated state in processShortPickOrPut {}", state);
+		}
 		mShortPickWi = inWi;
 		mShortPickQty = inQuantity;
 	}
@@ -1438,11 +1451,23 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	}
 
+/**
+ * This che is looking at the wi, and seeing a poscon lighting instruction. Send it to the appropriate controller.
+ */
 	private void lightWiPosConLocations(WorkInstruction inFirstWi) {
 		String wiCmdString = inFirstWi.getPosConCmdStream();
 		if (wiCmdString == null || wiCmdString.equals("[]")) {
 			return;
 		}
+		
+		String ledCmdString = inFirstWi.getLedCmdStream();
+		if ( ledCmdString != null && !ledCmdString.isEmpty() && !ledCmdString.equals("[]")) {
+			LOGGER.error("lightWiPosConLocations: WI  at {} with both poscon and wi lighting instructions. How?", inFirstWi.getPickInstruction());
+			LOGGER.error("poscon stream: {}", wiCmdString);
+			LOGGER.error("led stream: {}", ledCmdString);
+			// Note: someday we will light the bay with a ping pong ball, so then this will not be an error. For now, looks like a bug.
+		}
+
 		NetGuid cheGuid = getGuid();
 		List<PosControllerInstr> instructions = PosConInstrGroupSerializer.deserializePosConInstrString(wiCmdString);
 		HashSet<PosManagerDeviceLogic> controllers = new HashSet<>();
@@ -1460,7 +1485,15 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			INetworkDevice device = mDeviceManager.getDeviceByGuid(thisGuid);
 			if (device instanceof PosManagerDeviceLogic) {
 				PosManagerDeviceLogic controller = (PosManagerDeviceLogic) device;
-				controller.addPosConInstrFor(cheGuid, instruction);
+
+				// This is kind of confusing. The server set up the instruction and stored it in the work instruction. But now we may have a short state
+				// So we have to modify the instruction. Only this CHE knows the state.
+				if (getCheStateEnum().equals(CheStateEnum.SHORT_PUT)) {
+					PosControllerInstr revisedInstruction = PosControllerInstr.getCorrespondingShortDisplay(instruction);
+					controller.addPosConInstrFor(cheGuid, revisedInstruction);
+				} else {
+					controller.addPosConInstrFor(cheGuid, instruction);
+				}
 				// As this is the point of adding the information to the PosManagerDeviceLogic, this should be the point of 
 				// remembering and associating this send to a specific active WI.
 				notifyNonChePosconLight(thisGuidStr, posconIndex, inFirstWi);
@@ -1513,7 +1546,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			// Send the CHE a display command (any of the WIs has the info we need).
 			CheStateEnum currentState = getCheStateEnum();
 			if (currentState != CheStateEnum.DO_PICK && currentState != CheStateEnum.SHORT_PICK
-					&& currentState != CheStateEnum.SCAN_SOMETHING && currentState != CheStateEnum.DO_PUT) {
+					&& currentState != CheStateEnum.SCAN_SOMETHING && currentState != CheStateEnum.DO_PUT && currentState != CheStateEnum.SHORT_PUT) {
 				LOGGER.error("unanticipated state in showActivePicks: {}", currentState);
 				setState(CheStateEnum.DO_PICK);
 				//return because setting state to DO_PICK will call this function again

@@ -328,6 +328,9 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		
 		LOGGER.info("Case 2: Short the first job. This should short ahead the third.");
 		WorkInstruction wi = picker.nextActiveWi();
+		// cannot get there except by scanning short
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 5000);
 		int button = picker.buttonFor(wi);
 		picker.pick(button, 0);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 5000);

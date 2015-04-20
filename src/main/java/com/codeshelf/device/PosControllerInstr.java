@@ -208,6 +208,20 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 		mControllerId = inControllerId;
 		mSourceId = inSourceId;
 	}
+	
+	/**
+	 * This constructor's purpose is to detail a clone
+	 */
+	public PosControllerInstr(final PosControllerInstr instructionToClone){
+		mPosition = instructionToClone.getPosition();
+		mReqQty = instructionToClone.getReqQty();
+		mMinQty = instructionToClone.getMinQty();
+		mMaxQty = instructionToClone.getMaxQty();
+		mFreq = instructionToClone.getFreq();
+		mDutyCycle = instructionToClone.getDutyCycle();
+		mControllerId = instructionToClone.getControllerId();
+		mSourceId = instructionToClone.mSourceId;
+	}
 
 	public void processRemoveField() {
 		if (mRemove == null) {
@@ -321,6 +335,17 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 		return desc;
 	}
 
+	/** 
+	 * Provide the short display corollary of this message
+	 */
+	public static PosControllerInstr getCorrespondingShortDisplay(PosControllerInstr instruction){
+		PosControllerInstr revisedInstruction = new PosControllerInstr(instruction);
+		revisedInstruction.setMinQty((byte) 0);
+		revisedInstruction.setFreq(PosControllerInstr.BLINK_FREQ);
+		
+		return revisedInstruction;
+	}
+	
 	public static class PosConInstrGroupSerializer {
 		/**
 		 * Duplicated from LedCmdGroupSerializer

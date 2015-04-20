@@ -37,13 +37,13 @@ public class PickSimulator {
 	public void login(String pickerId) {
 		// This is the original "scan badge" scan for setuporders process that assumes transition to Container_Select state.
 		cheDeviceLogic.scanCommandReceived("U%" + pickerId);
-		waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
 	}
 
 	public void loginAndCheckState(String pickerId, CheStateEnum inState) {
 		// This is the "scan badge" scan
 		cheDeviceLogic.scanCommandReceived("U%" + pickerId);
-		waitForCheState(inState, 1000);
+		waitForCheState(inState, 2000);
 	}
 
 	public String getProcessType() {
@@ -94,17 +94,6 @@ public class PickSimulator {
 		// If the job finished, we would want to end the transaction as it does in production, but confirm short has nothing to commit yet.
 	}
 
-	/*	public void simulateCommitByChangingTransaction(PersistenceService inService) {
-			// This would normally be done with the message boundaries. But as an example, see buttonPress(). In production the button message is formed and sent to server. But in this
-			// pickSimulation, we form button command, and tell cheDeviceLogic to directly process it, as if it were just deserialized after receiving. No transaction boundary there.
-			if (inService == null || !inService.hasActiveTransaction()) {
-				LOGGER.error("bad call to simulateCommitByChangingTransaction");
-			} else {
-				inService.commitTransaction();
-				inService.beginTransaction();
-			}
-		}
-	*/
 	public void logout() {
 		scanCommand("LOGOUT");
 		waitForCheState(CheStateEnum.IDLE, 1000);

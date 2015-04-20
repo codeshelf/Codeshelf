@@ -41,8 +41,8 @@ import com.google.common.base.Strings;
  *
  */
 public class WiFactory {
-	private static final Logger	LOGGER			= LoggerFactory.getLogger(WiFactory.class);
-	
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(WiFactory.class);
+
 	// For now, a public enum, but not stored on the WI. Just passed along in create methods so that we know what the location and/or order location mean.
 	public enum WiPurpose {
 		WiPurposeUnknown,
@@ -53,7 +53,6 @@ public class WiFactory {
 		WiPurposeReplenishPut,
 		WiPurposeRestockPut
 	}
-
 
 	// IMPORTANT. This should be synched with LightService.defaultLedsToLight
 	private static final int	maxLedsToLight	= 4;
@@ -167,11 +166,10 @@ public class WiFactory {
 		Che inChe,
 		Location inLocation,
 		final Timestamp inTime,
-		WiPurpose purpose
-		) throws DaoException {
+		WiPurpose purpose) throws DaoException {
 		return createWorkInstruction(inStatus, inType, inOrderDetail, inContainer, inChe, inLocation, inTime, purpose, true);
 	}
-	
+
 	/**
 	 * Create a work instruction for and order item quantity picked into a container at a location.
 	 * @param inStatus
@@ -226,7 +224,7 @@ public class WiFactory {
 					cheColor);
 				setPosConInstructions(resultWi, inLocation);
 				LOGGER.error("unexpected call to code that should be dead."); // If we see this, investigate and build a unit test.
-			} else {				
+			} else {
 				// This might be a cross batch case, or a put wall put. Position and leds come from the outbound order.			
 				if (purpose == WiPurpose.WiPurposeCrossBatchPut || purpose == WiPurpose.WiPurposePutWallPut) {
 					// Then the location and lights come from order location
@@ -243,7 +241,7 @@ public class WiFactory {
 						inOrderDetail.getUomMasterId(),
 						cheColor);
 					setPosConInstructions(resultWi, inLocation);
-				} 
+				}
 			}
 		}
 		Facility facility = inOrderDetail.getParent().getFacility();
@@ -307,7 +305,7 @@ public class WiFactory {
 				resultWi.setLedCmdStream("[]"); // empty array
 				resultWi.setStatus(WorkInstructionStatusEnum.NEW);
 				resultWi.setParent(facility);
-				if (linkInstructionToDetail){
+				if (linkInstructionToDetail) {
 					inOrderDetail.addWorkInstruction(resultWi);
 				}
 				inChe.addWorkInstruction(resultWi);
@@ -398,6 +396,7 @@ public class WiFactory {
 		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForLocationList(inOrder.getActiveOrderLocations(), inColor);
 		if (ledCmdGroupList.size() > 0)
 			inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
+		checkDoubleCmdStreams(inWi);
 	}
 
 	private static void setPosConInstructions(WorkInstruction wi, List<OrderLocation> locations) {
@@ -476,7 +475,7 @@ public class WiFactory {
 		inWi.setPosAlongPath(posAlongPath);
 
 		// if the location does not have led numbers, we do not have tubes or lasers there. Do not proceed.
-		if (inLocation.getFirstLedNumAlongPath() == null || inLocation.getFirstLedNumAlongPath() == 0)
+		if (!inLocation.isLightableAisleController())
 			return;
 
 		// if the location does not have controller associated, we would NPE below. Might as well check now.
@@ -493,6 +492,7 @@ public class WiFactory {
 
 		if (ledCmdGroupList.size() > 0)
 			inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
+		checkDoubleCmdStreams(inWi);
 	}
 
 	// --------------------------------------------------------------------------
@@ -540,6 +540,10 @@ public class WiFactory {
 		short lastLedPosNum = 0;
 		List<LedCmdGroup> ledCmdGroupList = new ArrayList<LedCmdGroup>();
 
+		if (inLocation != null && !inLocation.isLightableAisleController()) {
+			return ledCmdGroupList;
+		}
+
 		if (inItem != null) {
 			// Use our utility function to get the leds for the item
 			LedRange theRange = inItem.getFirstLastLedsForItem();
@@ -586,7 +590,8 @@ public class WiFactory {
 	// --------------------------------------------------------------------------
 	/**
 	 * Utility function to create LED command group. Will return a list, which may be empty if there is nothing to send. Caller should check for empty list.
-	 * Called now for setting WI LED pattern for crossbatch put.
+	 * Called now for setting WI LED pattern for crossbatch put. Or could possibly be called for put wall with LEDs
+	 * This filters out locations that are not lightable by LED, so caller does not need to check
 	 * @param inLocationList
 	 * @param inColor
 	 */
@@ -599,6 +604,10 @@ public class WiFactory {
 				LOGGER.error("null order location in getLedCmdGroupListForLocationList. How?");
 				continue;
 			}
+			if (!theLocation.isLightableAisleController()) {
+				continue;
+			}
+
 			short firstLedPosNum = theLocation.getFirstLedNumAlongPath();
 			short lastLedPosNum = theLocation.getLastLedNumAlongPath();
 
@@ -667,6 +676,9 @@ public class WiFactory {
 			LOGGER.error("work instruction was not initialized");
 		}
 
+		if (!inLocation.isLightableAisleController())
+			return;
+
 		String itemDomainId = Item.makeDomainId(inItemMasterId, inLocation, inUom);
 		short firstLedPosNum = inLocation.getFirstLedPosForItemId(itemDomainId);
 		short lastLedPosNum = inLocation.getLastLedPosForItemId(itemDomainId);
@@ -694,6 +706,7 @@ public class WiFactory {
 
 		ledCmdGroupList.add(ledCmdGroup);
 		inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
+		checkDoubleCmdStreams(inWi);
 	}
 
 	/**
@@ -727,9 +740,22 @@ public class WiFactory {
 		return returnStr;
 	}
 
+	private static void checkDoubleCmdStreams(WorkInstruction wi) {
+		String wiCmdString = wi.getPosConCmdStream();
+		if (wiCmdString == null || wiCmdString.equals("[]")) {
+			return;
+		}
+		// so there is a poscon stream. Is there also a led command stream
+		String ledCmdString = wi.getLedCmdStream();
+		if (ledCmdString == null || ledCmdString.equals("[]")) {
+			return;
+		}
+		LOGGER.error("checkDoubleCmdStreams found double lighting streams");
+	}
+
 	/**
-	 * Set an aisle led pattern on the inTargetWi; or do nothing
-	 */
+	* Set an aisle led pattern on the inTargetWi; or do nothing
+	*/
 	private static void setWorkInstructionLedPatternForHK(WorkInstruction inTargetWi,
 		WorkInstructionTypeEnum inType,
 		WorkInstruction inPrevWi) {
@@ -742,6 +768,7 @@ public class WiFactory {
 		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForHK(inType, inTargetWi.getLocation());
 		if (ledCmdGroupList.size() > 0)
 			inTargetWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
+		checkDoubleCmdStreams(inTargetWi);
 	}
 
 	/**

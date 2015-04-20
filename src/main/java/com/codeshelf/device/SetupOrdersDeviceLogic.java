@@ -63,6 +63,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Setter
 	private String								mPutWallName;
 
+	// knowing this allows better CHE feedback
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private String								mLastPutWallItemScan;
+
 	@Getter
 	@Setter
 	private boolean								mInventoryCommandAllowed	= true;
@@ -80,6 +86,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	public String getDeviceType() {
 		return CsDeviceManager.DEVICETYPE_CHE_SETUPORDERS;
+	}
+
+	private String getForWallMessageLine() {
+		return String.format("FOR %s", getPutWallName());
 	}
 
 	// --------------------------------------------------------------------------
@@ -162,6 +172,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					invalidScanMsg(NO_CONTAINERS_SETUP_MSG, FINISH_SETUP_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
 					break;
 
+				case SHORT_PUT_CONFIRM:
+					sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
+					break;
+
 				case SHORT_PICK_CONFIRM:
 					if (isSameState) {
 						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
@@ -173,6 +187,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					if (isSameState) {
 						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 					}
+					// first try. Show normally, but based on state, the wi min count will be set to zero.
+					showActivePicks();
+					break;
+
+				case SHORT_PUT:
 					// first try. Show normally, but based on state, the wi min count will be set to zero.
 					showActivePicks();
 					break;
@@ -229,15 +248,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 
 				case PUT_WALL_SCAN_ORDER:
-					sendDisplayCommand(SCAN_PUTWALL_ORDER_MSG, SCAN_PUTWALL_LINE2_MSG);
+					sendDisplayCommand(SCAN_PUTWALL_ORDER_MSG, PUT_WALL_MSG); // could be for any wall in this state.
 					break;
 
 				case PUT_WALL_SCAN_LOCATION:
-					sendDisplayCommand(SCAN_PUTWALL_LOCATION_MSG, SCAN_PUTWALL_LINE2_MSG);
+					sendDisplayCommand(SCAN_PUTWALL_LOCATION_MSG, PUT_WALL_MSG); // could be for any wall in this state.
 					break;
 
 				case PUT_WALL_SCAN_ITEM:
-					sendDisplayCommand(SCAN_PUTWALL_ITEM_MSG, SCAN_PUTWALL_LINE2_MSG);
+					sendDisplayCommand(SCAN_PUTWALL_ITEM_MSG, getForWallMessageLine()); // we know the wall the worker is doing in this state
 					break;
 
 				case PUT_WALL_SCAN_WALL:
@@ -246,6 +265,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 				case GET_PUT_INSTRUCTION:
 					sendDisplayCommand(GET_WORK_MSG, EMPTY_MSG);
+					break;
+					
+				case NO_PUT_WORK:
+					// we would like to say "No work for item in wall2"
+					String itemID = getLastPutWallItemScan();
+					String thirdLine = String.format("IN %s", getPutWallName());
+					sendDisplayCommand(NO_WORK_FOR, itemID, thirdLine, SCAN_ITEM_OR_CLEAR);
 					break;
 
 				case DO_PUT:
@@ -433,10 +459,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case DO_PUT:
+			case SHORT_PUT:
+			case SHORT_PUT_CONFIRM:
 				// DEV-713 : more to do. This situation is on a job, and the user wants to abandon it.
 				// Allow at all? set to PUT_WALL_SCAN_ITEM implies that. Or do nothing to force worker to complete or short it.
 
 				setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
+				// TODO
 				// If allowing, we would want to clear and refresh the poscon display, and clear activeWis.
 				// Also a notifyXX()
 				// Would be nice to send message to server to delete the work instruction, but we leave lots of wis hanging around.
@@ -477,6 +506,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case SHORT_PICK_CONFIRM:
+			case SHORT_PUT_CONFIRM:
 				confirmShortPick(inScanStr);
 				break;
 
@@ -604,8 +634,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processShortPickYes(wi, mShortPickQty);
 			}
 		} else {
-			// Just return to showing the active picks.
+			// Just return to showing the active picks or puts.
+			CheStateEnum state = getCheStateEnum();
+			if (state == CheStateEnum.SHORT_PICK_CONFIRM)
 			setState(CheStateEnum.DO_PICK);
+			else if (state == CheStateEnum.SHORT_PUT_CONFIRM)
+				setState(CheStateEnum.DO_PUT);
+			else {
+				LOGGER.error("unexpected state in confirmShortPick: {}", state);
+			}
 		}
 	}
 
@@ -989,6 +1026,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case SCAN_GTIN:
 				break;
+				
+			case DO_PUT:
+				setState(CheStateEnum.SHORT_PUT); // flashes the poscons with active jobs
+				break;
 
 			//Anywhere else we can start work if there's anything setup
 			default:
@@ -1051,7 +1092,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	private void processIdleStateScan(final String inScanPrefixStr, final String inScanStr) {
 
-		if (USER_PREFIX.equals(inScanPrefixStr)) {
+		if (USER_PREFIX.equals(inScanPrefixStr) || "".equals(inScanPrefixStr) || inScanPrefixStr == null) {
 			clearAllPositionControllers();
 			this.setUserId(inScanStr);
 			mDeviceManager.verifyBadge(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
@@ -1592,7 +1633,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		CheStateEnum state = getCheStateEnum();
 
 		if (state == CheStateEnum.DO_PICK || state == CheStateEnum.SHORT_PICK) {
-			// maintain the CHE feedback, but not for put wall puts. Not DO_PUT. And later likely need to add SHORT_PUT state. Not there either.
+			// maintain the CHE feedback, but not for put wall puts. Not DO_PUT. And not SHORT_PUT state.
 
 			//Decrement count if this is a non-HK WI
 			if (!inWi.isHousekeeping()) {
@@ -1708,7 +1749,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					if (inQuantity == maxCountForPositionControllerDisplay && planQuantity > maxCountForPositionControllerDisplay)
 						processNormalPick(wi, planQuantity); // Assume all were picked. No way for user to tell if more than 98 given.
 					else {
-						processShortPick(wi, inQuantity);
+						processShortPickOrPut(wi, inQuantity);
 					}
 				}
 			}
@@ -1721,7 +1762,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * @param inQuantity
 	 */
 	@Override
-	protected void processShortPick(WorkInstruction inWi, Integer inQuantity) {
+	protected void processShortPickOrPut(WorkInstruction inWi, Integer inQuantity) {
 		// This should be a corollary of processNormalPick, which has side effects of clearing the poscon for the pressed button if there is more work,
 		// Or not clearing, and just going to feedback
 
@@ -1734,7 +1775,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 
 		// Then the inherited shorts part is the same
-		super.processShortPick(inWi, inQuantity);
+		super.processShortPickOrPut(inWi, inQuantity);
 	}
 
 	protected void processPutWallOrderScan(final String inScanPrefixStr, final String inScanStr) {
@@ -1764,7 +1805,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// Note: or NO_PUT_WORK
 
 		notifyPutWallItem(inScanStr, getPutWallName());
-
+		setLastPutWallItemScan(inScanStr);
 		sendWallItemWiRequest(inScanStr, getPutWallName());
 
 	}
@@ -1845,7 +1886,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		CheStateEnum state = getCheStateEnum();
 
-		if (state == CheStateEnum.DO_PUT) {
+		if (state == CheStateEnum.DO_PUT || state == CheStateEnum.SHORT_PUT) {
 			doPosConDisplaysforActivePutWis();
 		} else {
 
@@ -1861,8 +1902,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 						instructions.add(instruction);
 					} else
 						LOGGER.error("unexpected missing poscon index for work instruction. State is {}", state);
+					// This might be troublesome for the Lowe's case of poscons on pick slot, and not on the cart at all.
 				}
 
+				// check instructions size? The callee does check and errors
 				sendPositionControllerInstructions(instructions);
 
 			}

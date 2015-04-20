@@ -76,7 +76,36 @@ public class CheProcessVerifyBadge extends ServerTest {
 		picker2.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
 		Assert.assertEquals("UNKNOWN BADGE", picker2.getLastCheDisplayString(1));
 	}
-	
+
+	@Test
+	public void testAuthenticationInactiveWorker(){
+		init(true);
+		
+		//Add inactive workers to DB
+		this.getTenantPersistenceService().beginTransaction();
+		Worker worker1 = createWorker(getFacility(), "Last Name 1", WORKER1);
+		worker1.setActive(false);
+		Worker.staticGetDao().store(worker1);
+		Worker worker2 = createWorker(getFacility(), "Last Name 2", WORKER2);
+		worker2.setActive(false);
+		Worker.staticGetDao().store(worker2);
+		this.getTenantPersistenceService().commitTransaction();
+		
+		//Fail to login into 2 CHEs with inactive
+		this.startSiteController();
+		
+		PickSimulator picker1 = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");		
+		picker1.scanSomething("U%" + WORKER1);
+		picker1.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
+		Assert.assertEquals("UNKNOWN BADGE", picker1.getLastCheDisplayString(1));
+		
+		PickSimulator picker2 = waitAndGetPickerForProcessType(this, cheGuid2, "CHE_LINESCAN");		
+		picker2.scanSomething("U%" + WORKER2);
+		picker2.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
+		Assert.assertEquals("UNKNOWN BADGE", picker2.getLastCheDisplayString(1));
+
+	}
+
 	@Test
 	public void testNoAuthenticationExistingWorker(){
 		init(false);
