@@ -45,11 +45,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// The CHE's container map.
 	private Map<String, String>					mPositionToContainerMap;
+	// This always exists, but map may be empty if PUT_WALL prior to container setup, or reduced meaning if PUT_WALL after work complete on this path.
 
 	//Map of containers to work instruction counts
 	private Map<String, WorkInstructionCount>	mContainerToWorkInstructionCountMap;
+	// Careful: this initializes as null, and only exists if there was successful return of the response from server. It must always be null checked.
 
-	// The CHE's container map.
+	// Transient. The CHE has scanned this container, and will add to container map if it learns the poscon position.
 	private String								mContainerInSetup;
 
 	// The CHE's current location.
@@ -110,7 +112,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				case IDLE:
 					sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
 					break;
-					
+
 				case VERIFYING_BADGE:
 					sendDisplayCommand(VERIFYING_BADGE_MSG, EMPTY_MSG);
 					break;
@@ -266,7 +268,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				case GET_PUT_INSTRUCTION:
 					sendDisplayCommand(GET_WORK_MSG, EMPTY_MSG);
 					break;
-					
+
 				case NO_PUT_WORK:
 					// we would like to say "No work for item in wall2"
 					String itemID = getLastPutWallItemScan();
@@ -560,6 +562,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * mContainerToWorkInstructionCountMap may be null in the PUT_WALL process
+	 * Should be valid in our normal process states
+	 */
+	private boolean feedbackCountersValid() {
+		return mContainerToWorkInstructionCountMap != null;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * call the short transaction
 	 * then update our local counts
 	 */
@@ -571,9 +582,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (mActivePickWiList.contains(inWi))
 			mActivePickWiList.remove(inWi);
 
+		// The proper setup orders flow will have this work instruction represented in this CHE's poscon data structures.
+		// However, the PUT_WALL process (somewhat like LINE_SCAN) does not. Let's not NPE
+
 		// Extra stuff for setup_orders is keeping track of poscon feedback information
 		//Decrement count as short
-		if (!inWi.isHousekeeping()) {
+		if (inWi.isHousekeeping()) {
+			LOGGER.error("unexpected housekeep in doShortTransaction");
+		} else if (feedbackCountersValid()) {
 			//The HK check should never be false
 			String containerId = inWi.getContainerId();
 			WorkInstructionCount count = this.mContainerToWorkInstructionCountMap.get(containerId);
@@ -586,9 +602,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (!position.equals(0)) {
 				this.showCartRunFeedbackIfNeeded(position);
 			}
-
-		} else
-			LOGGER.error("unexpected housekeep in doShortTransaction");
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -599,6 +613,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		notifyWiVerb(inWi, "SHORT", kLogAsWarn);
 		doShortTransaction(inWi, inPicked);
+
+		CheStateEnum state = getCheStateEnum();
 
 		clearLedAndPosConControllersForWi(inWi); // wrong? What about any short aheads?
 
@@ -612,13 +628,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (mActivePickWiList.size() > 0) {
 			// If there's more active picks then show them.
 			if (autoShortOn) {
-				LOGGER.error("Simultaneous work instructions turned off currently, so unexpected case in confirmShortPick");
+				LOGGER.error("Simultaneous work instructions turned off currently, so unexpected case in confirmShortPick. state: {}",
+					state);
 				LOGGER.error("wi = {}", mActivePickWiList.get(0)); // log the first to help understand
 			}
 			showActivePicks();
 		} else {
 			// There's no more active picks, so move to the next set.
-			doNextPick();
+			if (state.equals(CheStateEnum.SHORT_PUT_CONFIRM))
+				doNextWallPut();
+			else
+				doNextPick();
 		}
 	}
 
@@ -637,7 +657,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			// Just return to showing the active picks or puts.
 			CheStateEnum state = getCheStateEnum();
 			if (state == CheStateEnum.SHORT_PICK_CONFIRM)
-			setState(CheStateEnum.DO_PICK);
+				setState(CheStateEnum.DO_PICK);
 			else if (state == CheStateEnum.SHORT_PUT_CONFIRM)
 				setState(CheStateEnum.DO_PUT);
 			else {
@@ -668,11 +688,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 *   Then setState(DO_PICK) calls showActivePicks()
 	 */
 	private void doNextPick() {
-		LOGGER.debug(this + "doNextPick");
+		// We might call doNextPick after a normal complete, or a short pick confirm.
+		// We should not call it for any put wall cases; call doNextWallPut instead			
+		CheStateEnum state = getCheStateEnum();
+		if (state.equals(CheStateEnum.SHORT_PUT_CONFIRM) || state.equals(CheStateEnum.SHORT_PUT)
+				|| state.equals(CheStateEnum.DO_PUT))
+			LOGGER.error("unexpected call to doNextPick() state:{}", state);
 
 		if (mActivePickWiList.size() > 0) {
 			// There are still picks in the active list.
-			LOGGER.error("Unexpected case in doNextPick");
+			LOGGER.error("Unexpected case in doNextPick. State:{}", state);
 			showActivePicks();
 			// each caller to doNextPick already checked mActivePickWiList.size(). Therefore new situation if found
 
@@ -683,7 +708,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					setState(CheStateEnum.SCAN_SOMETHING); // This will cause showActivePicks();
 				else
 					setState(CheStateEnum.DO_PICK); // This will cause showActivePicks();
-				// showActivePicks();
 			} else {
 				int uncompletedInstructionsOnOtherPathsSum = getUncompletedInstructionsOnOtherPathsSum();
 				processPickComplete(uncompletedInstructionsOnOtherPathsSum > 0);
@@ -1026,7 +1050,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case SCAN_GTIN:
 				break;
-				
+
 			case DO_PUT:
 				setState(CheStateEnum.SHORT_PUT); // flashes the poscons with active jobs
 				break;
@@ -1055,6 +1079,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		switch (mCheStateEnum) {
 
 			case PICK_COMPLETE:
+			case PICK_COMPLETE_CURR_PATH:
 			case NO_WORK:
 				//Setup the CHE
 				setupChe();
@@ -1102,7 +1127,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			invalidScanMsg(CheStateEnum.IDLE);
 		}
 	}
-	
+
 	@Override
 	public void processResultOfVerifyBadge(Boolean verified) {
 		if (mCheStateEnum == CheStateEnum.VERIFYING_BADGE) {
@@ -1355,6 +1380,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 
 	private int getUncompletedInstructionsOnOtherPathsSum() {
+		if (!feedbackCountersValid()) {
+			LOGGER.error("Inappropriate call to getUncompletedInstructionsOnOtherPathsSum. state:{}", getCheStateEnum());
+			return 0;
+		}
+		// feedbackCountersValid() proves mContainerToWorkInstructionCountMap != null, so do not check that again.
+		// why not just iterate the values?
 		WorkInstructionCount[] counts = mContainerToWorkInstructionCountMap.values().toArray(new WorkInstructionCount[0]);
 		int uncompletedInstructionsOnOtherPathsCounter = 0;
 		for (WorkInstructionCount count : counts) {
@@ -1364,9 +1395,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 
 	/** Shows the count feedback on the position controller
+	 * This returns without error if the feedback counters are not valid.
 	 */
 	protected void showCartSetupFeedback() {
-		//Generate position controller commands
+		//make sure mContainerToWorkInstructionCountMap exists
+		if (!feedbackCountersValid()) {
+			return;
+		}
+
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 
 		for (Entry<String, String> containerMapEntry : mPositionToContainerMap.entrySet()) {
@@ -1441,6 +1477,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			LOGGER.error("showCartRunFeedbackIfNeeded was supplied a null position");
 			return;
 		}
+		if (!feedbackCountersValid()) {
+			LOGGER.error("incorrect call to showCartRunFeedbackIfNeeded");
+			return;
+		}
 
 		// Temporary
 		LOGGER.info("showCartRunFeedbackIfNeeded posconIndex {} called", inPosition);
@@ -1461,6 +1501,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		} else {
 			specificPositionCalled = true;
+			// TODO make sure the get is valid
 			String containerId = mPositionToContainerMap.get(inPosition.toString());
 			WorkInstructionCount wiCount = mContainerToWorkInstructionCountMap.get(containerId);
 			PosControllerInstr instr = this.getCartRunFeedbackInstructionForCount(wiCount, inPosition);
@@ -1503,7 +1544,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		boolean reverse = REVERSE_COMMAND.equalsIgnoreCase(inScanStr);
 		//Split it out by state
 		switch (mCheStateEnum) {
-			//In the error states we must go to CLEAR_ERROR_SCAN_INVALID
+		//In the error states we must go to CLEAR_ERROR_SCAN_INVALID
 			case CONTAINER_POSITION_IN_USE:
 			case CONTAINER_POSITION_INVALID:
 			case CONTAINER_SELECTION_INVALID:
@@ -1632,21 +1673,19 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		CheStateEnum state = getCheStateEnum();
 
-		if (state == CheStateEnum.DO_PICK || state == CheStateEnum.SHORT_PICK) {
+		if (feedbackCountersValid()) { // makes sure mContainerToWorkInstructionCountMap not null
 			// maintain the CHE feedback, but not for put wall puts. Not DO_PUT. And not SHORT_PUT state.
-
 			//Decrement count if this is a non-HK WI
+			String containerId = inWi.getContainerId();
 			if (!inWi.isHousekeeping()) {
-				String containerId = inWi.getContainerId();
 				WorkInstructionCount count = this.mContainerToWorkInstructionCountMap.get(containerId);
 				count.decrementGoodCountAndIncrementCompleteCount();
-
-				Byte position = getPosconIndexOfContainerId(containerId);
-				// TODO unnecessary?
-				if (!position.equals(0)) {
-					this.showCartRunFeedbackIfNeeded(position); // handles the CHE poscons, including clearing this specific on if no feedback
-				}
 			}
+			Byte position = getPosconIndexOfContainerId(containerId);
+			if (!position.equals(0)) {
+				this.showCartRunFeedbackIfNeeded(position); // handles the CHE poscons, including clearing this specific poscon if no feedback
+			}
+
 		}
 
 		clearLedAndPosConControllersForWi(inWi); // includes putwall poscons, not CHE poscons
@@ -1675,6 +1714,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * @return
 	 */
 	private String getContainerIdFromButtonNum(Integer inButtonNum) {
+		// TODO make the get safe
 		return mPositionToContainerMap.get(Integer.toString(inButtonNum));
 	}
 

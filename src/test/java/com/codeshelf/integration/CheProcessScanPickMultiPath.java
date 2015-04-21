@@ -131,17 +131,6 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		return getFacility();
 	}
 
-	private void verifyCheDisplay(PickSimulator picker, String exp1, String exp2, String exp3, String exp4) {
-		String disp1 = picker.getLastCheDisplayString(1).trim();
-		String disp2 = picker.getLastCheDisplayString(2).trim();
-		String disp3 = picker.getLastCheDisplayString(3).trim();
-		String disp4 = picker.getLastCheDisplayString(4).trim();
-		String template = "%s\n%s\n%s\n%s";
-		String expected = String.format(template, exp1, exp2, exp3, exp4);
-		String displayed = String.format(template, disp1, disp2, disp3, disp4);
-		Assert.assertEquals(expected, displayed);
-	}
-
 	private void containerSetup(PickSimulator picker) {
 		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
@@ -392,11 +381,11 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		compareInstructionsList(wiList, expectations1);
 
 		//Pick all items on this path
-		pickItemAuto(picker);
-		pickItemAuto(picker);
-		pickItemAuto(picker);
-		pickItemAuto(picker);
-		pickItemAuto(picker);
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		picker.pickItemAuto();
 
 		//Very "All Work Complete" message and "--" on poscon
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE_CURR_PATH, WAIT_TIME);
@@ -431,9 +420,9 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		compareInstructionsList(wiList, expectations2);
 
 		//Finish the other path
-		pickItemAuto(picker);
-		pickItemAuto(picker);
-		pickItemAuto(picker);
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		picker.pickItemAuto();
 
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
 		verifyCheDisplay(picker, "ALL WORK COMPLETE", "", "", "");
@@ -462,11 +451,11 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		Assert.assertEquals(5, wiList.size());
 
 		//Pick all 5 items on this path
-		pickItemAuto(picker);
-		pickItemAuto(picker);
-		pickItemAuto(picker);
-		pickItemAuto(picker);
-		pickItemAuto(picker);
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		picker.pickItemAuto();
 
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE_CURR_PATH, WAIT_TIME);
 
@@ -483,8 +472,8 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		Assert.assertEquals(3, wiList.size());
 
 		//Pick 2 items on the other path
-		pickItemAuto(picker);
-		pickItemAuto(picker);
+		picker.pickItemAuto();
+		picker.pickItemAuto();
 		//Short the last item
 		picker.scanCommand("SHORT");
 		picker.pick(1, 0);
@@ -516,10 +505,10 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		Assert.assertEquals(5, wiList.size());
 
 		//Pick 4 items on this path and short the last one
-		pickItemAuto(picker);
-		pickItemAuto(picker);
-		pickItemAuto(picker);
-		pickItemAuto(picker);
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		picker.pickItemAuto();
 		picker.scanCommand("SHORT");
 		picker.pick(1, 0); //Short the last item
 		picker.scanCommand("YES");

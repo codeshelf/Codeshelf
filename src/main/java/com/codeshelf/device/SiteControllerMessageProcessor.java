@@ -51,7 +51,8 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 	public void handleResponse(WebSocketConnection session, ResponseABC response) {
 		LOGGER.debug("Response received:" + response);
 		if (response.getStatus() != ResponseStatus.Success) {
-			LOGGER.warn("Request #" + response.getRequestId() + " failed: " + response.getStatusMessage());
+			LOGGER.warn("Response:{} failed for request:{} statusMsg: {}", response.getClass().getSimpleName(), response.getRequestId(), response.getStatusMessage());
+			// LOGGER.warn("Request #" + response.getRequestId() + " failed: " + response.getStatusMessage());
 		}
 		//////////////////////////////////////////
 		// Handler for Login Response

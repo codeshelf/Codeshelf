@@ -891,7 +891,7 @@ public class CheProcessTestPick extends ServerTest {
 		//After the v15 release, jumping to a new position during a pick restores all previously shorted instructions
 		Assert.assertEquals(5, picker.countRemainingJobs());
 		//Skip a first instruction to mainain an older test that expected the shorted instructions to stay hidden
-		pickItemAuto(picker);
+		picker.pickItemAuto();
 
 		wi = picker.nextActiveWi();
 		button = picker.buttonFor(wi);
@@ -2324,4 +2324,63 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);
 
 	}
+	
+	/**
+	 * This test verifies that the "bay change" displays disappears after the button is pressed, 
+	 * and a different CHE poscon displays the quantity for the next pick
+	 */
+	@Test
+	public final void testBayChangeDisappearTest() throws IOException {
+		LOGGER.info("1: setup facility");
+		this.getTenantPersistenceService().beginTransaction();
+		setUpOneAisleFourBaysFlatFacilityWithOrders();
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSiteController();
+
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+
+		LOGGER.info("2: assign two identical two-item orders to containers on the CHE");
+		picker.login("Picker #1");
+		picker.setupOrderIdAsContainer("7", "1");
+		picker.setupOrderIdAsContainer("8", "2");
+		
+		LOGGER.info("3: verify 'Location Select' and work on containers");
+		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 4000);
+		verifyCheDisplay(picker, "SCAN START LOCATION", "OR SCAN START", "", "SHOWING WI COUNTS");
+		Byte posConValue1 = picker.getLastSentPositionControllerDisplayValue((byte) 1);
+		Assert.assertEquals(new Byte("2"), posConValue1);
+		Byte posConValue2 = picker.getLastSentPositionControllerDisplayValue((byte) 2);
+		Assert.assertEquals(new Byte("2"), posConValue2);
+		
+		LOGGER.info("4: verify generated instructions");
+		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		List<WorkInstruction> wiList = picker.getRemainingPicksWiList();
+		String[] expectations = { "Item2", "Item2", "Housekeeping", "Item6", "Item6" };
+		compareInstructionsList(wiList, expectations);
+		
+		LOGGER.info("5: pick two items before bay change");
+		picker.pick(2, 40);
+		picker.pick(1, 40);
+		
+		LOGGER.info("6: verify 'bc' code on position 1; then - press button to advance");
+		Assert.assertEquals(PosControllerInstr.BAY_COMPLETE_CODE, picker.getLastSentPositionControllerDisplayValue((byte) 1));
+		picker.buttonPress(1, 0);
+		
+		// The main purpose of the test.
+		LOGGER.info("7: verify the correct quantity on position 2, and nothing on position 1");
+		Assert.assertEquals(new Byte("30"), picker.getLastSentPositionControllerDisplayValue((byte) 2));
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
+		
+		LOGGER.info("8: wrap up the test by finishing both orders");
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 4000);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_C);
+		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);
+	}
+
 }

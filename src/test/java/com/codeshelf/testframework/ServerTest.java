@@ -29,7 +29,7 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.util.ThreadUtils;
 
 public abstract class ServerTest extends HibernateTest {
-	private final Logger LOGGER = LoggerFactory.getLogger(ServerTest.class);
+	private final static Logger LOGGER = LoggerFactory.getLogger(ServerTest.class);
 
 	@Override
 	Type getFrameworkType() {
@@ -246,7 +246,11 @@ public abstract class ServerTest extends HibernateTest {
 				"2,2,354,12/03/14 12:00,12/31/14 12:00,Item15,,55,a,Group1,,\r\n" + 
 				"2,2,355,12/03/14 12:00,12/31/14 12:00,Item2,,66,a,Group1,,\r\n" + 
 				"2,2,356,12/03/14 12:00,12/31/14 12:00,Item8,,77,a,Group1,,\r\n" + 
-				"2,2,357,12/03/14 12:00,12/31/14 12:00,Item14,,77,a,Group1,,\r\n";
+				"2,2,357,12/03/14 12:00,12/31/14 12:00,Item14,,77,a,Group1,,\r\n" +
+				"7,7,346,12/03/14 12:00,12/31/14 12:00,Item2,,40,a,Group1,,\r\n" + 
+				"7,7,347,12/03/14 12:00,12/31/14 12:00,Item6,,30,a,Group1,,\r\n" +  
+				"8,8,349,12/03/14 12:00,12/31/14 12:00,Item2,,40,a,Group1,,\r\n" + 
+				"8,8,350,12/03/14 12:00,12/31/14 12:00,Item6,,30,a,Group1,,\r\n";
 		importOrdersData(getFacility(), orders);
 		return getFacility();
 	}
@@ -367,11 +371,31 @@ public abstract class ServerTest extends HibernateTest {
 			return null;
 		}
 	}
+		
+	public void verifyCheDisplay(PickSimulator picker, String exp1, String exp2, String exp3, String exp4) {
+		String disp1 = picker.getLastCheDisplayString(1).trim();
+		String disp2 = picker.getLastCheDisplayString(2).trim();
+		String disp3 = picker.getLastCheDisplayString(3).trim();
+		String disp4 = picker.getLastCheDisplayString(4).trim();
+		String template = "%s\n%s\n%s\n%s";
+		String expected = String.format(template, exp1, exp2, exp3, exp4);
+		String displayed = String.format(template, disp1, disp2, disp3, disp4);
+		Assert.assertEquals(expected, displayed);
+	}
 	
-	protected void pickItemAuto(PickSimulator picker){
-		WorkInstruction wi = picker.getActivePick();
-		int button = picker.buttonFor(wi);
-		int quantity = wi.getPlanQuantity();
-		picker.pick(button, quantity);
+	/**
+	 * A wrapper to avoid our endless casts of integers used in tests to Bytes to compare with deviceLogic values
+	 * 	Without do this: Assert.assertEquals((Byte) (byte) 3, displayValue); and no range checking.
+	 *  Instead do this: Assert.assertEquals(toByte(3), displayValue);
+	 *  Does not throw. Logs error on out of range. Always returns a good Byte
+	 */
+	protected static Byte toByte(int theInt){
+		if (theInt < 0 || theInt > 255) {
+			LOGGER.error("toByte out of range");
+			return new Byte((byte) 0);
+		}
+		else {
+			return ((Byte) (byte) theInt); 
+		}
 	}
 }

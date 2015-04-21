@@ -166,14 +166,14 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			new Timestamp(startDate.getTime())), Restrictions.lt("completed", new Timestamp(endDate.getTime()))),
 			ImmutableList.of(Order.asc("completed")));
 	}
-	
+
 	/**
 	 * Seems a bit silly, but we do not have a good means to get hold of services. Test framework has the work service, so this is the best kludge.
 	 */
-	public LightService getLightService(){
+	public LightService getLightService() {
 		return this.lightService;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Compute work instructions for a CHE that's at the listed location with the listed container IDs.
@@ -204,7 +204,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		List<Container> containerList = new ArrayList<Container>();
 		for (String containerId : inContainerIdList) {
 			Container container = Container.staticGetDao().findByDomainId(facility, containerId);
-			if (container != null){
+			if (container != null) {
 				// add to the list that will generate work instructions
 				containerList.add(container);
 				// Set the CHE on the containerUse
@@ -250,7 +250,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				}
 			}
 		}
-		
+
 		Timestamp theTime = now();
 
 		// Get all of the OUTBOUND work instructions.
@@ -262,8 +262,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		List<WorkInstruction> crossInstructions = generateCrossWallInstructions(facility, inChe, containerList, theTime);
 		workList.getInstructions().addAll(crossInstructions);
 
-		if (workList.getInstructions().isEmpty() && workList.getDetails().isEmpty()){
-			List<WorkInstruction> slowPutWallInstructions = PutWallOrderGenerator.attemptToGenerateWallOrders(inChe, inContainerIdList, theTime);
+		if (workList.getInstructions().isEmpty() && workList.getDetails().isEmpty()) {
+			List<WorkInstruction> slowPutWallInstructions = PutWallOrderGenerator.attemptToGenerateWallOrders(inChe,
+				inContainerIdList,
+				theTime);
 			workList.getInstructions().addAll(slowPutWallInstructions);
 		}
 
@@ -598,7 +600,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			aWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
 				WorkInstructionTypeEnum.PLAN,
 				orderDetail,
-				inChe, 
+				inChe,
 				true,
 				null); // Could be normal WI, or a short WI
 		} else {
@@ -652,6 +654,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		// 3) Find all order locations for any of those slots/tiers
 		// 4) If the order (from the order location) is active, find any order details for it that match the item
 		// 5) make the work instruction to the orderlocation location. (There may be several work instructions for the request.)
+		// 6) sort via our usual sequencer.
 
 		// As we find the details, we want to call as
 		// 		SingleWorkItem workItem = makeWIForOutbound(orderDetail, inChe, null, null, inFacility, inFacility.getPaths());
@@ -709,6 +712,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				wiResultList.add(wi);
 			}
 		}
+		// 6 Sort code
+		// There may be more than one plan for this SKU in the wall. If so, they need to be sorted normally, rather than leaving
+		// the work instruction with null for group and sort code.  Do not add housekeeping for these.
+		if (wiResultList.size() > 0) {
+			sortAndSaveActionableWIs(facility, wiResultList, false); // all of these should be actionable.
+		}
 
 		response.setWorkInstructions(wiResultList);
 		return response;
@@ -749,7 +758,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		if (!master.equals(detail.getItemMaster())) {
 			ItemMaster detailMaster = detail.getItemMaster();
 			LOGGER.info("mismatch master:{}, detailMaster: {}", master.getDomainId(), detailMaster.getDomainId());
-			
+			// probably change to debug. Just information about perhaps why a detail is not being chosen to make a plan
 			return false;
 		}
 		OrderStatusEnum detailStatus = detail.getStatus();
@@ -1790,7 +1799,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		computeAndSendOrderFeedback(ol, true); // single message is last of the group
 		return true;
 	}
-	
+
 	public boolean badgeVerifiesOK(Che che, String badge) {
 		Facility facility = che.getFacility();
 		//Get global Authentication property value
@@ -1798,7 +1807,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		boolean badgeAuth = badgeAuthStr == null ? false : Boolean.parseBoolean(badgeAuthStr);
 		//Get active Worker with a matching badge id
 		Worker worker = Worker.findWorker(facility, badge);
-		
+
 		if (badgeAuth) {
 			if (worker == null) {
 				//Authentication + unknown worker = failed
