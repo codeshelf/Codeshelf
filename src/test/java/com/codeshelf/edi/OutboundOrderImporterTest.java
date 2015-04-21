@@ -1710,6 +1710,51 @@ public class OutboundOrderImporterTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
+	@Test
+	public final void testGtinReimport() throws IOException{
+		// initial order import
+		beginTransaction();
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin" +
+				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,Group1,gtin-1-each" +
+				"\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,Group1,gtin-1-case" +
+				"\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,80,each,Group1,gtin-2";
+		importCsvString(facility, firstCsvString);
+		commitTransaction();
+
+		// check gtin
+		beginTransaction();
+		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1"); 
+		OrderDetail d1_1 = h1.getOrderDetail("101");
+		Gtin d1_1_gtin = d1_1.getItemMaster().getGtinForUom(d1_1.getUomMaster());
+		Assert.assertEquals("gtin-1-each", d1_1_gtin.getDomainId());
+		OrderDetail d1_2 = h1.getOrderDetail("102");
+		Gtin d1_2_gtin = d1_2.getItemMaster().getGtinForUom(d1_2.getUomMaster());
+		Assert.assertEquals("gtin-1-case", d1_2_gtin.getDomainId());
+		commitTransaction();
+
+		// modify gtin
+		beginTransaction();
+		facility = Facility.staticGetDao().findByPersistentId(facilityId);
+		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin" +
+				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,Group1,gtin-1-each-mod" +
+				"\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,Group1,gtin-1-case" +
+				"\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,80,each,Group1,gtin-2";
+		importCsvString(facility, firstCsvString);
+		commitTransaction();
+
+		// check gtin again
+		beginTransaction();
+		h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1"); 
+		d1_1 = h1.getOrderDetail("101");
+		d1_1_gtin = d1_1.getItemMaster().getGtinForUom(d1_1.getUomMaster());
+		Assert.assertEquals("gtin-1-each-mod", d1_1_gtin.getDomainId());
+		d1_2 = h1.getOrderDetail("102");
+		d1_2_gtin = d1_2.getItemMaster().getGtinForUom(d1_2.getUomMaster());
+		Assert.assertEquals("gtin-1-case", d1_2_gtin.getDomainId());
+		commitTransaction();
+	}
+
 	/**
 	 * This is not generally useful. It gets absolutely all orders and groups, not even limiting to the facility.
 	 * Then assumes that all are represented in the groupExpectations and headerExpectations and complains if one is found not in expectations. You cannot chain imports and only check the results for
