@@ -1055,6 +1055,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		switch (mCheStateEnum) {
 
 			case PICK_COMPLETE:
+			case PICK_COMPLETE_CURR_PATH:
 			case NO_WORK:
 				//Setup the CHE
 				setupChe();
