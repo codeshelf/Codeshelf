@@ -67,7 +67,7 @@ public class LightService implements IApiService {
 		//Light the POS range
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 		//The following collection contains a list of all Controllers that contain affected (lit) PosCons
-		//When the time comes to extinguish ilumilated PosCons, a clear-all instruction will be sent to each of those device
+		//When the time comes to extinguish illuminated PosCons, a clear-all instruction will be sent to each of those device
 		final HashSet<String> affectedControllers = new HashSet<String>();
 		getInstructionsForPosConRange(facility, null, theLocation, instructions, affectedControllers);
 		PosControllerInstrList posMessage = new PosControllerInstrList(instructions);
