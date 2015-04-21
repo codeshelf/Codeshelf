@@ -66,18 +66,29 @@ public class LightService implements IApiService {
 
 		//Light the POS range
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-		getInstructionsForPosConRange(facility, null, theLocation, instructions, null);
-		final PosControllerInstrList posMessage = new PosControllerInstrList(instructions);
+		//The following collection contains a list of all Controllers that contain affected (lit) PosCons
+		//When the time comes to extinguish ilumilated PosCons, a clear-all instruction will be sent to each of those device
+		final HashSet<String> affectedControllers = new HashSet<String>();
+		getInstructionsForPosConRange(facility, null, theLocation, instructions, affectedControllers);
+		PosControllerInstrList posMessage = new PosControllerInstrList(instructions);
 		sendMessage(facility.getSiteControllerUsers(), posMessage);
 		//Modify all POS commands to clear their POSs instead.
 		new Timer().schedule(new TimerTask() {
 			@Override
 			public void run() {
 				LOGGER.info("AisleDeviceLogic expire timer fired.");
-				for (PosControllerInstr instructions : posMessage.getInstructions()) {
-					instructions.getRemovePos().add(instructions.getPosition());
+				//Generate a list of clear-all instruction
+				List<PosControllerInstr> instructions = Lists.newArrayList();
+				for (String controller : affectedControllers) {
+					PosControllerInstr instructionClear = new PosControllerInstr();
+					instructionClear.setControllerId(controller);
+					instructionClear.setRemove("all");
+					instructionClear.processRemoveField();
+					instructions.add(instructionClear);
 				}
-				sendMessage(facility.getSiteControllerUsers(), posMessage);
+				//Send the generated list
+				PosControllerInstrList clearListMessage = new PosControllerInstrList(instructions);
+				sendMessage(facility.getSiteControllerUsers(), clearListMessage);
 			}
 		}, 20000);
 	}

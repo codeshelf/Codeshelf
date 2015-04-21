@@ -114,11 +114,12 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 		String sourceStr = inNetGuid.getHexStringNoPrefix();
 
 		Map<Byte, PosControllerInstr> sourceInsts = mPosInstructionBySource.get(inNetGuid);
-		for (Byte position : positions) {
-			LOGGER.info("Clear PosCon " + position + " for Source:" + sourceStr + " on " + getMyGuidStr());
-			sourceInsts.remove(position);
+		if (sourceInsts != null) {
+			for (Byte position : positions) {
+				LOGGER.info("Clear PosCon " + position + " for Source:" + sourceStr + " on " + getMyGuidStr());
+				sourceInsts.remove(position);
+			}
 		}
-
 		if (sourceInsts.isEmpty()) {
 			mPosInstructionBySource.remove(inNetGuid);
 		}
