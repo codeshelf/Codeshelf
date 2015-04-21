@@ -31,12 +31,14 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.service.NotificationLoggingService.EventType;
 import com.codeshelf.util.PcapRecord;
 import com.codeshelf.util.PcapRingBuffer;
 import com.codeshelf.util.TwoKeyMap;
 import com.codeshelf.ws.client.CsClientEndpoint;
 import com.codeshelf.ws.client.WebSocketEventListener;
 import com.codeshelf.ws.protocol.message.LightLedsInstruction;
+import com.codeshelf.ws.protocol.message.NotificationMessage;
 import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
@@ -323,6 +325,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		String cheId = inPersistentId.toString();
 		ComputePutWallInstructionRequest req = new ComputePutWallInstructionRequest(cheId, itemOrUpc, putWallName);
 		clientEndpoint.sendMessage(req);
+	}
+	
+	public void sendNotificationMessage(final String inCheId, final UUID inPersistentId, final EventType eventType){
+		LOGGER.debug("Notify: Che={}; type={}", inCheId, eventType);
+		String cheId = inPersistentId.toString();
+		NotificationMessage msg = new NotificationMessage(cheId, eventType);
+		clientEndpoint.sendMessage(msg);
 	}
 
 	// --------------------------------------------------------------------------

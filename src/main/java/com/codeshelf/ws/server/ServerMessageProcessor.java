@@ -17,6 +17,7 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.InventoryService;
+import com.codeshelf.service.NotificationLoggingService;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.protocol.command.CommandABC;
@@ -42,6 +43,7 @@ import com.codeshelf.ws.protocol.command.VerifyBadgeCommand;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.protocol.message.KeepAlive;
 import com.codeshelf.ws.protocol.message.MessageABC;
+import com.codeshelf.ws.protocol.message.NotificationMessage;
 import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
@@ -93,6 +95,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	private final Counter			inventoryLightItemRequestCounter;
 	private final Counter			inventoryLightLocationRequestCounter;
 	private final Counter			putWallPlacementCounter;
+	private final Counter			notificationCounter;
 	private final Timer				requestProcessingTimer;
 
 	private ServiceFactory			serviceFactory;
@@ -129,6 +132,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		inventoryLightLocationRequestCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.inventory-light-location");
 		putWallPlacementCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.put-wall-placement");
 		requestProcessingTimer = metricsService.createTimer(MetricsGroup.WSS, "requests.processing-time");
+		notificationCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.notification");
 
 	}
 
@@ -314,6 +318,11 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		if (message instanceof KeepAlive) {
 			keepAliveCounter.inc();
 			systemRequestCounter.inc();
+		} else if (message instanceof NotificationMessage) {
+			notificationCounter.inc();
+			NotificationMessage msg = (NotificationMessage) message;
+			NotificationLoggingService service = serviceFactory.getServiceInstance(NotificationLoggingService.class);
+			service.notify(msg.getDeviceId(), msg.getEventType());
 		} else {
 			LOGGER.warn("Unexpected message received on session " + session + ": " + message);
 		}

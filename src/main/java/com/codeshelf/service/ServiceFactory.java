@@ -11,7 +11,7 @@ public class ServiceFactory {
 
 	@Inject
 	public ServiceFactory(WorkService workService, LightService lightService, IPropertyService propertyService,
-			UiUpdateService uiUpdateService, OrderService orderService, InventoryService inventoryService) {
+			UiUpdateService uiUpdateService, OrderService orderService, InventoryService inventoryService, NotificationLoggingService notificationService) {
 		mServices = Maps.newHashMap();
 		mServices.put(WorkService.class, workService);
 		mServices.put(LightService.class, lightService);
@@ -19,6 +19,7 @@ public class ServiceFactory {
 		mServices.put(UiUpdateService.class, uiUpdateService);
 		mServices.put(OrderService.class, orderService);
 		mServices.put(InventoryService.class, inventoryService);
+		mServices.put(NotificationLoggingService.class, notificationService);
 	}
 
 	@SuppressWarnings("unchecked")

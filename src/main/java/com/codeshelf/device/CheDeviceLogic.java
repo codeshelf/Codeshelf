@@ -35,6 +35,7 @@ import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.service.NotificationLoggingService.EventType;
 import com.codeshelf.util.ThreadUtils;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
@@ -1688,6 +1689,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			showingQuantity,
 			getUserId(),
 			getMyGuidStr());
+		mDeviceManager.sendNotificationMessage(getGuid().getHexStringNoPrefix(), getPersistentId(), EventType.BUTTON);
 	}
 
 	protected void notifyOffCheButton(int buttonNum, int showingQuantity, String fromGuidId) {

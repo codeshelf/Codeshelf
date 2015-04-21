@@ -1209,8 +1209,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		List<Item> itemsList1a = master1.getItemsOfUom("CS");
 		Assert.assertEquals(1, itemsList1a.size());
 		Assert.assertEquals(1, master1.getItems().size());
-		Item items1a = itemsList1a.get(0);
-		UUID persist1a = items1a.getPersistentId();
+		//Item items1a = itemsList1a.get(0);
+		//UUID persist1a = items1a.getPersistentId();
 		master4 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0004");
 		List<Item> itemsList4a = master4.getItemsOfUom("EA");
 		Assert.assertEquals(1, itemsList4a.size());
@@ -1234,8 +1234,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		items1 = master1.getItems();
 
 		Assert.assertEquals(2, items1.size()); // Should have created new
-		Item items1b = items1.get(0);
-		UUID persist1b = items1b.getPersistentId();
+		//Item items1b = items1.get(0);
+		//UUID persist1b = items1b.getPersistentId();
 
 		master4 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0004");
 		items4 = master4.getItems();

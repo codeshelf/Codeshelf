@@ -72,7 +72,7 @@ public class LightService implements IApiService {
 		getInstructionsForPosConRange(facility, null, theLocation, instructions, affectedControllers);
 		PosControllerInstrList posMessage = new PosControllerInstrList(instructions);
 		sendMessage(facility.getSiteControllerUsers(), posMessage);
-		//Modify all POS commands to clear their POSs instead.
+		//Extinguish all PosCons in affected controllers after some time. This will not affect displayed instructions send from other devices (such as CHEs)
 		new Timer().schedule(new TimerTask() {
 			@Override
 			public void run() {
