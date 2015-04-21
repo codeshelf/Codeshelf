@@ -1637,17 +1637,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			// maintain the CHE feedback, but not for put wall puts. Not DO_PUT. And not SHORT_PUT state.
 
 			//Decrement count if this is a non-HK WI
+			String containerId = inWi.getContainerId();
 			if (!inWi.isHousekeeping()) {
-				String containerId = inWi.getContainerId();
 				WorkInstructionCount count = this.mContainerToWorkInstructionCountMap.get(containerId);
 				count.decrementGoodCountAndIncrementCompleteCount();
-
-				Byte position = getPosconIndexOfContainerId(containerId);
-				// TODO unnecessary?
-				if (!position.equals(0)) {
-					this.showCartRunFeedbackIfNeeded(position); // handles the CHE poscons, including clearing this specific on if no feedback
-				}
 			}
+			Byte position = getPosconIndexOfContainerId(containerId);
+			// TODO unnecessary?
+			if (!position.equals(0)) {
+				this.showCartRunFeedbackIfNeeded(position); // handles the CHE poscons, including clearing this specific poscon if no feedback
+			}
+
 		}
 
 		clearLedAndPosConControllersForWi(inWi); // includes putwall poscons, not CHE poscons

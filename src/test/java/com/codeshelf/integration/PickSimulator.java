@@ -93,6 +93,14 @@ public class PickSimulator {
 		// many state possibilities here. On to the next job, or finished all work, or need to confirm a short.
 		// If the job finished, we would want to end the transaction as it does in production, but confirm short has nothing to commit yet.
 	}
+	
+	public void pickItemAuto(){
+		waitForCheState(CheStateEnum.DO_PICK, 4000);
+		WorkInstruction wi = getActivePick();
+		int button = buttonFor(wi);
+		int quantity = wi.getPlanQuantity();
+		pick(button, quantity);
+	}
 
 	public void logout() {
 		scanCommand("LOGOUT");
