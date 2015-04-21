@@ -463,14 +463,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case DO_PUT:
 			case SHORT_PUT:
 			case SHORT_PUT_CONFIRM:
-				// DEV-713 : more to do. This situation is on a job, and the user wants to abandon it.
-				// Allow at all? set to PUT_WALL_SCAN_ITEM implies that. Or do nothing to force worker to complete or short it.
-
+				// DEV-713 : Worker is on a job, wants to abandon it.
+				// Allow at all? If we did nothing it would force worker to complete or short it.
+				WorkInstruction wi = this.getOneActiveWorkInstruction();
+				if (wi != null) {
+					notifyWiVerb( wi, "Cancel put", false);
+					clearLedAndPosConControllersForWi(wi);
+				}
 				setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
-				// TODO
-				// If allowing, we would want to clear and refresh the poscon display, and clear activeWis.
-				// Also a notifyXX()
-				// Would be nice to send message to server to delete the work instruction, but we leave lots of wis hanging around.
+				// Might be nice to send message to server to delete the work instruction, but we leave the wi hanging around for many use cases.
+				// When that item/GTIN is scanned again, the work instruction will "recycle", so we are not creating a bigger and bigger mess.
+				
 				break;
 
 			default:
@@ -1839,6 +1842,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 
 	protected void processPutWallItemScan(final String inScanPrefixStr, final String inScanStr) {
+		// This should be a clean scan of itemId or GTIN/UPC. If there is a scan prefix, don't bother asking the server.
+		if (!inScanPrefixStr.isEmpty()) {
+			LOGGER.warn("Ignoring inappropriate scan");
+			setState(getCheStateEnum()); // looks like noop, but force screen redraw
+			return;
+		}
 
 		setState(CheStateEnum.GET_PUT_INSTRUCTION);
 		// The response then returns the work instruction, and transitions to DO_PUT state. 
