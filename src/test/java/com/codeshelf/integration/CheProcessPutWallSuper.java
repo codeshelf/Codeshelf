@@ -40,7 +40,8 @@ public class CheProcessPutWallSuper extends ServerTest {
 				+ "Bay,B2,CLONE(B1)\n" //
 				+ "Aisle,A2,CLONE(A1),,,,tierB1S1Side,2.85,20,X,20\n"
 				+ "Aisle,A3,CLONE(A1),,,,tierB1S1Side,2.85,60,X,20\n"
-				+ "Aisle,A4,,,,,tierB1S1Side,20,20,X,20\n" + "Bay,B1,50,,,,,,,,\n"//
+				+ "Aisle,A4,,,,,tierB1S1Side,20,20,X,20\n" //
+				+ "Bay,B1,50,,,,,,,,\n"//
 				+ "Tier,T1,50,4,0,0,,,,,\n"//
 				+ "Bay,B2,CLONE(B1)\n"; //
 		importAislesData(getFacility(), aislesCsvString);
@@ -69,7 +70,7 @@ public class CheProcessPutWallSuper extends ServerTest {
 		aisle3.associatePathSegment(persistStr);
 
 		Path path4 = createPathForTest(getFacility());
-		segment0 = addPathSegmentForTest(path4, 0, 15d, 6d, 20d, 6d);
+		segment0 = addPathSegmentForTest(path4, 0, 20d, 6d, 30d, 6d);
 		persistStr = segment0.getPersistentId().toString();
 		aisle4.associatePathSegment(persistStr);
 
@@ -211,7 +212,6 @@ public class CheProcessPutWallSuper extends ServerTest {
 				+ "\r\n,USF314,COSTCO,11117,11117.1,11117,1515,Sku1515,5,each,F14,gtin1515"
 				+ "\r\n,USF314,COSTCO,11118,11118.1,11118,1515,Sku1515,3,each,S11,gtin1515"
 				+ "\r\n,USF314,COSTCO,11118,11118.2,11118,1521,Sku1521,3,each,S11,gtin1521";
-
 
 		Facility facility = getFacility();
 		importOrdersData(facility, orderCsvString);
