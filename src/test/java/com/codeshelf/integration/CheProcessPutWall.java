@@ -146,7 +146,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		// let's see how P16 thinks it should light.
 		Location loc = facility.findSubLocationById("P16");
 		Assert.assertFalse(loc.isLightableAisleController());
-		Assert.assertTrue(loc.isLightablePoscon());		
+		Assert.assertTrue(loc.isLightablePoscon());
 		this.getTenantPersistenceService().commitTransaction();
 
 		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
@@ -160,8 +160,8 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker2.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
 		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);
 		Byte posConValue2 = picker2.getLastSentPositionControllerDisplayValue((byte) 2);
-		Assert.assertEquals(new Byte("1"), posConValue1);
-		Assert.assertEquals(new Byte("1"), posConValue2);
+		Assert.assertEquals(toByte(1), posConValue1);
+		Assert.assertEquals(toByte(1), posConValue2);
 
 		LOGGER.info("3: The result should be only two work instructions, as orders 11115 and 11116 are for the same SKU on the same wall.");
 		picker2.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
@@ -376,7 +376,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 5);
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 6);
-		Assert.assertEquals((Byte) (byte) 5, displayValue);
+		Assert.assertEquals(toByte(5), displayValue);
 
 		// complete this job. That is all for this SKU in this wall. Therefore, need to scan again.
 		posman.buttonPress(6, 5);
@@ -433,7 +433,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		LOGGER.info("1b: This should result in the poscon lighting");
 		// P12 is at poscon index 2. Count should be 4
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 2);
-		Assert.assertEquals((Byte) (byte) 4, displayValue);
+		Assert.assertEquals(toByte(4), displayValue);
 		// button from the put wall
 		posman.buttonPress(2, 4);
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
@@ -518,4 +518,111 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Assert.assertEquals(posman.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_O);
 
 	}
+
+	@Test
+	public final void putWallShort() throws IOException {
+		// This is for DEV-715
+
+		this.getTenantPersistenceService().beginTransaction();
+		setUpFacilityWithPutWall();
+		setUpOrders1(getFacility());
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSiteController();
+		PickSimulator picker1 = new PickSimulator(this, cheGuid1);
+
+		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
+		Assert.assertNotNull(posman);
+
+		LOGGER.info("1: Just set up some orders for the put wall");
+		LOGGER.info(" : P14 is in WALL1. P15 and P16 are in WALL2. We will skip the slow mover SKU pick for this.");
+		picker1.login("Picker #1");
+		picker1.scanCommand("ORDER_WALL");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanSomething("11118");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker1.scanSomething("L%P14");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanSomething("11115");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker1.scanSomething("L%P15");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanSomething("11116");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker1.scanSomething("L%P16");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanCommand("CLEAR");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+
+		// Verify that orders 11118, 11115, and 11116 are having order locations in put wall
+		this.getTenantPersistenceService().beginTransaction();
+		assertOrderLocation("11118", "P14", "WALL1 - P14");
+		assertOrderLocation("11115", "P15", "WALL2 - P15");
+		assertOrderLocation("11116", "P16", "WALL2 - P16");
+		assertOrderLocation("11111", "", ""); // always good to test the NOT case. 
+		this.getTenantPersistenceService().commitTransaction();
+
+		LOGGER.info("2: As if aslow movers came out of system, just scan the first SKUs to place into put wall");
+
+		picker1.scanCommand("PUT_WALL");
+		// 11118 is in wall 1 with two detail lines for 1515 and 1521
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
+		picker1.scanSomething("L%WALL1");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+		// This is scan of the SKU, the ItemMaster's domainId
+		picker1.scanSomething("1515");
+		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
+		// P14 is at poscon index 4. Count should be 3. No flashing
+		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
+		Byte flashValue = posman.getLastSentPositionControllerDisplayFreq((byte) 4);
+		Byte minValue = posman.getLastSentPositionControllerMinQty((byte) 4);
+		Assert.assertEquals(toByte(3), displayValue);
+		Assert.assertEquals(toByte(3), minValue);
+		Assert.assertEquals(toByte(0), flashValue);
+
+		LOGGER.info("2b: scanning short should make the wall button flash on the number");
+		picker1.scanCommand("SHORT");
+		picker1.waitForCheState(CheStateEnum.SHORT_PUT, WAIT_TIME);
+		picker1.logCheDisplay();
+		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
+		flashValue = posman.getLastSentPositionControllerDisplayFreq((byte) 4);
+		minValue = posman.getLastSentPositionControllerMinQty((byte) 4);
+		Assert.assertEquals(toByte(3), displayValue);
+		Assert.assertEquals(toByte(0), minValue);
+		Assert.assertEquals(toByte(21), flashValue); // our flashing value
+
+		// button from the put wall. Let's see how this affected the poscon
+		posman.buttonPress(4, 1);
+		picker1.waitForCheState(CheStateEnum.SHORT_PUT_CONFIRM, WAIT_TIME);
+		picker1.logCheDisplay();
+		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
+		flashValue = posman.getLastSentPositionControllerDisplayFreq((byte) 4);
+		minValue = posman.getLastSentPositionControllerMinQty((byte) 4);
+		Assert.assertEquals(toByte(3), displayValue);
+		Assert.assertEquals(toByte(0), minValue);
+		Assert.assertEquals(toByte(21), flashValue);
+
+		LOGGER.info("2c: Short confirm screen is up. Scan no to see how it recovers. Poscon display is back to original job.");
+		picker1.scanCommand("NO");
+		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
+		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
+		flashValue = posman.getLastSentPositionControllerDisplayFreq((byte) 4);
+		minValue = posman.getLastSentPositionControllerMinQty((byte) 4);
+		Assert.assertEquals(toByte(3), displayValue);
+		Assert.assertEquals(toByte(3), minValue);
+		Assert.assertEquals(toByte(0), flashValue);
+
+		LOGGER.info("2d: Short same job again. And confirm the short");
+		picker1.scanCommand("SHORT");
+		picker1.waitForCheState(CheStateEnum.SHORT_PUT, WAIT_TIME);
+		posman.buttonPress(4, 1);
+		picker1.waitForCheState(CheStateEnum.SHORT_PUT_CONFIRM, WAIT_TIME);
+		picker1.scanCommand("YES");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+		// No active job on the poscon, so it should now show the state of the order.
+		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+
+	}
+
 }

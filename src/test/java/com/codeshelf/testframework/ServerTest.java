@@ -29,7 +29,7 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.util.ThreadUtils;
 
 public abstract class ServerTest extends HibernateTest {
-	private final Logger LOGGER = LoggerFactory.getLogger(ServerTest.class);
+	private final static Logger LOGGER = LoggerFactory.getLogger(ServerTest.class);
 
 	@Override
 	Type getFrameworkType() {
@@ -373,5 +373,21 @@ public abstract class ServerTest extends HibernateTest {
 		int button = picker.buttonFor(wi);
 		int quantity = wi.getPlanQuantity();
 		picker.pick(button, quantity);
+	}
+	
+	/**
+	 * A wrapper to avoid our endless casts of integers used in tests to Bytes to compare with deviceLogic values
+	 * 	Without do this: Assert.assertEquals((Byte) (byte) 3, displayValue); and no range checking.
+	 *  Instead do this: Assert.assertEquals(toByte(3), displayValue);
+	 *  Does not throw. Logs error on out of range. Always returns a good Byte
+	 */
+	protected static Byte toByte(int theInt){
+		if (theInt < 0 || theInt > 255) {
+			LOGGER.error("toByte out of range");
+			return new Byte((byte) 0);
+		}
+		else {
+			return ((Byte) (byte) theInt); 
+		}
 	}
 }
