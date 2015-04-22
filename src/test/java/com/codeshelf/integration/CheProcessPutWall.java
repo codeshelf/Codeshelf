@@ -367,8 +367,8 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		this.logWiList(wiList);
 		picker1.logCheDisplay();
 		// Plan to P15 has count 4; P16 count 5. P15 sorts first.
-		// Should the screen show the single work instruction count, or the combined count? Currently, the single.
-		Assert.assertEquals("QTY 4", picker1.getLastCheDisplayString(3));
+		// Should the screen show the single work instruction count, or the combined count? From v15, both
+		Assert.assertEquals("QTY 4 of 9", picker1.getLastCheDisplayString(3));
 
 		LOGGER.info("4c: The poscon at P15 shows 4 count. P16 should still show the '--'");
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 5);

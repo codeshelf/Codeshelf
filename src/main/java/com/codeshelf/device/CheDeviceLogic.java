@@ -428,10 +428,17 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		return false;
 	}
 
+	protected boolean isAPutState() {
+		CheStateEnum state = getCheStateEnum();
+		return state.equals(CheStateEnum.DO_PUT) || state.equals(CheStateEnum.SHORT_PUT)
+				|| state.equals(CheStateEnum.SHORT_PUT_CONFIRM);
+	}
+
 	// --------------------------------------------------------------------------
 	/**
-	 * After simultaneous work instruction enhancement, the answer will come from mActivePickWiList.
-	 * For our v13 kludge, the answer comes from mAllPicksWiList
+	 * The answer comes from mActivePickWiList, as this can work also for putwall.
+	 * For simultaneous picks, it might come from active picks list to avoid the possibility of failure cases below. But we still need to 
+	 * work from mActivePickWiList if PICKMULT is off.
 	 */
 	private int getTotalCountSameSkuLocation(WorkInstruction inWi) {
 		if (inWi == null) {
@@ -443,12 +450,16 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		String pickLocation = inWi.getPickInstruction();
 		int totalQty = 0;
 
+		boolean putwallCase = isAPutState();
+
 		// using mAllPicksWiList, we expect same item, same pick location, uncompleted, unshorted.
 		// this will find and match the inWi also.
+		// for put wall case, we started with item scan, so all match the item. The locations are different for put wall.
 		for (WorkInstruction wi : mAllPicksWiList) {
 			WorkInstructionStatusEnum theStatus = wi.getStatus();
 			if (theStatus == WorkInstructionStatusEnum.INPROGRESS || theStatus == WorkInstructionStatusEnum.NEW)
-				if (wiMatchesItemLocation(pickSku, pickLocation, wi)) {
+
+				if (putwallCase || wiMatchesItemLocation(pickSku, pickLocation, wi)) {
 					totalQty += wi.getPlanQuantity();
 				}
 			/* This code makes the huge assumption that the work sequencer is very rational. A case that would fail is:
@@ -464,29 +475,33 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Today, return just the simple string numeral.
-	 * Suggested enhancement: part of a multi-work instruction pick, return as +5+.  If a single, then -5-
-	 * For our v13 kludge, the answer comes from mAllPicksWiList
+	 * What "count" shall we show for a job? The answer is surprisingly tricky.
+	 * If there are 3 jobs in a row for the same SKU for 2 each, multipick or not, should it show as "2" or "6" or "2 of 6".
+	 * For picking, we want the total count of that sku in that location, whether multipick or not. That is "6"
+	 * For put wall, we never have simultaneous puts. We want to show "2 of 6"
 	 */
 	protected String getWICountStringForCheDisplay(WorkInstruction inWi) {
 		if (inWi.isHousekeeping()) {
 			return "";
 		}
+		// If multi-pick, we are showing the first of active picks list, but all active picks have poscons lit. We want the total pick count.
+		// If not multi-pick, one CHE poscon at a time is lit, but the screen shows the pick location. Do we prefer "QTY 9" or "QTY 3 of 9".  The worker will take 9 from that location.
+		// For a put wall, if we showed "P15"  "QTY 9" , it would be misleading if only 3 are supposed to go to P15. We definitely want "QTY 3 of 9" for put wall.
+		// Back to picking. If PICKMULT, "QTY 3 of 9" is not so good because all poscons are lit, and the the one we represent as first needing only 3 is arbitrary.
+		// If not PICKMULT "QTY 3 of 9" is arguably better than "9", except for the inconsistency. For now, not doing it.
+
 		Integer planQty = inWi.getPlanQuantity();
 		Integer totalQtyThisSku = getTotalCountSameSkuLocation(inWi);
 		String returnStr;
-		/* better
-		if (planQty >= totalQtyThisSku)
-			returnStr = "-" + planQty + "-";
-		else
-			returnStr = "+" + totalQtyThisSku + "+";
-		*/
-		// As Zach specifies
+
 		if (planQty >= totalQtyThisSku)
 			returnStr = planQty.toString();
-		else
-			returnStr = totalQtyThisSku.toString();
-		// >=?  We do not really know that all future deviceLogic classes will use mAllPicksWiList which is where getTotalCountSameSku comes from.
+		else {
+			if (isAPutState())
+				returnStr = String.format("%d of %d", planQty, totalQtyThisSku);
+			else
+				returnStr = totalQtyThisSku.toString();
+		}
 
 		return returnStr;
 	}
