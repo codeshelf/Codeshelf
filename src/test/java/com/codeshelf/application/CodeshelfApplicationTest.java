@@ -66,7 +66,8 @@ public class CodeshelfApplicationTest extends ServerTest {
 			this.webSocketManagerService,
 			new DummyPropertyService(),
 			new TokenSessionService(),
-			mock(AuthorizingSecurityManager.class));
+			mock(AuthorizingSecurityManager.class),
+			mock(SchedulingService.class));
 
 		final Result checkAppRunning = new Result();
 

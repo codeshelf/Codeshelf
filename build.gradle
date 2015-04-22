@@ -114,6 +114,8 @@ dependencies {
 			'org.apache.mina:mina-core:2.0.4',
 
 			'org.mockito:mockito-core:1.9.5',
+			
+			'org.quartz-scheduler:quartz:2.2.1',	
 
 			// manually update
 			files('lib/dist/classindex-3.3.jar'), // needs to be in fixed location for eclipse annotation processing
