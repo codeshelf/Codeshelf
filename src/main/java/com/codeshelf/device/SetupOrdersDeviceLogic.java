@@ -467,13 +467,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				// Allow at all? If we did nothing it would force worker to complete or short it.
 				WorkInstruction wi = this.getOneActiveWorkInstruction();
 				if (wi != null) {
-					notifyWiVerb( wi, "Cancel put", false);
+					notifyWiVerb(wi, "Cancel put", false);
 					clearLedAndPosConControllersForWi(wi);
 				}
 				setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
 				// Might be nice to send message to server to delete the work instruction, but we leave the wi hanging around for many use cases.
 				// When that item/GTIN is scanned again, the work instruction will "recycle", so we are not creating a bigger and bigger mess.
-				
+
 				break;
 
 			default:
@@ -783,10 +783,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			// This check is valid for batch order pick. Invalid for put wall put.			
 			CheStateEnum state = this.getCheStateEnum();
-			if (state != CheStateEnum.GET_PUT_INSTRUCTION && state != CheStateEnum.DO_PUT && getPosconIndexOfWi(wi) == 0) {
-				LOGGER.error("{} not in container map. State is {}", wi.getContainerId(), state);
-				break;
-			}
+			if (state != CheStateEnum.GET_PUT_INSTRUCTION && state != CheStateEnum.DO_PUT && state != CheStateEnum.SHORT_PUT_CONFIRM)
+				if (getPosconIndexOfWi(wi) == 0) {
+					LOGGER.error("{} not in container map. State is {}", wi.getContainerId(), state);
+					break;
+				}
 
 			// If the WI is INPROGRESS or NEW then consider it.
 			if ((wi.getStatus().equals(WorkInstructionStatusEnum.NEW))
