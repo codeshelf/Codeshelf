@@ -757,8 +757,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 		if (!master.equals(detail.getItemMaster())) {
 			ItemMaster detailMaster = detail.getItemMaster();
-			LOGGER.info("mismatch master:{}, detailMaster: {}", master.getDomainId(), detailMaster.getDomainId());
-			// probably change to debug. Just information about perhaps why a detail is not being chosen to make a plan
+			LOGGER.debug("mismatch master:{}, detailMaster: {}", master.getDomainId(), detailMaster.getDomainId());
+			// Just information about perhaps why a detail is not being chosen to make a plan
 			return false;
 		}
 		OrderStatusEnum detailStatus = detail.getStatus();

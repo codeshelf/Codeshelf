@@ -68,7 +68,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		this.registerService(propertyService);
 		this.registerService(authService);
 		this.registerService(ediProcessorService);
-		this.registerService(schedulingService);
+		// this.registerService(schedulingService);
 	}
 
 	// --------------------------------------------------------------------------

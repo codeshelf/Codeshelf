@@ -980,15 +980,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	public void processOffCheButtonPress(String sourceGuid, CommandControlButton inButtonCommand) {
 		if (connectedToServer) {
-
 			WorkInstruction wi = null;
-			// TODO how do we find the work instruction this button was displaying?							
 
 			int posconIndex = inButtonCommand.getPosNum();
 			int quantity = inButtonCommand.getValue();
 			notifyOffCheButton(posconIndex, quantity, sourceGuid); // This merely logs
 
-			// LOGGER.info("retrieve {} {}", sourceGuid, posconIndex); // useful to debug
+			// find the work instruction this button was displaying?							
 			wi = retrieveOffChePosconWorkInstruction(sourceGuid, posconIndex);
 
 			if (wi != null) {
@@ -1273,15 +1271,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	protected void processShortPickOrPut(WorkInstruction inWi, Integer inQuantity) {
 		CheStateEnum state = getCheStateEnum();
-		if (state == CheStateEnum.SHORT_PICK )
+		if (state == CheStateEnum.SHORT_PICK)
 			setState(CheStateEnum.SHORT_PICK_CONFIRM);
-		else if (state == CheStateEnum.SHORT_PUT )
+		else if (state == CheStateEnum.SHORT_PUT)
 			setState(CheStateEnum.SHORT_PUT_CONFIRM);
-		else if (state == CheStateEnum.SHORT_PICK_CONFIRM || state == CheStateEnum.SHORT_PUT_CONFIRM){
+		else if (state == CheStateEnum.SHORT_PICK_CONFIRM || state == CheStateEnum.SHORT_PUT_CONFIRM) {
 			LOGGER.info("extra button press without confirmation in state {}", state);
 			setState(state); // forces out the usual side effects, if any. None so far, beyond redoing the CHE display and che poscons.
-		}
-		else {
+		} else {
 			LOGGER.error("unanticipated state in processShortPickOrPut {}", state);
 		}
 		mShortPickWi = inWi;
@@ -1451,18 +1448,19 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	}
 
-/**
- * This che is looking at the wi, and seeing a poscon lighting instruction. Send it to the appropriate controller.
- */
+	/**
+	 * This che is looking at the wi, and seeing a poscon lighting instruction. Send it to the appropriate controller.
+	 */
 	private void lightWiPosConLocations(WorkInstruction inFirstWi) {
 		String wiCmdString = inFirstWi.getPosConCmdStream();
 		if (wiCmdString == null || wiCmdString.equals("[]")) {
 			return;
 		}
-		
+
 		String ledCmdString = inFirstWi.getLedCmdStream();
-		if ( ledCmdString != null && !ledCmdString.isEmpty() && !ledCmdString.equals("[]")) {
-			LOGGER.error("lightWiPosConLocations: WI  at {} with both poscon and wi lighting instructions. How?", inFirstWi.getPickInstruction());
+		if (ledCmdString != null && !ledCmdString.isEmpty() && !ledCmdString.equals("[]")) {
+			LOGGER.error("lightWiPosConLocations: WI  at {} with both poscon and wi lighting instructions. How?",
+				inFirstWi.getPickInstruction());
 			LOGGER.error("poscon stream: {}", wiCmdString);
 			LOGGER.error("led stream: {}", ledCmdString);
 			// Note: someday we will light the bay with a ping pong ball, so then this will not be an error. For now, looks like a bug.
@@ -1546,7 +1544,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			// Send the CHE a display command (any of the WIs has the info we need).
 			CheStateEnum currentState = getCheStateEnum();
 			if (currentState != CheStateEnum.DO_PICK && currentState != CheStateEnum.SHORT_PICK
-					&& currentState != CheStateEnum.SCAN_SOMETHING && currentState != CheStateEnum.DO_PUT && currentState != CheStateEnum.SHORT_PUT) {
+					&& currentState != CheStateEnum.SCAN_SOMETHING && currentState != CheStateEnum.DO_PUT
+					&& currentState != CheStateEnum.SHORT_PUT) {
 				LOGGER.error("unanticipated state in showActivePicks: {}", currentState);
 				setState(CheStateEnum.DO_PICK);
 				//return because setting state to DO_PICK will call this function again
@@ -1656,16 +1655,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			getMyGuidStr());
 	}
 
-	protected void notifyPutWallResponse(final List<WorkInstruction> inWorkItemList){
+	protected void notifyPutWallResponse(final List<WorkInstruction> inWorkItemList) {
 		int listsize = 0;
 		if (inWorkItemList != null)
 			listsize = inWorkItemList.size();
-		LOGGER.info("*{} work instructions in put wall response:{} by picker:{} device:{}",
-			listsize,
-			getUserId(),
-			getMyGuidStr());	
+		LOGGER.info("*{} work instructions in put wall response by picker:{} device:{}", listsize, getUserId(), getMyGuidStr());
 	}
-	
+
 	protected void notifyPutWallItem(String itemOrUpd, String wallname) {
 		LOGGER.info("*Request plans for item:{} in put wall:{} by picker:{} device:{}",
 			itemOrUpd,
@@ -1808,7 +1804,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		return existingState;
 	}
 
-	public void processResultOfVerifyBadge(Boolean verified){
+	public void processResultOfVerifyBadge(Boolean verified) {
 		// To be overridden by SetupOrderDeviceLogic and LineScanDeviceLogic
 	}
 }
