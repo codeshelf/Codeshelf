@@ -995,12 +995,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param insScanPrefixStr
-	 * @param inScanStr
+	 * During Setup_Orders process, the user has scanned the thing to be set up.  That is:
+	 * - C% container ID, as for Good Eggs cross batch order setup.
+	 * - a plain order ID. Almost any pick operation. (as of v16, still requires the order has preassignedContainerID matching the order.)
+	 * - from v16 L% put wall name. The plain put wall name also works, but only because here we think it is an order ID. The 
+	 *   back end does a search to determine what it is.
 	 */
 	private void processContainerSelectScan(final String inScanPrefixStr, String inScanStr) {
-		// DEV-518. Also accept the raw order ID.
-		if (inScanPrefixStr.isEmpty() || CONTAINER_PREFIX.equals(inScanPrefixStr)) {
+		if (inScanPrefixStr.isEmpty() || CONTAINER_PREFIX.equals(inScanPrefixStr) || LOCATION_PREFIX.equals(inScanPrefixStr)) {
 
 			mContainerInSetup = inScanStr;
 			// Check to see if this container is already setup in a position.
@@ -1012,9 +1014,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				this.clearOnePositionController(currentAssignment);
 			}
 
-			// It would be cool if we could check here. Call to REST API on the server? Needs to not block for long, though.
-			// When we scan a container, that container either should match a cross batch order detail, or match an outbound order's preassigned container. If not, 
-			// this is a "ride along" error. Would be nice if the user could see it immediately.
 			setState(CheStateEnum.CONTAINER_POSITION);
 		} else {
 			setState(CheStateEnum.CONTAINER_SELECTION_INVALID);

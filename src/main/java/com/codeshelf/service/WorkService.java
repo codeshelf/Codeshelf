@@ -229,7 +229,15 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					}
 				}
 			} else {
-				LOGGER.warn("Unknown container '{}'", containerId);
+				// Does this deserve a warn? At minimum, the containerId might be a valid put wall name for the SKU pick process.
+				Location loc = facility.findSubLocationById(containerId);
+				if (loc == null) {
+					LOGGER.warn("Unknown container/order ID: {} in computeWorkInstructions for {}", containerId, inChe.getDomainId());
+				} else if (!loc.isPutWallLocation()){
+					LOGGER.warn("Location: {} scanned in computeWorkInstructions for {}, but not a put wall", containerId, inChe.getDomainId());
+					// Still a small hole here. User is likely scanning a bay name. But a scanned tier or slot name fom the wall would not yield a warning.
+				}
+
 			}
 		}
 

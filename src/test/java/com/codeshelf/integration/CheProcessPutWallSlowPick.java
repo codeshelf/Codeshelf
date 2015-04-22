@@ -95,7 +95,61 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		Assert.assertEquals("Item mismatch", "1515", wi2.getItemId());
 		Assert.assertEquals("Quantity mismatch", new Integer(9), wi2.getPlanQuantity());
 	}
-	
+
+	@Test
+	public final void slowMoverScanWallLocation() {
+		// For DEV-762 allow L%WALL1 scan, instead of WALL1.  For PUT_WALL process we require the L% form.
+		LOGGER.info("1: Set up identically to slowMoverCombineOrders, but use L%WALL1 and L%WALL2");
+		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
+		picker2.login("Picker #2");
+		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		// spell it out in detail once so we see what is going on.
+		picker2.scanSomething("L%WALL1");
+		picker2.waitForCheState(CheStateEnum.CONTAINER_POSITION, WAIT_TIME);
+		picker2.scanSomething("P%1");
+		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		/*picker2.setupOrderIdAsContainer("WALL1", "1"); */
+		picker2.setupOrderIdAsContainer("L%WALL2", "2");
+		
+		// Although some of this seems out of scope, it explores the validation/logging in WorkService.computeWorkInstructions()
+		LOGGER.info("2: Set up poscons 3 and beyond with assorted invalid location and orders. Should not affect 1 and 2 at all aside from invoke a review state.");
+		LOGGER.info("2a: A bad location name. See warn in server logs during computeWorkInstructinos");
+		picker2.setupOrderIdAsContainer("L%WALL99", "3");
+		
+		LOGGER.info("2b: A good location name, but not a put wall. See warn in server logs during computeWorkInstructions");
+		picker2.setupOrderIdAsContainer("L%S15", "4");
+
+		LOGGER.info("2c: A good location name, in a put wall, but a slot name. Almost certainly a user error, but no useful warning.");
+		picker2.setupOrderIdAsContainer("L%P17", "5");
+		// a bizarre quirk. Not tested. If we set up both P16 and WALL2, the one order belongs to both. Do we get two work instructions? Yes, incorrectly.
+
+		LOGGER.info("2d: A bad order name. ");
+		picker2.setupOrderIdAsContainer("1119119119", "6");
+
+		LOGGER.info("3: After start, will go to LOCATION_SELECT_REVIEW state since we did for bad poscon positions ");
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, WAIT_TIME);
+		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);
+		Byte posConValue2 = picker2.getLastSentPositionControllerDisplayValue((byte) 2);
+		Assert.assertEquals(new Byte("1"), posConValue1);
+		Assert.assertEquals(new Byte("1"), posConValue2);
+
+		LOGGER.info("3b: The result should be only two work instructions, as orders 11115 and 11116 are for the same SKU on the same wall.");
+		picker2.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
+		picker2.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+
+		List<WorkInstruction> wiList = picker2.getAllPicksList();
+		Assert.assertEquals(2, wiList.size());
+		WorkInstruction wi1 = wiList.get(0);
+		WorkInstruction wi2 = wiList.get(1);
+		Assert.assertEquals("Item mismatch", "1514", wi1.getItemId());
+		Assert.assertEquals("Quantity mismatch", new Integer(3), wi1.getPlanQuantity());
+		Assert.assertEquals("Item mismatch", "1515", wi2.getItemId());
+		Assert.assertEquals("Quantity mismatch", new Integer(9), wi2.getPlanQuantity());
+		
+		// Checks for the two are exactly as for the other test. But look at the logged WARNs and "Position 6 got no WIs. Causes:..."
+	}
+
 	@Test
 	public final void slowMoverDontCombineOrders() throws IOException {
 		PickSimulator picker1 = new PickSimulator(this, cheGuid1);
