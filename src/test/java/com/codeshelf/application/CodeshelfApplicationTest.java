@@ -54,7 +54,6 @@ public class CodeshelfApplicationTest extends ServerTest {
 			aislesFileImporter);
 		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
 
-		
 		WebApiServer adminServer = new WebApiServer();
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(
 			ediProcessorService,
@@ -67,7 +66,7 @@ public class CodeshelfApplicationTest extends ServerTest {
 			new DummyPropertyService(),
 			new TokenSessionService(),
 			mock(AuthorizingSecurityManager.class),
-			mock(SchedulingService.class));
+			null);
 
 		final Result checkAppRunning = new Result();
 
