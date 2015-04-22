@@ -43,7 +43,8 @@ public class PickSimulator {
 	public void loginAndCheckState(String pickerId, CheStateEnum inState) {
 		// This is the "scan badge" scan
 		cheDeviceLogic.scanCommandReceived("U%" + pickerId);
-		waitForCheState(inState, 2000);
+		// badge authorization now takes longer. Trip to server and back
+		waitForCheState(inState, 4000);
 	}
 
 	public String getProcessType() {
