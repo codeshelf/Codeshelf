@@ -23,6 +23,7 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.service.NotificationService.EventType;
 
 /**
  * @author jonranstrom
@@ -418,7 +419,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		if (inScanStr.equals(YES_COMMAND)) {
 			WorkInstruction wi = this.getActiveWorkInstruction();
 			if (wi != null) {
-				notifyWiVerb(wi, "SHORT", kLogAsWarn);
+				notifyWiVerb(wi, EventType.SHORT, kLogAsWarn);
 				doShortTransaction(wi, mShortPickQty);
 
 				clearLedAndPosConControllersForWi(wi);
@@ -470,7 +471,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		inWi.setStatus(WorkInstructionStatusEnum.COMPLETE);
 
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
-		notifyWiVerb(inWi, "COMPLETE by button", kLogAsInfo);
+		notifyWiVerb(inWi, EventType.COMPLETE, kLogAsInfo);
 
 		mActivePickWiList.remove(inWi);
 

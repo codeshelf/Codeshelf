@@ -1,0 +1,44 @@
+<databaseChangeLog 
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog" 
+	logicalFilePath="db.changelog-v16.1.xml"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+    <changeSet author="ilya (generated)" id="1429818304488-4">
+        <createTable tableName="event_worker">
+            <column name="persistentid" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="domainid" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="INT8">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="device_guid" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="device_persistentid" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="event_type" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="order_detail_persistentid" type="UUID"/>
+            <column name="work_instruction_persistentid" type="UUID"/>
+            <column name="worker_id" type="VARCHAR(255)"/>
+            <column name="facility_persistentid" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="ilya (generated)" id="1429818304488-5">
+        <addPrimaryKey columnNames="persistentid" constraintName="event_workerPK" tableName="event_worker"/>
+    </changeSet>
+    <changeSet author="ilya (generated)" id="1429818304488-6">
+        <addForeignKeyConstraint baseColumnNames="facility_persistentid" baseTableName="event_worker" constraintName="FK_prqr6idi80r9w5rpkgms4c7v3" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="location"/>
+    </changeSet>
+</databaseChangeLog>

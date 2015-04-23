@@ -74,6 +74,7 @@
         <mapping class="com.codeshelf.model.domain.Gtin"/>
         <mapping class="com.codeshelf.model.domain.DataImportReceipt"/>
         <mapping class="com.codeshelf.model.domain.Worker"/>
+        <mapping class="com.codeshelf.model.domain.Event"/>
 
     </session-factory>
 </hibernate-configuration>

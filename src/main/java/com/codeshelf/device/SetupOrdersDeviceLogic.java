@@ -30,6 +30,7 @@ import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.service.NotificationService.EventType;
 import com.codeshelf.util.CompareNullChecker;
 import com.codeshelf.ws.protocol.request.PutWallPlacementRequest;
 
@@ -611,7 +612,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	protected void processShortPickYes(final WorkInstruction inWi, int inPicked) {
 
-		notifyWiVerb(inWi, "SHORT", kLogAsWarn);
+		notifyWiVerb(inWi, EventType.SHORT, kLogAsWarn);
 		doShortTransaction(inWi, inPicked);
 
 		CheStateEnum state = getCheStateEnum();
@@ -973,7 +974,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// Finally, do all our shorts
 		for (WorkInstruction wi : toShortList) {
 			// Short aheads will always set the actual pick quantity to zero.
-			notifyWiVerb(wi, "SHORT_AHEAD", kLogAsWarn);
+			notifyWiVerb(wi, EventType.SHORT_AHEAD, kLogAsWarn);
 			doShortTransaction(wi, 0);
 		}
 
@@ -1667,7 +1668,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		inWi.setStatus(WorkInstructionStatusEnum.COMPLETE);
 
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
-		notifyWiVerb(inWi, "COMPLETE by button", kLogAsInfo);
+		notifyWiVerb(inWi, EventType.COMPLETE, kLogAsInfo);
 
 		mActivePickWiList.remove(inWi);
 

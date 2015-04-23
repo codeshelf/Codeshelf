@@ -34,9 +34,11 @@ import com.codeshelf.flyweight.controller.INetworkDevice;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.NotificationLoggingService.EventType;
+import com.codeshelf.service.NotificationService.EventType;
 import com.codeshelf.util.ThreadUtils;
+import com.codeshelf.ws.protocol.message.NotificationMessage;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -246,7 +248,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		public static String scanPickEnumToString(ScanNeededToVerifyPick inValue) {
 			return inValue.mInternal;
 		}
-	}
+	} 
 
 	protected boolean alreadyScannedSkuOrUpcOrLpnThisWi(WorkInstruction inWi) {
 		return false;
@@ -1623,7 +1625,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * 
 	 * By convention, start these string with something recognizable, to tell these notifies apart from the rest that is going on.
 	 */
-	protected void notifyWiVerb(final WorkInstruction inWi, String inVerb, boolean needWarn) {
+	protected void notifyWiVerb(final WorkInstruction inWi, EventType inVerb, boolean needWarn) {
 		if (inWi == null) {
 			LOGGER.error("bad call to notifyWarnWi"); // want stack trace?
 			return;
@@ -1647,6 +1649,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				inWi.getPickInstruction(),
 				getUserId(),
 				getMyGuidStr());
+		NotificationMessage message = new NotificationMessage(Che.class, getPersistentId(), getMyGuidStr(), getUserId(), inVerb);
+		if (!inWi.isHousekeeping()) {
+			message.setWorkInstructionId(inWi.getPersistentId());
+		}
+		mDeviceManager.sendNotificationMessage(message);
 	}
 
 	protected void notifyOrderToPutWall(String orderId, String locationName) {
@@ -1664,7 +1671,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.info("*{} work instructions in put wall response:{} by picker:{} device:{}",
 			listsize,
 			getUserId(),
-			getMyGuidStr());	
+			getMyGuidStr());
 	}
 	
 	protected void notifyPutWallItem(String itemOrUpd, String wallname) {
@@ -1689,7 +1696,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			showingQuantity,
 			getUserId(),
 			getMyGuidStr());
-		mDeviceManager.sendNotificationMessage(getGuid().getHexStringNoPrefix(), getPersistentId(), EventType.BUTTON);
+		NotificationMessage message = new NotificationMessage(Che.class, getPersistentId(), getMyGuidStr(), getUserId(), EventType.BUTTON);
+		mDeviceManager.sendNotificationMessage(message);
 	}
 
 	protected void notifyOffCheButton(int buttonNum, int showingQuantity, String fromGuidId) {
@@ -1730,7 +1738,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		// TODO
 		// If the user scanned SKIPSCAN return true
 		if (inScanStr.equals(SCAN_SKIP) || inScanStr.equals(SKIP_SCAN)) {
-			notifyWiVerb(inWi, "SKIPSCAN", kLogAsWarn);
+			notifyWiVerb(inWi, EventType.SKIP_ITEM_SCAN, kLogAsWarn);
 			return returnString;
 		}
 

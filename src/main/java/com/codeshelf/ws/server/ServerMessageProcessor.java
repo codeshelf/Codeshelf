@@ -17,7 +17,7 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.InventoryService;
-import com.codeshelf.service.NotificationLoggingService;
+import com.codeshelf.service.NotificationService;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.protocol.command.CommandABC;
@@ -320,9 +320,8 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			systemRequestCounter.inc();
 		} else if (message instanceof NotificationMessage) {
 			notificationCounter.inc();
-			NotificationMessage msg = (NotificationMessage) message;
-			NotificationLoggingService service = serviceFactory.getServiceInstance(NotificationLoggingService.class);
-			service.notify(msg.getDeviceId(), msg.getEventType());
+			NotificationService service = serviceFactory.getServiceInstance(NotificationService.class);
+			service.saveEvent((NotificationMessage) message);
 		} else {
 			LOGGER.warn("Unexpected message received on session " + session + ": " + message);
 		}
