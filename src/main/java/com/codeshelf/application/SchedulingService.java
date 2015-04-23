@@ -34,6 +34,7 @@ public class SchedulingService extends AbstractCodeshelfIdleService {
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	@Override
 	protected void startUp() throws Exception {
 		Trigger daily2AMTrigger = TriggerBuilder

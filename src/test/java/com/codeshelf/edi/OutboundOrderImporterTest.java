@@ -1153,6 +1153,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 	}
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void itemCreationChoicesfromOrders() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();

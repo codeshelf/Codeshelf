@@ -12,8 +12,6 @@ import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.HeaderCounts;
 import com.codeshelf.model.OrderTypeEnum;
@@ -33,7 +31,6 @@ import com.codeshelf.testframework.ServerTest;
  * 
  */
 public class CrossBatchImporterTest extends ServerTest {
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(CrossBatchImporterTest.class);
 
 	private UUID facilityId;
 	
