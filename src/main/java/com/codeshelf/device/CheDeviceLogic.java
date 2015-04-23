@@ -789,9 +789,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
 				} else {
 					if (wiCount.getCompleteCount() == 0) {
-						//This should not be possible (unless we only had a single HK WI, which would be a bug)
-						//We will log this for now and treat it as a completed WI
-						LOGGER.error("WorkInstructionCount has no counts {};", wiCount);
+						// This should not be possible (unless we only had a single HK WI, which would be a bug)
+						// However, restart on a route after completing all work for an order comes back this way. Server could return the count
+						// but does not. Treat it as order complete. The corresponding case  in setupOrdersDeviceLogic is demonstrated 
+						// in cheProcessPutWall.orderWallRemoveOrder(); Don't know if any case hits this in CheDeviceLogic.
+						LOGGER.debug("WorkInstructionCount has no counts {};", wiCount);
 					}
 					//Ready for packout - solid, dim, "oc"
 					return new PosControllerInstr(position,
@@ -1666,6 +1668,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.info("*Put order/cntr:{} into put wall location:{} by picker:{} device:{}",
 			orderId,
 			locationName,
+			getUserId(),
+			getMyGuidStr());
+	}
+	
+	protected void notifyRemoveOrderFromChe(String orderId, Byte orderPositionOnChe){
+		LOGGER.info("*Removed order/cntr:{} from position:{} by picker:{} device:{}",
+			orderId,
+			orderPositionOnChe,
 			getUserId(),
 			getMyGuidStr());
 	}

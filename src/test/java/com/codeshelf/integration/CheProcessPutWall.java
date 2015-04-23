@@ -895,16 +895,24 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
 		Assert.assertNotNull(posman);
 
-		LOGGER.info("1a: set up a one-pick order");
+		LOGGER.info("1a: set up 11117 as our one-pick order. Also 11119 just to complete one");
+		// Re-START on the completed 11119 job tests some subtle things. Server does not send it back in feedback as "oc",
+		// but we interpret it as "oc".
 		picker.login("Picker #1");
 		picker.setupContainer("11117", "4");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker.setupContainer("11119", "6");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
 		picker.scanLocation("F11");
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		List<WorkInstruction> wis = picker.getAllPicksList();
+		this.logWiList(wis);
 
-		LOGGER.info("1b: Short the first job");
+		LOGGER.info("1b: Complete 11119 (2 count at poscon 6), then short the 111117 job");
+		picker.buttonPress(6, 2);
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, WAIT_TIME);
 		picker.buttonPress(4, 0);
@@ -916,9 +924,14 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.scanLocation("F14");
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
 
-		LOGGER.info("3a: Restart. Get the job again");
+		LOGGER.info("3a: Restart. Get the 11117 job again. LOCATION_SELECT_REVIEW because 11119 is completed");
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, WAIT_TIME);
+		// see that 11119 shows as oc
+		Byte poscon6Value = picker.getLastSentPositionControllerDisplayValue((byte) 6);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, poscon6Value);
+		Byte maxValue = picker.getLastSentPositionControllerMaxQty((byte) 6);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_O, maxValue);
 		picker.scanCommand("START"); // this could have been location scan on the same path
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 	
@@ -938,6 +951,8 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.scanSomething("L%P14");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker.scanCommand("CLEAR");
+		// The choice of PICK_COMPLETE or CONTAINER_SELECT after CLEAR used to depend on if there is anything in the container map
+		// That is why we just completed one order first in the test. But now, it is set by a member variable.
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
 
 		LOGGER.info("4b: Check the put wall display");
@@ -945,12 +960,27 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
 	
-		LOGGER.info("4c: Restart. See if you get the job again");
+		LOGGER.info("4c: Restart. Do not get the job again. (did before DEV-766)");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.NO_WORK, WAIT_TIME);
+		
+		LOGGER.info("5: Not recommended. Just showing. Set up again even though it is is in the put wall");
+		picker.scanCommand("SETUP");			
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker.setupContainer("11117", "4");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
-		picker.scanCommand("START");
+		picker.scanLocation("F11");
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		wis = picker.getAllPicksList();
+		this.logWiList(wis);
+		Assert.assertEquals(1, wis.size());
 		
+		LOGGER.info("5b: Put wall display still there");
+		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+	
 
 
 	}
