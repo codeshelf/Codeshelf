@@ -46,7 +46,8 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 			final WebSocketManagerService webSocketManagerService,
 			final IPropertyService propertyService,
 			final TokenSessionService authService,
-			final SecurityManager securityManager) {
+			final SecurityManager securityManager,
+			final SchedulingService schedulingService) {
 			
 		super(inWebApiServer);
 	
@@ -66,9 +67,8 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		this.registerService(webSocketManagerService);
 		this.registerService(propertyService);
 		this.registerService(authService);
-
 		this.registerService(ediProcessorService);
-
+		if (schedulingService!=null) this.registerService(schedulingService);
 	}
 
 	// --------------------------------------------------------------------------

@@ -13,6 +13,7 @@ import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Tier;
@@ -365,8 +366,8 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		this.logWiList(wiList);
 		picker1.logCheDisplay();
 		// Plan to P15 has count 4; P16 count 5. P15 sorts first.
-		// Should the screen show the single work instruction count, or the combined count? Currently, the single.
-		Assert.assertEquals("QTY 4", picker1.getLastCheDisplayString(3));
+		// Should the screen show the single work instruction count, or the combined count? From v15, both
+		Assert.assertEquals("QTY 4 of 9", picker1.getLastCheDisplayString(3));
 
 		LOGGER.info("4c: The poscon at P15 shows 4 count. P16 should still show the '--'");
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 5);
@@ -413,9 +414,8 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
 		Assert.assertNotNull(posman);
 
+		// A diversion. This could be in non-integration unit test. Only one needed. Do not clone if you clone the test.
 		CheDeviceLogic theDevice = picker.getCheDeviceLogic();
-
-		// A diversion. This could be in non-integration unit test.
 		theDevice.testOffChePosconWorkInstructions();
 
 		LOGGER.info("1a: set up a one-pick order");
@@ -682,5 +682,308 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Assert.assertEquals(posman.getLastSentPositionControllerMaxQty((byte) 5), PosControllerInstr.BITENCODED_LED_DASH);
 
 	}
+
+	@Test
+	public final void putWallClearAbandon() throws IOException {
+		// This test shows that CLEAR may be used in put wall states DO_PUT, SHORT_PUT, nad SHORT_PUT_CONFIRM
+
+		this.getTenantPersistenceService().beginTransaction();
+		setUpFacilityWithPutWall();
+		setUpOrders1(getFacility());
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSiteController();
+		PickSimulator picker1 = new PickSimulator(this, cheGuid1);
+
+		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
+		Assert.assertNotNull(posman);
+
+		LOGGER.info("1: Just set up some orders for the put wall");
+		LOGGER.info(" : P14 is in WALL1. P15 and P16 are in WALL2. We will skip the slow mover SKU pick for this.");
+		picker1.login("Picker #1");
+		picker1.scanCommand("ORDER_WALL");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanSomething("11118");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker1.scanSomething("L%P14");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanSomething("11115");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker1.scanSomething("L%P15");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanSomething("11116");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker1.scanSomething("L%P16");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanCommand("CLEAR");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+
+		LOGGER.info("2: As if aslow movers came out of system, just scan the SKU to place into put wall");
+
+		picker1.scanCommand("PUT_WALL");
+		// 11118 is in wall 1 with two detail lines for 1515 and 1521
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
+		picker1.scanSomething("L%WALL1");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+		// This is scan of the SKU, the ItemMaster's domainId
+		picker1.scanSomething("1515");
+		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
+		// P14 is at poscon index 4. Count should be 3. No flashing
+		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
+		Assert.assertEquals(toByte(3), displayValue);
+
+		LOGGER.info("2b: Scan CLEAR, which cancels the job. Show that the poscon display is back to the order feedback");
+		picker1.scanCommand("CLEAR");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+
+		LOGGER.info("3a: scanning short should make the wall button flash on the number");
+		picker1.scanSomething("1515");
+		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
+		picker1.scanCommand("SHORT");
+		picker1.waitForCheState(CheStateEnum.SHORT_PUT, WAIT_TIME);
+		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
+		Byte flashValue = posman.getLastSentPositionControllerDisplayFreq((byte) 4);
+		Byte minValue = posman.getLastSentPositionControllerMinQty((byte) 4);
+		Assert.assertEquals(toByte(3), displayValue);
+		Assert.assertEquals(toByte(0), minValue);
+		Assert.assertEquals(toByte(21), flashValue); // our flashing value
+
+		LOGGER.info("3b: Scan CLEAR, which cancels the job. Show that the poscon display is back to the order feedback");
+		picker1.scanCommand("CLEAR");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+
+		LOGGER.info("4a: Short and do the button to get to confirm state");
+		picker1.scanSomething("1515");
+		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
+		picker1.scanCommand("SHORT");
+		picker1.waitForCheState(CheStateEnum.SHORT_PUT, WAIT_TIME);
+		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
+		flashValue = posman.getLastSentPositionControllerDisplayFreq((byte) 4);
+		minValue = posman.getLastSentPositionControllerMinQty((byte) 4);
+		Assert.assertEquals(toByte(3), displayValue);
+		Assert.assertEquals(toByte(0), minValue);
+		Assert.assertEquals(toByte(21), flashValue); // our flashing value
+
+		// button from the put wall. Let's see how this affected the poscon
+		posman.buttonPress(4, 1);
+		picker1.waitForCheState(CheStateEnum.SHORT_PUT_CONFIRM, WAIT_TIME);
+		picker1.logCheDisplay();
+		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
+		flashValue = posman.getLastSentPositionControllerDisplayFreq((byte) 4);
+		minValue = posman.getLastSentPositionControllerMinQty((byte) 4);
+		Assert.assertEquals(toByte(3), displayValue);
+		Assert.assertEquals(toByte(0), minValue);
+		Assert.assertEquals(toByte(21), flashValue);
+
+		LOGGER.info("4b: Scan CLEAR, which cancels the job. Show that the poscon display is back to the order feedback");
+		picker1.scanCommand("CLEAR");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+	}
+
+	@Test
+	public final void putWallOtherConfigurations() throws IOException {
+		// This is for DEV-714
+		/* The point is to make sure that our various configuration possibilities, including multi-pick, do not make the put wall unusable.
+		 * Housekeeping: 
+		 *  BAYCHANG - If a put wall is a bay, there would never be the possibility of bay change. If the put wall is an aisle, there could be that possibility. Not tested.
+		 *  RPEATPOS - currently, container/order is not being populated onto put wall work instruction. We do test one SKU to several slots in the wall. This does not
+		 *  yield repeat container housekeeping.
+		 * PICKMULT: we have decided to not do multiple puts at once. This is tested.
+		 * WORKSEQR: We have no concept of how the put wall should work if WORKSEQR is not set to BayDistance. Not tested.
+		 * SCANPICK: Should not matter. All putwall puts begin with a scan. All but this one test of SCANPICK off. This test is set for UPC scan.
+		 * AUTOSHRT: default is on, and we showed elsewhere that short ahead works. It is off in this test.
+		 */
+
+		this.getTenantPersistenceService().beginTransaction();
+		setUpFacilityWithPutWall();
+		setUpOrders1(getFacility());
+
+		LOGGER.info("1: Set up with all possibly interfering configurations set.");
+		propertyService.changePropertyValue(getFacility(), DomainObjectProperty.PICKMULT, Boolean.toString(true));
+		propertyService.changePropertyValue(getFacility(), DomainObjectProperty.SCANPICK, "UPC");
+		propertyService.changePropertyValue(getFacility(), DomainObjectProperty.AUTOSHRT, Boolean.toString(false));
+
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSiteController();
+		PickSimulator picker1 = new PickSimulator(this, cheGuid1);
+
+		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
+		Assert.assertNotNull(posman);
+
+		LOGGER.info("1: Just set up some orders for the put wall");
+		LOGGER.info(" : P14 is in WALL1. P15 and P16 are in WALL2. We will skip the slow mover SKU pick for this.");
+		picker1.login("Picker #1");
+		picker1.scanCommand("ORDER_WALL");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanSomething("11118");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker1.scanSomething("L%P14");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanSomething("11115");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker1.scanSomething("L%P15");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanSomething("11116");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker1.scanSomething("L%P16");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanCommand("CLEAR");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+
+
+		LOGGER.info("2a: We will do 1515 in wall2 as it yields two plan that might be subject to PICKMULT");
+		picker1.scanCommand("PUT_WALL");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
+		picker1.scanSomething("L%WALL2");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+		// This is scan of the SKU, the ItemMaster's domainId
+		picker1.scanSomething("1515");
+		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
+		
+		LOGGER.info("2b: if SCANPICK had an effect we would have had to scan again foolishly.");
+		List<WorkInstruction> wiList = picker1.getAllPicksList();
+		logWiList(wiList);
+		Assert.assertEquals(2, wiList.size());
+		
+		LOGGER.info("2c: if PICKMULT had an effect we would have two in active jobs list instead of 1.");
+		List<WorkInstruction> activeWiList = picker1.getActivePickList();
+		Assert.assertEquals(1, activeWiList.size());
+		
+		LOGGER.info("3a: AUTOSHRT is off. Short the first of two jobs for this SKU, and see that the second job does not short ahead.");
+		// P15 sorts first, with count 4
+		picker1.logCheDisplay();
+		picker1.scanCommand("SHORT");
+		picker1.waitForCheState(CheStateEnum.SHORT_PUT, WAIT_TIME);
+		posman.buttonPress(5, 1);
+		picker1.waitForCheState(CheStateEnum.SHORT_PUT_CONFIRM, WAIT_TIME);
+		
+		LOGGER.info("3b: This will not short ahead. See in the log. Therefore, go to DO_PUT state for the P15 job for the same SKU.");
+		picker1.scanCommand("YES");
+		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
+		picker1.logCheDisplay();
+
+	}
+	
+	@Test
+	public final void orderWallRemoveOrder() throws IOException {
+		// This is for DEV-766. Test strategy:
+		// Order 11117 has a single line from F14. So set up cart for it, and start on the path say at F14 or F11.
+		// Short the order.
+		// Change location, or finish and restart, we will get that work again.
+		// Short the order again. Finish, and place 11117 to ORDER_WALL.
+		// Restart. Do not get that work again.
+
+		this.getTenantPersistenceService().beginTransaction();
+		setUpFacilityWithPutWall();
+		setUpOrders1(getFacility());
+		// Let's document the poscon index for P14
+		Facility facility = getFacility();
+		Location loc = facility.findSubLocationById("P14");
+		LOGGER.info("1: P14 has index:{}", loc.getPosconIndex());
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSiteController();
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+
+		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
+		Assert.assertNotNull(posman);
+
+		LOGGER.info("1a: set up 11117 as our one-pick order. Also 11119 just to complete one");
+		// Re-START on the completed 11119 job tests some subtle things. Server does not send it back in feedback as "oc",
+		// but we interpret it as "oc".
+		picker.login("Picker #1");
+		picker.setupContainer("11117", "4");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker.setupContainer("11119", "6");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.scanLocation("F11");
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		List<WorkInstruction> wis = picker.getAllPicksList();
+		this.logWiList(wis);
+
+		LOGGER.info("1b: Complete 11119 (2 count at poscon 6), then short the 111117 job");
+		picker.buttonPress(6, 2);
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, WAIT_TIME);
+		picker.buttonPress(4, 0);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, WAIT_TIME);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+
+		LOGGER.info("2a: Try to jump to location on same path, without doing START. Ignored");
+		picker.scanLocation("F14");
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+
+		LOGGER.info("3a: Restart. Get the 11117 job again. LOCATION_SELECT_REVIEW because 11119 is completed");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, WAIT_TIME);
+		// see that 11119 shows as oc
+		Byte poscon6Value = picker.getLastSentPositionControllerDisplayValue((byte) 6);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, poscon6Value);
+		Byte maxValue = picker.getLastSentPositionControllerMaxQty((byte) 6);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_O, maxValue);
+		picker.scanCommand("START"); // this could have been location scan on the same path
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+	
+		LOGGER.info("3b: Short it again");
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, WAIT_TIME);
+		picker.buttonPress(4, 0);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, WAIT_TIME);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+		
+		LOGGER.info("4a: Place this order in the put wall");
+		picker.scanCommand("ORDER_WALL");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker.scanSomething("11117");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker.scanSomething("L%P14");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker.scanCommand("CLEAR");
+		// The choice of PICK_COMPLETE or CONTAINER_SELECT after CLEAR used to depend on if there is anything in the container map
+		// That is why we just completed one order first in the test. But now, it is set by a member variable.
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+
+		LOGGER.info("4b: Check the put wall display");
+		// P14 is at poscon index 4.
+		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+	
+		LOGGER.info("4c: Restart. Do not get the job again. (did before DEV-766)");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.NO_WORK, WAIT_TIME);
+		
+		LOGGER.info("5: Not recommended. Just showing. Set up again even though it is is in the put wall");
+		picker.scanCommand("SETUP");			
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker.setupContainer("11117", "4");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.scanLocation("F11");
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		wis = picker.getAllPicksList();
+		this.logWiList(wis);
+		Assert.assertEquals(1, wis.size());
+		
+		LOGGER.info("5b: Put wall display still there");
+		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+	
+
+
+	}
+
 
 }

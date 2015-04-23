@@ -23,8 +23,6 @@ import lombok.Setter;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.EdiProviderEnum;
 import com.codeshelf.model.EdiServiceStateEnum;
@@ -50,8 +48,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implements IEdiService {
-
-	private static final Logger			LOGGER				= LoggerFactory.getLogger(EdiServiceABC.class);
 
 	public static class EdiServiceABCDao extends GenericDaoABC<EdiServiceABC> implements ITypedDao<EdiServiceABC> {
 		public final Class<EdiServiceABC> getDaoClass() {

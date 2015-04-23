@@ -431,10 +431,17 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		return false;
 	}
 
+	protected boolean isAPutState() {
+		CheStateEnum state = getCheStateEnum();
+		return state.equals(CheStateEnum.DO_PUT) || state.equals(CheStateEnum.SHORT_PUT)
+				|| state.equals(CheStateEnum.SHORT_PUT_CONFIRM);
+	}
+
 	// --------------------------------------------------------------------------
 	/**
-	 * After simultaneous work instruction enhancement, the answer will come from mActivePickWiList.
-	 * For our v13 kludge, the answer comes from mAllPicksWiList
+	 * The answer comes from mActivePickWiList, as this can work also for putwall.
+	 * For simultaneous picks, it might come from active picks list to avoid the possibility of failure cases below. But we still need to 
+	 * work from mActivePickWiList if PICKMULT is off.
 	 */
 	private int getTotalCountSameSkuLocation(WorkInstruction inWi) {
 		if (inWi == null) {
@@ -446,12 +453,16 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		String pickLocation = inWi.getPickInstruction();
 		int totalQty = 0;
 
+		boolean putwallCase = isAPutState();
+
 		// using mAllPicksWiList, we expect same item, same pick location, uncompleted, unshorted.
 		// this will find and match the inWi also.
+		// for put wall case, we started with item scan, so all match the item. The locations are different for put wall.
 		for (WorkInstruction wi : mAllPicksWiList) {
 			WorkInstructionStatusEnum theStatus = wi.getStatus();
 			if (theStatus == WorkInstructionStatusEnum.INPROGRESS || theStatus == WorkInstructionStatusEnum.NEW)
-				if (wiMatchesItemLocation(pickSku, pickLocation, wi)) {
+
+				if (putwallCase || wiMatchesItemLocation(pickSku, pickLocation, wi)) {
 					totalQty += wi.getPlanQuantity();
 				}
 			/* This code makes the huge assumption that the work sequencer is very rational. A case that would fail is:
@@ -467,29 +478,33 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Today, return just the simple string numeral.
-	 * Suggested enhancement: part of a multi-work instruction pick, return as +5+.  If a single, then -5-
-	 * For our v13 kludge, the answer comes from mAllPicksWiList
+	 * What "count" shall we show for a job? The answer is surprisingly tricky.
+	 * If there are 3 jobs in a row for the same SKU for 2 each, multipick or not, should it show as "2" or "6" or "2 of 6".
+	 * For picking, we want the total count of that sku in that location, whether multipick or not. That is "6"
+	 * For put wall, we never have simultaneous puts. We want to show "2 of 6"
 	 */
 	protected String getWICountStringForCheDisplay(WorkInstruction inWi) {
 		if (inWi.isHousekeeping()) {
 			return "";
 		}
+		// If multi-pick, we are showing the first of active picks list, but all active picks have poscons lit. We want the total pick count.
+		// If not multi-pick, one CHE poscon at a time is lit, but the screen shows the pick location. Do we prefer "QTY 9" or "QTY 3 of 9".  The worker will take 9 from that location.
+		// For a put wall, if we showed "P15"  "QTY 9" , it would be misleading if only 3 are supposed to go to P15. We definitely want "QTY 3 of 9" for put wall.
+		// Back to picking. If PICKMULT, "QTY 3 of 9" is not so good because all poscons are lit, and the the one we represent as first needing only 3 is arbitrary.
+		// If not PICKMULT "QTY 3 of 9" is arguably better than "9", except for the inconsistency. For now, not doing it.
+
 		Integer planQty = inWi.getPlanQuantity();
 		Integer totalQtyThisSku = getTotalCountSameSkuLocation(inWi);
 		String returnStr;
-		/* better
-		if (planQty >= totalQtyThisSku)
-			returnStr = "-" + planQty + "-";
-		else
-			returnStr = "+" + totalQtyThisSku + "+";
-		*/
-		// As Zach specifies
+
 		if (planQty >= totalQtyThisSku)
 			returnStr = planQty.toString();
-		else
-			returnStr = totalQtyThisSku.toString();
-		// >=?  We do not really know that all future deviceLogic classes will use mAllPicksWiList which is where getTotalCountSameSku comes from.
+		else {
+			if (isAPutState())
+				returnStr = String.format("%d of %d", planQty, totalQtyThisSku);
+			else
+				returnStr = totalQtyThisSku.toString();
+		}
 
 		return returnStr;
 	}
@@ -777,9 +792,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
 				} else {
 					if (wiCount.getCompleteCount() == 0) {
-						//This should not be possible (unless we only had a single HK WI, which would be a bug)
-						//We will log this for now and treat it as a completed WI
-						LOGGER.error("WorkInstructionCount has no counts {};", wiCount);
+						// This should not be possible (unless we only had a single HK WI, which would be a bug)
+						// However, restart on a route after completing all work for an order comes back this way. Server could return the count
+						// but does not. Treat it as order complete. The corresponding case  in setupOrdersDeviceLogic is demonstrated 
+						// in cheProcessPutWall.orderWallRemoveOrder(); Don't know if any case hits this in CheDeviceLogic.
+						LOGGER.debug("WorkInstructionCount has no counts {};", wiCount);
 					}
 					//Ready for packout - solid, dim, "oc"
 					return new PosControllerInstr(position,
@@ -983,15 +1000,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	public void processOffCheButtonPress(String sourceGuid, CommandControlButton inButtonCommand) {
 		if (connectedToServer) {
-
 			WorkInstruction wi = null;
-			// TODO how do we find the work instruction this button was displaying?							
 
 			int posconIndex = inButtonCommand.getPosNum();
 			int quantity = inButtonCommand.getValue();
 			notifyOffCheButton(posconIndex, quantity, sourceGuid); // This merely logs
 
-			// LOGGER.info("retrieve {} {}", sourceGuid, posconIndex); // useful to debug
+			// find the work instruction this button was displaying?							
 			wi = retrieveOffChePosconWorkInstruction(sourceGuid, posconIndex);
 
 			if (wi != null) {
@@ -1276,15 +1291,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	protected void processShortPickOrPut(WorkInstruction inWi, Integer inQuantity) {
 		CheStateEnum state = getCheStateEnum();
-		if (state == CheStateEnum.SHORT_PICK )
+		if (state == CheStateEnum.SHORT_PICK)
 			setState(CheStateEnum.SHORT_PICK_CONFIRM);
-		else if (state == CheStateEnum.SHORT_PUT )
+		else if (state == CheStateEnum.SHORT_PUT)
 			setState(CheStateEnum.SHORT_PUT_CONFIRM);
-		else if (state == CheStateEnum.SHORT_PICK_CONFIRM || state == CheStateEnum.SHORT_PUT_CONFIRM){
+		else if (state == CheStateEnum.SHORT_PICK_CONFIRM || state == CheStateEnum.SHORT_PUT_CONFIRM) {
 			LOGGER.info("extra button press without confirmation in state {}", state);
 			setState(state); // forces out the usual side effects, if any. None so far, beyond redoing the CHE display and che poscons.
-		}
-		else {
+		} else {
 			LOGGER.error("unanticipated state in processShortPickOrPut {}", state);
 		}
 		mShortPickWi = inWi;
@@ -1454,18 +1468,19 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	}
 
-/**
- * This che is looking at the wi, and seeing a poscon lighting instruction. Send it to the appropriate controller.
- */
+	/**
+	 * This che is looking at the wi, and seeing a poscon lighting instruction. Send it to the appropriate controller.
+	 */
 	private void lightWiPosConLocations(WorkInstruction inFirstWi) {
 		String wiCmdString = inFirstWi.getPosConCmdStream();
 		if (wiCmdString == null || wiCmdString.equals("[]")) {
 			return;
 		}
-		
+
 		String ledCmdString = inFirstWi.getLedCmdStream();
-		if ( ledCmdString != null && !ledCmdString.isEmpty() && !ledCmdString.equals("[]")) {
-			LOGGER.error("lightWiPosConLocations: WI  at {} with both poscon and wi lighting instructions. How?", inFirstWi.getPickInstruction());
+		if (ledCmdString != null && !ledCmdString.isEmpty() && !ledCmdString.equals("[]")) {
+			LOGGER.error("lightWiPosConLocations: WI  at {} with both poscon and wi lighting instructions. How?",
+				inFirstWi.getPickInstruction());
 			LOGGER.error("poscon stream: {}", wiCmdString);
 			LOGGER.error("led stream: {}", ledCmdString);
 			// Note: someday we will light the bay with a ping pong ball, so then this will not be an error. For now, looks like a bug.
@@ -1549,7 +1564,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			// Send the CHE a display command (any of the WIs has the info we need).
 			CheStateEnum currentState = getCheStateEnum();
 			if (currentState != CheStateEnum.DO_PICK && currentState != CheStateEnum.SHORT_PICK
-					&& currentState != CheStateEnum.SCAN_SOMETHING && currentState != CheStateEnum.DO_PUT && currentState != CheStateEnum.SHORT_PUT) {
+					&& currentState != CheStateEnum.SCAN_SOMETHING && currentState != CheStateEnum.DO_PUT
+					&& currentState != CheStateEnum.SHORT_PUT) {
 				LOGGER.error("unanticipated state in showActivePicks: {}", currentState);
 				setState(CheStateEnum.DO_PICK);
 				//return because setting state to DO_PICK will call this function again
@@ -1663,17 +1679,22 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			getUserId(),
 			getMyGuidStr());
 	}
-
-	protected void notifyPutWallResponse(final List<WorkInstruction> inWorkItemList){
-		int listsize = 0;
-		if (inWorkItemList != null)
-			listsize = inWorkItemList.size();
-		LOGGER.info("*{} work instructions in put wall response:{} by picker:{} device:{}",
-			listsize,
+	
+	protected void notifyRemoveOrderFromChe(String orderId, Byte orderPositionOnChe){
+		LOGGER.info("*Removed order/cntr:{} from position:{} by picker:{} device:{}",
+			orderId,
+			orderPositionOnChe,
 			getUserId(),
 			getMyGuidStr());
 	}
-	
+
+	protected void notifyPutWallResponse(final List<WorkInstruction> inWorkItemList) {
+		int listsize = 0;
+		if (inWorkItemList != null)
+			listsize = inWorkItemList.size();
+		LOGGER.info("*{} work instructions in put wall response by picker:{} device:{}", listsize, getUserId(), getMyGuidStr());
+	}
+
 	protected void notifyPutWallItem(String itemOrUpd, String wallname) {
 		LOGGER.info("*Request plans for item:{} in put wall:{} by picker:{} device:{}",
 			itemOrUpd,
@@ -1818,7 +1839,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		return existingState;
 	}
 
-	public void processResultOfVerifyBadge(Boolean verified){
+	public void processResultOfVerifyBadge(Boolean verified) {
 		// To be overridden by SetupOrderDeviceLogic and LineScanDeviceLogic
 	}
 }

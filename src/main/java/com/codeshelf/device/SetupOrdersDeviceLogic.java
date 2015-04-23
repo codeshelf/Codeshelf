@@ -42,7 +42,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	// This code runs on the site controller, not the CHE.
 	// The goal is to convert data and instructions to something that the CHE controller can consume and act on with minimal logic.
 
-	private static final Logger					LOGGER						= LoggerFactory.getLogger(SetupOrdersDeviceLogic.class);
+	private static final Logger					LOGGER							= LoggerFactory.getLogger(SetupOrdersDeviceLogic.class);
 
 	// The CHE's container map.
 	private Map<String, String>					mPositionToContainerMap;
@@ -74,7 +74,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	@Getter
 	@Setter
-	private boolean								mInventoryCommandAllowed	= true;
+	private boolean								mInventoryCommandAllowed		= true;
+
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	CheStateEnum								mRememberStateEnteringWallState	= CheStateEnum.CONTAINER_SELECT;
 
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -354,6 +359,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CONTAINER_SELECT:
 				// only if no container/orders at all have been set up
 				if (mPositionToContainerMap.size() == 0) {
+					setRememberStateEnteringWallState(mCheStateEnum);
 					setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
 				} else {
 					LOGGER.warn("User: {} attempted to do ORDER_WALL after having some pick orders set up", this.getUserId());
@@ -362,6 +368,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case PICK_COMPLETE:
 			case PICK_COMPLETE_CURR_PATH:
+				setRememberStateEnteringWallState(mCheStateEnum);
 				setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
 				break;
 
@@ -378,6 +385,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CONTAINER_SELECT:
 				// only if no container/orders at all have been set up
 				if (mPositionToContainerMap.size() == 0) {
+					setRememberStateEnteringWallState(mCheStateEnum);
 					setState(CheStateEnum.PUT_WALL_SCAN_WALL);
 				} else {
 					LOGGER.warn("User: {} attempted to do PUT_WALL after having some pick orders set up", this.getUserId());
@@ -386,6 +394,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case PICK_COMPLETE:
 			case PICK_COMPLETE_CURR_PATH:
+				setRememberStateEnteringWallState(mCheStateEnum);
 				setState(CheStateEnum.PUT_WALL_SCAN_WALL);
 				break;
 
@@ -453,25 +462,28 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case GET_PUT_INSTRUCTION: // should never happen. State is transitory unless the server failed to respond
 			case PUT_WALL_SCAN_WALL:
 				// DEV-708, 712 specification. We want to return the state we started from: CONTAINER_SELECT or PICK_COMPLETE
-				// Perhaps will need a member variable, but for now we can tell by the state of the container map
+				CheStateEnum priorState = getRememberStateEnteringWallState();
 				if (mPositionToContainerMap.size() == 0) {
-					setState(CheStateEnum.CONTAINER_SELECT);
+					setState(priorState);
 				} else {
-					setState(CheStateEnum.PICK_COMPLETE);
+					setState(priorState);
 				}
 				break;
 
 			case DO_PUT:
 			case SHORT_PUT:
 			case SHORT_PUT_CONFIRM:
-				// DEV-713 : more to do. This situation is on a job, and the user wants to abandon it.
-				// Allow at all? set to PUT_WALL_SCAN_ITEM implies that. Or do nothing to force worker to complete or short it.
-
+				// DEV-713 : Worker is on a job, wants to abandon it.
+				// Allow at all? If we did nothing it would force worker to complete or short it.
+				WorkInstruction wi = this.getOneActiveWorkInstruction();
+				if (wi != null) {
+					notifyWiVerb(wi, EventType.CANCEL_PUT, false);
+					clearLedAndPosConControllersForWi(wi);
+				}
 				setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
-				// TODO
-				// If allowing, we would want to clear and refresh the poscon display, and clear activeWis.
-				// Also a notifyXX()
-				// Would be nice to send message to server to delete the work instruction, but we leave lots of wis hanging around.
+				// Might be nice to send message to server to delete the work instruction, but we leave the wi hanging around for many use cases.
+				// When that item/GTIN is scanned again, the work instruction will "recycle", so we are not creating a bigger and bigger mess.
+
 				break;
 
 			default:
@@ -781,10 +793,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			// This check is valid for batch order pick. Invalid for put wall put.			
 			CheStateEnum state = this.getCheStateEnum();
-			if (state != CheStateEnum.GET_PUT_INSTRUCTION && state != CheStateEnum.DO_PUT && getPosconIndexOfWi(wi) == 0) {
-				LOGGER.error("{} not in container map. State is {}", wi.getContainerId(), state);
-				break;
-			}
+			if (state != CheStateEnum.GET_PUT_INSTRUCTION && state != CheStateEnum.DO_PUT
+					&& state != CheStateEnum.SHORT_PUT_CONFIRM)
+				if (getPosconIndexOfWi(wi) == 0) {
+					LOGGER.error("{} not in container map. State is {}", wi.getContainerId(), state);
+					break;
+				}
 
 			// If the WI is INPROGRESS or NEW then consider it.
 			if ((wi.getStatus().equals(WorkInstructionStatusEnum.NEW))
@@ -992,12 +1006,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param insScanPrefixStr
-	 * @param inScanStr
+	 * During Setup_Orders process, the user has scanned the thing to be set up.  That is:
+	 * - C% container ID, as for Good Eggs cross batch order setup.
+	 * - a plain order ID. Almost any pick operation. (as of v16, still requires the order has preassignedContainerID matching the order.)
+	 * - from v16 L% put wall name. The plain put wall name also works, but only because here we think it is an order ID. The 
+	 *   back end does a search to determine what it is.
 	 */
 	private void processContainerSelectScan(final String inScanPrefixStr, String inScanStr) {
-		// DEV-518. Also accept the raw order ID.
-		if (inScanPrefixStr.isEmpty() || CONTAINER_PREFIX.equals(inScanPrefixStr)) {
+		if (inScanPrefixStr.isEmpty() || CONTAINER_PREFIX.equals(inScanPrefixStr) || LOCATION_PREFIX.equals(inScanPrefixStr)) {
 
 			mContainerInSetup = inScanStr;
 			// Check to see if this container is already setup in a position.
@@ -1009,9 +1025,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				this.clearOnePositionController(currentAssignment);
 			}
 
-			// It would be cool if we could check here. Call to REST API on the server? Needs to not block for long, though.
-			// When we scan a container, that container either should match a cross batch order detail, or match an outbound order's preassigned container. If not, 
-			// this is a "ride along" error. Would be nice if the user could see it immediately.
 			setState(CheStateEnum.CONTAINER_POSITION);
 		} else {
 			setState(CheStateEnum.CONTAINER_SELECTION_INVALID);
@@ -1438,9 +1451,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 							PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
 					} else {
 						if (wiCount.getCompleteCount() == 0) {
-							//This should not be possible (unless we only had a single HK WI, which would be a bug)
-							//We will log this for now and treat it as a completed WI
-							LOGGER.error("WorkInstructionCount has no counts {}; containerId={}", wiCount, containerId);
+							// This should not be possible (unless we only had a single HK WI, which would be a bug)
+							// However, restart on a route after completing all work for an order comes back this way. Server could return the count
+							// but does not. Treat it as order complete. This case is demonstrated in cheProcessPutWall.orderWallRemoveOrder();
+							LOGGER.debug("WorkInstructionCount has no counts {}; containerId={}", wiCount, containerId);
 						}
 						//Ready for packout - solid, dim oc
 						instructions.add(new PosControllerInstr(position,
@@ -1723,8 +1737,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// careful: POSITION_ALL is zero
 		if (PosControllerInstr.POSITION_ALL.equals(posconIndex))
 			LOGGER.error("Incorrect use of clearContainerAssignmentAtIndex"); // did you really intend mPositionToContainerMap.clear()?
-		else
-			mPositionToContainerMap.remove(Integer.toString(posconIndex));
+		else {
+			String containerId = mPositionToContainerMap.remove(Integer.toString(posconIndex));
+			// The count map may or may not be set up, depending on what happened before this clear is called. However, it is certain
+			// that if we do not have the position mapped, we should not have work instruction count.
+			if (containerId != null) {
+				// careful. Unlike the mPositionToContainerMap, this map is null until populated
+				if (mContainerToWorkInstructionCountMap != null)
+					mContainerToWorkInstructionCountMap.remove(containerId);
+			}
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -1826,20 +1848,35 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	protected void processPutWallLocationScan(final String inScanPrefixStr, final String inScanStr) {
 		String orderId = getLastPutWallOrderScan();
-		PutWallPlacementRequest message = new PutWallPlacementRequest(getPersistentId().toString(), orderId, inScanStr);
-		mDeviceManager.clientEndpoint.sendMessage(message);
-		sendOrderPlacementMessage(getLastPutWallOrderScan(), inScanStr);
+		sendOrderPlacementMessage(orderId, inScanStr);
+		// DEV-766. If we just put this order to the wall, we should remove it from our cart. 
+		// Otherwise, if we START or change location, we will still get that order work.
+
+		// TODO later. if we remove from container map, need to clear CHE state after the server maintains that.
+		Byte orderPositionOnChe = getPosconIndexOfContainerId(orderId);
+		if (orderPositionOnChe != 0) {
+			clearContainerAssignmentAtIndex(orderPositionOnChe);
+			notifyRemoveOrderFromChe(orderId, orderPositionOnChe);
+		}
+
 		setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
 	}
 
 	private void sendOrderPlacementMessage(String orderId, String locationName) {
 		// This will form the command and send to server. If successful, the putwall poscon feedback will be apparent.
-		LOGGER.info("to do: send put wall setup msg {} at {}", orderId, locationName);
+		PutWallPlacementRequest message = new PutWallPlacementRequest(getPersistentId().toString(), orderId, locationName);
+		mDeviceManager.clientEndpoint.sendMessage(message);
 
 		notifyOrderToPutWall(orderId, locationName);
 	}
 
 	protected void processPutWallItemScan(final String inScanPrefixStr, final String inScanStr) {
+		// This should be a clean scan of itemId or GTIN/UPC. If there is a scan prefix, don't bother asking the server.
+		if (!inScanPrefixStr.isEmpty()) {
+			LOGGER.warn("Ignoring inappropriate scan");
+			setState(getCheStateEnum()); // looks like noop, but force screen redraw
+			return;
+		}
 
 		setState(CheStateEnum.GET_PUT_INSTRUCTION);
 		// The response then returns the work instruction, and transitions to DO_PUT state. 

@@ -557,31 +557,6 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	@Override
 	protected void doPosConDisplaysforActiveWis() {
 
-		/*
-		byte planQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanQuantity());
-		byte minQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMinQuantity());
-		byte maxQuantityForPositionController = byteValueForPositionDisplay(firstWi.getPlanMaxQuantity());
-		if (getCheStateEnum() == CheStateEnum.SHORT_PICK)
-			minQuantityForPositionController = byteValueForPositionDisplay(0); // allow shorts to decrement on position controller down to zero
-
-		byte freq = PosControllerInstr.SOLID_FREQ;
-		byte brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
-		// blink is an indicator that decrement button is active, usually as a consequence of short pick. (Max difference is also possible for discretionary picks)
-		if (planQuantityForPositionController != minQuantityForPositionController
-				|| planQuantityForPositionController != maxQuantityForPositionController) {
-			freq = PosControllerInstr.BRIGHT_DUTYCYCLE;
-			brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
-		}
-
-		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-
-		PosControllerInstr instruction = new PosControllerInstr(getPosconIndex(),
-			planQuantityForPositionController,
-			minQuantityForPositionController,
-			maxQuantityForPositionController,
-			freq,
-			brightness);
-		*/
 		WorkInstruction firstWi = getOneActiveWorkInstruction();
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 		PosControllerInstr instruction = getPosInstructionForWiAtIndex(firstWi, getPosconIndex());		
@@ -668,16 +643,12 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 					break;
 
 				case SCAN_SOMETHING:
-					if (isSameState || previousState == CheStateEnum.GET_WORK) {
-						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
-					}
+					// no cart feedback for line scan
 					showActivePicks(); // change this? DEV-653
 					break;
 					
 				case SCAN_SOMETHING_SHORT: // this is like a short confirm.
-					if (isSameState) {
-						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
-					}
+					// no cart feedback for line scan
 					sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
 					break;
 				
@@ -695,6 +666,19 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		} finally {
 			setSetStateStackCount(priorCount);
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * For LineScanDeviceLogic, getPosconIndexOfWi() will return 1 or 0 only
+	 * Called generically in tests by picker. Therefore, need the override
+	 */
+	public byte getPosconIndexOfWi(WorkInstruction wi) {
+		if (wi == null)
+			return 0;
+		if (wi.equals(this.getActiveWorkInstruction()))
+			return 1;
+		return 0;
 	}
 
 	private void showTheActivePick() {

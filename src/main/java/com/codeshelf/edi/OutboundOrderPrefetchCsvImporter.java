@@ -298,24 +298,6 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			mEvaluationList.add(inItem);
 	}
 
-	/*
-	 * Hope it is safe. Follow our parent/child hibernate pattern.
-	 */
-	private void safelyDeleteItem(Item inItem) {
-		// for the moment, just archive it?
-		//inItem.setActive(false);
-		LOGGER.info("Deleting inventory item: " + inItem.toLogString());
-
-		// item is in the parent master list and in location item lists
-		ItemMaster itsMaster = inItem.getParent();
-		itsMaster.removeItemFromMaster(inItem);
-
-		Location itsLocation = inItem.getStoredLocation();
-		itsLocation.removeStoredItem(inItem);
-
-		Item.staticGetDao().delete(inItem);
-	}
-
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inCsvBean

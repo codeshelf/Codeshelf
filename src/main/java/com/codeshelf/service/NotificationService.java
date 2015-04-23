@@ -15,7 +15,7 @@ import com.codeshelf.ws.protocol.message.NotificationMessage;
 import com.google.inject.Inject;
 
 public class NotificationService implements IApiService{
-	public enum EventType {LOGIN, SKIP_ITEM_SCAN, BUTTON, WI, SHORT, SHORT_AHEAD, COMPLETE}	
+	public enum EventType {LOGIN, SKIP_ITEM_SCAN, BUTTON, WI, SHORT, SHORT_AHEAD, COMPLETE, CANCEL_PUT}	
 	
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(NotificationService.class);
 	
