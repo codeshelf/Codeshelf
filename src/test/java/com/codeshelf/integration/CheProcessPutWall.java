@@ -414,9 +414,8 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
 		Assert.assertNotNull(posman);
 
+		// A diversion. This could be in non-integration unit test. Only one needed. Do not clone if you clone the test.
 		CheDeviceLogic theDevice = picker.getCheDeviceLogic();
-
-		// A diversion. This could be in non-integration unit test.
 		theDevice.testOffChePosconWorkInstructions();
 
 		LOGGER.info("1a: set up a one-pick order");
@@ -871,5 +870,90 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker1.logCheDisplay();
 
 	}
+	
+	@Test
+	public final void orderWallRemoveOrder() throws IOException {
+		// This is for DEV-766. Test strategy:
+		// Order 11117 has a single line from F14. So set up cart for it, and start on the path say at F14 or F11.
+		// Short the order.
+		// Change location, or finish and restart, we will get that work again.
+		// Short the order again. Finish, and place 11117 to ORDER_WALL.
+		// Restart. Do not get that work again.
+
+		this.getTenantPersistenceService().beginTransaction();
+		setUpFacilityWithPutWall();
+		setUpOrders1(getFacility());
+		// Let's document the poscon index for P14
+		Facility facility = getFacility();
+		Location loc = facility.findSubLocationById("P14");
+		LOGGER.info("1: P14 has index:{}", loc.getPosconIndex());
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSiteController();
+		PickSimulator picker = new PickSimulator(this, cheGuid1);
+
+		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
+		Assert.assertNotNull(posman);
+
+		LOGGER.info("1a: set up a one-pick order");
+		picker.login("Picker #1");
+		picker.setupContainer("11117", "4");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.scanLocation("F11");
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+
+		LOGGER.info("1b: Short the first job");
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, WAIT_TIME);
+		picker.buttonPress(4, 0);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, WAIT_TIME);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+
+		LOGGER.info("2a: Try to jump to location on same path, without doing START. Ignored");
+		picker.scanLocation("F14");
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+
+		LOGGER.info("3a: Restart. Get the job again");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.scanCommand("START"); // this could have been location scan on the same path
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+	
+		LOGGER.info("3b: Short it again");
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, WAIT_TIME);
+		picker.buttonPress(4, 0);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, WAIT_TIME);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+		
+		LOGGER.info("4a: Place this order in the put wall");
+		picker.scanCommand("ORDER_WALL");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker.scanSomething("11117");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker.scanSomething("L%P14");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker.scanCommand("CLEAR");
+		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+
+		LOGGER.info("4b: Check the put wall display");
+		// P14 is at poscon index 4.
+		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+	
+		LOGGER.info("4c: Restart. See if you get the job again");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		
+
+
+	}
+
 
 }
