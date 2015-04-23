@@ -1198,6 +1198,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	protected void processPickComplete(boolean isWorkOnOtherPaths) {
 		// There are no more WIs, so the pick is complete.
+		String otherInformation = "";
+		if (isWorkOnOtherPaths)
+			otherInformation = "Some of these orders need picks from other paths"; //  should be localized
+		notifyCheWorkerVerb("PATH COMPLETE", otherInformation);
+
 
 		// Clear the existing LEDs.
 		ledControllerClearLeds(); // this checks getLastLedControllerGuid(), and bails if null.
@@ -1671,13 +1676,18 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			getUserId(),
 			getMyGuidStr());
 	}
-	
-	protected void notifyRemoveOrderFromChe(String orderId, Byte orderPositionOnChe){
+
+	protected void notifyRemoveOrderFromChe(String orderId, Byte orderPositionOnChe) {
 		LOGGER.info("*Removed order/cntr:{} from position:{} by picker:{} device:{}",
 			orderId,
 			orderPositionOnChe,
 			getUserId(),
 			getMyGuidStr());
+	}
+
+	protected void notifyCheWorkerVerb(String inVerb, String otherInformation) {
+		// VERBS initially are LOGIN, LOGOUT, BEGIN SETUP, START PATH, COMPLETE PATH
+		LOGGER.info("*{} by picker:{} device:{} {}", inVerb, getUserId(), getMyGuidStr(), otherInformation);
 	}
 
 	protected void notifyPutWallResponse(final List<WorkInstruction> inWorkItemList) {
