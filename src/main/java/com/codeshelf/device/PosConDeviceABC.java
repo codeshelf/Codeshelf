@@ -87,11 +87,11 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		}
 	}
 
-	protected void clearAllPositionControllers() {
-		clearOnePositionController(PosControllerInstr.POSITION_ALL);
+	protected void clearAllPosconsOnThisDevice() {
+		clearOnePosconOnThisDevice(PosControllerInstr.POSITION_ALL);
 	}
 
-	protected void clearOnePositionController(Byte inPosition) {
+	protected void clearOnePosconOnThisDevice(Byte inPosition) {
 		if (inPosition == PosControllerInstr.POSITION_ALL)
 			LOGGER.info("{}: Sending Clear PosCon command for ALL", this.getMyGuidStr());
 		else
