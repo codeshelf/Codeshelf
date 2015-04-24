@@ -11,13 +11,14 @@ import com.codeshelf.manager.User;
 @EqualsAndHashCode(of={"status","user","tokenTimestamp","newToken"})
 public class TokenSession {
 	public static enum Status {
-		ACCEPTED,
+		ACTIVE_SESSION,
 		LOGIN_NOT_ALLOWED,
 		INVALID_USER_ID,
 		INVALID_TOKEN,
 		INVALID_TIMESTAMP,
 		BAD_CREDENTIALS,
-		SESSION_IDLE_TIMEOUT
+		SESSION_IDLE_TIMEOUT,
+		SPECIAL_SESSION
 	};
 	@Getter
 	private Status status; 
@@ -43,6 +44,10 @@ public class TokenSession {
 		this.user = user;
 		this.tenant = tenant;
 		this.status = status;
+		if(tokenTimestamp == null)
+			tokenTimestamp = System.currentTimeMillis();
+		if(sessionStartTimestamp == null)
+			sessionStartTimestamp = tokenTimestamp;
 		this.tokenTimestamp = tokenTimestamp;
 		this.sessionStartTimestamp = sessionStartTimestamp;
 		this.sessionFlags = sessionFlags;
@@ -61,7 +66,7 @@ public class TokenSession {
 	}
 	
 	private void notAccepted(Status status) {
-		if(status.equals(Status.ACCEPTED)) {
+		if(status.equals(Status.ACTIVE_SESSION)) {
 			throw new RuntimeException("Invalid status");
 		}
 	}

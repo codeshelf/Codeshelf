@@ -6,8 +6,8 @@ import org.apache.commons.codec.binary.Base64;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
+import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.security.TokenSession.Status;
 import com.codeshelf.testframework.MockDaoTest;
 
@@ -31,7 +31,7 @@ public class TokenSessionServiceTest extends MockDaoTest {
 		// can find and validate auth cookie
 		TokenSession resp = auth.checkAuthCookie(cookies);
 		Assert.assertNotNull(resp);
-		Assert.assertEquals(Status.ACCEPTED,resp.getStatus());
+		Assert.assertEquals(Status.ACTIVE_SESSION,resp.getStatus());
 		Assert.assertEquals(user,resp.getUser());
 
 		// has valid timestamp

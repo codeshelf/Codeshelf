@@ -20,7 +20,6 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 
-import lombok.AccessLevel;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NonNull;
@@ -121,7 +120,7 @@ public class Tenant implements DatabaseCredentials {
 	boolean	active = true;
 	
 	@OneToMany(mappedBy = "tenant",targetEntity=User.class)
-	@Getter(AccessLevel.PROTECTED)
+	@Getter
 	private List<User> users;
 
 	@Transient

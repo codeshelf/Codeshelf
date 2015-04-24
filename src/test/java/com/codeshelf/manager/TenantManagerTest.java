@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.api.TenantsResource;
 import com.codeshelf.manager.api.UsersResource;
+import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.TokenSession;
@@ -73,7 +74,7 @@ public class TenantManagerTest extends HibernateTest {
 		}
 		
 		// can authenticate default
-		Assert.assertEquals(Status.ACCEPTED,this.tokenSessionService.authenticate(existingUsername,CodeshelfNetwork.DEFAULT_SITECON_PASS).getStatus());
+		Assert.assertEquals(Status.ACTIVE_SESSION,this.tokenSessionService.authenticate(existingUsername,CodeshelfNetwork.DEFAULT_SITECON_PASS).getStatus());
 		
 		// can fail to authenticate on wrong password
 		Assert.assertEquals(Status.BAD_CREDENTIALS,this.tokenSessionService.authenticate(existingUsername,"badpassword").getStatus());
@@ -90,7 +91,7 @@ public class TenantManagerTest extends HibernateTest {
 		Assert.assertTrue(this.tenantManagerService.getUsers(newUser.getTenant()).contains(newUser));
 
 		// can authenticate
-		Assert.assertEquals(Status.ACCEPTED,this.tokenSessionService.authenticate(newUser.getUsername(),"goodpassword").getStatus());
+		Assert.assertEquals(Status.ACTIVE_SESSION,this.tokenSessionService.authenticate(newUser.getUsername(),"goodpassword").getStatus());
 		
 		// can disable
 		newUser.setActive(false);
@@ -100,13 +101,13 @@ public class TenantManagerTest extends HibernateTest {
 		// can reenable
 		newUser.setActive(true);
 		newUser = this.tenantManagerService.updateUser(newUser);
-		Assert.assertEquals(Status.ACCEPTED,this.tokenSessionService.authenticate(newUser.getUsername(),"goodpassword").getStatus());
+		Assert.assertEquals(Status.ACTIVE_SESSION,this.tokenSessionService.authenticate(newUser.getUsername(),"goodpassword").getStatus());
 		
 		// can change password
 		newUser.setHashedPassword(tokenSessionService.hashPassword("newpassword"));
 		newUser = tenantManagerService.updateUser(newUser);
 		Assert.assertEquals(Status.BAD_CREDENTIALS,this.tokenSessionService.authenticate(newUser.getUsername(),"goodpassword").getStatus());
-		Assert.assertEquals(Status.ACCEPTED,this.tokenSessionService.authenticate(newUser.getUsername(),"newpassword").getStatus());
+		Assert.assertEquals(Status.ACTIVE_SESSION,this.tokenSessionService.authenticate(newUser.getUsername(),"newpassword").getStatus());
 		
 		// can look up via REST API several ways
 		List<User> users = (List<User>) this.usersResource.get(null,null).getEntity();
@@ -134,7 +135,7 @@ public class TenantManagerTest extends HibernateTest {
 		User apiUser = (User) this.usersResource.createUser(params).getEntity();
 		Assert.assertTrue(apiUser.getUsername().equals("apiuser"));
 		// TODO: secure auth over REST
-		Assert.assertEquals(Status.ACCEPTED,this.tokenSessionService.authenticate("apiuser","goodpassword").getStatus());
+		Assert.assertEquals(Status.ACTIVE_SESSION,this.tokenSessionService.authenticate("apiuser","goodpassword").getStatus());
 
 		// create fails if user already exists
 		Assert.assertNull(this.usersResource.createUser(params).getEntity());
@@ -163,7 +164,7 @@ public class TenantManagerTest extends HibernateTest {
 		// succeeds update with clean map
 		Assert.assertNotNull(this.usersResource.updateUser(apiUser.getId(), params).getEntity());
 		Assert.assertEquals(Status.BAD_CREDENTIALS,this.tokenSessionService.authenticate("apiuser","goodpassword").getStatus());
-		Assert.assertEquals(Status.ACCEPTED,this.tokenSessionService.authenticate("apiuser","newpassword").getStatus());
+		Assert.assertEquals(Status.ACTIVE_SESSION,this.tokenSessionService.authenticate("apiuser","newpassword").getStatus());
 
 		// can disable
 		params.clear();
@@ -174,7 +175,7 @@ public class TenantManagerTest extends HibernateTest {
 		// and reenable
 		params.putSingle("active", "true");
 		Assert.assertNotNull(this.usersResource.updateUser(apiUser.getId(), params).getEntity());
-		Assert.assertEquals(Status.ACCEPTED,this.tokenSessionService.authenticate("apiuser","newpassword").getStatus());
+		Assert.assertEquals(Status.ACTIVE_SESSION,this.tokenSessionService.authenticate("apiuser","newpassword").getStatus());
 	}
 
 	@SuppressWarnings("unchecked")
@@ -193,7 +194,7 @@ public class TenantManagerTest extends HibernateTest {
 		// with user
 		User newUser = this.tenantManagerService.createUser(newTenant, "tenantuser", "goodpassword", null);		
 		// can authenticate 
-		Assert.assertEquals(Status.ACCEPTED,this.tokenSessionService.authenticate("tenantuser", "goodpassword").getStatus());
+		Assert.assertEquals(Status.ACTIVE_SESSION,this.tokenSessionService.authenticate("tenantuser", "goodpassword").getStatus());
 
 		// can look up by id or name or list
 		Assert.assertTrue(this.tenantManagerService.getTenant(newTenant.getId()).equals(newTenant));
@@ -211,7 +212,7 @@ public class TenantManagerTest extends HibernateTest {
 		newTenant.setActive(true);
 		newTenant = this.tenantManagerService.updateTenant(newTenant);
 		response = this.tokenSessionService.authenticate("tenantuser", "goodpassword");
-		Assert.assertEquals(Status.ACCEPTED,response.getStatus());
+		Assert.assertEquals(Status.ACTIVE_SESSION,response.getStatus());
 		
 		// can look up via REST API couple of ways
 		List<Tenant> tenants = (List<Tenant>) this.tenantsResource.get().getEntity();
@@ -277,7 +278,7 @@ public class TenantManagerTest extends HibernateTest {
 		Assert.assertNotNull(apiTenant);
 		Assert.assertTrue(apiTenant.isActive());
 		newUser = this.tenantManagerService.getUser(newUser.getId());
-		Assert.assertEquals(Status.ACCEPTED,this.tokenSessionService.authenticate(newUser.getUsername(),"goodpassword").getStatus());
+		Assert.assertEquals(Status.ACTIVE_SESSION,this.tokenSessionService.authenticate(newUser.getUsername(),"goodpassword").getStatus());
 		
 		// password validation (default config has requireSymbol and requireMixed turned off)
 		// TODO: manipulate configuration and test other modes

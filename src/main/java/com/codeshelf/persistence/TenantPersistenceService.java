@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.dao.PropertyDao;

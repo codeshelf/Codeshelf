@@ -1,4 +1,4 @@
-package com.codeshelf.manager;
+package com.codeshelf.manager.service;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,6 +12,9 @@ import org.apache.commons.io.IOUtils;
 import org.hibernate.Session;
 import org.yaml.snakeyaml.Yaml;
 
+import com.codeshelf.manager.Tenant;
+import com.codeshelf.manager.User;
+import com.codeshelf.manager.UserRole;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.security.TokenSessionService;
 import com.google.common.collect.ArrayListMultimap;

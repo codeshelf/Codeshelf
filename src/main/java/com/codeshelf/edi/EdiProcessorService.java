@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Timer;
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.EdiServiceStateEnum;

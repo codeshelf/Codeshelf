@@ -1,4 +1,4 @@
-package com.codeshelf.manager;
+package com.codeshelf.manager.service;
 
 import lombok.Getter;
 
@@ -83,6 +83,7 @@ public class ManagerPersistenceService extends AbstractPersistenceService implem
 	@Override
 	public void initializeTenantData() {
 		DefaultRolesPermissions.sync();
+		DefaultSecurityQuestions.sync();
 	}
 
 	@Override

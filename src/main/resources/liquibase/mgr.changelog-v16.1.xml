@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog logicalFilePath="mgr.changelog-v16.1.xml"
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd
+		http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+    <changeSet author="ivan (generated)" id="1430167355034-14">
+        <createTable tableName="security_answer">
+            <column name="id" type="INT4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="hashed_answer" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="question_id" type="INT4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_id" type="INT4">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="ivan (generated)" id="1430167355034-15">
+        <createTable tableName="security_question">
+            <column name="id" type="INT4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="code" type="VARCHAR(32)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_modified" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="question" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="ivan (generated)" id="1430167355034-16">
+        <addColumn tableName="users">
+            <column name="last_authenticated" type="timestamp"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="ivan (generated)" id="1430167355034-17">
+        <addColumn tableName="users">
+            <column name="last_recovery_email" type="timestamp"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="ivan (edited)" id="1430167355034-18">
+        <addColumn tableName="users">
+            <column name="recovery_emails_remain" type="int4" defaultValue="5">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="ivan (edited)" id="1430167355034-19">
+        <addColumn tableName="users">
+            <column name="recovery_tries_remain" type="int4" defaultValue="5">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="ivan (edited)" id="1430167355034-20">
+        <addColumn tableName="user_role">
+            <column name="restricted" type="boolean" defaultValue="true">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="ivan (generated)" id="1430167355034-21">
+        <addPrimaryKey columnNames="id" constraintName="security_answPK" tableName="security_answer"/>
+    </changeSet>
+    <changeSet author="ivan (generated)" id="1430167355034-22">
+        <addPrimaryKey columnNames="id" constraintName="security_quesPK" tableName="security_question"/>
+    </changeSet>
+    <changeSet author="ivan (generated)" id="1430167355034-23">
+        <addUniqueConstraint columnNames="question_id, user_id" constraintName="UC_SECURITY_ANSWER_QUESTION_ID_USER_ID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="security_answer"/>
+    </changeSet>
+    <changeSet author="ivan (generated)" id="1430167355034-24">
+        <addUniqueConstraint columnNames="code" constraintName="UC_SECURITY_QUESTION_CODE" deferrable="false" disabled="false" initiallyDeferred="false" tableName="security_question"/>
+    </changeSet>
+    <changeSet author="ivan (generated)" id="1430167355034-25">
+        <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="security_answer" constraintName="FK_49tj0vgbh9liw10ybri81wu4v" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="security_question"/>
+    </changeSet>
+    <changeSet author="ivan (generated)" id="1430167355034-26">
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="security_answer" constraintName="FK_9sx9b543pepeboi6t3x7kc4yg" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="users"/>
+    </changeSet>
+    <changeSet author="ivan (edited)" id="1430167471552-4">
+        <dropDefaultValue columnDataType="int4" columnName="recovery_emails_remain" tableName="users"/>
+    </changeSet>
+    <changeSet author="ivan (edited)" id="1430167471552-5">
+        <dropDefaultValue columnDataType="int4" columnName="recovery_tries_remain" tableName="users"/>
+    </changeSet>
+    <changeSet author="ivan (edited)" id="1430167471552-6">
+        <dropDefaultValue columnDataType="boolean" columnName="restricted" tableName="user_role"/>
+    </changeSet>
+</databaseChangeLog>

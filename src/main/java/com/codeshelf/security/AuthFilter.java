@@ -40,7 +40,7 @@ public class AuthFilter implements Filter {
 		boolean authenticated = false;
 		TokenSession tokenSession = tokenSessionService.checkAuthCookie(cookies);
 		if(tokenSession != null) {
-			if(tokenSession.getStatus().equals(TokenSession.Status.ACCEPTED)) {
+			if(tokenSession.getStatus().equals(TokenSession.Status.ACTIVE_SESSION)) {
 				
 				authenticated = true;
 

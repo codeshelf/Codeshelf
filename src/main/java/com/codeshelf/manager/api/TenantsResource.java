@@ -20,9 +20,9 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.manager.ITenantManagerService;
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.manager.service.ITenantManagerService;
+import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.util.FormUtility;
 
 @Path("/tenants")
@@ -183,7 +183,7 @@ public class TenantsResource {
 		ITenantManagerService manager = TenantManagerService.getInstance();
 		Tenant newTenant = null;
 		
-		Map<String,String> validFields = FormUtility.getValidFieldsOrThrow(tenantParams, validCreateTenantFields);
+		Map<String,String> validFields = FormUtility.getValidFields(tenantParams, validCreateTenantFields);
 		if(validFields != null) {
 			String tenantName = validFields.get("name");
 			String schemaName = validFields.get("schemaname");

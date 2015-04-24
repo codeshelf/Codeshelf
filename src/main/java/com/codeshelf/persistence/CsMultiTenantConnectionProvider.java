@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.persistence.DatabaseUtils.SQLSyntax;
 import com.codeshelf.security.CodeshelfSecurityManager;
 

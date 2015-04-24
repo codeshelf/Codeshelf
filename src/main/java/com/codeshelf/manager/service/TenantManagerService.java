@@ -1,12 +1,14 @@
-package com.codeshelf.manager;
+package com.codeshelf.manager.service;
 
 import java.nio.charset.Charset;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -18,6 +20,13 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.SecurityAnswer;
+import com.codeshelf.manager.SecurityQuestion;
+import com.codeshelf.manager.Shard;
+import com.codeshelf.manager.Tenant;
+import com.codeshelf.manager.User;
+import com.codeshelf.manager.UserPermission;
+import com.codeshelf.manager.UserRole;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.persistence.AbstractPersistenceService;
 import com.codeshelf.persistence.DatabaseCredentials;
@@ -172,7 +181,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	public User createUser(Tenant tenant, String username, String password, Set<UserRole> roles) {
 		if (!tokenSessionService.usernameMeetsRequirements(username))
 			throw new IllegalArgumentException("tried to create user with invalid username (caller must prevalidate)");
-		if (!tokenSessionService.passwordMeetsRequirements(password))
+		if (password != null && !tokenSessionService.passwordMeetsRequirements(password))
 			throw new IllegalArgumentException("tried to create user with invalid password (caller must prevalidate)");
 
 		User result = null;
@@ -186,7 +195,8 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 
 			User user = new User();
 			user.setUsername(username);
-			user.setHashedPassword(tokenSessionService.hashPassword(password));
+			if(password != null) 
+				user.setHashedPassword(tokenSessionService.hashPassword(password));
 			if (roles != null)
 				user.setRoles(roles);
 			tenant.addUser(user);
@@ -317,6 +327,7 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		try {
 			if (tenant == null) {
 				Criteria criteria = session.createCriteria(User.class);
+				criteria.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY);
 				@SuppressWarnings("unchecked")
 				List<User> list = (List<User>) criteria.list();
 				userList = list;
@@ -691,12 +702,16 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 	}
 
 	@Override
-	public List<UserRole> getRoles() {
+	public List<UserRole> getRoles(boolean includeRestrictedRoles) {
 		List<UserRole> results = null;
 
 		try {
 			Session session = managerPersistenceService.getSessionWithTransaction();
 			Criteria criteria = session.createCriteria(UserRole.class);
+			if(!includeRestrictedRoles) {
+				criteria.add(Restrictions.eq("restricted", false));
+			}
+			criteria.setResultTransformer(Criteria.DISTINCT_ROOT_ENTITY);
 			@SuppressWarnings("unchecked")
 			Collection<UserRole> list = criteria.list();
 			results = new ArrayList<UserRole>(list.size());
@@ -736,6 +751,32 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		}
 		return result;
 	}
+	
+	@Override
+	public Set<UserRole> getUserRoles(String listOfRoles, boolean allowRestrictedRoles) {
+		Set<UserRole> result = new HashSet<UserRole>();
+		if(listOfRoles == null || listOfRoles.isEmpty())
+			return result;
+		
+		String[] roleNames = listOfRoles.split(UserRole.TOKEN_SEPARATOR);
+		try {
+			Session session = managerPersistenceService.getSessionWithTransaction();
+			for(int i=0;i<roleNames.length;i++) {
+				UserRole role = (UserRole) session.bySimpleNaturalId(UserRole.class).load(roleNames[i]);
+				if(role != null && (allowRestrictedRoles || (!role.isRestricted() ))  ) {
+					result.add(role);
+				} else {
+					LOGGER.warn("invalid role name in list: {}",roleNames[i]);
+					return null;
+				}
+			}			
+		} finally {
+			managerPersistenceService.commitTransaction();
+		}
+		return result;
+	}
+
+
 
 	@Override
 	public UserRole createRole(String name) {
@@ -903,6 +944,111 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 			if (!deleted)
 				managerPersistenceService.rollbackTransaction();
 		}
+	}
+
+	@Override
+	public Map<String,String> getActiveSecurityQuestions() {
+		List<SecurityQuestion> resultList = listSecurityQuestions(true);
+		Map<String,String> result = new HashMap<String,String>();
+		for(SecurityQuestion question : resultList) {
+			result.put(question.getCode(),question.getQuestion());
+		}
+		return result;
+	}
+
+	@Override
+	public Map<String,SecurityQuestion> getAllSecurityQuestions() {
+		List<SecurityQuestion> resultList = listSecurityQuestions(true);
+		Map<String,SecurityQuestion> result = new HashMap<String,SecurityQuestion>();
+		for(SecurityQuestion question : resultList) {
+			result.put(question.getCode(),question);
+		}
+		return result;
+	}
+
+	private List<SecurityQuestion> listSecurityQuestions(boolean activeOnly) {
+		List<SecurityQuestion> resultList = null;
+		Session session = managerPersistenceService.getSessionWithTransaction();
+		try {
+			Criteria criteria = session.createCriteria(SecurityQuestion.class);
+			if(activeOnly) {
+				criteria.add(Restrictions.eq("active", true));
+			}
+			@SuppressWarnings("unchecked")
+			List<SecurityQuestion> list = criteria.list();
+			resultList = list;
+		} finally {
+			managerPersistenceService.commitTransaction();
+		}
+		return resultList;
+	}
+
+	@Override
+	public User setSecurityAnswers(User user, Map<SecurityQuestion,String> questionAndAnswer) {		
+		TokenSessionService sessionService = TokenSessionService.getInstance();
+		if(questionAndAnswer == null || questionAndAnswer.size() < sessionService.getSecurityAnswerMinCount()) {
+			throw new IllegalArgumentException("no valid question/answer map provided of at least size "+sessionService.getSecurityAnswerMinCount());
+		}
+
+		// first, delete old security answers
+		Session session = managerPersistenceService.getSessionWithTransaction();
+		boolean success = false;
+		int deleted = 0;
+		try {
+			user = (User) session.load(User.class, user.getId());
+			for(SecurityAnswer currentAnswer : user.getSecurityAnswers().values()) {
+				// delete old answers
+				session.delete(currentAnswer);
+				deleted++;
+			} 
+			user.setSecurityAnswers(new HashMap<SecurityQuestion,SecurityAnswer>());
+			session.saveOrUpdate(user);
+			success = true;
+		} finally {
+			if(success) {
+				LOGGER.debug("User {} deleted {} old security questions",user.getUsername(),deleted);
+				managerPersistenceService.commitTransaction();
+			} else {
+				LOGGER.error("User {} failed to delete {} old security questions",user.getUsername(),deleted);
+				managerPersistenceService.rollbackTransaction();			
+			}
+		}
+		
+		// now create answers 
+		if(success) {
+			session = managerPersistenceService.getSessionWithTransaction();
+			success = false;
+			try {
+				user = (User) session.load(User.class, user.getId());
+				Map<SecurityQuestion, SecurityAnswer> newMap = new HashMap<SecurityQuestion, SecurityAnswer>();
+				for(SecurityQuestion question : questionAndAnswer.keySet()) {
+					String newAnswerString = questionAndAnswer.get(question);
+					if(question != null && sessionService.securityAnswerMeetsRequirements(newAnswerString)) {
+						String newHashedAnswer = sessionService.hashSecurityAnswer(newAnswerString);
+						SecurityAnswer answer = new SecurityAnswer();
+						answer.setUser(user);
+						answer.setQuestion(question);
+						answer.setHashedAnswer(newHashedAnswer);
+						session.save(answer);
+						newMap.put(question, answer);
+					} else {
+						throw new IllegalArgumentException("Invalid question code provided, cannot create security question map");
+					}
+				}
+				user.setSecurityAnswers(newMap);
+				session.saveOrUpdate(user);
+				success=true;
+			} finally {
+				if(success) {
+					LOGGER.info("User {} set {} security questions",user.getUsername(),questionAndAnswer.size());
+					managerPersistenceService.commitTransaction();
+				} else {
+					LOGGER.error("User {} failure to set security questions",user.getUsername());
+					managerPersistenceService.rollbackTransaction();			
+				}
+			}
+		}
+		return success?user:null;
 	}
 
 }

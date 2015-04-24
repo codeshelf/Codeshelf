@@ -35,19 +35,21 @@ import com.codeshelf.device.ClientConnectionManagerService;
 import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.device.SiteControllerMessageProcessor;
 import com.codeshelf.device.radio.RadioController;
+import com.codeshelf.email.EmailService;
+import com.codeshelf.email.TemplateService;
 import com.codeshelf.event.EventProducer;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.flyweight.controller.TcpServerInterface;
-import com.codeshelf.manager.DefaultRolesPermissions;
-import com.codeshelf.manager.ITenantManagerService;
-import com.codeshelf.manager.ManagerPersistenceService;
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.UserPermission;
 import com.codeshelf.manager.UserRole;
+import com.codeshelf.manager.service.DefaultRolesPermissions;
+import com.codeshelf.manager.service.ITenantManagerService;
+import com.codeshelf.manager.service.ManagerPersistenceService;
+import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
@@ -118,6 +120,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 	private static IPropertyService					staticPropertyService;
 	private static ServerMessageProcessor			staticServerMessageProcessor;
 	private static TokenSessionService				staticTokenSessionService;
+	private static EmailService						staticEmailService;
+	private static TemplateService					staticTemplateService;
 
 	// real non-mock instances
 	private static TenantPersistenceService			realTenantPersistenceService;
@@ -156,6 +160,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 	protected IPropertyService						propertyService;
 	protected IMetricsService						metricsService;
 	protected TokenSessionService					tokenSessionService;
+	protected EmailService							emailService;
+	protected TemplateService						templateService;
 
 	protected IRadioController						radioController;
 
@@ -206,6 +212,13 @@ public abstract class FrameworkTest implements IntegrationTest {
 				// Shiro modules
 				bind(SecurityManager.class).to(CodeshelfSecurityManager.class);
 				bind(Realm.class).to(CodeshelfRealm.class);
+				
+				requestStaticInjection(EmailService.class);
+				bind(EmailService.class).in(Singleton.class);
+				
+				requestStaticInjection(TemplateService.class);
+				bind(TemplateService.class).in(Singleton.class);
+				
 			}
 
 			@Provides
@@ -236,6 +249,12 @@ public abstract class FrameworkTest implements IntegrationTest {
 		staticTokenSessionService = injector.getInstance(TokenSessionService.class);
 		staticTokenSessionService.startAsync();
 		ServiceUtility.awaitRunningOrThrow(staticTokenSessionService);
+		staticEmailService = injector.getInstance(EmailService.class);
+		staticEmailService.startAsync();
+		ServiceUtility.awaitRunningOrThrow(staticEmailService);
+		staticTemplateService = injector.getInstance(TemplateService.class);
+		staticTemplateService.startAsync();
+		ServiceUtility.awaitRunningOrThrow(staticTemplateService);
 
 		staticPropertyService = injector.getInstance(IPropertyService.class);
 
@@ -265,7 +284,11 @@ public abstract class FrameworkTest implements IntegrationTest {
 		metricsService = staticMetricsService;
 		MetricsService.setInstance(metricsService);
 		tokenSessionService = staticTokenSessionService;
-		TokenSessionService.setInstance(staticTokenSessionService);
+		TokenSessionService.setInstance(tokenSessionService);
+		emailService = staticEmailService;
+		EmailService.setInstance(emailService);
+		templateService = staticTemplateService;
+		TemplateService.setInstance(templateService);
 
 		SecurityUtils.setSecurityManager(new CodeshelfSecurityManager(new CodeshelfRealm()));
 
@@ -365,6 +388,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 		propertyService = null;
 		metricsService = null;
 		tokenSessionService = null;
+		emailService = null;
+		templateService = null;
 
 		if (resetRealPersistenceDaos) {
 			realTenantPersistenceService.resetDaosForTest();
@@ -496,7 +521,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 				realTenantPersistenceService.forgetInitialActions(tenant.getTenantIdentifier());
 			}
 			realTenantManagerService.resetTenant(realDefaultTenant);
-			List<UserRole> roles = realTenantManagerService.getRoles();
+			List<UserRole> roles = realTenantManagerService.getRoles(true);
 			for (UserRole role : roles) {
 				if (!DefaultRolesPermissions.isDefaultRole(role.getName())) {
 					realTenantManagerService.deleteRole(role);

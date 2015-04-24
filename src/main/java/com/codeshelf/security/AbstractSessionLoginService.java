@@ -6,8 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
+import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.security.TokenSession.Status;
 
 public abstract class AbstractSessionLoginService extends AbstractHmacTokenService {
@@ -38,7 +38,7 @@ public abstract class AbstractSessionLoginService extends AbstractHmacTokenServi
 						long timestamp = System.currentTimeMillis();
 						Tenant tenant = user.getTenant();
 						String token = this.createToken(user.getId(), tenant.getId(), timestamp, timestamp, null); // create default token for new session
-						response = new TokenSession(Status.ACCEPTED,
+						response = new TokenSession(Status.ACTIVE_SESSION,
 							user,
 							tenant,
 							timestamp, 
@@ -73,7 +73,7 @@ public abstract class AbstractSessionLoginService extends AbstractHmacTokenServi
 	private boolean checkPassword(final String password, final String hash) {
 		return Md5Crypt.apr1Crypt(password, hash).equals(hash);
 	}
-
+	
 	public boolean hashIsValid(String hash) {
 		return hash.startsWith("$apr1$");
 	}

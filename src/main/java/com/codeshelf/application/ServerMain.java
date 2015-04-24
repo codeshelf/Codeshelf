@@ -25,8 +25,10 @@ import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.LocationAliasCsvImporter;
 import com.codeshelf.edi.OrderLocationCsvImporter;
 import com.codeshelf.edi.OutboundOrderPrefetchCsvImporter;
-import com.codeshelf.manager.ITenantManagerService;
-import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.email.EmailService;
+import com.codeshelf.email.TemplateService;
+import com.codeshelf.manager.service.ITenantManagerService;
+import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -148,6 +150,13 @@ public final class ServerMain {
 
 				requestStaticInjection(TokenSessionService.class);
 				bind(TokenSessionService.class).in(Singleton.class);
+				
+				requestStaticInjection(EmailService.class);
+				bind(EmailService.class).in(Singleton.class);
+				
+				requestStaticInjection(TemplateService.class);
+				bind(TemplateService.class).in(Singleton.class);
+				
 			}
 					
 		}, 

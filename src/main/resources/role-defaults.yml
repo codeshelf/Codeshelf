@@ -2,12 +2,6 @@
 #   At TenantManager startup, these roles and permissions will exist 
 #   and the roles will contain exactly these sets of permissions 
 
-SiteController:
-  - "ws:login"
-  - "wi:*"
-  - "light:use"
-  - "che:pick,setup,verifybadge"
-  - "che:inventory"
 Cart:
   - "che:pick,setup"
 Inventory:
@@ -48,7 +42,8 @@ Configure:
   - "path:*"
   - "light:*"
   - "worker:*"
-  - "event:*"
+
+# All roles beginning with "Cs" are special restricted roles that cannot be assigned by non-Codeshelf users 
 CsDeveloper:
   - "che:simulate"
 CsSupport:
@@ -65,3 +60,12 @@ CsSupport:
   - "inventory:import"
 CsSuperuser:
   - "*"  # includes such checked permissions as tenant:*, user:*, role:*, perm:*
+
+# the SiteController role is also restricted
+SiteController:
+  - "ws:login"
+  - "wi:*"
+  - "light:use"
+  - "che:pick,setup,verifybadge"
+  - "che:inventory"
+  

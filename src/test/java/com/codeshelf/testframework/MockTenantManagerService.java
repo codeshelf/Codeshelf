@@ -2,6 +2,7 @@ package com.codeshelf.testframework;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -9,13 +10,14 @@ import java.util.concurrent.TimeoutException;
 
 import org.mockito.Mockito;
 
-import com.codeshelf.manager.ITenantManagerService;
+import com.codeshelf.manager.SecurityQuestion;
 import com.codeshelf.manager.Shard;
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.TenantManagerService.ShutdownCleanupReq;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.UserPermission;
 import com.codeshelf.manager.UserRole;
+import com.codeshelf.manager.service.ITenantManagerService;
+import com.codeshelf.manager.service.TenantManagerService.ShutdownCleanupReq;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 
@@ -182,7 +184,7 @@ public class MockTenantManagerService implements ITenantManagerService {
 		return "".getBytes();
 	}
 	@Override
-	public List<UserRole> getRoles() {
+	public List<UserRole> getRoles(boolean includeRestricted) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -193,6 +195,11 @@ public class MockTenantManagerService implements ITenantManagerService {
 	}
 	@Override
 	public UserRole getRoleByName(String name) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public Set<UserRole> getUserRoles(String listOfRoles, boolean allowRestricted) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -244,5 +251,20 @@ public class MockTenantManagerService implements ITenantManagerService {
 	@Override
 	public Tenant getTenantBySchemaName(String schemaName) {
 		return this.getInitialTenant();
+	}
+	@Override
+	public User setSecurityAnswers(User user, Map<SecurityQuestion, String> questionAndAnswer) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public Map<String, String> getActiveSecurityQuestions() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public Map<String, SecurityQuestion> getAllSecurityQuestions() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

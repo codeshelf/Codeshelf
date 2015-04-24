@@ -14,7 +14,7 @@ public class FormUtility {
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(FormUtility.class);
 	private FormUtility() {}
 
-	public static Map<String, String> getValidFieldsOrThrow(MultivaluedMap<String, String> userParams, Set<String> validFields) {
+	public static Map<String, String> getValidFields(MultivaluedMap<String, String> userParams, Set<String> validFields) {
 		Map<String, String> result = new HashMap<String, String>();
 		boolean error = false;
 	

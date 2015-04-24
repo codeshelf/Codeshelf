@@ -35,95 +35,102 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
-@Table(name = "user_role") // role is reserved word
+@Table(name = "user_role")
+// role is reserved word
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 //@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.PROPERTY, property = "className")
 //@JsonIgnoreProperties({"className"})
-@EqualsAndHashCode(of={"name"})
+@EqualsAndHashCode(of = { "name", "restricted" })
 public class UserRole {
 
 	@SuppressWarnings("unused")
-	private static final Logger	LOGGER					= LoggerFactory.getLogger(UserRole.class);
+	private static final Logger	LOGGER			= LoggerFactory.getLogger(UserRole.class);
 
 	public static final String	TOKEN_SEPARATOR	= ",";
 
 	@Id
-	@Column(nullable = false,name="id")
-	@GeneratedValue(strategy=GenerationType.AUTO)
+	@Column(nullable = false, name = "id")
+	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Getter
 	@Setter
 	@JsonProperty
-	Integer id;
-	
+	Integer						id;
+
 	/* Timestamped entity */
 	@Getter
 	@Temporal(TemporalType.TIMESTAMP)
-	@Column(nullable = false,name="created")
+	@Column(nullable = false, name = "created")
 	//@JsonProperty
-	Date created;
+	Date						created;
 	//
 	@Getter
 	@Temporal(TemporalType.TIMESTAMP)
-	@Column(nullable = false,name="last_modified")
+	@Column(nullable = false, name = "last_modified")
 	//@JsonProperty
-	Date lastModified;
-	//
+	Date						lastModified;
+
+	/* Timestamped entity */
 	@PrePersist
-	protected void onCreate() { this.created = this.lastModified = new Date(); }
+	protected void onCreate() {		this.created = this.lastModified = new Date();	}
 	@PreUpdate
-	protected void onUpdate() { this.lastModified = new Date(); }
-	/* Timestamped entity */
+	protected void onUpdate() {		this.lastModified = new Date();	}
 
 	@Getter
-	@Column(nullable = false, name="name", unique=true)
+	@Column(nullable = false, name = "name", unique = true)
 	@JsonProperty
 	@NaturalId
-	String name;
+	String				name;
 
-	@ManyToMany(targetEntity=UserPermission.class, fetch=FetchType.EAGER)
-	@JoinTable(name="roles_permissions")
+	@Getter
+	@Setter
+	@Column(nullable = false, name = "restricted")
+	//@JsonProperty
+	boolean				restricted	= false;
+
+	@ManyToMany(targetEntity = UserPermission.class, fetch = FetchType.EAGER)
+	@JoinTable(name = "roles_permissions")
 	@Getter
 	@JsonProperty
-	Set<UserPermission> permissions = new HashSet<UserPermission>();
-	
+	Set<UserPermission>	permissions	= new HashSet<UserPermission>();
+
 	public UserRole() {
 	}
-	
+
 	public UserRole(String name) {
 		this.name = name;
 	}
-	
+
 	public void setName(String newName) {
-		if(nameIsValid(newName)) {
+		if (nameIsValid(newName)) {
 			this.name = newName;
-		} else {			
-			throw new RuntimeException("Role cannot contain comma");
+		} else {
+			throw new RuntimeException("Role cannot contain this character: " + TOKEN_SEPARATOR);
 		}
 	}
-	
+
 	@Override
 	public String toString() {
 		return name;
 	}
-	
+
 	public static boolean nameIsValid(String name) {
-		if(name==null)
+		if (name == null)
 			return false;
 		return !name.contains(TOKEN_SEPARATOR);
 	}
-	
+
 	public Collection<String> getPermissionStrings() {
 		Collection<String> permissionStrings = new ArrayList<String>(this.getPermissions().size());
-		for(UserPermission perm : this.getPermissions()) {
+		for (UserPermission perm : this.getPermissions()) {
 			permissionStrings.add(perm.getDescriptor());
 		}
 		return permissionStrings;
 	}
 
 	public void setPermissions(Set<UserPermission> permissions) {
-		if(!this.permissions.equals(permissions)) {
+		if (!this.permissions.equals(permissions)) {
 			this.permissions.clear();
 			this.permissions.addAll(permissions);
 		}

@@ -12,8 +12,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.edi.EdiProcessorService;
-import com.codeshelf.manager.ITenantManagerService;
-import com.codeshelf.manager.ManagerPersistenceService;
+import com.codeshelf.email.EmailService;
+import com.codeshelf.email.TemplateService;
+import com.codeshelf.manager.service.ITenantManagerService;
+import com.codeshelf.manager.service.ManagerPersistenceService;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.codeshelf.metrics.DropboxServiceHealthCheck;
@@ -47,7 +49,9 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 			final IPropertyService propertyService,
 			final TokenSessionService authService,
 			final SecurityManager securityManager,
-			final SchedulingService schedulingService) {
+			final SchedulingService schedulingService,
+			final EmailService emailService,
+			final TemplateService templateService) {
 			
 		super(inWebApiServer);
 	
@@ -68,6 +72,8 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		this.registerService(propertyService);
 		this.registerService(authService);
 		this.registerService(ediProcessorService);
+		this.registerService(emailService);
+		this.registerService(templateService);
 		if (schedulingService!=null) this.registerService(schedulingService);
 	}
 

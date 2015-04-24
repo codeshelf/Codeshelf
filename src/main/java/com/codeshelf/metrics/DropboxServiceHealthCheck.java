@@ -2,7 +2,7 @@ package com.codeshelf.metrics;
 
 import java.util.List;
 
-import com.codeshelf.manager.TenantManagerService;
+import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.domain.DropboxService;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.persistence.TenantPersistenceService;

@@ -104,6 +104,8 @@ dependencies {
 			'com.dropbox.core:dropbox-core-sdk:1.7.6',
 
 			'com.sun.mail:javax.mail:1.5.2',
+			'commons-validator:commons-validator:1.4.1',
+			'org.apache.velocity:velocity:1.7',
 
 			'com.eaio.uuid:uuid:3.2',
 			'org.projectlombok:lombok:1.14.8',

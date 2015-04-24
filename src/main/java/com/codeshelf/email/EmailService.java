@@ -14,6 +14,7 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import org.apache.commons.validator.routines.EmailValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,11 +39,14 @@ public class EmailService extends AbstractCodeshelfExecutionThreadService {
 	private InternetAddress					from;
 	private PasswordAuthentication			authentication;
 	private BlockingQueue<OutboundMessage>	pending					= null;
+	private EmailValidator					emailValidator;
 
 	@Inject
 	private static EmailService				theInstance;
 
+	@Inject
 	private EmailService() {
+		emailValidator = EmailValidator.getInstance(false);
 	}
 
 	public final static EmailService getInstance() {
@@ -56,19 +60,19 @@ public class EmailService extends AbstractCodeshelfExecutionThreadService {
 
 	@Override
 	protected void startUp() throws Exception {
+		pending = new ArrayBlockingQueue<OutboundMessage>(EMAIL_QUEUE_SIZE);
+
 		String username = System.getProperty("mail.username");
 		String password = System.getProperty("mail.password");
-		this.from = new InternetAddress(username);
+		if(!Strings.isNullOrEmpty(username) && !Strings.isNullOrEmpty(password)) {
+			this.from = new InternetAddress(username);
 
-		Properties sendConfig = new Properties();
-		sendConfig.put("mail.smtp.auth", MAIL_SMTP_AUTH ? "true" : "false");
-		sendConfig.put("mail.smtp.starttls.enable", MAIL_STARTTLS_ENABLE ? "true" : "false");
-		sendConfig.put("mail.smtp.host", MAIL_SMTP_HOST);
-		sendConfig.put("mail.smtp.port", Integer.toString(MAIL_SMTP_PORT));
+			Properties sendConfig = new Properties();
+			sendConfig.put("mail.smtp.auth", MAIL_SMTP_AUTH ? "true" : "false");
+			sendConfig.put("mail.smtp.starttls.enable", MAIL_STARTTLS_ENABLE ? "true" : "false");
+			sendConfig.put("mail.smtp.host", MAIL_SMTP_HOST);
+			sendConfig.put("mail.smtp.port", Integer.toString(MAIL_SMTP_PORT));
 
-		if (Strings.isNullOrEmpty(password)) {
-			this.session = null;
-		} else {
 			this.authentication = new PasswordAuthentication(username, password);
 			Authenticator authenticator = new Authenticator() {
 				protected PasswordAuthentication getPasswordAuthentication() {
@@ -76,9 +80,9 @@ public class EmailService extends AbstractCodeshelfExecutionThreadService {
 				}
 			};
 			this.session = Session.getInstance(sendConfig, authenticator);
+		} else {
+			this.session = null;
 		}
-
-		pending = new ArrayBlockingQueue<OutboundMessage>(EMAIL_QUEUE_SIZE);
 	}
 
 	@Override
@@ -119,7 +123,8 @@ public class EmailService extends AbstractCodeshelfExecutionThreadService {
 		}
 	}
 
-	private void sendEmail(OutboundMessage outboundMessage) {
+	private boolean sendEmail(OutboundMessage outboundMessage) {
+		boolean sent=false;
 		if (session == null) {
 			LOGGER.error("Not actually configured to send email: {}", outboundMessage.toString());
 		} else {
@@ -130,11 +135,13 @@ public class EmailService extends AbstractCodeshelfExecutionThreadService {
 				message.setSubject(outboundMessage.getSubject());
 				message.setText(outboundMessage.getBody());
 				Transport.send(message);
+				sent=true;
 				LOGGER.error("Sent email: {}", outboundMessage.toString());
 			} catch (MessagingException e) {
 				LOGGER.error("Failed to send email: {}", outboundMessage.toString(), e);
 			}
 		}
+		return sent;
 	}
 
 	public boolean send(String to, String subject, String body) {
@@ -147,6 +154,14 @@ public class EmailService extends AbstractCodeshelfExecutionThreadService {
 		}
 		if (!result) {
 			LOGGER.error("Failed to enqueue email: {}", message.toString());
+		}
+		return result;
+	}
+	
+	public boolean isEmailAddress(String input) {
+		boolean result;
+		synchronized(emailValidator) {
+			result = emailValidator.isValid(input);
 		}
 		return result;
 	}

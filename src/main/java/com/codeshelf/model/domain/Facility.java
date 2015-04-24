@@ -32,8 +32,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.NetGuid;
-import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
+import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.EdiProviderEnum;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.HeaderCounts;

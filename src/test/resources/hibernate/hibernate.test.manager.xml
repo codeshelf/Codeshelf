@@ -43,6 +43,8 @@
        	<mapping class="com.codeshelf.manager.User"/>
        	<mapping class="com.codeshelf.manager.UserRole"/>
        	<mapping class="com.codeshelf.manager.UserPermission"/>
-       		       		
+        <mapping class="com.codeshelf.manager.SecurityQuestion"/>
+        <mapping class="com.codeshelf.manager.SecurityAnswer"/>
+       		       		       		
     </session-factory>
 </hibernate-configuration>
