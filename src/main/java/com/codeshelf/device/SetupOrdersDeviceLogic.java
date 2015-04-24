@@ -1144,14 +1144,19 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	@Override
 	public void processResultOfVerifyBadge(Boolean verified) {
-		if (mCheStateEnum == CheStateEnum.VERIFYING_BADGE) {
+		if (mCheStateEnum.equals(CheStateEnum.VERIFYING_BADGE)) {
 			if (verified) {
 				clearAllPositionControllers();
 				setState(CheStateEnum.CONTAINER_SELECT);
+				notifyCheWorkerVerb("LOG IN", "");
 			} else {
 				setState(CheStateEnum.IDLE);
 				invalidScanMsg(UNKNOWN_BADGE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+				notifyCheWorkerVerb("LOG IN", "Credential Denied");
 			}
+		}
+		else {
+			LOGGER.error("unexpected verifyBadge response in state {}", mCheStateEnum);
 		}
 	}
 
@@ -1541,6 +1546,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (POSITION_PREFIX.equals(inScanPrefixStr)) {
 			if (mPositionToContainerMap.get(inScanStr) == null) {
 				mPositionToContainerMap.put(inScanStr, mContainerInSetup);
+
+				// This one is kind of funny. We go straight from scan badge to setup, or after setup command. We will choose as our event
+				// the first order association to poscon.
+				if (mPositionToContainerMap.values().size() == 1) {
+					String otherInformation = String.format("First order/container: %s", mContainerInSetup);
+					notifyCheWorkerVerb("SETUP STARTED", otherInformation);
+				}
 				mContainerInSetup = "";
 				setState(CheStateEnum.CONTAINER_SELECT);
 			} else {
@@ -1641,12 +1653,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (inWorkItemList == null || inWorkItemList.size() == 0) {
 			setState(CheStateEnum.NO_WORK);
 		} else {
+			WorkInstruction wi1 = inWorkItemList.get(0);
+			String otherInformation = String.format("First pick at %s", wi1.getPickInstruction());
 			for (WorkInstruction wi : inWorkItemList) {
-				LOGGER.debug("WI: Loc: " + wi.getLocationId() + " SKU: " + wi.getItemId() + " Instr: " + wi.getPickInstruction());
+				LOGGER.debug("WI: Loc: {}  SKU: {}  Instr: {}", wi.getLocationId(), wi.getItemId(), wi.getPickInstruction());
 			}
 			mActivePickWiList.clear();
 			mAllPicksWiList.clear();
 			mAllPicksWiList.addAll(inWorkItemList);
+
+			//  This is the best trigger for "start" on a path. But this also triggers for location change or reverse on a path.
+			notifyCheWorkerVerb("PATH STARTED", otherInformation);
+
 			doNextPick();
 			// doNextPick will set the state.
 		}
@@ -2054,6 +2072,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**
 	 */
 	protected void logout() {
+		notifyCheWorkerVerb("LOG OUT", "");
+
 		super.logout();
 		resetInventoryCommandAllowed();
 		mPositionToContainerMap.clear();
