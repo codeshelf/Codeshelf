@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.DomainObjectABC;
-import com.codeshelf.model.domain.Event;
+import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -41,7 +41,7 @@ public class NotificationService implements IApiService{
 				return;
 			}
 			
-			Event event = new Event();
+			WorkerEvent event = new WorkerEvent();
 			event.setFacility(device.getFacility());
 			event.setEventType(message.getEventType());
 			event.setDevicePersistentId(message.getDevicePersistentId().toString());
@@ -59,7 +59,7 @@ public class NotificationService implements IApiService{
 			}
 			
 			event.generateDomainId();
-			Event.staticGetDao().store(event);
+			WorkerEvent.staticGetDao().store(event);
 		} catch (Exception e) {
 			throw e;
 		} finally {

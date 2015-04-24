@@ -27,11 +27,13 @@ import org.hibernate.criterion.Restrictions;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.EndDateParam;
+import com.codeshelf.api.BaseResponse.EventTypeParam;
 import com.codeshelf.api.BaseResponse.StartDateParam;
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.HardwareRequest;
 import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
 import com.codeshelf.api.HardwareRequest.LightRequest;
+import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedInstrListMessage;
 import com.codeshelf.device.LedSample;
@@ -42,6 +44,7 @@ import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
+import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.OrderService;
@@ -53,6 +56,7 @@ import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 public class FacilityResource {
@@ -213,6 +217,40 @@ public class FacilityResource {
 		}
 	}
 
+	@GET
+	@Path("events")
+	@RequiresPermissions("event:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response searchEvents(
+		@QueryParam("type") EventTypeParam typeParam, 
+		@QueryParam("resolved") Boolean resolved ) {
+		ErrorResponse errors = new ErrorResponse();
+		try {
+			List<Criterion> filterParams = new ArrayList<Criterion>();
+			filterParams.add(Restrictions.eq("facility", facility));
+			if (typeParam != null && typeParam.getValue() != null) {
+				filterParams.add(Restrictions.eq("eventType", typeParam.getValue()));
+			}
+			//If "resolved" parameter not provided, return, both, resolved and unresolved events
+			if (resolved != null) {
+				if (resolved){
+					filterParams.add(Restrictions.isNotNull("resolution"));
+				} else {
+					filterParams.add(Restrictions.isNull("resolution"));
+				}
+			}
+			List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
+			List<EventDisplay> result = Lists.newArrayList();
+			for (WorkerEvent event : events) {
+				result.add(new EventDisplay(event));
+			}
+			return BaseResponse.buildResponse(result);
+		} catch (Exception e) {
+			errors.processException(e);
+			return errors.buildResponse();
+		}
+	}
+	
 	@PUT
 	@Path("hardware")
 	@RequiresPermissions("companion:view")

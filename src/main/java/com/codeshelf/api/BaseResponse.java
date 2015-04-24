@@ -13,6 +13,7 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.service.NotificationService.EventType;
 import com.codeshelf.util.DateTimeParser;
 
 public abstract class BaseResponse {
@@ -131,9 +132,18 @@ public abstract class BaseResponse {
 		protected Date parse(String param) { 
 			final DateTimeParser dateParser = new DateTimeParser();
 			return dateParser.parse(param, DateTimeParser.UnspecifiedTime.END_OF_DAY);
-		}
-		
+		}		
 	}
-
 	
+	public static class EventTypeParam extends AbstractParam<EventType> {
+
+		public EventTypeParam(String str) {
+			super(str);
+		}
+
+		@Override
+		protected EventType parse(String param) { 
+			return EventType.valueOf(param);
+		}		
+	}
 }

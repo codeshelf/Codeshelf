@@ -31,20 +31,24 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Event extends DomainObjectABC {
-	public static class EventDao extends GenericDaoABC<Event> implements ITypedDao<Event> {
-		public final Class<Event> getDaoClass() {
-			return Event.class;
+public class WorkerEvent extends DomainObjectABC {
+	public static class WorkerEventDao extends GenericDaoABC<WorkerEvent> implements ITypedDao<WorkerEvent> {
+		public final Class<WorkerEvent> getDaoClass() {
+			return WorkerEvent.class;
 		}
 	}
 	
-	public static ITypedDao<Event> staticGetDao() {
-		return TenantPersistenceService.getInstance().getDao(Event.class);
+	public static ITypedDao<WorkerEvent> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(WorkerEvent.class);
 	}
 
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Setter
 	private Facility						facility;
+	
+	@ManyToOne(optional = true, fetch = FetchType.LAZY)
+	@Getter @Setter
+	private Resolution						resolution;
 
 	@Column(nullable = false)
 	@Getter @Setter
@@ -75,14 +79,14 @@ public class Event extends DomainObjectABC {
 	@Column(nullable = true, name = "order_detail_persistentid")
 	@Type(type="com.codeshelf.persistence.DialectUUIDType")
 	@Getter @Setter
-	private UUID						orderDetailId;
+	private UUID							orderDetailId;
 
 	@Column(nullable = true, name = "work_instruction_persistentid")
 	@Type(type="com.codeshelf.persistence.DialectUUIDType")
 	@Getter @Setter
-	private UUID						workInstructionId;
+	private UUID							workInstructionId;
 
-	public Event() {
+	public WorkerEvent() {
 		setCreated(new Timestamp(System.currentTimeMillis()));
 	}
 	
@@ -93,7 +97,7 @@ public class Event extends DomainObjectABC {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public final ITypedDao<Event> getDao() {
+	public final ITypedDao<WorkerEvent> getDao() {
 		return staticGetDao();
 	}
 

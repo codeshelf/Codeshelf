@@ -38,6 +38,7 @@ Admin:
   - "light:*"
   - "inventory:edit"
   - "worker:*"
+  - "event:*"
 Configure:
   - "ws:login"
   - "ux:*" 
@@ -47,6 +48,7 @@ Configure:
   - "path:*"
   - "light:*"
   - "worker:*"
+  - "event:*"
 CsDeveloper:
   - "che:simulate"
 CsSupport:

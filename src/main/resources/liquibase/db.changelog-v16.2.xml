@@ -1,0 +1,37 @@
+<databaseChangeLog 
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog" 
+	logicalFilePath="db.changelog-v16.2.xml"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+    <changeSet author="ilya (generated)" id="1429899806399-6">
+        <createTable tableName="resolution">
+            <column name="persistentid" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="domainid" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="INT8">
+                <constraints nullable="false"/>
+            </column>
+            <column name="resolved_by" type="VARCHAR(255)"/>
+            <column name="timestamp" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="facility_persistentid" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="ilya (generated)" id="1429899806399-7">
+        <addColumn tableName="event_worker">
+            <column name="resolution_persistentid" type="UUID"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="ilya (generated)" id="1429899806399-8">
+        <addPrimaryKey columnNames="persistentid" constraintName="resolutionPK" tableName="resolution"/>
+        <addForeignKeyConstraint baseColumnNames="resolution_persistentid" baseTableName="event_worker" constraintName="FK_2t8cgggmyjp6riiggm0yx1a1b" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="resolution"/>
+        <addForeignKeyConstraint baseColumnNames="facility_persistentid" baseTableName="resolution" constraintName="FK_bb9lff46cc73cvblndjfqmkap" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="location"/>
+    </changeSet>
+</databaseChangeLog>
