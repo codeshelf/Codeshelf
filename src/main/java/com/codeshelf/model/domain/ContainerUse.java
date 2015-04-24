@@ -84,6 +84,12 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	@Setter
 	private Che					currentChe;
 
+	@Column(nullable = true, name = "poscon_index")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Integer			posconIndex = null;
+
 	@Column(nullable = false)
 	@Getter
 	@Setter
