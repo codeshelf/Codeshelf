@@ -1578,7 +1578,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case NO_CONTAINERS_SETUP:
 				//Do nothing. Only a "Clear Error" will get you out 
 				break;
-
+			case IDLE:
 			case VERIFYING_BADGE:
 				//Do nothing while still verifying badge
 				break;

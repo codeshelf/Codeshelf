@@ -16,6 +16,8 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -36,7 +38,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Worker extends DomainObjectABC implements Validatable{
-
+	private static final Logger				LOGGER				= LoggerFactory.getLogger(Worker.class);
+	
 	public static class WorkerDao extends GenericDaoABC<Worker> implements ITypedDao<Worker> {
 		public final Class<Worker> getDaoClass() {
 			return Worker.class;
@@ -176,7 +179,15 @@ public class Worker extends DomainObjectABC implements Validatable{
 			//Ignore provided Worker when needed
 			filterParams.add(Restrictions.ne("persistentId", skipWorker));
 		}
-		List<Worker> workers = staticGetDao().findByFilter(filterParams);
+		List<Worker> workers = null;
+		try {
+			workers = staticGetDao().findByFilter(filterParams);
+		} catch (Exception e) {
+			//Tracking down LOGIN error 
+			LOGGER.error("Worker lookup failed facility {}, badgeId {}", facility.getPersistentId(), badgeId);
+			e.printStackTrace();
+			throw e;
+		}
 		if (workers == null || workers.isEmpty()) {
 			return null;
 		}
