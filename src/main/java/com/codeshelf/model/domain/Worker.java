@@ -179,15 +179,7 @@ public class Worker extends DomainObjectABC implements Validatable{
 			//Ignore provided Worker when needed
 			filterParams.add(Restrictions.ne("persistentId", skipWorker));
 		}
-		List<Worker> workers = null;
-		try {
-			workers = staticGetDao().findByFilter(filterParams);
-		} catch (Exception e) {
-			//Tracking down LOGIN error 
-			LOGGER.error("Worker lookup failed facility {}, badgeId {}", facility.getPersistentId(), badgeId);
-			e.printStackTrace();
-			throw e;
-		}
+		List<Worker> workers = staticGetDao().findByFilter(filterParams);
 		if (workers == null || workers.isEmpty()) {
 			return null;
 		}

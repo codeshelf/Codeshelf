@@ -1144,7 +1144,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	@Override
 	public void processResultOfVerifyBadge(Boolean verified) {
-		if (mCheStateEnum.equals(CheStateEnum.VERIFYING_BADGE)) {
+		if (mCheStateEnum.equals(CheStateEnum.VERIFYING_BADGE) || mCheStateEnum.equals(CheStateEnum.IDLE)) {
 			if (verified) {
 				clearAllPosconsOnThisDevice();
 				setState(CheStateEnum.CONTAINER_SELECT);
