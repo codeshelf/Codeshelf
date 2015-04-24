@@ -6,7 +6,6 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.integration.PickSimulator;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.protocol.request.VerifyBadgeRequest;
