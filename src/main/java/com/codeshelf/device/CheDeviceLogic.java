@@ -1133,7 +1133,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	protected void setupChe() {
 		clearAllPosconsOnThisDevice();
-		clearAllPosconsOnThisDevice();
 		setState(CheStateEnum.CONTAINER_SELECT);
 	}
 
