@@ -1143,7 +1143,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	@Override
 	public void processResultOfVerifyBadge(Boolean verified) {
-		if (mCheStateEnum == CheStateEnum.VERIFYING_BADGE) {
+		if (mCheStateEnum.equals(CheStateEnum.VERIFYING_BADGE)) {
 			if (verified) {
 				clearAllPositionControllers();
 				setState(CheStateEnum.CONTAINER_SELECT);
@@ -1153,6 +1153,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				invalidScanMsg(UNKNOWN_BADGE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
 				notifyCheWorkerVerb("LOG IN", "Credential Denied");
 			}
+		}
+		else {
+			LOGGER.error("unexpected verifyBadge response in state {}", mCheStateEnum);
 		}
 	}
 
