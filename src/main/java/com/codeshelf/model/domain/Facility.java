@@ -369,11 +369,10 @@ public class Facility extends Location {
 			LOGGER.warn("Multiple site controllers found but expected no more than one for facility: {}", this);
 		} 
 		LinkedList<SiteController> list = new LinkedList<>(siteControllers);
-		SiteController first = list.getFirst();
-		if (first != null) {
-			return first.getDomainId();
-		} else {
+		if(list.isEmpty()) {
 			return null;
+		} else {
+			return list.getFirst().getDomainId();
 		}
 	}
 

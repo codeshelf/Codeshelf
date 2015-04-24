@@ -66,7 +66,7 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 
 	public final void removeAllPosConInstrsAndSend() {
 		mPosInstructionBySource.clear();
-		clearAllPositionControllers();
+		clearAllPosconsOnThisDevice();
 	}
 
 	/**
@@ -219,7 +219,7 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 
 	public final void updatePosCons(boolean updateUnassociated) {
 		// This likely needs to be made much more efficient.
-		clearAllPositionControllers();
+		clearAllPosconsOnThisDevice();
 
 		// Add in all active work instructions. Modeled from mPosInstructionBySource
 		Map<Byte, PosControllerInstr> latestInstructionsForPosition = new HashMap<Byte, PosControllerInstr>();

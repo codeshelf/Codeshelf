@@ -1115,7 +1115,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.info("User logut");
 		// Clear all of the container IDs we were tracking.
 		this.setUserId("");
-		clearAllPositionControllers();
+		clearAllPosconsOnThisDevice();
 		mActivePickWiList.clear();
 		mAllPicksWiList.clear();
 		setState(CheStateEnum.IDLE);
@@ -1125,15 +1125,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		//Clear PosConControllers
 		forceClearAllPosConControllersForThisCheDevice();
 
-		clearAllPositionControllers();
+		clearAllPosconsOnThisDevice();
 	}
 
 	/**
 	 * Setup the CHE by clearing all the data structures
 	 */
 	protected void setupChe() {
-		clearAllPositionControllers();
-		clearAllPositionControllers();
+		clearAllPosconsOnThisDevice();
 		setState(CheStateEnum.CONTAINER_SELECT);
 	}
 
@@ -1816,7 +1815,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			String errorStr = verifyWiField(wi, inScanStr);
 			if (errorStr.isEmpty()) {
 				// clear usually not needed. Only after correcting a bad scan
-				clearAllPositionControllers();
+				clearAllPosconsOnThisDevice();
 				setState(CheStateEnum.DO_PICK);
 
 			} else {

@@ -347,7 +347,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 				//Legacy Behavior
 				if (mCheStateEnum != CheStateEnum.SHORT_PICK_CONFIRM) {
-					clearAllPositionControllers();
+					clearAllPosconsOnThisDevice();
 				}
 				break;
 		}
@@ -444,7 +444,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CONTAINER_POSITION_INVALID:
 			case CONTAINER_SELECTION_INVALID:
 			case NO_CONTAINERS_SETUP:
-				clearAllPositionControllers();
+				clearAllPosconsOnThisDevice();
 				setState(CheStateEnum.CONTAINER_SELECT);
 				break;
 			case SCAN_GTIN:
@@ -489,7 +489,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			default:
 				//Reset ourselves
 				//Ideally we shouldn't have to clear poscons here
-				clearAllPositionControllers();
+				clearAllPosconsOnThisDevice();
 				setState(mCheStateEnum);
 				break;
 
@@ -1022,7 +1022,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (currentAssignment != 0) {
 				// careful: 0 also equals PosControllerInstr.POSITION_ALL
 				clearContainerAssignmentAtIndex(currentAssignment);
-				this.clearOnePositionController(currentAssignment);
+				this.clearOnePosconOnThisDevice(currentAssignment);
 			}
 
 			setState(CheStateEnum.CONTAINER_POSITION);
@@ -1132,7 +1132,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private void processIdleStateScan(final String inScanPrefixStr, final String inScanStr) {
 
 		if (USER_PREFIX.equals(inScanPrefixStr) || "".equals(inScanPrefixStr) || inScanPrefixStr == null) {
-			clearAllPositionControllers();
+			clearAllPosconsOnThisDevice();
 			this.setUserId(inScanStr);
 			mDeviceManager.verifyBadge(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
 			setState(CheStateEnum.VERIFYING_BADGE);
@@ -1146,7 +1146,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	public void processResultOfVerifyBadge(Boolean verified) {
 		if (mCheStateEnum.equals(CheStateEnum.VERIFYING_BADGE)) {
 			if (verified) {
-				clearAllPositionControllers();
+				clearAllPosconsOnThisDevice();
 				setState(CheStateEnum.CONTAINER_SELECT);
 				notifyCheWorkerVerb("LOG IN", "");
 			} else {
@@ -1167,7 +1167,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * @param inLocationStr
 	 */
 	private void requestWorkAndSetGetWorkState(final String inLocationStr, final Boolean reverseOrderFromLastTime) {
-		clearAllPositionControllers();
+		clearAllPosconsOnThisDevice();
 		this.mLocationId = inLocationStr;
 		Map<String, String> positionToContainerMapCopy = new HashMap<String, String>(mPositionToContainerMap);
 
@@ -1534,7 +1534,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (!instructions.isEmpty()) {
 			sendPositionControllerInstructions(instructions);
 		} else if (specificPositionCalled) {
-			clearOnePositionController(inPosition);
+			clearOnePosconOnThisDevice(inPosition);
 		}
 	}
 
@@ -1634,7 +1634,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private void startWork(final String inScanedPickDirections) {
 		boolean isReverse = inScanedPickDirections.equals(REVERSE_COMMAND);
 
-		clearAllPositionControllers();
+		clearAllPosconsOnThisDevice();
 		mContainerInSetup = "";
 		//Duplicate map to avoid later changes
 		Map<String, String> positionToContainerMapCopy = new HashMap<String, String>(mPositionToContainerMap);
@@ -1852,7 +1852,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		for (WorkInstruction wi : this.getActivePickWiList()) {
 			byte position = getPosconIndexOfWi(wi);
 			if (position != 0)
-				clearOnePositionController(position);
+				clearOnePosconOnThisDevice(position);
 		}
 
 		// Then the inherited shorts part is the same

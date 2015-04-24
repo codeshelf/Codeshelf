@@ -156,7 +156,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	public void processResultOfVerifyBadge(Boolean verified) {
 		if (mCheStateEnum == CheStateEnum.VERIFYING_BADGE) {
 			if (verified) {
-				clearAllPositionControllers();
+				clearAllPosconsOnThisDevice();
 				setState(CheStateEnum.READY);
 			} else {
 				setState(CheStateEnum.IDLE);
@@ -304,7 +304,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 */
 	@Override
 	protected void clearErrorCommandReceived() {
-		clearAllPositionControllers();
+		clearAllPosconsOnThisDevice();
 		// needs implementation
 		CheStateEnum currentState = getCheStateEnum();
 		switch (currentState) {
