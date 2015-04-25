@@ -2072,13 +2072,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**
 	 */
 	protected void logout() {
-		notifyCheWorkerVerb("LOG OUT", "");
-
-		super.logout();
+		super.logout(); // this calls the notifyXXX
 		resetInventoryCommandAllowed();
+		mContainerInSetup = "";
+		
+		/* DEV-775 No longer clear CHE setup state on logout
 		mPositionToContainerMap.clear();
 		mContainerToWorkInstructionCountMap = null;
-		mContainerInSetup = "";
+		*/
 	}
 
 	/**

@@ -682,7 +682,12 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		clearLastLedControllerGuids(); // Setting the state that we have nothing more to clear for this CHE.		
 	}
 
-	private void forceClearAllPosConControllersForThisCheDevice() {
+	// --------------------------------------------------------------------------
+	/**
+	 * Clear poscons controlled by other devices set by original request from this device.
+	 * This does nothing for this CHE's own poscons.
+	 */
+	private void forceClearOtherPosConControllersForThisCheDevice() {
 		List<PosManagerDeviceLogic> controllers = mDeviceManager.getPosConControllers();
 		for (PosManagerDeviceLogic controller : controllers) {
 			controller.removePosConInstrsForSource(getGuid());
@@ -1112,20 +1117,18 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	/**
 	 */
 	protected void logout() {
-		LOGGER.info("User logut");
-		// Clear all of the container IDs we were tracking.
-		this.setUserId("");
-		clearAllPosconsOnThisDevice();
+		notifyCheWorkerVerb("LOG OUT", "");
+
+		this.setUserId("");		
 		mActivePickWiList.clear();
-		mAllPicksWiList.clear();
+		mAllPicksWiList.clear();		
 		setState(CheStateEnum.IDLE);
 
+		clearAllPosconsOnThisDevice();
 		forceClearAllLedsForThisCheDevice();
 
-		//Clear PosConControllers
-		forceClearAllPosConControllersForThisCheDevice();
-
-		clearAllPosconsOnThisDevice();
+		//Clear PosConControllers. (Put walls showing order feedback.)
+		forceClearOtherPosConControllersForThisCheDevice();
 	}
 
 	/**
@@ -1210,7 +1213,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		ledControllerClearLeds(); // this checks getLastLedControllerGuid(), and bails if null.
 
 		//Clear PosConControllers
-		forceClearAllPosConControllersForThisCheDevice();
+		forceClearOtherPosConControllersForThisCheDevice();
 
 		// CD_0041 is there a need for this?
 		ledControllerShowLeds(getGuid());
@@ -1274,7 +1277,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 
 		//Clear PutWall PosCons
-		forceClearAllPosConControllersForThisCheDevice();
+		forceClearOtherPosConControllersForThisCheDevice();
 	}
 
 	// --------------------------------------------------------------------------
@@ -1585,7 +1588,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			// Tell aisle controller(s) what to light next
 			lightWiLocations(firstWi);
 
-			forceClearAllPosConControllersForThisCheDevice();
+			forceClearOtherPosConControllersForThisCheDevice();
 			lightWiPosConLocations(firstWi);
 
 			// This can be elaborate. For setup_Orders work mode, as poscons complete their work, they show their status.
