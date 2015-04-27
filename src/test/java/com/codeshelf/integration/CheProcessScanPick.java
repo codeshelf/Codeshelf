@@ -286,7 +286,7 @@ public class CheProcessScanPick extends ServerTest {
 		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 	
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.loginAndSetup("Picker #1");
 		
 		LOGGER.info("1b: Scan INVENTORY command");
 		picker.scanCommand("INVENTORY");
@@ -396,7 +396,7 @@ public class CheProcessScanPick extends ServerTest {
 		picker.waitForCheState(CheStateEnum.IDLE, 1000);
 		
 		LOGGER.info("1a: login, should go to READY state");
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.loginAndSetup("Picker #1");
 		
 		LOGGER.info("1b: scan X%INVENTORY, should go to SCAN_GTIN state");
 		picker.scanCommand("INVENTORY");
@@ -488,7 +488,7 @@ public class CheProcessScanPick extends ServerTest {
 		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("1b: setup two orders on the cart. Several of the details have unmodelled preferred locations");
 		picker.setupContainer("12345", "1");
@@ -583,7 +583,7 @@ public class CheProcessScanPick extends ServerTest {
 		picker.forceDeviceToMatchManagerConfiguration();
 		Assert.assertEquals("SKU", picker.getCheDeviceLogic().getScanVerificationType());
 
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("1b: setup two orders on the cart. Several of the details have unmodelled preferred locations");
 		picker.setupContainer("12345", "1");
@@ -639,7 +639,7 @@ public class CheProcessScanPick extends ServerTest {
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 
 		LOGGER.info("2a: setup same two orders on the cart. Start. Location. Brings to SCAN_SOMETHING state");
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.loginAndSetup("Picker #1");
 		picker.setupContainer("12345", "1");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 		picker.setupContainer("11111", "2");
@@ -659,7 +659,7 @@ public class CheProcessScanPick extends ServerTest {
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 
 		LOGGER.info("3a: setup same two orders again. Start. Location. Brings to SCAN_SOMETHING state");
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.loginAndSetup("Picker #1");
 		picker.setupContainer("12345", "1");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 		picker.setupContainer("11111", "2");
@@ -686,7 +686,7 @@ public class CheProcessScanPick extends ServerTest {
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 
 		LOGGER.info("4a: setup same two orders again. Start. Location. Brings to SCAN_SOMETHING state");
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.loginAndSetup("Picker #1");
 		picker.setupContainer("12345", "1");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 		picker.setupContainer("11111", "2");
@@ -716,7 +716,7 @@ public class CheProcessScanPick extends ServerTest {
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 
 		LOGGER.info("5a: setup again. Just to see that we can logout from SCAN_SOMETHING_SHORT state");
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.loginAndSetup("Picker #1");
 		picker.setupContainer("11111", "2");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 		picker.scanCommand("START");
@@ -733,7 +733,7 @@ public class CheProcessScanPick extends ServerTest {
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 
 		LOGGER.info("6a: setup again. Checking if scanskip works");
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.loginAndSetup("Picker #1");
 		picker.setupContainer("11111", "2");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 		picker.scanCommand("START");
@@ -783,7 +783,7 @@ public class CheProcessScanPick extends ServerTest {
 		Assert.assertEquals("SKU", picker.getCheDeviceLogic().getScanVerificationType());
 
 		LOGGER.info("1b: setup two orders on the cart. Start. Location. Brings to SCAN_SOMETHING state");
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.loginAndSetup("Picker #1");
 		picker.setupContainer("12345", "1");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 		picker.setupContainer("11111", "2");
@@ -845,7 +845,7 @@ public class CheProcessScanPick extends ServerTest {
 		Assert.assertEquals(WorkInstructionSequencerType.WorkSequence.toString(), manager.getSequenceKind());
 		picker.forceDeviceToMatchManagerConfiguration();
 
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("1b: setup two orders on the cart. Several of the details have unmodelled preferred locations");
 		picker.setupContainer("12345", "1");
@@ -874,7 +874,7 @@ public class CheProcessScanPick extends ServerTest {
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.loginAndSetup("Picker #1");
 
 		picker.setupContainer("456", "2");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
@@ -981,7 +981,7 @@ public class CheProcessScanPick extends ServerTest {
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
 
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("1b: setup two orders on the cart. Several of the details have unmodelled preferred locations");
 		picker.setupContainer("12345", "1");
@@ -1012,7 +1012,7 @@ public class CheProcessScanPick extends ServerTest {
 		this.setUpOrdersWithCntrAndSequence(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("2b: setup two orders on the cart. Several of the details have unmodelled preferred locations");
 		picker.setupContainer("12345", "1");
@@ -1090,7 +1090,7 @@ public class CheProcessScanPick extends ServerTest {
 		this.startSiteController(); // after all the parameter changes
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("1b: setup two orders on the cart. Several of the details have unmodelled preferred locations");
 		picker.setupContainer("12345", "1");
