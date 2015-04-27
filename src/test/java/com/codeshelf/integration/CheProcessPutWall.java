@@ -36,7 +36,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 
 		LOGGER.info("1: prove ORDER_WALL and clear works from start and finish, but not after setup or during pick");
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 		picker.scanCommand("ORDER_WALL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker.scanCommand("CLEAR");
@@ -118,7 +118,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		PickSimulator picker1 = new PickSimulator(this, cheGuid1);
 
 		LOGGER.info("1: Just set up some orders to the put wall. Intentionally choose order with inventory location in the slow mover area.");
-		picker1.login("Picker #1");
+		picker1.loginAndSetup("Picker #1");
 		picker1.scanCommand("ORDER_WALL");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanSomething("11114");
@@ -152,7 +152,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		this.getTenantPersistenceService().commitTransaction();
 
 		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
-		picker2.login("Picker #2");
+		picker2.loginAndSetup("Picker #2");
 		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker2.setupOrderIdAsContainer("WALL1", "1");
 		picker2.setupOrderIdAsContainer("WALL2", "2");
@@ -193,7 +193,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 
 		LOGGER.info("1: prove PUT_WALL and clear works from start and finish, but not after setup or during pick");
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 		picker.scanCommand("PUT_WALL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
 		picker.scanCommand("CLEAR");
@@ -282,7 +282,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 		LOGGER.info("1: Just set up some orders for the put wall");
 		LOGGER.info(" : P14 is in WALL1. P15 and P16 are in WALL2. Set up slow mover CHE for that SKU pick");
-		picker1.login("Picker #1");
+		picker1.loginAndSetup("Picker #1");
 		picker1.scanCommand("ORDER_WALL");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanSomething("11118");
@@ -419,7 +419,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		theDevice.testOffChePosconWorkInstructions();
 
 		LOGGER.info("1a: set up a one-pick order");
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 		picker.setupContainer("11117", "4");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker.scanCommand("START");
@@ -470,7 +470,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 		LOGGER.info("1: Set up some orders for the put wall before doing any picks");
 		LOGGER.info(" : P12 is in WALL1. P15 and P16 are in WALL2.");
-		picker1.login("Picker #1");
+		picker1.loginAndSetup("Picker #1");
 		picker1.scanCommand("ORDER_WALL");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanSomething("11117");
@@ -542,7 +542,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 		LOGGER.info("1: Just set up some orders for the put wall");
 		LOGGER.info(" : P14 is in WALL1. P15 and P16 are in WALL2. We will skip the slow mover SKU pick for this.");
-		picker1.login("Picker #1");
+		picker1.loginAndSetup("Picker #1");
 		picker1.scanCommand("ORDER_WALL");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanSomething("11118");
@@ -700,7 +700,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 		LOGGER.info("1: Just set up some orders for the put wall");
 		LOGGER.info(" : P14 is in WALL1. P15 and P16 are in WALL2. We will skip the slow mover SKU pick for this.");
-		picker1.login("Picker #1");
+		picker1.loginAndSetup("Picker #1");
 		picker1.scanCommand("ORDER_WALL");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanSomething("11118");
@@ -819,7 +819,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 		LOGGER.info("1: Just set up some orders for the put wall");
 		LOGGER.info(" : P14 is in WALL1. P15 and P16 are in WALL2. We will skip the slow mover SKU pick for this.");
-		picker1.login("Picker #1");
+		picker1.loginAndSetup("Picker #1");
 		picker1.scanCommand("ORDER_WALL");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanSomething("11118");
@@ -898,7 +898,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		LOGGER.info("1a: set up 11117 as our one-pick order. Also 11119 just to complete one");
 		// Re-START on the completed 11119 job tests some subtle things. Server does not send it back in feedback as "oc",
 		// but we interpret it as "oc".
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 		picker.setupContainer("11117", "4");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker.setupContainer("11119", "6");

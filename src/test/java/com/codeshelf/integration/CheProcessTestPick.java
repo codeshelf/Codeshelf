@@ -341,7 +341,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("1", "1");
 		picker.setupOrderIdAsContainer("2", "2");
 		picker.setupOrderIdAsContainer("3", "3");
@@ -407,7 +407,7 @@ public class CheProcessTestPick extends ServerTest {
 		// Start setting up cart etc
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("1", "1");
 		picker.setupOrderIdAsContainer("2", "2");
 		picker.setupOrderIdAsContainer("3", "3");
@@ -652,7 +652,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		// Set up a cart for order 12345, which will generate work instructions
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 		picker.setupContainer("12345", "1");
 		picker.startAndSkipReview("D403", 8000, 5000);
 
@@ -720,7 +720,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 
 		// This brief case covers and allows retirement of CheSimulationTest.java
 		LOGGER.info("Case 1: If no work, immediately comes to NO_WORK after start. (Before v6, it came to all work complete.)");
@@ -972,7 +972,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("Case 1: Scan on near the end of the route. Only 3 of 7 jobs left. (There are 3 housekeeping). So, with route-wrap, 10 jobs");
 
@@ -1049,7 +1049,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("Case 1: Scan ");
 		// The case is to set up batch containers 2,3,7,11. Start location D-26 is ok (no wrap). Start location D-76 has a wrap.
@@ -1130,7 +1130,7 @@ public class CheProcessTestPick extends ServerTest {
 		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we found the bug with it on.
 
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("Set up first CHE ");
 		// The case is to set up batch containers 2,3,7,11. Start location D-26 is ok (no wrap). Start location D-76 has a wrap.
@@ -1154,7 +1154,7 @@ public class CheProcessTestPick extends ServerTest {
 		// This is the DEV-592 bug. Our hibernate parent-childe patterns says we cannot add WI to one CHE without first removing from the other.
 
 		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
-		picker2.login("Picker #2");
+		picker2.loginAndSetup("Picker #2");
 
 		picker2.setupContainer("2", "4");
 		picker2.setupContainer("3", "5");
@@ -1239,7 +1239,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("a6", "6");
 
 		//Check that container show last 2 digits of container id
@@ -1271,7 +1271,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		//Reset Picker
 		picker.logout();
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("Continue setting up containers with bad counts");
 		picker.setupOrderIdAsContainer("a1111", "1");
@@ -1418,7 +1418,7 @@ public class CheProcessTestPick extends ServerTest {
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 
 		//SETUP
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("1", "1");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
@@ -1434,7 +1434,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		//SETUP AGAIN
 		picker.logout();
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("1", "1");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
@@ -1455,7 +1455,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		//SETUP AGAIN
 		picker.logout();
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("1", "1");
 		picker.scanCommand("START");
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
@@ -1488,7 +1488,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.startSiteController();
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("11111", "1");
 		picker.setupOrderIdAsContainer("44444", "4");
 		picker.startAndSkipReview("D301", 3000, 3000);
@@ -1559,7 +1559,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("11111", "1");
 		picker.setupOrderIdAsContainer("22222", "2");
 		picker.setupOrderIdAsContainer("33333", "3"); //missing order id
@@ -1794,7 +1794,7 @@ public class CheProcessTestPick extends ServerTest {
 		// Start setting up cart etc
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("11111", "1");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
 
@@ -1859,7 +1859,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 
 		//CASE 1: Scan 2 containers in a row
 		picker.setupOrderIdAsContainer("11111", "1");
@@ -1882,7 +1882,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		//Reset
 		picker.logout();
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 
 		//CASE 2: Scan 2 positions in a row
 		picker.setupOrderIdAsContainer("11111", "1");
@@ -2037,7 +2037,7 @@ public class CheProcessTestPick extends ServerTest {
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 
 		LOGGER.info("1b: setup two orders, that will have 3 work instructions. The first two are same SKU/Location so should be done as simultaneous WI ");
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("11111", "1");
 		picker.setupOrderIdAsContainer("44444", "2");
 		picker.setupOrderIdAsContainer("22222", "3");
@@ -2190,7 +2190,7 @@ public class CheProcessTestPick extends ServerTest {
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 
 		LOGGER.info("1b: setup two orders, that will have 3 work instructions. The first two are same SKU/Location so should be done as simultaneous WI ");
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("11111", "1");
 		picker.setupOrderIdAsContainer("44444", "2");
 		picker.setupOrderIdAsContainer("22222", "3");
@@ -2341,7 +2341,7 @@ public class CheProcessTestPick extends ServerTest {
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
 
 		LOGGER.info("2: assign two identical two-item orders to containers on the CHE");
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("7", "1");
 		picker.setupOrderIdAsContainer("8", "2");
 		

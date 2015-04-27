@@ -34,14 +34,16 @@ public class PickSimulator {
 		Assert.assertNotNull(cheDeviceLogic);
 	}
 
-	public void login(String pickerId) {
-		// This is the original "scan badge" scan for setuporders process that assumes transition to Container_Select state.
+	public void loginAndSetup(String pickerId) {
+		// From v16, login goes to SETUP_PREVIEW state. Then explicit SETUP scan goes to CONTAINER_SELECT
+		// preparing for that change
 		cheDeviceLogic.scanCommandReceived("U%" + pickerId);
+		// SETUP_PREVIEW state, then scan command SETUP
 		waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
 	}
 
 	public void loginAndCheckState(String pickerId, CheStateEnum inState) {
-		// This is the "scan badge" scan
+		// This only does the login ("scan badge" scan). Especially in Line_Scan process, this is used in tests rather than loginAndSetup.
 		cheDeviceLogic.scanCommandReceived("U%" + pickerId);
 		// badge authorization now takes longer. Trip to server and back
 		waitForCheState(inState, 4000);

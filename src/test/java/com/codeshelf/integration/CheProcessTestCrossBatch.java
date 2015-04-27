@@ -232,7 +232,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("Case 1: A happy-day startup. No housekeeping jobs. Two from one container.");
 
@@ -294,7 +294,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		Assert.assertNotNull(facility);
 
 		PickSimulator picker = new PickSimulator(this, cheGuid1);
-		picker.login("Picker #1");
+		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("Case 1: Startup. Container 11 will have 2 jobs. We can short one, and see the other short ahead. Container 15 has one job.");
 		LOGGER.info("                  Containers 16-19 do 4 situations that might cause immediate short. They do not. ");

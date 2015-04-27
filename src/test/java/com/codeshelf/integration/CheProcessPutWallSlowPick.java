@@ -30,7 +30,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		PickSimulator picker1 = new PickSimulator(this, cheGuid1);
 
 		LOGGER.info("1: Just set up some orders to the put wall. Intentionally choose order with inventory location in the slow mover area.");
-		picker1.login("Picker #1");
+		picker1.loginAndSetup("Picker #1");
 		String ordersAndPositions[][] = {{"11114", "L%P14"},{"11115", "L%P15"},{"11116", "L%P16"}};
 		assignOrdersToPutWall(picker1, ordersAndPositions);
  
@@ -68,7 +68,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 	public final void slowMoverCombineOrders() {
 		// This is for DEV-711
 		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
-		picker2.login("Picker #2");
+		picker2.loginAndSetup("Picker #2");
 		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker2.setupOrderIdAsContainer("WALL1", "1");
 		picker2.setupOrderIdAsContainer("WALL2", "2");
@@ -101,7 +101,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		// For DEV-762 allow L%WALL1 scan, instead of WALL1.  For PUT_WALL process we require the L% form.
 		LOGGER.info("1: Set up identically to slowMoverCombineOrders, but use L%WALL1 and L%WALL2");
 		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
-		picker2.login("Picker #2");
+		picker2.loginAndSetup("Picker #2");
 		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		// spell it out in detail once so we see what is going on.
 		picker2.scanSomething("L%WALL1");
@@ -158,7 +158,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		assignOrdersToPutWall(picker1, ordersAndPositions);
 		
 		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
-		picker2.login("Picker #2");
+		picker2.loginAndSetup("Picker #2");
 		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker2.setupOrderIdAsContainer("WALL2", "1");
 		
@@ -173,7 +173,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 	@Test
 	public final void slowMoverBadWallName() {
 		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
-		picker2.login("Picker #2");
+		picker2.loginAndSetup("Picker #2");
 		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker2.setupOrderIdAsContainer("Bad Wall Name", "1");
 		
@@ -192,7 +192,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 	@Test
 	public final void slowMoverBadAndGoodWallNames() {
 		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
-		picker2.login("Picker #2");
+		picker2.loginAndSetup("Picker #2");
 		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		
 		picker2.setupOrderIdAsContainer("WALL1", "1");
@@ -220,7 +220,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 	@Test
 	public final void slowMoverOrderAndWallMix() throws IOException {
 		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
-		picker2.login("Picker #2");
+		picker2.loginAndSetup("Picker #2");
 		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker2.setupOrderIdAsContainer("12345", "1");
 		picker2.setupOrderIdAsContainer("WALL2", "2");
@@ -244,7 +244,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 	@Test
 	public final void slowMoverFreeOrders() throws IOException {
 		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
-		picker2.login("Picker #2");
+		picker2.loginAndSetup("Picker #2");
 		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker2.setupOrderIdAsContainer("11111", "1");
 		picker2.setupOrderIdAsContainer("11112", "2");
