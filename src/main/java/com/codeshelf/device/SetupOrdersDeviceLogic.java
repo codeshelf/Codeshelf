@@ -133,7 +133,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 
 				case SETUP_SUMMARY:
-					sendPreviewScreen();
+					sendSummaryScreen();
 					break;
 
 				case COMPUTE_WORK:
@@ -1492,8 +1492,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	/**
 	 * Show status for this setup in our restrictive 4 x 20 manner.
+	 * Trying to align the counts, allow for 3 digit counts.
 	 */
-	private void sendPreviewScreen() {
+	private void sendSummaryScreen() {
 		String orderCountStr = Integer.toString(getCountOfSetupOrderContainers());
 		orderCountStr = StringUtils.leftPad(orderCountStr, 3);
 		String locStr = getLocationId(); // this might be null the very first time.
@@ -1501,7 +1502,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (locStr == null) {
 			line1 = String.format("%s orders ", orderCountStr);
 		} else {
-			line1 = String.format("%s orders at %s", orderCountStr, locStr);
+			locStr = StringUtils.leftPad(locStr, 9); // Always right justifying the location
+			line1 = String.format("%s orders %s", orderCountStr, locStr);
 		}
 
 		int pickCount = getCountOfGoodJobsOnSetupPath();
@@ -1513,7 +1515,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (otherCount > 0) {
 			String otherCountStr = Integer.toString(otherCount);
 			otherCountStr = StringUtils.leftPad(otherCountStr, 3);
-			line2 = String.format("%s picks, %s other", pickCountStr, otherCountStr);
+			line2 = String.format("%s picks  %s other", pickCountStr, otherCountStr);
 		} else {
 			line2 = String.format("%s picks", pickCountStr);
 		}
@@ -1526,16 +1528,20 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (shortCount > 0) {
 			String shortCountStr = Integer.toString(shortCount);
 			shortCountStr = StringUtils.leftPad(shortCountStr, 3);
-			line3 = String.format("%s done,  %s short", doneCountStr, shortCountStr);
+			line3 = String.format("%s done   %s short", doneCountStr, shortCountStr);
 		} else {
 			line3 = String.format("%s done", doneCountStr);
 		}
 
 		// Try to be a little clever and context sensitive here
 		String line4;
-		if (pickCount == 0)
-			line4 = "Scan SETUP";
-		else
+		if (pickCount == 0 && otherCount == 0 && shortCount == 0)
+			line4 = "SETUP"; // START provide no useful functionality
+		else if (pickCount == 0 && otherCount > 0)
+			line4 = "START (other path)"; // Or setup to nuke the cart. Not enough space
+		else if (pickCount == 0)
+			line4 = "SETUP (or START)"; // you might start again to redo any shorts
+		else // pickcount > 0. Usually just want to start
 			line4 = "START (or SETUP)";
 		this.sendDisplayCommand(line1, line2, line3, line4);
 
