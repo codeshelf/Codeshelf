@@ -39,8 +39,8 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.testframework.ServerTest;
 
 /**
- *
- *
+ * DELETING THIS ENTIRE FILE. JR.
+ * Hard to maintain is it does not do things the right way necessarily.
  */
 public class CrossBatchRunTest extends ServerTest {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CrossBatchRunTest.class);
