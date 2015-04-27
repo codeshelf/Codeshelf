@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
+import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionStatusEnum;
@@ -20,17 +21,18 @@ import com.codeshelf.testframework.IntegrationTest;
 
 public class PickSimulator {
 
-	IntegrationTest				test;
-
 	@Getter
 	CheDeviceLogic				cheDeviceLogic;
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PickSimulator.class);
 
 	public PickSimulator(IntegrationTest test, NetGuid cheGuid) {
-		this.test = test;
+		this(test.getDeviceManager(), cheGuid);
+	}
+	
+	public PickSimulator(CsDeviceManager deviceManager, NetGuid cheGuid) {
 		// verify that che is in site controller's device list
-		cheDeviceLogic = (CheDeviceLogic) test.getDeviceManager().getDeviceByGuid(cheGuid);
+		cheDeviceLogic = (CheDeviceLogic) deviceManager.getDeviceByGuid(cheGuid);
 		Assert.assertNotNull(cheDeviceLogic);
 	}
 
