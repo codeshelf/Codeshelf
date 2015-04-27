@@ -82,7 +82,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Setter
 	CheStateEnum								mRememberStateEnteringWallState	= CheStateEnum.CONTAINER_SELECT;
 
-	private final boolean						usePreviewState					= false;
+	private final boolean						useSummaryState					= false;
 
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -99,6 +99,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			mLocationId = che.getLastScannedLocation();
 		}
 
+	}
+
+	public boolean usesSummaryState() {
+		return useSummaryState;
 	}
 
 	public String getDeviceType() {
@@ -1162,7 +1166,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (verified) {
 				clearAllPosconsOnThisDevice();
 
-				if (usePreviewState) // for now, to make code refactoring easier.
+				if (useSummaryState) // for now, to make code refactoring easier.
 					setState(CheStateEnum.SETUP_SUMMARY);
 				else
 					setState(CheStateEnum.CONTAINER_SELECT);
@@ -1541,7 +1545,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			line4 = "START (other path)"; // Or setup to nuke the cart. Not enough space
 		else if (pickCount == 0)
 			line4 = "SETUP (or START)"; // you might start again to redo any shorts
-		else // pickcount > 0. Usually just want to start
+		else
+			// pickcount > 0. Usually just want to start
 			line4 = "START (or SETUP)";
 		this.sendDisplayCommand(line1, line2, line3, line4);
 
