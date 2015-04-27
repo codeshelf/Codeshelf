@@ -66,12 +66,16 @@ public class CheDeviceLogicTest extends MockDaoTest {
 
 		IRadioController radioController = mock(IRadioController.class);
 		CsDeviceManager deviceManager = new CsDeviceManager(radioController, mock(CsClientEndpoint.class));
-		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), deviceManager, radioController);
+		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(),
+			new NetGuid("0xABC"),
+			deviceManager,
+			radioController,
+			null);
 		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
 		cheDeviceLogic.startDevice();
 
 		cheDeviceLogic.scanCommandReceived("U%PICKER1");
-		
+
 		cheDeviceLogic.processResultOfVerifyBadge(true);
 
 		cheDeviceLogic.scanCommandReceived("C%" + containerId);
@@ -79,8 +83,8 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		cheDeviceLogic.scanCommandReceived("P%" + posconPosition);
 
 		cheDeviceLogic.scanCommandReceived("X%START");
-		WorkInstructionCount wiCount = new WorkInstructionCount(1, 0, 0, 0,0);
-		cheDeviceLogic.processWorkInstructionCounts(1, ImmutableMap.<String, WorkInstructionCount>of(containerId, wiCount));
+		WorkInstructionCount wiCount = new WorkInstructionCount(1, 0, 0, 0, 0);
+		cheDeviceLogic.processWorkInstructionCounts(1, ImmutableMap.<String, WorkInstructionCount> of(containerId, wiCount));
 		cheDeviceLogic.scanCommandReceived("X%START");
 
 		WorkInstruction wi = mock(WorkInstruction.class, Mockito.CALLS_REAL_METHODS);
@@ -95,27 +99,25 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		Mockito.when(wi.getContainerId()).thenReturn(containerId);
 		Mockito.when(wi.getItemId()).thenReturn("fakeItemId");
 
-		cheDeviceLogic.assignWork(ImmutableList.<WorkInstruction>of(wi), "ASSIGN WORK MESSAGE?");
+		cheDeviceLogic.assignWork(ImmutableList.<WorkInstruction> of(wi), "ASSIGN WORK MESSAGE?");
 		Assert.assertEquals(CheStateEnum.DO_PICK, cheDeviceLogic.waitForCheState(CheStateEnum.DO_PICK, 5000));
 		pressButton(cheDeviceLogic, posconPosition, wiQuantity);
 		Assert.assertEquals(CheStateEnum.PICK_COMPLETE, cheDeviceLogic.waitForCheState(CheStateEnum.PICK_COMPLETE, 5000));
 
 		cheDeviceLogic.scanCommandReceived("X%SETUP");
 
-		LinkedList<ICommand> commands =  posconCommands(radioController, 1);
+		LinkedList<ICommand> commands = posconCommands(radioController, 1);
 
 		LOGGER.info(commands.toString());
 
 		Collections.reverse(commands);
 		for (ICommand command : commands) { //find last poscon related message
-			if (command instanceof CommandControlClearPosController
-				|| command instanceof CommandControlSetPosController) {
-				Assert.assertTrue("Last command: " + command,  command instanceof CommandControlClearPosController);
+			if (command instanceof CommandControlClearPosController || command instanceof CommandControlSetPosController) {
+				Assert.assertTrue("Last command: " + command, command instanceof CommandControlClearPosController);
 				break;
 
 			}
 		}
-
 
 	}
 
@@ -143,8 +145,11 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		IRadioController radioController = mock(IRadioController.class);
 
 		// CheDeviceLogic is now an abstract base class
-		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"),
-			mock(CsDeviceManager.class), radioController);
+		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(),
+			new NetGuid("0xABC"),
+			mock(CsDeviceManager.class),
+			radioController,
+			null);
 
 		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
 		cheDeviceLogic.startDevice();
@@ -199,7 +204,10 @@ public class CheDeviceLogicTest extends MockDaoTest {
 
 		IRadioController radioController = mock(IRadioController.class);
 
-		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), mock(CsDeviceManager.class), radioController);
+		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(),
+			new NetGuid("0xABC"),
+			mock(CsDeviceManager.class),
+			radioController, null);
 
 		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
 		cheDeviceLogic.startDevice();
@@ -222,8 +230,7 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		cheDeviceLogic.scanCommandReceived("L%ANYLOCATIONAFTERPICK");
 
 		//Pretend no work ahead of this location
-		cheDeviceLogic.assignWork(Collections.<WorkInstruction>emptyList(), null);
-
+		cheDeviceLogic.assignWork(Collections.<WorkInstruction> emptyList(), null);
 
 		pressButton(cheDeviceLogic, chePosition, wi.getPlanQuantity());
 
@@ -237,7 +244,11 @@ public class CheDeviceLogicTest extends MockDaoTest {
 
 		IRadioController radioController = mock(IRadioController.class);
 
-		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), mock(CsDeviceManager.class), radioController);
+		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(),
+			new NetGuid("0xABC"),
+			mock(CsDeviceManager.class),
+			radioController,
+			null);
 
 		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
 		cheDeviceLogic.startDevice();
@@ -258,12 +269,15 @@ public class CheDeviceLogicTest extends MockDaoTest {
 
 	}
 
-
 	@Test
 	public void whenCheDisconnectedStateRemainsTheSameOnScan() {
 		IRadioController radioController = mock(IRadioController.class);
 
-		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), mock(CsDeviceManager.class), radioController);
+		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(),
+			new NetGuid("0xABC"),
+			mock(CsDeviceManager.class),
+			radioController,
+			null);
 
 		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
 		cheDeviceLogic.startDevice();
@@ -276,7 +290,9 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		verify(radioController, atLeast(1)).sendCommand(commandCaptor.capture(), any(NetAddress.class), eq(true));
 
 		CommandControlDisplayMessage noConnectionMessage = commandCaptor.getValue();
-		Assert.assertEquals("Last invocation was: " + noConnectionMessage, "Please Wait...", noConnectionMessage.getLine3MessageStr());
+		Assert.assertEquals("Last invocation was: " + noConnectionMessage,
+			"Please Wait...",
+			noConnectionMessage.getLine3MessageStr());
 
 	}
 
@@ -284,7 +300,11 @@ public class CheDeviceLogicTest extends MockDaoTest {
 	public void whenCheReconnectsStateReturns() {
 		IRadioController radioController = mock(IRadioController.class);
 
-		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(), new NetGuid("0xABC"), mock(CsDeviceManager.class), radioController);
+		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(),
+			new NetGuid("0xABC"),
+			mock(CsDeviceManager.class),
+			radioController,
+			null);
 
 		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
 		cheDeviceLogic.startDevice();
@@ -302,7 +322,7 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		ArgumentCaptor<CommandControlDisplayMessage> commandCaptor = forClass(CommandControlDisplayMessage.class);
 		verify(radioController, atLeast(1)).sendCommand(commandCaptor.capture(), any(NetAddress.class), eq(true));
 		List<CommandControlDisplayMessage> reverseOrder = Lists.reverse(commandCaptor.getAllValues());
-		
+
 		//In reverse order
 		CommandControlDisplayMessage scanContainer = reverseOrder.remove(0);
 		Assert.assertEquals("Last message was: " + scanContainer, "VERIFYING BADGE", scanContainer.getLine1MessageStr());
@@ -318,15 +338,13 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		CommandControlDisplayMessage noNetwork = reverseOrder.remove(0);
 		Assert.assertEquals("Second to last message was: " + noNetwork, "Unavailable", noNetwork.getLine2MessageStr());
 
-
 	}
-
 
 	/**
 	 * Simulate button press for the given position and quantity value
 	 */
 	private void pressButton(CheDeviceLogic cheDeviceLogic, int pos, int value) {
-		cheDeviceLogic.buttonCommandReceived(new CommandControlButton(mock(NetEndpoint.class), (byte)pos, (byte)value));
+		cheDeviceLogic.buttonCommandReceived(new CommandControlButton(mock(NetEndpoint.class), (byte) pos, (byte) value));
 	}
 
 	/**
@@ -358,7 +376,7 @@ public class CheDeviceLogicTest extends MockDaoTest {
 	 *
 	 */
 	private static class DisplayCommandContains extends ArgumentMatcher<CommandControlDisplayMessage> {
-		private String message;
+		private String	message;
 
 		public DisplayCommandContains(String message) {
 			Preconditions.checkArgument(!Strings.isNullOrEmpty(message));
@@ -369,10 +387,9 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		public boolean matches(Object iCommand) {
 			if (iCommand instanceof CommandControlDisplayMessage) {
 				CommandControlDisplayMessage command = (CommandControlDisplayMessage) iCommand;
-				return command.getLine1MessageStr().contains(this.message)
-				|| command.getLine2MessageStr().contains(this.message)
-				|| command.getLine3MessageStr().contains(this.message)
-				|| command.getLine4MessageStr().contains(this.message);
+				return command.getLine1MessageStr().contains(this.message) || command.getLine2MessageStr().contains(this.message)
+						|| command.getLine3MessageStr().contains(this.message)
+						|| command.getLine4MessageStr().contains(this.message);
 			} else {
 				return false;
 			}
@@ -383,8 +400,6 @@ public class CheDeviceLogicTest extends MockDaoTest {
 			super.describeTo(description);
 			description.appendText(" \"" + this.message + "\"");
 		}
-
-
 
 	}
 }

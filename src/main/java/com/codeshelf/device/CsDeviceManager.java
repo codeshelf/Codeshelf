@@ -461,7 +461,8 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		return false;
 	}
 
-	private void doCreateUpdateNetDevice(UUID persistentId, NetGuid deviceGuid, String deviceType) {
+	private void doCreateUpdateNetDevice(UUID persistentId, NetGuid deviceGuid, String deviceType, Che che) {
+		// che is often null. Only needed for SetupOrdersDeviceLogic
 		Preconditions.checkNotNull(persistentId, "persistentId of device cannot be null");
 		Preconditions.checkNotNull(deviceGuid, "deviceGuid of device cannot be null");
 		Preconditions.checkNotNull(deviceType, "deviceType of device cannot be null");
@@ -473,9 +474,9 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		if (netDevice == null) {
 			// new device
 			if (deviceType.equals(DEVICETYPE_CHE)) {
-				netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController);
+				netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController, che);
 			} else if (deviceType.equals(DEVICETYPE_CHE_SETUPORDERS)) {
-				netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController);
+				netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController, che);
 			} else if (deviceType.equals(DEVICETYPE_CHE_LINESCAN)) {
 				netDevice = new LineScanDeviceLogic(persistentId, deviceGuid, this, radioController);
 			} else if (deviceType.equals(DEVICETYPE_LED)) {
@@ -522,9 +523,9 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 				}
 				// can't really change the NetGuid so we will create new device
 				if (deviceType.equals(DEVICETYPE_CHE)) {
-					netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController);
+					netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController, che);
 				} else if (deviceType.equals(DEVICETYPE_CHE_SETUPORDERS)) {
-					netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController);
+					netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController, che);
 				} else if (deviceType.equals(DEVICETYPE_CHE_LINESCAN)) {
 					netDevice = new LineScanDeviceLogic(persistentId, deviceGuid, this, radioController);
 				} else if (deviceType.equals(DEVICETYPE_LED)) {
@@ -600,7 +601,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			LOGGER.error("misuse of updateOneDevice()");
 			return existingDevice;
 		}
-		doCreateUpdateNetDevice(persistentId, deviceGuid, newProcessType);
+		doCreateUpdateNetDevice(persistentId, deviceGuid, newProcessType, null);
 		INetworkDevice newDevice = mDeviceMap.get(persistentId);
 		return newDevice;
 	}
@@ -609,29 +610,31 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		Set<UUID> updateDevices = new HashSet<UUID>();
 		// update network devices
 		LOGGER.info("updateNetwork() called. Creating or updating deviceLogic for each CHE");
+		// updateNetwork is called a lot. It does figure out if something needs to change..
+		
 		for (Che che : network.getChes().values()) {
 			try {
 				UUID id = che.getPersistentId();
 				NetGuid deviceGuid = new NetGuid(che.getDeviceGuid());
 
 				Che.ProcessMode theMode = che.getProcessMode();
+				
 				if (theMode == null)
-					doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE_SETUPORDERS);
+					doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE_SETUPORDERS, che);
 				else {
 					switch (theMode) {
 						case LINE_SCAN:
-							doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE_LINESCAN);
+							doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE_LINESCAN, null);
 							break;
 						case SETUP_ORDERS:
-							doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE_SETUPORDERS);
+							doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE_SETUPORDERS, che);
 							break;
 						default:
 							LOGGER.error("unimplemented case in updateNetwork");
 							continue;
 					}
 				}
-				// doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE); // comment this in favor of block above
-
+	
 				updateDevices.add(id);
 			} catch (Exception e) {
 				//error in one should not cause issues setting up others
@@ -643,9 +646,9 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 				UUID id = ledController.getPersistentId();
 				NetGuid deviceGuid = new NetGuid(ledController.getDeviceGuid());
 				if (ledController.getDeviceType() == DeviceType.Poscons) {
-					doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_POS_CON_CTRL);
+					doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_POS_CON_CTRL, null);
 				} else {
-					doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_LED);
+					doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_LED, null);
 				}
 				updateDevices.add(id);
 			} catch (Exception e) {

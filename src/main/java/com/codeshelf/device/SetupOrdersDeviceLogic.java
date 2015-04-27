@@ -29,6 +29,7 @@ import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
+import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.NotificationService.EventType;
 import com.codeshelf.util.CompareNullChecker;
@@ -55,7 +56,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	// Transient. The CHE has scanned this container, and will add to container map if it learns the poscon position.
 	private String								mContainerInSetup;
 
-	// The CHE's current location.
+	// The location the CHE scanned as starting point. Note: this initializes from che.getLastScannedLocation(), but then is maintained locally.
 	@Accessors(prefix = "m")
 	@Getter
 	private String								mLocationId;
@@ -81,15 +82,23 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Setter
 	CheStateEnum								mRememberStateEnteringWallState	= CheStateEnum.CONTAINER_SELECT;
 
+	private final boolean						usePreviewState					= false;
+
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final CsDeviceManager inDeviceManager,
-		final IRadioController inRadioController) {
+		final IRadioController inRadioController,
+		final Che che) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 
 		mPositionToContainerMap = new HashMap<String, String>();
 
 		updateConfigurationFromManager();
+		// For DEV-776, 778, we want to initialize to know the path location the CHE last scanned onto.
+		if (che != null) { // many tests do not have the che available, so just leave mLocationId null
+			mLocationId = che.getLastScannedLocation();
+		}
+
 	}
 
 	public String getDeviceType() {
@@ -121,6 +130,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 				case VERIFYING_BADGE:
 					sendDisplayCommand(VERIFYING_BADGE_MSG, EMPTY_MSG);
+					break;
+
+				case SETUP_PREVIEW:
+					sendPreviewScreen();
 					break;
 
 				case COMPUTE_WORK:
@@ -393,6 +406,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case PICK_COMPLETE:
+			case SETUP_PREVIEW:
 			case PICK_COMPLETE_CURR_PATH:
 				setRememberStateEnteringWallState(mCheStateEnum);
 				setState(CheStateEnum.PUT_WALL_SCAN_WALL);
@@ -1094,6 +1108,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case PICK_COMPLETE:
 			case PICK_COMPLETE_CURR_PATH:
+			case SETUP_PREVIEW:
 			case NO_WORK:
 				//Setup the CHE
 				setupChe();
@@ -1147,15 +1162,19 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (mCheStateEnum.equals(CheStateEnum.VERIFYING_BADGE) || mCheStateEnum.equals(CheStateEnum.IDLE)) {
 			if (verified) {
 				clearAllPosconsOnThisDevice();
-				setState(CheStateEnum.CONTAINER_SELECT);
+
+				if (usePreviewState) // for now, to make code refactoring easier.
+					setState(CheStateEnum.SETUP_PREVIEW);
+				else
+					setState(CheStateEnum.CONTAINER_SELECT);
+
 				notifyCheWorkerVerb("LOG IN", "");
 			} else {
 				setState(CheStateEnum.IDLE);
 				invalidScanMsg(UNKNOWN_BADGE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
 				notifyCheWorkerVerb("LOG IN", "Credential Denied");
 			}
-		}
-		else {
+		} else {
 			LOGGER.error("unexpected verifyBadge response in state {}", mCheStateEnum);
 		}
 	}
@@ -1398,6 +1417,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 	}
 
+	/**
+	 * A series of private functions giving the overall state of the setup
+	 * This first is uncompletedInstructionsOnOtherPaths
+	 */
 	private int getUncompletedInstructionsOnOtherPathsSum() {
 		if (!feedbackCountersValid()) {
 			LOGGER.error("Inappropriate call to getUncompletedInstructionsOnOtherPathsSum. state:{}", getCheStateEnum());
@@ -1411,6 +1434,112 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			uncompletedInstructionsOnOtherPathsCounter += count.getUncompletedInstructionsOnOtherPaths();
 		}
 		return uncompletedInstructionsOnOtherPathsCounter;
+	}
+
+	/**
+	 * How many container/orderId are setup
+	 */
+	private int getCountOfSetupOrderContainers() {
+		if (mContainerToWorkInstructionCountMap == null)
+			return 0;
+		else
+			return mContainerToWorkInstructionCountMap.size();
+	}
+
+	/**
+	 * How many jobs for the mLocationId path?
+	 */
+	private int getCountOfGoodJobsOnSetupPath() {
+		if (mContainerToWorkInstructionCountMap == null)
+			return 0;
+		else {
+			int goodJobsCounter = 0;
+			for (WorkInstructionCount count : mContainerToWorkInstructionCountMap.values()) {
+				goodJobsCounter += count.getGoodCount();
+			}
+			return goodJobsCounter;
+		}
+	}
+
+	/**
+	 * How many jobs were completed?
+	 */
+	private int getCountOfCompletedJobsOnSetupPath() {
+		if (mContainerToWorkInstructionCountMap == null)
+			return 0;
+		else {
+			int completeJobsCounter = 0;
+			for (WorkInstructionCount count : mContainerToWorkInstructionCountMap.values()) {
+				completeJobsCounter += count.getCompleteCount();
+			}
+			return completeJobsCounter;
+		}
+	}
+
+	/**
+	 * How many shorts for the mLocationId path?
+	 */
+	private int getCountOfShortsOnSetupPath() {
+		if (mContainerToWorkInstructionCountMap == null)
+			return 0;
+		else {
+			int goodJobsCounter = 0;
+			for (WorkInstructionCount count : mContainerToWorkInstructionCountMap.values()) {
+				goodJobsCounter += count.getShortCount();
+			}
+			return goodJobsCounter;
+		}
+	}
+
+	/**
+	 * Show status for this setup in our restrictive 4 x 20 manner.
+	 */
+	private void sendPreviewScreen() {
+		String orderCountStr = Integer.toString(getCountOfSetupOrderContainers());
+		orderCountStr = StringUtils.leftPad(orderCountStr, 3);
+		String locStr = getLocationId(); // this might be null the very first time.
+		String line1;
+		if (locStr == null) {
+			line1 = String.format("%s orders ", orderCountStr);
+		} else {
+			line1 = String.format("%s orders at %s", orderCountStr, locStr);
+		}
+
+		int pickCount = getCountOfGoodJobsOnSetupPath();
+		String pickCountStr = Integer.toString(pickCount);
+		pickCountStr = StringUtils.leftPad(pickCountStr, 3);
+		// Too clever?  only show other path counts if there are any		
+		String line2;
+		int otherCount = getUncompletedInstructionsOnOtherPathsSum();
+		if (otherCount > 0) {
+			String otherCountStr = Integer.toString(otherCount);
+			otherCountStr = StringUtils.leftPad(otherCountStr, 3);
+			line2 = String.format("%s picks, %s other", pickCountStr, otherCountStr);
+		} else {
+			line2 = String.format("%s picks", pickCountStr);
+		}
+
+		String doneCountStr = Integer.toString(getCountOfCompletedJobsOnSetupPath());
+		doneCountStr = StringUtils.leftPad(doneCountStr, 3);
+		int shortCount = getCountOfShortsOnSetupPath();
+		// Too clever?  only show shorts if there are any
+		String line3;
+		if (shortCount > 0) {
+			String shortCountStr = Integer.toString(shortCount);
+			shortCountStr = StringUtils.leftPad(shortCountStr, 3);
+			line3 = String.format("%s done,  %s short", doneCountStr, shortCountStr);
+		} else {
+			line3 = String.format("%s done", doneCountStr);
+		}
+
+		// Try to be a little clever and context sensitive here
+		String line4;
+		if (pickCount == 0)
+			line4 = "Scan SETUP";
+		else
+			line4 = "START (or SETUP)";
+		this.sendDisplayCommand(line1, line2, line3, line4);
+
 	}
 
 	/** Shows the count feedback on the position controller
@@ -2075,7 +2204,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		super.logout(); // this calls the notifyXXX
 		resetInventoryCommandAllowed();
 		mContainerInSetup = "";
-		
+
 		/* DEV-775 No longer clear CHE setup state on logout
 		mPositionToContainerMap.clear();
 		mContainerToWorkInstructionCountMap = null;
