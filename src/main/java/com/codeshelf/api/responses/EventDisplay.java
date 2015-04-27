@@ -12,16 +12,31 @@ import lombok.Getter;
 public class EventDisplay {
 	//Event Fields
 	@Getter
-	private UUID eventId;
+	private UUID 							eventId;
 	
 	@Getter
-	private EventType type;
+	private EventType 						type;
 	
 	@Getter
-	private Timestamp createdAt;
+	private Timestamp 						createdAt;
 	
 	@Getter
-	private String description;
+	private String 							description;
+
+	@Getter
+	private String							devicePersistentId;
+	
+	@Getter
+	private String							deviceGuid;
+	
+	@Getter
+	private String							workerId;
+	
+	@Getter
+	private UUID							orderDetailId;
+
+	@Getter
+	private UUID							workInstructionId;
 
 	
 	//Resolution Fields
@@ -39,6 +54,11 @@ public class EventDisplay {
 		type = event.getEventType();
 		createdAt = event.getCreated();
 		description = event.getDomainId();
+		devicePersistentId = event.getDevicePersistentId();
+		deviceGuid = event.getDeviceGuid();
+		workerId = event.getWorkerId();
+		orderDetailId = event.getOrderDetailId();
+		workInstructionId = event.getWorkInstructionId();
 		Resolution resolution = event.getResolution();
 		if (resolution != null){
 			resolved = true;
