@@ -132,7 +132,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					sendDisplayCommand(VERIFYING_BADGE_MSG, EMPTY_MSG);
 					break;
 
-				case SETUP_PREVIEW:
+				case SETUP_SUMMARY:
 					sendPreviewScreen();
 					break;
 
@@ -406,7 +406,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case PICK_COMPLETE:
-			case SETUP_PREVIEW:
+			case SETUP_SUMMARY:
 			case PICK_COMPLETE_CURR_PATH:
 				setRememberStateEnteringWallState(mCheStateEnum);
 				setState(CheStateEnum.PUT_WALL_SCAN_WALL);
@@ -1108,7 +1108,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case PICK_COMPLETE:
 			case PICK_COMPLETE_CURR_PATH:
-			case SETUP_PREVIEW:
+			case SETUP_SUMMARY:
 			case NO_WORK:
 				//Setup the CHE
 				setupChe();
@@ -1163,7 +1163,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				clearAllPosconsOnThisDevice();
 
 				if (usePreviewState) // for now, to make code refactoring easier.
-					setState(CheStateEnum.SETUP_PREVIEW);
+					setState(CheStateEnum.SETUP_SUMMARY);
 				else
 					setState(CheStateEnum.CONTAINER_SELECT);
 
