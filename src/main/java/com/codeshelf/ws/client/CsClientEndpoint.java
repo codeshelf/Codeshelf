@@ -247,12 +247,12 @@ public class CsClientEndpoint {
 					}
 				}
 			}
-			session.getBasicRemote().sendObject(message);
-			this.messageSent();
 			if (message instanceof RequestABC) {
 				// keep track of request
 				CsClientEndpoint.messageCoordinator.registerRequest((RequestABC) message);
 			}
+			session.getBasicRemote().sendObject(message);
+			this.messageSent();
 			return true;
 		} catch (Exception e) {
 			LOGGER.error("Exception while trying to send message #" + message.getMessageId(), e);

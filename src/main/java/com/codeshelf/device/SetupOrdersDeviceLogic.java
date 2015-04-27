@@ -1130,12 +1130,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * @param inScanStr
 	 */
 	private void processIdleStateScan(final String inScanPrefixStr, final String inScanStr) {
-
 		if (USER_PREFIX.equals(inScanPrefixStr) || "".equals(inScanPrefixStr) || inScanPrefixStr == null) {
 			clearAllPosconsOnThisDevice();
 			this.setUserId(inScanStr);
-			mDeviceManager.verifyBadge(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
 			setState(CheStateEnum.VERIFYING_BADGE);
+			mDeviceManager.verifyBadge(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
 			invalidScanMsg(CheStateEnum.IDLE);

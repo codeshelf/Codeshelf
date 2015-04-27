@@ -144,8 +144,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		if (USER_PREFIX.equals(inScanPrefixStr) || "".equals(inScanPrefixStr) || inScanPrefixStr == null) {
 			setReadyMsg("");
 			this.setUserId(inScanStr);
-			mDeviceManager.verifyBadge(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
 			setState(CheStateEnum.VERIFYING_BADGE);
+			mDeviceManager.verifyBadge(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
 			setReadyMsg("Invalid scan");
