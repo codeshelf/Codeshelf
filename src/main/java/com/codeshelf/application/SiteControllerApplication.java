@@ -6,7 +6,15 @@
 
 package com.codeshelf.application;
 
+import groovy.util.ResourceException;
+import groovy.util.ScriptException;
+
+import java.io.IOException;
+
 import lombok.Getter;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.ClientConnectionManagerService;
 import com.codeshelf.device.CsDeviceManager;
@@ -17,10 +25,14 @@ import com.codeshelf.metrics.ConnectedToServerHealthCheck;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.RadioOnHealthCheck;
+import com.codeshelf.service.groovy.GroovyShellService;
 import com.codeshelf.ws.client.CsClientEndpoint;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
 public final class SiteControllerApplication extends CodeshelfApplication {
+	private static final Logger							LOGGER						= LoggerFactory.getLogger(SiteControllerApplication.class);
 
 	@Getter
 	private CsDeviceManager	deviceManager;
@@ -43,6 +55,20 @@ public final class SiteControllerApplication extends CodeshelfApplication {
 		this.clientEndpoint = clientEndpoint;
 		this.radioController = inRadioController;
 		deviceManager = new CsDeviceManager(inRadioController,clientEndpoint);
+		
+		/*
+		try {
+			startClojureEngine(deviceManager);
+		} catch (ClassNotFoundException e) {
+			LOGGER.error("unable to start clojure repl", e);
+		}
+		*/
+		try {
+			startGroovyEngine(deviceManager);
+		} catch (Exception e) {
+			LOGGER.error("unable to start groovy repl", e);
+		}
+
 		
 		new SiteControllerMessageProcessor(deviceManager,clientEndpoint);
 	}
@@ -88,4 +114,31 @@ public final class SiteControllerApplication extends CodeshelfApplication {
 	protected void doInitializeApplicationData() {
 
 	}
+	
+	/*
+	private static void startClojureEngine(CsDeviceManager deviceManager) throws ClassNotFoundException {
+		 Class.forName("clojure.lang.RT");
+
+		 String startScript = "(ns my-app (:require [clojure.tools.nrepl.server :as nrepl-server] [cider.nrepl :refer (cider-nrepl-handler)])) (nrepl-server/start-server :port 7888 :handler cider-nrepl-handler)";
+		 
+		    // Start the nREPL server.
+
+		    Compiler.load(new StringReader(startScript));
+
+		    // Make the Spring context available in the "lw" namespace.
+
+		    RT.var("lw", "*manager*", deviceManager);
+	}
+*/
+	
+	private static void startGroovyEngine(CsDeviceManager deviceManager) throws IOException, ResourceException, ScriptException, InstantiationException, IllegalAccessException, InterruptedException {
+		
+		GroovyShellService shell = new GroovyShellService(
+			ImmutableMap.<String,Object>of("deviceManager", deviceManager),
+			ImmutableList.<String>of("scripts/simulation/init.groovy"),
+			8185);
+		shell.launchInBackground();
+
+	}
+	
 }
