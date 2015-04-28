@@ -119,7 +119,7 @@ public class RootAuthResource {
 				}
 			} else if(tokenSession.getStatus().equals(TokenSession.Status.SPECIAL_SESSION) 
 					&& tokenSession.getSessionFlags().get(Flag.ACCOUNT_SETUP)
-					&& tokenSession.getUser().getHashedPassword() == null) {				
+					&& (tokenSession.getUser().getHashedPassword() == null || tokenSession.getSessionFlags().get(Flag.ACCOUNT_RECOVERY)) ) {				
 				// alternatively, allow user to set password without providing old password, 
 				// if ACCOUNT_SETUP (or re-SETUP) mode
 				

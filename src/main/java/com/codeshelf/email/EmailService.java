@@ -136,7 +136,7 @@ public class EmailService extends AbstractCodeshelfExecutionThreadService {
 				message.setText(outboundMessage.getBody());
 				Transport.send(message);
 				sent=true;
-				LOGGER.error("Sent email: {}", outboundMessage.toString());
+				LOGGER.info("Sent email: {}", outboundMessage.toString());
 			} catch (MessagingException e) {
 				LOGGER.error("Failed to send email: {}", outboundMessage.toString(), e);
 			}
