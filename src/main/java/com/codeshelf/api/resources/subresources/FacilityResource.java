@@ -21,6 +21,7 @@ import javax.ws.rs.core.Response;
 import lombok.Setter;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
@@ -42,6 +43,7 @@ import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.model.OrderStatusEnum;
+import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
@@ -183,6 +185,20 @@ public class FacilityResource {
 		return BaseResponse.buildResponse(summary);
 	}
 
+	@GET
+	@Path("/ches")
+	@RequiresPermissions("che:edit")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getAllChesInFacility() {
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("facility", facility));
+		Criteria cheCriteria = Che.staticGetDao().createCriteria();
+		cheCriteria.createCriteria("parent", "network").add(Restrictions.eq("parent", facility));
+		List<Che> ches = Che.staticGetDao().findByCriteriaQuery(cheCriteria);
+		return BaseResponse.buildResponse(ches);
+	}
+
+	
 	@GET
 	@Path("/workers")
 	@RequiresPermissions("worker:view")
