@@ -1,7 +1,8 @@
 package com.codeshelf.api.resources.subresources;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -43,14 +44,14 @@ public class CheResource {
 		ErrorResponse errors = new ErrorResponse();
 
 		try {
-			//User picker = new User();
-			//che.setCurrentUser(currentUser);
 			Facility facility = che.getFacility();
-			List<String> validContainers = new ArrayList<>();
+			Map<String, String> validContainers = new HashMap<String,String>();
+			int position = 1;
 			for (String containerId : containers) {
 				Container container = Container.staticGetDao().findByDomainId(facility, containerId);
 				if (container != null) {
-					validContainers.add(containerId);
+					validContainers.put(Integer.toString(position),containerId);
+					position++;
 				}
 			}
 			WorkList workList = workService.computeWorkInstructions(che, validContainers);

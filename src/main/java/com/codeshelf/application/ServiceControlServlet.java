@@ -11,8 +11,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.codeshelf.manager.TenantManagerService;
-import com.codeshelf.manager.TenantManagerService.ShutdownCleanupReq;
+import com.codeshelf.manager.service.TenantManagerService;
+import com.codeshelf.manager.service.TenantManagerService.ShutdownCleanupReq;
 
 @SuppressWarnings("serial")
 public class ServiceControlServlet extends HttpServlet {

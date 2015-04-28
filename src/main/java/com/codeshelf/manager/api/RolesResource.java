@@ -20,10 +20,10 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.manager.ITenantManagerService;
-import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.UserPermission;
 import com.codeshelf.manager.UserRole;
+import com.codeshelf.manager.service.ITenantManagerService;
+import com.codeshelf.manager.service.TenantManagerService;
 
 @Path("/roles")
 @RequiresPermissions("role")
@@ -42,7 +42,7 @@ public class RolesResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response get() {
 		try {
-			List<UserRole> roleList = TenantManagerService.getInstance().getRoles();
+			List<UserRole> roleList = TenantManagerService.getInstance().getRoles(true);
 			return Response.ok(roleList).build();
 		} catch (Exception e) {
 			LOGGER.error("Unexpected exception", e);

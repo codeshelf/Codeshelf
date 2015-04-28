@@ -18,6 +18,7 @@ import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
+import com.codeshelf.util.ThreadUtils;
 
 public abstract class PosConDeviceABC extends DeviceLogicABC {
 	private static final Logger				LOGGER	= LoggerFactory.getLogger(PosConDeviceABC.class);
@@ -165,5 +166,22 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 			return null;
 		}
 	}
+	
+	public Byte waitForControllerDisplayValue(byte position, Byte value, int timeoutInMillis){
+	long start = System.currentTimeMillis();
+	Byte currentValue = null;
+	while (System.currentTimeMillis() - start < timeoutInMillis) {
+		// retry every 100ms
+		ThreadUtils.sleep(100);
+		currentValue = getLastSentPositionControllerDisplayValue(position);
+		// either can be null
+		if (currentValue == value) {
+			// expected state found - all good
+			break;
+		}
+	}
+	return currentValue;
+	}
+
 
 }

@@ -28,6 +28,8 @@ import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.service.ManagerPersistenceService;
+import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.persistence.DatabaseCredentials;
 import com.codeshelf.persistence.DatabaseUtils;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -143,7 +145,7 @@ public class Shard implements DatabaseCredentials {
 		return result;
 	}
 
-	protected Tenant createTenant(String name, String schemaName, String username, String password) {
+	public Tenant createTenant(String name, String schemaName, String username, String password) {
 		Tenant result = null;
 
 		// this is called to initialize default tenant while TenantManagerService is starting

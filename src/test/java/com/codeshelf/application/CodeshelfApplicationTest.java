@@ -18,6 +18,8 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
+import com.codeshelf.email.EmailService;
+import com.codeshelf.email.TemplateService;
 import com.codeshelf.model.dao.Result;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
@@ -66,7 +68,9 @@ public class CodeshelfApplicationTest extends ServerTest {
 			new DummyPropertyService(),
 			new TokenSessionService(),
 			mock(AuthorizingSecurityManager.class),
-			null);
+			null,
+			this.emailService,
+			this.templateService);
 
 		final Result checkAppRunning = new Result();
 

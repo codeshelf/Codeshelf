@@ -12,15 +12,15 @@ import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import lombok.Getter;
-import lombok.Setter;
 
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.Validatable;
@@ -38,6 +38,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Worker extends DomainObjectABC implements Validatable{
+	@SuppressWarnings("unused")
 	private static final Logger				LOGGER				= LoggerFactory.getLogger(Worker.class);
 	
 	public static class WorkerDao extends GenericDaoABC<Worker> implements ITypedDao<Worker> {

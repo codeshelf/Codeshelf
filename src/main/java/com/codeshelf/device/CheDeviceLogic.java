@@ -250,6 +250,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 	} 
 
+	public boolean usesSummaryState() {
+		return false; // SetupOrderDeviceLogic will override
+	}
+
 	protected boolean alreadyScannedSkuOrUpcOrLpnThisWi(WorkInstruction inWi) {
 		return false;
 	}

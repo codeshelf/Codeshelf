@@ -7,7 +7,9 @@ import lombok.Getter;
  */
 public class SessionFlags {
 	public static enum Flag {
-		AUTO_REFRESH_SESSION(0, true);
+		AUTO_REFRESH_SESSION(0, true),
+		ACCOUNT_RECOVERY(1, false),
+		ACCOUNT_SETUP(2, false);
 
 		@Getter
 		private byte	bit;

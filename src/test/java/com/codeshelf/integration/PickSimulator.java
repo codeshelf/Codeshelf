@@ -29,7 +29,7 @@ public class PickSimulator {
 	public PickSimulator(IntegrationTest test, NetGuid cheGuid) {
 		this(test.getDeviceManager(), cheGuid);
 	}
-	
+
 	public PickSimulator(CsDeviceManager deviceManager, NetGuid cheGuid) {
 		// verify that che is in site controller's device list
 		cheDeviceLogic = (CheDeviceLogic) deviceManager.getDeviceByGuid(cheGuid);
@@ -37,11 +37,15 @@ public class PickSimulator {
 	}
 
 	public void loginAndSetup(String pickerId) {
-		// From v16, login goes to SETUP_PREVIEW state. Then explicit SETUP scan goes to CONTAINER_SELECT
-		// preparing for that change
 		cheDeviceLogic.scanCommandReceived("U%" + pickerId);
-		// SETUP_PREVIEW state, then scan command SETUP
-		waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		// From v16, login goes to SETUP_SUMMARY state. Then explicit SETUP scan goes to CONTAINER_SELECT
+		if (cheDeviceLogic.usesSummaryState()) {
+			waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+			scanCommand("SETUP");		
+			waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		} else {
+			waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		}
 	}
 
 	public void loginAndCheckState(String pickerId, CheStateEnum inState) {
@@ -59,7 +63,7 @@ public class PickSimulator {
 	public void setup() {
 		// The happy case. Scan setup needed after completing a cart run. Still logged in.
 		scanCommand("SETUP");
-		waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
 	}
 
 	public void setupOrderIdAsContainer(String orderId, String positionId) {
@@ -98,8 +102,8 @@ public class PickSimulator {
 		// many state possibilities here. On to the next job, or finished all work, or need to confirm a short.
 		// If the job finished, we would want to end the transaction as it does in production, but confirm short has nothing to commit yet.
 	}
-	
-	public void pickItemAuto(){
+
+	public void pickItemAuto() {
 		waitForCheState(CheStateEnum.DO_PICK, 4000);
 		WorkInstruction wi = getActivePick();
 		int button = buttonFor(wi);
@@ -115,9 +119,9 @@ public class PickSimulator {
 	/**
 	 * This helps the test writer scanSomething may well include the % to simulate a command. But the test writer may have included extra in scanCommand, scanLocation, etc.
 	 */
-	private void checkExtraPercent(String inCommand){
+	private void checkExtraPercent(String inCommand) {
 		if (inCommand != null && inCommand.length() > 2) {
-			if (inCommand.charAt(1) == '%'){
+			if (inCommand.charAt(1) == '%') {
 				LOGGER.error("Did you mean to use scanSomething() instead?");
 			}
 		}
@@ -330,8 +334,13 @@ public class PickSimulator {
 	public String getLastCheDisplayString(int lineIndex) {
 		return cheDeviceLogic.getRecentCheDisplayString(lineIndex);
 	}
+
 	public void logCheDisplay() {
-		LOGGER.info("Line1:{} Line2:{} Line3:{} Line4:{}",getLastCheDisplayString(1),getLastCheDisplayString(2),getLastCheDisplayString(3),getLastCheDisplayString(4));
+		LOGGER.info("Line1:{} Line2:{} Line3:{} Line4:{}",
+			getLastCheDisplayString(1),
+			getLastCheDisplayString(2),
+			getLastCheDisplayString(3),
+			getLastCheDisplayString(4));
 	}
 
 	public void forceDeviceToMatchManagerConfiguration() {

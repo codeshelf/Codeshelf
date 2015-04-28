@@ -7,8 +7,8 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.filter.NetworkChangeListener;
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
+import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.DomainObjectProperty;
@@ -62,7 +62,7 @@ public class LoginCommand extends CommandABC {
 				} else {
 					tokenSession = TokenSessionService.getInstance().authenticate(username, password);
 	            }
-				if (tokenSession.getStatus().equals(Status.ACCEPTED)) {
+				if (tokenSession.getStatus().equals(Status.ACTIVE_SESSION)) {
 					User authUser = tokenSession.getUser();
 					// successfully authenticated user with password
 					Tenant tenant = TenantManagerService.getInstance().getTenantByUser(authUser);				

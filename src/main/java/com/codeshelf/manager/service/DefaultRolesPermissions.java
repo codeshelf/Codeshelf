@@ -1,4 +1,4 @@
-package com.codeshelf.manager;
+package com.codeshelf.manager.service;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,12 +13,16 @@ import org.apache.commons.io.IOUtils;
 import org.hibernate.Session;
 import org.yaml.snakeyaml.Yaml;
 
+import com.codeshelf.manager.UserPermission;
+import com.codeshelf.manager.UserRole;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 
 public class DefaultRolesPermissions {
 	final public static String				ROLE_DEFAULTS_FILENAME	= "role-defaults.yml";
+	
 	final public static String 				SITE_CONTROLLER_ROLE = "SiteController";
+	final public static String				RESTRICTED_ROLE_NAME_PREFIX = "Cs";
 
 	private static Multimap<String, String>	multimap;
 
@@ -102,6 +106,7 @@ public class DefaultRolesPermissions {
 
 		role = (UserRole) session.load(UserRole.class, roleId);
 		role.setPermissions(permissions);
+		role.setRestricted(roleName.equals(SITE_CONTROLLER_ROLE) || roleName.startsWith(RESTRICTED_ROLE_NAME_PREFIX));
 		session.saveOrUpdate(role);
 	}
 

@@ -56,7 +56,7 @@ public enum CheStateEnum {
 	SHORT_PUT_CONFIRM(CheStateNum.SHORT_PUT_CONFIRM, "SHORT_PUT_CONFIRM"),
 
 	// state for Che setup persistence
-	SETUP_PREVIEW(CheStateNum.SETUP_PREVIEW, "SETUP_PREVIEW");
+	SETUP_SUMMARY(CheStateNum.SETUP_SUMMARY, "SETUP_SUMMARY");
 
 	private int		mValue;
 	private String	mName;
@@ -201,7 +201,7 @@ public enum CheStateEnum {
 		static final byte	SHORT_PUT					= 32;
 		static final byte	SHORT_PUT_CONFIRM			= 33;
 		// state for Che Setup Persistence
-		static final byte	SETUP_PREVIEW				= 34;	// may result in removal of PICK_COMPLETE_CURR_PATH, PICK_COMPLETE
+		static final byte	SETUP_SUMMARY				= 34;	// may result in removal of PICK_COMPLETE_CURR_PATH, PICK_COMPLETE
 
 		private CheStateNum() {
 		};

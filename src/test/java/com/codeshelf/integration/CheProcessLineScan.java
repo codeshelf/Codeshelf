@@ -661,7 +661,7 @@ public class CheProcessLineScan extends ServerTest {
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
 		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("1a: setup two orders on the cart. Several of the details have unmodelled preferred locations");
 		// The setup is all the same, so just blow through it.
@@ -685,7 +685,7 @@ public class CheProcessLineScan extends ServerTest {
 		setUpLineScanOrdersWithCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
 	
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.loginAndSetup("Picker #1");
 		
 		LOGGER.info("2b: setup two orders on the cart. Several of the details have unmodelled preferred locations");
 		picker.setupContainer("12345", "1"); 
@@ -716,7 +716,7 @@ public class CheProcessLineScan extends ServerTest {
 		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 	
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
+		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("3b: setup two orders on the cart. Several of the details have unmodelled preferred locations");
 		picker.setupContainer("12345", "1"); 
@@ -724,7 +724,7 @@ public class CheProcessLineScan extends ServerTest {
 		picker.setupContainer("11111", "2"); 
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 		
-		LOGGER.info("3c: START. Now we get some work. 3 jobs, since only 3 details had modeled locatoins");
+		LOGGER.info("3c: START. Now we get some work. 3 jobs, since only 3 details had modeled locations");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
 		

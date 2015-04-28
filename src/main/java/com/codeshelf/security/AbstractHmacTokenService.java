@@ -12,8 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
+import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.security.SessionFlags.Flag;
 import com.codeshelf.security.TokenSession.Status;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
@@ -25,8 +25,8 @@ public abstract class AbstractHmacTokenService extends AbstractCodeshelfIdleServ
 
 
 	abstract int getSessionMaxFutureSeconds();
-	abstract int getSessionMaxIdleMinutes();
-	abstract int getSessionMinIdleMinutes();
+	abstract int getSessionMaxIdleMinutes(SessionFlags sessionFlags);
+	abstract int getSessionMinIdleMinutes(SessionFlags sessionFlags);
 	abstract byte[] getTokenXor();
 
 	private static final String	HMAC_ALGORITHM	= "HmacSHA1";
@@ -64,29 +64,34 @@ public abstract class AbstractHmacTokenService extends AbstractCodeshelfIdleServ
 
 	public TokenSession checkToken(String value) {
 		TokenSession resp = null;
-		ByteBuffer hmac = ByteBuffer.wrap(decodeToken(value));
-		if (hmac.remaining() == (4 + 4 + 4 + 8 + 8 + 1 + 20)) {
-			int version = hmac.getInt();
-			if (version == TOKEN_VERSION) {
-				int userId = hmac.getInt();
-				int tenantId = hmac.getInt();
-				long timestamp = hmac.getLong();
-				long sessionStart = hmac.getLong();
-				SessionFlags sessionFlags = new SessionFlags(hmac.get());
-				byte[] matchHmac = createHmacBytes(userId, tenantId, timestamp, sessionStart, sessionFlags);
-				if (Arrays.equals(hmac.array(), matchHmac)) {
-					resp = respondToValidToken(userId, tenantId, timestamp, sessionStart, sessionFlags);
+		if(value != null) {
+			ByteBuffer hmac = ByteBuffer.wrap(decodeToken(value));
+			if (hmac.remaining() == (4 + 4 + 4 + 8 + 8 + 1 + 20)) {
+				int version = hmac.getInt();
+				if (version == TOKEN_VERSION) {
+					int userId = hmac.getInt();
+					int tenantId = hmac.getInt();
+					long timestamp = hmac.getLong();
+					long sessionStart = hmac.getLong();
+					SessionFlags sessionFlags = new SessionFlags(hmac.get());
+					byte[] matchHmac = createHmacBytes(userId, tenantId, timestamp, sessionStart, sessionFlags);
+					if (Arrays.equals(hmac.array(), matchHmac)) {
+						resp = respondToValidToken(userId, tenantId, timestamp, sessionStart, sessionFlags);
+					} else {
+						LOGGER.warn("Invalid HMAC for user ID {} timestamp {}", userId, timestamp);
+						resp = new TokenSession(Status.INVALID_TOKEN);
+					}
 				} else {
-					LOGGER.warn("Invalid HMAC for user ID {} timestamp {}", userId, timestamp);
+					LOGGER.warn("Failed to parse auth token, bad version {}", version);
 					resp = new TokenSession(Status.INVALID_TOKEN);
 				}
 			} else {
-				LOGGER.warn("Failed to parse auth token, bad version {}", version);
+				LOGGER.warn("auth token was wrong size, {} bytes", hmac.remaining());
 				resp = new TokenSession(Status.INVALID_TOKEN);
 			}
 		} else {
-			LOGGER.warn("auth token was wrong size, {} bytes", hmac.remaining());
-			resp = new TokenSession(Status.INVALID_TOKEN);
+			LOGGER.debug("no auth token provided");
+			resp = null;
 		}
 		return resp;
 	}
@@ -120,17 +125,26 @@ public abstract class AbstractHmacTokenService extends AbstractCodeshelfIdleServ
 				long ageSeconds = (now - timestamp) / 1000L;
 				if (ageSeconds > (0 - this.getSessionMaxFutureSeconds())) {
 					// timestamp is not in the future
-					if (ageSeconds < this.getSessionMaxIdleMinutes() * 60) {
+					if (ageSeconds < this.getSessionMaxIdleMinutes(sessionFlags) * 60) {
+						// we are going to accept this token, but flags may indicate special status
+
 						String refreshToken = null;
-						if (sessionFlags.get(Flag.AUTO_REFRESH_SESSION)) {
-							// session is still active
-							if (ageSeconds > this.getSessionMinIdleMinutes() * 60) {
-								// if token is valid but getting old, offer an updated one
-								LOGGER.info("renewing token for {}", user.getUsername());
-								refreshToken = this.createToken(userId, tenantId, now, sessionStart, sessionFlags);
+						Status tokenStatus;
+						
+						if (sessionFlags.get(Flag.ACCOUNT_SETUP) || sessionFlags.get(Flag.ACCOUNT_RECOVERY)) {
+							tokenStatus = Status.SPECIAL_SESSION;
+						} else {
+							tokenStatus = Status.ACTIVE_SESSION;
+							// auto refresh is only applicable for regular sessions
+							if (sessionFlags.get(Flag.AUTO_REFRESH_SESSION)) {
+								if (ageSeconds > this.getSessionMinIdleMinutes(sessionFlags) * 60) {
+									// if token is valid but getting old, offer an updated one
+									LOGGER.info("renewing token for {}", user.getUsername());
+									refreshToken = this.createToken(userId, tenantId, now, sessionStart, sessionFlags);
+								}
 							}
 						}
-						response = new TokenSession(Status.ACCEPTED, user, tenant, timestamp, sessionStart, sessionFlags, refreshToken);
+						response = new TokenSession(tokenStatus, user, tenant, timestamp, sessionStart, sessionFlags, refreshToken);
 					} else {
 						LOGGER.info("expired token for user {} (timestamp {}, sessionStart {})", userId, timestamp, sessionStart);
 						response = new TokenSession(Status.SESSION_IDLE_TIMEOUT, user, tenant, timestamp, sessionStart, sessionFlags, null);

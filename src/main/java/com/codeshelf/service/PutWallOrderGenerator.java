@@ -2,6 +2,7 @@ package com.codeshelf.service;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -29,7 +30,7 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.google.common.collect.Lists;
 
 public class PutWallOrderGenerator {
-	protected static List<WorkInstruction> attemptToGenerateWallOrders(Che che, List<String> inContainerIdList, Timestamp theTime) {
+	protected static List<WorkInstruction> attemptToGenerateWallOrders(Che che, Collection<String> inContainerIdList, Timestamp theTime) {
 		List<WorkInstruction> wiList = Lists.newArrayList();
 		if (inContainerIdList == null || inContainerIdList.isEmpty()) {
 			return wiList;
@@ -144,7 +145,7 @@ public class PutWallOrderGenerator {
 	/**
 	 * Returns a map of provided Put Walls to orders located in those walls
 	 */
-	private static HashMap<String, List<OrderHeader>> getOrdersInPutWalls(List<String> putWallNames) {
+	private static HashMap<String, List<OrderHeader>> getOrdersInPutWalls(Collection<String> putWallNames) {
 		List<OrderHeader> allOrders = OrderHeader.staticGetDao().getAll();
 		HashMap<String, List<OrderHeader>> wallOrders = new HashMap<>();
 		for (OrderHeader order : allOrders) {

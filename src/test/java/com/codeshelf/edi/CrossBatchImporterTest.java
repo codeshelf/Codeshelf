@@ -31,7 +31,6 @@ import com.codeshelf.testframework.ServerTest;
  * 
  */
 public class CrossBatchImporterTest extends ServerTest {
-
 	private UUID facilityId;
 	
 	@Override

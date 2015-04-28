@@ -1,0 +1,7 @@
+# Default security questions
+# After tenant manager persistence startup, all of these questions will exist with the text as specified.
+# Be extremely careful if changing this file, to avoid locking out users!
+
+FIRSTCAR: "What was the year, make and model of your first car (example: 1969 Corvette Stingray)?"
+FIRSTKISS: "What was the first name of the first person you kissed?"
+DREAMJOB: "What is your dream job?"

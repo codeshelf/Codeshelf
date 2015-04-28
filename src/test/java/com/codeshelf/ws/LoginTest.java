@@ -4,8 +4,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
+import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.testframework.HibernateTest;

@@ -21,11 +21,11 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.manager.ITenantManagerService;
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.TenantManagerService;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.UserRole;
+import com.codeshelf.manager.service.ITenantManagerService;
+import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.security.TokenSessionService;
 import com.codeshelf.util.FormUtility;
 
@@ -45,6 +45,7 @@ public class UsersResource {
 		validCreateUserFields.add("username");
 		validCreateUserFields.add("password");
 		validCreateUserFields.add("roles");
+		
 		validUpdateUserFields.add("password");
 		validUpdateUserFields.add("active");
 		validUpdateUserFields.add("roles");
@@ -192,7 +193,7 @@ public class UsersResource {
 			} // else ignore if no change
 			success = true;
 		} else if (key.equals("roles")) {
-			Set<UserRole> roles = userRoles(value);
+			Set<UserRole> roles = TenantManagerService.getInstance().getUserRoles(value,true);
 			if(roles != null) {
 				if(!user.getRoles().equals(roles)) {
 					LOGGER.info("update user {} - set roles = {}", user.getUsername(),value);
@@ -206,30 +207,11 @@ public class UsersResource {
 		return success;
 	}
 
-	private Set<UserRole> userRoles(String value) {
-		Set<UserRole> result = new HashSet<UserRole>();
-		if(value == null || value.isEmpty())
-			return result;
-		
-		ITenantManagerService manager = TenantManagerService.getInstance();
-		String[] roleNames = value.split(UserRole.TOKEN_SEPARATOR);
-		for(int i=0;i<roleNames.length;i++) {
-			UserRole role = manager.getRoleByName(roleNames[i]);
-			if(role != null) {
-				result.add(role);
-			} else {
-				LOGGER.warn("invalid role name in list: {}",value);
-				return null;
-			}
-		}
-		return result;
-	}
-
 	private User doCreateUser(MultivaluedMap<String, String> userParams) {
 		ITenantManagerService manager = TenantManagerService.getInstance();
 		User newUser = null;
 
-		Map<String, String> cleanInput = FormUtility.getValidFieldsOrThrow(userParams, validCreateUserFields);
+		Map<String, String> cleanInput = FormUtility.getValidFields(userParams, validCreateUserFields);
 		if (cleanInput != null) {
 			String username = cleanInput.get("username");
 			String tenantIdString = cleanInput.get("tenantid");
@@ -240,7 +222,7 @@ public class UsersResource {
 			} catch(NumberFormatException e) {
 				LOGGER.warn("count not convert value to tenantId: {}", tenantIdString);
 			}
-			Set<UserRole> roles = userRoles(cleanInput.get("roles"));
+			Set<UserRole> roles = manager.getUserRoles(cleanInput.get("roles"),true);
 
 			if (username != null && password != null && roles != null) {
 				if (manager.canCreateUser(username)) {
