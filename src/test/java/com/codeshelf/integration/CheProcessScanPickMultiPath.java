@@ -132,8 +132,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 	}
 
 	private void containerSetup(PickSimulator picker) {
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
-		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker.loginAndSetup("Picker #1");
 		picker.setupContainer("1", "1");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 	}
