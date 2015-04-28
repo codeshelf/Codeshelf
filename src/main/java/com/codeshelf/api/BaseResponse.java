@@ -145,5 +145,5 @@ public abstract class BaseResponse {
 		protected EventType parse(String param) { 
 			return EventType.valueOf(param);
 		}		
-	}
+	}	
 }

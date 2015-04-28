@@ -267,10 +267,10 @@ public class FacilityResource {
 	@Path("pickrate")
 	@RequiresPermissions("event:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response pickRate() {
+	public Response pickRate(@QueryParam("start") StartDateParam startDateParam) {
 		ErrorResponse errors = new ErrorResponse();
 		try {
-			List<PickRate> pickRates = notificationService.getPickRate();
+			List<PickRate> pickRates = notificationService.getPickRate(startDateParam.getValue());
 			return BaseResponse.buildResponse(pickRates);
 		} catch (Exception e) {
 			errors.processException(e);

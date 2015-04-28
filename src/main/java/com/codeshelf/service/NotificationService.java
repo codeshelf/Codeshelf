@@ -1,6 +1,7 @@
 package com.codeshelf.service;
 
 import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -77,11 +78,12 @@ public class NotificationService implements IApiService{
 	}
 	
 	@SuppressWarnings("unchecked")
-	public List<PickRate> getPickRate(){
+	public List<PickRate> getPickRate(Date startDate){
 		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		Session session = TenantPersistenceService.getInstance().getSession();
-		String schema = tenant.getSchemaName();
+		String schemaName = tenant.getSchemaName();
 
+		String dateCondition = startDate == null ? "" : "AND e.created >= '" + new Timestamp(startDate.getTime()) + "'";
 		String queryStr = String.format(
 			"SELECT " +
 			"	e.worker_id AS worker_id,\n"+
@@ -90,10 +92,11 @@ public class NotificationService implements IApiService{
 			"	DATE_TRUNC('hour', e.created) AS hour\n" +  
 			"FROM %s.event_worker e\n" + 
 			"	LEFT JOIN %s.work_instruction wi ON e.work_instruction_persistentid = wi.persistentid\n" + 
-			"WHERE e.event_type = 'COMPLETE'					--Only loop at Pick actions\n" + 
-			"	AND e.work_instruction_persistentid IS NOT NULL --Skip housekeeping actions\n" + 
+			"WHERE e.event_type = 'COMPLETE'\n" +																//Only look at Pick actions 
+			"	AND e.work_instruction_persistentid IS NOT NULL\n" + 											//Skip housekeeping actions
+			"	%s\n" +																							//Filter by earliest data when needed
 			"GROUP BY e.worker_id, date_trunc('hour', e.created)\n" +
-			"ORDER BY date_trunc('hour', e.created)", schema, schema);
+			"ORDER BY date_trunc('hour', e.created)", schemaName, schemaName, dateCondition);
 		SQLQuery getPickSummaryQuery = session.createSQLQuery(queryStr)
 			.addScalar("worker_id", StandardBasicTypes.STRING)
 			.addScalar("hour", StandardBasicTypes.TIMESTAMP)
