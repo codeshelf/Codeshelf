@@ -26,7 +26,6 @@ import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 // --------------------------------------------------------------------------
