@@ -12,7 +12,7 @@ public class PickRate {
 	private Timestamp hour;
 	
 	@Getter
-	private String hourUTC;
+	private String hourUI;
 	
 	@Getter
 	private Integer picks;
@@ -20,10 +20,10 @@ public class PickRate {
 	@Getter
 	private Integer quantity;
 
-	public PickRate(String workerId, Timestamp hour, String hourUTC, Integer picks, Integer quantity) {
+	public PickRate(String workerId, Timestamp hour, String hourUI, Integer picks, Integer quantity) {
 		this.workerId = workerId;
 		this.hour = hour;
-		this.hourUTC = hourUTC;
+		this.hourUI = hourUI;
 		this.picks = picks;
 		this.quantity = quantity;
 	}

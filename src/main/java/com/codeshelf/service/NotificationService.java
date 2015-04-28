@@ -107,10 +107,10 @@ public class NotificationService implements IApiService{
 			for (Object[] item : pickSummary) {
 				String workerId = (String) item[0];
 				Timestamp hour = (Timestamp) item[1];
-				String hourUTC = (String) item[2];
+				String hourUI = (String) item[2];
 				Integer picks = (Integer) item[3];
 				Integer quantity = (Integer) item[4];
-				PickRate rate = new PickRate(workerId, hour, hourUTC, picks, quantity);
+				PickRate rate = new PickRate(workerId, hour, hourUI, picks, quantity);
 				result.add(rate);
 			}
 		}
