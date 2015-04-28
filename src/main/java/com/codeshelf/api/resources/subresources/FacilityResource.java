@@ -34,6 +34,7 @@ import com.codeshelf.api.HardwareRequest;
 import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
 import com.codeshelf.api.HardwareRequest.LightRequest;
 import com.codeshelf.api.responses.EventDisplay;
+import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedInstrListMessage;
 import com.codeshelf.device.LedSample;
@@ -255,14 +256,14 @@ public class FacilityResource {
 	}
 		
 	@GET
-	@Path("eventsummary")
+	@Path("pickrate")
 	@RequiresPermissions("event:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response eventSummary() {
+	public Response pickRate() {
 		ErrorResponse errors = new ErrorResponse();
 		try {
-			notificationService.getPickSummary();
-			return BaseResponse.buildResponse("OK");
+			List<PickRate> pickRates = notificationService.getPickRate();
+			return BaseResponse.buildResponse(pickRates);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();

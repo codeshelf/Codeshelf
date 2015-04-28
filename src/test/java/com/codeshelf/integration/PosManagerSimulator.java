@@ -6,7 +6,6 @@ import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.PosManagerDeviceLogic;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.INetworkDevice;
