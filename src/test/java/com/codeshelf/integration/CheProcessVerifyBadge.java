@@ -40,12 +40,11 @@ public class CheProcessVerifyBadge extends ServerTest {
 		this.startSiteController();
 		
 		PickSimulator picker1 = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");		
-		picker1.scanSomething("U%" + WORKER1);
-		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker1.loginAndSetup(WORKER1); // This goes through the setup_summary state
 		
 		PickSimulator picker2 = waitAndGetPickerForProcessType(this, cheGuid2, "CHE_LINESCAN");		
 		picker2.scanSomething("U%" + WORKER2);
-		picker2.waitForCheState(CheStateEnum.READY, WAIT_TIME);
+		picker2.waitForCheState(CheStateEnum.READY, WAIT_TIME); // line scan has different process
 
 		//Verify created workers
 		this.getTenantPersistenceService().beginTransaction();
@@ -131,8 +130,7 @@ public class CheProcessVerifyBadge extends ServerTest {
 		this.startSiteController();
 		
 		PickSimulator picker1 = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");		
-		picker1.scanSomething("U%" + WORKER1);
-		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker1.loginAndSetup(WORKER1);
 		
 		PickSimulator picker2 = waitAndGetPickerForProcessType(this, cheGuid2, "CHE_LINESCAN");		
 		picker2.scanSomething("U%" + WORKER2);

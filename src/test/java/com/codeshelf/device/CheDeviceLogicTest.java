@@ -58,74 +58,10 @@ import com.google.common.collect.Lists;
 public class CheDeviceLogicTest extends MockDaoTest {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheDeviceLogicTest.class);
 
-	@Test
-	public void cheSetupAfterCompleteClearsPosCon() {
-		int posconPosition = 1;
-		String containerId = "CONTAINER9";
-		int wiQuantity = 1;
+	// Removed cheSetupAfterCompleteClearsPosCon() because CHE setup persistence changes this, and we have very good realistic tests for this.
+	// The rest are passing but do not assume they are working correctly. If there is a new failure here, evaluate carefully. These unit tests
+	// are much faster to run than the integration tests, but these are only better if they are absolutely clear about what the Che process is.
 
-		IRadioController radioController = mock(IRadioController.class);
-		CsDeviceManager deviceManager = new CsDeviceManager(radioController, mock(CsClientEndpoint.class));
-		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(),
-			new NetGuid("0xABC"),
-			deviceManager,
-			radioController,
-			null);
-		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
-		cheDeviceLogic.startDevice();
-
-		cheDeviceLogic.scanCommandReceived("U%PICKER1");
-
-		cheDeviceLogic.processResultOfVerifyBadge(true);
-
-		cheDeviceLogic.scanCommandReceived("C%" + containerId);
-
-		cheDeviceLogic.scanCommandReceived("P%" + posconPosition);
-
-		cheDeviceLogic.scanCommandReceived("X%START");
-		WorkInstructionCount wiCount = new WorkInstructionCount(1, 0, 0, 0, 0);
-		cheDeviceLogic.processWorkInstructionCounts(1, ImmutableMap.<String, WorkInstructionCount> of(containerId, wiCount));
-		cheDeviceLogic.scanCommandReceived("X%START");
-
-		WorkInstruction wi = mock(WorkInstruction.class, Mockito.CALLS_REAL_METHODS);
-		wi.setType(WorkInstructionTypeEnum.PLAN);
-		wi.setStatus(WorkInstructionStatusEnum.NEW);
-		wi.setPickInstruction("fakePickInstruction");
-		wi.setLedCmdStream("[]");
-		wi.setPlanQuantity(wiQuantity);
-		wi.setPlanMinQuantity(wiQuantity);
-		wi.setPlanMaxQuantity(wiQuantity);
-
-		Mockito.when(wi.getContainerId()).thenReturn(containerId);
-		Mockito.when(wi.getItemId()).thenReturn("fakeItemId");
-
-		cheDeviceLogic.assignWork(ImmutableList.<WorkInstruction> of(wi), "ASSIGN WORK MESSAGE?");
-		Assert.assertEquals(CheStateEnum.DO_PICK, cheDeviceLogic.waitForCheState(CheStateEnum.DO_PICK, 5000));
-		pressButton(cheDeviceLogic, posconPosition, wiQuantity);
-		Assert.assertEquals(CheStateEnum.PICK_COMPLETE, cheDeviceLogic.waitForCheState(CheStateEnum.PICK_COMPLETE, 5000));
-
-		cheDeviceLogic.scanCommandReceived("X%SETUP");
-
-		LinkedList<ICommand> commands = posconCommands(radioController, 1);
-
-		LOGGER.info(commands.toString());
-
-		Collections.reverse(commands);
-		for (ICommand command : commands) { //find last poscon related message
-			if (command instanceof CommandControlClearPosController || command instanceof CommandControlSetPosController) {
-				Assert.assertTrue("Last command: " + command, command instanceof CommandControlClearPosController);
-				break;
-
-			}
-		}
-
-	}
-
-	private LinkedList<ICommand> posconCommands(IRadioController radioController, int posconPosition) {
-		ArgumentCaptor<ICommand> commands = ArgumentCaptor.forClass(ICommand.class);
-		verify(radioController, Mockito.atLeastOnce()).sendCommand(commands.capture(), any(NetAddress.class), any(Boolean.class));
-		return new LinkedList<ICommand>(commands.getAllValues());
-	}
 
 	@Test
 	public void showsCompleteWorkAfterPicks() {

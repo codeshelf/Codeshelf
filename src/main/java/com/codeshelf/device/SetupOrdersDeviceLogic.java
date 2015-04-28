@@ -2215,10 +2215,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		resetInventoryCommandAllowed();
 		mContainerInSetup = "";
 
-		/* DEV-775 No longer clear CHE setup state on logout
-		mPositionToContainerMap.clear();
-		mContainerToWorkInstructionCountMap = null;
-		*/
+		//DEV-775 No longer clear CHE setup state on logout
+		if (!usesSummaryState()) {
+			mPositionToContainerMap.clear();
+			mContainerToWorkInstructionCountMap = null;
+		}
 	}
 
 	/**
