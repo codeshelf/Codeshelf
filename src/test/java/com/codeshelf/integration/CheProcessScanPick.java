@@ -21,6 +21,8 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.Container;
+import com.codeshelf.model.domain.ContainerUse;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
@@ -504,6 +506,17 @@ public class CheProcessScanPick extends ServerTest {
 		picker.scanLocation("D303");
 		// DEV-653 go to SCAN_SOMETHING state instead of DO_PICK
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		
+		// verify position index
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		Container c1 = Container.staticGetDao().findByDomainId(facility, "12345");
+		ContainerUse cu1 = ContainerUse.staticGetDao().findByDomainId(c1, "12345");
+		Assert.assertTrue(cu1.getPosconIndex()==1);
+		Container c2 = Container.staticGetDao().findByDomainId(facility, "11111");
+		ContainerUse cu2 = ContainerUse.staticGetDao().findByDomainId(c2, "11111");
+		Assert.assertTrue(cu2.getPosconIndex()==2);
+		this.getTenantPersistenceService().commitTransaction();
 
 		List<WorkInstruction> scWiList = picker.getAllPicksList();
 		Assert.assertEquals(3, scWiList.size());

@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
@@ -186,11 +187,11 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * @param inContainerIdList
 	 * @return
 	 */
-	public final WorkList computeWorkInstructions(final Che inChe, final List<String> inContainerIdList) {
-		return computeWorkInstructions(inChe, inContainerIdList, false);
+	public final WorkList computeWorkInstructions(final Che inChe, final Map<String, String> positionToContainerMap) {
+		return computeWorkInstructions(inChe, positionToContainerMap, false);
 	}
 
-	public final WorkList computeWorkInstructions(final Che inChe, final List<String> inContainerIdList, final Boolean reverse) {
+	public final WorkList computeWorkInstructions(final Che inChe, final Map<String, String> positionToContainerMap, final Boolean reverse) {
 		inChe.clearChe();
 
 		Facility facility = inChe.getFacility();
@@ -202,7 +203,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		// Set new uses on the CHE.
 		// FIXME: retrieve all containers in one shot from the database
 		List<Container> containerList = new ArrayList<Container>();
-		for (String containerId : inContainerIdList) {
+		for (Entry<String, String> e : positionToContainerMap.entrySet()) {
+			String containerId = e.getValue();
 			Container container = Container.staticGetDao().findByDomainId(facility, containerId);
 			if (container != null) {
 				// add to the list that will generate work instructions
@@ -223,9 +225,11 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					}
 
 					try {
+						Integer posconIndex = Integer.parseInt(e.getKey());
+						thisUse.setPosconIndex(posconIndex);
 						ContainerUse.staticGetDao().store(thisUse);
-					} catch (DaoException e) {
-						LOGGER.error("", e);
+					} catch (Exception ex) {
+						LOGGER.error("Failed to update container use "+thisUse, ex);
 					}
 				}
 			} else {
@@ -237,7 +241,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					LOGGER.warn("Location: {} scanned in computeWorkInstructions for {}, but not a put wall", containerId, inChe.getDomainId());
 					// Still a small hole here. User is likely scanning a bay name. But a scanned tier or slot name fom the wall would not yield a warning.
 				}
-
 			}
 		}
 
@@ -272,7 +275,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		if (workList.getInstructions().isEmpty() && workList.getDetails().isEmpty()) {
 			List<WorkInstruction> slowPutWallInstructions = PutWallOrderGenerator.attemptToGenerateWallOrders(inChe,
-				inContainerIdList,
+				positionToContainerMap.values(),
 				theTime);
 			workList.getInstructions().addAll(slowPutWallInstructions);
 		}
@@ -323,9 +326,15 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		// computeWorkInstructions wants a containerId list
 		List<String> containersIdList = Arrays.asList(inContainers.split("\\s*,\\s*")); // this trims out white space
+		HashMap<String,String> containerMap = new HashMap<String,String>();
+		int pos=1;
+		for (String containerId : containersIdList) {
+			containerMap.put(Integer.toString(pos), containerId);
+			pos++;
+		}
 
 		if (containersIdList.size() > 0) {
-			return this.computeWorkInstructions(inChe, containersIdList);
+			return this.computeWorkInstructions(inChe, containerMap);
 			// That did the work. Big side effect. Deleted existing WIs for the CHE. Made new ones. Assigned container uses to the CHE.
 			// The wiCount returned is mainly or convenience and debugging. It may not include some shorts
 		}

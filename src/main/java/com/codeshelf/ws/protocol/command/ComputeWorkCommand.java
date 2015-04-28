@@ -1,6 +1,5 @@
 package com.codeshelf.ws.protocol.command;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -48,12 +47,12 @@ public class ComputeWorkCommand extends CommandABC {
 		if (che != null) {
 			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();
 			Map<String, String> positionToContainerMap = request.getPositionToContainerMap();
-			List<String> containerIdList = new ArrayList<String>(positionToContainerMap.values());
+			//List<String> containerIdList = new ArrayList<String>(positionToContainerMap.values());
 			BooleanHolder pathChanged = new BooleanHolder(false);
 			Boolean reverse = request.getReversePickOrder();
 			
 			// Get the work instructions for this CHE at this location for the given containers.
-			WorkList allWorkList = workService.computeWorkInstructions(che, containerIdList, reverse);
+			WorkList allWorkList = workService.computeWorkInstructions(che, positionToContainerMap, reverse);
 						
 			// Get work instructions with housekeeping
 			List<WorkInstruction> instructionsOnPath = workService.getWorkInstructions(che, request.getLocationId(), reverse, pathChanged);
@@ -61,7 +60,7 @@ public class ComputeWorkCommand extends CommandABC {
 			//Get the counts
 			Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(allWorkList, instructionsOnPath);
 			
-			// ~bhe: should we check for null/zero and return a different status?
+			// create response
 			response.setWorkInstructions(instructionsOnPath);
 			response.setContainerToWorkInstructionCountMap(containerToCountMap);
 			response.setTotalGoodWorkInstructions(getTotalGoodWorkInstructionsCount(containerToCountMap));

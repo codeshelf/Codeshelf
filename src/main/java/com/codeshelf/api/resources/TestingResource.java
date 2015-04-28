@@ -3,9 +3,10 @@ package com.codeshelf.api.resources;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -75,9 +76,9 @@ public class TestingResource {
 				return errors.buildResponse();
 			}
 			Che che = ches.get(0);
-			List<String> containers = new ArrayList<String>();
-			containers.add(order1 + "");
-			containers.add(order2 + "");
+			Map<String,String> containers = new HashMap<String,String>();
+			containers.put("1",order1 + "");
+			containers.put("2",order2 + "");
 			facility = Facility.staticGetDao().findByPersistentId(facilityUUID.getValue());
 			WorkList workList = workService.computeWorkInstructions(che, containers);
 			List<WorkInstruction> instructions = workList.getInstructions();
