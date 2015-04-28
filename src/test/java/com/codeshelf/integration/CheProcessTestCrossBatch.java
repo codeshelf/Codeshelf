@@ -272,7 +272,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		button = picker.buttonFor(wi);
 		quant = wi.getPlanQuantity();
 		picker.pick(button, quant);
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 5000);
+		picker.waitForCheState(picker.getCompleteState(), 5000);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -344,7 +344,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 
 		// pick last item
 		picker.pick(button, quant);
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 5000);
+		picker.waitForCheState(picker.getCompleteState(), 5000);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}

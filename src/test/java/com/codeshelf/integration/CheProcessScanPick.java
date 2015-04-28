@@ -1058,7 +1058,7 @@ public class CheProcessScanPick extends ServerTest {
 			String item = sortedItemLocs[i][0];
 			String loc = sortedItemLocs[i][1];
 			boolean last = (i == sortedItemLocs.length - 1);
-			tryPick(picker, item, loc, (!last) ? CheStateEnum.DO_PICK : CheStateEnum.PICK_COMPLETE);
+			tryPick(picker, item, loc, (!last) ? CheStateEnum.DO_PICK : picker.getCompleteState());
 		}
 		picker.logout();
 	}
