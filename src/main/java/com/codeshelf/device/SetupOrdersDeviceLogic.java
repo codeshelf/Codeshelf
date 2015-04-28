@@ -378,6 +378,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case PICK_COMPLETE:
+			case SETUP_SUMMARY:
 			case PICK_COMPLETE_CURR_PATH:
 				setRememberEnteringWallOrInventoryState(mCheStateEnum);
 				setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
@@ -737,7 +738,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				else
 					setState(CheStateEnum.DO_PICK); // This will cause showActivePicks();
 			} else {
-				int uncompletedInstructionsOnOtherPathsSum = getUncompletedInstructionsOnOtherPathsSum();
+				int uncompletedInstructionsOnOtherPathsSum = getCountJobsOnOtherPaths();
 				processPickComplete(uncompletedInstructionsOnOtherPathsSum > 0);
 			}
 		}
@@ -1215,6 +1216,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 
 	// --------------------------------------------------------------------------
+	/**
+	 * Order_Setup the complete path state is SETUP_SUMMARY
+	 */
+	public CheStateEnum getCompleteState() {
+		if (usesSummaryState())
+			return CheStateEnum.SETUP_SUMMARY;
+		else
+			return super.getCompleteState();
+	}
+
+	// --------------------------------------------------------------------------
 	/* 
 	 */
 	@Override
@@ -1408,7 +1420,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.LOCATION_SELECT);
 			}
 		} else {
-			int uncompletedInstructionsOnOtherPathsSum = getUncompletedInstructionsOnOtherPathsSum();
+			int uncompletedInstructionsOnOtherPathsSum = getCountJobsOnOtherPaths();
 			if (uncompletedInstructionsOnOtherPathsSum == 0) {
 				setState(CheStateEnum.NO_WORK);
 			} else {
@@ -1419,25 +1431,22 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	/**
 	 * A series of private functions giving the overall state of the setup
-	 * This first is uncompletedInstructionsOnOtherPaths
+	 * How many uncompleted job on other paths?
 	 */
-	private int getUncompletedInstructionsOnOtherPathsSum() {
-		if (!feedbackCountersValid()) {
-			LOGGER.error("Inappropriate call to getUncompletedInstructionsOnOtherPathsSum. state:{}", getCheStateEnum());
+	private int getCountJobsOnOtherPaths() {
+		if (mContainerToWorkInstructionCountMap == null)
 			return 0;
+		else {
+			int uncompletedInstructionsOnOtherPathsCounter = 0;
+			for (WorkInstructionCount count : mContainerToWorkInstructionCountMap.values()) {
+				uncompletedInstructionsOnOtherPathsCounter += count.getUncompletedInstructionsOnOtherPaths();
+			}
+			return uncompletedInstructionsOnOtherPathsCounter;
 		}
-		// feedbackCountersValid() proves mContainerToWorkInstructionCountMap != null, so do not check that again.
-		// why not just iterate the values?
-		WorkInstructionCount[] counts = mContainerToWorkInstructionCountMap.values().toArray(new WorkInstructionCount[0]);
-		int uncompletedInstructionsOnOtherPathsCounter = 0;
-		for (WorkInstructionCount count : counts) {
-			uncompletedInstructionsOnOtherPathsCounter += count.getUncompletedInstructionsOnOtherPaths();
-		}
-		return uncompletedInstructionsOnOtherPathsCounter;
 	}
 
 	/**
-	 * How many container/orderId are setup
+	 * How many container/orderId are setup?
 	 */
 	private int getCountOfSetupOrderContainers() {
 		if (mContainerToWorkInstructionCountMap == null)
@@ -1512,7 +1521,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		pickCountStr = StringUtils.leftPad(pickCountStr, 3);
 		// Too clever?  only show other path counts if there are any		
 		String line2;
-		int otherCount = getUncompletedInstructionsOnOtherPathsSum();
+		int otherCount = getCountJobsOnOtherPaths();
 		if (otherCount > 0) {
 			String otherCountStr = Integer.toString(otherCount);
 			otherCountStr = StringUtils.leftPad(otherCountStr, 3);

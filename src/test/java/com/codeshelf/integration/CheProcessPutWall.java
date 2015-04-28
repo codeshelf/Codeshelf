@@ -64,13 +64,13 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
 		picker.pick(button, quant);
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
 
 		LOGGER.info("1e: ORDER_WALL from complete state");
 		picker.scanCommand("ORDER_WALL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker.scanCommand("CLEAR");
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
 
 		LOGGER.info("1g: Do simple actual order setup to put wall");
 		picker.scanCommand("ORDER_WALL");
@@ -80,7 +80,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.scanSomething("L%P12");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker.scanCommand("CLEAR");
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
 
 		LOGGER.info("2: Demonstrate what a put wall picker object can do.");
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
@@ -255,13 +255,13 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
 		picker.pick(button, quant);
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
 
 		LOGGER.info("1f: PUT_WALL from complete state");
 		picker.scanCommand("PUT_WALL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
 		picker.scanCommand("CLEAR");
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
 
 	}
 
@@ -442,7 +442,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Assert.assertEquals(toByte(4), displayValue);
 		// button from the put wall
 		posman.buttonPress(2, 4);
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
 
 		// after DEV-713 
 		// we get two plans. For this test, handle singly. DEV-714 is about lighting two or more put wall locations at time.
@@ -518,9 +518,10 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		int button = picker1.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
 		picker1.pick(button, quant);
-		picker1.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
-		// will this have intermittent failure? Server complete led to new message back to update the posman display. There is no state to wait for.
-		ThreadUtils.sleep(2000);
+		picker1.waitForCheState(picker1.getCompleteState(), WAIT_TIME);
+		
+		// wait-for to avoid intermittent failure
+		posman.waitForControllerDisplayValue((byte) 3, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME);
 		Assert.assertEquals(posman.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_O);
 
 	}
@@ -642,8 +643,8 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker1.scanCommand("YES");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		// No active job on the poscon, so it should now show the state of the order.
-		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
-		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+		// do a wait-for to avoid the interrmittent failure
+		posman.waitForControllerDisplayValue((byte) 4, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME);
 
 		LOGGER.info("3a: Scan 1515 into wall2 will give two jobs. Short the first");
 		picker1.scanCommand("CLEAR");
@@ -674,8 +675,8 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker1.scanCommand("YES");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		LOGGER.info("3c: both order/slots should show needing more. Just the normal dash.");
-		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 6);
-		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+		// Wait for here. Intermittent can happen
+		posman.waitForControllerDisplayValue((byte) 6, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME);
 		Assert.assertEquals(posman.getLastSentPositionControllerMaxQty((byte) 6), PosControllerInstr.BITENCODED_LED_DASH);
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 5);
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
@@ -918,11 +919,11 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.buttonPress(4, 0);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, WAIT_TIME);
 		picker.scanCommand("YES");
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
 
 		LOGGER.info("2a: Try to jump to location on same path, without doing START. Ignored");
 		picker.scanLocation("F14");
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
 
 		LOGGER.info("3a: Restart. Get the 11117 job again. LOCATION_SELECT_REVIEW because 11119 is completed");
 		picker.scanCommand("START");
@@ -941,7 +942,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.buttonPress(4, 0);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, WAIT_TIME);
 		picker.scanCommand("YES");
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
 		
 		// show nothing there at position 4.
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
@@ -957,7 +958,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.scanCommand("CLEAR");
 		// The choice of PICK_COMPLETE or CONTAINER_SELECT after CLEAR used to depend on if there is anything in the container map
 		// That is why we just completed one order first in the test. But now, it is set by a member variable.
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
+		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
 
 		LOGGER.info("4b: Check the put wall display"); // use a waitFor since there is nothing to trigger off of. Avoid intermittent failure
 		// P14 is at poscon index 4.

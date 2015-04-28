@@ -248,7 +248,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		public static String scanPickEnumToString(ScanNeededToVerifyPick inValue) {
 			return inValue.mInternal;
 		}
-	} 
+	}
 
 	public boolean usesSummaryState() {
 		return false; // SetupOrderDeviceLogic will override
@@ -1123,9 +1123,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected void logout() {
 		notifyCheWorkerVerb("LOG OUT", "");
 
-		this.setUserId("");		
+		this.setUserId("");
 		mActivePickWiList.clear();
-		mAllPicksWiList.clear();		
+		mAllPicksWiList.clear();
 		setState(CheStateEnum.IDLE);
 
 		clearAllPosconsOnThisDevice();
@@ -1203,6 +1203,22 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Order_Setup the complete path state is SETUP_SUMMARY
+	 */
+	public CheStateEnum getCompleteState(){
+		return CheStateEnum.PICK_COMPLETE;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * For linescan, we set to  PICK_COMPLETE. Override for Order_Setup we set to SETUP_SUMMARY
+	 */
+	protected void setToCompleteState() {
+		setState(getCompleteState());
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * Is this useful to linescan?  If not, move as private function to SetupOrdersDeviceLogic
 	 */
 	protected void processPickComplete(boolean isWorkOnOtherPaths) {
@@ -1211,7 +1227,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (isWorkOnOtherPaths)
 			otherInformation = "Some of these orders need picks from other paths"; //  should be localized
 		notifyCheWorkerVerb("PATH COMPLETE", otherInformation);
-
 
 		// Clear the existing LEDs.
 		ledControllerClearLeds(); // this checks getLastLedControllerGuid(), and bails if null.
@@ -1222,11 +1237,15 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		// CD_0041 is there a need for this?
 		ledControllerShowLeds(getGuid());
 
+		setToCompleteState();
+
+		/* TODO remove
 		if (isWorkOnOtherPaths) {
 			setState(CheStateEnum.PICK_COMPLETE_CURR_PATH);
 		} else {
 			setState(CheStateEnum.PICK_COMPLETE);
 		}
+		*/
 	}
 
 	// --------------------------------------------------------------------------
@@ -1735,7 +1754,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			showingQuantity,
 			getUserId(),
 			getMyGuidStr());
-		NotificationMessage message = new NotificationMessage(Che.class, getPersistentId(), getMyGuidStr(), getUserId(), EventType.BUTTON);
+		NotificationMessage message = new NotificationMessage(Che.class,
+			getPersistentId(),
+			getMyGuidStr(),
+			getUserId(),
+			EventType.BUTTON);
 		mDeviceManager.sendNotificationMessage(message);
 	}
 

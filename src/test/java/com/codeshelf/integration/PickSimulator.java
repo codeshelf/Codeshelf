@@ -305,6 +305,10 @@ public class PickSimulator {
 			Assert.fail(theProblem);
 		}
 	}
+	
+	public CheStateEnum getCompleteState() {
+		return cheDeviceLogic.getCompleteState();
+	}
 
 	public boolean hasLastSentInstruction(byte position) {
 		return cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position)
