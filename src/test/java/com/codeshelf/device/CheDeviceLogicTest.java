@@ -10,7 +10,6 @@ import static org.mockito.Mockito.verify;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -20,15 +19,11 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.CommandControlButton;
-import com.codeshelf.flyweight.command.CommandControlClearPosController;
 import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
-import com.codeshelf.flyweight.command.CommandControlSetPosController;
-import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
@@ -37,16 +32,12 @@ import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 import com.codeshelf.generators.FacilityGenerator;
 import com.codeshelf.generators.WorkInstructionGenerator;
 import com.codeshelf.model.WorkInstructionCount;
-import com.codeshelf.model.WorkInstructionStatusEnum;
-import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.testframework.MockDaoTest;
-import com.codeshelf.ws.client.CsClientEndpoint;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
 /**
@@ -98,7 +89,7 @@ public class CheDeviceLogicTest extends MockDaoTest {
 
 		cheDeviceLogic.scanCommandReceived("X%START");
 
-		//This test only generates valid orders (no shorts etc). LOCATION_REVIEW_SELECT should never be entered.
+		LOGGER.info("This test only generates valid orders (no shorts etc). LOCATION_REVIEW_SELECT should never be entered.");
 		//We will pass in a map containing good counts with no bad counts.
 		Map<String, WorkInstructionCount> containerToWorkInstructionMap = new HashMap<String, WorkInstructionCount>();
 		containerToWorkInstructionMap.put(wi.getContainerId(), new WorkInstructionCount(wi.getPlanQuantity(), 0, 0, 0, 0));

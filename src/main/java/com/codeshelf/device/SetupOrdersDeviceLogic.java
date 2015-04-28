@@ -43,7 +43,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	// This code runs on the site controller, not the CHE.
 	// The goal is to convert data and instructions to something that the CHE controller can consume and act on with minimal logic.
 
-	private static final Logger					LOGGER							= LoggerFactory.getLogger(SetupOrdersDeviceLogic.class);
+	private static final Logger					LOGGER									= LoggerFactory.getLogger(SetupOrdersDeviceLogic.class);
 
 	// The CHE's container map.
 	private Map<String, String>					mPositionToContainerMap;
@@ -73,16 +73,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Setter
 	private String								mLastPutWallItemScan;
 
-	@Getter
-	@Setter
-	private boolean								mInventoryCommandAllowed		= true;
-
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	CheStateEnum								mRememberStateEnteringWallState	= CheStateEnum.CONTAINER_SELECT;
+	CheStateEnum								mRememberEnteringWallOrInventoryState	= CheStateEnum.CONTAINER_SELECT;
 
-	private final boolean						useSummaryState					= false;
+	private final boolean						useSummaryState							= false;
 
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -316,8 +312,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	protected void processCommandScan(final String inScanStr) {
 
-		updateInventoryCommandAccess(inScanStr);
-
 		switch (inScanStr) {
 
 			case LOGOUT_COMMAND:
@@ -376,7 +370,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CONTAINER_SELECT:
 				// only if no container/orders at all have been set up
 				if (mPositionToContainerMap.size() == 0) {
-					setRememberStateEnteringWallState(mCheStateEnum);
+					setRememberEnteringWallOrInventoryState(mCheStateEnum);
 					setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
 				} else {
 					LOGGER.warn("User: {} attempted to do ORDER_WALL after having some pick orders set up", this.getUserId());
@@ -385,7 +379,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case PICK_COMPLETE:
 			case PICK_COMPLETE_CURR_PATH:
-				setRememberStateEnteringWallState(mCheStateEnum);
+				setRememberEnteringWallOrInventoryState(mCheStateEnum);
 				setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
 				break;
 
@@ -402,7 +396,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CONTAINER_SELECT:
 				// only if no container/orders at all have been set up
 				if (mPositionToContainerMap.size() == 0) {
-					setRememberStateEnteringWallState(mCheStateEnum);
+					setRememberEnteringWallOrInventoryState(mCheStateEnum);
 					setState(CheStateEnum.PUT_WALL_SCAN_WALL);
 				} else {
 					LOGGER.warn("User: {} attempted to do PUT_WALL after having some pick orders set up", this.getUserId());
@@ -412,7 +406,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case PICK_COMPLETE:
 			case SETUP_SUMMARY:
 			case PICK_COMPLETE_CURR_PATH:
-				setRememberStateEnteringWallState(mCheStateEnum);
+				setRememberEnteringWallOrInventoryState(mCheStateEnum);
 				setState(CheStateEnum.PUT_WALL_SCAN_WALL);
 				break;
 
@@ -422,32 +416,38 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	}
 
-	protected void resetInventoryCommandAllowed() {
-		lastScanedGTIN = null;
-		setMInventoryCommandAllowed(true);
-	}
-
-	protected void updateInventoryCommandAccess(String inCommandStr) {
-		if (!inCommandStr.equals(INVENTORY_COMMAND)) {
-			setMInventoryCommandAllowed(false);
-		}
-
-		else if (inCommandStr.equals(LOGOUT_COMMAND)) {
-			setMInventoryCommandAllowed(true);
-		}
-	}
-
+	/**
+	 * Inventory command received. Worker might do this at any time. Within this, controlled by state, we want to allow, or simply ignore the scan.
+	 * Inventory allowed (for now) from basically the same places put wall is allowed, at the start or end of process, but not within.
+	 * SETUP_SUMMARY state mostly.
+	 */
 	protected void inventoryCommandReceived() {
 
 		switch (mCheStateEnum) {
+
 			case CONTAINER_SELECT:
-				if (isMInventoryCommandAllowed()) {
+				// only if no container/orders at all have been set up. Consistent with putwall/order wall
+				if (mPositionToContainerMap.size() == 0) {
+					setRememberEnteringWallOrInventoryState(mCheStateEnum);
 					setState(CheStateEnum.SCAN_GTIN);
 				} else {
-					LOGGER.warn("User: {} attempted inventory scan in invalid state: {}", this.getUserId(), mCheStateEnum);
+					LOGGER.warn("User: {} attempted to do INVENTORY after having some pick orders set up", this.getUserId());
 				}
 				break;
+
+			case PICK_COMPLETE:
+			case PICK_COMPLETE_CURR_PATH:
+				setRememberEnteringWallOrInventoryState(mCheStateEnum);
+				setState(CheStateEnum.SCAN_GTIN);
+				break;
+
+			case SETUP_SUMMARY:
+				setRememberEnteringWallOrInventoryState(mCheStateEnum);
+				setState(CheStateEnum.SCAN_GTIN);
+				break;
+
 			default:
+				LOGGER.warn("User: {} attempted inventory scan in invalid state: {}", this.getUserId(), mCheStateEnum);
 				break;
 		}
 
@@ -466,8 +466,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.CONTAINER_SELECT);
 				break;
 			case SCAN_GTIN:
-				resetInventoryCommandAllowed();
-				setState(CheStateEnum.CONTAINER_SELECT);
+				lastScanedGTIN = null;
+				CheStateEnum priorToInventoryState = getRememberEnteringWallOrInventoryState();
+				setState(priorToInventoryState);
 				break;
 
 			case NO_PUT_WORK:
@@ -480,12 +481,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case GET_PUT_INSTRUCTION: // should never happen. State is transitory unless the server failed to respond
 			case PUT_WALL_SCAN_WALL:
 				// DEV-708, 712 specification. We want to return the state we started from: CONTAINER_SELECT or PICK_COMPLETE
-				CheStateEnum priorState = getRememberStateEnteringWallState();
-				if (mPositionToContainerMap.size() == 0) {
-					setState(priorState);
-				} else {
-					setState(priorState);
-				}
+				CheStateEnum priorState = getRememberEnteringWallOrInventoryState();
+				setState(priorState);
 				break;
 
 			case DO_PUT:
@@ -2212,7 +2209,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	protected void logout() {
 		super.logout(); // this calls the notifyXXX
-		resetInventoryCommandAllowed();
+		lastScanedGTIN = null;
 		mContainerInSetup = "";
 
 		//DEV-775 No longer clear CHE setup state on logout
