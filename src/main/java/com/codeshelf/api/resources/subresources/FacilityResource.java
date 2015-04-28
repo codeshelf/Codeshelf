@@ -47,6 +47,7 @@ import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.service.NotificationService;
 import com.codeshelf.service.OrderService;
 import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
@@ -63,16 +64,18 @@ public class FacilityResource {
 
 	private final WorkService	workService;
 	private final OrderService orderService;
+	private final NotificationService notificationService;
 	private final WebSocketManagerService webSocketManagerService;
 
 	@Setter
 	private Facility facility;
 
 	@Inject
-	public FacilityResource(WorkService workService, OrderService orderService, WebSocketManagerService webSocketManagerService) {
+	public FacilityResource(WorkService workService, OrderService orderService, NotificationService notificationService, WebSocketManagerService webSocketManagerService) {
 		this.orderService = orderService;
 		this.workService = workService;
 		this.webSocketManagerService = webSocketManagerService;
+		this.notificationService = notificationService;
 	}
 
 	@GET
@@ -245,6 +248,21 @@ public class FacilityResource {
 				result.add(new EventDisplay(event));
 			}
 			return BaseResponse.buildResponse(result);
+		} catch (Exception e) {
+			errors.processException(e);
+			return errors.buildResponse();
+		}
+	}
+		
+	@GET
+	@Path("eventsummary")
+	@RequiresPermissions("event:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response eventSummary() {
+		ErrorResponse errors = new ErrorResponse();
+		try {
+			notificationService.getPickSummary();
+			return BaseResponse.buildResponse("OK");
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();

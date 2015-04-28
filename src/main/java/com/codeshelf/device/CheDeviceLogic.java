@@ -1647,6 +1647,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * However, something like SKIPSCAN can only be learned of here.
 	 * 
 	 * By convention, start these string with something recognizable, to tell these notifies apart from the rest that is going on.
+	 * 
+	 * Currently saved actions: CANCEL_PUT, SHORT, SHORT_AHEAD, COMPLETE, SCAN_SKIP
 	 */
 	protected void notifyWiVerb(final WorkInstruction inWi, EventType inVerb, boolean needWarn) {
 		if (inWi == null) {
