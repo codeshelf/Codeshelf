@@ -943,6 +943,10 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
 		
+		// show nothing there at position 4.
+		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
+		Assert.assertNull(displayValue);
+
 		LOGGER.info("4a: Place this order in the put wall");
 		picker.scanCommand("ORDER_WALL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
@@ -955,10 +959,9 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		// That is why we just completed one order first in the test. But now, it is set by a member variable.
 		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
 
-		LOGGER.info("4b: Check the put wall display");
+		LOGGER.info("4b: Check the put wall display"); // use a waitFor since there is nothing to trigger off of. Avoid intermittent failure
 		// P14 is at poscon index 4.
-		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
-		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+		posman.waitForControllerDisplayValue((byte) 4, PosControllerInstr.BITENCODED_SEGMENTS_CODE, 1);
 	
 		LOGGER.info("4c: Restart. Do not get the job again. (did before DEV-766)");
 		picker.scanCommand("START");
