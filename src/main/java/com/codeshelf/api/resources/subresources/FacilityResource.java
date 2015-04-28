@@ -49,6 +49,7 @@ import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.NotificationService;
+import com.codeshelf.service.NotificationService.EventType;
 import com.codeshelf.service.OrderService;
 import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
@@ -226,14 +227,21 @@ public class FacilityResource {
 	@RequiresPermissions("event:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response searchEvents(
-		@QueryParam("type") EventTypeParam typeParam, 
+		@QueryParam("type") List<EventTypeParam> typeParamList, 
 		@QueryParam("resolved") Boolean resolved ) {
 		ErrorResponse errors = new ErrorResponse();
 		try {
 			List<Criterion> filterParams = new ArrayList<Criterion>();
 			filterParams.add(Restrictions.eq("facility", facility));
-			if (typeParam != null && typeParam.getValue() != null) {
-				filterParams.add(Restrictions.eq("eventType", typeParam.getValue()));
+			//If any "type" parameters are provided, filter accordingly
+			List<EventType> typeList = Lists.newArrayList();
+			for (EventTypeParam type : typeParamList) {
+				if (type != null) {
+					typeList.add(type.getValue());
+				}
+			}
+			if (!typeList.isEmpty()) {
+				filterParams.add(Restrictions.in("eventType", typeList));
 			}
 			//If "resolved" parameter not provided, return, both, resolved and unresolved events
 			if (resolved != null) {
