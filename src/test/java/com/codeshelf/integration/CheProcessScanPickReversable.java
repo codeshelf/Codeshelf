@@ -30,7 +30,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
-		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
 		LOGGER.info("1a: leave LOCAPICK off, set SCANPICK, set BayDistance");
 

@@ -275,7 +275,7 @@ public class CheProcessScanPick extends ServerTest {
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
-		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
 		LOGGER.info("1a: Set LOCAPICK, then import the orders file, with containerId.");
 
@@ -380,7 +380,7 @@ public class CheProcessScanPick extends ServerTest {
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
-		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
 		LOGGER.info("1a: Set LOCAPICK, then import the orders file, with containerId.");
 
@@ -479,7 +479,7 @@ public class CheProcessScanPick extends ServerTest {
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
-		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
 		LOGGER.info("1a: Set LOCAPICK, then import the orders file again, with containerId");
 		this.getTenantPersistenceService().beginTransaction();
@@ -544,7 +544,7 @@ public class CheProcessScanPick extends ServerTest {
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
-		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
 		LOGGER.info("1a: Set LOCAPICK, then import the orders file, with containerId. Also set SCANPICK");
 
@@ -776,7 +776,7 @@ public class CheProcessScanPick extends ServerTest {
 		this.startSiteController();
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
-		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
 		LOGGER.info("1a: Set LOCAPICK, then import the orders file, with containerId. Also set SCANPICK");
 
@@ -887,7 +887,7 @@ public class CheProcessScanPick extends ServerTest {
 		this.startSiteController();
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
-		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 		picker.loginAndSetup("Picker #1");
 
 		picker.setupContainer("456", "2");
@@ -993,7 +993,7 @@ public class CheProcessScanPick extends ServerTest {
 
 		Assert.assertEquals(WorkInstructionSequencerType.WorkSequence.toString(), manager.getSequenceKind());
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
-		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
 		picker.loginAndSetup("Picker #1");
 

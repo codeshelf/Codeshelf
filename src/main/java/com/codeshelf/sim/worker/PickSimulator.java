@@ -196,12 +196,16 @@ public class PickSimulator {
 		return getActivePickList().size(); //  0 if out of work. Usually 1. Only higher for simultaneous pick work instructions.
 	}
 
-	public CheStateEnum currentCheState() {
+	public boolean isComplete() {
+		return getCompleteState().equals(getCurrentCheState());
+	}
+	
+	public CheStateEnum getCurrentCheState() {
 		return cheDeviceLogic.getCheStateEnum();
 	}
 
 	public String getPickerTypeAndState(String inPrefix) {
-		return inPrefix + " " + getProcessType() + ": State is " + currentCheState();
+		return inPrefix + " " + getProcessType() + ": State is " + getCurrentCheState();
 	}
 
 	public int buttonFor(WorkInstruction inWorkInstruction) {
@@ -358,7 +362,7 @@ public class PickSimulator {
 
     public String getLastCheDisplay() {
         StringBuffer s = new StringBuffer();
-        for (int i = 0; i < 4; i++) {
+        for (int i = 1; i <= 4; i++) {
             s.append(getLastCheDisplayString(i)).append("\n");
         }
         return s.toString();

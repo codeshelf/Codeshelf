@@ -67,11 +67,11 @@ public final class GroovyShellThread extends Thread {
             in = telnet.getInputStream();
             logger.debug("Created socket IO streams...");
             
-            binding.setVariable(OUT_KEY, telnet.getOutputStream());
+            binding.setVariable(OUT_KEY, out);
             logger.debug("Added output stream to binding collection as {}", OUT_KEY);
             
             final GroovyClassLoader loader = new GroovyClassLoader(this.getContextClassLoader());
-            final IO io = new IO(telnet.getInputStream(), telnet.getOutputStream(), telnet.getOutputStream());
+            final IO io = new IO(in, out, out);
                         
             final Groovysh gsh = new Groovysh(loader, binding, io);
             gsh.getImports().addAll(ImmutableList.of("com.codeshelf.sim.worker.PickSimulator"));
