@@ -941,34 +941,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		Integer toShortCount = 0;
 		Integer removeHousekeepCount = 0;
 
-		/* old Algorithm
-		// Algorithm:  The all picks list is ordered by sequence. So consider anything in that list with later sequence.
-		// One or two of these might also be in mActivePickWiList if it is a simultaneous work instruction pick that we are on.  Remove if found there.
-		WorkInstruction prevWi = null;
-		for (WorkInstruction wi : mAllPicksWiList) {
-			if (laterWi(wi, inShortWi)) {
-				laterCount++;
-				if (sameProductLotEtc(wi, inShortWi)) {
-					// When simultaneous pick work instructions return, we must not short ahead within the simultaneous pick. See CD_0043 for details.
-					// if (!mActivePickWiList.contains(wi)) {
-					toShortCount++;
-					// housekeeps that are not the current job should not be in mActivePickWiList. Just check that possibility to confirm our understanding.
-					if (unCompletedUnneededHousekeep(prevWi)) {
-						if (mActivePickWiList.contains(prevWi))
-							LOGGER.error("unanticipated housekeep in mActivePickWiList in doShortAheads");
-						removeHousekeepCount++;
-						doCompleteUnneededHousekeep(prevWi);
-					}
-					// Short aheads will always set the actual pick quantity to zero.
-					doShortTransaction(wi, 0);
-					// }
-				}
-			}
-			prevWi = wi;
-		}
-		*/
-
-		// New algorithm. Assemble what we want to short
+		// Algorithm. Assemble what we want to short
 		List<WorkInstruction> toShortList = new ArrayList<WorkInstruction>();
 		// Find short aheads from the active picks first, which might have lower sort values.
 		// If we are shorting the inShortWi, there should be no housekeeps in the active pick list.
@@ -1602,7 +1575,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 
 	/** Shows the count feedback on the position controller
-	 * This returns without error if the feedback counters are not valid.
+	 * This returns without error if the feedback counters are not valid. 
+	 * This routine has "grown" from v16. Used to not be called at the end of a run. Now is. So we need to show more state
+	 * from what happened on the run. But only show that stuff if there is not a good WI count.
 	 */
 	protected void showCartSetupFeedback() {
 		//make sure mContainerToWorkInstructionCountMap exists
@@ -1634,29 +1609,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				LOGGER.info("Position Feedback_2: Poscon {} -- {}", position, wiCount);
 				if (count == 0) {
 					//0 good WI's
-					if (wiCount.hasBadCounts() || wiCount.hasWorkOtherPaths()) {
-						//If there any bad counts then we are "done for now" - dim, solid dashes
-						instructions.add(new PosControllerInstr(position,
-							PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-							PosControllerInstr.BITENCODED_LED_DASH,
-							PosControllerInstr.BITENCODED_LED_DASH,
-							PosControllerInstr.SOLID_FREQ.byteValue(),
-							PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
-					} else {
-						if (wiCount.getCompleteCount() == 0) {
-							// This should not be possible (unless we only had a single HK WI, which would be a bug)
-							// However, restart on a route after completing all work for an order comes back this way. Server could return the count
-							// but does not. Treat it as order complete. This case is demonstrated in cheProcessPutWall.orderWallRemoveOrder();
-							LOGGER.debug("WorkInstructionCount has no counts {}; containerId={}", wiCount, containerId);
-						}
-						//Ready for packout - solid, dim oc
-						instructions.add(new PosControllerInstr(position,
-							PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-							PosControllerInstr.BITENCODED_LED_C,
-							PosControllerInstr.BITENCODED_LED_O,
-							PosControllerInstr.SOLID_FREQ.byteValue(),
-							PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
-					}
+					
+					// Fairly significant change from v16 to let this routine do the odd stuff
+					instructions.add(getCartRunFeedbackInstructionForCount(wiCount, position)); // this should do shorts, otherpath, orderComplete
+					// used to have code here to do the dash and "oc".
+
+					
 				} else {
 					//Non-zero good WI's means bright display
 
@@ -1973,6 +1931,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	protected void processButtonPress(Integer inButtonNum, Integer inQuantity) {
 		// In general, this can only come if the poscon was set in a way that prepared it to be able to send.
 		// However, pickSimulator.pick() can be called in any context, which simulates the button press command coming in.
+		notifyButton(inButtonNum, inQuantity);
 
 		// The point is, let's check our state
 		switch (mCheStateEnum) {
@@ -1986,9 +1945,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(mCheStateEnum);
 				return;
 			default: {
+				LOGGER.warn("Unexpected button press ignored. OR invalid pick() call by some unit test.");
 				// We want to ignore the button press, but force out starting poscon situation again.
 				setState(mCheStateEnum);
-				LOGGER.warn("Unexpected button press ignored. OR invalid pick() call by some unit test.");
 				return;
 			}
 		}
@@ -2001,7 +1960,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (wi == null) {
 				// Simply ignore button presses when there is no work instruction.
 			} else {
-				notifyButton(inButtonNum, inQuantity);
 				if (inQuantity >= wi.getPlanMinQuantity()) {
 					processNormalPick(wi, inQuantity);
 				} else {
