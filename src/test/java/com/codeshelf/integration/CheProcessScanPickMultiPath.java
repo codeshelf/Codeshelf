@@ -253,8 +253,6 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		//Scan START, review displays
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
-		// TODO
-		// verifyCheDisplay(picker, "SCAN START LOCATION", "OR SCAN START", "", "SHOWING WI COUNTS");
 		Byte posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("5"), posConValue);
 

@@ -158,8 +158,6 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker2.setupOrderIdAsContainer("WALL1", "1");
 		picker2.setupOrderIdAsContainer("WALL2", "2");
 
-		// TODO figure out what is happening with this. Probably just not showing orderID anymore.
-		// picker2.startAndSkipReview("S11", WAIT_TIME, WAIT_TIME);
 		picker2.scanCommand("START");
 		picker2.waitForCheState(picker2.getLocationStartReviewState(), WAIT_TIME);
 		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);

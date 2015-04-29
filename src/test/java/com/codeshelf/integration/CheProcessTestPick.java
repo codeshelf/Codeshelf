@@ -1255,7 +1255,6 @@ public class CheProcessTestPick extends ServerTest {
 		//Check State Make sure we do not hit REVIEW
 		picker.waitForCheState(picker.getLocationStartReviewState(), 3000);
 
-		// TODO fix for new process
 		LOGGER.info("Case 1: 1 good pick no flashing");
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 6).intValue(), 1);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 6), PosControllerInstr.BRIGHT_DUTYCYCLE);
@@ -1745,12 +1744,6 @@ public class CheProcessTestPick extends ServerTest {
 
 		// Look at the screen
 		// TODO Check out the SUMMARY screen
-		/*
-		line1 = picker.getLastCheDisplayString(1);
-		line3 = picker.getLastCheDisplayString(3);
-		Assert.assertEquals("ALL WORK COMPLETE", line1);
-		Assert.assertEquals("", line3);
-		*/
 
 		propertyService.restoreHKDefaults(facility);
 
@@ -2348,7 +2341,6 @@ public class CheProcessTestPick extends ServerTest {
 		picker.setupOrderIdAsContainer("7", "1");
 		picker.setupOrderIdAsContainer("8", "2");
 
-		// TODO fix for new process
 		LOGGER.info("3: verify 'Location Select' and work on containers");
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(picker.getLocationStartReviewState(), 4000);
