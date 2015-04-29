@@ -1,9 +1,6 @@
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.perf.OrderBatchPerformanceTest;
-import com.dropbox.core.DbxWebAuth.Exception;
-import com.sun.java.util.jar.pack.Instruction;
 
 class PickOrders {
 	int WAIT_TIME = 4000
@@ -25,11 +22,18 @@ class PickOrders {
 		try {
 			picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
 		} catch (IllegalStateException e) {
-			//Check if CHE is in NO_WORK state
-			picker.waitForCheState(CheStateEnum.NO_WORK, WAIT_TIME);
-			println("No work for this order. Check if order " + order + " exists");
-			picker.logout();
-			return;
+			CheStateEnum state = picker.getCurrentCheState();
+			//If CHE is in NO_WORK or NO_WORK_CURR_PATH state, exit without crashing.
+			if (state == CheStateEnum.NO_WORK){
+				println("No work for this order. Check if order " + order + " exists");
+				picker.logout();
+				return;
+			} else if (state == CheStateEnum.NO_WORK_CURR_PATH) {
+				println("No work for this order on current path.");
+				picker.logout();
+				return;
+			}
+			throw e; 
 		}
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, WAIT_TIME);
