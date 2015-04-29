@@ -241,7 +241,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		picker.setupContainer("15", "3");
 
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 5000);
+		picker.waitForCheState(picker.getLocationStartReviewState(), 5000);
 		picker.scanLocation("D-36");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 		propertyService.restoreHKDefaults(facility);

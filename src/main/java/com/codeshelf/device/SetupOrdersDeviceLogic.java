@@ -134,6 +134,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 				case SETUP_SUMMARY:
 					sendSummaryScreen();
+					// We also want cart feedback, including active work instruction counts per poscon
+					this.showCartSetupFeedback();				
 					break;
 
 				case COMPUTE_WORK:

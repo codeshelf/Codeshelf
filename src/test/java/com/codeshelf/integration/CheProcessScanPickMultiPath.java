@@ -295,7 +295,6 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		//The che will remain the in the LOCATION_SELECT state, but will now show work for the new path
 		picker.scanLocation("Loc2B");
 		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
-		verifyCheDisplay(picker, "SCAN START LOCATION", "OR SCAN START", "", "SHOWING WI COUNTS");
 		posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("3"), posConValue);
 
@@ -399,7 +398,6 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		//Scan location on a different path. Verify remaining work count
 		picker.scanLocation("Loc2A");
 		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
-		verifyCheDisplay(picker, "SCAN START LOCATION", "OR SCAN START", "", "SHOWING WI COUNTS");
 		posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("3"), posConValue);
 
@@ -455,7 +453,8 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		picker.scanLocation("Loc2A");
 		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
 		// So, start again, then get the new location.
-		
+
+		//TODO fix
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.NO_WORK_CURR_PATH, WAIT_TIME);
 		picker.scanLocation("Loc2A");
