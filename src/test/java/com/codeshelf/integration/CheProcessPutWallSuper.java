@@ -252,4 +252,5 @@ public class CheProcessPutWallSuper extends ServerTest {
 		ItemMaster master = ItemMaster.staticGetDao().findByDomainId(facility, sku);
 		Assert.assertNotNull(master);
 	}
+
 }

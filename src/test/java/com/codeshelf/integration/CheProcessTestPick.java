@@ -49,6 +49,7 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.UiUpdateService;
+import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
 import com.google.common.base.Strings;
@@ -339,7 +340,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		// Start setting up cart etc
 		this.getTenantPersistenceService().beginTransaction();
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 
 		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("1", "1");
@@ -405,7 +406,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 
 		// Start setting up cart etc
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 
 		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("1", "1");
@@ -651,7 +652,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		// Set up a cart for order 12345, which will generate work instructions
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 		picker.loginAndSetup("Picker #1");
 		picker.setupContainer("12345", "1");
 		picker.startAndSkipReview("D403", 8000, 5000);
@@ -719,7 +720,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 		picker.loginAndSetup("Picker #1");
 
 		// This brief case covers and allows retirement of CheSimulationTest.java
@@ -887,7 +888,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.pick(button, quant);
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
-		
+
 		//After the v15 release, jumping to a new position during a pick restores all previously shorted instructions
 		Assert.assertEquals(5, picker.countRemainingJobs());
 		//Skip a first instruction to mainain an older test that expected the shorted instructions to stay hidden
@@ -971,7 +972,7 @@ public class CheProcessTestPick extends ServerTest {
 		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we need to test removing the bay change just prior to the wrap point.
 
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("Case 1: Scan on near the end of the route. Only 3 of 7 jobs left. (There are 3 housekeeping). So, with route-wrap, 10 jobs");
@@ -1047,7 +1048,7 @@ public class CheProcessTestPick extends ServerTest {
 		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we found the bug with it on.
 
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("Case 1: Scan ");
@@ -1127,7 +1128,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we found the bug with it on.
 
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("Set up first CHE ");
@@ -1151,7 +1152,7 @@ public class CheProcessTestPick extends ServerTest {
 		LOGGER.info("First CHE walks away. Never doing anything. Set up same thing on second CHE ");
 		// This is the DEV-592 bug. Our hibernate parent-childe patterns says we cannot add WI to one CHE without first removing from the other.
 
-		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
+		PickSimulator picker2 = createPickSim(cheGuid2);
 		picker2.loginAndSetup("Picker #2");
 
 		picker2.setupContainer("2", "4");
@@ -1235,7 +1236,7 @@ public class CheProcessTestPick extends ServerTest {
 		//Make sure we have 4 orders/containers
 		Assert.assertEquals(5, containers.size());
 
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 
 		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("a6", "6");
@@ -1413,7 +1414,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 
 		//SETUP
 		picker.loginAndSetup("Picker #1");
@@ -1484,17 +1485,17 @@ public class CheProcessTestPick extends ServerTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 		this.startSiteController();
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 
 		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("11111", "1");
 		picker.setupOrderIdAsContainer("44444", "4");
 		picker.startAndSkipReview("D301", 3000, 3000);
-		
+
 		// No item for 44444, therefore nothing good happened. If it autoshorts, it would show double dash. If no short made, then it shows
 		// single dash. As of April 2015, doAutoShortInstructions() is hard coded to false in WorkService. It does not use AUTOSHRT parameter.
 		// Therefore, we expect poscon 4 to get the single dash, instead of the double short dash.
-		
+
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 4), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 4), PosControllerInstr.BITENCODED_LED_DASH);
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 4), PosControllerInstr.BITENCODED_LED_DASH);
@@ -1555,7 +1556,7 @@ public class CheProcessTestPick extends ServerTest {
 		//Make sure we have 4 orders/containers
 		Assert.assertEquals(4, containers.size());
 
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 
 		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("11111", "1");
@@ -1793,7 +1794,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		// Start setting up cart etc
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 
 		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("11111", "1");
@@ -1858,7 +1859,7 @@ public class CheProcessTestPick extends ServerTest {
 		// Start setting up cart etc
 		this.getTenantPersistenceService().beginTransaction();
 
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 
 		picker.loginAndSetup("Picker #1");
 
@@ -2035,7 +2036,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 		this.startSiteController(); // after all the parameter changes
 
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 
 		LOGGER.info("1b: setup two orders, that will have 3 work instructions. The first two are same SKU/Location so should be done as simultaneous WI ");
 		picker.loginAndSetup("Picker #1");
@@ -2188,7 +2189,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 		this.startSiteController(); // after all the parameter changes
 
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 
 		LOGGER.info("1b: setup two orders, that will have 3 work instructions. The first two are same SKU/Location so should be done as simultaneous WI ");
 		picker.loginAndSetup("Picker #1");
@@ -2319,15 +2320,15 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 2), PosControllerInstr.BITENCODED_TOP_BOTTOM);
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 2), PosControllerInstr.BITENCODED_TOP_BOTTOM);
-		
+
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_C);
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);
 
 	}
-	
+
 	/**
-	 * This test verifies that the "bay change" displays disappears after the button is pressed, 
+	 * This test verifies that the "bay change" displays disappears after the button is pressed,
 	 * and a different CHE poscon displays the quantity for the next pick
 	 */
 	@Test
@@ -2339,13 +2340,13 @@ public class CheProcessTestPick extends ServerTest {
 
 		this.startSiteController();
 
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 
 		LOGGER.info("2: assign two identical two-item orders to containers on the CHE");
 		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("7", "1");
 		picker.setupOrderIdAsContainer("8", "2");
-		
+
 		LOGGER.info("3: verify 'Location Select' and work on containers");
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 4000);
@@ -2354,27 +2355,27 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(new Byte("2"), posConValue1);
 		Byte posConValue2 = picker.getLastSentPositionControllerDisplayValue((byte) 2);
 		Assert.assertEquals(new Byte("2"), posConValue2);
-		
+
 		LOGGER.info("4: verify generated instructions");
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		List<WorkInstruction> wiList = picker.getRemainingPicksWiList();
 		String[] expectations = { "Item2", "Item2", "Housekeeping", "Item6", "Item6" };
 		compareInstructionsList(wiList, expectations);
-		
+
 		LOGGER.info("5: pick two items before bay change");
 		picker.pick(2, 40);
 		picker.pick(1, 40);
-		
+
 		LOGGER.info("6: verify 'bc' code on position 1; then - press button to advance");
 		Assert.assertEquals(PosControllerInstr.BAY_COMPLETE_CODE, picker.getLastSentPositionControllerDisplayValue((byte) 1));
 		picker.buttonPress(1, 0);
-		
+
 		// The main purpose of the test.
 		LOGGER.info("7: verify the correct quantity on position 2, and nothing on position 1");
 		Assert.assertEquals(new Byte("30"), picker.getLastSentPositionControllerDisplayValue((byte) 2));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
-		
+
 		LOGGER.info("8: wrap up the test by finishing both orders");
 		picker.pickItemAuto();
 		picker.pickItemAuto();

@@ -15,6 +15,7 @@ import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 
 public class CheProcessScanPickReversable extends ServerTest {

@@ -19,6 +19,7 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.LightService;
+import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.util.ThreadUtils;
 
 public class CheProcessPutWall extends CheProcessPutWallSuper {
@@ -33,7 +34,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 
 		LOGGER.info("1: prove ORDER_WALL and clear works from start and finish, but not after setup or during pick");
 		picker.loginAndSetup("Picker #1");
@@ -115,7 +116,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		PickSimulator picker1 = new PickSimulator(this, cheGuid1);
+		PickSimulator picker1 = createPickSim(cheGuid1);
 
 		LOGGER.info("1: Just set up some orders to the put wall. Intentionally choose order with inventory location in the slow mover area.");
 		picker1.loginAndSetup("Picker #1");
@@ -151,7 +152,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Assert.assertTrue(loc.isLightablePoscon());
 		this.getTenantPersistenceService().commitTransaction();
 
-		PickSimulator picker2 = new PickSimulator(this, cheGuid2);
+		PickSimulator picker2 = createPickSim(cheGuid2);
 		picker2.loginAndSetup("Picker #2");
 		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker2.setupOrderIdAsContainer("WALL1", "1");
@@ -190,7 +191,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 
 		LOGGER.info("1: prove PUT_WALL and clear works from start and finish, but not after setup or during pick");
 		picker.loginAndSetup("Picker #1");
@@ -275,7 +276,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		PickSimulator picker1 = new PickSimulator(this, cheGuid1);
+		PickSimulator picker1 = createPickSim(cheGuid1);
 
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
 		Assert.assertNotNull(posman);
@@ -305,7 +306,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		assertOrderLocation("11118", "P14", "WALL1 - P14");
 		assertOrderLocation("11115", "P15", "WALL2 - P15");
 		assertOrderLocation("11116", "P16", "WALL2 - P16");
-		assertOrderLocation("11111", "", ""); // always good to test the NOT case. 
+		assertOrderLocation("11111", "", ""); // always good to test the NOT case.
 		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("2: As if the slow movers came out of system, just scan those SKUs to place into put wall");
@@ -409,7 +410,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
 		Assert.assertNotNull(posman);
@@ -444,7 +445,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		posman.buttonPress(2, 4);
 		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
 
-		// after DEV-713 
+		// after DEV-713
 		// we get two plans. For this test, handle singly. DEV-714 is about lighting two or more put wall locations at time.
 		// By that time, we should have implemented something to not allow button press from CHE poscon, especially if more than one WI.
 
@@ -463,7 +464,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		PickSimulator picker1 = new PickSimulator(this, cheGuid1);
+		PickSimulator picker1 = createPickSim(cheGuid1);
 
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
 		Assert.assertNotNull(posman);
@@ -519,7 +520,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		int quant = wi.getPlanQuantity();
 		picker1.pick(button, quant);
 		picker1.waitForCheState(picker1.getCompleteState(), WAIT_TIME);
-		
+
 		// wait-for to avoid intermittent failure
 		posman.waitForControllerDisplayValue((byte) 3, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME);
 		Assert.assertEquals(posman.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_O);
@@ -536,7 +537,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		PickSimulator picker1 = new PickSimulator(this, cheGuid1);
+		PickSimulator picker1 = createPickSim(cheGuid1);
 
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
 		Assert.assertNotNull(posman);
@@ -566,7 +567,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		assertOrderLocation("11118", "P14", "WALL1 - P14");
 		assertOrderLocation("11115", "P15", "WALL2 - P15");
 		assertOrderLocation("11116", "P16", "WALL2 - P16");
-		assertOrderLocation("11111", "", ""); // always good to test the NOT case. 
+		assertOrderLocation("11111", "", ""); // always good to test the NOT case.
 		// Let's document the poscon indices, and relative position of P15 and P16
 		Facility facility = getFacility();
 		Location loc = facility.findSubLocationById("P14");
@@ -694,7 +695,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		PickSimulator picker1 = new PickSimulator(this, cheGuid1);
+		PickSimulator picker1 = createPickSim(cheGuid1);
 
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
 		Assert.assertNotNull(posman);
@@ -791,7 +792,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 	public final void putWallOtherConfigurations() throws IOException {
 		// This is for DEV-714
 		/* The point is to make sure that our various configuration possibilities, including multi-pick, do not make the put wall unusable.
-		 * Housekeeping: 
+		 * Housekeeping:
 		 *  BAYCHANG - If a put wall is a bay, there would never be the possibility of bay change. If the put wall is an aisle, there could be that possibility. Not tested.
 		 *  RPEATPOS - currently, container/order is not being populated onto put wall work instruction. We do test one SKU to several slots in the wall. This does not
 		 *  yield repeat container housekeeping.
@@ -813,7 +814,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		PickSimulator picker1 = new PickSimulator(this, cheGuid1);
+		PickSimulator picker1 = createPickSim(cheGuid1);
 
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
 		Assert.assertNotNull(posman);
@@ -847,16 +848,16 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		// This is scan of the SKU, the ItemMaster's domainId
 		picker1.scanSomething("1515");
 		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
-		
+
 		LOGGER.info("2b: if SCANPICK had an effect we would have had to scan again foolishly.");
 		List<WorkInstruction> wiList = picker1.getAllPicksList();
 		logWiList(wiList);
 		Assert.assertEquals(2, wiList.size());
-		
+
 		LOGGER.info("2c: if PICKMULT had an effect we would have two in active jobs list instead of 1.");
 		List<WorkInstruction> activeWiList = picker1.getActivePickList();
 		Assert.assertEquals(1, activeWiList.size());
-		
+
 		LOGGER.info("3a: AUTOSHRT is off. Short the first of two jobs for this SKU, and see that the second job does not short ahead.");
 		// P15 sorts first, with count 4
 		picker1.logCheDisplay();
@@ -864,14 +865,14 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker1.waitForCheState(CheStateEnum.SHORT_PUT, WAIT_TIME);
 		posman.buttonPress(5, 1);
 		picker1.waitForCheState(CheStateEnum.SHORT_PUT_CONFIRM, WAIT_TIME);
-		
+
 		LOGGER.info("3b: This will not short ahead. See in the log. Therefore, go to DO_PUT state for the P15 job for the same SKU.");
 		picker1.scanCommand("YES");
 		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
 		picker1.logCheDisplay();
 
 	}
-	
+
 	@Test
 	public final void orderWallRemoveOrder() throws IOException {
 		// This is for DEV-766. Test strategy:
@@ -891,7 +892,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
 		Assert.assertNotNull(posman);
@@ -935,7 +936,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_O, maxValue);
 		picker.scanCommand("START"); // this could have been location scan on the same path
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
-	
+
 		LOGGER.info("3b: Short it again");
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, WAIT_TIME);
@@ -943,7 +944,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, WAIT_TIME);
 		picker.scanCommand("YES");
 		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
-		
+
 		// show nothing there at position 4.
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
 		Assert.assertNull(displayValue);
@@ -963,13 +964,13 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		LOGGER.info("4b: Check the put wall display"); // use a waitFor since there is nothing to trigger off of. Avoid intermittent failure
 		// P14 is at poscon index 4.
 		posman.waitForControllerDisplayValue((byte) 4, PosControllerInstr.BITENCODED_SEGMENTS_CODE, 1);
-	
+
 		LOGGER.info("4c: Restart. Do not get the job again. (did before DEV-766)");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.NO_WORK, WAIT_TIME);
-		
+
 		LOGGER.info("5: Not recommended. Just showing. Set up again even though it is is in the put wall");
-		picker.scanCommand("SETUP");			
+		picker.scanCommand("SETUP");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker.setupContainer("11117", "4");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
@@ -980,11 +981,11 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		wis = picker.getAllPicksList();
 		this.logWiList(wis);
 		Assert.assertEquals(1, wis.size());
-		
+
 		LOGGER.info("5b: Put wall display still there");
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
-	
+
 
 
 	}

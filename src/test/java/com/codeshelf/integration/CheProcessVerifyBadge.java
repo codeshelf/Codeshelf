@@ -15,6 +15,7 @@ import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Worker;
+import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 
 public class CheProcessVerifyBadge extends ServerTest {
