@@ -92,7 +92,7 @@ public class PickSimulator {
 			// perform start without location scan, if location is undefined
 			return;
 		}
-		waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, inComputeTimeOut);
+		waitForCheState(getLocationStartReviewState(true), inComputeTimeOut);
 		scanLocation(location);
 		waitForCheState(CheStateEnum.DO_PICK, inLocationTimeOut);
 	}
