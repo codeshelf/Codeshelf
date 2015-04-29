@@ -115,6 +115,8 @@ public class WebApiServer {
 					resourceContextHandler.setHandler(resourceHandler);
 					contexts.addHandler(resourceContextHandler);				
 		        }
+			} else { //site controller
+				contexts.addHandler(this.createWorkerSimApiHandler(deviceManager));
 			}
 
 			server.start();
@@ -229,6 +231,17 @@ public class WebApiServer {
 		restApiContext.addServlet(DefaultServlet.class, "/");  //filter needs to front an actual servlet so put a basic servlet in place
 		return restApiContext;
 	}
+	
+	private Handler createWorkerSimApiHandler(CsDeviceManager deviceManager) {
+		ServletContextHandler workerSimContext = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
+		workerSimContext.setContextPath("/sim");
+		ResourceConfig rc = new PackagesResourceConfig("com.codeshelf.sim.worker.api");
+		ServletContainer container = new ServletContainer(rc);
+		workerSimContext.addServlet(new ServletHolder(container), "/*");
+		return workerSimContext;
+	}
+
+
 	
 	private Handler createManagerApiHandler() {
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
