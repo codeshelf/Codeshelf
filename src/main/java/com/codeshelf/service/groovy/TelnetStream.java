@@ -56,19 +56,23 @@ public class TelnetStream {
         }
 
         private void handleWILL() throws IOException {
-            int opt = is.read();
+            @SuppressWarnings("unused")
+			int opt = is.read();
         }
 
         private void handleWONT() throws IOException {
-            int opt = is.read();
+            @SuppressWarnings("unused")
+			int opt = is.read();
         }
 
         private void handleDO() throws IOException {
-            int opt = is.read();
+            @SuppressWarnings("unused")
+			int opt = is.read();
         }
 
         private void handleDONT() throws IOException {
-            int opt = is.read();
+            @SuppressWarnings("unused")
+			int opt = is.read();
         }
 
         private void handleSB() throws IOException {
