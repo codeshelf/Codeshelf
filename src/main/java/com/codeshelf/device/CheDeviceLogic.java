@@ -1200,6 +1200,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	public CheStateEnum getCompleteState() {
 		return CheStateEnum.PICK_COMPLETE;
 	}
+	
+	public CheStateEnum getNoWorkReviewState() {
+		return CheStateEnum.NO_WORK;
+	}
 
 	// --------------------------------------------------------------------------
 	/**

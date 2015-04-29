@@ -112,58 +112,6 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		 */
 	}
 
-	@SuppressWarnings("unused")
-	@Test
-	public void showsNoWorkIfNothingAheadOfLocation() {
-		this.getTenantPersistenceService().beginTransaction();
-
-		int chePosition = 1;
-
-		Facility facility = new FacilityGenerator().generateValid();
-		this.getTenantPersistenceService().commitTransaction();
-
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		WorkInstruction wi = new WorkInstructionGenerator().generateWithNewStatus(facility);
-		this.getTenantPersistenceService().commitTransaction();
-
-		List<WorkInstruction> wiToDo = ImmutableList.of(wi);
-
-		IRadioController radioController = mock(IRadioController.class);
-
-		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(),
-			new NetGuid("0xABC"),
-			mock(CsDeviceManager.class),
-			radioController, null);
-
-		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
-		cheDeviceLogic.startDevice();
-
-		cheDeviceLogic.scanCommandReceived("U%PICKER1");
-
-		cheDeviceLogic.scanCommandReceived("C%" + wi.getContainerId());
-
-		cheDeviceLogic.scanCommandReceived("P%" + chePosition);
-
-		cheDeviceLogic.scanCommandReceived("X%START");
-
-		//This test only generates valid orders (no shorts etc). LOCATION_REVIEW_SELECT should never be entered.
-		//We will pass in a map containing good counts with no bad counts.
-		Map<String, WorkInstructionCount> containerToWorkInstructionMap = new HashMap<String, WorkInstructionCount>();
-		containerToWorkInstructionMap.put(wi.getContainerId(), new WorkInstructionCount(wi.getPlanQuantity(), 0, 0, 0, 0));
-
-		cheDeviceLogic.processWorkInstructionCounts(0, containerToWorkInstructionMap);
-
-		cheDeviceLogic.scanCommandReceived("L%ANYLOCATIONAFTERPICK");
-
-		//Pretend no work ahead of this location
-		cheDeviceLogic.assignWork(Collections.<WorkInstruction> emptyList(), null);
-
-		pressButton(cheDeviceLogic, chePosition, wi.getPlanQuantity());
-
-		verifyDisplay(radioController, "NO WORK TO DO");
-
-	}
 
 	@Test
 	public void showsNoMoreWorkWhenNoWIs() {
@@ -191,8 +139,6 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		//Empty map for workinstructionMap. Since totalWiCount is 0. LOCATION_REVIEW should not happen
 		Map<String, WorkInstructionCount> containerToWorkInstructionMap = new HashMap<String, WorkInstructionCount>();
 		cheDeviceLogic.processWorkInstructionCounts(0, containerToWorkInstructionMap);
-
-		verifyDisplay(radioController, "NO WORK TO DO");
 
 	}
 

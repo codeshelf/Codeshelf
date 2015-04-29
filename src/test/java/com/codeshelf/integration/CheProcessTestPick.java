@@ -727,7 +727,7 @@ public class CheProcessTestPick extends ServerTest {
 		LOGGER.info("Case 1: If no work, immediately comes to NO_WORK after start. (Before v6, it came to all work complete.)");
 		picker.setupContainer("9x9x9", "1"); // unknown container
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.NO_WORK, 5000);
+		picker.waitForCheState(picker.getNoWorkReviewState(), 5000);
 
 		Assert.assertEquals(0, picker.countActiveJobs());
 
@@ -772,9 +772,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.scanCommand("START");
 		picker.waitForCheState(picker.getLocationStartReviewState(true), 4000);
 		picker.scanLocation("BAD_LOCATION");
-		picker.waitForCheState(CheStateEnum.NO_WORK, 4000);
-		firstLine = picker.getLastCheDisplayString(1);
-		Assert.assertEquals("NO WORK TO DO", firstLine);
+		picker.waitForCheState(picker.getNoWorkReviewState(), 4000);
 
 		picker.scanLocation("D303");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);

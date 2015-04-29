@@ -866,7 +866,7 @@ public class CheProcessScanPick extends ServerTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 		LOGGER.info("1c: START. Now we get some work. 3 jobs, since only 3 details had modeled locations");
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.NO_WORK, 4000);
+		picker.waitForCheState(picker.getNoWorkReviewState(), 4000);
 
 	}
 

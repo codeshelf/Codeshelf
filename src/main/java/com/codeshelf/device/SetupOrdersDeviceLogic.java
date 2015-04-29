@@ -1211,11 +1211,20 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**
 	 * Order_Setup the complete path state is SETUP_SUMMARY
 	 */
+	@Override
 	public CheStateEnum getCompleteState() {
 		if (usesSummaryState())
 			return CheStateEnum.SETUP_SUMMARY;
 		else
 			return super.getCompleteState();
+	}
+
+	@Override
+	public CheStateEnum getNoWorkReviewState() {
+		if (usesSummaryState())
+			return CheStateEnum.SETUP_SUMMARY;
+		else
+			return super.getNoWorkReviewState();
 	}
 
 	// --------------------------------------------------------------------------
@@ -1416,7 +1425,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		} else {
 			// v16 remove NO_WORK_CURR_PATH. Just NO_WORK, until we go to SETUP_SUMMARY
-			setState(CheStateEnum.NO_WORK);
+			setState(getNoWorkReviewState());
 		}
 	}
 
@@ -1781,7 +1790,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	public void assignWork(final List<WorkInstruction> inWorkItemList, String message) {
 		if (inWorkItemList == null || inWorkItemList.size() == 0) {
-			setState(CheStateEnum.NO_WORK);
+			setState(getNoWorkReviewState());
 		} else {
 			WorkInstruction wi1 = inWorkItemList.get(0);
 			String otherInformation = String.format("First pick at %s", wi1.getPickInstruction());

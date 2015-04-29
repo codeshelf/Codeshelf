@@ -182,7 +182,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		picker2.setupOrderIdAsContainer("Bad Wall Name", "1");
 
 		picker2.scanCommand("START");
-		picker2.waitForCheState(CheStateEnum.NO_WORK, WAIT_TIME);
+		picker2.waitForCheState(picker2.getNoWorkReviewState(), WAIT_TIME);
 
 		//Confirm nothing on PosCon1
 		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);

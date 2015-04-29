@@ -673,7 +673,7 @@ public class CheProcessLineScan extends ServerTest {
 		
 		LOGGER.info("1b: START. NO work, because the file did not have containerID set for the order");
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.NO_WORK, 4000);
+		picker.waitForCheState(picker.getNoWorkReviewState(), 4000);
 
 		// logout back to idle state.
 		picker.logout();
