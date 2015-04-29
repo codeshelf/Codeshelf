@@ -74,9 +74,10 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		picker2.setupOrderIdAsContainer("WALL1", "1");
 		picker2.setupOrderIdAsContainer("WALL2", "2");
 
+		// TODO fix
 		// picker2.startAndSkipReview("S11", WAIT_TIME, WAIT_TIME);
 		picker2.scanCommand("START");
-		picker2.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker2.waitForCheState(picker2.getLocationStartReviewState(), WAIT_TIME);
 		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);
 		Byte posConValue2 = picker2.getLastSentPositionControllerDisplayValue((byte) 2);
 		Assert.assertEquals(new Byte("1"), posConValue1);
@@ -127,9 +128,10 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		LOGGER.info("2d: A bad order name. ");
 		picker2.setupOrderIdAsContainer("1119119119", "6");
 
+		// TODO fix
 		LOGGER.info("3: After start, will go to LOCATION_SELECT_REVIEW state since we did for bad poscon positions ");
 		picker2.scanCommand("START");
-		picker2.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, WAIT_TIME);
+		picker2.waitForCheState(picker2.getLocationStartReviewState(true), WAIT_TIME);
 		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);
 		Byte posConValue2 = picker2.getLastSentPositionControllerDisplayValue((byte) 2);
 		Assert.assertEquals(new Byte("1"), posConValue1);
@@ -164,8 +166,9 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		picker2.setupOrderIdAsContainer("WALL2", "1");
 
 		picker2.scanCommand("START");
-		picker2.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker2.waitForCheState(picker2.getLocationStartReviewState(), WAIT_TIME);
 
+		// TODO fix
 		//Make sure different items do not combine
 		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("2"), posConValue1);
@@ -201,8 +204,9 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		picker2.setupOrderIdAsContainer("Bad Wall Name", "3");
 
 		picker2.scanCommand("START");
-		picker2.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, WAIT_TIME);
+		picker2.waitForCheState(picker2.getLocationStartReviewState(true), WAIT_TIME);
 
+		// TODO fix
 		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);
 		Byte posConValue2 = picker2.getLastSentPositionControllerDisplayValue((byte) 2);
 		Assert.assertEquals(new Byte("1"), posConValue1);
@@ -227,8 +231,9 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		picker2.setupOrderIdAsContainer("WALL2", "2");
 
 		picker2.scanCommand("START");
-		picker2.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, WAIT_TIME);
+		picker2.waitForCheState(picker2.getLocationStartReviewState(true), WAIT_TIME);
 
+		// TODO fix
 		//Verify 2 items on PosCon1. Order "12345" has 3 items, but only 2 of them are on the path che picks.
 		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("2"), posConValue1);
@@ -251,8 +256,9 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		picker2.setupOrderIdAsContainer("11112", "2");
 
 		picker2.scanCommand("START");
-		picker2.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker2.waitForCheState(picker2.getLocationStartReviewState(), WAIT_TIME);
 
+		// TODO fix
 		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("4"), posConValue1);
 
