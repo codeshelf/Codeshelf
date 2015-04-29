@@ -81,7 +81,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
@@ -106,7 +106,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		picker.scanCommand(CheDeviceLogic.REVERSE_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		picker.scanCommand(CheDeviceLogic.REVERSE_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
@@ -131,7 +131,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		picker.scanCommand(CheDeviceLogic.REVERSE_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
@@ -155,7 +155,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		picker.scanCommand(CheDeviceLogic.REVERSE_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
@@ -178,7 +178,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		picker.scanCommand(CheDeviceLogic.REVERSE_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		picker.scanCommand(CheDeviceLogic.REVERSE_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		List<WorkInstruction> scWiList = picker.getRemainingPicksWiList();
@@ -186,7 +186,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		compareInstructionsList(scWiList, expectations1);
 
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		scWiList = picker.getRemainingPicksWiList();
@@ -194,7 +194,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		compareInstructionsList(scWiList, expectations2);
 
 		picker.scanCommand(CheDeviceLogic.REVERSE_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		picker.scanCommand(CheDeviceLogic.REVERSE_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		scWiList = picker.getRemainingPicksWiList();
@@ -216,7 +216,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		picker.scanLocation("LocX26");
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
@@ -240,7 +240,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		picker.scanCommand(CheDeviceLogic.REVERSE_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		picker.scanLocation("LocX26");
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
@@ -265,7 +265,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
@@ -285,7 +285,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		picker.scanCommand(CheDeviceLogic.REVERSE_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
@@ -316,7 +316,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		picker.scanCommand(CheDeviceLogic.REVERSE_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		picker.scanCommand(CheDeviceLogic.REVERSE_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
@@ -336,7 +336,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		picker.scanCommand(CheDeviceLogic.REVERSE_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
@@ -367,7 +367,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 
 		//Go forward
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
@@ -387,7 +387,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 
 		//Go reverse
 		picker.scanCommand(CheDeviceLogic.REVERSE_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		picker.scanCommand(CheDeviceLogic.REVERSE_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
@@ -401,7 +401,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 
 		//Go forward and jump
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		picker.scanLocation("LocX26");
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
