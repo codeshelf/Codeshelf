@@ -105,6 +105,13 @@ public class WorkInstructionCount {
 		uncompletedInstructionsOnOtherPaths++;
 	}
 
+	/**
+	 * This is very important as it indicated the work for an order/container that is not being done on the current cart run
+	 */
+	public int getOtherWorkTotal() {
+		return uncompletedInstructionsOnOtherPaths + detailsNoWiMade;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;

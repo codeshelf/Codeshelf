@@ -1246,13 +1246,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		setToCompleteState();
 
-		/* TODO remove
-		if (isWorkOnOtherPaths) {
-			setState(CheStateEnum.PICK_COMPLETE_CURR_PATH);
-		} else {
-			setState(CheStateEnum.PICK_COMPLETE);
-		}
-		*/
 	}
 
 	// --------------------------------------------------------------------------

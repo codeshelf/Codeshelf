@@ -135,7 +135,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				case SETUP_SUMMARY:
 					sendSummaryScreen();
 					// We also want cart feedback, including active work instruction counts per poscon
-					this.showCartSetupFeedback();				
+					this.showCartSetupFeedback();
 					break;
 
 				case COMPUTE_WORK:
@@ -257,10 +257,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 				case NO_WORK:
 					sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
-					this.showCartSetupFeedback();
-					break;
-				case NO_WORK_CURR_PATH:
-					sendDisplayCommand(NO_WORK_MSG, ON_CURR_PATH_MSG, SCAN_LOCATION_MSG, SHOWING_WI_COUNTS);
 					this.showCartSetupFeedback();
 					break;
 				case SCAN_GTIN:
@@ -1197,7 +1193,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**
 	 * Order_Setup the complete path state is SETUP_SUMMARY
 	 */
-	public CheStateEnum getLocationStartReviewState(){
+	public CheStateEnum getLocationStartReviewState() {
 		if (usesSummaryState())
 			return CheStateEnum.SETUP_SUMMARY;
 		else
@@ -1233,7 +1229,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processIdleStateScan(inScanPrefixStr, inContent);
 				break;
 			case NO_WORK:
-			case NO_WORK_CURR_PATH:
 				processLocationScan(inScanPrefixStr, inContent);
 				break;
 			case LOCATION_SELECT:
@@ -1420,18 +1415,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.LOCATION_SELECT);
 			}
 		} else {
-			int uncompletedInstructionsOnOtherPathsSum = getCountJobsOnOtherPaths();
-			if (uncompletedInstructionsOnOtherPathsSum == 0) {
-				setState(CheStateEnum.NO_WORK);
-			} else {
-				setState(CheStateEnum.NO_WORK_CURR_PATH);
-			}
+			// v16 remove NO_WORK_CURR_PATH. Just NO_WORK, until we go to SETUP_SUMMARY
+			setState(CheStateEnum.NO_WORK);
 		}
 	}
 
 	/**
 	 * A series of private functions giving the overall state of the setup
-	 * How many uncompleted job on other paths?
+	 * How many jobs on not being done for this setup? Includes uncompleted wi other paths, and details with no wi made
 	 */
 	private int getCountJobsOnOtherPaths() {
 		if (mContainerToWorkInstructionCountMap == null)
@@ -1439,7 +1430,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		else {
 			int uncompletedInstructionsOnOtherPathsCounter = 0;
 			for (WorkInstructionCount count : mContainerToWorkInstructionCountMap.values()) {
-				uncompletedInstructionsOnOtherPathsCounter += count.getUncompletedInstructionsOnOtherPaths();
+				uncompletedInstructionsOnOtherPathsCounter += count.getOtherWorkTotal();
 			}
 			return uncompletedInstructionsOnOtherPathsCounter;
 		}
@@ -1453,6 +1444,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			return 0;
 		else
 			return mContainerToWorkInstructionCountMap.size();
+		// huge assumption that all WorkInstructionCounts in the map are valid. See ComputeWorkCommand.computeContainerWorkInstructionCounts
+		// which filtered out some "None" counts. Not sure if that is correct or not. 
 	}
 
 	/**
@@ -1609,12 +1602,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				LOGGER.info("Position Feedback_2: Poscon {} -- {}", position, wiCount);
 				if (count == 0) {
 					//0 good WI's
-					
+
 					// Fairly significant change from v16 to let this routine do the odd stuff
 					instructions.add(getCartRunFeedbackInstructionForCount(wiCount, position)); // this should do shorts, otherpath, orderComplete
 					// used to have code here to do the dash and "oc".
 
-					
 				} else {
 					//Non-zero good WI's means bright display
 

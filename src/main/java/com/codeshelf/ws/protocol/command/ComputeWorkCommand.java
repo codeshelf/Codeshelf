@@ -95,6 +95,14 @@ public class ComputeWorkCommand extends CommandABC {
 		for (WorkInstruction wi : allWorkInstructions){
 			WorkInstructionStatusEnum wiStatus = wi.getStatus();
 			String containerId = wi.getContainerId();
+			// This is sometimes odd. Seeing "None" in a wi for something that may have got a putwall job before.
+			// Returning a WorkInstructionCount for "None"  may confuse the site controller. Just filter here.
+			if (containerId == null || containerId.isEmpty() || containerId.equals("None")) {
+				LOGGER.warn("computeContainerWorkInstructionCounts had a wi for 'None' container");
+				LOGGER.warn("Wi: {}", wi);
+				continue; // do not make new WorkInstructionCount for the bad one.
+			}
+				
 			count = containerToWorkInstructCountMap.get(containerId);
 			if (count == null) {
 				count = new WorkInstructionCount();

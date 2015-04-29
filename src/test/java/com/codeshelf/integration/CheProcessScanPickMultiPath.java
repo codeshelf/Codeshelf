@@ -390,8 +390,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 
 		//Verify "No Work On Current Path" message
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.NO_WORK_CURR_PATH, WAIT_TIME);
-		verifyCheDisplay(picker, "NO WORK TO DO", "ON CURRENT PATH", "SCAN START LOCATION", "SHOWING WI COUNTS");
+		picker.waitForCheState(CheStateEnum.NO_WORK, WAIT_TIME);
 
 		//Scan location on a different path. Verify remaining work count
 		picker.scanLocation("Loc2A");
@@ -454,7 +453,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 
 		//TODO fix
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.NO_WORK_CURR_PATH, WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.NO_WORK, WAIT_TIME);
 		picker.scanLocation("Loc2A");
 		// TODO CLUMSY, fix.
 		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
