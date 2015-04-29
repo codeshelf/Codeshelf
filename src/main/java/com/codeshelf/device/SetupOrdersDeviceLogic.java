@@ -145,15 +145,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 
 				case LOCATION_SELECT:
-					if (isOkToStartWithoutLocation())
+					if (mPositionToContainerMap.size() > 0)
 						sendDisplayCommand(SCAN_LOCATION_MSG, OR_SCAN_START, EMPTY_MSG, SHOWING_WI_COUNTS);
 					else
 						sendDisplayCommand(SCAN_LOCATION_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
 					this.showCartSetupFeedback();
 					break;
 
+				// this state going away
 				case LOCATION_SELECT_REVIEW:
-					if (isOkToStartWithoutLocation())
+					if (mPositionToContainerMap.size() > 0)
 						sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1, OR_SCAN_LOCATION, OR_SCAN_START, SHOWING_WI_COUNTS);
 					else
 						sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1,
@@ -1186,7 +1187,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * WARNING: The parameter is the scanned location, or "START", or "REVERSE"
 	 * @param inLocationStr
 	 */
-	private void requestWorkAndSetGetWorkState(final String inLocationStr, final Boolean reverseOrderFromLastTime) {		
+	private void requestWorkAndSetGetWorkState(final String inLocationStr, final Boolean reverseOrderFromLastTime) {
 		// by protocol, inLocationStr may be null for START or Reverse. Do not overwrite mLocationId which is perfectly good.
 		clearAllPosconsOnThisDevice();
 		Map<String, String> positionToContainerMapCopy = new HashMap<String, String>(mPositionToContainerMap);
@@ -1215,6 +1216,24 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			LOGGER.info("Not a location ID: " + inScanStr);
 			invalidScanMsg(mCheStateEnum);
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Order_Setup the complete path state is SETUP_SUMMARY
+	 */
+	public CheStateEnum getLocationStartReviewState(){
+		if (usesSummaryState())
+			return CheStateEnum.SETUP_SUMMARY;
+		else
+			return super.getLocationStartReviewState();
+	}
+
+	public CheStateEnum getLocationStartReviewState(boolean needOldReviewState) {
+		if (usesSummaryState())
+			return CheStateEnum.SETUP_SUMMARY;
+		else
+			return super.getLocationStartReviewState(needOldReviewState);
 	}
 
 	// --------------------------------------------------------------------------
@@ -1418,7 +1437,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 			LOGGER.info("Got Counts {}", mContainerToWorkInstructionCountMap);
 
-			if (doesNeedReview) {
+			if (usesSummaryState())
+				setState(CheStateEnum.SETUP_SUMMARY);
+			else if (doesNeedReview) {
 				setState(CheStateEnum.LOCATION_SELECT_REVIEW);
 			} else {
 				setState(CheStateEnum.LOCATION_SELECT);
@@ -1571,7 +1592,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		else
 			// pickcount > 0. Usually just want to start
 			line4 = "START (or SETUP)";
-		
+
 		// Note to Andrew: make this look nice. By default, line1 has larger font than the other lines. 
 		// for this screen, all could be the same monospace font.
 		this.sendDisplayCommand(line1, line2, line3, line4);
@@ -1752,23 +1773,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processContainerPosition(COMMAND_PREFIX, inScanStr);
 				break;
 
+			case SETUP_SUMMARY:
 			case LOCATION_SELECT:
 			case LOCATION_SELECT_REVIEW:
 				// Normally, start work here would hit the default case below, calling start work() which queries to server again
 				// ultimately coming back to LOCATION_SELECT state. However, if okToStartWithoutLocation, then start scan moves us forward
-				if (isOkToStartWithoutLocation()) {
-					LOGGER.info("starting without a start location");
-					boolean reverseOrderFromLastTime = getMReversePickOrder() != reverse;
-					//Remember the selected pick direction
-					setMReversePickOrder(reverse);
-					requestWorkAndSetGetWorkState(null, reverseOrderFromLastTime);
-				} else { // do as we did before
-					if (mPositionToContainerMap.values().size() > 0) {
-						startWork(inScanStr);
-					} else {
-						setState(CheStateEnum.NO_CONTAINERS_SETUP);
-					}
-				}
+				boolean reverseOrderFromLastTime = getMReversePickOrder() != reverse;
+				//Remember the selected pick direction
+				setMReversePickOrder(reverse);
+				requestWorkAndSetGetWorkState(null, reverseOrderFromLastTime);
 				break;
 
 			case SCAN_GTIN:

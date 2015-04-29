@@ -171,11 +171,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	private Table<String, Integer, WorkInstruction>	mWiNonChePoscons;
 
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	boolean											mOkToStartWithoutLocation				= true;
-
 	private NetGuid									mLastLedControllerGuid;
 	private boolean									mMultipleLastLedControllerGuids;
 
@@ -284,12 +279,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		ScanNeededToVerifyPick theEnum = ScanNeededToVerifyPick.stringToScanPickEnum(scanPickValue);
 		setScanNeededToVerifyPick(theEnum);
 
+		// We might want this, as if workSequence, then start location is far less relevant
 		@SuppressWarnings("unused")
 		String mSequenceKind = mDeviceManager.getSequenceKind();
-		//setOkToStartWithoutLocation("WorkSequence".equalsIgnoreCase(mSequenceKind));
-		//As part of DEV-670 work, we are always enabling scanning of "start" or "reverse" on the "scan location" screen
-		setOkToStartWithoutLocation(true);
-
 	}
 
 	public CheDeviceLogic(final UUID inPersistentId,
@@ -1205,10 +1197,25 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	/**
 	 * Order_Setup the complete path state is SETUP_SUMMARY
 	 */
-	public CheStateEnum getCompleteState(){
+	public CheStateEnum getCompleteState() {
 		return CheStateEnum.PICK_COMPLETE;
 	}
-	
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Order_Setup the complete path state is SETUP_SUMMARY
+	 */
+	public CheStateEnum getLocationStartReviewState() {
+		return CheStateEnum.LOCATION_SELECT;
+	}
+
+	public CheStateEnum getLocationStartReviewState(boolean needOldReviewState) {
+		if (needOldReviewState)
+			return CheStateEnum.LOCATION_SELECT_REVIEW;
+		else
+			return CheStateEnum.LOCATION_SELECT;
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * For linescan, we set to  PICK_COMPLETE. Override for Order_Setup we set to SETUP_SUMMARY

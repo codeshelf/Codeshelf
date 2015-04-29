@@ -305,8 +305,18 @@ public class PickSimulator {
 		}
 	}
 
+	// This is for the drastic CHE process changes in v16. Is it PICK_COMPLETE state, or SETUP_SUMMARY state.
 	public CheStateEnum getCompleteState() {
 		return cheDeviceLogic.getCompleteState();
+	}
+
+	// This is for the drastic CHE process changes in v16. Is it LOCATION_SELECT state, or SETUP_SUMMARY state.
+	public CheStateEnum getLocationStartReviewState() {
+		return cheDeviceLogic.getLocationStartReviewState();
+	}
+
+	public CheStateEnum getLocationStartReviewState(boolean needOldReviewState) {
+		return cheDeviceLogic.getLocationStartReviewState(needOldReviewState);
 	}
 
 	public boolean hasLastSentInstruction(byte position) {
