@@ -698,7 +698,7 @@ public class CheProcessLineScan extends ServerTest {
 		// This is important. We could in principle make these work instructions as a special case of location-based pick. 
 		// No inventory, but the order detail preferred location is resolvable, so we could do it
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
+		picker.waitForCheState(picker.getLocationStartReviewState(true), 4000);
 	
 		// logout back to idle state.
 		picker.logout();
@@ -727,7 +727,7 @@ public class CheProcessLineScan extends ServerTest {
 		
 		LOGGER.info("3c: START. Now we get some work. 3 jobs, since only 3 details had modeled locations");
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
+		picker.waitForCheState(picker.getLocationStartReviewState(true), 4000);
 		
 		LOGGER.info("3d: scan a valid location. Log out the work instructions that we got.");
 		picker.scanLocation("D303");
