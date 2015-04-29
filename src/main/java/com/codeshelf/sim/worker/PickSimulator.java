@@ -6,7 +6,6 @@ import java.util.UUID;
 
 import lombok.Getter;
 
-import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +31,9 @@ public class PickSimulator {
 	public PickSimulator(CsDeviceManager deviceManager, NetGuid cheGuid) {
 		// verify that che is in site controller's device list
 		cheDeviceLogic = (CheDeviceLogic) deviceManager.getDeviceByGuid(cheGuid);
-		Assert.assertNotNull("No che found with guid: " + cheGuid, cheDeviceLogic);
+		if (cheDeviceLogic == null) {
+			throw new IllegalArgumentException("No che found with guid: " + cheGuid);
+		}
 	}
 
 	public void loginAndSetup(String pickerId) {
@@ -232,8 +233,7 @@ public class PickSimulator {
 		else if (count == 1)
 			return activeList.get(0);
 		else {
-			Assert.fail("More than one active pick. Use getActivePickList() instead"); // and know what you are doing.
-			return null;
+			throw new IllegalStateException("More than one active pick. Use getActivePickList() instead"); // and know what you are doing.
 		}
 	}
 
@@ -301,7 +301,7 @@ public class PickSimulator {
 				timeoutInMillis,
 				lastState,
 				cheDeviceLogic.inSetState());
-			Assert.fail(theProblem);
+			throw new IllegalStateException(theProblem); 
 		}
 	}
 

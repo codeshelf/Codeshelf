@@ -58,7 +58,9 @@ public abstract class AbstractCookieSessionService extends AbstractSessionLoginS
 	public Cookie createAuthCookie(String token) {
 		Cookie cookie = new Cookie(getCookieName(), token);
 		cookie.setPath("/");
-		cookie.setDomain(this.getCookieDomain());
+		if (this.getCookieDomain() != null) {
+			cookie.setDomain(this.getCookieDomain());
+		}
 		cookie.setVersion(0);
 		cookie.setMaxAge(this.getCookieMaxAgeHours() * 60 * 60);
 		cookie.setSecure(this.isCookieSecure());
