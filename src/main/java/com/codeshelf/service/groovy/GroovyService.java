@@ -21,6 +21,7 @@ import groovy.lang.GroovyClassLoader;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.Map;
 
 import org.apache.commons.io.FilenameUtils;
@@ -120,21 +121,24 @@ public abstract class GroovyService {
 	            }
 	        };
 	
-	        final GroovyClassLoader loader = new GroovyClassLoader(this.getClass().getClassLoader());
-	        final File[] files = new File(this.customScriptsLocation).listFiles(filter);
-	        for (final File file : files) {
-	            try {
-	                final Class<?> c = loader.parseClass(file);
-	                
-	                final String fileNameWithOutExt = FilenameUtils.removeExtension(file.getName());
-	                
-	                binding.setVariable(fileNameWithOutExt, c.newInstance());
-	                logger.debug("Add custom groovy script [{}] to the binding", fileNameWithOutExt);
-	            } catch (final Exception e) {
-	                logger.error(e.getMessage(), e);
-	            }
-	        }
-	        IOUtils.closeQuietly(loader);
+	        
+	        try (GroovyClassLoader loader = new GroovyClassLoader(this.getClass().getClassLoader())) {
+		        final File[] files = new File(this.customScriptsLocation).listFiles(filter);
+		        for (final File file : files) {
+		            try {
+		                final Class<?> c = loader.parseClass(file);
+		                
+		                final String fileNameWithOutExt = FilenameUtils.removeExtension(file.getName());
+		                
+		                binding.setVariable(fileNameWithOutExt, c.newInstance());
+		                logger.debug("Add custom groovy script [{}] to the binding", fileNameWithOutExt);
+		            } catch (final Exception e) {
+		                logger.error(e.getMessage(), e);
+		            }
+		        }
+	        } catch (IOException e1) {
+				//quiet
+			} 
     	}
     }
 }
