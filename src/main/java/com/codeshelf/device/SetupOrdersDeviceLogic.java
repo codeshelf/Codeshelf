@@ -1186,9 +1186,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * WARNING: The parameter is the scanned location, or "START", or "REVERSE"
 	 * @param inLocationStr
 	 */
-	private void requestWorkAndSetGetWorkState(final String inLocationStr, final Boolean reverseOrderFromLastTime) {
+	private void requestWorkAndSetGetWorkState(final String inLocationStr, final Boolean reverseOrderFromLastTime) {		
+		// by protocol, inLocationStr may be null for START or Reverse. Do not overwrite mLocationId which is perfectly good.
 		clearAllPosconsOnThisDevice();
-		this.mLocationId = inLocationStr;
 		Map<String, String> positionToContainerMapCopy = new HashMap<String, String>(mPositionToContainerMap);
 
 		mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(),
@@ -1208,6 +1208,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
 			ledControllerClearLeds();
+			mLocationId = inScanStr; // let's remember where user scanned.
+			// Careful. Later, codeshelf tape scan. Need to get the interpretted position back from server.
 			requestWorkAndSetGetWorkState(inScanStr, false);
 		} else {
 			LOGGER.info("Not a location ID: " + inScanStr);
@@ -1269,8 +1271,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				//Do Nothing if you are in an error state and you scan something that's not "Clear Error"
 				break;
 
+			case SETUP_SUMMARY:
 			case DO_PICK:
 				// At any time during the pick we can change locations.
+				// At summary, we can change location/path
 				if (inScanPrefixStr.equals(LOCATION_PREFIX)) {
 					processLocationScan(inScanPrefixStr, inContent);
 				}
@@ -1505,15 +1509,22 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Trying to align the counts, allow for 3 digit counts.
 	 */
 	private void sendSummaryScreen() {
-		String orderCountStr = Integer.toString(getCountOfSetupOrderContainers());
+		int orderCount = getCountOfSetupOrderContainers();
+		String orderCountStr = Integer.toString(orderCount);
 		orderCountStr = StringUtils.leftPad(orderCountStr, 3);
 		String locStr = getLocationId(); // this might be null the very first time.
 		String line1;
 		if (locStr == null) {
-			line1 = String.format("%s orders ", orderCountStr);
+			if (orderCount == 1)
+				line1 = String.format("%s order  ", orderCountStr);
+			else
+				line1 = String.format("%s orders ", orderCountStr);
 		} else {
 			locStr = StringUtils.leftPad(locStr, 9); // Always right justifying the location
-			line1 = String.format("%s orders %s", orderCountStr, locStr);
+			if (orderCount == 1)
+				line1 = String.format("%s order  %s", orderCountStr, locStr);
+			else
+				line1 = String.format("%s orders %s", orderCountStr, locStr);
 		}
 
 		int pickCount = getCountOfGoodJobsOnSetupPath();
@@ -1525,9 +1536,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (otherCount > 0) {
 			String otherCountStr = Integer.toString(otherCount);
 			otherCountStr = StringUtils.leftPad(otherCountStr, 3);
-			line2 = String.format("%s picks  %s other", pickCountStr, otherCountStr);
+			if (pickCount == 1)
+				line2 = String.format("%s pick   %s other", pickCountStr, otherCountStr);
+			else
+				line2 = String.format("%s picks  %s other", pickCountStr, otherCountStr);
 		} else {
-			line2 = String.format("%s picks", pickCountStr);
+			if (pickCount == 1)
+				line2 = String.format("%s pick ", pickCountStr);
+			else
+				line2 = String.format("%s picks", pickCountStr);
 		}
 
 		String doneCountStr = Integer.toString(getCountOfCompletedJobsOnSetupPath());
@@ -1554,6 +1571,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		else
 			// pickcount > 0. Usually just want to start
 			line4 = "START (or SETUP)";
+		
+		// Note to Andrew: make this look nice. By default, line1 has larger font than the other lines. 
+		// for this screen, all could be the same monospace font.
 		this.sendDisplayCommand(line1, line2, line3, line4);
 
 	}
