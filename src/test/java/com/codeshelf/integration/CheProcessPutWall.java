@@ -853,6 +853,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Assert.assertEquals(2, wiList.size());
 
 		LOGGER.info("2c: if PICKMULT had an effect we would have two in active jobs list instead of 1.");
+		// TODO Bizarre: if workSequence given for orders 115 and 116 to same sequence, we do get the 2.
 		List<WorkInstruction> activeWiList = picker1.getActivePickList();
 		Assert.assertEquals(1, activeWiList.size());
 
