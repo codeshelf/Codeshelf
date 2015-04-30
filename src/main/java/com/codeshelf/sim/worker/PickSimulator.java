@@ -326,6 +326,10 @@ public class PickSimulator {
 	public CheStateEnum getLocationStartReviewState(boolean needOldReviewState) {
 		return cheDeviceLogic.getLocationStartReviewState(needOldReviewState);
 	}
+	public boolean usesSummaryState() {
+		return cheDeviceLogic.usesSummaryState();
+	}
+	// end drastic CHE process changes
 
 	public boolean hasLastSentInstruction(byte position) {
 		return cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position)

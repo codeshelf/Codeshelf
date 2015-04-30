@@ -1198,11 +1198,17 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * Order_Setup the complete path state is SETUP_SUMMARY
 	 */
 	public CheStateEnum getCompleteState() {
-		return CheStateEnum.PICK_COMPLETE;
+		if (usesSummaryState())
+			return CheStateEnum.SETUP_SUMMARY;
+		else
+			return CheStateEnum.PICK_COMPLETE;
 	}
-	
+
 	public CheStateEnum getNoWorkReviewState() {
-		return CheStateEnum.NO_WORK;
+		if (usesSummaryState())
+			return CheStateEnum.SETUP_SUMMARY;
+		else
+			return CheStateEnum.NO_WORK;
 	}
 
 	// --------------------------------------------------------------------------
@@ -1210,11 +1216,16 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * Order_Setup the complete path state is SETUP_SUMMARY
 	 */
 	public CheStateEnum getLocationStartReviewState() {
-		return CheStateEnum.LOCATION_SELECT;
+		if (usesSummaryState())
+			return CheStateEnum.SETUP_SUMMARY;
+		else
+			return CheStateEnum.LOCATION_SELECT;
 	}
 
 	public CheStateEnum getLocationStartReviewState(boolean needOldReviewState) {
-		if (needOldReviewState)
+		if (usesSummaryState())
+			return CheStateEnum.SETUP_SUMMARY;
+		else if (needOldReviewState)
 			return CheStateEnum.LOCATION_SELECT_REVIEW;
 		else
 			return CheStateEnum.LOCATION_SELECT;

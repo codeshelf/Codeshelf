@@ -838,7 +838,6 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker1.scanCommand("CLEAR");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
-
 		LOGGER.info("2a: We will do 1515 in wall2 as it yields two plan that might be subject to PICKMULT");
 		picker1.scanCommand("PUT_WALL");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
@@ -931,14 +930,18 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		// TODO
 		LOGGER.info("3a: Restart. Get the 11117 job again. LOCATION_SELECT_REVIEW because 11119 is completed");
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(true), WAIT_TIME);
-		// see that 11119 shows as oc
-		Byte poscon6Value = picker.getLastSentPositionControllerDisplayValue((byte) 6);
-		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, poscon6Value);
-		Byte maxValue = picker.getLastSentPositionControllerMaxQty((byte) 6);
-		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_O, maxValue);
-		picker.scanCommand("START"); // this could have been location scan on the same path
-		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		if (!picker.usesSummaryState()) {
+			picker.waitForCheState(picker.getLocationStartReviewState(true), WAIT_TIME);
+			// see that 11119 shows as oc
+			Byte poscon6Value = picker.getLastSentPositionControllerDisplayValue((byte) 6);
+			Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, poscon6Value);
+			Byte maxValue = picker.getLastSentPositionControllerMaxQty((byte) 6);
+			Assert.assertEquals(PosControllerInstr.BITENCODED_LED_O, maxValue);
+			picker.scanCommand("START"); // this could have been location scan on the same path
+			picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		} else {
+			picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		}
 
 		LOGGER.info("3b: Short it again");
 		picker.scanCommand("SHORT");
@@ -970,7 +973,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 		LOGGER.info("4c: Restart. Do not get the job again. (did before DEV-766)");
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.NO_WORK, WAIT_TIME);
+		picker.waitForCheState(picker.getNoWorkReviewState(), WAIT_TIME);
 
 		LOGGER.info("5: Not recommended. Just showing. Set up again even though it is is in the put wall");
 		picker.scanCommand("SETUP");
@@ -989,9 +992,6 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
 
-
-
 	}
-
 
 }

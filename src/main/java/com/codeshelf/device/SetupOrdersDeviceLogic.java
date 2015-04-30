@@ -1189,44 +1189,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 
 	// --------------------------------------------------------------------------
-	/**
-	 * Order_Setup the complete path state is SETUP_SUMMARY
-	 */
-	public CheStateEnum getLocationStartReviewState() {
-		if (usesSummaryState())
-			return CheStateEnum.SETUP_SUMMARY;
-		else
-			return super.getLocationStartReviewState();
-	}
-
-	public CheStateEnum getLocationStartReviewState(boolean needOldReviewState) {
-		if (usesSummaryState())
-			return CheStateEnum.SETUP_SUMMARY;
-		else
-			return super.getLocationStartReviewState(needOldReviewState);
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Order_Setup the complete path state is SETUP_SUMMARY
-	 */
-	@Override
-	public CheStateEnum getCompleteState() {
-		if (usesSummaryState())
-			return CheStateEnum.SETUP_SUMMARY;
-		else
-			return super.getCompleteState();
-	}
-
-	@Override
-	public CheStateEnum getNoWorkReviewState() {
-		if (usesSummaryState())
-			return CheStateEnum.SETUP_SUMMARY;
-		else
-			return super.getNoWorkReviewState();
-	}
-
-	// --------------------------------------------------------------------------
 	/* 
 	 */
 	@Override
