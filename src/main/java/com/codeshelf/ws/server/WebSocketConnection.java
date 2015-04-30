@@ -34,7 +34,6 @@ import com.codeshelf.model.dao.IDaoListener;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.SiteController;
 import com.codeshelf.persistence.TenantPersistenceService;

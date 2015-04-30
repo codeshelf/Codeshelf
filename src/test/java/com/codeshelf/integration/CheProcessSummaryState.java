@@ -13,7 +13,6 @@ import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
 
