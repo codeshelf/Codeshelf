@@ -444,7 +444,7 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 								} catch (Exception e) {
 									LOGGER.error("caught trying to send che updateto site controller", e);
 									// make sure we do not immediately try again and fail again. Set out to the future
-									final long failedCheUpdateTimeForward = 60 * 60 * 1000; // 1 hour
+									final long failedCheUpdateTimeForward = 60 * 1000; // retry in one min
 									connection.setNextCheRefresh(System.currentTimeMillis() + failedCheUpdateTimeForward);
 								}
 							}							

@@ -450,7 +450,6 @@ public class WebSocketConnection implements IDaoListener {
 			LOGGER.info("Failed to send Che updates to site controller: User context is undefined.");
 			return;
 		}
-		
 		try {
 			TenantPersistenceService.getInstance().beginTransaction();
 			SiteController siteController = SiteController.staticGetDao().findByDomainId(null, this.currentUserContext.getUsername());
@@ -463,7 +462,8 @@ public class WebSocketConnection implements IDaoListener {
 					this.sendMessage(msg);
 				}
 			}
-			this.nextCheRefresh = System.currentTimeMillis() + this.cheUpdateInterval;
+			// this.nextCheRefresh = System.currentTimeMillis() + this.cheUpdateInterval;
+			this.nextCheRefresh = -1; // do not refresh periodically
 			TenantPersistenceService.getInstance().commitTransaction();
 		}
 		catch (Exception e) {
