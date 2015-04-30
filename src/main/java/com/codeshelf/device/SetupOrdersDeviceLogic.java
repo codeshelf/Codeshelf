@@ -94,7 +94,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (che != null) { // many tests do not have the che available, so just leave mLocationId null
 			mLocationId = che.getLastScannedLocation();
 		}
-
 	}
 
 	public boolean usesSummaryState() {
@@ -1545,30 +1544,35 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				line2 = String.format("%s picks", pickCountStr);
 		}
 
-		String doneCountStr = Integer.toString(getCountOfCompletedJobsOnSetupPath());
+		int doneCount = getCountOfCompletedJobsOnSetupPath();
+		String doneCountStr = Integer.toString(doneCount);
 		doneCountStr = StringUtils.leftPad(doneCountStr, 3);
 		int shortCount = getCountOfShortsOnSetupPath();
-		// Too clever?  only show shorts if there are any
-		String line3;
-		if (shortCount > 0) {
-			String shortCountStr = Integer.toString(shortCount);
-			shortCountStr = StringUtils.leftPad(shortCountStr, 3);
-			line3 = String.format("%s done   %s short", doneCountStr, shortCountStr);
-		} else {
-			line3 = String.format("%s done", doneCountStr);
+		// We want to show completed jobs and shorts upon completion only. The reason is the server is not
+		// handing these to us usefully in the computeWorkInstructions process. If we showed 0 done as the user scans onto a new location or reverses
+		// part way through, users would complain about us "losing" their completed work.
+		String line3 = "";
+		if (doneCount > 0 || shortCount > 0) {
+			if (shortCount > 0) {
+				String shortCountStr = Integer.toString(shortCount);
+				shortCountStr = StringUtils.leftPad(shortCountStr, 3);
+				line3 = String.format("%s done   %s short", doneCountStr, shortCountStr);
+			} else {
+				line3 = String.format("%s done", doneCountStr);
+			}
 		}
 
 		// Try to be a little clever and context sensitive here
 		String line4;
-		if (pickCount == 0 && otherCount == 0 && shortCount == 0)
-			line4 = "SETUP"; // START provide no useful functionality
+		if (pickCount == 0 && otherCount == 0)
+			line4 = "SETUP"; // START provides no useful functionality
 		else if (pickCount == 0 && otherCount > 0)
-			line4 = "START (other path)"; // Or setup to nuke the cart. Not enough space
+			line4 = "Scan Other Location"; // Or setup to nuke the cart. Not enough space
 		else if (pickCount == 0)
 			line4 = "SETUP (or START)"; // you might start again to redo any shorts
 		else
 			// pickcount > 0. Usually just want to start
-			line4 = "START (or SETUP)";
+			line4 = "START (or SETUP)"; // or other location
 
 		// Note to Andrew: make this look nice. By default, line1 has larger font than the other lines. 
 		// for this screen, all could be the same monospace font.
