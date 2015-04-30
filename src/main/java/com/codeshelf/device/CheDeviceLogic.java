@@ -171,11 +171,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	private Table<String, Integer, WorkInstruction>	mWiNonChePoscons;
 
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	boolean											mOkToStartWithoutLocation				= true;
-
 	private NetGuid									mLastLedControllerGuid;
 	private boolean									mMultipleLastLedControllerGuids;
 
@@ -248,7 +243,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		public static String scanPickEnumToString(ScanNeededToVerifyPick inValue) {
 			return inValue.mInternal;
 		}
-	} 
+	}
 
 	public boolean usesSummaryState() {
 		return false; // SetupOrderDeviceLogic will override
@@ -284,12 +279,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		ScanNeededToVerifyPick theEnum = ScanNeededToVerifyPick.stringToScanPickEnum(scanPickValue);
 		setScanNeededToVerifyPick(theEnum);
 
+		// We might want this, as if workSequence, then start location is far less relevant
 		@SuppressWarnings("unused")
 		String mSequenceKind = mDeviceManager.getSequenceKind();
-		//setOkToStartWithoutLocation("WorkSequence".equalsIgnoreCase(mSequenceKind));
-		//As part of DEV-670 work, we are always enabling scanning of "start" or "reverse" on the "scan location" screen
-		setOkToStartWithoutLocation(true);
-
 	}
 
 	public CheDeviceLogic(final UUID inPersistentId,
@@ -1123,9 +1115,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected void logout() {
 		notifyCheWorkerVerb("LOG OUT", "");
 
-		this.setUserId("");		
+		this.setUserId("");
 		mActivePickWiList.clear();
-		mAllPicksWiList.clear();		
+		mAllPicksWiList.clear();
 		setState(CheStateEnum.IDLE);
 
 		clearAllPosconsOnThisDevice();
@@ -1203,6 +1195,52 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Order_Setup the complete path state is SETUP_SUMMARY
+	 */
+	public CheStateEnum getCompleteState() {
+		if (usesSummaryState())
+			return CheStateEnum.SETUP_SUMMARY;
+		else
+			return CheStateEnum.PICK_COMPLETE;
+	}
+
+	public CheStateEnum getNoWorkReviewState() {
+		if (usesSummaryState())
+			return CheStateEnum.SETUP_SUMMARY;
+		else
+			return CheStateEnum.NO_WORK;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Order_Setup the complete path state is SETUP_SUMMARY
+	 */
+	public CheStateEnum getLocationStartReviewState() {
+		if (usesSummaryState())
+			return CheStateEnum.SETUP_SUMMARY;
+		else
+			return CheStateEnum.LOCATION_SELECT;
+	}
+
+	public CheStateEnum getLocationStartReviewState(boolean needOldReviewState) {
+		if (usesSummaryState())
+			return CheStateEnum.SETUP_SUMMARY;
+		else if (needOldReviewState)
+			return CheStateEnum.LOCATION_SELECT_REVIEW;
+		else
+			return CheStateEnum.LOCATION_SELECT;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * For linescan, we set to  PICK_COMPLETE. Override for Order_Setup we set to SETUP_SUMMARY
+	 */
+	protected void setToCompleteState() {
+		setState(getCompleteState());
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * Is this useful to linescan?  If not, move as private function to SetupOrdersDeviceLogic
 	 */
 	protected void processPickComplete(boolean isWorkOnOtherPaths) {
@@ -1211,7 +1249,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (isWorkOnOtherPaths)
 			otherInformation = "Some of these orders need picks from other paths"; //  should be localized
 		notifyCheWorkerVerb("PATH COMPLETE", otherInformation);
-
 
 		// Clear the existing LEDs.
 		ledControllerClearLeds(); // this checks getLastLedControllerGuid(), and bails if null.
@@ -1222,11 +1259,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		// CD_0041 is there a need for this?
 		ledControllerShowLeds(getGuid());
 
-		if (isWorkOnOtherPaths) {
-			setState(CheStateEnum.PICK_COMPLETE_CURR_PATH);
-		} else {
-			setState(CheStateEnum.PICK_COMPLETE);
-		}
+		setToCompleteState();
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -1651,6 +1685,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * However, something like SKIPSCAN can only be learned of here.
 	 * 
 	 * By convention, start these string with something recognizable, to tell these notifies apart from the rest that is going on.
+	 * 
+	 * Currently saved actions: CANCEL_PUT, SHORT, SHORT_AHEAD, COMPLETE, SCAN_SKIP
 	 */
 	protected void notifyWiVerb(final WorkInstruction inWi, EventType inVerb, boolean needWarn) {
 		if (inWi == null) {
@@ -1733,7 +1769,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			showingQuantity,
 			getUserId(),
 			getMyGuidStr());
-		NotificationMessage message = new NotificationMessage(Che.class, getPersistentId(), getMyGuidStr(), getUserId(), EventType.BUTTON);
+		NotificationMessage message = new NotificationMessage(Che.class,
+			getPersistentId(),
+			getMyGuidStr(),
+			getUserId(),
+			EventType.BUTTON);
 		mDeviceManager.sendNotificationMessage(message);
 	}
 

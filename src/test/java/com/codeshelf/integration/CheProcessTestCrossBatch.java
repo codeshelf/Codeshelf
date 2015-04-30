@@ -26,6 +26,7 @@ import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 
 /**
@@ -224,23 +225,23 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().findByPersistentId(facId);
 		Assert.assertNotNull(facility);
 
 
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("Case 1: A happy-day startup. No housekeeping jobs. Two from one container.");
 
 		picker.setupContainer("11", "1"); // This prepended to scan "C%11" as per Codeshelf scan specification
 		picker.setupContainer("15", "3");
-		
+
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 5000);
+		picker.waitForCheState(picker.getLocationStartReviewState(), 5000);
 		picker.scanLocation("D-36");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 		propertyService.restoreHKDefaults(facility);
@@ -272,11 +273,11 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		button = picker.buttonFor(wi);
 		quant = wi.getPlanQuantity();
 		picker.pick(button, quant);
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 5000);
+		picker.waitForCheState(picker.getCompleteState(), 5000);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
 	@Test
 	public final void crossBatchShorts() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
@@ -288,22 +289,22 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().findByPersistentId(facId);
 		Assert.assertNotNull(facility);
 
-		PickSimulator picker = new PickSimulator(this, cheGuid1);
+		PickSimulator picker = createPickSim(cheGuid1);
 		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("Case 1: Startup. Container 11 will have 2 jobs. We can short one, and see the other short ahead. Container 15 has one job.");
 		LOGGER.info("                  Containers 16-19 do 4 situations that might cause immediate short. They do not. ");
 
 		picker.setupContainer("15", "1"); // Good one gives one work instruction
-		picker.setupContainer("16", "2"); 
-		picker.setupContainer("17", "3"); 
-		picker.setupContainer("18", "4"); 
-		picker.setupContainer("19", "5"); 
+		picker.setupContainer("16", "2");
+		picker.setupContainer("17", "3");
+		picker.setupContainer("18", "4");
+		picker.setupContainer("19", "5");
 		picker.setupContainer("11", "6"); // Good one gives two work instruction
 
 		picker.startAndSkipReview("D-36", 5000, 3000);
@@ -313,8 +314,8 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		LOGGER.info("List the work instructions as the server sees them");
 		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
 		logWiList(serverWiList);
-		
-		
+
+
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 
 		Che che1 = Che.staticGetDao().findByPersistentId(this.che1PersistentId);
@@ -325,7 +326,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		LOGGER.info("List the CHE work instructions which might have new shorts. Order is random for this. Only 3 confirms no immediate shorts.");
 		// CheProcessTestPick.java shows immediate shorts for picks.
 		logWiList(cheWis);
-		
+
 		LOGGER.info("Case 2: Short the first job. This should short ahead the third.");
 		WorkInstruction wi = picker.nextActiveWi();
 		// cannot get there except by scanning short
@@ -344,7 +345,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 
 		// pick last item
 		picker.pick(button, quant);
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, 5000);
+		picker.waitForCheState(picker.getCompleteState(), 5000);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}

@@ -95,6 +95,20 @@ public class ComputeWorkCommand extends CommandABC {
 		for (WorkInstruction wi : allWorkInstructions){
 			WorkInstructionStatusEnum wiStatus = wi.getStatus();
 			String containerId = wi.getContainerId();
+			// This is sometimes odd. Seeing "None" in a wi for something that may have got a putwall job before.
+			// Returning a WorkInstructionCount for "None"  may confuse the site controller. Just filter here.
+			if (containerId == null || containerId.isEmpty() || containerId.equals("None")) {
+				LOGGER.info("computeContainerWorkInstructionCounts had a wi for 'None' container");
+				LOGGER.info("Wi: {}", wi);
+				continue; // do not make new WorkInstructionCount for the bad one.
+				// Currently getting "None" for completed work instruction. This is not useful. It would become useful to return only if:
+				// - Server counts shorts and completes on this path only.
+				// - however, two or more separate shorts for the same detail only count as one.
+				// - A complete (completing the detail) overrules any short.
+				// - And, both the short and completes give use the containerId we need to use. Warning, there are probably other reasons
+				// the containerId is not set that way on the completed or short WIs.				
+			}
+				
 			count = containerToWorkInstructCountMap.get(containerId);
 			if (count == null) {
 				count = new WorkInstructionCount();

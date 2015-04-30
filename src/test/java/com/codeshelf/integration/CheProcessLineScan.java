@@ -32,6 +32,7 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.PropertyService;
+import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 
 /**
@@ -266,7 +267,7 @@ public class CheProcessLineScan extends ServerTest {
 
 		LOGGER.info(picker.getPickerTypeAndState("0:"));
 
-		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
 		// login goes to ready state. (Says to scan a line).
 		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
@@ -407,7 +408,7 @@ public class CheProcessLineScan extends ServerTest {
 
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
-		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
 		LOGGER.info("1: login, should go to READY state");
 		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
@@ -518,7 +519,7 @@ public class CheProcessLineScan extends ServerTest {
 
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
-		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
 		LOGGER.info("1a: login, should go to READY state");
 		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
@@ -660,7 +661,7 @@ public class CheProcessLineScan extends ServerTest {
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 
-		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("1a: setup two orders on the cart. Several of the details have unmodelled preferred locations");
@@ -672,7 +673,7 @@ public class CheProcessLineScan extends ServerTest {
 		
 		LOGGER.info("1b: START. NO work, because the file did not have containerID set for the order");
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.NO_WORK, 4000);
+		picker.waitForCheState(picker.getNoWorkReviewState(), 4000);
 
 		// logout back to idle state.
 		picker.logout();
@@ -697,7 +698,7 @@ public class CheProcessLineScan extends ServerTest {
 		// This is important. We could in principle make these work instructions as a special case of location-based pick. 
 		// No inventory, but the order detail preferred location is resolvable, so we could do it
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
+		picker.waitForCheState(picker.getLocationStartReviewState(true), 4000);
 	
 		// logout back to idle state.
 		picker.logout();
@@ -726,7 +727,7 @@ public class CheProcessLineScan extends ServerTest {
 		
 		LOGGER.info("3c: START. Now we get some work. 3 jobs, since only 3 details had modeled locations");
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
+		picker.waitForCheState(picker.getLocationStartReviewState(true), 4000);
 		
 		LOGGER.info("3d: scan a valid location. Log out the work instructions that we got.");
 		picker.scanLocation("D303");
@@ -781,7 +782,7 @@ public class CheProcessLineScan extends ServerTest {
 		super.startSiteController();
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
-		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 		
 		CsDeviceManager manager = this.getDeviceManager();
 		Assert.assertNotNull(manager);
@@ -955,7 +956,7 @@ public class CheProcessLineScan extends ServerTest {
 		
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
-		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 		
 		CsDeviceManager manager = this.getDeviceManager();
 		Assert.assertNotNull(manager);
@@ -1078,7 +1079,7 @@ public class CheProcessLineScan extends ServerTest {
 		
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
-		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 		
 		CsDeviceManager manager = this.getDeviceManager();
 		Assert.assertNotNull(manager);
@@ -1155,7 +1156,7 @@ public class CheProcessLineScan extends ServerTest {
 		startSiteController();
 		
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
-		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
 		LOGGER.info("1a: login, should go to READY state");
 		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
@@ -1264,7 +1265,7 @@ public class CheProcessLineScan extends ServerTest {
 		startSiteController();
 		
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
-		Assert.assertEquals(CheStateEnum.IDLE, picker.currentCheState());
+		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
 		LOGGER.info("0a: scan INVENTORY and make sure we stay idle");
 		picker.scanCommand("INVENTORY");

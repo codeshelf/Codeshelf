@@ -1,4 +1,4 @@
-package com.codeshelf.integration;
+package com.codeshelf.sim.worker;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -6,7 +6,6 @@ import java.util.UUID;
 
 import lombok.Getter;
 
-import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +16,6 @@ import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.testframework.IntegrationTest;
 
 public class PickSimulator {
 
@@ -26,14 +24,16 @@ public class PickSimulator {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PickSimulator.class);
 
-	public PickSimulator(IntegrationTest test, NetGuid cheGuid) {
-		this(test.getDeviceManager(), cheGuid);
+	public PickSimulator(CsDeviceManager deviceManager, String cheGuid) {
+		this(deviceManager, new NetGuid(cheGuid));
 	}
 
 	public PickSimulator(CsDeviceManager deviceManager, NetGuid cheGuid) {
 		// verify that che is in site controller's device list
 		cheDeviceLogic = (CheDeviceLogic) deviceManager.getDeviceByGuid(cheGuid);
-		Assert.assertNotNull(cheDeviceLogic);
+		if (cheDeviceLogic == null) {
+			throw new IllegalArgumentException("No che found with guid: " + cheGuid);
+		}
 	}
 
 	public void loginAndSetup(String pickerId) {
@@ -41,7 +41,7 @@ public class PickSimulator {
 		// From v16, login goes to SETUP_SUMMARY state. Then explicit SETUP scan goes to CONTAINER_SELECT
 		if (cheDeviceLogic.usesSummaryState()) {
 			waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
-			scanCommand("SETUP");		
+			scanCommand("SETUP");
 			waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
 		} else {
 			waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
@@ -92,7 +92,7 @@ public class PickSimulator {
 			// perform start without location scan, if location is undefined
 			return;
 		}
-		waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, inComputeTimeOut);
+		waitForCheState(getLocationStartReviewState(true), inComputeTimeOut);
 		scanLocation(location);
 		waitForCheState(CheStateEnum.DO_PICK, inLocationTimeOut);
 	}
@@ -196,12 +196,16 @@ public class PickSimulator {
 		return getActivePickList().size(); //  0 if out of work. Usually 1. Only higher for simultaneous pick work instructions.
 	}
 
-	public CheStateEnum currentCheState() {
+	public boolean isComplete() {
+		return getCompleteState().equals(getCurrentCheState());
+	}
+	
+	public CheStateEnum getCurrentCheState() {
 		return cheDeviceLogic.getCheStateEnum();
 	}
 
 	public String getPickerTypeAndState(String inPrefix) {
-		return inPrefix + " " + getProcessType() + ": State is " + currentCheState();
+		return inPrefix + " " + getProcessType() + ": State is " + getCurrentCheState();
 	}
 
 	public int buttonFor(WorkInstruction inWorkInstruction) {
@@ -233,8 +237,7 @@ public class PickSimulator {
 		else if (count == 1)
 			return activeList.get(0);
 		else {
-			Assert.fail("More than one active pick. Use getActivePickList() instead"); // and know what you are doing.
-			return null;
+			throw new IllegalStateException("More than one active pick. Use getActivePickList() instead"); // and know what you are doing.
 		}
 	}
 
@@ -302,9 +305,31 @@ public class PickSimulator {
 				timeoutInMillis,
 				lastState,
 				cheDeviceLogic.inSetState());
-			Assert.fail(theProblem);
+			throw new IllegalStateException(theProblem); 
 		}
 	}
+
+	// This is for the drastic CHE process changes in v16. Is it PICK_COMPLETE state, or SETUP_SUMMARY state.
+	public CheStateEnum getCompleteState() {
+		return cheDeviceLogic.getCompleteState();
+	}
+
+	public CheStateEnum getNoWorkReviewState() {
+		return cheDeviceLogic.getNoWorkReviewState();
+	}
+
+	// This is for the drastic CHE process changes in v16. Is it LOCATION_SELECT state, or SETUP_SUMMARY state.
+	public CheStateEnum getLocationStartReviewState() {
+		return cheDeviceLogic.getLocationStartReviewState();
+	}
+
+	public CheStateEnum getLocationStartReviewState(boolean needOldReviewState) {
+		return cheDeviceLogic.getLocationStartReviewState(needOldReviewState);
+	}
+	public boolean usesSummaryState() {
+		return cheDeviceLogic.usesSummaryState();
+	}
+	// end drastic CHE process changes
 
 	public boolean hasLastSentInstruction(byte position) {
 		return cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position)
@@ -342,6 +367,14 @@ public class PickSimulator {
 			getLastCheDisplayString(3),
 			getLastCheDisplayString(4));
 	}
+
+    public String getLastCheDisplay() {
+        StringBuffer s = new StringBuffer();
+        for (int i = 1; i <= 4; i++) {
+            s.append(getLastCheDisplayString(i)).append("\n");
+        }
+        return s.toString();
+    }
 
 	public void forceDeviceToMatchManagerConfiguration() {
 		cheDeviceLogic.updateConfigurationFromManager();

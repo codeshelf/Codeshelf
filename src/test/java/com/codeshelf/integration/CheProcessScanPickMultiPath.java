@@ -23,6 +23,7 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 
 public class CheProcessScanPickMultiPath extends ServerTest {
@@ -132,8 +133,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 	}
 
 	private void containerSetup(PickSimulator picker) {
-		picker.loginAndCheckState("Picker #1", CheStateEnum.CONTAINER_SELECT);
-		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker.loginAndSetup("Picker #1");
 		picker.setupContainer("1", "1");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 	}
@@ -151,7 +151,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 
 		//Start work without specifying path
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
@@ -175,8 +175,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 
 		//Scan START, verify the number of items on the CHE's path
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
-		verifyCheDisplay(picker, "SCAN START LOCATION", "OR SCAN START", "", "SHOWING WI COUNTS");
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		Byte posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("5"), posConValue);
 
@@ -201,8 +200,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 
 		//Scan START, verify the number of items on the CHE's path
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
-		verifyCheDisplay(picker, "SCAN START LOCATION", "OR SCAN START", "", "SHOWING WI COUNTS");
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		Byte posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("3"), posConValue);
 
@@ -228,8 +226,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 
 		//Scan START, review displays
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
-		verifyCheDisplay(picker, "SCAN START LOCATION", "OR SCAN START", "", "SHOWING WI COUNTS");
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		Byte posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("5"), posConValue);
 
@@ -255,16 +252,14 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 
 		//Scan START, review displays
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
-		verifyCheDisplay(picker, "SCAN START LOCATION", "OR SCAN START", "", "SHOWING WI COUNTS");
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		Byte posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("5"), posConValue);
 
 		//Scan location on the same path, but not in the beginning
 		//The che will remain the in the LOCATION_SELECT state, but will now show work for the new path
 		picker.scanLocation("Loc2B");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
-		verifyCheDisplay(picker, "SCAN START LOCATION", "OR SCAN START", "", "SHOWING WI COUNTS");
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("3"), posConValue);
 
@@ -290,16 +285,14 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 
 		//Scan START, review displays
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
-		verifyCheDisplay(picker, "SCAN START LOCATION", "OR SCAN START", "", "SHOWING WI COUNTS");
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		Byte posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("5"), posConValue);
 
 		//Scan location on a different path
 		//The che will remain the in the LOCATION_SELECT state, but will now show work for the new path
 		picker.scanLocation("Loc2B");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
-		verifyCheDisplay(picker, "SCAN START LOCATION", "OR SCAN START", "", "SHOWING WI COUNTS");
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("3"), posConValue);
 
@@ -325,24 +318,21 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 
 		//Scan START, review displays
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
-		verifyCheDisplay(picker, "SCAN START LOCATION", "OR SCAN START", "", "SHOWING WI COUNTS");
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		Byte posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("5"), posConValue);
 
 		//Scan location on a different path
 		//The che will remain the in the LOCATION_SELECT state, but will now show work for the new path
 		picker.scanLocation("Loc2B");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
-		verifyCheDisplay(picker, "SCAN START LOCATION", "OR SCAN START", "", "SHOWING WI COUNTS");
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("3"), posConValue);
 
 		//Once again, scan location on a different path (returning to the original one)
 		//The che will remain the in the LOCATION_SELECT state, but will now show work for the new path
 		picker.scanLocation("Loc1B");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
-		verifyCheDisplay(picker, "SCAN START LOCATION", "OR SCAN START", "", "SHOWING WI COUNTS");
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("5"), posConValue);
 
@@ -367,8 +357,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 
 		//Scan START, review displays
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
-		verifyCheDisplay(picker, "SCAN START LOCATION", "OR SCAN START", "", "SHOWING WI COUNTS");
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		Byte posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("5"), posConValue);
 
@@ -388,8 +377,8 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		picker.pickItemAuto();
 
 		//Very "All Work Complete" message and "--" on poscon
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE_CURR_PATH, WAIT_TIME);
-		verifyCheDisplay(picker, "PATH COMPLETE", "SCAN NEW LOCATION", "OR SETUP NEW CART", "");
+		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
+		// verifyCheDisplay(picker, "PATH COMPLETE", "SCAN NEW LOCATION", "OR SETUP NEW CART", "");
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, picker.getLastSentPositionControllerDisplayValue((byte) 1));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_DASH, picker.getLastSentPositionControllerMinQty((byte) 1));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_DASH, picker.getLastSentPositionControllerMaxQty((byte) 1));
@@ -401,13 +390,11 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 
 		//Verify "No Work On Current Path" message
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.NO_WORK_CURR_PATH, WAIT_TIME);
-		verifyCheDisplay(picker, "NO WORK TO DO", "ON CURRENT PATH", "SCAN START LOCATION", "SHOWING WI COUNTS");
+		picker.waitForCheState(picker.getNoWorkReviewState(), WAIT_TIME);
 
 		//Scan location on a different path. Verify remaining work count
 		picker.scanLocation("Loc2A");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
-		verifyCheDisplay(picker, "SCAN START LOCATION", "OR SCAN START", "", "SHOWING WI COUNTS");
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("3"), posConValue);
 
@@ -424,8 +411,8 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		picker.pickItemAuto();
 		picker.pickItemAuto();
 
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
-		verifyCheDisplay(picker, "ALL WORK COMPLETE", "", "", "");
+		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
+		// verifyCheDisplay(picker, "ALL WORK COMPLETE", "", "", "");
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, picker.getLastSentPositionControllerDisplayValue((byte) 1));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_C, picker.getLastSentPositionControllerMinQty((byte) 1));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_O, picker.getLastSentPositionControllerMaxQty((byte) 1));
@@ -442,7 +429,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 
 		//Scan START
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		//Scan START to begin pick
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
@@ -457,14 +444,27 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		picker.pickItemAuto();
 		picker.pickItemAuto();
 
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE_CURR_PATH, WAIT_TIME);
+		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
 
-		//Scan location on a different path.
+		// Can you directly scan location onto a different path. No. Still at complete state.
 		picker.scanLocation("Loc2A");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
+		// So, start again, then get the new location.
 
-		//Start pick on the new path.
+		//TODO fix
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
+		if (!picker.usesSummaryState())
+			picker.waitForCheState(picker.getNoWorkReviewState(), WAIT_TIME);
+		else
+			picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+
+		picker.scanLocation("Loc2A");
+		// TODO CLUMSY, fix.
+		if (!picker.usesSummaryState())
+			picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
+		else
+			picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker.scanLocation("Loc2A");
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
 		//Verify that there are 3 items on the second path
@@ -479,8 +479,8 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		picker.pick(1, 0);
 		picker.scanCommand("YES");
 
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE, WAIT_TIME);
-		verifyCheDisplay(picker, "ALL WORK COMPLETE", "", "", "");
+		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
+		// verifyCheDisplay(picker, "ALL WORK COMPLETE", "", "", "");
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, picker.getLastSentPositionControllerDisplayValue((byte) 1));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_TOP_BOTTOM, picker.getLastSentPositionControllerMinQty((byte) 1));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_TOP_BOTTOM, picker.getLastSentPositionControllerMaxQty((byte) 1));
@@ -495,7 +495,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 
 		//Scan START
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		//Scan START to begin pick
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
@@ -515,8 +515,8 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 
 		//At this point, there are unfinished items on both paths
 		//(Shorted items on this and all items on another)
-		picker.waitForCheState(CheStateEnum.PICK_COMPLETE_CURR_PATH, WAIT_TIME);
-		verifyCheDisplay(picker, "PATH COMPLETE", "SCAN NEW LOCATION", "OR SETUP NEW CART", "");
+		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
+		// verifyCheDisplay(picker, "PATH COMPLETE", "SCAN NEW LOCATION", "OR SETUP NEW CART", "");
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, picker.getLastSentPositionControllerDisplayValue((byte) 1));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_TRIPLE_DASH, picker.getLastSentPositionControllerMinQty((byte) 1));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_TRIPLE_DASH, picker.getLastSentPositionControllerMaxQty((byte) 1));

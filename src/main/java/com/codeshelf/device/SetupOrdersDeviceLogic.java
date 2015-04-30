@@ -43,7 +43,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	// This code runs on the site controller, not the CHE.
 	// The goal is to convert data and instructions to something that the CHE controller can consume and act on with minimal logic.
 
-	private static final Logger					LOGGER							= LoggerFactory.getLogger(SetupOrdersDeviceLogic.class);
+	private static final Logger					LOGGER									= LoggerFactory.getLogger(SetupOrdersDeviceLogic.class);
 
 	// The CHE's container map.
 	private Map<String, String>					mPositionToContainerMap;
@@ -73,16 +73,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Setter
 	private String								mLastPutWallItemScan;
 
-	@Getter
-	@Setter
-	private boolean								mInventoryCommandAllowed		= true;
-
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	CheStateEnum								mRememberStateEnteringWallState	= CheStateEnum.CONTAINER_SELECT;
+	CheStateEnum								mRememberEnteringWallOrInventoryState	= CheStateEnum.CONTAINER_SELECT;
 
-	private final boolean						useSummaryState					= false;
+	private final boolean						useSummaryState							= false;
 
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -98,7 +94,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (che != null) { // many tests do not have the che available, so just leave mLocationId null
 			mLocationId = che.getLastScannedLocation();
 		}
-
 	}
 
 	public boolean usesSummaryState() {
@@ -138,6 +133,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 				case SETUP_SUMMARY:
 					sendSummaryScreen();
+					// We also want cart feedback, including active work instruction counts per poscon
+					this.showCartSetupFeedback();
 					break;
 
 				case COMPUTE_WORK:
@@ -149,15 +146,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 
 				case LOCATION_SELECT:
-					if (isOkToStartWithoutLocation())
+					if (mPositionToContainerMap.size() > 0)
 						sendDisplayCommand(SCAN_LOCATION_MSG, OR_SCAN_START, EMPTY_MSG, SHOWING_WI_COUNTS);
 					else
 						sendDisplayCommand(SCAN_LOCATION_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
 					this.showCartSetupFeedback();
 					break;
 
+				// this state going away
 				case LOCATION_SELECT_REVIEW:
-					if (isOkToStartWithoutLocation())
+					if (mPositionToContainerMap.size() > 0)
 						sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1, OR_SCAN_LOCATION, OR_SCAN_START, SHOWING_WI_COUNTS);
 					else
 						sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1,
@@ -260,10 +258,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
 					this.showCartSetupFeedback();
 					break;
-				case NO_WORK_CURR_PATH:
-					sendDisplayCommand(NO_WORK_MSG, ON_CURR_PATH_MSG, SCAN_LOCATION_MSG, SHOWING_WI_COUNTS);
-					this.showCartSetupFeedback();
-					break;
 				case SCAN_GTIN:
 					if (lastScanedGTIN == null) {
 						sendDisplayCommand(SCAN_GTIN, EMPTY_MSG);
@@ -315,8 +309,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Command scans are split out by command then state because they are more likely to be state independent
 	 */
 	protected void processCommandScan(final String inScanStr) {
-
-		updateInventoryCommandAccess(inScanStr);
 
 		switch (inScanStr) {
 
@@ -376,7 +368,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CONTAINER_SELECT:
 				// only if no container/orders at all have been set up
 				if (mPositionToContainerMap.size() == 0) {
-					setRememberStateEnteringWallState(mCheStateEnum);
+					setRememberEnteringWallOrInventoryState(mCheStateEnum);
 					setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
 				} else {
 					LOGGER.warn("User: {} attempted to do ORDER_WALL after having some pick orders set up", this.getUserId());
@@ -384,8 +376,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case PICK_COMPLETE:
+			case SETUP_SUMMARY:
 			case PICK_COMPLETE_CURR_PATH:
-				setRememberStateEnteringWallState(mCheStateEnum);
+				setRememberEnteringWallOrInventoryState(mCheStateEnum);
 				setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
 				break;
 
@@ -402,7 +395,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CONTAINER_SELECT:
 				// only if no container/orders at all have been set up
 				if (mPositionToContainerMap.size() == 0) {
-					setRememberStateEnteringWallState(mCheStateEnum);
+					setRememberEnteringWallOrInventoryState(mCheStateEnum);
 					setState(CheStateEnum.PUT_WALL_SCAN_WALL);
 				} else {
 					LOGGER.warn("User: {} attempted to do PUT_WALL after having some pick orders set up", this.getUserId());
@@ -412,7 +405,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case PICK_COMPLETE:
 			case SETUP_SUMMARY:
 			case PICK_COMPLETE_CURR_PATH:
-				setRememberStateEnteringWallState(mCheStateEnum);
+				setRememberEnteringWallOrInventoryState(mCheStateEnum);
 				setState(CheStateEnum.PUT_WALL_SCAN_WALL);
 				break;
 
@@ -422,32 +415,38 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	}
 
-	protected void resetInventoryCommandAllowed() {
-		lastScanedGTIN = null;
-		setMInventoryCommandAllowed(true);
-	}
-
-	protected void updateInventoryCommandAccess(String inCommandStr) {
-		if (!inCommandStr.equals(INVENTORY_COMMAND)) {
-			setMInventoryCommandAllowed(false);
-		}
-
-		else if (inCommandStr.equals(LOGOUT_COMMAND)) {
-			setMInventoryCommandAllowed(true);
-		}
-	}
-
+	/**
+	 * Inventory command received. Worker might do this at any time. Within this, controlled by state, we want to allow, or simply ignore the scan.
+	 * Inventory allowed (for now) from basically the same places put wall is allowed, at the start or end of process, but not within.
+	 * SETUP_SUMMARY state mostly.
+	 */
 	protected void inventoryCommandReceived() {
 
 		switch (mCheStateEnum) {
+
 			case CONTAINER_SELECT:
-				if (isMInventoryCommandAllowed()) {
+				// only if no container/orders at all have been set up. Consistent with putwall/order wall
+				if (mPositionToContainerMap.size() == 0) {
+					setRememberEnteringWallOrInventoryState(mCheStateEnum);
 					setState(CheStateEnum.SCAN_GTIN);
 				} else {
-					LOGGER.warn("User: {} attempted inventory scan in invalid state: {}", this.getUserId(), mCheStateEnum);
+					LOGGER.warn("User: {} attempted to do INVENTORY after having some pick orders set up", this.getUserId());
 				}
 				break;
+
+			case PICK_COMPLETE:
+			case PICK_COMPLETE_CURR_PATH:
+				setRememberEnteringWallOrInventoryState(mCheStateEnum);
+				setState(CheStateEnum.SCAN_GTIN);
+				break;
+
+			case SETUP_SUMMARY:
+				setRememberEnteringWallOrInventoryState(mCheStateEnum);
+				setState(CheStateEnum.SCAN_GTIN);
+				break;
+
 			default:
+				LOGGER.warn("User: {} attempted inventory scan in invalid state: {}", this.getUserId(), mCheStateEnum);
 				break;
 		}
 
@@ -466,8 +465,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.CONTAINER_SELECT);
 				break;
 			case SCAN_GTIN:
-				resetInventoryCommandAllowed();
-				setState(CheStateEnum.CONTAINER_SELECT);
+				lastScanedGTIN = null;
+				CheStateEnum priorToInventoryState = getRememberEnteringWallOrInventoryState();
+				setState(priorToInventoryState);
 				break;
 
 			case NO_PUT_WORK:
@@ -480,12 +480,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case GET_PUT_INSTRUCTION: // should never happen. State is transitory unless the server failed to respond
 			case PUT_WALL_SCAN_WALL:
 				// DEV-708, 712 specification. We want to return the state we started from: CONTAINER_SELECT or PICK_COMPLETE
-				CheStateEnum priorState = getRememberStateEnteringWallState();
-				if (mPositionToContainerMap.size() == 0) {
-					setState(priorState);
-				} else {
-					setState(priorState);
-				}
+				CheStateEnum priorState = getRememberEnteringWallOrInventoryState();
+				setState(priorState);
 				break;
 
 			case DO_PUT:
@@ -740,7 +736,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				else
 					setState(CheStateEnum.DO_PICK); // This will cause showActivePicks();
 			} else {
-				int uncompletedInstructionsOnOtherPathsSum = getUncompletedInstructionsOnOtherPathsSum();
+				int uncompletedInstructionsOnOtherPathsSum = getCountJobsOnOtherPaths();
 				processPickComplete(uncompletedInstructionsOnOtherPathsSum > 0);
 			}
 		}
@@ -940,34 +936,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		Integer toShortCount = 0;
 		Integer removeHousekeepCount = 0;
 
-		/* old Algorithm
-		// Algorithm:  The all picks list is ordered by sequence. So consider anything in that list with later sequence.
-		// One or two of these might also be in mActivePickWiList if it is a simultaneous work instruction pick that we are on.  Remove if found there.
-		WorkInstruction prevWi = null;
-		for (WorkInstruction wi : mAllPicksWiList) {
-			if (laterWi(wi, inShortWi)) {
-				laterCount++;
-				if (sameProductLotEtc(wi, inShortWi)) {
-					// When simultaneous pick work instructions return, we must not short ahead within the simultaneous pick. See CD_0043 for details.
-					// if (!mActivePickWiList.contains(wi)) {
-					toShortCount++;
-					// housekeeps that are not the current job should not be in mActivePickWiList. Just check that possibility to confirm our understanding.
-					if (unCompletedUnneededHousekeep(prevWi)) {
-						if (mActivePickWiList.contains(prevWi))
-							LOGGER.error("unanticipated housekeep in mActivePickWiList in doShortAheads");
-						removeHousekeepCount++;
-						doCompleteUnneededHousekeep(prevWi);
-					}
-					// Short aheads will always set the actual pick quantity to zero.
-					doShortTransaction(wi, 0);
-					// }
-				}
-			}
-			prevWi = wi;
-		}
-		*/
-
-		// New algorithm. Assemble what we want to short
+		// Algorithm. Assemble what we want to short
 		List<WorkInstruction> toShortList = new ArrayList<WorkInstruction>();
 		// Find short aheads from the active picks first, which might have lower sort values.
 		// If we are shorting the inShortWi, there should be no housekeeps in the active pick list.
@@ -1189,8 +1158,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * @param inLocationStr
 	 */
 	private void requestWorkAndSetGetWorkState(final String inLocationStr, final Boolean reverseOrderFromLastTime) {
+		// by protocol, inLocationStr may be null for START or Reverse. Do not overwrite mLocationId which is perfectly good.
 		clearAllPosconsOnThisDevice();
-		this.mLocationId = inLocationStr;
 		Map<String, String> positionToContainerMapCopy = new HashMap<String, String>(mPositionToContainerMap);
 
 		mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(),
@@ -1210,6 +1179,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
 			ledControllerClearLeds();
+			mLocationId = inScanStr; // let's remember where user scanned.
+			// Careful. Later, codeshelf tape scan. Need to get the interpretted position back from server.
 			requestWorkAndSetGetWorkState(inScanStr, false);
 		} else {
 			LOGGER.info("Not a location ID: " + inScanStr);
@@ -1228,7 +1199,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processIdleStateScan(inScanPrefixStr, inContent);
 				break;
 			case NO_WORK:
-			case NO_WORK_CURR_PATH:
 				processLocationScan(inScanPrefixStr, inContent);
 				break;
 			case LOCATION_SELECT:
@@ -1260,8 +1230,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				//Do Nothing if you are in an error state and you scan something that's not "Clear Error"
 				break;
 
+			case SETUP_SUMMARY:
 			case DO_PICK:
 				// At any time during the pick we can change locations.
+				// At summary, we can change location/path
 				if (inScanPrefixStr.equals(LOCATION_PREFIX)) {
 					processLocationScan(inScanPrefixStr, inContent);
 				}
@@ -1405,48 +1377,45 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 			LOGGER.info("Got Counts {}", mContainerToWorkInstructionCountMap);
 
-			if (doesNeedReview) {
+			if (usesSummaryState())
+				setState(CheStateEnum.SETUP_SUMMARY);
+			else if (doesNeedReview) {
 				setState(CheStateEnum.LOCATION_SELECT_REVIEW);
 			} else {
 				setState(CheStateEnum.LOCATION_SELECT);
 			}
 		} else {
-			int uncompletedInstructionsOnOtherPathsSum = getUncompletedInstructionsOnOtherPathsSum();
-			if (uncompletedInstructionsOnOtherPathsSum == 0) {
-				setState(CheStateEnum.NO_WORK);
-			} else {
-				setState(CheStateEnum.NO_WORK_CURR_PATH);
-			}
+			// v16 remove NO_WORK_CURR_PATH. Just NO_WORK, until we go to SETUP_SUMMARY
+			setState(getNoWorkReviewState());
 		}
 	}
 
 	/**
 	 * A series of private functions giving the overall state of the setup
-	 * This first is uncompletedInstructionsOnOtherPaths
+	 * How many jobs on not being done for this setup? Includes uncompleted wi other paths, and details with no wi made
 	 */
-	private int getUncompletedInstructionsOnOtherPathsSum() {
-		if (!feedbackCountersValid()) {
-			LOGGER.error("Inappropriate call to getUncompletedInstructionsOnOtherPathsSum. state:{}", getCheStateEnum());
+	private int getCountJobsOnOtherPaths() {
+		if (mContainerToWorkInstructionCountMap == null)
 			return 0;
+		else {
+			int uncompletedInstructionsOnOtherPathsCounter = 0;
+			for (WorkInstructionCount count : mContainerToWorkInstructionCountMap.values()) {
+				uncompletedInstructionsOnOtherPathsCounter += count.getOtherWorkTotal();
+			}
+			return uncompletedInstructionsOnOtherPathsCounter;
 		}
-		// feedbackCountersValid() proves mContainerToWorkInstructionCountMap != null, so do not check that again.
-		// why not just iterate the values?
-		WorkInstructionCount[] counts = mContainerToWorkInstructionCountMap.values().toArray(new WorkInstructionCount[0]);
-		int uncompletedInstructionsOnOtherPathsCounter = 0;
-		for (WorkInstructionCount count : counts) {
-			uncompletedInstructionsOnOtherPathsCounter += count.getUncompletedInstructionsOnOtherPaths();
-		}
-		return uncompletedInstructionsOnOtherPathsCounter;
 	}
 
 	/**
-	 * How many container/orderId are setup
+	 * How many container/orderId are setup?
 	 */
 	private int getCountOfSetupOrderContainers() {
 		if (mContainerToWorkInstructionCountMap == null)
 			return 0;
 		else
 			return mContainerToWorkInstructionCountMap.size();
+		// huge assumption that all WorkInstructionCounts in the map are valid. See ComputeWorkCommand.computeContainerWorkInstructionCounts
+		// which filtered out some "None" counts. Not sure if that is correct or not. 
 	}
 
 	/**
@@ -1499,15 +1468,22 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Trying to align the counts, allow for 3 digit counts.
 	 */
 	private void sendSummaryScreen() {
-		String orderCountStr = Integer.toString(getCountOfSetupOrderContainers());
+		int orderCount = getCountOfSetupOrderContainers();
+		String orderCountStr = Integer.toString(orderCount);
 		orderCountStr = StringUtils.leftPad(orderCountStr, 3);
 		String locStr = getLocationId(); // this might be null the very first time.
 		String line1;
 		if (locStr == null) {
-			line1 = String.format("%s orders ", orderCountStr);
+			if (orderCount == 1)
+				line1 = String.format("%s order  ", orderCountStr);
+			else
+				line1 = String.format("%s orders ", orderCountStr);
 		} else {
 			locStr = StringUtils.leftPad(locStr, 9); // Always right justifying the location
-			line1 = String.format("%s orders %s", orderCountStr, locStr);
+			if (orderCount == 1)
+				line1 = String.format("%s order  %s", orderCountStr, locStr);
+			else
+				line1 = String.format("%s orders %s", orderCountStr, locStr);
 		}
 
 		int pickCount = getCountOfGoodJobsOnSetupPath();
@@ -1515,45 +1491,61 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		pickCountStr = StringUtils.leftPad(pickCountStr, 3);
 		// Too clever?  only show other path counts if there are any		
 		String line2;
-		int otherCount = getUncompletedInstructionsOnOtherPathsSum();
+		int otherCount = getCountJobsOnOtherPaths();
 		if (otherCount > 0) {
 			String otherCountStr = Integer.toString(otherCount);
 			otherCountStr = StringUtils.leftPad(otherCountStr, 3);
-			line2 = String.format("%s picks  %s other", pickCountStr, otherCountStr);
+			if (pickCount == 1)
+				line2 = String.format("%s pick   %s other", pickCountStr, otherCountStr);
+			else
+				line2 = String.format("%s picks  %s other", pickCountStr, otherCountStr);
 		} else {
-			line2 = String.format("%s picks", pickCountStr);
+			if (pickCount == 1)
+				line2 = String.format("%s pick ", pickCountStr);
+			else
+				line2 = String.format("%s picks", pickCountStr);
 		}
 
-		String doneCountStr = Integer.toString(getCountOfCompletedJobsOnSetupPath());
+		int doneCount = getCountOfCompletedJobsOnSetupPath();
+		String doneCountStr = Integer.toString(doneCount);
 		doneCountStr = StringUtils.leftPad(doneCountStr, 3);
 		int shortCount = getCountOfShortsOnSetupPath();
-		// Too clever?  only show shorts if there are any
-		String line3;
-		if (shortCount > 0) {
-			String shortCountStr = Integer.toString(shortCount);
-			shortCountStr = StringUtils.leftPad(shortCountStr, 3);
-			line3 = String.format("%s done   %s short", doneCountStr, shortCountStr);
-		} else {
-			line3 = String.format("%s done", doneCountStr);
+		// We want to show completed jobs and shorts upon completion only. The reason is the server is not
+		// handing these to us usefully in the computeWorkInstructions process. If we showed 0 done as the user scans onto a new location or reverses
+		// part way through, users would complain about us "losing" their completed work.
+		String line3 = "";
+		if (doneCount > 0 || shortCount > 0) {
+			if (shortCount > 0) {
+				String shortCountStr = Integer.toString(shortCount);
+				shortCountStr = StringUtils.leftPad(shortCountStr, 3);
+				line3 = String.format("%s done   %s short", doneCountStr, shortCountStr);
+			} else {
+				line3 = String.format("%s done", doneCountStr);
+			}
 		}
 
 		// Try to be a little clever and context sensitive here
 		String line4;
-		if (pickCount == 0 && otherCount == 0 && shortCount == 0)
-			line4 = "SETUP"; // START provide no useful functionality
+		if (pickCount == 0 && otherCount == 0)
+			line4 = "SETUP"; // START provides no useful functionality
 		else if (pickCount == 0 && otherCount > 0)
-			line4 = "START (other path)"; // Or setup to nuke the cart. Not enough space
+			line4 = "Scan Other Location"; // Or setup to nuke the cart. Not enough space
 		else if (pickCount == 0)
 			line4 = "SETUP (or START)"; // you might start again to redo any shorts
 		else
 			// pickcount > 0. Usually just want to start
-			line4 = "START (or SETUP)";
+			line4 = "START (or SETUP)"; // or other location
+
+		// Note to Andrew: make this look nice. By default, line1 has larger font than the other lines. 
+		// for this screen, all could be the same monospace font.
 		this.sendDisplayCommand(line1, line2, line3, line4);
 
 	}
 
 	/** Shows the count feedback on the position controller
-	 * This returns without error if the feedback counters are not valid.
+	 * This returns without error if the feedback counters are not valid. 
+	 * This routine has "grown" from v16. Used to not be called at the end of a run. Now is. So we need to show more state
+	 * from what happened on the run. But only show that stuff if there is not a good WI count.
 	 */
 	protected void showCartSetupFeedback() {
 		//make sure mContainerToWorkInstructionCountMap exists
@@ -1585,29 +1577,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				LOGGER.info("Position Feedback_2: Poscon {} -- {}", position, wiCount);
 				if (count == 0) {
 					//0 good WI's
-					if (wiCount.hasBadCounts() || wiCount.hasWorkOtherPaths()) {
-						//If there any bad counts then we are "done for now" - dim, solid dashes
-						instructions.add(new PosControllerInstr(position,
-							PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-							PosControllerInstr.BITENCODED_LED_DASH,
-							PosControllerInstr.BITENCODED_LED_DASH,
-							PosControllerInstr.SOLID_FREQ.byteValue(),
-							PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
-					} else {
-						if (wiCount.getCompleteCount() == 0) {
-							// This should not be possible (unless we only had a single HK WI, which would be a bug)
-							// However, restart on a route after completing all work for an order comes back this way. Server could return the count
-							// but does not. Treat it as order complete. This case is demonstrated in cheProcessPutWall.orderWallRemoveOrder();
-							LOGGER.debug("WorkInstructionCount has no counts {}; containerId={}", wiCount, containerId);
-						}
-						//Ready for packout - solid, dim oc
-						instructions.add(new PosControllerInstr(position,
-							PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-							PosControllerInstr.BITENCODED_LED_C,
-							PosControllerInstr.BITENCODED_LED_O,
-							PosControllerInstr.SOLID_FREQ.byteValue(),
-							PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
-					}
+
+					// Fairly significant change from v16 to let this routine do the odd stuff
+					instructions.add(getCartRunFeedbackInstructionForCount(wiCount, position)); // this should do shorts, otherpath, orderComplete
+					// used to have code here to do the dash and "oc".
+
 				} else {
 					//Non-zero good WI's means bright display
 
@@ -1726,23 +1700,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processContainerPosition(COMMAND_PREFIX, inScanStr);
 				break;
 
+			case SETUP_SUMMARY:
 			case LOCATION_SELECT:
 			case LOCATION_SELECT_REVIEW:
 				// Normally, start work here would hit the default case below, calling start work() which queries to server again
 				// ultimately coming back to LOCATION_SELECT state. However, if okToStartWithoutLocation, then start scan moves us forward
-				if (isOkToStartWithoutLocation()) {
-					LOGGER.info("starting without a start location");
-					boolean reverseOrderFromLastTime = getMReversePickOrder() != reverse;
-					//Remember the selected pick direction
-					setMReversePickOrder(reverse);
-					requestWorkAndSetGetWorkState(null, reverseOrderFromLastTime);
-				} else { // do as we did before
-					if (mPositionToContainerMap.values().size() > 0) {
-						startWork(inScanStr);
-					} else {
-						setState(CheStateEnum.NO_CONTAINERS_SETUP);
-					}
-				}
+				boolean reverseOrderFromLastTime = getMReversePickOrder() != reverse;
+				//Remember the selected pick direction
+				setMReversePickOrder(reverse);
+				requestWorkAndSetGetWorkState(null, reverseOrderFromLastTime);
 				break;
 
 			case SCAN_GTIN:
@@ -1790,7 +1756,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	public void assignWork(final List<WorkInstruction> inWorkItemList, String message) {
 		if (inWorkItemList == null || inWorkItemList.size() == 0) {
-			setState(CheStateEnum.NO_WORK);
+			setState(getNoWorkReviewState());
 		} else {
 			WorkInstruction wi1 = inWorkItemList.get(0);
 			String otherInformation = String.format("First pick at %s", wi1.getPickInstruction());
@@ -1932,6 +1898,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	protected void processButtonPress(Integer inButtonNum, Integer inQuantity) {
 		// In general, this can only come if the poscon was set in a way that prepared it to be able to send.
 		// However, pickSimulator.pick() can be called in any context, which simulates the button press command coming in.
+		notifyButton(inButtonNum, inQuantity);
 
 		// The point is, let's check our state
 		switch (mCheStateEnum) {
@@ -1945,9 +1912,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(mCheStateEnum);
 				return;
 			default: {
+				LOGGER.warn("Unexpected button press ignored. OR invalid pick() call by some unit test.");
 				// We want to ignore the button press, but force out starting poscon situation again.
 				setState(mCheStateEnum);
-				LOGGER.warn("Unexpected button press ignored. OR invalid pick() call by some unit test.");
 				return;
 			}
 		}
@@ -1960,7 +1927,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (wi == null) {
 				// Simply ignore button presses when there is no work instruction.
 			} else {
-				notifyButton(inButtonNum, inQuantity);
 				if (inQuantity >= wi.getPlanMinQuantity()) {
 					processNormalPick(wi, inQuantity);
 				} else {
@@ -2212,13 +2178,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	protected void logout() {
 		super.logout(); // this calls the notifyXXX
-		resetInventoryCommandAllowed();
+		lastScanedGTIN = null;
 		mContainerInSetup = "";
 
-		/* DEV-775 No longer clear CHE setup state on logout
-		mPositionToContainerMap.clear();
-		mContainerToWorkInstructionCountMap = null;
-		*/
+		//DEV-775 No longer clear CHE setup state on logout
+		if (!usesSummaryState()) {
+			mPositionToContainerMap.clear();
+			mContainerToWorkInstructionCountMap = null;
+		}
 	}
 
 	/**

@@ -9,11 +9,13 @@ import com.codeshelf.filter.NetworkChangeListener;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
+import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Organization;
+import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.SiteController;
 import com.codeshelf.persistence.AbstractPersistenceService;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -65,35 +67,44 @@ public class LoginCommand extends CommandABC {
 				if (tokenSession.getStatus().equals(Status.ACTIVE_SESSION)) {
 					User authUser = tokenSession.getUser();
 					// successfully authenticated user with password
-					Tenant tenant = TenantManagerService.getInstance().getTenantByUser(authUser);				
+					Tenant tenant = TenantManagerService.getInstance().getTenantByUser(authUser);
 					wsConnection.authenticated(authUser,tenant);
 					CodeshelfSecurityManager.setContext(authUser,tenant);
 					try {
 						TenantPersistenceService.getInstance().beginTransaction();
-						
+
 						LOGGER.info("User " + authUser.getUsername() + " of " + tenant.getName() + " authenticated on session "
 								+ wsConnection.getSessionId());
-	
+
 						// determine if site controller
 						SiteController sitecon = SiteController.staticGetDao().findByDomainId(null, username);
 						CodeshelfNetwork network = null;
 						if (sitecon != null) {
 							network = sitecon.getParent();
-							
-							// ensure all collections are loaded, because hibernate session 
+
+							// ensure all collections are loaded, because hibernate session
 							// will already be closed when response is serialized
 							network.getChes().size();
 							network.getLedControllers().size();
 							network.getSiteControllers().size();
 							network = AbstractPersistenceService.<CodeshelfNetwork>deproxify(network);
-						
-							// send all network updates to this session for this network 
+
+							// send all network updates to this session for this network
 							NetworkChangeListener.registerWithSession(this.objectChangeBroadcaster, wsConnection, network);
-						} // else regular user session
-	
+						} else { //regular ui client
+							// First login from the client will make sure a facility is created only
+							//  for the "default" tenant in Tracy, CA
+							String tenantId = tenant.getName();
+							if (TenantManagerService.INITIAL_TENANT_NAME.equals(tenantId)) {
+								if (Facility.staticGetDao().getAll().isEmpty()) {
+									Facility.createFacility("F1", "First Facility",new Point(PositionTypeEnum.GPS, -122.2741133, 37.8004643, 0.0));
+								}
+							}
+						}
+
 						// update session counters
 						this.sessionManager.updateCounters();
-	
+
 						// generate login response
 						response.setStatus(ResponseStatus.Success);
 						response.setUser(authUser);
@@ -102,34 +113,34 @@ public class LoginCommand extends CommandABC {
 						String[] permArray = new String[permSet.size()];
 						response.setPermissions(permSet.toArray(permArray));
 						response.setNetwork(network);
-	
+
 						// AUTOSHRT needed for sitecon, not UX clients, but go ahead and populate.
 						if (network != null) {
 							IPropertyService properties = PropertyService.getInstance();
-							
+
 							Facility facility = network.getParent();
 							String valueStr = properties.getPropertyFromConfig(facility, DomainObjectProperty.AUTOSHRT);
 							response.setAutoShortValue(Boolean.parseBoolean(valueStr));
-	
+
 							String pickInfo = properties.getPropertyFromConfig(facility, DomainObjectProperty.PICKINFO);
 							response.setPickInfoValue(pickInfo);
-	
+
 							String containerType = properties.getPropertyFromConfig(facility, DomainObjectProperty.CNTRTYPE);
 							response.setContainerTypeValue(containerType);
-							
+
 							String scanType = properties.getPropertyFromConfig(facility, DomainObjectProperty.SCANPICK);
 							response.setScanTypeValue(scanType);
-							
+
 							String sequenceKind = properties.getPropertyFromConfig(facility, DomainObjectProperty.WORKSEQR);
 							response.setSequenceKind(sequenceKind);
-							
+
 							String pickMultValue = properties.getPropertyFromConfig(facility, DomainObjectProperty.PICKMULT);
 							response.setPickMultValue(pickMultValue);
-	
-						} else {
+
+						} else { //ui client user
 							response.setAutoShortValue(false); // not read by client. No need to look it up.
+
 						}
-	
 					} finally {
 						TenantPersistenceService.getInstance().commitTransaction();
 						CodeshelfSecurityManager.removeContext();

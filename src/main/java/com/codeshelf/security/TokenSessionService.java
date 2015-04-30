@@ -16,6 +16,7 @@ import com.codeshelf.manager.User;
 import com.codeshelf.security.SessionFlags.Flag;
 import com.codeshelf.security.TokenSession.Status;
 import com.codeshelf.util.StringUIConverter;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 
 public class TokenSessionService extends AbstractCookieSessionService {
@@ -42,7 +43,7 @@ public class TokenSessionService extends AbstractCookieSessionService {
 	// cookie settings
 	static final public String	COOKIE_NAME							= "CSTOK";
 	private static final int	COOKIE_DEFAULT_MAX_AGE_HOURS		= 24;
-	private static final String	COOKIE_DEFAULT_DOMAIN				= "";
+	//private static final String	COOKIE_DEFAULT_DOMAIN		    = //not setting a domain field works across browsers for localhost,127.0.0.1, and hosts with no domains
 	@Getter
 	String						cookieDomain;
 	@Getter
@@ -115,10 +116,7 @@ public class TokenSessionService extends AbstractCookieSessionService {
 		
 		// cookie settings
 		String cookieDomain = System.getProperty("auth.cookie.domain");
-		if (cookieDomain != null)
-			this.cookieDomain = cookieDomain;
-		else
-			this.cookieDomain = COOKIE_DEFAULT_DOMAIN;
+		this.cookieDomain = Strings.emptyToNull(cookieDomain); //don't set DOMAIN= field (.e.g. localhost, 127.0.0.1 and hosts with no domain;
 		this.cookieSecure = Boolean.getBoolean("auth.cookie.secure");
 		this.cookieMaxAgeHours = Integer.getInteger("auth.cookie.maxagehours", COOKIE_DEFAULT_MAX_AGE_HOURS);
 

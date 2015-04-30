@@ -21,6 +21,7 @@ import javax.ws.rs.core.Response;
 import lombok.Setter;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
@@ -34,6 +35,7 @@ import com.codeshelf.api.HardwareRequest;
 import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
 import com.codeshelf.api.HardwareRequest.LightRequest;
 import com.codeshelf.api.responses.EventDisplay;
+import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedInstrListMessage;
 import com.codeshelf.device.LedSample;
@@ -41,12 +43,15 @@ import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.model.OrderStatusEnum;
+import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.service.NotificationService;
+import com.codeshelf.service.NotificationService.EventType;
 import com.codeshelf.service.OrderService;
 import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
@@ -63,16 +68,18 @@ public class FacilityResource {
 
 	private final WorkService	workService;
 	private final OrderService orderService;
+	private final NotificationService notificationService;
 	private final WebSocketManagerService webSocketManagerService;
 
 	@Setter
 	private Facility facility;
 
 	@Inject
-	public FacilityResource(WorkService workService, OrderService orderService, WebSocketManagerService webSocketManagerService) {
+	public FacilityResource(WorkService workService, OrderService orderService, NotificationService notificationService, WebSocketManagerService webSocketManagerService) {
 		this.orderService = orderService;
 		this.workService = workService;
 		this.webSocketManagerService = webSocketManagerService;
+		this.notificationService = notificationService;
 	}
 
 	@GET
@@ -179,6 +186,20 @@ public class FacilityResource {
 	}
 
 	@GET
+	@Path("/ches")
+	@RequiresPermissions("che:edit")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getAllChesInFacility() {
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("facility", facility));
+		Criteria cheCriteria = Che.staticGetDao().createCriteria();
+		cheCriteria.createCriteria("parent", "network").add(Restrictions.eq("parent", facility));
+		List<Che> ches = Che.staticGetDao().findByCriteriaQuery(cheCriteria);
+		return BaseResponse.buildResponse(ches);
+	}
+
+	
+	@GET
 	@Path("/workers")
 	@RequiresPermissions("worker:view")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -222,14 +243,21 @@ public class FacilityResource {
 	@RequiresPermissions("event:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response searchEvents(
-		@QueryParam("type") EventTypeParam typeParam, 
+		@QueryParam("type") List<EventTypeParam> typeParamList, 
 		@QueryParam("resolved") Boolean resolved ) {
 		ErrorResponse errors = new ErrorResponse();
 		try {
 			List<Criterion> filterParams = new ArrayList<Criterion>();
 			filterParams.add(Restrictions.eq("facility", facility));
-			if (typeParam != null && typeParam.getValue() != null) {
-				filterParams.add(Restrictions.eq("eventType", typeParam.getValue()));
+			//If any "type" parameters are provided, filter accordingly
+			List<EventType> typeList = Lists.newArrayList();
+			for (EventTypeParam type : typeParamList) {
+				if (type != null) {
+					typeList.add(type.getValue());
+				}
+			}
+			if (!typeList.isEmpty()) {
+				filterParams.add(Restrictions.in("eventType", typeList));
 			}
 			//If "resolved" parameter not provided, return, both, resolved and unresolved events
 			if (resolved != null) {
@@ -245,6 +273,21 @@ public class FacilityResource {
 				result.add(new EventDisplay(event));
 			}
 			return BaseResponse.buildResponse(result);
+		} catch (Exception e) {
+			errors.processException(e);
+			return errors.buildResponse();
+		}
+	}
+		
+	@GET
+	@Path("pickrate")
+	@RequiresPermissions("event:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response pickRate(@QueryParam("start") StartDateParam startDateParam) {
+		ErrorResponse errors = new ErrorResponse();
+		try {
+			List<PickRate> pickRates = notificationService.getPickRate(startDateParam.getValue());
+			return BaseResponse.buildResponse(pickRates);
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();

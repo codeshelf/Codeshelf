@@ -26,7 +26,6 @@ import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 // --------------------------------------------------------------------------
@@ -57,7 +56,7 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	@Column(nullable = false,name="device_guid")
 	@Getter
 	@Setter
-	@JsonProperty
+	//json serialization using string getDeviceGuidStr
 	private byte[]					deviceGuid;
 
 	// The description.
@@ -108,13 +107,26 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 		deviceGuid = inGuid.getParamValueAsByteArray();
 	}
 
-	@JsonIgnore
+	@JsonProperty("deviceGuid")
 	public String getDeviceGuidStr() {
-		return new NetGuid(deviceGuid).toString();
+		if (deviceGuid == null || deviceGuid.equals(new byte[4])) {
+			return null;
+		} else {
+			return new NetGuid(deviceGuid).toString();
+		}
 	}
 
+	@JsonProperty("deviceGuid")
 	public void setDeviceGuidStr(String inGuidStr) {
-		deviceGuid = new NetGuid(inGuidStr).getParamValueAsByteArray();
+		byte[] emptyArray = new byte[4];
+		if (inGuidStr == null) {
+			deviceGuid = null;
+		} else if (inGuidStr.equals("0x00000000")){
+			deviceGuid = emptyArray;
+			
+		} else {
+			deviceGuid = new NetGuid(inGuidStr).getParamValueAsByteArray();
+		}
 	}
 
 	public void setNetAddress(NetAddress inNetworkAddress) {

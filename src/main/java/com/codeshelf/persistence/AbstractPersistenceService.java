@@ -252,10 +252,14 @@ public abstract class AbstractPersistenceService extends AbstractCodeshelfIdleSe
     		this.eventListenerIntegrator = integrator;
     	}
 
+    	// always write UTC to database regardless of JVM local time
+    	configuration.registerTypeOverride(new UtcTimestampType());
+    	
 		// initialize hibernate session factory
     	StandardServiceRegistryBuilder ssrb = 
         		new StandardServiceRegistryBuilder(bootstrapBuilder.build())
         			.applySettings(configuration.getProperties());
+    	
         this.sessionFactory = configuration.buildSessionFactory(ssrb.build());
         
         // enable statistics
