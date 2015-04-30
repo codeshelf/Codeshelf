@@ -20,6 +20,6 @@ class UPCVerifiedPick {
 		} else {
 			pickSim.scanCommand("SKIPSCAN");
 		}	
-		pickSim.buttonPress(pos, 
+		pickSim.buttonPress(pos, 0) 
 	}
 }

@@ -1,12 +1,14 @@
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.sim.worker.PickSimulator;
 
 class PickOrders {
 	int WAIT_TIME = 4000
 	int UPC_SKIP_FREQ = 2;
+	int SHORT_FREQ = 2;
 	
-	def pickOrders(picker, order) {
+	def pickOrders(PickSimulator picker, String order, double chanceSkipUpc, double chanceShort) {
 		println "picking order " + order + " " + picker
 		//Reset CHE to IDLE
 		picker.logout()
@@ -28,10 +30,6 @@ class PickOrders {
 				println("No work for this order. Check if order " + order + " exists");
 				picker.logout();
 				return;
-			} else if (state == CheStateEnum.NO_WORK_CURR_PATH) {
-				println("No work for this order on current path.");
-				picker.logout();
-				return;
 			}
 			throw e; 
 		}
@@ -41,16 +39,21 @@ class PickOrders {
 		def List<WorkInstruction> picksList = picker.getAllPicksList();
 		println(picksList.size() + " instructions to pick on the path");
 		
-		int count = 1;
 		//Iterate until no instructions left
 		while(true){
 			WorkInstruction instruction = picker.getActivePick();
 			if (instruction == null) {
-				print("No active picks left");
+				println("No active picks left");
 				break;
-			} else if (!instruction.isHousekeeping()) {
+			} else if (instruction.isHousekeeping()) {
+				//Skip Housekeeping instruction
+				picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+				picker.pickItemAuto();
+			} else {
+				//Process normal instruction
 				picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, WAIT_TIME);
-				if (count++ % UPC_SKIP_FREQ == 0) {
+				//Scan UPC or skip it
+				if (chance(chanceSkipUpc)) {
 					println("Skip UPC scan");
 					picker.scanSomething(CheDeviceLogic.SKIP_SCAN);
 				} else {
@@ -58,13 +61,28 @@ class PickOrders {
 					picker.scanSomething(instruction.getItemId());
 				}
 				picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+				//Pick item or short it
+				if (chance(chanceShort)) {
+					println("Short Item");
+					picker.scanCommand("SHORT");
+					picker.waitForCheState(CheStateEnum.SHORT_PICK, WAIT_TIME);
+					picker.pick(1,0);
+					picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, WAIT_TIME);
+					picker.scanCommand("YES");
+				} else {
+					println("Pick Item");
+					picker.pickItemAuto();
+				}
 			}
-			//Pick item or skip Housekeeping instruction
-			picker.pickItemAuto();
 		}
 		
 		//Finish test by logging out
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
+	}
+	
+	boolean chance(double percentage) {
+		double rnd = Math.random();
+		return rnd < percentage;
 	}
 }
