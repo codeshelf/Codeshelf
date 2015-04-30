@@ -423,20 +423,31 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 						}
 						updateWebSocketConnectionState(connection);
 
-						// DEV-728 site controller needs a set of initialization messages for putwall status. And the same solution may correct any drift.
-						if (user != null && user.isSiteController() && connection.getNextPutWallRefresh() >= 0
-								&& connection.getLastState() == WebSocketConnection.State.ACTIVE
-								&& System.currentTimeMillis() > connection.getNextPutWallRefresh()) {
-							try {
-
-								reinitSiteController(connection, user, tenant);
-
-							} catch (Exception e) {
-								LOGGER.error("caught trying to initialize or refresh putwall to site controller", e);
-								// make sure we do not immediately try again and fail again. Set out to the future
-								final long failedPutWallInitTimeForward = 60 * 60 * 1000; // 1 hour
-								connection.setNextPutWallRefresh(System.currentTimeMillis() + failedPutWallInitTimeForward);
+						// check for valid site controller connection
+						if (user != null && user.isSiteController() && connection.getLastState() == WebSocketConnection.State.ACTIVE) {
+							// DEV-728 site controller needs a set of initialization messages for putwall status. And the same solution may correct any drift.
+							if (connection.getNextPutWallRefresh() >= 0 && System.currentTimeMillis() > connection.getNextPutWallRefresh()) {
+								try {
+									reinitializingPutWallStatus(connection, user, tenant);
+								} catch (Exception e) {
+									LOGGER.error("caught trying to initialize or refresh putwall to site controller", e);
+									// make sure we do not immediately try again and fail again. Set out to the future
+									final long failedPutWallInitTimeForward = 60 * 60 * 1000; // 1 hour
+									connection.setNextPutWallRefresh(System.currentTimeMillis() + failedPutWallInitTimeForward);
+								}
 							}
+							// refresh ches periodically
+							if (connection.getNextCheRefresh() >= 0 && System.currentTimeMillis() > connection.getNextCheRefresh()) {
+								try {
+									// send che config to site controller
+									connection.sendCheUpdates();					
+								} catch (Exception e) {
+									LOGGER.error("caught trying to send che updateto site controller", e);
+									// make sure we do not immediately try again and fail again. Set out to the future
+									final long failedCheUpdateTimeForward = 60 * 60 * 1000; // 1 hour
+									connection.setNextCheRefresh(System.currentTimeMillis() + failedCheUpdateTimeForward);
+								}
+							}							
 						}
 
 					} finally {
@@ -455,18 +466,18 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 		}
 	}
 
-	@Override
-	protected Scheduler scheduler() {
-		//return Scheduler.newFixedRateSchedule(this.startupDelaySeconds, this.periodSeconds, TimeUnit.SECONDS);
-		return Scheduler.newFixedDelaySchedule(this.startupDelaySeconds, this.periodSeconds, TimeUnit.SECONDS);
-	}
-
 	public boolean hasAnySessions() {
 		if (this.activeConnections == null)
 			return false;
 		return !this.activeConnections.isEmpty();
 	}
 
+	@Override
+	protected Scheduler scheduler() {
+		//return Scheduler.newFixedRateSchedule(this.startupDelaySeconds, this.periodSeconds, TimeUnit.SECONDS);
+		return Scheduler.newFixedDelaySchedule(this.startupDelaySeconds, this.periodSeconds, TimeUnit.SECONDS);
+	}
+	
 	class PutWallRefresher implements Callable<Boolean> {
 		Tenant		tenant;
 		UserContext	userContext;
@@ -501,7 +512,7 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 		}
 	}
 
-	private void reinitSiteController(WebSocketConnection connection, UserContext contextUser, Tenant contextTenant) {
+	private void reinitializingPutWallStatus(WebSocketConnection connection, UserContext contextUser, Tenant contextTenant) {
 		// DEV-728 This is a site controller connection. For now, only one, but even later, we do not which site controller has which put wall. 
 		// So just send all put wall init messages to this site controller.
 

@@ -11,6 +11,7 @@ import com.codeshelf.ws.client.CsClientEndpoint;
 import com.codeshelf.ws.protocol.command.CommandABC;
 import com.codeshelf.ws.protocol.command.PingCommand;
 import com.codeshelf.ws.protocol.message.CheDisplayMessage;
+import com.codeshelf.ws.protocol.message.CheStatusMessage;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.message.NetworkStatusMessage;
@@ -194,6 +195,10 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 		} else if (message instanceof OrderLocationFeedbackMessage) {
 			OrderLocationFeedbackMessage msg = (OrderLocationFeedbackMessage) message;
 			this.deviceManager.processOrderLocationFeedbackMessage(msg);
+		} else if (message instanceof CheStatusMessage) {
+			CheStatusMessage msg = (CheStatusMessage) message;
+			//	@Jon: Handle che update	here
+			LOGGER.info("Update received for Che: "+msg.getCheId());
 		}
 	}
 

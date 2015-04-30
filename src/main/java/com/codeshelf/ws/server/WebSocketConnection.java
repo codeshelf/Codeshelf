@@ -32,10 +32,15 @@ import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.dao.IDaoListener;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
+import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.model.domain.SiteController;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
+import com.codeshelf.ws.protocol.message.CheStatusMessage;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.google.common.util.concurrent.Service;
 
@@ -83,6 +88,15 @@ public class WebSocketConnection implements IDaoListener {
 	@Getter
 	@Setter
 	long												nextPutWallRefresh				= System.currentTimeMillis() + 15 * 1000; // wait 15 seconds after connection to initialize
+
+	@Getter @Setter
+	long nextCheRefresh	= 0;
+
+	@Getter @Setter
+	long cheUpdateInterval = 1000 * 60 * 1;
+
+	@Getter @Setter
+	long initialCheUpdateDelay = 1000 * 10;
 
 	@Getter
 	@Setter
@@ -411,7 +425,8 @@ public class WebSocketConnection implements IDaoListener {
 		if (user.isSiteController()) {
 			pingTimer = MetricsService.getInstance().createTimer(MetricsGroup.WSS, "ping-" + user.getUsername());
 		}
-
+		// set target time for initial che update
+		this.nextCheRefresh = System.currentTimeMillis() + initialCheUpdateDelay;
 	}
 
 	public void pongReceived(long startTime) {
@@ -430,10 +445,32 @@ public class WebSocketConnection implements IDaoListener {
 			session.close(new CloseReason(CloseCodes.GOING_AWAY, ""));
 		}
 	}
-	/*
-	public Tenant getTenant() {
-		if(this.user == null)
-			return null;
-		return this.user.getTenant();
-	}*/
+
+	public void sendCheUpdates() {
+		if (this.getCurrentUserContext()==null) {
+			LOGGER.info("Failed to send Che updates to site controller: User context is undefined.");
+			return;
+		}
+		
+		try {
+			TenantPersistenceService.getInstance().beginTransaction();
+			SiteController siteController = SiteController.staticGetDao().findByDomainId(null, this.currentUserContext.getUsername());
+			CodeshelfNetwork network = siteController.getParent();
+			List<Che> ches = Che.staticGetDao().findByParent(network);
+			if (ches!=null) {
+				LOGGER.info("Sending "+ches.size()+" Che updates to site controller "+this.getCurrentUserContext().getUsername());
+				for (Che che : ches) {
+					CheStatusMessage msg = new CheStatusMessage(che);
+					this.sendMessage(msg);
+				}
+			}
+			this.nextCheRefresh = System.currentTimeMillis() + this.cheUpdateInterval;
+			TenantPersistenceService.getInstance().commitTransaction();
+		}
+		catch (Exception e) {
+			LOGGER.error("Failed to send che updates to site controller "+this.getCurrentUserContext().getUsername(),e);			
+		} finally {
+			TenantPersistenceService.getInstance().rollbackAnyActiveTransactions();
+		}		
+	}
 }
