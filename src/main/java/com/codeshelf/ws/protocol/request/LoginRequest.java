@@ -5,7 +5,6 @@ import lombok.Setter;
 
 public class LoginRequest extends RequestABC {
 
-
 	@Getter @Setter
 	private String cstoken;
 

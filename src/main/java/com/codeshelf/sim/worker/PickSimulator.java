@@ -361,7 +361,7 @@ public class PickSimulator {
 	}
 
 	public void logCheDisplay() {
-		LOGGER.info("Line1:{} Line2:{} Line3:{} Line4:{}",
+		LOGGER.info("SCREEN Line1:{} Line2:{} Line3:{} Line4:{}",
 			getLastCheDisplayString(1),
 			getLastCheDisplayString(2),
 			getLastCheDisplayString(3),

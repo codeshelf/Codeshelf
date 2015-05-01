@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -26,8 +25,6 @@ import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsGroup;
-import com.codeshelf.model.domain.SiteController;
-import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.AbstractCodeshelfScheduledService;
@@ -125,7 +122,7 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 		String sessionId = session.getId();
 		WebSocketConnection wsConnection = activeConnections.get(sessionId);
 		if (wsConnection == null) {
-			wsConnection = new WebSocketConnection(session, sharedExecutor);
+			wsConnection = new WebSocketConnection(session, sharedExecutor, this.workService);
 			wsConnection.setSessionId(sessionId); // apparently just used for logging in context of connection	
 			activeConnections.put(sessionId, wsConnection);
 			LOGGER.info("Session " + session.getId() + " started");
@@ -423,20 +420,12 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 						}
 						updateWebSocketConnectionState(connection);
 
-						// DEV-728 site controller needs a set of initialization messages for putwall status. And the same solution may correct any drift.
-						if (user != null && user.isSiteController() && connection.getNextPutWallRefresh() >= 0
-								&& connection.getLastState() == WebSocketConnection.State.ACTIVE
-								&& System.currentTimeMillis() > connection.getNextPutWallRefresh()) {
-							try {
-
-								reinitSiteController(connection, user, tenant);
-
-							} catch (Exception e) {
-								LOGGER.error("caught trying to initialize or refresh putwall to site controller", e);
-								// make sure we do not immediately try again and fail again. Set out to the future
-								final long failedPutWallInitTimeForward = 60 * 60 * 1000; // 1 hour
-								connection.setNextPutWallRefresh(System.currentTimeMillis() + failedPutWallInitTimeForward);
-							}
+						// check for valid site controller connection
+						if (user != null && user.isSiteController() && connection.getLastState() == WebSocketConnection.State.ACTIVE) {
+							// DEV-728 site controller needs a set of initialization messages for putwall status. And the same solution may correct any drift.
+							connection.checkForPutWallUpdate();
+							// refresh ches?
+							connection.checkForCheUpdates();
 						}
 
 					} finally {
@@ -455,63 +444,16 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 		}
 	}
 
-	@Override
-	protected Scheduler scheduler() {
-		//return Scheduler.newFixedRateSchedule(this.startupDelaySeconds, this.periodSeconds, TimeUnit.SECONDS);
-		return Scheduler.newFixedDelaySchedule(this.startupDelaySeconds, this.periodSeconds, TimeUnit.SECONDS);
-	}
-
 	public boolean hasAnySessions() {
 		if (this.activeConnections == null)
 			return false;
 		return !this.activeConnections.isEmpty();
 	}
 
-	class PutWallRefresher implements Callable<Boolean> {
-		Tenant		tenant;
-		UserContext	userContext;
-		WorkService	workService;
-
-		PutWallRefresher(UserContext contextUser, Tenant contextTenant, WorkService workService) {
-			this.tenant = contextTenant;
-			this.userContext = contextUser;
-			this.workService = workService;
-		}
-
-		@Override
-		public Boolean call() throws Exception {
-			try {
-				long startMillis = System.currentTimeMillis();
-				CodeshelfSecurityManager.setContext(userContext, tenant);
-				TenantPersistenceService.getInstance().beginTransaction();
-				try {
-					SiteController siteController = SiteController.staticGetDao().findByDomainId(null, userContext.getUsername());
-					workService.reinitPutWallFeedback(siteController);
-				} finally {
-					TenantPersistenceService.getInstance().commitTransaction();
-				}
-				
-				long totalMillis = System.currentTimeMillis() - startMillis;
-				LOGGER.info("{}ms for reinitSiteController", totalMillis);
-			} finally {
-				CodeshelfSecurityManager.removeContext();
-			}
-
-			return true;
-		}
-	}
-
-	private void reinitSiteController(WebSocketConnection connection, UserContext contextUser, Tenant contextTenant) {
-		// DEV-728 This is a site controller connection. For now, only one, but even later, we do not which site controller has which put wall. 
-		// So just send all put wall init messages to this site controller.
-
-		// Ivan suggested using the ExecutorService. 
-		ExecutorService executor = Executors.newSingleThreadExecutor();
-		executor.submit(new PutWallRefresher(contextUser, contextTenant, workService));
-
-		// set the next refresh time
-		final long successPutWallInitTimeForward = 12 * 60 * 60 * 1000; // 12 hours
-		connection.setNextPutWallRefresh(System.currentTimeMillis() + successPutWallInitTimeForward);
+	@Override
+	protected Scheduler scheduler() {
+		//return Scheduler.newFixedRateSchedule(this.startupDelaySeconds, this.periodSeconds, TimeUnit.SECONDS);
+		return Scheduler.newFixedDelaySchedule(this.startupDelaySeconds, this.periodSeconds, TimeUnit.SECONDS);
 	}
 
 }

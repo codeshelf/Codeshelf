@@ -32,10 +32,15 @@ import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.dao.IDaoListener;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
+import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.model.domain.SiteController;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
+import com.codeshelf.service.WorkService;
+import com.codeshelf.ws.protocol.message.CheStatusMessage;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.google.common.util.concurrent.Service;
 
@@ -82,7 +87,20 @@ public class WebSocketConnection implements IDaoListener {
 
 	@Getter
 	@Setter
-	long												nextPutWallRefresh				= System.currentTimeMillis() + 15 * 1000; // wait 15 seconds after connection to initialize
+	long nextPutWallRefresh	= -1;
+
+	@Getter @Setter
+	long putwallUpdateInterval = 12 * 60 * 60 * 1000; // 12 hours
+	//long putwallUpdateInterval = 60 * 1000; // every min
+	
+	@Getter @Setter
+	long nextCheRefresh	= -1;
+
+	@Getter @Setter
+	long initialUpdateDelay = 1000 * 10; // send updates 10 sec after authentication
+	
+	@Getter @Setter
+	long updateFailureDelay = 60 * 1000; // try again in a minute
 
 	@Getter
 	@Setter
@@ -98,12 +116,16 @@ public class WebSocketConnection implements IDaoListener {
 
 	private ExecutorService								executorService;
 
+	WorkService											workService;
+
 	// track individual tasks
 	Set<Future<?>>										pendingFutures					= new ConcurrentHashSet<Future<?>>();
+
 	private static final int							NUM_FUTURES_CLEANUP_THRESHOLD	= 5;
 
-	public WebSocketConnection(Session session, ExecutorService sharedExecutor) {
+	public WebSocketConnection(Session session, ExecutorService sharedExecutor, WorkService workService) {
 		this.wsSession = session;
+		this.workService = workService;
 		this.executorService = sharedExecutor;
 	}
 
@@ -411,7 +433,9 @@ public class WebSocketConnection implements IDaoListener {
 		if (user.isSiteController()) {
 			pingTimer = MetricsService.getInstance().createTimer(MetricsGroup.WSS, "ping-" + user.getUsername());
 		}
-
+		// set target time for initial che update
+		this.nextCheRefresh = System.currentTimeMillis() + initialUpdateDelay;
+		this.nextPutWallRefresh = System.currentTimeMillis() + initialUpdateDelay;
 	}
 
 	public void pongReceived(long startTime) {
@@ -430,10 +454,62 @@ public class WebSocketConnection implements IDaoListener {
 			session.close(new CloseReason(CloseCodes.GOING_AWAY, ""));
 		}
 	}
-	/*
-	public Tenant getTenant() {
-		if(this.user == null)
-			return null;
-		return this.user.getTenant();
-	}*/
+
+	public void checkForCheUpdates() {
+		if (this.getCurrentUserContext()==null) {
+			LOGGER.info("Failed to send Che updates to site controller: User context is undefined.");
+			return;
+		}
+		if (getNextCheRefresh() >= 0 && System.currentTimeMillis() > getNextCheRefresh()) {
+			try {
+				TenantPersistenceService.getInstance().beginTransaction();
+				SiteController siteController = SiteController.staticGetDao().findByDomainId(null, this.currentUserContext.getUsername());
+				CodeshelfNetwork network = siteController.getParent();
+				List<Che> ches = Che.staticGetDao().findByParent(network);
+				if (ches!=null) {
+					LOGGER.info("Sending "+ches.size()+" Che updates to site controller "+this.getCurrentUserContext().getUsername());
+					for (Che che : ches) {
+						CheStatusMessage msg = new CheStatusMessage(che);
+						this.sendMessage(msg);
+					}
+				}
+				// this.nextCheRefresh = System.currentTimeMillis() + this.cheUpdateInterval;
+				this.nextCheRefresh = -1; // do not refresh periodically
+				TenantPersistenceService.getInstance().commitTransaction();
+			}
+			catch (Exception e) {
+				LOGGER.error("Failed to send che updates to site controller "+this.getCurrentUserContext().getUsername(),e);			
+				this.setNextCheRefresh(System.currentTimeMillis() + updateFailureDelay);
+	
+			} finally {
+				TenantPersistenceService.getInstance().rollbackAnyActiveTransactions();
+			}		
+		}
+	}
+
+	public void checkForPutWallUpdate() {
+		if (this.getCurrentUserContext()==null) {
+			LOGGER.info("Failed to send PutWall update to site controller: User context is undefined.");
+			return;
+		}
+		long startMillis = System.currentTimeMillis();
+		if (getNextPutWallRefresh() >= 0 && startMillis>getNextPutWallRefresh()) {
+			try {
+				TenantPersistenceService.getInstance().beginTransaction();
+				SiteController siteController = SiteController.staticGetDao().findByDomainId(null, getCurrentUserContext().getUsername());
+				workService.reinitPutWallFeedback(siteController);
+				TenantPersistenceService.getInstance().commitTransaction();
+				long totalMillis = System.currentTimeMillis() - startMillis;
+				LOGGER.info("{}ms for putwall update", totalMillis);
+				// schedule next putwall update
+				this.setNextPutWallRefresh(System.currentTimeMillis() + putwallUpdateInterval);
+			}
+			catch (Exception e) {
+				LOGGER.error("Failed to send PutWall update to site controller "+this.getCurrentUserContext().getUsername(),e);
+				this.setNextPutWallRefresh(System.currentTimeMillis() + updateFailureDelay);
+			} finally {
+				TenantPersistenceService.getInstance().rollbackAnyActiveTransactions();
+			}
+		}
+	}
 }

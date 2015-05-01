@@ -65,13 +65,11 @@ public class CreatePathCommandTest extends HibernateTest {
 
 		ObjectChangeBroadcaster objectChangeBroadcaster = this.getTenantPersistenceService().getEventListenerIntegrator().getChangeBroadcaster();
 		Session websocketSession = mock(Session.class);
-		WebSocketConnection viewSession = new WebSocketConnection(websocketSession, Executors.newSingleThreadExecutor());
+		WebSocketConnection viewSession = new WebSocketConnection(websocketSession, Executors.newSingleThreadExecutor(),null);
 
 		/* register a filter like the UI does */
 		viewSession.registerObjectEventListener(new Filter(TenantPersistenceService.getInstance().getDao(PathSegment.class), PathSegment.class, "ID1"));
 		objectChangeBroadcaster.registerDAOListener(getDefaultTenantId(),viewSession,  PathSegment.class);
-		
-		
 		
 		Path noPath = Path.staticGetDao().findByDomainId(testFacility, testPathDomainId);
 		Assert.assertNull(noPath);

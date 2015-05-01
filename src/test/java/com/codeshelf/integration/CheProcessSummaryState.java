@@ -1,0 +1,533 @@
+package com.codeshelf.integration;
+
+import java.io.IOException;
+import java.util.List;
+
+import org.junit.Assert;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.codeshelf.device.CheStateEnum;
+import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.model.WorkInstructionSequencerType;
+import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Container;
+import com.codeshelf.model.domain.ContainerUse;
+import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.sim.worker.PickSimulator;
+
+public class CheProcessSummaryState extends CheProcessPutWallSuper {
+	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessSummaryState.class);
+	private static final int	WAIT_TIME	= 4000;
+
+	/*
+	 * The purpose of these tests is to make sure all supported process variations work with the summary state.
+	 * The super class provides setUpFacilityWithPutWall(). For our purposes, F11 to F18 on one path, and S11 to S18 on another path
+	 * The super class provides setUpOrders1(). Orders except for 11115 and 11116 have workSequence. All other uses of this do not use the workSequence.
+	 * This class will have a separate setupUnmodeledFacility() method. Same setUpOrders1() may be used.
+	 */
+
+	/**
+	 * The goal is an unmodeled facility. Two CHEs. No aisle controllers, poscons. No paths.
+	 * Naturally, must use WorkSequence
+	 */
+	protected Facility getUnmodeledFacility() throws IOException {
+		propertyService.changePropertyValue(getFacility(),
+			DomainObjectProperty.WORKSEQR,
+			WorkInstructionSequencerType.WorkSequence.toString());
+
+		// Look's like CHE1 is reused as is test to test.
+		Che che1 = Che.staticGetDao().findByDomainId(getNetwork(), "CHE1");
+		Assert.assertNotNull(che1);
+		che1.setLastScannedLocation("");
+		Che.staticGetDao().store(che1);
+
+		return getFacility();
+	}
+
+	/**
+	 * The goal is the super class modeled facility. But with CHE1's lastscanlocation set to F11
+	 */
+	protected Facility getModeledFacility() throws IOException {
+
+		Facility facility = setUpFacilityWithPutWall();
+		// let's find our CHE and set its last logged in value before site controller initializes
+		Che che1 = Che.staticGetDao().findByDomainId(getNetwork(), "CHE1");
+		Assert.assertNotNull(che1);
+		che1.setLastScannedLocation("F11");
+		Che.staticGetDao().store(che1);
+		return facility;
+	}
+
+	/**
+	 * Assuming some structure of the SETUP_SUMMARY screen, find the location name we last scanned onto.
+	 */
+	private String getSummaryScreenLocation(PickSimulator picker) {
+		String line1 = picker.getLastCheDisplayString(1);
+		line1 = line1.trim();
+		int lengthLine1 = line1.length();
+		int lastSpaceAt = line1.lastIndexOf(" ");
+		if (lastSpaceAt < 0)
+			return "";
+		return line1.substring(lastSpaceAt + 1, lengthLine1);
+	}
+
+	/**
+	 * Assuming some structure of the SETUP_SUMMARY screen, find the count of orders shown as a string.
+	 */
+	private String getSummaryScreenOrderCount(PickSimulator picker) {
+		String line1 = picker.getLastCheDisplayString(1);
+		line1 = line1.trim(); // strip lead (and trail). At this point, the string is something like "2 orders          xxxxx"
+		int firstSpaceAt = line1.indexOf(" ");
+		if (firstSpaceAt < 0)
+			return "";
+		return line1.substring(0, firstSpaceAt);
+	}
+
+	/**
+	 * Assuming some structure of the SETUP_SUMMARY screen, find the count of jobs shown as a string.
+	 */
+	private String getSummaryScreenJobCount(PickSimulator picker) {
+		String line2 = picker.getLastCheDisplayString(2);
+		line2 = line2.trim(); // strip lead (and trail). At this point, the string is something like "12 jobs          1 other"
+		int firstSpaceAt = line2.indexOf(" ");
+		if (firstSpaceAt < 0)
+			return "";
+		return line2.substring(0, firstSpaceAt);
+	}
+
+	/**
+	 * Assuming some structure of the SETUP_SUMMARY screen, find the count done shown as a string.
+	 * Return "" if done is not showing at all
+	 */
+	private String getSummaryScreenDoneCount(PickSimulator picker) {
+		String line3 = picker.getLastCheDisplayString(3);
+		line3 = line3.trim(); // strip lead (and trail). At this point, the string is something like "0 done          2 short"
+		int firstSpaceAt = line3.indexOf(" ");
+		if (firstSpaceAt < 0)
+			return "";
+		else
+			return line3.substring(0, firstSpaceAt);
+		// We are assuming if shorts > 0, then we also show done even if 0.
+	}
+
+	@Test
+	public final void basicSummary() throws IOException {
+		// This shows the simple success case of 4 picks from 2 orders on 2 paths. CHE's lastScanLocation at F11, so START would assume that.
+		// A few extra starts and location scans thrown in before getting to the picks.
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = getModeledFacility();
+		setUpOrders1(facility);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSiteController();
+		PickSimulator picker1 = createPickSim(cheGuid1);
+
+		if (!picker1.usesSummaryState())
+			return; // this test only applies to new CHE process, not old.
+
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+
+		LOGGER.info("1a: Check the initial summary screen. Right justified at line 1 should be F11"); // see getModeledFacility for why.
+		Assert.assertEquals("F11", getSummaryScreenLocation(picker1));
+
+		LOGGER.info("1b: Set up orders 11117 and 12345 for pick");
+		picker1.scanCommand("SETUP");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker1.scanSomething("11117");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_POSITION, WAIT_TIME);
+		picker1.scanSomething("P%1");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker1.setupOrderIdAsContainer("12345", "2"); // the easier way.
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay(); // Look in log to see what we have
+
+		LOGGER.info("1c: The summary screen should show 2 orders and 3 jobs with 1 other");
+		Assert.assertEquals("2", getSummaryScreenOrderCount(picker1)); // this way to test independent of labeling
+		Assert.assertEquals("3", getSummaryScreenJobCount(picker1));
+
+		String line2 = picker1.getLastCheDisplayString(2);
+		int lengthLine2 = line2.length();
+		String otherCountStr = line2.substring(lengthLine2 - 7, lengthLine2);
+		Assert.assertEquals("1 other", otherCountStr); // not independent of labeling and screen format
+
+		LOGGER.info("2a: Start, but don't pick");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		List<WorkInstruction> wis = picker1.getAllPicksList();
+		this.logWiList(wis);
+
+		LOGGER.info("2b: Scan start again. This comes back to summary screen");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+
+		LOGGER.info("2c: From summary screen, scan location on same path. This will start the pick");
+		picker1.scanLocation("F14");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+
+		LOGGER.info("2d: From pick, scan location on same path. This will start the pick from that point on the path.");
+		picker1.scanLocation("F11");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+
+		LOGGER.info("3a: From pick, scan location on different path. This will go the summary state.");
+		picker1.scanLocation("S11");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay(); // Look in log to see what we have
+
+		LOGGER.info("3b: Still 2 orders but now 1 job with 3 other");
+		Assert.assertEquals("S11", getSummaryScreenLocation(picker1));
+		Assert.assertEquals("2", getSummaryScreenOrderCount(picker1));
+		Assert.assertEquals("1", getSummaryScreenJobCount(picker1));
+		Assert.assertEquals("", getSummaryScreenDoneCount(picker1));
+
+		LOGGER.info("3c: Start; ready to pick");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+
+		LOGGER.info("3d: Pick the one job  on path. Comes to Summary screen as the pick is complete");
+		WorkInstruction wi = picker1.nextActiveWi(); // spell out the steps of pickItemAuto() once
+		int button = picker1.buttonFor(wi);
+		int quant = wi.getPlanQuantity();
+		picker1.pick(button, quant);
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay(); // Look in log to see what we have
+
+		LOGGER.info("3e: line 2 now has 0 picks, 3 other. Line 3 has 1 done. Line 4 suggests to scan another location");
+		Assert.assertEquals("2", getSummaryScreenOrderCount(picker1));
+		Assert.assertEquals("0", getSummaryScreenJobCount(picker1));
+		Assert.assertEquals("1", getSummaryScreenDoneCount(picker1));
+
+		LOGGER.info("4a: From summary, scan location on different path. This will go the summary state but with different counts.");
+		picker1.scanLocation("F12");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay(); // Look in log to see what we have
+		// Now no other. Also, the complete count is lost. Fix someday?
+		// This was a new path case. We might want to lose the complete on path change.
+		Assert.assertEquals("F12", getSummaryScreenLocation(picker1));
+		Assert.assertEquals("2", getSummaryScreenOrderCount(picker1));
+		Assert.assertEquals("3", getSummaryScreenJobCount(picker1));
+		Assert.assertEquals("", getSummaryScreenDoneCount(picker1));
+
+		LOGGER.info("4b: Start; ready to pick");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+
+		LOGGER.info("4c: Start; Pick 1. (2 remain)");
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+
+		LOGGER.info("4d: Start; from pick screen, goes back to summary");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		Assert.assertEquals("2", getSummaryScreenJobCount(picker1));
+		// the complete count is lost. Fix someday? Only not lost if you actually finish
+		Assert.assertEquals("", getSummaryScreenDoneCount(picker1));
+
+		LOGGER.info("4e: Let's finish; goes to summary");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		Assert.assertEquals("0", getSummaryScreenJobCount(picker1));
+		Assert.assertEquals("2", getSummaryScreenDoneCount(picker1));
+	}
+
+	@Test
+	public final void badLocationChange() throws IOException {
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = getModeledFacility();
+		setUpOrders1(facility);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSiteController();
+		PickSimulator picker1 = createPickSim(cheGuid1);
+
+		if (!picker1.usesSummaryState())
+			return; // this test only applies to new CHE process, not old.
+
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+
+		LOGGER.info("1: Set up orders 11117 and 12345 for pick");
+		picker1.scanCommand("SETUP");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker1.setupOrderIdAsContainer("11117", "1");
+		picker1.setupOrderIdAsContainer("12345", "2"); // the easier way.
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay(); // Look in log to see what we have
+		Assert.assertEquals("2", getSummaryScreenOrderCount(picker1));
+		Assert.assertEquals("3", getSummaryScreenJobCount(picker1));
+
+		LOGGER.info("2: Scan to a bad location. The back end gives us the work instructions for good location it had before.");
+		picker1.scanLocation("XX12");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+
+		// picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay(); // Look in log to see what we have
+		List<WorkInstruction> wis = picker1.getAllPicksList();
+		this.logWiList(wis);
+		Assert.assertEquals(4, wis.size()); // one housekeeping. That is why not 3.
+
+		LOGGER.info("2b: Start to go to summary screen");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		// TODO call it a bug here. Backend kept assuming F11. Would be better if we knew and displayed that.
+		Assert.assertEquals("XX12", getSummaryScreenLocation(picker1));
+		picker1.logCheDisplay(); // Look in log to see what we have
+		Assert.assertEquals("3", getSummaryScreenJobCount(picker1));
+
+		LOGGER.info("2c: Scan to our good S11 location that has one job on path.");
+		picker1.scanLocation("S11");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay(); // Look in log to see what we have
+		Assert.assertEquals("1", getSummaryScreenJobCount(picker1));
+
+		LOGGER.info("2d: Start the pick, but don't pick");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+
+		LOGGER.info("2e: Scan to a bad location. The back end gives us the work instructions for good location it had before.");
+		// TODO This is highly questionable! Both the shown location, and getting good picks for the prior location
+		picker1.scanLocation("XX12");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		// picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+
+		LOGGER.info("2f: Start to go to summary screen");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		Assert.assertEquals("XX12", getSummaryScreenLocation(picker1));
+		Assert.assertEquals("1", getSummaryScreenJobCount(picker1));
+	}
+
+	@Test
+	public final void workSequenceAndSummary() throws IOException {
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = getUnmodeledFacility();
+		setUpOrders1(facility);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSiteController();
+		PickSimulator picker1 = createPickSim(cheGuid1);
+
+		if (!picker1.usesSummaryState())
+			return; // this test only applies to new CHE process, not old.
+
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+
+		LOGGER.info("1: Set up orders 11117 and 12345 for pick. No known paths, so should get all 4 jobs");
+		picker1.scanCommand("SETUP");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker1.setupOrderIdAsContainer("11117", "1");
+		picker1.setupOrderIdAsContainer("12345", "2");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay(); // Look in log to see what we have
+		Assert.assertEquals("2", getSummaryScreenOrderCount(picker1));
+		Assert.assertEquals("4", getSummaryScreenJobCount(picker1));
+
+		LOGGER.info("2: Scan Start. The back end gives us the work instructions for good location it had before.");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		List<WorkInstruction> wis = picker1.getAllPicksList();
+		this.logWiList(wis);
+		Assert.assertEquals(5, wis.size()); // one housekeeping. That is why not 4.
+
+		LOGGER.info("2b: Scan Start. Back to summary.");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay(); // Look in log to see what we have
+		Assert.assertEquals("4", getSummaryScreenJobCount(picker1));
+
+		LOGGER.info("2c: Scan to what was a good S11 location  in other test with one job on path. But this test should not have it");
+		picker1.scanLocation("S11");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+
+		LOGGER.info("2d: Scan Start. Back to summary.");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay(); // Look in log to see what we have
+		Assert.assertEquals("4", getSummaryScreenJobCount(picker1));
+
+		LOGGER.info("3a: Scan a location from DO_PICK. Should do little in workSequence mode. Stays picking. (No path change)");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.scanLocation("F11");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+
+		LOGGER.info("3b: Start. Back to summary. See if we picked up the F11");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		// TODO This is questionable. The location probably has no value
+		Assert.assertEquals("F11", getSummaryScreenLocation(picker1));
+		Assert.assertEquals("4", getSummaryScreenJobCount(picker1));
+
+		LOGGER.info("4: pick to completion"); // 5 because one housekeeping
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		Assert.assertEquals("0", getSummaryScreenJobCount(picker1));
+		Assert.assertEquals("4", getSummaryScreenDoneCount(picker1));
+	}
+
+	@Test
+	public final void badOrdersAndSummary() throws IOException {
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = getUnmodeledFacility();
+		setUpOrders1(facility);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSiteController();
+		PickSimulator picker1 = createPickSim(cheGuid1);
+
+		if (!picker1.usesSummaryState())
+			return; // this test only applies to new CHE process, not old.
+
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+
+		LOGGER.info("1: Set up orders 11117 and bad order 99999 for pick. No known paths, so should get all 1 good job for 11117");
+		picker1.scanCommand("SETUP");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker1.setupOrderIdAsContainer("11117", "1");
+		picker1.setupOrderIdAsContainer("99999", "2");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay(); // Look in log to see what we have
+		Assert.assertEquals("1", getSummaryScreenOrderCount(picker1));
+		Assert.assertEquals("1", getSummaryScreenJobCount(picker1));
+		// Summary screen does not show any error.
+		// poscon 2 shows "--" which may be ambiguous. Same a no orders on this path, but are on other paths. Good to show something anyway.
+		Assert.assertEquals(picker1.getLastSentPositionControllerDisplayValue((byte) 2),
+			PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker1.getLastSentPositionControllerMinQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
+		Assert.assertEquals(picker1.getLastSentPositionControllerMaxQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
+
+		LOGGER.info("2: Scan Start. Ready to do our one job");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		List<WorkInstruction> wis = picker1.getAllPicksList();
+		this.logWiList(wis);
+		Assert.assertEquals(1, wis.size());
+		Assert.assertEquals(toByte(5), picker1.getLastSentPositionControllerDisplayValue((byte) 1));
+		// continue showing feedback on position 2, even as we are doing the one
+		Assert.assertEquals(picker1.getLastSentPositionControllerDisplayValue((byte) 2),
+			PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker1.getLastSentPositionControllerMinQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
+		Assert.assertEquals(picker1.getLastSentPositionControllerMaxQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
+
+		LOGGER.info("2b: Scan Start. Back to summary.");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay(); // Look in log to see what we have
+		Assert.assertEquals(picker1.getLastSentPositionControllerDisplayValue((byte) 2),
+			PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker1.getLastSentPositionControllerMinQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
+		Assert.assertEquals(picker1.getLastSentPositionControllerMaxQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
+	}
+
+	@Test
+	public final void cheSetupPersistence() throws IOException {
+		// This somewhat replicates a small section in CheProcessScanPick
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = getUnmodeledFacility();
+		setUpOrders1(facility);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSiteController();
+		PickSimulator picker1 = createPickSim(cheGuid1);
+		PickSimulator picker2 = createPickSim(cheGuid2);
+
+		if (!picker1.usesSummaryState())
+			return; // this test only applies to new CHE process, not old.
+
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+
+		LOGGER.info("1: Set up orders 11117 and bad order 99999 for picker1. No known paths, so should get 1 good job for 11117");
+		picker1.scanCommand("SETUP");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker1.setupOrderIdAsContainer("11117", "1");
+		picker1.setupOrderIdAsContainer("99999", "2");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+
+		LOGGER.info("2: Set up orders 11117 and bad order 12345 for picker2. No known paths, so should get all 4 jobs");
+		picker2.loginAndCheckState("Picker #2", CheStateEnum.SETUP_SUMMARY);
+		picker2.scanCommand("SETUP");
+		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker2.setupOrderIdAsContainer("11117", "3");
+		picker2.setupOrderIdAsContainer("12345", "2");
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+
+		LOGGER.info("3: Set up picker2 again, with only one different order");
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker2.scanCommand("SETUP");
+		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker2.setupOrderIdAsContainer("11111", "3");
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+
+
+		// Let's see what the backend has
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		Container c12345 = Container.staticGetDao().findByDomainId(facility, "12345");
+		ContainerUse cu12345 = ContainerUse.staticGetDao().findByDomainId(c12345, "12345");
+		Assert.assertTrue(cu12345.getPosconIndex() == 2);
+		Container c11117 = Container.staticGetDao().findByDomainId(facility, "11117");
+		ContainerUse cu11117 = ContainerUse.staticGetDao().findByDomainId(c11117, "11117");
+		Assert.assertTrue(cu11117.getPosconIndex() == 3);
+		Container c99999 = Container.staticGetDao().findByDomainId(facility, "99999");
+		Assert.assertNull(c99999);
+		
+		Container c11111 = Container.staticGetDao().findByDomainId(facility, "11111");
+		ContainerUse cu11111 = ContainerUse.staticGetDao().findByDomainId(c11111, "11111");
+		Assert.assertTrue(cu11111.getPosconIndex() == 3);
+		
+		// And check the CHEs. See CheStatusMessage and how it populates. We can check the same.
+		Che che1 = Che.staticGetDao().findByDomainId(getNetwork(), "CHE1");
+		Che che2 = Che.staticGetDao().findByDomainId(getNetwork(), "CHE2");
+		Assert.assertNotNull(che1);
+		Assert.assertNotNull(che2);
+		// It is not clear if che1 should have 11117 use anymore, as che2 took it away. But ok if both had it.
+		// This seems to show that che1 lost it. Usually good, but there are bad possibilities
+		List<ContainerUse> uses1 = che1.getUses();
+		Assert.assertEquals(0, uses1.size());
+
+		// It is clear that che2 should only have 11111 now. It used to have 12345 and 111117 but no longer should.
+		// If uses2 size is 3, we have a bug.
+		List<ContainerUse> uses2 = che2.getUses();
+		Assert.assertEquals(1, uses2.size());
+		Assert.assertEquals(cu11111, uses2.get(0)); // Should be the same container use we saw before
+
+	
+		this.getTenantPersistenceService().commitTransaction();
+	}
+
+}

@@ -133,7 +133,6 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		putWallPlacementCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.put-wall-placement");
 		requestProcessingTimer = metricsService.createTimer(MetricsGroup.WSS, "requests.processing-time");
 		notificationCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.notification");
-
 	}
 
 	ObjectChangeBroadcaster getObjectChangeBroadcaster() {
@@ -173,7 +172,6 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		} else if (request instanceof VerifyBadgeRequest) {
 			VerifyBadgeRequest req = (VerifyBadgeRequest) request;
 			command = new VerifyBadgeCommand(csSession, req, serviceFactory.getServiceInstance(WorkService.class));
-			computeWorkCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof ComputeWorkRequest) {
 			ComputeWorkRequest req = (ComputeWorkRequest) request;
@@ -184,13 +182,11 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			command = new ComputeDetailWorkCommand(csSession,
 				(ComputeDetailWorkRequest) request,
 				serviceFactory.getServiceInstance(WorkService.class));
-			computeWorkCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof ComputePutWallInstructionRequest) {
 			command = new ComputePutWallInstructionCommand(csSession,
 				(ComputePutWallInstructionRequest) request,
 				serviceFactory.getServiceInstance(WorkService.class));
-			computeWorkCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof ObjectGetRequest) {
 			command = new ObjectGetCommand(csSession, (ObjectGetRequest) request);
@@ -252,14 +248,11 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			LOGGER.error("invalid message {} for user {}", request.getClass().getSimpleName(), user.getUsername());
 		}
 		try {
-			//if(user != null) TenantPersistenceService.getInstance().beginTransaction();
-
 			// check if matching command was found
 			if (command == null) {
 				LOGGER.warn("Unable to find matching command for request " + request + ". Ignoring request.");
 				timerContext.stop();
 			} else {
-
 				// throw exception if not authorized
 				CodeshelfSecurityManager.authorizeAnnotatedClass(command.getClass());
 
@@ -273,9 +266,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 					missingResponseCounter.inc();
 				}
 			}
-			//if(user != null) TenantPersistenceService.getInstance().commitTransaction();
 		} catch (Exception e) {
-			//if(user != null) TenantPersistenceService.getInstance().rollbackTransaction();
 			String message;
 			if (e instanceof NullPointerException || e instanceof HibernateException) {
 				message = "Exception"; // do not return detail on this type of exception to caller
