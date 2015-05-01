@@ -197,8 +197,9 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			this.deviceManager.processOrderLocationFeedbackMessage(msg);
 		} else if (message instanceof CheStatusMessage) {
 			CheStatusMessage msg = (CheStatusMessage) message;
-			//	@Jon: Handle che update	here
-			LOGGER.info("Update received for Che: "+msg.getCheId());
+			LOGGER.info("Setup-state initialization received for Che: "+msg.getCheId());
+			// probably need to change to pass guid. Is that necessarily the CheID?
+			this.deviceManager.processSetupStateMessage(msg.getCheId(), msg.getContainerPositions());
 		}
 	}
 

@@ -7,6 +7,7 @@ package com.codeshelf.device;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -706,6 +707,10 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		} else {
 			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
 		}
+	}
+	public void processSetupStateMessage(String networkGuid, HashMap<String,Integer> positionMap){
+		LOGGER.warn("processSetupStateMessage needs implementation");
+		
 	}
 
 	// Works the same as processGetWorkResponse? Good
