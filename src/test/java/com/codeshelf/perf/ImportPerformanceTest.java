@@ -3,15 +3,20 @@ package com.codeshelf.perf;
 import java.io.InputStream;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.InputStreamBody;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.message.BasicNameValuePair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,9 +31,12 @@ public class ImportPerformanceTest {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ImportPerformanceTest.class);
 	private static NumberFormat formatter = new DecimalFormat("#0.00");     
 
-    public void postFile(String urlString, InputStream is) throws Exception {
-        CloseableHttpClient client = HttpClients.createDefault();
-        
+    public void postFile(String authUrl, String urlString, InputStream is) throws Exception {
+		CloseableHttpClient client = HttpClients.createDefault();
+		
+		//Authenticate
+		auth(client, authUrl, "simulate@example.com", "testme");
+		
         HttpPost postRequest = new HttpPost (urlString) ;
         // create entity            
         InputStreamBody isb = new InputStreamBody(is,ContentType.TEXT_PLAIN);
@@ -41,15 +49,23 @@ public class ImportPerformanceTest {
                 .build();
         
         postRequest.setEntity(reqEntity);
-        
+
         //Send request
         HttpResponse response = client.execute(postRequest);
-                 
         //Verify response if any
         if (response != null) {
             LOGGER.info("Post complete: "+response.getStatusLine().getStatusCode());
         }
     }	
+    
+    private void auth(CloseableHttpClient client, String authUrl, String username, String password) throws Exception{
+    	HttpPost authRequest = new HttpPost(authUrl);
+    	ArrayList<NameValuePair> postParameters = new ArrayList<>();
+    	postParameters.add(new BasicNameValuePair("u", username));
+    	postParameters.add(new BasicNameValuePair("p", password));
+    	authRequest.setEntity(new UrlEncodedFormEntity(postParameters));
+    	CloseableHttpResponse response = client.execute(authRequest);
+    }
 	
 	public static void main(String[] args) {
 		long start = System.currentTimeMillis();
@@ -58,40 +74,44 @@ public class ImportPerformanceTest {
 		try {
 			ClassLoader classloader = Thread.currentThread().getContextClassLoader();
 			// TODO: get facility ID from API
-			String facilityId = "df993559-ea88-4a98-808d-0a90c8cc92cd";
+			String facilityId = "9fd0ec86-841f-4407-957d-864e304efe97";
 			
 			LOGGER.info("Started performance import test started...");
 			
-			String baseUrl = "http://localhost:"+Integer.getInteger("api.port")+"/";
+
+			String baseUrl = "http://localhost:"+Integer.getInteger("api.port");
+			String authUrl = baseUrl + "/auth/";
+			String baseImportUrl = baseUrl + "/api/facilities/" + facilityId + "/import";
+						
 			// post aisle file
-			String url = baseUrl+"api/import/site/"+facilityId;			
+			String url = baseImportUrl + "/site";			
 			InputStream is = classloader.getResourceAsStream("perftest/aisles.csv");
-			test.postFile(url, is);
+			test.postFile(authUrl, url, is);
 
 			// post location mappings
-			url = baseUrl+"api/import/locations/"+facilityId;			
+			url = baseImportUrl + "/locations";
 			is = classloader.getResourceAsStream("perftest/location-mapping.csv");
-			test.postFile(url, is);
+			test.postFile(authUrl, url, is);
 
 			// post inventory
-			url = baseUrl+"api/import/inventory/"+facilityId;	
+			url = baseImportUrl + "/inventory";	
 			is = classloader.getResourceAsStream("perftest/inventory.csv");
-			test.postFile(url, is);
+			test.postFile(authUrl, url, is);
 
 			// post first order file
-			url = baseUrl+"api/import/orders/"+facilityId;			
+			url = baseImportUrl + "/orders";			
 			is = classloader.getResourceAsStream("perftest/orders-1.csv");
-			test.postFile(url, is);
+			test.postFile(authUrl, url, is);
 
 			// post second order file
-			url = baseUrl+"api/import/orders/"+facilityId;			
+			url = baseImportUrl + "/orders";			
 			is = classloader.getResourceAsStream("perftest/orders-2.csv");
-			test.postFile(url, is);
+			test.postFile(authUrl, url, is);
 
 			// post third order file
-			url = baseUrl+"api/import/orders/"+facilityId;			
+			url = baseImportUrl + "/orders";			
 			is = classloader.getResourceAsStream("perftest/orders-3.csv");
-			test.postFile(url, is);
+			test.postFile(authUrl, url, is);
 			
 		} catch (Exception e) {
 			LOGGER.error("Exception while running performance test", e);

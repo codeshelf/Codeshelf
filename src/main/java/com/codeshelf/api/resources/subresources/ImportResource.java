@@ -1,4 +1,4 @@
-package com.codeshelf.api.resources;
+package com.codeshelf.api.resources.subresources;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -8,11 +8,12 @@ import java.sql.Timestamp;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
+import lombok.Setter;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
@@ -30,7 +31,6 @@ import com.sun.jersey.api.core.ResourceContext;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
 
-@Path("/import")
 public class ImportResource {
 
 	@Context
@@ -40,6 +40,9 @@ public class ImportResource {
 	private LocationAliasCsvImporter locationAliasImporter;
 	private OutboundOrderPrefetchCsvImporter outboundOrderImporter;
 	private InventoryCsvImporter inventoryImporter;
+	
+	@Setter
+	private Facility facility;
 	
 	@Inject
 	public ImportResource(AislesFileCsvImporter aislesFileCsvImporter, 
@@ -55,21 +58,14 @@ public class ImportResource {
 	}
 	
 	@POST
-	@Path("/site/{facilityId}")
+	@Path("/site")
 	@RequiresPermissions("facility:edit")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response uploadSite(
-		@PathParam("facilityId") String facilityId,
         @FormDataParam("file") InputStream fileInputStream,
         @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
 		try {
-			// make sure facility exists
-			Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
-			if (facility==null) {
-				// facility not found
-				return BaseResponse.buildResponse(null,404);
-			}
 			// process file
 			Reader reader = new InputStreamReader(fileInputStream);
 			boolean result = this.aislesFileCsvImporter.importAislesFileFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
@@ -79,29 +75,19 @@ public class ImportResource {
 			return BaseResponse.buildResponse(null,500);
 		}
 		catch (Exception e) {
-			ErrorResponse errors = new ErrorResponse();
-			errors.processException(e);
-			return errors.buildResponse();
+			return new ErrorResponse().processException(e);
 		} 
 	}
 	
 	@POST
-	@Path("/locations/{facilityId}")
+	@Path("/locations")
 	@RequiresPermissions("facility:edit")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response uploadLocations(
-		@PathParam("facilityId") String facilityId,
         @FormDataParam("file") InputStream fileInputStream,
         @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
-
 		try {
-			// make sure facility exists
-			Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
-			if (facility==null) {
-				// facility not found
-				return BaseResponse.buildResponse(null,404);
-			}
 			Reader reader = new InputStreamReader(fileInputStream);
 			boolean result = this.locationAliasImporter.importLocationAliasesFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
 			if (result) {
@@ -110,58 +96,38 @@ public class ImportResource {
 			return BaseResponse.buildResponse(null,500);
 		}
 		catch (Exception e) {
-			ErrorResponse errors = new ErrorResponse();
-			errors.processException(e);
-			return errors.buildResponse();
+			return new ErrorResponse().processException(e);
 		} 
 	}
 
 	@SuppressWarnings("unused")
 	@POST
-	@Path("/orders/{facilityId}")
+	@Path("/orders")
 	@RequiresPermissions("order:import")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response uploadOrders(
-		@PathParam("facilityId") String facilityId,
         @FormDataParam("file") InputStream fileInputStream,
         @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
-
 		try {
-			// make sure facility exists
-			Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
-			if (facility==null) {
-				// facility not found
-				return BaseResponse.buildResponse(null,404);
-			}
 			Reader reader = new InputStreamReader(fileInputStream);
 			BatchResult<Object> result = this.outboundOrderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
 			return BaseResponse.buildResponse(null,200);				
 		}
 		catch (Exception e) {
-			ErrorResponse errors = new ErrorResponse();
-			errors.processException(e);
-			return errors.buildResponse();
+			return new ErrorResponse().processException(e);
 		} 
 	}
 	
 	@POST
-	@Path("/inventory/{facilityId}")
+	@Path("/inventory")
 	@RequiresPermissions("inventory:import")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response uploadInventory(
-		@PathParam("facilityId") String facilityId,
         @FormDataParam("file") InputStream fileInputStream,
         @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
-
 		try {
-			// make sure facility exists
-			Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
-			if (facility==null) {
-				// facility not found
-				return BaseResponse.buildResponse(null,404);
-			}
 			Reader reader = new InputStreamReader(fileInputStream);
 			boolean result = this.inventoryImporter.importSlottedInventoryFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
 			if (result) {
@@ -170,9 +136,7 @@ public class ImportResource {
 			return BaseResponse.buildResponse(null,500);
 		}
 		catch (Exception e) {
-			ErrorResponse errors = new ErrorResponse();
-			errors.processException(e);
-			return errors.buildResponse();
+			return new ErrorResponse().processException(e);
 		}
 	}
 }

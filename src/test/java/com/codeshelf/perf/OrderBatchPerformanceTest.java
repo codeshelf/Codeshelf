@@ -38,7 +38,7 @@ public class OrderBatchPerformanceTest {
 	final private static String BASE_URL = "http://localhost:8181/";
 	final private static String USERNAME = "simulate@example.com";
 	final private static String PASSWORD = "testme";
-	final private static String FACILITY = "cd2f359a-c5a0-4547-bf53-f31fff10ba2f";
+	final private static String FACILITY = "9fd0ec86-841f-4407-957d-864e304efe97";
 	
 	static {
 		JvmProperties.load("server");
@@ -174,7 +174,7 @@ public class OrderBatchPerformanceTest {
 				br = new BufferedReader(new FileReader(orderInputFile));				
 				LOGGER.info("Processing order file "+orderInputFile);
 				// post first order file
-				String url = BASE_URL +"api/import/orders/"+ FACILITY;			
+				String url = BASE_URL +"api/facilities/" + FACILITY + "/import/orders/";			
 				
 				test.postFile(url, orderInputFile);
 			} catch (Exception e) {

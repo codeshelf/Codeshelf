@@ -55,8 +55,7 @@ public class EventResource {
 			EventDisplay eventDisplay = new EventDisplay(event);
 			return BaseResponse.buildResponse(eventDisplay);
 		} catch (Exception e) {
-			errors.processException(e);
-			return errors.buildResponse();
+			return errors.processException(e);
 		}
 	}
 

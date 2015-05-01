@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import javassist.NotFoundException;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.Response;
 
 import lombok.Getter;
 
@@ -46,7 +47,7 @@ public class ErrorResponse extends BaseResponse{
 		addError("Could not find " + type + " " + uuid);
 	}
 	
-	public void processException(Throwable e) {
+	public Response processException(Throwable e) {
 		String message = e.getMessage();
 		LOGGER.error("Returning error to client", e);
 		if (message == null || message.isEmpty()) {
@@ -58,5 +59,6 @@ public class ErrorResponse extends BaseResponse{
 		} else {
 			setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 		}
+		return buildResponse();
 	}
 }

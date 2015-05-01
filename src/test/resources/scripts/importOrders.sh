@@ -9,4 +9,4 @@ COOKIE_JAR_PATH=/tmp/import_cookies
 echo "Cookies are at: " $COOKIE_JAR_PATH
 curl --include --cookie-jar $COOKIE_JAR_PATH --data "u=$USER&p=$PASS" http://$HOST:8181/auth/
 curl --include --cookie $COOKIE_JAR_PATH http://$HOST:8181/api/facilities
-curl -v --cookie $COOKIE_JAR_PATH  --form file=@$FILE http://$HOST:8181/api/import/orders/$FACILITY
+curl -v --cookie $COOKIE_JAR_PATH  --form file=@$FILE http://$HOST:8181/api/facilities/$FACILITY/import/orders/

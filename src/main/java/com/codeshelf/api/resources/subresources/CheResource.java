@@ -57,8 +57,7 @@ public class CheResource {
 			WorkList workList = workService.computeWorkInstructions(che, validContainers);
 			return BaseResponse.buildResponse(workList);
 		} catch (Exception e) {
-			errors.processException(e);
-			return errors.buildResponse();
+			return errors.processException(e);
 		} 
 	}
 }
