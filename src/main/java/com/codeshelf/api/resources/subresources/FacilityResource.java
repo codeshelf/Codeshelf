@@ -15,6 +15,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -63,6 +64,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.sun.jersey.api.core.ResourceContext;
 
 public class FacilityResource {
 
@@ -73,6 +75,9 @@ public class FacilityResource {
 
 	@Setter
 	private Facility facility;
+	
+	@Context
+	private ResourceContext resourceContext;
 
 	@Inject
 	public FacilityResource(WorkService workService, OrderService orderService, NotificationService notificationService, WebSocketManagerService webSocketManagerService) {
@@ -93,10 +98,15 @@ public class FacilityResource {
 			Session session = persistenceService.getSession();
 			return BaseResponse.buildResponse(this.orderService.orderDetailsNoLocation(tenant, session, facility.getPersistentId()));		
 		} catch (Exception e) {
-			ErrorResponse errors = new ErrorResponse();
-			errors.processException(e);
-			return errors.buildResponse();
+			return new ErrorResponse().processException(e);
 		}
+	}
+
+	@Path("/import")
+	public ImportResource1 getImportResource() throws Exception {
+		ImportResource1 r = resourceContext.getResource(ImportResource1.class);
+	    r.setFacility(facility);
+	    return r;
 	}
 
     @GET
@@ -233,8 +243,7 @@ public class FacilityResource {
 			Worker createdWorker = Worker.staticGetDao().findByPersistentId(id);
 			return BaseResponse.buildResponse(createdWorker);
 		} catch (Exception e) {
-			errors.processException(e);
-			return errors.buildResponse();
+			return errors.processException(e);
 		}
 	}
 
@@ -289,8 +298,7 @@ public class FacilityResource {
 			List<PickRate> pickRates = notificationService.getPickRate(startDateParam.getValue());
 			return BaseResponse.buildResponse(pickRates);
 		} catch (Exception e) {
-			errors.processException(e);
-			return errors.buildResponse();
+			return errors.processException(e);
 		}
 	}
 	
@@ -340,8 +348,7 @@ public class FacilityResource {
 
 			return BaseResponse.buildResponse("Commands Sent");
 		} catch (Exception e) {
-			errors.processException(e);
-			return errors.buildResponse();
+			return errors.processException(e);
 		}
 	}
 }

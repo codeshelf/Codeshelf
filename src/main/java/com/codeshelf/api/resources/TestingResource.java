@@ -104,8 +104,7 @@ public class TestingResource {
 			}
 			return BaseResponse.buildResponse("Test orders created and ran.");
 		} catch (Exception e) {
-			errors.processException(e);
-			return errors.buildResponse();
+			return errors.processException(e);
 		} finally {
 			persistence.commitTransaction();
 		}

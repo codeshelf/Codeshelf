@@ -4,9 +4,7 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
 
 class PickOrders {
-	int WAIT_TIME = 4000
-	int UPC_SKIP_FREQ = 2;
-	int SHORT_FREQ = 2;
+	int WAIT_TIME = 10000
 	
 	def pickOrders(PickSimulator picker, String order, double chanceSkipUpc, double chanceShort) {
 		println "picking order " + order + " " + picker
@@ -21,12 +19,17 @@ class PickOrders {
 		//Set up order on the CHE and try to start pick
 		picker.setupContainer(order, "1");
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
+		boolean usesSummaryState = picker.getCheDeviceLogic().usesSummaryState();
 		try {
-			picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+			if (usesSummaryState) {
+				picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+			} else {
+				picker.waitForCheState(CheStateEnum.LOCATION_SELECT, WAIT_TIME);
+			}
 		} catch (IllegalStateException e) {
 			CheStateEnum state = picker.getCurrentCheState();
 			//If CHE is in NO_WORK or NO_WORK_CURR_PATH state, exit without crashing.
-			if (state == CheStateEnum.NO_WORK){
+			if (state == CheStateEnum.NO_WORK || state == CheStateEnum.SETUP_SUMMARY){
 				println("No work for this order. Check if order " + order + " exists");
 				picker.logout();
 				return;

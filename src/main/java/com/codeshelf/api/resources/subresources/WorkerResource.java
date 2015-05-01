@@ -48,8 +48,7 @@ public class WorkerResource {
 			Worker savedWorker = Worker.staticGetDao().findByPersistentId(worker.getPersistentId());
 			return BaseResponse.buildResponse(savedWorker);
 		} catch (Exception e) {
-			errors.processException(e);
-			return errors.buildResponse();
+			return errors.processException(e);
 		}
 	}
 }
