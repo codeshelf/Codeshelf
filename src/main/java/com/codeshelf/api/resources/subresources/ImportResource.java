@@ -31,7 +31,7 @@ import com.sun.jersey.api.core.ResourceContext;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 import com.sun.jersey.multipart.FormDataParam;
 
-public class ImportResource1 {
+public class ImportResource {
 
 	@Context
 	private ResourceContext resourceContext;	
@@ -45,7 +45,7 @@ public class ImportResource1 {
 	private Facility facility;
 	
 	@Inject
-	public ImportResource1(AislesFileCsvImporter aislesFileCsvImporter, 
+	public ImportResource(AislesFileCsvImporter aislesFileCsvImporter, 
 		OrderLocationCsvImporter orderLocationImporter, 
 		LocationAliasCsvImporter locationAliasImporter,  
 		OutboundOrderPrefetchCsvImporter outboundOrderImporter,

@@ -103,8 +103,8 @@ public class FacilityResource {
 	}
 
 	@Path("/import")
-	public ImportResource1 getImportResource() throws Exception {
-		ImportResource1 r = resourceContext.getResource(ImportResource1.class);
+	public ImportResource getImportResource() throws Exception {
+		ImportResource r = resourceContext.getResource(ImportResource.class);
 	    r.setFacility(facility);
 	    return r;
 	}
