@@ -78,7 +78,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Setter
 	CheStateEnum								mRememberEnteringWallOrInventoryState	= CheStateEnum.CONTAINER_SELECT;
 
-	private final boolean						useSummaryState							= false;
+	private final boolean						useSummaryState							= true;
 
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -1161,7 +1161,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// by protocol, inLocationStr may be null for START or Reverse. Do not overwrite mLocationId which is perfectly good.
 		clearAllPosconsOnThisDevice();
 		Map<String, String> positionToContainerMapCopy = new HashMap<String, String>(mPositionToContainerMap);
-
+		LOGGER.info("Sending {} positions to server in getCheWork", positionToContainerMapCopy.size());
 		mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(),
 			getPersistentId(),
 			inLocationStr,
@@ -1410,9 +1410,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * How many container/orderId are setup?
 	 */
 	private int getCountOfSetupOrderContainers() {
-		if (mContainerToWorkInstructionCountMap == null)
-			return 0;
-		else
+		if (mContainerToWorkInstructionCountMap == null) {
+			// special case for initialization of persisted cart setup
+			return this.mPositionToContainerMap.size();
+		} else
 			return mContainerToWorkInstructionCountMap.size();
 		// huge assumption that all WorkInstructionCounts in the map are valid. See ComputeWorkCommand.computeContainerWorkInstructionCounts
 		// which filtered out some "None" counts. Not sure if that is correct or not. 
@@ -1422,9 +1423,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * How many jobs for the mLocationId path?
 	 */
 	private int getCountOfGoodJobsOnSetupPath() {
-		if (mContainerToWorkInstructionCountMap == null)
-			return 0;
-		else {
+		if (mContainerToWorkInstructionCountMap == null) {
+			// special case for initialization of persisted cart setup
+			if (this.mPositionToContainerMap.size() > 0)
+				return -1; // This is a goofy flag that will display as ?
+			else
+				return 0;
+		} else {
 			int goodJobsCounter = 0;
 			for (WorkInstructionCount count : mContainerToWorkInstructionCountMap.values()) {
 				goodJobsCounter += count.getGoodCount();
@@ -1487,7 +1492,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 
 		int pickCount = getCountOfGoodJobsOnSetupPath();
-		String pickCountStr = Integer.toString(pickCount);
+		// Goofy flag for the persisted initialization case. If -1, display as ?
+		String pickCountStr;
+		if (pickCount >= 0)
+			pickCountStr = Integer.toString(pickCount);
+		else
+			pickCountStr = "?";
 		pickCountStr = StringUtils.leftPad(pickCountStr, 3);
 		// Too clever?  only show other path counts if there are any		
 		String line2;
@@ -1708,7 +1718,19 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				boolean reverseOrderFromLastTime = getMReversePickOrder() != reverse;
 				//Remember the selected pick direction
 				setMReversePickOrder(reverse);
-				requestWorkAndSetGetWorkState(null, reverseOrderFromLastTime);
+
+				// For DEV-784 Odd case. If we just initialized our setup state, then we may be in SETUP_SUMMARY state even though
+				// We never did the work instruction count thing. We need to call startWork instead of requestWorkAndSetGetWorkState
+				if (this.mContainerToWorkInstructionCountMap == null) {
+					if (mPositionToContainerMap.values().size() > 0) {
+						startWork(inScanStr);
+					} else {
+						// should we do anything?
+					}
+
+				} else { // normal case
+					requestWorkAndSetGetWorkState(null, reverseOrderFromLastTime);
+				}
 				break;
 
 			case SCAN_GTIN:
@@ -1743,6 +1765,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		mContainerInSetup = "";
 		//Duplicate map to avoid later changes
 		Map<String, String> positionToContainerMapCopy = new HashMap<String, String>(mPositionToContainerMap);
+		LOGGER.info("Sending {} positions to server in computeCheWork", positionToContainerMapCopy.size());
 		mDeviceManager.computeCheWork(getGuid().getHexStringNoPrefix(), getPersistentId(), positionToContainerMapCopy, isReverse);
 		setState(CheStateEnum.COMPUTE_WORK);
 	}
@@ -2214,10 +2237,43 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					// Short or complete must have been scanned.
 					if (theStatus.equals(WorkInstructionStatusEnum.COMPLETE) || theStatus.equals(WorkInstructionStatusEnum.SHORT))
 						return true;
-
 				}
 		}
 		return false;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Initialize from server to know what containers are setup on this CHE
+	 * For DEV-784.
+	 */
+	@Override
+	public void processStateSetup(HashMap<String, Integer> positionMap) {
+		if (positionMap == null) {
+			LOGGER.error("Null map inprocessStateSetup");
+			return;
+		}
+		CheStateEnum state = getCheStateEnum();
+		if (!state.equals(CheStateEnum.IDLE)) {
+			LOGGER.error("Received processStateSetup in state {}", state);
+			return;
+		}
+		if (!mPositionToContainerMap.isEmpty()) {
+			LOGGER.error("Received processStateSetup when map is not empty. How?");
+			return;
+		}
+		for (Map.Entry<String, Integer> entry : positionMap.entrySet()) {
+			String container = entry.getKey();
+			Integer position = entry.getValue();
+			if (container == null || position == null)
+				LOGGER.error("null value in processStateSetup map");
+			else if (container.isEmpty() || position < 1 || position > 255)
+				LOGGER.error("bad value in processStateSetup map. container:{} position:{}", container, position);
+			else {
+				LOGGER.info("{} initialize setup; container:{} position:{}", this.getMyGuidStrForLog(), container, position);
+				mPositionToContainerMap.put(position.toString(), container);
+			}
+		}
 	}
 
 }

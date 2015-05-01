@@ -709,8 +709,11 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		}
 	}
 	public void processSetupStateMessage(String networkGuid, HashMap<String,Integer> positionMap){
-		LOGGER.warn("processSetupStateMessage needs implementation");
-		
+		CheDeviceLogic cheDevice = this.getCheDeviceByControllerId(networkGuid);
+		if (cheDevice == null)
+			LOGGER.error("Did not find device for {} in processSetupStateMessage", networkGuid);
+		else
+			cheDevice.processStateSetup(positionMap);		
 	}
 
 	// Works the same as processGetWorkResponse? Good

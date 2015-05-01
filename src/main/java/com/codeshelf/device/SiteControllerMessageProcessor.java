@@ -52,7 +52,10 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 	public void handleResponse(WebSocketConnection session, ResponseABC response) {
 		LOGGER.debug("Response received:" + response);
 		if (response.getStatus() != ResponseStatus.Success) {
-			LOGGER.warn("Response:{} failed for request:{} statusMsg: {}", response.getClass().getSimpleName(), response.getRequestId(), response.getStatusMessage());
+			LOGGER.warn("Response:{} failed for request:{} statusMsg: {}",
+				response.getClass().getSimpleName(),
+				response.getRequestId(),
+				response.getStatusMessage());
 			// LOGGER.warn("Request #" + response.getRequestId() + " failed: " + response.getStatusMessage());
 		}
 		//////////////////////////////////////////
@@ -197,9 +200,8 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			this.deviceManager.processOrderLocationFeedbackMessage(msg);
 		} else if (message instanceof CheStatusMessage) {
 			CheStatusMessage msg = (CheStatusMessage) message;
-			LOGGER.info("Setup-state initialization received for Che: "+msg.getCheId());
-			// probably need to change to pass guid. Is that necessarily the CheID?
-			this.deviceManager.processSetupStateMessage(msg.getCheId(), msg.getContainerPositions());
+			LOGGER.info("Setup-state initialization received for Che: " + msg.getCheGuid());
+			this.deviceManager.processSetupStateMessage(msg.getCheGuid(), msg.getContainerPositions());
 		}
 	}
 
