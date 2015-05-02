@@ -265,8 +265,8 @@ public class CheProcessTestPick extends ServerTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 
-		for(Entry<String, String> entry : ThreadContext.getContext().entrySet()) {
-			LOGGER.info("ThreadContext: {} = {}",entry.getKey(),entry.getValue());
+		for (Entry<String, String> entry : ThreadContext.getContext().entrySet()) {
+			LOGGER.info("ThreadContext: {} = {}", entry.getKey(), entry.getValue());
 		}
 		this.startSiteController();
 
@@ -698,27 +698,18 @@ public class CheProcessTestPick extends ServerTest {
 		// set up data for pick scenario
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSimpleNoSlotFacility();
-		this.getTenantPersistenceService().commitTransaction();
-
-		this.startSiteController();
-
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
 		setUpSmallInventoryAndOrders(facility);
-		this.getTenantPersistenceService().commitTransaction();
-
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
 		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		// perform pick operations
+		// Verify only two containers made
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		List<Container> containers = Container.staticGetDao().findByParent(facility);
 		Assert.assertEquals(2, containers.size());
 		this.getTenantPersistenceService().commitTransaction();
 
+		this.startSiteController();
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
 		PickSimulator picker = createPickSim(cheGuid1);
 		picker.loginAndSetup("Picker #1");
@@ -774,7 +765,12 @@ public class CheProcessTestPick extends ServerTest {
 		picker.scanLocation("BAD_LOCATION");
 		picker.waitForCheState(picker.getNoWorkReviewState(), 4000);
 
+		// Change from bad location to a resolved location on a path is interpretted as a path change. Therefore
+		// to the summary state and not directly to pick.
+		// Note: this fails if not in usesSummaryState()
 		picker.scanLocation("D303");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		firstLine = picker.getLastCheDisplayString(1);
 		Assert.assertEquals("D303", firstLine);
@@ -793,11 +789,15 @@ public class CheProcessTestPick extends ServerTest {
 
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
+		LOGGER.info("first wi button: {} quant:{}",button, quant);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		wi = WorkInstruction.staticGetDao().reload(wi);
-		//Pos 1 should be the same
+		
+		// Does pos 1 show some sort of order feedback? No.
+		Byte valuePos1 = picker.getLastSentPositionControllerDisplayValue((byte) 1);
+		LOGGER.info("pos1 display value: {}", valuePos1);
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 1));
 		//After Scanning start location of D303 we should be right next to the
 		//8oz bowls which is part of order 11111 in position 2 with a quantity of 1

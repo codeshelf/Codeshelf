@@ -247,7 +247,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	public String getOrderId() {
 		return parent.getOrderId();
 	}
-	
+
 	public String getShipperId() {
 		return parent.getShipperId();
 	}
@@ -444,8 +444,27 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			return "";
 		return theGroup.getDomainId();
 	}
+
 	public String getOrderLocationAliasIds() {
 		return parent.getOrderLocationAliasIds();
+	}
+
+	/**
+	 * It is very important to understand if an OrderDetail's preferredLocation is a good modeled location, and also to know if it 
+	 * is on a path. Show blank if not modeled. Normal nominal if modeled and on a path. Parenthesis around if not on a path.
+	 * Also does the generic deleted location thing of brackets if the alias is for a deleted location.
+	 */
+	public String getPreferredNominalUi() {
+		Location loc = getPreferredLocObject();
+		if (loc == null)
+			return "";
+		String nomName = loc.getNominalLocationId(); // This has bracket if location was deleted.
+		// getPathSegment() is the raw field getter. We need to go up the location hierarchy
+		if (loc.getAssociatedPathSegment() == null) {
+			return String.format("(%s)", nomName);
+
+		} else
+			return nomName;
 	}
 
 	public Location getPreferredLocObject() {
@@ -464,31 +483,29 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	 */
 	public boolean reevaluateStatus() {
 		OrderStatusEnum priorStatus = getStatus();
-		if(getWorkInstructions().isEmpty()) {
+		if (getWorkInstructions().isEmpty()) {
 			if (priorStatus == OrderStatusEnum.INPROGRESS) {
 				setStatus(OrderStatusEnum.RELEASED);
 				return true;
 			}
 			return false;
 		}
-		
+
 		int qtyPicked = 0;
 		boolean anyToPick = false;
 		for (WorkInstruction sumWi : getWorkInstructions()) {
 			WorkInstructionStatusEnum status = sumWi.getStatus();
-			if (status.equals(WorkInstructionStatusEnum.COMPLETE)
-				|| status.equals(WorkInstructionStatusEnum.SHORT)) {
-				
+			if (status.equals(WorkInstructionStatusEnum.COMPLETE) || status.equals(WorkInstructionStatusEnum.SHORT)) {
+
 				qtyPicked += sumWi.getActualQuantity();
-			} else if (status.equals(WorkInstructionStatusEnum.INPROGRESS)
-					  || status.equals(WorkInstructionStatusEnum.NEW)) {
-			
+			} else if (status.equals(WorkInstructionStatusEnum.INPROGRESS) || status.equals(WorkInstructionStatusEnum.NEW)) {
+
 				anyToPick |= true;
 			}
 		}
 		if (qtyPicked >= getMinQuantity()) {
 			setStatus(OrderStatusEnum.COMPLETE);
-		} else if (anyToPick){
+		} else if (anyToPick) {
 			setStatus(OrderStatusEnum.INPROGRESS);
 		} else {
 			setStatus(OrderStatusEnum.SHORT);
@@ -501,60 +518,54 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			return false;
 		}
 	}
-	
-	public boolean isPreferredDetail(){
+
+	public boolean isPreferredDetail() {
 		return getPreferredLocation() != null && getWorkSequence() != null;
 	}
-	
-	public String getGtinId(){
+
+	public String getGtinId() {
 		ItemMaster im = getItemMaster();
 		UomMaster um = getUomMaster();
 		Gtin gtin = null;
-		
+
 		if (im != null && um != null) {
 			gtin = im.getGtinForUom(um);
-			
+
 			if (gtin != null) {
 				return gtin.getDomainId();
 			} else {
 				return "";
 			}
-			
+
 		} else {
 			return "";
 		}
 	}
-	
-	public static int archiveOrderDetails(Timestamp inProcessTime, boolean undefinedGroupUpdated){		
+
+	public static int archiveOrderDetails(Timestamp inProcessTime, boolean undefinedGroupUpdated) {
 		Session session = TenantPersistenceService.getInstance().getSession();
 
 		int numArchived = 0;
 
-		
 		String hasNoGroupQueryStr = "UPDATE OrderDetail od SET od.active = false WHERE od.active = true AND od IN"
-				+ "(SELECT odd FROM OrderDetail odd WHERE odd.parent.orderType = 'OUTBOUND' "
-				+ "AND odd.active = true "
-				+ "AND odd.updated <> :processTime "
-				+ "AND odd.parent.orderGroup = null )";
-	
-		
+				+ "(SELECT odd FROM OrderDetail odd WHERE odd.parent.orderType = 'OUTBOUND' " + "AND odd.active = true "
+				+ "AND odd.updated <> :processTime " + "AND odd.parent.orderGroup = null )";
+
 		String hasGroupQueryStr = "UPDATE OrderDetail od SET od.active = false WHERE od.active = true AND od IN"
-				+ "(SELECT odd FROM OrderDetail odd WHERE odd.parent.orderType = 'OUTBOUND' "
-				+ "AND odd.active = true "
-				+ "AND odd.updated <> :processTime "
-				+ "AND odd.parent.orderGroup <> null "
+				+ "(SELECT odd FROM OrderDetail odd WHERE odd.parent.orderType = 'OUTBOUND' " + "AND odd.active = true "
+				+ "AND odd.updated <> :processTime " + "AND odd.parent.orderGroup <> null "
 				+ "AND odd.parent.orderGroup.updated = :processTime )";
-	
+
 		Query hasGroupQuery = session.createQuery(hasGroupQueryStr);
 		hasGroupQuery.setTimestamp("processTime", inProcessTime);
 		numArchived = hasGroupQuery.executeUpdate();
-		
-		if (undefinedGroupUpdated) {	
+
+		if (undefinedGroupUpdated) {
 			Query hasNoGroupQuery = session.createQuery(hasNoGroupQueryStr);
 			hasNoGroupQuery.setTimestamp("processTime", inProcessTime);
-			numArchived += hasNoGroupQuery.executeUpdate();		
+			numArchived += hasNoGroupQuery.executeUpdate();
 		}
-		
+
 		LOGGER.info("Archived: {} OrderDetails", numArchived);
 		return numArchived;
 	}

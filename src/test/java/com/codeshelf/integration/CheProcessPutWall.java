@@ -379,16 +379,15 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		posman.buttonPress(5, 4);
 		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
 		picker1.logCheDisplay();
+		
 		// check the displays. The P15 slot has order feedback. P16 slot show the 5 count
-		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 5);
-		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
-		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 6);
-		Assert.assertEquals(toByte(5), displayValue);
+		// These can take time. Hence the wait-for
+		posman.waitForControllerDisplayValue((byte) 5, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME);
+		posman.waitForControllerDisplayValue((byte) 6, (byte) 5, WAIT_TIME);
 
 		LOGGER.info("4e: Complete this job. That is all for this SKU in this wall. Therefore, need to scan again.");
 		posman.buttonPress(6, 5);
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
-
 	}
 
 	@Test

@@ -266,23 +266,30 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		Assert.assertEquals("2", getSummaryScreenOrderCount(picker1));
 		Assert.assertEquals("3", getSummaryScreenJobCount(picker1));
 
-		LOGGER.info("2: Scan to a bad location. The back end gives us the work instructions for good location it had before.");
+		LOGGER.info("2: Scan to a bad location. The back end interprets this as a path change, so come to summary screen instead of DO_PICK.");
 		picker1.scanLocation("XX12");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.scanCommand("START");
 		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
-		// picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		picker1.logCheDisplay(); // Look in log to see what we have
 		List<WorkInstruction> wis = picker1.getAllPicksList();
 		this.logWiList(wis);
-		Assert.assertEquals(4, wis.size()); // one housekeeping. That is why not 3.
+		Assert.assertEquals(6, wis.size()); // Found all 4 jobs, plus 2 housekeeping.
+
+		// See that the backend persisted the scan even though it is not resolvable
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		Che che = Che.staticGetDao().findByDomainId(getNetwork(), "CHE1");
+		Assert.assertEquals("XX12", che.getLastScannedLocation());
+		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("2b: Start to go to summary screen");
 		picker1.scanCommand("START");
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
-		// TODO call it a bug here. Backend kept assuming F11. Would be better if we knew and displayed that.
 		Assert.assertEquals("XX12", getSummaryScreenLocation(picker1));
 		picker1.logCheDisplay(); // Look in log to see what we have
-		Assert.assertEquals("3", getSummaryScreenJobCount(picker1));
+		Assert.assertEquals("4", getSummaryScreenJobCount(picker1));
 
 		LOGGER.info("2c: Scan to our good S11 location that has one job on path.");
 		picker1.scanLocation("S11");
@@ -294,17 +301,17 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		picker1.scanCommand("START");
 		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
-		LOGGER.info("2e: Scan to a bad location. The back end gives us the work instructions for good location it had before.");
-		// TODO This is highly questionable! Both the shown location, and getting good picks for the prior location
+		LOGGER.info("2e: Scan to a bad location. Interpretted as path change so back to summary screen.");
 		picker1.scanLocation("XX12");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.scanCommand("START");
 		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
-		// picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
-		LOGGER.info("2f: Start to go to summary screen");
+		LOGGER.info("2f: Start to go to summary screen. Back to our 4 jobs");
 		picker1.scanCommand("START");
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		Assert.assertEquals("XX12", getSummaryScreenLocation(picker1));
-		Assert.assertEquals("1", getSummaryScreenJobCount(picker1));
+		Assert.assertEquals("4", getSummaryScreenJobCount(picker1));
 	}
 
 	@Test

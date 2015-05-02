@@ -191,7 +191,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		return computeWorkInstructions(inChe, positionToContainerMap, false);
 	}
 
-	public final WorkList computeWorkInstructions(final Che inChe, final Map<String, String> positionToContainerMap, final Boolean reverse) {
+	public final WorkList computeWorkInstructions(final Che inChe,
+		final Map<String, String> positionToContainerMap,
+		final Boolean reverse) {
 		inChe.clearChe();
 
 		Facility facility = inChe.getFacility();
@@ -229,16 +231,20 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 						thisUse.setPosconIndex(posconIndex);
 						ContainerUse.staticGetDao().store(thisUse);
 					} catch (Exception ex) {
-						LOGGER.error("Failed to update container use "+thisUse, ex);
+						LOGGER.error("Failed to update container use " + thisUse, ex);
 					}
 				}
 			} else {
 				// Does this deserve a warn? At minimum, the containerId might be a valid put wall name for the SKU pick process.
 				Location loc = facility.findSubLocationById(containerId);
 				if (loc == null) {
-					LOGGER.warn("Unknown container/order ID: {} in computeWorkInstructions for {}", containerId, inChe.getDomainId());
-				} else if (!loc.isPutWallLocation()){
-					LOGGER.warn("Location: {} scanned in computeWorkInstructions for {}, but not a put wall", containerId, inChe.getDomainId());
+					LOGGER.warn("Unknown container/order ID: {} in computeWorkInstructions for {}",
+						containerId,
+						inChe.getDomainId());
+				} else if (!loc.isPutWallLocation()) {
+					LOGGER.warn("Location: {} scanned in computeWorkInstructions for {}, but not a put wall",
+						containerId,
+						inChe.getDomainId());
 					// Still a small hole here. User is likely scanning a bay name. But a scanned tier or slot name fom the wall would not yield a warning.
 				}
 			}
@@ -326,8 +332,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		// computeWorkInstructions wants a containerId list
 		List<String> containersIdList = Arrays.asList(inContainers.split("\\s*,\\s*")); // this trims out white space
-		HashMap<String,String> containerMap = new HashMap<String,String>();
-		int pos=1;
+		HashMap<String, String> containerMap = new HashMap<String, String>();
+		int pos = 1;
 		for (String containerId : containersIdList) {
 			containerMap.put(Integer.toString(pos), containerId);
 			pos++;
@@ -805,9 +811,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inChe
-	 * @param inScannedLocationId
-	 * Only set if the scanned location resolved
+	 * New from v16. Set whether scanned location resolved or not
 	 */
 	private void saveCheLastScannedLocation(final Che inChe, final String inScannedLocationId) {
 		if (inScannedLocationId == null) {
@@ -819,29 +823,44 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			LOGGER.error("unexpected value in saveCheLastScannedLocation");
 			return;
 		}
+		// if the same as it was, bail
+		if (inScannedLocationId.equals(inChe.getLastScannedLocation()))
+			return;
 
 		Facility facility = inChe.getFacility();
 		Location cheLocation = facility.findSubLocationById(inScannedLocationId);
-		if (cheLocation != null) {
-			inChe.setLastScannedLocation(inScannedLocationId);
-			Che.staticGetDao().store(inChe);
+		if (cheLocation == null) {
+			LOGGER.info("scanned location '{}' does not resolve to a modeled location", inScannedLocationId);
 		}
+		inChe.setLastScannedLocation(inScannedLocationId);
+		Che.staticGetDao().store(inChe);
 	}
 
-	private boolean detectPossiblePathChange(final Che che, final String inScannedLocationId, final BooleanHolder pathChanged) {
+	// --------------------------------------------------------------------------
+	/**
+	 * New from v16. Changing from a good path to bad location or good location without path constitutes a path change
+	 * Bails on null or blank primarily as that is quick-start unconfigured scenario.
+	 */
+	private boolean detectPossiblePathChange(final Che che, final String inScannedLocationId) {
 		if (inScannedLocationId == null || "".equals(inScannedLocationId)) {
 			return false;
 		}
+		// if the same as it was, bail
+		if (inScannedLocationId.equals(che.getLastScannedLocation()))
+			return false;
+
 		Path oldPath = che.getActivePath();
-		if (oldPath == null) {
-			return false;
-		}
+		Path newPath = null;
 		Location newLocation = che.getFacility().findSubLocationById(inScannedLocationId);
-		if (newLocation == null) {
+		if (newLocation != null)
+			newPath = newLocation.getAssociatedPathSegment().getParent();
+
+		if (oldPath == null && newPath == null)
 			return false;
-		}
-		Path newPath = newLocation.getAssociatedPathSegment().getParent();
-		return newPath != oldPath;
+		if (oldPath == null) // we know newPath != null
+			return true;
+		else
+			return !oldPath.equals(newPath);
 	}
 
 	private String getFirstGoodAisleLocation(List<WorkInstruction> completeRouteWiList) {
@@ -874,18 +893,22 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		long startTimestamp = System.currentTimeMillis();
 		Facility facility = inChe.getFacility();
 
-		pathChanged.value = detectPossiblePathChange(inChe, inScannedLocationId, pathChanged);
+		// This may be called with null inScannedLocationId for a simple START scan
+		pathChanged.value = detectPossiblePathChange(inChe, inScannedLocationId);
 		saveCheLastScannedLocation(inChe, inScannedLocationId);
 
 		//Get current complete list of WIs. If CHE doesn't yet have a last_scanned_location set, this will retrieve items on all paths
 		List<WorkInstruction> completeRouteWiList = findCheInstructionsFromPosition(inChe, 0.0, false);
 
-		if (inChe.getActivePath() == null && !completeRouteWiList.isEmpty()) {
-			Collections.sort(completeRouteWiList, new GroupAndSortCodeComparator());
-			String locationId = getFirstGoodAisleLocation(completeRouteWiList);
-			saveCheLastScannedLocation(inChe, locationId);
-			completeRouteWiList = findCheInstructionsFromPosition(inChe, 0.0, false);
-		}
+		// If something was scanned, even if it does not resolve to a location, don't limit to first path found
+		String chesLastScan = inChe.getLastScannedLocation(); // may or may not have been updated by saveCheLastScannedLocation() above
+		if (chesLastScan == null || chesLastScan.isEmpty())			
+			if (inChe.getActivePath() == null && !completeRouteWiList.isEmpty()) {
+				Collections.sort(completeRouteWiList, new GroupAndSortCodeComparator());
+				String locationId = getFirstGoodAisleLocation(completeRouteWiList);
+				saveCheLastScannedLocation(inChe, locationId);
+				completeRouteWiList = findCheInstructionsFromPosition(inChe, 0.0, false);
+			}
 
 		//We could have existing HK WIs if we've already retrieved the work instructions once but scanned a new location.
 		//In that case, we must make sure we remove all existing HK WIs so that we can properly add them back in at the end.
