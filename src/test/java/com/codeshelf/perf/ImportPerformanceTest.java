@@ -9,7 +9,6 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
@@ -64,7 +63,7 @@ public class ImportPerformanceTest {
     	postParameters.add(new BasicNameValuePair("u", username));
     	postParameters.add(new BasicNameValuePair("p", password));
     	authRequest.setEntity(new UrlEncodedFormEntity(postParameters));
-    	CloseableHttpResponse response = client.execute(authRequest);
+    	client.execute(authRequest);
     }
 	
 	public static void main(String[] args) {
@@ -74,7 +73,7 @@ public class ImportPerformanceTest {
 		try {
 			ClassLoader classloader = Thread.currentThread().getContextClassLoader();
 			// TODO: get facility ID from API
-			String facilityId = "9fd0ec86-841f-4407-957d-864e304efe97";
+			String facilityId = "c8b3f786-bc69-4dbb-8068-b51f0024f9c7";
 			
 			LOGGER.info("Started performance import test started...");
 			
