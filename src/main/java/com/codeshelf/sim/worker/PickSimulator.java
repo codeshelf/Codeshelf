@@ -308,6 +308,23 @@ public class PickSimulator {
 			throw new IllegalStateException(theProblem); 
 		}
 	}
+	
+	public void waitForOneOfCheStates(ArrayList<CheStateEnum> statesList, int timeoutInMillis) {
+		CheStateEnum lastState = cheDeviceLogic.waitForOneOfCheStates(statesList, timeoutInMillis);
+		if (!statesList.contains(lastState)) {
+			StringBuilder statesStr = new StringBuilder();
+			for (CheStateEnum state : statesList) {
+				statesStr.append(state).append(" ");
+				statesList.add(state);
+			}
+			String theProblem = String.format("Che state %s not encountered in %dms. State is %s, inSetState: %s",
+				statesStr.toString(),
+				timeoutInMillis,
+				lastState,
+				cheDeviceLogic.inSetState());
+			throw new IllegalStateException(theProblem); 
+		}
+	}
 
 	// This is for the drastic CHE process changes in v16. Is it PICK_COMPLETE state, or SETUP_SUMMARY state.
 	public CheStateEnum getCompleteState() {

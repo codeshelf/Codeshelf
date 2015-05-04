@@ -1897,6 +1897,28 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		CheStateEnum existingState = getCheStateEnum();
 		return existingState;
 	}
+	
+	/**
+	 * Method used for script testing, where a Che may transition to one of several states, and we'd like to wait for transition to finish before proceeding
+	 */
+	public CheStateEnum waitForOneOfCheStates(ArrayList<CheStateEnum> states, int timeoutInMillis) {
+		long start = System.currentTimeMillis();
+		while (System.currentTimeMillis() - start < timeoutInMillis) {
+			// retry every 100ms
+			ThreadUtils.sleep(100);
+			CheStateEnum currentState = getCheStateEnum();
+			// we are waiting for the expected CheStateEnum, AND the indicator that we are out of the setState() routine.
+			// Typically, the state is set first, then some side effects are called that depend on the state.  The picker is usually checking on
+			// some of the side effects after this call.
+			if (states.contains(currentState) && !inSetState()) {
+				// expected state found - all good
+				break;
+			}
+		}
+		CheStateEnum existingState = getCheStateEnum();
+		return existingState;
+	}
+
 
 	public void processResultOfVerifyBadge(Boolean verified) {
 		// To be overridden by SetupOrderDeviceLogic and LineScanDeviceLogic

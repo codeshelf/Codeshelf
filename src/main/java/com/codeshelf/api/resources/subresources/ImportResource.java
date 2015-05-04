@@ -112,7 +112,7 @@ public class ImportResource {
 		try {
 			Reader reader = new InputStreamReader(fileInputStream);
 			BatchResult<Object> result = this.outboundOrderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
-			return BaseResponse.buildResponse(null,200);				
+			return BaseResponse.buildResponse(result,200);				
 		}
 		catch (Exception e) {
 			return new ErrorResponse().processException(e);

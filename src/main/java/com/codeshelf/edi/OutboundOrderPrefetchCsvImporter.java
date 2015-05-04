@@ -215,9 +215,10 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 
 		// process order file
 		int lineCount = 1;
+		int count = 1, size = list.size();
 		for (OutboundOrderCsvBean orderBean : list) {
 			try {
-				OrderHeader order = orderCsvBeanImport(orderBean, inFacility, inProcessTime);
+				OrderHeader order = orderCsvBeanImport(orderBean, inFacility, inProcessTime, count++ + "/" + size);
 				if ((order != null) && (!orderSet.contains(order))) {
 					orderSet.add(order);
 				}
@@ -306,11 +307,12 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	// @Transactional
 	private OrderHeader orderCsvBeanImport(final OutboundOrderCsvBean inCsvBean,
 		final Facility inFacility,
-		final Timestamp inEdiProcessTime) {
+		final Timestamp inEdiProcessTime,
+		final String counterStr) {
 
 		OrderHeader order = null;
 
-		LOGGER.info(inCsvBean.toString());
+		LOGGER.info(counterStr + ", " + inCsvBean.toString());
 
 		String errorMsg = inCsvBean.validateBean();
 		if (errorMsg != null) {
