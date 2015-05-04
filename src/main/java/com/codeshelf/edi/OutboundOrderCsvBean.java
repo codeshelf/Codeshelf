@@ -63,13 +63,12 @@ public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 	protected String	customerId;
 	protected String	workSequence;
 	// new fields for location-based pick DEV-571
-	protected String	upc;
 	protected String	operationType;
 	protected String	locationId;
 	protected String	cmFromLeft;
 	
 	// new fields for scanable inventory DEV-642
-	protected String	gtin;
+	protected String	gtin; // use this field for upc
 
 	public final String getGtin() {
 		return strip(gtin);
@@ -170,11 +169,6 @@ public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 
 	public final String getCustomerId() {
 		return strip(customerId);
-	}
-
-	// new fields for location-based pick DEV-571
-	public final String getUpc() {
-		return strip(upc);
 	}
 
 	public final String getOperationType() {
