@@ -1648,6 +1648,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		OrderDetail orderDetail = storedWi.getOrderDetail();
 		// from v5 housekeeping WI may have null orderDetail
 		if (orderDetail != null) {
+			if (orderDetail.getActive()==false) {
+				// TODO: create event
+				LOGGER.warn("Workinstruction completed for inactive order detail "+orderDetail);				
+			}
 			orderDetail.reevaluateStatus();
 			OrderHeader order = orderDetail.getParent();
 			if (order != null) {
