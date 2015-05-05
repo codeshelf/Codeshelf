@@ -14,10 +14,10 @@ import lombok.Getter;
 @EqualsAndHashCode
 public class ItemDisplay implements Comparable<ItemDisplay> {
 	
-	public static final FieldComparator<Map<Object, Object>>	ItemIdComparator = new FieldComparator<Map<Object, Object>>() {
+	public static final FieldComparator<Map<Object, Object>>	ItemComparator = new FieldComparator<Map<Object, Object>>() {
 
 		@Getter
-		private String[] sortedBy = {"itemId"};
+		private String[] sortedBy = {"itemId", "location", "uom"};
 		
 		@Override
 		public int compare(Map<Object, Object> record1, Map<Object, Object> record2) {
@@ -45,11 +45,15 @@ public class ItemDisplay implements Comparable<ItemDisplay> {
 	@Getter
 	private String description;
 
-	
+
+	@Getter
+	private String location;
+
 	public ItemDisplay(EventDisplay eventDisplay) {
 		this.itemId = eventDisplay.getItemId();
 		this.uom = eventDisplay.getItemUom();
 		this.description = eventDisplay.getItemDescription();
+		this.location = eventDisplay.getItemLocation();
 	}
 
 	@Override

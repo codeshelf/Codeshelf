@@ -30,6 +30,10 @@ public class EventDisplay {
 	@Getter
 	private String itemDescription;
 
+
+	@Getter
+	private String itemLocation;
+
 	@Getter
 	private Integer wiPlanQuantity;
 	
@@ -83,6 +87,7 @@ public class EventDisplay {
 		itemId = wi.getItemId();
 		itemDescription = wi.getItemMaster().getDescription();
 		itemUom = wi.getUomMasterId();
+		itemLocation = wi.getPickInstruction();
 		wiPlanQuantity = wi.getPlanQuantity();
 		wiActualQuantity = wi.getActualQuantity();
 		workerName = String.format("%s, %s %s", Strings.nullToEmpty(worker.getLastName()),

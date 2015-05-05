@@ -261,6 +261,7 @@ public class FacilityResource {
 	public Response searchEvents(
 		@QueryParam("type") List<EventTypeParam> typeParamList, 
 		@QueryParam("itemId") String itemId,
+		@QueryParam("location") String location,
 		@QueryParam("groupBy") String groupBy,
 		@QueryParam("resolved") Boolean resolved ) {
 		ErrorResponse errors = new ErrorResponse();
@@ -293,11 +294,12 @@ public class FacilityResource {
 
 			List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
 			if (!Strings.isNullOrEmpty(itemId)) {
-				ResultDisplay result = new ResultDisplay(ItemDisplay.ItemIdComparator);
+				ResultDisplay result = new ResultDisplay();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
 					ItemDisplay itemDisplayKey = new ItemDisplay(eventDisplay);
-					if (itemId.equals(itemDisplayKey.getItemId())) {
+					if (itemId.equals(itemDisplayKey.getItemId()) &&
+						location.equals(itemDisplayKey.getLocation())) {
 						result.add(new BeanMap(eventDisplay));
 					}
 				}
@@ -313,7 +315,7 @@ public class FacilityResource {
 					issuesByItem.put(itemDisplayKey, count+1);
 				}
 
-				ResultDisplay result = new ResultDisplay(ItemDisplay.ItemIdComparator);
+				ResultDisplay result = new ResultDisplay(ItemDisplay.ItemComparator);
 				for (Map.Entry<ItemDisplay, Integer> issuesByItemEntry : issuesByItem.entrySet()) {
 					Map<Object, Object> values = new HashMap<>();
 					values.putAll(new BeanMap(issuesByItemEntry.getKey()));
