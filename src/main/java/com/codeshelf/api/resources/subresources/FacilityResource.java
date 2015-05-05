@@ -260,6 +260,7 @@ public class FacilityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response searchEvents(
 		@QueryParam("type") List<EventTypeParam> typeParamList, 
+		@QueryParam("itemId") String itemId,
 		@QueryParam("groupBy") String groupBy,
 		@QueryParam("resolved") Boolean resolved ) {
 		ErrorResponse errors = new ErrorResponse();
@@ -276,6 +277,11 @@ public class FacilityResource {
 			if (!typeList.isEmpty()) {
 				filterParams.add(Restrictions.in("eventType", typeList));
 			}
+			
+			if (!Strings.isNullOrEmpty(itemId)) {
+				//do by filter param but for now needs to be manually filtered
+			}
+			
 			//If "resolved" parameter not provided, return, both, resolved and unresolved events
 			if (resolved != null) {
 				if (resolved){
@@ -284,7 +290,20 @@ public class FacilityResource {
 					filterParams.add(Restrictions.isNull("resolution"));
 				}
 			}
+
 			List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
+			if (!Strings.isNullOrEmpty(itemId)) {
+				ResultDisplay result = new ResultDisplay(ItemDisplay.ItemIdComparator);
+				for (WorkerEvent event : events) {
+					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
+					ItemDisplay itemDisplayKey = new ItemDisplay(eventDisplay);
+					if (itemId.equals(itemDisplayKey.getItemId())) {
+						result.add(new BeanMap(eventDisplay));
+					}
+				}
+				return BaseResponse.buildResponse(result);
+			}
+			
 			if ("item".equals(groupBy)) {
 				Map<ItemDisplay, Integer> issuesByItem = new HashMap<>();
 				for (WorkerEvent event : events) {

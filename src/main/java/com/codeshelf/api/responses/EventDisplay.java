@@ -16,7 +16,7 @@ import com.google.common.base.Strings;
 public class EventDisplay {
 	//Event Fields
 	@Getter
-	private UUID 							eventId;
+	private UUID 							persistentId;
 	
 	@Getter
 	private EventType 						type;
@@ -77,7 +77,7 @@ public class EventDisplay {
 	}
 	
 	private EventDisplay(WorkerEvent event, WorkInstruction wi, Worker worker) {
-		eventId = event.getPersistentId();
+		persistentId = event.getPersistentId();
 		type = event.getEventType();
 		createdAt = event.getCreated();
 		itemId = wi.getItemId();
