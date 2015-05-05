@@ -2,7 +2,9 @@ package com.codeshelf.api.resources.subresources;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -21,6 +23,7 @@ import javax.ws.rs.core.Response;
 
 import lombok.Setter;
 
+import org.apache.commons.beanutils.BeanMap;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
@@ -36,7 +39,9 @@ import com.codeshelf.api.HardwareRequest;
 import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
 import com.codeshelf.api.HardwareRequest.LightRequest;
 import com.codeshelf.api.responses.EventDisplay;
+import com.codeshelf.api.responses.ItemDisplay;
 import com.codeshelf.api.responses.PickRate;
+import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedInstrListMessage;
 import com.codeshelf.device.LedSample;
@@ -60,8 +65,10 @@ import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.protocol.message.CheDisplayMessage;
 import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.server.WebSocketManagerService;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
@@ -253,6 +260,7 @@ public class FacilityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response searchEvents(
 		@QueryParam("type") List<EventTypeParam> typeParamList, 
+		@QueryParam("groupBy") String groupBy,
 		@QueryParam("resolved") Boolean resolved ) {
 		ErrorResponse errors = new ErrorResponse();
 		try {
@@ -277,11 +285,48 @@ public class FacilityResource {
 				}
 			}
 			List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
-			List<EventDisplay> result = Lists.newArrayList();
-			for (WorkerEvent event : events) {
-				result.add(new EventDisplay(event));
+			if ("item".equals(groupBy)) {
+				Map<ItemDisplay, Integer> issuesByItem = new HashMap<>();
+				for (WorkerEvent event : events) {
+					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
+					ItemDisplay itemDisplayKey = new ItemDisplay(eventDisplay);
+					Integer count = MoreObjects.firstNonNull(issuesByItem.get(itemDisplayKey), 0);
+					issuesByItem.put(itemDisplayKey, count+1);
+				}
+
+				ResultDisplay result = new ResultDisplay(ItemDisplay.ItemIdComparator);
+				for (Map.Entry<ItemDisplay, Integer> issuesByItemEntry : issuesByItem.entrySet()) {
+					Map<Object, Object> values = new HashMap<>();
+					values.putAll(new BeanMap(issuesByItemEntry.getKey()));
+					values.put("count", issuesByItemEntry.getValue());
+					result.add(values);
+				}
+				return BaseResponse.buildResponse(result);
+			} else if ("type".equals(groupBy)){
+				Map<EventType, Integer> issuesByType = new HashMap<>();
+				for (WorkerEvent event : events) {
+					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
+					EventType eventType = eventDisplay.getType();
+					Integer count = MoreObjects.firstNonNull(issuesByType.get(eventType), 0);
+					issuesByType.put(eventType, count+1);
+				}
+				ResultDisplay result = new ResultDisplay(issuesByType.size());
+				for (Map.Entry<EventType, Integer> issuesByTypeEntry : issuesByType.entrySet()) {
+					Map<Object, Object> values = new HashMap<>();
+					values.putAll(new BeanMap(issuesByTypeEntry.getKey()));
+					values.put("count", issuesByTypeEntry.getValue());
+					result.add(values);
+				}
+				return BaseResponse.buildResponse(result);
+			} else {
+				ResultDisplay result = new ResultDisplay(events.size());
+				for (WorkerEvent event : events) {
+					result.add(new BeanMap(EventDisplay.createEventDisplay(event)));
+				}
+				return BaseResponse.buildResponse(result);
 			}
-			return BaseResponse.buildResponse(result);
+			
+
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();

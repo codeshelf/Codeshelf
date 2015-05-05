@@ -25,7 +25,14 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 public class NotificationService implements IApiService{
-	public enum EventType {LOGIN, SKIP_ITEM_SCAN, BUTTON, WI, SHORT, SHORT_AHEAD, COMPLETE, CANCEL_PUT}	
+	
+	public enum EventType {
+		LOGIN, SKIP_ITEM_SCAN, BUTTON, WI, SHORT, SHORT_AHEAD, COMPLETE, CANCEL_PUT;
+		
+		public String getName() {
+			return name();
+		}
+	}	
 	
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(NotificationService.class);
 	

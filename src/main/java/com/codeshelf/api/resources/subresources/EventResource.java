@@ -29,7 +29,7 @@ public class EventResource {
 	@RequiresPermissions("event:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getEvent() {
-		EventDisplay eventDisplay = new EventDisplay(event);
+		EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
 		return BaseResponse.buildResponse(eventDisplay);
 	}
 
@@ -52,7 +52,8 @@ public class EventResource {
 			event.setResolution(resolution);
 			Resolution.staticGetDao().store(resolution);
 			WorkerEvent.staticGetDao().store(event);
-			EventDisplay eventDisplay = new EventDisplay(event);
+			
+			EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
 			return BaseResponse.buildResponse(eventDisplay);
 		} catch (Exception e) {
 			return errors.processException(e);
