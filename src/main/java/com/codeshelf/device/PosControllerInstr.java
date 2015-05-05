@@ -208,11 +208,11 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 		mControllerId = inControllerId;
 		mSourceId = inSourceId;
 	}
-	
+
 	/**
 	 * This constructor's purpose is to detail a clone
 	 */
-	public PosControllerInstr(final PosControllerInstr instructionToClone){
+	public PosControllerInstr(final PosControllerInstr instructionToClone) {
 		mPosition = instructionToClone.getPosition();
 		mReqQty = instructionToClone.getReqQty();
 		mMinQty = instructionToClone.getMinQty();
@@ -325,27 +325,54 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 	 * value = 240 is BITENCODED_SEGMENTS_CODE, which then use the hex codes from min and max for the two LEDs.
 	 */
 	public String conciseDescription() {
-		String desc = String.format("[pos:%d value:%d min:%d, max:%d, freq:%d, duty:%d]",
-			getPosition(),
-			getReqQty(),
-			getMinQty(),
-			getMaxQty(),
-			getFreq(),
-			getDutyCycle());
+		Byte value = getReqQty();
+		String freq = "solid";
+		if (getFreq() > 0)
+			freq = getFreq().toString();
+		Byte position = getPosition();
+		String posString = position.toString();
+		if (position == 0)
+			posString = "all";
+		String desc;
+		if (value != BITENCODED_SEGMENTS_CODE) {
+			desc = String.format("[pos:%s value:%d min:%d, max:%d, freq:%s, duty:%d]",
+				posString,
+				getReqQty(),
+				getMinQty(),
+				getMaxQty(),
+				freq,
+				getDutyCycle());
+		} else {
+			Byte minValue = getMinQty();
+			String summary = "??";
+			if (minValue == BITENCODED_LED_DASH)
+				summary = "'dash'";
+			else if (minValue == BITENCODED_LED_C)
+				summary = "'oc'";
+			else if (minValue == BITENCODED_LED_E)
+				summary = "'E'";
+			else if (minValue == BITENCODED_TRIPLE_DASH)
+				summary = "'triple dash'";
+			else if (minValue == BITENCODED_TOP_BOTTOM)
+				summary = "'double dash'";
+			else
+				LOGGER.error("unhandled case in PosControllerInstr.conciseDescription()");
+			desc = String.format("[pos:%s %s freq:%s, duty:%d]", posString, summary, freq, getDutyCycle());
+		}
 		return desc;
 	}
 
 	/** 
 	 * Provide the short display corollary of this message
 	 */
-	public static PosControllerInstr getCorrespondingShortDisplay(PosControllerInstr instruction){
+	public static PosControllerInstr getCorrespondingShortDisplay(PosControllerInstr instruction) {
 		PosControllerInstr revisedInstruction = new PosControllerInstr(instruction);
 		revisedInstruction.setMinQty((byte) 0);
 		revisedInstruction.setFreq(PosControllerInstr.BLINK_FREQ);
-		
+
 		return revisedInstruction;
 	}
-	
+
 	public static class PosConInstrGroupSerializer {
 		/**
 		 * Duplicated from LedCmdGroupSerializer

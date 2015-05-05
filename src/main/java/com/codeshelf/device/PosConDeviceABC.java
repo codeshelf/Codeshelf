@@ -35,16 +35,10 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 	protected String getConciseInstructionsSummary() {
 		return null;
 	}
-
-	protected void sendPositionControllerInstructions(List<PosControllerInstr> inInstructions) {
-
-		if (inInstructions.isEmpty()) {
-			LOGGER.error("sendPositionControllerInstructions called for empty instructions");
-			return;
-		}
-
 	
-		// If we are logging these, lets do so in a way that is useful
+	private void logOnePosconBatch(final List<PosControllerInstr> inInstructions){
+		// Much better than LOGGER.info("{}: Sending PosCon Instructions {}", this.getMyGuidStr(), inInstructions);
+	
 		String header = String.format("%s: Sending PosCon Instructions", this.getMyGuidStr());
 		final int logGroupSize = 3;
 		int intructionCount = 0;
@@ -61,10 +55,15 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 				LOGGER.info(toLogStr);
 				toLogStr = "";
 			}
-		}
+		}		
+	}
 
-		// Doesn't the following look simpler than all of the aboive? Horrible in the logs, though.
-		// LOGGER.info("{}: Sending PosCon Instructions {}", this.getMyGuidStr(), inInstructions);
+	protected void sendPositionControllerInstructions(List<PosControllerInstr> inInstructions) {
+
+		if (inInstructions.isEmpty()) {
+			LOGGER.error("sendPositionControllerInstructions called for empty instructions");
+			return;
+		}
 
 		//Update the last sent posControllerInstr for the position 
 		for (PosControllerInstr instr : inInstructions) {
@@ -78,6 +77,8 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		int batchStart = 0, size = inInstructions.size(), batchSize = 10;
 		while (batchStart < size) {
 			List<PosControllerInstr> batch = inInstructions.subList(batchStart, Math.min(batchStart + batchSize, size));
+			// log these as we are really sending them out
+			logOnePosconBatch(batch);
 			ICommand command = new CommandControlSetPosController(NetEndpoint.PRIMARY_ENDPOINT, batch);
 			mRadioController.sendCommand(command, getAddress(), true);
 			batchStart += batchSize;
