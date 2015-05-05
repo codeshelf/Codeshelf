@@ -98,6 +98,9 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 			return "";
 		return line2.substring(0, firstSpaceAt);
 	}
+	
+	// need getSummaryScreenOtherCount(). Need to parse it out of the line.
+
 
 	/**
 	 * Assuming some structure of the SETUP_SUMMARY screen, find the count done shown as a string.
@@ -113,6 +116,8 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 			return line3.substring(0, firstSpaceAt);
 		// We are assuming if shorts > 0, then we also show done even if 0.
 	}
+	
+	// need getSummaryScreenShortsCount(). Need to parse it out of the line.
 
 	@Test
 	public final void basicSummary() throws IOException {
@@ -206,12 +211,11 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		picker1.scanLocation("F12");
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		picker1.logCheDisplay(); // Look in log to see what we have
-		// Now no other. Also, the complete count is lost. Fix someday?
-		// This was a new path case. We might want to lose the complete on path change.
+		// Notice we keep the complete count, even though this was a path change
 		Assert.assertEquals("F12", getSummaryScreenLocation(picker1));
 		Assert.assertEquals("2", getSummaryScreenOrderCount(picker1));
 		Assert.assertEquals("3", getSummaryScreenJobCount(picker1));
-		Assert.assertEquals("", getSummaryScreenDoneCount(picker1));
+		Assert.assertEquals("1", getSummaryScreenDoneCount(picker1));
 
 		LOGGER.info("4b: Start; ready to pick");
 		picker1.scanCommand("START");
@@ -220,23 +224,26 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		LOGGER.info("4c: Start; Pick 1. (2 remain)");
 		picker1.pickItemAuto();
 		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
-
-		LOGGER.info("4d: Start; from pick screen, goes back to summary");
-		picker1.scanCommand("START");
+		
+		LOGGER.info("4d: REVERSE; from pick screen, goes back to summary, just as start would");
+		picker1.scanCommand("REVERSE");
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		Assert.assertEquals("2", getSummaryScreenJobCount(picker1));
-		// the complete count is lost. Fix someday? Only not lost if you actually finish
-		Assert.assertEquals("", getSummaryScreenDoneCount(picker1));
+		Assert.assertEquals("2", getSummaryScreenDoneCount(picker1));
 
-		LOGGER.info("4e: Let's finish; goes to summary");
-		picker1.scanCommand("START");
+		LOGGER.info("4e: Let's finish in reverse; goes to summary");
+		picker1.scanCommand("REVERSE");
 		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		wis = picker1.getAllPicksList();
+		this.logWiList(wis);
+		// The F14 job was going to be fourth above. Can see in the log/console at the logWiList() call. Now it is done next since we reversed.
+		Assert.assertEquals("F14", picker1.getLastCheDisplayString(1));
 		picker1.pickItemAuto();
 		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		picker1.pickItemAuto();
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		Assert.assertEquals("0", getSummaryScreenJobCount(picker1));
-		Assert.assertEquals("2", getSummaryScreenDoneCount(picker1));
+		Assert.assertEquals("4", getSummaryScreenDoneCount(picker1));
 	}
 
 	@Test
@@ -312,6 +319,43 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		Assert.assertEquals("XX12", getSummaryScreenLocation(picker1));
 		Assert.assertEquals("4", getSummaryScreenJobCount(picker1));
+		
+		// Change of test mission here. Above was changes between good and bad paths.
+		// Now make sure setup resets the remembered completes and shorts since that was not checked in basicSummary().
+		LOGGER.info("3a: Complete one job and short one, then go to setup summary screen");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		// next in is housekeeping, so do that also
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		WorkInstruction wi = picker1.nextActiveWi();
+		picker1.scanCommand("SHORT");
+		picker1.waitForCheState(CheStateEnum.SHORT_PICK, WAIT_TIME);
+		int button = picker1.buttonFor(wi);
+		picker1.pick(button, 0);
+		picker1.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, WAIT_TIME);
+		picker1.scanCommand("YES");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		// Three left. We only completed one, and we shorted one. (And the one housekeeping.)
+		Assert.assertEquals("3", getSummaryScreenJobCount(picker1));
+		Assert.assertEquals("1", getSummaryScreenDoneCount(picker1));
+		// we do not have getSummaryScreenShortsCount(picker1));
+		
+		LOGGER.info("3b: Setup again, with same orders");
+		picker1.scanCommand("SETUP");
+		picker1.setupOrderIdAsContainer("11117", "1");
+		picker1.setupOrderIdAsContainer("12345", "2"); // the easier way.
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay(); // Look in log to see what we have
+		Assert.assertEquals("2", getSummaryScreenOrderCount(picker1));
+		Assert.assertEquals("3", getSummaryScreenJobCount(picker1));
+		Assert.assertEquals("", getSummaryScreenDoneCount(picker1));
+
 	}
 
 	@Test

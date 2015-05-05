@@ -76,7 +76,20 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	CheStateEnum								mRememberEnteringWallOrInventoryState	= CheStateEnum.CONTAINER_SELECT;
+	private CheStateEnum						mRememberEnteringWallOrInventoryState	= CheStateEnum.CONTAINER_SELECT;
+
+	// When we  START or location change again, the server does not give us what we completed already.
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private int									mRememberPriorCompletes					= 0;
+
+	// When we  START or location change again, the server does not give us what we shorted already.
+	// Warning: server will make new plan for what you shorted.
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private int									mRememberPriorShorts					= 0;
 
 	private final boolean						useSummaryState							= true;
 
@@ -1061,8 +1074,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				WorkInstruction wi = getOneActiveWorkInstruction();
 				if (wi != null) {
 					// short scan of housekeeping work instruction makes no sense
-					if (wi.isHousekeeping())
+					if (wi.isHousekeeping()) {
+						LOGGER.warn("Probable test error. Don't short a housekeeping. User error if happening in production");
 						invalidScanMsg(mCheStateEnum); // Invalid to short a housekeep
+					}
 					else
 						setState(CheStateEnum.SHORT_PICK); // flashes all poscons with active jobs
 				} else {
@@ -1160,6 +1175,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private void requestWorkAndSetGetWorkState(final String inLocationStr, final Boolean reverseOrderFromLastTime) {
 		// by protocol, inLocationStr may be null for START or Reverse. Do not overwrite mLocationId which is perfectly good.
 		clearAllPosconsOnThisDevice();
+		
+		rememberCompletesAndShorts(); // is this right?
+		
 		Map<String, String> positionToContainerMapCopy = new HashMap<String, String>(mPositionToContainerMap);
 		LOGGER.info("Sending {} positions to server in getCheWork", positionToContainerMapCopy.size());
 		mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(),
@@ -1439,9 +1457,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 
 	/**
-	 * How many jobs were completed?
+	 * How many jobs were completed? Give the value of this feedback cycle, plus whatever we accumulated before.
 	 */
-	private int getCountOfCompletedJobsOnSetupPath() {
+	private int getCountOfCompletedJobsThisSetup() {
 		if (mContainerToWorkInstructionCountMap == null)
 			return 0;
 		else {
@@ -1449,14 +1467,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			for (WorkInstructionCount count : mContainerToWorkInstructionCountMap.values()) {
 				completeJobsCounter += count.getCompleteCount();
 			}
-			return completeJobsCounter;
+			return completeJobsCounter + getRememberPriorCompletes();
 		}
 	}
 
 	/**
-	 * How many shorts for the mLocationId path?
+	 * How many shorts for the mLocationId path? Give the value of this feedback cycle, plus whatever we accumulated before.
 	 */
-	private int getCountOfShortsOnSetupPath() {
+	private int getCountOfShortsThisSetup() {
 		if (mContainerToWorkInstructionCountMap == null)
 			return 0;
 		else {
@@ -1464,10 +1482,25 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			for (WorkInstructionCount count : mContainerToWorkInstructionCountMap.values()) {
 				goodJobsCounter += count.getShortCount();
 			}
-			return goodJobsCounter;
+			return goodJobsCounter + getRememberPriorShorts();
 		}
 	}
 
+	/**
+	 * When we dump the cart (SETUP), set these back to zero.
+	 */
+	private void rememberCompletesAndShorts() {
+		setRememberPriorShorts(getCountOfShortsThisSetup());
+		setRememberPriorCompletes(getCountOfCompletedJobsThisSetup());
+	}
+
+	/**
+	 * When we are changing path or starting again, and get feedback from server, we need to remember how many shorts and completes we have done.
+	 */
+	private void resetRememberCompletesAndShorts() {
+		setRememberPriorShorts(0);
+		setRememberPriorCompletes(0);
+	}
 	/**
 	 * Show status for this setup in our restrictive 4 x 20 manner.
 	 * Trying to align the counts, allow for 3 digit counts.
@@ -1516,10 +1549,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				line2 = String.format("%s picks", pickCountStr);
 		}
 
-		int doneCount = getCountOfCompletedJobsOnSetupPath();
+		int doneCount = getCountOfCompletedJobsThisSetup();
 		String doneCountStr = Integer.toString(doneCount);
 		doneCountStr = StringUtils.leftPad(doneCountStr, 3);
-		int shortCount = getCountOfShortsOnSetupPath();
+		int shortCount = getCountOfShortsThisSetup();
 		// We want to show completed jobs and shorts upon completion only. The reason is the server is not
 		// handing these to us usefully in the computeWorkInstructions process. If we showed 0 done as the user scans onto a new location or reverses
 		// part way through, users would complain about us "losing" their completed work.
@@ -1763,6 +1796,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		clearAllPosconsOnThisDevice();
 		mContainerInSetup = "";
+		
+		rememberCompletesAndShorts(); // is this right?
+		
 		//Duplicate map to avoid later changes
 		Map<String, String> positionToContainerMapCopy = new HashMap<String, String>(mPositionToContainerMap);
 		LOGGER.info("Sending {} positions to server in computeCheWork", positionToContainerMapCopy.size());
@@ -2218,6 +2254,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		mPositionToContainerMap.clear();
 		mContainerToWorkInstructionCountMap = null;
 		mContainerInSetup = "";
+		resetRememberCompletesAndShorts();
 		super.setupChe();
 	}
 
