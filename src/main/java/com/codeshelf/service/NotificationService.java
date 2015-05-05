@@ -2,6 +2,7 @@ package com.codeshelf.service;
 
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,6 +37,8 @@ public class NotificationService implements IApiService{
 	
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(NotificationService.class);
 	
+	private static final EnumSet SAVE_ONLY = EnumSet.of(EventType.SKIP_ITEM_SCAN, EventType.SHORT);
+	
 	@Inject
 	public NotificationService() {
 	}
@@ -43,6 +46,9 @@ public class NotificationService implements IApiService{
 	public void saveEvent(NotificationMessage message) {
 		//Is this the correct current approach to transactions?
 		try {
+			if (!SAVE_ONLY.contains(message.getEventType())) {
+				return;
+			}
 			TenantPersistenceService.getInstance().beginTransaction();
 			LOGGER.info("Saving notification from {}: {}", message.getDeviceGuid(), message.getEventType());
 			Class<?> deviceClass = message.getDeviceClass();
