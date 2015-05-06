@@ -17,27 +17,27 @@ public class WorkInstructionCount {
 
 	@Getter
 	@Setter
-	private int	goodCount					= 0;
+	private int	goodCount							= 0;
 
 	@Getter
 	@Setter
-	private int	shortCount					= 0;
+	private int	shortCount							= 0;
 
 	@Getter
 	@Setter
-	private int	completeCount				= 0;
+	private int	completeCount						= 0;
 
 	@Getter
 	@Setter
-	private int	invalidOrUnknownStatusCount	= 0;
+	private int	invalidOrUnknownStatusCount			= 0;
 
 	@Getter
 	@Setter
-	private int	detailsNoWiMade				= 0;
+	private int	detailsNoWiMade						= 0;
 
 	@Getter
 	@Setter
-	private int	uncompletedInstructionsOnOtherPaths		= 0;
+	private int	uncompletedInstructionsOnOtherPaths	= 0;
 
 	/* Later enhancement will like needly two detail fields. One for not on my current path, but in my work area. 
 	And the other for unknown path or path in other area. 
@@ -100,7 +100,7 @@ public class WorkInstructionCount {
 	public void incrementDetailsNoWiMade() {
 		detailsNoWiMade++;
 	}
-	
+
 	public void incrementUncompletedInstructionsOnOtherPaths() {
 		uncompletedInstructionsOnOtherPaths++;
 	}
@@ -145,10 +145,31 @@ public class WorkInstructionCount {
 		return true;
 	}
 
+/*
+ * This would be closer to a lomboc toString().  Too verbose though, as we log this frequently.
+ 	public String getFullDescription() {
+		return String.format("WorkInstructionCount [goodCount=%d, immediateShortCount=%d, completeCount=%d, invalidOrUnknownStatusCount=%d, detailsNoWiMade=%d, uncompletedInstructionsOnOtherPaths=%d]",
+			goodCount,
+			shortCount,
+			completeCount,
+			invalidOrUnknownStatusCount,
+			detailsNoWiMade,
+			uncompletedInstructionsOnOtherPaths);
+	}
+*/
+
+	/**
+	 * A concise description for logging
+	 */
 	@Override
 	public String toString() {
-		return String.format("WorkInstructionCount [goodCount=%d, immediateShortCount=%d, completeCount=%d, invalidOrUnknownStatusCount=%d, detailsNoWiMade=%d, uncompletedInstructionsOnOtherPaths=%d]",
-			goodCount, shortCount, completeCount, invalidOrUnknownStatusCount, detailsNoWiMade, uncompletedInstructionsOnOtherPaths);
+		return String.format("[good=%d, short=%d, complete=%d, invalid=%d, detailsNoWi=%d, otherPaths=%d]",
+			goodCount,
+			shortCount,
+			completeCount,
+			invalidOrUnknownStatusCount,
+			detailsNoWiMade,
+			uncompletedInstructionsOnOtherPaths);
 	}
 
 }

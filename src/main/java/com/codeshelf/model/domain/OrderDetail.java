@@ -511,7 +511,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			setStatus(OrderStatusEnum.SHORT);
 		}
 		if (!priorStatus.equals(getStatus())) {
-			LOGGER.info("Changed status of order detai, was: " + priorStatus + ", now: " + this);
+			LOGGER.info("Changed status of order detail, was: " + priorStatus + ", now: " + this);
 			this.getDao().store(this);
 			return true;
 		} else {

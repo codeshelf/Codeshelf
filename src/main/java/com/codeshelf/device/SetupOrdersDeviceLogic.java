@@ -1617,7 +1617,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				LOGGER.info("Position {} got no WIs. Causes: no path defined, unknown container id, no inventory", position);
 			} else {
 				byte count = (byte) wiCount.getGoodCount();
-				LOGGER.info("Position Feedback_2: Poscon {} -- {}", position, wiCount);
+				LOGGER.info("WorkInstructionCount at pos:{} -- {}", position, wiCount);
 				if (count == 0) {
 					//0 good WI's
 
