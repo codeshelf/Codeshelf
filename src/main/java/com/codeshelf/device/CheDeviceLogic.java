@@ -26,6 +26,8 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.device.AisleDeviceLogic.LedCmd;
 import com.codeshelf.device.PosControllerInstr.PosConInstrGroupSerializer;
 import com.codeshelf.flyweight.command.CommandControlButton;
+import com.codeshelf.flyweight.command.CommandControlClearDisplay;
+import com.codeshelf.flyweight.command.CommandControlDispalySingleLineMessage;
 import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
 import com.codeshelf.flyweight.command.EffectEnum;
 import com.codeshelf.flyweight.command.ICommand;
@@ -410,6 +412,17 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			inLine2Message,
 			inLine3Message,
 			inLine4Message);
+		mRadioController.sendCommand(command, getAddress(), true);
+	}
+	
+	// FIXME - huffa temp
+	protected void sendMessage(String msg, byte font, short x, short y){
+		ICommand command = new CommandControlDispalySingleLineMessage(NetEndpoint.PRIMARY_ENDPOINT, msg, font, x, y);
+		mRadioController.sendCommand(command, getAddress(), true);
+	}
+	
+	protected void clearDisplay(){
+		ICommand command = new CommandControlClearDisplay(NetEndpoint.PRIMARY_ENDPOINT);
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
 
