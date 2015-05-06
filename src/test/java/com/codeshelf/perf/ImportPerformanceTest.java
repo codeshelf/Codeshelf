@@ -73,7 +73,7 @@ public class ImportPerformanceTest {
 		try {
 			ClassLoader classloader = Thread.currentThread().getContextClassLoader();
 			// TODO: get facility ID from API
-			String facilityId = "c8b3f786-bc69-4dbb-8068-b51f0024f9c7";
+			String facilityId = "7d16e862-32db-4270-8eda-aff14629aceb";
 			
 			LOGGER.info("Started performance import test started...");
 			
