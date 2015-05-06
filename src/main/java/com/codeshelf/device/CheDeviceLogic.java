@@ -767,7 +767,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				PosControllerInstr.DIM_DUTYCYCLE.byteValue());
 		} else {
 			byte count = (byte) wiCount.getGoodCount();
-			LOGGER.info("Position Feedback: Poscon {} -- {}", position, wiCount);
+			// Caller (in SetupOrdersDeviceLogic) just logged, so we do not need to log again here. Caller also logged the pick count.
 			if (count == 0) { // nothing else to do from this cart setup.
 				// Indicate short this path, work other paths, or both.
 				if (wiCount.hasShortsThisPath() && wiCount.hasWorkOtherPaths()) {
