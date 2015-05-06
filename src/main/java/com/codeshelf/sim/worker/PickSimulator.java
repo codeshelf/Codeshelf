@@ -315,9 +315,8 @@ public class PickSimulator {
 			StringBuilder statesStr = new StringBuilder();
 			for (CheStateEnum state : statesList) {
 				statesStr.append(state).append(" ");
-				statesList.add(state);
 			}
-			String theProblem = String.format("Che state %s not encountered in %dms. State is %s, inSetState: %s",
+			String theProblem = String.format("Che states %snot encountered in %dms. State is %s, inSetState: %s",
 				statesStr.toString(),
 				timeoutInMillis,
 				lastState,

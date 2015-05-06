@@ -38,7 +38,7 @@ public class OrderBatchPerformanceTest {
 	final private static String BASE_URL = "http://localhost:8181/";
 	final private static String USERNAME = "simulate@example.com";
 	final private static String PASSWORD = "testme";
-	final private static String FACILITY = "9fd0ec86-841f-4407-957d-864e304efe97";
+	final private static String FACILITY = "7d16e862-32db-4270-8eda-aff14629aceb";
 	
 	static {
 		JvmProperties.load("server");
