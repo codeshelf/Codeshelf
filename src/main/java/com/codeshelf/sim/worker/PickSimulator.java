@@ -9,6 +9,7 @@ import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.application.ContextLogging;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.CsDeviceManager;
@@ -36,8 +37,17 @@ public class PickSimulator {
 		}
 	}
 
+	private void scanUser(String pickerId) {
+		try {
+			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
+			cheDeviceLogic.scanCommandReceived("U%" + pickerId);
+		} finally {
+			ContextLogging.clearNetGuid();
+		}
+	}
+
 	public void loginAndSetup(String pickerId) {
-		cheDeviceLogic.scanCommandReceived("U%" + pickerId);
+		scanUser(pickerId);
 		// From v16, login goes to SETUP_SUMMARY state. Then explicit SETUP scan goes to CONTAINER_SELECT
 		if (cheDeviceLogic.usesSummaryState()) {
 			waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
@@ -50,7 +60,7 @@ public class PickSimulator {
 
 	public void loginAndCheckState(String pickerId, CheStateEnum inState) {
 		// This only does the login ("scan badge" scan). Especially in Line_Scan process, this is used in tests rather than loginAndSetup.
-		cheDeviceLogic.scanCommandReceived("U%" + pickerId);
+		scanUser(pickerId);
 		// badge authorization now takes longer. Trip to server and back
 		waitForCheState(inState, 4000);
 	}
@@ -131,12 +141,22 @@ public class PickSimulator {
 	public void scanCommand(String inCommand) {
 		// Valid commands currently are only START, SETUP, LOGOUT, SHORT, YES, NO, See https://codeshelf.atlassian.net/wiki/display/TD/Bar+Codes+in+Codeshelf+Application
 		checkExtraPercent(inCommand);
-		cheDeviceLogic.scanCommandReceived("X%" + inCommand);
+		try {
+			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
+			cheDeviceLogic.scanCommandReceived("X%" + inCommand);
+		} finally {
+			ContextLogging.clearNetGuid();
+		}
 	}
 
 	public void scanLocation(String inLocation) {
 		checkExtraPercent(inLocation);
-		cheDeviceLogic.scanCommandReceived("L%" + inLocation);
+		try {
+			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
+			cheDeviceLogic.scanCommandReceived("L%" + inLocation);
+		} finally {
+			ContextLogging.clearNetGuid();
+		}
 	}
 
 	/**
@@ -144,36 +164,66 @@ public class PickSimulator {
 	 */
 	public void scanContainer(String inContainerId) {
 		checkExtraPercent(inContainerId);
-		cheDeviceLogic.scanCommandReceived("C%" + inContainerId);
+		try {
+			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
+			cheDeviceLogic.scanCommandReceived("C%" + inContainerId);
+		} finally {
+			ContextLogging.clearNetGuid();
+		}
 	}
 
 	/**
 	 * Does not add C% or anything else to conform with Codeshelf scan specification. DEV-518. Also accept the raw order ID.
 	 */
 	public void scanOrderId(String inOrderId) {
-		cheDeviceLogic.scanCommandReceived(inOrderId);
+		try {
+			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
+			cheDeviceLogic.scanCommandReceived(inOrderId);
+		} finally {
+			ContextLogging.clearNetGuid();
+		}
 	}
 
 	/**
 	 * Same as scanOrderId. DEV-621. Just given this name for clarity of JUnit tests.
 	 */
 	public void scanOrderDetailId(String inOrderDetailId) {
-		cheDeviceLogic.scanCommandReceived(inOrderDetailId);
+		try {
+			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
+			cheDeviceLogic.scanCommandReceived(inOrderDetailId);
+		} finally {
+			ContextLogging.clearNetGuid();
+		}
 	}
 
 	/**
 	 * Same as scanOrderId. DEV-653. Just given this name for clarity of JUnit tests. (Scan the SKU, or UPC, or license plate)
 	 */
 	public void scanSomething(String inSomething) {
-		cheDeviceLogic.scanCommandReceived(inSomething);
+		try {
+			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
+			cheDeviceLogic.scanCommandReceived(inSomething);
+		} finally {
+			ContextLogging.clearNetGuid();
+		}
 	}
 
 	public void scanPosition(String inPositionId) {
-		cheDeviceLogic.scanCommandReceived("P%" + inPositionId);
+		try {
+			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
+			cheDeviceLogic.scanCommandReceived("P%" + inPositionId);
+		} finally {
+			ContextLogging.clearNetGuid();
+		}
 	}
 
 	public void buttonPress(int inPosition, int inQuantity) {
-		cheDeviceLogic.simulateButtonPress(inPosition, inQuantity);
+		try {
+			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
+			cheDeviceLogic.simulateButtonPress(inPosition, inQuantity);
+		} finally {
+			ContextLogging.clearNetGuid();
+		}
 	}
 
 	// Useful, primitive methods for checking the result after some actions
@@ -199,7 +249,7 @@ public class PickSimulator {
 	public boolean isComplete() {
 		return getCompleteState().equals(getCurrentCheState());
 	}
-	
+
 	public CheStateEnum getCurrentCheState() {
 		return cheDeviceLogic.getCheStateEnum();
 	}
@@ -305,10 +355,10 @@ public class PickSimulator {
 				timeoutInMillis,
 				lastState,
 				cheDeviceLogic.inSetState());
-			throw new IllegalStateException(theProblem); 
+			throw new IllegalStateException(theProblem);
 		}
 	}
-	
+
 	public void waitForOneOfCheStates(ArrayList<CheStateEnum> statesList, int timeoutInMillis) {
 		CheStateEnum lastState = cheDeviceLogic.waitForOneOfCheStates(statesList, timeoutInMillis);
 		if (!statesList.contains(lastState)) {
@@ -321,7 +371,7 @@ public class PickSimulator {
 				timeoutInMillis,
 				lastState,
 				cheDeviceLogic.inSetState());
-			throw new IllegalStateException(theProblem); 
+			throw new IllegalStateException(theProblem);
 		}
 	}
 
@@ -342,9 +392,11 @@ public class PickSimulator {
 	public CheStateEnum getLocationStartReviewState(boolean needOldReviewState) {
 		return cheDeviceLogic.getLocationStartReviewState(needOldReviewState);
 	}
+
 	public boolean usesSummaryState() {
 		return cheDeviceLogic.usesSummaryState();
 	}
+
 	// end drastic CHE process changes
 
 	public boolean hasLastSentInstruction(byte position) {
@@ -384,13 +436,13 @@ public class PickSimulator {
 			getLastCheDisplayString(4));
 	}
 
-    public String getLastCheDisplay() {
-        StringBuffer s = new StringBuffer();
-        for (int i = 1; i <= 4; i++) {
-            s.append(getLastCheDisplayString(i)).append("\n");
-        }
-        return s.toString();
-    }
+	public String getLastCheDisplay() {
+		StringBuffer s = new StringBuffer();
+		for (int i = 1; i <= 4; i++) {
+			s.append(getLastCheDisplayString(i)).append("\n");
+		}
+		return s.toString();
+	}
 
 	public void forceDeviceToMatchManagerConfiguration() {
 		cheDeviceLogic.updateConfigurationFromManager();

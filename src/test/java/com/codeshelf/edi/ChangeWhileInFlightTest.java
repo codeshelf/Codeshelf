@@ -148,6 +148,8 @@ public class ChangeWhileInFlightTest extends ServerTest {
 		facility = Facility.staticGetDao().reload(facility);
 		order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
 		OrderStatusEnum status = order.getStatus();
+		
+		// order status should still be in progress, since a line item was added with the re-import
 		Assert.assertEquals(OrderStatusEnum.INPROGRESS, status);
 		commitTransaction();		
 	}

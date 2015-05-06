@@ -37,6 +37,8 @@ public abstract class CommandControlABC extends ExtendedCommandABC {
 	public static final byte	SET_POSCONTROLLER			= 3;
 	public static final byte	CLR_POSCONTROLLER			= 4;
 	public static final byte	BUTTON						= 5;
+	public static final byte	SINGLE_LINE_MESSAGE			= 6;
+	public static final byte	CLEAR_DISPLAY				= 7;
 
 	// --------------------------------------------------------------------------
 	/**

@@ -6,7 +6,8 @@ configuration:
       name: console
       target: SYSTEM_OUT
       patternlayout:
-        pattern: '%d{ISO8601} [%-5p] %m (%c)%n'
+        pattern: '%d{ISO8601} [%-5p] %m [%X{netguid}] [%X{worker}] [%X{tags}] [%X{user}] (%c)%n'
+# old pattern was '%d{ISO8601} [%-5p] %m (%c)%n', but we need this to closely match production
 
   loggers:
     root:
