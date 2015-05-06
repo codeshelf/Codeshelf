@@ -100,7 +100,6 @@ public class ImportResource {
 		} 
 	}
 
-	@SuppressWarnings("unused")
 	@POST
 	@Path("/orders")
 	@RequiresPermissions("order:import")
