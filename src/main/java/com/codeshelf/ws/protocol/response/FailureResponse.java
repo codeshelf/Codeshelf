@@ -14,4 +14,9 @@ public class FailureResponse extends ResponseABC{
 		setStatus(ResponseStatus.Fail);
 		setStatusMessage(message);
 	}
+
+	@Override
+	public String getDeviceIdentifier() {
+		return null;
+	}
 }

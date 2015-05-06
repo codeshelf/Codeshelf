@@ -1,10 +1,16 @@
 package com.codeshelf.service.groovy;
 
+import static com.codeshelf.service.groovy.TelnetStream.Commands.DO;
+import static com.codeshelf.service.groovy.TelnetStream.Commands.DONT;
+import static com.codeshelf.service.groovy.TelnetStream.Commands.IAC;
+import static com.codeshelf.service.groovy.TelnetStream.Commands.SB;
+import static com.codeshelf.service.groovy.TelnetStream.Commands.SE;
+import static com.codeshelf.service.groovy.TelnetStream.Commands.WILL;
+import static com.codeshelf.service.groovy.TelnetStream.Commands.WONT;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-
-import static com.codeshelf.service.groovy.TelnetStream.Commands.*;
 
 /**
  * Author:      nik <br>

@@ -28,4 +28,9 @@ public class GetOrderDetailWorkResponse extends ResponseABC {
 			}
 		}
 	}
+
+	@Override
+	public String getDeviceIdentifier() {
+		return getNetworkGuid();
+	}
 }

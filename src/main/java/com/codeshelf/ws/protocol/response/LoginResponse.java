@@ -47,4 +47,9 @@ public class LoginResponse extends ResponseABC {
 
 	public LoginResponse() {
 	}
+
+	@Override
+	public String getDeviceIdentifier() {
+		return null;
+	}
 }

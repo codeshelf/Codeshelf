@@ -34,4 +34,9 @@ public class GetPutWallInstructionResponse extends ResponseABC {
 		}
 	}
 
+
+	@Override
+	public String getDeviceIdentifier() {
+		return getNetworkGuid();
+	}
 }

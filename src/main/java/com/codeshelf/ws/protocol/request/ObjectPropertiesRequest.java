@@ -24,4 +24,9 @@ public class ObjectPropertiesRequest extends RequestABC {
 	// @Getter @Setter
 	// List<String> propertyNames;
 	
+
+	@Override
+	public String getDeviceIdentifier() {
+		return null;
+	}
 }

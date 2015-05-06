@@ -10,4 +10,9 @@ public class VerifyBadgeResponse extends ResponseABC {
 
 	@Getter @Setter
 	private Boolean verified = false;
+	
+	@Override
+	public String getDeviceIdentifier() {
+		return getNetworkGuid();
+	}
 }

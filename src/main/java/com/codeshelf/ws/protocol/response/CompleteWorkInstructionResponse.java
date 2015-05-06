@@ -8,4 +8,9 @@ import lombok.Setter;
 public class CompleteWorkInstructionResponse extends ResponseABC {
 	@Getter @Setter
 	UUID workInstructionId;
+
+	@Override
+	public String getDeviceIdentifier() {
+		return null;
+	}
 }

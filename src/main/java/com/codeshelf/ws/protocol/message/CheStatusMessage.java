@@ -3,7 +3,6 @@ package com.codeshelf.ws.protocol.message;
 import java.util.HashMap;
 import java.util.List;
 
-
 import lombok.Getter;
 import lombok.Setter;
 
@@ -41,5 +40,10 @@ public class CheStatusMessage extends MessageABC {
 				this.containerPositions.put(use.getContainerName(), use.getPosconIndex());
 			}
 		}
+	}
+
+	@Override
+	public String getDeviceIdentifier() {
+		return getCheGuid();
 	}
 }

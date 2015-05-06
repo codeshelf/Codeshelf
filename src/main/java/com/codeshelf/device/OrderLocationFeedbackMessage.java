@@ -115,4 +115,9 @@ public class OrderLocationFeedbackMessage extends MessageABC {
 		setLocationName(locName);
 	}
 
+	@Override
+	public String getDeviceIdentifier() {
+		return getControllerId();
+	}
+
 }

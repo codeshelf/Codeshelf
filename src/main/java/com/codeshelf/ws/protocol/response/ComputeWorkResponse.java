@@ -47,4 +47,9 @@ public class ComputeWorkResponse extends ResponseABC {
 			}
 		}
 	}
+
+	@Override
+	public String getDeviceIdentifier() {
+		return getNetworkGuid();
+	}
 }

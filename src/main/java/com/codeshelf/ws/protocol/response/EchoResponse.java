@@ -14,4 +14,9 @@ public class EchoResponse extends ResponseABC {
 	public EchoResponse(String message) {
 		this.message = message;
 	}
+
+	@Override
+	public String getDeviceIdentifier() {
+		return null;
+	}
 }

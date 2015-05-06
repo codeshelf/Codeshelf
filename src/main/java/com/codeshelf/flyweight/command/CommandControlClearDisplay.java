@@ -6,12 +6,6 @@
 
 package com.codeshelf.flyweight.command;
 
-import java.io.IOException;
-
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

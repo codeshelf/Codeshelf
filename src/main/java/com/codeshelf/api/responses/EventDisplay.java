@@ -3,11 +3,11 @@ package com.codeshelf.api.responses;
 import java.sql.Timestamp;
 import java.util.UUID;
 
+import lombok.Getter;
+
 import com.codeshelf.model.domain.Resolution;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.service.NotificationService.EventType;
-
-import lombok.Getter;
 
 public class EventDisplay {
 	//Event Fields

@@ -24,4 +24,9 @@ public class CheDisplayMessage extends MessageABC {
 		line3 = inLine3==null?"":inLine3;
 		line4 = inLine4==null?"":inLine4;
 	}
+
+	@Override
+	public String getDeviceIdentifier() {
+		return getNetGuidStr();
+	}
 }

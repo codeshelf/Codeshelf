@@ -30,4 +30,9 @@ public class LedInstrListMessage extends MessageABC{
 		this.mInstructions = Lists.newArrayList();
 		mInstructions.add(instruction);
 	}
+
+	@Override
+	public String getDeviceIdentifier() {
+		return null;
+	}
 }

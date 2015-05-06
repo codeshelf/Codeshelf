@@ -2,10 +2,10 @@ package com.codeshelf.ws.protocol.message;
 
 import java.util.UUID;
 
-import com.codeshelf.service.NotificationService.EventType;
-
 import lombok.Getter;
 import lombok.Setter;
+
+import com.codeshelf.service.NotificationService.EventType;
 
 public class NotificationMessage extends MessageABC{
 	@Getter
@@ -34,5 +34,10 @@ public class NotificationMessage extends MessageABC{
 		this.deviceGuid = deviceGuid;
 		this.workerId = userId;
 		this.eventType = eventType;
+	}
+
+	@Override
+	public String getDeviceIdentifier() {
+		return getDeviceGuid();
 	}
 }

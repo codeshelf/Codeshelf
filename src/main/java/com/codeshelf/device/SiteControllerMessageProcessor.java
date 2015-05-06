@@ -5,7 +5,9 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.application.ContextLogging;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.flyweight.controller.INetworkDevice;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.ws.client.CsClientEndpoint;
 import com.codeshelf.ws.protocol.command.CommandABC;
@@ -25,7 +27,7 @@ import com.codeshelf.ws.protocol.response.GetOrderDetailWorkResponse;
 import com.codeshelf.ws.protocol.response.GetPutWallInstructionResponse;
 import com.codeshelf.ws.protocol.response.InventoryUpdateResponse;
 import com.codeshelf.ws.protocol.response.LoginResponse;
-import com.codeshelf.ws.protocol.response.PutWallPlacementResponce;
+import com.codeshelf.ws.protocol.response.PutWallPlacementResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.protocol.response.VerifyBadgeResponse;
@@ -50,183 +52,212 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 
 	@Override
 	public void handleResponse(WebSocketConnection session, ResponseABC response) {
-		LOGGER.debug("Response received:" + response);
-		if (response.getStatus() != ResponseStatus.Success) {
-			LOGGER.warn("Response:{} failed for request:{} statusMsg: {}",
-				response.getClass().getSimpleName(),
-				response.getRequestId(),
-				response.getStatusMessage());
-			// LOGGER.warn("Request #" + response.getRequestId() + " failed: " + response.getStatusMessage());
-		}
-		//////////////////////////////////////////
-		// Handler for Login Response
-		if (response instanceof LoginResponse) {
-			LoginResponse loginResponse = (LoginResponse) response;
-			boolean attached = false;
-			if (loginResponse.getStatus() == ResponseStatus.Success) {
-				CodeshelfNetwork network = loginResponse.getNetwork();
-				if (network != null) {
-					LOGGER.info("Attached to network " + network.getDomainId());
-					attached = true;
+		try {
+			this.setDeviceContext(response);
 
-					// DEV-582 hook up to AUTOSHRT parameter
-					deviceManager.setAutoShortValue(loginResponse.isAutoShortValue());
-					deviceManager.setPickInfoValue(loginResponse.getPickInfoValue());
-					String pickMult = loginResponse.getPickMultValue();
-					deviceManager.setPickMultValue(Boolean.parseBoolean(pickMult));
-					deviceManager.setContainerTypeValue(loginResponse.getContainerTypeValue());
-					deviceManager.setScanTypeValue(loginResponse.getScanTypeValue());
-					deviceManager.setSequenceKind(loginResponse.getSequenceKind());
-					// attached has the huge side effect of getting all CHEs and setting up device logic for them. Better have the config values first.
-					deviceManager.attached(network);
+			LOGGER.info("Response received:" + response);
+			if (response.getStatus() != ResponseStatus.Success) {
+				LOGGER.warn("Response:{} failed for request:{} statusMsg: {}",
+					response.getClass().getSimpleName(),
+					response.getRequestId(),
+					response.getStatusMessage());
+				// LOGGER.warn("Request #" + response.getRequestId() + " failed: " + response.getStatusMessage());
+			}
+			//////////////////////////////////////////
+			// Handler for Login Response
+			if (response instanceof LoginResponse) {
+				LoginResponse loginResponse = (LoginResponse) response;
+				boolean attached = false;
+				if (loginResponse.getStatus() == ResponseStatus.Success) {
+					CodeshelfNetwork network = loginResponse.getNetwork();
+					if (network != null) {
+						LOGGER.info("Attached to network " + network.getDomainId());
+						attached = true;
+
+						// DEV-582 hook up to AUTOSHRT parameter
+						deviceManager.setAutoShortValue(loginResponse.isAutoShortValue());
+						deviceManager.setPickInfoValue(loginResponse.getPickInfoValue());
+						String pickMult = loginResponse.getPickMultValue();
+						deviceManager.setPickMultValue(Boolean.parseBoolean(pickMult));
+						deviceManager.setContainerTypeValue(loginResponse.getContainerTypeValue());
+						deviceManager.setScanTypeValue(loginResponse.getScanTypeValue());
+						deviceManager.setSequenceKind(loginResponse.getSequenceKind());
+						// attached has the huge side effect of getting all CHEs and setting up device logic for them. Better have the config values first.
+						deviceManager.attached(network);
+					} else {
+						LOGGER.error("loginResponse has no network");
+					}
+				}
+				if (!attached) {
+					LOGGER.warn("Failed to attach network: " + response.getStatusMessage());
+					try {
+						this.deviceManager.unattached();
+						clientEndpoint.disconnect();
+					} catch (IOException e) {
+						LOGGER.error("Failed to disconnect client", e);
+					}
+				}
+			}
+			//////////////////////////////////////////
+			// Handler for Verify Badge
+			else if (response instanceof VerifyBadgeResponse) {
+				VerifyBadgeResponse verifyBadgeResponse = (VerifyBadgeResponse) response;
+				deviceManager.processVerifyBadgeResponse(verifyBadgeResponse.getNetworkGuid(), verifyBadgeResponse.getVerified());
+			}
+			//////////////////////////////////////////
+			// Handler for Compute Work and Get Work
+			else if (response instanceof ComputeWorkResponse) {
+				ComputeWorkResponse computeWorkResponse = (ComputeWorkResponse) response;
+				if (computeWorkResponse.getPurpose() == ComputeWorkPurpose.COMPUTE_WORK || computeWorkResponse.getPathChanged()) {
+					if (response.getStatus() == ResponseStatus.Success) {
+						this.deviceManager.processComputeWorkResponse(computeWorkResponse.getNetworkGuid(),
+							computeWorkResponse.getTotalGoodWorkInstructions(),
+							computeWorkResponse.getContainerToWorkInstructionCountMap());
+					}
 				} else {
-					LOGGER.error("loginResponse has no network");
+					if (response.getStatus() == ResponseStatus.Success) {
+						this.deviceManager.processGetWorkResponse(computeWorkResponse.getNetworkGuid(),
+							computeWorkResponse.getWorkInstructions(),
+							computeWorkResponse.getStatusMessage());
+					}
 				}
 			}
-			if (!attached) {
-				LOGGER.warn("Failed to attach network: " + response.getStatusMessage());
-				try {
-					this.deviceManager.unattached();
-					clientEndpoint.disconnect();
-				} catch (IOException e) {
-					LOGGER.error("Failed to disconnect client", e);
-				}
-			}
-		}
-		//////////////////////////////////////////
-		// Handler for Verify Badge
-		else if (response instanceof VerifyBadgeResponse) {
-			VerifyBadgeResponse verifyBadgeResponse = (VerifyBadgeResponse) response;
-			deviceManager.processVerifyBadgeResponse(verifyBadgeResponse.getNetworkGuid(), verifyBadgeResponse.getVerified());
-		}
-		//////////////////////////////////////////
-		// Handler for Compute Work and Get Work
-		else if (response instanceof ComputeWorkResponse) {
-			ComputeWorkResponse computeWorkResponse = (ComputeWorkResponse) response;
-			if (computeWorkResponse.getPurpose() == ComputeWorkPurpose.COMPUTE_WORK || computeWorkResponse.getPathChanged()) {
+			//////////////////////////////////////////
+			// Handler for WI Completion
+			else if (response instanceof CompleteWorkInstructionResponse) {
+				CompleteWorkInstructionResponse workResponse = (CompleteWorkInstructionResponse) response;
 				if (response.getStatus() == ResponseStatus.Success) {
-					this.deviceManager.processComputeWorkResponse(computeWorkResponse.getNetworkGuid(),
-						computeWorkResponse.getTotalGoodWorkInstructions(),
-						computeWorkResponse.getContainerToWorkInstructionCountMap());
+					this.deviceManager.processWorkInstructionCompletedResponse(workResponse.getWorkInstructionId());
 				}
-			} else {
+			}
+			//////////////////////////////////////////
+			// Handler for Get Order Detail Work-- LINE_SCAN work flow
+			else if (response instanceof GetOrderDetailWorkResponse) {
+				GetOrderDetailWorkResponse workResponse = (GetOrderDetailWorkResponse) response;
 				if (response.getStatus() == ResponseStatus.Success) {
-					this.deviceManager.processGetWorkResponse(computeWorkResponse.getNetworkGuid(),
-						computeWorkResponse.getWorkInstructions(),
-						computeWorkResponse.getStatusMessage());
+					LOGGER.info("GetOrderDetailWorkResponse received: success. Passing through to deviceManager");
+					this.deviceManager.processOrderDetailWorkResponse(workResponse.getNetworkGuid(),
+						workResponse.getWorkInstructions(),
+						workResponse.getStatusMessage());
+				} else {
+					LOGGER.info("GetOrderDetailWorkResponse received: not success. No action.");
 				}
 			}
-		}
-		//////////////////////////////////////////
-		// Handler for WI Completion
-		else if (response instanceof CompleteWorkInstructionResponse) {
-			CompleteWorkInstructionResponse workResponse = (CompleteWorkInstructionResponse) response;
-			if (response.getStatus() == ResponseStatus.Success) {
-				this.deviceManager.processWorkInstructionCompletedResponse(workResponse.getWorkInstructionId());
+			//////////////////////////////////////////
+			// Handler for Get Order Detail Work-- LINE_SCAN work flow
+			else if (response instanceof GetPutWallInstructionResponse) {
+				GetPutWallInstructionResponse wallResponse = (GetPutWallInstructionResponse) response;
+				if (wallResponse.getStatus() == ResponseStatus.Success) {
+					LOGGER.info("GetPutWallInstructionResponse received: success. Passing through to deviceManager");
+					this.deviceManager.processPutWallInstructionResponse(wallResponse.getNetworkGuid(),
+						wallResponse.getWorkInstructions(),
+						wallResponse.getStatusMessage());
+				} else {
+					LOGGER.info("GetPutWallInstructionResponse received: not success. No action.");
+				}
 			}
-		}
-		//////////////////////////////////////////
-		// Handler for Get Order Detail Work-- LINE_SCAN work flow
-		else if (response instanceof GetOrderDetailWorkResponse) {
-			GetOrderDetailWorkResponse workResponse = (GetOrderDetailWorkResponse) response;
-			if (response.getStatus() == ResponseStatus.Success) {
-				LOGGER.info("GetOrderDetailWorkResponse received: success. Passing through to deviceManager");
-				this.deviceManager.processOrderDetailWorkResponse(workResponse.getNetworkGuid(),
-					workResponse.getWorkInstructions(),
-					workResponse.getStatusMessage());
-			} else {
-				LOGGER.info("GetOrderDetailWorkResponse received: not success. No action.");
+			//////////////////////////////////////////
+			// Handler for Get Order Detail Work-- LINE_SCAN work flow
+			else if (response instanceof InventoryUpdateResponse) {
+				InventoryUpdateResponse inventoryScanResponse = (InventoryUpdateResponse) response;
+				if (response.getStatus() == ResponseStatus.Success) {
+					this.deviceManager.processInventoryScanRespose(inventoryScanResponse.getStatusMessage());
+				}
 			}
-		}
-		//////////////////////////////////////////
-		// Handler for Get Order Detail Work-- LINE_SCAN work flow
-		else if (response instanceof GetPutWallInstructionResponse) {
-			GetPutWallInstructionResponse wallResponse = (GetPutWallInstructionResponse) response;
-			if (wallResponse.getStatus() == ResponseStatus.Success) {
-				LOGGER.info("GetPutWallInstructionResponse received: success. Passing through to deviceManager");
-				this.deviceManager.processPutWallInstructionResponse(wallResponse.getNetworkGuid(),
-					wallResponse.getWorkInstructions(),
-					wallResponse.getStatusMessage());
-			} else {
-				LOGGER.info("GetPutWallInstructionResponse received: not success. No action.");
-			}
-		}
-		//////////////////////////////////////////
-		// Handler for Get Order Detail Work-- LINE_SCAN work flow
-		else if (response instanceof InventoryUpdateResponse) {
-			InventoryUpdateResponse inventoryScanResponse = (InventoryUpdateResponse) response;
-			if (response.getStatus() == ResponseStatus.Success) {
-				this.deviceManager.processInventoryScanRespose(inventoryScanResponse.getStatusMessage());
-			}
-		}
 
-		else if (response instanceof PutWallPlacementResponce) {
-		}
+			else if (response instanceof PutWallPlacementResponse) {
+			}
 
-		// Handle server-side errors
-		else if (response instanceof FailureResponse) {
-			FailureResponse failureResponse = (FailureResponse) response;
-			this.deviceManager.processFailureResponse(failureResponse);
-		}
+			// Handle server-side errors
+			else if (response instanceof FailureResponse) {
+				FailureResponse failureResponse = (FailureResponse) response;
+				this.deviceManager.processFailureResponse(failureResponse);
+			}
 
-		else {
-			LOGGER.warn("Failed to handle response " + response);
+			else {
+				LOGGER.warn("Failed to handle response " + response);
+			}
+		} finally {
+			this.clearDeviceContext();
 		}
 	}
 
 	@Override
 	public void handleMessage(WebSocketConnection session, MessageABC message) {
-		//////////////////////////////////////////
-		// Handler for Network Update
-		if (message instanceof NetworkStatusMessage) {
-			NetworkStatusMessage update = (NetworkStatusMessage) message;
-			LOGGER.info("Processing Network Status update");
-			this.deviceManager.updateNetwork(update.getNetwork());
-		} else if (message instanceof LedInstrListMessage) {
-			this.deviceManager.lightSomeLeds(((LedInstrListMessage) message).getInstructions());
-		} else if (message instanceof CheDisplayMessage) {
-			CheDisplayMessage msg = (CheDisplayMessage) message;
-			String guidStr = msg.getNetGuidStr();
-			NetGuid theGuid = new NetGuid(guidStr);
-			this.deviceManager.processDisplayCheMessage(theGuid, msg.getLine1(), msg.getLine2(), msg.getLine3(), msg.getLine4());
-		} else if (message instanceof PosControllerInstr) {
-			PosControllerInstr msg = (PosControllerInstr) message;
-			this.deviceManager.processPosConControllerMessage(msg, false);
-		} else if (message instanceof PosControllerInstrList) {
-			PosControllerInstrList msg = (PosControllerInstrList) message;
-			this.deviceManager.processPosConControllerListMessage(msg);
-		} else if (message instanceof OrderLocationFeedbackMessage) {
-			OrderLocationFeedbackMessage msg = (OrderLocationFeedbackMessage) message;
-			this.deviceManager.processOrderLocationFeedbackMessage(msg);
-		} else if (message instanceof CheStatusMessage) {
-			CheStatusMessage msg = (CheStatusMessage) message;
-			LOGGER.info("Setup-state initialization received for Che: " + msg.getCheGuid());
-			this.deviceManager.processSetupStateMessage(msg.getCheGuid(), msg.getContainerPositions());
+		try {
+			this.setDeviceContext(message);
+
+			//////////////////////////////////////////
+			// Handler for Network Update
+			if (message instanceof NetworkStatusMessage) {
+				NetworkStatusMessage update = (NetworkStatusMessage) message;
+				LOGGER.info("Processing Network Status update");
+				this.deviceManager.updateNetwork(update.getNetwork());
+			} else if (message instanceof LedInstrListMessage) {
+				this.deviceManager.lightSomeLeds(((LedInstrListMessage) message).getInstructions());
+			} else if (message instanceof CheDisplayMessage) {
+				CheDisplayMessage msg = (CheDisplayMessage) message;
+				String guidStr = msg.getNetGuidStr();
+				NetGuid theGuid = new NetGuid(guidStr);
+				this.deviceManager.processDisplayCheMessage(theGuid, msg.getLine1(), msg.getLine2(), msg.getLine3(), msg.getLine4());
+			} else if (message instanceof PosControllerInstr) {
+				PosControllerInstr msg = (PosControllerInstr) message;
+				this.deviceManager.processPosConControllerMessage(msg, false);
+			} else if (message instanceof PosControllerInstrList) {
+				PosControllerInstrList msg = (PosControllerInstrList) message;
+				this.deviceManager.processPosConControllerListMessage(msg);
+			} else if (message instanceof OrderLocationFeedbackMessage) {
+				OrderLocationFeedbackMessage msg = (OrderLocationFeedbackMessage) message;
+				this.deviceManager.processOrderLocationFeedbackMessage(msg);
+			} else if (message instanceof CheStatusMessage) {
+				CheStatusMessage msg = (CheStatusMessage) message;
+				LOGGER.info("Setup-state initialization received for Che: " + msg.getCheGuid());
+				this.deviceManager.processSetupStateMessage(msg.getCheGuid(), msg.getContainerPositions());
+			}
+		} finally {
+			this.clearDeviceContext();
 		}
 	}
 
 	@Override
 	public ResponseABC handleRequest(WebSocketConnection session, RequestABC request) {
-		LOGGER.info("Request received for processing: " + request);
-		CommandABC command = null;
-		ResponseABC response = null;
+		try {
+			this.setDeviceContext(request);
 
-		if (request instanceof PingRequest) {
-			command = new PingCommand(null, (PingRequest) request);
+			LOGGER.info("Request received for processing: " + request);
+			CommandABC command = null;
+			ResponseABC response = null;
+
+			if (request instanceof PingRequest) {
+				command = new PingCommand(null, (PingRequest) request);
+			}
+			// check if matching command was found
+			if (command == null) {
+				LOGGER.warn("Unable to find matching command for request " + request + ". Ignoring request.");
+				return null;
+			}
+			// execute command and generate response to be sent to client
+			response = command.exec();
+			if (response != null) {
+				// automatically tie response to request
+				response.setRequestId(request.getMessageId());
+			} else {
+				LOGGER.warn("No response generated for request " + request);
+			}
+			return response;
+		} finally {
+			this.clearDeviceContext();
 		}
-		// check if matching command was found
-		if (command == null) {
-			LOGGER.warn("Unable to find matching command for request " + request + ". Ignoring request.");
-			return null;
+	}
+	
+	private void setDeviceContext(MessageABC message) {
+		INetworkDevice device = deviceManager.getDevice(message.getDeviceIdentifier());
+		if(device != null) {
+			ContextLogging.setNetGuid(device.getGuid());
 		}
-		// execute command and generate response to be sent to client
-		response = command.exec();
-		if (response != null) {
-			// automatically tie response to request
-			response.setRequestId(request.getMessageId());
-		} else {
-			LOGGER.warn("No response generated for request " + request);
-		}
-		return response;
+	}
+	
+	private void clearDeviceContext() {
+		ContextLogging.clearNetGuid();
 	}
 }

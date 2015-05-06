@@ -13,4 +13,9 @@ public class ObjectGetRequest extends RequestABC {
 	
 	@Getter @Setter
 	String getterMethod;
+
+	@Override
+	public String getDeviceIdentifier() {
+		return null;
+	}
 }

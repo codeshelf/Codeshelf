@@ -7,7 +7,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.protocol.request.PutWallPlacementRequest;
-import com.codeshelf.ws.protocol.response.PutWallPlacementResponce;
+import com.codeshelf.ws.protocol.response.PutWallPlacementResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
@@ -26,7 +26,7 @@ public class PutWallPlacementCommand extends CommandABC{
 
 	@Override
 	public ResponseABC exec() {
-		PutWallPlacementResponce response = new PutWallPlacementResponce();
+		PutWallPlacementResponse response = new PutWallPlacementResponse();
 		String cheId = request.getDeviceId();
 		
 		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));

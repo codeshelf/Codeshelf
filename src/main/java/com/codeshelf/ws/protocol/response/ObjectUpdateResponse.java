@@ -8,4 +8,9 @@ import lombok.ToString;
 public class ObjectUpdateResponse extends ResponseABC {
 	@Getter @Setter
 	Object results;
+
+	@Override
+	public String getDeviceIdentifier() {
+		return null;
+	}
 }

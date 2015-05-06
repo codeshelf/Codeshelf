@@ -14,4 +14,9 @@ public class EchoRequest extends RequestABC {
 	public EchoRequest(String message) {
 		this.message = message;
 	}
+
+	@Override
+	public String getDeviceIdentifier() {
+		return null;
+	}
 }

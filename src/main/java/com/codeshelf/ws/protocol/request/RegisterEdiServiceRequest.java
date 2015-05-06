@@ -4,10 +4,17 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class RegisterEdiServiceRequest extends RequestABC {
-	
-	 @Getter @Setter
-	 String facilityId;
-	 
-	 @Getter @Setter
-	 String serviceProvider;
+
+	@Getter
+	@Setter
+	String	facilityId;
+
+	@Getter
+	@Setter
+	String	serviceProvider;
+
+	@Override
+	public String getDeviceIdentifier() {
+		return null;
+	}
 }

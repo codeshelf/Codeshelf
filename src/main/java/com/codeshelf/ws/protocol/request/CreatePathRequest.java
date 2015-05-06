@@ -15,4 +15,9 @@ public class CreatePathRequest extends RequestABC {
 	
 	@Getter @Setter
 	PathSegment[] pathSegments;
+
+	@Override
+	public String getDeviceIdentifier() {
+		return null;
+	}
 }

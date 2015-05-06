@@ -21,4 +21,9 @@ public class LoginRequest extends RequestABC {
 		this.userId = userId;
 		this.password = password;
 	}
+
+	@Override
+	public String getDeviceIdentifier() {
+		return null;
+	}
 }

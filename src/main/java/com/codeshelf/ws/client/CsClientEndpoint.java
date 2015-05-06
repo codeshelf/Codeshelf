@@ -128,27 +128,33 @@ public class CsClientEndpoint {
 
 	@OnMessage(maxMessageSize = JsonEncoder.WEBSOCKET_MAX_MESSAGE_SIZE)
 	public void onMessage(Session session, MessageABC message) throws IOException, EncodeException {
-		messageReceived();
-		if (message instanceof ResponseABC) {
-			ResponseABC response = (ResponseABC) message;
-			messageProcessor.handleResponse(null, response);
-			messageCoordinator.unregisterRequest(response);
+		try {
+			
+			messageReceived();
+			if (message instanceof ResponseABC) {
+				ResponseABC response = (ResponseABC) message;
+				messageProcessor.handleResponse(null, response);
+				messageCoordinator.unregisterRequest(response);
 
-		} else if (message instanceof RequestABC) {
-			RequestABC request = (RequestABC) message;
-			LOGGER.debug("Request received: " + request);
-			// pass request to processor to execute command
-			ResponseABC response = messageProcessor.handleRequest(null, request);
-			if (response != null) {
-				// send response to client
-				LOGGER.debug("Sending response " + response + " for request " + request);
-				sendMessage(response);
-			} else {
-				LOGGER.warn("No response generated for request " + request);
+			} else if (message instanceof RequestABC) {
+				RequestABC request = (RequestABC) message;
+				LOGGER.debug("Request received: " + request);
+				// pass request to processor to execute command
+				ResponseABC response = messageProcessor.handleRequest(null, request);
+				if (response != null) {
+					// send response to client
+					LOGGER.debug("Sending response " + response + " for request " + request);
+					sendMessage(response);
+				} else {
+					LOGGER.warn("No response generated for request " + request);
+				}
+			} else if (!(message instanceof KeepAlive)) {
+				LOGGER.debug("Other message received: " + message);
+				messageProcessor.handleMessage(null, message);
 			}
-		} else if (!(message instanceof KeepAlive)) {
-			LOGGER.debug("Other message received: " + message);
-			messageProcessor.handleMessage(null, message);
+		}
+		finally {
+			
 		}
 	}
 

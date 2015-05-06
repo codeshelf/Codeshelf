@@ -21,4 +21,9 @@ public class PosControllerInstrList extends MessageABC{
 	public PosControllerInstrList(List<PosControllerInstr> instructions) {
 		this.mInstructions = instructions;
 	}
+
+	@Override
+	public String getDeviceIdentifier() {
+		return null;
+	}
 }

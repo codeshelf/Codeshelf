@@ -507,7 +507,9 @@ public class RadioController implements IRadioController {
 	@Override
 	public final void sendCommand(ICommand inCommand, NetworkId inNetworkId, NetAddress inDstAddr, boolean inAckRequested) {
 		INetworkDevice device = this.mDeviceNetAddrMap.get(inDstAddr);
+		String previousNetGuidContext = null;
 		if (device != null) {
+			previousNetGuidContext = ContextLogging.getNetGuid();
 			ContextLogging.setNetGuid(device.getGuid());
 		}
 		try {
@@ -572,7 +574,11 @@ public class RadioController implements IRadioController {
 			}
 
 		} finally {
-			ContextLogging.clearNetGuid();
+			if(previousNetGuidContext != null) {
+				ContextLogging.setNetGuid(previousNetGuidContext);
+			} else {
+				ContextLogging.clearNetGuid();
+			}
 		}
 
 	}

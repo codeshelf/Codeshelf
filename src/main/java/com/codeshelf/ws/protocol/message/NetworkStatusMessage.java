@@ -16,4 +16,10 @@ public class NetworkStatusMessage extends MessageABC {
 		network.getDomainId(); // ensure object loaded
 		this.network = network;
 	}
+
+	@Override
+	public String getDeviceIdentifier() {
+		return null;
+	}
+
 }

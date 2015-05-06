@@ -426,4 +426,9 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 			return allOk;
 		}
 	}
+
+	@Override
+	public String getDeviceIdentifier() {
+		return this.getControllerId();
+	}
 }

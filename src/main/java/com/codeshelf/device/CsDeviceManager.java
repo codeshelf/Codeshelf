@@ -207,8 +207,33 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	/* (non-Javadoc)
 	 * @see com.codeshelf.device.CsDeviceManager#getDeviceByGuid(com.codeshelf.flyweight.command.NetGuid)
 	 */
-	public final INetworkDevice getDeviceByGuid(NetGuid inGuid) {
+	public INetworkDevice getDeviceByGuid(NetGuid inGuid) {
 		return mDeviceMap.get(inGuid);
+	}
+
+	public INetworkDevice getDevice(Object deviceIdentifier) {
+		INetworkDevice result = null;
+		
+		if(deviceIdentifier instanceof NetGuid || deviceIdentifier instanceof UUID) {
+			result = mDeviceMap.get(deviceIdentifier);
+		} 
+		else if(deviceIdentifier instanceof String) {
+			// string representation of a NetGuid or UUID
+			String id = (String) deviceIdentifier;
+			deviceIdentifier = null;
+			try {
+				if(id.length() == NetGuid.NET_GUID_HEX_CHARS) {
+					deviceIdentifier = new NetGuid(id);
+				} else {
+					deviceIdentifier = UUID.fromString(id);
+				}
+			} catch(Exception e) {
+			}
+			if(deviceIdentifier != null) {
+				result = mDeviceMap.get(deviceIdentifier);
+			}
+		}
+		return result;
 	}
 
 	// --------------------------------------------------------------------------

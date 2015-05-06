@@ -1,5 +1,8 @@
 package com.codeshelf.persistence;
 
+import java.util.Comparator;
+import java.util.Date;
+
 import org.hibernate.HibernateException;
 import org.hibernate.dialect.Dialect;
 import org.hibernate.engine.spi.SessionImplementor;
@@ -8,9 +11,6 @@ import org.hibernate.type.LiteralType;
 import org.hibernate.type.TimestampType;
 import org.hibernate.type.VersionType;
 import org.hibernate.type.descriptor.java.JdbcTimestampTypeDescriptor;
-
-import java.util.Comparator;
-import java.util.Date;
 
 @SuppressWarnings("serial")
 public class UtcTimestampType extends AbstractSingleColumnStandardBasicType<Date> implements VersionType<Date>, LiteralType<Date> {

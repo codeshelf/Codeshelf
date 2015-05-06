@@ -7,4 +7,9 @@ public class ObjectGetResponse extends ResponseABC {
 
 	@Getter @Setter
 	Object results;
+
+	@Override
+	public String getDeviceIdentifier() {
+		return null;
+	}
 }
