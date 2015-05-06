@@ -57,6 +57,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	// This code runs on the site controller, not the CHE.
 	// The goal is to convert data and instructions to something that the CHE controller can consume and act on with minimal logic.
 
+	private static final String						THREAD_CONTEXT_WORKER_KEY				= "worker";
+	private static final String						THREAD_CONTEXT_TAGS_KEY					= "tags";
+
 	private static final Logger						LOGGER									= LoggerFactory.getLogger(CheDeviceLogic.class);
 
 	protected static final String					COMMAND_PREFIX							= "X%";
@@ -1711,6 +1714,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 		String orderId = inWi.getContainerId(); // We really want order ID, but site controller only has this denormalized
 
+		// old
 		// Pretty goofy code duplication, but can avoid some run time execution if loglevel would not result in this logging
 		if (needWarn)
 			LOGGER.warn("*{} for order/cntr:{} item:{} location:{} by picker:{} device:{}",
@@ -1728,6 +1732,28 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				inWi.getPickInstruction(),
 				getUserId(),
 				getMyGuidStr());
+
+		// new
+		try {
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Work_Instruction");
+			if (needWarn)
+				LOGGER.info("{} for order/cntr:{} item:{} location:{}",
+					inVerb,
+					orderId,
+					inWi.getItemId(),
+					inWi.getPickInstruction());
+			else
+				LOGGER.info("{} for order/cntr:{} item:{} location:{}",
+					inVerb,
+					orderId,
+					inWi.getItemId(),
+					inWi.getPickInstruction());
+		} finally {
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+		}
+
 		NotificationMessage message = new NotificationMessage(Che.class, getPersistentId(), getMyGuidStr(), getUserId(), inVerb);
 		if (!inWi.isHousekeeping()) {
 			message.setWorkInstructionId(inWi.getPersistentId());
@@ -1752,8 +1778,20 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	}
 
 	protected void notifyCheWorkerVerb(String inVerb, String otherInformation) {
-		// VERBS initially are LOGIN, LOGOUT, BEGIN SETUP, START PATH, COMPLETE PATH
+		// VERBS initially are LOGIN, LOGOUT, BEGIN, SETUP, START_PATH, COMPLETE_PATH
+		// old
 		LOGGER.info("*{} by picker:{} device:{} {}", inVerb, getUserId(), getMyGuidStr(), otherInformation);
+
+		// new
+		try {
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Worker_Action");
+			LOGGER.info(inVerb);
+		} finally {
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+		}
+
 	}
 
 	protected void notifyPutWallResponse(final List<WorkInstruction> inWorkItemList) {
@@ -1772,34 +1810,61 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	}
 
 	protected void notifyScanInventoryUpdate(String locationStr, String itemOrGtin) {
+		// old
 		LOGGER.info("*Inventory update for item/gtin:{} to location:{} by picker:{} device:{}",
 			itemOrGtin,
 			locationStr,
 			getUserId(),
 			getMyGuidStr());
+
 	}
 
 	protected void notifyButton(int buttonNum, int showingQuantity) {
+		// old
 		LOGGER.info("*Button #{} pressed with quantity {} by picker:{} device:{}",
 			buttonNum,
 			showingQuantity,
 			getUserId(),
 			getMyGuidStr());
+
+		// new
+		try {
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Button");
+			LOGGER.info("Button #{} pressed with quantity {}", buttonNum, showingQuantity);
+		} finally {
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+		}
+
+		/* Remove--we do not need button presses in our database.
 		NotificationMessage message = new NotificationMessage(Che.class,
 			getPersistentId(),
 			getMyGuidStr(),
 			getUserId(),
 			EventType.BUTTON);
 		mDeviceManager.sendNotificationMessage(message);
+		*/
 	}
 
 	protected void notifyOffCheButton(int buttonNum, int showingQuantity, String fromGuidId) {
+		// old
 		LOGGER.info("*Wall Button #{} device:{} pressed with quantity {}. Inferred picker:{} inferred device:{}",
 			buttonNum,
 			fromGuidId,
 			showingQuantity,
 			getUserId(),
 			getMyGuidStr());
+
+		// new
+		try {
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Button_Press");
+			LOGGER.info("Wall Button #{} device:{} pressed with quantity {}", buttonNum, fromGuidId, showingQuantity);
+		} finally {
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+		}
 	}
 
 	private void notifyNonChePosconLight(String controllerId, int posconIndex, WorkInstruction wi) {
@@ -1807,6 +1872,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			LOGGER.error("null work instruction in notifyNonChePosconLight");
 			return;
 		}
+		// old
 		int displayCount = wi.getPlanQuantity();
 		LOGGER.info("*Wall Button #{} device:{} will show count:{}. Active job for picker:{} device:{}",
 			posconIndex,
@@ -1814,10 +1880,31 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			displayCount,
 			getUserId(),
 			getMyGuidStr());
+
+		// new
+		try {
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Button_Display");
+			LOGGER.info("Button #{} device:{} will show count:{} for active job", posconIndex, controllerId, displayCount);
+		} finally {
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+		}
 	}
 
 	protected void notifyScan(String theScan) {
+		// old
 		LOGGER.info("*Scan {} by picker:{} device:{}", theScan, getUserId(), getMyGuidStr());
+
+		// new
+		try {
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Scan");
+			LOGGER.info(theScan);
+		} finally {
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -1910,7 +1997,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		CheStateEnum existingState = getCheStateEnum();
 		return existingState;
 	}
-	
+
 	/**
 	 * Method used for script testing, where a Che may transition to one of several states, and we'd like to wait for transition to finish before proceeding
 	 */
@@ -1931,7 +2018,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		CheStateEnum existingState = getCheStateEnum();
 		return existingState;
 	}
-
 
 	public void processResultOfVerifyBadge(Boolean verified) {
 		// To be overridden by SetupOrderDeviceLogic and LineScanDeviceLogic
