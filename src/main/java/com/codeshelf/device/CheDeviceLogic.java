@@ -418,12 +418,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
 	
-	// FIXME - huffa temp
-	protected void sendMessage(String msg, byte font, short x, short y){
-		ICommand command = new CommandControlDispalySingleLineMessage(NetEndpoint.PRIMARY_ENDPOINT, msg, font, x, y);
-		mRadioController.sendCommand(command, getAddress(), true);
-	}
-	
 	protected void clearDisplay(){
 		ICommand command = new CommandControlClearDisplay(NetEndpoint.PRIMARY_ENDPOINT);
 		mRadioController.sendCommand(command, getAddress(), true);
