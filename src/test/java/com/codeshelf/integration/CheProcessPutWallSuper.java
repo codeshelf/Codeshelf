@@ -196,6 +196,7 @@ public class CheProcessPutWallSuper extends ServerTest {
 		// Some extra singleton orders just to get to completion states.
 		// worksequence field is there for other tests that use this superclass
 		// See note about orders 11115 and 11116 in putWallOtherConfigurations() case 2c. Set both to sequen 113 to reproduce
+		// order 11120 has two preferred locations that are not modeled.
 
 		String orderCsvString = "orderGroupId,shipmentId,customerId,orderId,orderDetailId,preAssignedContainerId,itemId,description,quantity,uom, locationId, gtin, workSequence"
 				+ "\r\n,USF314,COSTCO,12345,12345.1,12345,1123,Sku1123,1,each,F11,gtin1123,11"
@@ -215,6 +216,9 @@ public class CheProcessPutWallSuper extends ServerTest {
 				+ "\r\n,USF314,COSTCO,11118,11118.1,11118,1515,Sku1515,3,each,S11,gtin1515,111"
 				+ "\r\n,USF314,COSTCO,11118,11118.2,11118,1521,Sku1521,3,each,S11,gtin1521,111"
 				+ "\r\n,USF314,COSTCO,11119,11119.1,11119,1555,Sku1555,2,each,F13,gtin1555,13"
+				+ "\r\n,USF314,COSTCO,11120,11120.1,11120,1701,Sku1701,2,each,X12,gtin1701,99"
+				+ "\r\n,USF314,COSTCO,11120,11120.2,11120,1702,Sku1702,2,each,X11,gtin1702,99"
+				+ "\r\n,USF314,COSTCO,11120,11120.3,11120,1602,Sku1602,2,each,X11,gtin1602,99"
 ;
 
 		Facility facility = getFacility();

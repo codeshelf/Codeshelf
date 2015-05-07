@@ -1539,14 +1539,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			String otherCountStr = Integer.toString(otherCount);
 			otherCountStr = StringUtils.leftPad(otherCountStr, 3);
 			if (pickCount == 1)
-				line2 = String.format("%s pick   %s other", pickCountStr, otherCountStr);
+				line2 = String.format("%s job    %s other", pickCountStr, otherCountStr);
 			else
-				line2 = String.format("%s picks  %s other", pickCountStr, otherCountStr);
+				line2 = String.format("%s jobs   %s other", pickCountStr, otherCountStr);
 		} else {
 			if (pickCount == 1)
-				line2 = String.format("%s pick ", pickCountStr);
+				line2 = String.format("%s job  ", pickCountStr);
 			else
-				line2 = String.format("%s picks", pickCountStr);
+				line2 = String.format("%s jobs ", pickCountStr);
 		}
 
 		int doneCount = getCountOfCompletedJobsThisSetup();
