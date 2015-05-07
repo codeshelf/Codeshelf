@@ -8,6 +8,7 @@ package com.codeshelf.flyweight.bitfields;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -219,7 +220,18 @@ public final class BitFieldInputStream {
 			byte[] rawBytes = new byte[len];
 
 			this.readBytes(rawBytes, len);
-			return new String(rawBytes);
+			
+			// we pick up garbage from the scanner sometimes.
+			// check unprintables. Throw ioexception, same as readByte and readBytes
+			for (byte b : rawBytes){
+				if (b < (byte) 32 || b > (byte) 127) {
+					throw new IOException("Unprintable character found in BitFieldInputStream");
+				}
+			}
+			
+			// used to do String(rawBytes) which leave you at the liberty of the local machine. Specify something
+			return new String(rawBytes,Charset.forName("US-ASCII"));
+			
 		} else {
 			return "";
 		}

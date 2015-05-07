@@ -1186,7 +1186,12 @@ public class RadioController implements IRadioController {
 				switch (inCommand.getExtendedCommandID().getValue()) {
 					case CommandControlABC.SCAN:
 						CommandControlScan scanCommand = (CommandControlScan) inCommand;
-						device.scanCommandReceived(scanCommand.getCommandString());
+						// The scan command certainly should have a string, but if the scanner is wiggy, maybe not.
+						String receivedScan = scanCommand.getCommandString();
+						if (receivedScan == null)
+							LOGGER.warn("Bad Scan! You may wish to check this scanner.");
+						else
+							device.scanCommandReceived(scanCommand.getCommandString());
 						break;
 
 					case CommandControlABC.BUTTON:
