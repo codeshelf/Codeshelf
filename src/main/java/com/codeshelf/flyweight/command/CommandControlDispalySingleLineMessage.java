@@ -30,11 +30,12 @@ public final class CommandControlDispalySingleLineMessage extends CommandControl
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CommandControlDispalySingleLineMessage.class);
 	
 	private static final int LENGTH_BYTES = 9;
-	
+
 	//Supported display fonts
 	public static final byte	ARIAL16						= 1;
 	public static final byte	ARIAL26						= 2;
-	public static final byte	BARCODE						= 3;	// FIXME - should be named correctly
+	public static final byte	BAR3Of9						= 3;
+	public static final byte	OPENSAN26BOLD				= 4;
 
 	@Accessors(prefix = "m")
 	@Getter
