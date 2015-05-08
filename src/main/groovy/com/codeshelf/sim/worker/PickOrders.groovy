@@ -8,7 +8,9 @@ import com.google.gson.JsonParser;
 
 class PickOrders {
 	int WAIT_TIMEOUT = 10000
+	int WAIT_ACTION = 0;
 	String workerId = "GroovyWorker1";
+	ArrayList<String> containers = new ArrayList<>();
 	
 	def pickOrders(PickSimulator picker, ArrayList<String> containerList, double chanceSkipUpc, double chanceShort) {
 		if (containerList == null || containerList.isEmpty()) {
@@ -22,9 +24,11 @@ class PickOrders {
 	
 		//Login into CHE
 		picker.loginAndSetup(workerId);
+		pause();
 		
 		//Setup containers and compute work
 		setupChe(picker, containerList)
+		pause();
 		
 		//Pick orders
 		pick(picker, chanceSkipUpc, chanceShort);
@@ -35,9 +39,53 @@ class PickOrders {
 		return "Finished picking containers " + containerList;
 	}
 	
-	boolean chance(double percentage) {
+	/**
+	 * This function will pick a provided number of recently imported orders in a single CHE run
+	 */
+	def pickOrders(PickSimulator picker, int startIndex, int endIndex, double chanceSkipUpc, double chanceShort) {
+		if (containers.isEmpty() || startIndex <= 0 || endIndex < startIndex) {
+			String msg = "Could not pick containers " + startIndex + " - " + endIndex + " from " + containers;
+			println(msg);
+			return msg;
+		}
+		int totalContainers = containers.size();
+		ArrayList<String> containerBatch = new ArrayList<>();
+		while (startIndex < totalContainers && startIndex <= endIndex) {
+			containerBatch.add(containers.get(startIndex++));
+		}
+		pickOrders(picker, containerBatch, chanceSkipUpc, chanceShort);
+	}
+	
+	/**
+	 * This function will pick a provided number of recently imported orders in a single CHE run
+	 */
+	def pickAllOrders(PickSimulator picker, int containersBatchSize, double chanceSkipUpc, double chanceShort) {
+		if (containers.isEmpty() || containersBatchSize <= 0) {
+			String msg = "Could not pick containers " + containers + " in batches of " + containersBatchSize;
+			println(msg);
+			return msg;
+		}
+		ArrayList containerBatch = new ArrayList<String>();
+		int index = 0, totalContainers = containers.size();
+		while (index < totalContainers) {
+			containerBatch.add(containers.get(index++));
+			if (containerBatch.size >= containersBatchSize) {
+				pickOrders(picker, containerBatch, chanceSkipUpc, chanceShort);
+				containerBatch = new ArrayList<String>();
+			}
+		}
+		pickOrders(picker, containerBatch, chanceSkipUpc, chanceShort);
+		return "Finished picking containers " + containers;
+	}
+
+	
+	def boolean chance(double percentage) {
 		double rnd = Math.random();
 		return rnd < percentage;
+	}
+	
+	def pause() {
+		Thread.sleep(WAIT_ACTION);
 	}
 	
 	/**
@@ -53,7 +101,7 @@ class PickOrders {
 		//Assign containers to positions
 		int position = 1;
 		for (container in containerList) {
-			picker.setupContainer(container, position++ + "");
+			picker.setupContainer(container + "", position++ + "");
 		}
 		//Compute work
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
@@ -66,7 +114,9 @@ class PickOrders {
 			println(noWorkMsg);
 			return noWorkMsg;
 		}
-
+		String msg = "Set containers " + containerList + " to the CHE"
+		println(msg);
+		return msg;
 	}
 	
 	def pick(PickSimulator picker, double chanceSkipUpc, double chanceShort){
@@ -74,11 +124,13 @@ class PickOrders {
 		CheStateEnum state = picker.getCurrentCheState();
 		if (state == CheStateEnum.IDLE) {
 			picker.loginAndSetup(workerId);
+			pause();
 		}
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		picker.waitForOneOfCheStates([CheStateEnum.SETUP_SUMMARY, CheStateEnum.LOCATION_SELECT, CheStateEnum.NO_WORK, CheStateEnum.DO_PICK, CheStateEnum.SCAN_SOMETHING], WAIT_TIMEOUT);
 		state = picker.getCurrentCheState();
 		if (state == CheStateEnum.SETUP_SUMMARY || state == CheStateEnum.LOCATION_SELECT){
+			pause();
 			picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 			picker.waitForOneOfCheStates([CheStateEnum.SETUP_SUMMARY, CheStateEnum.NO_WORK, CheStateEnum.DO_PICK, CheStateEnum.SCAN_SOMETHING], WAIT_TIMEOUT);
 		}
@@ -96,6 +148,7 @@ class PickOrders {
 		
 		//Iterate over instructions, picking items, until no instructions left
 		while(true){
+			pause();
 			WorkInstruction instruction = picker.getActivePick();
 			if (instruction == null) {
 				println("No active picks left");
@@ -120,7 +173,6 @@ class PickOrders {
 					}
 					picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIMEOUT);
 				}
-				//Thread.sleep(1000);
 				//Pick item or short it
 				if (chance(chanceShort)) {
 					println("Short Item");
@@ -136,8 +188,11 @@ class PickOrders {
 				}
 			}
 		}
+		String msg = "Completed CHE run";
+		println(msg);
+		return msg;
 	}
-		
+	 
 	def importOrders(String facilityId, String filename){
 		String outFile = 'importedOrders.txt';
 		def sout = new StringBuffer(), serr = new StringBuffer()
@@ -163,30 +218,25 @@ class PickOrders {
 		}
 		//Generate a list of imported containers
 		JsonArray ordersList = parsedOrders.getAsJsonArray("result");
-		HashSet<String> containers = new HashSet<>();
+		HashSet<String> containersHash = new HashSet<>();
 		for (JsonObject order : ordersList) {
 			String containerId = order["preAssignedContainerId"].getAsString();
 			if (containerId != null) {
-				containers.add(containerId);
+				containersHash.add(containerId);
 			}
 		}
+		containers = new ArrayList<String>(containersHash);
 		println("Imported containers: " + containers);
 		return containers;
 	}
 	
 	def importAndPickOrders(PickSimulator picker, String facilityId, String filename, int batchSize, double chanceSkipUpc, double chanceShort) {
-		HashSet<String> containers = importOrders(facilityId, filename);
+		//Import orders
+		importOrders(facilityId, filename);
 		
-		//Assign containers to CHE and pick them in batches
-		ArrayList containerBatch = new ArrayList<String>();
-		for (String container : containers) {
-			containerBatch.add(container);
-			if (containerBatch.size >= batchSize) {
-				pickOrders(picker, containerBatch, chanceSkipUpc, chanceShort);
-				containerBatch = new ArrayList<String>();
-			}
-		}
-		pickOrders(picker, containerBatch, chanceSkipUpc, chanceShort);
-		return;
+		//Pick all orders in batches
+		pickAllOrders(picker, batchSize, chanceSkipUpc, chanceShort);
+		
+		return "Orders imported and picked";
 	}	
 }

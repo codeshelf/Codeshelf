@@ -1,0 +1,7 @@
+:load src/main/groovy/com/codeshelf/sim/worker/PickOrders.groovy
+picker = new PickSimulator(deviceManager, "0x0000009B");
+pickProcess = new PickOrders();
+pickProcess.importOrders("87e1c58d-b98b-4f19-a6ec-74c7109d97f4", "../../Desktop/Orders/orders_100_1.csv");
+pickProcess.setupChe(picker, [26768766, 26768767, 26768774, 26768775]);
+pickProcess.pick(picker, 0.3, 0.3);
+picker.logout();
