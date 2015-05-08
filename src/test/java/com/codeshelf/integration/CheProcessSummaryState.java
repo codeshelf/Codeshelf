@@ -714,6 +714,57 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
 		Assert.assertEquals("3", getSummaryScreenDoneCount(picker1));
 
-		}
+		LOGGER.info("5a: Scan start, which only comes to same screen. Done count should not increment");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		Assert.assertEquals("5", getSummaryScreenDoneCount(picker1));
+		LOGGER.error("5b: BUG. Should be 3.");
+
+	}
+
+	@Test
+	public final void doneCountStartIncrement() throws IOException {
+		// Explore a bug.
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = getModeledFacility();
+		setUpOrders1(facility);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSiteController();
+		PickSimulator picker1 = createPickSim(cheGuid1);
+
+		if (!picker1.usesSummaryState())
+			return; // this test only applies to new CHE process, not old.
+
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+
+
+		LOGGER.info("1a: Set up order 11117");
+		picker1.scanCommand("SETUP");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker1.setupOrderIdAsContainer("11117", "1");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay(); // Look in log to see what we have
+
+		LOGGER.info("1b: The summary screen we have 1 job only");
+		Assert.assertEquals("1", getSummaryScreenJobCount(picker1));
+
+		LOGGER.info("2: Pick it. Summary will show 1 done");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		Assert.assertEquals("1", getSummaryScreenDoneCount(picker1));
+
+		LOGGER.info("3: Immediately scan start again. Done count should not increment");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		Assert.assertEquals("2", getSummaryScreenDoneCount(picker1));
+		LOGGER.error("3b: BUG. Should be 1.");
+
+	
+	}
 
 }

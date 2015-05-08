@@ -1077,8 +1077,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					if (wi.isHousekeeping()) {
 						LOGGER.warn("Probable test error. Don't short a housekeeping. User error if happening in production");
 						invalidScanMsg(mCheStateEnum); // Invalid to short a housekeep
-					}
-					else
+					} else
 						setState(CheStateEnum.SHORT_PICK); // flashes all poscons with active jobs
 				} else {
 					// Stay in the same state - the scan made no sense.
@@ -1175,9 +1174,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private void requestWorkAndSetGetWorkState(final String inLocationStr, final Boolean reverseOrderFromLastTime) {
 		// by protocol, inLocationStr may be null for START or Reverse. Do not overwrite mLocationId which is perfectly good.
 		clearAllPosconsOnThisDevice();
-		
+
 		rememberCompletesAndShorts(); // is this right?
-		
+
 		Map<String, String> positionToContainerMapCopy = new HashMap<String, String>(mPositionToContainerMap);
 		LOGGER.info("Sending {} positions to server in getCheWork", positionToContainerMapCopy.size());
 		mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(),
@@ -1394,6 +1393,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 			}
 			LOGGER.info("Got Counts {}", mContainerToWorkInstructionCountMap);
+			// It is not so clear, should server give us completed work instructions? Should we clear those out?
+						
+			
 
 			if (usesSummaryState())
 				setState(CheStateEnum.SETUP_SUMMARY);
@@ -1491,8 +1493,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	private void rememberCompletesAndShorts() {
 		setRememberPriorShorts(getCountOfShortsThisSetup());
+		LOGGER.info("Entering rememberCompletesAndShorts, prior completes={}", getRememberPriorCompletes());
 		setRememberPriorCompletes(getCountOfCompletedJobsThisSetup());
-	}
+		LOGGER.info("After adding this setup completes; rememberCompletesAndShorts, prior completes={}", getRememberPriorCompletes());
+}
 
 	/**
 	 * When we are changing path or starting again, and get feedback from server, we need to remember how many shorts and completes we have done.
@@ -1501,6 +1505,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		setRememberPriorShorts(0);
 		setRememberPriorCompletes(0);
 	}
+
 	/**
 	 * Show status for this setup in our restrictive 4 x 20 manner.
 	 * Trying to align the counts, allow for 3 digit counts.
@@ -1796,9 +1801,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		clearAllPosconsOnThisDevice();
 		mContainerInSetup = "";
-		
+
 		rememberCompletesAndShorts(); // is this right?
-		
+
 		//Duplicate map to avoid later changes
 		Map<String, String> positionToContainerMapCopy = new HashMap<String, String>(mPositionToContainerMap);
 		LOGGER.info("Sending {} positions to server in computeCheWork", positionToContainerMapCopy.size());
