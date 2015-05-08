@@ -417,8 +417,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			inLine4Message);
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
-	
-	protected void clearDisplay(){
+
+	protected void clearDisplay() {
 		ICommand command = new CommandControlClearDisplay(NetEndpoint.PRIMARY_ENDPOINT);
 		mRadioController.sendCommand(command, getAddress(), true);
 	}
@@ -1708,8 +1708,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 		String orderId = inWi.getContainerId(); // We really want order ID, but site controller only has this denormalized
 
-		// old
-		// Pretty goofy code duplication, but can avoid some run time execution if loglevel would not result in this logging
+		/*
 		if (needWarn)
 			LOGGER.warn("*{} for order/cntr:{} item:{} location:{} by picker:{} device:{}",
 				inVerb,
@@ -1726,11 +1725,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				inWi.getPickInstruction(),
 				getUserId(),
 				getMyGuidStr());
+		*/
 
 		// new
 		try {
 			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
 			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Work_Instruction");
+			// Pretty goofy code duplication, but can avoid some run time execution if loglevel would not result in this logging
 			if (needWarn)
 				LOGGER.info("{} for order/cntr:{} item:{} location:{}",
 					inVerb,
@@ -1756,25 +1757,49 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	}
 
 	protected void notifyOrderToPutWall(String orderId, String locationName) {
+		/*
 		LOGGER.info("*Put order/cntr:{} into put wall location:{} by picker:{} device:{}",
 			orderId,
 			locationName,
 			getUserId(),
 			getMyGuidStr());
+		*/
+
+		// new
+		try {
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Order_Into_Wall");
+			LOGGER.info("Put order/cntr:{} into put wall location:{}", orderId, locationName);
+		} finally {
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+		}
 	}
 
 	protected void notifyRemoveOrderFromChe(String orderId, Byte orderPositionOnChe) {
+		/*
 		LOGGER.info("*Removed order/cntr:{} from position:{} by picker:{} device:{}",
 			orderId,
 			orderPositionOnChe,
 			getUserId(),
 			getMyGuidStr());
+		*/
+
+		// new
+		try {
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Remove_Order_Che");
+			LOGGER.info("Removed order/cntr:{} from position:{}", orderId, orderPositionOnChe);
+		} finally {
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+		}
 	}
 
 	protected void notifyCheWorkerVerb(String inVerb, String otherInformation) {
 		// VERBS initially are LOGIN, LOGOUT, BEGIN, SETUP, START_PATH, COMPLETE_PATH
-		// old
-		LOGGER.info("*{} by picker:{} device:{} {}", inVerb, getUserId(), getMyGuidStr(), otherInformation);
+
+		// LOGGER.info("*{} by picker:{} device:{} {}", inVerb, getUserId(), getMyGuidStr(), otherInformation);
 
 		// new
 		try {
@@ -1792,34 +1817,68 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		int listsize = 0;
 		if (inWorkItemList != null)
 			listsize = inWorkItemList.size();
-		LOGGER.info("*{} work instructions in put wall response by picker:{} device:{}", listsize, getUserId(), getMyGuidStr());
+		// LOGGER.info("*{} work instructions in put wall response by picker:{} device:{}", listsize, getUserId(), getMyGuidStr());
+
+		// new
+		try {
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Plans_Response");
+			LOGGER.info("{} work instructions in put wall response", listsize);
+		} finally {
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+		}
 	}
 
 	protected void notifyPutWallItem(String itemOrUpd, String wallname) {
-		LOGGER.info("*Request plans for item:{} in put wall:{} by picker:{} device:{}",
+		/*
+		   LOGGER.info("*Request plans for item:{} in put wall:{} by picker:{} device:{}",
 			itemOrUpd,
 			wallname,
 			getUserId(),
 			getMyGuidStr());
+		*/
+
+		// new
+		try {
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Plans_Request");
+			LOGGER.info("Request plans for item:{} in put wall:{}", itemOrUpd, wallname);
+		} finally {
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+		}
+
 	}
 
 	protected void notifyScanInventoryUpdate(String locationStr, String itemOrGtin) {
-		// old
+		/*
 		LOGGER.info("*Inventory update for item/gtin:{} to location:{} by picker:{} device:{}",
 			itemOrGtin,
 			locationStr,
 			getUserId(),
 			getMyGuidStr());
-
+		*/
+		
+		// new
+		try {
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Inventory_Update");
+			LOGGER.info("Inventory update for item/gtin:{} to location:{}", itemOrGtin, locationStr);
+		} finally {
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+		}
 	}
 
 	protected void notifyButton(int buttonNum, int showingQuantity) {
-		// old
+		/*
 		LOGGER.info("*Button #{} pressed with quantity {} by picker:{} device:{}",
 			buttonNum,
 			showingQuantity,
 			getUserId(),
 			getMyGuidStr());
+		*/
 
 		// new
 		try {
@@ -1842,13 +1901,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	}
 
 	protected void notifyOffCheButton(int buttonNum, int showingQuantity, String fromGuidId) {
-		// old
+		/*
 		LOGGER.info("*Wall Button #{} device:{} pressed with quantity {}. Inferred picker:{} inferred device:{}",
 			buttonNum,
 			fromGuidId,
 			showingQuantity,
 			getUserId(),
 			getMyGuidStr());
+		*/
 
 		// new
 		try {
@@ -1866,14 +1926,15 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			LOGGER.error("null work instruction in notifyNonChePosconLight");
 			return;
 		}
-		// old
 		int displayCount = wi.getPlanQuantity();
+		/*
 		LOGGER.info("*Wall Button #{} device:{} will show count:{}. Active job for picker:{} device:{}",
 			posconIndex,
 			controllerId,
 			displayCount,
 			getUserId(),
 			getMyGuidStr());
+		*/
 
 		// new
 		try {
@@ -1887,8 +1948,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	}
 
 	protected void notifyScan(String theScan) {
-		// old
-		LOGGER.info("*Scan {} by picker:{} device:{}", theScan, getUserId(), getMyGuidStr());
+		// LOGGER.info("*Scan {} by picker:{} device:{}", theScan, getUserId(), getMyGuidStr());
 
 		// new
 		try {
