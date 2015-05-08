@@ -53,6 +53,7 @@ public class WorkInstructionCount {
 		this.shortCount = immediateShortCount;
 		this.completeCount = completeCount;
 		this.invalidOrUnknownStatusCount = invalidOrUnknownStatusCount;
+		// fyi: looks like this constructor is used only by tests and not in production. That is ok.
 	}
 
 	public WorkInstructionCount() {

@@ -717,8 +717,7 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		LOGGER.info("5a: Scan start, which only comes to same screen. Done count should not increment");
 		picker1.scanCommand("START");
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
-		Assert.assertEquals("5", getSummaryScreenDoneCount(picker1));
-		LOGGER.error("5b: BUG. Should be 3.");
+		Assert.assertEquals("3", getSummaryScreenDoneCount(picker1));
 
 	}
 
@@ -758,13 +757,30 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		Assert.assertEquals("1", getSummaryScreenDoneCount(picker1));
 
+		LOGGER.info("2b: position 1 will show oc");
+		Assert.assertEquals(picker1.getLastSentPositionControllerDisplayValue((byte) 1),
+			PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker1.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_C);
+		Assert.assertEquals(picker1.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);
+
+		LOGGER.info("3: Immediately scan start again. Done count should not increment. Poscon still show oc");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		Assert.assertEquals("1", getSummaryScreenDoneCount(picker1));
+		Assert.assertEquals(picker1.getLastSentPositionControllerDisplayValue((byte) 1),
+			PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker1.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_C);
+		Assert.assertEquals(picker1.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);
+
 		LOGGER.info("3: Immediately scan start again. Done count should not increment");
 		picker1.scanCommand("START");
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
-		Assert.assertEquals("2", getSummaryScreenDoneCount(picker1));
-		LOGGER.error("3b: BUG. Should be 1.");
+		Assert.assertEquals("1", getSummaryScreenDoneCount(picker1));
+		Assert.assertEquals(picker1.getLastSentPositionControllerDisplayValue((byte) 1),
+			PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker1.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_C);
+		Assert.assertEquals(picker1.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);
 
-	
 	}
 
 }
