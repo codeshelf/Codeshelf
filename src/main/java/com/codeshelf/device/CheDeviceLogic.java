@@ -27,7 +27,6 @@ import com.codeshelf.device.AisleDeviceLogic.LedCmd;
 import com.codeshelf.device.PosControllerInstr.PosConInstrGroupSerializer;
 import com.codeshelf.flyweight.command.CommandControlButton;
 import com.codeshelf.flyweight.command.CommandControlClearDisplay;
-import com.codeshelf.flyweight.command.CommandControlDispalySingleLineMessage;
 import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
 import com.codeshelf.flyweight.command.EffectEnum;
 import com.codeshelf.flyweight.command.ICommand;

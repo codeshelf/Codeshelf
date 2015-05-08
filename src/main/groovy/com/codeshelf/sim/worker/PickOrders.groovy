@@ -10,7 +10,7 @@ class PickOrders {
 	int WAIT_TIMEOUT = 10000
 	int WAIT_ACTION = 0;
 	String workerId = "GroovyWorker1";
-	ArrayList<String> containers = new ArrayList<>();
+	ArrayList<String> importedContainers = new ArrayList<>();
 	
 	def pickOrders(PickSimulator picker, ArrayList<String> containerList, double chanceSkipUpc, double chanceShort) {
 		if (containerList == null || containerList.isEmpty()) {
@@ -43,15 +43,15 @@ class PickOrders {
 	 * This function will pick a provided number of recently imported orders in a single CHE run
 	 */
 	def pickOrders(PickSimulator picker, int startIndex, int endIndex, double chanceSkipUpc, double chanceShort) {
-		if (containers.isEmpty() || startIndex <= 0 || endIndex < startIndex) {
-			String msg = "Could not pick containers " + startIndex + " - " + endIndex + " from " + containers;
+		if (importedContainers.isEmpty() || startIndex <= 0 || endIndex < startIndex) {
+			String msg = "Could not pick containers " + startIndex + " - " + endIndex + " from " + importedContainers;
 			println(msg);
 			return msg;
 		}
-		int totalContainers = containers.size();
+		int totalContainers = importedContainers.size();
 		ArrayList<String> containerBatch = new ArrayList<>();
 		while (startIndex < totalContainers && startIndex <= endIndex) {
-			containerBatch.add(containers.get(startIndex++));
+			containerBatch.add(importedContainers.get(startIndex++));
 		}
 		pickOrders(picker, containerBatch, chanceSkipUpc, chanceShort);
 	}
@@ -60,8 +60,15 @@ class PickOrders {
 	 * This function will pick a provided number of recently imported orders in a single CHE run
 	 */
 	def pickAllOrders(PickSimulator picker, int containersBatchSize, double chanceSkipUpc, double chanceShort) {
+		return pickOrders(picker, importedContainers, containersBatchSize, chanceSkipUpc, chanceShort);
+	}
+	
+	/**
+	 * This function will pick a provided number of recently imported orders in a single CHE run
+	 */
+	def pickOrders(PickSimulator picker, ArrayList<String> containerList, int containersBatchSize, double chanceSkipUpc, double chanceShort) {
 		if (containers.isEmpty() || containersBatchSize <= 0) {
-			String msg = "Could not pick containers " + containers + " in batches of " + containersBatchSize;
+			String msg = "Could not pick containers " + importedContainers + " in batches of " + containersBatchSize;
 			println(msg);
 			return msg;
 		}
@@ -77,7 +84,6 @@ class PickOrders {
 		pickOrders(picker, containerBatch, chanceSkipUpc, chanceShort);
 		return "Finished picking containers " + containers;
 	}
-
 	
 	def boolean chance(double percentage) {
 		double rnd = Math.random();
@@ -225,9 +231,9 @@ class PickOrders {
 				containersHash.add(containerId);
 			}
 		}
-		containers = new ArrayList<String>(containersHash);
-		println("Imported containers: " + containers);
-		return containers;
+		importedContainers = new ArrayList<String>(containersHash);
+		println("Imported containers: " + importedContainers);
+		return importedContainers;
 	}
 	
 	def importAndPickOrders(PickSimulator picker, String facilityId, String filename, int batchSize, double chanceSkipUpc, double chanceShort) {
