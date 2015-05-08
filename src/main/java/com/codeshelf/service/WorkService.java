@@ -99,12 +99,14 @@ import com.google.inject.Inject;
 
 public class WorkService extends AbstractCodeshelfExecutionThreadService implements IApiService {
 
-	public static final long			DEFAULT_RETRY_DELAY	= 10000L;
-	private static final String			SHUTDOWN_MESSAGE	= "*****SHUTDOWN*****";
-	public static final int				DEFAULT_CAPACITY	= Integer.MAX_VALUE;
-	private static Double				BAY_ALIGNMENT_FUDGE	= 0.25;
+	private static final String			THREAD_CONTEXT_TAGS_KEY	= "tags";										// duplicated in CheDeviceLogic. Need a common place
 
-	private static final Logger			LOGGER				= LoggerFactory.getLogger(WorkService.class);
+	public static final long			DEFAULT_RETRY_DELAY		= 10000L;
+	private static final String			SHUTDOWN_MESSAGE		= "*****SHUTDOWN*****";
+	public static final int				DEFAULT_CAPACITY		= Integer.MAX_VALUE;
+	private static Double				BAY_ALIGNMENT_FUDGE		= 0.25;
+
+	private static final Logger			LOGGER					= LoggerFactory.getLogger(WorkService.class);
 	private BlockingQueue<WIMessage>	completedWorkInstructions;
 
 	private final LightService			lightService;
@@ -903,7 +905,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		// If something was scanned, even if it does not resolve to a location, don't limit to first path found
 		String chesLastScan = inChe.getLastScannedLocation(); // may or may not have been updated by saveCheLastScannedLocation() above
-		if (chesLastScan == null || chesLastScan.isEmpty())			
+		if (chesLastScan == null || chesLastScan.isEmpty())
 			if (inChe.getActivePath() == null && !completeRouteWiList.isEmpty()) {
 				Collections.sort(completeRouteWiList, new GroupAndSortCodeComparator());
 				String locationId = getFirstGoodAisleLocation(completeRouteWiList);
@@ -1651,9 +1653,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		OrderDetail orderDetail = storedWi.getOrderDetail();
 		// from v5 housekeeping WI may have null orderDetail
 		if (orderDetail != null) {
-			if (orderDetail.getActive()==false) {
+			if (orderDetail.getActive() == false) {
 				// TODO: create event
-				LOGGER.warn("Workinstruction completed for inactive order detail "+orderDetail);				
+				LOGGER.warn("Workinstruction completed for inactive order detail " + orderDetail);
 			}
 			orderDetail.reevaluateStatus();
 			OrderHeader order = orderDetail.getParent();
@@ -1804,21 +1806,44 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 	/**
 	 * This function attempts to place an Order into a provided Location
+	 */
+	private void logInContext(String tag, String msg, boolean warnNeeded) {
+		try {
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, tag);
+			if (warnNeeded)
+				LOGGER.warn(msg);
+			else
+				LOGGER.info(msg);
+		} finally {
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+		}
+	}
+
+	/**
+	 * This function attempts to place an Order into a provided Location
 	 * It is used during a Put Wall setup
 	 */
 	public boolean processPutWallPlacement(Che che, String orderId, String locationId) {
+		if (che == null) {
+			LOGGER.error("null che in processPutWallPlacement. how?");
+			return false;
+		}
+		final String orderWallTag = "CHE_EVENT Order_To_Wall";
+
 		Facility facility = che.getFacility();
 		//Try to retrieve OrderHeader and Location that were specified. Exit function if either was not found
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
 		Location location = facility.findSubLocationById(locationId);
 		if (order == null) {
-			LOGGER.warn("Could not find order " + orderId);
+			logInContext(orderWallTag, "Could not find order " + orderId, true);
 			return false;
 		}
 		if (location == null) {
-			LOGGER.warn("Could not find location " + locationId);
+			logInContext(orderWallTag, "Could not find location " + locationId, true);
 			return false;
 		}
+
+		String whatWeDid = "";
 
 		// Just to avoid churn, lets not delete and make new if we would only replicate what is there.
 		boolean skipDeleteNew = false;
@@ -1828,6 +1853,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			ol = locations.get(0);
 			if (location.equals(ol.getLocation())) {
 				skipDeleteNew = true;
+				whatWeDid = "No update. Order already there.";
 			}
 		}
 
@@ -1837,10 +1863,27 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			for (OrderLocation foundLocation : locations) {
 				order.removeOrderLocation(foundLocation);
 				orderLocationDao.delete(foundLocation);
+				String orderName = foundLocation.getParentId();
+				whatWeDid = whatWeDid + String.format("Removed prior order %s. ", orderName);
 			}
 			//Create a new order location in the put wall
 			ol = order.addOrderLocation(location);
+			if (ol != null) {
+				String olOrderName = ol.getParentId();
+				Location olLoc = ol.getLocation();
+				String locName = olLoc.getBestUsableLocationName();
+				whatWeDid = whatWeDid + String.format("Add order %s to %s. ", olOrderName, locName);
+			}
 		}
+
+		// Let's log in our new style
+		String cheGuidName = che.getDeviceGuidStrNoPrefix();
+		String toLogStr = String.format("Put wall order message from %s for %s at %s. Server action: %s ",
+			cheGuidName,
+			orderId,
+			locationId,
+			whatWeDid);
+		logInContext(orderWallTag, toLogStr, false);
 
 		//Light up the selected location. Send even if just a redo
 		computeAndSendOrderFeedback(ol, true); // single message is last of the group

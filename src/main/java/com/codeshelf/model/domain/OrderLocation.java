@@ -27,6 +27,7 @@ import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 // --------------------------------------------------------------------------
@@ -74,7 +75,7 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	@JsonProperty
 	private Timestamp			updated;
 
-	// The owning facility.
+	// The owning order.
 	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	@Getter
 	@Setter
@@ -111,5 +112,19 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	public final Facility getFacility() {
 		return getParent().getFacility();
 	}
+	
+	// --------------------------------------------------------------------------
+	/* 
+	 * This is just order ID
+	 */
+	@JsonIgnore
+	public String getParentId() {
+		OrderHeader theParent = getParent();
+		if (theParent != null)
+			return theParent.getDomainId();
+		else
+			return "";
+	}
+
 
 }
