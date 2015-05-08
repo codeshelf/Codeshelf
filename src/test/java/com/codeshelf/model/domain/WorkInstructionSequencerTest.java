@@ -81,12 +81,13 @@ public class WorkInstructionSequencerTest extends ServerTest {
 	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testBayDistanceSequencer()  throws IOException{
-		this.getTenantPersistenceService().beginTransaction();
-
+		beginTransaction();
 		Facility facility = setUpFacility("FAC-"+new UUID());
+		commitTransaction();
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
 		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
+		beginTransaction();
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1123,D101,12 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,0\r\n" //
 				+ "1124,D102,18 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,0\r\n" //
@@ -95,7 +96,10 @@ public class WorkInstructionSequencerTest extends ServerTest {
 				+ "1127,D202,SJJ BPP,1,each,6/25/14 12:00,00\r\n" //
 				+ "1128,D203,SJJ BPP,10,each,6/25/14 12:00,0\r\n"; //
 		importInventoryData(facility, csvString);
+		commitTransaction();
 
+		beginTransaction();
+		facility = facility.reload();
 		Location locationD101 = facility.findSubLocationById("D101");
 		Location locationD102 = facility.findSubLocationById("D102");
 		Location locationD103 = facility.findSubLocationById("D103");
@@ -105,6 +109,7 @@ public class WorkInstructionSequencerTest extends ServerTest {
 
 		Item item1123LocD101 = locationD101.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123LocD101);
+		commitTransaction();
 
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Item 1123 exists in case and each.
@@ -116,9 +121,13 @@ public class WorkInstructionSequencerTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,12345,12345,1125,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1126,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1128,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+		beginTransaction();
 		importOrdersData(facility, csvString2);
+		commitTransaction();
 		
 		// We should have one order with 4 details 
+		beginTransaction();
+		facility = facility.reload();
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
 		Assert.assertNotNull(order);
 		Integer detailCount = order.getOrderDetails().size();

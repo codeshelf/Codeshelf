@@ -146,9 +146,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 
 	}
 
-	// @SuppressWarnings("unused")
-	@SuppressWarnings("unused")
-	private void setUpGroup1OrdersAndSlotting(Facility inFacility) throws IOException {
+	private void setUpGroup1OrdersAndSlotting(Facility facility) throws IOException {
 		// These are group = "1". Orders "123", "456", and "789"
 		// 5 products batched into containers 11 through 15
 		// and 99999999,Unknown Item
@@ -171,8 +169,11 @@ public class CheProcessTestCrossBatch extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,888,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,999,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
-		importOrdersData(inFacility, orderCsvString);
-
+		beginTransaction();
+		facility = facility.reload();
+		importOrdersData(facility, orderCsvString);
+		commitTransaction();
+		
 		// Slotting file
 
 		String csvString2 = "orderId,locationId\r\n" //
@@ -180,7 +181,10 @@ public class CheProcessTestCrossBatch extends ServerTest {
 				+ "456,D-25\r\n" // in A1.B2
 				+ "888,D-XX\r\n" // bad location
 				+ "789,D-35\r\n"; // in A2.B2
-		boolean result = importSlotting(inFacility, csvString2);
+		beginTransaction();
+		facility = facility.reload();
+		importSlotting(facility, csvString2);
+		commitTransaction();
 
 		// Batches file. 11-15 are valid. 16-18 are looking for problems.
 		String thirdCsvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
@@ -193,43 +197,47 @@ public class CheProcessTestCrossBatch extends ServerTest {
 				+ "1,18,77777777,2,ea\r\n" // Order for item does not exist.
 				+ "1,19,66666666,2,ea\r\n" // Order for item came with 0 count in outbound order.
 				+ "1,15,10706961,2,ea\r\n"; // a good one last, to prove we elegantly skipped one line each only above.
-		importBatchData(inFacility, thirdCsvString);
+		beginTransaction();
+		facility = facility.reload();
+		importBatchData(facility, thirdCsvString);
+		commitTransaction();
 	}
 
 	@Test
 	public final void testDataSetup() throws IOException {
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Facility facility = setUpSimpleSlottedFacility();
 		UUID facId = facility.getPersistentId();
+		commitTransaction();
+		
 		setUpGroup1OrdersAndSlotting(facility);
-		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		facility = Facility.staticGetDao().findByPersistentId(facId);
 		Assert.assertNotNull(facility);
 
 		List<Container> containers = Container.staticGetDao().findByParent(facility);
 		int containerCount = containers.size(); // This can throw if  we did not re-get the facility in the new transaction boundary. Just testing that.
 		Assert.assertTrue(containerCount == 7);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
 	public final void basicCrossBatchRun() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Facility facility = setUpSimpleSlottedFacility();
-		UUID facId = facility.getPersistentId();
-		setUpGroup1OrdersAndSlotting(facility);
 		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		UUID facId = facility.getPersistentId();
+		commitTransaction();
+
+		setUpGroup1OrdersAndSlotting(facility);
 
 		this.startSiteController();
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		facility = Facility.staticGetDao().findByPersistentId(facId);
 		Assert.assertNotNull(facility);
-
 
 		// Set up a cart for orders 12345 and 1111, which will generate work instructions
 		PickSimulator picker = createPickSim(cheGuid1);
@@ -275,18 +283,18 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		picker.pick(button, quant);
 		picker.waitForCheState(picker.getCompleteState(), 5000);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
 	public final void crossBatchShorts() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-
+		beginTransaction();
 		Facility facility = setUpSimpleSlottedFacility();
 		UUID facId = facility.getPersistentId();
-		setUpGroup1OrdersAndSlotting(facility);
 		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
+
+		setUpGroup1OrdersAndSlotting(facility);
 
 		this.startSiteController();
 

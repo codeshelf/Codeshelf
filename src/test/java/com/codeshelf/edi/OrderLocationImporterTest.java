@@ -60,8 +60,7 @@ public class OrderLocationImporterTest extends ServerTest {
 	 */
 	@Test
 	public final void testSlottingBeforeOrders() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-
+		beginTransaction();
 		Facility facility = getTestFacility("O-SLOTTING9", "F-SLOTTING9");
 		setupTestLocations(facility);
 		
@@ -85,7 +84,9 @@ public class OrderLocationImporterTest extends ServerTest {
 		OrderHeader order3333 = OrderHeader.staticGetDao().findByDomainId(facility, "03333");
 		Assert.assertNotNull("Should have still processed the other lines after an error", order3333); // after fix, will have a header
 		Assert.assertEquals("Should have still processed the other lines after an error",1, order3333.getOrderLocations().size());
-
+		commitTransaction();
+		
+		beginTransaction();
 		// **************
 		// Now the orders file. The 01111 line has detailId 01111.1. The other two leave the detail blank, so will get a default name.
 		String csvString4 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -93,7 +94,10 @@ public class OrderLocationImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,,02222,,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,,03333,,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvString4);
+		commitTransaction();
 
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		order1111 = OrderHeader.staticGetDao().findByDomainId(facility, "01111");
 
 		Assert.assertNotNull(order1111);

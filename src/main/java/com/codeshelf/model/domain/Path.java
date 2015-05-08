@@ -459,13 +459,12 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	public void deleteThisPath() {
 
 		for (PathSegment segment : this.getSegments()) {
-
 			// make sure segment is not associated to a location			
 			for (Location location : segment.getLocations()) {
 				if (location.getAssociatedPathSegment().equals(segment)) {
-					LOGGER.info("clearing path segment association");
+					LOGGER.debug("clearing path segment association");
+					location = TenantPersistenceService.<Location>deproxify(location);
 					location.setPathSegment(null);
-					// which DAO?
 					location.getDao().store(location);
 				}
 			}
@@ -479,14 +478,6 @@ public class Path extends DomainObjectTreeABC<Facility> {
 			this.setWorkArea(null);
 			Path.staticGetDao().store(this);
 			WorkArea.staticGetDao().delete(wa);
-
-			/*			
-			wa.setParent(null);
-			WorkArea...store(wa);
-			*/
-			// WorkArea has lists of locations, users and active ches also.
-			// Jeff said users and ches will come later, but for now, they do not point at the wa. He said location list can be removed.
-
 		}
 		// then delete this path
 		Path.staticGetDao().delete(this);

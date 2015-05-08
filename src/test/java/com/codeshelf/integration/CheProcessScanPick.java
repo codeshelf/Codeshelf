@@ -1083,10 +1083,13 @@ public class CheProcessScanPick extends ServerTest {
 	 */
 	@Test
 	public final void testPfswebScanPicks() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
-		this.setUpOrdersWithCntrAndSequence(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
+		
+		beginTransaction();
+		setUpOrdersWithCntrAndSequence(facility);
+		commitTransaction();
 
 		LOGGER.info("1a: leave LOCAPICK off, set SCANPICK, set WORKSEQR");
 

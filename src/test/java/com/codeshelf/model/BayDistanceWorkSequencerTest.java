@@ -26,33 +26,35 @@ import edu.emory.mathcs.backport.java.util.Arrays;
 public class BayDistanceWorkSequencerTest extends ServerTest {
 	@Test
 	public void testEdiSequenceByPath() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
 		//Combined Path order: [A3.B3, A3.B2, A3.B1, A1.B3, A2.B3, A1.B2, A2.B2, A1.B1, A2.B1]
 		//Default Item pick order: I3(D303, [2])->I2(D302, [1])->I1(D301, [0])->I4(D401, [3])
 		Facility facility = setUpSimpleNoSlotFacility();
-		String prefferences[] = {"","","",""};
-		List<WorkInstruction> instructions = common(facility, prefferences);
+
+		beginTransaction();
+		String preferences[] = {"","","",""};
+		List<WorkInstruction> instructions = common(facility, preferences);
 
 		WorkInstructionSequencerABC sequencer = getWorkSequenceSequencer(facility);
 		List<WorkInstruction> sorted = sequencer.sort(facility, instructions);
 
 		Assert.assertEquals(ImmutableList.of(instructions.get(2), instructions.get(1), instructions.get(0), instructions.get(3)), sorted);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
 	public void testEdiBothWorkSequence() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
 		//Combined Path order: [A3.B3, A3.B2, A3.B1, A1.B3, A2.B3, A1.B2, A2.B2, A1.B1, A2.B1]
 		//Default Item pick order: I3(D303, [2])->I2(D302, [1])->I1(D301, [0])->I4(D401, [3])
 		Facility facility = setUpSimpleNoSlotFacility();
-		String prefferences[] = {"1","2","3","4"};
-		List<WorkInstruction> instructions = common(facility, prefferences);
+
+		beginTransaction();
+		String preferences[] = {"1","2","3","4"};
+		List<WorkInstruction> instructions = common(facility, preferences);
 		WorkInstructionSequencerABC sequencer = getWorkSequenceSequencer(facility);
 		List<WorkInstruction> sorted = sequencer.sort(facility, instructions);
 
 		Assert.assertEquals(ImmutableList.of(instructions.get(0), instructions.get(1), instructions.get(2), instructions.get(3)), sorted);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	private WorkInstructionSequencerABC getWorkSequenceSequencer(Facility facility) {
@@ -63,28 +65,32 @@ public class BayDistanceWorkSequencerTest extends ServerTest {
 	
 	@Test
 	public void testEdiSequenceMixed() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
 		//Combined Path order: [A3.B3, A3.B2, A3.B1, A1.B3, A2.B3, A1.B2, A2.B2, A1.B1, A2.B1]
 		//Default Item pick order: I3(D303, [2])->I2(D302, [1])->I1(D301, [0])->I4(D401, [3])
 		Facility facility = setUpSimpleNoSlotFacility();
-		String prefferences[] = {"","","","2"};
-		List<WorkInstruction> instructions = common(facility, prefferences);
+
+		beginTransaction();
+		facility = facility.reload();
+		String preferences[] = {"","","","2"};
+		List<WorkInstruction> instructions = common(facility, preferences);
 
 		WorkInstructionSequencerABC sequencer = getWorkSequenceSequencer(facility);
 		List<WorkInstruction> sorted = sequencer.sort(facility, instructions);
 
 		Assert.assertEquals(ImmutableList.of(instructions.get(3), instructions.get(2), instructions.get(1), instructions.get(0)), sorted);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 	
 	@Test
 	public void testEdiSequenceNoLocationsOlnyPrefferences() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
 		//Combined Path order: [A3.B3, A3.B2, A3.B1, A1.B3, A2.B3, A1.B2, A2.B2, A1.B1, A2.B1]
 		//Default Item pick order: I3(D303, [2])->I2(D302, [1])->I1(D301, [0])->I4(D401, [3])
 		Facility facility = setUpSimpleNoSlotFacility();
-		String prefferences[] = {"1","2","3","4"};
-		List<WorkInstruction> instructions = common(facility, prefferences);
+		
+		beginTransaction();
+		facility = facility.reload();
+		String preferences[] = {"1","2","3","4"};
+		List<WorkInstruction> instructions = common(facility, preferences);
 		
 		instructions.get(0).setLocation(null);
 		instructions.get(1).setLocation(null);
@@ -95,17 +101,19 @@ public class BayDistanceWorkSequencerTest extends ServerTest {
 		List<WorkInstruction> sorted = sequencer.sort(facility, instructions);
 
 		Assert.assertEquals(ImmutableList.of(instructions.get(0), instructions.get(1), instructions.get(2), instructions.get(3)), sorted);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 	
 	@Test
 	public void testEdiSequenceFirstRemoveWhenNoLocation() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
 		//Combined Path order: [A3.B3, A3.B2, A3.B1, A1.B3, A2.B3, A1.B2, A2.B2, A1.B1, A2.B1]
 		//Default Item pick order: I3(D303, [2])->I2(D302, [1])->I1(D301, [0])->I4(D401, [3])
 		Facility facility = setUpSimpleNoSlotFacility();
-		String prefferences[] = {"","2","","4"};
-		List<WorkInstruction> instructions = common(facility, prefferences);
+
+		beginTransaction();
+		facility = facility.reload();
+		String preferences[] = {"","2","","4"};
+		List<WorkInstruction> instructions = common(facility, preferences);
 		
 		instructions.get(0).setLocation(null);
 		instructions.get(1).setLocation(null);
@@ -116,25 +124,28 @@ public class BayDistanceWorkSequencerTest extends ServerTest {
 		List<WorkInstruction> sorted = sequencer.sort(facility, instructions);
 
 		Assert.assertEquals(ImmutableList.of(instructions.get(1), instructions.get(3)), sorted);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
 	public void testEdiSequenceFirstRemoveWhenNoPath() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
 		//Combined Path order: [A3.B3, A3.B2, A3.B1, A1.B3, A2.B3, A1.B2, A2.B2, A1.B1, A2.B1]
 		//Default Item pick order: I3(D303, [2])->I2(D302, [1])->I1(D301, [0])->I4(D401, [3])
 		Facility facility = setUpSimpleNoSlotFacility();
-		String prefferences[] = {"1","","3",""};
-		List<WorkInstruction> instructions = common(facility, prefferences);
+
+		beginTransaction();
+		facility = facility.reload();
+		String preferences[] = {"1","","3",""};
+		List<WorkInstruction> instructions = common(facility, preferences);
 
 		List<Path> paths = facility.getPaths();
 		for (Path path : paths) {
 			facility.removePath(path.getDomainId());
 			path.deleteThisPath();
 		}
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		
+		beginTransaction();
 		Facility.staticGetDao().reload(facility);
 		WorkInstructionSequencerABC sequencer = getWorkSequenceSequencer(facility);
 		List<WorkInstruction> sorted = sequencer.sort(facility, instructions);
@@ -145,7 +156,7 @@ public class BayDistanceWorkSequencerTest extends ServerTest {
 		for (Path path : paths) {
 			facility.addPath(path);
 		}
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	private List<WorkInstruction> common(Facility facility, String[] preffernces) throws IOException{

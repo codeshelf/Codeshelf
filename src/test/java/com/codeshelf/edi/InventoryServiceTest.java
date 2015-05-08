@@ -35,13 +35,15 @@ public class InventoryServiceTest extends ServerTest {
 	
 	@Before
 	public void initTest() throws IOException {
-		TenantPersistenceService.getInstance().beginTransaction();
+		beginTransaction();
 		VirtualSlottedFacilityGenerator generator = new VirtualSlottedFacilityGenerator(createAisleFileImporter(), createLocationAliasImporter(), createOrderImporter());
 		Facility facility = generator.generateFacilityForVirtualSlotting(testName.getMethodName());
-		generator.setupOrders(facility);
-		
 		this.facilityId=facility.getPersistentId();
-		TenantPersistenceService.getInstance().commitTransaction();
+		commitTransaction();
+
+		beginTransaction();
+		generator.setupOrders(facility);
+		commitTransaction();
 	}
 	
 	/**
@@ -261,7 +263,7 @@ public class InventoryServiceTest extends ServerTest {
 
 	@Test
 	public void testUpsertItemUsingAlphaCount() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Facility facility=Facility.staticGetDao().findByPersistentId(facilityId);
 
 		Tier tier = (Tier) facility.findSubLocationById("A1.B1.T1");
@@ -280,7 +282,7 @@ public class InventoryServiceTest extends ServerTest {
 			Assert.assertTrue(e.hasViolationForProperty("quantity"));
 		}
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test

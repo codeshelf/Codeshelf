@@ -36,11 +36,12 @@ public class LineScanTest extends ServerTest {
 
 	@Before
 	public void initTest() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		importer = createOrderImporter();
 		Facility facility = createFacility(); 
 		ServiceFactory serviceFactory = new ServiceFactory(workService, null, null, null, null, null, null);
-		//processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get());
+		commitTransaction();
+
 		processor = new ServerMessageProcessor(serviceFactory, new ConverterProvider().get(), this.webSocketManagerService);
 		
 		String csvString = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,gtin,type,locationId,cmFromLeft"
@@ -48,9 +49,9 @@ public class LineScanTest extends ServerTest {
 				+ "\r\n11,11,11.1,SKU0003,Spoon 6in.,1,CS,,pick,D21,"
 				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D35,10"
 				+ "\r\n11,11,10.1,SKU0005,Mars Bars,20,EA,,pick,D36,10";
+		beginTransaction();
 		importCsvString(facility, csvString);
-
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
@@ -106,7 +107,7 @@ public class LineScanTest extends ServerTest {
 
 	@Test
 	public void testGetWorkInstructionCompletedInstruction() throws Exception {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Che che = Che.staticGetDao().getAll().get(0);
 
 		ComputeDetailWorkRequest request = new ComputeDetailWorkRequest(che.getPersistentId().toString(), "11.1");
@@ -127,7 +128,7 @@ public class LineScanTest extends ServerTest {
 		response = workService.getWorkInstructionsForOrderDetail(che, "11.1"); 
 		instructions = response.getWorkInstructions();
 		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, instruction.getStatus());
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 	
 	@Test

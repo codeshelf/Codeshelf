@@ -124,10 +124,13 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		// This shows the simple success case of 4 picks from 2 orders on 2 paths. CHE's lastScanLocation at F11, so START would assume that.
 		// A few extra starts and location scans thrown in before getting to the picks.
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();		
 		Facility facility = getModeledFacility();
+		commitTransaction();
+		
+		beginTransaction();		
 		setUpOrders1(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
@@ -249,10 +252,13 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 	@Test
 	public final void badLocationChange() throws IOException {
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();		
 		Facility facility = getModeledFacility();
+		commitTransaction();
+
+		beginTransaction();		
 		setUpOrders1(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
@@ -361,10 +367,13 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 	@Test
 	public final void workSequenceAndSummary() throws IOException {
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Facility facility = getUnmodeledFacility();
+		commitTransaction();
+		
+		beginTransaction();
 		setUpOrders1(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
@@ -441,10 +450,13 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 	@Test
 	public final void badOrdersAndSummary() throws IOException {
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Facility facility = getUnmodeledFacility();
+		commitTransaction();
+
+		beginTransaction();
 		setUpOrders1(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
@@ -498,10 +510,13 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 	public final void cheSetupPersistence() throws IOException {
 		// This somewhat replicates a small section in CheProcessScanPick
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Facility facility = getUnmodeledFacility();
+		commitTransaction();
+
+		beginTransaction();
 		setUpOrders1(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);

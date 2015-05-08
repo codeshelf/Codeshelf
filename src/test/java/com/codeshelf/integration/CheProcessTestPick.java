@@ -97,9 +97,12 @@ public class CheProcessTestPick extends ServerTest {
 				+ "Tier,T3,,5,32,40,\r\n" //
 				+ "Tier,T4,,5,32,60,\r\n" //
 				+ "Tier,T5,,5,32,80,\r\n";//
+		beginTransaction();
 		importAislesData(getFacility(), csvAisles);
-
+		commitTransaction();
+		
 		// Get the aisle
+		beginTransaction();
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
 		Assert.assertNotNull(aisle1);
 
@@ -112,6 +115,7 @@ public class CheProcessTestPick extends ServerTest {
 		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getFacility(), "A2");
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
+		commitTransaction();		
 
 		String csvAliases = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1.T1.S1,D-96\r\n" + "A1.B1.T1.S2,D-97\r\n" + "A1.B1.T1.S3,D-98\r\n"
@@ -165,25 +169,32 @@ public class CheProcessTestPick extends ServerTest {
 				+ "A2.B2.T5.S1	D-5\r\n"
 				+ "A2.B2.T5.S2	D-4\r\n" + "A2.B2.T5.S3	D-3\r\n" + "A2.B2.T5.S4	D-2\r\n"
 				*/
-				+ "A2.B2.T5.S5	D-1\r\n";
-		importLocationAliasesData(getFacility(), csvAliases);
+				+ "A2.B2.T5.S5,D-1\r\n";
+		beginTransaction();
+		Facility fac = getFacility().reload();
+		importLocationAliasesData(fac, csvAliases);
+		commitTransaction();
+		
+		beginTransaction();
+		fac = fac.reload();
 
 		CodeshelfNetwork network = getNetwork();
 
 		LedController controller1 = network.findOrCreateLedController("1", new NetGuid("0x00000011"));
 
 		Short channel1 = 1;
-		Location aisle1x = getFacility().findSubLocationById("A1");
+		Location aisle1x = fac.findSubLocationById("A1");
 		controller1.addLocation(aisle1x);
 		aisle1x.setLedChannel(channel1);
 		aisle1x.getDao().store(aisle1x);
 
-		Location aisle2x = getFacility().findSubLocationById("A2");
+		Location aisle2x = fac.findSubLocationById("A2");
 		controller1.addLocation(aisle2x);
 		aisle2x.setLedChannel(channel1);
 		aisle2x.getDao().store(aisle2x);
+		commitTransaction();
 
-		return getFacility();
+		return fac;
 	}
 
 	private void setUpSmallInventoryAndOrders(Facility inFacility) throws IOException {
@@ -198,7 +209,10 @@ public class CheProcessTestPick extends ServerTest {
 				+ "1522,D302,Butterfly Yoyo,,ea,6/25/14 12:00,3\r\n" //
 				+ "1523,D301,SJJ BPP, ,each,6/25/14 12:00,3\r\n"//
 				+ "1555,D502,paper towel, ,cs,6/25/14 12:00,18\r\n";//
+		beginTransaction();
+		inFacility = Facility.staticGetDao().reload(inFacility);
 		importInventoryData(inFacility, csvInventory);
+		commitTransaction();
 
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Item 1123 exists in case and each.
@@ -215,7 +229,10 @@ public class CheProcessTestPick extends ServerTest {
 				+ "\r\n,USF314,COSTCO,11111,11111,1523,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n,USF314,COSTCO,11111,11111,1124,8 oz Bowls -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n,USF314,COSTCO,11111,11111,1555,paper towel,2,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+		beginTransaction();
+		inFacility = Facility.staticGetDao().reload(inFacility);
 		importOrdersData(inFacility, csvOrders);
+		commitTransaction();
 	}
 
 	@SuppressWarnings("unused")
@@ -223,7 +240,7 @@ public class CheProcessTestPick extends ServerTest {
 		// Setting up containers 2,3,7,11 to match the bug
 
 		// Outbound orders
-
+		beginTransaction();
 		String csvOrders = "orderGroupId,orderId,itemId,description,quantity,uom\r\n" //
 				+ "5/26/14,1001dry,53a8a03ab38e3c0200000330,vitalvittles Organic Flax-Seed Oat Bread,2,loaf\r\n" //
 				+ "5/26/14,1003dry,539f2da2622fcc0200001009,sayhayfarms Organic Sungold Cherry Tomatoes,4,pint\r\n" //
@@ -231,29 +248,36 @@ public class CheProcessTestPick extends ServerTest {
 				+ "5/26/14,1007dry,5266bd1e4d5eed0200000155,firebrand Pretzel Croutons,8,bag\r\n" //
 				+ "5/26/14,1016dry,50916c6dd136890200000311,blackjet Crack*a*Roons,17,cookies\r\n"; //
 		importOrdersData(inFacility, csvOrders);
-
+		inFacility = Facility.staticGetDao().reload(inFacility);
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(inFacility, "1001dry");
-		// inFacility.getOrderHeader("1001dry");
 		Assert.assertNotNull(order);
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 1, detailCount);
+		commitTransaction();
 
 		// Slotting
+		beginTransaction();		
 		String csvSlotting = "orderId,locationId\r\n" //
 				+ "1001dry,D-26\r\n" + "1001dry,D-27\r\n" + "1001dry,D-28\r\n" + "1001dry,D-29\r\n"
 				+ "1001dry,D-30\r\n"
 				+ "1001dry,D-31\r\n" + "1001dry,D-32\r\n" + "1001dry,D-33\r\n" + "1001dry,D-34\r\n"
 				+ "1001dry,D-35\r\n"
 				+ "1003dry,D-22\r\n" + "1006dry,D-100\r\n" + "1016dry,D-76\r\n" + "1007dry,D-99\r\n";
+		inFacility = Facility.staticGetDao().reload(inFacility);
 		boolean result = importSlotting(inFacility, csvSlotting);
+		commitTransaction();
 
 		// Batches file. Only containers 2,3,7,11
+		beginTransaction();
+		inFacility = Facility.staticGetDao().reload(inFacility);
 		String csvBatch = "itemId,orderGroupId,containerId,description,quantity,uom\r\n" //
 				+ "539f2da2622fcc0200001009,5/26/14,2,sayhayfarms Organic Sungold Cherry Tomatoes,1,pint\r\n" //
 				+ "53a8a03ab38e3c0200000330,5/26/14,3,vitalvittles Organic Flax-Seed Oat Bread,1,loaf\r\n" //
 				+ "50916c6dd136890200000311,5/26/14,7,blackjet Crack*a*Roons,2,cookies\r\n" //
 				+ "5266bd1e4d5eed0200000155,5/26/14,11,firebrand Pretzel Croutons,7,bag\r\n";//
+		inFacility = Facility.staticGetDao().reload(inFacility);
 		importBatchData(inFacility, csvBatch);
+		commitTransaction();
 	}
 
 	@Test
@@ -696,17 +720,16 @@ public class CheProcessTestPick extends ServerTest {
 		// Case 5: Inappropriate location scan, then normal button press works");
 
 		// set up data for pick scenario
-		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSimpleNoSlotFacility();
+
 		setUpSmallInventoryAndOrders(facility);
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
 
 		// Verify only two containers made
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		List<Container> containers = Container.staticGetDao().findByParent(facility);
 		Assert.assertEquals(2, containers.size());
+		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
@@ -1037,8 +1060,9 @@ public class CheProcessTestPick extends ServerTest {
 		// Reproduce bug seen during MAT for v10
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpZigzagSlottedFacility();
-		setUpBatchOrdersForZigzag(facility);
 		this.getTenantPersistenceService().commitTransaction();
+
+		setUpBatchOrdersForZigzag(facility);
 
 		this.startSiteController();
 
@@ -1115,10 +1139,9 @@ public class CheProcessTestPick extends ServerTest {
 	public final void twoChesCrossBatch() throws IOException {
 		// Reproduce DEV-592 seen during MAT for v10
 		// This test case setup similarly to testRouteWrap2
-		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpZigzagSlottedFacility();
+
 		setUpBatchOrdersForZigzag(facility);
-		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
 
@@ -1191,9 +1214,8 @@ public class CheProcessTestPick extends ServerTest {
 		// set up data for pick scenario
 
 		// set up data for pick scenario
-		this.getTenantPersistenceService().beginTransaction();
-
 		Facility facility = setUpSimpleNoSlotFacility();
+		
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
 		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -1202,6 +1224,7 @@ public class CheProcessTestPick extends ServerTest {
 				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
 				+ "4,D401,Test Item 4,1,EA,6/25/14 12:00,66\r\n" //
 				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
+		this.getTenantPersistenceService().beginTransaction();
 		importInventoryData(facility, csvInventory);
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -1381,9 +1404,8 @@ public class CheProcessTestPick extends ServerTest {
 	public final void testCartSetupFeedbackWithPreviouslyShortedWI() throws IOException {
 
 		// set up data for pick scenario
-		this.getTenantPersistenceService().beginTransaction();
-
 		Facility facility = setUpSimpleNoSlotFacility();
+		
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
 		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -1392,25 +1414,22 @@ public class CheProcessTestPick extends ServerTest {
 				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
 				+ "4,D401,Test Item 4,1,EA,6/25/14 12:00,66\r\n" //
 				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
+		beginTransaction();
 		importInventoryData(facility, csvInventory);
-		this.getTenantPersistenceService().commitTransaction();
+		propertyService.turnOffHK(facility);
+		commitTransaction();
 
 		this.startSiteController();
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		beginTransaction();
+		facility = facility.reload();
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Order 1 has two items in stock (Item 1 and Item 2)
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,1,1,1,Test Item 1,2,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,1,1,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvOrders);
-
-		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
-
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		commitTransaction();
 
 		PickSimulator picker = createPickSim(cheGuid1);
 
@@ -1460,28 +1479,28 @@ public class CheProcessTestPick extends ServerTest {
 		picker.scanLocation("D301");
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-
-		propertyService.restoreHKDefaults(facility);
-		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
 	public final void noInventoryCartRunFeedback() throws IOException {
 		// One good result for this, so the cart has something to run. And one no inventory.
-		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSimpleNoSlotFacility();
-		propertyService.turnOffHK(facility);
+
+		beginTransaction();
 		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
 				+ "4,D401,Test Item 4,6,EA,6/25/14 12:00,66\r\n";
 		importInventoryData(facility, csvInventory);
+		propertyService.turnOffHK(facility);
+		commitTransaction();
 
+		beginTransaction();
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,44444,44444,5,Test Item 5,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvOrders);
-
 		this.getTenantPersistenceService().commitTransaction();
+		
 		this.startSiteController();
 		PickSimulator picker = createPickSim(cheGuid1);
 
@@ -2003,9 +2022,9 @@ public class CheProcessTestPick extends ServerTest {
 	@Test
 	public final void basicSimulPick() throws IOException {
 
-		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSimpleNoSlotFacility();
 
+		this.getTenantPersistenceService().beginTransaction();
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
 				+ "\r\n1,USF314,COSTCO,11111,11111,Sku1,Test Item 1,1,each,LocA,1"
 				+ "\r\n1,USF314,COSTCO,11111,11111,Sku3,Test Item 3,1,each,LocB,2"
@@ -2158,7 +2177,9 @@ public class CheProcessTestPick extends ServerTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSimpleNoSlotFacility();
+		this.getTenantPersistenceService().commitTransaction();
 
+		this.getTenantPersistenceService().beginTransaction();
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
 				+ "\r\n1,USF314,COSTCO,11111,11111,Sku1,Test Item 1,1,each,LocA,1"
 				+ "\r\n1,USF314,COSTCO,11111,11111,Sku2,Test Item 2,4,each,LocC,2"
@@ -2326,9 +2347,7 @@ public class CheProcessTestPick extends ServerTest {
 	@Test
 	public final void testBayChangeDisappearTest() throws IOException {
 		LOGGER.info("1: setup facility");
-		this.getTenantPersistenceService().beginTransaction();
 		setUpOneAisleFourBaysFlatFacilityWithOrders();
-		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
 

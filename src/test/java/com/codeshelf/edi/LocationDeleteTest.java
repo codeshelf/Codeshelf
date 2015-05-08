@@ -29,6 +29,7 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.testframework.ServerTest;
 
 /**
@@ -195,10 +196,11 @@ public class LocationDeleteTest extends ServerTest {
 	}
 
 	@SuppressWarnings("unused")
-	private void setUpGroup1OrdersAndSlotting(Facility inFacility) throws IOException {
+	private void setUpGroup1OrdersAndSlotting(Facility facility) throws IOException {
 		// These are group = "1". Orders "123", "456", and "789"
 		// 5 products batched into containers 11 through 15
-
+		beginTransaction();
+		facility = facility.reload();
 		String orderCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,,123,10700589,Napa Valley Bistro - Jalape������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,,123,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -210,23 +212,30 @@ public class LocationDeleteTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,789,10100250,Organic Fire-Roasted Red Bell Peppers,3,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
-		importOrdersData(inFacility, orderCsvString);
+		importOrdersData(facility, orderCsvString);
+		commitTransaction();
 		
 		// Slotting file
+		beginTransaction();	
+		facility = facility.reload();
 		String csvString2 = "orderId,locationId\r\n" //
 				+ "123,D-2\r\n" // in A1.B1
 				+ "456,D-25\r\n" // in A1.B2
 				+ "789,D-35\r\n"; // in A2.B2
-		boolean result = importSlotting(inFacility, csvString2);
+		boolean result = importSlotting(facility, csvString2);
+		commitTransaction();
 
 		// Batches file
+		beginTransaction();	
+		facility = facility.reload();
 		String thirdCsvString = "orderGroupId,containerId,itemId,quantity,uom\r\n" //
 				+ "1,11,10700589,5,ea\r\n" //
 				+ "1,12,10722222,10,ea\r\n" //
 				+ "1,13,10706962,3,ea\r\n" //
 				+ "1,14,10100250,4,ea\r\n" //
 				+ "1,15,10706961,2,ea\r\n"; //
-		importBatchData(inFacility, thirdCsvString);
+		importBatchData(facility, thirdCsvString);
+		commitTransaction();
 	}
 
 	@Test
@@ -234,16 +243,13 @@ public class LocationDeleteTest extends ServerTest {
 		// The idea is to setup, then delete an aisle that has order locations, complete and active work instruction, associated path and controller.
 		// Make sure  no throws as those things are accessed.
 		// Bring it back
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Facility facility = setUpSimpleSlottedFacility("LD01", LARGER_FACILITY);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
 		setUpGroup1OrdersAndSlotting(facility);
-		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Assert.assertNotNull(theNetwork);
@@ -331,7 +337,7 @@ public class LocationDeleteTest extends ServerTest {
 		locationA1B1T1S1 = facility.findSubLocationById("A1.B1.T1.S1");
 		Assert.assertTrue(locationA1B1T1S1.getActive());
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
@@ -341,8 +347,9 @@ public class LocationDeleteTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		LOGGER.info("DeleteLocation Test 2. Start by setting up standard aisles A1 and A2");
 		Facility facility = setUpSimpleSlottedFacility("LD02", LARGER_FACILITY);
-		setUpGroup1OrdersAndSlotting(facility);
 		this.getTenantPersistenceService().commitTransaction();
+
+		setUpGroup1OrdersAndSlotting(facility);
 
 		this.getTenantPersistenceService().beginTransaction();
 		LOGGER.info("Reread same aisles file again. Just to see that there is no throw.");
@@ -393,24 +400,23 @@ public class LocationDeleteTest extends ServerTest {
 		// One of the order locations is for D-25
 		LOGGER.info("DeleteLocation Test . Start by setting up smaller aisle A1 and A2");
 		Facility facility = setUpSimpleSlottedFacility("LD03", SMALLER_FACILITY);
-		setUpGroup1OrdersAndSlotting(facility);
-
 		this.getTenantPersistenceService().commitTransaction();
+
+		setUpGroup1OrdersAndSlotting(facility);
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public final void locationDelete4() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-
 		// This test starts with the smaller file. So D-26/A1.B2.T1.S5 never existed. In test2, the location is inactive after reading the smaller file.
 		LOGGER.info("DeleteLocation Test4 . Part 1. Start by setting up smaller aisle A1 and A2");
 		Facility facility = setUpSimpleSlottedFacility("LD04", SMALLER_FACILITY);
-		setUpGroup1OrdersAndSlotting(facility);
-
 		readInventory(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
+		setUpGroup1OrdersAndSlotting(facility);
+		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		/*

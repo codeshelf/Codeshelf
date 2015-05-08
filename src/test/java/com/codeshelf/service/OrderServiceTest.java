@@ -17,8 +17,11 @@ public class OrderServiceTest extends ServerTest{
 	
 	@Test
 	public void orderdetailNoLocation() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Facility facility = setUpSimpleNoSlotFacility();
+		commitTransaction();
+		
+		beginTransaction();
 		Location exists = new LinkedList<Location>(facility.getSubLocationsInWorkingOrder()).getLast();
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence,locationId"
 				+ "\r\n1,USF314,COSTCO,11111,11111,NOLOCITEMID,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0," + exists.getAliases().get(0).getAlias()
@@ -26,9 +29,9 @@ public class OrderServiceTest extends ServerTest{
 				+ "\r\n1,USF314,COSTCO,44444,44444,5,Test Item 5,5,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,"
 				+ "\r\n1,USF314,COSTCO,55555,55555,2,Test Item 2,7,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,";
 		importOrdersData(facility, csvOrders);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 		
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		OrderService orderService = new OrderService();
 		Session session = this.getTenantPersistenceService().getSession();
 		Collection<OrderDetailView> orderDetails = orderService.orderDetailsNoLocation(getDefaultTenant(),session, facility.getPersistentId());
@@ -40,6 +43,6 @@ public class OrderServiceTest extends ServerTest{
 			
 		}
 		Assert.assertEquals(15, totalQuantity);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 }

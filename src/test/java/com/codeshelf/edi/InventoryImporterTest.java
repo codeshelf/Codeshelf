@@ -577,8 +577,9 @@ public class InventoryImporterTest extends ServerTest {
 	@SuppressWarnings({ "unused" })
 	@Test
 	public final void testNonSlottedPick() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Facility facilityForVirtualSlotting = Facility.staticGetDao().findByPersistentId(this.facilityForVirtualSlottingId);
+		commitTransaction();
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
 		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
@@ -590,8 +591,13 @@ public class InventoryImporterTest extends ServerTest {
 				+ "1522,D503,SJJ BPP,1,Case,6/25/14 12:00,3\r\n" //
 				+ "1522,D403,SJJ BPP,10,each,6/25/14 12:00,3\r\n";//
 
+		beginTransaction();
+		facilityForVirtualSlotting = facilityForVirtualSlotting.reload();
 		Facility facility = setupInventoryData(facilityForVirtualSlotting, csvString);
+		commitTransaction();
 
+		beginTransaction();
+		facility = facility.reload();
 		Location locationD403 = facility.findSubLocationById("D403");
 		Location locationD402 = facility.findSubLocationById("D402");
 		Location locationD502 = facility.findSubLocationById("D502");
@@ -603,6 +609,7 @@ public class InventoryImporterTest extends ServerTest {
 		// A brief side trip to check the list we use for lighting inventory in a tier
 		List<Item>  invList = locationD502.getInventoryInWorkingOrder();
 		Assert.assertTrue(invList.size() == 2);
+		commitTransaction();	
 
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Item 1123 exists in case and each.
@@ -617,12 +624,15 @@ public class InventoryImporterTest extends ServerTest {
 				+ "\r\n"
 				+ "\r"
 				+ "\r\n" + "\n";
-
+		beginTransaction();
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = createOrderImporter();
 		importer2.importOrdersFromCsvStream(new StringReader(csvOrders), facility, ediProcessTime2);
+		commitTransaction();
 
 		// We should have one order with 3 details. Only 2 of which are fulfillable.
+		beginTransaction();
+		facility = facility.reload();		
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
 
 		Assert.assertNotNull(order);

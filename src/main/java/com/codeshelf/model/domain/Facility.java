@@ -1200,5 +1200,10 @@ public class Facility extends Location {
 		
 		return facility;
 	}
+	
+	// convenience method
+	public Facility reload() {
+		return Facility.staticGetDao().reload(this);
+	}
 
 }

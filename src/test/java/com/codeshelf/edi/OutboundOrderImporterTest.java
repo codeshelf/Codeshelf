@@ -88,7 +88,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 	@Test
 	public final void testOrderImporterFromCsvStream() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -109,7 +109,10 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
-
+		commitTransaction();
+		
+		beginTransaction();
+		facility = facility.reload();
 		OrderGroup orderGroup = facility.getOrderGroup("1");
 		Assert.assertNotNull(orderGroup);
 		Assert.assertEquals(OrderStatusEnum.RELEASED, orderGroup.getStatus());
@@ -134,7 +137,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertEquals(detail931b, detail931);
 		Assert.assertEquals(detail931DomainID, "10706962-each"); // This is the itemID from file above.
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
@@ -418,7 +421,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertTrue(theCounts.mActiveHeaders == 3);
 		Assert.assertTrue(theCounts.mActiveDetails == 11);
 		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
-
+		this.getTenantPersistenceService().commitTransaction();
+		
 		// Now import a smaller list of orders, but more than one.
 		String secondOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalapeno Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -434,12 +438,14 @@ public class OutboundOrderImporterTest extends ServerTest {
 		stream = new ByteArrayInputStream(csv2Array);
 		reader = new InputStreamReader(stream);
 
-		// First import a big list of orders.
+		// second order import
+		this.getTenantPersistenceService().beginTransaction();
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
+		facility = Facility.staticGetDao().reload(facility);
 		importer = createOrderImporter();
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
-
 		this.getTenantPersistenceService().commitTransaction();
+		
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		
@@ -469,7 +475,6 @@ public class OutboundOrderImporterTest extends ServerTest {
 			}
 		}
 		this.getTenantPersistenceService().commitTransaction();
-
 	}
 
 	@Test
@@ -708,7 +713,9 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		commitTransaction();
 
+		beginTransaction();
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "123");
 
 		Assert.assertNotNull(order);
@@ -735,7 +742,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertTrue(theCounts.mActiveHeaders == 3);
 		Assert.assertTrue(theCounts.mActiveDetails == 11);
 		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
-
+		commitTransaction();
+		
 		// This is a very odd test. Above had one set of headers, and this a different set. Could happen for different customers maybe, but here same customer and same orders.
 		// So, what happens to the details? The answer is the old details all updated with the new ids. In this case, the new IDs are the "item-uom" pairs
 		String secondCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -751,13 +759,13 @@ public class OutboundOrderImporterTest extends ServerTest {
 		byte[] secondCsvArray = secondCsvString.getBytes();
 		stream = new ByteArrayInputStream(secondCsvArray);
 		reader = new InputStreamReader(stream);
-
 		ediProcessTime = new Timestamp(System.currentTimeMillis());
+		beginTransaction();
 		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		commitTransaction();
 
-		//Refresh facility
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		// check data
+		beginTransaction();
 		facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
 		//123.1 should no longer exist. Instead, there should be 10700589-each
@@ -787,7 +795,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 1);
 		Assert.assertTrue(theCounts2.mActiveCntrUses == 2);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
@@ -1350,7 +1358,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	 */
 	@Test
 	public final void testArchiveNoGroup() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom" +
@@ -1358,17 +1366,17 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a" +
 				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a";
 		importCsvString(facility, firstCsvString);
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		
+		beginTransaction();
 		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom" +
 				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a" +
 				"\r\n4,4,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a";
 		importCsvString(facility, secondCsvString);
-
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		commitTransaction();
 		
+		beginTransaction();
+		facility = facility.reload();		
 		HashMap<String, Boolean> groupExpectations = new HashMap<String, Boolean>();
 		groupExpectations.put("Group1", true);
 		HashMap<String, Boolean> headerExpectations = new HashMap<String, Boolean>();
@@ -1377,13 +1385,12 @@ public class OutboundOrderImporterTest extends ServerTest {
 		headerExpectations.put("3", true);
 		headerExpectations.put("4", true);
 		assertArchiveStatuses(groupExpectations, headerExpectations);
-
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
 	public final void testArchiveTwoGroups() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
@@ -1391,14 +1398,16 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1" +
 				"\r\n3,3,347,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group2";
 		importCsvString(facility, firstCsvString);
+		commitTransaction();
 
+		beginTransaction();
 		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
 				"\r\n4,4,349,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2" +
 				"\r\n5,5,350,12/03/14 12:00,12/31/14 12:00,Item8,,50,a,Group2";
 		importCsvString(facility, secondCsvString);
-
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
+		commitTransaction();
+		
+		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		
 		HashMap<String, Boolean> groupExpectations = new HashMap<String, Boolean>();
@@ -1412,12 +1421,12 @@ public class OutboundOrderImporterTest extends ServerTest {
 		headerExpectations.put("5", true);
 		assertArchiveStatuses(groupExpectations, headerExpectations);
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test
 	public final void testArchiveAbandonedGroup() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 
 		LOGGER.info("1: Read tiny orders for for group 1, 2 orders with one detail each.");
@@ -1425,9 +1434,9 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" +
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1";
 		importCsvString(facility, firstCsvString);
-		getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
-		getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		OrderHeader header1a = OrderHeader.staticGetDao().findByDomainId(facility, "1");
 		OrderGroup group1a = header1a.getOrderGroup();
 		Assert.assertNotNull(group1a);
@@ -1438,9 +1447,9 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group2" +
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2";
 		importCsvString(facility, secondCsvString);
-		getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
-		getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		group1a = OrderGroup.staticGetDao().reload(group1a);
 		OrderHeader header1b = OrderHeader.staticGetDao().findByDomainId(facility, "1");
@@ -1465,7 +1474,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	    */
 		
 		LOGGER.info("  We showed that the orders are the same objects. They changed owner groups.");
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 	}
 
 	@Test

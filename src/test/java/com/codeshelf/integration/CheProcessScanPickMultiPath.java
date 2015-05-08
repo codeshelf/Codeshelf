@@ -31,9 +31,9 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 	private static final int	WAIT_TIME	= 4000;
 
 	private PickSimulator setupCheOnPathAndReturnPicker(String cheLastScannedLocation) throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpMultiPathFacilityWithOrders(cheLastScannedLocation);
 
+		beginTransaction();
 		LOGGER.info("1a: leave LOCAPICK off, SCANPICK off, set BayDistance, no housekeeping");
 		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
 		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "Disabled");
@@ -41,8 +41,8 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 			DomainObjectProperty.WORKSEQR,
 			WorkInstructionSequencerType.BayDistance.toString());
 		propertyService.turnOffHK(facility);
-
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
+		
 		this.startSiteController();
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
@@ -58,18 +58,22 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 				+ "Tier,T1,100,0,32,0,,,,,\n"
 				+ "Aisle,A2,,,,,zigzagB1S1Side,3,6,X,20\n"
 				+ "Bay,B1,100,,,,,,,,\n" + "Tier,T1,100,0,32,0,,,,,\n" + "Bay,B2,100,,,,,,,,\n" + "Tier,T1,100,0,32,0,,,,,\n";
-		importAislesData(getFacility(), aislesCsvString);
-
+		beginTransaction();
+		Facility facility = getFacility();
+		importAislesData(facility, aislesCsvString);
+		commitTransaction();
+		
 		// Get the aisles
-		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
-		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getFacility(), "A2");
+		beginTransaction();
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(facility, "A2");
 		Assert.assertNotNull(aisle1);
 		Assert.assertNotNull(aisle2);
 
-		Path path1 = createPathForTest(getFacility());
+		Path path1 = createPathForTest(facility);
 		PathSegment segment1_1 = addPathSegmentForTest(path1, 0, 3d, 4.5, 5d, 4.5);
 
-		Path path2 = createPathForTest(getFacility());
+		Path path2 = createPathForTest(facility);
 		PathSegment segment2_1 = addPathSegmentForTest(path2, 0, 3d, 6.5, 5d, 6.5);
 
 		String persistStr1 = segment1_1.getPersistentId().toString();
@@ -80,20 +84,23 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 
 		String csvLocationAliases = "mappedLocationId,locationAlias\r\n" + "A1.B1.T1,Loc1A\r\n" + "A1.B2.T1,Loc1B\r\n"
 				+ "A2.B1.T1,Loc2A\r\n" + "A2.B2.T1,Loc2B\r\n";
-		importLocationAliasesData(getFacility(), csvLocationAliases);
-
+		importLocationAliasesData(facility, csvLocationAliases);
+		commitTransaction();
+		
+		beginTransaction();
+		facility = facility.reload();
 		CodeshelfNetwork network = getNetwork();
 
 		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
 		LedController controller2 = network.findOrCreateLedController("LED2", new NetGuid("0x00000012"));
 
 		Short channel1 = 1;
-		Location tier1 = getFacility().findSubLocationById("A1.B1.T1");
+		Location tier1 = facility.findSubLocationById("A1.B1.T1");
 		controller1.addLocation(tier1);
 		tier1.setLedChannel(channel1);
 		tier1.getDao().store(tier1);
 
-		Location tier2 = getFacility().findSubLocationById("A2.B1.T1");
+		Location tier2 = facility.findSubLocationById("A2.B1.T1");
 		controller2.addLocation(tier2);
 		tier2.setLedChannel(channel1);
 		tier2.getDao().store(tier1);
@@ -117,7 +124,8 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 				+ "Item14,Loc2B,Item Desc 14,1000,a,12/03/14 12:00,,12\r\n"
 				+ "Item15,Loc2B,Item Desc 15,1000,a,12/03/14 12:00,,24\r\n"
 				+ "Item16,Loc2B,Item Desc 16,1000,a,12/03/14 12:00,,36\r\n";
-		importInventoryData(getFacility(), inventory);
+		importInventoryData(facility, inventory);
+		commitTransaction();
 
 		String orders = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,workSequence,locationId\r\n"
 				+ "1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1,,\n"
@@ -128,8 +136,10 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 				+ "1,1,350,12/03/14 12:00,12/31/14 12:00,Item5,,33,a,Group1,,\n"
 				+ "1,1,351,12/03/14 12:00,12/31/14 12:00,Item3,,22,a,Group1,,\n"
 				+ "1,1,352,12/03/14 12:00,12/31/14 12:00,Item6,,33,a,Group1,,\n";
-		importOrdersData(getFacility(), orders);
-		return getFacility();
+		beginTransaction();
+		importOrdersData(facility, orders);
+		commitTransaction();
+		return facility;
 	}
 
 	private void containerSetup(PickSimulator picker) {

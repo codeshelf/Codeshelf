@@ -216,10 +216,8 @@ public class CheProcessPutWallSuper extends ServerTest {
 				+ "\r\n,USF314,COSTCO,11118,11118.2,11118,1521,Sku1521,3,each,S11,gtin1521,111"
 				+ "\r\n,USF314,COSTCO,11119,11119.1,11119,1555,Sku1555,2,each,F13,gtin1555,13"
 ;
-
-		Facility facility = getFacility();
-		importOrdersData(facility, orderCsvString);
-		ItemMaster theMaster = ItemMaster.staticGetDao().findByDomainId(facility, "1515");
+		importOrdersData(inFacility, orderCsvString);
+		ItemMaster theMaster = ItemMaster.staticGetDao().findByDomainId(inFacility, "1515");
 		Assert.assertNotNull("ItemMaster should be created", theMaster);
 	}
 

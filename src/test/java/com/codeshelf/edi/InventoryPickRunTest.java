@@ -272,11 +272,20 @@ public class InventoryPickRunTest extends ServerTest {
 	@SuppressWarnings("unused")
 	@Test
 	public final void testSequenceAlongTierWithoutTop() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-
+		beginTransaction();
 		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
 		Assert.assertNotNull(facility);
+		propertyService.turnOffHK(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		commitTransaction();
 
+		// Inventory
+		beginTransaction();
+		readInventoryWithoutTop(facility);
+		commitTransaction();
+
+		beginTransaction();
+		facility = facility.reload();
 		Tier tierA1B1T2 = (Tier) facility.findSubLocationById("D-26"); // just using alias a little.
 		Tier tierA1B1T1 = (Tier) facility.findSubLocationById("D-27"); // just using alias a little.
 		Assert.assertNotNull(tierA1B1T1.getLedController());
@@ -286,23 +295,20 @@ public class InventoryPickRunTest extends ServerTest {
 		String posA1B1 = tierA1B1T1.getPosAlongPathui();
 		String posA2B1 = tierA1B2T1.getPosAlongPathui();
 		Assert.assertTrue(tierA1B2T1.getPosAlongPath() > tierA1B1T1.getPosAlongPath());
-
-		// Inventory
-		readInventoryWithoutTop(facility);
 		List<Item> aList = tierA1B1T2.getInventoryInWorkingOrder();
 		Assert.assertTrue(aList.size() == 4);
 		logItemList(aList);
 		Item firstOnPath = aList.get(0);
 		String firstSku = firstOnPath.getItemMasterId();
 		Assert.assertEquals("1124", firstSku);
+		commitTransaction();
 
 		// Orders
+		beginTransaction();
 		readOrdersForA1(facility);
+		commitTransaction();
 
-		propertyService.turnOffHK(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B1T1, and four on B2T2");
-		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
@@ -327,10 +333,18 @@ public class InventoryPickRunTest extends ServerTest {
 	@SuppressWarnings("unused")
 	@Test
 	public final void testSequenceAlongTierWithTop() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-
+		beginTransaction();
 		Facility facility = setUpSimpleNonSlottedFacility("InvP_02");
 		Assert.assertNotNull(facility);
+		commitTransaction();
+
+		// Inventory
+		beginTransaction();
+		readInventoryWithTop(facility);
+		commitTransaction();
+
+		beginTransaction();
+		facility = facility.reload();
 		Tier tierA1B1T2 = (Tier) facility.findSubLocationById("D-26"); // just using alias a little.
 		Tier tierA1B1T1 = (Tier) facility.findSubLocationById("D-27"); // just using alias a little.
 		Assert.assertNotNull(tierA1B1T1.getLedController());
@@ -341,20 +355,22 @@ public class InventoryPickRunTest extends ServerTest {
 		String posA1B1 = tierA1B1T1.getPosAlongPathui();
 		String posA2B1 = tierA1B2T1.getPosAlongPathui();
 		Assert.assertTrue(tierA1B2T1.getPosAlongPath() > tierA1B1T1.getPosAlongPath());
-
-		// Inventory
-		readInventoryWithTop(facility);
+	
 		List<Item> aList = tierA1B1T2.getInventoryInWorkingOrder();
 		Assert.assertTrue(aList.size() == 4);
 		logItemList(aList);
 		Item firstOnPath = aList.get(0);
 		String firstSku = firstOnPath.getItemMasterId();
 		Assert.assertEquals("1124", firstSku);
+		commitTransaction();
 
 		// Orders
+		beginTransaction();
 		readOrdersForA1(facility);
+		commitTransaction();
 
 		// Just check a UI field. Basically looking for NPE
+		beginTransaction();
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "12000");
 
 		Assert.assertNotNull(order);
@@ -391,18 +407,23 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 	public final void testimmediateShorts() throws IOException {
 		// generation of immediateShort
 		// cleanup of immediate short
-		this.getTenantPersistenceService().beginTransaction();
-
+		beginTransaction();
 		Facility facility = setUpSimpleNonSlottedFacility("InvP_03");
 		Assert.assertNotNull(facility);
-
+		commitTransaction();
+		
 		// Inventory
+		beginTransaction();
 		readInventoryWithTop(facility);
+		commitTransaction();
 
 		// Orders
+		beginTransaction();
 		readOrdersForA1(facility);
+		commitTransaction();
 
 		// Delete two of the items, which will cause immediate short upon cart setup
+		beginTransaction();
 		ItemMaster master1123 = ItemMaster.staticGetDao().findByDomainId(facility, "1123");
 		ItemMaster master1124 = ItemMaster.staticGetDao().findByDomainId(facility, "1124");
 		Item item1123 = master1123.getItemsOfUom("EA").get(0);
@@ -534,21 +555,24 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 
 	@Test
 	public final void testBayDistance() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-
-		
+		beginTransaction();
 		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
 		Assert.assertNotNull(facility);
-		
 		LOGGER.info("0. Set WORKSEQR = BayDistance.");
 		PropertyService.getInstance().changePropertyValue(facility, DomainObjectProperty.WORKSEQR, "BayDistance");
+		commitTransaction();
 		
 		// Inventory
+		beginTransaction();
 		readInventoryBayDistance(facility);
+		commitTransaction();
 
 		// Orders
+		beginTransaction();
 		readOrdersForBayDistance(facility);
+		commitTransaction();
 		
+		beginTransaction();
 		OrderHeader orderHeader = OrderHeader.staticGetDao().findByDomainId(facility, "12000");
 
 		Assert.assertNotNull(orderHeader);
@@ -573,30 +597,31 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		OrderDetail orderDetail4 = orderHeader.getOrderDetail("104");
 		Assert.assertNotNull(orderDetail4);
 		Assert.assertTrue(orderDetail4.willProduceWi(workService));
-		
-		this.getTenantPersistenceService().commitTransaction();
+
+		commitTransaction();
 	}
 	
 	@Test
 	public final void testWorkSequence() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-
+		beginTransaction();
 		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
 		Assert.assertNotNull(facility);
-		
 		LOGGER.info("1: Set WORKSEQR = WorkSequence.");
 		PropertyService.getInstance().changePropertyValue(facility, DomainObjectProperty.WORKSEQR, "WorkSequence");
+		commitTransaction();
 		
 		// Inventory
+		beginTransaction();
 		readInventoryBayDistance(facility);
+		commitTransaction();
 
 		// Orders
+		beginTransaction();
 		readOrdersForWorkSequence(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 		
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		OrderHeader orderHeader = OrderHeader.staticGetDao().findByDomainId(facility, "12000");
-
 		Assert.assertNotNull(orderHeader);
 		
 		LOGGER.info("1. OrderDetail 101 does not have an inventory location, does have a good preferred location, has sequence");
@@ -619,9 +644,8 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		OrderDetail orderDetail4 = orderHeader.getOrderDetail("104");
 		Assert.assertNotNull(orderDetail4);
 		Assert.assertTrue(orderDetail4.willProduceWi(workService));
-		
-		
-		this.getTenantPersistenceService().commitTransaction();
+				
+		commitTransaction();
 	}
 
 }

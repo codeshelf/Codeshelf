@@ -75,6 +75,11 @@ public class DataImportReceipt extends DomainObjectTreeABC<Facility> {
 	@Getter @Setter
 	DataImportType type = DataImportType.Orders;
 	
+	@Column(nullable = true, length=20)
+	@Enumerated(EnumType.STRING)
+	@Getter @Setter
+	DataImportStatus status;
+	
 	@Override
 	public String getDefaultDomainIdPrefix() {
 		return "IMPORT-";

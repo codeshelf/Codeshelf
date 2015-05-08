@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import org.codehaus.groovy.syntax.TokenMismatchException;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,6 +69,7 @@ public abstract class ServerTest extends HibernateTest {
 		Facility facility = organization.getFacility(fName);
 		*/
 
+		beginTransaction();
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,tierB1S1Side,12.85,43.45,X,120,Y\r\n" //
 				+ "Bay,B1,230,,,,,\r\n" //
@@ -91,8 +93,10 @@ public abstract class ServerTest extends HibernateTest {
 				+ "Bay,B3,230,,,,,\r\n" //
 				+ "Tier,T1,,0,80,160,,\r\n"; //
 		importAislesData(getFacility(), csvString);
+		commitTransaction();
 
 		// Get the aisle
+		beginTransaction();
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
 		Assert.assertNotNull(aisle1);
 
@@ -113,7 +117,9 @@ public abstract class ServerTest extends HibernateTest {
 		Assert.assertNotNull(aisle3);
 		String persistStr2 = segment02.getPersistentId().toString();
 		aisle3.associatePathSegment(persistStr2);
+		commitTransaction();
 
+		beginTransaction();
 		String csvString2 = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1, D300\r\n" //
 				+ "A1.B2, D400\r\n" //
@@ -128,7 +134,9 @@ public abstract class ServerTest extends HibernateTest {
 				+ "A3.B2.T1, D502\r\n" //
 				+ "A3.B3.T1, D503\r\n";//
 		importLocationAliasesData(getFacility(), csvString2);
+		commitTransaction();
 
+		beginTransaction();
 		CodeshelfNetwork network = getNetwork();
 
 		LedController controller1 = network.findOrCreateLedController("1", new NetGuid("0x00000011"));
@@ -136,7 +144,8 @@ public abstract class ServerTest extends HibernateTest {
 		LedController controller3 = network.findOrCreateLedController("3", new NetGuid("0x00000013"));
 
 		Short channel1 = 1;
-		Location tier = getFacility().findSubLocationById("A1.B1.T1");
+		Facility facility = getFacility().reload();
+		Location tier = facility.findSubLocationById("A1.B1.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
@@ -145,35 +154,37 @@ public abstract class ServerTest extends HibernateTest {
 		if (!tierName.equals("D301"))
 			LOGGER.error("D301 vs. A1.B1.T1 alias not set up in setUpSimpleNoSlotFacility");
 
-		tier = getFacility().findSubLocationById("A1.B2.T1");
+		tier = facility.findSubLocationById("A1.B2.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A1.B3.T1");
+		tier = facility.findSubLocationById("A1.B3.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A2.B1.T1");
+		tier = facility.findSubLocationById("A2.B1.T1");
 		controller2.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A2.B2.T1");
+		tier = facility.findSubLocationById("A2.B2.T1");
 		controller2.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A3.B1.T1");
+		tier = facility.findSubLocationById("A3.B1.T1");
 		controller3.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A3.B2.T1");
+		tier = facility.findSubLocationById("A3.B2.T1");
 		controller3.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
+		commitTransaction();
 
 		return getFacility();
 	}
 
 	protected Facility setUpOneAisleFourBaysFlatFacilityWithOrders() throws IOException{
+		beginTransaction();
 		String aislesCsvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" +
 				"Aisle,A1,,,,,zigzagB1S1Side,2.85,5,X,20\r\n" +
 				"Bay,B1,50,,,,,,,,\r\n" +
@@ -185,8 +196,10 @@ public abstract class ServerTest extends HibernateTest {
 				"Bay,B4,50,,,,,,,,\r\n" +
 				"Tier,T1,50,0,16,0,,,,,\r\n"; //
 		importAislesData(getFacility(), aislesCsvString);
+		commitTransaction();
 
 		// Get the aisle
+		beginTransaction();
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
 		Assert.assertNotNull(aisle1);
 
@@ -195,26 +208,32 @@ public abstract class ServerTest extends HibernateTest {
 
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
+		
+		CodeshelfNetwork network = getNetwork();
+		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
 
+		propertyService.changePropertyValue(getFacility(), DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		commitTransaction();
+
+		beginTransaction();
+		Facility fac = Facility.staticGetDao().reload(getFacility());
+		Short channel1 = 1;
+		Location tier = fac.findSubLocationById("A1.B1.T1");
+		controller1.addLocation(tier);
+		tier.setLedChannel(channel1);
+		tier.getDao().store(tier);
+		commitTransaction();
+
+		beginTransaction();
 		String csvLocationAliases = "mappedLocationId,locationAlias\r\n" +
 				"A1.B1.T1,LocX24\r\n" +
 				"A1.B2.T1,LocX25\r\n" +
 				"A1.B3.T1,LocX26\r\n" +
 				"A1.B4.T1,LocX27\r\n";//
 		importLocationAliasesData(getFacility(), csvLocationAliases);
+		commitTransaction();
 
-		CodeshelfNetwork network = getNetwork();
-
-		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
-
-		Short channel1 = 1;
-		Location tier = getFacility().findSubLocationById("A1.B1.T1");
-		controller1.addLocation(tier);
-		tier.setLedChannel(channel1);
-		tier.getDao().store(tier);
-
-		propertyService.changePropertyValue(getFacility(), DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
-
+		beginTransaction();
 		String inventory = "itemId,locationId,description,quantity,uom,inventoryDate,lotId,cmFromLeft\r\n" +
 				"Item1,LocX24,Item Desc 1,1000,a,12/03/14 12:00,,0\r\n" +
 				"Item2,LocX24,Item Desc 2,1000,a,12/03/14 12:00,,12\r\n" +
@@ -233,7 +252,9 @@ public abstract class ServerTest extends HibernateTest {
 				"Item15,LocX27,Item Desc 15,1000,a,12/03/14 12:00,,24\r\n" +
 				"Item16,LocX27,Item Desc 16,1000,a,12/03/14 12:00,,36\r\n";
 		importInventoryData(getFacility(), inventory);
+		commitTransaction();
 
+		beginTransaction();
 		String orders = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,workSequence,locationId\r\n" +
 				"1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1,,\r\n" +
 				"1,1,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1,,\r\n" +
@@ -252,6 +273,7 @@ public abstract class ServerTest extends HibernateTest {
 				"8,8,349,12/03/14 12:00,12/31/14 12:00,Item2,,40,a,Group1,,\r\n" +
 				"8,8,350,12/03/14 12:00,12/31/14 12:00,Item6,,30,a,Group1,,\r\n";
 		importOrdersData(getFacility(), orders);
+		commitTransaction();
 		return getFacility();
 	}
 

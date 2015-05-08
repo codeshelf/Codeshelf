@@ -588,7 +588,8 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			Facility facility = (Facility) this;
 			LocationAlias alias = LocationAlias.staticGetDao().findByDomainId(facility, inLocationId);
 			if ((alias != null) && (alias.getActive())) {
-				return alias.getMappedLocation();
+				Location location = alias.getMappedLocation();
+				return TenantPersistenceService.<Location> deproxify(location);
 			}
 		} // else
 
