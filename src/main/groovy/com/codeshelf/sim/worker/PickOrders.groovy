@@ -66,7 +66,7 @@ class PickOrders {
 	/**
 	 * This function will pick a provided number of recently imported orders in a single CHE run
 	 */
-	def pickOrders(PickSimulator picker, ArrayList<String> containerList, int containersBatchSize, double chanceSkipUpc, double chanceShort) {
+	def pickOrders(PickSimulator picker, ArrayList<String> containers, int containersBatchSize, double chanceSkipUpc, double chanceShort) {
 		if (containers.isEmpty() || containersBatchSize <= 0) {
 			String msg = "Could not pick containers " + importedContainers + " in batches of " + containersBatchSize;
 			println(msg);
