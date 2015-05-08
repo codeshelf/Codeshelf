@@ -19,41 +19,40 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  * A set is defined by work instructions all with the same create time. (Several processes create sets of work instructions, giving all the same time.)
  */
 
-@JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
-public class WiSetSummary implements Comparable<WiSetSummary>{
+@JsonAutoDetect(getterVisibility = Visibility.PUBLIC_ONLY, fieldVisibility = Visibility.NONE)
+public class WiSetSummary implements Comparable<WiSetSummary> {
 	@Getter
-	private String cheId, cheDomainId;
+	private String		cheId, cheDomainId;
 	@Getter
-	private Timestamp assignedTime;
+	private Timestamp	assignedTime;
 	@Getter
-	public String formattedAssignedTime = "";
+	public String		formattedAssignedTime	= "";
 	@Getter
-	private int shortCount, invalidCount, newCount, inprogressCount, completeCount, revertCount;
-
+	private int			shortCount, invalidCount, newCount, inprogressCount, completeCount, revertCount;
 
 	public WiSetSummary(final Timestamp assignedTime) {
 		setAssignedTime(assignedTime);
 	}
-	
+
 	public WiSetSummary(final Timestamp assignedTime, String cheId, String cheDomainId) {
 		setAssignedTime(assignedTime);
 		this.cheId = cheId;
 		this.cheDomainId = cheDomainId;
 	}
-	
-	public int getActiveCount(){
+
+	public int getActiveCount() {
 		return invalidCount + newCount + inprogressCount + revertCount;
 	}
-	
+
 	@JsonIgnore
 	public int getTotal() {
 		return invalidCount + newCount + inprogressCount + shortCount + completeCount + revertCount;
 	}
-	
+
 	public boolean isActive() {
 		return getActiveCount() > 0;
 	}
-	
+
 	public void incrementStatus(final WorkInstructionStatusEnum inStatus) {
 		switch (inStatus) {
 			case INVALID:
@@ -76,27 +75,26 @@ public class WiSetSummary implements Comparable<WiSetSummary>{
 				break;
 		}
 	}
-	
+
 	public boolean equalCounts(final WiSetSummary inSummary) {
-		if (inSummary.getActiveCount() != this.getActiveCount() ||
-			inSummary.completeCount != this.completeCount ||
-			inSummary.shortCount != this.shortCount) {
+		if (inSummary.getActiveCount() != this.getActiveCount() || inSummary.completeCount != this.completeCount
+				|| inSummary.shortCount != this.shortCount) {
 			return false;
 		}
 		return true;
 	}
 
-	private void setAssignedTime (Timestamp assignedTime) {
+	private void setAssignedTime(Timestamp assignedTime) {
 		this.assignedTime = assignedTime;
 		computeUnderstandableTimeString();
 	}
-	
+
 	public void computeUnderstandableTimeString() {
 		if (assignedTime != null) {
 			formattedAssignedTime = TimeFormat.getUITime(assignedTime);
 		}
 	}
-	
+
 	public int compareTo(WiSetSummary compareRun) {
 		return assignedTime.compareTo(compareRun.assignedTime);
 	}

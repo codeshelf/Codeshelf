@@ -536,6 +536,7 @@ public class CheProcessLineScan extends ServerTest {
 		picker.scanOrderDetailId("12345.3"); // does not add "%"	
 		// GET_WORK happened immediately. DO_PICK happens when the command response comes back
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
+		picker.logCheDisplay();
 		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
 		WorkInstruction wi = picker.getActivePick();
 		int quant = wi.getPlanQuantity();

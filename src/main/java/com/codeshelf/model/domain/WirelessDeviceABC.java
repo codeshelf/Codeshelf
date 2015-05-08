@@ -26,6 +26,7 @@ import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 // --------------------------------------------------------------------------
@@ -129,6 +130,15 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 		}
 	}
 
+	@JsonIgnore
+	public String getDeviceGuidStrNoPrefix() {
+		if (deviceGuid == null || deviceGuid.equals(new byte[4])) {
+			return null;
+		} else {
+			NetGuid theGuid = new NetGuid(deviceGuid);
+			return theGuid.getHexStringNoPrefix();
+		}
+	}
 	public void setNetAddress(NetAddress inNetworkAddress) {
 		networkAddress = (byte) inNetworkAddress.getValue();
 	}

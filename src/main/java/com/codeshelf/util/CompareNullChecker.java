@@ -18,4 +18,17 @@ public class CompareNullChecker {
 		else 
 			return 0;
 	}
+	
+	/**
+	 * Careful with this. Returns zero if neither is null or if both are null.
+	 */
+	public static int compareNullsIfBothNullReturnZero(Object inObject1, Object inObject2){
+		if (inObject1 == null && inObject2 != null) 
+			return 1;
+		else if (inObject2 == null && inObject1 != null)
+			return -1;
+		else 
+			return 0;
+	}
+
 }

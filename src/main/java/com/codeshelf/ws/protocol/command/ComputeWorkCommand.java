@@ -28,10 +28,10 @@ import com.codeshelf.ws.server.WebSocketConnection;
 public class ComputeWorkCommand extends CommandABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ComputeWorkCommand.class);
 
-	private ComputeWorkRequest request;
+	private ComputeWorkRequest	request;
 
-	private WorkService	workService;
-	
+	private WorkService			workService;
+
 	public ComputeWorkCommand(WebSocketConnection connection, ComputeWorkRequest request, WorkService workService) {
 		super(connection);
 		this.request = request;
@@ -45,21 +45,25 @@ public class ComputeWorkCommand extends CommandABC {
 		String cheId = request.getDeviceId();
 		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
 		if (che != null) {
-			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();
+			String networkGuid = che.getDeviceNetGuid().getHexStringNoPrefix();
 			Map<String, String> positionToContainerMap = request.getPositionToContainerMap();
 			//List<String> containerIdList = new ArrayList<String>(positionToContainerMap.values());
 			BooleanHolder pathChanged = new BooleanHolder(false);
 			Boolean reverse = request.getReversePickOrder();
-			
+
 			// Get the work instructions for this CHE at this location for the given containers.
 			WorkList allWorkList = workService.computeWorkInstructions(che, positionToContainerMap, reverse);
-						
+
 			// Get work instructions with housekeeping
-			List<WorkInstruction> instructionsOnPath = workService.getWorkInstructions(che, request.getLocationId(), reverse, pathChanged);
-			
+			List<WorkInstruction> instructionsOnPath = workService.getWorkInstructions(che,
+				request.getLocationId(),
+				reverse,
+				pathChanged);
+
 			//Get the counts
-			Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(allWorkList, instructionsOnPath);
-			
+			Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(allWorkList,
+				instructionsOnPath);
+
 			// create response
 			response.setWorkInstructions(instructionsOnPath);
 			response.setContainerToWorkInstructionCountMap(containerToCountMap);
@@ -69,30 +73,31 @@ public class ComputeWorkCommand extends CommandABC {
 			response.setStatus(ResponseStatus.Success);
 			return response;
 		}
-		response.setStatusMessage("Can't find CHE with id "+cheId);
+		response.setStatusMessage("Can't find CHE with id " + cheId);
 		response.setStatus(ResponseStatus.Fail);
 		return response;
 	}
-	
+
 	/**
 	 * Compute work instruction counts by containerId
 	 */
-	public static final Map<String, WorkInstructionCount> computeContainerWorkInstructionCounts(WorkList allWork, List<WorkInstruction> instructionsOnPath) {
+	public static final Map<String, WorkInstructionCount> computeContainerWorkInstructionCounts(WorkList allWork,
+		List<WorkInstruction> instructionsOnPath) {
 		Map<String, WorkInstructionCount> containerToWorkInstructCountMap = new HashMap<String, WorkInstructionCount>();
 		WorkInstructionCount count = null;
 		List<OrderDetail> allWorkUnpickableDetails = allWork.getDetails();
-		
+
 		//Create a searcheable set on UUIDs for instructions on a current Path
 		HashSet<String> instructionsOnPathSet = new HashSet<String>();
 		for (WorkInstruction wi : instructionsOnPath) {
 			instructionsOnPathSet.add(wi.getPersistentId().toString());
 		}
-		
+
 		//Iterate through all instructions.
 		//  If instruction is on a current Path, analyze it as active
 		//  If not - add it to auto-shorted items
 		List<WorkInstruction> allWorkInstructions = allWork.getInstructions();
-		for (WorkInstruction wi : allWorkInstructions){
+		for (WorkInstruction wi : allWorkInstructions) {
 			WorkInstructionStatusEnum wiStatus = wi.getStatus();
 			String containerId = wi.getContainerId();
 			// This is sometimes odd. Seeing "None" in a wi for something that may have got a putwall job before.
@@ -108,13 +113,13 @@ public class ComputeWorkCommand extends CommandABC {
 				// - And, both the short and completes give use the containerId we need to use. Warning, there are probably other reasons
 				// the containerId is not set that way on the completed or short WIs.				
 			}
-				
+
 			count = containerToWorkInstructCountMap.get(containerId);
 			if (count == null) {
 				count = new WorkInstructionCount();
 				containerToWorkInstructCountMap.put(containerId, count);
 			}
-			
+
 			if (instructionsOnPathSet.contains(wi.getPersistentId().toString())) {
 				//This instruction is on the current Path
 				if (wiStatus == null) {
@@ -125,6 +130,7 @@ public class ComputeWorkCommand extends CommandABC {
 				} else {
 					switch (wiStatus) {
 						case COMPLETE:
+							// What happens if server does not increment Complete? Only fails ComputWorkCommandTest. Apparently not needed.
 							count.incrementCompleteCount();
 							break;
 						case NEW:
@@ -139,18 +145,19 @@ public class ComputeWorkCommand extends CommandABC {
 							count.incrementInvalidOrUnknownStatusCount();
 							break;
 						case SHORT:
+							// What happens if server does not increment Short? Only fails ComputWorkCommandTest. Apparently not needed.
 							count.incrementImmediateShortCount();
 							break;
 					}
 				}
 			} else {
 				//This instruction is not on the current Path
-				if (wiStatus != WorkInstructionStatusEnum.COMPLETE){
+				if (wiStatus != WorkInstructionStatusEnum.COMPLETE) {
 					count.incrementUncompletedInstructionsOnOtherPaths();
 				}
 			}
 		}
-		
+
 		//Process all auto-shorted items
 		for (OrderDetail detail : allWorkUnpickableDetails) {
 			String containerId = detail.getParent().getContainerId();

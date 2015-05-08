@@ -353,6 +353,7 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		
 		LOGGER.info("3b: Setup again, with same orders");
 		picker1.scanCommand("SETUP");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker1.setupOrderIdAsContainer("11117", "1");
 		picker1.setupOrderIdAsContainer("12345", "2"); // the easier way.
 		picker1.scanCommand("START");
@@ -361,6 +362,56 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		Assert.assertEquals("2", getSummaryScreenOrderCount(picker1));
 		Assert.assertEquals("3", getSummaryScreenJobCount(picker1));
 		Assert.assertEquals("", getSummaryScreenDoneCount(picker1));
+		
+		/*
+		 * add this part when we pick up unmodeled and unpathed locations in bayDistance sort
+		 * 
+		LOGGER.info("4a: Setup for an order that has only unmodeled locations. Therefore, no path");
+		picker1.scanCommand("SETUP");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker1.setupOrderIdAsContainer("11120", "1");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		// Assert.assertEquals("2", getSummaryScreenJobCount(picker1));
+
+		LOGGER.info("4b: The preferred location is X11. Scan there, although any other unmodeled location name would do.");
+		picker1.scanLocation("X11");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		Assert.assertEquals("3", getSummaryScreenJobCount(picker1));
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		List<WorkInstruction> wis4 = picker1.getAllPicksList();
+		this.logWiList(wis4);
+
+		LOGGER.info("4b: We are seeing what bay sequencer does with no path. We sort by location first, then sku");
+		// This is a very important (and only) test of PosAlongPathComparator for zero and null posAlongPath values
+		// The two X11s, then the X12. And for the X11s, secondary sort by SKU.
+		// Note the WARN in the console "3 work instructions made not on path. Add them last."
+		Assert.assertEquals("X11", picker1.getLastCheDisplayString(1));
+		Assert.assertEquals("1602", picker1.getLastCheDisplayString(2));
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		// a housekeep
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		Assert.assertEquals("X11", picker1.getLastCheDisplayString(1));
+		Assert.assertEquals("1702", picker1.getLastCheDisplayString(2));
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		// a housekeep				
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		Assert.assertEquals("X12", picker1.getLastCheDisplayString(1));
+		Assert.assertEquals("1701", picker1.getLastCheDisplayString(2));
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		Assert.assertEquals("3", getSummaryScreenDoneCount(picker1));
+
+		LOGGER.info("4c: Log out/Log in again. See that done count is the same");
+		picker1.logout();
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+		Assert.assertEquals("3", getSummaryScreenDoneCount(picker1));
+		*/
 
 	}
 
@@ -594,6 +645,157 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 
 	
 		this.getTenantPersistenceService().commitTransaction();
+	}
+
+	@Test
+	public final void doneCounts() throws IOException {
+		// A trick part of this feature is to remember the done and short counts done on this cart run between restarts,
+		// logout, login.  If site controller has to reinitialize, the setup is good but the done and short counts are lost.
+		// That is ok.
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = getModeledFacility();
+		setUpOrders1(facility);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSiteController();
+		PickSimulator picker1 = createPickSim(cheGuid1);
+
+		if (!picker1.usesSummaryState())
+			return; // this test only applies to new CHE process, not old.
+
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+
+		LOGGER.info("1a: Check the initial summary screen. Right justified at line 1 should be F11"); // see getModeledFacility for why.
+		Assert.assertEquals("F11", getSummaryScreenLocation(picker1));
+
+		LOGGER.info("1b: Set up orders 11117 and 12345 for pick");
+		picker1.scanCommand("SETUP");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker1.setupOrderIdAsContainer("11117", "1");
+		picker1.setupOrderIdAsContainer("12345", "2");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay(); // Look in log to see what we have
+
+		LOGGER.info("1c: The summary screen we have 3 jobs with 1 other");
+		Assert.assertEquals("3", getSummaryScreenJobCount(picker1));
+
+
+		LOGGER.info("2a: Pick one");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+
+		LOGGER.info("2b: See the summary screen show one done");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		Assert.assertEquals("1", getSummaryScreenDoneCount(picker1));
+
+
+		LOGGER.info("3a: Logout. Log in. See that done count is the same");
+		picker1.logout();
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+		Assert.assertEquals("1", getSummaryScreenDoneCount(picker1));
+
+		LOGGER.info("3b: Logout/Log in again. See that done count is the same");
+		picker1.logout();
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+		Assert.assertEquals("1", getSummaryScreenDoneCount(picker1));
+
+
+		LOGGER.info("4a: Start; pick this path to completion");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		Assert.assertEquals("3", getSummaryScreenDoneCount(picker1));
+		
+		LOGGER.info("4b: Logout. Log in. See that done count is the same");
+		picker1.logout();
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+		Assert.assertEquals("3", getSummaryScreenDoneCount(picker1));
+
+		LOGGER.info("4c: Logout/Log in again. See that done count is the same");
+		picker1.logout();
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+		Assert.assertEquals("3", getSummaryScreenDoneCount(picker1));
+
+		LOGGER.info("4d: Logout/Log in again. See that done count is the same");
+		picker1.logout();
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+		Assert.assertEquals("3", getSummaryScreenDoneCount(picker1));
+
+		LOGGER.info("5a: Scan start, which only comes to same screen. Done count should not increment");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		Assert.assertEquals("3", getSummaryScreenDoneCount(picker1));
+
+	}
+
+	@Test
+	public final void doneCountStartIncrement() throws IOException {
+		// Explore a bug.
+
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = getModeledFacility();
+		setUpOrders1(facility);
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSiteController();
+		PickSimulator picker1 = createPickSim(cheGuid1);
+
+		if (!picker1.usesSummaryState())
+			return; // this test only applies to new CHE process, not old.
+
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+
+
+		LOGGER.info("1a: Set up order 11117");
+		picker1.scanCommand("SETUP");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker1.setupOrderIdAsContainer("11117", "1");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay(); // Look in log to see what we have
+
+		LOGGER.info("1b: The summary screen we have 1 job only");
+		Assert.assertEquals("1", getSummaryScreenJobCount(picker1));
+
+		LOGGER.info("2: Pick it. Summary will show 1 done");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.pickItemAuto();
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		Assert.assertEquals("1", getSummaryScreenDoneCount(picker1));
+
+		LOGGER.info("2b: position 1 will show oc");
+		Assert.assertEquals(picker1.getLastSentPositionControllerDisplayValue((byte) 1),
+			PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker1.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_C);
+		Assert.assertEquals(picker1.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);
+
+		LOGGER.info("3: Immediately scan start again. Done count should not increment. Poscon still show oc");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		Assert.assertEquals("1", getSummaryScreenDoneCount(picker1));
+		Assert.assertEquals(picker1.getLastSentPositionControllerDisplayValue((byte) 1),
+			PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker1.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_C);
+		Assert.assertEquals(picker1.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);
+
+		LOGGER.info("3: Immediately scan start again. Done count should not increment");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		Assert.assertEquals("1", getSummaryScreenDoneCount(picker1));
+		Assert.assertEquals(picker1.getLastSentPositionControllerDisplayValue((byte) 1),
+			PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker1.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_C);
+		Assert.assertEquals(picker1.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);
+
 	}
 
 }

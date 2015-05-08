@@ -1077,8 +1077,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					if (wi.isHousekeeping()) {
 						LOGGER.warn("Probable test error. Don't short a housekeeping. User error if happening in production");
 						invalidScanMsg(mCheStateEnum); // Invalid to short a housekeep
-					}
-					else
+					} else
 						setState(CheStateEnum.SHORT_PICK); // flashes all poscons with active jobs
 				} else {
 					// Stay in the same state - the scan made no sense.
@@ -1175,9 +1174,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private void requestWorkAndSetGetWorkState(final String inLocationStr, final Boolean reverseOrderFromLastTime) {
 		// by protocol, inLocationStr may be null for START or Reverse. Do not overwrite mLocationId which is perfectly good.
 		clearAllPosconsOnThisDevice();
-		
-		rememberCompletesAndShorts(); // is this right?
-		
+
+		rememberCompletesAndShorts();
+
 		Map<String, String> positionToContainerMapCopy = new HashMap<String, String>(mPositionToContainerMap);
 		LOGGER.info("Sending {} positions to server in getCheWork", positionToContainerMapCopy.size());
 		mDeviceManager.getCheWork(getGuid().getHexStringNoPrefix(),
@@ -1394,6 +1393,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 			}
 			LOGGER.info("Got Counts {}", mContainerToWorkInstructionCountMap);
+			// It is not so clear, should server give us completed work instructions? Should we clear those out?
 
 			if (usesSummaryState())
 				setState(CheStateEnum.SETUP_SUMMARY);
@@ -1457,9 +1457,23 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 
 	/**
-	 * How many jobs were completed? Give the value of this feedback cycle, plus whatever we accumulated before.
+	 * How many completed jobs are currently in the map.
 	 */
-	private int getCountOfCompletedJobsThisSetup() {
+	private void removeCompletesAndShortsInCountMap() {
+		if (mContainerToWorkInstructionCountMap == null)
+			return;
+		else {
+			for (WorkInstructionCount count : mContainerToWorkInstructionCountMap.values()) {
+				count.setCompleteCount(0);
+				count.setShortCount(0);
+			}
+		}
+	}
+
+	/**
+	 * How many completed jobs are currently in the map.
+	 */
+	private int getCountOfCompletedJobsInCountMap() {
 		if (mContainerToWorkInstructionCountMap == null)
 			return 0;
 		else {
@@ -1467,31 +1481,56 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			for (WorkInstructionCount count : mContainerToWorkInstructionCountMap.values()) {
 				completeJobsCounter += count.getCompleteCount();
 			}
-			return completeJobsCounter + getRememberPriorCompletes();
+			return completeJobsCounter;
 		}
+	}
+
+	/**
+	 * How many completed jobs are currently in the map.
+	 */
+	private int getCountOfShortedJobsInCountMap() {
+		if (mContainerToWorkInstructionCountMap == null)
+			return 0;
+		else {
+			int shortedJobsCounter = 0;
+			for (WorkInstructionCount count : mContainerToWorkInstructionCountMap.values()) {
+				shortedJobsCounter += count.getShortCount();
+			}
+			return shortedJobsCounter;
+		}
+	}
+
+	/**
+	 * How many jobs were completed? Give the value of this feedback cycle, plus whatever we accumulated before.
+	 */
+	private int getCountOfCompletedJobsThisSetup() {
+		return getCountOfCompletedJobsInCountMap() + getRememberPriorCompletes();
 	}
 
 	/**
 	 * How many shorts for the mLocationId path? Give the value of this feedback cycle, plus whatever we accumulated before.
 	 */
 	private int getCountOfShortsThisSetup() {
-		if (mContainerToWorkInstructionCountMap == null)
-			return 0;
-		else {
-			int goodJobsCounter = 0;
-			for (WorkInstructionCount count : mContainerToWorkInstructionCountMap.values()) {
-				goodJobsCounter += count.getShortCount();
-			}
-			return goodJobsCounter + getRememberPriorShorts();
-		}
+		return getCountOfShortedJobsInCountMap() + getRememberPriorShorts();
 	}
 
 	/**
-	 * When we dump the cart (SETUP), set these back to zero.
+	 * Server will come back with new counts for a new START or new path, so we remember completes and shorts for this cart setup.
+	 * When we dump the cart (SETUP), we set these back to zero.
+	 * Since we are remembering a summary value, we clear the completes and shorts in the counts map, while leaving the container wi map alone.
 	 */
 	private void rememberCompletesAndShorts() {
+		/*
+		int priorCompleteValue = getRememberPriorCompletes();
+		int completesInCountMap = getCountOfCompletedJobsInCountMap();
+		LOGGER.debug("Entering rememberCompletesAndShorts, prior completes={}. in map = {}", priorCompleteValue, completesInCountMap);
+		*/
+
 		setRememberPriorShorts(getCountOfShortsThisSetup());
 		setRememberPriorCompletes(getCountOfCompletedJobsThisSetup());
+
+		// Remove the completes and shorts in the map since we are now remembering the summary count elsewhere. DEV-812 bug if not.
+		removeCompletesAndShortsInCountMap();
 	}
 
 	/**
@@ -1501,6 +1540,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		setRememberPriorShorts(0);
 		setRememberPriorCompletes(0);
 	}
+
 	/**
 	 * Show status for this setup in our restrictive 4 x 20 manner.
 	 * Trying to align the counts, allow for 3 digit counts.
@@ -1539,14 +1579,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			String otherCountStr = Integer.toString(otherCount);
 			otherCountStr = StringUtils.leftPad(otherCountStr, 3);
 			if (pickCount == 1)
-				line2 = String.format("%s pick   %s other", pickCountStr, otherCountStr);
+				line2 = String.format("%s job    %s other", pickCountStr, otherCountStr);
 			else
-				line2 = String.format("%s picks  %s other", pickCountStr, otherCountStr);
+				line2 = String.format("%s jobs   %s other", pickCountStr, otherCountStr);
 		} else {
 			if (pickCount == 1)
-				line2 = String.format("%s pick ", pickCountStr);
+				line2 = String.format("%s job  ", pickCountStr);
 			else
-				line2 = String.format("%s picks", pickCountStr);
+				line2 = String.format("%s jobs ", pickCountStr);
 		}
 
 		int doneCount = getCountOfCompletedJobsThisSetup();
@@ -1796,9 +1836,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		clearAllPosconsOnThisDevice();
 		mContainerInSetup = "";
-		
+
 		rememberCompletesAndShorts(); // is this right?
-		
+
 		//Duplicate map to avoid later changes
 		Map<String, String> positionToContainerMapCopy = new HashMap<String, String>(mPositionToContainerMap);
 		LOGGER.info("Sending {} positions to server in computeCheWork", positionToContainerMapCopy.size());
