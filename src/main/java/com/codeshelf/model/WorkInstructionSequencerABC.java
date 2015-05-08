@@ -25,7 +25,8 @@ public abstract class WorkInstructionSequencerABC implements IWorkInstructionSeq
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(WorkInstructionSequencerABC.class);
 
 	/**
-	 * Sort WorkInstructions by their posAlongPath. This is identical to CheDeviceLogic.WiDistanceComparator
+	 * Sort WorkInstructions by their posAlongPath. This use to be identical to CheDeviceLogic.WiDistanceComparator
+	 * But now added location and sku tie-breaker sorts
 	 */
 	class PosAlongPathComparator implements Comparator<WorkInstruction> {
 
@@ -36,11 +37,29 @@ public abstract class WorkInstructionSequencerABC implements IWorkInstructionSeq
 
 			Double wi1Pos = inWi1.getPosAlongPath();
 			Double wi2Pos = inWi2.getPosAlongPath();
-			value = CompareNullChecker.compareNulls(wi1Pos, wi2Pos);
+			value = CompareNullChecker.compareNullsIfBothNullReturnZero(wi1Pos, wi2Pos);
 			if (value != 0)
 				return value;
 
-			return wi1Pos.compareTo(wi2Pos);
+			// new behavior in v16. If posAlongPath is unknown (no path, or unmodeled), 
+			// then try to look at preferredLocation then sku, both as strings
+			if ((wi1Pos == null && wi2Pos == null) || (wi1Pos == 0 && wi2Pos == 0)) {
+				// there should be pickInstruction, or the work instruction would not have been made. But some unit tests cheat on this
+				String pick1 = inWi1.getPickInstruction();
+				String pick2 = inWi2.getPickInstruction();
+				if (pick1 == null)
+					return 0; // just bail on the foolish case. This is seen.
+				value = pick1.compareTo(pick2);
+				if (value != 0)
+					return value;
+				// also, wi should always know its sku
+				String sku1 = inWi1.getItemId();
+				String sku2 = inWi2.getItemId();
+				if (sku1 == null)
+					return 0; // just bail on the foolish case. Not seen yet.
+				return sku1.compareTo(sku2);
+			} else
+				return wi1Pos.compareTo(wi2Pos);
 		}
 	}
 

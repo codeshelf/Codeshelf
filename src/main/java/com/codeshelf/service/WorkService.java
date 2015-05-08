@@ -640,8 +640,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			for (WorkInstruction wi : orderDetail.getWorkInstructions()) {
 				//As of DEV-603 we are only adding completed WIs to the list
 				if (WorkInstructionStatusEnum.COMPLETE == wi.getStatus()) {
-					LOGGER.info("Adding already complete WIs to list; orderDetail={}", orderDetail);
-					wiResultList.add(wi);
+					LOGGER.info("Not Adding already complete WIs to list _2_; orderDetail={}", orderDetail);
+					// wiResultList.add(wi);
+					// This is not likely to matter for line_scan process
 				}
 			}
 		}
@@ -1196,6 +1197,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 									if (WorkInstructionStatusEnum.COMPLETE == wi.getStatus()) {
 										LOGGER.info("Adding already complete WIs to list; orderDetail={}", orderDetail);
 										wiResultList.add(wi);
+										// If changed, only testCartSetupFeedback fails
+
 									}
 								}
 							}
