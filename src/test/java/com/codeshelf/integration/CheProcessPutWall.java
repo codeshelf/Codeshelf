@@ -83,7 +83,23 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
 
-		LOGGER.info("2: Demonstrate what a put wall picker object can do.");
+		LOGGER.info("2: Do valid order setup to put wall, but to slot that is not a put wall. Will get a WARN");
+		picker.scanCommand("ORDER_WALL");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker.scanSomething("11112");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker.scanSomething("L%F12");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker.scanSomething("11114");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker.scanSomething("L%F12");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker.scanCommand("CLEAR");
+		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
+		// Besides the warn, the successful placement removed 11112 from P12 as it moved to F12.
+		// Then placing 11114 at F12 removes 11112
+
+		LOGGER.info("3: Demonstrate what a put wall picker object can do.");
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
 		Assert.assertNotNull(posman);
 
@@ -379,7 +395,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		posman.buttonPress(5, 4);
 		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
 		picker1.logCheDisplay();
-		
+
 		// check the displays. The P15 slot has order feedback. P16 slot show the 5 count
 		// These can take time. Hence the wait-for
 		posman.waitForControllerDisplayValue((byte) 5, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME);
