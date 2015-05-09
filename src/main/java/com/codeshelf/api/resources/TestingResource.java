@@ -20,6 +20,7 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import com.codeshelf.api.BaseResponse;
+import com.codeshelf.api.GroovyTelnetRunner;
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.edi.ICsvInventoryImporter;
@@ -36,7 +37,6 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.service.WorkService;
-import com.codeshelf.sim.worker.GroovyTelnetRunner;
 import com.google.inject.Inject;
 
 @Path("/test")
