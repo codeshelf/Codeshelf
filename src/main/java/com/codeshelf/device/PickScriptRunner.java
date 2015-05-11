@@ -14,36 +14,47 @@ public class PickScriptRunner {
 	
 	private HashMap<String, PickSimulator> pickers = new HashMap<>();
 	private StringBuilder report = new StringBuilder();
-	private CsDeviceManager deviceManager;
+	private final CsDeviceManager deviceManager;
 	
-	
-	public void runScript(CsDeviceManager deviceManager, PickScriptMessage message) {
+	public PickScriptRunner(CsDeviceManager deviceManager) {
 		this.deviceManager = deviceManager;
-		String script = message.getScript();
-		if (script == null) {
-			message.setResponseMessage("Empty script");
-			deviceManager.clientEndpoint.sendMessage(message);
-			return;
-		}
-		try {
-			String[] lines = script.split("\n");
-			for (String line : lines) {
-				processLine(line);
+	}
+	
+	/**
+	 * This method need to run asynchronously to not hold up the message queue between Server and Site
+	 */
+	public void runScript(final PickScriptMessage message) {
+		Runnable runnable = new Runnable() {			
+			@Override
+			public void run() {
+				String script = message.getScript();
+				if (script == null) {
+					message.setResponseMessage("Empty script");
+					deviceManager.clientEndpoint.sendMessage(message);
+					return;
+				}
+				try {
+					String[] lines = script.split("\n");
+					for (String line : lines) {
+						processLine(line);
+					}
+				} catch (Exception e) {
+					report.append(e.getClass().getName()).append("\n");
+					String error = e.getMessage();
+					if (error == null || error.isEmpty()) {
+						error = ExceptionUtils.getStackTrace(e);
+					}
+					report.append(error);
+					message.setResponseMessage(report.toString());
+					deviceManager.clientEndpoint.sendMessage(message);
+					return;
+				}
+				report.append("Script Finished\n");
+				message.setResponseMessage(report.toString());
+				deviceManager.clientEndpoint.sendMessage(message);
 			}
-		} catch (Exception e) {
-			report.append(e.getClass().getName()).append("\n");
-			String error = e.getMessage();
-			if (error == null || error.isEmpty()) {
-				error = ExceptionUtils.getStackTrace(e);
-			}
-			report.append(error);
-			message.setResponseMessage(report.toString());
-			deviceManager.clientEndpoint.sendMessage(message);
-			return;
-		}
-		report.append("Script Finished\n");
-		message.setResponseMessage(report.toString());
-		deviceManager.clientEndpoint.sendMessage(message);
+		};
+		new Thread(runnable).start();
 	}
 	
 	private void processLine(String line) throws Exception {
