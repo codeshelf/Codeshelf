@@ -71,16 +71,19 @@ public class CheProcessPutWallSuper extends ServerTest {
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
 
+		aisle2 = Aisle.staticGetDao().findByDomainId(facility, "A2");
 		Path path2 = createPathForTest(facility);
 		segment0 = addPathSegmentForTest(path2, 0, 3d, 16d, 5d, 16d);
 		persistStr = segment0.getPersistentId().toString();
 		aisle2.associatePathSegment(persistStr);
 
+		aisle3 = Aisle.staticGetDao().findByDomainId(facility, "A3");
 		Path path3 = createPathForTest(facility);
 		segment0 = addPathSegmentForTest(path3, 0, 3d, 36d, 5d, 36d);
 		persistStr = segment0.getPersistentId().toString();
 		aisle3.associatePathSegment(persistStr);
 
+		aisle4 = Aisle.staticGetDao().findByDomainId(facility, "A4");
 		Path path4 = createPathForTest(facility);
 		segment0 = addPathSegmentForTest(path4, 0, 20d, 6d, 30d, 6d);
 		persistStr = segment0.getPersistentId().toString();
