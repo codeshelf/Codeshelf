@@ -35,7 +35,10 @@ public final class CommandControlDisplaySingleLineMessage extends CommandControl
 	public static final byte	ARIAL16						= 1;
 	public static final byte	ARIAL26						= 2;
 	public static final byte	BAR3Of9						= 3;
-	public static final byte	OPENSAN26BOLD				= 4;
+	public static final byte	ARIALMONOBOLD16				= 4;
+	public static final byte	ARIALMONOBOLD20				= 5;
+	public static final byte	ARIALMONOBOLD24				= 6;
+	public static final byte	ARIALMONOBOLD26				= 7;
 
 	@Accessors(prefix = "m")
 	@Getter
