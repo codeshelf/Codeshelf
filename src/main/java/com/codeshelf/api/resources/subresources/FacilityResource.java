@@ -308,7 +308,7 @@ public class FacilityResource {
 	@Path("/runpickscript")
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response executeGroovyCommands(String script) {
+	public Response executeGroovyCommands(@QueryParam("timeout_min") Integer timeoutMin, String script) {
 		try {
 			ErrorResponse errors = new ErrorResponse();
 			if (script == null || script.isEmpty()) {
@@ -319,7 +319,7 @@ public class FacilityResource {
 			UUID id = UUID.randomUUID();
 			PickScriptMessage scriptMessage = new PickScriptMessage(id, script);
 			webSocketManagerService.sendMessage(users, scriptMessage);
-			String response = PickScriptCallPool.waitForResponse(id, script);
+			String response = PickScriptCallPool.waitForResponse(id, script, timeoutMin);
 			return BaseResponse.buildResponse(response);
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);

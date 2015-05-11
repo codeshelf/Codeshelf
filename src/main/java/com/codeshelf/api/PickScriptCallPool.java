@@ -12,7 +12,10 @@ public class PickScriptCallPool {
 		return waitForResponse(id, script, DEF_TIMEOUT_MIN);
 	}
 	
-	public static String waitForResponse(UUID id, String script, int timeoutMin) throws InterruptedException{
+	public static String waitForResponse(UUID id, String script, Integer timeoutMin) throws InterruptedException{
+		if (timeoutMin == null) {
+			timeoutMin = DEF_TIMEOUT_MIN;
+		}
 		long start = System.currentTimeMillis();
 		long now = System.currentTimeMillis();
 		String response = null;
