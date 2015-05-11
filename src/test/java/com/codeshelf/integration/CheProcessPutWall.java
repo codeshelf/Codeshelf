@@ -164,7 +164,8 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Assert.assertFalse(loc.isLightableAisleController());
 		Assert.assertTrue(loc.isLightablePoscon());
 		commitTransaction();
-
+		
+		LOGGER.info("2b: pickers set up WALL1 and WALL2 and do start");
 		PickSimulator picker2 = createPickSim(cheGuid2);
 		picker2.loginAndSetup("Picker #2");
 		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
@@ -173,9 +174,12 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 		picker2.scanCommand("START");
 
-		picker2.waitForCheState(picker2.getLocationStartReviewState(), WAIT_TIME);
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);
 		Byte posConValue2 = picker2.getLastSentPositionControllerDisplayValue((byte) 2);
+		
+		LOGGER.info("2c: Check poscon displays on picker2");
+		picker2.logCheDisplay();
 		
 		// FIXME: assertions below fail
 		Assert.assertEquals(toByte(1), posConValue1);
