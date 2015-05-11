@@ -1884,8 +1884,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			locationId,
 			whatWeDid);
 		logInContext(orderWallTag, toLogStr, false);
+		if (!location.isPutWallLocation()) {
+			toLogStr = String.format("%s is not configured as a put wall", locationId);
+			logInContext(orderWallTag, toLogStr, true); // a WARN
+		}
 
-		//Light up the selected location. Send even if just a redo
+		//Light up the selected location. Send even if just a redo. Note: will not light if not a put wall.
 		computeAndSendOrderFeedback(ol, true); // single message is last of the group
 		return true;
 	}
