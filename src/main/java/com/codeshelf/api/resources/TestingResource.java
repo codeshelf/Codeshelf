@@ -166,35 +166,4 @@ public class TestingResource {
 		ICsvOrderImporter importer2 = new OutboundOrderPrefetchCsvImporter(new EventProducer());
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
 	}
-	/*
-	@POST
-	@Path("/groovy")
-	@Consumes(MediaType.TEXT_PLAIN)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response executeGroovyCommands(@QueryParam("host") String host, @QueryParam("port") Integer port, String script) {
-		try {
-			ErrorResponse errors = new ErrorResponse();
-			boolean invalid = false;
-			if (host == null) {
-				errors.addErrorMissingQueryParam("host");
-				invalid = true;
-			}
-			if (port == null) {
-				errors.addErrorMissingQueryParam("port");
-				invalid = true;
-			}
-			if (script == null || script.isEmpty()) {
-				errors.addError("Supply the script to the body of the call");
-				invalid = true;
-			}
-			if (invalid) {
-				return errors.buildResponse();
-			}
-			String result = new GroovyTelnetRunner().executeScript(host, port, script);
-			return BaseResponse.buildResponse(result);
-		} catch (Exception e) {
-			return new ErrorResponse().processException(e);
-		}
-	}
-	*/
 }
