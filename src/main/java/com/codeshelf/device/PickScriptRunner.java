@@ -4,6 +4,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
@@ -17,14 +19,18 @@ import com.google.common.collect.Lists;
 public class PickScriptRunner {
 	private final static String TEMPLATE_DEF_PICKER = "defPicker <pickerName> <cheGuid>";
 	private final static String TEMPLATE_SETUP = "setup <pickerName> <containers>";
-	private final static String TEMPLATE_PICK = "pick <pickerName> <chanceSkipUpc> <chanceShort>";
+	private final static String TEMPLATE_SET_PARAMS = "setParams <pickPause> <chanceSkipUpc> <chanceShort>";
+	private final static String TEMPLATE_PICK = "pick <pickerNames>";
 	private final static String TEMPLATE_PICKER_EXEC = "pickerExec <pickerName> <pickerCommand> [arguments]";
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(PickScriptRunner.class);
 	private static final int WAIT_TIMEOUT = 4000;
+	private int pickPause = 0;
+	private double chanceSkipUpc = 0, chanceShort = 0;
 	private HashMap<String, PickSimulator> pickers = new HashMap<>();
 	private StringBuilder report = new StringBuilder();
 	private final CsDeviceManager deviceManager;
+	private static final Object lock = new Object();
 	
 	public PickScriptRunner(CsDeviceManager deviceManager) {
 		this.deviceManager = deviceManager;
@@ -49,15 +55,8 @@ public class PickScriptRunner {
 						processLine(line);
 					}
 				} catch (Exception e) {
-					report.append(e.getClass().getName()).append(": ");
-					String error = e.getMessage();
-					if (error == null || error.isEmpty()) {
-						error = ExceptionUtils.getStackTrace(e);
-					}
+					String error = exceptionToString(e);
 					report.append(error);
-					message.setResponseMessage(report.toString());
-					deviceManager.clientEndpoint.sendMessage(message);
-					return;
 				}
 				report.append("***Script Completed***\n");
 				message.setResponseMessage(report.toString());
@@ -68,7 +67,7 @@ public class PickScriptRunner {
 	}
 	
 	private void processLine(String line) throws Exception {
-		report.append(line).append("\n");
+		report.append("Run: ").append(line).append("\n");
 		if (line == null || line.isEmpty()) {
 			return;
 		}
@@ -83,10 +82,15 @@ public class PickScriptRunner {
 			processDefinePickerCommand(parts);
 		} else if (command.equalsIgnoreCase("setup")) {
 			processSetupCommand(parts);
+		} else if (command.equalsIgnoreCase("setParams")) {
+			processSetParamsCommand(parts);
 		} else if (command.equalsIgnoreCase("pick")) {
 			processPickCommand(parts);
+		} else if (command.equalsIgnoreCase("pickAll")) {
+			processPickAllCommand();
+		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command. " + command + " Expected [pickerExec, defPicker, setup]");
+			throw new Exception("Invalid command " + command + ". Expected [pickerExec, defPicker, setup, setParams, pick, pickAll, //]");
 		}
 	}
 	
@@ -130,6 +134,20 @@ public class PickScriptRunner {
 		PickSimulator picker = new PickSimulator(deviceManager, cheGuid);
 		pickers.put(pickerName, picker);
 	}
+	
+	/**
+	 * Expects to see command
+	 * setParams <pickPause> <chanceSkipUpc> <chanceShort>
+	 * @throws Exception
+	 */
+	private void processSetParamsCommand(String parts[]) throws Exception {
+		if (parts.length != 4){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_SET_PARAMS);
+		}
+		pickPause = Integer.parseInt(parts[1]);
+		chanceSkipUpc = Double.parseDouble(parts[2]);
+		chanceShort = Double.parseDouble(parts[3]);
+	}
 
 	/**
 	 * Expects to see command
@@ -142,6 +160,7 @@ public class PickScriptRunner {
 		}
 		String pickerName = parts[1];
 		PickSimulator picker = getPicker(pickerName);
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIMEOUT);
 		String container;
 		for (int i = 2; i < parts.length; i++){
 			container = parts[i];
@@ -153,18 +172,48 @@ public class PickScriptRunner {
 	
 	/**
 	 * Expects to see command
-	 * pick <pickerName> <chanceSkipUpc> <chanceShort>
+	 * pickAll
+	 * @throws Exception
+	 */
+	private void processPickAllCommand() throws Exception{
+		LOGGER.info("Start che picks");
+		ExecutorService executor = Executors.newFixedThreadPool(pickers.size());
+		for (final PickSimulator picker : pickers.values()) {
+			if (picker != null) {
+				Runnable runnable = new Runnable() {
+					@Override
+					public void run() {
+						try {
+							pick(picker);
+						} catch (Exception e) {
+							report.append(exceptionToString(e));
+						}
+					}
+				};
+				executor.execute(runnable);
+			}
+		}
+		executor.shutdown();
+		while (!executor.isTerminated()) {
+			Thread.sleep(1000);
+		}
+		LOGGER.info("che picks done");
+	}
+	
+	/**
+	 * Expects to see command
+	 * pick <pickerName>
 	 * @throws Exception
 	 */
 	private void processPickCommand(String parts[]) throws Exception{
-		//PickSimulator picker, double chanceSkipUpc, double chanceShort
-		if (parts.length < 4){
+		if (parts.length != 2){
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_PICK);
 		}
 		PickSimulator picker = getPicker(parts[1]);
-		double chanceSkipUpc = Double.parseDouble(parts[2]);
-		double chanceShort = Double.parseDouble(parts[3]);
-
+		pick(picker);
+	}
+	
+	private void pick(PickSimulator picker) throws Exception{
 		//At this point, CHE should already have containers set up. Start START to advance to Pick or Review stage
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		ArrayList<CheStateEnum> states = Lists.newArrayList();
@@ -178,7 +227,7 @@ public class PickScriptRunner {
 		
 		//If CHE is in a Review stage, scan START again to advance to Pick stage
 		if (state == CheStateEnum.SETUP_SUMMARY || state == CheStateEnum.LOCATION_SELECT){
-			pause();
+			Thread.sleep(pickPause);
 			picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 			states.remove(CheStateEnum.LOCATION_SELECT);
 			picker.waitForOneOfCheStates(states, WAIT_TIMEOUT);
@@ -188,7 +237,9 @@ public class PickScriptRunner {
 		//If Che immediately arrives at the end-of-work state, stop processing this order
 		if (state == CheStateEnum.NO_WORK || state == CheStateEnum.SETUP_SUMMARY){
 			picker.logout();
-			report.append("No work generated for the CHE\n");
+			synchronized (lock) {
+				report.append("No work generated for the CHE\n");
+			}
 			return;
 		}
 	
@@ -200,7 +251,7 @@ public class PickScriptRunner {
 		pickStates.add(CheStateEnum.SCAN_SOMETHING);
 		pickStates.add(CheStateEnum.DO_PICK);
 		while(true){
-			pause();
+			Thread.sleep(pickPause);
 			WorkInstruction instruction = picker.getActivePick();
 			if (instruction == null) {
 				break;
@@ -256,11 +307,16 @@ public class PickScriptRunner {
 		return picker;
 	}
 	
-	private void throwIncorrectNumberOfArgumentsException(String expected) throws Exception{
-		throw new Exception("Incorrect number of arguments. Expected '" + expected + "'");
+	private String exceptionToString(Exception e) { 
+		report.append(e.getClass().getName()).append(": ");
+		String error = e.getMessage();
+		if (error == null || error.isEmpty()) {
+			error = ExceptionUtils.getStackTrace(e);
+		}
+		return e.getClass().getName() + ": " + error;
 	}
 	
-	private void pause(){
-		
+	private void throwIncorrectNumberOfArgumentsException(String expected) throws Exception{
+		throw new Exception("Incorrect number of arguments. Expected '" + expected + "'");
 	}
 }
