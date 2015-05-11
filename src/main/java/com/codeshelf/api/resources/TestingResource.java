@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -20,7 +19,6 @@ import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import com.codeshelf.api.BaseResponse;
-import com.codeshelf.api.GroovyTelnetRunner;
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.edi.ICsvInventoryImporter;
@@ -168,7 +166,7 @@ public class TestingResource {
 		ICsvOrderImporter importer2 = new OutboundOrderPrefetchCsvImporter(new EventProducer());
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
 	}
-	
+	/*
 	@POST
 	@Path("/groovy")
 	@Consumes(MediaType.TEXT_PLAIN)
@@ -198,4 +196,5 @@ public class TestingResource {
 			return new ErrorResponse().processException(e);
 		}
 	}
+	*/
 }
