@@ -28,13 +28,9 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 	@Test
 	public final void putWallOrderSetup() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
 		setUpFacilityWithPutWall();
-		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();		
 		setUpOrders1(getFacility());
-		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
 		PickSimulator picker = createPickSim(cheGuid1);
@@ -112,15 +108,9 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 	@Test
 	public final void slowMoverWorkInstructions() throws IOException {
 		// This is for DEV-711
+		Facility facility = setUpFacilityWithPutWall();
 
-		beginTransaction();
-		setUpFacilityWithPutWall();
-		commitTransaction();
-
-		beginTransaction();
-		Facility facility = getFacility().reload();
 		setUpOrders1(facility);
-		commitTransaction();
 
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
@@ -166,9 +156,11 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker2.setupOrderIdAsContainer("WALL2", "2");
 
 		picker2.scanCommand("START");
+
 		picker2.waitForCheState(picker2.getLocationStartReviewState(), WAIT_TIME);
 		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);
 		Byte posConValue2 = picker2.getLastSentPositionControllerDisplayValue((byte) 2);
+		
 		// FIXME: assertions below fail
 		Assert.assertEquals(toByte(1), posConValue1);
 		Assert.assertEquals(toByte(1), posConValue2);
@@ -192,13 +184,9 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 	public final void putWallFlowState() throws IOException {
 		// This is for DEV-712, just doing the Che state transitions
 
-		this.getTenantPersistenceService().beginTransaction();
 		setUpFacilityWithPutWall();
-		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();		
 		setUpOrders1(getFacility());
-		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
 		PickSimulator picker = createPickSim(cheGuid1);
@@ -280,13 +268,9 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 	public final void putWallPut() throws IOException {
 		// This is for DEV-712, 713
 
-		this.getTenantPersistenceService().beginTransaction();
 		setUpFacilityWithPutWall();
-		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();
 		setUpOrders1(getFacility());
-		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
@@ -410,9 +394,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		// The picker/Che guid is "00009991"
 		// The posman guid is "00001881"
 
-		this.getTenantPersistenceService().beginTransaction();
 		setUpFacilityWithPutWall();
-		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();		
 		// just these two orders set up as picks from P area.
@@ -471,13 +453,9 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 	public final void putWallLightingConfusion() throws IOException {
 		// This explores the ambiguous situation of ORDER_WALL being set up, but still doing a normal orders pick
 
-		this.getTenantPersistenceService().beginTransaction();
 		setUpFacilityWithPutWall();
-		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();		
 		setUpOrders1(getFacility());
-		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
@@ -547,13 +525,9 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 	public final void putWallShort() throws IOException {
 		// This is for DEV-715
 
-		this.getTenantPersistenceService().beginTransaction();
 		setUpFacilityWithPutWall();
-		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();		
 		setUpOrders1(getFacility());
-		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
@@ -708,13 +682,9 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 	public final void putWallClearAbandon() throws IOException {
 		// This test shows that CLEAR may be used in put wall states DO_PUT, SHORT_PUT, nad SHORT_PUT_CONFIRM
 
-		this.getTenantPersistenceService().beginTransaction();
 		setUpFacilityWithPutWall();
-		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();		
 		setUpOrders1(getFacility());
-		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
@@ -824,13 +794,9 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		 * AUTOSHRT: default is on, and we showed elsewhere that short ahead works. It is off in this test.
 		 */
 
-		this.getTenantPersistenceService().beginTransaction();
 		setUpFacilityWithPutWall();
-		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();		
 		setUpOrders1(getFacility());
-		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		LOGGER.info("1: Set up with all possibly interfering configurations set.");
@@ -908,14 +874,13 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		// Short the order again. Finish, and place 11117 to ORDER_WALL.
 		// Restart. Do not get that work again.
 
-		this.getTenantPersistenceService().beginTransaction();
-		setUpFacilityWithPutWall();
-		this.getTenantPersistenceService().commitTransaction();
+		Facility facility = setUpFacilityWithPutWall();
+
+		setUpOrders1(getFacility());
 
 		this.getTenantPersistenceService().beginTransaction();		
-		setUpOrders1(getFacility());
 		// Let's document the poscon index for P14
-		Facility facility = getFacility();
+		facility = facility.reload();
 		Location loc = facility.findSubLocationById("P14");
 		LOGGER.info("1: P14 has index:{}", loc.getPosconIndex());
 		this.getTenantPersistenceService().commitTransaction();

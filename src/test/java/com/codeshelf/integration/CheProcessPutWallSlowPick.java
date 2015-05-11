@@ -22,13 +22,9 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 
 	@Before
 	public void setupPutWall() throws IOException{
-		beginTransaction();
-		setUpFacilityWithPutWall();
-		commitTransaction();
+		Facility facility = setUpFacilityWithPutWall();
 
-		beginTransaction();
-		setUpOrders1(getFacility());
-		commitTransaction();
+		setUpOrders1(facility);
 
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
@@ -39,9 +35,10 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		assignOrdersToPutWall(picker1, ordersAndPositions);
 
 		LOGGER.info("2: P14 is in WALL1. P15 and P16 are in WALL2. Set up slow mover CHE for that SKU pick");
+
 		// Verify that orders 11114, 11115, and 11116 are having order locations in put wall
 		beginTransaction();
-		Facility facility = Facility.staticGetDao().reload(getFacility());
+		facility = facility.reload();
 		assertOrderLocation("11114", "P14", "WALL1 - P14");
 		assertOrderLocation("11115", "P15", "WALL2 - P15");
 		assertOrderLocation("11116", "P16", "WALL2 - P16");

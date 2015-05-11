@@ -3,7 +3,7 @@ package com.codeshelf.integration;
 import java.io.IOException;
 import java.util.List;
 
-import org.junit.Assert;
+import static org.junit.Assert.*;
 
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.DeviceType;
@@ -44,38 +44,51 @@ public class CheProcessPutWallSuper extends ServerTest {
 				+ "Bay,B1,50,,,,,,,,\n"//
 				+ "Tier,T1,50,4,0,0,,,,,\n"//
 				+ "Bay,B2,CLONE(B1)\n"; //
-		importAislesData(getFacility(), aislesCsvString);
+		beginTransaction();
+		Facility facility = getFacility();
+		importAislesData(facility, aislesCsvString);
+		commitTransaction();
 
 		// Get the aisles
-		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
-		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getFacility(), "A2");
-		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(getFacility(), "A3");
-		Aisle aisle4 = Aisle.staticGetDao().findByDomainId(getFacility(), "A4");
-		Assert.assertNotNull(aisle1);
+		beginTransaction();
+		facility = facility.reload();		
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(facility, "A2");
+		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(facility, "A3");
+		Aisle aisle4 = Aisle.staticGetDao().findByDomainId(facility, "A4");
+		assertNotNull(aisle1);
+		assertNotNull(aisle2);
+		assertNotNull(aisle3);
+		assertNotNull(aisle4);
+		commitTransaction();
 
 		//Make separate paths and asssign to aisle
-		Path path1 = createPathForTest(getFacility());
+		beginTransaction();
+		facility = facility.reload();
+		aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
+		Path path1 = createPathForTest(facility);
 		PathSegment segment0 = addPathSegmentForTest(path1, 0, 3d, 6d, 5d, 6d);
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
 
-		Path path2 = createPathForTest(getFacility());
+		Path path2 = createPathForTest(facility);
 		segment0 = addPathSegmentForTest(path2, 0, 3d, 16d, 5d, 16d);
 		persistStr = segment0.getPersistentId().toString();
 		aisle2.associatePathSegment(persistStr);
 
-		Path path3 = createPathForTest(getFacility());
+		Path path3 = createPathForTest(facility);
 		segment0 = addPathSegmentForTest(path3, 0, 3d, 36d, 5d, 36d);
 		persistStr = segment0.getPersistentId().toString();
 		aisle3.associatePathSegment(persistStr);
 
-		Path path4 = createPathForTest(getFacility());
+		Path path4 = createPathForTest(facility);
 		segment0 = addPathSegmentForTest(path4, 0, 20d, 6d, 30d, 6d);
 		persistStr = segment0.getPersistentId().toString();
 		aisle4.associatePathSegment(persistStr);
 
 		aisle4.togglePutWallLocation();
-		Assert.assertTrue(aisle4.isPutWallLocation());
+		assertTrue(aisle4.isPutWallLocation());
+		commitTransaction();
 
 		//Import location aliases
 		// A1 and A2 are fast mover blocks. F11-F18 and F21-F28
@@ -116,21 +129,26 @@ public class CheProcessPutWallSuper extends ServerTest {
 				+ "A4.B2.T1.S2,P16\n"//
 				+ "A4.B2.T1.S3,P17\n"//
 				+ "A4.B2.T1.S4,P18\n";//
-		importLocationAliasesData(getFacility(), csvLocationAliases);
+		beginTransaction();
+		facility = facility.reload();
+		importLocationAliasesData(facility, csvLocationAliases);
+		commitTransaction();
 
+		beginTransaction();
+		facility = facility.reload();
 		CodeshelfNetwork network = getNetwork();
 
 		//Set up a PosManager
 		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid(CONTROLLER_1_ID));
 		controller1.updateFromUI(CONTROLLER_1_ID, "Poscons");
-		Assert.assertEquals(DeviceType.Poscons, controller1.getDeviceType());
+		assertEquals(DeviceType.Poscons, controller1.getDeviceType());
 
 		//Assign PosCon controller and indices to slots
-		Location wall1Tier = getFacility().findSubLocationById("A4.B1.T1");
+		Location wall1Tier = facility.findSubLocationById("A4.B1.T1");
 		controller1.addLocation(wall1Tier);
 		wall1Tier.setLedChannel((short) 1);
 		wall1Tier.getDao().store(wall1Tier);
-		Location wall2Tier = getFacility().findSubLocationById("A4.B2.T1");
+		Location wall2Tier = facility.findSubLocationById("A4.B2.T1");
 		controller1.addLocation(wall2Tier);
 		wall2Tier.setLedChannel((short) 1);
 		wall2Tier.getDao().store(wall2Tier);
@@ -138,7 +156,7 @@ public class CheProcessPutWallSuper extends ServerTest {
 		String[] slotNames = { "P11", "P12", "P13", "P14", "P15", "P16", "P17", "P18" };
 		int posconIndex = 1;
 		for (String slotName : slotNames) {
-			Location slot = getFacility().findSubLocationById(slotName);
+			Location slot = facility.findSubLocationById(slotName);
 			slot.setPosconIndex(posconIndex);
 			slot.getDao().store(slot);
 			posconIndex += 1;
@@ -148,47 +166,48 @@ public class CheProcessPutWallSuper extends ServerTest {
 		LedController controller2 = network.findOrCreateLedController("LED2", new NetGuid(CONTROLLER_2_ID));
 		LedController controller3 = network.findOrCreateLedController("LED2", new NetGuid(CONTROLLER_3_ID));
 		LedController controller4 = network.findOrCreateLedController("LED2", new NetGuid(CONTROLLER_4_ID));
-		Location aisle = getFacility().findSubLocationById("A1");
+		Location aisle = facility.findSubLocationById("A1");
 		controller2.addLocation(aisle);
 		aisle.setLedChannel((short) 1);
-		aisle = getFacility().findSubLocationById("A2");
+		aisle = facility.findSubLocationById("A2");
 		controller3.addLocation(aisle);
 		aisle.setLedChannel((short) 1);
-		aisle = getFacility().findSubLocationById("A3");
+		aisle = facility.findSubLocationById("A3");
 		controller4.addLocation(aisle);
 		aisle.setLedChannel((short) 1);
 
 		// Check our lighting configuration
-		Location slot = getFacility().findSubLocationById("P12");
-		Assert.assertTrue(slot.isLightablePoscon());
-		Assert.assertTrue(slot.isLightable());
-		Assert.assertFalse(slot.isLightableAisleController());
-		slot = getFacility().findSubLocationById("P17");
-		Assert.assertTrue(slot.isLightablePoscon());
-		Assert.assertTrue(slot.isLightable());
-		Assert.assertFalse(slot.isLightableAisleController());
+		Location slot = facility.findSubLocationById("P12");
+		assertTrue(slot.isLightablePoscon());
+		assertTrue(slot.isLightable());
+		assertFalse(slot.isLightableAisleController());
+		slot = facility.findSubLocationById("P17");
+		assertTrue(slot.isLightablePoscon());
+		assertTrue(slot.isLightable());
+		assertFalse(slot.isLightableAisleController());
 
-		slot = getFacility().findSubLocationById("F11");
-		Assert.assertFalse(slot.isLightablePoscon());
-		Assert.assertTrue(slot.isLightable());
-		Assert.assertTrue(slot.isLightableAisleController());
-		slot = getFacility().findSubLocationById("F23");
-		Assert.assertFalse(slot.isLightablePoscon());
-		Assert.assertTrue(slot.isLightable());
-		Assert.assertTrue(slot.isLightableAisleController());
-		slot = getFacility().findSubLocationById("S17");
-		Assert.assertFalse(slot.isLightablePoscon());
-		Assert.assertTrue(slot.isLightable());
-		Assert.assertTrue(slot.isLightableAisleController());
+		slot = facility.findSubLocationById("F11");
+		assertFalse(slot.isLightablePoscon());
+		assertTrue(slot.isLightable());
+		assertTrue(slot.isLightableAisleController());
+		slot = facility.findSubLocationById("F23");
+		assertFalse(slot.isLightablePoscon());
+		assertTrue(slot.isLightable());
+		assertTrue(slot.isLightableAisleController());
+		slot = facility.findSubLocationById("S17");
+		assertFalse(slot.isLightablePoscon());
+		assertTrue(slot.isLightable());
+		assertTrue(slot.isLightableAisleController());
 
 		propertyService.changePropertyValue(getFacility(),
 			DomainObjectProperty.WORKSEQR,
 			WorkInstructionSequencerType.BayDistance.toString());
+		commitTransaction();
 
-		return getFacility();
+		return facility;
 	}
 
-	protected void setUpOrders1(Facility inFacility) throws IOException {
+	protected void setUpOrders1(Facility facility) throws IOException {
 		// Outbound orders. No group. Using 5 digit order number and .N detail ID. The preassigned container number matches the order.
 		// With preferredLocation. No inventory. All preferredLocations resolve. There is GTIN/UPC for each item.
 		// Order 12345 has two items in fast, and one is slow
@@ -198,6 +217,8 @@ public class CheProcessPutWallSuper extends ServerTest {
 		// See note about orders 11115 and 11116 in putWallOtherConfigurations() case 2c. Set both to sequen 113 to reproduce
 		// order 11120 has two preferred locations that are not modeled.
 
+		beginTransaction();
+		facility = facility.reload();
 		String orderCsvString = "orderGroupId,shipmentId,customerId,orderId,orderDetailId,preAssignedContainerId,itemId,description,quantity,uom, locationId, gtin, workSequence"
 				+ "\r\n,USF314,COSTCO,12345,12345.1,12345,1123,Sku1123,1,each,F11,gtin1123,11"
 				+ "\r\n,USF314,COSTCO,12345,12345.2,12345,1493,Sku1493,1,each,F12,gtin1493,12"
@@ -220,9 +241,10 @@ public class CheProcessPutWallSuper extends ServerTest {
 				+ "\r\n,USF314,COSTCO,11120,11120.2,11120,1702,Sku1702,2,each,X11,gtin1702,99"
 				+ "\r\n,USF314,COSTCO,11120,11120.3,11120,1602,Sku1602,2,each,X11,gtin1602,99"
 ;
-		importOrdersData(inFacility, orderCsvString);
-		ItemMaster theMaster = ItemMaster.staticGetDao().findByDomainId(inFacility, "1515");
-		Assert.assertNotNull("ItemMaster should be created", theMaster);
+		importOrdersData(facility, orderCsvString);
+		ItemMaster theMaster = ItemMaster.staticGetDao().findByDomainId(facility, "1515");
+		assertNotNull("ItemMaster should be created", theMaster);
+		commitTransaction();
 	}
 
 	/**
@@ -231,30 +253,30 @@ public class CheProcessPutWallSuper extends ServerTest {
 	 * Always checks the rather complicated putWallUiField field, which is blank if no order location or not in put wall.
 	 */
 	protected void assertOrderLocation(String orderId, String locationId, String putWallUiField) {
-		Facility facility = getFacility();
+		Facility facility = getFacility().reload();
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
-		Assert.assertNotNull(order);
+		assertNotNull(order);
 
 		if (!locationId.isEmpty()) {
 			Location location = facility.findSubLocationById(locationId);
-			Assert.assertNotNull(location);
+			assertNotNull(location);
 			List<OrderLocation> locations = order.getOrderLocations();
-			Assert.assertEquals(1, locations.size());
+			assertEquals(1, locations.size());
 			OrderLocation savedOrderLocation = locations.get(0);
 			Location savedLocation = savedOrderLocation.getLocation();
-			Assert.assertEquals(location, savedLocation);
+			assertEquals(location, savedLocation);
 		} else {
 			List<OrderLocation> locations = order.getOrderLocations();
-			Assert.assertEquals(0, locations.size());
+			assertEquals(0, locations.size());
 		}
 
 		// getPutWallUi is what shows in the WebApp
-		Assert.assertEquals(putWallUiField, order.getPutWallUi());
+		assertEquals(putWallUiField, order.getPutWallUi());
 	}
 
 	protected void assertItemMaster(Facility facility, String sku) {
 		ItemMaster master = ItemMaster.staticGetDao().findByDomainId(facility, sku);
-		Assert.assertNotNull(master);
+		assertNotNull(master);
 	}
 
 }
