@@ -25,11 +25,14 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.AisleDeviceLogic.LedCmd;
 import com.codeshelf.device.PosControllerInstr.PosConInstrGroupSerializer;
+import com.codeshelf.flyweight.command.CommandControlABC;
 import com.codeshelf.flyweight.command.CommandControlButton;
 import com.codeshelf.flyweight.command.CommandControlClearDisplay;
 import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
+import com.codeshelf.flyweight.command.CommandControlDisplaySingleLineMessage;
 import com.codeshelf.flyweight.command.EffectEnum;
 import com.codeshelf.flyweight.command.ICommand;
+import com.codeshelf.flyweight.command.NetCommandId;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.INetworkDevice;
@@ -371,6 +374,21 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			return;
 		}
 		mLastScreenDisplayLines.set(oneBasedLineIndex - 1, lineValue);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 *  This is the primitive that sends out a single line command
+	 *  Documented at https://codeshelf.atlassian.net/wiki/display/TD/KW2+CHE+Displays
+	 */
+	private void sendSingleLineDisplayMessage(final String inLineMessageStr, final byte fontType, final short posX, final short posY) {
+		ICommand command = new CommandControlDisplaySingleLineMessage(NetEndpoint.PRIMARY_ENDPOINT,
+			inLineMessageStr,
+			fontType,
+			posX,
+			posY);
+		mRadioController.sendCommand(command, getAddress(), true);
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -1858,7 +1876,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			getUserId(),
 			getMyGuidStr());
 		*/
-		
+
 		// new
 		try {
 			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());

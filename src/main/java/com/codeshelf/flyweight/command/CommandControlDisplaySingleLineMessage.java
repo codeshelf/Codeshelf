@@ -25,9 +25,9 @@ import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
  *
  *  @author huffa
  */
-public final class CommandControlDispalySingleLineMessage extends CommandControlABC {
+public final class CommandControlDisplaySingleLineMessage extends CommandControlABC {
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(CommandControlDispalySingleLineMessage.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(CommandControlDisplaySingleLineMessage.class);
 	
 	private static final int LENGTH_BYTES = 9;
 
@@ -60,9 +60,9 @@ public final class CommandControlDispalySingleLineMessage extends CommandControl
 	// --------------------------------------------------------------------------
 	/**
 	 *  This is the constructor to use to create a data command to send to the network.
-	 *  @param inEndpoint	The end point to send the command.
+	 *  Documented at https://codeshelf.atlassian.net/wiki/display/TD/KW2+CHE+Displays
 	 */
-	public CommandControlDispalySingleLineMessage(final NetEndpoint inEndpoint,
+	public CommandControlDisplaySingleLineMessage(final NetEndpoint inEndpoint,
 		final String inLineMessageStr,
 		final byte fontType,
 		final short posX,
@@ -80,7 +80,7 @@ public final class CommandControlDispalySingleLineMessage extends CommandControl
 	/**
 	 *  This is the constructor to use to create a data command that's read off of the network input stream.
 	 */
-	public CommandControlDispalySingleLineMessage() {
+	public CommandControlDisplaySingleLineMessage() {
 		super(new NetCommandId(CommandControlABC.SINGLE_LINE_MESSAGE));
 	}
 
