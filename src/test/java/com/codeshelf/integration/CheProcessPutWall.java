@@ -20,7 +20,6 @@ import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.LightService;
 import com.codeshelf.sim.worker.PickSimulator;
-import com.codeshelf.util.ThreadUtils;
 
 public class CheProcessPutWall extends CheProcessPutWallSuper {
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessPutWall.class);
