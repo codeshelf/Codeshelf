@@ -137,7 +137,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			switch (inCheState) {
 				case IDLE:
-					sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
+					// sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
+					testSingleLineDisplays(4);
 					break;
 
 				case VERIFYING_BADGE:

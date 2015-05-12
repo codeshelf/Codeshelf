@@ -9,6 +9,8 @@ import java.util.List;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.WiFactory;
 import com.codeshelf.model.WiFactory.WiPurpose;
@@ -30,7 +32,11 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.google.common.collect.Lists;
 
 public class PutWallOrderGenerator {
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(PutWallOrderGenerator.class);
+
 	protected static List<WorkInstruction> attemptToGenerateWallOrders(Che che, Collection<String> inContainerIdList, Timestamp theTime) {
+		LOGGER.info("attemptToGenerateWallOrders for che:{}, walls:{}", che.getDomainId(), inContainerIdList);
+
 		List<WorkInstruction> wiList = Lists.newArrayList();
 		if (inContainerIdList == null || inContainerIdList.isEmpty()) {
 			return wiList;
@@ -54,6 +60,8 @@ public class PutWallOrderGenerator {
 	 * Generate a Work Instructions list for the current wall
 	 */
 	private static List<WorkInstruction> generateWIsForWall(Che che, String wallId, List<OrderHeader> orders, Timestamp theTime) {
+		LOGGER.info("generateWIsForWall for {}, orders number considered{}", wallId, orders.size());
+		
 		HashMap<String, WorkInstruction> wiHashThisWallAndRun = new HashMap<String, WorkInstruction>();
 		Facility facility = che.getFacility();
 		//Retrieve or create a new container for this wall
@@ -119,6 +127,9 @@ public class PutWallOrderGenerator {
 		}
 		container.setUpdated(theTime);
 		Container.staticGetDao().store(container);
+
+		LOGGER.info("getContainerForWall for {} found {} potential match", wallId, containers.size());
+		
 		return container;
 	}
 	
@@ -146,6 +157,8 @@ public class PutWallOrderGenerator {
 	 * Returns a map of provided Put Walls to orders located in those walls
 	 */
 	private static HashMap<String, List<OrderHeader>> getOrdersInPutWalls(Collection<String> putWallNames) {
+		LOGGER.info("getOrdersInPutWalls called for {}", putWallNames);
+
 		List<OrderHeader> allOrders = OrderHeader.staticGetDao().getAll();
 		HashMap<String, List<OrderHeader>> wallOrders = new HashMap<>();
 		for (OrderHeader order : allOrders) {
@@ -165,6 +178,8 @@ public class PutWallOrderGenerator {
 				}
 			}
 		}
+		LOGGER.info("getOrdersInPutWalls return {} orders", wallOrders.size());
+
 		return wallOrders;
 	}
 
