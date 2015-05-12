@@ -6,6 +6,9 @@
 package com.codeshelf.model.domain;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
@@ -57,7 +60,7 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(OrderLocation.class);
 
-	@ManyToOne(optional = false,fetch=FetchType.LAZY)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@JsonProperty
 	@Getter
 	@Setter
@@ -76,7 +79,7 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	private Timestamp			updated;
 
 	// The owning order.
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Getter
 	@Setter
 	private OrderHeader			parent;
@@ -112,7 +115,7 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	public final Facility getFacility() {
 		return getParent().getFacility();
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* 
 	 * This is just order ID
@@ -126,5 +129,36 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 			return "";
 	}
 
+	// --------------------------------------------------------------------------
+	/* 
+	 * Give the logable name of the location for this OrderLocation
+	 */
+	public String getLocationName() {
+		Location loc = getLocation();
+		return loc.getBestUsableLocationName();
+	}
+
+	// --------------------------------------------------------------------------
+	/* 
+	 * Helper method. This has a bad query. This assumes it is in a tenant transaction.
+	 * Somewaht similar to OrderLocationCsvImporter.deleteLocation.
+	 */
+	public static List<OrderLocation> findOrderLocationsAtLocation(final Location inLocation, final Facility inFacility) {
+
+		ArrayList<OrderLocation> olList = new ArrayList<OrderLocation>();
+
+		List<OrderHeader> orders = OrderHeader.staticGetDao().findByParent(inFacility);
+		for (OrderHeader order : orders) {
+			// For every OrderLocation at this location, delete it.
+			Iterator<OrderLocation> iter = order.getOrderLocations().iterator();
+			while (iter.hasNext()) {
+				OrderLocation orderLocation = iter.next();
+				if (orderLocation.getLocation().equals(inLocation)) {
+					olList.add(orderLocation);
+				}
+			}
+		}
+		return olList;
+	}
 
 }
