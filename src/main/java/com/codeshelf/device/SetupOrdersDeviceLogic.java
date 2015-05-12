@@ -91,7 +91,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Setter
 	private int									mRememberPriorShorts					= 0;
 
-	private final boolean						useSummaryState							= true;
+	private final boolean						useNewCheScreen							= false;
 
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -109,8 +109,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 	}
 
-	public boolean usesSummaryState() {
-		return useSummaryState;
+	public boolean usesNewCheScreen() {
+		return useNewCheScreen;
 	}
 
 	public String getDeviceType() {
@@ -137,8 +137,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			switch (inCheState) {
 				case IDLE:
-					// sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
-					testSingleLineDisplays(4);
+					sendDisplayCommand(SCAN_USERID_MSG, EMPTY_MSG);
 					break;
 
 				case VERIFYING_BADGE:
@@ -1150,10 +1149,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (verified) {
 				clearAllPosconsOnThisDevice();
 
-				if (useSummaryState) // for now, to make code refactoring easier.
-					setState(CheStateEnum.SETUP_SUMMARY);
-				else
-					setState(CheStateEnum.CONTAINER_SELECT);
+				setState(CheStateEnum.SETUP_SUMMARY);
 
 				notifyCheWorkerVerb("LOG IN", "");
 			} else {
@@ -1396,13 +1392,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			LOGGER.info("Got Counts {}", mContainerToWorkInstructionCountMap);
 			// It is not so clear, should server give us completed work instructions? Should we clear those out?
 
-			if (usesSummaryState())
-				setState(CheStateEnum.SETUP_SUMMARY);
-			else if (doesNeedReview) {
-				setState(CheStateEnum.LOCATION_SELECT_REVIEW);
-			} else {
-				setState(CheStateEnum.LOCATION_SELECT);
-			}
+			setState(CheStateEnum.SETUP_SUMMARY);
 		} else {
 			// v16 remove NO_WORK_CURR_PATH. Just NO_WORK, until we go to SETUP_SUMMARY
 			setState(getNoWorkReviewState());
@@ -1620,9 +1610,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			// pickcount > 0. Usually just want to start
 			line4 = "START (or SETUP)"; // or other location
 
-		// Note to Andrew: make this look nice. By default, line1 has larger font than the other lines. 
-		// for this screen, all could be the same monospace font.
-		this.sendDisplayCommand(line1, line2, line3, line4);
+		// This screen needs monospace
+		if (this.usesNewCheScreen())
+			this.sendMonospaceDisplayScreen(line1, line2, line3, line4, true); // larger bottom line
+		else
+			this.sendDisplayCommand(line1, line2, line3, line4);
 
 	}
 
@@ -2282,10 +2274,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		mContainerInSetup = "";
 
 		//DEV-775 No longer clear CHE setup state on logout
-		if (!usesSummaryState()) {
-			mPositionToContainerMap.clear();
-			mContainerToWorkInstructionCountMap = null;
-		}
 	}
 
 	/**

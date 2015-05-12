@@ -251,7 +251,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 	}
 
-	public boolean usesSummaryState() {
+	public boolean usesNewCheScreen() {
 		return false; // SetupOrderDeviceLogic will override
 	}
 
@@ -483,22 +483,31 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	/**
 	 * A corollary to the original full screen message function. It remembers the lines,
 	 * then sends a clear and several CommandControlDisplaySingleLineMessages.
-	 * x offset = 26, which centers 20-character lines on teh 400 pixel 2.7 inch display.
+	 * x offset = 26, which centers 20-character lines on the 400 pixel 2.7 inch display.
 	 */
 	protected void sendMonospaceDisplayScreen(final String inLine1Message,
 		final String inLine2Message,
 		final String inLine3Message,
-		final String inLine4Message) {
+		final String inLine4Message,
+		final boolean largerBottomLine) {
 
 		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
 		rememberLinesSent(inLine1Message, inLine2Message, inLine3Message,inLine4Message);
 		
+		if (!this.isDeviceAssociated()) {
+			LOGGER.debug("skipping send display for unassociated " + this.getMyGuidStrForLog());
+			return;
+		}
+		logLinesSent(inLine1Message, inLine2Message, inLine3Message,inLine4Message); // not logged if no association
 		clearDisplay();
+		
 		sendSingleLineDisplayMessage(inLine1Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 35);
 		sendSingleLineDisplayMessage(inLine2Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 90);
 		sendSingleLineDisplayMessage(inLine3Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 145);
-		sendSingleLineDisplayMessage(inLine4Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 200);
-		
+		if (largerBottomLine)
+			sendSingleLineDisplayMessage(inLine4Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24, (byte) 12, (byte) 200);		
+		else
+			sendSingleLineDisplayMessage(inLine4Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 200);		
 	}
 	
 	// --------------------------------------------------------------------------
@@ -519,7 +528,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		if (!this.isDeviceAssociated()) {
 			LOGGER.debug("skipping send display for unassociated " + this.getMyGuidStrForLog());
-			// This is far less logging than if the command actually goes, so might as well say what is going on.
 			return;
 		}
 		logLinesSent(inLine1Message, inLine2Message, inLine3Message,inLine4Message); // not logged if no association
@@ -1322,17 +1330,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * Order_Setup the complete path state is SETUP_SUMMARY
 	 */
 	public CheStateEnum getCompleteState() {
-		if (usesSummaryState())
 			return CheStateEnum.SETUP_SUMMARY;
-		else
-			return CheStateEnum.PICK_COMPLETE;
+			// return CheStateEnum.PICK_COMPLETE;
 	}
 
 	public CheStateEnum getNoWorkReviewState() {
-		if (usesSummaryState())
 			return CheStateEnum.SETUP_SUMMARY;
-		else
-			return CheStateEnum.NO_WORK;
+			// return CheStateEnum.NO_WORK;
 	}
 
 	// --------------------------------------------------------------------------
@@ -1340,19 +1344,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * Order_Setup the complete path state is SETUP_SUMMARY
 	 */
 	public CheStateEnum getLocationStartReviewState() {
-		if (usesSummaryState())
 			return CheStateEnum.SETUP_SUMMARY;
-		else
-			return CheStateEnum.LOCATION_SELECT;
+			// return CheStateEnum.LOCATION_SELECT;
 	}
 
 	public CheStateEnum getLocationStartReviewState(boolean needOldReviewState) {
-		if (usesSummaryState())
 			return CheStateEnum.SETUP_SUMMARY;
-		else if (needOldReviewState)
-			return CheStateEnum.LOCATION_SELECT_REVIEW;
-		else
-			return CheStateEnum.LOCATION_SELECT;
+			// return CheStateEnum.LOCATION_SELECT;
 	}
 
 	// --------------------------------------------------------------------------
