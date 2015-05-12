@@ -9,6 +9,8 @@ import java.util.List;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.WiFactory;
 import com.codeshelf.model.WiFactory.WiPurpose;
@@ -27,12 +29,19 @@ import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.sim.worker.PickSimulator;
 import com.google.common.collect.Lists;
 
 public class PutWallOrderGenerator {
+	
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(PutWallOrderGenerator.class);
+
 	protected static List<WorkInstruction> attemptToGenerateWallOrders(Che che, Collection<String> inContainerIdList, Timestamp theTime) {
+		LOGGER.info("attemptToGenerateWallOrders for che:{}, walls:{}", che.getDomainId(), inContainerIdList);
+
 		List<WorkInstruction> wiList = Lists.newArrayList();
 		if (inContainerIdList == null || inContainerIdList.isEmpty()) {
+			LOGGER.info("attemptToGenerateWallOrders exited due to empty list");
 			return wiList;
 		}
 		//Get all orders in the provided walls 
@@ -54,6 +63,8 @@ public class PutWallOrderGenerator {
 	 * Generate a Work Instructions list for the current wall
 	 */
 	private static List<WorkInstruction> generateWIsForWall(Che che, String wallId, List<OrderHeader> orders, Timestamp theTime) {
+		LOGGER.info("generateWIsForWall for {}, orders number considered{}", wallId, orders.size());
+		
 		HashMap<String, WorkInstruction> wiHashThisWallAndRun = new HashMap<String, WorkInstruction>();
 		Facility facility = che.getFacility();
 		//Retrieve or create a new container for this wall
@@ -100,6 +111,7 @@ public class PutWallOrderGenerator {
 	 * Retrieve or generate a Container to be used for a single Wall in this Slow Pick run
 	 */
 	private static Container getContainerForWall(Facility facility, String wallId, Timestamp theTime){
+
 		//Container domainId names should be unique. However, if, for some reason there are multiple Conainers with the same domainId,
 		//the following conde ensures that the first one gets reused rather than creating a third one
 		//(calling findByDomainId() returns null when there are multiple matches)
@@ -119,6 +131,9 @@ public class PutWallOrderGenerator {
 		}
 		container.setUpdated(theTime);
 		Container.staticGetDao().store(container);
+
+		LOGGER.info("getContainerForWall for {} found {} potential match", wallId, containers.size());
+		
 		return container;
 	}
 	
@@ -146,7 +161,11 @@ public class PutWallOrderGenerator {
 	 * Returns a map of provided Put Walls to orders located in those walls
 	 */
 	private static HashMap<String, List<OrderHeader>> getOrdersInPutWalls(Collection<String> putWallNames) {
+		LOGGER.info("getOrdersInPutWalls called for {}", putWallNames);
+
 		List<OrderHeader> allOrders = OrderHeader.staticGetDao().getAll();
+		// Obvious trouble here. Do we want a memory list of a million orders?
+		
 		HashMap<String, List<OrderHeader>> wallOrders = new HashMap<>();
 		for (OrderHeader order : allOrders) {
 			List<OrderLocation> orderLocations = order.getOrderLocations();
@@ -165,6 +184,8 @@ public class PutWallOrderGenerator {
 				}
 			}
 		}
+		LOGGER.info("getOrdersInPutWalls return {} orders", wallOrders.size());
+
 		return wallOrders;
 	}
 
