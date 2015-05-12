@@ -391,30 +391,82 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inLine1Message
-	 * @param inLine2Message
-	 * @param inLine3Message
-	 * @param inLine4Message
+	 *  Test function to explore how it works
+	 *  Findings on the 2.7 inch CHE: 20 is a comfortable x value for left side of screen.
+	 *  40 is comfortable y value for first line for smaller fonts.
+	 *  ARIAL16 displays about 35 digits.
+	 *  ARIAL26 displays about 22 digits
+	 *  ARIALMONOBOLD20 gives us 22 characters. To center 22 characters, x offset 18. For 20 chars, x = 26. For 4 y lines, use 35, 90, 145, 200
+	 *  ARIALMONOBOLD24 gives us 19 characters. To center 19, use x offset 12.
+	 *  ARIALMONOBOLD16 gives us 27 characters. Unpleasingly small.
+	 *  ARIALMONOBOLD26 gives us 17 characters
+
 	 */
-	protected void sendDisplayCommand(final String inLine1Message,
+	protected void testSingleLineDisplays(final int whichTest) {
+		clearDisplay();
+		String testString40 = "1234567890123456789012345678901234567890";
+		String testString20 = "12345678901234567890";
+		if (whichTest == 1) {
+			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIAL16, (byte) 0, (byte) 0);
+			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIAL16, (byte) 5, (byte) 40);
+			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIAL26, (byte) 10, (byte) 100);
+			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIAL26, (byte) 20, (byte) 180);
+		}
+		else if (whichTest == 2) {
+			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 20, (byte) 40);
+			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 20, (byte) 95);
+			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24, (byte) 20, (byte) 150);
+			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24, (byte) 20, (byte) 205);
+		}
+		else if (whichTest == 3) { 
+			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 18, (byte) 35);
+			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 18, (byte) 90);
+			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 18, (byte) 145);
+			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 18, (byte) 200);
+		}
+		else if (whichTest == 4) { // This is our prototype for monospace corollary of old screens
+			sendSingleLineDisplayMessage(testString20, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 35);
+			sendSingleLineDisplayMessage(testString20, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 90);
+			sendSingleLineDisplayMessage(testString20, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 145);
+			sendSingleLineDisplayMessage(testString20, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 200);
+		}
+		else if (whichTest == 5) {
+			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD16, (byte) 20, (byte) 35);
+			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD16, (byte) 20, (byte) 90);
+			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD26, (byte) 20, (byte) 145);
+			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD26, (byte) 20, (byte) 200);
+		}
+		else if (whichTest == 6) { // Try to get mono 24. Does not quite do it. 19 is good
+			sendSingleLineDisplayMessage(testString20, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24, (byte) 12, (byte) 35);
+			sendSingleLineDisplayMessage(testString20, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24, (byte) 12, (byte) 90);
+			sendSingleLineDisplayMessage(testString20, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24, (byte) 12, (byte) 145);
+			sendSingleLineDisplayMessage(testString20, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24, (byte) 12, (byte) 200);
+		}
+
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Helper function called by two display functions.
+	 */
+	private void rememberLinesSent(final String inLine1Message,
 		final String inLine2Message,
 		final String inLine3Message,
 		final String inLine4Message) {
-		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
 		doSetRecentCheDisplayString(1, inLine1Message);
 		doSetRecentCheDisplayString(2, inLine2Message);
 		doSetRecentCheDisplayString(3, inLine3Message);
-		doSetRecentCheDisplayString(4, inLine4Message);
+		doSetRecentCheDisplayString(4, inLine4Message);		
+	}
 
-		// DEV-459 if this CHE is not associated, there is no point in sending out a display.
-		// Lots of upstream code generates display messages.
-
-		if (!this.isDeviceAssociated()) {
-			LOGGER.debug("skipping send display for unassociated " + this.getMyGuidStrForLog());
-			// This is far less logging than if the command actually goes, so might as well say what is going on.
-			return;
-		}
-
+	// --------------------------------------------------------------------------
+	/**
+	 * Helper function called by two display functions.
+	 */
+	private void logLinesSent(final String inLine1Message,
+		final String inLine2Message,
+		final String inLine3Message,
+		final String inLine4Message) {
 		String displayString = "Display message for " + getMyGuidStrForLog();
 		if (!inLine1Message.isEmpty())
 			displayString += " line1: " + inLine1Message;
@@ -425,6 +477,53 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (!inLine4Message.isEmpty())
 			displayString += " line4: " + inLine4Message;
 		LOGGER.info(displayString);
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * A corollary to the original full screen message function. It remembers the lines,
+	 * then sends a clear and several CommandControlDisplaySingleLineMessages.
+	 * x offset = 26, which centers 20-character lines on teh 400 pixel 2.7 inch display.
+	 */
+	protected void sendMonospaceDisplayScreen(final String inLine1Message,
+		final String inLine2Message,
+		final String inLine3Message,
+		final String inLine4Message) {
+
+		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
+		rememberLinesSent(inLine1Message, inLine2Message, inLine3Message,inLine4Message);
+		
+		clearDisplay();
+		sendSingleLineDisplayMessage(inLine1Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 35);
+		sendSingleLineDisplayMessage(inLine2Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 90);
+		sendSingleLineDisplayMessage(inLine3Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 145);
+		sendSingleLineDisplayMessage(inLine4Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 200);
+		
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * This was our original full screen message function. It remembers the lines,
+	 * then sends a CommandControlDisplayMessage.
+	 * The KW2 firmware automatically displays line 1 in ARIAL26, and lines 2-4 in ARIAL16.
+	 */
+	protected void sendDisplayCommand(final String inLine1Message,
+		final String inLine2Message,
+		final String inLine3Message,
+		final String inLine4Message) {
+		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
+		rememberLinesSent(inLine1Message, inLine2Message, inLine3Message,inLine4Message);
+
+		// DEV-459 if this CHE is not associated, there is no point in sending out a display.
+		// Lots of upstream code generates display messages.
+
+		if (!this.isDeviceAssociated()) {
+			LOGGER.debug("skipping send display for unassociated " + this.getMyGuidStrForLog());
+			// This is far less logging than if the command actually goes, so might as well say what is going on.
+			return;
+		}
+		logLinesSent(inLine1Message, inLine2Message, inLine3Message,inLine4Message); // not logged if no association
+
 		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT,
 			inLine1Message,
 			inLine2Message,
@@ -906,9 +1005,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			LOGGER.error(" bad input to rememberOffChePosconWorkInstruction");
 			return;
 		}
-		@SuppressWarnings("unused")
 		String theSub = controllerId.substring(0, 2);
-		if ("0x".equals(controllerId.substring(0, 2))) {
+		if ("0x".equals(theSub)) {
 			LOGGER.error("Probable coding error. See comments in rememberOffChePosconWorkInstruction()");
 			// By convention, use the non- Ox form, but continue
 		}
