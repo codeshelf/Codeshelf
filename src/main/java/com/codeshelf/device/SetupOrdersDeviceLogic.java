@@ -1149,10 +1149,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (verified) {
 				clearAllPosconsOnThisDevice();
 
-				if (useNewCheScreen) // for now, to make code refactoring easier.
-					setState(CheStateEnum.SETUP_SUMMARY);
-				else
-					setState(CheStateEnum.CONTAINER_SELECT);
+				setState(CheStateEnum.SETUP_SUMMARY);
 
 				notifyCheWorkerVerb("LOG IN", "");
 			} else {
