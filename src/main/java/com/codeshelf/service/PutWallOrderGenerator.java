@@ -215,7 +215,7 @@ public class PutWallOrderGenerator {
 		if (location == null) {
 			return false;
 		}
-		if (location.getPersistentId() == ancestor.getPersistentId()) {
+		if (location.equals(ancestor)) {
 			return true;
 		}
 		return doesLocationHaveAncestorRecursive(location.getParent(), ancestor);
