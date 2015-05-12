@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
@@ -18,7 +19,8 @@ import com.google.common.collect.Lists;
 
 public class PickScriptRunner {
 	private final static String TEMPLATE_DEF_PICKER = "defPicker <pickerName> <cheGuid>";
-	private final static String TEMPLATE_SETUP = "setup <pickerName> <containers>";
+	private final static String TEMPLATE_SETUP_CART = "setupCart <pickerName> <containers>";
+	private final static String TEMPLATE_WAIT = "waitForState <pickerName> <states>";
 	private final static String TEMPLATE_SET_PARAMS = "setParams <pickPause> <chanceSkipUpc> <chanceShort>";
 	private final static String TEMPLATE_PICK = "pick <pickerNames>";
 	private final static String TEMPLATE_PICKER_EXEC = "pickerExec <pickerName> <pickerCommand> [arguments]";
@@ -40,7 +42,7 @@ public class PickScriptRunner {
 	 * This method need to run asynchronously to not hold up the message queue between Server and Site
 	 */
 	public void runScript(final PickScriptMessage message) {
-		Runnable runnable = new Runnable() {			
+		Runnable runnable = new Runnable() {
 			@Override
 			public void run() {
 				String script = message.getScript();
@@ -57,6 +59,8 @@ public class PickScriptRunner {
 				} catch (Exception e) {
 					String error = exceptionToString(e);
 					report.append(error);
+					report.append("Logging out from all pickers due to this error\n");
+					logoutAll();
 				}
 				report.append("***Script Completed***\n");
 				message.setResponseMessage(report.toString());
@@ -71,6 +75,8 @@ public class PickScriptRunner {
 		if (line == null || line.isEmpty()) {
 			return;
 		}
+		//Clean up multiple spaces between words 
+		line = line.trim().replaceAll("\\s+", " ");
 		String parts[] = line.split(" ");
 		for (int i = 0; i < parts.length; i++) {
 			parts[i] = parts[i].trim();
@@ -80,8 +86,10 @@ public class PickScriptRunner {
 			processPickerExecCommand(parts);
 		} else if (command.equalsIgnoreCase("defPicker")) {
 			processDefinePickerCommand(parts);
-		} else if (command.equalsIgnoreCase("setup")) {
-			processSetupCommand(parts);
+		} else if (command.equalsIgnoreCase("waitForState")) {
+			processWaitForStatesCommand(parts);
+		} else if (command.equalsIgnoreCase("setupCart")) {
+			processSetupCartCommand(parts);
 		} else if (command.equalsIgnoreCase("setParams")) {
 			processSetParamsCommand(parts);
 		} else if (command.equalsIgnoreCase("pick")) {
@@ -90,7 +98,7 @@ public class PickScriptRunner {
 			processPickAllCommand();
 		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command " + command + ". Expected [pickerExec, defPicker, setup, setParams, pick, pickAll, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [pickerExec, defPicker, waitForState, setupCard, setParams, pick, pickAll, //]");
 		}
 	}
 	
@@ -137,6 +145,24 @@ public class PickScriptRunner {
 	
 	/**
 	 * Expects to see command
+	 * waitForState <pickerName> <states>
+	 * @throws Exception
+	 */
+	private void processWaitForStatesCommand(String parts[]) throws Exception {
+		if (parts.length < 3){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_WAIT);
+		}
+		PickSimulator picker = getPicker(parts[1]);
+		ArrayList<CheStateEnum> states = Lists.newArrayList();
+		for (int i = 2; i < parts.length; i++) {
+			CheStateEnum state = CheStateEnum.valueOf(parts[i]);
+			states.add(state);
+		}
+		picker.waitForOneOfCheStates(states, WAIT_TIMEOUT);
+	}
+	
+	/**
+	 * Expects to see command
 	 * setParams <pickPause> <chanceSkipUpc> <chanceShort>
 	 * @throws Exception
 	 */
@@ -151,12 +177,12 @@ public class PickScriptRunner {
 
 	/**
 	 * Expects to see command
-	 * setup <pickerName> <containers>
+	 * setupCart <pickerName> <containers>
 	 * @throws Exception
 	 */
-	private void processSetupCommand(String parts[]) throws Exception {
+	private void processSetupCartCommand(String parts[]) throws Exception {
 		if (parts.length < 3){
-			throwIncorrectNumberOfArgumentsException(TEMPLATE_SETUP);
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_SETUP_CART);
 		}
 		String pickerName = parts[1];
 		PickSimulator picker = getPicker(pickerName);
@@ -167,6 +193,15 @@ public class PickScriptRunner {
 			if (container != null && !container.isEmpty()){
 				picker.setupContainer(parts[i], (i-1)+"");
 			}
+		}
+	}
+	
+	/**
+	 * If needed, this command can be made part of the available functionality
+	 */
+	private void logoutAll(){
+		for (PickSimulator picker : pickers.values()){
+			picker.logout();
 		}
 	}
 	
@@ -194,9 +229,7 @@ public class PickScriptRunner {
 			}
 		}
 		executor.shutdown();
-		while (!executor.isTerminated()) {
-			Thread.sleep(1000);
-		}
+		executor.awaitTermination(5, TimeUnit.MINUTES);
 		LOGGER.info("che picks done");
 	}
 	
@@ -313,7 +346,7 @@ public class PickScriptRunner {
 		if (error == null || error.isEmpty()) {
 			error = ExceptionUtils.getStackTrace(e);
 		}
-		return e.getClass().getName() + ": " + error;
+		return e.getClass().getName() + ": " + error + "\n";
 	}
 	
 	private void throwIncorrectNumberOfArgumentsException(String expected) throws Exception{

@@ -20,7 +20,6 @@ import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.LightService;
 import com.codeshelf.sim.worker.PickSimulator;
-import com.codeshelf.util.ThreadUtils;
 
 public class CheProcessPutWall extends CheProcessPutWallSuper {
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessPutWall.class);
@@ -111,11 +110,8 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		lightService.lightLocation(facility.getPersistentId().toString(), "P11");
 		this.getTenantPersistenceService().commitTransaction();
 
-		// will this have intermittent failure? lightLocation() led to new message back to update the posman display. There is no state to wait for.
-		ThreadUtils.sleep(2000);
-		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 1);
-		Assert.assertNotNull(displayValue); // Poscon is lit. Just to have it in one test case, let's sanctify all the values.
-		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
+		// lightLocation() led to new message back to update the posman display. There is no state to wait for.
+		posman.waitForControllerDisplayValue((byte) 1, PosControllerInstr.BITENCODED_SEGMENTS_CODE, 2000);
 		Assert.assertEquals(posman.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_TRIPLE_DASH);
 		Assert.assertEquals(posman.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_TRIPLE_DASH);
 		// could check flashing and brightness, but seem pointless.
@@ -936,28 +932,21 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.scanCommand("YES");
 		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
 
-		// TODO fix. Handled better with new process
-		/*
-		LOGGER.info("2a: Try to jump to location on same path, without doing START. Ignored");
+		LOGGER.info("2a: Try to jump to location on same path, without doing START. On same path. so ready to pick");
 		picker.scanLocation("F14");
-		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
-		*/
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
 		// TODO
 		LOGGER.info("3a: Restart. Get the 11117 job again. LOCATION_SELECT_REVIEW because 11119 is completed");
 		picker.scanCommand("START");
-		if (!picker.usesSummaryState()) {
-			picker.waitForCheState(picker.getLocationStartReviewState(true), WAIT_TIME);
-			// see that 11119 shows as oc
-			Byte poscon6Value = picker.getLastSentPositionControllerDisplayValue((byte) 6);
-			Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, poscon6Value);
-			Byte maxValue = picker.getLastSentPositionControllerMaxQty((byte) 6);
-			Assert.assertEquals(PosControllerInstr.BITENCODED_LED_O, maxValue);
-			picker.scanCommand("START"); // this could have been location scan on the same path
-			picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
-		} else {
-			picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
-		}
+		picker.waitForCheState(picker.getLocationStartReviewState(true), WAIT_TIME);
+		// see that 11119 shows as oc
+		Byte poscon6Value = picker.getLastSentPositionControllerDisplayValue((byte) 6);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, poscon6Value);
+		Byte maxValue = picker.getLastSentPositionControllerMaxQty((byte) 6);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_O, maxValue);
+		picker.scanCommand("START"); // this could have been location scan on the same path
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
 		LOGGER.info("3b: Short it again");
 		picker.scanCommand("SHORT");
@@ -1008,6 +997,88 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
 
+	}
+
+	@Test
+	public final void putWallOrderReassign() throws IOException {
+		// This shows if we are live updating to clear out earlier order locations
+
+		this.getTenantPersistenceService().beginTransaction();
+		setUpFacilityWithPutWall();
+		setUpOrders1(getFacility());
+
+		// Document where the poscon indices of some of the slots
+		Facility facility = getFacility();
+		Location loc = facility.findSubLocationById("P13");
+		LOGGER.info("P13 has index:{}", loc.getPosconIndex());
+		loc = facility.findSubLocationById("P14");
+		LOGGER.info("P14 has index:{}", loc.getPosconIndex());
+		loc = facility.findSubLocationById("P15");
+		LOGGER.info("P15 has index:{}", loc.getPosconIndex());
+		loc = facility.findSubLocationById("P16");
+		LOGGER.info("P16 has index:{}", loc.getPosconIndex());
+
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.startSiteController();
+		PickSimulator picker1 = createPickSim(cheGuid1);
+
+		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
+		Assert.assertNotNull(posman);
+
+		LOGGER.info("0: Set up three orders in the put wall");
+		picker1.loginAndSetup("Picker #1");
+		picker1.scanCommand("ORDER_WALL");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.setOrderToPutWall("11117", "P13");
+		picker1.setOrderToPutWall("11115", "P15");
+		picker1.setOrderToPutWall("11116", "P16");
+		picker1.scanCommand("CLEAR");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+
+		// show the starting state of the orders we will use
+		beginTransaction();
+		facility = getFacility();
+		Facility.staticGetDao().reload(facility);
+		assertOrderLocation("11115", "P15", "WALL2 - P15");
+		assertOrderLocation("11116", "P16", "WALL2 - P16");
+		assertOrderLocation("11117", "P13", "WALL1 - P13");
+		assertOrderLocation("11119", "", "");
+		commitTransaction();
+
+		// P13 is at poscon index 3. Should show "--" as there is more work for that order.
+		posman.waitForControllerDisplayValue((byte) 3, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME);
+		Assert.assertEquals(posman.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
+
+		/* Use cases are
+		 * 0) Covered in setup. New order to unoccupied slot. 
+		 * 1) If  we set new order ID to the spot of the assigned one, does the old order lose its orderLocation? Should. Still light the new.
+		 * 2) If we take order with a wall location, and assign it to an empty slot, does the old slot lose its light and new get it?
+		 * 3) Take order with a wall location, and assign it where another exists. The prior slot light should go off.
+		 * 4) Take order with wall location, and reassign to same location again. No change.
+		 */
+
+		LOGGER.info("1: Different order takes the spot of 11117 in P13");
+		picker1.scanCommand("ORDER_WALL");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.setOrderToPutWall("11119", "P13");
+		// Will check result later. Not too much point in calling wait for byte 3 to stay the same.
+
+		LOGGER.info("2: 11115, in P15, assigned to empty slot P14");
+		posman.waitForControllerDisplayValue((byte) 5, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME); // 11115 was here
+		posman.waitForControllerDisplayValue((byte) 4, null, WAIT_TIME); // show it is blank
+		picker1.setOrderToPutWall("11115", "P14");
+		posman.waitForControllerDisplayValue((byte) 4, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME); // moved it
+		posman.waitForControllerDisplayValue((byte) 5, null, WAIT_TIME); // blanked this one
+
+		// check that all orders are as we expect them to be
+		beginTransaction();
+		facility = getFacility();
+		Facility.staticGetDao().reload(facility);
+		assertOrderLocation("11115", "P14", "WALL1 - P14");
+		assertOrderLocation("11119", "P13", "WALL1 - P13");
+		assertOrderLocation("11117", "", "");
+		commitTransaction();
 	}
 
 }

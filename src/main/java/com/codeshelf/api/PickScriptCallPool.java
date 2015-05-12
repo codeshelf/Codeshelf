@@ -8,11 +8,14 @@ public class PickScriptCallPool {
 	private static HashMap<UUID, String> responses = new HashMap<>();
 	private static Object lock = new Object();
 	
-	public static String waitForResponse(UUID id, String script) throws InterruptedException{
-		return waitForResponse(id, script, DEF_TIMEOUT_MIN);
+	public static String waitForSiteResponse(UUID id, String script) throws InterruptedException{
+		return waitForSiteResponse(id, script, DEF_TIMEOUT_MIN);
 	}
 	
-	public static String waitForResponse(UUID id, String script, int timeoutMin) throws InterruptedException{
+	public static String waitForSiteResponse(UUID id, String script, Integer timeoutMin) throws InterruptedException{
+		if (timeoutMin == null) {
+			timeoutMin = DEF_TIMEOUT_MIN;
+		}
 		long start = System.currentTimeMillis();
 		long now = System.currentTimeMillis();
 		String response = null;
@@ -27,12 +30,12 @@ public class PickScriptCallPool {
 			}
 			
 		}
-		return "Request timed out.";
+		return null;
 	}
 	
-	public static void registerResponse(UUID id, String response) {
+	public static void registerSiteResponse(UUID id, String response) {
 		synchronized (lock) {
 			responses.put(id, response);
 		}
-	}
+	}	
 }

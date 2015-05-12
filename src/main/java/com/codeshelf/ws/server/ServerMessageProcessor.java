@@ -317,7 +317,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			service.saveEvent((NotificationMessage) message);
 		} else if (message instanceof PickScriptMessage){
 			PickScriptMessage pickScriptMessage = (PickScriptMessage) message;
-			PickScriptCallPool.registerResponse(pickScriptMessage.getId(), pickScriptMessage.getResponseMessage());
+			PickScriptCallPool.registerSiteResponse(pickScriptMessage.getId(), pickScriptMessage.getResponseMessage());
 		}else {
 			LOGGER.warn("Unexpected message received on session " + session + ": " + message);
 		}

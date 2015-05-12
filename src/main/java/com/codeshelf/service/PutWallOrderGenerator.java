@@ -64,7 +64,6 @@ public class PutWallOrderGenerator {
 	 */
 	private static List<WorkInstruction> generateWIsForWall(Che che, String wallId, List<OrderHeader> orders, Timestamp theTime) {
 		LOGGER.info("generateWIsForWall for {}, orders number considered {}", wallId, orders.size());
-		
 		HashMap<String, WorkInstruction> wiHashThisWallAndRun = new HashMap<String, WorkInstruction>();
 		Facility facility = che.getFacility();
 		//Retrieve or create a new container for this wall

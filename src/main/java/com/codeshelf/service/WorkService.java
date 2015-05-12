@@ -1862,14 +1862,30 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			}
 		}
 
+		ITypedDao<OrderLocation> orderLocationDao = OrderLocation.staticGetDao();
+
 		if (!skipDeleteNew) {
-			//Delete old order locations
-			ITypedDao<OrderLocation> orderLocationDao = OrderLocation.staticGetDao();
+			// if this order took the place of another order, we have to delete the other order's OrderLocation
+			List<OrderLocation> olList = OrderLocation.findOrderLocationsAtLocation(location, facility);
+			for (OrderLocation ol2 : olList) {
+				OrderHeader order2 = ol2.getParent();
+				whatWeDid = whatWeDid + String.format("Removed order %s from %s. ", order2.getDomainId(), locationId);
+				order2.removeOrderLocation(ol2);
+				orderLocationDao.delete(ol2);
+			}
+		}
+
+		List<Location> changedLocationList = new ArrayList<Location>();
+
+		if (!skipDeleteNew) {
+			//Delete other OrderLocations from the order we scanned. Those are in the "locations" variable.			
 			for (OrderLocation foundLocation : locations) {
+				String otherLocationName = foundLocation.getLocationName();
+				changedLocationList.add(foundLocation.getLocation());
 				order.removeOrderLocation(foundLocation);
 				orderLocationDao.delete(foundLocation);
 				String orderName = foundLocation.getParentId();
-				whatWeDid = whatWeDid + String.format("Removed prior order %s. ", orderName);
+				whatWeDid = whatWeDid + String.format("Removed %s from order %s. ", otherLocationName, orderName);
 			}
 			//Create a new order location in the put wall
 			ol = order.addOrderLocation(location);
@@ -1892,6 +1908,18 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		if (!location.isPutWallLocation()) {
 			toLogStr = String.format("%s is not configured as a put wall", locationId);
 			logInContext(orderWallTag, toLogStr, true); // a WARN
+		}
+
+		if (changedLocationList.size() > 0) {
+			// need to send out some clear poscon commands. Well, this assumes just a clear, which is right for order_wall process
+			/// but could have future bugs here
+			int locCountToSend = changedLocationList.size();
+			LOGGER.info("sending {} putwall clear slot instructions", locCountToSend);
+			int locCount = 0;
+			for (Location loc : changedLocationList) {
+				locCount++;
+				computeAndSendEmptyOrderFeedback(loc, locCountToSend == locCount);
+			}
 		}
 
 		//Light up the selected location. Send even if just a redo. Note: will not light if not a put wall.

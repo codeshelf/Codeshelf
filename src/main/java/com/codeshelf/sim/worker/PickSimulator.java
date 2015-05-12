@@ -23,7 +23,9 @@ public class PickSimulator {
 	@Getter
 	CheDeviceLogic				cheDeviceLogic;
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(PickSimulator.class);
+	private static final Logger	LOGGER		= LoggerFactory.getLogger(PickSimulator.class);
+
+	private final int			WAIT_TIME	= 4000;
 
 	public PickSimulator(CsDeviceManager deviceManager, String cheGuid) {
 		this(deviceManager, new NetGuid(cheGuid));
@@ -49,20 +51,16 @@ public class PickSimulator {
 	public void loginAndSetup(String pickerId) {
 		scanUser(pickerId);
 		// From v16, login goes to SETUP_SUMMARY state. Then explicit SETUP scan goes to CONTAINER_SELECT
-		if (cheDeviceLogic.usesSummaryState()) {
-			waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
-			scanCommand("SETUP");
-			waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
-		} else {
-			waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
-		}
+		waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		scanCommand("SETUP");
+		waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 	}
 
 	public void loginAndCheckState(String pickerId, CheStateEnum inState) {
 		// This only does the login ("scan badge" scan). Especially in Line_Scan process, this is used in tests rather than loginAndSetup.
 		scanUser(pickerId);
 		// badge authorization now takes longer. Trip to server and back
-		waitForCheState(inState, 4000);
+		waitForCheState(inState, WAIT_TIME);
 	}
 
 	public String getProcessType() {
@@ -73,7 +71,7 @@ public class PickSimulator {
 	public void setup() {
 		// The happy case. Scan setup needed after completing a cart run. Still logged in.
 		scanCommand("SETUP");
-		waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 	}
 
 	public void setupOrderIdAsContainer(String orderId, String positionId) {
@@ -83,6 +81,24 @@ public class PickSimulator {
 
 		scanPosition(positionId);
 		waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+	}
+
+	/**
+	 * Should be in state PUT_WALL_SCAN_ORDER when called. 
+	 * Usually scan ORDER_WALL, then wait for PUT_WALL_SCAN_ORDER, then start calling this.
+	 * Do not include any prefix in the parameters.
+	 */
+	public void setOrderToPutWall(String orderId, String locationName) {
+		if ((orderId.length() > 1) && (orderId.charAt(1) == '%'))
+			LOGGER.error("orderId in setOrderToPutWall should not take percent");
+
+		if ((locationName.length() > 1) && (locationName.charAt(1) == '%'))
+			LOGGER.error("location in setOrderToPutWall should not take percent. Just the alias name.");
+
+		scanSomething(orderId);
+		waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		scanLocation(locationName);
+		waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 	}
 
 	public void setupContainer(String containerId, String positionId) {
@@ -114,7 +130,7 @@ public class PickSimulator {
 	}
 
 	public void pickItemAuto() {
-		waitForCheState(CheStateEnum.DO_PICK, 4000);
+		waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		WorkInstruction wi = getActivePick();
 		int button = buttonFor(wi);
 		int quantity = wi.getPlanQuantity();
@@ -391,10 +407,6 @@ public class PickSimulator {
 
 	public CheStateEnum getLocationStartReviewState(boolean needOldReviewState) {
 		return cheDeviceLogic.getLocationStartReviewState(needOldReviewState);
-	}
-
-	public boolean usesSummaryState() {
-		return cheDeviceLogic.usesSummaryState();
 	}
 
 	// end drastic CHE process changes
