@@ -306,6 +306,7 @@ public class FacilityResource {
 	
 	@POST
 	@Path("/runpickscript")
+	@RequiresPermissions("pickscript:run")
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response executeGroovyCommands(@QueryParam("timeout_min") Integer timeoutMin, String script) {
