@@ -943,18 +943,14 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		// TODO
 		LOGGER.info("3a: Restart. Get the 11117 job again. LOCATION_SELECT_REVIEW because 11119 is completed");
 		picker.scanCommand("START");
-		if (!picker.usesSummaryState()) {
-			picker.waitForCheState(picker.getLocationStartReviewState(true), WAIT_TIME);
-			// see that 11119 shows as oc
-			Byte poscon6Value = picker.getLastSentPositionControllerDisplayValue((byte) 6);
-			Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, poscon6Value);
-			Byte maxValue = picker.getLastSentPositionControllerMaxQty((byte) 6);
-			Assert.assertEquals(PosControllerInstr.BITENCODED_LED_O, maxValue);
-			picker.scanCommand("START"); // this could have been location scan on the same path
-			picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
-		} else {
-			picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
-		}
+		picker.waitForCheState(picker.getLocationStartReviewState(true), WAIT_TIME);
+		// see that 11119 shows as oc
+		Byte poscon6Value = picker.getLastSentPositionControllerDisplayValue((byte) 6);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, poscon6Value);
+		Byte maxValue = picker.getLastSentPositionControllerMaxQty((byte) 6);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_O, maxValue);
+		picker.scanCommand("START"); // this could have been location scan on the same path
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
 		LOGGER.info("3b: Short it again");
 		picker.scanCommand("SHORT");
@@ -1085,7 +1081,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Facility.staticGetDao().reload(facility);
 		assertOrderLocation("11115", "P14", "WALL1 - P14");
 		assertOrderLocation("11119", "P13", "WALL1 - P13");
- 		assertOrderLocation("11117", "", "");
+		assertOrderLocation("11117", "", "");
 		commitTransaction();
 	}
 

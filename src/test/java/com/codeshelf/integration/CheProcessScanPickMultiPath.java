@@ -451,19 +451,11 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
 		// So, start again, then get the new location.
 
-		//TODO fix
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		if (!picker.usesSummaryState())
-			picker.waitForCheState(picker.getNoWorkReviewState(), WAIT_TIME);
-		else
-			picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
 		picker.scanLocation("Loc2A");
-		// TODO CLUMSY, fix.
-		if (!picker.usesSummaryState())
-			picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
-		else
-			picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		picker.scanLocation("Loc2A");
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 

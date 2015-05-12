@@ -51,13 +51,9 @@ public class PickSimulator {
 	public void loginAndSetup(String pickerId) {
 		scanUser(pickerId);
 		// From v16, login goes to SETUP_SUMMARY state. Then explicit SETUP scan goes to CONTAINER_SELECT
-		if (cheDeviceLogic.usesSummaryState()) {
-			waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
-			scanCommand("SETUP");
-			waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
-		} else {
-			waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
-		}
+		waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		scanCommand("SETUP");
+		waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 	}
 
 	public void loginAndCheckState(String pickerId, CheStateEnum inState) {
@@ -411,10 +407,6 @@ public class PickSimulator {
 
 	public CheStateEnum getLocationStartReviewState(boolean needOldReviewState) {
 		return cheDeviceLogic.getLocationStartReviewState(needOldReviewState);
-	}
-
-	public boolean usesSummaryState() {
-		return cheDeviceLogic.usesSummaryState();
 	}
 
 	// end drastic CHE process changes

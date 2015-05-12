@@ -132,9 +132,6 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
 
-		if (!picker1.usesSummaryState())
-			return; // this test only applies to new CHE process, not old.
-
 		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
 
 		LOGGER.info("1a: Check the initial summary screen. Right justified at line 1 should be F11"); // see getModeledFacility for why.
@@ -256,9 +253,6 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
-
-		if (!picker1.usesSummaryState())
-			return; // this test only applies to new CHE process, not old.
 
 		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
 
@@ -420,9 +414,6 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
 
-		if (!picker1.usesSummaryState())
-			return; // this test only applies to new CHE process, not old.
-
 		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
 
 		LOGGER.info("1: Set up orders 11117 and 12345 for pick. No known paths, so should get all 4 jobs");
@@ -500,9 +491,6 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
 
-		if (!picker1.usesSummaryState())
-			return; // this test only applies to new CHE process, not old.
-
 		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
 
 		LOGGER.info("1: Set up orders 11117 and bad order 99999 for pick. No known paths, so should get all 1 good job for 11117");
@@ -557,9 +545,6 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
 		PickSimulator picker2 = createPickSim(cheGuid2);
-
-		if (!picker1.usesSummaryState())
-			return; // this test only applies to new CHE process, not old.
 
 		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
 
@@ -646,9 +631,6 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
 
-		if (!picker1.usesSummaryState())
-			return; // this test only applies to new CHE process, not old.
-
 		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
 
 		LOGGER.info("1a: Check the initial summary screen. Right justified at line 1 should be F11"); // see getModeledFacility for why.
@@ -732,9 +714,6 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
-
-		if (!picker1.usesSummaryState())
-			return; // this test only applies to new CHE process, not old.
 
 		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
 
