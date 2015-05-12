@@ -933,12 +933,9 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.scanCommand("YES");
 		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
 
-		// TODO fix. Handled better with new process
-		/*
-		LOGGER.info("2a: Try to jump to location on same path, without doing START. Ignored");
+		LOGGER.info("2a: Try to jump to location on same path, without doing START. On same path. so ready to pick");
 		picker.scanLocation("F14");
-		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
-		*/
+		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
 		// TODO
 		LOGGER.info("3a: Restart. Get the 11117 job again. LOCATION_SELECT_REVIEW because 11119 is completed");
