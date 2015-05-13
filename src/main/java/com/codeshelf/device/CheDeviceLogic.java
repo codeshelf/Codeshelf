@@ -42,7 +42,7 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.NotificationService.EventType;
 import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.HashBasedTable;
@@ -1518,7 +1518,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	@Override
 	public String toString() {
-		return Objects.toStringHelper(this).add("netGuid", getGuid()).toString();
+		return MoreObjects.toStringHelper(this).add("netGuid", getGuid()).toString();
 	}
 
 	/**

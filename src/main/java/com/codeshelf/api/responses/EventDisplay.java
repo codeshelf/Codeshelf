@@ -5,7 +5,6 @@ import java.util.UUID;
 
 import lombok.Getter;
 
-import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.domain.Resolution;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;

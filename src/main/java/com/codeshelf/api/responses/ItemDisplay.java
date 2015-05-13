@@ -1,15 +1,11 @@
 package com.codeshelf.api.responses;
 
-import java.util.Comparator;
 import java.util.Map;
-import java.util.Objects;
-
-import org.apache.commons.lang.ObjectUtils;
-
-import com.google.common.collect.ImmutableMap;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+
+import org.apache.commons.lang.ObjectUtils;
 
 @EqualsAndHashCode
 public class ItemDisplay implements Comparable<ItemDisplay> {
@@ -24,8 +20,8 @@ public class ItemDisplay implements Comparable<ItemDisplay> {
 			int value = 0;
 			
 			for (String sortField : sortedBy) {
-				Comparable item1 = (Comparable) record1.get(sortField);
-				Comparable item2 = (Comparable) record2.get(sortField);
+				Comparable<?> item1 = (Comparable<?>) record1.get(sortField);
+				Comparable<?> item2 = (Comparable<?>) record2.get(sortField);
 				value =  ObjectUtils.compare(item1, item2);
 				if (value != 0) {
 					break;
@@ -58,8 +54,8 @@ public class ItemDisplay implements Comparable<ItemDisplay> {
 
 	@Override
 	public int compareTo(ItemDisplay item) {
-		Comparable thisValue = this.getItemId();
-		Comparable value = item.getItemId();
+		Comparable<?> thisValue = this.getItemId();
+		Comparable<?> value = item.getItemId();
 		// TODO Auto-generated method stub
 		return ObjectUtils.compare(thisValue, value);
 	}

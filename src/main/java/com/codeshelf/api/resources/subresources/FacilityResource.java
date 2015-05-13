@@ -24,9 +24,8 @@ import javax.ws.rs.core.Response;
 
 import lombok.Setter;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.beanutils.BeanMap;
-
+import org.apache.commons.io.IOUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
@@ -43,8 +42,8 @@ import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
 import com.codeshelf.api.HardwareRequest.LightRequest;
 import com.codeshelf.api.pickscript.PickScriptCallPool;
 import com.codeshelf.api.pickscript.PickScriptParser;
-import com.codeshelf.api.pickscript.PickScriptServerRunner;
 import com.codeshelf.api.pickscript.PickScriptParser.PickScriptPart;
+import com.codeshelf.api.pickscript.PickScriptServerRunner;
 import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.ItemDisplay;
 import com.codeshelf.api.responses.PickRate;

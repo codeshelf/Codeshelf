@@ -9,8 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.validation.Errors;
-import com.google.common.base.Objects;
-import com.google.common.base.Objects.ToStringHelper;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableMap;
 
 /**
@@ -40,14 +39,14 @@ public class EventProducer {
 	}
 
 	private void produceErrorsEvent(EventInterval inInterval, Set<EventTag> inTags, EventSeverity inSeverity, Object inErrors, Object inRelatedObject) {
-		ToStringHelper messageHelper = baseEventSerialization(inInterval, inTags, inSeverity, inRelatedObject);
+		MoreObjects.ToStringHelper messageHelper = baseEventSerialization(inInterval, inTags, inSeverity, inRelatedObject);
 		
 		String logMessage = messageHelper.add("violations", inErrors).toString();
 		log(inSeverity, logMessage);
 	}
 	
 	private void produceExceptionEvent(EventInterval inInterval, Set<EventTag> inTags, EventSeverity inSeverity, Exception inException, Object inRelatedObject) {
-		ToStringHelper messageHelper = baseEventSerialization(inInterval, inTags, inSeverity, inRelatedObject);
+		MoreObjects.ToStringHelper messageHelper = baseEventSerialization(inInterval, inTags, inSeverity, inRelatedObject);
 		String logMessage = messageHelper.toString();
 		
 		if (inException != null) {
@@ -68,7 +67,7 @@ public class EventProducer {
 	}
 
 	private void produceEvent(EventInterval inInterval, Set<EventTag> inTags, EventSeverity inSeverity, Object inRelatedObject) {
-		ToStringHelper messageHelper = baseEventSerialization(EventInterval.INSTANTANEOUS, inTags, EventSeverity.INFO, inRelatedObject);
+		MoreObjects.ToStringHelper messageHelper = baseEventSerialization(EventInterval.INSTANTANEOUS, inTags, EventSeverity.INFO, inRelatedObject);
 		LOGGER.info(messageHelper.toString());
 	}
 
@@ -119,12 +118,12 @@ public class EventProducer {
 		}
 	}
 
-	private ToStringHelper baseEventSerialization(EventInterval inInterval, Set<EventTag> inTags, EventSeverity inSeverity, Object inRelatedObject) {
+	private MoreObjects.ToStringHelper baseEventSerialization(EventInterval inInterval, Set<EventTag> inTags, EventSeverity inSeverity, Object inRelatedObject) {
 		Map<String, ?> namedValues = Collections.emptyMap();
 		if (inRelatedObject != null) {
 			namedValues = ImmutableMap.of("relatedObject", inRelatedObject);
 		}
-		return Objects.toStringHelper("Event")
+		return MoreObjects.toStringHelper("Event")
 			.add("tags", inTags)
 			.add("severity", inSeverity)
 			.add("interval", inInterval)

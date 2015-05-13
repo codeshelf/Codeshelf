@@ -26,6 +26,7 @@ import com.google.common.base.Strings;
 public class OrderReimportTest extends ServerTest {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(OrderReimportTest.class);
 
+	@SuppressWarnings("unused")
 	@Test
 	public final void importRunReimport() throws IOException {
 		

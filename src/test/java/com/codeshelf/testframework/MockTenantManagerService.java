@@ -18,7 +18,6 @@ import com.codeshelf.manager.UserPermission;
 import com.codeshelf.manager.UserRole;
 import com.codeshelf.manager.service.ITenantManagerService;
 import com.codeshelf.manager.service.TenantManagerService.ShutdownCleanupReq;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 
 public class MockTenantManagerService implements ITenantManagerService {
@@ -34,13 +33,6 @@ public class MockTenantManagerService implements ITenantManagerService {
 		defaultTenant.addUser(defaultUser); // tenant is possibly a mock and this doesn't do anything
 	}
 
-	public ListenableFuture<State> start() {
-		return null;
-	}
-	
-	public State startAndWait() {
-		return State.RUNNING;
-	}
 	@Override
 	public Service startAsync() {
 		return this;
@@ -54,13 +46,6 @@ public class MockTenantManagerService implements ITenantManagerService {
 		return State.RUNNING;
 	}
 	
-	public ListenableFuture<State> stop() {
-		return null;
-	}
-	
-	public State stopAndWait() {
-		return State.RUNNING;
-	}
 	@Override
 	public Service stopAsync() {
 		return this;

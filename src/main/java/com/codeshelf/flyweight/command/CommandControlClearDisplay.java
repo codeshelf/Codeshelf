@@ -20,6 +20,7 @@ import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
  */
 public final class CommandControlClearDisplay extends CommandControlABC {
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CommandControlClearDisplay.class);
 	
 	private static final int LENGTH_BYTES = 0;
