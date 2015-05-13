@@ -81,6 +81,9 @@ public class OutboundOrderBatchProcessor implements Runnable {
 	int numOrders; 
 	int numLines;
 	
+	@Getter @Setter
+	int maxProcessingAttempts = 10;
+	
 	public OutboundOrderBatchProcessor(int procId, OutboundOrderPrefetchCsvImporter importer, Timestamp processTime, Facility facility) {
 		this.importer = importer;
 		this.processTime = processTime;
@@ -93,9 +96,11 @@ public class OutboundOrderBatchProcessor implements Runnable {
 	@Override
 	public void run() {		
 		OutboundOrderBatch batch = importer.getBatchQueue().poll();
-		while(batch!=null) {
+		while (batch!=null) {
 			// process batch
-			LOGGER.info("Worker #"+processorId+" is processing "+batch);
+			batch.setProcessingAttempts(batch.getProcessingAttempts()+1);
+			LOGGER.info("Worker #"+processorId+" is processing "+batch+" in "+batch.getProcessingAttempts()+". attempt");
+			
 			try {
 				TenantPersistenceService.getInstance().beginTransaction();	
 				
@@ -240,8 +245,15 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				TenantPersistenceService.getInstance().commitTransaction();
 			}
 			catch (StaleObjectStateException e) {
-				// TODO: retry processing order batch
-				LOGGER.warn("Failed to process order batch "+batch,e);
+				LOGGER.warn("Failed to process order batch "+batch+" due to stale data.",e);
+				if (batch.getProcessingAttempts()>this.maxProcessingAttempts) {
+					LOGGER.error("Giving up on processing order batch "+batch+".  Retry import at a later time.");
+				}
+				else {
+					// returning batch to the queue to give it another chance
+					LOGGER.warn("Returning batch "+batch+" to import queue to retry.");
+					importer.getBatchQueue().add(batch);
+				}
 				TenantPersistenceService.getInstance().rollbackTransaction();				
 			}
 			catch (Exception e) {
