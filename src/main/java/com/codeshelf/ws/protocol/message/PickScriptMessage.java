@@ -12,9 +12,11 @@ public class PickScriptMessage extends MessageABC{
 	@Getter
 	private String script;
 	
+	@Setter @Getter
+	private String response;
 	
 	@Setter @Getter
-	private String responseMessage;
+	private boolean success = true;
 	
 	public PickScriptMessage() {}
 	

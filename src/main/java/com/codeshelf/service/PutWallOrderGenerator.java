@@ -29,7 +29,6 @@ import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.sim.worker.PickSimulator;
 import com.google.common.collect.Lists;
 
 public class PutWallOrderGenerator {

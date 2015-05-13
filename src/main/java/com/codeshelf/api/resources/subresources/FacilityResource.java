@@ -1,6 +1,5 @@
 package com.codeshelf.api.resources.subresources;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -42,9 +41,10 @@ import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.HardwareRequest;
 import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
 import com.codeshelf.api.HardwareRequest.LightRequest;
-import com.codeshelf.api.PickScriptServerProcessor.PickScriptPart;
-import com.codeshelf.api.PickScriptCallPool;
-import com.codeshelf.api.PickScriptServerProcessor;
+import com.codeshelf.api.pickscript.PickScriptCallPool;
+import com.codeshelf.api.pickscript.PickScriptParser;
+import com.codeshelf.api.pickscript.PickScriptServerRunner;
+import com.codeshelf.api.pickscript.PickScriptParser.PickScriptPart;
 import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.ItemDisplay;
 import com.codeshelf.api.responses.PickRate;
@@ -53,6 +53,7 @@ import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedInstrListMessage;
 import com.codeshelf.device.LedSample;
 import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.model.OrderStatusEnum;
@@ -80,7 +81,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
-import com.sun.jersey.multipart.FormDataBodyPart;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
 public class FacilityResource {
@@ -89,7 +89,8 @@ public class FacilityResource {
 	private final OrderService orderService;
 	private final NotificationService notificationService;
 	private final WebSocketManagerService webSocketManagerService;
-
+	private final ICsvOrderImporter orderImporter;
+	
 	@Setter
 	private Facility facility;
 
@@ -97,11 +98,12 @@ public class FacilityResource {
 	private ResourceContext resourceContext;
 
 	@Inject
-	public FacilityResource(WorkService workService, OrderService orderService, NotificationService notificationService, WebSocketManagerService webSocketManagerService) {
+	public FacilityResource(WorkService workService, OrderService orderService, NotificationService notificationService, WebSocketManagerService webSocketManagerService, ICsvOrderImporter orderImporter) {
 		this.orderService = orderService;
 		this.workService = workService;
 		this.webSocketManagerService = webSocketManagerService;
 		this.notificationService = notificationService;
+		this.orderImporter = orderImporter;
 	}
 
 	@GET
@@ -394,11 +396,12 @@ public class FacilityResource {
 			UUID id = UUID.randomUUID();
 			PickScriptMessage scriptMessage = new PickScriptMessage(id, script);
 			webSocketManagerService.sendMessage(users, scriptMessage);
-			String response = PickScriptCallPool.waitForSiteResponse(id, script, timeoutMin);
-			if (response == null) {
-				response = "Site request timed out.";
+			PickScriptMessage responseMessage = PickScriptCallPool.waitForSiteResponse(id, timeoutMin);
+			if (responseMessage == null) {
+				errors.addError("Site request timed out");
+				return errors.buildResponse();
 			}
-			return BaseResponse.buildResponse(response);
+			return BaseResponse.buildResponse(responseMessage.getResponse());
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
 		}
@@ -413,50 +416,51 @@ public class FacilityResource {
 		try {
 			ErrorResponse errors = new ErrorResponse();
 			//Retrieve the script
-			String script = readFile(body, "script", errors);
+			InputStream scriptIS = PickScriptParser.getInputStream(body, "script");
+			if (scriptIS == null) {
+				errors.addErrorMissingBodyParam("script");
+				return errors.buildResponse();
+			}
+			String script = IOUtils.toString(scriptIS);
 			if (script == null || script.isEmpty()) {
+				errors.addError("Script file was empty");
 				return errors.buildResponse();
 			}
 			//Split the script into a list of SERVER and SITE parts
-			ArrayList<PickScriptPart> scriptParts = PickScriptServerProcessor.parseMixedScript(script);
+			ArrayList<PickScriptPart> scriptParts = PickScriptParser.parseMixedScript(script);
 			Set<User> users = facility.getSiteControllerUsers();
 			StringBuilder response = new StringBuilder();
+			PickScriptServerRunner scriptRunner = new PickScriptServerRunner(facility, orderImporter, body);
 			//Process script parts
 			while (!scriptParts.isEmpty()) {
 				PickScriptPart part = scriptParts.remove(0);
 				if (part.isServer()) {
 					//SERVER
+					PickScriptMessage serverResponseMessage = scriptRunner.processServerScript(part.getScript());
+					response.append(serverResponseMessage.getResponse());
+					if (!serverResponseMessage.isSuccess()) {
+						break;
+					}
 				} else {
 					//SITE
 					UUID id = UUID.randomUUID();
-					PickScriptMessage scriptMessage = new PickScriptMessage(id, script);
+					PickScriptMessage scriptMessage = new PickScriptMessage(id, part.getScript());
 					webSocketManagerService.sendMessage(users, scriptMessage);
-					String siteResponse = PickScriptCallPool.waitForSiteResponse(id, script, timeoutMin);
-					if (siteResponse == null) {
-						response.append("Site request timed out.");
+					PickScriptMessage siteResponseMessage = PickScriptCallPool.waitForSiteResponse(id, timeoutMin);
+					if (siteResponseMessage == null) {
+						response.append("Site request timed out");
 						break;
 					}
-					response.append(siteResponse);
+					response.append(siteResponseMessage.getResponse());
+					if (!siteResponseMessage.isSuccess()) {
+						break;
+					}
 				}
 			}
 			return BaseResponse.buildResponse(response.toString());
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
 		}
-	}
-
-	private String readFile(FormDataMultiPart body, String fieldName, ErrorResponse errors) throws IOException {
-		FormDataBodyPart part = body.getField(fieldName);
-		if (part == null) {
-			errors.addErrorMissingBodyParam(fieldName);
-			return null;
-		}
-		InputStream is = part.getEntityAs(InputStream.class);
-		String text = IOUtils.toString(is);
-		if (text == null || text.isEmpty()) {
-			errors.addError("File " + fieldName + " was empty");
-		}
-		return text;
 	}
 
 	@PUT

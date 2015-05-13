@@ -216,7 +216,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				this.deviceManager.processSetupStateMessage(msg.getCheGuid(), msg.getContainerPositions());
 			} else if (message instanceof PickScriptMessage) {
 				PickScriptMessage msg = (PickScriptMessage) message;
-				new PickScriptRunner(deviceManager).runScript(msg);
+				new PickScriptSiteRunner(deviceManager).runScript(msg);
 			}
 		} finally {
 			this.clearDeviceContext();
