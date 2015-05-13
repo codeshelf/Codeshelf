@@ -2,12 +2,10 @@ package com.codeshelf.api.resources.subresources;
 
 import java.sql.Timestamp;
 
-import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
-import javax.ws.rs.PUT;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -20,6 +18,7 @@ import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.model.domain.Resolution;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.security.CodeshelfSecurityManager;
 
 public class EventResource {
 	@Setter
@@ -29,16 +28,16 @@ public class EventResource {
 	@RequiresPermissions("event:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getEvent() {
-		EventDisplay eventDisplay = new EventDisplay(event);
+		EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
 		return BaseResponse.buildResponse(eventDisplay);
 	}
 
-	@PUT
+	@POST
 	@Path("resolve")
 	@RequiresPermissions("event:edit")
-	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response resolveEvent(@QueryParam("resolvedBy") String resolvedBy) {
+	public Response resolveEvent() {
+		String resolvedBy = CodeshelfSecurityManager.getCurrentUserContext().getUsername();
 		ErrorResponse errors = new ErrorResponse();
 		try {
 			Resolution resolution = event.getResolution();
@@ -52,7 +51,8 @@ public class EventResource {
 			event.setResolution(resolution);
 			Resolution.staticGetDao().store(resolution);
 			WorkerEvent.staticGetDao().store(event);
-			EventDisplay eventDisplay = new EventDisplay(event);
+			
+			EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
 			return BaseResponse.buildResponse(eventDisplay);
 		} catch (Exception e) {
 			return errors.processException(e);

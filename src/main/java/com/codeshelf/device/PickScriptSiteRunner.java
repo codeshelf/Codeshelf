@@ -8,16 +8,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
+import com.codeshelf.util.CsExceptionUtils;
 import com.codeshelf.ws.protocol.message.PickScriptMessage;
 import com.google.common.collect.Lists;
 
-public class PickScriptRunner {
+public class PickScriptSiteRunner {
 	private final static String TEMPLATE_DEF_PICKER = "defPicker <pickerName> <cheGuid>";
 	private final static String TEMPLATE_SETUP_CART = "setupCart <pickerName> <containers>";
 	private final static String TEMPLATE_WAIT = "waitForState <pickerName> <states>";
@@ -25,7 +25,7 @@ public class PickScriptRunner {
 	private final static String TEMPLATE_PICK = "pick <pickerNames>";
 	private final static String TEMPLATE_PICKER_EXEC = "pickerExec <pickerName> <pickerCommand> [arguments]";
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(PickScriptRunner.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(PickScriptSiteRunner.class);
 	private static final int WAIT_TIMEOUT = 4000;
 	private int pickPause = 0;
 	private double chanceSkipUpc = 0, chanceShort = 0;
@@ -34,7 +34,7 @@ public class PickScriptRunner {
 	private final CsDeviceManager deviceManager;
 	private static final Object lock = new Object();
 	
-	public PickScriptRunner(CsDeviceManager deviceManager) {
+	public PickScriptSiteRunner(CsDeviceManager deviceManager) {
 		this.deviceManager = deviceManager;
 	}
 	
@@ -47,23 +47,25 @@ public class PickScriptRunner {
 			public void run() {
 				String script = message.getScript();
 				if (script == null) {
-					message.setResponseMessage("Empty script");
+					message.setResponse("Empty site script");
+					message.setSuccess(false);
 					deviceManager.clientEndpoint.sendMessage(message);
 					return;
 				}
+				report.append("SERVER\n");
 				try {
 					String[] lines = script.split("\n");
 					for (String line : lines) {
 						processLine(line);
 					}
 				} catch (Exception e) {
-					String error = exceptionToString(e);
-					report.append(error);
+					report.append(CsExceptionUtils.exceptionToString(e)).append("\n");
 					report.append("Logging out from all pickers due to this error\n");
 					logoutAll();
+					message.setSuccess(false);
 				}
 				report.append("***Script Completed***\n");
-				message.setResponseMessage(report.toString());
+				message.setResponse(report.toString());
 				deviceManager.clientEndpoint.sendMessage(message);
 			}
 		};
@@ -221,7 +223,7 @@ public class PickScriptRunner {
 						try {
 							pick(picker);
 						} catch (Exception e) {
-							report.append(exceptionToString(e));
+							report.append(CsExceptionUtils.exceptionToString(e)).append("\n");
 						}
 					}
 				};
@@ -339,16 +341,7 @@ public class PickScriptRunner {
 		}
 		return picker;
 	}
-	
-	private String exceptionToString(Exception e) { 
-		report.append(e.getClass().getName()).append(": ");
-		String error = e.getMessage();
-		if (error == null || error.isEmpty()) {
-			error = ExceptionUtils.getStackTrace(e);
-		}
-		return e.getClass().getName() + ": " + error + "\n";
-	}
-	
+		
 	private void throwIncorrectNumberOfArgumentsException(String expected) throws Exception{
 		throw new Exception("Incorrect number of arguments. Expected '" + expected + "'");
 	}

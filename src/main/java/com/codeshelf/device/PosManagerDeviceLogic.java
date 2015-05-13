@@ -96,7 +96,8 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 	 */
 	public final void removePosConInstrsForSource(final NetGuid inNetGuid) {
 		String sourceStr = inNetGuid.getHexStringNoPrefix();
-		LOGGER.info("Clear PosCons for Source:" + sourceStr + " on " + getMyGuidStr());
+		String toLog = String.format("Clear PosCons for Source:%s on %s", sourceStr, getMyGuidStr());
+		notifyPoscons(toLog);
 		mPosInstructionBySource.remove(inNetGuid);
 	}
 
@@ -117,7 +118,8 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 		//The above value might be null if  another process has already removed all instructions for the current controller from the provided source
 		if (sourceInsts != null) {
 			for (Byte position : positions) {
-				LOGGER.info("Clear PosCon " + position + " for Source:" + sourceStr + " on " + getMyGuidStr());
+				String toLog = String.format("Clear PosCon %s for Source:%s on %s", position.toString(), sourceStr, getMyGuidStr());
+				notifyPoscons(toLog);
 				sourceInsts.remove(position);
 			}
 			if (sourceInsts.isEmpty()) {

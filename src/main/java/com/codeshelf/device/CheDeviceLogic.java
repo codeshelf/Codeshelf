@@ -37,12 +37,10 @@ import com.codeshelf.flyweight.controller.INetworkDevice;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionStatusEnum;
-import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.NotificationService.EventType;
 import com.codeshelf.util.ThreadUtils;
-import com.codeshelf.ws.protocol.message.NotificationMessage;
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.HashBasedTable;
@@ -56,9 +54,6 @@ import com.google.common.collect.Table;
 public class CheDeviceLogic extends PosConDeviceABC {
 	// This code runs on the site controller, not the CHE.
 	// The goal is to convert data and instructions to something that the CHE controller can consume and act on with minimal logic.
-
-	private static final String						THREAD_CONTEXT_WORKER_KEY				= "worker";
-	private static final String						THREAD_CONTEXT_TAGS_KEY					= "tags";
 
 	private static final Logger						LOGGER									= LoggerFactory.getLogger(CheDeviceLogic.class);
 
@@ -155,10 +150,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Getter
 	protected CheStateEnum							mCheStateEnum;
 
-	// The CHE's current user.
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
+	// The CHE's current user. no lomboc because getUserId defined on base class
 	protected String								mUserId;
 
 	// All WIs for all containers on the CHE.
@@ -249,6 +241,15 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		public static String scanPickEnumToString(ScanNeededToVerifyPick inValue) {
 			return inValue.mInternal;
 		}
+	}
+
+	@Override
+	public String getUserId() {
+		return mUserId;
+	}
+
+	public void setUserId(String user) {
+		mUserId = user;
 	}
 
 	public boolean usesNewCheScreen() {
@@ -411,36 +412,61 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIAL16, (byte) 5, (byte) 40);
 			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIAL26, (byte) 10, (byte) 100);
 			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIAL26, (byte) 20, (byte) 180);
-		}
-		else if (whichTest == 2) {
+		} else if (whichTest == 2) {
 			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 20, (byte) 40);
 			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 20, (byte) 95);
-			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24, (byte) 20, (byte) 150);
-			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24, (byte) 20, (byte) 205);
-		}
-		else if (whichTest == 3) { 
+			sendSingleLineDisplayMessage(testString40,
+				CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24,
+				(byte) 20,
+				(byte) 150);
+			sendSingleLineDisplayMessage(testString40,
+				CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24,
+				(byte) 20,
+				(byte) 205);
+		} else if (whichTest == 3) {
 			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 18, (byte) 35);
 			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 18, (byte) 90);
-			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 18, (byte) 145);
-			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 18, (byte) 200);
-		}
-		else if (whichTest == 4) { // This is our prototype for monospace corollary of old screens
+			sendSingleLineDisplayMessage(testString40,
+				CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20,
+				(byte) 18,
+				(byte) 145);
+			sendSingleLineDisplayMessage(testString40,
+				CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20,
+				(byte) 18,
+				(byte) 200);
+		} else if (whichTest == 4) { // This is our prototype for monospace corollary of old screens
 			sendSingleLineDisplayMessage(testString20, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 35);
 			sendSingleLineDisplayMessage(testString20, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 90);
-			sendSingleLineDisplayMessage(testString20, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 145);
-			sendSingleLineDisplayMessage(testString20, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 200);
-		}
-		else if (whichTest == 5) {
+			sendSingleLineDisplayMessage(testString20,
+				CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20,
+				(byte) 26,
+				(byte) 145);
+			sendSingleLineDisplayMessage(testString20,
+				CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20,
+				(byte) 26,
+				(byte) 200);
+		} else if (whichTest == 5) {
 			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD16, (byte) 20, (byte) 35);
 			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD16, (byte) 20, (byte) 90);
-			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD26, (byte) 20, (byte) 145);
-			sendSingleLineDisplayMessage(testString40, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD26, (byte) 20, (byte) 200);
-		}
-		else if (whichTest == 6) { // Try to get mono 24. Does not quite do it. 19 is good
+			sendSingleLineDisplayMessage(testString40,
+				CommandControlDisplaySingleLineMessage.ARIALMONOBOLD26,
+				(byte) 20,
+				(byte) 145);
+			sendSingleLineDisplayMessage(testString40,
+				CommandControlDisplaySingleLineMessage.ARIALMONOBOLD26,
+				(byte) 20,
+				(byte) 200);
+		} else if (whichTest == 6) { // Try to get mono 24. Does not quite do it. 19 is good
 			sendSingleLineDisplayMessage(testString20, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24, (byte) 12, (byte) 35);
 			sendSingleLineDisplayMessage(testString20, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24, (byte) 12, (byte) 90);
-			sendSingleLineDisplayMessage(testString20, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24, (byte) 12, (byte) 145);
-			sendSingleLineDisplayMessage(testString20, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24, (byte) 12, (byte) 200);
+			sendSingleLineDisplayMessage(testString20,
+				CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24,
+				(byte) 12,
+				(byte) 145);
+			sendSingleLineDisplayMessage(testString20,
+				CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24,
+				(byte) 12,
+				(byte) 200);
 		}
 
 	}
@@ -456,7 +482,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		doSetRecentCheDisplayString(1, inLine1Message);
 		doSetRecentCheDisplayString(2, inLine2Message);
 		doSetRecentCheDisplayString(3, inLine3Message);
-		doSetRecentCheDisplayString(4, inLine4Message);		
+		doSetRecentCheDisplayString(4, inLine4Message);
 	}
 
 	// --------------------------------------------------------------------------
@@ -476,9 +502,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			displayString += " line3: " + inLine3Message;
 		if (!inLine4Message.isEmpty())
 			displayString += " line4: " + inLine4Message;
-		LOGGER.info(displayString);
+		notifyScreenDisplay(displayString);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * A corollary to the original full screen message function. It remembers the lines,
@@ -492,24 +518,30 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		final boolean largerBottomLine) {
 
 		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
-		rememberLinesSent(inLine1Message, inLine2Message, inLine3Message,inLine4Message);
-		
+		rememberLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message);
+
 		if (!this.isDeviceAssociated()) {
 			LOGGER.debug("skipping send display for unassociated " + this.getMyGuidStrForLog());
 			return;
 		}
-		logLinesSent(inLine1Message, inLine2Message, inLine3Message,inLine4Message); // not logged if no association
+		logLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message); // not logged if no association
 		clearDisplay();
-		
+
 		sendSingleLineDisplayMessage(inLine1Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 35);
 		sendSingleLineDisplayMessage(inLine2Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 90);
 		sendSingleLineDisplayMessage(inLine3Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 145);
 		if (largerBottomLine)
-			sendSingleLineDisplayMessage(inLine4Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24, (byte) 12, (byte) 200);		
+			sendSingleLineDisplayMessage(inLine4Message,
+				CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24,
+				(byte) 12,
+				(byte) 200);
 		else
-			sendSingleLineDisplayMessage(inLine4Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 200);		
+			sendSingleLineDisplayMessage(inLine4Message,
+				CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20,
+				(byte) 26,
+				(byte) 200);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * This was our original full screen message function. It remembers the lines,
@@ -521,7 +553,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		final String inLine3Message,
 		final String inLine4Message) {
 		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
-		rememberLinesSent(inLine1Message, inLine2Message, inLine3Message,inLine4Message);
+		rememberLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message);
 
 		// DEV-459 if this CHE is not associated, there is no point in sending out a display.
 		// Lots of upstream code generates display messages.
@@ -530,7 +562,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			LOGGER.debug("skipping send display for unassociated " + this.getMyGuidStrForLog());
 			return;
 		}
-		logLinesSent(inLine1Message, inLine2Message, inLine3Message,inLine4Message); // not logged if no association
+		logLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message); // not logged if no association
 
 		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT,
 			inLine1Message,
@@ -1330,13 +1362,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * Order_Setup the complete path state is SETUP_SUMMARY
 	 */
 	public CheStateEnum getCompleteState() {
-			return CheStateEnum.SETUP_SUMMARY;
-			// return CheStateEnum.PICK_COMPLETE;
+		return CheStateEnum.SETUP_SUMMARY;
+		// return CheStateEnum.PICK_COMPLETE;
 	}
 
 	public CheStateEnum getNoWorkReviewState() {
-			return CheStateEnum.SETUP_SUMMARY;
-			// return CheStateEnum.NO_WORK;
+		return CheStateEnum.SETUP_SUMMARY;
+		// return CheStateEnum.NO_WORK;
 	}
 
 	// --------------------------------------------------------------------------
@@ -1344,13 +1376,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * Order_Setup the complete path state is SETUP_SUMMARY
 	 */
 	public CheStateEnum getLocationStartReviewState() {
-			return CheStateEnum.SETUP_SUMMARY;
-			// return CheStateEnum.LOCATION_SELECT;
+		return CheStateEnum.SETUP_SUMMARY;
+		// return CheStateEnum.LOCATION_SELECT;
 	}
 
 	public CheStateEnum getLocationStartReviewState(boolean needOldReviewState) {
-			return CheStateEnum.SETUP_SUMMARY;
-			// return CheStateEnum.LOCATION_SELECT;
+		return CheStateEnum.SETUP_SUMMARY;
+		// return CheStateEnum.LOCATION_SELECT;
 	}
 
 	// --------------------------------------------------------------------------
@@ -1518,7 +1550,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	@Override
 	public String toString() {
-		return Objects.toStringHelper(this).add("netGuid", getGuid()).toString();
+		return MoreObjects.toStringHelper(this).add("netGuid", getGuid()).toString();
 	}
 
 	/**
@@ -1625,9 +1657,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 						toLogString = toLogString + " " + ledSample.getPosition() + ":" + ledSample.getColor();
 				}
 				if (setCount > 0)
-					LOGGER.info(toLogString);
+					notifyLeds(toLogString);
 				if (setCount > kMaxLedSetsToLog)
-					LOGGER.info("And more LED not logged. Total LED Sets this update = " + setCount);
+					notifyLeds("And more LED not logged. Total LED Sets this update = " + setCount);
 
 				if (ledController.isDeviceAssociated()) {
 					ledControllerShowLeds(ledControllerGuid);
@@ -1800,276 +1832,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	protected void doPosConDisplaysforActiveWis() {
 		LOGGER.error("doPosConDisplaysforActiveWis() needs override");
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * These notifyXXX functions  with warn parameter might get hooked up to Codeshelf Companion tables someday. 
-	 * These log from the site controller extremely consistently. Companion should mostly log back end effects.
-	 * However, something like SKIPSCAN can only be learned of here.
-	 * 
-	 * By convention, start these string with something recognizable, to tell these notifies apart from the rest that is going on.
-	 * 
-	 * Currently saved actions: CANCEL_PUT, SHORT, SHORT_AHEAD, COMPLETE, SCAN_SKIP
-	 */
-	protected void notifyWiVerb(final WorkInstruction inWi, EventType inVerb, boolean needWarn) {
-		if (inWi == null) {
-			LOGGER.error("bad call to notifyWarnWi"); // want stack trace?
-			return;
-		}
-		String orderId = inWi.getContainerId(); // We really want order ID, but site controller only has this denormalized
-
-		/*
-		if (needWarn)
-			LOGGER.warn("*{} for order/cntr:{} item:{} location:{} by picker:{} device:{}",
-				inVerb,
-				orderId,
-				inWi.getItemId(),
-				inWi.getPickInstruction(),
-				getUserId(),
-				getMyGuidStr());
-		else
-			LOGGER.info("*{} for order/cntr:{} item:{} location:{} by picker:{} device:{}",
-				inVerb,
-				orderId,
-				inWi.getItemId(),
-				inWi.getPickInstruction(),
-				getUserId(),
-				getMyGuidStr());
-		*/
-
-		// new
-		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Work_Instruction");
-			// Pretty goofy code duplication, but can avoid some run time execution if loglevel would not result in this logging
-			if (needWarn)
-				LOGGER.info("{} for order/cntr:{} item:{} location:{}",
-					inVerb,
-					orderId,
-					inWi.getItemId(),
-					inWi.getPickInstruction());
-			else
-				LOGGER.info("{} for order/cntr:{} item:{} location:{}",
-					inVerb,
-					orderId,
-					inWi.getItemId(),
-					inWi.getPickInstruction());
-		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
-		}
-
-		NotificationMessage message = new NotificationMessage(Che.class, getPersistentId(), getMyGuidStr(), getUserId(), inVerb);
-		if (!inWi.isHousekeeping()) {
-			message.setWorkInstructionId(inWi.getPersistentId());
-		}
-		mDeviceManager.sendNotificationMessage(message);
-	}
-
-	protected void notifyOrderToPutWall(String orderId, String locationName) {
-		/*
-		LOGGER.info("*Put order/cntr:{} into put wall location:{} by picker:{} device:{}",
-			orderId,
-			locationName,
-			getUserId(),
-			getMyGuidStr());
-		*/
-
-		// new
-		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Order_Into_Wall");
-			LOGGER.info("Put order/cntr:{} into put wall location:{}", orderId, locationName);
-		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
-		}
-	}
-
-	protected void notifyRemoveOrderFromChe(String orderId, Byte orderPositionOnChe) {
-		/*
-		LOGGER.info("*Removed order/cntr:{} from position:{} by picker:{} device:{}",
-			orderId,
-			orderPositionOnChe,
-			getUserId(),
-			getMyGuidStr());
-		*/
-
-		// new
-		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Remove_Order_Che");
-			LOGGER.info("Removed order/cntr:{} from position:{}", orderId, orderPositionOnChe);
-		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
-		}
-	}
-
-	protected void notifyCheWorkerVerb(String inVerb, String otherInformation) {
-		// VERBS initially are LOGIN, LOGOUT, BEGIN, SETUP, START_PATH, COMPLETE_PATH
-
-		// LOGGER.info("*{} by picker:{} device:{} {}", inVerb, getUserId(), getMyGuidStr(), otherInformation);
-
-		// new
-		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Worker_Action");
-			LOGGER.info(inVerb);
-		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
-		}
-
-	}
-
-	protected void notifyPutWallResponse(final List<WorkInstruction> inWorkItemList) {
-		int listsize = 0;
-		if (inWorkItemList != null)
-			listsize = inWorkItemList.size();
-		// LOGGER.info("*{} work instructions in put wall response by picker:{} device:{}", listsize, getUserId(), getMyGuidStr());
-
-		// new
-		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Plans_Response");
-			LOGGER.info("{} work instructions in put wall response", listsize);
-		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
-		}
-	}
-
-	protected void notifyPutWallItem(String itemOrUpd, String wallname) {
-		/*
-		   LOGGER.info("*Request plans for item:{} in put wall:{} by picker:{} device:{}",
-			itemOrUpd,
-			wallname,
-			getUserId(),
-			getMyGuidStr());
-		*/
-
-		// new
-		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Plans_Request");
-			LOGGER.info("Request plans for item:{} in put wall:{}", itemOrUpd, wallname);
-		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
-		}
-
-	}
-
-	protected void notifyScanInventoryUpdate(String locationStr, String itemOrGtin) {
-		/*
-		LOGGER.info("*Inventory update for item/gtin:{} to location:{} by picker:{} device:{}",
-			itemOrGtin,
-			locationStr,
-			getUserId(),
-			getMyGuidStr());
-		*/
-
-		// new
-		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Inventory_Update");
-			LOGGER.info("Inventory update for item/gtin:{} to location:{}", itemOrGtin, locationStr);
-		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
-		}
-	}
-
-	protected void notifyButton(int buttonNum, int showingQuantity) {
-		/*
-		LOGGER.info("*Button #{} pressed with quantity {} by picker:{} device:{}",
-			buttonNum,
-			showingQuantity,
-			getUserId(),
-			getMyGuidStr());
-		*/
-
-		// new
-		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Button");
-			LOGGER.info("Button #{} pressed with quantity {}", buttonNum, showingQuantity);
-		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
-		}
-
-		/* Remove--we do not need button presses in our database.
-		NotificationMessage message = new NotificationMessage(Che.class,
-			getPersistentId(),
-			getMyGuidStr(),
-			getUserId(),
-			EventType.BUTTON);
-		mDeviceManager.sendNotificationMessage(message);
-		*/
-	}
-
-	protected void notifyOffCheButton(int buttonNum, int showingQuantity, String fromGuidId) {
-		/*
-		LOGGER.info("*Wall Button #{} device:{} pressed with quantity {}. Inferred picker:{} inferred device:{}",
-			buttonNum,
-			fromGuidId,
-			showingQuantity,
-			getUserId(),
-			getMyGuidStr());
-		*/
-
-		// new
-		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Button_Press");
-			LOGGER.info("Wall Button #{} device:{} pressed with quantity {}", buttonNum, fromGuidId, showingQuantity);
-		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
-		}
-	}
-
-	private void notifyNonChePosconLight(String controllerId, int posconIndex, WorkInstruction wi) {
-		if (wi == null) {
-			LOGGER.error("null work instruction in notifyNonChePosconLight");
-			return;
-		}
-		int displayCount = wi.getPlanQuantity();
-		/*
-		LOGGER.info("*Wall Button #{} device:{} will show count:{}. Active job for picker:{} device:{}",
-			posconIndex,
-			controllerId,
-			displayCount,
-			getUserId(),
-			getMyGuidStr());
-		*/
-
-		// new
-		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Button_Display");
-			LOGGER.info("Button #{} device:{} will show count:{} for active job", posconIndex, controllerId, displayCount);
-		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
-		}
-	}
-
-	protected void notifyScan(String theScan) {
-		// LOGGER.info("*Scan {} by picker:{} device:{}", theScan, getUserId(), getMyGuidStr());
-
-		// new
-		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Scan");
-			LOGGER.info(theScan);
-		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
-		}
 	}
 
 	// --------------------------------------------------------------------------

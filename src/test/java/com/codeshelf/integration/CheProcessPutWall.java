@@ -1068,15 +1068,28 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		posman.waitForControllerDisplayValue((byte) 5, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME); // 11115 was here
 		posman.waitForControllerDisplayValue((byte) 4, null, WAIT_TIME); // show it is blank
 		picker1.setOrderToPutWall("11115", "P14");
-		posman.waitForControllerDisplayValue((byte) 4, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME); // moved it
 		posman.waitForControllerDisplayValue((byte) 5, null, WAIT_TIME); // blanked this one
+		posman.waitForControllerDisplayValue((byte) 4, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME); // moved it here
+		
+		LOGGER.info("3: 11115, in P14, assigned P13 where 11119 is");
+		posman.waitForControllerDisplayValue((byte) 4, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME); // 11115 is here
+		posman.waitForControllerDisplayValue((byte) 3, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME); // 11119 is here
+		picker1.setOrderToPutWall("11115", "P13");
+		posman.waitForControllerDisplayValue((byte) 4, null, WAIT_TIME); // nothing left here
+		posman.waitForControllerDisplayValue((byte) 3, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME); // 11115 now is here
+
+		LOGGER.info("3: 11115, in P13, assigned to P13 again");
+		posman.waitForControllerDisplayValue((byte) 3, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME); // 11115  is here
+		picker1.setOrderToPutWall("11115", "P13");
+		// wait for no change makes no sense. Oh, well.
+		posman.waitForControllerDisplayValue((byte) 3, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME); // 11115  is still here
 
 		// check that all orders are as we expect them to be
 		beginTransaction();
 		facility = getFacility();
 		Facility.staticGetDao().reload(facility);
-		assertOrderLocation("11115", "P14", "WALL1 - P14");
-		assertOrderLocation("11119", "P13", "WALL1 - P13");
+		assertOrderLocation("11115", "P13", "WALL1 - P13");
+		assertOrderLocation("11119", "", "");
 		assertOrderLocation("11117", "", "");
 		commitTransaction();
 	}
