@@ -77,7 +77,6 @@ import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
@@ -409,7 +408,7 @@ public class FacilityResource {
 
 	@POST
 	@Path("/runpickscript_files")
-	@RequiresPermissions("pickscript:run")
+	@RequiresPermissions("che:simulate")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response runPickScriptWithFiles(@QueryParam("timeout_min") Integer timeoutMin, FormDataMultiPart body){

@@ -33,7 +33,6 @@ Admin:
   - "inventory:edit"
   - "worker:*"
   - "event:*"
-  - "pickscript:run"
 Configure:
   - "ws:login"
   - "ux:*" 
@@ -59,7 +58,6 @@ CsSupport:
   - "order:import"
   - "inventory:edit"
   - "inventory:import"
-  - "pickscript:run"
 CsSuperuser:
   - "*"  # includes such checked permissions as tenant:*, user:*, role:*, perm:*
 
