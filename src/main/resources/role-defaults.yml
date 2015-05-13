@@ -30,7 +30,7 @@ Admin:
   - "facility:edit"
   - "path:*"
   - "light:*"
-  - "inventory:edit"
+  - "inventory:*"
   - "worker:*"
   - "event:*"
 Configure:
