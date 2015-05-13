@@ -50,8 +50,7 @@ import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.server.WebSocketManagerService;
-import com.google.common.base.Objects;
-import com.google.common.base.Objects.ToStringHelper;
+import com.google.common.base.MoreObjects;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 
@@ -305,7 +304,7 @@ public class LightServiceTest extends ServerTest {
 	private void assertASampleWillLightLocation(Location location, LightLedsInstruction ledMessage) {
 		List<LedCmdGroup> ledCmdGroups = LedCmdGroupSerializer.deserializeLedCmdString(ledMessage.getLedCommands());
 		boolean found = false;
-		ToStringHelper message = Objects.toStringHelper("Failed, probably lit out of order ");
+		MoreObjects.ToStringHelper message = MoreObjects.toStringHelper("Failed, probably lit out of order ");
 		for (LedCmdGroup ledCmdGroup : ledCmdGroups) {
 			for(LedSample ledSample : ledCmdGroup.getLedSampleList()) {
 				short pos = ledSample.getPosition();

@@ -2,9 +2,7 @@ package com.codeshelf.api.responses;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeSet;
 
 import lombok.Getter;
@@ -48,6 +46,7 @@ public class ResultDisplay {
 	}
 	
 	public void add(Map<Object, Object> values) {
+		@SuppressWarnings("unused")
 		boolean ret = results.add(values);
 	}
 

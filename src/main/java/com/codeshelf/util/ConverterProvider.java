@@ -22,38 +22,44 @@ public class ConverterProvider implements Provider<ConvertUtilsBean> {
 		return convertUtils;
 	}
 	
-	@SuppressWarnings("rawtypes")
 	private static class UUIDConverter extends AbstractConverter {
 		@Override
-		protected Object convertToType(Class arg0, Object inValue) throws Throwable {
-			return UUID.fromString(String.valueOf(inValue));
+		protected <T> T convertToType(Class<T> arg0, Object inValue) throws Throwable {
+			@SuppressWarnings("unchecked")
+			T uuid = (T)UUID.fromString(String.valueOf(inValue));
+			return uuid;
 		}
 
 		@Override
-		protected Class getDefaultType() {
+		protected Class<?> getDefaultType() {
 			return UUID.class;
 		}
 	}
 
-	
-	@SuppressWarnings("rawtypes")
 	private static class EnumConverter extends AbstractConverter {
 		@SuppressWarnings("unchecked")
 		@Override
-		protected Object convertToType(Class inClass, Object inValue) throws Throwable {
-			return Enum.valueOf(inClass, String.valueOf(inValue));
+		protected <T> T convertToType(Class<T> inClass, Object inValue) throws Throwable {
+			/*
+			 * 
+			 *     public static <T extends Enum<T>> T valueOf(Class<T> enumType,
+                                                String name) {
+			 */
+			@SuppressWarnings("rawtypes")
+			Class<? extends Enum> enumClass = (Class<? extends Enum>) inClass;
+			T value = (T) Enum.valueOf(enumClass, String.valueOf(inValue)); 
+			return value;
 		}
 
 		@Override
-		protected Class getDefaultType() {
+		protected Class<?> getDefaultType() {
 			return Enum.class;
 		}
 	}
 	
-	@SuppressWarnings("rawtypes")
 	private static class TimestampConverter extends AbstractConverter {
 		@Override
-		protected Object convertToType(Class inClass, Object inValue) throws Throwable {
+		protected  <T> T convertToType(Class<T> inClass, Object inValue) throws Throwable {
 			long timeInMillis = -1;
 			if (inValue instanceof String) {
 				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
@@ -64,7 +70,9 @@ public class ConverterProvider implements Provider<ConvertUtilsBean> {
 			} 
 			
 			if (timeInMillis >= 0) {
-				return new Timestamp(timeInMillis);
+				@SuppressWarnings("unchecked")
+				T timestamp = (T)new Timestamp(timeInMillis);
+				return timestamp;
 			}
 			else {
 				return null;
@@ -72,7 +80,7 @@ public class ConverterProvider implements Provider<ConvertUtilsBean> {
 		}
 
 		@Override
-		protected Class getDefaultType() {
+		protected Class<?> getDefaultType() {
 			return Timestamp.class;
 		}
 	}

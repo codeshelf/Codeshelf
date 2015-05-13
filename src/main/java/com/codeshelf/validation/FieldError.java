@@ -5,6 +5,7 @@ import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 
@@ -115,7 +116,7 @@ public class FieldError extends ObjectError {
 
 	@Override
 	public String toString() {
-		return Objects.toStringHelper(this)
+		return MoreObjects.toStringHelper(this)
 			.add("field", getField())
 			.add("codes", Arrays.toString(getCodes()))
 			.add("message", getMessage())
