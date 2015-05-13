@@ -55,10 +55,12 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 
 		Facility facility = setUpFacilityWithPutWall();
 		// let's find our CHE and set its last logged in value before site controller initializes
+		beginTransaction();
 		Che che1 = Che.staticGetDao().findByDomainId(getNetwork(), "CHE1");
 		Assert.assertNotNull(che1);
 		che1.setLastScannedLocation("F11");
 		Che.staticGetDao().store(che1);
+		commitTransaction();
 		return facility;
 	}
 
@@ -124,13 +126,9 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		// This shows the simple success case of 4 picks from 2 orders on 2 paths. CHE's lastScanLocation at F11, so START would assume that.
 		// A few extra starts and location scans thrown in before getting to the picks.
 
-		beginTransaction();		
 		Facility facility = getModeledFacility();
-		commitTransaction();
 		
-		beginTransaction();		
 		setUpOrders1(facility);
-		commitTransaction();
 
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
@@ -249,13 +247,9 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 	@Test
 	public final void badLocationChange() throws IOException {
 
-		beginTransaction();		
 		Facility facility = getModeledFacility();
-		commitTransaction();
 
-		beginTransaction();		
 		setUpOrders1(facility);
-		commitTransaction();
 
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
@@ -638,10 +632,9 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		// logout, login.  If site controller has to reinitialize, the setup is good but the done and short counts are lost.
 		// That is ok.
 
-		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = getModeledFacility();
+		
 		setUpOrders1(facility);
-		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
@@ -722,10 +715,9 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 	public final void doneCountStartIncrement() throws IOException {
 		// Explore a bug.
 
-		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = getModeledFacility();
+
 		setUpOrders1(facility);
-		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);

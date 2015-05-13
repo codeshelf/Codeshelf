@@ -277,7 +277,6 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		@SuppressWarnings("unused")
 		Gtin gtinMap = upsertGtin(inFacility, itemMaster, inCsvBean, uomMaster);
 
-		Item updatedOrCreatedItem = null;
 		// If preferredLocation is there, we set it on the detail. LOCAPICK controls whether we also create new inventory to match.
 		if (getLocapickValue()) {
 			String locationValue = orderDetail.getPreferredLocation(); // empty string if location did not validate
@@ -326,7 +325,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 					}
 
 					// updateSlottedItem is going to make new inventory if location changed for cases, and also for each if EACHMULT is true
-					updatedOrCreatedItem = importer.updateSlottedItem(false,
+					importer.updateSlottedItem(false,
 						itemBean,
 						location,
 						inEdiProcessTime,

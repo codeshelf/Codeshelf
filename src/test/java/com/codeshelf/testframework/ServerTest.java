@@ -6,7 +6,6 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.codehaus.groovy.syntax.TokenMismatchException;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

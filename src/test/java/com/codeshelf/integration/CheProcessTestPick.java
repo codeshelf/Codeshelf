@@ -1146,7 +1146,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.startSiteController();
 
 		// perform pick operation
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we found the bug with it on.
 
 		PickSimulator picker = createPickSim(cheGuid1);
@@ -1200,7 +1200,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		//picker2.simulateCommitByChangingTransaction(this.persistenceService);
 
-		this.tenantPersistenceService.commitTransaction();
+		commitTransaction();
 	}
 
 	@Test

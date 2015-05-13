@@ -18,7 +18,6 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.LocationAlias;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.UomMaster;
-import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.service.UiUpdateService;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.validation.InputValidationException;

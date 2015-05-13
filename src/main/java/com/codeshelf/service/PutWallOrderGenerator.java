@@ -29,9 +29,11 @@ import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.sim.worker.PickSimulator;
 import com.google.common.collect.Lists;
 
 public class PutWallOrderGenerator {
+	
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(PutWallOrderGenerator.class);
 
 	protected static List<WorkInstruction> attemptToGenerateWallOrders(Che che, Collection<String> inContainerIdList, Timestamp theTime) {
@@ -39,6 +41,7 @@ public class PutWallOrderGenerator {
 
 		List<WorkInstruction> wiList = Lists.newArrayList();
 		if (inContainerIdList == null || inContainerIdList.isEmpty()) {
+			LOGGER.info("attemptToGenerateWallOrders exited due to empty list");
 			return wiList;
 		}
 		//Get all orders in the provided walls 
@@ -60,7 +63,7 @@ public class PutWallOrderGenerator {
 	 * Generate a Work Instructions list for the current wall
 	 */
 	private static List<WorkInstruction> generateWIsForWall(Che che, String wallId, List<OrderHeader> orders, Timestamp theTime) {
-		LOGGER.info("generateWIsForWall for {}, orders number considered{}", wallId, orders.size());
+		LOGGER.info("generateWIsForWall for {}, orders number considered {}", wallId, orders.size());
 		
 		HashMap<String, WorkInstruction> wiHashThisWallAndRun = new HashMap<String, WorkInstruction>();
 		Facility facility = che.getFacility();
@@ -108,6 +111,7 @@ public class PutWallOrderGenerator {
 	 * Retrieve or generate a Container to be used for a single Wall in this Slow Pick run
 	 */
 	private static Container getContainerForWall(Facility facility, String wallId, Timestamp theTime){
+
 		//Container domainId names should be unique. However, if, for some reason there are multiple Conainers with the same domainId,
 		//the following conde ensures that the first one gets reused rather than creating a third one
 		//(calling findByDomainId() returns null when there are multiple matches)
@@ -160,15 +164,24 @@ public class PutWallOrderGenerator {
 		LOGGER.info("getOrdersInPutWalls called for {}", putWallNames);
 
 		List<OrderHeader> allOrders = OrderHeader.staticGetDao().getAll();
+		// Obvious trouble here. Do we want a memory list of a million orders?
+		// There are far fewer OrderLocations. GetAll of them instead.
+		
 		HashMap<String, List<OrderHeader>> wallOrders = new HashMap<>();
 		for (OrderHeader order : allOrders) {
 			List<OrderLocation> orderLocations = order.getOrderLocations();
 			if (!order.getActive() || orderLocations == null || orderLocations.isEmpty()) {
 				continue;
 			}
+			
+			LOGGER.info("getOrdersInPutWalls found that order {} had {} OrderLocation(s)", order.getDomainId(), orderLocations.size());
+
 			Location orderLocation = orderLocations.get(0).getLocation();
 			for (String wallName : putWallNames) {
 				if (doesLocationHaveAncestor(orderLocation, wallName)) {
+					// this next not encouncered, proving problem in doesLocationHaveAncestor
+					LOGGER.info("getOrdersInPutWalls found that order {} had orderLocation in {}", orderLocation.getParent().getDomainId(), wallName);
+				
 					List<OrderHeader> ordersInThisWall = wallOrders.get(wallName);
 					if (ordersInThisWall == null) {
 						ordersInThisWall = Lists.newArrayList();
@@ -202,7 +215,7 @@ public class PutWallOrderGenerator {
 		if (location == null) {
 			return false;
 		}
-		if (location == ancestor) {
+		if (location.equals(ancestor)) {
 			return true;
 		}
 		return doesLocationHaveAncestorRecursive(location.getParent(), ancestor);

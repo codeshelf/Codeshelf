@@ -29,7 +29,6 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.testframework.ServerTest;
 
 /**
