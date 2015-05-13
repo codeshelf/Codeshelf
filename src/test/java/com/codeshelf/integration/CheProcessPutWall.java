@@ -1003,10 +1003,10 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 	public final void putWallOrderReassign() throws IOException {
 		// This shows if we are live updating to clear out earlier order locations
 
-		this.getTenantPersistenceService().beginTransaction();
 		setUpFacilityWithPutWall();
 		setUpOrders1(getFacility());
 
+		beginTransaction();
 		// Document where the poscon indices of some of the slots
 		Facility facility = getFacility();
 		Location loc = facility.findSubLocationById("P13");
@@ -1018,7 +1018,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		loc = facility.findSubLocationById("P16");
 		LOGGER.info("P16 has index:{}", loc.getPosconIndex());
 
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		this.startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);

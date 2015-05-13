@@ -178,9 +178,7 @@ public class PutWallOrderGenerator {
 			Location orderLocation = orderLocations.get(0).getLocation();
 			for (String wallName : putWallNames) {
 				if (doesLocationHaveAncestor(orderLocation, wallName)) {
-					// this next not encouncered, proving problem in doesLocationHaveAncestor
-					LOGGER.info("getOrdersInPutWalls found that order {} had orderLocation in {}", orderLocation.getParent().getDomainId(), wallName);
-				
+					LOGGER.info("getOrdersInPutWalls found that order {} had orderLocation in {}", orderLocation.getParent().getDomainId(), wallName);			
 					List<OrderHeader> ordersInThisWall = wallOrders.get(wallName);
 					if (ordersInThisWall == null) {
 						ordersInThisWall = Lists.newArrayList();
