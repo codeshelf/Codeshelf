@@ -64,7 +64,6 @@ public class PutWallOrderGenerator {
 	 */
 	private static List<WorkInstruction> generateWIsForWall(Che che, String wallId, List<OrderHeader> orders, Timestamp theTime) {
 		LOGGER.info("generateWIsForWall for {}, orders number considered {}", wallId, orders.size());
-		
 		HashMap<String, WorkInstruction> wiHashThisWallAndRun = new HashMap<String, WorkInstruction>();
 		Facility facility = che.getFacility();
 		//Retrieve or create a new container for this wall
@@ -179,9 +178,7 @@ public class PutWallOrderGenerator {
 			Location orderLocation = orderLocations.get(0).getLocation();
 			for (String wallName : putWallNames) {
 				if (doesLocationHaveAncestor(orderLocation, wallName)) {
-					// this next not encouncered, proving problem in doesLocationHaveAncestor
-					LOGGER.info("getOrdersInPutWalls found that order {} had orderLocation in {}", orderLocation.getParent().getDomainId(), wallName);
-				
+					LOGGER.info("getOrdersInPutWalls found that order {} had orderLocation in {}", orderLocation.getParent().getDomainId(), wallName);			
 					List<OrderHeader> ordersInThisWall = wallOrders.get(wallName);
 					if (ordersInThisWall == null) {
 						ordersInThisWall = Lists.newArrayList();

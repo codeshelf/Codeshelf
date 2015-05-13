@@ -282,7 +282,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		workList.getInstructions().addAll(crossInstructions);
 
 		if (workList.getInstructions().isEmpty() && workList.getDetails().isEmpty()) {
-			// Bug seen in asynch importer branch. And why does this not use the containerList? Probably change these loggers to debug later.
 			LOGGER.info("Calling PutWallOrderGenerator. containerList:{} positionToContainerMap:{}",
 				containerList,
 				positionToContainerMap.values());
