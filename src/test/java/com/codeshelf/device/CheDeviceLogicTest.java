@@ -2,7 +2,6 @@ package com.codeshelf.device;
 
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
@@ -13,18 +12,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import org.hamcrest.Description;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.flyweight.command.CommandControlButton;
 import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
 import com.codeshelf.flyweight.command.NetAddress;
-import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
@@ -34,8 +29,6 @@ import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.testframework.MockDaoTest;
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -212,66 +205,4 @@ public class CheDeviceLogicTest extends MockDaoTest {
 
 	}
 
-	/**
-	 * Simulate button press for the given position and quantity value
-	 */
-	private void pressButton(CheDeviceLogic cheDeviceLogic, int pos, int value) {
-		cheDeviceLogic.buttonCommandReceived(new CommandControlButton(mock(NetEndpoint.class), (byte) pos, (byte) value));
-	}
-
-	/**
-	 * Determine if the radio controller displayed a message with the given message
-	 */
-	private void verifyDisplay(IRadioController radioController, String message) {
-		verifyDisplayOfMockitoObj(verify(radioController, atLeast(1)), message);
-
-	}
-
-	/**
-	 * Determine if the radio controller object (wrapped from Mockito.verify() has
-	 * sent a display command with the given message
-	 */
-	private void verifyDisplayOfMockitoObj(IRadioController verifyRadioController, String message) {
-		verifyRadioController.sendCommand(displayContains(message), any(NetAddress.class), eq(true));
-
-	}
-
-	/**
-	 * Convenience method to return the matcher to long for the given message on any line in the display command
-	 */
-	private CommandControlDisplayMessage displayContains(String message) {
-		return argThat(new DisplayCommandContains(message));
-	}
-
-	/**
-	 * Custom matcher to see if the given message appears in any line of the display command
-	 *
-	 */
-	private static class DisplayCommandContains extends ArgumentMatcher<CommandControlDisplayMessage> {
-		private String	message;
-
-		public DisplayCommandContains(String message) {
-			Preconditions.checkArgument(!Strings.isNullOrEmpty(message));
-			this.message = message;
-		}
-
-		@Override
-		public boolean matches(Object iCommand) {
-			if (iCommand instanceof CommandControlDisplayMessage) {
-				CommandControlDisplayMessage command = (CommandControlDisplayMessage) iCommand;
-				return command.getLine1MessageStr().contains(this.message) || command.getLine2MessageStr().contains(this.message)
-						|| command.getLine3MessageStr().contains(this.message)
-						|| command.getLine4MessageStr().contains(this.message);
-			} else {
-				return false;
-			}
-		}
-
-		@Override
-		public void describeTo(Description description) {
-			super.describeTo(description);
-			description.appendText(" \"" + this.message + "\"");
-		}
-
-	}
 }
