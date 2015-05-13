@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -24,6 +26,8 @@ import javax.ws.rs.core.Response;
 import lombok.Setter;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.beanutils.BeanMap;
+
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
@@ -42,7 +46,9 @@ import com.codeshelf.api.PickScriptServerProcessor.PickScriptPart;
 import com.codeshelf.api.PickScriptCallPool;
 import com.codeshelf.api.PickScriptServerProcessor;
 import com.codeshelf.api.responses.EventDisplay;
+import com.codeshelf.api.responses.ItemDisplay;
 import com.codeshelf.api.responses.PickRate;
+import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedInstrListMessage;
 import com.codeshelf.device.LedSample;
@@ -67,8 +73,10 @@ import com.codeshelf.ws.protocol.message.CheDisplayMessage;
 import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.message.PickScriptMessage;
 import com.codeshelf.ws.server.WebSocketManagerService;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
@@ -84,7 +92,7 @@ public class FacilityResource {
 
 	@Setter
 	private Facility facility;
-	
+
 	@Context
 	private ResourceContext resourceContext;
 
@@ -105,7 +113,7 @@ public class FacilityResource {
 		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		try {
 			Session session = persistenceService.getSession();
-			return BaseResponse.buildResponse(this.orderService.orderDetailsNoLocation(tenant, session, facility.getPersistentId()));		
+			return BaseResponse.buildResponse(this.orderService.orderDetailsNoLocation(tenant, session, facility.getPersistentId()));
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
 		}
@@ -126,7 +134,7 @@ public class FacilityResource {
     	List<WorkInstruction> results = this.workService.getWorkResults(facility.getPersistentId(), startTimestamp.getValue(), endTimestamp.getValue());
 		return BaseResponse.buildResponse(results);
 	}
-	
+
 
 	@GET
 	@Path("/work/topitems")
@@ -217,7 +225,7 @@ public class FacilityResource {
 		return BaseResponse.buildResponse(ches);
 	}
 
-	
+
 	@GET
 	@Path("/workers")
 	@RequiresPermissions("worker:view")
@@ -261,7 +269,10 @@ public class FacilityResource {
 	@RequiresPermissions("event:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response searchEvents(
-		@QueryParam("type") List<EventTypeParam> typeParamList, 
+		@QueryParam("type") List<EventTypeParam> typeParamList,
+		@QueryParam("itemId") String itemId,
+		@QueryParam("location") String location,
+		@QueryParam("groupBy") String groupBy,
 		@QueryParam("resolved") Boolean resolved ) {
 		ErrorResponse errors = new ErrorResponse();
 		try {
@@ -277,6 +288,11 @@ public class FacilityResource {
 			if (!typeList.isEmpty()) {
 				filterParams.add(Restrictions.in("eventType", typeList));
 			}
+
+			if (!Strings.isNullOrEmpty(itemId)) {
+				//do by filter param but for now needs to be manually filtered
+			}
+
 			//If "resolved" parameter not provided, return, both, resolved and unresolved events
 			if (resolved != null) {
 				if (resolved){
@@ -285,18 +301,69 @@ public class FacilityResource {
 					filterParams.add(Restrictions.isNull("resolution"));
 				}
 			}
+
 			List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
-			List<EventDisplay> result = Lists.newArrayList();
-			for (WorkerEvent event : events) {
-				result.add(new EventDisplay(event));
+			if (!Strings.isNullOrEmpty(itemId)) {
+				ResultDisplay result = new ResultDisplay();
+				for (WorkerEvent event : events) {
+					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
+					ItemDisplay itemDisplayKey = new ItemDisplay(eventDisplay);
+					if (itemId.equals(itemDisplayKey.getItemId()) &&
+						location.equals(itemDisplayKey.getLocation())) {
+						result.add(new BeanMap(eventDisplay));
+					}
+				}
+				return BaseResponse.buildResponse(result);
 			}
-			return BaseResponse.buildResponse(result);
+
+			if ("item".equals(groupBy)) {
+				Map<ItemDisplay, Integer> issuesByItem = new HashMap<>();
+				for (WorkerEvent event : events) {
+					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
+					ItemDisplay itemDisplayKey = new ItemDisplay(eventDisplay);
+					Integer count = MoreObjects.firstNonNull(issuesByItem.get(itemDisplayKey), 0);
+					issuesByItem.put(itemDisplayKey, count+1);
+				}
+
+				ResultDisplay result = new ResultDisplay(ItemDisplay.ItemComparator);
+				for (Map.Entry<ItemDisplay, Integer> issuesByItemEntry : issuesByItem.entrySet()) {
+					Map<Object, Object> values = new HashMap<>();
+					values.putAll(new BeanMap(issuesByItemEntry.getKey()));
+					values.put("count", issuesByItemEntry.getValue());
+					result.add(values);
+				}
+				return BaseResponse.buildResponse(result);
+			} else if ("type".equals(groupBy)){
+				Map<EventType, Integer> issuesByType = new HashMap<>();
+				for (WorkerEvent event : events) {
+					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
+					EventType eventType = eventDisplay.getType();
+					Integer count = MoreObjects.firstNonNull(issuesByType.get(eventType), 0);
+					issuesByType.put(eventType, count+1);
+				}
+				ResultDisplay result = new ResultDisplay(issuesByType.size());
+				for (Map.Entry<EventType, Integer> issuesByTypeEntry : issuesByType.entrySet()) {
+					Map<Object, Object> values = new HashMap<>();
+					values.putAll(new BeanMap(issuesByTypeEntry.getKey()));
+					values.put("count", issuesByTypeEntry.getValue());
+					result.add(values);
+				}
+				return BaseResponse.buildResponse(result);
+			} else {
+				ResultDisplay result = new ResultDisplay(events.size());
+				for (WorkerEvent event : events) {
+					result.add(new BeanMap(EventDisplay.createEventDisplay(event)));
+				}
+				return BaseResponse.buildResponse(result);
+			}
+
+
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
 		}
 	}
-		
+
 	@GET
 	@Path("pickrate")
 	@RequiresPermissions("event:view")
@@ -310,7 +377,7 @@ public class FacilityResource {
 			return errors.processException(e);
 		}
 	}
-	
+
 	@POST
 	@Path("/runpickscript")
 	@RequiresPermissions("pickscript:run")
@@ -336,7 +403,7 @@ public class FacilityResource {
 			return new ErrorResponse().processException(e);
 		}
 	}
-	
+
 	@POST
 	@Path("/runpickscript_files")
 	@RequiresPermissions("pickscript:run")
@@ -377,7 +444,7 @@ public class FacilityResource {
 			return new ErrorResponse().processException(e);
 		}
 	}
-	
+
 	private String readFile(FormDataMultiPart body, String fieldName, ErrorResponse errors) throws IOException {
 		FormDataBodyPart part = body.getField(fieldName);
 		if (part == null) {
