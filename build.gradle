@@ -71,7 +71,8 @@ dependencies {
 
             'com.google.inject:guice:3.0',
 			'com.google.inject.extensions:guice-servlet:3.0',
-			'com.google.guava:guava:16.0',
+			'com.google.guava:guava:18.0',
+            'commons-beanutils:commons-beanutils:1.9.2',
 			'commons-io:commons-io:2.4',
 			'commons-codec:commons-codec:1.10',
 
