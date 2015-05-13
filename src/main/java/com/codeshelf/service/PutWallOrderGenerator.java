@@ -159,25 +159,16 @@ public class PutWallOrderGenerator {
 	 * Returns a map of provided Put Walls to orders located in those walls
 	 */
 	private static HashMap<String, List<OrderHeader>> getOrdersInPutWalls(Collection<String> putWallNames) {
-		LOGGER.info("getOrdersInPutWalls called for {}", putWallNames);
-
-		List<OrderHeader> allOrders = OrderHeader.staticGetDao().getAll();
-		// Obvious trouble here. Do we want a memory list of a million orders?
-		// There are far fewer OrderLocations. GetAll of them instead.
-		
+		List<OrderLocation> orderLocations = OrderLocation.staticGetDao().getAll();
 		HashMap<String, List<OrderHeader>> wallOrders = new HashMap<>();
-		for (OrderHeader order : allOrders) {
-			List<OrderLocation> orderLocations = order.getOrderLocations();
-			if (!order.getActive() || orderLocations == null || orderLocations.isEmpty()) {
+		for (OrderLocation orderLocation : orderLocations) {
+			OrderHeader order = orderLocation.getParent();
+			if (!order.getActive()) {
 				continue;
 			}
-			
-			LOGGER.info("getOrdersInPutWalls found that order {} had {} OrderLocation(s)", order.getDomainId(), orderLocations.size());
-
-			Location orderLocation = orderLocations.get(0).getLocation();
+			Location location = orderLocation.getLocation();
 			for (String wallName : putWallNames) {
-				if (doesLocationHaveAncestor(orderLocation, wallName)) {
-					LOGGER.info("getOrdersInPutWalls found that order {} had orderLocation in {}", orderLocation.getParent().getDomainId(), wallName);			
+				if (doesLocationHaveAncestor(location, wallName)) {
 					List<OrderHeader> ordersInThisWall = wallOrders.get(wallName);
 					if (ordersInThisWall == null) {
 						ordersInThisWall = Lists.newArrayList();
@@ -186,9 +177,8 @@ public class PutWallOrderGenerator {
 					ordersInThisWall.add(order);
 				}
 			}
-		}
-		LOGGER.info("getOrdersInPutWalls return {} orders", wallOrders.size());
 
+		}
 		return wallOrders;
 	}
 
