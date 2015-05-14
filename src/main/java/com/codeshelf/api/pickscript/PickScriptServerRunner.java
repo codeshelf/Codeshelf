@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.hibernate.criterion.Criterion;
@@ -11,11 +12,17 @@ import org.hibernate.criterion.Restrictions;
 
 import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
+import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.Path;
+import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Tier;
+import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.service.UiUpdateService;
 import com.codeshelf.util.CsExceptionUtils;
 import com.codeshelf.ws.protocol.message.PickScriptMessage;
@@ -25,6 +32,9 @@ public class PickScriptServerRunner {
 	private final static String TEMPLATE_IMPORT_ORDERS = "importOrders <filename>";
 	private final static String TEMPLATE_IMPORT_AISLES = "importAisles <filename>";
 	private final static String TEMPLATE_SET_LED_CONTROLLER = "setLedController <location> <controller> <channel> ['allTiersInAisle']";
+	private final static String TEMPLATE_CREATE_CHE = "createChe <che> <color> <mode>";
+	private final static String TEMPLATE_DELETE_ALL_PATHS = "deleteAllPaths";
+	private final static String TEMPLATE_DEF_PATH = "defPath <pathName> (segments 'X' <start x> <start y> <end x> <end y>)";
 	
 	private final Facility facility;
 	private final UiUpdateService uiUpdateService;
@@ -32,6 +42,7 @@ public class PickScriptServerRunner {
 	private final ICsvAislesFileImporter aisleImporter;
 	private StringBuilder report;
 	private final FormDataMultiPart postBody;
+	private HashMap<String, Path> paths = new HashMap<String, Path>();
 	
 	public PickScriptServerRunner(Facility facility, 
 		FormDataMultiPart postBody,
@@ -80,9 +91,15 @@ public class PickScriptServerRunner {
 			processImportAislesCommand(parts);
 		} else if (command.equalsIgnoreCase("setLedController")) {
 			processSetAisleControllerCommand(parts);
+		} else if (command.equalsIgnoreCase("createChe")) {
+			processCreateCheCommand(parts);
+		} else if (command.equalsIgnoreCase("deleteAllPaths")) {
+			processDeleteAllPathsCommand(parts);
+		} else if (command.equalsIgnoreCase("defPath")) {
+			processDefinePathCommand(parts);
 		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [importOrders, importAisles, setLedController, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [importOrders, importAisles, setLedController, createChe, deleteAllPaths, defPath, //]");
 		}
 	}
 	
@@ -160,7 +177,77 @@ public class PickScriptServerRunner {
 		locations = null;
 	}
 
+	/**
+	 * Expects to see command
+	 * createChe <che> <color> <mode>
+	 * @throws Exception 
+	 */
+	private void processCreateCheCommand(String parts[]) throws Exception {
+		if (parts.length != 4){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_CREATE_CHE);
+		}
+		String name = parts[1], color = parts[2].toUpperCase(), mode = parts[3];
+		//Confirm that the provided enum values are valid
+		ColorEnum.valueOf(color);
+		ProcessMode.valueOf(mode);
+		
+		//Create or update CHE
+		Che che = Che.staticGetDao().findByDomainId(facility.getNetworks().get(0), name);
+		
+		if (che == null) {
+			uiUpdateService.addChe(facility.getPersistentId().toString(), name, null, color, name, mode);
+		} else {
+			uiUpdateService.updateChe(che.getPersistentId().toString(), name, null, color, name, mode);
+		}
+	}
 
+	/**
+	 * Expects to see command
+	 * deleteAllPaths
+	 * @throws Exception 
+	 */
+	private void processDeleteAllPathsCommand(String parts[]) throws Exception {
+		if (parts.length != 1){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_DELETE_ALL_PATHS);
+		}
+		paths.clear();
+		List<Path> pathList = Path.staticGetDao().findByParent(facility);
+		for (Path path : pathList) {
+			path.deleteThisPath();
+		}
+	}
+
+	/**
+	 * Expects to see command
+	 * defPath <pathName> (segments 'X' <start x> <start y> <end x> <end y>)
+	 * @throws Exception 
+	 */
+	private void processDefinePathCommand(String parts[]) throws Exception {
+		if (parts.length < 7 || (parts.length - 2) % 5 != 0 ){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_DEF_PATH);
+		}
+		String pathName = parts[1];
+		if (paths.containsKey(pathName)) {
+			throw new Exception("Path " + pathName + " has already been defined in this script");
+		}
+		Path path = facility.createPath("");
+		int totalSegnemts = (parts.length - 2) / 5;
+		for (int segNum = 0; segNum < totalSegnemts; segNum++) {
+			int offset = 2 + segNum * 5;
+			if (!parts[offset].equalsIgnoreCase("X")) {
+				throw new Exception("Did not put an 'X' before each path segment");
+			}
+			double startX = Double.parseDouble(parts[offset + 1]);
+			double startY = Double.parseDouble(parts[offset + 2]);
+			double endX =   Double.parseDouble(parts[offset + 3]);
+			double endY =   Double.parseDouble(parts[offset + 4]);
+			Point head = new Point(PositionTypeEnum.METERS_FROM_PARENT, startX, startY, 0.0);
+			Point tail = new Point(PositionTypeEnum.METERS_FROM_PARENT, endX, endY, 0.0);
+			path.createPathSegment(segNum, head, tail);
+		}
+		paths.put(pathName, path);
+	}
+	
 	private InputStreamReader readFile(String filename) throws Exception{
 		InputStream is = PickScriptParser.getInputStream(postBody, filename);
 		if (is == null) {
