@@ -27,6 +27,9 @@ public class OutboundOrderBatch {
 
 	@Getter
 	Set<String> orderGroupIds = new HashSet<String>();
+	
+	@Getter @Setter
+	int processingAttempts = 0;
 
 	public OutboundOrderBatch(int batchId) {
 		this.batchId = batchId;
