@@ -1,0 +1,17 @@
+itemId,locationId,description,quantity,uom,inventoryDate,lotId,cmFromLeft
+Item1,LocX24,Item Desc 1,1000,a,12/03/14 12:00,,1
+Item2,LocX24,Item Desc 2,1000,a,12/03/14 12:00,,25
+Item3,LocX24,Item Desc 3,1000,a,12/03/14 12:00,,49
+Item4,LocX24,Item Desc 4,1000,a,12/03/14 12:00,,74
+Item5,LocX25,Item Desc 5,1000,a,12/03/14 12:00,,1
+Item6,LocX25,Item Desc 6,1000,a,12/03/14 12:00,,25
+Item7,LocX25,Item Desc 7,1000,a,12/03/14 12:00,,49
+Item8,LocX25,Item Desc 8,1000,a,12/03/14 12:00,,74
+Item9,LocX26,Item Desc 9,1000,a,12/03/14 12:00,,1
+Item10,LocX26,Item Desc 10,1000,a,12/03/14 12:00,,25
+Item11,LocX26,Item Desc 11,1000,a,12/03/14 12:00,,49
+Item12,LocX26,Item Desc 12,1000,a,12/03/14 12:00,,74
+Item13,LocX27,Item Desc 13,1000,a,12/03/14 12:00,,1
+Item14,LocX27,Item Desc 14,1000,a,12/03/14 12:00,,25
+Item15,LocX27,Item Desc 15,1000,a,12/03/14 12:00,,49
+Item16,LocX27,Item Desc 16,1000,a,12/03/14 12:00,,74

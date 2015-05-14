@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.SortedSet;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
@@ -20,6 +21,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Path;
+import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.Che.ProcessMode;
@@ -35,6 +37,7 @@ public class PickScriptServerRunner {
 	private final static String TEMPLATE_CREATE_CHE = "createChe <che> <color> <mode>";
 	private final static String TEMPLATE_DELETE_ALL_PATHS = "deleteAllPaths";
 	private final static String TEMPLATE_DEF_PATH = "defPath <pathName> (segments 'X' <start x> <start y> <end x> <end y>)";
+	private final static String TEMPLATE_ASSIGN_PATH_SGM_AISLE = "assighPathSgmToAisle <pathName> <segment id> <aisle name>";
 	
 	private final Facility facility;
 	private final UiUpdateService uiUpdateService;
@@ -97,9 +100,11 @@ public class PickScriptServerRunner {
 			processDeleteAllPathsCommand(parts);
 		} else if (command.equalsIgnoreCase("defPath")) {
 			processDefinePathCommand(parts);
+		} else if (command.equalsIgnoreCase("assighPathSgmToAisle")) {
+			processAsignPathSegmentToAisleCommand(parts);
 		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [importOrders, importAisles, setLedController, createChe, deleteAllPaths, defPath, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [importOrders, importAisles, setLedController, createChe, deleteAllPaths, defPath, assighPathSgmToAisle, //]");
 		}
 	}
 	
@@ -193,7 +198,6 @@ public class PickScriptServerRunner {
 		
 		//Create or update CHE
 		Che che = Che.staticGetDao().findByDomainId(facility.getNetworks().get(0), name);
-		
 		if (che == null) {
 			uiUpdateService.addChe(facility.getPersistentId().toString(), name, null, color, name, mode);
 		} else {
@@ -246,6 +250,38 @@ public class PickScriptServerRunner {
 			path.createPathSegment(segNum, head, tail);
 		}
 		paths.put(pathName, path);
+	}
+
+	/**
+	 * Expects to see command
+	 * assighPathSgmToAisle <pathName> <segment id> <aisle name>
+	 * @throws Exception 
+	 */
+	private void processAsignPathSegmentToAisleCommand(String parts[]) throws Exception {
+		if (parts.length != 4){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_ASSIGN_PATH_SGM_AISLE);
+		}
+		String pathName = parts[1], aisleName= parts[3];
+		Path path = paths.get(pathName);
+		if (path == null) {
+			throw new Exception("Path " + pathName + " has not been defined in this script");
+		}
+		int segmentId = Integer.parseInt(parts[2]);
+		/*
+		SortedSet<PathSegment> segments = path.getSegments();
+		if (segments.size() <= segmentId) {
+			throw new Exception("Path " + pathName + " only has " + segments.size() + " segments");
+		}
+		*/
+		PathSegment segment = path.getPathSegment(segmentId);
+		if (segment == null) {
+			throw new Exception("Path " + pathName + " does not have segment " + segmentId);
+		}
+		Aisle aisle = Aisle.staticGetDao().findByDomainId(facility, aisleName);
+		if (aisle == null) {
+			throw new Exception("Unable to find aisle " + aisleName);
+		}
+		aisle.associatePathSegment(segment);
 	}
 	
 	private InputStreamReader readFile(String filename) throws Exception{

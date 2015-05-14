@@ -1,0 +1,11 @@
+SERVER
+importAisles aisles
+setLedController A1.B1.T1 0x000000031 1 allTiersInAisle
+setLedController A2 0x0000000AB 1
+createChe 0x000000099 magenta SETUP_ORDERS
+deleteAllPaths
+defPath p1 X 2.82 5.40 5.19 5.40 X 5.19 5.40 5.19 6.40 X 5.19 6.40 2.77 6.40
+defPath p2 X 2.60 7.40 5.28 7.40
+assighPathSgmToAisle p1 0 A1
+assighPathSgmToAisle p1 2 A2
+assighPathSgmToAisle p2 0 A3
