@@ -69,6 +69,7 @@ import com.codeshelf.service.NotificationService.EventType;
 import com.codeshelf.service.OrderService;
 import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
+import com.codeshelf.service.UiUpdateService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.protocol.message.CheDisplayMessage;
 import com.codeshelf.ws.protocol.message.LightLedsInstruction;
@@ -88,6 +89,7 @@ public class FacilityResource {
 	private final OrderService orderService;
 	private final NotificationService notificationService;
 	private final WebSocketManagerService webSocketManagerService;
+	private final UiUpdateService uiUpdateService;
 	private final ICsvAislesFileImporter aislesImporter;
 	private final ICsvOrderImporter orderImporter;
 	
@@ -102,12 +104,14 @@ public class FacilityResource {
 		OrderService orderService, 
 		NotificationService notificationService, 
 		WebSocketManagerService webSocketManagerService,
+		UiUpdateService uiUpdateService,
 		ICsvAislesFileImporter aislesImporter,
 		ICsvOrderImporter orderImporter) {
 		this.orderService = orderService;
 		this.workService = workService;
 		this.webSocketManagerService = webSocketManagerService;
 		this.notificationService = notificationService;
+		this.uiUpdateService = uiUpdateService;
 		this.aislesImporter = aislesImporter;
 		this.orderImporter = orderImporter;
 	}
@@ -436,7 +440,7 @@ public class FacilityResource {
 			ArrayList<PickScriptPart> scriptParts = PickScriptParser.parseMixedScript(script);
 			Set<User> users = facility.getSiteControllerUsers();
 			StringBuilder response = new StringBuilder();
-			PickScriptServerRunner scriptRunner = new PickScriptServerRunner(facility, body, aislesImporter, orderImporter);
+			PickScriptServerRunner scriptRunner = new PickScriptServerRunner(facility, body, uiUpdateService, aislesImporter, orderImporter);
 			//Process script parts
 			while (!scriptParts.isEmpty()) {
 				PickScriptPart part = scriptParts.remove(0);

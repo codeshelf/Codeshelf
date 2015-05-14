@@ -11,13 +11,12 @@ import org.hibernate.criterion.Restrictions;
 
 import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
-import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.domain.Aisle;
-import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Tier;
+import com.codeshelf.service.UiUpdateService;
 import com.codeshelf.util.CsExceptionUtils;
 import com.codeshelf.ws.protocol.message.PickScriptMessage;
 import com.sun.jersey.multipart.FormDataMultiPart;
@@ -27,18 +26,21 @@ public class PickScriptServerRunner {
 	private final static String TEMPLATE_IMPORT_AISLES = "importAisles <filename>";
 	private final static String TEMPLATE_SET_LED_CONTROLLER = "setLedController <location> <controller> <channel> ['allTiersInAisle']";
 	
-	private Facility facility;
-	private ICsvOrderImporter orderImporter;
-	private ICsvAislesFileImporter aisleImporter;
+	private final Facility facility;
+	private final UiUpdateService uiUpdateService;
+	private final ICsvOrderImporter orderImporter;
+	private final ICsvAislesFileImporter aisleImporter;
 	private StringBuilder report;
-	private FormDataMultiPart postBody;
+	private final FormDataMultiPart postBody;
 	
 	public PickScriptServerRunner(Facility facility, 
 		FormDataMultiPart postBody,
+		UiUpdateService uiUpdateService,
 		ICsvAislesFileImporter aisleImporter,
 		ICsvOrderImporter orderImporter) {
 		this.facility = facility;
 		this.postBody = postBody;
+		this.uiUpdateService = uiUpdateService;
 		this.aisleImporter = aisleImporter;
 		this.orderImporter = orderImporter;
 	}
@@ -124,13 +126,11 @@ public class PickScriptServerRunner {
 		if (parts.length == 5 && !parts[4].equalsIgnoreCase("allTiersInAisle")){
 			throw new Exception("The optional 4th parameter in the 'setLedController' command has to be 'allTiersInAisle'");
 		}
-		//Find or create LED Controller
 		String controllerName = parts[2];
 		String controllerChannel = parts[3];
-		CodeshelfNetwork network = facility.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
-		NetGuid guid = new NetGuid(controllerName);
-		String controllerDomainId = guid.getHexStringNoPrefix();
-		LedController controller = network.findOrCreateLedController(controllerDomainId, guid);
+
+		//Find or create LED Controller
+		LedController controller = uiUpdateService.addControllerCallWithObjects(facility, controllerName, "Lights");
 		
 		//Find Location
 		String locationName = parts[1];
@@ -148,7 +148,7 @@ public class PickScriptServerRunner {
 			throw new Exception("Could not find location " + locationName);
 		}
 		
-		//Assign controller to Aisle or to Tier
+		//Assign controller to a given Aisle, given Tier, or to all Tiers in an Aisle of a given Tier
 		if (foundLocation instanceof Aisle){
 			((Aisle) foundLocation).setControllerChannel(controller.getPersistentId().toString(), controllerChannel);
 		} else if(foundLocation instanceof Tier){

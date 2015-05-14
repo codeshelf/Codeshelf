@@ -16,6 +16,7 @@ import com.codeshelf.api.resources.subresources.FacilityResource;
 import com.codeshelf.api.resources.subresources.WorkerResource;
 import com.codeshelf.service.NotificationService;
 import com.codeshelf.service.OrderService;
+import com.codeshelf.service.UiUpdateService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.testframework.HibernateTest;
 
@@ -28,7 +29,7 @@ public class WorkerTest extends HibernateTest {
 		WorkService workService = generateWorkService();
 		OrderService orderService = new OrderService();
 		NotificationService notificaitonService = new NotificationService();
-		facilityResource = new FacilityResource(workService, orderService, notificaitonService, webSocketManagerService, createAisleFileImporter(), createOrderImporter());
+		facilityResource = new FacilityResource(workService, orderService, notificaitonService, webSocketManagerService, new UiUpdateService(), createAisleFileImporter(), createOrderImporter());
 		Facility facility = getFacility();
 		facilityResource.setFacility(facility);
 		workersResource = new WorkersResource();

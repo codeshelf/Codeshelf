@@ -233,6 +233,14 @@ public class UiUpdateService implements IApiService {
 		final String inNewDeviceType) {
 		
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityPersistentId);
+		LedController controller = addControllerCallWithObjects(facility, inNewControllerId, inNewDeviceType);
+		return controller.getPersistentId();
+	}
+	
+	public LedController addControllerCallWithObjects(
+		final Facility facility,
+		final String inNewControllerId,
+		final String inNewDeviceType) {
 		CodeshelfNetwork network = facility.getNetworks().get(0);
 		NetGuid guid = new NetGuid(inNewControllerId);
 		String domainId = guid.getHexStringNoPrefix();
@@ -243,7 +251,7 @@ public class UiUpdateService implements IApiService {
 			controller.setDeviceType(deviceType);
 			controller.getDao().store(controller);
 		}
-		return controller.getPersistentId();
+		return controller;
 	}
 	
 	/**
