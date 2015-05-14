@@ -52,6 +52,7 @@ import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedInstrListMessage;
 import com.codeshelf.device.LedSample;
 import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
@@ -87,6 +88,7 @@ public class FacilityResource {
 	private final OrderService orderService;
 	private final NotificationService notificationService;
 	private final WebSocketManagerService webSocketManagerService;
+	private final ICsvAislesFileImporter aislesImporter;
 	private final ICsvOrderImporter orderImporter;
 	
 	@Setter
@@ -96,11 +98,17 @@ public class FacilityResource {
 	private ResourceContext resourceContext;
 
 	@Inject
-	public FacilityResource(WorkService workService, OrderService orderService, NotificationService notificationService, WebSocketManagerService webSocketManagerService, ICsvOrderImporter orderImporter) {
+	public FacilityResource(WorkService workService, 
+		OrderService orderService, 
+		NotificationService notificationService, 
+		WebSocketManagerService webSocketManagerService,
+		ICsvAislesFileImporter aislesImporter,
+		ICsvOrderImporter orderImporter) {
 		this.orderService = orderService;
 		this.workService = workService;
 		this.webSocketManagerService = webSocketManagerService;
 		this.notificationService = notificationService;
+		this.aislesImporter = aislesImporter;
 		this.orderImporter = orderImporter;
 	}
 
@@ -428,7 +436,7 @@ public class FacilityResource {
 			ArrayList<PickScriptPart> scriptParts = PickScriptParser.parseMixedScript(script);
 			Set<User> users = facility.getSiteControllerUsers();
 			StringBuilder response = new StringBuilder();
-			PickScriptServerRunner scriptRunner = new PickScriptServerRunner(facility, orderImporter, body);
+			PickScriptServerRunner scriptRunner = new PickScriptServerRunner(facility, body, aislesImporter, orderImporter);
 			//Process script parts
 			while (!scriptParts.isEmpty()) {
 				PickScriptPart part = scriptParts.remove(0);
