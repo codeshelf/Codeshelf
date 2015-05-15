@@ -1,11 +1,30 @@
 SERVER
 importAisles aisles
+importLocations locations
 setLedController A1.B1.T1 0x000000031 1 allTiersInAisle
 setLedController A2 0x0000000AB 1
-createChe 0x000000099 magenta SETUP_ORDERS
+createChe 0x0000000A3 magenta SETUP_ORDERS
+createChe 0x00000009B green SETUP_ORDERS
 deleteAllPaths
 defPath p1 X 2.82 5.40 5.19 5.40 X 5.19 5.40 5.19 6.40 X 5.19 6.40 2.77 6.40
 defPath p2 X 2.60 7.40 5.28 7.40
 assighPathSgmToAisle p1 0 A1
 assighPathSgmToAisle p1 2 A2
 assighPathSgmToAisle p2 0 A3
+importInventory inventory
+importOrders orders
+
+SITE
+//Define pickers
+defPicker pickerA 0x0000009B
+defPicker pickerB 0x000000A3
+//Set pick parameters [pickSpeed, frequency of skipping UPC, frequency of shorting an item]
+setParams 3 0.5 0.5
+//Setup and run both CHEs together
+pickerExec pickerA loginAndSetup Ilya1
+setupCart pickerA 26768709 26768711 26768712 26768712
+pickerExec pickerB loginAndSetup Ilya2
+setupCart pickerB 26768717 26768718 26768718 26768719 26768720
+pickAll
+pickerExec pickerA logout
+pickerExec pickerB logout

@@ -53,6 +53,8 @@ import com.codeshelf.device.LedInstrListMessage;
 import com.codeshelf.device.LedSample;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.edi.ICsvAislesFileImporter;
+import com.codeshelf.edi.ICsvInventoryImporter;
+import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
@@ -91,6 +93,8 @@ public class FacilityResource {
 	private final WebSocketManagerService webSocketManagerService;
 	private final UiUpdateService uiUpdateService;
 	private final ICsvAislesFileImporter aislesImporter;
+	private final ICsvLocationAliasImporter locationsImporter;
+	private final ICsvInventoryImporter inventoryImporter;
 	private final ICsvOrderImporter orderImporter;
 	
 	@Setter
@@ -106,6 +110,8 @@ public class FacilityResource {
 		WebSocketManagerService webSocketManagerService,
 		UiUpdateService uiUpdateService,
 		ICsvAislesFileImporter aislesImporter,
+		ICsvLocationAliasImporter locationsImporter,
+		ICsvInventoryImporter inventoryImporter,
 		ICsvOrderImporter orderImporter) {
 		this.orderService = orderService;
 		this.workService = workService;
@@ -113,6 +119,8 @@ public class FacilityResource {
 		this.notificationService = notificationService;
 		this.uiUpdateService = uiUpdateService;
 		this.aislesImporter = aislesImporter;
+		this.locationsImporter = locationsImporter;
+		this.inventoryImporter = inventoryImporter;
 		this.orderImporter = orderImporter;
 	}
 
@@ -425,6 +433,8 @@ public class FacilityResource {
 	public Response runPickScriptWithFiles(@QueryParam("timeout_min") Integer timeoutMin, FormDataMultiPart body){
 		try {
 			ErrorResponse errors = new ErrorResponse();
+			TenantPersistenceService persistence = TenantPersistenceService.getInstance();
+			
 			//Retrieve the script
 			InputStream scriptIS = PickScriptParser.getInputStream(body, "script");
 			if (scriptIS == null) {
@@ -440,13 +450,15 @@ public class FacilityResource {
 			ArrayList<PickScriptPart> scriptParts = PickScriptParser.parseMixedScript(script);
 			Set<User> users = facility.getSiteControllerUsers();
 			StringBuilder response = new StringBuilder();
-			PickScriptServerRunner scriptRunner = new PickScriptServerRunner(facility, body, uiUpdateService, aislesImporter, orderImporter);
+			PickScriptServerRunner scriptRunner = new PickScriptServerRunner(facility, body, uiUpdateService, aislesImporter, locationsImporter, inventoryImporter, orderImporter);
 			//Process script parts
 			while (!scriptParts.isEmpty()) {
 				PickScriptPart part = scriptParts.remove(0);
 				if (part.isServer()) {
 					//SERVER
+					persistence.beginTransaction();
 					PickScriptMessage serverResponseMessage = scriptRunner.processServerScript(part.getScript());
+					persistence.commitTransaction();
 					response.append(serverResponseMessage.getResponse());
 					if (!serverResponseMessage.isSuccess()) {
 						break;

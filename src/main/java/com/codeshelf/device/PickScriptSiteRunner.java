@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.util.CsExceptionUtils;
@@ -21,13 +22,14 @@ public class PickScriptSiteRunner {
 	private final static String TEMPLATE_DEF_PICKER = "defPicker <pickerName> <cheGuid>";
 	private final static String TEMPLATE_SETUP_CART = "setupCart <pickerName> <containers>";
 	private final static String TEMPLATE_WAIT = "waitForState <pickerName> <states>";
-	private final static String TEMPLATE_SET_PARAMS = "setParams <pickPause> <chanceSkipUpc> <chanceShort>";
+	private final static String TEMPLATE_SET_PARAMS = "setParams <pickPauseSec> <chanceSkipUpc> <chanceShort>";
 	private final static String TEMPLATE_PICK = "pick <pickerNames>";
 	private final static String TEMPLATE_PICKER_EXEC = "pickerExec <pickerName> <pickerCommand> [arguments]";
+	private final static String TEMPLATE_WAIT_SECONDS = "waitSeconds <seconds>";
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(PickScriptSiteRunner.class);
 	private static final int WAIT_TIMEOUT = 4000;
-	private int pickPause = 0;
+	private int pickPauseMs = 0;
 	private double chanceSkipUpc = 0, chanceShort = 0;
 	private HashMap<String, PickSimulator> pickers = new HashMap<>();
 	private StringBuilder report = new StringBuilder();
@@ -73,6 +75,7 @@ public class PickScriptSiteRunner {
 	}
 	
 	private void processLine(String line) throws Exception {
+		LOGGER.info("Runing script line " + line);
 		report.append("Run: ").append(line).append("\n");
 		if (line == null || line.isEmpty()) {
 			return;
@@ -98,9 +101,11 @@ public class PickScriptSiteRunner {
 			processPickCommand(parts);
 		} else if (command.equalsIgnoreCase("pickAll")) {
 			processPickAllCommand();
+		} else if (command.equalsIgnoreCase("waitSeconds")) {
+			processWaitSecondsCommand(parts);
 		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [pickerExec, defPicker, waitForState, setupCard, setParams, pick, pickAll, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [pickerExec, defPicker, waitForState, setupCard, setParams, pick, pickAll, waitSeconds, //]");
 		}
 	}
 	
@@ -140,7 +145,18 @@ public class PickScriptSiteRunner {
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_DEF_PICKER);
 		}
 		String pickerName = parts[1];
-		String cheGuid = parts[2];
+		NetGuid cheGuid = new NetGuid(parts[2]);
+		
+		//In case, the device has just been added to the system, wait for Server to send device info to Site
+		long start = System.currentTimeMillis(), now = System.currentTimeMillis();
+		while (now < start + 15 * 1000){
+			if (deviceManager.getDeviceByGuid(cheGuid) != null){
+				break;
+			}
+			Thread.sleep(1000);
+			now = System.currentTimeMillis();
+		}
+		
 		PickSimulator picker = new PickSimulator(deviceManager, cheGuid);
 		pickers.put(pickerName, picker);
 	}
@@ -165,14 +181,14 @@ public class PickScriptSiteRunner {
 	
 	/**
 	 * Expects to see command
-	 * setParams <pickPause> <chanceSkipUpc> <chanceShort>
+	 * setParams <pickPauseSec> <chanceSkipUpc> <chanceShort>
 	 * @throws Exception
 	 */
 	private void processSetParamsCommand(String parts[]) throws Exception {
 		if (parts.length != 4){
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_SET_PARAMS);
 		}
-		pickPause = Integer.parseInt(parts[1]);
+		pickPauseMs = Integer.parseInt(parts[1]) * 1000;
 		chanceSkipUpc = Double.parseDouble(parts[2]);
 		chanceShort = Double.parseDouble(parts[3]);
 	}
@@ -198,6 +214,20 @@ public class PickScriptSiteRunner {
 		}
 	}
 	
+	/**
+	 * Expects to see command
+	 * waitSeconds <seconds>
+	 * @throws Exception 
+	 */
+	private void processWaitSecondsCommand(String parts[]) throws Exception {
+		if (parts.length != 2){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_WAIT_SECONDS);
+		}
+		int seconds = Integer.parseInt(parts[1]);
+		LOGGER.info("Pause site script");
+		Thread.sleep(seconds * 1000); 
+	}
+
 	/**
 	 * If needed, this command can be made part of the available functionality
 	 */
@@ -262,7 +292,7 @@ public class PickScriptSiteRunner {
 		
 		//If CHE is in a Review stage, scan START again to advance to Pick stage
 		if (state == CheStateEnum.SETUP_SUMMARY || state == CheStateEnum.LOCATION_SELECT){
-			Thread.sleep(pickPause);
+			Thread.sleep(pickPauseMs);
 			picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 			states.remove(CheStateEnum.LOCATION_SELECT);
 			picker.waitForOneOfCheStates(states, WAIT_TIMEOUT);
@@ -286,7 +316,7 @@ public class PickScriptSiteRunner {
 		pickStates.add(CheStateEnum.SCAN_SOMETHING);
 		pickStates.add(CheStateEnum.DO_PICK);
 		while(true){
-			Thread.sleep(pickPause);
+			Thread.sleep(pickPauseMs);
 			WorkInstruction instruction = picker.getActivePick();
 			if (instruction == null) {
 				break;

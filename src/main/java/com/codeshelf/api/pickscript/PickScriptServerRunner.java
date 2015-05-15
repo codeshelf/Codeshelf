@@ -6,12 +6,16 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.SortedSet;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.codeshelf.device.PickScriptSiteRunner;
 import com.codeshelf.edi.ICsvAislesFileImporter;
+import com.codeshelf.edi.ICsvInventoryImporter;
+import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.PositionTypeEnum;
@@ -33,16 +37,22 @@ import com.sun.jersey.multipart.FormDataMultiPart;
 public class PickScriptServerRunner {
 	private final static String TEMPLATE_IMPORT_ORDERS = "importOrders <filename>";
 	private final static String TEMPLATE_IMPORT_AISLES = "importAisles <filename>";
+	private final static String TEMPLATE_IMPORT_LOCATIONS = "importLocations <filename>";
+	private final static String TEMPLATE_IMPORT_INVENTORY = "importInventory <filename>";
 	private final static String TEMPLATE_SET_LED_CONTROLLER = "setLedController <location> <controller> <channel> ['allTiersInAisle']";
 	private final static String TEMPLATE_CREATE_CHE = "createChe <che> <color> <mode>";
 	private final static String TEMPLATE_DELETE_ALL_PATHS = "deleteAllPaths";
 	private final static String TEMPLATE_DEF_PATH = "defPath <pathName> (segments 'X' <start x> <start y> <end x> <end y>)";
 	private final static String TEMPLATE_ASSIGN_PATH_SGM_AISLE = "assighPathSgmToAisle <pathName> <segment id> <aisle name>";
+	private final static String TEMPLATE_WAIT_SECONDS = "waitSeconds <seconds>";
 	
+	private static final Logger LOGGER = LoggerFactory.getLogger(PickScriptSiteRunner.class);
 	private final Facility facility;
 	private final UiUpdateService uiUpdateService;
 	private final ICsvOrderImporter orderImporter;
 	private final ICsvAislesFileImporter aisleImporter;
+	private final ICsvLocationAliasImporter locationsImporter;
+	private final ICsvInventoryImporter inventoryImporter;
 	private StringBuilder report;
 	private final FormDataMultiPart postBody;
 	private HashMap<String, Path> paths = new HashMap<String, Path>();
@@ -51,11 +61,15 @@ public class PickScriptServerRunner {
 		FormDataMultiPart postBody,
 		UiUpdateService uiUpdateService,
 		ICsvAislesFileImporter aisleImporter,
+		ICsvLocationAliasImporter locationsImporter,
+		ICsvInventoryImporter inventoryImporter,
 		ICsvOrderImporter orderImporter) {
 		this.facility = facility;
 		this.postBody = postBody;
 		this.uiUpdateService = uiUpdateService;
 		this.aisleImporter = aisleImporter;
+		this.locationsImporter = locationsImporter;
+		this.inventoryImporter = inventoryImporter;
 		this.orderImporter = orderImporter;
 	}
 	
@@ -77,6 +91,7 @@ public class PickScriptServerRunner {
 	}
 	
 	private void processLine(String line) throws Exception {
+		LOGGER.info("Runing script line " + line);
 		report.append("Run: ").append(line).append("\n");
 		if (line == null || line.isEmpty()) {
 			return;
@@ -92,6 +107,10 @@ public class PickScriptServerRunner {
 			processImportOrdersCommand(parts);
 		} else if (command.equalsIgnoreCase("importAisles")) {
 			processImportAislesCommand(parts);
+		} else if (command.equalsIgnoreCase("importLocations")) {
+			processImportLocationsCommand(parts);
+		} else if (command.equalsIgnoreCase("importInventory")) {
+			processImportInventory(parts);
 		} else if (command.equalsIgnoreCase("setLedController")) {
 			processSetAisleControllerCommand(parts);
 		} else if (command.equalsIgnoreCase("createChe")) {
@@ -102,9 +121,11 @@ public class PickScriptServerRunner {
 			processDefinePathCommand(parts);
 		} else if (command.equalsIgnoreCase("assighPathSgmToAisle")) {
 			processAsignPathSegmentToAisleCommand(parts);
+		} else if (command.equalsIgnoreCase("waitSeconds")) {
+			processWaitSecondsCommand(parts);
 		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [importOrders, importAisles, setLedController, createChe, deleteAllPaths, defPath, assighPathSgmToAisle, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [importOrders, importAisles, importInventory, setLedController, createChe, deleteAllPaths, defPath, assighPathSgmToAisle, waitSeconds, //]");
 		}
 	}
 	
@@ -135,6 +156,35 @@ public class PickScriptServerRunner {
 		InputStreamReader reader = readFile(filename);
 		aisleImporter.importAislesFileFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
 	}
+
+	/**
+	 * Expects to see command
+	 * importLocations <filename>
+	 * @throws Exception 
+	 */
+	private void processImportLocationsCommand(String parts[]) throws Exception {
+		if (parts.length != 2){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_IMPORT_LOCATIONS);
+		}
+		String filename = parts[1];
+		InputStreamReader reader = readFile(filename);
+		locationsImporter.importLocationAliasesFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
+	}
+
+	/**
+	 * Expects to see command
+	 * importInventory <filename>
+	 * @throws Exception 
+	 */
+	private void processImportInventory(String parts[]) throws Exception {
+		if (parts.length != 2){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_IMPORT_INVENTORY);
+		}
+		String filename = parts[1];
+		InputStreamReader reader = readFile(filename);
+		inventoryImporter.importSlottedInventoryFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
+	}
+
 	
 	/**
 	 * Expects to see command
@@ -267,12 +317,6 @@ public class PickScriptServerRunner {
 			throw new Exception("Path " + pathName + " has not been defined in this script");
 		}
 		int segmentId = Integer.parseInt(parts[2]);
-		/*
-		SortedSet<PathSegment> segments = path.getSegments();
-		if (segments.size() <= segmentId) {
-			throw new Exception("Path " + pathName + " only has " + segments.size() + " segments");
-		}
-		*/
 		PathSegment segment = path.getPathSegment(segmentId);
 		if (segment == null) {
 			throw new Exception("Path " + pathName + " does not have segment " + segmentId);
@@ -282,6 +326,21 @@ public class PickScriptServerRunner {
 			throw new Exception("Unable to find aisle " + aisleName);
 		}
 		aisle.associatePathSegment(segment);
+	}
+
+	/**
+	 * Expects to see command
+	 * waitSeconds <seconds>
+	 * @throws Exception 
+	 */
+	private void processWaitSecondsCommand(String parts[]) throws Exception {
+		if (parts.length != 2){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_WAIT_SECONDS);
+		}
+		System.out.println("Pause server script");
+		int seconds = Integer.parseInt(parts[1]);
+		LOGGER.info("Pause server script");
+		Thread.sleep(seconds * 1000); 
 	}
 	
 	private InputStreamReader readFile(String filename) throws Exception{
