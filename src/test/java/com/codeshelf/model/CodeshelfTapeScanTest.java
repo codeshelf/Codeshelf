@@ -47,5 +47,10 @@ public class CodeshelfTapeScanTest extends MinimalTest {
 		Assert.assertEquals(393249,CodeshelfTape.extractGuid("Coil"));
 		Assert.assertEquals(393249,CodeshelfTape.extractGuid("COII"));
 		
+		// convert base32 to tape ID
+		Assert.assertEquals("2ZBR7Z",CodeshelfTape.intToBase32(99999999));
+		Assert.assertEquals("55555",CodeshelfTape.intToBase32(5412005));
+		Assert.assertEquals("0000",CodeshelfTape.intToBase32(0));
+		Assert.assertEquals("C011",CodeshelfTape.intToBase32(393249));		
 	}
 }

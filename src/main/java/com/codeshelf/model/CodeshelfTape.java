@@ -6,7 +6,7 @@ public class CodeshelfTape {
 	// format = %AABBBBBBCCCD" where AABBBBBB = mfr/guid, CCC = left offset in cm, D = reserved (0)
 	final static String TAPE_REGEX = "%[0-9]{11}0";
 	final static String BASE32_HEADER_REGEX = "[0Oo1IiLl23456789AaBbCcDdEeFfGgHhJjKkMmNnPpQqRrSsTtVvWwXxYyZz]{4,6}";
-	
+
 	@Getter
 	int guid;
 	@Getter
@@ -77,6 +77,21 @@ public class CodeshelfTape {
 			shift += 5;
 		}
 		return result;
+	}
+	
+	public static String intToBase32(int value) {
+        String result = "";
+        while (value > 0)
+        {
+        	int digit = value % 32;
+            result = base32chars.substring(digit, digit+1) + result;
+            value = value >> 5;
+        }
+        while (result.length() < 4)
+        {
+            result = base32chars.substring(0, 1) + result;
+        }
+        return result;
 	}
 
 }
