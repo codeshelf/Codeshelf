@@ -22,12 +22,16 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.CodeshelfTape;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.TierBayComparable;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.validation.ErrorCode;
+import com.codeshelf.validation.InputValidationException;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.google.common.base.Strings;
 
 //--------------------------------------------------------------------------
 /**
@@ -178,7 +182,7 @@ public class Tier extends Location {
 		int lowest = 0;
 		for (Slot slot : slotList) {
 			Integer index = slot.getPosconIndex();
-			if (index != null){
+			if (index != null) {
 				if (index > highest)
 					highest = index;
 				if (lowest == 0 || index < lowest)
@@ -189,7 +193,8 @@ public class Tier extends Location {
 			return "";
 		else if (highest == lowest)
 			return Integer.toString(highest);
-		else return String.format("%d - %d", lowest, highest);
+		else
+			return String.format("%d - %d", lowest, highest);
 	}
 
 	public String getSlotAliasRange() {
@@ -242,7 +247,7 @@ public class Tier extends Location {
 		super.doSetControllerChannel(inControllerPersistentIDStr, inChannelStr);
 		// Following our normal pattern, if we are setting for the tier, let's be sure to clear for the slots. 
 		// Coding error from v13 or so set on slots. But we might add other functionality later. We still would want to clear slot controller. DEV-764)
-		
+
 		boolean shouldClearSlotPoscons = false;
 		// Rarely needed. If changing from poscons to lights, clear out the old poscon indices.
 		LedController ledController = this.getLedController();
@@ -365,4 +370,61 @@ public class Tier extends Location {
 	public static void sortByDomainId(List<Tier> tiers) {
 		java.util.Collections.sort(tiers, new TierBayComparable());
 	}
+
+	/**
+	 * Property that uses String type so UX edit works
+	 * getTapeIdUi should return the same form as is printed on Codeshelf tape. Base 32 so that a big enough number is represented in
+	 * few enough characters for a human to remember and enter.
+	 */
+	public String getTapeIdUi() {
+		Integer value = getTapeId();
+		if (value != null && value > 0)
+			return CodeshelfTape.intToBase32(value);
+		else {
+			return "";
+		}
+	}
+
+	/**
+	 * Property that uses String type  so UX edit works
+	 * This is primarily for our UX editor. Parameter normally will not have the leading %
+	 * Throws InputValidationException if the value does not resolve to a good tape ID. The result of that is
+	 * red cell in the UX.
+	 * Very important: we allow the user to clear the value by passing in empty string.
+	 */
+	public void setTapeIdUi(String inTapeGuidString) {
+		// Check the clear case. Only clear if changed
+		if ("".equals(inTapeGuidString)) {
+			Integer value = getTapeId();
+			if (value != null && value > 0) {
+				LOGGER.info("Clearing tape Id on tier {}.",
+					this.getBestUsableLocationName());
+				setTapeId(null);}
+			return; // either way, return so we o not throw below.
+		}
+
+		Integer guidValue = -1; // this matches the error value in CodeshelfTape.extractGuid()
+		if (Strings.isNullOrEmpty(inTapeGuidString) || inTapeGuidString.trim().length() == 0) {
+
+		} else {
+			try {
+				guidValue = CodeshelfTape.extractGuid(inTapeGuidString);
+			} catch (NumberFormatException e) {
+				throw new InputValidationException(this, "tape Id", inTapeGuidString, ErrorCode.FIELD_WRONG_TYPE);
+			}
+		}
+		if (guidValue > 0) {
+			// don't log and update on no change
+			Integer oldValue = getTapeId();
+			if (!guidValue.equals(oldValue)) {
+				LOGGER.info("Setting tape Id on tier {}. Entered value {} converted to database value {}.",
+					this.getBestUsableLocationName(),
+					inTapeGuidString,
+					guidValue);
+				setTapeId(guidValue);
+			}
+		} else
+			throw new InputValidationException(this, "tape Id", inTapeGuidString, ErrorCode.FIELD_WRONG_TYPE);
+	}
+
 }
