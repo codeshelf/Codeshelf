@@ -127,7 +127,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				processVerifyScan(inScanPrefixStr, inContent);
 				break;
 			case SCAN_GTIN:
-				processGtinScan(inScanPrefixStr, inContent);
+				processGtinStateScan(inScanPrefixStr, inContent);
 				break;
 			default:
 				break;

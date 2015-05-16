@@ -1263,7 +1263,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case SCAN_GTIN:
-				processGtinScan(inScanPrefixStr, inContent);
+				processGtinStateScan(inScanPrefixStr, inContent);
 				break;
 
 			case PUT_WALL_SCAN_LOCATION:

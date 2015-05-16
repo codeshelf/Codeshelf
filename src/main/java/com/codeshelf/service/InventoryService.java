@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.LineScanDeviceLogic;
 import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.model.CodeshelfTape;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
@@ -243,7 +244,7 @@ public class InventoryService implements IApiService {
 		}
 		
 		// Find location that tapeId is already associated with
-		Location oldLocation = findLocationForTapeId(inFacility, inTapeId);
+		Location oldLocation = findLocationForTapeId(inTapeId);
 		if (oldLocation != null) {
 			LOGGER.warn("TapeId: {} is already associated with location: {}.", inTapeId, oldLocation.getDomainId());
 			oldLocation.setTapeId(null);
@@ -273,6 +274,16 @@ public class InventoryService implements IApiService {
 	 * @return void
 	 */
 	public void lightLocationByAliasOrTapeId(String inLocation, boolean isTape, UUID inChePersistentId) {
+		Location locToLight = null;
+		if (isTape) {
+			Integer shelfGuid = CodeshelfTape.extractGuid(inLocation);
+			if (shelfGuid > 0) {
+				locToLight = findLocationForTapeId(shelfGuid);
+			}
+		} 
+		else {
+			LOGGER.error("Need to implement alias case in lightLocationByAliasOrTapeId");
+		}
 
 	}
 	
@@ -284,7 +295,7 @@ public class InventoryService implements IApiService {
 	 * @param inTapeId		The tapeId to search for
 	 * @return Location		Returns null if tapeId is not associated to a location
 	 */
-	private Location findLocationForTapeId(Facility inFacility,int inTapeId) {
+	private Location findLocationForTapeId(int inTapeId) {
 		
 		Session session = TenantPersistenceService.getInstance().getSession();
 		
