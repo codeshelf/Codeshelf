@@ -195,23 +195,51 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Setter
 	private String									lastPutWallOrderScan;
 
-	protected void processGtinScan(final String inScanPrefixStr, final String inScanStr) {
-		boolean isTape = false;
+	/**
+	 * We have only one inventory state, not two. Essentially another state by whether or not we think we have a valid
+	 * gtin or item id in lastScanedGTIN.  This is fairly complicated. We desire:
+	 * - scan a gtin or item ID: flash where we think it is, and remember it for later update.
+	 * - scan codeshelf tape. If lastScannedGtin, do the update. If not, perhaps just flash it.
+	 * By all means, do not remember a tape or location string as lastScanedGTIN
+	 */
+	protected void processGtinStateScan(final String inScanPrefixStr, final String inScanStr) {
 
-		if (LOCATION_PREFIX.equals(inScanPrefixStr) && lastScanedGTIN != null) {
-			// Updating location of an item
-			notifyScanInventoryUpdate(inScanStr, lastScanedGTIN);
-			mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, lastScanedGTIN);
-		} else if (LOCATION_PREFIX.equals(inScanPrefixStr) && lastScanedGTIN == null) {
-			// Lighting a location based on location
-			mDeviceManager.inventoryLightLocationScan(getPersistentId(), inScanStr, isTape);
-		} else if (TAPE_PREFIX.equals(inScanPrefixStr) && lastScanedGTIN == null) {
-			// Lighting a location based on tape
-			isTape = true;
-			mDeviceManager.inventoryLightLocationScan(getPersistentId(), inScanStr, isTape);
-		} else if (USER_PREFIX.equals(inScanPrefixStr)) {
-			LOGGER.warn("Recieved invalid USER scan: {}. Expected location or GTIN.", inScanStr);
-		} else {
+		boolean isTape = TAPE_PREFIX.equals(inScanPrefixStr);
+		// Let's separate out the logic by the kind of scan we got, and then handle by whether we have a stored gtin or not.
+
+		// Location scan is fairly unlikely
+		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
+			if (lastScanedGTIN != null) {
+				// Updating location of an item
+				notifyScanInventoryUpdate(inScanStr, lastScanedGTIN);
+				mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, lastScanedGTIN);
+			}
+			else {
+				// just a location ID scan. light it.
+				mDeviceManager.inventoryLightLocationScan(getPersistentId(), inScanStr, isTape);
+			}
+		}
+
+		// tape scan is likely
+		else if (TAPE_PREFIX.equals(inScanPrefixStr)) {
+			if (lastScanedGTIN != null) {
+				// Updating location of an item
+				LOGGER.error("processGtinStateScan() needs work on the main case");
+				notifyScanInventoryUpdate(inScanStr, lastScanedGTIN);
+				mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, lastScanedGTIN);
+			}
+			else {
+				// just a location ID scan. light it.
+				mDeviceManager.inventoryLightLocationScan(getPersistentId(), inScanStr, isTape);
+			}
+		}
+
+		// Other special scans not valid, such as user, position, container
+		else if (inScanPrefixStr != null && !inScanPrefixStr.isEmpty()) {
+			LOGGER.warn("Recieved invalid scan: {}. Expected tape or location scan, or GTIN.", inScanStr);
+		} 
+		else {
+			// An unadorned string should be gtin/UPC. Store it, replacing what we had.
 			mDeviceManager.inventoryLightItemScan(this.getPersistentId(), inScanStr);
 			lastScanedGTIN = inScanStr;
 		}
@@ -1214,6 +1242,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			result = ITEMID_PREFIX;
 		} else if (inScanStr.startsWith(POSITION_PREFIX)) {
 			result = POSITION_PREFIX;
+		} else if (inScanStr.startsWith(TAPE_PREFIX)) {
+			result = TAPE_PREFIX;
 		}
 
 		return result;

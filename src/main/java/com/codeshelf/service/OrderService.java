@@ -33,6 +33,7 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.ProductivitySummaryList.StatusSummary;
+import com.codeshelf.util.UomNormalizer;
 import com.google.common.collect.ImmutableMap;
 import com.sun.jersey.api.NotFoundException;
 
@@ -183,8 +184,10 @@ public class OrderService implements IApiService {
 	}
 
 	public StatusSummary statusSummary(Session session, UUID facilityUUID, String aggregate, String filterName) {
-		if (aggregate.equals("Case")) {
-			 return caseSummary(session, facilityUUID, filterName);
+		if (UomNormalizer.normalizedEquals("CASE", aggregate)) {
+			 return uomSummary(session, facilityUUID, filterName,UomNormalizer.variants(UomNormalizer.CASE));
+		} else if (UomNormalizer.normalizedEquals("EACH", aggregate)) {
+			return uomSummary(session, facilityUUID, filterName, UomNormalizer.variants(UomNormalizer.EACH));
 		} else if (aggregate.equals("OrderHeader")){
 			return orderSummary(session, facilityUUID, filterName);
 		} else if (aggregate.equals("OrderDetail")) {
@@ -227,12 +230,12 @@ public class OrderService implements IApiService {
 	/**
 	 * A very specific example of summarizing by a specific field
 	 */
-	private StatusSummary caseSummary(Session session, UUID facilityUUID, String filterName) {
-		//TODO temp copy
-		String fromClause = "select count(od.status) as total,  od.status as status from OrderDetail od join od.parent oh join od.uomMaster uom where oh.parent.persistentId = :facilityUUID and uom.domainId in ('CS') and ";
+	private StatusSummary uomSummary(Session session, UUID facilityUUID, String filterName, List<String> uoms) {
+		String fromClause = "select count(od.status) as total,  od.status as status from OrderDetail od join od.parent oh join od.uomMaster uom where oh.parent.persistentId = :facilityUUID and upper(uom.domainId) in (:uoms) and ";
 		String hqlWhereString = generateFilters(session).get(filterName);
 		Query query = session.createQuery(fromClause + hqlWhereString + " group by od.status")
 				.setParameter("facilityUUID", facilityUUID)
+				.setParameterList("uoms", uoms)
 				.setCacheable(true);
 		@SuppressWarnings("unchecked")
 		List<Object[]> tuples = query.list();
@@ -243,6 +246,7 @@ public class OrderService implements IApiService {
 		return summary;
 	}
 
+	
 	@SuppressWarnings("unchecked")
 	public ProductivitySummaryList getProductivitySummary(UUID facilityId, boolean skipSQL) throws Exception {
 		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();

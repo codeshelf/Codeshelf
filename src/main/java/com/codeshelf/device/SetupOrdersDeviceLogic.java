@@ -91,7 +91,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Setter
 	private int									mRememberPriorShorts					= 0;
 
-	private final boolean						useNewCheScreen							= false;
+	private final boolean						useNewCheScreen							= true;
 
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -1263,7 +1263,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case SCAN_GTIN:
-				processGtinScan(inScanPrefixStr, inContent);
+				processGtinStateScan(inScanPrefixStr, inContent);
 				break;
 
 			case PUT_WALL_SCAN_LOCATION:

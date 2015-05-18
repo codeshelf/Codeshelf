@@ -1078,7 +1078,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		posman.waitForControllerDisplayValue((byte) 4, null, WAIT_TIME); // nothing left here
 		posman.waitForControllerDisplayValue((byte) 3, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME); // 11115 now is here
 
-		LOGGER.info("3: 11115, in P13, assigned to P13 again");
+		LOGGER.info("4: 11115, in P13, assigned to P13 again");
 		posman.waitForControllerDisplayValue((byte) 3, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME); // 11115  is here
 		picker1.setOrderToPutWall("11115", "P13");
 		// wait for no change makes no sense. Oh, well.
