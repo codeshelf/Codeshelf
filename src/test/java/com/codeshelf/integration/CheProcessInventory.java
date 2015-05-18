@@ -192,7 +192,7 @@ public class CheProcessInventory extends ServerTest {
 				+ "\r\n106,USF314,COSTCO,11111,11111,11111.4,1124,gtin1124,8 oz Bowls -PLA Compostable,1,each"
 				+ "\r\n107,USF314,COSTCO,11111,11111,11111.5,1555,gtin1555,paper towel,2,each";
 		importOrdersData(inFacility, csvOrders);
-		
+
 		// We expect these gtins are made.
 		ItemMaster master = ItemMaster.staticGetDao().findByDomainId(inFacility, "1123");
 		Assert.assertNotNull(master);
@@ -269,14 +269,14 @@ public class CheProcessInventory extends ServerTest {
 		Location locationD402 = facility.findSubLocationById("D402");
 		Assert.assertNotNull(locationD402);
 		Item item1493locD402 = locationD402.getStoredItemFromMasterIdAndUom("1493", "ea");
-// 		Assert.assertNotNull(item1493locD402);
-// TODO fix
-		
+		// 		Assert.assertNotNull(item1493locD402);
+		// TODO fix
+
 		LOGGER.info("2b: check that item 1123 moved via the tape scan to D303");
 		Location locationD303 = facility.findSubLocationById("D303");
 		Assert.assertNotNull(locationD303);
 		Item item1123locD303 = locationD303.getStoredItemFromMasterIdAndUom("1123", "ea");
-// 		Assert.assertNotNull(item1123locD303);
+		// 		Assert.assertNotNull(item1123locD303);
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
@@ -285,7 +285,7 @@ public class CheProcessInventory extends ServerTest {
 	 * LOCAPICK is true, so create inventory on order import.
 	 */
 	public final void testInventory2() throws IOException {
-// TODO add as test
+		// TODO add as test
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
 
