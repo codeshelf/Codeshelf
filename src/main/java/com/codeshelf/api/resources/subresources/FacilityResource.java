@@ -32,6 +32,7 @@ import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 
+import com.codahale.metrics.health.HealthCheck.Result;
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.EndDateParam;
 import com.codeshelf.api.BaseResponse.EventTypeParam;
@@ -58,6 +59,7 @@ import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
+import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
@@ -438,6 +440,13 @@ public class FacilityResource {
 					}
 				} else {
 					//SITE
+					//Test is Site Controller is running
+					Result siteHealth = new ActiveSiteControllerHealthCheck(webSocketManagerService).execute();
+					if (!siteHealth.isHealthy()){
+						response.append("Site controller problem: " + siteHealth.getMessage());
+						break;
+					}
+					//Execute script
 					UUID id = UUID.randomUUID();
 					PickScriptMessage scriptMessage = new PickScriptMessage(id, part.getScript());
 					webSocketManagerService.sendMessage(users, scriptMessage);
