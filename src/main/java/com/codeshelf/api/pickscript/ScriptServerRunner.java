@@ -18,10 +18,10 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
@@ -36,12 +36,13 @@ import com.codeshelf.ws.protocol.message.PickScriptMessage;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
 public class ScriptServerRunner {
-	private final static String TEMPLATE_SET_CHANNEL = "setChannel <channel>";
+	private final static String TEMPLATE_EDIT_FACILITY = "editFacility <facility domain id> <primary site controller id> <primary radio channel>";
 	private final static String TEMPLATE_IMPORT_ORDERS = "importOrders <filename>";
 	private final static String TEMPLATE_IMPORT_AISLES = "importAisles <filename>";
 	private final static String TEMPLATE_IMPORT_LOCATIONS = "importLocations <filename>";
 	private final static String TEMPLATE_IMPORT_INVENTORY = "importInventory <filename>";
-	private final static String TEMPLATE_SET_LED_CONTROLLER = "setLedController <location> <controller> <channel> ['allTiersInAisle']";
+	private final static String TEMPLATE_SET_CONTROLLER = "setController <location> <lights/poscons> <controller> <channel> ['allTiersInAisle']";
+	private final static String TEMPLATE_TOGGLE_PUT_WALL = "togglePutWall <aisle> [boolean putwall]";
 	private final static String TEMPLATE_CREATE_CHE = "createChe <che> <color> <mode>";
 	private final static String TEMPLATE_DELETE_ALL_PATHS = "deleteAllPaths";
 	private final static String TEMPLATE_DEF_PATH = "defPath <pathName> (segments 'X' <start x> <start y> <end x> <end y>)";
@@ -106,8 +107,8 @@ public class ScriptServerRunner {
 			parts[i] = parts[i].trim();
 		}
 		String command = parts[0];
-		if (command.equalsIgnoreCase("setChannel")) {
-			processSetChannelCommand(parts);
+		if (command.equalsIgnoreCase("editFacility")) {
+			processEditFacilityCommand(parts);
 		} else if (command.equalsIgnoreCase("importOrders")) {
 			processImportOrdersCommand(parts);
 		} else if (command.equalsIgnoreCase("importAisles")) {
@@ -116,8 +117,10 @@ public class ScriptServerRunner {
 			processImportLocationsCommand(parts);
 		} else if (command.equalsIgnoreCase("importInventory")) {
 			processImportInventory(parts);
-		} else if (command.equalsIgnoreCase("setLedController")) {
+		} else if (command.equalsIgnoreCase("setController")) {
 			processSetAisleControllerCommand(parts);
+		} else if (command.equalsIgnoreCase("togglePutWall")) {
+			processTogglePutWallCommand(parts);
 		} else if (command.equalsIgnoreCase("createChe")) {
 			processCreateCheCommand(parts);
 		} else if (command.equalsIgnoreCase("deleteAllPaths")) {
@@ -130,21 +133,22 @@ public class ScriptServerRunner {
 			processWaitSecondsCommand(parts);
 		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [setChannel, importOrders, importAisles, importInventory, setLedController, createChe, deleteAllPaths, defPath, assighPathSgmToAisle, waitSeconds, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, importOrders, importAisles, importInventory, setController, togglePutWall, createChe, deleteAllPaths, defPath, assighPathSgmToAisle, waitSeconds, //]");
 		}
 	}
 
 	/**
 	 * Expects to see command
-	 * setChannel <channel>
+	 * editFacility <facility domain id> <primary site controller id> <primary radio channel>
 	 * @throws Exception 
 	 */
-	private void processSetChannelCommand(String parts[]) throws Exception {
-		if (parts.length != 2){
-			throwIncorrectNumberOfArgumentsException(TEMPLATE_SET_CHANNEL);
+	private void processEditFacilityCommand(String parts[]) throws Exception {
+		if (parts.length != 4){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_EDIT_FACILITY);
 		}
-		CodeshelfNetwork network = facility.getNetworks().get(0);
-		network.setChannel(Short.parseShort(parts[1]));
+		facility.setDomainId(parts[1]);
+		facility.setPrimarySiteControllerId(parts[2]);
+		facility.setPrimaryChannel(Short.parseShort(parts[3]));
 	}
 
 	/**
@@ -206,21 +210,30 @@ public class ScriptServerRunner {
 	
 	/**
 	 * Expects to see command
-	 * setLedController <location> <controller> <channel> ['allTiersInAisle']
+	 * setLedController <location> <type lights/poscons> <controller> <channel> ['allTiersInAisle']
 	 * @throws Exception 
 	 */
 	private void processSetAisleControllerCommand(String parts[]) throws Exception {
-		if (parts.length != 4 && parts.length != 5){
-			throwIncorrectNumberOfArgumentsException(TEMPLATE_SET_LED_CONTROLLER);
+		if (parts.length != 5 && parts.length != 6){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_SET_CONTROLLER);
 		}
-		if (parts.length == 5 && !parts[4].equalsIgnoreCase("allTiersInAisle")){
+		//Verify device type and fix capitalization
+		String type = null;
+		if ("Lights".equalsIgnoreCase(parts[2])){
+			type = DeviceType.Lights.toString();
+		} else if ("Poscons".equalsIgnoreCase(parts[2])){
+			type = DeviceType.Poscons.toString();
+		} else {
+			throw new Exception("Invalid controller type " + parts[2] + " (lights/poscons");
+		}
+		if (parts.length == 6 && !parts[5].equalsIgnoreCase("allTiersInAisle")){
 			throw new Exception("The optional 4th parameter in the 'setLedController' command has to be 'allTiersInAisle'");
 		}
-		String controllerName = parts[2];
-		String controllerChannel = parts[3];
+		String controllerName = parts[3];
+		String controllerChannel = parts[4];
 
-		//Find or create LED Controller
-		LedController controller = uiUpdateService.addControllerCallWithObjects(facility, controllerName, "Lights");
+		//Find or create Controller
+		LedController controller = uiUpdateService.addControllerCallWithObjects(facility, controllerName, type);
 		
 		//Find Location
 		String locationName = parts[1];
@@ -242,12 +255,39 @@ public class ScriptServerRunner {
 		if (foundLocation instanceof Aisle){
 			((Aisle) foundLocation).setControllerChannel(controller.getPersistentId().toString(), controllerChannel);
 		} else if(foundLocation instanceof Tier){
-			String tiersInAisle = parts.length==5 ? Tier.ALL_TIERS_IN_AISLE : Tier.THIS_TIER_ONLY;
+			String tiersInAisle = parts.length==6 ? Tier.ALL_TIERS_IN_AISLE : Tier.THIS_TIER_ONLY;
 			((Tier) foundLocation).setControllerChannel(controller.getPersistentId().toString(), controllerChannel, tiersInAisle);
 		} else {
 			throw new Exception(foundLocation.getClassName() + " " + foundLocation + " is not an Aisle or a Tier");
 		}
-		locations = null;
+	}
+	
+	/**
+	 * Expects to see command
+	 * togglePutWall <aisle> [boolean putwall]
+	 * @throws Exception 
+	 */
+	private void processTogglePutWallCommand(String parts[]) throws Exception {
+		if (parts.length < 2 || parts.length > 3){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_TOGGLE_PUT_WALL);
+		} 
+		Boolean putWall = null;
+		if (parts.length == 3){
+			String flag = parts[2];
+			if (!"true".equalsIgnoreCase(flag) && !"false".equalsIgnoreCase(flag)) {
+				throw new Exception("The second and optional parameter of 'togglePutWall' must be 'true' or 'false'");
+			}
+			putWall = "true".equalsIgnoreCase(flag);
+		}
+		Aisle aisle = Aisle.staticGetDao().findByDomainId(facility, parts[1]);
+		if (aisle == null) {
+			throw new Exception("Unable to find aisle " + parts[1]);
+		}
+		if (putWall == null) {
+			aisle.togglePutWallLocation();
+		} else {
+			aisle.setAsPutWallLocation(putWall);
+		}
 	}
 
 	/**
