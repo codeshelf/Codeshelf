@@ -1,7 +1,6 @@
 package com.codeshelf.edi;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -13,15 +12,12 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.Item;
-import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
-import com.google.common.base.Strings;
 
 public class OrderReimportTest extends ServerTest {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(OrderReimportTest.class);
