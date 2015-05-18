@@ -89,6 +89,7 @@ public class PickScriptServerRunner {
 			message.setSuccess(false);
 		}
 		message.setResponse(report.toString());
+		LOGGER.info("Server script block completed");
 		return message;
 	}
 	

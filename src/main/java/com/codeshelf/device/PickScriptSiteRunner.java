@@ -69,6 +69,7 @@ public class PickScriptSiteRunner {
 					logoutAll();
 					message.setSuccess(false);
 				}
+				LOGGER.info("Site script block completed");
 				report.append("***Script Completed***\n");
 				message.setResponse(report.toString());
 				deviceManager.clientEndpoint.sendMessage(message);
@@ -256,14 +257,18 @@ public class PickScriptSiteRunner {
 				INetworkDevice device = deviceManager.getDeviceByGuid(netGuid);
 				if (device == null) {
 					allFound = false;
-					missingLog.append(netGuid).append(" - unknown guid").append(",");
+					missingLog.append(netGuid).append(" - unknown guid").append(", ");
 				} else {
 					NetworkDeviceStateEnum state = device.getDeviceStateEnum();
 					if (state != NetworkDeviceStateEnum.STARTED){
-						missingLog.append(netGuid).append(" - ").append(state).append(",");
+						String stateStr = state == null? "NotConnected" : state.toString();
+						missingLog.append(netGuid).append(" - ").append(stateStr).append(", ");
 						allFound = false;
 					}
 				}
+			}
+			if (allFound) {
+				break;
 			}
 			Thread.sleep(1000);
 			now = System.currentTimeMillis();
