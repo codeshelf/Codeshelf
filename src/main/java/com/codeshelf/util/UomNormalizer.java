@@ -1,6 +1,11 @@
 package com.codeshelf.util;
 
+import java.util.List;
+import java.util.Map;
+
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * Important: we need to match each pick orders to each inventory, and case to case. But the UOMs come from customer data. They may vary.
@@ -12,6 +17,11 @@ public class UomNormalizer {
 	// Once set, these shall never change as they are in the database as part of item domainId.
 	public static final String EACH = "EA";
 	public static final String CASE = "CS";
+
+	private static final Map<String, List<String>> variants = ImmutableMap.<String, List<String>>of(
+		EACH, ImmutableList.of("EA", "EACH", "PK", "PICK"),// PICK is sort of a kludge for Accu-Logistics
+		CASE, ImmutableList.of("CS", "CASE")
+	);
 	
 	public UomNormalizer() {
 
@@ -19,17 +29,13 @@ public class UomNormalizer {
 
 	// So far, only case and each.  In english, also may need carton, jar, box, pack or package. Notice potential conflict with "pick".
 	public static String normalizeString(String inUomStr) {
-		String returnStr = inUomStr;
-		
-		if (inUomStr.equalsIgnoreCase("cs") || inUomStr.equalsIgnoreCase("case"))
-			returnStr = CASE;
-		else if (inUomStr.equalsIgnoreCase("ea") || inUomStr.equalsIgnoreCase("each"))
-			returnStr = EACH;
-		else if (inUomStr.equalsIgnoreCase("pk") || inUomStr.equalsIgnoreCase("pick")) // sort of a kludge for Accu-Logistics
-			returnStr = EACH;
-		else 
-			returnStr = inUomStr.toUpperCase();
-
+		String returnStr = inUomStr.toUpperCase();
+		for (Map.Entry<String, List<String>>  variantEntry : variants.entrySet()) {
+			List<String> variants = variantEntry.getValue();
+			if (variants.contains(returnStr)) {
+				return variantEntry.getKey();
+			}
+		}
 		return returnStr;
 	}
 
@@ -45,6 +51,10 @@ public class UomNormalizer {
 	 */
 	public static boolean isEach(String inUom){
 		return normalizedEquals(EACH, inUom);
+	}
+
+	public static List<String> variants(String normalizedString) {
+		return variants.get(normalizedString);
 	}
 
 }
