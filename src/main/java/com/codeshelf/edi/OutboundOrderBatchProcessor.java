@@ -800,6 +800,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		}
 		if (result.getQuantity()==null || result.getQuantity()!=quantities) {
 			if (result.getQuantity()!=null) {
+				// set order change flag
 				this.orderChangeMap.put(inOrder.getOrderId(), true);
 				LOGGER.info("Quantity changed from "+result.getQuantity()+" to "+quantities+" for "+result.getDomainId());
 			}
