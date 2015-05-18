@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -21,6 +20,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import lombok.Setter;
 
@@ -98,7 +98,7 @@ public class FacilityResource {
 	private final ICsvLocationAliasImporter locationsImporter;
 	private final ICsvInventoryImporter inventoryImporter;
 	private final ICsvOrderImporter orderImporter;
-	
+
 	@Setter
 	private Facility facility;
 
@@ -106,9 +106,9 @@ public class FacilityResource {
 	private ResourceContext resourceContext;
 
 	@Inject
-	public FacilityResource(WorkService workService, 
-		OrderService orderService, 
-		NotificationService notificationService, 
+	public FacilityResource(WorkService workService,
+		OrderService orderService,
+		NotificationService notificationService,
 		WebSocketManagerService webSocketManagerService,
 		UiUpdateService uiUpdateService,
 		ICsvAislesFileImporter aislesImporter,
@@ -274,7 +274,7 @@ public class FacilityResource {
 			}
 			worker.setUpdated(new Timestamp(System.currentTimeMillis()));
 			if (!worker.isValid(errors)){
-				errors.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				errors.setStatus(Status.BAD_REQUEST);
 				return errors.buildResponse();
 			}
 			UUID id = worker.getPersistentId();
@@ -409,7 +409,7 @@ public class FacilityResource {
 		try {
 			ErrorResponse errors = new ErrorResponse();
 			TenantPersistenceService persistence = TenantPersistenceService.getInstance();
-			
+
 			//Retrieve the script
 			InputStream scriptIS = PickScriptParser.getInputStream(body, "script");
 			if (scriptIS == null) {
@@ -461,7 +461,7 @@ public class FacilityResource {
 					}
 				}
 			}
-			return BaseResponse.buildResponse(response.toString());
+			return BaseResponse.buildResponse(response.toString(), Status.OK, MediaType.TEXT_PLAIN_TYPE);
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
 		}

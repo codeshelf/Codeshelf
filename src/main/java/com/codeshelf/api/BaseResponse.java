@@ -3,10 +3,11 @@ package com.codeshelf.api;
 import java.util.Date;
 import java.util.UUID;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.WebApplicationException;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
+import javax.ws.rs.core.Response.Status;
 
 import lombok.Setter;
 
@@ -21,17 +22,18 @@ public abstract class BaseResponse {
 
 	
 	@Setter
-	private int	status	= 200;
+	private Status	status	= Status.OK;
 
 	public Response buildResponse() {
 		return buildResponse(this, status);
 	}
 
 	public static Response buildResponse(Object obj) {
-		return buildResponse(obj, 200);
+		return buildResponse(obj, Status.OK);
 	}
 
-	public static Response buildResponse(Object obj, int status) {
+	
+	public static Response buildResponse(Object obj, Status status) {
 		ResponseBuilder builder = Response.status(status);
 		if (obj != null) {
 			builder = builder.entity(obj);
@@ -39,15 +41,24 @@ public abstract class BaseResponse {
 		return builder.build();
 	}
 
+	public static Response buildResponse(Object obj, Status status, MediaType type) {
+		ResponseBuilder builder = Response.status(status);
+		if (obj != null) {
+			builder = builder.entity(obj);
+		}
+		builder.type(type);
+		return builder.build();
+	}
+
 	public static boolean isUUIDValid(UUIDParam uuid, String paramName, ErrorResponse errors) {
 		if (uuid == null) {
-			errors.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			errors.setStatus(Status.BAD_REQUEST);
 			errors.addErrorMissingQueryParam(paramName);
 			return false;
 		} else {
 			UUID facilityId = uuid.getValue();
 			if (facilityId == null) {
-				errors.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+				errors.setStatus(Status.BAD_REQUEST);
 				errors.addErrorBadUUID(uuid.getRawValue());
 				return false;
 			}
