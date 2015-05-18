@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -83,6 +84,8 @@ public class OutboundOrderBatchProcessor implements Runnable {
 	
 	@Getter @Setter
 	int maxProcessingAttempts = 10;
+
+	Map<String,Boolean> orderChangeMap;
 	
 	public OutboundOrderBatchProcessor(int procId, OutboundOrderPrefetchCsvImporter importer, Timestamp processTime, Facility facility) {
 		this.importer = importer;
@@ -130,7 +133,8 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				orderHeaderCache.load(facility,batch.getOrderIds());		
 				LOGGER.info("OrderHeader cache populated with "+this.orderHeaderCache.size()+" entries");
 
-				// prefetch orders details already associated with orders
+				// prefetch order details already associated with orders
+				this.orderChangeMap = new HashMap<String,Boolean>();
 				this.orderlineMap = new HashMap<String, Map<String,OrderDetail>>();
 				if (orderHeaderCache.size()==0) {
 					LOGGER.info("Skipping order line loading, since all orders are new.");
@@ -145,6 +149,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 						if (l==null) {
 							l = new HashMap<String,OrderDetail>();
 							this.orderlineMap.put(line.getOrderId(), l);
+							this.orderChangeMap.put(line.getOrderId(), false);
 						}
 						l.put(line.getOrderDetailId(),line);
 					}
@@ -215,6 +220,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 							line.setActive(false);
 							OrderDetail.staticGetDao().store(line);
 							LOGGER.info("Deactivating order item "+line);
+							this.orderChangeMap.put(line.getOrderId(),true);
 						}
 						// reset empty order flag
 						if (line.getActive() && line.getQuantity()!=null && line.getQuantity()>0) {
@@ -228,6 +234,20 @@ public class OutboundOrderBatchProcessor implements Runnable {
 					if (isEmptyOrder.get(order.getOrderId())==true) {
 						order.setActive(false);
 						OrderHeader.staticGetDao().store(order);
+					}
+				}
+				
+				// reactivate changed orders
+				for (Entry<String, Boolean> e : this.orderChangeMap.entrySet()) {
+					if (e.getValue()) {
+						OrderHeader order = this.orderHeaderCache.get(e.getKey());
+						LOGGER.info("Order "+order+" changed during import");
+						if (!order.getActive() || order.getStatus()!=OrderStatusEnum.RELEASED) {
+							LOGGER.info("Order "+order+" reactivated");							
+							order.setActive(true);
+							order.setStatus(OrderStatusEnum.RELEASED);
+							OrderHeader.staticGetDao().store(order);
+						}
 					}
 				}
 				
@@ -497,14 +517,12 @@ public class OutboundOrderBatchProcessor implements Runnable {
 			result = new OrderHeader();
 			result.setDomainId(inCsvBean.getOrderId());
 			this.orderHeaderCache.put(result);
-			// code below taken out to improve performance. it's safe as long as 
-			// orders are not retrieved via facility in this transaction.
-			//inFacility.addOrderHeader(result);
+			result.setStatus(OrderStatusEnum.RELEASED);
+			result.setActive(true);
 			result.setParent(inFacility);
 		}
 
-		result.setOrderType(OrderTypeEnum.OUTBOUND);
-		result.setStatus(OrderStatusEnum.RELEASED);
+		result.setOrderType(OrderTypeEnum.OUTBOUND);		
 		result.setCustomerId(inCsvBean.getCustomerId());
 		result.setShipperId(inCsvBean.getShipperId());
 
@@ -552,7 +570,6 @@ public class OutboundOrderBatchProcessor implements Runnable {
 			result.setOrderGroup(inOrderGroup);
 		}
 		try {
-			result.setActive(true);
 			result.setUpdated(inEdiProcessTime);
 			OrderHeader.staticGetDao().store(result);
 		} catch (DaoException e) {
@@ -724,7 +741,9 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				lines = new HashMap<String,OrderDetail>();
 				this.orderlineMap.put(inOrder.getOrderId(), lines);
 			}
-			lines.put(detailId,result);			
+			lines.put(detailId,result);
+			// set order change status due to addition
+			this.orderChangeMap.put(inOrder.getOrderId(),true);
 		} else {
 			oldDetailId = result.getDomainId();
 			setOldPreferredLocation(result.getPreferredLocation());
@@ -779,8 +798,14 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		} catch (NumberFormatException e) {
 			LOGGER.warn("quantity could not be coerced to integer, setting to zero: " + inCsvBean);
 		}
-		result.setQuantities(quantities);
-
+		if (result.getQuantity()==null || result.getQuantity()!=quantities) {
+			if (result.getQuantity()!=null) {
+				this.orderChangeMap.put(inOrder.getOrderId(), true);
+				LOGGER.info("Quantity changed from "+result.getQuantity()+" to "+quantities+" for "+result.getDomainId());
+			}
+			result.setQuantities(quantities);
+		}
+		
 		try {
 			// Override the min quantity if specified - otherwise make the same as the nominal quantity.
 			if (inCsvBean.getMinQuantity() != null) {
