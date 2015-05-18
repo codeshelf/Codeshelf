@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +39,7 @@ public class PickScriptSiteRunner {
 	private StringBuilder report = new StringBuilder();
 	private final CsDeviceManager deviceManager;
 	private static final Object lock = new Object();
+	private Random rnd_gen = new Random(0);
 	
 	public PickScriptSiteRunner(CsDeviceManager deviceManager) {
 		this.deviceManager = deviceManager;
@@ -411,7 +413,7 @@ public class PickScriptSiteRunner {
 	}
 
 	private boolean chance(double percentage) {
-		double rnd = Math.random();
+		double rnd = rnd_gen.nextDouble();
 		return rnd < percentage;
 	}
 
