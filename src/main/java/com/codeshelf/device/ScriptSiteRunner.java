@@ -21,7 +21,7 @@ import com.codeshelf.util.CsExceptionUtils;
 import com.codeshelf.ws.protocol.message.PickScriptMessage;
 import com.google.common.collect.Lists;
 
-public class PickScriptSiteRunner {
+public class ScriptSiteRunner {
 	private final static String TEMPLATE_DEF_PICKER = "defPicker <pickerName> <cheGuid>";
 	private final static String TEMPLATE_SETUP_CART = "setupCart <pickerName> <containers>";
 	private final static String TEMPLATE_WAIT = "waitForState <pickerName> <states>";
@@ -31,7 +31,7 @@ public class PickScriptSiteRunner {
 	private final static String TEMPLATE_WAIT_SECONDS = "waitSeconds <seconds>";
 	private final static String TEMPLATE_WAIT_DEVICES = "waitForDevices <devices>";
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(PickScriptSiteRunner.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ScriptSiteRunner.class);
 	private static final int WAIT_TIMEOUT = 4000;
 	private int pickPauseMs = 0;
 	private double chanceSkipUpc = 0, chanceShort = 0;
@@ -41,7 +41,7 @@ public class PickScriptSiteRunner {
 	private static final Object lock = new Object();
 	private Random rnd_gen = new Random(0);
 	
-	public PickScriptSiteRunner(CsDeviceManager deviceManager) {
+	public ScriptSiteRunner(CsDeviceManager deviceManager) {
 		this.deviceManager = deviceManager;
 	}
 	

@@ -504,4 +504,13 @@ public class Path extends DomainObjectTreeABC<Facility> {
 			this.workArea = null;
 		}
 	}
+	
+	public String getPathScript() {
+		SortedSet<PathSegment> segments = getSegments();
+		StringBuilder script = new StringBuilder();
+		for (PathSegment segment : segments) {
+			script.append(String.format("X %.2f %.2f %.2f %.2f ", segment.getStartPosX(), segment.getStartPosY(), segment.getEndPosX(), segment.getEndPosY()));
+		}
+		return script.toString();
+	}
 }

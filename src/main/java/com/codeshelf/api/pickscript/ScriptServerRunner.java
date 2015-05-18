@@ -12,7 +12,7 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.device.PickScriptSiteRunner;
+import com.codeshelf.device.ScriptSiteRunner;
 import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
@@ -35,7 +35,7 @@ import com.codeshelf.util.CsExceptionUtils;
 import com.codeshelf.ws.protocol.message.PickScriptMessage;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
-public class PickScriptServerRunner {
+public class ScriptServerRunner {
 	private final static String TEMPLATE_SET_CHANNEL = "setChannel <channel>";
 	private final static String TEMPLATE_IMPORT_ORDERS = "importOrders <filename>";
 	private final static String TEMPLATE_IMPORT_AISLES = "importAisles <filename>";
@@ -48,7 +48,7 @@ public class PickScriptServerRunner {
 	private final static String TEMPLATE_ASSIGN_PATH_SGM_AISLE = "assighPathSgmToAisle <pathName> <segment id> <aisle name>";
 	private final static String TEMPLATE_WAIT_SECONDS = "waitSeconds <seconds>";
 	
-	private static final Logger LOGGER = LoggerFactory.getLogger(PickScriptSiteRunner.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ScriptSiteRunner.class);
 	private final Facility facility;
 	private final UiUpdateService uiUpdateService;
 	private final ICsvOrderImporter orderImporter;
@@ -59,7 +59,7 @@ public class PickScriptServerRunner {
 	private final FormDataMultiPart postBody;
 	private HashMap<String, Path> paths = new HashMap<String, Path>();
 	
-	public PickScriptServerRunner(Facility facility, 
+	public ScriptServerRunner(Facility facility, 
 		FormDataMultiPart postBody,
 		UiUpdateService uiUpdateService,
 		ICsvAislesFileImporter aisleImporter,

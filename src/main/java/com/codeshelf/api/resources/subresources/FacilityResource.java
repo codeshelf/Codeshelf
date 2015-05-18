@@ -44,7 +44,7 @@ import com.codeshelf.api.HardwareRequest.LightRequest;
 import com.codeshelf.api.pickscript.PickScriptCallPool;
 import com.codeshelf.api.pickscript.PickScriptParser;
 import com.codeshelf.api.pickscript.PickScriptParser.PickScriptPart;
-import com.codeshelf.api.pickscript.PickScriptServerRunner;
+import com.codeshelf.api.pickscript.ScriptServerRunner;
 import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.ItemDisplay;
 import com.codeshelf.api.responses.PickRate;
@@ -401,11 +401,11 @@ public class FacilityResource {
 	}
 
 	@POST
-	@Path("/runpickscript")
+	@Path("/runscript")
 	@RequiresPermissions("che:simulate")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response runPickScriptWithFiles(@QueryParam("timeout_min") Integer timeoutMin, FormDataMultiPart body){
+	public Response runScript(@QueryParam("timeout_min") Integer timeoutMin, FormDataMultiPart body){
 		try {
 			ErrorResponse errors = new ErrorResponse();
 			TenantPersistenceService persistence = TenantPersistenceService.getInstance();
@@ -425,7 +425,7 @@ public class FacilityResource {
 			ArrayList<PickScriptPart> scriptParts = PickScriptParser.parseMixedScript(script);
 			Set<User> users = facility.getSiteControllerUsers();
 			StringBuilder response = new StringBuilder();
-			PickScriptServerRunner scriptRunner = new PickScriptServerRunner(facility, body, uiUpdateService, aislesImporter, locationsImporter, inventoryImporter, orderImporter);
+			ScriptServerRunner scriptRunner = new ScriptServerRunner(facility, body, uiUpdateService, aislesImporter, locationsImporter, inventoryImporter, orderImporter);
 			//Process script parts
 			while (!scriptParts.isEmpty()) {
 				PickScriptPart part = scriptParts.remove(0);
