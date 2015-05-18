@@ -229,25 +229,28 @@ public class OutboundOrderBatchProcessor implements Runnable {
 					}
 				}
 				
-				// deactivate empty orders
-				for (OrderHeader order : this.orderHeaderCache.getAll()) {
-					if (isEmptyOrder.get(order.getOrderId())==true) {
-						order.setActive(false);
-						OrderHeader.staticGetDao().store(order);
-					}
-				}
-				
 				// reactivate changed orders
 				for (Entry<String, Boolean> e : this.orderChangeMap.entrySet()) {
 					if (e.getValue()) {
 						OrderHeader order = this.orderHeaderCache.get(e.getKey());
-						LOGGER.info("Order "+order+" changed during import");
-						if (!order.getActive() || order.getStatus()!=OrderStatusEnum.RELEASED) {
-							LOGGER.info("Order "+order+" reactivated");							
-							order.setActive(true);
-							order.setStatus(OrderStatusEnum.RELEASED);
-							OrderHeader.staticGetDao().store(order);
+						if (!isEmptyOrder.get(order.getOrderId())) {
+							LOGGER.info("Order "+order+" changed during import");
+							if (!order.getActive() || order.getStatus()!=OrderStatusEnum.RELEASED) {
+								LOGGER.info("Order "+order+" reactivated");							
+								order.setActive(true);
+								order.setStatus(OrderStatusEnum.RELEASED);
+								OrderHeader.staticGetDao().store(order);
+							}
 						}
+					}
+				}
+				
+				// deactivate empty orders
+				for (OrderHeader order : this.orderHeaderCache.getAll()) {
+					if (isEmptyOrder.get(order.getOrderId())==true) {
+						LOGGER.info("Deactivating empty order "+order);
+						order.setActive(false);
+						OrderHeader.staticGetDao().store(order);
 					}
 				}
 				
