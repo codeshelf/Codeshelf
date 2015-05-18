@@ -84,4 +84,22 @@ public class PathTest extends HibernateTest {
 		
 		this.getTenantPersistenceService().commitTransaction();
 	}
+	
+	@Test
+	public final void testPathScript() {
+		this.getTenantPersistenceService().beginTransaction();
+
+		Facility facility = createFacilityWithOutboundOrders();
+		Assert.assertNotNull(facility);
+		
+		Path path = createPathForTest(facility);
+		addPathSegmentForTest(path, 0, 2.82, 5.40, 5.19, 5.40);
+		addPathSegmentForTest(path, 1, 5.19, 5.40, 5.19, 6.40);
+		addPathSegmentForTest(path, 2, 5.19, 6.40, 2.77, 6.40); 
+		String script = path.getPathScript().trim();
+		Assert.assertEquals("X 2.82 5.40 5.19 5.40 X 5.19 5.40 5.19 6.40 X 5.19 6.40 2.77 6.40", script);
+
+		this.getTenantPersistenceService().commitTransaction();
+	}
+
 }
