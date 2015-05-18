@@ -1,6 +1,7 @@
 package com.codeshelf.service;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +22,7 @@ import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.UomMaster;
+import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
@@ -34,17 +36,19 @@ import com.google.inject.Inject;
 
 public class InventoryService implements IApiService {
 
-	int TAPEID_LENGTH = 12;
-	LightService lightService;
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(LineScanDeviceLogic.class);
-	
+	int							TAPEID_LENGTH	= 12;
+	LightService				lightService;
+	private static final Logger	LOGGER			= LoggerFactory.getLogger(LineScanDeviceLogic.class);
+
 	@Inject
-	public InventoryService(LightService inLightService){
+	public InventoryService(LightService inLightService) {
 		this.lightService = inLightService;
 	}
-	
-	public InventoryUpdateResponse moveOrCreateInventory(String inGtin, String inLocation, UUID inChePersistentId){
-		
+
+	public InventoryUpdateResponse moveOrCreateInventory(String inGtin, String inLocation, UUID inChePersistentId) {
+
+		LOGGER.warn("moveOrCreateInventory called for gtin:{}, location:{}", inGtin, inLocation);
+
 		InventoryUpdateResponse response = new InventoryUpdateResponse();
 		Che che = Che.staticGetDao().findByPersistentId(inChePersistentId);
 		if (che == null) {
@@ -55,9 +59,9 @@ public class InventoryService implements IApiService {
 			response.setStatus(ResponseStatus.Fail);
 			return response;
 		}
-		
+
 		Facility facility = che.getFacility();
-		
+
 		if (inLocation == null || inLocation.isEmpty()) {
 			LOGGER.error("Location not specified for GTIN: {}, CHE: {}", inGtin, che.getDomainId());
 			response.appendStatusMessage("moveOrCreateInventory ERROR: Location is not specified.");
@@ -66,11 +70,13 @@ public class InventoryService implements IApiService {
 			response.setStatus(ResponseStatus.Fail);
 			return response;
 		}
-		
+
 		Location location = findLocation(facility, inLocation);
 		if (location.equals(facility)) {
 			LOGGER.warn("Move request from CHE: {} for GTIN: {} could not resolve location: {}. Using facility as location.",
-				che.getDomainId(), inGtin, inLocation);
+				che.getDomainId(),
+				inGtin,
+				inLocation);
 			response.setFoundLocation(false);
 			response.appendStatusMessage("moveOrCreateInventory WARN: Could not find location: " + inLocation + ". Using facility.");
 		}
@@ -79,17 +85,17 @@ public class InventoryService implements IApiService {
 		Timestamp createTime = null;
 		UomMaster uomMaster = null;
 		Gtin gtin = Gtin.getGtinForFacility(facility, inGtin);
-		
+
 		if (gtin == null) {
 			// Creating a new item if we cannot find GTIN
 			LOGGER.info("GTIN {} was not found.", inGtin);
 			response.appendStatusMessage(" Could not find GTIN: " + inGtin + ". Attempting to create GTIN: " + inGtin);
 			response.setFoundGtin(false);
-			
+
 			createTime = new Timestamp(System.currentTimeMillis());
 			String guessedUom = guessUomForItem(inGtin, facility);
 			uomMaster = upsertUomMaster(guessedUom, facility);
-			
+
 			itemMaster = createItemMaster(inGtin, facility, createTime, uomMaster);
 			if (itemMaster == null) {
 				LOGGER.error("Unable to create ItemMaster for GTIN: {}", inGtin);
@@ -97,7 +103,7 @@ public class InventoryService implements IApiService {
 				response.setStatus(ResponseStatus.Fail);
 				return response;
 			}
-			
+
 			gtin = itemMaster.createGtin(inGtin, uomMaster);
 			if (gtin != null) {
 				LOGGER.info("Created new GTIN: {} with UOM: {}", inGtin, gtin.getUomMaster().toString());
@@ -114,42 +120,46 @@ public class InventoryService implements IApiService {
 		}
 
 		Item result = null;
-		if (itemMaster != null ) {
+		if (itemMaster != null) {
 			// findOrdCreateItem determines if an item is created or moved 
 			result = itemMaster.findOrCreateItem(location, uomMaster);
 			LOGGER.info("Item: {} is in location(s): {}", result.getDomainId(), result.getParent().getItemLocations());
 		}
-		
+
 		if (result != null) {
 			if (result.getQuantity() == null) {
 				result.setQuantity(0.0);
 			}
-			
+
 			if (result.getCmFromLeft() == null) {
 				result.setCmFromLeft(0);
 				result.setCmFromLeftui("0");
 			}
-			
+
 			createTime = new Timestamp(System.currentTimeMillis());
 			result.setActive(true);
-			result.setUpdated(createTime);	
+			result.setUpdated(createTime);
 
 			Item.staticGetDao().store(result);
-			
-			lightService.lightItemSpecificColor(facility.getPersistentId().toString(), result.getPersistentId().toString(), che.getColor());
+
+			lightService.lightItemSpecificColor(facility.getPersistentId().toString(),
+				result.getPersistentId().toString(),
+				che.getColor());
 			response.setStatus(ResponseStatus.Success);
 		} else {
-			LOGGER.error("Was unable to create/get item with GTIN: {} Loc: {} UOM: {}", inGtin, location.toString(), uomMaster.getDomainId());
+			LOGGER.error("Was unable to create/get item with GTIN: {} Loc: {} UOM: {}",
+				inGtin,
+				location.toString(),
+				uomMaster.getDomainId());
 			response.setStatus(ResponseStatus.Fail);
 		}
-		
+
 		return response;
 	}
-	
-	
-	public InventoryLightItemResponse lightInventoryByGtin(String inGtin, UUID inChePersistentId){
+
+	public InventoryLightItemResponse lightInventoryByGtin(String inGtin, UUID inChePersistentId) {
 		InventoryLightItemResponse response = new InventoryLightItemResponse();
-		
+
 		Che che = Che.staticGetDao().findByPersistentId(inChePersistentId);
 		if (che == null) {
 			LOGGER.error("Could not load che: {}", inChePersistentId.toString());
@@ -161,8 +171,8 @@ public class InventoryService implements IApiService {
 		}
 		ColorEnum color = che.getColor();
 		Facility facility = che.getFacility();
-		
-		List<Gtin> gtins = Gtin.staticGetDao().findByFilter(ImmutableList.<Criterion>of(Restrictions.eq("domainId", inGtin)));
+
+		List<Gtin> gtins = Gtin.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("domainId", inGtin)));
 		if (gtins.isEmpty()) {
 			LOGGER.info("GTIN: {} requested to light by CHE: {} was not found.", inGtin, che.getDomainId());
 			response.setFoundGtin(false);
@@ -172,16 +182,16 @@ public class InventoryService implements IApiService {
 		} else {
 			response.setFoundGtin(true);
 		}
-		
+
 		Gtin gtin = gtins.get(0);
 		ItemMaster itemMaster = gtin.getParent();
 		List<Item> items = itemMaster.getItemsOfUom(gtin.getUomMaster().getDomainId());
 		lightService.lightItemsSpecificColor(facility.getPersistentId().toString(), items, color);
-		
+
 		response.setStatus(ResponseStatus.Success);
 		return response;
 	}
-	
+
 	public UomMaster upsertUomMaster(final String inUomId, final Facility inFacility) {
 		DefaultErrors errors = new DefaultErrors(UomMaster.class);
 		if (Strings.emptyToNull(inUomId) == null) {
@@ -212,7 +222,7 @@ public class InventoryService implements IApiService {
 
 		return result;
 	}
-	
+
 	/**
 	 * Sets the tapeId of a location (aisle, bay, tier, slot).
 	 * 
@@ -235,36 +245,38 @@ public class InventoryService implements IApiService {
 	public void setLocationTapeId(Facility inFacility, int inTapeId, String inLocation) {
 		// tapeId is associated with a location
 		// location already has a tapeId
-		
+
 		// Find location
 		Location location = findLocation(inFacility, inLocation);
 		if (location.equals(inFacility)) {
 			LOGGER.warn("Could not find location: {}. TapeId: {} will not be associated.", inLocation, inTapeId);
 			return;
 		}
-		
+
 		// Find location that tapeId is already associated with
-		Location oldLocation = findLocationForTapeId(inTapeId);
+		Location oldLocation = findLocationForTapeId(inFacility, inTapeId);
 		if (oldLocation != null) {
 			LOGGER.warn("TapeId: {} is already associated with location: {}.", inTapeId, oldLocation.getDomainId());
 			oldLocation.setTapeId(null);
 			LOGGER.warn("TapeId: {} dissociated from location: {}", inTapeId, oldLocation.getDomainId());
-			
+
 			if (!location.isActive()) {
 				LOGGER.warn("Location: {} is not active", location.getDomainId());
 			}
 		}
-		
+
 		// Check if location already has an associated tapeId
 		if (location.getTapeId() != null) {
-			LOGGER.warn("Location: {} is already associated with tapeId: {}. It will be dissociated.", location.getDomainId(), inTapeId);
+			LOGGER.warn("Location: {} is already associated with tapeId: {}. It will be dissociated.",
+				location.getDomainId(),
+				inTapeId);
 		}
-		
+
 		// Associate with new location
 		location.setTapeId(inTapeId);
 		LOGGER.info("TapeId: {} associated with location: {}", inTapeId, location.getDomainId());
 	}
-	
+
 	/**
 	 * Lights a location by either location alias or tapeId
 	 * 
@@ -273,46 +285,43 @@ public class InventoryService implements IApiService {
 	 * @param inChePersistentId	persistentId of che making call
 	 * @return void
 	 */
-	public void lightLocationByAliasOrTapeId(String inLocation, boolean isTape, UUID inChePersistentId) {
+	public void lightLocationByAliasOrTapeId(Facility inFacilty, String inLocation, boolean isTape, UUID inChePersistentId) {
 		Location locToLight = null;
 		if (isTape) {
 			Integer shelfGuid = CodeshelfTape.extractGuid(inLocation);
 			if (shelfGuid > 0) {
-				locToLight = findLocationForTapeId(shelfGuid);
+				locToLight = findLocationForTapeId(inFacilty, shelfGuid);
 			}
-		} 
-		else {
+		} else {
 			LOGGER.error("Need to implement alias case in lightLocationByAliasOrTapeId");
 		}
 
 	}
-	
+
 	/**
 	 * Finds the location that a tapeId is associated with.
 	 * There should only ever be a single location associated with a tapeId
+	 * @param inFacility 
 	 * 
 	 * @param inFacility	The facility
 	 * @param inTapeId		The tapeId to search for
 	 * @return Location		Returns null if tapeId is not associated to a location
 	 */
-	private Location findLocationForTapeId(int inTapeId) {
-		
-		Session session = TenantPersistenceService.getInstance().getSession();
-		
-		@SuppressWarnings("unchecked")
-		List<Location> locations = session.createCriteria(Location.class)
-			    .add(Restrictions.like("tapeId", inTapeId))
-			    .list();
-		
+	private Location findLocationForTapeId(Facility inFacility, int inTapeId) {
+		// Session session = TenantPersistenceService.getInstance().getSession();
+		// List<Location> locations = session.createCriteria(Location.class).add(Restrictions.eq("tapeId", inTapeId)).list();
+
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("tapeId", inTapeId));
+		List<Location> locations = Location.staticGetLocationDao().findByFilter(filterParams);
+
 		if (locations.isEmpty()) {
 			return null;
 		} else {
 			return locations.get(0);
 		}
 	}
-	
-	
-	
+
 	/**
 	 * Guesses the unit of measure for an item based on the GTIN and the facility.
 	 * 
@@ -324,9 +333,27 @@ public class InventoryService implements IApiService {
 	private String guessUomForItem(String inGtin, Facility inFacility) {
 		return "EA";
 	}
-	
+
+	/**
+	 * The inLocation may be a location or alias name, or from v17 a tapeId with leading %
+	 */
 	private Location findLocation(Facility inFacility, String inLocation) {
-		Location location = inFacility.findSubLocationById(inLocation);
+		if (inFacility == null) {
+			LOGGER.error("null facility in findLocation()");
+			// nothing safe to return. Let it NPE below to log out the stack trace.
+		}
+		if (inLocation == null || inLocation.isEmpty()) {
+			LOGGER.error("null or empty location string in findLocation()");
+			return inFacility;
+		}
+		Location location = null;
+		if (inLocation.startsWith("%")) {
+			int tapeId = CodeshelfTape.extractGuid(inLocation);
+			LOGGER.info("{} extracted to tapeId {}", inLocation, tapeId);
+			location = findLocationForTapeId(inFacility, tapeId);
+		} else {
+			location = inFacility.findSubLocationById(inLocation);
+		}
 
 		// Remember, findSubLocationById will find inactive locations.
 		// We couldn't find the location, so assign the inventory to the facility itself (which is a location);  Not sure this is best, but it is the historical behavior from pre-v1.
@@ -340,26 +367,26 @@ public class InventoryService implements IApiService {
 			LOGGER.warn("Location {} is inactive. Using facility.", inLocation);
 			location = inFacility;
 		}
-		
+
 		return location;
 	}
-	
+
 	private ItemMaster createItemMaster(final String inItemId,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
 		final UomMaster inUomMaster) {
-		
+
 		ItemMaster result = null;
 		result = new ItemMaster();
-		
+
 		// If we were able to get/create an item master then update it.
 		if (result != null) {
-			
+
 			result.setDomainId(inItemId);
 			result.setItemId(inItemId);
 			result.setParent(inFacility);
 			result.setStandardUom(inUomMaster);
-			
+
 			try {
 				result.setActive(true);
 				result.setUpdated(inEdiProcessTime);
@@ -368,8 +395,8 @@ public class InventoryService implements IApiService {
 				LOGGER.error("Error saving ItemMaster: {}", e);
 			}
 		}
-		
+
 		return result;
 	}
-	
+
 }

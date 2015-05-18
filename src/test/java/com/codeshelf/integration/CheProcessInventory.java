@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.model.CodeshelfTape;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Che.ProcessMode;
@@ -166,6 +167,26 @@ public class CheProcessInventory extends ServerTest {
 		setTapeForTierNamed("D502", "d502");
 		setTapeForTierNamed("D503", "d503");
 
+		// Check one convert and extract
+		Location loc301 = getFacility().findSubLocationById("D301");
+		int locTapeId = loc301.getTapeId();
+		String base32Id = CodeshelfTape.intToBase32(locTapeId);
+		LOGGER.info("Location D301 has tapeId:{}, which converts to  base32:{}", locTapeId, base32Id);
+		// Codeshelf tape scans to the numerals, because more numerals are actually more compact than fewer alpha characters.
+		// The following is 429057 with offset 250 cm
+		int extractTapeId = CodeshelfTape.extractGuid("%004290570250");
+		Assert.assertEquals(locTapeId, extractTapeId);
+
+		// Check one convert and extract
+		Location loc303 = getFacility().findSubLocationById("D303");
+		int loc303TapeId = loc303.getTapeId();
+		String base32IdLoc303 = CodeshelfTape.intToBase32(loc303TapeId);
+		LOGGER.info("Location D301 has tapeId:{}, which converts to  base32:{}", loc303TapeId, base32IdLoc303);
+		// Codeshelf tape scans to the numerals, because more numerals are actually more compact than fewer alpha characters.
+		// The following is 429057 with offset 250 cm
+		int extractTapeIdLoc303 = CodeshelfTape.extractGuid("%004290590250");
+		Assert.assertEquals(loc303TapeId, extractTapeIdLoc303);
+
 		return getFacility();
 	}
 
@@ -175,7 +196,7 @@ public class CheProcessInventory extends ServerTest {
 			Tier t = (Tier) loc;
 			t.setTapeIdUi(tapeGuidString);
 			Tier.staticGetDao().store(t);
-			LOGGER.info("Tier:{} has tape id:{}", tierName, t.getTapeIdUi());
+			LOGGER.info("Tier:{} has tape name:{} and tape id:{}", tierName, t.getTapeIdUi(), t.getTapeId());
 		}
 	}
 
@@ -206,6 +227,17 @@ public class CheProcessInventory extends ServerTest {
 	 */
 	@Test
 	public final void testInventory() throws IOException {
+		/*
+		Tier:D301 has tape name:D301 and tape id:429057
+		Tier:D302 has tape name:D302 and tape id:429058
+		Tier:D303 has tape name:D303 and tape id:429059
+		Tier:D401 has tape name:D401 and tape id:430081
+		Tier:D402 has tape name:D402 and tape id:430082
+		Tier:D403 has tape name:D403 and tape id:430083
+		Tier:D501 has tape name:D501 and tape id:431105
+		Tier:D502 has tape name:D502 and tape id:431106
+		Tier:D503 has tape name:D503 and tape id:431107
+		 */
 
 		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
@@ -249,8 +281,8 @@ public class CheProcessInventory extends ServerTest {
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 		picker.logCheDisplay();
 
-		LOGGER.info("1g: scan Codeshelf tape corresponding to a different tier and offset. ");
-		picker.scanSomething("%000D3030250");
+		LOGGER.info("1g: scan Codeshelf tape corresponding to a different tier and offset. D303 tape Id is 429059 ");
+		picker.scanSomething("%004290590250");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 		picker.logCheDisplay();
 
@@ -269,14 +301,14 @@ public class CheProcessInventory extends ServerTest {
 		Location locationD402 = facility.findSubLocationById("D402");
 		Assert.assertNotNull(locationD402);
 		Item item1493locD402 = locationD402.getStoredItemFromMasterIdAndUom("1493", "ea");
-		// 		Assert.assertNotNull(item1493locD402);
+		Assert.assertNotNull(item1493locD402);
 		// TODO fix
 
 		LOGGER.info("2b: check that item 1123 moved via the tape scan to D303");
 		Location locationD303 = facility.findSubLocationById("D303");
 		Assert.assertNotNull(locationD303);
 		Item item1123locD303 = locationD303.getStoredItemFromMasterIdAndUom("1123", "ea");
-		// 		Assert.assertNotNull(item1123locD303);
+		Assert.assertNotNull(item1123locD303);
 		this.getTenantPersistenceService().commitTransaction();
 	}
 

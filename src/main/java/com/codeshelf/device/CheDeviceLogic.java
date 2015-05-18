@@ -224,9 +224,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		else if (TAPE_PREFIX.equals(inScanPrefixStr)) {
 			if (lastScanedGTIN != null) {
 				// Updating location of an item
-				LOGGER.error("processGtinStateScan() needs work on the main case");
-				notifyScanInventoryUpdate(inScanStr, lastScanedGTIN);
-				mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, lastScanedGTIN);
+				// Let's pass with the tape prefix to the server. Otherwise, it has to query one way, and then again for tape
+				String tapeScan = TAPE_PREFIX + inScanStr;
+				notifyScanInventoryUpdate(tapeScan, lastScanedGTIN);
+				mDeviceManager.inventoryUpdateScan(this.getPersistentId(), tapeScan, lastScanedGTIN);
 			}
 			else {
 				// just a location ID scan. light it.
