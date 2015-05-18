@@ -12,6 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.flyweight.controller.INetworkDevice;
+import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.util.CsExceptionUtils;
@@ -26,6 +28,7 @@ public class PickScriptSiteRunner {
 	private final static String TEMPLATE_PICK = "pick <pickerNames>";
 	private final static String TEMPLATE_PICKER_EXEC = "pickerExec <pickerName> <pickerCommand> [arguments]";
 	private final static String TEMPLATE_WAIT_SECONDS = "waitSeconds <seconds>";
+	private final static String TEMPLATE_WAIT_DEVICES = "waitForDevices <devices>";
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(PickScriptSiteRunner.class);
 	private static final int WAIT_TIMEOUT = 4000;
@@ -103,9 +106,11 @@ public class PickScriptSiteRunner {
 			processPickAllCommand();
 		} else if (command.equalsIgnoreCase("waitSeconds")) {
 			processWaitSecondsCommand(parts);
+		}  else if (command.equalsIgnoreCase("waitForDevices")) {
+			processWaitForDevicesCommand(parts);
 		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [pickerExec, defPicker, waitForState, setupCard, setParams, pick, pickAll, waitSeconds, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [pickerExec, defPicker, waitForState, setupCard, setParams, pick, pickAll, waitSeconds, waitForDevices, //]");
 		}
 	}
 	
@@ -227,6 +232,47 @@ public class PickScriptSiteRunner {
 		LOGGER.info("Pause site script");
 		Thread.sleep(seconds * 1000); 
 	}
+	
+	/**
+	 * Expects to see command
+	 * waitForDevices <devices>
+	 * @throws Exception 
+	 */
+	private void processWaitForDevicesCommand(String parts[]) throws Exception {
+		if (parts.length < 2){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_WAIT_DEVICES);
+		}
+		NetGuid[] devices = new NetGuid[parts.length - 1];
+		for (int i = 1; i < parts.length; i++) {
+			devices[i-1] = new NetGuid(parts[i]);
+		}
+		long start = System.currentTimeMillis(), now = System.currentTimeMillis();
+		StringBuilder missingLog = new StringBuilder();
+		boolean allFound = false;
+		while (now < start + 15 * 1000){
+			missingLog = new StringBuilder();
+			allFound = true;
+			for (NetGuid netGuid : devices) {
+				INetworkDevice device = deviceManager.getDeviceByGuid(netGuid);
+				if (device == null) {
+					allFound = false;
+					missingLog.append(netGuid).append(" - unknown guid").append(",");
+				} else {
+					NetworkDeviceStateEnum state = device.getDeviceStateEnum();
+					if (state != NetworkDeviceStateEnum.STARTED){
+						missingLog.append(netGuid).append(" - ").append(state).append(",");
+						allFound = false;
+					}
+				}
+			}
+			Thread.sleep(1000);
+			now = System.currentTimeMillis();
+		}
+		if (!allFound) {
+			throw new Exception("Following devices are unknown or not connected: " + missingLog);
+		}
+	}
+
 
 	/**
 	 * If needed, this command can be made part of the available functionality

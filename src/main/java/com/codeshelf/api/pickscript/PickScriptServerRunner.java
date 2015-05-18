@@ -21,6 +21,7 @@ import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
@@ -35,6 +36,7 @@ import com.codeshelf.ws.protocol.message.PickScriptMessage;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
 public class PickScriptServerRunner {
+	private final static String TEMPLATE_SET_CHANNEL = "setChannel <channel>";
 	private final static String TEMPLATE_IMPORT_ORDERS = "importOrders <filename>";
 	private final static String TEMPLATE_IMPORT_AISLES = "importAisles <filename>";
 	private final static String TEMPLATE_IMPORT_LOCATIONS = "importLocations <filename>";
@@ -103,7 +105,9 @@ public class PickScriptServerRunner {
 			parts[i] = parts[i].trim();
 		}
 		String command = parts[0];
-		if (command.equalsIgnoreCase("importOrders")) {
+		if (command.equalsIgnoreCase("setChannel")) {
+			processSetChannelCommand(parts);
+		} else if (command.equalsIgnoreCase("importOrders")) {
 			processImportOrdersCommand(parts);
 		} else if (command.equalsIgnoreCase("importAisles")) {
 			processImportAislesCommand(parts);
@@ -125,10 +129,23 @@ public class PickScriptServerRunner {
 			processWaitSecondsCommand(parts);
 		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [importOrders, importAisles, importInventory, setLedController, createChe, deleteAllPaths, defPath, assighPathSgmToAisle, waitSeconds, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [setChannel, importOrders, importAisles, importInventory, setLedController, createChe, deleteAllPaths, defPath, assighPathSgmToAisle, waitSeconds, //]");
 		}
 	}
-	
+
+	/**
+	 * Expects to see command
+	 * setChannel <channel>
+	 * @throws Exception 
+	 */
+	private void processSetChannelCommand(String parts[]) throws Exception {
+		if (parts.length != 2){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_SET_CHANNEL);
+		}
+		CodeshelfNetwork network = facility.getNetworks().get(0);
+		network.setChannel(Short.parseShort(parts[1]));
+	}
+
 	/**
 	 * Expects to see command
 	 * importOrders <filename>
