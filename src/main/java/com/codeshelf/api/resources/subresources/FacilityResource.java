@@ -400,33 +400,6 @@ public class FacilityResource {
 
 	@POST
 	@Path("/runpickscript")
-	@RequiresPermissions("pickscript:run")
-	@Consumes(MediaType.TEXT_PLAIN)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response runPickScript(@QueryParam("timeout_min") Integer timeoutMin, String script) {
-		try {
-			ErrorResponse errors = new ErrorResponse();
-			if (script == null || script.isEmpty()) {
-				errors.addError("Supply the script to the body of the call");
-				return errors.buildResponse();
-			}
-			Set<User> users = facility.getSiteControllerUsers();
-			UUID id = UUID.randomUUID();
-			PickScriptMessage scriptMessage = new PickScriptMessage(id, script);
-			webSocketManagerService.sendMessage(users, scriptMessage);
-			PickScriptMessage responseMessage = PickScriptCallPool.waitForSiteResponse(id, timeoutMin);
-			if (responseMessage == null) {
-				errors.addError("Site request timed out");
-				return errors.buildResponse();
-			}
-			return BaseResponse.buildResponse(responseMessage.getResponse());
-		} catch (Exception e) {
-			return new ErrorResponse().processException(e);
-		}
-	}
-
-	@POST
-	@Path("/runpickscript_files")
 	@RequiresPermissions("che:simulate")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
