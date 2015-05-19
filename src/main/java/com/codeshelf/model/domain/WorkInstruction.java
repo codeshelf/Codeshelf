@@ -254,6 +254,11 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	private OrderDetail					orderDetail;
 
 	private static final Integer		MAX_WI_DESC_BYTES	= 80;
+	
+	@Column(name = "verify")
+	@Getter @Setter
+	@JsonProperty
+	private boolean verify = false;	
 
 	public WorkInstruction() {
 	}

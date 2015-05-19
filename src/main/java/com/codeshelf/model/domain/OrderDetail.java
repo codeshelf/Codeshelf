@@ -162,6 +162,11 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@JsonProperty
 	private Integer							workSequence;
 
+	@Column(name = "verify")
+	@Getter @Setter
+	@JsonProperty
+	private boolean verify = false;
+
 	public OrderDetail() {
 		this(null, true);
 	}
