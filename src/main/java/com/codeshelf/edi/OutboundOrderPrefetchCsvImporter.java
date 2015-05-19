@@ -58,6 +58,8 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	@Getter @Setter
 	int maxOrderLines = 500;
 	
+	BatchResult<Object> batchResult = null;
+	
 	@Getter
 	private ConcurrentLinkedQueue<OutboundOrderBatch> batchQueue = new ConcurrentLinkedQueue<OutboundOrderBatch>();
 	
@@ -81,6 +83,8 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		
 		// make sure the facility is up-to-date
 		facility = facility.reload();
+		
+		this.batchResult = new BatchResult<Object>();
 		
 		// Get our LOCAPICK configuration value. It will not change during importing one file.
 		boolean locapickValue = PropertyService.getInstance().getBooleanPropertyFromConfig(facility, DomainObjectProperty.LOCAPICK);
@@ -203,8 +207,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			LOGGER.error("Failed to import "+numOrders+" orders and "+numLineItems+" lines in "+(endTime-startTime)/1000+" seconds");
 		}
 		DataImportReceipt.staticGetDao().store(receipt);
-		BatchResult<Object> batchResult = new BatchResult<Object>();
-		return batchResult;
+		return this.batchResult;
 	}
 
 	@Override

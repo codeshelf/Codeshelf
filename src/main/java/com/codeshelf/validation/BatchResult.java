@@ -17,7 +17,7 @@ public class BatchResult<T> {
 	@Getter
 	private List<T> result;
 	
-	@Getter
+	@Getter @Setter
 	long startTime = System.currentTimeMillis();
 	
 	@Getter @Setter
@@ -59,8 +59,8 @@ public class BatchResult<T> {
 		return "";
 	}
 
-	public void setStartTime(long startTime) {
-		// TODO Auto-generated method stub
-		
+	public void merge(BatchResult<T> batchResult) {
+		this.result.addAll(batchResult.getResult());
 	}
+
 }

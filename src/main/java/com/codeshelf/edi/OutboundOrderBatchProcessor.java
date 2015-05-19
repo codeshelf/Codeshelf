@@ -236,10 +236,11 @@ public class OutboundOrderBatchProcessor implements Runnable {
 						if (!isEmptyOrder.get(order.getOrderId())) {
 							LOGGER.info("Order "+order+" changed during import");
 							if (!order.getActive() || order.getStatus()!=OrderStatusEnum.RELEASED) {
-								LOGGER.info("Order "+order+" reactivated");							
+								LOGGER.info("Order "+order+" reactivated. Status set to 'released'.");							
 								order.setActive(true);
 								order.setStatus(OrderStatusEnum.RELEASED);
 								OrderHeader.staticGetDao().store(order);
+								// TODO: check if order was on cart or (partially) picked and create event
 							}
 						}
 					}
@@ -266,6 +267,8 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				}
 				this.numOrders = allOrderLines.size();				
 				TenantPersistenceService.getInstance().commitTransaction();
+				LOGGER.info("Completed processing "+batch);
+				this.importer.batchResult.merge(batchResult);
 			}
 			catch (StaleObjectStateException e) {
 				LOGGER.warn("Failed to process order batch "+batch+" due to stale data.",e);
