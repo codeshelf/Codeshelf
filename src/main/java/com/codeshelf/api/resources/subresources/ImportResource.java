@@ -12,6 +12,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import lombok.Setter;
 
@@ -70,9 +71,9 @@ public class ImportResource {
 			Reader reader = new InputStreamReader(fileInputStream);
 			boolean result = this.aislesFileCsvImporter.importAislesFileFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
 			if (result) {
-				return BaseResponse.buildResponse(null,200);				
+				return BaseResponse.buildResponse(null,Status.OK);				
 			}
-			return BaseResponse.buildResponse(null,500);
+			return BaseResponse.buildResponse(null, Status.INTERNAL_SERVER_ERROR);
 		}
 		catch (Exception e) {
 			return new ErrorResponse().processException(e);
@@ -91,9 +92,9 @@ public class ImportResource {
 			Reader reader = new InputStreamReader(fileInputStream);
 			boolean result = this.locationAliasImporter.importLocationAliasesFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
 			if (result) {
-				return BaseResponse.buildResponse(null,200);				
+				return BaseResponse.buildResponse(null,Status.OK);				
 			}
-			return BaseResponse.buildResponse(null,500);
+			return BaseResponse.buildResponse(null, Status.INTERNAL_SERVER_ERROR);
 		}
 		catch (Exception e) {
 			return new ErrorResponse().processException(e);
@@ -111,7 +112,7 @@ public class ImportResource {
 		try {
 			Reader reader = new InputStreamReader(fileInputStream);
 			BatchResult<Object> result = this.outboundOrderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
-			return BaseResponse.buildResponse(result,200);				
+			return BaseResponse.buildResponse(result,Status.OK);				
 		}
 		catch (Exception e) {
 			return new ErrorResponse().processException(e);
@@ -130,9 +131,9 @@ public class ImportResource {
 			Reader reader = new InputStreamReader(fileInputStream);
 			boolean result = this.inventoryImporter.importSlottedInventoryFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
 			if (result) {
-				return BaseResponse.buildResponse(null,200);				
+				return BaseResponse.buildResponse(null, Status.OK);				
 			}
-			return BaseResponse.buildResponse(null,500);
+			return BaseResponse.buildResponse(null, Status.INTERNAL_SERVER_ERROR);
 		}
 		catch (Exception e) {
 			return new ErrorResponse().processException(e);
