@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.service.InventoryService;
 import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
-import com.codeshelf.ws.protocol.response.InventoryLightItemResponse;
 import com.codeshelf.ws.protocol.response.InventoryLightLocationResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
