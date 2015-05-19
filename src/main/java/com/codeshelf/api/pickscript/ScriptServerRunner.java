@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
@@ -404,7 +405,12 @@ public class ScriptServerRunner {
 	private InputStreamReader readFile(String filename) throws Exception{
 		InputStream is = PickScriptParser.getInputStream(postBody, filename);
 		if (is == null) {
-			throw new Exception("Unable to find file " + filename);
+			StringBuilder availableFiles = new StringBuilder("Available Files: ");
+			Set<String> fields = postBody.getFields().keySet();
+			for (String field : fields) {
+				availableFiles.append(field).append(", ");
+			}
+			throw new Exception("Unable to find file " + filename + ". " + availableFiles);
 		}
 		return new InputStreamReader(is);
 	}
