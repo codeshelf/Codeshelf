@@ -16,8 +16,6 @@ import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.CodeshelfTape;
 import com.codeshelf.model.domain.Aisle;
-import com.codeshelf.model.domain.Che;
-import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
@@ -302,7 +300,6 @@ public class CheProcessInventory extends ServerTest {
 		Assert.assertNotNull(locationD402);
 		Item item1493locD402 = locationD402.getStoredItemFromMasterIdAndUom("1493", "ea");
 		Assert.assertNotNull(item1493locD402);
-		// TODO fix
 
 		LOGGER.info("2b: check that item 1123 moved via the tape scan to D303");
 		Location locationD303 = facility.findSubLocationById("D303");
@@ -316,40 +313,28 @@ public class CheProcessInventory extends ServerTest {
 	 * Login, scan a valid order detail ID, scan INVENTORY command.
 	 * LOCAPICK is true, so create inventory on order import.
 	 */
+	// @Test
 	public final void testInventory2() throws IOException {
-		// TODO add as test
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
+		// LOCAPICK off
+		commitTransaction();
 
+		beginTransaction();
 		setUpOrdersWithCntrAndGtin(facility);
-
-		// we need to set che1 to be in line scan mode
-		CodeshelfNetwork network = getNetwork();
-		Che che1 = network.getChe("CHE1");
-		Assert.assertNotNull(che1);
-		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
-		che1.setProcessMode(ProcessMode.LINE_SCAN);
-		Che.staticGetDao().store(che1);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
 
-		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
-		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
+		picker.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
 
-		LOGGER.info("0a: scan INVENTORY and make sure we stay idle");
-		picker.scanCommand("INVENTORY");
-		picker.waitForCheState(CheStateEnum.IDLE, 1000);
-
-		LOGGER.info("1a: login, should go to READY state");
-		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
-
-		LOGGER.info("1b: scan X%INVENTORY, should go to SCAN_GTIN state");
+		LOGGER.info("1a: scan X%INVENTORY, should go to SCAN_GTIN state");
 		picker.scanCommand("INVENTORY");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 
-		LOGGER.info("1c: scan GTIN that does not exist - 200");
-		picker.scanSomething("200");
+		LOGGER.info("1b: scan GTIN that does not exist - gtin299");
+		picker.scanSomething("gtin299");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 
 		LOGGER.info("1d: scan location. Should create item with GTIN at location D302");
@@ -361,7 +346,7 @@ public class CheProcessInventory extends ServerTest {
 		LOGGER.info("1e: check that the item with GTIN 200 exists at D302");
 		Location D302 = facility.findSubLocationById("D302");
 		Assert.assertNotNull(D302);
-		Item item200 = D302.getStoredItemFromMasterIdAndUom("200", "ea");
+		Item item200 = D302.getStoredItemFromMasterIdAndUom("gtin200", "ea");
 		Assert.assertNotNull(item200);
 		this.getTenantPersistenceService().commitTransaction();
 

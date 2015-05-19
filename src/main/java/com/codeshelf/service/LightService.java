@@ -42,15 +42,15 @@ import com.google.inject.Inject;
 
 public class LightService implements IApiService {
 
-	private static final Logger				LOGGER						= LoggerFactory.getLogger(LightService.class);
+	private static final Logger		LOGGER						= LoggerFactory.getLogger(LightService.class);
 
-	private final static ColorEnum			defaultColor				= ColorEnum.RED;
-	private final static int				defaultLightDurationSeconds	= 20;
+	private final static ColorEnum	defaultColor				= ColorEnum.RED;
+	private final static int		defaultLightDurationSeconds	= 20;
 
 	// Originally 4 leds. The aisle file read and UI indicates 4 leds.  Was changed to 3 leds before aisle controller message splitting to allow more simultaneous lighting.
 	// Should not longer be necessary. Between v6 and v10 there was some inconsistency between 3 and 4. Now consistent.  Ideally no configuration parameter for this because if set
 	// otherwise, the UI still show 4. See DEV-411
-	private final static int				defaultLedsToLight			= 4;											// IMPORTANT. This should be synched with WIFactory.maxLedsToLight
+	private final static int		defaultLedsToLight			= 4;											// IMPORTANT. This should be synched with WIFactory.maxLedsToLight
 
 	@Inject
 	public LightService() {
@@ -91,6 +91,32 @@ public class LightService implements IApiService {
 				sendMessage(facility.getSiteControllerUsers(), clearListMessage);
 			}
 		}, 20000);
+	}
+
+	/**
+	 * The primary use of this is after a scan of tape or location in INVENTORY mode. We want to light where user scanned.
+	 * Initially, only LEDs, but we could add poscon later.
+	 * This calls getMetersFromAnchorGivenCmFromLeft() which may throw InputValidationException
+	 */
+	public void lightLocationCmFromLeft(Location inLocation, int inCmFromLeft) {
+		if (inLocation == null) {
+			LOGGER.error("null location in lightLocationOffset");
+			return;
+		}
+		Facility facility = inLocation.getFacility();
+		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
+
+		if (inLocation.isLightableAisleController()) {
+			List<LightLedsInstruction> instructions = Lists.newArrayList();
+
+			LedRange theRange = getLedRangeForLocationCmFromLeft(inLocation, inCmFromLeft);
+			LightLedsInstruction instruction = getLedCmdGroupListForRange(facility, color, inLocation, theRange);
+			instructions.add(instruction);
+			
+			LedInstrListMessage message = new LedInstrListMessage(instructions);
+			sendMessage(facility.getSiteControllerUsers(), message);
+		}
+
 	}
 
 	public void lightInventory(final String facilityPersistentId, final String inLocationNominalId) {
@@ -247,6 +273,7 @@ public class LightService implements IApiService {
 
 	private LightLedsInstruction toLedsInstruction(Facility facility, int maxNumLeds, final ColorEnum inColor, final Item inItem) {
 		// Use our utility function to get the leds for the item
+		/*
 		LedRange theRange = inItem.getFirstLastLedsForItem().capLeds(maxNumLeds);
 		Location itemLocation = inItem.getStoredLocation();
 		if (itemLocation.isLightableAisleController()) {
@@ -255,6 +282,59 @@ public class LightService implements IApiService {
 		} else {
 			return null;
 		}
+		*/
+		Location itemLocation = inItem.getStoredLocation();
+		if (itemLocation.isLightableAisleController()) {
+			LedRange theRange = getLedRangeForLocationOffset(itemLocation, inItem.getMetersFromAnchor()).capLeds(maxNumLeds);
+			LightLedsInstruction instruction = getLedCmdGroupListForRange(facility, inColor, itemLocation, theRange);
+			return instruction;
+		} else {
+			return null;
+		}
+	}
+
+	/**
+	 * This is called quite directly for lighting an item, as the item knows its location and offset from anchor.
+	 * Called a bit more indirectly for lighting after scanning Codeshelf tape.
+	 */
+	private LedRange getLedRangeForLocationOffset(Location inLocation, Double inMetersFromAnchor) {
+		if (inLocation == null) {
+			LOGGER.error("null location in getLedRangeForLocationOffset");
+			return null;
+		}
+		Double metersFromAnchor = 0.0;
+		if (inMetersFromAnchor != null)
+			metersFromAnchor = inMetersFromAnchor;
+
+		// to compute, we need the locations first and last led positions
+		if (inLocation.isFacility())
+			return LedRange.zero(); // was initialized to give values of 0,0
+
+		int firstLocLed = inLocation.getFirstLedNumAlongPath();
+		int lastLocLed = inLocation.getLastLedNumAlongPath();
+
+		Double locationWidth = inLocation.getLocationWidthMeters();
+		boolean lowerLedNearAnchor = inLocation.isLowerLedNearAnchor();
+
+		LedRange theLedRange = LedRange.computeLedsToLight(firstLocLed,
+			lastLocLed,
+			lowerLedNearAnchor,
+			locationWidth,
+			metersFromAnchor);
+		return theLedRange;
+	}
+
+	/**
+	 * The trick here is to determine the anchor point direction, then convert cmFromLeft to meters from Anchor
+	 * This calls getMetersFromAnchorGivenCmFromLeft() which may throw InputValidationException
+	 */
+	private LedRange getLedRangeForLocationCmFromLeft(Location inLocation, int inCmFromLeft) {
+		if (inLocation == null) {
+			LOGGER.error("null location in getLedRangeForLocationCmFromLeft");
+			return null;
+		}
+		Double metersFromAnchor = inLocation.getMetersFromAnchorGivenCmFromLeft(inCmFromLeft);
+		return getLedRangeForLocationOffset(inLocation, metersFromAnchor);
 	}
 
 	private LightLedsInstruction toLedsInstruction(Facility facility,
