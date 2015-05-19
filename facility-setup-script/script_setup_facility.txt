@@ -1,9 +1,11 @@
 SERVER
-setChannel 8
+editFacility Facility1 5001 8
 importAisles aisles
 importLocations locations
-setLedController A1.B1.T1 0x000000031 1 allTiersInAisle
-setLedController A2 0x0000000AB 1
+togglePutWall A3 true
+setController A1.B1.T1 lights  0x000000031 1 allTiersInAisle
+setController A2       lights  0x0000000AB 1
+setController A3       poscons 0x0000000AA 1
 createChe 0x0000000A3 magenta SETUP_ORDERS
 createChe 0x00000009B green SETUP_ORDERS
 deleteAllPaths

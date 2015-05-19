@@ -1,5 +1,7 @@
 package com.codeshelf.ws.protocol.command;
 
+import java.util.UUID;
+
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,6 +10,7 @@ import com.codeshelf.service.InventoryService;
 import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
 import com.codeshelf.ws.protocol.response.InventoryLightLocationResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
+import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
 @RequiresPermissions("light:use")
@@ -26,7 +29,17 @@ public class InventoryLightLocationCommand extends CommandABC {
 
 	@Override
 	public ResponseABC exec() {
-		return new InventoryLightLocationResponse();
+		
+		InventoryLightLocationResponse response = new InventoryLightLocationResponse();
+		
+		UUID cheUUID = UUID.fromString(request.getDeviceId());
+		if (cheUUID != null ) {
+			inventoryService.lightLocationByAliasOrTapeId(request.getLocation(), request.getIsTape(), cheUUID);
+			response.setStatus(ResponseStatus.Success);
+		} else {
+			response.setStatus(ResponseStatus.Fail);
+		}	
+		return response;
 	}
 	
 }

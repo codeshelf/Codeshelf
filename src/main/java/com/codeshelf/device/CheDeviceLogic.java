@@ -222,16 +222,16 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		// tape scan is likely
 		else if (TAPE_PREFIX.equals(inScanPrefixStr)) {
+			String tapeScan = TAPE_PREFIX + inScanStr;
 			if (lastScanedGTIN != null) {
 				// Updating location of an item
 				// Let's pass with the tape prefix to the server. Otherwise, it has to query one way, and then again for tape
-				String tapeScan = TAPE_PREFIX + inScanStr;
-				notifyScanInventoryUpdate(tapeScan, lastScanedGTIN);
+					notifyScanInventoryUpdate(tapeScan, lastScanedGTIN);
 				mDeviceManager.inventoryUpdateScan(this.getPersistentId(), tapeScan, lastScanedGTIN);
 			}
 			else {
-				// just a location ID scan. light it.
-				mDeviceManager.inventoryLightLocationScan(getPersistentId(), inScanStr, isTape);
+				// just a location ID scan. light it. Also pass the % first.
+				mDeviceManager.inventoryLightLocationScan(getPersistentId(), tapeScan, isTape);
 			}
 		}
 

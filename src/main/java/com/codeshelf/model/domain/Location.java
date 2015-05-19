@@ -49,6 +49,8 @@ import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.util.StringUIConverter;
+import com.codeshelf.validation.ErrorCode;
+import com.codeshelf.validation.InputValidationException;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -1095,6 +1097,30 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			}
 		}
 		return cmdPathsSet;
+	}
+
+	/**
+	 * This is called somewhat indirectly via user setters, so it throws InputValidationException
+	 */
+	public Double getMetersFromAnchorGivenCmFromLeft(int inCmFromLeft) {
+		if (isFacility()) {
+			return 0.0;
+		}
+		Double value = 0.0;
+		if (inCmFromLeft < 0) {
+			throw new InputValidationException(this, "cmFromLeft", inCmFromLeft, ErrorCode.FIELD_NUMBER_NOT_NEGATIVE);
+		} else {
+			Double pickEndWidthMeters = getLocationWidthMeters();
+			if (isLeftSideTowardsAnchor()) {
+				value = inCmFromLeft / 100.0;
+			} else {
+				value = pickEndWidthMeters - (inCmFromLeft / 100.0);
+			}
+			if (value > pickEndWidthMeters || value < 0) {
+				throw new InputValidationException(this, "cmFromLeft", inCmFromLeft, ErrorCode.FIELD_NUMBER_ABOVE_MAX);
+			}
+		}
+		return value;
 	}
 
 	public Boolean isLeftSideTowardsAnchor() {

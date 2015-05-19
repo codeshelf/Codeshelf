@@ -251,7 +251,7 @@ public class InventoryService implements IApiService {
 		}
 
 		// Find location that tapeId is already associated with
-		Location oldLocation = findLocationForTapeId(inFacility, inTapeId);
+		Location oldLocation = findLocationForTapeId(inTapeId);
 		if (oldLocation != null) {
 			LOGGER.warn("TapeId: {} is already associated with location: {}.", inTapeId, oldLocation.getDomainId());
 			oldLocation.setTapeId(null);
@@ -282,15 +282,36 @@ public class InventoryService implements IApiService {
 	 * @param inChePersistentId	persistentId of che making call
 	 * @return void
 	 */
-	public void lightLocationByAliasOrTapeId(Facility inFacilty, String inLocation, boolean isTape, UUID inChePersistentId) {
+	public void lightLocationByAliasOrTapeId(String inLocation, boolean isTape, UUID inChePersistentId) {
+		Che che = Che.staticGetDao().findByPersistentId(inChePersistentId);
+		// We could log a CHE_DISPLAY
+
 		Location locToLight = null;
+		Integer cmOffSet = 0;
 		if (isTape) {
-			Integer shelfGuid = CodeshelfTape.extractGuid(inLocation);
+			CodeshelfTape thisTape = CodeshelfTape.scan(inLocation);
+			Integer shelfGuid = thisTape.getGuid();
+			cmOffSet = thisTape.getOffsetCm();
 			if (shelfGuid > 0) {
-				locToLight = findLocationForTapeId(inFacilty, shelfGuid);
+				locToLight = findLocationForTapeId(shelfGuid);
+				// Later. This might be guid for a tier that has slots, we would interpret the slot by the cmOffset.
+
 			}
 		} else {
-			LOGGER.error("Need to implement alias case in lightLocationByAliasOrTapeId");
+			// can we find the facility somehow?
+			Facility facility = null;
+			if (che != null)
+				facility = che.getFacility();
+			else {
+				LOGGER.error("cannot lightLocationByAliasOrTapeId because CHE is not resolved");
+			}
+			if (facility != null) {
+				locToLight = facility.findSubLocationById(inLocation);
+			}
+		}
+		if (locToLight != null) {
+			lightService.lightLocationCmFromLeft(locToLight, cmOffSet);
+			// lightService.lightLocation(facilityPersistentId, inLocationNominalId);
 		}
 
 	}
@@ -298,13 +319,11 @@ public class InventoryService implements IApiService {
 	/**
 	 * Finds the location that a tapeId is associated with.
 	 * There should only ever be a single location associated with a tapeId
-	 * @param inFacility 
-	 * 
 	 * @param inFacility	The facility
 	 * @param inTapeId		The tapeId to search for
 	 * @return Location		Returns null if tapeId is not associated to a location
 	 */
-	private Location findLocationForTapeId(Facility inFacility, int inTapeId) {
+	private Location findLocationForTapeId(int inTapeId) {
 		// Session session = TenantPersistenceService.getInstance().getSession();
 		// List<Location> locations = session.createCriteria(Location.class).add(Restrictions.eq("tapeId", inTapeId)).list();
 
@@ -347,7 +366,7 @@ public class InventoryService implements IApiService {
 		if (inLocation.startsWith("%")) {
 			int tapeId = CodeshelfTape.extractGuid(inLocation);
 			LOGGER.info("{} extracted to tapeId {}", inLocation, tapeId);
-			location = findLocationForTapeId(inFacility, tapeId);
+			location = findLocationForTapeId(tapeId);
 		} else {
 			location = inFacility.findSubLocationById(inLocation);
 		}
