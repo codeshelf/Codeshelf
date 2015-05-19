@@ -4,8 +4,9 @@ import java.util.ArrayList;
 
 import javassist.NotFoundException;
 
-import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import lombok.Getter;
 
@@ -54,11 +55,13 @@ public class ErrorResponse extends BaseResponse{
 			message = ExceptionUtils.getStackTrace(e);
 		}
 		addError(message);
+		Status status = null;
 		if (e instanceof NotFoundException) {
-			setStatus(HttpServletResponse.SC_NOT_FOUND);
+			status = Status.NOT_FOUND;
 		} else {
-			setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			status = Status.INTERNAL_SERVER_ERROR;
 		}
-		return buildResponse();
+		
+		return buildResponse(this, status, MediaType.APPLICATION_JSON_TYPE);
 	}
 }

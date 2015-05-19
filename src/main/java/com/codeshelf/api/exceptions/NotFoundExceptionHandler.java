@@ -1,7 +1,7 @@
 package com.codeshelf.api.exceptions;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 import javax.ws.rs.ext.ExceptionMapper;
 import javax.ws.rs.ext.Provider;
 
@@ -14,7 +14,7 @@ public class NotFoundExceptionHandler implements ExceptionMapper<NotFoundExcepti
     public Response toResponse(NotFoundException ex) {
     	ErrorResponse error = new ErrorResponse();
     	error.processException(ex);
-    	error.setStatus(HttpServletResponse.SC_NOT_FOUND);
+    	error.setStatus(Status.NOT_FOUND);
         return error.buildResponse();
     }
 }
