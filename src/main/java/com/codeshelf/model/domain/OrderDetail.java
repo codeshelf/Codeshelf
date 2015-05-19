@@ -162,10 +162,10 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@JsonProperty
 	private Integer							workSequence;
 
-	@Column(name = "verify")
-	@Getter @Setter
+	@Column(nullable = true, name = "needs_scan")
+	@Setter
 	@JsonProperty
-	private boolean verify = false;
+	private Boolean needsScan = false;
 
 	public OrderDetail() {
 		this(null, true);
@@ -527,6 +527,13 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	public boolean isPreferredDetail() {
 		return getPreferredLocation() != null && getWorkSequence() != null;
 	}
+	
+	public Boolean getNeedsScan() {
+		if (needsScan==null) {
+			return false;
+		}
+		return needsScan;
+	}	
 
 	public String getGtinId() {
 		ItemMaster im = getItemMaster();
