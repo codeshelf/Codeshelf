@@ -125,12 +125,16 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		// a bizarre quirk. Not tested. If we set up both P16 and WALL2, the one order belongs to both. Do we get two work instructions? Yes, incorrectly.
 
 		LOGGER.info("2d: A bad order name. ");
-		picker2.setupOrderIdAsContainer("1119119119", "6");
+		// picker2.setupOrderIdAsContainer("1119119119", "6"); cannot do this since it waits for the non error state
+		picker2.scanSomething("1119119119");
+		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECTION_INVALID, WAIT_TIME);
+		picker2.scanCommand("CLEAR");
+		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		// TODO fix
-		LOGGER.info("3: After start, will go to LOCATION_SELECT_REVIEW state since we did for bad poscon positions ");
+		LOGGER.info("3: After start, will go to summary");
 		picker2.scanCommand("START");
-		picker2.waitForCheState(picker2.getLocationStartReviewState(true), WAIT_TIME);
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);
 		Byte posConValue2 = picker2.getLastSentPositionControllerDisplayValue((byte) 2);
 		Assert.assertEquals(new Byte("1"), posConValue1);

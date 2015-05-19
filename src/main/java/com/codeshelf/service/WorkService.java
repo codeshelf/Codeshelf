@@ -859,8 +859,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		Path oldPath = che.getActivePath();
 		Path newPath = null;
 		Location newLocation = che.getFacility().findSubLocationById(inScannedLocationId);
-		if (newLocation != null)
-			newPath = newLocation.getAssociatedPathSegment().getParent();
+		if (newLocation != null) {
+			newPath = newLocation.getAssociatedPath();
+		}
 
 		if (oldPath == null && newPath == null)
 			return false;
@@ -1523,13 +1524,13 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		Double startingPathPos = null;
 		if (cheLocation != null) {
-			Path path = cheLocation.getAssociatedPathSegment().getParent();
+			Path path = cheLocation.getAssociatedPath();
 			Bay cheBay = cheLocation.getParentAtLevel(Bay.class);
 			Bay selectedBay = cheBay;
 			if (cheBay == null) {
 				LOGGER.error("Che does not have a bay parent location in getStartingPathDistance #1");
 				return null;
-			} else if (cheBay.getPosAlongPath() == null) {
+			} else if (path == null || cheBay.getPosAlongPath() == null) {
 				LOGGER.error("Ches bay parent location does not have posAlongPath in getStartingPathDistance #2");
 				return null;
 			}

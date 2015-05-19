@@ -330,7 +330,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				setState(currentState);
 				break;
 			case SCAN_GTIN:
-				lastScanedGTIN = null;
+				lastScannedGTIN = null;
 				setReadyMsg("");
 				setState(CheStateEnum.READY);
 				break;
@@ -653,7 +653,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 					break;
 				
 				case SCAN_GTIN:
-					if (lastScanedGTIN == null) {
+					if (lastScannedGTIN == null) {
 						sendDisplayCommand(SCAN_GTIN, EMPTY_MSG);
 					} else {
 						sendDisplayCommand(SCAN_GTIN_OR_LOCATION, EMPTY_MSG);

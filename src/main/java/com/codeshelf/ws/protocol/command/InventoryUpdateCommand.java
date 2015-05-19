@@ -34,6 +34,7 @@ public class InventoryUpdateCommand extends CommandABC {
 		
 		UUID cheUUID = UUID.fromString(request.getDeviceId());
 		if (cheUUID != null ) {
+			// At this point, the getLocation() string may be a location name (usually alias), or if a tape Id, it still has the % prefix
 			response = inventoryService.moveOrCreateInventory(request.getGtin(), request.getLocation(), cheUUID);
 		} else {
 			LOGGER.error("Unable to process CHE UUID: {}", request.getDeviceId());

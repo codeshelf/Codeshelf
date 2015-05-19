@@ -43,8 +43,9 @@ public class InventoryService implements IApiService {
 	}
 
 	public InventoryUpdateResponse moveOrCreateInventory(String inGtin, String inLocation, UUID inChePersistentId) {
+		// At this point, inLocation may be a location name (usually alias), or if a tape Id, it still has the % prefix
 
-		LOGGER.warn("moveOrCreateInventory called for gtin:{}, location:{}", inGtin, inLocation);
+		LOGGER.info("moveOrCreateInventory called for gtin:{}, location:{}", inGtin, inLocation);
 
 		InventoryUpdateResponse response = new InventoryUpdateResponse();
 		Che che = Che.staticGetDao().findByPersistentId(inChePersistentId);
@@ -76,6 +77,10 @@ public class InventoryService implements IApiService {
 				inLocation);
 			response.setFoundLocation(false);
 			response.appendStatusMessage("moveOrCreateInventory WARN: Could not find location: " + inLocation + ". Using facility.");
+		}
+		int cmFromLeft = 0;
+		if (inLocation.startsWith("%")) {
+			cmFromLeft = CodeshelfTape.extractCmFromLeft(inLocation);
 		}
 
 		ItemMaster itemMaster = null;
@@ -136,6 +141,7 @@ public class InventoryService implements IApiService {
 			createTime = new Timestamp(System.currentTimeMillis());
 			result.setActive(true);
 			result.setUpdated(createTime);
+			result.setCmFromLeft(cmFromLeft);
 
 			Item.staticGetDao().store(result);
 
@@ -285,6 +291,15 @@ public class InventoryService implements IApiService {
 	public void lightLocationByAliasOrTapeId(String inLocation, boolean isTape, UUID inChePersistentId) {
 		Che che = Che.staticGetDao().findByPersistentId(inChePersistentId);
 		// We could log a CHE_DISPLAY
+		
+		ColorEnum color = ColorEnum.RED;
+		if (che != null){
+		color = che.getColor();
+		}
+		else {
+			LOGGER.error("CHE is not resolved in lightLocationByAliasOrTapeId");
+		}
+
 
 		Location locToLight = null;
 		Integer cmOffSet = 0;
@@ -302,16 +317,12 @@ public class InventoryService implements IApiService {
 			Facility facility = null;
 			if (che != null)
 				facility = che.getFacility();
-			else {
-				LOGGER.error("cannot lightLocationByAliasOrTapeId because CHE is not resolved");
-			}
 			if (facility != null) {
 				locToLight = facility.findSubLocationById(inLocation);
 			}
 		}
 		if (locToLight != null) {
-			lightService.lightLocationCmFromLeft(locToLight, cmOffSet);
-			// lightService.lightLocation(facilityPersistentId, inLocationNominalId);
+			lightService.lightLocationCmFromLeft(locToLight, cmOffSet, color);
 		}
 
 	}
