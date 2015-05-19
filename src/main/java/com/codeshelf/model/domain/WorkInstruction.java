@@ -254,6 +254,11 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	private OrderDetail					orderDetail;
 
 	private static final Integer		MAX_WI_DESC_BYTES	= 80;
+	
+	@Column(nullable = true, name = "needs_scan")
+	@Setter
+	@JsonProperty
+	private Boolean needsScan = false;
 
 	public WorkInstruction() {
 	}
@@ -574,6 +579,13 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		} else {
 			return null;
 		}
+	}
+	
+	public Boolean getNeedsScan() {
+		if (needsScan==null) {
+			return false;
+		}
+		return needsScan;
 	}
 
 	public String getGtinId() {
