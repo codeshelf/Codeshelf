@@ -1,6 +1,8 @@
 SERVER
 editFacility Facility1 5000 8
 createDummyOutline 1
+setProperty scanpick UPC
+setProperty invtmenu true
 importAisles aisles
 importLocations locations
 togglePutWall Aisle3 true

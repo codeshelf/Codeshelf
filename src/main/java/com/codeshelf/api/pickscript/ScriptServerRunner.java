@@ -19,8 +19,10 @@ import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
@@ -31,6 +33,7 @@ import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.Vertex;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.UiUpdateService;
 import com.codeshelf.util.CsExceptionUtils;
 import com.codeshelf.ws.protocol.message.PickScriptMessage;
@@ -39,6 +42,7 @@ import com.sun.jersey.multipart.FormDataMultiPart;
 public class ScriptServerRunner {
 	private final static String TEMPLATE_EDIT_FACILITY = "editFacility <facility domain id> <primary site controller id> <primary radio channel>";
 	private final static String TEMPLATE_OUTLINE = "createDummyOutline [size 1/2/3]";
+	private final static String TEMPLATE_SET_PROPERTY = "setProperty <name> <value>";
 	private final static String TEMPLATE_IMPORT_ORDERS = "importOrders <filename>";
 	private final static String TEMPLATE_IMPORT_AISLES = "importAisles <filename>";
 	private final static String TEMPLATE_IMPORT_LOCATIONS = "importLocations <filename>";
@@ -56,6 +60,7 @@ public class ScriptServerRunner {
 	private final TenantPersistenceService persistence;
 	private final UUID facilityId;
 	private final UiUpdateService uiUpdateService;
+	private final PropertyService propertyService;
 	private final ICsvOrderImporter orderImporter;
 	private final ICsvAislesFileImporter aisleImporter;
 	private final ICsvLocationAliasImporter locationsImporter;
@@ -69,6 +74,7 @@ public class ScriptServerRunner {
 		UUID facilityId,
 		FormDataMultiPart postBody,
 		UiUpdateService uiUpdateService,
+		PropertyService propertyService,
 		ICsvAislesFileImporter aisleImporter,
 		ICsvLocationAliasImporter locationsImporter,
 		ICsvInventoryImporter inventoryImporter,
@@ -77,6 +83,7 @@ public class ScriptServerRunner {
 		this.facilityId = facilityId;
 		this.postBody = postBody;
 		this.uiUpdateService = uiUpdateService;
+		this.propertyService = propertyService;
 		this.aisleImporter = aisleImporter;
 		this.locationsImporter = locationsImporter;
 		this.inventoryImporter = inventoryImporter;
@@ -122,6 +129,8 @@ public class ScriptServerRunner {
 			processEditFacilityCommand(parts);
 		} else if (command.equalsIgnoreCase("createDummyOutline")) {
 			processOutlineCommand(parts);
+		} else if (command.equalsIgnoreCase("setProperty")) {
+			processSetPropertyCommand(parts);
 		} else if (command.equalsIgnoreCase("importOrders")) {
 			processImportOrdersCommand(parts);
 		} else if (command.equalsIgnoreCase("importAisles")) {
@@ -148,7 +157,7 @@ public class ScriptServerRunner {
 			processWaitSecondsCommand(parts);
 		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, importOrders, importAisles, importInventory, setController, setPoscons, togglePutWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, waitSeconds, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, importOrders, importAisles, importInventory, setController, setPoscons, togglePutWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, waitSeconds, //]");
 		}
 	}
 
@@ -202,6 +211,23 @@ public class ScriptServerRunner {
 			facility.createVertex("V2", "GPS", -122.271210114411247, 37.8029527822164439, 2);
 			facility.createVertex("V3", "GPS", -122.271210114411247, 37.8032855078260113, 3);
 		}
+	}
+
+	/**
+	 * Expects to see command
+	 * setProperty <name> <value>
+	 * @throws Exception 
+	 */
+	private void processSetPropertyCommand(String parts[]) throws Exception {
+		if (parts.length != 3){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_SET_PROPERTY);
+		}
+		String name = parts[1].toUpperCase();
+		DomainObjectProperty property = PropertyDao.getInstance().getPropertyWithDefault(facility, name);
+		if (property == null) {
+			throw new Exception("Property " + name + " doesn't exist");
+		}
+		propertyService.changePropertyValue(facility, name, parts[2]);
 	}
 
 	/**
