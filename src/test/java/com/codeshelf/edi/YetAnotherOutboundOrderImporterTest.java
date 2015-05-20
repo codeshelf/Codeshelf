@@ -23,16 +23,12 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.testframework.ServerTest;
 
 /**
- * Time to start another test, since the other order import test has almost 2000 lines now...
+ * It's time to start another test, since the other order import test class has almost 2000 lines now...
  */
 public class YetAnotherOutboundOrderImporterTest extends ServerTest {
 	
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(YetAnotherOutboundOrderImporterTest.class);
-
-	// the full set of fields known to the bean  (in the order of the bean, just for easier verification) is
-	// orderGroupId,orderId,orderDetailID,itemId,description,quantity,minQuantity,maxQuantity,uom,orderDate,dueDate,destinationId,pickStrategy,preAssignedContainerId,shipmentId,customerId,workSequence
-	// of these: orderId,itemId,description,quantity,uom are not nullable
 
 	private ICsvOrderImporter	importer;
 	private UUID				facilityId;
@@ -73,14 +69,17 @@ public class YetAnotherOutboundOrderImporterTest extends ServerTest {
 		Integer detailCount = order.getOrderDetails().size();
 		Assert.assertEquals((Integer) 3, detailCount);
 
+		// ensure "yes" is interpreted as true
 		OrderDetail detail1 = order.getOrderDetail("10700589-each");
 		Assert.assertNotNull(detail1); 
 		Assert.assertSame(true, detail1.getNeedsScan());
 
+		// ensure "no" is interpreted as false
 		OrderDetail detail2 = order.getOrderDetail("10706952-each");
 		Assert.assertNotNull(detail2); 
 		Assert.assertSame(false, detail2.getNeedsScan());
 
+		// ensure undefined field is interpreted as false
 		OrderDetail detail3 = order.getOrderDetail("10706962-each");
 		Assert.assertNotNull(detail3); 
 		Assert.assertSame(false, detail3.getNeedsScan());
