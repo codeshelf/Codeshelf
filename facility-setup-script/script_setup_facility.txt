@@ -1,5 +1,6 @@
 SERVER
 editFacility Facility1 5000 8
+createDummyOutline 1
 importAisles aisles
 importLocations locations
 togglePutWall Aisle3 true
