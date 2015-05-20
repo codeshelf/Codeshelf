@@ -46,7 +46,7 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_TOGGLE_PUT_WALL = "togglePutWall <aisle> [boolean putwall]";
 	private final static String TEMPLATE_CREATE_CHE = "createChe <che> <color> <mode>";
 	private final static String TEMPLATE_DELETE_ALL_PATHS = "deleteAllPaths";
-	private final static String TEMPLATE_DEF_PATH = "defPath <pathName> (segments 'X' <start x> <start y> <end x> <end y>)";
+	private final static String TEMPLATE_DEF_PATH = "defPath <pathName> (segments '-' <start x> <start y> <end x> <end y>)";
 	private final static String TEMPLATE_ASSIGN_PATH_SGM_AISLE = "assignPathSgmToAisle <pathName> <segment id> <aisle name>";
 	private final static String TEMPLATE_WAIT_SECONDS = "waitSeconds <seconds>";
 	
@@ -360,7 +360,7 @@ public class ScriptServerRunner {
 
 	/**
 	 * Expects to see command
-	 * defPath <pathName> (segments 'X' <start x> <start y> <end x> <end y>)
+	 * defPath <pathName> (segments '-' <start x> <start y> <end x> <end y>)
 	 * @throws Exception 
 	 */
 	private void processDefinePathCommand(String parts[]) throws Exception {
@@ -375,8 +375,8 @@ public class ScriptServerRunner {
 		int totalSegnemts = (parts.length - 2) / 5;
 		for (int segNum = 0; segNum < totalSegnemts; segNum++) {
 			int offset = 2 + segNum * 5;
-			if (!parts[offset].equalsIgnoreCase("X")) {
-				throw new Exception("Did not put an 'X' before each path segment");
+			if (!parts[offset].equals("-")) {
+				throw new Exception("Did not put an '-' before each path segment");
 			}
 			double startX = Double.parseDouble(parts[offset + 1]);
 			double startY = Double.parseDouble(parts[offset + 2]);

@@ -10,8 +10,8 @@ setPoscons A3.B1.T1 1 forward A3.B2.T1 5 forward A3.B3.T1 9 forward A3.B4.T1 13 
 createChe 0x0000000A3 magenta SETUP_ORDERS
 createChe 0x00000009B green SETUP_ORDERS
 deleteAllPaths
-defPath p1 X 2.82 5.40 5.19 5.40 X 5.19 5.40 5.19 6.40 X 5.19 6.40 2.77 6.40
-defPath p2 X 2.60 7.40 5.28 7.40
+defPath p1 - 2.82 5.40 5.19 5.40 - 5.19 5.40 5.19 6.40 - 5.19 6.40 2.77 6.40
+defPath p2 - 2.60 7.40 5.28 7.40
 assignPathSgmToAisle p1 0 A1
 assignPathSgmToAisle p1 2 Aisle2
 assignPathSgmToAisle p2 0 A3
