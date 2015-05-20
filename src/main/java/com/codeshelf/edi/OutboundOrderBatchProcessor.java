@@ -786,6 +786,15 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		result.setDescription(inCsvBean.getDescription());
 		result.setUomMaster(inUomMaster);
 		
+		boolean needsScan = false;
+		if (inCsvBean.getNeedsScan()!=null) {
+			String needsScanStr = inCsvBean.getNeedsScan().toLowerCase();
+			if ("yes".equals(needsScanStr)||"y".equals(needsScanStr)||"true".equals(needsScanStr)||"t".equals(needsScanStr)||"1".equals(needsScanStr)) {
+				needsScan = true;
+			}
+		}
+		result.setNeedsScan(needsScan);
+		
 		String workSeq = inCsvBean.getWorkSequence();
 		try  {
 			if (workSeq != null) {
