@@ -74,6 +74,19 @@ public class PickSimulator {
 		waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 	}
 
+	/**
+	 * Typical use is picker.inventoryViaTape("gtin1123", "%004290590250");
+	 * where you pass the actual scan from the tape. 
+	 * However, it will also work as picker.inventoryViaTape("gtin1123", "L%D23");
+	 */
+	public void inventoryViaTape(String gtin, String tapeScan) {
+		scanSomething(gtin);
+		// not really right. Stays in SCAN_GTIN state. Perhaps it should transition to other state and wait for server response to get back to state.
+		waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
+		scanSomething(tapeScan);
+		waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
+	}
+
 	public void setupOrderIdAsContainer(String orderId, String positionId) {
 		// DEV-518. Also accept the raw order ID as the containerId
 		scanOrderId(orderId);
