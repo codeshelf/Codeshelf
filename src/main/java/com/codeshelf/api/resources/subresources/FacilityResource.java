@@ -408,7 +408,6 @@ public class FacilityResource {
 	public Response runScript(@QueryParam("timeout_min") Integer timeoutMin, FormDataMultiPart body){
 		try {
 			ErrorResponse errors = new ErrorResponse();
-			TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 
 			//Retrieve the script
 			InputStream scriptIS = PickScriptParser.getInputStream(body, "script");
@@ -425,15 +424,14 @@ public class FacilityResource {
 			ArrayList<PickScriptPart> scriptParts = PickScriptParser.parseMixedScript(script);
 			Set<User> users = facility.getSiteControllerUsers();
 			StringBuilder response = new StringBuilder();
-			ScriptServerRunner scriptRunner = new ScriptServerRunner(facility, body, uiUpdateService, aislesImporter, locationsImporter, inventoryImporter, orderImporter);
+			TenantPersistenceService persistence = TenantPersistenceService.getInstance();
+			ScriptServerRunner scriptRunner = new ScriptServerRunner(persistence, facility.getPersistentId(), body, uiUpdateService, aislesImporter, locationsImporter, inventoryImporter, orderImporter);
 			//Process script parts
 			while (!scriptParts.isEmpty()) {
 				PickScriptPart part = scriptParts.remove(0);
 				if (part.isServer()) {
 					//SERVER
-					persistence.beginTransaction();
 					PickScriptMessage serverResponseMessage = scriptRunner.processServerScript(part.getScript());
-					persistence.commitTransaction();
 					response.append(serverResponseMessage.getResponse());
 					if (!serverResponseMessage.isSuccess()) {
 						break;

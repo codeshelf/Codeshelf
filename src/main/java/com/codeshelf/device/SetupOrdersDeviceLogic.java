@@ -93,6 +93,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	private final boolean						useNewCheScreen							= true;
 
+	private boolean								mSetupMixHasPutwall						= false;
+	private boolean								mSetupMixHasCntrOrder					= false;
+
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final CsDeviceManager inDeviceManager,
@@ -201,7 +204,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 
 				case CONTAINER_SELECTION_INVALID:
-					invalidScanMsg(INVALID_CONTAINER_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+					// This deals with DEV-836, 837. 
+					if (!this.isSetupMixOk()) {
+						invalidScanMsg(INVALID_CONTAINER_MSG, "Use START to begin", CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+					} else {
+						invalidScanMsg(INVALID_CONTAINER_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+					}
 					break;
 
 				case NO_CONTAINERS_SETUP:
@@ -272,11 +280,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					this.showCartSetupFeedback();
 					break;
 				case SCAN_GTIN:
-					if (lastScanedGTIN == null) {
-						sendDisplayCommand(SCAN_GTIN, EMPTY_MSG);
-					} else {
-						sendDisplayCommand(SCAN_GTIN_OR_LOCATION, EMPTY_MSG);
-					}
+					sendGtinScreen(lastScannedGTIN);
 					break;
 
 				case PUT_WALL_SCAN_ORDER:
@@ -458,6 +462,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.SCAN_GTIN);
 				break;
 
+			case SCAN_GTIN:
+				// Inventory got us to this state. Rescan of inventory just clears the GTIN so that it will not accidentally inventory.
+				this.lastScannedGTIN = null;
+				setState(CheStateEnum.SCAN_GTIN);
+				break;
+
 			default:
 				LOGGER.warn("User: {} attempted inventory scan in invalid state: {}", this.getUserId(), mCheStateEnum);
 				break;
@@ -478,7 +488,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.CONTAINER_SELECT);
 				break;
 			case SCAN_GTIN:
-				lastScanedGTIN = null;
+				lastScannedGTIN = null;
 				CheStateEnum priorToInventoryState = getRememberEnteringWallOrInventoryState();
 				setState(priorToInventoryState);
 				break;
@@ -1004,6 +1014,31 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	}
 
+	/*
+	 * For setup mix, see notes about DEV-836 in processContainerSelectScan
+	*/
+	private boolean recordSetupMix(boolean possiblePutWallScan) {
+		// This is inelegant. We record in our internals if we are returning false even though we will not actually record the container/wall.
+		// Just to make isSetupMixOk() work, which signals the appropriate user message.  Barely ok because no other side effects are tied to this.
+		// Hopefully the feedback will train the user to not do this too often.
+		if (possiblePutWallScan)
+			mSetupMixHasPutwall = true;
+		else
+			mSetupMixHasCntrOrder = true;
+		return isSetupMixOk();
+	}
+
+	private boolean isSetupMixOk() {
+		// ok as long as not both
+		return (!(mSetupMixHasPutwall && mSetupMixHasCntrOrder));
+	}
+
+	private void clearSetupMix() {
+		mSetupMixHasPutwall = false;
+		mSetupMixHasCntrOrder = false;
+
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * During Setup_Orders process, the user has scanned the thing to be set up.  That is:
@@ -1013,7 +1048,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 *   back end does a search to determine what it is.
 	 */
 	private void processContainerSelectScan(final String inScanPrefixStr, String inScanStr) {
-		if (inScanPrefixStr.isEmpty() || CONTAINER_PREFIX.equals(inScanPrefixStr) || LOCATION_PREFIX.equals(inScanPrefixStr)) {
+		boolean possiblePutWallScan = LOCATION_PREFIX.equals(inScanPrefixStr);
+		// Since we enforce "all orders/containers" or "all putwall" per cart setup, we can track that here.
+		boolean setupMixOk = recordSetupMix(possiblePutWallScan);
+		if (!setupMixOk) {
+			setState(CheStateEnum.CONTAINER_SELECTION_INVALID);
+
+		}
+
+		else if (inScanPrefixStr.isEmpty() || CONTAINER_PREFIX.equals(inScanPrefixStr) || LOCATION_PREFIX.equals(inScanPrefixStr)) {
 
 			mContainerInSetup = inScanStr;
 			// Check to see if this container is already setup in a position.
@@ -1025,6 +1068,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				this.clearOnePosconOnThisDevice(currentAssignment);
 			}
 
+			// trouble here. Cause of DEV-836 bug. If the scan was of a putwall name, the next correct state is container_position to give it a position on
+			// cart. But if some generic position that the user wanted to start at, we want to either "error, please START", or go directly to processLocationScan
+			// in order to compute the work. Site controller cannot know which case it is.
 			setState(CheStateEnum.CONTAINER_POSITION);
 		} else {
 			setState(CheStateEnum.CONTAINER_SELECTION_INVALID);
@@ -1192,9 +1238,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
+			// DEV-836, 837. From what states shall we allow this?
 			ledControllerClearLeds();
 			mLocationId = inScanStr; // let's remember where user scanned.
+
+			// TODO Codeshelf tape
 			// Careful. Later, codeshelf tape scan. Need to get the interpretted position back from server.
+			LOGGER.info("processLocationScan {}. About to call requestWorkAndSetGetWorkState", inScanStr);
 			requestWorkAndSetGetWorkState(inScanStr, false);
 		} else {
 			LOGGER.info("Not a location ID: " + inScanStr);
@@ -1530,6 +1580,29 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private void resetRememberCompletesAndShorts() {
 		setRememberPriorShorts(0);
 		setRememberPriorCompletes(0);
+	}
+
+	/**
+	 * Help the user know what scans will do
+	 */
+	private void sendGtinScreen(String inLastScannedGTIN) {
+		String line1 = SCAN_GTIN_OR_LOCATION;
+		String line2 = "";
+		String line3 = "";
+		String line4 = "CLEAR to exit";
+
+		if (inLastScannedGTIN == null) {
+			line2 = "GTIN to move inventory";
+			line3 = "Location to test light";
+
+		} else {
+			// A GTIN was scanned. It will move on a location scan
+			line2 = String.format("%s will move if", inLastScannedGTIN);
+			line3 = "you scan a location.";
+			line4 = "Or other GTIN or CLEAR";
+
+		}
+		sendDisplayCommand(line1, line2, line3, line4);
 	}
 
 	/**
@@ -2270,7 +2343,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	protected void logout() {
 		super.logout(); // this calls the notifyXXX
-		lastScanedGTIN = null;
+		lastScannedGTIN = null;
 		mContainerInSetup = "";
 
 		//DEV-775 No longer clear CHE setup state on logout
@@ -2284,6 +2357,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		mContainerToWorkInstructionCountMap = null;
 		mContainerInSetup = "";
 		resetRememberCompletesAndShorts();
+		clearSetupMix();
 		super.setupChe();
 	}
 

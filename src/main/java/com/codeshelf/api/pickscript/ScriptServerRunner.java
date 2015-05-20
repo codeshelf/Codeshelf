@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
@@ -31,6 +32,7 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.Che.ProcessMode;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.service.UiUpdateService;
 import com.codeshelf.util.CsExceptionUtils;
 import com.codeshelf.ws.protocol.message.PickScriptMessage;
@@ -47,28 +49,32 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_CREATE_CHE = "createChe <che> <color> <mode>";
 	private final static String TEMPLATE_DELETE_ALL_PATHS = "deleteAllPaths";
 	private final static String TEMPLATE_DEF_PATH = "defPath <pathName> (segments 'X' <start x> <start y> <end x> <end y>)";
-	private final static String TEMPLATE_ASSIGN_PATH_SGM_AISLE = "assighPathSgmToAisle <pathName> <segment id> <aisle name>";
+	private final static String TEMPLATE_ASSIGN_PATH_SGM_AISLE = "assignPathSgmToAisle <pathName> <segment id> <aisle name>";
 	private final static String TEMPLATE_WAIT_SECONDS = "waitSeconds <seconds>";
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScriptSiteRunner.class);
-	private final Facility facility;
+	private final TenantPersistenceService persistence;
+	private final UUID facilityId;
 	private final UiUpdateService uiUpdateService;
 	private final ICsvOrderImporter orderImporter;
 	private final ICsvAislesFileImporter aisleImporter;
 	private final ICsvLocationAliasImporter locationsImporter;
 	private final ICsvInventoryImporter inventoryImporter;
-	private StringBuilder report;
 	private final FormDataMultiPart postBody;
+	private StringBuilder report;
+	private Facility facility;
 	private HashMap<String, Path> paths = new HashMap<String, Path>();
 	
-	public ScriptServerRunner(Facility facility, 
+	public ScriptServerRunner(TenantPersistenceService persistence,
+		UUID facilityId,
 		FormDataMultiPart postBody,
 		UiUpdateService uiUpdateService,
 		ICsvAislesFileImporter aisleImporter,
 		ICsvLocationAliasImporter locationsImporter,
 		ICsvInventoryImporter inventoryImporter,
 		ICsvOrderImporter orderImporter) {
-		this.facility = facility;
+		this.persistence = persistence;
+		this.facilityId = facilityId;
 		this.postBody = postBody;
 		this.uiUpdateService = uiUpdateService;
 		this.aisleImporter = aisleImporter;
@@ -84,9 +90,13 @@ public class ScriptServerRunner {
 		try {
 			String[] lines = script.split("\n");
 			for (String line : lines) {
+				persistence.beginTransaction();
+				facility = Facility.staticGetDao().findByPersistentId(facilityId);
 				processLine(line);
+				persistence.commitTransaction();
 			}
 		} catch (Exception e) {
+			persistence.rollbackTransaction();
 			report.append(CsExceptionUtils.exceptionToString(e)).append("\n");
 			message.setSuccess(false);
 		}
@@ -128,13 +138,13 @@ public class ScriptServerRunner {
 			processDeleteAllPathsCommand(parts);
 		} else if (command.equalsIgnoreCase("defPath")) {
 			processDefinePathCommand(parts);
-		} else if (command.equalsIgnoreCase("assighPathSgmToAisle")) {
+		} else if (command.equalsIgnoreCase("assignPathSgmToAisle")) {
 			processAsignPathSegmentToAisleCommand(parts);
 		} else if (command.equalsIgnoreCase("waitSeconds")) {
 			processWaitSecondsCommand(parts);
 		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, importOrders, importAisles, importInventory, setController, togglePutWall, createChe, deleteAllPaths, defPath, assighPathSgmToAisle, waitSeconds, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, importOrders, importAisles, importInventory, setController, togglePutWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, waitSeconds, //]");
 		}
 	}
 
@@ -253,11 +263,13 @@ public class ScriptServerRunner {
 		}
 		
 		//Assign controller to a given Aisle, given Tier, or to all Tiers in an Aisle of a given Tier
-		if (foundLocation instanceof Aisle){
-			((Aisle) foundLocation).setControllerChannel(controller.getPersistentId().toString(), controllerChannel);
-		} else if(foundLocation instanceof Tier){
+		if (foundLocation.isAisle()){
+			Aisle aisle = Aisle.staticGetDao().findByPersistentId(foundLocation.getPersistentId());
+			aisle.setControllerChannel(controller.getPersistentId().toString(), controllerChannel);
+		} else if(foundLocation.isTier()){
 			String tiersInAisle = parts.length==6 ? Tier.ALL_TIERS_IN_AISLE : Tier.THIS_TIER_ONLY;
-			((Tier) foundLocation).setControllerChannel(controller.getPersistentId().toString(), controllerChannel, tiersInAisle);
+			Tier tier = Tier.staticGetDao().findByPersistentId(foundLocation.getPersistentId());
+			tier.setControllerChannel(controller.getPersistentId().toString(), controllerChannel, tiersInAisle);
 		} else {
 			throw new Exception(foundLocation.getClassName() + " " + foundLocation + " is not an Aisle or a Tier");
 		}
@@ -363,7 +375,7 @@ public class ScriptServerRunner {
 
 	/**
 	 * Expects to see command
-	 * assighPathSgmToAisle <pathName> <segment id> <aisle name>
+	 * assignPathSgmToAisle <pathName> <segment id> <aisle name>
 	 * @throws Exception 
 	 */
 	private void processAsignPathSegmentToAisleCommand(String parts[]) throws Exception {

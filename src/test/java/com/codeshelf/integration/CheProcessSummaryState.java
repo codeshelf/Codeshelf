@@ -100,9 +100,8 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 			return "";
 		return line2.substring(0, firstSpaceAt);
 	}
-	
-	// need getSummaryScreenOtherCount(). Need to parse it out of the line.
 
+	// need getSummaryScreenOtherCount(). Need to parse it out of the line.
 
 	/**
 	 * Assuming some structure of the SETUP_SUMMARY screen, find the count done shown as a string.
@@ -118,7 +117,7 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 			return line3.substring(0, firstSpaceAt);
 		// We are assuming if shorts > 0, then we also show done even if 0.
 	}
-	
+
 	// need getSummaryScreenShortsCount(). Need to parse it out of the line.
 
 	@Test
@@ -127,7 +126,7 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		// A few extra starts and location scans thrown in before getting to the picks.
 
 		Facility facility = getModeledFacility();
-		
+
 		setUpOrders1(facility);
 
 		this.startSiteController();
@@ -222,7 +221,7 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		LOGGER.info("4c: Start; Pick 1. (2 remain)");
 		picker1.pickItemAuto();
 		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
-		
+
 		LOGGER.info("4d: REVERSE; from pick screen, goes back to summary, just as start would");
 		picker1.scanCommand("REVERSE");
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
@@ -313,7 +312,7 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		Assert.assertEquals("XX12", getSummaryScreenLocation(picker1));
 		Assert.assertEquals("4", getSummaryScreenJobCount(picker1));
-		
+
 		// Change of test mission here. Above was changes between good and bad paths.
 		// Now make sure setup resets the remembered completes and shorts since that was not checked in basicSummary().
 		LOGGER.info("3a: Complete one job and short one, then go to setup summary screen");
@@ -338,7 +337,7 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		Assert.assertEquals("3", getSummaryScreenJobCount(picker1));
 		Assert.assertEquals("1", getSummaryScreenDoneCount(picker1));
 		// we do not have getSummaryScreenShortsCount(picker1));
-		
+
 		LOGGER.info("3b: Setup again, with same orders");
 		picker1.scanCommand("SETUP");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
@@ -350,7 +349,7 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		Assert.assertEquals("2", getSummaryScreenOrderCount(picker1));
 		Assert.assertEquals("3", getSummaryScreenJobCount(picker1));
 		Assert.assertEquals("", getSummaryScreenDoneCount(picker1));
-		
+
 		/*
 		 * add this part when we pick up unmodeled and unpathed locations in bayDistance sort
 		 * 
@@ -404,12 +403,57 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 	}
 
 	@Test
+	public final void badPathLocationChange() throws IOException {
+		// DEV-837 had NPE in v16 from starting on a location with no path assignment.
+		// DEV 836 is similar. No NPE, but odd functionality. X11 - X18 are modeled locations without path
+		/*
+		 * DEV-836 reproduced by scan badge, setup, orderId, position(poscon), scan modeled start location without path assignment.
+		 * DEV-837 reproduced by scan badge, setup, orderId, position(poscon), scan START, scan modeled start location without path assignment.
+		 */
+
+		Facility facility = getModeledFacility();
+
+		setUpOrders1(facility);
+
+		this.startSiteController();
+		PickSimulator picker1 = createPickSim(cheGuid1);
+
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+
+		LOGGER.info("1: Reproduce DEV-836");
+		picker1.scanCommand("SETUP");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker1.setupOrderIdAsContainer("11117", "1");
+		picker1.scanLocation("X11");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECTION_INVALID, WAIT_TIME);
+		picker1.logCheDisplay(); // Look in log to see what we have
+		picker1.logout();
+
+		LOGGER.info("2: Reproduce DEV-837");
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+		picker1.scanCommand("SETUP");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker1.setupOrderIdAsContainer("11117", "1");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.scanLocation("X11");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME); // this was the point of the NPE
+		picker1.logCheDisplay(); // Look in log to see what we have. No paths. Actually 1 job. How?
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.logCheDisplay(); // Look in log to see what we have. No paths. Actually 1 job. How?
+		// It got the F14 job, which is modeled and on a path. Probably a bug, but low priority.
+		picker1.logout();
+
+	}
+
+	@Test
 	public final void workSequenceAndSummary() throws IOException {
 
 		beginTransaction();
 		Facility facility = getUnmodeledFacility();
 		commitTransaction();
-		
+
 		beginTransaction();
 		setUpOrders1(facility);
 		commitTransaction();
@@ -589,7 +633,6 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		picker2.scanCommand("START");
 		picker2.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
-
 		// Let's see what the backend has
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
@@ -601,11 +644,11 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		Assert.assertTrue(cu11117.getPosconIndex() == 3);
 		Container c99999 = Container.staticGetDao().findByDomainId(facility, "99999");
 		Assert.assertNull(c99999);
-		
+
 		Container c11111 = Container.staticGetDao().findByDomainId(facility, "11111");
 		ContainerUse cu11111 = ContainerUse.staticGetDao().findByDomainId(c11111, "11111");
 		Assert.assertTrue(cu11111.getPosconIndex() == 3);
-		
+
 		// And check the CHEs. See CheStatusMessage and how it populates. We can check the same.
 		Che che1 = Che.staticGetDao().findByDomainId(getNetwork(), "CHE1");
 		Che che2 = Che.staticGetDao().findByDomainId(getNetwork(), "CHE2");
@@ -622,7 +665,6 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		Assert.assertEquals(1, uses2.size());
 		Assert.assertEquals(cu11111, uses2.get(0)); // Should be the same container use we saw before
 
-	
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
@@ -633,7 +675,7 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		// That is ok.
 
 		Facility facility = getModeledFacility();
-		
+
 		setUpOrders1(facility);
 
 		this.startSiteController();
@@ -656,7 +698,6 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		LOGGER.info("1c: The summary screen we have 3 jobs with 1 other");
 		Assert.assertEquals("3", getSummaryScreenJobCount(picker1));
 
-
 		LOGGER.info("2a: Pick one");
 		picker1.scanCommand("START");
 		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
@@ -668,7 +709,6 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		Assert.assertEquals("1", getSummaryScreenDoneCount(picker1));
 
-
 		LOGGER.info("3a: Logout. Log in. See that done count is the same");
 		picker1.logout();
 		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
@@ -679,7 +719,6 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
 		Assert.assertEquals("1", getSummaryScreenDoneCount(picker1));
 
-
 		LOGGER.info("4a: Start; pick this path to completion");
 		picker1.scanCommand("START");
 		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
@@ -688,7 +727,7 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		picker1.pickItemAuto();
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		Assert.assertEquals("3", getSummaryScreenDoneCount(picker1));
-		
+
 		LOGGER.info("4b: Logout. Log in. See that done count is the same");
 		picker1.logout();
 		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
@@ -723,7 +762,6 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		PickSimulator picker1 = createPickSim(cheGuid1);
 
 		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
-
 
 		LOGGER.info("1a: Set up order 11117");
 		picker1.scanCommand("SETUP");

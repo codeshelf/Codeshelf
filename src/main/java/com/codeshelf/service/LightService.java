@@ -97,14 +97,14 @@ public class LightService implements IApiService {
 	 * The primary use of this is after a scan of tape or location in INVENTORY mode. We want to light where user scanned.
 	 * Initially, only LEDs, but we could add poscon later.
 	 * This calls getMetersFromAnchorGivenCmFromLeft() which may throw InputValidationException
+	 * @param color 
 	 */
-	public void lightLocationCmFromLeft(Location inLocation, int inCmFromLeft) {
+	public void lightLocationCmFromLeft(Location inLocation, int inCmFromLeft, ColorEnum color) {
 		if (inLocation == null) {
 			LOGGER.error("null location in lightLocationOffset");
 			return;
 		}
 		Facility facility = inLocation.getFacility();
-		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
 
 		if (inLocation.isLightableAisleController()) {
 			List<LightLedsInstruction> instructions = Lists.newArrayList();
