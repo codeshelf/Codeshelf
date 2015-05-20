@@ -66,7 +66,8 @@ public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 	protected String	operationType;
 	protected String	locationId;
 	protected String	cmFromLeft;
-	
+	protected String	needsScan;
+
 	// new fields for scanable inventory DEV-642
 	protected String	gtin; // use this field for upc
 
@@ -181,6 +182,10 @@ public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 
 	public final String getCmFromLeft() {
 		return strip(cmFromLeft);
+	}
+
+	public String getNeedsScan() {
+		return strip(needsScan);
 	}
 
 }

@@ -33,6 +33,7 @@ public class CheProcessPutWallSuper extends ServerTest {
 	 */
 	protected Facility setUpFacilityWithPutWall() throws IOException {
 		//Import aisles. A4 is the put wall. No LEDs
+		// A9 is an extra aisle with no path assignment.
 		String aislesCsvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\n"
 				+ "Aisle,A1,,,,,tierB1S1Side,2.85,10,X,20\n"
 				+ "Bay,B1,50,,,,,,,,\n"
@@ -40,7 +41,7 @@ public class CheProcessPutWallSuper extends ServerTest {
 				+ "Bay,B2,CLONE(B1)\n" //
 				+ "Aisle,A2,CLONE(A1),,,,tierB1S1Side,2.85,20,X,20\n"
 				+ "Aisle,A3,CLONE(A1),,,,tierB1S1Side,2.85,60,X,20\n"
-				+ "Aisle,A4,,,,,tierB1S1Side,20,20,X,20\n" //
+				+ "Aisle,A9,CLONE(A1),,,,tierB1S1Side,2.85,100,X,20\n" + "Aisle,A4,,,,,tierB1S1Side,20,20,X,20\n" //
 				+ "Bay,B1,50,,,,,,,,\n"//
 				+ "Tier,T1,50,4,0,0,,,,,\n"//
 				+ "Bay,B2,CLONE(B1)\n"; //
@@ -51,7 +52,7 @@ public class CheProcessPutWallSuper extends ServerTest {
 
 		// Get the aisles
 		beginTransaction();
-		facility = facility.reload();		
+		facility = facility.reload();
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(facility, "A2");
 		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(facility, "A3");
@@ -131,7 +132,16 @@ public class CheProcessPutWallSuper extends ServerTest {
 				+ "A4.B2.T1.S1,P15\n"//
 				+ "A4.B2.T1.S2,P16\n"//
 				+ "A4.B2.T1.S3,P17\n"//
-				+ "A4.B2.T1.S4,P18\n";//
+				+ "A4.B2.T1.S4,P18\n"//
+				+ "A9.B1.T1.S1,X11\n"//
+				+ "A9.B1.T1.S2,X12\n"//
+				+ "A9.B1.T1.S3,X13\n"// 
+				+ "A9.B1.T1.S4,X14\n"//
+				+ "A9.B2.T1.S1,X15\n"//
+				+ "A9.B2.T1.S2,X16\n"//
+				+ "A9.B2.T1.S3,X17\n"//
+				+ "A9.B2.T1.S4,X18\n";//
+
 		beginTransaction();
 		facility = facility.reload();
 		importLocationAliasesData(facility, csvLocationAliases);
@@ -242,8 +252,7 @@ public class CheProcessPutWallSuper extends ServerTest {
 				+ "\r\n,USF314,COSTCO,11119,11119.1,11119,1555,Sku1555,2,each,F13,gtin1555,13"
 				+ "\r\n,USF314,COSTCO,11120,11120.1,11120,1701,Sku1701,2,each,X12,gtin1701,99"
 				+ "\r\n,USF314,COSTCO,11120,11120.2,11120,1702,Sku1702,2,each,X11,gtin1702,99"
-				+ "\r\n,USF314,COSTCO,11120,11120.3,11120,1602,Sku1602,2,each,X11,gtin1602,99"
-;
+				+ "\r\n,USF314,COSTCO,11120,11120.3,11120,1602,Sku1602,2,each,X11,gtin1602,99";
 		importOrdersData(facility, orderCsvString);
 		ItemMaster theMaster = ItemMaster.staticGetDao().findByDomainId(facility, "1515");
 		assertNotNull("ItemMaster should be created", theMaster);

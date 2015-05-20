@@ -20,6 +20,7 @@ import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
 
 public class OrderReimportTest extends ServerTest {
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(OrderReimportTest.class);
 
 	@Test

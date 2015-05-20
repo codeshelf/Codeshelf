@@ -652,6 +652,14 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return result;
 	}
 
+	public Path getAssociatedPath() {
+		PathSegment seg = getAssociatedPathSegment();
+		if (seg != null)
+			return seg.getParent();
+		else
+			return null;
+	}
+
 	public PathSegment getAssociatedPathSegment() {
 		if (isFacility()) {
 			return null;

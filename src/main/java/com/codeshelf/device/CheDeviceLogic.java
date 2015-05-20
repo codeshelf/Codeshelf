@@ -189,7 +189,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	@Getter
 	@Setter
-	protected String								lastScanedGTIN;
+	protected String								lastScannedGTIN;
 
 	@Getter
 	@Setter
@@ -209,10 +209,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		// Location scan is fairly unlikely
 		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
-			if (lastScanedGTIN != null) {
+			if (lastScannedGTIN != null) {
 				// Updating location of an item
-				notifyScanInventoryUpdate(inScanStr, lastScanedGTIN);
-				mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, lastScanedGTIN);
+				notifyScanInventoryUpdate(inScanStr, lastScannedGTIN);
+				mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, lastScannedGTIN);
 			}
 			else {
 				// just a location ID scan. light it.
@@ -223,11 +223,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		// tape scan is likely
 		else if (TAPE_PREFIX.equals(inScanPrefixStr)) {
 			String tapeScan = TAPE_PREFIX + inScanStr;
-			if (lastScanedGTIN != null) {
+			if (lastScannedGTIN != null) {
 				// Updating location of an item
 				// Let's pass with the tape prefix to the server. Otherwise, it has to query one way, and then again for tape
-					notifyScanInventoryUpdate(tapeScan, lastScanedGTIN);
-				mDeviceManager.inventoryUpdateScan(this.getPersistentId(), tapeScan, lastScanedGTIN);
+					notifyScanInventoryUpdate(tapeScan, lastScannedGTIN);
+				mDeviceManager.inventoryUpdateScan(this.getPersistentId(), tapeScan, lastScannedGTIN);
 			}
 			else {
 				// just a location ID scan. light it. Also pass the % first.
@@ -242,7 +242,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		else {
 			// An unadorned string should be gtin/UPC. Store it, replacing what we had.
 			mDeviceManager.inventoryLightItemScan(this.getPersistentId(), inScanStr);
-			lastScanedGTIN = inScanStr;
+			lastScannedGTIN = inScanStr;
 		}
 		setState(CheStateEnum.SCAN_GTIN);
 	}
