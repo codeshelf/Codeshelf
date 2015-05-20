@@ -44,7 +44,8 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_IMPORT_AISLES = "importAisles <filename>";
 	private final static String TEMPLATE_IMPORT_LOCATIONS = "importLocations <filename>";
 	private final static String TEMPLATE_IMPORT_INVENTORY = "importInventory <filename>";
-	private final static String TEMPLATE_SET_CONTROLLER = "setController <location> <lights/poscons> <controller> <channel> ['allTiersInAisle']";
+	private final static String TEMPLATE_SET_CONTROLLER = "setController <location> <lights/poscons> <controller> <channel> ['tiersInAisle']";
+	private final static String TEMPLATE_SET_POSCONS = "setPoscons (assignments <tier> <startIndex> <'forward'/'reverse'>)";
 	private final static String TEMPLATE_TOGGLE_PUT_WALL = "togglePutWall <aisle> [boolean putwall]";
 	private final static String TEMPLATE_CREATE_CHE = "createChe <che> <color> <mode>";
 	private final static String TEMPLATE_DELETE_ALL_PATHS = "deleteAllPaths";
@@ -130,6 +131,8 @@ public class ScriptServerRunner {
 			processImportInventory(parts);
 		} else if (command.equalsIgnoreCase("setController")) {
 			processSetAisleControllerCommand(parts);
+		} else if (command.equalsIgnoreCase("setPoscons")) {
+			processSetPosconsCommand(parts);
 		} else if (command.equalsIgnoreCase("togglePutWall")) {
 			processTogglePutWallCommand(parts);
 		} else if (command.equalsIgnoreCase("createChe")) {
@@ -144,7 +147,7 @@ public class ScriptServerRunner {
 			processWaitSecondsCommand(parts);
 		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, importOrders, importAisles, importInventory, setController, togglePutWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, waitSeconds, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, importOrders, importAisles, importInventory, setController, setPoscons, togglePutWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, waitSeconds, //]");
 		}
 	}
 
@@ -221,7 +224,7 @@ public class ScriptServerRunner {
 	
 	/**
 	 * Expects to see command
-	 * setLedController <location> <type lights/poscons> <controller> <channel> ['allTiersInAisle']
+	 * setLedController <location> <type lights/poscons> <controller> <channel> ['tiersInAisle']
 	 * @throws Exception 
 	 */
 	private void processSetAisleControllerCommand(String parts[]) throws Exception {
@@ -237,8 +240,8 @@ public class ScriptServerRunner {
 		} else {
 			throw new Exception("Invalid controller type " + parts[2] + " (lights/poscons");
 		}
-		if (parts.length == 6 && !parts[5].equalsIgnoreCase("allTiersInAisle")){
-			throw new Exception("The optional 4th parameter in the 'setLedController' command has to be 'allTiersInAisle'");
+		if (parts.length == 6 && !parts[5].equalsIgnoreCase("tiersInAisle")){
+			throw new Exception("The optional 4th parameter in the 'setLedController' command has to be 'tiersInAisle'");
 		}
 		String controllerName = parts[3];
 		String controllerChannel = parts[4];
@@ -272,6 +275,43 @@ public class ScriptServerRunner {
 			tier.setControllerChannel(controller.getPersistentId().toString(), controllerChannel, tiersInAisle);
 		} else {
 			throw new Exception(foundLocation.getClassName() + " " + foundLocation + " is not an Aisle or a Tier");
+		}
+	}
+
+	/**
+	 * Expects to see command
+	 * setPoscons (assignments <tier> <startIndex> <'forward'/'reverse'>)
+	 * @throws Exception 
+	 */
+	private void processSetPosconsCommand(String parts[]) throws Exception {
+		int blockLength = 3;
+		if (parts.length < 4 || (parts.length - 1) % blockLength != 0 ){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_SET_POSCONS);
+		}
+		int totalBlocks = (parts.length - 1) / blockLength;
+		for (int blockNum = 0; blockNum < totalBlocks; blockNum++) {
+			//Read assignemnt block
+			int offset = 1 + blockNum * blockLength;
+			String direction = parts[offset + 2];
+			if (!"forward".equalsIgnoreCase(direction) && !"reverse".equalsIgnoreCase(direction)) {
+				throw new Exception("Last argument of the 'setPoscons' assignment block has to be 'forward' or 'reverse'");
+			}
+			String tierName = parts[offset];
+			Integer startIndex = Integer.parseInt(parts[offset + 1]);
+			boolean reverse = "reverse".equalsIgnoreCase(direction);
+			
+			//Validate Tier
+			Location location = facility.findSubLocationById(tierName);
+			if (location == null){
+				throw new Exception("Unable to find location " + tierName);
+			}
+			if (!location.isTier()){
+				throw new Exception(location.getClassName() + " " + tierName + " is not a Tier");
+			}
+			Tier tier = Tier.staticGetDao().findByPersistentId(location.getPersistentId());
+			
+			//Set Poscons index for a Tier
+			tier.setPoscons(startIndex, reverse);
 		}
 	}
 	

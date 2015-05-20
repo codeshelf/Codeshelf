@@ -3,9 +3,10 @@ editFacility Facility1 5000 8
 importAisles aisles
 importLocations locations
 togglePutWall A3 true
-setController A1.B1.T1 lights  0x000000031 1 allTiersInAisle
+setController A1.B1.T1 lights  0x000000031 1 tiersInAisle
 setController A2       lights  0x0000000AB 1
-setController A3       poscons 0x0000000AA 1
+setController A3.B1.T1 poscons 0x0000000AA 1 tiersInAisle
+setPoscons A3.B1.T1 1 forward A3.B2.T1 5 forward A3.B3.T1 9 forward A3.B4.T1 13 forward
 createChe 0x0000000A3 magenta SETUP_ORDERS
 createChe 0x00000009B green SETUP_ORDERS
 deleteAllPaths
