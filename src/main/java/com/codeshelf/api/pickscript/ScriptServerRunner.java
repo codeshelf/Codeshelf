@@ -3,14 +3,11 @@ package com.codeshelf.api.pickscript;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import org.hibernate.criterion.Criterion;
-import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -251,30 +248,21 @@ public class ScriptServerRunner {
 		
 		//Find Location
 		String locationName = parts[1];
-		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", facility));
-		List<Location> locations = Location.staticGetLocationDao().getAll();
-		Location foundLocation = null;
-		for (Location location : locations) {
-			if (location.getFacility().equals(facility) && location.getNominalLocationId().equalsIgnoreCase(locationName)){
-				foundLocation = location;
-				break;				
-			}
-		}
-		if (foundLocation == null) {
+		Location location = facility.findSubLocationById(locationName);
+		if (location == null) {
 			throw new Exception("Could not find location " + locationName);
 		}
 		
 		//Assign controller to a given Aisle, given Tier, or to all Tiers in an Aisle of a given Tier
-		if (foundLocation.isAisle()){
-			Aisle aisle = Aisle.staticGetDao().findByPersistentId(foundLocation.getPersistentId());
+		if (location.isAisle()){
+			Aisle aisle = Aisle.staticGetDao().findByPersistentId(location.getPersistentId());
 			aisle.setControllerChannel(controller.getPersistentId().toString(), controllerChannel);
-		} else if(foundLocation.isTier()){
+		} else if(location.isTier()){
 			String tiersInAisle = parts.length==6 ? Tier.ALL_TIERS_IN_AISLE : Tier.THIS_TIER_ONLY;
-			Tier tier = Tier.staticGetDao().findByPersistentId(foundLocation.getPersistentId());
+			Tier tier = Tier.staticGetDao().findByPersistentId(location.getPersistentId());
 			tier.setControllerChannel(controller.getPersistentId().toString(), controllerChannel, tiersInAisle);
 		} else {
-			throw new Exception(foundLocation.getClassName() + " " + foundLocation + " is not an Aisle or a Tier");
+			throw new Exception(location.getClassName() + " " + locationName + " is not an Aisle or a Tier");
 		}
 	}
 
@@ -290,7 +278,6 @@ public class ScriptServerRunner {
 		}
 		int totalBlocks = (parts.length - 1) / blockLength;
 		for (int blockNum = 0; blockNum < totalBlocks; blockNum++) {
-			//Read assignemnt block
 			int offset = 1 + blockNum * blockLength;
 			String direction = parts[offset + 2];
 			if (!"forward".equalsIgnoreCase(direction) && !"reverse".equalsIgnoreCase(direction)) {
@@ -300,17 +287,7 @@ public class ScriptServerRunner {
 			Integer startIndex = Integer.parseInt(parts[offset + 1]);
 			boolean reverse = "reverse".equalsIgnoreCase(direction);
 			
-			//Validate Tier
-			Location location = facility.findSubLocationById(tierName);
-			if (location == null){
-				throw new Exception("Unable to find location " + tierName);
-			}
-			if (!location.isTier()){
-				throw new Exception(location.getClassName() + " " + tierName + " is not a Tier");
-			}
-			Tier tier = Tier.staticGetDao().findByPersistentId(location.getPersistentId());
-			
-			//Set Poscons index for a Tier
+			Tier tier = findTier(tierName);
 			tier.setPoscons(startIndex, reverse);
 		}
 	}
@@ -324,6 +301,7 @@ public class ScriptServerRunner {
 		if (parts.length < 2 || parts.length > 3){
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_TOGGLE_PUT_WALL);
 		} 
+		
 		Boolean putWall = null;
 		if (parts.length == 3){
 			String flag = parts[2];
@@ -332,10 +310,8 @@ public class ScriptServerRunner {
 			}
 			putWall = "true".equalsIgnoreCase(flag);
 		}
-		Aisle aisle = Aisle.staticGetDao().findByDomainId(facility, parts[1]);
-		if (aisle == null) {
-			throw new Exception("Unable to find aisle " + parts[1]);
-		}
+		 
+		Aisle aisle = findAisle(parts[1]);
 		if (putWall == null) {
 			aisle.togglePutWallLocation();
 		} else {
@@ -432,10 +408,7 @@ public class ScriptServerRunner {
 		if (segment == null) {
 			throw new Exception("Path " + pathName + " does not have segment " + segmentId);
 		}
-		Aisle aisle = Aisle.staticGetDao().findByDomainId(facility, aisleName);
-		if (aisle == null) {
-			throw new Exception("Unable to find aisle " + aisleName);
-		}
+		Aisle aisle = findAisle(aisleName);
 		aisle.associatePathSegment(segment);
 	}
 
@@ -470,4 +443,29 @@ public class ScriptServerRunner {
 	private void throwIncorrectNumberOfArgumentsException(String expected) throws Exception{
 		throw new Exception("Incorrect number of arguments. Expected '" + expected + "'");
 	}
+	
+	private Aisle findAisle(String aisleName) throws Exception{
+		Location location = facility.findSubLocationById(aisleName);
+		if (location == null) {
+			throw new Exception("Unable to find location " + aisleName);
+		}
+		if (!location.isAisle()){
+			throw new Exception(location.getClassName() + " " + aisleName + " is not an Aisle");
+		}
+		Aisle aisle = Aisle.staticGetDao().findByPersistentId(location.getPersistentId());
+		return aisle;
+	}
+	
+	private Tier findTier(String tierName) throws Exception{
+		Location location = facility.findSubLocationById(tierName);
+		if (location == null) {
+			throw new Exception("Unable to find location " + tierName);
+		}
+		if (!location.isTier()){
+			throw new Exception(location.getClassName() + " " + tierName + " is not a Tier");
+		}
+		Tier tier = Tier.staticGetDao().findByPersistentId(location.getPersistentId());
+		return tier;
+	}
+
 }
