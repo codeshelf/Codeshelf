@@ -73,6 +73,7 @@ import com.codeshelf.service.NotificationService.EventType;
 import com.codeshelf.service.OrderService;
 import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
+import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.UiUpdateService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.protocol.message.CheDisplayMessage;
@@ -94,6 +95,7 @@ public class FacilityResource {
 	private final NotificationService notificationService;
 	private final WebSocketManagerService webSocketManagerService;
 	private final UiUpdateService uiUpdateService;
+	private final PropertyService propertyService;
 	private final ICsvAislesFileImporter aislesImporter;
 	private final ICsvLocationAliasImporter locationsImporter;
 	private final ICsvInventoryImporter inventoryImporter;
@@ -111,6 +113,7 @@ public class FacilityResource {
 		NotificationService notificationService,
 		WebSocketManagerService webSocketManagerService,
 		UiUpdateService uiUpdateService,
+		PropertyService propertyService,
 		ICsvAislesFileImporter aislesImporter,
 		ICsvLocationAliasImporter locationsImporter,
 		ICsvInventoryImporter inventoryImporter,
@@ -120,6 +123,7 @@ public class FacilityResource {
 		this.webSocketManagerService = webSocketManagerService;
 		this.notificationService = notificationService;
 		this.uiUpdateService = uiUpdateService;
+		this.propertyService = propertyService;
 		this.aislesImporter = aislesImporter;
 		this.locationsImporter = locationsImporter;
 		this.inventoryImporter = inventoryImporter;
@@ -425,7 +429,7 @@ public class FacilityResource {
 			Set<User> users = facility.getSiteControllerUsers();
 			StringBuilder response = new StringBuilder();
 			TenantPersistenceService persistence = TenantPersistenceService.getInstance();
-			ScriptServerRunner scriptRunner = new ScriptServerRunner(persistence, facility.getPersistentId(), body, uiUpdateService, aislesImporter, locationsImporter, inventoryImporter, orderImporter);
+			ScriptServerRunner scriptRunner = new ScriptServerRunner(persistence, facility.getPersistentId(), body, uiUpdateService, propertyService, aislesImporter, locationsImporter, inventoryImporter, orderImporter);
 			//Process script parts
 			while (!scriptParts.isEmpty()) {
 				PickScriptPart part = scriptParts.remove(0);

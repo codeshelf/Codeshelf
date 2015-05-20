@@ -6,6 +6,7 @@
 package com.codeshelf.integration;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,6 +29,7 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
+import com.codeshelf.util.ThreadUtils;
 
 /**
  * @author jon ranstrom
@@ -310,79 +312,112 @@ public class CheProcessInventory extends ServerTest {
 	}
 
 	/**
-	 * Login, scan a valid order detail ID, scan INVENTORY command.
-	 * LOCAPICK is true, so create inventory on order import.
+	 * Mimicking what may happen at new site:
+	 * Do the inventory, before Codeshelf has the GTINs, etc.
+	 * Only later, the orders  file has some, but not all of the GTINS.
 	 */
-	// @Test
-	public final void testInventory2() throws IOException {
+	@Test
+	public final void testInventoryOnboarding() throws IOException {
 		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
-		// LOCAPICK off
 		commitTransaction();
-
-		beginTransaction();
-		setUpOrdersWithCntrAndGtin(facility);
-		commitTransaction();
+		// No orders file yet, so no GTINs or OrderMasters in the system
 
 		startSiteController();
 		PickSimulator picker = createPickSim(cheGuid1);
 
 		picker.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
-
-		LOGGER.info("1a: scan X%INVENTORY, should go to SCAN_GTIN state");
 		picker.scanCommand("INVENTORY");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 
-		LOGGER.info("1b: scan GTIN that does not exist - gtin299");
-		picker.scanSomething("gtin299");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		LOGGER.info("1a: inventory five gtins that will come in orders file to good locations");
+		picker.inventoryViaTape("gtin1123", "%004290570250"); // D301
+		picker.inventoryViaTape("gtin1493", "%004290580250"); // D302
+		picker.inventoryViaTape("gtin1522", "%004290590250"); // D303
+		picker.inventoryViaTape("gtin1122", "%004290590100"); // D303
+		picker.inventoryViaTape("gtin1523", "%004290590050"); // D303
 
-		LOGGER.info("1d: scan location. Should create item with GTIN at location D302");
-		picker.scanLocation("D302");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		LOGGER.info("1a2: one repeat inventory to different location");
+		picker.inventoryViaTape("gtin1123", "%004290590050"); // was in D301. This is D303
 
-		this.getTenantPersistenceService().beginTransaction();
+		LOGGER.info("1b: inventory two gtins that will come in orders file to unknown tape locations");
+		picker.inventoryViaTape("gtin1124", "%004299960250");
+		picker.inventoryViaTape("gtin1555", "%004299970250");
+
+		LOGGER.info("1c: inventory two gtins that will not come in orders file to good locations");
+		picker.inventoryViaTape("gtin9996", "%004311050250"); // D501
+		picker.inventoryViaTape("gtin9997", "%004311060250"); // D502
+
+		LOGGER.info("1d: inventory two gtins that will not come in orders file to unknown tape locations");
+		picker.inventoryViaTape("gtin9998", "%004299980250");
+		picker.inventoryViaTape("gtin9999", "%004299990250");
+
+		// probably need to wait here to allow the transactions to complete.
+		ThreadUtils.sleep(4000);
+
+		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
-		LOGGER.info("1e: check that the item with GTIN 200 exists at D302");
-		Location D302 = facility.findSubLocationById("D302");
-		Assert.assertNotNull(D302);
-		Item item200 = D302.getStoredItemFromMasterIdAndUom("gtin200", "ea");
-		Assert.assertNotNull(item200);
-		this.getTenantPersistenceService().commitTransaction();
 
-		LOGGER.info("2a: scan invalid commands");
-		picker.scanCommand("SETUP");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		LOGGER.info("1e: Verify that with the 12 inventory actions with 11 gtins, 11 gtins and 11 masters made");
+		List<Gtin> gtins = Gtin.staticGetDao().getAll();
+		List<ItemMaster> masters = ItemMaster.staticGetDao().getAll();
+		List<Item> items = Item.staticGetDao().getAll();
+		Assert.assertEquals(11, gtins.size());
+		Assert.assertEquals(11, masters.size());
+		Assert.assertEquals(11, items.size());
 
-		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		LOGGER.info("1f: Log the first few gtins");
+		int count = 0;
+		for (Gtin gtin : gtins) {
+			count++;
+			LOGGER.info("Gtin:{} for master:{}", gtin.getGtin(), gtin.getItemMasterId());
+			if (count > 2)
+				break;
+		}
 
-		picker.scanCommand("SHORT");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		LOGGER.info("1g: Log the first few item masters");
+		count = 0;
+		for (ItemMaster master : masters) {
+			count++;
+			LOGGER.info("Master:{} with gtins:{} and item locations:{}", master.getDomainId(), master.getItemGtins(), master.getItemLocations());
+			if (count > 2)
+				break;
+		}
 
-		picker.scanCommand("YES");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		LOGGER.info("1h: Log the first few items");
+		count = 0;
+		for (Item item : items) {
+			count++;
+			LOGGER.info("Item:{} for master:{} and gtin:{}", item.getDomainId(), item.getItemMasterId(), item.getGtinId());
+			if (count > 2)
+				break;
+		}
 
-		picker.scanCommand("NO");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		commitTransaction();
 
-		picker.scanSomething("U%USER1");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		// Following fails! "gtin1123" was made, guessing at master "gtin1123". When the orders file comes, the master SKU is "1123". The import does not
+		// deal with this. After the import, our desired goal is no master with name gtin1123; there is a master SKU 1123; and gtin1123 belongs to the master.
+		// Perhaps just changing the domainId of the master will work.
+		// This is DEV-840
+		/*
+		LOGGER.info("2: Load the orders file with 7 gtins and SKUs");
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		setUpOrdersWithCntrAndGtin(facility);
+		commitTransaction();
 
-		LOGGER.info("2b: scan GTIN that exists - 100");
-		picker.scanSomething("100");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		LOGGER.info("3: See what we have now");
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		List<Gtin> gtins2 = Gtin.staticGetDao().getAll();
+		List<ItemMaster> masters2 = ItemMaster.staticGetDao().getAll();
+		List<Item> items2 = Item.staticGetDao().getAll();
+		Assert.assertEquals(11, gtins2.size());
+		Assert.assertEquals(11, masters2.size());
+		Assert.assertEquals(11, items2.size());
+		commitTransaction();
+		*/
 
-		LOGGER.info("2c: clear");
-		picker.scanCommand("CLEAR");
-		picker.waitForCheState(CheStateEnum.READY, 1000);
-
-		LOGGER.info("3a: scan inventory command");
-		picker.scanCommand("INVENTORY");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-
-		LOGGER.info("3b: scan location before scanning GTIN");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 	}
 
 }

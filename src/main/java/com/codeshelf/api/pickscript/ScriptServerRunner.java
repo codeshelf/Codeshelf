@@ -19,8 +19,10 @@ import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
@@ -29,7 +31,9 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.Che.ProcessMode;
+import com.codeshelf.model.domain.Vertex;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.UiUpdateService;
 import com.codeshelf.util.CsExceptionUtils;
 import com.codeshelf.ws.protocol.message.PickScriptMessage;
@@ -37,6 +41,8 @@ import com.sun.jersey.multipart.FormDataMultiPart;
 
 public class ScriptServerRunner {
 	private final static String TEMPLATE_EDIT_FACILITY = "editFacility <facility domain id> <primary site controller id> <primary radio channel>";
+	private final static String TEMPLATE_OUTLINE = "createDummyOutline [size 1/2/3]";
+	private final static String TEMPLATE_SET_PROPERTY = "setProperty <name> <value>";
 	private final static String TEMPLATE_IMPORT_ORDERS = "importOrders <filename>";
 	private final static String TEMPLATE_IMPORT_AISLES = "importAisles <filename>";
 	private final static String TEMPLATE_IMPORT_LOCATIONS = "importLocations <filename>";
@@ -46,7 +52,7 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_TOGGLE_PUT_WALL = "togglePutWall <aisle> [boolean putwall]";
 	private final static String TEMPLATE_CREATE_CHE = "createChe <che> <color> <mode>";
 	private final static String TEMPLATE_DELETE_ALL_PATHS = "deleteAllPaths";
-	private final static String TEMPLATE_DEF_PATH = "defPath <pathName> (segments 'X' <start x> <start y> <end x> <end y>)";
+	private final static String TEMPLATE_DEF_PATH = "defPath <pathName> (segments '-' <start x> <start y> <end x> <end y>)";
 	private final static String TEMPLATE_ASSIGN_PATH_SGM_AISLE = "assignPathSgmToAisle <pathName> <segment id> <aisle name>";
 	private final static String TEMPLATE_WAIT_SECONDS = "waitSeconds <seconds>";
 	
@@ -54,6 +60,7 @@ public class ScriptServerRunner {
 	private final TenantPersistenceService persistence;
 	private final UUID facilityId;
 	private final UiUpdateService uiUpdateService;
+	private final PropertyService propertyService;
 	private final ICsvOrderImporter orderImporter;
 	private final ICsvAislesFileImporter aisleImporter;
 	private final ICsvLocationAliasImporter locationsImporter;
@@ -67,6 +74,7 @@ public class ScriptServerRunner {
 		UUID facilityId,
 		FormDataMultiPart postBody,
 		UiUpdateService uiUpdateService,
+		PropertyService propertyService,
 		ICsvAislesFileImporter aisleImporter,
 		ICsvLocationAliasImporter locationsImporter,
 		ICsvInventoryImporter inventoryImporter,
@@ -75,6 +83,7 @@ public class ScriptServerRunner {
 		this.facilityId = facilityId;
 		this.postBody = postBody;
 		this.uiUpdateService = uiUpdateService;
+		this.propertyService = propertyService;
 		this.aisleImporter = aisleImporter;
 		this.locationsImporter = locationsImporter;
 		this.inventoryImporter = inventoryImporter;
@@ -118,6 +127,10 @@ public class ScriptServerRunner {
 		String command = parts[0];
 		if (command.equalsIgnoreCase("editFacility")) {
 			processEditFacilityCommand(parts);
+		} else if (command.equalsIgnoreCase("createDummyOutline")) {
+			processOutlineCommand(parts);
+		} else if (command.equalsIgnoreCase("setProperty")) {
+			processSetPropertyCommand(parts);
 		} else if (command.equalsIgnoreCase("importOrders")) {
 			processImportOrdersCommand(parts);
 		} else if (command.equalsIgnoreCase("importAisles")) {
@@ -144,7 +157,7 @@ public class ScriptServerRunner {
 			processWaitSecondsCommand(parts);
 		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, importOrders, importAisles, importInventory, setController, setPoscons, togglePutWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, waitSeconds, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, importOrders, importAisles, importInventory, setController, setPoscons, togglePutWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, waitSeconds, //]");
 		}
 	}
 
@@ -160,6 +173,61 @@ public class ScriptServerRunner {
 		facility.setDomainId(parts[1]);
 		facility.setPrimarySiteControllerId(parts[2]);
 		facility.setPrimaryChannel(Short.parseShort(parts[3]));
+	}
+
+	/**
+	 * Expects to see command
+	 * createDummyOutline [size 1/2/3]
+	 * @throws Exception 
+	 */
+	private void processOutlineCommand(String parts[]) throws Exception {
+		if (parts.length > 2){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_OUTLINE);
+		}
+		int facilitySize = 1;
+		if (parts.length == 2) {
+			facilitySize = Integer.parseInt(parts[1]);
+		}
+		if (facilitySize < 1 || facilitySize > 3) {
+			throw new Exception("Invalid facility size " + facilitySize + ". Allowed values: 1-3");
+		}
+		List<Vertex> vertices = facility.getVertices();
+		while (!vertices.isEmpty()){
+			Vertex.staticGetDao().delete(vertices.remove(0));
+		}
+		if (facilitySize == 1) {
+			facility.createVertex("V0", "GPS", -122.271673679351807, 37.8032855078260113, 0);
+			facility.createVertex("V1", "GPS", -122.271673679351807, 37.8031498746375263, 1);
+			facility.createVertex("V2", "GPS", -122.271479676417243, 37.8031498746375263, 2);
+			facility.createVertex("V3", "GPS", -122.271479676417243, 37.8032855078260113, 3);
+		} else if (facilitySize == 2) {
+			facility.createVertex("V0", "GPS", -122.271673679351807, 37.8032855078260113, 0);
+			facility.createVertex("V1", "GPS", -122.271673679351807, 37.8030545074026705, 1);
+			facility.createVertex("V2", "GPS", -122.271384457997215, 37.8030545074026705, 2);
+			facility.createVertex("V3", "GPS", -122.271384457997215, 37.8032855078260113, 3);
+		} else if (facilitySize == 3) {
+			facility.createVertex("V0", "GPS", -122.271673679351807, 37.8032855078260113, 0);
+			facility.createVertex("V1", "GPS", -122.271673679351807, 37.8029527822164439, 1);
+			facility.createVertex("V2", "GPS", -122.271210114411247, 37.8029527822164439, 2);
+			facility.createVertex("V3", "GPS", -122.271210114411247, 37.8032855078260113, 3);
+		}
+	}
+
+	/**
+	 * Expects to see command
+	 * setProperty <name> <value>
+	 * @throws Exception 
+	 */
+	private void processSetPropertyCommand(String parts[]) throws Exception {
+		if (parts.length != 3){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_SET_PROPERTY);
+		}
+		String name = parts[1].toUpperCase();
+		DomainObjectProperty property = PropertyDao.getInstance().getPropertyWithDefault(facility, name);
+		if (property == null) {
+			throw new Exception("Property " + name + " doesn't exist");
+		}
+		propertyService.changePropertyValue(facility, name, parts[2]);
 	}
 
 	/**
@@ -360,7 +428,7 @@ public class ScriptServerRunner {
 
 	/**
 	 * Expects to see command
-	 * defPath <pathName> (segments 'X' <start x> <start y> <end x> <end y>)
+	 * defPath <pathName> (segments '-' <start x> <start y> <end x> <end y>)
 	 * @throws Exception 
 	 */
 	private void processDefinePathCommand(String parts[]) throws Exception {
@@ -375,8 +443,8 @@ public class ScriptServerRunner {
 		int totalSegnemts = (parts.length - 2) / 5;
 		for (int segNum = 0; segNum < totalSegnemts; segNum++) {
 			int offset = 2 + segNum * 5;
-			if (!parts[offset].equalsIgnoreCase("X")) {
-				throw new Exception("Did not put an 'X' before each path segment");
+			if (!parts[offset].equals("-")) {
+				throw new Exception("Did not put an '-' before each path segment");
 			}
 			double startX = Double.parseDouble(parts[offset + 1]);
 			double startY = Double.parseDouble(parts[offset + 2]);

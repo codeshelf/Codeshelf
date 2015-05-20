@@ -16,6 +16,7 @@ import com.codeshelf.api.resources.subresources.FacilityResource;
 import com.codeshelf.api.resources.subresources.WorkerResource;
 import com.codeshelf.service.NotificationService;
 import com.codeshelf.service.OrderService;
+import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.UiUpdateService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.testframework.HibernateTest;
@@ -34,6 +35,7 @@ public class WorkerTest extends HibernateTest {
 			notificaitonService, 
 			webSocketManagerService, 
 			new UiUpdateService(), 
+			new PropertyService(),
 			createAisleFileImporter(), 
 			createLocationAliasImporter(), 
 			createInventoryImporter(), 
