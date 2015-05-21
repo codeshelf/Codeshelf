@@ -394,7 +394,7 @@ public class FacilityResource {
 	@Path("pickrate")
 	@RequiresPermissions("event:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response pickRate(@QueryParam("start") StartDateParam startDateParam) {
+	public Response pickRate(@QueryParam("startTimestamp") StartDateParam startDateParam, @QueryParam("endTimestamp") EndDateParam endDateParam) {
 		ErrorResponse errors = new ErrorResponse();
 		try {
 			List<PickRate> pickRates = notificationService.getPickRate(startDateParam.getValue());
