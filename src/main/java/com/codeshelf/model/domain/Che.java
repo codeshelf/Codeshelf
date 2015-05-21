@@ -83,6 +83,11 @@ public class Che extends WirelessDeviceABC {
 	@JsonProperty
 	private String					lastScannedLocation;
 
+	@Column(nullable = true, name = "associate_to_che_guid")
+	@Getter
+	@Setter
+	private byte[]					associateToCheGuid;
+
 	@OneToMany(mappedBy = "currentChe")
 	@Getter
 	private List<ContainerUse>		uses				= new ArrayList<ContainerUse>();
@@ -252,7 +257,7 @@ public class Che extends WirelessDeviceABC {
 			return null;
 		}
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Functions related to remembering a CHE's current path and work area. For DEV-721
@@ -280,7 +285,7 @@ public class Che extends WirelessDeviceABC {
 	public String getActivePathUi() {
 		String returnStr = "";
 		Path path = getActivePath();
-		if (path != null){
+		if (path != null) {
 			returnStr = path.getDomainId();
 		}
 		return returnStr;
@@ -291,7 +296,7 @@ public class Che extends WirelessDeviceABC {
 		// Existing CHE UX Work Area field needs to change, or come to this.
 		String returnStr = "";
 		Path path = getActivePath();
-		if (path != null){
+		if (path != null) {
 			WorkArea area = path.getWorkArea();
 			if (area != null) {
 				returnStr = area.getWorkAreaId();
