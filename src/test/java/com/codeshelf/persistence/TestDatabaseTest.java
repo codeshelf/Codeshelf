@@ -5,10 +5,17 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
+import java.sql.Timestamp;
+import java.util.List;
+
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.testframework.HibernateTest;
 
@@ -30,6 +37,29 @@ public class TestDatabaseTest extends HibernateTest {
 		testDatabaseSequence();
 	}
 
+	//Passes if the following line is commented out 
+	//	configuration.registerTypeOverride(new UtcTimestampType());
+	//@Test
+	public void testDateQuery() {
+		this.getTenantPersistenceService().beginTransaction();
+		Facility facility = createFacility();
+		Container container = this.createContainer("id", facility);
+		Container.staticGetDao().store(container);
+		Timestamp updatedTime = container.getUpdated();
+		this.getTenantPersistenceService().commitTransaction();
+		
+		this.getTenantPersistenceService().beginTransaction();
+		
+		Session session = this.getTenantPersistenceService().getSession();
+		Query  query = session.createQuery("from Container where updated <= :endDateTime");
+		query.setTimestamp("endDateTime", updatedTime);
+		List<Container> containers = query.list();
+		Assert.assertEquals(1, containers.size());
+		this.getTenantPersistenceService().commitTransaction();
+		
+	}
+	
+	
 	private void testDatabaseSequence() {
 		
 		LOGGER.info("Test Database sequence #"+TestDatabaseTest.sequence_static);
