@@ -312,9 +312,13 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			keepAliveCounter.inc();
 			systemRequestCounter.inc();
 		} else if (message instanceof NotificationMessage) {
-			notificationCounter.inc();
-			NotificationService service = serviceFactory.getServiceInstance(NotificationService.class);
-			service.saveEvent((NotificationMessage) message);
+			try {
+				notificationCounter.inc();
+				NotificationService service = serviceFactory.getServiceInstance(NotificationService.class);
+				service.saveEvent((NotificationMessage) message);
+			} catch (RuntimeException e) {
+				LOGGER.warn(String.format("Unable to save event for session %s and message %s", session,  message), e); //using string format so that exeption can be supplied
+			}
 		} else if (message instanceof PickScriptMessage){
 			PickScriptMessage pickScriptMessage = (PickScriptMessage) message;
 			PickScriptCallPool.registerSiteResponse(pickScriptMessage);

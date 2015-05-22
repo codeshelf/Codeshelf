@@ -1,29 +1,26 @@
 package com.codeshelf.api.responses;
 
-import java.sql.Timestamp;
-
 import lombok.Getter;
+import lombok.Setter;
 
 public class PickRate {
-	@Getter
+	@Getter @Setter
 	private String workerId;
 
-	@Getter
-	private Timestamp hour;
+	@Getter @Setter
+	private Integer hour;
 	
-	@Getter
-	private String hourUI;
+	@Getter @Setter
+	private Long picks;
 	
-	@Getter
-	private Integer picks;
-	
-	@Getter
-	private Integer quantity;
+	@Getter @Setter
+	private Long quantity;
 
-	public PickRate(String workerId, Timestamp hour, String hourUI, Integer picks, Integer quantity) {
+	public PickRate() {}
+	
+	public PickRate(String workerId, Integer hour, Long picks, Long quantity) {
 		this.workerId = workerId;
 		this.hour = hour;
-		this.hourUI = hourUI;
 		this.picks = picks;
 		this.quantity = quantity;
 	}

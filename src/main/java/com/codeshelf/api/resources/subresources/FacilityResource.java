@@ -31,6 +31,7 @@ import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
+import org.joda.time.DateTime;
 
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.codeshelf.api.BaseResponse;
@@ -397,7 +398,7 @@ public class FacilityResource {
 	public Response pickRate(@QueryParam("startTimestamp") StartDateParam startDateParam, @QueryParam("endTimestamp") EndDateParam endDateParam) {
 		ErrorResponse errors = new ErrorResponse();
 		try {
-			List<PickRate> pickRates = notificationService.getPickRate(startDateParam.getValue(), endDateParam.getValue());
+			List<PickRate> pickRates = notificationService.getPickRate(new DateTime(startDateParam.getValue()), new DateTime(endDateParam.getValue()));
 			return BaseResponse.buildResponse(pickRates);
 		} catch (Exception e) {
 			return errors.processException(e);
