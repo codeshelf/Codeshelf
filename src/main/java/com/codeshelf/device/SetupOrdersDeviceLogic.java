@@ -96,6 +96,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private boolean								mSetupMixHasPutwall						= false;
 	private boolean								mSetupMixHasCntrOrder					= false;
 
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private String								mLinkedToCheName						= null;
+
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final CsDeviceManager inDeviceManager,
@@ -314,6 +319,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					showActivePicks();
 					break;
 
+				case REMOTE:
+					sendRemoteStateScreen();
+					break;
+
+				case REMOTE_PENDING:
+					sendDisplayCommand("Linking...", EMPTY_MSG);
+					break;
+
 				default:
 					break;
 			}
@@ -369,12 +382,33 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				putWallCommandReceived();
 				break;
 
+			case REMOTE_COMMAND:
+				remoteCommandReceived();
+				break;
+
 			default:
 
 				//Legacy Behavior
 				if (mCheStateEnum != CheStateEnum.SHORT_PICK_CONFIRM) {
 					clearAllPosconsOnThisDevice();
 				}
+				break;
+		}
+	}
+
+	protected void remoteCommandReceived() {
+		// state sensitive. Only allow at start and finish for now.
+		switch (mCheStateEnum) {
+			case SETUP_SUMMARY:
+				setState(CheStateEnum.REMOTE);
+				break;
+			case REMOTE:
+				// This triggers our clear association action
+				stubFunctionClearAssociation();
+				setState(CheStateEnum.REMOTE); // will go to REMOTE_PENDING
+				break;
+
+			default:
 				break;
 		}
 	}
@@ -497,13 +531,27 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
 				break;
 
+			case REMOTE:
+				setState(CheStateEnum.SETUP_SUMMARY);
+				break;
+
+			case REMOTE_PENDING: // State is transitory unless the server failed to respond
+				LOGGER.error("Probable bug. Clear from REMOTE_PENDING state.");
+				setState(CheStateEnum.SETUP_SUMMARY);
+				break;
+
+			case GET_PUT_INSTRUCTION: // State is transitory unless the server failed to respond
+				LOGGER.error("Probable bug. Clear from GET_PUT_INSTRUCTION state.");
+				CheStateEnum priorState = getRememberEnteringWallOrInventoryState();
+				setState(priorState);
+				break;
+
 			case PUT_WALL_SCAN_ORDER:
 			case PUT_WALL_SCAN_LOCATION:
 			case PUT_WALL_SCAN_ITEM:
-			case GET_PUT_INSTRUCTION: // should never happen. State is transitory unless the server failed to respond
 			case PUT_WALL_SCAN_WALL:
 				// DEV-708, 712 specification. We want to return the state we started from: CONTAINER_SELECT or PICK_COMPLETE
-				CheStateEnum priorState = getRememberEnteringWallOrInventoryState();
+				priorState = getRememberEnteringWallOrInventoryState();
 				setState(priorState);
 				break;
 
@@ -1342,6 +1390,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processPutWallScanWall(inScanPrefixStr, inContent);
 				break;
 
+			case REMOTE:
+				processCheLinkScan(inScanPrefixStr, inContent);
+
 			default:
 				break;
 		}
@@ -1602,6 +1653,35 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			line4 = "Or other GTIN or CLEAR";
 
 		}
+		sendDisplayCommand(line1, line2, line3, line4);
+	}
+
+	/**
+	 * Show if we are linked, and give instructions on how to link. Screen will show as
+	 * Linked to: (none)
+	 * Scan Che name to link
+	 * 
+	 * CLEAR to exit
+	 * 
+	 * or
+	 * Linked to: CHE3
+	 * Scan Che name to link
+	 * or REMOTE to unlink
+	 * CLEAR to exit
+	 */
+	void sendRemoteStateScreen() {
+		String cheName = getLinkedToCheName();
+		boolean wasNull = false;
+		if (cheName == null) {
+			cheName = "(none)";
+			wasNull = true;}
+		String line1 = String.format("Linked to: %s", cheName);
+		String line2 = "Scan Che name to link";
+		String line3 = "";
+		if (!wasNull)
+			line3 = "or REMOTE to unlink";		
+		String line4 = "CLEAR to exit";
+
 		sendDisplayCommand(line1, line2, line3, line4);
 	}
 
@@ -2414,6 +2494,36 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				mPositionToContainerMap.put(position.toString(), container);
 			}
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Send the websocket message to clear
+	 * For DEV-843, 844.
+	 */
+	private void stubFunctionClearAssociation() {
+		this.setLinkedToCheName(null);
+		setState(CheStateEnum.REMOTE); // forces screen redraw. Later, send the message and go to REMOTE_PENDING state.
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Send the websocket message to clear
+	 * For DEV-843, 844.
+	 */
+	private void stubFunctionAssociateToChe(String cheName) {
+		this.setLinkedToCheName(cheName);
+		setState(CheStateEnum.REMOTE); // forces screen redraw. Later, send the message and go to REMOTE_PENDING state.
+	}
+
+	private void processCheLinkScan(String inScanPrefixStr, String inContent) {
+		if (CHE_NAME_PREFIX.equals(inScanPrefixStr)) {
+			stubFunctionAssociateToChe(inContent);
+		} else {
+			LOGGER.info("Not a CHE scan:{}{} ", inScanPrefixStr, inContent);
+			invalidScanMsg(mCheStateEnum);
+		}
+
 	}
 
 }

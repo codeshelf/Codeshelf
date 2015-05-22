@@ -74,26 +74,38 @@ public class EventDisplay {
 	private String resolvedBy;
 
 	public static EventDisplay createEventDisplay(WorkerEvent event) {
-		WorkInstruction wi = WorkInstruction.staticGetDao().findByPersistentId(event.getWorkInstructionId());
+		WorkInstruction wi = null;
+		
+		UUID workInstructionId = event.getWorkInstructionId();
+		if (workInstructionId != null) {
+			wi = WorkInstruction.staticGetDao().findByPersistentId(workInstructionId);
+		}
+		
 		Worker worker = Worker.findWorker(event.getFacility(), event.getWorkerId());
 		return new EventDisplay(event, wi, worker);
 	}
 
 	private EventDisplay(WorkerEvent event, WorkInstruction wi, Worker worker) {
+		if (wi != null) {
+			itemId = wi.getItemId();
+			itemDescription = wi.getItemMaster().getDescription();
+			itemUom = wi.getUomMasterId();
+			itemLocation = wi.getPickInstruction();
+			wiPlanQuantity = wi.getPlanQuantity();
+			wiActualQuantity = wi.getActualQuantity();
+			orderId = wi.getOrderId();
+			deviceGuid = wi.getAssignedChe().getDeviceGuidStr();
+		}
+
+		if (worker != null) {
+			workerName = String.format("%s, %s %s", Strings.nullToEmpty(worker.getLastName()),
+				Strings.nullToEmpty(worker.getFirstName()),
+				Strings.nullToEmpty(worker.getMiddleInitial()));
+		}
+		
 		persistentId = event.getPersistentId();
 		type = event.getEventType();
 		createdAt = event.getCreated();
-		itemId = wi.getItemId();
-		itemDescription = wi.getItemMaster().getDescription();
-		itemUom = wi.getUomMasterId();
-		itemLocation = wi.getPickInstruction();
-		wiPlanQuantity = wi.getPlanQuantity();
-		wiActualQuantity = wi.getActualQuantity();
-		workerName = String.format("%s, %s %s", Strings.nullToEmpty(worker.getLastName()),
-												Strings.nullToEmpty(worker.getFirstName()),
-												Strings.nullToEmpty(worker.getMiddleInitial()));
-		orderId = wi.getOrderId();
-		deviceGuid = wi.getAssignedChe().getDeviceGuidStr();
 		devicePersistentId = event.getDevicePersistentId();
 		workerId = event.getWorkerId();
 		orderDetailId = event.getOrderDetailId();

@@ -7,13 +7,15 @@ import lombok.Getter;
 
 import org.apache.commons.lang.ObjectUtils;
 
-@EqualsAndHashCode
+import com.google.common.base.Strings;
+
+@EqualsAndHashCode(of={"itemId", "uom", "location"})
 public class ItemDisplay implements Comparable<ItemDisplay> {
 	
 	public static final FieldComparator<Map<Object, Object>>	ItemComparator = new FieldComparator<Map<Object, Object>>() {
 
 		@Getter
-		private String[] sortedBy = {"itemId", "location", "uom"};
+		private String[] sortedBy = {"itemId", "uom", "location"};
 		
 		@Override
 		public int compare(Map<Object, Object> record1, Map<Object, Object> record2) {
@@ -46,10 +48,10 @@ public class ItemDisplay implements Comparable<ItemDisplay> {
 	private String location;
 
 	public ItemDisplay(EventDisplay eventDisplay) {
-		this.itemId = eventDisplay.getItemId();
-		this.uom = eventDisplay.getItemUom();
-		this.description = eventDisplay.getItemDescription();
-		this.location = eventDisplay.getItemLocation();
+		this.itemId = Strings.nullToEmpty(eventDisplay.getItemId());
+		this.uom = Strings.nullToEmpty(eventDisplay.getItemUom());
+		this.description = Strings.nullToEmpty(eventDisplay.getItemDescription());
+		this.location = Strings.nullToEmpty(eventDisplay.getItemLocation());
 	}
 
 	@Override
