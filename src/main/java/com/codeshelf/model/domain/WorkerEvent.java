@@ -86,7 +86,7 @@ public class WorkerEvent extends DomainObjectABC {
 	@Getter @Setter
 	private UUID							orderDetailId;
 
-	@ManyToOne()
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "work_instruction_persistentid", foreignKey=@ForeignKey(name="none", value=ConstraintMode.NO_CONSTRAINT ))
 	@Type(type="com.codeshelf.persistence.DialectUUIDType")
 	@Getter @Setter
