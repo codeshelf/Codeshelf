@@ -37,7 +37,7 @@ public class NotificationService implements IApiService{
 	
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(NotificationService.class);
 	
-	private static final EnumSet<EventType> SAVE_ONLY = EnumSet.of(EventType.SKIP_ITEM_SCAN, EventType.SHORT);
+	private static final EnumSet<EventType> SAVE_ONLY = EnumSet.of(EventType.SKIP_ITEM_SCAN, EventType.SHORT, EventType.COMPLETE);
 	
 	@Inject
 	public NotificationService() {
@@ -65,6 +65,7 @@ public class NotificationService implements IApiService{
 			}
 			
 			WorkerEvent event = new WorkerEvent();
+			event.setCreated(new Timestamp(message.getTimestamp()));
 			event.setFacility(device.getFacility());
 			event.setEventType(message.getEventType());
 			event.setDevicePersistentId(message.getDevicePersistentId().toString());
@@ -84,6 +85,7 @@ public class NotificationService implements IApiService{
 			event.generateDomainId();
 			WorkerEvent.staticGetDao().store(event);
 		} catch (Exception e) {
+			TenantPersistenceService.getInstance().rollbackTransaction();
 			throw e;
 		} finally {
 			TenantPersistenceService.getInstance().commitTransaction();
@@ -91,7 +93,7 @@ public class NotificationService implements IApiService{
 	}
 	
 	@SuppressWarnings("unchecked")
-	public List<PickRate> getPickRate(Date startDate){
+	public List<PickRate> getPickRate(Date startDate, Date endDate){
 		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		Session session = TenantPersistenceService.getInstance().getSession();
 		String schemaName = tenant.getSchemaName();

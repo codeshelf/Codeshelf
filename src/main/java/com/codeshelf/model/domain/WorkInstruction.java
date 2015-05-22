@@ -260,6 +260,11 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private Boolean needsScan = false;
 
+	@Column(nullable = true, name = "gtin")
+	@Getter @Setter
+	@JsonProperty
+	private String gtin = null;
+
 	public WorkInstruction() {
 	}
 
@@ -588,6 +593,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		return needsScan;
 	}
 
+	/* replaced by GTIN field
 	public String getGtinId() {
 		// remember, house keeping WIs may not have order detail. It is nullable. Other kinds of work instruction also may not.
 		ItemMaster im = getItemMaster();
@@ -610,5 +616,6 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			return "";
 		}
 	}
+	*/
 
 }

@@ -703,6 +703,14 @@ public abstract class FrameworkTest implements IntegrationTest {
 		Mockito.when(user.getPermissionStrings()).thenReturn(Sets.newHashSet("*"));
 		return user;
 	}
+	
+	public Che getChe1() {
+		return Che.staticGetDao().findByPersistentId(this.che1PersistentId);
+	}
+
+	public Che getChe2() {
+		return Che.staticGetDao().findByPersistentId(this.che2PersistentId);
+	}
 
 	private void createMockWsConnection() {
 		UserContext user = setDefaultUserAndTenant();

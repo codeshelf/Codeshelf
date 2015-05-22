@@ -42,9 +42,11 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	
 	DateTimeParser					mDateTimeParser;
 
-	@Getter
-	@Setter
-	private Boolean					locapickValue			= null;
+	@Getter @Setter
+	private Boolean					locaPick			= null;
+
+	@Getter @Setter
+	private Boolean					scanPick			= null;
 
 	@Getter
 	@Setter
@@ -86,9 +88,10 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		
 		this.batchResult = new BatchResult<Object>();
 		
-		// Get our LOCAPICK configuration value. It will not change during importing one file.
-		boolean locapickValue = PropertyService.getInstance().getBooleanPropertyFromConfig(facility, DomainObjectProperty.LOCAPICK);
-		setLocapickValue(locapickValue);
+		// Get our LOCAPICK and SCANPICK configuration values. It will not change during importing one file.
+		this.locaPick = PropertyService.getInstance().getBooleanPropertyFromConfig(facility, DomainObjectProperty.LOCAPICK);
+		this.scanPick = PropertyService.getInstance().getBooleanPropertyFromConfig(facility, DomainObjectProperty.SCANPICK);
+
 		int numOrders = 0;
 		int numLineItems = 0; 
 		
@@ -214,4 +217,5 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	protected Set<EventTag> getEventTagsForImporter() {
 		return EnumSet.of(EventTag.IMPORT, EventTag.ORDER_OUTBOUND);
 	}
+
 }

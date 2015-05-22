@@ -57,6 +57,7 @@ import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerUse;
 import com.codeshelf.model.domain.DomainObjectProperty;
@@ -1962,4 +1963,102 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			}
 		}
 	}
+
+	/**
+	 * Primary API to set a mobile CHE association to other CHE.
+	 * This enforces consistency. Therefore may unexpectedly clear another CHE's association.
+	 * Returns true if there was a significant association change.
+	 */
+	public boolean associateCheToCheName(Che inChe, String inCheNameToAssociateTo) {
+		if (inChe == null || inCheNameToAssociateTo == null || inCheNameToAssociateTo.isEmpty()) {
+			LOGGER.error("null input to associateCheToCheName");
+			return false;
+		}
+		LOGGER.info("Associate {} to {}", inChe.getDomainId(), inCheNameToAssociateTo);
+		// The name must be the domainId
+		CodeshelfNetwork network = inChe.getParent();
+		Che otherChe = Che.staticGetDao().findByDomainId(network, inCheNameToAssociateTo);
+		if (otherChe == null) {
+			LOGGER.warn("did not find CHE named {}", inCheNameToAssociateTo);
+			return false;
+		}
+
+		if (otherChe.equals(inChe)) {
+			LOGGER.warn("associateCheToCheName called to associate to itself. Not allowed");
+			return false;
+		}
+		boolean changed = false;
+		
+		// By any chance, is the che we are going to associate to already pointing at another CHE? If so, clear that.
+		Che chePointedAt = otherChe.getAssociateToChe();
+		if (chePointedAt != null) {
+			LOGGER.warn("{} was itself associated to {}. Clearing {} association",
+				otherChe.getDomainId(),
+				chePointedAt.getDomainId(),
+				otherChe.getDomainId());
+			changed = clearCheAssociation(otherChe);
+		}
+
+		// is any other CHE already associated to the otherChe? Only looks for one. I suppose bad bugs could make more.
+		Che pointingAtOtherChe = otherChe.getCheAssociatedToThis();
+		if (pointingAtOtherChe != null) {
+			LOGGER.warn("Clearing association of {} which pointed to {}", pointingAtOtherChe.getDomainId(), inCheNameToAssociateTo);
+			pointingAtOtherChe.setAssociateToCheGuid(null);
+			Che.staticGetDao().store(pointingAtOtherChe);
+			changed = true;
+		}
+
+		// finally, do the set
+		inChe.setAssociateToCheGuid(otherChe.getDeviceGuid());
+		Che.staticGetDao().store(inChe);
+		changed = true;
+		
+		return changed;
+	}
+
+	/**
+	 * If the inChe is associated to another CHE, clear that association
+	 * Returns true if there was a significant association change.
+	 */
+	public boolean clearCheAssociation(Che inChe) {
+		if (inChe == null) {
+			LOGGER.error("null input to clearCheAssociation");
+			return false;
+		}
+		boolean changed = false;
+		LOGGER.info("Clearing {} association", inChe.getDomainId());
+
+		byte[] bytes = inChe.getAssociateToCheGuid();
+		if (bytes == null) {
+			LOGGER.info("needless clearCheAssociation");
+			// remove later?
+		} else {
+			inChe.setAssociateToCheGuid(null);
+			Che.staticGetDao().store(inChe);
+			changed = true;
+		}
+		return changed;
+	}
+
+	/**
+	 * If any CHE are associated to the inChe, clear the association. Actually one finds there first. 
+	 * Possible bugs with multiples may not be handled.
+	 * Returns true if there was a significant association change.
+	 */
+	public boolean clearAssociationsToChe(Che inChe) {
+		if (inChe == null) {
+			LOGGER.error("null input to clearAssociationsToChe");
+			return false;
+		}
+		boolean changed = false;
+		LOGGER.info("Clearing associations to {}", inChe.getDomainId());
+		Che pointingAtChe = inChe.getCheAssociatedToThis();
+		if (pointingAtChe != null) {
+			pointingAtChe.setAssociateToCheGuid(null);
+			Che.staticGetDao().store(pointingAtChe);
+			changed = true;
+		}
+		return changed;
+	}
+
 }

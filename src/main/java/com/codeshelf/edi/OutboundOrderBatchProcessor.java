@@ -52,9 +52,6 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 	DateTimeParser dateTimeParser;
 
-	@Getter @Setter
-	private Boolean	locapickValue = null;
-
 	@Getter
 	private Timestamp	processTime;
 
@@ -94,7 +91,6 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		this.facility = facility;
 		this.processorId = procId;
 		this.dateTimeParser = new DateTimeParser();
-		this.locapickValue = importer.getLocapickValue();
 	}
 	
 	@Override
@@ -321,7 +317,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		Gtin gtinMap = upsertGtin(inFacility, itemMaster, inCsvBean, uomMaster);
 
 		// If preferredLocation is there, we set it on the detail. LOCAPICK controls whether we also create new inventory to match.
-		if (getLocapickValue()) {
+		if (importer.getLocaPick()) {
 			String locationValue = orderDetail.getPreferredLocation(); // empty string if location did not validate
 			if (locationValue != null && !locationValue.isEmpty()) {
 				// somewhat cloned from UiUpdateService.upsertItem(); Could refactor
@@ -813,11 +809,18 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		result.setDescription(inCsvBean.getDescription());
 		result.setUomMaster(inUomMaster);
 		
+		// calculate needs scan setting
 		boolean needsScan = false;
 		if (inCsvBean.getNeedsScan()!=null) {
 			String needsScanStr = inCsvBean.getNeedsScan().toLowerCase();
 			if ("yes".equals(needsScanStr)||"y".equals(needsScanStr)||"true".equals(needsScanStr)||"t".equals(needsScanStr)||"1".equals(needsScanStr)) {
 				needsScan = true;
+			}
+		}
+		else {
+			// check global scanpick setting
+			if (importer.getScanPick()) {
+				 needsScan = true;
 			}
 		}
 		result.setNeedsScan(needsScan);
