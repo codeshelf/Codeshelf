@@ -63,7 +63,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					LOCATION_PREFIX							= "L%";
 	protected static final String					ITEMID_PREFIX							= "I%";
 	protected static final String					POSITION_PREFIX							= "P%";
-	protected static final String					TAPE_PREFIX								= "%";
+	protected static final String					TAPE_PREFIX								= "%";												// save a character for tape, allowing tighter resolution
+	protected static final String					CHE_NAME_PREFIX							= "H%";
 
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 20 characters.
@@ -129,6 +130,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					INVENTORY_COMMAND						= "INVENTORY";
 	protected static final String					ORDER_WALL_COMMAND						= "ORDER_WALL";
 	protected static final String					PUT_WALL_COMMAND						= "PUT_WALL";
+	protected static final String					REMOTE_COMMAND							= "REMOTE";
 
 	// With WORKSEQR = "WorkSequence", work may scan start instead of scanning a location. 
 	// LOCATION_SELECT, we want "SCAN START LOCATION" "OR SCAN START"
@@ -213,8 +215,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				// Updating location of an item
 				notifyScanInventoryUpdate(inScanStr, lastScannedGTIN);
 				mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, lastScannedGTIN);
-			}
-			else {
+			} else {
 				// just a location ID scan. light it.
 				mDeviceManager.inventoryLightLocationScan(getPersistentId(), inScanStr, isTape);
 			}
@@ -226,10 +227,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			if (lastScannedGTIN != null) {
 				// Updating location of an item
 				// Let's pass with the tape prefix to the server. Otherwise, it has to query one way, and then again for tape
-					notifyScanInventoryUpdate(tapeScan, lastScannedGTIN);
+				notifyScanInventoryUpdate(tapeScan, lastScannedGTIN);
 				mDeviceManager.inventoryUpdateScan(this.getPersistentId(), tapeScan, lastScannedGTIN);
-			}
-			else {
+			} else {
 				// just a location ID scan. light it. Also pass the % first.
 				mDeviceManager.inventoryLightLocationScan(getPersistentId(), tapeScan, isTape);
 			}
@@ -238,8 +238,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		// Other special scans not valid, such as user, position, container
 		else if (inScanPrefixStr != null && !inScanPrefixStr.isEmpty()) {
 			LOGGER.warn("Recieved invalid scan: {}. Expected tape or location scan, or GTIN.", inScanStr);
-		} 
-		else {
+		} else {
 			// An unadorned string should be gtin/UPC. Store it, replacing what we had.
 			mDeviceManager.inventoryLightItemScan(this.getPersistentId(), inScanStr);
 			lastScannedGTIN = inScanStr;
@@ -1245,6 +1244,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			result = POSITION_PREFIX;
 		} else if (inScanStr.startsWith(TAPE_PREFIX)) {
 			result = TAPE_PREFIX;
+		}else if (inScanStr.startsWith(CHE_NAME_PREFIX)) {
+			result = CHE_NAME_PREFIX;
 		}
 
 		return result;
