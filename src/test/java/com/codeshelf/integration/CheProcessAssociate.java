@@ -228,10 +228,13 @@ public class CheProcessAssociate extends ServerTest {
 		Facility facility = setUpSmallNoSlotFacility();
 		commitTransaction();
 
+		startSiteController();
+
 		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Che che1 = this.getChe1();
 		Che che2 = this.getChe2();
+		CodeshelfNetwork network = che1.getParent();
 
 		LOGGER.info("1: see the non-associated state");
 		String state0Che1 = che1.getAssociateToUi();
@@ -254,6 +257,7 @@ public class CheProcessAssociate extends ServerTest {
 		facility = Facility.staticGetDao().reload(facility);
 		che1 = Che.staticGetDao().reload(che1);
 		che2 = Che.staticGetDao().reload(che2);
+		network = CodeshelfNetwork.staticGetDao().reload(network); // these are necessary or the WorkService functions have staleObjectUpdate exceptions
 
 		LOGGER.info("2b2: check our associate getters in the next transaction");
 		byte[] bytes = che1.getAssociateToCheGuid();
@@ -277,6 +281,7 @@ public class CheProcessAssociate extends ServerTest {
 		facility = Facility.staticGetDao().reload(facility);
 		che1 = Che.staticGetDao().reload(che1);
 		che2 = Che.staticGetDao().reload(che2);
+		network = CodeshelfNetwork.staticGetDao().reload(network); // these are necessary or the WorkService functions have staleObjectUpdate exceptions
 
 		Assert.assertNull(che1.getAssociateToChe());
 		Assert.assertNull(che2.getCheAssociatedToThis());
@@ -293,6 +298,7 @@ public class CheProcessAssociate extends ServerTest {
 		facility = Facility.staticGetDao().reload(facility);
 		che1 = Che.staticGetDao().reload(che1);
 		che2 = Che.staticGetDao().reload(che2);
+		network = CodeshelfNetwork.staticGetDao().reload(network); // these are necessary or the WorkService functions have staleObjectUpdate exceptions
 
 		LOGGER.info("4b: associate back the other way. Will give some warns");
 		this.workService.associateCheToCheName(che1, "CHE2");
@@ -302,9 +308,10 @@ public class CheProcessAssociate extends ServerTest {
 		// Commit, primarily to have the network update go to site controller. Should see that in the log.
 		commitTransaction();
 		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		che1 = Che.staticGetDao().reload(che1);
 		che2 = Che.staticGetDao().reload(che2);
-		facility = Facility.staticGetDao().reload(facility);
+		network = CodeshelfNetwork.staticGetDao().reload(network);
 
 		LOGGER.info("5: tell che2 to clear associations to it");
 		this.workService.clearAssociationsToChe(che2);
@@ -315,13 +322,13 @@ public class CheProcessAssociate extends ServerTest {
 		facility = Facility.staticGetDao().reload(facility);
 		che1 = Che.staticGetDao().reload(che1);
 		che2 = Che.staticGetDao().reload(che2);
+		network = CodeshelfNetwork.staticGetDao().reload(network);
 
 		Assert.assertNull(che1.getAssociateToChe());
 		Assert.assertNull(che2.getCheAssociatedToThis());
 		Assert.assertNull(che2.getAssociateToChe());
 
 		commitTransaction();
-
 	}
 
 	/**

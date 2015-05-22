@@ -1967,11 +1967,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	/**
 	 * Primary API to set a mobile CHE association to other CHE.
 	 * This enforces consistency. Therefore may unexpectedly clear another CHE's association.
+	 * Returns true if there was a significant association change.
 	 */
-	public void associateCheToCheName(Che inChe, String inCheNameToAssociateTo) {
+	public boolean associateCheToCheName(Che inChe, String inCheNameToAssociateTo) {
 		if (inChe == null || inCheNameToAssociateTo == null || inCheNameToAssociateTo.isEmpty()) {
 			LOGGER.error("null input to associateCheToCheName");
-			return;
+			return false;
 		}
 		LOGGER.info("Associate {} to {}", inChe.getDomainId(), inCheNameToAssociateTo);
 		// The name must be the domainId
@@ -1979,14 +1980,15 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		Che otherChe = Che.staticGetDao().findByDomainId(network, inCheNameToAssociateTo);
 		if (otherChe == null) {
 			LOGGER.warn("did not find CHE named {}", inCheNameToAssociateTo);
-			return;
+			return false;
 		}
 
 		if (otherChe.equals(inChe)) {
 			LOGGER.warn("associateCheToCheName called to associate to itself. Not allowed");
-			return;
+			return false;
 		}
-
+		boolean changed = false;
+		
 		// By any chance, is the che we are going to associate to already pointing at another CHE? If so, clear that.
 		Che chePointedAt = otherChe.getAssociateToChe();
 		if (chePointedAt != null) {
@@ -1994,7 +1996,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				otherChe.getDomainId(),
 				chePointedAt.getDomainId(),
 				otherChe.getDomainId());
-			clearCheAssociation(otherChe);
+			changed = clearCheAssociation(otherChe);
 		}
 
 		// is any other CHE already associated to the otherChe? Only looks for one. I suppose bad bugs could make more.
@@ -2003,21 +2005,27 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			LOGGER.warn("Clearing association of {} which pointed to {}", pointingAtOtherChe.getDomainId(), inCheNameToAssociateTo);
 			pointingAtOtherChe.setAssociateToCheGuid(null);
 			Che.staticGetDao().store(pointingAtOtherChe);
+			changed = true;
 		}
 
 		// finally, do the set
 		inChe.setAssociateToCheGuid(otherChe.getDeviceGuid());
 		Che.staticGetDao().store(inChe);
+		changed = true;
+		
+		return changed;
 	}
 
 	/**
 	 * If the inChe is associated to another CHE, clear that association
+	 * Returns true if there was a significant association change.
 	 */
-	public void clearCheAssociation(Che inChe) {
+	public boolean clearCheAssociation(Che inChe) {
 		if (inChe == null) {
 			LOGGER.error("null input to clearCheAssociation");
-			return;
+			return false;
 		}
+		boolean changed = false;
 		LOGGER.info("Clearing {} association", inChe.getDomainId());
 
 		byte[] bytes = inChe.getAssociateToCheGuid();
@@ -2027,24 +2035,30 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		} else {
 			inChe.setAssociateToCheGuid(null);
 			Che.staticGetDao().store(inChe);
+			changed = true;
 		}
+		return changed;
 	}
 
 	/**
 	 * If any CHE are associated to the inChe, clear the association. Actually one finds there first. 
 	 * Possible bugs with multiples may not be handled.
+	 * Returns true if there was a significant association change.
 	 */
-	public void clearAssociationsToChe(Che inChe) {
+	public boolean clearAssociationsToChe(Che inChe) {
 		if (inChe == null) {
 			LOGGER.error("null input to clearAssociationsToChe");
-			return;
+			return false;
 		}
+		boolean changed = false;
 		LOGGER.info("Clearing associations to {}", inChe.getDomainId());
 		Che pointingAtChe = inChe.getCheAssociatedToThis();
 		if (pointingAtChe != null) {
 			pointingAtChe.setAssociateToCheGuid(null);
 			Che.staticGetDao().store(pointingAtChe);
+			changed = true;
 		}
+		return changed;
 	}
 
 }

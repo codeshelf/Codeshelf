@@ -87,6 +87,7 @@ public class Che extends WirelessDeviceABC {
 	@Column(nullable = true, name = "associate_to_che_guid")
 	@Getter
 	@Setter
+	@JsonProperty
 	private byte[]					associateToCheGuid;
 
 	@OneToMany(mappedBy = "currentChe")
