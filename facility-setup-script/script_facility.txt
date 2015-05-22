@@ -1,0 +1,20 @@
+SERVER
+editFacility F1 5000 8
+createDummyOutline 1
+setProperty scanpick UPC
+setProperty invtmenu true
+importAisles aisles
+importLocations locations
+togglePutWall Aisle3 true
+setController LocX24   lights  0x000000031 1 tiersInAisle
+setController Aisle2   lights  0x0000000AB 1
+setController A3.B1.T1 poscons 0x0000000AA 1 tiersInAisle
+setPoscons A3.B1.T1 1 forward A3.B2.T1 5 forward A3.B3.T1 9 forward A3.B4.T1 13 forward
+createChe 0x0000000A3 magenta SETUP_ORDERS
+createChe 0x00000009B green SETUP_ORDERS
+deleteAllPaths
+defPath p1 - 2.82 5.40 5.19 5.40 - 5.19 5.40 5.19 6.40 - 5.19 6.40 2.77 6.40
+defPath p2 - 2.60 7.40 5.28 7.40
+assignPathSgmToAisle p1 0 A1
+assignPathSgmToAisle p1 2 Aisle2
+assignPathSgmToAisle p2 0 A3
