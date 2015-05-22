@@ -301,7 +301,7 @@ public class CheProcessInventory extends ServerTest {
 		LOGGER.info("2a: check that item 1493 is in D402");
 		Location locationD402 = facility.findSubLocationById("D402");
 		Assert.assertNotNull(locationD402);
-		Item item1493locD402 = locationD402.getStoredItemFromMasterIdAndUom("1493", "ea");
+		Item item1493locD402 = locationD402.getStoredItemFromMasterIdAndUom("1493", "CS");
 		Assert.assertNotNull(item1493locD402);
 
 		LOGGER.info("2b: check that item 1123 moved via the tape scan to D303");
