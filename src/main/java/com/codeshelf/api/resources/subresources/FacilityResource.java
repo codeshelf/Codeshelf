@@ -562,7 +562,7 @@ public class FacilityResource {
 					}
 				}
 			}
-			return BaseResponse.buildResponse(new ScriptApiResponse(scriptStep.getNextId(), scriptStep.getScriptId(), report.toString()));
+			return BaseResponse.buildResponse(new ScriptApiResponse(scriptStep.getNextId(), report.toString()));
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
 		}
