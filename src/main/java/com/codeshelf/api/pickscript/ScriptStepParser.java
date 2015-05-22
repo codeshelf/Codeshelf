@@ -11,13 +11,17 @@ import com.google.common.collect.Lists;
 import com.sun.jersey.multipart.FormDataBodyPart;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
-public class PickScriptParser {
+public class ScriptStepParser {
 	private static final String SERVER = "SERVER", SITE = "SITE";
 
-	public static ArrayList<PickScriptPart> parseMixedScript(String script) throws Exception{
+	public static ArrayList<StepPart> parseMixedScript(String script) throws Exception{
 		ArrayList<String> lines = new ArrayList<String>(Arrays.asList(script.split("\n")));
+		return parseScriptStep(lines);
+	}
+	
+	public static ArrayList<StepPart> parseScriptStep(ArrayList<String> lines) throws Exception{
 		verifyThatScriptStartsEitherWithServerOrSite(lines);
-		ArrayList<PickScriptPart> scriptParts = Lists.newArrayList();
+		ArrayList<StepPart> scriptParts = Lists.newArrayList();
 		while (!lines.isEmpty()) {
 			scriptParts.add(getNextScriptPart(lines));
 		}
@@ -41,12 +45,11 @@ public class PickScriptParser {
 		}
 	}
 	
-	private static PickScriptPart getNextScriptPart(ArrayList<String> lines) throws Exception{
+	private static StepPart getNextScriptPart(ArrayList<String> lines) throws Exception{
 		StringBuilder builder = new StringBuilder();
 		boolean isServer = false, lookingForFirstLine = true;
 		while (!lines.isEmpty()) {
 			String line = lines.get(0).trim();
-			//line = lines.remove(0);
 			if (lookingForFirstLine) {
 				if (!(line.equalsIgnoreCase(SERVER) || line.equalsIgnoreCase(SITE))) {
 					throw new Exception("getNextScriptPart() called with script not starting with SERVER/SITE - internal logic error");
@@ -62,17 +65,17 @@ public class PickScriptParser {
 			}
 			lines.remove(0);
 		}
-		PickScriptPart part = new PickScriptPart(isServer, builder.toString()); 
+		StepPart part = new StepPart(isServer, builder.toString()); 
 		return part;
 	}
 	
-	public static class PickScriptPart{
+	public static class StepPart{
 		@Getter
 		private boolean isServer;
 		@Getter
 		private String script;
 		
-		public PickScriptPart(boolean isServer, String script) {
+		public StepPart(boolean isServer, String script) {
 			this.isServer = isServer;
 			this.script = script;
 		}

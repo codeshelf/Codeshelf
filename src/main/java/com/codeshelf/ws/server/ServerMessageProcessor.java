@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
-import com.codeshelf.api.pickscript.PickScriptCallPool;
+import com.codeshelf.api.pickscript.ScriptSiteCallPool;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsGroup;
@@ -317,7 +317,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			service.saveEvent((NotificationMessage) message);
 		} else if (message instanceof PickScriptMessage){
 			PickScriptMessage pickScriptMessage = (PickScriptMessage) message;
-			PickScriptCallPool.registerSiteResponse(pickScriptMessage);
+			ScriptSiteCallPool.registerSiteResponse(pickScriptMessage);
 		}else {
 			LOGGER.warn("Unexpected message received on session " + session + ": " + message);
 		}

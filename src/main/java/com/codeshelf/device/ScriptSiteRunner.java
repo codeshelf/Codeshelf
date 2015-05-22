@@ -72,7 +72,7 @@ public class ScriptSiteRunner {
 					message.setSuccess(false);
 				}
 				LOGGER.info("Site script block completed");
-				report.append("***Script Completed***\n");
+				report.append("***Site Script Completed***\n");
 				message.setResponse(report.toString());
 				deviceManager.clientEndpoint.sendMessage(message);
 			}

@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import com.codeshelf.ws.protocol.message.PickScriptMessage;
 
-public class PickScriptCallPool {
+public class ScriptSiteCallPool {
 	private static final int DEF_TIMEOUT_MIN = 5;
 	private static HashMap<UUID, PickScriptMessage> responses = new HashMap<>();
 	private static Object lock = new Object();

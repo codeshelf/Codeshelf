@@ -1,3 +1,4 @@
+STEP This step sets up facility
 SERVER
 editFacility F1 5000 8
 createDummyOutline 1
@@ -19,10 +20,14 @@ assignPathSgmToAisle p1 0 A1
 assignPathSgmToAisle p1 2 Aisle2
 assignPathSgmToAisle p2 0 A3
 
+STEP This step adds inventory and orders to facility
 SERVER
 importInventory inventory
+
+SERVER
 importOrders orders_10
 
+STEP
 SITE
 waitForDevices 0x0000009B 0x000000A3 0x00000031 0x0000000AB
 //Define pickers

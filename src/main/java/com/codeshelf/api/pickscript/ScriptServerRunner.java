@@ -109,6 +109,7 @@ public class ScriptServerRunner {
 		}
 		message.setResponse(report.toString());
 		LOGGER.info("Server script block completed");
+		report.append("***Server Script Completed***\n");
 		return message;
 	}
 	
@@ -496,7 +497,7 @@ public class ScriptServerRunner {
 	}
 	
 	private InputStreamReader readFile(String filename) throws Exception{
-		InputStream is = PickScriptParser.getInputStream(postBody, filename);
+		InputStream is = ScriptStepParser.getInputStream(postBody, filename);
 		if (is == null) {
 			StringBuilder availableFiles = new StringBuilder("Available Files: ");
 			Set<String> fields = postBody.getFields().keySet();
