@@ -65,6 +65,7 @@ public class WiFactory {
 		String wiDomainId = Long.toString(seq);
 
 		WorkInstruction resultWi = new WorkInstruction();
+		resultWi.setParent(inLocation.getFacility());
 		resultWi.setDomainId(wiDomainId);
 		resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 		resultWi.setLedCmdStream("[]"); // empty array
@@ -79,6 +80,10 @@ public class WiFactory {
 			resultWi.setPosAlongPath(inLocation.getPosAlongPath());
 		}
 
+		resultWi.setType(WorkInstructionTypeEnum.PLAN);
+		resultWi.setPickInstruction("");
+		resultWi.setItemMaster(null);
+		resultWi.setContainer(null);
 		resultWi.setOrderDetail(null);
 		resultWi.setPlanQuantity(0);
 		resultWi.setPlanMinQuantity(0);
