@@ -294,24 +294,31 @@ public class Che extends WirelessDeviceABC {
 
 	/**
 	 * This requires a search or query. Doing a linear search to start.
+	 * Warning: cannot do .equals on the byte[] returned by getDeviceGuid() or getAssociateToCheGuid()
 	 */
 	public Che getAssociateToChe() {
 		byte[] theBytes = getAssociateToCheGuid();
 		if (theBytes == null)
 			return null;
 		else {
+			NetGuid associateToGuid = new NetGuid(theBytes);
 			Che foundChe = null;
 			CodeshelfNetwork network = this.getParent();
 			for (Che che : network.getChes().values()) {
-				if (theBytes.equals(che.getDeviceGuid())){					
-					foundChe = che;
-					// complain if associated to itself
-					if (foundChe.equals(this)) {
-						LOGGER.error("CHE associated to itself in getAssociateToChe()?");
-						foundChe = null;
+				// if (theBytes.equals(che.getDeviceGuid())){
+				byte[] cheBytes = che.getDeviceGuid();
+				if (cheBytes != null) {
+					NetGuid cheGuid = new NetGuid(cheBytes);
+					if (associateToGuid.equals(cheGuid)) {
+						foundChe = che;
+						// complain if associated to itself
+						if (foundChe.equals(this)) {
+							LOGGER.error("CHE associated to itself in getAssociateToChe()?");
+							foundChe = null;
+						}
+						break;
 					}
-					break;
-				}			
+				}
 			}
 			return foundChe;
 		}
@@ -319,30 +326,37 @@ public class Che extends WirelessDeviceABC {
 
 	/**
 	 * This requires a search or query. Doing a linear search to start.
+	 * Warning: cannot do .equals on the byte[] returned by getDeviceGuid() or getAssociateToCheGuid()
 	 */
 	public Che getCheAssociatedToThis() {
 		byte[] theBytes = getDeviceGuid();
 		if (theBytes == null) {
 			LOGGER.error("should never be in getCheAssociateToMe()");
 			return null;
-		}
-		else {
+		} else {
+			NetGuid myGuid = new NetGuid(theBytes);
 			Che foundChe = null;
 			CodeshelfNetwork network = this.getParent();
 			for (Che che : network.getChes().values()) {
-				if (theBytes.equals(che.getAssociateToCheGuid())){					
-					foundChe = che;
-					// complain if associated to itself
-					if (foundChe.equals(this)) {
-						LOGGER.error("CHE associated to itself in getCheAssociateToMe()?");
-						foundChe = null;
+				// if (theBytes.equals(che.getAssociateToCheGuid())) {
+				byte[] associatedBytes = che.getAssociateToCheGuid();
+				if (associatedBytes != null) {
+					NetGuid associatedGuid = new NetGuid(associatedBytes);
+					if (associatedGuid.equals(myGuid)) {
+						foundChe = che;
+						// complain if associated to itself
+						if (foundChe.equals(this)) {
+							LOGGER.error("CHE associated to itself in getCheAssociateToMe()?");
+							foundChe = null;
+						}
+						break;
 					}
-					break;
-				}				
+				}
 			}
 			return foundChe;
 		}
 	}
+
 	/**
 	 * This is a straight field look up. No search.
 	 */
@@ -375,7 +389,7 @@ public class Che extends WirelessDeviceABC {
 			String cheName = associateTee.getDomainId();
 			String guidStr = associateTee.getDeviceGuidStrNoPrefix();
 			returnStr = String.format("%s-%s-->this", cheName, guidStr);
-		}		
+		}
 		return returnStr;
 	}
 

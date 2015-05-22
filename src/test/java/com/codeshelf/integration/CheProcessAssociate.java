@@ -232,7 +232,7 @@ public class CheProcessAssociate extends ServerTest {
 		facility = Facility.staticGetDao().reload(facility);
 		Che che1 = this.getChe1();
 		Che che2 = this.getChe2();
-		
+
 		LOGGER.info("1: see the non-associated state");
 		String state0Che1 = che1.getAssociateToUi();
 		Assert.assertEquals("", state0Che1);
@@ -243,11 +243,26 @@ public class CheProcessAssociate extends ServerTest {
 
 		LOGGER.info("2: associate (mobile) CHE1 to (cart) CHE2");
 		this.workService.associateCheToCheName(che1, "CHE2");
-		
-		LOGGER.info("2b: check our associate getters");
+
+		LOGGER.info("2b1: check our associate getters");
 		Assert.assertEquals(che2, che1.getAssociateToChe());
 		Assert.assertEquals(che1, che2.getCheAssociatedToThis());
-		
+
+		// Commit, primarily to have the network update go to site controller. Should see that in the log.
+		commitTransaction();
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		che1 = Che.staticGetDao().reload(che1);
+		che2 = Che.staticGetDao().reload(che2);
+
+		LOGGER.info("2b2: check our associate getters in the next transaction");
+		byte[] bytes = che1.getAssociateToCheGuid();
+		Assert.assertNotNull(bytes);
+		byte[] che2bytes = che2.getDeviceGuid();
+		LOGGER.info("che1 pointing at:{} che2 is:{}", bytes, che2bytes);
+		Assert.assertEquals(che2, che1.getAssociateToChe());
+		Assert.assertEquals(che1, che2.getCheAssociatedToThis());
+
 		LOGGER.info("2b: check the UI field");
 		String state1Che1 = che1.getAssociateToUi();
 		Assert.assertEquals("this-->CHE2-00009992", state1Che1);
@@ -256,6 +271,13 @@ public class CheProcessAssociate extends ServerTest {
 
 		LOGGER.info("3: tell che1 to clear associations");
 		this.workService.clearCheAssociation(che1);
+		// Commit, primarily to have the network update go to site controller. Should see that in the log.
+		commitTransaction();
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		che1 = Che.staticGetDao().reload(che1);
+		che2 = Che.staticGetDao().reload(che2);
+
 		Assert.assertNull(che1.getAssociateToChe());
 		Assert.assertNull(che2.getCheAssociatedToThis());
 		Assert.assertNull(che2.getAssociateToChe());
@@ -265,13 +287,35 @@ public class CheProcessAssociate extends ServerTest {
 		Assert.assertEquals(che1, che2.getAssociateToChe());
 		Assert.assertEquals(che2, che1.getCheAssociatedToThis());
 
+		// Commit, primarily to have the network update go to site controller. Should see that in the log.
+		commitTransaction();
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		che1 = Che.staticGetDao().reload(che1);
+		che2 = Che.staticGetDao().reload(che2);
+
 		LOGGER.info("4b: associate back the other way. Will give some warns");
 		this.workService.associateCheToCheName(che1, "CHE2");
 		Assert.assertEquals(che2, che1.getAssociateToChe());
 		Assert.assertEquals(che1, che2.getCheAssociatedToThis());
 
+		// Commit, primarily to have the network update go to site controller. Should see that in the log.
+		commitTransaction();
+		beginTransaction();
+		che1 = Che.staticGetDao().reload(che1);
+		che2 = Che.staticGetDao().reload(che2);
+		facility = Facility.staticGetDao().reload(facility);
+
 		LOGGER.info("5: tell che2 to clear associations to it");
 		this.workService.clearAssociationsToChe(che2);
+
+		// Commit, primarily to have the network update go to site controller. Should see that in the log.
+		commitTransaction();
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		che1 = Che.staticGetDao().reload(che1);
+		che2 = Che.staticGetDao().reload(che2);
+
 		Assert.assertNull(che1.getAssociateToChe());
 		Assert.assertNull(che2.getCheAssociatedToThis());
 		Assert.assertNull(che2.getAssociateToChe());
