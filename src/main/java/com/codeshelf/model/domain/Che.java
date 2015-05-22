@@ -330,7 +330,7 @@ public class Che extends WirelessDeviceABC {
 			Che foundChe = null;
 			CodeshelfNetwork network = this.getParent();
 			for (Che che : network.getChes().values()) {
-				if (theBytes.equals(getAssociateToCheGuid())){					
+				if (theBytes.equals(che.getAssociateToCheGuid())){					
 					foundChe = che;
 					// complain if associated to itself
 					if (foundChe.equals(this)) {
@@ -374,7 +374,7 @@ public class Che extends WirelessDeviceABC {
 		} else if (associateTee != null) {
 			String cheName = associateTee.getDomainId();
 			String guidStr = associateTee.getDeviceGuidStrNoPrefix();
-			returnStr = String.format("t%s-%s-->this", cheName, guidStr);
+			returnStr = String.format("%s-%s-->this", cheName, guidStr);
 		}		
 		return returnStr;
 	}

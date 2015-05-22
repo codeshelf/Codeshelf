@@ -6,7 +6,6 @@
 package com.codeshelf.integration;
 
 import java.io.IOException;
-import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -17,10 +16,10 @@ import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.CodeshelfTape;
 import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
-import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
@@ -29,7 +28,6 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
-import com.codeshelf.util.ThreadUtils;
 
 /**
  * @author jon ranstrom
@@ -222,18 +220,68 @@ public class CheProcessAssociate extends ServerTest {
 	}
 
 	/**
-	 * Login, scan a valid order detail ID, scan INVENTORY command.
-	 * LOCAPICK is true, so create inventory on order import.
+	 * Test of the associate getters, and the WorkService APIs for associate.
 	 */
 	@Test
 	public final void testAssociateProgramatically() throws IOException {
+		beginTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		commitTransaction();
+
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		Che che1 = this.getChe1();
+		Che che2 = this.getChe2();
+		
+		LOGGER.info("1: see the non-associated state");
+		String state0Che1 = che1.getAssociateToUi();
+		Assert.assertEquals("", state0Che1);
+		String state0Che2 = che2.getAssociateToUi();
+		Assert.assertEquals("", state0Che2);
+		Assert.assertNull(che1.getAssociateToChe());
+		Assert.assertNull(che2.getCheAssociatedToThis());
+
+		LOGGER.info("2: associate (mobile) CHE1 to (cart) CHE2");
+		this.workService.associateCheToCheName(che1, "CHE2");
+		
+		LOGGER.info("2b: check our associate getters");
+		Assert.assertEquals(che2, che1.getAssociateToChe());
+		Assert.assertEquals(che1, che2.getCheAssociatedToThis());
+		
+		LOGGER.info("2b: check the UI field");
+		String state1Che1 = che1.getAssociateToUi();
+		Assert.assertEquals("this-->CHE2-00009992", state1Che1);
+		String state1Che2 = che2.getAssociateToUi();
+		Assert.assertEquals("CHE1-00009991-->this", state1Che2);
+
+		LOGGER.info("3: tell che1 to clear associations");
+		this.workService.clearCheAssociation(che1);
+		Assert.assertNull(che1.getAssociateToChe());
+		Assert.assertNull(che2.getCheAssociatedToThis());
+		Assert.assertNull(che2.getAssociateToChe());
+
+		LOGGER.info("4: associate CHE2 to CHE1");
+		this.workService.associateCheToCheName(che2, "CHE1");
+		Assert.assertEquals(che1, che2.getAssociateToChe());
+		Assert.assertEquals(che2, che1.getCheAssociatedToThis());
+
+		LOGGER.info("4b: associate back the other way. Will give some warns");
+		this.workService.associateCheToCheName(che1, "CHE2");
+		Assert.assertEquals(che2, che1.getAssociateToChe());
+		Assert.assertEquals(che1, che2.getCheAssociatedToThis());
+
+		LOGGER.info("5: tell che2 to clear associations to it");
+		this.workService.clearAssociationsToChe(che2);
+		Assert.assertNull(che1.getAssociateToChe());
+		Assert.assertNull(che2.getCheAssociatedToThis());
+		Assert.assertNull(che2.getAssociateToChe());
+
+		commitTransaction();
 
 	}
 
 	/**
-	 * Mimicking what may happen at new site:
-	 * Do the inventory, before Codeshelf has the GTINs, etc.
-	 * Only later, the orders  file has some, but not all of the GTINS.
+	 * Test using association via CHE scans
 	 */
 	@Test
 	public final void testAssociateChe() throws IOException {
@@ -243,9 +291,10 @@ public class CheProcessAssociate extends ServerTest {
 		// No orders file yet, so no GTINs or OrderMasters in the system
 
 		startSiteController();
-		PickSimulator picker = createPickSim(cheGuid1);
+		PickSimulator picker1 = createPickSim(cheGuid1);
+		PickSimulator picker2 = createPickSim(cheGuid2);
 
-		picker.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
 	}
 
 }
