@@ -1,5 +1,5 @@
 SERVER
-editFacility Facility1 5000 8
+editFacility F1 5000 8
 createDummyOutline 1
 setProperty scanpick UPC
 setProperty invtmenu true

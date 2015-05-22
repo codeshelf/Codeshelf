@@ -26,6 +26,9 @@ public class OutboundOrderBatch {
 	Set<String> itemIds = new HashSet<String>();
 
 	@Getter
+	Set<String> gtinIds = new HashSet<String>();
+
+	@Getter
 	Set<String> orderGroupIds = new HashSet<String>();
 	
 	@Getter @Setter
@@ -40,6 +43,7 @@ public class OutboundOrderBatch {
 		this.orderIds.add(orderBean.getOrderId());
 		this.containerIds.add(orderBean.getPreAssignedContainerId());
 		this.itemIds.add(orderBean.getItemId());
+		this.gtinIds.add(orderBean.getGtin());
 		String orderGroupId = orderBean.getOrderGroupId();
 		if (orderGroupId!=null) {
 			orderGroupIds.add(orderGroupId);

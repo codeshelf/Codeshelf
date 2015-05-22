@@ -72,6 +72,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 	
 	DomainObjectCache<ItemMaster> itemMasterCache = null;
 	DomainObjectCache<OrderHeader> orderHeaderCache = null;
+	HashMap<String, Gtin> gtinCache = null;
 	
 	private HashMap<String, Map<String,OrderDetail>> orderlineMap;
 	private HashMap<String, Container> containerMap;
@@ -124,7 +125,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				// cache item master
 				itemMasterCache.reset();
 				itemMasterCache.setFetchOnMiss(false);
-				itemMasterCache.load(facility,batch.getItemIds());		
+				itemMasterCache.load(facility,batch.getItemIds());	
 				LOGGER.info("ItemMaster cache populated with "+this.itemMasterCache.size()+" entries");
 		
 				// cache order headers
@@ -132,6 +133,10 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				orderHeaderCache.setFetchOnMiss(false);
 				orderHeaderCache.load(facility,batch.getOrderIds());		
 				LOGGER.info("OrderHeader cache populated with "+this.orderHeaderCache.size()+" entries");
+
+				// cache gtin
+				gtinCache = generateGtinCache(facility);
+				LOGGER.info("Gtin cache populated with "+this.gtinCache.size()+" entries");
 
 				// prefetch order details already associated with orders
 				this.orderChangeMap = new HashMap<String,Boolean>();
@@ -310,7 +315,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
 		UomMaster uomMaster = updateUomMaster(inCsvBean.getUom(), inFacility);
 		String itemId = inCsvBean.getItemId();
-		ItemMaster itemMaster = updateItemMaster(itemId, inCsvBean.getDescription(), inFacility, inEdiProcessTime, uomMaster);
+		ItemMaster itemMaster = updateItemMaster(itemId, inCsvBean.getDescription(), inFacility, inEdiProcessTime, uomMaster, inCsvBean.getGtin());
 		OrderDetail orderDetail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
 		@SuppressWarnings("unused")
 		Gtin gtinMap = upsertGtin(inFacility, itemMaster, inCsvBean, uomMaster);
@@ -598,12 +603,34 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		final String inDescription,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
-		final UomMaster inUomMaster) {
+		final UomMaster inUomMaster,
+		final String gtinId) {
 		ItemMaster itemMaster = null;
 
-		// retrieve item master from cache
+		//There should not be an ItemMaster and an auto-generated Gtin's ItemMaster at the same time
+		//This is due to Gtin's ItemMaster only being created when there isn't already an ItemMaster for that gtinId
+		//If it does happen, ignore the Gtin's ItemMaster
 		itemMaster = this.itemMasterCache.get(inItemId);
-	
+		
+		//Try to find a matching manual-inventory Gtin
+		Gtin gtin = this.gtinCache.get(gtinId);
+		if (itemMaster == null && gtin != null) {
+			itemMaster = gtin.getParent();
+			List<Item> items = itemMaster.getItems();
+			for(Item item : items) {
+				if (gtin.equals(item.getGtin())){
+					item.setUomMaster(inUomMaster);
+					item.setDomainId(item.makeDomainId());
+					Item.staticGetDao().store(item);
+				}
+			}
+			gtin.setUomMaster(inUomMaster);
+			itemMaster.setDomainId(inItemId);
+			itemMaster.setItemId(inItemId);
+			ItemMaster.staticGetDao().store(itemMaster);
+			Gtin.staticGetDao().store(gtin);
+		}
+		
 		// create a new item, if needed
 		if (itemMaster == null) {
 			itemMaster = new ItemMaster();
@@ -900,6 +927,17 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		return domainMatch;
 	}
 	
+	private HashMap<String, Gtin> generateGtinCache(Facility facility) {
+		HashMap<String, Gtin> cache = new HashMap<>();
+		HashMap<String, Object> criteriaParams = new HashMap<>();
+		criteriaParams.put("facilityId", facility.getPersistentId());
+		List<Gtin> gtins = Gtin.staticGetDao().findByFilter("gtinsByFacility", criteriaParams);
+		for (Gtin gtin : gtins) {
+			cache.put(gtin.getDomainId(), gtin);
+		}
+		return cache;
+	}
+	
 	private OrderDetail getCachedOrderDetail(String orderId, String orderLineId) {
 		Map<String, OrderDetail> orderDetails = this.orderlineMap.get(orderId);
 		if (orderDetails==null) return null;
@@ -920,7 +958,6 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		// would also want leading zeros removed, but may need to leave one 0 for 0000.
 		cleanString = cleanString.replaceFirst("^0+(?!$)", ""); 
 		return Integer.valueOf(cleanString);
-
 	}
 	
 }

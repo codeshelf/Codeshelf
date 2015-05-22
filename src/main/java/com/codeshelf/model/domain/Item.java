@@ -107,6 +107,9 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	private Timestamp			updated;
 
 	// --------------------------------------------------------------------------
+	public Item() {
+	}
+
 	/**
 	 * This creates a standard domainId that keeps all of the items in different locations unique among a single ItemMaster.
 	 * @param inItemId
@@ -125,7 +128,8 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		return inItemMasterId + "-" + inLocation.getNominalLocationIdExcludeBracket() + "-" + revisedUom;
 	}
 
-	public Item() {
+	public String makeDomainId() {
+		return makeDomainId(getItemMasterId(), getStoredLocation(), getUomMasterId());
 	}
 
 	@SuppressWarnings("unchecked")

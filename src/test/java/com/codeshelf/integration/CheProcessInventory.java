@@ -6,6 +6,7 @@
 package com.codeshelf.integration;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 
 import org.junit.Assert;
@@ -203,17 +204,17 @@ public class CheProcessInventory extends ServerTest {
 	private void setUpOrdersWithCntrAndGtin(Facility inFacility) throws IOException {
 		// Outbound order. No group. Using 5 digit order number and .N detail ID. With preassigned container number.
 		// The result of importing this will be gtin made as we have the SKU and UOM. We can then create items via inventory actions.
-		String csvOrders = "gtin,shipmentId,customerId,orderId,preassignedContainerId,orderDetailId,itemId,gtin,description,quantity,uom"
-				+ "\r\n100,USF314,COSTCO,12345,12345,12345.1,1123,gtin1123,12/16 oz Bowl Lids -PLA Compostable,1,each"
-				+ "\r\n101,USF314,COSTCO,12345,12345,12345.2,1493,gtin1493,PARK RANGER Doll,1,each"
-				+ "\r\n102,USF314,COSTCO,12345,12345,12345.3,1522,gtin1522,Butterfly Yoyo,3,each"
-				+ "\r\n103,USF314,COSTCO,11111,11111,11111.1,1122,gtin1122,8 oz Bowl Lids -PLA Compostable,2,each"
-				+ "\r\n104,USF314,COSTCO,11111,11111,11111.2,1522,gtin1522,Butterfly Yoyo,1,each"
-				+ "\r\n105,USF314,COSTCO,11111,11111,11111.3,1523,gtin1523,SJJ BPP,1,each"
-				+ "\r\n106,USF314,COSTCO,11111,11111,11111.4,1124,gtin1124,8 oz Bowls -PLA Compostable,1,each"
-				+ "\r\n107,USF314,COSTCO,11111,11111,11111.5,1555,gtin1555,paper towel,2,each";
+		String csvOrders = "shipmentId,customerId,orderId,preassignedContainerId,orderDetailId,itemId,gtin,description,quantity,uom"
+				+ "\r\nUSF314,COSTCO,12345,12345,12345.1,1123,gtin1123,12/16 oz Bowl Lids -PLA Compostable,1,each"
+				+ "\r\nUSF314,COSTCO,12345,12345,12345.2,1493,gtin1493,PARK RANGER Doll,1,case"
+				+ "\r\nUSF314,COSTCO,12345,12345,12345.3,1522,gtin1522,Butterfly Yoyo,3,each"
+				+ "\r\nUSF314,COSTCO,11111,11111,11111.1,1122,gtin1122,8 oz Bowl Lids -PLA Compostable,2,case"
+				+ "\r\nUSF314,COSTCO,11111,11111,11111.2,1522,gtin1522,Butterfly Yoyo,1,each"
+				+ "\r\nUSF314,COSTCO,11111,11111,11111.3,1523,gtin1523,SJJ BPP,1,case"
+				+ "\r\nUSF314,COSTCO,11111,11111,11111.4,1124,gtin1124,8 oz Bowls -PLA Compostable,1,each"
+				+ "\r\nUSF314,COSTCO,11111,11111,11111.5,1555,gtin1555,paper towel,2,case";
 		importOrdersData(inFacility, csvOrders);
-
+		
 		// We expect these gtins are made.
 		ItemMaster master = ItemMaster.staticGetDao().findByDomainId(inFacility, "1123");
 		Assert.assertNotNull(master);
@@ -366,32 +367,19 @@ public class CheProcessInventory extends ServerTest {
 		Assert.assertEquals(11, masters.size());
 		Assert.assertEquals(11, items.size());
 
-		LOGGER.info("1f: Log the first few gtins");
-		int count = 0;
-		for (Gtin gtin : gtins) {
-			count++;
-			LOGGER.info("Gtin:{} for master:{}", gtin.getGtin(), gtin.getItemMasterId());
-			if (count > 2)
-				break;
-		}
-
-		LOGGER.info("1g: Log the first few item masters");
-		count = 0;
-		for (ItemMaster master : masters) {
-			count++;
-			LOGGER.info("Master:{} with gtins:{} and item locations:{}", master.getDomainId(), master.getItemGtins(), master.getItemLocations());
-			if (count > 2)
-				break;
-		}
-
-		LOGGER.info("1h: Log the first few items");
-		count = 0;
-		for (Item item : items) {
-			count++;
-			LOGGER.info("Item:{} for master:{} and gtin:{}", item.getDomainId(), item.getItemMasterId(), item.getGtinId());
-			if (count > 2)
-				break;
-		}
+		log(gtins, masters, items);
+		HashMap<String, Gtin> gtinHash = getGtinHash(gtins);
+		assertItemsUom(gtinHash.get("gtin1493"), "EA");
+		assertItemsUom(gtinHash.get("gtin1522"), "EA");
+		assertItemsUom(gtinHash.get("gtin1122"), "EA");
+		assertItemsUom(gtinHash.get("gtin1523"), "EA");
+		assertItemsUom(gtinHash.get("gtin1123"), "EA");
+		assertItemsUom(gtinHash.get("gtin1124"), "EA");
+		assertItemsUom(gtinHash.get("gtin1555"), "EA");
+		assertItemsUom(gtinHash.get("gtin9996"), "EA");
+		assertItemsUom(gtinHash.get("gtin9997"), "EA");
+		assertItemsUom(gtinHash.get("gtin9998"), "EA");
+		assertItemsUom(gtinHash.get("gtin9999"), "EA");
 
 		commitTransaction();
 
@@ -399,7 +387,7 @@ public class CheProcessInventory extends ServerTest {
 		// deal with this. After the import, our desired goal is no master with name gtin1123; there is a master SKU 1123; and gtin1123 belongs to the master.
 		// Perhaps just changing the domainId of the master will work.
 		// This is DEV-840
-		/*
+		
 		LOGGER.info("2: Load the orders file with 7 gtins and SKUs");
 		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
@@ -415,9 +403,56 @@ public class CheProcessInventory extends ServerTest {
 		Assert.assertEquals(11, gtins2.size());
 		Assert.assertEquals(11, masters2.size());
 		Assert.assertEquals(11, items2.size());
-		commitTransaction();
-		*/
+		
+		log(gtins2, masters2, items2);
+		gtinHash = getGtinHash(gtins2);
+		assertItemsUom(gtinHash.get("gtin1493"), "case");
+		assertItemsUom(gtinHash.get("gtin1522"), "each");
+		assertItemsUom(gtinHash.get("gtin1122"), "case");
+		assertItemsUom(gtinHash.get("gtin1523"), "case");
+		assertItemsUom(gtinHash.get("gtin1123"), "each");
+		assertItemsUom(gtinHash.get("gtin1124"), "each");
+		assertItemsUom(gtinHash.get("gtin1555"), "case");
+		assertItemsUom(gtinHash.get("gtin9996"), "EA");
+		assertItemsUom(gtinHash.get("gtin9997"), "EA");
+		assertItemsUom(gtinHash.get("gtin9998"), "EA");
+		assertItemsUom(gtinHash.get("gtin9999"), "EA");
 
+		commitTransaction();
+	}
+	
+	private void log(List<Gtin> gtins, List<ItemMaster> masters, List<Item> items){
+		LOGGER.info("1f: Log gtins");
+		for (Gtin gtin : gtins) {
+			LOGGER.info("Gtin:{} for master:{}, uom: {}", gtin.getGtin(), gtin.getItemMasterId(), gtin.getUomMaster());
+		}
+
+		LOGGER.info("1g: Log item masters");
+		for (ItemMaster master : masters) {
+			LOGGER.info("Master:{} with gtins:{} and item locations:{}", master.getDomainId(), master.getItemGtins(), master.getItemLocations());
+		}
+
+		LOGGER.info("1h: Log items");
+		for (Item item : items) {
+			LOGGER.info("Item:{} for master:{}, uom: {}, and gtin:{}", item.getDomainId(), item.getItemMasterId(), item.getUomMaster(), item.getGtinId());
+		}
 	}
 
+	private HashMap<String, Gtin> getGtinHash(List<Gtin> gtins) {
+		HashMap<String, Gtin> gtinHash = new HashMap<>();
+		for (Gtin gtin : gtins) {
+			gtinHash.put(gtin.getDomainId(), gtin);
+		}
+		return gtinHash;
+	}
+	
+	private void assertItemsUom(Gtin gtin, String expectedUom) {
+		Assert.assertNotNull(gtin);
+		Assert.assertNotNull(gtin.getParent());
+		List<Item> items = gtin.getParent().getItems();
+		Assert.assertTrue("Could not find items for Gtin " + gtin, !items.isEmpty());
+		for (Item item : items) {
+			Assert.assertEquals(expectedUom, item.getUomMasterId());
+		}
+	}
 }
