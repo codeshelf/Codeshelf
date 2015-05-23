@@ -99,7 +99,7 @@ local NET_CHECK_TYPES = { [1] = "Req", [2] = "Resp"}
 
 local ASSOC_CMDS = {[0] = "AssocReq", [1] = "AssocResp", [2] = "AssocCheck", [3] = "AssocACK" }
 
-local CONTROL_CMDS = {[0] = "Scan", [1] = "Message", [2] = "LED", [3] = "Set PosCtl", [4] = "Clr PosCtl", [5] = "Button" }
+local CONTROL_CMDS = {[0] = "Scan", [1] = "Message", [2] = "LED", [3] = "Set PosCtl", [4] = "Clr PosCtl", [5] = "Button", [6] = "Message Single", [7] = "Clear Display" }
 local EFFECTS = {[0] = "Solid", [1] = "Flash", [2] = "Error", [3] = "Motel" }
 
 flyweightproto = Proto("flyweight","Flyweight Protocol")
@@ -149,6 +149,11 @@ fwfields.f_control_pos_minval = ProtoField.uint8("flyweight.pos.minval" , "MinVa
 fwfields.f_control_pos_maxval = ProtoField.uint8("flyweight.pos.maxval" , "MaxVal", base.DEC)
 fwfields.f_control_pos_pwmfreq = ProtoField.uint8("flyweight.pos.freq" , "Freq", base.DEC)
 fwfields.f_control_pos_pwmduty = ProtoField.uint8("flyweight.pos.duty" , "Duty", base.DEC)
+
+fwfields.f_msgone_msg = ProtoField.string("flyweight.msgone.msg" , "Message", ftypes.STRING)
+fwfields.f_msgone_font = ProtoField.uint8("flyweight.msgone.font" , "Font", base.DEC)
+fwfields.f_msgone_x = ProtoField.uint8("flyweight.msgone.x" , "X", base.DEC)
+fwfields.f_msgone_y = ProtoField.uint8("flyweight.msgone.y" , "Y", base.DEC)
 
 local f_control_led_chan_field = Field.new("flyweight.led.chan")
 local f_control_led_effect_field = Field.new("flyweight.led.effect")
@@ -348,6 +353,18 @@ function control(tvb, pkt, root, flyweight_tree)
     data_dissector:call(tvb(8):tvb(), pkt, root)
   elseif control_cmd == 5 then
     pkt.cols.info = "Button"
+    local data_dissector = Dissector.get("data")
+    data_dissector:call(tvb(8):tvb(), pkt, root)
+  elseif control_cmd == 6 then
+    pkt.cols.info = "Message Single"
+    control_tree:add_packet_field(fwfields.f_msgone_font, tvb:range(8, 1), ENC_BIG_ENDIAN)
+    control_tree:add_packet_field(fwfields.f_msgone_x, tvb:range(9, 2), ENC_BIG_ENDIAN)
+    control_tree:add_packet_field(fwfields.f_msgone_y, tvb:range(11, 2), ENC_BIG_ENDIAN)
+    local message_len = tvb:range(13,1):uint()
+    control_tree:add_packet_field(fwfields.f_msgone_msg, tvb:range(14, message_len), ENC_BIG_ENDIAN)
+    local data_dissector = Dissector.get("data")
+   elseif control_cmd == 7 then
+    pkt.cols.info = "Clear Display"
     local data_dissector = Dissector.get("data")
     data_dissector:call(tvb(8):tvb(), pkt, root)
   end
