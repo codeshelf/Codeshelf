@@ -400,8 +400,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 			case REMOTE:
 				// This triggers our clear association action
-				stubFunctionClearAssociation();
-				setState(CheStateEnum.REMOTE); // will go to REMOTE_PENDING
+				unlinkRemoteCheAssociation();
+				// will go to REMOTE_PENDING
 				break;
 
 			default:
@@ -2464,34 +2464,5 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * Send the websocket message to clear
-	 * For DEV-843, 844.
-	 */
-	private void stubFunctionClearAssociation() {
-		this.setLinkedToCheName(null);
-		setState(CheStateEnum.REMOTE); // forces screen redraw. Later, send the message and go to REMOTE_PENDING state.
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Send the websocket message to clear
-	 * For DEV-843, 844.
-	 */
-	private void stubFunctionAssociateToChe(String cheName) {
-		this.setLinkedToCheName(cheName);
-		setState(CheStateEnum.REMOTE); // forces screen redraw. Later, send the message and go to REMOTE_PENDING state.
-	}
-
-	private void processCheLinkScan(String inScanPrefixStr, String inContent) {
-		if (CHE_NAME_PREFIX.equals(inScanPrefixStr)) {
-			stubFunctionAssociateToChe(inContent);
-		} else {
-			LOGGER.info("Not a CHE scan:{}{} ", inScanPrefixStr, inContent);
-			invalidScanMsg(mCheStateEnum);
-		}
-
-	}
 
 }

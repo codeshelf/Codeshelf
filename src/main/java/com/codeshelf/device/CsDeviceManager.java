@@ -39,6 +39,7 @@ import com.codeshelf.ws.client.CsClientEndpoint;
 import com.codeshelf.ws.client.WebSocketEventListener;
 import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
+import com.codeshelf.ws.protocol.request.AssociateRemoteCheRequest;
 import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
@@ -352,6 +353,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		LOGGER.debug("computePutWallInstruction: Che={}; ", inCheId);
 		String cheId = inPersistentId.toString();
 		ComputePutWallInstructionRequest req = new ComputePutWallInstructionRequest(cheId, itemOrUpc, putWallName);
+		clientEndpoint.sendMessage(req);
+	}
+
+	public void associateRemoteChe(final String inCheId, final UUID inPersistentId, String cheIdToAssociateTo) {
+		LOGGER.debug("associateRemoteChe: Che={}; ", inCheId);
+		String cheId = inPersistentId.toString();
+		AssociateRemoteCheRequest req = new AssociateRemoteCheRequest(cheId, cheIdToAssociateTo);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -784,7 +792,23 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			LOGGER.info("processPutWallInstructionResponse calling cheDevice.assignWallPuts");
 			cheDevice.assignWallPuts(workInstructions, message); // will initially use assignWork override, but probably need to add parameters.			
 		} else {
-			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
+			LOGGER.warn("Device not found in processPutWallInstructionResponse. CHE id={}", cheId);
+		}
+	}
+
+	/** Two key actions from the associate response
+	 * 1) Immediately, in advance of networkUpdate that may come, modify and maintain the association map in the cheDeviceLogic
+	 * 2) Update local variables in the cheDeviceLogic so that the immediate screen draw looks right.
+	 */
+	public void processAssociateResponse(String networkGuid, String associatedCheGuid, String associatedCheName) {
+		NetGuid cheId = new NetGuid("0x" + networkGuid);
+		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
+		if (cheDevice != null) {
+			// Although not done yet, may be useful to return information such as WI already completed, or it shorted, or ....
+			LOGGER.info("processAssociateResponse calling cheDevice.maintainAssociation");
+			cheDevice.maintainAssociation(associatedCheGuid, associatedCheName); 			
+		} else {
+			LOGGER.error("Device not found in processAssociateResponse. CHE id={}", cheId);
 		}
 	}
 
