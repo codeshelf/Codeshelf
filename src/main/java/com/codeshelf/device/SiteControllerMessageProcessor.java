@@ -173,6 +173,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				AssociateRemoteCheResponse associateResponse = (AssociateRemoteCheResponse) response;
 				if (response.getStatus() == ResponseStatus.Success) {
 					this.deviceManager.processAssociateResponse(associateResponse.getNetworkGuid(),
+						associateResponse.getCheName(),
 						associateResponse.getAssociatedCheGuid(),
 						associateResponse.getAssociatedCheName());
 				}

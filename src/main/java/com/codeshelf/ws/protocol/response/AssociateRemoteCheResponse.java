@@ -14,6 +14,10 @@ public class AssociateRemoteCheResponse extends ResponseABC {
 
 	@Getter
 	@Setter
+	String							cheName; // Name corresponding to the guid above
+
+	@Getter
+	@Setter
 	String							associatedCheGuid; // Guid of the cart CHE that remote is associating to
 
 	@Getter

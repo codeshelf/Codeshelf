@@ -56,16 +56,18 @@ public class AssociateRemoteCheCommand extends CommandABC {
 			}
 
 			response = new AssociateRemoteCheResponse();
+			response.setCheName(che.getDomainId());
 			if (currentAssociatedChe == null) {
 				response.setAssociatedCheName(null);
 				response.setAssociatedCheGuid(null);
 			} else {
 				response.setAssociatedCheName(currentAssociatedChe.getDomainId());
-				response.setAssociatedCheGuid(currentAssociatedChe.getDeviceGuidStr());				
+				response.setAssociatedCheGuid(currentAssociatedChe.getDeviceGuidStrNoPrefix());				
 			}
 
 			response.setNetworkGuid(networkGuid);
 			response.setStatus(ResponseStatus.Success);
+			LOGGER.info("associate response has guid:{} name:{}, assocGuid:{} assocName:{}",response.getNetworkGuid(), response.getCheName(), response.getAssociatedCheGuid(), response.getAssociatedCheName());
 			return response;
 		}
 		response = new AssociateRemoteCheResponse();

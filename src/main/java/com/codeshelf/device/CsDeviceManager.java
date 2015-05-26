@@ -13,13 +13,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.locks.Lock;
 
 import lombok.Getter;
 import lombok.Setter;
 
+import org.mockito.internal.stubbing.answers.DoesNothing;
+import org.mockito.invocation.InvocationOnMock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.flyweight.bitfields.OutOfRangeException;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.command.NetworkId;
 import com.codeshelf.flyweight.controller.INetworkDevice;
@@ -70,6 +74,8 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 	private TwoKeyMap<UUID, NetGuid, INetworkDevice>	mDeviceMap;
 
+	private Map<NetGuid, CheData>						mDeviceDataMap;
+
 	@Getter
 	private IRadioController							radioController;
 
@@ -117,6 +123,8 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 		radioController = inRadioController;
 		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
+
+		mDeviceDataMap = new HashMap<NetGuid, CheData>();
 
 		username = System.getProperty("websocket.username");
 		password = System.getProperty("websocket.password");
@@ -223,7 +231,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			deviceIdentifier = null;
 			try {
 				if (id.length() == NetGuid.NET_GUID_HEX_CHARS) {
-					deviceIdentifier = new NetGuid(id);
+					deviceIdentifier = getNetGuidFromPrefixHexString(id);
 				} else {
 					deviceIdentifier = UUID.fromString(id);
 				}
@@ -239,19 +247,33 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	// --------------------------------------------------------------------------
 	/* 
 	 * Public convenience function for put wall button press. Need to easily find the CheDeviceLogic that asked the position to be lit.
+	 * Also used privately for remote CHE association
+	 * The inControllerId should have leading "0x" except for unrealistic unit tests
 	 */
-	public final CheDeviceLogic getCheDeviceByControllerId(String controllerId) {
-		if (controllerId == null)
+	public final CheDeviceLogic getCheDeviceByControllerId(String inControllerId) {
+		if (inControllerId == null)
 			return null;
 
-		NetGuid theGuid = new NetGuid(controllerId);
-		INetworkDevice theDevice = mDeviceMap.get(theGuid);
+		NetGuid theGuid = getNetGuidFromPrefixHexString(inControllerId);
+		return getCheDeviceByNetGuid(theGuid);
+	}
+
+	// --------------------------------------------------------------------------
+	/* 
+	 * Public convenience function for put wall button press. Need to easily find the CheDeviceLogic that asked the position to be lit.
+	 * Also used privately for remote CHE association
+	 */
+	private CheDeviceLogic getCheDeviceByNetGuid(NetGuid inGuid) {
+		if (inGuid == null)
+			return null;
+
+		INetworkDevice theDevice = mDeviceMap.get(inGuid);
 		if (theDevice == null)
 			return null;
 		else if (theDevice instanceof CheDeviceLogic)
 			return (CheDeviceLogic) theDevice;
 		else {
-			LOGGER.error("unexpected device type for {} in getCheDeviceByControllerId", controllerId);
+			LOGGER.error("unexpected device type for {} in getCheDeviceByControllerId", inGuid);
 			return null;
 		}
 	}
@@ -264,7 +286,9 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		if (controllerId == null)
 			return null;
 
-		NetGuid theGuid = new NetGuid(controllerId);
+		NetGuid theGuid = getNetGuidFromPrefixHexString(controllerId);
+		if (theGuid == null)
+			return null;
 		INetworkDevice theDevice = mDeviceMap.get(theGuid);
 		if (theDevice == null)
 			return null;
@@ -728,37 +752,34 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	}
 
 	public void processVerifyBadgeResponse(String networkGuid, Boolean verified) {
-		NetGuid cheId = new NetGuid("0x" + networkGuid);
-		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
+		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			if (verified == null) {
 				verified = false;
 			}
 			cheDevice.processResultOfVerifyBadge(verified);
 		} else {
-			LOGGER.warn("Unable to process Verify Badge response for CHE id={} CHE not found", cheId);
+			LOGGER.warn("Unable to process Verify Badge response for CHE id={} CHE not found", networkGuid);
 		}
 	}
 
 	public void processComputeWorkResponse(String networkGuid,
 		Integer workInstructionCount,
 		Map<String, WorkInstructionCount> containerToWorkInstructionCountMap) {
-		NetGuid cheId = new NetGuid("0x" + networkGuid);
-		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
+		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			cheDevice.processWorkInstructionCounts(workInstructionCount, containerToWorkInstructionCountMap);
 		} else {
-			LOGGER.warn("Unable to assign work count to CHE id={} CHE not found", cheId);
+			LOGGER.warn("Unable to assign work count to CHE id={} CHE not found", networkGuid);
 		}
 	}
 
 	public void processGetWorkResponse(String networkGuid, List<WorkInstruction> workInstructions, String message) {
-		NetGuid cheId = new NetGuid("0x" + networkGuid);
-		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
+		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			cheDevice.assignWork(workInstructions, message);
 		} else {
-			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
+			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", networkGuid);
 		}
 	}
 
@@ -772,27 +793,25 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 	// Works the same as processGetWorkResponse? Good
 	public void processOrderDetailWorkResponse(String networkGuid, List<WorkInstruction> workInstructions, String message) {
-		NetGuid cheId = new NetGuid("0x" + networkGuid);
-		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
+		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			// Although not done yet, may be useful to return information such as WI already completed, or it shorted, or ....
 			LOGGER.info("processOrderDetailWorkResponse calling cheDevice.assignWork()");
 			cheDevice.assignWork(workInstructions, message); // will initially use assignWork override, but probably need to add parameters.			
 		} else {
-			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
+			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", networkGuid);
 		}
 	}
 
 	// Works the same as processGetWorkResponse? Good
 	public void processPutWallInstructionResponse(String networkGuid, List<WorkInstruction> workInstructions, String message) {
-		NetGuid cheId = new NetGuid("0x" + networkGuid);
-		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
+		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			// Although not done yet, may be useful to return information such as WI already completed, or it shorted, or ....
 			LOGGER.info("processPutWallInstructionResponse calling cheDevice.assignWallPuts");
 			cheDevice.assignWallPuts(workInstructions, message); // will initially use assignWork override, but probably need to add parameters.			
 		} else {
-			LOGGER.warn("Device not found in processPutWallInstructionResponse. CHE id={}", cheId);
+			LOGGER.warn("Device not found in processPutWallInstructionResponse. CHE id={}", networkGuid);
 		}
 	}
 
@@ -800,15 +819,32 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	 * 1) Immediately, in advance of networkUpdate that may come, modify and maintain the association map in the cheDeviceLogic
 	 * 2) Update local variables in the cheDeviceLogic so that the immediate screen draw looks right.
 	 */
-	public void processAssociateResponse(String networkGuid, String associatedCheGuid, String associatedCheName) {
-		NetGuid cheId = new NetGuid("0x" + networkGuid);
-		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
+	public void processAssociateResponse(String networkGuid,
+		String thisCheName,
+		String associatedCheGuidId,
+		String associatedCheName) {
+		LOGGER.info("site controller processAssociateResponse for guid:{} associate to:{}",networkGuid, associatedCheGuidId);
+		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
-			// Although not done yet, may be useful to return information such as WI already completed, or it shorted, or ....
+			NetGuid associateGuid = null;
+			if (associatedCheGuidId != null) {
+				CheDeviceLogic associatedDevice = getCheDeviceFromPrefixHexString("0x" + associatedCheGuidId);
+				// Only allow this if we have it in our device map as a che
+				if (associatedDevice == null) {
+					LOGGER.error("processAssociateResponse did not find valid che device for {}", associatedCheGuidId);
+					associateGuid = null;
+				}
+				else {
+					associateGuid = associatedDevice.getGuid();
+				}
+			}
+			// perhaps more direct to compute the guid from "0x" + networkGuid, but we did that above and found this device
+			this.maintainDeviceData(cheDevice.getGuid(), thisCheName, associateGuid, associatedCheName);
+
 			LOGGER.info("processAssociateResponse calling cheDevice.maintainAssociation");
-			cheDevice.maintainAssociation(associatedCheGuid, associatedCheName); 			
+			cheDevice.maintainAssociation(associatedCheName);
 		} else {
-			LOGGER.error("Device not found in processAssociateResponse. CHE id={}", cheId);
+			LOGGER.error("Device not found in processAssociateResponse. CHE id={}", networkGuid);
 		}
 	}
 
@@ -919,5 +955,121 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			LOGGER.error("Unexpected problem putting packet of size={} in ring buffer", packet.length, e);
 		}
 	}
+
+	/**
+	 * records in the mDeviceDataMap.
+	 * Used in the following efficient functions to find the associated che's name and associated che's guid.
+	 */
+	private class CheData {
+		@Getter
+		@Setter
+		String	cheName;					// the name of this CHE, corresponding to the guid
+
+		@Getter
+		@Setter
+		NetGuid	associatedToRemoteCheGuid;
+
+		// @Getter
+		// @Setter
+		// NetGuid	remoteCheAssociatedToThis;
+
+		public CheData(String cheName, NetGuid associatedToCheGuid) {
+		}
+
+	}
+
+	/**
+	 * This may populate upon use. If associatedToCheGuid is not null, we know it is valid.
+	 * If necessary, make the entry for it.
+	 * 
+	 */
+	private void maintainDeviceData(NetGuid thisCheGuid, String thisCheName, NetGuid associatedToCheGuid, String associatedCheName) {
+		if (associatedToCheGuid != null) {
+			// Make sure it exists. Add if necessary.
+			CheData assocData = mDeviceDataMap.get(associatedToCheGuid);
+			if (assocData == null) {
+				LOGGER.debug("adding device data element {}:{}", associatedToCheGuid, associatedCheName);
+				// Note: if we are associating to another GUID, that may not be associated other.
+				assocData = new CheData(associatedCheName, null);
+				CheData oldAssocData = mDeviceDataMap.put(associatedToCheGuid, assocData);
+				if (oldAssocData != null)
+					LOGGER.error("unexpected result_1 in maintainDeviceData");
+			}
+			// If we did find it, still need to update to a self-consistent state.
+			else {
+				assocData.setAssociatedToRemoteCheGuid(null);
+				assocData.setCheName(associatedCheName); // rarely necessary. The name of this che probably did not change.
+			}
+		}
+		// Above just made sure the associated che has an entry in  mDeviceDataMap.  Guid -> cheName and null associated CHE.
+		// Now set or clear the association.
+
+		CheData thisData = mDeviceDataMap.get(thisCheGuid);
+		if (thisData == null) {
+			LOGGER.debug("adding device data element {}:{}", thisCheGuid, thisCheName);
+			thisData = new CheData(thisCheName, null);
+			CheData oldDataRecord = mDeviceDataMap.put(thisCheGuid, thisData);
+			if (oldDataRecord != null)
+				LOGGER.error("unexpected result_2 in maintainDeviceData");
+		}
+		thisData.setAssociatedToRemoteCheGuid(associatedToCheGuid);
+	}
+
+	/**
+	 * From the guid, what is the che's name
+	 */
+	protected String getCheNameFromGuid(NetGuid thisCheGuid) {
+		CheData thisData = mDeviceDataMap.get(thisCheGuid);
+		if (thisData == null) {
+			return null;
+		}
+		return thisData.getCheName();
+	}
+
+	/**
+	 * From the guid, what is the associated che's name
+	 */
+	protected String getAssociatedCheNameFromGuid(NetGuid thisCheGuid) {
+		CheData thisData = mDeviceDataMap.get(thisCheGuid);
+		if (thisData == null) {
+			return null;
+		}
+		NetGuid assocGuid = thisData.getAssociatedToRemoteCheGuid();
+		if (assocGuid == null) {
+			return null;
+		}
+		CheData assocData = mDeviceDataMap.get(assocGuid);
+		if (assocData == null) {
+			return null;
+		}
+		return assocData.getCheName();
+	}
+
+	/**
+	 * Fairly trivial function provides useful logging. Common bug is mixup of prefix or not on the hex string.
+	 * This catches the the OutOfRangeException, logs, and returns null. Other exceptions are not caught.
+	 */
+	private NetGuid getNetGuidFromPrefixHexString(String inString) {
+		NetGuid deviceGuid = null;
+		try {
+			deviceGuid = new NetGuid(inString);
+		} catch (OutOfRangeException e) {
+			LOGGER.error("could not get netGuid in getDevice", e);
+		}
+		return deviceGuid;
+	}
+	
+	/**
+	 * Common bug is mixup of prefix or not on the hex string, which will log error from OutOfRangeException and return null.
+	 * Input as "0x0000008d".
+	 */
+	private CheDeviceLogic getCheDeviceFromPrefixHexString(String inString) {
+		NetGuid theGuid = getNetGuidFromPrefixHexString(inString);
+		if (theGuid == null)
+			return null;
+		else
+			return this.getCheDeviceByNetGuid(theGuid);
+	}
+
 
 }

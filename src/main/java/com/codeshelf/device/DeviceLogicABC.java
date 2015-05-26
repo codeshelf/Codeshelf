@@ -134,11 +134,15 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	 * Utility function. Should be promoted, and get a cached value.
 	 */
 	protected String getMyGuidStr() {
-		String thisGuidStr = "";
+		return getGuidNoPrefix();
+	}
+	
+	public String getGuidNoPrefix(){
 		NetGuid thisGuid = this.getGuid();
 		if (thisGuid != null)
-			thisGuidStr = thisGuid.getHexStringNoPrefix();
-		return thisGuidStr;
+			return thisGuid.getHexStringNoPrefix();
+		else
+			return null;		
 	}
 	
 	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, String cheName, byte[] associatedToCheGuid){

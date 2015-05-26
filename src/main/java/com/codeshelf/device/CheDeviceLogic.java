@@ -2068,9 +2068,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * This is called as a result of AssociateRemoteCheResponse. We need to transition off of remote_Pending state,
 	 * and update our local variables.
 	 */
-	public void maintainAssociation(String associateCheGuid, String associateCheName) {
+	public void maintainAssociation(String associateCheName) {
 		if (!CheStateEnum.REMOTE_PENDING.equals(this.getCheStateEnum())){
 				LOGGER.error("Incorrect state in maintainAssociation. How? State is {}", getCheStateEnum());}
+
 		this.setLinkedToCheName(associateCheName); // null is ok here. Means no association.
 		setState(CheStateEnum.REMOTE);
 		}
