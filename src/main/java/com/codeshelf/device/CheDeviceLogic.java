@@ -2025,5 +2025,57 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		sendDisplayCommand(line1, line2, line3, line4);
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Send the websocket message to clear
+	 * For DEV-843, 844.
+	 */
+	protected void unlinkRemoteCheAssociation() {
+		setState(CheStateEnum.REMOTE_PENDING); // forces screen redraw. Later, send the message and go to REMOTE_PENDING state.
 
-}
+		mDeviceManager.associateRemoteChe(getGuid().getHexStringNoPrefix(), getPersistentId(), null);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Send the websocket message to clear
+	 * For DEV-843, 844.
+	 */
+	private void linkRemoteCheAssociation(String cheName) {
+		if (cheName == null) {
+			LOGGER.error("Bug? Or use ");
+		}
+		// this.setLinkedToCheName(cheName);
+		setState(CheStateEnum.REMOTE_PENDING); // forces screen redraw. Later, send the message and go to REMOTE_PENDING state.
+		
+		mDeviceManager.associateRemoteChe(getGuid().getHexStringNoPrefix(), getPersistentId(), cheName);
+		// sends a command. Ultimately returns back the newly associated che, or old one if there was a validation failure
+
+	}
+
+	protected void processCheLinkScan(String inScanPrefixStr, String inContent) {
+		if (CHE_NAME_PREFIX.equals(inScanPrefixStr)) {
+			linkRemoteCheAssociation(inContent);
+		} else {
+			LOGGER.info("Not a CHE scan:{}{} ", inScanPrefixStr, inContent);
+			invalidScanMsg(mCheStateEnum);
+		}
+
+	}
+
+	/**
+	 * This is called as a result of AssociateRemoteCheResponse. We need to transition off of remote_Pending state,
+	 * and update our local variables.
+	 */
+	public void maintainAssociation(String associateCheGuid, String associateCheName) {
+		if (!CheStateEnum.REMOTE_PENDING.equals(this.getCheStateEnum())){
+				LOGGER.error("Incorrect state in maintainAssociation. How? State is {}", getCheStateEnum());}
+		this.setLinkedToCheName(associateCheName); // null is ok here. Means no association.
+		setState(CheStateEnum.REMOTE);
+		}
+
+	}
+
+
+
