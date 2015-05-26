@@ -340,7 +340,7 @@ public class CheProcessAssociate extends ServerTest {
 		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
 		commitTransaction();
-		// No orders file yet, so no GTINs or OrderMasters in the system
+		// No orders file yet. Just testing associations
 
 		startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
@@ -369,7 +369,25 @@ public class CheProcessAssociate extends ServerTest {
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		picker1.logCheDisplay();
 
+		LOGGER.info("5: Associate to unknown che");
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.scanSomething("H%CHE99");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.logCheDisplay();
+		picker1.scanCommand("CLEAR");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
+		LOGGER.info("6: Associate to itself");
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.scanCommand("REMOTE");  // unlink old association, if any
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.scanSomething("H%CHE1");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.logCheDisplay();
+		picker1.scanCommand("CLEAR");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 	}
 
 }
