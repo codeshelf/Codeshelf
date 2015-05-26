@@ -83,7 +83,7 @@ import com.codeshelf.service.UiUpdateService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.protocol.message.CheDisplayMessage;
 import com.codeshelf.ws.protocol.message.LightLedsInstruction;
-import com.codeshelf.ws.protocol.message.PickScriptMessage;
+import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
@@ -435,14 +435,16 @@ public class FacilityResource {
 			StringBuilder response = new StringBuilder();
 			TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 			ScriptServerRunner scriptRunner = new ScriptServerRunner(persistence, facility.getPersistentId(), body, uiUpdateService, propertyService, aislesImporter, locationsImporter, inventoryImporter, orderImporter);
+			boolean success = true;
 			//Process script parts
 			while (!scriptParts.isEmpty()) {
 				StepPart part = scriptParts.remove(0);
 				if (part.isServer()) {
 					//SERVER
-					PickScriptMessage serverResponseMessage = scriptRunner.processServerScript(part.getScript());
+					ScriptMessage serverResponseMessage = scriptRunner.processServerScript(part.getScriptLines());
 					response.append(serverResponseMessage.getResponse());
 					if (!serverResponseMessage.isSuccess()) {
+						success = false;
 						break;
 					}
 				} else {
@@ -455,20 +457,21 @@ public class FacilityResource {
 					}
 					//Execute script
 					UUID id = UUID.randomUUID();
-					PickScriptMessage scriptMessage = new PickScriptMessage(id, part.getScript());
+					ScriptMessage scriptMessage = new ScriptMessage(id, part.getScriptLines());
 					webSocketManagerService.sendMessage(users, scriptMessage);
-					PickScriptMessage siteResponseMessage = ScriptSiteCallPool.waitForSiteResponse(id, timeoutMin);
+					ScriptMessage siteResponseMessage = ScriptSiteCallPool.waitForSiteResponse(id, timeoutMin);
 					if (siteResponseMessage == null) {
 						response.append("Site request timed out");
 						break;
 					}
 					response.append(siteResponseMessage.getResponse());
 					if (!siteResponseMessage.isSuccess()) {
+						success = false;
 						break;
 					}
 				}
 			}
-			return BaseResponse.buildResponse(response.toString(), Status.OK, MediaType.TEXT_PLAIN_TYPE);
+			return BaseResponse.buildResponse(response.toString(), success ? Status.OK : Status.BAD_REQUEST, MediaType.TEXT_PLAIN_TYPE);
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
 		}
@@ -494,8 +497,8 @@ public class FacilityResource {
 				errors.addError("Script file was empty");
 				return errors.buildResponse();
 			}
-			ScriptApiResponse response = ScriptParser.parseScript(script);
-			return BaseResponse.buildResponse(response);
+			ScriptStep firstStep  = ScriptParser.parseScript(script);
+			return BaseResponse.buildResponse(new ScriptApiResponse(firstStep.getId(), firstStep.getRequiredFiles(), "Script imported"));
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
 		}
@@ -521,7 +524,7 @@ public class FacilityResource {
 				errors.addError("Script step " + scriptStepId.getValue() + " doesn't exist");
 				return errors.buildResponse();
 			}
-			StringBuilder report = new StringBuilder("Running script step " + scriptStep.getComment());
+			StringBuilder report = new StringBuilder("Running script step " + scriptStep.getComment() + "\n");
 	
 			//Split the script into a list of SERVER and SITE parts
 			ArrayList<StepPart> scriptParts = scriptStep.getParts();
@@ -529,14 +532,16 @@ public class FacilityResource {
 			
 			TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 			ScriptServerRunner scriptRunner = new ScriptServerRunner(persistence, facility.getPersistentId(), body, uiUpdateService, propertyService, aislesImporter, locationsImporter, inventoryImporter, orderImporter);
+			boolean success = true;
 			//Process script parts
 			while (!scriptParts.isEmpty()) {
 				StepPart part = scriptParts.remove(0);
 				if (part.isServer()) {
 					//SERVER
-					PickScriptMessage serverResponseMessage = scriptRunner.processServerScript(part.getScript());
+					ScriptMessage serverResponseMessage = scriptRunner.processServerScript(part.getScriptLines());
 					report.append(serverResponseMessage.getResponse());
 					if (!serverResponseMessage.isSuccess()) {
+						success = false;
 						break;
 					}
 				} else {
@@ -549,20 +554,29 @@ public class FacilityResource {
 					}
 					//Execute script
 					UUID id = UUID.randomUUID();
-					PickScriptMessage scriptMessage = new PickScriptMessage(id, part.getScript());
+					ScriptMessage scriptMessage = new ScriptMessage(id, part.getScriptLines());
 					webSocketManagerService.sendMessage(users, scriptMessage);
-					PickScriptMessage siteResponseMessage = ScriptSiteCallPool.waitForSiteResponse(id, timeoutMin);
+					ScriptMessage siteResponseMessage = ScriptSiteCallPool.waitForSiteResponse(id, timeoutMin);
 					if (siteResponseMessage == null) {
 						report.append("Site request timed out");
 						break;
 					}
 					report.append(siteResponseMessage.getResponse());
 					if (!siteResponseMessage.isSuccess()) {
+						success = false;
 						break;
 					}
 				}
 			}
-			return BaseResponse.buildResponse(new ScriptApiResponse(scriptStep.getNextId(), report.toString()));
+			ScriptStep nextStep = scriptStep.getNextStep();
+			if (!success) {
+				return BaseResponse.buildResponse(new ScriptApiResponse(null, null, report.toString()), Status.BAD_REQUEST);
+			}
+			if (nextStep == null) {
+				return BaseResponse.buildResponse(new ScriptApiResponse(null, null, report.toString()));
+			} else {
+				return BaseResponse.buildResponse(new ScriptApiResponse(nextStep.getId(), nextStep.getRequiredFiles(), report.toString()));
+			}
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
 		}

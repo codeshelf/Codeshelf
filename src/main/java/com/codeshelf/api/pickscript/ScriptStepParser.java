@@ -46,8 +46,8 @@ public class ScriptStepParser {
 	}
 	
 	private static StepPart getNextScriptPart(ArrayList<String> lines) throws Exception{
-		StringBuilder builder = new StringBuilder();
 		boolean isServer = false, lookingForFirstLine = true;
+		ArrayList<String> stepLines = Lists.newArrayList();
 		while (!lines.isEmpty()) {
 			String line = lines.get(0).trim();
 			if (lookingForFirstLine) {
@@ -61,11 +61,11 @@ public class ScriptStepParser {
 					//Reached the next script part
 					break;
 				}
-				builder.append(line).append("\n");
+				stepLines.add(line);
 			}
 			lines.remove(0);
 		}
-		StepPart part = new StepPart(isServer, builder.toString()); 
+		StepPart part = new StepPart(isServer, stepLines); 
 		return part;
 	}
 	
@@ -73,16 +73,20 @@ public class ScriptStepParser {
 		@Getter
 		private boolean isServer;
 		@Getter
-		private String script;
+		private ArrayList<String> scriptLines;
 		
-		public StepPart(boolean isServer, String script) {
+		public StepPart(boolean isServer, ArrayList<String> scriptLines) {
 			this.isServer = isServer;
-			this.script = script;
+			this.scriptLines = scriptLines;
 		}
 		
 		@Override
 		public String toString() {
-			return script;
+			StringBuilder script = new StringBuilder();
+			for (String line : scriptLines){
+				script.append(line).append("\n");
+			}
+			return script.toString();
 		}
 	}
 	

@@ -36,7 +36,7 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.UiUpdateService;
 import com.codeshelf.util.CsExceptionUtils;
-import com.codeshelf.ws.protocol.message.PickScriptMessage;
+import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
 public class ScriptServerRunner {
@@ -90,18 +90,18 @@ public class ScriptServerRunner {
 		this.orderImporter = orderImporter;
 	}
 	
-	public PickScriptMessage processServerScript(String script){
+	public ScriptMessage processServerScript(List<String> lines){
 		report = new StringBuilder();
 		report.append("SERVER\n");
-		PickScriptMessage message = new PickScriptMessage();
+		ScriptMessage message = new ScriptMessage();
 		try {
-			String[] lines = script.split("\n");
 			for (String line : lines) {
 				persistence.beginTransaction();
 				facility = Facility.staticGetDao().findByPersistentId(facilityId);
 				processLine(line);
 				persistence.commitTransaction();
 			}
+			report.append("***Server Script Completed***\n");
 		} catch (Exception e) {
 			persistence.rollbackTransaction();
 			report.append(CsExceptionUtils.exceptionToString(e)).append("\n");
@@ -109,7 +109,6 @@ public class ScriptServerRunner {
 		}
 		message.setResponse(report.toString());
 		LOGGER.info("Server script block completed");
-		report.append("***Server Script Completed***\n");
 		return message;
 	}
 	

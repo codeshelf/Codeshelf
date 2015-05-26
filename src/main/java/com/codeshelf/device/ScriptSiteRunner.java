@@ -18,7 +18,7 @@ import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.util.CsExceptionUtils;
-import com.codeshelf.ws.protocol.message.PickScriptMessage;
+import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.google.common.collect.Lists;
 
 public class ScriptSiteRunner {
@@ -48,12 +48,12 @@ public class ScriptSiteRunner {
 	/**
 	 * This method need to run asynchronously to not hold up the message queue between Server and Site
 	 */
-	public void runScript(final PickScriptMessage message) {
+	public void runScript(final ScriptMessage message) {
 		Runnable runnable = new Runnable() {
 			@Override
 			public void run() {
-				String script = message.getScript();
-				if (script == null) {
+				List<String> lines = message.getLines();
+				if (lines == null) {
 					message.setResponse("Empty site script");
 					message.setSuccess(false);
 					deviceManager.clientEndpoint.sendMessage(message);
@@ -61,7 +61,6 @@ public class ScriptSiteRunner {
 				}
 				report.append("SERVER\n");
 				try {
-					String[] lines = script.split("\n");
 					for (String line : lines) {
 						processLine(line);
 					}

@@ -45,7 +45,7 @@ import com.codeshelf.ws.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.protocol.message.KeepAlive;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
-import com.codeshelf.ws.protocol.message.PickScriptMessage;
+import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
@@ -319,8 +319,8 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			} catch (RuntimeException e) {
 				LOGGER.warn(String.format("Unable to save event for session %s and message %s", session,  message), e); //using string format so that exeption can be supplied
 			}
-		} else if (message instanceof PickScriptMessage){
-			PickScriptMessage pickScriptMessage = (PickScriptMessage) message;
+		} else if (message instanceof ScriptMessage){
+			ScriptMessage pickScriptMessage = (ScriptMessage) message;
 			ScriptSiteCallPool.registerSiteResponse(pickScriptMessage);
 		}else {
 			LOGGER.warn("Unexpected message received on session " + session + ": " + message);

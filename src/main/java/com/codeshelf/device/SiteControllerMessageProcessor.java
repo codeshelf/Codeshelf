@@ -17,7 +17,7 @@ import com.codeshelf.ws.protocol.message.CheStatusMessage;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.message.NetworkStatusMessage;
-import com.codeshelf.ws.protocol.message.PickScriptMessage;
+import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
 import com.codeshelf.ws.protocol.request.PingRequest;
 import com.codeshelf.ws.protocol.request.RequestABC;
@@ -214,8 +214,8 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				CheStatusMessage msg = (CheStatusMessage) message;
 				LOGGER.info("Setup-state initialization received for Che: " + msg.getCheGuid());
 				this.deviceManager.processSetupStateMessage(msg.getCheGuid(), msg.getContainerPositions());
-			} else if (message instanceof PickScriptMessage) {
-				PickScriptMessage msg = (PickScriptMessage) message;
+			} else if (message instanceof ScriptMessage) {
+				ScriptMessage msg = (ScriptMessage) message;
 				new ScriptSiteRunner(deviceManager).runScript(msg);
 			}
 		} finally {
