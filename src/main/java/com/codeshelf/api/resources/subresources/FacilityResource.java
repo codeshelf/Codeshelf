@@ -54,6 +54,7 @@ import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.ItemDisplay;
 import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.api.responses.ResultDisplay;
+import com.codeshelf.api.responses.WorkerDisplay;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedInstrListMessage;
 import com.codeshelf.device.LedSample;
@@ -303,6 +304,7 @@ public class FacilityResource {
 		@QueryParam("type") List<EventTypeParam> typeParamList,
 		@QueryParam("itemId") String itemId,
 		@QueryParam("location") String location,
+		@QueryParam("workerId") String workerId,
 		@QueryParam("groupBy") String groupBy,
 		@QueryParam("resolved") Boolean resolved ) {
 		ErrorResponse errors = new ErrorResponse();
@@ -345,8 +347,20 @@ public class FacilityResource {
 					}
 				}
 				return BaseResponse.buildResponse(result);
+			} else if (!Strings.isNullOrEmpty(workerId)) {
+				ResultDisplay result = new ResultDisplay();
+				for (WorkerEvent event : events) {
+					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
+					WorkerDisplay workerDisplayKey = new WorkerDisplay(eventDisplay);
+					if (workerId.equals(workerDisplayKey.getId())) {
+						result.add(new BeanMap(eventDisplay));
+					}
+				}
+				return BaseResponse.buildResponse(result);
 			}
 
+			
+			
 			if ("item".equals(groupBy)) {
 				Map<ItemDisplay, Integer> issuesByItem = new HashMap<>();
 				for (WorkerEvent event : events) {
@@ -364,6 +378,23 @@ public class FacilityResource {
 					result.add(values);
 				}
 				return BaseResponse.buildResponse(result);
+			} else if ("worker".equals(groupBy)) {
+					Map<WorkerDisplay, Integer> issuesByWorker = new HashMap<>();
+					for (WorkerEvent event : events) {
+						EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
+						WorkerDisplay workerDisplayKey = new WorkerDisplay(eventDisplay);
+						Integer count = MoreObjects.firstNonNull(issuesByWorker.get(workerDisplayKey), 0);
+						issuesByWorker.put(workerDisplayKey, count+1);
+					}
+
+					ResultDisplay result = new ResultDisplay(WorkerDisplay.ItemComparator);
+					for (Map.Entry<WorkerDisplay, Integer> issuesByWorkerEntry : issuesByWorker.entrySet()) {
+						Map<Object, Object> values = new HashMap<>();
+						values.putAll(new BeanMap(issuesByWorkerEntry.getKey()));
+						values.put("count", issuesByWorkerEntry.getValue());
+						result.add(values);
+					}
+					return BaseResponse.buildResponse(result);
 			} else if ("type".equals(groupBy)){
 				Map<EventType, Integer> issuesByType = new HashMap<>();
 				for (WorkerEvent event : events) {
