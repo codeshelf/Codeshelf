@@ -39,6 +39,7 @@ import com.codeshelf.ws.client.CsClientEndpoint;
 import com.codeshelf.ws.client.WebSocketEventListener;
 import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
+import com.codeshelf.ws.protocol.request.AssociateRemoteCheRequest;
 import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
@@ -213,23 +214,22 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 	public INetworkDevice getDevice(Object deviceIdentifier) {
 		INetworkDevice result = null;
-		
-		if(deviceIdentifier instanceof NetGuid || deviceIdentifier instanceof UUID) {
+
+		if (deviceIdentifier instanceof NetGuid || deviceIdentifier instanceof UUID) {
 			result = mDeviceMap.get(deviceIdentifier);
-		} 
-		else if(deviceIdentifier instanceof String) {
+		} else if (deviceIdentifier instanceof String) {
 			// string representation of a NetGuid or UUID
 			String id = (String) deviceIdentifier;
 			deviceIdentifier = null;
 			try {
-				if(id.length() == NetGuid.NET_GUID_HEX_CHARS) {
+				if (id.length() == NetGuid.NET_GUID_HEX_CHARS) {
 					deviceIdentifier = new NetGuid(id);
 				} else {
 					deviceIdentifier = UUID.fromString(id);
 				}
-			} catch(Exception e) {
+			} catch (Exception e) {
 			}
-			if(deviceIdentifier != null) {
+			if (deviceIdentifier != null) {
 				result = mDeviceMap.get(deviceIdentifier);
 			}
 		}
@@ -327,7 +327,11 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		final Boolean reverse) {
 		LOGGER.debug("Compute work: Che={}; Container={}", inCheId, positionToContainerMap);
 		String cheId = inPersistentId.toString();
-		ComputeWorkRequest req = new ComputeWorkRequest(ComputeWorkPurpose.COMPUTE_WORK, cheId, null, positionToContainerMap, reverse);
+		ComputeWorkRequest req = new ComputeWorkRequest(ComputeWorkPurpose.COMPUTE_WORK,
+			cheId,
+			null,
+			positionToContainerMap,
+			reverse);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -351,21 +355,36 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		ComputePutWallInstructionRequest req = new ComputePutWallInstructionRequest(cheId, itemOrUpc, putWallName);
 		clientEndpoint.sendMessage(req);
 	}
-		
-	public void sendNotificationMessage(final NotificationMessage message){
+
+	public void associateRemoteChe(final String inCheId, final UUID inPersistentId, String cheIdToAssociateTo) {
+		LOGGER.debug("associateRemoteChe: Che={}; ", inCheId);
+		String cheId = inPersistentId.toString();
+		AssociateRemoteCheRequest req = new AssociateRemoteCheRequest(cheId, cheIdToAssociateTo);
+		clientEndpoint.sendMessage(req);
+	}
+
+	public void sendNotificationMessage(final NotificationMessage message) {
 		LOGGER.debug("Notify: Device={}; type={}", message.getDevicePersistentId(), message.getEventType());
 		clientEndpoint.sendMessage(message);
 	}
-
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.codeshelf.device.CsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
 	 */
-	public void getCheWork(final String inCheId, final UUID inPersistentId, final String inLocationId, final Map<String, String> positionToContainerMap, final Boolean reversePickOrder, final Boolean reverseOrderFromLastTime) {
+	public void getCheWork(final String inCheId,
+		final UUID inPersistentId,
+		final String inLocationId,
+		final Map<String, String> positionToContainerMap,
+		final Boolean reversePickOrder,
+		final Boolean reverseOrderFromLastTime) {
 		LOGGER.debug("Get work: Che={}; Loc={}", inCheId, inLocationId);
 		String cheId = inPersistentId.toString();
-		ComputeWorkRequest req = new ComputeWorkRequest(ComputeWorkPurpose.GET_WORK, cheId, inLocationId, positionToContainerMap, reversePickOrder);
+		ComputeWorkRequest req = new ComputeWorkRequest(ComputeWorkPurpose.GET_WORK,
+			cheId,
+			inLocationId,
+			positionToContainerMap,
+			reversePickOrder);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -523,6 +542,10 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 					radioController.removeNetworkDevice(oldNetworkDevice);
 				} else {
 					LOGGER.info("Creating deviceType={}; persistentId={}; guid={}", deviceType, persistentId, netDevice.getGuid());
+					// Let's see if we get the CHE's name and associated guid
+					if (che != null)
+						LOGGER.info("CHE name={}; associatedGuid={};", che.getDomainId(), che.getAssociateToCheGuid());
+
 				}
 				radioController.addNetworkDevice(netDevice);
 			}
@@ -565,6 +588,11 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 				if (!suppressMapUpdate) {
 					radioController.addNetworkDevice(netDevice);
 				}
+
+				//TODO if associated to che guid does not match what we have, we need to have the device align itself.
+			} else if (che != null && netDevice.needUpdateCheDetails(deviceGuid, che.getDomainId(), che.getAssociateToCheGuid())) {
+				LOGGER.debug("No update to. deviceType={}; guid={};", deviceType, deviceGuid);
+				suppressMapUpdate = true; // did the update within the existing map. No change to the TwoKeyMap
 			} else {
 				// if not changing netGuid, there is nothing to change
 				LOGGER.debug("No update to. deviceType={}; guid={};", deviceType, deviceGuid);
@@ -637,14 +665,14 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		// update network devices
 		LOGGER.info("updateNetwork() called. Creating or updating deviceLogic for each CHE");
 		// updateNetwork is called a lot. It does figure out if something needs to change..
-		
+
 		for (Che che : network.getChes().values()) {
 			try {
 				UUID id = che.getPersistentId();
 				NetGuid deviceGuid = new NetGuid(che.getDeviceGuid());
 
 				Che.ProcessMode theMode = che.getProcessMode();
-				
+
 				if (theMode == null)
 					doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE_SETUPORDERS, che);
 				else {
@@ -660,7 +688,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 							continue;
 					}
 				}
-	
+
 				updateDevices.add(id);
 			} catch (Exception e) {
 				//error in one should not cause issues setting up others
@@ -733,12 +761,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
 		}
 	}
-	public void processSetupStateMessage(String networkGuid, HashMap<String,Integer> positionMap){
+
+	public void processSetupStateMessage(String networkGuid, HashMap<String, Integer> positionMap) {
 		CheDeviceLogic cheDevice = this.getCheDeviceByControllerId(networkGuid);
 		if (cheDevice == null)
 			LOGGER.error("Did not find device for {} in processSetupStateMessage", networkGuid);
 		else
-			cheDevice.processStateSetup(positionMap);		
+			cheDevice.processStateSetup(positionMap);
 	}
 
 	// Works the same as processGetWorkResponse? Good
@@ -763,11 +792,26 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			LOGGER.info("processPutWallInstructionResponse calling cheDevice.assignWallPuts");
 			cheDevice.assignWallPuts(workInstructions, message); // will initially use assignWork override, but probably need to add parameters.			
 		} else {
-			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
+			LOGGER.warn("Device not found in processPutWallInstructionResponse. CHE id={}", cheId);
 		}
 	}
-	
-	
+
+	/** Two key actions from the associate response
+	 * 1) Immediately, in advance of networkUpdate that may come, modify and maintain the association map in the cheDeviceLogic
+	 * 2) Update local variables in the cheDeviceLogic so that the immediate screen draw looks right.
+	 */
+	public void processAssociateResponse(String networkGuid, String associatedCheGuid, String associatedCheName) {
+		NetGuid cheId = new NetGuid("0x" + networkGuid);
+		CheDeviceLogic cheDevice = (CheDeviceLogic) mDeviceMap.get(cheId);
+		if (cheDevice != null) {
+			// Although not done yet, may be useful to return information such as WI already completed, or it shorted, or ....
+			LOGGER.info("processAssociateResponse calling cheDevice.maintainAssociation");
+			cheDevice.maintainAssociation(associatedCheGuid, associatedCheName); 			
+		} else {
+			LOGGER.error("Device not found in processAssociateResponse. CHE id={}", cheId);
+		}
+	}
+
 	public void processFailureResponse(FailureResponse failure) {
 		String cheGuidStr = failure.getCheId();
 		if (cheGuidStr != null) {

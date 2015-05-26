@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Timer;
-import com.codeshelf.api.pickscript.PickScriptCallPool;
+import com.codeshelf.api.pickscript.ScriptSiteCallPool;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsGroup;
@@ -21,6 +21,7 @@ import com.codeshelf.service.InventoryService;
 import com.codeshelf.service.NotificationService;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.service.WorkService;
+import com.codeshelf.ws.protocol.command.AssociateRemoteCheCommand;
 import com.codeshelf.ws.protocol.command.CommandABC;
 import com.codeshelf.ws.protocol.command.CompleteWorkInstructionCommand;
 import com.codeshelf.ws.protocol.command.ComputeDetailWorkCommand;
@@ -45,7 +46,8 @@ import com.codeshelf.ws.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.protocol.message.KeepAlive;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
-import com.codeshelf.ws.protocol.message.PickScriptMessage;
+import com.codeshelf.ws.protocol.message.ScriptMessage;
+import com.codeshelf.ws.protocol.request.AssociateRemoteCheRequest;
 import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
@@ -190,6 +192,11 @@ public class ServerMessageProcessor implements IMessageProcessor {
 				(ComputePutWallInstructionRequest) request,
 				serviceFactory.getServiceInstance(WorkService.class));
 			applicationRequestCounter.inc();
+		} else if (request instanceof AssociateRemoteCheRequest) {
+			command = new AssociateRemoteCheCommand(csSession,
+				(AssociateRemoteCheRequest) request,
+				serviceFactory.getServiceInstance(WorkService.class));
+			applicationRequestCounter.inc();
 		} else if (request instanceof ObjectGetRequest) {
 			command = new ObjectGetCommand(csSession, (ObjectGetRequest) request);
 			objectGetCounter.inc();
@@ -312,12 +319,16 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			keepAliveCounter.inc();
 			systemRequestCounter.inc();
 		} else if (message instanceof NotificationMessage) {
-			notificationCounter.inc();
-			NotificationService service = serviceFactory.getServiceInstance(NotificationService.class);
-			service.saveEvent((NotificationMessage) message);
-		} else if (message instanceof PickScriptMessage){
-			PickScriptMessage pickScriptMessage = (PickScriptMessage) message;
-			PickScriptCallPool.registerSiteResponse(pickScriptMessage);
+			try {
+				notificationCounter.inc();
+				NotificationService service = serviceFactory.getServiceInstance(NotificationService.class);
+				service.saveEvent((NotificationMessage) message);
+			} catch (RuntimeException e) {
+				LOGGER.warn(String.format("Unable to save event for session %s and message %s", session,  message), e); //using string format so that exeption can be supplied
+			}
+		} else if (message instanceof ScriptMessage){
+			ScriptMessage pickScriptMessage = (ScriptMessage) message;
+			ScriptSiteCallPool.registerSiteResponse(pickScriptMessage);
 		}else {
 			LOGGER.warn("Unexpected message received on session " + session + ": " + message);
 		}

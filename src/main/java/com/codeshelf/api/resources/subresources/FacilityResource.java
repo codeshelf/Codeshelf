@@ -31,19 +31,24 @@ import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
+import org.joda.time.DateTime;
 
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.EndDateParam;
 import com.codeshelf.api.BaseResponse.EventTypeParam;
 import com.codeshelf.api.BaseResponse.StartDateParam;
+import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.HardwareRequest;
 import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
 import com.codeshelf.api.HardwareRequest.LightRequest;
-import com.codeshelf.api.pickscript.PickScriptCallPool;
-import com.codeshelf.api.pickscript.PickScriptParser;
-import com.codeshelf.api.pickscript.PickScriptParser.PickScriptPart;
+import com.codeshelf.api.pickscript.ScriptParser;
+import com.codeshelf.api.pickscript.ScriptParser.ScriptApiResponse;
+import com.codeshelf.api.pickscript.ScriptParser.ScriptStep;
+import com.codeshelf.api.pickscript.ScriptSiteCallPool;
+import com.codeshelf.api.pickscript.ScriptStepParser;
+import com.codeshelf.api.pickscript.ScriptStepParser.StepPart;
 import com.codeshelf.api.pickscript.ScriptServerRunner;
 import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.ItemDisplay;
@@ -78,7 +83,7 @@ import com.codeshelf.service.UiUpdateService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.protocol.message.CheDisplayMessage;
 import com.codeshelf.ws.protocol.message.LightLedsInstruction;
-import com.codeshelf.ws.protocol.message.PickScriptMessage;
+import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
@@ -100,7 +105,7 @@ public class FacilityResource {
 	private final ICsvLocationAliasImporter locationsImporter;
 	private final ICsvInventoryImporter inventoryImporter;
 	private final ICsvOrderImporter orderImporter;
-
+	
 	@Setter
 	private Facility facility;
 
@@ -397,7 +402,7 @@ public class FacilityResource {
 	public Response pickRate(@QueryParam("startTimestamp") StartDateParam startDateParam, @QueryParam("endTimestamp") EndDateParam endDateParam) {
 		ErrorResponse errors = new ErrorResponse();
 		try {
-			List<PickRate> pickRates = notificationService.getPickRate(startDateParam.getValue(), endDateParam.getValue());
+			List<PickRate> pickRates = notificationService.getPickRate(new DateTime(startDateParam.getValue()), new DateTime(endDateParam.getValue()));
 			return BaseResponse.buildResponse(pickRates);
 		} catch (Exception e) {
 			return errors.processException(e);
@@ -414,7 +419,7 @@ public class FacilityResource {
 			ErrorResponse errors = new ErrorResponse();
 
 			//Retrieve the script
-			InputStream scriptIS = PickScriptParser.getInputStream(body, "script");
+			InputStream scriptIS = ScriptStepParser.getInputStream(body, "script");
 			if (scriptIS == null) {
 				errors.addErrorMissingBodyParam("script");
 				return errors.buildResponse();
@@ -425,19 +430,21 @@ public class FacilityResource {
 				return errors.buildResponse();
 			}
 			//Split the script into a list of SERVER and SITE parts
-			ArrayList<PickScriptPart> scriptParts = PickScriptParser.parseMixedScript(script);
+			ArrayList<StepPart> scriptParts = ScriptStepParser.parseMixedScript(script);
 			Set<User> users = facility.getSiteControllerUsers();
 			StringBuilder response = new StringBuilder();
 			TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 			ScriptServerRunner scriptRunner = new ScriptServerRunner(persistence, facility.getPersistentId(), body, uiUpdateService, propertyService, aislesImporter, locationsImporter, inventoryImporter, orderImporter);
+			boolean success = true;
 			//Process script parts
 			while (!scriptParts.isEmpty()) {
-				PickScriptPart part = scriptParts.remove(0);
+				StepPart part = scriptParts.remove(0);
 				if (part.isServer()) {
 					//SERVER
-					PickScriptMessage serverResponseMessage = scriptRunner.processServerScript(part.getScript());
+					ScriptMessage serverResponseMessage = scriptRunner.processServerScript(part.getScriptLines());
 					response.append(serverResponseMessage.getResponse());
 					if (!serverResponseMessage.isSuccess()) {
+						success = false;
 						break;
 					}
 				} else {
@@ -450,20 +457,126 @@ public class FacilityResource {
 					}
 					//Execute script
 					UUID id = UUID.randomUUID();
-					PickScriptMessage scriptMessage = new PickScriptMessage(id, part.getScript());
+					ScriptMessage scriptMessage = new ScriptMessage(id, part.getScriptLines());
 					webSocketManagerService.sendMessage(users, scriptMessage);
-					PickScriptMessage siteResponseMessage = PickScriptCallPool.waitForSiteResponse(id, timeoutMin);
+					ScriptMessage siteResponseMessage = ScriptSiteCallPool.waitForSiteResponse(id, timeoutMin);
 					if (siteResponseMessage == null) {
 						response.append("Site request timed out");
 						break;
 					}
 					response.append(siteResponseMessage.getResponse());
 					if (!siteResponseMessage.isSuccess()) {
+						success = false;
 						break;
 					}
 				}
 			}
-			return BaseResponse.buildResponse(response.toString(), Status.OK, MediaType.TEXT_PLAIN_TYPE);
+			return BaseResponse.buildResponse(response.toString(), success ? Status.OK : Status.BAD_REQUEST, MediaType.TEXT_PLAIN_TYPE);
+		} catch (Exception e) {
+			return new ErrorResponse().processException(e);
+		}
+	}
+	
+	@POST
+	@Path("/process_script")
+	@RequiresPermissions("che:simulate")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response runScriptSteps(FormDataMultiPart body){
+		try {
+			ErrorResponse errors = new ErrorResponse();
+
+			//Retrieve the script
+			InputStream scriptIS = ScriptStepParser.getInputStream(body, "script");
+			if (scriptIS == null) {
+				errors.addErrorMissingBodyParam("script");
+				return errors.buildResponse();
+			}
+			String script = IOUtils.toString(scriptIS);
+			if (script == null || script.isEmpty()) {
+				errors.addError("Script file was empty");
+				return errors.buildResponse();
+			}
+			ScriptStep firstStep  = ScriptParser.parseScript(script);
+			return BaseResponse.buildResponse(new ScriptApiResponse(firstStep.getId(), firstStep.getRequiredFiles(), "Script imported"));
+		} catch (Exception e) {
+			return new ErrorResponse().processException(e);
+		}
+	}
+	
+	@POST
+	@Path("/run_script")
+	@RequiresPermissions("che:simulate")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response runScript(@QueryParam("script_step_id") UUIDParam scriptStepId, 
+		@QueryParam("timeout_min") Integer timeoutMin,
+		FormDataMultiPart body){
+		try {
+			ErrorResponse errors = new ErrorResponse();
+			if (!BaseResponse.isUUIDValid(scriptStepId, "script_step_id", errors)){
+				return errors.buildResponse();
+			}
+			
+			
+			ScriptStep scriptStep = ScriptParser.getScriptStep(scriptStepId.getValue());
+			if (scriptStep == null) {
+				errors.addError("Script step " + scriptStepId.getValue() + " doesn't exist");
+				return errors.buildResponse();
+			}
+			StringBuilder report = new StringBuilder("Running script step " + scriptStep.getComment() + "\n");
+	
+			//Split the script into a list of SERVER and SITE parts
+			ArrayList<StepPart> scriptParts = scriptStep.getParts();
+			Set<User> users = facility.getSiteControllerUsers();
+			
+			TenantPersistenceService persistence = TenantPersistenceService.getInstance();
+			ScriptServerRunner scriptRunner = new ScriptServerRunner(persistence, facility.getPersistentId(), body, uiUpdateService, propertyService, aislesImporter, locationsImporter, inventoryImporter, orderImporter);
+			boolean success = true;
+			//Process script parts
+			while (!scriptParts.isEmpty()) {
+				StepPart part = scriptParts.remove(0);
+				if (part.isServer()) {
+					//SERVER
+					ScriptMessage serverResponseMessage = scriptRunner.processServerScript(part.getScriptLines());
+					report.append(serverResponseMessage.getResponse());
+					if (!serverResponseMessage.isSuccess()) {
+						success = false;
+						break;
+					}
+				} else {
+					//SITE
+					//Test is Site Controller is running
+					Result siteHealth = new ActiveSiteControllerHealthCheck(webSocketManagerService).execute();
+					if (!siteHealth.isHealthy()){
+						report.append("Site controller problem: " + siteHealth.getMessage());
+						break;
+					}
+					//Execute script
+					UUID id = UUID.randomUUID();
+					ScriptMessage scriptMessage = new ScriptMessage(id, part.getScriptLines());
+					webSocketManagerService.sendMessage(users, scriptMessage);
+					ScriptMessage siteResponseMessage = ScriptSiteCallPool.waitForSiteResponse(id, timeoutMin);
+					if (siteResponseMessage == null) {
+						report.append("Site request timed out");
+						break;
+					}
+					report.append(siteResponseMessage.getResponse());
+					if (!siteResponseMessage.isSuccess()) {
+						success = false;
+						break;
+					}
+				}
+			}
+			ScriptStep nextStep = scriptStep.getNextStep();
+			if (!success) {
+				return BaseResponse.buildResponse(new ScriptApiResponse(null, null, report.toString()), Status.BAD_REQUEST);
+			}
+			if (nextStep == null) {
+				return BaseResponse.buildResponse(new ScriptApiResponse(null, null, report.toString()));
+			} else {
+				return BaseResponse.buildResponse(new ScriptApiResponse(nextStep.getId(), nextStep.getRequiredFiles(), report.toString()));
+			}
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
 		}

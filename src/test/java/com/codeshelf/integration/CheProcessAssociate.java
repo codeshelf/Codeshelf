@@ -35,7 +35,8 @@ import com.codeshelf.testframework.ServerTest;
  */
 public class CheProcessAssociate extends ServerTest {
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessAssociate.class);
+	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessAssociate.class);
+	private static final int	WAIT_TIME	= 4000;
 
 	// This is based on CheProcessLineScan which had a convenient no-slot facility.
 
@@ -339,13 +340,66 @@ public class CheProcessAssociate extends ServerTest {
 		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
 		commitTransaction();
-		// No orders file yet, so no GTINs or OrderMasters in the system
+		// No orders file yet. Just testing associations
 
 		startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
 		PickSimulator picker2 = createPickSim(cheGuid2);
 
 		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+		picker2.loginAndCheckState("Picker #2", CheStateEnum.SETUP_SUMMARY);
+
+		LOGGER.info("1: Picker 1 scan REMOTE");
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.logCheDisplay();
+
+		LOGGER.info("2: Picker 1 scan the CHE2 name");
+		picker1.scanSomething("H%CHE2");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.logCheDisplay();
+		Assert.assertEquals("Linked to: CHE2", picker1.getLastCheDisplayString(1));
+
+		LOGGER.info("3: Picker 1 scan REMOTE from remote screen to clear association");
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.logCheDisplay();
+
+		LOGGER.info("4: Picker 1 scan CLEAR to exit");
+		picker1.scanCommand("CLEAR");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay();
+
+		LOGGER.info("5: Associate to unknown che");
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.scanSomething("H%CHE99");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		Assert.assertEquals("Linked to: (none)", picker1.getLastCheDisplayString(1));
+		picker1.logCheDisplay();
+		picker1.scanCommand("CLEAR");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+
+		LOGGER.info("6: Associate to itself");
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.scanCommand("REMOTE"); // unlink old association, if any
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.scanSomething("H%CHE1");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.logCheDisplay();
+		Assert.assertEquals("Linked to: (none)", picker1.getLastCheDisplayString(1));
+		picker1.scanCommand("CLEAR");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+
+		LOGGER.info("7: Unnecessary unlink");
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.scanCommand("REMOTE"); // unlink old association, if any. There is not.
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		Assert.assertEquals("Linked to: (none)", picker1.getLastCheDisplayString(1));
+		picker1.scanCommand("CLEAR");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 	}
 
 }

@@ -1,16 +1,17 @@
 package com.codeshelf.ws.protocol.message;
 
+import java.util.List;
 import java.util.UUID;
 
 import lombok.Getter;
 import lombok.Setter;
 
-public class PickScriptMessage extends MessageABC{
+public class ScriptMessage extends MessageABC{
 	@Getter
 	private UUID id;
 	
 	@Getter
-	private String script;
+	private List<String> lines;
 	
 	@Setter @Getter
 	private String response;
@@ -18,11 +19,11 @@ public class PickScriptMessage extends MessageABC{
 	@Setter @Getter
 	private boolean success = true;
 	
-	public PickScriptMessage() {}
+	public ScriptMessage() {}
 	
-	public PickScriptMessage(UUID id, String script) {
+	public ScriptMessage(UUID id, List<String> lines) {
 		this.id = id;
-		this.script = script;
+		this.lines = lines;
 	}
 	
 	@Override

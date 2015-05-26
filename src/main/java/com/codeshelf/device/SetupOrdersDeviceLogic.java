@@ -96,6 +96,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private boolean								mSetupMixHasPutwall						= false;
 	private boolean								mSetupMixHasCntrOrder					= false;
 
+
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final CsDeviceManager inDeviceManager,
@@ -314,6 +315,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					showActivePicks();
 					break;
 
+				case REMOTE:
+					sendRemoteStateScreen();
+					break;
+
+				case REMOTE_PENDING:
+					sendDisplayCommand("Linking...", EMPTY_MSG);
+					break;
+
 				default:
 					break;
 			}
@@ -369,12 +378,33 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				putWallCommandReceived();
 				break;
 
+			case REMOTE_COMMAND:
+				remoteCommandReceived();
+				break;
+
 			default:
 
 				//Legacy Behavior
 				if (mCheStateEnum != CheStateEnum.SHORT_PICK_CONFIRM) {
 					clearAllPosconsOnThisDevice();
 				}
+				break;
+		}
+	}
+
+	protected void remoteCommandReceived() {
+		// state sensitive. Only allow at start and finish for now.
+		switch (mCheStateEnum) {
+			case SETUP_SUMMARY:
+				setState(CheStateEnum.REMOTE);
+				break;
+			case REMOTE:
+				// This triggers our clear association action
+				unlinkRemoteCheAssociation();
+				// will go to REMOTE_PENDING
+				break;
+
+			default:
 				break;
 		}
 	}
@@ -497,13 +527,27 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
 				break;
 
+			case REMOTE:
+				setState(CheStateEnum.SETUP_SUMMARY);
+				break;
+
+			case REMOTE_PENDING: // State is transitory unless the server failed to respond
+				LOGGER.error("Probable bug. Clear from REMOTE_PENDING state.");
+				setState(CheStateEnum.SETUP_SUMMARY);
+				break;
+
+			case GET_PUT_INSTRUCTION: // State is transitory unless the server failed to respond
+				LOGGER.error("Probable bug. Clear from GET_PUT_INSTRUCTION state.");
+				CheStateEnum priorState = getRememberEnteringWallOrInventoryState();
+				setState(priorState);
+				break;
+
 			case PUT_WALL_SCAN_ORDER:
 			case PUT_WALL_SCAN_LOCATION:
 			case PUT_WALL_SCAN_ITEM:
-			case GET_PUT_INSTRUCTION: // should never happen. State is transitory unless the server failed to respond
 			case PUT_WALL_SCAN_WALL:
 				// DEV-708, 712 specification. We want to return the state we started from: CONTAINER_SELECT or PICK_COMPLETE
-				CheStateEnum priorState = getRememberEnteringWallOrInventoryState();
+				priorState = getRememberEnteringWallOrInventoryState();
 				setState(priorState);
 				break;
 
@@ -1342,6 +1386,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processPutWallScanWall(inScanPrefixStr, inContent);
 				break;
 
+			case REMOTE:
+				processCheLinkScan(inScanPrefixStr, inContent);
+
 			default:
 				break;
 		}
@@ -1604,6 +1651,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 		sendDisplayCommand(line1, line2, line3, line4);
 	}
+
 
 	/**
 	 * Show status for this setup in our restrictive 4 x 20 manner.
@@ -2415,5 +2463,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		}
 	}
+
 
 }

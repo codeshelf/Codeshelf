@@ -63,7 +63,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					LOCATION_PREFIX							= "L%";
 	protected static final String					ITEMID_PREFIX							= "I%";
 	protected static final String					POSITION_PREFIX							= "P%";
-	protected static final String					TAPE_PREFIX								= "%";
+	protected static final String					TAPE_PREFIX								= "%";												// save a character for tape, allowing tighter resolution
+	protected static final String					CHE_NAME_PREFIX							= "H%";
 
 	// These are the message strings we send to the remote CHE.
 	// Currently, these cannot be longer than 20 characters.
@@ -129,6 +130,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					INVENTORY_COMMAND						= "INVENTORY";
 	protected static final String					ORDER_WALL_COMMAND						= "ORDER_WALL";
 	protected static final String					PUT_WALL_COMMAND						= "PUT_WALL";
+	protected static final String					REMOTE_COMMAND							= "REMOTE";
 
 	// With WORKSEQR = "WorkSequence", work may scan start instead of scanning a location. 
 	// LOCATION_SELECT, we want "SCAN START LOCATION" "OR SCAN START"
@@ -195,6 +197,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Setter
 	private String									lastPutWallOrderScan;
 
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private String									mLinkedToCheName						= null;
+
 	/**
 	 * We have only one inventory state, not two. Essentially another state by whether or not we think we have a valid
 	 * gtin or item id in lastScanedGTIN.  This is fairly complicated. We desire:
@@ -213,8 +220,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				// Updating location of an item
 				notifyScanInventoryUpdate(inScanStr, lastScannedGTIN);
 				mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, lastScannedGTIN);
-			}
-			else {
+			} else {
 				// just a location ID scan. light it.
 				mDeviceManager.inventoryLightLocationScan(getPersistentId(), inScanStr, isTape);
 			}
@@ -226,10 +232,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			if (lastScannedGTIN != null) {
 				// Updating location of an item
 				// Let's pass with the tape prefix to the server. Otherwise, it has to query one way, and then again for tape
-					notifyScanInventoryUpdate(tapeScan, lastScannedGTIN);
+				notifyScanInventoryUpdate(tapeScan, lastScannedGTIN);
 				mDeviceManager.inventoryUpdateScan(this.getPersistentId(), tapeScan, lastScannedGTIN);
-			}
-			else {
+			} else {
 				// just a location ID scan. light it. Also pass the % first.
 				mDeviceManager.inventoryLightLocationScan(getPersistentId(), tapeScan, isTape);
 			}
@@ -238,8 +243,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		// Other special scans not valid, such as user, position, container
 		else if (inScanPrefixStr != null && !inScanPrefixStr.isEmpty()) {
 			LOGGER.warn("Recieved invalid scan: {}. Expected tape or location scan, or GTIN.", inScanStr);
-		} 
-		else {
+		} else {
 			// An unadorned string should be gtin/UPC. Store it, replacing what we had.
 			mDeviceManager.inventoryLightItemScan(this.getPersistentId(), inScanStr);
 			lastScannedGTIN = inScanStr;
@@ -1245,6 +1249,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			result = POSITION_PREFIX;
 		} else if (inScanStr.startsWith(TAPE_PREFIX)) {
 			result = TAPE_PREFIX;
+		} else if (inScanStr.startsWith(CHE_NAME_PREFIX)) {
+			result = CHE_NAME_PREFIX;
 		}
 
 		return result;
@@ -1980,4 +1986,96 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	public void processResultOfVerifyBadge(Boolean verified) {
 		// To be overridden by SetupOrderDeviceLogic and LineScanDeviceLogic
 	}
-}
+
+	/**
+	 * Implement some or most of the remote business at CheDeviceLogic level so that future CHE applications can automatically remote.
+	 */
+	@Override
+	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, String cheName, byte[] associatedToCheGuid) {
+		// TODO update internals
+
+		return false;
+	}
+	
+	/**
+	 * Show if we are linked, and give instructions on how to link. Screen will show as
+	 * Linked to: (none)
+	 * Scan Che name to link
+	 * 
+	 * CLEAR to exit
+	 * 
+	 * or
+	 * Linked to: CHE3
+	 * Scan Che name to link
+	 * or REMOTE to unlink
+	 * CLEAR to exit
+	 */
+	protected void sendRemoteStateScreen() {
+		String cheName = getLinkedToCheName();
+		boolean wasNull = false;
+		if (cheName == null) {
+			cheName = "(none)";
+			wasNull = true;}
+		String line1 = String.format("Linked to: %s", cheName);
+		String line2 = "Scan Che name to link";
+		String line3 = "";
+		if (!wasNull)
+			line3 = "or REMOTE to unlink";		
+		String line4 = "CLEAR to exit";
+
+		sendDisplayCommand(line1, line2, line3, line4);
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Send the websocket message to clear
+	 * For DEV-843, 844.
+	 */
+	protected void unlinkRemoteCheAssociation() {
+		setState(CheStateEnum.REMOTE_PENDING); // forces screen redraw. Later, send the message and go to REMOTE_PENDING state.
+
+		mDeviceManager.associateRemoteChe(getGuid().getHexStringNoPrefix(), getPersistentId(), null);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Send the websocket message to clear
+	 * For DEV-843, 844.
+	 */
+	private void linkRemoteCheAssociation(String cheName) {
+		if (cheName == null) {
+			LOGGER.error("Bug? Or use ");
+		}
+		// this.setLinkedToCheName(cheName);
+		setState(CheStateEnum.REMOTE_PENDING); // forces screen redraw. Later, send the message and go to REMOTE_PENDING state.
+		
+		mDeviceManager.associateRemoteChe(getGuid().getHexStringNoPrefix(), getPersistentId(), cheName);
+		// sends a command. Ultimately returns back the newly associated che, or old one if there was a validation failure
+
+	}
+
+	protected void processCheLinkScan(String inScanPrefixStr, String inContent) {
+		if (CHE_NAME_PREFIX.equals(inScanPrefixStr)) {
+			linkRemoteCheAssociation(inContent);
+		} else {
+			LOGGER.info("Not a CHE scan:{}{} ", inScanPrefixStr, inContent);
+			invalidScanMsg(mCheStateEnum);
+		}
+
+	}
+
+	/**
+	 * This is called as a result of AssociateRemoteCheResponse. We need to transition off of remote_Pending state,
+	 * and update our local variables.
+	 */
+	public void maintainAssociation(String associateCheGuid, String associateCheName) {
+		if (!CheStateEnum.REMOTE_PENDING.equals(this.getCheStateEnum())){
+				LOGGER.error("Incorrect state in maintainAssociation. How? State is {}", getCheStateEnum());}
+		this.setLinkedToCheName(associateCheName); // null is ok here. Means no association.
+		setState(CheStateEnum.REMOTE);
+		}
+
+	}
+
+
+

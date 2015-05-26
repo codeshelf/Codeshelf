@@ -17,10 +17,11 @@ import com.codeshelf.ws.protocol.message.CheStatusMessage;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.message.NetworkStatusMessage;
-import com.codeshelf.ws.protocol.message.PickScriptMessage;
+import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
 import com.codeshelf.ws.protocol.request.PingRequest;
 import com.codeshelf.ws.protocol.request.RequestABC;
+import com.codeshelf.ws.protocol.response.AssociateRemoteCheResponse;
 import com.codeshelf.ws.protocol.response.CompleteWorkInstructionResponse;
 import com.codeshelf.ws.protocol.response.ComputeWorkResponse;
 import com.codeshelf.ws.protocol.response.FailureResponse;
@@ -157,8 +158,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 					LOGGER.info("GetPutWallInstructionResponse received: not success. No action.");
 				}
 			}
-			//////////////////////////////////////////
-			// Handler for Get Order Detail Work-- LINE_SCAN work flow
+
 			else if (response instanceof InventoryUpdateResponse) {
 				InventoryUpdateResponse inventoryScanResponse = (InventoryUpdateResponse) response;
 				if (response.getStatus() == ResponseStatus.Success) {
@@ -167,6 +167,15 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			}
 
 			else if (response instanceof PutWallPlacementResponse) {
+			}
+
+			else if (response instanceof AssociateRemoteCheResponse) {
+				AssociateRemoteCheResponse associateResponse = (AssociateRemoteCheResponse) response;
+				if (response.getStatus() == ResponseStatus.Success) {
+					this.deviceManager.processAssociateResponse(associateResponse.getNetworkGuid(),
+						associateResponse.getAssociatedCheGuid(),
+						associateResponse.getAssociatedCheName());
+				}
 			}
 
 			// Handle server-side errors
@@ -214,8 +223,8 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				CheStatusMessage msg = (CheStatusMessage) message;
 				LOGGER.info("Setup-state initialization received for Che: " + msg.getCheGuid());
 				this.deviceManager.processSetupStateMessage(msg.getCheGuid(), msg.getContainerPositions());
-			} else if (message instanceof PickScriptMessage) {
-				PickScriptMessage msg = (PickScriptMessage) message;
+			} else if (message instanceof ScriptMessage) {
+				ScriptMessage msg = (ScriptMessage) message;
 				new ScriptSiteRunner(deviceManager).runScript(msg);
 			}
 		} finally {
@@ -253,14 +262,14 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			this.clearDeviceContext();
 		}
 	}
-	
+
 	private void setDeviceContext(MessageABC message) {
 		INetworkDevice device = deviceManager.getDevice(message.getDeviceIdentifier());
-		if(device != null) {
+		if (device != null) {
 			ContextLogging.setNetGuid(device.getGuid());
 		}
 	}
-	
+
 	private void clearDeviceContext() {
 		ContextLogging.clearNetGuid();
 	}

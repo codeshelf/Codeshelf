@@ -5,10 +5,13 @@ import java.util.UUID;
 
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
+import javax.persistence.ConstraintMode;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
+import javax.persistence.ForeignKey;
+import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
@@ -18,7 +21,9 @@ import lombok.Setter;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Type;
+import org.joda.time.DateTime;
 
+import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -37,7 +42,7 @@ public class WorkerEvent extends DomainObjectABC {
 			return WorkerEvent.class;
 		}
 	}
-	
+
 	public static ITypedDao<WorkerEvent> staticGetDao() {
 		return TenantPersistenceService.getInstance().getDao(WorkerEvent.class);
 	}
@@ -45,7 +50,7 @@ public class WorkerEvent extends DomainObjectABC {
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Setter
 	private Facility						facility;
-	
+
 	@ManyToOne(optional = true, fetch = FetchType.LAZY)
 	@Getter @Setter
 	private Resolution						resolution;
@@ -53,43 +58,61 @@ public class WorkerEvent extends DomainObjectABC {
 	@Column(nullable = false)
 	@Getter @Setter
 	@JsonProperty
-	private Timestamp						created;
+	private Timestamp created;
 
 	@Column(nullable = false, name = "event_type")
 	@Enumerated(EnumType.STRING)
 	@Getter @Setter
 	@JsonProperty
 	private EventType						eventType;
-	
+
 	@Column(nullable = false, name = "device_persistentid")
 	@Getter @Setter
 	@JsonProperty
 	private String							devicePersistentId;
-	
+
 	@Column(nullable = false, name = "device_guid")
 	@Getter @Setter
 	@JsonProperty
 	private String							deviceGuid;
-	
+
 	@Column(nullable = true, name = "worker_id")
 	@Getter @Setter
 	@JsonProperty
 	private String							workerId;
-	
+
 	@Column(nullable = true, name = "order_detail_persistentid")
 	@Type(type="com.codeshelf.persistence.DialectUUIDType")
 	@Getter @Setter
 	private UUID							orderDetailId;
 
-	@Column(nullable = true, name = "work_instruction_persistentid")
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "work_instruction_persistentid", foreignKey=@ForeignKey(name="none", value=ConstraintMode.NO_CONSTRAINT ))
 	@Type(type="com.codeshelf.persistence.DialectUUIDType")
 	@Getter @Setter
-	private UUID							workInstructionId;
+	private WorkInstruction							workInstruction;
+
+	@Column(nullable = true, name = "work_instruction_persistentid", insertable=false, updatable=false)
+	@Type(type="com.codeshelf.persistence.DialectUUIDType")
+	@Getter @Setter
+	private UUID 		workInstructionId;
+
 
 	public WorkerEvent() {
 		setCreated(new Timestamp(System.currentTimeMillis()));
 	}
-	
+
+	public WorkerEvent(DateTime created, EventType eventType, NetGuid deviceGuid, UUID devicePersistentId, Facility facility) {
+		setCreated(new Timestamp(created.getMillis()));
+		setDeviceGuid(deviceGuid.toString());
+		setDevicePersistentId(devicePersistentId.toString());
+		setEventType(eventType);
+		setFacility(facility);
+		generateDomainId();
+	}
+
+
+
 	@Override
 	public String getDefaultDomainIdPrefix() {
 		return "Ev";
@@ -105,7 +128,7 @@ public class WorkerEvent extends DomainObjectABC {
 	public Facility getFacility() {
 		return facility;
 	}
-	
+
 	public void generateDomainId(){
 		String domainId = getDefaultDomainIdPrefix() + "_" + getDeviceGuid() + "_" + getEventType();
 		setDomainId(domainId);

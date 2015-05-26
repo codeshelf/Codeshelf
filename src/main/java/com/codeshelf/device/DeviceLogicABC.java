@@ -140,4 +140,9 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 			thisGuidStr = thisGuid.getHexStringNoPrefix();
 		return thisGuidStr;
 	}
+	
+	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, String cheName, byte[] associatedToCheGuid){
+		return false;
+	}
+
 }

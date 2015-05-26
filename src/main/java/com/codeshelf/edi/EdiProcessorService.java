@@ -29,6 +29,7 @@ import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.AbstractCodeshelfScheduledService;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 // --------------------------------------------------------------------------
 /**
@@ -40,12 +41,12 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 
 	private static final Logger			LOGGER					= LoggerFactory.getLogger(EdiProcessorService.class);
 
-	private ICsvOrderImporter			mCsvOrderImporter;
-	private ICsvOrderLocationImporter	mCsvOrderLocationImporter;
-	private ICsvInventoryImporter		mCsvInventoryImporter;
-	private ICsvLocationAliasImporter	mCsvLocationAliasImporter;
-	private ICsvAislesFileImporter		mCsvAislesFileImporter;
-	private ICsvCrossBatchImporter		mCsvCrossBatchImporter;
+	private Provider<ICsvOrderImporter>			mCsvOrderImporter;
+	private Provider<ICsvOrderLocationImporter>	mCsvOrderLocationImporter;
+	private Provider<ICsvInventoryImporter>		mCsvInventoryImporter;
+	private Provider<ICsvLocationAliasImporter>	mCsvLocationAliasImporter;
+	private Provider<ICsvAislesFileImporter>		mCsvAislesFileImporter;
+	private Provider<ICsvCrossBatchImporter>		mCsvCrossBatchImporter;
 
 	private Timer					ediProcessingTimer;
 	private Thread ediSignalThread = null;
@@ -55,12 +56,12 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 	BlockingQueue<String> ediSignalQueue = null;
 
 	@Inject
-	public EdiProcessorService(final ICsvOrderImporter inCsvOrdersImporter,
-		final ICsvInventoryImporter inCsvInventoryImporter,
-		final ICsvLocationAliasImporter inCsvLocationsImporter,
-		final ICsvOrderLocationImporter inCsvOrderLocationImporter,
-		final ICsvCrossBatchImporter inCsvCrossBatchImporter,
-		final ICsvAislesFileImporter inCsvAislesFileImporter) {
+	public EdiProcessorService(final Provider<ICsvOrderImporter> inCsvOrdersImporter,
+		final Provider<ICsvInventoryImporter> inCsvInventoryImporter,
+		final Provider<ICsvLocationAliasImporter> inCsvLocationsImporter,
+		final Provider<ICsvOrderLocationImporter> inCsvOrderLocationImporter,
+		final Provider<ICsvCrossBatchImporter> inCsvCrossBatchImporter,
+		final Provider<ICsvAislesFileImporter> inCsvAislesFileImporter) {
 
 		mCsvOrderImporter = inCsvOrdersImporter;
 		mCsvOrderLocationImporter = inCsvOrderLocationImporter;
@@ -113,12 +114,12 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 			for (Facility facility : this.getFacilities()) {
 				for (IEdiService ediService : facility.getEdiServices()) {
 					if (ediService.getServiceState().equals(EdiServiceStateEnum.LINKED)) {
-						if (ediService.getUpdatesFromHost(mCsvOrderImporter,
-							mCsvOrderLocationImporter,
-							mCsvInventoryImporter,
-							mCsvLocationAliasImporter,
-							mCsvCrossBatchImporter,
-							mCsvAislesFileImporter)) {
+						if (ediService.getUpdatesFromHost(mCsvOrderImporter.get(),
+							mCsvOrderLocationImporter.get(),
+							mCsvInventoryImporter.get(),
+							mCsvLocationAliasImporter.get(),
+							mCsvCrossBatchImporter.get(),
+							mCsvAislesFileImporter.get())) {
 							numChecked ++;
 							// Signal other threads that we've just processed new EDI.
 							try {

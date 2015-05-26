@@ -1971,7 +1971,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 */
 	public boolean associateCheToCheName(Che inChe, String inCheNameToAssociateTo) {
 		if (inChe == null || inCheNameToAssociateTo == null || inCheNameToAssociateTo.isEmpty()) {
-			LOGGER.error("null input to associateCheToCheName");
+			LOGGER.error("null input to WorkService.associateCheToCheName");
 			return false;
 		}
 		LOGGER.info("Associate {} to {}", inChe.getDomainId(), inCheNameToAssociateTo);
@@ -1979,12 +1979,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		CodeshelfNetwork network = inChe.getParent();
 		Che otherChe = Che.staticGetDao().findByDomainId(network, inCheNameToAssociateTo);
 		if (otherChe == null) {
-			LOGGER.warn("did not find CHE named {}", inCheNameToAssociateTo);
+			LOGGER.warn("WorkService.associateCheToCheName() did not find CHE named {}", inCheNameToAssociateTo);
 			return false;
 		}
 
 		if (otherChe.equals(inChe)) {
-			LOGGER.warn("associateCheToCheName called to associate to itself. Not allowed");
+			LOGGER.warn("WorkService.associateCheToCheName called to associate to itself. Not allowed");
 			return false;
 		}
 		boolean changed = false;
@@ -1992,7 +1992,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		// By any chance, is the che we are going to associate to already pointing at another CHE? If so, clear that.
 		Che chePointedAt = otherChe.getAssociateToChe();
 		if (chePointedAt != null) {
-			LOGGER.warn("{} was itself associated to {}. Clearing {} association",
+			LOGGER.warn("associateCheToCheName(): {} was itself associated to {}. Clearing {} association",
 				otherChe.getDomainId(),
 				chePointedAt.getDomainId(),
 				otherChe.getDomainId());
@@ -2002,7 +2002,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		// is any other CHE already associated to the otherChe? Only looks for one. I suppose bad bugs could make more.
 		Che pointingAtOtherChe = otherChe.getCheAssociatedToThis();
 		if (pointingAtOtherChe != null) {
-			LOGGER.warn("Clearing association of {} which pointed to {}", pointingAtOtherChe.getDomainId(), inCheNameToAssociateTo);
+			LOGGER.warn("associateCheToCheName(): Clearing association of {} which pointed to {}", pointingAtOtherChe.getDomainId(), inCheNameToAssociateTo);
 			pointingAtOtherChe.setAssociateToCheGuid(null);
 			Che.staticGetDao().store(pointingAtOtherChe);
 			changed = true;
@@ -2022,7 +2022,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 */
 	public boolean clearCheAssociation(Che inChe) {
 		if (inChe == null) {
-			LOGGER.error("null input to clearCheAssociation");
+			LOGGER.error("clearCheAssociation(): null input to clearCheAssociation");
 			return false;
 		}
 		boolean changed = false;
