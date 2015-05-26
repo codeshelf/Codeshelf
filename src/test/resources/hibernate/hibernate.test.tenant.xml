@@ -85,6 +85,7 @@
         <mapping class="com.codeshelf.model.domain.Worker"/>
         <mapping class="com.codeshelf.model.domain.WorkerEvent"/>
         <mapping class="com.codeshelf.model.domain.Resolution"/>
+        <mapping class="com.codeshelf.model.domain.Script"/>
 
     </session-factory>
 </hibernate-configuration>

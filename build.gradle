@@ -68,6 +68,7 @@ dependencies {
             */
 
             'org.codehaus.groovy:groovy-groovysh:2.4.3',
+            'org.codehaus.groovy:groovy-jsr223:2.4.3',
 
             'com.google.inject:guice:3.0',
 			'com.google.inject.extensions:guice-servlet:3.0',

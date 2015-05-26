@@ -127,8 +127,10 @@ public class CsServerEndPoint {
 					} else {
 						LOGGER.warn("No response generated for request " + request);
 					}
-					if (needTransaction)
+					if (needTransaction) {
 						TenantPersistenceService.getInstance().commitTransaction();
+						LOGGER.debug("Committed transaction for request "+request);
+					};
 					needTransaction = false;
 				} finally {
 					if (needTransaction)
