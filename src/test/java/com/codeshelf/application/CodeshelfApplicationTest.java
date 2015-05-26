@@ -24,6 +24,7 @@ import com.codeshelf.report.PickDocumentGenerator;
 import com.codeshelf.security.TokenSessionService;
 import com.codeshelf.service.DummyPropertyService;
 import com.codeshelf.testframework.ServerTest;
+import com.google.inject.Provider;
 
 /**
  * @author jeffw
@@ -40,18 +41,13 @@ public class CodeshelfApplicationTest extends ServerTest {
 	@Test
 	public void testStartStopApplication() {
 
-		ICsvOrderImporter orderImporter = mock(ICsvOrderImporter.class);
-		ICsvInventoryImporter inventoryImporter = mock(ICsvInventoryImporter.class);
-		ICsvLocationAliasImporter locationAliasImporter = mock(ICsvLocationAliasImporter.class);
-		ICsvOrderLocationImporter orderLocationImporter = mock(ICsvOrderLocationImporter.class);
-		ICsvCrossBatchImporter crossBatchImporter = mock(ICsvCrossBatchImporter.class);
-		ICsvAislesFileImporter aislesFileImporter = mock(ICsvAislesFileImporter.class);
-		EdiProcessorService ediProcessorService = new EdiProcessorService(orderImporter,
-			inventoryImporter,
-			locationAliasImporter,
-			orderLocationImporter,
-			crossBatchImporter,
-			aislesFileImporter);
+		Provider mockProvider= mock(Provider.class);
+		EdiProcessorService ediProcessorService = new EdiProcessorService(mockProvider,
+			mockProvider,
+			mockProvider,
+			mockProvider,
+			mockProvider,
+			mockProvider);
 		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
 
 		WebApiServer adminServer = new WebApiServer();

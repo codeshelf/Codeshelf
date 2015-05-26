@@ -18,6 +18,7 @@ import java.util.concurrent.BlockingQueue;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,7 @@ import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.validation.BatchResult;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.Provider;
 
 /**
  * @author jeffw
@@ -57,19 +59,16 @@ public class EdiProcessorTest extends MockDaoTest {
 	public final void ediProcessThreadTest() {
 		LOGGER.info("starting ediProcessThreadTest");
 
-		ICsvOrderImporter orderImporter = generateFailingImporter();
-		ICsvInventoryImporter inventoryImporter = mock(ICsvInventoryImporter.class);
-		ICsvLocationAliasImporter locationImporter = mock(ICsvLocationAliasImporter.class);
-		ICsvOrderLocationImporter orderLocationImporter = mock(ICsvOrderLocationImporter.class);
-		ICsvCrossBatchImporter crossBatchImporter = mock(ICsvCrossBatchImporter.class);
-		ICsvAislesFileImporter aislesFileImporter = mock(ICsvAislesFileImporter.class);
+		Provider failingInstanceProvider = mock(Provider.class);
+		Mockito.when(failingInstanceProvider.get()).thenReturn(generateFailingImporter());
+		Provider anyProvider = mock(Provider.class);
 
-		EdiProcessorService ediProcessorService = new EdiProcessorService(orderImporter,
-			inventoryImporter,
-			locationImporter,
-			orderLocationImporter,
-			crossBatchImporter,
-			aislesFileImporter);
+		EdiProcessorService ediProcessorService = new EdiProcessorService(failingInstanceProvider,
+			anyProvider,
+			anyProvider,
+			anyProvider,
+			anyProvider,
+			anyProvider);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessorService.setEdiSignalQueue(testBlockingQueue);
 		
@@ -339,12 +338,13 @@ public class EdiProcessorTest extends MockDaoTest {
 		facility.addEdiService(ediServiceUnlinked);
 		facility.addEdiService(ediServiceLinked);
 
-		EdiProcessorService ediProcessorService = new EdiProcessorService(orderImporter,
-			inventoryImporter,
-			locationImporter,
-			orderLocationImporter,
-			crossBatchImporter,
-			aislesFileImporter);
+		Provider anyProvider = mock(Provider.class);
+		EdiProcessorService ediProcessorService = new EdiProcessorService(anyProvider,
+			anyProvider,
+			anyProvider,
+			anyProvider,
+			anyProvider,
+			anyProvider);
 
 		IMetricsService metrics = new DummyMetricsService();
 		MetricsService.setInstance(metrics);	// will be restored to normal values by framework 
