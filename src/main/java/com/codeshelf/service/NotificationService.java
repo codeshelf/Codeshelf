@@ -59,6 +59,8 @@ public class NotificationService implements IApiService{
 			}
 			TenantPersistenceService.getInstance().beginTransaction();
 			LOGGER.info("Saving notification from {}: {}", message.getDeviceGuid(), message.getEventType());
+			WorkerEvent event = new WorkerEvent();
+
 			Class<?> deviceClass = message.getDeviceClass();
 			DomainObjectABC device = null;
 			if (deviceClass == Che.class) {
@@ -69,18 +71,18 @@ public class NotificationService implements IApiService{
 			if (device == null) {
 				throw new IllegalArgumentException(String.format("unable to find %s device %s (%s)", deviceClass, message.getDevicePersistentId(), message.getDeviceGuid()));
 			}
-			
-			WorkerEvent event = new WorkerEvent();
-			event.setCreated(new Timestamp(message.getTimestamp()));
-			event.setFacility(device.getFacility());
-			event.setEventType(message.getEventType());
 			event.setDeviceGuid(new NetGuid(message.getDeviceGuid()).toString());
+			event.setFacility(device.getFacility());
+			event.setDevicePersistentId(device.getPersistentId().toString());
+			
+			event.setCreated(new Timestamp(message.getTimestamp()));
+			event.setEventType(message.getEventType());
 			event.setWorkerId(message.getWorkerId());
 			
 			UUID workInstructionId = message.getWorkInstructionId();
 			if (workInstructionId != null) {
-				event.setWorkInstructionId(workInstructionId);
 				WorkInstruction wi = WorkInstruction.staticGetDao().findByPersistentId(workInstructionId);
+				event.setWorkInstruction(wi);
 				OrderDetail orderDetail = wi.getOrderDetail();
 				if (orderDetail != null) {
 					event.setOrderDetailId(orderDetail.getPersistentId());
