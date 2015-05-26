@@ -22,13 +22,16 @@ import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.ContainerUse;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderDetail;
+import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.UomMaster;
+import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
@@ -200,8 +203,23 @@ public class UiUpdateService implements IApiService {
 		Che che = Che.staticGetDao().findByPersistentId(cheId);
 
 		if (che == null) {
-			LOGGER.error("Could not find che {0}", cheId);
+			LOGGER.error("Could not find che {}", cheId);
 			return;
+		}
+		LOGGER.info("Deleting che {}", cheId);
+		List<ContainerUse> uses = che.getUses();
+		for (ContainerUse use : uses) {
+			OrderHeader header = use.getOrderHeader();
+			LOGGER.info("Null-out ContainerUse on OrderHeader {}", header.getDomainId());
+			header.setContainerUse(null);
+			OrderHeader.staticGetDao().store(header);
+			LOGGER.info("Deleting ContainerUse {}", use.getDomainId());
+			ContainerUse.staticGetDao().delete(use);
+		}
+		List<WorkInstruction> instructions = che.getCheWorkInstructions();
+		LOGGER.info("Deleting {} WorkeInstructions for che {}", instructions.size(), cheId);
+		for (WorkInstruction instruction : instructions) {
+			WorkInstruction.staticGetDao().delete(instruction);
 		}
 		Che.staticGetDao().delete(che);
 	}
