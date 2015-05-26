@@ -96,10 +96,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private boolean								mSetupMixHasPutwall						= false;
 	private boolean								mSetupMixHasCntrOrder					= false;
 
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	private String								mLinkedToCheName						= null;
 
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
@@ -1656,34 +1652,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		sendDisplayCommand(line1, line2, line3, line4);
 	}
 
-	/**
-	 * Show if we are linked, and give instructions on how to link. Screen will show as
-	 * Linked to: (none)
-	 * Scan Che name to link
-	 * 
-	 * CLEAR to exit
-	 * 
-	 * or
-	 * Linked to: CHE3
-	 * Scan Che name to link
-	 * or REMOTE to unlink
-	 * CLEAR to exit
-	 */
-	void sendRemoteStateScreen() {
-		String cheName = getLinkedToCheName();
-		boolean wasNull = false;
-		if (cheName == null) {
-			cheName = "(none)";
-			wasNull = true;}
-		String line1 = String.format("Linked to: %s", cheName);
-		String line2 = "Scan Che name to link";
-		String line3 = "";
-		if (!wasNull)
-			line3 = "or REMOTE to unlink";		
-		String line4 = "CLEAR to exit";
-
-		sendDisplayCommand(line1, line2, line3, line4);
-	}
 
 	/**
 	 * Show status for this setup in our restrictive 4 x 20 manner.

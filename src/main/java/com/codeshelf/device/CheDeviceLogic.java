@@ -197,6 +197,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Setter
 	private String									lastPutWallOrderScan;
 
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private String									mLinkedToCheName						= null;
+
 	/**
 	 * We have only one inventory state, not two. Essentially another state by whether or not we think we have a valid
 	 * gtin or item id in lastScanedGTIN.  This is fairly complicated. We desire:
@@ -1244,7 +1249,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			result = POSITION_PREFIX;
 		} else if (inScanStr.startsWith(TAPE_PREFIX)) {
 			result = TAPE_PREFIX;
-		}else if (inScanStr.startsWith(CHE_NAME_PREFIX)) {
+		} else if (inScanStr.startsWith(CHE_NAME_PREFIX)) {
 			result = CHE_NAME_PREFIX;
 		}
 
@@ -1981,4 +1986,44 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	public void processResultOfVerifyBadge(Boolean verified) {
 		// To be overridden by SetupOrderDeviceLogic and LineScanDeviceLogic
 	}
+
+	/**
+	 * Implement some or most of the remote business at CheDeviceLogic level so that future CHE applications can automatically remote.
+	 */
+	@Override
+	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, String cheName, byte[] associatedToCheGuid) {
+		// TODO update internals
+
+		return false;
+	}
+	
+	/**
+	 * Show if we are linked, and give instructions on how to link. Screen will show as
+	 * Linked to: (none)
+	 * Scan Che name to link
+	 * 
+	 * CLEAR to exit
+	 * 
+	 * or
+	 * Linked to: CHE3
+	 * Scan Che name to link
+	 * or REMOTE to unlink
+	 * CLEAR to exit
+	 */
+	protected void sendRemoteStateScreen() {
+		String cheName = getLinkedToCheName();
+		boolean wasNull = false;
+		if (cheName == null) {
+			cheName = "(none)";
+			wasNull = true;}
+		String line1 = String.format("Linked to: %s", cheName);
+		String line2 = "Scan Che name to link";
+		String line3 = "";
+		if (!wasNull)
+			line3 = "or REMOTE to unlink";		
+		String line4 = "CLEAR to exit";
+
+		sendDisplayCommand(line1, line2, line3, line4);
+	}
+
 }

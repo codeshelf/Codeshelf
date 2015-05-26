@@ -162,4 +162,6 @@ public interface INetworkDevice {
 
 	public void setFirmwareVersion(short firmwareVersion);
 
+	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, String cheName, byte[] associatedToCheGuid);
+
 }

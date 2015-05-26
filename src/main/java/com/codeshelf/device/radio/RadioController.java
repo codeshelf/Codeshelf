@@ -85,7 +85,7 @@ public class RadioController implements IRadioController {
 	private static final long										NETCHECK_DELAY_MILLIS			= 250;
 
 	private static final long										ACK_TIMEOUT_MILLIS				= 20;
-	private static final int										ACK_SEND_RETRY_COUNT			= 20;
+	private static final int										ACK_SEND_RETRY_COUNT			= 30;
 	private static final long										MAX_PACKET_AGE_MILLIS			= 2000;
 
 	private static final long										BACKGROUND_SERVICE_DELAY_MS		= 20;
@@ -93,7 +93,7 @@ public class RadioController implements IRadioController {
 	private static final long										BROADCAST_RATE_MILLIS			= 750;
 
 	private static final int										MAX_CHANNEL_VALUE				= 255;
-	private static final long										PACKET_SPACING_MILLIS			= 40;
+	private static final long										PACKET_SPACING_MILLIS			= 15;
 	private static final int										ACK_QUEUE_SIZE					= 200;
 
 	@Getter

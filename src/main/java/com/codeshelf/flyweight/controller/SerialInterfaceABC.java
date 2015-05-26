@@ -444,11 +444,12 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		//			mSerialOutputStream.write(IGatewayInterface.END);
 		//			mSerialOutputStream.flush();
 		buffer[bufPos++] = IGatewayInterface.END;
-		buffer[bufPos + 1] = IGatewayInterface.END;
+//		buffer[bufPos++] = IGatewayInterface.END;
+//		buffer[bufPos+1] = IGatewayInterface.END;
 
-		clrRTS();
+		//clrRTS();
 		writeBytes(buffer, bufPos);
-		setRTS();
+		//setRTS();
 
 		boolean isMerelyNetManagementTraffic = false;
 		ICommand aCommand = inPacket.getCommand();
@@ -459,13 +460,13 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			LOGGER.trace("Send packet:    " + inPacket.toString());
 		else
 			LOGGER.debug("Send packet:    " + inPacket.toString());
-		//if (LOGGER.isDebugEnabled()) {
-		//	try {
-		//		hexDumpArray(packetBytes);
-		//	} catch (Exception e) {
-		//		LOGGER.error("", e);
-		//	}
-		//}
+		if (LOGGER.isDebugEnabled()) {
+			try {
+				hexDumpArray(packetBytes);
+			} catch (Exception e) {
+				LOGGER.error("", e);
+			}
+		}
 		
 		if(this.packetListener != null) {
 			this.packetListener.capture(packetBytes);
