@@ -1996,7 +1996,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		return false;
 	}
-	
+
 	/**
 	 * Show if we are linked, and give instructions on how to link. Screen will show as
 	 * Linked to: (none)
@@ -2015,17 +2015,18 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		boolean wasNull = false;
 		if (cheName == null) {
 			cheName = "(none)";
-			wasNull = true;}
+			wasNull = true;
+		}
 		String line1 = String.format("Linked to: %s", cheName);
 		String line2 = "Scan Che name to link";
 		String line3 = "";
 		if (!wasNull)
-			line3 = "or REMOTE to unlink";		
+			line3 = "or REMOTE to unlink";
 		String line4 = "CLEAR to exit";
 
 		sendDisplayCommand(line1, line2, line3, line4);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Send the websocket message to clear
@@ -2048,7 +2049,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 		// this.setLinkedToCheName(cheName);
 		setState(CheStateEnum.REMOTE_PENDING); // forces screen redraw. Later, send the message and go to REMOTE_PENDING state.
-		
+
 		mDeviceManager.associateRemoteChe(getGuid().getHexStringNoPrefix(), getPersistentId(), cheName);
 		// sends a command. Ultimately returns back the newly associated che, or old one if there was a validation failure
 
@@ -2069,14 +2070,17 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * and update our local variables.
 	 */
 	public void maintainAssociation(String associateCheName) {
-		if (!CheStateEnum.REMOTE_PENDING.equals(this.getCheStateEnum())){
-				LOGGER.error("Incorrect state in maintainAssociation. How? State is {}", getCheStateEnum());}
-
-		this.setLinkedToCheName(associateCheName); // null is ok here. Means no association.
-		setState(CheStateEnum.REMOTE);
+		LOGGER.info("maintainAssociation called with {}", associateCheName);
+		if (!CheStateEnum.REMOTE_PENDING.equals(this.getCheStateEnum())) {
+			LOGGER.error("Incorrect state in maintainAssociation. How? State is {}", getCheStateEnum());
 		}
 
+		this.setLinkedToCheName(associateCheName); // null is ok here. Means no association.
+		if (associateCheName == null)
+			setState(CheStateEnum.REMOTE);
+		else {
+			setState(CheStateEnum.REMOTE_LINKED);
+		}
 	}
 
-
-
+}

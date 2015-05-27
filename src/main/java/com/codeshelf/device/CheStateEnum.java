@@ -56,11 +56,11 @@ public enum CheStateEnum {
 
 	// state for Che setup persistence
 	SETUP_SUMMARY(CheStateNum.SETUP_SUMMARY, "SETUP_SUMMARY"),
-	
+
 	// states used for mobile CHE association
 	REMOTE(CheStateNum.REMOTE, "REMOTE"),
-	REMOTE_PENDING(CheStateNum.REMOTE_PENDING, "REMOTE_PENDING");
-	
+	REMOTE_PENDING(CheStateNum.REMOTE_PENDING, "REMOTE_PENDING"),
+	REMOTE_LINKED(CheStateNum.REMOTE_LINKED, "REMOTE_LINKED");
 
 	private int		mValue;
 	private String	mName;
@@ -207,8 +207,9 @@ public enum CheStateEnum {
 		// state for Che Setup Persistence
 		static final byte	SETUP_SUMMARY				= 34;	// may result in removal of PICK_COMPLETE_CURR_PATH, PICK_COMPLETE
 		// states used for mobile CHE association
-		static final byte	REMOTE						= 35;	
-		static final byte	REMOTE_PENDING				= 36;	
+		static final byte	REMOTE						= 35;
+		static final byte	REMOTE_PENDING				= 36;
+		static final byte	REMOTE_LINKED				= 37;
 
 		private CheStateNum() {
 		};

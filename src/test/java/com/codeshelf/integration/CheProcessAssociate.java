@@ -356,27 +356,35 @@ public class CheProcessAssociate extends ServerTest {
 
 		LOGGER.info("2: Picker 1 scan the CHE2 name");
 		picker1.scanSomething("H%CHE2");
-		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
 		picker1.logCheDisplay();
-		Assert.assertEquals("Linked to: CHE2", picker1.getLastCheDisplayString(1));
+		// Here we would see the che2 display
 
 		LOGGER.info("3: Picker 1 scan REMOTE from remote screen to clear association");
 		picker1.scanCommand("REMOTE");
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		picker1.logCheDisplay();
+		Assert.assertEquals("Linked to: CHE2", picker1.getLastCheDisplayString(1));
 
 		LOGGER.info("4: Picker 1 scan CLEAR to exit");
 		picker1.scanCommand("CLEAR");
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		picker1.logCheDisplay();
 
-		LOGGER.info("5: Associate to unknown che");
+		LOGGER.info("5: Associate to unknown che. Result is still linked as it was to CHE2");
 		picker1.scanCommand("REMOTE");
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		picker1.scanSomething("H%CHE99");
+		picker1.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
+		Assert.assertEquals("Linked to: CHE2", picker1.getLastCheDisplayString(1));
+		picker1.logCheDisplay();
+
+		LOGGER.info("5b: Clear it");		
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.scanCommand("REMOTE");
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		Assert.assertEquals("Linked to: (none)", picker1.getLastCheDisplayString(1));
-		picker1.logCheDisplay();
 		picker1.scanCommand("CLEAR");
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 

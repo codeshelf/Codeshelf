@@ -322,6 +322,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				case REMOTE_PENDING:
 					sendDisplayCommand("Linking...", EMPTY_MSG);
 					break;
+					
+				case REMOTE_LINKED:
+					// TODO don't send this screen. So ask for linked screen.
+					LOGGER.error("implement linked screen");
+					sendRemoteStateScreen();
+					break;
 
 				default:
 					break;
@@ -396,8 +402,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// state sensitive. Only allow at start and finish for now.
 		switch (mCheStateEnum) {
 			case SETUP_SUMMARY:
+			case REMOTE_LINKED:
 				setState(CheStateEnum.REMOTE);
 				break;
+				
 			case REMOTE:
 				// This triggers our clear association action
 				unlinkRemoteCheAssociation();
@@ -530,6 +538,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case REMOTE:
 				setState(CheStateEnum.SETUP_SUMMARY);
 				break;
+				
+			// just a note: clear command is passed through in REMOTE_LINKED state
 
 			case REMOTE_PENDING: // State is transitory unless the server failed to respond
 				LOGGER.error("Probable bug. Clear from REMOTE_PENDING state.");
@@ -1388,6 +1398,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case REMOTE:
 				processCheLinkScan(inScanPrefixStr, inContent);
+				break;
+				
+			case REMOTE_LINKED:
+				LOGGER.error("TODO implement case");
+				// TODO
+				break;
 
 			default:
 				break;
