@@ -376,7 +376,8 @@ public class CheProcessAssociate extends ServerTest {
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		picker1.scanSomething("H%CHE99");
 		picker1.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
-		Assert.assertEquals("Linked to: CHE2", picker1.getLastCheDisplayString(1));
+		// linked will pick up the CHE2 actual display
+		// Assert.assertEquals("Linked to: CHE2", picker1.getLastCheDisplayString(1));
 		picker1.logCheDisplay();
 		
 		LOGGER.info("5b: While linked, other scans should pass through to the other che");		
@@ -413,5 +414,44 @@ public class CheProcessAssociate extends ServerTest {
 		picker1.scanCommand("CLEAR");
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 	}
+	
+	/**
+	 * Test using association via CHE scans
+	 */
+	@Test
+	public final void testAssociatedCheScreen() throws IOException {
+		beginTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		commitTransaction();
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		setUpOrdersWithCntrAndGtin(facility);
+		commitTransaction();
 
+		startSiteController();
+		PickSimulator picker1 = createPickSim(cheGuid1);
+		PickSimulator picker2 = createPickSim(cheGuid2);
+		
+		LOGGER.info("1: Picker 2 sets up some jobs on CHE2, then logs out");		
+		picker2.loginAndCheckState("Picker #2", CheStateEnum.SETUP_SUMMARY);
+		picker2.scanCommand("SETUP");
+		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker2.setupOrderIdAsContainer("12345", "1");
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker2.logCheDisplay();
+		picker2.logout();
+		
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+
+		LOGGER.info("2: Picker 1 scan REMOTE and link to CHE2");
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.logCheDisplay();
+		picker1.scanSomething("H%CHE2");
+		picker1.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
+		picker1.logCheDisplay();
+		// Here we would see the che2 display
+
+	}
 }

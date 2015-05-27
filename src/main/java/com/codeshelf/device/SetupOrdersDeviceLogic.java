@@ -96,7 +96,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private boolean								mSetupMixHasPutwall						= false;
 	private boolean								mSetupMixHasCntrOrder					= false;
 
-
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final CsDeviceManager inDeviceManager,
@@ -322,11 +321,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				case REMOTE_PENDING:
 					sendDisplayCommand("Linking...", EMPTY_MSG);
 					break;
-					
+
 				case REMOTE_LINKED:
-					// TODO don't send this screen. So ask for linked screen.
-					LOGGER.error("implement linked screen");
-					sendRemoteStateScreen();
+					LOGGER.info("Transition to linked state");
+					// sendRemoteStateScreen();
+					// This user is logged in. As we transition into REMOTE_LINKED state, ask other CHE device to draw our screen.
+					enterLinkedState();
 					break;
 
 				default:
@@ -405,7 +405,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case REMOTE_LINKED:
 				setState(CheStateEnum.REMOTE);
 				break;
-				
+
 			case REMOTE:
 				// This triggers our clear association action
 				unlinkRemoteCheAssociation();
@@ -538,7 +538,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case REMOTE:
 				setState(CheStateEnum.SETUP_SUMMARY);
 				break;
-				
+
 			// just a note: clear command is passed through in REMOTE_LINKED state
 
 			case REMOTE_PENDING: // State is transitory unless the server failed to respond
@@ -1243,14 +1243,20 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 	}
 
+	/**
+	* This is the essence of the log in result after verify badge. Factored out so that remote linked CHE may get this CHE to the right state.
+	*/
+	@Override
+	public void finishLogin() {
+		clearAllPosconsOnThisDevice();
+		setState(CheStateEnum.SETUP_SUMMARY);
+	}
+
 	@Override
 	public void processResultOfVerifyBadge(Boolean verified) {
 		if (mCheStateEnum.equals(CheStateEnum.VERIFYING_BADGE) || mCheStateEnum.equals(CheStateEnum.IDLE)) {
 			if (verified) {
-				clearAllPosconsOnThisDevice();
-
-				setState(CheStateEnum.SETUP_SUMMARY);
-
+				finishLogin();
 				notifyCheWorkerVerb("LOG IN", "");
 			} else {
 				setState(CheStateEnum.IDLE);
@@ -1399,10 +1405,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case REMOTE:
 				processCheLinkScan(inScanPrefixStr, inContent);
 				break;
-				
+
 			case REMOTE_LINKED:
-				LOGGER.error("TODO implement case");
-				// TODO
+				LOGGER.error("Should not have gotten here");
 				break;
 
 			default:
@@ -1667,7 +1672,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 		sendDisplayCommand(line1, line2, line3, line4);
 	}
-
 
 	/**
 	 * Show status for this setup in our restrictive 4 x 20 manner.
@@ -2479,6 +2483,5 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		}
 	}
-
 
 }

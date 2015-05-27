@@ -197,10 +197,16 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Setter
 	private String									lastPutWallOrderScan;
 
+	// Fields for REMOTE linked CHEs
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
 	private String									mLinkedToCheName						= null;
+
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private NetGuid									mLinkedFromCheGuid						= null;
 
 	/**
 	 * We have only one inventory state, not two. Essentially another state by whether or not we think we have a valid
@@ -419,8 +425,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			fontType,
 			posX,
 			posY);
-		mRadioController.sendCommand(command, getAddress(), true);
-
+		sendScreenCommandToMyChe(command);
+		sendScreenCommandToLinkFromChe(command);
 	}
 
 	// --------------------------------------------------------------------------
@@ -552,12 +558,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
 		rememberLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message);
+		
+		logLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message); // log even if no association. This is the only logging for remote linked CHE
 
-		if (!this.isDeviceAssociated()) {
-			LOGGER.debug("skipping send display for unassociated " + this.getMyGuidStrForLog());
-			return;
-		}
-		logLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message); // not logged if no association
 		clearDisplay();
 
 		sendSingleLineDisplayMessage(inLine1Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 35);
@@ -588,26 +591,24 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
 		rememberLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message);
 
-		// DEV-459 if this CHE is not associated, there is no point in sending out a display.
-		// Lots of upstream code generates display messages.
-
-		if (!this.isDeviceAssociated()) {
-			LOGGER.debug("skipping send display for unassociated " + this.getMyGuidStrForLog());
-			return;
-		}
-		logLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message); // not logged if no association
+		logLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message); // log the lines even if no association. This is the only logging for remote che
 
 		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT,
 			inLine1Message,
 			inLine2Message,
 			inLine3Message,
 			inLine4Message);
-		mRadioController.sendCommand(command, getAddress(), true);
+
+		sendScreenCommandToMyChe(command);
+
+		sendScreenCommandToLinkFromChe(command);
+
 	}
 
 	protected void clearDisplay() {
 		ICommand command = new CommandControlClearDisplay(NetEndpoint.PRIMARY_ENDPOINT);
-		mRadioController.sendCommand(command, getAddress(), true);
+		sendScreenCommandToMyChe(command);
+		sendScreenCommandToLinkFromChe(command);
 	}
 
 	protected boolean wiMatchesItemLocation(String matchItem, String matchPickLocation, WorkInstruction wiToCheck) { // used for DEV-691, DEV-692
@@ -1024,7 +1025,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	@Override
 	public void scanCommandReceived(String inCommandStr) {
-		
+
 		// TODO if passed from linked CHE, process it anyway.
 		if (!connectedToServer) {
 			LOGGER.debug("NotConnectedToServer: Ignoring scan command: " + inCommandStr);
@@ -1036,12 +1037,12 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		String scanPrefixStr = getScanPrefix(inCommandStr);
 		String scanStr = getScanContents(inCommandStr, scanPrefixStr);
-		
+
 		// If this (mobile) CHE is linked to another CHE, then pass through scans to that CHE. Except for REMOTE and LOGOUT
 		boolean passToOtherChe = false;
-		if (CheStateEnum.REMOTE_LINKED.equals(getCheStateEnum())){
+		if (CheStateEnum.REMOTE_LINKED.equals(getCheStateEnum())) {
 			passToOtherChe = true;
-			if(COMMAND_PREFIX.equals(scanPrefixStr)) {
+			if (COMMAND_PREFIX.equals(scanPrefixStr)) {
 				if (REMOTE_COMMAND.equals(scanStr) || LOGOUT_COMMAND.equals(scanStr)) {
 					passToOtherChe = false;
 				}
@@ -2099,14 +2100,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			setState(CheStateEnum.REMOTE_LINKED);
 		}
 	}
-	
+
 	/**
 	 * Get the CheDevice logic that this remote (mobile) CHE is linked to.
 	 */
-	CheDeviceLogic getLinkedCheDevice() {
+	public CheDeviceLogic getLinkedCheDevice() {
 		CheDeviceLogic linkedDevice = null;
 		NetGuid assocGuid = getDeviceManager().getAssociatedCheGuidFromGuid(getGuid());
-		if (assocGuid != null){
+		if (assocGuid != null) {
 			linkedDevice = getDeviceManager().getCheDeviceByNetGuid(assocGuid);
 		}
 		return linkedDevice;
@@ -2117,23 +2118,121 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * The scanning CHE directly calls this.
 	 */
 	void scanReceivedFrom(NetGuid remoteCheGuid, String scanStr) {
-		LOGGER.info("{} recieved from {}",scanStr, remoteCheGuid);
+		LOGGER.info("{} recieved from {}", scanStr, remoteCheGuid);
 		// TODO: make sure this is processed, even if this CHE is offline
 		scanCommandReceived(scanStr);
 	}
-	
+
 	/**
 	 * This is the sending  side of pass-through to the linked CHE. At this time only scans are passed through.
 	 */
-	void passScanToLinkedChe(String scanStr) {
+	public void passScanToLinkedChe(String scanStr) {
 		LOGGER.info("passScanToLinkedChe {}", scanStr);
 		CheDeviceLogic linkedDevice = getLinkedCheDevice();
-		if (linkedDevice == null){
+		if (linkedDevice == null) {
 			LOGGER.error("passScanToLinkedChe failed to find the device");
 			return;
 		}
 		linkedDevice.scanReceivedFrom(getGuid(), scanStr);
 	}
 
+	/**
+	 * Called on entry to REMOTE_LINKED state. This is the sending side to get the screen from linked device.
+	 */
+	public void enterLinkedState() {
+		CheDeviceLogic linkedDevice = getLinkedCheDevice();
+		if (linkedDevice == null) {
+			LOGGER.error("enterLinkedState failed to find the device");
+			return;
+		}
+		linkedDevice.processLink(getGuid(), getUserId());
+	}
+
+	/**
+	 * Called on entry to REMOTE_LINKED state. This is the receiving side to get the screen from linked device.
+	 */
+	public void processLink(NetGuid sourceDeviceGuid, String sourceUserName) {
+		// We want to store the source device or guid
+		// We want to claim the sourceUserName as our own.
+		// If in idle state, we want to transition to SETUP_SUMMARY, acting as if we are logged in.
+		// finally, draw our screen onto source device. But that may happen as a side effect.
+
+		if (sourceDeviceGuid == null) {
+			LOGGER.error("null guid in processLink");
+			return;
+		}
+
+		CheDeviceLogic sourceDevice = getDeviceManager().getCheDeviceByNetGuid(sourceDeviceGuid);
+		if (sourceDevice == null) {
+			LOGGER.error("processLink failed to find the device");
+			return;
+		}
+
+		String currentUserId = getUserId();
+		if (currentUserId != null) {
+			LOGGER.warn("linking {}. Replacing user {} with {}",
+				sourceDeviceGuid.getHexStringNoPrefix(),
+				currentUserId,
+				sourceUserName);
+		} else {
+			LOGGER.info("linking {} with user {}", sourceDeviceGuid.getHexStringNoPrefix(), sourceUserName);
+		}
+
+		setLinkedFromCheGuid(sourceDeviceGuid);
+		setUserId(sourceUserName);
+		if (CheStateEnum.IDLE.equals(getCheStateEnum())) {
+			// we want to log in "generically"
+			finishLogin();
+		}
+	}
+
+	public void finishLogin() {
+		LOGGER.error("override finishLogin needed");
+	}
+
+	/**
+	 * If a remote CHE is linked to me, get its device.
+	 */
+	CheDeviceLogic getLinkFromCheDevice() {
+		NetGuid sourceGuid = getLinkedFromCheGuid();
+		if (sourceGuid == null)
+			return null;
+		return getDeviceManager().getCheDeviceByNetGuid(sourceGuid);
+	}
+
+	/**
+	 * Called by the three screen command primitives. Therefore, just after drawing the local screen, will draw the remote screen
+	 * This is the sending side (the cart CHE) as its state machine decided to redraw its own screen and send a clone out to the mobile che screen.
+	 */
+	void sendScreenCommandToLinkFromChe(ICommand inCommand) {
+		CheDeviceLogic linkFromDevice = getLinkFromCheDevice();
+		if (linkFromDevice != null) {
+			// We do not want to call directly. Rather, pass back, and let that device decide if it is in in the right state for remote screen redraws.
+			linkFromDevice.processScreenCommandAtLinkFromChe(inCommand);
+		}
+	}
+
+	/**
+	 * Called by the three screen command primitives. Therefore, just after drawing the local screen, will draw the remote screen
+	 * This is the sending side (the cart CHE) as its state machine decided to redraw its own screen and send a clone out to the mobile che screen.
+	 */
+	void sendScreenCommandToMyChe(ICommand inCommand) {
+		if (this.isDeviceAssociated()) {
+			mRadioController.sendCommand(inCommand, getAddress(), true);
+		}
+	}
+
+	/**
+	 * This is the receiving side (the mobile CHE) getting the screen from the cart CHE.
+	 * This will log a warn if not in the REMOTE_LINKED state and will not do anything.
+	 */
+	void processScreenCommandAtLinkFromChe(ICommand inCommand) {
+		CheStateEnum state = getCheStateEnum();
+		if (CheStateEnum.REMOTE_LINKED.equals(state)) {
+			sendScreenCommandToMyChe(inCommand);
+		} else {
+			LOGGER.warn("processScreenCommandFromLinkedChe called from state:{}. Not drawing", state);
+		}
+	}
 
 }

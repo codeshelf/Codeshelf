@@ -450,7 +450,14 @@ public class PickSimulator {
 	}
 
 	public String getLastCheDisplayString(int lineIndex) {
-		return cheDeviceLogic.getRecentCheDisplayString(lineIndex);
+		// This is a bit tricky. If a cloned screen we need the other cheDeviceLog.
+		CheDeviceLogic deviceToAsk = cheDeviceLogic;
+		if (CheStateEnum.REMOTE_LINKED.equals(cheDeviceLogic.getCheStateEnum())) {
+			deviceToAsk = cheDeviceLogic.getLinkedCheDevice();
+			if (deviceToAsk == null)
+				deviceToAsk = cheDeviceLogic;
+		}
+		return deviceToAsk.getRecentCheDisplayString(lineIndex);
 	}
 
 	public void logCheDisplay() {
