@@ -243,11 +243,11 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 	// --------------------------------------------------------------------------
 	/* 
-	 * Public convenience function for put wall button press. Need to easily find the CheDeviceLogic that asked the position to be lit.
+	 * Package convenience function for put wall button press. Need to easily find the CheDeviceLogic that asked the position to be lit.
 	 * Also used privately for remote CHE association
 	 * The inControllerId should have leading "0x" except for unrealistic unit tests
 	 */
-	public final CheDeviceLogic getCheDeviceByControllerId(String inControllerId) {
+	CheDeviceLogic getCheDeviceByControllerId(String inControllerId) {
 		if (inControllerId == null)
 			return null;
 
@@ -257,10 +257,10 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 	// --------------------------------------------------------------------------
 	/* 
-	 * Public convenience function for put wall button press. Need to easily find the CheDeviceLogic that asked the position to be lit.
+	 * Package convenience function for put wall button press. Need to easily find the CheDeviceLogic that asked the position to be lit.
 	 * Also used privately for remote CHE association
 	 */
-	private CheDeviceLogic getCheDeviceByNetGuid(NetGuid inGuid) {
+	CheDeviceLogic getCheDeviceByNetGuid(NetGuid inGuid) {
 		if (inGuid == null)
 			return null;
 
@@ -1024,14 +1024,21 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	}
 
 	/**
-	 * From the guid, what is the associated che's name
+	 * From the guid, what is the associated che's guid
 	 */
-	protected String getAssociatedCheNameFromGuid(NetGuid thisCheGuid) {
+	public NetGuid getAssociatedCheGuidFromGuid(NetGuid thisCheGuid) {
 		CheData thisData = mDeviceDataMap.get(thisCheGuid);
 		if (thisData == null) {
 			return null;
 		}
-		NetGuid assocGuid = thisData.getAssociatedToRemoteCheGuid();
+		return thisData.getAssociatedToRemoteCheGuid();
+	}
+
+	/**
+	 * From the guid, what is the associated che's name
+	 */
+	protected String getAssociatedCheNameFromGuid(NetGuid thisCheGuid) {
+		NetGuid assocGuid = getAssociatedCheGuidFromGuid(thisCheGuid);
 		if (assocGuid == null) {
 			return null;
 		}

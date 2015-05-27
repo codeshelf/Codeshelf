@@ -1024,6 +1024,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	@Override
 	public void scanCommandReceived(String inCommandStr) {
+		
+		// TODO if passed from linked CHE, process it anyway.
 		if (!connectedToServer) {
 			LOGGER.debug("NotConnectedToServer: Ignoring scan command: " + inCommandStr);
 			return;
@@ -1032,10 +1034,25 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		// Clean up any potential newline or carriage returns.
 		inCommandStr = inCommandStr.replaceAll("[\n\r]", "");
 
-		notifyScan(inCommandStr); // logs
-
 		String scanPrefixStr = getScanPrefix(inCommandStr);
 		String scanStr = getScanContents(inCommandStr, scanPrefixStr);
+		
+		// If this (mobile) CHE is linked to another CHE, then pass through scans to that CHE. Except for REMOTE and LOGOUT
+		boolean passToOtherChe = false;
+		if (CheStateEnum.REMOTE_LINKED.equals(getCheStateEnum())){
+			passToOtherChe = true;
+			if(COMMAND_PREFIX.equals(scanPrefixStr)) {
+				if (REMOTE_COMMAND.equals(scanStr) || LOGOUT_COMMAND.equals(scanStr)) {
+					passToOtherChe = false;
+				}
+			}
+		}
+		if (passToOtherChe) {
+			passScanToLinkedChe(inCommandStr);
+			return;
+		}
+
+		notifyScan(inCommandStr); // logs
 
 		// Command scans actions are determined by the scan content (the command issued) then state because they are more likely to be state independent
 		if (inCommandStr.startsWith(COMMAND_PREFIX)) {
@@ -2040,12 +2057,12 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Send the websocket message to clear
+	 * Send the websocket message to set
 	 * For DEV-843, 844.
 	 */
 	private void linkRemoteCheAssociation(String cheName) {
 		if (cheName == null) {
-			LOGGER.error("Bug? Or use ");
+			LOGGER.error("Bug? Or use unlinkRemoteCheAssociation");
 		}
 		// this.setLinkedToCheName(cheName);
 		setState(CheStateEnum.REMOTE_PENDING); // forces screen redraw. Later, send the message and go to REMOTE_PENDING state.
@@ -2059,7 +2076,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (CHE_NAME_PREFIX.equals(inScanPrefixStr)) {
 			linkRemoteCheAssociation(inContent);
 		} else {
-			LOGGER.info("Not a CHE scan:{}{} ", inScanPrefixStr, inContent);
+			LOGGER.warn("Not a CHE scan:{}{} ", inScanPrefixStr, inContent);
 			invalidScanMsg(mCheStateEnum);
 		}
 
@@ -2070,7 +2087,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * and update our local variables.
 	 */
 	public void maintainAssociation(String associateCheName) {
-		LOGGER.info("maintainAssociation called with {}", associateCheName);
+		LOGGER.debug("maintainAssociation called with {}", associateCheName);
 		if (!CheStateEnum.REMOTE_PENDING.equals(this.getCheStateEnum())) {
 			LOGGER.error("Incorrect state in maintainAssociation. How? State is {}", getCheStateEnum());
 		}
@@ -2082,5 +2099,41 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			setState(CheStateEnum.REMOTE_LINKED);
 		}
 	}
+	
+	/**
+	 * Get the CheDevice logic that this remote (mobile) CHE is linked to.
+	 */
+	CheDeviceLogic getLinkedCheDevice() {
+		CheDeviceLogic linkedDevice = null;
+		NetGuid assocGuid = getDeviceManager().getAssociatedCheGuidFromGuid(getGuid());
+		if (assocGuid != null){
+			linkedDevice = getDeviceManager().getCheDeviceByNetGuid(assocGuid);
+		}
+		return linkedDevice;
+	}
+
+	/**
+	 * This is the receiving side of pass-through to the linked CHE. At this time only scans are passed through.
+	 * The scanning CHE directly calls this.
+	 */
+	void scanReceivedFrom(NetGuid remoteCheGuid, String scanStr) {
+		LOGGER.info("{} recieved from {}",scanStr, remoteCheGuid);
+		// TODO: make sure this is processed, even if this CHE is offline
+		scanCommandReceived(scanStr);
+	}
+	
+	/**
+	 * This is the sending  side of pass-through to the linked CHE. At this time only scans are passed through.
+	 */
+	void passScanToLinkedChe(String scanStr) {
+		LOGGER.info("passScanToLinkedChe {}", scanStr);
+		CheDeviceLogic linkedDevice = getLinkedCheDevice();
+		if (linkedDevice == null){
+			LOGGER.error("passScanToLinkedChe failed to find the device");
+			return;
+		}
+		linkedDevice.scanReceivedFrom(getGuid(), scanStr);
+	}
+
 
 }

@@ -378,8 +378,12 @@ public class CheProcessAssociate extends ServerTest {
 		picker1.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
 		Assert.assertEquals("Linked to: CHE2", picker1.getLastCheDisplayString(1));
 		picker1.logCheDisplay();
+		
+		LOGGER.info("5b: While linked, other scans should pass through to the other che");		
+		picker1.scanSomething("XXXZZZ");
+		picker1.scanCommand("INVENTORY");
 
-		LOGGER.info("5b: Clear it");		
+		LOGGER.info("5c: Clear it. REMOTE and LOGOUT are processed locally.");		
 		picker1.scanCommand("REMOTE");
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		picker1.scanCommand("REMOTE");
