@@ -13,13 +13,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.locks.Lock;
 
 import lombok.Getter;
 import lombok.Setter;
 
-import org.mockito.internal.stubbing.answers.DoesNothing;
-import org.mockito.invocation.InvocationOnMock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

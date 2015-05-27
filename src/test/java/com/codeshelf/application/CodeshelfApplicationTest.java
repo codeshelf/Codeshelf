@@ -12,12 +12,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.codeshelf.edi.EdiProcessorService;
-import com.codeshelf.edi.ICsvAislesFileImporter;
-import com.codeshelf.edi.ICsvCrossBatchImporter;
-import com.codeshelf.edi.ICsvInventoryImporter;
-import com.codeshelf.edi.ICsvLocationAliasImporter;
-import com.codeshelf.edi.ICsvOrderImporter;
-import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.model.dao.Result;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
