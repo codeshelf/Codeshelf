@@ -529,7 +529,7 @@ public class FacilityResource {
 				return errors.buildResponse();
 			}
 			ScriptStep firstStep  = ScriptParser.parseScript(script);
-			return BaseResponse.buildResponse(new ScriptApiResponse(firstStep.getId(), firstStep.getRequiredFiles(), "Script imported"));
+			return BaseResponse.buildResponse(new ScriptApiResponse(firstStep, "Script imported"));
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
 		}
@@ -601,12 +601,12 @@ public class FacilityResource {
 			}
 			ScriptStep nextStep = scriptStep.getNextStep();
 			if (!success) {
-				return BaseResponse.buildResponse(new ScriptApiResponse(null, null, report.toString()), Status.BAD_REQUEST);
+				return BaseResponse.buildResponse(new ScriptApiResponse(report.toString()), Status.BAD_REQUEST);
 			}
 			if (nextStep == null) {
-				return BaseResponse.buildResponse(new ScriptApiResponse(null, null, report.toString()));
+				return BaseResponse.buildResponse(new ScriptApiResponse(report.toString()));
 			} else {
-				return BaseResponse.buildResponse(new ScriptApiResponse(nextStep.getId(), nextStep.getRequiredFiles(), report.toString()));
+				return BaseResponse.buildResponse(new ScriptApiResponse(nextStep, report.toString()));
 			}
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);

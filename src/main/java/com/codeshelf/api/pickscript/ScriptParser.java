@@ -28,6 +28,11 @@ public class ScriptParser {
 		ScriptStep prevStep = null;
 		ScriptStep firstStep = null;
 		while (!lines.isEmpty()) {
+			//Skip comments before the first Step in the script
+			if (firstStep == null && lines.get(0).startsWith("//")) {
+				lines.remove(0);
+				continue;
+			}
 			ScriptStep scriptStep = getNextScriptStep(lines);
 			synchronized (scriptStepsGlobal) {
 				scriptStepsGlobal.put(scriptStep.id, scriptStep);
@@ -56,7 +61,8 @@ public class ScriptParser {
 			stepLines.add(scriptLines.remove(0));
 		}
 		ArrayList<StepPart> stepParts = ScriptStepParser.parseScriptStep(stepLines);
-		ScriptStep step = new ScriptStep(stepParts, stepHeader.substring(STEP.length()).trim());
+		String comment = stepHeader.substring(STEP.length()).trim();
+		ScriptStep step = new ScriptStep(stepParts, comment);
 		return step;
 	}
 		
@@ -117,12 +123,18 @@ public class ScriptParser {
 	
 	public static class ScriptApiResponse{
 		public UUID nextStepId;
+		public String nextStepComment;
 		public List<String> requiredFiles;
 		public String report;
 		
-		public ScriptApiResponse(UUID nextStepId, List<String> requiredFiles, String report) {
-			this.nextStepId = nextStepId;
-			this.requiredFiles = requiredFiles;
+		public ScriptApiResponse(ScriptStep step, String report) {
+			this.nextStepId = step.getId();
+			this.requiredFiles = step.getRequiredFiles();
+			this.nextStepComment = step.getComment();
+			this.report = report;
+		}
+		
+		public ScriptApiResponse(String report) {
 			this.report = report;
 		}
 	}

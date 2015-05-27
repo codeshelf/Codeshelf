@@ -1,3 +1,4 @@
+// This script sets up facility, imports orders, and performs picks
 STEP This step sets up facility
 SERVER
 editFacility F1 5000 8
