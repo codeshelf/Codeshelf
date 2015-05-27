@@ -12,6 +12,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.script.ScriptException;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -28,6 +30,7 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.service.PropertyService;
+import com.codeshelf.service.ScriptingService;
 import com.codeshelf.util.DateTimeParser;
 import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.validation.BatchResult;
@@ -67,6 +70,9 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	
 	@Getter @Setter
 	int numWorkerThreads = 1;
+	
+	@Getter
+	ScriptingService scriptingService = null;
 
 	@Inject
 	public OutboundOrderPrefetchCsvImporter(final EventProducer inProducer) {
@@ -85,6 +91,15 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		
 		// make sure the facility is up-to-date
 		facility = facility.reload();
+		
+		// initialize scripting service
+		try {
+			scriptingService = ScriptingService.createInstance();
+			scriptingService.loadScripts(facility);
+		} 
+		catch (ScriptException e) {
+			LOGGER.error("Failed to initiatilze scripting service", e);
+		}
 		
 		this.batchResult = new BatchResult<Object>();
 		

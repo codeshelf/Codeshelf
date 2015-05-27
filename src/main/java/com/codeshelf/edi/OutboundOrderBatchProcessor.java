@@ -10,9 +10,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.script.ScriptException;
+
 import lombok.Getter;
 import lombok.Setter;
 
+import org.apache.commons.lang.StringUtils;
 import org.hibernate.Criteria;
 import org.hibernate.StaleObjectStateException;
 import org.hibernate.criterion.Restrictions;
@@ -39,6 +42,7 @@ import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.util.DateTimeParser;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.validation.InputValidationException;
@@ -811,15 +815,25 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		
 		// calculate needs scan setting
 		boolean needsScan = false;
-		if (inCsvBean.getNeedsScan()!=null) {
+		if (inCsvBean.getNeedsScan()!=null && !StringUtils.isEmpty(inCsvBean.getNeedsScan())) {
 			String needsScanStr = inCsvBean.getNeedsScan().toLowerCase();
 			if ("yes".equals(needsScanStr)||"y".equals(needsScanStr)||"true".equals(needsScanStr)||"t".equals(needsScanStr)||"1".equals(needsScanStr)) {
 				needsScan = true;
 			}
 		}
 		else {
-			// check global scanpick setting
-			if (importer.getScanPick()) {
+			// try scripting, if needsscan is not explicitly specified
+			if (importer.getScriptingService().hasExtentionPoint(ExtensionPointType.OrderImportNeedsScan)) {
+				Object[] params = { inCsvBean };
+				try {
+					needsScan = (boolean) importer.getScriptingService().eval(inFacility, ExtensionPointType.OrderImportNeedsScan, params);
+				} 
+				catch (Exception e) {
+					LOGGER.error("Failed to evaluate script", e);
+				}
+			}
+			// check global scanpick setting as third option
+			else if (importer.getScanPick()) {
 				 needsScan = true;
 			}
 		}

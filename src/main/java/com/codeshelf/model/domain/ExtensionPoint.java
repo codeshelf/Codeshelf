@@ -22,24 +22,24 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
-import com.codeshelf.service.ExtensionPoint;
+import com.codeshelf.service.ExtensionPointType;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
-@Table(name = "script")
+@Table(name = "extension_point")
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Script extends DomainObjectTreeABC<Facility> {
+public class ExtensionPoint extends DomainObjectTreeABC<Facility> {
 
-	public static class ScriptDao extends GenericDaoABC<Script> implements ITypedDao<Script> {
-		public final Class<Script> getDaoClass() {
-			return Script.class;
+	public static class ExtensionPointDao extends GenericDaoABC<ExtensionPoint> implements ITypedDao<ExtensionPoint> {
+		public final Class<ExtensionPoint> getDaoClass() {
+			return ExtensionPoint.class;
 		}
 	}
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(Script.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(ExtensionPoint.class);
 
 	@Column(nullable = false)
 	@Getter @Setter
@@ -56,28 +56,28 @@ public class Script extends DomainObjectTreeABC<Facility> {
 	@Column(nullable = false)
 	@Getter @Setter
 	@JsonProperty
-	ExtensionPoint extension;
+	ExtensionPointType extension;
 	
-	@Column(nullable = false)
+	@Column(nullable = false, columnDefinition = "TEXT")
 	@Getter @Setter
 	@JsonProperty
-	String body;
+	String script;
 
-	public Script() {
+	public ExtensionPoint() {
 		super();
 	}
 	
 	@SuppressWarnings("unchecked")
-	public final ITypedDao<Script> getDao() {
+	public final ITypedDao<ExtensionPoint> getDao() {
 		return staticGetDao();
 	}
 
-	public static ITypedDao<Script> staticGetDao() {
-		return TenantPersistenceService.getInstance().getDao(Script.class);
+	public static ITypedDao<ExtensionPoint> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(ExtensionPoint.class);
 	}
 
 	public final String getDefaultDomainIdPrefix() {
-		return "SCRIPT";
+		return "EXP";
 	}
 
 	public Facility getFacility() {

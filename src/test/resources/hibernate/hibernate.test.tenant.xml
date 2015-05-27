@@ -50,7 +50,6 @@
         <mapping class="com.codeshelf.model.domain.Tier"/>
         <mapping class="com.codeshelf.model.domain.Slot"/>
         <mapping class="com.codeshelf.model.domain.UnspecifiedLocation"/>
-        
 
         <mapping class="com.codeshelf.model.domain.DomainObjectProperty"/>
         <mapping class="com.codeshelf.model.domain.DomainObjectPropertyDefault"/>
@@ -85,7 +84,7 @@
         <mapping class="com.codeshelf.model.domain.Worker"/>
         <mapping class="com.codeshelf.model.domain.WorkerEvent"/>
         <mapping class="com.codeshelf.model.domain.Resolution"/>
-        <mapping class="com.codeshelf.model.domain.Script"/>
+        <mapping class="com.codeshelf.model.domain.ExtensionPoint"/>
 
     </session-factory>
 </hibernate-configuration>

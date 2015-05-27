@@ -12,7 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.Script;
+import com.codeshelf.model.domain.ExtensionPoint;
 
 public class ScriptingService {
 
@@ -20,7 +20,7 @@ public class ScriptingService {
 
 	ScriptEngine				engine;
 
-	HashSet<ExtensionPoint>		availableExtentions	= new HashSet<ExtensionPoint>();
+	HashSet<ExtensionPointType>		availableExtentions	= new HashSet<ExtensionPointType>();
 
 	public ScriptingService() {
 		init();
@@ -31,7 +31,7 @@ public class ScriptingService {
 		engine = factory.getEngineByName("groovy");
 	}
 
-	public void addExtentionPoint(ExtensionPoint extp, String functionScript) throws ScriptException {
+	public void addExtentionPoint(ExtensionPointType extp, String functionScript) throws ScriptException {
 		if (engine == null) {
 			LOGGER.error("engine not set up in ScriptingService.  Need to run gradle?");
 			return;
@@ -40,20 +40,20 @@ public class ScriptingService {
 		this.availableExtentions.add(extp);
 	}
 
-	public boolean hasExtentionPoint(ExtensionPoint extp) {
+	public boolean hasExtentionPoint(ExtensionPointType extp) {
 		return this.availableExtentions.contains(extp);
 	}
 
-	public List<Script> loadScripts(Facility facility) throws ScriptException {
-		List<Script> scripts = Script.staticGetDao().findByParent(facility);
-		for (Script script : scripts) {
+	public List<ExtensionPoint> loadScripts(Facility facility) throws ScriptException {
+		List<ExtensionPoint> scripts = ExtensionPoint.staticGetDao().findByParent(facility);
+		for (ExtensionPoint script : scripts) {
 			LOGGER.info("Adding extention " + script.getExtension());
-			this.addExtentionPoint(script.getExtension(), script.getBody());
+			this.addExtentionPoint(script.getExtension(), script.getScript());
 		}
 		return scripts;
 	}
 
-	public Object eval(Facility facility, ExtensionPoint ext, Object[] params) throws ScriptException {
+	public Object eval(Facility facility, ExtensionPointType ext, Object[] params) throws ScriptException {
 		if (!this.availableExtentions.contains(ext)) {
 			LOGGER.info("Unable to eval extension point: Script it");
 			return null;

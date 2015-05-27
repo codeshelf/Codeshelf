@@ -160,9 +160,8 @@ public class OrderLocationImporterTest extends ServerTest {
 			.slot("01111", "D-21")
 			.slot("01112", "D-22")
 			.slot("01113", "D-23")
-				.slot("01114", "D-24")
+			.slot("01114", "D-24")
 			.build();
-		
 		
 		Assert.assertTrue("Failed to import slotting file", importSlotting(facility, initialSlotFile));
 
