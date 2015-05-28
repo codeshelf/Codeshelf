@@ -865,7 +865,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			LOGGER.info("processDisplayCheMessage calling cheDevice.sendDisplayCommand()");
 			cheDevice.sendDisplayCommand(line1, line2, line3, line4);
 		} else {
-			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
+			LOGGER.warn("Unable to processDisplayCheMessage for CHE id={} CHE not found", cheId);
 		}
 	}
 

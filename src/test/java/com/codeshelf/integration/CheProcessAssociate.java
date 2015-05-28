@@ -1,7 +1,7 @@
 /*******************************************************************************
- *  CodeShelf
+ *  Codeshelf
  *  Copyright (c) 2014, Codeshelf, All rights reserved
- *  file IntegrationTest1.java
+ *  file CheProcessAssociate.java
  *******************************************************************************/
 package com.codeshelf.integration;
 
@@ -360,16 +360,25 @@ public class CheProcessAssociate extends ServerTest {
 		picker1.logCheDisplay();
 		// Here we would see the che2 display
 
-		LOGGER.info("3: Picker 1 scan REMOTE from remote screen to clear association");
+		LOGGER.info("3a: Picker 1 scan CLEAR from remote screen to clear association");
 		picker1.scanCommand("REMOTE");
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		picker1.logCheDisplay();
 		Assert.assertEquals("Linked to: CHE2", picker1.getLastCheDisplayString(1));
 
-		LOGGER.info("4: Picker 1 scan CLEAR to exit");
+		LOGGER.info("3b: Picker 1 scan CLEAR to clear link, then clear to exit");
+		picker1.scanCommand("CLEAR");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.logCheDisplay();
 		picker1.scanCommand("CLEAR");
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		picker1.logCheDisplay();
+
+		LOGGER.info("4: Link to CHE2 again");
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.scanSomething("H%CHE2");
+		picker1.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
 
 		LOGGER.info("5: Associate to unknown che. Result is still linked as it was to CHE2");
 		picker1.scanCommand("REMOTE");
@@ -384,10 +393,16 @@ public class CheProcessAssociate extends ServerTest {
 		picker1.scanSomething("XXXZZZ");
 		picker1.scanCommand("INVENTORY");
 
-		LOGGER.info("5c: Clear it. REMOTE and LOGOUT are processed locally.");
+		LOGGER.info("5c: Clear it. REMOTE while linked says Remote to continue.");
 		picker1.scanCommand("REMOTE");
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
+
+		LOGGER.info("5d: Clear it.");
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.scanCommand("CLEAR");
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		Assert.assertEquals("Linked to: (none)", picker1.getLastCheDisplayString(1));
 		picker1.scanCommand("CLEAR");

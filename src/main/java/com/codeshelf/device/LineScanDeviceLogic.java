@@ -88,8 +88,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				yesOrNoCommandReceived(inScanStr);
 				break;
 
-			case CLEAR_ERROR_COMMAND:
-				clearErrorCommandReceived();
+			case CLEAR_COMMAND:
+				clearCommandReceived();
 				break;
 			
 			case INVENTORY_COMMAND:
@@ -303,7 +303,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 * If on a job, abandon it and go back to ready state
 	 */
 	@Override
-	protected void clearErrorCommandReceived() {
+	protected void clearCommandReceived() {
 		clearAllPosconsOnThisDevice();
 		// needs implementation
 		CheStateEnum currentState = getCheStateEnum();
