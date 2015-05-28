@@ -325,8 +325,11 @@ public class CheProcessLineScan extends ServerTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
-		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
+
+		beginTransaction();
+		setUpLineScanOrdersNoCntr(facility);
+		commitTransaction();
 
 		this.startSiteController();
 
@@ -790,8 +793,7 @@ public class CheProcessLineScan extends ServerTest {
 		OrderDetail detail = OrderDetail.staticGetDao().findByDomainId(order, "12345.3");
 		Assert.assertNotNull(detail);
 		
-		// Bjoern: uncomment here
-		// Assert.assertTrue(detail.getNeedsScan());
+		Assert.assertTrue(detail.getNeedsScan());
 		
 		commitTransaction();
 
