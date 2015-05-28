@@ -43,7 +43,7 @@ import com.codeshelf.ws.client.WebSocketEventListener;
 import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
 import com.codeshelf.ws.protocol.message.PosConSetupMessage;
-import com.codeshelf.ws.protocol.request.AssociateRemoteCheRequest;
+import com.codeshelf.ws.protocol.request.LinkRemoteCheRequest;
 import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
@@ -380,10 +380,10 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		clientEndpoint.sendMessage(req);
 	}
 
-	public void associateRemoteChe(final String inCheId, final UUID inPersistentId, String cheIdToAssociateTo) {
+	public void linkRemoteChe(final String inCheId, final UUID inPersistentId, String cheIdToAssociateTo) {
 		LOGGER.debug("associateRemoteChe: Che={}; ", inCheId);
 		String cheId = inPersistentId.toString();
-		AssociateRemoteCheRequest req = new AssociateRemoteCheRequest(cheId, cheIdToAssociateTo);
+		LinkRemoteCheRequest req = new LinkRemoteCheRequest(cheId, cheIdToAssociateTo);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -819,32 +819,32 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	 * 1) Immediately, in advance of networkUpdate that may come, modify and maintain the association map in the cheDeviceLogic
 	 * 2) Update local variables in the cheDeviceLogic so that the immediate screen draw looks right.
 	 */
-	public void processAssociateResponse(String networkGuid,
+	public void processCheLinkResponse(String networkGuid,
 		String thisCheName,
-		String associatedCheGuidId,
-		String associatedCheName) {
-		LOGGER.info("site controller processAssociateResponse for guid:{} associate to:{}",networkGuid, associatedCheGuidId);
+		String linkedCheGuidId,
+		String linkedCheName) {
+		LOGGER.info("site controller processCheLinkResponse for guid:{} associate to:{}",networkGuid, linkedCheGuidId);
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			NetGuid associateGuid = null;
-			if (associatedCheGuidId != null) {
-				CheDeviceLogic associatedDevice = getCheDeviceFromPrefixHexString("0x" + associatedCheGuidId);
+			if (linkedCheGuidId != null) {
+				CheDeviceLogic linkedDevice = getCheDeviceFromPrefixHexString("0x" + linkedCheGuidId);
 				// Only allow this if we have it in our device map as a che
-				if (associatedDevice == null) {
-					LOGGER.error("processAssociateResponse did not find valid che device for {}", associatedCheGuidId);
+				if (linkedDevice == null) {
+					LOGGER.error("processCheLinkResponse did not find valid che device for {}", linkedCheGuidId);
 					associateGuid = null;
 				}
 				else {
-					associateGuid = associatedDevice.getGuid();
+					associateGuid = linkedDevice.getGuid();
 				}
 			}
 			// perhaps more direct to compute the guid from "0x" + networkGuid, but we did that above and found this device
-			this.maintainDeviceData(cheDevice.getGuid(), thisCheName, associateGuid, associatedCheName);
+			this.maintainDeviceData(cheDevice.getGuid(), thisCheName, associateGuid, linkedCheName);
 
-			LOGGER.info("processAssociateResponse calling cheDevice.maintainAssociation");
-			cheDevice.maintainAssociation(associatedCheName);
+			LOGGER.info("processCheLinkResponse calling cheDevice.maintainLink");
+			cheDevice.maintainLink(linkedCheName);
 		} else {
-			LOGGER.error("Device not found in processAssociateResponse. CHE id={}", networkGuid);
+			LOGGER.error("Device not found in processCheLinkResponse. CHE id={}", networkGuid);
 		}
 	}
 
@@ -868,7 +868,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			LOGGER.info("processDisplayCheMessage calling cheDevice.sendDisplayCommand()");
 			cheDevice.sendDisplayCommand(line1, line2, line3, line4);
 		} else {
-			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", cheId);
+			LOGGER.warn("Unable to processDisplayCheMessage for CHE id={} CHE not found", cheId);
 		}
 	}
 
@@ -1045,7 +1045,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	/**
 	 * From the guid, what is the associated che's guid
 	 */
-	public NetGuid getAssociatedCheGuidFromGuid(NetGuid thisCheGuid) {
+	public NetGuid getLinkedCheGuidFromGuid(NetGuid thisCheGuid) {
 		CheData thisData = mDeviceDataMap.get(thisCheGuid);
 		if (thisData == null) {
 			return null;
@@ -1057,7 +1057,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	 * From the guid, what is the associated che's name
 	 */
 	protected String getAssociatedCheNameFromGuid(NetGuid thisCheGuid) {
-		NetGuid assocGuid = getAssociatedCheGuidFromGuid(thisCheGuid);
+		NetGuid assocGuid = getLinkedCheGuidFromGuid(thisCheGuid);
 		if (assocGuid == null) {
 			return null;
 		}

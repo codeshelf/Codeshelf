@@ -22,7 +22,7 @@ import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
 import com.codeshelf.ws.protocol.request.PingRequest;
 import com.codeshelf.ws.protocol.request.RequestABC;
-import com.codeshelf.ws.protocol.response.AssociateRemoteCheResponse;
+import com.codeshelf.ws.protocol.response.LinkRemoteCheResponse;
 import com.codeshelf.ws.protocol.response.CompleteWorkInstructionResponse;
 import com.codeshelf.ws.protocol.response.ComputeWorkResponse;
 import com.codeshelf.ws.protocol.response.FailureResponse;
@@ -170,13 +170,13 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			else if (response instanceof PutWallPlacementResponse) {
 			}
 
-			else if (response instanceof AssociateRemoteCheResponse) {
-				AssociateRemoteCheResponse associateResponse = (AssociateRemoteCheResponse) response;
+			else if (response instanceof LinkRemoteCheResponse) {
+				LinkRemoteCheResponse linkResponse = (LinkRemoteCheResponse) response;
 				if (response.getStatus() == ResponseStatus.Success) {
-					this.deviceManager.processAssociateResponse(associateResponse.getNetworkGuid(),
-						associateResponse.getCheName(),
-						associateResponse.getAssociatedCheGuid(),
-						associateResponse.getAssociatedCheName());
+					this.deviceManager.processCheLinkResponse(linkResponse.getNetworkGuid(),
+						linkResponse.getCheName(),
+						linkResponse.getLinkedCheGuid(),
+						linkResponse.getLinkedCheName());
 				}
 			}
 

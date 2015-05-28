@@ -372,7 +372,7 @@ public class Che extends WirelessDeviceABC {
 	}
 
 	/**
-	 * For the UI. Show CHE name and guid. One field shows either association direction
+	 * For the UI. Show CHE name. One field shows either association direction
 	 */
 	public String getAssociateToUi() {
 		String returnStr = "";
@@ -382,14 +382,13 @@ public class Che extends WirelessDeviceABC {
 			LOGGER.error("Both associated to and associated from");
 			returnStr = "Error";
 		}
+		//TODO need localization of controlling and controlled by
 		if (associatedTo != null) {
 			String cheName = associatedTo.getDomainId();
-			String guidStr = associatedTo.getDeviceGuidStrNoPrefix();
-			returnStr = String.format("this-->%s-%s", cheName, guidStr);
+			returnStr = String.format("controlling %s", cheName);
 		} else if (associateTee != null) {
 			String cheName = associateTee.getDomainId();
-			String guidStr = associateTee.getDeviceGuidStrNoPrefix();
-			returnStr = String.format("%s-%s-->this", cheName, guidStr);
+			returnStr = String.format("controlled by %s", cheName);
 		}
 		return returnStr;
 	}

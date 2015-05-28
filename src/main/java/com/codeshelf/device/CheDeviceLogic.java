@@ -126,7 +126,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	public static final String						LOGOUT_COMMAND							= "LOGOUT";
 	protected static final String					YES_COMMAND								= "YES";
 	protected static final String					NO_COMMAND								= "NO";
-	protected static final String					CLEAR_ERROR_COMMAND						= "CLEAR";
+	protected static final String					CLEAR_COMMAND							= "CLEAR";
 	protected static final String					INVENTORY_COMMAND						= "INVENTORY";
 	protected static final String					ORDER_WALL_COMMAND						= "ORDER_WALL";
 	protected static final String					PUT_WALL_COMMAND						= "PUT_WALL";
@@ -302,9 +302,15 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected boolean isScanNeededToVerifyPick() {
 		WorkInstruction wi = this.getOneActiveWorkInstruction();
 
-		if (wi.isHousekeeping())
+		if (wi.isHousekeeping()) {
 			return false;
-		else if (mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY) {
+				}
+		/*
+		else if (wi.getNeedsScan()) {
+			return !alreadyScannedSkuOrUpcOrLpnThisWi(wi);
+		}
+		*/
+else if (mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY) {
 			return !alreadyScannedSkuOrUpcOrLpnThisWi(wi);
 			// See if we can skip this scan because we already scanned.
 		}
@@ -426,6 +432,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			posX,
 			posY);
 		sendScreenCommandToMyChe(command);
+		quickSleep();
 		sendScreenCommandToLinkFromChe(command);
 	}
 
@@ -546,6 +553,20 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * Sleep briefly between repeated sends to same CHE. Especially in sendMonospaceDisplayScreen
+	 */
+	private void quickSleep() {
+		// Does this help? Getting missed packets and therefore incomplete screen redraws.
+		/*
+		try {
+			Thread.sleep(5);
+		} catch (InterruptedException e) {
+		}
+		*/
+	}
+
+	// --------------------------------------------------------------------------
+	/**
 	 * A corollary to the original full screen message function. It remembers the lines,
 	 * then sends a clear and several CommandControlDisplaySingleLineMessages.
 	 * x offset = 26, which centers 20-character lines on the 400 pixel 2.7 inch display.
@@ -558,14 +579,18 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
 		rememberLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message);
-		
+
 		logLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message); // log even if no association. This is the only logging for remote linked CHE
 
 		clearDisplay();
+		quickSleep();
 
 		sendSingleLineDisplayMessage(inLine1Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 35);
+		quickSleep();
 		sendSingleLineDisplayMessage(inLine2Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 90);
+		quickSleep();
 		sendSingleLineDisplayMessage(inLine3Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 145);
+		quickSleep();
 		if (largerBottomLine)
 			sendSingleLineDisplayMessage(inLine4Message,
 				CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24,
@@ -600,7 +625,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			inLine4Message);
 
 		sendScreenCommandToMyChe(command);
-
+		quickSleep();
 		sendScreenCommandToLinkFromChe(command);
 
 	}
@@ -608,6 +633,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected void clearDisplay() {
 		ICommand command = new CommandControlClearDisplay(NetEndpoint.PRIMARY_ENDPOINT);
 		sendScreenCommandToMyChe(command);
+		quickSleep();
 		sendScreenCommandToLinkFromChe(command);
 	}
 
@@ -1358,7 +1384,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.error("setupCommandReceived() needs override");
 	}
 
-	protected void clearErrorCommandReceived() {
+	protected void clearCommandReceived() {
 		LOGGER.error("clearErrorCommandReceived() needs override");
 	}
 
@@ -2009,7 +2035,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * Implement some or most of the remote business at CheDeviceLogic level so that future CHE applications can automatically remote.
 	 */
 	@Override
-	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, String cheName, byte[] associatedToCheGuid) {
+	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, String cheName, byte[] linkedToCheGuid) {
 		// TODO update internals
 
 		return false;
@@ -2038,9 +2064,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		String line1 = String.format("Linked to: %s", cheName);
 		String line2 = "Scan Che name to link";
 		String line3 = "";
-		if (!wasNull)
-			line3 = "or REMOTE to unlink";
-		String line4 = "CLEAR to exit";
+		String line4 = "";
+		if (!wasNull) {
+			line3 = "or CLEAR to unlink";
+			line4 = "REMOTE to keep link";
+		} else {
+			line4 = "CLEAR to exit";
+		}
 
 		sendDisplayCommand(line1, line2, line3, line4);
 	}
@@ -2051,9 +2081,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * For DEV-843, 844.
 	 */
 	protected void unlinkRemoteCheAssociation() {
-		setState(CheStateEnum.REMOTE_PENDING); // forces screen redraw. Later, send the message and go to REMOTE_PENDING state.
+		// Not so great. Does the cheDeviceLogic locals in advance. Pretty valid for unlink as it is the unlikely the server will not comply.
+		// There is no good place to put it on the associateRemoteChe response as by then the values are changed and we can not tell the linkee to clear itself.
+		unLinkLocalVariables();
 
-		mDeviceManager.associateRemoteChe(getGuid().getHexStringNoPrefix(), getPersistentId(), null);
+		setState(CheStateEnum.REMOTE_PENDING);
+
+		mDeviceManager.linkRemoteChe(getGuid().getHexStringNoPrefix(), getPersistentId(), null);
 	}
 
 	// --------------------------------------------------------------------------
@@ -2065,11 +2099,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (cheName == null) {
 			LOGGER.error("Bug? Or use unlinkRemoteCheAssociation");
 		}
-		// this.setLinkedToCheName(cheName);
 		setState(CheStateEnum.REMOTE_PENDING); // forces screen redraw. Later, send the message and go to REMOTE_PENDING state.
 
-		mDeviceManager.associateRemoteChe(getGuid().getHexStringNoPrefix(), getPersistentId(), cheName);
-		// sends a command. Ultimately returns back the newly associated che, or old one if there was a validation failure
+		mDeviceManager.linkRemoteChe(getGuid().getHexStringNoPrefix(), getPersistentId(), cheName);
+		// sends a command. Ultimately returns back the newly linked che, or old one if there was a validation failure
 
 	}
 
@@ -2087,14 +2120,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * This is called as a result of AssociateRemoteCheResponse. We need to transition off of remote_Pending state,
 	 * and update our local variables.
 	 */
-	public void maintainAssociation(String associateCheName) {
-		LOGGER.debug("maintainAssociation called with {}", associateCheName);
+	public void maintainLink(String linkCheName) {
+		LOGGER.debug("maintainLink called with {}", linkCheName);
 		if (!CheStateEnum.REMOTE_PENDING.equals(this.getCheStateEnum())) {
-			LOGGER.error("Incorrect state in maintainAssociation. How? State is {}", getCheStateEnum());
+			LOGGER.error("Incorrect state in maintainLink. How? State is {}", getCheStateEnum());
 		}
 
-		this.setLinkedToCheName(associateCheName); // null is ok here. Means no association.
-		if (associateCheName == null)
+		this.setLinkedToCheName(linkCheName); // null is ok here. Means no association.
+		if (linkCheName == null)
 			setState(CheStateEnum.REMOTE);
 		else {
 			setState(CheStateEnum.REMOTE_LINKED);
@@ -2106,9 +2139,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	public CheDeviceLogic getLinkedCheDevice() {
 		CheDeviceLogic linkedDevice = null;
-		NetGuid assocGuid = getDeviceManager().getAssociatedCheGuidFromGuid(getGuid());
-		if (assocGuid != null) {
-			linkedDevice = getDeviceManager().getCheDeviceByNetGuid(assocGuid);
+		NetGuid linkedGuid = getDeviceManager().getLinkedCheGuidFromGuid(getGuid());
+		if (linkedGuid != null) {
+			linkedDevice = getDeviceManager().getCheDeviceByNetGuid(linkedGuid);
 		}
 		return linkedDevice;
 	}
@@ -2151,7 +2184,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	/**
 	 * Called on entry to REMOTE_LINKED state. This is the receiving side to get the screen from linked device.
 	 */
-	public void processLink(NetGuid sourceDeviceGuid, String sourceUserName) {
+	void processLink(NetGuid sourceDeviceGuid, String sourceUserName) {
 		// We want to store the source device or guid
 		// We want to claim the sourceUserName as our own.
 		// If in idle state, we want to transition to SETUP_SUMMARY, acting as if we are logged in.
@@ -2169,7 +2202,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 
 		String currentUserId = getUserId();
-		if (currentUserId != null) {
+		if (currentUserId != null && !currentUserId.equals(sourceUserName)) {
 			LOGGER.warn("linking {}. Replacing user {} with {}",
 				sourceDeviceGuid.getHexStringNoPrefix(),
 				currentUserId,
@@ -2183,7 +2216,36 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (CheStateEnum.IDLE.equals(getCheStateEnum())) {
 			// we want to log in "generically"
 			finishLogin();
+		} else {
+			// finishLogin resulted in new screen draw, which was also sent to the linked CHE. But if connecting after cart is logged in
+			// we still need a screen redraw or else the remote CHE is left on the "Linking..." screen. 
+			// Achieve in the usual way: just setState to current state. setState() forces a redraw.
+			setState(getCheStateEnum());
 		}
+	}
+
+	/**
+	 * When the controlling CHE clears the link or logs out when linked, the cart CHE should return to its base state.
+	 * This is the sending (remote CHE) side of the transaction
+	 */
+	void unLinkLocalVariables() {
+		CheDeviceLogic linkedDevice = getLinkedCheDevice();
+		if (linkedDevice == null) {
+			return;
+		}
+		LOGGER.info("{} unlinking. Giving up remote control.", this.getGuidNoPrefix());
+		linkedDevice.processUnLinkLocalVariables(this.getGuidNoPrefix());
+	}
+
+	/**
+	 * When the controlling CHE clears the link or logs out when linked, the cart CHE should return to its base state.
+	 * This is the receiving (cart CHE) side of the transaction.
+	 */
+	void processUnLinkLocalVariables(String sourceString) {
+		setLinkedFromCheGuid(null);
+		setUserId(null);
+		setState(CheStateEnum.IDLE);
+		LOGGER.info("{} unlinked from {}. Resuming local control.", sourceString, this.getGuidNoPrefix());
 	}
 
 	public void finishLogin() {

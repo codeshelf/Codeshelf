@@ -1,7 +1,7 @@
 /*******************************************************************************
- *  CodeShelf
+ *  Codeshelf
  *  Copyright (c) 2014, Codeshelf, All rights reserved
- *  file IntegrationTest1.java
+ *  file CheProcessAssociate.java
  *******************************************************************************/
 package com.codeshelf.integration;
 
@@ -33,9 +33,9 @@ import com.codeshelf.testframework.ServerTest;
  * @author jon ranstrom
  *
  */
-public class CheProcessAssociate extends ServerTest {
+public class CheProcessRemoteLink extends ServerTest {
 
-	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessAssociate.class);
+	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessRemoteLink.class);
 	private static final int	WAIT_TIME	= 4000;
 
 	// This is based on CheProcessLineScan which had a convenient no-slot facility.
@@ -224,7 +224,7 @@ public class CheProcessAssociate extends ServerTest {
 	 * Test of the associate getters, and the WorkService APIs for associate.
 	 */
 	@Test
-	public final void testAssociateProgramatically() throws IOException {
+	public final void testLinkProgramatically() throws IOException {
 		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
 		commitTransaction();
@@ -270,9 +270,9 @@ public class CheProcessAssociate extends ServerTest {
 
 		LOGGER.info("2b: check the UI field");
 		String state1Che1 = che1.getAssociateToUi();
-		Assert.assertEquals("this-->CHE2-00009992", state1Che1);
+		Assert.assertEquals("controlling CHE2", state1Che1);
 		String state1Che2 = che2.getAssociateToUi();
-		Assert.assertEquals("CHE1-00009991-->this", state1Che2);
+		Assert.assertEquals("controlled by CHE1", state1Che2);
 
 		LOGGER.info("3: tell che1 to clear associations");
 		this.workService.clearCheAssociation(che1);
@@ -336,9 +336,9 @@ public class CheProcessAssociate extends ServerTest {
 	 * Test using association via CHE scans
 	 */
 	@Test
-	public final void testAssociateChe() throws IOException {
+	public final void testLinkChe() throws IOException {
 		beginTransaction();
-		Facility facility = setUpSmallNoSlotFacility();
+		setUpSmallNoSlotFacility();
 		commitTransaction();
 		// No orders file yet. Just testing associations
 
@@ -360,16 +360,25 @@ public class CheProcessAssociate extends ServerTest {
 		picker1.logCheDisplay();
 		// Here we would see the che2 display
 
-		LOGGER.info("3: Picker 1 scan REMOTE from remote screen to clear association");
+		LOGGER.info("3a: Picker 1 scan CLEAR from remote screen to clear association");
 		picker1.scanCommand("REMOTE");
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		picker1.logCheDisplay();
 		Assert.assertEquals("Linked to: CHE2", picker1.getLastCheDisplayString(1));
 
-		LOGGER.info("4: Picker 1 scan CLEAR to exit");
+		LOGGER.info("3b: Picker 1 scan CLEAR to clear link, then clear to exit");
+		picker1.scanCommand("CLEAR");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.logCheDisplay();
 		picker1.scanCommand("CLEAR");
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		picker1.logCheDisplay();
+
+		LOGGER.info("4: Link to CHE2 again");
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.scanSomething("H%CHE2");
+		picker1.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
 
 		LOGGER.info("5: Associate to unknown che. Result is still linked as it was to CHE2");
 		picker1.scanCommand("REMOTE");
@@ -384,10 +393,16 @@ public class CheProcessAssociate extends ServerTest {
 		picker1.scanSomething("XXXZZZ");
 		picker1.scanCommand("INVENTORY");
 
-		LOGGER.info("5c: Clear it. REMOTE and LOGOUT are processed locally.");
+		LOGGER.info("5c: Clear it. REMOTE while linked says Remote to continue.");
 		picker1.scanCommand("REMOTE");
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
+
+		LOGGER.info("5d: Clear it.");
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.scanCommand("CLEAR");
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		Assert.assertEquals("Linked to: (none)", picker1.getLastCheDisplayString(1));
 		picker1.scanCommand("CLEAR");
@@ -419,7 +434,7 @@ public class CheProcessAssociate extends ServerTest {
 	 * Test using association via CHE scans
 	 */
 	@Test
-	public final void testAssociatedCheScreen() throws IOException {
+	public final void testLinkedCheScreen() throws IOException {
 		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
 		commitTransaction();

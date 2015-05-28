@@ -368,8 +368,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				yesOrNoCommandReceived(inScanStr);
 				break;
 
-			case CLEAR_ERROR_COMMAND:
-				clearErrorCommandReceived();
+			case CLEAR_COMMAND:
+				clearCommandReceived();
 				break;
 
 			case INVENTORY_COMMAND:
@@ -407,9 +407,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case REMOTE:
-				// This triggers our clear association action
-				unlinkRemoteCheAssociation();
-				// will go to REMOTE_PENDING
+				// If there is a link, the screen says "Remote to keep link"
+				// So, we need to know if there is a link. If so, transition to REMOTE_LINKED
+				// If not, just stay here.
+				String cheName = getLinkedToCheName();
+				if (cheName != null) {
+					setState(CheStateEnum.REMOTE_LINKED);
+				}
 				break;
 
 			default:
@@ -513,7 +517,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	}
 
-	protected void clearErrorCommandReceived() {
+	protected void clearCommandReceived() {
 		//Split it out by state
 		switch (mCheStateEnum) {
 
@@ -536,7 +540,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case REMOTE:
-				setState(CheStateEnum.SETUP_SUMMARY);
+				//  If linked, the screen says clear to unlink. So we need to know if we are linked
+				String cheName = getLinkedToCheName();
+				if (cheName != null) {
+					// This triggers our clear link action
+					unlinkRemoteCheAssociation();
+					// will go to REMOTE_PENDING
+				} else {
+					setState(CheStateEnum.SETUP_SUMMARY);
+				}
 				break;
 
 			// just a note: clear command is passed through in REMOTE_LINKED state
