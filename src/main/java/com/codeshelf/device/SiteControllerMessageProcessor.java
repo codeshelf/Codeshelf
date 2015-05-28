@@ -17,6 +17,7 @@ import com.codeshelf.ws.protocol.message.CheStatusMessage;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.message.NetworkStatusMessage;
+import com.codeshelf.ws.protocol.message.PosConSetupMessage;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
 import com.codeshelf.ws.protocol.request.PingRequest;
@@ -222,11 +223,14 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				this.deviceManager.processOrderLocationFeedbackMessage(msg);
 			} else if (message instanceof CheStatusMessage) {
 				CheStatusMessage msg = (CheStatusMessage) message;
-				LOGGER.info("Setup-state initialization received for Che: " + msg.getCheGuid());
-				this.deviceManager.processSetupStateMessage(msg.getCheGuid(), msg.getContainerPositions());
+				LOGGER.info("Setup-state initialization received for Che: " + msg.getNetGuidStr());
+				this.deviceManager.processSetupStateMessage(msg.getNetGuidStr(), msg.getContainerPositions());
 			} else if (message instanceof ScriptMessage) {
 				ScriptMessage msg = (ScriptMessage) message;
 				new ScriptSiteRunner(deviceManager).runScript(msg);
+			} else if (message instanceof PosConSetupMessage) {
+				PosConSetupMessage msg = (PosConSetupMessage) message;
+				this.deviceManager.processPosConSetupMessage(msg);
 			}
 		} finally {
 			this.clearDeviceContext();

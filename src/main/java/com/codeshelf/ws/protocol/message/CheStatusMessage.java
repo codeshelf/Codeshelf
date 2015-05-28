@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 
 import lombok.Getter;
-import lombok.Setter;
 
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ContainerUse;
@@ -18,11 +17,7 @@ import com.codeshelf.model.domain.ContainerUse;
  * 	- Change the CHE process mode
  * 
  */
-public class CheStatusMessage extends MessageABC {
-
-	@Getter
-	@Setter
-	String						cheGuid;
+public class CheStatusMessage extends DeviceMessageABC {
 
 	@Getter
 	HashMap<String, Integer>	containerPositions;
@@ -31,7 +26,7 @@ public class CheStatusMessage extends MessageABC {
 	}
 
 	public CheStatusMessage(Che che) {
-		setCheGuid(che.getDeviceNetGuid().getHexStringNoPrefix());
+		setNetGuidStr(che.getDeviceNetGuid().getHexStringNoPrefix());
 
 		List<ContainerUse> uses = che.getUses();
 		if (uses != null) {
@@ -40,10 +35,5 @@ public class CheStatusMessage extends MessageABC {
 				this.containerPositions.put(use.getContainerName(), use.getPosconIndex());
 			}
 		}
-	}
-
-	@Override
-	public String getDeviceIdentifier() {
-		return getCheGuid();
 	}
 }

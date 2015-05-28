@@ -53,7 +53,7 @@ public class NotificationService implements IApiService{
 				return;
 			}
 			TenantPersistenceService.getInstance().beginTransaction();
-			LOGGER.info("Saving notification from {}: {}", message.getDeviceGuid(), message.getEventType());
+			LOGGER.info("Saving notification from {}: {}", message.getNetGuidStr(), message.getEventType());
 			WorkerEvent event = new WorkerEvent();
 
 			Class<?> deviceClass = message.getDeviceClass();
@@ -64,9 +64,9 @@ public class NotificationService implements IApiService{
 				throw new IllegalArgumentException("unable to process notifications from " + deviceClass + " devices");
 			}
 			if (device == null) {
-				throw new IllegalArgumentException(String.format("unable to find %s device %s (%s)", deviceClass, message.getDevicePersistentId(), message.getDeviceGuid()));
+				throw new IllegalArgumentException(String.format("unable to find %s device %s (%s)", deviceClass, message.getDevicePersistentId(), message.getNetGuidStr()));
 			}
-			event.setDeviceGuid(new NetGuid(message.getDeviceGuid()).toString());
+			event.setDeviceGuid(new NetGuid(message.getNetGuidStr()).toString());
 			event.setFacility(device.getFacility());
 			event.setDevicePersistentId(device.getPersistentId().toString());
 			

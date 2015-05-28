@@ -21,6 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.bitfields.OutOfRangeException;
+import com.codeshelf.flyweight.command.CommandControlPosconSetup;
+import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.command.NetworkId;
 import com.codeshelf.flyweight.controller.INetworkDevice;
@@ -40,6 +42,7 @@ import com.codeshelf.ws.client.CsClientEndpoint;
 import com.codeshelf.ws.client.WebSocketEventListener;
 import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
+import com.codeshelf.ws.protocol.message.PosConSetupMessage;
 import com.codeshelf.ws.protocol.request.AssociateRemoteCheRequest;
 import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
@@ -891,6 +894,22 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		}
 		return device;
 	}
+	
+	public void processPosConSetupMessage(PosConSetupMessage message) {
+		NetGuid controllerGuid = new NetGuid(message.getNetGuidStr());
+		INetworkDevice device = mDeviceMap.get(controllerGuid);
+		if (device == null) {
+			LOGGER.warn("Unable to start poscon setup on device {}. Device not found", controllerGuid);
+			return;
+		}
+		if (! (device instanceof PosConDeviceABC)) {
+			LOGGER.warn("Unable to start poscon setup on device {}. Device {} is not a PosConDeviceABC", controllerGuid, device);
+			return;
+		}
+		CommandControlPosconSetup command = new CommandControlPosconSetup(NetEndpoint.PRIMARY_ENDPOINT);
+		radioController.sendCommand(command, device.getAddress(), true);
+	}
+
 
 	public void processPosConControllerListMessage(PosControllerInstrList instructionList) {
 		HashSet<PosManagerDeviceLogic> controllers = new HashSet<>();
