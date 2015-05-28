@@ -302,8 +302,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected boolean isScanNeededToVerifyPick() {
 		WorkInstruction wi = this.getOneActiveWorkInstruction();
 
-		if (wi.isHousekeeping())
+		if (wi.isHousekeeping()) {
 			return false;
+		}
+		/*
+		else if (wi.getNeedsScan()) {
+			return !alreadyScannedSkuOrUpcOrLpnThisWi(wi);
+		}
+		*/
 		else if (mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY) {
 			return !alreadyScannedSkuOrUpcOrLpnThisWi(wi);
 			// See if we can skip this scan because we already scanned.
