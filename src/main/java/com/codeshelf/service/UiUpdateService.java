@@ -39,6 +39,7 @@ import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 import com.codeshelf.ws.protocol.message.PosConSetupMessage;
+import com.codeshelf.ws.protocol.message.PosConShowAddresses;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.Strings;
 
@@ -260,6 +261,22 @@ public class UiUpdateService implements IApiService {
 		}
 		Set<User> users = device.getFacility().getSiteControllerUsers();
 		PosConSetupMessage message = new PosConSetupMessage(device.getDeviceNetGuid().toString());
+		WebSocketManagerService.getInstance().sendMessage(users, message);
+	}
+	
+	public void posConShowAddresses(String deviceId, boolean isChe){
+		WirelessDeviceABC device = null;
+		if (isChe) { 
+			device = Che.staticGetDao().findByPersistentId(deviceId);
+		} else {
+			device = LedController.staticGetDao().findByPersistentId(deviceId);
+		}
+		if (device == null) {
+			LOGGER.error("Could not find " + (isChe?"che ":"controlelr ") + deviceId);
+			return;
+		}
+		Set<User> users = device.getFacility().getSiteControllerUsers();
+		PosConShowAddresses message = new PosConShowAddresses(device.getDeviceNetGuid().toString());
 		WebSocketManagerService.getInstance().sendMessage(users, message);
 	}
 	

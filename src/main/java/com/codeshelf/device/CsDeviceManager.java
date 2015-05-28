@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.bitfields.OutOfRangeException;
+import com.codeshelf.flyweight.command.CommandControlPosconBroadcast;
 import com.codeshelf.flyweight.command.CommandControlPosconSetup;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
@@ -42,6 +43,7 @@ import com.codeshelf.ws.client.CsClientEndpoint;
 import com.codeshelf.ws.client.WebSocketEventListener;
 import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
+import com.codeshelf.ws.protocol.message.PosConShowAddresses;
 import com.codeshelf.ws.protocol.message.PosConSetupMessage;
 import com.codeshelf.ws.protocol.request.LinkRemoteCheRequest;
 import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
@@ -916,6 +918,22 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		CommandControlPosconSetup command = new CommandControlPosconSetup(NetEndpoint.PRIMARY_ENDPOINT);
 		radioController.sendCommand(command, device.getAddress(), true);
 	}
+	
+	public void processPosConShowAddresses(PosConShowAddresses message) {
+		NetGuid controllerGuid = new NetGuid(message.getNetGuidStr());
+		INetworkDevice device = mDeviceMap.get(controllerGuid);
+		if (device == null) {
+			LOGGER.warn("Unable to illumincate poscons on device {}. Device not found", controllerGuid);
+			return;
+		}
+		if (! (device instanceof PosConDeviceABC)) {
+			LOGGER.warn("Unable to illumincate poscons on device {}. Device {} is not a PosConDeviceABC", controllerGuid, device);
+			return;
+		}
+		CommandControlPosconBroadcast command = new CommandControlPosconBroadcast(CommandControlPosconBroadcast.POS_SHOW_ADDR, NetEndpoint.PRIMARY_ENDPOINT);
+		radioController.sendCommand(command, device.getAddress(), true);
+	}
+
 
 	public void processPosConControllerListMessage(PosControllerInstrList instructionList) {
 		HashSet<PosManagerDeviceLogic> controllers = new HashSet<>();

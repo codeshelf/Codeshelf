@@ -17,6 +17,7 @@ import com.codeshelf.ws.protocol.message.CheStatusMessage;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.message.NetworkStatusMessage;
+import com.codeshelf.ws.protocol.message.PosConShowAddresses;
 import com.codeshelf.ws.protocol.message.PosConSetupMessage;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
@@ -231,6 +232,9 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			} else if (message instanceof PosConSetupMessage) {
 				PosConSetupMessage msg = (PosConSetupMessage) message;
 				this.deviceManager.processPosConSetupMessage(msg);
+			} else if (message instanceof PosConShowAddresses) {
+				PosConShowAddresses msg = (PosConShowAddresses) message;
+				this.deviceManager.processPosConShowAddresses(msg);
 			}
 		} finally {
 			this.clearDeviceContext();
