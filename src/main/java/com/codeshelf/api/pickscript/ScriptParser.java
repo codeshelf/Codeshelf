@@ -126,6 +126,8 @@ public class ScriptParser {
 		public String nextStepComment;
 		public List<String> requiredFiles;
 		public String report;
+		public ArrayList<String> errors;
+		
 		
 		public ScriptApiResponse(ScriptStep step, String report) {
 			this.nextStepId = step.getId();
@@ -136,6 +138,16 @@ public class ScriptParser {
 		
 		public ScriptApiResponse(String report) {
 			this.report = report;
+		}
+		
+		public void addError(String error){
+			if (error == null || error.isEmpty()) {
+				return;
+			}
+			if (errors == null) {
+				errors = Lists.newArrayList();
+			}
+			errors.add(error);
 		}
 	}
 }

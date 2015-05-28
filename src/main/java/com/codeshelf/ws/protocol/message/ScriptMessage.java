@@ -16,14 +16,22 @@ public class ScriptMessage extends MessageABC{
 	@Setter @Getter
 	private String response;
 	
-	@Setter @Getter
+	@Getter
 	private boolean success = true;
+	
+	@Getter
+	private String error;
 	
 	public ScriptMessage() {}
 	
 	public ScriptMessage(UUID id, List<String> lines) {
 		this.id = id;
 		this.lines = lines;
+	}
+	
+	public void setError(String error){
+		success = false;
+		this.error = error;
 	}
 	
 	@Override

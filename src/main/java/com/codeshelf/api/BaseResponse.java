@@ -9,8 +9,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
-import lombok.Setter;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,18 +18,9 @@ import com.codeshelf.util.DateTimeParser;
 public abstract class BaseResponse {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(BaseResponse.class);
 
-	
-	@Setter
-	private Status	status	= Status.OK;
-
-	public Response buildResponse() {
-		return buildResponse(this, status);
-	}
-
 	public static Response buildResponse(Object obj) {
 		return buildResponse(obj, Status.OK);
 	}
-
 	
 	public static Response buildResponse(Object obj, Status status) {
 		ResponseBuilder builder = Response.status(status);

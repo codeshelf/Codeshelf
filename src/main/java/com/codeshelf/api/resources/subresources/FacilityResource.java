@@ -564,6 +564,7 @@ public class FacilityResource {
 			TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 			ScriptServerRunner scriptRunner = new ScriptServerRunner(persistence, facility.getPersistentId(), body, uiUpdateService, propertyService, aislesImporter, locationsImporter, inventoryImporter, orderImporter);
 			boolean success = true;
+			String error = null;
 			//Process script parts
 			while (!scriptParts.isEmpty()) {
 				StepPart part = scriptParts.remove(0);
@@ -572,6 +573,7 @@ public class FacilityResource {
 					ScriptMessage serverResponseMessage = scriptRunner.processServerScript(part.getScriptLines());
 					report.append(serverResponseMessage.getResponse());
 					if (!serverResponseMessage.isSuccess()) {
+						error = serverResponseMessage.getError();
 						success = false;
 						break;
 					}
@@ -594,6 +596,7 @@ public class FacilityResource {
 					}
 					report.append(siteResponseMessage.getResponse());
 					if (!siteResponseMessage.isSuccess()) {
+						error = siteResponseMessage.getError();
 						success = false;
 						break;
 					}
@@ -601,7 +604,9 @@ public class FacilityResource {
 			}
 			ScriptStep nextStep = scriptStep.getNextStep();
 			if (!success) {
-				return BaseResponse.buildResponse(new ScriptApiResponse(report.toString()), Status.BAD_REQUEST);
+				ScriptApiResponse errorResponse = new ScriptApiResponse(report.toString());
+				errorResponse.addError(error);
+				return BaseResponse.buildResponse(errorResponse, Status.BAD_REQUEST);
 			}
 			if (nextStep == null) {
 				return BaseResponse.buildResponse(new ScriptApiResponse(report.toString()));

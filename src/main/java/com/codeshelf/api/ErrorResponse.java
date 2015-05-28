@@ -4,11 +4,11 @@ import java.util.ArrayList;
 
 import javassist.NotFoundException;
 
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.slf4j.Logger;
@@ -21,9 +21,12 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
 @JsonInclude(Include.NON_NULL)
-public class ErrorResponse extends BaseResponse{
+public class ErrorResponse {
 	private final static Logger LOGGER=LoggerFactory.getLogger(ErrorResponse.class);
 
+	@Setter
+	private Status status = Status.BAD_REQUEST;
+	
 	@Getter
 	private ArrayList<String> errors;
 
@@ -55,13 +58,16 @@ public class ErrorResponse extends BaseResponse{
 			message = ExceptionUtils.getStackTrace(e);
 		}
 		addError(message);
-		Status status = null;
 		if (e instanceof NotFoundException) {
 			status = Status.NOT_FOUND;
 		} else {
 			status = Status.INTERNAL_SERVER_ERROR;
 		}
 		
-		return buildResponse(this, status, MediaType.APPLICATION_JSON_TYPE);
+		return buildResponse();
+	}
+	
+	public Response buildResponse() {
+		return BaseResponse.buildResponse(this, status);
 	}
 }

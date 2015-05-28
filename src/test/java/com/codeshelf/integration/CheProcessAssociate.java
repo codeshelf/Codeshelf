@@ -26,7 +26,6 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Tier;
-import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 

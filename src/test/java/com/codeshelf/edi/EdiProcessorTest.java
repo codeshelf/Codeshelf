@@ -58,7 +58,7 @@ public class EdiProcessorTest extends MockDaoTest {
 	@Test
 	public final void ediProcessThreadTest() {
 		LOGGER.info("starting ediProcessThreadTest");
-
+		//TODO consider resolving the below warnings
 		Provider failingInstanceProvider = mock(Provider.class);
 		Mockito.when(failingInstanceProvider.get()).thenReturn(generateFailingImporter());
 		Provider anyProvider = mock(Provider.class);
@@ -90,14 +90,15 @@ public class EdiProcessorTest extends MockDaoTest {
 		final class Result {
 			public boolean	processed	= false;
 		}
-
+		//TODO Are tge following importers still needed?
+		/*
 		ICsvOrderImporter orderImporter = generateFailingImporter();
 		ICsvInventoryImporter inventoryImporter = mock(ICsvInventoryImporter.class);
 		ICsvLocationAliasImporter locationImporter = mock(ICsvLocationAliasImporter.class);
 		ICsvOrderLocationImporter orderLocationImporter = mock(ICsvOrderLocationImporter.class);
 		ICsvCrossBatchImporter crossBatchImporter = mock(ICsvCrossBatchImporter.class);
 		ICsvAislesFileImporter aislesFileImporter = mock(ICsvAislesFileImporter.class);
-
+		*/
 		final Result linkedResult = new Result();
 		final Result unlinkedResult = new Result();
 

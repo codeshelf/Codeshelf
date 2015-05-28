@@ -54,8 +54,7 @@ public class ScriptSiteRunner {
 			public void run() {
 				List<String> lines = message.getLines();
 				if (lines == null) {
-					message.setResponse("Empty site script");
-					message.setSuccess(false);
+					message.setError("Empty site script");
 					deviceManager.clientEndpoint.sendMessage(message);
 					return;
 				}
@@ -64,14 +63,15 @@ public class ScriptSiteRunner {
 					for (String line : lines) {
 						processLine(line);
 					}
+					LOGGER.info("Site script block completed");
+					report.append("***Site Script Completed Successfully***\n");
 				} catch (Exception e) {
-					report.append(CsExceptionUtils.exceptionToString(e)).append("\n");
-					report.append("Logging out from all pickers due to this error\n");
 					logoutAll();
-					message.setSuccess(false);
+					String error = CsExceptionUtils.exceptionToString(e);
+					report.append(error).append("Logging out from all pickers due to this error\n");
+					message.setError(error);
 				}
-				LOGGER.info("Site script block completed");
-				report.append("***Site Script Completed***\n");
+				
 				message.setResponse(report.toString());
 				deviceManager.clientEndpoint.sendMessage(message);
 			}

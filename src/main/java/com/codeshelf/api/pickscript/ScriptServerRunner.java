@@ -101,11 +101,11 @@ public class ScriptServerRunner {
 				processLine(line);
 				persistence.commitTransaction();
 			}
-			report.append("***Server Script Completed***\n");
+			report.append("***Server Script Completed Successfully***\n");
 		} catch (Exception e) {
 			persistence.rollbackTransaction();
 			report.append(CsExceptionUtils.exceptionToString(e)).append("\n");
-			message.setSuccess(false);
+			message.setError(CsExceptionUtils.exceptionToString(e) + "\n");
 		}
 		message.setResponse(report.toString());
 		LOGGER.info("Server script block completed");
