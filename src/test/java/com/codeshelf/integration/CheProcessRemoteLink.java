@@ -33,9 +33,9 @@ import com.codeshelf.testframework.ServerTest;
  * @author jon ranstrom
  *
  */
-public class CheProcessAssociate extends ServerTest {
+public class CheProcessRemoteLink extends ServerTest {
 
-	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessAssociate.class);
+	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessRemoteLink.class);
 	private static final int	WAIT_TIME	= 4000;
 
 	// This is based on CheProcessLineScan which had a convenient no-slot facility.
@@ -224,7 +224,7 @@ public class CheProcessAssociate extends ServerTest {
 	 * Test of the associate getters, and the WorkService APIs for associate.
 	 */
 	@Test
-	public final void testAssociateProgramatically() throws IOException {
+	public final void testLinkProgramatically() throws IOException {
 		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
 		commitTransaction();
@@ -336,9 +336,9 @@ public class CheProcessAssociate extends ServerTest {
 	 * Test using association via CHE scans
 	 */
 	@Test
-	public final void testAssociateChe() throws IOException {
+	public final void testLinkChe() throws IOException {
 		beginTransaction();
-		Facility facility = setUpSmallNoSlotFacility();
+		setUpSmallNoSlotFacility();
 		commitTransaction();
 		// No orders file yet. Just testing associations
 
@@ -434,7 +434,7 @@ public class CheProcessAssociate extends ServerTest {
 	 * Test using association via CHE scans
 	 */
 	@Test
-	public final void testAssociatedCheScreen() throws IOException {
+	public final void testLinkedCheScreen() throws IOException {
 		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
 		commitTransaction();

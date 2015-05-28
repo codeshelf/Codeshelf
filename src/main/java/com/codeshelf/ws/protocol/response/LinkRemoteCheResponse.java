@@ -3,7 +3,7 @@ package com.codeshelf.ws.protocol.response;
 import lombok.Getter;
 import lombok.Setter;
 
-public class AssociateRemoteCheResponse extends ResponseABC {
+public class LinkRemoteCheResponse extends ResponseABC {
 	
 	// private static final Logger		LOGGER	= LoggerFactory.getLogger(GetPutWallInstructionResponse.class);
 	// had some temporary debugging. Not needed now.
@@ -18,11 +18,11 @@ public class AssociateRemoteCheResponse extends ResponseABC {
 
 	@Getter
 	@Setter
-	String							associatedCheGuid; // Guid of the cart CHE that remote is associating to
+	String							linkedCheGuid; // Guid of the cart CHE that remote is associating to
 
 	@Getter
 	@Setter
-	String							associatedCheName; // Name of the cart CHE that remote is associating to
+	String							linkedCheName; // Name of the cart CHE that remote is associating to
 
 
 	@Override

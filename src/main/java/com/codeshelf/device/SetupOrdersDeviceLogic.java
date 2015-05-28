@@ -543,7 +543,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				//  If linked, the screen says clear to unlink. So we need to know if we are linked
 				String cheName = getLinkedToCheName();
 				if (cheName != null) {
-					// This triggers our clear association action
+					// This triggers our clear link action
 					unlinkRemoteCheAssociation();
 					// will go to REMOTE_PENDING
 				} else {

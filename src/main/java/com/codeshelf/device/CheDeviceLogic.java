@@ -304,13 +304,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		if (wi.isHousekeeping()) {
 			return false;
-		}
+				}
 		/*
 		else if (wi.getNeedsScan()) {
 			return !alreadyScannedSkuOrUpcOrLpnThisWi(wi);
 		}
 		*/
-		else if (mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY) {
+else if (mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY) {
 			return !alreadyScannedSkuOrUpcOrLpnThisWi(wi);
 			// See if we can skip this scan because we already scanned.
 		}
@@ -2035,7 +2035,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * Implement some or most of the remote business at CheDeviceLogic level so that future CHE applications can automatically remote.
 	 */
 	@Override
-	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, String cheName, byte[] associatedToCheGuid) {
+	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, String cheName, byte[] linkedToCheGuid) {
 		// TODO update internals
 
 		return false;
@@ -2087,7 +2087,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		setState(CheStateEnum.REMOTE_PENDING);
 
-		mDeviceManager.associateRemoteChe(getGuid().getHexStringNoPrefix(), getPersistentId(), null);
+		mDeviceManager.linkRemoteChe(getGuid().getHexStringNoPrefix(), getPersistentId(), null);
 	}
 
 	// --------------------------------------------------------------------------
@@ -2101,8 +2101,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 		setState(CheStateEnum.REMOTE_PENDING); // forces screen redraw. Later, send the message and go to REMOTE_PENDING state.
 
-		mDeviceManager.associateRemoteChe(getGuid().getHexStringNoPrefix(), getPersistentId(), cheName);
-		// sends a command. Ultimately returns back the newly associated che, or old one if there was a validation failure
+		mDeviceManager.linkRemoteChe(getGuid().getHexStringNoPrefix(), getPersistentId(), cheName);
+		// sends a command. Ultimately returns back the newly linked che, or old one if there was a validation failure
 
 	}
 
@@ -2120,14 +2120,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * This is called as a result of AssociateRemoteCheResponse. We need to transition off of remote_Pending state,
 	 * and update our local variables.
 	 */
-	public void maintainAssociation(String associateCheName) {
-		LOGGER.debug("maintainAssociation called with {}", associateCheName);
+	public void maintainLink(String linkCheName) {
+		LOGGER.debug("maintainLink called with {}", linkCheName);
 		if (!CheStateEnum.REMOTE_PENDING.equals(this.getCheStateEnum())) {
-			LOGGER.error("Incorrect state in maintainAssociation. How? State is {}", getCheStateEnum());
+			LOGGER.error("Incorrect state in maintainLink. How? State is {}", getCheStateEnum());
 		}
 
-		this.setLinkedToCheName(associateCheName); // null is ok here. Means no association.
-		if (associateCheName == null)
+		this.setLinkedToCheName(linkCheName); // null is ok here. Means no association.
+		if (linkCheName == null)
 			setState(CheStateEnum.REMOTE);
 		else {
 			setState(CheStateEnum.REMOTE_LINKED);
@@ -2139,9 +2139,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	public CheDeviceLogic getLinkedCheDevice() {
 		CheDeviceLogic linkedDevice = null;
-		NetGuid assocGuid = getDeviceManager().getAssociatedCheGuidFromGuid(getGuid());
-		if (assocGuid != null) {
-			linkedDevice = getDeviceManager().getCheDeviceByNetGuid(assocGuid);
+		NetGuid linkedGuid = getDeviceManager().getLinkedCheGuidFromGuid(getGuid());
+		if (linkedGuid != null) {
+			linkedDevice = getDeviceManager().getCheDeviceByNetGuid(linkedGuid);
 		}
 		return linkedDevice;
 	}

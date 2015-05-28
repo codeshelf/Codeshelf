@@ -21,7 +21,7 @@ import com.codeshelf.service.InventoryService;
 import com.codeshelf.service.NotificationService;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.service.WorkService;
-import com.codeshelf.ws.protocol.command.AssociateRemoteCheCommand;
+import com.codeshelf.ws.protocol.command.LinkRemoteCheCommand;
 import com.codeshelf.ws.protocol.command.CommandABC;
 import com.codeshelf.ws.protocol.command.CompleteWorkInstructionCommand;
 import com.codeshelf.ws.protocol.command.ComputeDetailWorkCommand;
@@ -47,7 +47,7 @@ import com.codeshelf.ws.protocol.message.KeepAlive;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
-import com.codeshelf.ws.protocol.request.AssociateRemoteCheRequest;
+import com.codeshelf.ws.protocol.request.LinkRemoteCheRequest;
 import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
@@ -192,9 +192,9 @@ public class ServerMessageProcessor implements IMessageProcessor {
 				(ComputePutWallInstructionRequest) request,
 				serviceFactory.getServiceInstance(WorkService.class));
 			applicationRequestCounter.inc();
-		} else if (request instanceof AssociateRemoteCheRequest) {
-			command = new AssociateRemoteCheCommand(csSession,
-				(AssociateRemoteCheRequest) request,
+		} else if (request instanceof LinkRemoteCheRequest) {
+			command = new LinkRemoteCheCommand(csSession,
+				(LinkRemoteCheRequest) request,
 				serviceFactory.getServiceInstance(WorkService.class));
 			applicationRequestCounter.inc();
 		} else if (request instanceof ObjectGetRequest) {

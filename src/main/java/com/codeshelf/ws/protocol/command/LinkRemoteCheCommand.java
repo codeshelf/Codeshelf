@@ -8,20 +8,20 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.validation.MethodArgumentException;
-import com.codeshelf.ws.protocol.request.AssociateRemoteCheRequest;
-import com.codeshelf.ws.protocol.response.AssociateRemoteCheResponse;
+import com.codeshelf.ws.protocol.request.LinkRemoteCheRequest;
+import com.codeshelf.ws.protocol.response.LinkRemoteCheResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
-public class AssociateRemoteCheCommand extends CommandABC {
+public class LinkRemoteCheCommand extends CommandABC {
 	private static final Logger			LOGGER	= LoggerFactory.getLogger(ComputeWorkCommand.class);
 
-	private AssociateRemoteCheRequest	request;
+	private LinkRemoteCheRequest	request;
 
 	private WorkService					workService;
 
-	public AssociateRemoteCheCommand(WebSocketConnection connection, AssociateRemoteCheRequest request, WorkService workService) {
+	public LinkRemoteCheCommand(WebSocketConnection connection, LinkRemoteCheRequest request, WorkService workService) {
 		super(connection);
 		this.request = request;
 		this.workService = workService;
@@ -29,7 +29,7 @@ public class AssociateRemoteCheCommand extends CommandABC {
 
 	@Override
 	public ResponseABC exec() {
-		AssociateRemoteCheResponse response = null;
+		LinkRemoteCheResponse response = null;
 		String cheId = request.getDeviceId();
 		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
 		if (che != null) {
@@ -39,7 +39,7 @@ public class AssociateRemoteCheCommand extends CommandABC {
 			try {
 				currentAssociatedChe = che.getAssociateToChe();
 				// The work service has an explicit clear function. We trigger via null cheName.
-				String newAssociateCheName = request.getRemoteCheNameToAssociateTo();
+				String newAssociateCheName = request.getRemoteCheNameToLinkTo();
 				
 				if (newAssociateCheName != null && workService.associateCheToCheName(che, newAssociateCheName)) {
 					che = Che.staticGetDao().reload(che);
@@ -55,22 +55,22 @@ public class AssociateRemoteCheCommand extends CommandABC {
 				throw e;
 			}
 
-			response = new AssociateRemoteCheResponse();
+			response = new LinkRemoteCheResponse();
 			response.setCheName(che.getDomainId());
 			if (currentAssociatedChe == null) {
-				response.setAssociatedCheName(null);
-				response.setAssociatedCheGuid(null);
+				response.setLinkedCheName(null);
+				response.setLinkedCheGuid(null);
 			} else {
-				response.setAssociatedCheName(currentAssociatedChe.getDomainId());
-				response.setAssociatedCheGuid(currentAssociatedChe.getDeviceGuidStrNoPrefix());				
+				response.setLinkedCheName(currentAssociatedChe.getDomainId());
+				response.setLinkedCheGuid(currentAssociatedChe.getDeviceGuidStrNoPrefix());				
 			}
 
 			response.setNetworkGuid(networkGuid);
 			response.setStatus(ResponseStatus.Success);
-			LOGGER.info("associate response has guid:{} name:{}, assocGuid:{} assocName:{}",response.getNetworkGuid(), response.getCheName(), response.getAssociatedCheGuid(), response.getAssociatedCheName());
+			LOGGER.info("associate response has guid:{} name:{}, assocGuid:{} assocName:{}",response.getNetworkGuid(), response.getCheName(), response.getLinkedCheGuid(), response.getLinkedCheName());
 			return response;
 		}
-		response = new AssociateRemoteCheResponse();
+		response = new LinkRemoteCheResponse();
 		response.setStatus(ResponseStatus.Fail);
 		return response;
 	}
