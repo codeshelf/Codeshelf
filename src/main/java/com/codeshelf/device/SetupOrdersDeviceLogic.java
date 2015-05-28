@@ -387,6 +387,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case REMOTE_COMMAND:
 				remoteCommandReceived();
 				break;
+				
+			case POSCON_COMMAND:
+				posconSetupCommandReveived();
+				break;
 
 			default:
 

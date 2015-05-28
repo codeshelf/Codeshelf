@@ -906,10 +906,16 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			LOGGER.warn("Unable to start poscon setup on device {}. Device {} is not a PosConDeviceABC", controllerGuid, device);
 			return;
 		}
+		putPosConsInSetupMode((PosConDeviceABC) device);
+	}
+	
+	/**
+	 * Tell device to put all PosCons in the Setup mode
+	 */
+	public void putPosConsInSetupMode(PosConDeviceABC device ){
 		CommandControlPosconSetup command = new CommandControlPosconSetup(NetEndpoint.PRIMARY_ENDPOINT);
 		radioController.sendCommand(command, device.getAddress(), true);
 	}
-
 
 	public void processPosConControllerListMessage(PosControllerInstrList instructionList) {
 		HashSet<PosManagerDeviceLogic> controllers = new HashSet<>();

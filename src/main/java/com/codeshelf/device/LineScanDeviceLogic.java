@@ -96,6 +96,10 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				inventoryScanCommandReveived();
 				break;
 
+			case POSCON_COMMAND:
+				posconSetupCommandReveived();
+				break;
+				
 			default:
 				break;
 		}

@@ -131,6 +131,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					ORDER_WALL_COMMAND						= "ORDER_WALL";
 	protected static final String					PUT_WALL_COMMAND						= "PUT_WALL";
 	protected static final String					REMOTE_COMMAND							= "REMOTE";
+	protected static final String					POSCON_COMMAND							= "POSCON";
 
 	// With WORKSEQR = "WorkSequence", work may scan start instead of scanning a location. 
 	// LOCATION_SELECT, we want "SCAN START LOCATION" "OR SCAN START"
@@ -1403,6 +1404,20 @@ else if (mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY) {
 	 */
 	protected void yesOrNoCommandReceived(final String inScanStr) {
 		LOGGER.error("yesOrNoCommandReceived() needs override");
+	}
+	
+	protected void posconSetupCommandReveived() {
+		CheStateEnum currentState = getCheStateEnum();
+		
+		switch(currentState) {
+			case IDLE:
+			case SETUP_SUMMARY:
+			case READY:
+				mDeviceManager.putPosConsInSetupMode(this);
+				break;
+			default:
+				break;
+		}
 	}
 
 	// --------------------------------------------------------------------------
