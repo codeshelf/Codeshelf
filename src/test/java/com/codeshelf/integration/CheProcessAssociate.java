@@ -26,6 +26,7 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Tier;
+import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 
@@ -440,6 +441,8 @@ public class CheProcessAssociate extends ServerTest {
 		picker2.scanCommand("START");
 		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		picker2.logCheDisplay();
+		String line1 = picker2.getLastCheDisplayString(1).trim();
+		Assert.assertEquals("1 order", line1);
 		picker2.logout();
 		
 		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
@@ -451,7 +454,45 @@ public class CheProcessAssociate extends ServerTest {
 		picker1.scanSomething("H%CHE2");
 		picker1.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
 		picker1.logCheDisplay();
+		Assert.assertEquals("1 order", picker1.getLastCheDisplayString(1).trim());
 		// Here we would see the che2 display
+
+		LOGGER.info("3: Picker 1 scan START. This will advance the CHE2 cart state. CHE1 is in REMOTE_LINKED state");
+		picker1.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		Assert.assertEquals(CheStateEnum.REMOTE_LINKED,picker1.getCurrentCheState());
+		picker1.logCheDisplay();
+		// No jobs. 3 "other". The problem is the orders file does not have location, and the inventory is not set.
+
+		LOGGER.info("4: Picker 1 scan INVENTORY and inventory what we need for order 12345");
+		picker1.scanCommand("INVENTORY");
+		picker2.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker1.scanSomething("gtin1123");
+		picker2.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker1.scanSomething("%004290570250");
+		picker2.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker1.scanSomething("gtin14933");
+		picker2.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker1.scanSomething("%004290590150");
+		picker2.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker1.scanCommand("CLEAR");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay();
+
+		LOGGER.info("5: Picker 1 scan a location on path. Get the job(s)");
+		// substitute a tape scan here
+		picker1.scanLocation("D301");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.logCheDisplay();
+
+		LOGGER.info("6: push the button on the cart. Poscons on the cart CHE2, not the mobile CHE1");
+		picker2.pickItemAuto();
+		// was only one job on the route, so done
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay();
+
 
 	}
 }
