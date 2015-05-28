@@ -105,7 +105,14 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		
 		// Get our LOCAPICK and SCANPICK configuration values. It will not change during importing one file.
 		this.locaPick = PropertyService.getInstance().getBooleanPropertyFromConfig(facility, DomainObjectProperty.LOCAPICK);
-		this.scanPick = PropertyService.getInstance().getBooleanPropertyFromConfig(facility, DomainObjectProperty.SCANPICK);
+		
+		this.scanPick = false;
+		DomainObjectProperty scanPickProp = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
+		if (scanPickProp!=null) {
+			if (!DomainObjectProperty.Default_SCANPICK.equals(scanPickProp.getValue())) {
+				this.scanPick = true;				
+			}
+		}
 
 		int numOrders = 0;
 		int numLineItems = 0; 

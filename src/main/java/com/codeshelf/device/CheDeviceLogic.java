@@ -305,16 +305,21 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		if (wi.isHousekeeping()) {
 			return false;
-				}
-		/*
+		}
+
+		// /*
 		else if (wi.getNeedsScan()) {
 			return !alreadyScannedSkuOrUpcOrLpnThisWi(wi);
 		}
-		*/
-else if (mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY) {
+		// */
+
+		/*
+		else if (mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY) {
 			return !alreadyScannedSkuOrUpcOrLpnThisWi(wi);
 			// See if we can skip this scan because we already scanned.
 		}
+		*/
+
 		return false;
 	}
 
@@ -1405,11 +1410,11 @@ else if (mScanNeededToVerifyPick != ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY) {
 	protected void yesOrNoCommandReceived(final String inScanStr) {
 		LOGGER.error("yesOrNoCommandReceived() needs override");
 	}
-	
+
 	protected void posconSetupCommandReveived() {
 		CheStateEnum currentState = getCheStateEnum();
-		
-		switch(currentState) {
+
+		switch (currentState) {
 			case IDLE:
 			case SETUP_SUMMARY:
 			case READY:

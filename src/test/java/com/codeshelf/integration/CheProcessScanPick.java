@@ -255,7 +255,7 @@ public class CheProcessScanPick extends ServerTest {
 				+ "\r\n107,USF314,COSTCO,11111,11111.5,1555,paper towel,2,each, D502";
 		importOrdersData(inFacility, csvOrders);
 	}
-	
+
 	/**
 	 * Simple test of INVENTORY command
 	 */
@@ -288,83 +288,83 @@ public class CheProcessScanPick extends ServerTest {
 		setUpLineScanOrdersNoCntrWithGtin(facility);
 		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
-	
+
 		picker.loginAndSetup("Picker #1");
-		
+
 		LOGGER.info("1b: Scan INVENTORY command");
 		picker.scanCommand("INVENTORY");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1c: scan a GTIN and check item location is correct");
 		picker.scanSomething("100");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1d: scan another GTIN");
 		picker.scanSomething("103");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1e: scan location");
 		picker.scanLocation("D302");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1f: scan a new GTIN");
 		picker.scanSomething("101");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1g: scan another GTIN");
 		picker.scanSomething("102");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1h: scan location");
 		picker.scanLocation("D301");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1i: scan another location. should move here.");
 		picker.scanLocation("D302");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1j: scan X%CLEAR and get back to READY state");
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
-		
+
 		LOGGER.info("1k: scan X%INVENTORY");
 		picker.scanCommand("INVENTORY");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1l: logout");
 		picker.scanCommand("LOGOUT");
 		picker.waitForCheState(CheStateEnum.IDLE, 1000);
-		
+
 		this.getTenantPersistenceService().beginTransaction();
-		facility  = Facility.staticGetDao().reload(facility);
-		
+		facility = Facility.staticGetDao().reload(facility);
+
 		LOGGER.info("2a: check that item 100 stayed in it's original location");
 		Location locationD301 = facility.findSubLocationById("D301");
 		Assert.assertNotNull(locationD301);
 		Item item1123locD301 = locationD301.getStoredItemFromMasterIdAndUom("1123", "ea");
 		Assert.assertNotNull(item1123locD301);
-		
+
 		LOGGER.info("2b: check that item 1123 moved from D301 to D302");
 		Location locationD302 = facility.findSubLocationById("D302");
 		Assert.assertNotNull(locationD302);
 		locationD301 = facility.findSubLocationById("D301");
 		Assert.assertNotNull(locationD301);
-		
+
 		Item item1122locD302 = locationD302.getStoredItemFromMasterIdAndUom("1122", "ea");
 		Assert.assertNotNull("Item 1122 (GTIN 103) should have moved to this location", item1122locD302);
 		Item item1122locD301 = locationD301.getStoredItemFromMasterIdAndUom("1122", "ea");
 		Assert.assertNull("Item 1122 should no longer be at this location", item1122locD301);
-		
+
 		LOGGER.info("2c: check that item 1522 moved to D302 and not D301");
 		Item gtin102itemLocD302 = locationD302.getStoredItemFromMasterIdAndUom("1522", "ea");
 		Assert.assertNotNull(gtin102itemLocD302);
 		Item item1522LocD301 = locationD301.getStoredItemFromMasterIdAndUom("1522", "ea");
 		Assert.assertNull(item1522LocD301);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 	}
-	
+
 	/**
 	 * Simple test of INVENTORY command
 	 */
@@ -393,26 +393,26 @@ public class CheProcessScanPick extends ServerTest {
 		setUpLineScanOrdersNoCntrWithGtin(facility);
 		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
-	
+
 		LOGGER.info("0a: scan INVENTORY and make sure we stay idle");
 		picker.scanCommand("INVENTORY");
 		picker.waitForCheState(CheStateEnum.IDLE, 1000);
-		
+
 		LOGGER.info("1a: login, should go to READY state");
 		picker.loginAndSetup("Picker #1");
-		
+
 		LOGGER.info("1b: scan X%INVENTORY, should go to SCAN_GTIN state");
 		picker.scanCommand("INVENTORY");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-	
+
 		LOGGER.info("1c: scan GTIN that does not exist - 200");
 		picker.scanSomething("200");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1d: scan location. Should create item with GTIN at location D302");
 		picker.scanLocation("D302");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		LOGGER.info("1e: check that the item with GTIN 200 exists at D302");
@@ -421,43 +421,43 @@ public class CheProcessScanPick extends ServerTest {
 		Item item200 = D302.getStoredItemFromMasterIdAndUom("200", "ea");
 		Assert.assertNotNull(item200);
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 		LOGGER.info("2a: scan invalid commands");
 		picker.scanCommand("SETUP");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		picker.scanCommand("NO");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		picker.scanSomething("U%USER1");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("2b: scan GTIN that exists - 100");
 		picker.scanSomething("100");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("2c: clear");
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
-		
+
 		LOGGER.info("3a: scan inventory command");
 		picker.scanCommand("INVENTORY");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("3b: scan location before scanning GTIN");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 	}
-	
+
 	/**
 	 * A trivial reference test of Setup_Orders
 	 */
@@ -507,16 +507,16 @@ public class CheProcessScanPick extends ServerTest {
 		picker.scanLocation("D303");
 		// DEV-653 go to SCAN_SOMETHING state instead of DO_PICK
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		
+
 		// verify position index
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Container c1 = Container.staticGetDao().findByDomainId(facility, "12345");
 		ContainerUse cu1 = ContainerUse.staticGetDao().findByDomainId(c1, "12345");
-		Assert.assertTrue(cu1.getPosconIndex()==1);
+		Assert.assertTrue(cu1.getPosconIndex() == 1);
 		Container c2 = Container.staticGetDao().findByDomainId(facility, "11111");
 		ContainerUse cu2 = ContainerUse.staticGetDao().findByDomainId(c2, "11111");
-		Assert.assertTrue(cu2.getPosconIndex()==2);
+		Assert.assertTrue(cu2.getPosconIndex() == 2);
 		this.getTenantPersistenceService().commitTransaction();
 
 		List<WorkInstruction> scWiList = picker.getAllPicksList();
@@ -972,16 +972,9 @@ public class CheProcessScanPick extends ServerTest {
 	 * jobCountToCheck parameter is new. If zero, does all. If set, will abort and logout only working partway through the list.
 	 */
 	private final void testPfswebWorkSequencePicks(String scanDirection, String[][] sortedItemLocs) throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
-		this.setUpOrdersWithCntrAndSequence(facility);
-		this.getTenantPersistenceService().commitTransaction();
 
-		LOGGER.info("1a: leave LOCAPICK off, set SCANPICK, set WORKSEQR");
-
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		Assert.assertNotNull(facility);
 		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
 		// we are not setting SCANPICK for this test. Only about sequencing
 		propertyService.changePropertyValue(facility,
@@ -989,6 +982,18 @@ public class CheProcessScanPick extends ServerTest {
 			WorkInstructionSequencerType.WorkSequence.toString());
 
 		propertyService.turnOffHK(facility);
+		commitTransaction();
+		
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		setUpOrdersWithCntrAndSequence(facility);
+		commitTransaction();
+
+		LOGGER.info("1a: leave LOCAPICK off, set SCANPICK, set WORKSEQR");
+
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		Assert.assertNotNull(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController(); // after all the parameter changes
@@ -1090,24 +1095,21 @@ public class CheProcessScanPick extends ServerTest {
 	public final void testPfswebScanPicks() throws IOException {
 		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
-		commitTransaction();
-		
-		beginTransaction();
-		setUpOrdersWithCntrAndSequence(facility);
-		commitTransaction();
 
-		LOGGER.info("1a: leave LOCAPICK off, set SCANPICK, set WORKSEQR");
-
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		Assert.assertNotNull(facility);
 		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
 		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
 		propertyService.changePropertyValue(facility,
 			DomainObjectProperty.WORKSEQR,
 			WorkInstructionSequencerType.WorkSequence.toString());
 		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+
+		commitTransaction();
+
+		beginTransaction();
+		setUpOrdersWithCntrAndSequence(facility);
+		commitTransaction();
+
+		LOGGER.info("1a: conditions: LOCAPICK off, set SCANPICK, set WORKSEQR");
 
 		this.startSiteController(); // after all the parameter changes
 
