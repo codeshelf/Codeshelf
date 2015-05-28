@@ -64,7 +64,7 @@ public class ScriptSiteRunner {
 						processLine(line);
 					}
 					LOGGER.info("Site script block completed");
-					report.append("***Site Script Completed Successfully***\n");
+					report.append("***Site Script Segment Completed Successfully***\n");
 				} catch (Exception e) {
 					logoutAll();
 					String error = CsExceptionUtils.exceptionToString(e);

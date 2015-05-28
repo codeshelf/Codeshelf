@@ -101,7 +101,7 @@ public class ScriptServerRunner {
 				processLine(line);
 				persistence.commitTransaction();
 			}
-			report.append("***Server Script Completed Successfully***\n");
+			report.append("***Server Script Segment Completed Successfully***\n");
 		} catch (Exception e) {
 			persistence.rollbackTransaction();
 			report.append(CsExceptionUtils.exceptionToString(e)).append("\n");
@@ -498,12 +498,7 @@ public class ScriptServerRunner {
 	private InputStreamReader readFile(String filename) throws Exception{
 		InputStream is = ScriptStepParser.getInputStream(postBody, filename);
 		if (is == null) {
-			StringBuilder availableFiles = new StringBuilder("Available Files: ");
-			Set<String> fields = postBody.getFields().keySet();
-			for (String field : fields) {
-				availableFiles.append(field).append(", ");
-			}
-			throw new Exception("Unable to find file " + filename + ". " + availableFiles);
+			throw new Exception("Unable to find file " + filename);
 		}
 		return new InputStreamReader(is);
 	}
