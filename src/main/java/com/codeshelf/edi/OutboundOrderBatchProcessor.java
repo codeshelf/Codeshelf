@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.script.ScriptException;
-
 import lombok.Getter;
 import lombok.Setter;
 
@@ -196,6 +194,17 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				int lineCount = 1;
 				int count = 1, size = lines.size();
 				for (OutboundOrderCsvBean orderBean : lines) {
+					// transform order bean with groovy script, if enabled
+					if (importer.getScriptingService().hasExtentionPoint(ExtensionPointType.OrderImportBeanTransformation)) {
+						Object[] params = { orderBean };
+						try {
+							orderBean = (OutboundOrderCsvBean) importer.getScriptingService().eval(facility, ExtensionPointType.OrderImportBeanTransformation, params);
+						} 
+						catch (Exception e) {
+							LOGGER.error("Failed to evaluate script", e);
+						}
+					}
+					// process order bean
 					try {
 						OrderHeader order = orderCsvBeanImport(orderBean, facility, processTime, count++ + "/" + size);
 						if ((order != null) && (!orderSet.contains(order))) {
@@ -376,7 +385,6 @@ public class OutboundOrderBatchProcessor implements Runnable {
 						uomMaster);
 				}
 			}
-
 		}
 		return order;
 	}
