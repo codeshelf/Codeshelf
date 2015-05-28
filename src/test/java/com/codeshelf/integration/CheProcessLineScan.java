@@ -192,7 +192,7 @@ public class CheProcessLineScan extends ServerTest {
 				+ "\r\n,USF314,COSTCO,11111,11111.5,1555,paper towel,2,each, D604";
 		importOrdersData(inFacility, csvOrders);
 	}
-	
+
 	private void setUpLineScanOrdersWithCntr(Facility inFacility) throws IOException {
 		// Exactly the same as above, but with preAssignedContainerId set equal to the orderId
 
@@ -207,7 +207,7 @@ public class CheProcessLineScan extends ServerTest {
 				+ "\r\n,USF314,COSTCO,11111,11111,11111.5,1555,paper towel,2,each, D604";
 		importOrdersData(inFacility, csvOrders);
 	}
-	
+
 	private void setUpLineScanOrdersNoCntrWithGtin(Facility inFacility) throws IOException {
 		// Outbound order. No group. Using 5 digit order number and .N detail ID. No preassigned container number.
 		// Locations D301-303, 401-403, 501-503 are modeled. 600s and 700s are not.
@@ -239,7 +239,7 @@ public class CheProcessLineScan extends ServerTest {
 		beginTransaction();
 		setUpLineScanOrdersNoCntr(facility);
 		commitTransaction();
-		
+
 		super.startSiteController();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -319,7 +319,7 @@ public class CheProcessLineScan extends ServerTest {
 	 * LOCAPICK is false, so no inventory created at the location.
 	 * Scanning detail 11111.1 with locationId D401, which is modeled.
 	 */
-	
+
 	@Test
 	public final void testSiteParamConfig() throws IOException {
 
@@ -329,47 +329,47 @@ public class CheProcessLineScan extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		CsDeviceManager manager = this.getDeviceManager();
 		Assert.assertNotNull(manager);
-		
+
 		// Test autoShort
 		manager.setAutoShortValue(true);
 		Assert.assertTrue(manager.getAutoShortValue());
-		
+
 		manager.setAutoShortValue(false);
 		Assert.assertFalse(manager.getAutoShortValue());
-		
+
 		// Test containterType
 		manager.setContainerTypeValue("Both");
 		Assert.assertEquals("Both", manager.getContainerTypeValue());
-		
+
 		manager.setContainerTypeValue("SKU");
 		Assert.assertEquals("SKU", manager.getContainerTypeValue());
-		
+
 		manager.setContainerTypeValue("Description");
 		Assert.assertEquals("Description", manager.getContainerTypeValue());
-		
+
 		// Test scanType
 		manager.setScanTypeValue("SKU");
 		Assert.assertEquals("SKU", manager.getScanTypeValue());
-		
+
 		manager.setScanTypeValue("UPC");
 		Assert.assertEquals("UPC", manager.getScanTypeValue());
-		
+
 		manager.setScanTypeValue("Disabled");
 		Assert.assertEquals("Disabled", manager.getScanTypeValue());
-		
+
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 	}
-	
+
 	/**
 	 * Login, scan a valid order detail ID, see the job. Then assorted re-scans and clears.
 	 * LOCAPICK is false, so no attempt at inventory creation.
@@ -560,7 +560,7 @@ public class CheProcessLineScan extends ServerTest {
 		picker.waitForCheState(CheStateEnum.READY, 2000);
 
 		LOGGER.info("3a: scan same order again");
-		picker.scanOrderDetailId("12345.3"); 	
+		picker.scanOrderDetailId("12345.3");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
 		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
 
@@ -568,11 +568,11 @@ public class CheProcessLineScan extends ServerTest {
 		wi = picker.getActivePick();
 		quant = wi.getPlanQuantity();
 		Assert.assertEquals(1, quant);
-		
+
 		LOGGER.info("3c: scan SHORT");
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 2000);
-		
+
 		LOGGER.info("3d: submit 0");
 		picker.pick(1, 0);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 2000);
@@ -589,7 +589,7 @@ public class CheProcessLineScan extends ServerTest {
 		picker.waitForCheState(CheStateEnum.READY, 2000);
 
 		LOGGER.info("5: CLEAR from SHORT_PICK_CONFIRM state");
-		picker.scanOrderDetailId("12345.3"); 	
+		picker.scanOrderDetailId("12345.3");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 2000);
@@ -599,18 +599,18 @@ public class CheProcessLineScan extends ServerTest {
 		picker.waitForCheState(CheStateEnum.READY, 2000);
 
 		LOGGER.info("6: Scan other order line from SHORT_PICK state");
-		picker.scanOrderDetailId("12345.3"); 	
+		picker.scanOrderDetailId("12345.3");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 2000);
 		picker.scanOrderDetailId("11111.1");
 		picker.waitForCheState(CheStateEnum.ABANDON_CHECK, 2000);
-		
+
 		LOGGER.info("6b: scan NO, so we should be on the 12345.3 job");
 		picker.scanCommand("NO");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 2000);
 		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
-		
+
 		LOGGER.info("6c: Repeat, but scan YES, so go to the 11111.1 job");
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 2000);
@@ -625,9 +625,9 @@ public class CheProcessLineScan extends ServerTest {
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 2000);
 		picker.pick(1, 0);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 2000);
-		picker.scanOrderDetailId("12345.3"); 	
+		picker.scanOrderDetailId("12345.3");
 		picker.waitForCheState(CheStateEnum.ABANDON_CHECK, 2000);
-		
+
 		LOGGER.info("7b: scan NO, so we should still be on the 11111.1 job");
 		picker.scanCommand("NO");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 2000);
@@ -643,11 +643,11 @@ public class CheProcessLineScan extends ServerTest {
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 2000);
 		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
-	
+
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 	}
-	
+
 	/**
 	 * Using the same data as linescan tests, try to setup up normal cart run
 	 * LOCAPICK is false, so no inventory created at the location.
@@ -675,11 +675,11 @@ public class CheProcessLineScan extends ServerTest {
 
 		LOGGER.info("1a: setup two orders on the cart. Several of the details have unmodelled preferred locations");
 		// The setup is all the same, so just blow through it.
-		picker.setupContainer("12345", "1"); 
+		picker.setupContainer("12345", "1");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
-		picker.setupContainer("11111", "2"); 
+		picker.setupContainer("11111", "2");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
-		
+
 		LOGGER.info("1b: START. NO work, because the file did not have containerID set for the order");
 		picker.scanCommand("START");
 		picker.waitForCheState(picker.getNoWorkReviewState(), 4000);
@@ -694,13 +694,13 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertNotNull(facility);
 		setUpLineScanOrdersWithCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
-	
+
 		picker.loginAndSetup("Picker #1");
-		
+
 		LOGGER.info("2b: setup two orders on the cart. Several of the details have unmodelled preferred locations");
-		picker.setupContainer("12345", "1"); 
+		picker.setupContainer("12345", "1");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
-		picker.setupContainer("11111", "2"); 
+		picker.setupContainer("11111", "2");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 
 		LOGGER.info("2c: START. Work because location is resolvable even without inventory. (LOCAPICK was off, so not made).");
@@ -708,11 +708,11 @@ public class CheProcessLineScan extends ServerTest {
 		// No inventory, but the order detail preferred location is resolvable, so we could do it
 		picker.scanCommand("START");
 		picker.waitForCheState(picker.getLocationStartReviewState(true), 4000);
-	
+
 		// logout back to idle state.
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
-		
+
 		LOGGER.info("3a: Set LOCAPICK, then import the orders file again, with containerId");
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
@@ -725,36 +725,35 @@ public class CheProcessLineScan extends ServerTest {
 		setUpLineScanOrdersWithCntr(facility);
 		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
-	
+
 		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("3b: setup two orders on the cart. Several of the details have unmodelled preferred locations");
-		picker.setupContainer("12345", "1"); 
+		picker.setupContainer("12345", "1");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
-		picker.setupContainer("11111", "2"); 
+		picker.setupContainer("11111", "2");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
-		
+
 		LOGGER.info("3c: START. Now we get some work. 3 jobs, since only 3 details had modeled locations");
 		picker.scanCommand("START");
 		picker.waitForCheState(picker.getLocationStartReviewState(true), 4000);
-		
+
 		LOGGER.info("3d: scan a valid location. Log out the work instructions that we got.");
 		picker.scanLocation("D303");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
 		Assert.assertEquals(3, serverWiList.size());
 		logWiList(serverWiList);
 		this.getTenantPersistenceService().commitTransaction();
 
-
 		// logout back to idle state.
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 
 	}
-	
+
 	/**
 	 * Login, scan a valid order detail ID, see the job.
 	 * LOCAPICK is false, so no attempt at inventory creation.
@@ -765,47 +764,47 @@ public class CheProcessLineScan extends ServerTest {
 
 		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
+
+		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
+		if (scanPickProperty != null) {
+			scanPickProperty.setValue("SKU");
+			PropertyDao.getInstance().store(scanPickProperty);
+		}
+		// we need to set che1 to be in line scan mode
+		CodeshelfNetwork network = getNetwork();
+		Che che1 = network.getChe("CHE1");
+		Assert.assertNotNull(che1);
+		che1.setProcessMode(ProcessMode.LINE_SCAN);
+		Che.staticGetDao().store(che1);
+
 		commitTransaction();
-		
+
 		beginTransaction();
 		setUpLineScanOrdersNoCntr(facility);
 		commitTransaction();
 
 		beginTransaction();
-		facility = facility.reload();
-		Assert.assertNotNull(facility);
+		facility = Facility.staticGetDao().reload(facility);
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
+		Assert.assertNotNull(order);
+		OrderDetail detail = OrderDetail.staticGetDao().findByDomainId(order, "12345.3");
+		Assert.assertNotNull(detail);
 		
-		// we need to set che1 to be in line scan mode
-		CodeshelfNetwork network = getNetwork();
-		Che che1 = network.getChe("CHE1");
-		Assert.assertNotNull(che1);
-		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
-		che1.setProcessMode(ProcessMode.LINE_SCAN);
-		Che.staticGetDao().store(che1);
+		// Bjoern: uncomment here
+		// Assert.assertTrue(detail.getNeedsScan());
 		
-		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
-		if (scanPickProperty != null) {
-			scanPickProperty.setValue("SKU");
-			PropertyDao.getInstance().store(scanPickProperty);
-		}		
 		commitTransaction();
+
 		
 		super.startSiteController();
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
 		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
-		
+
 		CsDeviceManager manager = this.getDeviceManager();
 		Assert.assertNotNull(manager);
-		
-		//String scanPickValue = manager.getScanTypeValue();
-		//LOGGER.info("Default SCANPICK value for test is " + scanPickValue);
-		//Assert.assertNotEquals("SKU", manager.getScanTypeValue());
-		// We would rather have the device manager know from the SCANPICK parameter update, but that does not happen yet in the integration test.
-		 // kludgy! Somewhat simulates restarting site controller
-		//manager.setScanTypeValue("SKU");
+
 		Assert.assertEquals("SKU", manager.getScanTypeValue());
-		picker.forceDeviceToMatchManagerConfiguration();
 
 		LOGGER.info("1a: login, should go to READY state");
 		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
@@ -813,7 +812,7 @@ public class CheProcessLineScan extends ServerTest {
 		LOGGER.info("1b: scan order, should go to SCAN_SOMETHING state");
 		picker.scanOrderDetailId("12345.3"); // does not add "%"
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 5000);
-		
+
 		LOGGER.info("1c: although the poscon shows the count, prove that the button does nothing");
 		WorkInstruction wi = picker.getActivePick();
 		int button = picker.buttonFor(wi);
@@ -822,34 +821,34 @@ public class CheProcessLineScan extends ServerTest {
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 		WorkInstruction wi2 = picker.nextActiveWi();
 		Assert.assertEquals(wi, wi2);
-		
+
 		LOGGER.info("1d: scan the SKU. This data has 1522");
 		picker.scanSomething("1522");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		
+
 		LOGGER.info("1e: now the button press works");
 		wi = picker.nextActiveWi();
 		button = picker.buttonFor(wi);
 		quant = wi.getPlanQuantity();
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.READY, 4000);
-		
+
 		// logout back to idle state.
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
-		
+
 		LOGGER.info("2: test shorting before scanning upc");
 		LOGGER.info("2a: login, should go to READY state");
 		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
-		
+
 		LOGGER.info("2b: scan order, should go to SCAN_SOMETHING state");
 		picker.scanOrderDetailId("12345.1"); // does not add "%"
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 5000);
-		
+
 		LOGGER.info("2c: scan short command");
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING_SHORT, 4000);
-		
+
 		LOGGER.info("2d: scan yes and go back to ready state");
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.READY, 2000);
@@ -857,48 +856,48 @@ public class CheProcessLineScan extends ServerTest {
 		LOGGER.info("2e: scan order, should go to SCAN_SOMETHING state");
 		picker.scanOrderDetailId("12345.1"); // does not add "%"
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 5000);
-		
+
 		LOGGER.info("2f: make sure need quant is still the same");
 		wi = picker.getActivePick();
 		quant = wi.getPlanQuantity();
-		Assert.assertEquals(1,quant);
-		
+		Assert.assertEquals(1, quant);
+
 		LOGGER.info("2g: scan SKU, should go to DO_PICK state");
 		picker.scanSomething("1123");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		
+
 		LOGGER.info("2h: press button to confirm pickup");
 		wi = picker.nextActiveWi();
 		button = picker.buttonFor(wi);
 		quant = wi.getPlanQuantity();
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.READY, 4000);
-		
+
 		// logout back to idle state.
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
-		
+
 		LOGGER.info("3: test shorting after scanning upc");
 		LOGGER.info("3a: login, should go to READY state");
 		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
-		
+
 		LOGGER.info("3b: scan order, should go to SCAN_SOMETHING state");
 		picker.scanOrderDetailId("11111.5"); // does not add "%"
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 5000);
-		
+
 		LOGGER.info("3c: make sure need quant is correct");
 		wi = picker.getActivePick();
 		quant = wi.getPlanQuantity();
-		Assert.assertEquals(2,quant);
-		
+		Assert.assertEquals(2, quant);
+
 		LOGGER.info("3d: scan SKU, should go to DO_PICK state");
 		picker.scanSomething("1555");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		
+
 		LOGGER.info("3e: scan SHORT");
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 2000);
-		
+
 		LOGGER.info("3f: submit 0");
 		picker.pick(1, 1);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 2000);
@@ -910,25 +909,25 @@ public class CheProcessLineScan extends ServerTest {
 		LOGGER.info("3h: scan order, should go to SCAN_SOMETHING state");
 		picker.scanOrderDetailId("11111.5"); // does not add "%"
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 5000);
-		
+
 		LOGGER.info("3i: make sure need quant is correct");
 		wi = picker.getActivePick();
 		quant = wi.getPlanQuantity();
-		Assert.assertEquals(1,quant);
-		
+		Assert.assertEquals(1, quant);
+
 		LOGGER.info("3j: scan SKU, should go to DO_PICK state");
 		picker.scanSomething("1555");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		
+
 		LOGGER.info("2h: press button to confirm pickup");
 		wi = picker.nextActiveWi();
 		button = picker.buttonFor(wi);
 		quant = wi.getPlanQuantity();
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.READY, 4000);
-		
+
 	}
-	
+
 	/**
 	 * Login, scan a valid order detail ID, see the job.
 	 * LOCAPICK is false, so no attempt at inventory creation.
@@ -949,7 +948,7 @@ public class CheProcessLineScan extends ServerTest {
 		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		
+
 		// we need to set che1 to be in line scan mode
 		CodeshelfNetwork network = getNetwork();
 		Che che1 = network.getChe("CHE1");
@@ -957,28 +956,28 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.staticGetDao().store(che1);
-		
+
 		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {
 			scanPickProperty.setValue("SKU");
 			PropertyDao.getInstance().store(scanPickProperty);
 		}
 		commitTransaction();
-		
+
 		this.startSiteController();
-		
+
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
 		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
-		
+
 		CsDeviceManager manager = this.getDeviceManager();
 		Assert.assertNotNull(manager);
-		
+
 		//String scanPickValue = manager.getScanTypeValue();
 		//LOGGER.info("Default SCANPICK value for test is " + scanPickValue);
 		//Assert.assertNotEquals("SKU", manager.getScanTypeValue());
 		// We would rather have the device manager know from the SCANPICK parameter update, but that does not happen yet in the integration test.
-		 // kludgy! Somewhat simulates restarting site controller
+		// kludgy! Somewhat simulates restarting site controller
 		//manager.setScanTypeValue("SKU");
 		Assert.assertEquals("SKU", manager.getScanTypeValue());
 		picker.forceDeviceToMatchManagerConfiguration();
@@ -989,7 +988,7 @@ public class CheProcessLineScan extends ServerTest {
 		LOGGER.info("1b: scan order, should go to SCAN_SOMETHING state");
 		picker.scanOrderDetailId("12345.3"); // does not add "%"
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
-		
+
 		LOGGER.info("1c: although the poscon shows the count, prove that the button does nothing");
 		WorkInstruction wi = picker.getActivePick();
 		int button = picker.buttonFor(wi);
@@ -998,26 +997,26 @@ public class CheProcessLineScan extends ServerTest {
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 		WorkInstruction wi2 = picker.nextActiveWi();
 		Assert.assertEquals(wi, wi2);
-		
+
 		LOGGER.info("1d: scan the wrong SKU. This data has 1522");
 		picker.scanSomething("8888");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
-		
+
 		LOGGER.info("1e: see if we can logout from SCAN_SOMETHING state");
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
-		
+
 		LOGGER.info("2a: login, should go to READY state");
 		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
 
 		LOGGER.info("2b: scan order, should go to SCAN_SOMETHING state");
 		picker.scanOrderDetailId("12345.3"); // does not add "%"
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 5000);
-		
+
 		LOGGER.info("2c: scan SKU. This data has 1522");
 		picker.scanSomething("1522");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 2000);
-		
+
 		LOGGER.info("2d: see that normal short process works from this point");
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 5000);
@@ -1025,17 +1024,17 @@ public class CheProcessLineScan extends ServerTest {
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 5000);
 		picker.scanCommand("NO");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
-		
+
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
-		
+
 		LOGGER.info("3a: login, should go to READY state");
 		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
 
 		LOGGER.info("3b: scan order, should go to SCAN_SOMETHING state");
 		picker.scanOrderDetailId("12345.3"); // does not add "%"
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 5000);
-		
+
 		LOGGER.info("3c: No product present. Worker's only choice is to scan short");
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING_SHORT, 4000); // like SHORT_PICK_CONFIRM
@@ -1043,18 +1042,18 @@ public class CheProcessLineScan extends ServerTest {
 		LOGGER.info("3d: Scan NO on the confirm message");
 		picker.scanCommand("NO");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
-		
+
 		LOGGER.info("3e: Worker decides to complete the short.");
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING_SHORT, 4000); // like SHORT_PICK_CONFIRM
-		
+
 		LOGGER.info("3f: Scan YES on the confirm message");
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.READY, 4000);
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 	}
-	
+
 	/**
 	 * Login, scan a valid order detail ID, see the job.
 	 * LOCAPICK is false, so no attempt at inventory creation.
@@ -1074,7 +1073,7 @@ public class CheProcessLineScan extends ServerTest {
 		beginTransaction();
 		facility = facility.reload();
 		Assert.assertNotNull(facility);
-		
+
 		// we need to set che1 to be in line scan mode
 		CodeshelfNetwork network = getNetwork();
 		Che che1 = network.getChe("CHE1");
@@ -1082,28 +1081,28 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.staticGetDao().store(che1);
-		
+
 		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {
 			scanPickProperty.setValue("SKU");
 			PropertyDao.getInstance().store(scanPickProperty);
 		}
 		commitTransaction();
-		
+
 		this.startSiteController();
-		
+
 		// Need to give time for the the CHE update to process through the site controller before settling on our picker.
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
 		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
-		
+
 		CsDeviceManager manager = this.getDeviceManager();
 		Assert.assertNotNull(manager);
-		
+
 		//String scanPickValue = manager.getScanTypeValue();
 		//LOGGER.info("Default SCANPICK value for test is " + scanPickValue);
 		//Assert.assertNotEquals("SKU", manager.getScanTypeValue());
 		// We would rather have the device manager know from the SCANPICK parameter update, but that does not happen yet in the integration test.
-		 // kludgy! Somewhat simulates restarting site controller
+		// kludgy! Somewhat simulates restarting site controller
 		//manager.setScanTypeValue("SKU");
 		Assert.assertEquals("SKU", manager.getScanTypeValue());
 		picker.forceDeviceToMatchManagerConfiguration();
@@ -1114,7 +1113,7 @@ public class CheProcessLineScan extends ServerTest {
 		LOGGER.info("1b: scan order, should go to SCAN_SOMETHING state");
 		picker.scanOrderDetailId("12345.3"); // does not add "%"
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 5000);
-		
+
 		LOGGER.info("1c: although the poscon shows the count, prove that the button does nothing");
 		WorkInstruction wi = picker.getActivePick();
 		int button = picker.buttonFor(wi);
@@ -1123,39 +1122,39 @@ public class CheProcessLineScan extends ServerTest {
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 		WorkInstruction wi2 = picker.nextActiveWi();
 		Assert.assertEquals(wi, wi2);
-		
+
 		LOGGER.info("1d: scan SCANPICK. This data has 1522");
 		picker.scanSomething("SCANSKIP");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		
+
 		LOGGER.info("1e: now the button press works");
 		wi = picker.nextActiveWi();
 		button = picker.buttonFor(wi);
 		quant = wi.getPlanQuantity();
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.READY, 4000);
-		
+
 		LOGGER.info("1f: scan same order, should go to READY state");
 		picker.scanOrderDetailId("12345.3"); // does not add "%"
 		picker.waitForCheState(CheStateEnum.READY, 5000);
 	}
-	
+
 	/**
 	 * Login, scan a valid order detail ID, scan INVENTORY command.
 	 * LOCAPICK is true, so create inventory on order import.
 	 */
 	@Test
 	public final void testInventoryScan() throws IOException {
-		
+
 		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
 		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
 		if (theProperty != null) {
 			theProperty.setValue(true);
 			PropertyDao.getInstance().store(theProperty);
-		}	
+		}
 		commitTransaction();
-		
+
 		beginTransaction();
 		setUpLineScanOrdersNoCntrWithGtin(facility);
 		commitTransaction();
@@ -1169,103 +1168,103 @@ public class CheProcessLineScan extends ServerTest {
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.staticGetDao().store(che1);
 		commitTransaction();
-		
+
 		startSiteController();
-		
+
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
 		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
 		LOGGER.info("1a: login, should go to READY state");
 		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
-		
+
 		LOGGER.info("1b: scan X%INVENTORY, should go to SCAN_GTIN state");
 		picker.scanCommand("INVENTORY");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1c: scan a GTIN and check item location is correct");
 		picker.scanSomething("100");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1d: scan another GTIN");
 		picker.scanSomething("103");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1e: scan location");
 		picker.scanLocation("D302");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1f: scan a new GTIN");
 		picker.scanSomething("101");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1g: scan another GTIN");
 		picker.scanSomething("102");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1h: scan location");
 		picker.scanLocation("D301");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1i: scan another location. should move here.");
 		picker.scanLocation("D302");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1j: scan X%CLEAR and get back to READY state");
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.READY, 1000);
-		
+
 		LOGGER.info("1k: scan X%INVENTORY");
 		picker.scanCommand("INVENTORY");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1l: logout");
 		picker.scanCommand("LOGOUT");
 		picker.waitForCheState(CheStateEnum.IDLE, 1000);
-		
+
 		this.getTenantPersistenceService().beginTransaction();
-		facility  = Facility.staticGetDao().reload(facility);
-		
+		facility = Facility.staticGetDao().reload(facility);
+
 		LOGGER.info("2a: check that item 100 stayed in it's original location");
 		Location locationD301 = facility.findSubLocationById("D301");
 		Assert.assertNotNull(locationD301);
 		Item item1123locD301 = locationD301.getStoredItemFromMasterIdAndUom("1123", "ea");
 		Assert.assertNotNull(item1123locD301);
-		
+
 		LOGGER.info("2b: check that item 1123 moved from D301 to D302");
 		Location locationD302 = facility.findSubLocationById("D302");
 		Assert.assertNotNull(locationD302);
 		locationD301 = facility.findSubLocationById("D301");
 		Assert.assertNotNull(locationD301);
-		
+
 		Item item1122locD302 = locationD302.getStoredItemFromMasterIdAndUom("1122", "ea");
 		Assert.assertNotNull("Item 1122 (GTIN 103) should have moved to this location", item1122locD302);
 		Item item1122locD301 = locationD301.getStoredItemFromMasterIdAndUom("1122", "ea");
 		Assert.assertNull("Item 1122 should no longer be at this location", item1122locD301);
-		
+
 		LOGGER.info("2c: check that item 1522 moved to D302 and not D301");
 		Item gtin102itemLocD302 = locationD302.getStoredItemFromMasterIdAndUom("1522", "ea");
 		Assert.assertNotNull(gtin102itemLocD302);
 		Item item1522LocD301 = locationD301.getStoredItemFromMasterIdAndUom("1522", "ea");
 		Assert.assertNull(item1522LocD301);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
 	/**
 	 * Login, scan a valid order detail ID, scan INVENTORY command.
 	 * LOCAPICK is true, so create inventory on order import.
 	 */
 	@Test
 	public final void testInventoryScan2() throws IOException {
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
-		
+
 		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
 		if (theProperty != null) {
 			theProperty.setValue(true);
 			PropertyDao.getInstance().store(theProperty);
-		}	
+		}
 
 		setUpLineScanOrdersNoCntrWithGtin(facility);
 
@@ -1277,32 +1276,31 @@ public class CheProcessLineScan extends ServerTest {
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.staticGetDao().store(che1);
 		this.getTenantPersistenceService().commitTransaction();
-		
-		
+
 		startSiteController();
-		
+
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_LINESCAN");
 		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
 
 		LOGGER.info("0a: scan INVENTORY and make sure we stay idle");
 		picker.scanCommand("INVENTORY");
 		picker.waitForCheState(CheStateEnum.IDLE, 1000);
-		
+
 		LOGGER.info("1a: login, should go to READY state");
 		picker.loginAndCheckState("Picker #1", CheStateEnum.READY);
-		
+
 		LOGGER.info("1b: scan X%INVENTORY, should go to SCAN_GTIN state");
 		picker.scanCommand("INVENTORY");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-	
+
 		LOGGER.info("1c: scan GTIN that does not exist - 200");
 		picker.scanSomething("200");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1d: scan location. Should create item with GTIN at location D302");
 		picker.scanLocation("D302");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		LOGGER.info("1e: check that the item with GTIN 200 exists at D302");
@@ -1311,38 +1309,38 @@ public class CheProcessLineScan extends ServerTest {
 		Item item200 = D302.getStoredItemFromMasterIdAndUom("200", "ea");
 		Assert.assertNotNull(item200);
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 		LOGGER.info("2a: scan invalid commands");
 		picker.scanCommand("SETUP");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		picker.scanCommand("NO");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		picker.scanSomething("U%USER1");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("2b: scan GTIN that exists - 100");
 		picker.scanSomething("100");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("2c: clear");
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.READY, 1000);
-		
+
 		LOGGER.info("3a: scan inventory command");
 		picker.scanCommand("INVENTORY");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("3b: scan location before scanning GTIN");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 	}
