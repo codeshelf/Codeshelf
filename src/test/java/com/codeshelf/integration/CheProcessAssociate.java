@@ -270,9 +270,9 @@ public class CheProcessAssociate extends ServerTest {
 
 		LOGGER.info("2b: check the UI field");
 		String state1Che1 = che1.getAssociateToUi();
-		Assert.assertEquals("this-->CHE2-00009992", state1Che1);
+		Assert.assertEquals("controlling CHE2", state1Che1);
 		String state1Che2 = che2.getAssociateToUi();
-		Assert.assertEquals("CHE1-00009991-->this", state1Che2);
+		Assert.assertEquals("controlled by CHE1", state1Che2);
 
 		LOGGER.info("3: tell che1 to clear associations");
 		this.workService.clearCheAssociation(che1);
