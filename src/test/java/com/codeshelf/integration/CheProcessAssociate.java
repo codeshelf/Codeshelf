@@ -379,12 +379,12 @@ public class CheProcessAssociate extends ServerTest {
 		// linked will pick up the CHE2 actual display
 		// Assert.assertEquals("Linked to: CHE2", picker1.getLastCheDisplayString(1));
 		picker1.logCheDisplay();
-		
-		LOGGER.info("5b: While linked, other scans should pass through to the other che");		
+
+		LOGGER.info("5b: While linked, other scans should pass through to the other che");
 		picker1.scanSomething("XXXZZZ");
 		picker1.scanCommand("INVENTORY");
 
-		LOGGER.info("5c: Clear it. REMOTE and LOGOUT are processed locally.");		
+		LOGGER.info("5c: Clear it. REMOTE and LOGOUT are processed locally.");
 		picker1.scanCommand("REMOTE");
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		picker1.scanCommand("REMOTE");
@@ -414,7 +414,7 @@ public class CheProcessAssociate extends ServerTest {
 		picker1.scanCommand("CLEAR");
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 	}
-	
+
 	/**
 	 * Test using association via CHE scans
 	 */
@@ -431,8 +431,8 @@ public class CheProcessAssociate extends ServerTest {
 		startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
 		PickSimulator picker2 = createPickSim(cheGuid2);
-		
-		LOGGER.info("1: Picker 2 sets up some jobs on CHE2, then logs out");		
+
+		LOGGER.info("1: Picker 2 sets up some jobs on CHE2, then logs out");
 		picker2.loginAndCheckState("Picker #2", CheStateEnum.SETUP_SUMMARY);
 		picker2.scanCommand("SETUP");
 		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
@@ -443,7 +443,7 @@ public class CheProcessAssociate extends ServerTest {
 		String line1 = picker2.getLastCheDisplayString(1).trim();
 		Assert.assertEquals("1 order", line1);
 		picker2.logout();
-		
+
 		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
 
 		LOGGER.info("2: Picker 1 scan REMOTE and link to CHE2");
@@ -459,7 +459,7 @@ public class CheProcessAssociate extends ServerTest {
 		LOGGER.info("3: Picker 1 scan START. This will advance the CHE2 cart state. CHE1 is in REMOTE_LINKED state");
 		picker1.scanCommand("START");
 		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
-		Assert.assertEquals(CheStateEnum.REMOTE_LINKED,picker1.getCurrentCheState());
+		Assert.assertEquals(CheStateEnum.REMOTE_LINKED, picker1.getCurrentCheState());
 		picker1.logCheDisplay();
 		// No jobs. 3 "other". The problem is the orders file does not have location, and the inventory is not set.
 
@@ -491,7 +491,6 @@ public class CheProcessAssociate extends ServerTest {
 		// was only one job on the route, so done
 		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		picker1.logCheDisplay();
-
 
 	}
 }
