@@ -972,10 +972,13 @@ public class CheProcessScanPick extends ServerTest {
 	 * jobCountToCheck parameter is new. If zero, does all. If set, will abort and logout only working partway through the list.
 	 */
 	private final void testPfswebWorkSequencePicks(String scanDirection, String[][] sortedItemLocs) throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
-		this.setUpOrdersWithCntrAndSequence(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
+
+		beginTransaction();
+		setUpOrdersWithCntrAndSequence(facility);
+		commitTransaction();
 
 		LOGGER.info("1a: leave LOCAPICK off, set SCANPICK, set WORKSEQR");
 
