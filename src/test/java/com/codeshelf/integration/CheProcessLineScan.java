@@ -941,29 +941,23 @@ public class CheProcessLineScan extends ServerTest {
 
 		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
-		commitTransaction();
-
-		beginTransaction();
-		setUpLineScanOrdersNoCntr(facility);
-		commitTransaction();
-
-		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		Assert.assertNotNull(facility);
-
-		// we need to set che1 to be in line scan mode
-		CodeshelfNetwork network = getNetwork();
-		Che che1 = network.getChe("CHE1");
-		Assert.assertNotNull(che1);
-		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
-		che1.setProcessMode(ProcessMode.LINE_SCAN);
-		Che.staticGetDao().store(che1);
 
 		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {
 			scanPickProperty.setValue("SKU");
 			PropertyDao.getInstance().store(scanPickProperty);
 		}
+		// we need to set che1 to be in line scan mode
+		CodeshelfNetwork network = getNetwork();
+		Che che1 = network.getChe("CHE1");
+		Assert.assertNotNull(che1);
+		che1.setProcessMode(ProcessMode.LINE_SCAN);
+		Che.staticGetDao().store(che1);
+
+		commitTransaction();
+
+		beginTransaction();
+		setUpLineScanOrdersNoCntr(facility);
 		commitTransaction();
 
 		this.startSiteController();
@@ -975,11 +969,6 @@ public class CheProcessLineScan extends ServerTest {
 		CsDeviceManager manager = this.getDeviceManager();
 		Assert.assertNotNull(manager);
 
-		//String scanPickValue = manager.getScanTypeValue();
-		//LOGGER.info("Default SCANPICK value for test is " + scanPickValue);
-		//Assert.assertNotEquals("SKU", manager.getScanTypeValue());
-		// We would rather have the device manager know from the SCANPICK parameter update, but that does not happen yet in the integration test.
-		// kludgy! Somewhat simulates restarting site controller
 		//manager.setScanTypeValue("SKU");
 		Assert.assertEquals("SKU", manager.getScanTypeValue());
 		picker.forceDeviceToMatchManagerConfiguration();
@@ -1066,29 +1055,23 @@ public class CheProcessLineScan extends ServerTest {
 
 		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
-		commitTransaction();
-
-		beginTransaction();
-		setUpLineScanOrdersNoCntr(facility);
-		commitTransaction();
-
-		beginTransaction();
-		facility = facility.reload();
-		Assert.assertNotNull(facility);
-
-		// we need to set che1 to be in line scan mode
-		CodeshelfNetwork network = getNetwork();
-		Che che1 = network.getChe("CHE1");
-		Assert.assertNotNull(che1);
-		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
-		che1.setProcessMode(ProcessMode.LINE_SCAN);
-		Che.staticGetDao().store(che1);
 
 		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {
 			scanPickProperty.setValue("SKU");
 			PropertyDao.getInstance().store(scanPickProperty);
 		}
+		// we need to set che1 to be in line scan mode
+		CodeshelfNetwork network = getNetwork();
+		Che che1 = network.getChe("CHE1");
+		Assert.assertNotNull(che1);
+		che1.setProcessMode(ProcessMode.LINE_SCAN);
+		Che.staticGetDao().store(che1);
+
+		commitTransaction();
+
+		beginTransaction();
+		setUpLineScanOrdersNoCntr(facility);
 		commitTransaction();
 
 		this.startSiteController();
@@ -1100,12 +1083,6 @@ public class CheProcessLineScan extends ServerTest {
 		CsDeviceManager manager = this.getDeviceManager();
 		Assert.assertNotNull(manager);
 
-		//String scanPickValue = manager.getScanTypeValue();
-		//LOGGER.info("Default SCANPICK value for test is " + scanPickValue);
-		//Assert.assertNotEquals("SKU", manager.getScanTypeValue());
-		// We would rather have the device manager know from the SCANPICK parameter update, but that does not happen yet in the integration test.
-		// kludgy! Somewhat simulates restarting site controller
-		//manager.setScanTypeValue("SKU");
 		Assert.assertEquals("SKU", manager.getScanTypeValue());
 		picker.forceDeviceToMatchManagerConfiguration();
 
