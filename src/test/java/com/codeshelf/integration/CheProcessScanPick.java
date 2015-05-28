@@ -535,10 +535,14 @@ public class CheProcessScanPick extends ServerTest {
 	@Test
 	public final void testScanPick() throws IOException {
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
+		commitTransaction();
+
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
 		setUpLineScanOrdersNoCntr(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
 
 		this.startSiteController();
 
@@ -548,16 +552,17 @@ public class CheProcessScanPick extends ServerTest {
 
 		LOGGER.info("1a: Set LOCAPICK, then import the orders file, with containerId. Also set SCANPICK");
 
-		this.getTenantPersistenceService().beginTransaction();
-
+		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
 		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
 		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
-
-		setUpLineScanOrdersWithCntr(facility);
 		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
+
+		beginTransaction();
+		setUpLineScanOrdersWithCntr(facility);
+		commitTransaction();
 
 		CsDeviceManager manager = this.getDeviceManager();
 		Assert.assertNotNull(manager);
