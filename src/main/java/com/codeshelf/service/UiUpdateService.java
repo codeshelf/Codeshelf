@@ -3,6 +3,7 @@ package com.codeshelf.service;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.hibernate.Criteria;
@@ -16,6 +17,7 @@ import com.codeshelf.edi.InventorySlottedCsvBean;
 import com.codeshelf.event.EventProducer;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.manager.User;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Aisle;
@@ -31,10 +33,13 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.UomMaster;
+import com.codeshelf.model.domain.WirelessDeviceABC;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
+import com.codeshelf.ws.protocol.message.PosConSetupMessage;
+import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.Strings;
 
 // --------------------------------------------------------------------------
@@ -240,6 +245,22 @@ public class UiUpdateService implements IApiService {
 		filterParams.add(Restrictions.eq("parent", facility));
 		List<Aisle> aisled = Aisle.staticGetDao().findByFilter(filterParams);
 		return (aisled.isEmpty()) ? ProcessMode.LINE_SCAN : ProcessMode.SETUP_ORDERS;
+	}
+	
+	public void posConSetup(String deviceId, boolean isChe){
+		WirelessDeviceABC device = null;
+		if (isChe) { 
+			device = Che.staticGetDao().findByPersistentId(deviceId);
+		} else {
+			device = LedController.staticGetDao().findByPersistentId(deviceId);
+		}
+		if (device == null) {
+			LOGGER.error("Could not find " + (isChe?"che ":"controlelr ") + deviceId);
+			return;
+		}
+		Set<User> users = device.getFacility().getSiteControllerUsers();
+		PosConSetupMessage message = new PosConSetupMessage(device.getDeviceNetGuid().toString());
+		WebSocketManagerService.getInstance().sendMessage(users, message);
 	}
 	
 	/**
