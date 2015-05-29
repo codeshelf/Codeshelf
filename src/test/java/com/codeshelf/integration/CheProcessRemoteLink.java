@@ -262,15 +262,15 @@ public class CheProcessRemoteLink extends ServerTest {
 		Assert.assertEquals("", state0Che1);
 		String state0Che2 = che2.getAssociateToUi();
 		Assert.assertEquals("", state0Che2);
-		Assert.assertNull(che1.getAssociateToChe());
-		Assert.assertNull(che2.getCheAssociatedToThis());
+		Assert.assertNull(che1.getLinkedToChe());
+		Assert.assertNull(che2.getCheLinkedToThis());
 
 		LOGGER.info("2: associate (mobile) CHE1 to (cart) CHE2");
 		this.workService.associateCheToCheName(che1, "CHE2");
 
 		LOGGER.info("2b1: check our associate getters");
-		Assert.assertEquals(che2, che1.getAssociateToChe());
-		Assert.assertEquals(che1, che2.getCheAssociatedToThis());
+		Assert.assertEquals(che2, che1.getLinkedToChe());
+		Assert.assertEquals(che1, che2.getCheLinkedToThis());
 
 		// Commit, primarily to have the network update go to site controller. Should see that in the log.
 		commitTransaction();
@@ -285,8 +285,8 @@ public class CheProcessRemoteLink extends ServerTest {
 		Assert.assertNotNull(bytes);
 		byte[] che2bytes = che2.getDeviceGuid();
 		LOGGER.info("che1 pointing at:{} che2 is:{}", bytes, che2bytes);
-		Assert.assertEquals(che2, che1.getAssociateToChe());
-		Assert.assertEquals(che1, che2.getCheAssociatedToThis());
+		Assert.assertEquals(che2, che1.getLinkedToChe());
+		Assert.assertEquals(che1, che2.getCheLinkedToThis());
 
 		LOGGER.info("2b: check the UI field");
 		String state1Che1 = che1.getAssociateToUi();
@@ -304,14 +304,14 @@ public class CheProcessRemoteLink extends ServerTest {
 		che2 = Che.staticGetDao().reload(che2);
 		network = CodeshelfNetwork.staticGetDao().reload(network); // these are necessary or the WorkService functions have staleObjectUpdate exceptions
 
-		Assert.assertNull(che1.getAssociateToChe());
-		Assert.assertNull(che2.getCheAssociatedToThis());
-		Assert.assertNull(che2.getAssociateToChe());
+		Assert.assertNull(che1.getLinkedToChe());
+		Assert.assertNull(che2.getCheLinkedToThis());
+		Assert.assertNull(che2.getLinkedToChe());
 
 		LOGGER.info("4: associate CHE2 to CHE1");
 		this.workService.associateCheToCheName(che2, "CHE1");
-		Assert.assertEquals(che1, che2.getAssociateToChe());
-		Assert.assertEquals(che2, che1.getCheAssociatedToThis());
+		Assert.assertEquals(che1, che2.getLinkedToChe());
+		Assert.assertEquals(che2, che1.getCheLinkedToThis());
 
 		// Commit, primarily to have the network update go to site controller. Should see that in the log.
 		commitTransaction();
@@ -323,8 +323,8 @@ public class CheProcessRemoteLink extends ServerTest {
 
 		LOGGER.info("4b: associate back the other way. Will give some warns");
 		this.workService.associateCheToCheName(che1, "CHE2");
-		Assert.assertEquals(che2, che1.getAssociateToChe());
-		Assert.assertEquals(che1, che2.getCheAssociatedToThis());
+		Assert.assertEquals(che2, che1.getLinkedToChe());
+		Assert.assertEquals(che1, che2.getCheLinkedToThis());
 
 		// Commit, primarily to have the network update go to site controller. Should see that in the log.
 		commitTransaction();
@@ -345,9 +345,9 @@ public class CheProcessRemoteLink extends ServerTest {
 		che2 = Che.staticGetDao().reload(che2);
 		network = CodeshelfNetwork.staticGetDao().reload(network);
 
-		Assert.assertNull(che1.getAssociateToChe());
-		Assert.assertNull(che2.getCheAssociatedToThis());
-		Assert.assertNull(che2.getAssociateToChe());
+		Assert.assertNull(che1.getLinkedToChe());
+		Assert.assertNull(che2.getCheLinkedToThis());
+		Assert.assertNull(che2.getLinkedToChe());
 
 		commitTransaction();
 	}

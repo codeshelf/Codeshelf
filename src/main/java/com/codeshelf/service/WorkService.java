@@ -1990,7 +1990,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		boolean changed = false;
 		
 		// By any chance, is the che we are going to associate to already pointing at another CHE? If so, clear that.
-		Che chePointedAt = otherChe.getAssociateToChe();
+		Che chePointedAt = otherChe.getLinkedToChe();
 		if (chePointedAt != null) {
 			LOGGER.warn("associateCheToCheName(): {} was itself associated to {}. Clearing {} association",
 				otherChe.getDomainId(),
@@ -2000,7 +2000,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 
 		// is any other CHE already associated to the otherChe? Only looks for one. I suppose bad bugs could make more.
-		Che pointingAtOtherChe = otherChe.getCheAssociatedToThis();
+		Che pointingAtOtherChe = otherChe.getCheLinkedToThis();
 		if (pointingAtOtherChe != null) {
 			LOGGER.warn("associateCheToCheName(): Clearing association of {} which pointed to {}", pointingAtOtherChe.getDomainId(), inCheNameToAssociateTo);
 			pointingAtOtherChe.setAssociateToCheGuid(null);
@@ -2052,7 +2052,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 		boolean changed = false;
 		LOGGER.info("Clearing associations to {}", inChe.getDomainId());
-		Che pointingAtChe = inChe.getCheAssociatedToThis();
+		Che pointingAtChe = inChe.getCheLinkedToThis();
 		if (pointingAtChe != null) {
 			pointingAtChe.setAssociateToCheGuid(null);
 			Che.staticGetDao().store(pointingAtChe);

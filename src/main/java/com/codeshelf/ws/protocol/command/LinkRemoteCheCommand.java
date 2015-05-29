@@ -37,17 +37,17 @@ public class LinkRemoteCheCommand extends CommandABC {
 			// Get the validated association result
 			Che currentAssociatedChe = null;
 			try {
-				currentAssociatedChe = che.getAssociateToChe();
+				currentAssociatedChe = che.getLinkedToChe();
 				// The work service has an explicit clear function. We trigger via null cheName.
 				String newAssociateCheName = request.getRemoteCheNameToLinkTo();
 				
 				if (newAssociateCheName != null && workService.associateCheToCheName(che, newAssociateCheName)) {
 					che = Che.staticGetDao().reload(che);
-					currentAssociatedChe = che.getAssociateToChe();
+					currentAssociatedChe = che.getLinkedToChe();
 				}
 				else if (newAssociateCheName == null && workService.clearCheAssociation(che)) {
 					che = Che.staticGetDao().reload(che);
-					currentAssociatedChe = che.getAssociateToChe();
+					currentAssociatedChe = che.getLinkedToChe();
 				}
 				
 			} catch (MethodArgumentException e) {
