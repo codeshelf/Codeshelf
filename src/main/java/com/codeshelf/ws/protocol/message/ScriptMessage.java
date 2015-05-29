@@ -29,7 +29,7 @@ public class ScriptMessage extends MessageABC{
 		this.lines = lines;
 	}
 	
-	public void setError(String error){
+	public void setMessageError(String error){
 		success = false;
 		this.error = error;
 	}
