@@ -94,26 +94,31 @@ public class CheProcessScanPick extends ServerTest {
 				+ "Tier,T1,,0,80,80,,\r\n" //
 				+ "Bay,B3,230,,,,,\r\n" //
 				+ "Tier,T1,,0,80,160,,\r\n"; //
-		importAislesData(getFacility(), csvString);
+		beginTransaction();
+		Facility facility = getFacility();
+		importAislesData(facility, csvString);
+		commitTransaction();
 
 		// Get the aisle
-		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
+		beginTransaction();
+		facility = facility.reload();
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest(getFacility());
+		Path aPath = createPathForTest(facility);
 		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
 
-		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getFacility(), "A2");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(facility, "A2");
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
 
-		Path path2 = createPathForTest(getFacility());
+		Path path2 = createPathForTest(facility);
 		PathSegment segment02 = addPathSegmentForTest(path2, 0, 22.0, 58.45, 12.85, 58.45);
 
-		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(getFacility(), "A3");
+		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(facility, "A3");
 		Assert.assertNotNull(aisle3);
 		String persistStr2 = segment02.getPersistentId().toString();
 		aisle3.associatePathSegment(persistStr2);
@@ -131,8 +136,10 @@ public class CheProcessScanPick extends ServerTest {
 				+ "A3.B1.T1, D501\r\n" //
 				+ "A3.B2.T1, D502\r\n" //
 				+ "A3.B3.T1, D503\r\n";//
-		importLocationAliasesData(getFacility(), csvLocationAliases);
-
+		importLocationAliasesData(facility, csvLocationAliases);
+		commitTransaction();
+		
+		beginTransaction();
 		CodeshelfNetwork network = getNetwork();
 
 		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
@@ -140,7 +147,7 @@ public class CheProcessScanPick extends ServerTest {
 		LedController controller3 = network.findOrCreateLedController("LED3", new NetGuid("0x00000013"));
 
 		Short channel1 = 1;
-		Location tier = getFacility().findSubLocationById("A1.B1.T1");
+		Location tier = facility.findSubLocationById("A1.B1.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
@@ -149,27 +156,27 @@ public class CheProcessScanPick extends ServerTest {
 		if (!tierName.equals("D301"))
 			LOGGER.error("D301 vs. A1.B1.T1 alias not set up in setUpSimpleNoSlotFacility");
 
-		tier = getFacility().findSubLocationById("A1.B2.T1");
+		tier = facility.findSubLocationById("A1.B2.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A1.B3.T1");
+		tier = facility.findSubLocationById("A1.B3.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A2.B1.T1");
+		tier = facility.findSubLocationById("A2.B1.T1");
 		controller2.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A2.B2.T1");
+		tier = facility.findSubLocationById("A2.B2.T1");
 		controller2.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A3.B1.T1");
+		tier = facility.findSubLocationById("A3.B1.T1");
 		controller3.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A3.B2.T1");
+		tier = facility.findSubLocationById("A3.B2.T1");
 		controller3.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
@@ -178,7 +185,8 @@ public class CheProcessScanPick extends ServerTest {
 			DomainObjectProperty.WORKSEQR,
 			WorkInstructionSequencerType.BayDistance.toString());
 
-		return getFacility();
+		commitTransaction();
+		return facility;
 	}
 
 	private void setUpLineScanOrdersNoCntr(Facility inFacility) throws IOException {
@@ -255,16 +263,14 @@ public class CheProcessScanPick extends ServerTest {
 				+ "\r\n107,USF314,COSTCO,11111,11111.5,1555,paper towel,2,each, D502";
 		importOrdersData(inFacility, csvOrders);
 	}
-	
+
 	/**
 	 * Simple test of INVENTORY command
 	 */
 	@Test
 	public final void testInventoryCommand() throws IOException {
 
-		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
-		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
@@ -288,91 +294,92 @@ public class CheProcessScanPick extends ServerTest {
 		setUpLineScanOrdersNoCntrWithGtin(facility);
 		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
-	
+
 		picker.loginAndSetup("Picker #1");
-		
+
 		LOGGER.info("1b: Scan INVENTORY command");
 		picker.scanCommand("INVENTORY");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1c: scan a GTIN and check item location is correct");
 		picker.scanSomething("100");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1d: scan another GTIN");
 		picker.scanSomething("103");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1e: scan location");
 		picker.scanLocation("D302");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1f: scan a new GTIN");
 		picker.scanSomething("101");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1g: scan another GTIN");
 		picker.scanSomething("102");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1h: scan location");
 		picker.scanLocation("D301");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1i: scan another location. should move here.");
 		picker.scanLocation("D302");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1j: scan X%CLEAR and get back to READY state");
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
-		
+
 		LOGGER.info("1k: scan X%INVENTORY");
 		picker.scanCommand("INVENTORY");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1l: logout");
 		picker.scanCommand("LOGOUT");
 		picker.waitForCheState(CheStateEnum.IDLE, 1000);
-		
+
 		this.getTenantPersistenceService().beginTransaction();
-		facility  = Facility.staticGetDao().reload(facility);
-		
+		facility = Facility.staticGetDao().reload(facility);
+
 		LOGGER.info("2a: check that item 100 stayed in it's original location");
 		Location locationD301 = facility.findSubLocationById("D301");
 		Assert.assertNotNull(locationD301);
 		Item item1123locD301 = locationD301.getStoredItemFromMasterIdAndUom("1123", "ea");
 		Assert.assertNotNull(item1123locD301);
-		
+
 		LOGGER.info("2b: check that item 1123 moved from D301 to D302");
 		Location locationD302 = facility.findSubLocationById("D302");
 		Assert.assertNotNull(locationD302);
 		locationD301 = facility.findSubLocationById("D301");
 		Assert.assertNotNull(locationD301);
-		
+
 		Item item1122locD302 = locationD302.getStoredItemFromMasterIdAndUom("1122", "ea");
 		Assert.assertNotNull("Item 1122 (GTIN 103) should have moved to this location", item1122locD302);
 		Item item1122locD301 = locationD301.getStoredItemFromMasterIdAndUom("1122", "ea");
 		Assert.assertNull("Item 1122 should no longer be at this location", item1122locD301);
-		
+
 		LOGGER.info("2c: check that item 1522 moved to D302 and not D301");
 		Item gtin102itemLocD302 = locationD302.getStoredItemFromMasterIdAndUom("1522", "ea");
 		Assert.assertNotNull(gtin102itemLocD302);
 		Item item1522LocD301 = locationD301.getStoredItemFromMasterIdAndUom("1522", "ea");
 		Assert.assertNull(item1522LocD301);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 	}
-	
+
 	/**
 	 * Simple test of INVENTORY command
 	 */
 	@Test
 	public final void testInventoryCommand2() throws IOException {
 
-		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
+
+		this.getTenantPersistenceService().beginTransaction();
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -393,26 +400,26 @@ public class CheProcessScanPick extends ServerTest {
 		setUpLineScanOrdersNoCntrWithGtin(facility);
 		propertyService.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
-	
+
 		LOGGER.info("0a: scan INVENTORY and make sure we stay idle");
 		picker.scanCommand("INVENTORY");
 		picker.waitForCheState(CheStateEnum.IDLE, 1000);
-		
+
 		LOGGER.info("1a: login, should go to READY state");
 		picker.loginAndSetup("Picker #1");
-		
+
 		LOGGER.info("1b: scan X%INVENTORY, should go to SCAN_GTIN state");
 		picker.scanCommand("INVENTORY");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-	
+
 		LOGGER.info("1c: scan GTIN that does not exist - 200");
 		picker.scanSomething("200");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("1d: scan location. Should create item with GTIN at location D302");
 		picker.scanLocation("D302");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		LOGGER.info("1e: check that the item with GTIN 200 exists at D302");
@@ -421,51 +428,52 @@ public class CheProcessScanPick extends ServerTest {
 		Item item200 = D302.getStoredItemFromMasterIdAndUom("200", "ea");
 		Assert.assertNotNull(item200);
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 		LOGGER.info("2a: scan invalid commands");
 		picker.scanCommand("SETUP");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		picker.scanCommand("NO");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		picker.scanSomething("U%USER1");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("2b: scan GTIN that exists - 100");
 		picker.scanSomething("100");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("2c: clear");
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
-		
+
 		LOGGER.info("3a: scan inventory command");
 		picker.scanCommand("INVENTORY");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 		LOGGER.info("3b: scan location before scanning GTIN");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-		
+
 	}
-	
+
 	/**
 	 * A trivial reference test of Setup_Orders
 	 */
 	@Test
 	public final void testNotScanPick() throws IOException {
 
-		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
+
+		this.getTenantPersistenceService().beginTransaction();
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -507,16 +515,16 @@ public class CheProcessScanPick extends ServerTest {
 		picker.scanLocation("D303");
 		// DEV-653 go to SCAN_SOMETHING state instead of DO_PICK
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		
+
 		// verify position index
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Container c1 = Container.staticGetDao().findByDomainId(facility, "12345");
 		ContainerUse cu1 = ContainerUse.staticGetDao().findByDomainId(c1, "12345");
-		Assert.assertTrue(cu1.getPosconIndex()==1);
+		Assert.assertTrue(cu1.getPosconIndex() == 1);
 		Container c2 = Container.staticGetDao().findByDomainId(facility, "11111");
 		ContainerUse cu2 = ContainerUse.staticGetDao().findByDomainId(c2, "11111");
-		Assert.assertTrue(cu2.getPosconIndex()==2);
+		Assert.assertTrue(cu2.getPosconIndex() == 2);
 		this.getTenantPersistenceService().commitTransaction();
 
 		List<WorkInstruction> scWiList = picker.getAllPicksList();
@@ -833,12 +841,12 @@ public class CheProcessScanPick extends ServerTest {
 
 	@Test
 	public void missingLocationIdShouldHaveNoWork() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
+
+		this.getTenantPersistenceService().beginTransaction();
 		String csvOrders = "orderGroupId,shipmentId,customerId,orderId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom, locationId, workSequence"
 				+ "\r\n,USF314,COSTCO,12345,12345,12345.1,1123,12/16 oz Bowl Lids -PLA Compostable,1,each, , 4000";
 		importOrdersData(facility, csvOrders);
-
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -980,11 +988,7 @@ public class CheProcessScanPick extends ServerTest {
 		setUpOrdersWithCntrAndSequence(facility);
 		commitTransaction();
 
-		LOGGER.info("1a: leave LOCAPICK off, set SCANPICK, set WORKSEQR");
-
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		Assert.assertNotNull(facility);
+		beginTransaction();
 		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
 		// we are not setting SCANPICK for this test. Only about sequencing
 		propertyService.changePropertyValue(facility,
@@ -992,6 +996,18 @@ public class CheProcessScanPick extends ServerTest {
 			WorkInstructionSequencerType.WorkSequence.toString());
 
 		propertyService.turnOffHK(facility);
+		commitTransaction();
+		
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		setUpOrdersWithCntrAndSequence(facility);
+		commitTransaction();
+
+		LOGGER.info("1a: leave LOCAPICK off, set SCANPICK, set WORKSEQR");
+
+		this.getTenantPersistenceService().beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		Assert.assertNotNull(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController(); // after all the parameter changes
@@ -1091,26 +1107,22 @@ public class CheProcessScanPick extends ServerTest {
 	 */
 	@Test
 	public final void testPfswebScanPicks() throws IOException {
-		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
-		commitTransaction();
-		
+
 		beginTransaction();
-		setUpOrdersWithCntrAndSequence(facility);
-		commitTransaction();
-
-		LOGGER.info("1a: leave LOCAPICK off, set SCANPICK, set WORKSEQR");
-
-		this.getTenantPersistenceService().beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		Assert.assertNotNull(facility);
 		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
 		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
 		propertyService.changePropertyValue(facility,
 			DomainObjectProperty.WORKSEQR,
 			WorkInstructionSequencerType.WorkSequence.toString());
 		propertyService.turnOffHK(facility);
-		this.getTenantPersistenceService().commitTransaction();
+		commitTransaction();
+
+		beginTransaction();
+		setUpOrdersWithCntrAndSequence(facility);
+		commitTransaction();
+
+		LOGGER.info("1a: conditions: LOCAPICK off, set SCANPICK, set WORKSEQR");
 
 		this.startSiteController(); // after all the parameter changes
 

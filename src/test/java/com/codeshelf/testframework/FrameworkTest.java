@@ -671,6 +671,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		return facility;
 	}
 
+	// this method should be removed. state should be managed in unit test method.
 	protected final Facility getFacility() {
 		if (facility == null) {
 			facility = generateTestFacility();
@@ -704,10 +705,12 @@ public abstract class FrameworkTest implements IntegrationTest {
 		return user;
 	}
 	
+	// this method should be removed. state should be managed in unit test method.
 	public Che getChe1() {
 		return Che.staticGetDao().findByPersistentId(this.che1PersistentId);
 	}
 
+	// this method should be removed. state should be managed in unit test method.
 	public Che getChe2() {
 		return Che.staticGetDao().findByPersistentId(this.che2PersistentId);
 	}

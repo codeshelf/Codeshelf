@@ -40,6 +40,7 @@ public abstract class CommandControlABC extends ExtendedCommandABC {
 	public static final byte	SINGLE_LINE_MESSAGE			= 6;
 	public static final byte	CLEAR_DISPLAY				= 7;
 	public static final byte	POSCON_SETUP				= 8;
+	public static final byte	POSCON_BROADCAST			= 9;
 
 	// --------------------------------------------------------------------------
 	/**
