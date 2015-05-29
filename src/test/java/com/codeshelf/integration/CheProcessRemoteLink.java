@@ -508,4 +508,83 @@ public class CheProcessRemoteLink extends ServerTest {
 		picker1.logCheDisplay();
 
 	}
+
+	/**
+	 * Test two mobiles "fighting" over control of one cart che
+	 */
+	@Test
+	public final void competingRemotes1() throws IOException {
+		beginTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		commitTransaction();
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		setUpOrdersWithCntrAndGtin(facility);
+		commitTransaction();
+
+		startSiteController();
+		PickSimulator picker1 = createPickSim(cheGuid1);
+		PickSimulator picker2 = createPickSim(cheGuid2);
+		PickSimulator picker3 = createPickSim(cheGuid3);
+
+		LOGGER.info("1: Picker 2 sets up some jobs on CHE2, then logs out");
+		picker2.loginAndCheckState("Picker #2", CheStateEnum.SETUP_SUMMARY);
+		picker2.scanCommand("SETUP");
+		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker2.setupOrderIdAsContainer("12345", "1");
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker2.logCheDisplay();
+		String line1 = picker2.getLastCheDisplayString(1).trim();
+		Assert.assertEquals("1 order", line1);
+		picker2.logout();
+
+		LOGGER.info("2: Picker 1 login, scan REMOTE and link to CHE2");
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.logCheDisplay();
+		picker1.scanSomething("H%CHE2");
+		picker1.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
+		picker1.logCheDisplay();
+		Assert.assertEquals("1 order", picker1.getLastCheDisplayString(1).trim());
+		Assert.assertEquals("1 order", picker2.getLastCheDisplayString(1).trim());
+
+		LOGGER.info("3: Picker 1 scan INVENTORY and inventory what we need for order 12345");
+		picker1.scanCommand("INVENTORY");
+		picker1.waitForLinkedCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker1.scanSomething("gtin1123");
+		picker1.waitForLinkedCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker1.scanSomething("%004290570250");
+		picker1.waitForLinkedCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker1.scanSomething("gtin14933");
+		picker1.waitForLinkedCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker1.scanSomething("%004290590150");
+		picker1.waitForLinkedCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker1.scanCommand("CLEAR");
+		picker1.waitForLinkedCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.logCheDisplay();
+
+		LOGGER.info("5: Picker 1 scan a location on path. Get the 1 job");
+		// substitute a tape scan here
+		picker1.scanLocation("D301");
+		picker1.waitForLinkedCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.scanCommand("START");
+		picker1.waitForLinkedCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.logCheDisplay();
+
+		LOGGER.info("6: Picker3 now log in as remote and steal CHE2");
+		picker3.loginAndCheckState("Picker #3", CheStateEnum.SETUP_SUMMARY);
+		picker3.scanCommand("REMOTE");
+		picker3.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker3.scanSomething("H%CHE2");
+		picker3.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
+		picker3.logCheDisplay();
+		Assert.assertEquals("D301", picker2.getLastCheDisplayString(1).trim());
+		Assert.assertEquals("D301", picker3.getLastCheDisplayString(1).trim());
+		picker1.logCheDisplay();
+		// Assert.assertEquals(CheStateEnum.REMOTE, picker1.getCurrentCheState());
+
+	}
+
 }

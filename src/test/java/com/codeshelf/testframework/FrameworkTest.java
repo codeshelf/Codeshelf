@@ -137,6 +137,9 @@ public abstract class FrameworkTest implements IntegrationTest {
 	protected static String							cheId2						= "CHE2";
 	@Getter
 	protected static NetGuid						cheGuid2					= new NetGuid("0x00009992");
+	protected static String							cheId3						= "CHE3";
+	@Getter
+	protected static NetGuid						cheGuid3					= new NetGuid("0x00009993");
 
 	// site controller services
 	private static CsClientEndpoint					staticClientEndpoint;
@@ -171,6 +174,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	protected UUID									networkPersistentId;
 	protected UUID									che1PersistentId;
 	protected UUID									che2PersistentId;
+	protected UUID									che3PersistentId;
 
 	@Getter
 	private String									defaultTenantId;
@@ -307,6 +311,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		networkPersistentId = null;
 		che1PersistentId = null;
 		che2PersistentId = null;
+		che3PersistentId = null;
 
 		if (staticWebSocketManagerService.hasAnySessions())
 			staticWebSocketManagerService.reset();
@@ -664,6 +669,11 @@ public abstract class FrameworkTest implements IntegrationTest {
 		che2.setDeviceNetGuid(cheGuid2);
 		che2.setDomainId(cheId2);
 		this.che2PersistentId = che2.getPersistentId();
+
+		// CreateFacility makes 2 CHE by default, which is fine for smaller sites. Need 3 for some tests.
+		Che che3 = network.createChe(cheId3, cheGuid3);
+		che3.setColor(ColorEnum.WHITE);
+		this.che3PersistentId = che3.getPersistentId();
 
 		if (!inTransaction)
 			this.getTenantPersistenceService().commitTransaction();
