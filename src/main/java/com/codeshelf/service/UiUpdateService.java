@@ -39,7 +39,7 @@ import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 import com.codeshelf.ws.protocol.message.PosConSetupMessage;
-import com.codeshelf.ws.protocol.message.PosConShowAddresses;
+import com.codeshelf.ws.protocol.message.PosConLightAddressesMessage;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.Strings;
 
@@ -264,7 +264,7 @@ public class UiUpdateService implements IApiService {
 		WebSocketManagerService.getInstance().sendMessage(users, message);
 	}
 	
-	public void posConShowAddresses(String deviceId, boolean isChe){
+	public void posConLightAddresses(String deviceId, boolean isChe){
 		WirelessDeviceABC device = null;
 		if (isChe) { 
 			device = Che.staticGetDao().findByPersistentId(deviceId);
@@ -276,7 +276,7 @@ public class UiUpdateService implements IApiService {
 			return;
 		}
 		Set<User> users = device.getFacility().getSiteControllerUsers();
-		PosConShowAddresses message = new PosConShowAddresses(device.getDeviceNetGuid().toString());
+		PosConLightAddressesMessage message = new PosConLightAddressesMessage(device.getDeviceNetGuid().toString());
 		WebSocketManagerService.getInstance().sendMessage(users, message);
 	}
 	
