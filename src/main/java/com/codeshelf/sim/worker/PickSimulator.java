@@ -376,7 +376,25 @@ public class PickSimulator {
 		return currentList;
 	}
 
+	/**
+	 * This waits for state for the picker's linked device only. If not linked, it throws causing the test to fail
+	 */
+	public void waitForLinkedCheState(CheStateEnum state, int timeoutInMillis) {
+		CheDeviceLogic deviceToAsk = getDeviceToAsk();
+		if (deviceToAsk.equals(cheDeviceLogic)){
+			String theProblem = "picker's CHE not linked";
+			throw new IllegalStateException(theProblem);
+		}
+		waitForDeviceState(deviceToAsk, state, timeoutInMillis);
+	}
+
+	/**
+	 * waitForCheState() is the primary API
+	 * This waits for state for the picker's device only. If in remoteLinked state, it returns REMOTE_LINKED
+	 */
 	public void waitForCheState(CheStateEnum state, int timeoutInMillis) {
+		waitForDeviceState(cheDeviceLogic, state, timeoutInMillis);
+		/*
 		CheStateEnum lastState = cheDeviceLogic.waitForCheState(state, timeoutInMillis);
 		if (!state.equals(lastState)) {
 			String theProblem = String.format("Che state %s not encountered in %dms. State is %s, inSetState: %s",
@@ -386,7 +404,24 @@ public class PickSimulator {
 				cheDeviceLogic.inSetState());
 			throw new IllegalStateException(theProblem);
 		}
+		*/
 	}
+	
+	/**
+	 * Wait for specified state. Throw if state does not come in time, causing the test to fail.
+	 */
+	private void waitForDeviceState(CheDeviceLogic device, CheStateEnum state, int timeoutInMillis) {
+		CheStateEnum lastState = device.waitForCheState(state, timeoutInMillis);
+		if (!state.equals(lastState)) {
+			String theProblem = String.format("Che state %s not encountered in %dms. State is %s, inSetState: %s",
+				state,
+				timeoutInMillis,
+				lastState,
+				device.inSetState());
+			throw new IllegalStateException(theProblem);
+		}
+	}
+	
 
 	public void waitForOneOfCheStates(ArrayList<CheStateEnum> statesList, int timeoutInMillis) {
 		CheStateEnum lastState = cheDeviceLogic.waitForOneOfCheStates(statesList, timeoutInMillis);
@@ -448,19 +483,29 @@ public class PickSimulator {
 	public Byte getLastSentPositionControllerMaxQty(byte position) {
 		return cheDeviceLogic.getLastSentPositionControllerMaxQty(position);
 	}
-
-	public String getLastCheDisplayString(int lineIndex) {
-		// This is a bit tricky. If a cloned screen we need the other cheDeviceLog.
+	
+	/**
+	 * Returns the picker's own device, unless it is in REMOTE_LINKED state. In which case it returns the link-to device
+	 */
+	private CheDeviceLogic getDeviceToAsk() {
 		CheDeviceLogic deviceToAsk = cheDeviceLogic;
 		if (CheStateEnum.REMOTE_LINKED.equals(cheDeviceLogic.getCheStateEnum())) {
 			deviceToAsk = cheDeviceLogic.getLinkedCheDevice();
 			if (deviceToAsk == null)
 				deviceToAsk = cheDeviceLogic;
 		}
+		return deviceToAsk;
+	}
+
+	public String getLastCheDisplayString(int lineIndex) {
+		// If a cloned screen we need the other cheDeviceLog.
+		CheDeviceLogic deviceToAsk = getDeviceToAsk();
 		return deviceToAsk.getRecentCheDisplayString(lineIndex);
 	}
 
 	public void logCheDisplay() {
+		// each line below may get the linked screen line. So the effect is logging the linked screen. 
+		// No need for another getDeviceToAsk() call.
 		LOGGER.info("SCREEN Line1:{} Line2:{} Line3:{} Line4:{}",
 			getLastCheDisplayString(1),
 			getLastCheDisplayString(2),
