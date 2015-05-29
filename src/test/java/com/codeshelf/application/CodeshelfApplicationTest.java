@@ -32,6 +32,7 @@ public class CodeshelfApplicationTest extends ServerTest {
 	 * Test method for {@link com.codeshelf.application.ServerCodeshelfApplication#startApplication()}.
 	 */
 	
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Test
 	public void testStartStopApplication() {
 

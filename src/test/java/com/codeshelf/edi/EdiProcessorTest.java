@@ -44,7 +44,7 @@ public class EdiProcessorTest extends MockDaoTest {
 	private final Logger LOGGER = LoggerFactory.getLogger(EdiProcessorTest.class);
 	private List<Service>	ephemeralServices;
 
-	
+
 	@Override
 	public boolean ephemeralServicesShouldStartAutomatically() {
 		return false;
@@ -55,6 +55,7 @@ public class EdiProcessorTest extends MockDaoTest {
 		return this.ephemeralServices;
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Test
 	public final void ediProcessThreadTest() {
 		LOGGER.info("starting ediProcessThreadTest");
@@ -71,11 +72,11 @@ public class EdiProcessorTest extends MockDaoTest {
 			anyProvider);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
 		ediProcessorService.setEdiSignalQueue(testBlockingQueue);
-		
+
 		getFacility();
 
 		IMetricsService metrics = new DummyMetricsService();
-		MetricsService.setInstance(metrics);	// will be restored to normal values by framework 
+		MetricsService.setInstance(metrics);	// will be restored to normal values by framework
 
 		this.ephemeralServices = new ArrayList<Service>();
 		ephemeralServices.add(ediProcessorService);
@@ -83,6 +84,7 @@ public class EdiProcessorTest extends MockDaoTest {
 		this.initializeEphemeralServiceManager();
 	}
 
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Test
 	public final void ediProcessorTest() {
 		LOGGER.info("starting ediProcessorTest");
@@ -90,20 +92,11 @@ public class EdiProcessorTest extends MockDaoTest {
 		final class Result {
 			public boolean	processed	= false;
 		}
-		//TODO Are tge following importers still needed?
-		/*
-		ICsvOrderImporter orderImporter = generateFailingImporter();
-		ICsvInventoryImporter inventoryImporter = mock(ICsvInventoryImporter.class);
-		ICsvLocationAliasImporter locationImporter = mock(ICsvLocationAliasImporter.class);
-		ICsvOrderLocationImporter orderLocationImporter = mock(ICsvOrderLocationImporter.class);
-		ICsvCrossBatchImporter crossBatchImporter = mock(ICsvCrossBatchImporter.class);
-		ICsvAislesFileImporter aislesFileImporter = mock(ICsvAislesFileImporter.class);
-		*/
 		final Result linkedResult = new Result();
 		final Result unlinkedResult = new Result();
 
 		getFacility();
-		
+
 		IEdiService ediServiceLinked = new IEdiService() {
 
 			public EdiServiceStateEnum getServiceState() {
@@ -334,7 +327,7 @@ public class EdiProcessorTest extends MockDaoTest {
 				return null;
 			}
 		};
-		
+
 		Facility facility = getFacility();
 		facility.addEdiService(ediServiceUnlinked);
 		facility.addEdiService(ediServiceLinked);
@@ -348,7 +341,7 @@ public class EdiProcessorTest extends MockDaoTest {
 			anyProvider);
 
 		IMetricsService metrics = new DummyMetricsService();
-		MetricsService.setInstance(metrics);	// will be restored to normal values by framework 
+		MetricsService.setInstance(metrics);	// will be restored to normal values by framework
 
 		this.ephemeralServices = new ArrayList<Service>();
 		ephemeralServices.add(ediProcessorService);
@@ -365,7 +358,7 @@ public class EdiProcessorTest extends MockDaoTest {
 
 		Assert.assertTrue(linkedResult.processed);
 		Assert.assertFalse(unlinkedResult.processed);
-		
+
 	}
 
 	private ICsvOrderImporter generateFailingImporter() {

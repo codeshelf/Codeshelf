@@ -53,7 +53,8 @@ public class TestDatabaseTest extends HibernateTest {
 		Session session = this.getTenantPersistenceService().getSession();
 		Query  query = session.createQuery("from Container where updated <= :endDateTime");
 		query.setTimestamp("endDateTime", updatedTime);
-		List<Container> containers = query.list();
+		
+		List<?> containers = query.list();
 		Assert.assertEquals(1, containers.size());
 		this.getTenantPersistenceService().commitTransaction();
 		
