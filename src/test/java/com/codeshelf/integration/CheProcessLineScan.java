@@ -69,6 +69,8 @@ public class CheProcessLineScan extends ServerTest {
 		Facility facility = organization.getFacility(fName);
 		*/
 
+		beginTransaction();
+		Facility facility = getFacility();
 		String csvAisles = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,tierB1S1Side,12.85,43.45,X,120,Y\r\n" //
 				+ "Bay,B1,230,,,,,\r\n" //
@@ -91,30 +93,36 @@ public class CheProcessLineScan extends ServerTest {
 				+ "Tier,T1,,0,80,80,,\r\n" //
 				+ "Bay,B3,230,,,,,\r\n" //
 				+ "Tier,T1,,0,80,160,,\r\n"; //
-		importAislesData(getFacility(), csvAisles);
+		importAislesData(facility, csvAisles);
+		commitTransaction();
 
 		// Get the aisle
-		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
+		beginTransaction();
+		facility = facility.reload();
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 
-		Path aPath = createPathForTest(getFacility());
+		Path aPath = createPathForTest(facility);
 		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 22.0, 48.45, 12.85, 48.45);
 
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
 
-		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(getFacility(), "A2");
+		Aisle aisle2 = Aisle.staticGetDao().findByDomainId(facility, "A2");
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
 
-		Path path2 = createPathForTest(getFacility());
+		Path path2 = createPathForTest(facility);
 		PathSegment segment02 = addPathSegmentForTest(path2, 0, 22.0, 58.45, 12.85, 58.45);
 
-		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(getFacility(), "A3");
+		Aisle aisle3 = Aisle.staticGetDao().findByDomainId(facility, "A3");
 		Assert.assertNotNull(aisle3);
 		String persistStr2 = segment02.getPersistentId().toString();
 		aisle3.associatePathSegment(persistStr2);
+		commitTransaction();
 
+		beginTransaction();
+		facility = facility.reload();
 		String csvAliases = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1, D300\r\n" //
 				+ "A1.B2, D400\r\n" //
@@ -128,8 +136,11 @@ public class CheProcessLineScan extends ServerTest {
 				+ "A3.B1.T1, D501\r\n" //
 				+ "A3.B2.T1, D502\r\n" //
 				+ "A3.B3.T1, D503\r\n";//
-		importLocationAliasesData(getFacility(), csvAliases);
+		importLocationAliasesData(facility, csvAliases);
+		commitTransaction();
 
+		beginTransaction();
+		facility = facility.reload();
 		CodeshelfNetwork network = getNetwork();
 
 		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
@@ -137,7 +148,7 @@ public class CheProcessLineScan extends ServerTest {
 		LedController controller3 = network.findOrCreateLedController("LED3", new NetGuid("0x00000013"));
 
 		Short channel1 = 1;
-		Location tier = getFacility().findSubLocationById("A1.B1.T1");
+		Location tier = facility.findSubLocationById("A1.B1.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
@@ -146,32 +157,33 @@ public class CheProcessLineScan extends ServerTest {
 		if (!tierName.equals("D301"))
 			LOGGER.error("D301 vs. A1.B1.T1 alias not set up in setUpSimpleNoSlotFacility");
 
-		tier = getFacility().findSubLocationById("A1.B2.T1");
+		tier = facility.findSubLocationById("A1.B2.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A1.B3.T1");
+		tier = facility.findSubLocationById("A1.B3.T1");
 		controller1.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A2.B1.T1");
+		tier = facility.findSubLocationById("A2.B1.T1");
 		controller2.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A2.B2.T1");
+		tier = facility.findSubLocationById("A2.B2.T1");
 		controller2.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A3.B1.T1");
+		tier = facility.findSubLocationById("A3.B1.T1");
 		controller3.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-		tier = getFacility().findSubLocationById("A3.B2.T1");
+		tier = facility.findSubLocationById("A3.B2.T1");
 		controller3.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
+		commitTransaction();
 
-		return getFacility();
+		return facility;
 	}
 
 	private void setUpLineScanOrdersNoCntr(Facility inFacility) throws IOException {
@@ -232,9 +244,7 @@ public class CheProcessLineScan extends ServerTest {
 	@Test
 	public final void testLineScanLogin() throws IOException {
 
-		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
-		commitTransaction();
 
 		beginTransaction();
 		setUpLineScanOrdersNoCntr(facility);
@@ -658,8 +668,9 @@ public class CheProcessLineScan extends ServerTest {
 	@Test
 	public final void testSetupOrderUnmodeledLocation() throws IOException {
 
-		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
+
+		this.getTenantPersistenceService().beginTransaction();
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -765,9 +776,9 @@ public class CheProcessLineScan extends ServerTest {
 	@Test
 	public final void testLineScanPick() throws IOException {
 
-		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
 
+		beginTransaction();
 		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {
 			scanPickProperty.setValue("SKU");
@@ -939,9 +950,9 @@ public class CheProcessLineScan extends ServerTest {
 	@Test
 	public final void testLineScanPickBadScans() throws IOException {
 
-		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
 
+		beginTransaction();
 		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {
 			scanPickProperty.setValue("SKU");
@@ -953,7 +964,6 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertNotNull(che1);
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.staticGetDao().store(che1);
-
 		commitTransaction();
 
 		beginTransaction();
@@ -1053,9 +1063,9 @@ public class CheProcessLineScan extends ServerTest {
 	@Test
 	public final void testLineScanPickSkipScan() throws IOException {
 
-		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
 
+		beginTransaction();
 		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
 		if (scanPickProperty != null) {
 			scanPickProperty.setValue("SKU");
@@ -1067,7 +1077,6 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertNotNull(che1);
 		che1.setProcessMode(ProcessMode.LINE_SCAN);
 		Che.staticGetDao().store(che1);
-
 		commitTransaction();
 
 		beginTransaction();
@@ -1125,8 +1134,9 @@ public class CheProcessLineScan extends ServerTest {
 	@Test
 	public final void testInventoryScan() throws IOException {
 
-		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
+
+		beginTransaction();
 		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
 		if (theProperty != null) {
 			theProperty.setValue(true);
@@ -1236,9 +1246,9 @@ public class CheProcessLineScan extends ServerTest {
 	@Test
 	public final void testInventoryScan2() throws IOException {
 
-		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
 
+		this.getTenantPersistenceService().beginTransaction();
 		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
 		if (theProperty != null) {
 			theProperty.setValue(true);

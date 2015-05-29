@@ -276,9 +276,11 @@ public abstract class ServerTest extends HibernateTest {
 		return getFacility();
 	}
 
+	// this method should be removed. state should be managed in unit test method.
 	protected CodeshelfNetwork getNetwork() {
 		return CodeshelfNetwork.staticGetDao().findByPersistentId(this.networkPersistentId);
 	}
+	
 	public void logWiList(List<WorkInstruction> inList) {
 		for (WorkInstruction wi : inList) {
 			// If this is called from a list of WIs from the site controller, the WI may not have all its normal fields populated.

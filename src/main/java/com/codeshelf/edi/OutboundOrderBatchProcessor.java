@@ -829,21 +829,9 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				needsScan = true;
 			}
 		}
-		else {
-			// try scripting, if needsscan is not explicitly specified
-			if (importer.getScriptingService().hasExtentionPoint(ExtensionPointType.OrderImportNeedsScan)) {
-				Object[] params = { inCsvBean };
-				try {
-					needsScan = (boolean) importer.getScriptingService().eval(inFacility, ExtensionPointType.OrderImportNeedsScan, params);
-				} 
-				catch (Exception e) {
-					LOGGER.error("Failed to evaluate script", e);
-				}
-			}
-			// check global scanpick setting as third option
-			else if (importer.getScanPick()) {
-				 needsScan = true;
-			}
+		// check global scanpick setting as second option
+		else if (importer.getScanPick()) {
+			 needsScan = true;
 		}
 		result.setNeedsScan(needsScan);
 		

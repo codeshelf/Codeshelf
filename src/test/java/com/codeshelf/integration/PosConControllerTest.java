@@ -69,11 +69,7 @@ public class PosConControllerTest extends ServerTest{
 	
 	@Test
 	public final void runPutWallProcess() throws IOException{
-		this.getTenantPersistenceService().beginTransaction();
-
 		setUpFacilityWithPutWallAndOrders();
-		
-		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	private LedController getController(UUID facilityId, String controllerId) {
@@ -124,14 +120,19 @@ public class PosConControllerTest extends ServerTest{
 				"Tier,T1,50,4,4,0,,,,,\n" + 
 				"Bay,B4,50,,,,,,,,\n" + 
 				"Tier,T1,50,4,4,0,,,,,\n"; //
-		importAislesData(getFacility(), aislesCsvString);
+		beginTransaction();
+		Facility facility = getFacility().reload();
+		importAislesData(facility, aislesCsvString);
+		commitTransaction();
 		
 		// Get the aisle
-		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
+		beginTransaction();
+		facility = facility.reload();
+		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Assert.assertNotNull(aisle1);
 		
 		//Assign path to aisle
-		Path aPath = createPathForTest(getFacility());
+		Path aPath = createPathForTest(facility);
 		PathSegment segment0 = addPathSegmentForTest(aPath, 0, 3d, 6d, 5d, 6d);
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
@@ -154,10 +155,12 @@ public class PosConControllerTest extends ServerTest{
 				"A1.B4.T1.S2,LocP14\n" + 
 				"A1.B4.T1.S3,LocP15\n" + 
 				"A1.B4.T1.S4,LocP16";//
-		importLocationAliasesData(getFacility(), csvLocationAliases);
+		importLocationAliasesData(facility, csvLocationAliases);
+		commitTransaction();
 
+		beginTransaction();
+		facility = facility.reload();	
 		CodeshelfNetwork network = getNetwork();
-
 		//Change LED controller to PosManager
 		LedController controller = network.findOrCreateLedController("LED1", new NetGuid(DEF_CONTROLLER_ID));
 		controller.updateFromUI(DEF_CONTROLLER_ID, "Poscons");
@@ -167,7 +170,7 @@ public class PosConControllerTest extends ServerTest{
 		String[] tierNames = {"A1.B1.T1", "A1.B2.T1", "A1.B3.T1", "A1.B4.T1"};
 		int posconIndex = 1;
 		for (String tierName : tierNames) {
-			Location tier = getFacility().findSubLocationById(tierName);
+			Location tier = facility.findSubLocationById(tierName);
 			controller.addLocation(tier);
 			tier.setLedChannel((short)1);
 			tier.setPosconIndex(posconIndex);
@@ -175,9 +178,12 @@ public class PosConControllerTest extends ServerTest{
 			posconIndex += 4;
 		}
 		
-		propertyService.changePropertyValue(getFacility(), DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
-		
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		commitTransaction();
+
 		//Import Cross-Batch orders
+		beginTransaction();
+		facility = facility.reload();
 		String orderCsvString = "orderGroupId,orderId,orderDetailId,itemId,description,quantity,uom\n" + 
 				"Group1,Order1,5397af8406851f02000014d0,TrailMix,\"bag, nanajoesgranola, Gluten-Free Tony's Trail Mix\",11,bag\n" + 
 				"Group1,Order1,5397af8406851f02000014af,PickleOfTheMonth,\"jar, emmys, Pickle of the Month\",22,jar\n" + 
@@ -195,17 +201,23 @@ public class PosConControllerTest extends ServerTest{
 				"Group1,Order3,5398ad2b583349020000307a,SeaSalt,\"jar, oaktownspiceshop, Pacific Fine Sea Salt\",33,jar\n" + 
 				"Group1,Order3,5398ad2b583349020000307b,FlakeSalt,\"jar, oaktownspiceshop, Cyprus White Flake Sea Salt\",63,jar\n" + 
 				"Group1,Order3,5398ad2b5833490200003077,ChocolateCupcakes,\"box, nattycakes, Spring Chocolate Cupcakes\",9,box";
-		importOrdersData(getFacility(), orderCsvString);
+		importOrdersData(facility, orderCsvString);
+		commitTransaction();
 		
 		//Import Slotting
+		beginTransaction();		
+		facility = facility.reload();
 		String slottingCsvString = "orderId,locationId\n" + 
 				"Order7,LocP8\n" + 
 				"Order7,LocP11\n" + 
 				"Order8,LocP15\n" + 
 				"Order9,LocP16";
-		importSlotting(getFacility(), slottingCsvString);
+		importSlotting(facility, slottingCsvString);
+		commitTransaction();
 
 		//Import Batch data
+		beginTransaction();		
+		facility = facility.reload();
 		String batchCsvStrng = "itemId,orderGroupId,containerId,description,quantity,uom\n" + 
 				"TrailMix,Group1,1,\"bag, nanajoesgranola, Gluten-Free Tony's Trail Mix\",2,bag\n" + 
 				"PickleOfTheMonth,Group1,2,\"jar, emmys, Pickle of the Month\",3,jar\n" + 
@@ -215,7 +227,8 @@ public class PosConControllerTest extends ServerTest{
 				"SeaSalt,Group1,2,\"jar, oaktownspiceshop, Pacific Fine Sea Salt\",2,jar\n" + 
 				"FlakeSalt,Group1,1,\"jar, oaktownspiceshop, Cyprus White Flake Sea Salt\",3,jar\n" + 
 				"ChocolateCupcakes,Group1,2,\"box, nattycakes, Spring Chocolate Cupcakes\",3,box";
-		importBatchData(getFacility(), batchCsvStrng);
-		return getFacility();
+		importBatchData(facility, batchCsvStrng);
+		commitTransaction();
+		return facility;
 	}
 }
