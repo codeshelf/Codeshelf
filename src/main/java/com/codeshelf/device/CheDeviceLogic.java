@@ -2245,6 +2245,32 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	}
 
 	/**
+	 * When the controlling CHE logs out without unlinking, we want to keep the links for easy scan badge and resume.
+	 * But we need the cart CHE to go back to idle state.
+	 * This is the sending (remote CHE) side of the transaction
+	 */
+	void disconnectRemoteDueToLogout() {
+		CheDeviceLogic linkedDevice = getLinkedCheDevice();
+		if (linkedDevice == null) {
+			return;
+		}
+		LOGGER.info("{} logged out, so setting remote screen back.", this.getGuidNoPrefix());
+		linkedDevice.processDisconnectRemoteDueToLogout(this.getGuidNoPrefix());
+	}
+	
+	/**
+	 * When the controlling CHE clears the link or logs out when linked, the cart CHE should return to its base state.
+	 * This is the receiving (cart CHE) side of the transaction.
+	 */
+	void processDisconnectRemoteDueToLogout(String sourceString) {
+		setLinkedFromCheGuid(null); 
+		setUserId(null);
+		setState(CheStateEnum.IDLE);
+		LOGGER.info("{} inactive link from {} due to logout. Back to base state.", this.getGuidNoPrefix(), sourceString);
+	}
+
+
+	/**
 	 * When the controlling CHE clears the link or logs out when linked, the cart CHE should return to its base state.
 	 * This is the sending (remote CHE) side of the transaction
 	 */

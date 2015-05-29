@@ -1272,8 +1272,20 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	public void processResultOfVerifyBadge(Boolean verified) {
 		if (mCheStateEnum.equals(CheStateEnum.VERIFYING_BADGE) || mCheStateEnum.equals(CheStateEnum.IDLE)) {
 			if (verified) {
-				finishLogin();
+				// finishLogin();
+				clearAllPosconsOnThisDevice();
+			
 				notifyCheWorkerVerb("LOG IN", "");
+				// If I am linked, and I just logged in, let's go to the REMOTE screen to show the worker what she is linked to.
+				// Better than going directly to REMOTE_LINKED state.
+				String cheName = getLinkedToCheName();
+				if (cheName != null) {
+					setState(CheStateEnum.REMOTE);
+				}
+				else {
+					setState(CheStateEnum.SETUP_SUMMARY); // the normal case
+				}
+			
 			} else {
 				setState(CheStateEnum.IDLE);
 				invalidScanMsg(UNKNOWN_BADGE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
@@ -2430,7 +2442,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		lastScannedGTIN = null;
 		mContainerInSetup = "";
 
-		//DEV-775 No longer clear CHE setup state on logout
+		// if this che had remote control of another, release the screen of the other
+		disconnectRemoteDueToLogout();
 	}
 
 	/**
