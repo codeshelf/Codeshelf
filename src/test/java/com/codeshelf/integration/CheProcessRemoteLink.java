@@ -219,6 +219,26 @@ public class CheProcessRemoteLink extends ServerTest {
 		Gtin gtin = Gtin.staticGetDao().findByDomainId(master, "gtin1123");
 		Assert.assertNotNull(gtin);
 	}
+	
+	/**
+	 * Utility function. Supplied picker should be in setupSummary state. If not, will fail.
+	 * Supplied pick should not be in REMOTE_LINKED state. (parameterize if you need it.)
+	 */
+	private void setupInventoryForOrders(PickSimulator picker){
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 1000);
+		picker.scanCommand("INVENTORY");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker.scanSomething("gtin1123");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker.scanSomething("%004290570250");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker.scanSomething("gtin14933");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker.scanSomething("%004290590150");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker.scanCommand("CLEAR");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+	}
 
 	/**
 	 * Test of the associate getters, and the WorkService APIs for associate.
@@ -333,7 +353,8 @@ public class CheProcessRemoteLink extends ServerTest {
 	}
 
 	/**
-	 * Test using association via CHE scans
+	 * Test link via CHE scans in a normal production manner.
+	 * Tests valid and invalid link cases.
 	 */
 	@Test
 	public final void testLinkChe() throws IOException {
@@ -431,7 +452,8 @@ public class CheProcessRemoteLink extends ServerTest {
 	}
 
 	/**
-	 * Test using association via CHE scans
+	 * Test that the screens of the linked CHE are correct.
+	 * Also a happy-day test of remote worker completing a job by pressing the button on the cart.
 	 */
 	@Test
 	public final void testLinkedCheScreen() throws IOException {
@@ -459,17 +481,15 @@ public class CheProcessRemoteLink extends ServerTest {
 		Assert.assertEquals("1 order", line1);
 		picker2.logout();
 
+		LOGGER.info("2: Picker 1 login, scan REMOTE, and link to CHE2");
 		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
-
-		LOGGER.info("2: Picker 1 scan REMOTE and link to CHE2");
 		picker1.scanCommand("REMOTE");
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		picker1.logCheDisplay();
 		picker1.scanSomething("H%CHE2");
 		picker1.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
-		picker1.logCheDisplay();
 		Assert.assertEquals("1 order", picker1.getLastCheDisplayString(1).trim());
-		// Here we would see the che2 display
+		// We see the che2 display
 
 		LOGGER.info("3: Picker 1 scan START. This will advance the CHE2 cart state. CHE1 is in REMOTE_LINKED state");
 		picker1.scanCommand("START");
@@ -479,6 +499,8 @@ public class CheProcessRemoteLink extends ServerTest {
 		// No jobs. 3 "other". The problem is the orders file does not have location, and the inventory is not set.
 
 		LOGGER.info("4: Picker 1 scan INVENTORY and inventory what we need for order 12345");
+		// notice, this is a remote inventory. Did not call setupInventoryForOrders() in this test.
+		// notice picker2. waitForCheState or picker1.waitForLinkedCheState
 		picker1.scanCommand("INVENTORY");
 		picker2.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 		picker1.scanSomething("gtin1123");
@@ -486,12 +508,11 @@ public class CheProcessRemoteLink extends ServerTest {
 		picker1.scanSomething("%004290570250");
 		picker2.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 		picker1.scanSomething("gtin14933");
-		picker2.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker1.waitForLinkedCheState(CheStateEnum.SCAN_GTIN, 1000);
 		picker1.scanSomething("%004290590150");
-		picker2.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker1.waitForLinkedCheState(CheStateEnum.SCAN_GTIN, 1000);
 		picker1.scanCommand("CLEAR");
 		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
-		picker1.logCheDisplay();
 
 		LOGGER.info("5: Picker 1 scan a location on path. Get the job(s)");
 		// substitute a tape scan here
@@ -499,7 +520,6 @@ public class CheProcessRemoteLink extends ServerTest {
 		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		picker1.scanCommand("START");
 		picker2.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
-		picker1.logCheDisplay();
 
 		LOGGER.info("6: push the button on the cart. Poscons on the cart CHE2, not the mobile CHE1");
 		picker2.pickItemAuto();
@@ -509,6 +529,30 @@ public class CheProcessRemoteLink extends ServerTest {
 
 	}
 
+	/**
+	 * One mobile linked to cart, with work underway. Then log out.
+	 * The cart poscons, LEDs, etc. should extinguish.
+	 * Log in again, resume, although not quite as it was.
+	 */
+	@Test
+	public final void remoteLogout() throws IOException {
+	}
+
+	/**
+	 * One mobile linked to cart, with work underway. Then link to different cart.
+	 */
+	@Test
+	public final void remoteToDifferentCart() throws IOException {
+	}
+
+	/**
+	 * One mobile linked to cart. Then cart workerscan from cart logouts, logs in.
+	 */
+	@Test
+	public final void remoteVsCart() throws IOException {
+	}
+
+	
 	/**
 	 * Test two mobiles "fighting" over control of one cart che
 	 */
@@ -539,8 +583,11 @@ public class CheProcessRemoteLink extends ServerTest {
 		Assert.assertEquals("1 order", line1);
 		picker2.logout();
 
-		LOGGER.info("2: Picker 1 login, scan REMOTE and link to CHE2");
+		LOGGER.info("2: Picker 1 login and inventory what we need");
 		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+		setupInventoryForOrders(picker1);
+
+		LOGGER.info("2b: Picker scan REMOTE and link to CHE2");
 		picker1.scanCommand("REMOTE");
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		picker1.logCheDisplay();
@@ -550,22 +597,7 @@ public class CheProcessRemoteLink extends ServerTest {
 		Assert.assertEquals("1 order", picker1.getLastCheDisplayString(1).trim());
 		Assert.assertEquals("1 order", picker2.getLastCheDisplayString(1).trim());
 
-		LOGGER.info("3: Picker 1 scan INVENTORY and inventory what we need for order 12345");
-		picker1.scanCommand("INVENTORY");
-		picker1.waitForLinkedCheState(CheStateEnum.SCAN_GTIN, 1000);
-		picker1.scanSomething("gtin1123");
-		picker1.waitForLinkedCheState(CheStateEnum.SCAN_GTIN, 1000);
-		picker1.scanSomething("%004290570250");
-		picker1.waitForLinkedCheState(CheStateEnum.SCAN_GTIN, 1000);
-		picker1.scanSomething("gtin14933");
-		picker1.waitForLinkedCheState(CheStateEnum.SCAN_GTIN, 1000);
-		picker1.scanSomething("%004290590150");
-		picker1.waitForLinkedCheState(CheStateEnum.SCAN_GTIN, 1000);
-		picker1.scanCommand("CLEAR");
-		picker1.waitForLinkedCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
-		picker1.logCheDisplay();
-
-		LOGGER.info("5: Picker 1 scan a location on path. Get the 1 job");
+		LOGGER.info("3: Picker 1 scan a location on path. Get the 1 job");
 		// substitute a tape scan here
 		picker1.scanLocation("D301");
 		picker1.waitForLinkedCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
@@ -573,7 +605,7 @@ public class CheProcessRemoteLink extends ServerTest {
 		picker1.waitForLinkedCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		picker1.logCheDisplay();
 
-		LOGGER.info("6: Picker3 now log in as remote and steal CHE2");
+		LOGGER.info("4: Picker3 now log in as remote and steal CHE2");
 		picker3.loginAndCheckState("Picker #3", CheStateEnum.SETUP_SUMMARY);
 		picker3.scanCommand("REMOTE");
 		picker3.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
@@ -582,9 +614,19 @@ public class CheProcessRemoteLink extends ServerTest {
 		picker3.logCheDisplay();
 		Assert.assertEquals("D301", picker2.getLastCheDisplayString(1).trim());
 		Assert.assertEquals("D301", picker3.getLastCheDisplayString(1).trim());
-		picker1.logCheDisplay();
-		// Assert.assertEquals(CheStateEnum.REMOTE, picker1.getCurrentCheState());
-
+		// no immediate update forced to mobile che 1, but the next activity there should force it.
+		Assert.assertEquals(CheStateEnum.REMOTE_LINKED, picker1.getCurrentCheState());
+		picker1.scanSomething("333444");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		Assert.assertEquals("Linked to: (none)", picker1.getLastCheDisplayString(1));
 	}
+
+	/**
+	 * Test one mobile trying to remote to other mobile that is already remote to CHE.
+	 */
+	@Test
+	public final void competingRemotes2() throws IOException {
+	}
+	
 
 }

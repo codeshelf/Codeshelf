@@ -2183,7 +2183,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.info("passScanToLinkedChe {}", scanStr);
 		CheDeviceLogic linkedDevice = getLinkedCheDevice();
 		if (linkedDevice == null) {
-			LOGGER.error("passScanToLinkedChe failed to find the device");
+			LOGGER.warn("passScanToLinkedChe failed to find the device. Setting state to unlinked.");
+			setLinkedToCheName(null);
+			setState(CheStateEnum.REMOTE);
 			return;
 		}
 		linkedDevice.scanReceivedFrom(getGuid(), scanStr);
