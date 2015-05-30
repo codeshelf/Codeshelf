@@ -1969,22 +1969,22 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * This enforces consistency. Therefore may unexpectedly clear another CHE's association.
 	 * Returns true if there was a significant association change.
 	 */
-	public boolean associateCheToCheName(Che inChe, String inCheNameToAssociateTo) {
-		if (inChe == null || inCheNameToAssociateTo == null || inCheNameToAssociateTo.isEmpty()) {
-			LOGGER.error("null input to WorkService.associateCheToCheName");
+	public boolean linkCheToCheName(Che inChe, String inCheNameToLinkTo) {
+		if (inChe == null || inCheNameToLinkTo == null || inCheNameToLinkTo.isEmpty()) {
+			LOGGER.error("null input to WorkService.linkCheToCheName");
 			return false;
 		}
-		LOGGER.info("Associate {} to {}", inChe.getDomainId(), inCheNameToAssociateTo);
+		LOGGER.info("Associate {} to {}", inChe.getDomainId(), inCheNameToLinkTo);
 		// The name must be the domainId
 		CodeshelfNetwork network = inChe.getParent();
-		Che otherChe = Che.staticGetDao().findByDomainId(network, inCheNameToAssociateTo);
+		Che otherChe = Che.staticGetDao().findByDomainId(network, inCheNameToLinkTo);
 		if (otherChe == null) {
-			LOGGER.warn("WorkService.associateCheToCheName() did not find CHE named {}", inCheNameToAssociateTo);
+			LOGGER.warn("WorkService.linkCheToCheName() did not find CHE named {}", inCheNameToLinkTo);
 			return false;
 		}
 
 		if (otherChe.equals(inChe)) {
-			LOGGER.warn("WorkService.associateCheToCheName called to associate to itself. Not allowed");
+			LOGGER.warn("WorkService.linkCheToCheName called to link to itself. Not allowed");
 			return false;
 		}
 		boolean changed = false;
@@ -1992,17 +1992,17 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		// By any chance, is the che we are going to associate to already pointing at another CHE? If so, clear that.
 		Che chePointedAt = otherChe.getLinkedToChe();
 		if (chePointedAt != null) {
-			LOGGER.warn("associateCheToCheName(): {} was itself associated to {}. Clearing {} association",
+			LOGGER.warn("linkCheToCheName(): {} was itself link to {}. Clearing {} association",
 				otherChe.getDomainId(),
 				chePointedAt.getDomainId(),
 				otherChe.getDomainId());
-			changed = clearCheAssociation(otherChe);
+			changed = clearCheLink(otherChe);
 		}
 
 		// is any other CHE already associated to the otherChe? Only looks for one. I suppose bad bugs could make more.
 		Che pointingAtOtherChe = otherChe.getCheLinkedToThis();
 		if (pointingAtOtherChe != null) {
-			LOGGER.warn("associateCheToCheName(): Clearing association of {} which pointed to {}", pointingAtOtherChe.getDomainId(), inCheNameToAssociateTo);
+			LOGGER.warn("linkCheToCheName(): Clearing link of {} which pointed to {}", pointingAtOtherChe.getDomainId(), inCheNameToLinkTo);
 			pointingAtOtherChe.setAssociateToCheGuid(null);
 			Che.staticGetDao().store(pointingAtOtherChe);
 			changed = true;
@@ -2020,9 +2020,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * If the inChe is associated to another CHE, clear that association
 	 * Returns true if there was a significant association change.
 	 */
-	public boolean clearCheAssociation(Che inChe) {
+	public boolean clearCheLink(Che inChe) {
 		if (inChe == null) {
-			LOGGER.error("clearCheAssociation(): null input to clearCheAssociation");
+			LOGGER.error("clearCheLink(): null input ");
 			return false;
 		}
 		boolean changed = false;
@@ -2041,11 +2041,11 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	}
 
 	/**
-	 * If any CHE are associated to the inChe, clear the association. Actually one finds there first. 
+	 * If any CHE are linked to the inChe, clear the link. Actually one finds there first. 
 	 * Possible bugs with multiples may not be handled.
-	 * Returns true if there was a significant association change.
+	 * Returns true if there was a significant link change.
 	 */
-	public boolean clearAssociationsToChe(Che inChe) {
+	public boolean clearLinksToChe(Che inChe) {
 		if (inChe == null) {
 			LOGGER.error("null input to clearAssociationsToChe");
 			return false;

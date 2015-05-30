@@ -41,11 +41,11 @@ public class LinkRemoteCheCommand extends CommandABC {
 				// The work service has an explicit clear function. We trigger via null cheName.
 				String newAssociateCheName = request.getRemoteCheNameToLinkTo();
 				
-				if (newAssociateCheName != null && workService.associateCheToCheName(che, newAssociateCheName)) {
+				if (newAssociateCheName != null && workService.linkCheToCheName(che, newAssociateCheName)) {
 					che = Che.staticGetDao().reload(che);
 					currentAssociatedChe = che.getLinkedToChe();
 				}
-				else if (newAssociateCheName == null && workService.clearCheAssociation(che)) {
+				else if (newAssociateCheName == null && workService.clearCheLink(che)) {
 					che = Che.staticGetDao().reload(che);
 					currentAssociatedChe = che.getLinkedToChe();
 				}

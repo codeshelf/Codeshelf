@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.CheStateEnum;
+import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.CodeshelfTape;
 import com.codeshelf.model.domain.Aisle;
@@ -266,7 +267,7 @@ public class CheProcessRemoteLink extends ServerTest {
 		Assert.assertNull(che2.getCheLinkedToThis());
 
 		LOGGER.info("2: associate (mobile) CHE1 to (cart) CHE2");
-		this.workService.associateCheToCheName(che1, "CHE2");
+		this.workService.linkCheToCheName(che1, "CHE2");
 
 		LOGGER.info("2b1: check our associate getters");
 		Assert.assertEquals(che2, che1.getLinkedToChe());
@@ -295,7 +296,7 @@ public class CheProcessRemoteLink extends ServerTest {
 		Assert.assertEquals("controlled by CHE1", state1Che2);
 
 		LOGGER.info("3: tell che1 to clear associations");
-		this.workService.clearCheAssociation(che1);
+		this.workService.clearCheLink(che1);
 		// Commit, primarily to have the network update go to site controller. Should see that in the log.
 		commitTransaction();
 		beginTransaction();
@@ -309,7 +310,7 @@ public class CheProcessRemoteLink extends ServerTest {
 		Assert.assertNull(che2.getLinkedToChe());
 
 		LOGGER.info("4: associate CHE2 to CHE1");
-		this.workService.associateCheToCheName(che2, "CHE1");
+		this.workService.linkCheToCheName(che2, "CHE1");
 		Assert.assertEquals(che1, che2.getLinkedToChe());
 		Assert.assertEquals(che2, che1.getCheLinkedToThis());
 
@@ -322,7 +323,7 @@ public class CheProcessRemoteLink extends ServerTest {
 		network = CodeshelfNetwork.staticGetDao().reload(network); // these are necessary or the WorkService functions have staleObjectUpdate exceptions
 
 		LOGGER.info("4b: associate back the other way. Will give some warns");
-		this.workService.associateCheToCheName(che1, "CHE2");
+		this.workService.linkCheToCheName(che1, "CHE2");
 		Assert.assertEquals(che2, che1.getLinkedToChe());
 		Assert.assertEquals(che1, che2.getCheLinkedToThis());
 
@@ -335,7 +336,7 @@ public class CheProcessRemoteLink extends ServerTest {
 		network = CodeshelfNetwork.staticGetDao().reload(network);
 
 		LOGGER.info("5: tell che2 to clear associations to it");
-		this.workService.clearAssociationsToChe(che2);
+		this.workService.clearLinksToChe(che2);
 
 		// Commit, primarily to have the network update go to site controller. Should see that in the log.
 		commitTransaction();
@@ -543,10 +544,69 @@ public class CheProcessRemoteLink extends ServerTest {
 	 */
 	@Test
 	public final void remoteToDifferentCart() throws IOException {
+		beginTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		commitTransaction();
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		setUpOrdersWithCntrAndGtin(facility);
+		commitTransaction();
+
+		startSiteController();
+		PickSimulator picker1 = createPickSim(cheGuid1);
+		PickSimulator picker2 = createPickSim(cheGuid2);
+		PickSimulator picker3 = createPickSim(cheGuid3);
+
+		LOGGER.info("1: Picker 2 sets up some jobs on CHE2, then logs out");
+		picker2.loginAndCheckState("Picker #2", CheStateEnum.SETUP_SUMMARY);
+		picker2.scanCommand("SETUP");
+		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker2.setupOrderIdAsContainer("12345", "1");
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker2.logCheDisplay();
+		String line1 = picker2.getLastCheDisplayString(1).trim();
+		Assert.assertEquals("1 order", line1);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, picker2.getLastSentPositionControllerDisplayValue((byte) 1));
+
+		picker2.logout();
+		Assert.assertNull(picker2.getLastSentPositionControllerDisplayValue((byte) 1));
+
+		// Warning. Not inventory this test. So just seeing order count.		
+		LOGGER.info("2: Picker1 scan REMOTE and link to CHE2. The CHE2 poscon shows feedback now.");
+		picker1.loginAndCheckState("Picker #2", CheStateEnum.SETUP_SUMMARY);
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.logCheDisplay();
+		picker1.scanSomething("H%CHE2");
+		picker1.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
+		picker1.logCheDisplay();
+		Assert.assertEquals("1 order", picker1.getLastCheDisplayString(1).trim());
+		Assert.assertEquals("1 order", picker2.getLastCheDisplayString(1).trim());
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, picker2.getLastSentPositionControllerDisplayValue((byte) 1));
+
+		LOGGER.info("3: let's see the CHE3 screen");
+		picker3.loginAndCheckState("Picker #3", CheStateEnum.SETUP_SUMMARY);
+		Assert.assertEquals("0 orders", picker3.getLastCheDisplayString(1).trim());
+
+		
+		LOGGER.info("4: Picker1 now remote to CHE3");
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.scanSomething("H%CHE3");
+		picker1.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
+
+		Assert.assertEquals("0 orders", picker1.getLastCheDisplayString(1).trim());
+		
+		// TODO disconnect CHE 2 as it has no user now.
+		LOGGER.info("5: CHE2 should be in idle state now.");
+		// picker2.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
+		// Assert.assertEquals(toByte(45), picker2.getLastSentPositionControllerDisplayValue((byte) 1));
+
 	}
 
 	/**
-	 * One mobile linked to cart. Then cart workerscan from cart logouts, logs in.
+	 * One mobile linked to cart. Then cart worker scan from cart logout, badge  in.
 	 */
 	@Test
 	public final void remoteVsCart() throws IOException {
@@ -587,7 +647,7 @@ public class CheProcessRemoteLink extends ServerTest {
 		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
 		setupInventoryForOrders(picker1);
 
-		LOGGER.info("2b: Picker scan REMOTE and link to CHE2");
+		LOGGER.info("2b: Picker1 scan REMOTE and link to CHE2");
 		picker1.scanCommand("REMOTE");
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		picker1.logCheDisplay();
@@ -626,6 +686,80 @@ public class CheProcessRemoteLink extends ServerTest {
 	 */
 	@Test
 	public final void competingRemotes2() throws IOException {
+		beginTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		commitTransaction();
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		setUpOrdersWithCntrAndGtin(facility);
+		commitTransaction();
+
+		startSiteController();
+		PickSimulator picker1 = createPickSim(cheGuid1);
+		PickSimulator picker2 = createPickSim(cheGuid2);
+		PickSimulator picker3 = createPickSim(cheGuid3);
+
+		LOGGER.info("1: Picker 2 sets up some jobs on CHE2, then logs out");
+		picker2.loginAndCheckState("Picker #2", CheStateEnum.SETUP_SUMMARY);
+		picker2.scanCommand("SETUP");
+		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker2.setupOrderIdAsContainer("12345", "1");
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		String line1 = picker2.getLastCheDisplayString(1).trim();
+		Assert.assertEquals("1 order", line1);
+		picker2.logout();
+
+		LOGGER.info("2: Picker 1 login and inventory what we need");
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+		setupInventoryForOrders(picker1);
+
+		LOGGER.info("2b: Picker scan REMOTE and link to CHE2");
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.logCheDisplay();
+		picker1.scanSomething("H%CHE2");
+		picker1.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
+		picker1.logCheDisplay();
+		Assert.assertEquals("1 order", picker1.getLastCheDisplayString(1).trim());
+		Assert.assertEquals("1 order", picker2.getLastCheDisplayString(1).trim());
+
+		LOGGER.info("3: Picker 1 scan a location on path. Get the 1 job");
+		// substitute a tape scan here
+		picker1.scanLocation("D301");
+		picker1.waitForLinkedCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.scanCommand("START");
+		picker1.waitForLinkedCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.logCheDisplay();
+
+		LOGGER.info("4: Picker3 now log in as remote and try to control mobile CHE1");
+		picker3.loginAndCheckState("Picker #3", CheStateEnum.SETUP_SUMMARY);
+		picker3.scanCommand("REMOTE");
+		picker3.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker3.scanSomething("H%CHE1");
+		picker3.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
+		picker1.logCheDisplay();
+		picker2.logCheDisplay();
+		picker3.logCheDisplay();
+		
+		// TODO What should picker 3 state be. Probably not REMOTE_LINKED
+		// TODO What should picker 1 state be. Definitely not REMOTE_LINKED
+		// TODO See ERROR in the log
+
+		// no immediate update forced to mobile che 1, but the next activity there should force it.
+		Assert.assertEquals(CheStateEnum.REMOTE_LINKED, picker1.getCurrentCheState());
+		picker1.scanSomething("333444");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		Assert.assertEquals("Linked to: (none)", picker1.getLastCheDisplayString(1));
+
+		// does che 3 recover from next activity?
+		Assert.assertEquals(CheStateEnum.REMOTE_LINKED, picker3.getCurrentCheState());
+		picker3.scanSomething("333444");
+		/*
+		picker3.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		Assert.assertEquals("Linked to: (none)", picker3.getLastCheDisplayString(1));
+		*/
+
 	}
 	
 
