@@ -1277,8 +1277,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				clearAllPosconsOnThisDevice();
 			
 				notifyCheWorkerVerb("LOG IN", "");
+				
+				/*
 				sendDisplayCommand("Welcome, " + getUserNameUI(), "");
 				ThreadUtils.sleep(1500);
+				*/
+				
 				// If I am linked, and I just logged in, let's go to the REMOTE screen to show the worker what she is linked to.
 				// Better than going directly to REMOTE_LINKED state.
 				String cheName = getLinkedToCheName();

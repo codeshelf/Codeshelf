@@ -537,6 +537,74 @@ public class CheProcessRemoteLink extends ServerTest {
 	 */
 	@Test
 	public final void remoteLogout() throws IOException {
+		beginTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		commitTransaction();
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		setUpOrdersWithCntrAndGtin(facility);
+		commitTransaction();
+
+		startSiteController();
+		PickSimulator picker1 = createPickSim(cheGuid1);
+		PickSimulator picker2 = createPickSim(cheGuid2);
+		
+		LOGGER.info("1: Picker 2 sets up some jobs on CHE2, then logs out");
+		picker2.loginAndCheckState("Picker #2", CheStateEnum.SETUP_SUMMARY);
+		picker2.scanCommand("SETUP");
+		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker2.setupOrderIdAsContainer("12345", "1");
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker2.logCheDisplay();
+		String line1 = picker2.getLastCheDisplayString(1).trim();
+		Assert.assertEquals("1 order", line1);
+		picker2.logout();
+
+		LOGGER.info("2: Picker 1 login and inventory what we need");
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+		setupInventoryForOrders(picker1);
+
+		LOGGER.info("2b: Picker1 scan REMOTE and link to CHE2");
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.logCheDisplay();
+		picker1.scanSomething("H%CHE2");
+		picker1.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
+		picker1.logCheDisplay();
+		Assert.assertEquals("1 order", picker1.getLastCheDisplayString(1).trim());
+		Assert.assertEquals("1 order", picker2.getLastCheDisplayString(1).trim());
+
+		LOGGER.info("3: Picker 1 scan a location on path. Get the 1 job");
+		// substitute a tape scan here
+		picker1.scanLocation("D301");
+		picker1.waitForLinkedCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.scanCommand("START");
+		picker1.waitForLinkedCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.logCheDisplay();
+
+		LOGGER.info("3b: verify the aisle controller lights (if we can), and poscon on the cart");
+		Assert.assertEquals(toByte(1), picker2.getLastSentPositionControllerDisplayValue((byte) 1));
+
+		LOGGER.info("4: Picker 1 logout.");
+		picker1.logout();
+
+		LOGGER.info("4b: Check the state of the cart screen and poscons");
+		picker2.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
+		Assert.assertNull(picker2.getLastSentPositionControllerDisplayValue((byte) 1));
+		
+		LOGGER.info("5: Picker1 log in again. As nothing unlinked it, it comes to REMOTE screen showing CHE2 still");
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.REMOTE);
+		picker1.logCheDisplay();
+		LOGGER.info("5b: Screen instructions suggest REMOTE to continue CHE2 link");
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
+		picker1.logCheDisplay();
+		// screen showing 1 order with location D301 as it was
+		// Assert.assertEquals("1 order", picker1.getLastCheDisplayString(1).trim());
+		// Assert.assertEquals("1 order", picker2.getLastCheDisplayString(1).trim());
+		// Good enough for this test.
+
 	}
 
 	/**
@@ -601,7 +669,6 @@ public class CheProcessRemoteLink extends ServerTest {
 		// TODO disconnect CHE 2 as it has no user now.
 		LOGGER.info("5: CHE2 should be in idle state now.");
 		// picker2.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
-		// Assert.assertEquals(toByte(45), picker2.getLastSentPositionControllerDisplayValue((byte) 1));
 
 	}
 
@@ -610,6 +677,64 @@ public class CheProcessRemoteLink extends ServerTest {
 	 */
 	@Test
 	public final void remoteVsCart() throws IOException {
+		beginTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		commitTransaction();
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		setUpOrdersWithCntrAndGtin(facility);
+		commitTransaction();
+
+		startSiteController();
+		PickSimulator picker1 = createPickSim(cheGuid1);
+		PickSimulator picker2 = createPickSim(cheGuid2);
+		
+		LOGGER.info("1: Picker 2 sets up some jobs on CHE2, then logs out");
+		picker2.loginAndCheckState("Picker #2", CheStateEnum.SETUP_SUMMARY);
+		picker2.scanCommand("SETUP");
+		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker2.setupOrderIdAsContainer("12345", "1");
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker2.logCheDisplay();
+		String line1 = picker2.getLastCheDisplayString(1).trim();
+		Assert.assertEquals("1 order", line1);
+		picker2.logout();
+
+		LOGGER.info("2: Picker 1 login and inventory what we need");
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+		setupInventoryForOrders(picker1);
+
+		LOGGER.info("2b: Picker1 scan REMOTE and link to CHE2");
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.logCheDisplay();
+		picker1.scanSomething("H%CHE2");
+		picker1.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
+		picker1.logCheDisplay();
+		Assert.assertEquals("1 order", picker1.getLastCheDisplayString(1).trim());
+		Assert.assertEquals("1 order", picker2.getLastCheDisplayString(1).trim());
+
+		LOGGER.info("3: Picker 1 scan a location on path. Get the 1 job");
+		// substitute a tape scan here
+		picker1.scanLocation("D301");
+		picker1.waitForLinkedCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		picker1.scanCommand("START");
+		picker1.waitForLinkedCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker1.logCheDisplay();
+		
+		LOGGER.info("4: Picker 2 (cart) logout");
+		picker2.logout();
+		// should result in picker 1 seeing it is not linked.
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.logCheDisplay();
+		
+		LOGGER.info("5: Picker 2 (cart) login, get work");
+		picker2.loginAndCheckState("Picker #2", CheStateEnum.SETUP_SUMMARY);
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		picker2.logCheDisplay();
+		// Done. cart is working independently. mobile is unlinked, on remote screen.
 	}
 
 	
