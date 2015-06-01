@@ -297,7 +297,7 @@ public class Che extends WirelessDeviceABC {
 	 * This requires a search or query. Doing a linear search to start.
 	 * Warning: cannot do .equals on the byte[] returned by getDeviceGuid() or getAssociateToCheGuid()
 	 */
-	public Che getAssociateToChe() {
+	public Che getLinkedToChe() {
 		byte[] theBytes = getAssociateToCheGuid();
 		if (theBytes == null)
 			return null;
@@ -314,7 +314,7 @@ public class Che extends WirelessDeviceABC {
 						foundChe = che;
 						// complain if associated to itself
 						if (foundChe.equals(this)) {
-							LOGGER.error("CHE associated to itself in getAssociateToChe()?");
+							LOGGER.error("CHE associated to itself in getLinkedToChe()?");
 							foundChe = null;
 						}
 						break;
@@ -329,10 +329,10 @@ public class Che extends WirelessDeviceABC {
 	 * This requires a search or query. Doing a linear search to start.
 	 * Warning: cannot do .equals on the byte[] returned by getDeviceGuid() or getAssociateToCheGuid()
 	 */
-	public Che getCheAssociatedToThis() {
+	public Che getCheLinkedToThis() {
 		byte[] theBytes = getDeviceGuid();
 		if (theBytes == null) {
-			LOGGER.error("should never be in getCheAssociateToMe()");
+			LOGGER.error("should never be in getCheLinkedToThis()");
 			return null;
 		} else {
 			NetGuid myGuid = new NetGuid(theBytes);
@@ -347,7 +347,7 @@ public class Che extends WirelessDeviceABC {
 						foundChe = che;
 						// complain if associated to itself
 						if (foundChe.equals(this)) {
-							LOGGER.error("CHE associated to itself in getCheAssociateToMe()?");
+							LOGGER.error("CHE linked to itself in getCheLinkedToThis()?");
 							foundChe = null;
 						}
 						break;
@@ -361,7 +361,7 @@ public class Che extends WirelessDeviceABC {
 	/**
 	 * This is a straight field look up. No search.
 	 */
-	public NetGuid getAssociateToGuid() {
+	public NetGuid getLinkedToGuid() {
 		byte[] theBytes = getAssociateToCheGuid();
 		if (theBytes == null)
 			return null;
@@ -376,8 +376,8 @@ public class Che extends WirelessDeviceABC {
 	 */
 	public String getAssociateToUi() {
 		String returnStr = "";
-		Che associatedTo = getAssociateToChe();
-		Che associateTee = getCheAssociatedToThis();
+		Che associatedTo = getLinkedToChe();
+		Che associateTee = getCheLinkedToThis();
 		if (associatedTo != null && associateTee != null) {
 			LOGGER.error("Both associated to and associated from");
 			returnStr = "Error";

@@ -44,7 +44,6 @@ import com.codeshelf.api.HardwareRequest;
 import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
 import com.codeshelf.api.HardwareRequest.LightRequest;
 import com.codeshelf.api.pickscript.ScriptParser;
-import com.codeshelf.api.pickscript.ScriptParser.ScriptApiResponse;
 import com.codeshelf.api.pickscript.ScriptParser.ScriptStep;
 import com.codeshelf.api.pickscript.ScriptSiteCallPool;
 import com.codeshelf.api.pickscript.ScriptStepParser;
@@ -439,74 +438,6 @@ public class FacilityResource {
 			return errors.processException(e);
 		}
 	}
-
-	@POST
-	@Path("/runscript")
-	@RequiresPermissions("che:simulate")
-	@Consumes(MediaType.MULTIPART_FORM_DATA)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response runScript(@QueryParam("timeout_min") Integer timeoutMin, FormDataMultiPart body){
-		try {
-			ErrorResponse errors = new ErrorResponse();
-
-			//Retrieve the script
-			InputStream scriptIS = ScriptStepParser.getInputStream(body, "script");
-			if (scriptIS == null) {
-				errors.addErrorMissingBodyParam("script");
-				return errors.buildResponse();
-			}
-			String script = IOUtils.toString(scriptIS);
-			if (script == null || script.isEmpty()) {
-				errors.addError("Script file was empty");
-				return errors.buildResponse();
-			}
-			//Split the script into a list of SERVER and SITE parts
-			ArrayList<StepPart> scriptParts = ScriptStepParser.parseMixedScript(script);
-			Set<User> users = facility.getSiteControllerUsers();
-			StringBuilder response = new StringBuilder();
-			TenantPersistenceService persistence = TenantPersistenceService.getInstance();
-			ScriptServerRunner scriptRunner = new ScriptServerRunner(persistence, facility.getPersistentId(), body, uiUpdateService, propertyService, aislesImporter, locationsImporter, inventoryImporter, orderImporter);
-			boolean success = true;
-			//Process script parts
-			while (!scriptParts.isEmpty()) {
-				StepPart part = scriptParts.remove(0);
-				if (part.isServer()) {
-					//SERVER
-					ScriptMessage serverResponseMessage = scriptRunner.processServerScript(part.getScriptLines());
-					response.append(serverResponseMessage.getResponse());
-					if (!serverResponseMessage.isSuccess()) {
-						success = false;
-						break;
-					}
-				} else {
-					//SITE
-					//Test is Site Controller is running
-					Result siteHealth = new ActiveSiteControllerHealthCheck(webSocketManagerService).execute();
-					if (!siteHealth.isHealthy()){
-						response.append("Site controller problem: " + siteHealth.getMessage());
-						break;
-					}
-					//Execute script
-					UUID id = UUID.randomUUID();
-					ScriptMessage scriptMessage = new ScriptMessage(id, part.getScriptLines());
-					webSocketManagerService.sendMessage(users, scriptMessage);
-					ScriptMessage siteResponseMessage = ScriptSiteCallPool.waitForSiteResponse(id, timeoutMin);
-					if (siteResponseMessage == null) {
-						response.append("Site request timed out");
-						break;
-					}
-					response.append(siteResponseMessage.getResponse());
-					if (!siteResponseMessage.isSuccess()) {
-						success = false;
-						break;
-					}
-				}
-			}
-			return BaseResponse.buildResponse(response.toString(), success ? Status.OK : Status.BAD_REQUEST, MediaType.TEXT_PLAIN_TYPE);
-		} catch (Exception e) {
-			return new ErrorResponse().processException(e);
-		}
-	}
 	
 	@POST
 	@Path("/process_script")
@@ -528,8 +459,10 @@ public class FacilityResource {
 				errors.addError("Script file was empty");
 				return errors.buildResponse();
 			}
-			ScriptStep firstStep  = ScriptParser.parseScript(script);
-			return BaseResponse.buildResponse(new ScriptApiResponse(firstStep, "Script imported"));
+			ScriptStep firstStep = ScriptParser.parseScript(script);
+			firstStep.setReport("Script imported");
+			//return BaseResponse.buildResponse(new ScriptApiResponse(firstStep, "Script imported"));
+			return BaseResponse.buildResponse(firstStep);
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
 		}
@@ -549,7 +482,6 @@ public class FacilityResource {
 				return errors.buildResponse();
 			}
 			
-			
 			ScriptStep scriptStep = ScriptParser.getScriptStep(scriptStepId.getValue());
 			if (scriptStep == null) {
 				errors.addError("Script step " + scriptStepId.getValue() + " doesn't exist");
@@ -558,7 +490,7 @@ public class FacilityResource {
 			StringBuilder report = new StringBuilder("Running script step " + scriptStep.getComment() + "\n");
 	
 			//Split the script into a list of SERVER and SITE parts
-			ArrayList<StepPart> scriptParts = scriptStep.getParts();
+			ArrayList<StepPart> scriptParts = scriptStep.parts();
 			Set<User> users = facility.getSiteControllerUsers();
 			
 			TenantPersistenceService persistence = TenantPersistenceService.getInstance();
@@ -602,16 +534,17 @@ public class FacilityResource {
 					}
 				}
 			}
-			ScriptStep nextStep = scriptStep.getNextStep();
+			ScriptStep nextStep = scriptStep.nextStep();
 			if (!success) {
-				ScriptApiResponse errorResponse = new ScriptApiResponse(report.toString());
-				errorResponse.addError(error);
-				return BaseResponse.buildResponse(errorResponse, Status.BAD_REQUEST);
+				nextStep = new ScriptStep(report.toString());
+				nextStep.addError(error);
+				return BaseResponse.buildResponse(nextStep, Status.BAD_REQUEST);
 			}
 			if (nextStep == null) {
-				return BaseResponse.buildResponse(new ScriptApiResponse(report.toString()));
+				return BaseResponse.buildResponse(new ScriptStep(report.toString()));
 			} else {
-				return BaseResponse.buildResponse(new ScriptApiResponse(nextStep, report.toString()));
+				nextStep.setReport(report.toString());
+				return BaseResponse.buildResponse(nextStep);
 			}
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);

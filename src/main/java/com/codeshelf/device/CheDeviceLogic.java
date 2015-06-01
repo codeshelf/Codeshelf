@@ -155,6 +155,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	// The CHE's current user. no lomboc because getUserId defined on base class
 	protected String								mUserId;
+	
+	@Setter
+	@Accessors(prefix = "m")
+	protected String								mUserNameUI;
+
 
 	// All WIs for all containers on the CHE.
 	@Accessors(prefix = "m")
@@ -290,6 +295,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	public void setUserId(String user) {
 		mUserId = user;
+	}
+	
+	public String getUserNameUI() {
+		return (mUserNameUI == null || mUserId.isEmpty()) ? mUserId : mUserNameUI;
 	}
 
 	public boolean usesNewCheScreen() {
@@ -1366,6 +1375,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected void logout() {
 		notifyCheWorkerVerb("LOG OUT", "");
 
+		if (getCheStateEnum() != CheStateEnum.IDLE){
+			sendDisplayCommand("Goodbye, " + getUserNameUI(), "Have a nice day");
+			ThreadUtils.sleep(1500);
+		}
+		
 		this.setUserId("");
 		mActivePickWiList.clear();
 		mAllPicksWiList.clear();
@@ -2183,7 +2197,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.info("passScanToLinkedChe {}", scanStr);
 		CheDeviceLogic linkedDevice = getLinkedCheDevice();
 		if (linkedDevice == null) {
-			LOGGER.error("passScanToLinkedChe failed to find the device");
+			LOGGER.warn("passScanToLinkedChe failed to find the device. Setting state to unlinked.");
+			setLinkedToCheName(null);
+			setState(CheStateEnum.REMOTE);
 			return;
 		}
 		linkedDevice.scanReceivedFrom(getGuid(), scanStr);

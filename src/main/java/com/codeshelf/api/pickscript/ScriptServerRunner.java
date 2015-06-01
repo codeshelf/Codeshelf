@@ -104,7 +104,7 @@ public class ScriptServerRunner {
 		} catch (Exception e) {
 			persistence.rollbackTransaction();
 			report.append(CsExceptionUtils.exceptionToString(e)).append("\n");
-			message.setError(CsExceptionUtils.exceptionToString(e) + "\n");
+			message.setMessageError(CsExceptionUtils.exceptionToString(e) + "\n");
 		}
 		message.setResponse(report.toString());
 		LOGGER.info("Server script block completed");

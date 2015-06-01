@@ -24,6 +24,7 @@ import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.NotificationService.EventType;
+import com.codeshelf.util.ThreadUtils;
 
 /**
  * @author jonranstrom
@@ -160,6 +161,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	public void processResultOfVerifyBadge(Boolean verified) {
 		if (mCheStateEnum == CheStateEnum.VERIFYING_BADGE) {
 			if (verified) {
+				sendDisplayCommand("Welcome, " + getUserNameUI(), "");
+				ThreadUtils.sleep(1500);
 				clearAllPosconsOnThisDevice();
 				setState(CheStateEnum.READY);
 			} else {

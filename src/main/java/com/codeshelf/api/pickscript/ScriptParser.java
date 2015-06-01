@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.UUID;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import com.codeshelf.api.pickscript.ScriptStepParser.StepPart;
 import com.google.common.collect.Lists;
@@ -27,6 +27,8 @@ public class ScriptParser {
 		}
 		ScriptStep prevStep = null;
 		ScriptStep firstStep = null;
+		
+		ArrayList<ScriptStep> steps = Lists.newArrayList();
 		while (!lines.isEmpty()) {
 			//Skip comments before the first Step in the script
 			if (firstStep == null && lines.get(0).startsWith("//")) {
@@ -43,6 +45,13 @@ public class ScriptParser {
 				prevStep.nextStep = scriptStep;
 			}
 			prevStep = scriptStep;
+			steps.add(scriptStep);
+		}
+		
+		//Enumerate steps
+		int stepNum = 0;
+		for (ScriptStep step : steps) {
+			step.setStepIndex(++stepNum, steps.size());
 		}
 		return firstStep;
 	}
@@ -89,18 +98,28 @@ public class ScriptParser {
 	
 	public static class ScriptStep {
 		@Getter
-		private final UUID id = UUID.randomUUID();
-		@Getter
-		private ScriptStep nextStep = null;
-		@Getter
-		private ArrayList<StepPart> parts;
+		private UUID id;
 		@Getter
 		private String comment;
+		@Getter @Setter
+		private String report;
 		@Getter
 		private ArrayList<String> requiredFiles = Lists.newArrayList();
+		@Getter
+		private ArrayList<String> errors;
+		@Getter
+		private int stepNum, totalSteps;
+		
+		private ScriptStep nextStep = null;
+		private ArrayList<StepPart> parts;
 		private Timestamp created = new Timestamp(System.currentTimeMillis());
 		
+		public ScriptStep(String report) {
+			this.report = report;
+		}
+
 		public ScriptStep(ArrayList<StepPart> parts, String comment) {
+			id = UUID.randomUUID();
 			this.parts = parts;
 			this.comment = comment;
 			scanForRequiredFiles();
@@ -119,25 +138,18 @@ public class ScriptParser {
 				}
 			}
 		}
-	}
-	
-	public static class ScriptApiResponse{
-		public UUID nextStepId;
-		public String nextStepComment;
-		public List<String> requiredFiles;
-		public String report;
-		public ArrayList<String> errors;
 		
-		
-		public ScriptApiResponse(ScriptStep step, String report) {
-			this.nextStepId = step.getId();
-			this.requiredFiles = step.getRequiredFiles();
-			this.nextStepComment = step.getComment();
-			this.report = report;
+		public void setStepIndex(int stepNum, int totalSteps){
+			this.stepNum = stepNum;
+			this.totalSteps = totalSteps;
 		}
 		
-		public ScriptApiResponse(String report) {
-			this.report = report;
+		public ScriptStep nextStep(){
+			return nextStep;
+		}
+		
+		public ArrayList<StepPart> parts(){
+			return parts;
 		}
 		
 		public void addError(String error){

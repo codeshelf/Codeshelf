@@ -54,11 +54,11 @@ public class ScriptSiteRunner {
 			public void run() {
 				List<String> lines = message.getLines();
 				if (lines == null) {
-					message.setError("Empty site script");
+					message.setMessageError("Empty site script");
 					deviceManager.clientEndpoint.sendMessage(message);
 					return;
 				}
-				report.append("SERVER\n");
+				report.append("SITE\n");
 				try {
 					for (String line : lines) {
 						processLine(line);
@@ -69,7 +69,7 @@ public class ScriptSiteRunner {
 					logoutAll();
 					String error = CsExceptionUtils.exceptionToString(e);
 					report.append(error).append("Logging out from all pickers due to this error\n");
-					message.setError(error);
+					message.setMessageError(error);
 				}
 				
 				message.setResponse(report.toString());

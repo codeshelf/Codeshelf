@@ -31,9 +31,10 @@ public class VerifyBadgeCommand extends CommandABC {
 		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
 		if (che != null) {
 			String networkGuid = che.getDeviceNetGuid().getHexStringNoPrefix();
-			boolean verified = workService.badgeVerifiesOK(che, request.getBadge());
+			String workerName = workService.verifyBadgeAndGetWorkerName(che.getFacility(), request.getBadge());
 			response.setNetworkGuid(networkGuid);
-			response.setVerified(verified);
+			response.setUserNameUI(workerName);
+			response.setVerified(workerName != null);
 			response.setStatus(ResponseStatus.Success);
 			return response;
 		}

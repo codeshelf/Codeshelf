@@ -753,12 +753,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		LOGGER.debug("Network updated: {} active devices, {} removed", updateDevices.size(), deleteDevices.size());
 	}
 
-	public void processVerifyBadgeResponse(String networkGuid, Boolean verified) {
+	public void processVerifyBadgeResponse(String networkGuid, Boolean verified, String userNameUI) {
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			if (verified == null) {
 				verified = false;
 			}
+			cheDevice.setUserNameUI(userNameUI);
 			cheDevice.processResultOfVerifyBadge(verified);
 		} else {
 			LOGGER.warn("Unable to process Verify Badge response for CHE id={} CHE not found", networkGuid);
@@ -821,11 +822,8 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	 * 1) Immediately, in advance of networkUpdate that may come, modify and maintain the association map in the cheDeviceLogic
 	 * 2) Update local variables in the cheDeviceLogic so that the immediate screen draw looks right.
 	 */
-	public void processCheLinkResponse(String networkGuid,
-		String thisCheName,
-		String linkedCheGuidId,
-		String linkedCheName) {
-		LOGGER.info("site controller processCheLinkResponse for guid:{} associate to:{}",networkGuid, linkedCheGuidId);
+	public void processCheLinkResponse(String networkGuid, String thisCheName, String linkedCheGuidId, String linkedCheName) {
+		LOGGER.info("site controller processCheLinkResponse for guid:{} associate to:{}", networkGuid, linkedCheGuidId);
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			NetGuid associateGuid = null;
@@ -835,8 +833,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 				if (linkedDevice == null) {
 					LOGGER.error("processCheLinkResponse did not find valid che device for {}", linkedCheGuidId);
 					associateGuid = null;
-				}
-				else {
+				} else {
 					associateGuid = linkedDevice.getGuid();
 				}
 			}
@@ -896,7 +893,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		}
 		return device;
 	}
-	
+
 	public void processPosConSetupMessage(PosConSetupMessage message) {
 		NetGuid controllerGuid = new NetGuid(message.getNetGuidStr());
 		INetworkDevice device = mDeviceMap.get(controllerGuid);
@@ -904,21 +901,21 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			LOGGER.warn("Unable to start poscon setup on device {}. Device not found", controllerGuid);
 			return;
 		}
-		if (! (device instanceof PosConDeviceABC)) {
+		if (!(device instanceof PosConDeviceABC)) {
 			LOGGER.warn("Unable to start poscon setup on device {}. Device {} is not a PosConDeviceABC", controllerGuid, device);
 			return;
 		}
 		putPosConsInSetupMode((PosConDeviceABC) device);
 	}
-	
+
 	/**
 	 * Tell device to put all PosCons in the Setup mode
 	 */
-	public void putPosConsInSetupMode(PosConDeviceABC device ){
+	public void putPosConsInSetupMode(PosConDeviceABC device) {
 		CommandControlPosconSetup command = new CommandControlPosconSetup(NetEndpoint.PRIMARY_ENDPOINT);
 		radioController.sendCommand(command, device.getAddress(), true);
 	}
-	
+
 	public void processPosConLightAddresses(PosConLightAddressesMessage message) {
 		NetGuid controllerGuid = new NetGuid(message.getNetGuidStr());
 		INetworkDevice device = mDeviceMap.get(controllerGuid);
@@ -926,14 +923,14 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			LOGGER.warn("Unable to light poscon addresses on device {}. Device not found", controllerGuid);
 			return;
 		}
-		if (! (device instanceof PosConDeviceABC)) {
+		if (!(device instanceof PosConDeviceABC)) {
 			LOGGER.warn("Unable to light poscon addresses on device {}. Device {} is not a PosConDeviceABC", controllerGuid, device);
 			return;
 		}
-		CommandControlPosconBroadcast command = new CommandControlPosconBroadcast(CommandControlPosconBroadcast.POS_SHOW_ADDR, NetEndpoint.PRIMARY_ENDPOINT);
+		CommandControlPosconBroadcast command = new CommandControlPosconBroadcast(CommandControlPosconBroadcast.POS_SHOW_ADDR,
+			NetEndpoint.PRIMARY_ENDPOINT);
 		radioController.sendCommand(command, device.getAddress(), true);
 	}
-
 
 	public void processPosConControllerListMessage(PosControllerInstrList instructionList) {
 		HashSet<PosManagerDeviceLogic> controllers = new HashSet<>();
@@ -1043,7 +1040,6 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		}
 		// Above just made sure the associated che has an entry in  mDeviceDataMap.  Guid -> cheName and null associated CHE.
 		// Now set or clear the association.
-
 		CheData thisData = mDeviceDataMap.get(thisCheGuid);
 		if (thisData == null) {
 			LOGGER.debug("adding device data element {}:{}", thisCheGuid, thisCheName);
@@ -1053,6 +1049,20 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 				LOGGER.error("unexpected result_2 in maintainDeviceData");
 		}
 		thisData.setAssociatedToRemoteCheGuid(associatedToCheGuid);
+
+		// Finally, as one mobile links to a CHE, if there was/were already linkage to the CHE, then clear.  This is a linear search.		
+		if (associatedToCheGuid != null) {
+			for (Map.Entry<NetGuid, CheData> entry : mDeviceDataMap.entrySet()) {
+				NetGuid key = entry.getKey();
+				CheData value = entry.getValue();
+				if (associatedToCheGuid.equals(value.getAssociatedToRemoteCheGuid())) {
+					if (!key.equals(thisCheGuid)) {
+						LOGGER.info("Removing {} link to {}",key.getHexStringNoPrefix(), associatedToCheGuid.getHexStringNoPrefix());
+						value.setAssociatedToRemoteCheGuid(null);
+					}
+				}
+			}
+		}
 	}
 
 	/**
@@ -1105,7 +1115,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		}
 		return deviceGuid;
 	}
-	
+
 	/**
 	 * Common bug is mixup of prefix or not on the hex string, which will log error from OutOfRangeException and return null.
 	 * Input as "0x0000008d".
@@ -1117,6 +1127,5 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		else
 			return this.getCheDeviceByNetGuid(theGuid);
 	}
-
 
 }
