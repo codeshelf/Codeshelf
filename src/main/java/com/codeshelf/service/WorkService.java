@@ -1928,8 +1928,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		return true;
 	}
 
-	public boolean badgeVerifiesOK(Che che, String badge) {
-		Facility facility = che.getFacility();
+	public String verifyBadgeAndGetWorkerName(Facility facility, String badge) {
 		//Get global Authentication property value
 		String badgeAuthStr = PropertyService.getInstance().getPropertyFromConfig(facility, DomainObjectProperty.BADGEAUTH);
 		boolean badgeAuth = badgeAuthStr == null ? false : Boolean.parseBoolean(badgeAuthStr);
@@ -1939,10 +1938,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			if (worker == null) {
 				//Authentication + unknown worker = failed
 				LOGGER.warn("Badge verification failed for unknown badge " + badge);
-				return false;
+				return null;
 			} else {
 				//Authentication + known worker = succeeded
-				return true;
+				return worker.getWorkerNameUI();
 			}
 		} else {
 			if (worker == null) {
@@ -1956,10 +1955,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				worker.setUpdated(new Timestamp(System.currentTimeMillis()));
 				Worker.staticGetDao().store(worker);
 				LOGGER.info("During badge verification created new Worker " + badge);
-				return true;
+				return worker.getWorkerNameUI();
 			} else {
 				//No authentication + known worker = succeeded
-				return true;
+				return worker.getWorkerNameUI();
 			}
 		}
 	}

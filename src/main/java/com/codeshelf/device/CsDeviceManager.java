@@ -753,12 +753,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		LOGGER.debug("Network updated: {} active devices, {} removed", updateDevices.size(), deleteDevices.size());
 	}
 
-	public void processVerifyBadgeResponse(String networkGuid, Boolean verified) {
+	public void processVerifyBadgeResponse(String networkGuid, Boolean verified, String userNameUI) {
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			if (verified == null) {
 				verified = false;
 			}
+			cheDevice.setUserNameUI(userNameUI);
 			cheDevice.processResultOfVerifyBadge(verified);
 		} else {
 			LOGGER.warn("Unable to process Verify Badge response for CHE id={} CHE not found", networkGuid);
