@@ -155,11 +155,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	// The CHE's current user. no lomboc because getUserId defined on base class
 	protected String								mUserId;
-	
+
 	@Setter
 	@Accessors(prefix = "m")
 	protected String								mUserNameUI;
-
 
 	// All WIs for all containers on the CHE.
 	@Accessors(prefix = "m")
@@ -296,7 +295,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	public void setUserId(String user) {
 		mUserId = user;
 	}
-	
+
 	public String getUserNameUI() {
 		return (mUserNameUI == null || mUserId.isEmpty()) ? mUserId : mUserNameUI;
 	}
@@ -1375,11 +1374,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected void logout() {
 		notifyCheWorkerVerb("LOG OUT", "");
 
-		if (getCheStateEnum() != CheStateEnum.IDLE){
+		if (getCheStateEnum() != CheStateEnum.IDLE) {
 			sendDisplayCommand("Goodbye, " + getUserNameUI(), "Have a nice day");
 			ThreadUtils.sleep(1500);
 		}
-		
+
 		this.setUserId("");
 		mActivePickWiList.clear();
 		mAllPicksWiList.clear();
@@ -2273,18 +2272,17 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.info("{} logged out, so setting remote screen back.", this.getGuidNoPrefix());
 		linkedDevice.processDisconnectRemoteDueToLogout(this.getGuidNoPrefix());
 	}
-	
+
 	/**
 	 * When the controlling CHE clears the link or logs out when linked, the cart CHE should return to its base state.
 	 * This is the receiving (cart CHE) side of the transaction.
 	 */
 	void processDisconnectRemoteDueToLogout(String sourceString) {
-		setLinkedFromCheGuid(null); 
+		setLinkedFromCheGuid(null);
 		setUserId(null);
 		setState(CheStateEnum.IDLE);
 		LOGGER.info("{} inactive link from {} due to logout. Back to base state.", this.getGuidNoPrefix(), sourceString);
 	}
-
 
 	/**
 	 * When the controlling CHE clears the link or logs out when linked, the cart CHE should return to its base state.

@@ -1,6 +1,9 @@
 package com.codeshelf.edi;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.Reader;
+import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -29,6 +32,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.ScriptingService;
 import com.codeshelf.util.DateTimeParser;
@@ -84,8 +88,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	/* (non-Javadoc)
 	 * @see com.codeshelf.edi.ICsvImporter#importOrdersFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
 	 */
-	public final BatchResult<Object> importOrdersFromCsvStream(final Reader inCsvReader, Facility facility,
-		Timestamp inProcessTime) {
+	public final BatchResult<Object> importOrdersFromCsvStream(Reader inCsvReader, Facility facility, Timestamp inProcessTime) {
 		
 		this.startTime = System.currentTimeMillis();
 		
@@ -112,6 +115,76 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			if (!DomainObjectProperty.Default_SCANPICK.equals(scanPickProp.getValue())) {
 				this.scanPick = true;				
 			}
+		}
+		
+		// transform order lines/header, if extension point is defined
+		if (scriptingService.hasExtentionPoint(ExtensionPointType.OrderImportLineTransformation) 
+				|| scriptingService.hasExtentionPoint(ExtensionPointType.OrderImportHeaderTransformation)) {
+			BufferedReader br = new BufferedReader(inCsvReader);
+			StringBuffer buffer = new StringBuffer();
+			// process file header
+			if (getScriptingService().hasExtentionPoint(ExtensionPointType.OrderImportHeaderTransformation)) {
+				LOGGER.info("Order import header transformation is enabled");
+				try {
+					String header = br.readLine();
+					Object[] params = { header };
+					String transformedHeader = (String) getScriptingService().eval(facility, ExtensionPointType.OrderImportHeaderTransformation, params);
+					buffer.append(transformedHeader);
+				}
+				catch (Exception e) {
+					LOGGER.error("Failed to transform order file header",e);
+					return this.batchResult;
+				}
+			}
+			else {
+				try {
+					// use header as-is
+					String header = br.readLine();
+					buffer.append(header);
+				}
+				catch (Exception e) {
+					LOGGER.error("Failed to read order file header",e);
+					return this.batchResult;
+				}				
+			}
+			// process file body
+			if (getScriptingService().hasExtentionPoint(ExtensionPointType.OrderImportLineTransformation)) {
+				LOGGER.info("Order import line transformation is enabled");
+				// transform order lines
+				try {
+					String line = null;
+				    while ((line = br.readLine()) != null) {
+						Object[] params = { line };
+						String transformedLine = (String) getScriptingService().eval(facility, ExtensionPointType.OrderImportLineTransformation, params);
+						buffer.append("\r\n"+transformedLine);
+				    }
+				}
+				catch (Exception e) {
+					LOGGER.error("Failed to read order file line",e);
+					return this.batchResult;
+				}				
+			}
+			else {
+				// use order lines as-is
+				try {
+					String line = null;
+				    while ((line = br.readLine()) != null) {
+				    	buffer.append("\r\n"+line);
+				    }
+				}
+				catch (Exception e) {
+					LOGGER.error("Failed to read order file line",e);
+					return this.batchResult;
+				}				
+			}
+			try {
+				br.close();
+			} 
+			catch (IOException e) {
+				LOGGER.warn("Failed to close order input stream", e);
+			}
+			// swap out reader
+			inCsvReader = new StringReader(buffer.toString());
 		}
 
 		int numOrders = 0;
