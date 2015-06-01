@@ -35,7 +35,7 @@ waitForDevices 0x0000009B 0x000000A3 0x00000031 0x0000000AB
 defPicker pickerA 0x0000009B
 defPicker pickerB 0x000000A3
 //Set pick parameters [pickSpeed, frequency of skipping UPC, frequency of shorting an item]
-setParams 3 0.5 0.5
+setParams pickSpeed=2 skipFreq=0.5 shortFreq=0.5
 //Setup and run both CHEs together
 pickerExec pickerA loginAndSetup Ilya1
 setupCart pickerA 26768709 26768711 26768712 26768712

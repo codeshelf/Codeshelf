@@ -3,6 +3,7 @@ package com.codeshelf.device;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
@@ -25,7 +26,7 @@ public class ScriptSiteRunner {
 	private final static String TEMPLATE_DEF_PICKER = "defPicker <pickerName> <cheGuid>";
 	private final static String TEMPLATE_SETUP_CART = "setupCart <pickerName> <containers>";
 	private final static String TEMPLATE_WAIT = "waitForState <pickerName> <states>";
-	private final static String TEMPLATE_SET_PARAMS = "setParams <pickPauseSec> <chanceSkipUpc> <chanceShort>";
+	private final static String TEMPLATE_SET_PARAMS = "setParams (assignments 'pickSpeed'/'skipFreq'/'shortFreq'=<value>)";
 	private final static String TEMPLATE_PICK = "pick <pickerNames>";
 	private final static String TEMPLATE_PICKER_EXEC = "pickerExec <pickerName> <pickerCommand> [arguments]";
 	private final static String TEMPLATE_WAIT_SECONDS = "waitSeconds <seconds>";
@@ -188,16 +189,51 @@ public class ScriptSiteRunner {
 	
 	/**
 	 * Expects to see command
-	 * setParams <pickPauseSec> <chanceSkipUpc> <chanceShort>
+	 * "setParams (assignments 'pickSpeed'/'skipFreq'/'shortFreq'=<value>)";
 	 * @throws Exception
 	 */
 	private void processSetParamsCommand(String parts[]) throws Exception {
-		if (parts.length != 4){
+		if (parts.length < 2){
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_SET_PARAMS);
 		}
-		pickPauseMs = Integer.parseInt(parts[1]) * 1000;
-		chanceSkipUpc = Double.parseDouble(parts[2]);
-		chanceShort = Double.parseDouble(parts[3]);
+		HashSet<String> madeAssignments = new HashSet<>();
+		String pickSpeedName = "pickSpeed", skipFreqName = "skipFreq", shortFreqName = "shortFreq";
+		String assignment[], name, value;
+		for (int i = 1; i < parts.length; i++) {
+			assignment = parts[i].split("=");
+			if (assignment.length != 2) {
+				throw new Exception("Count not process assignment " + parts[i]);
+			}
+			name = assignment[0];
+			value = assignment[1]; 
+			//Verify that this command does not repeat property assignments
+			if (madeAssignments.contains(name)) {
+				throw new Exception("Attempting to set " + name + " multiple times in this command");
+			}
+			madeAssignments.add(name);
+			//Save property value
+			if (name.equalsIgnoreCase(pickSpeedName)) {
+				int pickPauseSecMax = 2 * 60, pickPauseSec = Integer.parseInt(value);
+				if (pickPauseSec > pickPauseSecMax) {
+					throw new Exception("Tring to set pickSpeed to " + pickPauseSec + " seconds. Max value = " + pickPauseSecMax);
+				}
+				pickPauseMs = pickPauseSec * 1000;
+			} else if (name.equalsIgnoreCase(skipFreqName)) {
+				chanceSkipUpc = Double.parseDouble(value);
+				validateFrequency(chanceSkipUpc, skipFreqName);
+			} else if (name.equalsIgnoreCase(shortFreqName)) {
+				chanceShort = Double.parseDouble(value);
+				validateFrequency(chanceShort, shortFreqName);
+			} else {
+				throw new Exception(String.format("Unknown pick property name %s [%s/%s/%s]", name, pickSpeedName, skipFreqName, shortFreqName));
+			}
+		}
+	}
+	
+	private void validateFrequency(Double frequency, String fieldName) throws Exception {
+		if (frequency < 0 || frequency > 1) {
+			throw new Exception("Attepting to set invalid frequency value " + frequency + " for " + fieldName + ". Allowed range [0-1]");
+		}
 	}
 
 	/**
