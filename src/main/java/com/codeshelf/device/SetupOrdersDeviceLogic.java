@@ -33,7 +33,6 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.NotificationService.EventType;
 import com.codeshelf.util.CompareNullChecker;
-import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.protocol.request.PutWallPlacementRequest;
 
 /**
