@@ -208,6 +208,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Getter
 	@Setter
 	private NetGuid									mLinkedFromCheGuid						= null;
+	
+	@Accessors(prefix = "m")
+	@Getter @Setter
+	private boolean									mTemporaryMessageDisplayed				= false;
 
 	/**
 	 * We have only one inventory state, not two. Essentially another state by whether or not we think we have a valid
@@ -2040,45 +2044,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 	}
 
-	public CheStateEnum waitForCheState(CheStateEnum state, int timeoutInMillis) {
-		long start = System.currentTimeMillis();
-		while (System.currentTimeMillis() - start < timeoutInMillis) {
-			// retry every 100ms
-			ThreadUtils.sleep(100);
-			CheStateEnum currentState = getCheStateEnum();
-			// we are waiting for the expected CheStateEnum, AND the indicator that we are out of the setState() routine.
-			// Typically, the state is set first, then some side effects are called that depend on the state.  The picker is usually checking on
-			// some of the side effects after this call.
-			if (currentState.equals(state) && !inSetState()) {
-				// expected state found - all good
-				break;
-			}
-		}
-		CheStateEnum existingState = getCheStateEnum();
-		return existingState;
-	}
-
-	/**
-	 * Method used for script testing, where a Che may transition to one of several states, and we'd like to wait for transition to finish before proceeding
-	 */
-	public CheStateEnum waitForOneOfCheStates(ArrayList<CheStateEnum> states, int timeoutInMillis) {
-		long start = System.currentTimeMillis();
-		while (System.currentTimeMillis() - start < timeoutInMillis) {
-			// retry every 100ms
-			ThreadUtils.sleep(100);
-			CheStateEnum currentState = getCheStateEnum();
-			// we are waiting for the expected CheStateEnum, AND the indicator that we are out of the setState() routine.
-			// Typically, the state is set first, then some side effects are called that depend on the state.  The picker is usually checking on
-			// some of the side effects after this call.
-			if (states.contains(currentState) && !inSetState()) {
-				// expected state found - all good
-				break;
-			}
-		}
-		CheStateEnum existingState = getCheStateEnum();
-		return existingState;
-	}
-
 	public void processResultOfVerifyBadge(Boolean verified) {
 		// To be overridden by SetupOrderDeviceLogic and LineScanDeviceLogic
 	}
@@ -2406,12 +2371,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	}
 	
 	protected void displayTemporaryMessage(String line1, String line2, final int timeout){
+		mTemporaryMessageDisplayed = true;
 		sendDisplayCommand(line1, line2);
 		Runnable clearThread = new Runnable() {
 			@Override
 			public void run() {
 				ThreadUtils.sleep(timeout);
 				setState(getCheStateEnum());
+				mTemporaryMessageDisplayed = false;
 			}
 		};
 		new Thread(clearThread).start();

@@ -1015,6 +1015,8 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		// NetGuid	remoteCheAssociatedToThis;
 
 		public CheData(String cheName, NetGuid associatedToCheGuid) {
+			setCheName(cheName);
+			setAssociatedToRemoteCheGuid(associatedToCheGuid);
 		}
 
 	}

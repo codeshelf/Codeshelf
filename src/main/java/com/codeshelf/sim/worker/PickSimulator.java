@@ -17,6 +17,8 @@ import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.util.ThreadUtils;
+import com.google.common.collect.Lists;
 
 public class PickSimulator {
 
@@ -61,6 +63,7 @@ public class PickSimulator {
 		scanUser(pickerId);
 		// badge authorization now takes longer. Trip to server and back
 		waitForCheState(inState, WAIT_TIME);
+		waitForTemporaryMessageToClear(WAIT_TIME);
 	}
 
 	public String getProcessType() {
@@ -394,24 +397,15 @@ public class PickSimulator {
 	 */
 	public void waitForCheState(CheStateEnum state, int timeoutInMillis) {
 		waitForDeviceState(cheDeviceLogic, state, timeoutInMillis);
-		/*
-		CheStateEnum lastState = cheDeviceLogic.waitForCheState(state, timeoutInMillis);
-		if (!state.equals(lastState)) {
-			String theProblem = String.format("Che state %s not encountered in %dms. State is %s, inSetState: %s",
-				state,
-				timeoutInMillis,
-				lastState,
-				cheDeviceLogic.inSetState());
-			throw new IllegalStateException(theProblem);
-		}
-		*/
 	}
 	
 	/**
 	 * Wait for specified state. Throw if state does not come in time, causing the test to fail.
 	 */
 	private void waitForDeviceState(CheDeviceLogic device, CheStateEnum state, int timeoutInMillis) {
-		CheStateEnum lastState = device.waitForCheState(state, timeoutInMillis);
+		ArrayList<CheStateEnum> states = Lists.newArrayList();
+		states.add(state);
+		CheStateEnum lastState = waitForOneOfCheStatesInner(device, states, timeoutInMillis);
 		if (!state.equals(lastState)) {
 			String theProblem = String.format("Che state %s not encountered in %dms. State is %s, inSetState: %s",
 				state,
@@ -422,9 +416,8 @@ public class PickSimulator {
 		}
 	}
 	
-
 	public void waitForOneOfCheStates(ArrayList<CheStateEnum> statesList, int timeoutInMillis) {
-		CheStateEnum lastState = cheDeviceLogic.waitForOneOfCheStates(statesList, timeoutInMillis);
+		CheStateEnum lastState = waitForOneOfCheStatesInner(cheDeviceLogic, statesList, timeoutInMillis);
 		if (!statesList.contains(lastState)) {
 			StringBuilder statesStr = new StringBuilder();
 			for (CheStateEnum state : statesList) {
@@ -437,6 +430,43 @@ public class PickSimulator {
 				cheDeviceLogic.inSetState());
 			throw new IllegalStateException(theProblem);
 		}
+	}
+	
+	/**
+	 * Method used for script testing, where a Che may transition to one of several states, and we'd like to wait for transition to finish before proceeding
+	 */
+	private CheStateEnum waitForOneOfCheStatesInner(CheDeviceLogic device, ArrayList<CheStateEnum> states, int timeoutInMillis) {
+		long start = System.currentTimeMillis();
+		while (System.currentTimeMillis() - start < timeoutInMillis) {
+			// retry every 100ms
+			ThreadUtils.sleep(100);
+			CheStateEnum currentState = device.getCheStateEnum();
+			// we are waiting for the expected CheStateEnum, AND the indicator that we are out of the setState() routine.
+			// Typically, the state is set first, then some side effects are called that depend on the state.  The picker is usually checking on
+			// some of the side effects after this call.
+			if (states.contains(currentState) && !device.inSetState()) {
+				// expected state found - all good
+				break;
+			}
+		}
+		CheStateEnum existingState = device.getCheStateEnum();
+		return existingState;
+	}
+
+	
+	public void waitForTemporaryMessageToClear(int timeoutInMillis) {
+		CheDeviceLogic device = getDeviceToAsk();
+		long start = System.currentTimeMillis();
+		while (System.currentTimeMillis() - start < timeoutInMillis) {
+			// retry every 100ms
+			ThreadUtils.sleep(100);
+			if (!device.isTemporaryMessageDisplayed()){
+				return;
+			}
+		}
+		String theProblem = String.format("CHE %s is still displaying temporary message %s after %dms", 
+			device.getGuid(), getLastCheDisplay(), timeoutInMillis);
+		throw new IllegalStateException(theProblem);
 	}
 
 	// This is for the drastic CHE process changes in v16. Is it PICK_COMPLETE state, or SETUP_SUMMARY state.
