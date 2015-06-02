@@ -826,6 +826,10 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		LOGGER.info("site controller processCheLinkResponse for guid:{} associate to:{}", networkGuid, linkedCheGuidId);
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
+			
+			// An edge case. If directly changing association from one cart to another, we need to reset the prior cart.
+			CheDeviceLogic priorLinkedDevice = cheDevice.getLinkedCheDevice();
+			
 			NetGuid associateGuid = null;
 			if (linkedCheGuidId != null) {
 				CheDeviceLogic linkedDevice = getCheDeviceFromPrefixHexString("0x" + linkedCheGuidId);
@@ -842,6 +846,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 			LOGGER.info("processCheLinkResponse calling cheDevice.maintainLink");
 			cheDevice.maintainLink(linkedCheName);
+			
+			// The edge case. If directly changing association from one cart to another, we need to reset the prior cart.
+			if (priorLinkedDevice != null && !priorLinkedDevice.getGuid().equals(associateGuid)){
+				LOGGER.info("breaking link to {}",priorLinkedDevice.getGuidNoPrefix());
+				// TODO
+				priorLinkedDevice.processUnLinkLocalVariables(cheDevice.getGuidNoPrefix());
+			}
 		} else {
 			LOGGER.error("Device not found in processCheLinkResponse. CHE id={}", networkGuid);
 		}

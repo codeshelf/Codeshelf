@@ -1374,13 +1374,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		//Retrieve state and username for the "good bye" message before they are cleared away. 
 		CheStateEnum originalState = getCheStateEnum();
 		
-		/*
-		if (getCheStateEnum() != CheStateEnum.IDLE) {
-			sendDisplayCommand("Goodbye, " + getUserNameUI(), "Have a nice day");
-			ThreadUtils.sleep(1500);
-		}
-		*/
-
 		// if this CHE is being remotely controlled, we want to break the link.
 		NetGuid linkedMobileGuid = this.getLinkedFromCheGuid();
 		if (linkedMobileGuid != null) {
@@ -2146,6 +2139,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (!CheStateEnum.REMOTE_PENDING.equals(this.getCheStateEnum())) {
 			LOGGER.error("Incorrect state in maintainLink. How? State is {}", getCheStateEnum());
 		}
+		
+		String priorLinkCheName = getLinkedToCheName();
+		LOGGER.info("CheDeviceLogic.maintainLink set link name: {}. Old link name was:{}", linkCheName, priorLinkCheName);
 
 		this.setLinkedToCheName(linkCheName); // null is ok here. Means no association.
 		if (linkCheName == null)
@@ -2201,6 +2197,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			LOGGER.error("enterLinkedState failed to find the device");
 			return;
 		}
+		// Is this is primary "link" transaction? Place the notify here.
+		notifyLink(linkedDevice.getGuid());
+		
 		linkedDevice.processLink(getGuid(), getUserId());
 	}
 
@@ -2306,7 +2305,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (linkedDevice == null) {
 			return;
 		}
-		LOGGER.info("{} unlinking. Giving up remote control.", this.getGuidNoPrefix());
+		// This is our best single unlink spot. Call notify here. Misses some forced unlinks.
+		notifyUnlink(linkedDevice.getGuid());
+		
 		linkedDevice.processUnLinkLocalVariables(this.getGuidNoPrefix());
 	}
 

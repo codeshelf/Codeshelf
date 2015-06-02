@@ -668,7 +668,7 @@ public class CheProcessRemoteLink extends ServerTest {
 		
 		// TODO disconnect CHE 2 as it has no user now.
 		LOGGER.info("5: CHE2 should be in idle state now.");
-		// picker2.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
+		picker2.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
 
 	}
 
