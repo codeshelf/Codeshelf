@@ -1489,11 +1489,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			return;
 		}
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-		BitSet usedPositions = new BitSet();
 		for (Entry<String, String> entry : mPositionToContainerMap.entrySet()) {
 			String containerId = entry.getValue();
 			Byte position = Byte.valueOf(entry.getKey());
-			usedPositions.set(position);
 			
 			Byte value = PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE;
 			//Use the last 1-2 characters of the containerId iff the container is numeric.
@@ -1526,9 +1524,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		}
 		LOGGER.debug("Sending Container Assaignments {}", instructions);
-		
-		//Adding the "clear" line below to clear PosCons from the new button-placement mode.
-		clearAllPosconsOnThisDevice();
 		
 		sendPositionControllerInstructions(instructions);		
 	}
