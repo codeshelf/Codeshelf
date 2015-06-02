@@ -4,8 +4,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.sql.Timestamp;
+import java.util.List;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -25,6 +27,7 @@ import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.LocationAliasCsvImporter;
 import com.codeshelf.edi.OrderLocationCsvImporter;
 import com.codeshelf.edi.OutboundOrderPrefetchCsvImporter;
+import com.codeshelf.model.domain.DataImportReceipt;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.validation.BatchResult;
 import com.google.inject.Inject;
@@ -139,4 +142,18 @@ public class ImportResource {
 			return new ErrorResponse().processException(e);
 		}
 	}
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getImportReceipts() {
+		try {
+			List<DataImportReceipt> receipts = DataImportReceipt.staticGetDao().getAll();
+			return BaseResponse.buildResponse(receipts);
+		}
+		catch (Exception e) {
+			return new ErrorResponse().processException(e);
+		}
+		
+	}
+	
 }
