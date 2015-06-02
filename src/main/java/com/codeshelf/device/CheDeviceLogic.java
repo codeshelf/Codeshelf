@@ -155,11 +155,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	// The CHE's current user. no lomboc because getUserId defined on base class
 	protected String								mUserId;
-	
-	@Setter
-	@Accessors(prefix = "m")
-	protected String								mUserNameUI;
-
 
 	// All WIs for all containers on the CHE.
 	@Accessors(prefix = "m")
@@ -213,6 +208,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Getter
 	@Setter
 	private NetGuid									mLinkedFromCheGuid						= null;
+	
+	@Accessors(prefix = "m")
+	@Getter @Setter
+	private boolean									mTemporaryMessageDisplayed				= false;
 
 	/**
 	 * We have only one inventory state, not two. Essentially another state by whether or not we think we have a valid
@@ -295,10 +294,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	public void setUserId(String user) {
 		mUserId = user;
-	}
-	
-	public String getUserNameUI() {
-		return (mUserNameUI == null || mUserId.isEmpty()) ? mUserId : mUserNameUI;
 	}
 
 	public boolean usesNewCheScreen() {
@@ -1370,17 +1365,37 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	}
 
 	// --------------------------------------------------------------------------
-	/**
+	/** 
+	 * logout() is the normal API
 	 */
 	protected void logout() {
 		notifyCheWorkerVerb("LOG OUT", "");
-
-		if (getCheStateEnum() != CheStateEnum.IDLE){
-			sendDisplayCommand("Goodbye, " + getUserNameUI(), "Have a nice day");
-			ThreadUtils.sleep(1500);
-		}
 		
-		this.setUserId("");
+		//Retrieve state and username for the "good bye" message before they are cleared away. 
+		CheStateEnum originalState = getCheStateEnum();
+		
+		// if this CHE is being remotely controlled, we want to break the link.
+		NetGuid linkedMobileGuid = this.getLinkedFromCheGuid();
+		if (linkedMobileGuid != null) {
+			breakLinkDueToLocalCheActivity(linkedMobileGuid);
+		}
+
+		// many side effects. Primarily clearing leds and poscons and setting state to idle
+		_logoutSideEffects();
+		
+		if (originalState != CheStateEnum.IDLE){
+			String userName = mDeviceManager.getWorkerNameFromGuid(getGuid());
+			mDeviceManager.setWorkerNameFromGuid(getGuid(), null);
+			displayTemporaryMessage("Goodbye, " + userName, "Have a nice day", 2000);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Called by normal logout, but also called when remote mobile che unlinks or logs out.
+	 */
+	private void _logoutSideEffects() {
+		this.setUserId(null);
 		mActivePickWiList.clear();
 		mAllPicksWiList.clear();
 		setState(CheStateEnum.IDLE);
@@ -2022,45 +2037,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 	}
 
-	public CheStateEnum waitForCheState(CheStateEnum state, int timeoutInMillis) {
-		long start = System.currentTimeMillis();
-		while (System.currentTimeMillis() - start < timeoutInMillis) {
-			// retry every 100ms
-			ThreadUtils.sleep(100);
-			CheStateEnum currentState = getCheStateEnum();
-			// we are waiting for the expected CheStateEnum, AND the indicator that we are out of the setState() routine.
-			// Typically, the state is set first, then some side effects are called that depend on the state.  The picker is usually checking on
-			// some of the side effects after this call.
-			if (currentState.equals(state) && !inSetState()) {
-				// expected state found - all good
-				break;
-			}
-		}
-		CheStateEnum existingState = getCheStateEnum();
-		return existingState;
-	}
-
-	/**
-	 * Method used for script testing, where a Che may transition to one of several states, and we'd like to wait for transition to finish before proceeding
-	 */
-	public CheStateEnum waitForOneOfCheStates(ArrayList<CheStateEnum> states, int timeoutInMillis) {
-		long start = System.currentTimeMillis();
-		while (System.currentTimeMillis() - start < timeoutInMillis) {
-			// retry every 100ms
-			ThreadUtils.sleep(100);
-			CheStateEnum currentState = getCheStateEnum();
-			// we are waiting for the expected CheStateEnum, AND the indicator that we are out of the setState() routine.
-			// Typically, the state is set first, then some side effects are called that depend on the state.  The picker is usually checking on
-			// some of the side effects after this call.
-			if (states.contains(currentState) && !inSetState()) {
-				// expected state found - all good
-				break;
-			}
-		}
-		CheStateEnum existingState = getCheStateEnum();
-		return existingState;
-	}
-
 	public void processResultOfVerifyBadge(Boolean verified) {
 		// To be overridden by SetupOrderDeviceLogic and LineScanDeviceLogic
 	}
@@ -2095,8 +2071,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			cheName = "(none)";
 			wasNull = true;
 		}
+		// TODO localize
 		String line1 = String.format("Linked to: %s", cheName);
-		String line2 = "Scan Che name to link";
+		String line2 = "Scan CHE name to link";
 		String line3 = "";
 		String line4 = "";
 		if (!wasNull) {
@@ -2153,12 +2130,18 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	/**
 	 * This is called as a result of AssociateRemoteCheResponse. We need to transition off of remote_Pending state,
 	 * and update our local variables.
+	 * One complexity: If we were linked to one CHE then
+	 * - Now linked to none: make sure the cart CHE goes to idle
+	 * - Now linked to different cart CHE: make sure first cart CHE goes to idle. (See test remoteToDifferentCart).
 	 */
 	public void maintainLink(String linkCheName) {
 		LOGGER.debug("maintainLink called with {}", linkCheName);
 		if (!CheStateEnum.REMOTE_PENDING.equals(this.getCheStateEnum())) {
 			LOGGER.error("Incorrect state in maintainLink. How? State is {}", getCheStateEnum());
 		}
+		
+		String priorLinkCheName = getLinkedToCheName();
+		LOGGER.info("CheDeviceLogic.maintainLink set link name: {}. Old link name was:{}", linkCheName, priorLinkCheName);
 
 		this.setLinkedToCheName(linkCheName); // null is ok here. Means no association.
 		if (linkCheName == null)
@@ -2214,6 +2197,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			LOGGER.error("enterLinkedState failed to find the device");
 			return;
 		}
+		// Is this is primary "link" transaction? Place the notify here.
+		notifyLink(linkedDevice.getGuid());
+		
 		linkedDevice.processLink(getGuid(), getUserId());
 	}
 
@@ -2273,18 +2259,42 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.info("{} logged out, so setting remote screen back.", this.getGuidNoPrefix());
 		linkedDevice.processDisconnectRemoteDueToLogout(this.getGuidNoPrefix());
 	}
-	
+
 	/**
 	 * When the controlling CHE clears the link or logs out when linked, the cart CHE should return to its base state.
 	 * This is the receiving (cart CHE) side of the transaction.
 	 */
 	void processDisconnectRemoteDueToLogout(String sourceString) {
-		setLinkedFromCheGuid(null); 
-		setUserId(null);
-		setState(CheStateEnum.IDLE);
+		setLinkedFromCheGuid(null);
+
 		LOGGER.info("{} inactive link from {} due to logout. Back to base state.", this.getGuidNoPrefix(), sourceString);
+		_logoutSideEffects();
 	}
 
+	/**
+	 * If the controlled CHE logs out while mobile CHE is controlling it, we want the controlling CHE to know it.
+	 * This is the sending (cart CHE) side of the transaction
+	 */
+	void breakLinkDueToLocalCheActivity(NetGuid linkedMobileGuid) {
+		LOGGER.info("Breaking link from {} due to local logout", linkedMobileGuid.getHexStringNoPrefix());
+		CheDeviceLogic linkedMobileDevice = getLinkFromCheDevice(); // should correspond to linkedMobileGuid
+		if (linkedMobileDevice != null) {
+			linkedMobileDevice.processBreakLinkDueToLocalCheActivity();
+		}
+	}
+
+	/**
+	 * If the controlled CHE logs out while mobile CHE is controlling it, we want the controlling CHE to know it.
+	 * This is the receiving (mobile CHE) side of the transaction. The result we want is transition to REMOTE state showing no link
+	 * 
+	 */
+	void processBreakLinkDueToLocalCheActivity() {
+		if (CheStateEnum.REMOTE_LINKED.equals(this.getCheStateEnum())) {
+			// This is a rather large side effect. To remote pending state, waiting for response
+			// This achieves the unlink happening all the way up at the server.
+			unlinkRemoteCheAssociation();
+		}
+	}
 
 	/**
 	 * When the controlling CHE clears the link or logs out when linked, the cart CHE should return to its base state.
@@ -2295,7 +2305,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (linkedDevice == null) {
 			return;
 		}
-		LOGGER.info("{} unlinking. Giving up remote control.", this.getGuidNoPrefix());
+		// This is our best single unlink spot. Call notify here. Misses some forced unlinks.
+		notifyUnlink(linkedDevice.getGuid());
+		
 		linkedDevice.processUnLinkLocalVariables(this.getGuidNoPrefix());
 	}
 
@@ -2358,5 +2370,18 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			LOGGER.warn("processScreenCommandFromLinkedChe called from state:{}. Not drawing", state);
 		}
 	}
-
+	
+	protected void displayTemporaryMessage(String line1, String line2, final int timeout){
+		mTemporaryMessageDisplayed = true;
+		sendDisplayCommand(line1, line2);
+		Runnable clearThread = new Runnable() {
+			@Override
+			public void run() {
+				ThreadUtils.sleep(timeout);
+				setState(getCheStateEnum());
+				mTemporaryMessageDisplayed = false;
+			}
+		};
+		new Thread(clearThread).start();
+	}
 }

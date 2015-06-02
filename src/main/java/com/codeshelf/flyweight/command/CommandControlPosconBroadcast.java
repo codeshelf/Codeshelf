@@ -7,6 +7,7 @@ import lombok.experimental.Accessors;
 
 public class CommandControlPosconBroadcast extends CommandControlABC{
 	public static final byte	POS_SHOW_ADDR 					= 1;
+	public static final byte	CLEAR_POSCON 					= 2;
 	
 	@Accessors(prefix = "m")
 	@Getter @Setter

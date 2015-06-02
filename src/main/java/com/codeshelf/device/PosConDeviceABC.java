@@ -417,6 +417,25 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		notifyDisplayTag(posconSummary, "CHE_DISPLAY Poscons");
 	}
 
+	protected void notifyLink(NetGuid linkingTo) {
+		if (linkingTo == null) {
+			LOGGER.error("null guid in notifyLink");
+			return;
+		}
+		String toNotify = String.format("Linking to %s. Taking remote control.", linkingTo.getHexStringNoPrefix());
+		notifyDisplayTag(toNotify, "CHE_EVENT Link");
+	}
+	
+	protected void notifyUnlink(NetGuid unlinkFrom) {
+		if (unlinkFrom == null) {
+			LOGGER.error("null guid in notifyUnLink");
+			return;
+		}
+		String toNotify = String.format("Unlink from %s. Giving up remote control.", unlinkFrom.getHexStringNoPrefix());
+		notifyDisplayTag(toNotify, "CHE_EVENT Unlink");
+	}
+
+	
 	/*
 	 * Helper functions
 	 */

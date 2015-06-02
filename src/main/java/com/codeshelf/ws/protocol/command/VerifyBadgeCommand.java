@@ -33,7 +33,7 @@ public class VerifyBadgeCommand extends CommandABC {
 			String networkGuid = che.getDeviceNetGuid().getHexStringNoPrefix();
 			String workerName = workService.verifyBadgeAndGetWorkerName(che.getFacility(), request.getBadge());
 			response.setNetworkGuid(networkGuid);
-			response.setUserNameUI(workerName);
+			response.setWorkerNameUI(workerName);
 			response.setVerified(workerName != null);
 			response.setStatus(ResponseStatus.Success);
 			return response;

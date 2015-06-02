@@ -753,13 +753,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		LOGGER.debug("Network updated: {} active devices, {} removed", updateDevices.size(), deleteDevices.size());
 	}
 
-	public void processVerifyBadgeResponse(String networkGuid, Boolean verified, String userNameUI) {
+	public void processVerifyBadgeResponse(String networkGuid, Boolean verified, String workerNameUI) {
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			if (verified == null) {
 				verified = false;
 			}
-			cheDevice.setUserNameUI(userNameUI);
+			setWorkerNameFromGuid(cheDevice.getGuid(), workerNameUI);
 			cheDevice.processResultOfVerifyBadge(verified);
 		} else {
 			LOGGER.warn("Unable to process Verify Badge response for CHE id={} CHE not found", networkGuid);
@@ -826,6 +826,10 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		LOGGER.info("site controller processCheLinkResponse for guid:{} associate to:{}", networkGuid, linkedCheGuidId);
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
+			
+			// An edge case. If directly changing association from one cart to another, we need to reset the prior cart.
+			CheDeviceLogic priorLinkedDevice = cheDevice.getLinkedCheDevice();
+			
 			NetGuid associateGuid = null;
 			if (linkedCheGuidId != null) {
 				CheDeviceLogic linkedDevice = getCheDeviceFromPrefixHexString("0x" + linkedCheGuidId);
@@ -842,6 +846,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 			LOGGER.info("processCheLinkResponse calling cheDevice.maintainLink");
 			cheDevice.maintainLink(linkedCheName);
+			
+			// The edge case. If directly changing association from one cart to another, we need to reset the prior cart.
+			if (priorLinkedDevice != null && !priorLinkedDevice.getGuid().equals(associateGuid)){
+				LOGGER.info("breaking link to {}",priorLinkedDevice.getGuidNoPrefix());
+				// TODO
+				priorLinkedDevice.processUnLinkLocalVariables(cheDevice.getGuidNoPrefix());
+			}
 		} else {
 			LOGGER.error("Device not found in processCheLinkResponse. CHE id={}", networkGuid);
 		}
@@ -1005,12 +1016,18 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		@Getter
 		@Setter
 		NetGuid	associatedToRemoteCheGuid;
+		
+		@Getter
+		@Setter
+		String	workerNameUI;				// the ui-friendly name of the logged in worker
 
 		// @Getter
 		// @Setter
 		// NetGuid	remoteCheAssociatedToThis;
 
 		public CheData(String cheName, NetGuid associatedToCheGuid) {
+			setCheName(cheName);
+			setAssociatedToRemoteCheGuid(associatedToCheGuid);
 		}
 
 	}
@@ -1101,6 +1118,32 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		}
 		return assocData.getCheName();
 	}
+	
+	/**
+	 * From the guid, what is the associated worker's ui-friendly name
+	 */
+	public String getWorkerNameFromGuid(NetGuid thisCheGuid) {
+		CheData thisData = mDeviceDataMap.get(thisCheGuid);
+		if (thisData == null) {
+			return "";
+		}
+		String workerName = thisData.getWorkerNameUI();
+		return workerName == null ? "" : workerName;
+	}
+	
+	/**
+	 * From the guid, set che worker's ui-friendly name
+	 */
+	public void setWorkerNameFromGuid(NetGuid thisCheGuid, String workerName) {
+		CheData thisData = mDeviceDataMap.get(thisCheGuid);
+		if (thisData == null) {
+			thisData = new CheData(null, null);
+			mDeviceDataMap.put(thisCheGuid, thisData);
+		}
+		thisData.setWorkerNameUI(workerName);
+	}
+
+
 
 	/**
 	 * Fairly trivial function provides useful logging. Common bug is mixup of prefix or not on the hex string.
