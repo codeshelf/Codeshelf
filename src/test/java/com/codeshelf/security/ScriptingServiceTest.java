@@ -37,7 +37,7 @@ public class ScriptingServiceTest extends ServerTest {
 		String text = "def OrderImportBeanTransformation(orderBean) { orderBean.description == 'abc' }";
 		ExtensionPoint needsScanScript = new ExtensionPoint();
 		needsScanScript.setParent(facility);
-		needsScanScript.setExtension(ExtensionPointType.OrderImportBeanTransformation);
+		needsScanScript.setType(ExtensionPointType.OrderImportBeanTransformation);
 		needsScanScript.setScript(text);
 		needsScanScript.setDomainId(ExtensionPointType.OrderImportBeanTransformation.toString());
 		ExtensionPoint.staticGetDao().store(needsScanScript);
@@ -82,7 +82,7 @@ public class ScriptingServiceTest extends ServerTest {
 		String text = "def OrderImportBeanTransformation(orderBean) { orderBean.needsScan = true; orderBean }";
 		ExtensionPoint needsScanScript = new ExtensionPoint();
 		needsScanScript.setParent(facility);
-		needsScanScript.setExtension(ExtensionPointType.OrderImportBeanTransformation);
+		needsScanScript.setType(ExtensionPointType.OrderImportBeanTransformation);
 		needsScanScript.setScript(text);
 		needsScanScript.setDomainId(ExtensionPointType.OrderImportBeanTransformation.toString());
 		ExtensionPoint.staticGetDao().store(needsScanScript);
@@ -144,7 +144,7 @@ public class ScriptingServiceTest extends ServerTest {
 		String text = "def OrderImportBeanTransformation(orderBean) { if (orderBean.customerId=='FOOBAR') orderBean.needsScan = true; orderBean }";
 		ExtensionPoint needsScanScript = new ExtensionPoint();
 		needsScanScript.setParent(facility);
-		needsScanScript.setExtension(ExtensionPointType.OrderImportBeanTransformation);
+		needsScanScript.setType(ExtensionPointType.OrderImportBeanTransformation);
 		needsScanScript.setScript(text);
 		needsScanScript.setDomainId(ExtensionPointType.OrderImportBeanTransformation.toString());
 		ExtensionPoint.staticGetDao().store(needsScanScript);
@@ -209,7 +209,7 @@ public class ScriptingServiceTest extends ServerTest {
 		String text = "def OrderImportHeaderTransformation(orderHeader) { orderHeader.replaceAll('\\\\^', ',') }";
 		ExtensionPoint extp = new ExtensionPoint();
 		extp.setParent(facility);
-		extp.setExtension(ExtensionPointType.OrderImportHeaderTransformation);
+		extp.setType(ExtensionPointType.OrderImportHeaderTransformation);
 		extp.setScript(text);
 		extp.setDomainId(ExtensionPointType.OrderImportHeaderTransformation.toString());
 		ExtensionPoint.staticGetDao().store(extp);
@@ -271,7 +271,7 @@ public class ScriptingServiceTest extends ServerTest {
 		String text = "def OrderImportLineTransformation(orderLine) { orderLine.replaceAll('~', ',') }";
 		ExtensionPoint extp = new ExtensionPoint();
 		extp.setParent(facility);
-		extp.setExtension(ExtensionPointType.OrderImportLineTransformation);
+		extp.setType(ExtensionPointType.OrderImportLineTransformation);
 		extp.setScript(text);
 		extp.setDomainId(ExtensionPointType.OrderImportLineTransformation.toString());
 		ExtensionPoint.staticGetDao().store(extp);

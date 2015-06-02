@@ -56,7 +56,7 @@ public class ExtensionPoint extends DomainObjectTreeABC<Facility> {
 	@Column(nullable = false)
 	@Getter @Setter
 	@JsonProperty
-	ExtensionPointType extension;
+	ExtensionPointType type;
 	
 	@Column(nullable = false, columnDefinition = "TEXT")
 	@Getter @Setter

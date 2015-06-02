@@ -47,8 +47,8 @@ public class ScriptingService {
 	public List<ExtensionPoint> loadScripts(Facility facility) throws ScriptException {
 		List<ExtensionPoint> scripts = ExtensionPoint.staticGetDao().findByParent(facility);
 		for (ExtensionPoint script : scripts) {
-			LOGGER.info("Adding extention point " + script.getExtension());
-			this.addExtentionPoint(script.getExtension(), script.getScript());
+			LOGGER.info("Adding extention point " + script.getType());
+			this.addExtentionPoint(script.getType(), script.getScript());
 		}
 		return scripts;
 	}
