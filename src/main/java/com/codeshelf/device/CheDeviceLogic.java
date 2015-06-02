@@ -156,10 +156,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	// The CHE's current user. no lomboc because getUserId defined on base class
 	protected String								mUserId;
 
-	@Setter
-	@Accessors(prefix = "m")
-	protected String								mUserNameUI;
-
 	// All WIs for all containers on the CHE.
 	@Accessors(prefix = "m")
 	@Getter
@@ -294,10 +290,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	public void setUserId(String user) {
 		mUserId = user;
-	}
-
-	public String getUserNameUI() {
-		return (mUserNameUI == null || mUserId.isEmpty()) ? mUserId : mUserNameUI;
 	}
 
 	public boolean usesNewCheScreen() {
@@ -1375,6 +1367,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected void logout() {
 		notifyCheWorkerVerb("LOG OUT", "");
 		
+		//Retrieve state and username for the "good bye" message before they are cleared away. 
+		CheStateEnum originalState = getCheStateEnum();
+		
 		/*
 		if (getCheStateEnum() != CheStateEnum.IDLE) {
 			sendDisplayCommand("Goodbye, " + getUserNameUI(), "Have a nice day");
@@ -1390,6 +1385,12 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		// many side effects. Primarily clearing leds and poscons and setting state to idle
 		_logoutSideEffects();
+		
+		if (originalState != CheStateEnum.IDLE){
+			String userName = mDeviceManager.getWorkerNameFromGuid(getGuid());
+			mDeviceManager.setWorkerNameFromGuid(getGuid(), null);
+			displayTemporaryMessage("Goodbye, " + userName, "Have a nice day", 2000);
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -2403,5 +2404,16 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			LOGGER.warn("processScreenCommandFromLinkedChe called from state:{}. Not drawing", state);
 		}
 	}
-
+	
+	protected void displayTemporaryMessage(String line1, String line2, final int timeout){
+		sendDisplayCommand(line1, line2);
+		Runnable clearThread = new Runnable() {
+			@Override
+			public void run() {
+				ThreadUtils.sleep(timeout);
+				setState(getCheStateEnum());
+			}
+		};
+		new Thread(clearThread).start();
+	}
 }

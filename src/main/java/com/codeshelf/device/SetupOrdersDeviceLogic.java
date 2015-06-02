@@ -7,6 +7,7 @@ package com.codeshelf.device;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -24,6 +25,8 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.flyweight.command.CommandControlPosconBroadcast;
+import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.WorkInstructionCount;
@@ -1118,6 +1121,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 *   back end does a search to determine what it is.
 	 */
 	private void processContainerSelectScan(final String inScanPrefixStr, String inScanStr) {
+		processContainerSelectScan(inScanPrefixStr, inScanStr, false);
+	}
+	
+	private void processContainerSelectScan(final String inScanPrefixStr, String inScanStr, boolean sendPosConBroadcast) {
 		boolean possiblePutWallScan = LOCATION_PREFIX.equals(inScanPrefixStr);
 		// Since we enforce "all orders/containers" or "all putwall" per cart setup, we can track that here.
 		boolean setupMixOk = recordSetupMix(possiblePutWallScan);
@@ -1142,6 +1149,19 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			// cart. But if some generic position that the user wanted to start at, we want to either "error, please START", or go directly to processLocationScan
 			// in order to compute the work. Site controller cannot know which case it is.
 			setState(CheStateEnum.CONTAINER_POSITION);
+
+			BitSet usedPositions = new BitSet();
+			for (Entry<String, String> entry : mPositionToContainerMap.entrySet()) {
+				Byte position = Byte.valueOf(entry.getKey());
+				usedPositions.set(position);
+			}
+			
+			if (sendPosConBroadcast) {
+				CommandControlPosconBroadcast broadcast = new CommandControlPosconBroadcast(CommandControlPosconBroadcast.POS_SHOW_ADDR, NetEndpoint.PRIMARY_ENDPOINT);
+				broadcast.setExcludeMap(usedPositions.toByteArray());
+				mRadioController.sendCommand(broadcast, getAddress(), true);
+			}
+			
 		} else {
 			setState(CheStateEnum.CONTAINER_SELECTION_INVALID);
 		}
@@ -1276,12 +1296,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				clearAllPosconsOnThisDevice();
 			
 				notifyCheWorkerVerb("LOG IN", "");
-				
-				/*
-				sendDisplayCommand("Welcome, " + getUserNameUI(), "");
-				ThreadUtils.sleep(1500);
-				*/
-				
+								
 				// If I am linked, and I just logged in, let's go to the REMOTE screen to show the worker what she is linked to.
 				// Better than going directly to REMOTE_LINKED state.
 				String cheName = getLinkedToCheName();
@@ -1291,7 +1306,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				else {
 					setState(CheStateEnum.SETUP_SUMMARY); // the normal case
 				}
-			
+				
+				displayTemporaryMessage("Welcome, " + mDeviceManager.getWorkerNameFromGuid(getGuid()), "", 2000);
 			} else {
 				setState(CheStateEnum.IDLE);
 				invalidScanMsg(UNKNOWN_BADGE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
@@ -1372,7 +1388,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case CONTAINER_SELECT:
-				processContainerSelectScan(inScanPrefixStr, inContent);
+				processContainerSelectScan(inScanPrefixStr, inContent, true);
 				break;
 
 			case CONTAINER_POSITION:
@@ -1473,11 +1489,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			return;
 		}
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-
+		BitSet usedPositions = new BitSet();
 		for (Entry<String, String> entry : mPositionToContainerMap.entrySet()) {
 			String containerId = entry.getValue();
 			Byte position = Byte.valueOf(entry.getKey());
-
+			usedPositions.set(position);
+			
 			Byte value = PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE;
 			//Use the last 1-2 characters of the containerId iff the container is numeric.
 			//Otherwise stick to the default character "a"
@@ -1509,8 +1526,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		}
 		LOGGER.debug("Sending Container Assaignments {}", instructions);
-
-		sendPositionControllerInstructions(instructions);
+		
+		//Adding the "clear" line below to clear PosCons from the new button-placement mode.
+		clearAllPosconsOnThisDevice();
+		
+		sendPositionControllerInstructions(instructions);		
 	}
 
 	// --------------------------------------------------------------------------

@@ -12,7 +12,7 @@ public class VerifyBadgeResponse extends ResponseABC {
 	private Boolean verified = false;
 	
 	@Getter @Setter
-	private String userNameUI;
+	private String workerNameUI;
 	
 	@Override
 	public String getDeviceIdentifier() {
