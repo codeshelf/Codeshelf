@@ -162,7 +162,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 			if (verified) {
 				clearAllPosconsOnThisDevice();
 				setState(CheStateEnum.READY);
-				displayTemporaryMessage("Welcome, " + mDeviceManager.getWorkerNameFromGuid(getGuid()), "", 2000);
+				displayTemporaryMessage("Welcome, " + mDeviceManager.getWorkerNameFromGuid(getGuid()), "", 1500);
 			} else {
 				setState(CheStateEnum.IDLE);
 				invalidScanMsg(UNKNOWN_BADGE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);

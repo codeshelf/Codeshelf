@@ -1149,22 +1149,26 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			// cart. But if some generic position that the user wanted to start at, we want to either "error, please START", or go directly to processLocationScan
 			// in order to compute the work. Site controller cannot know which case it is.
 			setState(CheStateEnum.CONTAINER_POSITION);
-
-			BitSet usedPositions = new BitSet();
-			for (Entry<String, String> entry : mPositionToContainerMap.entrySet()) {
-				Byte position = Byte.valueOf(entry.getKey());
-				usedPositions.set(position);
-			}
 			
 			if (sendPosConBroadcast) {
 				CommandControlPosconBroadcast broadcast = new CommandControlPosconBroadcast(CommandControlPosconBroadcast.POS_SHOW_ADDR, NetEndpoint.PRIMARY_ENDPOINT);
-				broadcast.setExcludeMap(usedPositions.toByteArray());
+				broadcast.setExcludeMap(getUsedPositionsByteArray());
 				mRadioController.sendCommand(broadcast, getAddress(), true);
 			}
 			
 		} else {
 			setState(CheStateEnum.CONTAINER_SELECTION_INVALID);
 		}
+	}
+	
+	private byte[] getUsedPositionsByteArray(){
+		BitSet usedPositions = new BitSet();
+		for (Entry<String, String> entry : mPositionToContainerMap.entrySet()) {
+			Byte position = Byte.valueOf(entry.getKey());
+			usedPositions.set(position);
+		}
+		byte[] data = usedPositions.toByteArray();
+		return data;
 	}
 
 	// --------------------------------------------------------------------------
@@ -1307,7 +1311,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					setState(CheStateEnum.SETUP_SUMMARY); // the normal case
 				}
 				
-				displayTemporaryMessage("Welcome, " + mDeviceManager.getWorkerNameFromGuid(getGuid()), "", 2000);
+				displayTemporaryMessage("Welcome, " + mDeviceManager.getWorkerNameFromGuid(getGuid()), "", 1500);
 			} else {
 				setState(CheStateEnum.IDLE);
 				invalidScanMsg(UNKNOWN_BADGE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
@@ -1524,6 +1528,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		}
 		LOGGER.debug("Sending Container Assaignments {}", instructions);
+		
+		//Adding the "clear" code below to clear PosCons from the new button-placement mode.
+		CommandControlPosconBroadcast broadcast = new CommandControlPosconBroadcast(CommandControlPosconBroadcast.CLEAR_POSCON, NetEndpoint.PRIMARY_ENDPOINT);
+		broadcast.setExcludeMap(getUsedPositionsByteArray());
+		mRadioController.sendCommand(broadcast, getAddress(), true);
 		
 		sendPositionControllerInstructions(instructions);		
 	}
