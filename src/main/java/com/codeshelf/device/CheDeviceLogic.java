@@ -526,10 +526,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 		logLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message); // not logged if no association
 		clearDisplay();
+		quickSleep();
 
 		sendSingleLineDisplayMessage(inLine1Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 35);
+		quickSleep();
 		sendSingleLineDisplayMessage(inLine2Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 90);
+		quickSleep();
 		sendSingleLineDisplayMessage(inLine3Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 145);
+		quickSleep();
 		if (largerBottomLine)
 			sendSingleLineDisplayMessage(inLine4Message,
 				CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24,
@@ -1949,4 +1953,20 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	public void processResultOfVerifyBadge(Boolean verified) {
 		// To be overridden by SetupOrderDeviceLogic and LineScanDeviceLogic
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Sleep briefly between repeated sends to same CHE. Especially in sendMonospaceDisplayScreen
+	 */
+	protected void quickSleep() {
+		// Does this help? Getting missed packets and therefore incomplete screen redraws.
+		// For v16 and version 3.0.3, Andrew wants 50 ms. Not great, but ok for Accu for now.
+		// with 3.1 will eliminate, or at least reduce to 5ms.
+		try {
+			Thread.sleep(50);
+		} catch (InterruptedException e) {
+		}
+	}
+
+
 }

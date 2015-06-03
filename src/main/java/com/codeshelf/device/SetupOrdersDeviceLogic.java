@@ -1136,6 +1136,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			clearAllPosconsOnThisDevice();
 			this.setUserId(inScanStr);
 			setState(CheStateEnum.VERIFYING_BADGE);
+			quickSleep();// Andrew wants this temporarily
 			mDeviceManager.verifyBadge(getGuid().getHexStringNoPrefix(), getPersistentId(), inScanStr);
 		} else {
 			LOGGER.info("Not a user ID: " + inScanStr);
