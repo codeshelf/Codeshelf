@@ -208,9 +208,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Getter
 	@Setter
 	private NetGuid									mLinkedFromCheGuid						= null;
-	
+
 	@Accessors(prefix = "m")
-	@Getter @Setter
+	@Getter
+	@Setter
 	private boolean									mTemporaryMessageDisplayed				= false;
 
 	/**
@@ -1370,10 +1371,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	protected void logout() {
 		notifyCheWorkerVerb("LOG OUT", "");
-		
+
 		//Retrieve state and username for the "good bye" message before they are cleared away. 
 		CheStateEnum originalState = getCheStateEnum();
-		
+
 		// if this CHE is being remotely controlled, we want to break the link.
 		NetGuid linkedMobileGuid = this.getLinkedFromCheGuid();
 		if (linkedMobileGuid != null) {
@@ -1382,8 +1383,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		// many side effects. Primarily clearing leds and poscons and setting state to idle
 		_logoutSideEffects();
-		
-		if (originalState != CheStateEnum.IDLE){
+
+		if (originalState != CheStateEnum.IDLE) {
 			String userName = mDeviceManager.getWorkerNameFromGuid(getGuid());
 			mDeviceManager.setWorkerNameFromGuid(getGuid(), null);
 			displayTemporaryMessage("Goodbye, " + userName, "Have a nice day", 2000);
@@ -2139,7 +2140,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (!CheStateEnum.REMOTE_PENDING.equals(this.getCheStateEnum())) {
 			LOGGER.error("Incorrect state in maintainLink. How? State is {}", getCheStateEnum());
 		}
-		
+
 		String priorLinkCheName = getLinkedToCheName();
 		LOGGER.info("CheDeviceLogic.maintainLink set link name: {}. Old link name was:{}", linkCheName, priorLinkCheName);
 
@@ -2199,7 +2200,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 		// Is this is primary "link" transaction? Place the notify here.
 		notifyLink(linkedDevice.getGuid());
-		
+
 		linkedDevice.processLink(getGuid(), getUserId());
 	}
 
@@ -2307,7 +2308,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 		// This is our best single unlink spot. Call notify here. Misses some forced unlinks.
 		notifyUnlink(linkedDevice.getGuid());
-		
+
 		linkedDevice.processUnLinkLocalVariables(this.getGuidNoPrefix());
 	}
 
@@ -2316,10 +2317,21 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * This is the receiving (cart CHE) side of the transaction.
 	 */
 	void processUnLinkLocalVariables(String sourceString) {
+		LOGGER.info("{} unlinking from {}. Resuming local control.", this.getGuidNoPrefix(), sourceString);
 		setLinkedFromCheGuid(null);
 		setUserId(null);
 		setState(CheStateEnum.IDLE);
-		LOGGER.info("{} unlinked from {}. Resuming local control.", sourceString, this.getGuidNoPrefix());
+	}
+
+	/**
+	 * This is rarely used. Only if a CHE was remote to another, and then itself gets controlled. It should not be in linked state.
+	 * Or one mobile was in linked state, then another mobile takes over control of the same cart.
+	 * Note the database and csDeviceLogic structures should be good when this called. This is only about the cheDeviceLogic member variables
+	 */
+	void forceFromLinkedState(CheStateEnum newState) {
+		LOGGER.warn("{} forced from state {} to {}", this.getGuidNoPrefix(), getCheStateEnum(), newState);
+		this.setLinkedToCheName(null);
+		setState(newState);
 	}
 
 	public void finishLogin() {
@@ -2370,8 +2382,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			LOGGER.warn("processScreenCommandFromLinkedChe called from state:{}. Not drawing", state);
 		}
 	}
-	
-	protected void displayTemporaryMessage(String line1, String line2, final int timeout){
+
+	protected void displayTemporaryMessage(String line1, String line2, final int timeout) {
 		mTemporaryMessageDisplayed = true;
 		sendDisplayCommand(line1, line2);
 		Runnable clearThread = new Runnable() {

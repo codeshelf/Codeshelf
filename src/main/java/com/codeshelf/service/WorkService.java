@@ -1991,7 +1991,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		// By any chance, is the che we are going to associate to already pointing at another CHE? If so, clear that.
 		Che chePointedAt = otherChe.getLinkedToChe();
 		if (chePointedAt != null) {
-			LOGGER.warn("linkCheToCheName(): {} was itself link to {}. Clearing {} association",
+			LOGGER.warn("linkCheToCheName(): {} was itself linked to {}. Clearing {} association",
 				otherChe.getDomainId(),
 				chePointedAt.getDomainId(),
 				otherChe.getDomainId());
