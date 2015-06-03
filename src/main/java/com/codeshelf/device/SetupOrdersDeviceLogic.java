@@ -390,7 +390,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case REMOTE_COMMAND:
 				remoteCommandReceived();
 				break;
-				
+
 			case POSCON_COMMAND:
 				posconSetupCommandReveived();
 				break;
@@ -409,6 +409,19 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// state sensitive. Only allow at start and finish for now.
 		switch (mCheStateEnum) {
 			case SETUP_SUMMARY:
+				// One tricky case. If this CHE is being remote controlled by another, and then there is a local remote scan
+				// we need to do something to remain consistent. Notice, we are only logged in as a result of the controlling CHE's log in, so
+				// if we do anything at all, we would have to log out. Probably best to do nothing. Local logout scan is the way out of this if the 
+				// mobile has disappeared
+				if (this.getLinkedFromCheGuid() != null) {
+					LOGGER.warn("{}: REMOTE scan from controlled CHE not allowed. (Would have to log out to do anything.) User should LOGOUT to use this CHE independently",
+						getGuidNoPrefix());
+				} else {
+					// The usual case is to go straight to remote state.
+					setState(CheStateEnum.REMOTE);
+				}
+				break;
+
 			case REMOTE_LINKED:
 				setState(CheStateEnum.REMOTE);
 				break;
@@ -1123,7 +1136,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private void processContainerSelectScan(final String inScanPrefixStr, String inScanStr) {
 		processContainerSelectScan(inScanPrefixStr, inScanStr, false);
 	}
-	
+
 	private void processContainerSelectScan(final String inScanPrefixStr, String inScanStr, boolean sendPosConBroadcast) {
 		boolean possiblePutWallScan = LOCATION_PREFIX.equals(inScanPrefixStr);
 		// Since we enforce "all orders/containers" or "all putwall" per cart setup, we can track that here.
@@ -1149,19 +1162,20 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			// cart. But if some generic position that the user wanted to start at, we want to either "error, please START", or go directly to processLocationScan
 			// in order to compute the work. Site controller cannot know which case it is.
 			setState(CheStateEnum.CONTAINER_POSITION);
-			
+
 			if (sendPosConBroadcast) {
-				CommandControlPosconBroadcast broadcast = new CommandControlPosconBroadcast(CommandControlPosconBroadcast.POS_SHOW_ADDR, NetEndpoint.PRIMARY_ENDPOINT);
+				CommandControlPosconBroadcast broadcast = new CommandControlPosconBroadcast(CommandControlPosconBroadcast.POS_SHOW_ADDR,
+					NetEndpoint.PRIMARY_ENDPOINT);
 				broadcast.setExcludeMap(getUsedPositionsByteArray());
 				mRadioController.sendCommand(broadcast, getAddress(), true);
 			}
-			
+
 		} else {
 			setState(CheStateEnum.CONTAINER_SELECTION_INVALID);
 		}
 	}
-	
-	private byte[] getUsedPositionsByteArray(){
+
+	private byte[] getUsedPositionsByteArray() {
 		BitSet usedPositions = new BitSet();
 		for (Entry<String, String> entry : mPositionToContainerMap.entrySet()) {
 			Byte position = Byte.valueOf(entry.getKey());
@@ -1298,19 +1312,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (verified) {
 				// finishLogin();
 				clearAllPosconsOnThisDevice();
-			
+
 				notifyCheWorkerVerb("LOG IN", "");
-								
+
 				// If I am linked, and I just logged in, let's go to the REMOTE screen to show the worker what she is linked to.
 				// Better than going directly to REMOTE_LINKED state.
 				String cheName = getLinkedToCheName();
 				if (cheName != null) {
 					setState(CheStateEnum.REMOTE);
-				}
-				else {
+				} else {
 					setState(CheStateEnum.SETUP_SUMMARY); // the normal case
 				}
-				
+
 				displayTemporaryMessage("Welcome, " + mDeviceManager.getWorkerNameFromGuid(getGuid()), "", 1500);
 			} else {
 				setState(CheStateEnum.IDLE);
@@ -1496,7 +1509,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		for (Entry<String, String> entry : mPositionToContainerMap.entrySet()) {
 			String containerId = entry.getValue();
 			Byte position = Byte.valueOf(entry.getKey());
-			
+
 			Byte value = PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE;
 			//Use the last 1-2 characters of the containerId iff the container is numeric.
 			//Otherwise stick to the default character "a"
@@ -1528,13 +1541,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		}
 		LOGGER.debug("Sending Container Assaignments {}", instructions);
-		
+
 		//Adding the "clear" code below to clear PosCons from the new button-placement mode.
-		CommandControlPosconBroadcast broadcast = new CommandControlPosconBroadcast(CommandControlPosconBroadcast.CLEAR_POSCON, NetEndpoint.PRIMARY_ENDPOINT);
+		CommandControlPosconBroadcast broadcast = new CommandControlPosconBroadcast(CommandControlPosconBroadcast.CLEAR_POSCON,
+			NetEndpoint.PRIMARY_ENDPOINT);
 		broadcast.setExcludeMap(getUsedPositionsByteArray());
 		mRadioController.sendCommand(broadcast, getAddress(), true);
-		
-		sendPositionControllerInstructions(instructions);		
+
+		sendPositionControllerInstructions(instructions);
 	}
 
 	// --------------------------------------------------------------------------
