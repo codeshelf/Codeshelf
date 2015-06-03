@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -29,11 +30,13 @@ import com.codeshelf.event.EventProducer;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LocationAlias;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.service.WorkService;
 import com.google.inject.Inject;
 
@@ -165,5 +168,41 @@ public class TestingResource {
 		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer2 = new OutboundOrderPrefetchCsvImporter(new EventProducer());
 		importer2.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+	}
+	
+	@POST
+	@Path("/createextensionpoints")
+	@RequiresPermissions("companion:create_extension")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response createTestExtensionPoints(@QueryParam("facilityId") UUIDParam facilityUUID) {
+		ErrorResponse errors = new ErrorResponse();
+		try {
+			Facility facility = Facility.staticGetDao().findByPersistentId(facilityUUID.getValue());
+			if (facility == null) {
+				errors.addErrorUUIDDoesntExist(facilityUUID.getRawValue(), "facility");;
+				return errors.buildResponse();
+			}
+			String time = System.currentTimeMillis() + "";
+			ExtensionPoint extension = new ExtensionPoint();
+			extension.setParent(facility);
+			extension.setDomainId("EP" + time);
+			extension.setScript(time + " " + time + " " + time + " " + time + " " + time + " " + time + " " + time + " " + time + " " + time + " " + time + " " + time + " ");
+			extension.setActive(new Random().nextInt() % 2 == 0);
+			switch (new Random().nextInt() % 3) {
+				case 0:
+					extension.setType(ExtensionPointType.OrderImportBeanTransformation);
+					break;
+				case 1:
+					extension.setType(ExtensionPointType.OrderImportHeaderTransformation);
+					break;
+				case 2:
+					extension.setType(ExtensionPointType.OrderImportLineTransformation);
+					break;
+			}
+			ExtensionPoint.staticGetDao().store(extension);			
+			return BaseResponse.buildResponse("Extension Point Created");
+		} catch (Exception e) {
+			return errors.processException(e);
+		}
 	}
 }
