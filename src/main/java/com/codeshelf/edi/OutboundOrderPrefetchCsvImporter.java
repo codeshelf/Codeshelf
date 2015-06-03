@@ -34,7 +34,7 @@ import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.service.PropertyService;
-import com.codeshelf.service.ScriptingService;
+import com.codeshelf.service.ExtensionPointService;
 import com.codeshelf.util.DateTimeParser;
 import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.validation.BatchResult;
@@ -76,7 +76,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	int numWorkerThreads = 1;
 	
 	@Getter
-	ScriptingService scriptingService = null;
+	ExtensionPointService extensionPointService = null;
 
 	@Inject
 	public OutboundOrderPrefetchCsvImporter(final EventProducer inProducer) {
@@ -97,11 +97,11 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		
 		// initialize scripting service
 		try {
-			scriptingService = ScriptingService.createInstance();
-			scriptingService.loadScripts(facility);
+			extensionPointService = ExtensionPointService.createInstance();
+			extensionPointService.load(facility);
 		} 
-		catch (ScriptException e) {
-			LOGGER.error("Failed to initiatilze scripting service", e);
+		catch (Exception e) {
+			LOGGER.error("Failed to initialize extension point service", e);
 		}
 		
 		this.batchResult = new BatchResult<Object>();
@@ -118,17 +118,17 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		}
 		
 		// transform order lines/header, if extension point is defined
-		if (scriptingService.hasExtentionPoint(ExtensionPointType.OrderImportLineTransformation) 
-				|| scriptingService.hasExtentionPoint(ExtensionPointType.OrderImportHeaderTransformation)) {
+		if (extensionPointService.hasExtensionPoint(ExtensionPointType.OrderImportLineTransformation) 
+				|| extensionPointService.hasExtensionPoint(ExtensionPointType.OrderImportHeaderTransformation)) {
 			BufferedReader br = new BufferedReader(inCsvReader);
 			StringBuffer buffer = new StringBuffer();
 			// process file header
-			if (getScriptingService().hasExtentionPoint(ExtensionPointType.OrderImportHeaderTransformation)) {
+			if (getExtensionPointService().hasExtensionPoint(ExtensionPointType.OrderImportHeaderTransformation)) {
 				LOGGER.info("Order import header transformation is enabled");
 				try {
 					String header = br.readLine();
 					Object[] params = { header };
-					String transformedHeader = (String) getScriptingService().eval(facility, ExtensionPointType.OrderImportHeaderTransformation, params);
+					String transformedHeader = (String) getExtensionPointService().eval(ExtensionPointType.OrderImportHeaderTransformation, params);
 					buffer.append(transformedHeader);
 				}
 				catch (Exception e) {
@@ -148,14 +148,14 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 				}				
 			}
 			// process file body
-			if (getScriptingService().hasExtentionPoint(ExtensionPointType.OrderImportLineTransformation)) {
+			if (getExtensionPointService().hasExtensionPoint(ExtensionPointType.OrderImportLineTransformation)) {
 				LOGGER.info("Order import line transformation is enabled");
 				// transform order lines
 				try {
 					String line = null;
 				    while ((line = br.readLine()) != null) {
 						Object[] params = { line };
-						String transformedLine = (String) getScriptingService().eval(facility, ExtensionPointType.OrderImportLineTransformation, params);
+						String transformedLine = (String) getExtensionPointService().eval(ExtensionPointType.OrderImportLineTransformation, params);
 						buffer.append("\r\n"+transformedLine);
 				    }
 				}

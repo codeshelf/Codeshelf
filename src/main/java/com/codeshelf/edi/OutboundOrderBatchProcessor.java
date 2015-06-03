@@ -195,13 +195,13 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				int count = 1, size = lines.size();
 				for (OutboundOrderCsvBean orderBean : lines) {
 					// transform order bean with groovy script, if enabled
-					if (importer.getScriptingService().hasExtentionPoint(ExtensionPointType.OrderImportBeanTransformation)) {
+					if (importer.getExtensionPointService().hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation)) {
 						Object[] params = { orderBean };
 						try {
-							orderBean = (OutboundOrderCsvBean) importer.getScriptingService().eval(facility, ExtensionPointType.OrderImportBeanTransformation, params);
+							orderBean = (OutboundOrderCsvBean) importer.getExtensionPointService().eval(ExtensionPointType.OrderImportBeanTransformation, params);
 						} 
 						catch (Exception e) {
-							LOGGER.error("Failed to evaluate script", e);
+							LOGGER.error("Failed to evaluate OrderImportBeanTransformation extension point", e);
 						}
 					}
 					// process order bean
