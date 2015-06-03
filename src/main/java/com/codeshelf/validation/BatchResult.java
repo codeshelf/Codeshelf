@@ -1,11 +1,16 @@
 package com.codeshelf.validation;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+
+import javax.persistence.Column;
 
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Track if any of the import lines failed and why.
@@ -17,11 +22,30 @@ public class BatchResult<T> {
 	@Getter
 	private List<T> result;
 	
-	@Getter @Setter
-	long startTime = System.currentTimeMillis();
+	@Getter
+	@Setter
+	private Date received;
 	
-	@Getter @Setter
-	long endTime = System.currentTimeMillis();
+	@Getter
+	@Setter
+	@JsonProperty
+	private Date started;
+	
+	@Column(nullable = false)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Date completed;
+	
+	@Getter
+	@Setter
+	@JsonProperty
+	int ordersProcessed = 0;
+
+	@Getter
+	@Setter
+	@JsonProperty
+	int linesProcessed = 0;
 	
 	@Getter
 	private List<FieldError> violations;

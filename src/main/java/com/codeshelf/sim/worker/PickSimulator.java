@@ -54,7 +54,6 @@ public class PickSimulator {
 		scanUser(pickerId);
 		// From v16, login goes to SETUP_SUMMARY state. Then explicit SETUP scan goes to CONTAINER_SELECT
 		waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
-		waitForTemporaryMessageToClear(WAIT_TIME);
 		scanCommand("SETUP");
 		waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 	}
@@ -64,7 +63,6 @@ public class PickSimulator {
 		scanUser(pickerId);
 		// badge authorization now takes longer. Trip to server and back
 		waitForCheState(inState, WAIT_TIME);
-		waitForTemporaryMessageToClear(WAIT_TIME);
 	}
 
 	public String getProcessType() {
@@ -452,22 +450,6 @@ public class PickSimulator {
 		}
 		CheStateEnum existingState = device.getCheStateEnum();
 		return existingState;
-	}
-
-	
-	public void waitForTemporaryMessageToClear(int timeoutInMillis) {
-		CheDeviceLogic device = getDeviceToAsk();
-		long start = System.currentTimeMillis();
-		while (System.currentTimeMillis() - start < timeoutInMillis) {
-			// retry every 100ms
-			ThreadUtils.sleep(100);
-			if (!device.isTemporaryMessageDisplayed()){
-				return;
-			}
-		}
-		String theProblem = String.format("CHE %s is still displaying temporary message %s after %dms", 
-			device.getGuid(), getLastCheDisplay(), timeoutInMillis);
-		throw new IllegalStateException(theProblem);
 	}
 
 	// This is for the drastic CHE process changes in v16. Is it PICK_COMPLETE state, or SETUP_SUMMARY state.

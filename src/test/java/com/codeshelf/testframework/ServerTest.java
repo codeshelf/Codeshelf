@@ -10,7 +10,6 @@ import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.edi.CrossBatchCsvImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.flyweight.command.NetGuid;
@@ -32,11 +31,6 @@ import com.codeshelf.util.ThreadUtils;
 public abstract class ServerTest extends HibernateTest {
 	private final static Logger LOGGER = LoggerFactory.getLogger(ServerTest.class);
 
-	public ServerTest() {
-		//Welcome and goodbye messages really slow down unit tests, so reduce their duration times to nothing.
-		CheDeviceLogic.WELCOME_MESSAGE_TIME = 0;
-		CheDeviceLogic.GOODBYE_MESSAGE_TIME = 0;
-	}
 	@Override
 	Type getFrameworkType() {
 		return Type.COMPLETE_SERVER;

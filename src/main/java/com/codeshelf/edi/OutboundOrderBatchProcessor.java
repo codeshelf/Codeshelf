@@ -282,7 +282,9 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				this.numOrders = allOrderLines.size();				
 				TenantPersistenceService.getInstance().commitTransaction();
 				LOGGER.info("Completed processing "+batch);
-				this.importer.batchResult.merge(batchResult);
+				
+				//TODO switch to callable and wait for the futures
+				LOGGER.info("Completed processing "+ batchResult);
 			}
 			catch (StaleObjectStateException e) {
 				LOGGER.warn("Failed to process order batch "+batch+" due to stale data.",e);

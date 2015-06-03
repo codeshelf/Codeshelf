@@ -39,7 +39,6 @@ import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.NotificationService.EventType;
-import com.codeshelf.util.ThreadUtils;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -144,8 +143,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					SKIP_SCAN								= "SKIPSCAN";
 
 	protected static final Integer					maxCountForPositionControllerDisplay	= 99;
-	public static Integer							WELCOME_MESSAGE_TIME					= 1500;
-	public static Integer							GOODBYE_MESSAGE_TIME					= 2000;
 
 	protected static boolean						kLogAsWarn								= true;
 	protected static boolean						kLogAsInfo								= false;
@@ -210,14 +207,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Getter
 	@Setter
 	private NetGuid									mLinkedFromCheGuid						= null;
-
-	@Accessors(prefix = "m")
-	@Getter
-	private boolean									mTemporaryMessageDisplayed				= false;
-	
-	@Accessors(prefix = "m")
-	@Getter
-	private Timestamp								mTemporaryMessageTimestamp				= new Timestamp(0);
 
 	/**
 	 * We have only one inventory state, not two. Essentially another state by whether or not we think we have a valid
@@ -592,11 +581,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		final String inLine4Message,
 		final boolean largerBottomLine) {
 
-		long secondsSinceLastTemporaryMessage = (System.currentTimeMillis() - mTemporaryMessageTimestamp.getTime()) / 1000;
-		if (mTemporaryMessageDisplayed && secondsSinceLastTemporaryMessage == 0){
-			return;
-		}
-
 		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
 		rememberLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message);
 
@@ -633,11 +617,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		final String inLine2Message,
 		final String inLine3Message,
 		final String inLine4Message) {
-		
-		long secondsSinceLastTemporaryMessage = (System.currentTimeMillis() - mTemporaryMessageTimestamp.getTime()) / 1000;
-		if (mTemporaryMessageDisplayed && secondsSinceLastTemporaryMessage == 0){
-			return;
-		}
 		
 		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
 		rememberLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message);
@@ -1384,12 +1363,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	protected void logout() {
 		notifyCheWorkerVerb("LOG OUT", "");
-
-		if (getCheStateEnum() != CheStateEnum.IDLE) {
-			String userName = mDeviceManager.getWorkerNameFromGuid(getGuid());
-			mDeviceManager.setWorkerNameFromGuid(getGuid(), null);
-			displayTemporaryMessage("Goodbye, " + userName, "Have a nice day", GOODBYE_MESSAGE_TIME);
-		}
 
 		// if this CHE is being remotely controlled, we want to break the link.
 		NetGuid linkedMobileGuid = this.getLinkedFromCheGuid();
@@ -2392,22 +2365,5 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		} else {
 			LOGGER.warn("processScreenCommandFromLinkedChe called from state:{}. Not drawing", state);
 		}
-	}
-
-	protected void displayTemporaryMessage(String line1, String line2, final int timeout) {
-		quickSleep(); // Andrew wants this temporarily
-		
-		sendDisplayCommand(line1, line2);
-		mTemporaryMessageDisplayed = true;
-		mTemporaryMessageTimestamp = new Timestamp(System.currentTimeMillis());
-		Runnable clearThread = new Runnable() {
-			@Override
-			public void run() {
-				ThreadUtils.sleep(timeout);
-				setState(getCheStateEnum());
-				mTemporaryMessageDisplayed = false;
-			}
-		};
-		new Thread(clearThread).start();
 	}
 }

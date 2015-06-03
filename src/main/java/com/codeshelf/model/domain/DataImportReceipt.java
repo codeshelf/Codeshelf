@@ -1,5 +1,7 @@
 package com.codeshelf.model.domain;
 
+import java.util.Date;
+
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -8,6 +10,8 @@ import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -44,19 +48,22 @@ public class DataImportReceipt extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private long received;
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date received;
 	
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private long started;
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date started;
 	
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private long completed;
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date completed;
 	
 	@Getter
 	@Setter
@@ -77,8 +84,14 @@ public class DataImportReceipt extends DomainObjectTreeABC<Facility> {
 	
 	@Column(nullable = true, length=20)
 	@Enumerated(EnumType.STRING)
+	@JsonProperty
 	@Getter @Setter
 	DataImportStatus status;
+	
+	@Column(nullable = true)
+	@JsonProperty
+	@Getter @Setter
+	String username;
 	
 	@Override
 	public String getDefaultDomainIdPrefix() {
@@ -97,6 +110,11 @@ public class DataImportReceipt extends DomainObjectTreeABC<Facility> {
 	@Override
 	public Facility getFacility() {
 		return this.parent;
+	}
+	
+	@Override
+	public String toString() {
+		return ordersProcessed+" orders and "+linesProcessed+" lines in "+(completed.getTime()-started.getTime())/1000+" seconds";
 	}
 
 }

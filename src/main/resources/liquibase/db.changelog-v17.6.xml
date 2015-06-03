@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
     <changeSet author="bhe (generated)" id="7:73dff3fa3675c70eb47ac7656c0dfb1e">
+        <preConditions onFail="MARK_RAN">
+            <not><tableExists tableName="extension_point" /></not>
+        </preConditions>
         <createTable tableName="extension_point">
             <column name="persistentid" type="UUID">
                 <constraints nullable="false"/>
@@ -33,8 +36,38 @@
     </changeSet>
     <changeSet author="bhe (generated)" id="1432765809241-9">
         <dropForeignKeyConstraint baseTableName="script" constraintName="FK_e40tufuu9nc7hqkg6m1qpw868"/>
+        <rollback>
+        </rollback>
     </changeSet>
     <changeSet author="bhe (generated)" id="1432765809241-10">
         <dropTable tableName="script"/>
+        <rollback>
+            <createTable tableName="script">
+            <column name="persistentid" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="domainid" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="INT8">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="body" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="extension" type="INT4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="parent_persistentid" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+
+        </createTable>
+        <addPrimaryKey columnNames="persistentid" constraintName="scriptPK" tableName="script"/>
+        <addForeignKeyConstraint baseColumnNames="parent_persistentid" baseTableName="script" constraintName="FK_e40tufuu9nc7hqkg6m1qpw868" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="location"/>
+        </rollback>
     </changeSet>
 </databaseChangeLog>

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.sql.Timestamp;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -59,13 +60,9 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	
 	long startTime;
 	long endTime;
-	int numOrders; 
-	int numLines;
 	
 	@Getter @Setter
 	int maxOrderLines = 500;
-	
-	BatchResult<Object> batchResult = null;
 	
 	@Getter
 	private ConcurrentLinkedQueue<OutboundOrderBatch> batchQueue = new ConcurrentLinkedQueue<OutboundOrderBatch>();
@@ -102,7 +99,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			LOGGER.error("Failed to initialize extension point service", e);
 		}
 		
-		this.batchResult = new BatchResult<Object>();
+		BatchResult<Object> batchResult = new BatchResult<Object>();
 		
 		// Get our LOCAPICK and SCANPICK configuration values. It will not change during importing one file.
 		this.locaPick = PropertyService.getInstance().getBooleanPropertyFromConfig(facility, DomainObjectProperty.LOCAPICK);
@@ -131,7 +128,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 				}
 				catch (Exception e) {
 					LOGGER.error("Failed to transform order file header",e);
-					return this.batchResult;
+					return batchResult;
 				}
 			}
 			else {
@@ -142,7 +139,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 				}
 				catch (Exception e) {
 					LOGGER.error("Failed to read order file header",e);
-					return this.batchResult;
+					return batchResult;
 				}				
 			}
 			// process file body
@@ -159,7 +156,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 				}
 				catch (Exception e) {
 					LOGGER.error("Failed to read order file line",e);
-					return this.batchResult;
+					return batchResult;
 				}				
 			}
 			else {
@@ -172,7 +169,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 				}
 				catch (Exception e) {
 					LOGGER.error("Failed to read order file line",e);
-					return this.batchResult;
+					return batchResult;
 				}				
 			}
 			try {
@@ -284,26 +281,38 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 
 		this.endTime = System.currentTimeMillis();
 		
-		DataImportReceipt receipt = new DataImportReceipt();
-		receipt.setReceived(startTime);
-		receipt.setStarted(startTime);
-		receipt.setCompleted(endTime);
-		receipt.setOrdersProcessed(numOrders);
-		receipt.setLinesProcessed(numLines);
-		receipt.setParent(facility);
-		receipt.setDomainId("Import-"+startTime);
-		boolean success = true;
+		batchResult.setReceived(new Date(startTime));
+		batchResult.setStarted(new Date(startTime));
+		batchResult.setCompleted(new Date(endTime));
+		batchResult.setOrdersProcessed(numOrders);
+		batchResult.setLinesProcessed(numLineItems);
+		return batchResult;
+	}
+	
+	@Override
+	public void persistDataReceipt(Facility facility, String username, long received, BatchResult<?> results) {
 
-		if (success) {
+		DataImportReceipt receipt = new DataImportReceipt();
+		receipt.setUsername(username);
+		receipt.setReceived(new Date(received));
+		receipt.setStarted(results.getStarted());
+		receipt.setCompleted(results.getCompleted());
+		receipt.setOrdersProcessed(results.getOrdersProcessed());
+		receipt.setLinesProcessed(results.getLinesProcessed());
+		
+		receipt.setParent(facility);
+		receipt.setDomainId("Import-"+results.getStarted());
+		if (results.isSuccessful()) {
 			receipt.setStatus(DataImportStatus.Completed);
-			LOGGER.info("Imported "+numOrders+" orders and "+numLineItems+" lines in "+(endTime-startTime)/1000+" seconds");
+			LOGGER.info("Imported " + receipt);
 		}
 		else {
 			receipt.setStatus(DataImportStatus.Failed);
-			LOGGER.error("Failed to import "+numOrders+" orders and "+numLineItems+" lines in "+(endTime-startTime)/1000+" seconds");
+			LOGGER.error("Failed to import " + receipt);
 		}
+
 		DataImportReceipt.staticGetDao().store(receipt);
-		return this.batchResult;
+
 	}
 
 	@Override
