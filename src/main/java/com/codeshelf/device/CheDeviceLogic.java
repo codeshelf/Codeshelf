@@ -443,7 +443,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			posX,
 			posY);
 		sendScreenCommandToMyChe(command);
-		quickSleep();
 		sendScreenCommandToLinkFromChe(command);
 	}
 
@@ -566,14 +565,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	/**
 	 * Sleep briefly between repeated sends to same CHE. Especially in sendMonospaceDisplayScreen
 	 */
-	private void quickSleep() {
+	protected void quickSleep() {
 		// Does this help? Getting missed packets and therefore incomplete screen redraws.
-		/*
+		// For v16 and version 3.0.3, Andrew wants 50 ms. Not great, but ok for Accu for now.
+		// with 3.1 will eliminate, or at least reduce to 5ms.
 		try {
-			Thread.sleep(5);
+			Thread.sleep(50);
 		} catch (InterruptedException e) {
 		}
-		*/
 	}
 
 	// --------------------------------------------------------------------------
@@ -636,7 +635,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			inLine4Message);
 
 		sendScreenCommandToMyChe(command);
-		quickSleep();
 		sendScreenCommandToLinkFromChe(command);
 
 	}
@@ -644,7 +642,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected void clearDisplay() {
 		ICommand command = new CommandControlClearDisplay(NetEndpoint.PRIMARY_ENDPOINT);
 		sendScreenCommandToMyChe(command);
-		quickSleep();
 		sendScreenCommandToLinkFromChe(command);
 	}
 
@@ -2355,7 +2352,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	void sendScreenCommandToLinkFromChe(ICommand inCommand) {
 		CheDeviceLogic linkFromDevice = getLinkFromCheDevice();
 		if (linkFromDevice != null) {
-			// We do not want to call directly. Rather, pass back, and let that device decide if it is in in the right state for remote screen redraws.
+			quickSleep(); // slight separation before sending
+			// We do not want to call directly. Rather, pass back, and let that device decide if it is in in the right state for remote screen redraws.			
 			linkFromDevice.processScreenCommandAtLinkFromChe(inCommand);
 		}
 	}
@@ -2384,6 +2382,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	}
 
 	protected void displayTemporaryMessage(String line1, String line2, final int timeout) {
+		quickSleep(); // Andrew wants this temporarily
+		
 		mTemporaryMessageDisplayed = true;
 		sendDisplayCommand(line1, line2);
 		Runnable clearThread = new Runnable() {
