@@ -15,8 +15,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.script.ScriptException;
-
 import lombok.Getter;
 import lombok.Setter;
 

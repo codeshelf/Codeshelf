@@ -24,6 +24,7 @@ import com.google.common.collect.Lists;
 
 public class ScriptSiteRunner {
 	private final static String TEMPLATE_DEF_CHE = "defChe <cheName> <cheGuid>";
+	private final static String TEMPLATE_LOGIN = "login <cheName> <workerId> <state>";
 	private final static String TEMPLATE_SETUP_CART = "setupCart <cheName> <containers>";
 	private final static String TEMPLATE_WAIT = "waitForState <cheName> <states>";
 	private final static String TEMPLATE_SET_PARAMS = "setParams (assignments 'pickSpeed'/'skipFreq'/'shortFreq'=<value>)";
@@ -31,7 +32,8 @@ public class ScriptSiteRunner {
 	private final static String TEMPLATE_CHE_EXEC = "cheExec <cheName> <cheCommand> [arguments]";
 	private final static String TEMPLATE_WAIT_SECONDS = "waitSeconds <seconds>";
 	private final static String TEMPLATE_WAIT_DEVICES = "waitForDevices <devices>";
-	
+	private final static String TEMPLATE_LOGOUT = "logout [cheNames]";
+
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScriptSiteRunner.class);
 	private static final int WAIT_TIMEOUT = 4000;
 	private int pickPauseMs = 0;
@@ -97,6 +99,8 @@ public class ScriptSiteRunner {
 			processCheExecCommand(parts);
 		} else if (command.equalsIgnoreCase("defChe")) {
 			processDefineCheCommand(parts);
+		} else if (command.equalsIgnoreCase("login")) {
+			processLoginCommand(parts);
 		} else if (command.equalsIgnoreCase("waitForState")) {
 			processWaitForStatesCommand(parts);
 		} else if (command.equalsIgnoreCase("setupCart")) {
@@ -111,9 +115,11 @@ public class ScriptSiteRunner {
 			processWaitSecondsCommand(parts);
 		}  else if (command.equalsIgnoreCase("waitForDevices")) {
 			processWaitForDevicesCommand(parts);
+		}  else if (command.equalsIgnoreCase("logout")) {
+			processLogoutCommand(parts);
 		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [cheExec, defChe, waitForState, setupCard, setParams, pick, pickAll, waitSeconds, waitForDevices, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [cheExec, defChe, login, waitForState, setupCard, setParams, pick, pickAll, waitSeconds, waitForDevices, logout, //]");
 		}
 	}
 	
@@ -167,6 +173,19 @@ public class ScriptSiteRunner {
 		
 		PickSimulator che = new PickSimulator(deviceManager, cheGuid);
 		ches.put(cheName, che);
+	}
+	
+	/**
+	 * Expects to see command
+	 * login <cheName> <workerId> <state>
+	 * @throws Exception
+	 */
+	private void processLoginCommand(String parts[]) throws Exception {
+		if (parts.length != 4){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_LOGIN);
+		}
+		PickSimulator che = getChe(parts[1]);
+		che.loginAndCheckState(parts[2], CheStateEnum.valueOf(parts[3]));
 	}
 	
 	/**
@@ -253,6 +272,25 @@ public class ScriptSiteRunner {
 			container = parts[i];
 			if (container != null && !container.isEmpty()){
 				che.setupContainer(parts[i], (i-1)+"");
+			}
+		}
+	}
+	
+	/**
+	 * Expects to see command
+	 * logout [cheNames]
+	 * @throws Exception 
+	 */
+	private void processLogoutCommand(String parts[]) throws Exception {
+		if (parts.length < 2){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_LOGOUT);
+		}
+		if (parts.length == 1){
+			logoutAll();
+		} else {
+			for (int i = 1; i < parts.length; i++) {
+				PickSimulator che = getChe(parts[i]);
+				che.logout();
 			}
 		}
 	}
