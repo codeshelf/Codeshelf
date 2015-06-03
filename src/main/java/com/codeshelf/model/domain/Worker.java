@@ -185,15 +185,5 @@ public class Worker extends DomainObjectABC implements Validatable{
 			return null;
 		}
 		return workers.get(0);
-	}
-	
-	public String getWorkerNameUI(){
-		if (firstName != null && !firstName.isEmpty()){
-			return firstName;
-		}
-		if (!lastName.isEmpty()) {
-			return lastName;
-		}
-		return badgeId;
-	}
+	}	
 }
