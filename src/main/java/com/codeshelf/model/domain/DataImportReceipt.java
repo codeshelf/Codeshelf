@@ -23,7 +23,6 @@ import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
@@ -85,10 +84,12 @@ public class DataImportReceipt extends DomainObjectTreeABC<Facility> {
 	
 	@Column(nullable = true, length=20)
 	@Enumerated(EnumType.STRING)
+	@JsonProperty
 	@Getter @Setter
 	DataImportStatus status;
 	
 	@Column(nullable = true)
+	@JsonProperty
 	@Getter @Setter
 	String username;
 	
