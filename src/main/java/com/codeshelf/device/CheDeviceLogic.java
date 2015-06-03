@@ -211,8 +211,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	@Accessors(prefix = "m")
 	@Getter
-	@Setter
 	private boolean									mTemporaryMessageDisplayed				= false;
+	
+	@Accessors(prefix = "m")
+	@Getter
+	private Timestamp								mTemporaryMessageTimestamp				= new Timestamp(0);
 
 	/**
 	 * We have only one inventory state, not two. Essentially another state by whether or not we think we have a valid
@@ -588,6 +591,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		final String inLine4Message,
 		final boolean largerBottomLine) {
 
+		long secondsSinceLastTemporaryMessage = (System.currentTimeMillis() - mTemporaryMessageTimestamp.getTime()) / 1000;
+		if (secondsSinceLastTemporaryMessage == 0){
+			return;
+		}
+
 		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
 		rememberLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message);
 
@@ -624,6 +632,12 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		final String inLine2Message,
 		final String inLine3Message,
 		final String inLine4Message) {
+		
+		long secondsSinceLastTemporaryMessage = (System.currentTimeMillis() - mTemporaryMessageTimestamp.getTime()) / 1000;
+		if (secondsSinceLastTemporaryMessage == 0){
+			return;
+		}
+		
 		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
 		rememberLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message);
 
@@ -1372,8 +1386,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected void logout() {
 		notifyCheWorkerVerb("LOG OUT", "");
 
-		//Retrieve state and username for the "good bye" message before they are cleared away. 
-		CheStateEnum originalState = getCheStateEnum();
+		if (getCheStateEnum() != CheStateEnum.IDLE) {
+			String userName = mDeviceManager.getWorkerNameFromGuid(getGuid());
+			mDeviceManager.setWorkerNameFromGuid(getGuid(), null);
+			displayTemporaryMessage("Goodbye, " + userName, "Have a nice day", 2000);
+		}
 
 		// if this CHE is being remotely controlled, we want to break the link.
 		NetGuid linkedMobileGuid = this.getLinkedFromCheGuid();
@@ -1383,12 +1400,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		// many side effects. Primarily clearing leds and poscons and setting state to idle
 		_logoutSideEffects();
-
-		if (originalState != CheStateEnum.IDLE) {
-			String userName = mDeviceManager.getWorkerNameFromGuid(getGuid());
-			mDeviceManager.setWorkerNameFromGuid(getGuid(), null);
-			displayTemporaryMessage("Goodbye, " + userName, "Have a nice day", 2000);
-		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -2384,8 +2395,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	}
 
 	protected void displayTemporaryMessage(String line1, String line2, final int timeout) {
-		mTemporaryMessageDisplayed = true;
 		sendDisplayCommand(line1, line2);
+		mTemporaryMessageDisplayed = true;
+		mTemporaryMessageTimestamp = new Timestamp(System.currentTimeMillis());
 		Runnable clearThread = new Runnable() {
 			@Override
 			public void run() {

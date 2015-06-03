@@ -1298,7 +1298,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (verified) {
 				// finishLogin();
 				clearAllPosconsOnThisDevice();
-			
+				displayTemporaryMessage("Welcome, " + mDeviceManager.getWorkerNameFromGuid(getGuid()), "", 1500);
+				
 				notifyCheWorkerVerb("LOG IN", "");
 								
 				// If I am linked, and I just logged in, let's go to the REMOTE screen to show the worker what she is linked to.
@@ -1310,8 +1311,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				else {
 					setState(CheStateEnum.SETUP_SUMMARY); // the normal case
 				}
-				
-				displayTemporaryMessage("Welcome, " + mDeviceManager.getWorkerNameFromGuid(getGuid()), "", 1500);
 			} else {
 				setState(CheStateEnum.IDLE);
 				invalidScanMsg(UNKNOWN_BADGE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
