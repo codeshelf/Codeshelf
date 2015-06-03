@@ -1313,7 +1313,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (verified) {
 				// finishLogin();
 				clearAllPosconsOnThisDevice();
-				displayTemporaryMessage("Welcome, " + mDeviceManager.getWorkerNameFromGuid(getGuid()), "", 1500);
+				displayTemporaryMessage("Welcome, " + mDeviceManager.getWorkerNameFromGuid(getGuid()), "", WELCOME_MESSAGE_TIME);
 				
 				notifyCheWorkerVerb("LOG IN", "");
 

@@ -161,7 +161,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		if (mCheStateEnum == CheStateEnum.VERIFYING_BADGE) {
 			if (verified) {
 				clearAllPosconsOnThisDevice();
-				displayTemporaryMessage("Welcome, " + mDeviceManager.getWorkerNameFromGuid(getGuid()), "", 1500);
+				displayTemporaryMessage("Welcome, " + mDeviceManager.getWorkerNameFromGuid(getGuid()), "", WELCOME_MESSAGE_TIME);
 				setState(CheStateEnum.READY);
 			} else {
 				setState(CheStateEnum.IDLE);

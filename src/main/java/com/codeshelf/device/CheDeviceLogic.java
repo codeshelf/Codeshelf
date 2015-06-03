@@ -144,6 +144,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					SKIP_SCAN								= "SKIPSCAN";
 
 	protected static final Integer					maxCountForPositionControllerDisplay	= 99;
+	public static Integer							WELCOME_MESSAGE_TIME					= 1500;
+	public static Integer							GOODBYE_MESSAGE_TIME					= 2000;
 
 	protected static boolean						kLogAsWarn								= true;
 	protected static boolean						kLogAsInfo								= false;
@@ -591,7 +593,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		final boolean largerBottomLine) {
 
 		long secondsSinceLastTemporaryMessage = (System.currentTimeMillis() - mTemporaryMessageTimestamp.getTime()) / 1000;
-		if (secondsSinceLastTemporaryMessage == 0){
+		if (mTemporaryMessageDisplayed && secondsSinceLastTemporaryMessage == 0){
 			return;
 		}
 
@@ -633,7 +635,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		final String inLine4Message) {
 		
 		long secondsSinceLastTemporaryMessage = (System.currentTimeMillis() - mTemporaryMessageTimestamp.getTime()) / 1000;
-		if (secondsSinceLastTemporaryMessage == 0){
+		if (mTemporaryMessageDisplayed && secondsSinceLastTemporaryMessage == 0){
 			return;
 		}
 		
@@ -1386,7 +1388,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (getCheStateEnum() != CheStateEnum.IDLE) {
 			String userName = mDeviceManager.getWorkerNameFromGuid(getGuid());
 			mDeviceManager.setWorkerNameFromGuid(getGuid(), null);
-			displayTemporaryMessage("Goodbye, " + userName, "Have a nice day", 2000);
+			displayTemporaryMessage("Goodbye, " + userName, "Have a nice day", GOODBYE_MESSAGE_TIME);
 		}
 
 		// if this CHE is being remotely controlled, we want to break the link.
