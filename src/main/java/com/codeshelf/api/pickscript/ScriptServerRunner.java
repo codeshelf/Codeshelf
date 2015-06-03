@@ -33,9 +33,11 @@ import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.Vertex;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.UiUpdateService;
 import com.codeshelf.util.CsExceptionUtils;
+import com.codeshelf.validation.BatchResult;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
@@ -264,7 +266,10 @@ public class ScriptServerRunner {
 		}
 		String filename = parts[1];
 		InputStreamReader reader = readFile(filename);
-		orderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
+		long receivedTime = System.currentTimeMillis();
+		BatchResult<Object> results = orderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
+		String username = CodeshelfSecurityManager.getCurrentUserContext().getUsername();
+		orderImporter.persistDataReceipt(facility, username, receivedTime, results);
 	}
 
 	/**

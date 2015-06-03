@@ -29,6 +29,7 @@ import com.codeshelf.edi.OrderLocationCsvImporter;
 import com.codeshelf.edi.OutboundOrderPrefetchCsvImporter;
 import com.codeshelf.model.domain.DataImportReceipt;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.BatchResult;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
@@ -112,10 +113,16 @@ public class ImportResource {
 	public Response uploadOrders(
         @FormDataParam("file") InputStream fileInputStream,
         @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
+	
+		
 		try {
+			long receivedTime = System.currentTimeMillis();
 			Reader reader = new InputStreamReader(fileInputStream);
-			BatchResult<Object> result = this.outboundOrderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
-			return BaseResponse.buildResponse(result,Status.OK);				
+			
+			BatchResult<Object> results = this.outboundOrderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
+			String username = CodeshelfSecurityManager.getCurrentUserContext().getUsername();
+			this.outboundOrderImporter.persistDataReceipt(facility, username, receivedTime, results);
+			return BaseResponse.buildResponse(results, Status.OK);				
 		}
 		catch (Exception e) {
 			return new ErrorResponse().processException(e);

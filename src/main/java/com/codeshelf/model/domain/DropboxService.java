@@ -36,12 +36,15 @@ import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.validation.BatchResult;
 import com.dropbox.core.DbxAccountInfo;
 import com.dropbox.core.DbxAppInfo;
 import com.dropbox.core.DbxAuthFinish;
 import com.dropbox.core.DbxClient;
 import com.dropbox.core.DbxDelta;
 import com.dropbox.core.DbxEntry;
+import com.dropbox.core.DbxEntry.File;
 import com.dropbox.core.DbxException;
 import com.dropbox.core.DbxRequestConfig;
 import com.dropbox.core.DbxWebAuthNoRedirect;
@@ -584,7 +587,7 @@ public class DropboxService extends EdiServiceABC {
 			logDetails("1) loading file into stream for potential processing" + filepath);
 			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 			ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-			inClient.getFile(inEntry.lcPath, null, outputStream);
+			File dbxFile = inClient.getFile(inEntry.lcPath, null, outputStream);
 			InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(outputStream.toByteArray()));
 
 			// Done within each if. We only want to rename as processing if we are actually processing.
@@ -602,7 +605,12 @@ public class DropboxService extends EdiServiceABC {
 				} else if (fileMatches(filepath, IMPORT_ORDERS_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
-					success = inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent(), ediProcessTime).isSuccessful();
+					BatchResult<Object> results = inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent(), ediProcessTime);
+					String username = CodeshelfSecurityManager.getCurrentUserContext().getUsername();
+					inCsvOrderImporter.persistDataReceipt(getParent(), username, dbxFile.clientMtime.getTime(),  results);
+
+					success = results.isSuccessful();
+
 				} else if (fileMatches(filepath, IMPORT_INVENTORY_PATH)) {
 					filepath = renameToProcessing(inClient, filepath);
 					processedAttempt = true;
