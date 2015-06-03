@@ -21,7 +21,7 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.service.ExtensionPointType;
-import com.codeshelf.service.ScriptingService;
+import com.codeshelf.service.ExtensionPointService;
 import com.codeshelf.testframework.ServerTest;
 
 public class ScriptingServiceTest extends ServerTest {
@@ -46,21 +46,21 @@ public class ScriptingServiceTest extends ServerTest {
 		beginTransaction();
 		try {
 			// init service
-			ScriptingService ss = ScriptingService.createInstance();
-			assertEquals(false,ss.hasExtentionPoint(ExtensionPointType.OrderImportBeanTransformation));
-			ss.loadScripts(facility);
-			assertEquals(true,ss.hasExtentionPoint(ExtensionPointType.OrderImportBeanTransformation));
+			ExtensionPointService ss = ExtensionPointService.createInstance();
+			assertEquals(false,ss.hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation));
+			ss.load(facility);
+			assertEquals(true,ss.hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation));
 			// positive test
 			OutboundOrderCsvBean bean1 = new OutboundOrderCsvBean();
 			bean1.setDescription("abc");
 			Object[] data1 = {bean1};
-			Object result1 = ss.eval(facility, ExtensionPointType.OrderImportBeanTransformation, data1);
+			Object result1 = ss.eval(ExtensionPointType.OrderImportBeanTransformation, data1);
 			assertEquals(true,result1);
 			// negative test
 			OutboundOrderCsvBean bean2 = new OutboundOrderCsvBean();
 			bean2.setDescription("def");
 			Object[] data2 = {bean2};
-			Object result2 = ss.eval(facility, ExtensionPointType.OrderImportBeanTransformation, data2);
+			Object result2 = ss.eval(ExtensionPointType.OrderImportBeanTransformation, data2);
 			assertEquals(false,result2);
 		} 
 		catch (ScriptException e) {
