@@ -826,10 +826,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		LOGGER.info("site controller processCheLinkResponse for guid:{} associate to:{}", networkGuid, linkedCheGuidId);
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
-			
-			// An edge case. If directly changing association from one cart to another, we need to reset the prior cart.
+
+			//Edge case 1. If directly changing association from one cart to another, we need to reset the prior cart.
 			CheDeviceLogic priorLinkedDevice = cheDevice.getLinkedCheDevice();
-			
+			if (priorLinkedDevice != null) {
+				LOGGER.info("processCheLinkResponse: {} was linked to {}", networkGuid, priorLinkedDevice.getGuidNoPrefix());
+			}
+
 			NetGuid associateGuid = null;
 			if (linkedCheGuidId != null) {
 				CheDeviceLogic linkedDevice = getCheDeviceFromPrefixHexString("0x" + linkedCheGuidId);
@@ -839,20 +842,49 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 					associateGuid = null;
 				} else {
 					associateGuid = linkedDevice.getGuid();
+					//Edge case 2. If the linked CHE is itself remote to another cheDevice, let's detect that set to a consistent state.
+					CheDeviceLogic chainLinkedDevice = linkedDevice.getLinkedCheDevice();
+					if (chainLinkedDevice != null) {
+						LOGGER.warn("breaking link between {} and {} because making new link to {}",
+							associateGuid.getHexStringNoPrefix(),
+							chainLinkedDevice.getGuidNoPrefix(),
+							associateGuid.getHexStringNoPrefix());
+						// TODO
+						chainLinkedDevice.processUnLinkLocalVariables(associateGuid.getHexStringNoPrefix());
+					}
+					// Edge case 3. We are linking to linkedCheGuidId/linkedDevice. Is another CHE controlling it now?
+					NetGuid otherMobileGuid = linkedDevice.getLinkedFromCheGuid();
+					if (otherMobileGuid != null) {
+						CheDeviceLogic otherMobileChe = this.getCheDeviceByNetGuid(otherMobileGuid);
+						if (otherMobileChe != null) {
+							otherMobileChe.forceFromLinkedState(CheStateEnum.REMOTE);
+						}
+					}
 				}
 			}
 			// perhaps more direct to compute the guid from "0x" + networkGuid, but we did that above and found this device
 			this.maintainDeviceData(cheDevice.getGuid(), thisCheName, associateGuid, linkedCheName);
 
+			//Edge case 2. If the linked CHE was itself remote to another cheDevice, its state is wrong. Correct it.
+			if (associateGuid != null) {
+				CheDeviceLogic assocDevice = this.getCheDeviceByNetGuid(associateGuid);
+				if (assocDevice != null && assocDevice.getCheStateEnum().equals(CheStateEnum.REMOTE_LINKED)) {
+					assocDevice.forceFromLinkedState(CheStateEnum.REMOTE);
+				}
+			}
+
 			LOGGER.info("processCheLinkResponse calling cheDevice.maintainLink");
 			cheDevice.maintainLink(linkedCheName);
-			
-			// The edge case. If directly changing association from one cart to another, we need to reset the prior cart.
-			if (priorLinkedDevice != null && !priorLinkedDevice.getGuid().equals(associateGuid)){
-				LOGGER.info("breaking link to {}",priorLinkedDevice.getGuidNoPrefix());
+
+			// Edge case 1. If directly changing association from one cart to another, we need to reset the prior cart.
+			if (priorLinkedDevice != null && !priorLinkedDevice.getGuid().equals(associateGuid)) {
+				LOGGER.info("breaking link to {} because making new link to {}",
+					priorLinkedDevice.getGuidNoPrefix(),
+					associateGuid.getHexStringNoPrefix());
 				// TODO
 				priorLinkedDevice.processUnLinkLocalVariables(cheDevice.getGuidNoPrefix());
 			}
+
 		} else {
 			LOGGER.error("Device not found in processCheLinkResponse. CHE id={}", networkGuid);
 		}
@@ -1016,7 +1048,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		@Getter
 		@Setter
 		NetGuid	associatedToRemoteCheGuid;
-		
+
 		@Getter
 		@Setter
 		String	workerNameUI;				// the ui-friendly name of the logged in worker
@@ -1029,7 +1061,6 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			setCheName(cheName);
 			setAssociatedToRemoteCheGuid(associatedToCheGuid);
 		}
-
 	}
 
 	/**
@@ -1074,7 +1105,9 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 				CheData value = entry.getValue();
 				if (associatedToCheGuid.equals(value.getAssociatedToRemoteCheGuid())) {
 					if (!key.equals(thisCheGuid)) {
-						LOGGER.info("Removing {} link to {}",key.getHexStringNoPrefix(), associatedToCheGuid.getHexStringNoPrefix());
+						LOGGER.info("Removing {} link to {}",
+							key.getHexStringNoPrefix(),
+							associatedToCheGuid.getHexStringNoPrefix());
 						value.setAssociatedToRemoteCheGuid(null);
 					}
 				}
@@ -1118,7 +1151,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		}
 		return assocData.getCheName();
 	}
-	
+
 	/**
 	 * From the guid, what is the associated worker's ui-friendly name
 	 */
@@ -1130,7 +1163,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		String workerName = thisData.getWorkerNameUI();
 		return workerName == null ? "" : workerName;
 	}
-	
+
 	/**
 	 * From the guid, set che worker's ui-friendly name
 	 */
@@ -1142,8 +1175,6 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		}
 		thisData.setWorkerNameUI(workerName);
 	}
-
-
 
 	/**
 	 * Fairly trivial function provides useful logging. Common bug is mixup of prefix or not on the hex string.

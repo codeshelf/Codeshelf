@@ -666,7 +666,6 @@ public class CheProcessRemoteLink extends ServerTest {
 
 		Assert.assertEquals("0 orders", picker1.getLastCheDisplayString(1).trim());
 		
-		// TODO disconnect CHE 2 as it has no user now.
 		LOGGER.info("5: CHE2 should be in idle state now.");
 		picker2.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
 
@@ -799,11 +798,28 @@ public class CheProcessRemoteLink extends ServerTest {
 		picker3.logCheDisplay();
 		Assert.assertEquals("D301", picker2.getLastCheDisplayString(1).trim());
 		Assert.assertEquals("D301", picker3.getLastCheDisplayString(1).trim());
-		// no immediate update forced to mobile che 1, but the next activity there should force it.
-		Assert.assertEquals(CheStateEnum.REMOTE_LINKED, picker1.getCurrentCheState());
-		picker1.scanSomething("333444");
+		
+		// picker 1 should be forced back to remote state
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		Assert.assertEquals("Linked to: (none)", picker1.getLastCheDisplayString(1));
+		
+		LOGGER.info("5: Check the database linkage via the UI fields");
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		Che che1 = Che.staticGetDao().findByPersistentId(che1PersistentId);
+		Che che2 = Che.staticGetDao().findByPersistentId(che2PersistentId);
+		Che che3 = Che.staticGetDao().findByPersistentId(che3PersistentId);
+		CodeshelfNetwork network = CodeshelfNetwork.staticGetDao().reload(getNetwork()); // these are necessary or the WorkService functions have staleObjectUpdate exceptions
+
+		String linkChe1 = che1.getAssociateToUi();
+		Assert.assertEquals("", linkChe1);
+		String linkChe2 = che2.getAssociateToUi();
+		Assert.assertEquals("controlled by CHE3", linkChe2);
+		String linkChe3 = che3.getAssociateToUi();
+		Assert.assertEquals("controlling CHE2", linkChe3);
+		commitTransaction();
+
+
 	}
 
 	/**
@@ -863,29 +879,88 @@ public class CheProcessRemoteLink extends ServerTest {
 		picker3.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		picker3.scanSomething("H%CHE1");
 		picker3.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
+		// picker 2 should experience a forced logout
+		picker2.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
 		picker1.logCheDisplay();
 		picker2.logCheDisplay();
-		picker3.logCheDisplay();
-		
-		// TODO What should picker 3 state be. Probably not REMOTE_LINKED
-		// TODO What should picker 1 state be. Definitely not REMOTE_LINKED
-		// TODO See ERROR in the log
-
-		// no immediate update forced to mobile che 1, but the next activity there should force it.
-		Assert.assertEquals(CheStateEnum.REMOTE_LINKED, picker1.getCurrentCheState());
-		picker1.scanSomething("333444");
-		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker3.logCheDisplay();	
+		// picker 3 state should be REMOTE_LINKED, because that is directly what the user did
+		// mobile che 1 was linked, but when CHE 3 linked to it, the state had to change. Go to REMOTE with (none)
+		Assert.assertEquals(CheStateEnum.REMOTE, picker1.getCurrentCheState());
 		Assert.assertEquals("Linked to: (none)", picker1.getLastCheDisplayString(1));
+		
+		LOGGER.info("5: Check the database linkage via the UI fields");
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		Che che1 = Che.staticGetDao().findByPersistentId(che1PersistentId);
+		Che che2 = Che.staticGetDao().findByPersistentId(che2PersistentId);
+		Che che3 = Che.staticGetDao().findByPersistentId(che3PersistentId);
+		CodeshelfNetwork network = CodeshelfNetwork.staticGetDao().reload(getNetwork()); // these are necessary or the WorkService functions have staleObjectUpdate exceptions
 
-		// does che 3 recover from next activity?
-		Assert.assertEquals(CheStateEnum.REMOTE_LINKED, picker3.getCurrentCheState());
-		picker3.scanSomething("333444");
-		/*
-		picker3.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
-		Assert.assertEquals("Linked to: (none)", picker3.getLastCheDisplayString(1));
-		*/
-
+		String linkChe1 = che1.getAssociateToUi();
+		Assert.assertEquals("controlled by CHE3", linkChe1);
+		String linkChe2 = che2.getAssociateToUi();
+		Assert.assertEquals("", linkChe2);
+		String linkChe3 = che3.getAssociateToUi();
+		Assert.assertEquals("controlling CHE1", linkChe3);
+		commitTransaction();
 	}
-	
+
+	/**
+	 * Test one mobile remote to other CHE. Then that one remotes to third CHE.
+	 */
+	@Test
+	public final void competingRemotes3() throws IOException {
+		beginTransaction();
+		Facility facility = setUpSmallNoSlotFacility();
+		commitTransaction();
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		setUpOrdersWithCntrAndGtin(facility);
+		commitTransaction();
+
+		startSiteController();
+		PickSimulator picker1 = createPickSim(cheGuid1);
+		PickSimulator picker2 = createPickSim(cheGuid2);
+		PickSimulator picker3 = createPickSim(cheGuid3);
+
+		LOGGER.info("1: Picker 2 sets up some jobs on CHE2, then logs out");
+		picker2.loginAndCheckState("Picker #2", CheStateEnum.SETUP_SUMMARY);
+		picker2.scanCommand("SETUP");
+		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		picker2.setupOrderIdAsContainer("12345", "1");
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		String line1 = picker2.getLastCheDisplayString(1).trim();
+		Assert.assertEquals("1 order", line1);
+		picker2.logout();
+
+		// no inventory needed for this test. Will not go to DO_PICK state
+		
+		LOGGER.info("2: Picker 1 scan REMOTE and link to CHE2");
+		picker1.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+		picker1.scanCommand("REMOTE");
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		picker1.logCheDisplay();
+		picker1.scanSomething("H%CHE2");
+		picker1.waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
+		picker1.logCheDisplay();
+		Assert.assertEquals("1 order", picker1.getLastCheDisplayString(1).trim());
+		Assert.assertEquals("1 order", picker2.getLastCheDisplayString(1).trim());
+
+		LOGGER.info("3: Picker2 now scan REMOTE. Not respected");
+		// Note that picker 2 is active only as a result of picker1's login. So REMOTE would have to act much like log out.
+		// It may not reasonably continue. We choose to do nothing, and WARN. Users only choice to use CHE 2 is to logout
+		picker2.scanCommand("REMOTE");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		// Look in log or console for "00009992: REMOTE scan from controlled CHE not allowed."
+		
+		LOGGER.info("4: Picker2 logout");
+		picker2.scanCommand("LOGOUT");
+		picker2.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
+		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		// The remoteVsCart() test covers this
+	}
+
 
 }

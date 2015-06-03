@@ -208,10 +208,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Getter
 	@Setter
 	private NetGuid									mLinkedFromCheGuid						= null;
+
+	@Accessors(prefix = "m")
+	@Getter
+	private boolean									mTemporaryMessageDisplayed				= false;
 	
 	@Accessors(prefix = "m")
-	@Getter @Setter
-	private boolean									mTemporaryMessageDisplayed				= false;
+	@Getter
+	private Timestamp								mTemporaryMessageTimestamp				= new Timestamp(0);
 
 	/**
 	 * We have only one inventory state, not two. Essentially another state by whether or not we think we have a valid
@@ -442,7 +446,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			posX,
 			posY);
 		sendScreenCommandToMyChe(command);
-		quickSleep();
 		sendScreenCommandToLinkFromChe(command);
 	}
 
@@ -565,14 +568,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	/**
 	 * Sleep briefly between repeated sends to same CHE. Especially in sendMonospaceDisplayScreen
 	 */
-	private void quickSleep() {
+	protected void quickSleep() {
 		// Does this help? Getting missed packets and therefore incomplete screen redraws.
-		/*
+		// For v16 and version 3.0.3, Andrew wants 50 ms. Not great, but ok for Accu for now.
+		// with 3.1 will eliminate, or at least reduce to 5ms.
 		try {
-			Thread.sleep(5);
+			Thread.sleep(50);
 		} catch (InterruptedException e) {
 		}
-		*/
 	}
 
 	// --------------------------------------------------------------------------
@@ -586,6 +589,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		final String inLine3Message,
 		final String inLine4Message,
 		final boolean largerBottomLine) {
+
+		long secondsSinceLastTemporaryMessage = (System.currentTimeMillis() - mTemporaryMessageTimestamp.getTime()) / 1000;
+		if (secondsSinceLastTemporaryMessage == 0){
+			return;
+		}
 
 		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
 		rememberLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message);
@@ -623,6 +631,12 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		final String inLine2Message,
 		final String inLine3Message,
 		final String inLine4Message) {
+		
+		long secondsSinceLastTemporaryMessage = (System.currentTimeMillis() - mTemporaryMessageTimestamp.getTime()) / 1000;
+		if (secondsSinceLastTemporaryMessage == 0){
+			return;
+		}
+		
 		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
 		rememberLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message);
 
@@ -635,7 +649,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			inLine4Message);
 
 		sendScreenCommandToMyChe(command);
-		quickSleep();
 		sendScreenCommandToLinkFromChe(command);
 
 	}
@@ -643,7 +656,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected void clearDisplay() {
 		ICommand command = new CommandControlClearDisplay(NetEndpoint.PRIMARY_ENDPOINT);
 		sendScreenCommandToMyChe(command);
-		quickSleep();
 		sendScreenCommandToLinkFromChe(command);
 	}
 
@@ -1370,10 +1382,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	protected void logout() {
 		notifyCheWorkerVerb("LOG OUT", "");
-		
-		//Retrieve state and username for the "good bye" message before they are cleared away. 
-		CheStateEnum originalState = getCheStateEnum();
-		
+
+		if (getCheStateEnum() != CheStateEnum.IDLE) {
+			String userName = mDeviceManager.getWorkerNameFromGuid(getGuid());
+			mDeviceManager.setWorkerNameFromGuid(getGuid(), null);
+			displayTemporaryMessage("Goodbye, " + userName, "Have a nice day", 2000);
+		}
+
 		// if this CHE is being remotely controlled, we want to break the link.
 		NetGuid linkedMobileGuid = this.getLinkedFromCheGuid();
 		if (linkedMobileGuid != null) {
@@ -1382,12 +1397,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		// many side effects. Primarily clearing leds and poscons and setting state to idle
 		_logoutSideEffects();
-		
-		if (originalState != CheStateEnum.IDLE){
-			String userName = mDeviceManager.getWorkerNameFromGuid(getGuid());
-			mDeviceManager.setWorkerNameFromGuid(getGuid(), null);
-			displayTemporaryMessage("Goodbye, " + userName, "Have a nice day", 2000);
-		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -2139,7 +2148,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (!CheStateEnum.REMOTE_PENDING.equals(this.getCheStateEnum())) {
 			LOGGER.error("Incorrect state in maintainLink. How? State is {}", getCheStateEnum());
 		}
-		
+
 		String priorLinkCheName = getLinkedToCheName();
 		LOGGER.info("CheDeviceLogic.maintainLink set link name: {}. Old link name was:{}", linkCheName, priorLinkCheName);
 
@@ -2199,7 +2208,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 		// Is this is primary "link" transaction? Place the notify here.
 		notifyLink(linkedDevice.getGuid());
-		
+
 		linkedDevice.processLink(getGuid(), getUserId());
 	}
 
@@ -2307,7 +2316,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 		// This is our best single unlink spot. Call notify here. Misses some forced unlinks.
 		notifyUnlink(linkedDevice.getGuid());
-		
+
 		linkedDevice.processUnLinkLocalVariables(this.getGuidNoPrefix());
 	}
 
@@ -2316,10 +2325,21 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * This is the receiving (cart CHE) side of the transaction.
 	 */
 	void processUnLinkLocalVariables(String sourceString) {
+		LOGGER.info("{} unlinking from {}. Resuming local control.", this.getGuidNoPrefix(), sourceString);
 		setLinkedFromCheGuid(null);
 		setUserId(null);
 		setState(CheStateEnum.IDLE);
-		LOGGER.info("{} unlinked from {}. Resuming local control.", sourceString, this.getGuidNoPrefix());
+	}
+
+	/**
+	 * This is rarely used. Only if a CHE was remote to another, and then itself gets controlled. It should not be in linked state.
+	 * Or one mobile was in linked state, then another mobile takes over control of the same cart.
+	 * Note the database and csDeviceLogic structures should be good when this called. This is only about the cheDeviceLogic member variables
+	 */
+	void forceFromLinkedState(CheStateEnum newState) {
+		LOGGER.warn("{} forced from state {} to {}", this.getGuidNoPrefix(), getCheStateEnum(), newState);
+		this.setLinkedToCheName(null);
+		setState(newState);
 	}
 
 	public void finishLogin() {
@@ -2343,7 +2363,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	void sendScreenCommandToLinkFromChe(ICommand inCommand) {
 		CheDeviceLogic linkFromDevice = getLinkFromCheDevice();
 		if (linkFromDevice != null) {
-			// We do not want to call directly. Rather, pass back, and let that device decide if it is in in the right state for remote screen redraws.
+			quickSleep(); // slight separation before sending
+			// We do not want to call directly. Rather, pass back, and let that device decide if it is in in the right state for remote screen redraws.			
 			linkFromDevice.processScreenCommandAtLinkFromChe(inCommand);
 		}
 	}
@@ -2370,10 +2391,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			LOGGER.warn("processScreenCommandFromLinkedChe called from state:{}. Not drawing", state);
 		}
 	}
-	
-	protected void displayTemporaryMessage(String line1, String line2, final int timeout){
-		mTemporaryMessageDisplayed = true;
+
+	protected void displayTemporaryMessage(String line1, String line2, final int timeout) {
+		quickSleep(); // Andrew wants this temporarily
+		
 		sendDisplayCommand(line1, line2);
+		mTemporaryMessageDisplayed = true;
+		mTemporaryMessageTimestamp = new Timestamp(System.currentTimeMillis());
 		Runnable clearThread = new Runnable() {
 			@Override
 			public void run() {
