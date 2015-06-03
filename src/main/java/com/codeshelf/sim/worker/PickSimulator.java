@@ -54,6 +54,7 @@ public class PickSimulator {
 		scanUser(pickerId);
 		// From v16, login goes to SETUP_SUMMARY state. Then explicit SETUP scan goes to CONTAINER_SELECT
 		waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		waitForTemporaryMessageToClear(WAIT_TIME);
 		scanCommand("SETUP");
 		waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 	}
