@@ -960,8 +960,6 @@ public class CheProcessRemoteLink extends ServerTest {
 		picker2.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		// The remoteVsCart() test covers this
-		
-
 	}
 
 
