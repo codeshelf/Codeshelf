@@ -25,6 +25,7 @@ import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
@@ -42,7 +43,8 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_EDIT_FACILITY = "editFacility <facility domain id> <primary site controller id> <primary radio channel>";
 	private final static String TEMPLATE_OUTLINE = "createDummyOutline [size 1/2/3]";
 	private final static String TEMPLATE_SET_PROPERTY = "setProperty <name> <value>";
-	private final static String TEMPLATE_IMPORT_ORDERS = "importOrders <filename>";
+	private final static String TEMPLATE_DELETE_ORDERS = "deleteOrders <filename>";
+	private final static String TEMPLATE_IMPORT_ORDERS = "importOrders <orders>";
 	private final static String TEMPLATE_IMPORT_AISLES = "importAisles <filename>";
 	private final static String TEMPLATE_IMPORT_LOCATIONS = "importLocations <filename>";
 	private final static String TEMPLATE_IMPORT_INVENTORY = "importInventory <filename>";
@@ -130,6 +132,8 @@ public class ScriptServerRunner {
 			processOutlineCommand(parts);
 		} else if (command.equalsIgnoreCase("setProperty")) {
 			processSetPropertyCommand(parts);
+		} else if (command.equalsIgnoreCase("deleteOrders")) {
+			processDeleteOrdersCommand(parts);
 		} else if (command.equalsIgnoreCase("importOrders")) {
 			processImportOrdersCommand(parts);
 		} else if (command.equalsIgnoreCase("importAisles")) {
@@ -156,7 +160,7 @@ public class ScriptServerRunner {
 			processWaitSecondsCommand(parts);
 		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, importOrders, importAisles, importInventory, setController, setPoscons, togglePutWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, waitSeconds, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, deleteOrders, importOrders, importAisles, importLocations, importInventory, setController, setPoscons, togglePutWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, waitSeconds, //]");
 		}
 	}
 
@@ -227,6 +231,26 @@ public class ScriptServerRunner {
 			throw new Exception("Property " + name + " doesn't exist");
 		}
 		propertyService.changePropertyValue(facility, name, parts[2]);
+	}
+
+	/**
+	 * Expects to see command
+	 * deleteOrders <orders>
+	 * @throws Exception 
+	 */
+	private void processDeleteOrdersCommand(String parts[]) throws Exception {
+		if (parts.length < 2){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_DELETE_ORDERS);
+		}
+		for (int i = 1; i < parts.length; i++) {
+			String orderId = parts[i];
+			OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
+			if (order != null) {
+				order.delete();
+			} else {
+				LOGGER.info("Warning: While running script, did not find order {}. Continuing with execution", orderId);
+			}
+		}
 	}
 
 	/**

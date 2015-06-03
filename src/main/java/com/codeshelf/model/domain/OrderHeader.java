@@ -627,4 +627,22 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		LOGGER.info("Archived: {} OrderHeaders ", numArchived);
 		return numArchived;
 	}
+	
+	/**
+	 * This method deleted the order and all dependencies from the DB.
+	 * It is to be used for testing of Automated Pick Scripts, so that the same orders can be picked repeatedly
+	 */
+	public void delete(){
+		LOGGER.info("Deleting order {}", this);
+		for (OrderDetail detail : getOrderDetails()){
+			for (WorkInstruction wi : detail.getWorkInstructions()) {
+				wi.setOrderDetail(null);
+				WorkInstruction.staticGetDao().store(wi);
+			}
+			OrderDetail.staticGetDao().delete(detail);
+		}
+		containerUse.setOrderHeader(null);
+		ContainerUse.staticGetDao().store(containerUse);
+		OrderHeader.staticGetDao().delete(this);
+	}
 }
