@@ -1,5 +1,7 @@
 package com.codeshelf.model.domain;
 
+import java.util.Date;
+
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -8,6 +10,8 @@ import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -19,6 +23,7 @@ import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
@@ -44,19 +49,22 @@ public class DataImportReceipt extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@Setter
 	@JsonProperty
-	private long received;
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date received;
 	
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private long started;
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date started;
 	
 	@Column(nullable = false)
 	@Getter
 	@Setter
 	@JsonProperty
-	private long completed;
+	@Temporal(TemporalType.TIMESTAMP)
+	private Date completed;
 	
 	@Getter
 	@Setter
@@ -80,6 +88,10 @@ public class DataImportReceipt extends DomainObjectTreeABC<Facility> {
 	@Getter @Setter
 	DataImportStatus status;
 	
+	@Column(nullable = true)
+	@Getter @Setter
+	String username;
+	
 	@Override
 	public String getDefaultDomainIdPrefix() {
 		return "IMPORT-";
@@ -97,6 +109,11 @@ public class DataImportReceipt extends DomainObjectTreeABC<Facility> {
 	@Override
 	public Facility getFacility() {
 		return this.parent;
+	}
+	
+	@Override
+	public String toString() {
+		return ordersProcessed+" orders and "+linesProcessed+" lines in "+(completed.getTime()-started.getTime())/1000+" seconds";
 	}
 
 }
