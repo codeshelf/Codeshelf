@@ -303,6 +303,13 @@ public class DropboxRealTest extends ServerTest {
 					}
 					return result;
 				}
+				
+				@Override
+				public void persistDataReceipt(Facility facility, String username, long receivedTime, BatchResult<?> result) {
+					//do nothing
+				}
+				
+				
 			};
 
 			LOGGER.info("START dbx getUpdatesFromHost for DBX02");

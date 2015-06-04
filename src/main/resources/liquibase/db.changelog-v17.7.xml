@@ -9,5 +9,12 @@
     </changeSet>
     <changeSet author="bhe (generated)" id="1433282324584-4">
         <dropColumn columnName="extension" tableName="extension_point"/>
+        <rollback>
+            <addColumn tableName="extension_point">
+                <column name="extension" type="INT4">
+                    <constraints nullable="false"/>
+                </column>
+            </addColumn>
+        </rollback>
     </changeSet>
 </databaseChangeLog>

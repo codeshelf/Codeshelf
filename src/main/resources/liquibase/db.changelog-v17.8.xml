@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+    <changeSet author="pmonteiro (generated)" id="1433349609357-2">
+        <preConditions onFail="MARK_RAN">
+            <not><columnExists tableName="import_receipt" columnName="username" /></not>
+        </preConditions>
+        <addColumn tableName="import_receipt">
+            <column name="username" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="pmonteiro" id="1433349609357-3">
+        <sql dbms="postgresql"
+            stripComments="true">
+              ALTER TABLE import_receipt
+             ALTER COLUMN received
+            SET DATA TYPE timestamp without time zone
+            USING timestamp without time zone 'epoch' + received * interval '1 ms';
+        </sql>
+        <sql dbms="postgresql"
+            stripComments="true">
+
+              ALTER TABLE import_receipt
+             ALTER COLUMN completed
+            SET DATA TYPE timestamp without time zone
+            USING timestamp without time zone 'epoch' + completed * interval '1 ms';
+        </sql>
+        <sql dbms="postgresql"
+            stripComments="true">
+
+              ALTER TABLE import_receipt
+             ALTER COLUMN started
+            SET DATA TYPE timestamp without time zone
+            USING timestamp without time zone 'epoch' + started * interval '1 ms';
+        </sql>
+        <rollback>
+            <sql dbms="postgresql"
+                 stripComments="true">
+
+                ALTER TABLE import_receipt
+                ALTER COLUMN received TYPE int8 USING extract(epoch from received) * 1000;
+            </sql>
+            <sql dbms="postgresql"
+                 stripComments="true">
+
+                ALTER TABLE import_receipt
+                ALTER COLUMN completed TYPE int8 USING extract(epoch from completed) * 1000;
+            </sql>
+            <sql dbms="postgresql"
+                 stripComments="true">
+
+                ALTER TABLE import_receipt
+                ALTER COLUMN started TYPE int8 USING extract(epoch from started) * 1000;
+            </sql>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

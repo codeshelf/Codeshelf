@@ -376,6 +376,12 @@ public class EdiProcessorTest extends MockDaoTest {
 				result.addViolation("bad", "bad", "msg");
 				return result;
 			}
+			
+			@Override
+			public void persistDataReceipt(Facility facility, String username, long receivedTime, BatchResult<?> result) {
+				//do nothing
+			}
+
 		};
 	}
 }
