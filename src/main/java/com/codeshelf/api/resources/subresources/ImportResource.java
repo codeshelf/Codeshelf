@@ -154,7 +154,7 @@ public class ImportResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getImportReceipts() {
 		try {
-			List<DataImportReceipt> receipts = DataImportReceipt.staticGetDao().getAll();
+			List<DataImportReceipt> receipts = DataImportReceipt.staticGetDao().findByParent(facility);
 			return BaseResponse.buildResponse(receipts);
 		}
 		catch (Exception e) {
