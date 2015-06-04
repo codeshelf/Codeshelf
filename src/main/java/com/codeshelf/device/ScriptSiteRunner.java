@@ -25,8 +25,9 @@ import com.google.common.collect.Lists;
 public class ScriptSiteRunner {
 	private final static String TEMPLATE_DEF_CHE = "defChe <cheName> <cheGuid>";
 	private final static String TEMPLATE_LOGIN = "login <cheName> <workerId> <state>";
+	private final static String TEMPLATE_LOGIN_REMOTE = "loginRemote <cheName> <workerId> <linkToChe>";
 	private final static String TEMPLATE_SETUP_CART = "setupCart <cheName> <containers>";
-	private final static String TEMPLATE_WAIT = "waitForState <cheName> <states>";
+	private final static String TEMPLATE_WAIT_FOR_STATES = "waitForState <cheName> <states>";
 	private final static String TEMPLATE_SET_PARAMS = "setParams (assignments 'pickSpeed'/'skipFreq'/'shortFreq'=<value>)";
 	private final static String TEMPLATE_PICK = "pick <cheNames>";
 	private final static String TEMPLATE_CHE_EXEC = "cheExec <cheName> <cheCommand> [arguments]";
@@ -101,6 +102,8 @@ public class ScriptSiteRunner {
 			processDefineCheCommand(parts);
 		} else if (command.equalsIgnoreCase("login")) {
 			processLoginCommand(parts);
+		} else if (command.equalsIgnoreCase("loginRemote")) {
+			processLoginRemoteCommand(parts);
 		} else if (command.equalsIgnoreCase("waitForState")) {
 			processWaitForStatesCommand(parts);
 		} else if (command.equalsIgnoreCase("setupCart")) {
@@ -119,7 +122,7 @@ public class ScriptSiteRunner {
 			processLogoutCommand(parts);
 		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [cheExec, defChe, login, waitForState, setupCard, setParams, pick, pickAll, waitSeconds, waitForDevices, logout, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [cheExec, defChe, login, loginRemote, waitForState, setupCard, setParams, pick, pickAll, waitSeconds, waitForDevices, logout, //]");
 		}
 	}
 	
@@ -190,12 +193,26 @@ public class ScriptSiteRunner {
 	
 	/**
 	 * Expects to see command
+	 * loginRemote <cheName> <workerId> <linkToCheName>
+	 * @throws Exception
+	 */
+	private void processLoginRemoteCommand(String parts[]) throws Exception {
+		if (parts.length != 4){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_LOGIN_REMOTE);
+		}
+		PickSimulator mobileChe = getChe(parts[1]);
+		String connectTo = parts[3];
+		mobileChe.loginAndRemoteLink(parts[2], connectTo);
+	}
+	
+	/**
+	 * Expects to see command
 	 * waitForState <cheName> <states>
 	 * @throws Exception
 	 */
 	private void processWaitForStatesCommand(String parts[]) throws Exception {
 		if (parts.length < 3){
-			throwIncorrectNumberOfArgumentsException(TEMPLATE_WAIT);
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_WAIT_FOR_STATES);
 		}
 		PickSimulator che = getChe(parts[1]);
 		ArrayList<CheStateEnum> states = Lists.newArrayList();
@@ -203,7 +220,7 @@ public class ScriptSiteRunner {
 			CheStateEnum state = CheStateEnum.valueOf(parts[i]);
 			states.add(state);
 		}
-		che.waitForOneOfCheStates(states, WAIT_TIMEOUT);
+		che.waitForCheStates(states, WAIT_TIMEOUT);
 	}
 	
 	/**
@@ -266,7 +283,7 @@ public class ScriptSiteRunner {
 		}
 		String cheName = parts[1];
 		PickSimulator che = getChe(cheName);
-		che.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIMEOUT);
+		che.waitForThisOrLinkedCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIMEOUT);
 		String container;
 		for (int i = 2; i < parts.length; i++){
 			container = parts[i];
@@ -413,7 +430,7 @@ public class ScriptSiteRunner {
 		states.add(CheStateEnum.NO_WORK);
 		states.add(CheStateEnum.DO_PICK);
 		states.add(CheStateEnum.SCAN_SOMETHING);
-		che.waitForOneOfCheStates(states, WAIT_TIMEOUT);
+		che.waitForCheStates(states, WAIT_TIMEOUT);
 		CheStateEnum state = che.getCurrentCheState();
 		
 		//If CHE is in a Review stage, scan START again to advance to Pick stage
@@ -421,7 +438,7 @@ public class ScriptSiteRunner {
 			Thread.sleep(pickPauseMs);
 			che.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 			states.remove(CheStateEnum.LOCATION_SELECT);
-			che.waitForOneOfCheStates(states, WAIT_TIMEOUT);
+			che.waitForCheStates(states, WAIT_TIMEOUT);
 		}
 		
 		state = che.getCurrentCheState();
@@ -452,7 +469,7 @@ public class ScriptSiteRunner {
 				che.pickItemAuto();
 			} else {
 				//Process normal instruction
-				che.waitForOneOfCheStates(pickStates, WAIT_TIMEOUT);
+				che.waitForCheStates(pickStates, WAIT_TIMEOUT);
 				state = che.getCurrentCheState();
 				//When picking multiple orders containing same items, UPC scan is only needed once per item
 				if (state == CheStateEnum.SCAN_SOMETHING) {

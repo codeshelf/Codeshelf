@@ -57,6 +57,22 @@ public class PickSimulator {
 		scanCommand("SETUP");
 		waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 	}
+	
+	public void loginAndRemoteLink(String pickerId, String connectTo) {
+		scanUser(pickerId);
+		//If this CHE was previously used as a remote controller, it will go into REMOTE state after the badge scan
+		ArrayList<CheStateEnum> states = Lists.newArrayList();
+		states.add(CheStateEnum.SETUP_SUMMARY);
+		states.add(CheStateEnum.REMOTE);
+		waitForCheStates(states, WAIT_TIME);
+		//If CHE goes into SETUP_SUMMARY state, scan the REMOTE command to go to REMOTE state
+		if (getCurrentCheState() == CheStateEnum.SETUP_SUMMARY) {
+			scanCommand("REMOTE");
+			waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+		}
+		scanSomething("H%" + connectTo);
+		waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
+	}
 
 	public void loginAndCheckState(String pickerId, CheStateEnum inState) {
 		// This only does the login ("scan badge" scan). Especially in Line_Scan process, this is used in tests rather than loginAndSetup.
@@ -119,10 +135,10 @@ public class PickSimulator {
 	public void setupContainer(String containerId, String positionId) {
 		// used for normal success case of scan container, then position on cart.
 		scanContainer(containerId);
-		waitForCheState(CheStateEnum.CONTAINER_POSITION, 1000);
+		waitForThisOrLinkedCheState(CheStateEnum.CONTAINER_POSITION, 1000);
 
 		scanPosition(positionId);
-		waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		waitForThisOrLinkedCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 	}
 
 	public void startAndSkipReview(String location, int inComputeTimeOut, int inLocationTimeOut) {
@@ -284,6 +300,10 @@ public class PickSimulator {
 	public CheStateEnum getCurrentCheState() {
 		return cheDeviceLogic.getCheStateEnum();
 	}
+	
+	public CheStateEnum getThisOrLinkedCurrentCheState() {
+		return getDeviceToAsk().getCheStateEnum();
+	}
 
 	public String getPickerTypeAndState(String inPrefix) {
 		return inPrefix + " " + getProcessType() + ": State is " + getCurrentCheState();
@@ -399,57 +419,62 @@ public class PickSimulator {
 	}
 	
 	/**
+	 * If this CHE is linked, wait for state on another che. If now, wait for state on this CHE
+	 */
+	public void waitForThisOrLinkedCheState(CheStateEnum state, int timeoutInMillis) {
+		waitForDeviceState(getDeviceToAsk(), state, timeoutInMillis);
+	}
+	
+	/**
+	 * If this CHE is linked, wait for state on another che. If now, wait for state on this CHE
+	 */
+	public void waitForThisOrLinkedCheStates(ArrayList<CheStateEnum> states, int timeoutInMillis) {
+		waitForDeviceStates(getDeviceToAsk(), states, timeoutInMillis);
+	}
+	
+	
+	public void waitForCheStates(ArrayList<CheStateEnum> states, int timeoutInMillis) {
+		waitForDeviceStates(cheDeviceLogic, states, timeoutInMillis);
+	}
+	
+	/**
 	 * Wait for specified state. Throw if state does not come in time, causing the test to fail.
 	 */
 	private void waitForDeviceState(CheDeviceLogic device, CheStateEnum state, int timeoutInMillis) {
 		ArrayList<CheStateEnum> states = Lists.newArrayList();
 		states.add(state);
-		CheStateEnum lastState = waitForOneOfCheStatesInner(device, states, timeoutInMillis);
-		if (!state.equals(lastState)) {
-			String theProblem = String.format("Che state %s not encountered in %dms. State is %s, inSetState: %s",
-				state,
-				timeoutInMillis,
-				lastState,
-				device.inSetState());
-			throw new IllegalStateException(theProblem);
-		}
+		waitForDeviceStates(device, states, timeoutInMillis);
 	}
-	
-	public void waitForOneOfCheStates(ArrayList<CheStateEnum> statesList, int timeoutInMillis) {
-		CheStateEnum lastState = waitForOneOfCheStatesInner(cheDeviceLogic, statesList, timeoutInMillis);
-		if (!statesList.contains(lastState)) {
-			StringBuilder statesStr = new StringBuilder();
-			for (CheStateEnum state : statesList) {
-				statesStr.append(state).append(" ");
-			}
-			String theProblem = String.format("Che states %snot encountered in %dms. State is %s, inSetState: %s",
-				statesStr.toString(),
-				timeoutInMillis,
-				lastState,
-				cheDeviceLogic.inSetState());
-			throw new IllegalStateException(theProblem);
-		}
-	}
-	
+
 	/**
 	 * Method used for script testing, where a Che may transition to one of several states, and we'd like to wait for transition to finish before proceeding
 	 */
-	private CheStateEnum waitForOneOfCheStatesInner(CheDeviceLogic device, ArrayList<CheStateEnum> states, int timeoutInMillis) {
+	private CheStateEnum waitForDeviceStates(CheDeviceLogic device, ArrayList<CheStateEnum> states, int timeoutInMillis) {
 		long start = System.currentTimeMillis();
+		CheStateEnum currentState = null;
 		while (System.currentTimeMillis() - start < timeoutInMillis) {
 			// retry every 100ms
 			ThreadUtils.sleep(100);
-			CheStateEnum currentState = device.getCheStateEnum();
+			currentState = device.getCheStateEnum();
 			// we are waiting for the expected CheStateEnum, AND the indicator that we are out of the setState() routine.
 			// Typically, the state is set first, then some side effects are called that depend on the state.  The picker is usually checking on
 			// some of the side effects after this call.
 			if (states.contains(currentState) && !device.inSetState()) {
 				// expected state found - all good
-				break;
+				return currentState;
 			}
 		}
-		CheStateEnum existingState = device.getCheStateEnum();
-		return existingState;
+		//Exception code below
+		StringBuilder statesStr = new StringBuilder();
+		for (CheStateEnum state : states) {
+			statesStr.append(state).append(" ");
+		}
+		String theProblem = String.format("Che states %snot encountered in %dms. State is %s, inSetState: %s",
+			statesStr.toString(),
+			timeoutInMillis,
+			currentState,
+			cheDeviceLogic.inSetState());
+		throw new IllegalStateException(theProblem);
 	}
 
 	// This is for the drastic CHE process changes in v16. Is it PICK_COMPLETE state, or SETUP_SUMMARY state.

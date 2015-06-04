@@ -99,7 +99,7 @@ class PickOrders {
 	 */
 	def setupChe(PickSimulator picker, ArrayList<String> containerList) {
 		//Get to CONTAINER_SELECT state
-		picker.waitForOneOfCheStates([CheStateEnum.IDLE, CheStateEnum.CONTAINER_SELECT], WAIT_TIMEOUT);
+		picker.waitForCheStates([CheStateEnum.IDLE, CheStateEnum.CONTAINER_SELECT], WAIT_TIMEOUT);
 		CheStateEnum state = picker.getCurrentCheState();
 		if (state == CheStateEnum.IDLE) {
 			picker.loginAndSetup(workerId);
@@ -112,7 +112,7 @@ class PickOrders {
 		//Compute work
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		boolean usesSummaryState = picker.getCheDeviceLogic().usesSummaryState();
-		picker.waitForOneOfCheStates([CheStateEnum.SETUP_SUMMARY, CheStateEnum.LOCATION_SELECT, CheStateEnum.NO_WORK], WAIT_TIMEOUT);
+		picker.waitForCheStates([CheStateEnum.SETUP_SUMMARY, CheStateEnum.LOCATION_SELECT, CheStateEnum.NO_WORK], WAIT_TIMEOUT);
 		state = picker.getCurrentCheState();
 		String noWorkMsg = "No work for these containers: " + containerList;
 		if (state == CheStateEnum.NO_WORK){
@@ -133,12 +133,12 @@ class PickOrders {
 			pause();
 		}
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForOneOfCheStates([CheStateEnum.SETUP_SUMMARY, CheStateEnum.LOCATION_SELECT, CheStateEnum.NO_WORK, CheStateEnum.DO_PICK, CheStateEnum.SCAN_SOMETHING], WAIT_TIMEOUT);
+		picker.waitForCheStates([CheStateEnum.SETUP_SUMMARY, CheStateEnum.LOCATION_SELECT, CheStateEnum.NO_WORK, CheStateEnum.DO_PICK, CheStateEnum.SCAN_SOMETHING], WAIT_TIMEOUT);
 		state = picker.getCurrentCheState();
 		if (state == CheStateEnum.SETUP_SUMMARY || state == CheStateEnum.LOCATION_SELECT){
 			pause();
 			picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-			picker.waitForOneOfCheStates([CheStateEnum.SETUP_SUMMARY, CheStateEnum.NO_WORK, CheStateEnum.DO_PICK, CheStateEnum.SCAN_SOMETHING], WAIT_TIMEOUT);
+			picker.waitForCheStates([CheStateEnum.SETUP_SUMMARY, CheStateEnum.NO_WORK, CheStateEnum.DO_PICK, CheStateEnum.SCAN_SOMETHING], WAIT_TIMEOUT);
 		}
 		
 		state = picker.getCurrentCheState();
@@ -165,7 +165,7 @@ class PickOrders {
 				picker.pickItemAuto();
 			} else {
 				//Process normal instruction
-				picker.waitForOneOfCheStates([CheStateEnum.SCAN_SOMETHING, CheStateEnum.DO_PICK], WAIT_TIMEOUT);
+				picker.waitForCheStates([CheStateEnum.SCAN_SOMETHING, CheStateEnum.DO_PICK], WAIT_TIMEOUT);
 				state = picker.getCurrentCheState();
 				//When picking multiple orders containing same items, UPC scan is only needed once per item
 				if (state == CheStateEnum.SCAN_SOMETHING) {
