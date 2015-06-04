@@ -45,10 +45,10 @@ import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
 import com.codeshelf.api.HardwareRequest.LightRequest;
 import com.codeshelf.api.pickscript.ScriptParser;
 import com.codeshelf.api.pickscript.ScriptParser.ScriptStep;
+import com.codeshelf.api.pickscript.ScriptServerRunner;
 import com.codeshelf.api.pickscript.ScriptSiteCallPool;
 import com.codeshelf.api.pickscript.ScriptStepParser;
 import com.codeshelf.api.pickscript.ScriptStepParser.StepPart;
-import com.codeshelf.api.pickscript.ScriptServerRunner;
 import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.ItemDisplay;
 import com.codeshelf.api.responses.PickRate;
@@ -62,21 +62,17 @@ import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
-import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
-import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
-import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.NotificationService;
 import com.codeshelf.service.NotificationService.EventType;
 import com.codeshelf.service.OrderService;
-import com.codeshelf.service.ProductivityCheSummaryList;
 import com.codeshelf.service.ProductivitySummaryList;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.UiUpdateService;
@@ -135,21 +131,6 @@ public class FacilityResource {
 		this.orderImporter = orderImporter;
 	}
 
-	@GET
-	@RequiresPermissions("companion:view")
-	@Path("/blockedwork/nolocation")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getBlockedWorkNoLocation() {
-		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
-		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
-		try {
-			Session session = persistenceService.getSession();
-			return BaseResponse.buildResponse(this.orderService.orderDetailsNoLocation(tenant, session, facility.getPersistentId()));
-		} catch (Exception e) {
-			return new ErrorResponse().processException(e);
-		}
-	}
-
 	@Path("/import")
 	public ImportResource getImportResource() throws Exception {
 		ImportResource r = resourceContext.getResource(ImportResource.class);
@@ -175,35 +156,6 @@ public class FacilityResource {
 		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		Session session = persistenceService.getSession();
 		return BaseResponse.buildResponse(this.orderService.itemsInQuantityOrder(session, facility.getPersistentId()));
-	}
-
-	@GET
-	@Path("/blockedwork/shorts")
-	@RequiresPermissions("companion:view")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getBlockedWorkShorts() {
-		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
-		Session session = persistenceService.getSession();
-		return BaseResponse.buildResponse(this.orderService.orderDetailsByStatus(session, facility.getPersistentId(), OrderStatusEnum.SHORT));
-	}
-
-	@GET
-	@Path("/productivity")
-	@RequiresPermissions("companion:view")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getProductivitySummary() throws Exception {
-		ProductivitySummaryList summary = orderService.getProductivitySummary(facility.getPersistentId(), false);
-		return BaseResponse.buildResponse(summary);
-	}
-
-	@GET
-	@Path("/chesummary")
-	@RequiresPermissions("companion:view")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getCheSummary() {
-		List<WorkInstruction> instructions = WorkInstruction.staticGetDao().getAll();
-		ProductivityCheSummaryList summary = new ProductivityCheSummaryList(facility.getPersistentId(), instructions);
-		return BaseResponse.buildResponse(summary);
 	}
 
 	@GET

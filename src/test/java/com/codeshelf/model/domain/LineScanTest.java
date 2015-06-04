@@ -30,7 +30,7 @@ import com.codeshelf.ws.server.WebSocketConnection;
 
 public class LineScanTest extends ServerTest {
 	@SuppressWarnings("unused")
-	private final static Logger LOGGER=LoggerFactory.getLogger(ProductivityReportingTest.class);
+	private final static Logger LOGGER=LoggerFactory.getLogger(LineScanTest.class);
 	private ICsvOrderImporter importer;
 	private ServerMessageProcessor	processor;
 
