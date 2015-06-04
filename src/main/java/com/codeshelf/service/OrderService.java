@@ -101,6 +101,15 @@ public class OrderService implements IApiService {
 		return result;
 	}
 	
+	public List<OrderHeader> findOrderHeadersForStatus(Facility facility, OrderStatusEnum orderStatusEnum) {
+		Criteria criteria = OrderHeader.staticGetDao().createCriteria()
+			.add(Property.forName("parent").eq(facility))
+			.add(Property.forName("status").eq(orderStatusEnum));
+			@SuppressWarnings("unchecked")
+			List<OrderHeader> results =(List<OrderHeader>) criteria.list();
+			return results;
+	}
+	
 	public List<OrderDetailView> orderDetailsByStatus(Session session, UUID facilityUUID, OrderStatusEnum orderStatusEnum) {
 		@SuppressWarnings("unchecked")
 		List<OrderDetailView>  result = session.createQuery(
@@ -278,7 +287,5 @@ public class OrderService implements IApiService {
 		}
 		return shipperFilters;
 	}
-
-
 
 }

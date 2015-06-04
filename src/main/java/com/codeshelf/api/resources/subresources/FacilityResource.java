@@ -64,8 +64,10 @@ import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
+import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
@@ -137,6 +139,15 @@ public class FacilityResource {
 	    r.setFacility(facility);
 	    return r;
 	}
+	
+	@GET
+	@Path("/orders")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getOrders(@QueryParam("status") String status) {
+    	List<OrderHeader> results = this.orderService.findOrderHeadersForStatus(facility, OrderStatusEnum.valueOf(status));
+		return BaseResponse.buildResponse(results);
+	}
+
 
     @GET
 	@Path("/work/results")
