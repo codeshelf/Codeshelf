@@ -378,7 +378,7 @@ public class EdiProcessorTest extends MockDaoTest {
 			}
 			
 			@Override
-			public void persistDataReceipt(Facility facility, String username, long receivedTime, BatchResult<?> result) {
+			public void persistDataReceipt(Facility facility, String username, String filename, long receivedTime, BatchResult<?> result) {
 				//do nothing
 			}
 

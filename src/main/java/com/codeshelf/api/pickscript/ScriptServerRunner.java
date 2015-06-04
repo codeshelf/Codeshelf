@@ -269,7 +269,7 @@ public class ScriptServerRunner {
 		long receivedTime = System.currentTimeMillis();
 		BatchResult<Object> results = orderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
 		String username = CodeshelfSecurityManager.getCurrentUserContext().getUsername();
-		orderImporter.persistDataReceipt(facility, username, receivedTime, results);
+		orderImporter.persistDataReceipt(facility, username, filename + ".csv", receivedTime, results);
 	}
 
 	/**

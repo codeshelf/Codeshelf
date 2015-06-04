@@ -290,10 +290,11 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	}
 	
 	@Override
-	public void persistDataReceipt(Facility facility, String username, long received, BatchResult<?> results) {
+	public void persistDataReceipt(Facility facility, String username, String filename, long received, BatchResult<?> results) {
 
 		DataImportReceipt receipt = new DataImportReceipt();
 		receipt.setUsername(username);
+		receipt.setFilename(filename);
 		receipt.setReceived(new Date(received));
 		receipt.setStarted(results.getStarted());
 		receipt.setCompleted(results.getCompleted());

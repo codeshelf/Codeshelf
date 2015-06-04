@@ -29,7 +29,7 @@ SERVER
 deleteOrders 26768709 26768711 26768712 26768712 26768717 26768718 26768718 26768719 26768720
 importOrders orders_10
 
-STEP test remote control pick
+STEP test remote control setup
 SITE 
 waitForDevices 0x0000009B 0x000000A3 0x00000031 0x0000000AB
 //Define ches

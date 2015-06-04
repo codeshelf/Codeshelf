@@ -23,6 +23,6 @@ public interface ICsvOrderImporter {
 	// here for easier testablity
 	int toInteger(final String inString);
 	
-	void persistDataReceipt(Facility facility, String username, long receivedTime,  BatchResult<?> result);
+	void persistDataReceipt(Facility facility, String username, String filename, long receivedTime,  BatchResult<?> result);
 
 }

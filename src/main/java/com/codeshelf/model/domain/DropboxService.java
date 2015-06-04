@@ -547,7 +547,6 @@ public class DropboxService extends EdiServiceABC {
 		// It cannot run on TeamCity
 
 		try {
-
 			String filepath = inEntry.lcPath;
 
 			/*  Warning: this is called rather indiscriminately. Whatever Dropbox sees anywhere (even in export and processed folders) gets called here.
@@ -607,7 +606,7 @@ public class DropboxService extends EdiServiceABC {
 					processedAttempt = true;
 					BatchResult<Object> results = inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent(), ediProcessTime);
 					String username = CodeshelfSecurityManager.getCurrentUserContext().getUsername();
-					inCsvOrderImporter.persistDataReceipt(getParent(), username, dbxFile.clientMtime.getTime(),  results);
+					inCsvOrderImporter.persistDataReceipt(getParent(), username, dbxFile.name, dbxFile.clientMtime.getTime(),  results);
 
 					success = results.isSuccessful();
 

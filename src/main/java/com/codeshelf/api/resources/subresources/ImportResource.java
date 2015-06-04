@@ -121,7 +121,7 @@ public class ImportResource {
 			
 			BatchResult<Object> results = this.outboundOrderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
 			String username = CodeshelfSecurityManager.getCurrentUserContext().getUsername();
-			this.outboundOrderImporter.persistDataReceipt(facility, username, receivedTime, results);
+			this.outboundOrderImporter.persistDataReceipt(facility, username, contentDispositionHeader.getFileName(), receivedTime, results);
 			return BaseResponse.buildResponse(results, Status.OK);				
 		}
 		catch (Exception e) {

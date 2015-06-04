@@ -93,6 +93,11 @@ public class DataImportReceipt extends DomainObjectTreeABC<Facility> {
 	@Getter @Setter
 	String username;
 	
+	@Column(nullable = true)
+	@JsonProperty
+	@Getter @Setter
+	String filename;
+	
 	@Override
 	public String getDefaultDomainIdPrefix() {
 		return "IMPORT-";
