@@ -302,6 +302,8 @@ public class CheProcessTestPick extends ServerTest {
 
 	//@Test
 	public final void testStartWorkReverseSkipToLocation() throws IOException {
+		// JR: not sure what this test used to do. Does not work
+		
 		// set up data for pick scenario
 		this.getTenantPersistenceService().beginTransaction();
 
@@ -314,7 +316,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		//Then skip to location
 		picker.scanLocation("D302");
-		picker.waitForCheState(CheStateEnum.LOCATION_SELECT, 3000);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
 		//For this data set
 		//Forward ordering is 3,2,1

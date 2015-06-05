@@ -15,7 +15,6 @@ public enum CheStateEnum {
 	VERIFYING_BADGE(CheStateNum.VERIFYING_BADGE, "VERIFYING_BADGE"),
 	COMPUTE_WORK(CheStateNum.COMPUTE_WORK, "COMPUTE_WORK"),
 	GET_WORK(CheStateNum.GET_WORK, "GET_WORK"),
-	LOCATION_SELECT(CheStateNum.LOCATION_SELECT, "LOCATION_SELECT"),
 	CONTAINER_SELECT(CheStateNum.CONTAINER_SELECT, "CONTAINER_SELECT"),
 	CONTAINER_POSITION(CheStateNum.CONTAINER_POSITION, "CONTAINER_POSITION"),
 	DO_PICK(CheStateNum.DO_PICK, "DO_PICK"),
@@ -90,10 +89,6 @@ public enum CheStateEnum {
 				result = CheStateEnum.GET_WORK;
 				break;
 
-			case CheStateNum.LOCATION_SELECT:
-				result = CheStateEnum.LOCATION_SELECT;
-				break;
-
 			case CheStateNum.CONTAINER_SELECT:
 				result = CheStateEnum.CONTAINER_SELECT;
 				break;
@@ -166,7 +161,7 @@ public enum CheStateEnum {
 		static final byte	VERIFYING_BADGE				= 1;
 		static final byte	COMPUTE_WORK				= 2;
 		static final byte	GET_WORK					= 3;
-		static final byte	LOCATION_SELECT				= 4;
+		// available. used to be location_select		= 4;
 		static final byte	CONTAINER_SELECT			= 5;
 		static final byte	CONTAINER_POSITION			= 6;
 		static final byte	DO_PICK						= 7;

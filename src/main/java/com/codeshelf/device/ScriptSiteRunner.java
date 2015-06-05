@@ -426,7 +426,6 @@ public class ScriptSiteRunner {
 		che.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		ArrayList<CheStateEnum> states = Lists.newArrayList();
 		states.add(CheStateEnum.SETUP_SUMMARY);
-		states.add(CheStateEnum.LOCATION_SELECT);
 		states.add(CheStateEnum.NO_WORK);
 		states.add(CheStateEnum.DO_PICK);
 		states.add(CheStateEnum.SCAN_SOMETHING);
@@ -434,10 +433,9 @@ public class ScriptSiteRunner {
 		CheStateEnum state = che.getCurrentCheState();
 		
 		//If CHE is in a Review stage, scan START again to advance to Pick stage
-		if (state == CheStateEnum.SETUP_SUMMARY || state == CheStateEnum.LOCATION_SELECT){
+		if (state == CheStateEnum.SETUP_SUMMARY){
 			Thread.sleep(pickPauseMs);
 			che.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-			states.remove(CheStateEnum.LOCATION_SELECT);
 			che.waitForCheStates(states, WAIT_TIMEOUT);
 		}
 		

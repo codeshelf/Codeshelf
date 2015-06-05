@@ -486,7 +486,7 @@ public class PickSimulator {
 		return cheDeviceLogic.getNoWorkReviewState();
 	}
 
-	// This is for the drastic CHE process changes in v16. Is it LOCATION_SELECT state, or SETUP_SUMMARY state.
+	// This is for the drastic CHE process changes in v16. Now SETUP_SUMMARY state.
 	public CheStateEnum getLocationStartReviewState() {
 		return cheDeviceLogic.getLocationStartReviewState();
 	}

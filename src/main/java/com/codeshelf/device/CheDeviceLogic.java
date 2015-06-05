@@ -133,7 +133,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					POSCON_COMMAND							= "POSCON";
 
 	// With WORKSEQR = "WorkSequence", work may scan start instead of scanning a location. 
-	// LOCATION_SELECT, we want "SCAN START LOCATION" "OR SCAN START"
 	// LOCATION_SELECT_REVIEW, we want "REVIEW MISSING WORK" "OR SCAN LOCATION" "OR SCAN START"
 	protected static final String					OR_SCAN_START							= cheLine("OR SCAN START");
 	protected static final String					OR_SCAN_LOCATION						= cheLine("OR SCAN LOCATION");
@@ -1491,12 +1490,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	public CheStateEnum getLocationStartReviewState() {
 		return CheStateEnum.SETUP_SUMMARY;
-		// return CheStateEnum.LOCATION_SELECT;
 	}
 
 	public CheStateEnum getLocationStartReviewState(boolean needOldReviewState) {
 		return CheStateEnum.SETUP_SUMMARY;
-		// return CheStateEnum.LOCATION_SELECT;
 	}
 
 	// --------------------------------------------------------------------------

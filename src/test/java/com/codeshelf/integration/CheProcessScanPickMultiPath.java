@@ -224,7 +224,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 	}
 
 	/**
-	 * From LOCATION_SELECT state, select a location on the same path.
+	 * Select a location on the same path.
 	 * Verify that the Pick starts immediately, just line during the single-path operations
 	 */
 	@Test
@@ -250,8 +250,8 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 	}
 
 	/**
-	 * From LOCATION_SELECT state, select a location on a different path.
-	 * Verify that the CHE remains in LOCATION_SELECT, but showing work for the new path 
+	 * Select a location on a different path.
+	 * Verify that the CHE is showing work for the new path 
 	 */
 	@Test
 	public void testSelectLocationChangePath() throws IOException {
@@ -267,7 +267,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		Assert.assertEquals(new Byte("5"), posConValue);
 
 		//Scan location on the same path, but not in the beginning
-		//The che will remain the in the LOCATION_SELECT state, but will now show work for the new path
+		//The che willshow work for the new path
 		picker.scanLocation("Loc2B");
 		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
@@ -283,7 +283,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 	}
 
 	/**
-	 * From LOCATION_SELECT, scan a location on a different path. Make sure CHE switches to it.
+	 * Scan a location on a different path. Make sure CHE switches to it.
 	 * Then, scan a location in the middle of the new path. Make sure that the work is ordered and wrapped accordingly
 	 */
 	@Test
@@ -300,7 +300,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		Assert.assertEquals(new Byte("5"), posConValue);
 
 		//Scan location on a different path
-		//The che will remain the in the LOCATION_SELECT state, but will now show work for the new path
+		//The che will show work for the new path
 		picker.scanLocation("Loc2B");
 		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
@@ -316,7 +316,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 	}
 
 	/**
-	 * From LOCATION_SELECT, scan a location on a different path. Make sure CHE switches to it.
+	 * Scan a location on a different path. Make sure CHE switches to it.
 	 * Then, scan a location in the middle of the new path. Make sure that the work is ordered and wrapped accordingly
 	 */
 	@Test
@@ -333,14 +333,14 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		Assert.assertEquals(new Byte("5"), posConValue);
 
 		//Scan location on a different path
-		//The che will remain the in the LOCATION_SELECT state, but will now show work for the new path
+		//The che will now show work for the new path
 		picker.scanLocation("Loc2B");
 		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("3"), posConValue);
 
 		//Once again, scan location on a different path (returning to the original one)
-		//The che will remain the in the LOCATION_SELECT state, but will now show work for the new path
+		//The che will show work for the new path
 		picker.scanLocation("Loc1B");
 		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
 		posConValue = picker.getLastSentPositionControllerDisplayValue((byte) 1);

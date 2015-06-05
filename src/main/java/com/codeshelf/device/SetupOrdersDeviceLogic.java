@@ -164,14 +164,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					sendDisplayCommand(GET_WORK_MSG, EMPTY_MSG);
 					break;
 
-				case LOCATION_SELECT:
-					if (mPositionToContainerMap.size() > 0)
-						sendDisplayCommand(SCAN_LOCATION_MSG, OR_SCAN_START, EMPTY_MSG, SHOWING_WI_COUNTS);
-					else
-						sendDisplayCommand(SCAN_LOCATION_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
-					this.showCartSetupFeedback();
-					break;
-
 				// this state going away
 				case LOCATION_SELECT_REVIEW:
 					if (mPositionToContainerMap.size() > 0)
@@ -674,10 +666,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		switch (inCheState) {
 			case IDLE:
 				sendDisplayCommand(SCAN_USERID_MSG, INVALID_SCAN_MSG);
-				break;
-
-			case LOCATION_SELECT:
-				sendDisplayCommand(SCAN_LOCATION_MSG, INVALID_SCAN_MSG);
 				break;
 
 			case DO_PICK:
@@ -1391,9 +1379,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case NO_WORK:
 				processLocationScan(inScanPrefixStr, inContent);
 				break;
-			case LOCATION_SELECT:
-				processLocationScan(inScanPrefixStr, inContent);
-				break;
 
 			case LOCATION_SELECT_REVIEW:
 				processLocationScan(inScanPrefixStr, inContent);
@@ -1565,7 +1550,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// The back-end returned the work instruction count.
 		if (totalWorkInstructionCount > 0 && mContainerToWorkInstructionCountMap != null
 				&& !mContainerToWorkInstructionCountMap.isEmpty()) {
-			//Use the map to determine if we need to go to location_select or review
 
 			//Check to see if we have any unknown containerIds. We must have a count for every container
 			boolean doesNeedReview = !(mPositionToContainerMap.size() == mContainerToWorkInstructionCountMap.size());
@@ -1989,10 +1973,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case SETUP_SUMMARY:
-			case LOCATION_SELECT:
 			case LOCATION_SELECT_REVIEW:
 				// Normally, start work here would hit the default case below, calling start work() which queries to server again
-				// ultimately coming back to LOCATION_SELECT state. However, if okToStartWithoutLocation, then start scan moves us forward
+				// ultimately coming back to SETUP_SUMMARY state. However, if okToStartWithoutLocation, then start scan moves us forward
 				boolean reverseOrderFromLastTime = getMReversePickOrder() != reverse;
 				//Remember the selected pick direction
 				setMReversePickOrder(reverse);

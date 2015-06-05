@@ -910,7 +910,6 @@ public class CheProcessScanPick extends ServerTest {
 		picker.scanCommand("START");
 
 		// Probably important. The case above yields some problems so that we hit LOCATION_SELECT_REVIEW state.
-		// Really should replicate this test case that is all clean so it goes to LOCATION_SELECT state.  The second START should work there also.
 		//picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
 		picker.waitForCheState(picker.getLocationStartReviewState(), 4000);
 
@@ -1061,9 +1060,6 @@ public class CheProcessScanPick extends ServerTest {
 		LOGGER.info("2c: START. Should get some work");
 		picker.scanCommand("START");
 
-		// Probably important. The case above yields some problems so that we hit LOCATION_SELECT_REVIEW state.
-		// Really should replicate this test case that is all clean so it goes to LOCATION_SELECT state.  The second START should work there also.
-		//picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
 		picker.waitForCheState(picker.getLocationStartReviewState(), 4000);
 
 		LOGGER.info("2d: in WorkSequence mode, we scan start again, instead of a location");
