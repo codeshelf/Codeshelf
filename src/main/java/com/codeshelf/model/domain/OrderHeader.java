@@ -439,6 +439,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	/**
 	 * @return
 	 */
+	@JsonProperty
 	public String getContainerId() {
 		String result = "";
 

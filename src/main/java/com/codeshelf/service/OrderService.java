@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,11 +14,11 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.Criteria;
 import org.hibernate.Query;
-import org.hibernate.SQLQuery;
 import org.hibernate.Session;
+import org.hibernate.criterion.Property;
 import org.hibernate.transform.AliasToBeanResultTransformer;
-import org.hibernate.type.StandardBasicTypes;
 
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.OrderStatusEnum;
@@ -102,42 +101,15 @@ public class OrderService implements IApiService {
 		return result;
 	}
 	
-	public Collection<OrderDetailView> orderDetailsNoLocation(Tenant tenant, Session session, UUID facilityUUID) {
-		HashSet<OrderDetailView> allOrderDetails = new HashSet<OrderDetailView>();
-		allOrderDetails.addAll(orderDetailNoPreferredLocation(tenant, session, facilityUUID));
-		allOrderDetails.retainAll(orderDetailsNoInventoryLocation(tenant, session, facilityUUID));
-		return allOrderDetails;
+	public List<OrderHeader> findOrderHeadersForStatus(Facility facility, OrderStatusEnum orderStatusEnum) {
+		Criteria criteria = OrderHeader.staticGetDao().createCriteria()
+			.add(Property.forName("parent").eq(facility))
+			.add(Property.forName("status").eq(orderStatusEnum));
+			@SuppressWarnings("unchecked")
+			List<OrderHeader> results =(List<OrderHeader>) criteria.list();
+			return results;
 	}
 	
-	private List<OrderDetailView> orderDetailNoPreferredLocation(Tenant tenant, Session session, UUID facilityUUID) {
-		@SuppressWarnings("unchecked")
-		List<OrderDetailView>  result = session.createQuery(
-			"select oh.domainId as orderId, od.domainId as orderDetailId, od.itemMaster.domainId as sku, od.uomMaster.domainId as uom, od.description as description, od.quantity as planQuantity, od.status as statusEnum"
-				+ " from OrderDetail as od left join od.parent as oh where oh.parent.persistentId = :facilityId and od.active = true and COALESCE(od.preferredLocation, '') = ''")
-				.setParameter("facilityId", facilityUUID)
-				.setResultTransformer(new AliasToBeanResultTransformer(OrderDetailView.class))
-				.list();
-		return result;
-	}
-	
-	private List<OrderDetailView> orderDetailsNoInventoryLocation(Tenant tenant, Session session, UUID facilityUUID) {
-		String schema = tenant.getSchemaName();
-		@SuppressWarnings("unchecked")
-		List<OrderDetailView>  result = session.createSQLQuery(String.format(
-			"select oh.domainid \"orderId\", od.domainId as \"orderDetailId\", im.domainId as \"sku\", um.domainId as \"uom\", od.description as \"description\", od.quantity as \"planQuantity\", od.status as \"statusString\""
-		    + " from %s.order_detail as od"
-			+ " left join %s.item as item on od.item_master_persistentid = item.parent_persistentid AND od.uom_master_persistentid = item.uom_master_persistentid"
-			+ " left join %s.order_header as oh on od.parent_persistentid = oh.persistentid"
-			+ " left join %s.item_master as im on od.item_master_persistentid = im.persistentid"
-			+ " left join %s.uom_master as um on od.uom_master_persistentid = um.persistentid"
-			+ " where CAST(oh.parent_persistentid AS varchar(50)) = :facilityId AND od.active = true AND stored_location_persistentid IS NULL"
-			, schema, schema, schema, schema, schema ))
-				.setParameter("facilityId", facilityUUID.toString())
-				.setResultTransformer(new AliasToBeanResultTransformer(OrderDetailView.class))
-				.list();
-		return result;
-	}
-
 	public List<OrderDetailView> orderDetailsByStatus(Session session, UUID facilityUUID, OrderStatusEnum orderStatusEnum) {
 		@SuppressWarnings("unchecked")
 		List<OrderDetailView>  result = session.createQuery(
@@ -246,51 +218,6 @@ public class OrderService implements IApiService {
 		return summary;
 	}
 
-	
-	@SuppressWarnings("unchecked")
-	public ProductivitySummaryList getProductivitySummary(UUID facilityId, boolean skipSQL) throws Exception {
-		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
-		
-		Facility facility = null;
-		List<Object[]> picksPerHour = null;
-		ProductivitySummaryList productivitySummary = null;
-		Session session = TenantPersistenceService.getInstance().getSession();
-		facility = Facility.staticGetDao().findByPersistentId(facilityId);
-		if (facility == null) {
-			throw new NotFoundException("Facility " + facilityId + " does not exist");
-		}
-
-		if (!skipSQL) {
-			String schema = tenant.getSchemaName();
-
-			String queryStr = String.format("" + "SELECT dur.order_group AS group,\n" + "		trim(to_char(\n"
-					+ "		 3600 / (EXTRACT('epoch' FROM avg(dur.duration)) + 1) ,\n"
-					+ "		'9999999999999999999D9')) AS picksPerHour\n" + "FROM \n" + "	(\n" + "		SELECT group_and_sort_code,\n"
-					+ "			COALESCE(g.domainid, 'undefined') AS order_group,\n"
-					+ "			i.completed - lag(i.completed) over (ORDER BY i.completed) as duration\n"
-					+ "		FROM %s.work_instruction i\n"
-					+ "			INNER JOIN %s.order_detail d ON i.order_detail_persistentid = d.persistentid\n"
-					+ "			INNER JOIN %s.order_header h ON d.parent_persistentid = h.persistentid\n"
-					+ "			LEFT JOIN %s.order_group g ON h.order_group_persistentid = g.persistentid\n"
-					+ "		WHERE  i.item_id != 'Housekeeping'\n" + "	) dur\n" + "WHERE dur.group_and_sort_code != '0001'\n"
-					+ "GROUP BY dur.order_group\n" + "ORDER BY dur.order_group", schema, schema, schema, schema);
-			SQLQuery getPicksPerHourQuery = session.createSQLQuery(queryStr)
-				.addScalar("group", StandardBasicTypes.STRING)
-				.addScalar("picksPerHour", StandardBasicTypes.DOUBLE);
-			getPicksPerHourQuery.setCacheable(true);
-			picksPerHour = getPicksPerHourQuery.list();
-		}
-		productivitySummary = new ProductivitySummaryList(facility, picksPerHour, session);
-		return productivitySummary;
-	}
-
-	public ProductivityCheSummaryList getCheByGroupSummary(UUID facilityId) throws Exception {
-		List<WorkInstruction> instructions = WorkInstruction.staticGetDao().findByFilter(CriteriaRegistry.ALL_BY_PARENT,
-			ImmutableMap.<String, Object> of("parentId", facilityId));
-		ProductivityCheSummaryList summary = new ProductivityCheSummaryList(facilityId, instructions);
-		return summary;
-	}
-
 	public List<WorkInstruction> getGroupShortInstructions(UUID facilityId, String groupNameIn) throws NotFoundException {
 		//Get Facility
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
@@ -360,7 +287,5 @@ public class OrderService implements IApiService {
 		}
 		return shipperFilters;
 	}
-
-
 
 }
