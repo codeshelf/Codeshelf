@@ -17,6 +17,7 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.apache.thrift.server.THsHaServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -753,12 +754,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		LOGGER.debug("Network updated: {} active devices, {} removed", updateDevices.size(), deleteDevices.size());
 	}
 
-	public void processVerifyBadgeResponse(String networkGuid, Boolean verified) {
+	public void processVerifyBadgeResponse(String networkGuid, Boolean verified, String workerNameUI) {
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			if (verified == null) {
 				verified = false;
 			}
+			setWorkerNameFromGuid(cheDevice.getGuid(), workerNameUI);
 			cheDevice.processResultOfVerifyBadge(verified);
 		} else {
 			LOGGER.warn("Unable to process Verify Badge response for CHE id={} CHE not found", networkGuid);
@@ -1047,6 +1049,10 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		@Getter
 		@Setter
 		NetGuid	associatedToRemoteCheGuid;
+		
+		@Getter
+		@Setter
+		String	workerNameUI;				// the ui-friendly name of the logged in worker
 
 		// @Getter
 		// @Setter
@@ -1145,6 +1151,27 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			return null;
 		}
 		return assocData.getCheName();
+	}
+
+	public String getWorkerNameFromGuid(NetGuid thisCheGuid) {
+		CheData thisData = mDeviceDataMap.get(thisCheGuid);
+		if (thisData == null) {
+			return null;
+		}
+		String workerName = thisData.getWorkerNameUI();
+		return workerName;
+	}
+
+	/**
+	 * From the guid, set che worker's ui-friendly name
+	 */
+	public void setWorkerNameFromGuid(NetGuid thisCheGuid, String workerName) {
+		CheData thisData = mDeviceDataMap.get(thisCheGuid);
+		if (thisData == null) {
+			thisData = new CheData(null, null);
+			mDeviceDataMap.put(thisCheGuid, thisData);
+		}
+		thisData.setWorkerNameUI(workerName);
 	}
 
 	/**

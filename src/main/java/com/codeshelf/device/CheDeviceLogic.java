@@ -1371,6 +1371,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		// many side effects. Primarily clearing leds and poscons and setting state to idle
 		_logoutSideEffects();
+		mDeviceManager.setWorkerNameFromGuid(getGuid(), null);
 	}
 
 	// --------------------------------------------------------------------------

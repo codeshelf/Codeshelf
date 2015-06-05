@@ -15,7 +15,6 @@ import com.codeshelf.flyweight.command.CommandControlButton;
 import com.codeshelf.flyweight.command.CommandControlClearPosController;
 import com.codeshelf.flyweight.command.CommandControlSetPosController;
 import com.codeshelf.flyweight.command.ICommand;
-import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
