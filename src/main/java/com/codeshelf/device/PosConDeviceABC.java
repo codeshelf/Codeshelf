@@ -15,6 +15,7 @@ import com.codeshelf.flyweight.command.CommandControlButton;
 import com.codeshelf.flyweight.command.CommandControlClearPosController;
 import com.codeshelf.flyweight.command.CommandControlSetPosController;
 import com.codeshelf.flyweight.command.ICommand;
+import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
@@ -27,7 +28,7 @@ import com.codeshelf.ws.protocol.message.NotificationMessage;
 public abstract class PosConDeviceABC extends DeviceLogicABC {
 	private static final String				THREAD_CONTEXT_WORKER_KEY	= "worker";
 	private static final String				THREAD_CONTEXT_TAGS_KEY		= "tags";
-	private static final String				THREAD_CONTEXT_NETGUID_KEY	= "netguid"; // clone from private ContextLogging variable
+	private static final String				THREAD_CONTEXT_NETGUID_KEY	= "netguid";										// clone from private ContextLogging variable
 
 	private static final Logger				LOGGER						= LoggerFactory.getLogger(PosConDeviceABC.class);
 
@@ -94,6 +95,15 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 				Thread.sleep(5);
 			} catch (InterruptedException e) {
 			}
+		}
+	}
+
+	/**
+	 * A bottleneck for command so we can looke at timing or whaterver
+	 */
+	protected void sendRadioControllerCommand(ICommand inCommand, NetAddress inDstAddr, boolean inAckRequested) {
+		if (this.isDeviceAssociated()) {
+			mRadioController.sendCommand(inCommand, inDstAddr, inAckRequested);
 		}
 	}
 
@@ -387,10 +397,10 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		try {
 			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
 			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, tagName);
-			
+
 			// A kludge to cover up some sloppiness of lack of logging context. And also, even without sloppiness, some cases happen
 			// somewhat independent of a transaction context
-	
+
 			String myGuid = this.getMyGuidStr();
 			if (!myGuid.equals(loggerNetGuid)) {
 				org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_NETGUID_KEY, myGuid);
@@ -425,7 +435,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		String toNotify = String.format("Linking to %s. Taking remote control.", linkingTo.getHexStringNoPrefix());
 		notifyDisplayTag(toNotify, "CHE_EVENT Link");
 	}
-	
+
 	protected void notifyUnlink(NetGuid unlinkFrom) {
 		if (unlinkFrom == null) {
 			LOGGER.error("null guid in notifyUnLink");
@@ -435,7 +445,6 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		notifyDisplayTag(toNotify, "CHE_EVENT Unlink");
 	}
 
-	
 	/*
 	 * Helper functions
 	 */
