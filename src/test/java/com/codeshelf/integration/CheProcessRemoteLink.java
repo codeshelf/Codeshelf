@@ -226,17 +226,17 @@ public class CheProcessRemoteLink extends ServerTest {
 	 * Supplied pick should not be in REMOTE_LINKED state. (parameterize if you need it.)
 	 */
 	private void setupInventoryForOrders(PickSimulator picker) {
-		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 1000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		picker.scanCommand("INVENTORY");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
 		picker.scanSomething("gtin1123");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
 		picker.scanSomething("%004290570250");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
 		picker.scanSomething("gtin14933");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
 		picker.scanSomething("%004290590150");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 	}
@@ -503,15 +503,15 @@ public class CheProcessRemoteLink extends ServerTest {
 		// notice, this is a remote inventory. Did not call setupInventoryForOrders() in this test.
 		// notice picker2. waitForCheState or picker1.waitForLinkedCheState
 		picker1.scanCommand("INVENTORY");
-		picker2.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker2.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
 		picker1.scanSomething("gtin1123");
-		picker2.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker2.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
 		picker1.scanSomething("%004290570250");
-		picker2.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker2.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
 		picker1.scanSomething("gtin14933");
-		picker1.waitForLinkedCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker1.waitForLinkedCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
 		picker1.scanSomething("%004290590150");
-		picker1.waitForLinkedCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker1.waitForLinkedCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
 		picker1.scanCommand("CLEAR");
 		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
