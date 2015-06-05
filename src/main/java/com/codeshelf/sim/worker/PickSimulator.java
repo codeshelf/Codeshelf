@@ -473,7 +473,7 @@ public class PickSimulator {
 			statesStr.toString(),
 			timeoutInMillis,
 			currentState,
-			cheDeviceLogic.inSetState());
+			device.inSetState());
 		throw new IllegalStateException(theProblem);
 	}
 

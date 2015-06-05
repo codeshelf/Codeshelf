@@ -641,8 +641,10 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 			}
 			OrderDetail.staticGetDao().delete(detail);
 		}
-		containerUse.setOrderHeader(null);
-		ContainerUse.staticGetDao().store(containerUse);
+		if (containerUse != null) {
+			containerUse.setOrderHeader(null);
+			ContainerUse.staticGetDao().store(containerUse);
+		}
 		OrderHeader.staticGetDao().delete(this);
 	}
 }
