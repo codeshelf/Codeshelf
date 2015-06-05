@@ -89,7 +89,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 			// log these as we are really sending them out
 			logOnePosconBatch(batch);
 			ICommand command = new CommandControlSetPosController(NetEndpoint.PRIMARY_ENDPOINT, batch);
-			mRadioController.sendCommand(command, getAddress(), true);
+			sendRadioControllerCommand(command, true);
 			batchStart += batchSize;
 			try {
 				Thread.sleep(5);
@@ -99,11 +99,12 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 	}
 
 	/**
-	 * A bottleneck for command so we can looke at timing or whaterver
+	 * A bottleneck for command so we can looke at timing or whatever
+	 * Send the command to the the getAddress() of this device
 	 */
-	protected void sendRadioControllerCommand(ICommand inCommand, NetAddress inDstAddr, boolean inAckRequested) {
+	protected void sendRadioControllerCommand(ICommand inCommand, boolean inAckRequested) {
 		if (this.isDeviceAssociated()) {
-			mRadioController.sendCommand(inCommand, inDstAddr, inAckRequested);
+			mRadioController.sendCommand(inCommand, getAddress(), inAckRequested);
 		}
 	}
 
@@ -129,7 +130,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		}
 
 		ICommand command = new CommandControlClearPosController(NetEndpoint.PRIMARY_ENDPOINT, inPosition);
-		mRadioController.sendCommand(command, getAddress(), true);
+		sendRadioControllerCommand(command, true);
 	}
 
 	public void simulateButtonPress(int inPosition, int inQuantity) {

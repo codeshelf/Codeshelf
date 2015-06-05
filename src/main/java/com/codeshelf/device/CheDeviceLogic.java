@@ -2346,7 +2346,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * This is the sending side (the cart CHE) as its state machine decided to redraw its own screen and send a clone out to the mobile che screen.
 	 */
 	void sendScreenCommandToMyChe(ICommand inCommand) {
-			sendRadioControllerCommand(inCommand, getAddress(), true);
+			sendRadioControllerCommand(inCommand, true);
 	}
 
 	/**

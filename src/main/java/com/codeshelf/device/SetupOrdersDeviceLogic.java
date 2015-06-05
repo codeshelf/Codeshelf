@@ -1155,7 +1155,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				CommandControlPosconBroadcast broadcast = new CommandControlPosconBroadcast(CommandControlPosconBroadcast.POS_SHOW_ADDR,
 					NetEndpoint.PRIMARY_ENDPOINT);
 				broadcast.setExcludeMap(getUsedPositionsByteArray());
-				mRadioController.sendCommand(broadcast, getAddress(), true);
+				sendRadioControllerCommand(broadcast, true);
 			}
 
 		} else {
@@ -1530,7 +1530,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		CommandControlPosconBroadcast broadcast = new CommandControlPosconBroadcast(CommandControlPosconBroadcast.CLEAR_POSCON,
 			NetEndpoint.PRIMARY_ENDPOINT);
 		broadcast.setExcludeMap(getUsedPositionsByteArray());
-		mRadioController.sendCommand(broadcast, getAddress(), true);
+		sendRadioControllerCommand(broadcast, true);
 
 		sendPositionControllerInstructions(instructions);
 	}
