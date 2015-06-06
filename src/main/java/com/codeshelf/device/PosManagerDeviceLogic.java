@@ -36,7 +36,7 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 
 	public void connectedToServer() {
 		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT, "PosCon Controller", "Connected", "", "");
-		mRadioController.sendCommand(command, getAddress(), true);
+		sendRadioControllerCommand(command, true);
 	}
 
 	public void disconnectedFromServer() {
@@ -45,7 +45,7 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 			"Disconnected",
 			"",
 			"");
-		mRadioController.sendCommand(command, getAddress(), true);
+		sendRadioControllerCommand(command, true);
 	}
 
 	@Override

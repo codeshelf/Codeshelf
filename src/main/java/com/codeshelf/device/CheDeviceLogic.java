@@ -386,7 +386,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			fontType,
 			posX,
 			posY);
-		mRadioController.sendCommand(command, getAddress(), true);
+		sendRadioControllerCommand(command, true);
 
 	}
 
@@ -573,12 +573,12 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			inLine2Message,
 			inLine3Message,
 			inLine4Message);
-		mRadioController.sendCommand(command, getAddress(), true);
+		sendRadioControllerCommand(command, true);
 	}
 
 	protected void clearDisplay() {
 		ICommand command = new CommandControlClearDisplay(NetEndpoint.PRIMARY_ENDPOINT);
-		mRadioController.sendCommand(command, getAddress(), true);
+		sendRadioControllerCommand(command, true);
 	}
 
 	protected boolean wiMatchesItemLocation(String matchItem, String matchPickLocation, WorkInstruction wiToCheck) { // used for DEV-691, DEV-692

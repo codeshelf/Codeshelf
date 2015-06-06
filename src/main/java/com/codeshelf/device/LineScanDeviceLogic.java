@@ -577,7 +577,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 */
 	private void clearThePoscon() {
 		ICommand command = new CommandControlClearPosController(NetEndpoint.PRIMARY_ENDPOINT, getPosconIndex());
-		mRadioController.sendCommand(command, getAddress(), true);
+		sendRadioControllerCommand(command, true);
 	}
 
 	// --------------------------------------------------------------------------

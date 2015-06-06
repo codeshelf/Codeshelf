@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import org.slf4j.Logger;
@@ -34,6 +35,11 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 	@Accessors(prefix = "m")
 	@Getter
 	private Map<Byte, PosControllerInstr>	mPosToLastSetIntrMap;
+
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	long									mLastRadioCommandSendForThisDevice	= 0;
 
 	public PosConDeviceABC(UUID inPersistentId, NetGuid inGuid, CsDeviceManager inDeviceManager, IRadioController inRadioController) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
@@ -88,12 +94,43 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 			// log these as we are really sending them out
 			logOnePosconBatch(batch);
 			ICommand command = new CommandControlSetPosController(NetEndpoint.PRIMARY_ENDPOINT, batch);
-			mRadioController.sendCommand(command, getAddress(), true);
+			sendRadioControllerCommand(command, true);
 			batchStart += batchSize;
 			try {
 				Thread.sleep(5);
 			} catch (InterruptedException e) {
 			}
+		}
+	}
+
+	/**
+	 * A bottleneck for command so we can look at timing or whatever
+	 * Send the command to the the getAddress() of this device
+	 */
+	protected void sendRadioControllerCommand(ICommand inCommand, boolean inAckRequested) {
+		if (this.isDeviceAssociated()) {
+			waitLongEnough();
+			setLastRadioCommandSendForThisDevice(System.currentTimeMillis());
+			mRadioController.sendCommand(inCommand, getAddress(), inAckRequested);
+		}
+	}
+
+	/**
+	 * Keeps track per device
+	 * Sleeps this thread long enough such that radio commands for the same device do not go out too fast.
+	 */
+	private void waitLongEnough() {
+		int delayPeriodMills = 5;
+
+		if (delayPeriodMills > 0) {
+			long lastSendMs = getLastRadioCommandSendForThisDevice();
+			long nowMs = System.currentTimeMillis();
+			long periodSince = nowMs - lastSendMs;
+			if (periodSince < delayPeriodMills)
+				try {
+					Thread.sleep(delayPeriodMills - periodSince);
+				} catch (InterruptedException e) {
+				}
 		}
 	}
 
@@ -119,7 +156,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		}
 
 		ICommand command = new CommandControlClearPosController(NetEndpoint.PRIMARY_ENDPOINT, inPosition);
-		mRadioController.sendCommand(command, getAddress(), true);
+		sendRadioControllerCommand(command, true);
 	}
 
 	public void simulateButtonPress(int inPosition, int inQuantity) {
