@@ -556,20 +556,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Sleep briefly between repeated sends to same CHE. Especially in sendMonospaceDisplayScreen
-	 */
-	protected void quickSleep() {
-		// Does this help? Getting missed packets and therefore incomplete screen redraws.
-		// For v16 and version 3.0.3, Andrew wants 50 ms. Not great, but ok for Accu for now.
-		// with 3.1 will eliminate, or at least reduce to 5ms.
-		try {
-			Thread.sleep(50);
-		} catch (InterruptedException e) {
-		}
-	}
-
-	// --------------------------------------------------------------------------
-	/**
 	 * A corollary to the original full screen message function. It remembers the lines,
 	 * then sends a clear and several CommandControlDisplaySingleLineMessages.
 	 * x offset = 26, which centers 20-character lines on the 400 pixel 2.7 inch display.
@@ -586,14 +572,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		logLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message); // log even if no association. This is the only logging for remote linked CHE
 
 		clearDisplay();
-		quickSleep();
 
 		sendSingleLineDisplayMessage(inLine1Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 35);
-		quickSleep();
 		sendSingleLineDisplayMessage(inLine2Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 90);
-		quickSleep();
 		sendSingleLineDisplayMessage(inLine3Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 145);
-		quickSleep();
 		if (largerBottomLine)
 			sendSingleLineDisplayMessage(inLine4Message,
 				CommandControlDisplaySingleLineMessage.ARIALMONOBOLD24,
@@ -616,7 +598,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		final String inLine2Message,
 		final String inLine3Message,
 		final String inLine4Message) {
-		
+
 		// Remember that we are trying to send, even before the association check. Want this to work in unit tests.
 		rememberLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message);
 
@@ -2336,7 +2318,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	void sendScreenCommandToLinkFromChe(ICommand inCommand) {
 		CheDeviceLogic linkFromDevice = getLinkFromCheDevice();
 		if (linkFromDevice != null) {
-			quickSleep(); // slight separation before sending
+			quickSleep(); // slight separation before sending to other device
 			// We do not want to call directly. Rather, pass back, and let that device decide if it is in in the right state for remote screen redraws.			
 			linkFromDevice.processScreenCommandAtLinkFromChe(inCommand);
 		}
@@ -2347,7 +2329,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * This is the sending side (the cart CHE) as its state machine decided to redraw its own screen and send a clone out to the mobile che screen.
 	 */
 	void sendScreenCommandToMyChe(ICommand inCommand) {
-			sendRadioControllerCommand(inCommand, true);
+		sendRadioControllerCommand(inCommand, true);
 	}
 
 	/**

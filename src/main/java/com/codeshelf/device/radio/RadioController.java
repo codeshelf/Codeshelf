@@ -23,6 +23,8 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,8 +86,8 @@ public class RadioController implements IRadioController {
 	private static final long										CTRL_START_DELAY_MILLIS			= 5;
 	private static final long										NETCHECK_DELAY_MILLIS			= 250;
 
-	private static final long										ACK_TIMEOUT_MILLIS				= 100; // matching v16
-	private static final int										ACK_SEND_RETRY_COUNT			= 10; // matching v16
+	private static final long										ACK_TIMEOUT_MILLIS				= 50;												// matching v16. Used to be 20
+	private static final int										ACK_SEND_RETRY_COUNT			= 20;												// matching v16. Used to be 20.
 	private static final long										MAX_PACKET_AGE_MILLIS			= 2000;
 
 	private static final long										BACKGROUND_SERVICE_DELAY_MS		= 20;
@@ -93,7 +95,7 @@ public class RadioController implements IRadioController {
 	private static final long										BROADCAST_RATE_MILLIS			= 750;
 
 	private static final int										MAX_CHANNEL_VALUE				= 255;
-	private static final long										PACKET_SPACING_MILLIS			= 15;
+	private static final long										PACKET_SPACING_MILLIS			= 50;												// matching v16. Used to be 15.
 	private static final int										ACK_QUEUE_SIZE					= 200;
 
 	@Getter
@@ -127,6 +129,11 @@ public class RadioController implements IRadioController {
 	private final AtomicInteger										mAckId							= new AtomicInteger(1);
 
 	private volatile boolean										mRunning						= false;
+
+	@Accessors(prefix = "m")
+	@Setter
+	@Getter
+	private long													mLastOutboundPacketTime			= 0;
 
 	// Services
 	private final RadioControllerPacketHandlerService				packetHandlerService;
@@ -574,7 +581,7 @@ public class RadioController implements IRadioController {
 			}
 
 		} finally {
-			if(previousNetGuidContext != null) {
+			if (previousNetGuidContext != null) {
 				ContextLogging.setNetGuid(previousNetGuidContext);
 			} else {
 				ContextLogging.clearNetGuid();
@@ -960,9 +967,9 @@ public class RadioController implements IRadioController {
 			LOGGER.info("ACKing packet: ackId={}; netId={}; srcAddr={}", inAckId, inNetId, inSrcAddr);
 
 			device.setLastAckId(inAckId);
-			//device.getGuid().getHexStringNoPrefix()
-			CommandAssocAck ackCmd = new CommandAssocAck("00000000",
-				new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, (byte) 0));
+			String theGuid = device.getGuid().getHexStringNoPrefix().toUpperCase();
+			// CommandAssocAck ackCmd = new CommandAssocAck("00000000",
+			CommandAssocAck ackCmd = new CommandAssocAck(theGuid, new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, (byte) 0));
 
 			IPacket ackPacket = new Packet(ackCmd, inNetId, mServerAddress, inSrcAddr, false);
 			ackCmd.setPacket(ackPacket);
@@ -1007,6 +1014,9 @@ public class RadioController implements IRadioController {
 				}
 
 				long differenceMs = System.currentTimeMillis() - maxLastPacketSentTimestampMs;
+				if (maxLastPacketSentTimestampMs == 0) {
+					differenceMs = PACKET_SPACING_MILLIS;
+				}
 
 				// Sleep if needed to ensure all device are ready to read our packet.
 				// We use a while loop here because sleep is not gaurunteed to
@@ -1021,7 +1031,8 @@ public class RadioController implements IRadioController {
 				}
 
 				// Send the broadcast packet
-				packetIOService.handleOutboundPacket(inPacket);
+				//packetIOService.handleOutboundPacket(inPacket);
+				sendOutboundPacketToController(inPacket);
 
 				// Update everybody's last sent timestamp. Similar race conditions could occur here (as described above) that would result in
 				//potential non-fatally spaced packets for new devices.
@@ -1056,6 +1067,9 @@ public class RadioController implements IRadioController {
 
 					// Sleep as need to ensure proper packet spacing
 					long differenceMs = System.currentTimeMillis() - lastPacketSentTimestampMs.get();
+					if (lastPacketSentTimestampMs.get() == 0) {
+						differenceMs = PACKET_SPACING_MILLIS;
+					}
 
 					// We use a while loop here because sleep is not gaurunteed
 					// to sleep for even at least the specified time.
@@ -1070,7 +1084,9 @@ public class RadioController implements IRadioController {
 
 					if (inPacket.getAckState() != AckStateEnum.SUCCEEDED) {
 						// Write out the packet
-						packetIOService.handleOutboundPacket(inPacket);
+						// packetIOService.handleOutboundPacket(inPacket);
+						sendOutboundPacketToController(inPacket);
+
 					} else {
 						//It is possible for BG Thread to submit a packet to be sent, then whilst waiting for the lock, we receive an ACK.
 						//If thats the case just return without updating the lastSentTimestamp. The lock will be released since it's in a finally block.
@@ -1087,6 +1103,25 @@ public class RadioController implements IRadioController {
 
 			}
 
+		}
+	}
+
+	private void sendOutboundPacketToController(IPacket inPacket) {
+		final long kWaitMs = 10;
+		// check time
+		long now = System.currentTimeMillis();
+		long lastSendDiff = now - getLastOutboundPacketTime();
+		if (lastSendDiff < kWaitMs) {
+			try {
+				Thread.sleep(kWaitMs - lastSendDiff);
+			} catch (InterruptedException e) {
+			}
+		}
+		try {
+			packetIOService.handleOutboundPacket(inPacket);
+		} finally {
+			long laterNow = System.currentTimeMillis();
+			setLastOutboundPacketTime(laterNow);
 		}
 	}
 

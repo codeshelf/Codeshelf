@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import org.slf4j.Logger;
@@ -25,15 +26,20 @@ import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
 
 public abstract class PosConDeviceABC extends DeviceLogicABC {
-	private static final String				THREAD_CONTEXT_WORKER_KEY	= "worker";
-	private static final String				THREAD_CONTEXT_TAGS_KEY		= "tags";
-	private static final String				THREAD_CONTEXT_NETGUID_KEY	= "netguid";										// clone from private ContextLogging variable
+	private static final String				THREAD_CONTEXT_WORKER_KEY			= "worker";
+	private static final String				THREAD_CONTEXT_TAGS_KEY				= "tags";
+	private static final String				THREAD_CONTEXT_NETGUID_KEY			= "netguid";										// clone from private ContextLogging variable
 
-	private static final Logger				LOGGER						= LoggerFactory.getLogger(PosConDeviceABC.class);
+	private static final Logger				LOGGER								= LoggerFactory.getLogger(PosConDeviceABC.class);
 
 	@Accessors(prefix = "m")
 	@Getter
 	private Map<Byte, PosControllerInstr>	mPosToLastSetIntrMap;
+
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	long									mLastRadioCommandSendForThisDevice	= 0;
 
 	public PosConDeviceABC(UUID inPersistentId, NetGuid inGuid, CsDeviceManager inDeviceManager, IRadioController inRadioController) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
@@ -98,12 +104,48 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 	}
 
 	/**
-	 * A bottleneck for command so we can looke at timing or whatever
+	 * A bottleneck for command so we can look at timing or whatever
 	 * Send the command to the the getAddress() of this device
 	 */
 	protected void sendRadioControllerCommand(ICommand inCommand, boolean inAckRequested) {
 		if (this.isDeviceAssociated()) {
+			waitLongEnough();
+			setLastRadioCommandSendForThisDevice(System.currentTimeMillis());
 			mRadioController.sendCommand(inCommand, getAddress(), inAckRequested);
+		}
+	}
+
+	/**
+	 * Keeps track per device
+	 * Sleeps this thread long enough such that radio commands for the same device do not go out too fast.
+	 */
+	private void waitLongEnough() {
+		int delayPeriodMills = 5;
+
+		if (delayPeriodMills > 0) {
+			long lastSendMs = getLastRadioCommandSendForThisDevice();
+			long nowMs = System.currentTimeMillis();
+			long periodSince = nowMs - lastSendMs;
+			if (periodSince < delayPeriodMills)
+				try {
+					Thread.sleep(delayPeriodMills - periodSince);
+				} catch (InterruptedException e) {
+				}
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Sleep briefly between repeating sends to two CHE. Especially in sendMonospaceDisplayScreen
+	 */
+	protected void quickSleep() {
+		// with 3.1 will eliminate, or at least reduce to 5ms.
+		int delayPeriodMills = 5;
+		if (delayPeriodMills > 0) {
+			try {
+				Thread.sleep(delayPeriodMills);
+			} catch (InterruptedException e) {
+			}
 		}
 	}
 
