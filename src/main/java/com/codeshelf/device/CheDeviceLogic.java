@@ -75,7 +75,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					OR_START_WORK_MSG						= cheLine("OR START WORK");
 	protected static final String					SELECT_POSITION_MSG						= cheLine("SELECT POSITION");
 	protected static final String					SHORT_PICK_CONFIRM_MSG					= cheLine("CONFIRM SHORT");
-	protected static final String					PICK_COMPLETE_MSG						= cheLine("ALL WORK COMPLETE");
 	public static final String						YES_NO_MSG								= cheLine("SCAN YES OR NO");						// public for test
 	protected static final String					NO_CONTAINERS_SETUP_MSG					= cheLine("NO SETUP CONTAINERS");
 	protected static final String					POSITION_IN_USE_MSG						= cheLine("POSITION IN USE");
@@ -84,9 +83,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					GET_WORK_MSG							= cheLine("GETTING WORK");
 	protected static final String					SHOWING_ORDER_IDS_MSG					= cheLine("SHOWING ORDER IDS");
 	protected static final String					SHOWING_WI_COUNTS						= cheLine("SHOWING WI COUNTS");
-	protected static final String					PATH_COMPLETE_MSG						= cheLine("PATH COMPLETE");
-	protected static final String					SCAN_NEW_LOCATION_MSG					= cheLine("SCAN NEW LOCATION");
-	protected static final String					OR_SETUP_NEW_CART_MSG					= cheLine("OR SETUP NEW CART");
 	protected static final String					VERIFYING_BADGE_MSG						= cheLine("VERIFYING BADGE");
 	protected static final String					UNKNOWN_BADGE_MSG						= cheLine("UNKNOWN BADGE");
 

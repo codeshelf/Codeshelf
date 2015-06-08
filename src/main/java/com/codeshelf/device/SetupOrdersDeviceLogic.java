@@ -244,20 +244,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
 					break;
 
-				case PICK_COMPLETE:
-					if (isSameState) {
-						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
-					}
-					sendDisplayCommand(PICK_COMPLETE_MSG, EMPTY_MSG);
-					break;
-
-				case PICK_COMPLETE_CURR_PATH:
-					if (isSameState) {
-						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
-					}
-					sendDisplayCommand(PATH_COMPLETE_MSG, SCAN_NEW_LOCATION_MSG, OR_SETUP_NEW_CART_MSG, EMPTY_MSG);
-					break;
-
 				case SCAN_GTIN:
 					sendGtinScreen(lastScannedGTIN);
 					break;
@@ -430,9 +416,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 				break;
 
-			case PICK_COMPLETE:
 			case SETUP_SUMMARY:
-			case PICK_COMPLETE_CURR_PATH:
 				setRememberEnteringWallOrInventoryState(mCheStateEnum);
 				setState(CheStateEnum.PUT_WALL_SCAN_ORDER);
 				break;
@@ -457,9 +441,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 				break;
 
-			case PICK_COMPLETE:
 			case SETUP_SUMMARY:
-			case PICK_COMPLETE_CURR_PATH:
 				setRememberEnteringWallOrInventoryState(mCheStateEnum);
 				setState(CheStateEnum.PUT_WALL_SCAN_WALL);
 				break;
@@ -487,12 +469,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				} else {
 					LOGGER.warn("User: {} attempted to do INVENTORY after having some pick orders set up", this.getUserId());
 				}
-				break;
-
-			case PICK_COMPLETE:
-			case PICK_COMPLETE_CURR_PATH:
-				setRememberEnteringWallOrInventoryState(mCheStateEnum);
-				setState(CheStateEnum.SCAN_GTIN);
 				break;
 
 			case SETUP_SUMMARY:
@@ -1218,9 +1194,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	protected void setupCommandReceived() {
 		//Split it out by state
 		switch (mCheStateEnum) {
-
-			case PICK_COMPLETE:
-			case PICK_COMPLETE_CURR_PATH:
 			case SETUP_SUMMARY:
 				//Setup the CHE
 				setupChe();
@@ -1357,10 +1330,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		switch (mCheStateEnum) {
 			case IDLE:
 				processIdleStateScan(inScanPrefixStr, inContent);
-				break;
-
-			case PICK_COMPLETE_CURR_PATH:
-				processLocationScan(inScanPrefixStr, inContent);
 				break;
 
 			case CONTAINER_SELECT:

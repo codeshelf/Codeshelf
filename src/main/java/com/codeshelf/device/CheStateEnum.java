@@ -20,8 +20,6 @@ public enum CheStateEnum {
 	DO_PICK(CheStateNum.DO_PICK, "DO_PICK"),
 	SHORT_PICK(CheStateNum.SHORT_PICK, "SHORT_PICK"),
 	SHORT_PICK_CONFIRM(CheStateNum.SHORT_PICK_CONFIRM, "SHORT_PICK_CONFIRM"),
-	PICK_COMPLETE(CheStateNum.PICK_COMPLETE, "PICK_COMPLETE"),
-	PICK_COMPLETE_CURR_PATH(CheStateNum.PICK_COMPLETE_CURR_PATH, "PICK_COMPLETE_CURR_PATH"),
 	CONTAINER_POSITION_INVALID(CheStateNum.CONTAINER_POSITION_INVALID, "CONTAINER_POSITION_INVALID"),
 	CONTAINER_SELECTION_INVALID(CheStateNum.CONTAINER_SELECTION_INVALID, "CONTAINER_SELECTION_INVALID"),
 	CONTAINER_POSITION_IN_USE(CheStateNum.CONTAINER_POSITION_IN_USE, "CONTAINER_POSITION_IN_USE"),
@@ -107,10 +105,6 @@ public enum CheStateEnum {
 				result = CheStateEnum.SHORT_PICK_CONFIRM;
 				break;
 
-			case CheStateNum.PICK_COMPLETE:
-				result = CheStateEnum.PICK_COMPLETE;
-				break;
-
 			case CheStateNum.CONTAINER_POSITION_INVALID:
 				result = CheStateEnum.CONTAINER_POSITION_INVALID;
 				break;
@@ -160,8 +154,8 @@ public enum CheStateEnum {
 		static final byte	CONTAINER_POSITION			= 6;
 		static final byte	DO_PICK						= 7;
 		static final byte	SHORT_PICK					= 8;
-		static final byte	PICK_COMPLETE				= 9;
-		static final byte	PICK_COMPLETE_CURR_PATH		= 10;	//Added Apr 8, 2015
+		// available, used to be PICK_COMPLETE			= 9;
+		// available, used to be PICK_COMPLETE_CURR_PATH= 10;	//Added Apr 8, 2015
 		// available, used to be NO WORK				= 11;
 		// available			= 12;
 		static final byte	SHORT_PICK_CONFIRM			= 13;	//Added Oct. 2014
