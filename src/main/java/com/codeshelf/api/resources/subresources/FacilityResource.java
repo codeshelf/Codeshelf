@@ -143,9 +143,18 @@ public class FacilityResource {
 	@GET
 	@Path("/orders")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getOrders(@QueryParam("status") String status) {
-    	List<OrderHeader> results = this.orderService.findOrderHeadersForStatus(facility, OrderStatusEnum.valueOf(status));
-		return BaseResponse.buildResponse(results);
+	public Response getOrders(@QueryParam("status") String status, @QueryParam("orderId") String orderIdValue) {
+		if (orderIdValue != null) {
+	    	List<OrderHeader> results = this.orderService.findOrderHeadersForOrderId(facility, orderIdValue);
+			return BaseResponse.buildResponse(results);
+			
+		} else if (status != null) {
+	    	List<OrderHeader> results = this.orderService.findOrderHeadersForStatus(facility, OrderStatusEnum.valueOf(status));
+			return BaseResponse.buildResponse(results);
+		}
+		ErrorResponse errors = new ErrorResponse();
+		errors.addError("A parameter of 'status' or 'orderId' should be provided");
+		return errors.buildResponse();
 	}
 
 
@@ -169,6 +178,7 @@ public class FacilityResource {
 		return BaseResponse.buildResponse(this.orderService.itemsInQuantityOrder(session, facility.getPersistentId()));
 	}
 
+	/*
 	@GET
 	@Path("/groupinstructions")
 	@RequiresPermissions("companion:view")
@@ -176,7 +186,7 @@ public class FacilityResource {
 	public Response getGroupInstructions(@QueryParam("group") String groupName) {
 		List<WorkInstruction> instructions = orderService.getGroupShortInstructions(facility.getPersistentId(), groupName);
 		return BaseResponse.buildResponse(instructions);
-	}
+	}*/
 
 	@GET
 	@Path("filters")

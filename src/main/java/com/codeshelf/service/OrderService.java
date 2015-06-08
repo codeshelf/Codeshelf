@@ -1,6 +1,5 @@
 package com.codeshelf.service;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -18,23 +17,17 @@ import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.Property;
+import org.hibernate.criterion.SimpleExpression;
 import org.hibernate.transform.AliasToBeanResultTransformer;
 
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.OrderStatusEnum;
-import com.codeshelf.model.WorkInstructionStatusEnum;
-import com.codeshelf.model.dao.CriteriaRegistry;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.OrderDetail;
-import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
-import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.ProductivitySummaryList.StatusSummary;
 import com.codeshelf.util.UomNormalizer;
-import com.google.common.collect.ImmutableMap;
-import com.sun.jersey.api.NotFoundException;
 
 /**
  * Functionality that reports and manipulates the Orders model (ie. OrderHeader, OrderGroups and OrderDetails).
@@ -102,15 +95,39 @@ public class OrderService implements IApiService {
 	}
 	
 	public List<OrderHeader> findOrderHeadersForStatus(Facility facility, OrderStatusEnum orderStatusEnum) {
-		Criteria criteria = OrderHeader.staticGetDao().createCriteria()
-			.add(Property.forName("parent").eq(facility))
-			.add(Property.forName("status").eq(orderStatusEnum));
-			@SuppressWarnings("unchecked")
-			List<OrderHeader> results =(List<OrderHeader>) criteria.list();
-			return results;
+
+		Criteria criteria = orderHeaderCriteria(facility)
+				.add(Property.forName("status").eq(orderStatusEnum));
+		@SuppressWarnings("unchecked")
+		List<OrderHeader> results =(List<OrderHeader>) criteria.list();
+		return results;
+
 	}
 	
-	public List<OrderDetailView> orderDetailsByStatus(Session session, UUID facilityUUID, OrderStatusEnum orderStatusEnum) {
+	public List<OrderHeader> findOrderHeadersForOrderId(Facility facility, String orderId) {
+		SimpleExpression orderIdProperty = null;
+		if (orderId != null && orderId.indexOf('*') >= 0) {
+			orderIdProperty = Property.forName("domainId").like(orderId.replace('*', '%'));
+		} else {
+			orderIdProperty = Property.forName("domainId").eq(orderId);
+		}
+		
+		Criteria criteria = orderHeaderCriteria(facility)
+								.add(orderIdProperty);
+		@SuppressWarnings("unchecked")
+		List<OrderHeader> results =(List<OrderHeader>) criteria.list();
+		return results;
+	}
+	
+	private Criteria orderHeaderCriteria(Facility facility) {
+		Criteria criteria = OrderHeader.staticGetDao().createCriteria()
+				.add(Property.forName("parent").eq(facility));
+		return criteria;
+				
+	}
+	
+	
+	public List<OrderDetailView> findOrderDetailsForStatus(Session session, UUID facilityUUID, OrderStatusEnum orderStatusEnum) {
 		@SuppressWarnings("unchecked")
 		List<OrderDetailView>  result = session.createQuery(
 			//	"select od "
@@ -217,6 +234,8 @@ public class OrderService implements IApiService {
 		}
 		return summary;
 	}
+	
+	/*
 
 	public List<WorkInstruction> getGroupShortInstructions(UUID facilityId, String groupNameIn) throws NotFoundException {
 		//Get Facility
@@ -252,7 +271,8 @@ public class OrderService implements IApiService {
 		}
 		return filtered;
 	}
-
+*/
+	
 	/***
 	 * This is initial work to get supported filters. Right now it is just a name, but is expected to become a set of objects.
 	 * This MAY converge with filters in codeshelf.filter somehow.
