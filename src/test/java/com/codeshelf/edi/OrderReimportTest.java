@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
@@ -182,7 +183,7 @@ public class OrderReimportTest extends ServerTest {
 		// pick second item
 		picker.pick(1, 1);
 		Assert.assertEquals(0, picker.countActiveJobs());
-		picker.waitForCheState(picker.getCompleteState(), 1000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 1000);
 		picker.logout();	
 		
 		// verify order status
@@ -294,7 +295,7 @@ public class OrderReimportTest extends ServerTest {
 		// pick second item
 		picker.pick(1, 1);
 		Assert.assertEquals(0, picker.countActiveJobs());
-		picker.waitForCheState(picker.getCompleteState(), 1000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 1000);
 		picker.logout();	
 		
 		// verify order status
@@ -406,7 +407,7 @@ public class OrderReimportTest extends ServerTest {
 		// pick second item
 		picker.pick(1, 1);
 		Assert.assertEquals(0, picker.countActiveJobs());
-		picker.waitForCheState(picker.getCompleteState(), 1000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 1000);
 		picker.logout();	
 		
 		// verify order status
@@ -518,7 +519,7 @@ public class OrderReimportTest extends ServerTest {
 		// pick second item
 		picker.pick(1, 1);
 		Assert.assertEquals(0, picker.countActiveJobs());
-		picker.waitForCheState(picker.getCompleteState(), 1000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 1000);
 		picker.logout();	
 		
 		// verify order status

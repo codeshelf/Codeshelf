@@ -373,7 +373,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.setupOrderIdAsContainer("2", "2");
 		picker.setupOrderIdAsContainer("3", "3");
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(), 3000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 
 		//Scan at item 1
 		picker.scanLocation("");
@@ -439,7 +439,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.setupOrderIdAsContainer("2", "2");
 		picker.setupOrderIdAsContainer("3", "3");
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(), 3000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 
 		picker.scanCommand("REVERSE");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
@@ -707,7 +707,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.pick(1, 1);
 		Assert.assertEquals(0, picker.countActiveJobs());
 
-		picker.waitForCheState(picker.getCompleteState(), 1000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 1000);
 		picker.logout();
 	}
 
@@ -743,7 +743,7 @@ public class CheProcessTestPick extends ServerTest {
 		LOGGER.info("Case 1: If no work, immediately comes to NO_WORK after start. (Before v6, it came to all work complete.)");
 		picker.setupContainer("9x9x9", "1"); // unknown container
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getNoWorkReviewState(), 5000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 5000);
 
 		Assert.assertEquals(0, picker.countActiveJobs());
 
@@ -786,9 +786,9 @@ public class CheProcessTestPick extends ServerTest {
 		//picker.startAndSkipReview("D303", 5000, 3000);
 		//Check to make sure we can scan a good location after a bad location
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(true), 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		picker.scanLocation("BAD_LOCATION");
-		picker.waitForCheState(picker.getNoWorkReviewState(), 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 
 		// Change from bad location to a resolved location on a path is interpretted as a path change. Therefore
 		// to the summary state and not directly to pick.
@@ -1084,7 +1084,7 @@ public class CheProcessTestPick extends ServerTest {
 		// Taking more than 3 seconds for the recompute and wrap.
 		picker.scanCommand("START");
 
-		picker.waitForCheState(picker.getLocationStartReviewState(), 3000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 		picker.scanLocation("D-76");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
@@ -1163,7 +1163,7 @@ public class CheProcessTestPick extends ServerTest {
 		// Taking more than 3 seconds for the recompute and wrap.
 		picker.scanCommand("START");
 
-		picker.waitForCheState(picker.getLocationStartReviewState(), 3000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 		picker.scanLocation("D-76");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
@@ -1184,7 +1184,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker2.setupContainer("11", "15");
 		picker2.scanCommand("START");
 
-		picker2.waitForCheState(picker.getLocationStartReviewState(), 3000);
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 		picker2.scanLocation("D-76");
 		picker2.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
@@ -1276,7 +1276,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.scanCommand("START");
 
 		//Check State Make sure we do not hit REVIEW
-		picker.waitForCheState(picker.getLocationStartReviewState(), 3000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 
 		LOGGER.info("Case 1: 1 good pick no flashing");
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 6).intValue(), 1);
@@ -1289,7 +1289,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.scanLocation("D303");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 		picker.pick(6, 1);
-		picker.waitForCheState(picker.getCompleteState(), 3000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 
 		//Reset Picker
 		picker.logout();
@@ -1324,7 +1324,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.scanCommand("START");
 
 		//Check State
-		picker.waitForCheState(picker.getLocationStartReviewState(true), 3000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 
 		//Check Screens
 		//Case 1: 2 good picks - solid , bright
@@ -1439,7 +1439,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("1", "1");
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(), 3000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 		picker.scanLocation("D301");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
@@ -1455,7 +1455,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("1", "1");
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(), 3000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 		picker.scanLocation("D301");
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
@@ -1477,7 +1477,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.setupOrderIdAsContainer("1", "1");
 		picker.scanCommand("START");
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
-		picker.waitForCheState(picker.getLocationStartReviewState(), 3000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 		picker.scanLocation("D301");
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
@@ -1723,7 +1723,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.buttonPress(2, 0);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 3000);
 		picker.scanCommand("YES");
-		picker.waitForCheState(picker.getCompleteState(), 3000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 
 		//Check Screens -- #1 it should be done so display solid, dim "oc"
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
@@ -2066,7 +2066,7 @@ public class CheProcessTestPick extends ServerTest {
 		 */
 
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(), 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 
@@ -2219,7 +2219,7 @@ public class CheProcessTestPick extends ServerTest {
 		 */
 
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(), 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 
@@ -2326,7 +2326,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.pick(1, 4);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		picker.pick(3, 6);
-		picker.waitForCheState(picker.getCompleteState(), 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 
 		LOGGER.info("6b: See if the shorted and shorted-ahead poscons show double dash, and the one good one is oc");
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
@@ -2362,7 +2362,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		LOGGER.info("3: verify 'Location Select' and work on containers");
 		picker.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-		picker.waitForCheState(picker.getLocationStartReviewState(), 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		Byte posConValue1 = picker.getLastSentPositionControllerDisplayValue((byte) 1);
 		Assert.assertEquals(new Byte("2"), posConValue1);
 		Byte posConValue2 = picker.getLastSentPositionControllerDisplayValue((byte) 2);
@@ -2391,7 +2391,7 @@ public class CheProcessTestPick extends ServerTest {
 		LOGGER.info("8: wrap up the test by finishing both orders");
 		picker.pickItemAuto();
 		picker.pickItemAuto();
-		picker.waitForCheState(picker.getCompleteState(), 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_C);
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);

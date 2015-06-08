@@ -153,7 +153,7 @@ public class PickSimulator {
 			// perform start without location scan, if location is undefined
 			return;
 		}
-		waitForCheState(getLocationStartReviewState(true), inComputeTimeOut);
+		waitForCheState(CheStateEnum.SETUP_SUMMARY, inComputeTimeOut);
 		scanLocation(location);
 		waitForCheState(CheStateEnum.DO_PICK, inLocationTimeOut);
 	}
@@ -295,10 +295,6 @@ public class PickSimulator {
 
 	public int countActiveJobs() {
 		return getActivePickList().size(); //  0 if out of work. Usually 1. Only higher for simultaneous pick work instructions.
-	}
-
-	public boolean isComplete() {
-		return getCompleteState().equals(getCurrentCheState());
 	}
 
 	public CheStateEnum getCurrentCheState() {
@@ -480,26 +476,6 @@ public class PickSimulator {
 			device.inSetState());
 		throw new IllegalStateException(theProblem);
 	}
-
-	// This is for the drastic CHE process changes in v16. Is it PICK_COMPLETE state, or SETUP_SUMMARY state.
-	public CheStateEnum getCompleteState() {
-		return cheDeviceLogic.getCompleteState();
-	}
-
-	public CheStateEnum getNoWorkReviewState() {
-		return cheDeviceLogic.getNoWorkReviewState();
-	}
-
-	// This is for the drastic CHE process changes in v16. Now SETUP_SUMMARY state.
-	public CheStateEnum getLocationStartReviewState() {
-		return cheDeviceLogic.getLocationStartReviewState();
-	}
-
-	public CheStateEnum getLocationStartReviewState(boolean needOldReviewState) {
-		return cheDeviceLogic.getLocationStartReviewState(needOldReviewState);
-	}
-
-	// end drastic CHE process changes
 
 	public boolean hasLastSentInstruction(byte position) {
 		return cheDeviceLogic.getPosToLastSetIntrMap().containsKey(position)

@@ -56,20 +56,20 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 		LOGGER.info("1d: pick to completion");
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		picker.scanLocation("F21");
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		WorkInstruction wi = picker.nextActiveWi();
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
 		picker.pick(button, quant);
-		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		LOGGER.info("1e: ORDER_WALL from complete state");
 		picker.scanCommand("ORDER_WALL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker.scanCommand("CLEAR");
-		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		LOGGER.info("1g: Do simple actual order setup to put wall");
 		picker.scanCommand("ORDER_WALL");
@@ -79,7 +79,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.scanSomething("L%P12");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker.scanCommand("CLEAR");
-		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		LOGGER.info("2: Do valid order setup to put wall, but to slot that is not a put wall. Will get a WARN");
 		picker.scanCommand("ORDER_WALL");
@@ -93,7 +93,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.scanSomething("L%F12");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker.scanCommand("CLEAR");
-		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		// Besides the warn, the successful placement removed 11112 from P12 as it moved to F12.
 		// Then placing 11114 at F12 removes 11112
 
@@ -263,20 +263,20 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 		LOGGER.info("1e: pick to completion");
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		picker.scanLocation("F21");
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		WorkInstruction wi = picker.nextActiveWi();
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
 		picker.pick(button, quant);
-		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		LOGGER.info("1f: PUT_WALL from complete state");
 		picker.scanCommand("PUT_WALL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
 		picker.scanCommand("CLEAR");
-		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 	}
 
@@ -435,7 +435,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.setupContainer("11117", "4");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		picker.scanLocation("P11");
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
@@ -454,7 +454,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Assert.assertEquals(toByte(4), displayValue);
 		// button from the put wall
 		posman.buttonPress(2, 4);
-		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		// after DEV-713
 		// we get two plans. For this test, handle singly. DEV-714 is about lighting two or more put wall locations at time.
@@ -509,7 +509,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker1.scanSomething("P%1");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker1.scanCommand("START");
-		picker1.waitForCheState(picker1.getLocationStartReviewState(), WAIT_TIME);
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		picker1.scanCommand("START");
 		picker1.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		List<WorkInstruction> activeWis = picker1.getActivePickList();
@@ -529,7 +529,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		int button = picker1.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
 		picker1.pick(button, quant);
-		picker1.waitForCheState(picker1.getCompleteState(), WAIT_TIME);
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		// wait-for to avoid intermittent failure
 		posman.waitForControllerDisplayValue((byte) 3, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME);
@@ -916,7 +916,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.setupContainer("11119", "6");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		picker.scanLocation("F11");
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		List<WorkInstruction> wis = picker.getAllPicksList();
@@ -930,7 +930,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.buttonPress(4, 0);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, WAIT_TIME);
 		picker.scanCommand("YES");
-		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		LOGGER.info("2a: Try to jump to location on same path, without doing START. On same path. so ready to pick");
 		picker.scanLocation("F14");
@@ -939,7 +939,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		// TODO
 		LOGGER.info("3a: Restart. Get the 11117 job again. LOCATION_SELECT_REVIEW because 11119 is completed");
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(true), WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		// see that 11119 shows as oc
 		Byte poscon6Value = picker.getLastSentPositionControllerDisplayValue((byte) 6);
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, poscon6Value);
@@ -954,7 +954,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.buttonPress(4, 0);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, WAIT_TIME);
 		picker.scanCommand("YES");
-		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		// show nothing there at position 4.
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
@@ -970,7 +970,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.scanCommand("CLEAR");
 		// The choice of PICK_COMPLETE or CONTAINER_SELECT after CLEAR used to depend on if there is anything in the container map
 		// That is why we just completed one order first in the test. But now, it is set by a member variable.
-		picker.waitForCheState(picker.getCompleteState(), WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		LOGGER.info("4b: Check the put wall display"); // use a waitFor since there is nothing to trigger off of. Avoid intermittent failure
 		// P14 is at poscon index 4.
@@ -978,7 +978,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 		LOGGER.info("4c: Restart. Do not get the job again. (did before DEV-766)");
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getNoWorkReviewState(), WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		LOGGER.info("5: Not recommended. Just showing. Set up again even though it is is in the put wall");
 		picker.scanCommand("SETUP");
@@ -986,7 +986,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.setupContainer("11117", "4");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(), WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		picker.scanLocation("F11");
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 		wis = picker.getAllPicksList();

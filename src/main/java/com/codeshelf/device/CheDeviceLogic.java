@@ -1450,40 +1450,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Order_Setup the complete path state is SETUP_SUMMARY
-	 */
-	public CheStateEnum getCompleteState() {
-		return CheStateEnum.SETUP_SUMMARY;
-		// return CheStateEnum.PICK_COMPLETE;
-	}
-
-	public CheStateEnum getNoWorkReviewState() {
-		return CheStateEnum.SETUP_SUMMARY;
-		// return CheStateEnum.NO_WORK;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Order_Setup the complete path state is SETUP_SUMMARY
-	 */
-	public CheStateEnum getLocationStartReviewState() {
-		return CheStateEnum.SETUP_SUMMARY;
-	}
-
-	public CheStateEnum getLocationStartReviewState(boolean needOldReviewState) {
-		return CheStateEnum.SETUP_SUMMARY;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * For linescan, we set to  PICK_COMPLETE. Override for Order_Setup we set to SETUP_SUMMARY
-	 */
-	protected void setToCompleteState() {
-		setState(getCompleteState());
-	}
-
-	// --------------------------------------------------------------------------
-	/**
 	 * Is this useful to linescan?  If not, move as private function to SetupOrdersDeviceLogic
 	 */
 	protected void processPickComplete(boolean isWorkOnOtherPaths) {
@@ -1502,8 +1468,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		// CD_0041 is there a need for this?
 		ledControllerShowLeds(getGuid());
 
-		setToCompleteState();
-
+		setState(CheStateEnum.SETUP_SUMMARY);
 	}
 
 	// --------------------------------------------------------------------------

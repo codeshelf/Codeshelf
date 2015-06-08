@@ -1539,12 +1539,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 			LOGGER.info("Got Counts {}", mContainerToWorkInstructionCountMap);
 			// It is not so clear, should server give us completed work instructions? Should we clear those out?
-
-			setState(CheStateEnum.SETUP_SUMMARY);
-		} else {
-			// v16 remove NO_WORK_CURR_PATH. Just NO_WORK, until we go to SETUP_SUMMARY
-			setState(getNoWorkReviewState());
 		}
+		setState(CheStateEnum.SETUP_SUMMARY);
 	}
 
 	/**
@@ -2017,7 +2013,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	public void assignWork(final List<WorkInstruction> inWorkItemList, String message) {
 		if (inWorkItemList == null || inWorkItemList.size() == 0) {
-			setState(getNoWorkReviewState());
+			setState(CheStateEnum.SETUP_SUMMARY);
 		} else {
 			WorkInstruction wi1 = inWorkItemList.get(0);
 			String otherInformation = String.format("First pick at %s", wi1.getPickInstruction());

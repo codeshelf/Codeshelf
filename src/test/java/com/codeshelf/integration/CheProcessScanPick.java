@@ -509,7 +509,7 @@ public class CheProcessScanPick extends ServerTest {
 
 		LOGGER.info("1c: START. Now we get some work. 3 jobs, since only 3 details had modeled locations");
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(true), 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 
 		LOGGER.info("1d: scan a valid location. Log out the work instructions that we got.");
 		picker.scanLocation("D303");
@@ -620,7 +620,7 @@ public class CheProcessScanPick extends ServerTest {
 
 		LOGGER.info("1c: START. Now we get some work. 3 jobs, since only 3 details had modeled locations");
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(true), 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 
 		LOGGER.info("1d: scan a valid location. This does the usual, but with SCANPICK, it goes to SCAN_SOMETHING state. The brightness is different");
 		picker.scanLocation("D303");
@@ -672,7 +672,7 @@ public class CheProcessScanPick extends ServerTest {
 		picker.setupContainer("11111", "2");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(true), 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		picker.scanLocation("D303");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 
@@ -692,7 +692,7 @@ public class CheProcessScanPick extends ServerTest {
 		picker.setupContainer("11111", "2");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(true), 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		picker.scanLocation("D303");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 
@@ -719,7 +719,7 @@ public class CheProcessScanPick extends ServerTest {
 		picker.setupContainer("11111", "2");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(true), 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		picker.scanLocation("D303");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 
@@ -747,7 +747,7 @@ public class CheProcessScanPick extends ServerTest {
 		picker.setupContainer("11111", "2");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(true), 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		picker.scanLocation("D303");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 
@@ -764,7 +764,7 @@ public class CheProcessScanPick extends ServerTest {
 		picker.setupContainer("11111", "2");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(true), 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		picker.scanLocation("D303");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 		picker.scanSomething("SCANSKIP");
@@ -816,7 +816,7 @@ public class CheProcessScanPick extends ServerTest {
 		picker.setupContainer("11111", "2");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(true), 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		picker.scanLocation("D303");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 
@@ -879,7 +879,7 @@ public class CheProcessScanPick extends ServerTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 		LOGGER.info("1c: START. Now we get some work. 3 jobs, since only 3 details had modeled locations");
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getNoWorkReviewState(), 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 
 	}
 
@@ -911,7 +911,7 @@ public class CheProcessScanPick extends ServerTest {
 
 		// Probably important. The case above yields some problems so that we hit LOCATION_SELECT_REVIEW state.
 		//picker.waitForCheState(CheStateEnum.LOCATION_SELECT_REVIEW, 4000);
-		picker.waitForCheState(picker.getLocationStartReviewState(), 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 
 		LOGGER.info("2d: in WorkSequence mode, we scan start again, instead of a location");
 
@@ -1032,7 +1032,7 @@ public class CheProcessScanPick extends ServerTest {
 		// DEV-637 note. After that is implemented, we would get plans here even though LOCAPICK is off and we do not get any inventory.		
 		// Shouldn't we get work? We have supplied location, and sequence. 
 		//picker.waitForCheState(CheStateEnum.NO_WORK, 4000);
-		picker.waitForCheState(picker.getLocationStartReviewState(), 6000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 6000);
 
 		// logout back to idle state.
 		picker.logout();
@@ -1060,7 +1060,7 @@ public class CheProcessScanPick extends ServerTest {
 		LOGGER.info("2c: START. Should get some work");
 		picker.scanCommand("START");
 
-		picker.waitForCheState(picker.getLocationStartReviewState(), 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 
 		LOGGER.info("2d: in WorkSequence mode, we scan start again, instead of a location");
 
@@ -1079,7 +1079,7 @@ public class CheProcessScanPick extends ServerTest {
 			String item = sortedItemLocs[i][0];
 			String loc = sortedItemLocs[i][1];
 			boolean last = (i == sortedItemLocs.length - 1);
-			tryPick(picker, item, loc, (!last) ? CheStateEnum.DO_PICK : picker.getCompleteState());
+			tryPick(picker, item, loc, (!last) ? CheStateEnum.DO_PICK : CheStateEnum.SETUP_SUMMARY);
 		}
 		picker.logout();
 	}
@@ -1133,7 +1133,7 @@ public class CheProcessScanPick extends ServerTest {
 
 		LOGGER.info("1c: START. Now we get some work. 8 jobs, only 3 with modeled locations");
 		picker.scanCommand("START");
-		picker.waitForCheState(picker.getLocationStartReviewState(), 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		LOGGER.info("1d: from v13, we can scan start again, instead of a location");
 		picker.scanCommand("START");
 

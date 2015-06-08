@@ -76,7 +76,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		// TODO fix
 		// picker2.startAndSkipReview("S11", WAIT_TIME, WAIT_TIME);
 		picker2.scanCommand("START");
-		picker2.waitForCheState(picker2.getLocationStartReviewState(), WAIT_TIME);
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);
 		Byte posConValue2 = picker2.getLastSentPositionControllerDisplayValue((byte) 2);
 		Assert.assertEquals(new Byte("1"), posConValue1);
@@ -169,7 +169,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		picker2.setupOrderIdAsContainer("WALL2", "1");
 
 		picker2.scanCommand("START");
-		picker2.waitForCheState(picker2.getLocationStartReviewState(), WAIT_TIME);
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		// TODO fix
 		//Make sure different items do not combine
@@ -185,7 +185,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		picker2.setupOrderIdAsContainer("Bad Wall Name", "1");
 
 		picker2.scanCommand("START");
-		picker2.waitForCheState(picker2.getNoWorkReviewState(), WAIT_TIME);
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		//Confirm nothing on PosCon1
 		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);
@@ -207,7 +207,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		picker2.setupOrderIdAsContainer("Bad Wall Name", "3");
 
 		picker2.scanCommand("START");
-		picker2.waitForCheState(picker2.getLocationStartReviewState(true), WAIT_TIME);
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		// TODO fix
 		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);
@@ -234,7 +234,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		picker2.setupOrderIdAsContainer("WALL2", "2");
 
 		picker2.scanCommand("START");
-		picker2.waitForCheState(picker2.getLocationStartReviewState(true), WAIT_TIME);
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		// TODO fix
 		//Verify 2 items on PosCon1. Order "12345" has 3 items, but only 2 of them are on the path che picks.
@@ -259,7 +259,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		picker2.setupOrderIdAsContainer("11112", "2");
 
 		picker2.scanCommand("START");
-		picker2.waitForCheState(picker2.getLocationStartReviewState(), WAIT_TIME);
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		// TODO fix
 		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);
