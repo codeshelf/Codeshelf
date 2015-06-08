@@ -52,8 +52,15 @@ public class PickSimulator {
 
 	public void loginAndSetup(String pickerId) {
 		scanUser(pickerId);
-		// From v16, login goes to SETUP_SUMMARY state. Then explicit SETUP scan goes to CONTAINER_SELECT
-		waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		waitForCheStates(states(CheStateEnum.SETUP_SUMMARY, CheStateEnum.REMOTE), WAIT_TIME);
+		if (getCurrentCheState() == CheStateEnum.REMOTE){
+			scanCommand("CLEAR");
+			//Since we are going from state REMOTE to REMOTE, give CHE a bit of time to enter a transactional state
+			ThreadUtils.sleep(500);
+			waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+			scanCommand("CLEAR");
+			waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		}
 		scanCommand("SETUP");
 		waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 	}
@@ -61,10 +68,7 @@ public class PickSimulator {
 	public void loginAndRemoteLink(String pickerId, String connectTo) {
 		scanUser(pickerId);
 		//If this CHE was previously used as a remote controller, it will go into REMOTE state after the badge scan
-		ArrayList<CheStateEnum> states = Lists.newArrayList();
-		states.add(CheStateEnum.SETUP_SUMMARY);
-		states.add(CheStateEnum.REMOTE);
-		waitForCheStates(states, WAIT_TIME);
+		waitForCheStates(states(CheStateEnum.SETUP_SUMMARY, CheStateEnum.REMOTE), WAIT_TIME);
 		//If CHE goes into SETUP_SUMMARY state, scan the REMOTE command to go to REMOTE state
 		if (getCurrentCheState() == CheStateEnum.SETUP_SUMMARY) {
 			scanCommand("REMOTE");
@@ -562,6 +566,13 @@ public class PickSimulator {
 
 	public void forceDeviceToMatchManagerConfiguration() {
 		cheDeviceLogic.updateConfigurationFromManager();
+	}
+	
+	public static ArrayList<CheStateEnum> states(CheStateEnum state1, CheStateEnum state2) {
+		ArrayList<CheStateEnum> states = Lists.newArrayListWithCapacity(2);
+		states.add(state1);
+		states.add(state2);
+		return states;
 	}
 
 }

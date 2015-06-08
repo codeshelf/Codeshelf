@@ -22,8 +22,6 @@ public enum CheStateEnum {
 	SHORT_PICK_CONFIRM(CheStateNum.SHORT_PICK_CONFIRM, "SHORT_PICK_CONFIRM"),
 	PICK_COMPLETE(CheStateNum.PICK_COMPLETE, "PICK_COMPLETE"),
 	PICK_COMPLETE_CURR_PATH(CheStateNum.PICK_COMPLETE_CURR_PATH, "PICK_COMPLETE_CURR_PATH"),
-	NO_WORK(CheStateNum.NO_WORK, "NO_WORK"),
-	LOCATION_SELECT_REVIEW(CheStateNum.LOCATION_SELECT_REVIEW, "LOCATION_SELECT_REVIEW"),
 	CONTAINER_POSITION_INVALID(CheStateNum.CONTAINER_POSITION_INVALID, "CONTAINER_POSITION_INVALID"),
 	CONTAINER_SELECTION_INVALID(CheStateNum.CONTAINER_SELECTION_INVALID, "CONTAINER_SELECTION_INVALID"),
 	CONTAINER_POSITION_IN_USE(CheStateNum.CONTAINER_POSITION_IN_USE, "CONTAINER_POSITION_IN_USE"),
@@ -113,10 +111,6 @@ public enum CheStateEnum {
 				result = CheStateEnum.PICK_COMPLETE;
 				break;
 
-			case CheStateNum.LOCATION_SELECT_REVIEW:
-				result = CheStateEnum.LOCATION_SELECT_REVIEW;
-				break;
-
 			case CheStateNum.CONTAINER_POSITION_INVALID:
 				result = CheStateEnum.CONTAINER_POSITION_INVALID;
 				break;
@@ -168,10 +162,10 @@ public enum CheStateEnum {
 		static final byte	SHORT_PICK					= 8;
 		static final byte	PICK_COMPLETE				= 9;
 		static final byte	PICK_COMPLETE_CURR_PATH		= 10;	//Added Apr 8, 2015
-		static final byte	NO_WORK						= 11;
+		// available, used to be NO WORK				= 11;
 		// available			= 12;
 		static final byte	SHORT_PICK_CONFIRM			= 13;	//Added Oct. 2014
-		static final byte	LOCATION_SELECT_REVIEW		= 14;	//Added Dec 12 2014
+		// available. used to be LOCATION_SELECT_REVIEW	= 14;
 
 		//Error States
 

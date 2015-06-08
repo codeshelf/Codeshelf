@@ -164,18 +164,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					sendDisplayCommand(GET_WORK_MSG, EMPTY_MSG);
 					break;
 
-				// this state going away
-				case LOCATION_SELECT_REVIEW:
-					if (mPositionToContainerMap.size() > 0)
-						sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1, OR_SCAN_LOCATION, OR_SCAN_START, SHOWING_WI_COUNTS);
-					else
-						sendDisplayCommand(LOCATION_SELECT_REVIEW_MSG_LINE_1,
-							LOCATION_SELECT_REVIEW_MSG_LINE_2,
-							LOCATION_SELECT_REVIEW_MSG_LINE_3,
-							SHOWING_WI_COUNTS);
-					this.showCartSetupFeedback();
-					break;
-
 				case CONTAINER_SELECT:
 					if (mPositionToContainerMap.size() < 1) {
 						sendDisplayCommand(getContainerSetupMsg(), EMPTY_MSG);
@@ -270,10 +258,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					sendDisplayCommand(PATH_COMPLETE_MSG, SCAN_NEW_LOCATION_MSG, OR_SETUP_NEW_CART_MSG, EMPTY_MSG);
 					break;
 
-				case NO_WORK:
-					sendDisplayCommand(NO_WORK_MSG, EMPTY_MSG, EMPTY_MSG, SHOWING_WI_COUNTS);
-					this.showCartSetupFeedback();
-					break;
 				case SCAN_GTIN:
 					sendGtinScreen(lastScannedGTIN);
 					break;
@@ -1238,7 +1222,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case PICK_COMPLETE:
 			case PICK_COMPLETE_CURR_PATH:
 			case SETUP_SUMMARY:
-			case NO_WORK:
 				//Setup the CHE
 				setupChe();
 				break;
@@ -1374,13 +1357,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		switch (mCheStateEnum) {
 			case IDLE:
 				processIdleStateScan(inScanPrefixStr, inContent);
-				break;
-			case NO_WORK:
-				processLocationScan(inScanPrefixStr, inContent);
-				break;
-
-			case LOCATION_SELECT_REVIEW:
-				processLocationScan(inScanPrefixStr, inContent);
 				break;
 
 			case PICK_COMPLETE_CURR_PATH:
@@ -1972,7 +1948,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case SETUP_SUMMARY:
-			case LOCATION_SELECT_REVIEW:
 				// Normally, start work here would hit the default case below, calling start work() which queries to server again
 				// ultimately coming back to SETUP_SUMMARY state. However, if okToStartWithoutLocation, then start scan moves us forward
 				boolean reverseOrderFromLastTime = getMReversePickOrder() != reverse;

@@ -82,11 +82,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					FINISH_SETUP_MSG						= cheLine("PLS SETUP CONTAINERS");
 	protected static final String					COMPUTE_WORK_MSG						= cheLine("COMPUTING WORK");
 	protected static final String					GET_WORK_MSG							= cheLine("GETTING WORK");
-	protected static final String					NO_WORK_MSG								= cheLine("NO WORK TO DO");
-	protected static final String					ON_CURR_PATH_MSG						= cheLine("ON CURRENT PATH");
-	protected static final String					LOCATION_SELECT_REVIEW_MSG_LINE_1		= cheLine("REVIEW MISSING WORK");
-	protected static final String					LOCATION_SELECT_REVIEW_MSG_LINE_2		= cheLine("OR SCAN LOCATION");
-	protected static final String					LOCATION_SELECT_REVIEW_MSG_LINE_3		= cheLine("TO CONTINUE AS IS");
 	protected static final String					SHOWING_ORDER_IDS_MSG					= cheLine("SHOWING ORDER IDS");
 	protected static final String					SHOWING_WI_COUNTS						= cheLine("SHOWING WI COUNTS");
 	protected static final String					PATH_COMPLETE_MSG						= cheLine("PATH COMPLETE");

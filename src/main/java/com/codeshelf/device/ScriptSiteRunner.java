@@ -426,7 +426,6 @@ public class ScriptSiteRunner {
 		che.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		ArrayList<CheStateEnum> states = Lists.newArrayList();
 		states.add(CheStateEnum.SETUP_SUMMARY);
-		states.add(CheStateEnum.NO_WORK);
 		states.add(CheStateEnum.DO_PICK);
 		states.add(CheStateEnum.SCAN_SOMETHING);
 		che.waitForCheStates(states, WAIT_TIMEOUT);
@@ -441,7 +440,7 @@ public class ScriptSiteRunner {
 		
 		state = che.getCurrentCheState();
 		//If Che immediately arrives at the end-of-work state, stop processing this order
-		if (state == CheStateEnum.NO_WORK || state == CheStateEnum.SETUP_SUMMARY){
+		if (state == CheStateEnum.SETUP_SUMMARY){
 			che.logout();
 			synchronized (lock) {
 				report.append("No work generated for the CHE\n");
@@ -453,9 +452,6 @@ public class ScriptSiteRunner {
 		LOGGER.info("{} instructions to pick on the path", picksList.size());
 		
 		//Iterate over instructions, picking items, until no instructions left
-		ArrayList<CheStateEnum> pickStates = Lists.newArrayList();
-		pickStates.add(CheStateEnum.SCAN_SOMETHING);
-		pickStates.add(CheStateEnum.DO_PICK);
 		while(true){
 			Thread.sleep(pickPauseMs);
 			WorkInstruction instruction = che.getActivePick();
@@ -467,7 +463,7 @@ public class ScriptSiteRunner {
 				che.pickItemAuto();
 			} else {
 				//Process normal instruction
-				che.waitForCheStates(pickStates, WAIT_TIMEOUT);
+				che.waitForCheStates(PickSimulator.states(CheStateEnum.SCAN_SOMETHING,  CheStateEnum.DO_PICK), WAIT_TIMEOUT);
 				state = che.getCurrentCheState();
 				//When picking multiple orders containing same items, UPC scan is only needed once per item
 				if (state == CheStateEnum.SCAN_SOMETHING) {
