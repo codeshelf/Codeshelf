@@ -421,13 +421,16 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 *  Documented at https://codeshelf.atlassian.net/wiki/display/TD/KW2+CHE+Displays
 	 */
 	private void sendSingleLineDisplayMessage(final String inLineMessageStr, final byte fontType, final short posX, final short posY) {
-		ICommand command = new CommandControlDisplaySingleLineMessage(NetEndpoint.PRIMARY_ENDPOINT,
-			inLineMessageStr,
-			fontType,
-			posX,
-			posY);
-		sendScreenCommandToMyChe(command);
-		sendScreenCommandToLinkFromChe(command);
+		if (inLineMessageStr != null && !inLineMessageStr.isEmpty()) {
+			ICommand command = new CommandControlDisplaySingleLineMessage(NetEndpoint.PRIMARY_ENDPOINT,
+				inLineMessageStr,
+				fontType,
+				posX,
+				posY);
+			sendScreenCommandToMyChe(command);
+			sendScreenCommandToLinkFromChe(command);
+		}
+		// for this, just don't send anything if the line is blank.
 	}
 
 	// --------------------------------------------------------------------------
@@ -948,6 +951,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		// setState(mCheStateEnum);  Always, after start, there is the device associate chain and redisplay which will call setState(mCheStateEnum);
 		setLastAckId((byte) 0);
+
+		// Let's force a short wait after associate
+		setLastRadioCommandSendForThisDevice(System.currentTimeMillis());
 	}
 
 	/**
@@ -1619,6 +1625,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	public void connectedToServer() {
 		connectedToServer = true;
+		this.clearAllPosconsOnThisDevice();
 		redisplayState();
 
 	}
