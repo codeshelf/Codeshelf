@@ -12,6 +12,7 @@ setController LocX24   lights  0x00000031 1 tiersInAisle
 setController Aisle2   lights  0x000000AB 1
 setController A3.B1.T1 poscons 0x000000AA 1 tiersInAisle
 setPoscons A3.B1.T1 1 forward A3.B2.T1 5 forward A3.B3.T1 9 forward A3.B4.T1 13 forward
+createChe 0x000000A4 blue LINE_SCAN
 createChe 0x000000A3 magenta SETUP_ORDERS
 createChe 0x0000009B green SETUP_ORDERS
 deleteAllPaths
@@ -21,29 +22,46 @@ assignPathSgmToAisle p1 0 A1
 assignPathSgmToAisle p1 2 Aisle2
 assignPathSgmToAisle p2 0 A3
 
-//STEP This step adds inventory and orders to facility
 SERVER
 importInventory inventory
-
-SERVER
 deleteOrders 26768709 26768711 26768712 26768712 26768717 26768718 26768718 26768719 26768720
 importOrders orders_10
 
-STEP test remote control setup
-SITE 
+STEP put wall
+SITE
 waitForDevices 0x0000009B 0x000000A3 0x00000031 0x0000000AB
+defChe cheA 0x0000009B
+logout cheA
+loginSetup cheA Ilya1
+scan cheA X%ORDER_WALL PUT_WALL_SCAN_ORDER
+orderToWall cheA 26768709 WallP11
+orderToWall cheA 26768711 WallP15
+orderToWall cheA 26768712 WallP16
+
+STEP line scan
+SITE
+defChe cheA 0x000000A4
+logout cheA
+login cheA Ilya1 READY
+scan cheA 26768709111112 SCAN_SOMETHING
+scan cheA 3605970651558 DO_PICK
+
+STEP test remote control setup
+SITE
 //Define ches
 defChe cheA 0x0000009B
 defChe cheB 0x000000A3
-logout cheA cheB
+defChe cheC 0x000000A4
+logout cheA cheB cheC
 loginRemote cheA Ilya1 0x000000A3
-cheExec cheA scanCommand SETUP
+scan cheA X%SETUP 
+waitForState cheB CONTAINER_SELECT
 setupCart cheA 26768709 26768711 26768712 26768712 26768717 26768718 26768718 26768719 26768720
-cheExec cheA scanCommand START
+scan cheA X%START
+waitForState cheB SETUP_SUMMARY
 
 STEP test notmal pick
 SITE
-waitForDevices 0x0000009B 0x000000A3 0x00000031 0x0000000AB
 //Define ches
 defChe cheA 0x0000009B
 defChe cheB 0x000000A3
@@ -51,9 +69,9 @@ logout cheA cheB
 //Set pick parameters [pickSpeed, frequency of skipping UPC, frequency of shorting an item]
 setParams pickSpeed=2 skipFreq=0.5 shortFreq=0.5
 //Setup and run both CHEs together
-cheExec cheA loginAndSetup Ilya1
+loginSetup cheA Ilya1
+loginSetup cheB Ilya2
 setupCart cheA 26768709 26768711 26768712 26768712
-cheExec cheB loginAndSetup Ilya2
 setupCart cheB 26768717 26768718 26768718 26768719 26768720
 pickAll
 logout cheA cheB

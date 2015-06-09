@@ -9,3 +9,7 @@ A3.B1,Wall1
 A3.B2,Wall2
 A3.B3,Wall3
 A3.B4,Wall4
+A3.B2.T1.S4,WallP8
+A3.B3.T1.S3,WallP11
+A3.B4.T1.S3,WallP15
+A3.B4.T1.S4,WallP16

@@ -24,13 +24,16 @@ import com.google.common.collect.Lists;
 
 public class ScriptSiteRunner {
 	private final static String TEMPLATE_DEF_CHE = "defChe <cheName> <cheGuid>";
-	private final static String TEMPLATE_LOGIN = "login <cheName> <workerId> <state>";
+	private final static String TEMPLATE_LOGIN = "login <cheName> <workerId> [state]";
+	private final static String TEMPLATE_LOGIN_SETUP = "loginSetup <cheName> <workerId>";
 	private final static String TEMPLATE_LOGIN_REMOTE = "loginRemote <cheName> <workerId> <linkToChe>";
+	private final static String TEMPLATE_SCAN = "scan <cheName> <scan> [expectedState]";
 	private final static String TEMPLATE_SETUP_CART = "setupCart <cheName> <containers>";
 	private final static String TEMPLATE_WAIT_FOR_STATES = "waitForState <cheName> <states>";
 	private final static String TEMPLATE_SET_PARAMS = "setParams (assignments 'pickSpeed'/'skipFreq'/'shortFreq'=<value>)";
 	private final static String TEMPLATE_PICK = "pick <cheNames>";
 	private final static String TEMPLATE_CHE_EXEC = "cheExec <cheName> <cheCommand> [arguments]";
+	private final static String TEMPLATE_ORDER_TO_WALL = "orderToWall <cheName> <orderId> <location>";
 	private final static String TEMPLATE_WAIT_SECONDS = "waitSeconds <seconds>";
 	private final static String TEMPLATE_WAIT_DEVICES = "waitForDevices <devices>";
 	private final static String TEMPLATE_LOGOUT = "logout [cheNames]";
@@ -102,8 +105,14 @@ public class ScriptSiteRunner {
 			processDefineCheCommand(parts);
 		} else if (command.equalsIgnoreCase("login")) {
 			processLoginCommand(parts);
+		} else if (command.equalsIgnoreCase("loginSetup")) {
+			processLoginSetupCommand(parts);
 		} else if (command.equalsIgnoreCase("loginRemote")) {
 			processLoginRemoteCommand(parts);
+		} else if (command.equalsIgnoreCase("scan")) {
+			processScanCommand(parts);
+		} else if (command.equalsIgnoreCase("orderToWall")) {
+			processOrderToWallCommand(parts);
 		} else if (command.equalsIgnoreCase("waitForState")) {
 			processWaitForStatesCommand(parts);
 		} else if (command.equalsIgnoreCase("setupCart")) {
@@ -122,7 +131,7 @@ public class ScriptSiteRunner {
 			processLogoutCommand(parts);
 		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [cheExec, defChe, login, loginRemote, waitForState, setupCard, setParams, pick, pickAll, waitSeconds, waitForDevices, logout, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [cheExec, defChe, login, loginSetup, loginRemote, scan, orderToWall, waitForState, setupCard, setParams, pick, pickAll, waitSeconds, waitForDevices, logout, //]");
 		}
 	}
 	
@@ -180,17 +189,34 @@ public class ScriptSiteRunner {
 	
 	/**
 	 * Expects to see command
-	 * login <cheName> <workerId> <state>
+	 * login <cheName> <workerId> [state]
 	 * @throws Exception
 	 */
 	private void processLoginCommand(String parts[]) throws Exception {
-		if (parts.length != 4){
+		if (parts.length != 3 && parts.length != 4){
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_LOGIN);
 		}
 		PickSimulator che = getChe(parts[1]);
-		che.loginAndCheckState(parts[2], CheStateEnum.valueOf(parts[3]));
+		if (parts.length == 3) {
+			che.loginAndCheckState(parts[2], CheStateEnum.SETUP_SUMMARY);
+		} else {
+			che.loginAndCheckState(parts[2], CheStateEnum.valueOf(parts[3]));
+		}
 	}
-	
+
+	/**
+	 * Expects to see command
+	 * loginSetup <cheName> <workerId>
+	 * @throws Exception
+	 */
+	private void processLoginSetupCommand(String parts[]) throws Exception {
+		if (parts.length != 3){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_LOGIN_SETUP);
+		}
+		PickSimulator che = getChe(parts[1]);
+		che.loginAndSetup(parts[2]);
+	}
+
 	/**
 	 * Expects to see command
 	 * loginRemote <cheName> <workerId> <linkToCheName>
@@ -203,6 +229,39 @@ public class ScriptSiteRunner {
 		PickSimulator mobileChe = getChe(parts[1]);
 		String connectTo = parts[3];
 		mobileChe.loginAndRemoteLink(parts[2], connectTo);
+	}
+	
+	/**
+	 * Expects to see command
+	 * scan <cheName> <scan> [expectedState]
+	 * @throws Exception
+	 */
+	private void processScanCommand(String parts[]) throws Exception {
+		if (parts.length != 3 && parts.length != 4){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_SCAN);
+		}
+		PickSimulator che = getChe(parts[1]);
+		che.scanSomething(parts[2]);
+		if (parts.length == 4) {
+			che.waitForCheState(CheStateEnum.valueOf(parts[3]), WAIT_TIMEOUT);
+		}
+	}
+	
+	/**
+	 * Expects to see command
+	 * orderToWall <cheName> <orderId> <location>
+	 * @throws Exception
+	 */
+	private void processOrderToWallCommand(String parts[]) throws Exception {
+		if (parts.length != 4){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_ORDER_TO_WALL);
+		}
+		PickSimulator che = getChe(parts[1]);
+		che.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIMEOUT);
+		che.scanOrderId(parts[2]);
+		che.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIMEOUT);
+		che.scanSomething(parts[3]);
+		che.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIMEOUT);
 	}
 	
 	/**

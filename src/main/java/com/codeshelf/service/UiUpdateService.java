@@ -216,9 +216,11 @@ public class UiUpdateService implements IApiService {
 		List<ContainerUse> uses = che.getUses();
 		for (ContainerUse use : uses) {
 			OrderHeader header = use.getOrderHeader();
-			LOGGER.info("Null-out ContainerUse on OrderHeader {}", header.getDomainId());
-			header.setContainerUse(null);
-			OrderHeader.staticGetDao().store(header);
+			if (header != null) {
+				LOGGER.info("Null-out ContainerUse on OrderHeader {}", header.getDomainId());
+				header.setContainerUse(null);
+				OrderHeader.staticGetDao().store(header);
+			}
 			LOGGER.info("Deleting ContainerUse {}", use.getDomainId());
 			ContainerUse.staticGetDao().delete(use);
 		}
