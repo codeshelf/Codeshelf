@@ -156,6 +156,15 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		}
 	}
 	
+	/**
+	* This is the essence of the log in result after verify badge. Factored out so that remote linked CHE may get this CHE to the right state.
+	*/
+	@Override
+	public void finishLogin() {
+		clearAllPosconsOnThisDevice();
+		setState(CheStateEnum.READY);
+	}
+	
 	@Override
 	public void processResultOfVerifyBadge(Boolean verified) {
 		if (mCheStateEnum == CheStateEnum.VERIFYING_BADGE) {
