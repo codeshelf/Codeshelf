@@ -126,11 +126,13 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 			long lastSendMs = getLastRadioCommandSendForThisDevice();
 			long nowMs = System.currentTimeMillis();
 			long periodSince = nowMs - lastSendMs;
-			if (periodSince < delayPeriodMills)
+			if (periodSince < delayPeriodMills) {
 				try {
 					Thread.sleep(delayPeriodMills - periodSince);
 				} catch (InterruptedException e) {
 				}
+				LOGGER.info("waited {} ms before sending", delayPeriodMills - periodSince);
+			}
 		}
 	}
 

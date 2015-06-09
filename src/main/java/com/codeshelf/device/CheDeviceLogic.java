@@ -381,13 +381,15 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 *  Documented at https://codeshelf.atlassian.net/wiki/display/TD/KW2+CHE+Displays
 	 */
 	private void sendSingleLineDisplayMessage(final String inLineMessageStr, final byte fontType, final short posX, final short posY) {
-		ICommand command = new CommandControlDisplaySingleLineMessage(NetEndpoint.PRIMARY_ENDPOINT,
-			inLineMessageStr,
-			fontType,
-			posX,
-			posY);
-		sendRadioControllerCommand(command, true);
-
+		if (inLineMessageStr != null && !inLineMessageStr.isEmpty()) {
+			ICommand command = new CommandControlDisplaySingleLineMessage(NetEndpoint.PRIMARY_ENDPOINT,
+				inLineMessageStr,
+				fontType,
+				posX,
+				posY);
+			sendRadioControllerCommand(command, true);
+		}
+		// for this, just don't send anything if the line is blank.
 	}
 
 	// --------------------------------------------------------------------------
@@ -526,10 +528,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 		logLinesSent(inLine1Message, inLine2Message, inLine3Message, inLine4Message); // not logged if no association
 		clearDisplay();
-		quickSleep();
 
 		sendSingleLineDisplayMessage(inLine1Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 35);
-		quickSleep();
 		sendSingleLineDisplayMessage(inLine2Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 90);
 		quickSleep();
 		sendSingleLineDisplayMessage(inLine3Message, CommandControlDisplaySingleLineMessage.ARIALMONOBOLD20, (byte) 26, (byte) 145);
@@ -917,6 +917,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		// setState(mCheStateEnum);  Always, after start, there is the device associate chain and redisplay which will call setState(mCheStateEnum);
 		setLastAckId((byte) 0);
+
+		// Let's force a short wait after associate
+		setLastRadioCommandSendForThisDevice(System.currentTimeMillis());
 	}
 
 	/**
@@ -1573,6 +1576,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	public void connectedToServer() {
 		connectedToServer = true;
+
+		this.clearAllPosconsOnThisDevice();
 		redisplayState();
 
 	}
@@ -1953,7 +1958,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	public void processResultOfVerifyBadge(Boolean verified) {
 		// To be overridden by SetupOrderDeviceLogic and LineScanDeviceLogic
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Sleep briefly between repeated sends to same CHE. Especially in sendMonospaceDisplayScreen
@@ -1967,6 +1972,5 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		} catch (InterruptedException e) {
 		}
 	}
-
 
 }
