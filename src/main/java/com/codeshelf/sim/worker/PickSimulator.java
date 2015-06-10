@@ -50,7 +50,14 @@ public class PickSimulator {
 		}
 	}
 
+	public void login(String pickerId) {
+		waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
+		scanUser(pickerId);
+		waitForCheStates(states(CheStateEnum.SETUP_SUMMARY, CheStateEnum.READY, CheStateEnum.REMOTE), WAIT_TIME);
+	}
+	
 	public void loginAndSetup(String pickerId) {
+		waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
 		scanUser(pickerId);
 		waitForCheStates(states(CheStateEnum.SETUP_SUMMARY, CheStateEnum.REMOTE), WAIT_TIME);
 		if (getCurrentCheState() == CheStateEnum.REMOTE){
@@ -66,6 +73,7 @@ public class PickSimulator {
 	}
 	
 	public void loginAndRemoteLink(String pickerId, String connectTo) {
+		waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
 		scanUser(pickerId);
 		//If this CHE was previously used as a remote controller, it will go into REMOTE state after the badge scan
 		waitForCheStates(states(CheStateEnum.SETUP_SUMMARY, CheStateEnum.REMOTE), WAIT_TIME);
@@ -79,6 +87,7 @@ public class PickSimulator {
 	}
 
 	public void loginAndCheckState(String pickerId, CheStateEnum inState) {
+		waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
 		// This only does the login ("scan badge" scan). Especially in Line_Scan process, this is used in tests rather than loginAndSetup.
 		scanUser(pickerId);
 		// badge authorization now takes longer. Trip to server and back
@@ -550,5 +559,12 @@ public class PickSimulator {
 		states.add(state2);
 		return states;
 	}
-
+	
+	public static ArrayList<CheStateEnum> states(CheStateEnum state1, CheStateEnum state2, CheStateEnum state3) {
+		ArrayList<CheStateEnum> states = Lists.newArrayListWithCapacity(2);
+		states.add(state1);
+		states.add(state2);
+		states.add(state3);
+		return states;
+	}
 }

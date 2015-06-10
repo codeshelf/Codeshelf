@@ -198,7 +198,7 @@ public class ScriptSiteRunner {
 		}
 		PickSimulator che = getChe(parts[1]);
 		if (parts.length == 3) {
-			che.loginAndCheckState(parts[2], CheStateEnum.SETUP_SUMMARY);
+			che.login(parts[2]);
 		} else {
 			che.loginAndCheckState(parts[2], CheStateEnum.valueOf(parts[3]));
 		}
