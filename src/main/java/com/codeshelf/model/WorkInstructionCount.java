@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import org.hibernate.Hibernate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -14,6 +16,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class WorkInstructionCount {
+
+	private static final Logger							LOGGER						= LoggerFactory.getLogger(WorkInstructionCount.class);
 
 	@Getter
 	@Setter
@@ -63,11 +67,21 @@ public class WorkInstructionCount {
 	public void decrementGoodCountAndIncrementShortCount() {
 		goodCount--;
 		shortCount++;
+		// Don't let goodCount go negative. -1 will display on poscon as "8.8."
+		if (goodCount < 0) {
+			goodCount = 0;
+			LOGGER.error("decrementGoodCountAndIncrementShortCount() got the good count negative. How?");
+		}
 	}
 
 	public void decrementGoodCountAndIncrementCompleteCount() {
 		goodCount--;
 		completeCount++;
+		// Don't let goodCount go negative
+		if (goodCount < 0) {
+			goodCount = 0;
+			LOGGER.error("decrementGoodCountAndIncrementCompleteCount() got the good count negative. How?");
+		}
 	}
 
 	public boolean hasBadCounts() {

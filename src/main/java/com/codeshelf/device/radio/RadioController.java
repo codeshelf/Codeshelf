@@ -87,7 +87,7 @@ public class RadioController implements IRadioController {
 	private static final long										NETCHECK_DELAY_MILLIS			= 250;
 
 	private static final long										ACK_TIMEOUT_MILLIS				= 50;												// matching v16. Used to be 20
-	private static final int										ACK_SEND_RETRY_COUNT			= 20;												// matching v16. Used to be 20.
+	private static final int										ACK_SEND_RETRY_COUNT			= 40;												// matching v16. Used to be 20.
 	private static final long										MAX_PACKET_AGE_MILLIS			= 2000;
 
 	private static final long										BACKGROUND_SERVICE_DELAY_MS		= 20;
