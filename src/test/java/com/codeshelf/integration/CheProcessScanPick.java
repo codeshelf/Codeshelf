@@ -712,28 +712,6 @@ public class CheProcessScanPick extends ServerTest {
 		picker.logout();
 		picker.waitForCheState(CheStateEnum.IDLE, 2000);
 
-		/*
-		LOGGER.info("Xa: setup same two orders again. Start. Location. Brings to SCAN_SOMETHING state");
-		picker.loginAndSetup("Picker #1");
-		picker.setupContainer("12345", "1");
-		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
-		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
-		picker.scanLocation("D303");
-		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
-
-		LOGGER.info("Xc: scan short before scanning SKU. ensure correct behavior");
-		picker.scanCommand("SHORT");
-		picker.waitForCheState(CheStateEnum.SHORT_PICK, 5000);
-		picker.pick(button, 0);
-		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 5000);
-		picker.scanCommand("NO");
-		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
-
-		picker.logout();
-		picker.waitForCheState(CheStateEnum.IDLE, 2000);
-		*/
-
 		LOGGER.info("4a: setup same two orders again. Start. Location. Brings to SCAN_SOMETHING state");
 		picker.loginAndSetup("Picker #1");
 		picker.setupContainer("12345", "1");
