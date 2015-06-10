@@ -173,7 +173,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Setter
 	protected int									mSetStateStackCount						= 0;
 
-	private ScanNeededToVerifyPick					mScanNeededToVerifyPick;
+	//private ScanNeededToVerifyPick					mScanNeededToVerifyPick;
 
 	@Getter
 	@Setter
@@ -312,20 +312,16 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		return false;
 	}
 
-	private void setScanNeededToVerifyPick(ScanNeededToVerifyPick inValue) {
-		mScanNeededToVerifyPick = inValue;
-	}
-
-	public String getScanVerificationType() {
-		return ScanNeededToVerifyPick.scanPickEnumToString(mScanNeededToVerifyPick);
-	}
-
-	public void updateConfigurationFromManager() {
-		mScanNeededToVerifyPick = ScanNeededToVerifyPick.NO_SCAN_TO_VERIFY;
+	public ScanNeededToVerifyPick getScanVerificationTypeEnum() {
 		String scanPickValue = mDeviceManager.getScanTypeValue();
-		ScanNeededToVerifyPick theEnum = ScanNeededToVerifyPick.stringToScanPickEnum(scanPickValue);
-		setScanNeededToVerifyPick(theEnum);
-
+		return ScanNeededToVerifyPick.stringToScanPickEnum(scanPickValue);
+	}
+	
+	public String getScanVerificationType() {
+		return ScanNeededToVerifyPick.scanPickEnumToString(getScanVerificationTypeEnum());
+	}
+	
+	public void updateConfigurationFromManager() {
 		// We might want this, as if workSequence, then start location is far less relevant
 		@SuppressWarnings("unused")
 		String mSequenceKind = mDeviceManager.getSequenceKind();
@@ -815,16 +811,23 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * trying to have the fourth line only depend on the state. We might throw additional messaging here if necessary.
 	 */
 	protected String getFourthLineDisplay() {
-		String returnString = "";
 		if (CheStateEnum.SHORT_PICK == mCheStateEnum || CheStateEnum.SHORT_PUT == mCheStateEnum) {
-			returnString = "DECREMENT POSITION";
-		}
+			return "DECREMENT POSITION";
+		} else if (CheStateEnum.SCAN_SOMETHING == mCheStateEnum) {
 		// kind of funny. States are uniformly defined, so this works even from wrong object
-		else if (CheStateEnum.SCAN_SOMETHING == mCheStateEnum) {
-			returnString = "SCAN UPC NEEDED";
-			// TODO: UPC or LPN or SKU
+			ScanNeededToVerifyPick scanVerification = getScanVerificationTypeEnum();
+			switch (scanVerification) {
+				case SKU_SCAN_TO_VERIFY:
+					return "SCAN SKU NEEDED";
+				case UPC_SCAN_TO_VERIFY:
+					return "SCAN GTIN NEEDED";
+				case LPN_SCAN_TO_VERIFY: // not implemented
+					return "SCAN LPN NEEDED";
+				default:
+					return "SCAN ITEM NEEDED";
+			}
 		}
-		return returnString;
+		return "";
 	}
 
 	// --------------------------------------------------------------------------
@@ -1873,40 +1876,17 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * @param insScanPrefixStr
 	 * @param inScanStr
 	 */
-	protected String verifyWiField(final WorkInstruction inWi, String inScanStr) {
-
-		String returnString = "";
-		// TODO
+	private String verifyWiField(final WorkInstruction inWi, String inScanStr) {
 		// If the user scanned SKIPSCAN return true
 		if (inScanStr.equals(SCAN_SKIP) || inScanStr.equals(SKIP_SCAN)) {
 			notifyWiVerb(inWi, EventType.SKIP_ITEM_SCAN, kLogAsWarn);
-			return returnString;
+			return "";
 		}
-
-		String wiVerifyValue = "";
-		switch (mScanNeededToVerifyPick) {
-			case SKU_SCAN_TO_VERIFY:
-				wiVerifyValue = inWi.getItemId();
-				break;
-
-			// TODO change this when we capture UPC. Need to pass it through to site controller in serialized WI to get it here.
-			case UPC_SCAN_TO_VERIFY:
-				wiVerifyValue = inWi.getItemId(); // for now, only works if the SKU is the UPC
-				break;
-
-			case LPN_SCAN_TO_VERIFY: // not implemented
-				LOGGER.error("LPN scan not implemented yet");
-				break;
-
-			default:
-
+		if (inScanStr.equals(inWi.getItemId()) || inScanStr.equals(inWi.getGtin())) {
+			return "";
 		}
-		if (wiVerifyValue == null || wiVerifyValue.isEmpty())
-			returnString = "Data error in WI"; // try to keep to 20 characters
-		else if (!wiVerifyValue.equals(inScanStr))
-			returnString = "Scan mismatch";
-
-		return returnString;
+		String error = String.format("Scan mismatch: expected %s or %s, received %s", inWi.getItemId(), inWi.getGtin(), inScanStr);
+		return error;
 	}
 
 	// --------------------------------------------------------------------------
@@ -1930,7 +1910,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				setState(CheStateEnum.DO_PICK);
 
 			} else {
-				LOGGER.info("errorStr = {}", errorStr); // TODO get this to the CHE display
+				LOGGER.error("errorStr = {}", errorStr); // TODO get this to the CHE display
 				invalidScanMsg(mCheStateEnum);
 			}
 
