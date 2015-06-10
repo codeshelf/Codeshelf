@@ -16,6 +16,7 @@ import lombok.Setter;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.SimpleExpression;
 import org.hibernate.transform.AliasToBeanResultTransformer;
@@ -23,6 +24,7 @@ import org.hibernate.transform.AliasToBeanResultTransformer;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
@@ -47,7 +49,7 @@ public class OrderService implements IApiService {
 		@Getter @Setter
 		private String uom;
 		@Getter @Setter
-		private String sku;
+		private String itemId;
 		@Getter @Setter
 		private String description;
 		@Getter @Setter
@@ -126,6 +128,28 @@ public class OrderService implements IApiService {
 				
 	}
 	
+
+	@SuppressWarnings("unchecked")
+	public List<OrderDetailView> getOrderDetailsForOrderId(Facility facility, String orderDomainId) {
+		return (List<OrderDetailView>) OrderDetail.staticGetDao().createCriteria()
+				.createAlias("itemMaster", "im")
+				.createAlias("uomMaster", "um")
+				.createAlias("parent", "order")
+				.add(Property.forName("order.domainId").eq(orderDomainId))
+				.add(Property.forName("order.parent").eq(facility))
+				.add(Property.forName("active").eq(true))
+				.setProjection(Projections.projectionList()
+					.add( Projections.property("domainId").as("orderDetailId"))
+					.add( Projections.property("description"))
+					.add( Projections.property("quantity").as("planQuantity"))
+					.add( Projections.property("status").as("statusEnum"))
+					.add(Projections.property("im.domainId"), "itemId")
+					.add(Projections.property("um.domainId").as("uom"))
+					.add(Projections.property("order.domainId").as("orderId")))
+					
+				.setResultTransformer(new AliasToBeanResultTransformer(OrderDetailView.class))
+				.list();
+	}
 	
 	public List<OrderDetailView> findOrderDetailsForStatus(Session session, UUID facilityUUID, OrderStatusEnum orderStatusEnum) {
 		@SuppressWarnings("unchecked")
@@ -307,5 +331,6 @@ public class OrderService implements IApiService {
 		}
 		return shipperFilters;
 	}
+
 
 }

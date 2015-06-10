@@ -67,6 +67,7 @@ import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
@@ -75,6 +76,7 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.service.NotificationService;
 import com.codeshelf.service.NotificationService.EventType;
 import com.codeshelf.service.OrderService;
+import com.codeshelf.service.OrderService.OrderDetailView;
 import com.codeshelf.service.ProductivitySummaryList;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.UiUpdateService;
@@ -157,6 +159,15 @@ public class FacilityResource {
 		return errors.buildResponse();
 	}
 
+	@GET
+	@Path("/orders/{orderId}/details")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getOrders(@PathParam("orderId") String orderDomainId) {
+		List<OrderDetailView> results = this.orderService.getOrderDetailsForOrderId(facility, orderDomainId);
+		return BaseResponse.buildResponse(results);
+	}
+
+	
 
     @GET
 	@Path("/work/results")
