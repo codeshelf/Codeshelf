@@ -173,7 +173,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Setter
 	protected int									mSetStateStackCount						= 0;
 
-	protected ScanNeededToVerifyPick				mScanNeededToVerifyPick;
+	private ScanNeededToVerifyPick					mScanNeededToVerifyPick;
 
 	@Getter
 	@Setter
@@ -312,7 +312,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		return false;
 	}
 
-	protected void setScanNeededToVerifyPick(ScanNeededToVerifyPick inValue) {
+	private void setScanNeededToVerifyPick(ScanNeededToVerifyPick inValue) {
 		mScanNeededToVerifyPick = inValue;
 	}
 
@@ -883,7 +883,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * Clear poscons controlled by other devices set by original request from this device.
 	 * This does nothing for this CHE's own poscons.
 	 */
-	private void forceClearOtherPosConControllersForThisCheDevice() {
+	protected void forceClearOtherPosConControllersForThisCheDevice() {
 		List<PosManagerDeviceLogic> controllers = mDeviceManager.getPosConControllers();
 		for (PosManagerDeviceLogic controller : controllers) {
 			controller.removePosConInstrsForSource(getGuid());
@@ -1442,29 +1442,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	protected void confirmShortPick(final String inScanStr) {
 		LOGGER.error("confirmShortPick() needs override");
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Is this useful to linescan?  If not, move as private function to SetupOrdersDeviceLogic
-	 */
-	protected void processPickComplete(boolean isWorkOnOtherPaths) {
-		// There are no more WIs, so the pick is complete.
-		String otherInformation = "";
-		if (isWorkOnOtherPaths)
-			otherInformation = "Some of these orders need picks from other paths"; //  should be localized
-		notifyCheWorkerVerb("PATH COMPLETE", otherInformation);
-
-		// Clear the existing LEDs.
-		ledControllerClearLeds(); // this checks getLastLedControllerGuid(), and bails if null.
-
-		//Clear PosConControllers
-		forceClearOtherPosConControllersForThisCheDevice();
-
-		// CD_0041 is there a need for this?
-		ledControllerShowLeds(getGuid());
-
-		setState(CheStateEnum.SETUP_SUMMARY);
 	}
 
 	// --------------------------------------------------------------------------

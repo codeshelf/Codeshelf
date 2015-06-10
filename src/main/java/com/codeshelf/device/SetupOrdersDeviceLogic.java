@@ -798,6 +798,29 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		}
 	}
+	
+	/**
+	 * Is this useful to linescan?  If not, move as private function to SetupOrdersDeviceLogic
+	 */
+	private void processPickComplete(boolean isWorkOnOtherPaths) {
+		// There are no more WIs, so the pick is complete.
+		String otherInformation = "";
+		if (isWorkOnOtherPaths)
+			otherInformation = "Some of these orders need picks from other paths"; //  should be localized
+		notifyCheWorkerVerb("PATH COMPLETE", otherInformation);
+
+		// Clear the existing LEDs.
+		ledControllerClearLeds(); // this checks getLastLedControllerGuid(), and bails if null.
+
+		//Clear PosConControllers
+		forceClearOtherPosConControllersForThisCheDevice();
+
+		// CD_0041 is there a need for this?
+		ledControllerShowLeds(getGuid());
+
+		setState(CheStateEnum.SETUP_SUMMARY);
+	}
+
 
 	// --------------------------------------------------------------------------
 	/**  doNextWallPut side effects
