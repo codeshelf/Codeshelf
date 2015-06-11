@@ -637,8 +637,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		LOGGER.info("Deleting order {}", this);
 		for (OrderDetail detail : getOrderDetails()){
 			for (WorkInstruction wi : detail.getWorkInstructions()) {
-				wi.setOrderDetail(null);
-				WorkInstruction.staticGetDao().store(wi);
+				WorkInstruction.staticGetDao().delete(wi);
 			}
 			OrderDetail.staticGetDao().delete(detail);
 		}

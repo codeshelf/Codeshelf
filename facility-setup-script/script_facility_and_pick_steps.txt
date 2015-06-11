@@ -60,7 +60,7 @@ setupCart cheA 26768709 26768711 26768712 26768712 26768717 26768718 26768718 26
 scan cheA X%START
 waitForState cheB SETUP_SUMMARY
 
-STEP test notmal pick
+STEP load orders on CHEs
 SITE
 //Define ches
 defChe cheA 0x0000009B
@@ -73,5 +73,11 @@ loginSetup cheA Ilya1
 loginSetup cheB Ilya2
 setupCart cheA 26768709 26768711 26768712 26768712
 setupCart cheB 26768717 26768718 26768718 26768719 26768720
+
+STEP load orders on CHEs
+SITE
+//Define ches
+defChe cheA 0x0000009B
+defChe cheB 0x000000A3
 pickAll
 logout cheA cheB

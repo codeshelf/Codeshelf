@@ -760,6 +760,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			WorkInstruction wi = mShortPickWi;
 			if (wi != null) {
 				processShortPickYes(wi, mShortPickQty);
+			} else {
+				List<WorkInstruction> activeInstructions = getActivePickWiList();
+				for (WorkInstruction activeInstruction : activeInstructions) {
+					processShortPickYes(activeInstruction, 0);
+				}
 			}
 		} else {
 			// Just return to showing the active picks.
