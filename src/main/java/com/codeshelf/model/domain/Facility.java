@@ -46,6 +46,8 @@ import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.PropertyService;
+import com.codeshelf.ws.protocol.message.DisconnectSiteControllerMessage;
+import com.codeshelf.ws.server.WebSocketManagerService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
@@ -1211,10 +1213,16 @@ public class Facility extends Location {
 	/**
 	 * Deletes all Facilities in the current schema. Use carefully.
 	 */
-	public static void delete(){
+	public static void delete(WebSocketManagerService webSocketManagerService){
 		TenantPersistenceService persistence = TenantPersistenceService.getInstance(); // convenience
 		String schema = CodeshelfSecurityManager.getCurrentTenant().getSchemaName();
 		Session session = persistence.getSession();
+		List<Facility> facilities = Facility.staticGetDao().getAll();
+		for (Facility facility : facilities) {
+			Set<User> users = facility.getSiteControllerUsers();
+			DisconnectSiteControllerMessage disconnectMessage = new DisconnectSiteControllerMessage();
+			webSocketManagerService.sendMessage(users, disconnectMessage);
+		}
 		//The "location" table contains the Facility. All objects we want to delete are descendants of the Facility
 		String query = String.format("TRUNCATE %s.location CASCADE", schema);
 		session.createSQLQuery(query).executeUpdate();

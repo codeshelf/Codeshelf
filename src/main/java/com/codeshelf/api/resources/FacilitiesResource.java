@@ -24,12 +24,20 @@ import com.codeshelf.api.resources.subresources.FacilityResource;
 import com.codeshelf.api.responses.FacilityShort;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Point;
+import com.codeshelf.ws.server.WebSocketManagerService;
+import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
 
 @Path("/facilities")
 public class FacilitiesResource {
 	@Context
 	private ResourceContext resourceContext;
+	private final WebSocketManagerService webSocketManagerService;
+	
+	@Inject
+	public FacilitiesResource(WebSocketManagerService webSocketManagerService){
+		this.webSocketManagerService = webSocketManagerService;
+	}
 	
 	@Path("{id}")
 	@RequiresPermissions("companion:view")
@@ -65,7 +73,7 @@ public class FacilitiesResource {
 	@RequiresPermissions("facility:edit")
 	public Response deleteFacility(){
 		try {
-			Facility.delete();
+			Facility.delete(webSocketManagerService);
 			return BaseResponse.buildResponse("Facilities Deleted");
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
