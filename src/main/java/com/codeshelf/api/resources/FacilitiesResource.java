@@ -3,6 +3,7 @@ package com.codeshelf.api.resources;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -17,6 +18,7 @@ import javax.ws.rs.core.Response;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import com.codeshelf.api.BaseResponse;
+import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.resources.subresources.FacilityResource;
 import com.codeshelf.api.responses.FacilityShort;
@@ -57,5 +59,16 @@ public class FacilitiesResource {
 	public Response addFacility(@FormParam("domainId") String domainId, @FormParam("description") String description) {
 		Facility facility = Facility.createFacility(domainId, description, Point.getZeroPoint());
 		return BaseResponse.buildResponse(facility);
+	}
+	
+	@DELETE
+	@RequiresPermissions("facility:edit")
+	public Response deleteFacility(){
+		try {
+			Facility.delete();
+			return BaseResponse.buildResponse("Facilities Deleted");
+		} catch (Exception e) {
+			return new ErrorResponse().processException(e);
+		}
 	}
 }

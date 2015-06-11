@@ -25,6 +25,7 @@ import javax.persistence.OneToMany;
 import lombok.Getter;
 
 import org.hibernate.Hibernate;
+import org.hibernate.Session;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.postgresql.util.PSQLException;
@@ -43,6 +44,7 @@ import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.PropertyService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -1205,5 +1207,16 @@ public class Facility extends Location {
 	public Facility reload() {
 		return Facility.staticGetDao().reload(this);
 	}
-
+	
+	/**
+	 * Deletes all Facilities in the current schema. Use carefully.
+	 */
+	public static void delete(){
+		TenantPersistenceService persistence = TenantPersistenceService.getInstance(); // convenience
+		String schema = CodeshelfSecurityManager.getCurrentTenant().getSchemaName();
+		Session session = persistence.getSession();
+		//The "location" table contains the Facility. All objects we want to delete are descendants of the Facility
+		String query = String.format("TRUNCATE %s.location CASCADE", schema);
+		session.createSQLQuery(query).executeUpdate();
+	}
 }
