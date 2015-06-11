@@ -80,7 +80,9 @@ public abstract class AbstractCookieSessionService extends AbstractSessionLoginS
 	}
 	
 	public String removerCookie() {
-		return this.getCookieName()+"=deleted;Domain="+this.getCookieDomain()+";Path=/;Expires=Thu, 01-Jan-1970 00:00:01 GMT";
+		return this.getCookieName()+"=deleted;"
+				+"Domain="+(this.getCookieDomain() == null? "" : this.getCookieDomain())
+				+";Path=/;Expires=Thu, 01-Jan-1970 00:00:01 GMT";
 	}
 
 }
