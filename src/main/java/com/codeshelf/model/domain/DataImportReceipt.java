@@ -77,6 +77,12 @@ public class DataImportReceipt extends DomainObjectTreeABC<Facility> {
 	@Column(name = "lines_processed")
 	int linesProcessed = 0;
 	
+	@Getter
+	@Setter
+	@JsonProperty
+	@Column(name = "lines_failed")
+	Integer linesFailed = 0;
+	
 	@Column(nullable = false, length=20)
 	@Enumerated(EnumType.STRING)
 	@Getter @Setter

@@ -47,16 +47,16 @@ public abstract class ImportCsvBeanABC {
 				Object fieldValue = field.get(this);
 				String fieldName = field.getName();
 				
-				//Check for NULL values
-				Annotation nullAnnotation = field.getAnnotation(NotNull.class);
+
+				NotNull nullAnnotation = field.getAnnotation(NotNull.class);
+				Size sizeAnnotation = field.getAnnotation(Size.class);
+				
 				if ((nullAnnotation != null) && (fieldValue == null)) {
+					//Check for NULL values
 					result.append(String.format("Required field '%s' is null\n", fieldName));
 					badCount++;
-				}
-				
-				//Check for too short (at this time - empty) values
-				Size sizeAnnotation = field.getAnnotation(Size.class);
-				if (sizeAnnotation != null) {
+				}  else if (sizeAnnotation != null) {
+					//Check for too short (at this time - empty) values
 					int min = sizeAnnotation.min();
 					if (min > 0) {
 						if (fieldValue == null) {

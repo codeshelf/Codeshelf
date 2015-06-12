@@ -311,6 +311,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		receipt.setCompleted(results.getCompleted());
 		receipt.setOrdersProcessed(results.getOrdersProcessed());
 		receipt.setLinesProcessed(results.getLinesProcessed());
+		receipt.setLinesFailed(results.getViolations().size());
 		
 		receipt.setParent(facility);
 		receipt.setDomainId("Import-"+results.getStarted());
