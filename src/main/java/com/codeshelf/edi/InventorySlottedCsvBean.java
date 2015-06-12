@@ -28,8 +28,6 @@ public class InventorySlottedCsvBean extends ImportCsvBeanABC {
 	@NotNull
 	@Size(min = 1)
 	protected String	description;
-	@NotNull
-	@Size(min = 1)
 	protected String	quantity;
 	@NotNull
 	@Size(min = 1)
