@@ -356,7 +356,8 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 			else if (minValue == BITENCODED_TOP_BOTTOM)
 				summary = "'double dash'";
 			else
-				LOGGER.error("unhandled case in PosControllerInstr.conciseDescription()");
+				; // not necessarily an error. See master for order feedback cases.
+				// LOGGER.error("unhandled case in PosControllerInstr.conciseDescription()");
 			desc = String.format("[pos:%s %s freq:%s, duty:%d]", posString, summary, freq, getDutyCycle());
 		}
 		return desc;
