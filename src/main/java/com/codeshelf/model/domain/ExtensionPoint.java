@@ -66,6 +66,16 @@ public class ExtensionPoint extends DomainObjectTreeABC<Facility> {
 	public ExtensionPoint() {
 		super();
 	}
+
+	public ExtensionPoint(Facility facility, ExtensionPointType type) {
+		super();
+		setParent(facility);
+		setDomainId(facility.getDomainId() + "-" + type.name());
+		setType(type);
+		setActive(false);
+		setScript("");
+	}
+
 	
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<ExtensionPoint> getDao() {

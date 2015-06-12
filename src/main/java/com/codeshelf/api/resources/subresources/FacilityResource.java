@@ -49,6 +49,7 @@ import com.codeshelf.api.pickscript.ScriptServerRunner;
 import com.codeshelf.api.pickscript.ScriptSiteCallPool;
 import com.codeshelf.api.pickscript.ScriptStepParser;
 import com.codeshelf.api.pickscript.ScriptStepParser.StepPart;
+import com.codeshelf.api.resources.ExtensionPointsResource;
 import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.ItemDisplay;
 import com.codeshelf.api.responses.PickRate;
@@ -66,6 +67,7 @@ import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
@@ -166,6 +168,13 @@ public class FacilityResource {
 		return BaseResponse.buildResponse(results);
 	}
 
+	@Path("/extensionpoints")
+	@Produces(MediaType.APPLICATION_JSON)
+	public ExtensionPointsResource getExtensionPoints() {
+		ExtensionPointsResource r = resourceContext.getResource(ExtensionPointsResource.class);
+		r.setFacility(facility);
+		return r;
+	}
 	
 
     @GET
