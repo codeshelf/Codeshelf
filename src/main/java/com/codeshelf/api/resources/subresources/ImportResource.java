@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
@@ -11,6 +12,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -19,9 +21,16 @@ import javax.ws.rs.core.Response.Status;
 import lombok.Setter;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.hibernate.Criteria;
+import org.hibernate.HibernateException;
+import org.hibernate.criterion.CriteriaQuery;
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Restrictions;
+import org.hibernate.engine.spi.TypedValue;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.ErrorResponse;
+import com.codeshelf.api.BaseResponse.StartDateParam;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.LocationAliasCsvImporter;
@@ -31,6 +40,7 @@ import com.codeshelf.model.domain.DataImportReceipt;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.BatchResult;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
 import com.sun.jersey.core.header.FormDataContentDisposition;
@@ -152,9 +162,14 @@ public class ImportResource {
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getImportReceipts() {
+	public Response getImportReceipts(@QueryParam("startTimestamp") StartDateParam startTimestamp) {
 		try {
-			List<DataImportReceipt> receipts = DataImportReceipt.staticGetDao().findByParent(facility);
+			ArrayList<Criterion> filter = Lists.newArrayList();
+			filter.add(Restrictions.eq("parent", facility));
+			if (startTimestamp != null) {
+				filter.add(Restrictions.gt("started", startTimestamp.getValue()));
+			}
+			List<DataImportReceipt> receipts = DataImportReceipt.staticGetDao().findByFilter(filter);
 			return BaseResponse.buildResponse(receipts);
 		}
 		catch (Exception e) {
