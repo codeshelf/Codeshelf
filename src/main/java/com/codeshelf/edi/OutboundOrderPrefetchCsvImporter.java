@@ -187,6 +187,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		int numLineItems = 0; 
 		
 		List<OutboundOrderCsvBean> list = toCsvBean(inCsvReader, OutboundOrderCsvBean.class);
+		
 		if (list.size()==0) {
 			LOGGER.info("Nothing to process.  Order file is empty.");
 			return null;
@@ -201,9 +202,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		Set<String> orderGroupIds = new HashSet<String>();
 		Map<String,OutboundOrderBatch> orderBatches = new HashMap<String, OutboundOrderBatch>();
 		//For readability, the first non-header line is indexed "2"
-		int lineNumber = 2;
 		for (OutboundOrderCsvBean orderBean : list) {
-			orderBean.setLineNumber(lineNumber++);
 			String orderId = orderBean.orderId;
 			orderIds.add(orderId);
 			String orderGroupId = orderBean.getOrderGroupId();

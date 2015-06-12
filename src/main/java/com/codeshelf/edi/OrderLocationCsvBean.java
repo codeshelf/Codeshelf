@@ -5,9 +5,6 @@
  *******************************************************************************/
 package com.codeshelf.edi;
 
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -27,11 +24,7 @@ public class OrderLocationCsvBean extends ImportCsvBeanABC implements Comparable
 
 	static final Logger	LOGGER	= LoggerFactory.getLogger(OrderLocationCsvBean.class);
 
-	@NotNull
-	@Size(min = 1)
 	protected String	orderId;
-	@NotNull
-	@Size(min = 1)
 	protected String	locationId;
 	
 	public final String getOrderId() {

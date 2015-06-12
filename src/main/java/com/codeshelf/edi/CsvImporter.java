@@ -36,6 +36,13 @@ public abstract class CsvImporter<T> {
 		} catch (IOException e) {
 			throw new EdiFileReadException("unable to import csv with bean class: " + inClass, e);
 		}
+		
+		int lineNumber = 2;
+		for (T bean : crossBatchBeanList) {
+			if (bean instanceof ImportCsvBeanABC){
+				((ImportCsvBeanABC) bean).setLineNumber(lineNumber++);
+			}
+		}
 		return crossBatchBeanList;
 	}
 

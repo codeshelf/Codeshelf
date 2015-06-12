@@ -55,6 +55,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 	public final boolean importOrderLocationsFromCsvStream(Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
 		boolean result = true;
 		List<OrderLocationCsvBean> orderLocationBeanList = toCsvBean(inCsvReader, OrderLocationCsvBean.class);
+
 		//Sort to put orders with same id together
 		Collections.sort(orderLocationBeanList);
 
@@ -125,6 +126,7 @@ public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> 
 		LOGGER.info(inCsvBean.toString());
 		String errorMsg = inCsvBean.validateBean();
 		if (errorMsg != null) {
+			LOGGER.error(errorMsg);
 			throw new InputValidationException(inCsvBean, errorMsg);
 		}
 		if (!inCsvBean.getOrderId().equals(lastOrderId)) {
