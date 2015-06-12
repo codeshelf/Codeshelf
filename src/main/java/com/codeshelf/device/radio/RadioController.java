@@ -86,9 +86,9 @@ public class RadioController implements IRadioController {
 	private static final long										CTRL_START_DELAY_MILLIS			= 5;
 	private static final long										NETCHECK_DELAY_MILLIS			= 250;
 
-	private static final long										ACK_TIMEOUT_MILLIS				= 50;												// matching v16. Used to be 20
-	private static final int										ACK_SEND_RETRY_COUNT			= 40;												// matching v16. Used to be 20.
-	private static final long										MAX_PACKET_AGE_MILLIS			= 2000;
+	private static final long										ACK_TIMEOUT_MILLIS				= 20;												// matching v16. Used to be 20
+	private static final int										ACK_SEND_RETRY_COUNT			= 20;												// matching v16. Used to be 20.
+	private static final long										MAX_PACKET_AGE_MILLIS			= 4000;
 
 	private static final long										BACKGROUND_SERVICE_DELAY_MS		= 20;
 
@@ -544,13 +544,22 @@ public class RadioController implements IRadioController {
 			if ((inAckRequested) && (inNetworkId.getValue() != (IPacket.BROADCAST_NETWORK_ID))
 					&& (inDstAddr.getValue() != (IPacket.BROADCAST_ADDRESS))) {
 
-				// If we're pending an ACK then assign an ACK ID.
 				int nextAckId = mAckId.getAndIncrement();
-				while (nextAckId > Byte.MAX_VALUE) {
-					mAckId.compareAndSet(nextAckId, 1);
-					nextAckId = mAckId.get();
-				}
 
+				if (nextAckId > Byte.MAX_VALUE) {
+					mAckId.compareAndSet(nextAckId + 1, 1);
+					nextAckId = mAckId.getAndIncrement();
+				}
+				
+				/*
+								// If we're pending an ACK then assign an ACK ID.
+								int nextAckId = mAckId.getAndIncrement();
+								while (nextAckId > Byte.MAX_VALUE) {
+									mAckId.compareAndSet(nextAckId, 1);
+									nextAckId = mAckId.get();
+								}
+				*/
+				
 				packet.setAckId((byte) nextAckId);
 				packet.setAckState(AckStateEnum.PENDING);
 
@@ -892,7 +901,8 @@ public class RadioController implements IRadioController {
 				// associated with us.
 				if (foundDevice.getDeviceStateEnum() == null) {
 					status = CommandAssocAck.IS_NOT_ASSOCIATED;
-					LOGGER.info("AssocCheck - NOT ASSOC: state was: {}", foundDevice.getDeviceStateEnum());
+					LOGGER.info("AssocCheck1 - NOT ASSOC: state was: {}", foundDevice.getDeviceStateEnum());
+					return;
 				} else if (foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.ASSIGN_SENT)) {
 
 					Queue<IPacket> pendingAcks = mPendingAcksMap.get(inSrcAddr);
@@ -906,7 +916,8 @@ public class RadioController implements IRadioController {
 					networkDeviceBecameActive(foundDevice);
 				} else if (!foundDevice.getDeviceStateEnum().equals(NetworkDeviceStateEnum.STARTED)) {
 					status = CommandAssocAck.IS_NOT_ASSOCIATED;
-					LOGGER.info("AssocCheck - NOT ASSOC: state was: {}", foundDevice.getDeviceStateEnum());
+					LOGGER.info("AssocCheck2 - NOT ASSOC: state was: {}", foundDevice.getDeviceStateEnum());
+					return;
 				}
 
 				// If the found device has the wrong GUID then we have the wrong
@@ -914,8 +925,9 @@ public class RadioController implements IRadioController {
 				// (This could be two matching network IDs on the same channel.
 				// This could be a serious flaw in the network protocol.)
 				if (!foundDevice.getGuid().toString().equalsIgnoreCase("0x" + uid)) {
-					LOGGER.info("AssocCheck - NOT ASSOC: GUID mismatch: {} and {}", foundDevice.getGuid(), uid);
+					LOGGER.info("AssocCheck3 - NOT ASSOC: GUID mismatch: {} and {}", foundDevice.getGuid(), uid);
 					status = CommandAssocAck.IS_NOT_ASSOCIATED;
+					return;
 				}
 
 				// Create and send an ack command to the remote that we think is
@@ -1107,16 +1119,15 @@ public class RadioController implements IRadioController {
 	}
 
 	private void sendOutboundPacketToController(IPacket inPacket) {
-		final long kWaitMs = 10;
 		// check time
-		long now = System.currentTimeMillis();
-		long lastSendDiff = now - getLastOutboundPacketTime();
-		if (lastSendDiff < kWaitMs) {
+		// long now = System.currentTimeMillis();
+		// long lastSendDiff = now - getLastOutboundPacketTime();
+		// if (lastSendDiff < kWaitMs) {
 			try {
-				Thread.sleep(kWaitMs - lastSendDiff);
+				Thread.sleep(5 /*kWaitMs - lastSendDiff*/);
 			} catch (InterruptedException e) {
 			}
-		}
+		// }
 		try {
 			packetIOService.handleOutboundPacket(inPacket);
 		} finally {

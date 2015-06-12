@@ -344,6 +344,7 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 				getDutyCycle());
 		} else {
 			Byte minValue = getMinQty();
+			Byte maxValue = getMaxQty();
 			String summary = "??";
 			if (minValue == BITENCODED_LED_DASH)
 				summary = "'dash'";
@@ -356,7 +357,17 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 			else if (minValue == BITENCODED_TOP_BOTTOM)
 				summary = "'double dash'";
 			else
-				LOGGER.error("unhandled case in PosControllerInstr.conciseDescription()");
+				// Remember the "order feedback" possibilities;
+				// we might be doing "00" or "08" for last digits of order ID, or "a" if not digits.
+			if (maxValue == PosControllerInstr.BITENCODED_DIGITS[0]) {
+				summary = "'digits'";  // with the leading zero. Would take a little code to get it back
+			}
+			else if (minValue == PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE ){
+				summary = "'a'";  // assigned
+			}
+			else {
+				LOGGER.error("unhandled case in PosControllerInstr.conciseDescription(). BitEncoded flag, with min:{}, max:{}", getMinQty(),
+					getMaxQty());}
 			desc = String.format("[pos:%s %s freq:%s, duty:%d]", posString, summary, freq, getDutyCycle());
 		}
 		return desc;
