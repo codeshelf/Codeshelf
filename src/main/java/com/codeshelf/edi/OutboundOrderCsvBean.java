@@ -44,8 +44,6 @@ public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 	@Size(min = 1)
 	protected String	itemId;
 	protected String	description;
-	@NotNull
-	@Size(min = 1)
 	protected String	quantity;
 	protected String	minQuantity;
 	protected String	maxQuantity;

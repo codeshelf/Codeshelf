@@ -341,8 +341,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		// orderId,itemId,description,quantity,uom are not nullable according to the bean
 		// There's no due date on first order line. nullable, ok
-		// There's no itemID on third to last line. (did not matter)
-		// There's no uom on second to last line. (did not matter)
+		// There's no itemID on third to last line. (now matters)
+		// There's no uom on second to last line. (now matters)
 		// There's no order date on last order line. nullable, ok
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,,0"
@@ -379,11 +379,10 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertNotNull(orderDetail);
 
 		HeaderCounts theCounts = facility.countOutboundOrders();
-		Assert.assertTrue(theCounts.mTotalHeaders == 3);
-		Assert.assertTrue(theCounts.mActiveHeaders == 3);
-		Assert.assertTrue(theCounts.mActiveDetails == 11);
-		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
-		// Seems possibly wrong! Got a detail for missing itemID.
+		Assert.assertEquals(3, theCounts.mTotalHeaders);
+		Assert.assertEquals(3, theCounts.mActiveHeaders);
+		Assert.assertEquals(9, theCounts.mActiveDetails);
+		Assert.assertEquals(3, theCounts.mActiveCntrUses);
 
 		this.getTenantPersistenceService().commitTransaction();
 
