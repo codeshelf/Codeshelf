@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -199,7 +200,10 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		Set<String> orderIds = new HashSet<String>();
 		Set<String> orderGroupIds = new HashSet<String>();
 		Map<String,OutboundOrderBatch> orderBatches = new HashMap<String, OutboundOrderBatch>();
+		//For readability, the first non-header line is indexed "2"
+		int lineNumber = 2;
 		for (OutboundOrderCsvBean orderBean : list) {
+			orderBean.setLineNumber(lineNumber++);
 			String orderId = orderBean.orderId;
 			orderIds.add(orderId);
 			String orderGroupId = orderBean.getOrderGroupId();
@@ -268,8 +272,10 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 				
 		// spawn workers and process order batch queue
         ExecutorService executor = Executors.newFixedThreadPool(numWorkerThreads);
+        ArrayList<OutboundOrderBatchProcessor> workers = new ArrayList<>(numWorkerThreads);
         for (int i = 1; i <= numWorkerThreads; i++) {
-        	Runnable worker = new OutboundOrderBatchProcessor(i, this, inProcessTime, facility);
+        	OutboundOrderBatchProcessor worker = new OutboundOrderBatchProcessor(i, this, inProcessTime, facility);
+        	workers.add(worker);
         	executor.execute(worker);
         }
         
@@ -277,6 +283,12 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
         executor.shutdown();
         while (!executor.isTerminated()) {
         	ThreadUtils.sleep(100);
+        }
+        
+        for (OutboundOrderBatchProcessor worker : workers) {
+        	BatchResult<Object> workerResult = worker.getBatchResult();
+        	batchResult.getViolations().addAll(workerResult.getViolations());
+        	workerResult.getViolations();
         }
 
 		this.endTime = System.currentTimeMillis();

@@ -78,7 +78,6 @@ public abstract class DomainObjectABC implements IDomainObject {
 	@NonNull
 	@Column(name = "domainid", nullable = false)
 	@Getter
-	@Setter
 	@JsonProperty
 	private String				domainId;
 
@@ -97,6 +96,13 @@ public abstract class DomainObjectABC implements IDomainObject {
 
 	public DomainObjectABC(String inDomainId) {
 		this.domainId = inDomainId;
+	}
+	
+	public void setDomainId(String inDomainId) {
+		if (inDomainId.isEmpty()) {
+			inDomainId = null;
+		}
+		domainId = inDomainId;
 	}
 
 	// --------------------------------------------------------------------------

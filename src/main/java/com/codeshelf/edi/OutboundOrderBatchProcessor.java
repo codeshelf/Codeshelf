@@ -61,7 +61,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 	private String oldPreferredLocation	= null;
 	
 	@Getter
-	BatchResult<Object> batchResult = new BatchResult<Object>();
+	private BatchResult<Object> batchResult = new BatchResult<Object>();
 		
 	private Facility facility;
 
@@ -112,7 +112,6 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				itemMasterCache = new DomainObjectCache<ItemMaster>(ItemMaster.staticGetDao());
 				orderHeaderCache = new DomainObjectCache<OrderHeader>(OrderHeader.staticGetDao());
 
-				BatchResult<Object> batchResult = new BatchResult<Object>();
 				ArrayList<OrderHeader> orderSet = new ArrayList<OrderHeader>();
 
 				LOGGER.debug("Begin order import.");
@@ -213,8 +212,9 @@ public class OutboundOrderBatchProcessor implements Runnable {
 						batchResult.add(orderBean);
 						importer.produceRecordSuccessEvent(orderBean);
 					} catch (Exception e) {
-						LOGGER.error("unable to import order line: " + orderBean, e);
-						batchResult.addLineViolation(lineCount, orderBean, e);
+						String errorMessage = String.format("Unable to import order line %d: %s", orderBean.getLineNumber(), e.toString());
+						LOGGER.error(errorMessage);
+						batchResult.addLineViolation(lineCount, orderBean, errorMessage);
 					}
 				}
 				
@@ -284,7 +284,6 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				LOGGER.info("Completed processing "+batch);
 				
 				//TODO switch to callable and wait for the futures
-				LOGGER.info("Completed processing "+ batchResult);
 			}
 			catch (StaleObjectStateException e) {
 				LOGGER.warn("Failed to process order batch "+batch+" due to stale data.",e);
@@ -318,6 +317,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 		String errorMsg = inCsvBean.validateBean();
 		if (errorMsg != null) {
+			LOGGER.error("Bean validation error: " + errorMsg);
 			throw new InputValidationException(inCsvBean, errorMsg);
 		}
 
