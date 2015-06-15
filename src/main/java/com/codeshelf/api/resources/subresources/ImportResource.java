@@ -25,8 +25,8 @@ import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 
 import com.codeshelf.api.BaseResponse;
+import com.codeshelf.api.BaseResponse.TimestampParam;
 import com.codeshelf.api.ErrorResponse;
-import com.codeshelf.api.BaseResponse.StartDateParam;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.LocationAliasCsvImporter;
@@ -158,12 +158,15 @@ public class ImportResource {
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getImportReceipts(@QueryParam("startTimestamp") StartDateParam startTimestamp) {
+	public Response getImportReceipts(@QueryParam("startTimestamp") TimestampParam startTimestamp, @QueryParam("endTimestamp") TimestampParam endTimestamp) {
 		try {
 			ArrayList<Criterion> filter = Lists.newArrayList();
 			filter.add(Restrictions.eq("parent", facility));
 			if (startTimestamp != null) {
-				filter.add(Restrictions.gt("started", startTimestamp.getValue()));
+				filter.add(Restrictions.ge("started", startTimestamp.getValue()));
+			}
+			if (endTimestamp != null) {
+				filter.add(Restrictions.le("started", endTimestamp.getValue()));
 			}
 			List<DataImportReceipt> receipts = DataImportReceipt.staticGetDao().findByFilter(filter);
 			return BaseResponse.buildResponse(receipts);
