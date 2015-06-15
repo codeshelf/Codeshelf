@@ -27,7 +27,6 @@ public class YetAnotherOutboundOrderImporterTest extends ServerTest {
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(YetAnotherOutboundOrderImporterTest.class);
 
-	private ICsvOrderImporter	importer;
 	private UUID				facilityId;
 
 	@Before
@@ -36,7 +35,6 @@ public class YetAnotherOutboundOrderImporterTest extends ServerTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 
-		importer = createOrderImporter();
 		facilityId = getTestFacility("O-" + getTestName(), "F-" + getTestName()).getPersistentId();
 
 		this.getTenantPersistenceService().commitTransaction();

@@ -1660,6 +1660,59 @@ public class OutboundOrderImporterTest extends ServerTest {
 		commitTransaction();
 	}
 
+	@Test
+	public final void testFailedLinesCounter() throws IOException{
+		beginTransaction();
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
+		LOGGER.info("1: No errors");
+		String ordersStringNormal = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId\n" +
+				"order1,detail1,item1,description1,5,each,LocX24,cont1\n" + 
+				"order1,detail2,item2,description2,5,each,LocX25,cont1\n" +
+				"order2,detail3,item3,description3,5,each,LocX26,cont2\n" +
+				"order2,detail4,item4,description4,5,each,LocX27,cont2\n";
+		BatchResult<Object> result = importOrdersData(facility, ordersStringNormal);
+		Assert.assertEquals(4, result.getLinesProcessed());
+		Assert.assertEquals(2, result.getOrdersProcessed());
+		Assert.assertEquals(0, result.getViolations().size());
+		
+		LOGGER.info("2: Bad header causes all lines to fail");
+		String ordersStringBadHeader = "orderId,orderDetailId,itemXId,description,quantity,uom,locationId,preAssignedContainerId\n" +
+				"order1,detail1,item1,description1,5,each,LocX24,cont1\n" + 
+				"order1,detail2,item2,description2,5,each,LocX25,cont1\n" +
+				"order2,detail3,item3,description3,5,each,LocX26,cont2\n" +
+				"order2,detail4,item4,description4,5,each,LocX27,cont2\n";
+		result = importOrdersData(facility, ordersStringBadHeader);
+		Assert.assertEquals(4, result.getLinesProcessed());
+		Assert.assertEquals(2, result.getOrdersProcessed());
+		Assert.assertEquals(4, result.getViolations().size());
+		Assert.assertTrue(result.getViolations().get(0).getMessage().contains("Required field 'itemId' is null"));
+		Assert.assertTrue(result.getViolations().get(1).getMessage().contains("Required field 'itemId' is null"));
+		Assert.assertTrue(result.getViolations().get(2).getMessage().contains("Required field 'itemId' is null"));
+		Assert.assertTrue(result.getViolations().get(3).getMessage().contains("Required field 'itemId' is null"));
+		
+		LOGGER.info("3: Missing order id");
+		String ordersStringMissingOrderId = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId\n" +
+				"order1,detail1,item1,description1,5,each,LocX24,cont1\n" + 
+				",detail2,item2,description2,5,each,LocX25,cont1\n" +
+				"order2,detail3,item3,description3,5,each,LocX26,cont2\n" +
+				"order2,detail4,item4,description4,5,each,LocX27,cont2\n";
+		result = importOrdersData(facility, ordersStringMissingOrderId);
+		Assert.assertEquals(1, result.getViolations().size());
+		Assert.assertTrue(result.getViolations().get(0).getMessage().contains("Errors on line 3: \nRequired field 'orderId' is empty"));
+		
+		LOGGER.info("3: Missing item id");
+		String ordersStringMissingDetailId = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId\n" +
+				"order1,detail1,item1,description1,5,each,LocX24,cont1\n" + 
+				"order1,detail2,item2,description2,5,each,LocX25,cont1\n" +
+				"order2,detail3,,description3,5,each,LocX26,cont2\n" +
+				"order2,detail4,item4,description4,5,each,LocX27,cont2\n";
+		result = importOrdersData(facility, ordersStringMissingDetailId);
+		Assert.assertEquals(1, result.getViolations().size());
+		Assert.assertTrue(result.getViolations().get(0).getMessage().contains("Errors on line 4: \nRequired field 'itemId' is empty"));
+
+		commitTransaction();
+	}
+	
 	/**
 	 * This is not generally useful. It gets absolutely all orders and groups, not even limiting to the facility.
 	 * Then assumes that all are represented in the groupExpectations and headerExpectations and complains if one is found not in expectations. You cannot chain imports and only check the results for
