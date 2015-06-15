@@ -4,10 +4,7 @@
  *******************************************************************************/
 package com.codeshelf.edi;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.sql.Timestamp;
 import java.util.UUID;
 
 import org.junit.Assert;
@@ -54,11 +51,8 @@ public class YetAnotherOutboundOrderImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,yes"
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,no"
 				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,";
-
-		InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(csvString.getBytes()));
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		
+		importOrdersData(facility, csvString);
 		commitTransaction();
 		
 		beginTransaction();

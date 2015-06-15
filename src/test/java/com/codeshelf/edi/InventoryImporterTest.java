@@ -6,7 +6,6 @@
 package com.codeshelf.edi;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -625,9 +624,7 @@ public class InventoryImporterTest extends ServerTest {
 				+ "\r"
 				+ "\r\n" + "\n";
 		beginTransaction();
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		ICsvOrderImporter importer2 = createOrderImporter();
-		importer2.importOrdersFromCsvStream(new StringReader(csvOrders), facility, ediProcessTime2);
+		importOrdersData(facility, csvOrders);
 		commitTransaction();
 
 		// We should have one order with 3 details. Only 2 of which are fulfillable.

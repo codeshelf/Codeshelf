@@ -5,11 +5,9 @@
  *******************************************************************************/
 package com.codeshelf.edi;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
@@ -59,7 +57,6 @@ public class OutboundOrderImporterTest extends ServerTest {
 	// orderGroupId,orderId,orderDetailID,itemId,description,quantity,minQuantity,maxQuantity,uom,orderDate,dueDate,destinationId,pickStrategy,preAssignedContainerId,shipmentId,customerId,workSequence
 	// of these: orderId,itemId,description,quantity,uom are not nullable
 
-	private ICsvOrderImporter	importer;
 	private UUID				facilityId;
 
 	@Before
@@ -68,7 +65,6 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		this.getTenantPersistenceService().beginTransaction();
 
-		importer = createOrderImporter();
 		facilityId = getTestFacility("O-" + getTestName(), "F-" + getTestName()).getPersistentId();
 
 		this.getTenantPersistenceService().commitTransaction();
@@ -501,14 +497,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,			1,0,5,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,					1,0,5,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
-
+		importOrdersData(facility, csvString);
+		
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "123");
 		Assert.assertNotNull(order);
 
@@ -539,13 +529,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		importOrdersData(facility, csvString);
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "123");
 
 		Assert.assertNotNull(order);
@@ -562,12 +546,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n2,USF314,COSTCO,222,222,10700004,Item4 Description,4,each"
 				+ "\r\n2,USF314,COSTCO,222,222,10700005,Item5 Description,5,each, , ";
 
-		byte[] csvArray2 = csvString2.getBytes();
-
-		ByteArrayInputStream stream2 = new ByteArrayInputStream(csvArray2);
-		InputStreamReader reader2 = new InputStreamReader(stream2);
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader2, facility, ediProcessTime2);
+		importOrdersData(facility, csvString2);
 
 		OrderHeader order2 = OrderHeader.staticGetDao().findByDomainId(facility, "222");
 
@@ -617,13 +596,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		importOrdersData(facility, csvString);
 
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "123");
 
@@ -655,13 +628,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,789,789,789.1,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,789.2,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
-		byte[] firstCsvArray = firstCsvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(firstCsvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		importOrdersData(facility, firstCsvString);
 		commitTransaction();
 
 		beginTransaction();
@@ -705,12 +672,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
-		byte[] secondCsvArray = secondCsvString.getBytes();
-		stream = new ByteArrayInputStream(secondCsvArray);
-		reader = new InputStreamReader(stream);
-		ediProcessTime = new Timestamp(System.currentTimeMillis());
 		beginTransaction();
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		importOrdersData(facility, secondCsvString);
 		commitTransaction();
 
 		// check data
@@ -1035,12 +998,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n11,11,11.1,SKU0003,Spoon 6in.,1,CS,,pick,D21,"
 				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D13,";
 
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		importOrdersData(facility, csvString);
 
 		OrderHeader order10 = OrderHeader.staticGetDao().findByDomainId(facility, "10");
 
@@ -1092,10 +1050,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		// Interesting that relaod the facility seems to set the tier straight.
 		facility = Facility.staticGetDao().reload(facility);
 
-		ByteArrayInputStream stream4 = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader4 = new InputStreamReader(stream4);
-		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader4, facility, ediProcessTime4);
+		importOrdersData(facility, csvString);
 
 		ItemMaster theMaster2 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0001");
 		Assert.assertNotNull("ItemMaster should be found", theMaster2);
@@ -1133,8 +1088,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n11,11,11.1,SKU0003,Spoon 6in.,1,CS,,pick,D21,"
 				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D13,";
 
-		Timestamp ediProcessTime1 = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(new StringReader(csvString1), facility, ediProcessTime1);
+		importOrdersData(facility, csvString1);
 
 		LOGGER.info("4: Check that we got item locations for SKU0001, and SKU0004, but not SKU0003 which had unknown alias location");
 		ItemMaster master1 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0001");
@@ -1176,8 +1130,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n11,11,11.1,SKU0003,Spoon 6in.,1,CS,,pick,D21,"
 				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D35,10";
 
-		Timestamp ediProcessTime2 = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(new StringReader(csvString2), facility, ediProcessTime2);
+		importOrdersData(facility, csvString2);
 		this.getTenantPersistenceService().commitTransaction();
 		
 		this.getTenantPersistenceService().beginTransaction();
@@ -1210,8 +1163,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n11,11,11.1,SKU0003,Spoon 6in.,1,CS,,pick,D21,"
 				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D35,10";
 
-		Timestamp ediProcessTime3 = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(new StringReader(csvString3), facility, ediProcessTime3);
+		importOrdersData(facility, csvString3);
 
 		master1 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0001");
 		items1 = master1.getItems();
@@ -1227,8 +1179,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n14,14,14.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D13,"
 				+ "\r\n14,14,14.2,SKU0003,Spoon 6in.,1,CS,,pick,D21,";
 
-		Timestamp ediProcessTime4 = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(new StringReader(csvString4), facility, ediProcessTime4);
+		importOrdersData(facility, csvString4);
 
 		master1 = ItemMaster.staticGetDao().findByDomainId(facility, "SKU0001");
 		items1 = master1.getItems();
@@ -1765,7 +1716,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		try {
 			InputStreamReader reader = new InputStreamReader(stream);
 			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-			return importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+			return createOrderImporter().importOrdersFromCsvStream(reader, facility, ediProcessTime);
 		} finally {
 			if(stream != null) {
 				stream.close();

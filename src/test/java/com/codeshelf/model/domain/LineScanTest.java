@@ -1,7 +1,6 @@
 package com.codeshelf.model.domain;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -12,13 +11,11 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ConverterProvider;
-import com.codeshelf.validation.BatchResult;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.MethodArgumentException;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
@@ -31,13 +28,11 @@ import com.codeshelf.ws.server.WebSocketConnection;
 public class LineScanTest extends ServerTest {
 	@SuppressWarnings("unused")
 	private final static Logger LOGGER=LoggerFactory.getLogger(LineScanTest.class);
-	private ICsvOrderImporter importer;
 	private ServerMessageProcessor	processor;
 
 	@Before
 	public void initTest() throws IOException {
 		beginTransaction();
-		importer = createOrderImporter();
 		Facility facility = createFacility(); 
 		ServiceFactory serviceFactory = new ServiceFactory(workService, null, null, null, null, null, null);
 		commitTransaction();
@@ -50,7 +45,7 @@ public class LineScanTest extends ServerTest {
 				+ "\r\n11,11,11.2,SKU0004,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D35,10"
 				+ "\r\n11,11,10.1,SKU0005,Mars Bars,20,EA,,pick,D36,10";
 		beginTransaction();
-		importCsvString(facility, csvString);
+		importOrdersData(facility, csvString);
 		commitTransaction();
 	}
 
@@ -144,11 +139,5 @@ public class LineScanTest extends ServerTest {
 			Assert.assertEquals("Expected a NotUnique exception", e.getErrorCode(), ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 		}
 		this.getTenantPersistenceService().commitTransaction();
-	}
-	
-	private BatchResult<Object> importCsvString(Facility facility, String csvString) throws IOException {
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		BatchResult<Object> results = importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-		return results;
-	}
+	}	
 }

@@ -2,10 +2,7 @@ package com.codeshelf.security;
 
 import static org.junit.Assert.*;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.sql.Timestamp;
 
 import javax.script.ScriptException;
 
@@ -14,7 +11,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.OutboundOrderCsvBean;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
@@ -75,12 +71,11 @@ public class ScriptingServiceTest extends ServerTest {
 		
 		Facility facility = setUpSimpleNoSlotFacility();
 		
-		ICsvOrderImporter importer = createOrderImporter();
-
 		// define a rule to set needsscan for each picks, if not defined in import file
 		beginTransaction();
 		String text = "def OrderImportBeanTransformation(orderBean) { orderBean.needsScan = true; orderBean }";
 		ExtensionPoint needsScanScript = new ExtensionPoint();
+		
 		needsScanScript.setParent(facility);
 		needsScanScript.setType(ExtensionPointType.OrderImportBeanTransformation);
 		needsScanScript.setScript(text);
@@ -93,12 +88,8 @@ public class ScriptingServiceTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,no"
 				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,case,2012-09-26 11:31:01,2012-09-26 11:31:03,0,"
 				+ "\r\n1,USF314,COSTCO,123,123,10706972,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,";
-
-		InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(csvString.getBytes()));
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		beginTransaction();
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		importOrdersData(facility, csvString);
 		commitTransaction();
 		
 		beginTransaction();
@@ -136,8 +127,6 @@ public class ScriptingServiceTest extends ServerTest {
 	public void orderBeanTransformationTest2() throws IOException {
 		
 		Facility facility = setUpSimpleNoSlotFacility();
-		
-		ICsvOrderImporter importer = createOrderImporter();
 
 		// define a rule to set needsscan for a specific customer
 		beginTransaction();
@@ -156,11 +145,8 @@ public class ScriptingServiceTest extends ServerTest {
 				+ "\r\n1,USF314,FOOBAR,223,223,10706962,Authentic Pizza Sauces,1,case,2012-09-26 11:31:01,2012-09-26 11:31:03,0,"
 				+ "\r\n1,USF314,COSTCO,224,224,10706972,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,";
 
-		InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(csvString.getBytes()));
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		beginTransaction();
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		importOrdersData(facility, csvString);
 		commitTransaction();
 		
 		beginTransaction();
@@ -201,8 +187,6 @@ public class ScriptingServiceTest extends ServerTest {
 	public void orderHeaderTransformationTest() throws IOException {
 		
 		Facility facility = setUpSimpleNoSlotFacility();
-		
-		ICsvOrderImporter importer = createOrderImporter();
 
 		// define a rule to set needsscan for each picks, if not defined in import file
 		beginTransaction();
@@ -221,11 +205,8 @@ public class ScriptingServiceTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,case,2012-09-26 11:31:01,2012-09-26 11:31:03,0,"
 				+ "\r\n1,USF314,COSTCO,123,123,10706972,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,";
 
-		InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(csvString.getBytes()));
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		beginTransaction();
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		importOrdersData(facility, csvString);
 		commitTransaction();
 		
 		beginTransaction();
@@ -264,8 +245,6 @@ public class ScriptingServiceTest extends ServerTest {
 		
 		Facility facility = setUpSimpleNoSlotFacility();
 		
-		ICsvOrderImporter importer = createOrderImporter();
-
 		// define a rule to set needsscan for each picks, if not defined in import file
 		beginTransaction();
 		String text = "def OrderImportLineTransformation(orderLine) { orderLine.replaceAll('~', ',') }";
@@ -281,11 +260,8 @@ public class ScriptingServiceTest extends ServerTest {
 				+ "\r\n1~USF314~COSTCO~123~123~10700589~Napa Valley Bistro - Jalapeo Stuffed Olives~1~each~2012-09-26 11:31:01~2012-09-26 11:31:03~0~yes"
 				+ "\r\n1~USF314~COSTCO~123~123~10706952~Italian Homemade Style Basil Pesto~1~each~2012-09-26 11:31:01,2012-09-26 11:31:03~0~no";
 
-		InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(csvString.getBytes()));
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		beginTransaction();
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		importOrdersData(facility, csvString);
 		commitTransaction();
 		
 		beginTransaction();
