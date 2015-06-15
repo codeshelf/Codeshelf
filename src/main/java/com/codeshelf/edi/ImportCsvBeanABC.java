@@ -5,7 +5,6 @@
  *******************************************************************************/
 package com.codeshelf.edi;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 
 import javax.validation.constraints.NotNull;

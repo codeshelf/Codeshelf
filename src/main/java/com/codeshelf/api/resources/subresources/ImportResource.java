@@ -21,12 +21,8 @@ import javax.ws.rs.core.Response.Status;
 import lombok.Setter;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.hibernate.Criteria;
-import org.hibernate.HibernateException;
-import org.hibernate.criterion.CriteriaQuery;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
-import org.hibernate.engine.spi.TypedValue;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.ErrorResponse;

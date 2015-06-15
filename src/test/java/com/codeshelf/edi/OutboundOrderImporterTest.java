@@ -104,11 +104,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,120,931,10706962,Sun Ripened Dried Tomato Pesto 24oz,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
-
-		InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(csvString.getBytes()));
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		importOrdersData(facility, csvString);
 		commitTransaction();
 		
 		beginTransaction();
@@ -181,14 +177,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n7,7,7.3,,,KL-CS-6,6x6x3 PLA Clamshell,4,EA,,pick,D15,"
 				+ "\r\n7,7,7.4,,,SP-PS-6,Spoon 6in.,1,CS,,pick,D21,"
 				+ "\r\n7,7,7.5,,,TO-SC-U9T,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D13,";
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		importOrdersData(facility, csvString);
 		this.getTenantPersistenceService().commitTransaction();
 		
 		this.getTenantPersistenceService().beginTransaction();
@@ -242,15 +231,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "1,,456,2170,Doodad,125,each,2012-09-26 11:31:03,2012-09-26 11:31:01\r\n" //
 				+ "1,PARALLEL,789,2150,Thingamajig,125,each,2012-09-26 11:31:03,2012-09-26 11:31:01\r\n" //
 				+ "1,PARALLEL,789,2170,Doodad,125,each,2012-09-26 11:31:03,2012-09-26 11:31:01";
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
-
+		importOrdersData(facility, csvString);
+		
 		// If not specified, default to serial
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "123");
 
@@ -275,10 +257,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "1,TRUCKA,123,3001,Widget,100,each,2012-09-26 11:31:01,2012-09-26 11:31:01\r\n" //
 				+ "1,FEDEX,456,4550,Gadget,450,case,2012-09-26 11:31:01,2012-09-26 11:31:01\r\n" //
 				+ "1,,789,3007,Dealybob,300,case,2012-09-26 11:31:02,2012-09-26 11:31:01\r\n";
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-
+		importOrdersData(facility, csvString);
+		
 		OrderHeader o123 = OrderHeader.staticGetDao().findByDomainId(facility, "123");
 		OrderHeader o456 = OrderHeader.staticGetDao().findByDomainId(facility, "456");
 		OrderHeader o789 = OrderHeader.staticGetDao().findByDomainId(facility, "789");
@@ -308,15 +288,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "1,,456,2170,Doodad,125,each,2012-09-26 11:31:03,2012-09-26 11:31:01\r\n" //
 				+ "1,CONTAINER1,789,2150,Thingamajig,125,each,2012-09-26 11:31:03,2012-09-26 11:31:01\r\n" //
 				+ "1,CONTAINER1,789,2170,Doodad,125,each,2012-09-26 11:31:03,2012-09-26 11:31:01";
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
-
+		importOrdersData(facility, csvString);
+		
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "789");
 
 		Assert.assertNotNull(order);
@@ -356,14 +329,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,456,456,,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,,2012-09-26 11:31:02,0";
-
-		byte[] csvArray = csvString.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		importOrdersData(facility, csvString);
 
 		// We should find order 123
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "123");
@@ -405,16 +371,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
-
-		byte[] csvArray = firstOrderBatchCsv.getBytes();
-
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		// First import a big list of orders.
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
-
+		importOrdersData(facility, firstOrderBatchCsv);
+		
 		HeaderCounts theCounts = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts.mActiveHeaders == 3);
@@ -431,18 +389,10 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
-
-		byte[] csv2Array = secondOrderBatchCsv.getBytes();
-
-		stream = new ByteArrayInputStream(csv2Array);
-		reader = new InputStreamReader(stream);
-
-		// second order import
 		this.getTenantPersistenceService().beginTransaction();
-		ediProcessTime = new Timestamp(System.currentTimeMillis());
 		facility = Facility.staticGetDao().reload(facility);
-		importer = createOrderImporter();
-		importer.importOrdersFromCsvStream(reader, facility, ediProcessTime);
+		importOrdersData(facility, secondOrderBatchCsv);
+		
 		this.getTenantPersistenceService().commitTransaction();
 		
 		this.getTenantPersistenceService().beginTransaction();
@@ -485,7 +435,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,123,123,10711111,Napa Valley Bistro Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
-		importCsvString(facility, firstOrderBatchCsv);
+		importOrdersData(facility, firstOrderBatchCsv);
 		this.getTenantPersistenceService().commitTransaction();
 		
 		this.getTenantPersistenceService().beginTransaction();
@@ -499,7 +449,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		String secondOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
-		importCsvString(facility, secondOrderBatchCsv);
+		importOrdersData(facility, secondOrderBatchCsv);
 		this.getTenantPersistenceService().commitTransaction();
 		
 		this.getTenantPersistenceService().beginTransaction();
@@ -814,7 +764,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,456,456,456.5,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,789.1,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,789.2,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
-		importCsvString(facility, firstCsvString);
+		importOrdersData(facility, firstCsvString);
 
 		HeaderCounts theCounts = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts.mTotalHeaders == 3);
@@ -823,7 +773,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
 
 		// Import exact same file again
-		importCsvString(facility, firstCsvString);
+		importOrdersData(facility, firstCsvString);
 
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
@@ -847,8 +797,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n243534,243534.10.01,2014-11-06 12:00:00,2014-11-06 12:00:00,TR-SC-U10T(a),9.8X7.5 Three Compartment Trays cs/400,12,CS,243534"
 				+ "\r\n243511,\"243,511.2\",2014-11-06 12:00:00,2014-11-06 12:00:00,CTL-SC-U3(b),Lids fro 8.88 x6.8 Fiber Boxes cs/400,23,CS,243511"
 				+ "\r\n243534,\"243,534.1\",2014-11-06 12:00:00,2014-11-06 12:00:00,TR-SC-U10T(b),9.8X7.5 Three Compartment Trays cs/400,8,CS,243534";
-
-		importCsvString(facility, nonSequentialOrders);
+		importOrdersData(facility, nonSequentialOrders);
 
 		HeaderCounts theCounts = facility.countOutboundOrders();
 		Assert.assertEquals(2, theCounts.mTotalHeaders);
@@ -906,10 +855,9 @@ public class OutboundOrderImporterTest extends ServerTest {
 		
 		// import files
 		getTenantPersistenceService().beginTransaction();
-		Timestamp firstEdiProcessTime = new Timestamp(System.currentTimeMillis() - 30000);
 		String withOneEmptyQuantity = "preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n123,123,123.1,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,\"\",each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
-		BatchResult<Object> results = importCsvString(facility, withOneEmptyQuantity, firstEdiProcessTime);
+		BatchResult<Object> results = importOrdersData(facility, withOneEmptyQuantity);
 		this.getTenantPersistenceService().commitTransaction();
 
 		// verify data
@@ -925,13 +873,12 @@ public class OutboundOrderImporterTest extends ServerTest {
 	public final void testImportAlphaQuantityAsZero() throws IOException {
 		getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();
-		Timestamp firstEdiProcessTime = new Timestamp(System.currentTimeMillis() - 30000);
 		getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		String withOneEmptyQuantity = "preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n123,123,123.1,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,\"A\",each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
-		BatchResult<Object> results = importCsvString(facility, withOneEmptyQuantity, firstEdiProcessTime);
+		BatchResult<Object> results = importOrdersData(facility, withOneEmptyQuantity);
 		getTenantPersistenceService().commitTransaction();
 
 		getTenantPersistenceService().beginTransaction();
@@ -964,7 +911,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\nUSF314,COSTCO,456,456,456.5,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\nUSF314,COSTCO,789,789,789.1,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\nUSF314,COSTCO,789,789,789.2,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
-		importCsvString(facility, firstCsvString);
+		importOrdersData(facility, firstCsvString);
 		this.getTenantPersistenceService().commitTransaction();
 		
 		// check order stats
@@ -975,7 +922,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertTrue(theCounts.mActiveDetails == 11);
 		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
 		// and import exact same file again
-		importCsvString(facility, firstCsvString);
+		importOrdersData(facility, firstCsvString);
 		this.getTenantPersistenceService().commitTransaction();
 		
 		// check order stats again
@@ -998,7 +945,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\nUSF314,COSTCO,456,456,456.4,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\nUSF314,COSTCO,456,456,456.5,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
-		importCsvString(facility, secondCsvString);
+		importOrdersData(facility, secondCsvString);
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
@@ -1014,7 +961,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		// Can a customer update a single order or detail by setting the count to zero
 		String fourthCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\nUSF314,COSTCO,123,123,123.3,10706962,Authentic Pizza Sauces,0,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
-		importCsvString(facility, fourthCsvString);
+		importOrdersData(facility, fourthCsvString);
 		
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
@@ -1030,8 +977,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		// So, can a customer update the count on a single item? 123.2 going to 3.
 		String fifthCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\nUSF314,COSTCO,123,123,123.2,10706952,Italian Homemade Style Basil Pesto,3,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
-
-		importCsvString(facility, fifthCsvString);
+		importOrdersData(facility, fifthCsvString);
 		
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
@@ -1050,8 +996,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\nUSF314,COSTCO,456,456,456.1,10711111,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,4,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\nUSF314,COSTCO,456,456,456.2,10722222,Italian Homemade Style Basil Pesto,4,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\nUSF314,COSTCO,456,456,456.3,10706962,Authentic Pizza Sauces,4,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
-
-		importCsvString(facility, sixthCsvString);
+		
+		importOrdersData(facility, sixthCsvString);
 		
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
@@ -1327,14 +1273,14 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" +
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1" +
 				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1";
-		importCsvString(facility, firstCsvString);
+		importOrdersData(facility, firstCsvString);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
 				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" +
 				"\r\n4,4,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1";
-		importCsvString(facility, secondCsvString);
+		importOrdersData(facility, secondCsvString);
 		
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
@@ -1364,14 +1310,14 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a" +
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a" +
 				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a";
-		importCsvString(facility, firstCsvString);
+		importOrdersData(facility, firstCsvString);
 		commitTransaction();
 		
 		beginTransaction();
 		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom" +
 				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a" +
 				"\r\n4,4,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a";
-		importCsvString(facility, secondCsvString);
+		importOrdersData(facility, secondCsvString);
 		commitTransaction();
 		
 		beginTransaction();
@@ -1396,14 +1342,14 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" +
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1" +
 				"\r\n3,3,347,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group2";
-		importCsvString(facility, firstCsvString);
+		importOrdersData(facility, firstCsvString);
 		commitTransaction();
 
 		beginTransaction();
 		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
 				"\r\n4,4,349,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2" +
 				"\r\n5,5,350,12/03/14 12:00,12/31/14 12:00,Item8,,50,a,Group2";
-		importCsvString(facility, secondCsvString);
+		importOrdersData(facility, secondCsvString);
 		commitTransaction();
 		
 		beginTransaction();
@@ -1432,7 +1378,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" +
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1";
-		importCsvString(facility, firstCsvString);
+		importOrdersData(facility, firstCsvString);
 		commitTransaction();
 
 		beginTransaction();
@@ -1445,7 +1391,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
 				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group2" +
 				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2";
-		importCsvString(facility, secondCsvString);
+		importOrdersData(facility, secondCsvString);
 		commitTransaction();
 
 		beginTransaction();
@@ -1493,7 +1439,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n1,1,1.2,12/03/14 12:00,12/31/14 12:00,Item16,,90,a,Group1" +
 				"\r\n2,2,2.1,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1" +
 				"\r\n3,3,3.1,12/03/14 12:00,12/31/14 12:00,Item9,,100,a,Group1";
-		importCsvString(facility, firstCsvString);
+		importOrdersData(facility, firstCsvString);
 
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
@@ -1522,7 +1468,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
 				"\r\n1,1,1.2,12/03/14 12:00,12/31/14 12:00,Item16,,90,a,Group2" +
 				"\r\n2,2,2.1,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2";
-		importCsvString(facility, secondCsvString);
+		importOrdersData(facility, secondCsvString);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -1574,7 +1520,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n1,1,,12/03/14 12:00,12/31/14 12:00,Item2,,100,each,Group1" +
 				"\r\n2,2,101,12/03/14 12:00,12/31/14 12:00,Item3,,90,each,Group1" +
 				"\r\n2,2,,12/03/14 12:00,12/31/14 12:00,Item2,,90,each,Group1";
-		importCsvString(facility, firstCsvString);
+		importOrdersData(facility, firstCsvString);
 
 		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1"); 
 		OrderDetail d1_1 = h1.getOrderDetail("101");
@@ -1608,7 +1554,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				//Other order - OK
 				"\r\n2,2,101,12/03/14 12:00,12/31/14 12:00,Item1,,9,each,Group1" +
 				"\r\n2,2,,12/03/14 12:00,12/31/14 12:00,Item4,,10,each,Group1";
-		importCsvString(facility, firstCsvString);
+		importOrdersData(facility, firstCsvString);
 
 		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1"); 
 
@@ -1642,7 +1588,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item2,,100,each,Group1,2" +
 				"\r\n2,2,201,12/03/14 12:00,12/31/14 12:00,Item3,,90,each,Group1," +
 				"\r\n2,2,202,12/03/14 12:00,12/31/14 12:00,Item2,,90,each,Group1,2";
-		importCsvString(facility, firstCsvString);
+		importOrdersData(facility, firstCsvString);
 
 		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1"); 
 		OrderDetail d1_1 = h1.getOrderDetail("101");
@@ -1677,7 +1623,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n2,2,203,12/03/14 12:00,12/31/14 12:00,Item4,,90,each,Group1,5" +
 				"\r\n2,2,204,12/03/14 12:00,12/31/14 12:00,Item5,,90,each,Group1,5" +	// Repeat gtin for different item
 				"\r\n2,2,205,12/03/14 12:00,12/31/14 12:00,Item5,,90,cs,Group1,6";		// Create new gtin for new UOM
-		importCsvString(facility, firstCsvString);
+		importOrdersData(facility, firstCsvString);
 
 		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1"); 
 		OrderDetail d1_1 = h1.getOrderDetail("101");
@@ -1727,7 +1673,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,Group1,gtin-1-each" +
 				"\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,Group1,gtin-1-case" +
 				"\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,80,each,Group1,gtin-2";
-		importCsvString(facility, firstCsvString);
+		importOrdersData(facility, firstCsvString);
 		commitTransaction();
 
 		// check gtin
@@ -1748,7 +1694,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,Group1,gtin-1-each-mod" +
 				"\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,Group1,gtin-1-case" +
 				"\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,80,each,Group1,gtin-2";
-		importCsvString(facility, firstCsvString);
+		importOrdersData(facility, firstCsvString);
 		commitTransaction();
 
 		// check gtin again
@@ -1812,16 +1758,6 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "A1.B2, D35\r\n" //
 				+ "A2.B1, D13\r\n"; //
 		importLocationAliasesData(inFacility, csvString2);
-	}
-
-	private BatchResult<Object> importCsvString(Facility facility, String csvString) throws IOException {
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		return importCsvString(facility, csvString, ediProcessTime);
-	}
-
-	private BatchResult<Object> importCsvString(Facility facility, String csvString, Timestamp ediProcessTime) throws IOException {
-		BatchResult<Object> results = importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-		return results;
 	}
 
 	private BatchResult<?> importOrdersResource(Facility facility, String csvResource) throws IOException, InterruptedException {

@@ -67,7 +67,6 @@ import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;

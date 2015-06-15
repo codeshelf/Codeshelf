@@ -43,6 +43,7 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.validation.BatchResult;
 
 public abstract class MockDaoTest extends MinimalTest {
 
@@ -541,10 +542,10 @@ public abstract class MockDaoTest extends MinimalTest {
 		importer.importSlottedInventoryFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 	}
 
-	protected void importOrdersData(Facility facility, String csvString) throws IOException {
+	protected BatchResult<Object> importOrdersData(Facility facility, String csvString) throws IOException {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderImporter importer = createOrderImporter();
-		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		return importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 	}
 
 	protected boolean importSlotting(Facility facility, String csvString) {
