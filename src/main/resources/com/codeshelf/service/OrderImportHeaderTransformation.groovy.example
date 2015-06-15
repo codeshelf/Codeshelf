@@ -1,0 +1,9 @@
+/**
+ * Transforms the String value of the header line before processing
+ *
+ */
+def OrderImportHeaderTransformation(orderHeader) { 
+    //example of replacing '^' delimited files and turning into ',' delimited file
+    // returns resulting string
+    orderHeader.replace('^', ',') 
+}
