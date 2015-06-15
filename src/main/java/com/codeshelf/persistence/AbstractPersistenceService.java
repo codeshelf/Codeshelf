@@ -120,7 +120,7 @@ public abstract class AbstractPersistenceService extends AbstractCodeshelfIdleSe
 		if (tx != null) {
 			// check for already active transaction
 			if (tx.isActive()) {
-				LOGGER.error("tried to begin transaction, but was already in active transaction (continuing transaction)");
+				LOGGER.error("tried to begin transaction, but was already in active transaction (continuing transaction)",new Exception("tried to begin transaction, but was already in active transaction"));
 				return tx;
 			}
 		} // else we will begin new transaction
@@ -149,7 +149,7 @@ public abstract class AbstractPersistenceService extends AbstractCodeshelfIdleSe
 			if (tx.isActive()) {
 				tx.commit();
 			} else {
-				LOGGER.error("tried to close inactive Tenant transaction");
+				LOGGER.error("tried to close inactive transaction", new Exception("tried to close inactive transaction"));
 			}
 		}
 	}
@@ -162,7 +162,7 @@ public abstract class AbstractPersistenceService extends AbstractCodeshelfIdleSe
 			if (tx.isActive()) {
 				tx.rollback();
 			} else {
-				LOGGER.error("tried to roll back inactive Tenant transaction");
+				LOGGER.error("tried to roll back inactive transaction", new Exception("tried to roll back inactive transaction"));
 			}
 		}
 	}
