@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.BayComparable;
+import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -44,10 +45,10 @@ public class Bay extends Location {
 	}
 
 	@SuppressWarnings("unused")
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(Bay.class);
+	private static final Logger			LOGGER				= LoggerFactory.getLogger(Bay.class);
 
-	private static Comparator<Location> topDownTierOrder = new TopDownTierOrder();
-	
+	private static Comparator<Location>	topDownTierOrder	= new TopDownTierOrder();
+
 	public Bay() {
 		super();
 	}
@@ -64,13 +65,13 @@ public class Bay extends Location {
 	public final String getDefaultDomainIdPrefix() {
 		return "B";
 	}
-	
+
 	public String getBaySortName() {
 		// to support list view meta-field tierSortName
 		String bayName = this.getDomainId();
 		String aisleName = "";
-		Aisle aisleLocation = this.<Aisle>getParentAtLevel(Aisle.class);
-				
+		Aisle aisleLocation = this.<Aisle> getParentAtLevel(Aisle.class);
+
 		if (aisleLocation != null) {
 			aisleName = aisleLocation.getDomainId();
 		}
@@ -80,7 +81,7 @@ public class Bay extends Location {
 	public String getBayIdForComparable() {
 		return getCompString(getDomainId());
 	}
-	
+
 	@Override
 	public List<Location> getSubLocationsInWorkingOrder() {
 		List<Location> copy = new ArrayList<Location>(getActiveChildren());
@@ -95,18 +96,18 @@ public class Bay extends Location {
 		return result;
 
 	}
-	
+
 	private static final class TopDownTierOrder implements Comparator<Location> {
-		final Ordering<Double> doubleOrdering = Ordering.<Double>natural().reverse().nullsLast();
+		final Ordering<Double>	doubleOrdering	= Ordering.<Double> natural().reverse().nullsLast();
 
 		@Override
 		public int compare(Location o1, Location o2) {
 			Double o1Z = o1.getAbsoluteAnchorPoint().getZ();
 			Double o2Z = o2.getAbsoluteAnchorPoint().getZ();
-			int result = doubleOrdering.compare(o1Z, o2Z); 
+			int result = doubleOrdering.compare(o1Z, o2Z);
 			return result;
 		}
-		
+
 	}
 
 	public Tier createTier(String inTierId, Point inAnchorPoint, Point inPickFaceEndPoint) {
@@ -114,28 +115,68 @@ public class Bay extends Location {
 		tier.setDomainId(inTierId);
 		tier.setAnchorPoint(inAnchorPoint);
 		tier.setPickFaceEndPoint(inPickFaceEndPoint);
-		
+
 		this.addLocation(tier);
-		
+
 		return tier;
 	}
-	
+
 	@Override
 	public boolean isBay() {
 		return true;
 	}
-	
+
 	public static Bay as(Location location) {
-		if (location==null) {
+		if (location == null) {
 			return null;
 		}
 		if (location.isBay()) {
-	    	return (Bay) location;
-	    }
-		throw new RuntimeException("Location is not a bay: "+location);
+			return (Bay) location;
+		}
+		throw new RuntimeException("Location is not a bay: " + location);
 	}
 
 	public static void sortByDomainId(List<Bay> bays) {
 		java.util.Collections.sort(bays, new BayComparable());
 	}
+
+	/**
+	 * Called by UX
+	 */
+	public void setPosconAssignment(String inControllerPersistentIDStr, String inIndexStr) {
+		doSetControllerChannel(inControllerPersistentIDStr, "1");
+		Integer posconIndex = 0;
+		try {
+			posconIndex = Integer.parseInt(inIndexStr);
+		} catch (NumberFormatException e) {
+
+		}
+		if (posconIndex < 1 || posconIndex > 255) {
+			LOGGER.warn("Bad poscon index value: {} in setPosconAssignment", posconIndex);
+			return;
+		}
+
+		LedController ledController = this.getLedController();
+		if (ledController == null) {
+			LOGGER.warn("Failed to set poscons on " + this + ": Bay has controller set.");
+			return;
+		}
+		if (ledController.getDeviceType() != DeviceType.Poscons) {
+			LOGGER.warn("Failed to set poscons on " + this + ": LedController " + ledController + " is not of device type Poscon.");
+			return;
+		}
+
+		this.setPosconIndex(posconIndex);
+		Bay.staticGetDao().store(this);
+
+	}
+	
+	/**
+	 * Called by UX
+	 */
+	public void clearPosconAssignment() {
+		this.setPosconIndex(null);
+		clearControllerChannel(); // does the store
+	}
+
 }
