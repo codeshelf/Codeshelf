@@ -38,6 +38,7 @@ import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.EndDateParam;
 import com.codeshelf.api.BaseResponse.EventTypeParam;
 import com.codeshelf.api.BaseResponse.StartDateParam;
+import com.codeshelf.api.BaseResponse.TimestampParam;
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.HardwareRequest;
@@ -180,7 +181,7 @@ public class FacilityResource {
 	@Path("/work/results")
 	@RequiresPermissions("companion:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getWorkResults(@QueryParam("startTimestamp") StartDateParam startTimestamp, @QueryParam("endTimestamp") EndDateParam endTimestamp) {
+	public Response getWorkResults(@QueryParam("startTimestamp") TimestampParam startTimestamp, @QueryParam("endTimestamp") TimestampParam endTimestamp) {
     	List<WorkInstruction> results = this.workService.getWorkResults(facility.getPersistentId(), startTimestamp.getValue(), endTimestamp.getValue());
 		return BaseResponse.buildResponse(results);
 	}

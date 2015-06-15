@@ -107,7 +107,21 @@ public abstract class BaseResponse {
 		}
 		
 	}
+
 	
+	public static class TimestampParam extends AbstractParam<Date> {
+
+		public TimestampParam(String str) {
+			super(str);
+		}
+
+		@Override
+		protected Date parse(String param) { 
+			final DateTimeParser dateParser = new DateTimeParser();
+			return dateParser.parse(param);
+		}
+	}
+
 	public static class StartDateParam extends AbstractParam<Date> {
 
 		public StartDateParam(String str) {

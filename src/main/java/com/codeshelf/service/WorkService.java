@@ -165,10 +165,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	public final List<WorkInstruction> getWorkResults(final UUID facilityUUID, final Date startDate, final Date endDate) {
 		//select persistentid, type, status, picker_id, completed, actual_quantity from capella.work_instruction where 
 		// type = 'ACTUAL' and date_trunc('day', completed) = timestamp '2015-03-11' order by completed
-		return WorkInstruction.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("type",
-			WorkInstructionTypeEnum.ACTUAL), Restrictions.eq("parent.persistentId", facilityUUID), Restrictions.ge("completed",
-			new Timestamp(startDate.getTime())), Restrictions.lt("completed", new Timestamp(endDate.getTime()))),
-			ImmutableList.of(Order.asc("completed")));
+		return WorkInstruction.staticGetDao().findByFilter(ImmutableList.<Criterion> of(
+				Restrictions.eq("type", WorkInstructionTypeEnum.ACTUAL),
+				Restrictions.eq("parent.persistentId", facilityUUID), 
+				Restrictions.ge("completed", new Timestamp(startDate.getTime())),
+				Restrictions.lt("completed", new Timestamp(endDate.getTime()))),
+				ImmutableList.of(Order.asc("completed")));
 	}
 
 	/**
