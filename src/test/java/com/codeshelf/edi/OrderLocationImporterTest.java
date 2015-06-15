@@ -5,9 +5,7 @@
  *******************************************************************************/
 package com.codeshelf.edi;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.sql.Timestamp;
 
 import org.junit.Assert;
@@ -435,8 +433,6 @@ public class OrderLocationImporterTest extends ServerTest {
 				+ ", A2.B2\r\n" // O3333's location
 				+ "O4444, "; //
 
-		byte[] csvArray = csvString.getBytes();
-
 		Facility facility = Facility.createFacility("F-ORDLOC.2", "TEST", Point.getZeroPoint());
 
 		OrderHeader order1111 = new OrderHeader();
@@ -543,12 +539,7 @@ public class OrderLocationImporterTest extends ServerTest {
 		OrderLocation.staticGetDao().store(orderLocation5555);
 		order4444.addOrderLocation(orderLocation5555);
 
-		ByteArrayInputStream stream = new ByteArrayInputStream(csvArray);
-		InputStreamReader reader = new InputStreamReader(stream);
-
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvOrderLocationImporter importer = createOrderLocationImporter();
-		importer.importOrderLocationsFromCsvStream(reader, facility, ediProcessTime);
+		importSlotting(facility, csvString);
 
 		// Make sure we can lookup all of the locations for order O1111.
 		Assert.assertEquals(3, order1111.getOrderLocations().size());
@@ -572,12 +563,8 @@ public class OrderLocationImporterTest extends ServerTest {
 
 		// --------
 		// Import it again - and rerun all the same tests.
-		stream = new ByteArrayInputStream(csvArray);
-		reader = new InputStreamReader(stream);
-
-		ediProcessTime = new Timestamp(System.currentTimeMillis());
-		importer.importOrderLocationsFromCsvStream(reader, facility, ediProcessTime);
-
+		importSlotting(facility, csvString);
+		
 		// Make sure we can lookup all of the locations for order O1111.
 		Assert.assertEquals(3, order1111.getOrderLocations().size());
 

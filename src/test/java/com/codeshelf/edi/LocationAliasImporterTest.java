@@ -202,9 +202,7 @@ public class LocationAliasImporterTest extends MockDaoTest {
 				+ "A1.B1, D139\r\n" //
 				+ "A2.B2, B34\r\n" //
 				+ "A3, AisleC\r\n";
-		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
-		ICsvLocationAliasImporter importer = createLocationAliasImporter();
-		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		importLocationAliasesData(facility, csvString);
 		this.getTenantPersistenceService().commitTransaction();
 		
 		LOGGER.info("2: Normal lookups by alias");
