@@ -47,11 +47,11 @@ public class NotificationService implements IApiService{
 	}
 
 	public void saveEvent(NotificationMessage message) {
-		//Is this the correct current approach to transactions?
+		if (!SAVE_ONLY.contains(message.getEventType())) {
+			return;
+		}
+		boolean save_completed=false;
 		try {
-			if (!SAVE_ONLY.contains(message.getEventType())) {
-				return;
-			}
 			TenantPersistenceService.getInstance().beginTransaction();
 			LOGGER.info("Saving notification from {}: {}", message.getNetGuidStr(), message.getEventType());
 			WorkerEvent event = new WorkerEvent();
@@ -86,11 +86,12 @@ public class NotificationService implements IApiService{
 			
 			event.generateDomainId();
 			WorkerEvent.staticGetDao().store(event);
-		} catch (Exception e) {
-			TenantPersistenceService.getInstance().rollbackTransaction();
-			throw e;
-		} finally {
 			TenantPersistenceService.getInstance().commitTransaction();
+			save_completed = true;
+		} finally {
+			if(!save_completed) {
+				TenantPersistenceService.getInstance().rollbackTransaction();
+			}
 		}
 	}
 	
