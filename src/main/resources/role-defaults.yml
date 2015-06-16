@@ -42,6 +42,10 @@ Configure:
   - "path:*"
   - "light:*"
   - "worker:*"
+Dashboard:
+  - "companion:view"
+  - "companion:savecredentials"
+  #also check that they do not have companion:nosavecredentials (prevent accidental save of * and companion:*  credentials)
 
 # All roles beginning with "Cs" are special restricted roles that cannot be assigned by non-Codeshelf users 
 CsDeveloper:

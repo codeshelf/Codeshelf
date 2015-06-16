@@ -9,7 +9,7 @@
 "configure@example.com":
   - Admin
 "a@example.com":
-  - Companion
+  - Dashboard
 "view@example.com":
   - Companion
   - Browse
