@@ -41,7 +41,8 @@ public class CheProcessPutWallSuper extends ServerTest {
 				+ "Bay,B2,CLONE(B1)\n" //
 				+ "Aisle,A2,CLONE(A1),,,,tierB1S1Side,2.85,20,X,20\n"
 				+ "Aisle,A3,CLONE(A1),,,,tierB1S1Side,2.85,60,X,20\n"
-				+ "Aisle,A9,CLONE(A1),,,,tierB1S1Side,2.85,100,X,20\n" + "Aisle,A4,,,,,tierB1S1Side,20,20,X,20\n" //
+				+ "Aisle,A9,CLONE(A1),,,,tierB1S1Side,2.85,100,X,20\n" //
+				+ "Aisle,A4,,,,,tierB1S1Side,20,20,X,20\n" //
 				+ "Bay,B1,50,,,,,,,,\n"//
 				+ "Tier,T1,50,4,0,0,,,,,\n"//
 				+ "Bay,B2,CLONE(B1)\n"; //

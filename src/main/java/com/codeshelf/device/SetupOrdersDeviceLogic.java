@@ -99,6 +99,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private boolean								mSetupMixHasPutwall						= false;
 	private boolean								mSetupMixHasCntrOrder					= false;
 
+	private static int							BAY_COMPLETE_CODE						= 1;
+	private static int							REPEAT_CONTAINER_CODE					= 2;
+
 	public SetupOrdersDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final CsDeviceManager inDeviceManager,
@@ -803,7 +806,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		}
 	}
-	
+
 	/**
 	 * Is this useful to linescan?  If not, move as private function to SetupOrdersDeviceLogic
 	 */
@@ -825,7 +828,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		setState(CheStateEnum.SETUP_SUMMARY);
 	}
-
 
 	// --------------------------------------------------------------------------
 	/**  doNextWallPut side effects
@@ -1284,7 +1286,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (verified) {
 				// finishLogin();
 				clearAllPosconsOnThisDevice();
-				
+
 				notifyCheWorkerVerb("LOG IN", "");
 
 				// If I am linked, and I just logged in, let's go to the REMOTE screen to show the worker what she is linked to.
@@ -1466,7 +1468,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			String containerId = entry.getValue();
 			Byte position = Byte.valueOf(entry.getKey());
 
-			Byte value = PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE;
+			Byte value = 0;
+			boolean needBitEncodedA = false;
 			//Use the last 1-2 characters of the containerId iff the container is numeric.
 			//Otherwise stick to the default character "a"
 
@@ -1477,8 +1480,19 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					value = Byte.valueOf(containerId.substring(containerId.length() - 2));
 				}
 			}
-
-			if (value >= 0 && value < 10) {
+			else {
+				needBitEncodedA = true; // "a"				
+			}
+			
+			if (needBitEncodedA) {
+				instructions.add(new PosControllerInstr(position,
+					PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+					PosControllerInstr.BITENCODED_LED_A,
+					PosControllerInstr.BITENCODED_LED_BLANK,
+					PosControllerInstr.SOLID_FREQ,
+					PosControllerInstr.MED_DUTYCYCLE));				
+			}
+			else if (value >= 0 && value < 10) {
 				//If we are going to pass a single 0 <= digit < 10 like 9, then we must show "09" instead of just 9.
 				instructions.add(new PosControllerInstr(position,
 					PosControllerInstr.BITENCODED_SEGMENTS_CODE,
@@ -2180,7 +2194,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			WorkInstruction wi = getWorkInstructionForContainerId(containerId);
 			if (wi == null) {
 				// Simply ignore button presses when there is no work instruction.
-			} else {
+			} else if (wi.isHousekeeping()){
+				// for housekeeping, any button press count. We will plug in a value of 0.  Version 3.0 poscons send value of -1.
+				// version 2.0 sends value of 0.
+				processNormalPick(wi, 0);
+			}else {
 				if (inQuantity >= wi.getPlanMinQuantity()) {
 					processNormalPick(wi, inQuantity);
 				} else {
@@ -2295,10 +2313,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				WorkInstructionTypeEnum theEnum = wi.getType();
 				if (WorkInstructionTypeEnum.HK_BAYCOMPLETE.equals(theEnum)) {
 					returnBool = true;
-					showSpecialPositionCode(PosControllerInstr.BAY_COMPLETE_CODE, wi.getContainerId());
+					showHouseKeepingDisplayOnPoscon(BAY_COMPLETE_CODE, wi.getContainerId());
 				} else if (WorkInstructionTypeEnum.HK_REPEATPOS.equals(theEnum)) {
 					returnBool = true;
-					showSpecialPositionCode(PosControllerInstr.REPEAT_CONTAINER_CODE, wi.getContainerId());
+					showHouseKeepingDisplayOnPoscon(REPEAT_CONTAINER_CODE, wi.getContainerId());
 				}
 			}
 		} else if (mActivePickWiList.size() > 1) {
@@ -2377,26 +2395,38 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
+	 * We used to have value code kludge for baychange and repeat container.
 	 */
-	private void showSpecialPositionCode(Byte inSpecialQuantityCode, String inContainerId) {
+	private void showHouseKeepingDisplayOnPoscon(int inSpecialCode, String inContainerId) {
+
 		boolean codeUnderstood = false;
-		Byte codeToSend = inSpecialQuantityCode;
-		if (inSpecialQuantityCode == PosControllerInstr.BAY_COMPLETE_CODE)
+
+		Byte valueToSend = PosControllerInstr.BITENCODED_SEGMENTS_CODE;
+		Byte minToSend = 0;
+		Byte maxToSend = 0;
+		if (inSpecialCode == BAY_COMPLETE_CODE) {
 			codeUnderstood = true;
-		else if (inSpecialQuantityCode == PosControllerInstr.REPEAT_CONTAINER_CODE)
+			minToSend = PosControllerInstr.BITENCODED_LED_C; // this is the right one, so it spells "bc"
+			maxToSend = PosControllerInstr.BITENCODED_LED_B;			
+		} else if (inSpecialCode == REPEAT_CONTAINER_CODE) {
 			codeUnderstood = true;
+			minToSend = PosControllerInstr.BITENCODED_LED_R; // this is the right one
+			maxToSend = PosControllerInstr.BITENCODED_LED_BLANK;
+		}
 
 		if (!codeUnderstood) {
-			LOGGER.error("showSpecialPositionCode: unknown quantity code={}; containerId={}", inSpecialQuantityCode, inContainerId);
+			LOGGER.error("showHouseKeepingDisplayOnPoscon: called with unknown code={}; containerId={}",
+				inSpecialCode,
+				inContainerId);
 			return;
 		}
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 		for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
 			if (mapEntry.getValue().equals(inContainerId)) {
 				PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(mapEntry.getKey()),
-					codeToSend,
-					codeToSend,
-					codeToSend,
+					valueToSend,
+					minToSend,
+					maxToSend,
 					PosControllerInstr.SOLID_FREQ, // change from SOLID_FREQ
 					PosControllerInstr.MED_DUTYCYCLE); // change from BRIGHT_DUTYCYCLE v6
 				instructions.add(instruction);
