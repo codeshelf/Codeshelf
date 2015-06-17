@@ -165,12 +165,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	public final List<WorkInstruction> getWorkResults(final UUID facilityUUID, final Date startDate, final Date endDate) {
 		//select persistentid, type, status, picker_id, completed, actual_quantity from capella.work_instruction where 
 		// type = 'ACTUAL' and date_trunc('day', completed) = timestamp '2015-03-11' order by completed
-		return WorkInstruction.staticGetDao().findByFilter(ImmutableList.<Criterion> of(
-				Restrictions.eq("type", WorkInstructionTypeEnum.ACTUAL),
-				Restrictions.eq("parent.persistentId", facilityUUID), 
-				Restrictions.ge("completed", new Timestamp(startDate.getTime())),
-				Restrictions.lt("completed", new Timestamp(endDate.getTime()))),
-				ImmutableList.of(Order.asc("completed")));
+		return WorkInstruction.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("type",
+			WorkInstructionTypeEnum.ACTUAL), Restrictions.eq("parent.persistentId", facilityUUID), Restrictions.ge("completed",
+			new Timestamp(startDate.getTime())), Restrictions.lt("completed", new Timestamp(endDate.getTime()))),
+			ImmutableList.of(Order.asc("completed")));
 	}
 
 	/**
@@ -429,11 +427,37 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 	}
 
-	private boolean orderLocationDeservesFeedback(OrderLocation orderLocation) {
+	private boolean locIsActivePutwallLocation(Location inLoc) {
+		if (inLoc != null && inLoc.isActive()) {
+			if (inLoc.isPutWallLocation()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Is the orderLocation on a location (usually slot) in a putwall that is directly lightable by poscon?
+	 */
+	private boolean orderLocationDeservesSlotFeedback(OrderLocation orderLocation) {
 		Location loc = orderLocation.getLocation();
-		if (loc != null && loc.isActive()) {
-			if (loc.isPutWallLocation()) {
-				if (loc.isLightablePoscon()) {
+		if (locIsActivePutwallLocation(loc)) {
+			if (loc.isLightablePoscon()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Is the orderLocation on a location (usually slot) in a putwall that is not directly lightable by poscon, but whose parent bay is?
+	 */
+	private boolean orderLocationDeservesBayFeedback(OrderLocation orderLocation) {
+		Location loc = orderLocation.getLocation();
+		if (locIsActivePutwallLocation(loc)) {
+			Location parentBay = loc.getParentAtLevel(Bay.class);
+			if (parentBay != null && parentBay.isActive()) {
+				if (parentBay.isLightablePoscon()) {
 					return true;
 				}
 			}
@@ -447,7 +471,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			return;
 		}
 		try {
-			if (orderLocationDeservesFeedback(orderLocation)) {
+			if (orderLocationDeservesSlotFeedback(orderLocation)) {
 				Facility facility = orderLocation.getFacility();
 				final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(orderLocation, isLastOfGroup);
 				sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
@@ -460,6 +484,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	}
 
 	/**
+	 * This somewhat complicated. A putwall may have one poscon per slot, or a lower cost putwall may have one poscon per bay.
+	 * This is only about poscon lighting. Although LEDs may be there in lower cost putwall, we never have leds continuously lit for order status.
+	 * 
 	 * Find all put walls, then the value for each slot in the put wall.
 	 * For now, separate messages but they could go out as lists of updates in a combined message.
 	 * DEV-729
@@ -467,7 +494,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	public void reinitPutWallFeedback(SiteController siteController) {
 
 		// Part 1 assemble what needs to be sent
-		List<OrderLocation> orderLocationsToSend = new ArrayList<OrderLocation>();
+		List<OrderLocation> orderLocationsForSlotPosconsToSend = new ArrayList<OrderLocation>();
+		List<OrderLocation> orderLocationsForBayPosconsToSend = new ArrayList<OrderLocation>();
 		List<Location> emptyLocationsToSend = new ArrayList<Location>();
 
 		// 1a find our facility
@@ -480,31 +508,36 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				aisleList.add((Aisle) loc);
 			}
 		}
-		// 1c Find all order locations that need to be sent. Keep a map by location
-		Map<String, OrderLocation> orderLocationByLocation = new HashMap<String, OrderLocation>();
+		// 1c Find all order locations that need to be sent. Keep a map by location of the ones directly for slots
+		Map<String, OrderLocation> orderLocationForSlotPosconByLocation = new HashMap<String, OrderLocation>();
 
 		Map<String, Object> filterArgs = ImmutableMap.<String, Object> of("facilityId", facility.getPersistentId());
 		List<OrderLocation> orderLocations = OrderLocation.staticGetDao().findByFilter("orderLocationByFacility", filterArgs);
 		for (OrderLocation ol : orderLocations) {
-			if (orderLocationDeservesFeedback(ol)) {
+			if (orderLocationDeservesSlotFeedback(ol)) {
 				Location loc = ol.getLocation();
-				orderLocationByLocation.put(loc.getLocationNameForMap(), ol);
-				orderLocationsToSend.add(ol);
+				orderLocationForSlotPosconByLocation.put(loc.getLocationNameForMap(), ol);
+				orderLocationsForSlotPosconsToSend.add(ol);
+			} else if (orderLocationDeservesBayFeedback(ol)) {
+				orderLocationsForBayPosconsToSend.add(ol);
 			}
 		}
-		// 1d iterate through all slots in those aisles. If not already sending, send an empty location
+		// 1d iterate through all poscon slots in those aisles. If not already sending, send an empty location
 		for (Aisle aisle : aisleList) {
 			List<Slot> slots = aisle.getActiveChildrenAtLevel(Slot.class);
 			for (Slot slot : slots) {
-				if (!orderLocationByLocation.containsKey(slot.getLocationNameForMap())) {
-					emptyLocationsToSend.add(slot);
+				// only if the slot has a poscon
+				if (slot.isLightablePoscon()) {
+					if (!orderLocationForSlotPosconByLocation.containsKey(slot.getLocationNameForMap())) {
+						emptyLocationsToSend.add(slot);
+					}
 				}
 			}
 		}
 
 		// Part 2. Send.  This is a little tricky. This is one "group" of messages. 
 		// We need to mark the last one sent among the two lists as last in the group.
-		int olToSend = orderLocationsToSend.size();
+		int olToSend = orderLocationsForSlotPosconsToSend.size();
 		int locToSend = emptyLocationsToSend.size();
 		int specialOlMessage = 0;
 		if (locToSend == 0)
@@ -514,7 +547,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		if (olToSend > 0)
 			LOGGER.info("sending {} order location feedback instructions", olToSend);
 		int olCount = 0;
-		for (OrderLocation ol : orderLocationsToSend) {
+		for (OrderLocation ol : orderLocationsForSlotPosconsToSend) {
 			olCount++;
 			computeAndSendOrderFeedback(ol, specialOlMessage == olCount);
 		}
@@ -1989,7 +2022,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			return false;
 		}
 		boolean changed = false;
-		
+
 		// By any chance, is the che we are going to associate to already pointing at another CHE? If so, clear that.
 		Che chePointedAt = otherChe.getLinkedToChe();
 		if (chePointedAt != null) {
@@ -2003,7 +2036,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		// is any other CHE already associated to the otherChe? Only looks for one. I suppose bad bugs could make more.
 		Che pointingAtOtherChe = otherChe.getCheLinkedToThis();
 		if (pointingAtOtherChe != null) {
-			LOGGER.warn("linkCheToCheName(): Clearing link of {} which pointed to {}", pointingAtOtherChe.getDomainId(), inCheNameToLinkTo);
+			LOGGER.warn("linkCheToCheName(): Clearing link of {} which pointed to {}",
+				pointingAtOtherChe.getDomainId(),
+				inCheNameToLinkTo);
 			pointingAtOtherChe.setAssociateToCheGuid(null);
 			Che.staticGetDao().store(pointingAtOtherChe);
 			changed = true;
@@ -2013,7 +2048,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		inChe.setAssociateToCheGuid(otherChe.getDeviceGuid());
 		Che.staticGetDao().store(inChe);
 		changed = true;
-		
+
 		return changed;
 	}
 
