@@ -165,9 +165,29 @@ public class Bay extends Location {
 			return;
 		}
 
+		LOGGER.info("Set bay {} poscon assignment to {} index:{}", this.getBestUsableLocationName(), ledController.getDeviceGuidStrNoPrefix(), posconIndex);
 		this.setPosconIndex(posconIndex);
 		Bay.staticGetDao().store(this);
-
+		
+		// Big side effect to make mistake correction easier. If setting the poscon index for a bay, let's clear out any set for
+		// the bay's tiers and slots. Don't clear the tier and slot controllers though, as that will then be set to LED controller probably.
+		
+		List<Location> tiers = this.getActiveChildren();
+		for (Location tier :tiers) {
+			// shall we assume bay child, if any, must be tier?
+			if (tier.getPosconIndex() != null){
+				tier.setPosconIndex(null);
+				Tier.staticGetDao().store(tier);				
+			}
+			List<Location> slots = tier.getActiveChildren();
+			for (Location slot :slots) {
+				// shall we assume bay child, if any, must be tier?
+				if (slot.getPosconIndex() != null){
+					slot.setPosconIndex(null);
+					Slot.staticGetDao().store(slot);				
+				}
+			}	
+		}
 	}
 	
 	/**
