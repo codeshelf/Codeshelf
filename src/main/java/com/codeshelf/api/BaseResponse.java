@@ -9,6 +9,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormatter;
+import org.joda.time.format.ISODateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,39 +119,13 @@ public abstract class BaseResponse {
 		}
 
 		@Override
-		protected Date parse(String param) { 
-			final DateTimeParser dateParser = new DateTimeParser();
-			return dateParser.parse(param);
+		protected Date parse(String param) {
+			
+			final DateTimeParser dateTimeParser = new DateTimeParser();
+			return dateTimeParser.parse(param);
 		}
 	}
 
-	public static class StartDateParam extends AbstractParam<Date> {
-
-		public StartDateParam(String str) {
-			super(str);
-		}
-
-		@Override
-		protected Date parse(String param) { 
-			final DateTimeParser dateParser = new DateTimeParser();
-			return dateParser.parse(param, DateTimeParser.UnspecifiedTime.START_OF_DAY);
-		}
-		
-	}
-
-	public static class EndDateParam extends AbstractParam<Date> {
-
-		public EndDateParam(String str) {
-			super(str);
-		}
-
-		@Override
-		protected Date parse(String param) { 
-			final DateTimeParser dateParser = new DateTimeParser();
-			return dateParser.parse(param, DateTimeParser.UnspecifiedTime.END_OF_DAY);
-		}		
-	}
-	
 	public static class EventTypeParam extends AbstractParam<EventType> {
 
 		public EventTypeParam(String str) {

@@ -113,7 +113,7 @@ dependencies {
 			'au.com.bytecode:opencsv:2.4',
 			'javax.validation:validation-api:1.1.0.Final',
             'joda-time:joda-time:2.3',
-			'com.joestelmach:natty:0.8',
+			'com.joestelmach:natty:0.11',
 			'org.apache.shiro:shiro-guice:1.+',
 			'com.dropbox.core:dropbox-core-sdk:1.7.6',
 

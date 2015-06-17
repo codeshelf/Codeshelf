@@ -35,9 +35,7 @@ import org.joda.time.DateTime;
 
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.codeshelf.api.BaseResponse;
-import com.codeshelf.api.BaseResponse.EndDateParam;
 import com.codeshelf.api.BaseResponse.EventTypeParam;
-import com.codeshelf.api.BaseResponse.StartDateParam;
 import com.codeshelf.api.BaseResponse.TimestampParam;
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.ErrorResponse;
@@ -421,7 +419,7 @@ public class FacilityResource {
 	@Path("pickrate")
 	@RequiresPermissions("event:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response pickRate(@QueryParam("startTimestamp") StartDateParam startDateParam, @QueryParam("endTimestamp") EndDateParam endDateParam) {
+	public Response pickRate(@QueryParam("startTimestamp") TimestampParam startDateParam, @QueryParam("endTimestamp") TimestampParam endDateParam) {
 		ErrorResponse errors = new ErrorResponse();
 		try {
 			List<PickRate> pickRates = notificationService.getPickRate(new DateTime(startDateParam.getValue()), new DateTime(endDateParam.getValue()));
