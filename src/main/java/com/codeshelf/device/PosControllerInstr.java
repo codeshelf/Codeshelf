@@ -41,12 +41,12 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 	// We started with 255 and worked down just in case we some day go higher than 99.
 	public static final Byte	ZERO_QTY						= (byte) 0;
 
-	//Status Codes
-	public static final Byte	BAY_COMPLETE_CODE				= (byte) 254;											// sort of fake quantities for now
+	// Older codes used through v16
+	// public static final Byte	BAY_COMPLETE_CODE				= (byte) 254;											// sort of fake quantities for now
 	// public static final Byte	DEFAULT_POSITION_ASSIGNED_CODE	= (byte) 253;
-	public static final Byte	REPEAT_CONTAINER_CODE			= (byte) 252;
+	// public static final Byte	REPEAT_CONTAINER_CODE			= (byte) 252;
 
-	//Commenting out bit encodings until v11
+	// bit encodings used now for all but simple numbers
 	public static final Byte	BITENCODED_SEGMENTS_CODE		= (byte) 240;
 	// Bit-encoded LED display characters.
 	// https://en.wikipedia.org/wiki/Seven-segment_display

@@ -44,7 +44,6 @@ public class Bay extends Location {
 		}
 	}
 
-	@SuppressWarnings("unused")
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(Bay.class);
 
 	private static Comparator<Location>	topDownTierOrder	= new TopDownTierOrder();
