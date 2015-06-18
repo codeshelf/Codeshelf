@@ -1136,7 +1136,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.pick(button, quant);
 		Assert.assertEquals("D-99", wi.getPickInstruction());
 		
-		ThreadUtils.sleep(1000);
+		ThreadUtils.sleep(1500);
 	}
 
 	@SuppressWarnings("unused")
@@ -1770,6 +1770,8 @@ public class CheProcessTestPick extends ServerTest {
 		propertyService.restoreHKDefaults(facility);
 
 		this.getTenantPersistenceService().commitTransaction();
+		
+		ThreadUtils.sleep(1500);
 	}
 
 	@Test
@@ -2402,6 +2404,8 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_C);
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);
+		
+		ThreadUtils.sleep(1500);
 	}
 
 }
