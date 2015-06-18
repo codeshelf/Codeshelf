@@ -6,6 +6,7 @@
 package com.codeshelf.device;
 
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.persistence.Transient;
 
@@ -83,6 +84,9 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	@Transient
 	private byte					mLastAckId;
 
+	private AtomicLong				mLastPacketReceivedTime	= new AtomicLong(System.currentTimeMillis());
+	private AtomicLong				mLastPacketSentTime		= new AtomicLong(System.currentTimeMillis());
+
 	public DeviceLogicABC(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final CsDeviceManager inDeviceManager,
@@ -128,7 +132,7 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	public final boolean isDeviceAssociated() {
 		return (mDeviceStateEnum != null && mDeviceStateEnum.equals(NetworkDeviceStateEnum.STARTED));
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Utility function. Should be promoted, and get a cached value.
@@ -136,17 +140,39 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	protected String getMyGuidStr() {
 		return getGuidNoPrefix();
 	}
-	
-	public String getGuidNoPrefix(){
+
+	// --------------------------------------------------------------------------
+	public String getGuidNoPrefix() {
 		NetGuid thisGuid = this.getGuid();
 		if (thisGuid != null)
 			return thisGuid.getHexStringNoPrefix();
 		else
-			return null;		
+			return null;
 	}
-	
-	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, String cheName, byte[] associatedToCheGuid){
+
+	// --------------------------------------------------------------------------
+	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, String cheName, byte[] associatedToCheGuid) {
 		return false;
+	}
+
+	// --------------------------------------------------------------------------
+	public void setLastPacketReceivedTime(long inTime) {
+		mLastPacketReceivedTime.set(inTime);
+	}
+
+	// --------------------------------------------------------------------------
+	public long getLastPacketReceivedTime() {
+		return mLastPacketReceivedTime.get();
+	}
+
+	// --------------------------------------------------------------------------
+	public void setLastPacketSentTime(long inTime) {
+		mLastPacketSentTime.set(inTime);
+	}
+
+	// --------------------------------------------------------------------------
+	public long getLastPacketSentTime() {
+		return mLastPacketSentTime.get();
 	}
 
 }

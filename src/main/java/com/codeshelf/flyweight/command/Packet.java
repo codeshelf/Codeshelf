@@ -8,12 +8,17 @@ package com.codeshelf.flyweight.command;
 
 import java.io.IOException;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.bitfields.BitFieldInputStream;
 import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
 import com.codeshelf.flyweight.bitfields.NBitInteger;
+import com.codeshelf.flyweight.controller.INetworkDevice;
 
 // --------------------------------------------------------------------------
 /**
@@ -58,6 +63,11 @@ import com.codeshelf.flyweight.bitfields.NBitInteger;
 public final class Packet implements IPacket {
 
 	private static final Logger		LOGGER			= LoggerFactory.getLogger(Packet.class);
+	
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private INetworkDevice			mDevice;
 
 	private PacketVersion			mPacketVersion	= new PacketVersion(IPacket.PACKET_VERSION_0);
 	private NBitInteger				mPacketType;

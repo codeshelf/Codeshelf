@@ -30,13 +30,13 @@ public class RadioControllerPacketIOService {
 																				.build());
 
 	private final IGatewayInterface						gatewayInterface;
-	private final RadioControllerPacketHandlerService	packetHandlerService;
+	private final RadioControllerInboundPacketService	packetHandlerService;
 
 	private NetworkId									networkId;
 	private volatile boolean							isShutdown		= false;
 
 	public RadioControllerPacketIOService(IGatewayInterface gatewayInterface,
-		RadioControllerPacketHandlerService packetHandlerService,
+		RadioControllerInboundPacketService packetHandlerService,
 		long writeDelayMs) {
 		super();
 		this.gatewayInterface = gatewayInterface;

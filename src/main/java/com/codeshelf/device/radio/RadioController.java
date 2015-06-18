@@ -136,7 +136,7 @@ public class RadioController implements IRadioController {
 	private long													mLastOutboundPacketTime			= 0;
 
 	// Services
-	private final RadioControllerPacketHandlerService				packetHandlerService;
+	private final RadioControllerInboundPacketService				packetHandlerService;
 	private final RadioControllerPacketIOService					packetIOService;
 	private final RadioControllerBroadcastService					broadcastService;
 
@@ -164,7 +164,7 @@ public class RadioController implements IRadioController {
 		}
 
 		// Create Services
-		this.packetHandlerService = new RadioControllerPacketHandlerService(this);
+		this.packetHandlerService = new RadioControllerInboundPacketService(this);
 		this.packetIOService = new RadioControllerPacketIOService(inGatewayInterface, packetHandlerService, PACKET_SPACING_MILLIS);
 		this.broadcastService = new RadioControllerBroadcastService(this, BROADCAST_RATE_MILLIS);
 	}

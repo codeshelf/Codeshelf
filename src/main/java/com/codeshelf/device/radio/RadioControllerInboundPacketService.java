@@ -25,8 +25,8 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
  * @author saba
  *
  */
-public class RadioControllerPacketHandlerService {
-	private static final Logger										LOGGER					= LoggerFactory.getLogger(RadioControllerPacketHandlerService.class);
+public class RadioControllerInboundPacketService {
+	private static final Logger										LOGGER					= LoggerFactory.getLogger(RadioControllerInboundPacketService.class);
 
 	private final ExecutorService									executor				= Executors.newFixedThreadPool(Math.max(Runtime.getRuntime()
 																								.availableProcessors() * 2,
@@ -40,7 +40,7 @@ public class RadioControllerPacketHandlerService {
 
 	private final RadioController									radioController;
 
-	public RadioControllerPacketHandlerService(RadioController radioController) {
+	public RadioControllerInboundPacketService(RadioController radioController) {
 		super();
 		this.radioController = radioController;
 	}

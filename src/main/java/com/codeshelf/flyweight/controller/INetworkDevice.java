@@ -163,5 +163,33 @@ public interface INetworkDevice {
 	public void setFirmwareVersion(short firmwareVersion);
 
 	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, String cheName, byte[] associatedToCheGuid);
+	
+	/**
+	 * getLastPacketReceivedTime();
+			lastSentTime = inDevice.getLastPacketSentTime();
+	 */
+	
+	/**
+	 * Set the last time a packet was received from this device
+	 * @param inTime
+	 */
+	public void setLastPacketReceivedTime(long inTime);
+	
+	/**
+	 * Get the last time a packet was received from this device
+	 */
+	public long getLastPacketReceivedTime();
+	
+	/**
+	 * Set the last time a packet was received from this device
+	 * @param inTime
+	 */
+	public void setLastPacketSentTime(long inTime);
+	
+	/**
+	 * Get the last time a packet was received from this device
+	 */
+	public long getLastPacketSentTime();
+
 
 }
