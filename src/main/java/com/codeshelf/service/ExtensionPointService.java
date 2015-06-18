@@ -22,30 +22,36 @@ public class ExtensionPointService {
 
 	HashSet<ExtensionPointType>		activeExtensions	= new HashSet<ExtensionPointType>();
 
-	public ExtensionPointService() {
-		init();
+	public ExtensionPointService(Facility facility) throws ScriptException {
+		initEngine();
+		load(facility);
 	}
 
-	public void init() {
+	private void initEngine() throws ScriptException {
 		ScriptEngineManager factory = new ScriptEngineManager();
 		engine = factory.getEngineByName("groovy");
+		if (engine == null) {
+			throw new ScriptException("groovy engine not setup in ExtensionPointService.  Need to run gradle eclipse?");
+		}
 	}
 
-	public void addExtensionPoint(ExtensionPointType extp, String functionScript) throws ScriptException {
-		if (engine == null) {
-			LOGGER.error("engine not set up in ScriptingService.  Need to run gradle?");
-			return;
-		}
+	private void addExtensionPoint(ExtensionPointType extp, String functionScript) throws ScriptException {
 		engine.eval(functionScript);
 		this.activeExtensions.add(extp);
 	}
+
+	private void clearExtensionPoints() {
+		this.activeExtensions.clear();
+	}
+
 
 	public boolean hasExtensionPoint(ExtensionPointType extp) {
 		return this.activeExtensions.contains(extp);
 	}
 
-	public List<ExtensionPoint> load(Facility facility) throws ScriptException {
+	private List<ExtensionPoint> load(Facility facility) throws ScriptException {
 		List<ExtensionPoint> eps = ExtensionPoint.staticGetDao().findByParent(facility);
+		this.clearExtensionPoints();
 		for (ExtensionPoint ep : eps) {
 			if (ep.isActive()) {
 				LOGGER.info("Adding extension point " + ep.getType());
@@ -60,22 +66,21 @@ public class ExtensionPointService {
 
 	public Object eval(ExtensionPointType ext, Object[] params) throws ScriptException {
 		if (!this.activeExtensions.contains(ext)) {
-			LOGGER.info("Unable to eval extension point: Script it");
-			return null;
+			throw new ScriptException("Script type " + ext + " is not active");
 		}
 		Invocable inv = (Invocable) engine;
 		Object result = null;
 		try {
 			result = inv.invokeFunction(ext.name(), params);
 		} catch (NoSuchMethodException e) {
-			LOGGER.error("Failed to evaluate " + ext.toString(), e);
+			throw new ScriptException("Script type " + ext + " does not contain method name " +  ext.name());
 		}
 		return result;
 	}
 
-	public static ExtensionPointService createInstance() {
+	public static ExtensionPointService createInstance(Facility facility) throws ScriptException {
 		// new instance every time now.  would be good to re-use on a tenant/facility level.
-		return new ExtensionPointService();
+		return new ExtensionPointService(facility);
 	}
 
 }

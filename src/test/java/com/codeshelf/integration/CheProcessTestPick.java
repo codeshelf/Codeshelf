@@ -1267,9 +1267,9 @@ public class CheProcessTestPick extends ServerTest {
 		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("a6", "6");
 
-		//Check that container show last 2 digits of container id
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 6),
-			PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE);
+		//Check that container show last 2 digits of container id. But container a6 must show as "a". (Note, this does not come from the a in a6; a means "assigned"
+		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 6),
+			PosControllerInstr.BITENCODED_LED_A);
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
 
 		this.getTenantPersistenceService().commitTransaction();
@@ -1307,13 +1307,13 @@ public class CheProcessTestPick extends ServerTest {
 		picker.setupOrderIdAsContainer("a6", "6");
 
 		//Quickly check assigment feedback
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1),
-			PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE);
+		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 1),
+			PosControllerInstr.BITENCODED_LED_A);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), Byte.valueOf("22"));
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), Byte.valueOf("33"));
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 4), Byte.valueOf("44"));
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 6),
-			PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE);
+		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 6),
+			PosControllerInstr.BITENCODED_LED_A);
 
 		//Pos 5 should have "09"
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 5), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
@@ -2383,8 +2383,11 @@ public class CheProcessTestPick extends ServerTest {
 		picker.pick(2, 40);
 		picker.pick(1, 40);
 
+		// JR_BUG
 		LOGGER.info("6: verify 'bc' code on position 1; then - press button to advance");
-		Assert.assertEquals(PosControllerInstr.BAY_COMPLETE_CODE, picker.getLastSentPositionControllerDisplayValue((byte) 1));
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
+		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_C);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_B, picker.getLastSentPositionControllerMaxQty((byte) 1));
 		picker.buttonPress(1, 0);
 
 		// The main purpose of the test.

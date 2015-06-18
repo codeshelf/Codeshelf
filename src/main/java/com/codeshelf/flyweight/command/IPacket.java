@@ -7,6 +7,7 @@ package com.codeshelf.flyweight.command;
 
 import com.codeshelf.flyweight.bitfields.BitFieldInputStream;
 import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
+import com.codeshelf.flyweight.controller.INetworkDevice;
 
 // --------------------------------------------------------------------------
 /**
@@ -210,4 +211,18 @@ public interface IPacket {
 	 * @param inAckData
 	 */
 	void setAckData(byte[] inAckData);
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the network device associated with this packet
+	 */
+	INetworkDevice getDevice();
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Set the network device associated with this packet
+	 * @param inDevice
+	 */
+	void setDevice(INetworkDevice inDevice);
+
 }

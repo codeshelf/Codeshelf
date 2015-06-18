@@ -22,10 +22,11 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.testframework.ServerTest;
 
 public class CheProcessPutWallSuper extends ServerTest {
-	protected String	CONTROLLER_1_ID	= "00001881";
-	protected String	CONTROLLER_2_ID	= "00001882";
-	protected String	CONTROLLER_3_ID	= "00001883";
-	protected String	CONTROLLER_4_ID	= "00001884";
+	protected String	CONTROLLER_1_ID	= "00001881"; // will be set as poscon mananger
+	protected String	CONTROLLER_2_ID	= "00001882"; // will be set as LED controller
+	protected String	CONTROLLER_3_ID	= "00001883"; // will be set as LED controller
+	protected String	CONTROLLER_4_ID	= "00001884"; // will be set as LED controller
+	protected String	CONTROLLER_5_ID	= "00001885"; // will be set as LED controller
 
 	/**
 	 * The goal is a small version of our model put wall facility. Two fast mover areas on different paths. A slow mover area on different path.
@@ -41,7 +42,8 @@ public class CheProcessPutWallSuper extends ServerTest {
 				+ "Bay,B2,CLONE(B1)\n" //
 				+ "Aisle,A2,CLONE(A1),,,,tierB1S1Side,2.85,20,X,20\n"
 				+ "Aisle,A3,CLONE(A1),,,,tierB1S1Side,2.85,60,X,20\n"
-				+ "Aisle,A9,CLONE(A1),,,,tierB1S1Side,2.85,100,X,20\n" + "Aisle,A4,,,,,tierB1S1Side,20,20,X,20\n" //
+				+ "Aisle,A9,CLONE(A1),,,,tierB1S1Side,2.85,100,X,20\n" //
+				+ "Aisle,A4,,,,,tierB1S1Side,20,20,X,20\n" //
 				+ "Bay,B1,50,,,,,,,,\n"//
 				+ "Tier,T1,50,4,0,0,,,,,\n"//
 				+ "Bay,B2,CLONE(B1)\n"; //
@@ -177,8 +179,12 @@ public class CheProcessPutWallSuper extends ServerTest {
 
 		//Set up a LED controllers for  the fast and slow movers
 		LedController controller2 = network.findOrCreateLedController("LED2", new NetGuid(CONTROLLER_2_ID));
-		LedController controller3 = network.findOrCreateLedController("LED2", new NetGuid(CONTROLLER_3_ID));
-		LedController controller4 = network.findOrCreateLedController("LED2", new NetGuid(CONTROLLER_4_ID));
+		LedController controller3 = network.findOrCreateLedController("LED3", new NetGuid(CONTROLLER_3_ID));
+		LedController controller4 = network.findOrCreateLedController("LED4", new NetGuid(CONTROLLER_4_ID));
+		// Unused (usually) controller for LED putwall
+		LedController controller5 = network.findOrCreateLedController("LED5", new NetGuid(CONTROLLER_5_ID));
+		
+		// perhaps not too correct. Entire aisle to controller. Only valid for zigzag configuration, but ok.
 		Location aisle = facility.findSubLocationById("A1");
 		controller2.addLocation(aisle);
 		aisle.setLedChannel((short) 1);

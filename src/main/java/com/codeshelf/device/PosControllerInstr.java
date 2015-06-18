@@ -41,23 +41,27 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 	// We started with 255 and worked down just in case we some day go higher than 99.
 	public static final Byte	ZERO_QTY						= (byte) 0;
 
-	//Status Codes
-	public static final Byte	BAY_COMPLETE_CODE				= (byte) 254;											// sort of fake quantities for now
-	public static final Byte	DEFAULT_POSITION_ASSIGNED_CODE	= (byte) 253;
-	public static final Byte	REPEAT_CONTAINER_CODE			= (byte) 252;
+	// Older codes used through v16
+	// public static final Byte	BAY_COMPLETE_CODE				= (byte) 254;											// sort of fake quantities for now
+	// public static final Byte	DEFAULT_POSITION_ASSIGNED_CODE	= (byte) 253;
+	// public static final Byte	REPEAT_CONTAINER_CODE			= (byte) 252;
 
-	//Commenting out bit encodings until v11
+	// bit encodings used now for all but simple numbers
 	public static final Byte	BITENCODED_SEGMENTS_CODE		= (byte) 240;
 	// Bit-encoded LED display characters.
 	// https://en.wikipedia.org/wiki/Seven-segment_display
 	// MSB->LSB the segments are encoded DP, G, F, E, D, C, B, A
 	public static final Byte	BITENCODED_LED_BLANK			= 0x00;
 	public static final Byte	BITENCODED_LED_DASH				= 0x40;
-	public static final Byte	BITENCODED_LED_O				= 0x5C;
-	public static final Byte	BITENCODED_LED_C				= 0x58;
-	public static final Byte	BITENCODED_LED_E				= 0x79;
+	public static final Byte	BITENCODED_LED_O				= 0x5C;												// small o
+	public static final Byte	BITENCODED_LED_C				= 0x58;												// small c
+	public static final Byte	BITENCODED_LED_E				= 0x79;												// cap E
 	public static final Byte	BITENCODED_TRIPLE_DASH			= 0x49;
 	public static final Byte	BITENCODED_TOP_BOTTOM			= 0x09;
+	// these are the bit encoded versions of the old value kludges. Necessary for 3.1 poscon
+	public static final Byte	BITENCODED_LED_B				= 0x7C;												// b
+	public static final Byte	BITENCODED_LED_A				= 0x5E;												// a
+	public static final Byte	BITENCODED_LED_R				= 0x50;												// r
 
 	//Any array mapping digits to their BITENCODED_LED bytes. Digit 9 is at the end of the array.
 	public static final byte[]	BITENCODED_DIGITS				= new byte[] { 0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07,
@@ -348,26 +352,31 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 			String summary = "??";
 			if (minValue == BITENCODED_LED_DASH)
 				summary = "'dash'";
-			else if (minValue == BITENCODED_LED_C)
-				summary = "'oc'";
-			else if (minValue == BITENCODED_LED_E)
+			else if (minValue == BITENCODED_LED_C) {  // currently bc or oc are our choices.
+				if (maxValue == BITENCODED_LED_O)
+					summary = "'oc'";
+				else
+					summary = "'bc'";
+			} else if (minValue == BITENCODED_LED_E)
 				summary = "'E'";
+			else if (minValue == BITENCODED_LED_A)
+				summary = "'a'";
+			else if (minValue == BITENCODED_LED_R)
+				summary = "'r'";
 			else if (minValue == BITENCODED_TRIPLE_DASH)
 				summary = "'triple dash'";
 			else if (minValue == BITENCODED_TOP_BOTTOM)
 				summary = "'double dash'";
 			else
-				// Remember the "order feedback" possibilities;
-				// we might be doing "00" or "08" for last digits of order ID, or "a" if not digits.
+			// Remember the "order feedback" possibilities;
+			// we might be doing "00" or "08" for last digits of order ID, or "a" if not digits.
 			if (maxValue == PosControllerInstr.BITENCODED_DIGITS[0]) {
-				summary = "'digits'";  // with the leading zero. Would take a little code to get it back
+				summary = "'digits'"; // with the leading zero. Would take a little code to get it back
+			} else {
+				LOGGER.error("unhandled case in PosControllerInstr.conciseDescription(). BitEncoded flag, with min:{}, max:{}",
+					getMinQty(),
+					getMaxQty());
 			}
-			else if (minValue == PosControllerInstr.DEFAULT_POSITION_ASSIGNED_CODE ){
-				summary = "'a'";  // assigned
-			}
-			else {
-				LOGGER.error("unhandled case in PosControllerInstr.conciseDescription(). BitEncoded flag, with min:{}, max:{}", getMinQty(),
-					getMaxQty());}
 			desc = String.format("[pos:%s %s freq:%s, duty:%d]", posString, summary, freq, getDutyCycle());
 		}
 		return desc;

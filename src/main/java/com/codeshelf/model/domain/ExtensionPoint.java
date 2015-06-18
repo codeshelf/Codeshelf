@@ -16,8 +16,6 @@ import lombok.Setter;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
@@ -38,8 +36,6 @@ public class ExtensionPoint extends DomainObjectTreeABC<Facility> {
 			return ExtensionPoint.class;
 		}
 	}
-
-	private static final Logger LOGGER = LoggerFactory.getLogger(ExtensionPoint.class);
 
 	@Column(nullable = false)
 	@Getter @Setter
@@ -73,7 +69,7 @@ public class ExtensionPoint extends DomainObjectTreeABC<Facility> {
 		setDomainId(facility.getDomainId() + "-" + type.name());
 		setType(type);
 		setActive(false);
-		setScript("");
+		setScript(type.getExampleScript());
 	}
 
 	

@@ -9,12 +9,12 @@
 "configure@example.com":
   - Admin
 "a@example.com":
-  - Companion
+  - Dashboard
 "view@example.com":
   - Companion
   - Browse
 "simulate@example.com":
-  - CsDeveloper
+  - Admin
   - CsSupport
 "che@example.com":
   - Browse

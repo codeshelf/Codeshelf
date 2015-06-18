@@ -1,6 +1,7 @@
 package com.codeshelf.service;
 
 import java.sql.Timestamp;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
@@ -47,11 +48,11 @@ public class NotificationService implements IApiService{
 	}
 
 	public void saveEvent(NotificationMessage message) {
-		//Is this the correct current approach to transactions?
+		if (!SAVE_ONLY.contains(message.getEventType())) {
+			return;
+		}
+		boolean save_completed=false;
 		try {
-			if (!SAVE_ONLY.contains(message.getEventType())) {
-				return;
-			}
 			TenantPersistenceService.getInstance().beginTransaction();
 			LOGGER.info("Saving notification from {}: {}", message.getNetGuidStr(), message.getEventType());
 			WorkerEvent event = new WorkerEvent();
@@ -86,11 +87,12 @@ public class NotificationService implements IApiService{
 			
 			event.generateDomainId();
 			WorkerEvent.staticGetDao().store(event);
-		} catch (Exception e) {
-			TenantPersistenceService.getInstance().rollbackTransaction();
-			throw e;
-		} finally {
 			TenantPersistenceService.getInstance().commitTransaction();
+			save_completed = true;
+		} finally {
+			if(!save_completed) {
+				TenantPersistenceService.getInstance().rollbackTransaction();
+			}
 		}
 	}
 	
@@ -100,7 +102,7 @@ public class NotificationService implements IApiService{
 		Query query = session.createQuery("SELECT workerId as workerId"
 				+ "                 ,HOUR(created) as hour"
 				+ "                 ,count(*) as picks"
-				+ "                 ,sum(workInstruction.actualQuantity) as quantity"
+				//+ "                 ,sum(workInstruction.actualQuantity) as quantity" TODO should denormalize into workerevent
 				+ "           FROM WorkerEvent"
 				+ "          WHERE eventType IN (:includedEventTypes)"
 				+ "            AND created BETWEEN :startDateTime AND :endDateTime"
@@ -109,10 +111,12 @@ public class NotificationService implements IApiService{
 				+ "       ORDER BY HOUR(created)"
 				);
 		query.setParameterList("includedEventTypes", ImmutableList.of(EventType.COMPLETE, EventType.SHORT));
-		query.setParameter("startDateTime", new Timestamp(startDateTime.getMillis()));
-		query.setParameter("endDateTime", new Timestamp(endDateTime.getMillis()));
+		Timestamp startTimestamp = new Timestamp(startDateTime.getMillis());
+		Timestamp endTimestamp = new Timestamp(endDateTime.getMillis());
+		query.setParameter("startDateTime", startTimestamp); //use setParameter instead of set timestamp so that it goes through the UTC conversion before hitting db
+		query.setParameter("endDateTime", endTimestamp);
 		query.setResultTransformer(new AliasToBeanResultTransformer(PickRate.class));
 		List<PickRate> results = query.list();
-		return results;
+ 		return results;
 	}
 }
