@@ -809,7 +809,7 @@ public class CheProcessRemoteLink extends ServerTest {
 		Che che1 = Che.staticGetDao().findByPersistentId(che1PersistentId);
 		Che che2 = Che.staticGetDao().findByPersistentId(che2PersistentId);
 		Che che3 = Che.staticGetDao().findByPersistentId(che3PersistentId);
-		CodeshelfNetwork network = CodeshelfNetwork.staticGetDao().reload(getNetwork()); // these are necessary or the WorkService functions have staleObjectUpdate exceptions
+		CodeshelfNetwork.staticGetDao().reload(getNetwork()); // these are necessary or the WorkService functions have staleObjectUpdate exceptions
 
 		String linkChe1 = che1.getAssociateToUi();
 		Assert.assertEquals("", linkChe1);

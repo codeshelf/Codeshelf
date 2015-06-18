@@ -167,8 +167,8 @@ public class RadioControllerPacketSchedulerService implements Runnable {
 	 */
 	private void deliverCommandPackets() {
 		IPacket packet = null;
-		INetworkDevice device = null;
-		long timeDiff = 0;
+		//INetworkDevice device = null;
+		//long timeDiff = 0;
 
 		if (mPendingPacketsMap.size() > 0) {
 
