@@ -156,7 +156,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	private Timestamp					dueDate;
 
 	// The container use for this order.
-	@OneToOne(optional = true, fetch = FetchType.LAZY)
+	@OneToOne(optional = true, fetch = FetchType.LAZY, orphanRemoval=true)
 	@JoinColumn(name = "container_use_persistentid")
 	@Getter
 	@Setter
@@ -174,12 +174,12 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private Timestamp					updated;
 
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "parent", orphanRemoval=true)
 	@MapKey(name = "domainId")
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	private Map<String, OrderDetail>	orderDetails	= new HashMap<String, OrderDetail>();
 
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	@MapKey(name = "domainId")
 	private Map<String, OrderLocation>	orderLocations	= new HashMap<String, OrderLocation>();
 
@@ -635,19 +635,6 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	 */
 	public void delete(){
 		LOGGER.info("Deleting order {}", this);
-		for (OrderDetail detail : getOrderDetails()){
-			for (WorkInstruction wi : detail.getWorkInstructions()) {
-				WorkInstruction.staticGetDao().delete(wi);
-			}
-			OrderDetail.staticGetDao().delete(detail);
-		}
-		if (containerUse != null) {
-			containerUse.setOrderHeader(null);
-			ContainerUse.staticGetDao().store(containerUse);
-		}
-		for (OrderLocation location : orderLocations.values()) {
-			OrderLocation.staticGetDao().delete(location);
-		}
 		OrderHeader.staticGetDao().delete(this);
 	}
 }

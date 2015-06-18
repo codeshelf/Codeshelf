@@ -10,6 +10,7 @@ import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,9 +42,15 @@ import com.codeshelf.testframework.ServerTest;
 public class CheProcessScanPick extends ServerTest {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessScanPick.class);
+	private Facility facility;
 
 	public CheProcessScanPick() {
 
+	}
+	
+	@Before
+	public void setupFacility(){
+		facility = setUpSmallNoSlotFacility();
 	}
 
 	private Facility setUpSmallNoSlotFacility() {
@@ -269,9 +276,6 @@ public class CheProcessScanPick extends ServerTest {
 	 */
 	@Test
 	public final void testInventoryCommand() throws IOException {
-
-		Facility facility = setUpSmallNoSlotFacility();
-
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		setUpLineScanOrdersNoCntr(facility);
@@ -376,9 +380,6 @@ public class CheProcessScanPick extends ServerTest {
 	 */
 	@Test
 	public final void testInventoryCommand2() throws IOException {
-
-		Facility facility = setUpSmallNoSlotFacility();
-
 		this.getTenantPersistenceService().beginTransaction();
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
@@ -462,7 +463,6 @@ public class CheProcessScanPick extends ServerTest {
 
 		LOGGER.info("3b: scan location before scanning GTIN");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
-
 	}
 
 	/**
@@ -470,9 +470,6 @@ public class CheProcessScanPick extends ServerTest {
 	 */
 	@Test
 	public final void testNotScanPick() throws IOException {
-
-		Facility facility = setUpSmallNoSlotFacility();
-
 		this.getTenantPersistenceService().beginTransaction();
 		setUpLineScanOrdersNoCntr(facility);
 		this.getTenantPersistenceService().commitTransaction();
@@ -542,11 +539,6 @@ public class CheProcessScanPick extends ServerTest {
 	 */
 	@Test
 	public final void testScanPick() throws IOException {
-
-		beginTransaction();
-		Facility facility = setUpSmallNoSlotFacility();
-		commitTransaction();
-
 		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		setUpLineScanOrdersNoCntr(facility);
@@ -781,11 +773,6 @@ public class CheProcessScanPick extends ServerTest {
 	 */
 	@Test
 	public final void testScanPickError() throws IOException {
-
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = setUpSmallNoSlotFacility();
-		this.getTenantPersistenceService().commitTransaction();
-
 		this.startSiteController();
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
@@ -841,8 +828,6 @@ public class CheProcessScanPick extends ServerTest {
 
 	@Test
 	public void missingLocationIdShouldHaveNoWork() throws IOException {
-		Facility facility = setUpSmallNoSlotFacility();
-
 		this.getTenantPersistenceService().beginTransaction();
 		String csvOrders = "orderGroupId,shipmentId,customerId,orderId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom, locationId, workSequence"
 				+ "\r\n,USF314,COSTCO,12345,12345,12345.1,1123,12/16 oz Bowl Lids -PLA Compostable,1,each, , 4000";
@@ -885,10 +870,6 @@ public class CheProcessScanPick extends ServerTest {
 
 	@Test
 	public void preferredLocationGetsSecondItemInPath() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = setUpSmallNoSlotFacility();
-		this.getTenantPersistenceService().commitTransaction();
-
 		LOGGER.info("1a: Set LOCAPICK, then import the orders file again, with containerId");
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
@@ -979,10 +960,6 @@ public class CheProcessScanPick extends ServerTest {
 	 * jobCountToCheck parameter is new. If zero, does all. If set, will abort and logout only working partway through the list.
 	 */
 	private final void testPfswebWorkSequencePicks(String scanDirection, String[][] sortedItemLocs) throws IOException {
-		beginTransaction();
-		Facility facility = setUpSmallNoSlotFacility();
-		commitTransaction();
-
 		beginTransaction();
 		setUpOrdersWithCntrAndSequence(facility);
 		commitTransaction();
@@ -1103,8 +1080,6 @@ public class CheProcessScanPick extends ServerTest {
 	 */
 	@Test
 	public final void testPfswebScanPicks() throws IOException {
-		Facility facility = setUpSmallNoSlotFacility();
-
 		beginTransaction();
 		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
 		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");

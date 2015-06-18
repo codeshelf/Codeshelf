@@ -152,7 +152,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	private String							preferredLocation;
 
 	@Getter
-	@OneToMany(mappedBy = "orderDetail")
+	@OneToMany(mappedBy = "orderDetail", orphanRemoval=true)
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	private List<WorkInstruction>			workInstructions			= new ArrayList<WorkInstruction>();
 

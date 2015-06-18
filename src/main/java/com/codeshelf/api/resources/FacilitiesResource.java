@@ -73,7 +73,7 @@ public class FacilitiesResource {
 	@RequiresPermissions("facility:edit")
 	public Response deleteFacilities(){
 		try {
-			Facility.delete(webSocketManagerService);
+			Facility.deleteAll(webSocketManagerService);
 			return BaseResponse.buildResponse("Facilities Deleted");
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);

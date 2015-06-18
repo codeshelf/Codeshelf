@@ -132,15 +132,15 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private Timestamp						updated;
 
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "parent", orphanRemoval=true)
 	@Getter
 	private List<Item>						items						= new ArrayList<Item>();
 	
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "parent", orphanRemoval=true)
 	@MapKey(name = "domainId")
 	@Getter
-	private Map<String, Gtin>			gtins					= new HashMap<String, Gtin>();
-
+	private Map<String, Gtin>				gtins						= new HashMap<String, Gtin>();
+	
 	public ItemMaster() {
 		lotHandlingEnum = LotHandlingEnum.FIFO;
 		active = true;

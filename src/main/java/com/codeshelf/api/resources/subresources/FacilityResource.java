@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -140,6 +141,18 @@ public class FacilityResource {
 		ImportResource r = resourceContext.getResource(ImportResource.class);
 	    r.setFacility(facility);
 	    return r;
+	}
+	
+	@DELETE
+	@RequiresPermissions("facility:edit")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response detete(){
+		try {
+			facility.delete(webSocketManagerService);
+			return BaseResponse.buildResponse("Facility Deleted");
+		} catch (Exception e) {
+			return new ErrorResponse().processException(e);
+		}	
 	}
 	
 	@GET

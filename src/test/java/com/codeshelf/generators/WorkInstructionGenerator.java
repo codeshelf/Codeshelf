@@ -97,9 +97,12 @@ public class WorkInstructionGenerator {
 	
 	//Move to order detail generator
 	private OrderDetail generateValidOrderDetail(Facility facility, ItemMaster itemMaster, UomMaster uom) {
-		OrderGroup orderGroup = new OrderGroup("OG1");
-		facility.addOrderGroup(orderGroup);
-		OrderGroup.staticGetDao().store(orderGroup);
+		OrderGroup orderGroup = OrderGroup.staticGetDao().findByDomainId(facility, "OG1");
+		if (orderGroup == null){
+			orderGroup = new OrderGroup("OG1");
+			facility.addOrderGroup(orderGroup);
+			OrderGroup.staticGetDao().store(orderGroup);
+		}
 		
 		OrderHeader orderHeader = new OrderHeader("OH1", OrderTypeEnum.OUTBOUND);
 		orderHeader.setParent(facility);

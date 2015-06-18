@@ -6,6 +6,9 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import lombok.Setter;
+
+import org.junit.After;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +33,19 @@ import com.codeshelf.util.ThreadUtils;
 
 public abstract class ServerTest extends HibernateTest {
 	private final static Logger LOGGER = LoggerFactory.getLogger(ServerTest.class);
-
+	@Setter
+	private boolean skipFacilityDelete = false;
+	
+	@After
+	public void deleteFacility(){
+		if (!skipFacilityDelete){
+			beginTransaction();
+			Facility facility = Facility.staticGetDao().reload(getFacility());
+			facility.delete();
+			commitTransaction();
+		}
+	}
+	
 	@Override
 	Type getFrameworkType() {
 		return Type.COMPLETE_SERVER;

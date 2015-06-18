@@ -112,6 +112,8 @@ public class MTOrderProcessingTest extends ServerTest {
 	
 	@Test
 	public void simultaneousTenantImports() throws Exception { 
+		setSkipFacilityDelete(true);
+		
 		// failed asserts in the accessor threads will cause this to throw execution exception		
 		createDefaultTenantsFacilities();
 		Future<Boolean> result1 = executor.submit(new TenantAccessor(tenant1,f1.getPersistentId()));
