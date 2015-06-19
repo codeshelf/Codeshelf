@@ -16,7 +16,6 @@ import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
-import com.codeshelf.model.domain.SiteController;
 import com.codeshelf.model.domain.Slot;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
@@ -128,10 +127,7 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		assertOrderLocation("11111", "", ""); // always good to test the NOT case.
 
 		LOGGER.info("1b: Call the site controller reinit function");
-		List<SiteController> siteControllers = SiteController.staticGetDao().getAll();
-		Assert.assertEquals((Integer) 1, (Integer) (siteControllers.size()));
-		SiteController siteController = siteControllers.get(0);
-		workService.reinitPutWallFeedback(siteController);
+		workService.reinitPutWallFeedback(getFacility());
 		commitTransaction();
 
 		// P14 is position 4. Show dash as an order is there. Should see in console logging about the reinit
@@ -178,10 +174,7 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		assertOrderLocation("11116", "", "");
 
 		LOGGER.info("1b: Call the site controller reinit function");
-		List<SiteController> siteControllers = SiteController.staticGetDao().getAll();
-		Assert.assertEquals((Integer) 1, (Integer) (siteControllers.size()));
-		SiteController siteController = siteControllers.get(0);
-		workService.reinitPutWallFeedback(siteController);
+		workService.reinitPutWallFeedback(getFacility());
 		// 11118 has two details in wall 1.  11115 and 11116 have one detail each in wall 2. See it logged in console
 		commitTransaction();
 		
@@ -205,8 +198,7 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		assertOrderLocation("11118", "P14", "WALL1 - P14");
 		assertOrderLocation("11115", "P15", "WALL2 - P15");
 		assertOrderLocation("11116", "P16", "WALL2 - P16");
-		siteController = SiteController.staticGetDao().reload(siteController);
-		workService.reinitPutWallFeedback(siteController);
+		workService.reinitPutWallFeedback(getFacility());
 		// 11118 has two details in wall 1.  11115 and 11116 have one detail each in wall 2. See it logged in console
 		commitTransaction();
 		

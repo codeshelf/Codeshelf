@@ -74,7 +74,6 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
-import com.codeshelf.model.domain.SiteController;
 import com.codeshelf.model.domain.Slot;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.SingleWorkItem;
@@ -480,7 +479,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 	private void computeAndSendOrderFeedbackForSlots(OrderLocation orderLocation, boolean isLastOfGroup) {
 		if (orderLocation == null) {
-			LOGGER.error("null input to computeAndSendOrderFeedback");
+			LOGGER.error("null input to computeAndSendOrderFeedbackForSlots");
 			return;
 		}
 		try {
@@ -523,18 +522,17 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			orderCounts.getCompleteCount(),
 			orderCounts.getRemainingCount(),
 			orderCounts.getShortCount());
-		
+
 		// Actually, using the same old message with only remainingCount added, so only need that value.
 		// If this object is enhanced to track inprogress separately, then we would pass the inprogress plus other remaining in the message.
 		// Do the send here
-		
-		LOGGER.error("FIX ME: send bay poscon message");
+
 		Facility facility = bay.getFacility();
 		int remain = orderCounts.getRemainingCount();
 		final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(bay, remain, isLastOfGroup);
 		sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
 	}
-	
+
 	/**
 	 * We have prevalidated list of orderLocations for bays that need feedback.
 	 * Now we need to sort them by bay, then iterate and find the accumulated values per bay. And send one message per bay.
@@ -547,7 +545,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		Collections.sort(orderLocationsForBayPoscons, new BayLocationComparator());
 		Bay currentBay = null;
 		OrderStatusSummary orderCounts = new OrderStatusSummary();
-		
+
 		for (OrderLocation ol : orderLocationsForBayPoscons) {
 			OrderHeader order = ol.getParent();
 			Location loc = ol.getLocation();
@@ -557,9 +555,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				continue;
 			}
 			// is this the first one? if so, set current bay
-			if (currentBay == null){
-				currentBay = thisBay;}
-			
+			if (currentBay == null) {
+				currentBay = thisBay;
+			}
+
 			if (thisBay.equals(currentBay)) {
 				// Accumulate counts for bay
 				orderCounts.addOrderToSummary(order);
@@ -587,17 +586,15 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * For now, separate messages but they could go out as lists of updates in a combined message.
 	 * DEV-729
 	 */
-	public void reinitPutWallFeedback(SiteController siteController) {
+	public void reinitPutWallFeedback(Facility facility) {
 
 		// Part 1 assemble what needs to be sent
 		List<OrderLocation> orderLocationsForSlotPosconsToSend = new ArrayList<OrderLocation>();
 		List<OrderLocation> orderLocationsForBayPosconsToSend = new ArrayList<OrderLocation>();
 		List<Location> emptyLocationsToSend = new ArrayList<Location>();
 
-		// 1a find our facility
-		Facility facility = siteController.getFacility();
+		// 1 Find all put walls in this facility.
 		List<Aisle> aisleList = new ArrayList<Aisle>();
-		// 1b Find all put walls in this facility.
 		List<Location> probablyAisles = facility.getChildren();
 		for (Location loc : probablyAisles) {
 			if (loc.isPutWallLocation() && loc instanceof Aisle) {
@@ -650,7 +647,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			}
 
 		}
-		
+
 		/*
 		if (false)  // ideally, set to true and some unit tests break.
 			return;
@@ -2071,6 +2068,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			logInContext(orderWallTag, toLogStr, true); // a WARN
 		}
 
+		// changedLocationList is list of slots where the order location(s) were. If the slot has a poscon,  clear that.
+		// If slot does not have a poscon, check its bay.
+
 		if (changedLocationList.size() > 0) {
 			// need to send out some clear poscon commands. Well, this assumes just a clear, which is right for order_wall process
 			/// but could have future bugs here
@@ -2079,12 +2079,64 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			int locCount = 0;
 			for (Location loc : changedLocationList) {
 				locCount++;
-				computeAndSendEmptyOrderFeedback(loc, locCountToSend == locCount);
+				if (loc.isLightablePoscon())
+					computeAndSendEmptyOrderFeedback(loc, locCountToSend == locCount);
+				else {
+					Bay bay = loc.getParentAtLevel(Bay.class);
+					if (bay != null && bay.isLightablePoscon())
+						computeAndSendEmptyOrderFeedback(bay, locCountToSend == locCount);
+					// could send double clears to same bay. Don't worry about it. Should rarely happen.
+				}
 			}
 		}
 
 		//Light up the selected location. Send even if just a redo. Note: will not light if not a put wall.
-		computeAndSendOrderFeedbackForSlots(ol, true); // single message is last of the group
+		Location locToLight = ol.getLocation();
+		// Four cases. 
+		// 1 This location directly has a poscon.  (original put wall)
+		// 2 This location has LEDs, and its parent bay has poscon. (lower cost put wall v18. DEV-909, etc.)
+		// 3 This location has LEDs, no parent has poscon
+		// 4 This location is not lightable.
+		
+		if (locToLight.isLightableAisleController()) {
+			// We can flash the LED
+		}	
+		// As for the poscons, it is a fairly expensive query. Could optimize a little here as we know the bay. But for reduced cost put wall
+		// many order locations may be in that bay
+		if (locToLight.isLightablePoscon()) {
+			computeAndSendOrderFeedbackForSlots(ol, true); // case 1 do this separately as it is much more efficient for the common normal putwall case.
+			return true;
+		} else {
+			Bay bay = locToLight.getParentAtLevel(Bay.class);
+			if (bay != null && bay.isLightablePoscon()) {
+				// just do the reinit code as that does the appropriate query. It will oversend to other put wall bays for now.
+				this.reinitPutWallFeedback(facility);// case 3
+			}
+			
+		}
+		
+		/*
+		if (locToLight.isLightablePoscon()) {
+			computeAndSendOrderFeedbackForSlots(ol, true); // case 1
+			return true;
+		}
+		else if (locToLight.isLightableAisleController()) {
+			// We can flash the LED
+			
+			// Update feedback for the bay poscon if any
+			Bay bay = locToLight.getParentAtLevel(Bay.class);
+			if (bay != null && bay.isLightablePoscon()) {
+				computeAndSendOrderFeedbackForBay(bay, true); // case 3
+			}
+			else {
+				// case 2.  We flashed the LED above.
+			}
+		}
+		else {
+			// case 4. Do nothing
+		}
+		*/
+
 		return true;
 	}
 
