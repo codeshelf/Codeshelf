@@ -1,8 +1,16 @@
 package com.codeshelf.device.radio;
+/**
+ * 
+ * 
+ * @author huffa
+ */
 
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -13,46 +21,51 @@ import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.controller.INetworkDevice;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-public class RadioControllerPacketSchedulerService implements Runnable {
-	private static final Logger										LOGGER							= LoggerFactory.getLogger(RadioController.class);
+public class RadioControllerPacketSchedulerService {
+	private static final Logger												LOGGER							= LoggerFactory.getLogger(RadioController.class);
 
-	public static final long										NETWORK_PACKET_SPACING_MILLIS	= 10;
-	public static final long										DEVICE_PACKET_SPACING_MILLIS	= 20;
+	public static final long												NETWORK_PACKET_SPACING_MILLIS	= 10;
+	public static final long												DEVICE_PACKET_SPACING_MILLIS	= 20;
 
-	private static final long										ACK_TIMEOUT_MILLIS				= 20;													// matching v16. Used to be 20
-	private static final int										ACK_SEND_RETRY_COUNT			= 20;													// matching v16. Used to be 20.
-	private static final long										MAX_PACKET_AGE_MILLIS			= 4000;
+	private static final long												ACK_TIMEOUT_MILLIS				= 20;												// matching v16. Used to be 20
+	private static final int												ACK_SEND_RETRY_COUNT			= 20;												// matching v16. Used to be 20.
+	private static final long												MAX_PACKET_AGE_MILLIS			= 4000;
 
-	public static final int											DEFAULT_QUEUE_SIZE				= 200;
+	private final RadioControllerPacketIOService							packetIOService;
 
-	private final RadioControllerPacketIOService					packetIOService;
+	private final ConcurrentMap<NetAddress, LinkedBlockingQueue<IPacket>>	mPendingPacketsMap				= Maps.newConcurrentMap();
 
-	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	mPendingPacketsMap				= Maps.newConcurrentMap();
+	private final LinkedBlockingQueue<IPacket>								mPendingNetMgmtPacketsQueue		= new LinkedBlockingQueue<IPacket>();
 
-	private final BlockingQueue<IPacket>							mPendingNetMgmtPacketsQueue		= new ArrayBlockingQueue<IPacket>(DEFAULT_QUEUE_SIZE);
-	
-	private final BlockingQueue<INetworkDevice>						mDeviceQueue					= new ArrayBlockingQueue<INetworkDevice>(DEFAULT_QUEUE_SIZE);
+	private final LinkedBlockingQueue<INetworkDevice>						mDeviceQueue					= new LinkedBlockingQueue<INetworkDevice>();
 
-	private AtomicLong												mLastPacketSentTime				= new AtomicLong(System.currentTimeMillis());
+	private AtomicLong														mLastPacketSentTime				= new AtomicLong(System.currentTimeMillis());
 
-	private boolean													shouldRun						= false;
+	private final ScheduledExecutorService									packetSendService				= Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("radio-bckgrnd-thread")
+																												.build());
 
+	// --------------------------------------------------------------------------
 	public RadioControllerPacketSchedulerService(RadioControllerPacketIOService inPacketIOService) {
 		this.packetIOService = inPacketIOService;
 	}
 
-	@Override
-	public void run() {
-		// TODO Auto-generated method stub
+	// --------------------------------------------------------------------------
+	public void start() {
 
-		shouldRun = true;
-
-		deliverPackets();
+		// Start the packet sending service
+		packetSendService.scheduleWithFixedDelay(new Runnable() {
+			@Override
+			public void run() {
+				deliverPackets();
+			}
+		}, 0, NETWORK_PACKET_SPACING_MILLIS, TimeUnit.MILLISECONDS);
 	}
 
+	// --------------------------------------------------------------------------
 	public void stop() {
-		shouldRun = false;
+		packetSendService.shutdown();
 	}
 
 	// --------------------------------------------------------------------------
@@ -65,22 +78,22 @@ public class RadioControllerPacketSchedulerService implements Runnable {
 	 * 			Is the network management packet
 	 */
 	public void addCommandPacketToSchedule(IPacket inPacket, INetworkDevice inDevice) {
-		// TODO - huffa - Check if device is in queue of devices, if not add to queue
 		if (!mDeviceQueue.contains(inDevice)) {
-				mDeviceQueue.offer(inDevice);
+			mDeviceQueue.offer(inDevice);
 		}
 
 		// Add the packet to the queue of packets to be sent
-		BlockingQueue<IPacket> queue = mPendingPacketsMap.get(inDevice.getAddress());
+		LinkedBlockingQueue<IPacket> queue = mPendingPacketsMap.get(inDevice.getAddress());
 		if (queue == null) {
-			queue = new ArrayBlockingQueue<IPacket>(DEFAULT_QUEUE_SIZE);
-			BlockingQueue<IPacket> existingQueue = mPendingPacketsMap.putIfAbsent(inDevice.getAddress(), queue);
+			queue = new LinkedBlockingQueue<IPacket>();
+			LinkedBlockingQueue<IPacket> existingQueue = mPendingPacketsMap.putIfAbsent(inDevice.getAddress(), queue);
 			if (existingQueue != null) {
 				queue = existingQueue;
 			}
 		}
 
 		// If the pending packet queue for that device is then drop the oldest packet
+		// FIXME - huffa not sure if this makes sense with the LinkedBlockingQueues
 		boolean success = queue.offer(inPacket);
 		while (!success) {
 			IPacket packetToDrop = queue.poll();
@@ -102,6 +115,8 @@ public class RadioControllerPacketSchedulerService implements Runnable {
 	public void addNetMgmtPacketToSchedule(IPacket inPacket) {
 
 		boolean success = mPendingNetMgmtPacketsQueue.offer(inPacket);
+
+		// FIXME - huffa not sure if this makes sense with LinkedBlockingQueues
 		while (!success) {
 			IPacket packetToDrop = mPendingNetMgmtPacketsQueue.poll();
 			LOGGER.warn("Dropping oldest net mgmt packet because netmgmt packet queue is full. Size={}; DroppedPacket={}",
@@ -117,27 +132,29 @@ public class RadioControllerPacketSchedulerService implements Runnable {
 	 *	
 	 */
 	public void markPacketAsAcked(INetworkDevice inDevice, byte inAckNum, IPacket inAckPacket) {
-		BlockingQueue<IPacket> queue;
+		LinkedBlockingQueue<IPacket> queue;
 
 		queue = mPendingPacketsMap.get(inDevice.getAddress());
 
-		if (queue != null) {
-			for (IPacket packet : queue) {
-				if (packet != null && packet.getAckId() == inAckNum) {
-					queue.remove(packet);
-					packet.setAckData(inAckPacket.getAckData());
-					packet.setAckState(AckStateEnum.SUCCEEDED);
+		synchronized (queue) {
+			if (queue != null) {
+				for (IPacket packet : queue) {
+					if (packet != null && packet.getAckId() == inAckNum) {
+						queue.remove(packet);
+						packet.setAckData(inAckPacket.getAckData());
+						packet.setAckState(AckStateEnum.SUCCEEDED);
+					}
 				}
-			}
-			
-			// TODO - huffa - If the queue is empty remove it from like map of queues? Remove device from queue of devices
-			if (queue.isEmpty()) {
-				// Remove the queue from the map of queues
-				// XXX - huffa - not sure if this is a good idea
-				//mPendingPacketsMap.remove(inDevice.getAddress(), queue);
-				
-				// Remove device from the queue of devices as it has no pending packets to be sent
-				mDeviceQueue.remove(inDevice);
+	
+				// TODO - huffa - If the queue is empty remove it from like map of queues? Remove device from queue of devices
+				if (queue.isEmpty()) {
+					// Remove the queue from the map of queues
+					// XXX - huffa - not sure if this is a good idea
+					//mPendingPacketsMap.remove(inDevice.getAddress(), queue);
+	
+					// Remove device from the queue of devices as it has no pending packets to be sent
+					mDeviceQueue.remove(inDevice);
+				}
 			}
 		}
 	}
@@ -148,86 +165,126 @@ public class RadioControllerPacketSchedulerService implements Runnable {
 	 */
 	private void deliverPackets() {
 
-		while (shouldRun) {
-
-			if (!mPendingNetMgmtPacketsQueue.isEmpty()) {
-				deliverNetMgmtPackets();
-			}
-
-			//FIXME - huffa not sure if this makes sense. We never remove the queues?
-			if (!mPendingPacketsMap.isEmpty()) {
-				deliverCommandPackets();
-			}
+		if (!mPendingNetMgmtPacketsQueue.isEmpty()) {
+			// If there are management packets send one
+			deliverNetMgmtPacket();
+		} else if (deviceReadyToSend()) {
+			// otherwise if there are devices waiting to send send those
+			deliverNextCommandPacket();
 		}
+
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 *	
 	 */
-	private void deliverCommandPackets() {
-		IPacket packet = null;
+	private boolean deviceReadyToSend() {
+		for (INetworkDevice device : mDeviceQueue) {
+			if (clearToSendToDevice(device)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 *	
+	 */
+	private void deliverNextCommandPacket() {
 		INetworkDevice device = null;
-		long timeDiff = 0;
+		BlockingQueue<IPacket> queue = null;
+		IPacket packet = null;
 
-		if (mPendingPacketsMap.size() > 0) {
-
-			for (BlockingQueue<IPacket> queue : mPendingPacketsMap.values()) {
-
-				packet = queue.peek();
-
-				if (packet != null && clearToSendToDevice(packet.getDevice())) {
-					if (clearToSendCommandPacket(packet)) {
-						sendPacket(packet);
-						packet.getDevice().setLastPacketSentTime(System.currentTimeMillis());
-
-						// Remove packet that does not require ack
-						if (packet.getAckId() == (byte) 0) {
-							queue.remove(packet);
-						}
-
-					} else {
-						LOGGER.warn("Removing packet from pending packets");
-						queue.remove(packet);
-					}
-				}
-				
-				// TODO - huffa - Check if queue is now empty, if so we should remove it from map 
-				// and device from device queue
-				
-				
-				// Stop sending command packets if there are mgmt packets
-				if (!mPendingNetMgmtPacketsQueue.isEmpty()) {
-					break;
-				}
-			}
+		// Get first device to send
+		device = getNextDevice();
+		if (device == null) {
+			return;
 		}
-	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 *	
-	 */
-	private void deliverNetMgmtPackets() {
-		long timeDiff;
+		// Get packet queue for the device
+		queue = mPendingPacketsMap.get(device.getAddress());
+		if (queue == null) {
+			return;
+		}
 
-		// Send all the networkMgmt packets that have queued up
-		for (IPacket packet : mPendingNetMgmtPacketsQueue) {
+		// Get next packet to send and send
+		packet = getNextPacket(queue);
 
-			timeDiff = System.currentTimeMillis() - mLastPacketSentTime.get();
+		if (packet != null) {
 
-			// Guarantee minimum of DEVICE_PACKET_SPACING_MILLIS between mgmt packets
-			if (timeDiff < DEVICE_PACKET_SPACING_MILLIS) {
-				try {
-					Thread.sleep(DEVICE_PACKET_SPACING_MILLIS - timeDiff);
-				} catch (InterruptedException e) {
-					LOGGER.error("", e);
-				}
-			}
-
+			// Send packet
 			sendPacket(packet);
 
-			//TODO - huffa - Update send time of each device
+			// Remove packet if it doesn't require an ACK
+			if (packet.getAckId() == 0) {
+				queue.remove(packet);
+			}
+
+			// Update last send time for device
+			device.setLastPacketSentTime(System.currentTimeMillis());
+		}
+
+		// If device still has pending packets add to the back of the queue
+		if (!queue.isEmpty()) {
+			putDeviceInQueue(device);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 *	
+	 */
+	private boolean putDeviceInQueue(INetworkDevice device) {
+		return mDeviceQueue.offer(device);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 *	
+	 */
+	private IPacket getNextPacket(BlockingQueue<IPacket> queue) {
+		for (IPacket packet : queue) {
+			if (clearToSendCommandPacket(packet)) {
+				return packet;
+			} else {
+				queue.remove(packet);
+				LOGGER.info("Dropping pending packet {}", packet);
+			}
+		}
+		return null;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 *	
+	 */
+	private INetworkDevice getNextDevice() {
+
+		for (INetworkDevice device : mDeviceQueue) {
+			if (clearToSendToDevice(device)) {
+				// XXX - huffa - will the reference live through the remove?
+				mDeviceQueue.remove(device);
+				return device;
+			}
+		}
+
+		return null;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 *	
+	 */
+	private void deliverNetMgmtPacket() {
+		IPacket packet = null;
+		
+		packet = mPendingNetMgmtPacketsQueue.poll();
+		
+		if (packet != null) {
+			sendPacket(packet);
+
 			updateLastSendTimeOfPendingDevices(System.currentTimeMillis());
 		}
 	}
@@ -253,19 +310,6 @@ public class RadioControllerPacketSchedulerService implements Runnable {
 	 *	
 	 */
 	private void sendPacket(IPacket inPacket) {
-		long timeDiff;
-
-		timeDiff = System.currentTimeMillis() - mLastPacketSentTime.get();
-
-		// Guarantee minimum of NETWORK_PACKET_SPACING_MILLIS between all packets
-		if (timeDiff < NETWORK_PACKET_SPACING_MILLIS) {
-			try {
-				Thread.sleep(NETWORK_PACKET_SPACING_MILLIS - timeDiff);
-			} catch (InterruptedException e) {
-				LOGGER.error("", e);
-			}
-		}
-
 		try {
 			packetIOService.handleOutboundPacket(inPacket);
 		} finally {
