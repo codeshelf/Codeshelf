@@ -90,7 +90,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 	// The work area that goes with this path.
 	// It shouldn't be null, but there is no way to create a parent-child relation when neither can be null.
-	@OneToOne(mappedBy = "parent",fetch=FetchType.LAZY)
+	@OneToOne(mappedBy = "parent",fetch=FetchType.LAZY, orphanRemoval=true)
 	@Getter
 	private WorkArea					workArea;
 
@@ -99,7 +99,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	private Double						length;
 
 	// All of the path segments that belong to this path.95
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "parent", orphanRemoval=true)
 	@MapKey(name = "segmentOrder")
 	private Map<Integer, PathSegment>	segments					= new HashMap<Integer, PathSegment>();
 

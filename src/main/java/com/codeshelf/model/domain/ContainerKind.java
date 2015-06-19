@@ -5,10 +5,13 @@
  *******************************************************************************/
 package com.codeshelf.model.domain;
 
+import java.util.List;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -81,6 +84,9 @@ public class ContainerKind extends DomainObjectTreeABC<Facility> {
 	@Setter
 	@JsonProperty
 	private Double				heightMeters;
+	
+	@OneToMany(mappedBy = "kind", orphanRemoval=true)
+	private List<Container>					containers;
 
 	public ContainerKind() {
 		classId = "";

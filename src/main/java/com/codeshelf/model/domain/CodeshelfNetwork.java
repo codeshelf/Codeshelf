@@ -108,18 +108,18 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	private Facility					parent;
 	
 	@Getter
-    @OneToMany(mappedBy = "parent",targetEntity=Che.class)
+    @OneToMany(mappedBy = "parent",targetEntity=Che.class, orphanRemoval=true)
     @MapKey(name = "domainId")
 	@JsonProperty
 	private Map<String, Che>			ches				= new HashMap<String, Che>();
 
 	@Getter
-	@OneToMany(mappedBy = "parent",targetEntity=LedController.class)
+	@OneToMany(mappedBy = "parent",targetEntity=LedController.class, orphanRemoval=true)
 	@MapKey(name = "domainId")
 	@JsonProperty
 	private Map<String, LedController>	ledControllers		= new HashMap<String, LedController>();
 
-	@OneToMany(mappedBy = "parent",targetEntity=SiteController.class)
+	@OneToMany(mappedBy = "parent",targetEntity=SiteController.class, orphanRemoval=true)
 	@MapKey(name = "domainId")
 	@Getter
 	@JsonProperty

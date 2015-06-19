@@ -56,7 +56,7 @@ logout cheA cheB cheC
 loginRemote cheA Ilya1 0x000000A3
 scan cheA X%SETUP 
 waitForState cheB CONTAINER_SELECT
-setupCart cheA 26768709 26768711 26768712 26768712 26768717 26768718 26768718 26768719 26768720
+setupCart cheA 26768709 26768711 26768712 26768717 26768718 26768719 26768720
 scan cheA X%START
 waitForState cheB SETUP_SUMMARY
 
@@ -71,10 +71,10 @@ setParams pickSpeed=2 skipFreq=0.5 shortFreq=0.5
 //Setup and run both CHEs together
 loginSetup cheA Ilya1
 loginSetup cheB Ilya2
-setupCart cheA 26768709 26768711 26768712 26768712
-setupCart cheB 26768717 26768718 26768718 26768719 26768720
+setupCart cheA 26768709 26768711 26768712 26768717
+setupCart cheB 26768718 26768719 26768720
 
-STEP load orders on CHEs
+STEP pick CHEs
 SITE
 //Define ches
 defChe cheA 0x0000009B

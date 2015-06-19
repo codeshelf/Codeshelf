@@ -49,6 +49,7 @@ public class DateTimeParserTest extends MinimalTest {
 
 	@Test
 	public void testISOUTC() {
+		@SuppressWarnings("unused")
 		Calendar cal = validateDateTime("2015-06-15T07:00:00.000Z", 2015, 6, 15, 7, 0, 0, TimeZone.getTimeZone("UTC"));
 	}
 

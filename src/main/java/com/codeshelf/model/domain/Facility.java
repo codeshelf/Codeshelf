@@ -88,27 +88,39 @@ public class Facility extends Location {
 	@MapKey(name = "domainId")
 	private Map<String, ContainerKind>		containerKinds		= new HashMap<String, ContainerKind>();
 
-	@OneToMany(mappedBy = "parent", targetEntity = EdiServiceABC.class)
+	@OneToMany(mappedBy = "parent", targetEntity = EdiServiceABC.class, orphanRemoval=true)
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
 	private List<IEdiService>				ediServices			= new ArrayList<IEdiService>();
 
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "parent", orphanRemoval=true)
 	@MapKey(name = "domainId")
 	private Map<String, CodeshelfNetwork>	networks			= new HashMap<String, CodeshelfNetwork>();
 
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	@MapKey(name = "domainId")
 	private Map<String, OrderGroup>			orderGroups			= new HashMap<String, OrderGroup>();
 
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "parent", orphanRemoval=true)
 	@MapKey(name = "domainId")
 	private Map<String, Path>				paths				= new HashMap<String, Path>();
 
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "parent", orphanRemoval=true)
 	@MapKey(name = "domainId")
 	private Map<String, UomMaster>			uomMasters			= new HashMap<String, UomMaster>();
 	
+	@OneToMany(mappedBy = "facility", orphanRemoval=true)
+	private List<Worker>					workers;
+	
+	@OneToMany(mappedBy = "parent", orphanRemoval=true)
+	private List<DataImportReceipt>			dataImportReceipts;
+	
+	@OneToMany(mappedBy = "facility", orphanRemoval=true)
+	private List<WorkerEvent>				workerEvents;
+	
+	@OneToMany(mappedBy = "facility", orphanRemoval=true)
+	private List<Resolution>				resolutions;
+
 	public Facility() {
 		super();
 	}
@@ -1079,13 +1091,15 @@ public class Facility extends Location {
 	}
 
 	public Aisle createAisle(String inAisleId, Point inAnchorPoint, Point inPickFaceEndPoint) {
-		Aisle aisle = new Aisle();
-		aisle.setDomainId(inAisleId);
-		aisle.setAnchorPoint(inAnchorPoint);
-		aisle.setPickFaceEndPoint(inPickFaceEndPoint);
-
-		this.addAisle(aisle);
-
+		Aisle aisle = Aisle.staticGetDao().findByDomainId(this, inAisleId);
+		if (aisle == null){
+			aisle = new Aisle();
+			aisle.setDomainId(inAisleId);
+			aisle.setAnchorPoint(inAnchorPoint);
+			aisle.setPickFaceEndPoint(inPickFaceEndPoint);
+	
+			this.addAisle(aisle);
+		}
 		return aisle;
 	}
 
@@ -1105,9 +1119,12 @@ public class Facility extends Location {
 	}
 
 	public UomMaster createUomMaster(String inDomainId) {
-		UomMaster uomMaster = new UomMaster();
-		uomMaster.setDomainId(inDomainId);
-		this.addUomMaster(uomMaster);
+		UomMaster uomMaster = UomMaster.staticGetDao().findByDomainId(this, inDomainId);
+		if (uomMaster == null) {
+			uomMaster = new UomMaster();
+			uomMaster.setDomainId(inDomainId);
+			this.addUomMaster(uomMaster);
+		}
 		return uomMaster;
 	}
 
@@ -1213,7 +1230,7 @@ public class Facility extends Location {
 	/**
 	 * Deletes all Facilities in the current schema. Use carefully.
 	 */
-	public static void delete(WebSocketManagerService webSocketManagerService){
+	public static void deleteAll(WebSocketManagerService webSocketManagerService){
 		TenantPersistenceService persistence = TenantPersistenceService.getInstance(); // convenience
 		String schema = CodeshelfSecurityManager.getCurrentTenant().getSchemaName();
 		Session session = persistence.getSession();
@@ -1226,5 +1243,40 @@ public class Facility extends Location {
 		//The "location" table contains the Facility. All objects we want to delete are descendants of the Facility
 		String query = String.format("TRUNCATE %s.location CASCADE", schema);
 		session.createSQLQuery(query).executeUpdate();
+	}
+	
+	public void delete(WebSocketManagerService webSocketManagerService){
+		Set<User> users = getSiteControllerUsers();
+		DisconnectSiteControllerMessage disconnectMessage = new DisconnectSiteControllerMessage();
+		webSocketManagerService.sendMessage(users, disconnectMessage);
+		delete();
+	}
+	
+	public void delete(){
+		List<WorkInstruction> workInstructions = WorkInstruction.staticGetDao().findByParent(this);
+		deleteCollection(workInstructions, WorkInstruction.staticGetDao());
+		
+		List<OrderHeader> orderHeaders = OrderHeader.staticGetDao().findByParent(this);
+		deleteCollection(orderHeaders, OrderHeader.staticGetDao());
+		
+		deleteCollection(containerKinds.values(), ContainerKind.staticGetDao());
+		
+		List<ItemMaster> itemMasters = ItemMaster.staticGetDao().findByParent(this);
+		deleteCollection(itemMasters, ItemMaster.staticGetDao());
+
+		List<ExtensionPoint> extensionPoints = ExtensionPoint.staticGetDao().findByParent(this);
+		deleteCollection(extensionPoints, ExtensionPoint.staticGetDao());
+
+		Facility.staticGetDao().delete(this);
+	}
+
+	
+	private void deleteCollection(Collection<?> collection, ITypedDao<?> dao) {
+		if (collection == null || collection.isEmpty()) {
+			return;
+		}
+		for (Object object : collection) {
+			dao.delete((IDomainObject)object);
+		}
 	}
 }

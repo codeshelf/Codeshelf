@@ -25,6 +25,7 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
+import com.codeshelf.util.ThreadUtils;
 
 public class CheProcessScanPickMultiPath extends ServerTest {
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessScanPickMultiPath.class);
@@ -486,6 +487,8 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, picker.getLastSentPositionControllerDisplayValue((byte) 1));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_TOP_BOTTOM, picker.getLastSentPositionControllerMinQty((byte) 1));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_TOP_BOTTOM, picker.getLastSentPositionControllerMaxQty((byte) 1));
+		
+		ThreadUtils.sleep(1500);
 	}
 
 	@Test
@@ -522,5 +525,7 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, picker.getLastSentPositionControllerDisplayValue((byte) 1));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_TRIPLE_DASH, picker.getLastSentPositionControllerMinQty((byte) 1));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_TRIPLE_DASH, picker.getLastSentPositionControllerMaxQty((byte) 1));
+		
+		ThreadUtils.sleep(1500);
 	}
 }

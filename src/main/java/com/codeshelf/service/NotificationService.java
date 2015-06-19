@@ -1,7 +1,6 @@
 package com.codeshelf.service;
 
 import java.sql.Timestamp;
-import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;

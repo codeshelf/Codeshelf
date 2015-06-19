@@ -174,13 +174,13 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	private String						lastDdcId;
 
 	// All of the vertices that define the location's footprint.
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "parent", orphanRemoval=true)
 	@Getter
 	@Setter
 	private List<Vertex>				vertices		= new ArrayList<Vertex>();
 
 	// The child locations.
-	@OneToMany(mappedBy = "parent")
+	@OneToMany(mappedBy = "parent", orphanRemoval=true)
 	@MapKey(name = "domainId")
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
@@ -188,7 +188,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	private Map<String, Location>		locations		= new HashMap<String, Location>();
 
 	// The location aliases for this location.
-	@OneToMany(mappedBy = "mappedLocation")
+	@OneToMany(mappedBy = "mappedLocation", orphanRemoval=true)
 	@Getter
 	@Setter
 	private List<LocationAlias>			aliases			= new ArrayList<LocationAlias>();
@@ -270,7 +270,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	@Setter
 	@JsonProperty
 	private Integer						tapeId;
-
+	
 	public Location() {
 		active = true;
 		this.setAnchorPoint(Point.getZeroPoint());
