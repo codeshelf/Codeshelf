@@ -16,8 +16,9 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 
 /**
- * This is a structure and calculator for order counts of its details. This refers to the single passed in order
- * WorkService needs this for order feedback for putwalls
+ * This is a structure and calculator summarize detail statuses for an arbitrary collection of orders.
+ * An inner class does the counting for each order
+ * WorkService needs this for order feedback for put walls
   */
 
 public class OrderStatusSummary {
@@ -31,15 +32,11 @@ public class OrderStatusSummary {
 	public int					shortCount;
 
 	public OrderStatusSummary() {
-		clearStatusSummary();
-	}
-	
-	public void clearStatusSummary() {
 		completeCount = 0;
 		remainingCount = 0;
 		shortCount = 0;
 	}
-
+	
 	public void addOrderToSummary(OrderHeader inOrder) {
 		if (inOrder == null) {
 			LOGGER.info("null order in OrderStatusSummary addOrderToSummary");
@@ -57,7 +54,7 @@ public class OrderStatusSummary {
 		shortCount += singleStatus.singleOrderShortCount;
 	}
 
-	class SingleOrderStatusSummary {
+	private class SingleOrderStatusSummary {
 
 		private OrderHeader	order;
 		private int			singleOrderCompleteCount;

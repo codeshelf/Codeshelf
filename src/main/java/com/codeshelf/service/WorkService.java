@@ -538,7 +538,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			return;
 		}
 		Collections.sort(orderLocationsForBayPoscons, new BayLocationComparator());
-		int bayCount = 0;
 		Bay currentBay = null;
 		OrderStatusSummary orderCounts = new OrderStatusSummary();
 		
@@ -563,16 +562,14 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				if (currentBay != null) {
 					sendBayFeedBack(currentBay, orderCounts);
 				}
-				orderCounts.clearStatusSummary();
+				// start a new one. Garbage collect the old
+				orderCounts = new OrderStatusSummary();
 				orderCounts.addOrderToSummary(order);
-				bayCount++;
 				currentBay = thisBay;
 			}
 		}
 		// And, send the last one we were working on
 		sendBayFeedBack(currentBay, orderCounts);
-
-
 	}
 
 	/**
@@ -647,8 +644,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		}
 		
+		/*
 		if (false)  // ideally, set to true and some unit tests break.
 			return;
+		*/
 
 		// Part 2. Send.  This is a little tricky. This is one "group" of messages. 
 		// We need to mark the last one sent among the two lists as last in the group.
