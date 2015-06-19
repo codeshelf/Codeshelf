@@ -20,7 +20,6 @@ import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.LightService;
 import com.codeshelf.sim.worker.PickSimulator;
-import com.codeshelf.util.ThreadUtils;
 
 public class CheProcessPutWall extends CheProcessPutWallSuper {
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessPutWall.class);
@@ -692,8 +691,6 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 5);
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
 		Assert.assertEquals(posman.getLastSentPositionControllerMaxQty((byte) 5), PosControllerInstr.BITENCODED_LED_DASH);
-
-		ThreadUtils.sleep(1000);
 	}
 
 	@Test
@@ -880,9 +877,6 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker1.scanCommand("YES");
 		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
 		picker1.logCheDisplay();
-
-		//Give time for WorkInstructions to be deleted before Facility delete starts
-		ThreadUtils.sleep(1000);
 	}
 
 	@Test

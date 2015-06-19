@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 
 import lombok.Setter;
 
+import org.hibernate.StaleObjectStateException;
 import org.junit.After;
 import org.junit.Assert;
 import org.slf4j.Logger;
@@ -39,10 +40,27 @@ public abstract class ServerTest extends HibernateTest {
 	@After
 	public void deleteFacility(){
 		if (!skipFacilityDelete){
-			beginTransaction();
-			Facility facility = Facility.staticGetDao().reload(getFacility());
-			facility.delete();
-			commitTransaction();
+			boolean stale = true;
+			int attempt = 0;
+			do {
+				try {
+					stale = false;
+					beginTransaction();
+					Facility facility = Facility.staticGetDao().reload(getFacility());
+					facility.delete();
+					commitTransaction();
+				} catch (StaleObjectStateException e) {
+					//A number of tests don't wait for all DB changes to propagate, resulting in Stale errors on Facility delete 
+					tenantPersistenceService.rollbackTransaction();
+					stale = true;
+					attempt++;
+					LOGGER.warn("Stale error encountered while deleting facility. Attempt" + attempt);
+					if (attempt > 3){
+						throw e;
+					}
+					ThreadUtils.sleep(1000);
+				}
+			} while(stale);
 		}
 	}
 	

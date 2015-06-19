@@ -28,7 +28,6 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
-import com.codeshelf.util.ThreadUtils;
 
 /**
  * @author jon ranstrom
@@ -285,8 +284,6 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 5000);
 
 		commitTransaction();
-		
-		ThreadUtils.sleep(1500);
 	}
 
 	@Test
@@ -359,9 +356,5 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 5000);
 
 		this.getTenantPersistenceService().commitTransaction();
-		
-		ThreadUtils.sleep(1500);
 	}
-
-
 }
