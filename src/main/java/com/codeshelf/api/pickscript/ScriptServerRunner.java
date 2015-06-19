@@ -20,6 +20,7 @@ import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
@@ -52,11 +53,13 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_IMPORT_INVENTORY = "importInventory <filename>";
 	private final static String TEMPLATE_SET_CONTROLLER = "setController <location> <lights/poscons> <controller> <channel> ['tiersInAisle']";
 	private final static String TEMPLATE_SET_POSCONS = "setPoscons (assignments <tier> <startIndex> <'forward'/'reverse'>)";
+	private final static String TEMPLATE_SET_POSCON_TO_BAY = "setPosconToBay (assignments <bay name> <controller> <poscon id>)";
 	private final static String TEMPLATE_TOGGLE_PUT_WALL = "togglePutWall <aisle> [boolean putwall]";
 	private final static String TEMPLATE_CREATE_CHE = "createChe <che> <color> <mode>";
 	private final static String TEMPLATE_DELETE_ALL_PATHS = "deleteAllPaths";
 	private final static String TEMPLATE_DEF_PATH = "defPath <pathName> (segments '-' <start x> <start y> <end x> <end y>)";
 	private final static String TEMPLATE_ASSIGN_PATH_SGM_AISLE = "assignPathSgmToAisle <pathName> <segment id> <aisle name>";
+	private final static String TEMPLATE_ASSIGN_TAPE_TO_TIER = "assignTapeToTier <tape id> <tier name>";
 	private final static String TEMPLATE_WAIT_SECONDS = "waitSeconds <seconds>";
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScriptSiteRunner.class);
@@ -145,9 +148,11 @@ public class ScriptServerRunner {
 		} else if (command.equalsIgnoreCase("importInventory")) {
 			processImportInventory(parts);
 		} else if (command.equalsIgnoreCase("setController")) {
-			processSetAisleControllerCommand(parts);
+			processSetLedControllerCommand(parts);
 		} else if (command.equalsIgnoreCase("setPoscons")) {
 			processSetPosconsCommand(parts);
+		} else if (command.equalsIgnoreCase("setPosconToBay")) {
+			processSetPosconToBayCommand(parts);
 		} else if (command.equalsIgnoreCase("togglePutWall")) {
 			processTogglePutWallCommand(parts);
 		} else if (command.equalsIgnoreCase("createChe")) {
@@ -158,11 +163,13 @@ public class ScriptServerRunner {
 			processDefinePathCommand(parts);
 		} else if (command.equalsIgnoreCase("assignPathSgmToAisle")) {
 			processAsignPathSegmentToAisleCommand(parts);
+		} else if (command.equalsIgnoreCase("assignTapeToTier")) {
+			processAsignTapeToTierCommand(parts);
 		} else if (command.equalsIgnoreCase("waitSeconds")) {
 			processWaitSecondsCommand(parts);
 		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, deleteOrders, importOrders, importAisles, importLocations, importInventory, setController, setPoscons, togglePutWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, waitSeconds, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, deleteOrders, importOrders, importAisles, importLocations, importInventory, setController, setPoscons, setPosconToBay, togglePutWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, assignTapeToTier, waitSeconds, //]");
 		}
 	}
 
@@ -320,7 +327,7 @@ public class ScriptServerRunner {
 	 * setLedController <location> <type lights/poscons> <controller> <channel> ['tiersInAisle']
 	 * @throws Exception 
 	 */
-	private void processSetAisleControllerCommand(String parts[]) throws Exception {
+	private void processSetLedControllerCommand(String parts[]) throws Exception {
 		if (parts.length != 5 && parts.length != 6){
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_SET_CONTROLLER);
 		}
@@ -385,6 +392,28 @@ public class ScriptServerRunner {
 			
 			Tier tier = findTier(tierName);
 			tier.setPoscons(startIndex, reverse);
+		}
+	}
+	
+	/**
+	 * Expects to see command
+	 * setPosconToBay (assignments <bay name> <controller> <poscon id>)
+	 * @throws Exception 
+	 */
+	private void processSetPosconToBayCommand(String parts[]) throws Exception {
+		int blockLength = 3;
+		if (parts.length < 4 || (parts.length - 1) % blockLength != 0 ){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_SET_POSCON_TO_BAY);
+		}
+		int totalBlocks = (parts.length - 1) / blockLength;
+		for (int blockNum = 0; blockNum < totalBlocks; blockNum++) {
+			int offset = 1 + blockNum * blockLength;
+			String bayName = parts[offset + 0], controllerName = parts[offset + 1], posconId = parts[offset + 2];
+			//Find or create Controller
+			LedController controller = uiUpdateService.addControllerCallWithObjects(facility, controllerName, DeviceType.Poscons.toString());
+			//Assign poscon to Bay
+			Bay bay = findBay(bayName);
+			bay.setPosconAssignment(controller.getPersistentId().toString(), posconId);
 		}
 	}
 	
@@ -510,6 +539,20 @@ public class ScriptServerRunner {
 
 	/**
 	 * Expects to see command
+	 * assignTapeToTier <tape id> <tier name>
+	 * @throws Exception 
+	 */
+	private void processAsignTapeToTierCommand(String parts[]) throws Exception {
+		if (parts.length != 3){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_ASSIGN_TAPE_TO_TIER);
+		}
+		String tapeId = parts[1], tierName= parts[2];
+		Tier tier = findTier(tierName);
+		tier.setTapeIdUi(tapeId);
+	}
+
+	/**
+	 * Expects to see command
 	 * waitSeconds <seconds>
 	 * @throws Exception 
 	 */
@@ -535,11 +578,17 @@ public class ScriptServerRunner {
 		throw new Exception("Incorrect number of arguments. Expected '" + expected + "'");
 	}
 	
-	private Aisle findAisle(String aisleName) throws Exception{
-		Location location = facility.findSubLocationById(aisleName);
-		if (location == null) {
-			throw new Exception("Unable to find location " + aisleName);
+	private Bay findBay(String bayName) throws Exception{
+		Location location = findLocation(bayName);
+		if (!location.isBay()){
+			throw new Exception(location.getClassName() + " " + bayName + " is not an Aisle");
 		}
+		Bay bay = Bay.staticGetDao().findByPersistentId(location.getPersistentId());
+		return bay;
+	}
+
+	private Aisle findAisle(String aisleName) throws Exception{
+		Location location = findLocation(aisleName);
 		if (!location.isAisle()){
 			throw new Exception(location.getClassName() + " " + aisleName + " is not an Aisle");
 		}
@@ -548,15 +597,20 @@ public class ScriptServerRunner {
 	}
 	
 	private Tier findTier(String tierName) throws Exception{
-		Location location = facility.findSubLocationById(tierName);
-		if (location == null) {
-			throw new Exception("Unable to find location " + tierName);
-		}
+		Location location = findLocation(tierName);
 		if (!location.isTier()){
 			throw new Exception(location.getClassName() + " " + tierName + " is not a Tier");
 		}
 		Tier tier = Tier.staticGetDao().findByPersistentId(location.getPersistentId());
 		return tier;
+	}
+	
+	private Location findLocation(String locationName) throws Exception{
+		Location location = facility.findSubLocationById(locationName);
+		if (location == null) {
+			throw new Exception("Unable to find location " + locationName);
+		}
+		return location;
 	}
 
 }
