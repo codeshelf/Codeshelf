@@ -193,7 +193,7 @@ public class RadioControllerPacketSchedulerService {
 	 *	
 	 */
 	private void deliverNextCommandPacket() {
-		//INetworkDevice device = null;
+		INetworkDevice device = null;
 		BlockingQueue<IPacket> queue = null;
 		IPacket packet = null;
 
