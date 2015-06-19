@@ -42,6 +42,7 @@ import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.HousekeepingInjector;
 import com.codeshelf.model.OrderStatusEnum;
+import com.codeshelf.model.OrderStatusSummary;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.WiFactory;
 import com.codeshelf.model.WiFactory.WiPurpose;
@@ -465,7 +466,19 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		return false;
 	}
 
-	private void computeAndSendOrderFeedback(OrderLocation orderLocation, boolean isLastOfGroup) {
+	/**
+	 * Assumes the caller is certain the bay will be valid. This efficiently finds it.
+	 */
+	private Bay getOrderLocationBay(OrderLocation orderLocation) {
+		if (orderLocation == null) {
+			LOGGER.error("null input to computeAndSendOrderFeedback");
+			return null;
+		}
+		Location loc = orderLocation.getLocation();
+		return (Bay) loc.getParentAtLevel(Bay.class);
+	}
+
+	private void computeAndSendOrderFeedbackForSlots(OrderLocation orderLocation, boolean isLastOfGroup) {
 		if (orderLocation == null) {
 			LOGGER.error("null input to computeAndSendOrderFeedback");
 			return;
@@ -481,6 +494,85 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		finally {
 
 		}
+	}
+
+	private class BayLocationComparator implements Comparator<OrderLocation> {
+		// Sort the OrderLocations such that all for the same bay will be together.
+
+		@Override
+		public int compare(OrderLocation ol1, OrderLocation ol2) {
+
+			int value = CompareNullChecker.compareNulls(ol1, ol2);
+			if (value != 0)
+				return value;
+			Location loc1 = ol1.getLocation();
+			Location loc2 = ol2.getLocation();
+			value = CompareNullChecker.compareNulls(loc1, loc2);
+			if (value != 0)
+				return value;
+			String ol1LocName = loc1.getFullDomainId();
+			String ol2LocName = loc2.getFullDomainId();
+
+			return ol1LocName.compareTo(ol2LocName);
+		}
+	}
+
+	private void sendBayFeedBack(Bay bay, OrderStatusSummary orderCounts) {
+		LOGGER.info("sending feedback for bay {}. Complete:{} Remain:{} Short:{}",
+			bay.getBestUsableLocationName(),
+			orderCounts.getCompleteCount(),
+			orderCounts.getRemainingCount(),
+			orderCounts.getShortCount());
+		
+		// Do the send here
+		LOGGER.error("FIX ME: send bay poscon message");
+	}
+	
+	/**
+	 * We have prevalidated list of orderLocations for bays that need feedback.
+	 * Now we need to sort them by bay, then iterate and find the accumulated values per bay. And send one message per bay.
+	 */
+	private void computeAndSendBayFeedBack(List<OrderLocation> orderLocationsForBayPoscons) {
+		if (orderLocationsForBayPoscons == null || orderLocationsForBayPoscons.isEmpty()) {
+			LOGGER.error("bad input to computeAndSendBayFeedBack");
+			return;
+		}
+		Collections.sort(orderLocationsForBayPoscons, new BayLocationComparator());
+		int bayCount = 0;
+		Bay currentBay = null;
+		OrderStatusSummary orderCounts = new OrderStatusSummary();
+		
+		for (OrderLocation ol : orderLocationsForBayPoscons) {
+			OrderHeader order = ol.getParent();
+			Location loc = ol.getLocation();
+			Bay thisBay = (Bay) loc.getParentAtLevel(Bay.class);
+			if (thisBay == null) {
+				LOGGER.error("unexpected orderLocation that does not have a parent bay in computeAndSendBayFeedBack");
+				continue;
+			}
+			// is this the first one? if so, set current bay
+			if (currentBay == null){
+				currentBay = thisBay;}
+			
+			if (thisBay.equals(currentBay)) {
+				// Accumulate counts for bay
+				orderCounts.addOrderToSummary(order);
+			} else {
+				// send what we had for current bay, and initialize our counts for the next bay
+
+				if (currentBay != null) {
+					sendBayFeedBack(currentBay, orderCounts);
+				}
+				orderCounts.clearStatusSummary();
+				orderCounts.addOrderToSummary(order);
+				bayCount++;
+				currentBay = thisBay;
+			}
+		}
+		// And, send the last one we were working on
+		sendBayFeedBack(currentBay, orderCounts);
+
+
 	}
 
 	/**
@@ -508,32 +600,55 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				aisleList.add((Aisle) loc);
 			}
 		}
-		// 1c Find all order locations that need to be sent. Keep a map by location of the ones directly for slots
-		Map<String, OrderLocation> orderLocationForSlotPosconByLocation = new HashMap<String, OrderLocation>();
+		// 1c Find all order locations that need to be sent. Keep a map by location that will work for slots and bays
+		Map<String, OrderLocation> orderLocationByLocation = new HashMap<String, OrderLocation>();
+		// We never access the orderLocation. Only test for the presence of the location name key. For Bays, the map has the right bay name,
+		// but only the first OrderLocation found in that Bay.
 
 		Map<String, Object> filterArgs = ImmutableMap.<String, Object> of("facilityId", facility.getPersistentId());
 		List<OrderLocation> orderLocations = OrderLocation.staticGetDao().findByFilter("orderLocationByFacility", filterArgs);
 		for (OrderLocation ol : orderLocations) {
 			if (orderLocationDeservesSlotFeedback(ol)) {
 				Location loc = ol.getLocation();
-				orderLocationForSlotPosconByLocation.put(loc.getLocationNameForMap(), ol);
+				orderLocationByLocation.put(loc.getLocationNameForMap(), ol);
 				orderLocationsForSlotPosconsToSend.add(ol);
 			} else if (orderLocationDeservesBayFeedback(ol)) {
 				orderLocationsForBayPosconsToSend.add(ol);
+				Bay theBay = getOrderLocationBay(ol);
+				// Unlike slots above, there may be many OrderLocations per bay. We only want the map entry for the first.
+				String bayName = theBay.getLocationNameForMap();
+				if (!orderLocationByLocation.containsKey(bayName)) {
+					orderLocationByLocation.put(bayName, ol);
+				}
 			}
 		}
+
 		// 1d iterate through all poscon slots in those aisles. If not already sending, send an empty location
 		for (Aisle aisle : aisleList) {
 			List<Slot> slots = aisle.getActiveChildrenAtLevel(Slot.class);
 			for (Slot slot : slots) {
 				// only if the slot has a poscon
 				if (slot.isLightablePoscon()) {
-					if (!orderLocationForSlotPosconByLocation.containsKey(slot.getLocationNameForMap())) {
+					if (!orderLocationByLocation.containsKey(slot.getLocationNameForMap())) {
 						emptyLocationsToSend.add(slot);
 					}
 				}
 			}
+			// 1e also poscon bays in those aisles. If not already sending, send an empty location to clear the poscon
+			List<Bay> bays = aisle.getActiveChildrenAtLevel(Bay.class);
+			for (Bay bay : bays) {
+				// only if the slot has a poscon
+				if (bay.isLightablePoscon()) {
+					if (!orderLocationByLocation.containsKey(bay.getLocationNameForMap())) {
+						emptyLocationsToSend.add(bay);
+					}
+				}
+			}
+
 		}
+		
+		if (false)  // ideally, set to true and some unit tests break.
+			return;
 
 		// Part 2. Send.  This is a little tricky. This is one "group" of messages. 
 		// We need to mark the last one sent among the two lists as last in the group.
@@ -545,20 +660,24 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		int specialLocMessage = locToSend; // normally, last loc message is last of group.
 
 		if (olToSend > 0)
-			LOGGER.info("sending {} order location feedback instructions", olToSend);
+			LOGGER.info("sending {} order location slot feedback instructions", olToSend);
 		int olCount = 0;
 		for (OrderLocation ol : orderLocationsForSlotPosconsToSend) {
 			olCount++;
-			computeAndSendOrderFeedback(ol, specialOlMessage == olCount);
+			computeAndSendOrderFeedbackForSlots(ol, specialOlMessage == olCount);
 		}
 		if (locToSend > 0)
-			LOGGER.info("sending {} putwall clear slot instructions", locToSend);
+			LOGGER.info("sending {} putwall clear poscon instructions", locToSend);
 		int locCount = 0;
 		for (Location loc : emptyLocationsToSend) {
 			locCount++;
 			computeAndSendEmptyOrderFeedback(loc, specialLocMessage == locCount);
 		}
 
+		if (orderLocationsForBayPosconsToSend.size() > 0) {
+			LOGGER.info("sending bay poscon instructions");
+			computeAndSendBayFeedBack(orderLocationsForBayPosconsToSend);
+		}
 	}
 
 	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
@@ -1959,7 +2078,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 
 		//Light up the selected location. Send even if just a redo. Note: will not light if not a put wall.
-		computeAndSendOrderFeedback(ol, true); // single message is last of the group
+		computeAndSendOrderFeedbackForSlots(ol, true); // single message is last of the group
 		return true;
 	}
 

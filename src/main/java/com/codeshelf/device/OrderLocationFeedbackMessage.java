@@ -53,7 +53,7 @@ public class OrderLocationFeedbackMessage extends MessageABC {
 	@Getter
 	@Setter
 	@Expose
-	@SerializedName(value = "hasAnyOrderAtAl")
+	@SerializedName(value = "hasAnyOrderAtAll")
 	private Boolean				mHasAnyOrderAtAll;
 
 	@Accessors(prefix = "m")

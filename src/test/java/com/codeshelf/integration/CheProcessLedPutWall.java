@@ -16,6 +16,7 @@ import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.SiteController;
 import com.codeshelf.model.domain.Slot;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
@@ -81,6 +82,65 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		commitTransaction();
 	}
 
+	/**
+	 * When site controller starts, the webSocket connect has a side effect to call reinitPutWallFeedback(). It is hard to replicate that, but we can
+	 * call the function. This is normal poscon put wall, testing workService.reinitPutWallFeedback()
+	 */
+	@Test
+	public final void testReinitPutwall() throws IOException {
+
+		setUpFacilityWithPutWall();
+
+		setUpOrders1(getFacility());
+
+		this.startSiteController();
+		PickSimulator picker1 = createPickSim(cheGuid1);
+		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_1_ID));
+		Assert.assertNotNull(posman);
+
+		LOGGER.info("1: Just set up some orders for the put wall");
+		LOGGER.info(" : P14 is in WALL1. P15 and P16 are in WALL2. Set up slow mover CHE for that SKU pick");
+		picker1.loginAndSetup("Picker #1");
+		picker1.scanCommand("ORDER_WALL");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanSomething("11118");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker1.scanSomething("L%P14");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanSomething("11115");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker1.scanSomething("L%P15");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanSomething("11116");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker1.scanSomething("L%P16");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanCommand("CLEAR");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		// P14 is position 4. Show dash as an order is there. Should see in console logging about the reinit
+		posman.waitForControllerDisplayValue((byte) 4, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME);
+
+		// Verify that orders 11114, 11115, and 11116 are having order locations in put wall
+		beginTransaction();
+		assertOrderLocation("11118", "P14", "WALL1 - P14");
+		assertOrderLocation("11115", "P15", "WALL2 - P15");
+		assertOrderLocation("11116", "P16", "WALL2 - P16");
+		assertOrderLocation("11111", "", ""); // always good to test the NOT case.
+
+		LOGGER.info("1b: Call the site controller reinit function");
+		List<SiteController> siteControllers = SiteController.staticGetDao().getAll();
+		Assert.assertEquals((Integer) 1, (Integer) (siteControllers.size()));
+		SiteController siteController = siteControllers.get(0);
+		workService.reinitPutWallFeedback(siteController);
+		commitTransaction();
+
+		// P14 is position 4. Show dash as an order is there. Should see in console logging about the reinit
+		// The problem with this is the value was that already before the reinit call. There is no good way to restart and reinit site controller to really test this.
+		// But at least it does execute reinitPutWallFeedback.
+		posman.waitForControllerDisplayValue((byte) 4, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME);
+
+	}
+
 	@Test
 	public final void ledPutWallPut() throws IOException {
 		// This is for DEV-712, 713
@@ -116,12 +176,19 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		// Verify that orders 11114, 11115, and 11116 are having order locations in put wall
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		assertOrderLocation("11118", "P14", "WALL1 - P14");
 		assertOrderLocation("11115", "P15", "WALL2 - P15");
 		assertOrderLocation("11116", "P16", "WALL2 - P16");
 		assertOrderLocation("11111", "", ""); // always good to test the NOT case.
-		this.getTenantPersistenceService().commitTransaction();
+
+		LOGGER.info("1b: Call the site controller reinit function");
+		List<SiteController> siteControllers = SiteController.staticGetDao().getAll();
+		Assert.assertEquals((Integer) 1, (Integer) (siteControllers.size()));
+		SiteController siteController = siteControllers.get(0);
+		workService.reinitPutWallFeedback(siteController);
+		// 11118 has two details in wall 1.  11115 and 11116 have one detail each in wall 2. See it logged in console
+		commitTransaction();
 
 		LOGGER.info("2: As if the slow movers came out of system, just scan those SKUs to place into put wall");
 
