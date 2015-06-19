@@ -156,7 +156,7 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		Assert.assertNotNull(posman);
 
 		LOGGER.info("1: Just set up some orders for the put wall");
-		LOGGER.info(" : P14 is in WALL1. P15 and P16 are in WALL2. Set up slow mover CHE for that SKU pick");
+		LOGGER.info(" : P14 is in WALL1. P15 and P16 are in WALL2.");
 		picker1.loginAndSetup("Picker #1");
 		picker1.scanCommand("ORDER_WALL");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
@@ -168,19 +168,14 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P15");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
-		picker1.scanSomething("11116");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
-		picker1.scanSomething("L%P16");
-		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker1.scanCommand("CLEAR");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
-		// Verify that orders 11114, 11115, and 11116 are having order locations in put wall
+		// Verify that orders 11114, 11115 have order locations in put wall, but not 11116
 		beginTransaction();
 		assertOrderLocation("11118", "P14", "WALL1 - P14");
 		assertOrderLocation("11115", "P15", "WALL2 - P15");
-		assertOrderLocation("11116", "P16", "WALL2 - P16");
-		assertOrderLocation("11111", "", ""); // always good to test the NOT case.
+		assertOrderLocation("11116", "", "");
 
 		LOGGER.info("1b: Call the site controller reinit function");
 		List<SiteController> siteControllers = SiteController.staticGetDao().getAll();
@@ -189,6 +184,35 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		workService.reinitPutWallFeedback(siteController);
 		// 11118 has two details in wall 1.  11115 and 11116 have one detail each in wall 2. See it logged in console
 		commitTransaction();
+		
+		LOGGER.info("1c: Wall1 has 2 jobs, and Wall2 has 2 jobs remaining. Should see those as dim feedback");
+		posman.waitForControllerDisplayValue((byte) 1, (byte) 2, WAIT_TIME);
+		posman.waitForControllerDisplayValue((byte) 2, (byte) 1, WAIT_TIME);
+
+		LOGGER.info("1d: Add in the 11116 order");
+		picker1.scanCommand("ORDER_WALL");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanSomething("11116");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker1.scanSomething("L%P16");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanCommand("CLEAR");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+
+
+		// Verify that orders 11114, 11115, 1111 have order locations in put wall
+		beginTransaction();
+		assertOrderLocation("11118", "P14", "WALL1 - P14");
+		assertOrderLocation("11115", "P15", "WALL2 - P15");
+		assertOrderLocation("11116", "P16", "WALL2 - P16");
+		siteController = SiteController.staticGetDao().reload(siteController);
+		workService.reinitPutWallFeedback(siteController);
+		// 11118 has two details in wall 1.  11115 and 11116 have one detail each in wall 2. See it logged in console
+		commitTransaction();
+		
+		LOGGER.info("1e: See that Wall2 now has 2 jobs remaining. Was one before we added 11116 to the wall");
+		posman.waitForControllerDisplayValue((byte) 1, (byte) 2, WAIT_TIME);
+		posman.waitForControllerDisplayValue((byte) 2, (byte) 2, WAIT_TIME);
 
 		LOGGER.info("2: As if the slow movers came out of system, just scan those SKUs to place into put wall");
 
@@ -203,7 +227,7 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		picker1.scanCommand("CLEAR");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		LOGGER.info("3a: Scanning 1515 into Wall1");
-
+		
 		// This is scan of the SKU, the ItemMaster's domainId
 		picker1.scanSomething("1515");
 		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);

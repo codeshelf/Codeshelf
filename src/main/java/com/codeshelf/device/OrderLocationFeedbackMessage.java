@@ -46,15 +46,15 @@ public class OrderLocationFeedbackMessage extends MessageABC {
 	@Getter
 	@Setter
 	@Expose
-	@SerializedName(value = "orderId")
-	private String				mOrderId;																// not initially used. Just seems like site controller could use it.
+	@SerializedName(value = "hasAnyOrderAtAll")
+	private Boolean				mHasAnyOrderAtAll;
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
 	@Expose
-	@SerializedName(value = "hasAnyOrderAtAll")
-	private Boolean				mHasAnyOrderAtAll;
+	@SerializedName(value = "jobCountRemaining")
+	private int				mJobCountRemaining;
 
 	@Accessors(prefix = "m")
 	@Getter
@@ -80,23 +80,33 @@ public class OrderLocationFeedbackMessage extends MessageABC {
 	public OrderLocationFeedbackMessage() {}
 
 	public OrderLocationFeedbackMessage(OrderLocation ol, boolean lastMsgOfGroup) {
+		// Use this constructor for one poscon per slot, one orderLocation per slot.
 		Location loc = ol.getLocation();
 		setLocationDependentFields(loc);
 		setHasAnyOrderAtAll(true);
 		OrderHeader oh = ol.getParent();
-		setOrderId(oh.getDomainId());
 		setOrderFullyComplete(OrderStatusEnum.COMPLETE.equals(oh.getStatus()));
 		setOrderCompleteThisArea(getOrderFullyComplete()); // fix later
 		setLastMsgOfGroup(lastMsgOfGroup);
 	}
 
+
 	public OrderLocationFeedbackMessage(Location loc, boolean lastMsgOfGroup) {
-		// Use this constructor to intentionally tell site controller there is nothing for this slot.
+		// Use this constructor to intentionally tell site controller there is nothing for this slot or other location.
 		setLocationDependentFields(loc);
 		setHasAnyOrderAtAll(false);
-		setOrderId("");
 		setOrderFullyComplete(false);
 		setOrderCompleteThisArea(false);
+		setLastMsgOfGroup(lastMsgOfGroup);
+	}
+
+	public OrderLocationFeedbackMessage(Location loc, int remainingCount, boolean lastMsgOfGroup) {
+		// Use this constructor to intentionally tell site controller there is nothing for this slot.
+		setLocationDependentFields(loc);
+		setHasAnyOrderAtAll(true);
+		setOrderFullyComplete(false);
+		setOrderCompleteThisArea(false);
+		setJobCountRemaining(remainingCount);
 		setLastMsgOfGroup(lastMsgOfGroup);
 	}
 

@@ -298,6 +298,9 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 		if (!instruction.getHasAnyOrderAtAll())
 			return null;
 		// choices are oc and --
+		// From v18, LED put wall may have one  poscon per bay. So a dim remaining count is possible.
+		int remaining = instruction.getJobCountRemaining();
+
 		Byte thirdByte = PosControllerInstr.BITENCODED_LED_DASH;
 		Byte fourthByte = PosControllerInstr.BITENCODED_LED_DASH;
 		if (instruction.getOrderFullyComplete()) {
@@ -305,12 +308,22 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 			fourthByte = PosControllerInstr.BITENCODED_LED_O;
 		}
 
-		return (new PosControllerInstr(position,
-			PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-			thirdByte,
-			fourthByte,
-			PosControllerInstr.SOLID_FREQ.byteValue(),
-			PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
-	};
+		if (remaining == 0) {
+			return (new PosControllerInstr(position,
+				PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+				thirdByte,
+				fourthByte,
+				PosControllerInstr.SOLID_FREQ.byteValue(),
+				PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
+		} else {
+			Byte secondByte = (byte) remaining;
+			return (new PosControllerInstr(position,
+				secondByte,
+				secondByte,
+				secondByte,
+				PosControllerInstr.SOLID_FREQ.byteValue(),
+				PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
+		}
 
+	}
 }

@@ -517,15 +517,22 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 	}
 
-	private void sendBayFeedBack(Bay bay, OrderStatusSummary orderCounts) {
+	private void sendBayFeedBack(Bay bay, OrderStatusSummary orderCounts, boolean isLastOfGroup) {
 		LOGGER.info("sending feedback for bay {}. Complete:{} Remain:{} Short:{}",
 			bay.getBestUsableLocationName(),
 			orderCounts.getCompleteCount(),
 			orderCounts.getRemainingCount(),
 			orderCounts.getShortCount());
 		
+		// Actually, using the same old message with only remainingCount added, so only need that value.
+		// If this object is enhanced to track inprogress separately, then we would pass the inprogress plus other remaining in the message.
 		// Do the send here
+		
 		LOGGER.error("FIX ME: send bay poscon message");
+		Facility facility = bay.getFacility();
+		int remain = orderCounts.getRemainingCount();
+		final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(bay, remain, isLastOfGroup);
+		sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
 	}
 	
 	/**
@@ -560,7 +567,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				// send what we had for current bay, and initialize our counts for the next bay
 
 				if (currentBay != null) {
-					sendBayFeedBack(currentBay, orderCounts);
+					sendBayFeedBack(currentBay, orderCounts, false);
 				}
 				// start a new one. Garbage collect the old
 				orderCounts = new OrderStatusSummary();
@@ -569,7 +576,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			}
 		}
 		// And, send the last one we were working on
-		sendBayFeedBack(currentBay, orderCounts);
+		sendBayFeedBack(currentBay, orderCounts, true);
 	}
 
 	/**
