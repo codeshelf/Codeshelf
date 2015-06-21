@@ -139,8 +139,6 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 
 	@Test
 	public final void ledPutWallPut() throws IOException {
-		// This is for DEV-712, 713
-
 		setUpFacilityWithLedPutWall();
 
 		setUpOrders1(getFacility());

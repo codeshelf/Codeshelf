@@ -292,6 +292,16 @@ public class LightService implements IApiService {
 			return null;
 		}
 	}
+	
+	public void flashOneLocationInColor(Location locToLight, ColorEnum color, Facility facility){
+		LOGGER.error("implement flashOneLocationInColor");
+		if (locToLight == null || !locToLight.isLightableAisleController()) {
+			LOGGER.error("bad call to flashOneLocationInColor");
+			return;
+		}
+
+	}
+
 
 	/**
 	 * This is called quite directly for lighting an item, as the item knows its location and offset from anchor.

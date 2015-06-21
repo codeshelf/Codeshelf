@@ -2100,9 +2100,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		
 		if (locToLight.isLightableAisleController()) {
 			// We can flash the LED
-		}	
-		// As for the poscons, it is a fairly expensive query. Could optimize a little here as we know the bay. But for reduced cost put wall
+		lightService.flashOneLocationInColor(locToLight, che.getColor(), facility);
+			}	
+		// As for the poscons, it is a fairly expensive query if one poscon per bay. 
+		// Could optimize a little here as we know the bay. But for reduced cost put wall
 		// many order locations may be in that bay
+		// Check much cheaper single poscon per slot case first.
 		if (locToLight.isLightablePoscon()) {
 			computeAndSendOrderFeedbackForSlots(ol, true); // case 1 do this separately as it is much more efficient for the common normal putwall case.
 			return true;
