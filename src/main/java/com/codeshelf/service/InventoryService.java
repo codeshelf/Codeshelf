@@ -294,9 +294,8 @@ public class InventoryService implements IApiService {
 		
 		ColorEnum color = ColorEnum.RED;
 		if (che != null){
-		color = che.getColor();
-		}
-		else {
+			color = che.getColor();
+		} else {
 			LOGGER.error("CHE is not resolved in lightLocationByAliasOrTapeId");
 		}
 
@@ -309,8 +308,12 @@ public class InventoryService implements IApiService {
 			cmOffSet = thisTape.getOffsetCm();
 			if (shelfGuid > 0) {
 				locToLight = findLocationForTapeId(shelfGuid);
-				// Later. This might be guid for a tier that has slots, we would interpret the slot by the cmOffset.
-
+				// This might be guid for a tier that has slots, we would interpret the slot by the cmOffset.
+				Location slot = attemptToFindCorrespondingSlot(locToLight, cmOffSet);
+				if (slot != null) {
+					lightService.lightLocation(slot, color);
+					return;
+				}
 			}
 		} else {
 			// can we find the facility somehow?
@@ -325,6 +328,25 @@ public class InventoryService implements IApiService {
 			lightService.lightLocationCmFromLeft(locToLight, cmOffSet, color);
 		}
 
+	}
+	
+	/**
+	 * If the provided location is a Tier, attempt to find a child-slot that matches given offset. 
+	 */
+	private Location attemptToFindCorrespondingSlot(Location locToLight, Integer cmOffSet) {
+		if (locToLight.isTier()) {
+			List<Location> children = locToLight.getChildren();
+			boolean xOriented = locToLight.isLocationXOriented();
+			double leftOffsetSm = locToLight.isLeftSideTowardsAnchor() ? cmOffSet : locToLight.getLocationWidthMeters() * 100 - cmOffSet;
+			for (Location child : children) {
+				double startCm = (xOriented ? child.getAnchorPosX() : child.getAnchorPosY()) * 100;
+				double endCm = startCm + child.getLocationWidthMeters() * 100;
+				if (startCm <= leftOffsetSm && endCm >= leftOffsetSm){
+					return child;
+				}
+			}
+		}
+		return null;
 	}
 
 	/**

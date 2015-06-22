@@ -820,7 +820,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				case SKU_SCAN_TO_VERIFY:
 					return "SCAN SKU NEEDED";
 				case UPC_SCAN_TO_VERIFY:
-					return "SCAN GTIN NEEDED";
+					return "SCAN UPC NEEDED";
 				case LPN_SCAN_TO_VERIFY: // not implemented
 					return "SCAN LPN NEEDED";
 				default:

@@ -57,11 +57,23 @@ public class LightService implements IApiService {
 	}
 
 	// --------------------------------------------------------------------------
+	/**
+	 * This function is called by UI to illuminate a location by name
+	 */
 	public void lightLocation(final String facilityPersistentId, final String inLocationNominalId) {
-		//Light LEDs
 		final Facility facility = checkFacility(facilityPersistentId);
-		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
 		Location theLocation = checkLocation(facility, inLocationNominalId);
+		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
+		lightLocation(theLocation, color);
+	}
+	
+	/**
+	 * This fucntion is called by the server (which already has access to Facility and Locaiton objects)
+	 */
+	public void lightLocation(final Location theLocation, ColorEnum color) {
+		final Facility facility = theLocation.getFacility();
+		
+		//Light LEDs
 		lightChildLocations(facility, theLocation, color);
 
 		//Light the POS range
