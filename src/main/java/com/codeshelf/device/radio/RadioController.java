@@ -139,6 +139,7 @@ public class RadioController implements IRadioController {
 	private final RadioControllerInboundPacketService				packetHandlerService;
 	private final RadioControllerPacketIOService					packetIOService;
 	private final RadioControllerBroadcastService					broadcastService;
+	private final RadioControllerPacketSchedulerService				packetSchedulerService;
 
 	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	mPendingAcksMap					= Maps.newConcurrentMap();
 	private final ConcurrentMap<NetAddress, AtomicLong>				mLastPacketSentTimestampMsMap	= Maps.newConcurrentMap();
@@ -167,6 +168,7 @@ public class RadioController implements IRadioController {
 		this.packetHandlerService = new RadioControllerInboundPacketService(this);
 		this.packetIOService = new RadioControllerPacketIOService(inGatewayInterface, packetHandlerService, PACKET_SPACING_MILLIS);
 		this.broadcastService = new RadioControllerBroadcastService(this, BROADCAST_RATE_MILLIS);
+		this.packetSchedulerService = new RadioControllerPacketSchedulerService(packetIOService);
 	}
 
 	@Override
@@ -211,7 +213,7 @@ public class RadioController implements IRadioController {
 
 	@Override
 	public final void stopController() {
-		backgroundService.shutdown();
+		//backgroundService.shutdown();
 		packetIOService.stop();
 		packetHandlerService.shutdown();
 
@@ -219,6 +221,7 @@ public class RadioController implements IRadioController {
 		gatewayInterface.stopInterface();
 
 		broadcastService.stop();
+		packetSchedulerService.stop();
 
 		// Signal that we want to stop.
 		mShouldRun = false;
@@ -270,14 +273,16 @@ public class RadioController implements IRadioController {
 			packetIOService.start();
 
 			// Kick off the background event processing
+			/*
 			backgroundService.scheduleWithFixedDelay(new Runnable() {
 				@Override
 				public void run() {
 					processEvents();
 				}
 			}, 0, BACKGROUND_SERVICE_DELAY_MS, TimeUnit.MILLISECONDS);
-
+			*/
 			broadcastService.start();
+			packetSchedulerService.start();
 		}
 	}
 
@@ -513,90 +518,33 @@ public class RadioController implements IRadioController {
 	 */
 	@Override
 	public final void sendCommand(ICommand inCommand, NetworkId inNetworkId, NetAddress inDstAddr, boolean inAckRequested) {
-		INetworkDevice device = this.mDeviceNetAddrMap.get(inDstAddr);
-		String previousNetGuidContext = null;
-		if (device != null) {
-			previousNetGuidContext = ContextLogging.getNetGuid();
-			ContextLogging.setNetGuid(device.getGuid());
+		INetworkDevice device = null;
+		IPacket packet = null;
+		
+		device = this.mDeviceGuidMap.get(inDstAddr);
+		
+		if (device == null) {
+			// FIXME - huffa
+			return;
 		}
-		try {
-			IPacket packet = new Packet(inCommand, inNetworkId, mServerAddress, inDstAddr, inAckRequested);
-			inCommand.setPacket(packet);
-
-			/*
-			 * Certain commands can request the remote to ACK (to guarantee that
-			 * the command arrived). Most packets will not contain a command
-			 * that requests and ACK, so normally packets will just get sent
-			 * right here.
-			 * 
-			 * If a packet's command requires an ACK then we perform the
-			 * following steps:
-			 * 
-			 * - Check that the packet address is something other than a
-			 * broadcast network ID or network address. (We don't support
-			 * broadcast ACK.) - If a packet queue does not exist for the
-			 * destination then: 1. Create a packet queue for the destination.
-			 * 2. Put the packet in the queue. 3. Send the packet. - If a packet
-			 * queue does exist for the destination then just put the packet in
-			 * it.
-			 */
-
-			if ((inAckRequested) && (inNetworkId.getValue() != (IPacket.BROADCAST_NETWORK_ID))
-					&& (inDstAddr.getValue() != (IPacket.BROADCAST_ADDRESS))) {
-
-				int nextAckId = mAckId.getAndIncrement();
-
-				if (nextAckId > Byte.MAX_VALUE) {
-					mAckId.compareAndSet(nextAckId + 1, 1);
-					nextAckId = mAckId.getAndIncrement();
-				}
-				
-				/*
-								// If we're pending an ACK then assign an ACK ID.
-								int nextAckId = mAckId.getAndIncrement();
-								while (nextAckId > Byte.MAX_VALUE) {
-									mAckId.compareAndSet(nextAckId, 1);
-									nextAckId = mAckId.get();
-								}
-				*/
-				
-				packet.setAckId((byte) nextAckId);
-				packet.setAckState(AckStateEnum.PENDING);
-
-				// Add the command to the pending ACKs map, and increment the command ID counter.
-				BlockingQueue<IPacket> queue = mPendingAcksMap.get(inDstAddr);
-				if (queue == null) {
-					queue = new ArrayBlockingQueue<IPacket>(ACK_QUEUE_SIZE);
-					BlockingQueue<IPacket> existingQueue = mPendingAcksMap.putIfAbsent(inDstAddr, queue);
-					if (existingQueue != null) {
-						queue = existingQueue;
-					}
-				}
-
-				// If the ACK queue is too full then pause.
-				boolean success = queue.offer(packet);
-				while (!success) {
-					// Given an ACK timeout of 20ms and a read frequency of 20ms. If the max queue size is over 20 (and it should be)
-					// then we can drop the earlier packets since they should be timed out anyway.
-					IPacket packetToDrop = queue.poll();
-					LOGGER.warn("Dropping packet because pendingAcksMap is full. Size={}; DroppedPacket={}",
-						queue.size(),
-						packetToDrop);
-					success = queue.offer(packet);
-				}
-				LOGGER.debug("Packet is now pending ACK: {}", packet);
-			} else {
-				sendSpacedPacket(packet);
-			}
-
-		} finally {
-			if (previousNetGuidContext != null) {
-				ContextLogging.setNetGuid(previousNetGuidContext);
-			} else {
-				ContextLogging.clearNetGuid();
-			}
+		
+		packet = new Packet(inCommand, inNetworkId, mServerAddress, inDstAddr, inAckRequested);
+		packet.setDevice(device);
+		
+		if (inAckRequested) {
+			packet.setAckId(device.getNextAckId());
 		}
+		
+		packetSchedulerService.addCommandPacketToSchedule(packet, device);
 
+	}
+	@Override
+	public final void sendNetMgmtCommand(ICommand inCommand, NetAddress inDstAddr) {
+		IPacket packet = null;
+		
+		packet = new Packet(inCommand, packetIOService.getNetworkId(), mServerAddress, inDstAddr, false);
+		
+		packetSchedulerService.addNetMgmtPacketToSchedule(packet);
 	}
 
 	/*
@@ -951,6 +899,13 @@ public class RadioController implements IRadioController {
 	}
 
 	private void processAckPacket(IPacket ackPacket) {
+		INetworkDevice device = null;
+		
+		device = mDeviceNetAddrMap.get(ackPacket.getSrcAddr());
+		
+		packetSchedulerService.markPacketAsAcked(device, ackPacket.getAckId(), ackPacket);
+		
+		/*
 		BlockingQueue<IPacket> queue = mPendingAcksMap.get(ackPacket.getSrcAddr());
 		if (queue != null) {
 			for (IPacket packet : queue) {
@@ -964,7 +919,7 @@ public class RadioController implements IRadioController {
 					}
 				}
 			}
-		}
+		}*/
 	}
 
 	/**

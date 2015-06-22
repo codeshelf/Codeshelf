@@ -444,7 +444,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		//			mSerialOutputStream.write(IGatewayInterface.END);
 		//			mSerialOutputStream.flush();
 		buffer[bufPos++] = IGatewayInterface.END;
-//		buffer[bufPos++] = IGatewayInterface.END;
+//		buffer[bufPos++] = IGatewayInterface.END; // XXX HUFFA - used for KW2 Gateway buffer issues.
 //		buffer[bufPos+1] = IGatewayInterface.END;
 
 		//clrRTS();

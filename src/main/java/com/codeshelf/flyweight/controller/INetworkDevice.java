@@ -190,6 +190,10 @@ public interface INetworkDevice {
 	 * Get the last time a packet was received from this device
 	 */
 	public long getLastPacketSentTime();
-
+	
+	/**
+	 * Get the next ack id for this device
+	 */
+	public byte getNextAckId();
 
 }

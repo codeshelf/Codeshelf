@@ -26,6 +26,8 @@ import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
  */
 public abstract class DeviceLogicABC implements INetworkDevice {
 
+	private byte					STARTING_ACK_NUM		= 1;
+
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
@@ -84,6 +86,9 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	@Transient
 	private byte					mLastAckId;
 
+	// FXIME - huffa Do we actually use this mLastAckId anywhere?
+	private byte					mAckId;
+
 	private AtomicLong				mLastPacketReceivedTime	= new AtomicLong(System.currentTimeMillis());
 	private AtomicLong				mLastPacketSentTime		= new AtomicLong(System.currentTimeMillis());
 
@@ -95,6 +100,7 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 		mGuid = inGuid;
 		mDeviceManager = inDeviceManager;
 		mRadioController = inRadioController;
+		mAckId = STARTING_ACK_NUM;
 	}
 
 	// --------------------------------------------------------------------------
@@ -173,6 +179,13 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	// --------------------------------------------------------------------------
 	public long getLastPacketSentTime() {
 		return mLastPacketSentTime.get();
+	}
+	
+	// --------------------------------------------------------------------------
+	public synchronized byte getNextAckId() {
+		byte curr = mAckId;
+		mAckId++;
+		return curr;
 	}
 
 }
