@@ -189,7 +189,26 @@ public class LightService implements IApiService {
 	}
 
 	/**
-	 * creates and returns the instruction
+	 * creates and returns the instruction showing active count for this work instruction.
+	 * (Might want to move this so site controller code can use it similarly)
+	 */
+	private static PosControllerInstr getWiCountInstruction(String inControllerId,
+		String inSourceGuid,
+		byte inPosition,
+		WorkInstruction inWorkInstruction) {
+		return (new PosControllerInstr(inControllerId,
+			inSourceGuid,
+			inPosition,
+			inWorkInstruction.getPlanQuantity().byteValue(),
+			inWorkInstruction.getPlanMinQuantity().byteValue(),
+			inWorkInstruction.getPlanMaxQuantity().byteValue(),
+			PosControllerInstr.BLINK_FREQ,
+			PosControllerInstr.BRIGHT_DUTYCYCLE));
+	}
+
+	/**
+	 * creates and returns the instruction for flashing triple line
+	 * (Might want to move this so site controller code can use it similarly)
 	 */
 	private static PosControllerInstr getTripleDashInstruction(String inControllerId, byte inPosition) {
 		return (new PosControllerInstr(inControllerId,
@@ -202,10 +221,22 @@ public class LightService implements IApiService {
 	}
 
 	/**
+	 * creates and returns the instruction for clearing all poscons for this controller
+	 * Only generated server-side
+	 */
+	private static PosControllerInstr getClearInstruction(String inControllerId) {
+		PosControllerInstr messageClear = new PosControllerInstr();
+		messageClear.setControllerId(inControllerId);
+		messageClear.setRemove("all");
+		messageClear.processRemoveField();
+		return messageClear;
+	}
+
+	/**
 	 * @param facility current facility
 	 * @param wi specifies CHE source and quantity to display. If null is provided, the PosCon simply blinks tripple bars
 	 * @param theLocation location to light
-	 * @param instructions provide an empty list to gather renerated instructions
+	 * @param instructions provide an empty list to gather regenerated instructions
 	 * @param clearedControllers provide an empty list if you'd like to remove all previous commands from the same source on the specified PosCon controller. Provide null otherwise. 
 	 */
 	public static void getInstructionsForPosConRange(final Facility facility,
@@ -227,10 +258,7 @@ public class LightService implements IApiService {
 			if (wi == null) {
 				//If just trying to illuminate PosCons, remove all previous illumination instruction
 				if (!clearedControllers.contains(posConController)) {
-					PosControllerInstr messageClear = new PosControllerInstr();
-					messageClear.setControllerId(posConController);
-					messageClear.setRemove("all");
-					messageClear.processRemoveField();
+					PosControllerInstr messageClear = getClearInstruction(posConController);
 					instructions.add(messageClear);
 					clearedControllers.add(posConController);
 				}
@@ -239,14 +267,7 @@ public class LightService implements IApiService {
 			} else {
 				Che che = wi.getAssignedChe();
 				String sourceGuid = che == null ? "" : che.getDeviceGuidStr();
-				message = new PosControllerInstr(posConController,
-					sourceGuid,
-					(byte) posConIndex,
-					wi.getPlanQuantity().byteValue(),
-					wi.getPlanMinQuantity().byteValue(),
-					wi.getPlanMaxQuantity().byteValue(),
-					PosControllerInstr.SOLID_FREQ,
-					PosControllerInstr.BRIGHT_DUTYCYCLE);
+				message = getWiCountInstruction(posConController, sourceGuid, (byte) posConIndex, wi);
 
 			}
 			instructions.add(message);
@@ -486,4 +507,3 @@ public class LightService implements IApiService {
 		}
 	}
 }
-
