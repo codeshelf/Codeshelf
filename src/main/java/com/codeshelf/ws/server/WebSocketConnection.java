@@ -380,8 +380,8 @@ public class WebSocketConnection implements IDaoListener {
 		}
 		*/
 		// wait for all listener threads to stop
+		this.eventListeners.clear();
 		this.cancelFutures();
-
 		this.lastState = State.CLOSED;
 		this.currentUserContext = null;
 		this.currentTenant = null;
