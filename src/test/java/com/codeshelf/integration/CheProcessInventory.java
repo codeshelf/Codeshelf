@@ -108,6 +108,7 @@ public class CheProcessInventory extends ServerTest {
 				+ "A1.B1.T1, D301\r\n" // will have codeshelf tape "d310" which translates to a large integer
 				+ "A1.B2.T1, D302\r\n" // "d302"
 				+ "A1.B3.T1, D303\r\n" // etc.
+				+ "A1.B3.T1.S4, D3034\r\n" // etc.
 				+ "A2.B1.T1, D401\r\n" //
 				+ "A2.B2.T1, D402\r\n" //
 				+ "A2.B3.T1, D403\r\n"//
@@ -304,11 +305,11 @@ public class CheProcessInventory extends ServerTest {
 		Item item1493locD402 = locationD402.getStoredItemFromMasterIdAndUom("1493", "CS");
 		Assert.assertNotNull(item1493locD402);
 
-		LOGGER.info("2b: check that item 1123 moved via the tape scan to D303");
-		Location locationD303 = facility.findSubLocationById("D303");
-		Assert.assertNotNull(locationD303);
-		Item item1123locD303 = locationD303.getStoredItemFromMasterIdAndUom("1123", "ea");
-		Assert.assertNotNull(item1123locD303);
+		LOGGER.info("2b: check that item 1123 moved via the tape scan to a slot D3034 under tier D303");
+		Location locationD3034 = facility.findSubLocationById("D3034");
+		Assert.assertNotNull(locationD3034);
+		Item item1123locD3034 = locationD3034.getStoredItemFromMasterIdAndUom("1123", "ea");
+		Assert.assertNotNull(item1123locD3034);
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
