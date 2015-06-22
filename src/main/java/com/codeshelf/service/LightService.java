@@ -84,6 +84,9 @@ public class LightService implements IApiService {
 		getInstructionsForPosConRange(facility, null, theLocation, instructions, affectedControllers);
 		PosControllerInstrList posMessage = new PosControllerInstrList(instructions);
 		sendMessage(facility.getSiteControllerUsers(), posMessage);
+		int lightDuration = PropertyService.getInstance().getPropertyAsInt(facility,
+			DomainObjectProperty.LIGHTSEC,
+			defaultLightDurationSeconds);
 		//Extinguish all PosCons in affected controllers after some time. This will not affect displayed instructions send from other devices (such as CHEs)
 		new Timer().schedule(new TimerTask() {
 			@Override
@@ -102,7 +105,7 @@ public class LightService implements IApiService {
 				PosControllerInstrList clearListMessage = new PosControllerInstrList(instructions);
 				sendMessage(facility.getSiteControllerUsers(), clearListMessage);
 			}
-		}, 20000);
+		}, lightDuration * 1000);
 	}
 
 	/**
