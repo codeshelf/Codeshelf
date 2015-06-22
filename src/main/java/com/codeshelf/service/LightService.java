@@ -66,13 +66,13 @@ public class LightService implements IApiService {
 		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
 		lightLocation(theLocation, color);
 	}
-	
+
 	/**
 	 * This fucntion is called by the server (which already has access to Facility and Locaiton objects)
 	 */
 	public void lightLocation(final Location theLocation, ColorEnum color) {
 		final Facility facility = theLocation.getFacility();
-		
+
 		//Light LEDs
 		lightChildLocations(facility, theLocation, color);
 
@@ -127,7 +127,7 @@ public class LightService implements IApiService {
 			LedRange theRange = getLedRangeForLocationCmFromLeft(inLocation, inCmFromLeft);
 			LightLedsInstruction instruction = getLedCmdGroupListForRange(facility, color, inLocation, theRange);
 			instructions.add(instruction);
-			
+
 			LedInstrListMessage message = new LedInstrListMessage(instructions);
 			sendMessage(facility.getSiteControllerUsers(), message);
 		}
@@ -307,8 +307,8 @@ public class LightService implements IApiService {
 			return null;
 		}
 	}
-	
-	public void flashOneLocationInColor(Location locToLight, ColorEnum color, Facility facility){
+
+	public void flashOneLocationInColor(Location locToLight, ColorEnum color, Facility facility) {
 		LOGGER.error("implement flashOneLocationInColor");
 		if (locToLight == null || !locToLight.isLightableAisleController()) {
 			LOGGER.error("bad call to flashOneLocationInColor");
@@ -316,7 +316,6 @@ public class LightService implements IApiService {
 		}
 
 	}
-
 
 	/**
 	 * This is called quite directly for lighting an item, as the item knows its location and offset from anchor.
