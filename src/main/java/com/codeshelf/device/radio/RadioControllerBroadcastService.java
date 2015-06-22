@@ -59,7 +59,7 @@ public class RadioControllerBroadcastService {
 					new NetChannelValue((byte) 0),
 					new NetChannelValue((byte) 0));
 
-				radioController.sendNetMgmtCommand(netCheck, broadcastAddress);
+				radioController.sendCommand(netCheck, broadcastAddress, false);
 
 			} catch (Exception e) {
 				LOGGER.error("Broadcast Error ", e);
