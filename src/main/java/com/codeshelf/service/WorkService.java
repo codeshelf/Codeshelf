@@ -2097,11 +2097,11 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		// 2 This location has LEDs, and its parent bay has poscon. (lower cost put wall v18. DEV-909, etc.)
 		// 3 This location has LEDs, no parent has poscon
 		// 4 This location is not lightable.
-		
+
 		if (locToLight.isLightableAisleController()) {
 			// We can flash the LED
-		lightService.flashOneLocationInColor(locToLight, che.getColor(), facility);
-			}	
+			lightService.flashOneLocationInColor(locToLight, che.getColor(), facility);
+		}
 		// As for the poscons, it is a fairly expensive query if one poscon per bay. 
 		// Could optimize a little here as we know the bay. But for reduced cost put wall
 		// many order locations may be in that bay
@@ -2115,30 +2115,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				// just do the reinit code as that does the appropriate query. It will oversend to other put wall bays for now.
 				this.reinitPutWallFeedback(facility);// case 3
 			}
-			
 		}
-		
-		/*
-		if (locToLight.isLightablePoscon()) {
-			computeAndSendOrderFeedbackForSlots(ol, true); // case 1
-			return true;
-		}
-		else if (locToLight.isLightableAisleController()) {
-			// We can flash the LED
-			
-			// Update feedback for the bay poscon if any
-			Bay bay = locToLight.getParentAtLevel(Bay.class);
-			if (bay != null && bay.isLightablePoscon()) {
-				computeAndSendOrderFeedbackForBay(bay, true); // case 3
-			}
-			else {
-				// case 2.  We flashed the LED above.
-			}
-		}
-		else {
-			// case 4. Do nothing
-		}
-		*/
 
 		return true;
 	}

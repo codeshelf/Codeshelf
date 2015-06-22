@@ -189,6 +189,19 @@ public class LightService implements IApiService {
 	}
 
 	/**
+	 * creates and returns the instruction
+	 */
+	private static PosControllerInstr getTripleDashInstruction(String inControllerId, byte inPosition) {
+		return (new PosControllerInstr(inControllerId,
+			inPosition,
+			PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+			PosControllerInstr.BITENCODED_TRIPLE_DASH,
+			PosControllerInstr.BITENCODED_TRIPLE_DASH,
+			PosControllerInstr.BLINK_FREQ,
+			PosControllerInstr.BRIGHT_DUTYCYCLE));
+	}
+
+	/**
 	 * @param facility current facility
 	 * @param wi specifies CHE source and quantity to display. If null is provided, the PosCon simply blinks tripple bars
 	 * @param theLocation location to light
@@ -222,13 +235,7 @@ public class LightService implements IApiService {
 					clearedControllers.add(posConController);
 				}
 				//If work instruction is not provided, light location with triple bars
-				message = new PosControllerInstr(posConController,
-					(byte) posConIndex,
-					PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-					PosControllerInstr.BITENCODED_TRIPLE_DASH,
-					PosControllerInstr.BITENCODED_TRIPLE_DASH,
-					PosControllerInstr.BLINK_FREQ,
-					PosControllerInstr.BRIGHT_DUTYCYCLE);
+				message = getTripleDashInstruction(posConController, (byte) posConIndex);
 			} else {
 				Che che = wi.getAssignedChe();
 				String sourceGuid = che == null ? "" : che.getDeviceGuidStr();
@@ -308,13 +315,21 @@ public class LightService implements IApiService {
 		}
 	}
 
+	/**
+	 * Called for LED putwall as order is placed into wall. Flash briefly.
+	 */
 	public void flashOneLocationInColor(Location locToLight, ColorEnum color, Facility facility) {
-		LOGGER.error("implement flashOneLocationInColor");
 		if (locToLight == null || !locToLight.isLightableAisleController()) {
 			LOGGER.error("bad call to flashOneLocationInColor");
 			return;
 		}
 
+		List<Location> leaves = Lists.newArrayList();
+		// using the general API. Only add the one location to leaves
+		leaves.add(locToLight);
+		List<LightLedsInstruction> instructions = lightAllAtOnce(facility, defaultLedsToLight, color, leaves);
+		LedInstrListMessage message = new LedInstrListMessage(instructions);
+		sendMessage(facility.getSiteControllerUsers(), message);
 	}
 
 	/**
@@ -471,3 +486,4 @@ public class LightService implements IApiService {
 		}
 	}
 }
+

@@ -59,7 +59,7 @@ public class DomainObjectProperty extends DomainObjectABC {
 	public final static String						WORKSEQR			= "WORKSEQR";
 	public final static String						Default_WORKSEQR	= "BayDistance";
 	public final static String						LIGHTSEC			= "LIGHTSEC";
-	public final static String						Default_LIGHTSEC	= "20";
+	public final static String						Default_LIGHTSEC	= "7";
 	public final static String						LIGHTCLR			= "LIGHTCLR";
 	public final static String						Default_LIGHTCLR	= "Red";
 	public final static String						CROSSBCH			= "CROSSBCH";
