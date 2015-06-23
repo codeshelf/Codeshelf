@@ -40,11 +40,13 @@ import com.codeshelf.edi.WorkInstructionCSVExporter;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
+import com.codeshelf.model.CodeshelfTape;
 import com.codeshelf.model.HousekeepingInjector;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderStatusSummary;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.WiFactory;
+import com.codeshelf.model.CodeshelfTape.TapeLocation;
 import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.WiSetSummary;
 import com.codeshelf.model.WiSummarizer;
@@ -1991,16 +1993,28 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			LOGGER.error("null che in processPutWallPlacement. how?");
 			return false;
 		}
+		if (locationId == null || locationId.isEmpty()) {
+			LOGGER.error("null locationId in processPutWallPlacement. how?");
+			return false;
+		}
+
 		final String orderWallTag = "CHE_EVENT Order_To_Wall";
 
 		Facility facility = che.getFacility();
 		//Try to retrieve OrderHeader and Location that were specified. Exit function if either was not found
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
-		Location location = facility.findSubLocationById(locationId);
 		if (order == null) {
 			logInContext(orderWallTag, "Could not find order " + orderId, true);
 			return false;
 		}
+		Location location = null;
+		if (locationId.startsWith(CheDeviceLogic.TAPE_PREFIX)) {
+			TapeLocation tapeLocation = CodeshelfTape.findFinestLocationForTape(locationId);
+			location = tapeLocation.getLocation();
+		} else {
+			location = facility.findSubLocationById(locationId);
+		}
+		
 		if (location == null) {
 			logInContext(orderWallTag, "Could not find location " + locationId, true);
 			return false;

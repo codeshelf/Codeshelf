@@ -2241,8 +2241,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		setState(CheStateEnum.PUT_WALL_SCAN_LOCATION);
 	}
 
-	protected void processPutWallLocationScan(final String inScanPrefixStr, final String inScanStr) {
+	protected void processPutWallLocationScan(final String inScanPrefixStr, String inScanStr) {
 		String orderId = getLastPutWallOrderScan();
+		if (TAPE_PREFIX.equals(inScanPrefixStr)) {
+			inScanStr = TAPE_PREFIX + inScanStr;
+		}
 		sendOrderPlacementMessage(orderId, inScanStr);
 		// DEV-766. If we just put this order to the wall, we should remove it from our cart. 
 		// Otherwise, if we START or change location, we will still get that order work.

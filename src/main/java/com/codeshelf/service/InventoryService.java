@@ -1,7 +1,6 @@
 package com.codeshelf.service;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -10,9 +9,11 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.LineScanDeviceLogic;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.CodeshelfTape;
+import com.codeshelf.model.CodeshelfTape.TapeLocation;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
@@ -70,6 +71,7 @@ public class InventoryService implements IApiService {
 		}
 
 		Location location = findLocation(facility, inLocation);
+		int cmFromLeft = 0;
 		if (location.equals(facility)) {
 			LOGGER.warn("Move request from CHE: {} for GTIN: {} could not resolve location: {}. Using facility as location.",
 				che.getDomainId(),
@@ -77,18 +79,11 @@ public class InventoryService implements IApiService {
 				inLocation);
 			response.setFoundLocation(false);
 			response.appendStatusMessage("moveOrCreateInventory WARN: Could not find location: " + inLocation + ". Using facility.");
+		} else if (inLocation.startsWith(CheDeviceLogic.TAPE_PREFIX)) {
+			TapeLocation tapeLocation = CodeshelfTape.findFinestLocationForTape(inLocation);
+			location = tapeLocation.getLocation();
+			cmFromLeft = tapeLocation.getCmOffset();
 		}
-		int cmFromLeft = 0;
-		if (inLocation.startsWith("%")) {
-			cmFromLeft = CodeshelfTape.extractCmFromLeft(inLocation);
-			Location slot = attemptToFindCorrespondingSlot(location, cmFromLeft);
-			if (slot != null) {
-				location = slot;
-				cmFromLeft = 0;
-			}
-		}
-		
-		
 
 		ItemMaster itemMaster = null;
 		Timestamp createTime = null;
@@ -264,7 +259,7 @@ public class InventoryService implements IApiService {
 		}
 
 		// Find location that tapeId is already associated with
-		Location oldLocation = findLocationForTapeId(inTapeId);
+		Location oldLocation = CodeshelfTape.findLocationForTapeId(inTapeId);
 		if (oldLocation != null) {
 			LOGGER.warn("TapeId: {} is already associated with location: {}.", inTapeId, oldLocation.getDomainId());
 			oldLocation.setTapeId(null);
@@ -310,18 +305,14 @@ public class InventoryService implements IApiService {
 		Location locToLight = null;
 		Integer cmOffSet = 0;
 		if (isTape) {
-			CodeshelfTape thisTape = CodeshelfTape.scan(inLocation);
-			Integer shelfGuid = thisTape.getGuid();
-			cmOffSet = thisTape.getOffsetCm();
-			if (shelfGuid > 0) {
-				locToLight = findLocationForTapeId(shelfGuid);
-				// This might be guid for a tier that has slots, we would interpret the slot by the cmOffset.
-				Location slot = attemptToFindCorrespondingSlot(locToLight, cmOffSet);
-				if (slot != null) {
-					lightService.lightLocationServerCall(slot, color);
-					return;
-				}
+			// This might be guid for a tier that has slots, we would interpret the slot by the cmOffset.
+			TapeLocation tapeLocation = CodeshelfTape.findFinestLocationForTape(inLocation);
+			locToLight = tapeLocation.getLocation();
+			if (locToLight != null && locToLight.isSlot()) {
+				lightService.lightLocationServerCall(locToLight, color);
+				return;
 			}
+			cmOffSet = tapeLocation.getCmOffset();
 		} else {
 			// can we find the facility somehow?
 			Facility facility = null;
@@ -335,47 +326,6 @@ public class InventoryService implements IApiService {
 			lightService.lightLocationCmFromLeft(locToLight, cmOffSet, color);
 		}
 
-	}
-	
-	/**
-	 * If the provided location is a Tier, attempt to find a child-slot that matches given offset. 
-	 */
-	private Location attemptToFindCorrespondingSlot(Location locToLight, Integer cmOffSet) {
-		if (locToLight.isTier()) {
-			List<Location> children = locToLight.getChildren();
-			boolean xOriented = locToLight.isLocationXOriented();
-			double leftOffsetSm = locToLight.isLeftSideTowardsAnchor() ? cmOffSet : locToLight.getLocationWidthMeters() * 100 - cmOffSet;
-			for (Location child : children) {
-				double startCm = (xOriented ? child.getAnchorPosX() : child.getAnchorPosY()) * 100;
-				double endCm = startCm + child.getLocationWidthMeters() * 100;
-				if (startCm <= leftOffsetSm && endCm >= leftOffsetSm){
-					return child;
-				}
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Finds the location that a tapeId is associated with.
-	 * There should only ever be a single location associated with a tapeId
-	 * @param inFacility	The facility
-	 * @param inTapeId		The tapeId to search for
-	 * @return Location		Returns null if tapeId is not associated to a location
-	 */
-	private Location findLocationForTapeId(int inTapeId) {
-		// Session session = TenantPersistenceService.getInstance().getSession();
-		// List<Location> locations = session.createCriteria(Location.class).add(Restrictions.eq("tapeId", inTapeId)).list();
-
-		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("tapeId", inTapeId));
-		List<Location> locations = Location.staticGetLocationDao().findByFilter(filterParams);
-
-		if (locations.isEmpty()) {
-			return null;
-		} else {
-			return locations.get(0);
-		}
 	}
 
 	/**
@@ -404,9 +354,7 @@ public class InventoryService implements IApiService {
 		}
 		Location location = null;
 		if (inLocation.startsWith("%")) {
-			int tapeId = CodeshelfTape.extractGuid(inLocation);
-			LOGGER.info("{} extracted to tapeId {}", inLocation, tapeId);
-			location = findLocationForTapeId(tapeId);
+			location = CodeshelfTape.findLocationForTape(inLocation);
 		} else {
 			location = inFacility.findSubLocationById(inLocation);
 		}

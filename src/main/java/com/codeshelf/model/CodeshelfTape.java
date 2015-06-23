@@ -1,5 +1,13 @@
 package com.codeshelf.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Restrictions;
+
+import com.codeshelf.model.domain.Location;
+
 import lombok.Getter;
 
 public class CodeshelfTape {
@@ -102,4 +110,60 @@ public class CodeshelfTape {
 		return result;
 	}
 
+	/**
+	 * Finds the location that a tapeId is associated with.
+	 * There should only ever be a single location associated with a tapeId
+	 * @param inFacility	The facility
+	 * @param inTapeId		The tapeId to search for
+	 * @return Location		Returns null if tapeId is not associated to a location
+	 */
+	public static Location findLocationForTapeId(int inTapeId) {
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("tapeId", inTapeId));
+		List<Location> locations = Location.staticGetLocationDao().findByFilter(filterParams);
+		return locations.isEmpty() ? null : locations.get(0);
+	}
+
+	public static Location findFinestLocationForTapeId(int inTapeId, int cmOffset) {
+		Location location = findLocationForTapeId(inTapeId);
+		if (location == null || !location.isTier()){
+			return location;
+		}
+		List<Location> children = location.getActiveChildren();
+		boolean xOriented = location.isLocationXOriented();
+		double leftOffsetSm = location.isLeftSideTowardsAnchor() ? cmOffset : location.getLocationWidthMeters() * 100 - cmOffset;
+		for (Location child : children) {
+			double startCm = (xOriented ? child.getAnchorPosX() : child.getAnchorPosY()) * 100;
+			double endCm = startCm + child.getLocationWidthMeters() * 100;
+			if (startCm <= leftOffsetSm && endCm >= leftOffsetSm){
+				return child;
+			}
+		}
+		return location;
+	}
+	
+	public static Location findLocationForTape(String tapeScan) {
+		CodeshelfTape tape = scan(tapeScan);
+		return findLocationForTapeId(tape.getGuid());
+	}
+	
+	public static TapeLocation findFinestLocationForTape(String tapeScan) {
+		CodeshelfTape tape = scan(tapeScan);
+		TapeLocation tapeLocation = new TapeLocation();
+		if (tape == null) {
+			return tapeLocation;
+		}
+		tapeLocation.location = findFinestLocationForTapeId(tape.getGuid(), tape.getOffsetCm());
+		if (tapeLocation.location != null) {
+			tapeLocation.cmOffset = tapeLocation.location.isSlot() ? 0 : tape.getOffsetCm();
+		}
+		return tapeLocation;
+	}
+	
+	public static class TapeLocation{
+		@Getter
+		private Location location;
+		@Getter
+		private int cmOffset;
+	}
 }

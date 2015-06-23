@@ -62,7 +62,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					LOCATION_PREFIX							= "L%";
 	protected static final String					ITEMID_PREFIX							= "I%";
 	protected static final String					POSITION_PREFIX							= "P%";
-	protected static final String					TAPE_PREFIX								= "%";												// save a character for tape, allowing tighter resolution
+	public static final String						TAPE_PREFIX								= "%";												// save a character for tape, allowing tighter resolution
 	protected static final String					CHE_NAME_PREFIX							= "H%";
 
 	// These are the message strings we send to the remote CHE.
