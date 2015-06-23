@@ -25,6 +25,7 @@ import com.codeshelf.device.PosControllerInstrList;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.manager.User;
 import com.codeshelf.model.LedRange;
+import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
@@ -234,12 +235,23 @@ public class LightService implements IApiService {
 
 	/**
 	 * @param facility current facility
-	 * @param wi specifies CHE source and quantity to display. If null is provided, the PosCon simply blinks tripple bars
+	 * @param wi specifies CHE source and quantity to display. If null is provided, the PosCon simply blinks triple bars
 	 * @param theLocation location to light
 	 * @param instructions provide an empty list to gather regenerated instructions
 	 * @param clearedControllers provide an empty list if you'd like to remove all previous commands from the same source on the specified PosCon controller. Provide null otherwise. 
+	 * This complicated function adds appropriate PosControllerInstr to the list that is passed in. Many calling contexts:
+	 * - Light location via UX slot light location for a slot with poscon (typically a put wall). Action: light the one slot with triple bar.
+	 * - Light location via UX tier light location whose slots have poscons (typically a put wall). Action: light each slot in the tier with triple bar.
+	 * - Light location via UX bay light location whose slots have poscons (typically a put wall). Action: light each slot in the bay with triple bar.
+	 * - Light location via UX slot light location for bay with poscon (typically a lower cost put wall with LEDs for slots.) Action: light the bay poscon with triple bar.
+	 *  (The LED slots would light also via different code.)
+	 * - Via ORDER_WALL, place order to a slot (poscons in slots). Action: give slot-wise order feedback on the poscon.
+	 * - Via ORDER_WALL, place order to a slot (LED for slots; poscon for the bay). Action: give bay-wise order feedback on the poscon. Briefly flash the slot LEDs.
+	 * - Via PUT_WALL, after scanning the item or gtin, if the slot in wall has poscon, show the plan count actively on the poscon.
+	 * - Via PUT_WALL, after scanning the item or gtin, if the slot has LEDs, but bay has poscon, show the plan count actively on the poscon and the LEDs flash.
 	 */
 	public static void getInstructionsForPosConRange(final Facility facility,
+	// Look a the caller. It added the LED instructions in another function.
 		final WorkInstruction wi,
 		final Location theLocation,
 		List<PosControllerInstr> instructions,
@@ -271,11 +283,30 @@ public class LightService implements IApiService {
 
 			}
 			instructions.add(message);
+		} else if (wi != null) {
+			// for lower cost putwall, the bay may have a poscon even though the slots have LEDs.
+			// This is only a situation for the active wi.
+			Bay bay = theLocation.getParentAtLevel(Bay.class);
+			if (bay.isLightablePoscon()) {
+				LedController controller = bay.getEffectiveLedController();
+				String posConController = controller == null ? "" : controller.getDeviceGuidStr();
+				int posConIndex = bay.getPosconIndex();
+				PosControllerInstr message = null;
+				Che che = wi.getAssignedChe();
+				String sourceGuid = che == null ? "" : che.getDeviceGuidStr();
+				message = getWiCountInstruction(posConController, sourceGuid, (byte) posConIndex, wi);
+				instructions.add(message);
+			}
 		}
-		List<Location> children = theLocation.getActiveChildren();
-		if (!children.isEmpty()) {
-			for (Location child : children) {
-				getInstructionsForPosConRange(facility, wi, child, instructions, clearedControllers);
+
+		// This child case is only to match LED lighting when a user does light location.
+		// never do it when the wi is supplied.
+		if (wi == null) {
+			List<Location> children = theLocation.getActiveChildren();
+			if (!children.isEmpty()) {
+				for (Location child : children) {
+					getInstructionsForPosConRange(facility, wi, child, instructions, clearedControllers);
+				}
 			}
 		}
 	}
