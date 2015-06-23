@@ -317,7 +317,7 @@ public class InventoryService implements IApiService {
 				// This might be guid for a tier that has slots, we would interpret the slot by the cmOffset.
 				Location slot = attemptToFindCorrespondingSlot(locToLight, cmOffSet);
 				if (slot != null) {
-					lightService.lightLocation(slot, color);
+					lightService.lightLocationServerCall(slot, color);
 					return;
 				}
 			}

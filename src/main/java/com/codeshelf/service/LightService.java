@@ -65,13 +65,13 @@ public class LightService implements IApiService {
 		final Facility facility = checkFacility(facilityPersistentId);
 		Location theLocation = checkLocation(facility, inLocationNominalId);
 		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
-		lightLocation(theLocation, color);
+		lightLocationServerCall(theLocation, color);
 	}
 
 	/**
 	 * This fucntion is called by the server (which already has access to Facility and Locaiton objects)
 	 */
-	public void lightLocation(final Location theLocation, ColorEnum color) {
+	public void lightLocationServerCall(final Location theLocation, ColorEnum color) {
 		final Facility facility = theLocation.getFacility();
 
 		//Light LEDs
