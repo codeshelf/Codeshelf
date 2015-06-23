@@ -81,13 +81,14 @@ public class InventoryService implements IApiService {
 		int cmFromLeft = 0;
 		if (inLocation.startsWith("%")) {
 			cmFromLeft = CodeshelfTape.extractCmFromLeft(inLocation);
+			Location slot = attemptToFindCorrespondingSlot(location, cmFromLeft);
+			if (slot != null) {
+				location = slot;
+				cmFromLeft = 0;
+			}
 		}
 		
-		Location slot = attemptToFindCorrespondingSlot(location, cmFromLeft);
-		if (slot != null) {
-			location = slot;
-			cmFromLeft = 0;
-		}
+		
 
 		ItemMaster itemMaster = null;
 		Timestamp createTime = null;
