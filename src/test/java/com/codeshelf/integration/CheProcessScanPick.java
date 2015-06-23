@@ -1127,10 +1127,21 @@ public class CheProcessScanPick extends ServerTest {
 				{ "1493", "D302" } //
 		*/
 		// Note: WorkSequenceComparator from v14 sorts by sequence, then item, then orderID. Therefore, the quantity 1 one comes first, as its orderId is lower.
-		LOGGER.info("2a :The first job needs a scan.");
+		LOGGER.info("2a_a :The first job needs a scan.");
 		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
 		Assert.assertEquals("1522", picker.getLastCheDisplayString(2));
 		Assert.assertEquals("QTY 4", picker.getLastCheDisplayString(3)); // This line may change due to function changes. Just update it
+		Assert.assertEquals("SCAN SKU NEEDED", picker.getLastCheDisplayString(4));
+		
+		LOGGER.info("2a_b :Scan an invalid SKU, verify that CHE specifies the needed SKU.");
+		picker.scanSomething("bad_sku");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
+		Assert.assertEquals("1522", picker.getLastCheDisplayString(2));
+		Assert.assertEquals("QTY 4", picker.getLastCheDisplayString(3)); // This line may change due to function changes. Just update it
+		Assert.assertEquals("SCAN 1522", picker.getLastCheDisplayString(4));
+		
+		LOGGER.info("2a_c :Scan the correct SKU; advance.");
 		picker.scanSomething("1522");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		WorkInstruction wi = picker.nextActiveWi();

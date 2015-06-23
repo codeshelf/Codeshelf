@@ -197,6 +197,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Getter
 	@Setter
 	private NetGuid									mLinkedFromCheGuid						= null;
+	
+	private WorkInstruction							verifyWi								= null;
 
 	/**
 	 * We have only one inventory state, not two. Essentially another state by whether or not we think we have a valid
@@ -712,7 +714,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * @param inPickInstructions
 	 * @param inDescription
 	 */
-	protected void sendDisplayWorkInstruction(WorkInstruction wi) {
+	private void sendDisplayWorkInstruction(WorkInstruction wi) {
 		String planQtyStr = getWICountStringForCheDisplay(wi);
 
 		String[] pickInfoLines = { "", "", "" };
@@ -793,7 +795,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 
 		// get "DECREMENT POSITION" or other instruction
-		pickInfoLines[2] = getFourthLineDisplay();
+		pickInfoLines[2] = getFourthLineDisplay(wi);
 
 		// Note: pickInstruction is more or less a location. Commonly a location alias, but may be a locationId or DDcId.
 		// GoodEggs many locations orders hitting too long case
@@ -810,21 +812,32 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	/**
 	 * trying to have the fourth line only depend on the state. We might throw additional messaging here if necessary.
 	 */
-	protected String getFourthLineDisplay() {
+	private String getFourthLineDisplay(WorkInstruction wi) {
 		if (CheStateEnum.SHORT_PICK == mCheStateEnum || CheStateEnum.SHORT_PUT == mCheStateEnum) {
 			return "DECREMENT POSITION";
 		} else if (CheStateEnum.SCAN_SOMETHING == mCheStateEnum) {
 		// kind of funny. States are uniformly defined, so this works even from wrong object
 			ScanNeededToVerifyPick scanVerification = getScanVerificationTypeEnum();
-			switch (scanVerification) {
-				case SKU_SCAN_TO_VERIFY:
-					return "SCAN SKU NEEDED";
-				case UPC_SCAN_TO_VERIFY:
-					return "SCAN UPC NEEDED";
-				case LPN_SCAN_TO_VERIFY: // not implemented
-					return "SCAN LPN NEEDED";
-				default:
-					return "SCAN ITEM NEEDED";
+			if (wi.equals(verifyWi)){
+				switch (scanVerification) {
+					case SKU_SCAN_TO_VERIFY:
+						return "SCAN " + wi.getItemId();
+					default:
+						String gtin = wi.getGtin();
+						
+						return "SCAN " + (gtin == null ? "?? Missing UPC" : gtin);
+				}
+			} else {
+				switch (scanVerification) {
+					case SKU_SCAN_TO_VERIFY:
+						return "SCAN SKU NEEDED";
+					case UPC_SCAN_TO_VERIFY:
+						return "SCAN UPC NEEDED";
+					case LPN_SCAN_TO_VERIFY: // not implemented
+						return "SCAN LPN NEEDED";
+					default:
+						return "SCAN ITEM NEEDED";
+				}
 			}
 		}
 		return "";
@@ -1895,9 +1908,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * @param inScanStr
 	 */
 	protected void processVerifyScan(final String inScanPrefixStr, String inScanStr) {
+		WorkInstruction wi = getOneActiveWorkInstruction();
 		if (inScanPrefixStr.isEmpty()) {
-
-			WorkInstruction wi = getOneActiveWorkInstruction();
 			if (wi == null) {
 				LOGGER.error("unanticipated no active WI in processVerifyScan");
 				invalidScanMsg(mCheStateEnum);
@@ -1908,16 +1920,18 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				// clear usually not needed. Only after correcting a bad scan
 				clearAllPosconsOnThisDevice();
 				setState(CheStateEnum.DO_PICK);
-
 			} else {
 				LOGGER.error("errorStr = {}", errorStr); // TODO get this to the CHE display
 				invalidScanMsg(mCheStateEnum);
+				verifyWi = wi;
+				sendDisplayWorkInstruction(getOneActiveWorkInstruction());
 			}
-
 		} else {
 			// Want some feedback here. Tell the user to scan something
 			LOGGER.info("Need to confirm by scanning the UPC "); // TODO later look at the class enum and decide on SKU or UPC or LPN or ....
 			invalidScanMsg(mCheStateEnum);
+			verifyWi = wi;
+			sendDisplayWorkInstruction(getOneActiveWorkInstruction());
 		}
 	}
 
