@@ -176,9 +176,9 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		// 11118 has two details in wall 1.  11115 and 11116 have one detail each in wall 2. See it logged in console
 		commitTransaction();
 		
-		LOGGER.info("1c: Wall1 has 2 jobs, and Wall2 has 2 jobs remaining. Should see those as dim feedback");
-		posman.waitForControllerDisplayValue((byte) 1, (byte) 2, WAIT_TIME);
-		posman.waitForControllerDisplayValue((byte) 2, (byte) 1, WAIT_TIME);
+		LOGGER.info("1c: Wall1 has 2 jobs, and Wall2 has 1 jobs remaining. Should see those as dim feedback");
+		posman.waitForControllerDisplayValue((byte) 1, (byte) 2, WAIT_TIME); // the wall 1 poscon
+		posman.waitForControllerDisplayValue((byte) 2, (byte) 1, WAIT_TIME); // the wall 2 poscon
 
 		LOGGER.info("1d: Add in the 11116 order");
 		picker1.scanCommand("ORDER_WALL");
@@ -219,8 +219,17 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		LOGGER.info("3a: Scanning 1515 into Wall1");
 		
 		// This is scan of the SKU, the ItemMaster's domainId
-		picker1.scanSomething("1515");
+		picker1.scanSomething("1521");
 		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
+		// This resulted in the the LED flashing for the job at the slot. AND the poscon showing the count of the active job.
+		// 1515 is needed for all three of the orders we set up.
+		// 1521 is needed only for 11118 in WALL1 - P1. Count 3. This will be a bright display. Brightness not verified here.
+		posman.waitForControllerDisplayValue((byte) 1, (byte) 3, WAIT_TIME);
+		// complete this job by poscon button press. 
+		posman.buttonPress(1, 3);
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+//		posman.waitForControllerDisplayValue((byte) 1, (byte) 1, WAIT_TIME); // now a dim display. One job left for orders in this wall
+
 
 		// P14 is B1.T1.S4. Count should be 3
 		// This is the essence of it.  P14 should have lit LEDs. And the poscon in bay 1 (index 1) should have count 3
