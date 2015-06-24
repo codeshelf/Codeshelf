@@ -1691,7 +1691,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Help the user know what scans will do
 	 */
 	private void sendGtinScreen(String inLastScannedGTIN) {
-		String line1 = SCAN_GTIN_OR_LOCATION;
+		String line1 = null;
+		switch (getScanVerificationTypeEnum()){
+			case SKU_SCAN_TO_VERIFY:
+				line1 = SCAN_SKU_OR_LOCATION;
+				break;
+			default:
+				line1 = SCAN_UPC_OR_LOCATION;
+		}
 		String line2 = "";
 		String line3 = "";
 		String line4 = "CLEAR to exit";

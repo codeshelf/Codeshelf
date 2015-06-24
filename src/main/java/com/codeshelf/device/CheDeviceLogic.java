@@ -91,8 +91,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					CLEAR_ERROR_MSG_LINE_1					= cheLine("CLEAR ERROR TO");
 	protected static final String					CLEAR_ERROR_MSG_LINE_2					= cheLine("CONTINUE");
 
-	protected static final String					SCAN_GTIN								= cheLine("SCAN GTIN");
-	protected static final String					SCAN_GTIN_OR_LOCATION					= cheLine("SCAN GTIN/LOCATION");
+	protected static final String					SCAN_UPC								= cheLine("SCAN UPC");
+	protected static final String					SCAN_SKU								= cheLine("SCAN SKU");
+	protected static final String					SCAN_UPC_OR_LOCATION					= cheLine("SCAN UPC/LOCATION");
+	protected static final String					SCAN_SKU_OR_LOCATION					= cheLine("SCAN SKU/LOCATION");
 
 	// Newer messages only used in Line_Scan mode. Some portion of the above are used for both Setup_Orders and Line_Scan, so keeping them all here.
 	protected static final String					SCAN_LINE_MSG							= cheLine("SCAN ORDER LINE");
