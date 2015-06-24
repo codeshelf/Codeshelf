@@ -666,13 +666,11 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 					break;
 				
 				case SCAN_GTIN:
-					if (lastScannedGTIN == null) {
-						sendDisplayCommand(SCAN_GTIN, EMPTY_MSG);
-					} else {
-						sendDisplayCommand(SCAN_GTIN_OR_LOCATION, EMPTY_MSG);
-					}
-					break;
-					
+					String scanType = getScanVerificationTypeUI();
+					String line_template = lastScannedGTIN == null ? SCAN_GTIN : SCAN_GTIN_OR_LOCATION;
+					String line = cheLine(String.format(line_template, scanType));
+					sendDisplayCommand(line, EMPTY_MSG);
+					break;					
 				default:
 					break;
 			}
