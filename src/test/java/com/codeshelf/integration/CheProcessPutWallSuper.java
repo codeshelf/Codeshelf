@@ -9,6 +9,7 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
+import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
@@ -73,6 +74,7 @@ public class CheProcessPutWallSuper extends ServerTest {
 		PathSegment segment0 = addPathSegmentForTest(path1, 0, 3d, 6d, 5d, 6d);
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
+		aisle1.togglePutWallLocation();
 
 		aisle2 = Aisle.staticGetDao().findByDomainId(facility, "A2");
 		Path path2 = createPathForTest(facility);
@@ -183,6 +185,10 @@ public class CheProcessPutWallSuper extends ServerTest {
 		LedController controller4 = network.findOrCreateLedController("LED4", new NetGuid(CONTROLLER_4_ID));
 		// Unused (usually) controller for LED putwall
 		LedController controller5 = network.findOrCreateLedController("LED5", new NetGuid(CONTROLLER_5_ID));
+		
+		controller5.updateFromUI(CONTROLLER_5_ID, "Poscons");
+		Bay bayA1B2 = (Bay)facility.findSubLocationById("A1.B2");
+		bayA1B2.setPosconAssignment(controller5.getPersistentId().toString(), "1");
 		
 		// perhaps not too correct. Entire aisle to controller. Only valid for zigzag configuration, but ok.
 		Location aisle = facility.findSubLocationById("A1");

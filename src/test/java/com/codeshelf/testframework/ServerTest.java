@@ -2,6 +2,7 @@ package com.codeshelf.testframework;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -9,6 +10,7 @@ import java.util.concurrent.Callable;
 import lombok.Setter;
 
 import org.hibernate.StaleObjectStateException;
+import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.slf4j.Logger;
@@ -38,7 +40,7 @@ public abstract class ServerTest extends HibernateTest {
 	private boolean skipFacilityDelete = false;
 	
 	@After
-	public void deleteFacility(){
+	public void deleteFacility() throws Exception{
 		if (!skipFacilityDelete){
 			boolean stale = true;
 			int attempt = 0;
@@ -59,6 +61,9 @@ public abstract class ServerTest extends HibernateTest {
 						throw e;
 					}
 					ThreadUtils.sleep(1000);
+				} catch (ConstraintViolationException e) {
+					SQLException se = e.getSQLException();
+					throw (se == null ? e : se);
 				}
 			} while(stale);
 		}

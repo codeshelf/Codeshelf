@@ -184,7 +184,7 @@ public class Bay extends Location {
 				// shall we assume bay child, if any, must be tier?
 				if (slot.getPosconIndex() != null){
 					slot.setPosconIndex(null);
-					Slot.staticGetDao().store(slot);				
+					Location.staticGetLocationDao().store(slot);
 				}
 			}	
 		}

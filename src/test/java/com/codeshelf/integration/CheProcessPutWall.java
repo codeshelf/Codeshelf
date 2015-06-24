@@ -20,6 +20,7 @@ import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.LightService;
 import com.codeshelf.sim.worker.PickSimulator;
+import com.codeshelf.util.ThreadUtils;
 
 public class CheProcessPutWall extends CheProcessPutWallSuper {
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessPutWall.class);
@@ -115,6 +116,57 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Assert.assertEquals(posman.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_TRIPLE_DASH);
 		Assert.assertEquals(posman.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_TRIPLE_DASH);
 		// could check flashing and brightness, but seem pointless.
+	}
+	
+	/**
+	 * This test places orders onto a PutWall and observers the Bay's single PosCon counting up the number of OrderDetails
+	 */
+	@Test
+	public final void putWallBayPoisconTest() throws IOException{
+		setUpFacilityWithPutWall();
+		setUpOrders1(getFacility());
+		this.startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_5_ID));
+		
+		picker.loginAndSetup("Picker #1");
+		picker.scanCommand("ORDER_WALL");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		Assert.assertNull(posman.getLastSentPositionControllerDisplayValue((byte)1));
+		
+		placeOrderOnLocation(picker, "11111", "L%F15");
+		assertAsynchPosconValue(posman, 1, 5);
+		
+		placeOrderOnLocation(picker, "11112", "L%F16");
+		assertAsynchPosconValue(posman, 1, 6);
+		
+		placeOrderOnLocation(picker, "11114", "L%F17");
+		assertAsynchPosconValue(posman, 1, 7);
+		
+		placeOrderOnLocation(picker, "11120", "L%F18");
+		assertAsynchPosconValue(posman, 1, 10);
+		
+		picker.scanCommand("CLEAR");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+	}
+	
+	private void placeOrderOnLocation(PickSimulator picker, String orerId, String locationId){
+		picker.scanSomething(orerId);
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker.scanSomething(locationId);
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+	}
+	
+	private void assertAsynchPosconValue(PosManagerSimulator posman, int posInd, int expected) {
+		Byte actual = null;
+		for (int i = 0; i < 5; i++) {
+			actual = posman.getLastSentPositionControllerDisplayValue((byte)posInd);
+			if (actual != null && expected == actual){
+				return;
+			}
+			ThreadUtils.sleep(150);
+		}
+		Assert.fail("Expected to see poscon value " + expected + ". Instead got " + actual + ".");
 	}
 
 	@Test
