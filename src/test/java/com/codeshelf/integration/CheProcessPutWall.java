@@ -130,6 +130,8 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_5_ID));
 		
 		picker.loginAndSetup("Picker #1");
+		
+		LOGGER.info("1: Put Orders into the wall.");
 		picker.scanCommand("ORDER_WALL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		Assert.assertNull(posman.getLastSentPositionControllerDisplayValue((byte)1));
@@ -149,6 +151,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		
+		LOGGER.info("2: Put an item into the wall.");
 		picker.scanCommand("PUT_WALL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
 		picker.scanLocation("F15");
@@ -169,7 +172,21 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		brightness = posman.getLastSentPositionControllerDisplayDutyCycle((byte)1);
 		Assert.assertEquals(PosControllerInstr.DIM_DUTYCYCLE, brightness);
 		assertAsynchPosconValue(posman, 1, 9);
-
+		
+		LOGGER.info("3: Short an item.");
+		picker.scanSomething("1555");
+		picker.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PUT, WAIT_TIME);
+		posman.buttonPress(1, 1);	//Expected quantity - 2
+		picker.waitForCheState(CheStateEnum.SHORT_PUT_CONFIRM, WAIT_TIME);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+		
+		//Ensure that Bay's poscon is dim and showing remaininig details
+		brightness = posman.getLastSentPositionControllerDisplayDutyCycle((byte)1);
+		Assert.assertEquals(PosControllerInstr.DIM_DUTYCYCLE, brightness);
+		assertAsynchPosconValue(posman, 1, 8);
 	}
 	
 	private void placeOrderOnLocation(PickSimulator picker, String orerId, String locationId){
