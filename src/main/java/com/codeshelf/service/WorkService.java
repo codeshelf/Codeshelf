@@ -699,6 +699,18 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			}
 			if (storedWi != null) {
 				computeAndSendOrderFeedback(storedWi);
+				//If WI is on a PutWall, refresh PutWall feedback
+				OrderDetail detail = storedWi.getOrderDetail();
+				if (detail != null) {
+					OrderHeader order = detail.getParent();
+					List<OrderLocation> orderLocations = order.getOrderLocations();
+					for (OrderLocation orderLocation : orderLocations) {
+						if (orderLocation.getLocation().isPutWallLocation()) {
+							reinitPutWallFeedback(che.getFacility());
+							break;
+						}
+					}
+				}
 			}
 		} else {
 			throw new IllegalArgumentException("Could not find che for id: " + cheId);
@@ -2014,7 +2026,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		} else {
 			location = facility.findSubLocationById(locationId);
 		}
-		
+
 		if (location == null) {
 			logInContext(orderWallTag, "Could not find location " + locationId, true);
 			return false;
