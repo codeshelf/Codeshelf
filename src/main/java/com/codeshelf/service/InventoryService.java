@@ -352,12 +352,7 @@ public class InventoryService implements IApiService {
 			LOGGER.error("null or empty location string in findLocation()");
 			return inFacility;
 		}
-		Location location = null;
-		if (inLocation.startsWith("%")) {
-			location = CodeshelfTape.findLocationForTape(inLocation);
-		} else {
-			location = inFacility.findSubLocationById(inLocation);
-		}
+		Location location = inFacility.findSubLocationById(inLocation);
 
 		// Remember, findSubLocationById will find inactive locations.
 		// We couldn't find the location, so assign the inventory to the facility itself (which is a location);  Not sure this is best, but it is the historical behavior from pre-v1.
@@ -365,6 +360,12 @@ public class InventoryService implements IApiService {
 			LOGGER.warn("Could not find location: {}. Using facility.", inLocation);
 			location = inFacility;
 		}
+		
+		//We do not need to drill down to a Slot in this case, return Tier 
+		if (inLocation.startsWith(CheDeviceLogic.TAPE_PREFIX) && location.isSlot()){
+			location = location.getParent();
+		}
+
 		// If location is inactive, then what? Would we want to move existing inventory there to facility? Doing that initially mostly because it is easier.
 		// Might be better to ask if this inventory item is already in that inactive location, and not move it if so.
 		else if (!location.isActive()) {

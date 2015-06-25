@@ -1336,7 +1336,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * @param inScanStr
 	 */
 	private void processLocationScan(final String inScanPrefixStr, String inScanStr) {
-		if (LOCATION_PREFIX.equals(inScanPrefixStr)) {
+		if (LOCATION_PREFIX.equals(inScanPrefixStr) || TAPE_PREFIX.equals(inScanPrefixStr)) {
+			if (TAPE_PREFIX.equals(inScanPrefixStr)) {
+				inScanStr = inScanPrefixStr + inScanStr;
+			}
 			// DEV-836, 837. From what states shall we allow this?
 			ledControllerClearLeds();
 			mLocationId = inScanStr; // let's remember where user scanned.
@@ -1383,14 +1386,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case DO_PICK:
 				// At any time during the pick we can change locations.
 				// At summary, we can change location/path
-				if (inScanPrefixStr.equals(LOCATION_PREFIX)) {
+				if (inScanPrefixStr.equals(LOCATION_PREFIX) || inScanPrefixStr.equals(TAPE_PREFIX)) {
 					processLocationScan(inScanPrefixStr, inContent);
 				}
 				break;
 
 			case SCAN_SOMETHING:
 				// At any time during the pick we can change locations.
-				if (inScanPrefixStr.equals(LOCATION_PREFIX)) {
+				if (inScanPrefixStr.equals(LOCATION_PREFIX) || inScanPrefixStr.equals(TAPE_PREFIX)) {
 					processLocationScan(inScanPrefixStr, inContent);
 				}
 				// If SCANPICK parameter is set, then the scan is SKU or UPC or LPN or .... Process it.

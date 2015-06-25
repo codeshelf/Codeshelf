@@ -40,7 +40,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.LedCmdPath;
+import com.codeshelf.model.CodeshelfTape;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.LedRange;
 import com.codeshelf.model.PositionTypeEnum;
@@ -632,18 +634,21 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			LOGGER.error("null input to findSubLocationById"); // If we see this, we might want to add and exception to the error line to get the stack trace
 			return null;
 		}
-
-		Integer firstDotPos = inLocationId.indexOf(".");
-		if (firstDotPos < 0) {
-			// There's no "dot" so look for the sublocation at this level.
-			result = this.findLocationById(inLocationId);
-		} else {
-			// There is a dot, so find the sublocation based on the first part and recursively ask it for the location from the second part.
-			String firstPart = inLocationId.substring(0, firstDotPos);
-			String secondPart = inLocationId.substring(firstDotPos + 1);
-			Location firstPartLocation = this.findLocationById(firstPart);
-			if (firstPartLocation != null) {
-				result = firstPartLocation.findSubLocationById(secondPart);
+		if (inLocationId.startsWith(CheDeviceLogic.TAPE_PREFIX)) {
+			result = CodeshelfTape.findFinestLocationForTape(inLocationId).getLocation();
+		} else { 
+			Integer firstDotPos = inLocationId.indexOf(".");
+			if (firstDotPos < 0) {
+				// There's no "dot" so look for the sublocation at this level.
+				result = this.findLocationById(inLocationId);
+			} else {
+				// There is a dot, so find the sublocation based on the first part and recursively ask it for the location from the second part.
+				String firstPart = inLocationId.substring(0, firstDotPos);
+				String secondPart = inLocationId.substring(firstDotPos + 1);
+				Location firstPartLocation = this.findLocationById(firstPart);
+				if (firstPartLocation != null) {
+					result = firstPartLocation.findSubLocationById(secondPart);
+				}
 			}
 		}
 		if (result != null && !result.isActive()) {

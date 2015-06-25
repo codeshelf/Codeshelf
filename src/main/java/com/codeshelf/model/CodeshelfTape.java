@@ -123,8 +123,21 @@ public class CodeshelfTape {
 		List<Location> locations = Location.staticGetLocationDao().findByFilter(filterParams);
 		return locations.isEmpty() ? null : locations.get(0);
 	}
+	
+	public static TapeLocation findFinestLocationForTape(String tapeScan) {
+		CodeshelfTape tape = scan(tapeScan);
+		TapeLocation tapeLocation = new TapeLocation();
+		if (tape == null) {
+			return tapeLocation;
+		}
+		tapeLocation.location = findFinestLocationForTapeId(tape.getGuid(), tape.getOffsetCm());
+		if (tapeLocation.location != null) {
+			tapeLocation.cmOffset = tapeLocation.location.isSlot() ? 0 : tape.getOffsetCm();
+		}
+		return tapeLocation;
+	}
 
-	public static Location findFinestLocationForTapeId(int inTapeId, int cmOffset) {
+	private static Location findFinestLocationForTapeId(int inTapeId, int cmOffset) {
 		Location location = findLocationForTapeId(inTapeId);
 		if (location == null || !location.isTier()){
 			return location;
@@ -140,24 +153,6 @@ public class CodeshelfTape {
 			}
 		}
 		return location;
-	}
-	
-	public static Location findLocationForTape(String tapeScan) {
-		CodeshelfTape tape = scan(tapeScan);
-		return findLocationForTapeId(tape.getGuid());
-	}
-	
-	public static TapeLocation findFinestLocationForTape(String tapeScan) {
-		CodeshelfTape tape = scan(tapeScan);
-		TapeLocation tapeLocation = new TapeLocation();
-		if (tape == null) {
-			return tapeLocation;
-		}
-		tapeLocation.location = findFinestLocationForTapeId(tape.getGuid(), tape.getOffsetCm());
-		if (tapeLocation.location != null) {
-			tapeLocation.cmOffset = tapeLocation.location.isSlot() ? 0 : tape.getOffsetCm();
-		}
-		return tapeLocation;
 	}
 	
 	public static class TapeLocation{
