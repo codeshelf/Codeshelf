@@ -148,6 +148,28 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		
+		picker.scanCommand("PUT_WALL");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
+		picker.scanLocation("F15");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+		picker.scanSomething("1122");
+		picker.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
+
+		//Ensure that Bay's poscon is bright and showing required number of items
+		Byte brightness = posman.getLastSentPositionControllerDisplayDutyCycle((byte)1);
+		Assert.assertEquals(PosControllerInstr.BRIGHT_DUTYCYCLE, brightness);
+		assertAsynchPosconValue(posman, 1, 2);
+		
+		//Press button
+		posman.buttonPress(1, 2);
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+		
+		//Ensure that Bay's poscon is dim and showing remaininig details
+		brightness = posman.getLastSentPositionControllerDisplayDutyCycle((byte)1);
+		Assert.assertEquals(PosControllerInstr.DIM_DUTYCYCLE, brightness);
+		assertAsynchPosconValue(posman, 1, 9);
+
 	}
 	
 	private void placeOrderOnLocation(PickSimulator picker, String orerId, String locationId){
@@ -159,7 +181,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 	
 	private void assertAsynchPosconValue(PosManagerSimulator posman, int posInd, int expected) {
 		Byte actual = null;
-		for (int i = 0; i < 5; i++) {
+		for (int i = 0; i < 7; i++) {
 			actual = posman.getLastSentPositionControllerDisplayValue((byte)posInd);
 			if (actual != null && expected == actual){
 				return;
