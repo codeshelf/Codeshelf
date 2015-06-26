@@ -35,6 +35,7 @@ import com.codeshelf.ws.protocol.response.LoginResponse;
 import com.codeshelf.ws.protocol.response.PutWallPlacementResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
+import com.codeshelf.ws.protocol.response.TapeLocationDecodingResponse;
 import com.codeshelf.ws.protocol.response.VerifyBadgeResponse;
 import com.codeshelf.ws.server.WebSocketConnection;
 import com.google.inject.Inject;
@@ -182,6 +183,14 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				}
 			}
 
+			else if (response instanceof TapeLocationDecodingResponse) {
+				TapeLocationDecodingResponse devodingResponse = (TapeLocationDecodingResponse) response;
+				if (response.getStatus() == ResponseStatus.Success) {
+					this.deviceManager.processTapeLocationDecodingResponse(devodingResponse.getNetworkGuid(),
+						devodingResponse.getDecodedLocation());
+				}
+			}
+			
 			// Handle server-side errors
 			else if (response instanceof FailureResponse) {
 				FailureResponse failureResponse = (FailureResponse) response;

@@ -12,9 +12,4 @@ public class ServiceMethodResponse extends ResponseABC {
 	
 	@Getter @Setter
 	Errors errors;
-
-	@Override
-	public String getDeviceIdentifier() {
-		return null;
-	}
 }

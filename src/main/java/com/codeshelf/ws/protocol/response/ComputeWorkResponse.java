@@ -18,9 +18,6 @@ public class ComputeWorkResponse extends ResponseABC {
 	private ComputeWorkPurpose purpose = ComputeWorkPurpose.COMPUTE_WORK;
 	
 	@Getter @Setter
-	String networkGuid;
-	
-	@Getter @Setter
 	Integer	totalGoodWorkInstructions = null;
 
 	@Getter
@@ -46,10 +43,5 @@ public class ComputeWorkResponse extends ResponseABC {
 				workInstructions.add(TenantPersistenceService.<WorkInstruction>deproxify(wi));
 			}
 		}
-	}
-
-	@Override
-	public String getDeviceIdentifier() {
-		return getNetworkGuid();
 	}
 }

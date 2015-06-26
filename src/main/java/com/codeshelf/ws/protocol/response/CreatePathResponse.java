@@ -8,9 +8,4 @@ import com.codeshelf.model.domain.Path;
 public class CreatePathResponse extends ResponseABC {
 	@Getter @Setter
 	Path path;
-
-	@Override
-	public String getDeviceIdentifier() {
-		return null;
-	}
 }

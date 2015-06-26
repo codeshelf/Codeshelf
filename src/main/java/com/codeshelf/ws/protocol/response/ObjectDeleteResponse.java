@@ -6,9 +6,4 @@ import lombok.Setter;
 public class ObjectDeleteResponse extends ResponseABC {
 	@Getter @Setter
 	Object results;
-
-	@Override
-	public String getDeviceIdentifier() {
-		return null;
-	}
 }

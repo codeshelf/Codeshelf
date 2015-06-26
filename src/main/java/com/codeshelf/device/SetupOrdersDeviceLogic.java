@@ -61,7 +61,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// The location the CHE scanned as starting point. Note: this initializes from che.getLastScannedLocation(), but then is maintained locally.
 	@Accessors(prefix = "m")
-	@Getter
+	@Getter @Setter
 	private String								mLocationId;
 
 	// If the CHE is in PUT_WALL process, the wall currently getting work instructions for
@@ -1730,6 +1730,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			else
 				line1 = String.format("%s orders ", orderCountStr);
 		} else {
+			if (locStr.startsWith(TAPE_PREFIX)){
+				mDeviceManager.requestTapeDecoding(getGuid().getHexStringNoPrefix(), getPersistentId(), locStr);
+			}
 			locStr = StringUtils.leftPad(locStr, 9); // Always right justifying the location
 			if (orderCount == 1)
 				line1 = String.format("%s order  %s", orderCountStr, locStr);
@@ -1797,7 +1800,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			this.sendMonospaceDisplayScreen(line1, line2, line3, line4, true); // larger bottom line
 		else
 			this.sendDisplayCommand(line1, line2, line3, line4);
-
 	}
 
 	/** Shows the count feedback on the position controller

@@ -10,9 +10,4 @@ public class PingResponse extends ResponseABC {
 	
 	public PingResponse() {
 	}
-
-	@Override
-	public String getDeviceIdentifier() {
-		return null;
-	}
 }

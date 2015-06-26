@@ -10,10 +10,6 @@ public class LinkRemoteCheResponse extends ResponseABC {
 	
 	@Getter
 	@Setter
-	String							networkGuid; // Guid of the (remote) CHE that is associating.
-
-	@Getter
-	@Setter
 	String							cheName; // Name corresponding to the guid above
 
 	@Getter
@@ -23,11 +19,4 @@ public class LinkRemoteCheResponse extends ResponseABC {
 	@Getter
 	@Setter
 	String							linkedCheName; // Name of the cart CHE that remote is associating to
-
-
-	@Override
-	public String getDeviceIdentifier() {
-		return getNetworkGuid();
-	}
-	
 }

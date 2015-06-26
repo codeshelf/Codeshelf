@@ -87,11 +87,4 @@ public class ObjectPropertiesResponse extends ResponseABC {
 		}			
 		return null;
 	}			
-
-
-	@Override
-	public String getDeviceIdentifier() {
-		return null;
-	}
-
 }

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
-import lombok.Setter;
 
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -15,10 +14,6 @@ public class GetPutWallInstructionResponse extends ResponseABC {
 	// had some temporary debugging. Not needed now.
 	
 	// Initially a clone of GetWorkResponse, but we expect it will drift.
-
-	@Getter
-	@Setter
-	String							networkGuid;
 
 	@Getter
 	private List<WorkInstruction>	workInstructions;
@@ -32,11 +27,5 @@ public class GetPutWallInstructionResponse extends ResponseABC {
 				workInstructions.add(TenantPersistenceService.<WorkInstruction> deproxify(wi));
 			}
 		}
-	}
-
-
-	@Override
-	public String getDeviceIdentifier() {
-		return getNetworkGuid();
 	}
 }

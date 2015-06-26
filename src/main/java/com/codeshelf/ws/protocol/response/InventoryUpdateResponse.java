@@ -16,9 +16,4 @@ public class InventoryUpdateResponse extends ResponseABC {
 	public void appendStatusMessage(String inMessage) {
 		this.setStatusMessage(this.getStatusMessage() + inMessage);
 	}
-
-	@Override
-	public String getDeviceIdentifier() {
-		return null;
-	}
 }

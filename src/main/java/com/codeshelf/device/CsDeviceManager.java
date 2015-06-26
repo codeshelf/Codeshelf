@@ -50,6 +50,7 @@ import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest;
+import com.codeshelf.ws.protocol.request.TapeLocationDecodingRequest;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
 import com.codeshelf.ws.protocol.request.InventoryLightItemRequest;
 import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
@@ -386,6 +387,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		LOGGER.debug("associateRemoteChe: Che={}; ", inCheId);
 		String cheId = inPersistentId.toString();
 		LinkRemoteCheRequest req = new LinkRemoteCheRequest(cheId, cheIdToAssociateTo);
+		clientEndpoint.sendMessage(req);
+	}
+
+	public void requestTapeDecoding(final String inCheId, final UUID inPersistentId, final String tapeId) {
+		LOGGER.debug("Decode tape: Che={}; tape={}", inCheId, tapeId);
+		String cheId = inPersistentId.toString();
+		TapeLocationDecodingRequest req = new TapeLocationDecodingRequest(cheId, tapeId);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -813,6 +821,25 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			// Although not done yet, may be useful to return information such as WI already completed, or it shorted, or ....
 			LOGGER.info("processPutWallInstructionResponse calling cheDevice.assignWallPuts");
 			cheDevice.assignWallPuts(workInstructions, message); // will initially use assignWork override, but probably need to add parameters.			
+		} else {
+			LOGGER.warn("Device not found in processPutWallInstructionResponse. CHE id={}", networkGuid);
+		}
+	}
+	
+	public void processTapeLocationDecodingResponse(String networkGuid, String decodedLocation) {
+		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
+		if (cheDevice != null) {
+			if (cheDevice instanceof SetupOrdersDeviceLogic){
+				((SetupOrdersDeviceLogic)cheDevice).setLocationId(decodedLocation);
+				if (cheDevice.getCheStateEnum() == CheStateEnum.SETUP_SUMMARY) {
+					LOGGER.info("Tape decoding {} received and saved, refreshing SETUP_SUMMARY. CHE id={}", decodedLocation, networkGuid);
+					cheDevice.setState(CheStateEnum.SETUP_SUMMARY);
+				} else {
+					LOGGER.info("Tape decoding {} received and saved, but device is no longer in SETUP_SUMMARY. CHE id={}", decodedLocation, networkGuid);
+				}
+			} else {
+				LOGGER.warn("Device is not SetupOrdersDeviceLogic in processTapeLocationDecodingResponse. CHE id={}", networkGuid);
+			}
 		} else {
 			LOGGER.warn("Device not found in processPutWallInstructionResponse. CHE id={}", networkGuid);
 		}

@@ -22,6 +22,10 @@ public abstract class ResponseABC extends MessageABC {
 	@Getter
 	@Setter
 	String			requestId;
+	
+	@Getter
+	@Setter
+	String			networkGuid;
 
 	@JsonIgnore
 	public boolean isSuccess() {
@@ -33,5 +37,10 @@ public abstract class ResponseABC extends MessageABC {
 		String returnStr = " status:" + status + " statusMessage:" + statusMessage + " requestId:" + requestId;
 		String className = this.getClass().getSimpleName(); // the class name is the useful part. Most of the responses do not have toString() overrides, and shouldn't
 		return className + ":" + returnStr;
+	}
+	
+	@Override
+	public final String getDeviceIdentifier() {
+		return getNetworkGuid();
 	}
 }

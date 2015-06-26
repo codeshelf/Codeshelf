@@ -41,6 +41,7 @@ import com.codeshelf.ws.protocol.command.ObjectUpdateCommand;
 import com.codeshelf.ws.protocol.command.PutWallPlacementCommand;
 import com.codeshelf.ws.protocol.command.RegisterFilterCommand;
 import com.codeshelf.ws.protocol.command.ServiceMethodCommand;
+import com.codeshelf.ws.protocol.command.TapeLocationDecodingCommand;
 import com.codeshelf.ws.protocol.command.VerifyBadgeCommand;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.protocol.message.KeepAlive;
@@ -68,6 +69,7 @@ import com.codeshelf.ws.protocol.request.PutWallPlacementRequest;
 import com.codeshelf.ws.protocol.request.RegisterFilterRequest;
 import com.codeshelf.ws.protocol.request.RequestABC;
 import com.codeshelf.ws.protocol.request.ServiceMethodRequest;
+import com.codeshelf.ws.protocol.request.TapeLocationDecodingRequest;
 import com.codeshelf.ws.protocol.request.VerifyBadgeRequest;
 import com.codeshelf.ws.protocol.response.FailureResponse;
 import com.codeshelf.ws.protocol.response.PingResponse;
@@ -100,6 +102,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	private final Counter			inventoryLightLocationRequestCounter;
 	private final Counter			putWallPlacementCounter;
 	private final Counter			notificationCounter;
+	private final Counter			tapeLocationDecodingCounter;
 	private final Timer				requestProcessingTimer;
 
 	private ServiceFactory			serviceFactory;
@@ -137,6 +140,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		putWallPlacementCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.put-wall-placement");
 		requestProcessingTimer = metricsService.createTimer(MetricsGroup.WSS, "requests.processing-time");
 		notificationCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.notification");
+		tapeLocationDecodingCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.tape-location-decoding");
 	}
 
 	ObjectChangeBroadcaster getObjectChangeBroadcaster() {
@@ -252,6 +256,10 @@ public class ServerMessageProcessor implements IMessageProcessor {
 				(PutWallPlacementRequest) request,
 				serviceFactory.getServiceInstance(WorkService.class));
 			putWallPlacementCounter.inc();
+			applicationRequestCounter.inc();
+		} else if (request instanceof TapeLocationDecodingRequest) {
+			command = new TapeLocationDecodingCommand(csSession, (TapeLocationDecodingRequest) request);
+			tapeLocationDecodingCounter.inc();
 			applicationRequestCounter.inc();
 		} else {
 			LOGGER.error("invalid message {} for user {}", request.getClass().getSimpleName(), user.getUsername());
