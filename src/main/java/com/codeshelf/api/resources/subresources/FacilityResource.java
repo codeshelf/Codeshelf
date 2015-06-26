@@ -1,6 +1,7 @@
 package com.codeshelf.api.resources.subresources;
 
 import java.io.InputStream;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -32,6 +33,7 @@ import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.exception.ConstraintViolationException;
 import org.joda.time.DateTime;
 
 import com.codahale.metrics.health.HealthCheck.Result;
@@ -149,6 +151,13 @@ public class FacilityResource {
 		try {
 			facility.delete(webSocketManagerService);
 			return BaseResponse.buildResponse("Facility Deleted");
+		} catch (ConstraintViolationException e) {
+			SQLException se = e.getSQLException();
+			if (se != null){
+				return new ErrorResponse().processException(se);
+			} else {
+				return new ErrorResponse().processException(e);
+			}
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
 		}	
