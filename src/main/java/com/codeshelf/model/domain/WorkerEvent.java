@@ -136,7 +136,7 @@ public class WorkerEvent extends DomainObjectABC {
 	}
 
 	public void generateDomainId(){
-		String domainId = getDefaultDomainIdPrefix() + "_" + getDeviceGuid() + "_" + getEventType();
+		String domainId = getDefaultDomainIdPrefix() + "_" + getDeviceGuid() + "_" + getEventType() + "_" + getCreated().getTime();
 		setDomainId(domainId);
 	}
 }
