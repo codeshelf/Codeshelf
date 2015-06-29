@@ -23,7 +23,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
-import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -102,12 +101,12 @@ public class WorkerEvent extends DomainObjectABC {
 		setCreated(new Timestamp(System.currentTimeMillis()));
 	}
 
-	public WorkerEvent(DateTime created, EventType eventType, NetGuid deviceGuid, UUID devicePersistentId, Facility facility) {
+	public WorkerEvent(DateTime created, EventType eventType, Che che) {
 		setCreated(new Timestamp(created.getMillis()));
-		setDeviceGuid(deviceGuid.toString());
-		setDevicePersistentId(devicePersistentId.toString());
+		setDeviceGuid(che.getDeviceGuidStr());
+		setDevicePersistentId(che.getPersistentId().toString());
 		setEventType(eventType);
-		setFacility(facility);
+		setFacility(che.getFacility());
 		generateDomainId();
 	}
 
