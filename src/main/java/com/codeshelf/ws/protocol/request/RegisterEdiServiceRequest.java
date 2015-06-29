@@ -12,9 +12,4 @@ public class RegisterEdiServiceRequest extends RequestABC {
 	@Getter
 	@Setter
 	String	serviceProvider;
-
-	@Override
-	public String getDeviceIdentifier() {
-		return null;
-	}
 }

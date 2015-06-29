@@ -32,9 +32,4 @@ public class ServiceMethodRequest extends RequestABC {
 		setMethodName(methodName);
 		setMethodArgs(methodArgs);
 	}
-
-	@Override
-	public String getDeviceIdentifier() {
-		return null;
-	}
 }

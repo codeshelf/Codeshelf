@@ -23,10 +23,4 @@ public class ObjectPropertiesRequest extends RequestABC {
 	// This really needs a properties list, but not now. The list view asks for the properties it wants returned.
 	// @Getter @Setter
 	// List<String> propertyNames;
-	
-
-	@Override
-	public String getDeviceIdentifier() {
-		return null;
-	}
 }

@@ -2,7 +2,7 @@ package com.codeshelf.ws.protocol.request;
 
 import lombok.Getter;
 
-public class ComputeDetailWorkRequest extends DeviceRequest {
+public class ComputeDetailWorkRequest extends RequestABC {
 
 	@Getter
 	String orderDetailId;

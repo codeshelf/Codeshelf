@@ -21,9 +21,4 @@ public class RegisterFilterRequest extends RequestABC {
 	
 	@Getter @Setter
 	List<Map<String, Object>> filterParams;
-
-	@Override
-	public String getDeviceIdentifier() {
-		return null;
-	}
 }

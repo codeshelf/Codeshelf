@@ -2,7 +2,7 @@ package com.codeshelf.ws.protocol.request;
 
 import lombok.Getter;
 
-public class ComputePutWallInstructionRequest extends DeviceRequest {
+public class ComputePutWallInstructionRequest extends RequestABC {
 
 	@Getter
 	String itemOrUpc;

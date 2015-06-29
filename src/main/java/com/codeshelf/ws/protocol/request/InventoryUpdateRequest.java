@@ -2,7 +2,7 @@ package com.codeshelf.ws.protocol.request;
 
 import lombok.Getter;
 
-public class InventoryUpdateRequest extends DeviceRequest {
+public class InventoryUpdateRequest extends RequestABC {
 
 	@Getter
 	String gtin;

@@ -39,9 +39,4 @@ public class ObjectUpdateRequest extends RequestABC {
 		this.persistentId = persistentId.toString();
 		this.properties = properties;
 	}
-
-	@Override
-	public String getDeviceIdentifier() {
-		return null;
-	}
 }

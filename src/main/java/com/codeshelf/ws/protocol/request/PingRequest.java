@@ -11,9 +11,4 @@ public class PingRequest extends RequestABC {
 	public PingRequest() {
 		startTime = System.currentTimeMillis();
 	}
-
-	@Override
-	public String getDeviceIdentifier() {
-		return null;
-	}
 }

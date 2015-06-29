@@ -16,9 +16,4 @@ public class ObjectDeleteRequest extends RequestABC {
 	
 	@Getter @Setter
 	String persistentId;
-
-	@Override
-	public String getDeviceIdentifier() {
-		return null;
-	}
 }

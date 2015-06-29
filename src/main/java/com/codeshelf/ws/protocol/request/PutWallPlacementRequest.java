@@ -2,7 +2,7 @@ package com.codeshelf.ws.protocol.request;
 
 import lombok.Getter;
 
-public class PutWallPlacementRequest extends DeviceRequest{
+public class PutWallPlacementRequest extends RequestABC{
 	@Getter
 	private String orderId;
 	

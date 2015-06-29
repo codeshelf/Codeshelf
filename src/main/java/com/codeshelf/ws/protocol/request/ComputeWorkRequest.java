@@ -5,7 +5,7 @@ import java.util.Map;
 import lombok.Getter;
 import lombok.Setter;
 
-public class ComputeWorkRequest extends DeviceRequest {
+public class ComputeWorkRequest extends RequestABC {
 	public enum ComputeWorkPurpose {COMPUTE_WORK, GET_WORK}
 	
 	@Getter

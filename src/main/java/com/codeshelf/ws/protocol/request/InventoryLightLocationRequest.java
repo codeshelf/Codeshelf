@@ -2,7 +2,7 @@ package com.codeshelf.ws.protocol.request;
 
 import lombok.Getter;
 
-public class InventoryLightLocationRequest extends DeviceRequest {
+public class InventoryLightLocationRequest extends RequestABC {
 	@Getter
 	String location;
 	

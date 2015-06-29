@@ -26,9 +26,4 @@ public class ObjectMethodRequest extends RequestABC {
 	
 	@Getter @Setter
 	List<ArgsClass> methodArgs;
-
-	@Override
-	public String getDeviceIdentifier() {
-		return null;
-	}
 }

@@ -54,7 +54,6 @@ import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest;
 import com.codeshelf.ws.protocol.request.CreatePathRequest;
-import com.codeshelf.ws.protocol.request.DeviceRequest;
 import com.codeshelf.ws.protocol.request.EchoRequest;
 import com.codeshelf.ws.protocol.request.InventoryLightItemRequest;
 import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
@@ -294,10 +293,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			}
 			response = new FailureResponse(message);
 			response.setRequestId(request.getMessageId());
-			if (request instanceof DeviceRequest) {
-				String cheId = ((DeviceRequest) request).getDeviceId();
-				((FailureResponse) response).setCheId(cheId);
-			}
+			((FailureResponse) response).setCheId(request.getDeviceId());
 		} finally {
 			if (timerContext != null)
 				timerContext.stop();

@@ -40,7 +40,7 @@ public abstract class ResponseABC extends MessageABC {
 	}
 	
 	@Override
-	public final String getDeviceIdentifier() {
+	public String getDeviceIdentifier() {
 		return getNetworkGuid();
 	}
 }
