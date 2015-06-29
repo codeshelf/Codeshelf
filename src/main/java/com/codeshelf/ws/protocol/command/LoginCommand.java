@@ -92,7 +92,7 @@ public class LoginCommand extends CommandABC {
 							// send all network updates to this session for this network
 							NetworkChangeListener.registerWithSession(this.objectChangeBroadcaster, wsConnection, network);
 						} else { //regular ui client
-							if (loginRequest.isDeviceLogin()) {
+							if (authUser.isSiteController()) {
 								String msg = "Could not connect site controller no facilities in this tenant";
 								LOGGER.warn(msg);
 								response.setStatusMessage(msg);
