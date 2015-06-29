@@ -78,6 +78,8 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	private TwoKeyMap<UUID, NetGuid, INetworkDevice>	mDeviceMap;
 
 	private Map<NetGuid, CheData>						mDeviceDataMap;
+	
+	private HashMap<String, String>						mPosconsInUse;
 
 	@Getter
 	private IRadioController							radioController;
@@ -128,6 +130,8 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
 
 		mDeviceDataMap = new HashMap<NetGuid, CheData>();
+		
+		mPosconsInUse = new HashMap<>();
 
 		username = System.getProperty("websocket.username");
 		password = System.getProperty("websocket.password");
@@ -1225,6 +1229,20 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			return null;
 		else
 			return this.getCheDeviceByNetGuid(theGuid);
+	}
+	
+	protected void occupyPutWallPoscon(String controllerId, int posConIndex, String cheId, String userId) {
+		String key = posconKeygen(controllerId, posConIndex);
+		mPosconsInUse.put(key, userId + " on " + cheId);
+	}
+	
+	protected String getPosconHolder(String controllerId, int posConIndex) {
+		String key = posconKeygen(controllerId, posConIndex);
+		return mPosconsInUse.get(key);
+	}
+	
+	private String posconKeygen(String controllerId, int posConIndex) {
+		return controllerId + "-" + posConIndex;
 	}
 
 }
