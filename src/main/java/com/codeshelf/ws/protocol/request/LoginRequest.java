@@ -14,9 +14,6 @@ public class LoginRequest extends RequestABC {
 	@Getter @Setter
 	private String password;
 	
-	@Getter @Setter
-	private boolean deviceLogin = false;
-
 	public LoginRequest() {
 	}
 

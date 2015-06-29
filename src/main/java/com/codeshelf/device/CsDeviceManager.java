@@ -471,7 +471,6 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		// connected to server - send attach request
 		LOGGER.info("Connected to server");
 		LoginRequest loginRequest = new LoginRequest(username, password);
-		loginRequest.setDeviceLogin(true);
 		clientEndpoint.sendMessage(loginRequest);
 	}
 
