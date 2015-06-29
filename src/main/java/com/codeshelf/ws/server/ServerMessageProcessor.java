@@ -293,7 +293,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			}
 			response = new FailureResponse(message);
 			response.setRequestId(request.getMessageId());
-			((FailureResponse) response).setCheId(request.getDeviceId());
+			((FailureResponse) response).setCheId(request.getDeviceIdentifier());
 		} finally {
 			if (timerContext != null)
 				timerContext.stop();

@@ -3,7 +3,7 @@ package com.codeshelf.ws.protocol.response;
 import lombok.Getter;
 import lombok.Setter;
 
-public class LinkRemoteCheResponse extends ResponseABC {
+public class LinkRemoteCheResponse extends DeviceResponseABC {
 	
 	// private static final Logger		LOGGER	= LoggerFactory.getLogger(GetPutWallInstructionResponse.class);
 	// had some temporary debugging. Not needed now.

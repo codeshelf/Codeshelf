@@ -22,10 +22,6 @@ public abstract class ResponseABC extends MessageABC {
 	@Getter
 	@Setter
 	String			requestId;
-	
-	@Getter
-	@Setter
-	String			networkGuid;
 
 	@JsonIgnore
 	public boolean isSuccess() {
@@ -41,6 +37,6 @@ public abstract class ResponseABC extends MessageABC {
 	
 	@Override
 	public String getDeviceIdentifier() {
-		return getNetworkGuid();
+		return null;
 	}
 }

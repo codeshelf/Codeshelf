@@ -2,7 +2,7 @@ package com.codeshelf.ws.protocol.request;
 
 import lombok.Getter;
 
-public class LinkRemoteCheRequest extends RequestABC {
+public class LinkRemoteCheRequest extends DeviceRequestABC {
 
 	@Getter
 	String remoteCheNameToLinkTo;

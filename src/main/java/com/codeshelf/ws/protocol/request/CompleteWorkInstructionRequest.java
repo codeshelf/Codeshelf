@@ -5,7 +5,7 @@ import lombok.Setter;
 
 import com.codeshelf.model.domain.WorkInstruction;
 
-public class CompleteWorkInstructionRequest extends RequestABC {
+public class CompleteWorkInstructionRequest extends DeviceRequestABC {
 
 	@Getter
 	@Setter

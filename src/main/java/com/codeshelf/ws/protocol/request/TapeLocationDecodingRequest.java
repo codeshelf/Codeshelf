@@ -2,7 +2,7 @@ package com.codeshelf.ws.protocol.request;
 
 import lombok.Getter;
 
-public class TapeLocationDecodingRequest extends RequestABC{
+public class TapeLocationDecodingRequest extends DeviceRequestABC{
 	@Getter
 	private String tapeId;
 	

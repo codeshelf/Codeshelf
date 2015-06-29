@@ -2,7 +2,7 @@ package com.codeshelf.ws.protocol.request;
 
 import lombok.Getter;
 
-public class VerifyBadgeRequest extends RequestABC {
+public class VerifyBadgeRequest extends DeviceRequestABC {
 	@Getter
 	private String badge;
 	

@@ -8,7 +8,7 @@ import lombok.Getter;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.persistence.TenantPersistenceService;
 
-public class GetPutWallInstructionResponse extends ResponseABC {
+public class GetPutWallInstructionResponse extends DeviceResponseABC {
 	
 	// private static final Logger		LOGGER	= LoggerFactory.getLogger(GetPutWallInstructionResponse.class);
 	// had some temporary debugging. Not needed now.

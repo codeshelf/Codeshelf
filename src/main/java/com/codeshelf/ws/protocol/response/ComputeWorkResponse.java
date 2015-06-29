@@ -13,7 +13,7 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
 
-public class ComputeWorkResponse extends ResponseABC {
+public class ComputeWorkResponse extends DeviceResponseABC {
 	@Getter @Setter
 	private ComputeWorkPurpose purpose = ComputeWorkPurpose.COMPUTE_WORK;
 	

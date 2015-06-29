@@ -8,7 +8,7 @@ import lombok.Getter;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.persistence.TenantPersistenceService;
 
-public class GetOrderDetailWorkResponse extends ResponseABC {
+public class GetOrderDetailWorkResponse extends DeviceResponseABC {
 	// Initially a clone of GetWorkResponse, but we expect it will drift.
 
 	@Getter
