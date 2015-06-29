@@ -92,6 +92,13 @@ public class LoginCommand extends CommandABC {
 							// send all network updates to this session for this network
 							NetworkChangeListener.registerWithSession(this.objectChangeBroadcaster, wsConnection, network);
 						} else { //regular ui client
+							if (loginRequest.isDeviceLogin()) {
+								String msg = "Could not connect site controller no facilities in this tenant";
+								LOGGER.warn(msg);
+								response.setStatusMessage(msg);
+								response.setStatus(ResponseStatus.Fail);
+								return response;
+							}
 							// First login from the client will make sure a facility is created only
 							//  for the "default" tenant in Tracy, CA
 							String tenantId = tenant.getName();
