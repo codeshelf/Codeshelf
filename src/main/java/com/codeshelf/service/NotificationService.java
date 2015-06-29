@@ -26,17 +26,9 @@ import com.google.inject.Inject;
 
 public class NotificationService implements IApiService{
 	
-	public enum EventType {
-		LOGIN, SKIP_ITEM_SCAN, BUTTON, WI, SHORT, SHORT_AHEAD, COMPLETE, CANCEL_PUT;
-		
-		public String getName() {
-			return name();
-		}
-	}	
-	
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(NotificationService.class);
 	
-	private static final EnumSet<EventType> SAVE_ONLY = EnumSet.of(EventType.SKIP_ITEM_SCAN, EventType.SHORT, EventType.COMPLETE);
+	private static final EnumSet<WorkerEvent.EventType> SAVE_ONLY = EnumSet.of(WorkerEvent.EventType.SKIP_ITEM_SCAN, WorkerEvent.EventType.SHORT, WorkerEvent.EventType.COMPLETE);
 	
 	@Inject
 	public NotificationService() {
@@ -109,7 +101,7 @@ public class NotificationService implements IApiService{
 				+ "                HOUR(created)"
 				+ "       ORDER BY HOUR(created)"
 				);
-		query.setParameterList("includedEventTypes", ImmutableList.of(EventType.COMPLETE, EventType.SHORT));
+		query.setParameterList("includedEventTypes", ImmutableList.of(WorkerEvent.EventType.COMPLETE, WorkerEvent.EventType.SHORT));
 		Timestamp startTimestamp = new Timestamp(startDateTime.getMillis());
 		Timestamp endTimestamp = new Timestamp(endDateTime.getMillis());
 		query.setParameter("startDateTime", startTimestamp); //use setParameter instead of set timestamp so that it goes through the UTC conversion before hitting db

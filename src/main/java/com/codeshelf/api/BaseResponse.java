@@ -12,7 +12,7 @@ import javax.ws.rs.core.Response.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.service.NotificationService.EventType;
+import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.util.DateTimeParser;
 
 public abstract class BaseResponse {
@@ -123,15 +123,15 @@ public abstract class BaseResponse {
 		}
 	}
 
-	public static class EventTypeParam extends AbstractParam<EventType> {
+	public static class EventTypeParam extends AbstractParam<WorkerEvent.EventType> {
 
 		public EventTypeParam(String str) {
 			super(str);
 		}
 
 		@Override
-		protected EventType parse(String param) { 
-			return EventType.valueOf(param);
+		protected WorkerEvent.EventType parse(String param) { 
+			return WorkerEvent.EventType.valueOf(param);
 		}		
 	}	
 }

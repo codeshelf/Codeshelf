@@ -12,7 +12,6 @@ import com.codeshelf.model.WiFactory;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
-import com.codeshelf.service.NotificationService.EventType;
 import com.codeshelf.testframework.HibernateTest;
 
 public class NotificationServiceTest extends HibernateTest {
@@ -58,8 +57,16 @@ public class NotificationServiceTest extends HibernateTest {
 		
 	}
 	
-	private void testDateBoundaries(DateTime eventTime, DateTime startTime, DateTime endTime, int numResults) {
+	private Che getTestChe() {
+		getFacility();
 		Che che = getChe1();
+		return che;
+	}
+	
+	private void testDateBoundaries(DateTime eventTime, DateTime startTime, DateTime endTime, int numResults) {
+		this.getTenantPersistenceService().beginTransaction();
+		Che che = getTestChe();
+		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		NotificationService service = new NotificationService();
@@ -78,7 +85,7 @@ public class NotificationServiceTest extends HibernateTest {
 		WorkInstruction.staticGetDao().store(wi);
 		WorkInstruction persistedWI = WorkInstruction.staticGetDao().findByDomainId(wi.getParent(), wi.getDomainId());
 		
-		WorkerEvent event = new WorkerEvent(eventTime, EventType.COMPLETE, che);
+		WorkerEvent event = new WorkerEvent(eventTime, WorkerEvent.EventType.COMPLETE, che, "worker");
 		event.setWorkInstruction(persistedWI);
 		service.saveEvent(event);
 	}

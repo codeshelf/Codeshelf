@@ -26,7 +26,6 @@ import org.joda.time.DateTime;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
-import com.codeshelf.service.NotificationService.EventType;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -39,6 +38,14 @@ public class WorkerEvent extends DomainObjectABC {
 	public static class WorkerEventDao extends GenericDaoABC<WorkerEvent> implements ITypedDao<WorkerEvent> {
 		public final Class<WorkerEvent> getDaoClass() {
 			return WorkerEvent.class;
+		}
+	}
+
+	public enum EventType {
+		LOGIN, SKIP_ITEM_SCAN, BUTTON, WI, SHORT, SHORT_AHEAD, COMPLETE, CANCEL_PUT;
+		
+		public String getName() {
+			return name();
 		}
 	}
 
@@ -63,7 +70,7 @@ public class WorkerEvent extends DomainObjectABC {
 	@Enumerated(EnumType.STRING)
 	@Getter @Setter
 	@JsonProperty
-	private EventType						eventType;
+	private WorkerEvent.EventType						eventType;
 
 	@Column(nullable = false, name = "device_persistentid")
 	@Getter @Setter
@@ -101,7 +108,7 @@ public class WorkerEvent extends DomainObjectABC {
 		setCreated(new Timestamp(System.currentTimeMillis()));
 	}
 
-	public WorkerEvent(DateTime created, EventType eventType, Che che) {
+	public WorkerEvent(DateTime created, WorkerEvent.EventType eventType, Che che, String workerId) {
 		setCreated(new Timestamp(created.getMillis()));
 		setDeviceGuid(che.getDeviceGuidStr());
 		setDevicePersistentId(che.getPersistentId().toString());

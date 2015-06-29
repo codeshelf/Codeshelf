@@ -21,7 +21,7 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.NotificationService.EventType;
+import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
 
@@ -260,7 +260,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 	 * 
 	 * Currently saved actions: CANCEL_PUT, SHORT, SHORT_AHEAD, COMPLETE, SCAN_SKIP
 	 */
-	protected void notifyWiVerb(final WorkInstruction inWi, EventType inVerb, boolean needWarn) {
+	protected void notifyWiVerb(final WorkInstruction inWi, WorkerEvent.EventType inVerb, boolean needWarn) {
 		if (inWi == null) {
 			LOGGER.error("bad call to notifyWarnWi"); // want stack trace?
 			return;
