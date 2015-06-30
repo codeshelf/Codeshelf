@@ -110,6 +110,8 @@ public class RootAuthResource {
 		if (tokenSession != null && !Strings.isNullOrEmpty(newPassword)) {
 			NewCookie newCookie = null;
 			boolean allowChange = false;
+			boolean passwordWasSet = (tokenSession.getUser().getHashedPassword() != null);
+
 			if(!Strings.isNullOrEmpty(oldPassword) && tokenSession.getStatus().equals(TokenSession.Status.ACTIVE_SESSION)) {
 				// regular password change - old password must be submitted
 				TokenSession authTest = tokenSessionService.authenticate(tokenSession.getUser().getUsername(), oldPassword);
@@ -134,7 +136,9 @@ public class RootAuthResource {
 				User user = tokenSession.getUser();
 				user.setHashedPassword(tokenSessionService.hashPassword(newPassword));
 				TenantManagerService.getInstance().updateUser(user);
-				SecurityEmails.sendPasswordChanged(user);
+				if(passwordWasSet) {
+					SecurityEmails.sendPasswordChanged(user);
+				}
 				ResponseBuilder responseBuilder = Response.ok(user);
 				if(newCookie != null) {
 					responseBuilder = responseBuilder.cookie(newCookie);
