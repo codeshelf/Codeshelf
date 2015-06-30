@@ -108,6 +108,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					SCAN_PUTWALL_NAME_MSG					= cheLine("SCAN PUT WALL NAME");
 	protected static final String					NO_WORK_FOR								= cheLine("NO WORK FOR");
 	protected static final String					SCAN_ITEM_OR_CLEAR						= cheLine("SCAN ITEM OR CLEAR");
+	
+	//For Poscon Busy
+	protected static final String					POSCON_BUSY_LINE_1						= "Poscon for %s busy";
+	protected static final String					POSCON_BUSY_LINE_3						= "Scan YES after they come";
+	protected static final String					POSCON_BUSY_LINE_4						= "or if they will never come";
 
 	public static final String						STARTWORK_COMMAND						= "START";
 	public static final String						REVERSE_COMMAND							= "REVERSE";
@@ -1589,7 +1594,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.error("Inappropriate call to processStateSetup()");
 	}
 
-	public void assignWallPuts(final List<WorkInstruction> inWorkItemList, final String message) {
+	public void assignWallPuts(final List<WorkInstruction> inWorkItemList) {
 		LOGGER.error("Inappropriate call to assignWallPuts()");
 	}
 

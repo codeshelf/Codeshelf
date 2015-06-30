@@ -43,6 +43,7 @@ public enum CheStateEnum {
 	// states used for put wall DEV-712, DEV-713
 	PUT_WALL_SCAN_WALL(CheStateNum.PUT_WALL_SCAN_WALL, "PUT_WALL_SCAN_WALL"),
 	PUT_WALL_SCAN_ITEM(CheStateNum.PUT_WALL_SCAN_ITEM, "PUT_WALL_SCAN_ITEM"),
+	PUT_WALL_POSCON_BUSY(CheStateNum.PUT_WALL_POSCON_BUSY, "PUT_WALL_POSCON_BUSY"),
 	DO_PUT(CheStateNum.DO_PUT, "DO_PUT"),
 	GET_PUT_INSTRUCTION(CheStateNum.GET_PUT_INSTRUCTION, "GET_PUT_INSTRUCTION"),
 	NO_PUT_WORK(CheStateNum.NO_PUT_WORK, "NO_PUT_WORK"),
@@ -181,6 +182,7 @@ public enum CheStateEnum {
 		static final byte	PUT_WALL_SCAN_ORDER			= 24;
 		static final byte	PUT_WALL_SCAN_LOCATION		= 25;
 		static final byte	PUT_WALL_SCAN_ITEM			= 26;
+		static final byte	PUT_WALL_POSCON_BUSY		= 4;	//Added June 30th, 2015
 		static final byte	DO_PUT						= 27;
 		static final byte	PUT_WALL_SCAN_WALL			= 29;
 		static final byte	GET_PUT_INSTRUCTION			= 30;

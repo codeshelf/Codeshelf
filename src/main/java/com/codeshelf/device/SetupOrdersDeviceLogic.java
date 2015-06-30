@@ -95,6 +95,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private int									mRememberPriorShorts					= 0;
 
 	private final boolean						useNewCheScreen							= true;
+	
+	@Accessors(prefix = "m")
+	@Getter 
+	@Setter
+	private String 								mBusyPoscons;
 
 	private boolean								mSetupMixHasPutwall						= false;
 	private boolean								mSetupMixHasCntrOrder					= false;
@@ -281,7 +286,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				case DO_PUT:
 					showActivePicks();
 					break;
-
+					
+				case PUT_WALL_POSCON_BUSY:
+					showPosconBusyScreen();
+					break;
+					
 				case REMOTE:
 					sendRemoteStateScreen();
 					break;
@@ -610,6 +619,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case SCAN_GTIN:
 				break;
 
+			case PUT_WALL_POSCON_BUSY:
+				doNextWallPut(false);
+				break;
+				
 			default:
 				// Stay in the same state - the scan made no sense.
 				invalidScanMsg(mCheStateEnum);
@@ -833,6 +846,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**  doNextWallPut side effects
 	 */
 	private void doNextWallPut() {
+		doNextWallPut(true);
+	}
+	
+	private void doNextWallPut(boolean verifyPosconAvailability) {
 		LOGGER.debug(this + "doNextWallPut");
 
 		if (mActivePickWiList.size() > 0) {
@@ -844,13 +861,19 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		} else {
 
 			if (selectNextActivePicks()) {
-				setState(CheStateEnum.DO_PUT); // This will cause showActivePicks();
+				String posconHolders = mDeviceManager.getPosconHolders(getGuid(), getOneActiveWorkInstruction());
+				if (posconHolders == null || !verifyPosconAvailability) {
+					setState(CheStateEnum.DO_PUT); // This will cause showActivePicks();
+				} else {
+					setBusyPoscons(posconHolders);
+					setState(CheStateEnum.PUT_WALL_POSCON_BUSY);
+				}
 			} else {
-				// no side effects needed? processPickComplete() is the corrolary
+				// no side effects needed? processPickComplete() is the corollary
 				setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
 			}
 		}
-	}
+	}	
 
 	// --------------------------------------------------------------------------
 	/**
@@ -2053,7 +2076,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**
 	 * Almost the same as assignWork(), but some state transitions differ
 	 */
-	public void assignWallPuts(final List<WorkInstruction> inWorkItemList, String message) {
+	@Override
+	public void assignWallPuts(final List<WorkInstruction> inWorkItemList) {
 		notifyPutWallResponse(inWorkItemList);
 		if (inWorkItemList == null || inWorkItemList.size() == 0) {
 			setState(CheStateEnum.NO_PUT_WORK);
@@ -2464,6 +2488,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		}
 		return 0;
+	}
+	
+	private void showPosconBusyScreen(){
+		String line1 = String.format(POSCON_BUSY_LINE_1, getOneActiveWorkInstruction().getPickInstruction());
+		String line2 = "By " + getBusyPoscons();
+		sendDisplayCommand(line1, line2, POSCON_BUSY_LINE_3, POSCON_BUSY_LINE_4);
 	}
 
 	// --------------------------------------------------------------------------

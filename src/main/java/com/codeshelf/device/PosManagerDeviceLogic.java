@@ -187,15 +187,21 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 	}
 
 	private String getSourceControllerIdForPosconPosition(Byte whichPoscon) {
+		PosControllerInstr locatedInstruction = null;
+		long latestPostingTime = 0;
 		// not so sure the data structures are ideal. For now, just iterate to find it.
-
-		for (Map<Byte, PosControllerInstr> x : mPosInstructionBySource.values()) {
-			PosControllerInstr y = x.get(whichPoscon);
-			if (y != null)
-				return y.getSourceId();
+		for (Map<Byte, PosControllerInstr> instructionsForSource : mPosInstructionBySource.values()) {
+			PosControllerInstr instruction = instructionsForSource.get(whichPoscon);
+			if (instruction != null){
+				long postedTime = instruction.getPostedToPosConController();
+				if (postedTime > latestPostingTime) {
+					latestPostingTime = postedTime;
+					locatedInstruction = instruction;
+				}
+			}
 		}
 
-		return null;
+		return locatedInstruction == null ? null : locatedInstruction.getSourceId();
 	}
 
 	// --------------------------------------------------------------------------

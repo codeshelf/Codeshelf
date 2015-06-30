@@ -155,9 +155,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				GetPutWallInstructionResponse wallResponse = (GetPutWallInstructionResponse) response;
 				if (wallResponse.getStatus() == ResponseStatus.Success) {
 					LOGGER.info("GetPutWallInstructionResponse received: success. Passing through to deviceManager");
-					this.deviceManager.processPutWallInstructionResponse(wallResponse.getNetworkGuid(),
-						wallResponse.getWorkInstructions(),
-						wallResponse.getStatusMessage());
+					this.deviceManager.processPutWallInstructionResponse(wallResponse.getNetworkGuid(),wallResponse.getWorkInstructions());
 				} else {
 					LOGGER.info("GetPutWallInstructionResponse received: not success. No action.");
 				}

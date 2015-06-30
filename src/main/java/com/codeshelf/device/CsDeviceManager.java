@@ -20,6 +20,7 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.device.PosControllerInstr.PosConInstrGroupSerializer;
 import com.codeshelf.flyweight.bitfields.OutOfRangeException;
 import com.codeshelf.flyweight.command.CommandControlPosconBroadcast;
 import com.codeshelf.flyweight.command.CommandControlPosconSetup;
@@ -59,6 +60,7 @@ import com.codeshelf.ws.protocol.request.LoginRequest;
 import com.codeshelf.ws.protocol.request.VerifyBadgeRequest;
 import com.codeshelf.ws.protocol.response.FailureResponse;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 /**
@@ -79,8 +81,6 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 	private Map<NetGuid, CheData>						mDeviceDataMap;
 	
-	private HashMap<String, String>						mPosconsInUse;
-
 	@Getter
 	private IRadioController							radioController;
 
@@ -131,8 +131,6 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 		mDeviceDataMap = new HashMap<NetGuid, CheData>();
 		
-		mPosconsInUse = new HashMap<>();
-
 		username = System.getProperty("websocket.username");
 		password = System.getProperty("websocket.password");
 
@@ -819,12 +817,12 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	}
 
 	// Works the same as processGetWorkResponse? Good
-	public void processPutWallInstructionResponse(String networkGuid, List<WorkInstruction> workInstructions, String message) {
+	public void processPutWallInstructionResponse(String networkGuid, List<WorkInstruction> workInstructions) {
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			// Although not done yet, may be useful to return information such as WI already completed, or it shorted, or ....
 			LOGGER.info("processPutWallInstructionResponse calling cheDevice.assignWallPuts");
-			cheDevice.assignWallPuts(workInstructions, message); // will initially use assignWork override, but probably need to add parameters.			
+			cheDevice.assignWallPuts(workInstructions); // will initially use assignWork override, but probably need to add parameters.			
 		} else {
 			LOGGER.warn("Device not found in processPutWallInstructionResponse. CHE id={}", networkGuid);
 		}
@@ -1230,14 +1228,52 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			return this.getCheDeviceByNetGuid(theGuid);
 	}
 	
-	protected void occupyPutWallPoscon(String controllerId, int posConIndex, String cheId, String userId) {
-		String key = posconKeygen(controllerId, posConIndex);
-		mPosconsInUse.put(key, userId + " on " + cheId);
-	}
-	
-	protected String getPosconHolder(String controllerId, int posConIndex) {
-		String key = posconKeygen(controllerId, posConIndex);
-		return mPosconsInUse.get(key);
+	protected String getPosconHolders(NetGuid sourceChe, WorkInstruction requestedWi) {
+		StringBuilder posconHolders = new StringBuilder();
+		if (requestedWi == null) {
+			return null;
+		}
+		String requestedPosconStream = requestedWi.getPosConCmdStream();
+		if (requestedPosconStream == null || requestedPosconStream.isEmpty()){
+			return null;
+		}
+		List<PosControllerInstr> requestedPosconInstructions = PosConInstrGroupSerializer.deserializePosConInstrString(requestedPosconStream);
+		if (requestedPosconInstructions.isEmpty()) {
+			return null;
+		}
+		List<String> requestedPoscons = Lists.newArrayList();
+		for (PosControllerInstr requestedPosconInstruction : requestedPosconInstructions) {
+			String requestedPoscon = posconKeygen(requestedPosconInstruction.getControllerId(), requestedPosconInstruction.getPosition());
+			requestedPoscons.add(requestedPoscon);
+		}
+		for (INetworkDevice networkDevice : mDeviceMap.values()) {
+			if (networkDevice instanceof CheDeviceLogic) {
+				CheDeviceLogic che = (CheDeviceLogic) networkDevice;
+				if (sourceChe.equals(che.getGuid())){
+					continue;
+				}
+				List<WorkInstruction> wisOnChe = che.getActivePickWiList();
+				for (WorkInstruction wi : wisOnChe) {
+					String posconStream = wi.getPosConCmdStream();
+					if (posconStream == null || posconStream.isEmpty()) {
+						continue;
+					}
+					List<PosControllerInstr> posconInstructions = PosConInstrGroupSerializer.deserializePosConInstrString(posconStream);
+					for (PosControllerInstr posconInstruction : posconInstructions) {
+						String usedPoscon = posconKeygen(posconInstruction.getControllerId(), posconInstruction.getPosition());
+						if (requestedPoscons.contains(usedPoscon)){
+							posconHolders.append(che.getUserId()).append(" on ").append(che.getMyGuidStr()).append(", ");
+						}
+					}
+				}
+			}
+		}
+		int len = posconHolders.length();
+		if (len == 0) {
+			return null;
+		} else {
+			return posconHolders.substring(0, len - 2);
+		}
 	}
 	
 	private String posconKeygen(String controllerId, int posConIndex) {
