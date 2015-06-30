@@ -21,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
+import com.codeshelf.security.SecurityEmails;
 import com.codeshelf.security.SessionFlags.Flag;
 import com.codeshelf.security.TokenSession;
 import com.codeshelf.security.TokenSessionService;
@@ -133,6 +134,7 @@ public class RootAuthResource {
 				User user = tokenSession.getUser();
 				user.setHashedPassword(tokenSessionService.hashPassword(newPassword));
 				TenantManagerService.getInstance().updateUser(user);
+				SecurityEmails.sendPasswordChanged(user);
 				ResponseBuilder responseBuilder = Response.ok(user);
 				if(newCookie != null) {
 					responseBuilder = responseBuilder.cookie(newCookie);

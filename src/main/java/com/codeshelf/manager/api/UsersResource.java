@@ -26,6 +26,7 @@ import com.codeshelf.manager.User;
 import com.codeshelf.manager.UserRole;
 import com.codeshelf.manager.service.ITenantManagerService;
 import com.codeshelf.manager.service.TenantManagerService;
+import com.codeshelf.security.SecurityEmails;
 import com.codeshelf.security.TokenSessionService;
 import com.codeshelf.util.FormUtility;
 
@@ -181,6 +182,7 @@ public class UsersResource {
 			if (tokenSessionService.passwordMeetsRequirements(value)) {
 				LOGGER.info("update user {} - change password requested", user.getUsername());
 				user.setHashedPassword(tokenSessionService.hashPassword(value));
+				SecurityEmails.sendPasswordChangedByAdmin(user);
 				success = true;
 			} else {
 				LOGGER.warn("update user {} - invalid password specified", user.getUsername());

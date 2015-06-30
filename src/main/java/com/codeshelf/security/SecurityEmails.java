@@ -23,6 +23,14 @@ public class SecurityEmails {
 		sendTokenEmail(TokenSessionService.getInstance().createAccountRecoveryToken(user),"account-recovery");
 	}
 
+	public static void sendPasswordChanged(User user) {
+		sendTokenEmail(TokenSessionService.getInstance().createAccountRecoveryToken(user),"password-changed");
+	}
+
+	public static void sendPasswordChangedByAdmin(User user) {
+		sendTokenEmail(TokenSessionService.getInstance().createAccountRecoveryToken(user),"password-changed-by-admin");
+	}
+
 	private static void sendTokenEmail(TokenSession session, String template) {
 		String token = session.getNewToken();
 		try {
