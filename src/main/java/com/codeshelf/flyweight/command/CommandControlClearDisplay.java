@@ -23,6 +23,7 @@ public final class CommandControlClearDisplay extends CommandControlABC {
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CommandControlClearDisplay.class);
 	
+	@SuppressWarnings("unused")
 	private static final int LENGTH_BYTES = 0;
 
 	// --------------------------------------------------------------------------

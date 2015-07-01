@@ -894,6 +894,7 @@ public class CheProcessRemoteLink extends ServerTest {
 		Che che1 = Che.staticGetDao().findByPersistentId(che1PersistentId);
 		Che che2 = Che.staticGetDao().findByPersistentId(che2PersistentId);
 		Che che3 = Che.staticGetDao().findByPersistentId(che3PersistentId);
+		@SuppressWarnings("unused")
 		CodeshelfNetwork network = CodeshelfNetwork.staticGetDao().reload(getNetwork()); // these are necessary or the WorkService functions have staleObjectUpdate exceptions
 
 		String linkChe1 = che1.getAssociateToUi();
@@ -921,6 +922,7 @@ public class CheProcessRemoteLink extends ServerTest {
 		startSiteController();
 		PickSimulator picker1 = createPickSim(cheGuid1);
 		PickSimulator picker2 = createPickSim(cheGuid2);
+		@SuppressWarnings("unused")
 		PickSimulator picker3 = createPickSim(cheGuid3);
 
 		LOGGER.info("1: Picker 2 sets up some jobs on CHE2, then logs out");

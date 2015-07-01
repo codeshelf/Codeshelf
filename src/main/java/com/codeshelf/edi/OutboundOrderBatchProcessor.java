@@ -190,6 +190,8 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				
 				// process order file
 				List<OutboundOrderCsvBean> lines = batch.getLines();
+				//Check if destinationId, shipperId, or customerId values vary within individual orders
+				checkForChangingFields(lines);
 				int lineCount = 1;
 				int count = 1, size = lines.size();
 				for (OutboundOrderCsvBean orderBean : lines) {
@@ -546,6 +548,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		result.setOrderType(OrderTypeEnum.OUTBOUND);		
 		result.setCustomerId(inCsvBean.getCustomerId());
 		result.setShipperId(inCsvBean.getShipperId());
+		result.setDestinationId(inCsvBean.getDestinationId());
 
 		if (inCsvBean.getOrderDate() != null) {
 			try {
@@ -957,6 +960,38 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		Map<String, OrderDetail> orderDetails = this.orderlineMap.get(orderId);
 		if (orderDetails==null) return null;
 		return orderDetails.get(orderLineId);
+	}
+	
+	private void checkForChangingFields(List<OutboundOrderCsvBean> beans){
+		HashMap<String, String[]> orders = new HashMap<>();
+		String orderId, destinationId, savedDestinationId, shipperId, savedShipperId, customerId, savedCustomerId, order[];
+		for (OutboundOrderCsvBean bean : beans){
+			destinationId = bean.getDestinationId();
+			shipperId = bean.getShipperId();
+			customerId = bean.getCustomerId();
+			orderId = bean.getOrderId();
+			order = orders.get(orderId);
+			if (order != null){
+				savedDestinationId = order[0];
+				savedShipperId = order[1];
+				savedCustomerId = order[2];				
+				if (!strEquals(destinationId, savedDestinationId)){
+					LOGGER.warn("Changing destinationId for order {}", orderId);
+				}
+				if (!strEquals(shipperId, savedShipperId)){
+					LOGGER.warn("Changing shipperId for order {}", orderId);
+				}
+				if (!strEquals(customerId, savedCustomerId)){
+					LOGGER.warn("Changing customerId for order {}", orderId);
+				}
+			}
+			String updatedOrder[] = {destinationId, shipperId, customerId};
+			orders.put(orderId, updatedOrder);
+		}
+	}
+	
+	private boolean strEquals(String str1, String str2) {
+	    return (str1 == null ? str2 == null : str1.equals(str2));
 	}
 	
 	private String genItemUomKey(ItemMaster item, UomMaster uom) {

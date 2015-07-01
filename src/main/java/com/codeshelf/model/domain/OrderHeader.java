@@ -141,6 +141,13 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private String						shipperId;
 
+	// Reference to the desctination address for this order.
+	@Column(nullable = true, name = "destination_id")
+	@Getter
+	@Setter
+	@JsonProperty
+	private String						destinationId;
+
 	// Order date.
 	@Column(nullable = true, name = "order_date")
 	@Getter
