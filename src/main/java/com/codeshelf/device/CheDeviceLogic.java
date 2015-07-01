@@ -38,7 +38,7 @@ import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.NotificationService.EventType;
+import com.codeshelf.model.domain.WorkerEvent;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -1905,7 +1905,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	private String verifyWiField(final WorkInstruction inWi, String inScanStr) {
 		// If the user scanned SKIPSCAN return true
 		if (inScanStr.equals(SCAN_SKIP) || inScanStr.equals(SKIP_SCAN)) {
-			notifyWiVerb(inWi, EventType.SKIP_ITEM_SCAN, kLogAsWarn);
+			notifyWiVerb(inWi, WorkerEvent.EventType.SKIP_ITEM_SCAN, kLogAsWarn);
 			return "";
 		}
 		if (inScanStr.equals(inWi.getItemId()) || inScanStr.equals(inWi.getGtin())) {

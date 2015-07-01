@@ -1,7 +1,6 @@
 package com.codeshelf.service;
 
 import java.util.List;
-import java.util.UUID;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -9,19 +8,15 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.codeshelf.api.responses.PickRate;
-import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WiFactory;
-import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
-import com.codeshelf.service.NotificationService.EventType;
 import com.codeshelf.testframework.HibernateTest;
 
 public class NotificationServiceTest extends HibernateTest {
 
-	private Facility testFacility;
 	private DateTime eventTime = new DateTime(1955, 11, 12, 10, 04, 00, 00, DateTimeZone.forID("US/Central"));  //lightning will strike the clock tower in back to the future
-
 	
 	@Test
 	public void testMessageOnStartDate() {
@@ -62,12 +57,20 @@ public class NotificationServiceTest extends HibernateTest {
 		
 	}
 	
+	private Che getTestChe() {
+		getFacility();
+		Che che = getChe1();
+		return che;
+	}
+	
 	private void testDateBoundaries(DateTime eventTime, DateTime startTime, DateTime endTime, int numResults) {
-		testFacility = createFacility();
+		this.getTenantPersistenceService().beginTransaction();
+		Che che = getTestChe();
+		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
 		NotificationService service = new NotificationService();
-		storePickEvent(service, eventTime);
+		storePickEvent(service, che, eventTime);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -77,12 +80,12 @@ public class NotificationServiceTest extends HibernateTest {
 		
 	}
 
-	private void storePickEvent(NotificationService service, DateTime eventTime) {
-		WorkInstruction wi = WiFactory.createForLocation(testFacility);
+	private void storePickEvent(NotificationService service, Che che, DateTime eventTime) {
+		WorkInstruction wi = WiFactory.createForLocation(che.getFacility());
 		WorkInstruction.staticGetDao().store(wi);
 		WorkInstruction persistedWI = WorkInstruction.staticGetDao().findByDomainId(wi.getParent(), wi.getDomainId());
 		
-		WorkerEvent event = new WorkerEvent(eventTime, EventType.COMPLETE, new NetGuid("0x00000099"), UUID.randomUUID(), testFacility);
+		WorkerEvent event = new WorkerEvent(eventTime, WorkerEvent.EventType.COMPLETE, che, "worker");
 		event.setWorkInstruction(persistedWI);
 		service.saveEvent(event);
 	}

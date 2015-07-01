@@ -76,7 +76,6 @@ import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.service.NotificationService;
-import com.codeshelf.service.NotificationService.EventType;
 import com.codeshelf.service.OrderService;
 import com.codeshelf.service.OrderService.OrderDetailView;
 import com.codeshelf.service.ProductivitySummaryList;
@@ -323,7 +322,7 @@ public class FacilityResource {
 			List<Criterion> filterParams = new ArrayList<Criterion>();
 			filterParams.add(Restrictions.eq("facility", facility));
 			//If any "type" parameters are provided, filter accordingly
-			List<EventType> typeList = Lists.newArrayList();
+			List<WorkerEvent.EventType> typeList = Lists.newArrayList();
 			for (EventTypeParam type : typeParamList) {
 				if (type != null) {
 					typeList.add(type.getValue());
@@ -407,15 +406,15 @@ public class FacilityResource {
 					}
 					return BaseResponse.buildResponse(result);
 			} else if ("type".equals(groupBy)){
-				Map<EventType, Integer> issuesByType = new HashMap<>();
+				Map<WorkerEvent.EventType, Integer> issuesByType = new HashMap<>();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
-					EventType eventType = eventDisplay.getType();
+					WorkerEvent.EventType eventType = eventDisplay.getType();
 					Integer count = MoreObjects.firstNonNull(issuesByType.get(eventType), 0);
 					issuesByType.put(eventType, count+1);
 				}
 				ResultDisplay result = new ResultDisplay(issuesByType.size());
-				for (Map.Entry<EventType, Integer> issuesByTypeEntry : issuesByType.entrySet()) {
+				for (Map.Entry<WorkerEvent.EventType, Integer> issuesByTypeEntry : issuesByType.entrySet()) {
 					Map<Object, Object> values = new HashMap<>();
 					values.putAll(new BeanMap(issuesByTypeEntry.getKey()));
 					values.put("count", issuesByTypeEntry.getValue());

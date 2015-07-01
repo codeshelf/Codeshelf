@@ -9,7 +9,6 @@ import com.codeshelf.model.domain.Resolution;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
-import com.codeshelf.service.NotificationService.EventType;
 import com.google.common.base.Strings;
 
 public class EventDisplay {
@@ -18,7 +17,7 @@ public class EventDisplay {
 	private UUID 							persistentId;
 
 	@Getter
-	private EventType 						type;
+	private WorkerEvent.EventType 						type;
 
 	@Getter
 	private String itemId;
