@@ -114,6 +114,7 @@ public class WorkerEvent extends DomainObjectABC {
 		setDevicePersistentId(che.getPersistentId().toString());
 		setEventType(eventType);
 		setFacility(che.getFacility());
+		setWorkerId(workerId);
 		generateDomainId();
 	}
 

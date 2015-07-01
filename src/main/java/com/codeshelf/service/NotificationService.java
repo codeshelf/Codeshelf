@@ -34,8 +34,9 @@ public class NotificationService implements IApiService{
 	public NotificationService() {
 	}
 	
-	public void saveEvent(WorkerEvent event) {
+	public WorkerEvent saveEvent(WorkerEvent event) {
 		WorkerEvent.staticGetDao().store(event);
+		return event;
 	}
 
 	public void saveEvent(NotificationMessage message) {
