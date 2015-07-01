@@ -309,6 +309,13 @@ public class CheProcessScanPick extends ServerTest {
 		picker.scanSomething("100");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 
+		LOGGER.info("1c2: scan a GTIN with leading zeroes. Pretend the EDI process stripped leading zeroes to leave 106 as the GTIN in the order");
+		picker.scanSomething("00106");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		LOGGER.info("1c3: scan location");
+		picker.scanLocation("D402");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+
 		LOGGER.info("1d: scan another GTIN");
 		picker.scanSomething("103");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
@@ -345,7 +352,7 @@ public class CheProcessScanPick extends ServerTest {
 		picker.scanCommand("LOGOUT");
 		picker.waitForCheState(CheStateEnum.IDLE, 1000);
 
-		this.getTenantPersistenceService().beginTransaction();
+		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 
 		LOGGER.info("2a: check that item 100 stayed in it's original location");
@@ -354,7 +361,7 @@ public class CheProcessScanPick extends ServerTest {
 		Item item1123locD301 = locationD301.getStoredItemFromMasterIdAndUom("1123", "ea");
 		Assert.assertNotNull(item1123locD301);
 
-		LOGGER.info("2b: check that item 1123 moved from D301 to D302");
+		LOGGER.info("2b: check that item 1122 moved from D301 to D302");
 		Location locationD302 = facility.findSubLocationById("D302");
 		Assert.assertNotNull(locationD302);
 		locationD301 = facility.findSubLocationById("D301");
@@ -371,7 +378,18 @@ public class CheProcessScanPick extends ServerTest {
 		Item item1522LocD301 = locationD301.getStoredItemFromMasterIdAndUom("1522", "ea");
 		Assert.assertNull(item1522LocD301);
 
-		this.getTenantPersistenceService().commitTransaction();
+		LOGGER.info("2c: check that item 1124 (GTIN 106) moved even though it scanned as 00106");
+		// DEV-937 case
+		Location locationD402 = facility.findSubLocationById("D402");
+		Location locationD501 = facility.findSubLocationById("D501");
+		Assert.assertNotNull(locationD402);
+		Assert.assertNotNull(locationD501);
+		Item item1124locD501 = locationD501.getStoredItemFromMasterIdAndUom("1124", "ea");
+		Item item1124locD402 = locationD402.getStoredItemFromMasterIdAndUom("1124", "ea");
+		Assert.assertNotNull(item1124locD402);
+		Assert.assertNull(item1124locD501);
+
+		commitTransaction();
 
 	}
 
