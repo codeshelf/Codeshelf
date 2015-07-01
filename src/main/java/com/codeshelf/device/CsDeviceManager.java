@@ -59,6 +59,7 @@ import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.protocol.request.LoginRequest;
 import com.codeshelf.ws.protocol.request.VerifyBadgeRequest;
 import com.codeshelf.ws.protocol.response.FailureResponse;
+import com.codeshelf.ws.protocol.response.VerifyBadgeResponse;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -763,16 +764,19 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		LOGGER.debug("Network updated: {} active devices, {} removed", updateDevices.size(), deleteDevices.size());
 	}
 
-	public void processVerifyBadgeResponse(String networkGuid, Boolean verified, String workerNameUI) {
-		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
+	public void processVerifyBadgeResponse(VerifyBadgeResponse response) {
+		String cheGuid = response.getNetworkGuid();
+		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + cheGuid);
+		Boolean verified = response.getVerified();
 		if (cheDevice != null) {
 			if (verified == null) {
 				verified = false;
 			}
-			setWorkerNameFromGuid(cheDevice.getGuid(), workerNameUI);
+			setWorkerNameFromGuid(cheDevice.getGuid(), response.getWorkerNameUI());
 			cheDevice.processResultOfVerifyBadge(verified);
+			setCheNameFromGuid(new NetGuid(cheGuid), response.getCheName());
 		} else {
-			LOGGER.warn("Unable to process Verify Badge response for CHE id={} CHE not found", networkGuid);
+			LOGGER.warn("Unable to process Verify Badge response for CHE id={} CHE not found", cheGuid);
 		}
 	}
 
@@ -1193,13 +1197,23 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	/**
 	 * From the guid, set che worker's ui-friendly name
 	 */
-	public void setWorkerNameFromGuid(NetGuid thisCheGuid, String workerName) {
-		CheData thisData = mDeviceDataMap.get(thisCheGuid);
-		if (thisData == null) {
-			thisData = new CheData(null, null);
-			mDeviceDataMap.put(thisCheGuid, thisData);
+	public void setWorkerNameFromGuid(NetGuid cheGuid, String workerName) {
+		CheData cheData = getOrCreateCheData(cheGuid);
+		cheData.setWorkerNameUI(workerName);
+	}
+	
+	public void setCheNameFromGuid(NetGuid cheGuid, String cheName) {
+		CheData cheData = getOrCreateCheData(cheGuid);
+		cheData.setCheName(cheName);
+	}
+	
+	private CheData getOrCreateCheData(NetGuid cheGuid) {
+		CheData cheData = mDeviceDataMap.get(cheGuid);
+		if (cheData == null) {
+			cheData = new CheData(null, null);
+			mDeviceDataMap.put(cheGuid, cheData);
 		}
-		thisData.setWorkerNameUI(workerName);
+		return cheData;
 	}
 
 	/**
@@ -1228,12 +1242,11 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			return this.getCheDeviceByNetGuid(theGuid);
 	}
 	
-	protected String getPosconHolders(NetGuid sourceChe, WorkInstruction requestedWi) {
+	/**
+	 * This function determines if any CHEs other that @sourceChe are using Poscons needed by @requestedWi
+	 */
+	protected String getPosconHolders(NetGuid sourceChe, String requestedPosconStream) {
 		StringBuilder posconHolders = new StringBuilder();
-		if (requestedWi == null) {
-			return null;
-		}
-		String requestedPosconStream = requestedWi.getPosConCmdStream();
 		if (requestedPosconStream == null || requestedPosconStream.isEmpty()){
 			return null;
 		}
@@ -1262,7 +1275,8 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 					for (PosControllerInstr posconInstruction : posconInstructions) {
 						String usedPoscon = posconKeygen(posconInstruction.getControllerId(), posconInstruction.getPosition());
 						if (requestedPoscons.contains(usedPoscon)){
-							posconHolders.append(che.getUserId()).append(" on ").append(che.getMyGuidStr()).append(", ");
+							String cheDescription = getCheDescription(che);
+							posconHolders.append(che.getUserId()).append(" on ").append(cheDescription).append(", ");
 						}
 					}
 				}
@@ -1274,6 +1288,17 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		} else {
 			return posconHolders.substring(0, len - 2);
 		}
+	}
+	
+	private String getCheDescription(CheDeviceLogic che) {
+		CheData cheData = mDeviceDataMap.get(che.getGuid());
+		if (cheData != null) {
+			String cheName = cheData.getCheName();
+			if (cheName != null) {
+				return cheName;
+			}
+		}
+		return che.getMyGuidStr();
 	}
 	
 	private String posconKeygen(String controllerId, int posConIndex) {

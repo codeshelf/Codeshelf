@@ -9,4 +9,7 @@ public class VerifyBadgeResponse extends DeviceResponseABC {
 	
 	@Getter @Setter
 	private String workerNameUI;
+	
+	@Getter @Setter
+	private String cheName;
 }

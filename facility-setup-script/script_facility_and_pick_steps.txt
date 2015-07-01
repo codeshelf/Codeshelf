@@ -15,8 +15,8 @@ setController A3.B1.T1 poscons 0x000000AA 1 tiersInAisle
 setPosconToBay A3.B3 0x000000AA 98 A3.B4 0x000000AA 99 A1.B2 0x000000DB 11
 setPoscons A3.B1.T1 1 forward A3.B2.T1 5 forward A3.B3.T1 9 forward A3.B4.T1 13 forward
 createChe 0x000000A4 blue LINE_SCAN
-createChe 0x000000A3 magenta SETUP_ORDERS
-createChe 0x0000009B green SETUP_ORDERS
+createChe 0x000000A3 magenta SETUP_ORDERS CHE_B
+createChe 0x0000009B green SETUP_ORDERS CHE_A
 deleteAllPaths
 defPath p1 - 2.82 5.40 5.19 5.40 - 5.19 5.40 5.19 6.40 - 5.19 6.40 2.77 6.40
 defPath p2 - 2.60 7.40 5.28 7.40
@@ -30,33 +30,34 @@ importInventory inventory
 deleteOrders 26768709 26768711 26768712 26768717 26768718 26768719 26768720
 importOrders orders_10
 
-STEP tape inventory
-SITE
-waitForDevices 0x0000009B 0x000000A3 0x00000031 0x0000000AB
-defChe cheA 0x0000009B
-logout cheA
-loginSetup cheA Ilya1
-scan cheA X%INVENTORY SCAN_GTIN
-scan cheA 123456789 SCAN_GTIN
-scan cheA %000000070250 SCAN_GTIN
-
 STEP put wall
 SITE
 waitForDevices 0x0000009B 0x000000A3 0x00000031 0x0000000AB
 defChe cheA 0x0000009B
+defChe cheB 0x000000A3
 logout cheA
 loginSetup cheA Ilya1
 scan cheA X%ORDER_WALL PUT_WALL_SCAN_ORDER
-orderToWall cheA 26768709 WallP11
-orderToWall cheA 26768711 WallP15
-orderToWall cheA 26768712 WallP16
+orderToWall cheA 26768709 %000000070050
+orderToWall cheA 26768711 %000000070350
+orderToWall cheA 26768712 %000000070650
+orderToWall cheA 26768718 %000000070900
+logout cheA cheB
+login cheA Ilya SETUP_SUMMARY
+login cheB Paul SETUP_SUMMARY
+scan cheA X%PUT_WALL PUT_WALL_SCAN_WALL
+scan cheB X%PUT_WALL PUT_WALL_SCAN_WALL
+scan cheA L%A1.B2 PUT_WALL_SCAN_ITEM
+scan cheB L%A1.B2 PUT_WALL_SCAN_ITEM
+scan cheB 3605970829131 DO_PUT
+scan cheA 3605970829216 PUT_WALL_POSCON_BUSY
 
 STEP line scan
 SITE
 defChe cheA 0x000000A4
 logout cheA
 login cheA Ilya1 READY
-scan cheA 26768709111112 SCAN_SOMETHING
+scan cheA 26768712111114 SCAN_SOMETHING
 scan cheA 3605970651558 DO_PICK
 
 STEP test remote control setup
@@ -66,7 +67,7 @@ defChe cheA 0x0000009B
 defChe cheB 0x000000A3
 defChe cheC 0x000000A4
 logout cheA cheB cheC
-loginRemote cheA Ilya1 0x000000A3
+loginRemote cheA Ilya1 CHE_B
 scan cheA X%SETUP 
 waitForState cheB CONTAINER_SELECT
 setupCart cheA 26768709 26768711 26768712 26768717 26768718 26768719 26768720

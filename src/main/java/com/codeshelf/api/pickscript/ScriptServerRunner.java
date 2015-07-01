@@ -55,7 +55,7 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_SET_POSCONS = "setPoscons (assignments <tier> <startIndex> <'forward'/'reverse'>)";
 	private final static String TEMPLATE_SET_POSCON_TO_BAY = "setPosconToBay (assignments <bay name> <controller> <poscon id>)";
 	private final static String TEMPLATE_TOGGLE_PUT_WALL = "togglePutWall <aisle> [boolean putwall]";
-	private final static String TEMPLATE_CREATE_CHE = "createChe <che> <color> <mode>";
+	private final static String TEMPLATE_CREATE_CHE = "createChe <che> <color> <mode> [name]";
 	private final static String TEMPLATE_DELETE_ALL_PATHS = "deleteAllPaths";
 	private final static String TEMPLATE_DEF_PATH = "defPath <pathName> (segments '-' <start x> <start y> <end x> <end y>)";
 	private final static String TEMPLATE_ASSIGN_PATH_SGM_AISLE = "assignPathSgmToAisle <pathName> <segment id> <aisle name>";
@@ -446,24 +446,25 @@ public class ScriptServerRunner {
 
 	/**
 	 * Expects to see command
-	 * createChe <che> <color> <mode>
+	 * createChe <che> <color> <mode> [name]
 	 * @throws Exception 
 	 */
 	private void processCreateCheCommand(String parts[]) throws Exception {
-		if (parts.length != 4){
+		if (parts.length < 4 || parts.length > 5){
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_CREATE_CHE);
 		}
-		String name = parts[1], color = parts[2].toUpperCase(), mode = parts[3];
+		String controllerId = parts[1], color = parts[2].toUpperCase(), mode = parts[3];
+		String domainId = parts.length == 5 ? parts[4] : controllerId;
 		//Confirm that the provided enum values are valid
 		ColorEnum.valueOf(color);
 		ProcessMode.valueOf(mode);
 		
 		//Create or update CHE
-		Che che = Che.staticGetDao().findByDomainId(facility.getNetworks().get(0), name);
+		Che che = Che.staticGetDao().findByDomainId(facility.getNetworks().get(0), domainId);
 		if (che == null) {
-			uiUpdateService.addChe(facility.getPersistentId().toString(), name, null, color, name, mode);
+			uiUpdateService.addChe(facility.getPersistentId().toString(), domainId, null, color, controllerId, mode);
 		} else {
-			uiUpdateService.updateChe(che.getPersistentId().toString(), name, null, color, name, mode);
+			uiUpdateService.updateChe(che.getPersistentId().toString(), domainId, null, color, controllerId, mode);
 		}
 	}
 

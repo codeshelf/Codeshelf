@@ -35,6 +35,7 @@ public class VerifyBadgeCommand extends CommandABC {
 			response.setNetworkGuid(networkGuid);
 			response.setWorkerNameUI(workerNameUI);
 			response.setVerified(workerNameUI != null);
+			response.setCheName(che.getDomainId());
 			response.setStatus(ResponseStatus.Success);
 			return response;
 		}

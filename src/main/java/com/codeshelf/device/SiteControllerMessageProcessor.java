@@ -108,7 +108,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			// Handler for Verify Badge
 			else if (response instanceof VerifyBadgeResponse) {
 				VerifyBadgeResponse verifyBadgeResponse = (VerifyBadgeResponse) response;
-				deviceManager.processVerifyBadgeResponse(verifyBadgeResponse.getNetworkGuid(), verifyBadgeResponse.getVerified(), verifyBadgeResponse.getWorkerNameUI());
+				deviceManager.processVerifyBadgeResponse(verifyBadgeResponse);
 			}
 			//////////////////////////////////////////
 			// Handler for Compute Work and Get Work

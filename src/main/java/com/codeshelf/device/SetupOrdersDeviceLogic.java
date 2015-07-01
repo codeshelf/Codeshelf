@@ -96,10 +96,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	private final boolean						useNewCheScreen							= true;
 	
-	@Accessors(prefix = "m")
-	@Getter 
-	@Setter
-	private String 								mBusyPoscons;
+	private String 								mBusyPosconHolders						= null;
+	private String 								mIgnoreExistingHoldersOnThesePoscons	= null;
 
 	private boolean								mSetupMixHasPutwall						= false;
 	private boolean								mSetupMixHasCntrOrder					= false;
@@ -620,7 +618,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case PUT_WALL_POSCON_BUSY:
-				doNextWallPut(false);
+				//mActivePickWiList.clear();
+				WorkInstruction nextWi = getOneActiveWorkInstruction();
+				if (nextWi != null) {
+					mIgnoreExistingHoldersOnThesePoscons = nextWi.getPosConCmdStream();
+				}
+				processPutWallItemScan("", getLastPutWallItemScan());
 				break;
 				
 			default:
@@ -846,10 +849,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**  doNextWallPut side effects
 	 */
 	private void doNextWallPut() {
-		doNextWallPut(true);
-	}
-	
-	private void doNextWallPut(boolean verifyPosconAvailability) {
 		LOGGER.debug(this + "doNextWallPut");
 
 		if (mActivePickWiList.size() > 0) {
@@ -861,13 +860,24 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		} else {
 
 			if (selectNextActivePicks()) {
-				String posconHolders = mDeviceManager.getPosconHolders(getGuid(), getOneActiveWorkInstruction());
-				if (posconHolders == null || !verifyPosconAvailability) {
-					setState(CheStateEnum.DO_PUT); // This will cause showActivePicks();
+				//result of getOneActiveWorkInstruction() is guaranteed by selectNextActivePicks() not to be null 
+				WorkInstruction nextWi = getOneActiveWorkInstruction();
+				String posconStream = nextWi.getPosConCmdStream();
+				if (posconStream.equals(mIgnoreExistingHoldersOnThesePoscons)){
+					//CHE arrived here from scanning YES on the POSCON_BUSY screen.
+					//Continue without checking if needed Poscons are in use by another CHE
+					mIgnoreExistingHoldersOnThesePoscons = null;
+					setState(CheStateEnum.DO_PUT);
 				} else {
-					setBusyPoscons(posconHolders);
-					setState(CheStateEnum.PUT_WALL_POSCON_BUSY);
-				}
+					//Check if the required Poscons are in use by another CHE. If yes, go to POSCON_BUSY screen
+					String posconHolders = mDeviceManager.getPosconHolders(getGuid(), posconStream);
+					if (posconHolders == null) {
+						setState(CheStateEnum.DO_PUT); // This will cause showActivePicks();
+					} else {
+						mBusyPosconHolders = posconHolders;
+						setState(CheStateEnum.PUT_WALL_POSCON_BUSY);
+					}
+				}				
 			} else {
 				// no side effects needed? processPickComplete() is the corollary
 				setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
@@ -2492,7 +2502,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	
 	private void showPosconBusyScreen(){
 		String line1 = String.format(POSCON_BUSY_LINE_1, getOneActiveWorkInstruction().getPickInstruction());
-		String line2 = "By " + getBusyPoscons();
+		String line2 = "By " + mBusyPosconHolders;
 		sendDisplayCommand(line1, line2, POSCON_BUSY_LINE_3, POSCON_BUSY_LINE_4);
 	}
 
