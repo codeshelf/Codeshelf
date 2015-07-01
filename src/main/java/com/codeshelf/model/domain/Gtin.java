@@ -22,7 +22,10 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.codeshelf.device.LineScanDeviceLogic;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -44,6 +47,8 @@ import com.google.common.collect.ImmutableList;
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Gtin extends DomainObjectTreeABC<ItemMaster> {
+
+	private static final Logger	LOGGER			= LoggerFactory.getLogger(Gtin.class);
 
 	public static class GtinMapDao extends GenericDaoABC<Gtin> implements ITypedDao<Gtin> {
 		public final Class<Gtin> getDaoClass() {
@@ -134,6 +139,10 @@ public class Gtin extends DomainObjectTreeABC<ItemMaster> {
 	 * For now, assume separate by facility and make sure it is reasonably efficient.
 	 */
 	public static Gtin getGtinForFacility(Facility facility, String scannedID) {
+		if (scannedID == null || scannedID.isEmpty()) {
+			LOGGER.error("null value in getGtinForFacility");
+			return null;
+		}
 		List<Gtin> gtins = Gtin.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("domainId", scannedID)));
 		for (Gtin gtin : gtins) {
 			// Just wondering. Might this fail due to tenant security constraints someday? 
@@ -142,6 +151,22 @@ public class Gtin extends DomainObjectTreeABC<ItemMaster> {
 				return gtin;
 			}
 		}
+		// If the GTIN was not found, we might have the odd case of leading zeroes. If so, EDI processing (especially a file that took a trip through a spreadsheet
+		// may have stripped the leading zeroes. Still scans with the zeroes, bu the data base may have the gtin/upc without.
+		if (scannedID.charAt(0)== '0'){
+			// we are in a leading zero situation. Strip. This regex does not strip "0" down to blank, but otherwise strips leading zeros
+			String strippedID = scannedID.replaceFirst("^0+(?!$)", "");
+			// search again
+			List<Gtin> gtin2s = Gtin.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("domainId", strippedID)));
+			for (Gtin gtin : gtin2s) {
+				if (gtin.getFacility().equals(facility)) {
+					LOGGER.warn("Found GTIN {} for value {}. Most likely data processing stripped leading zeros during order processing.",strippedID, scannedID);
+					return gtin;
+				}
+			}
+
+		}
+		
 		return null;
 	}
 
