@@ -25,6 +25,8 @@ import com.codeshelf.security.SecurityEmails;
 import com.codeshelf.security.SessionFlags.Flag;
 import com.codeshelf.security.TokenSession;
 import com.codeshelf.security.TokenSessionService;
+import com.codeshelf.validation.DefaultErrors;
+import com.codeshelf.validation.ErrorCode;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 
@@ -33,6 +35,8 @@ public class RootAuthResource {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(RootAuthResource.class);
 	private TokenSessionService	tokenSessionService;
 
+	private static final String OLD = "old";
+	
 	public RootAuthResource() {
 		this(TokenSessionService.getInstance());
 	}
@@ -97,7 +101,7 @@ public class RootAuthResource {
 	@Path("pw")
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response changePassword(@FormParam("old") String oldPassword,
+	public Response changePassword(@FormParam(OLD) String oldPassword,
 		@FormParam("new") String newPassword,
 		@FormParam(TokenSessionService.COOKIE_NAME) String authToken,
 		@CookieParam(TokenSessionService.COOKIE_NAME) Cookie authCookie) {
@@ -107,18 +111,25 @@ public class RootAuthResource {
 		if(tokenSession == null)
 			tokenSession = tokenSessionService.checkAuthCookie(authCookie);
 		
-		if (tokenSession != null && !Strings.isNullOrEmpty(newPassword)) {
+		if (tokenSession != null) {
 			NewCookie newCookie = null;
 			boolean allowChange = false;
 			boolean passwordWasSet = (tokenSession.getUser().getHashedPassword() != null);
 
-			if(!Strings.isNullOrEmpty(oldPassword) && tokenSession.getStatus().equals(TokenSession.Status.ACTIVE_SESSION)) {
-				// regular password change - old password must be submitted
-				TokenSession authTest = tokenSessionService.authenticate(tokenSession.getUser().getUsername(), oldPassword);
-				if (authTest != null && authTest.getStatus().equals(TokenSession.Status.ACTIVE_SESSION)) {
-					allowChange = true;
-				} else {
+			if(tokenSession.getStatus().equals(TokenSession.Status.ACTIVE_SESSION)) {
+				if (!Strings.isNullOrEmpty(oldPassword)) { 
+					// regular password change - old password must be submitted
+					TokenSession authTest = tokenSessionService.authenticate(tokenSession.getUser().getUsername(), oldPassword);
+					if (authTest != null && authTest.getStatus().equals(TokenSession.Status.ACTIVE_SESSION)) {
+						allowChange = true;
+					}
+				}
+				
+				if (!allowChange) {
 					LOGGER.warn("Could not confirm old password trying to change password for user {} with token status {}",tokenSession.getUser().getUsername(),tokenSession.getStatus());
+					DefaultErrors errors = new DefaultErrors();
+					errors.rejectValue(OLD, oldPassword, ErrorCode.FIELD_INVALID);
+					return Response.status(Status.BAD_REQUEST.getStatusCode()).entity(errors).build();
 				}
 			} else if(tokenSession.getStatus().equals(TokenSession.Status.SPECIAL_SESSION) 
 					&& tokenSession.getSessionFlags().get(Flag.ACCOUNT_SETUP)

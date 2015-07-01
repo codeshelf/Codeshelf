@@ -8,6 +8,7 @@ import java.io.IOException;
 
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -38,19 +39,11 @@ public class AuthResourceTest extends MockDaoTest {
 	
 	@Test	
 	public void testAuthenticationReturnsTenantName() throws IOException {
-		User testUser = new User();
-		
+
 		String testTenantName  = "tenant";
-		Tenant testTenant = new Tenant();
-		testTenant.setName(testTenantName);
-		
-		
-		TokenSession testSession = mock(TokenSession.class);
-		when(testSession.getUser()).thenReturn(testUser);
-		when(testSession.getTenant()).thenReturn(testTenant);
-		when(testSession.getStatus()).thenReturn(TokenSession.Status.ACTIVE_SESSION);
-		
-		
+
+		TokenSession testSession = createMockTokenSession(TokenSession.Status.ACTIVE_SESSION, testTenantName);
+
 		TokenSessionService service = mock(TokenSessionService.class);
 		when(service.authenticate(anyString(), anyString())).thenReturn(testSession);
 		
@@ -63,18 +56,10 @@ public class AuthResourceTest extends MockDaoTest {
 
 	@Test	
 	public void testgetAuthorizedUserReturnsTenantName() throws IOException {
-		User testUser = new User();
 		
 		String testTenantName  = "tenant";
-		Tenant testTenant = new Tenant();
-		testTenant.setName(testTenantName);
-		
-		
-		TokenSession testSession = mock(TokenSession.class);
-		when(testSession.getUser()).thenReturn(testUser);
-		when(testSession.getTenant()).thenReturn(testTenant);
-		when(testSession.getStatus()).thenReturn(TokenSession.Status.ACTIVE_SESSION);
-		
+
+		TokenSession testSession = createMockTokenSession(TokenSession.Status.ACTIVE_SESSION, testTenantName);
 		
 		TokenSessionService service = mock(TokenSessionService.class);
 		when(service.checkAuthCookie(Mockito.any(Cookie.class))).thenReturn(testSession);
@@ -86,6 +71,52 @@ public class AuthResourceTest extends MockDaoTest {
 		Assert.assertEquals(testTenantName, responseNode.get("tenant").get("name").asText());
 	}
 
+	@Test
+	public void testChangePasswordInactiveSession() {
+		String testTenantName  = "tenant";
+
+		TokenSession testSession = createMockTokenSession(TokenSession.Status.INVALID_TOKEN, testTenantName);
+
+		TokenSessionService service = mock(TokenSessionService.class);
+		when(service.checkAuthCookie(Mockito.any(Cookie.class))).thenReturn(testSession);
+
+		RootAuthResource subject = new RootAuthResource(service);
+		Response response = subject.changePassword("good", "newgood", null, mock(Cookie.class));
+		Assert.assertEquals(Status.FORBIDDEN.getStatusCode(), response.getStatus());
+	}
+
+	@Test
+	public void testChangePasswordWrongOldPassword() throws IOException {
+		String testTenantName  = "tenant";
+
+		TokenSession testSession = createMockTokenSession(TokenSession.Status.ACTIVE_SESSION, testTenantName);
+
+		TokenSessionService service = mock(TokenSessionService.class);
+		when(service.checkAuthCookie(Mockito.any(Cookie.class))).thenReturn(testSession);
+
+		RootAuthResource subject = new RootAuthResource(service);
+		Response response = subject.changePassword("bad", "newgood", null, mock(Cookie.class));
+		Assert.assertEquals(Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+		
+		JsonNode responseNode = toJsonNode(response.getEntity());
+		Assert.assertTrue(responseNode.toString(), responseNode.get("fieldErrors").has("old"));
+		Assert.assertNotNull(responseNode.get("fieldErrors").get("old").findValue("message"));
+		
+	}
+
+	
+	private TokenSession createMockTokenSession(TokenSession.Status status, String tenantName) {
+		Tenant testTenant = new Tenant();
+		testTenant.setName(tenantName);
+		
+		User testUser = new User();
+		
+		TokenSession testSession = mock(TokenSession.class);
+		when(testSession.getUser()).thenReturn(testUser);
+		when(testSession.getTenant()).thenReturn(testTenant);
+		when(testSession.getStatus()).thenReturn(status);
+		return testSession;
+	}
 	
 	private JsonNode toJsonNode(Object o) throws IOException {
 		ObjectMapper objectMapper = new ObjectMapper();

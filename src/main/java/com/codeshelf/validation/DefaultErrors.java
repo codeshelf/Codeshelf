@@ -28,11 +28,17 @@ public class DefaultErrors implements Errors, Serializable {
 
 	@Getter
 	private String	objectName;
-	
-	public DefaultErrors(Class<?> cls) {
-		this.objectName = cls.getCanonicalName();
+
+	public DefaultErrors() {
+		this.objectName = "Form";
 		this.globalErrors = new ArrayList<ObjectError>();
 		this.fieldErrors = new HashMap<String, List<FieldError>>();
+	}
+
+	
+	public DefaultErrors(Class<?> cls) {
+		this();
+		this.objectName = cls.getCanonicalName();
 	}
 
 	public void reject(ErrorCode errorCode, String defaultMessage) {
