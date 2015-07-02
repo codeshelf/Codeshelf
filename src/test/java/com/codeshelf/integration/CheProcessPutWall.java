@@ -1274,7 +1274,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		beginTransaction();
 		facility = getFacility();
 		Facility.staticGetDao().reload(facility);
-		assertOrderLocation("11115", "P13", "WALL1 - P13");
+		assertOrderLocation("11115", "P13", "Put Wall: WALL1 - P13");
 		assertOrderLocation("11119", "", "");
 		assertOrderLocation("11117", "", "");
 		commitTransaction();

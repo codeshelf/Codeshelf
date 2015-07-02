@@ -193,9 +193,9 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 
 		// Verify that orders 11114, 11115, 1111 have order locations in put wall
 		beginTransaction();
-		assertOrderLocation("11118", "P14", "WALL1 - P14");
-		assertOrderLocation("11115", "P15", "WALL2 - P15");
-		assertOrderLocation("11116", "P16", "WALL2 - P16");
+		assertOrderLocation("11118", "P14", "Put Wall: WALL1 - P14");
+		assertOrderLocation("11115", "P15", "Put Wall: WALL2 - P15");
+		assertOrderLocation("11116", "P16", "Put Wall: WALL2 - P16");
 		workService.reinitPutWallFeedback(getFacility());
 		// 11118 has two details in wall 1.  11115 and 11116 have one detail each in wall 2. See it logged in console
 		commitTransaction();
