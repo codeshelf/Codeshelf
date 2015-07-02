@@ -121,9 +121,9 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 
 		// Verify that orders 11114, 11115, and 11116 are having order locations in put wall
 		beginTransaction();
-		assertOrderLocation("11118", "P14", "WALL1 - P14");
-		assertOrderLocation("11115", "P15", "WALL2 - P15");
-		assertOrderLocation("11116", "P16", "WALL2 - P16");
+		assertOrderLocation("11118", "P14", "Put Wall: WALL1 - P14");
+		assertOrderLocation("11115", "P15", "Put Wall: WALL2 - P15");
+		assertOrderLocation("11116", "P16", "Put Wall: WALL2 - P16");
 		assertOrderLocation("11111", "", ""); // always good to test the NOT case.
 
 		LOGGER.info("1b: Call the site controller reinit function");
@@ -167,8 +167,8 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 
 		// Verify that orders 11114, 11115 have order locations in put wall, but not 11116
 		beginTransaction();
-		assertOrderLocation("11118", "P14", "WALL1 - P14");
-		assertOrderLocation("11115", "P15", "WALL2 - P15");
+		assertOrderLocation("11118", "P14", "Put Wall: WALL1 - P14");
+		assertOrderLocation("11115", "P15", "Put Wall: WALL2 - P15");
 		assertOrderLocation("11116", "", "");
 
 		LOGGER.info("1b: Call the site controller reinit function");
@@ -309,9 +309,9 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 
 		// Verify that orders 11118, 11115, and 11116 are having order locations in put wall
 		this.getTenantPersistenceService().beginTransaction();
-		assertOrderLocation("11118", "P14", "WALL1 - P14");
-		assertOrderLocation("11115", "P15", "WALL2 - P15");
-		assertOrderLocation("11116", "P16", "WALL2 - P16");
+		assertOrderLocation("11118", "P14", "Put Wall: WALL1 - P14");
+		assertOrderLocation("11115", "P15", "Put Wall: WALL2 - P15");
+		assertOrderLocation("11116", "P16", "Put Wall: WALL2 - P16");
 		assertOrderLocation("11111", "", ""); // always good to test the NOT case.
 		// Let's document the poscon indices, and relative position of P15 and P16
 		Facility facility = getFacility();
