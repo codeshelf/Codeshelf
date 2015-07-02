@@ -76,8 +76,7 @@ public class Facility extends Location {
 			return Facility.class;
 		}
 
-		@Override
-		public Facility findByDomainId(final IDomainObject parentObject, final String domainId) {
+		public Facility findByDomainId(final String domainId) {
 			return super.findByDomainId(null, domainId);
 		}
 	}

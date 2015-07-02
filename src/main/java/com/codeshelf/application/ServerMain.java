@@ -82,8 +82,17 @@ public final class ServerMain {
 	public static void main(String[] inArgs) throws Exception {
 
 		// Create and start the application.
-		Injector dynamicInjector = setupInjector();
+		Injector dynamicInjector = createInjector();
 		
+		ICodeshelfApplication application = startApplication(dynamicInjector);
+		// Handle events until the application exits.
+		application.handleEvents();
+
+		LOGGER.info("Exiting Main()");
+		System.exit(0);		
+	}
+
+	public static ICodeshelfApplication startApplication(Injector dynamicInjector) throws Exception {
 		ICodeshelfApplication application = dynamicInjector.getInstance(ServerCodeshelfApplication.class);
 
 		application.startServices(); // this includes persistence and such, probably has to start before anything else
@@ -92,19 +101,14 @@ public final class ServerMain {
 		CsServerEndPoint.setMessageProcessor(dynamicInjector.getInstance(ServerMessageProcessor.class));
 		
 		application.startApplication();
-
-		// Handle events until the application exits.
-		application.handleEvents();
-
-		LOGGER.info("Exiting Main()");
-		System.exit(0);
+		return application;
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
 	 */
-	private static Injector setupInjector() {
+	public static Injector createInjector() {
 		Injector injector = Guice.createInjector(new AbstractModule() {
 			@Override
 			protected void configure() {
