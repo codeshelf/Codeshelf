@@ -39,9 +39,9 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		// Verify that orders 11114, 11115, and 11116 are having order locations in put wall
 		beginTransaction();
 		facility = facility.reload();
-		assertOrderLocation("11114", "P14", "WALL1 - P14");
-		assertOrderLocation("11115", "P15", "WALL2 - P15");
-		assertOrderLocation("11116", "P16", "WALL2 - P16");
+		assertOrderLocation("11114", "P14", "Put Wall: WALL1 - P14");
+		assertOrderLocation("11115", "P15", "Put Wall: WALL2 - P15");
+		assertOrderLocation("11116", "P16", "Put Wall: WALL2 - P16");
 		assertItemMaster(facility, "1514");
 		assertItemMaster(facility, "1515");
 		commitTransaction();
