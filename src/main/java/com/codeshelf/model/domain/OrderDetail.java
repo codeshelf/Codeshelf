@@ -439,8 +439,8 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		return internalString;
 	}
 
-	public String getPutWallUi() {
-		return getParent().getPutWallUi();
+	public String getWallUi() {
+		return getParent().getWallUi();
 	}
 
 	public String getGroupUi() {

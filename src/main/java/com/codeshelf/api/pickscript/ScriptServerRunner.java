@@ -54,7 +54,7 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_SET_CONTROLLER = "setController <location> <lights/poscons> <controller> <channel> ['tiersInAisle']";
 	private final static String TEMPLATE_SET_POSCONS = "setPoscons (assignments <tier> <startIndex> <'forward'/'reverse'>)";
 	private final static String TEMPLATE_SET_POSCON_TO_BAY = "setPosconToBay (assignments <bay name> <controller> <poscon id>)";
-	private final static String TEMPLATE_TOGGLE_PUT_WALL = "togglePutWall <aisle> [boolean putwall]";
+	private final static String TEMPLATE_SET_WALL = "setWall <aisle> <off/putwall/skuwall>";
 	private final static String TEMPLATE_CREATE_CHE = "createChe <che> <color> <mode> [name]";
 	private final static String TEMPLATE_DELETE_ALL_PATHS = "deleteAllPaths";
 	private final static String TEMPLATE_DEF_PATH = "defPath <pathName> (segments '-' <start x> <start y> <end x> <end y>)";
@@ -153,8 +153,8 @@ public class ScriptServerRunner {
 			processSetPosconsCommand(parts);
 		} else if (command.equalsIgnoreCase("setPosconToBay")) {
 			processSetPosconToBayCommand(parts);
-		} else if (command.equalsIgnoreCase("togglePutWall")) {
-			processTogglePutWallCommand(parts);
+		} else if (command.equalsIgnoreCase("setWall")) {
+			processSetWallCommand(parts);
 		} else if (command.equalsIgnoreCase("createChe")) {
 			processCreateCheCommand(parts);
 		} else if (command.equalsIgnoreCase("deleteAllPaths")) {
@@ -168,6 +168,8 @@ public class ScriptServerRunner {
 		} else if (command.equalsIgnoreCase("waitSeconds")) {
 			processWaitSecondsCommand(parts);
 		} else if (command.startsWith("//")) {
+		} else if  (command.equalsIgnoreCase("togglePutWall")) {
+			throw new Exception("Command togglePutWall has been deprecated due to an addition of Sku Walls. Instead, use " + TEMPLATE_SET_WALL);
 		} else {
 			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, deleteOrders, importOrders, importAisles, importLocations, importInventory, setController, setPoscons, setPosconToBay, togglePutWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, assignTapeToTier, waitSeconds, //]");
 		}
@@ -419,28 +421,23 @@ public class ScriptServerRunner {
 	
 	/**
 	 * Expects to see command
-	 * togglePutWall <aisle> [boolean putwall]
+	 * setWall <aisle> <off/putwall/skuwall>
 	 * @throws Exception 
 	 */
-	private void processTogglePutWallCommand(String parts[]) throws Exception {
-		if (parts.length < 2 || parts.length > 3){
-			throwIncorrectNumberOfArgumentsException(TEMPLATE_TOGGLE_PUT_WALL);
+	private void processSetWallCommand(String parts[]) throws Exception {
+		if (parts.length != 3){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_SET_WALL);
 		} 
-		
-		Boolean putWall = null;
-		if (parts.length == 3){
-			String flag = parts[2];
-			if (!"true".equalsIgnoreCase(flag) && !"false".equalsIgnoreCase(flag)) {
-				throw new Exception("The second and optional parameter of 'togglePutWall' must be 'true' or 'false'");
-			}
-			putWall = "true".equalsIgnoreCase(flag);
-		}
-		 
 		Aisle aisle = findAisle(parts[1]);
-		if (putWall == null) {
-			aisle.togglePutWallLocation();
+		String wallType = parts[2];
+		if (Location.PUTWALL_USAGE.equalsIgnoreCase(wallType)){
+			aisle.setUsage(Location.PUTWALL_USAGE);
+		} else if (Location.SKUWALL_USAGE.equalsIgnoreCase(wallType)){
+			aisle.setUsage(Location.SKUWALL_USAGE);
+		} else if ("off".equalsIgnoreCase(wallType)){
+			aisle.setUsage(null);
 		} else {
-			aisle.setAsPutWallLocation(putWall);
+			throw new Exception("Unknown wall type '" + wallType + "' [off/putwall/skuwall]");
 		}
 	}
 

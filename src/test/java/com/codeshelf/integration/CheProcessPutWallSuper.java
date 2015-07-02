@@ -74,7 +74,7 @@ public class CheProcessPutWallSuper extends ServerTest {
 		PathSegment segment0 = addPathSegmentForTest(path1, 0, 3d, 6d, 5d, 6d);
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
-		aisle1.togglePutWallLocation();
+		aisle1.toggleWallLocation();
 
 		aisle2 = Aisle.staticGetDao().findByDomainId(facility, "A2");
 		Path path2 = createPathForTest(facility);
@@ -94,7 +94,7 @@ public class CheProcessPutWallSuper extends ServerTest {
 		persistStr = segment0.getPersistentId().toString();
 		aisle4.associatePathSegment(persistStr);
 
-		aisle4.togglePutWallLocation();
+		aisle4.toggleWallLocation();
 		assertTrue(aisle4.isPutWallLocation());
 		commitTransaction();
 
@@ -295,7 +295,7 @@ public class CheProcessPutWallSuper extends ServerTest {
 		}
 
 		// getPutWallUi is what shows in the WebApp
-		assertEquals(putWallUiField, order.getPutWallUi());
+		assertEquals(putWallUiField, order.getWallUi());
 	}
 
 	protected void assertItemMaster(Facility facility, String sku) {

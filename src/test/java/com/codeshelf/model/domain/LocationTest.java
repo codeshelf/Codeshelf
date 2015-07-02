@@ -86,33 +86,59 @@ public class LocationTest extends MockDaoTest {
 		Facility facility = createFacilityWithOutboundOrders();
 		
 		Location aisle = facility.findLocationById("A1");
-		Location bay = aisle.findLocationById("B1");
+		Location bay1 = aisle.findLocationById("B1");
+		Location bay2 = aisle.findLocationById("B2");
 
-		//Verify that neither location is PutWall
-		Assert.assertEquals(false, aisle.isPutWallLocation());
-		Assert.assertEquals(false, bay.isPutWallLocation());
+		//Verify that neither location is a Wall
+		Assert.assertFalse(aisle.isImmediateWallLocation());
+		Assert.assertEquals("", aisle.getWallUi());
+		Assert.assertFalse(bay1.isImmediateWallLocation());
+		Assert.assertEquals("", bay1.getWallUi());
+		Assert.assertFalse(bay2.isImmediateWallLocation());
+		Assert.assertEquals("", bay2.getWallUi());
 		
-		//Set bay to PutWall, and verify that only it is such. (This is odd case. Normally the aisle is set. CheProcess tests do normal cases.)
-		bay.setAsPutWallLocation(true);
-		Assert.assertEquals(false, aisle.isPutWallLocation());
-		Assert.assertEquals(true, bay.isPutWallLocation());
-		Assert.assertEquals("", aisle.getPutWallUi()); // aisle not a put wall
-		Assert.assertEquals("A1.B1", bay.getPutWallUi()); // bay is a put wall. No alias, so shows the nominal ID.
+		//Set bay1 to PutWall and bay2 to SkuWall
+		bay1.setUsage(Location.PUTWALL_USAGE);
+		bay2.setUsage(Location.SKUWALL_USAGE);
+		Assert.assertFalse(aisle.isWallLocation());
+		Assert.assertTrue(bay1.isWallLocation());
+		Assert.assertTrue(bay1.isPutWallLocation());
+		Assert.assertFalse(bay1.isSkuWallLocation());
+		Assert.assertEquals("Put Wall: A1.B1", bay1.getWallUi());
+		Assert.assertTrue(bay2.isWallLocation());
+		Assert.assertFalse(bay2.isPutWallLocation());
+		Assert.assertTrue(bay2.isSkuWallLocation());
+		Assert.assertEquals("Sku Wall: A1.B2", bay2.getWallUi());
 
+		//Toggle both bays. Bay1 should become SkuWall, Bay2 should stop being a wall
+		bay1.toggleWallLocation();
+		bay2.toggleWallLocation();
+		Assert.assertTrue(bay1.isWallLocation());
+		Assert.assertFalse(bay1.isPutWallLocation());
+		Assert.assertTrue(bay1.isSkuWallLocation());
+		Assert.assertEquals("Sku Wall: A1.B1", bay1.getWallUi());
+		Assert.assertFalse(bay2.isWallLocation());
+		Assert.assertFalse(bay2.isPutWallLocation());
+		Assert.assertFalse(bay2.isSkuWallLocation());
+		Assert.assertEquals("", bay2.getWallUi());
 
-		//Revert to both off
-		bay.setAsPutWallLocation(false);
-		Assert.assertEquals(false, aisle.isPutWallLocation());
-		Assert.assertEquals(false, bay.isPutWallLocation());
+		//Set aisle to PutWall. Verify that bay1 is still a Sku Wall, but bay2 is now a Put Wall
+		aisle.toggleWallLocation();
+		Assert.assertTrue(aisle.isWallLocation());
+		Assert.assertTrue(aisle.isImmediateWallLocation());
+		Assert.assertTrue(aisle.isPutWallLocation());
+		Assert.assertFalse(aisle.isSkuWallLocation());
+		Assert.assertEquals("Put Wall: A1", aisle.getWallUi());
+		Assert.assertTrue(bay1.isWallLocation());
+		Assert.assertFalse(bay1.isPutWallLocation());
+		Assert.assertTrue(bay1.isSkuWallLocation());
+		Assert.assertEquals("Sku Wall: A1.B1", bay1.getWallUi());
+		Assert.assertTrue(bay2.isWallLocation());
+		Assert.assertTrue(bay2.isPutWallLocation());
+		Assert.assertFalse(bay2.isSkuWallLocation());
+		Assert.assertEquals("Put Wall: A1.B2", bay2.getWallUi());
 
-		//Set aisle to PutWall, and verify that both locations are PutWall
-		aisle.togglePutWallLocation();
-		Assert.assertEquals(true, aisle.isPutWallLocation());
-		Assert.assertEquals(true, bay.isPutWallLocation());
-		Assert.assertEquals("A1", aisle.getPutWallUi()); // is putwall; no alias
-		Assert.assertEquals("A1.B1", bay.getPutWallUi());
 
 		this.getTenantPersistenceService().commitTransaction();
-	}
-
+	}	
 }

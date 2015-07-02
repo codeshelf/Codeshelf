@@ -7,8 +7,8 @@ setProperty scanpick UPC
 setProperty invtmenu true
 importAisles aisles
 importLocations locations
-togglePutWall Aisle1 true
-togglePutWall Aisle3 true
+setWall Aisle1 putwall
+setWall Aisle3 skuwall
 setController LocX24   lights  0x00000031 1 tiersInAisle
 setController Aisle2   lights  0x000000AB 1
 setController A3.B1.T1 poscons 0x000000AA 1 tiersInAisle

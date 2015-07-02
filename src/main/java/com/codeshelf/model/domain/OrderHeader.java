@@ -591,7 +591,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	 * For put wall case, assume only one order location.
 	 * Ideally, this will show both the wall name, and the specific wall slot.
 	 */
-	public String getPutWallUi() {
+	public String getWallUi() {
 		List<OrderLocation> orderLocations = this.getActiveOrderLocations();
 		int count = orderLocations.size();
 		if (count == 0)
@@ -599,10 +599,10 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		Location loc = orderLocations.get(0).getLocation();
 		// should never be null, but safe...
 		if (loc != null) {
-			if (loc.isImmediatePutWallLocation())
-				return loc.getPutWallUi(); // could indicate something if more than one, but that would be an odd case. ORDER_WALL deletes old and makes a new one.
+			if (loc.isImmediateWallLocation())
+				return loc.getWallUi(); // could indicate something if more than one, but that would be an odd case. ORDER_WALL deletes old and makes a new one.
 			else {
-				return loc.getPutWallUi() + " - " + loc.getBestUsableLocationName();
+				return loc.getWallUi() + " - " + loc.getBestUsableLocationName();
 			}
 		}
 		return "";

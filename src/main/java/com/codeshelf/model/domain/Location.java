@@ -81,6 +81,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(Location.class);
 
 	public static final String	PUTWALL_USAGE		= "putwall";
+	public static final String	SKUWALL_USAGE		= "skuwall";
 
 	public static class LocationDao extends GenericDaoABC<Location> implements ITypedDao<Location> {
 		public final Class<Location> getDaoClass() {
@@ -1430,23 +1431,38 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	}
 
 	public boolean isPutWallLocation() {
-		if (isImmediatePutWallLocation()) {
-			return true;
+		return isWallLocation(PUTWALL_USAGE);
+	}
+
+	public boolean isSkuWallLocation() {
+		return isWallLocation(SKUWALL_USAGE);
+	}
+
+	public boolean isWallLocation() {
+		return isWallLocation(null);
+	}
+	
+	private boolean isWallLocation(String expectedUsage) {
+		if (isImmediateWallLocation()) {
+			return expectedUsage == null || expectedUsage.equalsIgnoreCase(getUsage());
 		}
 		Location parent = getParent();
-		return (parent == null) ? false : parent.isPutWallLocation();
+		return (parent == null) ? false : parent.isWallLocation(expectedUsage);
+	}
+	
+	public boolean isImmediateWallLocation() {
+		return PUTWALL_USAGE.equalsIgnoreCase(usage) || SKUWALL_USAGE.equalsIgnoreCase(usage);
 	}
 
-	public boolean isImmediatePutWallLocation() {
-		return PUTWALL_USAGE.equalsIgnoreCase(usage);
-	}
-
-	public void setAsPutWallLocation(boolean isPutWall) {
-		setUsage(isPutWall ? PUTWALL_USAGE : null);
-	}
-
-	public void togglePutWallLocation() {
-		setAsPutWallLocation(!isImmediatePutWallLocation());
+	public void toggleWallLocation() {
+		//off -> putwall -> skuwall -> off
+		if (usage == null) {
+			setUsage(PUTWALL_USAGE);
+		} else if (PUTWALL_USAGE.equalsIgnoreCase(usage)) {
+			setUsage(SKUWALL_USAGE);
+		} else {
+			setUsage(null);
+		}
 	}
 
 	/**
@@ -1464,15 +1480,19 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 * However, it is likely that the aisle is defined, but the users are using the bay names. So this is not really knowable.
 	 * We generally want to return the alias name if a put wall, and blank if not.
 	 */
-	public String getPutWallUi() {
-		//Check if this location is PutWall
-		if (isImmediatePutWallLocation()) {
-			return getBestUsableLocationName();
+	public String getWallUi() {
+		boolean isPutWall = isWallLocation(PUTWALL_USAGE);
+		boolean isSkuWall = isWallLocation(SKUWALL_USAGE);
+		String usageStr = isPutWall ? "Put Wall: " : isSkuWall ? "Sku Wall: " : "";
+		
+		//Check if this location is a Put or SKU Wall
+		if (isImmediateWallLocation()) {
+			return usageStr + getBestUsableLocationName();
 		}
 		// If parents are PutWall, let's assume bay or aisle are used, and not the tier. (Can change later if needed). 
 		// If the bay has an alias name and the aisle does not, let's return only the bay name.
 		// If neither bay nor alias has alias, then return the bay nominal name. If both have alias, show both.
-		if (isPutWallLocation()) {
+		if (isWallLocation()) {
 			Location bay = this.getParentAtLevel(Bay.class);
 			Location aisle = this.getParentAtLevel(Aisle.class);
 			String bayAlias = "";
@@ -1484,11 +1504,11 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 				aisleAlias = aisle.getPrimaryAliasId();
 
 			if (bay != null && aisleAlias.isEmpty())
-				return bay.getBestUsableLocationName();
+				return usageStr + bay.getBestUsableLocationName();
 			else if (aisle != null && bayAlias.isEmpty())
-				return aisle.getBestUsableLocationName();
+				return usageStr + aisle.getBestUsableLocationName();
 			else
-				return String.format("%s / %s", bayAlias, aisleAlias);
+				return String.format("%s%s / %s", usageStr, bayAlias, aisleAlias);
 		}
 		return ""; // return blank if not a put wall
 	}
