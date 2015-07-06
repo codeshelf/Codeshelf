@@ -1,6 +1,6 @@
 package com.codeshelf.api.resources.subresources;
 
-import java.io.InputStream;
+import java.io.InputStream;	
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -94,6 +94,8 @@ import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
+import java.util.Collections;
+
 public class FacilityResource {
 
 	private final WorkService	workService;
@@ -166,17 +168,17 @@ public class FacilityResource {
 	@Path("/orders")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getOrders(@QueryParam("status") String status, @QueryParam("orderId") String orderIdValue) {
+		@SuppressWarnings("unchecked")
+		List<OrderHeader> results = Collections.emptyList();
 		if (orderIdValue != null) {
-	    	List<OrderHeader> results = this.orderService.findOrderHeadersForOrderId(facility, orderIdValue);
-			return BaseResponse.buildResponse(results);
-			
+			results = this.orderService.findOrderHeadersForOrderId(facility, orderIdValue);
 		} else if (status != null) {
-	    	List<OrderHeader> results = this.orderService.findOrderHeadersForStatus(facility, OrderStatusEnum.valueOf(status));
-			return BaseResponse.buildResponse(results);
+	    	results = this.orderService.findOrderHeadersForStatus(facility, new OrderStatusEnum[]{OrderStatusEnum.valueOf(status)});
+		} else {
+			//TODO dirty implementation to return all
+			results = this.orderService.findOrderHeadersForStatus(facility, OrderStatusEnum.values());
 		}
-		ErrorResponse errors = new ErrorResponse();
-		errors.addError("A parameter of 'status' or 'orderId' should be provided");
-		return errors.buildResponse();
+		return BaseResponse.buildResponse(results);
 	}
 
 	@GET
