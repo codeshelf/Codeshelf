@@ -122,31 +122,52 @@ public class Aisle extends Location {
 
 	// As you face the pick face, is the left toward the anchor point? If so, any cm offset adds to an anchor point. 
 	// If not, any cm offset subtracts from a pick face end	
-	public Boolean isLeftSideAsYouFaceByB1S1() {
+	public Boolean isLeftSideTowardB1S1() {
 		// JR in progress for DEV-310
 		// The answer depends on the aisle's relationship to its pathSegment
 		Boolean returnValue = true;
 
 		PathSegment mySegment = getPathSegment();
 		if (mySegment != null) {
-			// are we X oriented or Y oriented. Could get that from either the aisle or the path. Here we ask the aisle
+			/*
+			 * 
+			 * Legend: = aisle, - path, * B1S1, L left side of pick face
+			 * 
+			 * X ORIENTED:
+			 * Y coordinate: 
+			 * 0  --------------------------L		If aisle is South of path, left side of pick face is away from B1S1
+			 * 1 *===========================
+			 * 2  L--------------------------		If aisle is North of path, left side of pick face is toward B1S1
+			 * 
+			 * 
+			 * Y ORIENTED:
+			 * X coordinate:
+			 * 0 1 2
+			 *   *
+			 * L = |
+			 * | = |
+			 * | = |
+			 * | = |
+			 * | = |
+			 * | = |
+			 * | = |
+			 * | = L
+			 * 
+			 * If aisle is West of path, left side of pick face is away B1S1
+			 * If aisle is East of path, left side of pick face is toward B1S1
+			 * 
+			 */
 			Boolean xOriented = this.isLocationXOriented();
-
 			if (xOriented) {
-				// Think about standing on the path, and looking at the aisle pickface. By our convention, B1 and and S1 are left as we look. But is further along the path or not?
-				// That depends on whether the path is above (Y coordinate) the aisle or not.
 				Double aisleY = this.getAnchorPosY();
 				Double pathY = mySegment.getStartPosY(); // assume start and end Y are roughly the same.
-				Boolean pathSegFlowsRight = mySegment.getEndPosX() > mySegment.getStartPosX();
-
-				// if aisle above the path, and path going right, then B1, B2, etc. will increase along the path
-				returnValue = ((aisleY < pathY) == pathSegFlowsRight);
+				boolean aisleNorthOfPath = aisleY < pathY;
+				returnValue = aisleNorthOfPath;
 			} else {
 				Double aisleX = this.getAnchorPosX();
 				Double pathX = mySegment.getStartPosX(); // assume start and end X are roughly the same.
-				Boolean pathSegFlowsDown = mySegment.getEndPosY() > mySegment.getStartPosY();
-				returnValue = ((aisleX < pathX) == pathSegFlowsDown);
-
+				boolean aisleEastOfPath = aisleX > pathX;
+				returnValue = aisleEastOfPath;
 			}
 		}
 		return returnValue;

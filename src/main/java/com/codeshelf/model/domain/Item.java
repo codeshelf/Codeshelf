@@ -309,7 +309,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 					throw new InputValidationException(this, "cmFromLeft", inCmFromLeft, ErrorCode.FIELD_NUMBER_NOT_NEGATIVE);
 				} else if (theLocation != null && !theLocation.isFacility()) {
 					Double pickEndWidthMeters = theLocation.getLocationWidthMeters();
-					if (theLocation.isLeftSideTowardsAnchor()) {
+					if (theLocation.isLeftSideTowardsB1S1()) {
 						value = inCmFromLeft / 100.0;
 					} else {
 						value = pickEndWidthMeters - (inCmFromLeft / 100.0);
@@ -333,7 +333,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		Integer value = 0;
 
 		Location theLocation = this.getStoredLocation();
-		if (theLocation.isLeftSideTowardsAnchor()) {
+		if (theLocation.isLeftSideTowardsB1S1()) {
 			value = (int) Math.round(meters * 100.0);
 		} else { // cm back from the pickface end
 			Double pickEndWidthMeters = theLocation.getLocationWidthMeters();

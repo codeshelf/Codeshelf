@@ -144,7 +144,7 @@ public class CodeshelfTape {
 		}
 		List<Location> children = location.getActiveChildren();
 		boolean xOriented = location.isLocationXOriented();
-		double leftOffsetSm = location.isLeftSideTowardsAnchor() ? cmOffset : location.getLocationWidthMeters() * 100 - cmOffset;
+		double leftOffsetSm = location.isLeftSideTowardsB1S1() ? cmOffset : location.getLocationWidthMeters() * 100 - cmOffset;
 		for (Location child : children) {
 			double startCm = (xOriented ? child.getAnchorPosX() : child.getAnchorPosY()) * 100;
 			double endCm = startCm + child.getLocationWidthMeters() * 100;

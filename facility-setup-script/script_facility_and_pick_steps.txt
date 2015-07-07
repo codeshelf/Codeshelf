@@ -8,11 +8,11 @@ setProperty invtmenu true
 importAisles aisles
 importLocations locations
 setWall Aisle1 putwall
-setWall Aisle3 skuwall
-setController LocX24   lights  0x00000031 1 tiersInAisle
-setController Aisle2   lights  0x000000AB 1
+setWall Aisle2 skuwall
+setController LocX24   lights  0x00000064 1 tiersInAisle
+setController LocX26   lights  0x000000AB 1 tiersInAisle
 setController A3.B1.T1 poscons 0x000000AA 1 tiersInAisle
-setPosconToBay A3.B3 0x000000AA 98 A3.B4 0x000000AA 99 A1.B2 0x000000DB 11
+setPosconToBay A3.B3 0x000000AA 98 A3.B4 0x000000AA 99 A1.B2 0x000000DB 11 A2.B2 0x000000DB 1
 setPoscons A3.B1.T1 1 forward A3.B2.T1 5 forward A3.B3.T1 9 forward A3.B4.T1 13 forward
 createChe 0x000000A4 blue LINE_SCAN
 createChe 0x000000A3 magenta SETUP_ORDERS CHE_B
@@ -23,7 +23,7 @@ defPath p2 - 2.60 7.40 5.28 7.40
 assignPathSgmToAisle p1 0 A1
 assignPathSgmToAisle p1 2 Aisle2
 assignPathSgmToAisle p2 0 A3
-assignTapeToTier 0007 A1.B2.T1
+assignTapeToTier 0007 A1.B2.T1 000X A2.B2.T1
 
 SERVER
 importInventory inventory
@@ -32,7 +32,7 @@ importOrders orders_10
 
 STEP put wall
 SITE
-waitForDevices 0x0000009B 0x000000A3 0x00000031 0x0000000AB
+waitForDevices 0x0000009B 0x000000A3 0x00000064 0x0000000AB
 defChe cheA 0x0000009B
 defChe cheB 0x000000A3
 logout cheA

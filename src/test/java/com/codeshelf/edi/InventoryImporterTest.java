@@ -470,8 +470,8 @@ public class InventoryImporterTest extends ServerTest {
 
 		// item1123 for CS in D101 which is the A1.B1.T1. 16 cm from left of 230 cm aisle
 		LedRange theLedRange2 = item1123.getFirstLastLedsForItem();
-		Assert.assertEquals(73, theLedRange2.getFirstLedToLight());
-		Assert.assertEquals(76, theLedRange2.getLastLedToLight());
+		Assert.assertEquals(5, theLedRange2.getFirstLedToLight());
+		Assert.assertEquals(8, theLedRange2.getLastLedToLight());
 
 		// item1123 for EA in D403 which is the A2.B2.T1. 135 cm from left of 230 cm aisle
 		Location locationA2B2T1 = facility.findSubLocationById("A2.B2.T1");
@@ -483,10 +483,10 @@ public class InventoryImporterTest extends ServerTest {
 		Item item1123EA = locationD403.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123EA);
 		Assert.assertFalse(locationD403.isLowerLedNearAnchor());
-		// This is A2 bay 2; LEDs come from that side in A2. ((230-135)/230)*80 == 33 is the central LED.
+		// This is A2 bay 2; LEDs come from that side in A2. (135/230)*80 == 47 is the central LED.
 		LedRange theLedRange3 = item1123EA.getFirstLastLedsForItem();
-		Assert.assertEquals(32, theLedRange3.getFirstLedToLight());
-		Assert.assertEquals(35, theLedRange3.getLastLedToLight());
+		Assert.assertEquals(46, theLedRange3.getFirstLedToLight());
+		Assert.assertEquals(49, theLedRange3.getLastLedToLight());
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -529,9 +529,9 @@ public class InventoryImporterTest extends ServerTest {
 		Item item1123EA = locationD402.getStoredItemFromMasterIdAndUom("1123", "EA");
 		Assert.assertNotNull(item1123EA);
 		LedRange theLedRange = item1123EA.getFirstLastLedsForItem();
-		// central led at about (((230-135)/230) * 80) + 80
-		Assert.assertEquals(112, theLedRange.getFirstLedToLight());
-		Assert.assertEquals(115, theLedRange.getLastLedToLight());
+		// central led at about (((135)/230) * 80) + 80
+		Assert.assertEquals(126, theLedRange.getFirstLedToLight());
+		Assert.assertEquals(129, theLedRange.getLastLedToLight());
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
