@@ -250,11 +250,11 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	}
 
 	public String getOrderId() {
-		return parent.getOrderId();
+		return getParent().getOrderId();
 	}
 
 	public String getShipperId() {
-		return parent.getShipperId();
+		return getParent().getShipperId();
 	}
 
 	/**
@@ -317,8 +317,8 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 				for (Item item : items) {
 					String itemUom = item.getUomMasterId();
 					String thisUom = this.getUomMasterId();
-					if (UomNormalizer.normalizedEquals(itemUom, thisUom)) {
-						String itemLocationId = item.getStoredLocation().getPrimaryAliasId();
+					if (UomNormalizer.normalizedEquals(itemUom, thisUom)) {						
+						String itemLocationId = item.getStoredLocation().getBestUsableLocationName(); // was getPrimaryAliasId() through v17
 						itemLocationIds.add(itemLocationId);
 					}
 				}
@@ -533,7 +533,16 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			return false;
 		}
 		return needsScan;
-	}	
+	}
+	
+	// meta fields for UI
+	public String getCustomerId(){
+		return getParent().getCustomerId(); // parent cannot be null
+	}
+
+	public String getDestinationId(){
+		return getParent().getDestinationId(); // parent cannot be null
+	}
 
 	public String getGtinId() {
 		ItemMaster im = getItemMaster();

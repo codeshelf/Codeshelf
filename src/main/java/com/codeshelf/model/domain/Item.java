@@ -163,23 +163,32 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		}
 	}
 
-	public String getItemLocationAlias() {
+	// We want this to return the nominal name if there is no alias.
+	public String getItemLocationName() {
 		Location theLoc = getStoredLocation();
 		if (theLoc == null)
 			return "";
 		else {
-			return theLoc.getPrimaryAliasId();
+			return theLoc.getBestUsableLocationName();
 		}
 	}
 
-	public void setItemLocationAlias(String inLocationAliasId) {
-		LocationAlias alias = LocationAlias.staticGetDao().findByDomainId(getParent().getParent(), inLocationAliasId);
-		if (alias == null) {
-			throw new DaoException("could not find location with alias: " + inLocationAliasId);
+	// For symmetry with getItemLocationName, this must accept alias or nominal name
+	// Careful, this is called by webapp for direct editing of item's location.
+	public void setItemLocationName(String inAliasOrNominal) {
+		LocationAlias alias = LocationAlias.staticGetDao().findByDomainId(getParent().getParent(), inAliasOrNominal);
+		Location loc = null;
+		if (alias != null) {
+			loc = alias.getMappedLocation();
+		} else {
+			Facility facility = this.getFacility();
+			loc = facility.findSubLocationById(inAliasOrNominal);
 		}
-		Location loc = alias.getMappedLocation();
+		if (loc == null) {
+		throw new DaoException("could not find location named: " + inAliasOrNominal);
+		}
 		if (!loc.isActive()) {
-			throw new DaoException("The location with alias: " + inLocationAliasId + " was deleted");
+			throw new DaoException("The location with alias: " + inAliasOrNominal + " was deleted");
 		}
 		setStoredLocation(loc);
 	}
@@ -441,7 +450,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	public String toLogString() {
 		// Let's return much less than the lomboc toString.
-		String toSay = "Sku:" + this.getItemMasterId() + " Uom:" + this.getUomMasterId() + " Loc:" + this.getItemLocationAlias();
+		String toSay = "Sku:" + this.getItemMasterId() + " Uom:" + this.getUomMasterId() + " Loc:" + this.getItemLocationName();
 		return toSay;
 	}
 	

@@ -23,16 +23,13 @@ import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.Item;
-import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.LocationAlias;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
-import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.LightService;
 import com.codeshelf.util.SequenceNumber;
@@ -270,7 +267,7 @@ public class WiFactory {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Create a work instruction for and orderdetail with no location or container
+	 * Create a work instruction for an orderdetail with no location or container
 	 * @return
 	 */
 	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
@@ -344,20 +341,11 @@ public class WiFactory {
 			
 			// set gtin field on work instruction based on order detail
 			resultWi.setGtin(null);
-			ItemMaster im = inOrderDetail.getItemMaster();
-			if (im != null && inOrderDetail != null) {
-				UomMaster um = inOrderDetail.getUomMaster();
-				Gtin gtin = null;
-				if (im != null && um != null) {
-					gtin = im.getGtinForUom(um);
-					if (gtin != null) {
-						resultWi.setGtin(gtin.getDomainId());
-					} 
-				} 
-			}
-			
-			// set needs scan field based on order detail
-			resultWi.setNeedsScan(inOrderDetail.getNeedsScan());
+			if (inOrderDetail != null) {
+				resultWi.setGtin(inOrderDetail.getGtinId());
+				// set needs scan field based on order detail
+				resultWi.setNeedsScan(inOrderDetail.getNeedsScan());
+			}			
 
 			// DEV-592 comments. Usually resultWi is newly made, but if setting up the CHE again, or another CHE, it may be the same old WI.
 			// If the same old one, already the orderDetail and facility relationship is correct. The CHE might be correct, or not if now going to a different one.
