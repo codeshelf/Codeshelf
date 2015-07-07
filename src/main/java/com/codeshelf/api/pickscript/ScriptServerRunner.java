@@ -59,7 +59,7 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_DELETE_ALL_PATHS = "deleteAllPaths";
 	private final static String TEMPLATE_DEF_PATH = "defPath <pathName> (segments '-' <start x> <start y> <end x> <end y>)";
 	private final static String TEMPLATE_ASSIGN_PATH_SGM_AISLE = "assignPathSgmToAisle <pathName> <segment id> <aisle name>";
-	private final static String TEMPLATE_ASSIGN_TAPE_TO_TIER = "assignTapeToTier <tape id> <tier name>";
+	private final static String TEMPLATE_ASSIGN_TAPE_TO_TIER = "assignTapeToTier (assignments <tape id> <tier name>)";
 	private final static String TEMPLATE_WAIT_SECONDS = "waitSeconds <seconds>";
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScriptSiteRunner.class);
@@ -537,16 +537,20 @@ public class ScriptServerRunner {
 
 	/**
 	 * Expects to see command
-	 * assignTapeToTier <tape id> <tier name>
+	 * assignTapeToTier (assignments <tape id> <tier name>)
 	 * @throws Exception 
 	 */
 	private void processAsignTapeToTierCommand(String parts[]) throws Exception {
-		if (parts.length != 3){
+		if (parts.length < 3 || (parts.length - 1) % 2 != 0 ){
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_ASSIGN_TAPE_TO_TIER);
 		}
-		String tapeId = parts[1], tierName= parts[2];
-		Tier tier = findTier(tierName);
-		tier.setTapeIdUi(tapeId);
+		int totalSegnemts = (parts.length - 1) / 2;
+		for (int segNum = 0; segNum < totalSegnemts; segNum++) {
+			int offset = 1 + segNum * 2;
+			String tapeId = parts[offset], tierName= parts[offset + 1];
+			Tier tier = findTier(tierName);
+			tier.setTapeIdUi(tapeId);
+		}
 	}
 
 	/**

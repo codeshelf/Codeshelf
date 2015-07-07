@@ -24,6 +24,7 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.testframework.ServerTest;
+import com.google.common.collect.Lists;
 
 /**
  * @author jon ranstrom
@@ -161,11 +162,11 @@ public class PickSimulaneousWis extends ServerTest {
 		A = 1123. B=1144. C=1155. D=1493. D=1522.
 		 */
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
-				+ "1123,D402,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,135\r\n" //
-				+ "1144,D402,20 oz cups -PLA Compostable,10,EA,6/25/14 12:00,108\r\n" //
-				+ "1155,D402,12 oz Bowl -PLA Compostable,10,EA,6/25/14 12:00,95\r\n" //
-				+ "1493,D402,PARK RANGER Doll,20,EA,6/25/14 12:00,66\r\n" //
-				+ "1522,D402,SJJ BPP,10,each,6/25/14 12:00,30\r\n";//
+				+ "1123,D402,12/16 oz Bowl Lids -PLA Compostable,6,EA,6/25/14 12:00,95\r\n" //
+				+ "1144,D402,20 oz cups -PLA Compostable,10,EA,6/25/14 12:00,122\r\n" //
+				+ "1155,D402,12 oz Bowl -PLA Compostable,10,EA,6/25/14 12:00,135\r\n" //
+				+ "1493,D402,PARK RANGER Doll,20,EA,6/25/14 12:00,164\r\n" //
+				+ "1522,D402,SJJ BPP,10,each,6/25/14 12:00,200\r\n";//
 		importInventoryData(facility, csvString);
 		this.getTenantPersistenceService().commitTransaction();
 

@@ -202,12 +202,12 @@ public class CheProcessTestPick extends ServerTest {
 		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
 		// One case item, just as part of our immediate short scenario
 		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
-				+ "1122,D302,8 oz Bowl Lids -PLA Compostable,,ea,6/25/14 12:00,80\r\n" //
-				+ "1123,D301,12/16 oz Bowl Lids -PLA Compostable,,EA,6/25/14 12:00,135\r\n" //
-				+ "1124,D303,8 oz Bowls -PLA Compostable,,ea,6/25/14 12:00,55\r\n" //
-				+ "1493,D301,PARK RANGER Doll,,ea,6/25/14 12:00,66\r\n" //
-				+ "1522,D302,Butterfly Yoyo,,ea,6/25/14 12:00,3\r\n" //
-				+ "1523,D301,SJJ BPP, ,each,6/25/14 12:00,3\r\n"//
+				+ "1122,D302,8 oz Bowl Lids -PLA Compostable,,ea,6/25/14 12:00,150\r\n" //
+				+ "1123,D301,12/16 oz Bowl Lids -PLA Compostable,,EA,6/25/14 12:00,95\r\n" //
+				+ "1124,D303,8 oz Bowls -PLA Compostable,,ea,6/25/14 12:00,175\r\n" //
+				+ "1493,D301,PARK RANGER Doll,,ea,6/25/14 12:00,164\r\n" //
+				+ "1522,D302,Butterfly Yoyo,,ea,6/25/14 12:00,227\r\n" //
+				+ "1523,D301,SJJ BPP, ,each,6/25/14 12:00,227\r\n"//
 				+ "1555,D502,paper towel, ,cs,6/25/14 12:00,18\r\n";//
 		beginTransaction();
 		inFacility = Facility.staticGetDao().reload(inFacility);

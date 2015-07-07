@@ -1125,7 +1125,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			throw new InputValidationException(this, "cmFromLeft", inCmFromLeft, ErrorCode.FIELD_NUMBER_NOT_NEGATIVE);
 		} else {
 			Double pickEndWidthMeters = getLocationWidthMeters();
-			if (isLeftSideTowardsAnchor()) {
+			if (isLeftSideTowardsB1S1()) {
 				value = inCmFromLeft / 100.0;
 			} else {
 				value = pickEndWidthMeters - (inCmFromLeft / 100.0);
@@ -1137,13 +1137,13 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return value;
 	}
 
-	public Boolean isLeftSideTowardsAnchor() {
+	public Boolean isLeftSideTowardsB1S1() {
 		// As you face the pickface, is the left toward the anchor (where the B1/S1 side is)
 		Aisle theAisle = this.<Aisle> getParentAtLevel(Aisle.class);
 		if (theAisle == null) {
 			return false;
 		} else {
-			return theAisle.isLeftSideAsYouFaceByB1S1();
+			return theAisle.isLeftSideTowardB1S1();
 			// this is moderately expensive, and rarely changes. Cache after first computation? Used extensively in item cmFromLeft calculations
 		}
 	}
