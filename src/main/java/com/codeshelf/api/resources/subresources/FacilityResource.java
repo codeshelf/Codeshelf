@@ -1,9 +1,10 @@
 package com.codeshelf.api.resources.subresources;
 
-import java.io.InputStream;	
+import java.io.InputStream;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,7 +71,6 @@ import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
@@ -94,8 +94,6 @@ import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
-import java.util.Collections;
-
 public class FacilityResource {
 
 	private final WorkService	workService;
@@ -108,7 +106,7 @@ public class FacilityResource {
 	private final ICsvLocationAliasImporter locationsImporter;
 	private final ICsvInventoryImporter inventoryImporter;
 	private final ICsvOrderImporter orderImporter;
-	
+
 	@Setter
 	private Facility facility;
 
@@ -144,7 +142,7 @@ public class FacilityResource {
 	    r.setFacility(facility);
 	    return r;
 	}
-	
+
 	@DELETE
 	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -161,15 +159,14 @@ public class FacilityResource {
 			}
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
-		}	
+		}
 	}
-	
+
 	@GET
 	@Path("/orders")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getOrders(@QueryParam("status") String status, @QueryParam("orderId") String orderIdValue) {
-		@SuppressWarnings("unchecked")
-		List<OrderHeader> results = Collections.emptyList();
+        List<Map<String, Object>> results = Collections.emptyList();
 		if (orderIdValue != null) {
 			results = this.orderService.findOrderHeadersForOrderId(facility, orderIdValue);
 		} else if (status != null) {
@@ -196,7 +193,7 @@ public class FacilityResource {
 		r.setFacility(facility);
 		return r;
 	}
-	
+
 
     @GET
 	@Path("/work/results")
@@ -371,8 +368,8 @@ public class FacilityResource {
 				return BaseResponse.buildResponse(result);
 			}
 
-			
-			
+
+
 			if ("item".equals(groupBy)) {
 				Map<ItemDisplay, Integer> issuesByItem = new HashMap<>();
 				for (WorkerEvent event : events) {
@@ -451,7 +448,7 @@ public class FacilityResource {
 			return errors.processException(e);
 		}
 	}
-	
+
 	@POST
 	@Path("/process_script")
 	@RequiresPermissions("che:simulate")
@@ -480,13 +477,13 @@ public class FacilityResource {
 			return new ErrorResponse().processException(e);
 		}
 	}
-	
+
 	@POST
 	@Path("/run_script")
 	@RequiresPermissions("che:simulate")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response runScript(@QueryParam("script_step_id") UUIDParam scriptStepId, 
+	public Response runScript(@QueryParam("script_step_id") UUIDParam scriptStepId,
 		@QueryParam("timeout_min") Integer timeoutMin,
 		FormDataMultiPart body){
 		try {
@@ -494,18 +491,18 @@ public class FacilityResource {
 			if (!BaseResponse.isUUIDValid(scriptStepId, "script_step_id", errors)){
 				return errors.buildResponse();
 			}
-			
+
 			ScriptStep scriptStep = ScriptParser.getScriptStep(scriptStepId.getValue());
 			if (scriptStep == null) {
 				errors.addError("Script step " + scriptStepId.getValue() + " doesn't exist");
 				return errors.buildResponse();
 			}
 			StringBuilder report = new StringBuilder("Running script step " + scriptStep.getComment() + "\n");
-	
+
 			//Split the script into a list of SERVER and SITE parts
 			ArrayList<StepPart> scriptParts = scriptStep.parts();
 			Set<User> users = facility.getSiteControllerUsers();
-			
+
 			TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 			ScriptServerRunner scriptRunner = new ScriptServerRunner(persistence, facility.getPersistentId(), body, uiUpdateService, propertyService, aislesImporter, locationsImporter, inventoryImporter, orderImporter);
 			boolean success = true;
