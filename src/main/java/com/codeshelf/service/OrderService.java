@@ -96,10 +96,9 @@ public class OrderService implements IApiService {
 		return result;
 	}
 	
-	public List<OrderHeader> findOrderHeadersForStatus(Facility facility, OrderStatusEnum orderStatusEnum) {
-
+	public List<OrderHeader> findOrderHeadersForStatus(Facility facility, OrderStatusEnum[] orderStatusEnums) {
 		Criteria criteria = orderHeaderCriteria(facility)
-				.add(Property.forName("status").eq(orderStatusEnum));
+				.add(Property.forName("status").in(orderStatusEnums));
 		@SuppressWarnings("unchecked")
 		List<OrderHeader> results =(List<OrderHeader>) criteria.list();
 		return results;

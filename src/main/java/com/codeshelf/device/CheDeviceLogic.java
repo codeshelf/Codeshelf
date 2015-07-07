@@ -1934,7 +1934,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				clearAllPosconsOnThisDevice();
 				setState(CheStateEnum.DO_PICK);
 			} else {
-				LOGGER.error("errorStr = {}", errorStr); // TODO get this to the CHE display
+				// user "errors" are logged as warn. Progamming errors are logged as error
+				LOGGER.warn(errorStr); // TODO get this to the CHE display
 				invalidScanMsg(mCheStateEnum);
 				verifyWi = wi;
 				sendDisplayWorkInstruction(getOneActiveWorkInstruction());
