@@ -42,14 +42,14 @@ import com.codeshelf.testframework.ServerTest;
 public class CheProcessScanPick extends ServerTest {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessScanPick.class);
-	private Facility facility;
+	private Facility			facility;
 
 	public CheProcessScanPick() {
 
 	}
-	
+
 	@Before
-	public void setupFacility(){
+	public void setupFacility() {
 		facility = setUpSmallNoSlotFacility();
 	}
 
@@ -145,7 +145,7 @@ public class CheProcessScanPick extends ServerTest {
 				+ "A3.B3.T1, D503\r\n";//
 		importLocationAliasesData(facility, csvLocationAliases);
 		commitTransaction();
-		
+
 		beginTransaction();
 		CodeshelfNetwork network = getNetwork();
 
@@ -255,6 +255,21 @@ public class CheProcessScanPick extends ServerTest {
 		importOrdersData(inFacility, csvOrders);
 	}
 
+	private void setUpOrdersWithCntrGtinAndSequence(Facility inFacility) throws IOException {
+		// Exactly the same as above, but with Gtin also
+
+		String csvOrders = "orderGroupId,shipmentId,customerId,orderId,preAssignedContainerId,orderDetailId,itemId,gtin,description,quantity,uom, locationId, workSequence"
+				+ "\r\n,USF314,COSTCO,12345,12345,12345.1,1123,gtin1123,12/16 oz Bowl Lids -PLA Compostable,1,each, D301, 4000"
+				+ "\r\n,USF314,COSTCO,12345,12345,12345.2,1493,gtin1493.PARK RANGER Doll,1,each, D302, 4001"
+				+ "\r\n,USF314,COSTCO,12345,12345,12345.3,1522,gtin1522,Butterfly Yoyo,3,each, D601, 2000"
+				+ "\r\n,USF314,COSTCO,11111,11111,11111.1,1122,gtin1122,8 oz Bowl Lids -PLA Compostable,2,each, D401, 3000"
+				+ "\r\n,USF314,COSTCO,11111,11111,11111.2,1522,gtin1522,Butterfly Yoyo,1,each, D601, 2000"
+				+ "\r\n,USF314,COSTCO,11111,11111,11111.3,1523,getin1523,SJJ BPP,1,each, D602, 2001"
+				+ "\r\n,USF314,COSTCO,11111,11111,11111.4,1124,gtin1124,8 oz Bowls -PLA Compostable,1,each, D603, 2002"
+				+ "\r\n,USF314,COSTCO,11111,11111,11111.5,1555,gtin1555,paper towel,2,each, D604, 2003";
+		importOrdersData(inFacility, csvOrders);
+	}
+
 	private void setUpLineScanOrdersNoCntrWithGtin(Facility inFacility) throws IOException {
 		// Outbound order. No group. Using 5 digit order number and .N detail ID. No preassigned container number.
 		// Locations D301-303, 401-403, 501-503 are modeled. 600s and 700s are not.
@@ -272,8 +287,71 @@ public class CheProcessScanPick extends ServerTest {
 	}
 
 	/**
-	 * Simple test of INVENTORY command
+	 * Test UPC scan
+	 * LOCAPICK off. This is location based pick with UPC scan
 	 */
+	@Test
+	public final void testPickWithUpcScan() throws IOException {
+		beginTransaction();
+
+		propertyService.turnOffHK(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "UPC");
+		setUpOrdersWithCntrGtinAndSequence(facility);
+		commitTransaction();
+
+		this.startSiteController();
+
+		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
+		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
+		picker.loginAndSetup("Picker #1");
+
+		LOGGER.info("1a: setup two orders on the cart. Several of the details have unmodelled preferred locations");
+		picker.setupContainer("12345", "1");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		picker.setupContainer("11111", "2");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+
+		LOGGER.info("1b: START. Now we get some work. 3 jobs, since only 3 details had modeled locations");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+
+		// Just verifying that gtin got populated onto the work instruction. DEV-957 was a report that this did not happen
+		LOGGER.info("2a: Look at site controller's version of active wi");
+		WorkInstruction wi = picker.getActivePick();
+		this.logOneWi(wi);
+		Assert.assertEquals("gtin1123", wi.getGtin()); // proves 1) gtin from order did go to work instruction; 2) the field got to the site controller.
+
+		// Just verifying that gtin got populated onto the work instruction
+		LOGGER.info("2b: Look at site controller's all picks list");
+		List<WorkInstruction> pickerWiList = picker.getAllPicksList();
+		this.logWiList(pickerWiList);
+
+		LOGGER.info("2c: Look at server version of all picks list");
+		beginTransaction();
+		facility = Facility.staticGetDao().reload(facility);
+		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
+		this.logWiList(serverWiList);
+		commitTransaction();
+
+		LOGGER.info("3a: Look at the CHE screen saying to scan UPC, then get on with it.");
+		picker.logCheDisplay();
+		LOGGER.info("3b: Scan the wrong upc. See the screen");
+		picker.scanSomething("gtin1124");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		picker.logCheDisplay();
+
+		LOGGER.info("3b: Scan the correct upc. See the screen");
+		picker.scanSomething("gtin1123");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.logCheDisplay();
+
+	}
+
+	/**
+	* Simple test of INVENTORY command
+	*/
 	@Test
 	public final void testInventoryCommand() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
@@ -991,7 +1069,7 @@ public class CheProcessScanPick extends ServerTest {
 
 		propertyService.turnOffHK(facility);
 		commitTransaction();
-		
+
 		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		setUpOrdersWithCntrAndSequence(facility);
@@ -1150,7 +1228,7 @@ public class CheProcessScanPick extends ServerTest {
 		Assert.assertEquals("1522", picker.getLastCheDisplayString(2));
 		Assert.assertEquals("QTY 4", picker.getLastCheDisplayString(3)); // This line may change due to function changes. Just update it
 		Assert.assertEquals("SCAN SKU NEEDED", picker.getLastCheDisplayString(4));
-		
+
 		LOGGER.info("2a_b :Scan an invalid SKU, verify that CHE specifies the needed SKU.");
 		picker.scanSomething("bad_sku");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
@@ -1158,7 +1236,7 @@ public class CheProcessScanPick extends ServerTest {
 		Assert.assertEquals("1522", picker.getLastCheDisplayString(2));
 		Assert.assertEquals("QTY 4", picker.getLastCheDisplayString(3)); // This line may change due to function changes. Just update it
 		Assert.assertEquals("SCAN 1522", picker.getLastCheDisplayString(4));
-		
+
 		LOGGER.info("2a_c :Scan the correct SKU; advance.");
 		picker.scanSomething("1522");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);

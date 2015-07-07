@@ -35,13 +35,13 @@ import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.util.ThreadUtils;
 
 public abstract class ServerTest extends HibernateTest {
-	private final static Logger LOGGER = LoggerFactory.getLogger(ServerTest.class);
+	private final static Logger	LOGGER				= LoggerFactory.getLogger(ServerTest.class);
 	@Setter
-	private boolean skipFacilityDelete = false;
-	
+	private boolean				skipFacilityDelete	= false;
+
 	@After
-	public void deleteFacility() throws Exception{
-		if (!skipFacilityDelete){
+	public void deleteFacility() throws Exception {
+		if (!skipFacilityDelete) {
 			boolean stale = true;
 			int attempt = 0;
 			do {
@@ -57,7 +57,7 @@ public abstract class ServerTest extends HibernateTest {
 					stale = true;
 					attempt++;
 					LOGGER.warn("Stale error encountered while deleting facility. Attempt" + attempt);
-					if (attempt > 3){
+					if (attempt > 3) {
 						throw e;
 					}
 					ThreadUtils.sleep(1000);
@@ -65,10 +65,10 @@ public abstract class ServerTest extends HibernateTest {
 					SQLException se = e.getSQLException();
 					throw (se == null ? e : se);
 				}
-			} while(stale);
+			} while (stale);
 		}
 	}
-	
+
 	@Override
 	Type getFrameworkType() {
 		return Type.COMPLETE_SERVER;
@@ -220,18 +220,17 @@ public abstract class ServerTest extends HibernateTest {
 		return getFacility();
 	}
 
-	protected Facility setUpOneAisleFourBaysFlatFacilityWithOrders() throws IOException{
+	protected Facility setUpOneAisleFourBaysFlatFacilityWithOrders() throws IOException {
 		beginTransaction();
-		String aislesCsvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" +
-				"Aisle,A1,,,,,zigzagB1S1Side,2.85,5,X,20\r\n" +
-				"Bay,B1,50,,,,,,,,\r\n" +
-				"Tier,T1,50,0,16,0,,,,,\r\n" +
-				"Bay,B2,50,,,,,,,,\r\n" +
-				"Tier,T1,50,0,16,0,,,,,\r\n" +
-				"Bay,B3,50,,,,,,,,\r\n" +
-				"Tier,T1,50,0,16,0,,,,,\r\n" +
-				"Bay,B4,50,,,,,,,,\r\n" +
-				"Tier,T1,50,0,16,0,,,,,\r\n"; //
+		String aislesCsvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n"
+				+ "Aisle,A1,,,,,zigzagB1S1Side,2.85,5,X,20\r\n"
+				+ "Bay,B1,50,,,,,,,,\r\n"
+				+ "Tier,T1,50,0,16,0,,,,,\r\n"
+				+ "Bay,B2,50,,,,,,,,\r\n"
+				+ "Tier,T1,50,0,16,0,,,,,\r\n"
+				+ "Bay,B3,50,,,,,,,,\r\n"
+				+ "Tier,T1,50,0,16,0,,,,,\r\n"
+				+ "Bay,B4,50,,,,,,,,\r\n" + "Tier,T1,50,0,16,0,,,,,\r\n"; //
 		importAislesData(getFacility(), aislesCsvString);
 		commitTransaction();
 
@@ -245,11 +244,13 @@ public abstract class ServerTest extends HibernateTest {
 
 		String persistStr = segment0.getPersistentId().toString();
 		aisle1.associatePathSegment(persistStr);
-		
+
 		CodeshelfNetwork network = getNetwork();
 		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
 
-		propertyService.changePropertyValue(getFacility(), DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		propertyService.changePropertyValue(getFacility(),
+			DomainObjectProperty.WORKSEQR,
+			WorkInstructionSequencerType.BayDistance.toString());
 		commitTransaction();
 
 		beginTransaction();
@@ -262,53 +263,50 @@ public abstract class ServerTest extends HibernateTest {
 		commitTransaction();
 
 		beginTransaction();
-		String csvLocationAliases = "mappedLocationId,locationAlias\r\n" +
-				"A1.B1.T1,LocX24\r\n" +
-				"A1.B2.T1,LocX25\r\n" +
-				"A1.B3.T1,LocX26\r\n" +
-				"A1.B4.T1,LocX27\r\n";//
+		String csvLocationAliases = "mappedLocationId,locationAlias\r\n" + "A1.B1.T1,LocX24\r\n" + "A1.B2.T1,LocX25\r\n"
+				+ "A1.B3.T1,LocX26\r\n" + "A1.B4.T1,LocX27\r\n";//
 		importLocationAliasesData(getFacility(), csvLocationAliases);
 		commitTransaction();
 
 		beginTransaction();
-		String inventory = "itemId,locationId,description,quantity,uom,inventoryDate,lotId,cmFromLeft\r\n" +
-				"Item1,LocX24,Item Desc 1,1000,a,12/03/14 12:00,,0\r\n" +
-				"Item2,LocX24,Item Desc 2,1000,a,12/03/14 12:00,,12\r\n" +
-				"Item3,LocX24,Item Desc 3,1000,a,12/03/14 12:00,,24\r\n" +
-				"Item4,LocX24,Item Desc 4,1000,a,12/03/14 12:00,,36\r\n" +
-				"Item5,LocX25,Item Desc 5,1000,a,12/03/14 12:00,,0\r\n" +
-				"Item6,LocX25,Item Desc 6,1000,a,12/03/14 12:00,,12\r\n" +
-				"Item7,LocX25,Item Desc 7,1000,a,12/03/14 12:00,,24\r\n" +
-				"Item8,LocX25,Item Desc 8,1000,a,12/03/14 12:00,,36\r\n" +
-				"Item9,LocX26,Item Desc 9,1000,a,12/03/14 12:00,,0\r\n" +
-				"Item10,LocX26,Item Desc 10,1000,a,12/03/14 12:00,,12\r\n" +
-				"Item11,LocX26,Item Desc 11,1000,a,12/03/14 12:00,,24\r\n" +
-				"Item12,LocX26,Item Desc 12,1000,a,12/03/14 12:00,,36\r\n" +
-				"Item13,LocX27,Item Desc 13,1000,a,12/03/14 12:00,,0\r\n" +
-				"Item14,LocX27,Item Desc 14,1000,a,12/03/14 12:00,,12\r\n" +
-				"Item15,LocX27,Item Desc 15,1000,a,12/03/14 12:00,,24\r\n" +
-				"Item16,LocX27,Item Desc 16,1000,a,12/03/14 12:00,,36\r\n";
+		String inventory = "itemId,locationId,description,quantity,uom,inventoryDate,lotId,cmFromLeft\r\n"
+				+ "Item1,LocX24,Item Desc 1,1000,a,12/03/14 12:00,,0\r\n"
+				+ "Item2,LocX24,Item Desc 2,1000,a,12/03/14 12:00,,12\r\n"
+				+ "Item3,LocX24,Item Desc 3,1000,a,12/03/14 12:00,,24\r\n"
+				+ "Item4,LocX24,Item Desc 4,1000,a,12/03/14 12:00,,36\r\n"
+				+ "Item5,LocX25,Item Desc 5,1000,a,12/03/14 12:00,,0\r\n"
+				+ "Item6,LocX25,Item Desc 6,1000,a,12/03/14 12:00,,12\r\n"
+				+ "Item7,LocX25,Item Desc 7,1000,a,12/03/14 12:00,,24\r\n"
+				+ "Item8,LocX25,Item Desc 8,1000,a,12/03/14 12:00,,36\r\n"
+				+ "Item9,LocX26,Item Desc 9,1000,a,12/03/14 12:00,,0\r\n"
+				+ "Item10,LocX26,Item Desc 10,1000,a,12/03/14 12:00,,12\r\n"
+				+ "Item11,LocX26,Item Desc 11,1000,a,12/03/14 12:00,,24\r\n"
+				+ "Item12,LocX26,Item Desc 12,1000,a,12/03/14 12:00,,36\r\n"
+				+ "Item13,LocX27,Item Desc 13,1000,a,12/03/14 12:00,,0\r\n"
+				+ "Item14,LocX27,Item Desc 14,1000,a,12/03/14 12:00,,12\r\n"
+				+ "Item15,LocX27,Item Desc 15,1000,a,12/03/14 12:00,,24\r\n"
+				+ "Item16,LocX27,Item Desc 16,1000,a,12/03/14 12:00,,36\r\n";
 		importInventoryData(getFacility(), inventory);
 		commitTransaction();
 
 		beginTransaction();
-		String orders = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,workSequence,locationId\r\n" +
-				"1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1,,\r\n" +
-				"1,1,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1,,\r\n" +
-				"1,1,347,12/03/14 12:00,12/31/14 12:00,Item11,,120,a,Group1,,\r\n" +
-				"1,1,348,12/03/14 12:00,12/31/14 12:00,Item9,,11,a,Group1,,\r\n" +
-				"1,1,349,12/03/14 12:00,12/31/14 12:00,Item2,,22,a,Group1,,\r\n" +
-				"1,1,350,12/03/14 12:00,12/31/14 12:00,Item5,,33,a,Group1,,\r\n" +
-				"1,1,351,12/03/14 12:00,12/31/14 12:00,Item3,,22,a,Group1,5,LocX24\r\n" +
-				"2,2,353,12/03/14 12:00,12/31/14 12:00,Item3,,44,a,Group1,,\r\n" +
-				"2,2,354,12/03/14 12:00,12/31/14 12:00,Item15,,55,a,Group1,,\r\n" +
-				"2,2,355,12/03/14 12:00,12/31/14 12:00,Item2,,66,a,Group1,,\r\n" +
-				"2,2,356,12/03/14 12:00,12/31/14 12:00,Item8,,77,a,Group1,,\r\n" +
-				"2,2,357,12/03/14 12:00,12/31/14 12:00,Item14,,77,a,Group1,,\r\n" +
-				"7,7,346,12/03/14 12:00,12/31/14 12:00,Item2,,40,a,Group1,,\r\n" +
-				"7,7,347,12/03/14 12:00,12/31/14 12:00,Item6,,30,a,Group1,,\r\n" +
-				"8,8,349,12/03/14 12:00,12/31/14 12:00,Item2,,40,a,Group1,,\r\n" +
-				"8,8,350,12/03/14 12:00,12/31/14 12:00,Item6,,30,a,Group1,,\r\n";
+		String orders = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,workSequence,locationId\r\n"
+				+ "1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1,,\r\n"
+				+ "1,1,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1,,\r\n"
+				+ "1,1,347,12/03/14 12:00,12/31/14 12:00,Item11,,120,a,Group1,,\r\n"
+				+ "1,1,348,12/03/14 12:00,12/31/14 12:00,Item9,,11,a,Group1,,\r\n"
+				+ "1,1,349,12/03/14 12:00,12/31/14 12:00,Item2,,22,a,Group1,,\r\n"
+				+ "1,1,350,12/03/14 12:00,12/31/14 12:00,Item5,,33,a,Group1,,\r\n"
+				+ "1,1,351,12/03/14 12:00,12/31/14 12:00,Item3,,22,a,Group1,5,LocX24\r\n"
+				+ "2,2,353,12/03/14 12:00,12/31/14 12:00,Item3,,44,a,Group1,,\r\n"
+				+ "2,2,354,12/03/14 12:00,12/31/14 12:00,Item15,,55,a,Group1,,\r\n"
+				+ "2,2,355,12/03/14 12:00,12/31/14 12:00,Item2,,66,a,Group1,,\r\n"
+				+ "2,2,356,12/03/14 12:00,12/31/14 12:00,Item8,,77,a,Group1,,\r\n"
+				+ "2,2,357,12/03/14 12:00,12/31/14 12:00,Item14,,77,a,Group1,,\r\n"
+				+ "7,7,346,12/03/14 12:00,12/31/14 12:00,Item2,,40,a,Group1,,\r\n"
+				+ "7,7,347,12/03/14 12:00,12/31/14 12:00,Item6,,30,a,Group1,,\r\n"
+				+ "8,8,349,12/03/14 12:00,12/31/14 12:00,Item2,,40,a,Group1,,\r\n"
+				+ "8,8,350,12/03/14 12:00,12/31/14 12:00,Item6,,30,a,Group1,,\r\n";
 		importOrdersData(getFacility(), orders);
 		commitTransaction();
 		return getFacility();
@@ -318,7 +316,7 @@ public abstract class ServerTest extends HibernateTest {
 	protected CodeshelfNetwork getNetwork() {
 		return CodeshelfNetwork.staticGetDao().findByPersistentId(this.networkPersistentId);
 	}
-	
+
 	public void logWiList(List<WorkInstruction> inList) {
 		for (WorkInstruction wi : inList) {
 			// If this is called from a list of WIs from the site controller, the WI may not have all its normal fields populated.
@@ -326,25 +324,36 @@ public abstract class ServerTest extends HibernateTest {
 
 			LOGGER.info(statusStr + " WiSort: " + wi.getGroupAndSortCode() + " cntr: " + wi.getContainerId() + " loc: "
 					+ wi.getPickInstruction() + "(" + wi.getNominalLocationId() + ")" + " count: " + wi.getPlanQuantity()
-					+ " SKU: " + wi.getItemId() + " order: " + wi.getOrderId() + " desc.: " + wi.getDescription());
+					+ " SKU: " + wi.getItemId() + " order: " + wi.getOrderId() + " desc.: " + wi.getDescription() + " gtin: "
+					+ wi.getGtin());
 		}
 	}
+
 	public void logOneWi(WorkInstruction inWi) {
 		// If this is called from a list of WIs from the site controller, the WI may not have all its normal fields populated.
 		String statusStr = padRight(inWi.getStatusString(), 8);
+		// If called from server side, the master is there. If site controller side, sku is the denormalized itemId
+		String sku = "";
+		if (inWi.getItemMaster() != null) {
+			sku = inWi.getItemMasterId();
+		} else {
+			sku = inWi.getItemId();
+		}
 
 		LOGGER.info(statusStr + " " + inWi.getGroupAndSortCode() + " " + inWi.getContainerId() + " loc: "
-				+ inWi.getPickInstruction() + "(" + inWi.getNominalLocationId() + ")" + " count: " + inWi.getPlanQuantity() + " actual: " + inWi.getActualQuantity()
-				+ " SKU: " + inWi.getItemMasterId() + " order: " + inWi.getOrderId() + " desc.: " + inWi.getDescription());
+				+ inWi.getPickInstruction() + "(" + inWi.getNominalLocationId() + ")" + " count: " + inWi.getPlanQuantity()
+				+ " actual: " + inWi.getActualQuantity() + " SKU: " + sku + " order: " + inWi.getOrderId()
+				+ " desc.: " + inWi.getDescription());
 	}
+
 	public void logItemList(List<Item> inList) {
 		for (Item item : inList)
 			LOGGER.info("SKU: " + item.getItemMasterId() + " cm: " + item.getCmFromLeft() + " posAlongPath: "
 					+ item.getPosAlongPathui() + " desc.: " + item.getItemDescription());
 	}
+
 	protected ICsvCrossBatchImporter createCrossBatchImporter() {
-		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(eventProducer,
-			workService);
+		ICsvCrossBatchImporter importer = new CrossBatchCsvImporter(eventProducer, workService);
 		return importer;
 	}
 
@@ -354,7 +363,7 @@ public abstract class ServerTest extends HibernateTest {
 	}
 
 	protected int importBatchData(Facility facility, String csvString) {
-		return importBatchData(facility,csvString,new Timestamp(System.currentTimeMillis()));
+		return importBatchData(facility, csvString, new Timestamp(System.currentTimeMillis()));
 	}
 
 	protected List<WorkInstruction> startWorkFromBeginning(Facility facility, String cheName, String containers) {
@@ -386,17 +395,23 @@ public abstract class ServerTest extends HibernateTest {
 			}
 			ThreadUtils.sleep(100); // retry every 100ms
 		}
-		Assert.fail(String.format("Process type %s not encounter in %dms after %d checks. Process type is %s", inProcessType, maxTimeToWaitMillis, count, existingType));
+		Assert.fail(String.format("Process type %s not encounter in %dms after %d checks. Process type is %s",
+			inProcessType,
+			maxTimeToWaitMillis,
+			count,
+			existingType));
 		return null;
 	}
 
-	protected PickSimulator waitAndGetPickerForProcessType(final IntegrationTest test, final NetGuid deviceGuid, final String inProcessType) {
-		Callable<PickSimulator> createPickSimulator = new Callable<PickSimulator> () {
+	protected PickSimulator waitAndGetPickerForProcessType(final IntegrationTest test,
+		final NetGuid deviceGuid,
+		final String inProcessType) {
+		Callable<PickSimulator> createPickSimulator = new Callable<PickSimulator>() {
 			@Override
 			public PickSimulator call() throws Exception {
 				PickSimulator picker = new PickSimulator(test.getDeviceManager(), deviceGuid);
 				String type = picker.getProcessType();
-				return (type.equals(inProcessType))? picker : null;
+				return (type.equals(inProcessType)) ? picker : null;
 			}
 		};
 
@@ -404,8 +419,8 @@ public abstract class ServerTest extends HibernateTest {
 		return picker;
 	}
 
-	protected class WaitForResult <T>{
-		private Callable<T> logicToCall;
+	protected class WaitForResult<T> {
+		private Callable<T>	logicToCall;
 
 		public WaitForResult(Callable<T> callable) {
 			this.logicToCall = callable;
@@ -421,7 +436,9 @@ public abstract class ServerTest extends HibernateTest {
 				T result = null;
 				try {
 					result = this.logicToCall.call();
-				} catch (Exception e) {e.printStackTrace();}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 				if (result != null) {
 					LOGGER.info("Desired object retrieved in " + count + " attempts");
 					return result;
@@ -450,16 +467,15 @@ public abstract class ServerTest extends HibernateTest {
 	 *  Instead do this: Assert.assertEquals(toByte(3), displayValue);
 	 *  Does not throw. Logs error on out of range. Always returns a good Byte
 	 */
-	protected static Byte toByte(int theInt){
+	protected static Byte toByte(int theInt) {
 		if (theInt < 0 || theInt > 255) {
 			LOGGER.error("toByte out of range");
 			return new Byte((byte) 0);
-		}
-		else {
+		} else {
 			return ((Byte) (byte) theInt);
 		}
 	}
-	
+
 	protected PickSimulator createPickSim(NetGuid cheGuid) {
 		return new PickSimulator(this.getDeviceManager(), cheGuid);
 	}
