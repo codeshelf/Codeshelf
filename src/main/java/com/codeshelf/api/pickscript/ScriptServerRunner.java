@@ -44,7 +44,7 @@ import com.sun.jersey.multipart.FormDataMultiPart;
 
 public class ScriptServerRunner {
 	private final static String TEMPLATE_EDIT_FACILITY = "editFacility <facility domain id> <primary site controller id> <primary radio channel>";
-	private final static String TEMPLATE_OUTLINE = "createDummyOutline [size 1/2/3]";
+	private final static String TEMPLATE_OUTLINE = "createDummyOutline [size]";
 	private final static String TEMPLATE_SET_PROPERTY = "setProperty <name> <value>";
 	private final static String TEMPLATE_DELETE_ORDERS = "deleteOrders <filename>";
 	private final static String TEMPLATE_IMPORT_ORDERS = "importOrders <orders>";
@@ -191,7 +191,7 @@ public class ScriptServerRunner {
 
 	/**
 	 * Expects to see command
-	 * createDummyOutline [size 1/2/3]
+	 * createDummyOutline [size]
 	 * @throws Exception 
 	 */
 	private void processOutlineCommand(String parts[]) throws Exception {
@@ -202,29 +202,18 @@ public class ScriptServerRunner {
 		if (parts.length == 2) {
 			facilitySize = Integer.parseInt(parts[1]);
 		}
-		if (facilitySize < 1 || facilitySize > 3) {
-			throw new Exception("Invalid facility size " + facilitySize + ". Allowed values: 1-3");
+		if (facilitySize < 1) {
+			throw new Exception("Invalid facility size " + facilitySize + ".");
 		}
 		List<Vertex> vertices = facility.getVertices();
 		while (!vertices.isEmpty()){
 			Vertex.staticGetDao().delete(vertices.remove(0));
 		}
-		if (facilitySize == 1) {
-			facility.createVertex("V0", "GPS", -122.271673679351807, 37.8032855078260113, 0);
-			facility.createVertex("V1", "GPS", -122.271673679351807, 37.8031498746375263, 1);
-			facility.createVertex("V2", "GPS", -122.271479676417243, 37.8031498746375263, 2);
-			facility.createVertex("V3", "GPS", -122.271479676417243, 37.8032855078260113, 3);
-		} else if (facilitySize == 2) {
-			facility.createVertex("V0", "GPS", -122.271673679351807, 37.8032855078260113, 0);
-			facility.createVertex("V1", "GPS", -122.271673679351807, 37.8030545074026705, 1);
-			facility.createVertex("V2", "GPS", -122.271384457997215, 37.8030545074026705, 2);
-			facility.createVertex("V3", "GPS", -122.271384457997215, 37.8032855078260113, 3);
-		} else if (facilitySize == 3) {
-			facility.createVertex("V0", "GPS", -122.271673679351807, 37.8032855078260113, 0);
-			facility.createVertex("V1", "GPS", -122.271673679351807, 37.8029527822164439, 1);
-			facility.createVertex("V2", "GPS", -122.271210114411247, 37.8029527822164439, 2);
-			facility.createVertex("V3", "GPS", -122.271210114411247, 37.8032855078260113, 3);
-		}
+		double anchorX = -122.271673679351807, anchorY = 37.8032855078260113, sideX = 0.00020 * facilitySize, sideY = 0.00016 * facilitySize;
+		facility.createVertex("V0", "GPS", anchorX, anchorY, 0);
+		facility.createVertex("V1", "GPS", anchorX, anchorY - sideY, 1);
+		facility.createVertex("V2", "GPS", anchorX + sideX, anchorY - sideY, 2);
+		facility.createVertex("V3", "GPS", anchorX + sideX, anchorY, 3);
 	}
 
 	/**
