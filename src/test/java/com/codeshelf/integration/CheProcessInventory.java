@@ -310,6 +310,23 @@ public class CheProcessInventory extends ServerTest {
 		Assert.assertNotNull(locationD3031);
 		Item item1123locD3031 = locationD3031.getStoredItemFromMasterIdAndUom("1123", "ea");
 		Assert.assertNotNull(item1123locD3031);
+		
+		LOGGER.info("3: test our UI functions getItemLocationName and setItemLocationName");
+		String locFor1493 = item1493locD402.getItemLocationName();
+		Assert.assertEquals("D402", locFor1493);
+		// call the set with an alias
+		item1493locD402.setItemLocationName("D403");
+		locFor1493 = item1493locD402.getItemLocationName();
+		Assert.assertEquals("D403", locFor1493);
+		// call the set with a nominal ID. A2.B2.T1 is the location of alias D402, so should set back to D402
+		item1493locD402.setItemLocationName("A2.B2.T1");
+		locFor1493 = item1493locD402.getItemLocationName();
+		Assert.assertEquals("D402", locFor1493);
+		// finally, set with a nominal ID without an alias
+		item1493locD402.setItemLocationName("A1.B3.T1.S2");
+		locFor1493 = item1493locD402.getItemLocationName();
+		Assert.assertEquals("A1.B3.T1.S2", locFor1493);
+		
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
