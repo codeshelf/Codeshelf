@@ -37,23 +37,28 @@ import com.google.inject.Provider;
  */
 public final class EdiProcessorService extends AbstractCodeshelfScheduledService {
 
-	int periodSeconds = 30;
+	@Getter
+	int											periodSeconds			= 30;
 
-	private static final Logger			LOGGER					= LoggerFactory.getLogger(EdiProcessorService.class);
+	private static final Logger					LOGGER					= LoggerFactory.getLogger(EdiProcessorService.class);
 
 	private Provider<ICsvOrderImporter>			mCsvOrderImporter;
 	private Provider<ICsvOrderLocationImporter>	mCsvOrderLocationImporter;
 	private Provider<ICsvInventoryImporter>		mCsvInventoryImporter;
 	private Provider<ICsvLocationAliasImporter>	mCsvLocationAliasImporter;
-	private Provider<ICsvAislesFileImporter>		mCsvAislesFileImporter;
-	private Provider<ICsvCrossBatchImporter>		mCsvCrossBatchImporter;
+	private Provider<ICsvAislesFileImporter>	mCsvAislesFileImporter;
+	private Provider<ICsvCrossBatchImporter>	mCsvCrossBatchImporter;
 
-	private Timer					ediProcessingTimer;
-	private Thread ediSignalThread = null;
-	
+	private Timer								ediProcessingTimer;
+	private Thread								ediSignalThread			= null;
+
+	Integer										lastNumTenants			= 0;
+	int											lastSuccessfulTenants	= 0;
+	Long										lastSuccessTime			= 0L;
+
 	@Getter
 	@Setter
-	BlockingQueue<String> ediSignalQueue = null;
+	BlockingQueue<String>						ediSignalQueue			= null;
 
 	@Inject
 	public EdiProcessorService(final Provider<ICsvOrderImporter> inCsvOrdersImporter,
@@ -70,40 +75,67 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 		mCsvAislesFileImporter = inCsvAislesFileImporter;
 		mCsvCrossBatchImporter = inCsvCrossBatchImporter;
 	}
-	
+
 	List<Facility> getFacilities() {
 		return Facility.staticGetDao().getAll();
 	}
 
 	@Override
 	protected void startUp() throws Exception {
-		if(this.ediSignalQueue == null) 
-		{
+		if (this.ediSignalQueue == null) {
 			this.ediSignalQueue = new ArrayBlockingQueue<>(100);
 			//throw new NullPointerException("couldn't start EDI processer, signal queue is null");
 		}
-		ediProcessingTimer		= MetricsService.getInstance().createTimer(MetricsGroup.EDI, "processing-time");
-		
+		ediProcessingTimer = MetricsService.getInstance().createTimer(MetricsGroup.EDI, "processing-time");
+
 		LOGGER.info("starting ediProcessorService");
 	}
 
 	@Override
 	protected void runOneIteration() throws Exception {
+		CodeshelfSecurityManager.removeContextIfPresent(); // shared thread, maybe other was aborted
 
 		LOGGER.trace("Begin EDI process.");
 
-		CodeshelfSecurityManager.removeContextIfPresent(); // shared thread, maybe other was aborted
+		int numTenants = 0;
+		int successfulTenants = 0;
+
 		for (Tenant tenant : TenantManagerService.getInstance().getTenants()) {
-			doEdiForTenant(tenant);
+			numTenants++;
+			if(doEdiForTenant(tenant)) {
+				successfulTenants++;
+			}
+		}
+		if(numTenants == successfulTenants) {
+			synchronized(this.lastSuccessTime) {
+				this.lastSuccessTime = System.currentTimeMillis();
+			}
+		}
+		synchronized(this.lastNumTenants) {
+			this.lastNumTenants = numTenants;
+			this.lastSuccessfulTenants = successfulTenants;
 		}
 	}
+	
+	public long getLastSuccessTime() {
+		synchronized(this.lastSuccessTime) {
+			return this.lastSuccessTime;
+		}	
+	}
+	
+	public String getErrorStatus() {
+		if(this.lastNumTenants == this.lastSuccessfulTenants) {
+			return null;
+		} //else
+		return String.format("%d/%d EDI working", this.lastSuccessfulTenants, this.lastNumTenants);
+	}
 
-	private void doEdiForTenant(Tenant tenant) {
+	private boolean doEdiForTenant(Tenant tenant) {
 		boolean completed = false;
 		int numChecked = 0;
 		final Timer.Context timerContext = ediProcessingTimer.time();
 		long startTime = System.currentTimeMillis();
-		
+
 		try {
 			UserContext systemUser = CodeshelfSecurityManager.getUserContextSYSTEM();
 			CodeshelfSecurityManager.setContext(systemUser, tenant);
@@ -120,7 +152,7 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 							mCsvLocationAliasImporter.get(),
 							mCsvCrossBatchImporter.get(),
 							mCsvAislesFileImporter.get())) {
-							numChecked ++;
+							numChecked++;
 							// Signal other threads that we've just processed new EDI.
 							try {
 								ediSignalThread = Thread.currentThread();
@@ -137,28 +169,34 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 			TenantPersistenceService.getInstance().commitTransaction();
 			completed = true;
 		} catch (RuntimeException e) {
-			LOGGER.error("Unable to process edi for tenant "+tenant.getId(), e);
+			LOGGER.error("Unable to process edi for tenant " + tenant.getId(), e);
 		} finally {
 			long endTime = System.currentTimeMillis();
-			if (timerContext != null) timerContext.stop();
-			LOGGER.info("Checked for updates from {} EDI services for tenant {} in {}s",numChecked,tenant.getName(),(endTime-startTime)/1000);
+			if (timerContext != null)
+				timerContext.stop();
+			LOGGER.info("Checked for updates from {} EDI services for tenant {} in {}s",
+				numChecked,
+				tenant.getName(),
+				(endTime - startTime) / 1000);
 			CodeshelfSecurityManager.removeContext();
 			if (!completed) {
 				TenantPersistenceService.getInstance().rollbackTransaction();
-				LOGGER.warn("EDI process did not complete successfully for tenant {}",tenant.getName());
+				LOGGER.warn("EDI process did not complete successfully for tenant {}", tenant.getName());
 			}
 		}
-
+		return completed;
 	}
 
 	@Override
 	protected void shutDown() throws Exception {
-		if(ediSignalThread != null) 
+		if (ediSignalThread != null)
 			ediSignalThread.interrupt();
 	}
 
 	@Override
 	protected Scheduler scheduler() {
-		return Scheduler.newFixedDelaySchedule(Integer.getInteger("service.edi.init.delay",0), this.periodSeconds, TimeUnit.SECONDS);
+		return Scheduler.newFixedDelaySchedule(Integer.getInteger("service.edi.init.delay", 0),
+			this.periodSeconds,
+			TimeUnit.SECONDS);
 	}
 }

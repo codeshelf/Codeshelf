@@ -19,6 +19,7 @@ import com.codeshelf.manager.service.ManagerPersistenceService;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.codeshelf.metrics.DropboxServiceHealthCheck;
+import com.codeshelf.metrics.EdiHealthCheck;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
@@ -106,6 +107,9 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 
 		DropboxServiceHealthCheck dbxCheck = new DropboxServiceHealthCheck();
 		metricsService.registerHealthCheck(dbxCheck);
+		
+		EdiHealthCheck ediCheck = new EdiHealthCheck(this.ediProcessorService);
+		metricsService.registerHealthCheck(ediCheck);
 	}
 
 	// --------------------------------------------------------------------------
