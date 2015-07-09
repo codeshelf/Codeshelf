@@ -1594,11 +1594,13 @@ public class OutboundOrderImporterTest extends ServerTest {
 		OrderHeader h2 = OrderHeader.staticGetDao().findByDomainId(facility, "2"); 
 		OrderDetail d2_1 = h2.getOrderDetail("201");
 		Gtin d2_1_gtin = d2_1.getItemMaster().getGtinForUom(d2_1.getUomMaster());
-		Assert.assertEquals("4", d2_1_gtin.getDomainId());
+		// there was a d2_1_gtin for detail 102. But it got converted on the line commented // Repeat gtin for diff UOM
+		// So, now we will not find the gtin for the previous UOM
+		Assert.assertNull(d2_1_gtin);
 		
 		OrderDetail d2_2 = h2.getOrderDetail("202");
 		Gtin d2_2_gtin = d2_2.getItemMaster().getGtinForUom(d2_2.getUomMaster());
-		Assert.assertNull(d2_2_gtin);
+		Assert.assertNotNull(d2_2_gtin); // this was the converted one
 		
 		OrderDetail d2_3 = h2.getOrderDetail("203");
 		Gtin d2_3_gtin = d2_3.getItemMaster().getGtinForUom(d2_3.getUomMaster());

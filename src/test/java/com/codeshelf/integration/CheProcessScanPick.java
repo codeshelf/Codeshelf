@@ -279,7 +279,7 @@ public class CheProcessScanPick extends ServerTest {
 				+ "\r\n101,USF314,COSTCO,12345,12345.2,1493,PARK RANGER Doll,1,each, D302"
 				+ "\r\n102,USF314,COSTCO,12345,12345.3,1522,Butterfly Yoyo,3,each, D303"
 				+ "\r\n103,USF314,COSTCO,11111,11111.1,1122,8 oz Bowl Lids -PLA Compostable,2,each, D401"
-				+ "\r\n104,USF314,COSTCO,11111,11111.2,1522,Butterfly Yoyo,1,each, D402"
+				+ "\r\n102,USF314,COSTCO,11111,11111.2,1522,Butterfly Yoyo,1,each, D402"
 				+ "\r\n105,USF314,COSTCO,11111,11111.3,1523,SJJ BPP,1,each, D403"
 				+ "\r\n106,USF314,COSTCO,11111,11111.4,1124,8 oz Bowls -PLA Compostable,1,each, D501"
 				+ "\r\n107,USF314,COSTCO,11111,11111.5,1555,paper towel,2,each, D502";
