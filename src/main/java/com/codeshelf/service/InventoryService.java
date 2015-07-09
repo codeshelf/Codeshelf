@@ -110,7 +110,7 @@ public class InventoryService implements IApiService {
 
 			gtin = itemMaster.createGtin(inGtin, uomMaster);
 			if (gtin != null) {
-				LOGGER.info("Created new GTIN: {} with UOM: {}", inGtin, gtin.getUomMaster().toString());
+				LOGGER.info("Created new gtin:{} for sku:{}/{}", gtin.getGtin(), itemMaster.getItemId(), uomMaster.getUomMasterId());
 				Gtin.staticGetDao().store(gtin);
 			} else {
 				LOGGER.error("Was unable to create GTIN for GTIN: {}", inGtin);

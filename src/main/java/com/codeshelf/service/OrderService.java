@@ -1,5 +1,6 @@
 package com.codeshelf.service;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -13,6 +14,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -20,6 +22,8 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.SimpleExpression;
 import org.hibernate.transform.AliasToBeanResultTransformer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.OrderStatusEnum;
@@ -82,6 +86,8 @@ public class OrderService implements IApiService {
 		
 	}
 
+	private static final Logger	LOGGER = LoggerFactory.getLogger(OrderService.class);
+	
 	public Collection<ItemView> itemsInQuantityOrder(Session session, UUID facilityUUID) {
 		@SuppressWarnings("unchecked")
 		List<ItemView>  result = session.createQuery(
@@ -96,16 +102,17 @@ public class OrderService implements IApiService {
 		return result;
 	}
 	
-	public List<OrderHeader> findOrderHeadersForStatus(Facility facility, OrderStatusEnum[] orderStatusEnums) {
+	public List<Map<String, Object>> findOrderHeadersForStatus(Facility facility, OrderStatusEnum[] orderStatusEnums) {
 		Criteria criteria = orderHeaderCriteria(facility)
 				.add(Property.forName("status").in(orderStatusEnums));
 		@SuppressWarnings("unchecked")
 		List<OrderHeader> results =(List<OrderHeader>) criteria.list();
-		return results;
+		return toOrderView(results);
 
 	}
 	
-	public List<OrderHeader> findOrderHeadersForOrderId(Facility facility, String orderId) {
+	public List<Map<String, Object>> findOrderHeadersForOrderId(Facility facility, String orderId) {
+		
 		SimpleExpression orderIdProperty = null;
 		if (orderId != null && orderId.indexOf('*') >= 0) {
 			orderIdProperty = Property.forName("domainId").like(orderId.replace('*', '%'));
@@ -117,7 +124,30 @@ public class OrderService implements IApiService {
 								.add(orderIdProperty);
 		@SuppressWarnings("unchecked")
 		List<OrderHeader> results =(List<OrderHeader>) criteria.list();
-		return results;
+		return toOrderView(results);
+	}
+
+	private List<Map<String, Object>> toOrderView(List<OrderHeader> results) {
+		PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
+		String[] propertyNames = new String[]{    "persistentId","destinationId", "fullDomainId", "orderId", "description", "readableOrderDate", "readableDueDate", "status", "containerId", "shipperId", "customerId", "workSequence", "orderLocationAliasIds", "active", "orderType", "wallUi", "groupUi"};
+		ArrayList<Map<String, Object>> viewResults = new ArrayList<Map<String, Object>>();
+		for (OrderHeader object : results) {
+			Map<String, Object> propertiesMap = new HashMap<>();
+			for (String propertyName : propertyNames) {
+				try {
+					Object resultObject = propertyUtils.getProperty(object, propertyName);
+					propertiesMap.put(propertyName, resultObject);
+				} catch(NoSuchMethodException e) {
+					// Minor problem. UI hierarchical view asks for same data field name for all object types in the view. Not really an error in most cases
+					LOGGER.debug("no property " +propertyName + " on object: " + object);
+				} catch(Exception e) {
+					LOGGER.warn("unexpected exception for property " +propertyName + " object: " + object, e);
+				}
+			}
+			viewResults.add(propertiesMap);
+		}
+		return viewResults;
+
 	}
 	
 	private Criteria orderHeaderCriteria(Facility facility) {

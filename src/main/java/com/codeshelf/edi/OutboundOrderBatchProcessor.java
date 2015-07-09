@@ -48,122 +48,125 @@ import com.google.common.base.Strings;
 
 public class OutboundOrderBatchProcessor implements Runnable {
 
-	private static final Logger LOGGER	= LoggerFactory.getLogger(OutboundOrderBatchProcessor.class);
+	private static final Logger							LOGGER					= LoggerFactory.getLogger(OutboundOrderBatchProcessor.class);
 
-	private OutboundOrderPrefetchCsvImporter importer;
+	private OutboundOrderPrefetchCsvImporter			importer;
 
-	DateTimeParser dateTimeParser;
+	DateTimeParser										dateTimeParser;
 
 	@Getter
-	private Timestamp	processTime;
+	private Timestamp									processTime;
 
-	@Getter @Setter
-	private String oldPreferredLocation	= null;
-	
 	@Getter
-	private BatchResult<Object> batchResult = new BatchResult<Object>();
-		
-	private Facility facility;
+	@Setter
+	private String										oldPreferredLocation	= null;
 
-	private int	processorId;
-	
-	Map<String,OrderHeader> orderMap;
-	
-	DomainObjectCache<ItemMaster> itemMasterCache = null;
-	DomainObjectCache<OrderHeader> orderHeaderCache = null;
-	HashMap<String, Gtin> gtinCache = null;
-	
-	private HashMap<String, Map<String,OrderDetail>> orderlineMap;
-	private HashMap<String, Container> containerMap;
-	private HashMap<String, ContainerUse> containerUseMap;
-	
-	long startTime;
-	long endTime;
-	int numOrders; 
-	int numLines;
-	
-	@Getter @Setter
-	int maxProcessingAttempts = 10;
+	@Getter
+	private BatchResult<Object>							batchResult				= new BatchResult<Object>();
 
-	Map<String,Boolean> orderChangeMap;
-	
-	public OutboundOrderBatchProcessor(int procId, OutboundOrderPrefetchCsvImporter importer, Timestamp processTime, Facility facility) {
+	private Facility									facility;
+
+	private int											processorId;
+
+	Map<String, OrderHeader>							orderMap;
+
+	DomainObjectCache<ItemMaster>						itemMasterCache			= null;
+	DomainObjectCache<OrderHeader>						orderHeaderCache		= null;
+	HashMap<String, Gtin>								gtinCache				= null;
+
+	private HashMap<String, Map<String, OrderDetail>>	orderlineMap;
+	private HashMap<String, Container>					containerMap;
+	private HashMap<String, ContainerUse>				containerUseMap;
+
+	long												startTime;
+	long												endTime;
+	int													numOrders;
+	int													numLines;
+
+	@Getter
+	@Setter
+	int													maxProcessingAttempts	= 10;
+
+	Map<String, Boolean>								orderChangeMap;
+
+	public OutboundOrderBatchProcessor(int procId,
+		OutboundOrderPrefetchCsvImporter importer,
+		Timestamp processTime,
+		Facility facility) {
 		this.importer = importer;
 		this.processTime = processTime;
 		this.facility = facility;
 		this.processorId = procId;
 		this.dateTimeParser = new DateTimeParser();
 	}
-	
+
 	@Override
-	public void run() {		
+	public void run() {
 		OutboundOrderBatch batch = importer.getBatchQueue().poll();
-		while (batch!=null) {
+		while (batch != null) {
 			// process batch
-			batch.setProcessingAttempts(batch.getProcessingAttempts()+1);
-			LOGGER.info("Worker #"+processorId+" is processing "+batch+" in "+batch.getProcessingAttempts()+". attempt");
-			
+			batch.setProcessingAttempts(batch.getProcessingAttempts() + 1);
+			LOGGER.info("Worker #" + processorId + " is processing " + batch + " in " + batch.getProcessingAttempts() + ". attempt");
+
 			try {
-				TenantPersistenceService.getInstance().beginTransaction();	
-				
+				TenantPersistenceService.getInstance().beginTransaction();
+
 				// attach facility to new session
 				Facility facility = Facility.staticGetDao().reload(this.facility);
-				
+
 				itemMasterCache = new DomainObjectCache<ItemMaster>(ItemMaster.staticGetDao());
 				orderHeaderCache = new DomainObjectCache<OrderHeader>(OrderHeader.staticGetDao());
 
 				ArrayList<OrderHeader> orderSet = new ArrayList<OrderHeader>();
 
 				LOGGER.debug("Begin order import.");
-				
+
 				this.startTime = System.currentTimeMillis();
-				LOGGER.info(batch.getItemIds().size()+" distinct items found in batch");
-				
+				LOGGER.info(batch.getItemIds().size() + " distinct items found in batch");
+
 				// cache item master
 				itemMasterCache.reset();
 				itemMasterCache.setFetchOnMiss(false);
-				itemMasterCache.load(facility,batch.getItemIds());	
-				LOGGER.info("ItemMaster cache populated with "+this.itemMasterCache.size()+" entries");
-		
+				itemMasterCache.load(facility, batch.getItemIds());
+				LOGGER.info("ItemMaster cache populated with " + this.itemMasterCache.size() + " entries");
+
 				// cache order headers
 				orderHeaderCache.reset();
 				orderHeaderCache.setFetchOnMiss(false);
-				orderHeaderCache.load(facility,batch.getOrderIds());		
-				LOGGER.info("OrderHeader cache populated with "+this.orderHeaderCache.size()+" entries");
+				orderHeaderCache.load(facility, batch.getOrderIds());
+				LOGGER.info("OrderHeader cache populated with " + this.orderHeaderCache.size() + " entries");
 
 				// cache gtin
 				gtinCache = generateGtinCache(facility);
-				LOGGER.info("Gtin cache populated with "+this.gtinCache.size()+" entries");
+				LOGGER.info("Gtin cache populated with " + this.gtinCache.size() + " entries");
 
 				// prefetch order details already associated with orders
-				this.orderChangeMap = new HashMap<String,Boolean>();
-				this.orderlineMap = new HashMap<String, Map<String,OrderDetail>>();
-				if (orderHeaderCache.size()==0) {
+				this.orderChangeMap = new HashMap<String, Boolean>();
+				this.orderlineMap = new HashMap<String, Map<String, OrderDetail>>();
+				if (orderHeaderCache.size() == 0) {
 					LOGGER.info("Skipping order line loading, since all orders are new.");
-				}
-				else {
-					LOGGER.info("Loading line items for "+orderHeaderCache.size()+" orders.");
+				} else {
+					LOGGER.info("Loading line items for " + orderHeaderCache.size() + " orders.");
 					Criteria criteria = OrderDetail.staticGetDao().createCriteria();
 					criteria.add(Restrictions.in("parent", orderHeaderCache.getAll()));
 					List<OrderDetail> orderDetails = OrderDetail.staticGetDao().findByCriteriaQuery(criteria);
 					for (OrderDetail line : orderDetails) {
-						Map<String,OrderDetail> l = this.orderlineMap.get(line.getOrderId());
-						if (l==null) {
-							l = new HashMap<String,OrderDetail>();
+						Map<String, OrderDetail> l = this.orderlineMap.get(line.getOrderId());
+						if (l == null) {
+							l = new HashMap<String, OrderDetail>();
 							this.orderlineMap.put(line.getOrderId(), l);
 							this.orderChangeMap.put(line.getOrderId(), false);
 						}
-						l.put(line.getOrderDetailId(),line);
+						l.put(line.getOrderDetailId(), line);
 					}
 				}
-				
+
 				// prefetch container uses already associated with orders
 				this.containerUseMap = new HashMap<String, ContainerUse>();
-				if (orderHeaderCache.size()==0) {
+				if (orderHeaderCache.size() == 0) {
 					LOGGER.info("Skipping container use loading, since all orders are new.");
-				}
-				else {
-					LOGGER.info("Loading container use for "+orderHeaderCache.size()+" orders.");
+				} else {
+					LOGGER.info("Loading container use for " + orderHeaderCache.size() + " orders.");
 					Criteria criteria = ContainerUse.staticGetDao().createCriteria();
 					criteria.add(Restrictions.in("orderHeader", orderHeaderCache.getAll()));
 					List<ContainerUse> containerUses = ContainerUse.staticGetDao().findByCriteriaQuery(criteria);
@@ -171,7 +174,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 						this.containerUseMap.put(cu.getOrderHeader().getOrderId(), cu);
 					}
 				}
-				
+
 				// prefetch containers that are referenced in current order file.
 				// because of m:m container to use relationship, containers that have
 				// no active use are not deactivated here, but in a background process.
@@ -187,7 +190,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				}
 				criteria = Container.staticGetDao().createCriteria();
 				criteria.add(Restrictions.in("domainId", containerIds));
-				
+
 				// process order file
 				List<OutboundOrderCsvBean> lines = batch.getLines();
 				//Check if destinationId, shipperId, or customerId values vary within individual orders
@@ -199,9 +202,9 @@ public class OutboundOrderBatchProcessor implements Runnable {
 					if (importer.getExtensionPointService().hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation)) {
 						Object[] params = { orderBean };
 						try {
-							orderBean = (OutboundOrderCsvBean) importer.getExtensionPointService().eval(ExtensionPointType.OrderImportBeanTransformation, params);
-						} 
-						catch (Exception e) {
+							orderBean = (OutboundOrderCsvBean) importer.getExtensionPointService()
+								.eval(ExtensionPointType.OrderImportBeanTransformation, params);
+						} catch (Exception e) {
 							LOGGER.error("Failed to evaluate OrderImportBeanTransformation extension point", e);
 						}
 					}
@@ -214,45 +217,47 @@ public class OutboundOrderBatchProcessor implements Runnable {
 						batchResult.add(orderBean);
 						importer.produceRecordSuccessEvent(orderBean);
 					} catch (Exception e) {
-						String errorMessage = String.format("Unable to import order line %d: %s", orderBean.getLineNumber(), e.toString());
+						String errorMessage = String.format("Unable to import order line %d: %s",
+							orderBean.getLineNumber(),
+							e.toString());
 						LOGGER.error(errorMessage);
 						batchResult.addLineViolation(lineCount, orderBean, errorMessage);
 					}
 				}
-				
+
 				// init empty order map
-				Map<String,Boolean> isEmptyOrder = new HashMap<String,Boolean>();
+				Map<String, Boolean> isEmptyOrder = new HashMap<String, Boolean>();
 				for (OrderHeader order : this.orderHeaderCache.getAll()) {
 					isEmptyOrder.put(order.getOrderId(), true);
 				}
-				
+
 				// loop through order items and deactivate items that have not been touched by this batch
 				// also set empty order flag to false, if order has non-zero item quantities
 				Collection<Map<String, OrderDetail>> allOrderLines = orderlineMap.values();
 				for (Map<String, OrderDetail> orderlines : allOrderLines) {
 					for (OrderDetail line : orderlines.values()) {
 						// deactivate out-dated items
-						if (line.getActive()==true && !line.getUpdated().equals(processTime)) {
+						if (line.getActive() == true && !line.getUpdated().equals(processTime)) {
 							line.setActive(false);
 							OrderDetail.staticGetDao().store(line);
-							LOGGER.info("Deactivating order item "+line);
-							this.orderChangeMap.put(line.getOrderId(),true);
+							LOGGER.info("Deactivating order item " + line);
+							this.orderChangeMap.put(line.getOrderId(), true);
 						}
 						// reset empty order flag
-						if (line.getActive() && line.getQuantity()!=null && line.getQuantity()>0) {
-							isEmptyOrder.put(line.getOrderId(), false);					
+						if (line.getActive() && line.getQuantity() != null && line.getQuantity() > 0) {
+							isEmptyOrder.put(line.getOrderId(), false);
 						}
 					}
 				}
-				
+
 				// reactivate changed orders
 				for (Entry<String, Boolean> e : this.orderChangeMap.entrySet()) {
 					if (e.getValue()) {
 						OrderHeader order = this.orderHeaderCache.get(e.getKey());
 						if (!isEmptyOrder.get(order.getOrderId())) {
-							LOGGER.info("Order "+order+" changed during import");
-							if (!order.getActive() || order.getStatus()!=OrderStatusEnum.RELEASED) {
-								LOGGER.info("Order "+order+" reactivated. Status set to 'released'.");							
+							LOGGER.info("Order " + order + " changed during import");
+							if (!order.getActive() || order.getStatus() != OrderStatusEnum.RELEASED) {
+								LOGGER.info("Order " + order + " reactivated. Status set to 'released'.");
 								order.setActive(true);
 								order.setStatus(OrderStatusEnum.RELEASED);
 								OrderHeader.staticGetDao().store(order);
@@ -261,53 +266,50 @@ public class OutboundOrderBatchProcessor implements Runnable {
 						}
 					}
 				}
-				
+
 				// deactivate empty orders
 				for (OrderHeader order : this.orderHeaderCache.getAll()) {
-					if (isEmptyOrder.get(order.getOrderId())==true) {
-						LOGGER.info("Deactivating empty order "+order);
+					if (isEmptyOrder.get(order.getOrderId()) == true) {
+						LOGGER.info("Deactivating empty order " + order);
 						order.setActive(false);
 						OrderHeader.staticGetDao().store(order);
 					}
 				}
-				
+
 				// loop through container uses and deactivate uses that have not been touched by this batch
 				Collection<ContainerUse> allUses = this.containerUseMap.values();
 				for (ContainerUse use : allUses) {
-					if (use.getActive()==true && !use.getUpdated().equals(processTime)) {
+					if (use.getActive() == true && !use.getUpdated().equals(processTime)) {
 						// use is out-dated -> deactivate
 						use.setActive(false);
 						ContainerUse.staticGetDao().store(use);
-						LOGGER.info("Deactivating container use "+use);
+						LOGGER.info("Deactivating container use " + use);
 					}
 				}
-				this.numOrders = allOrderLines.size();				
+				this.numOrders = allOrderLines.size();
 				TenantPersistenceService.getInstance().commitTransaction();
-				LOGGER.info("Completed processing "+batch);
-				
+				LOGGER.info("Completed processing " + batch);
+
 				//TODO switch to callable and wait for the futures
-			}
-			catch (StaleObjectStateException e) {
-				LOGGER.warn("Failed to process order batch "+batch+" due to stale data.",e);
-				if (batch.getProcessingAttempts()>this.maxProcessingAttempts) {
-					LOGGER.error("Giving up on processing order batch "+batch+".  Retry import at a later time.");
-				}
-				else {
+			} catch (StaleObjectStateException e) {
+				LOGGER.warn("Failed to process order batch " + batch + " due to stale data.", e);
+				if (batch.getProcessingAttempts() > this.maxProcessingAttempts) {
+					LOGGER.error("Giving up on processing order batch " + batch + ".  Retry import at a later time.");
+				} else {
 					// returning batch to the queue to give it another chance
-					LOGGER.warn("Returning batch "+batch+" to import queue to retry.");
+					LOGGER.warn("Returning batch " + batch + " to import queue to retry.");
 					importer.getBatchQueue().add(batch);
 				}
-				TenantPersistenceService.getInstance().rollbackTransaction();				
-			}
-			catch (Exception e) {
-				LOGGER.info("Failed to process "+batch,e);
-				TenantPersistenceService.getInstance().rollbackTransaction();				
+				TenantPersistenceService.getInstance().rollbackTransaction();
+			} catch (Exception e) {
+				LOGGER.info("Failed to process " + batch, e);
+				TenantPersistenceService.getInstance().rollbackTransaction();
 			}
 			// pull next batch off queue
 			batch = importer.getBatchQueue().poll();
 		}
 	}
-	
+
 	private OrderHeader orderCsvBeanImport(final OutboundOrderCsvBean inCsvBean,
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime,
@@ -328,7 +330,12 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		updateContainer(inCsvBean, inFacility, inEdiProcessTime, order);
 		UomMaster uomMaster = updateUomMaster(inCsvBean.getUom(), inFacility);
 		String itemId = inCsvBean.getItemId();
-		ItemMaster itemMaster = updateItemMaster(itemId, inCsvBean.getDescription(), inFacility, inEdiProcessTime, uomMaster, inCsvBean.getGtin());
+		ItemMaster itemMaster = updateItemMaster(itemId,
+			inCsvBean.getDescription(),
+			inFacility,
+			inEdiProcessTime,
+			uomMaster,
+			inCsvBean.getGtin());
 		OrderDetail orderDetail = updateOrderDetail(inCsvBean, inFacility, inEdiProcessTime, order, uomMaster, itemMaster);
 		@SuppressWarnings("unused")
 		Gtin gtinMap = upsertGtin(inFacility, itemMaster, inCsvBean, uomMaster);
@@ -371,7 +378,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 								Collection<Item> locItems = oldLocation.getStoredItems().values();
 								List<Item> masterItems = itemMaster.getItems();
 								LOGGER.error("location has " + locItems.size() + " items. Master has " + masterItems.size());
-								if (locItems.size() == 1){
+								if (locItems.size() == 1) {
 									Item fromMasterItems = masterItems.get(0);
 									LOGGER.error("fromLocItems: " + fromMasterItems.toLogString());
 								}
@@ -381,12 +388,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 					}
 
 					// updateSlottedItem is going to make new inventory if location changed for cases, and also for each if EACHMULT is true
-					importer.updateSlottedItem(false,
-						itemBean,
-						location,
-						inEdiProcessTime,
-						itemMaster,
-						uomMaster);
+					importer.updateSlottedItem(false, itemBean, location, inEdiProcessTime, itemMaster, uomMaster);
 				}
 			}
 		}
@@ -404,12 +406,12 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		final Facility inFacility,
 		final Timestamp inEdiProcessTime) {
 		String orderGroupId = inCsvBean.getOrderGroupId();
-		if (orderGroupId==null || orderGroupId.length()==0) {
+		if (orderGroupId == null || orderGroupId.length() == 0) {
 			// order group in undefined
 			return null;
 		}
 		OrderGroup result = inFacility.getOrderGroup(inCsvBean.getOrderGroupId());
-		if ((result == null) ) {
+		if ((result == null)) {
 			// create new order group
 			result = new OrderGroup();
 			result.setOrderGroupId(orderGroupId);
@@ -455,7 +457,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 		if ((containerId != null) && (containerId.length() > 0)) {
 			//result = inFacility.getContainer(inCsvBean.getPreAssignedContainerId());
-			container = this.containerMap.get(containerId);		
+			container = this.containerMap.get(containerId);
 			if (container == null) {
 				// create new container, if it does not already exist
 				container = new Container();
@@ -492,8 +494,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				if (prevOrder == null) {
 					inOrder.addHeadersContainerUse(use);
 					Container.staticGetDao().store(inOrder);
-				}
-				else if (!prevOrder.equals(inOrder)) {
+				} else if (!prevOrder.equals(inOrder)) {
 					prevOrder.removeHeadersContainerUse(use);
 					Container.staticGetDao().store(prevOrder);
 					inOrder.addHeadersContainerUse(use);
@@ -545,7 +546,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 			result.setParent(inFacility);
 		}
 
-		result.setOrderType(OrderTypeEnum.OUTBOUND);		
+		result.setOrderType(OrderTypeEnum.OUTBOUND);
 		result.setCustomerId(inCsvBean.getCustomerId());
 		result.setShipperId(inCsvBean.getShipperId());
 		result.setDestinationId(inCsvBean.getDestinationId());
@@ -624,14 +625,23 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		//This is due to Gtin's ItemMaster only being created when there isn't already an ItemMaster for that gtinId
 		//If it does happen, ignore the Gtin's ItemMaster
 		itemMaster = this.itemMasterCache.get(inItemId);
-		
-		//Try to find a matching manual-inventory Gtin
+
+		// Try to find a matching manual-inventory Gtin
+		// This is a very important case for "inventory onboarding". Initial inventory scan of gtin make a phone item and item master.
+		// Now comes the good update where we have a chance to correct it. Log as WARN.
 		Gtin gtin = this.gtinCache.get(gtinId);
 		if (itemMaster == null && gtin != null) {
+
+			// see upsertGtin() code below for relevance
+			LOGGER.warn("GTIN_case_3c {} already exists but for wrong SKU. Changing to {}", gtin, inItemId);
+			// Careful: need to handle case 3a and 3b.
+			// if the the current gtin sku is exactly the same as gtin domainId, then we just want to update the master and items uom as we do next.
+			// However, host system data errors can lead to gtin or sku changes on apparently valid data
+
 			itemMaster = gtin.getParent();
 			List<Item> items = itemMaster.getItems();
-			for(Item item : items) {
-				if (gtin.equals(item.getGtin())){
+			for (Item item : items) {
+				if (gtin.equals(item.getGtin())) {
 					item.setUomMaster(inUomMaster);
 					item.setDomainId(item.makeDomainId());
 					Item.staticGetDao().store(item);
@@ -642,8 +652,9 @@ public class OutboundOrderBatchProcessor implements Runnable {
 			itemMaster.setItemId(inItemId);
 			ItemMaster.staticGetDao().store(itemMaster);
 			Gtin.staticGetDao().store(gtin);
+			LOGGER.info("Updated to {}", gtin);
 		}
-		
+
 		// create a new item, if needed
 		if (itemMaster == null) {
 			itemMaster = new ItemMaster();
@@ -654,13 +665,11 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		}
 
 		// update only if modified or new
-		if (itemMaster.getDescription()!=null && itemMaster.getDescription().equals(inDescription) &&
-			itemMaster.getStandardUom().equals(inUomMaster) &&
-			itemMaster.getActive()!=null && itemMaster.getActive()==true && 
-			itemMaster.getActive()!=null && itemMaster.getUpdated()==inEdiProcessTime) {
+		if (itemMaster.getDescription() != null && itemMaster.getDescription().equals(inDescription)
+				&& itemMaster.getStandardUom().equals(inUomMaster) && itemMaster.getActive() != null
+				&& itemMaster.getActive() == true && itemMaster.getActive() != null && itemMaster.getUpdated() == inEdiProcessTime) {
 			// already up to date
-		}
-		else {
+		} else {
 			itemMaster.setDescription(inDescription);
 			itemMaster.setStandardUom(inUomMaster);
 			itemMaster.setActive(true);
@@ -700,54 +709,107 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		return result;
 	}
 
-	private Gtin upsertGtin(final Facility inFacility, final ItemMaster inItemMaster, 
-		final OutboundOrderCsvBean inCsvBean, UomMaster uomMaster) {
-		
+	private Gtin upsertGtin(final Facility inFacility,
+		final ItemMaster inItemMaster,
+		final OutboundOrderCsvBean inCsvBean,
+		UomMaster uomMaster) {
+
 		if (inCsvBean.getGtin() == null || inCsvBean.getGtin().isEmpty()) {
 			return null;
 		}
-		
-		Gtin result = Gtin.staticGetDao().findByDomainId(null, inCsvBean.getGtin());
+		String gtinId = inCsvBean.getGtin();
+
+		Gtin result = Gtin.staticGetDao().findByDomainId(null, gtinId);
 		ItemMaster previousItemMaster = null;
-		
-		if (result != null){
+
+		/* Many cases possible!
+		 * If we have this gtinId already
+		 *  - 1) match the same itemMaster and UOM. No change needed. No log.
+		 *  - 2) Same itemMaster. Change the UOM. Need a change if following last update wins. Need a WARN/notify
+		 *  - 3) Different itemMaster.
+		 *  - 3a) Different itemMaster has a gtin for this uom (different gtinID). WARN. Delete that and modify this. Or modify domainId on that?
+		 *  - 3b) Different itemMaster has no gtin for this uom. WARN. Modify this, and remove this from old itemMaster?
+		 * If we do not have this gtin already
+		 *  - 4) But this itemMaster/uom has a gtin already. WARN. Modify that gtin, changing its domainId
+		 *  - 5) This itemMater/uom does not have gtin already. Simple add. Log as INFO, as adding a gtin is relatively rare after initial usage.
+		 */
+
+		if (result != null) {
+			// we have this gtinId already
 			previousItemMaster = result.getParent();
-			
+			UomMaster previousUomMaster = result.getUomMaster();
+
 			// Check if existing GTIN is associated with the ItemMaster
 			if (previousItemMaster.equals(inItemMaster)) {
-				
+
 				// Check if the UOM specified in the inventory file matches UOM of existing GTIN
-				if (!uomMaster.equals(result.getUomMaster())) {
-					LOGGER.warn("UOM specified in order line {} conflicts with UOM of specified existing GTIN {}." +
-							" Did not change UOM for existing GTIN.", inCsvBean.toString(), result.getDomainId());
-					
-					return null;
+				if (!uomMaster.equals(previousUomMaster)) {
+					// This is - 2) Same itemMaster. Change the UOM. Need a change if following last update wins. Need a WARN/notify
+					LOGGER.warn("GTIN_case_2 {} already exists but for wrong UOM. Changing it to {}",
+						result,
+						uomMaster.getUomMasterId());
+					// return null;
+					result.setUomMaster(uomMaster);
+					try {
+						Gtin.staticGetDao().store(result);
+					} catch (DaoException e) {
+						LOGGER.error("upsertGtinMap save", e);
+					}
 				}
-				
+
 			} else {
-				
+				// This is - 3) Different itemMaster.
 				// Import line is attempting to associate existing GTIN with a new item. We do not allow this.
-				LOGGER.warn("GTIN {} already exists and is associated with item {}." + 
-						" GTIN will remain associated with item {}.", result.getDomainId(), result.getParent().getDomainId(),
-						result.getParent().getDomainId());
-				
+				// NEVER SEEN, even for correct test case, because upsertGtin() is called after master update happened. Search for GTIN_case_3 above
+				LOGGER.error("gtin_case_3 {} already exists but for wrong SKU. Would need to change to {}",
+					result,
+					inItemMaster.getItemId());
+				// Careful: need to handle case 3a and 3b
 				return null;
 			}
 		} else {
-			
-			result = inItemMaster.createGtin(inCsvBean.getGtin(), uomMaster);
+			// we do not have this gtinId already
 
-			try {
-				Gtin.staticGetDao().store(result);
-			} catch (DaoException e) {
-				LOGGER.error("upsertGtinMap save", e);
+			Gtin existingGtinForMaster = inItemMaster.getGtinForUom(uomMaster);
+			if (existingGtinForMaster != null) {
+				// 4) But this itemMaster/uom has a gtin already. WARN. Modify that gtin, changing its domainId
+				// But we can only do so there is not already a gtin with that domainId
+				Gtin sameGtinOtherMasterOrUom = this.gtinCache.get(gtinId);
+
+				if (sameGtinOtherMasterOrUom != null) {
+					LOGGER.error("GTIN_case_4a {} already exists. Cannot modify it to {}/{}",
+						sameGtinOtherMasterOrUom,
+						inItemMaster.getItemId(),
+						uomMaster.getUomMasterId());
+					return null;
+				} else {
+					LOGGER.warn("GTIN_case_4b {} already exists. Changing it to {}", existingGtinForMaster, gtinId);
+					// return null;
+					existingGtinForMaster.setDomainId(gtinId);
+					try {
+						Gtin.staticGetDao().store(existingGtinForMaster);
+						result = existingGtinForMaster;
+					} catch (DaoException e) {
+						LOGGER.error("upsertGtinMap save", e);
+					}
+				}
+
+			} else {
+				// 5) simple add
+				LOGGER.info("Adding new gtin:{} for sku:{}/{}", gtinId, inItemMaster.getItemId(), uomMaster.getUomMasterId());
+				result = inItemMaster.createGtin(gtinId, uomMaster);
+
+				try {
+					Gtin.staticGetDao().store(result);
+				} catch (DaoException e) {
+					LOGGER.error("upsertGtinMap save", e);
+				}
 			}
 		}
-		
+
 		return result;
 	}
 
-	
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inCsvBean
@@ -775,21 +837,21 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 		//result = inOrder.getOrderDetail(detailId);
 		result = findOrderDetail(inOrder.getOrderId(), detailId, inItemMaster, inUomMaster);
-		
+
 		// DEV-596 if existing order detail had a preferredLocation, we need remember what it was.
 		setOldPreferredLocation(null);
 		String oldDetailId = null;
 		if (result == null) {
 			result = new OrderDetail();
 			// add to cache
-			Map<String,OrderDetail> lines = this.orderlineMap.get(inOrder.getOrderId());
-			if (lines==null) {
-				lines = new HashMap<String,OrderDetail>();
+			Map<String, OrderDetail> lines = this.orderlineMap.get(inOrder.getOrderId());
+			if (lines == null) {
+				lines = new HashMap<String, OrderDetail>();
 				this.orderlineMap.put(inOrder.getOrderId(), lines);
 			}
-			lines.put(detailId,result);
+			lines.put(detailId, result);
 			// set order change status due to addition
-			this.orderChangeMap.put(inOrder.getOrderId(),true);
+			this.orderChangeMap.put(inOrder.getOrderId(), true);
 		} else {
 			oldDetailId = result.getDomainId();
 			setOldPreferredLocation(result.getPreferredLocation());
@@ -825,23 +887,24 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		result.setItemMaster(inItemMaster);
 		result.setDescription(inCsvBean.getDescription());
 		result.setUomMaster(inUomMaster);
-		
+
 		// calculate needs scan setting
 		boolean needsScan = false;
-		if (inCsvBean.getNeedsScan()!=null && !StringUtils.isEmpty(inCsvBean.getNeedsScan())) {
+		if (inCsvBean.getNeedsScan() != null && !StringUtils.isEmpty(inCsvBean.getNeedsScan())) {
 			String needsScanStr = inCsvBean.getNeedsScan().toLowerCase();
-			if ("yes".equals(needsScanStr)||"y".equals(needsScanStr)||"true".equals(needsScanStr)||"t".equals(needsScanStr)||"1".equals(needsScanStr)) {
+			if ("yes".equals(needsScanStr) || "y".equals(needsScanStr) || "true".equals(needsScanStr) || "t".equals(needsScanStr)
+					|| "1".equals(needsScanStr)) {
 				needsScan = true;
 			}
 		}
 		// check global scanpick setting as second option
 		else if (importer.getScanPick()) {
-			 needsScan = true;
+			needsScan = true;
 		}
 		result.setNeedsScan(needsScan);
-		
+
 		String workSeq = inCsvBean.getWorkSequence();
-		try  {
+		try {
 			if (workSeq != null) {
 				result.setWorkSequence(toInteger((workSeq)));
 			}
@@ -858,15 +921,15 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		} catch (NumberFormatException e) {
 			LOGGER.warn("quantity could not be coerced to integer, setting to zero: " + inCsvBean);
 		}
-		if (result.getQuantity()==null || result.getQuantity()!=quantities) {
-			if (result.getQuantity()!=null) {
+		if (result.getQuantity() == null || result.getQuantity() != quantities) {
+			if (result.getQuantity() != null) {
 				// set order change flag
 				this.orderChangeMap.put(inOrder.getOrderId(), true);
-				LOGGER.info("Quantity changed from "+result.getQuantity()+" to "+quantities+" for "+result.getDomainId());
+				LOGGER.info("Quantity changed from " + result.getQuantity() + " to " + quantities + " for " + result.getDomainId());
 			}
 			result.setQuantities(quantities);
 		}
-		
+
 		try {
 			// Override the min quantity if specified - otherwise make the same as the nominal quantity.
 			if (inCsvBean.getMinQuantity() != null) {
@@ -889,49 +952,48 @@ public class OutboundOrderBatchProcessor implements Runnable {
 			LOGGER.warn("bad or missing value in min or max quantity field for " + detailId);
 		}
 
-		if (result.getQuantity()==null || result.getQuantity()<=0) {
-			result.setActive(false);			
-		}
-		else {
+		if (result.getQuantity() == null || result.getQuantity() <= 0) {
+			result.setActive(false);
+		} else {
 			result.setActive(true);
 		}
 		result.setUpdated(inEdiProcessTime);
 
 		// The order detail's id might have changed. Make sure the order header has it under the new id
-		if (result.getParent()==null) {
-			inOrder.addOrderDetail(result);			
-		}
-		else {
+		if (result.getParent() == null) {
+			inOrder.addOrderDetail(result);
+		} else {
 			if (!result.getOrderDetailId().equals(oldDetailId)) {
 				inOrder.removeOrderDetail(oldDetailId);
-				inOrder.addOrderDetail(result);				
+				inOrder.addOrderDetail(result);
 			}
 		}
 		OrderDetail.staticGetDao().store(result);
 		return result;
 	}
-	
+
 	private OrderDetail findOrderDetail(String orderId, String domainId, ItemMaster item, UomMaster uom) {
 		// find by domain id
 		//OrderDetail domainMatch = header.getOrderDetail(domainId);
-		OrderDetail domainMatch = getCachedOrderDetail(orderId,domainId);
+		OrderDetail domainMatch = getCachedOrderDetail(orderId, domainId);
 
 		if (item == null) {
 			return domainMatch;
 		}
 		// find by item master and uom
 		Map<String, OrderDetail> itemMap = this.orderlineMap.get(orderId);
-		if (itemMap==null) {
+		if (itemMap == null) {
 			return null;
 		}
 		Collection<OrderDetail> details = itemMap.values();
-		if (details==null) return null;
+		if (details == null)
+			return null;
 		for (OrderDetail detail : details) {
 			String examinedKey = genItemUomKey(detail.getItemMaster(), detail.getUomMaster());
-			if (genItemUomKey(item, uom).equals(examinedKey) && detail.getActive()){
+			if (genItemUomKey(item, uom).equals(examinedKey) && detail.getActive()) {
 				return detail;
 			}
-		}		
+		}
 		/*
 		List<OrderDetail> details = header.getOrderDetails();
 		String examinedKey;
@@ -944,7 +1006,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		*/
 		return domainMatch;
 	}
-	
+
 	private HashMap<String, Gtin> generateGtinCache(Facility facility) {
 		HashMap<String, Gtin> cache = new HashMap<>();
 		HashMap<String, Object> criteriaParams = new HashMap<>();
@@ -955,59 +1017,62 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		}
 		return cache;
 	}
-	
+
 	private OrderDetail getCachedOrderDetail(String orderId, String orderLineId) {
 		Map<String, OrderDetail> orderDetails = this.orderlineMap.get(orderId);
-		if (orderDetails==null) return null;
+		if (orderDetails == null)
+			return null;
 		return orderDetails.get(orderLineId);
 	}
-	
-	private void checkForChangingFields(List<OutboundOrderCsvBean> beans){
+
+	private void checkForChangingFields(List<OutboundOrderCsvBean> beans) {
 		HashMap<String, String[]> orders = new HashMap<>();
 		String orderId, destinationId, savedDestinationId, shipperId, savedShipperId, customerId, savedCustomerId, order[];
-		for (OutboundOrderCsvBean bean : beans){
+		for (OutboundOrderCsvBean bean : beans) {
 			destinationId = bean.getDestinationId();
 			shipperId = bean.getShipperId();
 			customerId = bean.getCustomerId();
 			orderId = bean.getOrderId();
 			order = orders.get(orderId);
-			if (order != null){
+			if (order != null) {
 				savedDestinationId = order[0];
 				savedShipperId = order[1];
-				savedCustomerId = order[2];				
-				if (!strEquals(destinationId, savedDestinationId)){
+				savedCustomerId = order[2];
+				if (!strEquals(destinationId, savedDestinationId)) {
 					LOGGER.warn("Changing destinationId for order {}", orderId);
 				}
-				if (!strEquals(shipperId, savedShipperId)){
+				if (!strEquals(shipperId, savedShipperId)) {
 					LOGGER.warn("Changing shipperId for order {}", orderId);
 				}
-				if (!strEquals(customerId, savedCustomerId)){
+				if (!strEquals(customerId, savedCustomerId)) {
 					LOGGER.warn("Changing customerId for order {}", orderId);
 				}
 			}
-			String updatedOrder[] = {destinationId, shipperId, customerId};
+			String updatedOrder[] = { destinationId, shipperId, customerId };
 			orders.put(orderId, updatedOrder);
 		}
 	}
-	
+
 	private boolean strEquals(String str1, String str2) {
-	    return (str1 == null ? str2 == null : str1.equals(str2));
+		return (str1 == null ? str2 == null : str1.equals(str2));
 	}
-	
+
 	private String genItemUomKey(ItemMaster item, UomMaster uom) {
-		if (item == null) {return null;}
-		return item.getDomainId() + ((uom==null || uom.getDomainId().isEmpty())?"":"-"+uom.getDomainId());
+		if (item == null) {
+			return null;
+		}
+		return item.getDomainId() + ((uom == null || uom.getDomainId().isEmpty()) ? "" : "-" + uom.getDomainId());
 	}
-	
+
 	public int toInteger(final String inString) {
 		// Integer.valueOf will throw a NumberFormatException if anything at all is wrong with the string. 
 		// Let's clean up the obvious. But this still throws NumberFormatException for something like "09x " and many other bad numbers.
-		
+
 		String cleanString = inString;
 		cleanString = cleanString.trim();
 		// would also want leading zeros removed, but may need to leave one 0 for 0000.
-		cleanString = cleanString.replaceFirst("^0+(?!$)", ""); 
+		cleanString = cleanString.replaceFirst("^0+(?!$)", "");
 		return Integer.valueOf(cleanString);
 	}
-	
+
 }
