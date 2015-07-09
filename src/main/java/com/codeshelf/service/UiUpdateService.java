@@ -19,6 +19,7 @@ import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.manager.User;
 import com.codeshelf.model.DeviceType;
+import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
@@ -26,6 +27,7 @@ import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.ContainerUse;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.LedController;
@@ -329,4 +331,22 @@ public class UiUpdateService implements IApiService {
 		}
 		ledDao.delete(controller);
 	}
+	
+	public void deleleGtin(final String gtinPersistentId) {
+		Gtin gtin = Gtin.staticGetDao().findByPersistentId(gtinPersistentId);
+		if (gtin == null) {
+			LOGGER.error("Could not find gtin {} to delete", gtinPersistentId);
+			return;
+		}
+		LOGGER.info("Deleting gtin: {}", gtin);
+		ItemMaster master = gtin.getParent();
+		master.removeGtinFromMaster(gtin);
+		try {
+			Gtin.staticGetDao().delete(gtin);
+		} catch (DaoException e) {
+			LOGGER.error("deleteGtin", e);
+		}		
+	}
+
+
 }

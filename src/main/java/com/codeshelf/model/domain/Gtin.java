@@ -67,6 +67,12 @@ public class Gtin extends DomainObjectTreeABC<ItemMaster> {
 	public Gtin() {
 	}
 
+	@Override
+	public String toString() {
+		String returnStr = getDomainId() + " for: " + getItemMasterId() + "/" + this.getUomMasterId();
+		return returnStr;
+	}
+
 	public void setGtin(final String inGtin) {
 		setDomainId(inGtin);
 	}
