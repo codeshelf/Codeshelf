@@ -24,7 +24,6 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.testframework.ServerTest;
-import com.google.common.collect.Lists;
 
 /**
  * @author jon ranstrom

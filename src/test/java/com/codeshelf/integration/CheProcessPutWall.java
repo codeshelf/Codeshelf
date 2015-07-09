@@ -721,6 +721,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 		// wait-for to avoid intermittent failure
 		posman.waitForControllerDisplayValue((byte) 3, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME);
+		ThreadUtils.sleep(500);
 		Assert.assertEquals(posman.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_O);
 
 	}

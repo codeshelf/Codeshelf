@@ -2175,7 +2175,7 @@ public class CheProcessTestPick extends ServerTest {
 	@Test
 	public final void simulPickShort() throws IOException {
 		// Bug?  should be BLINK_FREQ
-		final Byte kBLINK_FREQ = PosControllerInstr.BRIGHT_DUTYCYCLE;
+		final Byte kBLINK_FREQ = PosControllerInstr.BLINK_FREQ;
 		final Byte kSOLID_FREQ = PosControllerInstr.SOLID_FREQ;
 
 		this.getTenantPersistenceService().beginTransaction();

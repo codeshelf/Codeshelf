@@ -168,7 +168,6 @@ public class FacilityResource {
 	@Path("/orders")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getOrders(@QueryParam("status") String status, @QueryParam("orderId") String orderIdValue) {
-		@SuppressWarnings("unchecked")
 		List<OrderHeader> results = Collections.emptyList();
 		if (orderIdValue != null) {
 			results = this.orderService.findOrderHeadersForOrderId(facility, orderIdValue);

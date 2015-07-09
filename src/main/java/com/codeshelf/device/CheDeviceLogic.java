@@ -1875,7 +1875,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		// blink is an indicator that decrement button is active, usually as a consequence of short pick. (Max difference is also possible for discretionary picks)
 		if (planQuantityForPositionController != minQuantityForPositionController
 				|| planQuantityForPositionController != maxQuantityForPositionController) {
-			freq = PosControllerInstr.BRIGHT_DUTYCYCLE; // Bug?  should be BLINK_FREQ
+			freq = PosControllerInstr.BLINK_FREQ; // Bug?  should be BLINK_FREQ
 			brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
 		}
 

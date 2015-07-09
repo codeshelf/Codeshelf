@@ -75,6 +75,7 @@ import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Slot;
+import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.SingleWorkItem;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
@@ -833,7 +834,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	public GetPutWallInstructionResponse getPutWallInstructionsForItem(final Che inChe,
 		final String itemOrUpc,
 		final String putWallName) {
-		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		GetPutWallInstructionResponse response = new GetPutWallInstructionResponse();
 		if (inChe == null) {
 			throw new MethodArgumentException(0, "Che missing", ErrorCode.FIELD_REQUIRED);
@@ -847,28 +847,97 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		LOGGER.info("GetPutWallInstructionResponse request for {} item:{} wall:{}", inChe.getDomainId(), itemOrUpc, putWallName);
 
 		Facility facility = inChe.getFacility();
+
+		Location putWallLoc = facility.findSubLocationById(putWallName);
+		if (putWallLoc == null || !putWallLoc.isWallLocation()) {
+			LOGGER.warn("Location {} not resolved or not a put wall", putWallName);
+			response.setStatus(ResponseStatus.Fail);
+			return response;			
+		}
+		
+		if (putWallLoc.isPutWallLocation()){
+			response = getOrderWallInstructionsForItem(facility, inChe, itemOrUpc, putWallLoc);
+			return response;
+		} else if (putWallLoc.isSkuWallLocation()){
+			response = getSkuWallInstructionsForItem(facility, inChe, itemOrUpc, putWallLoc);
+			return response;
+		} else {
+			LOGGER.warn("Location {} is a wall, but neither a Put wall, nor a Sku wall", putWallName);
+			response.setStatus(ResponseStatus.Fail);
+			return response;						
+		}
+	}
+	
+	private GetPutWallInstructionResponse getSkuWallInstructionsForItem(final Facility facility,
+		final Che che,
+		final String itemOrUpc,
+		final Location skuWallLoc){
+		GetPutWallInstructionResponse response = new GetPutWallInstructionResponse();		
+		Gtin gtin = Gtin.getGtinForFacility(facility, itemOrUpc);
+		if (gtin == null) {
+			ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, itemOrUpc);
+			if (itemMaster == null) {
+				LOGGER.warn("Did not find item id from {}", itemOrUpc);
+			} else {
+				LOGGER.warn("Found item id, but require Gtin for Sku wall {}", itemOrUpc);
+			}
+			response.setStatus(ResponseStatus.Fail);
+			return response;
+		}
+
+		Item item = findItemInSkuWall(skuWallLoc, gtin.getParent(), gtin.getUomMaster());
+		if (item == null) {
+			LOGGER.warn("Did not find item for Gtin {} Found item id, but require Gtin for Sku wall {}", itemOrUpc);
+			response.setStatus(ResponseStatus.Fail);
+			return response;
+		}
+		
+		WorkInstruction wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
+			WorkInstructionTypeEnum.PLAN,
+			item,
+			che,
+			new Timestamp(System.currentTimeMillis()));
+		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
+		wiResultList.add(wi);
+		response.setWorkInstructions(wiResultList);
+		return response;
+	}
+	
+	private void getStoredItemsInLocationAndChildren(Location loc, List<Item> itemAccumulator) {
+		itemAccumulator.addAll(loc.getStoredItems().values());
+		List<Location> children = loc.getChildren();
+		for (Location child : children){
+			getStoredItemsInLocationAndChildren(child, itemAccumulator);
+		}
+	}
+	
+	private Item findItemInSkuWall(Location skuWallLoc, ItemMaster itemMaster, UomMaster uomMaster){
+		List<Item> itemsInWall = Lists.newArrayList();
+		getStoredItemsInLocationAndChildren(skuWallLoc, itemsInWall);
+		for (Item storedItem : itemsInWall) {
+			if(storedItem.getParent().equals(itemMaster) && storedItem.getUomMaster().equals(uomMaster)){
+				return storedItem;
+			}
+		}
+		return null;
+	}
+	
+	private GetPutWallInstructionResponse getOrderWallInstructionsForItem(final Facility facility,
+		final Che che,
+		final String itemOrUpc,
+		final Location putWallLoc) {
 		// The algorithm is
 		// 1a) find the itemMaster for the item id or upc
-		// 1b) find the location and determine it is a put wall.
 		// 2) find or iterate all slots/tiers that are children of the put wall location.
 		// 3) Find all order locations for any of those slots/tiers
 		// 4) If the order (from the order location) is active, find any order details for it that match the item
 		// 5) make the work instruction to the orderlocation location. (There may be several work instructions for the request.)
 		// 6) sort via our usual sequencer.
-
-		// As we find the details, we want to call as
-		// 		SingleWorkItem workItem = makeWIForOutbound(orderDetail, inChe, null, null, inFacility, inFacility.getPaths());
-
-		// 1
+		GetPutWallInstructionResponse response = new GetPutWallInstructionResponse();
+		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		ItemMaster master = getItemMasterFromScanValue(facility, itemOrUpc);
 		if (master == null) {
 			LOGGER.warn("Did not find item master from {}", itemOrUpc);
-			response.setStatus(ResponseStatus.Fail);
-			return response;
-		}
-		Location putWallLoc = facility.findSubLocationById(putWallName);
-		if (putWallLoc == null || !putWallLoc.isPutWallLocation()) {
-			LOGGER.warn("Location {} not resolved or not a put wall", putWallName);
 			response.setStatus(ResponseStatus.Fail);
 			return response;
 		}
@@ -907,7 +976,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			OrderHeader oh = detail.getParent();
 			OrderLocation ol = oh.getFirstOrderLocationOnPath(null);
 
-			WorkInstruction wi = getWiForPutWallDetailAndLocation(inChe, detail, ol);
+			WorkInstruction wi = getWiForPutWallDetailAndLocation(che, detail, ol);
 			if (wi != null) {
 				wiResultList.add(wi);
 			}
@@ -921,7 +990,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		response.setWorkInstructions(wiResultList);
 		return response;
-
+		
 	}
 
 	// --------------------------------------------------------------------------

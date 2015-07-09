@@ -542,6 +542,9 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 * @param inDescription
 	 */
 	public static final String cookDescription(final String inDescription) {
+		if (inDescription == null){
+			return null;
+		}
 		String cookedDesc = inDescription.substring(0, Math.min(MAX_WI_DESC_BYTES, inDescription.length()));
 		// This was the original remove ASCII line
 		// cookedDesc = cookedDesc.replaceAll("[^\\p{ASCII}]", "");

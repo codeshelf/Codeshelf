@@ -23,7 +23,9 @@ import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.Item;
+import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.LocationAlias;
@@ -384,7 +386,51 @@ public class WiFactory {
 		}
 		return resultWi;
 	}
+	
+	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum status,
+		WorkInstructionTypeEnum type,
+		Item item,
+		Che che,
+		final Timestamp time) throws DaoException {
+		ItemMaster itemMaster = item.getParent();
+		Location location = item.getStoredLocation();
+		String locationId = location.getFullDomainId();
+		LocationAlias alias = location.getPrimaryAlias();
+		String pickInstruction = alias == null? locationId : alias.getAlias();
+		
+		WorkInstruction wi = new WorkInstruction();
+		wi.setCreated(new Timestamp(System.currentTimeMillis()));
+		wi.setStatus(status);
+		wi.setType(type);
+		wi.setParent(che.getFacility());
+		che.addWorkInstruction(wi);
+		wi.setDomainId(Long.toString(SequenceNumber.generate()));
+		wi.setItemMaster(itemMaster);
+		String cookedDesc = WorkInstruction.cookDescription(itemMaster.getDescription());
+		wi.setDescription(cookedDesc);
+		wi.setPlanQuantity(1);
+		wi.setPlanMinQuantity(1);
+		wi.setPlanMaxQuantity(99);
+		wi.setActualQuantity(0);
+		wi.setAssigned(time);
+		Gtin gtin = item.getGtin();
+		if (gtin != null) {
+			wi.setGtin(gtin.getDomainId());
+		}
+		wi.setLocation(location);
+		wi.setLocationId(locationId);
+		wi.doSetPickInstruction(pickInstruction);
+		wi.doSetPickInstruction(pickInstruction);
+		
+		setPosConInstructions(wi, item.getStoredLocation());
+		
+		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForItemOrLocation(item, che.getColor(), item.getStoredLocation());
+		if (ledCmdGroupList.size() > 0)
+			wi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
 
+		return wi;
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inWi
@@ -425,11 +471,9 @@ public class WiFactory {
 	}
 
 	private static void setPosConInstructions(WorkInstruction wi, Location location) {
-		if (location.isLightablePoscon()) {
-			List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-			LightService.getInstructionsForPosConRange(wi.getParent(), wi, location, instructions, null);
-			setPosConInstructionsHelper(wi, instructions);
-		}
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+		LightService.getInstructionsForPosConRange(wi.getParent(), wi, location, instructions, null);
+		setPosConInstructionsHelper(wi, instructions);
 	}
 
 	private static void setPosConInstructionsHelper(WorkInstruction wi, List<PosControllerInstr> instructions) {
@@ -505,7 +549,7 @@ public class WiFactory {
 		}
 
 		// We will light the inventory where it is in blue
-		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForItemInLocation(theItem, inColor, inLocation);
+		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForItemOrLocation(theItem, inColor, inLocation);
 
 		if (ledCmdGroupList.size() > 0)
 			inWi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
@@ -527,16 +571,6 @@ public class WiFactory {
 	public List<LedCmdGroup> getLedCmdGroupListForInventoryItem(final Item inItem, final ColorEnum inColor) {
 		Location location = inItem.getStoredLocation();
 		return getLedCmdGroupListForItemOrLocation(inItem, inColor, location);
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * API used by setOutboundWorkInstructionLedPatternAndPosAlongPathFromInventoryItem
-	 */
-	private static List<LedCmdGroup> getLedCmdGroupListForItemInLocation(final Item inItem,
-		final ColorEnum inColor,
-		final Location inLocation) {
-		return getLedCmdGroupListForItemOrLocation(inItem, inColor, inLocation);
 	}
 
 	// --------------------------------------------------------------------------

@@ -203,7 +203,7 @@ public class LightService implements IApiService {
 			inWorkInstruction.getPlanQuantity().byteValue(),
 			inWorkInstruction.getPlanMinQuantity().byteValue(),
 			inWorkInstruction.getPlanMaxQuantity().byteValue(),
-			PosControllerInstr.BLINK_FREQ,
+			PosControllerInstr.SOLID_FREQ,
 			PosControllerInstr.BRIGHT_DUTYCYCLE));
 	}
 
@@ -287,7 +287,7 @@ public class LightService implements IApiService {
 			// for lower cost putwall, the bay may have a poscon even though the slots have LEDs.
 			// This is only a situation for the active wi.
 			Bay bay = theLocation.getParentAtLevel(Bay.class);
-			if (bay.isLightablePoscon()) {
+			if (bay != null && bay.isLightablePoscon()) {
 				LedController controller = bay.getEffectiveLedController();
 				String posConController = controller == null ? "" : controller.getDeviceGuidStr();
 				int posConIndex = bay.getPosconIndex();

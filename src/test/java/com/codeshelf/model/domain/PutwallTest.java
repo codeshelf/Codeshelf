@@ -241,7 +241,9 @@ public class PutwallTest extends MockDaoTest {
 				"      \"controllerId\":\"0x0000002D\",\n" + 
 				"      \"position\":2,\n" + 
 				"      \"reqQty\":20,\n" + 
-				"      \"maxQty\":70\n" + 
+				"      \"maxQty\":70,\n" +
+				"      \"brightness\":\"BRIGHT\",\n" + 
+				"      \"frequency\":\"SOLID\"\n" + 
 				"    }\n" + 
 				"]";
 		mController.lightExtraPosCons(message);

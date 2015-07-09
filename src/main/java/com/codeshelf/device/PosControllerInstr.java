@@ -143,17 +143,15 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 
 	@Accessors(prefix = "m")
 	@Getter
-	@Setter
 	@SerializedName(value = "frequency")
 	@Expose
-	private Frequency			mFrequency						= Frequency.SOLID;
+	private Frequency			mFrequency;
 
 	@Accessors(prefix = "m")
 	@Getter
-	@Setter
 	@SerializedName(value = "brightness")
 	@Expose
-	private Brightness			mBrightness						= Brightness.BRIGHT;
+	private Brightness			mBrightness;
 
 	@Accessors(prefix = "m")
 	@Getter
