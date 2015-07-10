@@ -42,37 +42,42 @@ import com.google.inject.Inject;
 
 public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderCsvBean> implements ICsvOrderImporter {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(OutboundOrderPrefetchCsvImporter.class);
-
-	@Getter @Setter
-	int maxRetries = 10;
-	
-	DateTimeParser					mDateTimeParser;
-
-	@Getter @Setter
-	private Boolean					locaPick			= null;
-
-	@Getter @Setter
-	private Boolean					scanPick			= null;
+	private static final Logger							LOGGER					= LoggerFactory.getLogger(OutboundOrderPrefetchCsvImporter.class);
 
 	@Getter
 	@Setter
-	private String					oldPreferredLocation	= null;													// for DEV-596
-	
-	long startTime;
-	long endTime;
-	
-	@Getter @Setter
-	int maxOrderLines = 500;
-	
+	int													maxRetries				= 10;
+
+	DateTimeParser										mDateTimeParser;
+
 	@Getter
-	private ConcurrentLinkedQueue<OutboundOrderBatch> batchQueue = new ConcurrentLinkedQueue<OutboundOrderBatch>();
-	
-	@Getter @Setter
-	int numWorkerThreads = 1;
-	
+	@Setter
+	private Boolean										locaPick				= null;
+
 	@Getter
-	ExtensionPointService extensionPointService = null;
+	@Setter
+	private Boolean										scanPick				= null;
+
+	@Getter
+	@Setter
+	private String										oldPreferredLocation	= null;															// for DEV-596
+
+	long												startTime;
+	long												endTime;
+
+	@Getter
+	@Setter
+	int													maxOrderLines			= 500;
+
+	@Getter
+	private ConcurrentLinkedQueue<OutboundOrderBatch>	batchQueue				= new ConcurrentLinkedQueue<OutboundOrderBatch>();
+
+	@Getter
+	@Setter
+	int													numWorkerThreads		= 1;
+
+	@Getter
+	ExtensionPointService								extensionPointService	= null;
 
 	@Inject
 	public OutboundOrderPrefetchCsvImporter(final EventProducer inProducer) {
@@ -85,35 +90,59 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	 * @see com.codeshelf.edi.ICsvImporter#importOrdersFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
 	 */
 	public final BatchResult<Object> importOrdersFromCsvStream(Reader inCsvReader, Facility facility, Timestamp inProcessTime) {
-		
+
 		this.startTime = System.currentTimeMillis();
-		
+
 		// make sure the facility is up-to-date
 		facility = facility.reload();
-		
+
 		// initialize scripting service
 		try {
 			extensionPointService = ExtensionPointService.createInstance(facility);
-		} 
-		catch (Exception e) {
+		} catch (Exception e) {
 			LOGGER.error("Failed to initialize extension point service", e);
 		}
-		
+
 		BatchResult<Object> batchResult = new BatchResult<Object>();
-		
+
 		// Get our LOCAPICK and SCANPICK configuration values. It will not change during importing one file.
 		this.locaPick = PropertyService.getInstance().getBooleanPropertyFromConfig(facility, DomainObjectProperty.LOCAPICK);
-		
+
 		this.scanPick = false;
 		DomainObjectProperty scanPickProp = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
-		if (scanPickProp!=null) {
+		if (scanPickProp != null) {
 			if (!DomainObjectProperty.Default_SCANPICK.equals(scanPickProp.getValue())) {
-				this.scanPick = true;				
+				this.scanPick = true;
 			}
 		}
-		
+
+		// DEV-978 extension point can fully supply the header.  However, that should not be done with OrderImportHeaderTransformation
+		// Note: this works by passing in a good java string that is empty, and getting back a non-empty string.
+		String extensionSuppliedHeader = "";
+		if (extensionPointService.hasExtensionPoint(ExtensionPointType.OrderImportCreateHeader)) {
+			if (extensionPointService.hasExtensionPoint(ExtensionPointType.OrderImportHeaderTransformation)) {
+				LOGGER.warn("OrderImportCreateHeader extension ignored because OrderImportHeaderTransformation is also on. Please turn one off.");
+				// Want an EDI notify event here?
+			} else {
+				try {
+					Object[] params = {extensionSuppliedHeader};
+					extensionSuppliedHeader = (String) getExtensionPointService().eval(ExtensionPointType.OrderImportCreateHeader,
+						params);
+					if (extensionSuppliedHeader.isEmpty()) {
+						// we called the header and nothing got done. As the extension was in effect, we must assume the file itself has no header.
+						LOGGER.warn("OrderImportCreateHeader in effect, but did not produce a header. Skipping this orders file.");
+						return batchResult;
+					}
+
+				} catch (Exception e) {
+					LOGGER.error("Extension failed to supply order file header", e);
+					return batchResult;
+				}
+			}
+		}
+
 		// transform order lines/header, if extension point is defined
-		if (extensionPointService.hasExtensionPoint(ExtensionPointType.OrderImportLineTransformation) 
+		if (extensionPointService.hasExtensionPoint(ExtensionPointType.OrderImportLineTransformation)
 				|| extensionPointService.hasExtensionPoint(ExtensionPointType.OrderImportHeaderTransformation)) {
 			BufferedReader br = new BufferedReader(inCsvReader);
 			StringBuffer buffer = new StringBuffer();
@@ -123,24 +152,27 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 				try {
 					String header = br.readLine();
 					Object[] params = { header };
-					String transformedHeader = (String) getExtensionPointService().eval(ExtensionPointType.OrderImportHeaderTransformation, params);
+					String transformedHeader = (String) getExtensionPointService().eval(ExtensionPointType.OrderImportHeaderTransformation,
+						params);
 					buffer.append(transformedHeader);
-				}
-				catch (Exception e) {
-					LOGGER.error("Failed to transform order file header",e);
+				} catch (Exception e) {
+					LOGGER.error("Failed to transform order file header", e);
 					return batchResult;
 				}
-			}
-			else {
+			} else {
 				try {
 					// use header as-is
-					String header = br.readLine();
+					String header;
+					if (!extensionSuppliedHeader.isEmpty()) {
+						header = extensionSuppliedHeader;
+					} else {
+						header = br.readLine();
+					}
 					buffer.append(header);
-				}
-				catch (Exception e) {
-					LOGGER.error("Failed to read order file header",e);
+				} catch (Exception e) {
+					LOGGER.error("Failed to read order file header", e);
 					return batchResult;
-				}				
+				}
 			}
 			// process file body
 			if (getExtensionPointService().hasExtensionPoint(ExtensionPointType.OrderImportLineTransformation)) {
@@ -148,34 +180,31 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 				// transform order lines
 				try {
 					String line = null;
-				    while ((line = br.readLine()) != null) {
+					while ((line = br.readLine()) != null) {
 						Object[] params = { line };
-						String transformedLine = (String) getExtensionPointService().eval(ExtensionPointType.OrderImportLineTransformation, params);
-						buffer.append("\r\n"+transformedLine);
-				    }
-				}
-				catch (Exception e) {
-					LOGGER.error("Failed to read order file line",e);
+						String transformedLine = (String) getExtensionPointService().eval(ExtensionPointType.OrderImportLineTransformation,
+							params);
+						buffer.append("\r\n" + transformedLine);
+					}
+				} catch (Exception e) {
+					LOGGER.error("Failed to read order file line", e);
 					return batchResult;
-				}				
-			}
-			else {
+				}
+			} else {
 				// use order lines as-is
 				try {
 					String line = null;
-				    while ((line = br.readLine()) != null) {
-				    	buffer.append("\r\n"+line);
-				    }
-				}
-				catch (Exception e) {
-					LOGGER.error("Failed to read order file line",e);
+					while ((line = br.readLine()) != null) {
+						buffer.append("\r\n" + line);
+					}
+				} catch (Exception e) {
+					LOGGER.error("Failed to read order file line", e);
 					return batchResult;
-				}				
+				}
 			}
 			try {
 				br.close();
-			} 
-			catch (IOException e) {
+			} catch (IOException e) {
 				LOGGER.warn("Failed to close order input stream", e);
 			}
 			// swap out reader
@@ -183,11 +212,11 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		}
 
 		int numOrders = 0;
-		int numLineItems = 0; 
-		
+		int numLineItems = 0;
+
 		List<OutboundOrderCsvBean> list = toCsvBean(inCsvReader, OutboundOrderCsvBean.class);
-		
-		if (list.size()==0) {
+
+		if (list.size() == 0) {
 			LOGGER.info("Nothing to process.  Order file is empty.");
 			return null;
 		}
@@ -195,21 +224,21 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		// instead of processing all order line items in one transaction,
 		// chunk it up into small batches and write it to a queue.
 		// orders from one file are always be contained by one batch.
-		
+
 		// create list of order batches
 		Set<String> orderIds = new HashSet<String>();
 		Set<String> orderGroupIds = new HashSet<String>();
-		Map<String,OutboundOrderBatch> orderBatches = new HashMap<String, OutboundOrderBatch>();
+		Map<String, OutboundOrderBatch> orderBatches = new HashMap<String, OutboundOrderBatch>();
 		//For readability, the first non-header line is indexed "2"
 		for (OutboundOrderCsvBean orderBean : list) {
 			String orderId = orderBean.orderId;
 			orderIds.add(orderId);
 			String orderGroupId = orderBean.getOrderGroupId();
-			if (orderGroupId!=null) {
-				orderGroupIds.add(orderGroupId);		
+			if (orderGroupId != null) {
+				orderGroupIds.add(orderGroupId);
 			}
 			OutboundOrderBatch batch = orderBatches.get(orderId);
-			if (batch==null) {
+			if (batch == null) {
 				batch = new OutboundOrderBatch(0);
 				orderBatches.put(orderId, batch);
 			}
@@ -217,20 +246,20 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			numLineItems++;
 		}
 		numOrders = orderBatches.size();
-		
+
 		// add all existing orders from specified order groups, so they can be retired if needed
 
-		if (orderGroupIds.size()>0) {
-			LOGGER.info("Adding orders for "+orderGroupIds.size()+" order groups");
+		if (orderGroupIds.size() > 0) {
+			LOGGER.info("Adding orders for " + orderGroupIds.size() + " order groups");
 			for (String orderGroupId : orderGroupIds) {
 				OrderGroup og = facility.getOrderGroup(orderGroupId);
-				if (og!=null) {
+				if (og != null) {
 					// add order headers to batch
 					for (OrderHeader order : og.getOrderHeaders()) {
 						String orderId = order.getOrderId();
 						if (!orderIds.contains(orderId)) {
 							// deactivate order and line items, since not included in order group
-							LOGGER.info("Deactivating order not included in group: "+order);
+							LOGGER.info("Deactivating order not included in group: " + order);
 							order.setActive(false);
 							OrderHeader.staticGetDao().store(order);
 							List<OrderDetail> details = order.getOrderDetails();
@@ -243,14 +272,14 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 				}
 			}
 		}
-		
+
 		// load order queue
 		int numBatches = 1;
 		OutboundOrderBatch combinedBatch = new OutboundOrderBatch(numBatches);
 		for (String orderId : orderBatches.keySet()) {
 			OutboundOrderBatch batch = orderBatches.get(orderId);
 			combinedBatch.add(batch);
-			if (combinedBatch.size()>maxOrderLines) {
+			if (combinedBatch.size() > maxOrderLines) {
 				// queue up batch
 				this.batchQueue.add(combinedBatch);
 				// and create a new one
@@ -258,39 +287,38 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 				combinedBatch = new OutboundOrderBatch(numBatches);
 			}
 		}
-		if (combinedBatch.size()>0) {
+		if (combinedBatch.size() > 0) {
 			// add remaining left-over batch to queue
-			this.batchQueue.add(combinedBatch);		
-		}
-		else {
+			this.batchQueue.add(combinedBatch);
+		} else {
 			// adjust count
 			numBatches--;
 		}
-		LOGGER.info("Order file chunked into "+numBatches+" batches.");
-				
+		LOGGER.info("Order file chunked into " + numBatches + " batches.");
+
 		// spawn workers and process order batch queue
-        ExecutorService executor = Executors.newFixedThreadPool(numWorkerThreads);
-        ArrayList<OutboundOrderBatchProcessor> workers = new ArrayList<>(numWorkerThreads);
-        for (int i = 1; i <= numWorkerThreads; i++) {
-        	OutboundOrderBatchProcessor worker = new OutboundOrderBatchProcessor(i, this, inProcessTime, facility);
-        	workers.add(worker);
-        	executor.execute(worker);
-        }
-        
-        // wait until all threads are done
-        executor.shutdown();
-        while (!executor.isTerminated()) {
-        	ThreadUtils.sleep(100);
-        }
-        
-        for (OutboundOrderBatchProcessor worker : workers) {
-        	BatchResult<Object> workerResult = worker.getBatchResult();
-        	batchResult.getViolations().addAll(workerResult.getViolations());
-        	workerResult.getViolations();
-        }
+		ExecutorService executor = Executors.newFixedThreadPool(numWorkerThreads);
+		ArrayList<OutboundOrderBatchProcessor> workers = new ArrayList<>(numWorkerThreads);
+		for (int i = 1; i <= numWorkerThreads; i++) {
+			OutboundOrderBatchProcessor worker = new OutboundOrderBatchProcessor(i, this, inProcessTime, facility);
+			workers.add(worker);
+			executor.execute(worker);
+		}
+
+		// wait until all threads are done
+		executor.shutdown();
+		while (!executor.isTerminated()) {
+			ThreadUtils.sleep(100);
+		}
+
+		for (OutboundOrderBatchProcessor worker : workers) {
+			BatchResult<Object> workerResult = worker.getBatchResult();
+			batchResult.getViolations().addAll(workerResult.getViolations());
+			workerResult.getViolations();
+		}
 
 		this.endTime = System.currentTimeMillis();
-		
+
 		batchResult.setReceived(new Date(startTime));
 		batchResult.setStarted(new Date(startTime));
 		batchResult.setCompleted(new Date(endTime));
@@ -298,7 +326,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		batchResult.setLinesProcessed(numLineItems);
 		return batchResult;
 	}
-	
+
 	@Override
 	public void persistDataReceipt(Facility facility, String username, String filename, long received, BatchResult<?> results) {
 
@@ -311,14 +339,13 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		receipt.setOrdersProcessed(results.getOrdersProcessed());
 		receipt.setLinesProcessed(results.getLinesProcessed());
 		receipt.setLinesFailed(results.getViolations().size());
-		
+
 		receipt.setParent(facility);
-		receipt.setDomainId("Import-"+results.getStarted());
+		receipt.setDomainId("Import-" + results.getStarted());
 		if (results.isSuccessful()) {
 			receipt.setStatus(DataImportStatus.Completed);
 			LOGGER.info("Imported " + receipt);
-		}
-		else {
+		} else {
 			receipt.setStatus(DataImportStatus.Failed);
 			LOGGER.error("Failed to import " + receipt);
 		}
