@@ -1,9 +1,13 @@
 package com.codeshelf.api.responses;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
+
+import com.codeshelf.service.NotificationService.WorkerEventTypeGroup;
 
 import lombok.Getter;
 
@@ -15,7 +19,7 @@ public class ResultDisplay {
 	private String[] sortedBy;
 	
 	@Getter
-	private Collection<Map<Object, Object>> results;
+	private Collection<Object> results;
 	
 	public ResultDisplay(FieldComparator<Map<Object,Object>> comparator) {
 		this(null, new TreeSet<>(comparator));
@@ -34,7 +38,7 @@ public class ResultDisplay {
 	
 	private ResultDisplay(Integer total, Collection<Map<Object, Object>> resultSet) {
 		this.explicitTotal = total;
-		this.results = resultSet;
+		this.results = new ArrayList<Object>(resultSet);
 	}
 
 	public int getTotal() {
@@ -48,6 +52,13 @@ public class ResultDisplay {
 	public void add(Map<Object, Object> values) {
 		@SuppressWarnings("unused")
 		boolean ret = results.add(values);
+	}
+
+
+	public void addAll(List<?> values) {
+		@SuppressWarnings("unused")
+		boolean ret = results.addAll(values);
+		
 	}
 
 }

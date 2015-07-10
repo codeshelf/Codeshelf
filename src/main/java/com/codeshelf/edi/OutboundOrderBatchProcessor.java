@@ -606,12 +606,25 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inItemId
-	 * @param inDescription
-	 * @param inFacility
-	 * @param inEdiProcessTime
-	 * @param inUomMaster
-	 * @return
+	 * helper for GTIN_case3 in updateItemMaster
+	 */
+	private boolean gtinIsAnOnboardingManufacture(Gtin inGtin) {
+		// If user scanned an inventory for an unknown GTIN, then we make phony item (to track the inventory) and phony itemMaster
+		// because the item must have itemMaster. We give the GTIN ID. Aside from that, gtin and master domainID would never match.
+		if (inGtin == null) {
+			LOGGER.error("null value in gtinIsAnOnboardingManufacture");
+			return false;
+		}
+		ItemMaster master = inGtin.getParent();
+		return inGtin.getDomainId().equals(master.getDomainId());
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Called during order import process. Please see very similar method in inventory service.
+	 * This may have rather extreme side effects of changing the gtin domain ID, changing item master domain ID,
+	 * and changing item domain ID and uom. Hopefully only for the "onboarding" process of inventory scan of a new UPC,
+	 * then later getting an order that names that UPC
 	 */
 	private ItemMaster updateItemMaster(final String inItemId,
 		final String inDescription,
@@ -632,27 +645,34 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		Gtin gtin = this.gtinCache.get(gtinId);
 		if (itemMaster == null && gtin != null) {
 
-			// see upsertGtin() code below for relevance
-			LOGGER.warn("GTIN_case_3c {} already exists but for wrong SKU. Changing to {}", gtin, inItemId);
-			// Careful: need to handle case 3a and 3b.
-			// if the the current gtin sku is exactly the same as gtin domainId, then we just want to update the master and items uom as we do next.
-			// However, host system data errors can lead to gtin or sku changes on apparently valid data
+			if (!gtinIsAnOnboardingManufacture(gtin)) {
+				LOGGER.error("GTIN_case_3ab {} already exists but for wrong SKU. Not changing to {}. SKU master may have incorrect data", gtin, inItemId);
+				// 3a and 3b differ in whether the gtin parent has any items that we are concerned about. If not, changing here is reasonable.
+				// Not handled yet.
+				// Do not return null, which is odd. See that the master is made anyway below.
+			} else {
+				// see upsertGtin() code below for more context for case 3.
+				LOGGER.warn("GTIN_case_3c {} already exists from apparent inventory process. Changing to {}", gtin, inItemId);
+				// if the the current gtin sku is exactly the same as gtin domainId, then we just want to update the master and items uom as we do next.
+				// However, host system data errors can lead to gtin or sku changes on apparently valid data
 
-			itemMaster = gtin.getParent();
-			List<Item> items = itemMaster.getItems();
-			for (Item item : items) {
-				if (gtin.equals(item.getGtin())) {
-					item.setUomMaster(inUomMaster);
-					item.setDomainId(item.makeDomainId());
-					Item.staticGetDao().store(item);
+				itemMaster = gtin.getParent();
+				List<Item> items = itemMaster.getItems();
+				for (Item item : items) {
+					if (gtin.equals(item.getGtin())) {
+						LOGGER.info("Changing UOM of item location {} at {}", item.getItemId(), item.getItemLocationName());
+						item.setUomMaster(inUomMaster);
+						item.setDomainId(item.makeDomainId());
+						Item.staticGetDao().store(item);
+					}
 				}
+				gtin.setUomMaster(inUomMaster);
+				itemMaster.setDomainId(inItemId);
+				itemMaster.setItemId(inItemId);
+				ItemMaster.staticGetDao().store(itemMaster);
+				Gtin.staticGetDao().store(gtin);
+				LOGGER.info("Updated GTIN to to {}", gtin);
 			}
-			gtin.setUomMaster(inUomMaster);
-			itemMaster.setDomainId(inItemId);
-			itemMaster.setItemId(inItemId);
-			ItemMaster.staticGetDao().store(itemMaster);
-			Gtin.staticGetDao().store(gtin);
-			LOGGER.info("Updated to {}", gtin);
 		}
 
 		// create a new item, if needed
@@ -670,6 +690,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				&& itemMaster.getActive() == true && itemMaster.getActive() != null && itemMaster.getUpdated() == inEdiProcessTime) {
 			// already up to date
 		} else {
+			// new or updated. Not really logging this. Ok. Note that it does change default UOM of the master.			
 			itemMaster.setDescription(inDescription);
 			itemMaster.setStandardUom(inUomMaster);
 			itemMaster.setActive(true);
@@ -759,12 +780,11 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 			} else {
 				// This is - 3) Different itemMaster.
-				// Import line is attempting to associate existing GTIN with a new item. We do not allow this.
-				// NEVER SEEN, even for correct test case, because upsertGtin() is called after master update happened. Search for GTIN_case_3 above
-				LOGGER.error("gtin_case_3 {} already exists but for wrong SKU. Would need to change to {}",
-					result,
-					inItemMaster.getItemId());
-				// Careful: need to handle case 3a and 3b
+				// Import line is attempting to associate existing GTIN with a new item.
+				// Note that updateItemMaster above has already modified the gtin for case 3c. (common onboarding case)
+				// Cases 3a and 3b do fall through to this, but not sure what to do
+				LOGGER.warn("gtin_case_3 hit in upsertGtin(). Doing nothing ");
+				// updateItemMaster logged 3a and 3b as an error already.
 				return null;
 			}
 		} else {

@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.List;
 
 import com.codeshelf.device.CheStateEnum;
+import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.Item;
@@ -288,6 +289,100 @@ public class OrdersWithGtinImportTest extends ServerTest {
 		LOGGER.info("gtins {}", gtins2);
 
 		commitTransaction();
+	}
+
+	/**
+	 * Reproduce Accu's problem. Core-E only handles up to UPC-12. But some Lunera products use UPC-14. So truncated.
+	 * Can these be inventoried? Can they be picked with a scan?
+	 */
+	@Test
+	public final void testTooLongGtin() throws IOException {
+		Facility facility = setUpSimpleNoSlotFacility();
+		// No orders file yet, so no GTINs or OrderMasters in the system
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+
+		picker.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+		picker.scanCommand("INVENTORY");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+
+		LOGGER.info("1a: inventory two gtins to good locations. Later orders file will have the gtin and replace the item/uom");
+		LOGGER.info("these are UPC-14 gtins, too long for Core-E");
+		picker.inventoryViaTape("12345678901201", "L%D301"); // 
+		picker.inventoryViaTape("12345678901301", "L%D302"); // 
+
+		// probably need to wait here to allow the transactions to complete.
+		ThreadUtils.sleep(4000);
+
+		LOGGER.info("2: Load the orders file with the 4 gtins suffering from Core-E trunctionation to 12 characters");
+		beginTransaction();
+		facility = facility.reload();
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
+				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,123456789012"
+				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,123456789013"
+				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,80,case,123456789014"
+				+ "\r\n1,1,104,12/03/14 12:00,12/31/14 12:00,Item3,,80,case,123456789015";
+		importOrdersData(facility, firstCsvString);
+		commitTransaction();
+
+		LOGGER.info("2b: See what gtin we have. Do we have 4 or 6? Answer 6");
+		beginTransaction();
+		facility = facility.reload();
+		List<Gtin> gtins = Gtin.staticGetDao().getAll();
+		LOGGER.info("gtins {}", gtins);
+		Assert.assertEquals(6, gtins.size());
+		commitTransaction();
+
+		LOGGER.info("3: inventory the other two gtins to good locations. We scan the UPC-14");
+		picker.inventoryViaTape("12345678901401", "L%D303"); // 
+		picker.inventoryViaTape("12345678901501", "L%D401"); // 
+		picker.scanCommand("CLEAR");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 1000);
+
+		LOGGER.info("3b: See what we have now. 6 or 8? Answer 8. But they are 4 duplicate pairs");
+		beginTransaction();
+		facility = facility.reload();
+		gtins = Gtin.staticGetDao().getAll();
+		LOGGER.info("gtins {}", gtins);
+		Assert.assertEquals(8, gtins.size());
+		
+		LOGGER.info("4: To continue, let's delete the longer gtins. Assume Accu will only get the truncated ones into the database");
+		for (Gtin gtin : gtins) {
+			String gtinId = gtin.getGtin();
+			if (gtinId.length() > 12) {
+				try {
+					Gtin.staticGetDao().delete(gtin);
+				}
+				catch (DaoException e) {
+					LOGGER.error("deleting gtins", e);
+				}
+			}
+		}
+		commitTransaction();
+		
+		LOGGER.info("4b: Verify only the 4 shorter gtins left");
+		beginTransaction();
+		facility = facility.reload();
+		gtins = Gtin.staticGetDao().getAll();
+		LOGGER.info("gtins {}", gtins);
+		Assert.assertEquals(4, gtins.size());
+		commitTransaction();
+		
+		// Still incomplete. Need to see what the trunctation strategy will be.
+		
+		picker.scanCommand("SETUP");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		picker.scanOrderId("1");
+		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 1000);
+		picker.scanPosition("1");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.logCheDisplay();
+		picker.scanCommand("START");
+		// picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+
 	}
 
 }

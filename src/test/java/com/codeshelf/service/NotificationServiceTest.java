@@ -1,6 +1,7 @@
 package com.codeshelf.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -12,11 +13,42 @@ import com.codeshelf.model.WiFactory;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.service.NotificationService.WorkerEventTypeGroup;
 import com.codeshelf.testframework.HibernateTest;
+import com.google.common.collect.ImmutableMap;
 
 public class NotificationServiceTest extends HibernateTest {
 
 	private DateTime eventTime = new DateTime(1955, 11, 12, 10, 04, 00, 00, DateTimeZone.forID("US/Central"));  //lightning will strike the clock tower in back to the future
+	
+	@Test
+	public void testGroupByType() {
+		this.getTenantPersistenceService().beginTransaction();
+		Che che = getTestChe();
+		
+		NotificationService service = new NotificationService();
+		service.saveEvent(createEvent(eventTime, WorkerEvent.EventType.COMPLETE, che));
+		service.saveEvent(createEvent(eventTime, WorkerEvent.EventType.COMPLETE, che));
+		service.saveEvent(createEvent(eventTime, WorkerEvent.EventType.SHORT, che));
+		service.saveEvent(createEvent(eventTime, WorkerEvent.EventType.SKIP_ITEM_SCAN, che));
+		this.getTenantPersistenceService().commitTransaction();
+
+		this.getTenantPersistenceService().beginTransaction();
+		List<WorkerEventTypeGroup> groupedCounts = service.groupWorkerEventsByType(getFacility(), false);
+		Assert.assertEquals(3, groupedCounts.size());
+		Map<WorkerEvent.EventType, Long> expectedValues = ImmutableMap.of(
+			WorkerEvent.EventType.COMPLETE, 2L,
+			WorkerEvent.EventType.SHORT, 1L,
+			WorkerEvent.EventType.SKIP_ITEM_SCAN, 1L
+		);
+		
+		
+		for (WorkerEventTypeGroup workerEventTypeGroup : groupedCounts) {
+			Assert.assertEquals(expectedValues.get(workerEventTypeGroup.getEventType()).longValue(), workerEventTypeGroup.getCount());
+		}
+		this.getTenantPersistenceService().commitTransaction();
+	}
+	
 	
 	@Test
 	public void testMessageOnStartDate() {
@@ -80,13 +112,19 @@ public class NotificationServiceTest extends HibernateTest {
 		
 	}
 
-	private void storePickEvent(NotificationService service, Che che, DateTime eventTime) {
+	private WorkerEvent createEvent(DateTime eventTime, WorkerEvent.EventType eventType, Che che) {
+		
+		WorkerEvent event = new WorkerEvent(eventTime, eventType, che, "worker");
+
 		WorkInstruction wi = WiFactory.createForLocation(che.getFacility());
 		WorkInstruction.staticGetDao().store(wi);
 		WorkInstruction persistedWI = WorkInstruction.staticGetDao().findByDomainId(wi.getParent(), wi.getDomainId());
-		
-		WorkerEvent event = new WorkerEvent(eventTime, WorkerEvent.EventType.COMPLETE, che, "worker");
 		event.setWorkInstruction(persistedWI);
+		return event;
+	}
+	
+	private void storePickEvent(NotificationService service, Che che, DateTime eventTime) {
+		WorkerEvent event = createEvent(eventTime, WorkerEvent.EventType.COMPLETE, che);
 		service.saveEvent(event);
 	}
 }
