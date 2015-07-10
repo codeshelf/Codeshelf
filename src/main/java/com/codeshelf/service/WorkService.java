@@ -872,7 +872,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		final Che che,
 		final String itemOrUpc,
 		final Location skuWallLoc){
-		GetPutWallInstructionResponse response = new GetPutWallInstructionResponse();		
+		GetPutWallInstructionResponse response = new GetPutWallInstructionResponse();
 		Gtin gtin = Gtin.getGtinForFacility(facility, itemOrUpc);
 		if (gtin == null) {
 			ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, itemOrUpc);
@@ -896,6 +896,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			WorkInstructionTypeEnum.PLAN,
 			item,
 			che,
+			WiPurpose.WiPurposeSkuWallPut,
 			new Timestamp(System.currentTimeMillis()));
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		wiResultList.add(wi);

@@ -171,7 +171,7 @@ public class ScriptServerRunner {
 		} else if  (command.equalsIgnoreCase("togglePutWall")) {
 			throw new Exception("Command togglePutWall has been deprecated due to an addition of Sku Walls. Instead, use " + TEMPLATE_SET_WALL);
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, deleteOrders, importOrders, importAisles, importLocations, importInventory, setController, setPoscons, setPosconToBay, togglePutWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, assignTapeToTier, waitSeconds, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, deleteOrders, importOrders, importAisles, importLocations, importInventory, setController, setPoscons, setPosconToBay, setWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, assignTapeToTier, waitSeconds, //]");
 		}
 	}
 

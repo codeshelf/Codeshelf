@@ -51,6 +51,7 @@ public class WiFactory {
 		WiPurposeHousekeep,
 		WiPurposeOutboundPick, // this is still multipurpose: SKU-pick, detail-pick, and pick-to-order.
 		WiPurposePutWallPut,
+		WiPurposeSkuWallPut,
 		WiPurposeCrossBatchPut,
 		WiPurposeReplenishPut,
 		WiPurposeRestockPut
@@ -391,6 +392,7 @@ public class WiFactory {
 		WorkInstructionTypeEnum type,
 		Item item,
 		Che che,
+		WiPurpose purpose,
 		final Timestamp time) throws DaoException {
 		ItemMaster itemMaster = item.getParent();
 		Location location = item.getStoredLocation();
@@ -402,6 +404,7 @@ public class WiFactory {
 		wi.setCreated(new Timestamp(System.currentTimeMillis()));
 		wi.setStatus(status);
 		wi.setType(type);
+		wi.setContainer(null);
 		wi.setParent(che.getFacility());
 		che.addWorkInstruction(wi);
 		wi.setDomainId(Long.toString(SequenceNumber.generate()));
@@ -425,9 +428,14 @@ public class WiFactory {
 		setPosConInstructions(wi, item.getStoredLocation());
 		
 		List<LedCmdGroup> ledCmdGroupList = getLedCmdGroupListForItemOrLocation(item, che.getColor(), item.getStoredLocation());
-		if (ledCmdGroupList.size() > 0)
+		if (ledCmdGroupList.size() > 0){
 			wi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledCmdGroupList));
-
+		}
+		if (wi.getLedCmdStream() == null) {
+			wi.setLedCmdStream("[]");
+		}
+		
+		WorkInstruction.staticGetDao().store(wi);
 		return wi;
 	}
 	
