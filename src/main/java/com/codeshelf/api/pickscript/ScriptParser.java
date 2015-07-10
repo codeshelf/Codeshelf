@@ -184,8 +184,10 @@ public class ScriptParser {
 					String lineClean = line.trim().replaceAll("\\s+", " ");
 					String parts[] = lineClean.split(" ");
 					String command = parts[0];
-					if (command.equalsIgnoreCase("importAisles") || command.equalsIgnoreCase("importLocations") || command.equalsIgnoreCase("importInventory") || command.equalsIgnoreCase("importOrders")) {
-						requiredFiles.add(parts[1]);
+					if (command.equalsIgnoreCase("importAisles") || command.equalsIgnoreCase("importLocations") || command.equalsIgnoreCase("importInventory") || command.equalsIgnoreCase("importOrders") || command.equalsIgnoreCase("addExtensionPoint")) {
+						if (parts.length > 1){
+							requiredFiles.add(parts[1]);
+						}
 					}
 				}
 			}

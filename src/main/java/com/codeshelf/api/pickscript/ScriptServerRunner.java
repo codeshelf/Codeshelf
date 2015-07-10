@@ -3,10 +3,14 @@ package com.codeshelf.api.pickscript;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+import org.apache.commons.io.IOUtils;
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +27,7 @@ import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
@@ -35,11 +40,13 @@ import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.Vertex;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.UiUpdateService;
 import com.codeshelf.util.CsExceptionUtils;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
+import com.google.common.collect.Lists;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
 public class ScriptServerRunner {
@@ -60,6 +67,8 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_DEF_PATH = "defPath <pathName> (segments '-' <start x> <start y> <end x> <end y>)";
 	private final static String TEMPLATE_ASSIGN_PATH_SGM_AISLE = "assignPathSgmToAisle <pathName> <segment id> <aisle name>";
 	private final static String TEMPLATE_ASSIGN_TAPE_TO_TIER = "assignTapeToTier (assignments <tape id> <tier name>)";
+	private final static String TEMPLATE_DELETE_EXTENSION = "deleteExtensionPoint <type>";
+	private final static String TEMPLATE_ADD_EXTENSION = "addExtensionPoint <extension> <type> <active/inactive>";
 	private final static String TEMPLATE_WAIT_SECONDS = "waitSeconds <seconds>";
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScriptSiteRunner.class);
@@ -161,13 +170,17 @@ public class ScriptServerRunner {
 			processAsignPathSegmentToAisleCommand(parts);
 		} else if (command.equalsIgnoreCase("assignTapeToTier")) {
 			processAsignTapeToTierCommand(parts);
+		} else if (command.equalsIgnoreCase("deleteExtensionPoint")) {
+			processDeleteExtensionPointCommand(parts);
+		} else if (command.equalsIgnoreCase("addExtensionPoint")) {
+			processAddExtensionPointCommand(parts);
 		} else if (command.equalsIgnoreCase("waitSeconds")) {
 			processWaitSecondsCommand(parts);
 		} else if (command.startsWith("//")) {
 		} else if  (command.equalsIgnoreCase("togglePutWall")) {
 			throw new Exception("Command togglePutWall has been deprecated due to an addition of Sku Walls. Instead, use " + TEMPLATE_SET_WALL);
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, deleteOrders, importOrders, importAisles, importLocations, importInventory, setController, setPoscons, setPosconToBay, setWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, assignTapeToTier, waitSeconds, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, deleteOrders, importOrders, importAisles, importLocations, importInventory, setController, setPoscons, setPosconToBay, setWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, assignTapeToTier, deleteExtensionPoint, addExtensionPoint, waitSeconds, //]");
 		}
 	}
 
@@ -536,6 +549,72 @@ public class ScriptServerRunner {
 			Tier tier = findTier(tierName);
 			tier.setTapeIdUi(tapeId);
 		}
+	}
+
+	
+	/**
+	 * Expects to see command
+	 * deleteExtensionPoint <type>
+	 * @throws Exception 
+	 */
+	private void processDeleteExtensionPointCommand(String parts[]) throws Exception {
+		if (parts.length != 2){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_DELETE_EXTENSION);
+		}
+		String typeStr = parts[1];
+		ExtensionPointType typeEnum = null;
+		try {
+			typeEnum = ExtensionPointType.valueOf(typeStr);
+		} catch (IllegalArgumentException e) {
+			throw new Exception("Illegal type '" + typeStr + "' for an extension point. [OrderImportBeanTransformation/OrderImportHeaderTransformation/OrderImportLineTransformation]");
+		}
+		ArrayList<Criterion> filter = Lists.newArrayList();
+		filter.add(Restrictions.eq("parent", facility));
+		filter.add(Restrictions.eq("type", typeEnum));
+		List<ExtensionPoint> extensions = ExtensionPoint.staticGetDao().findByFilter(filter);
+		for (ExtensionPoint extension : extensions) {
+			ExtensionPoint.staticGetDao().delete(extension);
+		}
+	}
+
+	/**
+	 * Expects to see command
+	 * addExtensionPoint <extension> <type> <active/inactive>
+	 * @throws Exception 
+	 */
+	private void processAddExtensionPointCommand(String parts[]) throws Exception {
+		if (parts.length != 4){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_ADD_EXTENSION);
+		}
+		String filename = parts[1], typeStr = parts[2], state = parts[3];
+		//Parse type and verify that no other extensions of this type exist
+		ExtensionPointType typeEnum = null;
+		try {
+			typeEnum = ExtensionPointType.valueOf(typeStr);
+		} catch (IllegalArgumentException e) {
+			throw new Exception("Illegal type '" + typeStr + "' for an extension point. [OrderImportBeanTransformation/OrderImportHeaderTransformation/OrderImportLineTransformation]");
+		}
+		ArrayList<Criterion> filter = Lists.newArrayList();
+		filter.add(Restrictions.eq("parent", facility));
+		filter.add(Restrictions.eq("type", typeEnum));
+		List<ExtensionPoint> existingExtensions = ExtensionPoint.staticGetDao().findByFilter(filter);
+		if (!existingExtensions.isEmpty()) {
+			throw new Exception(typeEnum + " extension already exists in this facility. Run 'deleteExtensionPoint " + typeEnum + "' to delete it.");
+		}
+		boolean active = true;
+		if ("active".equalsIgnoreCase(state)) {
+			active = true;
+		} else if ("inactive".equalsIgnoreCase(state)) {
+			active = false;
+		} else {
+			throw new Exception("Invalid exptension point state '" + state + "'. [active/inactive]");
+		}
+		InputStreamReader reader = readFile(filename);
+		String script = IOUtils.toString(reader);
+		ExtensionPoint point = new ExtensionPoint(facility, typeEnum);
+		point.setScript(script);
+		point.setActive(active);
+		ExtensionPoint.staticGetDao().store(point);
 	}
 
 	/**

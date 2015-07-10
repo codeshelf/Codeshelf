@@ -30,6 +30,10 @@ assignPathSgmToAisle p1 0 A1
 assignPathSgmToAisle p1 2 Aisle2
 assignPathSgmToAisle p2 0 A3
 assignTapeToTier 0007 A1.B2.T1 000X A2.B2.T1
+deleteExtensionPoint OrderImportLineTransformation
+deleteExtensionPoint OrderImportBeanTransformation
+addExtensionPoint extensionLine OrderImportLineTransformation active
+addExtensionPoint extensionBean OrderImportBeanTransformation inactive
 
 SERVER
 importInventory inventory

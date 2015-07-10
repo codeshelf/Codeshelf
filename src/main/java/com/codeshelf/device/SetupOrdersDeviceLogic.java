@@ -2123,7 +2123,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			// maintain the CHE feedback, but not for put wall puts. Not DO_PUT. And not SHORT_PUT state.
 			//Decrement count if this is a non-HK WI
 			String containerId = inWi.getContainerId();
-			if (!inWi.isHousekeeping()) {
+			if (!inWi.isHousekeeping() && !"None".equalsIgnoreCase(containerId)) {
 				WorkInstructionCount count = this.mContainerToWorkInstructionCountMap.get(containerId);
 				count.decrementGoodCountAndIncrementCompleteCount();
 			}
