@@ -124,12 +124,8 @@ public class ScriptServerRunner {
 		if (line == null || line.isEmpty()) {
 			return;
 		}
-		//Clean up multiple spaces between words 
-		line = line.trim().replaceAll("\\s+", " ");
-		String parts[] = line.split(" ");
-		for (int i = 0; i < parts.length; i++) {
-			parts[i] = parts[i].trim();
-		}
+		String parts[] = ScriptParser.splitLine(line);
+		
 		String command = parts[0];
 		if (command.equalsIgnoreCase("editFacility")) {
 			processEditFacilityCommand(parts);
