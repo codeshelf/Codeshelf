@@ -361,5 +361,15 @@ public class OrderService implements IApiService {
 		return shipperFilters;
 	}
 
+	public int deleteAll(Facility facility) {
+		//This needs to obey the relationship cascades defined in hibernate
+		List<OrderHeader> orderHeaders = OrderHeader.staticGetDao().findByParent(facility);
+		int result = orderHeaders.size();
+		for (OrderHeader orderHeader : orderHeaders) {
+			OrderHeader.staticGetDao().delete(orderHeader);
+		}
+		return result;
+	}
+
 
 }

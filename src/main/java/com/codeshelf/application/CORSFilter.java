@@ -40,7 +40,7 @@ public class CORSFilter implements Filter {
 			"Access-Control-Allow-Origin", allowOrigin //Have to be specific when the xhr contains credentials
 		);
 		httpResponse.addHeader(
-			"Access-Control-Allow-Methods", "POST, GET, PUT, OPTIONS"
+			"Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS"
 		);
 		httpResponse.addHeader(
 			"Vary", "Accept-Encoding, Origin"
