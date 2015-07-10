@@ -5,8 +5,15 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.hibernate.criterion.Projections;
+import org.hibernate.criterion.Restrictions;
 import org.hibernate.transform.AliasToBeanResultTransformer;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
@@ -16,6 +23,7 @@ import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.DomainObjectABC;
+import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
@@ -111,4 +119,30 @@ public class NotificationService implements IApiService{
 		List<PickRate> results = query.list();
  		return results;
 	}
+
+	@ToString
+	public static class WorkerEventTypeGroup {
+		@Getter @Setter
+		WorkerEvent.EventType eventType;
+		
+		@Getter @Setter
+		long count;
+	}
+
+	@SuppressWarnings("unchecked")
+	public List<WorkerEventTypeGroup> groupWorkerEventsByType(Facility facility, boolean resolved) {
+        Criteria criteria = WorkerEvent.staticGetDao().createCriteria();
+        criteria.setProjection(Projections.projectionList()
+        		.add(Projections.groupProperty("eventType"), "eventType")
+        		.add(Projections.rowCount(), "count"))
+        	.add(Restrictions.eq("facility", facility));
+        	if (resolved){
+        		criteria.add(Restrictions.isNotNull("resolution"));
+        	} else {
+        		criteria.add(Restrictions.isNull("resolution"));
+        	}
+
+        	criteria.setResultTransformer(new AliasToBeanResultTransformer(WorkerEventTypeGroup.class));
+        	return criteria.list();
+    }
 }

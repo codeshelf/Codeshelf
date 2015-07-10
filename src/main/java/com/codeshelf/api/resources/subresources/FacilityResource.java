@@ -33,6 +33,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.exception.ConstraintViolationException;
 import org.joda.time.DateTime;
@@ -76,6 +77,7 @@ import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.service.NotificationService;
+import com.codeshelf.service.NotificationService.WorkerEventTypeGroup;
 import com.codeshelf.service.OrderService;
 import com.codeshelf.service.OrderService.OrderDetailView;
 import com.codeshelf.service.ProductivitySummaryList;
@@ -344,8 +346,10 @@ public class FacilityResource {
 				}
 			}
 
-			List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
+			
+			
 			if (!Strings.isNullOrEmpty(itemId)) {
+				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
 				ResultDisplay result = new ResultDisplay();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
@@ -357,6 +361,7 @@ public class FacilityResource {
 				}
 				return BaseResponse.buildResponse(result);
 			} else if (!Strings.isNullOrEmpty(workerId)) {
+				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
 				ResultDisplay result = new ResultDisplay();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
@@ -371,6 +376,7 @@ public class FacilityResource {
 
 
 			if ("item".equals(groupBy)) {
+				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
 				Map<ItemDisplay, Integer> issuesByItem = new HashMap<>();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
@@ -387,40 +393,31 @@ public class FacilityResource {
 					result.add(values);
 				}
 				return BaseResponse.buildResponse(result);
-			} else if ("worker".equals(groupBy)) {
-					Map<WorkerDisplay, Integer> issuesByWorker = new HashMap<>();
-					for (WorkerEvent event : events) {
-						EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
-						WorkerDisplay workerDisplayKey = new WorkerDisplay(eventDisplay);
-						Integer count = MoreObjects.firstNonNull(issuesByWorker.get(workerDisplayKey), 0);
-						issuesByWorker.put(workerDisplayKey, count+1);
-					}
-
-					ResultDisplay result = new ResultDisplay(WorkerDisplay.ItemComparator);
-					for (Map.Entry<WorkerDisplay, Integer> issuesByWorkerEntry : issuesByWorker.entrySet()) {
-						Map<Object, Object> values = new HashMap<>();
-						values.putAll(new BeanMap(issuesByWorkerEntry.getKey()));
-						values.put("count", issuesByWorkerEntry.getValue());
-						result.add(values);
-					}
-					return BaseResponse.buildResponse(result);
-			} else if ("type".equals(groupBy)){
-				Map<WorkerEvent.EventType, Integer> issuesByType = new HashMap<>();
+			} else if ("worker".equals(groupBy)) {	
+				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
+				Map<WorkerDisplay, Integer> issuesByWorker = new HashMap<>();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
-					WorkerEvent.EventType eventType = eventDisplay.getType();
-					Integer count = MoreObjects.firstNonNull(issuesByType.get(eventType), 0);
-					issuesByType.put(eventType, count+1);
+					WorkerDisplay workerDisplayKey = new WorkerDisplay(eventDisplay);
+					Integer count = MoreObjects.firstNonNull(issuesByWorker.get(workerDisplayKey), 0);
+					issuesByWorker.put(workerDisplayKey, count+1);
 				}
-				ResultDisplay result = new ResultDisplay(issuesByType.size());
-				for (Map.Entry<WorkerEvent.EventType, Integer> issuesByTypeEntry : issuesByType.entrySet()) {
+
+				ResultDisplay result = new ResultDisplay(WorkerDisplay.ItemComparator);
+				for (Map.Entry<WorkerDisplay, Integer> issuesByWorkerEntry : issuesByWorker.entrySet()) {
 					Map<Object, Object> values = new HashMap<>();
-					values.putAll(new BeanMap(issuesByTypeEntry.getKey()));
-					values.put("count", issuesByTypeEntry.getValue());
+					values.putAll(new BeanMap(issuesByWorkerEntry.getKey()));
+					values.put("count", issuesByWorkerEntry.getValue());
 					result.add(values);
 				}
 				return BaseResponse.buildResponse(result);
+			} else if ("type".equals(groupBy)){
+				List<WorkerEventTypeGroup> issuesByType = notificationService.groupWorkerEventsByType(facility, resolved);
+				ResultDisplay result = new ResultDisplay(issuesByType.size());
+		        result.addAll(issuesByType);	
+				return BaseResponse.buildResponse(result);
 			} else {
+				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
 				ResultDisplay result = new ResultDisplay(events.size());
 				for (WorkerEvent event : events) {
 					result.add(new BeanMap(EventDisplay.createEventDisplay(event)));
