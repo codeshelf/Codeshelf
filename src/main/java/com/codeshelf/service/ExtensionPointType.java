@@ -17,6 +17,7 @@ public enum ExtensionPointType {
 	
 	OrderImportBeanTransformation,
 	OrderImportHeaderTransformation,
+	OrderImportCreateHeader,
 	OrderImportLineTransformation;
 
 	/**

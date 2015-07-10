@@ -1,0 +1,8 @@
+/**
+ * Called with an empty String object passed in. This should populate the string to supply the header that matches the customers order lines.
+ * Only use this when customer has no header line at all. This may not be used with OrderImportHeadeaderTransformation.
+ * Go ahead and make up column names for customer columns that we do not use.
+ */
+def OrderImportCreateHeader(orderHeader) { 
+     orderHeader= "asMission,orderId,preAssignedContainerId,locationId,quantity,itemId,orderDetailId,workSequence,buildingCode,uom"
+}
