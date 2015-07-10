@@ -33,7 +33,6 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
-import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.exception.ConstraintViolationException;
 import org.joda.time.DateTime;

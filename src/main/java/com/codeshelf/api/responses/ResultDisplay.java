@@ -1,13 +1,10 @@
 package com.codeshelf.api.responses;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
-
-import com.codeshelf.service.NotificationService.WorkerEventTypeGroup;
 
 import lombok.Getter;
 

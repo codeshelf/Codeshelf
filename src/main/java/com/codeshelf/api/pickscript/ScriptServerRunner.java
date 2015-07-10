@@ -124,12 +124,8 @@ public class ScriptServerRunner {
 		if (line == null || line.isEmpty()) {
 			return;
 		}
-		//Clean up multiple spaces between words 
-		line = line.trim().replaceAll("\\s+", " ");
-		String parts[] = line.split(" ");
-		for (int i = 0; i < parts.length; i++) {
-			parts[i] = parts[i].trim();
-		}
+		String parts[] = ScriptParser.splitLine(line);
+		
 		String command = parts[0];
 		if (command.equalsIgnoreCase("editFacility")) {
 			processEditFacilityCommand(parts);
@@ -171,7 +167,7 @@ public class ScriptServerRunner {
 		} else if  (command.equalsIgnoreCase("togglePutWall")) {
 			throw new Exception("Command togglePutWall has been deprecated due to an addition of Sku Walls. Instead, use " + TEMPLATE_SET_WALL);
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, deleteOrders, importOrders, importAisles, importLocations, importInventory, setController, setPoscons, setPosconToBay, togglePutWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, assignTapeToTier, waitSeconds, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, deleteOrders, importOrders, importAisles, importLocations, importInventory, setController, setPoscons, setPosconToBay, setWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, assignTapeToTier, waitSeconds, //]");
 		}
 	}
 

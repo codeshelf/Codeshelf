@@ -1,7 +1,13 @@
 // This script sets up facility, imports orders, and performs picks
+
+var :site		5000
+var :channel	8
+var :che1 		0x0000009B
+var :contr1 	0x00000064
+
 STEP This step sets up facility
 SERVER
-editFacility F1 5000 8
+editFacility F1 :site :channel
 createDummyOutline 1
 setProperty scanpick UPC
 setProperty invtmenu true
@@ -9,14 +15,14 @@ importAisles aisles
 importLocations locations
 setWall Aisle1 putwall
 setWall Aisle2 skuwall
-setController LocX24   lights  0x00000064 1 tiersInAisle
+setController LocX24   lights  :contr1 1 tiersInAisle
 setController LocX26   lights  0x000000AB 1 tiersInAisle
 setController A3.B1.T1 poscons 0x000000AA 1 tiersInAisle
 setPosconToBay A3.B3 0x000000AA 98 A3.B4 0x000000AA 99 A1.B2 0x000000DB 11 A2.B2 0x000000DB 1
 setPoscons A3.B1.T1 1 forward A3.B2.T1 5 forward A3.B3.T1 9 forward A3.B4.T1 13 forward
 createChe 0x000000A4 blue LINE_SCAN
 createChe 0x000000A3 magenta SETUP_ORDERS CHE_B
-createChe 0x0000009B green SETUP_ORDERS CHE_A
+createChe :che1 green SETUP_ORDERS CHE_A
 deleteAllPaths
 defPath p1 - 2.82 5.40 5.19 5.40 - 5.19 5.40 5.19 6.40 - 5.19 6.40 2.77 6.40
 defPath p2 - 2.60 7.40 5.28 7.40
@@ -32,8 +38,8 @@ importOrders orders_10
 
 STEP put wall
 SITE
-waitForDevices 0x0000009B 0x000000A3 0x00000064 0x0000000AB
-defChe cheA 0x0000009B
+waitForDevices :che1 0x000000A3 :contr1 0x0000000AB
+defChe cheA :che1
 defChe cheB 0x000000A3
 logout cheA
 loginSetup cheA Ilya1
@@ -63,7 +69,7 @@ scan cheA 3605970651558 DO_PICK
 STEP test remote control setup
 SITE
 //Define ches
-defChe cheA 0x0000009B
+defChe cheA :che1
 defChe cheB 0x000000A3
 defChe cheC 0x000000A4
 logout cheA cheB cheC
@@ -77,7 +83,7 @@ waitForState cheB SETUP_SUMMARY
 STEP load orders on CHEs
 SITE
 //Define ches
-defChe cheA 0x0000009B
+defChe cheA :che1
 defChe cheB 0x000000A3
 logout cheA cheB
 //Set pick parameters [pickSpeed, frequency of skipping UPC, frequency of shorting an item]
@@ -91,7 +97,7 @@ setupCart cheB 26768718 26768719 26768720
 STEP pick CHEs
 SITE
 //Define ches
-defChe cheA 0x0000009B
+defChe cheA :che1
 defChe cheB 0x000000A3
 pickAll
 logout cheA cheB

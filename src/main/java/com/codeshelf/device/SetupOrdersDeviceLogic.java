@@ -863,7 +863,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				//result of getOneActiveWorkInstruction() is guaranteed by selectNextActivePicks() not to be null 
 				WorkInstruction nextWi = getOneActiveWorkInstruction();
 				String posconStream = nextWi.getPosConCmdStream();
-				if (posconStream.equals(mIgnoreExistingHoldersOnThesePoscons)){
+				if (posconStream != null && posconStream.equals(mIgnoreExistingHoldersOnThesePoscons)){
 					//CHE arrived here from scanning YES on the POSCON_BUSY screen.
 					//Continue without checking if needed Poscons are in use by another CHE
 					mIgnoreExistingHoldersOnThesePoscons = null;

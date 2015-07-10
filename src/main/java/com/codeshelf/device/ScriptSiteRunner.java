@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.api.pickscript.ScriptParser;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.INetworkDevice;
 import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
@@ -92,12 +93,8 @@ public class ScriptSiteRunner {
 		if (line == null || line.isEmpty()) {
 			return;
 		}
-		//Clean up multiple spaces between words 
-		line = line.trim().replaceAll("\\s+", " ");
-		String parts[] = line.split(" ");
-		for (int i = 0; i < parts.length; i++) {
-			parts[i] = parts[i].trim();
-		}
+		String parts[] = ScriptParser.splitLine(line);
+		
 		String command = parts[0];
 		if (command.equalsIgnoreCase("cheExec")) {
 			processCheExecCommand(parts);

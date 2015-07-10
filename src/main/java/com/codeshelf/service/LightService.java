@@ -197,13 +197,14 @@ public class LightService implements IApiService {
 		String inSourceGuid,
 		byte inPosition,
 		WorkInstruction inWorkInstruction) {
+		Byte freq = (inWorkInstruction.getPlanMinQuantity() < inWorkInstruction.getPlanMaxQuantity()) ? PosControllerInstr.BLINK_FREQ : PosControllerInstr.SOLID_FREQ;
 		return (new PosControllerInstr(inControllerId,
 			inSourceGuid,
 			inPosition,
 			inWorkInstruction.getPlanQuantity().byteValue(),
 			inWorkInstruction.getPlanMinQuantity().byteValue(),
 			inWorkInstruction.getPlanMaxQuantity().byteValue(),
-			PosControllerInstr.SOLID_FREQ,
+			freq,
 			PosControllerInstr.BRIGHT_DUTYCYCLE));
 	}
 

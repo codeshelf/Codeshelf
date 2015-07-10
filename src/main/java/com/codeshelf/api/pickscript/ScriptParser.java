@@ -25,6 +25,9 @@ public class ScriptParser {
 		if (lines.isEmpty()) {
 			throw new Exception("Could not read any lines from the script file");
 		}
+		
+		processVaraibles(lines);
+		
 		ScriptStep prevStep = null;
 		ScriptStep firstStep = null;
 		
@@ -54,6 +57,45 @@ public class ScriptParser {
 			step.setStepIndex(++stepNum, steps.size());
 		}
 		return firstStep;
+	}
+	
+	private static void processVaraibles(ArrayList<String> scriptLines) throws Exception{
+		ArrayList<String[]> variables = Lists.newArrayList();
+		String line = null;
+		//Read variables from the top of the script
+		while (!scriptLines.isEmpty()){
+			line = scriptLines.get(0);
+			String parts[] = ScriptParser.splitLine(line);
+			if (line.isEmpty() || line.startsWith("//")){
+				scriptLines.remove(0);
+			} else if ("var".equalsIgnoreCase(parts[0])){
+				if (parts.length != 3) {
+					throw new Exception("Incorrect number of arguments in '" + line + "'. Expected 'var <:name> <value>'");
+				}
+				String varName = parts[1];
+				String varValue = parts[2];
+				if (!varName.startsWith(":")) {
+					throw new Exception("Incorrect variable name '" + varName + "' in '" + line + "'; must start with ':'");
+				}
+				String variable[] = {varName, varValue};
+				variables.add(variable);
+				scriptLines.remove(0);
+			} else {
+				break;
+			}
+		}
+		//Replace variables with values in the rest of the script
+		int numLines = scriptLines.size();
+		for (int i = 0; i < numLines; i++){
+			line = scriptLines.get(i);
+			System.out.println("Start: " + line);
+			for (String[] variable : variables) {
+				line = line.replaceAll(variable[0], variable[1]);
+			}
+			scriptLines.set(i, line);
+			System.out.println("End  : " + line);
+		}
+		return;
 	}
 	
 	private static ScriptStep getNextScriptStep(ArrayList<String> scriptLines) throws Exception{
@@ -94,6 +136,16 @@ public class ScriptParser {
 			    }
 			}			
 		}
+	}
+	
+	public static String[] splitLine(String line){
+		//Clean up multiple spaces between words 
+		line = line.trim().replaceAll("\\s+", " ");
+		String parts[] = line.split(" ");
+		for (int i = 0; i < parts.length; i++) {
+			parts[i] = parts[i].trim();
+		}
+		return parts;
 	}
 	
 	public static class ScriptStep {
