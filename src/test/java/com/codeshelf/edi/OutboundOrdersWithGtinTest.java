@@ -30,8 +30,8 @@ import com.codeshelf.util.ThreadUtils;
 /**
   *
  */
-public class OrdersWithGtinImportTest extends ServerTest {
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(OrdersWithGtinImportTest.class);
+public class OutboundOrdersWithGtinTest extends ServerTest {
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(OutboundOrdersWithGtinTest.class);
 
 	/*
 	 * If multiple gtins are created for an item we may return the incorrect gtin. We do not check if a gtin exists
@@ -292,7 +292,7 @@ public class OrdersWithGtinImportTest extends ServerTest {
 	}
 
 	/**
-	 * Reproduce Accu's problem. Core-E only handles up to UPC-12. But some Lunera products use UPC-14. So truncated.
+	 * Reproduce Accu's problem. Core-E only handles up to UPC-12. But some Lunera products use 17 chars. So truncated.
 	 * Can these be inventoried? Can they be picked with a scan?
 	 */
 	@Test
@@ -307,9 +307,9 @@ public class OrdersWithGtinImportTest extends ServerTest {
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 
 		LOGGER.info("1a: inventory two gtins to good locations. Later orders file will have the gtin and replace the item/uom");
-		LOGGER.info("these are UPC-14 gtins, too long for Core-E");
-		picker.inventoryViaTape("12345678901201", "L%D301"); // 
-		picker.inventoryViaTape("12345678901301", "L%D302"); // 
+		LOGGER.info("these are 17 character gtins, too long for Core-E");
+		picker.inventoryViaTape("12345678901234567", "L%D301"); // 
+		picker.inventoryViaTape("12345678901334567", "L%D302"); // 
 
 		// probably need to wait here to allow the transactions to complete.
 		ThreadUtils.sleep(4000);
@@ -325,62 +325,112 @@ public class OrdersWithGtinImportTest extends ServerTest {
 		importOrdersData(facility, firstCsvString);
 		commitTransaction();
 
-		LOGGER.info("2b: See what gtin we have. Do we have 4 or 6? Answer 6");
+		LOGGER.info("2b: See what gtin we have. Do we have 4 or 6? Answer 4. We successful transformed the itemLocations for item1/ea and item1/case");
 		beginTransaction();
 		facility = facility.reload();
 		List<Gtin> gtins = Gtin.staticGetDao().getAll();
 		LOGGER.info("gtins {}", gtins);
-		Assert.assertEquals(6, gtins.size());
+		Assert.assertEquals(4, gtins.size());
 		commitTransaction();
 
-		LOGGER.info("3: inventory the other two gtins to good locations. We scan the UPC-14");
-		picker.inventoryViaTape("12345678901401", "L%D303"); // 
-		picker.inventoryViaTape("12345678901501", "L%D401"); // 
+		LOGGER.info("3: inventory the other two gtins to good locations. We scan the full gtin");
+		picker.inventoryViaTape("12345678901434567", "L%D303"); // 
+		picker.inventoryViaTape("12345678901534567", "L%D401"); // 
 		picker.scanCommand("CLEAR");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 1000);
 
-		LOGGER.info("3b: See what we have now. 6 or 8? Answer 8. But they are 4 duplicate pairs");
+		LOGGER.info("3b: See what we have now. 4 or 6? Answer 6.");
 		beginTransaction();
 		facility = facility.reload();
 		gtins = Gtin.staticGetDao().getAll();
 		LOGGER.info("gtins {}", gtins);
-		Assert.assertEquals(8, gtins.size());
-		
-		LOGGER.info("4: To continue, let's delete the longer gtins. Assume Accu will only get the truncated ones into the database");
-		for (Gtin gtin : gtins) {
-			String gtinId = gtin.getGtin();
-			if (gtinId.length() > 12) {
-				try {
-					Gtin.staticGetDao().delete(gtin);
-				}
-				catch (DaoException e) {
-					LOGGER.error("deleting gtins", e);
-				}
-			}
-		}
+		Assert.assertEquals(6, gtins.size());
 		commitTransaction();
+		// The only way to continue is to delete the longer gtin, then edit the shorter one to have value. Try not to lose track of the position.
+		// Note that during order import we have the full gtinCache available. But not during the server-side inventory transaction via gtin.
+		// We do not want to do a full query there in order to call findUniqueManufacturedSubstringMatch()
 		
-		LOGGER.info("4b: Verify only the 4 shorter gtins left");
+		// After this, normal pickscan applies. Full gtin is in the database. Full scan will match. No need for separate testing here.
+	}
+	
+	/**
+	 * Core-E only handles up to UPC-12. But some Lunera products use 17 chars. So truncated.
+	 * Just explore the order import issue.
+	 */
+	@Test
+	public final void truncatedGtinInFile() throws IOException {
+		Facility facility = setUpSimpleNoSlotFacility();
+		// No orders file yet, so no GTINs or OrderMasters in the system
+
+		LOGGER.info("1: Load the orders file with the 4 long gtins. This is just to get correct data into the system");
+		// At accu, this would be done by editing the gtins in webapp
 		beginTransaction();
 		facility = facility.reload();
-		gtins = Gtin.staticGetDao().getAll();
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
+				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,12345678901234567"
+				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,12345678901334567"
+				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,80,case,12345678901434567"
+				+ "\r\n1,1,104,12/03/14 12:00,12/31/14 12:00,Item3,,80,case,12345678901534567";
+		importOrdersData(facility, firstCsvString);
+		commitTransaction();
+
+		LOGGER.info("1b: See that we have 4 gtin now.");
+		beginTransaction();
+		facility = facility.reload();
+		List<Gtin> gtins = Gtin.staticGetDao().getAll();
 		LOGGER.info("gtins {}", gtins);
 		Assert.assertEquals(4, gtins.size());
 		commitTransaction();
 		
-		// Still incomplete. Need to see what the trunctation strategy will be.
+		LOGGER.info("2a: Import new order line for item1/case, but with truncated Gtin. This should do a GTIN case 5 match and not make a new gtin");
+		// Actually checked below in gtins.size() assert.
+		beginTransaction();
+		facility = facility.reload();
+		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
+				+ "\r\n2,2,2_01,12/03/14 12:00,12/31/14 12:00,Item1,,80,case,123456789012";
+		importOrdersData(facility, firstCsvString);
+		commitTransaction();
+
+		LOGGER.info("2b: Import new order line for item1/case, but stripping off the front of the Gtin. This should do a GTIN case 5 match and not make a new gtin");
+		// Actually checked below in gtins.size() assert.
+		beginTransaction();
+		facility = facility.reload();
+		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
+				+ "\r\n3,3,3_01,12/03/14 12:00,12/31/14 12:00,Item1,,80,case,678901234567";
+		importOrdersData(facility, firstCsvString);
+		commitTransaction();
 		
-		picker.scanCommand("SETUP");
-		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
-		picker.scanOrderId("1");
-		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 1000);
-		picker.scanPosition("1");
-		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
-		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
-		picker.logCheDisplay();
-		picker.scanCommand("START");
-		// picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		LOGGER.info("3: Import new order line for item1/each, but with an internal substring of Gtin. This does not match");
+		// This looks like the host corrected a GTIN so it does change, and does not make a new one. See GGTIN_case_4b in log
+		beginTransaction();
+		facility = facility.reload();
+		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
+				+ "\r\n4,4,402,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,345678901334";
+		importOrdersData(facility, firstCsvString);
+		commitTransaction();
+		
+		beginTransaction();
+		gtins = Gtin.staticGetDao().getAll();
+		LOGGER.info("gtins {}", gtins);
+		Assert.assertEquals(4, gtins.size());
+		commitTransaction();
+
+		LOGGER.info("4: Import new order line for item2/each, wth a truncation that would match the item2 case gtin");
+		// This will make a new gtin
+		beginTransaction();
+		facility = facility.reload();
+		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
+				+ "\r\n5,5,501,12/03/14 12:00,12/31/14 12:00,Item2,,80,each,123456789014";
+		importOrdersData(facility, firstCsvString);
+		commitTransaction();
+		
+		beginTransaction();
+		gtins = Gtin.staticGetDao().getAll();
+		LOGGER.info("gtins {}", gtins);
+		Assert.assertEquals(5, gtins.size());
+		commitTransaction();
+
+
 
 
 	}
