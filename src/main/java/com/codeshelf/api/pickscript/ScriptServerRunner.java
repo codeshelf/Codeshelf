@@ -68,7 +68,7 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_ASSIGN_PATH_SGM_AISLE = "assignPathSgmToAisle <pathName> <segment id> <aisle name>";
 	private final static String TEMPLATE_ASSIGN_TAPE_TO_TIER = "assignTapeToTier (assignments <tape id> <tier name>)";
 	private final static String TEMPLATE_DELETE_EXTENSION = "deleteExtensionPoint <type>";
-	private final static String TEMPLATE_ADD_EXTENSION = "addExtensionPoint <extension> <type> <active/inactive>";
+	private final static String TEMPLATE_ADD_EXTENSION = "addExtensionPoint <filename> <type> <active/inactive>";
 	private final static String TEMPLATE_WAIT_SECONDS = "waitSeconds <seconds>";
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScriptSiteRunner.class);
@@ -579,7 +579,7 @@ public class ScriptServerRunner {
 
 	/**
 	 * Expects to see command
-	 * addExtensionPoint <extension> <type> <active/inactive>
+	 * addExtensionPoint <filename> <type> <active/inactive>
 	 * @throws Exception 
 	 */
 	private void processAddExtensionPointCommand(String parts[]) throws Exception {

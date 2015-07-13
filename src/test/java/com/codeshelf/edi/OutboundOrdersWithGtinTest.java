@@ -16,7 +16,6 @@ import java.util.Collection;
 import java.util.List;
 
 import com.codeshelf.device.CheStateEnum;
-import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.Item;
