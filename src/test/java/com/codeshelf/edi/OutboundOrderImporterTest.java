@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -83,7 +86,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	}
 
 	@Test
-	public final void testOrderImporterFromCsvStream() throws IOException {
+	public final void testOrderImporterFromCsvStream() throws IOException, ParseException {
 		beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
@@ -99,7 +102,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,120,931,10706962,Sun Ripened Dried Tomato Pesto 24oz,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+				+ "\r\n1,USF314,COSTCO,120,931,10706962,Sun Ripened Dried Tomato Pesto 24oz,1,each,2012-09-26 11:31:01,,0";
 		importOrdersData(facility, csvString);
 		commitTransaction();
 		
@@ -128,7 +131,13 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertNotNull(detail931b); // this works, find by itemId within an order.
 		Assert.assertEquals(detail931b, detail931);
 		Assert.assertEquals(detail931DomainID, "10706962-each"); // This is the itemID from file above.
-
+		
+		String expectedDateStr = OutboundOrderCsvBean.getDefaultDueDate();
+		SimpleDateFormat parserSDF = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");		
+		Date expectedDate = parserSDF.parse(expectedDateStr);
+		Timestamp dueDate931 = order931.getDueDate();
+		Assert.assertEquals(expectedDate.getTime(), dueDate931.getTime());	//Verify the auto-filled due date
+		
 		commitTransaction();
 	}
 

@@ -18,8 +18,10 @@ import javax.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import net.fortuna.ical4j.model.Date;
 
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +36,7 @@ import org.slf4j.LoggerFactory;
 public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 
 	static final Logger	LOGGER	= LoggerFactory.getLogger(OutboundOrderCsvBean.class);
+	public static final DateTimeFormatter EOD_FORMATTER = DateTimeFormat.forPattern("MM/dd/yyyy 23:59:59");
 
 	protected String	orderGroupId;
 
@@ -126,9 +129,18 @@ public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 	}
 	
 	public void fillDefaultDueDate(){
-		if (getDueDate() == null) {
-			setDueDate(new Date().toString());
+		if (getDueDate() == null || getDueDate().isEmpty()) {
+			setDueDate(getDefaultDueDate());
 		}
+	}
+	
+	public static String getDefaultDueDate(){
+		DateTime date = new DateTime();
+		int hour = date.getHourOfDay();
+		if (hour >= 17) {
+			date = date.plusDays(1);
+		}
+		return EOD_FORMATTER.print(date);
 	}
 
 	public final String getQuantity() {

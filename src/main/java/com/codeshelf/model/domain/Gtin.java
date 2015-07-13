@@ -31,7 +31,6 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 
 // --------------------------------------------------------------------------
