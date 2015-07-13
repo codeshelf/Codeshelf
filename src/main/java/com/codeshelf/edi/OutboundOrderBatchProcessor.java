@@ -319,6 +319,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 		LOGGER.info(counterStr + ", " + inCsvBean.toString());
 
+		inCsvBean.fillDefaultDueDate();
 		String errorMsg = inCsvBean.validateBean();
 		if (errorMsg != null) {
 			LOGGER.error("Bean validation error: " + errorMsg);
@@ -1047,17 +1048,19 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 	private void checkForChangingFields(List<OutboundOrderCsvBean> beans) {
 		HashMap<String, String[]> orders = new HashMap<>();
-		String orderId, destinationId, savedDestinationId, shipperId, savedShipperId, customerId, savedCustomerId, order[];
+		String orderId, destinationId, savedDestinationId, shipperId, savedShipperId, customerId, savedCustomerId, dueDate, savedDueDate, order[];
 		for (OutboundOrderCsvBean bean : beans) {
 			destinationId = bean.getDestinationId();
 			shipperId = bean.getShipperId();
 			customerId = bean.getCustomerId();
+			dueDate = bean.getDueDate();
 			orderId = bean.getOrderId();
 			order = orders.get(orderId);
 			if (order != null) {
 				savedDestinationId = order[0];
 				savedShipperId = order[1];
 				savedCustomerId = order[2];
+				savedDueDate = order[3];
 				if (!strEquals(destinationId, savedDestinationId)) {
 					LOGGER.warn("Changing destinationId for order {}", orderId);
 				}
@@ -1067,8 +1070,11 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				if (!strEquals(customerId, savedCustomerId)) {
 					LOGGER.warn("Changing customerId for order {}", orderId);
 				}
+				if (!strEquals(dueDate, savedDueDate)) {
+					LOGGER.warn("Changing dueDate for order {}", orderId);
+				}
 			}
-			String updatedOrder[] = { destinationId, shipperId, customerId };
+			String updatedOrder[] = {destinationId, shipperId, customerId, dueDate};
 			orders.put(orderId, updatedOrder);
 		}
 	}

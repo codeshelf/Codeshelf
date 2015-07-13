@@ -18,6 +18,7 @@ import javax.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import net.fortuna.ical4j.model.Date;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,6 +123,12 @@ public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 			LOGGER.warn("truncating description to fit database column");
 		}
 		return theDescription;
+	}
+	
+	public void fillDefaultDueDate(){
+		if (getDueDate() == null) {
+			setDueDate(new Date().toString());
+		}
 	}
 
 	public final String getQuantity() {
