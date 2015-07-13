@@ -4,7 +4,6 @@ import java.io.InputStream;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +52,7 @@ import com.codeshelf.api.pickscript.ScriptSiteCallPool;
 import com.codeshelf.api.pickscript.ScriptStepParser;
 import com.codeshelf.api.pickscript.ScriptStepParser.StepPart;
 import com.codeshelf.api.resources.ExtensionPointsResource;
+import com.codeshelf.api.resources.OrdersResource;
 import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.ItemDisplay;
 import com.codeshelf.api.responses.PickRate;
@@ -68,7 +68,6 @@ import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
-import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
@@ -78,7 +77,6 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.service.NotificationService;
 import com.codeshelf.service.NotificationService.WorkerEventTypeGroup;
 import com.codeshelf.service.OrderService;
-import com.codeshelf.service.OrderService.OrderDetailView;
 import com.codeshelf.service.ProductivitySummaryList;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.UiUpdateService;
@@ -163,29 +161,13 @@ public class FacilityResource {
 		}
 	}
 
-	@GET
 	@Path("/orders")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getOrders(@QueryParam("status") String status, @QueryParam("orderId") String orderIdValue) {
-        List<Map<String, Object>> results = Collections.emptyList();
-		if (orderIdValue != null) {
-			results = this.orderService.findOrderHeadersForOrderId(facility, orderIdValue);
-		} else if (status != null) {
-	    	results = this.orderService.findOrderHeadersForStatus(facility, new OrderStatusEnum[]{OrderStatusEnum.valueOf(status)});
-		} else {
-			//TODO dirty implementation to return all
-			results = this.orderService.findOrderHeadersForStatus(facility, OrderStatusEnum.values());
-		}
-		return BaseResponse.buildResponse(results);
+	public OrdersResource getOrders() {
+		OrdersResource r = resourceContext.getResource(OrdersResource.class);
+	    r.setFacility(facility);
+	    return r;
 	}
 
-	@GET
-	@Path("/orders/{orderId}/details")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getOrders(@PathParam("orderId") String orderDomainId) {
-		List<OrderDetailView> results = this.orderService.getOrderDetailsForOrderId(facility, orderDomainId);
-		return BaseResponse.buildResponse(results);
-	}
 
 	@Path("/extensionpoints")
 	@Produces(MediaType.APPLICATION_JSON)

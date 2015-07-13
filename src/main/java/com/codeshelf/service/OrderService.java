@@ -129,7 +129,26 @@ public class OrderService implements IApiService {
 
 	private List<Map<String, Object>> toOrderView(List<OrderHeader> results) {
 		PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
-		String[] propertyNames = new String[]{    "persistentId","destinationId", "fullDomainId", "orderId", "description", "readableOrderDate", "readableDueDate", "status", "containerId", "shipperId", "customerId", "workSequence", "orderLocationAliasIds", "active", "orderType", "wallUi", "groupUi"};
+		String[] propertyNames = new String[]{
+				"persistentId",
+				"destinationId",
+				"fullDomainId",
+				"orderId",
+				"description",
+				"readableOrderDate",
+				"readableDueDate",
+				"status",
+				"containerId",
+				"shipperId",
+				"customerId",
+				"workSequence", 
+				"orderLocationAliasIds",
+				"active",
+				"orderType",
+				"wallUi",
+				"groupUi", 
+				"dueDate"};
+		
 		ArrayList<Map<String, Object>> viewResults = new ArrayList<Map<String, Object>>();
 		for (OrderHeader object : results) {
 			Map<String, Object> propertiesMap = new HashMap<>();
@@ -359,6 +378,16 @@ public class OrderService implements IApiService {
 			shipperFilters.put(shipperId, String.format("oh.active = true and oh.shipperId = '%s'", shipperId));
 		}
 		return shipperFilters;
+	}
+
+	public int deleteAll(Facility facility) {
+		//This needs to obey the relationship cascades defined in hibernate
+		List<OrderHeader> orderHeaders = OrderHeader.staticGetDao().findByParent(facility);
+		int result = orderHeaders.size();
+		for (OrderHeader orderHeader : orderHeaders) {
+			OrderHeader.staticGetDao().delete(orderHeader);
+		}
+		return result;
 	}
 
 

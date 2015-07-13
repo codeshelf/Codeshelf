@@ -641,13 +641,17 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		itemMaster = this.itemMasterCache.get(inItemId);
 
 		// Try to find a matching manual-inventory Gtin
-		// This is a very important case for "inventory onboarding". Initial inventory scan of gtin make a phone item and item master.
+		// This is a very important case for "inventory onboarding". Initial inventory scan of gtin make a phony item and item master.
 		// Now comes the good update where we have a chance to correct it. Log as WARN.
 		Gtin gtin = this.gtinCache.get(gtinId);
+		if (gtin == null)
+			gtin = findUniqueManufacturedSubstringMatch(gtinId);
 		if (itemMaster == null && gtin != null) {
 
 			if (!gtinIsAnOnboardingManufacture(gtin)) {
-				LOGGER.error("GTIN_case_3ab {} already exists but for wrong SKU. Not changing to {}. SKU master may have incorrect data", gtin, inItemId);
+				LOGGER.error("GTIN_case_3ab {} already exists but for wrong SKU. Not changing to {}. SKU master may have incorrect data",
+					gtin,
+					inItemId);
 				// 3a and 3b differ in whether the gtin parent has any items that we are concerned about. If not, changing here is reasonable.
 				// Not handled yet.
 				// Do not return null, which is odd. See that the master is made anyway below.
@@ -789,10 +793,18 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				return null;
 			}
 		} else {
-			// we do not have this gtinId already
+			// we do not have this exact gtinId already.
+			Gtin matchingGtinForMaster = findGtinMatchOnItemMaster(gtinId, inItemMaster, uomMaster);
 
-			Gtin existingGtinForMaster = inItemMaster.getGtinForUom(uomMaster);
-			if (existingGtinForMaster != null) {
+			Gtin misMatchGtinForMaster = findGtinMisMatchOnItemMaster(gtinId, inItemMaster, uomMaster, matchingGtinForMaster);
+
+			if (matchingGtinForMaster != null) {
+				if (!matchingGtinForMaster.getDomainId().equals(gtinId)) {
+					LOGGER.warn("GTIN_case_5 Found gtin:{} even though file had this substring {}", matchingGtinForMaster, gtinId);
+				}
+				return matchingGtinForMaster;
+
+			} else if (misMatchGtinForMaster != null) {
 				// 4) But this itemMaster/uom has a gtin already. WARN. Modify that gtin, changing its domainId
 				// But we can only do so there is not already a gtin with that domainId
 				Gtin sameGtinOtherMasterOrUom = this.gtinCache.get(gtinId);
@@ -804,20 +816,23 @@ public class OutboundOrderBatchProcessor implements Runnable {
 						uomMaster.getUomMasterId());
 					return null;
 				} else {
-					LOGGER.warn("GTIN_case_4b {} already exists. Changing it to {}", existingGtinForMaster, gtinId);
-					// return null;
-					existingGtinForMaster.setDomainId(gtinId);
+					// Change the GTIN based on the order file
+					LOGGER.warn("GTIN_case_4b {} already exists. Changing it to {}", misMatchGtinForMaster, gtinId);
+					misMatchGtinForMaster.setDomainId(gtinId);
 					try {
-						Gtin.staticGetDao().store(existingGtinForMaster);
-						result = existingGtinForMaster;
+						Gtin.staticGetDao().store(misMatchGtinForMaster);
+						result = misMatchGtinForMaster;
 					} catch (DaoException e) {
 						LOGGER.error("upsertGtinMap save", e);
 					}
 				}
 
 			} else {
-				// 5) simple add
-				LOGGER.info("Adding new gtin:{} for sku:{}/{}", gtinId, inItemMaster.getItemId(), uomMaster.getUomMasterId());
+				// We do not have this gtin yet.
+				LOGGER.warn("GTIN_case_6 Adding new gtin:{} for sku:{}/{}",
+					gtinId,
+					inItemMaster.getItemId(),
+					uomMaster.getUomMasterId());
 				result = inItemMaster.createGtin(gtinId, uomMaster);
 
 				try {
@@ -829,6 +844,91 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		}
 
 		return result;
+	}
+
+	final int	lkMinimalSloppyGtinMatchLength	= 9;
+	final int	lkMaximumSloppyGtinMatchLength	= 14;
+
+	// --------------------------------------------------------------------------
+	/**
+	 * DEV-979 Accu's truncated GTIN case. What if we find a gtin the the gtinId is a substring of?
+	 * Anyway, this return either exact match or the Gtin that gtinId is a substring of if the itemMaster already had it.
+	 */
+	private Gtin findGtinMatchOnItemMaster(String gtinId, ItemMaster inItemMaster, UomMaster uomMaster) {
+		// inItemMaster.getGtinForUom(uomMaster); definitely returns a gtin or null. This is determining if the passed in gtinID is a close enough match to be the same.
+
+		if (gtinId == null)
+			return null;
+
+		Gtin result = inItemMaster.getGtinForUom(uomMaster);
+		if (result != null && result.getDomainId().equals(gtinId))
+			return result;
+
+		// if not an exact match, let's not bother searching if the length of the gtinId is long enough that it is doubtful it is a substring of a longer Gtin. And not trivially short.
+		int gtinLength = gtinId.length();
+		if (gtinLength < lkMinimalSloppyGtinMatchLength || gtinLength > lkMaximumSloppyGtinMatchLength) {
+			return null;
+		}
+
+		// Does this itemMaster already have a gtin that this id is a substring of, with matching uom?
+		Collection<Gtin> gtins = inItemMaster.getGtins().values();
+		for (Gtin gtin : gtins) {
+			String thisId = gtin.getDomainId();
+			if (thisId.length() > gtinLength) {
+				if (thisId.startsWith(gtinId) || thisId.endsWith(gtinId)) {
+					if (gtin.getUomMaster().equals(uomMaster))
+						return gtin;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * This assumes findGtinMatchOnItemMaster() was called and the result given as the matchingGtin parameter.
+	 * This is just to avoid multiple identical investigations
+	 */
+	private Gtin findGtinMisMatchOnItemMaster(String gtinId, ItemMaster inItemMaster, UomMaster uomMaster, Gtin matchingGtin) {
+
+		if (matchingGtin != null)
+			return null;
+		// if the master has a gtin for the uom, and it was not matched, it must be mismatched.
+		return inItemMaster.getGtinForUom(uomMaster);
+	}
+
+	/**
+	 * This is a fairly expensive check within the gtin cache.
+	 * We may have longer gtins in the database.
+	 */
+	private Gtin findUniqueManufacturedSubstringMatch(String gtinId) {
+		if (gtinId == null)
+			return null;
+		Gtin result = null;
+		int foundCount = 0;
+		int gtinLength = gtinId.length();
+		if (gtinLength < lkMinimalSloppyGtinMatchLength || gtinLength > lkMaximumSloppyGtinMatchLength) {
+			return null;
+		}
+
+		Collection<Gtin> gtins = gtinCache.values();
+		for (Gtin gtin : gtins) {
+			String thisId = gtin.getDomainId();
+			if (thisId.length() > gtinLength) {
+				if (thisId.startsWith(gtinId) || thisId.endsWith(gtinId)) {
+					if (gtinIsAnOnboardingManufacture(gtin)) {
+						result = gtin;
+						foundCount++;
+					}
+				}
+			}
+		}
+		if (foundCount == 1)
+			return result;
+		else {
+			LOGGER.warn("GTIN_case_7. More than one match possibility for {}. Manual cleanup may be needed", gtinId);
+			return null;
+		}
+
 	}
 
 	// --------------------------------------------------------------------------
