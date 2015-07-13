@@ -346,11 +346,14 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		LOGGER.info("gtins {}", gtins);
 		Assert.assertEquals(6, gtins.size());
 		commitTransaction();
-		// The only way to continue is to delete the longer gtin, then edit the shorter one to have value. Try not to lose track of the position.
+		// The only way to continue is to get to one gtin per order line
 		// Note that during order import we have the full gtinCache available. But not during the server-side inventory transaction via gtin.
 		// We do not want to do a full query there in order to call findUniqueManufacturedSubstringMatch()
 		
 		// After this, normal pickscan applies. Full gtin is in the database. Full scan will match. No need for separate testing here.
+		
+		LOGGER.info ("4a: Demonstrate how user would fix. We have two extra gtin now. In the pairs, one has correct gtin location with an item, and one correct details for truncated gtin.");
+
 	}
 	
 	/**

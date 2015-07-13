@@ -28,7 +28,10 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.validation.ErrorCode;
+import com.codeshelf.validation.InputValidationException;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 
 // --------------------------------------------------------------------------
@@ -47,7 +50,7 @@ import com.google.common.collect.ImmutableList;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Gtin extends DomainObjectTreeABC<ItemMaster> {
 
-	private static final Logger	LOGGER			= LoggerFactory.getLogger(Gtin.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(Gtin.class);
 
 	public static class GtinMapDao extends GenericDaoABC<Gtin> implements ITypedDao<Gtin> {
 		public final Class<Gtin> getDaoClass() {
@@ -158,21 +161,85 @@ public class Gtin extends DomainObjectTreeABC<ItemMaster> {
 		}
 		// If the GTIN was not found, we might have the odd case of leading zeroes. If so, EDI processing (especially a file that took a trip through a spreadsheet
 		// may have stripped the leading zeroes. Still scans with the zeroes, bu the data base may have the gtin/upc without.
-		if (scannedID.charAt(0)== '0'){
+		if (scannedID.charAt(0) == '0') {
 			// we are in a leading zero situation. Strip. This regex does not strip "0" down to blank, but otherwise strips leading zeros
 			String strippedID = scannedID.replaceFirst("^0+(?!$)", "");
 			// search again
-			List<Gtin> gtin2s = Gtin.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("domainId", strippedID)));
+			List<Gtin> gtin2s = Gtin.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("domainId",
+				strippedID)));
 			for (Gtin gtin : gtin2s) {
 				if (gtin.getFacility().equals(facility)) {
-					LOGGER.warn("Found GTIN {} for value {}. Most likely data processing stripped leading zeros during order processing.",strippedID, scannedID);
+					LOGGER.warn("Found GTIN {} for value {}. Most likely data processing stripped leading zeros during order processing.",
+						strippedID,
+						scannedID);
 					return gtin;
 				}
 			}
 
 		}
-		
+
 		return null;
+	}
+
+	public boolean gtinIsAnOnboardingManufacture() {
+		// If user scanned an inventory for an unknown GTIN, then we make phony item (to track the inventory) and phony itemMaster
+		// because the item must have itemMaster. We give the GTIN ID. Aside from that, gtin and master domainID would never match.
+		ItemMaster master = getParent();
+		return getDomainId().equals(master.getDomainId());
+	}
+
+	/**
+	 * This might go better in UiUpdaterService. But the direct column edit in WebApp makes this compelling.
+	 * This edit is tricky. See OutboundOrdersWithGtinTest.java for the many business cases. We will keep it simple here.
+	 * Validate, comply if we can, throw if we cannot.
+	 */
+	public void setGtinUi(String inNewGtin) {
+		// "this" is the gtin the user edited and presumably wants to keep.
+		List<Gtin> gtins = Gtin.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("domainId", inNewGtin)));
+		if (gtins.isEmpty()) {
+			// No conflict. Go ahead and change it.
+			LOGGER.warn("User changing Gtin {} to {} for SKU {}.", getDomainId(), inNewGtin, getItemMasterId());
+			setDomainId(inNewGtin);
+			Gtin.staticGetDao().store(this);
+		} else {
+			boolean isOnboardingConversionCase = false;
+			Item existingItemLocation = null;
+
+			if (gtins.size() == 1) {
+				Gtin existingGtin = gtins.get(0);
+				if (existingGtin.gtinIsAnOnboardingManufacture()) {
+					// it probably has an item location.
+					ItemMaster existingMaster = existingGtin.getParent();
+					List<Item> existingItems = existingMaster.getItems();
+					if (existingItems.size() == 1) {
+						existingItemLocation = existingItems.get(0);
+						isOnboardingConversionCase = true;
+					}
+				}
+			}
+			if (isOnboardingConversionCase) {
+				// would be nice to automatically fix, like the order import does.
+				LOGGER.warn("User tried to change Gtin {} to {}. Need to delete {} and then reinventory {} to location {}",
+					getDomainId(),
+					inNewGtin,
+					inNewGtin,
+					getItemMasterId(),
+					existingItemLocation.getItemLocationName());
+			} else {
+				LOGGER.warn("User tried to change Gtin {} to {} for SKU {}, but that Gtin exists. Delete it first.",
+					getDomainId(),
+					inNewGtin,
+					getItemMasterId());
+			}
+			throw new InputValidationException(this, "Gtin/UPC", inNewGtin, ErrorCode.FIELD_REFERENCE_NOT_UNIQUE);
+		}
+	}
+
+	/**
+	 * Need getter defined for the UI field
+	*/
+	public String getGtinUi() {
+		return getDomainId();
 	}
 
 }
