@@ -31,7 +31,6 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 
 // --------------------------------------------------------------------------
@@ -192,9 +191,15 @@ public class Gtin extends DomainObjectTreeABC<ItemMaster> {
 	 * This might go better in UiUpdaterService. But the direct column edit in WebApp makes this compelling.
 	 * This edit is tricky. See OutboundOrdersWithGtinTest.java for the many business cases. We will keep it simple here.
 	 * Validate, comply if we can, throw if we cannot.
+	 * The validation is at least 8 chars long, and not a duplicate.
 	 */
 	public void setGtinUi(String inNewGtin) {
 		// "this" is the gtin the user edited and presumably wants to keep.
+		if (inNewGtin == null || inNewGtin.length() < 8) {
+			LOGGER.warn("Disallow user changing Gtin {} to {} for SKU {}.", getDomainId(), inNewGtin, getItemMasterId());
+			throw new InputValidationException(this, "Gtin/UPC", inNewGtin, ErrorCode.FIELD_GENERAL);
+		}
+
 		List<Gtin> gtins = Gtin.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("domainId", inNewGtin)));
 		if (gtins.isEmpty()) {
 			// No conflict. Go ahead and change it.
