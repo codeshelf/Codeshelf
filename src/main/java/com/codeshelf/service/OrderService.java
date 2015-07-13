@@ -129,7 +129,26 @@ public class OrderService implements IApiService {
 
 	private List<Map<String, Object>> toOrderView(List<OrderHeader> results) {
 		PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
-		String[] propertyNames = new String[]{    "persistentId","destinationId", "fullDomainId", "orderId", "description", "readableOrderDate", "readableDueDate", "status", "containerId", "shipperId", "customerId", "workSequence", "orderLocationAliasIds", "active", "orderType", "wallUi", "groupUi"};
+		String[] propertyNames = new String[]{
+				"persistentId",
+				"destinationId",
+				"fullDomainId",
+				"orderId",
+				"description",
+				"readableOrderDate",
+				"readableDueDate",
+				"status",
+				"containerId",
+				"shipperId",
+				"customerId",
+				"workSequence", 
+				"orderLocationAliasIds",
+				"active",
+				"orderType",
+				"wallUi",
+				"groupUi", 
+				"dueDate"};
+		
 		ArrayList<Map<String, Object>> viewResults = new ArrayList<Map<String, Object>>();
 		for (OrderHeader object : results) {
 			Map<String, Object> propertiesMap = new HashMap<>();
