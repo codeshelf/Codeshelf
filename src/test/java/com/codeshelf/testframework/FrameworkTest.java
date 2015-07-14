@@ -139,7 +139,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	protected static NetGuid						cheGuid2					= new NetGuid("0x00009992");
 	protected static String							cheId3						= "CHE3";
 	@Getter
-	protected static NetGuid						cheGuid3					= new NetGuid("0x00009993");
+	protected static NetGuid						cheGuid3					= new NetGuid("0x00009999");
 
 	// site controller services
 	private static CsClientEndpoint					staticClientEndpoint;

@@ -2003,7 +2003,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		UiUpdateService service = new UiUpdateService();
 		Facility facility = getFacility();
-		CodeshelfNetwork network = facility.createNetwork("WITEST");
+		CodeshelfNetwork network = this.getNetwork();
 		Che che = network.createChe("0x00000004", new NetGuid("0x00000004"));
 
 		//Get default mode in a facility without aisles

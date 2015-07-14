@@ -1204,18 +1204,26 @@ public class Facility extends Location {
 		CodeshelfNetwork network = facility.createNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 		
 		// Create a site controller & associated user
-		network.createSiteController(CodeshelfNetwork.DEFAULT_SITECON_SERIAL, "Default Area", false);
+		int siteconSerial = CodeshelfNetwork.DEFAULT_SITECON_SERIAL;
+		while(SiteController.staticGetDao().findByDomainId(null, Integer.toString(siteconSerial)) != null) {
+			// pick first available site controller serial number e.g. 5001
+			siteconSerial++;
+		}
+		network.createSiteController(siteconSerial, "Default Area", false);
 		
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();
 		
 		// Setup two dummy CHEs
-		for (int cheNum = 1; cheNum <= 2; cheNum++) {
-			String cheName = "CHE" + cheNum;
-			Che che = network.getChe(cheName);
-			if (che == null) {
-				che = network.createChe(cheName, new NetGuid("0x0000999" + cheNum));
-			}
+		int cheNum = 0;
+		for(int chesCreated=0;chesCreated < 2;chesCreated++) {
+			String cheName;
+			do {
+				cheNum++;
+				cheName="CHE" + cheNum;
+			} while(Che.staticGetDao().findByDomainId(null,cheName) != null);
+			@SuppressWarnings("unused")
+			Che che = network.createChe(cheName, new NetGuid(String.format("0x%08X",0x9990+cheNum)) );
 		}
 		
 		return facility;

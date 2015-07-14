@@ -14,6 +14,7 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -39,7 +40,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 
 @Entity
-@Table(name = "led_controller")
+@Table(name = "led_controller",uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"}),@UniqueConstraint(columnNames = {"device_guid"})})
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class LedController extends WirelessDeviceABC {
 
