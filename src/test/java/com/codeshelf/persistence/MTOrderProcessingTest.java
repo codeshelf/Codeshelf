@@ -112,7 +112,6 @@ public class MTOrderProcessingTest extends ServerTest {
 	
 	@Test
 	public void simultaneousTenantImports() throws Exception { 
-		setSkipFacilityDelete(true);
 		
 		// failed asserts in the accessor threads will cause this to throw execution exception		
 		createDefaultTenantsFacilities();

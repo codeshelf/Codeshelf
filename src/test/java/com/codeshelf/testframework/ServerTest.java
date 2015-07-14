@@ -36,38 +36,6 @@ import com.codeshelf.util.ThreadUtils;
 
 public abstract class ServerTest extends HibernateTest {
 	private final static Logger	LOGGER				= LoggerFactory.getLogger(ServerTest.class);
-	@Setter
-	private boolean				skipFacilityDelete	= false;
-
-	@After
-	public void deleteFacility() throws Exception {
-		if (!skipFacilityDelete) {
-			boolean stale = true;
-			int attempt = 0;
-			do {
-				try {
-					stale = false;
-					beginTransaction();
-					Facility facility = Facility.staticGetDao().reload(getFacility());
-					facility.delete();
-					commitTransaction();
-				} catch (StaleObjectStateException e) {
-					//A number of tests don't wait for all DB changes to propagate, resulting in Stale errors on Facility delete 
-					tenantPersistenceService.rollbackTransaction();
-					stale = true;
-					attempt++;
-					LOGGER.warn("Stale error encountered while deleting facility. Attempt" + attempt);
-					if (attempt > 3) {
-						throw e;
-					}
-					ThreadUtils.sleep(1000);
-				} catch (ConstraintViolationException e) {
-					SQLException se = e.getSQLException();
-					throw (se == null ? e : se);
-				}
-			} while (stale);
-		}
-	}
 
 	@Override
 	Type getFrameworkType() {
