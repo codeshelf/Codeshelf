@@ -2,16 +2,10 @@ package com.codeshelf.testframework;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import lombok.Setter;
-
-import org.hibernate.StaleObjectStateException;
-import org.hibernate.exception.ConstraintViolationException;
-import org.junit.After;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
