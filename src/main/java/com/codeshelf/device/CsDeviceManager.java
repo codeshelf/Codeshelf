@@ -439,9 +439,9 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	/* (non-Javadoc)
 	 * @see com.codeshelf.device.CsDeviceManager#inventoryScan(final UUID inCheId, final UUID inPersistentId, final String inLocationId, final String inGtin)
 	 */
-	public void inventoryUpdateScan(final UUID inPersistentId, final String inLocationId, final String inGtin) {
+	public void inventoryUpdateScan(final UUID inPersistentId, final String inLocationId, final String inGtin, final String skuWallName) {
 		LOGGER.debug("Inventory update Scan: Che={}; Loc={}; GTIN={};", inPersistentId, inLocationId, inGtin);
-		InventoryUpdateRequest req = new InventoryUpdateRequest(inPersistentId.toString(), inGtin, inLocationId);
+		InventoryUpdateRequest req = new InventoryUpdateRequest(inPersistentId.toString(), inGtin, inLocationId, skuWallName);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -821,12 +821,12 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	}
 
 	// Works the same as processGetWorkResponse? Good
-	public void processPutWallInstructionResponse(String networkGuid, List<WorkInstruction> workInstructions) {
+	public void processPutWallInstructionResponse(String networkGuid, List<WorkInstruction> workInstructions, String wallType) {
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			// Although not done yet, may be useful to return information such as WI already completed, or it shorted, or ....
 			LOGGER.info("processPutWallInstructionResponse calling cheDevice.assignWallPuts");
-			cheDevice.assignWallPuts(workInstructions); // will initially use assignWork override, but probably need to add parameters.			
+			cheDevice.assignWallPuts(workInstructions, wallType); // will initially use assignWork override, but probably need to add parameters.			
 		} else {
 			LOGGER.warn("Device not found in processPutWallInstructionResponse. CHE id={}", networkGuid);
 		}

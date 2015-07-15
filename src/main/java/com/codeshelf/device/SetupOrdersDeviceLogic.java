@@ -33,6 +33,7 @@ import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.util.CompareNullChecker;
@@ -70,12 +71,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Setter
 	private String								mPutWallName;
 
-	// knowing this allows better CHE feedback
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
 	private String								mLastPutWallItemScan;
-
+	
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
@@ -274,6 +274,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					sendDisplayCommand(GET_WORK_MSG, EMPTY_MSG);
 					break;
 
+				case SKU_WALL_SCAN_GTIN_LOCATION:
+					sendDisplayCommand(SCAN_SKU_LOCATION_MSG_1, getLastPutWallItemScan(), SCAN_SKU_LOCATION_MSG_2, EMPTY_MSG);
+					break;
+										
 				case NO_PUT_WORK:
 					// we would like to say "No work for item in wall2"
 					String itemID = getLastPutWallItemScan();
@@ -554,7 +558,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				priorState = getRememberEnteringWallOrInventoryState();
 				setState(priorState);
 				break;
-
+				
+			case SKU_WALL_SCAN_GTIN_LOCATION:
+				setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
+				break;
+				
 			case DO_PUT:
 			case SHORT_PUT:
 			case SHORT_PUT_CONFIRM:
@@ -928,7 +936,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			// This check is valid for batch order pick. Invalid for put wall put.			
 			CheStateEnum state = this.getCheStateEnum();
 			if (state != CheStateEnum.GET_PUT_INSTRUCTION && state != CheStateEnum.DO_PUT
-					&& state != CheStateEnum.SHORT_PUT_CONFIRM)
+					&& state != CheStateEnum.SHORT_PUT_CONFIRM && state != CheStateEnum.COMPUTE_WORK)
 				if (getPosconIndexOfWi(wi) == 0) {
 					LOGGER.error("{} not in container map. State is {}", wi.getContainerId(), state);
 					break;
@@ -1461,6 +1469,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case PUT_WALL_SCAN_WALL:
 				processPutWallScanWall(inScanPrefixStr, inContent);
+				break;
+				
+			case SKU_WALL_SCAN_GTIN_LOCATION:
+				processSkuWallNewLocationScan(inScanPrefixStr, inContent);
 				break;
 
 			case REMOTE:
@@ -2087,10 +2099,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Almost the same as assignWork(), but some state transitions differ
 	 */
 	@Override
-	public void assignWallPuts(final List<WorkInstruction> inWorkItemList) {
-		notifyPutWallResponse(inWorkItemList);
+	public void assignWallPuts(final List<WorkInstruction> inWorkItemList, String wallType) {
+		notifyPutWallResponse(inWorkItemList, wallType);
 		if (inWorkItemList == null || inWorkItemList.size() == 0) {
-			setState(CheStateEnum.NO_PUT_WORK);
+			if (Location.PUTWALL_USAGE.equals(wallType)){
+				setState(CheStateEnum.NO_PUT_WORK);
+			} else if (Location.SKUWALL_USAGE.equals(wallType)){
+				setState(CheStateEnum.SKU_WALL_SCAN_GTIN_LOCATION);
+			}
 		} else {
 			mActivePickWiList.clear();
 			mAllPicksWiList.clear();
@@ -2584,5 +2600,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		}
 	}
-
+	
+	protected void processSkuWallNewLocationScan(String inScanPrefixStr, String inScanStr) {
+		if (TAPE_PREFIX.equals(inScanPrefixStr)) {
+			inScanStr = TAPE_PREFIX + inScanStr;
+		}
+		mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, mLastPutWallItemScan, mPutWallName);
+		setState(CheStateEnum.COMPUTE_WORK);
+	}
 }

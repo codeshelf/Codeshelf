@@ -10,12 +10,16 @@ public class InventoryUpdateRequest extends DeviceRequestABC {
 	@Getter
 	String location;
 	
+	@Getter
+	String skuWallName;
+	
 	public InventoryUpdateRequest() {
 	}
 	
-	public InventoryUpdateRequest(String cheId, String inGtin, String inLocation) {
+	public InventoryUpdateRequest(String cheId, String inGtin, String inLocation, String skuWallName) {
 		this.gtin = inGtin;
 		this.location = inLocation;
+		this.skuWallName = skuWallName;
 		setDeviceId(cheId);
 	}
 }

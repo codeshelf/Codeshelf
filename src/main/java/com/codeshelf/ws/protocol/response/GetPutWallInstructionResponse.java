@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -17,6 +18,9 @@ public class GetPutWallInstructionResponse extends DeviceResponseABC {
 
 	@Getter
 	private List<WorkInstruction>	workInstructions;
+	
+	@Getter @Setter
+	private String wallType;
 
 	public void setWorkInstructions(List<WorkInstruction> wis) {
 		if (wis == null) {

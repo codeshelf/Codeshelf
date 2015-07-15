@@ -235,7 +235,8 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		} else if (request instanceof InventoryUpdateRequest) {
 			command = new InventoryUpdateCommand(csSession,
 				(InventoryUpdateRequest) request,
-				serviceFactory.getServiceInstance(InventoryService.class));
+				serviceFactory.getServiceInstance(InventoryService.class),
+				serviceFactory.getServiceInstance(WorkService.class));
 			inventoryUpdateRequestCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof InventoryLightItemRequest) {

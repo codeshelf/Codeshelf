@@ -109,6 +109,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					NO_WORK_FOR								= cheLine("NO WORK FOR");
 	protected static final String					SCAN_ITEM_OR_CLEAR						= cheLine("SCAN ITEM OR CLEAR");
 	
+	//For Sku wall
+	protected static final String					SCAN_SKU_LOCATION_MSG_1					= cheLine("SCAN LOCATION FOR");
+	protected static final String					SCAN_SKU_LOCATION_MSG_2					= cheLine("OR SCAN CLEAR");
+	
+	//To repeat: !!!DO NOT CREATE LINES LONGER THAN 20 CHARACTERS!!! using cheLine()
+	//Causes untraceable error during Site initialization
+	
 	//For Poscon Busy
 	protected static final String					POSCON_BUSY_LINE_1						= "Poscon for %s busy";
 	protected static final String					POSCON_BUSY_LINE_3						= "Scan YES after they come";
@@ -191,7 +198,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Getter
 	@Setter
 	private String									lastPutWallOrderScan;
-
+	
 	// Fields for REMOTE linked CHEs
 	@Accessors(prefix = "m")
 	@Getter
@@ -222,7 +229,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			if (lastScannedGTIN != null) {
 				// Updating location of an item
 				notifyScanInventoryUpdate(inScanStr, lastScannedGTIN);
-				mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, lastScannedGTIN);
+				mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, lastScannedGTIN, null);
 			} else {
 				// just a location ID scan. light it.
 				mDeviceManager.inventoryLightLocationScan(getPersistentId(), inScanStr, isTape);
@@ -236,7 +243,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				// Updating location of an item
 				// Let's pass with the tape prefix to the server. Otherwise, it has to query one way, and then again for tape
 				notifyScanInventoryUpdate(tapeScan, lastScannedGTIN);
-				mDeviceManager.inventoryUpdateScan(this.getPersistentId(), tapeScan, lastScannedGTIN);
+				mDeviceManager.inventoryUpdateScan(this.getPersistentId(), tapeScan, lastScannedGTIN, null);
 			} else {
 				// just a location ID scan. light it. Also pass the % first.
 				mDeviceManager.inventoryLightLocationScan(getPersistentId(), tapeScan, isTape);
@@ -253,7 +260,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 		setState(CheStateEnum.SCAN_GTIN);
 	}
-
+	
 	protected enum ScanNeededToVerifyPick {
 		NO_SCAN_TO_VERIFY("disabled"),
 		UPC_SCAN_TO_VERIFY("UPC"),
@@ -1594,7 +1601,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.error("Inappropriate call to processStateSetup()");
 	}
 
-	public void assignWallPuts(final List<WorkInstruction> inWorkItemList) {
+	public void assignWallPuts(final List<WorkInstruction> inWorkItemList, String wallType) {
 		LOGGER.error("Inappropriate call to assignWallPuts()");
 	}
 

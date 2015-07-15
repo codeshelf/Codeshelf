@@ -331,7 +331,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 
 	}
 
-	protected void notifyPutWallResponse(final List<WorkInstruction> inWorkItemList) {
+	protected void notifyPutWallResponse(final List<WorkInstruction> inWorkItemList, String wallType) {
 		int listsize = 0;
 		if (inWorkItemList != null)
 			listsize = inWorkItemList.size();
@@ -339,7 +339,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		try {
 			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
 			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Plans_Response");
-			LOGGER.info("{} work instructions in put wall response", listsize);
+			LOGGER.info("{} work instructions in " + wallType + " response", listsize);
 		} finally {
 			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
 			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);

@@ -554,7 +554,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 		if (inCsvBean.getOrderDate() != null) {
 			try {
-				Date date = dateTimeParser.parse(inCsvBean.getDueDate());
+				Date date = dateTimeParser.parse(inCsvBean.getOrderDate());
 				// date may be null if string was blank
 				if (date != null)
 					result.setOrderDate(new Timestamp(date.getTime()));

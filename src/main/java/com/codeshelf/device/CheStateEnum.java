@@ -50,6 +50,9 @@ public enum CheStateEnum {
 	SHORT_PUT(CheStateNum.SHORT_PUT, "SHORT_PUT"),
 	SHORT_PUT_CONFIRM(CheStateNum.SHORT_PUT_CONFIRM, "SHORT_PUT_CONFIRM"),
 
+	//states used for sku/return wall DEV-956
+	SKU_WALL_SCAN_GTIN_LOCATION(CheStateNum.SKU_WALL_SCAN_GTIN_LOCATION, "SKU_WALL_SCAN_GTIN_LOCATION"),
+	
 	// state for Che setup persistence
 	SETUP_SUMMARY(CheStateNum.SETUP_SUMMARY, "SETUP_SUMMARY"),
 
@@ -150,13 +153,12 @@ public enum CheStateEnum {
 		static final byte	VERIFYING_BADGE				= 1;
 		static final byte	COMPUTE_WORK				= 2;
 		static final byte	GET_WORK					= 3;
-		// available. used to be location_select		= 4;
+		static final byte	PUT_WALL_POSCON_BUSY		= 4;	//Added June 30th, 2015
 		static final byte	CONTAINER_SELECT			= 5;
 		static final byte	CONTAINER_POSITION			= 6;
 		static final byte	DO_PICK						= 7;
 		static final byte	SHORT_PICK					= 8;
-		// available, used to be PICK_COMPLETE			= 9;
-		// available, used to be PICK_COMPLETE_CURR_PATH= 10;	//Added Apr 8, 2015
+		static final byte	SKU_WALL_SCAN_GTIN_LOCATION = 9;	//Added July 13th
 		// available, used to be NO WORK				= 11;
 		// available			= 12;
 		static final byte	SHORT_PICK_CONFIRM			= 13;	//Added Oct. 2014
@@ -182,7 +184,6 @@ public enum CheStateEnum {
 		static final byte	PUT_WALL_SCAN_ORDER			= 24;
 		static final byte	PUT_WALL_SCAN_LOCATION		= 25;
 		static final byte	PUT_WALL_SCAN_ITEM			= 26;
-		static final byte	PUT_WALL_POSCON_BUSY		= 4;	//Added June 30th, 2015
 		static final byte	DO_PUT						= 27;
 		static final byte	PUT_WALL_SCAN_WALL			= 29;
 		static final byte	GET_PUT_INSTRUCTION			= 30;

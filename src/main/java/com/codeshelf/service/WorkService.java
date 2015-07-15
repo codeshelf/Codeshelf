@@ -835,6 +835,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		final String itemOrUpc,
 		final String putWallName) {
 		GetPutWallInstructionResponse response = new GetPutWallInstructionResponse();
+		response.setStatus(ResponseStatus.Success);
 		if (inChe == null) {
 			throw new MethodArgumentException(0, "Che missing", ErrorCode.FIELD_REQUIRED);
 		}
@@ -851,7 +852,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		Location putWallLoc = facility.findSubLocationById(putWallName);
 		if (putWallLoc == null || !putWallLoc.isWallLocation()) {
 			LOGGER.warn("Location {} not resolved or not a put wall", putWallName);
-			response.setStatus(ResponseStatus.Fail);
 			return response;			
 		}
 		
@@ -863,7 +863,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			return response;
 		} else {
 			LOGGER.warn("Location {} is a wall, but neither a Put wall, nor a Sku wall", putWallName);
-			response.setStatus(ResponseStatus.Fail);
 			return response;						
 		}
 	}
@@ -873,6 +872,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		final String itemOrUpc,
 		final Location skuWallLoc){
 		GetPutWallInstructionResponse response = new GetPutWallInstructionResponse();
+		response.setWallType(Location.SKUWALL_USAGE);
 		Gtin gtin = Gtin.getGtinForFacility(facility, itemOrUpc);
 		if (gtin == null) {
 			ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, itemOrUpc);
@@ -881,14 +881,16 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			} else {
 				LOGGER.warn("Found item id, but require Gtin for Sku wall {}", itemOrUpc);
 			}
-			response.setStatus(ResponseStatus.Fail);
 			return response;
 		}
 
 		Item item = findItemInSkuWall(skuWallLoc, gtin.getParent(), gtin.getUomMaster());
 		if (item == null) {
-			LOGGER.warn("Did not find item for Gtin {} Found item id, but require Gtin for Sku wall {}", itemOrUpc);
-			response.setStatus(ResponseStatus.Fail);
+			LOGGER.info("Did not find item for Gtin {} at {}. Checking other Sku walls", itemOrUpc, skuWallLoc.getNominalLocationId());
+			item = findItemInAllSkuWalls(facility, gtin.getParent(), gtin.getUomMaster());
+		}
+		if (item == null) {
+			LOGGER.warn("Did not find item for Gtin {}", itemOrUpc);
 			return response;
 		}
 		
@@ -923,6 +925,21 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		return null;
 	}
 	
+	private Item findItemInAllSkuWalls(Facility facility, ItemMaster itemMaster, UomMaster uomMaster){
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("usage", Location.SKUWALL_USAGE));
+		List<Location> skuWalls = Location.staticGetLocationDao().findByFilter(filterParams);
+		for (Location skuWall : skuWalls){
+			if (skuWall.getFacility().equals(facility)){
+				Item item = findItemInSkuWall(skuWall, itemMaster, uomMaster);
+				if (item != null) {
+					return item;
+				}
+			}
+		}
+		return null;
+	}
+	
 	private GetPutWallInstructionResponse getOrderWallInstructionsForItem(final Facility facility,
 		final Che che,
 		final String itemOrUpc,
@@ -935,6 +952,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		// 5) make the work instruction to the orderlocation location. (There may be several work instructions for the request.)
 		// 6) sort via our usual sequencer.
 		GetPutWallInstructionResponse response = new GetPutWallInstructionResponse();
+		response.setWallType(Location.PUTWALL_USAGE);
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		ItemMaster master = getItemMasterFromScanValue(facility, itemOrUpc);
 		if (master == null) {

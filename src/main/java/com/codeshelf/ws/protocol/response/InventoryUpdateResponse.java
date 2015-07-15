@@ -3,7 +3,7 @@ package com.codeshelf.ws.protocol.response;
 import lombok.Getter;
 import lombok.Setter;
 
-public class InventoryUpdateResponse extends ResponseABC {
+public class InventoryUpdateResponse extends DeviceResponseABC {
 
 	@Getter
 	@Setter
