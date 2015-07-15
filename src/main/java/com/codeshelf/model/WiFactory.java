@@ -397,8 +397,7 @@ public class WiFactory {
 		ItemMaster itemMaster = item.getParent();
 		Location location = item.getStoredLocation();
 		String locationId = location.getFullDomainId();
-		LocationAlias alias = location.getPrimaryAlias();
-		String pickInstruction = alias == null? locationId : alias.getAlias();
+		String pickInstruction = location.getBestUsableLocationName();
 		
 		WorkInstruction wi = new WorkInstruction();
 		wi.setCreated(new Timestamp(System.currentTimeMillis()));
@@ -422,7 +421,6 @@ public class WiFactory {
 		}
 		wi.setLocation(location);
 		wi.setLocationId(locationId);
-		wi.doSetPickInstruction(pickInstruction);
 		wi.doSetPickInstruction(pickInstruction);
 		
 		setPosConInstructions(wi, item.getStoredLocation());

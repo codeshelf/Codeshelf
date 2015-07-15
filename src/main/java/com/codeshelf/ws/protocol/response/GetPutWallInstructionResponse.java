@@ -21,6 +21,10 @@ public class GetPutWallInstructionResponse extends DeviceResponseABC {
 	
 	@Getter @Setter
 	private String wallType;
+	
+	@Getter @Setter
+	private String alternateWallName;
+
 
 	public void setWorkInstructions(List<WorkInstruction> wis) {
 		if (wis == null) {

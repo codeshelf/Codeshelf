@@ -71,7 +71,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					EMPTY_MSG								= cheLine("");
 	protected static final String					INVALID_SCAN_MSG						= cheLine("INVALID");
 	protected static final String					SCAN_USERID_MSG							= cheLine("SCAN BADGE");
-	protected static final String					SCAN_LOCATION_MSG						= cheLine("SCAN START LOCATION");
+	protected static final String					SCAN_START_LOCATION_MSG						= cheLine("SCAN START LOCATION");
 	protected static final String					OR_START_WORK_MSG						= cheLine("OR START WORK");
 	protected static final String					SELECT_POSITION_MSG						= cheLine("SELECT POSITION");
 	protected static final String					SHORT_PICK_CONFIRM_MSG					= cheLine("CONFIRM SHORT");
@@ -110,8 +110,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					SCAN_ITEM_OR_CLEAR						= cheLine("SCAN ITEM OR CLEAR");
 	
 	//For Sku wall
-	protected static final String					SCAN_SKU_LOCATION_MSG_1					= cheLine("SCAN LOCATION FOR");
-	protected static final String					SCAN_SKU_LOCATION_MSG_2					= cheLine("OR SCAN CLEAR");
+	protected static final String					SCAN_LOCATION_MSG						= cheLine("SCAN LOCATION");
+	protected static final String					CLEAR_TO_CANCEL_MSG						= cheLine("CLEAR TO CANCEL");
 	
 	//To repeat: !!!DO NOT CREATE LINES LONGER THAN 20 CHARACTERS!!! using cheLine()
 	//Causes untraceable error during Site initialization
@@ -1601,7 +1601,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.error("Inappropriate call to processStateSetup()");
 	}
 
-	public void assignWallPuts(final List<WorkInstruction> inWorkItemList, String wallType) {
+	public void assignWallPuts(final List<WorkInstruction> inWorkItemList, String wallType, String alternateWallName) {
 		LOGGER.error("Inappropriate call to assignWallPuts()");
 	}
 

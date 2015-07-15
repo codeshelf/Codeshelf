@@ -884,10 +884,11 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			return response;
 		}
 
-		Item item = findItemInSkuWall(skuWallLoc, gtin.getParent(), gtin.getUomMaster());
+		Item item = skuWallLoc.findItemInLocationAndChildren(gtin.getParent(), gtin.getUomMaster());
 		if (item == null) {
 			LOGGER.info("Did not find item for Gtin {} at {}. Checking other Sku walls", itemOrUpc, skuWallLoc.getNominalLocationId());
-			item = findItemInAllSkuWalls(facility, gtin.getParent(), gtin.getUomMaster());
+			String alternateWallName = findSkuWallWithItem(facility, gtin.getParent(), gtin.getUomMaster());
+			response.setAlternateWallName(alternateWallName);
 		}
 		if (item == null) {
 			LOGGER.warn("Did not find item for Gtin {}", itemOrUpc);
@@ -905,35 +906,16 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		response.setWorkInstructions(wiResultList);
 		return response;
 	}
-	
-	private void getStoredItemsInLocationAndChildren(Location loc, List<Item> itemAccumulator) {
-		itemAccumulator.addAll(loc.getStoredItems().values());
-		List<Location> children = loc.getChildren();
-		for (Location child : children){
-			getStoredItemsInLocationAndChildren(child, itemAccumulator);
-		}
-	}
-	
-	private Item findItemInSkuWall(Location skuWallLoc, ItemMaster itemMaster, UomMaster uomMaster){
-		List<Item> itemsInWall = Lists.newArrayList();
-		getStoredItemsInLocationAndChildren(skuWallLoc, itemsInWall);
-		for (Item storedItem : itemsInWall) {
-			if(storedItem.getParent().equals(itemMaster) && storedItem.getUomMaster().equals(uomMaster)){
-				return storedItem;
-			}
-		}
-		return null;
-	}
-	
-	private Item findItemInAllSkuWalls(Facility facility, ItemMaster itemMaster, UomMaster uomMaster){
+		
+	private String findSkuWallWithItem(Facility facility, ItemMaster itemMaster, UomMaster uomMaster){
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("usage", Location.SKUWALL_USAGE));
 		List<Location> skuWalls = Location.staticGetLocationDao().findByFilter(filterParams);
 		for (Location skuWall : skuWalls){
 			if (skuWall.getFacility().equals(facility)){
-				Item item = findItemInSkuWall(skuWall, itemMaster, uomMaster);
+				Item item = skuWall.findItemInLocationAndChildren(itemMaster, uomMaster);
 				if (item != null) {
-					return item;
+					return skuWall.getBestUsableLocationName();
 				}
 			}
 		}

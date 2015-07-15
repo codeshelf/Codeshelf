@@ -834,7 +834,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 		return result;
 	}
-
+	
 	public void addStoredItem(Item inItem) {
 		Location previousLocation = inItem.getStoredLocation();
 
@@ -1454,6 +1454,16 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	public boolean isImmediateWallLocation() {
 		return PUTWALL_USAGE.equalsIgnoreCase(usage) || SKUWALL_USAGE.equalsIgnoreCase(usage);
 	}
+	
+	public Location getWall(String wallType) {
+		if (!isWallLocation(wallType)){
+			return null;
+		}
+		if (isImmediateWallLocation()){
+			return this;
+		}
+		return getParent().getWall(wallType);
+	}
 
 	public void toggleWallLocation() {
 		//off -> putwall -> skuwall -> off
@@ -1476,6 +1486,39 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return returnString;
 	}
 
+	public boolean hasDescendant(Location location) {
+		if (this.equals(location)) {
+			return true;
+		}
+		List<Location> children = getChildren();
+		for (Location child : children) {
+			if (child.hasDescendant(location)){
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private void getStoredItemsInLocationAndChildren(List<Item> itemAccumulator) {
+		itemAccumulator.addAll(getStoredItems().values());
+		List<Location> children = getChildren();
+		for (Location child : children){
+			child.getStoredItemsInLocationAndChildren(itemAccumulator);
+		}
+	}
+	
+	public Item findItemInLocationAndChildren(ItemMaster itemMaster, UomMaster uomMaster){
+		List<Item> itemsInWall = Lists.newArrayList();
+		getStoredItemsInLocationAndChildren(itemsInWall);
+		for (Item storedItem : itemsInWall) {
+			if(storedItem.getParent().equals(itemMaster) && storedItem.getUomMaster().equals(uomMaster)){
+				return storedItem;
+			}
+		}
+		return null;
+	}
+
+	
 	/**
 	 * We want to provide the most useful information possible to the user. That is the name of the put wall ancestor for this location.
 	 * However, it is likely that the aisle is defined, but the users are using the bay names. So this is not really knowable.

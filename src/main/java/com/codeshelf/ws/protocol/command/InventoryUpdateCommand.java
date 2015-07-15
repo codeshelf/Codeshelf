@@ -39,10 +39,10 @@ public class InventoryUpdateCommand extends CommandABC {
 		UUID cheUUID = UUID.fromString(cheId);
 		if (cheUUID != null ) {
 			// At this point, the getLocation() string may be a location name (usually alias), or if a tape Id, it still has the % prefix
-			response = inventoryService.moveOrCreateInventory(request.getGtin(), request.getLocation(), cheUUID);
+			String skuWallName = request.getSkuWallName();
+			response = inventoryService.moveOrCreateInventory(request.getGtin(), request.getLocation(), cheUUID, skuWallName);
 			response.setNetworkGuid(cheId);
 			
-			String skuWallName = request.getSkuWallName();
 			if (skuWallName != null) {
 				ComputePutWallInstructionRequest putWallInstructionRequest = new ComputePutWallInstructionRequest(cheId, request.getGtin(), skuWallName);
 				ComputePutWallInstructionCommand putWallInstructionCommand = new ComputePutWallInstructionCommand(wsConnection, putWallInstructionRequest, workService);

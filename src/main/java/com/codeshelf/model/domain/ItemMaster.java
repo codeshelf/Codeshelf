@@ -403,13 +403,13 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		boolean thisItemEach = UomNormalizer.isEach(thisUomId);
 		Facility facility = inLocation.getFacility();
 		boolean eachMult = PropertyService.getInstance().getBooleanPropertyFromConfig(facility, DomainObjectProperty.EACHMULT);
+		String domainId = Item.makeDomainId(this.getItemId(), inLocation, thisUomId);
 		if (thisItemEach && !eachMult) {
 			for (Item item : getItems()) {
 				if (UomNormalizer.isEach(item.getUomMasterId()))
 					return item;
 			}
 		} else {
-			String domainId = Item.makeDomainId(this.getItemId(), inLocation, thisUomId);
 			for (Item item : getItems()) {
 				// if items follow the normal pattern, equals on domainId would be sufficient				
 				if (domainId.equals(item.getDomainId()))
@@ -420,6 +420,14 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 						return item;
 					}
 				}
+			}
+		}
+		//Make sure that there are no identical items in the same Sku wall
+		if (inLocation.isSkuWallLocation()){
+			Location wall = inLocation.getWall(Location.SKUWALL_USAGE);
+			Item itemInWall = wall.findItemInLocationAndChildren(this, inUom);
+			if (itemInWall != null){
+				return itemInWall;
 			}
 		}
 		return null;

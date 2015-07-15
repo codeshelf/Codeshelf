@@ -72,7 +72,7 @@ public class InventoryServiceTest extends ServerTest {
 		che1.setColor(ColorEnum.GREEN);
 		
 		// Try moving an existing item
-		inventoryService.moveOrCreateInventory("101", "D403", che1.getPersistentId());
+		inventoryService.moveOrCreateInventory("101", "D403", che1.getPersistentId(), null);
 		Location locationD401 = facility.findSubLocationById("D403");
 		Assert.assertNotNull(locationD401);
 		Location locationD502 = facility.findSubLocationById("D502");
@@ -94,7 +94,7 @@ public class InventoryServiceTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = setupInventoryData(facilityForVirtualSlotting, csvString);
 		// Try creating a new item
-		inventoryService.moveOrCreateInventory("201", "D100", che1.getPersistentId());
+		inventoryService.moveOrCreateInventory("201", "D100", che1.getPersistentId(), null);
 		
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();

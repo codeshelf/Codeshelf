@@ -85,13 +85,11 @@ public class CheProcessSkuWall extends ServerTest{
 		picker.login("Worker1");
 		picker.scanCommand("INVENTORY");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
-		//Inventory items onto wall A1.B1
+		//Inventory items onto selected wall A1.B1
 		loadInventory(picker, "Item1", "%000000010050");
 		loadInventory(picker, "Item2", "%000000010350");
 		loadInventory(picker, "Item3", "%000000010650");
 		loadInventory(picker, "Item4", "%000000010950");
-		//Inventory items onto wall A1.B2
-		loadInventory(picker, "Item5", "%000000020050");
 		picker.logout();
 		ThreadUtils.sleep(600);
 
@@ -100,6 +98,7 @@ public class CheProcessSkuWall extends ServerTest{
 		verifyLocation(facility, "Item1", "Slot1111");
 		verifyLocation(facility, "Item2", "Slot1112");
 		verifyLocation(facility, "Item3", "Slot1113");
+		verifyLocation(facility, "Item4", "Slot1114");
 		verifyLocation(facility, "Item4", "Slot1114");
 
 		this.getTenantPersistenceService().commitTransaction();
@@ -148,10 +147,7 @@ public class CheProcessSkuWall extends ServerTest{
 		Assert.assertEquals(expectedDisplay, picker.getLastCheDisplay());
 		//Verify PosCon display (min = 1, qty = 1, max = 99, blinking, bright)
 		posman.waitForControllerDisplayValue((byte)1, (byte)1, WAIT_TIME);
-		Assert.assertEquals(1, (int)posman.getLastSentPositionControllerMinQty((byte)1));
-		Assert.assertEquals(99, (int)posman.getLastSentPositionControllerMaxQty((byte)1));
-		Assert.assertEquals(PosControllerInstr.BLINK_FREQ, posman.getLastSentPositionControllerDisplayFreq((byte)1));
-		Assert.assertEquals(PosControllerInstr.BRIGHT_DUTYCYCLE, posman.getLastSentPositionControllerDisplayDutyCycle((byte)1));
+		verifySkuPoscon(1);
 		//Press PosCon button, place item into wall
 		posman.buttonPress(1, 5);
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
@@ -159,37 +155,71 @@ public class CheProcessSkuWall extends ServerTest{
 	}
 	
 	@Test
-	public final void putItemExistingOtherWallLocation() throws IOException{
+	public final void itemOnlyAnotherWallOverride() throws IOException{
 		picker.login("Worker1");
 		picker.scanCommand("PUT_WALL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
-		picker.scanLocation("Wall_1_1");
+		picker.scanLocation("Wall_1_2");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 
-		//Do put onto the selected wall
-		putItemOntoSkuWall(picker, posman, "Item1", "Item1", "Slot1111");
-
-		//Do put onto another wall
-		picker.scanSomething("Item5");
-		picker.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
-		String expectedDisplay = "Tier121\nItem5\nQTY 1\n\n";
+		LOGGER.info("1: Select an item that exists in another wall");
+		picker.scanSomething("Item3");
+		picker.waitForCheState(CheStateEnum.SKU_WALL_ALTERNATE_WALL_AVAILABLE, WAIT_TIME);
+		String expectedDisplay = "Scan YES for Aisle1\nOr scan in Wall_1_2\nTo move Item3\nCLEAR TO CANCEL\n";
 		Assert.assertEquals(expectedDisplay, picker.getLastCheDisplay());
+		
+		LOGGER.info("2: Scan onto the new wall (Wall_1_2)");
+		picker.scanSomething("%000000020050");
+		picker.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
 
 		posman.waitForControllerDisplayValue((byte)2, (byte)1, WAIT_TIME);
-		//Make sure Wall_1_1 PosCon is blank
+		expectedDisplay = "Tier121\nItem3\nQTY 1\n\n";
+		Assert.assertEquals(expectedDisplay, picker.getLastCheDisplay());
+		LOGGER.info("3.a: Make sure Wall_1_1 PosCon is blank");
 		Assert.assertNull(posman.getLastSentPositionControllerMinQty((byte)1));
 		Assert.assertNull(posman.getLastSentPositionControllerMaxQty((byte)1));
-		//Make sure Wall_1_2 PosCon is lit instead
-		Assert.assertEquals(1, (int)posman.getLastSentPositionControllerMinQty((byte)2));
-		Assert.assertEquals(99, (int)posman.getLastSentPositionControllerMaxQty((byte)2));
-		Assert.assertEquals(PosControllerInstr.BLINK_FREQ, posman.getLastSentPositionControllerDisplayFreq((byte)2));
-		Assert.assertEquals(PosControllerInstr.BRIGHT_DUTYCYCLE, posman.getLastSentPositionControllerDisplayDutyCycle((byte)2));
+		LOGGER.info("3.b: Make sure Wall_1_2 PosCon is lit");
+		verifySkuPoscon(2);
 		
-		//Press PosCon button, place item into wall
+		LOGGER.info("4: Press PosCon button, place item into wall");
 		posman.buttonPress(2, 5);
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		posman.waitForControllerDisplayValue((byte)2, null, WAIT_TIME);
 	}
+	
+	@Test
+	public final void itemOnlyAnotherWallSwitch() throws IOException{
+		picker.login("Worker1");
+		picker.scanCommand("PUT_WALL");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
+		picker.scanLocation("Wall_1_2");
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+
+		LOGGER.info("1: Select an item that exists in another wall");
+		picker.scanSomething("Item3");
+		picker.waitForCheState(CheStateEnum.SKU_WALL_ALTERNATE_WALL_AVAILABLE, WAIT_TIME);
+		String expectedDisplay = "Scan YES for Aisle1\nOr scan in Wall_1_2\nTo move Item3\nCLEAR TO CANCEL\n";
+		Assert.assertEquals(expectedDisplay, picker.getLastCheDisplay());
+		
+		LOGGER.info("2: Switch over to the wall with this item (Wall_1_1)");
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
+		
+		posman.waitForControllerDisplayValue((byte)1, (byte)1, WAIT_TIME);
+		expectedDisplay = "Slot1113\nItem3\nQTY 1\n\n";
+		Assert.assertEquals(expectedDisplay, picker.getLastCheDisplay());
+		LOGGER.info("3.a: Make sure Wall_1_2 PosCon is blank");
+		Assert.assertNull(posman.getLastSentPositionControllerMinQty((byte)2));
+		Assert.assertNull(posman.getLastSentPositionControllerMaxQty((byte)2));
+		LOGGER.info("3.b: Make sure Wall_1_1 PosCon is lit");
+		verifySkuPoscon(1);
+		
+		LOGGER.info("4: Press PosCon button, place item into wall");
+		posman.buttonPress(1, 5);
+		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+		posman.waitForControllerDisplayValue((byte)2, null, WAIT_TIME);
+	}
+
 	
 	@Test
 	public final void putItemNewLocation() throws IOException{
@@ -201,23 +231,24 @@ public class CheProcessSkuWall extends ServerTest{
 		
 		picker.scanSomething("New Item");
 		picker.waitForCheState(CheStateEnum.SKU_WALL_SCAN_GTIN_LOCATION, WAIT_TIME);
-		picker.scanSomething("%000000020050");
+		picker.scanSomething("%000000010050");
 		picker.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
-		String expectedDisplay = "Tier121\nNew Item\nQTY 1\n\n";
+		String expectedDisplay = "Slot1111\nNew Item\nQTY 1\n\n";
 		Assert.assertEquals(expectedDisplay, picker.getLastCheDisplay());
-		//Make sure Wall_1_2 PosCon is lit
-		Assert.assertEquals(1, (int)posman.getLastSentPositionControllerMinQty((byte)2));
-		Assert.assertEquals(99, (int)posman.getLastSentPositionControllerMaxQty((byte)2));
-		Assert.assertEquals(PosControllerInstr.BLINK_FREQ, posman.getLastSentPositionControllerDisplayFreq((byte)2));
-		Assert.assertEquals(PosControllerInstr.BRIGHT_DUTYCYCLE, posman.getLastSentPositionControllerDisplayDutyCycle((byte)2));
+		//Make sure Wall_1_1 PosCon is lit
+		verifySkuPoscon(1);
 		
 		//Press PosCon button, place item into wall
-		posman.buttonPress(2, 5);
+		posman.buttonPress(1, 5);
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
-		posman.waitForControllerDisplayValue((byte)2, null, WAIT_TIME);
-
-
-
+		posman.waitForControllerDisplayValue((byte)1, null, WAIT_TIME);
 	}
-
+	
+	private void verifySkuPoscon(int position){
+		byte pos = (byte)position;
+		Assert.assertEquals(1, (int)posman.getLastSentPositionControllerMinQty(pos));
+		Assert.assertEquals(99, (int)posman.getLastSentPositionControllerMaxQty(pos));
+		Assert.assertEquals(PosControllerInstr.BLINK_FREQ, posman.getLastSentPositionControllerDisplayFreq(pos));
+		Assert.assertEquals(PosControllerInstr.BRIGHT_DUTYCYCLE, posman.getLastSentPositionControllerDisplayDutyCycle(pos));
+	}
 }

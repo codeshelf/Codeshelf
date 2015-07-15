@@ -70,6 +70,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Getter
 	@Setter
 	private String								mPutWallName;
+	
+	// When putting items into Sku wall, save here if another wall holds the required item
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private String								mAlternatePutWall;
 
 	@Accessors(prefix = "m")
 	@Getter
@@ -139,6 +145,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	protected void setState(final CheStateEnum inCheState) {
 		int priorCount = getSetStateStackCount();
 		try {
+			String line1, line2, line3;
 			// This is tricky. setState() may have side effects that call setState. So even as the internal setState is done, the first one may not be done.
 			// Therefore, a counter instead of a boolean.
 			setSetStateStackCount(priorCount + 1);
@@ -275,7 +282,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 
 				case SKU_WALL_SCAN_GTIN_LOCATION:
-					sendDisplayCommand(SCAN_SKU_LOCATION_MSG_1, getLastPutWallItemScan(), SCAN_SKU_LOCATION_MSG_2, EMPTY_MSG);
+					line2 = "For " + mLastPutWallItemScan;
+					line3 = "Into wall: " + mPutWallName;
+					sendDisplayCommand(SCAN_LOCATION_MSG, line2, line3, CLEAR_TO_CANCEL_MSG);
+					break;
+					
+				case SKU_WALL_ALTERNATE_WALL_AVAILABLE:
+					line1 = "Scan YES for " + mAlternatePutWall;
+					line2 = "Or scan in " + mPutWallName;
+					line3 = "To move " + mLastPutWallItemScan;
+					sendDisplayCommand(line1, line2, line3, CLEAR_TO_CANCEL_MSG);
 					break;
 										
 				case NO_PUT_WORK:
@@ -632,6 +648,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					mIgnoreExistingHoldersOnThesePoscons = nextWi.getPosConCmdStream();
 				}
 				processPutWallItemScan("", getLastPutWallItemScan());
+				break;
+				
+			case SKU_WALL_ALTERNATE_WALL_AVAILABLE:
+				if (mAlternatePutWall != null && "yes".equalsIgnoreCase(inScanStr)) {
+					mPutWallName = mAlternatePutWall;
+					processPutWallItemScan("", mLastPutWallItemScan);
+				}
 				break;
 				
 			default:
@@ -1472,6 +1495,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 				
 			case SKU_WALL_SCAN_GTIN_LOCATION:
+			case SKU_WALL_ALTERNATE_WALL_AVAILABLE:
 				processSkuWallNewLocationScan(inScanPrefixStr, inContent);
 				break;
 
@@ -2099,13 +2123,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Almost the same as assignWork(), but some state transitions differ
 	 */
 	@Override
-	public void assignWallPuts(final List<WorkInstruction> inWorkItemList, String wallType) {
+	public void assignWallPuts(final List<WorkInstruction> inWorkItemList, String wallType, String alternateWallName) {
 		notifyPutWallResponse(inWorkItemList, wallType);
 		if (inWorkItemList == null || inWorkItemList.size() == 0) {
 			if (Location.PUTWALL_USAGE.equals(wallType)){
 				setState(CheStateEnum.NO_PUT_WORK);
 			} else if (Location.SKUWALL_USAGE.equals(wallType)){
-				setState(CheStateEnum.SKU_WALL_SCAN_GTIN_LOCATION);
+				if (alternateWallName == null) {
+					setState(CheStateEnum.SKU_WALL_SCAN_GTIN_LOCATION);
+				} else {
+					mAlternatePutWall = alternateWallName;
+					setState(CheStateEnum.SKU_WALL_ALTERNATE_WALL_AVAILABLE);
+				}
 			}
 		} else {
 			mActivePickWiList.clear();

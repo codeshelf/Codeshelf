@@ -52,6 +52,7 @@ public enum CheStateEnum {
 
 	//states used for sku/return wall DEV-956
 	SKU_WALL_SCAN_GTIN_LOCATION(CheStateNum.SKU_WALL_SCAN_GTIN_LOCATION, "SKU_WALL_SCAN_GTIN_LOCATION"),
+	SKU_WALL_ALTERNATE_WALL_AVAILABLE(CheStateNum.SKU_WALL_ALTERNATE, "SKU_WALL_ALTERNATE"),
 	
 	// state for Che setup persistence
 	SETUP_SUMMARY(CheStateNum.SETUP_SUMMARY, "SETUP_SUMMARY"),
@@ -159,6 +160,7 @@ public enum CheStateEnum {
 		static final byte	DO_PICK						= 7;
 		static final byte	SHORT_PICK					= 8;
 		static final byte	SKU_WALL_SCAN_GTIN_LOCATION = 9;	//Added July 13th
+		static final byte	SKU_WALL_ALTERNATE 			= 10;	//Added July 15th
 		// available, used to be NO WORK				= 11;
 		// available			= 12;
 		static final byte	SHORT_PICK_CONFIRM			= 13;	//Added Oct. 2014

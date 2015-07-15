@@ -59,6 +59,7 @@ import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.protocol.request.LoginRequest;
 import com.codeshelf.ws.protocol.request.VerifyBadgeRequest;
 import com.codeshelf.ws.protocol.response.FailureResponse;
+import com.codeshelf.ws.protocol.response.GetPutWallInstructionResponse;
 import com.codeshelf.ws.protocol.response.VerifyBadgeResponse;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -821,12 +822,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	}
 
 	// Works the same as processGetWorkResponse? Good
-	public void processPutWallInstructionResponse(String networkGuid, List<WorkInstruction> workInstructions, String wallType) {
+	public void processPutWallInstructionResponse(GetPutWallInstructionResponse wallResponse) {
+		String networkGuid = wallResponse.getNetworkGuid();
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			// Although not done yet, may be useful to return information such as WI already completed, or it shorted, or ....
 			LOGGER.info("processPutWallInstructionResponse calling cheDevice.assignWallPuts");
-			cheDevice.assignWallPuts(workInstructions, wallType); // will initially use assignWork override, but probably need to add parameters.			
+			cheDevice.assignWallPuts(wallResponse.getWorkInstructions(), wallResponse.getWallType(), wallResponse.getAlternateWallName()); // will initially use assignWork override, but probably need to add parameters.			
 		} else {
 			LOGGER.warn("Device not found in processPutWallInstructionResponse. CHE id={}", networkGuid);
 		}

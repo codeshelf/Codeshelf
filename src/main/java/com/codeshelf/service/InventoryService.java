@@ -43,7 +43,7 @@ public class InventoryService implements IApiService {
 		this.lightService = inLightService;
 	}
 
-	public InventoryUpdateResponse moveOrCreateInventory(String inGtin, String inLocation, UUID inChePersistentId) {
+	public InventoryUpdateResponse moveOrCreateInventory(String inGtin, String inLocation, UUID inChePersistentId, String wallName) {
 		// At this point, inLocation may be a location name (usually alias), or if a tape Id, it still has the % prefix
 
 		LOGGER.info("moveOrCreateInventory called for gtin:{}, location:{}", inGtin, inLocation);
@@ -71,6 +71,28 @@ public class InventoryService implements IApiService {
 		}
 
 		Location location = findLocation(facility, inLocation);
+		
+		//If the Inventory process in performed while putting a new item into the Sku wall, do not permit placement into other waklls (CD_0099B)
+		if (wallName != null) {
+			Location wallLocation = findLocation(facility, wallName);
+			if (wallLocation.equals(facility)) {
+				LOGGER.error("Could not locate wall {} (optional parameter)", wallName);
+				response.appendStatusMessage("moveOrCreateInventory ERROR: Could not locate wall " + wallName + " (optional parameter).");
+				response.setFoundGtin(false);
+				response.setFoundLocation(false);
+				response.setStatus(ResponseStatus.Fail);
+				return response;				
+			}
+			if (!wallLocation.hasDescendant(location)) {
+				LOGGER.error("Location {} is not within wall {}", inLocation, wallName);
+				response.appendStatusMessage("moveOrCreateInventory ERROR: Location " + inLocation + " is not within wall " + wallName);
+				response.setFoundGtin(false);
+				response.setFoundLocation(false);
+				response.setStatus(ResponseStatus.Fail);
+				return response;								
+			}
+		}
+		
 		int cmFromLeft = 0;
 		if (location.equals(facility)) {
 			LOGGER.warn("Move request from CHE: {} for GTIN: {} could not resolve location: {}. Using facility as location.",
