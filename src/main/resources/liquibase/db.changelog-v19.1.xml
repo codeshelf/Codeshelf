@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog 
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog" 
+	logicalFilePath="db.changelog-v19.1.xml"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+    <changeSet author="ivan (generated)" id="1436911911365-10">
+        <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_EDI_SERVICE_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="edi_service"/>
+    </changeSet>
+    <changeSet author="ivan (generated)" id="1436911911365-11">
+        <addUniqueConstraint columnNames="parent_persistentid, dtype" constraintName="UC_EDI_SERVICE_PARENT_PERSISTENTID_DTYPE" deferrable="false" disabled="false" initiallyDeferred="false" tableName="edi_service"/>
+    </changeSet>
+    <changeSet author="ivan (generated)" id="1436911911365-12">
+        <addUniqueConstraint columnNames="parent_persistentid, provider" constraintName="UC_EDI_SERVICE_PARENT_PERSISTENTID_PROVIDER" deferrable="false" disabled="false" initiallyDeferred="false" tableName="edi_service"/>
+    </changeSet>
+    <changeSet author="ivan (generated)" id="1436911911365-13">
+        <addUniqueConstraint columnNames="device_guid" constraintName="UC_LED_CONTROLLER_DEVICE_GUID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="led_controller"/>
+    </changeSet>
+    <changeSet author="ivan (generated)" id="1436911911365-14">
+        <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_LED_CONTROLLER_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="led_controller"/>
+    </changeSet>
+    <changeSet author="ivan (generated)" id="1436911911365-15">
+        <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_LOCATION_ALIAS_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="location_alias"/>
+    </changeSet>
+    <changeSet author="ivan (generated)" id="1436911911365-16">
+        <addUniqueConstraint columnNames="parent_persistentid" constraintName="UC_NETWORK_PARENT_PERSISTENTID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="network"/>
+    </changeSet>
+    <changeSet author="ivan (generated)" id="1436911911365-17">
+        <addUniqueConstraint columnNames="domainid" constraintName="UC_SITE_CONTROLLER_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="site_controller"/>
+    </changeSet>
+    <changeSet author="ivan (generated)" id="1436911911365-18">
+        <addUniqueConstraint columnNames="parent_persistentid, device_guid" constraintName="UC_SITE_CONTROLLER_PARENT_PERSISTENTID_DEVICE_GUID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="site_controller"/>
+    </changeSet>
+</databaseChangeLog>

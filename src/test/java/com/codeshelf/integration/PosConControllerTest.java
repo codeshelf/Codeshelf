@@ -40,10 +40,10 @@ public class PosConControllerTest extends ServerTest{
 		String newControllerId = "10000001";
 		
 		//Create facility
-		TenantPersistenceService.getInstance().beginTransaction();
+		//TenantPersistenceService.getInstance().beginTransaction();
 		Facility facility = setUpOneAisleFourBaysFlatFacilityWithOrders();
 		facilityId = facility.getPersistentId();
-		TenantPersistenceService.getInstance().commitTransaction();
+		//TenantPersistenceService.getInstance().commitTransaction();
 		
 		super.startSiteController();
 		waitAndGetAisleDeviceLogic(this, new NetGuid(DEF_CONTROLLER_ID));
@@ -162,7 +162,7 @@ public class PosConControllerTest extends ServerTest{
 		facility = facility.reload();	
 		CodeshelfNetwork network = getNetwork();
 		//Change LED controller to PosManager
-		LedController controller = network.findOrCreateLedController("LED1", new NetGuid(DEF_CONTROLLER_ID));
+		LedController controller = network.findOrCreateLedController(DEF_CONTROLLER_ID, new NetGuid(DEF_CONTROLLER_ID));
 		controller.updateFromUI(DEF_CONTROLLER_ID, "Poscons");
 		Assert.assertEquals(DeviceType.Poscons, controller.getDeviceType());
 

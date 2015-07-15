@@ -17,6 +17,7 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -42,7 +43,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@Table(name = "edi_service")
+@Table(name = "edi_service",
+	uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"}),
+						@UniqueConstraint(columnNames = {"parent_persistentid", "provider"}),
+						@UniqueConstraint(columnNames = {"parent_persistentid", "dtype"})})
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
@@ -54,7 +58,6 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 			return EdiServiceABC.class;
 		}
 	}
-	
       
    	// The owning Facility.
 	@ManyToOne(optional = false, fetch=FetchType.LAZY)

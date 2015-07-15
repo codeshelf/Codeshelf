@@ -243,8 +243,7 @@ public class WorkServiceTest extends ServerTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void completeWorkInstructionExceptionIfNotFound() throws IOException {
-		setSkipFacilityDelete(true);
-		
+	
 		this.getTenantPersistenceService().beginTransaction();
 
 		UUID cheId = UUID.randomUUID();
@@ -273,7 +272,6 @@ public class WorkServiceTest extends ServerTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void doesNotExportIfWICannotBeStored() throws IOException {
-		setSkipFacilityDelete(true);
 		
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = facilityGenerator.generateValid();
@@ -420,7 +418,6 @@ public class WorkServiceTest extends ServerTest {
 	
 	@Test
 	public void workInstructionExportingIsNotBlocked() throws IOException, InterruptedException {
-		setSkipFacilityDelete(true);
 		
 		this.getTenantPersistenceService().beginTransaction();
 		
