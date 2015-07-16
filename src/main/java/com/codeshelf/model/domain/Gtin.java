@@ -246,5 +246,22 @@ public class Gtin extends DomainObjectTreeABC<ItemMaster> {
 	public String getGtinUi() {
 		return getDomainId();
 	}
+	
+	/**
+	 * UI field is very useful to show what gtins have item locations.
+	*/
+	public String getGtinLocations() {
+		ItemMaster master = getParent();
+		List<Item> items = master.getItemsOfUom(getUomMasterId());
+		String locsString = "";
+		for(Item item :items) {
+			if (!locsString.isEmpty()) {
+				locsString += " , ";
+			}
+			locsString += item.getItemLocationName();
+		}
+		return locsString;
+	}
+
 
 }
