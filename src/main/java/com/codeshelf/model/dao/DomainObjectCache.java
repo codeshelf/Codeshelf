@@ -97,6 +97,9 @@ public class DomainObjectCache<T extends DomainObjectABC> {
 		objectCache.put(obj.getDomainId(), obj);		
 	}
 
+	public void remove(T obj) {
+		objectCache.remove(obj.getDomainId());		
+	}
 	public int size() {
 		return this.objectCache.size();
 	}

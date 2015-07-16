@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.util.UomNormalizer;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
 // --------------------------------------------------------------------------
@@ -58,7 +59,7 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 	public UomMaster() {
 
 	}
-	
+
 	public UomMaster(Facility parent, String inUomId) {
 		super(inUomId);
 		this.parent = parent;
@@ -87,6 +88,18 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 
 	public void setUomMasterId(String inUomMasterId) {
 		setDomainId(inUomMasterId);
+	}
+
+	/**
+	 * If there happen to be two versions of the "each" uom, then this function returns true whereas simple equals will fail. That would confuse GTIN and inventory logic.
+	 */
+	public boolean equalsNormalized(UomMaster inMaster) {
+		if (this.equals(inMaster))
+			return true;
+		else if (UomNormalizer.normalizedEquals(this.getUomMasterId(), inMaster.getUomMasterId()))
+			return true;
+		return false;
+
 	}
 
 }

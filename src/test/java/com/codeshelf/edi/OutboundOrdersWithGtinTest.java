@@ -22,6 +22,7 @@ import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
@@ -252,9 +253,11 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		List<Gtin> gtins = Gtin.staticGetDao().getAll();
 		List<ItemMaster> masters = ItemMaster.staticGetDao().getAll();
 		List<Item> items = Item.staticGetDao().getAll();
+		List<UomMaster> uoms = UomMaster.staticGetDao().getAll();
 		Assert.assertEquals(3, gtins.size());
 		Assert.assertEquals(3, masters.size());
 		Assert.assertEquals(3, items.size());
+		Assert.assertEquals(1, uoms.size());
 
 		LOGGER.info("1c: See the gtins in the log or console");
 		LOGGER.info("gtins {}", gtins);
@@ -281,9 +284,11 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		List<Gtin> gtins2 = Gtin.staticGetDao().getAll();
 		List<ItemMaster> masters2 = ItemMaster.staticGetDao().getAll();
 		List<Item> items2 = Item.staticGetDao().getAll();
+		List<UomMaster> uoms2 = UomMaster.staticGetDao().getAll();
 		Assert.assertEquals(3, gtins2.size());
 		Assert.assertEquals(3, masters2.size());
 		Assert.assertEquals(3, items2.size());
+		Assert.assertEquals(2, uoms2.size());// the inventory created the default EA. In the orders file, each matched to it, and case was created.
 		LOGGER.info("2b: See the gtins in the log or console");
 		LOGGER.info("gtins {}", gtins2);
 
@@ -348,13 +353,13 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		// The only way to continue is to get to one gtin per order line
 		// Note that during order import we have the full gtinCache available. But not during the server-side inventory transaction via gtin.
 		// We do not want to do a full query there in order to call findUniqueManufacturedSubstringMatch()
-		
+
 		// After this, normal pickscan applies. Full gtin is in the database. Full scan will match. No need for separate testing here.
-		
-		LOGGER.info ("4a: Demonstrate how user would fix. We have two extra gtin now. In the pairs, one has correct gtin location with an item, and one correct details for truncated gtin.");
+
+		LOGGER.info("4a: Demonstrate how user would fix. We have two extra gtin now. In the pairs, one has correct gtin location with an item, and one correct details for truncated gtin.");
 
 	}
-	
+
 	/**
 	 * Core-E only handles up to UPC-12. But some Lunera products use 17 chars. So truncated.
 	 * Just explore the order import issue.
@@ -383,7 +388,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		LOGGER.info("gtins {}", gtins);
 		Assert.assertEquals(4, gtins.size());
 		commitTransaction();
-		
+
 		LOGGER.info("2a: Import new order line for item1/case, but with truncated Gtin. This should do a GTIN case 5 match and not make a new gtin");
 		// Actually checked below in gtins.size() assert.
 		beginTransaction();
@@ -401,7 +406,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 				+ "\r\n3,3,3_01,12/03/14 12:00,12/31/14 12:00,Item1,,80,case,678901234567";
 		importOrdersData(facility, firstCsvString);
 		commitTransaction();
-		
+
 		LOGGER.info("3: Import new order line for item1/each, but with an internal substring of Gtin. This does not match");
 		// This looks like the host corrected a GTIN so it does change, and does not make a new one. See GGTIN_case_4b in log
 		beginTransaction();
@@ -410,7 +415,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 				+ "\r\n4,4,402,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,345678901334";
 		importOrdersData(facility, firstCsvString);
 		commitTransaction();
-		
+
 		beginTransaction();
 		gtins = Gtin.staticGetDao().getAll();
 		LOGGER.info("gtins {}", gtins);
@@ -425,15 +430,122 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 				+ "\r\n5,5,501,12/03/14 12:00,12/31/14 12:00,Item2,,80,each,123456789014";
 		importOrdersData(facility, firstCsvString);
 		commitTransaction();
-		
+
 		beginTransaction();
 		gtins = Gtin.staticGetDao().getAll();
 		LOGGER.info("gtins {}", gtins);
 		Assert.assertEquals(5, gtins.size());
 		commitTransaction();
+	}
 
+	/**
+	 * Sometimes, someone will pass an orders file through Excel, which results in removal of leading zeros.
+	 * If we import this, do not make a mess.
+	 */
+	@Test
+	public final void strippedLeadingZerosGtin() throws IOException {
+		Facility facility = setUpSimpleNoSlotFacility();
+		// No orders file yet, so no GTINs or OrderMasters in the system
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
 
+		picker.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);
+		picker.scanCommand("INVENTORY");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 
+		LOGGER.info("1a: inventory two gtins with leading zeros to good locations.");
+		picker.inventoryViaTape("000123456788", "L%D301"); // 
+		picker.inventoryViaTape("000123456789", "L%D302"); // 
+
+		// probably need to wait here to allow the transactions to complete.
+		ThreadUtils.sleep(4000);
+
+		LOGGER.info("2: Load the orders file that had those two truncated. Do they match up?");
+		beginTransaction();
+		facility = facility.reload();
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
+				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,123456788"
+				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,123456789";
+		importOrdersData(facility, firstCsvString);
+		commitTransaction();
+
+		LOGGER.info("2b: See what gtin we have. Do we have 2 or 4? Answer 2. They resolved due to trailing truncation match, which is good.");
+		// No special case needed for zeros.
+		beginTransaction();
+		facility = facility.reload();
+		List<Gtin> gtins = Gtin.staticGetDao().getAll();
+		LOGGER.info("gtins {}", gtins);
+		Assert.assertEquals(2, gtins.size());
+		List<ItemMaster> masters = ItemMaster.staticGetDao().getAll();
+		LOGGER.info("masters {}", masters);
+		Assert.assertEquals(2, masters.size());
+
+		// The gtins should have leading zeros.
+		Gtin gtin = gtins.get(0);
+		char firstChar = gtin.getGtin().charAt(0);
+		Assert.assertEquals('0', firstChar);
+		List<UomMaster> uoms = UomMaster.staticGetDao().getAll();
+		Assert.assertEquals(2, uoms.size());// the original scan without UOM to EA, which normalizes with each. Add case from this import.
+		commitTransaction();
+
+		LOGGER.info("3: Load the orders file again, but without losing leading zeros");
+		beginTransaction();
+		facility = facility.reload();
+		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
+				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,000123456788"
+				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,000123456789";
+		importOrdersData(facility, firstCsvString);
+		commitTransaction();
+
+		LOGGER.info("3b: See what we have now. 2 or 4? Answer 2.");
+		beginTransaction();
+		facility = facility.reload();
+		gtins = Gtin.staticGetDao().getAll();
+		LOGGER.info("gtins {}", gtins);
+		Assert.assertEquals(2, gtins.size());
+
+		masters = ItemMaster.staticGetDao().getAll();
+		LOGGER.info("masters {}", masters);
+		Assert.assertEquals(2, masters.size());
+
+		// The gtins should still have leading zeros.
+		gtin = gtins.get(0);
+		firstChar = gtin.getGtin().charAt(0);
+		Assert.assertEquals('0', firstChar);
+		uoms = UomMaster.staticGetDao().getAll();
+		Assert.assertEquals(2, uoms.size());
+		commitTransaction();
+
+		LOGGER.info("4: Load the orders file without leading zeros");
+		// looks like same case as 2. But it is not. In case 2, the leading zero gtin was "manufactured".
+		// Now in test 4, the existing leading zero gtin was converted, and is no longer "manufactured".
+		beginTransaction();
+		facility = facility.reload();
+		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
+				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,123456788"
+				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,123456789";
+		importOrdersData(facility, firstCsvString);
+		commitTransaction();
+
+		LOGGER.info("4b: Still 2 gtin with leading zeros.");
+		beginTransaction();
+		facility = facility.reload();
+		gtins = Gtin.staticGetDao().getAll();
+		LOGGER.info("gtins {}", gtins);
+		uoms = UomMaster.staticGetDao().getAll();
+		Assert.assertEquals(2, uoms.size());// the default bad one, and each and case from this import.
+		LOGGER.info("uoms {}", uoms);
+
+		masters = ItemMaster.staticGetDao().getAll();
+		LOGGER.info("masters {}", masters);
+		Assert.assertEquals(2, masters.size());
+
+		Assert.assertEquals(2, gtins.size());
+		// The gtins should have leading zeros.
+		gtin = gtins.get(0);
+		firstChar = gtin.getGtin().charAt(0);
+		Assert.assertEquals('0', firstChar);
+		commitTransaction();
 
 	}
 
