@@ -143,7 +143,8 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 
 		// transform order lines/header, if extension point is defined
 		if (extensionPointService.hasExtensionPoint(ExtensionPointType.OrderImportLineTransformation)
-				|| extensionPointService.hasExtensionPoint(ExtensionPointType.OrderImportHeaderTransformation)) {
+				|| extensionPointService.hasExtensionPoint(ExtensionPointType.OrderImportHeaderTransformation)
+				|| extensionPointService.hasExtensionPoint(ExtensionPointType.OrderImportCreateHeader)) {
 			BufferedReader br = new BufferedReader(inCsvReader);
 			StringBuffer buffer = new StringBuffer();
 			// process file header
