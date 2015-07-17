@@ -548,5 +548,56 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		commitTransaction();
 
 	}
+	/**
+	 * Nipul did something in test that seemed to show dropping an orders file did not update a gtin on a master.
+	 * This test tries to reproduce
+	 */
+	@Test
+	public final void changingUom() throws IOException {
+		Facility facility = setUpSimpleNoSlotFacility();
+		// No orders file yet, so no GTINs or OrderMasters in the system
+
+		LOGGER.info("1: Load the orders file with the no gtins and each");
+		beginTransaction();
+		facility = facility.reload();
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
+				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,7,each"
+				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item2,,9,each"
+				+ "\r\n2,1,201,12/03/14 12:00,12/31/14 12:00,Item1,,70,each";
+		importOrdersData(facility, firstCsvString);
+		commitTransaction();
+
+		LOGGER.info("1b: See that we have 1 gtin now.");
+		beginTransaction();
+		facility = facility.reload();
+		List<Gtin> gtins = Gtin.staticGetDao().getAll();
+		Assert.assertEquals(0, gtins.size());
+		commitTransaction();
+
+		LOGGER.info("2: Import new orders file gtin but using EA");
+		beginTransaction();
+		facility = facility.reload();
+		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
+				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,7,EA,1234567890123"
+				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item2,,9,EA,1234567890999"
+				+ "\r\n2,1,201,12/03/14 12:00,12/31/14 12:00,Item1,,70,EA,1234567890123";
+		importOrdersData(facility, firstCsvString);
+		commitTransaction();
+
+		beginTransaction();
+		gtins = Gtin.staticGetDao().getAll();
+		LOGGER.info("gtins {}", gtins);
+		Assert.assertEquals(2, gtins.size());
+		
+		LOGGER.info("2b: look for order 1");
+		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1");
+		Assert.assertNotNull(h1);
+		OrderDetail d1_1 = h1.getOrderDetail("101");
+		String gtinId = d1_1.getGtinId();
+		Assert.assertEquals("1234567890123", gtinId);
+
+		commitTransaction();
+	}
+
 
 }

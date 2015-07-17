@@ -804,7 +804,9 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 			if (matchingGtinForMaster != null) {
 				if (!matchingGtinForMaster.getDomainId().equals(gtinId)) {
-					LOGGER.warn("GTIN_case_5 Found gtin:{} even though file had this substring {}", matchingGtinForMaster, gtinId);
+					// Info, because this case will happen over and over again at Accu as they send truncated gtins that do not
+					// trigger any special processing.
+					LOGGER.info("GTIN_case_5 Found gtin:{} even though file had this substring {}", matchingGtinForMaster, gtinId);
 				}
 				return matchingGtinForMaster;
 
@@ -898,24 +900,39 @@ public class OutboundOrderBatchProcessor implements Runnable {
 					return gtin;
 				}
 			}
-			LOGGER.debug("rejected {} for master's gtin match of {}:{}/{}", gtin, gtinId, inItemMaster.getItemId(), inUomMaster.getUomMasterId());
+			LOGGER.debug("rejected {} for master's gtin match of {}:{}/{}",
+				gtin,
+				gtinId,
+				inItemMaster.getItemId(),
+				inUomMaster.getUomMasterId());
 		}
 		// The test strippedLeadingZerosGtin has two inventory conversions to the same item master but different uom.
 		// case 4  leaves the somewhat odd situation of gtins for the same real master pointing at separate masters as the second one has not been converted yet.
 		Collection<Gtin> gtins2 = gtinCache.values();
 		LOGGER.debug("Cache has these gtins {}", gtins2);
 		for (Gtin gtin2 : gtins2) {
+			boolean gtin2IsOnboarder = gtin2.gtinIsAnOnboardingManufacture();
 			String thisId2 = gtin2.getDomainId();
-			if (gtin2.getParent().equals(inItemMaster) || gtin2.gtinIsAnOnboardingManufacture()) {
+			if (gtin2.getParent().equals(inItemMaster) || gtin2IsOnboarder) {
 				if (isSloppyGtinMatch(gtinId, thisId2)) {
 					if (gtin2.getUomMaster().equalsNormalized(inUomMaster)) {
-						LOGGER.warn("Found gtin sloppy match of {} within {} in cache but not on Item's gtins list", gtinId, thisId2);
-						LOGGER.warn("Should be a rare case after inventory new SKU, then get order with two or more uom for that SKU");
+						if (!gtin2IsOnboarder) {
+							LOGGER.warn("Found gtin sloppy match of {} within {} in cache but not on Item's gtins list",
+								gtinId,
+								thisId2);
+							LOGGER.warn("Should be a rare case after inventory new SKU, then get order with two or more uom for that SKU");
+						} else {
+							LOGGER.info("Found gtin sloppy match of {} within cache. {} is an onboarding gtin", gtinId, thisId2);
+						}
 						return gtin2;
 					}
 				}
 			}
-			LOGGER.debug("rejected {} for cache gtin match of {}:{}/{}", gtin2, gtinId, inItemMaster.getItemId(), inUomMaster.getUomMasterId());
+			LOGGER.debug("rejected {} for cache gtin match of {}:{}/{}",
+				gtin2,
+				gtinId,
+				inItemMaster.getItemId(),
+				inUomMaster.getUomMasterId());
 		}
 
 		return null;
