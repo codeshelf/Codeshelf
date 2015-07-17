@@ -42,7 +42,7 @@ public class InventoryUpdateCommand extends CommandABC {
 			String skuWallName = request.getSkuWallName();
 			response = inventoryService.moveOrCreateInventory(request.getGtin(), request.getLocation(), cheUUID, skuWallName);
 			response.setNetworkGuid(cheId);
-			
+			//If the SKU wall name was provided, automatically put CHE into the PUT mode by computing work for this location and item
 			if (skuWallName != null) {
 				ComputePutWallInstructionRequest putWallInstructionRequest = new ComputePutWallInstructionRequest(cheId, request.getGtin(), skuWallName);
 				ComputePutWallInstructionCommand putWallInstructionCommand = new ComputePutWallInstructionCommand(wsConnection, putWallInstructionRequest, workService);

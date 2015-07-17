@@ -14,7 +14,7 @@ setProperty invtmenu true
 importAisles aisles
 importLocations locations
 setWall Aisle1 putwall
-setWall Aisle2 skuwall
+setWall A2 skuwall
 setController LocX24   lights  :contr1 1 tiersInAisle
 setController LocX26   lights  0x000000AB 1 tiersInAisle
 setController A3.B1.T1 poscons 0x000000AA 1 tiersInAisle
@@ -27,7 +27,7 @@ deleteAllPaths
 defPath p1 - 2.82 5.40 5.19 5.40 - 5.19 5.40 5.19 6.40 - 5.19 6.40 2.77 6.40
 defPath p2 - 2.60 7.40 5.28 7.40
 assignPathSgmToAisle p1 0 A1
-assignPathSgmToAisle p1 2 Aisle2
+assignPathSgmToAisle p1 2 A2
 assignPathSgmToAisle p2 0 A3
 assignTapeToTier 0007 A1.B2.T1 0027 A2.B1.T1 000X A2.B2.T1
 deleteExtensionPoint OrderImportLineTransformation

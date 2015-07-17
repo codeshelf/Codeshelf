@@ -57,6 +57,7 @@ import com.codeshelf.ws.protocol.request.InventoryLightItemRequest;
 import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
 import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.protocol.request.LoginRequest;
+import com.codeshelf.ws.protocol.request.SkuWallLocationDisambiguationRequest;
 import com.codeshelf.ws.protocol.request.VerifyBadgeRequest;
 import com.codeshelf.ws.protocol.response.FailureResponse;
 import com.codeshelf.ws.protocol.response.GetPutWallInstructionResponse;
@@ -445,6 +446,12 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		InventoryUpdateRequest req = new InventoryUpdateRequest(inPersistentId.toString(), inGtin, inLocationId, skuWallName);
 		clientEndpoint.sendMessage(req);
 	}
+	
+	public void skuWallLocationDisambiguation(final UUID inPersistentId, final String inLocationId, final String inGtin, final String skuWallName) {
+		LOGGER.debug("Inventory update Scan: Che={}; Loc={}; GTIN={};", inPersistentId, inLocationId, inGtin);
+		SkuWallLocationDisambiguationRequest req = new SkuWallLocationDisambiguationRequest(inPersistentId.toString(), inGtin, inLocationId, skuWallName);
+		clientEndpoint.sendMessage(req);
+	}
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -828,7 +835,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		if (cheDevice != null) {
 			// Although not done yet, may be useful to return information such as WI already completed, or it shorted, or ....
 			LOGGER.info("processPutWallInstructionResponse calling cheDevice.assignWallPuts");
-			cheDevice.assignWallPuts(wallResponse.getWorkInstructions(), wallResponse.getWallType(), wallResponse.getAlternateWallName()); // will initially use assignWork override, but probably need to add parameters.			
+			cheDevice.assignWallPuts(wallResponse.getWorkInstructions(), wallResponse.getWallType(), wallResponse.getWallName()); // will initially use assignWork override, but probably need to add parameters.			
 		} else {
 			LOGGER.warn("Device not found in processPutWallInstructionResponse. CHE id={}", networkGuid);
 		}

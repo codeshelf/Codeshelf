@@ -1455,16 +1455,6 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return PUTWALL_USAGE.equalsIgnoreCase(usage) || SKUWALL_USAGE.equalsIgnoreCase(usage);
 	}
 	
-	public Location getWall(String wallType) {
-		if (!isWallLocation(wallType)){
-			return null;
-		}
-		if (isImmediateWallLocation()){
-			return this;
-		}
-		return getParent().getWall(wallType);
-	}
-
 	public void toggleWallLocation() {
 		//off -> putwall -> skuwall -> off
 		if (usage == null) {
@@ -1517,7 +1507,38 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 		return null;
 	}
+	
+	public Location getWall(String wallType){
+		if ((wallType == SKUWALL_USAGE && !isSkuWallLocation()) || (wallType == PUTWALL_USAGE && !isPutWallLocation())){
+			return null;
+		}
+		if (isAisle()){
+			return this;
+		}
+		Aisle aisle = getParentAtLevel(Aisle.class);
+		Bay bay = getParentAtLevel(Bay.class);
+		boolean aisleAlias = aisle.getPrimaryAlias() != null;
+		//If Aisle and Bay both have aliases, or only Aisle does, then AISLE is the Wall
+		//If Aisles and Bay both lack aliases, or Bay has alias, but not Aisle, then BAY is the wall
+		return aisleAlias ? aisle : bay;
+	}
 
+	/**
+	 * Determines if the supplied object is an ancestor of this object
+	 */
+	public boolean hasAncestor(Location ancestor) {
+		if (ancestor == null) {
+			return false;
+		}
+		Location parent = this;
+		while (parent != null) {
+			if (parent.equals(ancestor)){
+				return true;
+			}
+			parent = parent.getParent();
+		}
+		return false;
+	}
 	
 	/**
 	 * We want to provide the most useful information possible to the user. That is the name of the put wall ancestor for this location.

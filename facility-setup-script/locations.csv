@@ -3,8 +3,9 @@ A1,Aisle1
 A1.B1.T1,LocX24
 A1.B2.T1,LocX25
 A1.B2.T1.S1,LocX25.1
-A2,Aisle2
+A2.B1,Wall21
 A2.B1.T1,LocX26
+A2.B2,Wall22
 A2.B2.T1,LocX27
 A3,Aisle3
 A3.B1,Wall1

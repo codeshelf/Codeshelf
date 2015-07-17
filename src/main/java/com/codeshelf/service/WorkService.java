@@ -852,7 +852,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		Location putWallLoc = facility.findSubLocationById(putWallName);
 		if (putWallLoc == null || !putWallLoc.isWallLocation()) {
 			LOGGER.warn("Location {} not resolved or not a put wall", putWallName);
-			return response;			
+			return response;
 		}
 		
 		if (putWallLoc.isPutWallLocation()){
@@ -870,9 +870,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	private GetPutWallInstructionResponse getSkuWallInstructionsForItem(final Facility facility,
 		final Che che,
 		final String itemOrUpc,
-		final Location skuWallLoc){
+		final Location locationInWall){
 		GetPutWallInstructionResponse response = new GetPutWallInstructionResponse();
 		response.setWallType(Location.SKUWALL_USAGE);
+		Location skuWallLoc = locationInWall.getWall(Location.SKUWALL_USAGE);
 		Gtin gtin = Gtin.getGtinForFacility(facility, itemOrUpc);
 		if (gtin == null) {
 			ItemMaster itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, itemOrUpc);
@@ -888,7 +889,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		if (item == null) {
 			LOGGER.info("Did not find item for Gtin {} at {}. Checking other Sku walls", itemOrUpc, skuWallLoc.getNominalLocationId());
 			String alternateWallName = findSkuWallWithItem(facility, gtin.getParent(), gtin.getUomMaster());
-			response.setAlternateWallName(alternateWallName);
+			response.setWallName(alternateWallName);
 		}
 		if (item == null) {
 			LOGGER.warn("Did not find item for Gtin {}", itemOrUpc);
@@ -904,6 +905,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		wiResultList.add(wi);
 		response.setWorkInstructions(wiResultList);
+		response.setWallName(skuWallLoc.getBestUsableLocationName());
 		return response;
 	}
 		
@@ -911,15 +913,22 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("usage", Location.SKUWALL_USAGE));
 		List<Location> skuWalls = Location.staticGetLocationDao().findByFilter(filterParams);
+		String foundWall = null;
 		for (Location skuWall : skuWalls){
 			if (skuWall.getFacility().equals(facility)){
 				Item item = skuWall.findItemInLocationAndChildren(itemMaster, uomMaster);
 				if (item != null) {
-					return skuWall.getBestUsableLocationName();
+					Location itemLocation = item.getStoredLocation();
+					Location itemWall = itemLocation.getWall(Location.SKUWALL_USAGE);
+					if (foundWall == null) {
+						foundWall = itemWall.getBestUsableLocationName();
+					} else {
+						return "other walls";
+					}
 				}
 			}
 		}
-		return null;
+		return foundWall;
 	}
 	
 	private GetPutWallInstructionResponse getOrderWallInstructionsForItem(final Facility facility,

@@ -1601,7 +1601,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.error("Inappropriate call to processStateSetup()");
 	}
 
-	public void assignWallPuts(final List<WorkInstruction> inWorkItemList, String wallType, String alternateWallName) {
+	public void assignWallPuts(final List<WorkInstruction> inWorkItemList, String wallType, String wallName) {
 		LOGGER.error("Inappropriate call to assignWallPuts()");
 	}
 

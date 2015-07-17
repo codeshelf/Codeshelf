@@ -52,14 +52,15 @@ public class CheProcessSkuWall extends ServerTest{
 		importAislesData(facility, aislesCsvString);
 		
 		String locationsCsvString = "mappedLocationId,locationAlias\n" + 
-				"A1,Aisle1\n" +
 				"A1.B1,Wall_1_1\n" +
 				"A1.B1.T1.S1,Slot1111\n" + 
 				"A1.B1.T1.S2,Slot1112\n" + 
 				"A1.B1.T1.S3,Slot1113\n" + 
 				"A1.B1.T1.S4,Slot1114\n" +
 				"A1.B2,Wall_1_2\n" +
-				"A1.B2.T1,Tier121\n";
+				"A1.B2.T1,Tier121\n" +
+				"A1.B3,Wall_1_3\n" +
+				"A1.B3.T1,Tier131\n";
 		importLocationAliasesData(facility, locationsCsvString);
 		
 		Aisle a1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
@@ -100,7 +101,6 @@ public class CheProcessSkuWall extends ServerTest{
 		verifyLocation(facility, "Item3", "Slot1113");
 		verifyLocation(facility, "Item4", "Slot1114");
 		verifyLocation(facility, "Item4", "Slot1114");
-
 		this.getTenantPersistenceService().commitTransaction();
 	}
 	
@@ -165,10 +165,10 @@ public class CheProcessSkuWall extends ServerTest{
 		LOGGER.info("1: Select an item that exists in another wall");
 		picker.scanSomething("Item3");
 		picker.waitForCheState(CheStateEnum.SKU_WALL_ALTERNATE_WALL_AVAILABLE, WAIT_TIME);
-		String expectedDisplay = "Scan YES for Aisle1\nOr scan in Wall_1_2\nTo move Item3\nCLEAR TO CANCEL\n";
+		String expectedDisplay = "Item in Wall_1_1\nScan to Wall_1_1\nOr tape in Wall_1_2\nOr CANCEL Item3\n";
 		Assert.assertEquals(expectedDisplay, picker.getLastCheDisplay());
 		
-		LOGGER.info("2: Scan onto the new wall (Wall_1_2)");
+		LOGGER.info("2: Scan onto the new location in the current wall (Wall_1_2)");
 		picker.scanSomething("%000000020050");
 		picker.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
 
@@ -198,11 +198,11 @@ public class CheProcessSkuWall extends ServerTest{
 		LOGGER.info("1: Select an item that exists in another wall");
 		picker.scanSomething("Item3");
 		picker.waitForCheState(CheStateEnum.SKU_WALL_ALTERNATE_WALL_AVAILABLE, WAIT_TIME);
-		String expectedDisplay = "Scan YES for Aisle1\nOr scan in Wall_1_2\nTo move Item3\nCLEAR TO CANCEL\n";
+		String expectedDisplay = "Item in Wall_1_1\nScan to Wall_1_1\nOr tape in Wall_1_2\nOr CANCEL Item3\n";
 		Assert.assertEquals(expectedDisplay, picker.getLastCheDisplay());
 		
 		LOGGER.info("2: Switch over to the wall with this item (Wall_1_1)");
-		picker.scanCommand("YES");
+		picker.scanSomething("Wall_1_1");
 		picker.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
 		
 		posman.waitForControllerDisplayValue((byte)1, (byte)1, WAIT_TIME);

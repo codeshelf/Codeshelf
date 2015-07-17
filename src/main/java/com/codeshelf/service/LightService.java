@@ -175,7 +175,9 @@ public class LightService implements IApiService {
 			try {
 				if (item.isLightable()) {
 					LightLedsInstruction instruction = toLedsInstruction(facility, defaultLedsToLight, color, item);
-					instructions.add(instruction);
+					if (instruction != null){
+						instructions.add(instruction);
+					}
 				} else {
 					LOGGER.warn("unable to light item: " + item);
 				}
@@ -348,16 +350,6 @@ public class LightService implements IApiService {
 
 	private LightLedsInstruction toLedsInstruction(Facility facility, int maxNumLeds, final ColorEnum inColor, final Item inItem) {
 		// Use our utility function to get the leds for the item
-		/*
-		LedRange theRange = inItem.getFirstLastLedsForItem().capLeds(maxNumLeds);
-		Location itemLocation = inItem.getStoredLocation();
-		if (itemLocation.isLightableAisleController()) {
-			LightLedsInstruction instruction = getLedCmdGroupListForRange(facility, inColor, itemLocation, theRange);
-			return instruction;
-		} else {
-			return null;
-		}
-		*/
 		Location itemLocation = inItem.getStoredLocation();
 		if (itemLocation.isLightableAisleController()) {
 			LedRange theRange = getLedRangeForLocationOffset(itemLocation, inItem.getMetersFromAnchor()).capLeds(maxNumLeds);

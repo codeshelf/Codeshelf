@@ -41,6 +41,7 @@ import com.codeshelf.ws.protocol.command.ObjectUpdateCommand;
 import com.codeshelf.ws.protocol.command.PutWallPlacementCommand;
 import com.codeshelf.ws.protocol.command.RegisterFilterCommand;
 import com.codeshelf.ws.protocol.command.ServiceMethodCommand;
+import com.codeshelf.ws.protocol.command.SkuWallLocationDisambiguationCommand;
 import com.codeshelf.ws.protocol.command.TapeLocationDecodingCommand;
 import com.codeshelf.ws.protocol.command.VerifyBadgeCommand;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
@@ -68,6 +69,7 @@ import com.codeshelf.ws.protocol.request.PutWallPlacementRequest;
 import com.codeshelf.ws.protocol.request.RegisterFilterRequest;
 import com.codeshelf.ws.protocol.request.RequestABC;
 import com.codeshelf.ws.protocol.request.ServiceMethodRequest;
+import com.codeshelf.ws.protocol.request.SkuWallLocationDisambiguationRequest;
 import com.codeshelf.ws.protocol.request.TapeLocationDecodingRequest;
 import com.codeshelf.ws.protocol.request.VerifyBadgeRequest;
 import com.codeshelf.ws.protocol.response.FailureResponse;
@@ -102,6 +104,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	private final Counter			putWallPlacementCounter;
 	private final Counter			notificationCounter;
 	private final Counter			tapeLocationDecodingCounter;
+	private final Counter			skuWallLocationDisambiguationCounter;
 	private final Timer				requestProcessingTimer;
 
 	private ServiceFactory			serviceFactory;
@@ -140,6 +143,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		requestProcessingTimer = metricsService.createTimer(MetricsGroup.WSS, "requests.processing-time");
 		notificationCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.notification");
 		tapeLocationDecodingCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.tape-location-decoding");
+		skuWallLocationDisambiguationCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.sku_wall_disambiguation");
 	}
 
 	ObjectChangeBroadcaster getObjectChangeBroadcaster() {
@@ -260,6 +264,13 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		} else if (request instanceof TapeLocationDecodingRequest) {
 			command = new TapeLocationDecodingCommand(csSession, (TapeLocationDecodingRequest) request);
 			tapeLocationDecodingCounter.inc();
+			applicationRequestCounter.inc();
+		} else if (request instanceof SkuWallLocationDisambiguationRequest) {
+			command = new SkuWallLocationDisambiguationCommand(csSession,
+				(SkuWallLocationDisambiguationRequest) request,
+				serviceFactory.getServiceInstance(InventoryService.class),
+				serviceFactory.getServiceInstance(WorkService.class));
+			skuWallLocationDisambiguationCounter.inc();
 			applicationRequestCounter.inc();
 		} else {
 			LOGGER.error("invalid message {} for user {}", request.getClass().getSimpleName(), user.getUsername());

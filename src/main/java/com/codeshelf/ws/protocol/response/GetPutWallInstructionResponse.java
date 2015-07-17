@@ -23,7 +23,7 @@ public class GetPutWallInstructionResponse extends DeviceResponseABC {
 	private String wallType;
 	
 	@Getter @Setter
-	private String alternateWallName;
+	private String wallName;
 
 
 	public void setWorkInstructions(List<WorkInstruction> wis) {
