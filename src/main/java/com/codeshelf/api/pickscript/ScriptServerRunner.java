@@ -193,6 +193,11 @@ public class ScriptServerRunner {
 		if (parts.length != 4){
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_EDIT_FACILITY);
 		}
+		String domainId = parts[1];
+		Facility facilityWithSameDomainId = Facility.staticGetDao().findByDomainId(null, domainId);
+		if (facilityWithSameDomainId != null && !facility.equals(facilityWithSameDomainId)) {
+			throw new Exception("Another facility " + domainId + " already exists");
+		}
 		facility.setDomainId(parts[1]);
 		facility.setPrimarySiteControllerId(parts[2]);
 		facility.setPrimaryChannel(Short.parseShort(parts[3]));
