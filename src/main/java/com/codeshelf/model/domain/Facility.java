@@ -67,8 +67,8 @@ import com.google.common.base.Strings;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Facility extends Location {
 
-	private static final String			IRONMQ_DOMAINID	= "IRONMQ";
-	private static final String 		UNSPECIFIED_LOCATION_DOMAINID	= "FACILITY_UNSPECIFIED";
+	private static final String	IRONMQ_DOMAINID					= "IRONMQ";
+	private static final String	UNSPECIFIED_LOCATION_DOMAINID	= "FACILITY_UNSPECIFIED";
 
 	public static class FacilityDao extends GenericDaoABC<Facility> implements ITypedDao<Facility> {
 		@Override
@@ -81,43 +81,43 @@ public class Facility extends Location {
 		}
 	}
 
-	private static final Logger				LOGGER				= LoggerFactory.getLogger(Facility.class);
+	private static final Logger				LOGGER			= LoggerFactory.getLogger(Facility.class);
 
 	@OneToMany(mappedBy = "parent")
 	@MapKey(name = "domainId")
-	private Map<String, ContainerKind>		containerKinds		= new HashMap<String, ContainerKind>();
+	private Map<String, ContainerKind>		containerKinds	= new HashMap<String, ContainerKind>();
 
-	@OneToMany(mappedBy = "parent", targetEntity = EdiServiceABC.class, orphanRemoval=true)
+	@OneToMany(mappedBy = "parent", targetEntity = EdiServiceABC.class, orphanRemoval = true)
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
-	private List<IEdiService>				ediServices			= new ArrayList<IEdiService>();
-
-	@OneToMany(mappedBy = "parent", orphanRemoval=true)
-	@MapKey(name = "domainId")
-	private Map<String, CodeshelfNetwork>	networks			= new HashMap<String, CodeshelfNetwork>();
+	private List<IEdiService>				ediServices		= new ArrayList<IEdiService>();
 
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	@MapKey(name = "domainId")
-	private Map<String, OrderGroup>			orderGroups			= new HashMap<String, OrderGroup>();
+	private Map<String, CodeshelfNetwork>	networks		= new HashMap<String, CodeshelfNetwork>();
 
-	@OneToMany(mappedBy = "parent", orphanRemoval=true)
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	@MapKey(name = "domainId")
-	private Map<String, Path>				paths				= new HashMap<String, Path>();
+	private Map<String, OrderGroup>			orderGroups		= new HashMap<String, OrderGroup>();
 
-	@OneToMany(mappedBy = "parent", orphanRemoval=true)
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	@MapKey(name = "domainId")
-	private Map<String, UomMaster>			uomMasters			= new HashMap<String, UomMaster>();
-	
-	@OneToMany(mappedBy = "facility", orphanRemoval=true)
+	private Map<String, Path>				paths			= new HashMap<String, Path>();
+
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
+	@MapKey(name = "domainId")
+	private Map<String, UomMaster>			uomMasters		= new HashMap<String, UomMaster>();
+
+	@OneToMany(mappedBy = "facility", orphanRemoval = true)
 	private List<Worker>					workers;
-	
-	@OneToMany(mappedBy = "parent", orphanRemoval=true)
+
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	private List<DataImportReceipt>			dataImportReceipts;
-	
-	@OneToMany(mappedBy = "facility", orphanRemoval=true)
+
+	@OneToMany(mappedBy = "facility", orphanRemoval = true)
 	private List<WorkerEvent>				workerEvents;
-	
-	@OneToMany(mappedBy = "facility", orphanRemoval=true)
+
+	@OneToMany(mappedBy = "facility", orphanRemoval = true)
 	private List<Resolution>				resolutions;
 
 	public Facility() {
@@ -133,7 +133,7 @@ public class Facility extends Location {
 	public boolean isFacility() {
 		return true;
 	}
-	
+
 	public List<Path> getPaths() {
 		return new ArrayList<Path>(this.paths.values());
 	}
@@ -256,7 +256,7 @@ public class Facility extends Location {
 		}
 	}
 
-	public  List<UomMaster> getUomMasters() {
+	public List<UomMaster> getUomMasters() {
 		return new ArrayList<UomMaster>(uomMasters.values());
 	}
 
@@ -382,9 +382,9 @@ public class Facility extends Location {
 		Collection<SiteController> siteControllers = network.getSiteControllers().values();
 		if (siteControllers.size() > 1) {
 			LOGGER.warn("Multiple site controllers found but expected no more than one for facility: {}", this);
-		} 
+		}
 		LinkedList<SiteController> list = new LinkedList<>(siteControllers);
-		if(list.isEmpty()) {
+		if (list.isEmpty()) {
 			return null;
 		} else {
 			return list.getFirst().getDomainId();
@@ -399,13 +399,12 @@ public class Facility extends Location {
 			if (siteControllers.size() > 1) {
 				LOGGER.warn("Multiple site controllers found but expected no more than one for facility: {}", this);
 			}
-			
+
 			SiteController foundSiteController = null;
-			for (SiteController siteController: siteControllers) {
-				if(siteController.getDomainId().equals(String.valueOf(siteControllerId))) {
+			for (SiteController siteController : siteControllers) {
+				if (siteController.getDomainId().equals(String.valueOf(siteControllerId))) {
 					foundSiteController = siteController;
-				} 
-				else {
+				} else {
 					network.removeSiteController(siteController.getDomainId());
 					SiteController.staticGetDao().delete(siteController);
 				}
@@ -415,7 +414,7 @@ public class Facility extends Location {
 			}
 		}
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inProtoBayWidthMeters
@@ -626,12 +625,12 @@ public class Facility extends Location {
 
 	private Location createUnspecifiedLocation(String domainId) {
 		UnspecifiedLocation location = new UnspecifiedLocation(domainId);
-		location.setFirstLedNumAlongPath((short)0);
+		location.setFirstLedNumAlongPath((short) 0);
 		this.addLocation(location);
 		UnspecifiedLocation.staticGetDao().store(location);
 		return location;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 */
@@ -643,10 +642,7 @@ public class Facility extends Location {
 	// --------------------------------------------------------------------------
 	/**
 	 */
-	public ContainerKind createContainerKind(String inDomainId,
-		Double inLengthMeters,
-		Double inWidthMeters,
-		Double inHeightMeters) {
+	public ContainerKind createContainerKind(String inDomainId, Double inLengthMeters, Double inWidthMeters, Double inHeightMeters) {
 
 		ContainerKind result = null;
 
@@ -1031,20 +1027,20 @@ public class Facility extends Location {
 		int inactiveDetailsOnActiveOrders = 0;
 		int inactiveCntrUsesOnActiveOrders = 0;
 		List<OrderHeader> orderHeaders = OrderHeader.staticGetDao().findByParent(this);
-		if (orderHeaders!=null) {
+		if (orderHeaders != null) {
 			for (OrderHeader order : orderHeaders) {
 				if (order.getOrderType().equals(inOrderTypeEnum)) {
 					totalCrossHeaders++;
 					if (order.getActive()) {
 						activeHeaders++;
-	
+
 						ContainerUse cntrUse = order.getContainerUse();
 						if (cntrUse != null)
 							if (cntrUse.getActive())
 								activeCntrUses++;
 							else
 								inactiveCntrUsesOnActiveOrders++;
-	
+
 						for (OrderDetail orderDetail : order.getOrderDetails()) {
 							if (orderDetail.getActive())
 								activeDetails++;
@@ -1091,12 +1087,12 @@ public class Facility extends Location {
 
 	public Aisle createAisle(String inAisleId, Point inAnchorPoint, Point inPickFaceEndPoint) {
 		Aisle aisle = Aisle.staticGetDao().findByDomainId(this, inAisleId);
-		if (aisle == null){
+		if (aisle == null) {
 			aisle = new Aisle();
 			aisle.setDomainId(inAisleId);
 			aisle.setAnchorPoint(inAnchorPoint);
 			aisle.setPickFaceEndPoint(inPickFaceEndPoint);
-	
+
 			this.addAisle(aisle);
 		}
 		return aisle;
@@ -1134,7 +1130,7 @@ public class Facility extends Location {
 			itemMaster.setDomainId(inDomainId);
 			itemMaster.setDescription(description);
 			itemMaster.setStandardUom(uomMaster);
-			itemMaster.setParent(this);			
+			itemMaster.setParent(this);
 		} else {
 			LOGGER.error("can't create ItemMaster " + inDomainId + " with UomMaster " + uomMaster.getDomainId() + " under "
 					+ this.getDomainId() + " because UomMaster parent is " + uomMaster.getParentFullDomainId());
@@ -1160,14 +1156,14 @@ public class Facility extends Location {
 		return getDomainId();
 	}
 
-	synchronized
-	public Location getUnspecifiedLocation() {
+	synchronized public Location getUnspecifiedLocation() {
 		Location unspecifiedLocation = this.getLocations().get(UNSPECIFIED_LOCATION_DOMAINID);
 		if (unspecifiedLocation == null) {
 			unspecifiedLocation = createUnspecifiedLocation(UNSPECIFIED_LOCATION_DOMAINID);
 		}
 		return unspecifiedLocation;
 	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inDomainId
@@ -1185,7 +1181,8 @@ public class Facility extends Location {
 		facility.setAnchorPoint(inAnchorPoint);
 		facility.store();
 
-		LOGGER.info("Creating facility "+inDomainId+" w/ dropbox, ironmq, network, sitecon, sitecon user, generic container and 2 CHEs");
+		LOGGER.info("Creating facility " + inDomainId
+				+ " w/ dropbox, ironmq, network, sitecon, sitecon user, generic container and 2 CHEs");
 
 		// Create a first Dropbox Service entry for this facility.
 		@SuppressWarnings("unused")
@@ -1195,20 +1192,19 @@ public class Facility extends Location {
 		try {
 			@SuppressWarnings("unused")
 			IronMqService ironMqService = facility.createIronMqService();
-		}
-		catch (PSQLException e) {
-			LOGGER.error("failed to create ironMQ service");			
+		} catch (PSQLException e) {
+			LOGGER.error("failed to create ironMQ service");
 		}
 
 		// Create the default network for the facility.
 		CodeshelfNetwork network = facility.createNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
-		
+
 		// Create a site controller & associated user
 		network.createSiteController(CodeshelfNetwork.DEFAULT_SITECON_SERIAL, "Default Area", false);
-		
+
 		// Create the generic container kind (for all unspecified containers)
 		facility.createDefaultContainerKind();
-		
+
 		// Setup two dummy CHEs
 		for (int cheNum = 1; cheNum <= 2; cheNum++) {
 			String cheName = "CHE" + cheNum;
@@ -1217,19 +1213,19 @@ public class Facility extends Location {
 				che = network.createChe(cheName, new NetGuid("0x0000999" + cheNum));
 			}
 		}
-		
+
 		return facility;
 	}
-	
+
 	// convenience method
 	public Facility reload() {
 		return Facility.staticGetDao().reload(this);
 	}
-	
+
 	/**
 	 * Deletes all Facilities in the current schema. Use carefully.
 	 */
-	public static void deleteAll(WebSocketManagerService webSocketManagerService){
+	public static void deleteAll(WebSocketManagerService webSocketManagerService) {
 		TenantPersistenceService persistence = TenantPersistenceService.getInstance(); // convenience
 		String schema = CodeshelfSecurityManager.getCurrentTenant().getSchemaName();
 		Session session = persistence.getSession();
@@ -1243,23 +1239,23 @@ public class Facility extends Location {
 		String query = String.format("TRUNCATE %s.location CASCADE", schema);
 		session.createSQLQuery(query).executeUpdate();
 	}
-	
-	public void delete(WebSocketManagerService webSocketManagerService){
+
+	public void delete(WebSocketManagerService webSocketManagerService) {
 		Set<User> users = getSiteControllerUsers();
 		DisconnectSiteControllerMessage disconnectMessage = new DisconnectSiteControllerMessage();
 		webSocketManagerService.sendMessage(users, disconnectMessage);
 		delete();
 	}
-	
-	public void delete(){
+
+	public void delete() {
 		List<WorkInstruction> workInstructions = WorkInstruction.staticGetDao().findByParent(this);
 		deleteCollection(workInstructions, WorkInstruction.staticGetDao());
-		
+
 		List<OrderHeader> orderHeaders = OrderHeader.staticGetDao().findByParent(this);
 		deleteCollection(orderHeaders, OrderHeader.staticGetDao());
-		
+
 		deleteCollection(containerKinds.values(), ContainerKind.staticGetDao());
-		
+
 		List<ItemMaster> itemMasters = ItemMaster.staticGetDao().findByParent(this);
 		deleteCollection(itemMasters, ItemMaster.staticGetDao());
 
@@ -1269,13 +1265,12 @@ public class Facility extends Location {
 		Facility.staticGetDao().delete(this);
 	}
 
-	
 	private void deleteCollection(Collection<?> collection, ITypedDao<?> dao) {
 		if (collection == null || collection.isEmpty()) {
 			return;
 		}
 		for (Object object : collection) {
-			dao.delete((IDomainObject)object);
+			dao.delete((IDomainObject) object);
 		}
 	}
 }
