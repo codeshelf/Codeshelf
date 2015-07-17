@@ -1174,7 +1174,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 					LOGGER.warn("Changing dueDate for order {}", orderId);
 				}
 			}
-			String updatedOrder[] = {destinationId, shipperId, customerId, dueDate};
+			String updatedOrder[] = { destinationId, shipperId, customerId, dueDate };
 			orders.put(orderId, updatedOrder);
 		}
 	}
