@@ -46,6 +46,7 @@ import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.PropertyService;
+import com.codeshelf.util.UomNormalizer;
 import com.codeshelf.ws.protocol.message.DisconnectSiteControllerMessage;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -258,6 +259,24 @@ public class Facility extends Location {
 
 	public List<UomMaster> getUomMasters() {
 		return new ArrayList<UomMaster>(uomMasters.values());
+	}
+
+	/*
+	 * Find the existing UOM that matches via normalization
+	 * Note: may not be the normalized value. This is historical. First one wins.
+	 */
+	public UomMaster getNormalizedUomMaster(String inUomMasterId) {
+		UomMaster foundMaster = getUomMaster(inUomMasterId);
+		if (foundMaster == null) {
+			List<UomMaster> masters = this.getUomMasters();
+			for (UomMaster master : masters) {
+				if (UomNormalizer.normalizedEquals(inUomMasterId, master.getUomMasterId())) {
+					foundMaster = master;
+					break;
+				}
+			}
+		}
+		return foundMaster;
 	}
 
 	public void addOrderGroup(OrderGroup inOrderGroup) {

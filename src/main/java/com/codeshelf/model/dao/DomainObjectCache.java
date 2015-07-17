@@ -23,24 +23,26 @@ import com.codeshelf.model.domain.ItemMaster;
 public class DomainObjectCache<T extends DomainObjectABC> {
 
 	@SuppressWarnings("unused")
-	private static final Logger LOGGER = LoggerFactory.getLogger(DomainObjectCache.class);
-	
-	@Getter @Setter
-	int maxPrefetchSize = 10000;
+	private static final Logger	LOGGER			= LoggerFactory.getLogger(DomainObjectCache.class);
 
-	@Getter @Setter
-	boolean fetchOnMiss = true;
-	
-	Map<String,T> objectCache =  new HashMap<String,T>();
-	
-	final ITypedDao<T> dao;
-	
-	IDomainObject parent = null;
-	
-	public DomainObjectCache(ITypedDao<T> dao) {		
+	@Getter
+	@Setter
+	int							maxPrefetchSize	= 10000;
+
+	@Getter
+	@Setter
+	boolean						fetchOnMiss		= true;
+
+	Map<String, T>				objectCache		= new HashMap<String, T>();
+
+	final ITypedDao<T>			dao;
+
+	IDomainObject				parent			= null;
+
+	public DomainObjectCache(ITypedDao<T> dao) {
 		this.dao = dao;
 	}
-		
+
 	public void loadAll() {
 		Criteria crit = this.dao.createCriteria();
 		if (this.dao.getDaoClass().equals(ItemMaster.class)) {
@@ -52,13 +54,13 @@ public class DomainObjectCache<T extends DomainObjectABC> {
 			objectCache.put(item.getDomainId(), item);
 		}
 	}
-	
+
 	public void load(IDomainObject parent) {
-		load(parent,null);
+		load(parent, null);
 	}
 
 	public void load(IDomainObject parent, Set<String> domainIds) {
-		if (domainIds==null || domainIds.size()==0) {
+		if (domainIds == null || domainIds.size() == 0) {
 			// nothing to load
 			return;
 		}
@@ -78,14 +80,14 @@ public class DomainObjectCache<T extends DomainObjectABC> {
 		for (T item : list) {
 			objectCache.put(item.getDomainId(), item);
 		}
-	}	
-	
+	}
+
 	public T get(String domainId) {
-		T obj = this.objectCache.get(domainId); 
-		if (obj==null && this.fetchOnMiss) {
+		T obj = this.objectCache.get(domainId);
+		if (obj == null && this.fetchOnMiss) {
 			// try to retrieve from database on miss
 			obj = this.dao.findByDomainId(this.parent, domainId);
-			if (obj!=null) {
+			if (obj != null) {
 				// add to cache
 				objectCache.put(obj.getDomainId(), obj);
 			}
@@ -94,17 +96,21 @@ public class DomainObjectCache<T extends DomainObjectABC> {
 	}
 
 	public void put(T obj) {
-		objectCache.put(obj.getDomainId(), obj);		
+		objectCache.put(obj.getDomainId(), obj);
+	}
+
+	public void remove(T obj) {
+		objectCache.remove(obj.getDomainId());		
 	}
 
 	public int size() {
 		return this.objectCache.size();
 	}
-	
+
 	public void reset() {
 		this.objectCache.clear();
 	}
-	
+
 	public Collection<T> getAll() {
 		return this.objectCache.values();
 	}

@@ -554,7 +554,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 		if (inCsvBean.getOrderDate() != null) {
 			try {
-				Date date = dateTimeParser.parse(inCsvBean.getDueDate());
+				Date date = dateTimeParser.parse(inCsvBean.getOrderDate());
 				// date may be null if string was blank
 				if (date != null)
 					result.setOrderDate(new Timestamp(date.getTime()));
@@ -645,7 +645,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		// Now comes the good update where we have a chance to correct it. Log as WARN.
 		Gtin gtin = this.gtinCache.get(gtinId);
 		if (gtin == null)
-			gtin = findUniqueManufacturedSubstringMatch(gtinId);
+			gtin = findUniqueSubstringMatch(gtinId);
 		if (itemMaster == null && gtin != null) {
 
 			if (!gtinIsAnOnboardingManufacture(gtin)) {
@@ -672,9 +672,13 @@ public class OutboundOrderBatchProcessor implements Runnable {
 					}
 				}
 				gtin.setUomMaster(inUomMaster);
+				LOGGER.warn("update the itemMaster cache.  rename ItemMaster {} to {}", itemMaster.getItemId(), inItemId);
+				this.itemMasterCache.remove(itemMaster);
 				itemMaster.setDomainId(inItemId);
 				itemMaster.setItemId(inItemId);
 				ItemMaster.staticGetDao().store(itemMaster);
+				this.itemMasterCache.put(itemMaster);
+
 				Gtin.staticGetDao().store(gtin);
 				LOGGER.info("Updated GTIN to to {}", gtin);
 			}
@@ -711,15 +715,15 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inUomId
-	 * @param inFacility
-	 * @return
+	 * Although it is called updateUomMaster, it really is a 
+	 * findNormalizedMasterOrCreate
+	 * Note: when creating, it creates with the passed in value, and the default normalized value.
+	 * this means that is "each" is the first kind of ea found, it the master.
 	 */
 	private UomMaster updateUomMaster(final String inUomId, final Facility inFacility) {
 		UomMaster result = null;
 
-		result = inFacility.getUomMaster(inUomId);
-
+		result = inFacility.getNormalizedUomMaster(inUomId);
 		if (result == null) {
 			result = new UomMaster();
 			result.setUomMasterId(inUomId);
@@ -738,7 +742,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 	private Gtin upsertGtin(final Facility inFacility,
 		final ItemMaster inItemMaster,
 		final OutboundOrderCsvBean inCsvBean,
-		UomMaster uomMaster) {
+		UomMaster inUomMaster) {
 
 		if (inCsvBean.getGtin() == null || inCsvBean.getGtin().isEmpty()) {
 			return null;
@@ -769,13 +773,13 @@ public class OutboundOrderBatchProcessor implements Runnable {
 			if (previousItemMaster.equals(inItemMaster)) {
 
 				// Check if the UOM specified in the inventory file matches UOM of existing GTIN
-				if (!uomMaster.equals(previousUomMaster)) {
+				if (!inUomMaster.equals(previousUomMaster)) {
 					// This is - 2) Same itemMaster. Change the UOM. Need a change if following last update wins. Need a WARN/notify
 					LOGGER.warn("GTIN_case_2 {} already exists but for wrong UOM. Changing it to {}",
 						result,
-						uomMaster.getUomMasterId());
+						inUomMaster.getUomMasterId());
 					// return null;
-					result.setUomMaster(uomMaster);
+					result.setUomMaster(inUomMaster);
 					try {
 						Gtin.staticGetDao().store(result);
 					} catch (DaoException e) {
@@ -788,19 +792,21 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				// Import line is attempting to associate existing GTIN with a new item.
 				// Note that updateItemMaster above has already modified the gtin for case 3c. (common onboarding case)
 				// Cases 3a and 3b do fall through to this, but not sure what to do
-				LOGGER.warn("gtin_case_3 hit in upsertGtin(). Doing nothing ");
-				// updateItemMaster logged 3a and 3b as an error already.
+				LOGGER.debug("gtin_case_3 hit in upsertGtin(). Doing nothing ");
+				// updateItemMaster logged 3a and 3b as an error already, or 3c as a WARN
 				return null;
 			}
 		} else {
 			// we do not have this exact gtinId already.
-			Gtin matchingGtinForMaster = findGtinMatchOnItemMaster(gtinId, inItemMaster, uomMaster);
+			Gtin matchingGtinForMaster = findGtinMatchOnItemMaster(gtinId, inItemMaster, inUomMaster);
 
-			Gtin misMatchGtinForMaster = findGtinMisMatchOnItemMaster(gtinId, inItemMaster, uomMaster, matchingGtinForMaster);
+			Gtin misMatchGtinForMaster = findGtinMisMatchOnItemMaster(gtinId, inItemMaster, inUomMaster, matchingGtinForMaster);
 
 			if (matchingGtinForMaster != null) {
 				if (!matchingGtinForMaster.getDomainId().equals(gtinId)) {
-					LOGGER.warn("GTIN_case_5 Found gtin:{} even though file had this substring {}", matchingGtinForMaster, gtinId);
+					// Info, because this case will happen over and over again at Accu as they send truncated gtins that do not
+					// trigger any special processing.
+					LOGGER.info("GTIN_case_5 Found gtin:{} even though file had this substring {}", matchingGtinForMaster, gtinId);
 				}
 				return matchingGtinForMaster;
 
@@ -810,10 +816,10 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				Gtin sameGtinOtherMasterOrUom = this.gtinCache.get(gtinId);
 
 				if (sameGtinOtherMasterOrUom != null) {
-					LOGGER.error("GTIN_case_4a {} already exists. Cannot modify it to {}/{}",
+					LOGGER.error("GTIN_case_4a {} already exists. Cannot modify it to {}/{}. You might do it manually",
 						sameGtinOtherMasterOrUom,
 						inItemMaster.getItemId(),
-						uomMaster.getUomMasterId());
+						inUomMaster.getUomMasterId());
 					return null;
 				} else {
 					// Change the GTIN based on the order file
@@ -832,8 +838,8 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				LOGGER.warn("GTIN_case_6 Adding new gtin:{} for sku:{}/{}",
 					gtinId,
 					inItemMaster.getItemId(),
-					uomMaster.getUomMasterId());
-				result = inItemMaster.createGtin(gtinId, uomMaster);
+					inUomMaster.getUomMasterId());
+				result = inItemMaster.createGtin(gtinId, inUomMaster);
 
 				try {
 					Gtin.staticGetDao().store(result);
@@ -846,21 +852,35 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		return result;
 	}
 
-	final int	lkMinimalSloppyGtinMatchLength	= 9;
+	final int	lkMinimalSloppyGtinMatchLength	= 7;
 	final int	lkMaximumSloppyGtinMatchLength	= 14;
+
+	// --------------------------------------------------------------------------
+	/**
+	 * DEV-979 helper. What if we find a gtin the the gtinId is a substring of?
+	 * In most calling contexts gtinIdToTest length is known to be at least 7
+	 */
+	private boolean isSloppyGtinMatch(String gtinIdToTest, String gtinIdFromActual) {
+		// We say the adminstrator should ensure that the full gtin is in the database. So that is the longer one. We do not sloppy match the other direction.
+		if (gtinIdToTest == null || gtinIdFromActual == null)
+			return false;
+		if (gtinIdToTest.length() > gtinIdFromActual.length())
+			return false;
+		return (gtinIdFromActual.startsWith(gtinIdToTest) || gtinIdFromActual.endsWith(gtinIdToTest));
+	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * DEV-979 Accu's truncated GTIN case. What if we find a gtin the the gtinId is a substring of?
 	 * Anyway, this return either exact match or the Gtin that gtinId is a substring of if the itemMaster already had it.
 	 */
-	private Gtin findGtinMatchOnItemMaster(String gtinId, ItemMaster inItemMaster, UomMaster uomMaster) {
+	private Gtin findGtinMatchOnItemMaster(String gtinId, ItemMaster inItemMaster, UomMaster inUomMaster) {
 		// inItemMaster.getGtinForUom(uomMaster); definitely returns a gtin or null. This is determining if the passed in gtinID is a close enough match to be the same.
 
-		if (gtinId == null)
+		if (gtinId == null || gtinId.isEmpty())
 			return null;
 
-		Gtin result = inItemMaster.getGtinForUom(uomMaster);
+		Gtin result = inItemMaster.getGtinForUom(inUomMaster);
 		if (result != null && result.getDomainId().equals(gtinId))
 			return result;
 
@@ -872,15 +892,49 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 		// Does this itemMaster already have a gtin that this id is a substring of, with matching uom?
 		Collection<Gtin> gtins = inItemMaster.getGtins().values();
+		LOGGER.debug("Master {} has these gtins {}", inItemMaster.getItemId(), gtins);
 		for (Gtin gtin : gtins) {
 			String thisId = gtin.getDomainId();
-			if (thisId.length() > gtinLength) {
-				if (thisId.startsWith(gtinId) || thisId.endsWith(gtinId)) {
-					if (gtin.getUomMaster().equals(uomMaster))
-						return gtin;
+			if (isSloppyGtinMatch(gtinId, thisId)) {
+				if (gtin.getUomMaster().equalsNormalized(inUomMaster)) {
+					return gtin;
 				}
 			}
+			LOGGER.debug("rejected {} for master's gtin match of {}:{}/{}",
+				gtin,
+				gtinId,
+				inItemMaster.getItemId(),
+				inUomMaster.getUomMasterId());
 		}
+		// The test strippedLeadingZerosGtin has two inventory conversions to the same item master but different uom.
+		// case 4  leaves the somewhat odd situation of gtins for the same real master pointing at separate masters as the second one has not been converted yet.
+		Collection<Gtin> gtins2 = gtinCache.values();
+		LOGGER.debug("Cache has these gtins {}", gtins2);
+		for (Gtin gtin2 : gtins2) {
+			boolean gtin2IsOnboarder = gtin2.gtinIsAnOnboardingManufacture();
+			String thisId2 = gtin2.getDomainId();
+			if (gtin2.getParent().equals(inItemMaster) || gtin2IsOnboarder) {
+				if (isSloppyGtinMatch(gtinId, thisId2)) {
+					if (gtin2.getUomMaster().equalsNormalized(inUomMaster)) {
+						if (!gtin2IsOnboarder) {
+							LOGGER.warn("Found gtin sloppy match of {} within {} in cache but not on Item's gtins list",
+								gtinId,
+								thisId2);
+							LOGGER.warn("Should be a rare case after inventory new SKU, then get order with two or more uom for that SKU");
+						} else {
+							LOGGER.info("Found gtin sloppy match of {} within cache. {} is an onboarding gtin", gtinId, thisId2);
+						}
+						return gtin2;
+					}
+				}
+			}
+			LOGGER.debug("rejected {} for cache gtin match of {}:{}/{}",
+				gtin2,
+				gtinId,
+				inItemMaster.getItemId(),
+				inUomMaster.getUomMasterId());
+		}
+
 		return null;
 	}
 
@@ -900,7 +954,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 	 * This is a fairly expensive check within the gtin cache.
 	 * We may have longer gtins in the database.
 	 */
-	private Gtin findUniqueManufacturedSubstringMatch(String gtinId) {
+	private Gtin findUniqueSubstringMatch(String gtinId) {
 		if (gtinId == null)
 			return null;
 		Gtin result = null;
@@ -915,20 +969,19 @@ public class OutboundOrderBatchProcessor implements Runnable {
 			String thisId = gtin.getDomainId();
 			if (thisId.length() > gtinLength) {
 				if (thisId.startsWith(gtinId) || thisId.endsWith(gtinId)) {
-					if (gtinIsAnOnboardingManufacture(gtin)) {
-						result = gtin;
-						foundCount++;
-					}
+					result = gtin;
+					foundCount++;
 				}
 			}
 		}
 		if (foundCount == 1)
 			return result;
-		else {
+		else if (foundCount > 1) {
 			LOGGER.warn("GTIN_case_7. More than one match possibility for {}. Manual cleanup may be needed", gtinId);
 			return null;
+		} else { // none found
+			return null;
 		}
-
 	}
 
 	// --------------------------------------------------------------------------

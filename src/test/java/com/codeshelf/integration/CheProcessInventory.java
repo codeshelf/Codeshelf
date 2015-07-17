@@ -419,17 +419,20 @@ public class CheProcessInventory extends ServerTest {
 		List<ItemMaster> masters2 = ItemMaster.staticGetDao().getAll();
 		List<Item> items2 = Item.staticGetDao().getAll();
 		Assert.assertEquals(11, gtins2.size());
-		Assert.assertEquals(12, masters2.size()); // odd.  In the console, see this is a consequence of [ERROR] GTIN_case_3ab
+		Assert.assertEquals(11, masters2.size());
 		Assert.assertEquals(11, items2.size());
 
 		log(gtins2, masters2, items2);
 		gtinHash = getGtinHash(gtins2);
+		// Important note. We do not make new UOM for equivalent ones.
+		// The inventory came first, and made the normalized name EA.
+		// When the orders file came with "each", it just used EA.
 		assertItemsUom(gtinHash.get("gtin1493"), "case");
-		assertItemsUom(gtinHash.get("gtin1522"), "each");
+		assertItemsUom(gtinHash.get("gtin1522"), "EA"); // orders file came with each
 		assertItemsUom(gtinHash.get("gtin1122"), "case");
 		assertItemsUom(gtinHash.get("gtin1523"), "case");
-		assertItemsUom(gtinHash.get("gtin1123"), "each");
-		assertItemsUom(gtinHash.get("gtin1124"), "each");
+		assertItemsUom(gtinHash.get("gtin1123"), "EA"); // orders file came with each
+		assertItemsUom(gtinHash.get("gtin1124"), "EA"); // orders file came with each
 		assertItemsUom(gtinHash.get("gtin1555"), "case");
 		assertItemsUom(gtinHash.get("gtin9996"), "EA");
 		assertItemsUom(gtinHash.get("gtin9997"), "EA");
