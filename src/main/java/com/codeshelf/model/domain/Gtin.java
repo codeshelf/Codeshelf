@@ -254,7 +254,7 @@ public class Gtin extends DomainObjectTreeABC<ItemMaster> {
 		ItemMaster master = getParent();
 		List<Item> items = master.getItemsOfUom(getUomMasterId());
 		String locsString = "";
-		for(Item item :items) {
+		for (Item item : items) {
 			if (!locsString.isEmpty()) {
 				locsString += " , ";
 			}
