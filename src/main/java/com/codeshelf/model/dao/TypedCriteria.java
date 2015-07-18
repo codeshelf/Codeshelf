@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 
 import com.google.common.collect.ImmutableMap;
@@ -12,14 +13,20 @@ import com.google.common.collect.Maps;
 @ToString(of={"query"})
 public class TypedCriteria {
 
+	private static final int DEFAULT_MAX_RECORDS = 1000;
+	
 	@Getter
 	private String	query;
 	@Getter
 	private Map<String, Class<?>>	parameterTypes;
 
+	@Getter @Setter
+	private int maxRecords;
+	
 	public TypedCriteria(String query, Map<String, Class<?>> parameterTypes) {
 		this.query = query;
 		this.parameterTypes = parameterTypes;
+		this.maxRecords = DEFAULT_MAX_RECORDS;
 	}
 		
 	public TypedCriteria(String query, String paramName1, Class<?> paramType1) {

@@ -38,8 +38,6 @@ public interface ITypedDao<T> {
 
 	List<T> findByFilter(String criteriaName, Map<String, Object> inFilterArgs);
 
-	List<T> findByFilter(String criteriaName, Map<String, Object> inFilterArgs, int maxRecords);
-
 	boolean matchesFilter(String criteriaName, Map<String, Object> inFilterArgs,
 		UUID persistentId);
 
