@@ -29,7 +29,6 @@ public class Filter implements ObjectEventListener {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(Filter.class);
 
-	private static final int MAX_FILTER_RECORDS = 1000; 
 	String	PERSISTENT_ID		= "persistentId";
 	String	PARENT_ID			= "parentPersistentId";
 	String	CLASSNAME			= "className";
@@ -185,7 +184,7 @@ public class Filter implements ObjectEventListener {
 	}			
 
 	public List<? extends IDomainObject> refreshMatchList() {
-		List<? extends IDomainObject> objectMatchList = dao.findByFilter(criteriaName,params, MAX_FILTER_RECORDS);
+		List<? extends IDomainObject> objectMatchList = dao.findByFilter(criteriaName,params);
 		List<UUID> objectIds = new LinkedList<UUID>();
 		for (IDomainObject object : objectMatchList) {
 			objectIds.add(object.getPersistentId());
