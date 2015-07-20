@@ -38,7 +38,8 @@ import com.codeshelf.util.ThreadUtils;
  */
 public class CheProcessInventory extends ServerTest {
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessInventory.class);
+	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessInventory.class);
+	private static final int	WAIT_TIME	= 4000;
 
 	// This is based on CheProcessLineScan which had a convenient no-slot facility.
 
@@ -76,7 +77,13 @@ public class CheProcessInventory extends ServerTest {
 				+ "Bay,B2,230,,,,,\r\n" //
 				+ "Tier,T1,,0,80,80,,\r\n" //
 				+ "Bay,B3,230,,,,,\r\n" //
-				+ "Tier,T1,,0,80,160,,\r\n"; //
+				+ "Tier,T1,,0,80,160,,\r\n" //
+				+ "Aisle,A4,,,,,tierB1S1Side,12.85,75.45,X,120,Y\r\n" //Aisle4 consists of 4 SKU walls: B1, and B2
+				+ "Bay,B1,230,,,,,\r\n" //
+				+ "Tier,T1,,0,80,0,,\r\n" //
+				+ "Bay,B2,230,,,,,\r\n" //
+				+ "Tier,T1,,0,80,0,,\r\n"; //
+
 		importAislesData(getFacility(), csvAisles);
 
 		// Get the aisle
@@ -114,7 +121,11 @@ public class CheProcessInventory extends ServerTest {
 				+ "A2.B3.T1, D403\r\n"//
 				+ "A3.B1.T1, D501\r\n" //
 				+ "A3.B2.T1, D502\r\n" //
-				+ "A3.B3.T1, D503\r\n";//
+				+ "A3.B3.T1, D503\r\n"//
+				+ "A4.B1, SkuWall1\r\n"//
+				+ "A4.B1.T1, SkuWall1_1\r\n"//
+				+ "A4.B2, SkuWall2\r\n"//
+				+ "A4.B2.T1, SkuWall2_1\r\n";//
 		importLocationAliasesData(getFacility(), csvAliases);
 
 		CodeshelfNetwork network = getNetwork();
@@ -157,7 +168,11 @@ public class CheProcessInventory extends ServerTest {
 		controller3.addLocation(tier);
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
-
+		
+		Aisle a4 = Aisle.staticGetDao().findByDomainId(getFacility(), "A4");
+		a4.setUsage(Location.SKUWALL_USAGE);
+		Aisle.staticGetDao().store(a4);
+		
 		// Note: the tape guids would vary. This just helps the test a bit.
 		setTapeForTierNamed("D301", "d301");
 		setTapeForTierNamed("D302", "d302");
@@ -168,6 +183,9 @@ public class CheProcessInventory extends ServerTest {
 		setTapeForTierNamed("D501", "d501");
 		setTapeForTierNamed("D502", "d502");
 		setTapeForTierNamed("D503", "d503");
+		setTapeForTierNamed("D503", "d503");
+		setTapeForTierNamed("SkuWall1_1", "d601");
+		setTapeForTierNamed("SkuWall2_1", "d602");
 
 		// Check one convert and extract
 		Location loc301 = getFacility().findSubLocationById("D301");
@@ -239,6 +257,8 @@ public class CheProcessInventory extends ServerTest {
 		Tier:D501 has tape name:D501 and tape id:431105
 		Tier:D502 has tape name:D502 and tape id:431106
 		Tier:D503 has tape name:D503 and tape id:431107
+		Tier:SkuWall1_1 has tape name:D601 and tape id:432129
+		Tier:SkuWall2_1 has tape name:D602 and tape id:432130
 		 */
 
 		beginTransaction();
@@ -257,44 +277,49 @@ public class CheProcessInventory extends ServerTest {
 
 		LOGGER.info("1b: scan X%INVENTORY, should go to SCAN_GTIN state");
 		picker.scanCommand("INVENTORY");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
 		picker.logCheDisplay();
 
 		LOGGER.info("1c: scan a GTIN that exists. We do not have this inventory yet.");
 		picker.scanSomething("gtin1123");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
 		picker.logCheDisplay();
 
 		LOGGER.info("1d: scan location. This is unlikely. Few sites would have barcodes up for location in our L% format");
 		picker.scanLocation("D302");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
 		picker.logCheDisplay();
 
 		LOGGER.info("1e: scan another GTIN  and also place it by location.");
 		picker.scanSomething("gtin1493");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
 		picker.logCheDisplay();
 		picker.scanLocation("D402");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
 		picker.logCheDisplay();
 
 		LOGGER.info("1f: scan the first GTIN again. Now it would light where it is at (center of D302)");
 		picker.scanSomething("gtin1123");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
 		picker.logCheDisplay();
 
 		LOGGER.info("1g: scan Codeshelf tape corresponding to a different tier and offset. D303 tape Id is 429059 ");
 		picker.scanSomething("%004290590250");
-		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
+		picker.logCheDisplay();
+		
+		LOGGER.info("1h: scan Codeshelf tape corresponding to a SKU wall. D601 tape Id is 432129 ");
+		picker.scanSomething("%004321290250");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
 		picker.logCheDisplay();
 
-		LOGGER.info("1h: scan X%CLEAR and get back to READY state");
+		LOGGER.info("1i: scan X%CLEAR and get back to READY state");
 		picker.scanCommand("CLEAR");
-		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 1000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
-		LOGGER.info("1i: logout");
+		LOGGER.info("1j: logout");
 		picker.scanCommand("LOGOUT");
-		picker.waitForCheState(CheStateEnum.IDLE, 1000);
+		picker.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
@@ -310,6 +335,12 @@ public class CheProcessInventory extends ServerTest {
 		Assert.assertNotNull(locationD3031);
 		Item item1123locD3031 = locationD3031.getStoredItemFromMasterIdAndUom("1123", "ea");
 		Assert.assertNotNull(item1123locD3031);
+		
+		LOGGER.info("2b: check that item 1123 ALSO exists in SKU wall SkuWall1 - slot A4.B1.T1, alias SkuWall1_1");
+		Location locationSku1_1 = facility.findSubLocationById("SkuWall1_1");
+		Assert.assertNotNull(locationSku1_1);
+		Item item1123locSku1_1 = locationSku1_1.getStoredItemFromMasterIdAndUom("1123", "ea");
+		Assert.assertNotNull(item1123locSku1_1);
 		
 		LOGGER.info("3: test our UI functions getItemLocationName and setItemLocationName");
 		String locFor1493 = item1493locD402.getItemLocationName();
@@ -328,6 +359,44 @@ public class CheProcessInventory extends ServerTest {
 		Assert.assertEquals("A1.B3.T1.S2", locFor1493);
 		
 		this.getTenantPersistenceService().commitTransaction();
+		
+		LOGGER.info("4: move item 1123 from one SKU wall to another");
+		LOGGER.info("4a: login to picker and go to INVENTORY mode");
+		picker.loginAndCheckState("Picker #1", CheStateEnum.SETUP_SUMMARY);		
+		picker.scanCommand("INVENTORY");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
+		LOGGER.info("4b: scan item 1123, and scan tape location in SkuWall2 (tier SkuWall2_1)");
+		picker.scanSomething("gtin1123");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
+		picker.scanSomething("%004321300250");
+		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
+		LOGGER.info("4c: logout");
+		picker.scanCommand("LOGOUT");
+		picker.waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
+		
+		this.getTenantPersistenceService().beginTransaction();
+
+		LOGGER.info("4d: verify that item 1123 remained in the same spot in the non-skuwall area");
+		facility = Facility.staticGetDao().reload(facility);
+		locationD3031 = facility.findSubLocationById("D3031");
+		Assert.assertNotNull(locationD3031);
+		item1123locD3031 = locationD3031.getStoredItemFromMasterIdAndUom("1123", "ea");
+		Assert.assertNotNull(item1123locD3031);
+		
+		LOGGER.info("4e: verify that item 1123 was removed from SkuWall1");
+		locationSku1_1 = facility.findSubLocationById("SkuWall1_1");
+		Assert.assertNotNull(locationSku1_1);
+		item1123locSku1_1 = locationSku1_1.getStoredItemFromMasterIdAndUom("1123", "ea");
+		Assert.assertNull(item1123locSku1_1);
+		
+		LOGGER.info("4e: verify that item 1123 was moved to SkuWall2");
+		Location locationSku2_1 = facility.findSubLocationById("SkuWall2_1");
+		Assert.assertNotNull(locationSku2_1);
+		Item item1123locSku2_1 = locationSku2_1.getStoredItemFromMasterIdAndUom("1123", "ea");
+		Assert.assertNotNull(item1123locSku2_1);
+
+		this.getTenantPersistenceService().commitTransaction();
+
 	}
 
 	/**

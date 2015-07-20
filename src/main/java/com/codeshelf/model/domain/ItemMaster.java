@@ -403,7 +403,8 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		boolean thisItemEach = UomNormalizer.isEach(thisUomId);
 		Facility facility = inLocation.getFacility();
 		boolean eachMult = PropertyService.getInstance().getBooleanPropertyFromConfig(facility, DomainObjectProperty.EACHMULT);
-		String domainId = Item.makeDomainId(this.getItemId(), inLocation, thisUomId);
+		boolean isLocationSkuWall = inLocation.isSkuWallLocation();
+		/*
 		if (thisItemEach && !eachMult) {
 			for (Item item : getItems()) {
 				if (UomNormalizer.isEach(item.getUomMasterId()))
@@ -420,6 +421,27 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 						return item;
 					}
 				}
+			}
+		}
+		*/
+		for (Item item : getItems()) {
+			boolean isItemInSkuWall = item.getStoredLocation().isSkuWallLocation();
+			//Even when disallowing multiple identical Items in the facility, we still allow the same Gtin to be in a normal area and on the Sku wall
+			boolean itemAndLocationAreBothInSkuWallOrOut = isLocationSkuWall == isItemInSkuWall;
+			if (thisItemEach && !eachMult) {
+				if (UomNormalizer.isEach(item.getUomMasterId()) && itemAndLocationAreBothInSkuWallOrOut)
+					return item;
+			} else {
+				// if items follow the normal pattern, equals on domainId would be sufficient
+				String domainId = Item.makeDomainId(this.getItemId(), inLocation, thisUomId); 
+				if (domainId.equals(item.getDomainId()) && itemAndLocationAreBothInSkuWallOrOut)
+					return item;
+				else if (inLocation.equals(item.getStoredLocation())) {
+					if (UomNormalizer.normalizedEquals(thisUomId, item.getUomMasterId()) && itemAndLocationAreBothInSkuWallOrOut) {
+						LOGGER.error("findExistingItem succeeded with domainId mismatch");
+						return item;
+					}
+				}				
 			}
 		}
 		//Make sure that there are no identical items in the same Sku wall
@@ -454,9 +476,12 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	 */
 	public Item findOrCreateItem(Location inLocation, UomMaster uom) {
 		Item item = findExistingItem(inLocation, uom);
-		if (item == null)
+		//If no item with matching master/uom found, create new item
+		if (item == null){
 			item = createStoredItem(inLocation, uom);
-		else if (!item.getStoredLocation().equals(inLocation))
+			return item;
+		}
+		if (!item.getStoredLocation().equals(inLocation))
 			inLocation.addStoredItem(item); // which removes from the prior location.
 		return item;
 	}

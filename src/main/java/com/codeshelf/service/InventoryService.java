@@ -43,7 +43,7 @@ public class InventoryService implements IApiService {
 		this.lightService = inLightService;
 	}
 
-	public InventoryUpdateResponse moveOrCreateInventory(String inGtin, String inLocation, UUID inChePersistentId, String wallName) {
+	public InventoryUpdateResponse moveOrCreateInventory(String inGtin, String inLocation, UUID inChePersistentId, String activeSkuWall) {
 		// At this point, inLocation may be a location name (usually alias), or if a tape Id, it still has the % prefix
 
 		LOGGER.info("moveOrCreateInventory called for gtin:{}, location:{}", inGtin, inLocation);
@@ -73,23 +73,23 @@ public class InventoryService implements IApiService {
 		Location location = findLocation(facility, inLocation);
 		
 		//If the Inventory process in performed while putting a new item into the Sku wall, do not permit placement into other waklls (CD_0099B)
-		if (wallName != null) {
-			Location wallLocation = findLocation(facility, wallName);
+		if (activeSkuWall != null) {
+			Location wallLocation = findLocation(facility, activeSkuWall);
 			if (wallLocation.equals(facility)) {
-				LOGGER.error("Could not locate wall {} (optional parameter)", wallName);
-				response.appendStatusMessage("moveOrCreateInventory ERROR: Could not locate wall " + wallName + " (optional parameter).");
+				LOGGER.error("Could not locate wall {} (optional parameter)", activeSkuWall);
+				response.appendStatusMessage("moveOrCreateInventory ERROR: Could not locate wall " + activeSkuWall + " (optional parameter).");
 				response.setFoundGtin(false);
 				response.setFoundLocation(false);
 				response.setStatus(ResponseStatus.Fail);
 				return response;				
 			}
 			if (!wallLocation.hasDescendant(location)) {
-				LOGGER.error("Location {} is not within wall {}", inLocation, wallName);
-				response.appendStatusMessage("moveOrCreateInventory ERROR: Location " + inLocation + " is not within wall " + wallName);
+				LOGGER.error("Location {} is not within wall {}", inLocation, activeSkuWall);
+				response.appendStatusMessage("moveOrCreateInventory ERROR: Location " + inLocation + " is not within wall " + activeSkuWall);
 				response.setFoundGtin(false);
 				response.setFoundLocation(false);
 				response.setStatus(ResponseStatus.Fail);
-				return response;								
+				return response;
 			}
 		}
 		
