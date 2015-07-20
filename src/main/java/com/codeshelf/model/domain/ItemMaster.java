@@ -525,18 +525,24 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	 * If more than one we might return the wrong GTIN, however, having multiple
 	 * GTINs with the same UOM is wrong.
 	 * 
+	 * New from v18/v19 find a gtin for the master with the equivalent normalized uom.
+	 * If both exist (shouldn't), return the exact match over the normalized match
+	 * 
 	 * FIXME Database restraint for GTIN ItemMaster <--> UOM matching
 	 */
 	public Gtin getGtinForUom(UomMaster inUomMaster){
 		
 		List<Gtin> gtinList = new ArrayList<Gtin>(gtins.values());
+		Gtin normalizedMatch = null;
 		
 		for (Gtin gtin : gtinList) {
 			if (gtin.getUomMaster().equals(inUomMaster))
 				return gtin;
-		}
-		
-		return null;
+			else if (gtin.getUomMaster().equalsNormalized(inUomMaster)){
+				normalizedMatch = gtin;
+			}
+		}		
+		return normalizedMatch;
 	}
 
 }

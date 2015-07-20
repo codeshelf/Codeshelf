@@ -1,6 +1,5 @@
 package com.codeshelf.model.domain;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.junit.Assert;
@@ -61,34 +60,6 @@ public class OrderHeaderTest extends HibernateTest {
 
 	}
 
-	@Test
-	public void testOrderHeaderLimits() {
-		this.getTenantPersistenceService().beginTransaction();
-		Facility facility = createFacility();
-		OrderHeader.staticGetDao().store(createOrderHeader("Order1", OrderTypeEnum.OUTBOUND, facility, null));
-		OrderHeader.staticGetDao().store(createOrderHeader("Order2", OrderTypeEnum.OUTBOUND, facility, null));
-		OrderHeader.staticGetDao().store(createOrderHeader("Order3", OrderTypeEnum.OUTBOUND, facility, null));
-		
-		
-		this.getTenantPersistenceService().commitTransaction();
-		this.getTenantPersistenceService().beginTransaction();
-		//Find all three
-		List<OrderHeader> orderHeaders = OrderHeader.staticGetDao().findByFilter("orderHeadersByFacilityAndType",
-			ImmutableMap.<String, Object>of(
-				"facilityId", facility.getPersistentId(),
-				"orderType", OrderTypeEnum.OUTBOUND.name())); //find only one
-		Assert.assertEquals(3, orderHeaders.size());
-
-		List<OrderHeader> singleOrderHeader = OrderHeader.staticGetDao().findByFilter("orderHeadersByFacilityAndType",
-			ImmutableMap.<String, Object>of(
-				"facilityId", facility.getPersistentId(),
-				"orderType", OrderTypeEnum.OUTBOUND.name()),
-				1); //find only one
-		Assert.assertEquals(1, singleOrderHeader.size());
-
-		this.getTenantPersistenceService().commitTransaction();
-	}
-	
 	@Test
 	public void testOrderHeaderByFacilityAndType() {
 		this.getTenantPersistenceService().beginTransaction();

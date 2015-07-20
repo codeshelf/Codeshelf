@@ -43,7 +43,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(GenericDaoABC.class);
 
-	private static final Integer NO_MAX_RECORDS	= null; // indicates no maximum records
+//	private static final Integer NO_MAX_RECORDS	= null; // indicates no maximum records
 
 	private ConvertUtilsBean converter;
 
@@ -194,7 +194,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		
 		HashMap<String, Object> newArgs = Maps.newHashMap(inArgs);
 		newArgs.put(parameterName, inPersistentId);
-		return (findByCriteria(singleObjectCriteria, newArgs, NO_MAX_RECORDS).isEmpty() == false);
+		return (findByCriteria(singleObjectCriteria, newArgs, criteria.getMaxRecords()).isEmpty() == false);
 	}
 	
 	// --------------------------------------------------------------------------
@@ -205,20 +205,9 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		// create criteria using look-up table
 		TypedCriteria criteria = CriteriaRegistry.getInstance().findByName(inCriteriaName, this.getDaoClass());
 		Preconditions.checkNotNull(criteria, "Unable to find filter criteria with name: %s" , inCriteriaName);
-		return findByCriteria(criteria, inArgs, NO_MAX_RECORDS);
+		return findByCriteria(criteria, inArgs, criteria.getMaxRecords());
 	}
 	
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
-	 */
-	public List<T> findByFilter(String inCriteriaName, Map<String, Object> inArgs, int maxRecords) {
-		// create criteria using look-up table
-		TypedCriteria criteria = CriteriaRegistry.getInstance().findByName(inCriteriaName, this.getDaoClass());
-		Preconditions.checkNotNull(criteria, "Unable to find filter criteria with name: %s" , inCriteriaName);
-		return findByCriteria(criteria, inArgs, maxRecords);
-	}
-
 	protected List<T> findByCriteria(TypedCriteria criteria, Map<String, Object> inArgs, Integer maxRecords) {
 		Session session = getCurrentSession();
 		Query query = session.createQuery(criteria.getQuery());
