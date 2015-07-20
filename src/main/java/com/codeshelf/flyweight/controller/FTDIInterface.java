@@ -12,6 +12,8 @@ import java.util.List;
 
 import jd2xx.JD2XX;
 import jd2xx.JD2XX.DeviceInfo;
+import jd2xx.JD2XXEventListener;
+import jd2xx.JD2XXEvent;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +59,8 @@ public final class FTDIInterface extends SerialInterfaceABC {
 	//	private static final int BAUD_416667 = 416667;
 	//	private static final int BAUD_625000 = 625000;
 	private static final int	BAUD_1250000		= 1250000;
-	private static final int	READ_BUFFER_BYTES	= Packet.MAX_PACKET_BYTES * 2;
+	private static final int	READ_BUFFER_BYTES	= Packet.MAX_PACKET_BYTES * 20;
+	private static final int	MAX_READ_BEFORE_TIMEOUT = Packet.MAX_PACKET_BYTES * 5;
 	//private static final int	VID					= 0x0403;
 	//private static final int	GW_PID				= 0xada8;
 	private static final long	GW_VID_PID			= 0x0403ada8;
@@ -69,6 +72,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 	private int					mReadBufferSize;
 	private int					mReadBufferPos;
 	private Boolean				mDeviceIsRunning	= false;
+	private int					bytesRead = 0;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -78,8 +82,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 		mReadBuffer = new byte[READ_BUFFER_BYTES];
 		try {
 			mJD2XXInterface = new JD2XX();
-		}
-		catch (UnsatisfiedLinkError e) {
+		} catch (UnsatisfiedLinkError e) {
 			LOGGER.error("JD2XX is not available");
 		}
 	}
@@ -267,7 +270,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 	 * @see com.gadgetworks.controller.SerialInterfaceABC#doStopInterface()
 	 */
 	protected void doStopInterface() {
-		if(mJD2XXInterface == null) {
+		if (mJD2XXInterface == null) {
 			LOGGER.warn("doStopInterface called, but mJD2XXInterface was null");
 		} else {
 			try {
@@ -284,26 +287,33 @@ public final class FTDIInterface extends SerialInterfaceABC {
 	 */
 	private void checkReadBuffer() {
 		try {
-			if (mReadBufferPos >= mReadBufferSize) {
+			//if (mReadBufferPos >= mReadBufferSize) {
+
 				int[] status = mJD2XXInterface.getStatus();
+				int mask = 0;
+				mask = mask | JD2XX.EVENT_RXCHAR;
+				//mJD2XXInterface.setEventNotification(mask, mJD2XXInterface.);
+
 				// The number of waiting bytes is in pos 0 of the status array.
 				if (status[0] > 0) {
 					int bytesToRead = Math.min(mReadBuffer.length, status[0]);
-					//LOGGER.debug("---------- Start read from FTDI ---------------------------------------------- ");
+					LOGGER.info("---------- Start read from FTDI ---------------------------------------------- ");
 					mReadBufferSize = mJD2XXInterface.read(mReadBuffer, 0, bytesToRead);
-					//hexDumpArray(mReadBuffer, mReadBufferSize);
-					//OGGER.debug("------------------------------------------------------------------------ ");
+					hexDumpArray(mReadBuffer, mReadBufferSize);
+					LOGGER.info("------------------------------------------------------------------------ ");
 					mReadBufferPos = 0;
 				} else {
 					// We didn't read a character, so sleep for a little.
+					
 					try {
-						Thread.sleep(READ_SLEEP_MILLIS);
+						Thread.sleep(2);
 					} catch (InterruptedException e) {
 						LOGGER.error("", e);
 					}
-
+					
 				}
-			}
+
+			//}
 		} catch (IOException e) {
 			resetInterface();
 		} catch (IndexOutOfBoundsException e) {
@@ -318,23 +328,40 @@ public final class FTDIInterface extends SerialInterfaceABC {
 	protected byte readByte() {
 		byte result = 0;
 		boolean byteRead = false;
+		
+		if (bytesRead > /*1280*/MAX_READ_BEFORE_TIMEOUT*5){
+			bytesRead = 0;
+			try {
+				Thread.sleep(2);
+			} catch (InterruptedException e) {
+				LOGGER.error("", e);
+			}
+		}
 
 		while ((shouldRun()) && (!byteRead)) {
-
-			checkReadBuffer();
+			
 
 			if (mReadBufferPos < mReadBufferSize) {
 				byteRead = true;
 				result = mReadBuffer[mReadBufferPos++];
+				bytesRead++;
+				
 			} else {
-				//				try {
-				//					Thread.sleep(READ_SLEEP_MILLIS);
-				//				} catch (InterruptedException e) {
-				//					LOGGER.error("", e);
-				//				}
+				checkReadBuffer();
+
+				if (mReadBufferSize == 0) {
+					try {
+						Thread.sleep(2);
+					} catch (InterruptedException e) {
+						LOGGER.error("", e);
+					}
+				}
 			}
 
 		}
+		
+		
+		
 		return result;
 	};
 
@@ -363,7 +390,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 		try {
 			mJD2XXInterface.write(inByte);
 		} catch (IOException e) {
-			LOGGER.error("Failed to send data",e.getMessage());
+			LOGGER.error("Failed to send data", e.getMessage());
 			resetInterface();
 		}
 	};

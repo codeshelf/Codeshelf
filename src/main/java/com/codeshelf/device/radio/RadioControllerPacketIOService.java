@@ -36,8 +36,7 @@ public class RadioControllerPacketIOService {
 	private volatile boolean							isShutdown		= false;
 
 	public RadioControllerPacketIOService(IGatewayInterface gatewayInterface,
-		RadioControllerInboundPacketService packetHandlerService,
-		long writeDelayMs) {
+		RadioControllerInboundPacketService packetHandlerService) {
 		super();
 		this.gatewayInterface = gatewayInterface;
 		this.packetHandlerService = packetHandlerService;
@@ -55,10 +54,9 @@ public class RadioControllerPacketIOService {
 	}
 
 	/**
-	 * This method is synchronized because the gateway's thread safety is
-	 * unknown
+	 * We should be careful not to call this method in two threads.
 	 */
-	public synchronized void handleOutboundPacket(IPacket packet) {
+	public void handleOutboundPacket(IPacket packet) {
 		// Send packet
 		packet.incrementSendCount();
 		gatewayInterface.sendPacket(packet);
@@ -67,7 +65,7 @@ public class RadioControllerPacketIOService {
 		if (packetsSentCounter != null) {
 			packetsSentCounter.inc();
 		}
-
+		
 		if (packet.getCommand().getCommandTypeEnum() != CommandGroupEnum.NETMGMT) {
 			LOGGER.debug("Outbound packet={}", packet);
 		}
@@ -85,12 +83,14 @@ public class RadioControllerPacketIOService {
 						// TODO Move gatewayInterface away from polling. This
 						// method will sleep for 1ms if we don't have enough
 						// packets to read.
-						IPacket packet = gatewayInterface.receivePacket(networkId);
+						LOGGER.info("BACK TO WAITING");
+						IPacket packet = null;
+						packet = gatewayInterface.receivePacket(networkId);
 
 						if (packet != null) {
 							// Hand packet off to handler service
 							boolean success = packetHandlerService.handleInboundPacket(packet);
-							LOGGER.debug("Inbound packet={}; didGetHandled={}", packet, success);
+							LOGGER.info("Inbound packet={}; didGetHandled={}", packet, success);
 							if (!success) {
 
 								LOGGER.warn("PacketHandlerService failed to accept packet. Pausing packet reads to retry handlePacket. Packet={}",

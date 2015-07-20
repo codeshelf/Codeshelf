@@ -126,14 +126,14 @@ public interface INetworkDevice {
 	/**
 	 * Get the last ack ID that we processed.
 	 */
-	byte getLastAckId();
+	byte getLastIncomingAckId();
 
 	// --------------------------------------------------------------------------
 	/**
 	 * Set the last ack ID that we processed.
-	 * @param inAckId
+	 * @param inAckId mOutgoingAckId
 	 */
-	void setLastAckId(byte inAckId);
+	void setLastIncomingAckId(byte inAckId);
 
 	// --------------------------------------------------------------------------
 	/**

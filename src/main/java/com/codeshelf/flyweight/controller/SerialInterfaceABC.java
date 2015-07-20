@@ -37,9 +37,9 @@ import com.codeshelf.flyweight.command.Packet;
 public abstract class SerialInterfaceABC implements IGatewayInterface {
 
 	public static final int		SERIAL_RESET_TIMEOUT_MS	= 500;
-	public static final int		READ_SLEEP_MILLIS		= 1;
+	public static final int		READ_SLEEP_MILLIS		= 10;
 	public static final int		READ_RECOVER_MILLIS		= 5000;
-	public static final int		WAIT_INTERFACE_MILLIS	= 10;
+	public static final int		WAIT_INTERFACE_MILLIS	= 5;
 
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(SerialInterfaceABC.class);
 
@@ -178,11 +178,13 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		byte[] nextFrameArray = this.receiveFrame();
 
 		if (nextFrameArray.length == 0) {
+			/*
 			try {
 				Thread.sleep(WAIT_INTERFACE_MILLIS);
 			} catch (InterruptedException e) {
 				LOGGER.error("", e);
 			}
+			*/
 		} else {
 
 			ByteArrayInputStream byteArray = new ByteArrayInputStream(nextFrameArray);
@@ -190,8 +192,10 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 
 			// Receive the next packet.
 			packet = new Packet();
-			packet.fromStream(inputStream, nextFrameArray.length);
-
+			if (nextFrameArray.length > 0) {
+				packet.fromStream(inputStream, nextFrameArray.length);
+			}
+			
 			if ((packet.getNetworkId().equals(inMyNetworkId))
 					|| (packet.getNetworkId().equals(new NetworkId(IPacket.ZERO_NETWORK_ID)))
 					|| (packet.getNetworkId().equals(new NetworkId(IPacket.BROADCAST_NETWORK_ID)))) {
@@ -224,6 +228,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 				}
 			}
 		}
+	
 		return result;
 	}
 
@@ -506,7 +511,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		for (pos = 0; pos < inBytesToWrite; pos++) {
 			if (pos % 16 == 0) {
 				if (text.length() > 0) {
-					LOGGER.debug(text);
+					LOGGER.info(text);
 				}
 				text = String.format("\t\t%02x: ", pos);
 			} else {
@@ -515,7 +520,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			text += String.format("%02x", inByteArray[pos]);
 		}
 		if (pos != 0) {
-			LOGGER.debug(text);
+			LOGGER.info(text);
 		}
 	}
 }
