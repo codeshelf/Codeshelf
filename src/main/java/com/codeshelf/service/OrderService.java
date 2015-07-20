@@ -385,7 +385,7 @@ public class OrderService implements IApiService {
 		List<OrderHeader> orderHeaders = OrderHeader.staticGetDao().findByParent(facility);
 		int result = orderHeaders.size();
 		for (OrderHeader orderHeader : orderHeaders) {
-			OrderHeader.staticGetDao().delete(orderHeader);
+			orderHeader.delete();
 		}
 		return result;
 	}
