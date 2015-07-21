@@ -27,13 +27,11 @@ import com.codeshelf.flyweight.command.CommandControlABC;
 import com.codeshelf.flyweight.command.CommandControlButton;
 import com.codeshelf.flyweight.command.CommandControlScan;
 import com.codeshelf.flyweight.command.CommandNetMgmtABC;
-import com.codeshelf.flyweight.command.CommandNetMgmtCheck;
 import com.codeshelf.flyweight.command.CommandNetMgmtIntfTest;
 import com.codeshelf.flyweight.command.CommandNetMgmtSetup;
 import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
-import com.codeshelf.flyweight.command.NetChannelValue;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.command.NetworkId;
 import com.codeshelf.flyweight.command.Packet;
@@ -432,7 +430,6 @@ public class RadioController implements IRadioController {
 				break;
 				
 			case CommandNetMgmtABC.NETCHECK_COMMAND:
-				processNetworkCheckCommand((CommandNetMgmtCheck) inCommand, inSrcAddr);
 				break;
 
 			case CommandNetMgmtABC.NETINTFTEST_COMMAND:
@@ -443,72 +440,6 @@ public class RadioController implements IRadioController {
 		}
 
 	}
-	
-	// --------------------------------------------------------------------------
-		/**
-		 * @param inCommand
-		 */
-		private void processNetworkCheckCommand(CommandNetMgmtCheck inCommand, NetAddress inSrcAddr) {
-
-			NetworkId networkId = inCommand.getNetworkId();
-			if (inCommand.getNetCheckType() == CommandNetMgmtCheck.NETCHECK_REQ) {
-				// This is a net-check request.
-
-				// If it's an all-network broadcast, or a request to our network
-				// then respond.
-				boolean shouldRespond = false;
-				String responseGUID = "";
-				if (inCommand.getNetCheckType() == CommandNetMgmtCheck.NETCHECK_RESP) {
-					// For a broadcast request we respond with the private GUID.
-					// This will cause the gateway (dongle)
-					// to insert its own GUID before transmitting it to the air.
-					shouldRespond = true;
-					responseGUID = PRIVATE_GUID;
-				} else if (networkId.equals(packetIOService.getNetworkId())) {
-					// For a network-specific request we respond with the GUID of
-					// the requester.
-					shouldRespond = true;
-					responseGUID = inCommand.getGUID();
-				}
-
-				if (shouldRespond) {
-					// If this is a network check for us then response back to the
-					// sender.
-					// Send a network check response command back to the sender.
-					CommandNetMgmtCheck netCheck = new CommandNetMgmtCheck(CommandNetMgmtCheck.NETCHECK_RESP,
-						inCommand.getNetworkId(),
-						responseGUID,
-						inCommand.getChannel(),
-						new NetChannelValue((byte) 0),
-						new NetChannelValue((byte) 0));
-					//this.sendCommand(netCheck, broadcastService.getBroadcastAddress(), false);
-				}
-			} else {
-				// This is a net-check response.
-				if (networkId.getValue() == IPacket.BROADCAST_NETWORK_ID) {
-
-					// If this is a all-network net-check broadcast response then
-					// book keep the values.
-
-					// Find the ChannelInfo instance for this channel.
-					byte channel = inCommand.getChannel();
-
-					if (inCommand.getGUID().equals(PRIVATE_GUID)) {
-						// This came from the gateway (dongle) directly.
-						// The gateway (dongle) will have inserted an energy detect
-						// value for the channel.
-						mChannelInfo[channel].setChannelEnergy(inCommand.getChannelEnergy().getValue());
-					} else {
-						// This came from another controller on the same channel, so
-						// increment the number of controllers on the channel.
-						mChannelInfo[channel].incrementControllerCount();
-					}
-				} else {
-					// The controller never receives network-specific net-check
-					// responses.
-				}
-			}
-		}
 
 	// --------------------------------------------------------------------------
 	/**

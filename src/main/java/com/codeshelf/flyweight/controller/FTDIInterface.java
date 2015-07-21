@@ -12,8 +12,6 @@ import java.util.List;
 
 import jd2xx.JD2XX;
 import jd2xx.JD2XX.DeviceInfo;
-import jd2xx.JD2XXEventListener;
-import jd2xx.JD2XXEvent;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

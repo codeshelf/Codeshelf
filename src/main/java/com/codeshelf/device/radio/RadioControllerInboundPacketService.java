@@ -1,19 +1,14 @@
 package com.codeshelf.device.radio;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.IPacket;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-
-//import edu.emory.mathcs.backport.java.util.concurrent.TimeUnit;
 
 /**
  * The packet handler service is thread-safe and allows multiple threads to call
@@ -27,21 +22,16 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
  *
  */
 public class RadioControllerInboundPacketService {
-	private static final Logger				LOGGER					= LoggerFactory.getLogger(RadioControllerInboundPacketService.class);
+	private static final Logger						LOGGER			= LoggerFactory.getLogger(RadioControllerInboundPacketService.class);
 
-	private final ExecutorService			executor				= Executors.newFixedThreadPool(Math.max(/*Runtime.getRuntime()
-																											.availableProcessors() */8,
-																		2),
+	private final ExecutorService					executor		= Executors.newFixedThreadPool(Math.max(Runtime.getRuntime()
+																		.availableProcessors() * 2, 2),
 																		new ThreadFactoryBuilder().setNameFormat("pckt-hndlr-%s")
 																			.build());
 
-	//private final BlockingQueue<IPacket>	incomingPackets			= new ArrayBlockingQueue<IPacket>(MAX_PACKET_QUEUE_SIZE);
-	private final ConcurrentLinkedQueue<IPacket> incomingPackets	= new ConcurrentLinkedQueue<IPacket>();
-	
+	private final ConcurrentLinkedQueue<IPacket>	incomingPackets	= new ConcurrentLinkedQueue<IPacket>();
 
-	private static final int				MAX_PACKET_QUEUE_SIZE	= 200;
-
-	private final RadioController			radioController;
+	private final RadioController					radioController;
 
 	public RadioControllerInboundPacketService(RadioController radioController) {
 		super();
@@ -86,40 +76,20 @@ public class RadioControllerInboundPacketService {
 
 		@Override
 		public void run() {
-			//if (queue.isEmpty()) {
-			//	return;
-			//}
-			
-			//LOGGER.info("**** Polling for packet");
-			
+
 			IPacket packet = null;
 			packet = queue.poll();
-			
+
 			if (packet == null) {
 				return;
 			}
-			
-			//LOGGER.info("**** Handling packet: {}", packet.toString());
 
 			try {
-				//LOGGER.info("~~Handling D: {} P: {}", packet.getDstAddr(), packet.toString());
-				// Handle packet
 				radioController.handleInboundPacket(packet);
 			} catch (Exception e) {
 				// Handle Error
-				//LOGGER.error("PacketHandler Error. Packet={}", packet, e);
-			} //finally {
-
-				// We synchronize on the queue
-				//synchronized (queue) {
-					//if (!queue.isEmpty()) {
-						// Resubmit this runnable if its not empty yet and let
-						// the other submitted PacketHandlers get a fair chance
-					//	executor.submit(this);
-					//}
-				//}
-				//LOGGER.info("**** Finished with packet: {}", packet.toString());
-			//}
+				LOGGER.error("PacketHandler Error. Packet={}", packet, e);
+			}
 		}
 	}
 }
