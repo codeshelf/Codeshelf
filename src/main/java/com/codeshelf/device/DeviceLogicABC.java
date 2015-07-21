@@ -10,10 +10,14 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import javax.persistence.Transient;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.INetworkDevice;
@@ -25,6 +29,7 @@ import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
  *
  */
 public abstract class DeviceLogicABC implements INetworkDevice {
+	private static final Logger		LOGGER								= LoggerFactory.getLogger(DeviceLogicABC.class);
 
 	@Accessors(prefix = "m")
 	@Getter
@@ -83,6 +88,11 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	@Setter
 	@Transient
 	private byte					mLastAckId;
+	
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	long							mLastRadioCommandSendForThisDevice	= 0;
 
 	private AtomicLong				mLastPacketReceivedTime	= new AtomicLong(System.currentTimeMillis());
 	private AtomicLong				mLastPacketSentTime		= new AtomicLong(System.currentTimeMillis());
@@ -131,6 +141,39 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	@Override
 	public final boolean isDeviceAssociated() {
 		return (mDeviceStateEnum != null && mDeviceStateEnum.equals(NetworkDeviceStateEnum.STARTED));
+	}
+
+	/**
+	 * A bottleneck for command so we can look at timing or whatever
+	 * Send the command to the the getAddress() of this device
+	 */
+	protected void sendRadioControllerCommand(ICommand inCommand, boolean inAckRequested) {
+		if (this.isDeviceAssociated()) {
+			waitLongEnough();
+			setLastRadioCommandSendForThisDevice(System.currentTimeMillis());
+			mRadioController.sendCommand(inCommand, getAddress(), inAckRequested);
+		}
+	}
+
+	/**
+	 * Keeps track per device
+	 * Sleeps this thread long enough such that radio commands for the same device do not go out too fast.
+	 */
+	private void waitLongEnough() {
+		int delayPeriodMills = 5;
+
+		if (delayPeriodMills > 0) {
+			long lastSendMs = getLastRadioCommandSendForThisDevice();
+			long nowMs = System.currentTimeMillis();
+			long periodSince = nowMs - lastSendMs;
+			if (periodSince < delayPeriodMills) {
+				try {
+					Thread.sleep(delayPeriodMills - periodSince);
+				} catch (InterruptedException e) {
+				}
+				LOGGER.info("waited {} ms to send", delayPeriodMills - periodSince);
+			}
+		}
 	}
 
 	// --------------------------------------------------------------------------

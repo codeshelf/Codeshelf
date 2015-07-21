@@ -345,8 +345,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			} else {
 				((PosManagerDeviceLogic) inNetworkDevice).disconnectedFromServer();
 			}
+		} else if (inNetworkDevice instanceof AisleDeviceLogic) {
+			if (isAttachedToServer) {
+				((AisleDeviceLogic) inNetworkDevice).connectedToServer();
+			} else {
+				((AisleDeviceLogic) inNetworkDevice).disconnectedFromServer();
+			}
 		}
-
 	}
 
 	// --------------------------------------------------------------------------
@@ -502,6 +507,9 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			if (networkDevice instanceof PosManagerDeviceLogic) {
 				((PosManagerDeviceLogic) networkDevice).connectedToServer();
 			}
+			if (networkDevice instanceof AisleDeviceLogic) {
+				((AisleDeviceLogic) networkDevice).connectedToServer();
+			}
 		}
 	}
 
@@ -517,6 +525,9 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			}
 			if (networkDevice instanceof PosManagerDeviceLogic) {
 				((PosManagerDeviceLogic) networkDevice).disconnectedFromServer();
+			}
+			if (networkDevice instanceof AisleDeviceLogic) {
+				((AisleDeviceLogic) networkDevice).disconnectedFromServer();
 			}
 		}
 		if (clientEndpoint.isConnected()) {

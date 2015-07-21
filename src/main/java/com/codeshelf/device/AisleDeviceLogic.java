@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.CommandControlButton;
+import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
 import com.codeshelf.flyweight.command.CommandControlLed;
 import com.codeshelf.flyweight.command.EffectEnum;
 import com.codeshelf.flyweight.command.ICommand;
@@ -66,6 +67,20 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		final CsDeviceManager inDeviceManager,
 		final IRadioController inRadioController) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
+	}
+
+	public void connectedToServer() {
+		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT, "LED Controller", "Connected", "Incorrect Configuration!", "This is not LED controller");
+		sendRadioControllerCommand(command, true);
+	}
+
+	public void disconnectedFromServer() {
+		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT,
+			"LED Controller",
+			"Disconnected",
+			"Incorrect Configuration!",
+			"This is not LED controller");
+		sendRadioControllerCommand(command, true);
 	}
 
 	public final short getSleepSeconds() {
