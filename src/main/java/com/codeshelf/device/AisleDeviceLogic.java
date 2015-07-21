@@ -69,11 +69,19 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 	}
 
+	/**
+	 * The following message is meant to appear on a CHE that was set up as an LED controller.
+	 * This can happen after an incorrect setup as a PosCon controller
+	 */
 	public void connectedToServer() {
 		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT, "LED Controller", "Connected", "Incorrect Configuration!", "This is not LED controller");
 		sendRadioControllerCommand(command, true);
 	}
 
+	/**
+	 * The following message is meant to appear on a CHE that was set up as an LED controller.
+	 * This can happen after an incorrect setup as a PosCon controller
+	 */
 	public void disconnectedFromServer() {
 		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT,
 			"LED Controller",
