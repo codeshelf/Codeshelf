@@ -31,6 +31,8 @@ import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 public abstract class DeviceLogicABC implements INetworkDevice {
 	private static final Logger		LOGGER								= LoggerFactory.getLogger(DeviceLogicABC.class);
 
+	private byte					STARTING_ACK_NUM		= 1;
+
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
@@ -87,7 +89,11 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	@Getter
 	@Setter
 	@Transient
-	private byte					mLastAckId;
+	private byte					mLastIncomingAckId;
+
+	@Accessors(prefix = "m")
+	@Getter
+	private byte					mOutgoingAckId;
 	
 	@Accessors(prefix = "m")
 	@Getter
@@ -105,6 +111,7 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 		mGuid = inGuid;
 		mDeviceManager = inDeviceManager;
 		mRadioController = inRadioController;
+		mOutgoingAckId = STARTING_ACK_NUM;
 	}
 
 	// --------------------------------------------------------------------------
@@ -121,7 +128,7 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	*/
 	public boolean isAckIdNew(byte inAckId) {
 		int unsignedAckId = inAckId & 0xFF;
-		int unsignedLastAckId = mLastAckId & 0xFF;
+		int unsignedLastAckId = mLastIncomingAckId & 0xFF;
 
 		if (unsignedAckId > unsignedLastAckId) {
 			return true;
@@ -149,7 +156,7 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	 */
 	protected void sendRadioControllerCommand(ICommand inCommand, boolean inAckRequested) {
 		if (this.isDeviceAssociated()) {
-			waitLongEnough();
+			//waitLongEnough();
 			setLastRadioCommandSendForThisDevice(System.currentTimeMillis());
 			mRadioController.sendCommand(inCommand, getAddress(), inAckRequested);
 		}
@@ -159,6 +166,7 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	 * Keeps track per device
 	 * Sleeps this thread long enough such that radio commands for the same device do not go out too fast.
 	 */
+	@SuppressWarnings("unused")
 	private void waitLongEnough() {
 		int delayPeriodMills = 5;
 
@@ -218,4 +226,18 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 		return mLastPacketSentTime.get();
 	}
 
+	// --------------------------------------------------------------------------
+	public synchronized byte getNextAckId() {
+		byte curr = mOutgoingAckId;
+		int currAckIdUnsigned = mOutgoingAckId & 0xFF;
+
+		if (currAckIdUnsigned == 255) {
+			mOutgoingAckId = STARTING_ACK_NUM;
+			curr = mOutgoingAckId;
+		} else {
+			mOutgoingAckId++;
+		}
+
+		return curr;
+	}
 }

@@ -224,5 +224,18 @@ public interface IPacket {
 	 * @param inDevice
 	 */
 	void setDevice(INetworkDevice inDevice);
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Returns whether the packet requires an acknowledgment 
+	 */
+	Boolean getRequiresAck();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Set that the packet requires an acknowledgment 
+	 * @param requiresAck
+	 */
+	void setRequiresAck(Boolean requiresAck);
 
 }

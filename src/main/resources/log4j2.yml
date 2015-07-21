@@ -131,6 +131,9 @@ configuration:
     - name: org.eclipse.jetty.server.Server
       level: warn
     
+    - name: com.joestelmach.natty.Parser
+      level: warn
+    
     - name: com.codeshelf.ws.server.ServerWatchdogThread
       level: info # 
  

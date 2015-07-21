@@ -68,6 +68,11 @@ public final class Packet implements IPacket {
 	@Getter
 	@Setter
 	private INetworkDevice			mDevice;
+	
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private Boolean					mRequiresAck;
 
 	private PacketVersion			mPacketVersion	= new PacketVersion(IPacket.PACKET_VERSION_0);
 	private NBitInteger				mPacketType;
@@ -117,6 +122,7 @@ public final class Packet implements IPacket {
 		mAckState = AckStateEnum.INVALID;
 		mSendCount = 0;
 		mCreateTimeMillis = System.currentTimeMillis();
+		setRequiresAck(inAckRequested);
 	}
 
 	// --------------------------------------------------------------------------
