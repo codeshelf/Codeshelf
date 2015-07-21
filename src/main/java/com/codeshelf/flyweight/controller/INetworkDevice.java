@@ -126,14 +126,14 @@ public interface INetworkDevice {
 	/**
 	 * Get the last ack ID that we processed.
 	 */
-	byte getLastAckId();
+	byte getLastIncomingAckId();
 
 	// --------------------------------------------------------------------------
 	/**
 	 * Set the last ack ID that we processed.
-	 * @param inAckId
+	 * @param inAckId mOutgoingAckId
 	 */
-	void setLastAckId(byte inAckId);
+	void setLastIncomingAckId(byte inAckId);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -190,6 +190,15 @@ public interface INetworkDevice {
 	 * Get the last time a packet was received from this device
 	 */
 	public long getLastPacketSentTime();
-
+	
+	/**
+	 * Get the next ack id for this device
+	 */
+	public byte getNextAckId();
+	
+	/**
+	 * Get the last outgoing ack id used
+	 */
+	public byte getOutgoingAckId();
 
 }

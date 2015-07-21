@@ -43,6 +43,12 @@ public interface IRadioController extends Runnable {
 	
 	// --------------------------------------------------------------------------
 	/**
+	 *	Send a network management command
+	*/
+	void sendNetMgmtCommand(ICommand inCommand, NetAddress inDstAddr);
+	
+	// --------------------------------------------------------------------------
+	/**
 	 *	Set the network ID (call before startController) 
 	 */
 	void setNetworkId(final NetworkId inNetworkId);

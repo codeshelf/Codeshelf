@@ -986,7 +986,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.info("Start CHE controller (after association) ");
 
 		// setState(mCheStateEnum);  Always, after start, there is the device associate chain and redisplay which will call setState(mCheStateEnum);
-		setLastAckId((byte) 0);
+		setLastIncomingAckId((byte) 0);
 
 		// Let's force a short wait after associate
 		setLastRadioCommandSendForThisDevice(System.currentTimeMillis());

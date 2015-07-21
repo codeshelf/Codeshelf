@@ -109,7 +109,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 	 */
 	protected void sendRadioControllerCommand(ICommand inCommand, boolean inAckRequested) {
 		if (this.isDeviceAssociated()) {
-			waitLongEnough();
+			//waitLongEnough();
 			setLastRadioCommandSendForThisDevice(System.currentTimeMillis());
 			mRadioController.sendCommand(inCommand, getAddress(), inAckRequested);
 		}

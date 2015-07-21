@@ -1,8 +1,6 @@
 package com.codeshelf.device.radio;
 
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -10,8 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.IPacket;
-import com.codeshelf.flyweight.command.NetAddress;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
@@ -22,59 +18,44 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
  * different SourceAddres. The parallelism of this service defaults to the
  * number of available cores*2
  * 
- * @author saba
+ * @author saba, huffa
  *
  */
 public class RadioControllerInboundPacketService {
-	private static final Logger										LOGGER					= LoggerFactory.getLogger(RadioControllerInboundPacketService.class);
+	private static final Logger						LOGGER			= LoggerFactory.getLogger(RadioControllerInboundPacketService.class);
 
-	private final ExecutorService									executor				= Executors.newFixedThreadPool(Math.max(Runtime.getRuntime()
-																								.availableProcessors() * 2,
-																								2),
-																								new ThreadFactoryBuilder().setNameFormat("pckt-hndlr-%s")
-																									.build());
+	private final ExecutorService					executor		= Executors.newFixedThreadPool(Math.max(Runtime.getRuntime()
+																		.availableProcessors() * 2, 2),
+																		new ThreadFactoryBuilder().setNameFormat("pckt-hndlr-%s")
+																			.build());
 
-	private final ConcurrentMap<NetAddress, BlockingQueue<IPacket>>	queueMap				= Maps.newConcurrentMap();
+	private final ConcurrentLinkedQueue<IPacket>	incomingPackets	= new ConcurrentLinkedQueue<IPacket>();
 
-	private static final int										MAX_PACKET_QUEUE_SIZE	= 50;
-
-	private final RadioController									radioController;
+	private final RadioController					radioController;
 
 	public RadioControllerInboundPacketService(RadioController radioController) {
 		super();
 		this.radioController = radioController;
 	}
 
+	public void start() {
+		executor.submit(new PacketHandler(incomingPackets));
+	}
+
 	public boolean handleInboundPacket(IPacket packet) {
-		// Get queue from queueMap in thread-safe manner. Multiple threads can
-		// call handle at the same time
-		BlockingQueue<IPacket> queue = queueMap.get(packet.getSrcAddr());
-		if (queue == null) {
-			queue = new ArrayBlockingQueue<IPacket>(MAX_PACKET_QUEUE_SIZE);
-			BlockingQueue<IPacket> existingQueue = queueMap.putIfAbsent(packet.getSrcAddr(), queue);
-			if (existingQueue != null) {
-				queue = existingQueue;
-			}
+		boolean wasAddedToQueue = true;
+
+		try {
+			wasAddedToQueue = incomingPackets.offer(packet);
+		} catch (IllegalStateException e) {
+			LOGGER.warn("Incoming packet queue is full. Clearing queue.");
+			incomingPackets.clear();
 		}
 
-		// We synchronize on the queue before modifying it (even though its
-		// thread-safe) because we must perform 3 actions atomically
-		boolean wasAddedToQueue = false;
-		synchronized (queue) {
-
-			boolean wasQueueOriginallyEmpty = queue.isEmpty();
-
-			// OFFER will not block and return boolean for success. If we block
-			// here, we will have a deadlock
-			wasAddedToQueue = queue.offer(packet);
-
-			// If it was originally empty, then we can resubmit a handler to the
-			// executor since no other handler should be running.
-			// But we should submit only if we succeeded in adding the packet to
-			// the queue!
-			if (wasAddedToQueue && wasQueueOriginallyEmpty) {
-				executor.submit(new PacketHandler(queue));
-			}
+		if (wasAddedToQueue) {
+			executor.submit(new PacketHandler(incomingPackets));
+		} else {
+			LOGGER.warn("Incoming packet was dropped. Queue size: {} Packet: {}", incomingPackets.size(), packet.toString());
 		}
 
 		return wasAddedToQueue;
@@ -85,48 +66,29 @@ public class RadioControllerInboundPacketService {
 	}
 
 	private final class PacketHandler implements Runnable {
-		private final BlockingQueue<IPacket>	queue;
+		private final ConcurrentLinkedQueue<IPacket>	queue;
 
-		public PacketHandler(BlockingQueue<IPacket> queue) {
+		public PacketHandler(ConcurrentLinkedQueue<IPacket> queue) {
 			super();
 			this.queue = queue;
 		}
 
 		@Override
 		public void run() {
-			// We do not need to use synchronize because we aren't actually
-			// modifying the queue
-			// We peek because if we poll, we would cause the queue to be empty
-			// which could submit another task for this
-			// NetAddr in parallel
-			IPacket packet = queue.peek();
+
+			IPacket packet = null;
+			packet = queue.poll();
+
+			if (packet == null) {
+				return;
+			}
 
 			try {
-				// Handle packet
 				radioController.handleInboundPacket(packet);
 			} catch (Exception e) {
 				// Handle Error
 				LOGGER.error("PacketHandler Error. Packet={}", packet, e);
-			} finally {
-				// The finally block ensures that we will always pop this packet
-				// off the queue, no matter if we have some uncaught exception
-				// or not (like a generic throwable)
-
-				// We synchronize on the queue (even though its thread-safe)
-				// because we must perform 2 actions atomically
-				synchronized (queue) {
-					// Remove packet we JUST finished processing
-					queue.poll();
-
-					if (!queue.isEmpty()) {
-						// Resubmit this runnable if its not empty yet and let
-						// the other submitted PacketHandlers get a fair chance
-						executor.submit(this);
-					}
-				}
 			}
-
 		}
-
 	}
 }
