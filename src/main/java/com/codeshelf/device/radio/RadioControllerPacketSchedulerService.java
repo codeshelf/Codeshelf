@@ -32,7 +32,7 @@ public class RadioControllerPacketSchedulerService {
 	public static final int														MAX_QUEUED_PACKETS_PER_DEVICE	= 50;
 	public static final int														MAX_QUEUED_NET_MGMT_PACKETS		= 50;
 	public static final int														MAX_NUM_QUEUED_DEVICES			= 150;
-	public static final int														MAX_NUM_BLOCKING_PEEKS			= 5;
+	public static final int														MAX_NUM_BLOCKING_PEEKS			= 2;
 
 	public static final int														MAP_INIT_SIZE					= 50;
 	public static final float													MAP_LOAD_FACTOR					= (float) 0.75;												// Default Java load factor
