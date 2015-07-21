@@ -45,7 +45,6 @@ public class RadioControllerInboundPacketService {
 	public boolean handleInboundPacket(IPacket packet) {
 		boolean wasAddedToQueue = true;
 
-		LOGGER.info("Adding packet {}", packet.toString());
 		try {
 			wasAddedToQueue = incomingPackets.offer(packet);
 		} catch (IllegalStateException e) {

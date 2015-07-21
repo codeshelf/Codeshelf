@@ -59,7 +59,6 @@ public class RadioControllerBroadcastService {
 					new NetChannelValue((byte) 0),
 					new NetChannelValue((byte) 0));
 
-				//radioController.sendCommand(netCheck, broadcastAddress, false);
 				radioController.sendNetMgmtCommand(netCheck, broadcastAddress);
 
 			} catch (Exception e) {

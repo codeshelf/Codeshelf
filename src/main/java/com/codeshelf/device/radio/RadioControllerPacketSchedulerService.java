@@ -31,18 +31,16 @@ public class RadioControllerPacketSchedulerService {
 
 	public static final int														MAX_QUEUED_PACKETS_PER_DEVICE	= 50;
 	public static final int														MAX_QUEUED_NET_MGMT_PACKETS		= 50;
-	public static final int														MAX_BUFFERED_INCOMING_PACKETS	= 50;
 	public static final int														MAX_NUM_QUEUED_DEVICES			= 150;
-	public static final long													MAX_QUEUE_OFFER_TIMEOUT_MILLIS	= 5;
+	public static final int														MAX_NUM_BLOCKING_PEEKS			= 5;
 
 	public static final int														MAP_INIT_SIZE					= 50;
-	public static final float													MAP_LOAD_FACTOR					= (float) 0.75;												// Default load factor
+	public static final float													MAP_LOAD_FACTOR					= (float) 0.75;												// Default Java load factor
 	public static final int														MAP_CONCURRENCY_LEVEL			= 4;
 
 	public static final long													NETWORK_PACKET_SPACING_MILLIS	= 5;
 	public static final long													DEVICE_PACKET_SPACING_MILLIS	= 40;
 
-	//private static final long												ACK_TIMEOUT_MILLIS				= 20;												// matching v16. Used to be 20
 	private static final int													ACK_SEND_RETRY_COUNT			= 20;															// matching v16. Used to be 20.
 	private static final long													MAX_PACKET_AGE_MILLIS			= 4000;
 
@@ -58,6 +56,9 @@ public class RadioControllerPacketSchedulerService {
 																													MAP_LOAD_FACTOR,
 																													MAP_CONCURRENCY_LEVEL);
 	private final ConcurrentHashMap<NetAddress, Byte>							mLastDeviceAckId				= new ConcurrentHashMap<NetAddress, Byte>(MAP_INIT_SIZE,
+																													MAP_LOAD_FACTOR,
+																													MAP_CONCURRENCY_LEVEL);
+	private final ConcurrentHashMap<NetAddress, Integer>						mDeviceBlockingPeekCount		= new ConcurrentHashMap<NetAddress, Integer>(MAP_INIT_SIZE,
 																													MAP_LOAD_FACTOR,
 																													MAP_CONCURRENCY_LEVEL);
 
@@ -114,6 +115,16 @@ public class RadioControllerPacketSchedulerService {
 		addDeviceToQueue(mDeviceQueue, inDevice);
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Adds an ack packet to the schedule. Puts the ack packet at the front of the
+	 * queue so that it is sent before any other commands.
+	 * 
+	 * @param inPacket
+	 * 			Is the ack packet
+	 * @param inDevice
+	 * 			Device to send ack to
+	 */
 	public void addAckPacketToSchedule(IPacket inPacket, INetworkDevice inDevice) {
 
 		// Add the packet to the queue of packets to be sent
@@ -194,7 +205,7 @@ public class RadioControllerPacketSchedulerService {
 		// Get next eligible device to send to
 		device = getNextDevice();
 		if (device == null) {
-			LOGGER.debug("No eligable devices to send to");
+			LOGGER.debug("No eligible devices to send to");
 			return;
 		}
 
@@ -220,10 +231,13 @@ public class RadioControllerPacketSchedulerService {
 	// --------------------------------------------------------------------------
 	/**
 	 *	Get the next eligible packet in queue.
+	 *
+	 *	@param inDevice
+	 *		Device to fetch next eligible packet for
 	 */
-	private IPacket getNextPacketForDevice(INetworkDevice device) {
+	private IPacket getNextPacketForDevice(INetworkDevice inDevice) {
 		IPacket packet = null;
-		ConcurrentLinkedDeque<IPacket> devicePacketdeque = mPendingPacketsMap.get(device.getAddress());
+		ConcurrentLinkedDeque<IPacket> devicePacketdeque = mPendingPacketsMap.get(inDevice.getAddress());
 
 		if (devicePacketdeque == null) {
 			return null;
@@ -242,7 +256,7 @@ public class RadioControllerPacketSchedulerService {
 
 				return packet;
 			} else {
-				LOGGER.debug("Removing packet from pending queue: {}", packet);
+				LOGGER.debug("Removing packet from pending queue: {}", packet.toString());
 				devicePacketdeque.pollFirst();
 			}
 
@@ -254,10 +268,13 @@ public class RadioControllerPacketSchedulerService {
 	// --------------------------------------------------------------------------
 	/**
 	 *	Check if device has more pending packets
+	 *
+	 *	@param inDevice
+	 *		Device to check if it has packets
 	 */
-	private boolean deviceHasPendingPackets(INetworkDevice device) {
+	private boolean deviceHasPendingPackets(INetworkDevice inDevice) {
 
-		ConcurrentLinkedDeque<IPacket> devicePacketQueue = mPendingPacketsMap.get(device.getAddress());
+		ConcurrentLinkedDeque<IPacket> devicePacketQueue = mPendingPacketsMap.get(inDevice.getAddress());
 
 		if (devicePacketQueue != null && !devicePacketQueue.isEmpty()) {
 			return true;
@@ -272,21 +289,31 @@ public class RadioControllerPacketSchedulerService {
 	 */
 	private INetworkDevice getNextDevice() {
 		INetworkDevice device = null;
+		int peekCount = 0;
 
 		// Check if the overflow queue has packets to send
-		// FIXME - huffa need to check how many times the head of this list has been checked.
+		// Check how many times the head of this list has been checked.
 		if (!mSecondDeviceQueue.isEmpty()) {
+			device = mSecondDeviceQueue.peek();
+			if (mDeviceBlockingPeekCount.containsKey(device.getAddress())) {
+				peekCount = mDeviceBlockingPeekCount.get(device.getAddress());
+			}
 
-			if (clearToSendToDevice(mSecondDeviceQueue.peek())) {
+			if (clearToSendToDevice(device)) {
 				device = mSecondDeviceQueue.poll();
+				mDeviceBlockingPeekCount.put(device.getAddress(), 0);
 				return device;
+			}
+
+			if (peekCount > MAX_NUM_BLOCKING_PEEKS) {
+				LOGGER.debug("Device blocked too many times. Placing in back of the queue. {}", device.getAddress());
+				device = mSecondDeviceQueue.poll();
+				mSecondDeviceQueue.offer(device);
+				mDeviceBlockingPeekCount.put(device.getAddress(), 0);
 			}
 		}
 
-		// FIXME - size() function is terrible!!!
-		// Find next eligible device
-		for (int i = 0; i < mDeviceQueue.size(); i++) {
-
+		while (!mDeviceQueue.isEmpty()) {
 			device = mDeviceQueue.poll();
 
 			if (!clearToSendToDevice(device)) {
@@ -322,17 +349,23 @@ public class RadioControllerPacketSchedulerService {
 	/**
 	 *	Update the 'last send time' of all the devices. Indicated the last time a packet
 	 *	was sent to the devices. Typical usage after sending net mgmt commands.
+	 *
+	 *	@param inTime
+	 *		The time to set
 	 */
-	private void updateLastSendTimeOfPendingDevices(long currentTimeMillis) {
-		mLastNetCheckSentTime = System.currentTimeMillis();
+	private void updateLastSendTimeOfPendingDevices(long inTime) {
+		mLastNetCheckSentTime = inTime;
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 *	Send a single packet to the packet IO service
+	 *
+	 *	@param inPacket
+	 *		Packet to send
 	 */
 	private void sendPacket(IPacket inPacket) {
-		LOGGER.warn("Sending packet with ack id: {}", inPacket.getAckId());
+		LOGGER.debug("Sending packet {}", inPacket.toString());
 		try {
 			packetIOService.handleOutboundPacket(inPacket);
 		} finally {
@@ -343,6 +376,9 @@ public class RadioControllerPacketSchedulerService {
 	// --------------------------------------------------------------------------
 	/**
 	 *	Check if the device is ready to receive another packet
+	 *
+	 *	@param inDevice
+	 *		Device to check
 	 */
 
 	private boolean clearToSendToDevice(INetworkDevice inDevice) {
@@ -371,6 +407,9 @@ public class RadioControllerPacketSchedulerService {
 	/**
 	 *	Check if it is clear to send packet to device. Logic exists here to drop packets
 	 *	from the queue.
+	 *
+	 *	@param inPacket
+	 *		Packet to check
 	 */
 	private boolean clearToSendCommandPacket(IPacket inPacket) {
 
@@ -382,8 +421,8 @@ public class RadioControllerPacketSchedulerService {
 			return true;
 		}
 
-		if (!packetOlderThanLastAcked(inPacket)) {
-			LOGGER.warn("Not sending packet - Has been ack'd. {} Packet {}", inPacket.getAckId(), inPacket.toString());
+		if (!packetNewerThanLastAcked(inPacket)) {
+			LOGGER.debug("Not sending packet - Has been ack'd. {} Packet {}", inPacket.getAckId(), inPacket.toString());
 			return false;
 		}
 
@@ -403,26 +442,28 @@ public class RadioControllerPacketSchedulerService {
 	// --------------------------------------------------------------------------
 	/**
 	 * Check if packet has been acked or perhaps skipped
+	 * 
+	 * 	@param inPacket
+	 * 		Packet to check
 	 */
-	// FIXME - huffa
 	// Could be dangerous if we are on the roll over and loose more than
 	// ten packets. Should probably update the map when we drop packets
 	// due to timeouts etc
-	private boolean packetOlderThanLastAcked(IPacket packet) {
+	private boolean packetNewerThanLastAcked(IPacket inPacket) {
 		Byte lastAck = 0;
 		byte packetAckId = 0;
 		INetworkDevice device = null;
 		int packetAckIdUnsigned = 0;
 		int lastAckIdUnsigned = 0;
 
-		device = packet.getDevice();
-		packetAckId = packet.getAckId();
+		device = inPacket.getDevice();
+		packetAckId = inPacket.getAckId();
 		lastAck = mLastDeviceAckId.get(device.getAddress());
 
 		packetAckIdUnsigned = packetAckId & 0xFF;
 		lastAckIdUnsigned = lastAck.byteValue() & 0xFF;
 
-		if (packetAckId == (byte) 0) {
+		if (packetAckIdUnsigned == 0) {
 			return true;
 		}
 
@@ -442,6 +483,11 @@ public class RadioControllerPacketSchedulerService {
 	// --------------------------------------------------------------------------
 	/**
 	 * Add a packet to a queue.
+	 * 
+	 * 	@param queue
+	 * 		Queue to add packet to
+	 * 	@param inPacket
+	 * 		Packet to add to queue
 	 */
 	private boolean addPacketToQueue(Queue<IPacket> queue, IPacket inPacket) {
 		boolean success = false;
@@ -460,6 +506,11 @@ public class RadioControllerPacketSchedulerService {
 	// --------------------------------------------------------------------------
 	/**
 	 * Add a device to a queue.
+	 * 
+	 * 	@param queue
+	 * 		Queue to add device to
+	 * 	@param inDevice
+	 * 		Device to add to queue
 	 */
 	private boolean addDeviceToQueue(Queue<INetworkDevice> queue, INetworkDevice inDevice) {
 		boolean success = false;
@@ -478,16 +529,20 @@ public class RadioControllerPacketSchedulerService {
 	// --------------------------------------------------------------------------
 	/**
 	 * Remove all pending packets from a devices queue. Typical usage is when a device
-	 * re-associates to the site controller.
+	 * re-associates to the site controller. Also resets the 'last ack id' to 1 that
+	 * the packet scheduler keeps tabs on.
+	 * 
+	 *	@param inDevice
+	 *		Device to clear packet queue 
 	 */
-	public void clearDevicePacketQueue(INetworkDevice foundDevice) {
-		if (foundDevice == null) {
+	public void clearDevicePacketQueue(INetworkDevice inDevice) {
+		if (inDevice == null) {
 			return;
 		}
-		
-		LOGGER.debug("Clearing device {} queue and resetting last ack number", foundDevice.getAddress().toString());
-		ConcurrentLinkedDeque<IPacket> deviceQueue = mPendingPacketsMap.get(foundDevice.getAddress());
-		mLastDeviceAckId.put(foundDevice.getAddress(), (byte) 1);
+
+		LOGGER.debug("Clearing device {} queue and resetting last ack number", inDevice.getAddress().toString());
+		ConcurrentLinkedDeque<IPacket> deviceQueue = mPendingPacketsMap.get(inDevice.getAddress());
+		mLastDeviceAckId.put(inDevice.getAddress(), (byte) 1);
 
 		if (deviceQueue != null) {
 			deviceQueue.clear();
@@ -498,17 +553,20 @@ public class RadioControllerPacketSchedulerService {
 	/**
 	 * Remove a device from the queue of devices. Typical usual is when a device is
 	 * deleted from the backend.
+	 * 
+	 * 	@param inDevice
+	 * 		Device to remove from scheduling
 	 */
-	public void removeDevice(INetworkDevice inNetworkDevice) {
+	public void removeDevice(INetworkDevice inDevice) {
 
-		if (inNetworkDevice == null) {
+		if (inDevice == null) {
 			return;
 		}
 
-		LOGGER.debug("Removing device from packet scheduling service {}", inNetworkDevice.toString());
-		mDeviceQueue.remove(inNetworkDevice);
-		mSecondDeviceQueue.remove(inNetworkDevice);
-		mPendingPacketsMap.remove(inNetworkDevice.getAddress());
-		mLastDeviceAckId.remove(inNetworkDevice.getAddress());
+		LOGGER.debug("Removing device from packet scheduling service {}", inDevice.toString());
+		mDeviceQueue.remove(inDevice);
+		mSecondDeviceQueue.remove(inDevice);
+		mPendingPacketsMap.remove(inDevice.getAddress());
+		mLastDeviceAckId.remove(inDevice.getAddress());
 	}
 }

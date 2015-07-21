@@ -83,14 +83,13 @@ public class RadioControllerPacketIOService {
 						// TODO Move gatewayInterface away from polling. This
 						// method will sleep for 1ms if we don't have enough
 						// packets to read.
-						LOGGER.info("BACK TO WAITING");
 						IPacket packet = null;
 						packet = gatewayInterface.receivePacket(networkId);
 
 						if (packet != null) {
 							// Hand packet off to handler service
 							boolean success = packetHandlerService.handleInboundPacket(packet);
-							LOGGER.info("Inbound packet={}; didGetHandled={}", packet, success);
+							//LOGGER.info("Inbound packet={}; didGetHandled={}", packet, success);
 							if (!success) {
 
 								LOGGER.warn("PacketHandlerService failed to accept packet. Pausing packet reads to retry handlePacket. Packet={}",
