@@ -44,7 +44,7 @@ public class RadioControllerPacketSchedulerService {
 	public static final int														MAP_CONCURRENCY_LEVEL			= 4;
 
 	public static final long													NETWORK_PACKET_SPACING_MILLIS	= 5;
-	public static final long													DEVICE_PACKET_SPACING_MILLIS	= 30;
+	public static final long													DEVICE_PACKET_SPACING_MILLIS	= 40;
 
 	//private static final long												ACK_TIMEOUT_MILLIS				= 20;												// matching v16. Used to be 20
 	private static final int													ACK_SEND_RETRY_COUNT			= 20;															// matching v16. Used to be 20.
@@ -260,7 +260,7 @@ public class RadioControllerPacketSchedulerService {
 		packet = getNextPacketForDevice(device);
 
 		if (packet != null) {
-			LOGGER.info("Sending packet");
+			LOGGER.info("Sending packet {}", packet.toString());
 			// Send packet
 			sendPacket(packet);
 
@@ -306,7 +306,7 @@ public class RadioControllerPacketSchedulerService {
 
 				return packet;
 			} else {
-				LOGGER.warn("Droping packet from pending queue: {}", packet);
+				//LOGGER.warn("Droping packet from pending queue: {}", packet);
 				//devicePacketdeque.removeFirst();
 				devicePacketdeque.pollFirst();
 			}
@@ -600,7 +600,7 @@ public class RadioControllerPacketSchedulerService {
 		}
 
 		ConcurrentLinkedDeque<IPacket> deviceQueue = mPendingPacketsMap.get(foundDevice.getAddress());
-		mLastDeviceAckId.put(foundDevice.getAddress(), (byte) 0);
+		mLastDeviceAckId.put(foundDevice.getAddress(), (byte) 1);
 
 		if (deviceQueue != null) {
 			deviceQueue.clear();

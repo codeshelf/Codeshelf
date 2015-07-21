@@ -86,6 +86,8 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	@Transient
 	private byte					mLastIncomingAckId;
 
+	@Accessors(prefix = "m")
+	@Getter
 	private byte					mOutgoingAckId;
 
 	private AtomicLong				mLastPacketReceivedTime	= new AtomicLong(System.currentTimeMillis());
@@ -185,7 +187,7 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 		byte curr = mOutgoingAckId;
 		int currAckIdUnsigned = mOutgoingAckId & 0xFF;
 
-		if (currAckIdUnsigned >= 254) {
+		if (currAckIdUnsigned == 255) {
 			mOutgoingAckId = STARTING_ACK_NUM;
 			curr = mOutgoingAckId;
 		} else {

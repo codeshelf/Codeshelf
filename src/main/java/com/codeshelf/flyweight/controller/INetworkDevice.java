@@ -195,5 +195,10 @@ public interface INetworkDevice {
 	 * Get the next ack id for this device
 	 */
 	public byte getNextAckId();
+	
+	/**
+	 * Get the last outgoing ack id used
+	 */
+	public byte getOutgoingAckId();
 
 }
