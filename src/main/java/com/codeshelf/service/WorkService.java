@@ -1130,6 +1130,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		return null;
 	}
 
+	public final List<WorkInstruction> getWorkInstructions(final Facility facility) {
+		return WorkInstruction.staticGetDao().findByParent(facility);
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inChe

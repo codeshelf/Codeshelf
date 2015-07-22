@@ -128,7 +128,6 @@ public class OrderService implements IApiService {
 	}
 
 	private List<Map<String, Object>> toOrderView(List<OrderHeader> results) {
-		PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
 		String[] propertyNames = new String[]{
 				"persistentId",
 				"destinationId",
@@ -148,7 +147,7 @@ public class OrderService implements IApiService {
 				"wallUi",
 				"groupUi", 
 				"dueDate"};
-		
+		PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
 		ArrayList<Map<String, Object>> viewResults = new ArrayList<Map<String, Object>>();
 		for (OrderHeader object : results) {
 			Map<String, Object> propertiesMap = new HashMap<>();
