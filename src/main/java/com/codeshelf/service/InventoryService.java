@@ -36,7 +36,7 @@ public class InventoryService implements IApiService {
 
 	int							TAPEID_LENGTH	= 12;
 	LightService				lightService;
-	private static final Logger	LOGGER			= LoggerFactory.getLogger(LineScanDeviceLogic.class);
+	private static final Logger	LOGGER			= LoggerFactory.getLogger(InventoryService.class);
 
 	@Inject
 	public InventoryService(LightService inLightService) {

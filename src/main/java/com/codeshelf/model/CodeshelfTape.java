@@ -5,7 +5,10 @@ import java.util.List;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.codeshelf.device.LineScanDeviceLogic;
 import com.codeshelf.model.domain.Location;
 
 import lombok.Getter;
@@ -14,6 +17,7 @@ public class CodeshelfTape {
 	// format = %AABBBBBBCCCD" where AABBBBBB = mfr/guid, CCC = left offset in cm, D = reserved (0)
 	final static String	TAPE_REGEX			= "%[0-9]{11}0";
 	final static String	BASE32_HEADER_REGEX	= "[0Oo1IiLl23456789AaBbCcDdEeFfGgHhJjKkMmNnPpQqRrSsTtVvWwXxYyZz]{4,6}";
+	private static final Logger	LOGGER			= LoggerFactory.getLogger(CodeshelfTape.class);
 
 	@Getter
 	int					guid;
@@ -128,11 +132,16 @@ public class CodeshelfTape {
 		CodeshelfTape tape = scan(tapeScan);
 		TapeLocation tapeLocation = new TapeLocation();
 		if (tape == null) {
+			LOGGER.warn("scanned:{} value looked like tape, but did not match tape regex.", tapeScan);
 			return tapeLocation;
 		}
 		tapeLocation.location = findFinestLocationForTapeId(tape.getGuid(), tape.getOffsetCm());
 		if (tapeLocation.location != null) {
 			tapeLocation.cmOffset = tapeLocation.location.isSlot() ? 0 : tape.getOffsetCm();
+		}
+		else {
+			String valueOnTape = CodeshelfTape.intToBase32(tape.getGuid());
+			LOGGER.warn("scanned:{} value on tape:{}. No location found with that tape ID.", tapeScan, valueOnTape);
 		}
 		return tapeLocation;
 	}
