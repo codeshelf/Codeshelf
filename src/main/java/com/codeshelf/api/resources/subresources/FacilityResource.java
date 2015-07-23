@@ -191,6 +191,8 @@ public class FacilityResource {
     	String[] propertyNames = new String[] {
 
     			 "groupAndSortCode",
+    			 "pickerId",
+    			 "type",
     			 "assigned",
     			 "completed",
     			 "pickInstructionUi",
@@ -211,7 +213,7 @@ public class FacilityResource {
     			 "planMaxQuantity",
     			 "actualQuantity",
     			 "litLedsForWi",
-    			 "gtinId",
+    			 "gtin",
     			 "needsScan"
     	};
     	List<WorkInstruction> results = this.workService.getWorkInstructions(facility);
