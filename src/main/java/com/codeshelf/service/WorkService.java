@@ -1416,7 +1416,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		List<OrderDetail> uncompletedDetails = new ArrayList<OrderDetail>();
-		int count = 0;
 
 		// To proceed, there should container use linked to outbound order
 		// We want to add all orders represented in the container list because these containers (or for Accu, fake containers representing the order) were scanned for this CHE to do.
@@ -1430,8 +1429,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					}
 					// An order detail might be set to zero quantity by customer, essentially canceling that item. Don't make a WI if canceled.
 					if (orderDetail.getQuantity() > 0) {
-						count++;
-						LOGGER.debug("WI #" + count + "in generateOutboundInstructions");
 						try {
 							// Pass facility as the default location of a short WI..
 							SingleWorkItem workItem = makeWIForOutbound(orderDetail,

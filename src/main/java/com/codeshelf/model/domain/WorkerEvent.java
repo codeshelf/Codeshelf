@@ -42,7 +42,7 @@ public class WorkerEvent extends DomainObjectABC {
 	}
 
 	public enum EventType {
-		LOGIN, SKIP_ITEM_SCAN, BUTTON, WI, SHORT, SHORT_AHEAD, COMPLETE, CANCEL_PUT;
+		LOGIN, SKIP_ITEM_SCAN, BUTTON, WI, SHORT, SHORT_AHEAD, COMPLETE, CANCEL_PUT, DETAIL_WI_MISMATCHED;
 		
 		public String getName() {
 			return name();
@@ -103,6 +103,10 @@ public class WorkerEvent extends DomainObjectABC {
 	@Getter @Setter
 	private UUID 		workInstructionId;
 
+	@Column(nullable = true, name = "description")
+	@Getter
+	@JsonProperty
+	private String							description;
 
 	public WorkerEvent() {
 		setCreated(new Timestamp(System.currentTimeMillis()));
@@ -118,7 +122,23 @@ public class WorkerEvent extends DomainObjectABC {
 		generateDomainId();
 	}
 
-
+	public WorkerEvent(WorkerEvent.EventType eventType, Facility facility, String workerId, String description) {
+		setCreated(new Timestamp(System.currentTimeMillis()));
+		setEventType(eventType);
+		setFacility(facility);
+		setWorkerId(workerId);
+		setDevicePersistentId("");
+		setDeviceGuid("");
+		setDescription(description);
+		generateDomainId();
+	}
+	
+	public void setDescription(String description){
+		if (description != null && description.length() > 255){
+			description = description.substring(0, 255);
+		}
+		this.description = description;
+	}
 
 	@Override
 	public String getDefaultDomainIdPrefix() {

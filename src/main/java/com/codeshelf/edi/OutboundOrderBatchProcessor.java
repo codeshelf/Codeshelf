@@ -39,9 +39,13 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.UomMaster;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.service.ExtensionPointType;
+import com.codeshelf.service.NotificationService;
 import com.codeshelf.util.DateTimeParser;
+import com.codeshelf.util.UomNormalizer;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.validation.InputValidationException;
 import com.google.common.base.Strings;
@@ -1029,6 +1033,25 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		} else {
 			oldDetailId = result.getDomainId();
 			setOldPreferredLocation(result.getPreferredLocation());
+			
+			//Check if detail's ItemMaster or UOM  changed since last time
+			boolean masterMatch = result.getItemMaster().equals(inItemMaster);
+			boolean uomMatch = UomNormalizer.normalizedEquals(result.getUomMasterId(), inUomMaster.getDomainId());
+			if (!masterMatch || !uomMatch){
+				String warning = String.format("OrderDetail %s changed from %s-%s to %s-%s.", detailId, result.getItemMasterId(), result.getUomMasterId(), inItemMaster.getDomainId(), inUomMaster.getDomainId());
+				LOGGER.warn(warning);
+				//Find all (if any) work completed for the modified details. Create events for it.
+				//The following awkward wi removal is done to avoid concurrent modification exceptions on the detail's wi list 
+				while (!result.getWorkInstructions().isEmpty()){
+					WorkInstruction wi = result.getWorkInstructions().get(0);
+					String eventWarning = warning + " Already picked " + wi.getActualQuantity() + " items.";
+					result.removeWorkInstruction(wi);
+					WorkInstruction.staticGetDao().delete(wi);
+					
+					WorkerEvent event = new WorkerEvent(WorkerEvent.EventType.DETAIL_WI_MISMATCHED, result.getFacility(), "Order Importer", eventWarning);
+					new NotificationService().saveEvent(event);
+				}
+			}
 		}
 		result.setOrderDetailId(detailId);
 

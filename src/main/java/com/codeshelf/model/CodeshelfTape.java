@@ -8,7 +8,6 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.device.LineScanDeviceLogic;
 import com.codeshelf.model.domain.Location;
 
 import lombok.Getter;

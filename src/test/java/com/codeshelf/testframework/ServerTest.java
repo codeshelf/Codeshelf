@@ -225,8 +225,11 @@ public abstract class ServerTest extends HibernateTest {
 		commitTransaction();
 
 		beginTransaction();
-		String csvLocationAliases = "mappedLocationId,locationAlias\r\n" + "A1.B1.T1,LocX24\r\n" + "A1.B2.T1,LocX25\r\n"
-				+ "A1.B3.T1,LocX26\r\n" + "A1.B4.T1,LocX27\r\n";//
+		String csvLocationAliases = "mappedLocationId,locationAlias\r\n" //
+				+ "A1.B1.T1,LocX24\r\n" //
+				+ "A1.B2.T1,LocX25\r\n" //
+				+ "A1.B3.T1,LocX26\r\n" //
+				+ "A1.B4.T1,LocX27\r\n";//
 		importLocationAliasesData(getFacility(), csvLocationAliases);
 		commitTransaction();
 
@@ -259,7 +262,7 @@ public abstract class ServerTest extends HibernateTest {
 				+ "1,1,348,12/03/14 12:00,12/31/14 12:00,Item9,,11,a,Group1,,\r\n"
 				+ "1,1,349,12/03/14 12:00,12/31/14 12:00,Item2,,22,a,Group1,,\r\n"
 				+ "1,1,350,12/03/14 12:00,12/31/14 12:00,Item5,,33,a,Group1,,\r\n"
-				+ "1,1,351,12/03/14 12:00,12/31/14 12:00,Item3,,22,a,Group1,5,LocX24\r\n"
+				+ "1,1,351,12/03/14 12:00,12/31/14 12:00,Item3,,21,a,Group1,5,LocX24\r\n"
 				+ "2,2,353,12/03/14 12:00,12/31/14 12:00,Item3,,44,a,Group1,,\r\n"
 				+ "2,2,354,12/03/14 12:00,12/31/14 12:00,Item15,,55,a,Group1,,\r\n"
 				+ "2,2,355,12/03/14 12:00,12/31/14 12:00,Item2,,66,a,Group1,,\r\n"

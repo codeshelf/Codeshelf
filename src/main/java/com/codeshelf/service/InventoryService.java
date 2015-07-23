@@ -10,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.CheDeviceLogic;
-import com.codeshelf.device.LineScanDeviceLogic;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.CodeshelfTape;
 import com.codeshelf.model.CodeshelfTape.TapeLocation;

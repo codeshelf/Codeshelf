@@ -15,6 +15,8 @@ import java.util.Map.Entry;
 import java.util.UUID;
 
 import org.apache.logging.log4j.ThreadContext;
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Restrictions;
 import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -48,6 +50,7 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.service.UiUpdateService;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
@@ -2400,4 +2403,86 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);
 	}
 
+	/**
+	 * In case of re-uploading an order with changed details, forget prok previously done on those details
+	 */
+	@Test
+	public final void testDetailModificationAfterSomeWorkDone() throws IOException{
+		setUpOneAisleFourBaysFlatFacilityWithOrders();
+		
+		beginTransaction();		
+		propertyService.turnOffHK(getFacility());
+		commitTransaction();
+		
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+		LOGGER.info("1: Load order onto CHE. Verify that there are 7 items on the path");
+		picker.loginAndSetup("Picker1");
+		picker.setupContainer("1", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		Assert.assertEquals("7 jobs", picker.getLastCheDisplayString(2).trim());
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		LOGGER.info("2: Pick first 2 items, that will later be modified");
+		WorkInstruction wi = picker.getActivePick();
+		Assert.assertEquals("Item2",  wi.getItemId());
+		Assert.assertEquals(22,  (int)wi.getPlanQuantity());
+		picker.pick(1, 22);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		wi = picker.getActivePick();
+		Assert.assertEquals("Item3",  wi.getItemId());
+		Assert.assertEquals(21,  (int)wi.getPlanQuantity());
+		picker.pick(1, 22);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		LOGGER.info("3: Pick the 3rd item. It will not be changed, so don't worry about what it is.");
+		picker.pickItemAuto();
+		picker.logout();
+		
+		LOGGER.info("4: Set up the order again and re-calc work. Make sure only 4 items remain");
+		picker.loginAndSetup("Picker1");
+		picker.setupContainer("1", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		Assert.assertEquals("4 jobs", picker.getLastCheDisplayString(2).trim());
+		picker.logout();
+		
+		beginTransaction();
+		LOGGER.info("5: Upload the order file again, modifying 2 already picked items");
+		//Upload order file, modifying 2 already picked order details: changing uom in the first (349) and the item master in the second (351)
+		//351 already had a preferred location, so CHE will know where to look for the new item.
+		//Still need to add location to 349, so that the changed item will still be on the path
+		String updatedOrder = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,workSequence,locationId\r\n"
+				+ "1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1,,\r\n"
+				+ "1,1,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1,,\r\n"
+				+ "1,1,347,12/03/14 12:00,12/31/14 12:00,Item11,,120,a,Group1,,\r\n"
+				+ "1,1,348,12/03/14 12:00,12/31/14 12:00,Item9,,11,a,Group1,,\r\n"
+				+ "1,1,349,12/03/14 12:00,12/31/14 12:00,Item2,,22,cs,Group1,,LocX24\r\n"
+				+ "1,1,350,12/03/14 12:00,12/31/14 12:00,Item5,,33,a,Group1,,\r\n"
+				+ "1,1,351,12/03/14 12:00,12/31/14 12:00,Item1,,22,a,Group1,5,LocX24\r\n";
+		importOrdersData(getFacility(), updatedOrder);
+		
+		LOGGER.info("6: Ensure that the currect Detail-WI-Mismatch events were created due to some work aldeady been done to the changed details");
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("facility", getFacility()));
+		filterParams.add(Restrictions.eq("eventType", WorkerEvent.EventType.DETAIL_WI_MISMATCHED));
+		List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
+		Assert.assertEquals(2, events.size());
+		ArrayList<String> expectedEvents = new ArrayList<>();
+		expectedEvents.add("OrderDetail 349 changed from Item2-a to Item2-cs. Already picked 22 items.");
+		expectedEvents.add("OrderDetail 351 changed from Item3-a to Item1-a. Already picked 22 items.");
+		for (WorkerEvent event : events) {
+			Assert.assertTrue(expectedEvents.contains(event.getDescription()));
+			expectedEvents.remove(event.getDescription());
+		}
+		commitTransaction();
+		
+		LOGGER.info("7: Set up cart and verify that there are now 6 items on the path");
+		picker.loginAndSetup("Picker1");
+		picker.setupContainer("1", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		Assert.assertEquals("6 jobs", picker.getLastCheDisplayString(2).trim());
+		picker.logout();
+	}
 }

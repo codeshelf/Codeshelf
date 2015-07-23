@@ -36,7 +36,7 @@ public class NotificationService implements IApiService{
 	
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(NotificationService.class);
 	
-	private static final EnumSet<WorkerEvent.EventType> SAVE_ONLY = EnumSet.of(WorkerEvent.EventType.SKIP_ITEM_SCAN, WorkerEvent.EventType.SHORT, WorkerEvent.EventType.COMPLETE);
+	private static final EnumSet<WorkerEvent.EventType> SAVE_ONLY = EnumSet.of(WorkerEvent.EventType.SKIP_ITEM_SCAN, WorkerEvent.EventType.SHORT, WorkerEvent.EventType.COMPLETE, WorkerEvent.EventType.DETAIL_WI_MISMATCHED);
 	
 	@Inject
 	public NotificationService() {

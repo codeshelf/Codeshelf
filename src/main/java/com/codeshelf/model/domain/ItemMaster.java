@@ -404,26 +404,6 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		Facility facility = inLocation.getFacility();
 		boolean eachMult = PropertyService.getInstance().getBooleanPropertyFromConfig(facility, DomainObjectProperty.EACHMULT);
 		boolean isLocationSkuWall = inLocation.isSkuWallLocation();
-		/*
-		if (thisItemEach && !eachMult) {
-			for (Item item : getItems()) {
-				if (UomNormalizer.isEach(item.getUomMasterId()))
-					return item;
-			}
-		} else {
-			for (Item item : getItems()) {
-				// if items follow the normal pattern, equals on domainId would be sufficient				
-				if (domainId.equals(item.getDomainId()))
-					return item;
-				else if (inLocation.equals(item.getStoredLocation())) {
-					if (UomNormalizer.normalizedEquals(thisUomId, item.getUomMasterId())) {
-						LOGGER.error("findExistingItem succeeded with domainId mismatch");
-						return item;
-					}
-				}
-			}
-		}
-		*/
 		for (Item item : getItems()) {
 			boolean isItemInSkuWall = item.getStoredLocation().isSkuWallLocation();
 			//Even when disallowing multiple identical Items in the facility, we still allow the same Gtin to be in a normal area and on the Sku wall
