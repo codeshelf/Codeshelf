@@ -8,15 +8,19 @@ package com.codeshelf.flyweight.controller;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 import jd2xx.JD2XX;
 import jd2xx.JD2XX.DeviceInfo;
 
+import org.apache.commons.collections.buffer.CircularFifoBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.Packet;
+
+import edu.emory.mathcs.backport.java.util.Arrays;
 
 /**
  * --------------------------------------------------------------------------
@@ -57,15 +61,19 @@ public final class FTDIInterface extends SerialInterfaceABC {
 	//	private static final int BAUD_416667 = 416667;
 	//	private static final int BAUD_625000 = 625000;
 	private static final int	BAUD_1250000			= 1250000;
-	private static final int	READ_BUFFER_BYTES		= Packet.MAX_PACKET_BYTES * 20;
-	private static final int	MAX_READ_BEFORE_TIMEOUT	= Packet.MAX_PACKET_BYTES * 25;
+	private static final int	READ_BUFFER_BYTES		= Packet.MAX_PACKET_BYTES * 3;
+	private static final int	MAX_READ_BEFORE_TIMEOUT	= Packet.MAX_PACKET_BYTES * 10;
 	private static final int	DEFAULT_SLEEP_MILLIS	= 2;
+	private static final int	DEFAULT_BUFFER_SIZE		= Packet.MAX_PACKET_BYTES * 200;
+	private static final long	TIME					= 3000;
+	private long				last_recieved			= System.currentTimeMillis();
 	//private static final int	VID					= 0x0403;
 	//private static final int	GW_PID				= 0xada8;
 	private static final long	GW_VID_PID				= 0x0403ada8;
 	//private static final int	FTDI_PID			= 0x6001;
 	private static final long	FTDI_VID_PID			= 0x04036001;
 
+	private CircularFifoBuffer	buffer;
 	private JD2XX				mJD2XXInterface;
 	private byte[]				mReadBuffer;
 	private int					mReadBufferSize;
@@ -78,7 +86,8 @@ public final class FTDIInterface extends SerialInterfaceABC {
 	 *  The constructor tries to setup the serial connection.
 	 */
 	public FTDIInterface() {
-		mReadBuffer = new byte[READ_BUFFER_BYTES];
+		mReadBuffer = new byte[DEFAULT_BUFFER_SIZE];
+		buffer = new CircularFifoBuffer(DEFAULT_BUFFER_SIZE);
 		try {
 			mJD2XXInterface = new JD2XX();
 		} catch (UnsatisfiedLinkError e) {
@@ -292,23 +301,48 @@ public final class FTDIInterface extends SerialInterfaceABC {
 			int mask = 0;
 			mask = mask | JD2XX.EVENT_RXCHAR;
 
-			// The number of waiting bytes is in pos 0 of the status array.
-			if (status[0] > 0) {
-				int bytesToRead = Math.min(mReadBuffer.length, status[0]);
-				//LOGGER.info("---------- Start read from FTDI ---------------------------------------------- ");
+			//			// The number of waiting bytes is in pos 0 of the status array.
+			//			if (status[0] > 0) {
+			//				int bytesToRead = Math.min(mReadBuffer.length, status[0]);
+			//				LOGGER.info("---------- Start read from FTDI ---------------------------------------------- ");
+			//				mReadBufferSize = mJD2XXInterface.read(mReadBuffer, 0, bytesToRead);
+			//				hexDumpArray(mReadBuffer, mReadBufferSize);
+			//				LOGGER.info("------------------------------------------------------------------------ ");
+			//				mReadBufferPos = 0;
+			//			} else {
+			//				mReadBufferSize = 0;
+			//				// We didn't read a character, so sleep for a little.
+			//				//				try {
+			//				//					Thread.sleep(DEFAULT_SLEEP_MILLIS);
+			//				//				} catch (InterruptedException e) {
+			//				//					LOGGER.error("", e);
+			//				//				}
+			//
+			//			}
+			//LOGGER.info("------------- Radio has {} bytes", status[0]);
+			if (!buffer.isFull() && status[0] > 0) {
+				int bytesToRead = Math.min(DEFAULT_BUFFER_SIZE - buffer.size(), status[0]);
+				LOGGER.info("---------- Start read from FTDI ---------------------------------------------- ");
+				LOGGER.info("------------- Radio has {} bytes", status[0]);
 				mReadBufferSize = mJD2XXInterface.read(mReadBuffer, 0, bytesToRead);
-				//hexDumpArray(mReadBuffer, mReadBufferSize);
-				//LOGGER.info("------------------------------------------------------------------------ ");
+				hexDumpArray(mReadBuffer, mReadBufferSize);
+				LOGGER.info("------------------------------------------------------------------------ ");
 				mReadBufferPos = 0;
-			} else {
-				// We didn't read a character, so sleep for a little.
-				try {
-					Thread.sleep(DEFAULT_SLEEP_MILLIS);
-				} catch (InterruptedException e) {
-					LOGGER.error("", e);
+
+				for (int i = 0; i < mReadBufferSize; i++) {
+					buffer.add(mReadBuffer[i]);
 				}
 
 			}
+
+//			if (buffer.isEmpty()) {
+//				bytesRead = 0;
+//				try {
+//					Thread.sleep(50);
+//				} catch (InterruptedException e) {
+//					LOGGER.error("", e);
+//				}
+//			}
 
 			//}
 		} catch (IOException e) {
@@ -326,39 +360,61 @@ public final class FTDIInterface extends SerialInterfaceABC {
 		byte result = 0;
 		boolean byteRead = false;
 
-		if (bytesRead > MAX_READ_BEFORE_TIMEOUT) {
-			bytesRead = 0;
-			// We've read a lot. Lets let sending have a chance.
-			try {
-				Thread.sleep(DEFAULT_SLEEP_MILLIS);
-			} catch (InterruptedException e) {
-				LOGGER.error("", e);
-			}
-		}
+		//		while ((shouldRun()) && (!byteRead)) {
+		//
+		//			if (mReadBufferPos < mReadBufferSize) {
+		//				byteRead = true;
+		//				result = mReadBuffer[mReadBufferPos++];
+		//				bytesRead++;
+		//
+		//			} else {
+		//				checkReadBuffer();
+		//
+		//				// There is nothing to read. Sleep to give sending a chance
+		//				if (mReadBufferSize == 0) {
+		//					bytesRead = 0;
+		//					try
+		//					{
+		//						Thread.sleep(1);
+		//					} catch (InterruptedException e) {
+		//						LOGGER.error("", e);
+		//					}
+		//				}
+		//			}
+		//		}
+
+		//		if (bytesRead > MAX_READ_BEFORE_TIMEOUT) {
+		//			bytesRead = 0;
+		//			// We've read a lot. Lets let sending have a chance.
+		//			try {
+		//				Thread.sleep(1);
+		//			} catch (InterruptedException e) {
+		//				LOGGER.error("", e);
+		//			}
+		//		}
 
 		while ((shouldRun()) && (!byteRead)) {
+			checkReadBuffer();
 
-			if (mReadBufferPos < mReadBufferSize) {
+			if (!buffer.isEmpty()) {
 				byteRead = true;
-				result = mReadBuffer[mReadBufferPos++];
-				bytesRead++;
-
-			} else {
-				checkReadBuffer();
-
-				// There is nothing to read. Sleep to give sending a chance
-				if (mReadBufferSize == 0) {
-					try {
-						Thread.sleep(DEFAULT_SLEEP_MILLIS);
-					} catch (InterruptedException e) {
-						LOGGER.error("", e);
-					}
-				}
+				result = (byte) buffer.remove();
+				//bytesRead++;
 			}
 		}
+		
+//		if (bytesRead > MAX_READ_BEFORE_TIMEOUT) {
+//			bytesRead = 0;
+//			// We've read a lot. Lets let sending have a chance.
+//			try {
+//				Thread.sleep(10);
+//			} catch (InterruptedException e) {
+//				LOGGER.error("", e);
+//			}
+//		}
 
 		return result;
-	};
+	}
 
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)

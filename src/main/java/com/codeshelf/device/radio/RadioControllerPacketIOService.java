@@ -24,7 +24,7 @@ public class RadioControllerPacketIOService {
 	private static final Logger							LOGGER			= LoggerFactory.getLogger(RadioControllerPacketIOService.class);
 
 	private Counter										packetsSentCounter;
-	private final ExecutorService						executorService	= Executors.newFixedThreadPool(1,
+	private final ExecutorService						executorService	= Executors.newFixedThreadPool(2,
 																			new ThreadFactoryBuilder().setNameFormat("pckt-io-%s")
 																				.setPriority(Thread.MAX_PRIORITY)
 																				.build());
@@ -34,6 +34,8 @@ public class RadioControllerPacketIOService {
 
 	private NetworkId									networkId;
 	private volatile boolean							isShutdown		= false;
+	private boolean										packetToSend	= false;
+	private PacketReader								packetReader;
 
 	public RadioControllerPacketIOService(IGatewayInterface gatewayInterface,
 		RadioControllerInboundPacketService packetHandlerService) {
@@ -43,7 +45,8 @@ public class RadioControllerPacketIOService {
 	}
 
 	public void start() {
-		executorService.submit(new PacketReader());
+		packetReader = new PacketReader();
+		executorService.submit(packetReader);
 		this.packetsSentCounter = MetricsService.getInstance().createCounter(MetricsGroup.Radio, "packets.sent");
 	}
 
@@ -57,15 +60,20 @@ public class RadioControllerPacketIOService {
 	 * We should be careful not to call this method in two threads.
 	 */
 	public void handleOutboundPacket(IPacket packet) {
+
+		packetToSend = true;
+
 		// Send packet
+		packetReader.pause();
 		packet.incrementSendCount();
 		gatewayInterface.sendPacket(packet);
+		packetReader.resume();
 		packet.setSentTimeMillis(System.currentTimeMillis());
 
 		if (packetsSentCounter != null) {
 			packetsSentCounter.inc();
 		}
-		
+
 		if (packet.getCommand().getCommandTypeEnum() != CommandGroupEnum.NETMGMT) {
 			LOGGER.debug("Outbound packet={}", packet);
 		}
@@ -73,12 +81,21 @@ public class RadioControllerPacketIOService {
 
 	private final class PacketReader implements Runnable {
 
+		private boolean	pause	= false;
+
 		@Override
-		public void run() {
+		public synchronized void run() {
 			while (!isShutdown) {
 				try {
 					if (gatewayInterface.isStarted()) {
 
+						while (pause) {
+							try {
+								Thread.sleep(2);
+							} catch (InterruptedException e) {
+								LOGGER.error("", e);
+							}
+						}
 						// Blocks and waits for packet
 						// TODO Move gatewayInterface away from polling. This
 						// method will sleep for 1ms if we don't have enough
@@ -138,6 +155,16 @@ public class RadioControllerPacketIOService {
 			if (!success) {
 				LOGGER.error("PacketHandlerService failed to accept packet after retries. Dropping packet={}", packet);
 			}
+		}
+
+		public void pause() {
+			pause = true;
+		}
+
+		public void resume() {
+			pause = false;
+			//this.notify();
+
 		}
 
 	}

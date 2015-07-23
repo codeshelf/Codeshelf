@@ -39,7 +39,7 @@ public class RadioControllerPacketSchedulerService {
 	public static final int														MAP_CONCURRENCY_LEVEL			= 4;
 
 	public static final long													NETWORK_PACKET_SPACING_MILLIS	= 5;
-	public static final long													DEVICE_PACKET_SPACING_MILLIS	= 40;
+	public static final long													DEVICE_PACKET_SPACING_MILLIS	= 20;
 
 	private static final int													ACK_SEND_RETRY_COUNT			= 20;															// matching v16. Used to be 20.
 	private static final long													MAX_PACKET_AGE_MILLIS			= 4000;
@@ -67,6 +67,7 @@ public class RadioControllerPacketSchedulerService {
 
 	// Scheduling threads
 	private final ScheduledExecutorService										packetSendService				= Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("pckt-schd")
+																													.setPriority(Thread.MAX_PRIORITY)
 																													.build());
 
 	// --------------------------------------------------------------------------
@@ -103,11 +104,17 @@ public class RadioControllerPacketSchedulerService {
 	 */
 	public void addCommandPacketToSchedule(IPacket inPacket, INetworkDevice inDevice) {
 
+		NetAddress deviceAddr = inDevice.getAddress();
+		if (deviceAddr == null) {
+			LOGGER.warn("Attempting to schedule packet for device without net address: {}", inDevice);
+			return;
+		}
+
 		// Add the packet to the queue of packets to be sent
-		ConcurrentLinkedDeque<IPacket> deque = mPendingPacketsMap.get(inDevice.getAddress());
+		ConcurrentLinkedDeque<IPacket> deque = mPendingPacketsMap.get(deviceAddr);
 		if (deque == null) {
 			deque = new ConcurrentLinkedDeque<IPacket>();
-			mPendingPacketsMap.put(inDevice.getAddress(), deque);
+			mPendingPacketsMap.put(deviceAddr, deque);
 		}
 
 		// Add new packet to the end of the queue
@@ -126,12 +133,17 @@ public class RadioControllerPacketSchedulerService {
 	 * 			Device to send ack to
 	 */
 	public void addAckPacketToSchedule(IPacket inPacket, INetworkDevice inDevice) {
+		NetAddress deviceAddr = inDevice.getAddress();
+		if (deviceAddr == null) {
+			LOGGER.warn("Attempting to schedule packet for device without net address: {}", inDevice);
+			return;
+		}
 
 		// Add the packet to the queue of packets to be sent
-		ConcurrentLinkedDeque<IPacket> deque = mPendingPacketsMap.get(inDevice.getAddress());
+		ConcurrentLinkedDeque<IPacket> deque = mPendingPacketsMap.get(deviceAddr);
 		if (deque == null) {
 			deque = new ConcurrentLinkedDeque<IPacket>();
-			mPendingPacketsMap.put(inDevice.getAddress(), deque);
+			mPendingPacketsMap.put(deviceAddr, deque);
 		}
 
 		// Need to send ACKs before other packets so add to the front of queue
@@ -177,7 +189,13 @@ public class RadioControllerPacketSchedulerService {
 	 * @param inAckPacket - Ack packet from device
 	 */
 	public void markPacketAsAcked(INetworkDevice inDevice, byte inAckNum, IPacket inAckPacket) {
-		mLastDeviceAckId.put(inDevice.getAddress(), inAckNum);
+		NetAddress deviceAddr = inDevice.getAddress();
+		if (deviceAddr == null) {
+			LOGGER.warn("Attempting to ack packet for device without net address: {}", inDevice);
+			return;
+		}
+
+		mLastDeviceAckId.put(deviceAddr, inAckNum);
 	}
 
 	// --------------------------------------------------------------------------
@@ -536,7 +554,16 @@ public class RadioControllerPacketSchedulerService {
 	 *		Device to clear packet queue 
 	 */
 	public void clearDevicePacketQueue(INetworkDevice inDevice) {
+
+		NetAddress deviceAddr;
+
 		if (inDevice == null) {
+			return;
+		}
+
+		deviceAddr = inDevice.getAddress();
+		if (deviceAddr == null) {
+			LOGGER.warn("Trying to clear packet schedule queue for device without net addres: {}", inDevice);
 			return;
 		}
 
@@ -558,8 +585,15 @@ public class RadioControllerPacketSchedulerService {
 	 * 		Device to remove from scheduling
 	 */
 	public void removeDevice(INetworkDevice inDevice) {
+		NetAddress deviceAddr;
 
 		if (inDevice == null) {
+			return;
+		}
+
+		deviceAddr = inDevice.getAddress();
+		if (deviceAddr == null) {
+			LOGGER.warn("Trying remove device from schedule without a net address {}", inDevice);
 			return;
 		}
 
