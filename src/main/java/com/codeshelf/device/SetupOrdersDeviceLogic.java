@@ -86,6 +86,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Getter
 	@Setter
 	private CheStateEnum						mRememberEnteringWallOrInventoryState	= CheStateEnum.CONTAINER_SELECT;
+	
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private CheStateEnum						mRememberEnteringInfoState				= CheStateEnum.PUT_WALL_SCAN_ITEM;
+	
+	//Save result of the last INFO request
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private String								mInfo[];
 
 	// When we  START or location change again, the server does not give us what we completed already.
 	@Accessors(prefix = "m")
@@ -314,6 +325,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				case PUT_WALL_POSCON_BUSY:
 					showPosconBusyScreen();
 					break;
+
+				case INFO_PROMPT:
+					sendDisplayCommand("SCAN LOCATION", "TO SEE CONTENTS");
+					break;
+
+				case INFO_RETRIEVAL:
+					sendDisplayCommand("RETRIEVING INFO", EMPTY_MSG);
+					break;
+					
+				case INFO_DISPLAY:
+					displayInfo();
+					break;
 					
 				case REMOTE:
 					sendRemoteStateScreen();
@@ -391,6 +414,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case POSCON_COMMAND:
 				posconSetupCommandReveived();
+				break;
+
+			case INFO_COMMAND:
+				infoCommandReceived();
 				break;
 
 			default:
@@ -524,6 +551,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 
 	}
+	
+	protected void infoCommandReceived() {
+		switch (mCheStateEnum) {
+			case PUT_WALL_SCAN_WALL:
+			case PUT_WALL_SCAN_ITEM:
+				setRememberEnteringInfoState(mCheStateEnum);
+				setState(CheStateEnum.INFO_PROMPT);
+				break;
+			default:
+		}
+	}
 
 	protected void clearCommandReceived() {
 		//Split it out by state
@@ -579,6 +617,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				// DEV-708, 712 specification. We want to return the state we started from: CONTAINER_SELECT or PICK_COMPLETE
 				priorState = getRememberEnteringWallOrInventoryState();
 				setState(priorState);
+				break;
+			
+			case INFO_PROMPT:
+				priorState = getRememberEnteringInfoState();
+				setState(priorState);
+				break;
+				
+			case INFO_RETRIEVAL:
+			case INFO_DISPLAY:
+				setInfo(null);
+				setState(CheStateEnum.INFO_PROMPT);
 				break;
 				
 			case SKU_WALL_SCAN_GTIN_LOCATION:
@@ -1500,6 +1549,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				
 			case SKU_WALL_ALTERNATE_WALL_AVAILABLE:
 				processSkuWallLocationDisambiguation(inScanPrefixStr, inContent);
+				break;
+				
+			case INFO_PROMPT:
+				requestWallLocationInfo(inScanPrefixStr, inContent);
 				break;
 				
 			case REMOTE:
@@ -2654,5 +2707,31 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		mDeviceManager.skuWallLocationDisambiguation(this.getPersistentId(), inScanStr, mLastPutWallItemScan, mPutWallName);
 		setState(CheStateEnum.COMPUTE_WORK);
 	}
-
+	
+	private void requestWallLocationInfo(String prefix, String location){
+		if (CheDeviceLogic.TAPE_PREFIX.equals(prefix)) {
+			location = prefix + location;
+		}
+		CheStateEnum infoSourceState = getRememberEnteringInfoState();
+		switch (infoSourceState) {
+			case PUT_WALL_SCAN_WALL:
+			case PUT_WALL_SCAN_ITEM:
+				setState(CheStateEnum.INFO_RETRIEVAL);
+				mDeviceManager.requestWallLocationInfo(prefix, location, getGuidNoPrefix(), getPersistentId().toString());
+				break;
+			default:				
+		}
+	}
+	
+	private void displayInfo(){
+		String lastLine = "CLEAR to exit";
+		if (mInfo == null) {
+			sendDisplayCommand("NO INFO RECEIVED", lastLine);
+		} else {
+			String line1 = mInfo[0] == null ? "" : mInfo[0];
+			String line2 = mInfo[1] == null ? "" : mInfo[1];
+			String line3 = mInfo[2] == null ? "" : mInfo[2];
+			sendDisplayCommand(line1, line2, line3, lastLine);
+		}
+	}
 }

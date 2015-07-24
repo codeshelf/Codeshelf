@@ -7,11 +7,17 @@ import com.google.inject.Inject;
 
 public class ServiceFactory {
 
-	private HashMap<Class<? extends IApiService>, IApiService>	mServices;
+	private HashMap<Class<? extends IApiService>, IApiService> mServices;
 
 	@Inject
-	public ServiceFactory(WorkService workService, LightService lightService, IPropertyService propertyService,
-			UiUpdateService uiUpdateService, OrderService orderService, InventoryService inventoryService, NotificationService notificationService) {
+	public ServiceFactory(WorkService workService,
+		LightService lightService,
+		IPropertyService propertyService,
+		UiUpdateService uiUpdateService,
+		OrderService orderService,
+		InventoryService inventoryService,
+		NotificationService notificationService,
+		InfoService infoService) {
 		mServices = Maps.newHashMap();
 		mServices.put(WorkService.class, workService);
 		mServices.put(LightService.class, lightService);
@@ -20,6 +26,7 @@ public class ServiceFactory {
 		mServices.put(OrderService.class, orderService);
 		mServices.put(InventoryService.class, inventoryService);
 		mServices.put(NotificationService.class, notificationService);
+		mServices.put(InfoService.class, infoService);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -27,5 +34,4 @@ public class ServiceFactory {
 		IApiService service = mServices.get(classObject);
 		return (T) service;
 	}
-
 }

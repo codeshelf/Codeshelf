@@ -51,6 +51,7 @@ import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest;
+import com.codeshelf.ws.protocol.request.InfoRequest;
 import com.codeshelf.ws.protocol.request.TapeLocationDecodingRequest;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
 import com.codeshelf.ws.protocol.request.InventoryLightItemRequest;
@@ -477,6 +478,16 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		InventoryLightLocationRequest req = new InventoryLightLocationRequest(inPersistentId.toString(), inLocation, isTape);
 		clientEndpoint.sendMessage(req);
 	}
+	
+	/**
+	 * Request information on items in the Wall location
+	 */
+	public void requestWallLocationInfo(final String inScanPrefixStr, String inScanStr, String cheGuid, String chePersistentId) {
+		LOGGER.debug("Request PutWall Location Info Inventory light location request: Che={};  Location={};", cheGuid, inScanStr);
+		InfoRequest req = new InfoRequest(InfoRequest.InfoRequestType.GET_WALL_LOCATION_INFO, chePersistentId, inScanStr);
+		clientEndpoint.sendMessage(req);
+	}
+
 
 	/**
 	 * Websocket connects then this authenticates and receives the network it should use
@@ -869,6 +880,30 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		} else {
 			LOGGER.warn("Device not found in processPutWallInstructionResponse. CHE id={}", networkGuid);
 		}
+	}
+	
+	public void processInfoResponse(String networkGuid, String info[]) {
+		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
+		if (cheDevice != null) {
+			if (cheDevice instanceof SetupOrdersDeviceLogic){
+				((SetupOrdersDeviceLogic) cheDevice).setInfo(info);
+				cheDevice.setState(CheStateEnum.INFO_DISPLAY);
+				/*
+				((SetupOrdersDeviceLogic)cheDevice).setLocationId(decodedLocation);
+				if (cheDevice.getCheStateEnum() == CheStateEnum.SETUP_SUMMARY) {
+					LOGGER.info("Tape decoding {} received and saved, refreshing SETUP_SUMMARY. CHE id={}", decodedLocation, networkGuid);
+					cheDevice.setState(CheStateEnum.SETUP_SUMMARY);
+				} else {
+					LOGGER.info("Tape decoding {} received and saved, but device is no longer in SETUP_SUMMARY. CHE id={}", decodedLocation, networkGuid);
+				}
+				*/
+			} else {
+				LOGGER.warn("Device is not SetupOrdersDeviceLogic in processTapeLocationDecodingResponse. CHE id={}", networkGuid);
+			}
+		} else {
+			LOGGER.warn("Device not found in processInfoResponse. CHE id={}", networkGuid);
+		}
+		
 	}
 
 	/** Two key actions from the associate response

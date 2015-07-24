@@ -17,6 +17,7 @@ import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
+import com.codeshelf.service.InfoService;
 import com.codeshelf.service.InventoryService;
 import com.codeshelf.service.NotificationService;
 import com.codeshelf.service.ServiceFactory;
@@ -29,6 +30,7 @@ import com.codeshelf.ws.protocol.command.ComputePutWallInstructionCommand;
 import com.codeshelf.ws.protocol.command.ComputeWorkCommand;
 import com.codeshelf.ws.protocol.command.CreatePathCommand;
 import com.codeshelf.ws.protocol.command.EchoCommand;
+import com.codeshelf.ws.protocol.command.InfoCommand;
 import com.codeshelf.ws.protocol.command.InventoryLightItemCommand;
 import com.codeshelf.ws.protocol.command.InventoryLightLocationCommand;
 import com.codeshelf.ws.protocol.command.InventoryUpdateCommand;
@@ -56,6 +58,7 @@ import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest;
 import com.codeshelf.ws.protocol.request.CreatePathRequest;
 import com.codeshelf.ws.protocol.request.EchoRequest;
+import com.codeshelf.ws.protocol.request.InfoRequest;
 import com.codeshelf.ws.protocol.request.InventoryLightItemRequest;
 import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
 import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
@@ -105,6 +108,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	private final Counter			notificationCounter;
 	private final Counter			tapeLocationDecodingCounter;
 	private final Counter			skuWallLocationDisambiguationCounter;
+	private final Counter			informationRequestCounter;
 	private final Timer				requestProcessingTimer;
 
 	private ServiceFactory			serviceFactory;
@@ -144,6 +148,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		notificationCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.notification");
 		tapeLocationDecodingCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.tape-location-decoding");
 		skuWallLocationDisambiguationCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.sku_wall_disambiguation");
+		informationRequestCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.information_request_counter");
 	}
 
 	ObjectChangeBroadcaster getObjectChangeBroadcaster() {
@@ -271,6 +276,10 @@ public class ServerMessageProcessor implements IMessageProcessor {
 				serviceFactory.getServiceInstance(InventoryService.class),
 				serviceFactory.getServiceInstance(WorkService.class));
 			skuWallLocationDisambiguationCounter.inc();
+			applicationRequestCounter.inc();
+		} else if (request instanceof InfoRequest) {
+			command = new InfoCommand(csSession, (InfoRequest) request, serviceFactory.getServiceInstance(InfoService.class));
+			informationRequestCounter.inc();
 			applicationRequestCounter.inc();
 		} else {
 			LOGGER.error("invalid message {} for user {}", request.getClass().getSimpleName(), user.getUsername());

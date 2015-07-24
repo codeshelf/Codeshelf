@@ -106,7 +106,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					SCAN_PUTWALL_LOCATION_MSG				= cheLine("SCAN LOCATION IN");
 	protected static final String					PUT_WALL_MSG							= cheLine("PUT WALL");
 	protected static final String					SCAN_PUTWALL_ITEM_MSG					= cheLine("SCAN ITEM/UPC");
-	protected static final String					SCAN_PUTWALL_NAME_MSG					= cheLine("SCAN PUT WALL NAME");
+	protected static final String					SCAN_PUTWALL_NAME_MSG					= cheLine("SCAN WALL NAME");
 	protected static final String					NO_WORK_FOR								= cheLine("NO WORK FOR");
 	protected static final String					SCAN_ITEM_OR_CLEAR						= cheLine("SCAN ITEM OR CLEAR");
 	
@@ -135,6 +135,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					PUT_WALL_COMMAND						= "PUT_WALL";
 	protected static final String					REMOTE_COMMAND							= "REMOTE";
 	protected static final String					POSCON_COMMAND							= "POSCON";
+	protected static final String					INFO_COMMAND							= "INFO";
 
 	// With WORKSEQR = "WorkSequence", work may scan start instead of scanning a location. 
 	// LOCATION_SELECT_REVIEW, we want "REVIEW MISSING WORK" "OR SCAN LOCATION" "OR SCAN START"

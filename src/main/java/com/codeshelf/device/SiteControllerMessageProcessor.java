@@ -30,6 +30,7 @@ import com.codeshelf.ws.protocol.response.ComputeWorkResponse;
 import com.codeshelf.ws.protocol.response.FailureResponse;
 import com.codeshelf.ws.protocol.response.GetOrderDetailWorkResponse;
 import com.codeshelf.ws.protocol.response.GetPutWallInstructionResponse;
+import com.codeshelf.ws.protocol.response.InfoResponse;
 import com.codeshelf.ws.protocol.response.InventoryUpdateResponse;
 import com.codeshelf.ws.protocol.response.LoginResponse;
 import com.codeshelf.ws.protocol.response.PutWallPlacementResponse;
@@ -186,6 +187,13 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				if (response.getStatus() == ResponseStatus.Success) {
 					this.deviceManager.processTapeLocationDecodingResponse(devodingResponse.getNetworkGuid(),
 						devodingResponse.getDecodedLocation());
+				}
+			}
+			
+			else if (response instanceof InfoResponse) {
+				InfoResponse infoResponse = (InfoResponse) response;
+				if (response.getStatus() == ResponseStatus.Success) {
+					this.deviceManager.processInfoResponse(infoResponse.getNetworkGuid(), infoResponse.getInfo());
 				}
 			}
 			

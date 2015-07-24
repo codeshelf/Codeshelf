@@ -60,7 +60,12 @@ public enum CheStateEnum {
 	// states used for mobile CHE association
 	REMOTE(CheStateNum.REMOTE, "REMOTE"),
 	REMOTE_PENDING(CheStateNum.REMOTE_PENDING, "REMOTE_PENDING"),
-	REMOTE_LINKED(CheStateNum.REMOTE_LINKED, "REMOTE_LINKED");
+	REMOTE_LINKED(CheStateNum.REMOTE_LINKED, "REMOTE_LINKED"),
+	
+	// states for the INFO command
+	INFO_PROMPT(CheStateNum.INFO_PROMPT, "INFO_PROMPT"),
+	INFO_RETRIEVAL(CheStateNum.INFO_RETRIEVAL, "INFO_RETRIEVAL"),
+	INFO_DISPLAY(CheStateNum.INFO_DISPLAY, "INFO_DISPLAY");
 
 	private int		mValue;
 	private String	mName;
@@ -161,10 +166,10 @@ public enum CheStateEnum {
 		static final byte	SHORT_PICK					= 8;
 		static final byte	SKU_WALL_SCAN_GTIN_LOCATION = 9;	//Added July 13th
 		static final byte	SKU_WALL_ALTERNATE 			= 10;	//Added July 15th
-		// available, used to be NO WORK				= 11;
-		// available			= 12;
+		static final byte	INFO_RETRIEVAL				= 11;	//Added July 23rd
+		static final byte	INFO_PROMPT					= 12;	//Added July 24th
 		static final byte	SHORT_PICK_CONFIRM			= 13;	//Added Oct. 2014
-		// available. used to be LOCATION_SELECT_REVIEW	= 14;
+		static final byte	INFO_DISPLAY				= 14;	//Added July 24th
 
 		//Error States
 
