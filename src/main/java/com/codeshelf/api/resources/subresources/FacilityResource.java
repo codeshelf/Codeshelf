@@ -202,6 +202,7 @@ public class FacilityResource {
     			 "itemMasterId",
     			 "planQuantity",
     			 "uomMasterId",
+    			 "uomNormalized",
     			 "orderId",
     			 "orderDetailId",
     			 "containerId",
