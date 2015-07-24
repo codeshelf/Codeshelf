@@ -18,7 +18,7 @@ setWall A2 skuwall
 setController LocX24   lights  :contr1 1 tiersInAisle
 setController LocX26   lights  0x000000AB 1 tiersInAisle
 setController A3.B1.T1 poscons 0x000000AA 1 tiersInAisle
-setPosconToBay A3.B3 0x000000AA 98 A3.B4 0x000000AA 99 A1.B2 0x000000DB 11 A2.B2 0x000000DB 1
+setPosconToBay A3.B3 0x000000AA 98 A3.B4 0x000000AA 99 A1.B2 0x000000DB 11 A2.B1 0x000000DB 1 A2.B2 0x000000DB 1
 setPoscons A3.B1.T1 1 forward A3.B2.T1 5 forward A3.B3.T1 9 forward A3.B4.T1 13 forward
 createChe 0x000000A4 blue LINE_SCAN
 createChe 0x000000A3 magenta SETUP_ORDERS CHE_B

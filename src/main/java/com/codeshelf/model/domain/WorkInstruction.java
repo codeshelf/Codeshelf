@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.LedRange;
 import com.codeshelf.model.TimeFormat;
+import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
@@ -247,6 +248,11 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	@Getter @Setter
 	@JsonProperty
 	private String gtin = null;
+	
+	@Column(nullable = true, name = "purpose")
+	@Getter @Setter
+	@JsonProperty
+	private WiPurpose purpose = null;
 
 	public WorkInstruction() {
 	}

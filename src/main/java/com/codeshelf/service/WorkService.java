@@ -801,6 +801,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				WorkInstructionTypeEnum.PLAN,
 				orderDetail,
 				inChe,
+				WiPurpose.WiPurposeOutboundPick,
 				true,
 				null); // Could be normal WI, or a short WI
 		} else {

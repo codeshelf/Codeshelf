@@ -70,6 +70,7 @@ public class WiFactory {
 		resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 		resultWi.setLedCmdStream("[]"); // empty array
 		resultWi.setStatus(WorkInstructionStatusEnum.NEW); // perhaps there could be a general housekeep status as there is for short,
+		resultWi.setPurpose(WiPurpose.WiPurposeUnknown);
 		// but short denotes completion as short, even if it was short from the start and there was never a chance to complete or short.
 
 		resultWi.setLocation(inLocation);
@@ -119,6 +120,7 @@ public class WiFactory {
 		resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
 		resultWi.setLedCmdStream("[]"); // empty array
 		resultWi.setParent(inFacility);
+		resultWi.setPurpose(WiPurpose.WiPurposeHousekeep);
 		setWorkInstructionLedPatternForHK(resultWi, inType, inPrevWi);
 
 		long seq = SequenceNumber.generate();
@@ -199,7 +201,7 @@ public class WiFactory {
 		WiPurpose purpose,
 		boolean linkInstructionToDetail) throws DaoException {
 
-		WorkInstruction resultWi = createWorkInstruction(inStatus, inType, inOrderDetail, inChe, linkInstructionToDetail, inTime);
+		WorkInstruction resultWi = createWorkInstruction(inStatus, inType, inOrderDetail, inChe, purpose, linkInstructionToDetail, inTime);
 		if (resultWi == null) { //no more work to do
 			return null;
 		}
@@ -277,6 +279,7 @@ public class WiFactory {
 		WorkInstructionTypeEnum inType,
 		OrderDetail inOrderDetail,
 		Che inChe,
+		WiPurpose purpose,
 		boolean linkInstructionToDetail,
 		final Timestamp inTime) throws DaoException {
 		Facility facility = inOrderDetail.getFacility();
@@ -340,7 +343,7 @@ public class WiFactory {
 			resultWi.setPlanMaxQuantity(maxQtyToPick);
 			resultWi.setActualQuantity(0);
 			resultWi.setAssigned(inTime);
-			resultWi.setType(inType);
+			resultWi.setPurpose(purpose);
 			
 			// set gtin field on work instruction based on order detail
 			resultWi.setGtin(null);
@@ -403,6 +406,7 @@ public class WiFactory {
 		wi.setCreated(new Timestamp(System.currentTimeMillis()));
 		wi.setStatus(status);
 		wi.setType(type);
+		wi.setPurpose(purpose);
 		wi.setContainer(null);
 		wi.setParent(che.getFacility());
 		che.addWorkInstruction(wi);
