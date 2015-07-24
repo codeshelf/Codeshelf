@@ -37,6 +37,7 @@ import com.codeshelf.flyweight.controller.INetworkDevice;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.google.common.base.MoreObjects;
@@ -736,6 +737,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	private void sendDisplayWorkInstruction(WorkInstruction wi) {
 		String planQtyStr = getWICountStringForCheDisplay(wi);
+		boolean skipQtyDisplay = WiPurpose.WiPurposeSkuWallPut.equals(wi.getPurpose());
 
 		String[] pickInfoLines = { "", "", "" };
 
@@ -752,7 +754,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			pickInfoLines[0] = info;
 
 			String displayDescription = wi.getDescription();
-			if (!planQtyStr.isEmpty()) {
+			if (!planQtyStr.isEmpty() && !skipQtyDisplay) {
 				displayDescription = planQtyStr + " " + displayDescription;
 			}
 
@@ -769,7 +771,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		} else if ("Description".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
 
 			String displayDescription = wi.getDescription();
-			if (!planQtyStr.isEmpty()) {
+			if (displayDescription == null) {
+				displayDescription = "";
+			}
+			if (!planQtyStr.isEmpty() && !skipQtyDisplay) {
 				displayDescription = planQtyStr + " " + displayDescription;
 			}
 
@@ -801,7 +806,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			pickInfoLines[0] = info;
 
 			String quantity = "";
-			if (!planQtyStr.isEmpty()) {
+			if (!planQtyStr.isEmpty() && !skipQtyDisplay) {
 				quantity = "QTY " + planQtyStr;
 			}
 

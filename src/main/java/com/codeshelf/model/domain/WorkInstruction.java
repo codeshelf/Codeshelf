@@ -251,6 +251,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	private String gtin = null;
 	
 	@Column(nullable = true, name = "purpose")
+	@Enumerated(value = EnumType.STRING)
 	@Getter @Setter
 	@JsonProperty
 	private WiPurpose purpose = null;

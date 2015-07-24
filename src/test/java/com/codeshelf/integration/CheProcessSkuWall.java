@@ -143,7 +143,7 @@ public class CheProcessSkuWall extends ServerTest{
 		picker.scanSomething(gtin);
 		picker.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
 		//Verify CHE display
-		String expectedDisplay = expectedLocation + "\n" + expectedItem + "\nQTY 1\n\n";
+		String expectedDisplay = expectedLocation + "\n" + expectedItem + "\n\n\n";
 		Assert.assertEquals(expectedDisplay, picker.getLastCheDisplay());
 		//Verify PosCon display (min = 1, qty = 1, max = 99, blinking, bright)
 		posman.waitForControllerDisplayValue((byte)1, (byte)1, WAIT_TIME);
@@ -173,7 +173,7 @@ public class CheProcessSkuWall extends ServerTest{
 		picker.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
 
 		posman.waitForControllerDisplayValue((byte)2, (byte)1, WAIT_TIME);
-		expectedDisplay = "Tier121\nItem3\nQTY 1\n\n";
+		expectedDisplay = "Tier121\nItem3\n\n\n";
 		Assert.assertEquals(expectedDisplay, picker.getLastCheDisplay());
 		LOGGER.info("3.a: Make sure Wall_1_1 PosCon is blank");
 		Assert.assertNull(posman.getLastSentPositionControllerMinQty((byte)1));
@@ -206,7 +206,7 @@ public class CheProcessSkuWall extends ServerTest{
 		picker.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
 		
 		posman.waitForControllerDisplayValue((byte)1, (byte)1, WAIT_TIME);
-		expectedDisplay = "Slot1113\nItem3\nQTY 1\n\n";
+		expectedDisplay = "Slot1113\nItem3\n\n\n";
 		Assert.assertEquals(expectedDisplay, picker.getLastCheDisplay());
 		LOGGER.info("3.a: Make sure Wall_1_2 PosCon is blank");
 		Assert.assertNull(posman.getLastSentPositionControllerMinQty((byte)2));
@@ -233,7 +233,7 @@ public class CheProcessSkuWall extends ServerTest{
 		picker.waitForCheState(CheStateEnum.SKU_WALL_SCAN_GTIN_LOCATION, WAIT_TIME);
 		picker.scanSomething("%000000010050");
 		picker.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
-		String expectedDisplay = "Slot1111\nNew Item\nQTY 1\n\n";
+		String expectedDisplay = "Slot1111\nNew Item\n\n\n";
 		Assert.assertEquals(expectedDisplay, picker.getLastCheDisplay());
 		//Make sure Wall_1_1 PosCon is lit
 		verifySkuPoscon(1);
