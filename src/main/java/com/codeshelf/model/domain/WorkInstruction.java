@@ -35,6 +35,7 @@ import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.util.StringUIConverter;
+import com.codeshelf.util.UomNormalizer;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -340,6 +341,19 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		OrderDetail detail = getOrderDetail();
 		if (detail != null)
 			return detail.getUomMasterId();
+		else
+			return "";
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * For a UI meta field
+	 * @return
+	 */
+	public String getUomNormalized() {
+		OrderDetail detail = getOrderDetail();
+		if (detail != null)
+			return UomNormalizer.normalizeString(detail.getUomMasterId());
 		else
 			return "";
 	}
