@@ -102,16 +102,16 @@ public class OrderService implements IApiService {
 		return result;
 	}
 	
-	public List<Map<String, Object>> findOrderHeadersForStatus(Facility facility, OrderStatusEnum[] orderStatusEnums) {
+	public List<Map<String, Object>> findOrderHeadersForStatus(Facility facility, String[] propertyNames, OrderStatusEnum[] orderStatusEnums) {
 		Criteria criteria = orderHeaderCriteria(facility)
 				.add(Property.forName("status").in(orderStatusEnums));
 		@SuppressWarnings("unchecked")
 		List<OrderHeader> results =(List<OrderHeader>) criteria.list();
-		return toOrderView(results);
+		return toOrderView(results, propertyNames);
 
 	}
 	
-	public List<Map<String, Object>> findOrderHeadersForOrderId(Facility facility, String orderId) {
+	public List<Map<String, Object>> findOrderHeadersForOrderId(Facility facility, String[] propertyNames, String orderId) {
 		
 		SimpleExpression orderIdProperty = null;
 		if (orderId != null && orderId.indexOf('*') >= 0) {
