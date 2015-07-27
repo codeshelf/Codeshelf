@@ -36,7 +36,7 @@ public class TransactionFilter implements Filter {
 			persistenceService.rollbackTransaction();
 			throw e;
 		} finally {
-			if(!threw)
+			if(!threw && persistenceService.hasAnyActiveTransactions())
 				persistenceService.commitTransaction();
 		}
 	}

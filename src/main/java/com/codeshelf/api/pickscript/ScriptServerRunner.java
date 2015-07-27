@@ -111,7 +111,9 @@ public class ScriptServerRunner {
 		ScriptMessage message = new ScriptMessage();
 		try {
 			for (String line : lines) {
-				persistence.beginTransaction();
+				if (!persistence.hasAnyActiveTransactions()){
+					persistence.beginTransaction();
+				}
 				facility = Facility.staticGetDao().findByPersistentId(facilityId);
 				processLine(line);
 				persistence.commitTransaction();
