@@ -33,6 +33,7 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.jpa.event.spi.JpaIntegrator;
 import org.hibernate.proxy.HibernateProxy;
+import org.hibernate.stat.Statistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,6 +86,10 @@ public abstract class AbstractPersistenceService extends AbstractCodeshelfIdleSe
 		Session session = this.sessionFactory.getCurrentSession();
 
 		return session;
+	}
+	
+	public Statistics getStatistics() {
+		return this.sessionFactory.getStatistics();
 	}
 	
 	private void initializeTenantSchema(String tenantIdentifier) {
