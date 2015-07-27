@@ -888,17 +888,8 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			if (cheDevice instanceof SetupOrdersDeviceLogic){
 				((SetupOrdersDeviceLogic) cheDevice).setInfo(info);
 				cheDevice.setState(CheStateEnum.INFO_DISPLAY);
-				/*
-				((SetupOrdersDeviceLogic)cheDevice).setLocationId(decodedLocation);
-				if (cheDevice.getCheStateEnum() == CheStateEnum.SETUP_SUMMARY) {
-					LOGGER.info("Tape decoding {} received and saved, refreshing SETUP_SUMMARY. CHE id={}", decodedLocation, networkGuid);
-					cheDevice.setState(CheStateEnum.SETUP_SUMMARY);
-				} else {
-					LOGGER.info("Tape decoding {} received and saved, but device is no longer in SETUP_SUMMARY. CHE id={}", decodedLocation, networkGuid);
-				}
-				*/
 			} else {
-				LOGGER.warn("Device is not SetupOrdersDeviceLogic in processTapeLocationDecodingResponse. CHE id={}", networkGuid);
+				LOGGER.warn("Device is not SetupOrdersDeviceLogic in processInfoResponse. CHE id={}", networkGuid);
 			}
 		} else {
 			LOGGER.warn("Device not found in processInfoResponse. CHE id={}", networkGuid);

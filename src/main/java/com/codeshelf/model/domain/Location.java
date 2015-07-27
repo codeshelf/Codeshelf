@@ -1508,6 +1508,23 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		return null;
 	}
 	
+	/**
+	 * Returns a list of all descendants of this Location INCLUDING ITSELF
+	 */
+	public List<Location> getAllDescendants(){
+		List<Location> descendants = Lists.newArrayList();
+		getAllDescendantsHelper(descendants);
+		return descendants;
+	}
+	
+	private void getAllDescendantsHelper(List<Location> descendants) {
+		descendants.add(this);
+		List<Location> children = getChildren();
+		for (Location child : children){
+			child.getAllDescendantsHelper(descendants);
+		}
+	}
+	
 	public Location getWall(String wallType){
 		if ((wallType == SKUWALL_USAGE && !isSkuWallLocation()) || (wallType == PUTWALL_USAGE && !isPutWallLocation())){
 			return null;

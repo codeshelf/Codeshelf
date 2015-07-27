@@ -1,6 +1,8 @@
 mappedLocationId,locationAlias
 A1,Aisle1
+A1.B1,Wall11
 A1.B1.T1,LocX24
+A1.B2,Wall12
 A1.B2.T1,LocX25
 A1.B2.T1.S1,LocX25.1
 A2.B1,Wall21

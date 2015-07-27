@@ -428,6 +428,13 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 			LOGGER.error("Failed to update order status", e);
 		}
 	}
+	
+	public void reevaluateOrderAndDetails(){
+		for (OrderDetail detail : getOrderDetails()){
+			detail.reevaluateStatus();
+		}
+		reevaluateStatus();
+	}
 
 	// --------------------------------------------------------------------------
 	/**

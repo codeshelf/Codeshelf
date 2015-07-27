@@ -32,7 +32,7 @@ public class InfoCommand extends CommandABC{
 		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
 		if (che!=null) {
 			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();
-			String info[] = infoService.getInfo(request);
+			String info[] = infoService.getInfo(che.getFacility(), request, che.getColor());
 			response.setInfo(info);
 			response.setNetworkGuid(networkGuid);
 			response.setStatus(ResponseStatus.Success);
