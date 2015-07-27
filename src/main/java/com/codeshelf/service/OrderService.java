@@ -16,6 +16,7 @@ import lombok.Setter;
 
 import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.hibernate.Criteria;
+import org.hibernate.FetchMode;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.Projections;
@@ -151,6 +152,7 @@ public class OrderService implements IApiService {
 	
 	private Criteria orderHeaderCriteria(Facility facility) {
 		Criteria criteria = OrderHeader.staticGetDao().createCriteria()
+				.setFetchMode("orderDetails", FetchMode.JOIN)
 				.add(Property.forName("parent").eq(facility));
 		return criteria;
 				
