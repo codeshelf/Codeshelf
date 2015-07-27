@@ -102,16 +102,16 @@ public class OrderService implements IApiService {
 		return result;
 	}
 	
-	public List<Map<String, Object>> findOrderHeadersForStatus(Facility facility, OrderStatusEnum[] orderStatusEnums) {
+	public List<Map<String, Object>> findOrderHeadersForStatus(Facility facility, String[] propertyNames, OrderStatusEnum[] orderStatusEnums) {
 		Criteria criteria = orderHeaderCriteria(facility)
 				.add(Property.forName("status").in(orderStatusEnums));
 		@SuppressWarnings("unchecked")
 		List<OrderHeader> results =(List<OrderHeader>) criteria.list();
-		return toOrderView(results);
+		return toOrderView(results, propertyNames);
 
 	}
 	
-	public List<Map<String, Object>> findOrderHeadersForOrderId(Facility facility, String orderId) {
+	public List<Map<String, Object>> findOrderHeadersForOrderId(Facility facility, String[] propertyNames, String orderId) {
 		
 		SimpleExpression orderIdProperty = null;
 		if (orderId != null && orderId.indexOf('*') >= 0) {
@@ -124,29 +124,10 @@ public class OrderService implements IApiService {
 								.add(orderIdProperty);
 		@SuppressWarnings("unchecked")
 		List<OrderHeader> results =(List<OrderHeader>) criteria.list();
-		return toOrderView(results);
+		return toOrderView(results, propertyNames);
 	}
 
-	private List<Map<String, Object>> toOrderView(List<OrderHeader> results) {
-		String[] propertyNames = new String[]{
-				"persistentId",
-				"destinationId",
-				"fullDomainId",
-				"orderId",
-				"description",
-				"readableOrderDate",
-				"readableDueDate",
-				"status",
-				"containerId",
-				"shipperId",
-				"customerId",
-				"workSequence", 
-				"orderLocationAliasIds",
-				"active",
-				"orderType",
-				"wallUi",
-				"groupUi", 
-				"dueDate"};
+	private List<Map<String, Object>> toOrderView(List<OrderHeader> results, String[] propertyNames) {
 		PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
 		ArrayList<Map<String, Object>> viewResults = new ArrayList<Map<String, Object>>();
 		for (OrderHeader object : results) {

@@ -42,11 +42,10 @@ h3 {
 </head>
 <body bgcolor="#FFFFFF" style="height:800px;">
 <%
-	SessionFactory sessionFactory = TenantPersistenceService.getInstance().getSessionFactory(); // default tenant
-	Statistics s = sessionFactory.getStatistics();
+	Statistics s = TenantPersistenceService.getInstance().getStatistics();
 	String x = s.toString();
 	PrintWriter pw = response.getWriter();
-	
+
 	Map<String,Long> properties = new LinkedHashMap<String,Long>();
 	properties.put("Connections",s.getConnectCount());
 	properties.put("Session Opened",s.getSessionOpenCount());
@@ -55,14 +54,14 @@ h3 {
 	properties.put("Successful Transactions",s.getSuccessfulTransactionCount());
 	properties.put("Queries",s.getQueryExecutionCount());
 	properties.put("Flushes",s.getFlushCount());
-	properties.put("Max Query Time",s.getQueryExecutionMaxTime());	
-	//properties.put("Query Hits",s.getQueryCacheHitCount());	
-	//properties.put("Query Misses",s.getQueryCacheMissCount());	
-	
+	properties.put("Max Query Time",s.getQueryExecutionMaxTime());
+	//properties.put("Query Hits",s.getQueryCacheHitCount());
+	//properties.put("Query Misses",s.getQueryCacheMissCount());
+
 	// print out properties
 	pw.write("<h3>Database Statistics:</h3>");
 	pw.write("<table>");
-	pw.write("<tr><th>Property</th><th>Value</th></tr>");	
+	pw.write("<tr><th>Property</th><th>Value</th></tr>");
 	int c=0;
 	for (String name : properties.keySet()) {
 		c++;
@@ -70,23 +69,23 @@ h3 {
 			pw.write("<tr>");
 		}
 		else {
-			pw.write("<tr class='alt'>");			
+			pw.write("<tr class='alt'>");
 		}
 		pw.write("<td>"+name+"</td>");
 		pw.write("<td>"+properties.get(name)+"</td>");
 	}
 	pw.write("</table>");
-	
+
 	// print out cache region stats
-	String[] regionNames = sessionFactory.getStatistics().getSecondLevelCacheRegionNames();
+	String[] regionNames = s.getSecondLevelCacheRegionNames();
 	Arrays.sort(regionNames);
 	pw.write("<h3>Cache Regions:</h3>");
 	pw.write("<table>");
-	pw.write("<tr><th>Name</th><th>Hits</th><th>Misses</th><th>Ratio</th><th>Puts</th><th>Elements</th></tr>");	
+	pw.write("<tr><th>Name</th><th>Hits</th><th>Misses</th><th>Ratio</th><th>Puts</th><th>Elements</th></tr>");
 	c=0;
 	for (String regionName : regionNames) {
 		c++;
-		SecondLevelCacheStatistics statistics = sessionFactory.getStatistics().getSecondLevelCacheStatistics(regionName);
+		SecondLevelCacheStatistics statistics = s.getSecondLevelCacheStatistics(regionName);
 		long ratio = 0;
 		if (statistics.getMissCount()+statistics.getHitCount()>0) {
 			ratio = statistics.getHitCount()*100/(statistics.getMissCount()+statistics.getHitCount());
@@ -95,7 +94,7 @@ h3 {
 			pw.write("<tr>");
 		}
 		else {
-			pw.write("<tr class='alt'>");			
+			pw.write("<tr class='alt'>");
 		}
 		pw.write("<td>"+regionName+"</td>");
 		pw.write("<td>"+statistics.getHitCount()+"</td>");
@@ -108,20 +107,20 @@ h3 {
 	pw.write("</table>");
 
 	// print out entity stats
-	String[] entityNames = sessionFactory.getStatistics().getEntityNames();
+	String[] entityNames = s.getEntityNames();
 	Arrays.sort(entityNames);
 	pw.write("<h3>Entity Statistics:</h3>");
 	pw.write("<table>");
-	pw.write("<tr><th>Name</th><th>Insert</th><th>Load</th><th>Fetch</th><th>Update</th><th>Delete</th></tr>");	
+	pw.write("<tr><th>Name</th><th>Insert</th><th>Load</th><th>Fetch</th><th>Update</th><th>Delete</th></tr>");
 	c=0;
 	for (String entityName : entityNames) {
 		c++;
-		EntityStatistics statistics = sessionFactory.getStatistics().getEntityStatistics(entityName);
+		EntityStatistics statistics = s.getEntityStatistics(entityName);
 		if (c%2==1) {
 			pw.write("<tr>");
 		}
 		else {
-			pw.write("<tr class='alt'>");			
+			pw.write("<tr class='alt'>");
 		}
 		pw.write("<td>"+entityName+"</td>");
 		pw.write("<td>"+statistics.getInsertCount()+"</td>");
@@ -132,23 +131,23 @@ h3 {
 		pw.write("</tr>");
 	}
 	pw.write("</table>");
-	
+
 	// print out collection stats
-	String[] collectionNames = sessionFactory.getStatistics().getCollectionRoleNames();
+	String[] collectionNames = s.getCollectionRoleNames();
 	Arrays.sort(collectionNames);
 	pw.write("<h3>Collection Statistics:</h3>");
 	pw.write("<table>");
-	pw.write("<tr><th>Name</th><th>Load</th><th>Fetch</th><th>Recreate</th><th>Update</th><th>Remove</th></tr>");	
+	pw.write("<tr><th>Name</th><th>Load</th><th>Fetch</th><th>Recreate</th><th>Update</th><th>Remove</th></tr>");
 	c=0;
 	for (String collectionName : collectionNames) {
 		c++;
-		CollectionStatistics statistics = sessionFactory.getStatistics().getCollectionStatistics(collectionName);
+		CollectionStatistics statistics = s.getCollectionStatistics(collectionName);
 		long ratio = 0;
 		if (c%2==1) {
 			pw.write("<tr>");
 		}
 		else {
-			pw.write("<tr class='alt'>");			
+			pw.write("<tr class='alt'>");
 		}
 		pw.write("<td>"+collectionName+"</td>");
 		pw.write("<td>"+statistics.getLoadCount()+"</td>");
@@ -159,17 +158,17 @@ h3 {
 		pw.write("</tr>");
 	}
 	pw.write("</table>");
-	
+
 	// print out query stats
-	String[] queryNames = sessionFactory.getStatistics().getQueries();
+	String[] queryNames = s.getQueries();
 	Arrays.sort(regionNames);
 	pw.write("<h3>Query Statistics:</h3>");
 	pw.write("<table>");
-	pw.write("<tr><th>Name</th><th>Count</th><th>Rows</th><th>Hits</th><th>Misses</th><th>Ratio</th><th>Puts</th><th>Min</th><th>Average</th><th>Max</th></tr>");	
+	pw.write("<tr><th>Name</th><th>Count</th><th>Rows</th><th>Hits</th><th>Misses</th><th>Ratio</th><th>Puts</th><th>Min</th><th>Average</th><th>Max</th></tr>");
 	c=0;
 	for (String queryName : queryNames) {
 		c++;
-		QueryStatistics statistics = sessionFactory.getStatistics().getQueryStatistics(queryName);
+		QueryStatistics statistics = s.getQueryStatistics(queryName);
 		long ratio = 0;
 		if (statistics.getCacheMissCount()+statistics.getCacheHitCount()>0) {
 			ratio = statistics.getCacheHitCount()*100/(statistics.getCacheMissCount()+statistics.getCacheHitCount());
@@ -178,7 +177,7 @@ h3 {
 			pw.write("<tr>");
 		}
 		else {
-			pw.write("<tr class='alt'>");			
+			pw.write("<tr class='alt'>");
 		}
 		pw.write("<td>"+queryName+"</td>");
 		pw.write("<td>"+statistics.getExecutionCount()+"</td>");
@@ -193,7 +192,7 @@ h3 {
 		pw.write("</tr>");
 	}
 	pw.write("</table>");
-		
+
 	pw.flush();
 %>
 <br>
