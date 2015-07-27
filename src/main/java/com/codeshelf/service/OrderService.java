@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -124,13 +125,19 @@ public class OrderService implements IApiService {
 		Criteria criteria = orderHeaderCriteria(facility)
 								.add(orderIdProperty);
 		@SuppressWarnings("unchecked")
-		List<OrderHeader> results =(List<OrderHeader>) criteria.list();
+		//long start = System.currentTimeMillis();
+		List<OrderHeader> joined =(List<OrderHeader>) criteria.list();
+		Set<OrderHeader> results = new HashSet<>(joined);
+		//long stop = System.currentTimeMillis();
+		//System.out.println("Fetch " + results.size() + " " + (start-stop));
 		return toOrderView(results, propertyNames);
 	}
 
-	private List<Map<String, Object>> toOrderView(List<OrderHeader> results, String[] propertyNames) {
+	private List<Map<String, Object>> toOrderView(Collection<OrderHeader> results, String[] propertyNames) {
 		PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
 		ArrayList<Map<String, Object>> viewResults = new ArrayList<Map<String, Object>>();
+		//long start = System.currentTimeMillis();
+
 		for (OrderHeader object : results) {
 			Map<String, Object> propertiesMap = new HashMap<>();
 			for (String propertyName : propertyNames) {
@@ -146,6 +153,9 @@ public class OrderService implements IApiService {
 			}
 			viewResults.add(propertiesMap);
 		}
+
+		//long stop = System.currentTimeMillis();
+		//System.out.println("TRANSFORM " +(stop-start));
 		return viewResults;
 
 	}
@@ -153,6 +163,8 @@ public class OrderService implements IApiService {
 	private Criteria orderHeaderCriteria(Facility facility) {
 		Criteria criteria = OrderHeader.staticGetDao().createCriteria()
 				.setFetchMode("orderDetails", FetchMode.JOIN)
+				.setFetchMode("containerUse", FetchMode.JOIN)
+				.setFetchMode("containerUse.parent", FetchMode.JOIN)
 				.add(Property.forName("parent").eq(facility));
 		return criteria;
 				
