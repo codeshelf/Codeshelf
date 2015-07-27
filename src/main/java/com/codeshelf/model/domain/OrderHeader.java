@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.persistence.Cacheable;
@@ -43,6 +44,7 @@ import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.util.UomNormalizer;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -511,6 +513,77 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 			}
 		}
 		return result;
+	}
+	
+	public String getPivotDetailCount() {
+		Integer result = 0;
+		for (OrderDetail orderDetail : getOrderDetails()) {
+			if (orderDetail.getActive()) {
+				result++;
+			}
+		}
+
+		if (result > 2) {
+			return "*";
+		} else  {
+			return String.valueOf(result);
+		}
+	}
+
+	public String getPivotRemainingDetailCount() {
+		Integer result = 0;
+		for (OrderDetail orderDetail : getOrderDetails()) {
+			if (orderDetail.getActive() &&
+			    (!orderDetail.getStatus().equals(OrderStatusEnum.COMPLETE))) {
+				result++;
+			}
+		}
+
+		if (result > 2) {
+			return "*";
+		} else  {
+			return String.valueOf(result);
+		}
+	}
+
+	
+	public Integer getCaseQuantity() {
+		return getQuantitiesByUOM().get(UomNormalizer.CASE);
+	}
+	
+	public Integer getEachQuantity() {
+		return getQuantitiesByUOM().get(UomNormalizer.EACH);
+		
+	}
+	
+	public Integer getOtherQuantity() {
+		Set<String> keys = getQuantitiesByUOM().keySet();
+		keys.remove(UomNormalizer.CASE);
+		keys.remove(UomNormalizer.EACH);
+		int total = 0;
+		for (String other : keys) {
+			total += getQuantitiesByUOM().get(other);
+		}
+		return total;
+	}
+	
+	public Map<String, Integer> getQuantitiesByUOM() {
+		Map<String, Integer> quantities = new HashMap<>();
+		for (OrderDetail orderDetail : getOrderDetails()) {
+			if (orderDetail.getActive()) {
+				String normalizedUom = UomNormalizer.normalizeString(orderDetail.getUomMasterId());
+				Integer quantity = orderDetail.getQuantity();
+				Integer lastQuantity = quantities.get(normalizedUom);
+				Integer newQuantity = 0;
+				if (lastQuantity == null) {
+					newQuantity = quantity;
+				} else {
+					newQuantity = lastQuantity + quantity;
+				}
+				quantities.put(normalizedUom, newQuantity);
+			}
+		}
+		return quantities;
 	}
 
 	// --------------------------------------------------------------------------

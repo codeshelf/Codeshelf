@@ -37,15 +37,17 @@ public class OrdersResource {
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getOrders(@QueryParam("status") String status, @QueryParam("orderId") String orderIdValue) {
-        List<Map<String, Object>> results = Collections.emptyList();
+	public Response getOrders(@QueryParam("status") String status, @QueryParam("orderId") String orderIdValue, @QueryParam("properties") List<String> propertyNamesList) {
+		String[] propertyNames = propertyNamesList.toArray(new String[]{});
+
+		List<Map<String, Object>> results = Collections.emptyList();
 		if (orderIdValue != null) {
-			results = this.orderService.findOrderHeadersForOrderId(facility, orderIdValue);
+			results = this.orderService.findOrderHeadersForOrderId(facility, propertyNames, orderIdValue);
 		} else if (status != null) {
-	    	results = this.orderService.findOrderHeadersForStatus(facility, new OrderStatusEnum[]{OrderStatusEnum.valueOf(status)});
+	    	results = this.orderService.findOrderHeadersForStatus(facility, propertyNames, new OrderStatusEnum[]{OrderStatusEnum.valueOf(status)});
 		} else {
 			//TODO dirty implementation to return all
-			results = this.orderService.findOrderHeadersForStatus(facility, OrderStatusEnum.values());
+			results = this.orderService.findOrderHeadersForStatus(facility, propertyNames, OrderStatusEnum.values());
 		}
 		return BaseResponse.buildResponse(results);
 	}
