@@ -91,6 +91,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	@Getter
 	private PcapRingBuffer								pcapBuffer;
 
+	@Getter
 	private String										username;
 	private String										password;
 
@@ -483,11 +484,10 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	 * Request information on items in the Wall location
 	 */
 	public void requestWallLocationInfo(final String inScanPrefixStr, String inScanStr, String cheGuid, String chePersistentId) {
-		LOGGER.debug("Request PutWall Location Info Inventory light location request: Che={};  Location={};", cheGuid, inScanStr);
+		LOGGER.debug("Request PutWall Location Info: Che={};  Location={};", cheGuid, inScanStr);
 		InfoRequest req = new InfoRequest(InfoRequest.InfoRequestType.GET_WALL_LOCATION_INFO, chePersistentId, inScanStr);
 		clientEndpoint.sendMessage(req);
 	}
-
 
 	/**
 	 * Websocket connects then this authenticates and receives the network it should use

@@ -554,6 +554,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	
 	protected void infoCommandReceived() {
 		switch (mCheStateEnum) {
+			case IDLE:
+				sendDisplayCommand("Site " + mDeviceManager.getUsername(), EMPTY_MSG);
+				break;
 			case PUT_WALL_SCAN_WALL:
 			case PUT_WALL_SCAN_ITEM:
 				setRememberEnteringInfoState(mCheStateEnum);
@@ -1552,6 +1555,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 				
 			case INFO_PROMPT:
+			case INFO_DISPLAY:
 				requestWallLocationInfo(inScanPrefixStr, inContent);
 				break;
 				
@@ -2733,5 +2737,5 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			String line3 = mInfo[2] == null ? "" : mInfo[2];
 			sendDisplayCommand(line1, line2, line3, lastLine);
 		}
-	}
+	}	
 }
