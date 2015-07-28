@@ -65,7 +65,10 @@ public enum CheStateEnum {
 	// states for the INFO command
 	INFO_PROMPT(CheStateNum.INFO_PROMPT, "INFO_PROMPT"),
 	INFO_RETRIEVAL(CheStateNum.INFO_RETRIEVAL, "INFO_RETRIEVAL"),
-	INFO_DISPLAY(CheStateNum.INFO_DISPLAY, "INFO_DISPLAY");
+	INFO_DISPLAY(CheStateNum.INFO_DISPLAY, "INFO_DISPLAY"),
+	
+	// states for the REMOVE command
+	REMOVE_WALL_ORDERS_CONFIRM(CheStateNum.REMOVE_WALL_ORDERS_CONFIRM, "REMOVE_WALL_ORDERS_CONFIRM");
 
 	private int		mValue;
 	private String	mName;
@@ -166,6 +169,7 @@ public enum CheStateEnum {
 		static final byte	SHORT_PICK					= 8;
 		static final byte	SKU_WALL_SCAN_GTIN_LOCATION = 9;	//Added July 13th
 		static final byte	SKU_WALL_ALTERNATE 			= 10;	//Added July 15th
+		// INFO states (except for SHORT_PICK_CONFIRM)
 		static final byte	INFO_RETRIEVAL				= 11;	//Added July 23rd
 		static final byte	INFO_PROMPT					= 12;	//Added July 24th
 		static final byte	SHORT_PICK_CONFIRM			= 13;	//Added Oct. 2014
@@ -203,7 +207,10 @@ public enum CheStateEnum {
 		static final byte	REMOTE						= 35;
 		static final byte	REMOTE_PENDING				= 36;
 		static final byte	REMOTE_LINKED				= 37;
-
+		
+		// REMOVE STATES
+		static final byte	REMOVE_WALL_ORDERS_CONFIRM  = 38;
+		
 		private CheStateNum() {
 		};
 	}

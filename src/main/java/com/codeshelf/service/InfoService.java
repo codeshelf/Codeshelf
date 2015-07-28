@@ -23,11 +23,13 @@ import com.google.inject.Inject;
 
 public class InfoService implements IApiService{
 	private LightService lightService;
+	private WorkService workService;
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(InfoService.class);
 	
 	@Inject
-	public InfoService(LightService inLightService) {
+	public InfoService(LightService inLightService, WorkService inWorkService) {
 		this.lightService = inLightService;
+		this.workService = inWorkService;
 	}
 
 	public String[] getInfo(Facility facility, InfoRequest request, ColorEnum color){
@@ -46,6 +48,11 @@ public class InfoService implements IApiService{
 			case LIGHT_INCOMPLETE_ORDERS:
 				lightOrdersInWall(facility, location, color, false);
 				return null;
+				
+			case REMOVE_WALL_ORDERS:
+				removeOrdersFromLocation(facility, location);
+				info = getWallLocationInfo(facility, location, color);
+				return info;
 				
 			default:
 				String unexpectedRequest[] = new String[3];
@@ -132,13 +139,23 @@ public class InfoService implements IApiService{
 			order.reevaluateOrderAndDetails();
 			boolean orderComplete = order.getStatus() == OrderStatusEnum.COMPLETE;
 			if (orderComplete == complete){
-				System.out.println("*********Light " + orderLocation.getLocation());
 				locationsToLight.add(orderLocation.getLocation());
-				//lightService.lightLocationServerCall(orderLocation.getLocation(), color);
-				//break;
 			}
 		}
 		lightService.lightLocationServerCall(locationsToLight, color);
+	}
+	
+	private void removeOrdersFromLocation(Facility facility, String locationStr) {
+		Location location = facility.findSubLocationById(locationStr);
+		if (location == null) {
+			return;
+		}
+		List<OrderLocation> orderLocations = getOrderLocationsInLocation(location);
+		for (OrderLocation orderLocation : orderLocations) {
+			orderLocation.getParent().removeOrderLocation(orderLocation);
+			OrderLocation.staticGetDao().delete(orderLocation);
+		}
+		workService.reinitPutWallFeedback(facility);
 	}
 	
 	private List<OrderHeader> getOrdersInLocation(Location location){

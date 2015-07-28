@@ -481,25 +481,11 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		clientEndpoint.sendMessage(req);
 	}
 	
-	/**
-	 * Request information on items in the Wall location
-	 */
-	public void requestWallLocationInfo(String inScanStr, String cheGuid, String chePersistentId) {
-		LOGGER.debug("Request PutWall Location Info: Che={};  Location={};", cheGuid, inScanStr);
-		InfoRequest req = new InfoRequest(InfoRequestType.GET_WALL_LOCATION_INFO, chePersistentId, inScanStr);
+	public void performInfoOrRemoveAction(InfoRequestType actionType, String location, String cheGuid, String chePersistentId) {
+		LOGGER.debug("sendInfoOrRemoveCommand: Che={};  Type ={}; Location={};", cheGuid, actionType, location);
+		InfoRequest req = new InfoRequest(actionType, chePersistentId, location);
 		clientEndpoint.sendMessage(req);
 	}
-	
-	/**
-	 * Light Orders in the last scanned wall location for the INFO command
-	 */
-	public void lightWallOrders(String location, boolean complete, String cheGuid, String chePersistentId) {
-		LOGGER.debug("Request PutWall Location Info: Che={};  Location={}; Complete={}", cheGuid, location, complete);
-		InfoRequestType type = complete ? InfoRequestType.LIGHT_COMPLETE_ORDERS : InfoRequestType.LIGHT_INCOMPLETE_ORDERS;
-		InfoRequest req = new InfoRequest(type, chePersistentId, location);
-		clientEndpoint.sendMessage(req);
-	}
-
 
 	/**
 	 * Websocket connects then this authenticates and receives the network it should use

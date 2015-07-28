@@ -37,6 +37,7 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.util.CompareNullChecker;
+import com.codeshelf.ws.protocol.request.InfoRequest.InfoRequestType;
 import com.codeshelf.ws.protocol.request.PutWallPlacementRequest;
 
 /**
@@ -343,6 +344,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					displayInfo();
 					break;
 					
+				case REMOVE_WALL_ORDERS_CONFIRM:
+					sendDisplayCommand(REMOVE_CONFIRM_1, REMOVE_CONFIRM_2, REMOVE_CONFIRM_3, EMPTY_MSG);
+					break;
+					
 				case REMOTE:
 					sendRemoteStateScreen();
 					break;
@@ -577,6 +582,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	
 	protected void removeCommandReceived() {
 		switch (mCheStateEnum) {
+			case INFO_DISPLAY:
+				setState(CheStateEnum.REMOVE_WALL_ORDERS_CONFIRM);
+				break;
 			default:
 		}
 	}
@@ -646,6 +654,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case INFO_DISPLAY:
 				setInfo(null);
 				setState(CheStateEnum.INFO_PROMPT);
+				break;
+				
+			case REMOVE_WALL_ORDERS_CONFIRM:
+				setState(CheStateEnum.INFO_DISPLAY);
 				break;
 				
 			case SKU_WALL_SCAN_GTIN_LOCATION:
@@ -725,7 +737,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 				
 			case INFO_DISPLAY:
-				mDeviceManager.lightWallOrders(getLastScannedInfoLocation(), YES_COMMAND.equals(inScanStr), getGuidNoPrefix(), getPersistentId().toString());
+				InfoRequestType type = YES_COMMAND.equals(inScanStr) ? InfoRequestType.LIGHT_COMPLETE_ORDERS : InfoRequestType.LIGHT_INCOMPLETE_ORDERS;
+				mDeviceManager.performInfoOrRemoveAction(type, getLastScannedInfoLocation(), getGuidNoPrefix(), getPersistentId().toString());
+				break;
+				
+			case REMOVE_WALL_ORDERS_CONFIRM:
+				if (YES_COMMAND.equalsIgnoreCase(inScanStr)){
+					mDeviceManager.performInfoOrRemoveAction(InfoRequestType.REMOVE_WALL_ORDERS, getLastScannedInfoLocation(), getGuidNoPrefix(), getPersistentId().toString());
+				} else {
+					setState(CheStateEnum.INFO_DISPLAY);
+				}
 				break;
 				
 			default:
@@ -2741,7 +2762,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case PUT_WALL_SCAN_WALL:
 			case PUT_WALL_SCAN_ITEM:
 				setState(CheStateEnum.INFO_RETRIEVAL);
-				mDeviceManager.requestWallLocationInfo(location, getGuidNoPrefix(), getPersistentId().toString());
+				mDeviceManager.performInfoOrRemoveAction(InfoRequestType.GET_WALL_LOCATION_INFO, location, getGuidNoPrefix(), getPersistentId().toString());
 				break;
 			default:				
 		}
