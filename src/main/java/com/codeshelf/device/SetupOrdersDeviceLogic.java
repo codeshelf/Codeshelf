@@ -97,6 +97,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Getter
 	@Setter
 	private String								mInfo[];
+	
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private String								mLastScannedInfoLocation				= null;
 
 	// When we  START or location change again, the server does not give us what we completed already.
 	@Accessors(prefix = "m")
@@ -420,6 +425,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				infoCommandReceived();
 				break;
 
+			case REMOVE_COMMAND:
+				removeCommandReceived();
+				break;
+
 			default:
 
 				//Legacy Behavior
@@ -562,6 +571,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setRememberEnteringInfoState(mCheStateEnum);
 				setState(CheStateEnum.INFO_PROMPT);
 				break;
+			default:
+		}
+	}
+	
+	protected void removeCommandReceived() {
+		switch (mCheStateEnum) {
 			default:
 		}
 	}
@@ -708,7 +723,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 				processPutWallItemScan("", getLastPutWallItemScan());
 				break;
-					
+				
+			case INFO_DISPLAY:
+				mDeviceManager.lightWallOrders(getLastScannedInfoLocation(), YES_COMMAND.equals(inScanStr), getGuidNoPrefix(), getPersistentId().toString());
+				break;
+				
 			default:
 				// Stay in the same state - the scan made no sense.
 				invalidScanMsg(mCheStateEnum);
@@ -2716,26 +2735,27 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (CheDeviceLogic.TAPE_PREFIX.equals(prefix)) {
 			location = prefix + location;
 		}
+		setLastScannedInfoLocation(location);
 		CheStateEnum infoSourceState = getRememberEnteringInfoState();
 		switch (infoSourceState) {
 			case PUT_WALL_SCAN_WALL:
 			case PUT_WALL_SCAN_ITEM:
 				setState(CheStateEnum.INFO_RETRIEVAL);
-				mDeviceManager.requestWallLocationInfo(prefix, location, getGuidNoPrefix(), getPersistentId().toString());
+				mDeviceManager.requestWallLocationInfo(location, getGuidNoPrefix(), getPersistentId().toString());
 				break;
 			default:				
 		}
 	}
 	
 	private void displayInfo(){
-		String lastLine = "CLEAR to exit";
 		if (mInfo == null) {
-			sendDisplayCommand("NO INFO RECEIVED", lastLine);
+			sendDisplayCommand("NO INFO RECEIVED", "CLEAR to exit");
 		} else {
-			String line1 = mInfo[0] == null ? "" : mInfo[0];
-			String line2 = mInfo[1] == null ? "" : mInfo[1];
-			String line3 = mInfo[2] == null ? "" : mInfo[2];
-			sendDisplayCommand(line1, line2, line3, lastLine);
+			String line1 = (mInfo.length < 1 || mInfo[0] == null) ? "" : mInfo[0];
+			String line2 = (mInfo.length < 2 || mInfo[1] == null) ? "" : mInfo[1];
+			String line3 = (mInfo.length < 3 || mInfo[2] == null) ? "" : mInfo[2];
+			String line4 = (mInfo.length < 4 || mInfo[3] == null) ? "" : mInfo[3];
+			sendDisplayCommand(line1, line2, line3, line4);
 		}
 	}	
 }

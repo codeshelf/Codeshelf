@@ -136,6 +136,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					REMOTE_COMMAND							= "REMOTE";
 	protected static final String					POSCON_COMMAND							= "POSCON";
 	protected static final String					INFO_COMMAND							= "INFO";
+	protected static final String					REMOVE_COMMAND							= "REMOVE";
 
 	// With WORKSEQR = "WorkSequence", work may scan start instead of scanning a location. 
 	// LOCATION_SELECT_REVIEW, we want "REVIEW MISSING WORK" "OR SCAN LOCATION" "OR SCAN START"

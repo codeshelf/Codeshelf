@@ -72,17 +72,30 @@ public class LightService implements IApiService {
 	 * This fucntion is called by the server (which already has access to Facility and Locaiton objects)
 	 */
 	public void lightLocationServerCall(final Location theLocation, ColorEnum color) {
-		final Facility facility = theLocation.getFacility();
+		List<Location> locations = Lists.newArrayList();
+		locations.add(theLocation);
+		lightLocationServerCall(locations, color);
+	}
+	
+	/**
+	 * This fucntion is called by the server (which already has access to Facility and Locaiton objects)
+	 */
+	public void lightLocationServerCall(final List<Location> locations, ColorEnum color) {
+		if (locations == null || locations.isEmpty()) {
+			return;
+		}
+		
+		final Facility facility = locations.get(0).getFacility();
 
 		//Light LEDs
-		lightChildLocations(facility, theLocation, color);
+		lightChildLocations(facility, locations, color);
 
 		//Light the POS range
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 		//The following collection contains a list of all Controllers that contain affected (lit) PosCons
 		//When the time comes to extinguish illuminated PosCons, a clear-all instruction will be sent to each of those device
 		final HashSet<String> affectedControllers = new HashSet<String>();
-		getInstructionsForPosConRange(facility, null, theLocation, instructions, affectedControllers);
+		getInstructionsForPosConRange(facility, null, locations, instructions, affectedControllers);
 		PosControllerInstrList posMessage = new PosControllerInstrList(instructions);
 		sendMessage(facility.getSiteControllerUsers(), posMessage);
 		int lightDuration = PropertyService.getInstance().getPropertyAsInt(facility,
@@ -239,7 +252,7 @@ public class LightService implements IApiService {
 	/**
 	 * @param facility current facility
 	 * @param wi specifies CHE source and quantity to display. If null is provided, the PosCon simply blinks triple bars
-	 * @param theLocation location to light
+	 * @param location to light
 	 * @param instructions provide an empty list to gather regenerated instructions
 	 * @param clearedControllers provide an empty list if you'd like to remove all previous commands from the same source on the specified PosCon controller. Provide null otherwise. 
 	 * This complicated function adds appropriate PosControllerInstr to the list that is passed in. Many calling contexts:
@@ -254,73 +267,86 @@ public class LightService implements IApiService {
 	 * - Via PUT_WALL, after scanning the item or gtin, if the slot has LEDs, but bay has poscon, show the plan count actively on the poscon and the LEDs flash.
 	 */
 	public static void getInstructionsForPosConRange(final Facility facility,
-	// Look a the caller. It added the LED instructions in another function.
 		final WorkInstruction wi,
-		final Location theLocation,
+		final Location location,
 		List<PosControllerInstr> instructions,
 		HashSet<String> clearedControllers) {
-		if (theLocation == null) {
+		List<Location> locations = Lists.newArrayList();
+		locations.add(location);
+		getInstructionsForPosConRange(facility, wi, locations, instructions, clearedControllers);
+	}
+	
+	public static void getInstructionsForPosConRange(final Facility facility,
+		final WorkInstruction wi,
+		final List<Location> locations,
+		List<PosControllerInstr> instructions,
+		HashSet<String> clearedControllers) {
+		if (locations == null) {
 			return;
 		}
 		if (clearedControllers == null) {
 			clearedControllers = new HashSet<String>();
 		}
-		if (theLocation.isLightablePoscon()) {
-			LedController controller = theLocation.getEffectiveLedController();
-			String posConController = controller == null ? "" : controller.getDeviceGuidStr();
-			int posConIndex = theLocation.getPosconIndex();
-			PosControllerInstr message = null;
-			if (wi == null) {
-				//If just trying to illuminate PosCons, remove all previous illumination instruction
-				if (!clearedControllers.contains(posConController)) {
-					PosControllerInstr messageClear = getClearInstruction(posConController);
-					instructions.add(messageClear);
-					clearedControllers.add(posConController);
-				}
-				//If work instruction is not provided, light location with triple bars
-				message = getTripleDashInstruction(posConController, (byte) posConIndex);
-			} else {
-				Che che = wi.getAssignedChe();
-				String sourceGuid = che == null ? "" : che.getDeviceGuidStr();
-				message = getWiCountInstruction(posConController, sourceGuid, (byte) posConIndex, wi);
-
-			}
-			instructions.add(message);
-		} else if (wi != null) {
-			// for lower cost putwall, the bay may have a poscon even though the slots have LEDs.
-			// This is only a situation for the active wi.
-			Bay bay = theLocation.getParentAtLevel(Bay.class);
-			if (bay != null && bay.isLightablePoscon()) {
-				LedController controller = bay.getEffectiveLedController();
+		for (Location theLocation : locations) {
+			if (theLocation.isLightablePoscon()) {
+				LedController controller = theLocation.getEffectiveLedController();
 				String posConController = controller == null ? "" : controller.getDeviceGuidStr();
-				int posConIndex = bay.getPosconIndex();
+				int posConIndex = theLocation.getPosconIndex();
 				PosControllerInstr message = null;
-				Che che = wi.getAssignedChe();
-				String sourceGuid = che == null ? "" : che.getDeviceGuidStr();
-				message = getWiCountInstruction(posConController, sourceGuid, (byte) posConIndex, wi);
-				instructions.add(message);
-			}
-		}
-
-		// This child case is only to match LED lighting when a user does light location.
-		// never do it when the wi is supplied.
-		if (wi == null) {
-			List<Location> children = theLocation.getActiveChildren();
-			if (!children.isEmpty()) {
-				for (Location child : children) {
-					getInstructionsForPosConRange(facility, wi, child, instructions, clearedControllers);
+				if (wi == null) {
+					//If just trying to illuminate PosCons, remove all previous illumination instruction
+					if (!clearedControllers.contains(posConController)) {
+						PosControllerInstr messageClear = getClearInstruction(posConController);
+						instructions.add(messageClear);
+						clearedControllers.add(posConController);
+					}
+					//If work instruction is not provided, light location with triple bars
+					message = getTripleDashInstruction(posConController, (byte) posConIndex);
+				} else {
+					Che che = wi.getAssignedChe();
+					String sourceGuid = che == null ? "" : che.getDeviceGuidStr();
+					message = getWiCountInstruction(posConController, sourceGuid, (byte) posConIndex, wi);
+	
 				}
+				instructions.add(message);
+			} else if (wi != null) {
+				// for lower cost putwall, the bay may have a poscon even though the slots have LEDs.
+				// This is only a situation for the active wi.
+				Bay bay = theLocation.getParentAtLevel(Bay.class);
+				if (bay != null && bay.isLightablePoscon()) {
+					LedController controller = bay.getEffectiveLedController();
+					String posConController = controller == null ? "" : controller.getDeviceGuidStr();
+					int posConIndex = bay.getPosconIndex();
+					PosControllerInstr message = null;
+					Che che = wi.getAssignedChe();
+					String sourceGuid = che == null ? "" : che.getDeviceGuidStr();
+					message = getWiCountInstruction(posConController, sourceGuid, (byte) posConIndex, wi);
+					instructions.add(message);
+				}
+			}
+	
+			// This child case is only to match LED lighting when a user does light location.
+			// never do it when the wi is supplied.
+			if (wi == null) {
+				List<Location> children = theLocation.getActiveChildren();
+				//if (!children.isEmpty()) {
+					//for (Location child : children) {
+						getInstructionsForPosConRange(facility, wi, children, instructions, clearedControllers);
+					//}
+				//}
 			}
 		}
 	}
 
 	// --------------------------------------------------------------------------
 
-	void lightChildLocations(final Facility facility, final Location location, ColorEnum color) {
+	void lightChildLocations(final Facility facility, final List<Location> locations, ColorEnum color) {
 		List<Location> leaves = Lists.newArrayList();
 		//Do not light slots when lighting an aisle
-		getAllLedLightableLeaves(location, leaves, !location.isAisle());
-		List<LightLedsInstruction> instructions = lightAllAtOnce(facility, defaultLedsToLight, color, leaves);
+		for (Location location: locations){ 
+			getAllLedLightableLeaves(location, leaves, !location.isAisle());
+		}
+		List<LightLedsInstruction> instructions = getLightInstructionsForMultipleLocations(facility, defaultLedsToLight, color, leaves);
 		LedInstrListMessage message = new LedInstrListMessage(instructions);
 		sendMessage(facility.getSiteControllerUsers(), message);
 	}
@@ -372,7 +398,7 @@ public class LightService implements IApiService {
 		List<Location> leaves = Lists.newArrayList();
 		// using the general API. Only add the one location to leaves
 		leaves.add(locToLight);
-		List<LightLedsInstruction> instructions = lightAllAtOnce(facility, defaultLedsToLight, color, leaves);
+		List<LightLedsInstruction> instructions = getLightInstructionsForMultipleLocations(facility, defaultLedsToLight, color, leaves);
 		LedInstrListMessage message = new LedInstrListMessage(instructions);
 		sendMessage(facility.getSiteControllerUsers(), message);
 	}
@@ -430,7 +456,7 @@ public class LightService implements IApiService {
 		return instruction;
 	}
 
-	private List<LightLedsInstruction> lightAllAtOnce(Facility facility,
+	private List<LightLedsInstruction> getLightInstructionsForMultipleLocations(Facility facility,
 		int numLeds,
 		ColorEnum diagnosticColor,
 		List<Location> children) {

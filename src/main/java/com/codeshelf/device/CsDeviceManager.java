@@ -54,6 +54,7 @@ import com.codeshelf.ws.protocol.request.ComputeWorkRequest;
 import com.codeshelf.ws.protocol.request.InfoRequest;
 import com.codeshelf.ws.protocol.request.TapeLocationDecodingRequest;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
+import com.codeshelf.ws.protocol.request.InfoRequest.InfoRequestType;
 import com.codeshelf.ws.protocol.request.InventoryLightItemRequest;
 import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
 import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
@@ -483,11 +484,22 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	/**
 	 * Request information on items in the Wall location
 	 */
-	public void requestWallLocationInfo(final String inScanPrefixStr, String inScanStr, String cheGuid, String chePersistentId) {
+	public void requestWallLocationInfo(String inScanStr, String cheGuid, String chePersistentId) {
 		LOGGER.debug("Request PutWall Location Info: Che={};  Location={};", cheGuid, inScanStr);
-		InfoRequest req = new InfoRequest(InfoRequest.InfoRequestType.GET_WALL_LOCATION_INFO, chePersistentId, inScanStr);
+		InfoRequest req = new InfoRequest(InfoRequestType.GET_WALL_LOCATION_INFO, chePersistentId, inScanStr);
 		clientEndpoint.sendMessage(req);
 	}
+	
+	/**
+	 * Light Orders in the last scanned wall location for the INFO command
+	 */
+	public void lightWallOrders(String location, boolean complete, String cheGuid, String chePersistentId) {
+		LOGGER.debug("Request PutWall Location Info: Che={};  Location={}; Complete={}", cheGuid, location, complete);
+		InfoRequestType type = complete ? InfoRequestType.LIGHT_COMPLETE_ORDERS : InfoRequestType.LIGHT_INCOMPLETE_ORDERS;
+		InfoRequest req = new InfoRequest(type, chePersistentId, location);
+		clientEndpoint.sendMessage(req);
+	}
+
 
 	/**
 	 * Websocket connects then this authenticates and receives the network it should use
@@ -886,7 +898,11 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			if (cheDevice instanceof SetupOrdersDeviceLogic){
-				((SetupOrdersDeviceLogic) cheDevice).setInfo(info);
+				if (info == null) {
+					LOGGER.info("INFO request returned with null info. This is normal. Thus, do not change saved info");
+				} else {
+					((SetupOrdersDeviceLogic) cheDevice).setInfo(info);
+				}
 				cheDevice.setState(CheStateEnum.INFO_DISPLAY);
 			} else {
 				LOGGER.warn("Device is not SetupOrdersDeviceLogic in processInfoResponse. CHE id={}", networkGuid);

@@ -51,6 +51,7 @@ import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.MoreObjects;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 
@@ -292,7 +293,9 @@ public class LightServiceTest extends ServerTest {
 		ColorEnum color = ColorEnum.RED;
 		
 		LightService lightService = new LightService();
-		lightService.lightChildLocations(facility, parent, color);
+		List<Location> locations = Lists.newArrayList();
+		locations.add(parent);
+		lightService.lightChildLocations(facility, locations, color);
 		
 		ArgumentCaptor<MessageABC> messagesCaptor = ArgumentCaptor.forClass(MessageABC.class);
 		verify(webSocketManagerService, times(1)).sendMessage(any(Set.class), messagesCaptor.capture());
