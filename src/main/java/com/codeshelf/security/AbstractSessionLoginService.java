@@ -41,9 +41,10 @@ public abstract class AbstractSessionLoginService extends AbstractHmacTokenServi
 					if (passwordValid) {
 						// set last authenticated before checking client version
 						user.setLastAuthenticated();
-						TenantManagerService.getInstance().updateUser(user);
 
 						if(version == null || tenant.clientVersionIsCompatible(version)) {
+							user.setBadVersionLoginTries(0); // version ok
+							
 							LOGGER.info("Creating token for user {}", user);
 							long timestamp = System.currentTimeMillis();
 
@@ -58,7 +59,10 @@ public abstract class AbstractSessionLoginService extends AbstractHmacTokenServi
 						} else {
 							LOGGER.info("Incompatible client version {} for user {}", version, user);
 							response = new TokenSession(Status.INCOMPATIBLE_VERSION, user);
+							user.setBadVersionLoginTries(user.getBadVersionLoginTries()+1);
 						}
+						TenantManagerService.getInstance().updateUser(user);
+
 					} else {
 						LOGGER.info("Invalid password for user {}", user);
 						response = new TokenSession(Status.BAD_CREDENTIALS, user);

@@ -129,6 +129,20 @@ public class User implements UserContext {
 	//not JSON
 	private String							hashedPassword;
 
+	// The client version reported at last login attempt
+	@Column(name = "client_version")
+	@Getter
+	@Setter
+	@JsonProperty
+	private String							clientVersion;
+
+	// Count of attempts to log in with an incompatible client version, since last success
+	@Column(nullable = false, name = "bad_version_login_tries")
+	@Getter
+	@Setter
+	@JsonProperty
+	private int								badVersionLoginTries;
+
 	// Is it active.
 	@Getter
 	@Setter
@@ -179,6 +193,7 @@ public class User implements UserContext {
 		active = true;
 		recoveryTriesRemain = DEFAULT_RECOVERY_TRIES;
 		recoveryEmailsRemain = DEFAULT_RECOVERY_EMAILS;
+		badVersionLoginTries = 0;
 	}
 
 	@JsonIgnore

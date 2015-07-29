@@ -10,4 +10,5 @@
 	<include file="mgr.changelog-v15.1.xml" relativeToChangelogFile="true" />
 	<include file="mgr.changelog-v15.2.xml" relativeToChangelogFile="true" />
 	<include file="mgr.changelog-v16.1.xml" relativeToChangelogFile="true" />
+	<include file="mgr.changelog-v19.1.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>

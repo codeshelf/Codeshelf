@@ -49,6 +49,8 @@ public class LoginTest extends HibernateTest {
 		// last authenticated was updated
 		user = TenantManagerService.getInstance().getUser(user.getId());
 		Assert.assertNotNull(user.getLastAuthenticated());
+		// bad version login tries is 0
+		Assert.assertEquals(0,user.getBadVersionLoginTries());
 	}
 
 	@Test
@@ -111,6 +113,8 @@ public class LoginTest extends HibernateTest {
 		// last authenticated was still updated even though login failed
 		user = TenantManagerService.getInstance().getUser(user.getId());
 		Assert.assertNotNull(user.getLastAuthenticated());
+
+		Assert.assertEquals(1,user.getBadVersionLoginTries(),1);
 	}
 
 	@Test
@@ -133,5 +137,21 @@ public class LoginTest extends HibernateTest {
 		// last authenticated was still updated even though login failed
 		user = TenantManagerService.getInstance().getUser(user.getId());
 		Assert.assertNotNull(user.getLastAuthenticated());
+
+		Assert.assertEquals(1,user.getBadVersionLoginTries());
+		
+		// subsequent successful attempt resets bad version login tries counter
+		request = new LoginRequest(user.getUsername(),password);
+		response = processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
+
+		Assert.assertTrue(response instanceof LoginResponse);
+		loginResponse = (LoginResponse) response;
+		Assert.assertEquals(ResponseStatus.Success, loginResponse.getStatus());
+		Assert.assertEquals(user.getUsername(), loginResponse.getUser().getUsername());
+		
+		// bad version login tries is 0
+		user = TenantManagerService.getInstance().getUser(user.getId());
+		Assert.assertEquals(0,user.getBadVersionLoginTries());
+
 	}
 }
