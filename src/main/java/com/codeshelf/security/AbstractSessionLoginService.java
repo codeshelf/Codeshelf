@@ -36,6 +36,9 @@ public abstract class AbstractSessionLoginService extends AbstractHmacTokenServi
 					if (passwordValid) {
 						LOGGER.info("Creating token for user {}", user);
 						long timestamp = System.currentTimeMillis();
+						user.setLastAuthenticated();
+						TenantManagerService.getInstance().updateUser(user);
+
 						Tenant tenant = user.getTenant();
 						String token = this.createToken(user.getId(), tenant.getId(), timestamp, timestamp, null); // create default token for new session
 						response = new TokenSession(Status.ACTIVE_SESSION,
