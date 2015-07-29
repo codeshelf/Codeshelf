@@ -156,6 +156,10 @@ public class LightService implements IApiService {
 		lightItemsSpecificColor(facilityPersistentId, items, color);
 	}
 
+	public void lightItem(Item item, ColorEnum color) {
+		lightItemSpecificColor(item.getFacility().getPersistentId().toString(), item.getPersistentId().toString(), color);
+	}
+	
 	/**
 	 * Light one item. Any subsequent activity on the aisle controller will wipe this away.
 	 */

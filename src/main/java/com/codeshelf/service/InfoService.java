@@ -8,7 +8,10 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.model.CodeshelfTape;
+import com.codeshelf.model.CodeshelfTape.TapeLocation;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
@@ -61,7 +64,7 @@ public class InfoService implements IApiService{
 				return info;
 				
 			case REMOVE_INVENTORY:
-				removeItemsFromInventory(facility, location);
+				removeItemFromInventory(facility, location);
 				info = getInventoryInfo(facility, location, color);
 				return info;
 				
@@ -193,51 +196,60 @@ public class InfoService implements IApiService{
 			info[1] = "Location " + locationStr;
 			return info;
 		}
-		List<Item> items = location.getStoredItemsInLocationAndChildren();
-		info[0] = location.getBestUsableLocationName() + " has " + items.size() + " items";
-		int lineCounter = 1;
-		StringBuilder lineBuilders[] = {null, new StringBuilder(), new StringBuilder(), new StringBuilder()};
-		StringBuilder curLine = lineBuilders[1];
+		//If location is not a Slot and not a Tape, stop
+		if (!location.isSlot() && !locationStr.startsWith(CheDeviceLogic.TAPE_PREFIX)) {
+			String locationType = location.isAisle() ? "Aisle" : location.isBay() ? "Bay" : "Tier";
+			info[0] = locationStr + " is " + locationType;
+			info[1] = "Expected Slot or Tape";
+			return info;
+		}
+		Item closestItem = getClosestItem(location, locationStr);
 		String scanType = PropertyService.getInstance().getPropertyFromConfig(facility, DomainObjectProperty.SCANPICK);
 		boolean showGtin = "UPC".equalsIgnoreCase(scanType);
-		boolean ranOutOrSpaceOnChe = false;
-		//Fill CHE display with as may inventoried items as will fit there
-		for (Item item : items) {
-			String itemId = showGtin ? item.getGtinId() : item.getDomainId();
-			if (curLine.length() == 0 || curLine.length() + itemId.length() <= 22){
-				curLine.append(itemId).append(", ");
-			} else if (lineCounter < 3) {
-				curLine = lineBuilders[++lineCounter];
-			} else {
-				ranOutOrSpaceOnChe = true;
-				break;
-			}
+		info[0] = location.getBestUsableLocationName();
+		if (closestItem == null) {
+			info[1] = "Item: none";
+			lightService.lightLocationServerCall(location, color);
+		} else if (showGtin) {
+			info[1] = "UPC: " + closestItem.getGtinId();
+			lightService.lightItem(closestItem, color);
+		} else {
+			info[1] = "SKU: " + closestItem.getDomainId();
+			lightService.lightItem(closestItem, color);
 		}
-		//If all items fit on the CHE display, remove comma after the last one;
-		if (!ranOutOrSpaceOnChe) { 
-			int lastLineLen = lineBuilders[lineCounter].length();
-			//See if the last filled line has, at least ", "
-			if (lastLineLen >= 2) {
-				lineBuilders[lineCounter] = new StringBuilder(lineBuilders[lineCounter].substring(0, lastLineLen - 2));
-			}
-		}
-		info[1] = lineBuilders[1].toString();
-		info[2] = lineBuilders[2].toString();
-		info[3] = lineBuilders[3].toString();
-		lightService.lightLocationServerCall(location, color);
 		return info;
 	}
 	
-	private void removeItemsFromInventory(Facility facility, String locationStr){
+	private void removeItemFromInventory(Facility facility, String locationStr){
 		Location location = facility.findSubLocationById(locationStr);
 		if (location == null) {
 			return;
 		}
-		List<Item> items = location.getStoredItemsInLocationAndChildren();
-		for (Item item : items) {
+		if (!location.isSlot() && !locationStr.startsWith(CheDeviceLogic.TAPE_PREFIX)) {
+			return;
+		}
+		Item item = getClosestItem(location, locationStr);
+		if (item != null){
 			item.getStoredLocation().removeStoredItem(item);
 			item.getParent().removeItemFromMaster(item);
 			Item.staticGetDao().delete(item);
 		}
+	}
+	
+	private Item getClosestItem(Location location, String locationStr) {
+		Item closestItem = null;
+		int scanOffset = 0, itemOffset, smallestDistance = 1000000, distance;
+		TapeLocation tapeLocation = CodeshelfTape.findFinestLocationForTape(locationStr);
+		scanOffset = tapeLocation.getCmOffset();
+		List<Item> items = location.getStoredItemsInLocationAndChildren();
+		for (Item item : items) {
+			itemOffset = item.getCmFromLeft();
+			distance = Math.abs(itemOffset - scanOffset);
+			if (distance < smallestDistance) {
+				smallestDistance = distance;
+				closestItem = item;
+			}
+		}
+		return closestItem;
 	}
 }
