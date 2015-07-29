@@ -3,7 +3,7 @@ package com.codeshelf.ws.protocol.request;
 import lombok.Getter;
 
 public class InfoRequest extends DeviceRequestABC{
-	public enum InfoRequestType {GET_WALL_LOCATION_INFO, LIGHT_COMPLETE_ORDERS, LIGHT_INCOMPLETE_ORDERS, REMOVE_WALL_ORDERS, GET_INVENTORY_INFO}
+	public enum InfoRequestType {GET_WALL_LOCATION_INFO, GET_INVENTORY_INFO, LIGHT_COMPLETE_ORDERS, LIGHT_INCOMPLETE_ORDERS, REMOVE_WALL_ORDERS, REMOVE_INVENTORY}
 	
 	@Getter
 	private InfoRequestType type;

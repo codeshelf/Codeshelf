@@ -345,9 +345,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 					
 				case REMOVE_WALL_ORDERS_CONFIRM:
-					sendDisplayCommand(REMOVE_CONFIRM_1, REMOVE_CONFIRM_2, REMOVE_CONFIRM_3, EMPTY_MSG);
+					sendDisplayCommand(REMOVE_CONFIRM_1, REMOVE_CONFIRM_2_ORDERS, REMOVE_CONFIRM_3, EMPTY_MSG);
 					break;
-					
+
+				case REMOVE_INVENTORY_CONFIRM:
+					sendDisplayCommand(REMOVE_CONFIRM_1, REMOVE_CONFIRM_2_INVENTORY, REMOVE_CONFIRM_3, EMPTY_MSG);
+					break;
+
 				case REMOTE:
 					sendRemoteStateScreen();
 					break;
@@ -583,11 +587,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 	
 	protected void removeCommandReceived() {
-		switch (mCheStateEnum) {
-			case INFO_DISPLAY:
-				setState(CheStateEnum.REMOVE_WALL_ORDERS_CONFIRM);
-				break;
-			default:
+		if (mCheStateEnum == CheStateEnum.INFO_DISPLAY){
+			switch (getRememberEnteringInfoState()){
+				case SCAN_GTIN: 				//Inventory->Info
+					setState(CheStateEnum.REMOVE_INVENTORY_CONFIRM);
+					break;					
+				case PUT_WALL_SCAN_WALL:		//PutWall->Info
+				case PUT_WALL_SCAN_ITEM:
+					setState(CheStateEnum.REMOVE_WALL_ORDERS_CONFIRM);
+					break;
+				default:
+			}
+
 		}
 	}
 
@@ -659,6 +670,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 				
 			case REMOVE_WALL_ORDERS_CONFIRM:
+			case REMOVE_INVENTORY_CONFIRM:
 				setState(CheStateEnum.INFO_DISPLAY);
 				break;
 				
@@ -746,6 +758,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case REMOVE_WALL_ORDERS_CONFIRM:
 				if (YES_COMMAND.equalsIgnoreCase(inScanStr)){
 					mDeviceManager.performInfoOrRemoveAction(InfoRequestType.REMOVE_WALL_ORDERS, getLastScannedInfoLocation(), getGuidNoPrefix(), getPersistentId().toString());
+				} else {
+					setState(CheStateEnum.INFO_DISPLAY);
+				}
+				break;
+				
+			case REMOVE_INVENTORY_CONFIRM:
+				if (YES_COMMAND.equalsIgnoreCase(inScanStr)){
+					mDeviceManager.performInfoOrRemoveAction(InfoRequestType.REMOVE_INVENTORY, getLastScannedInfoLocation(), getGuidNoPrefix(), getPersistentId().toString());
 				} else {
 					setState(CheStateEnum.INFO_DISPLAY);
 				}

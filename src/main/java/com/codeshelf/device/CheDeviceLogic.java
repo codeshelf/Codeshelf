@@ -116,7 +116,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	
 	//For Remove command
 	protected static final String					REMOVE_CONFIRM_1						= cheLine("SCAN YES OR NO");
-	protected static final String					REMOVE_CONFIRM_2						= cheLine("YES: remove order(s)");
+	protected static final String					REMOVE_CONFIRM_2_ORDERS					= cheLine("YES: remove order(s)");
+	protected static final String					REMOVE_CONFIRM_2_INVENTORY				= cheLine("YES: remove item(s)");
 	protected static final String					REMOVE_CONFIRM_3						= cheLine("NO:  cancel");
 	
 	//To repeat: !!!DO NOT CREATE LINES LONGER THAN 20 CHARACTERS!!! using cheLine()

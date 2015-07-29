@@ -43,6 +43,10 @@ public class InfoService implements IApiService{
 				info = getWallLocationInfo(facility, location, color);
 				return info;
 
+			case GET_INVENTORY_INFO:
+				info = getInventoryInfo(facility, location, color);
+				return info;
+
 			case LIGHT_COMPLETE_ORDERS:
 				lightOrdersInWall(facility, location, color, true);
 				return null;
@@ -56,7 +60,8 @@ public class InfoService implements IApiService{
 				info = getWallLocationInfo(facility, location, color);
 				return info;
 				
-			case GET_INVENTORY_INFO:
+			case REMOVE_INVENTORY:
+				removeItemsFromInventory(facility, location);
 				info = getInventoryInfo(facility, location, color);
 				return info;
 				
@@ -221,5 +226,18 @@ public class InfoService implements IApiService{
 		info[3] = lineBuilders[3].toString();
 		lightService.lightLocationServerCall(location, color);
 		return info;
+	}
+	
+	private void removeItemsFromInventory(Facility facility, String locationStr){
+		Location location = facility.findSubLocationById(locationStr);
+		if (location == null) {
+			return;
+		}
+		List<Item> items = location.getStoredItemsInLocationAndChildren();
+		for (Item item : items) {
+			item.getStoredLocation().removeStoredItem(item);
+			item.getParent().removeItemFromMaster(item);
+			Item.staticGetDao().delete(item);
+		}
 	}
 }
