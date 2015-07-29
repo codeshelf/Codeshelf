@@ -6,7 +6,6 @@ import org.mockito.Mockito;
 
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
-import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.util.ConverterProvider;
@@ -32,16 +31,12 @@ public class LoginTest extends HibernateTest {
 
 	@Test
 	public final void testLoginSucceed() {
-		CodeshelfSecurityManager.removeContextIfPresent();
-		
 		// Create a user for the organization.
 		String password = "password";
 		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, null);
 		Assert.assertNull(user.getLastAuthenticated());
 
-		LoginRequest request = new LoginRequest();
-		request.setUserId(user.getUsername());
-		request.setPassword(password);
+		LoginRequest request = new LoginRequest(user.getUsername(),password);
 		
 		ResponseABC response = processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
 
@@ -56,16 +51,13 @@ public class LoginTest extends HibernateTest {
 		Assert.assertNotNull(user.getLastAuthenticated());
 	}
 
-	@SuppressWarnings("unused")
 	@Test
 	public final void testUserIdFail() {
 		// Create a user for the organization.
 		String password = "password";
 		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, null);
 		
-		LoginRequest request = new LoginRequest();
-		request.setUserId("user@invalid.com");
-		request.setPassword(password);
+		LoginRequest request = new LoginRequest("user@invalid.com",password);
 		
 		ResponseABC response = processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
 
@@ -85,9 +77,7 @@ public class LoginTest extends HibernateTest {
 		String password = "password";
 		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, null);
 		
-		LoginRequest request = new LoginRequest();
-		request.setUserId(user.getUsername());
-		request.setPassword("invalid");
+		LoginRequest request = new LoginRequest(user.getUsername(),"invalid");
 		
 		ResponseABC response = processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
 
@@ -99,5 +89,49 @@ public class LoginTest extends HibernateTest {
 		// last authenticated was NOT updated
 		user = TenantManagerService.getInstance().getUser(user.getId());
 		Assert.assertNull(user.getLastAuthenticated());
+	}
+
+	@Test
+	public final void testIncompatibleVersionFail() {
+		// Create a user for the organization.
+		String password = "password";
+		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, null);
+		Assert.assertNull(user.getLastAuthenticated());
+
+		LoginRequest request = new LoginRequest(user.getUsername(),password);
+		request.setClientVersion("0.1"); // incompatible version
+
+		ResponseABC response = processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
+
+		Assert.assertTrue(response instanceof LoginResponse);
+
+		LoginResponse loginResponse = (LoginResponse) response;
+		Assert.assertEquals(ResponseStatus.Authentication_Failed, loginResponse.getStatus());
+
+		// last authenticated was still updated even though login failed
+		user = TenantManagerService.getInstance().getUser(user.getId());
+		Assert.assertNotNull(user.getLastAuthenticated());
+	}
+
+	@Test
+	public final void testNullVersionFail() {
+		// Create a user for the organization.
+		String password = "password";
+		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, null);
+		Assert.assertNull(user.getLastAuthenticated());
+
+		LoginRequest request = new LoginRequest(user.getUsername(),password);
+		request.setClientVersion(null); // no version provided
+
+		ResponseABC response = processor.handleRequest(Mockito.mock(WebSocketConnection.class), request);
+
+		Assert.assertTrue(response instanceof LoginResponse);
+
+		LoginResponse loginResponse = (LoginResponse) response;
+		Assert.assertEquals(ResponseStatus.Authentication_Failed, loginResponse.getStatus());
+
+		// last authenticated was still updated even though login failed
+		user = TenantManagerService.getInstance().getUser(user.getId());
+		Assert.assertNotNull(user.getLastAuthenticated());
 	}
 }

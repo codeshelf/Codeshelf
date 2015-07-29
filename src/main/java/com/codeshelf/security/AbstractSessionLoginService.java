@@ -27,27 +27,38 @@ public abstract class AbstractSessionLoginService extends AbstractHmacTokenServi
 
 	/**************************** password hash methods ****************************/
 	public TokenSession authenticate(String username, String password) {
+		return authenticate(username,password,null);
+	}
+
+	public TokenSession authenticate(String username, String password, String version) {
 		TokenSession response = null;
 		User user = TenantManagerService.getInstance().getUser(username);
 		if (user != null) {
 			boolean passwordValid = checkPassword(password, user.getHashedPassword());
-			if (user.getTenant().isActive()) {
+			Tenant tenant = user.getTenant();
+			if (tenant.isActive()) {
 				if (user.isLoginAllowed()) {
 					if (passwordValid) {
-						LOGGER.info("Creating token for user {}", user);
-						long timestamp = System.currentTimeMillis();
+						// set last authenticated before checking client version
 						user.setLastAuthenticated();
 						TenantManagerService.getInstance().updateUser(user);
 
-						Tenant tenant = user.getTenant();
-						String token = this.createToken(user.getId(), tenant.getId(), timestamp, timestamp, null); // create default token for new session
-						response = new TokenSession(Status.ACTIVE_SESSION,
-							user,
-							tenant,
-							timestamp, 
-							timestamp, 
-							null, // no flags specified
-							token); // offer token
+						if(version == null || tenant.clientVersionIsCompatible(version)) {
+							LOGGER.info("Creating token for user {}", user);
+							long timestamp = System.currentTimeMillis();
+
+							String token = this.createToken(user.getId(), tenant.getId(), timestamp, timestamp, null); // create default token for new session
+							response = new TokenSession(Status.ACTIVE_SESSION,
+								user,
+								tenant,
+								timestamp,
+								timestamp,
+								null, // no flags specified
+								token); // offer token
+						} else {
+							LOGGER.info("Incompatible client version {} for user {}", version, user);
+							response = new TokenSession(Status.INCOMPATIBLE_VERSION, user);
+						}
 					} else {
 						LOGGER.info("Invalid password for user {}", user);
 						response = new TokenSession(Status.BAD_CREDENTIALS, user);
