@@ -571,8 +571,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case IDLE:
 				sendDisplayCommand("Site " + mDeviceManager.getUsername(), EMPTY_MSG);
 				break;
+			case SCAN_GTIN: 	//Inventory scan
 			case PUT_WALL_SCAN_WALL:
 			case PUT_WALL_SCAN_ITEM:
+				setInfo(null);
 				setRememberEnteringInfoState(mCheStateEnum);
 				setState(CheStateEnum.INFO_PROMPT);
 				break;
@@ -1596,7 +1598,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				
 			case INFO_PROMPT:
 			case INFO_DISPLAY:
-				requestWallLocationInfo(inScanPrefixStr, inContent);
+				processInfoLocationScan(inScanPrefixStr, inContent);
 				break;
 				
 			case REMOTE:
@@ -2752,7 +2754,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		setState(CheStateEnum.COMPUTE_WORK);
 	}
 	
-	private void requestWallLocationInfo(String prefix, String location){
+	private void processInfoLocationScan(String prefix, String location){
 		if (CheDeviceLogic.TAPE_PREFIX.equals(prefix)) {
 			location = prefix + location;
 		}
@@ -2764,12 +2766,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.INFO_RETRIEVAL);
 				mDeviceManager.performInfoOrRemoveAction(InfoRequestType.GET_WALL_LOCATION_INFO, location, getGuidNoPrefix(), getPersistentId().toString());
 				break;
+			case SCAN_GTIN:	//Inventory mode
+				mDeviceManager.performInfoOrRemoveAction(InfoRequestType.GET_INVENTORY_INFO, location, getGuidNoPrefix(), getPersistentId().toString());
+				setState(CheStateEnum.INFO_RETRIEVAL);
+				break;
 			default:				
 		}
 	}
 	
 	private void displayInfo(){
-		if (mInfo == null) {
+		if (getInfo() == null) {
 			sendDisplayCommand("NO INFO RECEIVED", "CLEAR to exit");
 		} else {
 			String line1 = (mInfo.length < 1 || mInfo[0] == null) ? "" : mInfo[0];

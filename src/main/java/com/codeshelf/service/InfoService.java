@@ -12,6 +12,7 @@ import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
@@ -24,6 +25,7 @@ import com.google.inject.Inject;
 public class InfoService implements IApiService{
 	private LightService lightService;
 	private WorkService workService;
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(InfoService.class);
 	
 	@Inject
@@ -54,6 +56,10 @@ public class InfoService implements IApiService{
 				info = getWallLocationInfo(facility, location, color);
 				return info;
 				
+			case GET_INVENTORY_INFO:
+				info = getInventoryInfo(facility, location, color);
+				return info;
+				
 			default:
 				String unexpectedRequest[] = new String[3];
 				unexpectedRequest[0] = "Unexpected Request";
@@ -64,16 +70,10 @@ public class InfoService implements IApiService{
 	
 	private String[] getWallLocationInfo(Facility facility, String locationStr, ColorEnum color){
 		String[] info = new String[4];
-		if (locationStr == null) {
-			LOGGER.error("InfoService Error: Received Wall Location Info request with null Location");
-			info[0] = "ERROR: Server didn't";
-			info[1] = "receive info location";
-			return info;
-		}
 		Location location = facility.findSubLocationById(locationStr);
 		if (location == null) {
 			info[0] = "Could not find";
-			info[1] = locationStr;
+			info[1] = "Location " + locationStr;
 			return info;
 		}
 		lightService.lightLocationServerCall(location, color);
@@ -178,5 +178,48 @@ public class InfoService implements IApiService{
 		filterParams.add(Restrictions.eq("active", true));
 		List<OrderLocation> orderLocations = OrderLocation.staticGetDao().findByFilter(filterParams);
 		return orderLocations;
+	}
+	
+	private String[] getInventoryInfo(Facility facility, String locationStr, ColorEnum color){
+		String[] info = new String[4];
+		Location location = facility.findSubLocationById(locationStr);
+		if (location == null) {
+			info[0] = "Could not find";
+			info[1] = "Location " + locationStr;
+			return info;
+		}
+		List<Item> items = location.getStoredItemsInLocationAndChildren();
+		info[0] = location.getBestUsableLocationName() + " has " + items.size() + " items";
+		int lineCounter = 1;
+		StringBuilder lineBuilders[] = {null, new StringBuilder(), new StringBuilder(), new StringBuilder()};
+		StringBuilder curLine = lineBuilders[1];
+		String scanType = PropertyService.getInstance().getPropertyFromConfig(facility, DomainObjectProperty.SCANPICK);
+		boolean showGtin = "UPC".equalsIgnoreCase(scanType);
+		boolean ranOutOrSpaceOnChe = false;
+		//Fill CHE display with as may inventoried items as will fit there
+		for (Item item : items) {
+			String itemId = showGtin ? item.getGtinId() : item.getDomainId();
+			if (curLine.length() == 0 || curLine.length() + itemId.length() <= 22){
+				curLine.append(itemId).append(", ");
+			} else if (lineCounter < 3) {
+				curLine = lineBuilders[++lineCounter];
+			} else {
+				ranOutOrSpaceOnChe = true;
+				break;
+			}
+		}
+		//If all items fit on the CHE display, remove comma after the last one;
+		if (!ranOutOrSpaceOnChe) { 
+			int lastLineLen = lineBuilders[lineCounter].length();
+			//See if the last filled line has, at least ", "
+			if (lastLineLen >= 2) {
+				lineBuilders[lineCounter] = new StringBuilder(lineBuilders[lineCounter].substring(0, lastLineLen - 2));
+			}
+		}
+		info[1] = lineBuilders[1].toString();
+		info[2] = lineBuilders[2].toString();
+		info[3] = lineBuilders[3].toString();
+		lightService.lightLocationServerCall(location, color);
+		return info;
 	}
 }

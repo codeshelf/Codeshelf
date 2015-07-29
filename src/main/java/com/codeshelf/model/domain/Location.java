@@ -1497,9 +1497,14 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 	}
 	
+	public List<Item> getStoredItemsInLocationAndChildren(){
+		List<Item> itemsInLocation = Lists.newArrayList();
+		getStoredItemsInLocationAndChildren(itemsInLocation);
+		return itemsInLocation;
+	}
+	
 	public Item findItemInLocationAndChildren(ItemMaster itemMaster, UomMaster uomMaster){
-		List<Item> itemsInWall = Lists.newArrayList();
-		getStoredItemsInLocationAndChildren(itemsInWall);
+		List<Item> itemsInWall = getStoredItemsInLocationAndChildren();
 		for (Item storedItem : itemsInWall) {
 			if(storedItem.getParent().equals(itemMaster) && storedItem.getUomMaster().equals(uomMaster)){
 				return storedItem;
