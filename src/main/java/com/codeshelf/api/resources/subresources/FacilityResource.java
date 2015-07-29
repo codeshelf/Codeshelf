@@ -565,6 +565,10 @@ public class FacilityResource {
 						report.append("Site controller problem: " + siteHealth.getMessage());
 						break;
 					}
+					if (users == null || users.isEmpty()) {
+						report.append("Could not communicate with site controller. Check Site Controller ID.");
+						break;
+					}
 					//Execute script
 					UUID id = UUID.randomUUID();
 					ScriptMessage scriptMessage = new ScriptMessage(id, part.getScriptLines());
