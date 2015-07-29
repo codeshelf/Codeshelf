@@ -54,11 +54,6 @@ public class RootAuthResource {
 			// authenticate method will log success/failure of attempt
 			TokenSession tokenSession = tokenSessionService.authenticate(username, password);
 			if (tokenSession != null && tokenSession.getStatus().equals(TokenSession.Status.ACTIVE_SESSION)) {
-				// record last login
-				User user = tokenSession.getUser();
-				user.setLastAuthenticated();
-				TenantManagerService.getInstance().updateUser(user);
-
 				// put token into a cookie
 				NewCookie cookie = tokenSessionService.createAuthNewCookie(tokenSession.getNewToken());
 				return Response.ok(toUserResponse(tokenSession)).cookie(cookie).build();

@@ -30,6 +30,7 @@ import org.hibernate.annotations.NaturalId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.application.JvmProperties;
 import com.codeshelf.persistence.DatabaseCredentials;
 import com.codeshelf.persistence.DatabaseUtils;
 import com.codeshelf.persistence.DatabaseUtils.SQLSyntax;
@@ -172,5 +173,15 @@ public class Tenant implements DatabaseCredentials {
 	public String getTenantIdentifier() {
 		// defined as schema name which is required to be unique
 		return this.getSchemaName();
+	}
+
+	public String getAppServerVersion() {
+		// TODO: return correct app server version for this tenant
+		// today, assuming that version = tenant manager version
+		return JvmProperties.getVersionStringShort();
+	}
+
+	public boolean clientVersionIsCompatible(String version) {
+		return this.getAppServerVersion().equals(version);
 	}
 }

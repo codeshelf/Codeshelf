@@ -57,12 +57,13 @@ public class LoginCommand extends CommandABC {
 			String cstoken = loginRequest.getCstoken();
 			String username = loginRequest.getUserId();
 			String password = loginRequest.getPassword();
+			String version = loginRequest.getClientVersion();
 			if (wsConnection != null) {
 				TokenSession tokenSession = null;
 				if (!Strings.isNullOrEmpty(cstoken)) {
 					tokenSession = TokenSessionService.getInstance().checkToken(cstoken);
 				} else {
-					tokenSession = TokenSessionService.getInstance().authenticate(username, password);
+					tokenSession = TokenSessionService.getInstance().authenticate(username, password, version);
 	            }
 				if (tokenSession.getStatus().equals(Status.ACTIVE_SESSION)) {
 					User authUser = tokenSession.getUser();

@@ -37,6 +37,11 @@ public class JsonDecoderTest extends MinimalTest {
 		String rawMessage = "{'LoginRequest':{'userId':'a@example.com','password':'testme','messageId':'cid_4'}}".replace('\'', '"');
 		MessageABC messageABC = decoder.decode(rawMessage);
 		Assert.assertTrue(messageABC instanceof LoginRequest);
+
+		// still decodes even with unrecognized fields in case of version mismatch
+		rawMessage = "{'LoginRequest':{'userId':'configure@example.com','password':'testme','messageId':'cid_4','bogon':'fnord'}}".replace('\'', '"');
+		messageABC = decoder.decode(rawMessage);
+		Assert.assertTrue(messageABC instanceof LoginRequest);
 	}
 	
 	@Test
