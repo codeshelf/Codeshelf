@@ -1,8 +1,11 @@
 package com.codeshelf.ws.protocol.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import lombok.Getter;
 import lombok.Setter;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class LoginRequest extends RequestABC {
 
 	@Getter @Setter

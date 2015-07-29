@@ -37,6 +37,7 @@ public class LoginTest extends HibernateTest {
 		// Create a user for the organization.
 		String password = "password";
 		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, null);
+		Assert.assertNull(user.getLastAuthenticated());
 
 		LoginRequest request = new LoginRequest();
 		request.setUserId(user.getUsername());
@@ -50,13 +51,14 @@ public class LoginTest extends HibernateTest {
 		Assert.assertEquals(ResponseStatus.Success, loginResponse.getStatus());
 		Assert.assertEquals(user.getUsername(), loginResponse.getUser().getUsername());
 		
+		// last authenticated was updated
+		user = TenantManagerService.getInstance().getUser(user.getId());
+		Assert.assertNotNull(user.getLastAuthenticated());
 	}
 
 	@SuppressWarnings("unused")
 	@Test
 	public final void testUserIdFail() {
-		this.getTenantPersistenceService().beginTransaction();
-
 		// Create a user for the organization.
 		String password = "password";
 		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, null);
@@ -71,14 +73,14 @@ public class LoginTest extends HibernateTest {
 		
 		LoginResponse loginResponse = (LoginResponse) response;
 		Assert.assertEquals(ResponseStatus.Authentication_Failed, loginResponse.getStatus());
-		
-		this.getTenantPersistenceService().commitTransaction();
+
+		// last authenticated was NOT updated
+		user = TenantManagerService.getInstance().getUser(user.getId());
+		Assert.assertNull(user.getLastAuthenticated());
 	}
 
 	@Test
 	public final void testPasswordFail() {
-		this.getTenantPersistenceService().beginTransaction();
-
 		// Create a user for the organization.
 		String password = "password";
 		User user = TenantManagerService.getInstance().createUser(getDefaultTenant(), "user1@example.com", password, null);
@@ -94,6 +96,8 @@ public class LoginTest extends HibernateTest {
 		LoginResponse loginResponse = (LoginResponse) response;
 		Assert.assertEquals(ResponseStatus.Authentication_Failed, loginResponse.getStatus());
 
-		this.getTenantPersistenceService().commitTransaction();
+		// last authenticated was NOT updated
+		user = TenantManagerService.getInstance().getUser(user.getId());
+		Assert.assertNull(user.getLastAuthenticated());
 	}
 }
