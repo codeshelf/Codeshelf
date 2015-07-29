@@ -53,6 +53,7 @@ public class LoginCommand extends CommandABC {
 	@Override
 	public ResponseABC exec() {
 		LoginResponse response = new LoginResponse();
+		String tenantName = null;
 		try {
 			String cstoken = loginRequest.getCstoken();
 			String username = loginRequest.getUserId();
@@ -69,6 +70,7 @@ public class LoginCommand extends CommandABC {
 					User authUser = tokenSession.getUser();
 					// successfully authenticated user with password
 					Tenant tenant = TenantManagerService.getInstance().getTenantByUser(authUser);
+					tenantName = tenant.getName();
 					wsConnection.authenticated(authUser,tenant);
 					CodeshelfSecurityManager.setContext(authUser,tenant);
 					try {
@@ -102,8 +104,7 @@ public class LoginCommand extends CommandABC {
 							}
 							// First login from the client will make sure a facility is created only
 							//  for the "default" tenant in Tracy, CA
-							String tenantId = tenant.getName();
-							if (TenantManagerService.INITIAL_TENANT_NAME.equals(tenantId)) {
+							if (TenantManagerService.INITIAL_TENANT_NAME.equals(tenantName)) {
 								if (Facility.staticGetDao().getAll().isEmpty()) {
 									Facility.createFacility("F1", "First Facility",new Point(PositionTypeEnum.GPS, -122.2741133, 37.8004643, 0.0));
 								}
@@ -116,6 +117,7 @@ public class LoginCommand extends CommandABC {
 						// generate login response
 						response.setStatus(ResponseStatus.Success);
 						response.setUser(authUser);
+						response.setTenantName(tenantName);
 						response.setOrganization(new Organization()); // just to avoid changing UI...
 						Set<String> permSet = authUser.getPermissionStrings();
 						String[] permArray = new String[permSet.size()];
