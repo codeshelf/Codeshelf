@@ -524,7 +524,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		}
 
 		if (result > 2) {
-			return "*";
+			return ">2";
 		} else  {
 			return String.valueOf(result);
 		}
@@ -540,7 +540,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		}
 
 		if (result > 2) {
-			return "*";
+			return ">2";
 		} else  {
 			return String.valueOf(result);
 		}
