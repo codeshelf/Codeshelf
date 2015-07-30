@@ -39,8 +39,9 @@ public abstract class AbstractSessionLoginService extends AbstractHmacTokenServi
 			if (tenant.isActive()) {
 				if (user.isLoginAllowed()) {
 					if (passwordValid) {
-						// set last authenticated before checking client version
+						// set last authenticated and client version before checking version compatibility
 						user.setLastAuthenticated();
+						user.setClientVersion(version);
 
 						if(version == null || tenant.clientVersionIsCompatible(version)) {
 							user.setBadVersionLoginTries(0); // version ok

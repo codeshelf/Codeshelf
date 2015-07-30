@@ -59,13 +59,20 @@ public class LoginCommand extends CommandABC {
 			String username = loginRequest.getUserId();
 			String password = loginRequest.getPassword();
 			String version = loginRequest.getClientVersion();
+
 			if (wsConnection != null) {
 				TokenSession tokenSession = null;
 				if (!Strings.isNullOrEmpty(cstoken)) {
+					// client claims to be already authenticated via token
 					tokenSession = TokenSessionService.getInstance().checkToken(cstoken);
-				} else {
+				} else if(version != null) {
+					// site controller / reported app version must be compatible
 					tokenSession = TokenSessionService.getInstance().authenticate(username, password, version);
+	            } else {
+	            	// not a site controller, or a very old site controller - just allow login
+	            	tokenSession = TokenSessionService.getInstance().authenticate(username, password);
 	            }
+
 				if (tokenSession.getStatus().equals(Status.ACTIVE_SESSION)) {
 					User authUser = tokenSession.getUser();
 					// successfully authenticated user with password
@@ -75,12 +82,13 @@ public class LoginCommand extends CommandABC {
 					CodeshelfSecurityManager.setContext(authUser,tenant);
 					try {
 						TenantPersistenceService.getInstance().beginTransaction();
-
+					
+						// determine if site controller
+						SiteController sitecon = SiteController.staticGetDao().findByDomainId(null, username);
+						
 						LOGGER.info("User " + authUser.getUsername() + " of " + tenant.getName() + " authenticated on session "
 								+ wsConnection.getSessionId());
 
-						// determine if site controller
-						SiteController sitecon = SiteController.staticGetDao().findByDomainId(null, username);
 						CodeshelfNetwork network = null;
 						if (sitecon != null) {
 							network = sitecon.getParent();
@@ -94,14 +102,14 @@ public class LoginCommand extends CommandABC {
 
 							// send all network updates to this session for this network
 							NetworkChangeListener.registerWithSession(this.objectChangeBroadcaster, wsConnection, network);
-						} else { //regular ui client
-							if (authUser.isSiteController()) {
-								String msg = "Could not connect site controller no facilities in this tenant";
-								LOGGER.warn(msg);
-								response.setStatusMessage(msg);
-								response.setStatus(ResponseStatus.Fail);
-								return response;
-							}
+						} else if (authUser.isSiteController()) {
+							String msg = "Could not connect site controller, it is not associated with a facility";
+							LOGGER.warn(msg);
+							response.setStatusMessage(msg);
+							response.setStatus(ResponseStatus.Fail);
+							return response;
+						} else {
+							//regular ui client
 							// First login from the client will make sure a facility is created only
 							//  for the "default" tenant in Tracy, CA
 							if (TenantManagerService.INITIAL_TENANT_NAME.equals(tenantName)) {
