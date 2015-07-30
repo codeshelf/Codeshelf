@@ -21,8 +21,6 @@ public class LoginTest extends ServerTest {
 
 	private ServerMessageProcessor	processor;
 
-	
-	
 	@Override
 	public void doBefore() {
 		super.doBefore();
