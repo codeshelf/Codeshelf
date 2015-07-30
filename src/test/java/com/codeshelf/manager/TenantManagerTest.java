@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.application.JvmProperties;
 import com.codeshelf.manager.api.TenantsResource;
 import com.codeshelf.manager.api.UsersResource;
 import com.codeshelf.manager.service.TenantManagerService;
@@ -110,18 +111,37 @@ public class TenantManagerTest extends HibernateTest {
 		Assert.assertEquals(Status.ACTIVE_SESSION,this.tokenSessionService.authenticate(newUser.getUsername(),"newpassword").getStatus());
 		
 		// can look up via REST API several ways
-		List<User> users = (List<User>) this.usersResource.get(null,null).getEntity();
+		List<User> users = (List<User>) this.usersResource.get(null,null,null,null).getEntity();
 		Assert.assertTrue(users.contains(newUser));
 		Assert.assertEquals(getDefaultTenant().getId(), users.get(users.indexOf(newUser)).getTenant().getId());
 
+		// site controller list
+		this.createFacility(); // ensure sitecon 5000 exists
+		User defaultSitecon = TenantManagerService.getInstance().getUser(CodeshelfNetwork.DEFAULT_SITECON_USERNAME); 
+		Assert.assertNotNull(defaultSitecon);
+		List<User> sitecons = (List<User>) this.usersResource.get(null,null,true,null).getEntity();
+		Assert.assertTrue(sitecons.contains(defaultSitecon));
+		// upgrade needed list
+		defaultSitecon.setClientVersion(JvmProperties.getVersionStringShort()); // version is correct 
+		TenantManagerService.getInstance().updateUser(defaultSitecon);
+		sitecons = (List<User>) this.usersResource.get(null,null,true,true).getEntity(); // upgrade needed
+		Assert.assertTrue(sitecons.isEmpty());
+
+		defaultSitecon.setClientVersion("0.1"); // version is INcorrect 
+		TenantManagerService.getInstance().updateUser(defaultSitecon);
+		sitecons = (List<User>) this.usersResource.get(null,null,true,true).getEntity(); // upgrade needed
+		Assert.assertTrue(sitecons.contains(defaultSitecon));
+		
+		Assert.assertEquals(getDefaultTenant().getId(), users.get(users.indexOf(newUser)).getTenant().getId());		
+		
 		String htpasswd = (String) this.usersResource.getHtpasswd().getEntity();
 		Assert.assertTrue(htpasswd.indexOf(newUser.getUsername()+":") >= 0);
 
-		users = (List<User>) this.usersResource.get(null,newUser.getTenant().getId()).getEntity();
+		users = (List<User>) this.usersResource.get(null,newUser.getTenant().getId(),null,null).getEntity();
 		Assert.assertTrue(users.contains(newUser));
 		Assert.assertEquals(getDefaultTenant().getName(), users.get(users.indexOf(newUser)).getTenant().getName());
 
-		User user = (User) this.usersResource.get(existingUsername,null).getEntity();
+		User user = (User) this.usersResource.get(existingUsername,null,null,null).getEntity();
 		Assert.assertTrue(user.getUsername().equals(existingUsername));
 		
 		user = (User) this.usersResource.getUser(newUser.getId()).getEntity();

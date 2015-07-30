@@ -252,4 +252,9 @@ public class MockTenantManagerService implements ITenantManagerService {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public List<User> getSiteControllerUsers(boolean onlyIfUpgradeNeeded) {
+		return new ArrayList<User>();
+	}
 }

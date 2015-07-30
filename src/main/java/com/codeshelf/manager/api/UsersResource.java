@@ -60,9 +60,11 @@ public class UsersResource {
 	@RequiresPermissions("user:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response get(@QueryParam("username") String username, 
-				@QueryParam("tenantid") Integer tenantId) {
+				@QueryParam("tenantid") Integer tenantId,
+				@QueryParam("sitecon") Boolean sitecon,
+				@QueryParam("needsupgrade") Boolean needsUpgrade) {
 		if (username == null)
-			return getUsers(tenantId);
+			return getUsers(tenantId,sitecon,needsUpgrade);
 		//else
 		return getUser(username,tenantId); // htpasswd ignored for username search
 	}
@@ -256,13 +258,19 @@ public class UsersResource {
 		return newUser;
 	}
 
-	private Response getUsers(Integer tenantId) {
+	private Response getUsers(Integer tenantId, Boolean sitecon, Boolean needsUpgrade) {
 		try {
 			Tenant tenant = null;
 			if (tenantId != null) 
 				tenant = TenantManagerService.getInstance().getTenant(tenantId);
 			
-			List<User> userList = TenantManagerService.getInstance().getUsers(tenant);
+			List<User> userList;
+			
+			if(tenant == null && sitecon != null && sitecon) {
+				userList = TenantManagerService.getInstance().getSiteControllerUsers(needsUpgrade != null && needsUpgrade);
+			} else {
+				userList = TenantManagerService.getInstance().getUsers(tenant);
+			}
 			
 			return Response.ok(userList).build();
 		} catch (Exception e) {

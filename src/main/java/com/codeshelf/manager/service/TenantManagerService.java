@@ -346,6 +346,19 @@ public class TenantManagerService extends AbstractCodeshelfIdleService implement
 		}
 		return userList;
 	}
+	
+	@Override
+	public List<User> getSiteControllerUsers(boolean onlyIfUpgradeNeeded) {
+		List<User> allUsers = getUsers(null);
+		List<User> sitecons = new ArrayList<User>();
+		for(User user : allUsers) {
+			if(user.isSiteController() &&
+					(!onlyIfUpgradeNeeded || !user.getTenant().clientVersionIsCompatible(user.getClientVersion())) ) {
+				sitecons.add(user);
+			}
+		}
+		return sitecons;
+	}
 
 	@Override
 	public byte[] getHtpasswd() {
