@@ -301,7 +301,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				case SKU_WALL_SCAN_GTIN_LOCATION:
 					line2 = "For " + mLastPutWallItemScan;
 					line3 = "Into wall: " + mPutWallName;
-					sendDisplayCommand(SCAN_LOCATION_MSG, line2, line3, CLEAR_TO_CANCEL_MSG);
+					sendDisplayCommand(SCAN_LOCATION_MSG, line2, line3, CANCEL_TO_EXIT_MSG);
 					break;
 					
 				case SKU_WALL_ALTERNATE_WALL_AVAILABLE:
@@ -345,13 +345,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 					
 				case REMOVE_WALL_ORDERS_CONFIRM:
-					sendDisplayCommand(REMOVE_CONFIRM_1, REMOVE_CONFIRM_2_ORDERS, REMOVE_CONFIRM_3, EMPTY_MSG);
+					sendDisplayCommand(REMOVE_CONFIRM_1_MSG, REMOVE_CONFIRM_2_ORDERS_MSG, REMOVE_CONFIRM_3_MSG, EMPTY_MSG);
 					break;
 
 				case REMOVE_INVENTORY_CONFIRM:
-					sendDisplayCommand(REMOVE_CONFIRM_1, REMOVE_CONFIRM_2_INVENTORY, REMOVE_CONFIRM_3, EMPTY_MSG);
+					sendDisplayCommand(REMOVE_CONFIRM_1_MSG, REMOVE_CONFIRM_2_INVENTORY_MSG, REMOVE_CONFIRM_3_MSG, EMPTY_MSG);
 					break;
 
+				case REMOVE_CHE_CONTAINER:
+					sendDisplayCommand(SELECT_POSITION_MSG, REMOVE_CONTAINER_MSG, EMPTY_MSG, CANCEL_TO_EXIT_MSG);
+					showContainerAssainments();
+					break;
+					
 				case REMOTE:
 					sendRemoteStateScreen();
 					break;
@@ -407,6 +412,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case CLEAR_COMMAND:
+			case CANCEL_COMMAND:
 				clearCommandReceived();
 				break;
 
@@ -582,23 +588,34 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setRememberEnteringInfoState(mCheStateEnum);
 				setState(CheStateEnum.INFO_PROMPT);
 				break;
+			case SETUP_SUMMARY:
+				setState(CheStateEnum.CONTAINER_SELECT);
+				break;
 			default:
 		}
 	}
 	
 	protected void removeCommandReceived() {
-		if (mCheStateEnum == CheStateEnum.INFO_DISPLAY){
-			switch (getRememberEnteringInfoState()){
-				case SCAN_GTIN: 				//Inventory->Info
-					setState(CheStateEnum.REMOVE_INVENTORY_CONFIRM);
-					break;					
-				case PUT_WALL_SCAN_WALL:		//PutWall->Info
-				case PUT_WALL_SCAN_ITEM:
-					setState(CheStateEnum.REMOVE_WALL_ORDERS_CONFIRM);
-					break;
-				default:
-			}
-
+		switch (mCheStateEnum){
+			case INFO_DISPLAY:
+				switch (getRememberEnteringInfoState()){
+					case SCAN_GTIN: 				//Inventory->Info
+						setState(CheStateEnum.REMOVE_INVENTORY_CONFIRM);
+						break;					
+					case PUT_WALL_SCAN_WALL:		//PutWall->Info
+					case PUT_WALL_SCAN_ITEM:
+						setState(CheStateEnum.REMOVE_WALL_ORDERS_CONFIRM);
+						break;
+					case CONTAINER_SELECT:
+						setState(CheStateEnum.REMOVE_CHE_CONTAINER);
+						break;
+					default:
+				}
+				break;
+			case CONTAINER_SELECT:
+				setState(CheStateEnum.REMOVE_CHE_CONTAINER);
+				break;
+			default:
 		}
 	}
 
@@ -672,6 +689,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case REMOVE_WALL_ORDERS_CONFIRM:
 			case REMOVE_INVENTORY_CONFIRM:
 				setState(CheStateEnum.INFO_DISPLAY);
+				break;
+				
+			case REMOVE_CHE_CONTAINER:
+				setState(CheStateEnum.CONTAINER_SELECT);
 				break;
 				
 			case SKU_WALL_SCAN_GTIN_LOCATION:
@@ -1621,6 +1642,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processInfoLocationScan(inScanPrefixStr, inContent);
 				break;
 				
+			case REMOVE_CHE_CONTAINER:
+				if ("P%".equalsIgnoreCase(inScanPrefixStr)){
+					byte position = Byte.parseByte(inContent);
+					clearContainerAssignmentAtIndex(position);
+					clearOnePosconOnThisDevice(position);
+					setState(CheStateEnum.CONTAINER_SELECT);
+				}
+				break;
+				
 			case REMOTE:
 				processCheLinkScan(inScanPrefixStr, inContent);
 				break;
@@ -2391,6 +2421,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case SCAN_SOMETHING_SHORT:
 				// Do not allow button press in this state. We did display the count on poscon. User might get confused.
 				setState(mCheStateEnum);
+				return;
+			case REMOVE_CHE_CONTAINER:
+				clearContainerAssignmentAtIndex(inButtonNum.byteValue());
+				clearOnePosconOnThisDevice(inButtonNum.byteValue());
+				setState(CheStateEnum.CONTAINER_SELECT);
 				return;
 			default: {
 				LOGGER.warn("Unexpected button press ignored. OR invalid pick() call by some unit test.");

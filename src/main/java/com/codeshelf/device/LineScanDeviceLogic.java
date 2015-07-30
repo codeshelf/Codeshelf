@@ -89,6 +89,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case CLEAR_COMMAND:
+			case CANCEL_COMMAND:
 				clearCommandReceived();
 				break;
 			

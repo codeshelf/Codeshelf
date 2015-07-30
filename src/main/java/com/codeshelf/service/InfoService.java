@@ -212,11 +212,14 @@ public class InfoService implements IApiService{
 			lightService.lightLocationServerCall(location, color);
 		} else if (showGtin) {
 			info[1] = "UPC: " + closestItem.getGtinId();
+			info[2] = closestItem.getItemDescription();
 			lightService.lightItem(closestItem, color);
 		} else {
 			info[1] = "SKU: " + closestItem.getDomainId();
+			info[2] = closestItem.getItemDescription();
 			lightService.lightItem(closestItem, color);
 		}
+		info[3] = CheDeviceLogic.CANCEL_TO_EXIT_MSG;
 		return info;
 	}
 	
@@ -245,6 +248,13 @@ public class InfoService implements IApiService{
 		for (Item item : items) {
 			itemOffset = item.getCmFromLeft();
 			distance = Math.abs(itemOffset - scanOffset);
+			if (distance == smallestDistance) {
+				//Sort items with the same distance from selected location
+				if (closestItem == null || closestItem.getPersistentId().compareTo(item.getPersistentId()) > 0){
+					smallestDistance = distance;
+					closestItem = item;					
+				}
+			}
 			if (distance < smallestDistance) {
 				smallestDistance = distance;
 				closestItem = item;

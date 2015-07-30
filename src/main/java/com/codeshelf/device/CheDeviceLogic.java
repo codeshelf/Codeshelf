@@ -72,7 +72,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					EMPTY_MSG								= cheLine("");
 	protected static final String					INVALID_SCAN_MSG						= cheLine("INVALID");
 	protected static final String					SCAN_USERID_MSG							= cheLine("SCAN BADGE");
-	protected static final String					SCAN_START_LOCATION_MSG						= cheLine("SCAN START LOCATION");
+	protected static final String					SCAN_START_LOCATION_MSG					= cheLine("SCAN START LOCATION");
 	protected static final String					OR_START_WORK_MSG						= cheLine("OR START WORK");
 	protected static final String					SELECT_POSITION_MSG						= cheLine("SELECT POSITION");
 	protected static final String					SHORT_PICK_CONFIRM_MSG					= cheLine("CONFIRM SHORT");
@@ -112,13 +112,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	
 	//For Sku wall
 	protected static final String					SCAN_LOCATION_MSG						= cheLine("SCAN LOCATION");
-	protected static final String					CLEAR_TO_CANCEL_MSG						= cheLine("CLEAR TO CANCEL");
+	public static final String						CANCEL_TO_EXIT_MSG						= cheLine("CANCEL to exit");
 	
 	//For Remove command
-	protected static final String					REMOVE_CONFIRM_1						= cheLine("SCAN YES OR NO");
-	protected static final String					REMOVE_CONFIRM_2_ORDERS					= cheLine("YES: remove order(s)");
-	protected static final String					REMOVE_CONFIRM_2_INVENTORY				= cheLine("YES: remove item");
-	protected static final String					REMOVE_CONFIRM_3						= cheLine("NO:  cancel");
+	protected static final String					REMOVE_CONFIRM_1_MSG					= cheLine("SCAN YES OR NO");
+	protected static final String					REMOVE_CONFIRM_2_ORDERS_MSG				= cheLine("YES: remove order(s)");
+	protected static final String					REMOVE_CONFIRM_2_INVENTORY_MSG			= cheLine("YES: remove item");
+	protected static final String					REMOVE_CONFIRM_3_MSG					= cheLine("NO:  cancel");
+	protected static final String					REMOVE_CONTAINER_MSG					= cheLine("To remove order");
 	
 	//To repeat: !!!DO NOT CREATE LINES LONGER THAN 20 CHARACTERS!!! using cheLine()
 	//Causes untraceable error during Site initialization
@@ -136,6 +137,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					YES_COMMAND								= "YES";
 	protected static final String					NO_COMMAND								= "NO";
 	protected static final String					CLEAR_COMMAND							= "CLEAR";
+	protected static final String					CANCEL_COMMAND							= "CANCEL";
 	protected static final String					INVENTORY_COMMAND						= "INVENTORY";
 	protected static final String					ORDER_WALL_COMMAND						= "ORDER_WALL";
 	protected static final String					PUT_WALL_COMMAND						= "PUT_WALL";

@@ -69,7 +69,8 @@ public enum CheStateEnum {
 	
 	// states for the REMOVE command
 	REMOVE_WALL_ORDERS_CONFIRM(CheStateNum.REMOVE_WALL_ORDERS_CONFIRM, "REMOVE_WALL_ORDERS_CONFIRM"),
-	REMOVE_INVENTORY_CONFIRM(CheStateNum.REMOVE_INVENTORY_CONFIRM, "REMOVE_INVENTORY_CONFIRM");
+	REMOVE_INVENTORY_CONFIRM(CheStateNum.REMOVE_INVENTORY_CONFIRM, "REMOVE_INVENTORY_CONFIRM"),
+	REMOVE_CHE_CONTAINER(CheStateNum.REMOVE_CHE_CONTAINER, "REMOVE_CHE_CONTAINER");
 
 	private int		mValue;
 	private String	mName;
@@ -210,8 +211,9 @@ public enum CheStateEnum {
 		static final byte	REMOTE_LINKED				= 37;
 		
 		// REMOVE States
-		static final byte	REMOVE_WALL_ORDERS_CONFIRM  = 38;
-		static final byte	REMOVE_INVENTORY_CONFIRM  = 39;
+		static final byte	REMOVE_WALL_ORDERS_CONFIRM  = 38;	//Added July 29th
+		static final byte	REMOVE_INVENTORY_CONFIRM  	= 39;	//Added July 29th
+		static final byte	REMOVE_CHE_CONTAINER  		= 40;	//Added July 30th
 		
 		private CheStateNum() {
 		};
