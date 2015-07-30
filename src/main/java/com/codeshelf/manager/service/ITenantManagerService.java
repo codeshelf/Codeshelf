@@ -32,6 +32,7 @@ public interface ITenantManagerService extends CodeshelfService {
 	Map<String, String> getActiveSecurityQuestions();
 	Map<String, SecurityQuestion> getAllSecurityQuestions();
 	List<User> getUsers(Tenant tenant);
+	List<User> getSiteControllerUsers(boolean onlyIfUpgradeNeeded);
 	byte[] getHtpasswd();
 
 	// tenants

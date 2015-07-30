@@ -26,6 +26,7 @@ import com.codahale.metrics.Counter;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
+import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.io.JsonDecoder;
 import com.codeshelf.ws.io.JsonEncoder;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
@@ -39,6 +40,8 @@ import com.google.inject.Inject;
 public class CsClientEndpoint {
 
 	private static final Logger		LOGGER				= LoggerFactory.getLogger(CsClientEndpoint.class);
+
+	private static final int		DEFAULT_RECONNECT_DELAY_MS	= 30000;
 
 	private Counter					messageCounter		= null;
 	private Counter					sessionStartCounter	= null;
@@ -77,7 +80,11 @@ public class CsClientEndpoint {
 	@Getter
 	@Setter
 	long							lastMessageReceived	= 0;
+	
+	private long					lastConnectionAttempt = 0;	
+	private int						reconnectDelayMs = 0;
 
+	
 	public CsClientEndpoint() {
 		this.uri = URI.create(System.getProperty("websocket.uri"));
 		if (this.uri == null) {
@@ -87,7 +94,7 @@ public class CsClientEndpoint {
 			}
 			this.uri = URI.create("ws://localhost:" + port + "/ws/");
 		}
-
+		this.reconnectDelayMs = Integer.getInteger("sitecontroller.reconnectdelayms", CsClientEndpoint.DEFAULT_RECONNECT_DELAY_MS);
 	}
 
 	private void initMetrics() {
@@ -171,6 +178,15 @@ public class CsClientEndpoint {
 	}
 
 	public void connect() throws DeploymentException, IOException {
+		// make sure we are not rapidly reconnecting to server
+		long now = System.currentTimeMillis();
+		long delay = (this.lastConnectionAttempt+this.reconnectDelayMs) - now; 
+		if(delay>0) {
+			LOGGER.info("Waiting " + Long.toString(delay/1000) + " seconds before reconnecting.");
+			ThreadUtils.sleep((int)delay);
+		}
+		this.lastConnectionAttempt = System.currentTimeMillis();
+
 		LOGGER.info("Connecting to WS server at " + uri);
 		// connect to the server
 		Session session = webSocketContainer.connectToServer(this, uri);

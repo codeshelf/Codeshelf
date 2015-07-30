@@ -731,6 +731,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		this.mockWsConnection = Mockito.mock(WebSocketConnection.class);
 		Mockito.when(mockWsConnection.getCurrentUserContext()).thenReturn(user);
 		Mockito.when(mockWsConnection.getCurrentTenant()).thenReturn(this.getDefaultTenant());
+		Mockito.when(mockWsConnection.getCurrentTenantIdentifier()).thenReturn(this.getDefaultTenantId());
 
 		// TODO: more advanced user connection setups for tests (real/mock, roles etc)                     
 	}
