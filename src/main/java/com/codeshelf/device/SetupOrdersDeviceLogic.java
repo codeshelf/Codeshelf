@@ -333,7 +333,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 
 				case INFO_PROMPT:
-					sendDisplayCommand("SCAN LOCATION", "TO SEE CONTENTS");
+					sendDisplayCommand("SCAN LOCATION", "To see contents", EMPTY_MSG, CANCEL_TO_EXIT_MSG);
 					break;
 
 				case INFO_RETRIEVAL:
@@ -2822,8 +2822,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				mDeviceManager.performInfoOrRemoveAction(InfoRequestType.GET_WALL_LOCATION_INFO, location, getGuidNoPrefix(), getPersistentId().toString());
 				break;
 			case SCAN_GTIN:	//Inventory mode
-				mDeviceManager.performInfoOrRemoveAction(InfoRequestType.GET_INVENTORY_INFO, location, getGuidNoPrefix(), getPersistentId().toString());
 				setState(CheStateEnum.INFO_RETRIEVAL);
+				mDeviceManager.performInfoOrRemoveAction(InfoRequestType.GET_INVENTORY_INFO, location, getGuidNoPrefix(), getPersistentId().toString());
 				break;
 			default:				
 		}

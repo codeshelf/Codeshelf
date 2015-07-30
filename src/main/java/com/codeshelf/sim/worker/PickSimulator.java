@@ -491,6 +491,10 @@ public class PickSimulator {
 				|| cheDeviceLogic.getPosToLastSetIntrMap().containsKey(PosControllerInstr.POSITION_ALL);
 	}
 
+	public Byte getLastSentPositionControllerDisplayValue(int position) {
+		return getLastSentPositionControllerDisplayValue((byte) position);
+	}
+
 	public Byte getLastSentPositionControllerDisplayValue(byte position) {
 		return cheDeviceLogic.getLastSentPositionControllerDisplayValue(position);
 	}
@@ -544,7 +548,7 @@ public class PickSimulator {
 	public String getLastCheDisplay() {
 		StringBuffer s = new StringBuffer();
 		for (int i = 1; i <= 4; i++) {
-			s.append(getLastCheDisplayString(i)).append("\n");
+			s.append(getLastCheDisplayString(i).trim()).append("\n");
 		}
 		return s.toString();
 	}

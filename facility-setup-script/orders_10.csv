@@ -1,4 +1,4 @@
-orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,gtin,destinationid,shipperId,customerId,dueDateX
+orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,gtin,destinationid,shipperId,customerId,dueDate
 26768709,26768709111112,3605970829216,,1,each,LocX24,26768709,0,,1,10,19,12/31/14 12:00 PM
 26768711,26768711111113,3605970829131,,2,each,LocX24,26768711,0,,2,11,20,
 26768712,26768712111114,3605970651558,,3,each,LocX25,26768712,0,gtinx1,3,12,21,12/31/14 12:00 PM

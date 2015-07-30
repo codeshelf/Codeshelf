@@ -198,9 +198,11 @@ public class InfoService implements IApiService{
 		}
 		//If location is not a Slot and not a Tape, stop
 		if (!location.isSlot() && !locationStr.startsWith(CheDeviceLogic.TAPE_PREFIX)) {
-			String locationType = location.isAisle() ? "Aisle" : location.isBay() ? "Bay" : "Tier";
-			info[0] = locationStr + " is " + locationType;
+			String locationType = location.isAisle() ? "AISLE" : location.isBay() ? "BAY" : "TIER";
+			info[0] = locationStr + " IS " + locationType;
 			info[1] = "Expected Slot or Tape";
+			info[2] = "Scan another location";
+			info[3] = CheDeviceLogic.CANCEL_TO_EXIT_MSG;
 			return info;
 		}
 		Item closestItem = getClosestItem(location, locationStr);
