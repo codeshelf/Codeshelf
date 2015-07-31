@@ -69,6 +69,19 @@ public class FacilitiesResource {
 		return BaseResponse.buildResponse(facility);
 	}
 	
+	@POST
+	@Path("/recreate/{domainId}")
+	@RequiresPermissions("facility:edit")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response recreateFacility(@PathParam("domainId") String domainId) {
+		Facility facility = Facility.staticGetDao().findByDomainId(null, domainId);
+		String description = facility.getDescription();
+		facility.delete(webSocketManagerService);
+		Facility recreatedFacility = Facility.createFacility(domainId, description, Point.getZeroPoint());
+		return BaseResponse.buildResponse(recreatedFacility);
+	}
+	
+	
 	@DELETE
 	@RequiresPermissions("facility:edit")
 	public Response deleteFacilities(){
