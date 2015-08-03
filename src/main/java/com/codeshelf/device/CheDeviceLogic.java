@@ -115,11 +115,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	public static final String						CANCEL_TO_EXIT_MSG						= cheLine("CANCEL to exit");
 	
 	//For Remove command
-	protected static final String					REMOVE_CONFIRM_1_MSG					= cheLine("SCAN YES OR NO");
-	protected static final String					REMOVE_CONFIRM_2_ORDERS_MSG				= cheLine("YES: remove order(s)");
-	protected static final String					REMOVE_CONFIRM_2_INVENTORY_MSG			= cheLine("YES: remove item");
-	protected static final String					REMOVE_CONFIRM_3_MSG					= cheLine("NO:  cancel");
 	protected static final String					REMOVE_CONTAINER_MSG					= cheLine("To remove order");
+	protected static final String					REMOVE_NOTHING_MSG						= cheLine("NOTHING TO REMOVE");
 	
 	//To repeat: !!!DO NOT CREATE LINES LONGER THAN 20 CHARACTERS!!! using cheLine()
 	//Causes untraceable error during Site initialization

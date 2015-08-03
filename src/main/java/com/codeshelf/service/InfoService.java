@@ -2,6 +2,7 @@ package com.codeshelf.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
@@ -25,10 +26,12 @@ import com.codeshelf.ws.protocol.request.InfoRequest.InfoRequestType;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
+import lombok.Getter;
+import lombok.Setter;
+
 public class InfoService implements IApiService{
 	private LightService lightService;
 	private WorkService workService;
-	@SuppressWarnings("unused")
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(InfoService.class);
 	
 	@Inject
@@ -37,52 +40,55 @@ public class InfoService implements IApiService{
 		this.workService = inWorkService;
 	}
 
-	public String[] getInfo(Facility facility, InfoRequest request, ColorEnum color){
+	public InfoPackage getInfo(Facility facility, InfoRequest request, ColorEnum color){
 		InfoRequestType type = request.getType();
-		String info[] = null;
 		String location = request.getLocation();
+		InfoPackage info = null;
 		switch(type){
 			case GET_WALL_LOCATION_INFO:
 				info = getWallLocationInfo(facility, location, color);
-				return info;
-
+				break;
+				
 			case GET_INVENTORY_INFO:
 				info = getInventoryInfo(facility, location, color);
-				return info;
+				break;
 
 			case LIGHT_COMPLETE_ORDERS:
 				lightOrdersInWall(facility, location, color, true);
-				return null;
+				break;
 				
 			case LIGHT_INCOMPLETE_ORDERS:
 				lightOrdersInWall(facility, location, color, false);
-				return null;
+				break;
 				
 			case REMOVE_WALL_ORDERS:
 				removeOrdersFromLocation(facility, location);
 				info = getWallLocationInfo(facility, location, color);
-				return info;
+				break;
 				
 			case REMOVE_INVENTORY:
-				removeItemFromInventory(facility, location);
+				removeItemFromInventory(request.getRemoveItemId());
 				info = getInventoryInfo(facility, location, color);
-				return info;
+				break;
 				
 			default:
-				String unexpectedRequest[] = new String[3];
-				unexpectedRequest[0] = "Unexpected Request";
-				unexpectedRequest[1] = "Type = " + (type == null ? "null" : type.toString());
-				return unexpectedRequest;
+				info = new InfoPackage();
+				info.setDisplayInfoLine(0, "Unexpected Request");
+				info.setDisplayInfoLine(1, "Type = " + (type == null ? "null" : type.toString()));
 		}
+		return info;
 	}
 	
-	private String[] getWallLocationInfo(Facility facility, String locationStr, ColorEnum color){
-		String[] info = new String[4];
+	private InfoPackage getWallLocationInfo(Facility facility, String locationStr, ColorEnum color){
+		InfoPackage infoPackage = new InfoPackage();
+		String info[] = new String[4];
+		String remove[] = new String[4];
 		Location location = facility.findSubLocationById(locationStr);
 		if (location == null) {
 			info[0] = "Could not find";
 			info[1] = "Location " + locationStr;
-			return info;
+			infoPackage.setDisplayInfo(info);
+			return infoPackage;
 		}
 		lightService.lightLocationServerCall(location, color);
 		String locationName = location.getBestUsableLocationName();
@@ -107,6 +113,7 @@ public class InfoService implements IApiService{
 			info[0] = locationName;
 			info[1] = "Order: none";
 		} else if (numOrders == 1){
+			infoPackage.setSomethingToRemove(true);
 			OrderHeader order = ordersInLocation.get(0);
 			info[0] = locationName;
 			info[1] = "Order: " + order.getDomainId();
@@ -125,13 +132,24 @@ public class InfoService implements IApiService{
 			} else {
 				info[3] = "Remain: " + incompleteDetails + " jobs";
 			}
+			remove[0] = "Remove order " + order.getDomainId();
+			remove[1] = "From " + location.getBestUsableLocationName();
+			remove[2] = "YES: remove order";
+			remove[3] = "CANCEL to exit";
 		} else {
+			infoPackage.setSomethingToRemove(true);
 			info[0] = locationName + " has " +  numOrders + " orders";
 			info[1] = incompleteOrders + " incompl, with " + incompleteDetails + " jobs";
 			info[2] = "YES: light completes";
 			info[3] = "NO: light incompletes";
+			remove[0] = "Remove " + numOrders + " orders";;
+			remove[1] = "From " + location.getBestUsableLocationName();
+			remove[2] = "YES: remove orders";
+			remove[3] = "CANCEL to exit";
 		}
-		return info;
+		infoPackage.setDisplayInfo(info);
+		infoPackage.setDisplayRemove(remove);
+		return infoPackage;
 	}
 	
 	private void lightOrdersInWall(Facility facility, String locationStr, ColorEnum color, boolean complete) {
@@ -188,13 +206,16 @@ public class InfoService implements IApiService{
 		return orderLocations;
 	}
 	
-	private String[] getInventoryInfo(Facility facility, String locationStr, ColorEnum color){
+	private InfoPackage getInventoryInfo(Facility facility, String locationStr, ColorEnum color){
+		InfoPackage infoPackage = new InfoPackage(); 
 		String[] info = new String[4];
+		String[] remove = new String[4];
 		Location location = facility.findSubLocationById(locationStr);
 		if (location == null) {
 			info[0] = "Could not find";
 			info[1] = "Location " + locationStr;
-			return info;
+			infoPackage.setDisplayInfo(info);
+			return infoPackage;
 		}
 		//If location is not a Slot and not a Tape, stop
 		if (!location.isSlot() && !locationStr.startsWith(CheDeviceLogic.TAPE_PREFIX)) {
@@ -203,37 +224,48 @@ public class InfoService implements IApiService{
 			info[1] = "Expected Slot or Tape";
 			info[2] = "Scan another location";
 			info[3] = CheDeviceLogic.CANCEL_TO_EXIT_MSG;
-			return info;
+			infoPackage.setDisplayInfo(info);
+			return infoPackage;
 		}
 		Item closestItem = getClosestItem(location, locationStr);
 		String scanType = PropertyService.getInstance().getPropertyFromConfig(facility, DomainObjectProperty.SCANPICK);
+		String itemId = null;
 		boolean showGtin = "UPC".equalsIgnoreCase(scanType);
 		info[0] = location.getBestUsableLocationName();
 		if (closestItem == null) {
 			info[1] = "Item: none";
 			lightService.lightLocationServerCall(location, color);
 		} else if (showGtin) {
-			info[1] = "UPC: " + closestItem.getGtinId();
+			infoPackage.setSomethingToRemove(true);
+			infoPackage.setRemoveItemId(closestItem.getPersistentId());
+			itemId = closestItem.getGtinId();
+			info[1] = "UPC: " + itemId;
 			info[2] = closestItem.getItemDescription();
 			lightService.lightItem(closestItem, color);
 		} else {
-			info[1] = "SKU: " + closestItem.getDomainId();
+			infoPackage.setSomethingToRemove(true);
+			infoPackage.setRemoveItemId(closestItem.getPersistentId());
+			itemId = closestItem.getDomainId();
+			info[1] = "SKU: " + itemId;
 			info[2] = closestItem.getItemDescription();
 			lightService.lightItem(closestItem, color);
 		}
 		info[3] = CheDeviceLogic.CANCEL_TO_EXIT_MSG;
-		return info;
+		remove[0] = "Remove " + itemId;
+		remove[1] = "From " + location.getBestUsableLocationName();
+		remove[2] = "YES: remove item";
+		remove[3] = "CANCEL to exit";
+		infoPackage.setDisplayInfo(info);
+		infoPackage.setDisplayRemove(remove);
+		return infoPackage;
 	}
 	
-	private void removeItemFromInventory(Facility facility, String locationStr){
-		Location location = facility.findSubLocationById(locationStr);
-		if (location == null) {
+	private void removeItemFromInventory(UUID itemId){
+		if (itemId == null) {
+			LOGGER.warn("Passed null PersistentId while trying to delete item from inventory");
 			return;
 		}
-		if (!location.isSlot() && !locationStr.startsWith(CheDeviceLogic.TAPE_PREFIX)) {
-			return;
-		}
-		Item item = getClosestItem(location, locationStr);
+		Item item = Item.staticGetDao().findByPersistentId(itemId);
 		if (item != null){
 			item.getStoredLocation().removeStoredItem(item);
 			item.getParent().removeItemFromMaster(item);
@@ -263,5 +295,52 @@ public class InfoService implements IApiService{
 			}
 		}
 		return closestItem;
+	}
+	
+	public static class InfoPackage{
+		@Getter
+		private String[] displayInfo = {"","","",""};
+		@Getter
+		private String[] displayRemove = {"","","",""};
+		@Getter @Setter
+		private UUID removeItemId;
+		@Getter @Setter
+		private boolean somethingToRemove = false;
+		
+		public String getDisplayInfoLine(int lineNum){
+			return displayInfo[lineNum];
+		}
+		
+		public String getDisplayRemoveLine(int lineNum){
+			return displayRemove[lineNum];
+		}
+		
+		public void setDisplayInfoLine(int lineNum, String line){
+			setDisplayLine(true, lineNum, line);
+		}
+		
+		public void setDisplayRemoveLine(int lineNum, String line){
+			setDisplayLine(false, lineNum, line);
+		}
+		
+		public void setDisplayInfo(String displayInfo[]) {
+			setDisplayInfoLine(0, displayInfo[0]);
+			setDisplayInfoLine(1, displayInfo[1]);
+			setDisplayInfoLine(2, displayInfo[2]);
+			setDisplayInfoLine(3, displayInfo[3]);
+		}
+		
+		public void setDisplayRemove(String displayRemove[]) {
+			setDisplayRemoveLine(0, displayRemove[0]);
+			setDisplayRemoveLine(1, displayRemove[1]);
+			setDisplayRemoveLine(2, displayRemove[2]);
+			setDisplayRemoveLine(3, displayRemove[3]);
+		}
+
+		private void setDisplayLine(boolean info, int lineNum, String line) {
+			if (lineNum >= 0 && lineNum <= 3) {
+				(info ? displayInfo : displayRemove)[lineNum] = line == null ? "" : line;
+			}
+		}
 	}
 }

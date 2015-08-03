@@ -36,6 +36,7 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.service.InfoService.InfoPackage;
 import com.codeshelf.util.CompareNullChecker;
 import com.codeshelf.ws.protocol.request.InfoRequest.InfoRequestType;
 import com.codeshelf.ws.protocol.request.PutWallPlacementRequest;
@@ -97,7 +98,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private String								mInfo[];
+	private InfoPackage							mInfo;
 	
 	@Accessors(prefix = "m")
 	@Getter
@@ -344,12 +345,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					displayInfo();
 					break;
 					
-				case REMOVE_WALL_ORDERS_CONFIRM:
-					sendDisplayCommand(REMOVE_CONFIRM_1_MSG, REMOVE_CONFIRM_2_ORDERS_MSG, REMOVE_CONFIRM_3_MSG, EMPTY_MSG);
-					break;
-
-				case REMOVE_INVENTORY_CONFIRM:
-					sendDisplayCommand(REMOVE_CONFIRM_1_MSG, REMOVE_CONFIRM_2_INVENTORY_MSG, REMOVE_CONFIRM_3_MSG, EMPTY_MSG);
+				case REMOVE_CONFIRMATION:
+					displayRemoveInfo();
 					break;
 
 				case REMOVE_CHE_CONTAINER:
@@ -598,16 +595,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	protected void removeCommandReceived() {
 		switch (mCheStateEnum){
 			case INFO_DISPLAY:
+				InfoPackage info = getInfo();
+				if (info == null || !info.isSomethingToRemove()) {
+					sendDisplayCommand(REMOVE_NOTHING_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+					break;
+				}
 				switch (getRememberEnteringInfoState()){
 					case SCAN_GTIN: 				//Inventory->Info
-						setState(CheStateEnum.REMOVE_INVENTORY_CONFIRM);
+						setState(CheStateEnum.REMOVE_CONFIRMATION);
 						break;					
 					case PUT_WALL_SCAN_WALL:		//PutWall->Info
 					case PUT_WALL_SCAN_ITEM:
-						setState(CheStateEnum.REMOVE_WALL_ORDERS_CONFIRM);
-						break;
-					case CONTAINER_SELECT:
-						setState(CheStateEnum.REMOVE_CHE_CONTAINER);
+						setState(CheStateEnum.REMOVE_CONFIRMATION);
 						break;
 					default:
 				}
@@ -686,8 +685,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.INFO_PROMPT);
 				break;
 				
-			case REMOVE_WALL_ORDERS_CONFIRM:
-			case REMOVE_INVENTORY_CONFIRM:
+			case REMOVE_CONFIRMATION:
 				setState(CheStateEnum.INFO_DISPLAY);
 				break;
 				
@@ -776,17 +774,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				mDeviceManager.performInfoOrRemoveAction(type, getLastScannedInfoLocation(), getGuidNoPrefix(), getPersistentId().toString());
 				break;
 				
-			case REMOVE_WALL_ORDERS_CONFIRM:
+			case REMOVE_CONFIRMATION:
 				if (YES_COMMAND.equalsIgnoreCase(inScanStr)){
-					mDeviceManager.performInfoOrRemoveAction(InfoRequestType.REMOVE_WALL_ORDERS, getLastScannedInfoLocation(), getGuidNoPrefix(), getPersistentId().toString());
-				} else {
-					setState(CheStateEnum.INFO_DISPLAY);
-				}
-				break;
-				
-			case REMOVE_INVENTORY_CONFIRM:
-				if (YES_COMMAND.equalsIgnoreCase(inScanStr)){
-					mDeviceManager.performInfoOrRemoveAction(InfoRequestType.REMOVE_INVENTORY, getLastScannedInfoLocation(), getGuidNoPrefix(), getPersistentId().toString());
+					if (getRememberEnteringInfoState() == CheStateEnum.SCAN_GTIN){
+						InfoPackage info = getInfo();
+						UUID removeItemId = info == null ? null : info.getRemoveItemId();
+						mDeviceManager.performInfoOrRemoveAction(InfoRequestType.REMOVE_INVENTORY, getLastScannedInfoLocation(), getGuidNoPrefix(), getPersistentId().toString(), removeItemId);
+					} else {
+						mDeviceManager.performInfoOrRemoveAction(InfoRequestType.REMOVE_WALL_ORDERS, getLastScannedInfoLocation(), getGuidNoPrefix(), getPersistentId().toString());
+					}
+					
 				} else {
 					setState(CheStateEnum.INFO_DISPLAY);
 				}
@@ -2830,14 +2827,20 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 	
 	private void displayInfo(){
-		if (getInfo() == null) {
+		InfoPackage info = getInfo();
+		if (info == null) {
 			sendDisplayCommand("NO INFO RECEIVED", "CLEAR to exit");
 		} else {
-			String line1 = (mInfo.length < 1 || mInfo[0] == null) ? "" : mInfo[0];
-			String line2 = (mInfo.length < 2 || mInfo[1] == null) ? "" : mInfo[1];
-			String line3 = (mInfo.length < 3 || mInfo[2] == null) ? "" : mInfo[2];
-			String line4 = (mInfo.length < 4 || mInfo[3] == null) ? "" : mInfo[3];
-			sendDisplayCommand(line1, line2, line3, line4);
+			sendDisplayCommand(info.getDisplayInfoLine(0), info.getDisplayInfoLine(1), info.getDisplayInfoLine(2), info.getDisplayInfoLine(3));
+		}
+	}
+	
+	private void displayRemoveInfo(){
+		InfoPackage info = getInfo();
+		if (info == null) {
+			sendDisplayCommand("NO INFO RECEIVED", "CLEAR to exit");
+		} else {
+			sendDisplayCommand(info.getDisplayRemoveLine(0), info.getDisplayRemoveLine(1), info.getDisplayRemoveLine(2), info.getDisplayRemoveLine(3));
 		}
 	}	
 }

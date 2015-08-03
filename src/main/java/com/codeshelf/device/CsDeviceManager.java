@@ -37,6 +37,7 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.service.InfoService.InfoPackage;
 import com.codeshelf.util.PcapRecord;
 import com.codeshelf.util.PcapRingBuffer;
 import com.codeshelf.util.TwoKeyMap;
@@ -482,8 +483,12 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	}
 	
 	public void performInfoOrRemoveAction(InfoRequestType actionType, String location, String cheGuid, String chePersistentId) {
+		performInfoOrRemoveAction(actionType, location, cheGuid, chePersistentId, null);
+	}
+	
+	public void performInfoOrRemoveAction(InfoRequestType actionType, String location, String cheGuid, String chePersistentId, UUID removeItemId) {
 		LOGGER.debug("sendInfoOrRemoveCommand: Che={};  Type ={}; Location={};", cheGuid, actionType, location);
-		InfoRequest req = new InfoRequest(actionType, chePersistentId, location);
+		InfoRequest req = new InfoRequest(actionType, chePersistentId, location, removeItemId);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -880,7 +885,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		}
 	}
 	
-	public void processInfoResponse(String networkGuid, String info[]) {
+	public void processInfoResponse(String networkGuid, InfoPackage info) {
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			if (cheDevice instanceof SetupOrdersDeviceLogic){

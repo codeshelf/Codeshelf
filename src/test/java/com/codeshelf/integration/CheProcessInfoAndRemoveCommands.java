@@ -24,6 +24,7 @@ import com.codeshelf.model.domain.Tier;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
+import com.codeshelf.util.ThreadUtils;
 
 public class CheProcessInfoAndRemoveCommands extends ServerTest{
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessInfoAndRemoveCommands.class);
@@ -173,8 +174,8 @@ public class CheProcessInfoAndRemoveCommands extends ServerTest{
 		
 		LOGGER.info("4b: Enter the REMOVE screen");
 		picker.scanCommand("REMOVE");
-		picker.waitForCheState(CheStateEnum.REMOVE_INVENTORY_CONFIRM, WAIT_TIME);
-		Assert.assertEquals("SCAN YES OR NO\nYES: remove item\nNO:  cancel\n\n", picker.getLastCheDisplay());
+		picker.waitForCheState(CheStateEnum.REMOVE_CONFIRMATION, WAIT_TIME);
+		Assert.assertEquals("Remove gtin2\nFrom Slot1113\nYES: remove item\nCANCEL to exit\n", picker.getLastCheDisplay());
 		
 		LOGGER.info("4c: Don't remove item, go back to INFO");
 		picker.scanCommand("NO");
@@ -183,8 +184,8 @@ public class CheProcessInfoAndRemoveCommands extends ServerTest{
 
 		LOGGER.info("4d: Enter REMOVE screen again, remove item, verify that it is gone");
 		picker.scanCommand("REMOVE");
-		picker.waitForCheState(CheStateEnum.REMOVE_INVENTORY_CONFIRM, WAIT_TIME);
-		Assert.assertEquals("SCAN YES OR NO\nYES: remove item\nNO:  cancel\n\n", picker.getLastCheDisplay());
+		picker.waitForCheState(CheStateEnum.REMOVE_CONFIRMATION, WAIT_TIME);
+		Assert.assertEquals("Remove gtin2\nFrom Slot1113\nYES: remove item\nCANCEL to exit\n", picker.getLastCheDisplay());
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.INFO_DISPLAY, WAIT_TIME);
 		Assert.assertEquals("Slot1113\nItem: none\n\nCANCEL to exit\n", picker.getLastCheDisplay());
@@ -205,8 +206,8 @@ public class CheProcessInfoAndRemoveCommands extends ServerTest{
 		
 		LOGGER.info("5c: Remove that item. Verify that the other item is now displayed");
 		picker.scanCommand("REMOVE");
-		picker.waitForCheState(CheStateEnum.REMOVE_INVENTORY_CONFIRM, WAIT_TIME);
-		Assert.assertEquals("SCAN YES OR NO\nYES: remove item\nNO:  cancel\n\n", picker.getLastCheDisplay());
+		picker.waitForCheState(CheStateEnum.REMOVE_CONFIRMATION, WAIT_TIME);
+		Assert.assertEquals("Remove gtin" + firstItemId + "\nFrom Slot1114\nYES: remove item\nCANCEL to exit\n", picker.getLastCheDisplay());
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.INFO_DISPLAY, WAIT_TIME);
 		Assert.assertEquals("Slot1114\nUPC: gtin"+ secondItemId + "\nItem Desc "+ secondItemId + "\nCANCEL to exit\n", picker.getLastCheDisplay());
@@ -221,10 +222,10 @@ public class CheProcessInfoAndRemoveCommands extends ServerTest{
 		picker.waitForCheState(CheStateEnum.INFO_DISPLAY, WAIT_TIME);
 		Assert.assertEquals("Tier112\nUPC: gtin6\nItem Desc 6\nCANCEL to exit\n", picker.getLastCheDisplay());
 		
-		LOGGER.info("7b: Remove that item. Verify that the second closes item is displayed");
+		LOGGER.info("7b: Remove that item. Verify that the second closest item is displayed");
 		picker.scanCommand("REMOVE");
-		picker.waitForCheState(CheStateEnum.REMOVE_INVENTORY_CONFIRM, WAIT_TIME);
-		Assert.assertEquals("SCAN YES OR NO\nYES: remove item\nNO:  cancel\n\n", picker.getLastCheDisplay());
+		picker.waitForCheState(CheStateEnum.REMOVE_CONFIRMATION, WAIT_TIME);
+		Assert.assertEquals("Remove gtin6\nFrom Tier112\nYES: remove item\nCANCEL to exit\n", picker.getLastCheDisplay());
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.INFO_DISPLAY, WAIT_TIME);
 		Assert.assertEquals("Tier112\nUPC: gtin5\nItem Desc 5\nCANCEL to exit\n", picker.getLastCheDisplay());
@@ -266,6 +267,7 @@ public class CheProcessInfoAndRemoveCommands extends ServerTest{
 		loadOrderIntoWall("26768718", "%000000010900");
 		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+		ThreadUtils.sleep(500);
 		Assert.assertEquals(6, (int)wallController.getLastSentPositionControllerDisplayValue((byte)1));
 		
 		LOGGER.info("3: Go to PUT_WALL.INFO mode");
@@ -291,8 +293,8 @@ public class CheProcessInfoAndRemoveCommands extends ServerTest{
 		
 		LOGGER.info("6b: Remove that order.");
 		picker.scanCommand("REMOVE");
-		picker.waitForCheState(CheStateEnum.REMOVE_WALL_ORDERS_CONFIRM, WAIT_TIME);
-		Assert.assertEquals("SCAN YES OR NO\nYES: remove order(s)\nNO:  cancel\n\n", picker.getLastCheDisplay());
+		picker.waitForCheState(CheStateEnum.REMOVE_CONFIRMATION, WAIT_TIME);
+		Assert.assertEquals("Remove order 26768712\nFrom Slot1113\nYES: remove order\nCANCEL to exit\n", picker.getLastCheDisplay());
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.INFO_DISPLAY, WAIT_TIME);
 		Assert.assertEquals("Slot1113\nOrder: none\n\n\n", picker.getLastCheDisplay());
@@ -305,8 +307,8 @@ public class CheProcessInfoAndRemoveCommands extends ServerTest{
 		
 		LOGGER.info("8: Remove all orders in the wall.");
 		picker.scanCommand("REMOVE");
-		picker.waitForCheState(CheStateEnum.REMOVE_WALL_ORDERS_CONFIRM, WAIT_TIME);
-		Assert.assertEquals("SCAN YES OR NO\nYES: remove order(s)\nNO:  cancel\n\n", picker.getLastCheDisplay());
+		picker.waitForCheState(CheStateEnum.REMOVE_CONFIRMATION, WAIT_TIME);
+		Assert.assertEquals("Remove 3 orders\nFrom Tier111\nYES: remove orders\nCANCEL to exit\n", picker.getLastCheDisplay());
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.INFO_DISPLAY, WAIT_TIME);
 		Assert.assertEquals("Tier111\nOrder: none\n\n\n", picker.getLastCheDisplay());

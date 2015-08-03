@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.service.InfoService;
+import com.codeshelf.service.InfoService.InfoPackage;
 import com.codeshelf.ws.protocol.request.InfoRequest;
 import com.codeshelf.ws.protocol.response.InfoResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
@@ -32,7 +33,7 @@ public class InfoCommand extends CommandABC{
 		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
 		if (che!=null) {
 			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();
-			String info[] = infoService.getInfo(che.getFacility(), request, che.getColor());
+			InfoPackage info = infoService.getInfo(che.getFacility(), request, che.getColor());
 			response.setInfo(info);
 			response.setNetworkGuid(networkGuid);
 			response.setStatus(ResponseStatus.Success);
