@@ -29,6 +29,9 @@ public class RadioControllerInboundPacketService {
 																		new ThreadFactoryBuilder().setNameFormat("pckt-hndlr-%s")
 																			.build());
 
+	// FIXME - huffa - this is not needed and probably causes a lot of garbage collection
+	// Hopefully this is the cause of the random "outages" where all the devices disconnect apparently
+	// due to lack of netcheck packets
 	private final ConcurrentLinkedQueue<IPacket>	incomingPackets	= new ConcurrentLinkedQueue<IPacket>();
 
 	private final RadioController					radioController;

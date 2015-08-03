@@ -46,6 +46,7 @@ public class RadioControllerPacketSchedulerService {
 
 	private final RadioControllerPacketIOService								packetIOService;
 
+	// FIXME - Huffa - It might be interesting to test this with a blocking queues rather than linked ones.
 	// Scheduling Queues
 	private final BlockingQueue<IPacket>										mPendingNetMgmtPacketsQueue		= new ArrayBlockingQueue<IPacket>(MAX_QUEUED_NET_MGMT_PACKETS);
 	private final ConcurrentLinkedQueue<INetworkDevice>							mDeviceQueue					= new ConcurrentLinkedQueue<INetworkDevice>();
