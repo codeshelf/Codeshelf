@@ -47,6 +47,7 @@ import com.codeshelf.util.CsExceptionUtils;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.google.common.collect.Lists;
+import com.google.inject.Provider;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
 public class ScriptServerRunner {
@@ -72,57 +73,60 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_WAIT_SECONDS = "waitSeconds <seconds>";
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScriptSiteRunner.class);
-	private final TenantPersistenceService persistence;
 	private final UUID facilityId;
 	private final UiUpdateService uiUpdateService;
 	private final PropertyService propertyService;
-	private final ICsvOrderImporter orderImporter;
-	private final ICsvAislesFileImporter aisleImporter;
-	private final ICsvLocationAliasImporter locationsImporter;
-	private final ICsvInventoryImporter inventoryImporter;
+	private final Provider<ICsvOrderImporter> orderImporterProvider;
+	private final Provider<ICsvAislesFileImporter> aisleImporterProvider;
+	private final Provider<ICsvLocationAliasImporter> locationsImporterProvider;
+	private final Provider<ICsvInventoryImporter> inventoryImporterProvider;
 	private final FormDataMultiPart postBody;
 	private StringBuilder report;
 	private Facility facility;
 	private HashMap<String, Path> paths = new HashMap<String, Path>();
 	
-	public ScriptServerRunner(TenantPersistenceService persistence,
+	public ScriptServerRunner(
 		UUID facilityId,
 		FormDataMultiPart postBody,
 		UiUpdateService uiUpdateService,
 		PropertyService propertyService,
-		ICsvAislesFileImporter aisleImporter,
-		ICsvLocationAliasImporter locationsImporter,
-		ICsvInventoryImporter inventoryImporter,
-		ICsvOrderImporter orderImporter) {
-		this.persistence = persistence;
+		Provider<ICsvAislesFileImporter> aisleImporterProvider,
+		Provider<ICsvLocationAliasImporter> locationsImporterProvider,
+		Provider<ICsvInventoryImporter> inventoryImporterProvider,
+		Provider<ICsvOrderImporter> orderImporterProvider) { 
 		this.facilityId = facilityId;
 		this.postBody = postBody;
 		this.uiUpdateService = uiUpdateService;
 		this.propertyService = propertyService;
-		this.aisleImporter = aisleImporter;
-		this.locationsImporter = locationsImporter;
-		this.inventoryImporter = inventoryImporter;
-		this.orderImporter = orderImporter;
+		this.aisleImporterProvider = aisleImporterProvider;
+		this.locationsImporterProvider = locationsImporterProvider;
+		this.inventoryImporterProvider = inventoryImporterProvider;
+		this.orderImporterProvider = orderImporterProvider;
 	}
 	
 	public ScriptMessage processServerScript(List<String> lines){
+		//Run the SERVER step of the script, creating a new transaction for every line of the script
+		TenantPersistenceService persistence = TenantPersistenceService.getInstance();
+		ScriptMessage message = new ScriptMessage();
 		report = new StringBuilder();
 		report.append("SERVER\n");
-		ScriptMessage message = new ScriptMessage();
-		try {
-			for (String line : lines) {
-				if (!persistence.hasAnyActiveTransactions()){
-					persistence.beginTransaction();
-				}
+		boolean success = true;
+		for (String line : lines) {
+			persistence.beginTransaction();
+			try {
 				facility = Facility.staticGetDao().findByPersistentId(facilityId);
 				processLine(line);
 				persistence.commitTransaction();
+			} catch (Exception e) {
+				persistence.rollbackTransaction();
+				report.append(CsExceptionUtils.exceptionToString(e)).append("\n");
+				message.setMessageError(CsExceptionUtils.exceptionToString(e) + "\n");
+				success = false;
+				break;
 			}
+		}
+		if (success) {
 			report.append("***Server Script Segment Completed Successfully***\n");
-		} catch (Exception e) {
-			persistence.rollbackTransaction();
-			report.append(CsExceptionUtils.exceptionToString(e)).append("\n");
-			message.setMessageError(CsExceptionUtils.exceptionToString(e) + "\n");
 		}
 		message.setResponse(report.toString());
 		LOGGER.info("Server script block completed");
@@ -281,6 +285,7 @@ public class ScriptServerRunner {
 		String filename = parts[1];
 		InputStreamReader reader = readFile(filename);
 		long receivedTime = System.currentTimeMillis();
+		ICsvOrderImporter orderImporter = orderImporterProvider.get();
 		BatchResult<Object> results = orderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
 		String username = CodeshelfSecurityManager.getCurrentUserContext().getUsername();
 		orderImporter.persistDataReceipt(facility, username, filename + ".csv", receivedTime, results);
@@ -297,7 +302,7 @@ public class ScriptServerRunner {
 		}
 		String filename = parts[1];
 		InputStreamReader reader = readFile(filename);
-		aisleImporter.importAislesFileFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
+		aisleImporterProvider.get().importAislesFileFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
 	}
 
 	/**
@@ -311,7 +316,7 @@ public class ScriptServerRunner {
 		}
 		String filename = parts[1];
 		InputStreamReader reader = readFile(filename);
-		locationsImporter.importLocationAliasesFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
+		locationsImporterProvider.get().importLocationAliasesFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
 	}
 
 	/**
@@ -325,7 +330,7 @@ public class ScriptServerRunner {
 		}
 		String filename = parts[1];
 		InputStreamReader reader = readFile(filename);
-		inventoryImporter.importSlottedInventoryFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
+		inventoryImporterProvider.get().importSlottedInventoryFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
 	}
 
 	

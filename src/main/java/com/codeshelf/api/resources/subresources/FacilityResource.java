@@ -93,6 +93,7 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.sun.jersey.api.core.ResourceContext;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
@@ -107,10 +108,10 @@ public class FacilityResource {
 	private final WebSocketManagerService webSocketManagerService;
 	private final UiUpdateService uiUpdateService;
 	private final PropertyService propertyService;
-	private final ICsvAislesFileImporter aislesImporter;
-	private final ICsvLocationAliasImporter locationsImporter;
-	private final ICsvInventoryImporter inventoryImporter;
-	private final ICsvOrderImporter orderImporter;
+	private final Provider<ICsvAislesFileImporter> aislesImporterProvider;
+	private final Provider<ICsvLocationAliasImporter> locationsImporterProvider;
+	private final Provider<ICsvInventoryImporter> inventoryImporterProvider;
+	private final Provider<ICsvOrderImporter> orderImporterProvider;
 
 	@Setter
 	private Facility facility;
@@ -125,20 +126,20 @@ public class FacilityResource {
 		WebSocketManagerService webSocketManagerService,
 		UiUpdateService uiUpdateService,
 		PropertyService propertyService,
-		ICsvAislesFileImporter aislesImporter,
-		ICsvLocationAliasImporter locationsImporter,
-		ICsvInventoryImporter inventoryImporter,
-		ICsvOrderImporter orderImporter) {
+		Provider<ICsvAislesFileImporter> aislesImporterProvider,
+		Provider<ICsvLocationAliasImporter> locationsImporterProvider,
+		Provider<ICsvInventoryImporter> inventoryImporterProvider,
+		Provider<ICsvOrderImporter> orderImporterProvider) {
 		this.orderService = orderService;
 		this.workService = workService;
 		this.webSocketManagerService = webSocketManagerService;
 		this.notificationService = notificationService;
 		this.uiUpdateService = uiUpdateService;
 		this.propertyService = propertyService;
-		this.aislesImporter = aislesImporter;
-		this.locationsImporter = locationsImporter;
-		this.inventoryImporter = inventoryImporter;
-		this.orderImporter = orderImporter;
+		this.aislesImporterProvider = aislesImporterProvider;
+		this.locationsImporterProvider = locationsImporterProvider;
+		this.inventoryImporterProvider = inventoryImporterProvider;
+		this.orderImporterProvider = orderImporterProvider;
 	}
 
 	@Path("/import")
@@ -524,8 +525,19 @@ public class FacilityResource {
 	public Response runScript(@QueryParam("script_step_id") UUIDParam scriptStepId,
 		@QueryParam("timeout_min") Integer timeoutMin,
 		FormDataMultiPart body){
+		TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 		try {
 			ErrorResponse errors = new ErrorResponse();
+			
+			//Verify that this Script Server Runner was called with an active transaction, and close it.
+			//The Server and Site script runners below will manage transactions themselves
+			if (!persistence.hasAnyActiveTransactions()) {
+				errors.addError("Server Error: FacilityResponse.runScript() called without an active transaction");
+				return errors.buildResponse();
+			}			
+			UUID facilityId = facility.getPersistentId();
+			persistence.commitTransaction();
+
 			if (!BaseResponse.isUUIDValid(scriptStepId, "script_step_id", errors)){
 				return errors.buildResponse();
 			}
@@ -535,14 +547,18 @@ public class FacilityResource {
 				errors.addError("Script step " + scriptStepId.getValue() + " doesn't exist");
 				return errors.buildResponse();
 			}
-			StringBuilder report = new StringBuilder("Running script step " + scriptStep.getComment() + "\n");
-
 			//Split the script into a list of SERVER and SITE parts
 			ArrayList<StepPart> scriptParts = scriptStep.parts();
-			Set<User> users = facility.getSiteControllerUsers();
+			StringBuilder report = new StringBuilder("Running script step " + scriptStep.getComment() + "\n");
 
-			TenantPersistenceService persistence = TenantPersistenceService.getInstance();
-			ScriptServerRunner scriptRunner = new ScriptServerRunner(persistence, facility.getPersistentId(), body, uiUpdateService, propertyService, aislesImporter, locationsImporter, inventoryImporter, orderImporter);
+			ScriptServerRunner serverScriptRunner = new ScriptServerRunner(facilityId,
+				body,
+				uiUpdateService,
+				propertyService,
+				aislesImporterProvider,
+				locationsImporterProvider,
+				inventoryImporterProvider,
+				orderImporterProvider);
 			boolean success = true;
 			String error = null;
 			//Process script parts
@@ -550,7 +566,7 @@ public class FacilityResource {
 				StepPart part = scriptParts.remove(0);
 				if (part.isServer()) {
 					//SERVER
-					ScriptMessage serverResponseMessage = scriptRunner.processServerScript(part.getScriptLines());
+					ScriptMessage serverResponseMessage = serverScriptRunner.processServerScript(part.getScriptLines());
 					report.append(serverResponseMessage.getResponse());
 					if (!serverResponseMessage.isSuccess()) {
 						error = serverResponseMessage.getError();
@@ -565,27 +581,38 @@ public class FacilityResource {
 						report.append("Site controller problem: " + siteHealth.getMessage());
 						break;
 					}
-					if (users == null || users.isEmpty()) {
-						report.append("Could not communicate with site controller. Check Site Controller ID.");
-						break;
-					}
-					//Execute script
-					UUID id = UUID.randomUUID();
-					ScriptMessage scriptMessage = new ScriptMessage(id, part.getScriptLines());
-					webSocketManagerService.sendMessage(users, scriptMessage);
-					ScriptMessage siteResponseMessage = ScriptSiteCallPool.waitForSiteResponse(id, timeoutMin);
-					if (siteResponseMessage == null) {
-						report.append("Site request timed out");
-						break;
-					}
-					report.append(siteResponseMessage.getResponse());
-					if (!siteResponseMessage.isSuccess()) {
-						error = siteResponseMessage.getError();
-						success = false;
-						break;
+					persistence.beginTransaction();
+					try {
+						facility = Facility.staticGetDao().reload(facility);
+						Set<User> users = facility.getSiteControllerUsers();
+						if (users == null || users.isEmpty()) {
+							report.append("Could not communicate with site controller. Check Site Controller ID.");
+							break;
+						}
+						//Execute script
+						UUID id = UUID.randomUUID();
+						ScriptMessage scriptMessage = new ScriptMessage(id, part.getScriptLines());
+						webSocketManagerService.sendMessage(users, scriptMessage);
+						persistence.commitTransaction();
+						ScriptMessage siteResponseMessage = ScriptSiteCallPool.waitForSiteResponse(id, timeoutMin);
+						if (siteResponseMessage == null) {
+							report.append("Site request timed out");
+							break;
+						}
+						report.append(siteResponseMessage.getResponse());
+						if (!siteResponseMessage.isSuccess()) {
+							error = siteResponseMessage.getError();
+							success = false;
+							break;
+						}
+					} finally {
+						if (!persistence.hasAnyActiveTransactions()) {
+							persistence.beginTransaction();
+						}
 					}
 				}
 			}
+
 			ScriptStep nextStep = scriptStep.nextStep();
 			if (!success) {
 				nextStep = new ScriptStep(report.toString());
@@ -600,6 +627,11 @@ public class FacilityResource {
 			}
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
+		} finally {
+			//Open a new transaction for TransactionFilter to close later
+			if (!persistence.hasAnyActiveTransactions()) {
+				persistence.beginTransaction();
+			}
 		}
 	}
 
