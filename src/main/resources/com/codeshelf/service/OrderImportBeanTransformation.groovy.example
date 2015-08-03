@@ -4,9 +4,11 @@
  * an order import file
  */
 def OrderImportBeanTransformation(orderLine) {
-    customerNeedsScan = ['SPECIALCUSTOMER', 'SPECIALCUSTOMER2']
-    if (customerNeedsScan.contains(orderLine.customerId)) {
+    shipperIdNoScan = ['UPS', 'ANOTHERSHIPPER']
+    if (shipperIdNoScan.contains(orderLine.shipperId)) {
+        orderLine.needsScan = false;
+    } else {
         orderLine.needsScan = true;
-    }
+   }
     return orderLine;
 }
