@@ -33,6 +33,7 @@ Admin:
   - "inventory:*"
   - "worker:*"
   - "event:*"
+  - "user:*"
 Configure:
   - "ws:login"
   - "ux:*" 
