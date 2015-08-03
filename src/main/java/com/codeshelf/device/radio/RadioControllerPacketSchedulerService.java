@@ -49,7 +49,8 @@ public class RadioControllerPacketSchedulerService {
 	// Scheduling Queues
 	private final BlockingQueue<IPacket>										mPendingNetMgmtPacketsQueue		= new ArrayBlockingQueue<IPacket>(MAX_QUEUED_NET_MGMT_PACKETS);
 	private final ConcurrentLinkedQueue<INetworkDevice>							mDeviceQueue					= new ConcurrentLinkedQueue<INetworkDevice>();
-	private final ConcurrentLinkedQueue<INetworkDevice>							mSecondDeviceQueue				= new ConcurrentLinkedQueue<INetworkDevice>();
+	//private final ConcurrentLinkedQueue<INetworkDevice>							mSecondDeviceQueue				= new ConcurrentLinkedQueue<INetworkDevice>();
+	private final ConcurrentLinkedDeque<INetworkDevice>							mSecondDeviceQueue				= new ConcurrentLinkedDeque<INetworkDevice>();
 
 	// Scheduling data structures
 	private final ConcurrentHashMap<NetAddress, ConcurrentLinkedDeque<IPacket>>	mPendingPacketsMap				= new ConcurrentHashMap<NetAddress, ConcurrentLinkedDeque<IPacket>>(MAP_INIT_SIZE,
@@ -120,6 +121,7 @@ public class RadioControllerPacketSchedulerService {
 		// Add new packet to the end of the queue
 		deque.addLast(inPacket);
 		addDeviceToQueue(mDeviceQueue, inDevice);
+		//LOGGER.warn("Device queue: {}", mDeviceQueue.toString());
 	}
 
 	// --------------------------------------------------------------------------
@@ -149,7 +151,7 @@ public class RadioControllerPacketSchedulerService {
 		// Need to send ACKs before other packets so add to the front of queue
 		deque.addFirst(inPacket);
 		addDeviceToQueue(mDeviceQueue, inDevice);
-
+		//LOGGER.warn("Device queue: {}", mDeviceQueue.toString());
 	}
 
 	// --------------------------------------------------------------------------
@@ -313,21 +315,34 @@ public class RadioControllerPacketSchedulerService {
 		// Check how many times the head of this list has been checked.
 		if (!mSecondDeviceQueue.isEmpty()) {
 			device = mSecondDeviceQueue.peek();
+			//device = mSecondDeviceQueue.poll();
 			if (mDeviceBlockingPeekCount.containsKey(device.getAddress())) {
 				peekCount = mDeviceBlockingPeekCount.get(device.getAddress());
+			}
+
+			if (peekCount > 0) {
+				LOGGER.warn("Peek count {}", peekCount);
 			}
 
 			if (clearToSendToDevice(device)) {
 				device = mSecondDeviceQueue.poll();
 				mDeviceBlockingPeekCount.put(device.getAddress(), 0);
+				//LOGGER.warn("Returning device");
 				return device;
+			} else {
+				mDeviceBlockingPeekCount.put(device.getAddress(), peekCount = peekCount + 1);
 			}
 
-			if (peekCount > MAX_NUM_BLOCKING_PEEKS) {
-				LOGGER.debug("Device blocked too many times. Placing in back of the queue. {}", device.getAddress());
+			if (peekCount > 3) {
+				LOGGER.warn("********************Device blocked too many times. Placing in back of the queue. {}",
+					device.getAddress());
 				device = mSecondDeviceQueue.poll();
 				mSecondDeviceQueue.offer(device);
-				mDeviceBlockingPeekCount.put(device.getAddress(), 0);
+				//mDeviceBlockingPeekCount.put(device.getAddress(), 0);
+				//device = mSecondDeviceQueue.poll();
+				//INetworkDevice currHead = mSecondDeviceQueue.poll();
+				//mSecondDeviceQueue.offerFirst(device);
+				//mSecondDeviceQueue.offerFirst(currHead);
 			}
 		}
 
@@ -335,8 +350,10 @@ public class RadioControllerPacketSchedulerService {
 			device = mDeviceQueue.poll();
 
 			if (!clearToSendToDevice(device)) {
+				mDeviceBlockingPeekCount.put(device.getAddress(), 0);
 				mSecondDeviceQueue.offer(device);
 			} else {
+				//LOGGER.warn("Returning device");
 				return device;
 			}
 		}
@@ -401,18 +418,19 @@ public class RadioControllerPacketSchedulerService {
 
 	private boolean clearToSendToDevice(INetworkDevice inDevice) {
 
-		long lastReceivedTime = System.currentTimeMillis();
-		long lastSentTime = System.currentTimeMillis();
+		long lastReceivedTime = 0; //System.currentTimeMillis();
+		long lastSentTime = 0; //System.currentTimeMillis();
 		long minDifference = 0;
 		long currTime = System.currentTimeMillis();
 
 		if (inDevice != null) {
-			lastReceivedTime = inDevice.getLastPacketReceivedTime();
+			lastReceivedTime = 0; //inDevice.getLastPacketReceivedTime();
 			lastSentTime = Math.max(inDevice.getLastPacketSentTime(), mLastNetCheckSentTime);
 
 			minDifference = Math.min(currTime - lastReceivedTime, currTime - lastSentTime);
 		}
 
+		//LOGGER.warn("LS: {}, LR: {}, LNChk: {}, Min Diff: {}", inDevice.getLastPacketSentTime(), inDevice.getLastPacketReceivedTime(),mLastNetCheckSentTime, minDifference);
 		if (minDifference < DEVICE_PACKET_SPACING_MILLIS) {
 			return false;
 		} else {

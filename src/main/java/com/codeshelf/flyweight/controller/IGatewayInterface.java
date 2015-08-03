@@ -63,4 +63,8 @@ public interface IGatewayInterface {
 	IPacket receivePacket(NetworkId inMyNetworkId);
 	
 	void setPacketListener(PacketCaptureListener listener);
+	
+	void pause();
+	
+	void resume();
 }

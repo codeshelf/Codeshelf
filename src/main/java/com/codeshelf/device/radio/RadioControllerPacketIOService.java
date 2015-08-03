@@ -17,24 +17,25 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 /**
  * 
- * @author saba
+ * @author saba, huffa
  *
  */
 public class RadioControllerPacketIOService {
-	private static final Logger							LOGGER			= LoggerFactory.getLogger(RadioControllerPacketIOService.class);
+	private static final Logger							LOGGER					= LoggerFactory.getLogger(RadioControllerPacketIOService.class);
+
+	private static final int							DEFAULT_SLEEP_MILLIS	= 5;
 
 	private Counter										packetsSentCounter;
-	private final ExecutorService						executorService	= Executors.newFixedThreadPool(2,
-																			new ThreadFactoryBuilder().setNameFormat("pckt-io-%s")
-																				.setPriority(Thread.MAX_PRIORITY)
-																				.build());
+	private final ExecutorService						executorService			= Executors.newFixedThreadPool(2,
+																					new ThreadFactoryBuilder().setNameFormat("pckt-io-%s")
+																						.setPriority(Thread.MAX_PRIORITY)
+																						.build());
 
 	private final IGatewayInterface						gatewayInterface;
 	private final RadioControllerInboundPacketService	packetHandlerService;
 
 	private NetworkId									networkId;
-	private volatile boolean							isShutdown		= false;
-	private boolean										packetToSend	= false;
+	private volatile boolean							isShutdown				= false;
 	private PacketReader								packetReader;
 
 	public RadioControllerPacketIOService(IGatewayInterface gatewayInterface,
@@ -61,12 +62,12 @@ public class RadioControllerPacketIOService {
 	 */
 	public void handleOutboundPacket(IPacket packet) {
 
-		packetToSend = true;
-
 		// Send packet
 		packetReader.pause();
 		packet.incrementSendCount();
+		//gatewayInterface.pause();
 		gatewayInterface.sendPacket(packet);
+		//gatewayInterface.resume();
 		packetReader.resume();
 		packet.setSentTimeMillis(System.currentTimeMillis());
 
@@ -89,17 +90,17 @@ public class RadioControllerPacketIOService {
 				try {
 					if (gatewayInterface.isStarted()) {
 
+						// Pause reading while we are sending
 						while (pause) {
 							try {
-								Thread.sleep(2);
+								Thread.sleep(DEFAULT_SLEEP_MILLIS);
 							} catch (InterruptedException e) {
 								LOGGER.error("", e);
 							}
 						}
+						
 						// Blocks and waits for packet
-						// TODO Move gatewayInterface away from polling. This
-						// method will sleep for 1ms if we don't have enough
-						// packets to read.
+						// TODO Move gatewayInterface away from polling.
 						IPacket packet = null;
 						packet = gatewayInterface.receivePacket(networkId);
 
@@ -163,8 +164,6 @@ public class RadioControllerPacketIOService {
 
 		public void resume() {
 			pause = false;
-			//this.notify();
-
 		}
 
 	}

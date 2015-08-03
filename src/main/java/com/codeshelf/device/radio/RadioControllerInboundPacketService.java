@@ -25,7 +25,7 @@ public class RadioControllerInboundPacketService {
 	private static final Logger						LOGGER			= LoggerFactory.getLogger(RadioControllerInboundPacketService.class);
 
 	private final ExecutorService					executor		= Executors.newFixedThreadPool(Math.max(Runtime.getRuntime()
-																		.availableProcessors() * 2, 2),
+																									.availableProcessors() * 2, 2),
 																		new ThreadFactoryBuilder().setNameFormat("pckt-hndlr-%s")
 																			.build());
 
