@@ -182,11 +182,11 @@ public class ScriptingServiceTest extends ServerTest {
 		ExtensionPoint.staticGetDao().store(needsScanScript);
 		commitTransaction();
 
-		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence,needsScan"
+		String csvString = "orderGroupId,customerId,shipperId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence,needsScan"
 				+ "\r\n1,USF314,SPECIALCUSTOMER,223,223,10700589,Napa Valley Bistro - Jalapeo Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,no"
 				+ "\r\n1,USF314,SPECIALCUSTOMER,223,223,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,yes"
 				+ "\r\n1,USF314,SPECIALCUSTOMER,223,223,10706962,Authentic Pizza Sauces,1,case,2012-09-26 11:31:01,2012-09-26 11:31:03,0,"
-				+ "\r\n1,USF314,COSTCO,224,224,10706972,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,";
+				+ "\r\n1,USF314,UPS,224,224,10706972,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,";
 
 		beginTransaction();
 		importOrdersData(facility, csvString);
