@@ -233,7 +233,7 @@ public class CheProcessInventory extends ServerTest {
 				+ "\r\nUSF314,COSTCO,11111,11111,11111.4,1124,gtin1124,8 oz Bowls -PLA Compostable,1,each"
 				+ "\r\nUSF314,COSTCO,11111,11111,11111.5,1555,gtin1555,paper towel,2,case";
 		importOrdersData(inFacility, csvOrders);
-		
+
 		// We expect these gtins are made.
 		ItemMaster master = ItemMaster.staticGetDao().findByDomainId(inFacility, "1123");
 		Assert.assertNotNull(master);
@@ -336,7 +336,7 @@ public class CheProcessInventory extends ServerTest {
 		Item item1123locD3031 = locationD3031.getStoredItemFromMasterIdAndUom("1123", "ea");
 		Assert.assertNotNull(item1123locD3031);
 		
-		LOGGER.info("2b: check that item 1123 ALSO exists in SKU wall SkuWall1 - slot A4.B1.T1, alias SkuWall1_1");
+		LOGGER.info("2c: check that item 1123 ALSO exists in SKU wall SkuWall1 - slot A4.B1.T1, alias SkuWall1_1");
 		Location locationSku1_1 = facility.findSubLocationById("SkuWall1_1");
 		Assert.assertNotNull(locationSku1_1);
 		Item item1123locSku1_1 = locationSku1_1.getStoredItemFromMasterIdAndUom("1123", "ea");
@@ -357,7 +357,7 @@ public class CheProcessInventory extends ServerTest {
 		item1493locD402.setItemLocationName("A1.B3.T1.S2");
 		locFor1493 = item1493locD402.getItemLocationName();
 		Assert.assertEquals("A1.B3.T1.S2", locFor1493);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 		
 		LOGGER.info("4: move item 1123 from one SKU wall to another");
@@ -474,7 +474,7 @@ public class CheProcessInventory extends ServerTest {
 		// deal with this. After the import, our desired goal is no master with name gtin1123; there is a master SKU 1123; and gtin1123 belongs to the master.
 		// Perhaps just changing the domainId of the master will work.
 		// This is DEV-840
-		
+
 		LOGGER.info("2: Load the orders file with 7 gtins and SKUs");
 		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
@@ -490,7 +490,7 @@ public class CheProcessInventory extends ServerTest {
 		Assert.assertEquals(11, gtins2.size());
 		Assert.assertEquals(11, masters2.size());
 		Assert.assertEquals(11, items2.size());
-		
+
 		log(gtins2, masters2, items2);
 		gtinHash = getGtinHash(gtins2);
 		// Important note. We do not make new UOM for equivalent ones.
@@ -510,8 +510,8 @@ public class CheProcessInventory extends ServerTest {
 
 		commitTransaction();
 	}
-	
-	private void log(List<Gtin> gtins, List<ItemMaster> masters, List<Item> items){
+
+	private void log(List<Gtin> gtins, List<ItemMaster> masters, List<Item> items) {
 		LOGGER.info("1f: Log gtins");
 		for (Gtin gtin : gtins) {
 			LOGGER.info("Gtin:{} for master:{}, uom: {}", gtin.getGtin(), gtin.getItemMasterId(), gtin.getUomMaster());
@@ -519,12 +519,19 @@ public class CheProcessInventory extends ServerTest {
 
 		LOGGER.info("1g: Log item masters");
 		for (ItemMaster master : masters) {
-			LOGGER.info("Master:{} with gtins:{} and item locations:{}", master.getDomainId(), master.getItemGtins(), master.getItemLocations());
+			LOGGER.info("Master:{} with gtins:{} and item locations:{}",
+				master.getDomainId(),
+				master.getItemGtins(),
+				master.getItemLocations());
 		}
 
 		LOGGER.info("1h: Log items");
 		for (Item item : items) {
-			LOGGER.info("Item:{} for master:{}, uom: {}, and gtin:{}", item.getDomainId(), item.getItemMasterId(), item.getUomMaster(), item.getGtinId());
+			LOGGER.info("Item:{} for master:{}, uom: {}, and gtin:{}",
+				item.getDomainId(),
+				item.getItemMasterId(),
+				item.getUomMaster(),
+				item.getGtinId());
 		}
 	}
 
@@ -535,7 +542,7 @@ public class CheProcessInventory extends ServerTest {
 		}
 		return gtinHash;
 	}
-	
+
 	private void assertItemsUom(Gtin gtin, String expectedUom) {
 		Assert.assertNotNull(gtin);
 		Assert.assertNotNull(gtin.getParent());

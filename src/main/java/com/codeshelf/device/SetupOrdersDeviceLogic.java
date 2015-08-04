@@ -780,6 +780,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 						InfoPackage info = getInfo();
 						UUID removeItemId = info == null ? null : info.getRemoveItemId();
 						mDeviceManager.performInfoOrRemoveAction(InfoRequestType.REMOVE_INVENTORY, getLastScannedInfoLocation(), getGuidNoPrefix(), getPersistentId().toString(), removeItemId);
+						setInfo(null);
+						setState(CheStateEnum.INFO_PROMPT);
 					} else {
 						mDeviceManager.performInfoOrRemoveAction(InfoRequestType.REMOVE_WALL_ORDERS, getLastScannedInfoLocation(), getGuidNoPrefix(), getPersistentId().toString());
 					}

@@ -1,6 +1,8 @@
 package com.codeshelf.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,6 +34,11 @@ import lombok.Setter;
 public class InfoService implements IApiService{
 	private LightService lightService;
 	private WorkService workService;
+	//The following 3 variables enable item cycling when scannin the same location
+	private String lastScannedInventoryLocation = null;
+	private short numRepeatedInventoryScans = 0; 
+	private short numItemsInClosestLocation = 0;
+
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(InfoService.class);
 	
 	@Inject
@@ -68,7 +75,6 @@ public class InfoService implements IApiService{
 				
 			case REMOVE_INVENTORY:
 				removeItemFromInventory(request.getRemoveItemId());
-				info = getInventoryInfo(facility, location, color);
 				break;
 				
 			default:
@@ -274,27 +280,45 @@ public class InfoService implements IApiService{
 	}
 	
 	private Item getClosestItem(Location location, String locationStr) {
-		Item closestItem = null;
-		int scanOffset = 0, itemOffset, smallestDistance = 1000000, distance;
+		//Count how many times the same location was scanned repeatedly
+		if (locationStr.equalsIgnoreCase(lastScannedInventoryLocation)) {
+			numRepeatedInventoryScans++;
+		} else {
+			lastScannedInventoryLocation = locationStr;
+			numRepeatedInventoryScans = 0;
+		}
+		//Get a list of items the same distance away from the scan
+		int scanOffsetCm = 0, itemOffsetCm, smallestDistanceCm = 100, distanceCm;
 		TapeLocation tapeLocation = CodeshelfTape.findFinestLocationForTape(locationStr);
-		scanOffset = tapeLocation.getCmOffset();
+		scanOffsetCm = tapeLocation.getCmOffset();
 		List<Item> items = location.getStoredItemsInLocationAndChildren();
+		ArrayList<Item> itemsInTheClosestLocation = Lists.newArrayList();
 		for (Item item : items) {
-			itemOffset = item.getCmFromLeft();
-			distance = Math.abs(itemOffset - scanOffset);
-			if (distance == smallestDistance) {
-				//Sort items with the same distance from selected location
-				if (closestItem == null || closestItem.getPersistentId().compareTo(item.getPersistentId()) > 0){
-					smallestDistance = distance;
-					closestItem = item;					
-				}
-			}
-			if (distance < smallestDistance) {
-				smallestDistance = distance;
-				closestItem = item;
+			itemOffsetCm = item.getCmFromLeft();
+			distanceCm = Math.abs(itemOffsetCm - scanOffsetCm);
+			if (distanceCm > 50) {
+				//If the ite	m is further from scan that the above threshold, ignore it
+			} else if (distanceCm == smallestDistanceCm) {
+				//If the item is at the same distance from scan as the previously closest item, save it too
+				itemsInTheClosestLocation.add(item);
+			} else if (distanceCm < smallestDistanceCm) {
+				//If the item is closer to scan than the previously closest item, save it
+				smallestDistanceCm = distanceCm;
+				itemsInTheClosestLocation.clear();
+				itemsInTheClosestLocation.add(item);
 			}
 		}
-		return closestItem;
+		if (itemsInTheClosestLocation.isEmpty()) {
+			return null;
+		}
+		//Sort items by domain id to ensure the same order every time
+		Collections.sort(itemsInTheClosestLocation, new Comparator<Item>(){
+		     public int compare(Item item1, Item item2){
+		    	 return item1.getDomainId().compareTo(item2.getDomainId());
+		     }
+		});
+		//Cycle through the items on repeated scans
+		return itemsInTheClosestLocation.get(numRepeatedInventoryScans % itemsInTheClosestLocation.size());
 	}
 	
 	public static class InfoPackage{

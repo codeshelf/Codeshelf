@@ -890,18 +890,17 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		if (cheDevice != null) {
 			if (cheDevice instanceof SetupOrdersDeviceLogic){
 				if (info == null) {
-					LOGGER.info("INFO request returned with null info. This is normal. Thus, do not change saved info");
+					LOGGER.info("INFO request returned with null info. This is normal. Thus, do not change CHE display");
 				} else {
 					((SetupOrdersDeviceLogic) cheDevice).setInfo(info);
+					cheDevice.setState(CheStateEnum.INFO_DISPLAY);
 				}
-				cheDevice.setState(CheStateEnum.INFO_DISPLAY);
 			} else {
 				LOGGER.warn("Device is not SetupOrdersDeviceLogic in processInfoResponse. CHE id={}", networkGuid);
 			}
 		} else {
 			LOGGER.warn("Device not found in processInfoResponse. CHE id={}", networkGuid);
 		}
-		
 	}
 
 	/** Two key actions from the associate response

@@ -559,66 +559,32 @@ public class FacilityResource {
 				locationsImporterProvider,
 				inventoryImporterProvider,
 				orderImporterProvider);
-			boolean success = true;
 			String error = null;
 			//Process script parts
 			while (!scriptParts.isEmpty()) {
 				StepPart part = scriptParts.remove(0);
+				ScriptMessage responseMessage = null;
 				if (part.isServer()) {
 					//SERVER
-					ScriptMessage serverResponseMessage = serverScriptRunner.processServerScript(part.getScriptLines());
-					report.append(serverResponseMessage.getResponse());
-					if (!serverResponseMessage.isSuccess()) {
-						error = serverResponseMessage.getError();
-						success = false;
-						break;
-					}
+					responseMessage = serverScriptRunner.processServerScript(part.getScriptLines());
 				} else {
 					//SITE
-					//Test is Site Controller is running
-					Result siteHealth = new ActiveSiteControllerHealthCheck(webSocketManagerService).execute();
-					if (!siteHealth.isHealthy()){
-						report.append("Site controller problem: " + siteHealth.getMessage());
-						break;
-					}
-					persistence.beginTransaction();
-					try {
-						facility = Facility.staticGetDao().reload(facility);
-						Set<User> users = facility.getSiteControllerUsers();
-						if (users == null || users.isEmpty()) {
-							report.append("Could not communicate with site controller. Check Site Controller ID.");
-							break;
-						}
-						//Execute script
-						UUID id = UUID.randomUUID();
-						ScriptMessage scriptMessage = new ScriptMessage(id, part.getScriptLines());
-						webSocketManagerService.sendMessage(users, scriptMessage);
-						persistence.commitTransaction();
-						ScriptMessage siteResponseMessage = ScriptSiteCallPool.waitForSiteResponse(id, timeoutMin);
-						if (siteResponseMessage == null) {
-							report.append("Site request timed out");
-							break;
-						}
-						report.append(siteResponseMessage.getResponse());
-						if (!siteResponseMessage.isSuccess()) {
-							error = siteResponseMessage.getError();
-							success = false;
-							break;
-						}
-					} finally {
-						if (!persistence.hasAnyActiveTransactions()) {
-							persistence.beginTransaction();
-						}
-					}
+					responseMessage = runSiteScript(part, timeoutMin);
+				}
+				report.append(responseMessage.getResponse());
+				if (!responseMessage.isSuccess()) {
+					error = responseMessage.getError();
+					break;
 				}
 			}
 
-			ScriptStep nextStep = scriptStep.nextStep();
-			if (!success) {
-				nextStep = new ScriptStep(report.toString());
-				nextStep.addError(error);
-				return BaseResponse.buildResponse(nextStep, Status.BAD_REQUEST);
+			if (error != null) {
+				ScriptStep nextStepError = new ScriptStep(report.toString());
+				nextStepError.addError(error);
+				return BaseResponse.buildResponse(nextStepError, Status.BAD_REQUEST);
 			}
+			
+			ScriptStep nextStep = scriptStep.nextStep();
 			if (nextStep == null) {
 				return BaseResponse.buildResponse(new ScriptStep(report.toString()));
 			} else {
@@ -632,6 +598,45 @@ public class FacilityResource {
 			if (!persistence.hasAnyActiveTransactions()) {
 				persistence.beginTransaction();
 			}
+		}
+	}
+	
+	private ScriptMessage runSiteScript(StepPart part, int timeoutMin){
+		ScriptMessage errorMesage = new ScriptMessage();
+		TenantPersistenceService persistence = TenantPersistenceService.getInstance();
+		//Test is Site Controller is running
+		Result siteHealth = new ActiveSiteControllerHealthCheck(webSocketManagerService).execute();
+		if (!siteHealth.isHealthy()){ 
+			errorMesage.setMessageError("Site controller problem: " + siteHealth.getMessage());
+			return errorMesage;
+		}
+		persistence.beginTransaction();
+		try {
+			facility = Facility.staticGetDao().reload(facility);
+			Set<User> users = facility.getSiteControllerUsers();
+			if (users == null || users.isEmpty()) {
+				errorMesage.setMessageError("Could not communicate with site controller. Check Site Controller ID.");
+				return errorMesage;
+			}
+			//Execute script
+			UUID id = UUID.randomUUID();
+			ScriptMessage scriptMessage = new ScriptMessage(id, part.getScriptLines());
+			webSocketManagerService.sendMessage(users, scriptMessage);
+			ScriptMessage siteResponseMessage = ScriptSiteCallPool.waitForSiteResponse(id, timeoutMin);
+			if (siteResponseMessage == null) {
+				errorMesage.setMessageError("Site request timed out");
+				return errorMesage; 
+			}
+			if (!siteResponseMessage.isSuccess()) {
+				errorMesage.setMessageError(siteResponseMessage.getError());
+				return errorMesage;
+			}
+			persistence.commitTransaction();
+			return siteResponseMessage;
+		} catch (Exception e) {
+			persistence.rollbackTransaction();
+			errorMesage.setMessageError("Site request failed: " + e.getMessage());
+			return errorMesage; 
 		}
 	}
 
