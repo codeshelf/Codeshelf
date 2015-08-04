@@ -37,7 +37,7 @@ public class InfoService implements IApiService{
 	//The following 3 variables enable item cycling when scannin the same location
 	private String lastScannedInventoryLocation = null;
 	private short numRepeatedInventoryScans = 0; 
-	private short numItemsInClosestLocation = 0;
+	private int numItemsInClosestLocation = 0;
 
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(InfoService.class);
 	
@@ -241,18 +241,19 @@ public class InfoService implements IApiService{
 		if (closestItem == null) {
 			info[1] = "Item: none";
 			lightService.lightLocationServerCall(location, color);
-		} else if (showGtin) {
-			infoPackage.setSomethingToRemove(true);
-			infoPackage.setRemoveItemId(closestItem.getPersistentId());
-			itemId = closestItem.getGtinId();
-			info[1] = "UPC: " + itemId;
-			info[2] = closestItem.getItemDescription();
-			lightService.lightItem(closestItem, color);
 		} else {
+			if (numItemsInClosestLocation > 1) {
+				info[0] += " (" + numItemsInClosestLocation + " items)";
+			}
+			if (showGtin) {
+				itemId = closestItem.getGtinId();
+				info[1] = "UPC: " + itemId;
+			} else {
+				itemId = closestItem.getDomainId();
+				info[1] = "SKU: " + itemId;
+			}
 			infoPackage.setSomethingToRemove(true);
 			infoPackage.setRemoveItemId(closestItem.getPersistentId());
-			itemId = closestItem.getDomainId();
-			info[1] = "SKU: " + itemId;
 			info[2] = closestItem.getItemDescription();
 			lightService.lightItem(closestItem, color);
 		}
@@ -308,6 +309,7 @@ public class InfoService implements IApiService{
 				itemsInTheClosestLocation.add(item);
 			}
 		}
+		numItemsInClosestLocation = itemsInTheClosestLocation.size();
 		if (itemsInTheClosestLocation.isEmpty()) {
 			return null;
 		}

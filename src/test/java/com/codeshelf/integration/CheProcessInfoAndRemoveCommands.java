@@ -147,7 +147,7 @@ public class CheProcessInfoAndRemoveCommands extends ServerTest{
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
 	}
 	
-	//@Test temporarily disabled to allow a merge
+	@Test
 	public void testInventory(){
 		LOGGER.info("1: Enter INVENTORY.INFO mode");
 		picker.loginAndSetup("Worker1");
@@ -188,29 +188,29 @@ public class CheProcessInfoAndRemoveCommands extends ServerTest{
 		Assert.assertEquals("Remove gtin2\nFrom Slot1113\nYES: remove item\nCANCEL to exit\n", picker.getLastCheDisplay());
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.INFO_PROMPT, WAIT_TIME);
-		Assert.assertEquals("Slot1113\nItem: none\n\nCANCEL to exit\n", picker.getLastCheDisplay());
+		Assert.assertEquals("SCAN LOCATION\nTo see contents\n\nCANCEL to exit\n", picker.getLastCheDisplay());
 		
-		LOGGER.info("5a: Scan location with 2 items placed identically");
+		LOGGER.info("5a: Scan location with 2 items placed identically. Verify item '3'");
 		picker.scanLocation("Slot1114");
 		picker.waitForCheState(CheStateEnum.INFO_DISPLAY, WAIT_TIME);
-		LOGGER.info("5b: See what item was picked first by the system (depends on PersistentId)");
-		int firstItemId, secondItemId;
-		if ("UPC: gtin3".equals(picker.getLastCheDisplayString(2))){
-			firstItemId = 3;
-			secondItemId = 4;
-		} else {
-			firstItemId = 4;
-			secondItemId = 3;
-		}
-		Assert.assertEquals("Slot1114\nUPC: gtin"+ firstItemId + "\nItem Desc "+ firstItemId + "\nCANCEL to exit\n", picker.getLastCheDisplay());
+		Assert.assertEquals("Slot1114 (2 items)\nUPC: gtin3\nItem Desc 3\nCANCEL to exit\n", picker.getLastCheDisplay());
 		
-		LOGGER.info("5c: Remove that item. Verify that the other item is now displayed");
+		LOGGER.info("5b: Scan the same location. Verify that another item '4' was now displayed");
+		picker.scanLocation("Slot1114");
+		picker.waitForCheState(CheStateEnum.INFO_DISPLAY, WAIT_TIME);
+		Assert.assertEquals("Slot1114 (2 items)\nUPC: gtin4\nItem Desc 4\nCANCEL to exit\n", picker.getLastCheDisplay());
+				
+		LOGGER.info("5c: Remove item '4'");
 		picker.scanCommand("REMOVE");
 		picker.waitForCheState(CheStateEnum.REMOVE_CONFIRMATION, WAIT_TIME);
-		Assert.assertEquals("Remove gtin" + firstItemId + "\nFrom Slot1114\nYES: remove item\nCANCEL to exit\n", picker.getLastCheDisplay());
+		Assert.assertEquals("Remove gtin4\nFrom Slot1114\nYES: remove item\nCANCEL to exit\n", picker.getLastCheDisplay());
 		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.INFO_PROMPT, WAIT_TIME);
+		
+		LOGGER.info("5d: Scan the location again, and see item '3' again");
+		picker.scanLocation("Slot1114");
 		picker.waitForCheState(CheStateEnum.INFO_DISPLAY, WAIT_TIME);
-		Assert.assertEquals("Slot1114\nUPC: gtin"+ secondItemId + "\nItem Desc "+ secondItemId + "\nCANCEL to exit\n", picker.getLastCheDisplay());
+		Assert.assertEquals("Slot1114\nUPC: gtin3\nItem Desc 3\nCANCEL to exit\n", picker.getLastCheDisplay());
 		
 		LOGGER.info("6: Scan tape to a Slot");
 		picker.scanSomething("%000000010100");
@@ -222,11 +222,13 @@ public class CheProcessInfoAndRemoveCommands extends ServerTest{
 		picker.waitForCheState(CheStateEnum.INFO_DISPLAY, WAIT_TIME);
 		Assert.assertEquals("Tier112\nUPC: gtin6\nItem Desc 6\nCANCEL to exit\n", picker.getLastCheDisplay());
 		
-		LOGGER.info("7b: Remove that item. Verify that the second closest item is displayed");
+		LOGGER.info("7b: Remove that item. Scan Location again. Verify that the second closest item is displayed");
 		picker.scanCommand("REMOVE");
 		picker.waitForCheState(CheStateEnum.REMOVE_CONFIRMATION, WAIT_TIME);
 		Assert.assertEquals("Remove gtin6\nFrom Tier112\nYES: remove item\nCANCEL to exit\n", picker.getLastCheDisplay());
 		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.INFO_PROMPT, WAIT_TIME);
+		picker.scanSomething("%000000020200");
 		picker.waitForCheState(CheStateEnum.INFO_DISPLAY, WAIT_TIME);
 		Assert.assertEquals("Tier112\nUPC: gtin5\nItem Desc 5\nCANCEL to exit\n", picker.getLastCheDisplay());
 		
