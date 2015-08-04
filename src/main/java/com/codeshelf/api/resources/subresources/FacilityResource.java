@@ -499,37 +499,32 @@ public class FacilityResource {
 				locationsImporterProvider,
 				inventoryImporterProvider,
 				orderImporterProvider);
-			boolean success = true;
 			String error = null;
 			//Process script parts
 			while (!scriptParts.isEmpty()) {
 				StepPart part = scriptParts.remove(0);
+				ScriptMessage responseMessage = null;
 				if (part.isServer()) {
 					//SERVER
-					ScriptMessage serverResponseMessage = serverScriptRunner.processServerScript(part.getScriptLines());
-					report.append(serverResponseMessage.getResponse());
-					if (!serverResponseMessage.isSuccess()) {
-						error = serverResponseMessage.getError();
-						success = false;
-						break;
-					}
+					responseMessage = serverScriptRunner.processServerScript(part.getScriptLines());
 				} else {
 					//SITE
-					String siteScriptError = runSiteScriptGetError(part, report, timeoutMin);
-					if (siteScriptError != null) {
-						report.append(siteScriptError);
-						error = siteScriptError;
-						success = false;
-						break;
-					}
+					responseMessage = runSiteScript(part, timeoutMin);
+				}
+				report.append(responseMessage.getResponse());
+				if (!responseMessage.isSuccess()) {
+					error = responseMessage.getError();
+					break;
 				}
 			}
-			ScriptStep nextStep = scriptStep.nextStep();
-			if (!success) {
-				nextStep = new ScriptStep(report.toString());
-				nextStep.addError(error);
-				return BaseResponse.buildResponse(nextStep, Status.BAD_REQUEST);
+
+			if (error != null) {
+				ScriptStep nextStepError = new ScriptStep(report.toString());
+				nextStepError.addError(error);
+				return BaseResponse.buildResponse(nextStepError, Status.BAD_REQUEST);
 			}
+			
+			ScriptStep nextStep = scriptStep.nextStep();
 			if (nextStep == null) {
 				return BaseResponse.buildResponse(new ScriptStep(report.toString()));
 			} else {
@@ -546,20 +541,22 @@ public class FacilityResource {
 		}
 	}
 	
-	private String runSiteScriptGetError(StepPart part, StringBuilder report, int timeoutMin){
-		String error = null;
+	private ScriptMessage runSiteScript(StepPart part, int timeoutMin){
+		ScriptMessage errorMesage = new ScriptMessage();
 		TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 		//Test is Site Controller is running
 		Result siteHealth = new ActiveSiteControllerHealthCheck(webSocketManagerService).execute();
 		if (!siteHealth.isHealthy()){ 
-			return "Site controller problem: " + siteHealth.getMessage();
+			errorMesage.setMessageError("Site controller problem: " + siteHealth.getMessage());
+			return errorMesage;
 		}
 		persistence.beginTransaction();
 		try {
 			facility = Facility.staticGetDao().reload(facility);
 			Set<User> users = facility.getSiteControllerUsers();
 			if (users == null || users.isEmpty()) {
-				return "Could not communicate with site controller. Check Site Controller ID.";
+				errorMesage.setMessageError("Could not communicate with site controller. Check Site Controller ID.");
+				return errorMesage;
 			}
 			//Execute script
 			UUID id = UUID.randomUUID();
@@ -567,18 +564,20 @@ public class FacilityResource {
 			webSocketManagerService.sendMessage(users, scriptMessage);
 			ScriptMessage siteResponseMessage = ScriptSiteCallPool.waitForSiteResponse(id, timeoutMin);
 			if (siteResponseMessage == null) {
-				return "Site request timed out";
+				errorMesage.setMessageError("Site request timed out");
+				return errorMesage; 
 			}
-			report.append(siteResponseMessage.getResponse());
 			if (!siteResponseMessage.isSuccess()) {
-				return siteResponseMessage.getError();
+				errorMesage.setMessageError(siteResponseMessage.getError());
+				return errorMesage;
 			}
 			persistence.commitTransaction();
+			return siteResponseMessage;
 		} catch (Exception e) {
 			persistence.rollbackTransaction();
-			return "Site request failed: " + e.getMessage();
+			errorMesage.setMessageError("Site request failed: " + e.getMessage());
+			return errorMesage; 
 		}
-		return error;
 	}
 
 	@PUT
