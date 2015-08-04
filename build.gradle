@@ -110,7 +110,7 @@ dependencies {
 			'com.github.sps.metrics:metrics-opentsdb:1.0.2',
 			'net.jpountz.lz4:lz4:1.2.0',
 
-			'au.com.bytecode:opencsv:2.4',
+			'com.opencsv:opencsv:3.5',
 			'javax.validation:validation-api:1.1.0.Final',
             'joda-time:joda-time:2.3',
 			'com.joestelmach:natty:0.11',
