@@ -1,5 +1,7 @@
 package com.codeshelf.model.domain;
 
+import static org.mockito.Mockito.mock;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,26 +22,30 @@ import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.UiUpdateService;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.testframework.HibernateTest;
+import com.google.inject.Provider;
 
 public class WorkerTest extends HibernateTest {
 	private FacilityResource facilityResource;
 	private WorkersResource workersResource;
 
 	@Before
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void init(){
 		WorkService workService = generateWorkService();
 		OrderService orderService = new OrderService();
 		NotificationService notificaitonService = new NotificationService();
+		
+		Provider anyProvider = mock(Provider.class);
 		facilityResource = new FacilityResource(workService, 
 			orderService, 
 			notificaitonService, 
 			webSocketManagerService, 
 			new UiUpdateService(), 
 			new PropertyService(),
-			createAisleFileImporter(), 
-			createLocationAliasImporter(), 
-			createInventoryImporter(), 
-			createOrderImporter());
+			anyProvider, 
+			anyProvider, 
+			anyProvider, 
+			anyProvider);
 		Facility facility = getFacility();
 		facilityResource.setFacility(facility);
 		workersResource = new WorkersResource();
