@@ -13,9 +13,12 @@ import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +32,8 @@ import org.mockito.Mockito;
 import org.mockito.internal.stubbing.answers.DoesNothing;
 import org.mockito.internal.stubbing.answers.ThrowsException;
 import org.mockito.invocation.InvocationOnMock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codeshelf.edi.IEdiExportServiceProvider;
 import com.codeshelf.edi.WorkInstructionCSVExporter;
@@ -57,6 +62,7 @@ import com.codeshelf.ws.server.ServerMessageProcessor;
 import com.google.common.collect.ImmutableList;
 
 public class WorkServiceTest extends ServerTest {
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(WorkServiceTest.class);
 	
 	private WorkInstructionGenerator wiGenerator = new WorkInstructionGenerator();
 	private FacilityGenerator facilityGenerator;
@@ -321,6 +327,43 @@ public class WorkServiceTest extends ServerTest {
 		verify(mockEdiExportService, Mockito.timeout(2000).times(total)).sendWorkInstructionsToHost(any(String.class));
 		
 		this.getTenantPersistenceService().commitTransaction();
+	}
+
+	@Test
+	public void workInstructionMessageContent() throws IOException, InterruptedException {
+		beginTransaction();
+		Facility facility = facilityGenerator.generateValid();
+		WorkInstruction wi = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
+		
+		// format calls WorkInstructionCSVExporter.exportWorkInstructions() with the list of one wi
+		// The result is a header line, and the work instruction line.
+		String messageBody = format(wi);
+		
+		// v18 and early v19  came like this
+		// "facilityId","workInstructionId","type","status","orderGroupId","orderId","containerId","itemId","uom","lotId","locationId","pickerId","planQuantity","actualQuantity","cheId","assigned","started","completed","version-1.0"
+		// "F1","143863495449100","ACTUAL","NEW","OG1","OH1","CONTID","ITEMID","UOMID","","F1.A1",,"5","0","CHE1","129044476-12-12T16:01:47Z","2015-08-03T13:49:09Z","2015-08-03T13:49:14Z",""
+		LOGGER.info(messageBody);
+		
+		// let's verify that the first field of the header is facilityId
+		// Our export seems to surround by quotes even when not needed.
+        BufferedReader br = new BufferedReader( new StringReader(messageBody));
+        String line1  = br.readLine();
+		
+		List<String> titleList = new ArrayList<String>(Arrays.asList(line1.split(",")));
+		String title = titleList.get(0);
+		Assert.assertEquals("\"facilityId\"", title);
+		title = titleList.get(5);
+		Assert.assertEquals("\"orderId\"", title);
+
+		String line2  = br.readLine();
+		List<String> fieldList = new ArrayList<String>(Arrays.asList(line2.split(",")));
+		String field = fieldList.get(0);
+		Assert.assertEquals("\"F1\"", field);
+		field = fieldList.get(5);
+		Assert.assertEquals("\"OH1\"", field);
+		
+		
+		commitTransaction();
 	}
 
 	@Test
