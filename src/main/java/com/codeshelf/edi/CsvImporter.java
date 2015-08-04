@@ -6,16 +6,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import au.com.bytecode.opencsv.CSVReader;
-import au.com.bytecode.opencsv.bean.CsvToBean;
-import au.com.bytecode.opencsv.bean.HeaderColumnNameMappingStrategy;
-
 import com.codeshelf.event.EventProducer;
 import com.codeshelf.event.EventSeverity;
 import com.codeshelf.event.EventTag;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
+import com.opencsv.CSVReader;
+import com.opencsv.bean.CsvToBean;
+import com.opencsv.bean.HeaderColumnNameMappingStrategy;
 
 public abstract class CsvImporter<T> {
 

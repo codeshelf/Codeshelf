@@ -15,8 +15,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import au.com.bytecode.opencsv.CSVReader;
-
 import com.codeshelf.generators.WorkInstructionGenerator;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderGroup;
@@ -25,6 +23,7 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.testframework.MockDaoTest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.opencsv.CSVReader;
 
 public class WorkInstructionCSVExporterTest extends MockDaoTest {
 

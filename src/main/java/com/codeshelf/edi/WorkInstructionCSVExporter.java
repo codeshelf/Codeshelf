@@ -6,11 +6,10 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-import au.com.bytecode.opencsv.CSVWriter;
-
 import com.codeshelf.model.domain.LocationAlias;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.opencsv.CSVWriter;
 
 public class WorkInstructionCSVExporter {
 
