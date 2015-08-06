@@ -333,8 +333,11 @@ public class WorkServiceTest extends ServerTest {
 	public void workInstructionMessageContent() throws IOException, InterruptedException {
 		beginTransaction();
 		Facility facility = facilityGenerator.generateValid();
+
+		LOGGER.info("1: Make the work instruction");
 		WorkInstruction wi = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
 		
+		LOGGER.info("2: Extract as we would send it");
 		// format calls WorkInstructionCSVExporter.exportWorkInstructions() with the list of one wi
 		// The result is a header line, and the work instruction line.
 		String messageBody = format(wi);
@@ -346,7 +349,8 @@ public class WorkServiceTest extends ServerTest {
 		
 		// let's verify that the first field of the header is facilityId
 		// Our export seems to surround by quotes even when not needed.
-        BufferedReader br = new BufferedReader( new StringReader(messageBody));
+		LOGGER.info("3: Parse the first line of message. Check the 0th and 5th column names");
+       BufferedReader br = new BufferedReader( new StringReader(messageBody));
         String line1  = br.readLine();
 		
 		List<String> titleList = new ArrayList<String>(Arrays.asList(line1.split(",")));
@@ -355,6 +359,7 @@ public class WorkServiceTest extends ServerTest {
 		title = titleList.get(5);
 		Assert.assertEquals("\"orderId\"", title);
 
+		LOGGER.info("3: Parse the second line of message. Check the 0th and 5th field values");
 		String line2  = br.readLine();
 		List<String> fieldList = new ArrayList<String>(Arrays.asList(line2.split(",")));
 		String field = fieldList.get(0);
@@ -392,8 +397,8 @@ public class WorkServiceTest extends ServerTest {
 
 	private String format(WorkInstruction wi) throws IOException {
 		WorkInstructionCSVExporter exporter = new WorkInstructionCSVExporter();
-		// TODO Auto-generated method stub
-		return exporter.exportWorkInstructions(ImmutableList.of(wi));
+		return exporter.exportWorkInstructions2(ImmutableList.of(wi));
+		// TODO temp. Change back to exportWorkInstructions
 	}
 
 	@Test

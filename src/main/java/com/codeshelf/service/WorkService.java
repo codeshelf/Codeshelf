@@ -1700,7 +1700,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			LOGGER.error("null input to WorkService.exportWorkInstruction", new Exception());
 		} else {
 			LOGGER.debug("Queueing work instruction: " + inWorkInstruction);
-			String messageBody = wiCSVExporter.exportWorkInstructions(ImmutableList.of(inWorkInstruction));
+			// exportWorkInstructions2() uses the bean. exportWorkInstructions() the old way
+			String messageBody = wiCSVExporter.exportWorkInstructions2(ImmutableList.of(inWorkInstruction));
 			Facility facility = inWorkInstruction.getParent();
 			IEdiService ediExportService = exportServiceProvider.getWorkInstructionExporter(facility);
 			WIMessage wiMessage = new WIMessage(ediExportService, messageBody);
