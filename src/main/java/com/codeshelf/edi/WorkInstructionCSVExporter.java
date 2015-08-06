@@ -1,15 +1,19 @@
 package com.codeshelf.edi;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.codeshelf.model.domain.LocationAlias;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
+import com.opencsv.bean.HeaderColumnNameMappingStrategy;
 
 public class WorkInstructionCSVExporter {
 
@@ -121,6 +125,92 @@ public class WorkInstructionCSVExporter {
 		return stringWriter.toString();
 	}
 	
+	/**
+	 * Redone using an export bean
+	 */
+	public String exportWorkInstructions2(List<WorkInstruction> inWorkInstructions) throws IOException {
+		// Convert the WI into a CSV string.
+		StringWriter stringWriter = new StringWriter();
+		CSVWriter csvWriter = new CSVWriter(stringWriter);
+		
+		// Set up the mapper
+		// We are doing this via an import match the order shown
+		String headerString = "facilityId, workInstructionId, type, status, orderGroupId, orderId, containerId,"
+				+ "itemId, uom, lotId, locationId, pickerId, planQuantity, actualQuantity, cheId,"
+				+ "assigned, started, completed"; // no version here
+		
+		/*
+		private static final Integer	FACILITYID_POS			= 0;
+		private static final Integer	WORKINSTRUCTIONID_POS	= 1;
+		private static final Integer	TYPE_POS				= 2;
+		private static final Integer	STATUS_POS				= 3;
+		private static final Integer	ORDERGROUPID_POS		= 4;
+		private static final Integer	ORDERID_POS				= 5;
+		private static final Integer	CONTAINERID_POS			= 6;
+		private static final Integer	ITEMID_POS				= 7;
+		private static final Integer	UOM_POS					= 8;
+		private static final Integer	LOTID_POS				= 9;
+		private static final Integer	LOCATIONID_POS			= 10;
+		private static final Integer	PICKERID_POS			= 11;
+		private static final Integer	PLAN_QTY_POS			= 12;
+		private static final Integer	ACT_QTY_POS				= 13;
+		private static final Integer	CHEID_POS				= 14;
+		private static final Integer	ASSIGNED_POS			= 15;
+		private static final Integer	STARTED_POS				= 16;
+		private static final Integer	COMPLETED_POS			= 17;
+		private static final Integer	VERSION_POS				= 18;
+		 */
+		
+		
+		HeaderColumnNameMappingStrategy<WorkInstructionCsvBean> strategy = null;
+		try  {
+			StringReader reader = new StringReader(headerString);
+			CSVReader csvReader = new CSVReader(reader);
+			strategy = new HeaderColumnNameMappingStrategy<WorkInstructionCsvBean>();
+			strategy.setType(WorkInstructionCsvBean.class);
+			strategy.captureHeader(csvReader);
+
+		} catch (IOException e) {
+			csvWriter.close();
+			throw new RuntimeException("create mapping strategy: ", e);
+		}
+		
+		// can we write just the mapper? Provide empty list
+		ArrayList<WorkInstructionCsvBean> beanList = new ArrayList<WorkInstructionCsvBean>();
+		/*
+		  try {
+		 
+			CsvExporter<WorkInstructionCsvBean> exporter = new CsvExporter<WorkInstructionCsvBean>();
+			exporter.setBeanList(beanList);
+			exporter.setStrategy(strategy);
+			exporter.writeHeader(csvWriter);
+			
+		} catch (RuntimeException e) {
+			csvWriter.close();
+			throw new RuntimeException("writing header: ", e);
+		}
+		*/
+
+		for (WorkInstruction wi : inWorkInstructions) {
+			WorkInstructionCsvBean bean = new WorkInstructionCsvBean(wi);
+			beanList.add(bean);
+		}
+		try {
+			CsvExporter<WorkInstructionCsvBean> exporter = new CsvExporter<WorkInstructionCsvBean>();
+			exporter.setBeanList(beanList);
+			exporter.setStrategy(strategy);
+			exporter.writeRecords(csvWriter);
+			
+		} catch (RuntimeException e) {
+			csvWriter.close();
+			throw new RuntimeException("writing records: ", e);
+		}
+		
+		csvWriter.close();
+		return stringWriter.toString();
+
+	}
+
 	private String formatDate(Timestamp time) {
 		if (time == null) {
 			return "";
