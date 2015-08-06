@@ -1,0 +1,7 @@
+/**
+ * provide a trailer
+ */
+def WorkInstructionCreateTrailer(orderId) {
+    trailer = ""
+     return trailer;
+}

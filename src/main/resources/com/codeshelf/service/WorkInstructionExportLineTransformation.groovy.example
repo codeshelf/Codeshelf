@@ -1,0 +1,6 @@
+/**
+ * Transforms the values of an order detail line before being parsed
+ */
+def WorkInstructionExportLineTransformation(orderLine) {
+    orderLine.replace(',', '^');
+}

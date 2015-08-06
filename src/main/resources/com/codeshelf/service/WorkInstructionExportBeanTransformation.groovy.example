@@ -1,0 +1,7 @@
+/**
+ * Transforms the values in the bean that will be used to produce the line.
+ */
+def WorkInstructionBeanTransformation(wiLine) {
+    wiLine.lotId = "";
+    return wiLine;
+}
