@@ -89,8 +89,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 	protected static final String					INVALID_POSITION_MSG					= cheLine("INVALID POSITION");
 	protected static final String					INVALID_CONTAINER_MSG					= cheLine("INVALID CONTAINER");
-	protected static final String					CLEAR_ERROR_MSG_LINE_1					= cheLine("CLEAR ERROR TO");
-	protected static final String					CLEAR_ERROR_MSG_LINE_2					= cheLine("CONTINUE");
+	protected static final String					CANCEL_TO_CONTINUE_MSG					= cheLine("CANCEL TO CONTINUE");
 
 	protected static final String					SCAN_GTIN								= "SCAN %s UPC";
 	protected static final String					SCAN_GTIN_OR_LOCATION					= "SCAN %s/LOCATION";
@@ -108,7 +107,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					SCAN_PUTWALL_ITEM_MSG					= cheLine("SCAN ITEM/UPC");
 	protected static final String					SCAN_PUTWALL_NAME_MSG					= cheLine("SCAN WALL NAME");
 	protected static final String					NO_WORK_FOR								= cheLine("NO WORK FOR");
-	protected static final String					SCAN_ITEM_OR_CLEAR						= cheLine("SCAN ITEM OR CLEAR");
+	protected static final String					SCAN_ITEM_OR_CANCEL						= cheLine("SCAN ITEM OR CANCEL");
 	
 	//For Sku wall
 	protected static final String					SCAN_LOCATION_MSG						= cheLine("SCAN LOCATION");
@@ -1430,8 +1429,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.error("setupCommandReceived() needs override");
 	}
 
-	protected void clearCommandReceived() {
-		LOGGER.error("clearErrorCommandReceived() needs override");
+	protected void cancelCommandReceived() {
+		LOGGER.error("cancelErrorCommandReceived() needs override");
 	}
 
 	// --------------------------------------------------------------------------
@@ -1987,13 +1986,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * Linked to: (none)
 	 * Scan Che name to link
 	 * 
-	 * CLEAR to exit
+	 * CANCEL to exit
 	 * 
 	 * or
 	 * Linked to: CHE3
 	 * Scan Che name to link
 	 * or REMOTE to unlink
-	 * CLEAR to exit
+	 * CANCEL to exit
 	 */
 	protected void sendRemoteStateScreen() {
 		String cheName = getLinkedToCheName();
@@ -2008,10 +2007,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		String line3 = "";
 		String line4 = "";
 		if (!wasNull) {
-			line3 = "or CLEAR to unlink";
+			line3 = "or CANCEL to unlink";
 			line4 = "REMOTE to keep link";
 		} else {
-			line4 = "CLEAR to exit";
+			line4 = "CANCEL to exit";
 		}
 
 		sendDisplayCommand(line1, line2, line3, line4);

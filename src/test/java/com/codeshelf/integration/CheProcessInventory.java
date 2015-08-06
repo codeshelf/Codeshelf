@@ -313,8 +313,8 @@ public class CheProcessInventory extends ServerTest {
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
 		picker.logCheDisplay();
 
-		LOGGER.info("1i: scan X%CLEAR and get back to READY state");
-		picker.scanCommand("CLEAR");
+		LOGGER.info("1i: scan X%CANCEL and get back to READY state");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		LOGGER.info("1j: logout");

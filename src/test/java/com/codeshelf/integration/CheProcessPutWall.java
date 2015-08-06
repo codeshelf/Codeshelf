@@ -39,7 +39,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.loginAndSetup("Picker #1");
 		picker.scanCommand("ORDER_WALL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
-		picker.scanCommand("CLEAR");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		LOGGER.info("1b: progress futher before clearing. Scan the order ID");
@@ -47,7 +47,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		picker.scanSomething("11112");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
-		picker.scanCommand("CLEAR");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		LOGGER.info("1c: cannot ORDER_WALL after one order is set");
@@ -69,7 +69,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		LOGGER.info("1e: ORDER_WALL from complete state");
 		picker.scanCommand("ORDER_WALL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
-		picker.scanCommand("CLEAR");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		LOGGER.info("1g: Do simple actual order setup to put wall");
@@ -79,7 +79,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker.scanSomething("L%P12");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
-		picker.scanCommand("CLEAR");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		LOGGER.info("2: Do valid order setup to put wall, but to slot that is not a put wall. Will get a WARN");
@@ -93,7 +93,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker.scanSomething("L%F12");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
-		picker.scanCommand("CLEAR");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		// Besides the warn, the successful placement removed 11112 from P12 as it moved to F12.
 		// Then placing 11114 at F12 removes 11112
@@ -148,7 +148,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		placeOrderOnLocation(picker, "11120", "L%F18");
 		assertAsynchPosconValue(posman, 1, 10);
 		
-		picker.scanCommand("CLEAR");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		
 		LOGGER.info("2: Put an item into the wall.");
@@ -267,7 +267,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Assert.assertNull(posman.getLastSentPositionControllerDisplayValue((byte)1));
 		placeOrderOnLocation(picker1, "11111", "L%F15");
 		assertAsynchPosconValue(posman, 1, 5);
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		
 		LOGGER.info("2: Picker1 gets an instruction to put Item into the wall.");
@@ -330,7 +330,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P16");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		LOGGER.info("2: P14 is in WALL1. P15 and P16 are in WALL2. Set up slow mover CHE for that SKU pick");
@@ -398,7 +398,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.loginAndSetup("Picker #1");
 		picker.scanCommand("PUT_WALL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
-		picker.scanCommand("CLEAR");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		LOGGER.info("1b: progress futher before clearing. Scan the order ID");
@@ -410,14 +410,14 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Assert.assertEquals("FOR WALL1", picker.getLastCheDisplayString(2));
 		picker.scanSomething("BadSku");
 		picker.waitForCheState(CheStateEnum.NO_PUT_WORK, WAIT_TIME);
-		// check on feedback here. Screen will show "NO WORK FOR BadSku IN WALL1  SCAN ITEM OR CLEAR
+		// check on feedback here. Screen will show "NO WORK FOR BadSku IN WALL1  SCAN ITEM OR CANCEL
 		Assert.assertEquals("NO WORK FOR", picker.getLastCheDisplayString(1));
 		Assert.assertEquals("BadSku", picker.getLastCheDisplayString(2));
 		Assert.assertEquals("IN WALL1", picker.getLastCheDisplayString(3));
-		Assert.assertEquals("SCAN ITEM OR CLEAR", picker.getLastCheDisplayString(4));
-		picker.scanCommand("CLEAR");
+		Assert.assertEquals("SCAN ITEM OR CANCEL", picker.getLastCheDisplayString(4));
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
-		picker.scanCommand("CLEAR");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		LOGGER.info("1c: progress even futher before clearing. Get onto a real put job");
@@ -428,7 +428,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker.scanSomething("L%P14");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
-		picker.scanCommand("CLEAR");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		// now back to the main story
 		picker.scanCommand("PUT_WALL");
@@ -438,9 +438,9 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		// For DEV-937. Assume it is "000gtin1514 that is scanned, but for various reasons we only got gtin1514 into the data base.
 		picker.scanSomething("000gtin1514");
 		picker.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
-		picker.scanCommand("CLEAR");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
-		picker.scanCommand("CLEAR");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		// This left a work instruction that we did not clean up
 
@@ -463,7 +463,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		LOGGER.info("1f: PUT_WALL from complete state");
 		picker.scanCommand("PUT_WALL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
-		picker.scanCommand("CLEAR");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 	}
@@ -499,7 +499,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P16");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		// Verify that orders 11114, 11115, and 11116 are having order locations in put wall
@@ -520,7 +520,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker1.scanSomething("BadItemId");
 		picker1.waitForCheState(CheStateEnum.NO_PUT_WORK, WAIT_TIME);
 
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		LOGGER.info("3a: Scanning 1515 into Wall1");
 
@@ -684,7 +684,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P16");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		// P13 is at poscon index 3. Should show "--" as there is more work for that order.
@@ -757,7 +757,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P16");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		// Verify that orders 11118, 11115, and 11116 are having order locations in put wall
@@ -846,7 +846,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		posman.waitForControllerDisplayValue((byte) 4, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME);
 
 		LOGGER.info("3a: Scan 1515 into wall2 will give two jobs. Short the first");
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker1.scanCommand("PUT_WALL");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
@@ -884,7 +884,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 	@Test
 	public final void putWallClearAbandon() throws IOException {
-		// This test shows that CLEAR may be used in put wall states DO_PUT, SHORT_PUT, nad SHORT_PUT_CONFIRM
+		// This test shows that CANCEL may be used in put wall states DO_PUT, SHORT_PUT, nad SHORT_PUT_CONFIRM
 
 		setUpFacilityWithPutWall();
 
@@ -913,7 +913,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P16");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		LOGGER.info("2: As if aslow movers came out of system, just scan the SKU to place into put wall");
@@ -930,8 +930,8 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Byte displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
 		Assert.assertEquals(toByte(3), displayValue);
 
-		LOGGER.info("2b: Scan CLEAR, which cancels the job. Show that the poscon display is back to the order feedback");
-		picker1.scanCommand("CLEAR");
+		LOGGER.info("2b: Scan CANCEL, which cancels the job. Show that the poscon display is back to the order feedback");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
@@ -948,8 +948,8 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Assert.assertEquals(toByte(0), minValue);
 		Assert.assertEquals(toByte(21), flashValue); // our flashing value
 
-		LOGGER.info("3b: Scan CLEAR, which cancels the job. Show that the poscon display is back to the order feedback");
-		picker1.scanCommand("CLEAR");
+		LOGGER.info("3b: Scan CANCEL, which cancels the job. Show that the poscon display is back to the order feedback");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
@@ -977,8 +977,8 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Assert.assertEquals(toByte(0), minValue);
 		Assert.assertEquals(toByte(21), flashValue);
 
-		LOGGER.info("4b: Scan CLEAR, which cancels the job. Show that the poscon display is back to the order feedback");
-		picker1.scanCommand("CLEAR");
+		LOGGER.info("4b: Scan CANCEL, which cancels the job. Show that the poscon display is back to the order feedback");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 4);
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, displayValue);
@@ -1032,7 +1032,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P16");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		LOGGER.info("2a: We will do 1515 in wall2 as it yields two plan that might be subject to PICKMULT");
@@ -1154,8 +1154,8 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker.scanSomething("L%P14");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
-		picker.scanCommand("CLEAR");
-		// The choice of PICK_COMPLETE or CONTAINER_SELECT after CLEAR used to depend on if there is anything in the container map
+		picker.scanCommand("CANCEL");
+		// The choice of PICK_COMPLETE or CONTAINER_SELECT after CANCEL used to depend on if there is anything in the container map
 		// That is why we just completed one order first in the test. But now, it is set by a member variable.
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
@@ -1220,7 +1220,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker1.setOrderToPutWall("11117", "P13");
 		picker1.setOrderToPutWall("11115", "P15");
 		picker1.setOrderToPutWall("11116", "P16");
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		// show the starting state of the orders we will use

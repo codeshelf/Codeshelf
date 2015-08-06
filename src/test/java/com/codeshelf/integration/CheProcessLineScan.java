@@ -447,7 +447,7 @@ public class CheProcessLineScan extends ServerTest {
 		Assert.assertEquals("D601", firstLine);
 
 		LOGGER.info("3: scan clear, which should bring us directly to ready state");
-		picker.scanCommand("CLEAR");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.READY, 2000);
 
 		LOGGER.info("4: scan non-existent order detail. Goes through GET_WORK, then back to READY state");
@@ -472,7 +472,7 @@ public class CheProcessLineScan extends ServerTest {
 		picker.waitForCheState(CheStateEnum.ABANDON_CHECK, 2000);
 
 		LOGGER.info("7b: however,scan clear from the yes/no screen; back to ready state");
-		picker.scanCommand("CLEAR");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.READY, 2000);
 
 		LOGGER.info("8: scan good detail.");
@@ -596,20 +596,20 @@ public class CheProcessLineScan extends ServerTest {
 		picker.waitForCheState(CheStateEnum.DO_PICK, 2000);
 		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
 
-		LOGGER.info("4: CLEAR from SHORT_PICK state");
+		LOGGER.info("4: CANCEL from SHORT_PICK state");
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 2000);
-		picker.scanCommand("CLEAR");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.READY, 2000);
 
-		LOGGER.info("5: CLEAR from SHORT_PICK_CONFIRM state");
+		LOGGER.info("5: CANCEL from SHORT_PICK_CONFIRM state");
 		picker.scanOrderDetailId("12345.3");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 5000);
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 2000);
 		picker.pick(1, 0);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 2000);
-		picker.scanCommand("CLEAR");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.READY, 2000);
 
 		LOGGER.info("6: Scan other order line from SHORT_PICK state");
@@ -1199,8 +1199,8 @@ public class CheProcessLineScan extends ServerTest {
 		picker.scanLocation("D302");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 
-		LOGGER.info("1j: scan X%CLEAR and get back to READY state");
-		picker.scanCommand("CLEAR");
+		LOGGER.info("1j: scan X%CANCEL and get back to READY state");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.READY, 1000);
 
 		LOGGER.info("1k: scan X%INVENTORY");
@@ -1328,8 +1328,8 @@ public class CheProcessLineScan extends ServerTest {
 		picker.scanSomething("100");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 
-		LOGGER.info("2c: clear");
-		picker.scanCommand("CLEAR");
+		LOGGER.info("2c: CANCEL");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.READY, 1000);
 
 		LOGGER.info("3a: scan inventory command");

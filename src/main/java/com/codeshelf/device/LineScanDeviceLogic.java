@@ -90,7 +90,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 
 			case CLEAR_COMMAND:
 			case CANCEL_COMMAND:
-				clearCommandReceived();
+				cancelCommandReceived();
 				break;
 			
 			case INVENTORY_COMMAND:
@@ -174,7 +174,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.READY);
 			} else {
 				setState(CheStateEnum.IDLE);
-				invalidScanMsg(UNKNOWN_BADGE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+				invalidScanMsg(UNKNOWN_BADGE_MSG, EMPTY_MSG, EMPTY_MSG, CANCEL_TO_CONTINUE_MSG);
 			}
 		}
 	}
@@ -317,7 +317,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 * If on a job, abandon it and go back to ready state
 	 */
 	@Override
-	protected void clearCommandReceived() {
+	protected void cancelCommandReceived() {
 		clearAllPosconsOnThisDevice();
 		// needs implementation
 		CheStateEnum currentState = getCheStateEnum();

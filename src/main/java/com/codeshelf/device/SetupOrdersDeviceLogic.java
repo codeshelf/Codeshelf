@@ -210,24 +210,24 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 
 				case CONTAINER_POSITION_INVALID:
-					invalidScanMsg(INVALID_POSITION_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+					invalidScanMsg(INVALID_POSITION_MSG, EMPTY_MSG, EMPTY_MSG, CANCEL_TO_CONTINUE_MSG);
 					break;
 
 				case CONTAINER_POSITION_IN_USE:
-					invalidScanMsg(POSITION_IN_USE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+					invalidScanMsg(POSITION_IN_USE_MSG, EMPTY_MSG, EMPTY_MSG, CANCEL_TO_CONTINUE_MSG);
 					break;
 
 				case CONTAINER_SELECTION_INVALID:
 					// This deals with DEV-836, 837. 
 					if (!this.isSetupMixOk()) {
-						invalidScanMsg(INVALID_CONTAINER_MSG, "Use START to begin", CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+						invalidScanMsg(INVALID_CONTAINER_MSG, "Use START to begin", EMPTY_MSG, CANCEL_TO_CONTINUE_MSG);
 					} else {
-						invalidScanMsg(INVALID_CONTAINER_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+						invalidScanMsg(INVALID_CONTAINER_MSG, EMPTY_MSG, EMPTY_MSG, CANCEL_TO_CONTINUE_MSG);
 					}
 					break;
 
 				case NO_CONTAINERS_SETUP:
-					invalidScanMsg(NO_CONTAINERS_SETUP_MSG, FINISH_SETUP_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+					invalidScanMsg(NO_CONTAINERS_SETUP_MSG, FINISH_SETUP_MSG, EMPTY_MSG, CANCEL_TO_CONTINUE_MSG);
 					break;
 
 				case SHORT_PUT_CONFIRM:
@@ -322,7 +322,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					// we would like to say "No work for item in wall2"
 					String itemID = getLastPutWallItemScan();
 					String thirdLine = String.format("IN %s", getPutWallName());
-					sendDisplayCommand(NO_WORK_FOR, itemID, thirdLine, SCAN_ITEM_OR_CLEAR);
+					sendDisplayCommand(NO_WORK_FOR, itemID, thirdLine, SCAN_ITEM_OR_CANCEL);
 					break;
 
 				case DO_PUT:
@@ -334,7 +334,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 
 				case INFO_PROMPT:
-					sendDisplayCommand("SCAN LOCATION", "To see contents", EMPTY_MSG, CANCEL_TO_EXIT_MSG);
+					sendDisplayCommand("SCAN LOCATION", "For content INFO", EMPTY_MSG, CANCEL_TO_EXIT_MSG);
 					break;
 
 				case INFO_RETRIEVAL:
@@ -410,7 +410,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case CLEAR_COMMAND:
 			case CANCEL_COMMAND:
-				clearCommandReceived();
+				cancelCommandReceived();
 				break;
 
 			case INVENTORY_COMMAND:
@@ -597,7 +597,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case INFO_DISPLAY:
 				InfoPackage info = getInfo();
 				if (info == null || !info.isSomethingToRemove()) {
-					sendDisplayCommand(REMOVE_NOTHING_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+					sendDisplayCommand(REMOVE_NOTHING_MSG, EMPTY_MSG, EMPTY_MSG, CANCEL_TO_CONTINUE_MSG);
 					break;
 				}
 				switch (getRememberEnteringInfoState()){
@@ -618,7 +618,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 	}
 
-	protected void clearCommandReceived() {
+	@Override
+	protected void cancelCommandReceived() {
 		//Split it out by state
 		switch (mCheStateEnum) {
 
@@ -737,7 +738,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CONTAINER_POSITION_INVALID:
 			case CONTAINER_SELECTION_INVALID:
 			case NO_CONTAINERS_SETUP:
-				//Do nothing. Only a "Clear Error" will get you out
+				//Do nothing. Only a "Cancel Error" will get you out
 				break;
 
 			case CONTAINER_POSITION:
@@ -780,12 +781,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 						InfoPackage info = getInfo();
 						UUID removeItemId = info == null ? null : info.getRemoveItemId();
 						mDeviceManager.performInfoOrRemoveAction(InfoRequestType.REMOVE_INVENTORY, getLastScannedInfoLocation(), getGuidNoPrefix(), getPersistentId().toString(), removeItemId);
-						setInfo(null);
-						setState(CheStateEnum.INFO_PROMPT);
 					} else {
 						mDeviceManager.performInfoOrRemoveAction(InfoRequestType.REMOVE_WALL_ORDERS, getLastScannedInfoLocation(), getGuidNoPrefix(), getPersistentId().toString());
 					}
-					
+					setInfo(null);
+					setState(CheStateEnum.INFO_PROMPT);
 				} else {
 					setState(CheStateEnum.INFO_DISPLAY);
 				}
@@ -1374,7 +1374,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CONTAINER_POSITION_INVALID:
 			case CONTAINER_SELECTION_INVALID:
 			case NO_CONTAINERS_SETUP:
-				//Do nothing. Only a "Clear Error" will get you out
+				//Do nothing. Only a "Cancel Error" will get you out
 				break;
 
 			case CONTAINER_POSITION:
@@ -1432,7 +1432,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CONTAINER_POSITION_INVALID:
 			case CONTAINER_SELECTION_INVALID:
 			case NO_CONTAINERS_SETUP:
-				//Do nothing. Only a "Clear Error" will get you out
+				//Do nothing. Only a "Cancel Error" will get you out
 				break;
 
 			case CONTAINER_POSITION:
@@ -1497,7 +1497,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 			} else {
 				setState(CheStateEnum.IDLE);
-				invalidScanMsg(UNKNOWN_BADGE_MSG, EMPTY_MSG, CLEAR_ERROR_MSG_LINE_1, CLEAR_ERROR_MSG_LINE_2);
+				invalidScanMsg(UNKNOWN_BADGE_MSG, EMPTY_MSG, EMPTY_MSG, CANCEL_TO_CONTINUE_MSG);
 				notifyCheWorkerVerb("LOG IN", "Credential Denied");
 			}
 		} else {
@@ -1577,7 +1577,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CONTAINER_POSITION_INVALID:
 			case CONTAINER_SELECTION_INVALID:
 			case NO_CONTAINERS_SETUP:
-				//Do Nothing if you are in an error state and you scan something that's not "Clear Error"
+				//Do Nothing if you are in an error state and you scan something that's not "Cancel Error"
 				break;
 
 			case SETUP_SUMMARY:
@@ -1611,7 +1611,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case NO_PUT_WORK:
-				// If one item scan did not work, let user scan another directly without first having to CLEAR.
+				// If one item scan did not work, let user scan another directly without first having to CANCEL.
 				// If user scans another location, let's assume it was a put wall change attempt.
 				if ("L%".equals(inScanPrefixStr)) {
 					processPutWallScanWall(inScanPrefixStr, inContent);
@@ -1918,7 +1918,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		String line1 = cheLine(String.format(SCAN_GTIN_OR_LOCATION, scanType));
 		String line2 = "";
 		String line3 = "";
-		String line4 = "CLEAR to exit";
+		String line4 = "CANCEL to exit";
 
 		if (inLastScannedGTIN == null) {
 			line2 = scanType + " to move inventory";
@@ -1928,7 +1928,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			// A GTIN was scanned. It will move on a location scan
 			line2 = String.format("%s will move if", inLastScannedGTIN);
 			line3 = "you scan a location.";
-			line4 = "Or other " + scanType + " or CLEAR";
+			line4 = "Or other " + scanType + " or CANCEL";
 
 		}
 		sendDisplayCommand(line1, line2, line3, line4);
@@ -2169,7 +2169,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case CONTAINER_POSITION_INVALID:
 			case CONTAINER_SELECTION_INVALID:
 			case NO_CONTAINERS_SETUP:
-				//Do nothing. Only a "Clear Error" will get you out 
+				//Do nothing. Only a "Cancel Error" will get you out 
 				break;
 			case IDLE:
 			case VERIFYING_BADGE:
@@ -2831,7 +2831,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private void displayInfo(){
 		InfoPackage info = getInfo();
 		if (info == null) {
-			sendDisplayCommand("NO INFO RECEIVED", "CLEAR to exit");
+			sendDisplayCommand("NO INFO RECEIVED", "CANCEL to exit");
 		} else {
 			sendDisplayCommand(info.getDisplayInfoLine(0), info.getDisplayInfoLine(1), info.getDisplayInfoLine(2), info.getDisplayInfoLine(3));
 		}
@@ -2840,7 +2840,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private void displayRemoveInfo(){
 		InfoPackage info = getInfo();
 		if (info == null) {
-			sendDisplayCommand("NO INFO RECEIVED", "CLEAR to exit");
+			sendDisplayCommand("NO INFO RECEIVED", "CANCEL to exit");
 		} else {
 			sendDisplayCommand(info.getDisplayRemoveLine(0), info.getDisplayRemoveLine(1), info.getDisplayRemoveLine(2), info.getDisplayRemoveLine(3));
 		}

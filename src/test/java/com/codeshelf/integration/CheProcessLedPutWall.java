@@ -114,7 +114,7 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P16");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		// P14 is position 4. Show dash as an order is there. Should see in console logging about the reinit
 		posman.waitForControllerDisplayValue((byte) 4, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME);
@@ -162,7 +162,7 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P15");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		// Verify that orders 11114, 11115 have order locations in put wall, but not 11116
@@ -187,7 +187,7 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P16");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 
@@ -214,7 +214,7 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		picker1.scanSomething("BadItemId");
 		picker1.waitForCheState(CheStateEnum.NO_PUT_WORK, WAIT_TIME);
 
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		LOGGER.info("3a: Scanning 1515 into Wall1");
 		
@@ -304,7 +304,7 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker1.scanSomething("L%P16");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		// Verify that orders 11118, 11115, and 11116 are having order locations in put wall
@@ -393,7 +393,7 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		posman.waitForControllerDisplayValue((byte) 4, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME);
 
 		LOGGER.info("3a: Scan 1515 into wall2 will give two jobs. Short the first");
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 		picker1.scanCommand("PUT_WALL");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);

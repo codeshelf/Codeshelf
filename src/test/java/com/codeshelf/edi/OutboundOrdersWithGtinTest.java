@@ -340,7 +340,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		LOGGER.info("3: inventory the other two gtins to good locations. We scan the full gtin");
 		picker.inventoryViaTape("12345678901434567", "L%D303"); // 
 		picker.inventoryViaTape("12345678901534567", "L%D401"); // 
-		picker.scanCommand("CLEAR");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 1000);
 
 		LOGGER.info("3b: See what we have now. 4 or 6? Answer 6.");

@@ -70,7 +70,6 @@ public class InfoService implements IApiService{
 				
 			case REMOVE_WALL_ORDERS:
 				removeOrdersFromLocation(facility, location);
-				info = getWallLocationInfo(facility, location, color);
 				break;
 				
 			case REMOVE_INVENTORY:
@@ -96,7 +95,7 @@ public class InfoService implements IApiService{
 			infoPackage.setDisplayInfo(info);
 			return infoPackage;
 		}
-		lightService.lightLocationServerCall(location, color);
+		lightOrdersInWall(facility, locationStr, color, null);
 		String locationName = location.getBestUsableLocationName();
 		List<OrderHeader> ordersInLocation = getOrdersInLocation(location);
 		int numOrders = ordersInLocation.size();
@@ -117,14 +116,14 @@ public class InfoService implements IApiService{
 		}
 		if (numOrders == 0) {
 			info[0] = locationName;
-			info[1] = "Order: none";
+			info[1] = "Orders: none";
 		} else if (numOrders == 1){
 			infoPackage.setSomethingToRemove(true);
 			OrderHeader order = ordersInLocation.get(0);
 			info[0] = locationName;
 			info[1] = "Order: " + order.getDomainId();
 			int completeDetails = order.getOrderDetails().size() - incompleteDetails;
-			info[2] = "Complete: " + completeDetails + " jobs";
+			info[2] = "Complete: " + completeDetails + (completeDetails == 1 ? " job" : " jobs");
 			if (incompleteDetails == 0) {
 				//Leave last line blank
 			} else if (incompleteDetails == 1) {
@@ -158,7 +157,11 @@ public class InfoService implements IApiService{
 		return infoPackage;
 	}
 	
-	private void lightOrdersInWall(Facility facility, String locationStr, ColorEnum color, boolean complete) {
+	/**
+	 * Lights orders in wall
+	 * @complete: null = all orders, true = completed orders, false = incomplete orders
+	 */
+	private void lightOrdersInWall(Facility facility, String locationStr, ColorEnum color, Boolean complete) {
 		Location location = facility.findSubLocationById(locationStr);
 		if (location == null) {
 			return;
@@ -170,7 +173,7 @@ public class InfoService implements IApiService{
 			order = orderLocation.getParent();
 			order.reevaluateOrderAndDetails();
 			boolean orderComplete = order.getStatus() == OrderStatusEnum.COMPLETE;
-			if (orderComplete == complete){
+			if (complete == null || orderComplete == complete){
 				locationsToLight.add(orderLocation.getLocation());
 			}
 		}
@@ -242,8 +245,11 @@ public class InfoService implements IApiService{
 			info[1] = "Item: none";
 			lightService.lightLocationServerCall(location, color);
 		} else {
-			if (numItemsInClosestLocation > 1) {
-				info[0] += " (" + numItemsInClosestLocation + " items)";
+			if (numItemsInClosestLocation == 1) {
+				info[0] += " (1 item)";
+			} else {
+				String itemCount = String.format(" (%d of %d items)", (numRepeatedInventoryScans % numItemsInClosestLocation) + 1, numItemsInClosestLocation);
+				info[0] += itemCount;
 			}
 			if (showGtin) {
 				itemId = closestItem.getGtinId();

@@ -59,7 +59,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 			picker.scanSomething(assignment[1]);
 			picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 		}
-		picker.scanCommand("CLEAR");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 	}
@@ -128,7 +128,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 		// picker2.setupOrderIdAsContainer("1119119119", "6"); cannot do this since it waits for the non error state
 		picker2.scanSomething("1119119119");
 		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECTION_INVALID, WAIT_TIME);
-		picker2.scanCommand("CLEAR");
+		picker2.scanCommand("CANCEL");
 		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		// TODO fix

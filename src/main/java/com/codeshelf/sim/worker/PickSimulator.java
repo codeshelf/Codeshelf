@@ -61,11 +61,11 @@ public class PickSimulator {
 		scanUser(pickerId);
 		waitForCheStates(states(CheStateEnum.SETUP_SUMMARY, CheStateEnum.REMOTE), WAIT_TIME);
 		if (getCurrentCheState() == CheStateEnum.REMOTE){
-			scanCommand("CLEAR");
+			scanCommand("CANCEL");
 			//Since we are going from state REMOTE to REMOTE, give CHE a bit of time to enter a transactional state
 			ThreadUtils.sleep(500);
 			waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
-			scanCommand("CLEAR");
+			scanCommand("CANCEL");
 			waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		}
 		scanCommand("SETUP");

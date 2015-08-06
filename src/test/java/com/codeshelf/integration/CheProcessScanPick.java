@@ -418,8 +418,8 @@ public class CheProcessScanPick extends ServerTest {
 		picker.scanLocation("D302");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 
-		LOGGER.info("1j: scan X%CLEAR and get back to READY state");
-		picker.scanCommand("CLEAR");
+		LOGGER.info("1j: scan X%CANCEL and get back to READY state");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 
 		LOGGER.info("1k: scan X%INVENTORY");
@@ -549,8 +549,8 @@ public class CheProcessScanPick extends ServerTest {
 		picker.scanSomething("100");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 
-		LOGGER.info("2c: clear");
-		picker.scanCommand("CLEAR");
+		LOGGER.info("2c: CANCEL");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
 
 		LOGGER.info("3a: scan inventory command");

@@ -237,7 +237,7 @@ public class CheProcessRemoteLink extends ServerTest {
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
 		picker.scanSomething("%004290590150");
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
-		picker.scanCommand("CLEAR");
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 	}
 
@@ -382,17 +382,17 @@ public class CheProcessRemoteLink extends ServerTest {
 		picker1.logCheDisplay();
 		// Here we would see the che2 display
 
-		LOGGER.info("3a: Picker 1 scan CLEAR from remote screen to clear association");
+		LOGGER.info("3a: Picker 1 scan CANCEL from remote screen to clear association");
 		picker1.scanCommand("REMOTE");
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		picker1.logCheDisplay();
 		Assert.assertEquals("Linked to: CHE2", picker1.getLastCheDisplayString(1));
 
-		LOGGER.info("3b: Picker 1 scan CLEAR to clear link, then clear to exit");
-		picker1.scanCommand("CLEAR");
+		LOGGER.info("3b: Picker 1 scan CANCEL to clear link, then CANCEL to exit");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		picker1.logCheDisplay();
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		picker1.logCheDisplay();
 
@@ -424,10 +424,10 @@ public class CheProcessRemoteLink extends ServerTest {
 		LOGGER.info("5d: Clear it.");
 		picker1.scanCommand("REMOTE");
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		Assert.assertEquals("Linked to: (none)", picker1.getLastCheDisplayString(1));
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		LOGGER.info("6: Associate to itself");
@@ -439,7 +439,7 @@ public class CheProcessRemoteLink extends ServerTest {
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		picker1.logCheDisplay();
 		Assert.assertEquals("Linked to: (none)", picker1.getLastCheDisplayString(1));
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 
 		LOGGER.info("7: Unnecessary unlink");
@@ -448,7 +448,7 @@ public class CheProcessRemoteLink extends ServerTest {
 		picker1.scanCommand("REMOTE"); // unlink old association, if any. There is not.
 		picker1.waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
 		Assert.assertEquals("Linked to: (none)", picker1.getLastCheDisplayString(1));
-		picker1.scanCommand("CLEAR");
+		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 	}
 

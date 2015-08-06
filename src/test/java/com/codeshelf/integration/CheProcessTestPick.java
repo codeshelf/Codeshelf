@@ -1892,8 +1892,8 @@ public class CheProcessTestPick extends ServerTest {
 		assertPositionHasErrorCode(picker, (byte) 2);
 		assertPositionHasErrorCode(picker, (byte) 3);
 
-		//Make sure CLEAR_ERROR gets us out
-		picker.scanCommand("CLEAR");
+		//Make sure CANCEL gets us out
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == Byte.valueOf("11"));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
@@ -1917,8 +1917,8 @@ public class CheProcessTestPick extends ServerTest {
 		assertPositionHasErrorCode(picker, (byte) 2);
 		assertPositionHasErrorCode(picker, (byte) 3);
 
-		//Make sure CLEAR_ERROR gets us out
-		picker.scanCommand("CLEAR");
+		//Make sure CANCEL gets us out
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == Byte.valueOf("11"));
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == Byte.valueOf("22"));
@@ -1936,8 +1936,8 @@ public class CheProcessTestPick extends ServerTest {
 		assertPositionHasErrorCode(picker, (byte) 2);
 		assertPositionHasErrorCode(picker, (byte) 3);
 
-		//Make sure CLEAR_ERROR gets us out
-		picker.scanCommand("CLEAR");
+		//Make sure CANCEL gets us out
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == Byte.valueOf("11"));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
@@ -1964,15 +1964,15 @@ public class CheProcessTestPick extends ServerTest {
 		assertPositionHasErrorCode(picker, (byte) 2);
 		assertPositionHasErrorCode(picker, (byte) 3);
 
-		//Make sure CLEAR_ERROR gets us out
-		picker.scanCommand("CLEAR");
+		//Make sure CANCEL gets us out
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == Byte.valueOf("11"));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
 
-		//Make sure CLEAR_ERROR again does nothing
-		picker.scanCommand("CLEAR");
+		//Make sure CANCEL again does nothing
+		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 1) == Byte.valueOf("11"));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
