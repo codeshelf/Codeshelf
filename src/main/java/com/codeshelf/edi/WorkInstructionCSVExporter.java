@@ -135,11 +135,13 @@ public class WorkInstructionCSVExporter {
 		
 		// Set up the mapper
 		// We are doing this via an import match the order shown
+		String headerString =WorkInstructionCsvBean.getCsvHeaderMatchingBean();
+		/*
 		String headerString = "facilityId, workInstructionId, type, status, orderGroupId, orderId, containerId,"
 				+ "itemId, uom, lotId, locationId, pickerId, planQuantity, actualQuantity, cheId,"
 				+ "assigned, started, completed"; // no version here
 		
-		/*
+
 		private static final Integer	FACILITYID_POS			= 0;
 		private static final Integer	WORKINSTRUCTIONID_POS	= 1;
 		private static final Integer	TYPE_POS				= 2;
@@ -175,22 +177,10 @@ public class WorkInstructionCSVExporter {
 			throw new RuntimeException("create mapping strategy: ", e);
 		}
 		
-		// can we write just the mapper? Provide empty list
+		// This process writes out header and the contents of each bean to match.
+		// It relies on reflection, then calling the getter for each name in the mapping strategy.
+		// This might be good for serializing out work instruction beans to persist in case the server restarts.
 		ArrayList<WorkInstructionCsvBean> beanList = new ArrayList<WorkInstructionCsvBean>();
-		/*
-		  try {
-		 
-			CsvExporter<WorkInstructionCsvBean> exporter = new CsvExporter<WorkInstructionCsvBean>();
-			exporter.setBeanList(beanList);
-			exporter.setStrategy(strategy);
-			exporter.writeHeader(csvWriter);
-			
-		} catch (RuntimeException e) {
-			csvWriter.close();
-			throw new RuntimeException("writing header: ", e);
-		}
-		*/
-
 		for (WorkInstruction wi : inWorkInstructions) {
 			WorkInstructionCsvBean bean = new WorkInstructionCsvBean(wi);
 			beanList.add(bean);

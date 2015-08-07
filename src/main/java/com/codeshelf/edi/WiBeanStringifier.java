@@ -50,24 +50,93 @@ public class WiBeanStringifier {
 
 	public String stringify() {
 
-		if (!wiBeanList.isEmpty() && getExtensionPointService() != null) {
-			// transform order bean with groovy script, if enabled
-			if (getExtensionPointService().hasExtensionPoint(ExtensionPointType.WorkInstructionExportBeanTransformation)) {
-				// Transform the content of our beans
-				for (WorkInstructionCsvBean wiBean : wiBeanList) {
-					Object[] params = { wiBean };
-					try {
-						wiBean = (WorkInstructionCsvBean) getExtensionPointService().eval(ExtensionPointType.WorkInstructionExportBeanTransformation,
-							params);
-					} catch (Exception e) {
-						LOGGER.error("Failed to evaluate WorkInstructionExportBeanTransformation extension point", e);
-					}
-				}
+		if (wiBeanList.isEmpty()) {
+			LOGGER.error("Nothing in bean list for WiBeanStringifier.stringify()");
+			return "";
+		}
+
+		boolean needContentExtension = false;
+		ExtensionPointService groovyService = getExtensionPointService();
+		if (groovyService.hasExtensionPoint(ExtensionPointType.WorkInstructionExportContent))
+			needContentExtension = true;
+
+		// Get header, trailer.
+		String returnStr = "";
+		String header = getWiHeader();
+		String trailer = getWiTrailer();
+		if (header != null && !header.isEmpty())
+			returnStr += header; // new line
+
+		// contents.. Add the new line
+		for (WorkInstructionCsvBean wiBean : wiBeanList) {
+			if (needContentExtension) {
+				returnStr += getWiCustomContent(groovyService, wiBean);
+			} else {
+				returnStr += wiBean.getDefaultCsvContent();
 			}
 		}
-		// Now we have the list of transformed beans, or original if no WorkInstructionExportBeanTransformation.
 
-		return "";
+		if (trailer != null && !trailer.isEmpty())
+			returnStr += trailer; // new line
+		return returnStr;
+	}
+
+	/**
+	 * Our default header is all the fields of the our native export bean.
+	 * But groovy extension may override. If override is null or empty, we do not add to the output file
+	 */
+	private String getWiHeader() {
+		if (getExtensionPointService().hasExtensionPoint(ExtensionPointType.WorkInstructionExportCreateHeader)) {
+			String theOrderId = getOrder().getOrderId();
+			String theCheId = getChe().getDomainId();
+			Object[] params = { theOrderId, theCheId };
+			String header = "";
+			try {
+				header = (String) getExtensionPointService().eval(ExtensionPointType.WorkInstructionExportCreateHeader, params);
+			} catch (Exception e) {
+				LOGGER.error("Failed to evaluate WorkInstructionExportCreateHeader extension point", e);
+			}
+			return header;
+		} else {
+			return WorkInstructionCsvBean.getCsvHeaderMatchingBean();
+		}
+	}
+
+	/**
+	 * Our default trailer is null.
+	 * But groovy extension may override. If trailer is null or empty, we do not add to the output file
+	 */
+	private String getWiTrailer() {
+		if (getExtensionPointService().hasExtensionPoint(ExtensionPointType.WorkInstructionExportCreateTrailer)) {
+			String theOrderId = getOrder().getOrderId();
+			String theCheId = getChe().getDomainId();
+			Object[] params = { theOrderId, theCheId };
+			String header = "";
+			try {
+				header = (String) getExtensionPointService().eval(ExtensionPointType.WorkInstructionExportCreateTrailer, params);
+			} catch (Exception e) {
+				LOGGER.error("Failed to evaluate WorkInstructionExportCreateTrailer extension point", e);
+			}
+			return header;
+		} else {
+			return "";
+		}
+	}
+
+	/**
+	 * Remember, there might be no header. Or the header may not at all specify the order of field in content lines.
+	 * We need a easily understood (brain-dead) way for groovy extension to write out lines using data from our bean.
+	 */
+	private String getWiCustomContent(ExtensionPointService inServiceType, WorkInstructionCsvBean inWiBean) {
+		String content = "";
+		Object[] params = { inWiBean };
+		try {
+			content = (String) getExtensionPointService().eval(ExtensionPointType.WorkInstructionExportContent, params);
+		} catch (Exception e) {
+			LOGGER.error("Failed to evaluate WorkInstructionExportContent extension point", e);
+		}
+
+		return content;
 	}
 
 }

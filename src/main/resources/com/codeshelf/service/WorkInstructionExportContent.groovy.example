@@ -1,7 +1,7 @@
 /**
- * Transforms the values in the bean that will be used to produce the line.
+ * Produce the line from the work instruction bean.
  */
-def WorkInstructionBeanTransformation(wiLine) {
+def WorkInstructionExportContent(wiBean) {
     wiLine.lotId = "";
     return wiLine;
 }

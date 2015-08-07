@@ -16,10 +16,9 @@ import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.WorkInstruction;
 
 /**
- * @author jeffw
+ * This is our "native" WI bean. We have default header to match the default csv content
  *
  */
-
 public class WorkInstructionCsvBean extends ExportCsvBeanABC {
 
 	static final Logger	LOGGER	= LoggerFactory.getLogger(WorkInstructionCsvBean.class);
@@ -85,6 +84,24 @@ public class WorkInstructionCsvBean extends ExportCsvBeanABC {
 	@Setter
 	protected String	completed;
 
+	/**
+	 * This does NOT automatically define the order the fields are written out. Matches the old IronMQ format
+	 */
+	public static String getCsvHeaderMatchingBean(){
+		return "facilityId, workInstructionId, type, status, orderGroupId, orderId, containerId,"
+				+ "itemId, uom, lotId, locationId, pickerId, planQuantity, actualQuantity, cheId,"
+				+ "assigned, started, completed"; // no version here
+	}
+	
+	/**
+	 * This defines the order the fields are written out. Matches the old IronMQ format. This should match getCsvHeaderMatchingBean 
+	 */
+	public String getDefaultCsvContent(){
+		return facilityId +","+ workInstructionId+","+ type+","+ status+","+ orderGroupId+","+ orderId+","+ containerId
+				+","+ itemId+","+ uom+","+ lotId+","+ locationId+","+ pickerId+","+ planQuantity+","+ actualQuantity+","+ cheId
+				+","+ assigned+","+ started+","+ completed; 
+	}
+	
 	public WorkInstructionCsvBean(WorkInstruction inWi) {
 		setFacilityId(inWi.getParent().getDomainId());
 		setWorkInstructionId(inWi.getDomainId());
