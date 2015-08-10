@@ -187,7 +187,8 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 		ArrayList<WorkInstructionCsvBean> beanList = getEdiExportAccumulator().getAndRemoveWiBeansFor(inOrder.getOrderId(),
 			inChe.getDomainId());
 		// This list has "complete" work instruction beans. The particular customer's EDI may need strange handling.
-		processOrderCompleteOnCart(inOrder, inChe, beanList);
+		String exportStr = processOrderCompleteOnCart(inOrder, inChe, beanList);
+		LOGGER.info(exportStr);
 	}
 
 	/**
