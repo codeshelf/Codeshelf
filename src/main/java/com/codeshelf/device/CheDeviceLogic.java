@@ -117,6 +117,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					REMOVE_CONTAINER_MSG					= cheLine("To remove order");
 	protected static final String					REMOVE_NOTHING_MSG						= cheLine("NOTHING TO REMOVE");
 	
+	//For Palletizer
+	protected static final String					PALL_NEW_LOCATION_1_MSG					= cheLine("Scan New Location");
+	protected static final String					PALL_NEW_LOCATION_2_MSG					= cheLine("For Store ");
+	protected static final String					PALL_NEW_LOCATION_3_MSG					= cheLine("Or Scan Another Item");
+	
 	//To repeat: !!!DO NOT CREATE LINES LONGER THAN 20 CHARACTERS!!! using cheLine()
 	//Causes untraceable error during Site initialization
 	
@@ -1429,9 +1434,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		LOGGER.error("setupCommandReceived() needs override");
 	}
 
-	protected void cancelCommandReceived() {
-		LOGGER.error("cancelErrorCommandReceived() needs override");
+	protected void processCommandCancel() {
+		LOGGER.error("processCommandCancel() needs override");
 	}
+	
 
 	// --------------------------------------------------------------------------
 	/**
@@ -2309,5 +2315,17 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		} else {
 			LOGGER.warn("processScreenCommandFromLinkedChe called from state:{}. Not drawing", state);
 		}
+	}
+	
+	protected void displayDeviceInfo(){
+		String deviceType = "UNKNOWN";
+		if (this instanceof SetupOrdersDeviceLogic) {
+			deviceType = "SETUP ORDERS";
+		} else if (this instanceof LineScanDeviceLogic) {
+			deviceType = "LINE SCAN";
+		} else if (this instanceof ChePalletizerDeviceLogic) {
+			deviceType = "PALLETIZER";
+		}
+		sendDisplayCommand("Site " + mDeviceManager.getUsername(), "Device: " + deviceType, EMPTY_MSG, CANCEL_TO_CONTINUE_MSG);
 	}
 }

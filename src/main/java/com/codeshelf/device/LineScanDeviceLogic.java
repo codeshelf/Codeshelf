@@ -64,6 +64,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	/** 
 	 * Command scans are split out by command then state because they are more likely to be state independent
 	 */
+	@Override
 	protected void processCommandScan(final String inScanStr) {
 
 		switch (inScanStr) {
@@ -90,7 +91,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 
 			case CLEAR_COMMAND:
 			case CANCEL_COMMAND:
-				cancelCommandReceived();
+				processCommandCancel();
 				break;
 			
 			case INVENTORY_COMMAND:
@@ -317,7 +318,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 * If on a job, abandon it and go back to ready state
 	 */
 	@Override
-	protected void cancelCommandReceived() {
+	protected void processCommandCancel() {
 		clearAllPosconsOnThisDevice();
 		// needs implementation
 		CheStateEnum currentState = getCheStateEnum();
@@ -697,6 +698,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 		showActivePicks(); // ancestor method works
 	}
 	
+	@Override
 	protected void invalidScanMsg(final CheStateEnum inCheState) {
 		mCheStateEnum = inCheState;
 

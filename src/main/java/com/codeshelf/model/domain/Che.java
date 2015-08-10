@@ -248,13 +248,16 @@ public class Che extends WirelessDeviceABC {
 
 	public enum ProcessMode {
 		SETUP_ORDERS,
-		LINE_SCAN;
+		LINE_SCAN,
+		PALLETIZER;
 
 		public static ProcessMode getMode(String str) {
 			if ("setup_orders".equalsIgnoreCase(str)) {
 				return SETUP_ORDERS;
 			} else if ("line_scan".equalsIgnoreCase(str)) {
 				return LINE_SCAN;
+			} else if ("palletizer".equalsIgnoreCase(str)) {
+				return PALLETIZER;
 			}
 			return null;
 		}

@@ -149,6 +149,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		return useNewCheScreen;
 	}
 
+	@Override
 	public String getDeviceType() {
 		return CsDeviceManager.DEVICETYPE_CHE_SETUPORDERS;
 	}
@@ -160,6 +161,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	// --------------------------------------------------------------------------
 	/**
 	 */
+	@Override
 	protected void setState(final CheStateEnum inCheState) {
 		int priorCount = getSetStateStackCount();
 		try {
@@ -380,6 +382,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/** 
 	 * Command scans are split out by command then state because they are more likely to be state independent
 	 */
+	@Override
 	protected void processCommandScan(final String inScanStr) {
 
 		switch (inScanStr) {
@@ -410,7 +413,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case CLEAR_COMMAND:
 			case CANCEL_COMMAND:
-				cancelCommandReceived();
+				processCommandCancel();
 				break;
 
 			case INVENTORY_COMMAND:
@@ -576,7 +579,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	protected void infoCommandReceived() {
 		switch (mCheStateEnum) {
 			case IDLE:
-				sendDisplayCommand("Site " + mDeviceManager.getUsername(), EMPTY_MSG);
+				displayDeviceInfo();
 				break;
 			case SCAN_GTIN: 	//Inventory scan
 			case PUT_WALL_SCAN_WALL:
@@ -619,7 +622,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 
 	@Override
-	protected void cancelCommandReceived() {
+	protected void processCommandCancel() {
 		//Split it out by state
 		switch (mCheStateEnum) {
 
@@ -804,6 +807,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Send the LED error status as well (color: red effect: error channel: 0).
 	 * 
 	 */
+	@Override
 	protected void invalidScanMsg(final CheStateEnum inCheState) {
 		mCheStateEnum = inCheState;
 

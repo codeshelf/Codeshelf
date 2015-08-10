@@ -38,6 +38,7 @@ import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.InfoService.InfoPackage;
+import com.codeshelf.service.WorkService.PalletizerInfo;
 import com.codeshelf.util.PcapRecord;
 import com.codeshelf.util.PcapRingBuffer;
 import com.codeshelf.util.TwoKeyMap;
@@ -60,6 +61,8 @@ import com.codeshelf.ws.protocol.request.InventoryLightItemRequest;
 import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
 import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.protocol.request.LoginRequest;
+import com.codeshelf.ws.protocol.request.PalletizerItemRequest;
+import com.codeshelf.ws.protocol.request.PalletizerNewLocationRequest;
 import com.codeshelf.ws.protocol.request.SkuWallLocationDisambiguationRequest;
 import com.codeshelf.ws.protocol.request.VerifyBadgeRequest;
 import com.codeshelf.ws.protocol.response.FailureResponse;
@@ -82,6 +85,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	static final String									DEVICETYPE_POS_CON_CTRL		= "PosCon Controller";
 	static final String									DEVICETYPE_CHE_SETUPORDERS	= "CHE_SETUPORDERS";
 	static final String									DEVICETYPE_CHE_LINESCAN		= "CHE_LINESCAN";
+	static final String									DEVICETYPE_CHE_PALLETIZER	= "CHE_PALLETIZER";
 
 	private TwoKeyMap<UUID, NetGuid, INetworkDevice>	mDeviceMap;
 
@@ -491,6 +495,18 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		InfoRequest req = new InfoRequest(actionType, chePersistentId, location, removeItemId);
 		clientEndpoint.sendMessage(req);
 	}
+	
+	public void palletizerItemRequest(String cheGuid, String chePersistentId, String item) {
+		LOGGER.debug("palletizerItemRequest: Che={};  Item={};", cheGuid, item);
+		PalletizerItemRequest req = new PalletizerItemRequest(chePersistentId, item);
+		clientEndpoint.sendMessage(req);
+	}
+	
+	public void palletizerNewLocationRequest(String cheGuid, String chePersistentId, String item, String location) {
+		LOGGER.debug("palletizerNewLocationRequest: Che={}, Item={}, Location={}", cheGuid, item, location);
+		PalletizerNewLocationRequest req = new PalletizerNewLocationRequest(chePersistentId, item, location);
+		clientEndpoint.sendMessage(req);
+	}
 
 	/**
 	 * Websocket connects then this authenticates and receives the network it should use
@@ -594,6 +610,8 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 				netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController, che);
 			} else if (deviceType.equals(DEVICETYPE_CHE_LINESCAN)) {
 				netDevice = new LineScanDeviceLogic(persistentId, deviceGuid, this, radioController);
+			} else if (deviceType.equals(DEVICETYPE_CHE_PALLETIZER)) {
+				netDevice = new ChePalletizerDeviceLogic(persistentId, deviceGuid, this, radioController);
 			} else if (deviceType.equals(DEVICETYPE_LED)) {
 				netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, radioController);
 			} else if (deviceType.equals(DEVICETYPE_POS_CON_CTRL)) {
@@ -647,6 +665,8 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 					netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController, che);
 				} else if (deviceType.equals(DEVICETYPE_CHE_LINESCAN)) {
 					netDevice = new LineScanDeviceLogic(persistentId, deviceGuid, this, radioController);
+				} else if (deviceType.equals(DEVICETYPE_CHE_PALLETIZER)) {
+					netDevice = new ChePalletizerDeviceLogic(persistentId, deviceGuid, this, radioController);
 				} else if (deviceType.equals(DEVICETYPE_LED)) {
 					netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, radioController);
 				} else if (deviceType.equals(DEVICETYPE_POS_CON_CTRL)) {
@@ -752,6 +772,9 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 							break;
 						case SETUP_ORDERS:
 							doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE_SETUPORDERS, che);
+							break;
+						case PALLETIZER:
+							doCreateUpdateNetDevice(id, deviceGuid, DEVICETYPE_CHE_PALLETIZER, che);
 							break;
 						default:
 							LOGGER.error("unimplemented case in updateNetwork");
@@ -902,6 +925,20 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			LOGGER.warn("Device not found in processInfoResponse. CHE id={}", networkGuid);
 		}
 	}
+	
+	public void processPalletizerItemResponse(String networkGuid, PalletizerInfo info) {
+		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
+		if (cheDevice != null) {
+			if (cheDevice instanceof ChePalletizerDeviceLogic){
+				((ChePalletizerDeviceLogic) cheDevice).processItemResponse(info);
+			} else {
+				LOGGER.warn("Device is not ChePalletizerDeviceLogic in processInfoResponse. CHE id={}", networkGuid);
+			}
+		} else {
+			LOGGER.warn("Device not found in processPalletizerItemResponse. CHE id={}", networkGuid);
+		}
+	}
+
 
 	/** Two key actions from the associate response
 	 * 1) Immediately, in advance of networkUpdate that may come, modify and maintain the association map in the cheDeviceLogic

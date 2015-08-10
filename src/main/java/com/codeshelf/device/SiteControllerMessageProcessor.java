@@ -33,6 +33,7 @@ import com.codeshelf.ws.protocol.response.GetPutWallInstructionResponse;
 import com.codeshelf.ws.protocol.response.InfoResponse;
 import com.codeshelf.ws.protocol.response.InventoryUpdateResponse;
 import com.codeshelf.ws.protocol.response.LoginResponse;
+import com.codeshelf.ws.protocol.response.PalletizerItemResponse;
 import com.codeshelf.ws.protocol.response.PutWallPlacementResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
@@ -194,6 +195,13 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				InfoResponse infoResponse = (InfoResponse) response;
 				if (response.getStatus() == ResponseStatus.Success) {
 					this.deviceManager.processInfoResponse(infoResponse.getNetworkGuid(), infoResponse.getInfo());
+				}
+			}
+			
+			else if (response instanceof PalletizerItemResponse) {
+				PalletizerItemResponse palletizerResponse = (PalletizerItemResponse) response;
+				if (response.getStatus() == ResponseStatus.Success) {
+					this.deviceManager.processPalletizerItemResponse(palletizerResponse.getNetworkGuid(), palletizerResponse.getInfo());
 				}
 			}
 			

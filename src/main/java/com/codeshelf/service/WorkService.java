@@ -2353,5 +2353,31 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 		return changed;
 	}
+	
+	public PalletizerInfo processPalletizerItemRequest(Che che, String item){
+		PalletizerInfo info = new PalletizerInfo();
+		String storeId = item.length() <= 4 ? item : item.substring(0, 4);
+		info.setItem(item);
+		info.setStoreId(storeId);
+		return info;
+	}
+	
+	public PalletizerInfo processPalletizerNewLocationRequest(Che che, String item, String location){
+		return processPalletizerItemRequest(che, item);
+	}
 
+	
+	public static class PalletizerInfo {
+		@Getter 
+		@Setter
+		private boolean locationFound = false;
+		
+		@Getter 
+		@Setter
+		private String storeId;
+		
+		@Getter 
+		@Setter
+		private String item;
+	}
 }
