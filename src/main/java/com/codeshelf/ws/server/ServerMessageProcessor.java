@@ -40,6 +40,7 @@ import com.codeshelf.ws.protocol.command.ObjectGetCommand;
 import com.codeshelf.ws.protocol.command.ObjectMethodCommand;
 import com.codeshelf.ws.protocol.command.ObjectPropertiesCommand;
 import com.codeshelf.ws.protocol.command.ObjectUpdateCommand;
+import com.codeshelf.ws.protocol.command.PalletizerItemCommand;
 import com.codeshelf.ws.protocol.command.PutWallPlacementCommand;
 import com.codeshelf.ws.protocol.command.RegisterFilterCommand;
 import com.codeshelf.ws.protocol.command.ServiceMethodCommand;
@@ -68,6 +69,8 @@ import com.codeshelf.ws.protocol.request.ObjectGetRequest;
 import com.codeshelf.ws.protocol.request.ObjectMethodRequest;
 import com.codeshelf.ws.protocol.request.ObjectPropertiesRequest;
 import com.codeshelf.ws.protocol.request.ObjectUpdateRequest;
+import com.codeshelf.ws.protocol.request.PalletizerItemRequest;
+import com.codeshelf.ws.protocol.request.PalletizerNewLocationRequest;
 import com.codeshelf.ws.protocol.request.PutWallPlacementRequest;
 import com.codeshelf.ws.protocol.request.RegisterFilterRequest;
 import com.codeshelf.ws.protocol.request.RequestABC;
@@ -109,6 +112,8 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	private final Counter			tapeLocationDecodingCounter;
 	private final Counter			skuWallLocationDisambiguationCounter;
 	private final Counter			informationRequestCounter;
+	private final Counter			palletizerItemCounter;
+	private final Counter			palletizerNewLocationCounter;
 	private final Timer				requestProcessingTimer;
 
 	private ServiceFactory			serviceFactory;
@@ -148,7 +153,9 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		notificationCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.notification");
 		tapeLocationDecodingCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.tape-location-decoding");
 		skuWallLocationDisambiguationCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.sku_wall_disambiguation");
-		informationRequestCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.information_request_counter");
+		informationRequestCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.information_request");
+		palletizerItemCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.palletizer_item");
+		palletizerNewLocationCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.palletizer_new_location");
 	}
 
 	ObjectChangeBroadcaster getObjectChangeBroadcaster() {
@@ -280,6 +287,14 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		} else if (request instanceof InfoRequest) {
 			command = new InfoCommand(csSession, (InfoRequest) request, serviceFactory.getServiceInstance(InfoService.class));
 			informationRequestCounter.inc();
+			applicationRequestCounter.inc();
+		} else if (request instanceof PalletizerItemRequest) {
+			command = new PalletizerItemCommand(csSession, (PalletizerItemRequest) request, serviceFactory.getServiceInstance(WorkService.class));
+			palletizerItemCounter.inc();
+			applicationRequestCounter.inc();
+		} else if (request instanceof PalletizerNewLocationRequest) {
+			command = new PalletizerItemCommand(csSession, (PalletizerItemRequest) request, serviceFactory.getServiceInstance(WorkService.class));
+			palletizerNewLocationCounter.inc();
 			applicationRequestCounter.inc();
 		} else {
 			LOGGER.error("invalid message {} for user {}", request.getClass().getSimpleName(), user.getUsername());

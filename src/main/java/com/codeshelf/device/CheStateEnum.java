@@ -69,7 +69,16 @@ public enum CheStateEnum {
 	
 	// states for the REMOVE command
 	REMOVE_CONFIRMATION(CheStateNum.REMOVE_CONFIRMATION, "REMOVE_CONFIRMATION"),
-	REMOVE_CHE_CONTAINER(CheStateNum.REMOVE_CHE_CONTAINER, "REMOVE_CHE_CONTAINER");
+	REMOVE_CHE_CONTAINER(CheStateNum.REMOVE_CHE_CONTAINER, "REMOVE_CHE_CONTAINER"),
+	
+	// states for PALLETIZER
+	PALLETIZER_SCAN_ITEM(CheStateNum.PALLETIZER_SCAN_ITEM, "PALLETIZER_SCAN_ITEM"),
+	PALLETIZER_PROCESSING(CheStateNum.PALLETIZER_PROCESSING, "PALLETIZER_PROCESSING"),
+	PALLETIZER_PUT_ITEM(CheStateNum.PALLETIZER_PUT_ITEM, "PALLETIZER_PUT_ITEM"),
+	PALLETIZER_NEW_LOCATION(CheStateNum.PALLETIZER_NEW_LOCATION, "PALLETIZER_NEW_LOCATION"),
+	PALLETIZER_DAMAGE(CheStateNum.PALLETIZER_DAMAGE, "PALLETIZER_DAMAGE"),
+	PALLETIZER_LICENSE(CheStateNum.PALLETIZER_LICENSE, "PALLETIZER_LICENSE");
+
 
 	private int		mValue;
 	private String	mName;
@@ -212,6 +221,15 @@ public enum CheStateEnum {
 		// REMOVE States
 		static final byte	REMOVE_CONFIRMATION  		= 38;	//Added July 29th
 		static final byte	REMOVE_CHE_CONTAINER  		= 39;	//Added July 30th
+		
+		//PALLETIZER
+		static final byte	PALLETIZER_SCAN_ITEM		= 40;	//Added August 10, 2015
+		static final byte	PALLETIZER_PROCESSING		= 41;	//Added August 10, 2015
+		static final byte	PALLETIZER_PUT_ITEM			= 42;	//Added August 10, 2015
+		static final byte	PALLETIZER_NEW_LOCATION		= 43;	//Added August 10, 2015
+		static final byte	PALLETIZER_DAMAGE			= 44;	//Added August 10, 2015
+		static final byte	PALLETIZER_LICENSE			= 45;	//Added August 10, 2015
+
 		
 		private CheStateNum() {
 		};
