@@ -46,6 +46,13 @@ public class WiBeanStringifier {
 		wiBeanList = inWiBeanList;
 		che = inChe;
 		order = inOrder;
+		// Some diagnostics
+		if (che == null || order == null) {
+			LOGGER.info("null objects passed to WiBeanStringifier");
+		}
+		if (extensionPointService == null) {
+			LOGGER.info("null extension service passed to WiBeanStringifier");
+		}
 	}
 
 	public String stringify() {
@@ -57,6 +64,9 @@ public class WiBeanStringifier {
 
 		boolean needContentExtension = false;
 		ExtensionPointService groovyService = getExtensionPointService();
+		// Debug aid
+		if (groovyService == null)
+			LOGGER.error("null extension point service in needContentExtension");
 		if (groovyService.hasExtensionPoint(ExtensionPointType.WorkInstructionExportContent))
 			needContentExtension = true;
 
@@ -65,7 +75,7 @@ public class WiBeanStringifier {
 		String header = getWiHeader();
 		String trailer = getWiTrailer();
 		if (header != null && !header.isEmpty())
-			returnStr += header; // new line
+			returnStr += header + "\n";
 
 		// contents.. Add the new line
 		for (WorkInstructionCsvBean wiBean : wiBeanList) {
@@ -74,10 +84,11 @@ public class WiBeanStringifier {
 			} else {
 				returnStr += wiBean.getDefaultCsvContent();
 			}
+			returnStr += "\n";
 		}
 
 		if (trailer != null && !trailer.isEmpty())
-			returnStr += trailer; // new line
+			returnStr += trailer + "\n";
 		return returnStr;
 	}
 
