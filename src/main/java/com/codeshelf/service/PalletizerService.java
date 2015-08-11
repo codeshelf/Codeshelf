@@ -23,13 +23,22 @@ import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.inject.Inject;
 
 import lombok.Getter;
 import lombok.Setter;
 
 public class PalletizerService implements IApiService{
+	private LightService lightService;
+	
 	private static final Logger			LOGGER					= LoggerFactory.getLogger(WorkService.class);
 	
+	@Inject
+	public PalletizerService(LightService inLightService) {
+		this.lightService = inLightService;
+	}
+
 	public PalletizerInfo processPalletizerItemRequest(Che che, String itemId){
 		Facility facility = che.getFacility();
 		String storeId = generatePalletizerStoreId(itemId);
@@ -168,6 +177,14 @@ public class PalletizerService implements IApiService{
 		order.setActive(false);
 		order.setDomainId(license);
 		OrderHeader.staticGetDao().store(order);
+		
+		//Should be just one order location
+		List<OrderLocation> orderLocations = order.getActiveOrderLocations();
+		List<Location> locations = Lists.newArrayList();
+		for (OrderLocation orderLocation : orderLocations) {
+			locations.add(orderLocation.getLocation());
+		}
+		lightService.lightLocationServerCall(locations, che.getColor());
 		return null;
 	}
 	

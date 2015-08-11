@@ -149,8 +149,8 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 				break;
 
 			case REMOVE_COMMAND:
-				clearItemInfo();
 				setState(CheStateEnum.PALLETIZER_LICENSE);
+				clearItemInfo();
 				break;
 				
 			case INFO_COMMAND:
@@ -293,8 +293,8 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 		switch (mCheStateEnum) {
 			case PALLETIZER_PUT_ITEM:
 				completeCurrentWi();
-				clearItemInfo();
 				setState(CheStateEnum.PALLETIZER_SCAN_ITEM);
+				clearItemInfo();
 				break;
 
 			default:
