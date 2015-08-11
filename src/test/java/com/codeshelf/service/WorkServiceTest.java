@@ -196,7 +196,8 @@ public class WorkServiceTest extends ServerTest {
 			mock(OrderService.class),
 			mock(InventoryService.class),
 			mock(NotificationService.class),
-			mock(InfoService.class));
+			mock(InfoService.class),
+			mock(PalletizerService.class));
 		this.getTenantPersistenceService().commitTransaction();
 
 		IMessageProcessor processor = new ServerMessageProcessor(factory,
@@ -219,7 +220,8 @@ public class WorkServiceTest extends ServerTest {
 			mock(OrderService.class),
 			mock(InventoryService.class),
 			mock(NotificationService.class),
-			mock(InfoService.class));
+			mock(InfoService.class),
+			mock(PalletizerService.class));
 		IMessageProcessor processor2 = new ServerMessageProcessor(factory2,
 			new ConverterProvider().get(),
 			this.webSocketManagerService);

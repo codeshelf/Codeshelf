@@ -12,7 +12,7 @@ import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
-import com.codeshelf.service.WorkService.PalletizerInfo;
+import com.codeshelf.service.PalletizerService.PalletizerInfo;
 import com.google.common.collect.Lists;
 
 import lombok.Getter;
@@ -73,6 +73,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 	
 	@Override
 	protected void setState(final CheStateEnum inCheState) {
+		clearAffectedLedAndPoscons();
 		int priorCount = getSetStateStackCount();
 		try {
 			setSetStateStackCount(priorCount + 1);
@@ -107,8 +108,11 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 					break;
 					
 				case PALLETIZER_DAMAGED:
-					clearAffectedLedAndPoscon();
 					sendDisplayCommand(DAMAGED_PUT_CONFIRM_MSG, YES_NO_MSG);
+					break;
+					
+				case PALLETIZER_LICENSE:
+					sendDisplayCommand(PALL_REMOVE_LICENSE_1_MSG, PALL_REMOVE_LICENSE_1_MSG, EMPTY_MSG, CANCEL_TO_EXIT_MSG);
 					break;
 					
 				default:
@@ -144,6 +148,11 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 				yesOrNoCommandReceived(inScanStr);
 				break;
 
+			case REMOVE_COMMAND:
+				setState(CheStateEnum.PALLETIZER_LICENSE);
+				clearItemInfo();
+				break;
+				
 			case INFO_COMMAND:
 				processCommandInfo();
 				break;
@@ -159,7 +168,6 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 			case PALLETIZER_DAMAGED:
 				if (YES_COMMAND.equalsIgnoreCase(inScanStr)) {
 					notifyWiVerb(getInfo().getWi(), WorkerEvent.EventType.SHORT, kLogAsWarn);
-					clearAffectedLedAndPoscon();
 					setState(CheStateEnum.PALLETIZER_SCAN_ITEM);
 				} else {
 					setState(CheStateEnum.PALLETIZER_PUT_ITEM);
@@ -200,6 +208,13 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 				}
 				break;
 				
+			case PALLETIZER_LICENSE:
+				if (isEmpty(scanPrefix)) {
+					setState(CheStateEnum.PALLETIZER_PROCESSING);
+					mDeviceManager.palletizerRemoveOrderRequest(getGuidNoPrefix(), getPersistentId().toString(), scanBody);
+				}
+				break;
+				
 			default:
 		}
 	}
@@ -216,14 +231,21 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 	
 	@Override
 	protected void processCommandCancel() {
-		clearAffectedLedAndPoscon();
 		switch (mCheStateEnum) {
 			case PALLETIZER_PROCESSING:
 				setState(CheStateEnum.PALLETIZER_SCAN_ITEM);
 				break;
 				
+			case PALLETIZER_PUT_ITEM:
+				setState(CheStateEnum.PALLETIZER_SCAN_ITEM);
+				break;
+				
 			case PALLETIZER_DAMAGED:
 				setState(CheStateEnum.PALLETIZER_PUT_ITEM);
+				break;
+				
+			case PALLETIZER_LICENSE:
+				setState(CheStateEnum.PALLETIZER_SCAN_ITEM);
 				break;
 				
 			default:
@@ -260,7 +282,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 		if (TAPE_PREFIX.equalsIgnoreCase(scanPrefix)) {
 			scanBody = scanPrefix + scanBody;
 		}
-		mDeviceManager.palletizerNewLocationRequest(getGuidNoPrefix(), getPersistentId().toString(), getInfo().getItem(), scanBody);
+		mDeviceManager.palletizerNewOrderRequest(getGuidNoPrefix(), getPersistentId().toString(), getInfo().getItem(), scanBody);
 	}
 	
 	@Override
@@ -271,8 +293,8 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 		switch (mCheStateEnum) {
 			case PALLETIZER_PUT_ITEM:
 				completeCurrentWi();
-				clearItemInfo();
 				setState(CheStateEnum.PALLETIZER_SCAN_ITEM);
+				clearItemInfo();
 				break;
 
 			default:
@@ -295,15 +317,14 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 		wi.setStatus(WorkInstructionStatusEnum.COMPLETE);
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi);
 		notifyWiVerb(wi, WorkerEvent.EventType.COMPLETE, kLogAsInfo);
-		clearAffectedLedAndPoscon();
 	}
 	
-	private void clearAffectedLedAndPoscon(){
+	private void clearAffectedLedAndPoscons(){
 		WorkInstruction wi = getInfo().getWi();
 		if (wi != null) {
 			clearLedAndPosConControllersForWi(wi);
 		}
-		clearOnePosconOnThisDevice((byte)1);
+		clearAllPosconsOnThisDevice();
 	}
 	
 	@Override
@@ -334,9 +355,26 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 		} else {
 			setState(CheStateEnum.PALLETIZER_NEW_ORDER);
 		}
-		String error = info.getErrorMessage();
-		if (error != null) {
-			sendDisplayCommand(error, EMPTY_MSG, EMPTY_MSG, CANCEL_TO_CONTINUE_MSG);
+		String error1 = info.getErrorMessage1();
+		if (error1 != null) {
+			String error2 = info.getErrorMessage2();
+			if (error2 == null){
+				error2 = "";
+			}
+			sendDisplayCommand(error1, error2, EMPTY_MSG, CANCEL_TO_CONTINUE_MSG);
+		}
+	}
+	
+	protected void processRemoveResponse(String error){
+		if (mCheStateEnum != CheStateEnum.PALLETIZER_PROCESSING){
+			LOGGER.warn("Unexpected state {} when receiving Palletizer Remove Response", mCheStateEnum);
+			return;
+		}
+		if (error == null) {
+			setState(CheStateEnum.PALLETIZER_SCAN_ITEM);
+		} else {
+			setState(CheStateEnum.PALLETIZER_LICENSE);
+			sendDisplayCommand(error, CANCEL_TO_CONTINUE_MSG);
 		}
 	}
 	

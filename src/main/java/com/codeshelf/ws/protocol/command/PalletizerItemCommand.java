@@ -6,8 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.service.WorkService;
-import com.codeshelf.service.WorkService.PalletizerInfo;
+import com.codeshelf.service.PalletizerService.PalletizerInfo;
+import com.codeshelf.service.PalletizerService;
 import com.codeshelf.ws.protocol.request.PalletizerItemRequest;
 import com.codeshelf.ws.protocol.response.PalletizerItemResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
@@ -19,12 +19,12 @@ public class PalletizerItemCommand extends CommandABC{
 
 	private PalletizerItemRequest	request;
 
-	private WorkService				workService;
+	private PalletizerService		palletizerService;
 
-	public PalletizerItemCommand(WebSocketConnection connection, PalletizerItemRequest request, WorkService workService) {
+	public PalletizerItemCommand(WebSocketConnection connection, PalletizerItemRequest request, PalletizerService palletizerService) {
 		super(connection);
 		this.request = request;
-		this.workService = workService;
+		this.palletizerService = palletizerService;
 	}
 
 	@Override
@@ -36,7 +36,7 @@ public class PalletizerItemCommand extends CommandABC{
 		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
 		if (che!=null) {
 			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();
-			PalletizerInfo info = workService.processPalletizerItemRequest(che, item);
+			PalletizerInfo info = palletizerService.processPalletizerItemRequest(che, item);
 			response.setInfo(info);
 			response.setNetworkGuid(networkGuid);
 			response.setStatus(ResponseStatus.Success);
