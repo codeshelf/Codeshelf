@@ -6,9 +6,12 @@
  *******************************************************************************/
 package com.codeshelf.edi;
 
+import groovy.lang.GroovyRuntimeException;
+
 import java.util.ArrayList;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +35,9 @@ public class WiBeanStringifier {
 	Che									che;
 	@Getter
 	OrderHeader							order;
+	@Getter
+	@Setter
+	boolean								notifyingOrderOnCart;
 
 	private static final Logger			LOGGER		= LoggerFactory.getLogger(WiBeanStringifier.class);
 
@@ -53,12 +59,53 @@ public class WiBeanStringifier {
 		if (extensionPointService == null) {
 			LOGGER.info("null extension service passed to WiBeanStringifier");
 		}
+		this.setNotifyingOrderOnCart(false);
 	}
 
 	public String stringify() {
+		try {
+		if (isNotifyingOrderOnCart()) {
+			return stringifyOrderOnCart();
+		} else {
+			return stringifyOrderComplete();
+		}
+		}
+		catch (GroovyRuntimeException e) {
+			LOGGER.warn("Groovy error in WiBeanStringifier: {}", e);
+			return "";
+		}
+	}
+
+	public String stringifyOrderOnCart() {
+
+		ExtensionPointService groovyService = getExtensionPointService();
+		// Debug aid
+		if (groovyService == null)
+			LOGGER.error("null extension point service in needContentExtension");
+		if (!groovyService.hasExtensionPoint(ExtensionPointType.OrderOnCartContent)) {
+			return "";
+		}
+		OrderHeader order = getOrder();
+		String orderId = order.getOrderId();
+		String customerId = order.getCustomerId();
+		if (customerId == null)
+				customerId = "";
+		String cheId = getChe().getDomainId();
+		String content = "";
+		Object[] params = { orderId, cheId, customerId};
+		try {
+			content = (String) getExtensionPointService().eval(ExtensionPointType.OrderOnCartContent, params);
+		} catch (Exception e) {
+			LOGGER.error("Failed to evaluate OrderOnCartContent extension point", e);
+		}
+
+		return content;
+	}
+
+	public String stringifyOrderComplete() {
 
 		if (wiBeanList.isEmpty()) {
-			LOGGER.error("Nothing in bean list for WiBeanStringifier.stringify()");
+			LOGGER.error("Nothing in bean list for WiBeanStringifier.stringifyOrderComplete()");
 			return "";
 		}
 

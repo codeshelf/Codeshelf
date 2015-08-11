@@ -421,7 +421,14 @@ public class WorkServiceTest extends ServerTest {
 	public void accumulatorTestWithExtensions() throws IOException, InterruptedException {
 		// What is a test with no asserts?  Not so great. Can see the output in the log/console, though. It works.
 
-		LOGGER.info("1: Add the header, trailer, and content extensions");
+		LOGGER.info("1: Add the orderOnCart, header, trailer, and content extensions");
+
+		// TODO change to order bean and che bean so we do not have to anticipate every need as a separate parameter. 
+		// Never pass domain object to groovy.
+		String onCartScript = "def OrderOnCartContent(orderId,cheId, customerId) { "
+				+ "def returnStr = '0073^ORDERSTATUS^0000000000^'"
+				+ "+ orderId +'^'+ cheId +'^'+ customerId + '^OPEN';"
+				+ " return returnStr;}";
 
 		// groovy by default returns the last thing in the function/closure that was done. In these cases, returns the string
 		String headerScript = "def WorkInstructionExportCreateHeader(orderId,cheId) { '0073^ORDERSTATUS^0000000000^'"
@@ -436,6 +443,14 @@ public class WorkServiceTest extends ServerTest {
 
 		beginTransaction();
 		Facility facility = facilityGenerator.generateValid();
+
+		// For PFSWeb (and Dematic carts), the OrderOnCart is approximately the same as the work instruction header, 
+		// but this will not be universally true
+		ExtensionPoint onCartExt = new ExtensionPoint(facility, ExtensionPointType.OrderOnCartContent);
+		onCartExt.setScript(onCartScript);
+		onCartExt.setActive(true);
+		ExtensionPoint.staticGetDao().store(onCartExt);
+
 		ExtensionPoint headerExt = new ExtensionPoint(facility, ExtensionPointType.WorkInstructionExportCreateHeader);
 		headerExt.setScript(headerScript);
 		headerExt.setActive(true);
@@ -464,10 +479,13 @@ public class WorkServiceTest extends ServerTest {
 		PhonyPFSWebExportService theService = new PhonyPFSWebExportService();
 		commitTransaction();
 
+		LOGGER.info("3: notify order on cart"); // Use extension points
+		theService.notifyOrderOnCart(wiOrder, wiChe);
+
 		LOGGER.info("4: Accumulate the wi"); // this does not use extension points
 		theService.notifyWiComplete(wi);
 
-		LOGGER.info("5: Report on the order");
+		LOGGER.info("5: Report on the order"); // Use extension points
 		theService.notifyOrderCompleteOnCart(wiOrder, wiChe);
 	}
 

@@ -174,7 +174,8 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	 * This is initially tailored to PFSWeb data interchange, mimicking Dematic cart
 	 */
 	public void notifyOrderOnCart(OrderHeader inOrder, Che inChe) {
-
+		String exportStr = processOrderOnCart(inOrder, inChe);
+		LOGGER.info(exportStr);
 	}
 
 	/**
@@ -199,6 +200,20 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	protected String processOrderCompleteOnCart(OrderHeader inOrder, Che inChe, ArrayList<WorkInstructionCsvBean> wiBeanList) {
 		
 		WiBeanStringifier stringifier = new WiBeanStringifier(inOrder, inChe, wiBeanList,getExtensionPointService() );
+		
+		return stringifier.stringify();
+		
+	}
+
+	/**
+	 * This returns a string that will be fed into some transport means.
+	 * For PFSWeb, string -> file -> ftp service
+	 * The standard behavior is nothing here, but extension may send something.
+	 */
+	protected String processOrderOnCart(OrderHeader inOrder, Che inChe) {
+		
+		WiBeanStringifier stringifier = new WiBeanStringifier(inOrder, inChe, null, getExtensionPointService() );
+		stringifier.setNotifyingOrderOnCart(true);
 		
 		return stringifier.stringify();
 		
