@@ -41,6 +41,7 @@ import com.codeshelf.ws.protocol.command.ObjectMethodCommand;
 import com.codeshelf.ws.protocol.command.ObjectPropertiesCommand;
 import com.codeshelf.ws.protocol.command.ObjectUpdateCommand;
 import com.codeshelf.ws.protocol.command.PalletizerItemCommand;
+import com.codeshelf.ws.protocol.command.PalletizerNewLocationCommand;
 import com.codeshelf.ws.protocol.command.PutWallPlacementCommand;
 import com.codeshelf.ws.protocol.command.RegisterFilterCommand;
 import com.codeshelf.ws.protocol.command.ServiceMethodCommand;
@@ -293,7 +294,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			palletizerItemCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof PalletizerNewLocationRequest) {
-			command = new PalletizerItemCommand(csSession, (PalletizerItemRequest) request, serviceFactory.getServiceInstance(WorkService.class));
+			command = new PalletizerNewLocationCommand(csSession, (PalletizerNewLocationRequest) request, serviceFactory.getServiceInstance(WorkService.class));
 			palletizerNewLocationCounter.inc();
 			applicationRequestCounter.inc();
 		} else {

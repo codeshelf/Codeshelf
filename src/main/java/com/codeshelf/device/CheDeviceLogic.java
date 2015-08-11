@@ -118,9 +118,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					REMOVE_NOTHING_MSG						= cheLine("NOTHING TO REMOVE");
 	
 	//For Palletizer
-	protected static final String					PALL_NEW_LOCATION_1_MSG					= cheLine("Scan New Location");
-	protected static final String					PALL_NEW_LOCATION_2_MSG					= cheLine("For Store ");
-	protected static final String					PALL_NEW_LOCATION_3_MSG					= cheLine("Or Scan Another Item");
+	protected static final String					PALL_NEW_ORDER_1_MSG					= cheLine("Scan New Location");
+	protected static final String					PALL_NEW_ORDER_2_MSG					= cheLine("For Store ");
+	protected static final String					PALL_NEW_ORDER_3_MSG					= cheLine("Or Scan Another Item");
+	protected static final String					PALL_SCAN_NEXT_ITEM_MSG					= cheLine("Scan Next Item");
 	
 	//To repeat: !!!DO NOT CREATE LINES LONGER THAN 20 CHARACTERS!!! using cheLine()
 	//Causes untraceable error during Site initialization

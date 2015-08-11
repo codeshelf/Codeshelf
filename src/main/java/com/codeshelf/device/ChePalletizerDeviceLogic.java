@@ -82,8 +82,13 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 					sendDisplayCommand("Processing...", EMPTY_MSG);
 					break;
 					
-				case PALLETIZER_NEW_LOCATION:
-					sendDisplayCommand(PALL_NEW_LOCATION_1_MSG, PALL_NEW_LOCATION_2_MSG + getInfo().getStoreId(), EMPTY_MSG, PALL_NEW_LOCATION_3_MSG);
+				case PALLETIZER_NEW_ORDER:
+					sendDisplayCommand(PALL_NEW_ORDER_1_MSG, PALL_NEW_ORDER_2_MSG + getInfo().getOrderId(), EMPTY_MSG, PALL_NEW_ORDER_3_MSG);
+					break;
+					
+				case PALLETIZER_PUT_ITEM:
+					PalletizerInfo info = getInfo();
+					sendDisplayCommand(info.getLocation(), "Item: " + info.getItem(), "Store: " + info.getOrderId(), PALL_SCAN_NEXT_ITEM_MSG);
 					break;
 					
 				default:
@@ -126,16 +131,22 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 				break;
 				
 			case PALLETIZER_SCAN_ITEM:
-				processItemScan(scanPrefix, scanBody);
+				if (isEmpty(scanPrefix)){
+					processItemScan(scanPrefix, scanBody);
+				}
 				break;
 				
 			case PALLETIZER_PUT_ITEM:
-				processItemScan(scanPrefix, scanBody);
+				if (isEmpty(scanPrefix)){
+					processItemScan(scanPrefix, scanBody);
+				}
 				break;
 				
-			case PALLETIZER_NEW_LOCATION:
-				if (isEmpty(scanPrefix) || LOCATION_PREFIX.equalsIgnoreCase(scanPrefix) || TAPE_PREFIX.equalsIgnoreCase(scanPrefix)) {
-					processNewStoreLocationScan(scanPrefix, scanBody);
+			case PALLETIZER_NEW_ORDER:
+				if (LOCATION_PREFIX.equalsIgnoreCase(scanPrefix) || TAPE_PREFIX.equalsIgnoreCase(scanPrefix)) {
+					processNewOrderLocationScan(scanPrefix, scanBody);
+				} else if (isEmpty(scanPrefix)){
+					processItemScan(scanPrefix, scanBody);
 				}
 				break;
 				
@@ -185,9 +196,9 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 		}
 	}
 	
-	private void processNewStoreLocationScan(String scanPrefix, String scanBody){
+	private void processNewOrderLocationScan(String scanPrefix, String scanBody){
 		setState(CheStateEnum.PALLETIZER_PROCESSING);
-		if (scanPrefix != null) {
+		if (TAPE_PREFIX.equalsIgnoreCase(scanPrefix)) {
 			scanBody = scanPrefix + scanBody;
 		}
 		mDeviceManager.palletizerNewLocationRequest(getGuidNoPrefix(), getPersistentId().toString(), getInfo().getItem(), scanBody);
@@ -216,10 +227,14 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 			return;
 		}
 		setInfo(info);
-		if (info.isLocationFound()) {
+		if (info.isOrderFound()) {
 			setState(CheStateEnum.PALLETIZER_PUT_ITEM);
 		} else {
-			setState(CheStateEnum.PALLETIZER_NEW_LOCATION);
+			setState(CheStateEnum.PALLETIZER_NEW_ORDER);
+		}
+		String error = info.getErrorMessage();
+		if (error != null) {
+			sendDisplayCommand(error, EMPTY_MSG, EMPTY_MSG, CANCEL_TO_CONTINUE_MSG);
 		}
 	}
 	

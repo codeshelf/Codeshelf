@@ -2355,29 +2355,99 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	}
 	
 	public PalletizerInfo processPalletizerItemRequest(Che che, String item){
+		Facility facility = che.getFacility();
+		String orderId = getPalletizerOrderId(item);
 		PalletizerInfo info = new PalletizerInfo();
-		String storeId = item.length() <= 4 ? item : item.substring(0, 4);
 		info.setItem(item);
-		info.setStoreId(storeId);
+		info.setOrderId(orderId);
+		Location location = null;
+		//Get order for this item
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
+		if (order == null){
+			info.setOrderFound(false);
+			return info;
+		} else {
+			List<OrderLocation> orderLocations = order.getActiveOrderLocations();
+			if (!orderLocations.isEmpty()) {
+				location = orderLocations.get(0).getLocation();
+			} else {
+				LOGGER.warn("Palletizer order {} doesn't have a location", orderId);
+			}
+		}
+		info.setOrderFound(true);
+		info.setLocation(location.getBestUsableLocationName());
+		//Create order detail, or reuse one from the same item in this order
+		OrderDetail detail = order.getOrderDetail(item);
+		if (detail == null) {
+			UomMaster uomMaster = facility.createUomMaster("EA");
+			ItemMaster itemMaster = facility.createItemMaster(item, null, uomMaster);
+			detail = new OrderDetail(item, true);
+			detail.setStatus(OrderStatusEnum.RELEASED);
+			detail.setUpdated(new Timestamp(System.currentTimeMillis()));
+			detail.setQuantities(1);
+			detail.setItemMaster(itemMaster);
+			detail.setUomMaster(uomMaster);
+			order.addOrderDetail(detail);
+			UomMaster.staticGetDao().store(uomMaster);
+			ItemMaster.staticGetDao().store(itemMaster);
+			OrderHeader.staticGetDao().store(order);
+		} else {
+			detail.setQuantities(detail.getQuantity() + 1);
+		}
+		OrderDetail.staticGetDao().store(detail);
 		return info;
 	}
 	
-	public PalletizerInfo processPalletizerNewLocationRequest(Che che, String item, String location){
+	public PalletizerInfo processPalletizerNewLocationRequest(Che che, String item, String locationStr){
+		Facility facility = che.getFacility();
+		Location location = facility.findSubLocationById(locationStr);
+		String orderId = getPalletizerOrderId(item);
+		if (location == null) {
+			LOGGER.error("Could not find location {}", locationStr);
+			PalletizerInfo info = new PalletizerInfo();
+			info.setItem(item);
+			info.setOrderId(orderId);
+			info.setOrderFound(false);
+			info.setErrorMessage("Not found: " + locationStr);
+			return info;
+		}
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
+		if (order == null) {
+			LOGGER.info("Creating Order {}", orderId);
+			order = OrderHeader.createEmptyOrderHeader(facility, orderId);
+			order.addOrderLocation(location);
+			OrderHeader.staticGetDao().store(order);
+		} else {
+			LOGGER.warn("Somewhy processPalletizerNewLocationRequest() was called for an item {} that already has a order", item);
+		}
 		return processPalletizerItemRequest(che, item);
 	}
-
+	private String getPalletizerOrderId(String item){
+		if (item == null) {
+			return null;
+		}
+		return item.length() <= 4 ? item : item.substring(0, 4);
+	}
 	
 	public static class PalletizerInfo {
 		@Getter 
 		@Setter
-		private boolean locationFound = false;
+		private boolean orderFound = false;
 		
 		@Getter 
 		@Setter
-		private String storeId;
+		private String orderId;
 		
 		@Getter 
 		@Setter
 		private String item;
+		
+		@Getter 
+		@Setter
+		private String location;
+		
+		@Getter 
+		@Setter
+		private String errorMessage;
 	}
 }
