@@ -1,0 +1,7 @@
+/**
+ * produce the message in customer format
+ */
+def OrderOnCartContent(orderId, cheId) {
+    msg = ""
+     return msg;
+}

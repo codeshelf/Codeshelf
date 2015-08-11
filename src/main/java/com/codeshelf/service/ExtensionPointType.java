@@ -19,6 +19,7 @@ public enum ExtensionPointType {
 	OrderImportHeaderTransformation,
 	OrderImportCreateHeader,
 	OrderImportLineTransformation,
+	OrderOnCartContent,
 	WorkInstructionExportContent,
 	WorkInstructionExportCreateHeader,
 	WorkInstructionExportCreateTrailer,

@@ -1,7 +1,7 @@
 /**
  * provide a header
  */
-def WorkInstructionCreateTrailer(orderId) {
+def WorkInstructionCreateHeader(orderId, cheId) {
     header = ""
      return header;
 }

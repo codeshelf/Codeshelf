@@ -15,12 +15,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.edi.OutboundOrderCsvBean;
+import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.service.ExtensionPointService;
 import com.codeshelf.service.ExtensionPointType;
+import com.codeshelf.service.PropertyService;
 import com.codeshelf.testframework.ServerTest;
 
 public class ScriptingServiceTest extends ServerTest {
@@ -170,6 +172,132 @@ public class ScriptingServiceTest extends ServerTest {
 	}
 
 	@Test
+	public void orderBeanAccuCustomerIdBasedNeedsScanTest() throws IOException {
+		Facility facility = setUpSimpleNoSlotFacility();
+		// define a rule to set needsscan for a specific customer
+
+		beginTransaction();
+		String text = "def OrderImportBeanTransformation(orderLine) {" +
+				"\r\n       customerNeedsScan = ['LUNERA']" +
+				"\r\n       if (customerNeedsScan.contains(orderLine.customerId)) {" +
+				"\r\n            orderLine.needsScan = true;" +
+				"\r\n       } else  {" +
+				"\r\n            orderLine.needsScan = false;" +
+				"\r\n	    }" +
+				"\r\n   	return orderLine;" +
+				"\r\n  }";
+		ExtensionPoint needsScanScript = new ExtensionPoint(facility, ExtensionPointType.OrderImportBeanTransformation);
+		needsScanScript.setActive(true);
+		needsScanScript.setScript(text);
+		ExtensionPoint.staticGetDao().store(needsScanScript);
+		commitTransaction();
+
+		
+		beginTransaction();
+		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
+		Assert.assertEquals("Disabled", scanPickProperty.getValue());
+		commitTransaction();
+
+		String csvString = "orderId,orderDetailId, orderDate, dueDate,itemId,description,quantity,uom,preAssignedContainerId, gtin, customerId"
+				+"\r\n\"268887\",268887.1,\"2015-08-10 12:00:00\",\"2015-08-10 12:00:00\",\"930-00010\",\"HN-H-G24D-26W-4000-G2\",\"4\",\"EA\",268887,\"718421828746\",\"LUNERA\""
+				+"\r\n\"268887\",268887.2,\"2015-08-10 12:00:00\",\"2015-08-10 12:00:00\",\"930-00052\",\"HN-H-G24Q-26W-4000-G3\",\"4\",\"EA\",268887,\"871699969172\",\"LUNERA\""
+				+"\r\n\"268887\",268887.3,\"2015-08-10 12:00:00\",\"2015-08-10 12:00:00\",\"930-00056\",\"HN-V-G24Q-26W-4000-G3\",\"4\",\"EA\",268887,\"871699969554\",\"LUNERA\""
+				+"\r\n\"268892\",268892.1,\"2015-08-10 12:00:00\",\"2015-08-10 12:00:00\",\"930-00049\",\"HN-H-G24Q-26W-2700-G3\",\"23\",\"EA\",268892,\"871699968878\",\"WORLD\""
+				+"\r\n\"268892\",268892.2,\"2015-08-10 12:00:00\",\"2015-08-10 12:00:00\",\"930-00051\",\"HN-H-G24Q-26W-3500-G3\",\"62\",\"EA\",268892,\"871699969004\",\"WORLD\"";
+		beginTransaction();
+		importOrdersData(facility, csvString);
+		commitTransaction();
+
+		beginTransaction();
+		facility = facility.reload();
+
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "268887");
+		Assert.assertNotNull(order);
+		Integer detailCount = order.getOrderDetails().size();
+		Assert.assertEquals((Integer) 3, detailCount);
+
+		OrderHeader order2 = OrderHeader.staticGetDao().findByDomainId(facility, "268892");
+		Assert.assertNotNull(order2);
+		Integer detailCount2 = order2.getOrderDetails().size();
+		Assert.assertEquals((Integer) 2, detailCount2);
+
+		// first three items for one customer should require scan
+		OrderDetail detail1 = order.getOrderDetail("268887.1");
+		Assert.assertNotNull(detail1);
+		Assert.assertSame(true, detail1.getNeedsScan());
+
+		OrderDetail detail2 = order2.getOrderDetail("268892.1");
+		Assert.assertNotNull(detail2);
+		Assert.assertSame(false, detail2.getNeedsScan());
+		commitTransaction();
+	}
+
+	@Test
+	public void orderBeanOverrideUPCtoFalse() throws IOException {
+		Facility facility = setUpSimpleNoSlotFacility();
+		// define a rule to set needsscan for a specific customer
+
+		beginTransaction();
+		String text = "def OrderImportBeanTransformation(orderLine) {" +
+				"\r\n       customerNeedsScan = ['LUNERA']" +
+				"\r\n       if (customerNeedsScan.contains(orderLine.customerId)) {" +
+				"\r\n            orderLine.needsScan = true;" +
+				"\r\n       } else  {" +
+				"\r\n            orderLine.needsScan = false;" +
+				"\r\n	    }" +
+				"\r\n   	return orderLine;" +
+				"\r\n  }";
+		ExtensionPoint needsScanScript = new ExtensionPoint(facility, ExtensionPointType.OrderImportBeanTransformation);
+		needsScanScript.setActive(true);
+		needsScanScript.setScript(text);
+		ExtensionPoint.staticGetDao().store(needsScanScript);
+		
+		PropertyService.getInstance().changePropertyValue(facility, DomainObjectProperty.SCANPICK, "UPC");
+		commitTransaction();
+
+		
+		beginTransaction();
+		
+		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
+		Assert.assertEquals("UPC", scanPickProperty.getValue());
+		commitTransaction();
+
+		String csvString = "orderId,orderDetailId, orderDate, dueDate,itemId,description,quantity,uom,preAssignedContainerId, gtin, customerId"
+				+"\r\n\"268887\",268887.1,\"2015-08-10 12:00:00\",\"2015-08-10 12:00:00\",\"930-00010\",\"HN-H-G24D-26W-4000-G2\",\"4\",\"EA\",268887,\"718421828746\",\"LUNERA\""
+				+"\r\n\"268887\",268887.2,\"2015-08-10 12:00:00\",\"2015-08-10 12:00:00\",\"930-00052\",\"HN-H-G24Q-26W-4000-G3\",\"4\",\"EA\",268887,\"871699969172\",\"LUNERA\""
+				+"\r\n\"268887\",268887.3,\"2015-08-10 12:00:00\",\"2015-08-10 12:00:00\",\"930-00056\",\"HN-V-G24Q-26W-4000-G3\",\"4\",\"EA\",268887,\"871699969554\",\"LUNERA\""
+				+"\r\n\"268892\",268892.1,\"2015-08-10 12:00:00\",\"2015-08-10 12:00:00\",\"930-00049\",\"HN-H-G24Q-26W-2700-G3\",\"23\",\"EA\",268892,\"871699968878\",\"WORLD\""
+				+"\r\n\"268892\",268892.2,\"2015-08-10 12:00:00\",\"2015-08-10 12:00:00\",\"930-00051\",\"HN-H-G24Q-26W-3500-G3\",\"62\",\"EA\",268892,\"871699969004\",\"WORLD\"";
+		beginTransaction();
+		importOrdersData(facility, csvString);
+		commitTransaction();
+
+		beginTransaction();
+		facility = facility.reload();
+
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "268887");
+		Assert.assertNotNull(order);
+		Integer detailCount = order.getOrderDetails().size();
+		Assert.assertEquals((Integer) 3, detailCount);
+
+		OrderHeader order2 = OrderHeader.staticGetDao().findByDomainId(facility, "268892");
+		Assert.assertNotNull(order2);
+		Integer detailCount2 = order2.getOrderDetails().size();
+		Assert.assertEquals((Integer) 2, detailCount2);
+
+		// first three items for one customer should require scan
+		OrderDetail detail1 = order.getOrderDetail("268887.1");
+		Assert.assertNotNull(detail1);
+		Assert.assertSame(true, detail1.getNeedsScan());
+
+		OrderDetail detail2 = order2.getOrderDetail("268892.1");
+		Assert.assertNotNull(detail2);
+		Assert.assertSame(false, detail2.getNeedsScan());
+		commitTransaction();
+	}
+
+	
+	@Test
 	public void orderBeanExampleScriptTransformationTest() throws IOException {
 
 		Facility facility = setUpSimpleNoSlotFacility();
@@ -225,7 +353,8 @@ public class ScriptingServiceTest extends ServerTest {
 
 		commitTransaction();
 	}
-
+	
+	
 	@Test
 	public void orderHeaderTransformationTest() throws IOException {
 
