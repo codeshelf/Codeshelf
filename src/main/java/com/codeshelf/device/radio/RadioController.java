@@ -327,6 +327,10 @@ public class RadioController implements IRadioController {
 	public final void sendCommand(ICommand inCommand, NetAddress inDstAddr, boolean inAckRequested) {
 		sendCommand(inCommand, packetIOService.getNetworkId(), inDstAddr, inAckRequested);
 	}
+	
+	public final void sendCommandFrontQueue(ICommand inCommand, NetAddress inDstAddr, boolean inAckRequested) {
+		sendCommandFrontQueue(inCommand, packetIOService.getNetworkId(), inDstAddr, inAckRequested);
+	}
 
 	public final void sendAssociationCommand(ICommand inCommand,
 		NetworkId inNetworkId,
@@ -387,6 +391,30 @@ public class RadioController implements IRadioController {
 			}
 
 			packetSchedulerService.addCommandPacketToSchedule(packet, device);
+		}
+	}
+	
+	public final void sendCommandFrontQueue(ICommand inCommand, NetworkId inNetworkId, NetAddress inDstAddr, boolean inAckRequested) {
+		INetworkDevice device = null;
+		IPacket packet = null;
+
+		device = this.mDeviceNetAddrMap.get(inDstAddr);
+
+		if (device == null) {
+			LOGGER.warn("Could not find device with net addres: {}", inDstAddr);
+			return;
+		}
+
+		packet = new Packet(inCommand, inNetworkId, mServerAddress, inDstAddr, inAckRequested);
+
+		if (packet != null) {
+			packet.setDevice(device);
+
+			if (inAckRequested) {
+				packet.setAckId(device.getNextAckId());
+			}
+
+			packetSchedulerService.addAckPacketToSchedule(packet, device);
 		}
 	}
 
@@ -672,7 +700,7 @@ public class RadioController implements IRadioController {
 				if (deviceBecameActive) {
 					// Create and send an ack command to the remote that we think is in the running state.
 					ackCmd = new CommandAssocAck(uid, new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, status));
-					sendCommand(ackCmd, inSrcAddr, false);
+					sendCommandFrontQueue(ackCmd, inSrcAddr, false);
 					networkDeviceBecameActive(foundDevice);
 				}
 			} finally {

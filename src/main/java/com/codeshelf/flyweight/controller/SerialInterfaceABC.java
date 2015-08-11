@@ -36,21 +36,22 @@ import com.codeshelf.flyweight.command.Packet;
 
 public abstract class SerialInterfaceABC implements IGatewayInterface {
 
-	public static final int		SERIAL_RESET_TIMEOUT_MS	= 500;
-	public static final int		READ_SLEEP_MILLIS		= 10;
-	public static final int		READ_RECOVER_MILLIS		= 5000;
-	public static final int		WAIT_INTERFACE_MILLIS	= 5;
+	public static final int			SERIAL_RESET_TIMEOUT_MS	= 500;
+	public static final int			READ_SLEEP_MILLIS		= 10;
+	public static final int			READ_RECOVER_MILLIS		= 5000;
+	public static final int			WAIT_INTERFACE_MILLIS	= 5;
 
-	private static final Logger	LOGGER					= LoggerFactory.getLogger(SerialInterfaceABC.class);
+	private static final Logger		LOGGER					= LoggerFactory.getLogger(SerialInterfaceABC.class);
 
-	private final Object		mLock					= new Object();
+	private final Object			mLock					= new Object();
 
 	@Setter
-	private PacketCaptureListener		packetListener			= null;
+	private PacketCaptureListener	packetListener			= null;
 
-	private boolean				mIsStarted;
-	private boolean				mShouldRun				= true;
-	private boolean				mIsStartingInterface;
+	private boolean					mIsStarted;
+	private boolean					mShouldRun				= true;
+	private boolean					mIsStartingInterface;
+	private boolean					mPause					= false;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -61,7 +62,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		//		mHexDumpEncoder = new HexDumpEncoder();
 
 	}
-	
+
 	/* --------------------------------------------------------------------------
 	 * (non-Javadoc)
 	 * @see com.codeshelf.flyweight.controller.IGatewayInterface#startInterface()
@@ -195,7 +196,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			if (nextFrameArray.length > 0) {
 				packet.fromStream(inputStream, nextFrameArray.length);
 			}
-			
+
 			if ((packet.getNetworkId().equals(inMyNetworkId))
 					|| (packet.getNetworkId().equals(new NetworkId(IPacket.ZERO_NETWORK_ID)))
 					|| (packet.getNetworkId().equals(new NetworkId(IPacket.BROADCAST_NETWORK_ID)))) {
@@ -207,7 +208,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			}
 			if ((LOGGER.isDebugEnabled() && (result != null))) {
 				ICommand command = result.getCommand();
-				if(command instanceof CommandAssocABC) {
+				if (command instanceof CommandAssocABC) {
 					CommandAssocABC assocCmd = (CommandAssocABC) command;
 					ContextLogging.setNetGuid(assocCmd.getGUID());
 				}
@@ -228,7 +229,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 				}
 			}
 		}
-	
+
 		return result;
 	}
 
@@ -240,9 +241,9 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 
 		while (!mIsStarted) {
 			try {
-				if(!this.mShouldRun)
+				if (!this.mShouldRun)
 					return;
-				
+
 				Thread.sleep(SERIAL_RESET_TIMEOUT_MS);
 			} catch (InterruptedException e) {
 				LOGGER.warn("", e);
@@ -405,11 +406,11 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		// Create a byte array that is exactly the right size.
 		byte[] result = new byte[bytesReceived];
 		System.arraycopy(frameBuffer, 0, result, 0, bytesReceived);
-		
-		if(this.packetListener != null) {
+
+		if (this.packetListener != null) {
 			this.packetListener.capture(result);
 		}
-		
+
 		return result;
 	}
 
@@ -449,8 +450,8 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		//			mSerialOutputStream.write(IGatewayInterface.END);
 		//			mSerialOutputStream.flush();
 		buffer[bufPos++] = IGatewayInterface.END;
-//		buffer[bufPos++] = IGatewayInterface.END; // XXX HUFFA - used for KW2 Gateway buffer issues.
-//		buffer[bufPos+1] = IGatewayInterface.END;
+		//		buffer[bufPos++] = IGatewayInterface.END; // XXX HUFFA - used for KW2 Gateway buffer issues.
+		//		buffer[bufPos+1] = IGatewayInterface.END;
 
 		//clrRTS();
 		writeBytes(buffer, bufPos);
@@ -472,8 +473,8 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 				LOGGER.error("", e);
 			}
 		}
-		
-		if(this.packetListener != null) {
+
+		if (this.packetListener != null) {
 			this.packetListener.capture(packetBytes);
 		}
 	}
@@ -522,5 +523,13 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		if (pos != 0) {
 			LOGGER.info(text);
 		}
+	}
+
+	public void pause() {
+		mPause = true;
+	}
+
+	public void resume() {
+		mPause = false;
 	}
 }

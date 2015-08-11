@@ -39,17 +39,19 @@ public class RadioControllerPacketSchedulerService {
 	public static final int														MAP_CONCURRENCY_LEVEL			= 4;
 
 	public static final long													NETWORK_PACKET_SPACING_MILLIS	= 5;
-	public static final long													DEVICE_PACKET_SPACING_MILLIS	= 40;
+	public static final long													DEVICE_PACKET_SPACING_MILLIS	= 20;
 
 	private static final int													ACK_SEND_RETRY_COUNT			= 20;															// matching v16. Used to be 20.
 	private static final long													MAX_PACKET_AGE_MILLIS			= 4000;
 
 	private final RadioControllerPacketIOService								packetIOService;
 
+	// FIXME - Huffa - It might be interesting to test this with a blocking queues rather than linked ones.
 	// Scheduling Queues
 	private final BlockingQueue<IPacket>										mPendingNetMgmtPacketsQueue		= new ArrayBlockingQueue<IPacket>(MAX_QUEUED_NET_MGMT_PACKETS);
 	private final ConcurrentLinkedQueue<INetworkDevice>							mDeviceQueue					= new ConcurrentLinkedQueue<INetworkDevice>();
-	private final ConcurrentLinkedQueue<INetworkDevice>							mSecondDeviceQueue				= new ConcurrentLinkedQueue<INetworkDevice>();
+	//private final ConcurrentLinkedQueue<INetworkDevice>							mSecondDeviceQueue				= new ConcurrentLinkedQueue<INetworkDevice>();
+	private final ConcurrentLinkedDeque<INetworkDevice>							mSecondDeviceQueue				= new ConcurrentLinkedDeque<INetworkDevice>();
 
 	// Scheduling data structures
 	private final ConcurrentHashMap<NetAddress, ConcurrentLinkedDeque<IPacket>>	mPendingPacketsMap				= new ConcurrentHashMap<NetAddress, ConcurrentLinkedDeque<IPacket>>(MAP_INIT_SIZE,
@@ -67,6 +69,7 @@ public class RadioControllerPacketSchedulerService {
 
 	// Scheduling threads
 	private final ScheduledExecutorService										packetSendService				= Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("pckt-schd")
+																													.setPriority(Thread.MAX_PRIORITY)
 																													.build());
 
 	// --------------------------------------------------------------------------
@@ -103,16 +106,23 @@ public class RadioControllerPacketSchedulerService {
 	 */
 	public void addCommandPacketToSchedule(IPacket inPacket, INetworkDevice inDevice) {
 
+		NetAddress deviceAddr = inDevice.getAddress();
+		if (deviceAddr == null) {
+			LOGGER.warn("Attempting to schedule packet for device without net address: {}", inDevice);
+			return;
+		}
+
 		// Add the packet to the queue of packets to be sent
-		ConcurrentLinkedDeque<IPacket> deque = mPendingPacketsMap.get(inDevice.getAddress());
+		ConcurrentLinkedDeque<IPacket> deque = mPendingPacketsMap.get(deviceAddr);
 		if (deque == null) {
 			deque = new ConcurrentLinkedDeque<IPacket>();
-			mPendingPacketsMap.put(inDevice.getAddress(), deque);
+			mPendingPacketsMap.put(deviceAddr, deque);
 		}
 
 		// Add new packet to the end of the queue
 		deque.addLast(inPacket);
 		addDeviceToQueue(mDeviceQueue, inDevice);
+		//LOGGER.warn("Device queue: {}", mDeviceQueue.toString());
 	}
 
 	// --------------------------------------------------------------------------
@@ -126,18 +136,23 @@ public class RadioControllerPacketSchedulerService {
 	 * 			Device to send ack to
 	 */
 	public void addAckPacketToSchedule(IPacket inPacket, INetworkDevice inDevice) {
+		NetAddress deviceAddr = inDevice.getAddress();
+		if (deviceAddr == null) {
+			LOGGER.warn("Attempting to schedule packet for device without net address: {}", inDevice);
+			return;
+		}
 
 		// Add the packet to the queue of packets to be sent
-		ConcurrentLinkedDeque<IPacket> deque = mPendingPacketsMap.get(inDevice.getAddress());
+		ConcurrentLinkedDeque<IPacket> deque = mPendingPacketsMap.get(deviceAddr);
 		if (deque == null) {
 			deque = new ConcurrentLinkedDeque<IPacket>();
-			mPendingPacketsMap.put(inDevice.getAddress(), deque);
+			mPendingPacketsMap.put(deviceAddr, deque);
 		}
 
 		// Need to send ACKs before other packets so add to the front of queue
 		deque.addFirst(inPacket);
 		addDeviceToQueue(mDeviceQueue, inDevice);
-
+		//LOGGER.warn("Device queue: {}", mDeviceQueue.toString());
 	}
 
 	// --------------------------------------------------------------------------
@@ -177,7 +192,13 @@ public class RadioControllerPacketSchedulerService {
 	 * @param inAckPacket - Ack packet from device
 	 */
 	public void markPacketAsAcked(INetworkDevice inDevice, byte inAckNum, IPacket inAckPacket) {
-		mLastDeviceAckId.put(inDevice.getAddress(), inAckNum);
+		NetAddress deviceAddr = inDevice.getAddress();
+		if (deviceAddr == null) {
+			LOGGER.warn("Attempting to ack packet for device without net address: {}", inDevice);
+			return;
+		}
+
+		mLastDeviceAckId.put(deviceAddr, inAckNum);
 	}
 
 	// --------------------------------------------------------------------------
@@ -295,21 +316,34 @@ public class RadioControllerPacketSchedulerService {
 		// Check how many times the head of this list has been checked.
 		if (!mSecondDeviceQueue.isEmpty()) {
 			device = mSecondDeviceQueue.peek();
+			//device = mSecondDeviceQueue.poll();
 			if (mDeviceBlockingPeekCount.containsKey(device.getAddress())) {
 				peekCount = mDeviceBlockingPeekCount.get(device.getAddress());
+			}
+
+			if (peekCount > 0) {
+				LOGGER.warn("Peek count {}", peekCount);
 			}
 
 			if (clearToSendToDevice(device)) {
 				device = mSecondDeviceQueue.poll();
 				mDeviceBlockingPeekCount.put(device.getAddress(), 0);
+				//LOGGER.warn("Returning device");
 				return device;
+			} else {
+				mDeviceBlockingPeekCount.put(device.getAddress(), peekCount = peekCount + 1);
 			}
 
-			if (peekCount > MAX_NUM_BLOCKING_PEEKS) {
-				LOGGER.debug("Device blocked too many times. Placing in back of the queue. {}", device.getAddress());
+			if (peekCount > 3) {
+				LOGGER.warn("********************Device blocked too many times. Placing in back of the queue. {}",
+					device.getAddress());
 				device = mSecondDeviceQueue.poll();
 				mSecondDeviceQueue.offer(device);
-				mDeviceBlockingPeekCount.put(device.getAddress(), 0);
+				//mDeviceBlockingPeekCount.put(device.getAddress(), 0);
+				//device = mSecondDeviceQueue.poll();
+				//INetworkDevice currHead = mSecondDeviceQueue.poll();
+				//mSecondDeviceQueue.offerFirst(device);
+				//mSecondDeviceQueue.offerFirst(currHead);
 			}
 		}
 
@@ -317,8 +351,10 @@ public class RadioControllerPacketSchedulerService {
 			device = mDeviceQueue.poll();
 
 			if (!clearToSendToDevice(device)) {
+				mDeviceBlockingPeekCount.put(device.getAddress(), 0);
 				mSecondDeviceQueue.offer(device);
 			} else {
+				//LOGGER.warn("Returning device");
 				return device;
 			}
 		}
@@ -383,18 +419,19 @@ public class RadioControllerPacketSchedulerService {
 
 	private boolean clearToSendToDevice(INetworkDevice inDevice) {
 
-		long lastReceivedTime = System.currentTimeMillis();
-		long lastSentTime = System.currentTimeMillis();
+		long lastReceivedTime = 0; //System.currentTimeMillis();
+		long lastSentTime = 0; //System.currentTimeMillis();
 		long minDifference = 0;
 		long currTime = System.currentTimeMillis();
 
 		if (inDevice != null) {
-			lastReceivedTime = inDevice.getLastPacketReceivedTime();
+			lastReceivedTime = 0; //inDevice.getLastPacketReceivedTime();
 			lastSentTime = Math.max(inDevice.getLastPacketSentTime(), mLastNetCheckSentTime);
 
 			minDifference = Math.min(currTime - lastReceivedTime, currTime - lastSentTime);
 		}
 
+		//LOGGER.warn("LS: {}, LR: {}, LNChk: {}, Min Diff: {}", inDevice.getLastPacketSentTime(), inDevice.getLastPacketReceivedTime(),mLastNetCheckSentTime, minDifference);
 		if (minDifference < DEVICE_PACKET_SPACING_MILLIS) {
 			return false;
 		} else {
@@ -536,7 +573,16 @@ public class RadioControllerPacketSchedulerService {
 	 *		Device to clear packet queue 
 	 */
 	public void clearDevicePacketQueue(INetworkDevice inDevice) {
+
+		NetAddress deviceAddr;
+
 		if (inDevice == null) {
+			return;
+		}
+
+		deviceAddr = inDevice.getAddress();
+		if (deviceAddr == null) {
+			LOGGER.warn("Trying to clear packet schedule queue for device without net addres: {}", inDevice);
 			return;
 		}
 
@@ -558,8 +604,15 @@ public class RadioControllerPacketSchedulerService {
 	 * 		Device to remove from scheduling
 	 */
 	public void removeDevice(INetworkDevice inDevice) {
+		NetAddress deviceAddr;
 
 		if (inDevice == null) {
+			return;
+		}
+
+		deviceAddr = inDevice.getAddress();
+		if (deviceAddr == null) {
+			LOGGER.warn("Trying remove device from schedule without a net address {}", inDevice);
 			return;
 		}
 
