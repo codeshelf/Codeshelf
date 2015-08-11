@@ -17,7 +17,8 @@ public class ServiceFactory {
 		OrderService orderService,
 		InventoryService inventoryService,
 		NotificationService notificationService,
-		InfoService infoService) {
+		InfoService infoService,
+		PalletizerService palletizerService) {
 		mServices = Maps.newHashMap();
 		mServices.put(WorkService.class, workService);
 		mServices.put(LightService.class, lightService);
@@ -27,6 +28,7 @@ public class ServiceFactory {
 		mServices.put(InventoryService.class, inventoryService);
 		mServices.put(NotificationService.class, notificationService);
 		mServices.put(InfoService.class, infoService);
+		mServices.put(PalletizerService.class, palletizerService);
 	}
 
 	@SuppressWarnings("unchecked")

@@ -20,6 +20,7 @@ import com.codeshelf.security.UserContext;
 import com.codeshelf.service.InfoService;
 import com.codeshelf.service.InventoryService;
 import com.codeshelf.service.NotificationService;
+import com.codeshelf.service.PalletizerService;
 import com.codeshelf.service.ServiceFactory;
 import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.protocol.command.LinkRemoteCheCommand;
@@ -41,7 +42,8 @@ import com.codeshelf.ws.protocol.command.ObjectMethodCommand;
 import com.codeshelf.ws.protocol.command.ObjectPropertiesCommand;
 import com.codeshelf.ws.protocol.command.ObjectUpdateCommand;
 import com.codeshelf.ws.protocol.command.PalletizerItemCommand;
-import com.codeshelf.ws.protocol.command.PalletizerNewLocationCommand;
+import com.codeshelf.ws.protocol.command.PalletizerNewOrderCommand;
+import com.codeshelf.ws.protocol.command.PalletizerRemoveOrderCommand;
 import com.codeshelf.ws.protocol.command.PutWallPlacementCommand;
 import com.codeshelf.ws.protocol.command.RegisterFilterCommand;
 import com.codeshelf.ws.protocol.command.ServiceMethodCommand;
@@ -71,7 +73,8 @@ import com.codeshelf.ws.protocol.request.ObjectMethodRequest;
 import com.codeshelf.ws.protocol.request.ObjectPropertiesRequest;
 import com.codeshelf.ws.protocol.request.ObjectUpdateRequest;
 import com.codeshelf.ws.protocol.request.PalletizerItemRequest;
-import com.codeshelf.ws.protocol.request.PalletizerNewLocationRequest;
+import com.codeshelf.ws.protocol.request.PalletizerNewOrderRequest;
+import com.codeshelf.ws.protocol.request.PalletizerRemoveOrderRequest;
 import com.codeshelf.ws.protocol.request.PutWallPlacementRequest;
 import com.codeshelf.ws.protocol.request.RegisterFilterRequest;
 import com.codeshelf.ws.protocol.request.RequestABC;
@@ -114,7 +117,8 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	private final Counter			skuWallLocationDisambiguationCounter;
 	private final Counter			informationRequestCounter;
 	private final Counter			palletizerItemCounter;
-	private final Counter			palletizerNewLocationCounter;
+	private final Counter			palletizerNewOrderCounter;
+	private final Counter			palletizerRemoveOrderCounter;
 	private final Timer				requestProcessingTimer;
 
 	private ServiceFactory			serviceFactory;
@@ -156,7 +160,8 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		skuWallLocationDisambiguationCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.sku_wall_disambiguation");
 		informationRequestCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.information_request");
 		palletizerItemCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.palletizer_item");
-		palletizerNewLocationCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.palletizer_new_location");
+		palletizerNewOrderCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.palletizer_new_order");
+		palletizerRemoveOrderCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.palletizer_remove_order");
 	}
 
 	ObjectChangeBroadcaster getObjectChangeBroadcaster() {
@@ -290,12 +295,16 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			informationRequestCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof PalletizerItemRequest) {
-			command = new PalletizerItemCommand(csSession, (PalletizerItemRequest) request, serviceFactory.getServiceInstance(WorkService.class));
+			command = new PalletizerItemCommand(csSession, (PalletizerItemRequest) request, serviceFactory.getServiceInstance(PalletizerService.class));
 			palletizerItemCounter.inc();
 			applicationRequestCounter.inc();
-		} else if (request instanceof PalletizerNewLocationRequest) {
-			command = new PalletizerNewLocationCommand(csSession, (PalletizerNewLocationRequest) request, serviceFactory.getServiceInstance(WorkService.class));
-			palletizerNewLocationCounter.inc();
+		} else if (request instanceof PalletizerNewOrderRequest) {
+			command = new PalletizerNewOrderCommand(csSession, (PalletizerNewOrderRequest) request, serviceFactory.getServiceInstance(PalletizerService.class));
+			palletizerNewOrderCounter.inc();
+			applicationRequestCounter.inc();
+		} else if (request instanceof PalletizerRemoveOrderRequest) {
+			command = new PalletizerRemoveOrderCommand(csSession, (PalletizerRemoveOrderRequest) request, serviceFactory.getServiceInstance(PalletizerService.class));
+			palletizerRemoveOrderCounter.inc();
 			applicationRequestCounter.inc();
 		} else {
 			LOGGER.error("invalid message {} for user {}", request.getClass().getSimpleName(), user.getUsername());

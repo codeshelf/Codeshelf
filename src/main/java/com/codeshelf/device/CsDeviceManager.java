@@ -38,7 +38,7 @@ import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.InfoService.InfoPackage;
-import com.codeshelf.service.WorkService.PalletizerInfo;
+import com.codeshelf.service.PalletizerService.PalletizerInfo;
 import com.codeshelf.util.PcapRecord;
 import com.codeshelf.util.PcapRingBuffer;
 import com.codeshelf.util.TwoKeyMap;
@@ -62,7 +62,8 @@ import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
 import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.protocol.request.LoginRequest;
 import com.codeshelf.ws.protocol.request.PalletizerItemRequest;
-import com.codeshelf.ws.protocol.request.PalletizerNewLocationRequest;
+import com.codeshelf.ws.protocol.request.PalletizerNewOrderRequest;
+import com.codeshelf.ws.protocol.request.PalletizerRemoveOrderRequest;
 import com.codeshelf.ws.protocol.request.SkuWallLocationDisambiguationRequest;
 import com.codeshelf.ws.protocol.request.VerifyBadgeRequest;
 import com.codeshelf.ws.protocol.response.FailureResponse;
@@ -502,9 +503,15 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		clientEndpoint.sendMessage(req);
 	}
 	
-	public void palletizerNewLocationRequest(String cheGuid, String chePersistentId, String item, String location) {
-		LOGGER.debug("palletizerNewLocationRequest: Che={}, Item={}, Location={}", cheGuid, item, location);
-		PalletizerNewLocationRequest req = new PalletizerNewLocationRequest(chePersistentId, item, location);
+	public void palletizerNewOrderRequest(String cheGuid, String chePersistentId, String item, String location) {
+		LOGGER.debug("palletizerNewOrderRequest: Che={}, Item={}, Location={}", cheGuid, item, location);
+		PalletizerNewOrderRequest req = new PalletizerNewOrderRequest(chePersistentId, item, location);
+		clientEndpoint.sendMessage(req);
+	}
+	
+	public void palletizerRemoveOrderRequest(String cheGuid, String chePersistentId, String license) {
+		LOGGER.debug("palletizerRemoveOrderRequest: Che={}, License={}", cheGuid, license);
+		PalletizerRemoveOrderRequest req = new PalletizerRemoveOrderRequest(chePersistentId, license);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -936,6 +943,19 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			}
 		} else {
 			LOGGER.warn("Device not found in processPalletizerItemResponse. CHE id={}", networkGuid);
+		}
+	}
+	
+	public void processPalletizerRemoveResponse(String networkGuid, String error) {
+		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
+		if (cheDevice != null) {
+			if (cheDevice instanceof ChePalletizerDeviceLogic){
+				((ChePalletizerDeviceLogic) cheDevice).processRemoveResponse(error);
+			} else {
+				LOGGER.warn("Device is not ChePalletizerDeviceLogic in processRemoveResponse. CHE id={}", networkGuid);
+			}
+		} else {
+			LOGGER.warn("Device not found in processPalletizerRemoveResponse. CHE id={}", networkGuid);
 		}
 	}
 

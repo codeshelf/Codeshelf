@@ -143,7 +143,7 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	 * Helper method. This has a bad query. This assumes it is in a tenant transaction.
 	 * Somewaht similar to OrderLocationCsvImporter.deleteLocation.
 	 */
-	public static List<OrderLocation> findOrderLocationsAtLocation(final Location inLocation, final Facility inFacility) {
+	public static List<OrderLocation> findOrderLocationsAtLocation(final Location inLocation, final Facility inFacility, final boolean activeOnly) {
 
 		ArrayList<OrderLocation> olList = new ArrayList<OrderLocation>();
 
@@ -153,7 +153,7 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 			Iterator<OrderLocation> iter = order.getOrderLocations().iterator();
 			while (iter.hasNext()) {
 				OrderLocation orderLocation = iter.next();
-				if (orderLocation.getLocation().equals(inLocation)) {
+				if (orderLocation.getLocation().equals(inLocation) && (!activeOnly || orderLocation.getActive())) {
 					olList.add(orderLocation);
 				}
 			}
