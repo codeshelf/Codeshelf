@@ -355,7 +355,13 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			}
 			// A correction for v4.1, mostly for good eggs. Do not set more than 4 leds.
 			// And if <= halfway through the slot, take it out of the upper. else the lower.
-			if (lastLitLed - firstLitLed > kMaxLedsPerSlot) {
+			
+			// Walmart palletizer kludge. Perhaps should be in aisles file. If it looks like a full 105cm light tube per slot, don't
+			// limit to only 4 LEDs.
+			if (lastLitLed - firstLitLed > 25) {
+				// let it be. Not the guard business decreased the 32 to 28 or 29 left for the slot.
+			}
+			else if (lastLitLed - firstLitLed > kMaxLedsPerSlot) {
 				if (slotIndex > slotCount / 2)
 					firstLitLed = (short) (lastLitLed - kMaxLedsPerSlot + 1);
 				else

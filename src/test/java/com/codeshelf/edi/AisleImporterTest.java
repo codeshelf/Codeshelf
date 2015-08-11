@@ -38,9 +38,58 @@ import com.codeshelf.testframework.MockDaoTest;
  */
 public class AisleImporterTest extends MockDaoTest {
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(AisleImporterTest.class);
-	
-	private static double			CM_PER_M		= 100D;
+	private static final Logger	LOGGER		= LoggerFactory.getLogger(AisleImporterTest.class);
+
+	private static double		CM_PER_M	= 100D;
+
+	@Test
+	public final void testWalmartPalletLighting() {
+		this.getTenantPersistenceService().beginTransaction();
+
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A49,,,,,tierB1S1Side,12.85,43.45,X,120,\r\n" //
+				+ "Bay,B1,318,,,,,\r\n" //
+				+ "Tier,T1,,3,96,0,,\r\n"; //
+		Facility facility = Facility.createFacility("F-AISLE99", "TEST", Point.getZeroPoint());
+		importAislesData(facility, csvString);
+
+		// Check the aisle
+		Location aisle = facility.findLocationById("A49");
+
+		// Check the bays
+		Location bay1 = aisle.findLocationById("B1");
+		Assert.assertNotNull(bay1);
+
+		// Get the tier. Then check the tier led values
+		Tier tierB1T1 = Tier.staticGetDao().findByDomainId(bay1, "T1");
+		Assert.assertNotNull(tierB1T1);
+
+		// Did not create path, but will default to increasing direction
+		Assert.assertTrue(tierB1T1.getFirstLedNumAlongPath() == 1);
+		Assert.assertTrue(tierB1T1.getLastLedNumAlongPath() == 96);
+
+		// Check some slot led values
+		Slot slotB1T1S1 = Slot.staticGetDao().findByDomainId(tierB1T1, "S1");
+		int firstLed = slotB1T1S1.getFirstLedNumAlongPath();
+		int lastLed = slotB1T1S1.getLastLedNumAlongPath();
+		Assert.assertEquals(3, firstLed);
+		Assert.assertEquals(31, lastLed);
+
+		Slot slotB1T1S2 = Slot.staticGetDao().findByDomainId(tierB1T1, "S2");
+		firstLed = slotB1T1S2.getFirstLedNumAlongPath();
+		lastLed = slotB1T1S2.getLastLedNumAlongPath();
+		Assert.assertEquals(35, firstLed);
+		Assert.assertEquals(63, lastLed);
+
+		Slot slotB1T1S3 = Slot.staticGetDao().findByDomainId(tierB1T1, "S3");
+		firstLed = slotB1T1S3.getFirstLedNumAlongPath();
+		lastLed = slotB1T1S3.getLastLedNumAlongPath();
+		Assert.assertEquals(67, firstLed);
+		Assert.assertEquals(95, lastLed);
+
+		this.getTenantPersistenceService().commitTransaction();
+
+	}
 
 	@Test
 	public final void testTierB1S1Side() {
@@ -58,7 +107,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T3,,4,80,150,,\r\n"; //
 		Facility facility = Facility.createFacility("F-AISLE9", "TEST", Point.getZeroPoint());
 		importAislesData(facility, csvString);
-		
+
 		// Check the aisle
 		Location aisle = facility.findLocationById("A9");
 		Assert.assertNotNull(aisle);
@@ -593,7 +642,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T3,,5,32,0,,\r\n"; //
 		Facility facility = Facility.createFacility("F-AISLE12", "TEST", Point.getZeroPoint());
 		importAislesData(facility, csvString);
-		
+
 		// Check what we got
 		Aisle aisle = Aisle.staticGetDao().findByDomainId(facility, "A12");
 		Assert.assertNotNull(aisle);
@@ -889,22 +938,21 @@ public class AisleImporterTest extends MockDaoTest {
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,,,,,\r\n" //
 				+ "Bay,B1,,,,,,\r\n" //
-				+ "Tier,T1,,,,,,\r\n"
-				+ "Aisle,A52,CLONE(A51),,,,,,,,\r\n"; //
+				+ "Tier,T1,,,,,,\r\n" + "Aisle,A52,CLONE(A51),,,,,,,,\r\n"; //
 		importAislesData(facility, csvString2);
-		
+
 		Aisle A512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(A512);
-		
+
 		Bay A51B12 = Bay.staticGetDao().findByDomainId(A512, "B1");
 		Assert.assertNotNull(A51B12);
-		
+
 		Tier tierA51B1T12 = Tier.staticGetDao().findByDomainId(A51B12, "T1");
 		Assert.assertNotNull(tierA51B1T12);
-		
+
 		Aisle A522 = Aisle.staticGetDao().findByDomainId(facility, "A52");
 		Assert.assertNotNull(A522);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
@@ -949,7 +997,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,6,50,0,,\r\n" //
 				+ "Tier,T2,,6,50,0.8,,\r\n"; //
 		importAislesData(facility, csvString2);
-		
+
 		aisle = Aisle.staticGetDao().findByDomainId(facility, "A15");
 		Assert.assertNotNull(aisle);
 
@@ -1310,7 +1358,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,4,32,0,,\r\n"; //
 		Facility facility = Facility.createFacility("F-AISLE5X", "TEST", Point.getZeroPoint());
 		importAislesData(facility, csvString);
-		
+
 		// Get A31
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle51);
@@ -1350,8 +1398,8 @@ public class AisleImporterTest extends MockDaoTest {
 	}
 
 	@Test
-	public final void testCloneTierB1S1Aisle(){
-		
+	public final void testCloneTierB1S1Aisle() {
+
 		// Test tierB1S1Side
 		this.getTenantPersistenceService().beginTransaction();
 
@@ -1366,14 +1414,13 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,2,32,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"
-				+ "Aisle,A54,,,,,tierB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,tierB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; //
 		Facility facility = Facility.createFacility("F-AISLE5X", "TEST", Point.getZeroPoint());
 		importAislesData(facility, csvString);
-		
+
 		// Check aisles exist
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle51);
@@ -1383,7 +1430,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(aisle53);
 		Aisle aisle54 = Aisle.staticGetDao().findByDomainId(facility, "A54");
 		Assert.assertNotNull(aisle54);
-		
+
 		// Check LED values
 		Bay bayA51B1 = Bay.staticGetDao().findByDomainId(aisle51, "B1");
 		Assert.assertNotNull(bayA51B1);
@@ -1393,7 +1440,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(slotA51B1T1S4);
 		Short ledA51B1T1S4value = slotA51B1T1S4.getFirstLedNumAlongPath();
 		Assert.assertNotNull(ledA51B1T1S4value);
-		
+
 		Bay bayA53B1 = Bay.staticGetDao().findByDomainId(aisle53, "B1");
 		Assert.assertNotNull(bayA53B1);
 		Tier tierA53B1T1 = Tier.staticGetDao().findByDomainId(bayA53B1, "T1");
@@ -1402,23 +1449,23 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(slotA53B1T1S4);
 		Short LedA53B2T1S4value = slotA53B1T1S4.getFirstLedNumAlongPath();
 		Assert.assertNotNull(LedA53B2T1S4value);
-		
+
 		Assert.assertEquals(ledA51B1T1S4value, LedA53B2T1S4value);
-		
+
 		// Check number slots and LEDs on B2 T3
 		Bay bayA53B2 = Bay.staticGetDao().findByDomainId(aisle53, "B2");
 		Assert.assertNotNull(bayA53B2);
 		Tier tierA53B2T3 = Tier.staticGetDao().findByDomainId(bayA53B2, "T3");
 		Assert.assertNotNull(tierA53B2T3);
 		Assert.assertEquals(tierA53B2T3.getActiveChildren().size(), 2);
-		
+
 		Short firstLed = tierA53B2T3.getFirstLedNumAlongPath();
 		Short lastLed = tierA53B2T3.getLastLedNumAlongPath();
-		Assert.assertEquals((lastLed-firstLed)+1, 32);
-		
+		Assert.assertEquals((lastLed - firstLed) + 1, 32);
+
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		
+
 		// TierB1S1Side Test 2 - (no slots on B2T3)
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,tierB1S1Side,12.85,43.45,X,120\r\n" //
@@ -1430,13 +1477,12 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && NUMBER OF LEDS CHANGED
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"
-				+ "Aisle,A54,,,,,tierB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,tierB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; //
 		importAislesData(facility, csvString2);
-		
+
 		// Check aisles exist
 		Aisle aisle512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle512);
@@ -1446,7 +1492,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(aisle532);
 		Aisle aisle542 = Aisle.staticGetDao().findByDomainId(facility, "A54");
 		Assert.assertNotNull(aisle542);
-		
+
 		// Check LED values
 		Bay bayA51B12 = Bay.staticGetDao().findByDomainId(aisle512, "B1");
 		Assert.assertNotNull(bayA51B12);
@@ -1456,7 +1502,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(slotA51B1T1S42);
 		Short ledA51B1T1S4value2 = slotA51B1T1S42.getFirstLedNumAlongPath();
 		Assert.assertNotNull(ledA51B1T1S4value2);
-		
+
 		Bay bayA53B12 = Bay.staticGetDao().findByDomainId(aisle532, "B1");
 		Assert.assertNotNull(bayA53B12);
 		Tier tierA53B1T12 = Tier.staticGetDao().findByDomainId(bayA53B12, "T1");
@@ -1465,26 +1511,26 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(slotA53B1T1S42);
 		Short LedA53B2T1S4value2 = slotA53B1T1S4.getFirstLedNumAlongPath();
 		Assert.assertNotNull(LedA53B2T1S4value2);
-		
+
 		Assert.assertEquals(ledA51B1T1S4value2, LedA53B2T1S4value2);
-		
+
 		// Check number slots and LEDs on B2 T3
 		Bay bayA53B22 = Bay.staticGetDao().findByDomainId(aisle532, "B2");
 		Assert.assertNotNull(bayA53B22);
 		Tier tierA53B2T32 = Tier.staticGetDao().findByDomainId(bayA53B22, "T3");
 		Assert.assertNotNull(tierA53B2T32);
 		Assert.assertEquals(0, tierA53B2T32.getActiveChildren().size());
-		
+
 		Short firstLed2 = tierA53B2T32.getFirstLedNumAlongPath();
 		Short lastLed2 = tierA53B2T32.getLastLedNumAlongPath();
-		Assert.assertEquals(40,(lastLed2-firstLed2)+1);
-		
+		Assert.assertEquals(40, (lastLed2 - firstLed2) + 1);
+
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
 	@Test
-	public final void testCloneTierNotB1S1Aisle(){
-		
+	public final void testCloneTierNotB1S1Aisle() {
+
 		// Test tierNotB1S1Side
 		this.getTenantPersistenceService().beginTransaction();
 
@@ -1499,14 +1545,13 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,2,32,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"
-				+ "Aisle,A54,,,,,tierNotB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,tierNotB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; //
 		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
 		importAislesData(facility, csvString);
-		
+
 		// Check aisles exist
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle51);
@@ -1516,7 +1561,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(aisle53);
 		Aisle aisle54 = Aisle.staticGetDao().findByDomainId(facility, "A54");
 		Assert.assertNotNull(aisle54);
-		
+
 		// Check LED values
 		Bay bayA51B1 = Bay.staticGetDao().findByDomainId(aisle51, "B1");
 		Assert.assertNotNull(bayA51B1);
@@ -1526,7 +1571,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(slotA51B1T1S4);
 		Short ledA51B1T1S4value = slotA51B1T1S4.getFirstLedNumAlongPath();
 		Assert.assertNotNull(ledA51B1T1S4value);
-		
+
 		Bay bayA53B1 = Bay.staticGetDao().findByDomainId(aisle53, "B1");
 		Assert.assertNotNull(bayA53B1);
 		Tier tierA53B1T1 = Tier.staticGetDao().findByDomainId(bayA53B1, "T1");
@@ -1535,23 +1580,23 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(slotA53B1T1S4);
 		Short LedA53B2T1S4value = slotA53B1T1S4.getFirstLedNumAlongPath();
 		Assert.assertNotNull(LedA53B2T1S4value);
-		
+
 		Assert.assertEquals(ledA51B1T1S4value, LedA53B2T1S4value);
-		
+
 		// Check number slots and LEDs on B2 T3
 		Bay bayA53B2 = Bay.staticGetDao().findByDomainId(aisle53, "B2");
 		Assert.assertNotNull(bayA53B2);
 		Tier tierA53B2T3 = Tier.staticGetDao().findByDomainId(bayA53B2, "T3");
 		Assert.assertNotNull(tierA53B2T3);
 		Assert.assertEquals(tierA53B2T3.getActiveChildren().size(), 2);
-		
+
 		Short firstLed = tierA53B2T3.getFirstLedNumAlongPath();
 		Short lastLed = tierA53B2T3.getLastLedNumAlongPath();
-		Assert.assertEquals((lastLed-firstLed)+1, 32);
-		
+		Assert.assertEquals((lastLed - firstLed) + 1, 32);
+
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		
+
 		// TierNotB1S1Side Test 2 - (no slots on B2T3)
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,tierNotB1S1Side,12.85,43.45,X,120\r\n" //
@@ -1563,13 +1608,12 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && NUMBER OF LEDS CHANGED
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"
-				+ "Aisle,A54,,,,,,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; //
 		importAislesData(facility, csvString2);
-		
+
 		// Check aisles exist
 		Aisle aisle512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle512);
@@ -1579,7 +1623,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(aisle532);
 		Aisle aisle542 = Aisle.staticGetDao().findByDomainId(facility, "A54");
 		Assert.assertNotNull(aisle542);
-		
+
 		// Check LED values
 		Bay bayA51B12 = Bay.staticGetDao().findByDomainId(aisle512, "B1");
 		Assert.assertNotNull(bayA51B12);
@@ -1589,7 +1633,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(slotA51B1T1S42);
 		Short ledA51B1T1S4value2 = slotA51B1T1S42.getFirstLedNumAlongPath();
 		Assert.assertNotNull(ledA51B1T1S4value2);
-		
+
 		Bay bayA53B12 = Bay.staticGetDao().findByDomainId(aisle532, "B1");
 		Assert.assertNotNull(bayA53B12);
 		Tier tierA53B1T12 = Tier.staticGetDao().findByDomainId(bayA53B12, "T1");
@@ -1598,26 +1642,26 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(slotA53B1T1S42);
 		Short LedA53B2T1S4value2 = slotA53B1T1S4.getFirstLedNumAlongPath();
 		Assert.assertNotNull(LedA53B2T1S4value2);
-		
+
 		Assert.assertEquals(ledA51B1T1S4value2, LedA53B2T1S4value2);
-		
+
 		// Check number slots and LEDs on B2 T3
 		Bay bayA53B22 = Bay.staticGetDao().findByDomainId(aisle532, "B2");
 		Assert.assertNotNull(bayA53B22);
 		Tier tierA53B2T32 = Tier.staticGetDao().findByDomainId(bayA53B22, "T3");
 		Assert.assertNotNull(tierA53B2T32);
 		Assert.assertEquals(0, tierA53B2T32.getActiveChildren().size());
-		
+
 		Short firstLed2 = tierA53B2T32.getFirstLedNumAlongPath();
 		Short lastLed2 = tierA53B2T32.getLastLedNumAlongPath();
-		Assert.assertEquals(40,(lastLed2-firstLed2)+1);
-		
+		Assert.assertEquals(40, (lastLed2 - firstLed2) + 1);
+
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
 	@Test
-	public final void testCloneZigzagB1S1Aisle(){
-		
+	public final void testCloneZigzagB1S1Aisle() {
+
 		// Test zigzagB1S1Side
 		this.getTenantPersistenceService().beginTransaction();
 
@@ -1632,14 +1676,13 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,2,32,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"
-				+ "Aisle,A54,,,,,zigzagB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,zigzagB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; //
 		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
 		importAislesData(facility, csvString);
-		
+
 		// Check aisles exist
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle51);
@@ -1649,7 +1692,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(aisle53);
 		Aisle aisle54 = Aisle.staticGetDao().findByDomainId(facility, "A54");
 		Assert.assertNotNull(aisle54);
-		
+
 		// Check LED values
 		Bay bayA51B1 = Bay.staticGetDao().findByDomainId(aisle51, "B1");
 		Assert.assertNotNull(bayA51B1);
@@ -1659,7 +1702,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(slotA51B1T1S4);
 		Short ledA51B1T1S4value = slotA51B1T1S4.getFirstLedNumAlongPath();
 		Assert.assertNotNull(ledA51B1T1S4value);
-		
+
 		Bay bayA53B1 = Bay.staticGetDao().findByDomainId(aisle53, "B1");
 		Assert.assertNotNull(bayA53B1);
 		Tier tierA53B1T1 = Tier.staticGetDao().findByDomainId(bayA53B1, "T1");
@@ -1668,23 +1711,23 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(slotA53B1T1S4);
 		Short LedA53B2T1S4value = slotA53B1T1S4.getFirstLedNumAlongPath();
 		Assert.assertNotNull(LedA53B2T1S4value);
-		
+
 		Assert.assertEquals(ledA51B1T1S4value, LedA53B2T1S4value);
-		
+
 		// Check number slots and LEDs on B2 T3
 		Bay bayA53B2 = Bay.staticGetDao().findByDomainId(aisle53, "B2");
 		Assert.assertNotNull(bayA53B2);
 		Tier tierA53B2T3 = Tier.staticGetDao().findByDomainId(bayA53B2, "T3");
 		Assert.assertNotNull(tierA53B2T3);
 		Assert.assertEquals(tierA53B2T3.getActiveChildren().size(), 2);
-		
+
 		Short firstLed = tierA53B2T3.getFirstLedNumAlongPath();
 		Short lastLed = tierA53B2T3.getLastLedNumAlongPath();
-		Assert.assertEquals((lastLed-firstLed)+1, 32);
-		
+		Assert.assertEquals((lastLed - firstLed) + 1, 32);
+
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		
+
 		// zigzagB1S1Side Test 2 - (no slots on B2T3)
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
@@ -1696,13 +1739,12 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && NUMBER OF LEDS CHANGED
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"
-				+ "Aisle,A54,,,,,zigzagB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,zigzagB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; // 
 		importAislesData(facility, csvString2);
-		
+
 		// Check aisles exist
 		Aisle aisle512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle512);
@@ -1712,7 +1754,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(aisle532);
 		Aisle aisle542 = Aisle.staticGetDao().findByDomainId(facility, "A54");
 		Assert.assertNotNull(aisle542);
-		
+
 		// Check LED values
 		Bay bayA51B12 = Bay.staticGetDao().findByDomainId(aisle512, "B1");
 		Assert.assertNotNull(bayA51B12);
@@ -1722,7 +1764,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(slotA51B1T1S42);
 		Short ledA51B1T1S4value2 = slotA51B1T1S42.getFirstLedNumAlongPath();
 		Assert.assertNotNull(ledA51B1T1S4value2);
-		
+
 		Bay bayA53B12 = Bay.staticGetDao().findByDomainId(aisle532, "B1");
 		Assert.assertNotNull(bayA53B12);
 		Tier tierA53B1T12 = Tier.staticGetDao().findByDomainId(bayA53B12, "T1");
@@ -1731,26 +1773,25 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(slotA53B1T1S42);
 		Short LedA53B2T1S4value2 = slotA53B1T1S4.getFirstLedNumAlongPath();
 		Assert.assertNotNull(LedA53B2T1S4value2);
-		
+
 		Assert.assertEquals(ledA51B1T1S4value2, LedA53B2T1S4value2);
-		
+
 		// Check number slots and LEDs on B2 T3
 		Bay bayA53B22 = Bay.staticGetDao().findByDomainId(aisle532, "B2");
 		Assert.assertNotNull(bayA53B22);
 		Tier tierA53B2T32 = Tier.staticGetDao().findByDomainId(bayA53B22, "T3");
 		Assert.assertNotNull(tierA53B2T32);
 		Assert.assertEquals(0, tierA53B2T32.getActiveChildren().size());
-		
+
 		Short firstLed2 = tierA53B2T32.getFirstLedNumAlongPath();
 		Short lastLed2 = tierA53B2T32.getLastLedNumAlongPath();
-		Assert.assertEquals(40,(lastLed2-firstLed2)+1);
-		
+		Assert.assertEquals(40, (lastLed2 - firstLed2) + 1);
+
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
 	@Test
-	public final void testCloneZigzagNotB1S1Aisle(){
-		
+	public final void testCloneZigzagNotB1S1Aisle() {
 
 		this.getTenantPersistenceService().beginTransaction();
 
@@ -1765,14 +1806,13 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,2,32,0,,\r\n"// 
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"//
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"
-				+ "Aisle,A54,,,,,zigzagNotB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,zigzagNotB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; // */
 		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
 		importAislesData(facility, csvString);
-		
+
 		// Check aisles exist
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle51);
@@ -1782,7 +1822,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(aisle53);
 		Aisle aisle54 = Aisle.staticGetDao().findByDomainId(facility, "A54");
 		Assert.assertNotNull(aisle54);
-		
+
 		// Check LED values
 		Bay bayA51B1 = Bay.staticGetDao().findByDomainId(aisle51, "B1");
 		Assert.assertNotNull(bayA51B1);
@@ -1792,7 +1832,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(slotA51B1T1S4);
 		Short ledA51B1T1S4value = slotA51B1T1S4.getFirstLedNumAlongPath();
 		Assert.assertNotNull(ledA51B1T1S4value);
-		
+
 		Bay bayA53B1 = Bay.staticGetDao().findByDomainId(aisle53, "B1");
 		Assert.assertNotNull(bayA53B1);
 		Tier tierA53B1T1 = Tier.staticGetDao().findByDomainId(bayA53B1, "T1");
@@ -1801,24 +1841,24 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(slotA53B1T1S4);
 		Short LedA53B2T1S4value = slotA53B1T1S4.getFirstLedNumAlongPath();
 		Assert.assertNotNull(LedA53B2T1S4value);
-		
+
 		Assert.assertEquals(ledA51B1T1S4value, LedA53B2T1S4value);
-		
+
 		// Check number slots and LEDs on B2 T3
-		
+
 		Bay bayA53B2 = Bay.staticGetDao().findByDomainId(aisle53, "B2");
 		Assert.assertNotNull(bayA53B2);
 		Tier tierA53B2T3 = Tier.staticGetDao().findByDomainId(bayA53B2, "T3");
 		Assert.assertNotNull(tierA53B2T3);
 		Assert.assertEquals(tierA53B2T3.getActiveChildren().size(), 2);
-		
+
 		Short firstLed = tierA53B2T3.getFirstLedNumAlongPath();
 		Short lastLed = tierA53B2T3.getLastLedNumAlongPath();
-		Assert.assertEquals((lastLed-firstLed)+1, 32);
-		
+		Assert.assertEquals((lastLed - firstLed) + 1, 32);
+
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		
+
 		// zigzagNotB1S1Side Test 2 - (no slots on B2T3)
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagNotB1S1Side,12.85,43.45,X,120\r\n" //
@@ -1830,13 +1870,12 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && LED COUNT CHANGE!
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"
-				+ "Aisle,A54,,,,,zigzagNotB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,zigzagNotB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; // */
 		importAislesData(facility, csvString2);
-		
+
 		// Check aisles exist
 		Aisle aisle512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle512);
@@ -1854,7 +1893,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(tierA51B1T12);
 		Short ledA51B1T1S4value2 = tierA51B1T12.getFirstLedNumAlongPath();
 		Assert.assertNotNull(ledA51B1T1S4value2);
-		
+
 		// Check the number of LEDs in A51B2T3 changed
 		Bay bayA51B22 = Bay.staticGetDao().findByDomainId(aisle512, "B2");
 		Assert.assertNotNull(bayA51B22);
@@ -1862,38 +1901,37 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(tierA51B2T32);
 		Short firstLed21 = tierA51B2T32.getFirstLedNumAlongPath();
 		Short lastLed21 = tierA51B2T32.getLastLedNumAlongPath();
-		Assert.assertEquals(40,  (lastLed21 - firstLed21)+1);
-		
+		Assert.assertEquals(40, (lastLed21 - firstLed21) + 1);
+
 		Bay bayA53B12 = Bay.staticGetDao().findByDomainId(aisle532, "B1");
 		Assert.assertNotNull(bayA53B12);
 		Tier tierA53B1T12 = Tier.staticGetDao().findByDomainId(bayA53B12, "T1");
 		Assert.assertNotNull(tierA53B1T12);
 		Short ledA53B2T1S4value2 = tierA53B1T12.getFirstLedNumAlongPath();
 		Assert.assertNotNull(ledA53B2T1S4value2);
-		
+
 		Assert.assertEquals(ledA51B1T1S4value2, ledA53B2T1S4value2);
-		
+
 		// Check number slots and LEDs on B2 T3
 		Bay bayA53B22 = Bay.staticGetDao().findByDomainId(aisle532, "B2");
 		Assert.assertNotNull(bayA53B22);
 		Tier tierA53B2T32 = Tier.staticGetDao().findByDomainId(bayA53B22, "T3");
 		Assert.assertNotNull(tierA53B2T32);
 		Assert.assertEquals(0, tierA53B2T32.getActiveChildren().size());
-		
+
 		Short firstLed2 = tierA53B2T32.getFirstLedNumAlongPath();
 		Short lastLed2 = tierA53B2T32.getLastLedNumAlongPath();
-		Assert.assertEquals(40,(lastLed2-firstLed2)+1);
-		
-		
+		Assert.assertEquals(40, (lastLed2 - firstLed2) + 1);
+
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
 	@Test
-	public final void testCloneChangeAttributes(){
+	public final void testCloneChangeAttributes() {
 		this.getTenantPersistenceService().beginTransaction();
 		// Test if we can change the X,Y orientation in a clone
 		// A clone should not be able to change the X,Y orientation
-		
+
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
@@ -1905,50 +1943,49 @@ public class AisleImporterTest extends MockDaoTest {
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle51);
 		Assert.assertEquals(aisle51.isLocationXOriented(), true);
-		
+
 		Aisle aisle52 = Aisle.staticGetDao().findByDomainId(facility, "A52");
 		Assert.assertNotNull(aisle52);
 		Assert.assertEquals(aisle52.isLocationXOriented(), true);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		
-		
+
 		// Test if we can change the depth
 		// A clone should not be able to change the depth
-		
+
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,200\r\n"; //
 		importAislesData(facility, csvString2);
-		
+
 		Aisle aisle512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle512);
-		
+
 		Vertex V3 = Vertex.staticGetDao().findByDomainId(aisle512, "V03");
-		Assert.assertEquals(120, (int)(V3.getPosY()*CM_PER_M));
-		
+		Assert.assertEquals(120, (int) (V3.getPosY() * CM_PER_M));
+
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
 		// Test if we can change the LED configuration
 		// A clone should not be able to change the LED configuration
 		// Will print out a warning to the user
-		
+
 		String csvString3 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,zigzagNotB1S1Side,12.85,48.45,X,200\r\n"; //
 		importAislesData(facility, csvString3);
-		
+
 		Aisle aisle513 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle513);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
 	@Test
 	public final void testCloneAisle() {
 		// For DEV-618
@@ -1983,8 +2020,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		Bay bayA52B1 = Bay.staticGetDao().findByDomainId(aisle52, "B1");
 		Assert.assertNotNull(bayA52B1); // change to notNull with DEV-618
-		
-		
+
 		// curious. Tier.staticGetDao().findByDomainId(null, "T1"); will find the A51 T1
 		Tier tierA52B1T1 = Tier.staticGetDao().findByDomainId(bayA52B1, "T1");
 		Assert.assertNotNull(tierA52B1T1);
@@ -1997,7 +2033,7 @@ public class AisleImporterTest extends MockDaoTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		
+
 		// Test Define -> clone defined -> clone defined
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
@@ -2011,7 +2047,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
 				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"; //
 		importAislesData(facility, csvString2);
-		
+
 		// Get A51
 		Aisle aisle512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle512);
@@ -2019,11 +2055,11 @@ public class AisleImporterTest extends MockDaoTest {
 		// Get A52
 		Aisle aisle522 = Aisle.staticGetDao().findByDomainId(facility, "A52");
 		Assert.assertNotNull(aisle522);
-		
+
 		// Get A53
 		Aisle aisle532 = Aisle.staticGetDao().findByDomainId(facility, "A53");
 		Assert.assertNotNull(aisle532);
-		
+
 		// Check slot LED numbers
 		Bay bayA51B12 = Bay.staticGetDao().findByDomainId(aisle512, "B1");
 		Assert.assertNotNull(bayA51B12);
@@ -2033,7 +2069,7 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(slotA51B1T1S42);
 		Short ledA51B1T1S42value = slotA51B1T1S42.getFirstLedNumAlongPath();
 		Assert.assertNotNull(ledA51B1T1S42value);
-		
+
 		Bay bayA53B12 = Bay.staticGetDao().findByDomainId(aisle532, "B1");
 		Assert.assertNotNull(bayA53B12);
 		Tier tierA53B1T12 = Tier.staticGetDao().findByDomainId(bayA53B12, "T1");
@@ -2042,28 +2078,27 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertNotNull(slotA53B1T1S42);
 		Short LedA53B2T1S42value = slotA53B1T1S42.getFirstLedNumAlongPath();
 		Assert.assertNotNull(LedA53B2T1S42value);
-		
+
 		Assert.assertEquals(ledA51B1T1S42value, LedA53B2T1S42value);
-		
+
 		// Check number slots and LEDs on B2 T3
 		Bay bayA53B22 = Bay.staticGetDao().findByDomainId(aisle532, "B2");
 		Assert.assertNotNull(bayA53B22);
 		Tier tierA53B2T32 = Tier.staticGetDao().findByDomainId(bayA53B22, "T3");
 		Assert.assertNotNull(tierA53B2T32);
-		
+
 		Assert.assertEquals(tierA53B2T32.getActiveChildren().size(), 2);
-		
+
 		Short firstLed2 = tierA53B2T32.getFirstLedNumAlongPath();
 		Short lastLed2 = tierA53B2T32.getLastLedNumAlongPath();
-		
-		Assert.assertEquals((lastLed2-firstLed2)+1, 40);
-		
-		
+
+		Assert.assertEquals((lastLed2 - firstLed2) + 1, 40);
+
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		
+
 		// Test define -> clone defined -> clone cloned
-		
+
 		String csvString3 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
@@ -2071,7 +2106,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
 				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"; //
 		importAislesData(facility, csvString3);
-		
+
 		// Get A51
 		Aisle aisle513 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle513);
@@ -2079,16 +2114,16 @@ public class AisleImporterTest extends MockDaoTest {
 		// Get A52
 		Aisle aisle523 = Aisle.staticGetDao().findByDomainId(facility, "A52");
 		Assert.assertNotNull(aisle523);
-		
+
 		// Get A53
 		Aisle aisle533 = Aisle.staticGetDao().findByDomainId(facility, "A53");
 		Assert.assertNotNull(aisle533);
-		
+
 		//note 1
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		
+
 		// Test define -> clone defined -> define -> clone first defined
 		String csvString4 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
@@ -2100,7 +2135,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Aisle,A54,Clone(A51),,,,,12.85,58.45,X,120\r\n"; //
 		importAislesData(facility, csvString4);
-		
+
 		// Get A51
 		Aisle aisle514 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle514);
@@ -2108,18 +2143,18 @@ public class AisleImporterTest extends MockDaoTest {
 		// Get A52
 		Aisle aisle524 = Aisle.staticGetDao().findByDomainId(facility, "A52");
 		Assert.assertNotNull(aisle524);
-		
+
 		// Get A53
 		Aisle aisle534 = Aisle.staticGetDao().findByDomainId(facility, "A53");
 		Assert.assertNotNull(aisle534);
-		
+
 		// Get A53
 		Aisle aisle544 = Aisle.staticGetDao().findByDomainId(facility, "A54");
 		Assert.assertNotNull(aisle544);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
 	@Test
 	public final void testBadCloneAisle() {
 		// For DEV-618
@@ -2133,13 +2168,13 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"; //
 		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
 		importAislesData(facility, csvString);
-		
+
 		Aisle A52 = Aisle.staticGetDao().findByDomainId(facility, "A52");
 		Assert.assertNull(A52);
-	
+
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		
+
 		// Should not be able to clone A51 because a bay definition inside is wrong
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
@@ -2147,16 +2182,16 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"; //
 		importAislesData(facility, csvString2);
-		
+
 		Aisle A512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(A512);
-		
+
 		Aisle A522 = Aisle.staticGetDao().findByDomainId(facility, "A52");
 		Assert.assertNull(A522);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		
+
 		// Should not be able to define and clone an aisle in the same line.
 		// There should be a warning for doing this. Check logs.
 		String csvString3 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -2165,11 +2200,11 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Aisle,A51,Clone(A51),,,,,12.85,48.45,X,120\r\n";
 		importAislesData(facility, csvString3);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 	}
-	
+
 	@Test
 	public final void testBadCloneAisle2() {
 		// For DEV-618
@@ -2187,20 +2222,20 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"; // Should not be able to clone.
 		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
 		importAislesData(facility, csvString);
-		
+
 		Aisle A51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(A51);
-		
+
 		Aisle A52 = Aisle.staticGetDao().findByDomainId(facility, "A52");
 		Assert.assertNull(A52);
-		
+
 		// Check what bays were created in A51
 		Bay A51B1 = Bay.staticGetDao().findByDomainId(A51, "B1");
 		Assert.assertNotNull(A51B1);
-		
+
 		Bay A51B2 = Bay.staticGetDao().findByDomainId(A51, "B2");
 		Assert.assertNull(A51B2);
-		
+
 		Bay A51B3 = Bay.staticGetDao().findByDomainId(A51, "B3");
 		Assert.assertNull(A51B3);
 
@@ -2214,16 +2249,16 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Aisle,A53,Clone(A52),,,,,12.85,48.45,X,120\r\n"; //
 		importAislesData(facility, csvString2);
-		
+
 		Aisle A512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(A512);
-		
+
 		Aisle A532 = Aisle.staticGetDao().findByDomainId(facility, "A53");
 		Assert.assertNull(A532);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
 	@Test
 	public final void testCloneAisleSlotCount() {
 		// For DEV-618
@@ -2242,52 +2277,49 @@ public class AisleImporterTest extends MockDaoTest {
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle51);
 
-		
 		Aisle aisle52 = Aisle.staticGetDao().findByDomainId(facility, "A52");
 		Assert.assertNotNull(aisle52);
-		
-		
+
 		// Check slot counts on A51
 		Bay bayA51B1 = Bay.staticGetDao().findByDomainId(aisle51, "B1");
 		Assert.assertNotNull(bayA51B1);
-		
+
 		// Aisle 51 - Bay 1 - Tier 1
 		Tier tierA51B1T1 = Tier.staticGetDao().findByDomainId(bayA51B1, "T1");
 		Assert.assertNotNull(tierA51B1T1);
-		
-		List<Location> slotsA51B1T1 = tierA51B1T1.getActiveChildren(); 
+
+		List<Location> slotsA51B1T1 = tierA51B1T1.getActiveChildren();
 		Assert.assertEquals(1, slotsA51B1T1.size());
 
 		// Aisle 51 - Bay 1 - Tier 2
 		Tier tierA51B1T2 = Tier.staticGetDao().findByDomainId(bayA51B1, "T2");
 		Assert.assertNotNull(tierA51B1T2);
-		
-		List<Location> slotsA51B1T2 = tierA51B1T2.getActiveChildren(); 
+
+		List<Location> slotsA51B1T2 = tierA51B1T2.getActiveChildren();
 		Assert.assertEquals(2, slotsA51B1T2.size());
-		
+
 		// Check slot counts on A51
 		Bay bayA52B1 = Bay.staticGetDao().findByDomainId(aisle52, "B1");
 		Assert.assertNotNull(bayA52B1);
-		
+
 		// Aisle 51 - Bay 1 - Tier 1
 		Tier tierA52B1T1 = Tier.staticGetDao().findByDomainId(bayA52B1, "T1");
 		Assert.assertNotNull(tierA52B1T1);
-		
-		List<Location> slotsA52B1T1 = tierA52B1T1.getActiveChildren(); 
+
+		List<Location> slotsA52B1T1 = tierA52B1T1.getActiveChildren();
 		Assert.assertEquals(1, slotsA52B1T1.size());
 
 		// Aisle 51 - Bay 1 - Tier 2
 		Tier tierA52B1T2 = Tier.staticGetDao().findByDomainId(bayA52B1, "T2");
 		Assert.assertNotNull(tierA52B1T2);
-		
-		List<Location> slotsA52B1T2 = tierA52B1T2.getActiveChildren(); 
+
+		List<Location> slotsA52B1T2 = tierA52B1T2.getActiveChildren();
 		Assert.assertEquals(2, slotsA52B1T2.size());
-		
-		
+
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 	}
-	
+
 	@Test
 	public final void testCloneBay() {
 		this.getTenantPersistenceService().beginTransaction();
@@ -2306,77 +2338,77 @@ public class AisleImporterTest extends MockDaoTest {
 		// Get aisle A51 and check
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle51);
-		
+
 		// Check if the second bay exists and its tiers
 		Bay bayA51B2 = Bay.staticGetDao().findByDomainId(aisle51, "B2");
 		Assert.assertNotNull(bayA51B2);
-		
+
 		Tier tierA51B2T1 = Tier.staticGetDao().findByDomainId(bayA51B2, "T1");
 		Assert.assertNotNull(tierA51B2T1);
-		
+
 		Tier tierA51B2T2 = Tier.staticGetDao().findByDomainId(bayA51B2, "T2");
 		Assert.assertNotNull(tierA51B2T2);
 
 		// Check if the third bay exists and its tiers
 		Bay bayA51B3 = Bay.staticGetDao().findByDomainId(aisle51, "B3");
 		Assert.assertNotNull(bayA51B3);
-		
+
 		Tier tierA51B3T1 = Tier.staticGetDao().findByDomainId(bayA51B3, "T1");
 		Assert.assertNotNull(tierA51B3T1);
-		
+
 		Tier tierA51B3T2 = Tier.staticGetDao().findByDomainId(bayA51B3, "T2");
 		Assert.assertNotNull(tierA51B3T2);
-		
+
 		// Check that the number of slots in the tiers is correct
 		List<Location> slotsA51B3T1 = tierA51B3T1.getActiveChildren();
 		Assert.assertEquals(1, slotsA51B3T1.size());
-		
+
 		List<Location> slotsA51B3T2 = tierA51B3T2.getActiveChildren();
 		Assert.assertEquals(2, slotsA51B3T2.size());
-		
+
 		// Get aisle A52 and check
 		Aisle aisle52 = Aisle.staticGetDao().findByDomainId(facility, "A52");
 		Assert.assertNotNull(aisle52);
-		
+
 		// Check if the second bay exists and its tiers
 		Bay bayA52B2 = Bay.staticGetDao().findByDomainId(aisle52, "B2");
 		Assert.assertNotNull(bayA52B2);
-		
+
 		Tier tierA52B2T1 = Tier.staticGetDao().findByDomainId(bayA52B2, "T1");
 		Assert.assertNotNull(tierA52B2T1);
-		
+
 		Tier tierA52B2T2 = Tier.staticGetDao().findByDomainId(bayA52B2, "T2");
 		Assert.assertNotNull(tierA52B2T2);
 
 		// Check if the third bay exists and its tiers
 		Bay bayA52B3 = Bay.staticGetDao().findByDomainId(aisle52, "B3");
 		Assert.assertNotNull(bayA52B3);
-		
+
 		Tier tierA52B3T1 = Tier.staticGetDao().findByDomainId(bayA52B3, "T1");
 		Assert.assertNotNull(tierA52B3T1);
-		
+
 		Tier tierA52B3T2 = Tier.staticGetDao().findByDomainId(bayA52B3, "T2");
 		Assert.assertNotNull(tierA52B3T2);
-		
+
 		// Check that the number of slots in the tiers is correct
 		List<Location> slotsA52B3T1 = tierA52B3T1.getActiveChildren();
 		Assert.assertEquals(1, slotsA52B3T1.size());
-		
+
 		List<Location> slotsA52B3T2 = tierA52B3T2.getActiveChildren();
 		Assert.assertEquals(2, slotsA52B3T2.size());
-		
+
 		// Check the number of LEDS on two tiers
 		short firstLedT1 = tierA52B3T1.getFirstLedNumAlongPath();
 		short lastLedT1 = tierA52B3T1.getLastLedNumAlongPath();
 		Assert.assertEquals(32, (lastLedT1 - firstLedT1) + 1);
-		
+
 		short firstLedT2 = tierA52B3T2.getFirstLedNumAlongPath();
 		short lastLedT2 = tierA52B3T2.getLastLedNumAlongPath();
 		Assert.assertEquals(40, (lastLedT2 - firstLedT2) + 1);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
 	// FIXME
 	@Test
 	public final void testBadCloneBay() {
@@ -2395,16 +2427,16 @@ public class AisleImporterTest extends MockDaoTest {
 		// Get aisle A51 and check
 		Aisle aisle51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisle51);
-		
+
 		Bay bayA51B4 = Bay.staticGetDao().findByDomainId(aisle51, "B4");
 		Assert.assertNull(bayA51B4);
-		
+
 		Bay bayA51B2 = Bay.staticGetDao().findByDomainId(aisle51, "B2");
 		Assert.assertNull(bayA51B2);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		
+
 		// Check that we cannot clone nonexistent bays
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
@@ -2412,18 +2444,18 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,1,32,0,,\r\n" //
 				+ "Tier,T2,,2,40,0,,\r\n" //
 				+ "Bay,B2,CLONE(B1),,,,,\r\n" //
-				+ "Bay,B3,CLONE(B4),,,,,\r\n";	//
+				+ "Bay,B3,CLONE(B4),,,,,\r\n"; //
 		importAislesData(facility, csvString2);
-		
+
 		Aisle aisleA512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisleA512);
-		
+
 		Bay A512B3 = Bay.staticGetDao().findByDomainId(aisleA512, "B3");
 		Assert.assertNull(A512B3);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		
+
 		// Check that we cannot define and clone the same bay in the same line.
 		// Check error logs for a warning about this. Nothing should be done.
 		String csvString3 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
@@ -2432,12 +2464,13 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,1,32,0,,\r\n" //
 				+ "Tier,T2,,2,40,0,,\r\n" //
 				+ "Bay,B1,CLONE(B1),,,,,\r\n" //
-				+ "Bay,B2,CLONE(B1),,,,,\r\n";	//
+				+ "Bay,B2,CLONE(B1),,,,,\r\n"; //
 		importAislesData(facility, csvString3);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 	}
+
 	@Test
 	public final void testCloneBayOrderings() {
 		this.getTenantPersistenceService().beginTransaction();
@@ -2448,123 +2481,123 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,1,32,0,,\r\n" //
 				+ "Tier,T2,,2,40,0,,\r\n" //
 				+ "Bay,B2,CLONE(B1),,,,,\r\n" //
-				+ "Bay,B3,115,,,,,\r\n"	//
+				+ "Bay,B3,115,,,,,\r\n" //
 				+ "Tier,T1,,1,32,0,,\r\n" //
 				+ "Bay,B4,CLONE(B1),,,,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"; //
 		Facility facility = Facility.createFacility("F-CLONE5X", "TEST", Point.getZeroPoint());
 		importAislesData(facility, csvString);
-	
+
 		// Check all the aisles exist
 		Aisle aisleA51 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisleA51);
-		
+
 		Aisle aisleA52 = Aisle.staticGetDao().findByDomainId(facility, "A52");
 		Assert.assertNotNull(aisleA52);
-		
+
 		// Check the bays exist
 		Bay bayA51B1 = Bay.staticGetDao().findByDomainId(aisleA51, "B1");
 		Assert.assertNotNull(bayA51B1);
-		
+
 		Bay bayA51B2 = Bay.staticGetDao().findByDomainId(aisleA51, "B2");
 		Assert.assertNotNull(bayA51B2);
-		
+
 		Bay bayA51B3 = Bay.staticGetDao().findByDomainId(aisleA51, "B3");
 		Assert.assertNotNull(bayA51B3);
-		
+
 		Bay bayA51B4 = Bay.staticGetDao().findByDomainId(aisleA51, "B4");
 		Assert.assertNotNull(bayA51B4);
-		
+
 		Bay bayA52B1 = Bay.staticGetDao().findByDomainId(aisleA52, "B1");
 		Assert.assertNotNull(bayA52B1);
-		
+
 		Bay bayA52B2 = Bay.staticGetDao().findByDomainId(aisleA52, "B2");
 		Assert.assertNotNull(bayA52B2);
-		
+
 		Bay bayA52B3 = Bay.staticGetDao().findByDomainId(aisleA52, "B3");
 		Assert.assertNotNull(bayA52B3);
-		
+
 		Bay bayA52B4 = Bay.staticGetDao().findByDomainId(aisleA52, "B4");
 		Assert.assertNotNull(bayA52B4);
-		
+
 		// Check some of the tiers exist - also slots and leds
 		Tier tierA51B2T1 = Tier.staticGetDao().findByDomainId(bayA51B2, "T1");
 		Assert.assertNotNull(tierA51B2T1);
-		
+
 		List<Location> slotsA51B2T1 = tierA51B2T1.getActiveChildren();
 		Assert.assertEquals(1, slotsA51B2T1.size());
-		
+
 		short firstLedT1 = tierA51B2T1.getFirstLedNumAlongPath();
 		short lastLedT1 = tierA51B2T1.getLastLedNumAlongPath();
 		Assert.assertEquals(32, (lastLedT1 - firstLedT1) + 1);
-		
+
 		Tier tierA51B2T2 = Tier.staticGetDao().findByDomainId(bayA51B2, "T2");
 		Assert.assertNotNull(tierA51B2T2);
-		
+
 		List<Location> slotsA51B2T2 = tierA51B2T2.getActiveChildren();
 		Assert.assertEquals(2, slotsA51B2T2.size());
-		
+
 		short firstLedT2 = tierA51B2T2.getFirstLedNumAlongPath();
 		short lastLedT2 = tierA51B2T2.getLastLedNumAlongPath();
 		Assert.assertEquals(40, (lastLedT2 - firstLedT2) + 1);
-		
+
 		// Check the number of tiers in A52 B3
 		List<Location> tiersA51B3 = bayA52B3.getActiveChildren();
 		Assert.assertEquals(1, tiersA51B3.size());
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
-		
+
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,1,32,0,,\r\n" //
 				+ "Tier,T2,,2,40,0,,\r\n" //
 				+ "Bay,B2,CLONE(B1),,,,,\r\n" //
-				+ "Bay,B3,CLONE(B2),,,,,\r\n";	//
+				+ "Bay,B3,CLONE(B2),,,,,\r\n"; //
 		importAislesData(facility, csvString2);
-		
+
 		// Check if cloning a cloned bay works
 		Aisle aisleA512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
 		Assert.assertNotNull(aisleA512);
-		
+
 		Bay bayA51B22 = Bay.staticGetDao().findByDomainId(aisleA512, "B2");
 		Assert.assertNotNull(bayA51B22);
-		
+
 		Bay bayA51B32 = Bay.staticGetDao().findByDomainId(aisleA512, "B3");
 		Assert.assertNotNull(bayA51B32);
-		
+
 		// Check tiers of aisles
 		Tier tierA51B2T12 = Tier.staticGetDao().findByDomainId(bayA51B22, "T1");
 		Assert.assertNotNull(tierA51B2T12);
-		
+
 		Tier tierA51B2T22 = Tier.staticGetDao().findByDomainId(bayA51B22, "T2");
 		Assert.assertNotNull(tierA51B2T22);
-		
+
 		Tier tierA51B3T12 = Tier.staticGetDao().findByDomainId(bayA51B32, "T1");
 		Assert.assertNotNull(tierA51B3T12);
-		
+
 		Tier tierA51B3T22 = Tier.staticGetDao().findByDomainId(bayA51B32, "T2");
 		Assert.assertNotNull(tierA51B3T22);
-		
+
 		// Check the slot counts of B3
 		List<Location> slotsA51B3T12 = tierA51B3T12.getActiveChildren();
 		Assert.assertEquals(1, slotsA51B3T12.size());
-		
+
 		List<Location> slotsA51B3T22 = tierA51B3T22.getActiveChildren();
 		Assert.assertEquals(2, slotsA51B3T22.size());
-		
+
 		// Check the LED count of the B3 tiers
 		short firstLedB3T1 = tierA51B3T12.getFirstLedNumAlongPath();
 		short lastLedB3T1 = tierA51B3T12.getLastLedNumAlongPath();
 		Assert.assertEquals(32, (lastLedB3T1 - firstLedB3T1) + 1);
-		
+
 		short firstLedB3T2 = tierA51B3T22.getFirstLedNumAlongPath();
 		short lastLedB3T2 = tierA51B3T22.getLastLedNumAlongPath();
 		Assert.assertEquals(40, (lastLedB3T2 - firstLedB3T2) + 1);
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
 	@Test
 	public final void testPath() {
 		this.getTenantPersistenceService().beginTransaction();
@@ -2850,7 +2883,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,5,40,0,,\r\n"; //
 		Facility facility = Facility.createFacility("F-AISLE29", "TEST", Point.getZeroPoint());
 		importAislesData(facility, csvString);
-		
+
 		// Get the objects we will use
 		Aisle aisle29 = Aisle.staticGetDao().findByDomainId(facility, "A29");
 		Assert.assertNotNull(aisle29);
@@ -2945,7 +2978,7 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T1,,5,40,0,,\r\n"; //
 		Facility facility = Facility.createFacility("F-AISLE31", "TEST", Point.getZeroPoint());
 		importAislesData(facility, csvString);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
