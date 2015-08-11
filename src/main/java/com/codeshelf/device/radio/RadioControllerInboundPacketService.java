@@ -1,6 +1,5 @@
 package com.codeshelf.device.radio;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -29,8 +28,6 @@ public class RadioControllerInboundPacketService {
 																		new ThreadFactoryBuilder().setNameFormat("pckt-hndlr-%s")
 																			.build());
 
-	private final ConcurrentLinkedQueue<IPacket>	incomingPackets	= new ConcurrentLinkedQueue<IPacket>();
-
 	private final RadioController					radioController;
 
 	public RadioControllerInboundPacketService(RadioController radioController) {
@@ -39,26 +36,12 @@ public class RadioControllerInboundPacketService {
 	}
 
 	public void start() {
-		executor.submit(new PacketHandler(incomingPackets));
+		executor.submit(new PacketHandler(null));
 	}
 
 	public boolean handleInboundPacket(IPacket packet) {
-		boolean wasAddedToQueue = true;
-
-		try {
-			wasAddedToQueue = incomingPackets.offer(packet);
-		} catch (IllegalStateException e) {
-			LOGGER.warn("Incoming packet queue is full. Clearing queue.");
-			incomingPackets.clear();
-		}
-
-		if (wasAddedToQueue) {
-			executor.submit(new PacketHandler(incomingPackets));
-		} else {
-			LOGGER.warn("Incoming packet was dropped. Queue size: {} Packet: {}", incomingPackets.size(), packet.toString());
-		}
-
-		return wasAddedToQueue;
+		executor.submit(new PacketHandler(packet));
+		return true;
 	}
 
 	public void shutdown() {
@@ -66,18 +49,16 @@ public class RadioControllerInboundPacketService {
 	}
 
 	private final class PacketHandler implements Runnable {
-		private final ConcurrentLinkedQueue<IPacket>	queue;
+		//private final ConcurrentLinkedQueue<IPacket>	queue;
+		private final IPacket packet;
 
-		public PacketHandler(ConcurrentLinkedQueue<IPacket> queue) {
+		public PacketHandler(IPacket inPacket) {
 			super();
-			this.queue = queue;
+			packet = inPacket;
 		}
 
 		@Override
 		public void run() {
-
-			IPacket packet = null;
-			packet = queue.poll();
 
 			if (packet == null) {
 				return;

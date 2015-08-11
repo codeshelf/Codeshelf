@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.flyweight.command.CommandControlABC;
 import com.codeshelf.flyweight.command.CommandGroupEnum;
 import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
@@ -412,6 +413,14 @@ public class RadioControllerPacketSchedulerService {
 	 *		Packet to check
 	 */
 	private boolean clearToSendCommandPacket(IPacket inPacket) {
+		
+		if (inPacket.getCommand().getCommandTypeEnum() == CommandGroupEnum.CONTROL) {
+			CommandControlABC command = (CommandControlABC) inPacket.getCommand();
+			
+			if(command.getExtendedCommandID().getValue() == CommandControlABC.ACK) {
+				return true;
+			}
+		}
 
 		if (inPacket.getCommand().getCommandTypeEnum() == CommandGroupEnum.ASSOC) {
 			return true;

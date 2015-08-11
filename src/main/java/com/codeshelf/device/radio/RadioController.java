@@ -24,6 +24,7 @@ import com.codeshelf.flyweight.command.CommandAssocCheck;
 import com.codeshelf.flyweight.command.CommandAssocReq;
 import com.codeshelf.flyweight.command.CommandAssocResp;
 import com.codeshelf.flyweight.command.CommandControlABC;
+import com.codeshelf.flyweight.command.CommandControlAck;
 import com.codeshelf.flyweight.command.CommandControlButton;
 import com.codeshelf.flyweight.command.CommandControlScan;
 import com.codeshelf.flyweight.command.CommandNetMgmtABC;
@@ -32,6 +33,7 @@ import com.codeshelf.flyweight.command.CommandNetMgmtSetup;
 import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
+import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.command.NetworkId;
 import com.codeshelf.flyweight.command.Packet;
@@ -631,7 +633,7 @@ public class RadioController implements IRadioController {
 			try {
 				CommandAssocAck ackCmd;
 				LOGGER.info("Assoc check for {}", foundDevice);
-
+				
 				short level = inCommand.getBatteryLevel();
 				if (foundDevice.getLastBatteryLevel() != level) {
 					foundDevice.setLastBatteryLevel(level);
@@ -691,7 +693,7 @@ public class RadioController implements IRadioController {
 
 	private void processAckPacket(IPacket ackPacket) {
 		INetworkDevice device = null;
-
+		
 		device = mDeviceNetAddrMap.get(ackPacket.getSrcAddr());
 
 		if (device != null) {
@@ -707,19 +709,13 @@ public class RadioController implements IRadioController {
 	private void sendPacketAck(INetworkDevice device, final byte inAckId, final NetworkId inNetId, final NetAddress inSrcAddr) {
 		ContextLogging.setNetGuid(device.getGuid());
 		try {
-
 			LOGGER.info("ACKing packet: ackId={}; netId={}; srcAddr={}", inAckId, inNetId, inSrcAddr);
-
 			device.setLastIncomingAckId(inAckId);
-			String theGuid = device.getGuid().getHexStringNoPrefix().toUpperCase();
-
-			CommandAssocAck ackCmd = new CommandAssocAck(theGuid, new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, (byte) 0));
-
-			IPacket ackPacket = new Packet(ackCmd, inNetId, mServerAddress, inSrcAddr, false);
-			ackCmd.setPacket(ackPacket);
-			ackPacket.setAckId(inAckId);
+			
+			CommandControlAck ackCmd = new CommandControlAck(NetEndpoint.PRIMARY_ENDPOINT, inAckId);
+			IPacket ackPacket = new Packet(ackCmd, packetIOService.getNetworkId(), mServerAddress, device.getAddress(), false);
+			
 			packetSchedulerService.addAckPacketToSchedule(ackPacket, device);
-
 		} finally {
 			ContextLogging.clearNetGuid();
 		}
