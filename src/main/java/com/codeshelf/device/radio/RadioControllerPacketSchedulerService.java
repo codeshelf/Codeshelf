@@ -320,11 +320,7 @@ public class RadioControllerPacketSchedulerService {
 			if (mDeviceBlockingPeekCount.containsKey(device.getAddress())) {
 				peekCount = mDeviceBlockingPeekCount.get(device.getAddress());
 			}
-
-			if (peekCount > 0) {
-				LOGGER.warn("Peek count {}", peekCount);
-			}
-
+			
 			if (clearToSendToDevice(device)) {
 				device = mSecondDeviceQueue.poll();
 				mDeviceBlockingPeekCount.put(device.getAddress(), 0);
@@ -335,8 +331,6 @@ public class RadioControllerPacketSchedulerService {
 			}
 
 			if (peekCount > 3) {
-				LOGGER.warn("********************Device blocked too many times. Placing in back of the queue. {}",
-					device.getAddress());
 				device = mSecondDeviceQueue.poll();
 				mSecondDeviceQueue.offer(device);
 				//mDeviceBlockingPeekCount.put(device.getAddress(), 0);
