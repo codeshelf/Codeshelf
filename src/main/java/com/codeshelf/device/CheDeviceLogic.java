@@ -122,6 +122,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					PALL_NEW_ORDER_2_MSG					= cheLine("For Store ");
 	protected static final String					PALL_NEW_ORDER_3_MSG					= cheLine("Or Scan Another Item");
 	protected static final String					PALL_SCAN_NEXT_ITEM_MSG					= cheLine("Scan Next Item");
+	protected static final String					DAMAGED_PUT_CONFIRM_MSG					= cheLine("CONFIRM DAMAGED");
 	
 	//To repeat: !!!DO NOT CREATE LINES LONGER THAN 20 CHARACTERS!!! using cheLine()
 	//Causes untraceable error during Site initialization
@@ -1760,7 +1761,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	/**
 	 * This che is looking at the wi, and seeing a poscon lighting instruction. Send it to the appropriate controller.
 	 */
-	private void lightWiPosConLocations(WorkInstruction inFirstWi) {
+	protected void lightWiPosConLocations(WorkInstruction inFirstWi) {
 		String wiCmdString = inFirstWi.getPosConCmdStream();
 		if (wiCmdString == null || wiCmdString.equals("[]")) {
 			return;

@@ -733,6 +733,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * The user scanned YES or NO.
 	 * @param inScanStr
 	 */
+	@Override
 	protected void yesOrNoCommandReceived(final String inScanStr) {
 
 		switch (mCheStateEnum) {
@@ -2409,6 +2410,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * @param inButtonNum
 	 * @param inQuantity
 	 */
+	@Override
 	protected void processButtonPress(Integer inButtonNum, Integer inQuantity) {
 		// In general, this can only come if the poscon was set in a way that prepared it to be able to send.
 		// However, pickSimulator.pick() can be called in any context, which simulates the button press command coming in.

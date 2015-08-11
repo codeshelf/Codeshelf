@@ -1,5 +1,7 @@
 package com.codeshelf.device;
 
+import java.sql.Timestamp;
+import java.util.List;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -7,10 +9,13 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
+import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.service.WorkService.PalletizerInfo;
+import com.google.common.collect.Lists;
 
 import lombok.Getter;
-import lombok.Setter;
 import lombok.experimental.Accessors;
 
 /**
@@ -26,7 +31,6 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 	
 	@Accessors(prefix = "m")
 	@Getter
-	@Setter
 	private PalletizerInfo						mInfo		 = new PalletizerInfo();
 	
 	public ChePalletizerDeviceLogic(UUID inPersistentId,
@@ -39,6 +43,18 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 	@Override
 	public String getDeviceType() {
 		return CsDeviceManager.DEVICETYPE_CHE_PALLETIZER;
+	}
+
+	private void setItemInfo(PalletizerInfo info){
+		if (info == null) {
+			clearItemInfo();
+		} else {
+			mInfo = info;
+		}
+	}
+
+	private void clearItemInfo(){
+		mInfo = new PalletizerInfo();
 	}
 	
 	@Override
@@ -87,8 +103,12 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 					break;
 					
 				case PALLETIZER_PUT_ITEM:
-					PalletizerInfo info = getInfo();
-					sendDisplayCommand(info.getLocation(), "Item: " + info.getItem(), "Store: " + info.getOrderId(), PALL_SCAN_NEXT_ITEM_MSG);
+					displayPutScreen();
+					break;
+					
+				case PALLETIZER_DAMAGED:
+					clearAffectedLedAndPoscon();
+					sendDisplayCommand(DAMAGED_PUT_CONFIRM_MSG, YES_NO_MSG);
 					break;
 					
 				default:
@@ -104,7 +124,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 	protected void processCommandScan(final String inScanStr) {
 		switch (inScanStr) {
 			case LOGOUT_COMMAND:
-				setInfo(new PalletizerInfo());
+				clearItemInfo();
 				logout();
 				break;
 				
@@ -113,8 +133,37 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 				processCommandCancel();
 				break;
 
+			case SHORT_COMMAND:
+				if (mCheStateEnum == CheStateEnum.PALLETIZER_PUT_ITEM) {
+					setState(CheStateEnum.PALLETIZER_DAMAGED);
+				}
+				break;
+				
+			case YES_COMMAND:
+			case NO_COMMAND:
+				yesOrNoCommandReceived(inScanStr);
+				break;
+
 			case INFO_COMMAND:
 				processCommandInfo();
+				break;
+				
+			default:
+				break;
+		}
+	}
+	
+	@Override
+	protected void yesOrNoCommandReceived(final String inScanStr) {
+		switch (mCheStateEnum) {
+			case PALLETIZER_DAMAGED:
+				if (YES_COMMAND.equalsIgnoreCase(inScanStr)) {
+					notifyWiVerb(getInfo().getWi(), WorkerEvent.EventType.SHORT, kLogAsWarn);
+					clearAffectedLedAndPoscon();
+					setState(CheStateEnum.PALLETIZER_SCAN_ITEM);
+				} else {
+					setState(CheStateEnum.PALLETIZER_PUT_ITEM);
+				}
 				break;
 				
 			default:
@@ -137,6 +186,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 				break;
 				
 			case PALLETIZER_PUT_ITEM:
+				completeCurrentWi();
 				if (isEmpty(scanPrefix)){
 					processItemScan(scanPrefix, scanBody);
 				}
@@ -166,7 +216,16 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 	
 	@Override
 	protected void processCommandCancel() {
+		clearAffectedLedAndPoscon();
 		switch (mCheStateEnum) {
+			case PALLETIZER_PROCESSING:
+				setState(CheStateEnum.PALLETIZER_SCAN_ITEM);
+				break;
+				
+			case PALLETIZER_DAMAGED:
+				setState(CheStateEnum.PALLETIZER_PUT_ITEM);
+				break;
+				
 			default:
 				setState(mCheStateEnum);
 				break;
@@ -205,6 +264,49 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 	}
 	
 	@Override
+	protected void processButtonPress(Integer inButtonNum, Integer inQuantity) {
+		notifyButton(inButtonNum, inQuantity);
+
+		// The point is, let's check our state
+		switch (mCheStateEnum) {
+			case PALLETIZER_PUT_ITEM:
+				completeCurrentWi();
+				clearItemInfo();
+				setState(CheStateEnum.PALLETIZER_SCAN_ITEM);
+				break;
+
+			default:
+				LOGGER.warn("Unexpected button press ignored.");
+				// We want to ignore the button press, but force out starting poscon situation again.
+				setState(mCheStateEnum);
+				return;
+		}
+	}
+	
+	private void completeCurrentWi(){
+		WorkInstruction wi = getInfo().getWi();
+		if (wi == null) {
+			LOGGER.warn("Palletizer PUT button press without a saved WI");
+			return;
+		}
+		wi.setActualQuantity(1);
+		wi.setPickerId(mUserId);
+		wi.setCompleted(new Timestamp(System.currentTimeMillis()));
+		wi.setStatus(WorkInstructionStatusEnum.COMPLETE);
+		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi);
+		notifyWiVerb(wi, WorkerEvent.EventType.COMPLETE, kLogAsInfo);
+		clearAffectedLedAndPoscon();
+	}
+	
+	private void clearAffectedLedAndPoscon(){
+		WorkInstruction wi = getInfo().getWi();
+		if (wi != null) {
+			clearLedAndPosConControllersForWi(wi);
+		}
+		clearOnePosconOnThisDevice((byte)1);
+	}
+	
+	@Override
 	public void processResultOfVerifyBadge(Boolean verified) {
 		if (mCheStateEnum.equals(CheStateEnum.VERIFYING_BADGE) || mCheStateEnum.equals(CheStateEnum.IDLE)) {
 			if (verified) {
@@ -226,7 +328,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 			LOGGER.warn("Unexpected state {} when receiving Palletizer Item Response", mCheStateEnum);
 			return;
 		}
-		setInfo(info);
+		setItemInfo(info);
 		if (info.isOrderFound()) {
 			setState(CheStateEnum.PALLETIZER_PUT_ITEM);
 		} else {
@@ -238,6 +340,23 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 		}
 	}
 	
+	private void displayPutScreen(){
+		PalletizerInfo info = getInfo();
+		sendDisplayCommand(info.getLocation(), "Item: " + info.getItem(), "Store: " + info.getOrderId(), PALL_SCAN_NEXT_ITEM_MSG);
+		WorkInstruction wi = info.getWi();
+		forceClearOtherPosConControllersForThisCheDevice();
+		if (wi != null) {
+			lightWiLocations(wi);
+			lightWiPosConLocations(wi);
+		} else {
+			LOGGER.warn("Arrived at Palletizer's PUT screen without a work instruction");
+		}
+		byte qty = 1;
+		List<PosControllerInstr> instructions = Lists.newArrayList();
+		instructions.add(new PosControllerInstr((byte)1,qty,qty,qty,PosControllerInstr.SOLID_FREQ, PosControllerInstr.BRIGHT_DUTYCYCLE));
+		sendPositionControllerInstructions(instructions);
+	}
+		
 	private boolean isEmpty(String str){
 		return (str == null) ? true : str.isEmpty();
 	}

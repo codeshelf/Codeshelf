@@ -54,7 +54,8 @@ public class WiFactory {
 		WiPurposeSkuWallPut,
 		WiPurposeCrossBatchPut,
 		WiPurposeReplenishPut,
-		WiPurposeRestockPut
+		WiPurposeRestockPut,
+		WiPalletizerPut
 	}
 
 	// IMPORTANT. This should be synched with LightService.defaultLedsToLight
@@ -396,6 +397,7 @@ public class WiFactory {
 		Item item,
 		Che che,
 		WiPurpose purpose,
+		boolean fixedQuantity,
 		final Timestamp time) throws DaoException {
 		ItemMaster itemMaster = item.getParent();
 		Location location = item.getStoredLocation();
@@ -416,7 +418,7 @@ public class WiFactory {
 		wi.setDescription(cookedDesc);
 		wi.setPlanQuantity(1);
 		wi.setPlanMinQuantity(1);
-		wi.setPlanMaxQuantity(99);
+		wi.setPlanMaxQuantity(fixedQuantity?1:99);
 		wi.setActualQuantity(0);
 		wi.setAssigned(time);
 		Gtin gtin = item.getGtin();
