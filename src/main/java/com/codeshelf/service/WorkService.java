@@ -686,13 +686,45 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	}
 
 	/**
-	 * We completed a work instruction. Where and how shall we send it?
-	 * Three choices so far: not at all, to IronMQ, or to SFTP
+	 * Two choices so far: not at all, or to SFTP
 	 */
+	public void notifyAddOrderToCart(OrderHeader inOrder, Che inChe) {
+		boolean ordersToSFTP = false;
+		if (ordersToSFTP) {
+			// This is the PFSWeb variant. 
+			// Not sure if these should go singly.
+			EdiServiceABC theService = getAccumulatingOutputService();
+			if (theService != null) {
+				theService.notifyOrderOnCart(inOrder, inChe);
+				theService.notifyOrderRemoveFromCart(inOrder, inChe);
+			}
+		}
+	}
+
+	/**
+	 * Two choices so far: not at all, or to SFTP.
+	 * Not sure that PFSWeb can tolerate this at all. Do not know how the message should look. Probably would
+	 * Send what was completed so far by calling theService.notifyOrderCompleteOnCart(wiOrder, wiChe), and trusting that sends nothing if there are none
+	 */
+	public void notifyRemoveOrderToCart(OrderHeader inOrder, Che inChe) {
+		boolean ordersToSFTP = false;
+		if (ordersToSFTP) {
+			// This is the PFSWeb variant. 
+			EdiServiceABC theService = getAccumulatingOutputService();
+			if (theService != null) {
+				theService.notifyOrderRemoveFromCart(inOrder, inChe);
+			}
+		}
+	}
+
+	/**
+	* We completed a work instruction. Where and how shall we send it?
+	* Three choices so far: not at all, to IronMQ, or to SFTP
+	*/
 	public void notifyEdiServiceCompletedWi(WorkInstruction inWi) {
 		// Replace with some selector
 		boolean wisToIronMQ = true;
-		boolean wisToIronSFTP = false;
+		boolean wisToSFTP = false;
 
 		if (wisToIronMQ) {
 			// This is the IronMQ blow by blow variant. It queues messages directly on WorkService, which is suspect. Work service is
@@ -702,8 +734,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			} catch (IOException e) {
 				LOGGER.error("Unable to export work instruction: " + inWi, e);
 			}
-		}
-		else if (wisToIronSFTP) {
+		} else if (wisToSFTP) {
 			// This is the PFSWeb variant. Each work instruction is add to the specific EDI service and accumulated, then sent finally
 			// if the order is complete on the cart
 			EdiServiceABC theService = getAccumulatingOutputService();

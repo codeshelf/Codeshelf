@@ -725,11 +725,12 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	}
 
 	/**
-	 * This method deleted the order and all dependencies from the DB.
-	 * It is to be used for testing of Automated Pick Scripts, so that the same orders can be picked repeatedly
+	 * Is this order fully complete as far as this cart is concerned. Called just after a wi complete, so somewhat answers the 
+	 * question of whether the last wi resulted in the order going OC. But choosing to do this server side rather than message
+	 * from site controller
 	 */
 	public boolean didOrderCompleteOnCart(Che wiChe) {
-		List<WorkInstruction> wiList = getWorkInstructionsThisOrderOnCart(wiChe);
+		List<WorkInstruction> wiList = getWorkInstructionsThisOrderForCart(wiChe);
 		if (wiList == null)
 			return false;
 		boolean foundIncomplete = false;
@@ -742,8 +743,26 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		return !foundIncomplete;
 	}
 
-	private List<WorkInstruction> getWorkInstructionsThisOrderOnCart(Che wiChe) {
-		// TODO Auto-generated method stub
+	/**
+	 * Server-side does not have a strong concept of on this cart now.
+	 * This returns a list of work instruction that are on or were ever done by this cart. Therefore, leftover
+	 * uncompleted WI from previous cart run will be in this list and may make didOrderCompleteOnCart return the wrong answer.
+	 * Probably fix here, restricting this list to wis on this cart now, if we can know it.
+	 */
+	private List<WorkInstruction> getWorkInstructionsThisOrderForCart(Che wiChe) {
+		// What is best, query, or java relations? Or this might be bad for performance, in which case site controller message might be better.
+		List<WorkInstruction> wisThisChe = new ArrayList<WorkInstruction>();
+		List<OrderDetail> details = this.getOrderDetails();
+		if (wiChe == null) {
+			return wisThisChe;
+		}
+		for (OrderDetail detail : details) {
+			List<WorkInstruction> wis = detail.getWorkInstructions();
+			for (WorkInstruction wi : wis) {
+				if (wiChe.equals(wi.getAssignedChe()))
+					wisThisChe.add(wi);
+			}
+		}
 		return null;
 	}
 }
