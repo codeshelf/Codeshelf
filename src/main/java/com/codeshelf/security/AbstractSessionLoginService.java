@@ -9,6 +9,7 @@ import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.security.TokenSession.Status;
+import com.google.common.base.Strings;
 
 public abstract class AbstractSessionLoginService extends AbstractHmacTokenService {
 	static final Logger	LOGGER								= LoggerFactory.getLogger(AbstractSessionLoginService.class);
@@ -94,7 +95,7 @@ public abstract class AbstractSessionLoginService extends AbstractHmacTokenServi
 	}
 	
 	public boolean hashIsValid(String hash) {
-		return hash.startsWith("$apr1$");
+		return !Strings.isNullOrEmpty(hash) && hash.startsWith("$apr1$");
 	}
 
 	public String describePasswordRequirements() {
