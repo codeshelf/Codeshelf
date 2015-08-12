@@ -427,22 +427,44 @@ public class WorkServiceTest extends ServerTest {
 
 		// TODO change to order bean and che bean so we do not have to anticipate every need as a separate parameter. 
 		// Never pass domain object to groovy.
-		String onCartScript = "def OrderOnCartContent(orderId,cheId, customerId) { "
-				+ "def returnStr = '0073^ORDERSTATUS^0000000000^'"
-				+ "+ orderId +'^'+ cheId +'^'+ customerId + '^OPEN';"
+		// Note: PFS web is both fixed field length, and delimited. First field is message ID, I think; not length.
+		String onCartScript = "def OrderOnCartContent(orderId,cheId, customerId) { def returnStr = " //
+				+ "'0073' +'^'" //
+				+ "+ 'ORDERSTATUS'.padRight(20) +'^'" //
+				+ "+ '0'.padLeft(10,'0') +'^'" //
+				+ "+ orderId.padRight(20) +'^'" //
+				+ "+ cheId.padRight(7) +'^'" //
+				+ "+ customerId.padRight(2) +'^'" //
+				+ "+ 'OPEN'.padRight(15);" //
 				+ " return returnStr;}";
 
-		// groovy by default returns the last thing in the function/closure that was done. In these cases, returns the string
-		String headerScript = "def WorkInstructionExportCreateHeader(orderId,cheId) { '0073^ORDERSTATUS^0000000000^'"
-				+ "+ orderId + '^CLOSED'}";
+		String headerScript = "def WorkInstructionExportCreateHeader(orderId,cheId) { def returnStr = " //
+				+ "'0073' +'^'" //
+				+ "+ 'ORDERSTATUS'.padRight(20) +'^'" //
+				+ "+ '0'.padLeft(10,'0') +'^'" //
+				+ "+ orderId.padRight(20) +'^'" //
+				+ "+ 'CLOSED'.padRight(15);" //
+				+ " return returnStr;}";
 
-		String trailerScript = "def WorkInstructionExportCreateTrailer(orderId,cheId) { '0057^ENDORDER^0000000000^'"
-				+ "+ orderId }";
+		String trailerScript = "def WorkInstructionExportCreateTrailer(orderId,cheId) { def returnStr = " //
+				+ "'0057' +'^'" //
+				+ "+ 'ENDORDER'.padRight(20) +'^'" //
+				+ "+ '0'.padLeft(10,'0') +'^'" //
+				+ "+ orderId.padRight(20);" //
+				+ " return returnStr;}";
 
-		String contentScript = "def WorkInstructionExportContent(bean) { '0090^PICKMISSIONSTATUS^0000000000^' +"
-				+ "bean.orderId +'^'+ bean.locationId +'^'+ bean.planQuantity +'^'+ bean.actualQuantity +'^'+"
-				+ "bean.itemId}";
-
+		// This matches the short specification. Customer sent a longer specification with timestamps and user names.
+		String contentScript = "def WorkInstructionExportContent(bean) { def returnStr = " //
+				+ "'0090' +'^'" //
+				+ "+ 'PICKMISSIONSTATUS'.padRight(20) +'^'" //
+				+ "+ '0'.padLeft(10,'0') +'^'" //
+				+ "+ bean.orderId.padRight(20) +'^'" //
+				+ "+ bean.locationId.padRight(20) +'^'" //
+				+ "+ bean.planQuantity.padLeft(15,'0') +'^'" //
+				+ "+ bean.actualQuantity.padLeft(15,'0') +'^'" //
+				+ "+ bean.itemId.padRight(25);" //
+				+ " return returnStr;}";
+ 
 		beginTransaction();
 		Facility facility = facilityGenerator.generateValid();
 
