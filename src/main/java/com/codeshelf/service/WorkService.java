@@ -696,17 +696,18 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			EdiServiceABC theService = getAccumulatingOutputService();
 			if (theService != null) {
 				theService.notifyOrderOnCart(inOrder, inChe);
-				theService.notifyOrderRemoveFromCart(inOrder, inChe);
 			}
 		}
 	}
 
 	/**
 	 * Two choices so far: not at all, or to SFTP.
-	 * Not sure that PFSWeb can tolerate this at all. Do not know how the message should look. Probably would
-	 * Send what was completed so far by calling theService.notifyOrderCompleteOnCart(wiOrder, wiChe), and trusting that sends nothing if there are none
+	 * Not sure that PFSWeb can tolerate this at all. Do not know how the message should look.
+	 * Calls through to theService.notifyOrderRemoveFromCart(). That should probably
+	 * send what was completed so far by calling notifyOrderCompleteOnCart(wiOrder, wiChe), 
+	 * and trusting that it sends nothing if there are none
 	 */
-	public void notifyRemoveOrderToCart(OrderHeader inOrder, Che inChe) {
+	public void notifyRemoveOrderFromCart(OrderHeader inOrder, Che inChe) {
 		boolean ordersToSFTP = false;
 		if (ordersToSFTP) {
 			// This is the PFSWeb variant. 
