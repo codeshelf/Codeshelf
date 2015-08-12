@@ -12,6 +12,7 @@ import org.apache.velocity.runtime.log.Log4JLogChute;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 
 import com.codeshelf.service.AbstractCodeshelfIdleService;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 
 public class TemplateService extends AbstractCodeshelfIdleService {
@@ -43,8 +44,14 @@ public class TemplateService extends AbstractCodeshelfIdleService {
 	@Override
 	protected void startUp() throws Exception {
 		defaultContext = new VelocityContext();
-		// set up shared default context here 
-		//defaultContext.put("auth.baseurl", System.getProperty("auth.baseurl"));
+		// set up shared default context here
+		String auth_baseurl = System.getProperty("auth.baseurl");
+		if (Strings.isNullOrEmpty(auth_baseurl)) {
+			VELOCITY_LOGGER.error("Emails will be incorrect, set 'auth.baseurl'");
+		}
+		defaultContext.put("reset_url" , auth_baseurl + "/#/resetpassword");
+		defaultContext.put("recovery_url" , auth_baseurl + "/#/setuppassword");
+		defaultContext.put("setup_url" , auth_baseurl + "/#/setuppassword");
 		
 		velocityEngine = new VelocityEngine();
 		velocityEngine.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, Log4JLogChute.class.getName());
@@ -52,6 +59,7 @@ public class TemplateService extends AbstractCodeshelfIdleService {
 		velocityEngine.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
 		velocityEngine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
 		velocityEngine.setProperty("classpath.resource.loader.path", "templates");
+
 		velocityEngine.init();
 	}
 
