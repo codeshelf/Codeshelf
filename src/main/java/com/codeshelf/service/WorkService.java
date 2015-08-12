@@ -62,6 +62,7 @@ import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerUse;
 import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.domain.EdiServiceABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.IEdiService;
@@ -684,17 +685,55 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 	}
 
+	/**
+	 * We completed a work instruction. Where and how shall we send it?
+	 * Three choices so far: not at all, to IronMQ, or to SFTP
+	 */
+	public void notifyEdiServiceCompletedWi(WorkInstruction inWi) {
+		// Replace with some selector
+		boolean wisToIronMQ = true;
+		boolean wisToIronSFTP = false;
+
+		if (wisToIronMQ) {
+			// This is the IronMQ blow by blow variant. It queues messages directly on WorkService, which is suspect. Work service is
+			// singleton shared by many tenants. The message knows its service (the correct one), maybe this works for multi-tenancy.
+			try {
+				exportWorkInstruction(inWi);
+			} catch (IOException e) {
+				LOGGER.error("Unable to export work instruction: " + inWi, e);
+			}
+		}
+		else if (wisToIronSFTP) {
+			// This is the PFSWeb variant. Each work instruction is add to the specific EDI service and accumulated, then sent finally
+			// if the order is complete on the cart
+			EdiServiceABC theService = getAccumulatingOutputService();
+			if (theService != null) {
+				theService.notifyWiComplete(inWi);
+				// then the slightly tricky part. Did this work instruction result in the order being complete on that cart?
+				Che wiChe = inWi.getAssignedChe();
+				OrderHeader wiOrder = inWi.getOrder();
+				if (wiOrder.didOrderCompleteOnCart(wiChe)) {
+					theService.notifyOrderCompleteOnCart(wiOrder, wiChe);
+				}
+			}
+		}
+
+	}
+
+	private EdiServiceABC getAccumulatingOutputService() {
+		// TODO get the SFTP service
+		return null;
+	}
+
 	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
 		Che che = Che.staticGetDao().findByPersistentId(cheId);
 		if (che != null) {
 			WorkInstruction storedWi = null;
 			try {
 				storedWi = persistWorkInstruction(incomingWI);
-				exportWorkInstruction(storedWi);
+				notifyEdiServiceCompletedWi(storedWi);
 			} catch (DaoException e) {
 				LOGGER.error("Unable to record work instruction: " + incomingWI, e);
-			} catch (IOException e) {
-				LOGGER.error("Unable to export work instruction: " + incomingWI, e);
 			}
 			if (storedWi != null) {
 				computeAndSendOrderFeedback(storedWi);
@@ -855,23 +894,23 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			LOGGER.warn("Location {} not resolved or not a put wall", putWallName);
 			return response;
 		}
-		
-		if (putWallLoc.isPutWallLocation()){
+
+		if (putWallLoc.isPutWallLocation()) {
 			response = getOrderWallInstructionsForItem(facility, inChe, itemOrUpc, putWallLoc);
 			return response;
-		} else if (putWallLoc.isSkuWallLocation()){
+		} else if (putWallLoc.isSkuWallLocation()) {
 			response = getSkuWallInstructionsForItem(facility, inChe, itemOrUpc, putWallLoc);
 			return response;
 		} else {
 			LOGGER.warn("Location {} is a wall, but neither a Put wall, nor a Sku wall", putWallName);
-			return response;						
+			return response;
 		}
 	}
-	
+
 	private GetPutWallInstructionResponse getSkuWallInstructionsForItem(final Facility facility,
 		final Che che,
 		final String itemOrUpc,
-		final Location locationInWall){
+		final Location locationInWall) {
 		GetPutWallInstructionResponse response = new GetPutWallInstructionResponse();
 		response.setWallType(Location.SKUWALL_USAGE);
 		Location skuWallLoc = locationInWall.getWall(Location.SKUWALL_USAGE);
@@ -888,7 +927,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		Item item = skuWallLoc.findItemInLocationAndChildren(gtin.getParent(), gtin.getUomMaster());
 		if (item == null) {
-			LOGGER.info("Did not find item for Gtin {} at {}. Checking other Sku walls", itemOrUpc, skuWallLoc.getNominalLocationId());
+			LOGGER.info("Did not find item for Gtin {} at {}. Checking other Sku walls",
+				itemOrUpc,
+				skuWallLoc.getNominalLocationId());
 			String alternateWallName = findSkuWallWithItem(facility, gtin.getParent(), gtin.getUomMaster());
 			response.setWallName(alternateWallName);
 		}
@@ -896,7 +937,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			LOGGER.warn("Did not find item for Gtin {}", itemOrUpc);
 			return response;
 		}
-		
+
 		WorkInstruction wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
 			WorkInstructionTypeEnum.PLAN,
 			item,
@@ -910,14 +951,14 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		response.setWallName(skuWallLoc.getBestUsableLocationName());
 		return response;
 	}
-		
-	private String findSkuWallWithItem(Facility facility, ItemMaster itemMaster, UomMaster uomMaster){
+
+	private String findSkuWallWithItem(Facility facility, ItemMaster itemMaster, UomMaster uomMaster) {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("usage", Location.SKUWALL_USAGE));
 		List<Location> skuWalls = Location.staticGetLocationDao().findByFilter(filterParams);
 		String foundWall = null;
-		for (Location skuWall : skuWalls){
-			if (skuWall.getFacility().equals(facility)){
+		for (Location skuWall : skuWalls) {
+			if (skuWall.getFacility().equals(facility)) {
 				Item item = skuWall.findItemInLocationAndChildren(itemMaster, uomMaster);
 				if (item != null) {
 					Location itemLocation = item.getStoredLocation();
@@ -932,7 +973,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		}
 		return foundWall;
 	}
-	
+
 	private GetPutWallInstructionResponse getOrderWallInstructionsForItem(final Facility facility,
 		final Che che,
 		final String itemOrUpc,
@@ -1002,7 +1043,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 		response.setWorkInstructions(wiResultList);
 		return response;
-		
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -1135,7 +1176,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	public final List<WorkInstruction> getWorkInstructions(final Facility facility) {
 		return WorkInstruction.staticGetDao().findByParent(facility);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inChe

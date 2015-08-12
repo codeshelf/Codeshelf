@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.PickStrategyEnum;
+import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
@@ -165,7 +166,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	private Timestamp					dueDate;
 
 	// The container use for this order.
-	@OneToOne(optional = true, fetch = FetchType.LAZY, orphanRemoval=true)
+	@OneToOne(optional = true, fetch = FetchType.LAZY, orphanRemoval = true)
 	@JoinColumn(name = "container_use_persistentid")
 	@Getter
 	@Setter
@@ -183,7 +184,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private Timestamp					updated;
 
-	@OneToMany(mappedBy = "parent", orphanRemoval=true)
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	@MapKey(name = "domainId")
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	private Map<String, OrderDetail>	orderDetails	= new HashMap<String, OrderDetail>();
@@ -430,9 +431,9 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 			LOGGER.error("Failed to update order status", e);
 		}
 	}
-	
-	public void reevaluateOrderAndDetails(){
-		for (OrderDetail detail : getOrderDetails()){
+
+	public void reevaluateOrderAndDetails() {
+		for (OrderDetail detail : getOrderDetails()) {
 			detail.reevaluateStatus();
 		}
 		reevaluateStatus();
@@ -514,7 +515,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		}
 		return result;
 	}
-	
+
 	public String getPivotDetailCount() {
 		Integer result = 0;
 		for (OrderDetail orderDetail : getOrderDetails()) {
@@ -525,7 +526,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 		if (result > 2) {
 			return ">2";
-		} else  {
+		} else {
 			return String.valueOf(result);
 		}
 	}
@@ -533,29 +534,27 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	public String getPivotRemainingDetailCount() {
 		Integer result = 0;
 		for (OrderDetail orderDetail : getOrderDetails()) {
-			if (orderDetail.getActive() &&
-			    (!orderDetail.getStatus().equals(OrderStatusEnum.COMPLETE))) {
+			if (orderDetail.getActive() && (!orderDetail.getStatus().equals(OrderStatusEnum.COMPLETE))) {
 				result++;
 			}
 		}
 
 		if (result > 2) {
 			return ">2";
-		} else  {
+		} else {
 			return String.valueOf(result);
 		}
 	}
 
-	
 	public Integer getCaseQuantity() {
 		return getQuantitiesByUOM().get(UomNormalizer.CASE);
 	}
-	
+
 	public Integer getEachQuantity() {
 		return getQuantitiesByUOM().get(UomNormalizer.EACH);
-		
+
 	}
-	
+
 	public Integer getOtherQuantity() {
 		Set<String> keys = getQuantitiesByUOM().keySet();
 		keys.remove(UomNormalizer.CASE);
@@ -566,7 +565,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		}
 		return total;
 	}
-	
+
 	public Map<String, Integer> getQuantitiesByUOM() {
 		Map<String, Integer> quantities = new HashMap<>();
 		for (OrderDetail orderDetail : getOrderDetails()) {
@@ -715,13 +714,36 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		LOGGER.info("Archived: {} OrderHeaders ", numArchived);
 		return numArchived;
 	}
-	
+
 	/**
 	 * This method deleted the order and all dependencies from the DB.
 	 * It is to be used for testing of Automated Pick Scripts, so that the same orders can be picked repeatedly
 	 */
-	public void delete(){
+	public void delete() {
 		LOGGER.info("Deleting order {}", this);
 		OrderHeader.staticGetDao().delete(this);
+	}
+
+	/**
+	 * This method deleted the order and all dependencies from the DB.
+	 * It is to be used for testing of Automated Pick Scripts, so that the same orders can be picked repeatedly
+	 */
+	public boolean didOrderCompleteOnCart(Che wiChe) {
+		List<WorkInstruction> wiList = getWorkInstructionsThisOrderOnCart(wiChe);
+		if (wiList == null)
+			return false;
+		boolean foundIncomplete = false;
+		for (WorkInstruction wi : wiList) {
+			WorkInstructionStatusEnum wiStatus = wi.getStatus();
+			if (wiStatus == WorkInstructionStatusEnum.INPROGRESS || wiStatus == WorkInstructionStatusEnum.NEW) {
+				foundIncomplete = true;
+			}
+		}
+		return !foundIncomplete;
+	}
+
+	private List<WorkInstruction> getWorkInstructionsThisOrderOnCart(Che wiChe) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

@@ -130,37 +130,43 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	// Description.
 	@Column(nullable = true)
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
 	private String						description;
 
 	// The pick instruction (cooked item ID to pick).
 	@Column(nullable = false, name = "pick_instruction")
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
 	private String						pickInstruction;
 
 	// The nominal planned pick quantity.
 	@Column(nullable = false, name = "plan_quantity")
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
 	private Integer						planQuantity;
 
 	// The min planned pick quantity.
 	@Column(nullable = false, name = "plan_min_quantity")
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
 	private Integer						planMinQuantity;
 
 	// The  max planned pick quantity.
 	@Column(nullable = false, name = "plan_max_quantity")
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
 	private Integer						planMaxQuantity;
 
 	// The pick quantity.
 	@Column(nullable = true, name = "actual_quantity")
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
 	private Integer						actualQuantity;
 
@@ -171,13 +177,15 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	// Denormalized for serialized WIs at the site controller.
 	@Column(nullable = false, name = "location_id")
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
 	private String						locationId;
 
 	// Picker ID.
 	@Column(nullable = true, name = "picker_id")
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
 	private String						pickerId;
 
@@ -192,69 +200,80 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	// A formatted stream of LED processing commands that tells the site gateway how to lights LEDs for this WI.
 	// See LedStreamProcessor
 	@Column(nullable = true, name = "led_cmd_stream", columnDefinition = "TEXT")
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
 	private String						ledCmdStream;
 
 	@Column(nullable = true, name = "poscon_cmd_stream", columnDefinition = "TEXT")
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
 	private String						posConCmdStream;
 
 	// The remote gateway controller will sort and group by this code, and then only send out one group to the radio network at a time.
 	@Column(nullable = true, name = "group_and_sort_code")
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
 	private String						groupAndSortCode;
 
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
 	@Column(nullable = true, name = "pos_along_path")
 	private Double						posAlongPath;
 
 	@Column(nullable = true)
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
 	private Timestamp					created;
 
 	@Column(nullable = true)
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
 	private Timestamp					assigned;
 
 	@Column(nullable = true)
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
 	private Timestamp					started;
 
 	@Column(nullable = true)
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
 	private Timestamp					completed;
 
 	// The parent order detail item.
 	@ManyToOne(optional = true, fetch = FetchType.LAZY)
 	@JoinColumn(name = "order_detail_persistentid")
-	@Getter @Setter
+	@Getter
+	@Setter
 	private OrderDetail					orderDetail;
 
 	private static final Integer		MAX_WI_DESC_BYTES	= 80;
-	
+
 	@Column(nullable = true, name = "needs_scan")
 	@Setter
 	@JsonProperty
-	private Boolean needsScan = false;
+	private Boolean						needsScan			= false;
 
 	@Column(nullable = true, name = "gtin")
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
-	private String gtin = null;
-	
+	private String						gtin				= null;
+
 	@Column(nullable = true, name = "purpose")
 	@Enumerated(value = EnumType.STRING)
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
-	private WiPurpose purpose = null;
+	private WiPurpose					purpose				= null;
 
 	public WorkInstruction() {
 	}
@@ -351,7 +370,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		else
 			return "";
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * For a UI meta field
@@ -384,12 +403,25 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 * @return
 	 */
 	public String getOrderId() {
+		OrderHeader header = getOrder();
+		if (header == null)
+			return "";
+		else
+			return header.getDomainId(); // parent must be there by DB constraint
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Convenience function
+	 * @return
+	 */
+	public OrderHeader getOrder() {
 		OrderDetail detail = this.getOrderDetail();
 		if (detail == null)
-			return "";
+			return null;
 		else {
 			OrderHeader header = detail.getParent();
-			return header.getDomainId(); // parent must be there by DB constraint
+			return header; // parent must be there by DB constraint
 		}
 	}
 
@@ -563,7 +595,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	 * @param inDescription
 	 */
 	public static final String cookDescription(final String inDescription) {
-		if (inDescription == null){
+		if (inDescription == null) {
 			return null;
 		}
 		String cookedDesc = inDescription.substring(0, Math.min(MAX_WI_DESC_BYTES, inDescription.length()));
@@ -592,9 +624,9 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 			return null;
 		}
 	}
-	
+
 	public Boolean getNeedsScan() {
-		if (needsScan==null) {
+		if (needsScan == null) {
 			return false;
 		}
 		return needsScan;
