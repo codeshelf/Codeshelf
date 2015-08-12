@@ -20,6 +20,7 @@ import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.security.SecurityEmails;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 
 @Path("/recovery")
 public class RecoveryResource {
@@ -56,7 +57,7 @@ public class RecoveryResource {
 			}
 			
 			// always return 200 ok on anything that looks like an email address, regardless of action taken
-			return Response.ok(username).build();
+			return Response.ok(ImmutableMap.of("u", username)).build();
 		}
 		LOGGER.warn("Could not parse email provided for starting account recovery");
 		return Response.status(Status.BAD_REQUEST).build();
