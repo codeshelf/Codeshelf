@@ -1910,12 +1910,51 @@ public class CheProcessTestPick extends ServerTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
 		picker.logCheDisplay();
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == Byte.valueOf("44"));
-		// button press poscon 3
+
+		LOGGER.info("3a1: Can you just press the button? No");
 		picker.pick(3, 44);
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
+		picker.logCheDisplay();
+
+		LOGGER.info("3a2: Can you scan the button position? No.");
+		picker.scanPosition("3");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECTION_INVALID, 3000);
+		picker.logCheDisplay();
+
+		picker.scanCommand("CANCEL");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
+
+		LOGGER.info("3a3: Can you scan the orderID at this point? Not for info. Only to try to move it.");
+		picker.scanSomething("44444");
+		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 3000);
+		picker.logCheDisplay();
+
+		LOGGER.info("3a3: cancel should work here, but doesn't. Still on CONTAINER_POSITION");
+		picker.scanCommand("CANCEL");
+		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 3000);
+		
+		LOGGER.info("3a4: clumsy way to get back");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION_INVALID, 3000);
+
+		picker.scanCommand("CANCEL");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
+
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+
+		LOGGER.info("3b1: remove the order by scanning the order after info");
+		picker.scanCommand("INFO");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
+		picker.logCheDisplay();
+
+		LOGGER.info("3b2: Can you scan the orderID at this point? Not for info. Only to try to move it.");
+		picker.scanSomething("44444");
+		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 3000);
+		picker.logCheDisplay();
 
 		LOGGER.info("3b: then go to first pick again. Make sure we do not send twice");
-		picker.scanCommand("START");
+		// picker.scanCommand("START");
 		//picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
 
