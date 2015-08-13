@@ -120,6 +120,8 @@ dependencies {
 			'com.sun.mail:javax.mail:1.5.2',
 			'commons-validator:commons-validator:1.4.1',
 			'org.apache.velocity:velocity:1.7',
+			
+			'com.jcraft:jsch:0.1.53', // ssh/sftp client
 
 			'com.eaio.uuid:uuid:3.2',
 			'org.projectlombok:lombok:1.14.8',

@@ -91,13 +91,14 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	@JsonProperty
 	private EdiServiceStateEnum		serviceState;
 
-	// The credentials (encoded toekns or obfuscated keys only).
+	// Access tokens and any other configuration to be interpreted by subclass.
+	// If the service requires storing a password, it should be obfuscated. 
 	@Column(nullable = true, name = "provider_credentials")
 	@Getter
 	@Setter
 	@JsonProperty
 	private String					providerCredentials;
-
+	
 	@Getter
 	@Setter
 	@Transient
