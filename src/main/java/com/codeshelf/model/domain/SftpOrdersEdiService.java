@@ -4,11 +4,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
-import java.util.Vector;
+import java.util.ArrayList;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.Transient;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,19 +18,14 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
-import com.codeshelf.edi.SftpConfiguration;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.BatchResult;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
-import com.jcraft.jsch.ChannelSftp.LsEntry;
-import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
-import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpException;
 
 @Entity
@@ -48,9 +42,6 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 	public static final String	SFTP_SERVICE_NAME			= "SFTP_ORDERS";
 	private static final String	FILENAME_SUFFIX_FAILED		= ".FAILED";
 	private static final String	FILENAME_SUFFIX_PROCESSING	= ".PROCESSING";
-
-	@Transient
-	JSch						jsch						= new JSch();
 
 	@Override
 	public String getServiceName() {
@@ -75,45 +66,32 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 	}
 
 	private boolean processOrders(ICsvOrderImporter inCsvOrderImporter) throws JSchException, SftpException, IOException {
-		// get user/host info
-		SftpConfiguration config = this.getConfiguration();
-		Session session = jsch.getSession(config.getUsername(), config.getHost(), config.getPort());
-		session.setUserInfo(config);
-
-		// create sftp connection
-		session.connect();
-		Channel channel = session.openChannel("sftp");
-		channel.connect();
-		ChannelSftp sftp = (ChannelSftp) channel;
-
 		boolean failure = false;
-		Vector<?> importFiles = sftp.ls(config.getImportPath());
-		if (importFiles != null) {
-			LOGGER.info("got {} entries in file list",importFiles.size());
-			// iterate through list of files in import folder
-			for (int ix = 0; ix < importFiles.size(); ix++) {
-				Object entry = importFiles.get(ix);
-				if (entry instanceof LsEntry) {
-					// found a file, process it
-					LsEntry lsEntry = (LsEntry) entry;
-					if(lsEntry.getAttrs().isReg()) {
-						LOGGER.info("processing file: {}",lsEntry.getLongname());
-						// regular file (not a folder or link etc)
-						if (!processImportFile(inCsvOrderImporter, config, sftp, lsEntry))
-							failure = true;
-					} else {
-						LOGGER.info("not a file: {}",lsEntry.getLongname());
-					}
+		
+		connect();
+
+		try {
+			ArrayList<String> filesToImport = retrieveImportFileList();
+			// process all regular files found
+			if(filesToImport.size() == 0) {
+				LOGGER.info("No files to process at {}",getConfiguration().getUrl());
+			} else {
+				for(int ix = 0; ix < filesToImport.size(); ix++ ) {
+					String filename = filesToImport.get(ix);
+					
+					LOGGER.info("processing file: {}",filename);
+					if (!processImportFile(inCsvOrderImporter, filename))
+						failure = true;
 				}
 			}
+		} finally {			
+			disconnect();
 		}
-		session.disconnect();
 
 		return !failure;
 	}
 
-	private boolean processImportFile(ICsvOrderImporter inCsvOrderImporter,SftpConfiguration config,ChannelSftp sftp, LsEntry file) throws SftpException, IOException {
-		String filename = file.getFilename();
+	private boolean processImportFile(ICsvOrderImporter inCsvOrderImporter, String filename) throws SftpException, IOException {
 		boolean success = false;
 		if(filename.endsWith(FILENAME_SUFFIX_FAILED)) {
 			// ignore
@@ -121,15 +99,16 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 		} else if(filename.endsWith(FILENAME_SUFFIX_PROCESSING)) {
 			// warn
 			LOGGER.warn("Found incomplete PROCESSING file in SFTP: {}",filename);
-		} else if(config.matchOrdersFilename(filename)) {
+		} else if(getConfiguration().matchOrdersFilename(filename)) {
 			// process this orders file
-			String originalPath = config.getImportPath()+"/"+filename;
+			String originalPath = getConfiguration().getImportPath()+"/"+filename;
 			String processingPath = originalPath + FILENAME_SUFFIX_PROCESSING;
 			String failedPath = originalPath + FILENAME_SUFFIX_FAILED;
-			String archivePath = config.getArchivePath()+"/"+filename;
+			String archivePath = getConfiguration().getArchivePath()+"/"+filename;
 			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 
 			// rename to .processing and begin
+			ChannelSftp sftp = getChannel();
 			sftp.rename(originalPath, processingPath);
 			InputStream fileStream = sftp.get(processingPath);
 			InputStreamReader reader = new InputStreamReader(fileStream);
@@ -140,7 +119,7 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 			// record receipt
 			long receivedTime = System.currentTimeMillis();
 			//long receivedTime = 1000 * file.getAttrs().getMTime();
-			inCsvOrderImporter.persistDataReceipt(getParent(), username, file.getLongname(), receivedTime, results);
+			inCsvOrderImporter.persistDataReceipt(getParent(), username, filename, receivedTime, results);
 
 			success = results.isSuccessful();
 			

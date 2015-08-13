@@ -1,11 +1,29 @@
 package com.codeshelf.edi;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.when;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.Charset;
+import java.sql.Timestamp;
+
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Mockito;
+import org.mockito.Mockito.*;
 
+import com.codeshelf.model.domain.AbstractSftpEdiService;
+import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.SftpOrdersEdiService;
 import com.codeshelf.testframework.HibernateTest;
+import com.codeshelf.validation.BatchResult;
+import com.jcraft.jsch.ChannelSftp;
+import com.jcraft.jsch.SftpException;
 
 public class SftpTest extends HibernateTest {
 	
@@ -15,7 +33,7 @@ public class SftpTest extends HibernateTest {
 	private static final String	SFTP_TEST_PASSWORD	= "m80isrq411";
 
 	@Test
-	public void testSetupAndConnect() {
+	public void testSftpOrders() throws IOException {
 		SftpConfiguration config = new SftpConfiguration();
 		config.setHost(SFTP_TEST_HOST);
 		config.setUsername(SFTP_TEST_USERNAME);
@@ -23,12 +41,13 @@ public class SftpTest extends HibernateTest {
 		config.setImportPath("/out");
 		config.setArchivePath("/out/archive");
 		
-		SftpOrdersEdiService sftpOrders = new SftpOrdersEdiService();
+		AbstractSftpEdiService sftpOrders = new SftpOrdersEdiService();
 		sftpOrders.setParent(getFacility());
 		String domainid = sftpOrders.getServiceName();
 		sftpOrders.setConfiguration(config);
 		sftpOrders.setDomainId(domainid);
 		
+		// ensure loads/saves configuration correctly
 		beginTransaction();
 		SftpOrdersEdiService.staticGetDao().store(sftpOrders);
 		commitTransaction();
@@ -42,12 +61,32 @@ public class SftpTest extends HibernateTest {
 		Assert.assertEquals(SFTP_TEST_USERNAME, config.getUsername());
 		Assert.assertEquals(SFTP_TEST_PASSWORD, config.getPassword());
 		
-		ICsvOrderImporter mockImporter = Mockito.mock(ICsvOrderImporter.class);
+		// create a test file on the server to be processed
+		String filename = config.getImportPath()+"/"+Long.toString(System.currentTimeMillis())+".DAT";
+		uploadTestFile(sftpOrders,filename,"");
 		
-		// try to connect
-		sftpOrders.getUpdatesFromHost(mockImporter ,null,null,null,null, null);
+		ICsvOrderImporter mockImporter = mock(ICsvOrderImporter.class);
+		BatchResult<Object> mockBatchResult = mock(BatchResult.class);
+		when(mockBatchResult.isSuccessful()).thenReturn(true);
+		when(mockImporter.importOrdersFromCsvStream(any(Reader.class), any(Facility.class), any(Timestamp.class))).thenReturn(mockBatchResult);
+
+		// now connect and process that file
+		sftpOrders.getUpdatesFromHost(mockImporter ,null,null,null,null, null);		
 		
-		// TODO: finish this test to ensure ability to connect to remote SFTP and get file list
+		// file was processed and result checked
+		verify(mockBatchResult,times(1)).isSuccessful();
+	}
+
+	private void uploadTestFile(AbstractSftpEdiService sftpService, String filename, String contents) {
+		ChannelSftp sftp = sftpService.connect();
+		try {
+			byte[] bytes = contents.getBytes(Charset.forName("ISO-8859-1"));
+			sftp.put(new ByteArrayInputStream(bytes), filename, ChannelSftp.OVERWRITE);
+		} catch (SftpException e) {
+			Assert.fail(e.getMessage());
+		} finally {
+			sftpService.disconnect();
+		}
 	}
 
 }

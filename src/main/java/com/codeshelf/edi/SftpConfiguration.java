@@ -196,10 +196,7 @@ public class SftpConfiguration implements UserInfo {
 		//return filename.endsWith(".DAT");
 	}
 
-	/*		@Getter
-			@Setter
-			@Accessors(prefix = "m")
-			@SerializedName(value = "token")
-			@Expose
-			private String	mToken;*/
+	public String getUrl() {
+		return String.format("sftp://%s@%s:%d", username,host,(int)port);
+	}
 }
