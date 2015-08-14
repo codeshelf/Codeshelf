@@ -27,7 +27,6 @@ import com.jcraft.jsch.SftpException;
 
 public class SftpTest extends HibernateTest {
 	
-	
 	private static final String	SFTP_TEST_HOST	= "sftp.codeshelf.com";
 	private static final String	SFTP_TEST_USERNAME	= "test";
 	private static final String	SFTP_TEST_PASSWORD	= "m80isrq411";
@@ -62,16 +61,18 @@ public class SftpTest extends HibernateTest {
 		Assert.assertEquals(SFTP_TEST_PASSWORD, config.getPassword());
 		
 		// create a test file on the server to be processed
-		String filename = config.getImportPath()+"/"+Long.toString(System.currentTimeMillis())+".DAT";
-		uploadTestFile(sftpOrders,filename,"");
-		
+		String filename1 = config.getImportPath()+"/"+Long.toString(System.currentTimeMillis())+"a.DAT";
+		uploadTestFile(sftpOrders,filename1,"order data 1");
+		//String filename2 = config.getImportPath()+"/"+Long.toString(System.currentTimeMillis())+"b.DAT";
+		//uploadTestFile(sftpOrders,filename2,"order data 2");
+
 		ICsvOrderImporter mockImporter = mock(ICsvOrderImporter.class);
 		BatchResult<Object> mockBatchResult = mock(BatchResult.class);
 		when(mockBatchResult.isSuccessful()).thenReturn(true);
 		when(mockImporter.importOrdersFromCsvStream(any(Reader.class), any(Facility.class), any(Timestamp.class))).thenReturn(mockBatchResult);
 
 		// now connect and process that file
-		sftpOrders.getUpdatesFromHost(mockImporter ,null,null,null,null, null);		
+		sftpOrders.getUpdatesFromHost(mockImporter ,null,null,null,null,null);		
 		
 		// file was processed and result checked
 		verify(mockBatchResult,times(1)).isSuccessful();

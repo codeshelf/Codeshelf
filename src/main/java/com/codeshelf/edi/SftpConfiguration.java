@@ -15,6 +15,7 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.persistence.Transient;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -23,6 +24,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.util.StringUIConverter;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
@@ -34,11 +36,66 @@ import com.jcraft.jsch.UserInfo;
  *
  */
 public class SftpConfiguration implements UserInfo {
-	static final Logger	LOGGER	= LoggerFactory.getLogger(SftpConfiguration.class);
+	static final Logger				LOGGER						= LoggerFactory.getLogger(SftpConfiguration.class);
 
-	private static final String	DEFAULT_SFTP_PASSWORD_KEY	= "1234567812345678";
-	private static IvParameterSpec iv = new IvParameterSpec(new byte[16]);
-	
+	private static final byte[]		DEFAULT_SFTP_PASSWORD_KEY	= { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01,	0x01, 0x01, 0x01, 0x01, 0x01, 0x01};
+
+	private static final String		SFTP_PASSWORD_CIPHER		= "AES";
+
+	@Getter
+	@Setter
+	@Expose
+	private String					host;
+
+	@Getter
+	@Setter
+	@Expose
+	private Integer					port;
+
+	@Getter
+	@Setter
+	@Expose
+	private String					username;
+
+	// encoded password
+	@Getter
+	@Setter
+	@Expose
+	private String					passwordEnc;
+
+	// path where files (eg orders) are found and downloaded ; null or empty if not used
+	@Getter
+	@Setter
+	@Expose
+	private String					importPath;
+
+	// path where imported files (eg orders) are moved after download ; null or empty if not used
+	@Getter
+	@Setter
+	@Expose
+	private String					archivePath;
+
+	// path where exported files (eg completed WIs) are uploaded ; null or empty if not used
+	@Getter
+	@Setter
+	@Expose
+	private String					exportPath;
+
+	@Transient
+	static private SecretKeySpec	keySpec;
+	static {
+		byte[] keyBytes = DEFAULT_SFTP_PASSWORD_KEY;
+		String keyString = System.getProperty("edi.sftp.password_key");
+		if (keyString != null && keyString.length() > 1) {
+			try {
+				keyBytes = StringUIConverter.hexStringToBytes(keyString);
+			} catch (NumberFormatException e) {
+				LOGGER.error("could not parse edi.sftp.password_key value: {}", keyString);
+			}
+		}
+		keySpec = new SecretKeySpec(keyBytes, SFTP_PASSWORD_CIPHER);
+	}
+
 	public SftpConfiguration() {
 		this("", 22, "", "", "", "");
 	}
@@ -52,46 +109,8 @@ public class SftpConfiguration implements UserInfo {
 		this.archivePath = archivePath;
 		this.exportPath = exportPath;
 		this.passwordEnc = null;
+
 	}
-
-	@Getter
-	@Setter
-	@Expose
-	private String	host;
-
-	@Getter
-	@Setter
-	@Expose
-	private Integer	port;
-
-	@Getter
-	@Setter
-	@Expose
-	private String	username;
-
-	// encoded password
-	@Getter
-	@Setter
-	@Expose
-	private String	passwordEnc;
-
-	// path where files (eg orders) are found and downloaded ; null or empty if not used
-	@Getter
-	@Setter
-	@Expose
-	private String	importPath;
-
-	// path where imported files (eg orders) are moved after download ; null or empty if not used
-	@Getter
-	@Setter
-	@Expose
-	private String	archivePath;
-
-	// path where exported files (eg completed WIs) are uploaded ; null or empty if not used
-	@Getter
-	@Setter
-	@Expose
-	private String	exportPath;
 
 	@Override
 	public String toString() {
@@ -126,24 +145,25 @@ public class SftpConfiguration implements UserInfo {
 		this.setPasswordEnc(SftpConfiguration.encodePassword(password));
 	}
 
-	static private String doCipher(String toDecrypt, String toEncrypt) 
-			throws IllegalBlockSizeException, BadPaddingException, InvalidKeyException, 
-			InvalidKeySpecException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidAlgorithmParameterException {
-		String key = System.getProperty("edi.sftp.password_key",DEFAULT_SFTP_PASSWORD_KEY);
-		Cipher cipher = null;
-		Charset encoding = Charset.forName("ISO-8859-1");
+	static private String doCipher(String toDecrypt, String toEncrypt) throws IllegalBlockSizeException,
+		BadPaddingException,
+		InvalidKeyException,
+		InvalidKeySpecException,
+		NoSuchAlgorithmException,
+		NoSuchPaddingException,
+		InvalidAlgorithmParameterException {
 
-		SecretKeySpec keySpec = new SecretKeySpec(key.getBytes(encoding), "AES");
-		cipher = Cipher.getInstance("AES");
-		
+		Charset encoding = Charset.forName("ISO-8859-1");
+		Cipher cipher = Cipher.getInstance(SFTP_PASSWORD_CIPHER);
 		String result = "";
+		
 		if (cipher != null && keySpec != null) {
 			if (toDecrypt != null) {
 				// decrypt
 				byte[] encrypted = Base64.decodeBase64(toDecrypt.getBytes(encoding));
 				cipher.init(Cipher.DECRYPT_MODE, keySpec);
-				result = new String(cipher.doFinal(encrypted),encoding);
-				
+				result = new String(cipher.doFinal(encrypted), encoding);
+
 			} else if (toEncrypt != null) {
 				// encrypt
 				byte[] plaintext = toEncrypt.getBytes(encoding);
@@ -154,17 +174,17 @@ public class SftpConfiguration implements UserInfo {
 
 		return result;
 	}
-	
+
 	static private String tryCipher(String encrypted, String plaintext) {
 		String result = "";
 		try {
-			result = doCipher(encrypted,plaintext);
+			result = doCipher(encrypted, plaintext);
 		} catch (InvalidKeyException | IllegalBlockSizeException | BadPaddingException | InvalidKeySpecException
 				| NoSuchAlgorithmException | NoSuchPaddingException | InvalidAlgorithmParameterException e) {
 			LOGGER.error("Unexpected encryption error when working with SFTP account password", e);
 		}
 		return result;
-		
+
 	}
 
 	@Override
@@ -197,6 +217,6 @@ public class SftpConfiguration implements UserInfo {
 	}
 
 	public String getUrl() {
-		return String.format("sftp://%s@%s:%d", username,host,(int)port);
+		return String.format("sftp://%s@%s:%d", username, host, (int) port);
 	}
 }

@@ -39,6 +39,9 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 	@Transient
 	SftpConfiguration	sftpConfiguration	= null;
 
+	@Transient
+	String				lastProviderCredentials = null; 
+
 	public AbstractSftpEdiService() {
 		super();
 		setProvider(EdiProviderEnum.OTHER);
@@ -46,16 +49,21 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 	}
 
 	synchronized public SftpConfiguration getConfiguration() {
-		// decoding the SFTP provider configuration is expensive, so we store the result 
-		if (sftpConfiguration == null) {
-			sftpConfiguration = SftpConfiguration.fromString(getProviderCredentials());
+		// decoding the SFTP provider configuration is expensive, so we store the result
+		// and check whether the source string has been changed
+		String currentProviderCredentials = getProviderCredentials();
+		if (sftpConfiguration == null 
+				|| (lastProviderCredentials != null && !lastProviderCredentials.equals(currentProviderCredentials))) {
+			sftpConfiguration = SftpConfiguration.fromString(currentProviderCredentials);
 		}
+		lastProviderCredentials = currentProviderCredentials;
 		return sftpConfiguration;
 	}
 
 	synchronized public void setConfiguration(SftpConfiguration configuration) {
 		sftpConfiguration = configuration;
-		this.setProviderCredentials(configuration.toString());
+		lastProviderCredentials = configuration.toString();
+		this.setProviderCredentials(lastProviderCredentials);
 	}
 
 	@Override
