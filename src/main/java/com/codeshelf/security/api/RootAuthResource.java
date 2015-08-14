@@ -141,6 +141,12 @@ public class RootAuthResource {
 				// change password
 				User user = tokenSession.getUser();
 				user.setHashedPassword(tokenSessionService.hashPassword(newPassword));
+
+				// these resets happen automatically when security questions are answered successfully
+				// also resetting here to account for case where security questions not used 
+				user.setRecoveryEmailsRemain(User.DEFAULT_RECOVERY_EMAILS);
+				user.setRecoveryTriesRemain(User.DEFAULT_RECOVERY_TRIES);
+
 				TenantManagerService.getInstance().updateUser(user);
 				if(passwordWasSet) {
 					SecurityEmails.sendPasswordChanged(user);

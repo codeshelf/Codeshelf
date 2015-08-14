@@ -19,13 +19,13 @@ import com.codeshelf.email.EmailService;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.security.SecurityEmails;
+import com.codeshelf.security.TokenSessionService;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 
 @Path("/recovery")
 public class RecoveryResource {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(RecoveryResource.class);
-	public static final int MINIMUM_MINUTES_SINCE_LAST_RECOVERY_EMAIL = 60*24;
 
 	@POST
 	@Path("start")
@@ -35,13 +35,16 @@ public class RecoveryResource {
 		if (!Strings.isNullOrEmpty(username) && EmailService.getInstance().isEmailAddress(username)) {
 			User user = TenantManagerService.getInstance().getUser(username);
 			if(user != null) {
-				if(user.getRecoveryEmailsRemain()>0) {
-					Date threshold = (new DateTime()).minusHours(MINIMUM_MINUTES_SINCE_LAST_RECOVERY_EMAIL).toDate();
+				int remainingRecoveryEmails = user.getRecoveryEmailsRemain();
+				if(remainingRecoveryEmails >0) {
+					int minimumMinutesSinceLastEmail = Integer.getInteger("auth.session.recovery.idleminutes", TokenSessionService.RECOVERY_DEFAULT_IDLE_MINUTES);
+					Date threshold = (new DateTime()).minusMinutes(minimumMinutesSinceLastEmail).toDate();
 					
 					if(user.getLastRecoveryEmail() == null 
 							|| user.getLastRecoveryEmail().before(threshold)) {
 						
 						LOGGER.info("Account recovery requested for user {}",user.getUsername());
+						user.setRecoveryEmailsRemain(remainingRecoveryEmails - 1);
 						user.setLastRecoveryEmail();
 						TenantManagerService.getInstance().updateUser(user);
 						SecurityEmails.sendRecovery(user);

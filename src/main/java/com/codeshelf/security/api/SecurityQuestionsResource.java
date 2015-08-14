@@ -144,6 +144,8 @@ public class SecurityQuestionsResource {
 
 				// record last login
 				user.setLastAuthenticated();
+				user.setRecoveryEmailsRemain(User.DEFAULT_RECOVERY_EMAILS);
+				user.setRecoveryTriesRemain(User.DEFAULT_RECOVERY_TRIES);
 				TenantManagerService.getInstance().updateUser(user);
 
 				NewCookie cookie = tokenSessionService.createAuthNewCookie(newSession.getNewToken());

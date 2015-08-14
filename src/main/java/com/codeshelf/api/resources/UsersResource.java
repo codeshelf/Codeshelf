@@ -188,6 +188,7 @@ public class UsersResource {
 				&& !user.getId().equals(CodeshelfSecurityManager.getCurrentUserContext().getId())) {
 			// allow the user to use recovery
 			user.setRecoveryEmailsRemain(User.DEFAULT_RECOVERY_EMAILS);
+			user.setRecoveryTriesRemain(User.DEFAULT_RECOVERY_TRIES);
 			user.setLastRecoveryEmail(null);
 			user.setHashedPassword(null);
 			SecurityEmails.sendAccountReset(user);

@@ -29,8 +29,8 @@ public class TokenSessionService extends AbstractCookieSessionService {
 	private static final int	SESSION_DEFAULT_MAX_FUTURE_SECONDS	= 30;													// do not allow timestamps significantly in the future
 	private static final int	SESSION_DEFAULT_MAX_IDLE_MINUTES	= 6;
 	private static final int	SESSION_DEFAULT_MIN_IDLE_MINUTES	= 5;
-	private static final int	SETUP_DEFAULT_IDLE_MINUTES			= 60 * 24;
-	private static final int	RECOVERY_DEFAULT_IDLE_MINUTES		= 60 * 2;
+	private static final int	SETUP_DEFAULT_IDLE_MINUTES			= 60 * 72;
+	public static final int		RECOVERY_DEFAULT_IDLE_MINUTES 		= 60 * 2; // same default used by RecoveryResource for recovery email frequency
 	private static final int	RECOVERY_SETPW_DEFAULT_IDLE_MINUTES	= 10;
 	@Getter
 	int							sessionMaxFutureSeconds;
