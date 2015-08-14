@@ -37,6 +37,9 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	private static final Logger	LOGGER							= LoggerFactory.getLogger(AisleDeviceLogic.class);
 	private static int			kNumChannelsOnAislController	= 2;												// We expect 4 ultimately. Just matching what was there.
 
+	private static final String				THREAD_CONTEXT_TAGS_KEY				= "tags";
+	private static final String				THREAD_CONTEXT_NETGUID_KEY			= "netguid";						// clone from private ContextLogging variable
+
 	@Accessors(prefix = "m")
 	protected class LedCmd {
 		@Getter
@@ -334,6 +337,36 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		updateLeds();
 	}
 
+	//--------------------------
+	/**
+	 * CHE_DISPLAY notifies. Similar to posconDeviceAbc one, but not the same as aisle controller does not have a worker context.
+	 */
+	protected void notifyDisplayTag(String logStr, String tagName) {
+		boolean guidChange = false;
+		String loggerNetGuid = org.apache.logging.log4j.ThreadContext.get(THREAD_CONTEXT_NETGUID_KEY);
+
+		try {
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, tagName);
+
+			// A kludge to cover up some sloppiness of lack of logging context. And also, even without sloppiness, some cases happen
+			// somewhat independent of a transaction context
+
+			String myGuid = this.getMyGuidStr();
+			if (!myGuid.equals(loggerNetGuid)) {
+				org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_NETGUID_KEY, myGuid);
+				guidChange = true;
+			}
+			LOGGER.info(logStr);
+		} finally {
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+			if (guidChange)
+				org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_NETGUID_KEY, loggerNetGuid);
+		}
+	}
+
+	protected void notifyLeds(String ledSummary) {
+		notifyDisplayTag(ledSummary, "CHE_DISPLAY Lights");
+	}
 	// --------------------------------------------------------------------------
 	/**
 	 * Light all of the LEDs required.
@@ -374,12 +407,12 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 			}
 		}
 		if (sentCount > 0)
-			LOGGER.info(toLogString);
+			notifyLeds(toLogString);
 		else { // A clearing sample was still sent
-			LOGGER.info("updateLeds on " + myGuidStr + ". Cleared. None lit back."); // position 0 black is being sent
+			notifyLeds("Cleared LEDs. None lit back."); // position 0 black is being sent
 		}
 		if (sentCount > kMaxLedCmdToLog)
-			LOGGER.info("And more LED not logged. Total LED Cmds this update = " + sentCount);
+			notifyLeds("And more LED not logged. Total LED Cmds this update = " + sentCount);
 
 		// New understanding of the protocol.
 		// Sort by color, then position.
