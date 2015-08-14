@@ -226,9 +226,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 					}
 					if (previousChe == null) {
 						inChe.addContainerUse(thisUse);
+						this.notifyAddOrderToCart(thisUse, inChe);
 					} else if (!previousChe.equals(inChe)) {
 						previousChe.removeContainerUse(thisUse);
+						// notify remove?
 						inChe.addContainerUse(thisUse);
+						this.notifyAddOrderToCart(thisUse, inChe);
 					}
 
 					try {
@@ -270,6 +273,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				} catch (DaoException e) {
 					LOGGER.error("", e);
 				}
+				this.notifyRemoveOrderFromCart(oldUse, inChe);
 			}
 		}
 
@@ -686,9 +690,28 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	}
 
 	/**
+	 * During setup, we are really setting up containers, and not orders
+	 * Need to map to the order then notify with order parameter
+	 */
+	public void notifyAddOrderToCart(ContainerUse inUse, Che inChe) {
+		if (inUse == null || inChe == null){
+			LOGGER.error("null value in notifyAddOrderToCart");
+			return;
+		}
+		OrderHeader order = inUse.getOrderHeader();
+		if (order == null){
+			LOGGER.warn("no order found for containerUse in notifyAddOrderToCart");
+			// Error? Probably not. GoodEggs had container uses that did not map to single outbound orders
+			return;
+		}
+		notifyAddOrderToCart(order, inChe);
+	}
+
+	/**
 	 * Two choices so far: not at all, or to SFTP
 	 */
 	public void notifyAddOrderToCart(OrderHeader inOrder, Che inChe) {
+		LOGGER.info("Order: {} added onto cart:{}", inOrder.getOrderId(), inChe.getDomainId());
 		boolean ordersToSFTP = false;
 		if (ordersToSFTP) {
 			// This is the PFSWeb variant. 
@@ -709,6 +732,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 */
 	public void notifyRemoveOrderFromCart(OrderHeader inOrder, Che inChe) {
 		boolean ordersToSFTP = false;
+		LOGGER.info("Order: {} removed from cart:{}", inOrder.getOrderId(), inChe.getDomainId());
 		if (ordersToSFTP) {
 			// This is the PFSWeb variant. 
 			EdiServiceABC theService = getAccumulatingOutputService();
@@ -716,6 +740,24 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				theService.notifyOrderRemoveFromCart(inOrder, inChe);
 			}
 		}
+	}
+	
+	/**
+	 * During setup, we are really setting up containers, and not orders
+	 * Need to map to the order then notify with order parameter
+	 */
+	public void notifyRemoveOrderFromCart(ContainerUse inUse, Che inChe) {
+		if (inUse == null || inChe == null){
+			LOGGER.error("null value in notifyRemoveOrderFromCart");
+			return;
+		}
+		OrderHeader order = inUse.getOrderHeader();
+		if (order == null){
+			LOGGER.warn("no order found for containerUse in notifyRemoveOrderFromCart");
+			// Error? Probably not. GoodEggs had container uses that did not map to single outbound orders
+			return;
+		}
+		notifyRemoveOrderFromCart(order, inChe);
 	}
 
 	/**
