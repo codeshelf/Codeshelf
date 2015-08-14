@@ -126,8 +126,8 @@ public class RootAuthResource {
 					errors.rejectValue(OLD, oldPassword, ErrorCode.FIELD_INVALID);
 					return Response.status(Status.BAD_REQUEST.getStatusCode()).entity(errors).build();
 				}
-			} else if(tokenSession.getStatus().equals(TokenSession.Status.SPECIAL_SESSION) 
-					&& tokenSession.getSessionFlags().get(Flag.ACCOUNT_SETUP)
+			} else if(tokenSession.getStatus().equals(TokenSession.Status.SPECIAL_SESSION)
+					&& (tokenSession.getSessionFlags().get(Flag.ACCOUNT_SETUP) /*REMOVE WHEN SECURITY QUESTIONS ARE ENABLED -> */||tokenSession.getSessionFlags().get(Flag.ACCOUNT_RECOVERY)) 
 					&& (tokenSession.getUser().getHashedPassword() == null || tokenSession.getSessionFlags().get(Flag.ACCOUNT_RECOVERY)) ) {				
 				// alternatively, allow user to set password without providing old password, 
 				// if ACCOUNT_SETUP (or re-SETUP) mode
