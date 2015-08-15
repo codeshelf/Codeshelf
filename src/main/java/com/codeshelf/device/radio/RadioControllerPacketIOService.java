@@ -23,7 +23,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 public class RadioControllerPacketIOService {
 	private static final Logger							LOGGER					= LoggerFactory.getLogger(RadioControllerPacketIOService.class);
 
-	private static final int							DEFAULT_SLEEP_MILLIS	= 5;
+	private static final int							DEFAULT_SLEEP_MILLIS	= 1;
 
 	private Counter										packetsSentCounter;
 	private final ExecutorService						executorService			= Executors.newFixedThreadPool(2,
@@ -160,10 +160,12 @@ public class RadioControllerPacketIOService {
 
 		public void pause() {
 			pause = true;
+			gatewayInterface.pause();
 		}
 
 		public void resume() {
 			pause = false;
+			gatewayInterface.resume();
 		}
 
 	}
