@@ -584,15 +584,12 @@ public class WiFactory {
 		Location location = inItem.getStoredLocation();
 		return getLedCmdGroupListForItemOrLocation(inItem, inColor, location);
 	}
-
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Utility function to create LED command group. Will return a list, which may be empty if there is nothing to send. Caller should check for empty list.
 	 * Called now for setting WI LED pattern for inventory pick.
 	 * Also called for directly lighting inventory item or location
-	 * @param inNetGuidStr
-	 * @param inItem
-	 * @param inColor
 	 */
 	//public for sake of a test
 	public static List<LedCmdGroup> getLedCmdGroupListForItemOrLocation(final Item inItem,

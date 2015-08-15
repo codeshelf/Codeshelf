@@ -76,7 +76,7 @@ public class LightService implements IApiService {
 		locations.add(theLocation);
 		lightLocationServerCall(locations, color);
 	}
-	
+
 	/**
 	 * This fucntion is called by the server (which already has access to Facility and Locaiton objects)
 	 */
@@ -84,7 +84,7 @@ public class LightService implements IApiService {
 		if (locations == null || locations.isEmpty()) {
 			return;
 		}
-		
+
 		final Facility facility = locations.get(0).getFacility();
 
 		//Light LEDs
@@ -159,7 +159,7 @@ public class LightService implements IApiService {
 	public void lightItem(Item item, ColorEnum color) {
 		lightItemSpecificColor(item.getFacility().getPersistentId().toString(), item.getPersistentId().toString(), color);
 	}
-	
+
 	/**
 	 * Light one item. Any subsequent activity on the aisle controller will wipe this away.
 	 */
@@ -192,7 +192,7 @@ public class LightService implements IApiService {
 			try {
 				if (item.isLightable()) {
 					LightLedsInstruction instruction = toLedsInstruction(facility, defaultLedsToLight, color, item);
-					if (instruction != null){
+					if (instruction != null) {
 						instructions.add(instruction);
 					}
 				} else {
@@ -216,7 +216,8 @@ public class LightService implements IApiService {
 		String inSourceGuid,
 		byte inPosition,
 		WorkInstruction inWorkInstruction) {
-		Byte freq = (inWorkInstruction.getPlanMinQuantity() < inWorkInstruction.getPlanMaxQuantity()) ? PosControllerInstr.BLINK_FREQ : PosControllerInstr.SOLID_FREQ;
+		Byte freq = (inWorkInstruction.getPlanMinQuantity() < inWorkInstruction.getPlanMaxQuantity()) ? PosControllerInstr.BLINK_FREQ
+				: PosControllerInstr.SOLID_FREQ;
 		return (new PosControllerInstr(inControllerId,
 			inSourceGuid,
 			inPosition,
@@ -279,7 +280,7 @@ public class LightService implements IApiService {
 		locations.add(location);
 		getInstructionsForPosConRange(facility, wi, locations, instructions, clearedControllers);
 	}
-	
+
 	public static void getInstructionsForPosConRange(final Facility facility,
 		final WorkInstruction wi,
 		final List<Location> locations,
@@ -310,7 +311,7 @@ public class LightService implements IApiService {
 					Che che = wi.getAssignedChe();
 					String sourceGuid = che == null ? "" : che.getDeviceGuidStr();
 					message = getWiCountInstruction(posConController, sourceGuid, (byte) posConIndex, wi);
-	
+
 				}
 				instructions.add(message);
 			} else if (wi != null) {
@@ -328,15 +329,15 @@ public class LightService implements IApiService {
 					instructions.add(message);
 				}
 			}
-	
+
 			// This child case is only to match LED lighting when a user does light location.
 			// never do it when the wi is supplied.
 			if (wi == null) {
 				List<Location> children = theLocation.getActiveChildren();
 				//if (!children.isEmpty()) {
-					//for (Location child : children) {
-						getInstructionsForPosConRange(facility, wi, children, instructions, clearedControllers);
-					//}
+				//for (Location child : children) {
+				getInstructionsForPosConRange(facility, wi, children, instructions, clearedControllers);
+				//}
 				//}
 			}
 		}
@@ -347,10 +348,13 @@ public class LightService implements IApiService {
 	void lightChildLocations(final Facility facility, final List<Location> locations, ColorEnum color) {
 		List<Location> leaves = Lists.newArrayList();
 		//Do not light slots when lighting an aisle
-		for (Location location: locations){ 
+		for (Location location : locations) {
 			getAllLedLightableLeaves(location, leaves, !location.isAisle());
 		}
-		List<LightLedsInstruction> instructions = getLightInstructionsForMultipleLocations(facility, defaultLedsToLight, color, leaves);
+		List<LightLedsInstruction> instructions = getLightInstructionsForMultipleLocations(facility,
+			defaultLedsToLight,
+			color,
+			leaves);
 		LedInstrListMessage message = new LedInstrListMessage(instructions);
 		sendMessage(facility.getSiteControllerUsers(), message);
 	}
@@ -402,7 +406,10 @@ public class LightService implements IApiService {
 		List<Location> leaves = Lists.newArrayList();
 		// using the general API. Only add the one location to leaves
 		leaves.add(locToLight);
-		List<LightLedsInstruction> instructions = getLightInstructionsForMultipleLocations(facility, defaultLedsToLight, color, leaves);
+		List<LightLedsInstruction> instructions = getLightInstructionsForMultipleLocations(facility,
+			defaultLedsToLight,
+			color,
+			leaves);
 		LedInstrListMessage message = new LedInstrListMessage(instructions);
 		sendMessage(facility.getSiteControllerUsers(), message);
 	}
@@ -434,7 +441,8 @@ public class LightService implements IApiService {
 			lastLocLed,
 			lowerLedNearAnchor,
 			locationWidth,
-			metersFromAnchor);
+			metersFromAnchor,
+			inLocation.isSlot());
 		return theLedRange;
 	}
 

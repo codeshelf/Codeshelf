@@ -117,40 +117,40 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Assert.assertEquals(posman.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_TRIPLE_DASH);
 		// could check flashing and brightness, but seem pointless.
 	}
-	
+
 	/**
 	 * This test places orders onto a PutWall and observers the Bay's single PosCon counting up the number of OrderDetails
 	 */
 	@Test
-	public final void putWallBayPosconTest() throws IOException{
+	public final void putWallBayPosconTest() throws IOException {
 		setUpFacilityWithPutWall();
 		setUpOrders1(getFacility());
 		this.startSiteController();
 		PickSimulator picker = createPickSim(cheGuid1);
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_5_ID));
-		
+
 		picker.loginAndSetup("Picker #1");
-		
+
 		LOGGER.info("1: Put Orders into the wall.");
 		picker.scanCommand("ORDER_WALL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
-		Assert.assertNull(posman.getLastSentPositionControllerDisplayValue((byte)1));
-		
+		Assert.assertNull(posman.getLastSentPositionControllerDisplayValue((byte) 1));
+
 		placeOrderOnLocation(picker, "11111", "L%F15");
 		assertAsynchPosconValue(posman, 1, 5);
-		
+
 		placeOrderOnLocation(picker, "11112", "L%F16");
 		assertAsynchPosconValue(posman, 1, 6);
-		
+
 		placeOrderOnLocation(picker, "11114", "L%F17");
 		assertAsynchPosconValue(posman, 1, 7);
-		
+
 		placeOrderOnLocation(picker, "11120", "L%F18");
 		assertAsynchPosconValue(posman, 1, 10);
-		
+
 		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
-		
+
 		LOGGER.info("2: Put an item into the wall.");
 		picker.scanCommand("PUT_WALL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
@@ -160,44 +160,44 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
 
 		//Ensure that Bay's poscon is bright and showing required number of items
-		Byte brightness = posman.getLastSentPositionControllerDisplayDutyCycle((byte)1);
+		Byte brightness = posman.getLastSentPositionControllerDisplayDutyCycle((byte) 1);
 		Assert.assertEquals(PosControllerInstr.BRIGHT_DUTYCYCLE, brightness);
 		assertAsynchPosconValue(posman, 1, 2);
-		
+
 		//Press button
 		posman.buttonPress(1, 2);
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
-		
+
 		//Ensure that Bay's poscon is dim and showing remaininig details
-		brightness = posman.getLastSentPositionControllerDisplayDutyCycle((byte)1);
+		brightness = posman.getLastSentPositionControllerDisplayDutyCycle((byte) 1);
 		Assert.assertEquals(PosControllerInstr.DIM_DUTYCYCLE, brightness);
 		assertAsynchPosconValue(posman, 1, 9);
-		
+
 		LOGGER.info("3: Short an item.");
 		picker.scanSomething("1555");
 		picker.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PUT, WAIT_TIME);
-		posman.buttonPress(1, 1);	//Expected quantity - 2
+		posman.buttonPress(1, 1); //Expected quantity - 2
 		picker.waitForCheState(CheStateEnum.SHORT_PUT_CONFIRM, WAIT_TIME);
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
-		
+
 		//Ensure that Bay's poscon is dim and showing remaininig details
-		brightness = posman.getLastSentPositionControllerDisplayDutyCycle((byte)1);
+		brightness = posman.getLastSentPositionControllerDisplayDutyCycle((byte) 1);
 		Assert.assertEquals(PosControllerInstr.DIM_DUTYCYCLE, brightness);
 		assertAsynchPosconValue(posman, 1, 8);
 	}
-	
-	private void placeOrderOnLocation(PickSimulator picker, String orerId, String locationId){
+
+	private void placeOrderOnLocation(PickSimulator picker, String orerId, String locationId) {
 		picker.scanSomething(orerId);
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
 		picker.scanSomething(locationId);
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
 	}
-	
+
 	@Test
-	public final void putWallSimultaneousPutTestPassFirstPicker() throws IOException{
+	public final void putWallSimultaneousPutTestPassFirstPicker() throws IOException {
 		setUpFacilityWithPutWall();
 		setUpOrders1(getFacility());
 		this.startSiteController();
@@ -205,29 +205,29 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		PickSimulator picker2 = createPickSim(cheGuid2);
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_5_ID));
 		simulataneousPutTestCommon(picker1, picker2, posman, "1122", "1522");
-		
+
 		LOGGER.info("4: Picker2 scans YES to override Picker1's use of the required Poscon.");
 		picker2.scanCommand("YES");
 		picker2.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
-		assertAsynchPosconValue(posman, 1, 1);	//Expect quantity "1" for item "1522" on picker2
+		assertAsynchPosconValue(posman, 1, 1); //Expect quantity "1" for item "1522" on picker2
 		Assert.assertEquals("S11", picker2.getLastCheDisplayString(1));
 		Assert.assertEquals("1522", picker2.getLastCheDisplayString(2));
 		Assert.assertEquals("QTY 1", picker2.getLastCheDisplayString(3));
 		Assert.assertEquals("", picker2.getLastCheDisplayString(4));
-		
+
 		LOGGER.info("5: Press poscon button to pick for Picker2.");
 		posman.buttonPress(1, 1);
 		picker2.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
-		assertAsynchPosconValue(posman, 1, 2);	//Expect quantity "2" for item "1122" on picker1
-		
+		assertAsynchPosconValue(posman, 1, 2); //Expect quantity "2" for item "1122" on picker1
+
 		LOGGER.info("6: Press poscon button to pick for Picker1.");
 		posman.buttonPress(1, 2);
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
-		assertAsynchPosconValue(posman, 1, 3);	//Expect poscon to show "3" for the remaining 3 details in the putwall (picking started with 5 details in the single order)
+		assertAsynchPosconValue(posman, 1, 3); //Expect poscon to show "3" for the remaining 3 details in the putwall (picking started with 5 details in the single order)
 	}
-	
+
 	@Test
-	public final void putWallSimultaneousPutTestForFirstPicker() throws IOException{
+	public final void putWallSimultaneousPutTestForFirstPicker() throws IOException {
 		setUpFacilityWithPutWall();
 		setUpOrders1(getFacility());
 		this.startSiteController();
@@ -235,41 +235,45 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		PickSimulator picker2 = createPickSim(cheGuid2);
 		PosManagerSimulator posman = new PosManagerSimulator(this, new NetGuid(CONTROLLER_5_ID));
 		simulataneousPutTestCommon(picker1, picker2, posman, "1122", "1522");
-		
+
 		LOGGER.info("4: Press poscon button to pick for Picker1.");
 		posman.buttonPress(1, 2);
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
-		assertAsynchPosconValue(posman, 1, 4);	//Expect poscon to show "3" for the remaining 3 details in the putwall (picking started with 5 details in the single order)
+		assertAsynchPosconValue(posman, 1, 4); //Expect poscon to show "3" for the remaining 3 details in the putwall (picking started with 5 details in the single order)
 
 		LOGGER.info("5: Picker2 scans YES to exit the POSCON_BUSY screen. While Picker1 already put an item, we don't auto-proapgate it to Picker2");
 		picker2.scanCommand("YES");
 		picker2.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
-		assertAsynchPosconValue(posman, 1, 1);	//Expect quantity "1" for item "1522" on picker2
+		assertAsynchPosconValue(posman, 1, 1); //Expect quantity "1" for item "1522" on picker2
 		Assert.assertEquals("S11", picker2.getLastCheDisplayString(1));
 		Assert.assertEquals("1522", picker2.getLastCheDisplayString(2));
 		Assert.assertEquals("QTY 1", picker2.getLastCheDisplayString(3));
 		Assert.assertEquals("", picker2.getLastCheDisplayString(4));
-		assertAsynchPosconValue(posman, 1, 1);	//Expect quantity "1" for item "1522" on picker2
+		assertAsynchPosconValue(posman, 1, 1); //Expect quantity "1" for item "1522" on picker2
 
 		LOGGER.info("6: Press poscon button to pick for Picker2.");
 		posman.buttonPress(1, 1);
 		picker2.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
-		assertAsynchPosconValue(posman, 1, 3);	//Expect poscon to show "3" for the remaining 3 details in the putwall (picking started with 5 details in the single order)
+		assertAsynchPosconValue(posman, 1, 3); //Expect poscon to show "3" for the remaining 3 details in the putwall (picking started with 5 details in the single order)
 	}
-		
-	private void simulataneousPutTestCommon(PickSimulator picker1, PickSimulator picker2, PosManagerSimulator posman, String item1, String item2) throws IOException{
+
+	private void simulataneousPutTestCommon(PickSimulator picker1,
+		PickSimulator picker2,
+		PosManagerSimulator posman,
+		String item1,
+		String item2) throws IOException {
 		picker1.loginAndSetup("Picker #1");
 		picker2.loginAndSetup("Picker #2");
-		
+
 		LOGGER.info("1: Put Orders into the wall.");
 		picker1.scanCommand("ORDER_WALL");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
-		Assert.assertNull(posman.getLastSentPositionControllerDisplayValue((byte)1));
+		Assert.assertNull(posman.getLastSentPositionControllerDisplayValue((byte) 1));
 		placeOrderOnLocation(picker1, "11111", "L%F15");
 		assertAsynchPosconValue(posman, 1, 5);
 		picker1.scanCommand("CANCEL");
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
-		
+
 		LOGGER.info("2: Picker1 gets an instruction to put Item into the wall.");
 		picker1.scanCommand("PUT_WALL");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
@@ -277,7 +281,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		picker1.scanSomething(item1);
 		picker1.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
-		
+
 		LOGGER.info("3: Picker2 tries to put an item into the same wall.");
 		picker2.scanCommand("PUT_WALL");
 		picker2.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
@@ -285,18 +289,18 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker2.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		picker2.scanSomething(item2);
 		picker2.waitForCheState(CheStateEnum.PUT_WALL_POSCON_BUSY, WAIT_TIME);
-		
+
 		Assert.assertEquals("Poscon for S11 busy", picker2.getLastCheDisplayString(1));
 		Assert.assertEquals("By Picker #1 on CHE1", picker2.getLastCheDisplayString(2));
 		Assert.assertEquals("Scan YES after they come", picker2.getLastCheDisplayString(3));
 		Assert.assertEquals("or if they will never come", picker2.getLastCheDisplayString(4));
 	}
-	
+
 	private void assertAsynchPosconValue(PosManagerSimulator posman, int posInd, int expected) {
 		Byte actual = null;
 		for (int i = 0; i < 7; i++) {
-			actual = posman.getLastSentPositionControllerDisplayValue((byte)posInd);
-			if (actual != null && expected == actual){
+			actual = posman.getLastSentPositionControllerDisplayValue((byte) posInd);
+			if (actual != null && expected == actual) {
 				return;
 			}
 			ThreadUtils.sleep(150);
@@ -347,7 +351,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Assert.assertFalse(loc.isLightableAisleController());
 		Assert.assertTrue(loc.isLightablePoscon());
 		commitTransaction();
-		
+
 		LOGGER.info("2b: pickers set up WALL1 and WALL2 and do start");
 		PickSimulator picker2 = createPickSim(cheGuid2);
 		picker2.loginAndSetup("Picker #2");
@@ -360,10 +364,10 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);
 		Byte posConValue2 = picker2.getLastSentPositionControllerDisplayValue((byte) 2);
-		
+
 		LOGGER.info("2c: Check poscon displays on picker2");
 		picker2.logCheDisplay();
-		
+
 		// FIXME: assertions below fail
 		Assert.assertEquals(toByte(1), posConValue1);
 		Assert.assertEquals(toByte(1), posConValue2);
@@ -600,7 +604,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 		setUpFacilityWithPutWall();
 
-		this.getTenantPersistenceService().beginTransaction();		
+		this.getTenantPersistenceService().beginTransaction();
 		// just these two orders set up as picks from P area.
 		String orderCsvString = "orderGroupId,shipmentId,customerId,orderId,orderDetailId,preAssignedContainerId,itemId,description,quantity,uom, locationId"
 				+ "\r\n,USF314,COSTCO,11117,11117.1,11117,1515,Sku1515,4,each,P12"
@@ -650,6 +654,48 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 		displayValue = posman.getLastSentPositionControllerDisplayValue((byte) 2);
 		Assert.assertNull(displayValue);
+
+	}
+
+	/**
+	 * This test full 105cm light tube per pallet
+	 */
+	@Test
+	public final void palletWallTest() throws IOException {
+		setUpFacilityWithPalletWall();
+		setUpOrders1(getFacility());
+
+		this.startSiteController();
+
+		beginTransaction();
+		Facility theFacility = getFacility();
+		theFacility.reload();
+		Location slot = theFacility.findSubLocationById("P12");
+		Assert.assertEquals(35, ((Short) slot.getFirstLedNumAlongPath()).intValue());
+		Assert.assertEquals(63, ((Short) slot.getLastLedNumAlongPath()).intValue());
+
+		LOGGER.info("1: send location lighting message for slot P12 with leds from 35 to 63");
+		LightService lightService = workService.getLightService();
+		lightService.lightLocation(theFacility.getPersistentId().toString(), "P12");
+		commitTransaction();
+		// Look in the console to see what got sent.
+
+		PickSimulator picker1 = createPickSim(cheGuid1);
+
+		LOGGER.info("2: Set up some orders for the put wall before doing any picks");
+		picker1.loginAndSetup("Picker #1");
+		picker1.scanCommand("ORDER_WALL");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanSomething("11117");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker1.scanSomething("L%P13");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanSomething("11115");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		picker1.scanSomething("L%P12");
+		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		picker1.scanCommand("CANCEL");
+		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 	}
 
@@ -1081,7 +1127,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 		setUpOrders1(getFacility());
 
-		this.getTenantPersistenceService().beginTransaction();		
+		this.getTenantPersistenceService().beginTransaction();
 		// Let's document the poscon index for P14
 		facility = facility.reload();
 		Location loc = facility.findSubLocationById("P14");
@@ -1257,7 +1303,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker1.setOrderToPutWall("11115", "P14");
 		posman.waitForControllerDisplayValue((byte) 5, null, WAIT_TIME); // blanked this one
 		posman.waitForControllerDisplayValue((byte) 4, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME); // moved it here
-		
+
 		LOGGER.info("3: 11115, in P14, assigned P13 where 11119 is");
 		posman.waitForControllerDisplayValue((byte) 4, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME); // 11115 is here
 		posman.waitForControllerDisplayValue((byte) 3, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME); // 11119 is here

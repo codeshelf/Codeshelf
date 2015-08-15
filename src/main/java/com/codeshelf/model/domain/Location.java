@@ -68,7 +68,7 @@ import com.google.common.collect.Ordering;
 
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@Table(name = "location", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
+@Table(name = "location", uniqueConstraints = { @UniqueConstraint(columnNames = { "parent_persistentid", "domainid" }) })
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
@@ -178,13 +178,13 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	private String						lastDdcId;
 
 	// All of the vertices that define the location's footprint.
-	@OneToMany(mappedBy = "parent", orphanRemoval=true)
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	@Getter
 	@Setter
 	private List<Vertex>				vertices		= new ArrayList<Vertex>();
 
 	// The child locations.
-	@OneToMany(mappedBy = "parent", orphanRemoval=true)
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	@MapKey(name = "domainId")
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
@@ -192,7 +192,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	private Map<String, Location>		locations		= new HashMap<String, Location>();
 
 	// The location aliases for this location.
-	@OneToMany(mappedBy = "mappedLocation", orphanRemoval=true)
+	@OneToMany(mappedBy = "mappedLocation", orphanRemoval = true)
 	@Getter
 	@Setter
 	private List<LocationAlias>			aliases			= new ArrayList<LocationAlias>();
@@ -274,7 +274,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	@Setter
 	@JsonProperty
 	private Integer						tapeId;
-	
+
 	public Location() {
 		active = true;
 		this.setAnchorPoint(Point.getZeroPoint());
@@ -638,7 +638,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 		if (inLocationId.startsWith(CheDeviceLogic.TAPE_PREFIX)) {
 			result = CodeshelfTape.findFinestLocationForTape(inLocationId).getLocation();
-		} else { 
+		} else {
 			Integer firstDotPos = inLocationId.indexOf(".");
 			if (firstDotPos < 0) {
 				// There's no "dot" so look for the sublocation at this level.
@@ -834,7 +834,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 		return result;
 	}
-	
+
 	public void addStoredItem(Item inItem) {
 		Location previousLocation = inItem.getStoredLocation();
 
@@ -1232,7 +1232,10 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 		boolean lowerLedNearAnchor = this.isLowerLedNearAnchor();
 
-		LedRange theLedRange = LedRange.computeLedsToLightForLocationNoOffset(firstLocLed, lastLocLed, lowerLedNearAnchor);
+		LedRange theLedRange = LedRange.computeLedsToLightForLocationNoOffset(firstLocLed,
+			lastLocLed,
+			lowerLedNearAnchor,
+			this.isSlot());
 
 		return theLedRange;
 	}
@@ -1442,7 +1445,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	public boolean isWallLocation() {
 		return isWallLocation(null);
 	}
-	
+
 	private boolean isWallLocation(String expectedUsage) {
 		if (isImmediateWallLocation()) {
 			return expectedUsage == null || expectedUsage.equalsIgnoreCase(getUsage());
@@ -1450,11 +1453,11 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		Location parent = getParent();
 		return (parent == null) ? false : parent.isWallLocation(expectedUsage);
 	}
-	
+
 	public boolean isImmediateWallLocation() {
 		return PUTWALL_USAGE.equalsIgnoreCase(usage) || SKUWALL_USAGE.equalsIgnoreCase(usage);
 	}
-	
+
 	public void toggleWallLocation() {
 		//off -> putwall -> skuwall -> off
 		if (usage == null) {
@@ -1482,59 +1485,59 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 		List<Location> children = getChildren();
 		for (Location child : children) {
-			if (child.hasDescendant(location)){
+			if (child.hasDescendant(location)) {
 				return true;
 			}
 		}
 		return false;
 	}
-	
+
 	private void getStoredItemsInLocationAndChildren(List<Item> itemAccumulator) {
 		itemAccumulator.addAll(getStoredItems().values());
 		List<Location> children = getChildren();
-		for (Location child : children){
+		for (Location child : children) {
 			child.getStoredItemsInLocationAndChildren(itemAccumulator);
 		}
 	}
-	
-	public List<Item> getStoredItemsInLocationAndChildren(){
+
+	public List<Item> getStoredItemsInLocationAndChildren() {
 		List<Item> itemsInLocation = Lists.newArrayList();
 		getStoredItemsInLocationAndChildren(itemsInLocation);
 		return itemsInLocation;
 	}
-	
-	public Item findItemInLocationAndChildren(ItemMaster itemMaster, UomMaster uomMaster){
+
+	public Item findItemInLocationAndChildren(ItemMaster itemMaster, UomMaster uomMaster) {
 		List<Item> itemsInWall = getStoredItemsInLocationAndChildren();
 		for (Item storedItem : itemsInWall) {
-			if(storedItem.getParent().equals(itemMaster) && storedItem.getUomMaster().equals(uomMaster)){
+			if (storedItem.getParent().equals(itemMaster) && storedItem.getUomMaster().equals(uomMaster)) {
 				return storedItem;
 			}
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Returns a list of all descendants of this Location INCLUDING ITSELF
 	 */
-	public List<Location> getAllDescendants(){
+	public List<Location> getAllDescendants() {
 		List<Location> descendants = Lists.newArrayList();
 		getAllDescendantsHelper(descendants);
 		return descendants;
 	}
-	
+
 	private void getAllDescendantsHelper(List<Location> descendants) {
 		descendants.add(this);
 		List<Location> children = getChildren();
-		for (Location child : children){
+		for (Location child : children) {
 			child.getAllDescendantsHelper(descendants);
 		}
 	}
-	
-	public Location getWall(String wallType){
-		if ((wallType == SKUWALL_USAGE && !isSkuWallLocation()) || (wallType == PUTWALL_USAGE && !isPutWallLocation())){
+
+	public Location getWall(String wallType) {
+		if ((wallType == SKUWALL_USAGE && !isSkuWallLocation()) || (wallType == PUTWALL_USAGE && !isPutWallLocation())) {
 			return null;
 		}
-		if (isAisle()){
+		if (isAisle()) {
 			return this;
 		}
 		Aisle aisle = getParentAtLevel(Aisle.class);
@@ -1554,14 +1557,14 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 		Location parent = this;
 		while (parent != null) {
-			if (parent.equals(ancestor)){
+			if (parent.equals(ancestor)) {
 				return true;
 			}
 			parent = parent.getParent();
 		}
 		return false;
 	}
-	
+
 	/**
 	 * We want to provide the most useful information possible to the user. That is the name of the put wall ancestor for this location.
 	 * However, it is likely that the aisle is defined, but the users are using the bay names. So this is not really knowable.
@@ -1571,7 +1574,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		boolean isPutWall = isWallLocation(PUTWALL_USAGE);
 		boolean isSkuWall = isWallLocation(SKUWALL_USAGE);
 		String usageStr = isPutWall ? "Put Wall: " : isSkuWall ? "Sku Wall: " : "";
-		
+
 		//Check if this location is a Put or SKU Wall
 		if (isImmediateWallLocation()) {
 			return usageStr + getBestUsableLocationName();

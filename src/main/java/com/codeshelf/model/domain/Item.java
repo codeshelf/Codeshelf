@@ -185,7 +185,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 			loc = facility.findSubLocationById(inAliasOrNominal);
 		}
 		if (loc == null) {
-		throw new DaoException("could not find location named: " + inAliasOrNominal);
+			throw new DaoException("could not find location named: " + inAliasOrNominal);
 		}
 		if (!loc.isActive()) {
 			throw new DaoException("The location with alias: " + inAliasOrNominal + " was deleted");
@@ -430,7 +430,8 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 			lastLocLed,
 			lowerLedNearAnchor,
 			locationWidth,
-			metersFromAnchor);
+			metersFromAnchor,
+			theLocation.isSlot());
 		return theLedRange;
 	}
 
@@ -453,11 +454,11 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 		String toSay = "Sku:" + this.getItemMasterId() + " Uom:" + this.getUomMasterId() + " Loc:" + this.getItemLocationName();
 		return toSay;
 	}
-	
+
 	public Gtin getGtin() {
 		UomMaster uomMaster = getUomMaster();
-		
-		if (uomMaster != null){
+
+		if (uomMaster != null) {
 			return getParent().getGtinForUom(uomMaster);
 		} else {
 			return null;
@@ -467,10 +468,10 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	public String getGtinId() {
 		UomMaster uomMaster = getUomMaster();
 		Gtin gtin = null;
-		
-		if (uomMaster != null){
+
+		if (uomMaster != null) {
 			gtin = getParent().getGtinForUom(uomMaster);
-			if (gtin != null){
+			if (gtin != null) {
 				return gtin.getDomainId();
 			} else {
 				return "";

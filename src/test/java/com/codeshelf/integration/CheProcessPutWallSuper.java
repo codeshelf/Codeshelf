@@ -3,7 +3,7 @@ package com.codeshelf.integration;
 import java.io.IOException;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import org.junit.Assert;
 
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.DeviceType;
@@ -28,6 +28,90 @@ public class CheProcessPutWallSuper extends ServerTest {
 	protected String	CONTROLLER_3_ID	= "00001883"; // will be set as LED controller
 	protected String	CONTROLLER_4_ID	= "00001884"; // will be set as LED controller
 	protected String	CONTROLLER_5_ID	= "00001885"; // will be set as LED controller
+	
+	protected void assertTrue(boolean inBool){
+		Assert.assertTrue(inBool);
+	}
+	protected void assertFalse(boolean inBool){
+		Assert.assertFalse(inBool);		
+	}
+	protected void assertNull(Object inOb){
+		Assert.assertNull(inOb);		
+	}
+	protected void assertNotNull(Object inOb){
+		Assert.assertNotNull(inOb);		
+	}
+
+	/**
+	 * The goal is to model a "put wall" for pallets that has one bay, one tier, with full 105 cm light tubes for each of 4 slots
+	 * 32 LEDs in 105cm per slot
+	 */
+	protected Facility setUpFacilityWithPalletWall() throws IOException {
+		//Import aisles. A4 is the put wall with LEDs. No poscon on the bay
+		// A9 is an extra aisle with no path assignment.
+		String aislesCsvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\n"
+				+ "Aisle,A4,,,,,tierB1S1Side,20,20,X,20\n" //
+				+ "Bay,B1,420,,,,,,,,\n"//
+				+ "Tier,T1,420,4,128,0,,,,,\n";//
+		beginTransaction();
+		Facility facility = getFacility();
+		importAislesData(facility, aislesCsvString);
+		commitTransaction();
+
+		// Get the aisle
+		beginTransaction();
+		Aisle aisle4 = Aisle.staticGetDao().findByDomainId(facility, "A4");
+	
+		//Make path and assign to aisle
+		aisle4 = Aisle.staticGetDao().findByDomainId(facility, "A4");
+		Path path4 = createPathForTest(facility);
+		PathSegment segment0 = addPathSegmentForTest(path4, 0, 20d, 6d, 30d, 6d);
+		String persistStr = segment0.getPersistentId().toString();
+		aisle4.associatePathSegment(persistStr);
+
+		aisle4.toggleWallLocation();
+		assertTrue(aisle4.isPutWallLocation());
+		commitTransaction();
+
+		//Import location aliases
+		// A1 and A2 are fast mover blocks. F11-F18 and F21-F28
+		// A3 is slow mover. S11-S18
+		// A4 is put wall. P11-P18, but with bays having alias names WALL1 and WALL2
+		String csvLocationAliases = "mappedLocationId,locationAlias\n" //
+				+ "A4.B1,WALL1\n"//
+				+ "A4.B1.T1.S1,P11\n"//
+				+ "A4.B1.T1.S2,P12\n"//
+				+ "A4.B1.T1.S3,P13\n"// 
+				+ "A4.B1.T1.S4,P14\n";//
+
+		beginTransaction();
+		facility = facility.reload();
+		importLocationAliasesData(facility, csvLocationAliases);
+		commitTransaction();
+
+		beginTransaction();
+		facility = facility.reload();
+		CodeshelfNetwork network = getNetwork();
+
+		//Set up a LED controller
+		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid(CONTROLLER_1_ID));
+		
+		// perhaps not too correct. Entire aisle to controller. Only valid for zigzag configuration, but ok.
+		Location aisle = facility.findSubLocationById("A4");
+		controller1.addLocation(aisle);
+		aisle.setLedChannel((short) 1);
+	
+		// Check our lighting configuration
+		Location slot = facility.findSubLocationById("P12");
+		Assert.assertFalse(slot.isLightablePoscon());
+		assertTrue(slot.isLightable());
+		assertTrue(slot.isLightableAisleController());
+		Assert.assertEquals(35, ((Short) slot.getFirstLedNumAlongPath()).intValue());
+		Assert.assertEquals(63, ((Short) slot.getLastLedNumAlongPath()).intValue());
+		commitTransaction();
+
+		return facility;
+	}
 
 	/**
 	 * The goal is a small version of our model put wall facility. Two fast mover areas on different paths. A slow mover area on different path.
@@ -158,7 +242,7 @@ public class CheProcessPutWallSuper extends ServerTest {
 		//Set up a PosManager
 		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid(CONTROLLER_1_ID));
 		controller1.updateFromUI(CONTROLLER_1_ID, "Poscons");
-		assertEquals(DeviceType.Poscons, controller1.getDeviceType());
+		Assert.assertEquals(DeviceType.Poscons, controller1.getDeviceType());
 
 		//Assign PosCon controller and indices to slots
 		Location wall1Tier = facility.findSubLocationById("A4.B1.T1");
@@ -267,7 +351,7 @@ public class CheProcessPutWallSuper extends ServerTest {
 				+ "\r\n,USF314,COSTCO,11120,11120.3,11120,1602,Sku1602,2,each,X11,gtin1602,99";
 		importOrdersData(facility, orderCsvString);
 		ItemMaster theMaster = ItemMaster.staticGetDao().findByDomainId(facility, "1515");
-		assertNotNull("ItemMaster should be created", theMaster);
+		assertNotNull(theMaster);
 		commitTransaction();
 	}
 
@@ -285,17 +369,17 @@ public class CheProcessPutWallSuper extends ServerTest {
 			Location location = facility.findSubLocationById(locationId);
 			assertNotNull(location);
 			List<OrderLocation> locations = order.getOrderLocations();
-			assertEquals(1, locations.size());
+			Assert.assertEquals(1, locations.size());
 			OrderLocation savedOrderLocation = locations.get(0);
 			Location savedLocation = savedOrderLocation.getLocation();
-			assertEquals(location, savedLocation);
+			Assert.assertEquals(location, savedLocation);
 		} else {
 			List<OrderLocation> locations = order.getOrderLocations();
-			assertEquals(0, locations.size());
+			Assert.assertEquals(0, locations.size());
 		}
 
 		// getPutWallUi is what shows in the WebApp
-		assertEquals(putWallUiField, order.getWallUi());
+		Assert.assertEquals(putWallUiField, order.getWallUi());
 	}
 
 	protected void assertItemMaster(Facility facility, String sku) {
