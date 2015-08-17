@@ -1,5 +1,6 @@
 package com.codeshelf.edi;
 
+import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.Charset;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -12,10 +13,12 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 import javax.persistence.Transient;
+import javax.ws.rs.core.MultivaluedMap;
 
 import lombok.Getter;
 import lombok.Setter;
 
+import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,6 +95,23 @@ public class SftpConfiguration implements UserInfo {
 		keySpec = new SecretKeySpec(keyBytes, SFTP_PASSWORD_CIPHER);
 	}
 
+	
+	public static SftpConfiguration updateFromMap(SftpConfiguration config, MultivaluedMap<String, String> params) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+			PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
+			propertyUtils.setProperty(config, "host", params.getFirst("host"));
+			propertyUtils.setProperty(config, "port", params.getFirst("port"));
+			propertyUtils.setProperty(config, "username", params.getFirst("username"));
+			propertyUtils.setProperty(config, "importPath", params.getFirst("importPath"));
+			propertyUtils.setProperty(config, "archivePath", params.getFirst("archivePath"));
+			propertyUtils.setProperty(config, "exportPath", params.getFirst("exportPath"));
+			
+			String password = params.getFirst("password");
+			if (password != null) {
+				config.setPassword(password);
+			}
+			return config;
+	}
+	
 	public SftpConfiguration() {
 		this("", 22, "", "", "", "");
 	}
@@ -215,4 +235,5 @@ public class SftpConfiguration implements UserInfo {
 	public String getUrl() {
 		return String.format("sftp://%s@%s:%d", username, host, (int) port);
 	}
+
 }

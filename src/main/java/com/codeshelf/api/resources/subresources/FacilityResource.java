@@ -21,6 +21,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
@@ -69,10 +70,14 @@ import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
+import com.codeshelf.edi.SftpConfiguration;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.DropboxService;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.IronMqService;
+import com.codeshelf.model.domain.SftpOrdersEdiService;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
@@ -91,6 +96,7 @@ import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -149,6 +155,14 @@ public class FacilityResource {
 	    return r;
 	}
 
+	@Path("/edigateways")
+	public EDIGatewaysResource getEdiResource() throws Exception {
+		EDIGatewaysResource r = resourceContext.getResource(EDIGatewaysResource.class);
+	    r.setFacility(facility);
+	    return r;
+	}
+
+	
 	@DELETE
 	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -168,6 +182,7 @@ public class FacilityResource {
 		}
 	}
 
+	
 	@Path("/orders")
 	public OrdersResource getOrders() {
 		OrdersResource r = resourceContext.getResource(OrdersResource.class);

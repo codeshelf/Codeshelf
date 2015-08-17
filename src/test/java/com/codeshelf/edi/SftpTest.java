@@ -17,7 +17,6 @@ import org.junit.Test;
 
 import com.codeshelf.model.domain.AbstractSftpEdiService;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.model.domain.SftpOrdersEdiService;
 import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.validation.BatchResult;
@@ -43,7 +42,7 @@ public class SftpTest extends HibernateTest {
 		
 		// ensure loads/saves configuration correctly
 		beginTransaction();
-		AbstractSftpEdiService sftpOrders = findSftpOrdersService(getFacility(), SftpOrdersEdiService.class); 
+		AbstractSftpEdiService sftpOrders = getFacility().findEdiService(SftpOrdersEdiService.class); 
 		sftpOrders.setConfiguration(config);
 		SftpOrdersEdiService.staticGetDao().store(sftpOrders);
 		commitTransaction();
@@ -74,15 +73,6 @@ public class SftpTest extends HibernateTest {
 		
 		// file was processed and result checked
 		verify(mockBatchResult,times(1)).isSuccessful();
-	}
-
-	private AbstractSftpEdiService findSftpOrdersService(Facility facility, Class<? extends AbstractSftpEdiService> cls) {
-		for (IEdiService ediService : facility.getEdiServices()) {
-			if (cls.isAssignableFrom(ediService.getClass())) {
-				return (AbstractSftpEdiService)ediService;
-			}
-		}
-		return null;
 	}
 
 	private void uploadTestFile(AbstractSftpEdiService sftpService, String filename, String contents) {

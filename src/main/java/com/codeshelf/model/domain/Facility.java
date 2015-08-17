@@ -719,7 +719,7 @@ public class Facility extends Location {
 		}
 
 		createSFTPOrderService("SFTPORDERS");
-		//createSFTPWIService("SFTPORDERS");
+		//createSFTPWIService("SFTPWIS");
 	}
 
 	// --------------------------------------------------------------------------
@@ -1318,4 +1318,24 @@ public class Facility extends Location {
 			dao.delete((IDomainObject) object);
 		}
 	}
+
+	@SuppressWarnings("unchecked")
+	public <T extends IEdiService> T findEdiService(Class<T> cls) {
+		for (IEdiService ediService : getEdiServices()) {
+			if (cls.isAssignableFrom(ediService.getClass())) {
+				return (T) ediService;
+			}
+		}
+		return null;
+	}
+	
+	public IEdiService findEdiService(String domainId) {
+		for (IEdiService ediService : getEdiServices()) {
+			if (ediService.getDomainId().equals(domainId)) {
+				return ediService;
+			}
+		}
+		return null;
+	}
+
 }
