@@ -40,7 +40,7 @@ public class DropboxServiceTest extends MockDaoTest {
 		Facility facility = new Facility();
 		facility.setFacilityId("TEST1");
 
-		facility.createDropboxService();
+		facility.createDefaultEDIServices();
 
 		DropboxService dropboxService = facility.getDropboxService();
 

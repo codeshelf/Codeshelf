@@ -85,22 +85,8 @@ public class DropboxRealTest extends ServerTest {
 		LedController controller3 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000013"));
 		*/
 		
-		DropboxService dropboxService = facility.getDropboxService();
-		if (dropboxService == null) {
-			facility.createDropboxService();
-			dropboxService = facility.getDropboxService();
-			LOGGER.warn("had to createDropboxService. Unusual for this JUNIT test. Please understand why the change ");
-			;
-		}
-		try {
-			dropboxService.setDomainId("DB");
-			dropboxService.setProviderCredentials(TEST_CREDENTIALS3);
-			dropboxService.setServiceState(EdiServiceStateEnum.LINKED);
-			DropboxService.staticGetDao().store(dropboxService);
-		} catch (DaoException e) {
-			LOGGER.error("Unable to store dropboxservice change after setting test credentials", e);
-		}
-
+		facility.createDefaultEDIServices();
+		
 		return facility;
 	}
 

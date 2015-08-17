@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
-import com.codeshelf.model.EdiProviderEnum;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.HeaderCounts;
 import com.codeshelf.model.OrderTypeEnum;
@@ -654,7 +653,7 @@ public class Facility extends Location {
 	/**
 	 */
 	public void createDefaultContainerKind() {
-		//ContainerKind containerKind = 
+		//ContainerKind containerKind =
 		createContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND, 0.0, 0.0, 0.0);
 	}
 
@@ -689,28 +688,6 @@ public class Facility extends Location {
 		return IronMqService.staticGetDao().findByDomainId(this, IRONMQ_DOMAINID);
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * @return
-	 */
-	public IronMqService createIronMqService() throws PSQLException {
-		// we saw the PSQL exception in staging test when the record could not be added
-		IronMqService result = null;
-
-		result = new IronMqService();
-		result.setDomainId(IRONMQ_DOMAINID);
-		result.setProvider(EdiProviderEnum.IRONMQ);
-		result.setServiceState(EdiServiceStateEnum.UNLINKED);
-		this.addEdiService(result);
-		result.storeCredentials("", ""); // non-null credentials
-		try {
-			IronMqService.staticGetDao().store(result);
-		} catch (DaoException e) {
-			LOGGER.error("Failed to save IronMQ service", e);
-		}
-
-		return result;
-	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -728,17 +705,33 @@ public class Facility extends Location {
 		return result;
 	}
 
+	public void createDefaultEDIServices() {
+		// Create a first Dropbox Service entry for this facility.
+		@SuppressWarnings("unused")
+		DropboxService dropboxService = createDropboxService();
+
+		// Create a first IronMQ Service entry for this facility.
+		try {
+			@SuppressWarnings("unused")
+			IronMqService ironMqService = createIronMqService();
+		} catch (PSQLException e) {
+			LOGGER.error("failed to create ironMQ service");
+		}
+
+		createSFTPOrderService("SFTPORDERS");
+		//createSFTPWIService("SFTPORDERS");
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
 	 */
-	public DropboxService createDropboxService() {
+	private DropboxService createDropboxService() {
 
 		DropboxService result = null;
 
 		result = new DropboxService();
 		result.setDomainId("DROPBOX");
-		result.setProvider(EdiProviderEnum.DROPBOX);
 		result.setServiceState(EdiServiceStateEnum.UNLINKED);
 
 		this.addEdiService(result);
@@ -749,6 +742,42 @@ public class Facility extends Location {
 		}
 
 		return result;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * @return
+	 */
+	private IronMqService createIronMqService() throws PSQLException {
+		// we saw the PSQL exception in staging test when the record could not be added
+		IronMqService result = null;
+
+		result = new IronMqService();
+		result.setDomainId(IRONMQ_DOMAINID);
+		result.setServiceState(EdiServiceStateEnum.UNLINKED);
+		this.addEdiService(result);
+		result.storeCredentials("", ""); // non-null credentials
+		try {
+			IronMqService.staticGetDao().store(result);
+		} catch (DaoException e) {
+			LOGGER.error("Failed to save IronMQ service", e);
+		}
+
+		return result;
+	}
+
+	private void createSFTPOrderService(String domainId) {
+		AbstractSftpEdiService sftpEDI = new SftpOrdersEdiService();
+		sftpEDI.setServiceState(EdiServiceStateEnum.UNLINKED);
+		sftpEDI.setDomainId(domainId);
+		this.addEdiService(sftpEDI);
+		try {
+			SftpOrdersEdiService.staticGetDao().store(sftpEDI);
+		} catch (DaoException e) {
+			LOGGER.error("Failed to save IronMQ service", e);
+		}
+
+
 	}
 
 	// --------------------------------------------------------------------------
@@ -1008,7 +1037,7 @@ public class Facility extends Location {
 	@JsonProperty("hasMeaningfulOrderGroups")
 	public boolean hasMeaningfulOrderGroups() {
 		// We really want to change to a config parameter, and then pass to the UI a three-value choice:
-		// Only two-level Orders view, only three-level, or both 2 and 3-level.		
+		// Only two-level Orders view, only three-level, or both 2 and 3-level.
 
 		List<OrderGroup> groupsList = this.getOrderGroups();
 		boolean result = groupsList.size() > 0;
@@ -1201,20 +1230,9 @@ public class Facility extends Location {
 		facility.store();
 
 		LOGGER.info("Creating facility " + inDomainId
-				+ " w/ dropbox, ironmq, network, sitecon, sitecon user, generic container and 2 CHEs");
+				+ " w/ all edi services, network, sitecon, sitecon user, generic container and 2 CHEs");
 
-		// Create a first Dropbox Service entry for this facility.
-		@SuppressWarnings("unused")
-		DropboxService dropboxService = facility.createDropboxService();
-
-		// Create a first IronMQ Service entry for this facility.
-		try {
-			@SuppressWarnings("unused")
-			IronMqService ironMqService = facility.createIronMqService();
-		} catch (PSQLException e) {
-			LOGGER.error("failed to create ironMQ service");
-		}
-
+		facility.createDefaultEDIServices();
 		// Create the default network for the facility.
 		CodeshelfNetwork network = facility.createNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 

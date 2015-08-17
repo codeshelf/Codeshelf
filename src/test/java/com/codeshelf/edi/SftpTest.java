@@ -2,8 +2,8 @@ package com.codeshelf.edi;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
@@ -17,6 +17,7 @@ import org.junit.Test;
 
 import com.codeshelf.model.domain.AbstractSftpEdiService;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.model.domain.SftpOrdersEdiService;
 import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.validation.BatchResult;
@@ -38,19 +39,17 @@ public class SftpTest extends HibernateTest {
 		config.setImportPath("/out");
 		config.setArchivePath("/out/archive");
 		
-		AbstractSftpEdiService sftpOrders = new SftpOrdersEdiService();
-		sftpOrders.setParent(getFacility());
-		String domainid = sftpOrders.getServiceName();
-		sftpOrders.setConfiguration(config);
-		sftpOrders.setDomainId(domainid);
+		
 		
 		// ensure loads/saves configuration correctly
 		beginTransaction();
+		AbstractSftpEdiService sftpOrders = findSftpOrdersService(getFacility(), SftpOrdersEdiService.class); 
+		sftpOrders.setConfiguration(config);
 		SftpOrdersEdiService.staticGetDao().store(sftpOrders);
 		commitTransaction();
 		
 		beginTransaction();
-		sftpOrders = SftpOrdersEdiService.staticGetDao().findByDomainId(getFacility(), domainid);
+		sftpOrders = SftpOrdersEdiService.staticGetDao().findByDomainId(getFacility(), sftpOrders.getDomainId());
 		commitTransaction();
 		
 		Assert.assertNotNull(sftpOrders);
@@ -75,6 +74,15 @@ public class SftpTest extends HibernateTest {
 		
 		// file was processed and result checked
 		verify(mockBatchResult,times(1)).isSuccessful();
+	}
+
+	private AbstractSftpEdiService findSftpOrdersService(Facility facility, Class<? extends AbstractSftpEdiService> cls) {
+		for (IEdiService ediService : facility.getEdiServices()) {
+			if (cls.isAssignableFrom(ediService.getClass())) {
+				return (AbstractSftpEdiService)ediService;
+			}
+		}
+		return null;
 	}
 
 	private void uploadTestFile(AbstractSftpEdiService sftpService, String filename, String contents) {

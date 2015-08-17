@@ -34,6 +34,7 @@ import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
+import com.codeshelf.model.EdiProviderEnum;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
@@ -120,6 +121,8 @@ public class IronMqService extends EdiServiceABC {
 	}
 
 	IronMqService(ClientProvider clientProvider) {
+		super();
+		this.setProvider(EdiProviderEnum.IRONMQ);
 		this.clientProvider = clientProvider;
 		exportCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS,"exports.ironmq");
 

@@ -98,7 +98,6 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 		
 		IronMqService service = new IronMqService();
 		service.setDomainId("IRONMQTEST");
-		service.setProvider(EdiProviderEnum.IRONMQ);
 		facility.addEdiService(service);
 
 		service.storeCredentials("540e1486364af100050000b4", "BAD");
@@ -121,7 +120,6 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 		
 		IronMqService service = new IronMqService();
 		service.setDomainId("IRONMQTEST");
-		service.setProvider(EdiProviderEnum.IRONMQ);
 		facility.addEdiService(service);
 
 		service.storeCredentials("BAD", "RzgIyO5FNeNAgZljs9x4um5UVqw");

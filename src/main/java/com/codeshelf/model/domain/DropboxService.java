@@ -31,6 +31,7 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
+import com.codeshelf.model.EdiProviderEnum;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
@@ -104,7 +105,8 @@ public class DropboxService extends EdiServiceABC {
 	private String				dbCursor;
 
 	public DropboxService() {
-
+		super();
+		setProvider(EdiProviderEnum.DROPBOX);
 	}
 
 	public final String getServiceName() {
