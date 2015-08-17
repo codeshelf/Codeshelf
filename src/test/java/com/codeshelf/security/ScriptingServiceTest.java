@@ -521,4 +521,64 @@ public class ScriptingServiceTest extends ServerTest {
 		commitTransaction();
 	}
 
+	@Test
+	public void pfsWebExtensionsTest() throws IOException {
+
+		// MESSAGETYPE field is not understood by Codeshelf.
+		String desiredHeader = "MESSAGETYPE,preAssignedContainerId,orderId,locationId,quantity,itemId,orderDetailId,workSequence,customerId";
+		String headerText = "def OrderImportCreateHeader(orderHeader) { orderHeader= \"" + desiredHeader + "\" }";
+		
+		String lineText = "def OrderImportLineTransformation(orderLine) {"
+				+ "orderLine.replace('^', ',');"
+				+ "}";
+		
+		String beanText = "def OrderImportBeanTransformation(bean) {" +
+				"\r\n       bean.uom = 'EA';" +
+				"\r\n   	return bean;" +
+				"\r\n  }";
+		
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		
+		beginTransaction();
+		ExtensionPoint headerExtp = new ExtensionPoint(facility, ExtensionPointType.OrderImportCreateHeader);
+		headerExtp.setScript(headerText);		
+		headerExtp.setActive(true);		
+		ExtensionPoint.staticGetDao().store(headerExtp);
+		
+		ExtensionPoint lineExtp = new ExtensionPoint(facility, ExtensionPointType.OrderImportLineTransformation);
+		lineExtp.setScript(lineText);		
+		lineExtp.setActive(true);		
+		ExtensionPoint.staticGetDao().store(lineExtp);
+
+		ExtensionPoint beanExtp = new ExtensionPoint(facility, ExtensionPointType.OrderImportBeanTransformation);
+		beanExtp.setActive(true);
+		beanExtp.setScript(beanText);
+		ExtensionPoint.staticGetDao().store(beanExtp);
+
+		
+		commitTransaction();
+		
+		String csvString = "ADDMISSION^11243513^11243513^NM00806F^1^889789006171^11243513111112^99999^S7"
+				+ "\r\nADDMISSION^11243513^11243513^NL01403D^1^889789003798^11243513111113^99999^S7"
+				+ "\r\nADDMISSION^11243513^11243513^NM00102F^1^889789003743^11243513111114^99999^S7";
+		
+		beginTransaction();
+		importOrdersData(facility, csvString);
+		commitTransaction();
+
+		beginTransaction();
+		facility = facility.reload();
+
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "11243513");
+		Assert.assertNotNull(order);
+		Integer detailCount = order.getOrderDetails().size();
+		Assert.assertEquals((Integer) 3, detailCount);
+		Assert.assertEquals("S7", order.getCustomerId());
+		OrderDetail aDetail = order.getOrderDetails().get(0);
+		Assert.assertEquals("EA", aDetail.getUomMasterId());
+
+		commitTransaction();
+	}
+
 }
