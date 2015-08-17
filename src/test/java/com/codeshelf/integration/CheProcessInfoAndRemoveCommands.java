@@ -40,7 +40,7 @@ public class CheProcessInfoAndRemoveCommands extends ServerTest{
 		
 		LOGGER.info("1: Set up facility");
 		Facility facility = getFacility();
-		//1 Aisle, 1 Bays, 2 Tiers
+		//1 Aisle, 1 Bay, 2 Tiers
 		String aislesCsvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\n" + 
 				"Aisle,A1,,,,,tierB1S1Side,2.85,5,X,20\n" + 
 				"Bay,B1,100,,,,,,,,\n" + 

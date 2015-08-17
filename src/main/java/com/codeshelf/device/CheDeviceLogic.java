@@ -122,9 +122,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					PALL_NEW_ORDER_2_MSG					= cheLine("For Store ");
 	protected static final String					PALL_NEW_ORDER_3_MSG					= cheLine("Or Scan Another Item");
 	protected static final String					PALL_SCAN_NEXT_ITEM_MSG					= cheLine("Scan Next Item");
-	protected static final String					DAMAGED_PUT_CONFIRM_MSG					= cheLine("CONFIRM DAMAGED");
-	protected static final String					PALL_REMOVE_LICENSE_1_MSG				= cheLine("Scan License");
-	protected static final String					PALL_REMOVE_LICENSE_2_MSG				= cheLine("To Close Pallet");
+	protected static final String					PALL_DAMAGED_CONFIRM_MSG				= cheLine("CONFIRM DAMAGED");
+	protected static final String					PALL_REMOVE_1_MSG						= cheLine("Scan License");
+	protected static final String					PALL_REMOVE_2_MSG						= cheLine("Or Location");
+	protected static final String					PALL_REMOVE_3_MSG						= cheLine("To Close Pallet");
 	
 	//To repeat: !!!DO NOT CREATE LINES LONGER THAN 20 CHARACTERS!!! using cheLine()
 	//Causes untraceable error during Site initialization

@@ -12,6 +12,7 @@ import com.opencsv.bean.BeanToCsv;
 import com.opencsv.bean.HeaderColumnNameMappingStrategy;
 import com.opencsv.bean.MappingStrategy;
 
+@SuppressWarnings("hiding")
 public class CsvExporter<ExportCsvBeanABC> {
 	List<ExportCsvBeanABC>			mBeanList;
 

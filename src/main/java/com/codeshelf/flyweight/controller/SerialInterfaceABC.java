@@ -51,6 +51,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 	private boolean					mIsStarted;
 	private boolean					mShouldRun				= true;
 	private boolean					mIsStartingInterface;
+	@SuppressWarnings("unused")
 	private boolean					mPause					= false;
 
 	// --------------------------------------------------------------------------

@@ -108,11 +108,11 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 					break;
 					
 				case PALLETIZER_DAMAGED:
-					sendDisplayCommand(DAMAGED_PUT_CONFIRM_MSG, YES_NO_MSG);
+					sendDisplayCommand(PALL_DAMAGED_CONFIRM_MSG, YES_NO_MSG);
 					break;
 					
-				case PALLETIZER_LICENSE:
-					sendDisplayCommand(PALL_REMOVE_LICENSE_1_MSG, PALL_REMOVE_LICENSE_1_MSG, EMPTY_MSG, CANCEL_TO_EXIT_MSG);
+				case PALLETIZER_REMOVE:
+					sendDisplayCommand(PALL_REMOVE_1_MSG, PALL_REMOVE_2_MSG, PALL_REMOVE_3_MSG, CANCEL_TO_EXIT_MSG);
 					break;
 					
 				default:
@@ -149,7 +149,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 				break;
 
 			case REMOVE_COMMAND:
-				setState(CheStateEnum.PALLETIZER_LICENSE);
+				setState(CheStateEnum.PALLETIZER_REMOVE);
 				clearItemInfo();
 				break;
 				
@@ -208,10 +208,10 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 				}
 				break;
 				
-			case PALLETIZER_LICENSE:
-				if (isEmpty(scanPrefix)) {
+			case PALLETIZER_REMOVE:
+				if (isEmpty(scanPrefix) || LOCATION_PREFIX.equals(scanPrefix) || TAPE_PREFIX.equals(scanPrefix)) {
 					setState(CheStateEnum.PALLETIZER_PROCESSING);
-					mDeviceManager.palletizerRemoveOrderRequest(getGuidNoPrefix(), getPersistentId().toString(), scanBody);
+					mDeviceManager.palletizerRemoveOrderRequest(getGuidNoPrefix(), getPersistentId().toString(), scanPrefix, scanBody);
 				}
 				break;
 				
@@ -233,19 +233,15 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 	protected void processCommandCancel() {
 		switch (mCheStateEnum) {
 			case PALLETIZER_PROCESSING:
-				setState(CheStateEnum.PALLETIZER_SCAN_ITEM);
-				break;
-				
 			case PALLETIZER_PUT_ITEM:
+			case PALLETIZER_NEW_ORDER:
+			case PALLETIZER_REMOVE:
+				clearItemInfo();
 				setState(CheStateEnum.PALLETIZER_SCAN_ITEM);
 				break;
-				
+								
 			case PALLETIZER_DAMAGED:
 				setState(CheStateEnum.PALLETIZER_PUT_ITEM);
-				break;
-				
-			case PALLETIZER_LICENSE:
-				setState(CheStateEnum.PALLETIZER_SCAN_ITEM);
 				break;
 				
 			default:
@@ -373,7 +369,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 		if (error == null) {
 			setState(CheStateEnum.PALLETIZER_SCAN_ITEM);
 		} else {
-			setState(CheStateEnum.PALLETIZER_LICENSE);
+			setState(CheStateEnum.PALLETIZER_REMOVE);
 			sendDisplayCommand(error, CANCEL_TO_CONTINUE_MSG);
 		}
 	}

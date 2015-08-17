@@ -350,7 +350,7 @@ public class ScriptServerRunner {
 		} else if ("Poscons".equalsIgnoreCase(parts[2])){
 			type = DeviceType.Poscons.toString();
 		} else {
-			throw new Exception("Invalid controller type " + parts[2] + " (lights/poscons");
+			throw new Exception("Invalid controller type " + parts[2] + " (lights/poscons)");
 		}
 		if (parts.length == 6 && !parts[5].equalsIgnoreCase("tiersInAisle")){
 			throw new Exception("The optional 4th parameter in the 'setLedController' command has to be 'tiersInAisle'");

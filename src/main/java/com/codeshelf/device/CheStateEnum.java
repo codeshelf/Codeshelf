@@ -77,7 +77,7 @@ public enum CheStateEnum {
 	PALLETIZER_PUT_ITEM(CheStateNum.PALLETIZER_PUT_ITEM, "PALLETIZER_PUT_ITEM"),
 	PALLETIZER_NEW_ORDER(CheStateNum.PALLETIZER_NEW_ORDER, "PALLETIZER_NEW_ORDER"),
 	PALLETIZER_DAMAGED(CheStateNum.PALLETIZER_DAMAGED, "PALLETIZER_DAMAGED"),
-	PALLETIZER_LICENSE(CheStateNum.PALLETIZER_LICENSE, "PALLETIZER_LICENSE");
+	PALLETIZER_REMOVE(CheStateNum.PALLETIZER_REMOVE, "PALLETIZER_REMOVE");
 
 
 	private int		mValue;
@@ -228,7 +228,7 @@ public enum CheStateEnum {
 		static final byte	PALLETIZER_PUT_ITEM			= 42;	//Added August 10, 2015
 		static final byte	PALLETIZER_NEW_ORDER		= 43;	//Added August 10, 2015
 		static final byte	PALLETIZER_DAMAGED			= 44;	//Added August 10, 2015
-		static final byte	PALLETIZER_LICENSE			= 45;	//Added August 10, 2015
+		static final byte	PALLETIZER_REMOVE			= 45;	//Added August 10, 2015
 
 		
 		private CheStateNum() {

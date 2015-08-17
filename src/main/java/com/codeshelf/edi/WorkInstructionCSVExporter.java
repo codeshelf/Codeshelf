@@ -128,6 +128,7 @@ public class WorkInstructionCSVExporter {
 	/**
 	 * Redone using an export bean
 	 */
+	@SuppressWarnings("deprecation")
 	public String exportWorkInstructions2(List<WorkInstruction> inWorkInstructions) throws IOException {
 		// Convert the WI into a CSV string.
 		StringWriter stringWriter = new StringWriter();

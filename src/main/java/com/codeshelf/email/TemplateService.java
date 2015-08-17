@@ -16,7 +16,6 @@ import com.google.common.base.Strings;
 import com.google.inject.Inject;
 
 public class TemplateService extends AbstractCodeshelfIdleService {
-	@SuppressWarnings("unused")
 	private static final Logger				VELOCITY_LOGGER			= LogManager.getLogger(VelocityEngine.class.getSimpleName());
 
 	private static final String	PREPEND_TEMPLATE_PATH = "templates/";

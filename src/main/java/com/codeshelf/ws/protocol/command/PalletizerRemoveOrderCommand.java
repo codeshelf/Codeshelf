@@ -29,13 +29,14 @@ public class PalletizerRemoveOrderCommand extends CommandABC{
 	@Override
 	public ResponseABC exec() {
 		String cheId = request.getDeviceId();
-		String license = request.getLicense();
-		LOGGER.info("Palletizer Remove Order liwth license {} on che {} request ", license, cheId);
+		String prefix = request.getPrefix();
+		String scan = request.getScan();
+		LOGGER.info("Palletizer Remove Order with scan {}{} on che {} request ", prefix, scan, cheId);
 		PalletizerRemoveOrderResponse response = new PalletizerRemoveOrderResponse();
 		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
 		if (che!=null) {
 			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();
-			String error = palletizerService.removeOrder(che, license);
+			String error = palletizerService.removeOrder(che, prefix, scan);
 			response.setError(error);
 			response.setNetworkGuid(networkGuid);
 			response.setStatus(ResponseStatus.Success);

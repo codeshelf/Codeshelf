@@ -1,7 +1,6 @@
 package com.codeshelf.edi;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
@@ -15,7 +14,6 @@ import java.sql.Timestamp;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Mockito.*;
 
 import com.codeshelf.model.domain.AbstractSftpEdiService;
 import com.codeshelf.model.domain.Facility;
@@ -67,6 +65,7 @@ public class SftpTest extends HibernateTest {
 		//uploadTestFile(sftpOrders,filename2,"order data 2");
 
 		ICsvOrderImporter mockImporter = mock(ICsvOrderImporter.class);
+		@SuppressWarnings("unchecked")
 		BatchResult<Object> mockBatchResult = mock(BatchResult.class);
 		when(mockBatchResult.isSuccessful()).thenReturn(true);
 		when(mockImporter.importOrdersFromCsvStream(any(Reader.class), any(Facility.class), any(Timestamp.class))).thenReturn(mockBatchResult);

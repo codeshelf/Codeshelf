@@ -93,6 +93,7 @@ public class PalletizerService implements IApiService{
 			WiPurpose.WiPalletizerPut,
 			true,
 			new Timestamp(System.currentTimeMillis()));
+		wi.setOrderDetail(detail);
 		info.setWi(wi);
 		return info;
 	}
@@ -108,13 +109,14 @@ public class PalletizerService implements IApiService{
 		if (location == null) {
 			LOGGER.error("Could not find location {}", locationStr);
 			info.setErrorMessage1("Not found: " + locationStr);
+			info.setErrorMessage2("Scan another location");
 			return info;
 		}
 		String existingStoreId = getPalletizerStoreIdAtLocation(location);
 		if (existingStoreId != null){
 			LOGGER.error("Palletizer Location {} occupied with {}", location.getBestUsableLocationName(), existingStoreId);
 			info.setErrorMessage1("Busy: " + location.getBestUsableLocationName());
-			info.setErrorMessage2("Remove " + existingStoreId + " first");
+			info.setErrorMessage2("Remove " + existingStoreId + " First");
 			return info;
 		}
 		
@@ -166,26 +168,58 @@ public class PalletizerService implements IApiService{
 		return orderId.length() >= 6 ? orderId.substring(2, 6) : orderId.substring(2);
 	}
 	
-	public String removeOrder(Che che, String license) {
+	public String removeOrder(Che che, String prefix, String scan) {
+		if (prefix == null || prefix.isEmpty()) {
+			return removeOrderByLicense(che, scan);
+		} else if ("%".equalsIgnoreCase(prefix) || "L%".equalsIgnoreCase(prefix)) {
+			return removeOrderByLocation(che, prefix, scan); 
+		} else {
+			return "Bad scan " + prefix + scan;
+		}
+	} 
+	
+	private String removeOrderByLocation(Che che, String prefix, String scan) {
+		String locationStr = "%".equals(prefix) ? prefix + scan : scan;
+		Facility facility = che.getFacility();
+		Location location = facility.findSubLocationById(locationStr);
+		if (location == null) {
+			return locationStr + " not found";
+		}
+		List<OrderLocation> orderLocations = OrderLocation.findOrderLocationsAtLocationAndChildren(location, facility, true);
+		if (orderLocations == null || orderLocations.isEmpty()) {
+			return "No Pallets In " + locationStr;
+		}
+		deactivateAndIlluminateOrders(che, orderLocations);
+		return null;
+	}
+	
+	private String removeOrderByLicense(Che che, String license){
 		Facility facility = che.getFacility();
 		String storeId = license.length() >= 4 ? license.substring(0, 4) : license;
 		OrderHeader order = getActivePalletizerOrder(facility, license);
 		if (order == null) {
 			LOGGER.warn("Order {} not found for palletizer removal", storeId);
-			return storeId + " not found"; 
+			return "Pallet " + storeId + " Not Found"; 
 		}
-		order.setActive(false);
 		order.setDomainId(license);
-		OrderHeader.staticGetDao().store(order);
 		
 		//Should be just one order location
 		List<OrderLocation> orderLocations = order.getActiveOrderLocations();
+		deactivateAndIlluminateOrders(che, orderLocations);
+		return null;		
+	}
+	
+	private void deactivateAndIlluminateOrders(Che che, List<OrderLocation> orderLocations) {
 		List<Location> locations = Lists.newArrayList();
 		for (OrderLocation orderLocation : orderLocations) {
 			locations.add(orderLocation.getLocation());
+			OrderHeader order = orderLocation.getParent();
+			order.setActive(false);
+			orderLocation.setActive(false);
+			OrderHeader.staticGetDao().store(order);
+			OrderLocation.staticGetDao().store(orderLocation);
 		}
 		lightService.lightLocationServerCall(locations, che.getColor());
-		return null;
 	}
 	
 	public static class PalletizerInfo {

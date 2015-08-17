@@ -509,9 +509,9 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		clientEndpoint.sendMessage(req);
 	}
 	
-	public void palletizerRemoveOrderRequest(String cheGuid, String chePersistentId, String license) {
-		LOGGER.debug("palletizerRemoveOrderRequest: Che={}, License={}", cheGuid, license);
-		PalletizerRemoveOrderRequest req = new PalletizerRemoveOrderRequest(chePersistentId, license);
+	public void palletizerRemoveOrderRequest(String cheGuid, String chePersistentId, String prefix, String scan) {
+		LOGGER.debug("palletizerRemoveOrderRequest: Che={}, Prefix={}, Scan={}", cheGuid, prefix, scan);
+		PalletizerRemoveOrderRequest req = new PalletizerRemoveOrderRequest(chePersistentId, prefix, scan);
 		clientEndpoint.sendMessage(req);
 	}
 

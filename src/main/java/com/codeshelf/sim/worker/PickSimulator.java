@@ -53,7 +53,12 @@ public class PickSimulator {
 	public void login(String pickerId) {
 		waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
 		scanUser(pickerId);
-		waitForCheStates(states(CheStateEnum.SETUP_SUMMARY, CheStateEnum.READY, CheStateEnum.REMOTE), WAIT_TIME);
+		ArrayList<CheStateEnum> loginStates = Lists.newArrayList();
+		loginStates.add(CheStateEnum.SETUP_SUMMARY);
+		loginStates.add(CheStateEnum.READY);
+		loginStates.add(CheStateEnum.REMOTE);
+		loginStates.add(CheStateEnum.PALLETIZER_SCAN_ITEM);
+		waitForCheStates(loginStates, WAIT_TIME);
 	}
 	
 	public void loginAndSetup(String pickerId) {

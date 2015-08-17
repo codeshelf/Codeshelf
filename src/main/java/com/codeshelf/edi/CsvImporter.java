@@ -24,6 +24,7 @@ public abstract class CsvImporter<T> {
 		mEventProducer = inProducer;
 	}
 
+	@SuppressWarnings("deprecation")
 	protected List<T> toCsvBean(Reader inCsvReader, Class<T> inClass) {
 		List<T> crossBatchBeanList = Collections.emptyList();
 		try (CSVReader csvReader = new CSVReader(inCsvReader)) {

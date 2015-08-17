@@ -4,13 +4,17 @@ import lombok.Getter;
 
 public class PalletizerRemoveOrderRequest extends DeviceRequestABC{
 	@Getter
-	private String license;
+	private String prefix;
+	@Getter
+	private String scan;
+
 
 	public PalletizerRemoveOrderRequest() {
 	}
 	
-	public PalletizerRemoveOrderRequest(String cheId, String license) {
+	public PalletizerRemoveOrderRequest(String cheId, String prefix, String scan) {
 		setDeviceId(cheId);
-		this.license = license;
+		this.prefix = prefix;
+		this.scan = scan;
 	}
 }

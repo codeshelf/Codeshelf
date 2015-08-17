@@ -32,6 +32,7 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.Lists;
 
 // --------------------------------------------------------------------------
 /**
@@ -160,5 +161,19 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 		}
 		return olList;
 	}
-
+	
+	public static List<OrderLocation> findOrderLocationsAtLocationAndChildren(Location inLocation, Facility inFacility, boolean activeOnly) {
+		List<OrderLocation> orderLocations = Lists.newArrayList();
+		findOrderLocationsAtLocationAndChildrenHelper(orderLocations, inLocation, inFacility, activeOnly);
+		return orderLocations;
+	}
+	
+	private static void findOrderLocationsAtLocationAndChildrenHelper(List<OrderLocation> accumulator, Location inLocation, Facility inFacility, boolean activeOnly) {
+		List<OrderLocation> orderLocations = findOrderLocationsAtLocation(inLocation, inFacility, activeOnly);
+		accumulator.addAll(orderLocations);
+		List<Location> children = inLocation.getChildren();
+		for (Location child : children) {
+			findOrderLocationsAtLocationAndChildrenHelper(accumulator, child, inFacility, activeOnly);
+		}
+	}
 }
