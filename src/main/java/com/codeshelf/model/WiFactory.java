@@ -587,6 +587,21 @@ public class WiFactory {
 	
 	// --------------------------------------------------------------------------
 	/**
+	 * Originally set to 4.
+	 * For Walmart palletizer, we want to allow most of a 105 cm light tube
+	 * 
+	 */
+	private static int getMaxLedsToLight(Location inLocation, int inPosNumTotal){
+		int returnValue = maxLedsToLight;
+		boolean looksLikeFullPalletSituation = (inLocation != null) && inLocation.isSlot() && (inPosNumTotal < 31 && inPosNumTotal > 25);
+		if (looksLikeFullPalletSituation)
+			returnValue = inPosNumTotal;
+		
+		return returnValue;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
 	 * Utility function to create LED command group. Will return a list, which may be empty if there is nothing to send. Caller should check for empty list.
 	 * Called now for setting WI LED pattern for inventory pick.
 	 * Also called for directly lighting inventory item or location
@@ -634,11 +649,12 @@ public class WiFactory {
 		LedCmdGroup ledCmdGroup = new LedCmdGroup(netGuidStr, inLocation.getEffectiveLedChannel(), firstLedPosNum, ledSamples);
 
 		int countUsed = 0;
+		int maxToLight = getMaxLedsToLight(inLocation, lastLedPosNum - firstLedPosNum + 1);
 		for (short ledPos = firstLedPosNum; ledPos <= lastLedPosNum; ledPos++) {
 			LedSample ledSample = new LedSample(ledPos, inColor);
 			ledSamples.add(ledSample);
 			countUsed++;
-			if (countUsed >= maxLedsToLight)
+			if (countUsed >= maxToLight)
 				break;
 		}
 		ledCmdGroup.setLedSampleList(ledSamples);
