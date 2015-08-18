@@ -1770,6 +1770,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			return;
 		}
 
+		/* Walmart palletizer, and later Walmart break pack sorter, light LEDs and the local CHE poscon,
+		 * However, I suppose there could be a reduced poscon putwall configuration with a bay poscon
 		String ledCmdString = inFirstWi.getLedCmdStream();
 		if (ledCmdString != null && !ledCmdString.isEmpty() && !ledCmdString.equals("[]")) {
 			LOGGER.error("lightWiPosConLocations: WI  at {} with both poscon and wi lighting instructions. How?",
@@ -1778,6 +1780,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			LOGGER.error("led stream: {}", ledCmdString);
 			// Note: someday we will light the bay with a ping pong ball, so then this will not be an error. For now, looks like a bug.
 		}
+		*/
 
 		NetGuid cheGuid = getGuid();
 		List<PosControllerInstr> instructions = PosConInstrGroupSerializer.deserializePosConInstrString(wiCmdString);
