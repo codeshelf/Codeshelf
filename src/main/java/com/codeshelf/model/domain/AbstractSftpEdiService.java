@@ -64,6 +64,7 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 		sftpConfiguration = configuration;
 		lastProviderCredentials = configuration.toString();
 		this.setProviderCredentials(lastProviderCredentials);
+		setServiceState(EdiServiceStateEnum.LINKED); // TODO: maybe add UX setup procedure to verify connection works
 	}
 
 	@Override
