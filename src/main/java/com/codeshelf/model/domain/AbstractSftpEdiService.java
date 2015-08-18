@@ -45,7 +45,7 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 	public AbstractSftpEdiService() {
 		super();
 		setProvider(EdiProviderEnum.OTHER);
-		setServiceState(EdiServiceStateEnum.LINKED); // TODO: maybe add UX setup procedure to verify connection works
+		setServiceState(EdiServiceStateEnum.UNLINKED); // TODO: maybe add UX setup procedure to verify connection works
 	}
 	
 	public AbstractSftpEdiService(String domainId) {
@@ -69,7 +69,9 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 		sftpConfiguration = configuration;
 		lastProviderCredentials = configuration.toString();
 		this.setProviderCredentials(lastProviderCredentials);
-		setServiceState(EdiServiceStateEnum.LINKED); // TODO: maybe add UX setup procedure to verify connection works
+		if (getHasCredentials()) {
+			setServiceState(EdiServiceStateEnum.LINKED); // TODO: maybe add UX setup procedure to verify connection works
+		}
 	}
 
 	@Override
