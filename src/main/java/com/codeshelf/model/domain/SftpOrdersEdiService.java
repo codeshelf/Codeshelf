@@ -43,6 +43,14 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 	private static final String	FILENAME_SUFFIX_FAILED		= ".FAILED";
 	private static final String	FILENAME_SUFFIX_PROCESSING	= ".PROCESSING";
 
+	public SftpOrdersEdiService() {
+		super();
+	}
+	
+	public SftpOrdersEdiService(String domainId) {
+		super(domainId);
+	}
+	
 	@Override
 	public String getServiceName() {
 		return SFTP_SERVICE_NAME;

@@ -47,6 +47,11 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 		setProvider(EdiProviderEnum.OTHER);
 		setServiceState(EdiServiceStateEnum.LINKED); // TODO: maybe add UX setup procedure to verify connection works
 	}
+	
+	public AbstractSftpEdiService(String domainId) {
+		this();
+		setDomainId(domainId);
+	}
 
 	synchronized public SftpConfiguration getConfiguration() {
 		// decoding the SFTP provider configuration is expensive, so we store the result

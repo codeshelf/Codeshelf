@@ -53,12 +53,13 @@
 	<include file="db.changelog-v17.8.xml" relativeToChangelogFile="true" />
 	<include file="db.changelog-v17.9.xml" relativeToChangelogFile="true" />
 	<include file="db.changelog-v17.10.xml" relativeToChangelogFile="true" />
-	
+
 	<include file="db.changelog-v18.1.xml" relativeToChangelogFile="true" />
 	<include file="db.changelog-v18.2.xml" relativeToChangelogFile="true" />
 
 	<include file="db.changelog-v19.1.xml" relativeToChangelogFile="true" />
 	<include file="db.changelog-v19.2.xml" relativeToChangelogFile="true" />
 	<include file="db.changelog-v19.3.xml" relativeToChangelogFile="true" />
-				
+    <include file="db.changelog-v20.1.xml" relativeToChangelogFile="true" />
+
 </databaseChangeLog>

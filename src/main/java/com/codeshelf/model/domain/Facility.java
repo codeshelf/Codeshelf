@@ -718,8 +718,8 @@ public class Facility extends Location {
 			LOGGER.error("failed to create ironMQ service");
 		}
 
-		createSFTPOrderService("SFTPORDERS");
-		//createSFTPWIService("SFTPWIS");
+		storeSftpService(new SftpWIsEdiService("SFTPWIS"));
+		storeSftpService(new SftpOrdersEdiService("SFTPORDERS"));
 	}
 
 	// --------------------------------------------------------------------------
@@ -766,20 +766,19 @@ public class Facility extends Location {
 		return result;
 	}
 
-	private void createSFTPOrderService(String domainId) {
-		AbstractSftpEdiService sftpEDI = new SftpOrdersEdiService();
-		sftpEDI.setServiceState(EdiServiceStateEnum.UNLINKED);
-		sftpEDI.setDomainId(domainId);
+
+	private void storeSftpService(AbstractSftpEdiService sftpEDI) {
 		this.addEdiService(sftpEDI);
 		try {
-			SftpOrdersEdiService.staticGetDao().store(sftpEDI);
+			sftpEDI.getDao().store(sftpEDI);
 		} catch (DaoException e) {
-			LOGGER.error("Failed to save IronMQ service", e);
+			LOGGER.error("Failed to save {} service", sftpEDI.getClass().toString(), e);
 		}
 
 
 	}
 
+	
 	// --------------------------------------------------------------------------
 	/**
 	 */
