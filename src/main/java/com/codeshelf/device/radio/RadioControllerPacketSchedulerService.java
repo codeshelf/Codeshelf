@@ -40,7 +40,7 @@ public class RadioControllerPacketSchedulerService {
 	public static final int														MAP_CONCURRENCY_LEVEL			= 4;
 
 	public static final long													NETWORK_PACKET_SPACING_MILLIS	= 5;
-	public static final long													DEVICE_PACKET_SPACING_MILLIS	= 40;
+	public static final long													DEVICE_PACKET_SPACING_MILLIS	= 20;
 
 	private static final int													ACK_SEND_RETRY_COUNT			= 20;															// matching v16. Used to be 20.
 	private static final long													MAX_PACKET_AGE_MILLIS			= 4000;
@@ -178,6 +178,17 @@ public class RadioControllerPacketSchedulerService {
 	 * @param inAckPacket - Ack packet from device
 	 */
 	public void markPacketAsAcked(INetworkDevice inDevice, byte inAckNum, IPacket inAckPacket) {
+		mLastDeviceAckId.put(inDevice.getAddress(), inAckNum);
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 *	Mark a queued packet as having been acknowledged. Will remove from sending queue.
+	 *
+	 * @param inDevice - Device associated with packet
+	 * @param inAckNum - Ack number of packet
+	 */
+	public void markPacketAsAcked(INetworkDevice inDevice, byte inAckNum) {
 		mLastDeviceAckId.put(inDevice.getAddress(), inAckNum);
 	}
 
@@ -366,7 +377,7 @@ public class RadioControllerPacketSchedulerService {
 	 *		Packet to send
 	 */
 	private void sendPacket(IPacket inPacket) {
-		LOGGER.debug("Sending packet {}", inPacket.toString());
+		//LOGGER.info("Sending packet {}", inPacket.toString());
 		try {
 			packetIOService.handleOutboundPacket(inPacket);
 		} finally {

@@ -318,6 +318,8 @@ public class RadioController implements IRadioController {
 					break;
 			}
 
+		} else {
+			LOGGER.error("Command was null");
 		}
 	}
 
@@ -715,6 +717,8 @@ public class RadioController implements IRadioController {
 			CommandControlAck ackCmd = new CommandControlAck(NetEndpoint.PRIMARY_ENDPOINT, inAckId);
 			IPacket ackPacket = new Packet(ackCmd, packetIOService.getNetworkId(), mServerAddress, device.getAddress(), false);
 			
+			//ackPacket.setPacketType(IPacket.ACK_PACKET);
+			
 			packetSchedulerService.addAckPacketToSchedule(ackPacket, device);
 		} finally {
 			ContextLogging.clearNetGuid();
@@ -819,6 +823,11 @@ public class RadioController implements IRadioController {
 						CommandControlButton buttonCommand = (CommandControlButton) inCommand;
 						device.buttonCommandReceived(buttonCommand);
 						break;
+						
+					case CommandControlABC.ACK:
+						CommandControlAck ackCommand = (CommandControlAck) inCommand;
+						processAckPacket(ackCommand, inSrcAddr);
+						break;
 
 					default:
 						break;
@@ -828,6 +837,17 @@ public class RadioController implements IRadioController {
 			}
 		}
 
+	}
+
+	private void processAckPacket(CommandControlAck inCommand, NetAddress inSrcAddr) {
+		INetworkDevice device = null;
+		
+		device = mDeviceNetAddrMap.get(inSrcAddr);
+
+		if (device != null) {
+			packetSchedulerService.markPacketAsAcked(device, inCommand.getAckNum());
+		}
+		
 	}
 
 	private byte getBestNetAddressForDevice(final INetworkDevice inNetworkDevice) {

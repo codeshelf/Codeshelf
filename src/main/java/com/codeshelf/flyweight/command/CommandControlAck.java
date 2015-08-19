@@ -24,12 +24,17 @@ public class CommandControlAck extends CommandControlABC {
 	
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CommandControlAck.class);
 	
-	private static final Integer	ACK_COMMAND_BYTES	= 1;
+	private static final Integer	ACK_COMMAND_BYTES	= 2;
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private Byte	mAckNum;
+	private Byte	mAckNum = 0;
+	
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private Byte	LQI = 0;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -38,7 +43,6 @@ public class CommandControlAck extends CommandControlABC {
 	 */
 	public CommandControlAck(final NetEndpoint inEndpoint, final Byte inAckNum) {
 		super(inEndpoint, new NetCommandId(CommandControlABC.ACK));
-
 		mAckNum = inAckNum;
 	}
 	
@@ -57,7 +61,7 @@ public class CommandControlAck extends CommandControlABC {
 	 */
 	@Override
 	protected String doToString() {
-		return "ack num: " + mAckNum;
+		return "ack num: " + mAckNum + " LQI: " + LQI;
 	}
 	
 	/* --------------------------------------------------------------------------
@@ -69,6 +73,7 @@ public class CommandControlAck extends CommandControlABC {
 
 		try {
 			inOutputStream.writeByte(mAckNum);
+			inOutputStream.writeByte(LQI);
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -84,6 +89,7 @@ public class CommandControlAck extends CommandControlABC {
 
 		try {
 			mAckNum = inInputStream.readByte();
+			LQI = inInputStream.readByte();
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}

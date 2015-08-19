@@ -179,6 +179,10 @@ public final class CommandFactory {
 			case CommandControlABC.BUTTON:
 				result = new CommandControlButton();
 				break;
+				
+			case CommandControlABC.ACK:
+				result = new CommandControlAck();
+				break;
 
 			default:
 				break;

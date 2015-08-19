@@ -65,6 +65,7 @@ public class RadioControllerInboundPacketService {
 			}
 
 			try {
+				//LOGGER.info("Handling pkt: ", packet);
 				radioController.handleInboundPacket(packet);
 			} catch (Exception e) {
 				// Handle Error
