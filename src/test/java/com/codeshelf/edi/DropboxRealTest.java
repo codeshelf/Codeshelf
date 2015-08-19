@@ -15,8 +15,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.model.EdiServiceStateEnum;
-import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.DropboxService;
 import com.codeshelf.model.domain.Facility;
 // import com.codeshelf.model.domain.LedController;

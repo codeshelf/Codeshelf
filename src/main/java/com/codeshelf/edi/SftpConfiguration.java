@@ -97,6 +97,9 @@ public class SftpConfiguration implements UserInfo {
 
 	
 	public static SftpConfiguration updateFromMap(SftpConfiguration config, MultivaluedMap<String, String> params) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+			if (config == null) {
+				config = new SftpConfiguration();
+			}
 			PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
 			propertyUtils.setProperty(config, "host", params.getFirst("host"));
 			propertyUtils.setProperty(config, "port", params.getFirst("port"));

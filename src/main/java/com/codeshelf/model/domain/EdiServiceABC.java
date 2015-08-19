@@ -52,8 +52,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@Table(name = "edi_service", uniqueConstraints = { @UniqueConstraint(columnNames = { "parent_persistentid", "domainid" }),
-		@UniqueConstraint(columnNames = { "parent_persistentid", "provider" }),
+@Table(name = "edi_service", uniqueConstraints = { 
+		@UniqueConstraint(columnNames = { "parent_persistentid", "domainid" }),
 		@UniqueConstraint(columnNames = { "parent_persistentid", "dtype" }) })
 @DiscriminatorColumn(name = "dtype", discriminatorType = DiscriminatorType.STRING)
 @Cacheable
