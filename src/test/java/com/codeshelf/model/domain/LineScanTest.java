@@ -1,7 +1,6 @@
 package com.codeshelf.model.domain;
 
 import java.io.IOException;
-import java.sql.Timestamp;
 import java.util.List;
 
 import org.junit.Assert;

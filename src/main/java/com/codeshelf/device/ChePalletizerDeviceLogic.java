@@ -3,6 +3,9 @@ package com.codeshelf.device;
 import java.util.List;
 import java.util.UUID;
 
+import lombok.Getter;
+import lombok.experimental.Accessors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,9 +15,6 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.service.PalletizerService.PalletizerInfo;
 import com.google.common.collect.Lists;
-
-import lombok.Getter;
-import lombok.experimental.Accessors;
 
 /**
  * This CHE type is being developed for WallMart.

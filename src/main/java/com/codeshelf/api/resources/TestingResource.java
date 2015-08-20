@@ -27,7 +27,6 @@ import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.OutboundOrderPrefetchCsvImporter;
 import com.codeshelf.event.EventProducer;
-import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ExtensionPoint;
