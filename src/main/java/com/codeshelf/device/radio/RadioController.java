@@ -742,10 +742,10 @@ public class RadioController implements IRadioController {
 		}
 
 		try {
-			if (packet.getPacketType() == IPacket.ACK_PACKET) {
-				LOGGER.debug("Packet remote ACK req RECEIVED: " + packet.toString());
-				processAckPacket(packet);
-			} else {
+//			if (packet.getPacketType() == IPacket.ACK_PACKET) {
+//				LOGGER.debug("Packet remote ACK req RECEIVED: " + packet.toString());
+//				processAckPacket(packet);
+//			} else {
 				// If the inbound packet had an ACK ID then respond with an ACK ID.
 				boolean shouldActOnCommand = true;
 				if (packet.getAckId() != IPacket.EMPTY_ACK_ID) {
@@ -766,7 +766,7 @@ public class RadioController implements IRadioController {
 				} else {
 					LOGGER.warn("ACKed, but did not process a packet that we acked before; {}", packet);
 				}
-			}
+//			}
 		} finally {
 			ContextLogging.clearNetGuid();
 		}

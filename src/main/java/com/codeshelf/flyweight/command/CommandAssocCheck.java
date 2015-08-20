@@ -23,12 +23,13 @@ import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
  */
 public final class CommandAssocCheck extends CommandAssocABC {
 
-	public static final int		DEVICE_VERSION_BYTES	= 2;
+	public static final int		DEVICE_VERSION_BYTES	= 3;
 
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(CommandAssocCheck.class);
 
 	private byte				mBatteryLevel;
 	private byte				mRestartCause;
+	private byte				mRestartData;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -70,6 +71,7 @@ public final class CommandAssocCheck extends CommandAssocABC {
 		try {
 			inOutputStream.writeByte(mBatteryLevel);
 			inOutputStream.writeByte(mRestartCause);
+			inOutputStream.writeByte(mRestartData);
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -86,6 +88,7 @@ public final class CommandAssocCheck extends CommandAssocABC {
 		try {
 			mBatteryLevel = inInputStream.readByte();
 			mRestartCause = inInputStream.readByte();
+			mRestartData = inInputStream.readByte();
 			
 			if (mBatteryLevel < 0) {
 				mBatteryLevel = 0;
@@ -116,5 +119,9 @@ public final class CommandAssocCheck extends CommandAssocABC {
 
 	public byte getRestartCause() {
 		return mRestartCause;
+	}
+	
+	public byte getRestartData() {
+		return mRestartData;
 	}
 }

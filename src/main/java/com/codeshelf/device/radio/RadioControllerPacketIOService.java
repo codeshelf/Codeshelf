@@ -67,8 +67,7 @@ public class RadioControllerPacketIOService {
 		}
 		
 		if (packet.getCommand().getCommandTypeEnum() != CommandGroupEnum.NETMGMT) {
-			// FIXME - change to debug
-			LOGGER.info("Outbound packet={}", packet);
+			LOGGER.debug("Outbound packet={}", packet);
 		}
 	}
 
