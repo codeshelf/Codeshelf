@@ -24,13 +24,11 @@ import com.codeshelf.model.domain.LocationAlias;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 /**
  * @author jeffw
  *
  */
-@Singleton
 public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> implements ICsvLocationAliasImporter {
 
 	private static final Logger				LOGGER	= LoggerFactory.getLogger(LocationAliasCsvImporter.class);
@@ -45,7 +43,6 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 	 * @see com.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
 	 */
 	public final boolean importLocationAliasesFromCsvStream(Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
-
 		boolean result = true;
 		List<LocationAliasCsvBean> locationAliasBeanList = toCsvBean(inCsvReader, LocationAliasCsvBean.class);
 

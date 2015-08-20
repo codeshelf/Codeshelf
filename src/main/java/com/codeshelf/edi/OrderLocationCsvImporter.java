@@ -34,20 +34,21 @@ import com.google.inject.Singleton;
  *
  */
 @Singleton
-public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean> implements ICsvOrderLocationImporter {
+public class OrderLocationCsvImporter extends CsvImporter<OrderLocationCsvBean>implements ICsvOrderLocationImporter {
 
-	private static final Logger			LOGGER	= LoggerFactory.getLogger(OrderLocationCsvImporter.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(OrderLocationCsvImporter.class);
 
 	@Inject
 	public OrderLocationCsvImporter(final EventProducer inProducer) {
 		super(inProducer);
 	}
-/*
-	private void reportBusinessEvent(Set<String> inTags, EventSeverity inSeverity, String inMessage) {
-		// Replace with EventProducer call
-		LOGGER.warn(inMessage);
-	}
-*/
+
+	/*
+		private void reportBusinessEvent(Set<String> inTags, EventSeverity inSeverity, String inMessage) {
+			// Replace with EventProducer call
+			LOGGER.warn(inMessage);
+		}
+	*/
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)

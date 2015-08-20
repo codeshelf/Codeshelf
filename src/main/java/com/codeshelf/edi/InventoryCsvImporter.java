@@ -11,6 +11,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.HibernateException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,13 +30,11 @@ import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 import com.google.common.base.Strings;
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 /**
  * @author jeffw
  *
  */
-@Singleton
 public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> implements ICsvInventoryImporter {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(InventoryCsvImporter.class);
@@ -128,6 +127,9 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 				} catch (InputValidationException e) {
 					produceRecordViolationEvent(EventSeverity.WARN, e, slottedInventoryBean);
 					LOGGER.warn("Unable to process record: " + slottedInventoryBean, e);
+				} catch (HibernateException e) {
+					LOGGER.error("Encountered Hibernate error. Roll back entire Inventory sheet. " + slottedInventoryBean, e);
+					throw e;
 				} catch (Exception e) {
 					produceRecordViolationEvent(EventSeverity.ERROR, e, slottedInventoryBean);
 					LOGGER.warn("Unable to process record: " + slottedInventoryBean, e);

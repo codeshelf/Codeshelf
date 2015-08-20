@@ -8,6 +8,7 @@ import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,14 @@ public class TransactionFilter implements Filter {
 		try {
 			persistenceService.beginTransaction();
 			filterChain.doFilter(request, response);
+			if (response instanceof HttpServletResponse) {
+				int status = ((HttpServletResponse)response).getStatus();
+				if (status < 200 || status >= 400){
+					LOGGER.warn("Rolling back transaction for non-200s-300s response: " + status);
+					threw = true;
+					persistenceService.rollbackTransaction();
+				}
+			}
 		} catch(Exception e) {
 			LOGGER.warn("Rolling back transaction for exception: " + e);
 			threw=true;

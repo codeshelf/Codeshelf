@@ -15,8 +15,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.model.EdiServiceStateEnum;
-import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.DropboxService;
 import com.codeshelf.model.domain.Facility;
 // import com.codeshelf.model.domain.LedController;
@@ -40,6 +38,7 @@ public class DropboxRealTest extends ServerTest {
 	private ICsvOrderLocationImporter	mCsvOrderLocationImporter;
 
 	// This obtained by jon Oct. 5 2014.  Pretty easy. Just run server normally. Dropbox link, etc.  Then later, pull this from the provider_credentials field in the database.
+	@SuppressWarnings("unused")
 	private final static String			TEST_CREDENTIALS3	= "rMS4NWXXc90AAAAAAAAAbXlihAPhBC7TafUSn3Tla4H3U43UauXCuWsFA7U3K-1U";
 
 	// To continue the dropbox investigation

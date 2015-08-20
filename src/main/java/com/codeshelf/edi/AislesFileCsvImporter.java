@@ -45,13 +45,11 @@ import com.codeshelf.model.domain.Vertex;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.validation.InputValidationException;
 import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 /**
  * @author ranstrom
  *
  */
-@Singleton
 public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implements ICsvAislesFileImporter {
 
 	public static enum ControllerLayout {
