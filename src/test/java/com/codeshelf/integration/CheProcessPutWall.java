@@ -298,7 +298,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 	private void assertAsynchPosconValue(PosManagerSimulator posman, int posInd, int expected) {
 		Byte actual = null;
-		for (int i = 0; i < 7; i++) {
+		for (int i = 0; i < 9; i++) {
 			actual = posman.getLastSentPositionControllerDisplayValue((byte) posInd);
 			if (actual != null && expected == actual) {
 				return;
