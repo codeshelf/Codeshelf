@@ -61,39 +61,6 @@ public class WiFactory {
 	// IMPORTANT. This should be synched with LightService.defaultLedsToLight
 	private static final int	maxLedsToLight	= 4;
 
-	public static WorkInstruction createForLocation(Location inLocation) {
-		long seq = SequenceNumber.generate();
-		String wiDomainId = Long.toString(seq);
-
-		WorkInstruction resultWi = new WorkInstruction();
-		resultWi.setParent(inLocation.getFacility());
-		resultWi.setDomainId(wiDomainId);
-		resultWi.setCreated(new Timestamp(System.currentTimeMillis()));
-		resultWi.setLedCmdStream("[]"); // empty array
-		resultWi.setStatus(WorkInstructionStatusEnum.NEW); // perhaps there could be a general housekeep status as there is for short,
-		resultWi.setPurpose(WiPurpose.WiPurposeUnknown);
-		// but short denotes completion as short, even if it was short from the start and there was never a chance to complete or short.
-
-		resultWi.setLocation(inLocation);
-		resultWi.setLocationId(inLocation.getFullDomainId());
-		if (inLocation.isFacility())
-			resultWi.setPosAlongPath(0.0);
-		else {
-			resultWi.setPosAlongPath(inLocation.getPosAlongPath());
-		}
-
-		resultWi.setType(WorkInstructionTypeEnum.PLAN);
-		resultWi.setPickInstruction("");
-		resultWi.setItemMaster(null);
-		resultWi.setContainer(null);
-		resultWi.setOrderDetail(null);
-		resultWi.setPlanQuantity(0);
-		resultWi.setPlanMinQuantity(0);
-		resultWi.setPlanMaxQuantity(0);
-		resultWi.setActualQuantity(0);
-		return resultWi;
-	}
-
 	/**
 	 * The API to create housekeeping work instruction
 	 */
@@ -164,21 +131,21 @@ public class WiFactory {
 	 * @param inStatus
 	 * @param inType
 	 * @param inOrderDetail
-	 * @param inContainer
 	 * @param inChe
-	 * @param inLocation
 	 * @param inTime
+	 * @param inContainer
+	 * @param inLocation
 	 * @return
 	 */
 	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
 		WorkInstructionTypeEnum inType,
+		WiPurpose purpose,
 		OrderDetail inOrderDetail,
-		Container inContainer,
 		Che inChe,
-		Location inLocation,
 		final Timestamp inTime,
-		WiPurpose purpose) throws DaoException {
-		return createWorkInstruction(inStatus, inType, inOrderDetail, inContainer, inChe, inLocation, inTime, purpose, true);
+		Container inContainer,
+		Location inLocation) throws DaoException {
+		return createWorkInstruction(inStatus, inType, purpose, inOrderDetail, inChe, inTime, inContainer, inLocation, true);
 	}
 
 	/**
@@ -186,23 +153,23 @@ public class WiFactory {
 	 * @param inStatus
 	 * @param inType
 	 * @param inOrderDetail
-	 * @param inContainer
 	 * @param inChe
-	 * @param inLocation
 	 * @param inTime
+	 * @param inContainer
+	 * @param inLocation
 	 * @return
 	 */
 	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
 		WorkInstructionTypeEnum inType,
-		OrderDetail inOrderDetail,
-		Container inContainer,
-		Che inChe,
-		Location inLocation,
-		final Timestamp inTime,
 		WiPurpose purpose,
+		OrderDetail inOrderDetail,
+		Che inChe,
+		final Timestamp inTime,
+		Container inContainer,
+		Location inLocation,
 		boolean linkInstructionToDetail) throws DaoException {
 
-		WorkInstruction resultWi = createWorkInstruction(inStatus, inType, inOrderDetail, inChe, purpose, linkInstructionToDetail, inTime);
+		WorkInstruction resultWi = createWorkInstruction(inStatus, inType, purpose, inOrderDetail, inChe, inTime, linkInstructionToDetail);
 		if (resultWi == null) { //no more work to do
 			return null;
 		}
@@ -278,11 +245,11 @@ public class WiFactory {
 	 */
 	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
 		WorkInstructionTypeEnum inType,
+		WiPurpose purpose,
 		OrderDetail inOrderDetail,
 		Che inChe,
-		WiPurpose purpose,
-		boolean linkInstructionToDetail,
-		final Timestamp inTime) throws DaoException {
+		final Timestamp inTime,
+		boolean linkInstructionToDetail) throws DaoException {
 		Facility facility = inOrderDetail.getFacility();
 		Integer qtyToPick = inOrderDetail.getQuantity();
 		Integer minQtyToPick = inOrderDetail.getMinQuantity();
@@ -293,10 +260,9 @@ public class WiFactory {
 		for (WorkInstruction wi : inOrderDetail.getWorkInstructions()) {
 			if (wi.getType().equals(WorkInstructionTypeEnum.PLAN)) {
 				resultWi = wi;
-				if (!wi.getFacility().equals(inOrderDetail.getFacility())) {
-					LOGGER.error("Strange: Work instruction " + resultWi.getPersistentId() + " in OrderDetail "
-							+ inOrderDetail.getDomainId() + " does not belong to Facility "
-							+ inOrderDetail.getFacility().getDomainId() + " (continuing)");
+				if (!wi.getFacility().equals(facility)) {
+					LOGGER.error("Strange: Work instruction {} in OrderDetail {}  does not belong to Facility {} (continuing" , 
+							resultWi.getPersistentId(), inOrderDetail.getDomainId(), facility.getDomainId() );
 				}
 				else {
 					LOGGER.info("Recyle existing PLAN wi for {} from OrderDetail:{}", wi.getItemId(), inOrderDetail.getDomainId());

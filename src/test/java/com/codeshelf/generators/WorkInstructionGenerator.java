@@ -79,7 +79,7 @@ public class WorkInstructionGenerator {
 		//Che che1 = Che.staticGetDao().findByDomainId(facility.getNetworks().get(0), "CHE1");
 		Che che1 = Che.staticGetDao().findByDomainId(null, "CHE1");
 		
-		WorkInstruction workInstruction = WiFactory.createWorkInstruction(statusEnum, typeEnum, orderDetail, container, che1, aisle, assignedTime, WiPurpose.WiPurposeOutboundPick);
+		WorkInstruction workInstruction = WiFactory.createWorkInstruction(statusEnum, typeEnum, WiPurpose.WiPurposeOutboundPick, orderDetail, che1, assignedTime, container, aisle);
 		
 		
 		workInstruction.setStarted(  new Timestamp(System.currentTimeMillis()-5000));
@@ -111,10 +111,9 @@ public class WorkInstructionGenerator {
 		OrderHeader.staticGetDao().store(orderHeader);
 
 		OrderDetail detail = new OrderDetail("OD1", true);
-		detail.setStatus(OrderStatusEnum.RELEASED);
-		detail.setUpdated(new Timestamp(System.currentTimeMillis()));
-		detail.setQuantities(5);
 		detail.setItemMaster(itemMaster);
+		detail.setQuantities(5);
+		detail.setStatus(OrderStatusEnum.RELEASED);
 		detail.setUomMaster(uom);
 		orderHeader.addOrderDetail(detail);
 		return detail;	

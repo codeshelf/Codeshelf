@@ -173,8 +173,9 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	public OrderDetail(String inDomainId, boolean active) {
 		super(inDomainId);
-		this.status = OrderStatusEnum.CREATED;
-		this.active = active;
+		this.setActive(active);
+		this.setStatus(OrderStatusEnum.CREATED);
+		this.setUpdated(new Timestamp(System.currentTimeMillis()));
 	}
 
 	@SuppressWarnings("unchecked")

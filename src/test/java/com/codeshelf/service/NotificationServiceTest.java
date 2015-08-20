@@ -9,7 +9,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.codeshelf.api.responses.PickRate;
-import com.codeshelf.model.WiFactory;
+import com.codeshelf.generators.WorkInstructionGenerator;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
@@ -116,12 +116,21 @@ public class NotificationServiceTest extends HibernateTest {
 		
 		WorkerEvent event = new WorkerEvent(eventTime, eventType, che, "worker");
 
-		WorkInstruction wi = WiFactory.createForLocation(che.getFacility());
+		WorkInstruction wi = createShortWorkInstruction(che, "worker");
 		WorkInstruction.staticGetDao().store(wi);
 		WorkInstruction persistedWI = WorkInstruction.staticGetDao().findByDomainId(wi.getParent(), wi.getDomainId());
 		event.setWorkInstruction(persistedWI);
 		return event;
 	}
+
+	private WorkInstruction createShortWorkInstruction(Che inChe, String inWorkerId) {
+		WorkInstructionGenerator wiGenerator = new WorkInstructionGenerator();
+		WorkInstruction  wi = wiGenerator.generateValid(inChe.getFacility());
+		wi.setAssignedChe(inChe);
+		wi.setShortState(inWorkerId, 0);
+		return wi;
+	}
+
 	
 	private void storePickEvent(NotificationService service, Che che, DateTime eventTime) {
 		WorkerEvent event = createEvent(eventTime, WorkerEvent.EventType.COMPLETE, che);

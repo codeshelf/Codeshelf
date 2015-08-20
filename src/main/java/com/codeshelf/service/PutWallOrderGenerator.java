@@ -81,12 +81,12 @@ public class PutWallOrderGenerator {
 					wi = WiFactory.createWorkInstruction(
 						WorkInstructionStatusEnum.NEW, 
 						WorkInstructionTypeEnum.PLAN, 
+						WiPurpose.WiPurposeOutboundPick, 
 						detail, 
-						container, 
 						che, 
-						location == null ? facility : location, 
 						theTime, 
-						WiPurpose.WiPurposeOutboundPick,
+						container, 
+						location == null ? facility : location,
 						false);
 					if (wi != null) {
 						wiHashThisWallAndRun.put(wiKey, wi);

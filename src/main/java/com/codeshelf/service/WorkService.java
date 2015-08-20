@@ -907,11 +907,11 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		if (workItem == null || workItem.getInstruction() == null) {
 			aWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
 				WorkInstructionTypeEnum.PLAN,
+				WiPurpose.WiPurposeOutboundPick,
 				orderDetail,
 				inChe,
-				WiPurpose.WiPurposeOutboundPick,
-				true,
-				null); // Could be normal WI, or a short WI
+				null,
+				true); // Could be normal WI, or a short WI
 		} else {
 			aWi = workItem.getInstruction();
 		}
@@ -1125,12 +1125,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		Location loc = orderLocation.getLocation();
 		WorkInstruction wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
 			WorkInstructionTypeEnum.PLAN,
+			WiPurpose.WiPurposePutWallPut,
 			detail,
-			null,
 			che,
-			loc,
 			null,
-			WiPurpose.WiPurposePutWallPut);
+			null,
+			loc);
 		return wi;
 
 	}
@@ -1614,12 +1614,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				try {
 					WorkInstruction wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
 						WorkInstructionTypeEnum.PLAN,
+						WiPurpose.WiPurposeCrossBatchPut,
 						work.getOutboundOrderDetail(),
-						work.getContainer(),
 						inChe,
-						work.getFirstLocationOnPath(),
 						inTime,
-						WiPurpose.WiPurposeCrossBatchPut);
+						work.getContainer(),
+						work.getFirstLocationOnPath());
 
 					// If we created a WI then add it to the list.
 					if (wi != null) {
@@ -1733,12 +1733,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				// If there is no location to send the Selector then create a PLANNED, SHORT WI for this order detail.
 				resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.SHORT,
 					WorkInstructionTypeEnum.ACTUAL,
+					WiPurpose.WiPurposeOutboundPick,
 					inOrderDetail,
-					inContainer,
 					inChe,
-					inFacility,
 					inTime,
-					WiPurpose.WiPurposeOutboundPick);
+					inContainer,
+					inFacility);
 				if (resultWi != null) {
 					resultWi.setPlanQuantity(0);
 					resultWi.setPlanMinQuantity(0);
@@ -1753,12 +1753,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		} else {
 			resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
 				WorkInstructionTypeEnum.PLAN,
+				WiPurpose.WiPurposeOutboundPick,
 				inOrderDetail,
-				inContainer,
 				inChe,
-				location,
 				inTime,
-				WiPurpose.WiPurposeOutboundPick);
+				inContainer,
+				location);
 			resultWork.addInstruction(resultWi);
 
 		}
