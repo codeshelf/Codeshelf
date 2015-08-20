@@ -41,6 +41,7 @@ import com.codeshelf.ws.protocol.command.ObjectGetCommand;
 import com.codeshelf.ws.protocol.command.ObjectMethodCommand;
 import com.codeshelf.ws.protocol.command.ObjectPropertiesCommand;
 import com.codeshelf.ws.protocol.command.ObjectUpdateCommand;
+import com.codeshelf.ws.protocol.command.PalletizerCompleteWiCommand;
 import com.codeshelf.ws.protocol.command.PalletizerItemCommand;
 import com.codeshelf.ws.protocol.command.PalletizerNewOrderCommand;
 import com.codeshelf.ws.protocol.command.PalletizerRemoveOrderCommand;
@@ -72,6 +73,7 @@ import com.codeshelf.ws.protocol.request.ObjectGetRequest;
 import com.codeshelf.ws.protocol.request.ObjectMethodRequest;
 import com.codeshelf.ws.protocol.request.ObjectPropertiesRequest;
 import com.codeshelf.ws.protocol.request.ObjectUpdateRequest;
+import com.codeshelf.ws.protocol.request.PalletizerCompleteWiRequest;
 import com.codeshelf.ws.protocol.request.PalletizerItemRequest;
 import com.codeshelf.ws.protocol.request.PalletizerNewOrderRequest;
 import com.codeshelf.ws.protocol.request.PalletizerRemoveOrderRequest;
@@ -119,6 +121,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	private final Counter			palletizerItemCounter;
 	private final Counter			palletizerNewOrderCounter;
 	private final Counter			palletizerRemoveOrderCounter;
+	private final Counter			palletizerCompleteWiCounter;
 	private final Timer				requestProcessingTimer;
 
 	private ServiceFactory			serviceFactory;
@@ -162,6 +165,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		palletizerItemCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.palletizer_item");
 		palletizerNewOrderCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.palletizer_new_order");
 		palletizerRemoveOrderCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.palletizer_remove_order");
+		palletizerCompleteWiCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.palletizer_complete_wi");
 	}
 
 	ObjectChangeBroadcaster getObjectChangeBroadcaster() {
@@ -305,6 +309,10 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		} else if (request instanceof PalletizerRemoveOrderRequest) {
 			command = new PalletizerRemoveOrderCommand(csSession, (PalletizerRemoveOrderRequest) request, serviceFactory.getServiceInstance(PalletizerService.class));
 			palletizerRemoveOrderCounter.inc();
+			applicationRequestCounter.inc();
+		} else if (request instanceof PalletizerCompleteWiRequest) {
+			command = new PalletizerCompleteWiCommand(csSession, (PalletizerCompleteWiRequest) request, serviceFactory.getServiceInstance(PalletizerService.class));
+			palletizerCompleteWiCounter.inc();
 			applicationRequestCounter.inc();
 		} else {
 			LOGGER.error("invalid message {} for user {}", request.getClass().getSimpleName(), user.getUsername());

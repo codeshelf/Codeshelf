@@ -55,7 +55,7 @@ public class WiFactory {
 		WiPurposeCrossBatchPut,
 		WiPurposeReplenishPut,
 		WiPurposeRestockPut,
-		WiPalletizerPut
+		WiPurposePalletizerPut
 	}
 
 	// IMPORTANT. This should be synched with LightService.defaultLedsToLight

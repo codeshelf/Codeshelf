@@ -61,6 +61,7 @@ import com.codeshelf.ws.protocol.request.InventoryLightItemRequest;
 import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
 import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.protocol.request.LoginRequest;
+import com.codeshelf.ws.protocol.request.PalletizerCompleteWiRequest;
 import com.codeshelf.ws.protocol.request.PalletizerItemRequest;
 import com.codeshelf.ws.protocol.request.PalletizerNewOrderRequest;
 import com.codeshelf.ws.protocol.request.PalletizerRemoveOrderRequest;
@@ -448,6 +449,12 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	public void completeWi(final String inCheId, final UUID inPersistentId, final WorkInstruction inWorkInstruction) {
 		LOGGER.debug("Complete: Che={}; WI={};", inCheId, inWorkInstruction);
 		CompleteWorkInstructionRequest req = new CompleteWorkInstructionRequest(inPersistentId.toString(), inWorkInstruction);
+		clientEndpoint.sendMessage(req);
+	}
+	
+	public void completePalletizerWi(final String inCheId, final UUID inPersistentId, final UUID wiId, final String userId, final Boolean shorted) {
+		LOGGER.debug("Complete Palletizer WI: Che={}; WI={}; Short={}", inCheId, wiId, shorted);
+		PalletizerCompleteWiRequest req = new PalletizerCompleteWiRequest(inPersistentId.toString(), wiId, userId, shorted);
 		clientEndpoint.sendMessage(req);
 	}
 

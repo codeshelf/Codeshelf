@@ -1,6 +1,5 @@
 package com.codeshelf.device;
 
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 
@@ -9,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
-import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.service.PalletizerService.PalletizerInfo;
@@ -167,7 +165,11 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 		switch (mCheStateEnum) {
 			case PALLETIZER_DAMAGED:
 				if (YES_COMMAND.equalsIgnoreCase(inScanStr)) {
-					notifyWiVerb(getInfo().getWi(), WorkerEvent.EventType.SHORT, kLogAsWarn);
+					WorkInstruction wi = getInfo().getWi();
+					if (wi != null) {
+						mDeviceManager.completePalletizerWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi.getPersistentId(), mUserId, true);
+						notifyWiVerb(wi, WorkerEvent.EventType.SHORT, kLogAsWarn);
+					}
 					setState(CheStateEnum.PALLETIZER_SCAN_ITEM);
 				} else {
 					setState(CheStateEnum.PALLETIZER_PUT_ITEM);
@@ -307,11 +309,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 			LOGGER.warn("Palletizer PUT button press without a saved WI");
 			return;
 		}
-		wi.setActualQuantity(1);
-		wi.setPickerId(mUserId);
-		wi.setCompleted(new Timestamp(System.currentTimeMillis()));
-		wi.setStatus(WorkInstructionStatusEnum.COMPLETE);
-		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi);
+		mDeviceManager.completePalletizerWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi.getPersistentId(), mUserId, false);
 		notifyWiVerb(wi, WorkerEvent.EventType.COMPLETE, kLogAsInfo);
 	}
 	

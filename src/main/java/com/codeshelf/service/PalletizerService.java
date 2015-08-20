@@ -3,6 +3,7 @@ package com.codeshelf.service;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +15,6 @@ import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderDetail;
@@ -69,8 +69,6 @@ public class PalletizerService implements IApiService{
 			uomMaster = facility.createUomMaster("EA");
 			itemMaster = facility.createItemMaster(itemId, null, uomMaster);
 			detail = new OrderDetail(itemId, true);
-			detail.setStatus(OrderStatusEnum.RELEASED);
-			detail.setUpdated(new Timestamp(System.currentTimeMillis()));
 			detail.setQuantities(1);
 			detail.setItemMaster(itemMaster);
 			detail.setUomMaster(uomMaster);
@@ -83,17 +81,18 @@ public class PalletizerService implements IApiService{
 			itemMaster = detail.getItemMaster();
 			uomMaster = detail.getUomMaster();
 		}
+		detail.setStatus(OrderStatusEnum.INPROGRESS);
+		detail.setUpdated(new Timestamp(System.currentTimeMillis()));
 		OrderDetail.staticGetDao().store(detail);
-		Item item = itemMaster.findOrCreateItem(location, uomMaster);
-		//Create work instruction for the new item
+		//Create work instruction for the new order detail
 		WorkInstruction wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INPROGRESS,
 			WorkInstructionTypeEnum.ACTUAL,
-			item,
+			detail,
+			null,
 			che,
-			WiPurpose.WiPalletizerPut,
-			true,
-			new Timestamp(System.currentTimeMillis()));
-		wi.setOrderDetail(detail);
+			location,
+			new Timestamp(System.currentTimeMillis()),
+			WiPurpose.WiPurposePalletizerPut);
 		info.setWi(wi);
 		return info;
 	}
@@ -214,12 +213,38 @@ public class PalletizerService implements IApiService{
 		for (OrderLocation orderLocation : orderLocations) {
 			locations.add(orderLocation.getLocation());
 			OrderHeader order = orderLocation.getParent();
+			order.setStatus(OrderStatusEnum.COMPLETE);
 			order.setActive(false);
+			order.setActive(false);
+			List<OrderDetail> details = order.getOrderDetails();
+			for (OrderDetail detail : details) {
+				detail.setActive(false);
+				detail.setStatus(OrderStatusEnum.COMPLETE);
+				OrderDetail.staticGetDao().store(detail);
+			}
 			orderLocation.setActive(false);
 			OrderHeader.staticGetDao().store(order);
 			OrderLocation.staticGetDao().store(orderLocation);
 		}
 		lightService.lightLocationServerCall(locations, che.getColor());
+	}
+	
+	public void completeWi(UUID wiId, String userId, Boolean shorted) {
+		WorkInstruction wi = WorkInstruction.staticGetDao().findByPersistentId(wiId);
+		if (wi == null) {
+			LOGGER.error("Palletizer Complete Wi Error: Did not find Wi " + wiId);
+			return;
+		}
+		Timestamp now = new Timestamp(System.currentTimeMillis());
+		wi.setActualQuantity(Boolean.TRUE.equals(shorted) ? 0 : 1);
+		wi.setPickerId(userId);
+		wi.setCompleted(now);
+		wi.setStatus(WorkInstructionStatusEnum.COMPLETE);
+		OrderDetail detail = wi.getOrderDetail();
+		detail.setUpdated(now);
+		detail.setStatus(OrderStatusEnum.COMPLETE);
+		WorkInstruction.staticGetDao().store(wi);
+		OrderDetail.staticGetDao().store(detail);
 	}
 	
 	public static class PalletizerInfo {
