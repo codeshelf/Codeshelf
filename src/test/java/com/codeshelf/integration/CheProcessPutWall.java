@@ -169,9 +169,9 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 
 		//Ensure that Bay's poscon is dim and showing remaininig details
+		assertAsynchPosconValue(posman, 1, 9);
 		brightness = posman.getLastSentPositionControllerDisplayDutyCycle((byte) 1);
 		Assert.assertEquals(PosControllerInstr.DIM_DUTYCYCLE, brightness);
-		assertAsynchPosconValue(posman, 1, 9);
 
 		LOGGER.info("3: Short an item.");
 		picker.scanSomething("1555");
@@ -184,9 +184,9 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 
 		//Ensure that Bay's poscon is dim and showing remaininig details
+		assertAsynchPosconValue(posman, 1, 8);
 		brightness = posman.getLastSentPositionControllerDisplayDutyCycle((byte) 1);
 		Assert.assertEquals(PosControllerInstr.DIM_DUTYCYCLE, brightness);
-		assertAsynchPosconValue(posman, 1, 8);
 	}
 
 	private void placeOrderOnLocation(PickSimulator picker, String orerId, String locationId) {

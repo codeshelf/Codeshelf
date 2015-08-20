@@ -79,6 +79,9 @@ public class ScriptParser {
 				cleanScript.add(line);
 			}
 		}
+		if(commentOngoing) {
+			throw new Exception("Script contains a non-closed multi-line comment. Check your '/*' and '*/' commands");
+		}
 		return cleanScript;
 	}
 	
