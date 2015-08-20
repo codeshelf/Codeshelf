@@ -336,10 +336,7 @@ public class InventoryCsvImporter extends CsvImporter<InventorySlottedCsvBean> i
 
 		result = ItemMaster.staticGetDao().findByDomainId(inFacility, inItemId);
 		if (result == null) {
-			result = new ItemMaster();
-			result.setDomainId(inItemId);
-			result.setItemId(inItemId);
-			result.setParent(inFacility);
+			result = new ItemMaster(inFacility, inItemId, inUomMaster);
 		}
 
 		// If we were able to get/create an item master then update it.

@@ -485,14 +485,8 @@ public abstract class MockDaoTest extends MinimalTest {
 	protected final ItemMaster createItemMaster(final String inItemId, final Facility inFacility, final UomMaster inUomMaster) {
 		ItemMaster result = null;
 
-		result = new ItemMaster();
-		result.setItemId(inItemId);
-		result.setParent(inFacility);
+		result = new ItemMaster(inFacility, inItemId, inUomMaster);
 		result.setDescription(inItemId);
-		result.setStandardUom(inUomMaster);
-		result.setActive(true);
-		result.setUpdated(new Timestamp(System.currentTimeMillis()));
-		result.setParent(inFacility);
 		ItemMaster.staticGetDao().store(result);
 
 		return result;

@@ -26,12 +26,7 @@ public class DomainObjectCacheTest extends HibernateTest {
 		uomMaster.setParent(facility);
 		UomMaster.staticGetDao().store(uomMaster);
 		facility.addUomMaster(uomMaster);
-		ItemMaster im = new ItemMaster();
-		im.setParent(facility);
-		im.setDomainId("IM#1");
-		im.setItemId("IM#1");
-		im.setStandardUom(uomMaster);
-		im.setUpdated(new Timestamp(System.currentTimeMillis()));
+		ItemMaster im = new ItemMaster(facility, "IM#1", uomMaster);
 		ItemMaster.staticGetDao().store(im);
 		this.getTenantPersistenceService().commitTransaction();
 

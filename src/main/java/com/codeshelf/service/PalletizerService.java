@@ -68,9 +68,7 @@ public class PalletizerService implements IApiService{
 		if (detail == null) {
 			uomMaster = facility.createUomMaster("EA");
 			itemMaster = facility.createItemMaster(itemId, null, uomMaster);
-			detail = new OrderDetail(itemId, true);
-			detail.setQuantities(1);
-			detail.setItemMaster(itemMaster);
+			detail = new OrderDetail(itemId, itemMaster, 1);
 			detail.setUomMaster(uomMaster);
 			order.addOrderDetail(detail);
 			UomMaster.staticGetDao().store(uomMaster);
@@ -87,12 +85,13 @@ public class PalletizerService implements IApiService{
 		//Create work instruction for the new order detail
 		WorkInstruction wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.INPROGRESS,
 			WorkInstructionTypeEnum.ACTUAL,
+			WiPurpose.WiPurposePalletizerPut,
 			detail,
-			null,
 			che,
-			location,
 			new Timestamp(System.currentTimeMillis()),
-			WiPurpose.WiPurposePalletizerPut);
+			null,
+			location
+			);
 		info.setWi(wi);
 		return info;
 	}

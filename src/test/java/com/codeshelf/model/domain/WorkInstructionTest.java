@@ -120,12 +120,7 @@ public class WorkInstructionTest extends HibernateTest {
 		UomMaster.staticGetDao().store(uomMaster);
 		facility.addUomMaster(uomMaster);
 
-		ItemMaster itemMaster = new ItemMaster();
-		itemMaster.setItemId("AAA");
-		itemMaster.setParent(facility);
-		itemMaster.setStandardUom(uomMaster);
-		itemMaster.setActive(true);
-		itemMaster.setUpdated(new Timestamp(System.currentTimeMillis()));
+		ItemMaster itemMaster = new ItemMaster(facility, "AAA", uomMaster);
 		ItemMaster.staticGetDao().store(itemMaster);
 
 		OrderHeader order1 = new OrderHeader();

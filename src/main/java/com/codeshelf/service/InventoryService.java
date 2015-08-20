@@ -121,9 +121,11 @@ public class InventoryService implements IApiService {
 			String guessedUom = guessUomForItem(inGtin, facility);
 			uomMaster = upsertUomMaster(guessedUom, facility);
 
-			itemMaster = createItemMaster(inGtin, facility, createTime, uomMaster);
-			if (itemMaster == null) {
-				LOGGER.error("Unable to create ItemMaster for GTIN: {}", inGtin);
+
+			try {
+				itemMaster = createItemMaster(inGtin, facility, createTime, uomMaster);
+			} catch (DaoException e) {
+				LOGGER.error("Unable to create ItemMaster for GTIN: {}", inGtin, e);
 				response.appendStatusMessage(" Failed to create item master for GTIN: " + inGtin);
 				response.setStatus(ResponseStatus.Fail);
 				return response;
@@ -402,26 +404,9 @@ public class InventoryService implements IApiService {
 		final Timestamp inEdiProcessTime,
 		final UomMaster inUomMaster) {
 
-		ItemMaster result = null;
-		result = new ItemMaster();
-
-		// If we were able to get/create an item master then update it.
-		if (result != null) {
-
-			result.setDomainId(inItemId);
-			result.setItemId(inItemId);
-			result.setParent(inFacility);
-			result.setStandardUom(inUomMaster);
-
-			try {
-				result.setActive(true);
-				result.setUpdated(inEdiProcessTime);
-				ItemMaster.staticGetDao().store(result);
-			} catch (DaoException e) {
-				LOGGER.error("Error saving ItemMaster: {}", e);
-			}
-		}
-
+		ItemMaster result =  new ItemMaster(inFacility, inItemId, inUomMaster);
+		result.setUpdated(inEdiProcessTime);
+		ItemMaster.staticGetDao().store(result);
 		return result;
 	}
 

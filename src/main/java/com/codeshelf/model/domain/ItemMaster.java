@@ -147,6 +147,13 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		updated = new Timestamp(System.currentTimeMillis());
 	}
 
+	public ItemMaster(Facility facility, String domainId, UomMaster inUom) {
+		this();
+		setParent(facility);
+		setItemId(domainId);
+		setStandardUom(inUom);
+	}
+	
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<ItemMaster> getDao() {
 		return staticGetDao();
@@ -483,11 +490,8 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	public Gtin createGtin(String inGtin, UomMaster inUomMaster) {
 		Gtin gtin = new Gtin();
 		gtin.setDomainId(inGtin);
-		
 		this.addGtinToMaster(gtin);
-		
 		gtin.setUomMaster(inUomMaster);
-		
 		return gtin;
 	}
 

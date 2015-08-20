@@ -198,8 +198,10 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		pickStrategy = PickStrategyEnum.SERIAL;
 	}
 
-	public OrderHeader(String domainId, OrderTypeEnum orderType) {
+	//special case taking the parent usually you do a parent.addXYZ();
+	public OrderHeader(Facility parent, String domainId, OrderTypeEnum orderType) {
 		super(domainId);
+		this.setParent(parent);
 		this.active = true;
 		this.orderType = orderType;
 		status = OrderStatusEnum.CREATED;

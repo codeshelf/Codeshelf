@@ -60,9 +60,8 @@ public class UomMaster extends DomainObjectTreeABC<Facility> {
 
 	}
 
-	public UomMaster(Facility parent, String inUomId) {
+	public UomMaster(String inUomId) {
 		super(inUomId);
-		this.parent = parent;
 	}
 
 	@SuppressWarnings("unchecked")

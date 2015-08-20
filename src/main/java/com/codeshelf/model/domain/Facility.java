@@ -1173,11 +1173,8 @@ public class Facility extends Location {
 	public ItemMaster createItemMaster(String inDomainId, String description, UomMaster uomMaster) {
 		ItemMaster itemMaster = null;
 		if (uomMaster.getParent().equals(this)) {
-			itemMaster = new ItemMaster();
-			itemMaster.setDomainId(inDomainId);
+			itemMaster = new ItemMaster(this, inDomainId, uomMaster);
 			itemMaster.setDescription(description);
-			itemMaster.setStandardUom(uomMaster);
-			itemMaster.setParent(this);
 		} else {
 			LOGGER.error("can't create ItemMaster " + inDomainId + " with UomMaster " + uomMaster.getDomainId() + " under "
 					+ this.getDomainId() + " because UomMaster parent is " + uomMaster.getParentFullDomainId());

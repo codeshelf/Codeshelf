@@ -550,12 +550,9 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 		if (result == null) {
 			LOGGER.debug("Creating new OrderHeader instance for " + inCsvBean.getOrderId() + " , for facility: " + inFacility);
-			result = new OrderHeader();
-			result.setDomainId(inCsvBean.getOrderId());
+			result = new OrderHeader(inFacility, inCsvBean.getOrderId(), OrderTypeEnum.OUTBOUND);
 			this.orderHeaderCache.put(result);
 			result.setStatus(OrderStatusEnum.RELEASED);
-			result.setActive(true);
-			result.setParent(inFacility);
 		}
 
 		result.setOrderType(OrderTypeEnum.OUTBOUND);
@@ -697,10 +694,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 		// create a new item, if needed
 		if (itemMaster == null) {
-			itemMaster = new ItemMaster();
-			itemMaster.setDomainId(inItemId);
-			itemMaster.setItemId(inItemId);
-			itemMaster.setParent(inFacility);
+			itemMaster = new ItemMaster(inFacility, inItemId, inUomMaster);
 			this.itemMasterCache.put(itemMaster);
 		}
 

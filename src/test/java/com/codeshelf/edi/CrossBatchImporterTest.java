@@ -59,12 +59,7 @@ public class CrossBatchImporterTest extends ServerTest {
 			inFacility.addUomMaster(uomMaster);
 		}
 
-		result = new ItemMaster();
-		result.setItemId(inItemMasterId);
-		result.setStandardUom(uomMaster);
-		result.setActive(true);
-		result.setUpdated(new Timestamp(System.currentTimeMillis()));
-		result.setParent(inFacility);
+		result = new ItemMaster(inFacility, inItemMasterId, uomMaster);
 		ItemMaster.staticGetDao().store(result);
 
 		return result;

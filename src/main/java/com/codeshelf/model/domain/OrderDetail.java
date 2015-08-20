@@ -168,14 +168,16 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	private Boolean needsScan = false;
 
 	public OrderDetail() {
-		this(null, true);
+		this(null, null, 0);
 	}
 
-	public OrderDetail(String inDomainId, boolean active) {
+	public OrderDetail(String inDomainId, ItemMaster inItemMaster, int inQuantity) {
 		super(inDomainId);
-		this.setActive(active);
+		this.setItemMaster(inItemMaster);
+		this.setQuantities(inQuantity);
 		this.setStatus(OrderStatusEnum.CREATED);
 		this.setUpdated(new Timestamp(System.currentTimeMillis()));
+		this.setActive(true);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -318,7 +320,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 				for (Item item : items) {
 					String itemUom = item.getUomMasterId();
 					String thisUom = this.getUomMasterId();
-					if (UomNormalizer.normalizedEquals(itemUom, thisUom)) {						
+					if (UomNormalizer.normalizedEquals(itemUom, thisUom)) {
 						String itemLocationId = item.getStoredLocation().getBestUsableLocationName(); // was getPrimaryAliasId() through v17
 						itemLocationIds.add(itemLocationId);
 					}
@@ -456,7 +458,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	}
 
 	/**
-	 * It is very important to understand if an OrderDetail's preferredLocation is a good modeled location, and also to know if it 
+	 * It is very important to understand if an OrderDetail's preferredLocation is a good modeled location, and also to know if it
 	 * is on a path. Show blank if not modeled. Normal nominal if modeled and on a path. Parenthesis around if not on a path.
 	 * Also does the generic deleted location thing of brackets if the alias is for a deleted location.
 	 */
@@ -528,14 +530,14 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	public boolean isPreferredDetail() {
 		return getPreferredLocation() != null && getWorkSequence() != null;
 	}
-	
+
 	public Boolean getNeedsScan() {
 		if (needsScan==null) {
 			return false;
 		}
 		return needsScan;
 	}
-	
+
 	// meta fields for UI
 	public String getCustomerId(){
 		return getParent().getCustomerId(); // parent cannot be null

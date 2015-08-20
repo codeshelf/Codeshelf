@@ -104,15 +104,13 @@ public class WorkInstructionGenerator {
 			OrderGroup.staticGetDao().store(orderGroup);
 		}
 		
-		OrderHeader orderHeader = new OrderHeader("OH1", OrderTypeEnum.OUTBOUND);
+		OrderHeader orderHeader = new OrderHeader(facility, "OH1", OrderTypeEnum.OUTBOUND);
 		orderHeader.setParent(facility);
 		
 		orderGroup.addOrderHeader(orderHeader);
 		OrderHeader.staticGetDao().store(orderHeader);
 
-		OrderDetail detail = new OrderDetail("OD1", true);
-		detail.setItemMaster(itemMaster);
-		detail.setQuantities(5);
+		OrderDetail detail = new OrderDetail("OD1", itemMaster, 5);
 		detail.setStatus(OrderStatusEnum.RELEASED);
 		detail.setUomMaster(uom);
 		orderHeader.addOrderDetail(detail);
