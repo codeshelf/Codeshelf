@@ -38,8 +38,9 @@ public class RadioControllerPacketSchedulerService {
 	public static final float													MAP_LOAD_FACTOR					= (float) 0.75;												// Default Java load factor
 	public static final int														MAP_CONCURRENCY_LEVEL			= 4;
 
-	public static final long													NETWORK_PACKET_SPACING_MILLIS	= 5;
-	public static final long													DEVICE_PACKET_SPACING_MILLIS	= 20;
+	public static final long													NETWORK_PACKET_SPACING_MILLIS	= 2;
+	public static final long													DEVICE_PACKET_SPACING_MILLIS	= 40;
+	public static final long													DEVICE_ASSOC_SPACING_MILLIS		= 5;
 
 	private static final int													ACK_SEND_RETRY_COUNT			= 20;															// matching v16. Used to be 20.
 	private static final long													MAX_PACKET_AGE_MILLIS			= 4000;
@@ -320,7 +321,7 @@ public class RadioControllerPacketSchedulerService {
 			if (mDeviceBlockingPeekCount.containsKey(device.getAddress())) {
 				peekCount = mDeviceBlockingPeekCount.get(device.getAddress());
 			}
-			
+
 			if (clearToSendToDevice(device)) {
 				device = mSecondDeviceQueue.poll();
 				mDeviceBlockingPeekCount.put(device.getAddress(), 0);
@@ -418,20 +419,53 @@ public class RadioControllerPacketSchedulerService {
 		long minDifference = 0;
 		long currTime = System.currentTimeMillis();
 
-		if (inDevice != null) {
-			lastReceivedTime = 0; //inDevice.getLastPacketReceivedTime();
-			lastSentTime = Math.max(inDevice.getLastPacketSentTime(), mLastNetCheckSentTime);
-
-			minDifference = Math.min(currTime - lastReceivedTime, currTime - lastSentTime);
-		}
-
-		//LOGGER.warn("LS: {}, LR: {}, LNChk: {}, Min Diff: {}", inDevice.getLastPacketSentTime(), inDevice.getLastPacketReceivedTime(),mLastNetCheckSentTime, minDifference);
-		if (minDifference < DEVICE_PACKET_SPACING_MILLIS) {
+		if (inDevice == null) {
 			return false;
-		} else {
-			return true;
 		}
 
+		lastReceivedTime = 0; //inDevice.getLastPacketReceivedTime();
+		lastSentTime = Math.max(inDevice.getLastPacketSentTime(), mLastNetCheckSentTime);
+		minDifference = Math.min(currTime - lastReceivedTime, currTime - lastSentTime);
+		//5
+		//LOGGER.warn("LS: {}, LR: {}, LNChk: {}, Min Diff: {}", inDevice.getLastPacketSentTime(), inDevice.getLastPacketReceivedTime(),mLastNetCheckSentTime, minDifference);
+		if (isNextPacketAssocCmd(inDevice)) {
+			if (minDifference < DEVICE_ASSOC_SPACING_MILLIS) {
+				return false;
+			} else {
+				return true;
+			}
+		} else {
+			if (minDifference < DEVICE_PACKET_SPACING_MILLIS) {
+				return false;
+			} else {
+				return true;
+			}
+		}
+
+	}
+
+	private boolean isNextPacketAssocCmd(INetworkDevice inDevice) {
+		if (inDevice == null) {
+			return false;
+		}
+
+		ConcurrentLinkedDeque<IPacket> deviceQueue = mPendingPacketsMap.get(inDevice.getAddress());
+
+		if (deviceQueue == null) {
+			return false;
+		}
+
+		IPacket headPacket = deviceQueue.peekFirst();
+		
+		if (headPacket == null) {
+			return false;
+		}
+
+		if (headPacket.getCommand().getCommandTypeEnum() == CommandGroupEnum.ASSOC) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -583,6 +617,8 @@ public class RadioControllerPacketSchedulerService {
 		LOGGER.debug("Clearing device {} queue and resetting last ack number", inDevice.getAddress().toString());
 		ConcurrentLinkedDeque<IPacket> deviceQueue = mPendingPacketsMap.get(inDevice.getAddress());
 		mLastDeviceAckId.put(inDevice.getAddress(), (byte) 1);
+
+		inDevice.setLastPacketSentTime(System.currentTimeMillis());
 
 		if (deviceQueue != null) {
 			deviceQueue.clear();

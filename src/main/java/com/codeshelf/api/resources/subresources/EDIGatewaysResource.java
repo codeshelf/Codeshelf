@@ -14,21 +14,29 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import lombok.Setter;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.edi.SftpConfiguration;
+import com.codeshelf.model.domain.AbstractSftpEdiService;
 import com.codeshelf.model.domain.DropboxService;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.model.domain.IronMqService;
 import com.codeshelf.model.domain.SftpOrdersEdiService;
+import com.codeshelf.model.domain.SftpWIsEdiService;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
 
 public class EDIGatewaysResource {
+
+
+	private static final Logger	LOGGER = LoggerFactory.getLogger(EDIGatewaysResource.class);
 
 	@Context
 	private ResourceContext resourceContext;	
@@ -53,12 +61,14 @@ public class EDIGatewaysResource {
 		IEdiService ediService = facility.findEdiService(domainId);
 		try {
 			IEdiService updatedEdiService = null;
-			if (SftpOrdersEdiService.class.isAssignableFrom(ediService.getClass())) {
-				updatedEdiService = updateSFTPOrders((SftpOrdersEdiService) ediService, params);
-			} else if (IronMqService.class.isAssignableFrom(ediService.getClass())) {
+			if (AbstractSftpEdiService.class.isAssignableFrom(ediService.getClass())) {
+				updatedEdiService = updateSftpService((AbstractSftpEdiService) ediService, params);
+			}else if (IronMqService.class.isAssignableFrom(ediService.getClass())) {
 				updatedEdiService = updateIronMqService((IronMqService) ediService, params);
 			} else if (DropboxService.class.isAssignableFrom(ediService.getClass())) {
 				updatedEdiService = updateDropboxService((DropboxService) ediService, params);
+			} else {
+				LOGGER.warn("unexpected EDI class {}", ediService.getClass());
 			}
 			return BaseResponse.buildResponse(updatedEdiService);
 		} catch(Exception e) {
@@ -66,10 +76,10 @@ public class EDIGatewaysResource {
 		}
 	}
 	
-	private IEdiService updateSFTPOrders(SftpOrdersEdiService ediService, MultivaluedMap<String, String> params) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+	private IEdiService updateSftpService(AbstractSftpEdiService ediService, MultivaluedMap<String, String> params) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		SftpConfiguration configuration = SftpConfiguration.updateFromMap(ediService.getConfiguration(), params);
 		ediService.setConfiguration(configuration);
-		SftpOrdersEdiService.staticGetDao().store(ediService);
+		ediService.getDao().store(ediService);
 		return ediService;
 	}
 

@@ -2,7 +2,7 @@
 <!DOCTYPE hibernate-configuration PUBLIC
         "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
         "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
- 
+
 <hibernate-configuration>
     <session-factory>
 
@@ -17,13 +17,13 @@
   		<property name="hibernate.c3p0.max_statements">100</property>
   		<property name="hibernate.c3p0.idle_test_period">300</property>
   		<property name="hibernate.c3p0.testConnectionOnCheckin">true</property>
-  	
+
   		<!-- Multitenant -->
   		<property name="hibernate.multiTenancy">SCHEMA</property>
 		<property name="hibernate.multi_tenant_connection_provider">com.codeshelf.persistence.CsMultiTenantConnectionProvider</property>
 		<property name="hibernate.tenant_identifier_resolver">com.codeshelf.persistence.CsCurrentTenantIdentifierResolver</property>
-		<property name="connectionCustomizerClassName">com.codeshelf.persistence.CsConnectionCustomizer</property>	
-		
+		<property name="connectionCustomizerClassName">com.codeshelf.persistence.CsConnectionCustomizer</property>
+
         <!-- Enable Hibernate's automatic session context management -->
         <property name="current_session_context_class">thread</property>
 
@@ -32,16 +32,16 @@
         <property name="hibernate.cache.use_second_level_cache">true</property>
         <property name="hibernate.cache.use_query_cache">true</property>
         <property name="net.sf.ehcache.configurationResourceName">hibernate/ehcache.xml</property>
-                
+
         <!-- Disable join fetching -->
         <property name="cmax_fetch_depth">0</property>
-        
-        <!-- output sql to console for debugging 
+
+        <!-- output sql to console for debugging
         <property name="show_sql">true</property>
         <property name="format_sql">true</property>
         <property name="use_sql_comments">true</property>
         -->
-        
+
 		<!-- Map these classes (by annotation) -->
         <mapping class="com.codeshelf.model.domain.Location"/>
         <mapping class="com.codeshelf.model.domain.Facility"/>
@@ -53,12 +53,13 @@
 
         <mapping class="com.codeshelf.model.domain.DomainObjectProperty"/>
         <mapping class="com.codeshelf.model.domain.DomainObjectPropertyDefault"/>
-        
+
         <mapping class="com.codeshelf.model.domain.EdiServiceABC"/>
         <mapping class="com.codeshelf.model.domain.DropboxService"/>
         <mapping class="com.codeshelf.model.domain.IronMqService"/>
         <mapping class="com.codeshelf.model.domain.SftpOrdersEdiService"/>
-        	
+        <mapping class="com.codeshelf.model.domain.SftpWIsEdiService"/>
+
         <mapping class="com.codeshelf.model.domain.CodeshelfNetwork"/>
         <mapping class="com.codeshelf.model.domain.Che"/>
         <mapping class="com.codeshelf.model.domain.LedController"/>

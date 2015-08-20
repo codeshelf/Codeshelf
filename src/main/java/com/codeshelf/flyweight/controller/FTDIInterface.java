@@ -59,7 +59,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 	//	private static final int BAUD_625000 = 625000;
 	private static final int	BAUD_1250000			= 1250000;
 	private static final int	DEFAULT_BUFFER_SIZE		= Packet.MAX_PACKET_BYTES * 200;
-	private static final int	DEFAULT_SLEEP_MILLIS	= 25;
+	private static final int	DEFAULT_SLEEP_MILLIS	= 1;//25;
 	//private static final int	VID					= 0x0403;
 	//private static final int	GW_PID				= 0xada8;
 	private static final long	GW_VID_PID				= 0x0403ada8;

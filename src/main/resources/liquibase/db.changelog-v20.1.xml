@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+    <changeSet author="pmonteiro (generated)" id="1439929524324-2">
+        <dropUniqueConstraint constraintName="UC_EDI_SERVICE_PARENT_PERSISTENTID_PROVIDER" tableName="edi_service"/>
+        <rollback>
+            <!-- copied from  change 19.1 -->
+            <addUniqueConstraint columnNames="parent_persistentid, provider" constraintName="UC_EDI_SERVICE_PARENT_PERSISTENTID_PROVIDER" deferrable="false" disabled="false" initiallyDeferred="false" tableName="edi_service"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>

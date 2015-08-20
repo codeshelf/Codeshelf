@@ -2,7 +2,7 @@
 <!DOCTYPE hibernate-configuration PUBLIC
         "-//Hibernate/Hibernate Configuration DTD 3.0//EN"
         "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
- 
+
 <hibernate-configuration>
     <session-factory>
         <!-- automatic session context management -->
@@ -17,23 +17,23 @@
   		<property name="hibernate.c3p0.max_size">20</property>
   		<property name="hibernate.c3p0.timeout">600</property>
   		<property name="hibernate.c3p0.max_statements">100</property>
-  		<property name="hibernate.c3p0.idle_test_period">3000</property>        
+  		<property name="hibernate.c3p0.idle_test_period">3000</property>
 
         <!-- configure second-level cache for now  -->
         <property name="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.EhCacheRegionFactory</property>
         <property name="hibernate.cache.use_second_level_cache">true</property>
         <property name="hibernate.cache.use_query_cache">true</property>
         <property name="net.sf.ehcache.configurationResourceName">hibernate/ehcache.xml</property>
-        
+
   		<!-- Multitenant -->
   		<property name="hibernate.multiTenancy">SCHEMA</property>
 		<property name="hibernate.multi_tenant_connection_provider">com.codeshelf.persistence.CsMultiTenantConnectionProvider</property>
 		<property name="hibernate.tenant_identifier_resolver">com.codeshelf.persistence.CsCurrentTenantIdentifierResolver</property>
-		<property name="connectionCustomizerClassName">com.codeshelf.persistence.CsConnectionCustomizer</property>	
-		
+		<property name="connectionCustomizerClassName">com.codeshelf.persistence.CsConnectionCustomizer</property>
+
         <!-- Echo all executed SQL to stdout -->
         <property name="show_sql">false</property>
-        
+
 		<!-- Map these classes (by annotation) -->
         <mapping class="com.codeshelf.model.domain.Location"/>
         <mapping class="com.codeshelf.model.domain.Facility"/>
@@ -50,6 +50,7 @@
         <mapping class="com.codeshelf.model.domain.DropboxService"/>
         <mapping class="com.codeshelf.model.domain.IronMqService"/>
         <mapping class="com.codeshelf.model.domain.SftpOrdersEdiService"/>
+        <mapping class="com.codeshelf.model.domain.SftpWIsEdiService"/>
 
         <mapping class="com.codeshelf.model.domain.CodeshelfNetwork"/>
         <mapping class="com.codeshelf.model.domain.Che"/>
