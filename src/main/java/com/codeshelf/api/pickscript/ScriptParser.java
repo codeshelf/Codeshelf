@@ -26,6 +26,7 @@ public class ScriptParser {
 			throw new Exception("Could not read any lines from the script file");
 		}
 		
+		lines = removeMultiLineComments(lines);
 		processVaraibles(lines);
 		
 		ScriptStep prevStep = null;
@@ -57,6 +58,28 @@ public class ScriptParser {
 			step.setStepIndex(++stepNum, steps.size());
 		}
 		return firstStep;
+	}
+	
+	/**
+	 * This method removes multi-line comments from the script
+	 */
+	private static ArrayList<String> removeMultiLineComments(ArrayList<String> scriptLines) throws Exception{
+		ArrayList<String> cleanScript = Lists.newArrayList();
+		boolean commentOngoing = false;
+		for (String line : scriptLines) {
+			if (line.startsWith("/*")) {
+				commentOngoing = true;
+			} else if (!line.startsWith("//") && line.endsWith("*/")) {
+				if (commentOngoing) {
+					commentOngoing = false;
+				} else {
+					throw new Exception("Encountered close-comment command without a matching open-comment: " + line);
+				}
+			} else if (!commentOngoing) {
+				cleanScript.add(line);
+			}
+		}
+		return cleanScript;
 	}
 	
 	private static void processVaraibles(ArrayList<String> scriptLines) throws Exception{

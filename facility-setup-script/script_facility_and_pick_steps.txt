@@ -6,6 +6,12 @@ var :che1 		0x0000009B
 var :chePall	0x000000A3
 var :contr1 	0x00000064
 
+/* This is a multi
+line comment
+/* This line doesn't inrettupt it
+// This line doesn't close it */
+But this one does */
+
 STEP This step sets up facility
 SERVER
 editFacility F1 :site :channel
@@ -41,6 +47,10 @@ SERVER
 importInventory inventory
 deleteOrders 26768709 26768711 26768712 26768717 26768718 26768719 26768720
 importOrders orders_10
+
+/*
+And one more multi line comment here
+*/
 
 STEP palletizer
 SITE 

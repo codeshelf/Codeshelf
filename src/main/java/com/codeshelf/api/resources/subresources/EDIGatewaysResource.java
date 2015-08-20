@@ -27,8 +27,6 @@ import com.codeshelf.model.domain.DropboxService;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.model.domain.IronMqService;
-import com.codeshelf.model.domain.SftpOrdersEdiService;
-import com.codeshelf.model.domain.SftpWIsEdiService;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
