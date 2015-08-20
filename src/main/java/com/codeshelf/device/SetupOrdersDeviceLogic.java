@@ -1198,11 +1198,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Update the WI fields to complete-ahead an unneeded housekeep, and call out to mDeviceManager to share it back to the server.
 	 */
 	private void doCompleteUnneededHousekeep(final WorkInstruction inWi) {
-
-		inWi.setActualQuantity(0);
-		inWi.setPickerId(mUserId);
-		inWi.setCompleted(new Timestamp(System.currentTimeMillis()));
-		inWi.setStatus(WorkInstructionStatusEnum.COMPLETE);
+		inWi.setCompleteState(mUserId, 0);
 
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
 	}
@@ -2313,11 +2309,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	@Override
 	protected void processNormalPick(WorkInstruction inWi, Integer inQuantity) {
-
-		inWi.setActualQuantity(inQuantity);
-		inWi.setPickerId(mUserId);
-		inWi.setCompleted(new Timestamp(System.currentTimeMillis()));
-		inWi.setStatus(WorkInstructionStatusEnum.COMPLETE);
+		inWi.setCompleteState(mUserId, inQuantity);
 
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
 		notifyWiVerb(inWi, WorkerEvent.EventType.COMPLETE, kLogAsInfo);

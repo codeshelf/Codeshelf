@@ -92,13 +92,11 @@ public class TestingResource {
 			int i = 0;
 			for(WorkInstruction instruction : instructions) {
 				persistence.beginTransaction();
-				instruction.setActualQuantity(instruction.getPlanQuantity());
-				instruction.setCompleted(new Timestamp(System.currentTimeMillis()));
 				instruction.setType(WorkInstructionTypeEnum.ACTUAL);
 				if (i++ % 4 == 0) {
-					instruction.setStatus(WorkInstructionStatusEnum.SHORT);
+					instruction.setShortState("SIMULATED", instruction.getPlanQuantity() - 1);
 				} else {
-					instruction.setStatus(WorkInstructionStatusEnum.COMPLETE);
+					instruction.setCompleteState("SIMULATED", instruction.getPlanQuantity());
 				}
 				workService.completeWorkInstruction(che.getPersistentId(), instruction);
 				Thread.sleep(2000);

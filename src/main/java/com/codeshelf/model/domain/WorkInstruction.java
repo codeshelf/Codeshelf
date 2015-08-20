@@ -291,6 +291,21 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		return "WI";
 	}
 
+	public void setCompleteState(String inPickerId, int inQuantity) {
+		setActualQuantity(inQuantity);
+		setPickerId(inPickerId);
+		setCompleted(new Timestamp(System.currentTimeMillis()));
+		setStatus(WorkInstructionStatusEnum.COMPLETE);
+	}
+	
+	public void setShortState(String inPickerId, int inQuantity) {
+		setActualQuantity(inQuantity);
+		setPickerId(inPickerId);
+		setCompleted(new Timestamp(System.currentTimeMillis()));
+		setStatus(WorkInstructionStatusEnum.SHORT);
+	}
+
+	
 	// Denormalized for serialized WIs at the site controller.
 	public void setContainer(Container inContainer) {
 		container = inContainer;
@@ -632,6 +647,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		return needsScan;
 	}
 
+	
 	/* replaced by GTIN field
 	public String getGtinId() {
 		// remember, house keeping WIs may not have order detail. It is nullable. Other kinds of work instruction also may not.

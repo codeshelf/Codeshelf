@@ -479,11 +479,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 */
 	@Override
 	protected void processNormalPick(WorkInstruction inWi, Integer inQuantity) {
-
-		inWi.setActualQuantity(inQuantity);
-		inWi.setPickerId(mUserId);
-		inWi.setCompleted(new Timestamp(System.currentTimeMillis()));
-		inWi.setStatus(WorkInstructionStatusEnum.COMPLETE);
+		inWi.setCompleteState(mUserId, inQuantity);
 
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
 		notifyWiVerb(inWi, WorkerEvent.EventType.COMPLETE, kLogAsInfo);

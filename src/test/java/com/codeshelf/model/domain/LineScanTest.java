@@ -112,11 +112,8 @@ public class LineScanTest extends ServerTest {
 		List<WorkInstruction> instructions = response.getWorkInstructions();
 		WorkInstruction instruction = instructions.get(0);
 		Assert.assertEquals(instruction.getStatus(), WorkInstructionStatusEnum.NEW);
-		
-		instruction.setActualQuantity(instruction.getPlanQuantity());
-		instruction.setCompleted(new Timestamp(System.currentTimeMillis()));
 		instruction.setType(WorkInstructionTypeEnum.ACTUAL);
-		instruction.setStatus(WorkInstructionStatusEnum.COMPLETE);
+		instruction.setCompleteState("test", instruction.getPlanQuantity());
 		
 		workService.completeWorkInstruction(che.getPersistentId(), instruction);
 

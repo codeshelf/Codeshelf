@@ -839,24 +839,19 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		boolean doComplete = inCompleteStr.equalsIgnoreCase("COMPLETE");
 		boolean doShort = inCompleteStr.equalsIgnoreCase("SHORT");
 
-		// default to complete values
-		Integer actualQuant = wi.getPlanQuantity();
-		WorkInstructionStatusEnum newStatus = WorkInstructionStatusEnum.COMPLETE;
-
-		if (doComplete) {
-		} else if (doShort) {
-			actualQuant--;
-			newStatus = WorkInstructionStatusEnum.SHORT;
-		}
-		Timestamp completeTime = now();
-		Timestamp startTime = new Timestamp(System.currentTimeMillis() - (10 * 1000)); // assume 10 seconds earlier
-
-		wi.setActualQuantity(actualQuant);
-		wi.setCompleted(completeTime);
-		wi.setStarted(startTime);
-		wi.setStatus(newStatus);
 		wi.setType(WorkInstructionTypeEnum.ACTUAL);
-		wi.setPickerId("SIMULATED");
+		Timestamp startTime = new Timestamp(System.currentTimeMillis() - (10 * 1000)); // assume 10 seconds earlier
+		wi.setStarted(startTime);
+
+		// default to complete values
+		String pickerId = "SIMULATED";
+		Integer actualQuantity = wi.getPlanQuantity();
+		if (doComplete) {
+			wi.setCompleteState(pickerId, actualQuantity);
+		} else if (doShort) {
+			actualQuantity--;
+			wi.setShortState(pickerId, actualQuantity);
+		}
 
 		//send in in like in came from SiteController
 		completeWorkInstruction(wi.getAssignedChe().getPersistentId(), wi);
