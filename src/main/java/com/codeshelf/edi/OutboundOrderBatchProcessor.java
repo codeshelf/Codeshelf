@@ -204,6 +204,8 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				for (OutboundOrderCsvBean orderBean : lines) {
 					// transform order bean with groovy script, if enabled
 					if (importer.getExtensionPointService().hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation)) {
+						long timeBeforeExtension = System.currentTimeMillis();
+ 
 						Object[] params = { orderBean };
 						try {
 							orderBean = (OutboundOrderCsvBean) importer.getExtensionPointService()
@@ -211,6 +213,9 @@ public class OutboundOrderBatchProcessor implements Runnable {
 						} catch (Exception e) {
 							LOGGER.error("Failed to evaluate OrderImportBeanTransformation extension point", e);
 						}
+						
+						importer.addToExtensionMsFromTimeBefore(timeBeforeExtension);
+
 					}
 					// process order bean
 					try {

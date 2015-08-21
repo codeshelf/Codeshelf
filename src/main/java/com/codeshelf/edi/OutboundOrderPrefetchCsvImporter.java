@@ -64,6 +64,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 
 	long												startTime;
 	long												endTime;
+	long												spentDoingExtensionsMs;
 
 	@Getter
 	@Setter
@@ -85,6 +86,14 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		mDateTimeParser = new DateTimeParser();
 	}
 
+	/** --------------------------------------------------------------------------
+	 * A simple, throw-safe mechanism to increment this time metric
+	 * This has package visibility as it it called from OutboundOrderBatchProcesser also
+	 */
+	void addToExtensionMsFromTimeBefore(long inTimeStampBeforeExtension) {
+		spentDoingExtensionsMs += System.currentTimeMillis() - inTimeStampBeforeExtension;
+	}
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.codeshelf.edi.ICsvImporter#importOrdersFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
@@ -92,13 +101,16 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	public final BatchResult<Object> importOrdersFromCsvStream(Reader inCsvReader, Facility facility, Timestamp inProcessTime) {
 
 		this.startTime = System.currentTimeMillis();
+		this.spentDoingExtensionsMs = 0;
 
 		// make sure the facility is up-to-date
 		facility = facility.reload();
 
 		// initialize scripting service
 		try {
+			long timeBeforeExtension = System.currentTimeMillis();
 			extensionPointService = ExtensionPointService.createInstance(facility);
+			addToExtensionMsFromTimeBefore(timeBeforeExtension);
 		} catch (Exception e) {
 			LOGGER.error("Failed to initialize extension point service", e);
 		}
@@ -125,7 +137,9 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 				// Want an EDI notify event here?
 			} else {
 				try {
-					Object[] params = {extensionSuppliedHeader};
+					long timeBeforeExtension = System.currentTimeMillis();
+
+					Object[] params = { extensionSuppliedHeader };
 					extensionSuppliedHeader = (String) getExtensionPointService().eval(ExtensionPointType.OrderImportCreateHeader,
 						params);
 					if (extensionSuppliedHeader.isEmpty()) {
@@ -134,6 +148,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 						return batchResult;
 					}
 
+					addToExtensionMsFromTimeBefore(timeBeforeExtension);
 				} catch (Exception e) {
 					LOGGER.error("Extension failed to supply order file header", e);
 					return batchResult;
@@ -152,9 +167,13 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 				LOGGER.info("Order import header transformation is enabled");
 				try {
 					String header = br.readLine();
+					long timeBeforeExtension = System.currentTimeMillis();
+
 					Object[] params = { header };
 					String transformedHeader = (String) getExtensionPointService().eval(ExtensionPointType.OrderImportHeaderTransformation,
 						params);
+					addToExtensionMsFromTimeBefore(timeBeforeExtension);
+
 					buffer.append(transformedHeader);
 				} catch (Exception e) {
 					LOGGER.error("Failed to transform order file header", e);
@@ -177,18 +196,20 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			}
 			// process file body
 			if (getExtensionPointService().hasExtensionPoint(ExtensionPointType.OrderImportLineTransformation)) {
-				LOGGER.info("Order import line transformation is enabled");
-				// transform order lines
 				try {
 					String line = null;
 					while ((line = br.readLine()) != null) {
+						long timeBeforeExtension = System.currentTimeMillis();
+
 						Object[] params = { line };
 						String transformedLine = (String) getExtensionPointService().eval(ExtensionPointType.OrderImportLineTransformation,
 							params);
+
+						addToExtensionMsFromTimeBefore(timeBeforeExtension);
 						buffer.append("\r\n" + transformedLine);
 					}
 				} catch (Exception e) {
-					LOGGER.error("Failed to read order file line", e);
+					LOGGER.error("Exception during OrderImportLineTransformation", e);
 					return batchResult;
 				}
 			} else {
@@ -319,6 +340,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		}
 
 		this.endTime = System.currentTimeMillis();
+		LOGGER.info("spent {} ms doing extensions", spentDoingExtensionsMs);
 
 		batchResult.setReceived(new Date(startTime));
 		batchResult.setStarted(new Date(startTime));

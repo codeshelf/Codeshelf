@@ -35,46 +35,46 @@ import org.slf4j.LoggerFactory;
 @ToString
 public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 
-	static final Logger	LOGGER	= LoggerFactory.getLogger(OutboundOrderCsvBean.class);
-	public static final DateTimeFormatter EOD_FORMATTER = DateTimeFormat.forPattern("MM/dd/yyyy 23:59:59");
+	static final Logger						LOGGER			= LoggerFactory.getLogger(OutboundOrderCsvBean.class);
+	public static final DateTimeFormatter	EOD_FORMATTER	= DateTimeFormat.forPattern("MM/dd/yyyy 23:59:59");
 
-	protected String	orderGroupId;
+	protected String						orderGroupId;
 
 	@NotNull
 	@Size(min = 1)
-	protected String	orderId;
-	protected String	orderDetailId;
+	protected String						orderId;
+	protected String						orderDetailId;
 	@NotNull
 	@Size(min = 1)
-	protected String	itemId;
-	protected String	description;
-	protected String	quantity;
-	protected String	minQuantity;
-	protected String	maxQuantity;
+	protected String						itemId;
+	protected String						description;
+	protected String						quantity;
+	protected String						minQuantity;
+	protected String						maxQuantity;
 	@NotNull
 	@Size(min = 1)
-	protected String	uom;
-	protected String	orderDate;
-	protected String	dueDate;
-	protected String	destinationId;
-	protected String	pickStrategy;
-	protected String	preAssignedContainerId;
-	protected String	shipperId;
-	protected String	customerId;
-	protected String	workSequence;
+	protected String						uom;
+	protected String						orderDate;
+	protected String						dueDate;
+	protected String						destinationId;
+	protected String						pickStrategy;
+	protected String						preAssignedContainerId;
+	protected String						shipperId;
+	protected String						customerId;
+	protected String						workSequence;
 	// new fields for location-based pick DEV-571
-	protected String	operationType;
-	protected String	locationId;
-	protected String	cmFromLeft;
-	protected String	needsScan;
+	protected String						operationType;
+	protected String						locationId;
+	protected String						cmFromLeft;
+	protected String						needsScan;
 
 	// new fields for scanable inventory DEV-642
-	protected String	gtin; // use this field for upc
+	protected String						gtin;																	// use this field for upc
 
 	public final String getGtin() {
 		return strip(gtin);
 	}
-	
+
 	public final String getOrderGroupId() {
 		return strip(orderGroupId);
 	}
@@ -92,8 +92,8 @@ public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 	}
 
 	public final String getDescription() {
-		if(null == description) {
-			return "null";
+		if (null == description) {
+			return ""; // Through v19 was the string "null"
 		}
 		String theDescription = description;
 		theDescription = strip(theDescription);
@@ -127,14 +127,14 @@ public class OutboundOrderCsvBean extends ImportCsvBeanABC {
 		}
 		return theDescription;
 	}
-	
-	public void fillDefaultDueDate(){
+
+	public void fillDefaultDueDate() {
 		if (getDueDate() == null || getDueDate().isEmpty()) {
 			setDueDate(getDefaultDueDate());
 		}
 	}
-	
-	public static String getDefaultDueDate(){
+
+	public static String getDefaultDueDate() {
 		DateTime date = new DateTime();
 		int hour = date.getHourOfDay();
 		if (hour >= 17) {
