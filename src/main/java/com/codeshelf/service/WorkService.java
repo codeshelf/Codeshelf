@@ -18,6 +18,7 @@ import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.persistence.Transient;
 
@@ -28,7 +29,6 @@ import lombok.ToString;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
-import org.omg.CORBA.BooleanHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1261,18 +1261,18 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * For testing: if scan location, then just return all work instructions assigned to the CHE. (Assumes no negative positions on path.)
 	 */
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe, final String inScannedLocationId) {
-		return getWorkInstructions(inChe, inScannedLocationId, false, new BooleanHolder(false));
+		return getWorkInstructions(inChe, inScannedLocationId, false, new AtomicBoolean(false));
 	}
 
 	public final List<WorkInstruction> getWorkInstructions(final Che inChe,
 		final String inScannedLocationId,
 		final Boolean reversePickOrder,
-		final BooleanHolder pathChanged) {
+		final AtomicBoolean pathChanged) {
 		long startTimestamp = System.currentTimeMillis();
 		Facility facility = inChe.getFacility();
 
 		// This may be called with null inScannedLocationId for a simple START scan
-		pathChanged.value = detectPossiblePathChange(inChe, inScannedLocationId);
+		pathChanged.set(detectPossiblePathChange(inChe, inScannedLocationId));
 		saveCheLastScannedLocation(inChe, inScannedLocationId);
 
 		//Get current complete list of WIs. If CHE doesn't yet have a last_scanned_location set, this will retrieve items on all paths

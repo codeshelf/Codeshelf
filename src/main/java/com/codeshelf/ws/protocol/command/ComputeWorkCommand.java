@@ -5,9 +5,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.omg.CORBA.BooleanHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +48,7 @@ public class ComputeWorkCommand extends CommandABC {
 			String networkGuid = che.getDeviceNetGuid().getHexStringNoPrefix();
 			Map<String, String> positionToContainerMap = request.getPositionToContainerMap();
 			//List<String> containerIdList = new ArrayList<String>(positionToContainerMap.values());
-			BooleanHolder pathChanged = new BooleanHolder(false);
+			AtomicBoolean pathChanged = new AtomicBoolean(false);
 			Boolean reverse = request.getReversePickOrder();
 
 			// Get the work instructions for this CHE at this location for the given containers.
@@ -69,7 +69,7 @@ public class ComputeWorkCommand extends CommandABC {
 			response.setContainerToWorkInstructionCountMap(containerToCountMap);
 			response.setTotalGoodWorkInstructions(getTotalGoodWorkInstructionsCount(containerToCountMap));
 			response.setNetworkGuid(networkGuid);
-			response.setPathChanged(pathChanged.value);
+			response.setPathChanged(pathChanged.get());
 			response.setStatus(ResponseStatus.Success);
 			return response;
 		}
