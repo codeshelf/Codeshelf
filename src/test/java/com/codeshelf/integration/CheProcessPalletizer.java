@@ -1,6 +1,7 @@
 package com.codeshelf.integration;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -9,12 +10,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.CheStateEnum;
+import com.codeshelf.model.OrderStatusEnum;
+import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.OrderDetail;
+import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Tier;
+import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
@@ -78,14 +84,49 @@ public class CheProcessPalletizer extends ServerTest{
 		openNewPallet("10010001", "L%Slot1111", "Slot1111");
 		openNewPallet("10020001", "%000000020010", "Tier112");
 
-		LOGGER.info("2: Put item in each pallet");
+		LOGGER.info("2: Put item in pallet 1001, scan item for pallet 1002, but don't complete it");
 		picker.scanSomething("10010002");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
 		Assert.assertEquals("Slot1111\nItem: 10010002\nStore: 1001\nScan Next Item\n", picker.getLastCheDisplay());
-
 		picker.scanSomething("10020002");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
 		Assert.assertEquals("Tier112\nItem: 10020002\nStore: 1002\nScan Next Item\n", picker.getLastCheDisplay());
+		
+		LOGGER.info("3: Verify DB objects");
+		beginTransaction();
+		Facility facility = getFacility();
+		LOGGER.info("3a: Verify Order Headers - both orders ongoing");
+		OrderHeader h1001 = findPalletizerOrderHeader(facility, "1001");
+		OrderHeader h1002 = findPalletizerOrderHeader(facility, "1002");
+		Assert.assertNotNull("Didn't find order 1001", h1001);
+		Assert.assertNotNull("Didn't find order 1002", h1002);
+		Assert.assertEquals(OrderStatusEnum.RELEASED, h1001.getStatus());
+		Assert.assertEquals(OrderStatusEnum.RELEASED, h1002.getStatus());
+		
+		LOGGER.info("3b: Verify Order Details - three completed, another in progress");
+		OrderDetail d10010001 = h1001.getOrderDetail("10010001");
+		OrderDetail d10010002 = h1001.getOrderDetail("10010002");
+		OrderDetail d10020001 = h1002.getOrderDetail("10020001");
+		OrderDetail d10020002 = h1002.getOrderDetail("10020002");
+		Assert.assertNotNull("Didn't find detail 10010001", d10010001);
+		Assert.assertNotNull("Didn't find detail 10010002", d10010002);
+		Assert.assertNotNull("Didn't find detail 10020001", d10020001);
+		Assert.assertNotNull("Didn't find detail 10020002", d10020002);
+		Assert.assertEquals(OrderStatusEnum.COMPLETE, d10010001.getStatus());
+		Assert.assertEquals(OrderStatusEnum.COMPLETE, d10010002.getStatus());
+		Assert.assertEquals(OrderStatusEnum.COMPLETE, d10020001.getStatus());
+		Assert.assertEquals(OrderStatusEnum.INPROGRESS, d10020002.getStatus());
+		
+		LOGGER.info("3c: Verify Work Instructions - three completed, another in progress");
+		WorkInstruction wi11 = d10010001.getWorkInstructions().get(0);
+		WorkInstruction wi12 = d10010002.getWorkInstructions().get(0);
+		WorkInstruction wi21 = d10020001.getWorkInstructions().get(0);
+		WorkInstruction wi22 = d10020002.getWorkInstructions().get(0);
+		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi11.getStatus());
+		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi12.getStatus());
+		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi21.getStatus());
+		Assert.assertEquals(WorkInstructionStatusEnum.INPROGRESS, wi22.getStatus());
+		commitTransaction();	
 	}
 	
 	@Test
@@ -106,6 +147,22 @@ public class CheProcessPalletizer extends ServerTest{
 		picker.scanSomething("10010003");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_NEW_ORDER, WAIT_TIME);
 		Assert.assertEquals("Scan New Location\nFor Store 1001\n\nOr Scan Another Item\n", picker.getLastCheDisplay());
+		
+		LOGGER.info("4: Verify DB objects");
+		beginTransaction();
+		Facility facility = getFacility();
+		LOGGER.info("4a: Verify Order Header - completed and inactive");
+		OrderHeader h1001 = findPalletizerOrderHeader(facility, "1001");
+		Assert.assertNotNull("Didn't find order 1001", h1001);
+		Assert.assertEquals(OrderStatusEnum.COMPLETE, h1001.getStatus());
+		Assert.assertFalse(h1001.getActive());
+		
+		LOGGER.info("4b: Verify Order Detail - completed and inactive");
+		OrderDetail d10010001 = h1001.getOrderDetail("10010001");
+		Assert.assertNotNull("Didn't find detail 10010001", d10010001);
+		Assert.assertEquals(OrderStatusEnum.COMPLETE, d10010001.getStatus());
+		Assert.assertFalse(d10010001.getActive());
+		commitTransaction();
 	}
 	
 	@Test
@@ -190,5 +247,16 @@ public class CheProcessPalletizer extends ServerTest{
 		picker.scanSomething(location);
 		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
 		Assert.assertEquals(locationName + "\nItem: " + item + "\nStore: " + store + "\nScan Next Item\n", picker.getLastCheDisplay());
+	}
+	
+	private OrderHeader findPalletizerOrderHeader(Facility facility, String orderId) {
+		List<OrderHeader> orders = OrderHeader.staticGetDao().findByParent(facility);
+		for (OrderHeader order : orders) {
+			String domainId = order.getDomainId();
+			if (domainId.startsWith(orderId) || domainId.startsWith("P_" + orderId)){
+				return order;
+			}
+		}
+		return null;
 	}
 }
