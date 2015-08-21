@@ -1286,9 +1286,9 @@ public class Facility extends Location {
 
 	public void delete(WebSocketManagerService webSocketManagerService) {
 		Set<User> users = getSiteControllerUsers();
+		delete();
 		DisconnectSiteControllerMessage disconnectMessage = new DisconnectSiteControllerMessage();
 		webSocketManagerService.sendMessage(users, disconnectMessage);
-		delete();
 	}
 
 	public void delete() {

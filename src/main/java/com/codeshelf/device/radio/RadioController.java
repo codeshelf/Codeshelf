@@ -558,6 +558,10 @@ public class RadioController implements IRadioController {
 		String uid = inCommand.getGUID();
 		NetGuid theGuid = null;
 
+		if (uid == null || uid.trim().isEmpty()) {
+			LOGGER.warn("Blank or missing uid: " + uid + " for processAssocReqCommand");
+			return;
+		}
 		// DEV-544 see garbage once in a while during MAT test. This may throw
 		try {
 			theGuid = new NetGuid("0x" + uid);
