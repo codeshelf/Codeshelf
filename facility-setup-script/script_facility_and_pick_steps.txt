@@ -30,7 +30,7 @@ setPoscons A3.B1.T1 1 forward A3.B2.T1 5 forward A3.B3.T1 9 forward A3.B4.T1 13 
 createChe 0x000000A4 blue LINE_SCAN
 createChe 0x000000C8 magenta SETUP_ORDERS CHE_B
 createChe :che1 green SETUP_ORDERS CHE_A
-createChe :chePall green PALLETIZER CHE_C
+createChe :chePall orange PALLETIZER CHE_C
 deleteAllPaths
 defPath p1 - 2.82 5.40 5.19 5.40 - 5.19 5.40 5.19 6.40 - 5.19 6.40 2.77 6.40
 defPath p2 - 2.60 7.40 5.28 7.40
