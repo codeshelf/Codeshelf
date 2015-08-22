@@ -78,11 +78,7 @@ public class WiBeanStringifier {
 
 	public String stringifyOrderOnCart() {
 
-		ExtensionPointService groovyService = getExtensionPointService();
-		// Debug aid
-		if (groovyService == null)
-			LOGGER.error("null extension point service in needContentExtension");
-		if (!groovyService.hasExtensionPoint(ExtensionPointType.OrderOnCartContent)) {
+		if (!hasExtensionPoint(ExtensionPointType.OrderOnCartContent)) {
 			return "";
 		}
 		OrderHeader order = getOrder();
@@ -111,10 +107,7 @@ public class WiBeanStringifier {
 
 		boolean needContentExtension = false;
 		ExtensionPointService groovyService = getExtensionPointService();
-		// Debug aid
-		if (groovyService == null)
-			LOGGER.error("null extension point service in needContentExtension");
-		if (groovyService.hasExtensionPoint(ExtensionPointType.WorkInstructionExportContent))
+		if (hasExtensionPoint(ExtensionPointType.WorkInstructionExportContent))
 			needContentExtension = true;
 
 		// Get header, trailer.
@@ -144,7 +137,7 @@ public class WiBeanStringifier {
 	 * But groovy extension may override. If override is null or empty, we do not add to the output file
 	 */
 	private String getWiHeader() {
-		if (getExtensionPointService().hasExtensionPoint(ExtensionPointType.WorkInstructionExportCreateHeader)) {
+		if (hasExtensionPoint(ExtensionPointType.WorkInstructionExportCreateHeader)) {
 			String theOrderId = getOrder().getOrderId();
 			String theCheId = getChe().getDomainId();
 			Object[] params = { theOrderId, theCheId };
@@ -165,7 +158,7 @@ public class WiBeanStringifier {
 	 * But groovy extension may override. If trailer is null or empty, we do not add to the output file
 	 */
 	private String getWiTrailer() {
-		if (getExtensionPointService().hasExtensionPoint(ExtensionPointType.WorkInstructionExportCreateTrailer)) {
+		if (hasExtensionPoint(ExtensionPointType.WorkInstructionExportCreateTrailer)) {
 			String theOrderId = getOrder().getOrderId();
 			String theCheId = getChe().getDomainId();
 			Object[] params = { theOrderId, theCheId };
@@ -197,4 +190,11 @@ public class WiBeanStringifier {
 		return content;
 	}
 
+	
+	private boolean hasExtensionPoint(ExtensionPointType type) {
+		ExtensionPointService extensionService = getExtensionPointService();
+		if (extensionService  == null)
+			LOGGER.error("null extension point service when checking for: " + type);
+		return (extensionService != null && extensionService.hasExtensionPoint(type));
+	}
 }
