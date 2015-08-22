@@ -42,6 +42,7 @@ public final class CommandAssocResp extends CommandAssocABC {
 	private NBitInteger			mNetworkSpacing;
 	private NetworkId			mNetworkId;
 	private short				mSleepSeconds;
+	private byte				mScannerType = 1;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -113,7 +114,8 @@ public final class CommandAssocResp extends CommandAssocABC {
 			inOutputStream.writeNBitInteger(mNetworkSpacing);
 			inOutputStream.writeNBitInteger(mNetworkId);
 			inOutputStream.writeShort(mSleepSeconds);
-			inOutputStream.roundOutByte();
+			//inOutputStream.roundOutByte();
+			inOutputStream.writeByte(mScannerType);
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -133,6 +135,7 @@ public final class CommandAssocResp extends CommandAssocABC {
 			inInputStream.readNBitInteger(mNetworkSpacing);
 			inInputStream.readNBitInteger(mNetworkId);
 			mSleepSeconds = inInputStream.readByte();
+			mScannerType = inInputStream.readByte();
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -144,6 +147,28 @@ public final class CommandAssocResp extends CommandAssocABC {
 	 */
 	protected int doComputeCommandSize() {
 		return super.doComputeCommandSize() + ADDRESS_ASSIGNED_BYTES;
+	}
+	
+	/* --------------------------------------------------------------------------
+	 * setScannerType
+	 * 
+	 * Sets a byte value indicating the type of scanner attached to device.
+	 * 
+	 * @param inScannerType
+	 */
+	public void setScannerType(byte inScannerType) {
+		mScannerType = inScannerType;
+	}
+	
+	/* --------------------------------------------------------------------------
+	 * getScannerType
+	 * 
+	 * Returns a byte value indicating the type of scanner attached to device.
+	 * 
+	 * @return byte inScannerType
+	 */
+	public byte getScannerType(){
+		return mScannerType;
 	}
 
 }

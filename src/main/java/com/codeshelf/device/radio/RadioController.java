@@ -750,7 +750,7 @@ public class RadioController implements IRadioController {
 				boolean shouldActOnCommand = true;
 				if (packet.getAckId() != IPacket.EMPTY_ACK_ID) {
 					if (device == null) {
-						LOGGER.warn("Ignoring packet with device with unknown address={}", packetSourceAddress);
+						//LOGGER.warn("Ignoring packet with device with unknown address={}", packetSourceAddress);
 						return;
 					} else {
 						// Only act on the command if the ACK is new (i.e. > last ack id)
