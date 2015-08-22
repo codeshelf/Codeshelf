@@ -42,7 +42,7 @@ public final class CommandAssocResp extends CommandAssocABC {
 	private NBitInteger			mNetworkSpacing;
 	private NetworkId			mNetworkId;
 	private short				mSleepSeconds;
-	private byte				mScannerType = 1;
+	private byte				mScannerType = 0;
 
 	// --------------------------------------------------------------------------
 	/**
