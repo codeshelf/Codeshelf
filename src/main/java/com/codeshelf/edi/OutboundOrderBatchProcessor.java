@@ -192,8 +192,10 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				for (Container container : containers) {
 					containerMap.put(container.getDomainId(), container);
 				}
-				criteria = Container.staticGetDao().createCriteria();
-				criteria.add(Restrictions.in("domainId", containerIds));
+				
+				// This marks the end of the prefetch process. Let's log what it took.
+				long msDurationOfPrefetch = System.currentTimeMillis() - this.startTime;
+				LOGGER.info("spent {} ms on order import prefetch", msDurationOfPrefetch);
 
 				// process order file
 				List<OutboundOrderCsvBean> lines = batch.getLines();

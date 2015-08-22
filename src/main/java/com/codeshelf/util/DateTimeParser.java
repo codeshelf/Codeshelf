@@ -35,11 +35,15 @@ public class DateTimeParser {
 	}
 
 	synchronized public Date parse(String inDateString, UnspecifiedTime unspecifiedTime) {
+		// short circuit a common case:
+		if (inDateString == null || inDateString.isEmpty())
+			return null;
+		
 		try {
 			DateTime dateTime = isoFormatter.parseDateTime(inDateString);
 			return dateTime.toDate();
 		} catch(Exception e) {
-			//try the other less strict pareser
+			//try the other less strict parser
 		}
 		List<DateGroup> dateGroups = mparser.parse(inDateString);
 		if (dateGroups.isEmpty()) {
