@@ -23,11 +23,15 @@ import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
  */
 public final class CommandAssocCheck extends CommandAssocABC {
 
-	public static final int		DEVICE_VERSION_BYTES	= 1;
+	public static final int		DEVICE_VERSION_BYTES	= 8;
 
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(CommandAssocCheck.class);
+	private int					mRestartDataLen = 2;
 
 	private byte				mBatteryLevel;
+	private byte				mRestartCause;
+	private byte[]				mRestartData = new byte[mRestartDataLen];
+	private int					mRestartPC;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -54,7 +58,8 @@ public final class CommandAssocCheck extends CommandAssocABC {
 	 */
 	@Override
 	public String doToString() {
-		return Integer.toHexString(ASSOC_CHECK_COMMAND) + " CHECK" + super.doToString() + " batt= " + mBatteryLevel;
+		return Integer.toHexString(ASSOC_CHECK_COMMAND) + " CHECK" + super.doToString() + " batt= " + mBatteryLevel + 
+				"reboot= " + mRestartCause;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -67,6 +72,9 @@ public final class CommandAssocCheck extends CommandAssocABC {
 
 		try {
 			inOutputStream.writeByte(mBatteryLevel);
+			inOutputStream.writeByte(mRestartCause);
+			inOutputStream.writeBytes(mRestartData, mRestartDataLen);
+			inOutputStream.writeInt(mRestartPC);
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -82,6 +90,10 @@ public final class CommandAssocCheck extends CommandAssocABC {
 
 		try {
 			mBatteryLevel = inInputStream.readByte();
+			mRestartCause = inInputStream.readByte();
+			inInputStream.readBytes(mRestartData, mRestartDataLen);
+			mRestartPC = inInputStream.readInt();
+			
 			if (mBatteryLevel < 0) {
 				mBatteryLevel = 0;
 			} else if (mBatteryLevel > 100) {
@@ -109,4 +121,15 @@ public final class CommandAssocCheck extends CommandAssocABC {
 		return mBatteryLevel;
 	}
 
+	public byte getRestartCause() {
+		return mRestartCause;
+	}
+	
+	public byte[] getRestartData() {
+		return mRestartData;
+	}
+	
+	public int	getRestartPC() {
+		return mRestartPC;
+	}
 }
