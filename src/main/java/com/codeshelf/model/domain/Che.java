@@ -70,6 +70,13 @@ public class Che extends WirelessDeviceABC {
 	@JsonProperty
 	private ColorEnum				color;
 
+	@Column(nullable = true, name = "scanner_type")
+	@Enumerated(value = EnumType.STRING)
+	@Getter
+	@Setter
+	@JsonProperty
+	private ScannerTypeEnum			scannerType;
+
 	@Column(name = "processmode")
 	@Enumerated(value = EnumType.STRING)
 	@Getter
@@ -106,6 +113,7 @@ public class Che extends WirelessDeviceABC {
 	public Che() {
 		super();
 		color = ColorEnum.BLUE;
+		scannerType = ScannerTypeEnum.ORIGINALSERIAL;
 	}
 
 	@SuppressWarnings("unchecked")

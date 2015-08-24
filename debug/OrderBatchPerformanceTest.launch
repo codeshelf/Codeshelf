@@ -9,7 +9,8 @@
 <listAttribute key="org.eclipse.debug.ui.favoriteGroups">
 <listEntry value="org.eclipse.debug.ui.launchGroup.run"/>
 </listAttribute>
+<booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.codeshelf.perf.OrderBatchPerformanceTest"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="/tmp/Lor-Converted"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="/Users/jonranstrom/Test_space/Lor_2000_wave"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="Codeshelf"/>
 </launchConfiguration>
