@@ -76,6 +76,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 	DomainObjectCache<ItemMaster>						itemMasterCache			= null;
 	DomainObjectCache<OrderHeader>						orderHeaderCache		= null;
+	DomainObjectCache<LocationAlias>					locationAliasCache		= null;
 	HashMap<String, Gtin>								gtinCache				= null;
 
 	private HashMap<String, Map<String, OrderDetail>>	orderlineMap;
@@ -120,6 +121,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 				itemMasterCache = new DomainObjectCache<ItemMaster>(ItemMaster.staticGetDao());
 				orderHeaderCache = new DomainObjectCache<OrderHeader>(OrderHeader.staticGetDao());
+				locationAliasCache = new DomainObjectCache<LocationAlias>(LocationAlias.staticGetDao());
 
 				ArrayList<OrderHeader> orderSet = new ArrayList<OrderHeader>();
 
@@ -139,6 +141,12 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				orderHeaderCache.setFetchOnMiss(false);
 				orderHeaderCache.load(facility, batch.getOrderIds());
 				LOGGER.info("OrderHeader cache populated with " + this.orderHeaderCache.size() + " entries");
+
+				// cache order headers
+				locationAliasCache.reset();
+				locationAliasCache.setFetchOnMiss(false);
+				locationAliasCache.load(facility, batch.getLocationIds());
+				LOGGER.info("LocationAlias cache populated with " + this.locationAliasCache.size() + " entries");
 
 				// cache gtin
 				gtinCache = generateGtinCache(facility);
@@ -192,7 +200,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				for (Container container : containers) {
 					containerMap.put(container.getDomainId(), container);
 				}
-				
+								
 				// This marks the end of the prefetch process. Let's log what it took.
 				long msDurationOfPrefetch = System.currentTimeMillis() - this.startTime;
 				LOGGER.info("spent {} ms on order import prefetch", msDurationOfPrefetch);
@@ -1062,7 +1070,8 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		String preferredLocation = inCsvBean.getLocationId();
 		if (preferredLocation != null) {
 			// check that location is valid
-			LocationAlias locationAlias = LocationAlias.staticGetDao().findByDomainId(inFacility, preferredLocation);
+			LocationAlias locationAlias = locationAliasCache.get(preferredLocation);
+			
 			if (locationAlias == null) {
 				// LOGGER.warn("location alias not found for preferredLocation: " + inCsvBean); // not much point to this warning. Will happen all the time.
 				// preferredLocation = "";

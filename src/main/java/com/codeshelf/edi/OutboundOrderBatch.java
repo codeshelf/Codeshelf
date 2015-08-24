@@ -31,6 +31,9 @@ public class OutboundOrderBatch {
 	@Getter
 	Set<String> orderGroupIds = new HashSet<String>();
 	
+	@Getter
+	HashSet<String> locationIds = new HashSet<String>();
+	
 	@Getter @Setter
 	int processingAttempts = 0;
 
@@ -44,6 +47,7 @@ public class OutboundOrderBatch {
 		this.containerIds.add(orderBean.getPreAssignedContainerId());
 		this.itemIds.add(orderBean.getItemId());
 		this.gtinIds.add(orderBean.getGtin());
+		this.locationIds.add(orderBean.getLocationId());
 		String orderGroupId = orderBean.getOrderGroupId();
 		if (orderGroupId!=null) {
 			orderGroupIds.add(orderGroupId);
