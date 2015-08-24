@@ -766,8 +766,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	*/
 	public void notifyEdiServiceCompletedWi(WorkInstruction inWi) {
 		// Replace with some selector
-		boolean wisToIronMQ = true;
-		boolean wisToSFTP = false;
+		boolean wisToIronMQ = false;
+		boolean wisToSFTP = true;
 
 		if (wisToIronMQ) {
 			// This is the IronMQ blow by blow variant. It queues messages directly on WorkService, which is suspect. Work service is
