@@ -40,7 +40,7 @@ public class RadioControllerPacketSchedulerService {
 	public static final int														MAP_CONCURRENCY_LEVEL			= 4;
 
 	public static final long													NETWORK_PACKET_SPACING_MILLIS	= 5;
-	public static final long													DEVICE_PACKET_SPACING_MILLIS	= 40;
+	public static final long													DEVICE_PACKET_SPACING_MILLIS	= 30;
 
 	private static final int													ACK_SEND_RETRY_COUNT			= 20;															// matching v16. Used to be 20.
 	private static final long													MAX_PACKET_AGE_MILLIS			= 4000;

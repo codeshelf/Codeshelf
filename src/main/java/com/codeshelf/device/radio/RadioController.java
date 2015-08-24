@@ -601,6 +601,7 @@ public class RadioController implements IRadioController {
 						broadcastService.getBroadcastAddress(),
 						foundDevice.getGuid(),
 						false);
+					
 					foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.ASSIGN_SENT);
 				} finally {
 					ContextLogging.clearNetGuid();
