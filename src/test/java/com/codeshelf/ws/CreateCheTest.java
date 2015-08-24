@@ -46,7 +46,7 @@ public class CreateCheTest extends MockDaoTest {
 		Facility.staticGetDao().store(facility);		
 		
 		UiUpdateService service = new UiUpdateService();
-		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
+		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL");
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -66,7 +66,7 @@ public class CreateCheTest extends MockDaoTest {
 		Facility.staticGetDao().store(facility);		
 		
 		UiUpdateService service = new UiUpdateService();
-		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
+		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL");
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -274,7 +274,7 @@ public class CreateCheTest extends MockDaoTest {
 		this.getTenantPersistenceService().beginTransaction();
 		Che che = createTestChe("0x00000002");
 		UiUpdateService service = new UiUpdateService();
-		service.updateChe(che.getPersistentId().toString(),"Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(che.getPersistentId().toString(),"Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL");
 		java.util.UUID cheid = che.getPersistentId();
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -295,21 +295,24 @@ public class CreateCheTest extends MockDaoTest {
 		UiUpdateService service = new UiUpdateService();
 		String persistentId = che.getPersistentId().toString();
 		//Update che successfully
-		service.updateChe(persistentId, "Test Device", "Description", "orange", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(persistentId, "Test Device", "Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL");
 		//Fail to update name
-		service.updateChe(persistentId, "", "Description", "orange", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(persistentId, "", "Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL");
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 		//Fail to update description
-		service.updateChe(persistentId, "Test Device", null, "orange", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(persistentId, "Test Device", null, "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL");
 		Assert.assertEquals(che.getDescription(), "Description");
 		//Fail to update color
-		service.updateChe(persistentId, "Test Device", "Description", "yellow", "0x00000099", "SETUP_ORDERS");
+		service.updateChe(persistentId, "Test Device", "Description", "yellow", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL");
 		Assert.assertEquals(che.getColor(), ColorEnum.ORANGE);
 		//Fail to update controller id
-		service.updateChe(persistentId, "Test Device", "Description", "orange", "0x00000099x", "SETUP_ORDERS");
+		service.updateChe(persistentId, "Test Device", "Description", "orange", "0x00000099x", "SETUP_ORDERS", "ORIGINALSERIAL");
 		Assert.assertEquals(che.getDeviceGuidStr(), "0x00000099");
 		//Fail to update process mode
-		service.updateChe(persistentId, "Test Device Changed", "Description", "orange", "0x00000099x", "SETUP_ORDERSX");
+		service.updateChe(persistentId, "Test Device Changed", "Description", "orange", "0x00000099x", "SETUP_ORDERSX", "ORIGINALSERIAL");
+		Assert.assertEquals(che.getDomainId(), "Test Device");
+		//Fail to update scanner type
+		service.updateChe(persistentId, "Test Device Changed", "Description", "orange", "0x00000099x", "SETUP_ORDERS", "ORIGINALSERIALX");
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 
 		this.getTenantPersistenceService().commitTransaction();

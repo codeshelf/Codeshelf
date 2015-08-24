@@ -35,6 +35,7 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
+import com.codeshelf.model.domain.ScannerTypeEnum;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.Vertex;
@@ -63,7 +64,7 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_SET_POSCONS = "setPoscons (assignments <tier> <startIndex> <'forward'/'reverse'>)";
 	private final static String TEMPLATE_SET_POSCON_TO_BAY = "setPosconToBay (assignments <bay name> <controller> <poscon id>)";
 	private final static String TEMPLATE_SET_WALL = "setWall <aisle> <off/putwall/skuwall>";
-	private final static String TEMPLATE_CREATE_CHE = "createChe <che> <color> <mode> [name]";
+	private final static String TEMPLATE_CREATE_CHE = "createChe <che> <color> <mode> [name] [scannerType]";
 	private final static String TEMPLATE_DELETE_ALL_PATHS = "deleteAllPaths";
 	private final static String TEMPLATE_DEF_PATH = "defPath <pathName> (segments '-' <start x> <start y> <end x> <end y>)";
 	private final static String TEMPLATE_ASSIGN_PATH_SGM_AISLE = "assignPathSgmToAisle <pathName> <segment id> <aisle name>";
@@ -453,25 +454,27 @@ public class ScriptServerRunner {
 
 	/**
 	 * Expects to see command
-	 * createChe <che> <color> <mode> [name]
+	 * createChe <che> <color> <mode> [name] [scannerType]
 	 * @throws Exception 
 	 */
 	private void processCreateCheCommand(String parts[]) throws Exception {
-		if (parts.length < 4 || parts.length > 5){
+		if (parts.length < 4 || parts.length > 6){
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_CREATE_CHE);
 		}
 		String controllerId = parts[1], color = parts[2].toUpperCase(), mode = parts[3];
-		String domainId = parts.length == 5 ? parts[4] : controllerId;
+		String domainId = parts.length >= 5 ? parts[4] : controllerId;
+		String scannerType = parts.length == 6 ? parts[5] : "ORIGINALSERIAL";
 		//Confirm that the provided enum values are valid
 		ColorEnum.valueOf(color);
 		ProcessMode.valueOf(mode);
+		ScannerTypeEnum.valueOf(scannerType);
 		
 		//Create or update CHE
 		Che che = Che.staticGetDao().findByDomainId(facility.getNetworks().get(0), domainId);
 		if (che == null) {
-			uiUpdateService.addChe(facility.getPersistentId().toString(), domainId, null, color, controllerId, mode);
+			uiUpdateService.addChe(facility.getPersistentId().toString(), domainId, null, color, controllerId, mode, scannerType);
 		} else {
-			uiUpdateService.updateChe(che.getPersistentId().toString(), domainId, null, color, controllerId, mode);
+			uiUpdateService.updateChe(che.getPersistentId().toString(), domainId, null, color, controllerId, mode, scannerType);
 		}
 	}
 

@@ -40,4 +40,13 @@ public enum ScannerTypeEnum {
 		else
 			return inScannerType.getValue();
 	}
+	
+	public static ScannerTypeEnum getScannerType(String str) {
+		if ("ORIGINALSERIAL".equalsIgnoreCase(str)) {
+			return ORIGINALSERIAL;
+		} else if ("CODECORPS3600".equalsIgnoreCase(str)) {
+			return CODECORPS3600;
+		}
+		return null;
+	}
 }

@@ -34,6 +34,7 @@ import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.ScannerTypeEnum;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WirelessDeviceABC;
 import com.codeshelf.model.domain.WorkInstruction;
@@ -117,15 +118,53 @@ public class UiUpdateService implements IApiService {
 		final String description,
 		final String colorStr,
 		final String controllerId,
-		final String processModeStr) {
+		final String processModeStr,
+		final String scannerTypeStr) {
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityPersistentId);
 		Che che = new Che();
 		che.setParent(facility.getNetworks().get(0));
+		return updateCheHelper(che, domainId, description, colorStr, controllerId, processModeStr, scannerTypeStr);
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Internal API to update one property. Extensively used in JUnit testing, so will not log. Caller should log.
+	 * Throw in a way that causes proper answer to go back to UI. Avoid other throws.
+	 */
+	public void updateChe(final String cheId,
+		final String domainId,
+		final String description,
+		final String colorStr,
+		final String controllerId,
+		final String processModeStr,
+		final String scannerTypeStr) {
+		Che che = Che.staticGetDao().findByPersistentId(cheId);
+
+		if (che == null) {
+			LOGGER.error("Could not find che {0}", cheId);
+			return;
+		}
+		updateCheHelper(che, domainId, description, colorStr, controllerId, processModeStr, scannerTypeStr);
+	}
+	
+	private UUID updateCheHelper(final Che che,
+		final String domainId,
+		final String description,
+		final String colorStr,
+		final String controllerId,
+		final String processModeStr,
+		final String scannerTypeStr) {
 		ProcessMode processMode = ProcessMode.getMode(processModeStr);
 		if (processMode == null) {
 			LOGGER.error("Provide a valid processMode [SETUP_ORDERS,LINE_SCAN]");
 			return null;
 		}
+		ScannerTypeEnum scannerType = ScannerTypeEnum.getScannerType(scannerTypeStr);
+		if (scannerType == null) {
+			LOGGER.error("Provide a valid scannerType [ORIGINALSERIAL,CODECORPS3600]");
+			return null;
+		}
+
 		try {
 			ColorEnum color = ColorEnum.valueOf(colorStr.toUpperCase());
 			che.setColor(color);
@@ -138,6 +177,7 @@ public class UiUpdateService implements IApiService {
 			che.setDescription(description);
 		}
 		che.setProcessMode(processMode);
+		che.setScannerType(scannerType);
 		try {
 			// Perhaps this should be at ancestor level. CHE changes this field only. LED controller changes domain ID and controller ID.
 			NetGuid currentGuid = che.getDeviceNetGuid();
@@ -151,60 +191,8 @@ public class UiUpdateService implements IApiService {
 			// Need to fix this. What kind of exception? Presumably, bad controller ID that leads to invalid GUID
 			LOGGER.error("Failed to set controller ID", e);
 		}
-
 		Che.staticGetDao().store(che);
 		return che.getPersistentId();
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * Internal API to update one property. Extensively used in JUnit testing, so will not log. Caller should log.
-	 * Throw in a way that causes proper answer to go back to UI. Avoid other throws.
-	 */
-	public void updateChe(final String cheId,
-		final String domainId,
-		final String description,
-		final String colorStr,
-		final String controllerId,
-		final String processModeStr) {
-		Che che = Che.staticGetDao().findByPersistentId(cheId);
-
-		if (che == null) {
-			LOGGER.error("Could not find che {0}", cheId);
-			return;
-		}
-		ProcessMode processMode = ProcessMode.getMode(processModeStr);
-		if (processMode == null) {
-			LOGGER.error("Provide a valid processMode [SETUP_ORDERS,LINE_SCAN]");
-			return;
-		}
-		try {
-			ColorEnum color = ColorEnum.valueOf(colorStr.toUpperCase());
-			che.setColor(color);
-		} catch (Exception e) {
-		}
-		if (domainId != null && !domainId.isEmpty()) {
-			che.setDomainId(domainId);
-		}
-		if (description != null) {
-			che.setDescription(description);
-		}
-		che.setProcessMode(processMode);
-		try {
-			// Perhaps this should be at ancestor level. CHE changes this field only. LED controller changes domain ID and controller ID.
-			NetGuid currentGuid = che.getDeviceNetGuid();
-			NetGuid newGuid = new NetGuid(controllerId);
-			if (newGuid == null || currentGuid.equals(newGuid)) {
-				return;
-			}
-			che.setDeviceNetGuid(newGuid);
-			//Che.staticGetDao().store(this);
-		} catch (Exception e) {
-			// Need to fix this. What kind of exception? Presumeably, bad controller ID that leads to invalid GUID
-			LOGGER.error("Failed to set controller ID", e);
-		}
-
-		Che.staticGetDao().store(che);
 	}
 
 	public void deleteChe(final String cheId) {
