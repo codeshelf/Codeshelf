@@ -1,16 +1,20 @@
 package com.codeshelf.model.domain;
 
+import java.io.ByteArrayInputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Vector;
 
 import javax.persistence.Transient;
 
-import lombok.Getter;
 import lombok.AccessLevel;
+import lombok.Getter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.edi.EdiFileWriteException;
 import com.codeshelf.edi.SftpConfiguration;
 import com.codeshelf.model.EdiProviderEnum;
 import com.codeshelf.model.EdiServiceStateEnum;
@@ -80,7 +84,8 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 		return (config != null && config.getHost() != null && config.getUsername() != null && config.getPassword() != null);
 	}
 
-	public ChannelSftp connect() {
+	
+	synchronized protected ChannelSftp connect() {
 		if (session != null || channel != null) {
 			LOGGER.error("tried to connect SFTP session, but was already open. forcing disconnect first.");
 			disconnect();
@@ -99,7 +104,7 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 		try {
 			session.connect();
 		} catch (JSchException e) {
-			LOGGER.warn("Failed to connect to sftp://{}@{}:{}", config.getUsername(), config.getHost(), config.getPort(), e);
+			LOGGER.warn("Failed to connect to {}", toSftpChannelDebug(), e);
 			return null;
 		}
 
@@ -111,39 +116,32 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 				channel.connect();
 			}
 		} catch (JSchException e) {
-			LOGGER.warn("Connected, but failed to open channel sftp://{}@{}:{}",
-				config.getUsername(),
-				config.getHost(),
-				config.getPort(),
-				e);
+			LOGGER.warn("Connected, but failed to open channel {}", toSftpChannelDebug(), e);
 			channel = null;
 		}
 		if (channel == null)
 			disconnect(); // hang up if SFTP channel wasn't created
 
-		LOGGER.info("EDI service {} connected to sftp://{}@{}:{}",
-			this.getServiceName(),
-			config.getUsername(),
-			config.getHost(),
-			config.getPort());
+		LOGGER.info("EDI service {} connected to {}", this.getServiceName(), toSftpChannelDebug());
 
 		return channel;
 	}
 
-	public void disconnect() {
+	
+	protected void disconnect() {
 		if (session == null) {
 			if (channel != null) {
-				LOGGER.error("disconnect() was called, there is a channel but no session. this is probably a bug.");
+				LOGGER.error("disconnect() was called, there is a channel but no session. this is probably a bug. {}", toSftpChannelDebug());
 				channel.disconnect();
 				channel = null;
 			} else {
-				LOGGER.error("disconnect() was called, but there is no session. this is probably a bug.");
+				LOGGER.error("disconnect() was called, but there is no session. this is probably a bug. {}", toSftpChannelDebug());
 			}
 		} else if (!session.isConnected()) {
 			if (channel == null) {
-				LOGGER.warn("disconnect() was called on an existing session that is not connected");
+				LOGGER.warn("disconnect() was called on an existing session that is not connected. {}", toSftpChannelDebug());
 			} else {
-				LOGGER.warn("disconnect() was called on an existing session that is not connected (sftp channel not null)");
+				LOGGER.warn("disconnect() was called on an existing session that is not connected (sftp channel not null) {}", toSftpChannelDebug());
 				if (channel.isConnected()) {
 					channel.disconnect();
 				}
@@ -161,20 +159,54 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 			session = null;
 		}
 	}
+	
+	synchronized public ExportReceipt uploadAsFile(final String fileContents, final String filename) {
+		ChannelSftp sftp = connect();
+		try {
+			byte[] bytes = fileContents.getBytes(StandardCharsets.ISO_8859_1);
+			sftp.put(new ByteArrayInputStream(bytes), filename, ChannelSftp.OVERWRITE);
+			return new ExportReceipt(filename, bytes.length);
+		} catch(SftpException e) {
+			throw new EdiFileWriteException("Unable to put file: " + filename, e);
+		
+		} finally {
+			disconnect();
+		}
+	}
+	
+	synchronized public void downloadFile(String absoluteFilename, OutputStream out) throws EdiFileWriteException {
+		ChannelSftp sftp = connect();
+		try {
+			sftp.get(absoluteFilename, out);
+		} catch(SftpException e) { 
+			throw new EdiFileWriteException("Unable to get file: " + absoluteFilename, e);
+		
+		} finally {
+			disconnect();
+		}
+		
+	}
 
-	public ArrayList<String> retrieveImportFileList() {
+	synchronized public void delete(String path) {
+		ChannelSftp sftp = connect();
+		try {
+			sftp.rm(path);
+		} catch(SftpException e) {
+			throw new EdiFileWriteException("Unable to remove file: " + path, e);
+		} finally {
+ 			disconnect();
+		}
+	}
+
+
+	protected ArrayList<String> retrieveImportFileList() {
 		Vector<?> fileList = null;
 		SftpConfiguration config = getConfiguration();
+		String importPath = config.getImportPath();
 		try {
-			fileList = this.getChannel().ls(config.getImportPath());
+			fileList = this.getChannel().ls(importPath);
 		} catch (SftpException e) {
-			LOGGER.warn("Error retrieving file list from sftp://{}@{}:{}/{}",
-				config.getUsername(),
-				config.getHost(),
-				config.getPort(),
-				config.getImportPath(),
-				e);
-			return new ArrayList<String>(0);
+			throw new EdiFileWriteException("Unable to list files from directory: " + importPath, e);
 		} 
 		
 		ArrayList<String> filesToImport = new ArrayList<String>(fileList.size()); 
@@ -196,5 +228,13 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 			}
 		}
 		return filesToImport;
+	}
+	
+	private String toSftpChannelDebug() {
+		SftpConfiguration config = getConfiguration();
+		return String.format("sftp://%s@%s:%d", 
+			config.getUsername(),
+			config.getHost(),
+			config.getPort());
 	}
 }

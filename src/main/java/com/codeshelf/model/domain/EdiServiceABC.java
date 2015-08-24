@@ -35,8 +35,6 @@ import com.codeshelf.edi.WiBeanStringifier;
 import com.codeshelf.edi.WorkInstructionCsvBean;
 import com.codeshelf.model.EdiProviderEnum;
 import com.codeshelf.model.EdiServiceStateEnum;
-import com.codeshelf.model.dao.GenericDaoABC;
-import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.service.ExtensionPointService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -61,13 +59,26 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implements IEdiService {
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(EdiServiceABC.class);
+	public static class ExportReceipt {
 
-	public static class EdiServiceABCDao extends GenericDaoABC<EdiServiceABC> implements ITypedDao<EdiServiceABC> {
-		public final Class<EdiServiceABC> getDaoClass() {
-			return EdiServiceABC.class;
+		private String	absoluteFilename;
+		private int	fileLength;
+
+		public ExportReceipt(String absoluteFilename, int fileLength) {
+			this.absoluteFilename = absoluteFilename;
+			this.fileLength = fileLength; 
+		}
+
+		public String getPath() {
+			return absoluteFilename;
+		}
+
+		public int getFileLength() {
+			return fileLength;
 		}
 	}
+
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(EdiServiceABC.class);
 
 	// The owning Facility.
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
@@ -175,7 +186,8 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	 * This is initially tailored to PFSWeb data interchange, mimicking Dematic cart
 	 */
 	public void notifyOrderOnCart(OrderHeader inOrder, Che inChe) {
-		String exportStr = processOrderOnCart(inOrder, inChe);
+		String exportStr = stringifyOrderOnCart(inOrder, inChe);
+		shipOrderOnCart(inOrder, inChe, exportStr);
 		LOGGER.info(exportStr);
 	}
 
@@ -183,22 +195,25 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	 * If this host needs it this way, send off the order with accumulated work instructions
 	 * This is initially tailored to PFSWeb data interchange, mimicking Dematic cart
 	 */
-	public void notifyOrderCompleteOnCart(OrderHeader inOrder, Che inChe) {
-		if (!hasEdiOutputAccumulator())
-			return;
+	public ExportReceipt notifyOrderCompleteOnCart(OrderHeader inOrder, Che inChe) {
+		if (!hasEdiOutputAccumulator()) {
+			return null;
+		}
 		ArrayList<WorkInstructionCsvBean> beanList = getEdiExportAccumulator().getAndRemoveWiBeansFor(inOrder.getOrderId(),
 			inChe.getDomainId());
 		// This list has "complete" work instruction beans. The particular customer's EDI may need strange handling.
-		String exportStr = processOrderCompleteOnCart(inOrder, inChe, beanList);
+		String exportStr = stringifyOrderCompleteOnCart(inOrder, inChe, beanList);
 		LOGGER.info(exportStr);
+		return shipOrderCompletedOnCart(inOrder, inChe, exportStr);
 	}
+	
 
 	/**
 	 * This returns a string that will be fed into some transport means.
 	 * For PFSWeb, string -> file -> ftp service
 	 * The standard behavior is the bean export with header. Groovy extensions modify the header, trailer, bean content, and line format.
 	 */
-	protected String processOrderCompleteOnCart(OrderHeader inOrder, Che inChe, ArrayList<WorkInstructionCsvBean> wiBeanList) {
+	protected String stringifyOrderCompleteOnCart(OrderHeader inOrder, Che inChe, ArrayList<WorkInstructionCsvBean> wiBeanList) {
 		
 		WiBeanStringifier stringifier = new WiBeanStringifier(inOrder, inChe, wiBeanList,getExtensionPointService() );
 		
@@ -211,7 +226,7 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	 * For PFSWeb, string -> file -> ftp service
 	 * The standard behavior is nothing here, but extension may send something.
 	 */
-	protected String processOrderOnCart(OrderHeader inOrder, Che inChe) {
+	protected String stringifyOrderOnCart(OrderHeader inOrder, Che inChe) {
 		
 		WiBeanStringifier stringifier = new WiBeanStringifier(inOrder, inChe, null, getExtensionPointService() );
 		stringifier.setNotifyingOrderOnCart(true);
@@ -227,6 +242,14 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	 */
 	public void notifyOrderRemoveFromCart(OrderHeader inOrder, Che inChe) {
 
+	}
+
+	protected ExportReceipt shipOrderCompletedOnCart(OrderHeader inOrder, Che inChe, String contents) {
+		return null;
+	}
+
+	protected void shipOrderOnCart(OrderHeader inOrder, Che inChe, String contents) {
+		//override in subclass
 	}
 
 }

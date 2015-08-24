@@ -57,7 +57,7 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 	}
 
 	@Override
-	public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
+	synchronized public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
 		ICsvInventoryImporter inCsvInventoryImporter,
 		ICsvLocationAliasImporter inCsvLocationsImporter,
@@ -115,17 +115,18 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 			String archivePath = getConfiguration().getArchivePath()+"/"+filename;
 			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 
+			// record receipt
+			long receivedTime = System.currentTimeMillis();
 			// rename to .processing and begin
 			ChannelSftp sftp = getChannel();
 			sftp.rename(originalPath, processingPath);
-			InputStream fileStream = sftp.get(processingPath);
-			InputStreamReader reader = new InputStreamReader(fileStream);
 			
-			BatchResult<Object> results = inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent(), ediProcessTime);
+			BatchResult<Object> results = null;
+			try(InputStream fileStream = sftp.get(processingPath)) {
+				InputStreamReader reader = new InputStreamReader(fileStream);
+				results = inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent(), ediProcessTime);
+			}
 			String username = CodeshelfSecurityManager.getCurrentUserContext().getUsername();
-			
-			// record receipt
-			long receivedTime = System.currentTimeMillis();
 			//long receivedTime = 1000 * file.getAttrs().getMTime();
 			inCsvOrderImporter.persistDataReceipt(getParent(), username, filename, receivedTime, results);
 

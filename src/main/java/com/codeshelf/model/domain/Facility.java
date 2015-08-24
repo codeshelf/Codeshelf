@@ -67,7 +67,8 @@ import com.google.common.base.Strings;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Facility extends Location {
 
-	private static final String	IRONMQ_DOMAINID					= "IRONMQ";
+	private static final String	SFTPWIS_DOMAINID	= "SFTPWIS";
+
 	private static final String	UNSPECIFIED_LOCATION_DOMAINID	= "FACILITY_UNSPECIFIED";
 
 	public static class FacilityDao extends GenericDaoABC<Facility> implements ITypedDao<Facility> {
@@ -685,7 +686,7 @@ public class Facility extends Location {
 	 * @return
 	 */
 	public IEdiService getEdiExportService() {
-		return IronMqService.staticGetDao().findByDomainId(this, IRONMQ_DOMAINID);
+		return SftpWIsEdiService.staticGetDao().findByDomainId(this, SFTPWIS_DOMAINID);
 	}
 
 
@@ -718,7 +719,7 @@ public class Facility extends Location {
 			LOGGER.error("failed to create ironMQ service");
 		}
 
-		storeSftpService(new SftpWIsEdiService("SFTPWIS"));
+		storeSftpService(new SftpWIsEdiService(SFTPWIS_DOMAINID));
 		storeSftpService(new SftpOrdersEdiService("SFTPORDERS"));
 	}
 
@@ -753,7 +754,7 @@ public class Facility extends Location {
 		IronMqService result = null;
 
 		result = new IronMqService();
-		result.setDomainId(IRONMQ_DOMAINID);
+		result.setDomainId("IRONMQ");
 		result.setServiceState(EdiServiceStateEnum.UNLINKED);
 		this.addEdiService(result);
 		result.storeCredentials("", ""); // non-null credentials

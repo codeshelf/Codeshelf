@@ -45,6 +45,16 @@ public class SftpWIsEdiService extends AbstractSftpEdiService {
 		return SFTP_SERVICE_NAME;
 	}
 
+	/**
+	 * Override this to use the standard output accumulator on your EDI service.
+	 * If the standard accumulator is not suitable, also override createEdiOutputAccumulator()
+	 */
+	@Override
+	protected boolean needsEdiOutputAccumulator() {
+		return true;
+	}
+
+
 	@Override
 	public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
@@ -60,7 +70,25 @@ public class SftpWIsEdiService extends AbstractSftpEdiService {
 
 	@Override
 	public void sendWorkInstructionsToHost(String exportMessage) throws IOException {
-		// not implemented in this service
+	}
+	
+	
+	@Override
+	protected ExportReceipt shipOrderCompletedOnCart(OrderHeader inOrder, Che inChe, String contents) {
+		String filename = String.format("COMPLETE_%s_%s_%s",  inOrder.getOrderId(), inChe.getDeviceGuidStr(), System.currentTimeMillis());
+		final String absoluteFilename = this.getConfiguration().getExportPath() + "/" + filename;
+		return uploadAsFile(contents, absoluteFilename);
+	}
+
+	@Override
+	protected void shipOrderOnCart(OrderHeader inOrder, Che inChe, String contents) {
+		String filename = String.format("LOADED_%s_%s_%s",  inOrder.getOrderId(), inChe.getDeviceGuidStr(), System.currentTimeMillis());
+		final String absoluteFilename = this.getConfiguration().getExportPath() + "/" + filename;
+		try {
+			uploadAsFile(contents, absoluteFilename);
+		} catch (Exception e) {
+			LOGGER.warn("Unable to upload {}\n Contents:\n{}", absoluteFilename,  contents, e);
+		}
 	}
 
 	@SuppressWarnings("unchecked")
@@ -72,5 +100,6 @@ public class SftpWIsEdiService extends AbstractSftpEdiService {
 	public static ITypedDao<SftpWIsEdiService> staticGetDao() {
 		return TenantPersistenceService.getInstance().getDao(SftpWIsEdiService.class);
 	}
+
 
 }
