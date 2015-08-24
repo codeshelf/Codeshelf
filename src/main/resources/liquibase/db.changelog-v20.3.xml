@@ -1,11 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
 	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd
 		http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
-	<changeSet author="jonranstrom (generated)" id="1440442356263-2">
+	<changeSet author="jonranstrom (generated)" id="1440444528343-2">
 		<addColumn tableName="che">
-			<column name="scanner_type" type="int4"/>
+			<column name="scanner_type" type="varchar(255)"/>
 		</addColumn>
 	</changeSet>
 </databaseChangeLog>

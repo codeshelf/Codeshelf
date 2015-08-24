@@ -113,6 +113,7 @@ public class Che extends WirelessDeviceABC {
 	public Che() {
 		super();
 		color = ColorEnum.BLUE;
+		scannerType = ScannerTypeEnum.ORIGINALSERIAL;
 	}
 
 	@SuppressWarnings("unchecked")
