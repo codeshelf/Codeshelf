@@ -18,12 +18,13 @@ import javax.ws.rs.core.MultivaluedMap;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.apache.commons.beanutils.PropertyUtilsBean;
+import org.apache.commons.beanutils.BeanUtilsBean;
 import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.util.StringUIConverter;
+import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
@@ -100,17 +101,14 @@ public class SftpConfiguration implements UserInfo {
 			if (config == null) {
 				config = new SftpConfiguration();
 			}
-			PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
-			propertyUtils.setProperty(config, "host", params.getFirst("host"));
-			propertyUtils.setProperty(config, "port", params.getFirst("port"));
-			propertyUtils.setProperty(config, "username", params.getFirst("username"));
-			propertyUtils.setProperty(config, "importPath", params.getFirst("importPath"));
-			propertyUtils.setProperty(config, "archivePath", params.getFirst("archivePath"));
-			propertyUtils.setProperty(config, "exportPath", params.getFirst("exportPath"));
-			
-			String password = params.getFirst("password");
-			if (password != null) {
-				config.setPassword(password);
+			BeanUtilsBean beanUtils = new BeanUtilsBean();
+			for (String key : params.keySet()) {
+				String value = Strings.emptyToNull(params.getFirst(key));
+				if (key.equals("password") && value == null) {
+					continue;
+				}
+				
+				beanUtils.copyProperty(config, key, value);
 			}
 			return config;
 	}
@@ -160,7 +158,7 @@ public class SftpConfiguration implements UserInfo {
 		return SftpConfiguration.decodePassword(encoded);
 	}
 
-	void setPassword(String password) {
+	public void setPassword(String password) {
 		this.setPasswordEnc(SftpConfiguration.encodePassword(password));
 	}
 
