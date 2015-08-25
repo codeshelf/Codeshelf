@@ -25,7 +25,7 @@ import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
  *  @author jeffw
  *  
  */
-@EqualsAndHashCode(callSuper=true, doNotUseGetters=true)
+@EqualsAndHashCode(callSuper = true, doNotUseGetters = true)
 public abstract class CommandControlABC extends ExtendedCommandABC {
 
 	public static final int		COMMAND_CONTROL_HDR_BYTES	= 1;
@@ -41,6 +41,7 @@ public abstract class CommandControlABC extends ExtendedCommandABC {
 	public static final byte	CLEAR_DISPLAY				= 7;
 	public static final byte	POSCON_SETUP				= 8;
 	public static final byte	POSCON_BROADCAST			= 9;
+	public static final byte	ACK							= 10;
 
 	// --------------------------------------------------------------------------
 	/**

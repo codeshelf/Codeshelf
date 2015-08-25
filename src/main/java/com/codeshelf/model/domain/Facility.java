@@ -1315,6 +1315,17 @@ public class Facility extends Location {
 			dao.delete((IDomainObject) object);
 		}
 	}
+	
+	public Collection<IEdiService> getLinkedEdiImportServices() {
+		//TODO only return services that implement import interface
+		ArrayList<IEdiService> importServices = new ArrayList<>();
+		for (IEdiService ediService : getEdiServices()) {
+			if (ediService.isLinked()) {
+				importServices.add(ediService);
+			}
+		}
+		return importServices;
+	}
 
 	@SuppressWarnings("unchecked")
 	public <T extends IEdiService> T findEdiService(Class<T> cls) {

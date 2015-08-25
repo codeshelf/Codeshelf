@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.flyweight.command.CommandControlABC;
 import com.codeshelf.flyweight.command.CommandGroupEnum;
 import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
@@ -39,7 +40,7 @@ public class RadioControllerPacketSchedulerService {
 	public static final int														MAP_CONCURRENCY_LEVEL			= 4;
 
 	public static final long													NETWORK_PACKET_SPACING_MILLIS	= 2;
-	public static final long													DEVICE_PACKET_SPACING_MILLIS	= 40;
+	public static final long													DEVICE_PACKET_SPACING_MILLIS	= 30;
 	public static final long													DEVICE_ASSOC_SPACING_MILLIS		= 5;
 
 	private static final int													ACK_SEND_RETRY_COUNT			= 20;															// matching v16. Used to be 20.
@@ -200,6 +201,17 @@ public class RadioControllerPacketSchedulerService {
 		}
 
 		mLastDeviceAckId.put(deviceAddr, inAckNum);
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 *	Mark a queued packet as having been acknowledged. Will remove from sending queue.
+	 *
+	 * @param inDevice - Device associated with packet
+	 * @param inAckNum - Ack number of packet
+	 */
+	public void markPacketAsAcked(INetworkDevice inDevice, byte inAckNum) {
+		mLastDeviceAckId.put(inDevice.getAddress(), inAckNum);
 	}
 
 	// --------------------------------------------------------------------------
@@ -396,7 +408,7 @@ public class RadioControllerPacketSchedulerService {
 	 *		Packet to send
 	 */
 	private void sendPacket(IPacket inPacket) {
-		LOGGER.debug("Sending packet {}", inPacket.toString());
+		//LOGGER.info("Sending packet {}", inPacket.toString());
 		try {
 			packetIOService.handleOutboundPacket(inPacket);
 		} finally {
@@ -477,6 +489,14 @@ public class RadioControllerPacketSchedulerService {
 	 *		Packet to check
 	 */
 	private boolean clearToSendCommandPacket(IPacket inPacket) {
+		
+		if (inPacket.getCommand().getCommandTypeEnum() == CommandGroupEnum.CONTROL) {
+			CommandControlABC command = (CommandControlABC) inPacket.getCommand();
+			
+			if(command.getExtendedCommandID().getValue() == CommandControlABC.ACK) {
+				return true;
+			}
+		}
 
 		if (inPacket.getCommand().getCommandTypeEnum() == CommandGroupEnum.ASSOC) {
 			return true;

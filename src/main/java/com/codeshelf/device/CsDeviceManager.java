@@ -623,9 +623,9 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			} else if (deviceType.equals(DEVICETYPE_CHE_SETUPORDERS)) {
 				netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController, che);
 			} else if (deviceType.equals(DEVICETYPE_CHE_LINESCAN)) {
-				netDevice = new LineScanDeviceLogic(persistentId, deviceGuid, this, radioController);
+				netDevice = new LineScanDeviceLogic(persistentId, deviceGuid, this, radioController, che);
 			} else if (deviceType.equals(DEVICETYPE_CHE_PALLETIZER)) {
-				netDevice = new ChePalletizerDeviceLogic(persistentId, deviceGuid, this, radioController);
+				netDevice = new ChePalletizerDeviceLogic(persistentId, deviceGuid, this, radioController, che);
 			} else if (deviceType.equals(DEVICETYPE_LED)) {
 				netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, radioController);
 			} else if (deviceType.equals(DEVICETYPE_POS_CON_CTRL)) {
@@ -678,9 +678,9 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 				} else if (deviceType.equals(DEVICETYPE_CHE_SETUPORDERS)) {
 					netDevice = new SetupOrdersDeviceLogic(persistentId, deviceGuid, this, radioController, che);
 				} else if (deviceType.equals(DEVICETYPE_CHE_LINESCAN)) {
-					netDevice = new LineScanDeviceLogic(persistentId, deviceGuid, this, radioController);
+					netDevice = new LineScanDeviceLogic(persistentId, deviceGuid, this, radioController, che);
 				} else if (deviceType.equals(DEVICETYPE_CHE_PALLETIZER)) {
-					netDevice = new ChePalletizerDeviceLogic(persistentId, deviceGuid, this, radioController);
+					netDevice = new ChePalletizerDeviceLogic(persistentId, deviceGuid, this, radioController, che);
 				} else if (deviceType.equals(DEVICETYPE_LED)) {
 					netDevice = new AisleDeviceLogic(persistentId, deviceGuid, this, radioController);
 				} else if (deviceType.equals(DEVICETYPE_POS_CON_CTRL)) {
@@ -693,6 +693,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 					radioController.addNetworkDevice(netDevice);
 				}
 
+				// TODO! Update scanner type on the fly!
 				//TODO if associated to che guid does not match what we have, we need to have the device align itself.
 			} else if (che != null && netDevice.needUpdateCheDetails(deviceGuid, che.getDomainId(), che.getAssociateToCheGuid())) {
 				LOGGER.debug("No update to. deviceType={}; guid={};", deviceType, deviceGuid);

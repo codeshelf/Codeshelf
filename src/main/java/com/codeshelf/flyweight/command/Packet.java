@@ -213,6 +213,7 @@ public final class Packet implements IPacket {
 				mCommand = CommandFactory.createCommand(inInputStream, this.packetPayloadSize(inFrameSize));
 			} else {
 				mAckData = new byte[IPacket.ACK_DATA_BYTES];
+				inInputStream.readByte();	// Read out command byte and disregard
 				inInputStream.readBytes(mAckData, IPacket.ACK_DATA_BYTES);
 			}
 			mCreateTimeMillis = System.currentTimeMillis();

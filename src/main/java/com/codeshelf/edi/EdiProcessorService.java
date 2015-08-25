@@ -21,7 +21,6 @@ import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
-import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -95,7 +94,7 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 	protected void runOneIteration() throws Exception {
 		CodeshelfSecurityManager.removeContextIfPresent(); // shared thread, maybe other was aborted
 
-		LOGGER.trace("Begin EDI process.");
+		LOGGER.trace("Begin EDI process for all tenants.");
 
 		int numTenants = 0;
 		int successfulTenants = 0;
@@ -144,27 +143,7 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 
 			// Loop through each facility to make sure that it's EDI service processes any queued EDI.
 			for (Facility facility : this.getFacilities()) {
-				for (IEdiService ediService : facility.getEdiServices()) {
-					if (ediService.getServiceState().equals(EdiServiceStateEnum.LINKED)) {
-						if (ediService.getUpdatesFromHost(mCsvOrderImporter.get(),
-							mCsvOrderLocationImporter.get(),
-							mCsvInventoryImporter.get(),
-							mCsvLocationAliasImporter.get(),
-							mCsvCrossBatchImporter.get(),
-							mCsvAislesFileImporter.get())) {
-							numChecked++;
-							// Signal other threads that we've just processed new EDI.
-							try {
-								ediSignalThread = Thread.currentThread();
-								ediSignalQueue.put(ediService.getServiceName());
-							} catch (InterruptedException e) {
-								LOGGER.error("Failed to signal other threads that we've just processed n EDI", e);
-							} finally {
-								ediSignalThread = null;
-							}
-						}
-					}
-				}
+				numChecked += doEdiForFacility(facility);
 			}
 			TenantPersistenceService.getInstance().commitTransaction();
 			completed = true;
@@ -185,6 +164,35 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 			}
 		}
 		return completed;
+	}
+
+	//package level for testing
+	int doEdiForFacility(Facility facility) {
+		int numChecked = 0;
+		for (IEdiService ediService : facility.getLinkedEdiImportServices()) {
+			try {
+				if (ediService.getUpdatesFromHost(mCsvOrderImporter.get(),
+					mCsvOrderLocationImporter.get(),
+					mCsvInventoryImporter.get(),
+					mCsvLocationAliasImporter.get(),
+					mCsvCrossBatchImporter.get(),
+					mCsvAislesFileImporter.get())) {
+					numChecked++;
+					// Signal other threads that we've just processed new EDI.
+					try {
+						ediSignalThread = Thread.currentThread();
+						ediSignalQueue.put(ediService.getServiceName());
+					} catch (InterruptedException e) {
+						LOGGER.error("Failed to signal other threads that we've just processed n EDI", e);
+					} finally {
+						ediSignalThread = null;
+					}
+				}
+			} catch(Exception e) {
+				LOGGER.warn("EDI import update failed for service  {}", ediService, e);
+			}
+		}
+		return numChecked;
 	}
 
 	@Override

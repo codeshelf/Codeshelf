@@ -89,7 +89,6 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	// The provider.
 	@Column(nullable = false)
 	@Enumerated(value = EnumType.STRING)
-	@Getter
 	@Setter
 	@JsonProperty
 	private EdiProviderEnum			provider;
@@ -132,6 +131,10 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 			}
 		}
 
+	}
+
+	public boolean isLinked() {
+		return EdiServiceStateEnum.LINKED.equals(this.getServiceState());
 	}
 
 	/**

@@ -75,6 +75,7 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
+import com.codeshelf.model.domain.SftpWIsEdiService;
 import com.codeshelf.model.domain.Slot;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
@@ -693,7 +694,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * During setup, we are really setting up containers, and not orders
 	 * Need to map to the order then notify with order parameter
 	 */
-	public void notifyAddOrderToCart(ContainerUse inUse, Che inChe) {
+	private void notifyAddOrderToCart(ContainerUse inUse, Che inChe) {
 		if (inUse == null || inChe == null){
 			LOGGER.error("null value in notifyAddOrderToCart");
 			return;
@@ -710,16 +711,13 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	/**
 	 * Two choices so far: not at all, or to SFTP
 	 */
-	public void notifyAddOrderToCart(OrderHeader inOrder, Che inChe) {
+	private void notifyAddOrderToCart(OrderHeader inOrder, Che inChe) {
 		LOGGER.info("Order: {} added onto cart:{}", inOrder.getOrderId(), inChe.getDomainId());
-		boolean ordersToSFTP = false;
-		if (ordersToSFTP) {
-			// This is the PFSWeb variant. 
-			// Not sure if these should go singly.
-			EdiServiceABC theService = getAccumulatingOutputService();
-			if (theService != null) {
-				theService.notifyOrderOnCart(inOrder, inChe);
-			}
+		// This is the PFSWeb variant. 
+		// Not sure if these should go singly.
+		EdiServiceABC theService = getAccumulatingOutputService(inOrder.getFacility());
+		if (theService != null) {
+			theService.notifyOrderOnCart(inOrder, inChe);
 		}
 	}
 
@@ -730,15 +728,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * send what was completed so far by calling notifyOrderCompleteOnCart(wiOrder, wiChe), 
 	 * and trusting that it sends nothing if there are none
 	 */
-	public void notifyRemoveOrderFromCart(OrderHeader inOrder, Che inChe) {
-		boolean ordersToSFTP = false;
+	private void notifyRemoveOrderFromCart(OrderHeader inOrder, Che inChe) {
 		LOGGER.info("Order: {} removed from cart:{}", inOrder.getOrderId(), inChe.getDomainId());
-		if (ordersToSFTP) {
-			// This is the PFSWeb variant. 
-			EdiServiceABC theService = getAccumulatingOutputService();
-			if (theService != null) {
-				theService.notifyOrderRemoveFromCart(inOrder, inChe);
-			}
+		// This is the PFSWeb variant. 
+		EdiServiceABC theService = getAccumulatingOutputService(inOrder.getFacility());
+		if (theService != null) {
+			theService.notifyOrderRemoveFromCart(inOrder, inChe);
 		}
 	}
 	
@@ -746,7 +741,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * During setup, we are really setting up containers, and not orders
 	 * Need to map to the order then notify with order parameter
 	 */
-	public void notifyRemoveOrderFromCart(ContainerUse inUse, Che inChe) {
+	private void notifyRemoveOrderFromCart(ContainerUse inUse, Che inChe) {
 		if (inUse == null || inChe == null){
 			LOGGER.error("null value in notifyRemoveOrderFromCart");
 			return;
@@ -764,7 +759,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	* We completed a work instruction. Where and how shall we send it?
 	* Three choices so far: not at all, to IronMQ, or to SFTP
 	*/
-	public void notifyEdiServiceCompletedWi(WorkInstruction inWi) {
+	private void notifyEdiServiceCompletedWi(WorkInstruction inWi) {
 		// Replace with some selector
 		boolean wisToIronMQ = false;
 		boolean wisToSFTP = true;
@@ -780,7 +775,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		} else if (wisToSFTP) {
 			// This is the PFSWeb variant. Each work instruction is add to the specific EDI service and accumulated, then sent finally
 			// if the order is complete on the cart
-			EdiServiceABC theService = getAccumulatingOutputService();
+			EdiServiceABC theService = getAccumulatingOutputService(inWi.getFacility());
 			if (theService != null) {
 				theService.notifyWiComplete(inWi);
 				// then the slightly tricky part. Did this work instruction result in the order being complete on that cart?
@@ -794,9 +789,13 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 	}
 
-	private EdiServiceABC getAccumulatingOutputService() {
-		// TODO get the SFTP service
-		return null;
+	private EdiServiceABC getAccumulatingOutputService(Facility facility) {
+		SftpWIsEdiService service =  facility.findEdiService(SftpWIsEdiService.class);
+		if (service != null && service.isLinked()) {
+			return service;
+		} else {
+			return null;
+		}
 	}
 
 	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
