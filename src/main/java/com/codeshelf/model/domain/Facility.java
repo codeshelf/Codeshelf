@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
+import com.codeshelf.metrics.ServiceStatusHealthCheck;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.HeaderCounts;
 import com.codeshelf.model.OrderTypeEnum;
@@ -1314,6 +1315,17 @@ public class Facility extends Location {
 		for (Object object : collection) {
 			dao.delete((IDomainObject) object);
 		}
+	}
+	
+	public Collection<IEdiService> getLinkedEdiImportServices() {
+		//TODO only return services that implement import interface
+		ArrayList<IEdiService> importServices = new ArrayList<>();
+		for (IEdiService ediService : getEdiServices()) {
+			if (ediService.getServiceState().equals(EdiServiceStateEnum.LINKED)) {
+				importServices.add(ediService);
+			}
+		}
+		return importServices;
 	}
 
 	@SuppressWarnings("unchecked")

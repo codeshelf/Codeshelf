@@ -33,6 +33,7 @@ import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.validation.BatchResult;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Provider;
 
@@ -82,6 +83,45 @@ public class EdiProcessorTest extends MockDaoTest {
 		ephemeralServices.add(ediProcessorService);
 		ephemeralServices.add(metrics);
 		this.initializeEphemeralServiceManager();
+	}
+
+	@Test
+	public final void facilityProcessingContinuesWithError() {
+		Provider anyProvider = mock(Provider.class);
+
+		EdiProcessorService ediProcessorService = new EdiProcessorService(anyProvider,
+			anyProvider,
+			anyProvider,
+			anyProvider,
+			anyProvider,
+			anyProvider);
+		
+		IEdiService failingService = mock(IEdiService.class);
+		Mockito.when(failingService.getUpdatesFromHost(
+			Mockito.any(ICsvOrderImporter.class),
+			Mockito.any(ICsvOrderLocationImporter.class),
+			Mockito.any(ICsvInventoryImporter.class),
+			Mockito.any(ICsvLocationAliasImporter.class),
+			Mockito.any(ICsvCrossBatchImporter.class),
+			Mockito.any(ICsvAislesFileImporter.class))).thenThrow(new RuntimeException("any"));
+		IEdiService goodService = mock(IEdiService.class);
+		Facility facility = mock(Facility.class);
+		Mockito.when(facility.getLinkedEdiImportServices()).thenReturn(ImmutableList.of(failingService, goodService));
+		ediProcessorService.doEdiForFacility(facility);
+		verifyCalled(goodService);
+		
+	}
+	
+	private void verifyCalled(IEdiService service) {
+		Mockito.verify(service, Mockito.atMost(1)).getUpdatesFromHost(
+			Mockito.any(ICsvOrderImporter.class),
+			Mockito.any(ICsvOrderLocationImporter.class),
+			Mockito.any(ICsvInventoryImporter.class),
+			Mockito.any(ICsvLocationAliasImporter.class),
+			Mockito.any(ICsvCrossBatchImporter.class),
+			Mockito.any(ICsvAislesFileImporter.class)
+			);
+		
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
