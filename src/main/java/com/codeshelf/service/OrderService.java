@@ -182,7 +182,7 @@ public class OrderService implements IApiService {
 				.add(Property.forName("active").eq(true))
 				.setProjection(Projections.projectionList()
 					.add( Projections.property("domainId").as("orderDetailId"))
-					.add( Projections.property("description"))
+					.add( Projections.property("description").as("description"))
 					.add( Projections.property("quantity").as("planQuantity"))
 					.add( Projections.property("status").as("statusEnum"))
 					.add(Projections.property("im.domainId"), "itemId")
