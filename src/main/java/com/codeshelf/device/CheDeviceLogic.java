@@ -382,7 +382,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		mAllPicksWiList = new ArrayList<WorkInstruction>();
 		mActivePickWiList = new ArrayList<WorkInstruction>();
 		mLastScreenDisplayLines = new ArrayList<String>(); // and preinitialize to lines 1-4
-		if (che != null)
+		if (che != null && che.getScannerType() != null)
 			setScannerTypeEnum(che.getScannerType());
 		for (int n = 0; n <= 3; n++) {
 			mLastScreenDisplayLines.add(" ");
