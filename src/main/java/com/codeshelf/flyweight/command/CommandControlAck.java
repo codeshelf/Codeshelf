@@ -34,7 +34,7 @@ public class CommandControlAck extends CommandControlABC {
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private Byte	LQI = 0;
+	private Byte	mLQI = 0;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -61,7 +61,7 @@ public class CommandControlAck extends CommandControlABC {
 	 */
 	@Override
 	protected String doToString() {
-		return "ack num: " + mAckNum + " LQI: " + LQI;
+		return "ack num: " + mAckNum + " LQI: " + getLQI();
 	}
 	
 	/* --------------------------------------------------------------------------
@@ -73,7 +73,7 @@ public class CommandControlAck extends CommandControlABC {
 
 		try {
 			inOutputStream.writeByte(mAckNum);
-			inOutputStream.writeByte(LQI);
+			inOutputStream.writeByte(mLQI);
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -89,7 +89,7 @@ public class CommandControlAck extends CommandControlABC {
 
 		try {
 			mAckNum = inInputStream.readByte();
-			LQI = inInputStream.readByte();
+			mLQI = inInputStream.readByte();
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
