@@ -1320,7 +1320,7 @@ public class Facility extends Location {
 		//TODO only return services that implement import interface
 		ArrayList<IEdiService> importServices = new ArrayList<>();
 		for (IEdiService ediService : getEdiServices()) {
-			if (ediService.getServiceState().equals(EdiServiceStateEnum.LINKED)) {
+			if (ediService.isLinked()) {
 				importServices.add(ediService);
 			}
 		}

@@ -13,13 +13,12 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
-import com.codeshelf.model.EdiServiceStateEnum;
 
 public interface IEdiService extends IDomainObjectTree<Facility> {
 
 	String getServiceName();
 
-	EdiServiceStateEnum getServiceState();
+	boolean isLinked();
 
 	boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,

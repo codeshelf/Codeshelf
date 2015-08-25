@@ -790,7 +790,12 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	}
 
 	private EdiServiceABC getAccumulatingOutputService(Facility facility) {
-		return facility.findEdiService(SftpWIsEdiService.class);
+		SftpWIsEdiService service =  facility.findEdiService(SftpWIsEdiService.class);
+		if (service != null && service.isLinked()) {
+			return service;
+		} else {
+			return null;
+		}
 	}
 
 	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
