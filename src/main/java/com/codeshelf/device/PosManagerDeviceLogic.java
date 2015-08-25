@@ -17,6 +17,7 @@ import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
+import com.codeshelf.model.domain.ScannerTypeEnum;
 
 public class PosManagerDeviceLogic extends PosConDeviceABC {
 	private static final Logger							LOGGER						= LoggerFactory.getLogger(PosManagerDeviceLogic.class);
@@ -331,5 +332,10 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 				PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
 		}
 
+	}
+
+	@Override
+	public byte getScannerTypeCode() {		
+		return ScannerTypeEnum.scannerTypeToByte(ScannerTypeEnum.INVALID);
 	}
 }

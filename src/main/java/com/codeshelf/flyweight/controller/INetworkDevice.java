@@ -201,4 +201,9 @@ public interface INetworkDevice {
 	 */
 	public byte getOutgoingAckId();
 
+	/**
+	 * If this device is a Che type with scanner, get its type.
+	 */
+	byte getScannerTypeCode();
+
 }

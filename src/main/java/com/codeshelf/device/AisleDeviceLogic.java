@@ -30,6 +30,7 @@ import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
+import com.codeshelf.model.domain.ScannerTypeEnum;
 import com.codeshelf.util.CompareNullChecker;
 
 public class AisleDeviceLogic extends DeviceLogicABC {
@@ -488,5 +489,10 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		}
 		LOGGER.info("sent to aisles controller:" + sampleSummary);
 		;
+	}
+
+	@Override
+	public byte getScannerTypeCode() {		
+		return ScannerTypeEnum.scannerTypeToByte(ScannerTypeEnum.INVALID);
 	}
 }

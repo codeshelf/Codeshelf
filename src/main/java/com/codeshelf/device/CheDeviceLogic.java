@@ -37,6 +37,8 @@ import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.ScannerTypeEnum;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.google.common.base.MoreObjects;
@@ -227,6 +229,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	private NetGuid									mLinkedFromCheGuid						= null;
 	
 	private WorkInstruction							verifyWi								= null;
+	
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private ScannerTypeEnum	mScannerTypeEnum = ScannerTypeEnum.ORIGINALSERIAL;
 
 	/**
 	 * We have only one inventory state, not two. Essentially another state by whether or not we think we have a valid
@@ -368,13 +375,15 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	public CheDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final CsDeviceManager inDeviceManager,
-		final IRadioController inRadioController) {
+		final IRadioController inRadioController, Che che) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 
 		mCheStateEnum = CheStateEnum.IDLE;
 		mAllPicksWiList = new ArrayList<WorkInstruction>();
 		mActivePickWiList = new ArrayList<WorkInstruction>();
 		mLastScreenDisplayLines = new ArrayList<String>(); // and preinitialize to lines 1-4
+		if (che != null)
+			setScannerTypeEnum(che.getScannerType());
 		for (int n = 0; n <= 3; n++) {
 			mLastScreenDisplayLines.add(" ");
 		}
@@ -2330,5 +2339,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			deviceType = "PALLETIZER";
 		}
 		sendDisplayCommand("Site " + mDeviceManager.getUsername(), "Device: " + deviceType, EMPTY_MSG, CANCEL_TO_CONTINUE_MSG);
+	}
+
+	@Override
+	public byte getScannerTypeCode() {			
+		return getScannerTypeEnum().getValue();
 	}
 }
