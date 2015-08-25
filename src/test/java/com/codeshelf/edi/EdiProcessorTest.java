@@ -87,8 +87,10 @@ public class EdiProcessorTest extends MockDaoTest {
 
 	@Test
 	public final void facilityProcessingContinuesWithError() {
+		@SuppressWarnings("rawtypes")
 		Provider anyProvider = mock(Provider.class);
 
+		@SuppressWarnings("unchecked")
 		EdiProcessorService ediProcessorService = new EdiProcessorService(anyProvider,
 			anyProvider,
 			anyProvider,
