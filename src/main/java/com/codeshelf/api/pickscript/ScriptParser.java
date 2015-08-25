@@ -114,12 +114,10 @@ public class ScriptParser {
 		int numLines = scriptLines.size();
 		for (int i = 0; i < numLines; i++){
 			line = scriptLines.get(i);
-			System.out.println("Start: " + line);
 			for (String[] variable : variables) {
 				line = line.replaceAll(variable[0], variable[1]);
 			}
 			scriptLines.set(i, line);
-			System.out.println("End  : " + line);
 		}
 		return;
 	}

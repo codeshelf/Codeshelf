@@ -641,7 +641,6 @@ public class ScriptServerRunner {
 		if (parts.length != 2){
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_WAIT_SECONDS);
 		}
-		System.out.println("Pause server script");
 		int seconds = Integer.parseInt(parts[1]);
 		LOGGER.info("Pause server script");
 		Thread.sleep(seconds * 1000); 
