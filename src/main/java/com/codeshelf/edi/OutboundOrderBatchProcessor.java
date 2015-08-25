@@ -1132,7 +1132,11 @@ public class OutboundOrderBatchProcessor implements Runnable {
 			if (result.getQuantity() != null) {
 				// set order change flag
 				this.orderChangeMap.put(inOrder.getOrderId(), true);
-				LOGGER.info("Quantity changed from " + result.getQuantity() + " to " + quantities + " for " + result.getDomainId());
+				// TODO  Error here. The "result" is an OrderDetail, but it is not the real order detail.
+				// This always reported change from 0 to N even if rereading the same file with only one line. 
+				// That is to say, the cache of orderHeaders is ok. But our cache of orderDetails is pretty wrong.
+				// Change to trace so this does not log foolishly. But change back to info with the cache fix.
+				LOGGER.trace("Quantity changed from " + result.getQuantity() + " to " + quantities + " for " + result.getDomainId());
 			}
 			result.setQuantities(quantities);
 		}
