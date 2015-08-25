@@ -138,7 +138,7 @@ public class DropboxService extends EdiServiceABC {
 		boolean result = false;
 
 		// Make sure we believe that we're properly registered with the service before we try to contact it.
-		if (getServiceState().equals(EdiServiceStateEnum.LINKED)) {
+		if (isLinked()) {
 
 			DbxClient client = getClient();
 			if (client != null) {

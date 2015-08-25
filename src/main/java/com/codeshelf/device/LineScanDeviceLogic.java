@@ -21,6 +21,7 @@ import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 
@@ -47,8 +48,8 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	public LineScanDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final CsDeviceManager inDeviceManager,
-		final IRadioController inRadioController) {
-		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
+		final IRadioController inRadioController, Che che) {
+		super(inPersistentId, inGuid, inDeviceManager, inRadioController, che);
 
 		updateConfigurationFromManager();
 		setLastScanedDetailId("");

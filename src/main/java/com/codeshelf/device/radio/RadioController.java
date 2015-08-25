@@ -623,6 +623,8 @@ public class RadioController implements IRadioController {
 					// Clear packet queue
 					packetSchedulerService.clearDevicePacketQueue(foundDevice);
 
+					byte scannerTypeCode = foundDevice.getScannerTypeCode();
+					// Andrew, use this
 					CommandAssocResp assignCmd = new CommandAssocResp(uid,
 						packetIOService.getNetworkId(),
 						foundDevice.getAddress(),

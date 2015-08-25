@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
-import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
@@ -33,6 +32,7 @@ import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.validation.BatchResult;
+import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Provider;
 
@@ -84,6 +84,47 @@ public class EdiProcessorTest extends MockDaoTest {
 		this.initializeEphemeralServiceManager();
 	}
 
+	@Test
+	public final void facilityProcessingContinuesWithError() {
+		@SuppressWarnings("rawtypes")
+		Provider anyProvider = mock(Provider.class);
+
+		@SuppressWarnings("unchecked")
+		EdiProcessorService ediProcessorService = new EdiProcessorService(anyProvider,
+			anyProvider,
+			anyProvider,
+			anyProvider,
+			anyProvider,
+			anyProvider);
+		
+		IEdiService failingService = mock(IEdiService.class);
+		Mockito.when(failingService.getUpdatesFromHost(
+			Mockito.any(ICsvOrderImporter.class),
+			Mockito.any(ICsvOrderLocationImporter.class),
+			Mockito.any(ICsvInventoryImporter.class),
+			Mockito.any(ICsvLocationAliasImporter.class),
+			Mockito.any(ICsvCrossBatchImporter.class),
+			Mockito.any(ICsvAislesFileImporter.class))).thenThrow(new RuntimeException("any"));
+		IEdiService goodService = mock(IEdiService.class);
+		Facility facility = mock(Facility.class);
+		Mockito.when(facility.getLinkedEdiImportServices()).thenReturn(ImmutableList.of(failingService, goodService));
+		ediProcessorService.doEdiForFacility(facility);
+		verifyCalled(goodService);
+		
+	}
+	
+	private void verifyCalled(IEdiService service) {
+		Mockito.verify(service, Mockito.atMost(1)).getUpdatesFromHost(
+			Mockito.any(ICsvOrderImporter.class),
+			Mockito.any(ICsvOrderLocationImporter.class),
+			Mockito.any(ICsvInventoryImporter.class),
+			Mockito.any(ICsvLocationAliasImporter.class),
+			Mockito.any(ICsvCrossBatchImporter.class),
+			Mockito.any(ICsvAislesFileImporter.class)
+			);
+		
+	}
+
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Test
 	public final void ediProcessorTest() {
@@ -99,8 +140,8 @@ public class EdiProcessorTest extends MockDaoTest {
 
 		IEdiService ediServiceLinked = new IEdiService() {
 
-			public EdiServiceStateEnum getServiceState() {
-				return EdiServiceStateEnum.LINKED;
+			public boolean isLinked() {
+				return true;
 			}
 
 			public String getServiceName() {
@@ -215,8 +256,8 @@ public class EdiProcessorTest extends MockDaoTest {
 
 		IEdiService ediServiceUnlinked = new IEdiService() {
 
-			public EdiServiceStateEnum getServiceState() {
-				return EdiServiceStateEnum.UNLINKED;
+			public boolean isLinked() {
+				return false;
 			}
 
 			public String getServiceName() {

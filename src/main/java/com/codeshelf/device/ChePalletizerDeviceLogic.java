@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
+import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.service.PalletizerService.PalletizerInfo;
@@ -34,8 +35,8 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 	public ChePalletizerDeviceLogic(UUID inPersistentId,
 		NetGuid inGuid,
 		CsDeviceManager inDeviceManager,
-		IRadioController inRadioController) {
-		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
+		IRadioController inRadioController, Che che) {
+		super(inPersistentId, inGuid, inDeviceManager, inRadioController, che);
 	}
 	
 	@Override

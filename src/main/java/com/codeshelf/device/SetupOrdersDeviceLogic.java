@@ -134,7 +134,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		final CsDeviceManager inDeviceManager,
 		final IRadioController inRadioController,
 		final Che che) {
-		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
+		super(inPersistentId, inGuid, inDeviceManager, inRadioController, che);
 
 		mPositionToContainerMap = new HashMap<String, String>();
 
