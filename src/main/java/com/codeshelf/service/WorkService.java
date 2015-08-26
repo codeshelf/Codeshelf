@@ -781,7 +781,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 				// then the slightly tricky part. Did this work instruction result in the order being complete on that cart?
 				Che wiChe = inWi.getAssignedChe();
 				OrderHeader wiOrder = inWi.getOrder();
-				if (wiOrder.didOrderCompleteOnCart(wiChe)) {
+				//Housekeeping WIs have null Details and (thus) Orders
+				if (wiOrder != null && wiOrder.didOrderCompleteOnCart(wiChe)) {
 					theService.notifyOrderCompleteOnCart(wiOrder, wiChe);
 				}
 			}
