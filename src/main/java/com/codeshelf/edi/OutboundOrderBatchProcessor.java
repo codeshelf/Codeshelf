@@ -42,7 +42,6 @@ import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
-import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.service.NotificationService;
 import com.codeshelf.util.DateTimeParser;
 import com.codeshelf.util.UomNormalizer;
@@ -110,18 +109,19 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		OutboundOrderBatch batch = importer.getBatchQueue().poll();
 		while (batch != null) {
 			// process batch
-			batch.setProcessingAttempts(batch.getProcessingAttempts() + 1);
+			batch.setProcessingAttempts(batch.getProcessingAttempts() + 1);			
+			
 			LOGGER.info("Worker #" + processorId + " is processing " + batch + " in " + batch.getProcessingAttempts() + ". attempt");
 
 			try {
 				TenantPersistenceService.getInstance().beginTransaction();
-
 				// attach facility to new session
 				Facility facility = Facility.staticGetDao().reload(this.facility);
+				
 
-				itemMasterCache = new DomainObjectCache<ItemMaster>(ItemMaster.staticGetDao());
-				orderHeaderCache = new DomainObjectCache<OrderHeader>(OrderHeader.staticGetDao());
-				locationAliasCache = new DomainObjectCache<LocationAlias>(LocationAlias.staticGetDao());
+				itemMasterCache = new DomainObjectCache<ItemMaster>(ItemMaster.staticGetDao(), "ItemMaster");
+				orderHeaderCache = new DomainObjectCache<OrderHeader>(OrderHeader.staticGetDao(), "OrderHeader");
+				locationAliasCache = new DomainObjectCache<LocationAlias>(LocationAlias.staticGetDao(), "LocationAlias");
 
 				ArrayList<OrderHeader> orderSet = new ArrayList<OrderHeader>();
 
@@ -212,6 +212,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				int lineCount = 1;
 				int count = 1, size = lines.size();
 				for (OutboundOrderCsvBean orderBean : lines) {
+					/*
 					// transform order bean with groovy script, if enabled
 					if (importer.getExtensionPointService().hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation)) {
 						long timeBeforeExtension = System.currentTimeMillis();
@@ -227,6 +228,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 						importer.addToExtensionMsFromTimeBefore(timeBeforeExtension);
 
 					}
+					*/
 					// process order bean
 					try {
 						OrderHeader order = orderCsvBeanImport(orderBean, facility, processTime, count++ + "/" + size);
@@ -554,10 +556,14 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 		// fetch from cache instead of hitting database
 		// result = inFacility.getOrderHeader(inCsvBean.getOrderId());
-		result = this.orderHeaderCache.get(inCsvBean.getOrderId());
+		String orderId = inCsvBean.getOrderId();
+		result = this.orderHeaderCache.get(orderId);
 
 		if (result == null) {
-			LOGGER.debug("Creating new OrderHeader instance for " + inCsvBean.getOrderId() + " , for facility: " + inFacility);
+			if (orderHeaderCache.containsKey(orderId)) {
+				LOGGER.error("{} key in cache, but OrderHeader not retrieved");
+			}
+			LOGGER.info("Creating OrderHeader: {} for facility: {}",orderId, inFacility);
 			result = new OrderHeader(inFacility, inCsvBean.getOrderId(), OrderTypeEnum.OUTBOUND);
 			this.orderHeaderCache.put(result);
 			result.setStatus(OrderStatusEnum.RELEASED);
