@@ -731,8 +731,6 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	 */
 	public boolean didOrderCompleteOnCart(Che wiChe) {
 		List<WorkInstruction> wiList = getWorkInstructionsThisOrderForCart(wiChe);
-		if (wiList == null)
-			return false;
 		boolean foundIncomplete = false;
 		for (WorkInstruction wi : wiList) {
 			WorkInstructionStatusEnum wiStatus = wi.getStatus();
@@ -752,17 +750,16 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	private List<WorkInstruction> getWorkInstructionsThisOrderForCart(Che wiChe) {
 		// What is best, query, or java relations? Or this might be bad for performance, in which case site controller message might be better.
 		List<WorkInstruction> wisThisChe = new ArrayList<WorkInstruction>();
-		List<OrderDetail> details = this.getOrderDetails();
-		if (wiChe == null) {
-			return wisThisChe;
-		}
-		for (OrderDetail detail : details) {
-			List<WorkInstruction> wis = detail.getWorkInstructions();
-			for (WorkInstruction wi : wis) {
-				if (wiChe.equals(wi.getAssignedChe()))
-					wisThisChe.add(wi);
+		if (wiChe != null) {
+			List<OrderDetail> details = this.getOrderDetails();
+			for (OrderDetail detail : details) {
+				List<WorkInstruction> wis = detail.getWorkInstructions();
+				for (WorkInstruction wi : wis) {
+					if (wiChe.equals(wi.getAssignedChe()))
+						wisThisChe.add(wi);
+				}
 			}
 		}
-		return null;
+		return wisThisChe;
 	}
 }
