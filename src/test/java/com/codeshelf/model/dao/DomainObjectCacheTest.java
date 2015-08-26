@@ -17,7 +17,7 @@ public class DomainObjectCacheTest extends HibernateTest {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = this.createFacility();
 		
-		DomainObjectCache<ItemMaster> cache = new DomainObjectCache<ItemMaster>(ItemMaster.staticGetDao());
+		DomainObjectCache<ItemMaster> cache = new DomainObjectCache<ItemMaster>(ItemMaster.staticGetDao(), "ItemMaster");
 		cache.loadAll();
 		Assert.assertEquals(0, cache.size());
 		

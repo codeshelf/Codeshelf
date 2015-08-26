@@ -248,6 +248,8 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	}
 
 	protected ExportReceipt shipOrderCompletedOnCart(OrderHeader inOrder, Che inChe, String contents) {
+		//override in subclass
+
 		return null;
 	}
 

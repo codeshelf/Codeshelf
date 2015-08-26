@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.List;
 
 import com.codeshelf.device.CheStateEnum;
+import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.Item;
@@ -23,6 +24,7 @@ import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.UomMaster;
+import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
@@ -103,16 +105,20 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		commitTransaction();
 	}
 
+	/**
+	 * Reimport with variations 4 times. See assorted warnings.
+	 * In v20, yielding 13 WARN and one ERROR
+	 */
 	@Test
 	public final void testGtinReimport() throws IOException {
 		// initial order import
-		Facility facility = setUpSimpleNoSlotFacility();
+		Facility facility = setUpSimpleNoSlotFacility();		
 
-		LOGGER.info("--1: import orders");
+		LOGGER.info("--1: import orders. Normal item ids");
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin"
 				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,Group1,gtin-1-each"
 				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,Group1,gtin-1-case"
-				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,80,each,Group1,gtin-2";
+				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,80,each,Group1,gtin0000002";
 		beginTransaction();
 		importOrdersData(facility, firstCsvString);
 		commitTransaction();
@@ -121,7 +127,11 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		beginTransaction();
 		facility = facility.reload();
 		List<Gtin> gtinList = Gtin.staticGetDao().getAll();
+		List<ItemMaster> masterList = ItemMaster.staticGetDao().getAll();
+		List<Item> itemList = Item.staticGetDao().getAll();
 		Assert.assertEquals(3, gtinList.size());
+		Assert.assertEquals(2, masterList.size());
+		Assert.assertEquals(0, itemList.size());
 
 		LOGGER.info("1b: look for order 1");
 		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1");
@@ -141,7 +151,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin"
 				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,Group1,gtin-1-each-mod"
 				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,Group1,gtin-1-case"
-				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,80,each,Group1,gtin-2";
+				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,80,each,Group1,gtin0000002";
 		importOrdersData(facility, firstCsvString);
 		commitTransaction();
 
@@ -149,7 +159,13 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		beginTransaction();
 		facility = facility.reload();
 		List<Gtin> gtinList2 = Gtin.staticGetDao().getAll();
+		if (gtinList2.size() != 3)
+			LOGGER.warn("gtins: {}",gtinList2);
 		Assert.assertEquals(3, gtinList2.size());
+		List<ItemMaster> masterList2 = ItemMaster.staticGetDao().getAll();
+		List<Item> itemList2 = Item.staticGetDao().getAll();
+		Assert.assertEquals(2, masterList2.size());
+		Assert.assertEquals(0, itemList2.size());
 
 		LOGGER.info("2c: look at the item1 gtins");
 		h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1");
@@ -168,7 +184,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin"
 				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,Group1,gtin-1-each-mod"
 				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,Group1,gtin-1-case"
-				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,80,case,Group1,gtin-2";
+				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,80,case,Group1,gtin0000002";
 		importOrdersData(facility, firstCsvString);
 		commitTransaction();
 
@@ -177,6 +193,10 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		facility = facility.reload();
 		List<Gtin> gtinList3 = Gtin.staticGetDao().getAll();
 		Assert.assertEquals(3, gtinList3.size());
+		List<ItemMaster> masterList3 = ItemMaster.staticGetDao().getAll();
+		List<Item> itemList3 = Item.staticGetDao().getAll();
+		Assert.assertEquals(2, masterList3.size());
+		Assert.assertEquals(0, itemList3.size());
 
 		LOGGER.info("3c: look at the item2 gtins");
 		h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1");
@@ -195,7 +215,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		facility = facility.reload();
 		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin"
 				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,Group1,gtin-1-case"
-				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item3,,80,case,Group1,gtin-2";
+				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item3,,80,case,Group1,gtin0000002";
 		importOrdersData(facility, firstCsvString);
 		commitTransaction();
 
@@ -204,6 +224,165 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		facility = facility.reload();
 		List<Gtin> gtinList4 = Gtin.staticGetDao().getAll();
 		Assert.assertEquals(3, gtinList4.size());
+		List<ItemMaster> masterList4 = ItemMaster.staticGetDao().getAll();
+		List<Item> itemList4 = Item.staticGetDao().getAll();
+		Assert.assertEquals(3, masterList4.size()); //See: Item3  now instead of Item2, which still exists as a master.
+		Assert.assertEquals(0, itemList4.size());
+
+		LOGGER.info("4c: look at the item3 gtins");
+		h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1");
+		h1_3 = h1.getOrderDetail("103");
+
+		ItemMaster sku_Item3 = h1_3.getItemMaster();
+		Collection<Gtin> sku3Gtins = sku_Item3.getGtins().values();
+		LOGGER.info("sku3 gtins =  {}", sku3Gtins);
+
+		LOGGER.info("4d: what about item2?");
+		sku_Item2 = ItemMaster.staticGetDao().reload(sku_Item2);
+		sku2Gtins = sku_Item2.getGtins().values();
+		LOGGER.info("sku2 gtins =  {}", sku2Gtins);
+
+		commitTransaction();
+
+	}
+
+	/**
+	 * Exactly the same as above, except that the itemId field has internal comma, and we have an extension point to modify it within a bean transform.
+	 * Reimport with variations 4 times. See assorted warnings.
+	 * In v20,  also yielding 13 WARN and one ERROR
+	 */
+	@Test
+	public final void testGtinReimportBeanTransform() throws IOException {
+		// initial order import
+		Facility facility = setUpSimpleNoSlotFacility();		
+		
+		LOGGER.info("--1a: set up order bean transform to deal with commas in the itemId");
+		beginTransaction();
+		String beanText = "def OrderImportBeanTransformation(bean) {" +
+				"\r\n       bean.itemId = bean.itemId.replace(',', '')" +
+				"\r\n   	return bean;" +
+				"\r\n  }";
+		ExtensionPoint beanExtp = new ExtensionPoint(facility, ExtensionPointType.OrderImportBeanTransformation);
+		beanExtp.setActive(true);
+		beanExtp.setScript(beanText);
+		ExtensionPoint.staticGetDao().store(beanExtp);
+		
+		commitTransaction();		
+
+		LOGGER.info("--1b: import orders. The itemId has internal commas");
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin"
+				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,\"Ite,m1\",,70,each,Group1,gtin-1-each"
+				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,\"Ite,m1\",,70,case,Group1,gtin-1-case"
+				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,\"Ite,m2\",,80,each,Group1,gtin0000002";
+		beginTransaction();
+		importOrdersData(facility, firstCsvString);
+		commitTransaction();
+
+		// check gtin
+		beginTransaction();
+		facility = facility.reload();
+		List<Gtin> gtinList = Gtin.staticGetDao().getAll();
+		List<ItemMaster> masterList = ItemMaster.staticGetDao().getAll();
+		List<Item> itemList = Item.staticGetDao().getAll();
+		Assert.assertEquals(3, gtinList.size());
+		Assert.assertEquals(2, masterList.size());
+		Assert.assertEquals(0, itemList.size());
+
+		LOGGER.info("1b: look for order 1");
+		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1");
+		Assert.assertNotNull(h1);
+		OrderDetail d1_1 = h1.getOrderDetail("101");
+		Gtin d1_1_gtin = d1_1.getItemMaster().getGtinForUom(d1_1.getUomMaster());
+		Assert.assertEquals("gtin-1-each", d1_1_gtin.getDomainId());
+		OrderDetail d1_2 = h1.getOrderDetail("102");
+		Gtin d1_2_gtin = d1_2.getItemMaster().getGtinForUom(d1_2.getUomMaster());
+		Assert.assertEquals("gtin-1-case", d1_2_gtin.getDomainId());
+		commitTransaction();
+
+		LOGGER.info("--2: re-import orders, modifying the name of gtin-1-each to gtin-1-mod");
+		LOGGER.info("v17 result is a new gtin, leaving the other. No warning.");
+		beginTransaction();
+		facility = facility.reload();
+		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin"
+				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,\"Ite,m1\",,70,each,Group1,gtin-1-each-mod"
+				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,\"Ite,m1\",,70,case,Group1,gtin-1-case"
+				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,\"Ite,m2\",,80,each,Group1,gtin0000002";
+		importOrdersData(facility, firstCsvString);
+		commitTransaction();
+
+		LOGGER.info("2b: count gtins. Did we modify one, or make new one?");
+		beginTransaction();
+		facility = facility.reload();
+		List<Gtin> gtinList2 = Gtin.staticGetDao().getAll();
+		if (gtinList2.size() != 3)
+			LOGGER.warn("gtins: {}",gtinList2);
+		Assert.assertEquals(3, gtinList2.size());
+		List<ItemMaster> masterList2 = ItemMaster.staticGetDao().getAll();
+		List<Item> itemList2 = Item.staticGetDao().getAll();
+		Assert.assertEquals(2, masterList2.size());
+		Assert.assertEquals(0, itemList2.size());
+
+		LOGGER.info("2c: look at the item1 gtins");
+		h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1");
+		d1_1 = h1.getOrderDetail("101");
+
+		ItemMaster sku_Item1 = d1_1.getItemMaster();
+		Collection<Gtin> sku1Gtins = sku_Item1.getGtins().values();
+		LOGGER.info("sku1 gtins =  {}", sku1Gtins);
+
+		commitTransaction();
+
+		LOGGER.info("--3a: re-import orders, modifying gtin2 to a different uom");
+		LOGGER.info("v17 result leaving the original gtin as it was. There is a WARN");
+		beginTransaction();
+		facility = facility.reload();
+		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin"
+				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,\"Ite,m1\",,70,each,Group1,gtin-1-each-mod"
+				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,\"Ite,m1\",,70,case,Group1,gtin-1-case"
+				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,\"Ite,m2\",,80,case,Group1,gtin0000002";
+		importOrdersData(facility, firstCsvString);
+		commitTransaction();
+
+		LOGGER.info("3b: count gtins. Did we modify one, or make new one?");
+		beginTransaction();
+		facility = facility.reload();
+		List<Gtin> gtinList3 = Gtin.staticGetDao().getAll();
+		Assert.assertEquals(3, gtinList3.size());
+		List<ItemMaster> masterList3 = ItemMaster.staticGetDao().getAll();
+		List<Item> itemList3 = Item.staticGetDao().getAll();
+		Assert.assertEquals(2, masterList3.size());
+		Assert.assertEquals(0, itemList3.size());
+
+		LOGGER.info("3c: look at the item2 gtins");
+		h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1");
+		OrderDetail h1_3 = h1.getOrderDetail("103");
+
+		ItemMaster sku_Item2 = h1_3.getItemMaster();
+		Collection<Gtin> sku2Gtins = sku_Item2.getGtins().values();
+		LOGGER.info("sku2 gtins =  {}", sku2Gtins);
+
+		commitTransaction();
+
+		LOGGER.info("--4a: re-import orders, modifying gtin2 to a different SKU");
+		LOGGER.info("v17 result leaving the original gtin as it was. There is no WARN");
+		LOGGER.info("and in v17, the one gtin is in both item2 and item3 master list of gtins");
+		beginTransaction();
+		facility = facility.reload();
+		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin"
+				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,\"Ite,m1\",,70,case,Group1,gtin-1-case"
+				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,\"Ite,m3\",,80,case,Group1,gtin0000002";
+		importOrdersData(facility, firstCsvString);
+		commitTransaction();
+
+		LOGGER.info("4b: count gtins. Did we modify one, or make new one?");
+		beginTransaction();
+		facility = facility.reload();
+		List<Gtin> gtinList4 = Gtin.staticGetDao().getAll();
+		Assert.assertEquals(3, gtinList4.size());
+		List<ItemMaster> masterList4 = ItemMaster.staticGetDao().getAll();
+		List<Item> itemList4 = Item.staticGetDao().getAll();
+		Assert.assertEquals(3, masterList4.size()); //See: Item3  now instead of Item2, which still exists as a master.
+		Assert.assertEquals(0, itemList4.size());
 
 		LOGGER.info("4c: look at the item3 gtins");
 		h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1");

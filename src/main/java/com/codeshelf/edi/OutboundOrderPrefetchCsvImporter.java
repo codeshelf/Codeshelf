@@ -242,11 +242,30 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		int numOrders = 0;
 		int numLineItems = 0;
 
-		List<OutboundOrderCsvBean> list = toCsvBean(inCsvReader, OutboundOrderCsvBean.class);
+		List<OutboundOrderCsvBean> originalBeanList = toCsvBean(inCsvReader, OutboundOrderCsvBean.class);
 
-		if (list.size() == 0) {
+		if (originalBeanList.size() == 0) {
 			LOGGER.info("Nothing to process.  Order file is empty.");
 			return null;
+		}
+
+		// From v20 DEV-1075
+		// We need to run the order bean transforms before doing any caching or even assembling orderIds, gtins, etc. 
+		if (getExtensionPointService().hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation)) {
+			long timeBeforeExtension = System.currentTimeMillis();
+			for (OutboundOrderCsvBean orderBean : originalBeanList) {
+				// transform order bean with groovy script, if enabled
+				if (getExtensionPointService().hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation)) {
+					Object[] params = { orderBean };
+					try {
+						orderBean = (OutboundOrderCsvBean) getExtensionPointService().eval(ExtensionPointType.OrderImportBeanTransformation,
+							params);
+					} catch (Exception e) {
+						LOGGER.error("Failed to evaluate OrderImportBeanTransformation extension point", e);
+					}
+				}
+			}
+			addToExtensionMsFromTimeBefore(timeBeforeExtension);
 		}
 
 		// instead of processing all order line items in one transaction,
@@ -258,7 +277,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		Set<String> orderGroupIds = new HashSet<String>();
 		Map<String, OutboundOrderBatch> orderBatches = new HashMap<String, OutboundOrderBatch>();
 		//For readability, the first non-header line is indexed "2"
-		for (OutboundOrderCsvBean orderBean : list) {
+		for (OutboundOrderCsvBean orderBean : originalBeanList) {
 			String orderId = orderBean.orderId;
 			orderIds.add(orderId);
 			String orderGroupId = orderBean.getOrderGroupId();
