@@ -68,7 +68,6 @@ public class TestingResource {
 			createOrders(facility, order1, order2);
 			persistence.commitTransaction();
 
-			System.out.println("Orders created");
 			Thread.sleep(6000);
 
 			persistence.beginTransaction();
@@ -84,9 +83,7 @@ public class TestingResource {
 			facility = Facility.staticGetDao().findByPersistentId(facilityUUID.getValue());
 			WorkList workList = workService.computeWorkInstructions(che, containers);
 			List<WorkInstruction> instructions = workList.getInstructions();
-			System.out.println("*****************Got " + instructions.size() + " instructions");
 			persistence.commitTransaction();
-			System.out.println("Assigned to CHE");
 
 			int i = 0;
 			for(WorkInstruction instruction : instructions) {
@@ -99,7 +96,6 @@ public class TestingResource {
 				}
 				workService.completeWorkInstruction(che.getPersistentId(), instruction);
 				Thread.sleep(2000);
-				System.out.println("Complete Instruction");
 				persistence.commitTransaction();
 			}
 			return BaseResponse.buildResponse("Test orders created and ran.");

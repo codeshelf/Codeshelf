@@ -728,6 +728,7 @@ public class RadioController implements IRadioController {
 		// The controller doesn't need to process these sub-commands.
 	}
 
+	@SuppressWarnings("unused")
 	private void processAckPacket(IPacket ackPacket) {
 		INetworkDevice device = null;
 		

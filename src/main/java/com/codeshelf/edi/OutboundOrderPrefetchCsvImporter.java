@@ -116,6 +116,9 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		}
 
 		BatchResult<Object> batchResult = new BatchResult<Object>();
+		batchResult.setReceived(new Date(startTime));
+		batchResult.setStarted(new Date(startTime));
+		batchResult.setCompleted(new Date(startTime));
 
 		// Get our LOCAPICK and SCANPICK configuration values. It will not change during importing one file.
 		this.locaPick = PropertyService.getInstance().getBooleanPropertyFromConfig(facility, DomainObjectProperty.LOCAPICK);
@@ -151,6 +154,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 					addToExtensionMsFromTimeBefore(timeBeforeExtension);
 				} catch (Exception e) {
 					LOGGER.error("Extension failed to supply order file header", e);
+					batchResult.addViolation("OrderImportCreateHeader Script", null, e.getMessage());
 					return batchResult;
 				}
 			}
@@ -177,6 +181,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 					buffer.append(transformedHeader);
 				} catch (Exception e) {
 					LOGGER.error("Failed to transform order file header", e);
+					batchResult.addViolation("OrderImportHeaderTransformation Script", null, e.getMessage());
 					return batchResult;
 				}
 			} else {
@@ -210,6 +215,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 					}
 				} catch (Exception e) {
 					LOGGER.error("Exception during OrderImportLineTransformation", e);
+					batchResult.addViolation("OrderImportLineTransformation Script", null, e.getMessage());
 					return batchResult;
 				}
 			} else {
@@ -236,11 +242,30 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		int numOrders = 0;
 		int numLineItems = 0;
 
-		List<OutboundOrderCsvBean> list = toCsvBean(inCsvReader, OutboundOrderCsvBean.class);
+		List<OutboundOrderCsvBean> originalBeanList = toCsvBean(inCsvReader, OutboundOrderCsvBean.class);
 
-		if (list.size() == 0) {
+		if (originalBeanList.size() == 0) {
 			LOGGER.info("Nothing to process.  Order file is empty.");
 			return null;
+		}
+
+		// From v20 DEV-1075
+		// We need to run the order bean transforms before doing any caching or even assembling orderIds, gtins, etc. 
+		if (getExtensionPointService().hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation)) {
+			long timeBeforeExtension = System.currentTimeMillis();
+			for (OutboundOrderCsvBean orderBean : originalBeanList) {
+				// transform order bean with groovy script, if enabled
+				if (getExtensionPointService().hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation)) {
+					Object[] params = { orderBean };
+					try {
+						orderBean = (OutboundOrderCsvBean) getExtensionPointService().eval(ExtensionPointType.OrderImportBeanTransformation,
+							params);
+					} catch (Exception e) {
+						LOGGER.error("Failed to evaluate OrderImportBeanTransformation extension point", e);
+					}
+				}
+			}
+			addToExtensionMsFromTimeBefore(timeBeforeExtension);
 		}
 
 		// instead of processing all order line items in one transaction,
@@ -252,7 +277,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		Set<String> orderGroupIds = new HashSet<String>();
 		Map<String, OutboundOrderBatch> orderBatches = new HashMap<String, OutboundOrderBatch>();
 		//For readability, the first non-header line is indexed "2"
-		for (OutboundOrderCsvBean orderBean : list) {
+		for (OutboundOrderCsvBean orderBean : originalBeanList) {
 			String orderId = orderBean.orderId;
 			orderIds.add(orderId);
 			String orderGroupId = orderBean.getOrderGroupId();
@@ -342,8 +367,6 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		this.endTime = System.currentTimeMillis();
 		LOGGER.info("spent {} ms doing extensions", spentDoingExtensionsMs);
 
-		batchResult.setReceived(new Date(startTime));
-		batchResult.setStarted(new Date(startTime));
 		batchResult.setCompleted(new Date(endTime));
 		batchResult.setOrdersProcessed(numOrders);
 		batchResult.setLinesProcessed(numLineItems);
