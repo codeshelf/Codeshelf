@@ -631,16 +631,12 @@ public class FacilityResource {
 			UUID id = UUID.randomUUID();
 			ScriptMessage scriptMessage = new ScriptMessage(id, part.getScriptLines());
 			webSocketManagerService.sendMessage(users, scriptMessage);
+			persistence.commitTransaction();
 			ScriptMessage siteResponseMessage = ScriptSiteCallPool.waitForSiteResponse(id, timeoutMin);
 			if (siteResponseMessage == null) {
 				errorMesage.setMessageError("Site request timed out");
 				return errorMesage; 
 			}
-			if (!siteResponseMessage.isSuccess()) {
-				errorMesage.setMessageError(siteResponseMessage.getError());
-				return errorMesage;
-			}
-			persistence.commitTransaction();
 			return siteResponseMessage;
 		} catch (Exception e) {
 			persistence.rollbackTransaction();

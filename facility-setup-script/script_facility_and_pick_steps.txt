@@ -3,6 +3,7 @@
 var :site		5000
 var :channel	8
 var :che1 		0x0000009B
+var :che2 		0x000001D9
 var :chePall	0x000000A3
 var :contr1 	0x00000064
 
@@ -27,9 +28,9 @@ setController LocX26   lights  0x000000AB 1 tiersInAisle
 setController A3.B1.T1 poscons 0x000000AA 1 tiersInAisle
 setPosconToBay A3.B3 0x000000AA 98 A3.B4 0x000000AA 99 A1.B2 0x000000DB 11 A2.B2 0x000000DB 1
 setPoscons A3.B1.T1 1 forward A3.B2.T1 5 forward A3.B3.T1 9 forward A3.B4.T1 13 forward
-createChe 0x000000A4 blue LINE_SCAN
-createChe 0x000000C8 magenta SETUP_ORDERS CHE_B
-createChe :che1 green SETUP_ORDERS CHE_A
+createChe 0x000000A4 blue LINE_SCAN CHE_A4 CODECORPS3600
+createChe :che1 green SETUP_ORDERS CHE_A ORIGINALSERIAL
+createChe :che2 cyan SETUP_ORDERS CHE_B
 createChe :chePall orange PALLETIZER CHE_C
 deleteAllPaths
 defPath p1 - 2.82 5.40 5.19 5.40 - 5.19 5.40 5.19 6.40 - 5.19 6.40 2.77 6.40
@@ -38,10 +39,16 @@ assignPathSgmToAisle p1 0 A1
 assignPathSgmToAisle p1 2 A2
 assignPathSgmToAisle p2 0 A3
 assignTapeToTier 0007 A1.B2.T1 0027 A2.B1.T1 000X A2.B2.T1
-deleteExtensionPoint OrderImportLineTransformation
+deleteExtensionPoint OrderOnCartContent
+deleteExtensionPoint WorkInstructionExportCreateHeader
+deleteExtensionPoint WorkInstructionExportCreateTrailer
+deleteExtensionPoint WorkInstructionExportContent
 deleteExtensionPoint OrderImportBeanTransformation
-addExtensionPoint extensionLine OrderImportLineTransformation active
+deleteExtensionPoint OrderImportCreateHeader
+deleteExtensionPoint OrderImportLineTransformation
 addExtensionPoint extensionBean OrderImportBeanTransformation inactive
+addExtensionPoint extensionLine OrderImportLineTransformation inactive
+
 
 SERVER
 importInventory inventory

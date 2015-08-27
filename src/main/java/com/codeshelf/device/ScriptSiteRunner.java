@@ -484,14 +484,14 @@ public class ScriptSiteRunner {
 		states.add(CheStateEnum.SETUP_SUMMARY);
 		states.add(CheStateEnum.DO_PICK);
 		states.add(CheStateEnum.SCAN_SOMETHING);
-		che.waitForCheStates(states, WAIT_TIMEOUT);
+		che.waitForCheStates(states, 15000);
 		CheStateEnum state = che.getCurrentCheState();
 		
 		//If CHE is in a Review stage, scan START again to advance to Pick stage
 		if (state == CheStateEnum.SETUP_SUMMARY){
 			Thread.sleep(pickPauseMs);
 			che.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-			che.waitForCheStates(states, WAIT_TIMEOUT);
+			che.waitForCheStates(states, 15000);
 		}
 		
 		state = che.getCurrentCheState();

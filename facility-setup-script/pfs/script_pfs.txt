@@ -1,0 +1,36 @@
+var :che1	0x0000009B
+var :che2	0x000001D9
+
+STEP Import Orders
+SERVER
+deleteExtensionPoint OrderOnCartContent
+deleteExtensionPoint WorkInstructionExportCreateHeader
+deleteExtensionPoint WorkInstructionExportCreateTrailer
+deleteExtensionPoint WorkInstructionExportContent
+deleteExtensionPoint OrderImportBeanTransformation
+deleteExtensionPoint OrderImportCreateHeader
+deleteExtensionPoint OrderImportLineTransformation
+addExtensionPoint pfs_orderOnCartContent OrderOnCartContent active
+addExtensionPoint pfs_wi_exportCreateHeader WorkInstructionExportCreateHeader active
+addExtensionPoint pfs_wi_exportCreateTrailer WorkInstructionExportCreateTrailer active
+addExtensionPoint pfs_wi_exportContent WorkInstructionExportContent active
+addExtensionPoint pfs_order_importbean OrderImportBeanTransformation active
+addExtensionPoint pfs_order_createheader OrderImportCreateHeader active
+addExtensionPoint pfs_order_importline OrderImportLineTransformation active
+deleteOrders 26688061 26688062 26688163 26688064 26688077 26688078 26688237 26688238 26688244
+importOrders 1213226
+importOrders 1213228
+importOrders 1213233
+importOrders 1213252
+importOrders 1213257
+
+SITE
+waitForDevices :che1 :che2
+defChe che1 :che1
+defChe che2 :che2
+logout che1 che2
+loginSetup che1 Ilya1
+loginSetup che2 Ilya1
+setupCart che1 26688061 26688062 26688163 26688064
+setupCart che2 26688077 26688078 26688237 26688238 26688244
+pickAll
