@@ -89,15 +89,14 @@ public class DomainObjectCache<T extends DomainObjectABC> {
 			crit.addOrder(Property.forName("updated").desc());
 		}
 		crit.setMaxResults(maxPrefetchSize);
-		List<T> list = dao.findByCriteriaQuery(crit);		
+		List<T> list = dao.findByCriteriaQuery(crit);
 		for (T item : list) {
 			objectCache.put(item.getDomainId(), item);
 		}
 		// Looking for possible object cache bugs. If absolutely nothing, it might be reasonable--only new domainIds in the file.
 		if (objectCache.size() == 0) {
-			Object exampleDomainId[] = domainIds.toArray();
-			LOGGER.warn("domainIds include {}. None in the database?", exampleDomainId[0]);
-			}
+			LOGGER.warn("{} cache: None loaded from database.", this.getCacheName());
+		}
 	}
 
 	public T get(String domainId) {
