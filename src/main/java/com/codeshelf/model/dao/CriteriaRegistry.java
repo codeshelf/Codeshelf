@@ -13,6 +13,7 @@ public class CriteriaRegistry {
 	public static final String	ALL_BY_PARENT	= "allByParent";
 	public static final String	ALL_ACTIVE_BY_PARENT	= "allActiveByParent";
 	private static final int	HIGH_MAX_RECORDS	= 5000;
+	private static final int	MED_MAX_RECORDS	= 2000;
 
 
 	private Map<String, TypedCriteria> indexedCriteria;
@@ -105,15 +106,17 @@ public class CriteriaRegistry {
 				"facilityId", UUID.class,
 				"locationId", UUID.class));
 
-		indexedCriteria.put("itemsByFacilityAndSku",
-			new TypedCriteria("from Item where parent.parent.persistentId = :facilityId and active = true and parent.domainId = :sku",
-				"facilityId", UUID.class,
-				"sku", String.class));
+		TypedCriteria  itemsByFacilityAndSku = new TypedCriteria("from Item where parent.parent.persistentId = :facilityId and active = true and parent.domainId = :sku",
+			"facilityId", UUID.class,
+			"sku", String.class);
+		itemsByFacilityAndSku.setMaxRecords(MED_MAX_RECORDS);
+		indexedCriteria.put("itemsByFacilityAndSku", itemsByFacilityAndSku);
 
-		indexedCriteria.put("itemsByFacilityAndGtin",
-			new TypedCriteria("from Item where parent.parent.persistentId = :facilityId and active = true and parent.persistentId = :itemMaster",
-				"facilityId", UUID.class,
-				"itemMaster", UUID.class).addEqualsRestriction("uomMaster.persistentId", "uomMaster", UUID.class));
+		TypedCriteria  itemsByFacilityAndGtin = new TypedCriteria("from Item where parent.parent.persistentId = :facilityId and active = true and parent.persistentId = :itemMaster",
+			"facilityId", UUID.class,
+			"itemMaster", UUID.class).addEqualsRestriction("uomMaster.persistentId", "uomMaster", UUID.class);
+		itemsByFacilityAndGtin.setMaxRecords(MED_MAX_RECORDS);
+		indexedCriteria.put("itemsByFacilityAndGtin", itemsByFacilityAndGtin);
 
 		indexedCriteria.put("tiersByFacility",
 			new TypedCriteria("from Tier where parent.parent.parent.persistentId = :facilityId and active = true",
@@ -165,10 +168,11 @@ public class CriteriaRegistry {
 			new TypedCriteria("from OrderHeader where active = true and orderGroup.persistentId = :theId and orderType = :orderType",
 				"theId", UUID.class, //the UI dynamically sets the "parent" with theId
 				"orderType", OrderTypeEnum.class));
-
-		indexedCriteria.put("gtinsByFacility",
-			new TypedCriteria("from Gtin where parent.parent.persistentId = :facilityId",
-				"facilityId", UUID.class));
+		
+		TypedCriteria  gtinsByFacility = new TypedCriteria("from Gtin where parent.parent.persistentId = :facilityId",
+			"facilityId", UUID.class);
+			gtinsByFacility.setMaxRecords(MED_MAX_RECORDS);
+		indexedCriteria.put("gtinsByFacility", gtinsByFacility);
 
 		indexedCriteria.put("orderLocationByFacility",
 			new TypedCriteria("from OrderLocation where active = true and parent.parent.persistentId = :facilityId",
