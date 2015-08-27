@@ -116,6 +116,9 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		}
 
 		BatchResult<Object> batchResult = new BatchResult<Object>();
+		batchResult.setReceived(new Date(startTime));
+		batchResult.setStarted(new Date(startTime));
+		batchResult.setCompleted(new Date(startTime));
 
 		// Get our LOCAPICK and SCANPICK configuration values. It will not change during importing one file.
 		this.locaPick = PropertyService.getInstance().getBooleanPropertyFromConfig(facility, DomainObjectProperty.LOCAPICK);
@@ -151,6 +154,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 					addToExtensionMsFromTimeBefore(timeBeforeExtension);
 				} catch (Exception e) {
 					LOGGER.error("Extension failed to supply order file header", e);
+					batchResult.addViolation("OrderImportCreateHeader Script", null, e.getMessage());
 					return batchResult;
 				}
 			}
@@ -177,6 +181,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 					buffer.append(transformedHeader);
 				} catch (Exception e) {
 					LOGGER.error("Failed to transform order file header", e);
+					batchResult.addViolation("OrderImportHeaderTransformation Script", null, e.getMessage());
 					return batchResult;
 				}
 			} else {
@@ -210,6 +215,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 					}
 				} catch (Exception e) {
 					LOGGER.error("Exception during OrderImportLineTransformation", e);
+					batchResult.addViolation("OrderImportLineTransformation Script", null, e.getMessage());
 					return batchResult;
 				}
 			} else {
@@ -361,8 +367,6 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		this.endTime = System.currentTimeMillis();
 		LOGGER.info("spent {} ms doing extensions", spentDoingExtensionsMs);
 
-		batchResult.setReceived(new Date(startTime));
-		batchResult.setStarted(new Date(startTime));
 		batchResult.setCompleted(new Date(endTime));
 		batchResult.setOrdersProcessed(numOrders);
 		batchResult.setLinesProcessed(numLineItems);

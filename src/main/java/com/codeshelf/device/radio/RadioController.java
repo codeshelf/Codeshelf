@@ -901,7 +901,8 @@ public class RadioController implements IRadioController {
 		boolean done = false;
 		boolean wentAround = false;
 		while (!done) {
-			if (!mDeviceNetAddrMap.containsKey(returnByte))
+			// Do not allow a device to have the net address 255 which is used as the broadcast address!
+			if ((returnByte != (byte)255) && (!mDeviceNetAddrMap.containsKey(returnByte)))
 				done = true;
 			else {
 				// we would like unsigned byte
@@ -929,7 +930,7 @@ public class RadioController implements IRadioController {
 			// If the device has no address then assign one.
 			if ((inNetworkDevice.getAddress() == null) || (inNetworkDevice.getAddress().equals(mServerAddress))) {
 				byte netAddressToUse = getBestNetAddressForDevice(inNetworkDevice);
-				LOGGER.info("adding network address " + netAddressToUse);
+				LOGGER.info("Adding device with network address: {} ", netAddressToUse & 0xFF);
 				inNetworkDevice.setAddress(new NetAddress(netAddressToUse));
 				// inNetworkDevice.setAddress(new NetAddress(mNextAddress++));
 			}
