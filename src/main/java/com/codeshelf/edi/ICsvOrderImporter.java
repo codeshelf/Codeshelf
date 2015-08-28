@@ -23,6 +23,8 @@ public interface ICsvOrderImporter {
 	// here for easier testablity
 	int toInteger(final String inString);
 	
+	void setTruncatedGtins(boolean value);
+	
 	void persistDataReceipt(Facility facility, String username, String filename, long receivedTime,  BatchResult<?> result);
 
 }

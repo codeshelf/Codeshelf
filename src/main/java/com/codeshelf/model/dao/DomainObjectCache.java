@@ -17,33 +17,48 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.DomainObjectABC;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.ItemMaster;
 
 public class DomainObjectCache<T extends DomainObjectABC> {
 
-	private static final Logger	LOGGER			= LoggerFactory.getLogger(DomainObjectCache.class);
+	private static final Logger	LOGGER					= LoggerFactory.getLogger(DomainObjectCache.class);
 
 	@Getter
 	@Setter
-	int							maxPrefetchSize	= 10000;
+	int							maxPrefetchSize			= 10000;
 
 	@Getter
 	@Setter
-	boolean						fetchOnMiss		= true;
+	boolean						fetchOnMiss				= true;
 
-	Map<String, T>				objectCache		= new HashMap<String, T>();
+	Map<String, T>				objectCache				= new HashMap<String, T>();
 
 	final ITypedDao<T>			dao;
 
-	IDomainObject				parent			= null;
+	IDomainObject				parent					= null;
 
 	@Getter
-	String						cacheName		= null;
+	String						cacheName				= null;
 
-	public DomainObjectCache(ITypedDao<T> dao, String inCacheName) {
+	boolean						grandparentIsFacility	= false;
+
+	@Setter
+	boolean						requiresEntireDBInCache	= false;
+
+	@Getter
+	Facility					facility				= null;
+
+	public DomainObjectCache(ITypedDao<T> dao, String inCacheName, Facility facility) {
 		this.dao = dao;
 		this.cacheName = inCacheName;
+		this.facility = facility;
+		if (this.dao.getDaoClass().equals(Gtin.class)) {
+			grandparentIsFacility = true;
+		}
+
 	}
 
 	/**
@@ -56,12 +71,23 @@ public class DomainObjectCache<T extends DomainObjectABC> {
 			return objectCache.containsKey(inKey);
 	}
 
+	/**
+	 * Calls through to its Map
+	 */
+	public Collection<T> values() {
+		if (objectCache == null)
+			return null;
+		else
+			return objectCache.values();
+	}
+
 	public void loadAll() {
 		Criteria crit = this.dao.createCriteria();
 		if (this.dao.getDaoClass().equals(ItemMaster.class)) {
 			crit.addOrder(Property.forName("updated").desc());
 		}
-		crit.setMaxResults(maxPrefetchSize);
+		if (!this.requiresEntireDBInCache) // certainly, if the entire DB is needed (gtin case for accu), don't limit it.
+			crit.setMaxResults(maxPrefetchSize);
 		List<T> list = dao.findByCriteriaQuery(crit);
 		for (T item : list) {
 			objectCache.put(item.getDomainId(), item);
@@ -69,18 +95,35 @@ public class DomainObjectCache<T extends DomainObjectABC> {
 	}
 
 	public void load(IDomainObject parent) {
-		load(parent, null);
+		if (grandparentIsFacility) {
+			LOGGER.error("load(parent) not yet supported for grandparent DomainObjectCache");
+			// not too hard to support, but need to do a query.
+		} else {
+			load(parent, null);
+		}
 	}
 
 	public void load(IDomainObject parent, Set<String> domainIds) {
 		if (domainIds == null || domainIds.size() == 0) {
-			// nothing to load
+			// nothing to load. Nothing will be queried for
 			return;
 		}
+		
+		if (this.requiresEntireDBInCache) {
+			loadAll();
+			return;
+		}
+		
 		this.parent = parent;
 		UUID persistentId = parent.getPersistentId();
 		Criteria crit = this.dao.createCriteria();
-		crit.add(Restrictions.eq("parent.persistentId", persistentId));
+		if (grandparentIsFacility) {
+			crit.createAlias("parent", "p");
+			crit.add(Restrictions.eq("p.parent.persistentId", persistentId));
+			// crit.add(Restrictions.eq("parent.parent.persistentId", persistentId)); this does not work
+		} else {
+			crit.add(Restrictions.eq("parent.persistentId", persistentId));
+		}
 		crit.add(Restrictions.in("domainId", domainIds));
 		// little bit of a hack: sort by update time stamp for item
 		// master to implement LRU prefetching.  would be better to have 
@@ -103,7 +146,17 @@ public class DomainObjectCache<T extends DomainObjectABC> {
 		T obj = this.objectCache.get(domainId);
 		if (obj == null && this.fetchOnMiss) {
 			// try to retrieve from database on miss
-			obj = this.dao.findByDomainId(this.parent, domainId);
+			if (grandparentIsFacility) {
+				Criteria crit = this.dao.createCriteria();
+				crit.createAlias("parent", "p");
+				crit.add(Restrictions.eq("p.parent.persistentId", getFacilityPersistentId()));
+				crit.add(Restrictions.eq("domainId", domainId));
+				List<T> list = dao.findByCriteriaQuery(crit);
+				if (list.size() == 1)
+					obj = list.get(0);
+			} else {
+				obj = this.dao.findByDomainId(this.parent, domainId);
+			}
 			if (obj != null) {
 				// add to cache
 				objectCache.put(obj.getDomainId(), obj);
@@ -114,6 +167,10 @@ public class DomainObjectCache<T extends DomainObjectABC> {
 			}
 		}
 		return obj;
+	}
+
+	private Object getFacilityPersistentId() {
+		return getFacility().getPersistentId();
 	}
 
 	public void put(T obj) {

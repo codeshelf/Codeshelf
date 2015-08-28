@@ -42,7 +42,10 @@ public class InventoryService implements IApiService {
 		this.lightService = inLightService;
 	}
 
-	public InventoryUpdateResponse moveOrCreateInventory(String inGtin, String inLocation, UUID inChePersistentId, String activeSkuWall) {
+	public InventoryUpdateResponse moveOrCreateInventory(String inGtin,
+		String inLocation,
+		UUID inChePersistentId,
+		String activeSkuWall) {
 		// At this point, inLocation may be a location name (usually alias), or if a tape Id, it still has the % prefix
 
 		LOGGER.info("moveOrCreateInventory called for gtin:{}, location:{}", inGtin, inLocation);
@@ -70,28 +73,30 @@ public class InventoryService implements IApiService {
 		}
 
 		Location location = findLocation(facility, inLocation);
-		
+
 		//If the Inventory process in performed while putting a new item into the Sku wall, do not permit placement into other waklls (CD_0099B)
 		if (activeSkuWall != null) {
 			Location wallLocation = findLocation(facility, activeSkuWall);
 			if (wallLocation.equals(facility)) {
 				LOGGER.error("Could not locate wall {} (optional parameter)", activeSkuWall);
-				response.appendStatusMessage("moveOrCreateInventory ERROR: Could not locate wall " + activeSkuWall + " (optional parameter).");
+				response.appendStatusMessage("moveOrCreateInventory ERROR: Could not locate wall " + activeSkuWall
+						+ " (optional parameter).");
 				response.setFoundGtin(false);
 				response.setFoundLocation(false);
 				response.setStatus(ResponseStatus.Fail);
-				return response;				
+				return response;
 			}
 			if (!wallLocation.hasDescendant(location)) {
 				LOGGER.error("Location {} is not within wall {}", inLocation, activeSkuWall);
-				response.appendStatusMessage("moveOrCreateInventory ERROR: Location " + inLocation + " is not within wall " + activeSkuWall);
+				response.appendStatusMessage("moveOrCreateInventory ERROR: Location " + inLocation + " is not within wall "
+						+ activeSkuWall);
 				response.setFoundGtin(false);
 				response.setFoundLocation(false);
 				response.setStatus(ResponseStatus.Fail);
 				return response;
 			}
 		}
-		
+
 		int cmFromLeft = 0;
 		if (location.equals(facility)) {
 			LOGGER.warn("Move request from CHE: {} for GTIN: {} could not resolve location: {}. Using facility as location.",
@@ -121,7 +126,6 @@ public class InventoryService implements IApiService {
 			String guessedUom = guessUomForItem(inGtin, facility);
 			uomMaster = upsertUomMaster(guessedUom, facility);
 
-
 			try {
 				itemMaster = createItemMaster(inGtin, facility, createTime, uomMaster);
 			} catch (DaoException e) {
@@ -134,7 +138,11 @@ public class InventoryService implements IApiService {
 			gtin = itemMaster.createGtin(inGtin, uomMaster);
 			if (gtin != null) {
 				LOGGER.info("Created new gtin:{} for sku:{}/{}", gtin.getGtin(), itemMaster.getItemId(), uomMaster.getUomMasterId());
-				Gtin.staticGetDao().store(gtin);
+				try {
+					Gtin.staticGetDao().store(gtin);
+				} catch (DaoException e) {
+					LOGGER.error("Unable to store new GTIN: {}", gtin, e);
+				}
 			} else {
 				LOGGER.error("Was unable to create GTIN for GTIN: {}", inGtin);
 				response.appendStatusMessage(" Could not create GTIN: " + inGtin);
@@ -316,14 +324,13 @@ public class InventoryService implements IApiService {
 	public void lightLocationByAliasOrTapeId(String inLocation, boolean isTape, UUID inChePersistentId) {
 		Che che = Che.staticGetDao().findByPersistentId(inChePersistentId);
 		// We could log a CHE_DISPLAY
-		
+
 		ColorEnum color = ColorEnum.RED;
-		if (che != null){
+		if (che != null) {
 			color = che.getColor();
 		} else {
 			LOGGER.error("CHE is not resolved in lightLocationByAliasOrTapeId");
 		}
-
 
 		Location locToLight = null;
 		Integer cmOffSet = 0;
@@ -383,9 +390,9 @@ public class InventoryService implements IApiService {
 			LOGGER.warn("Could not find location: {}. Using facility.", inLocation);
 			location = inFacility;
 		}
-		
+
 		//We do not need to drill down to a Slot in this case, return Tier 
-		if (inLocation.startsWith(CheDeviceLogic.TAPE_PREFIX) && location.isSlot()){
+		if (inLocation.startsWith(CheDeviceLogic.TAPE_PREFIX) && location.isSlot()) {
 			location = location.getParent();
 		}
 
@@ -404,7 +411,7 @@ public class InventoryService implements IApiService {
 		final Timestamp inEdiProcessTime,
 		final UomMaster inUomMaster) {
 
-		ItemMaster result =  new ItemMaster(inFacility, inItemId, inUomMaster);
+		ItemMaster result = new ItemMaster(inFacility, inItemId, inUomMaster);
 		result.setUpdated(inEdiProcessTime);
 		ItemMaster.staticGetDao().store(result);
 		return result;

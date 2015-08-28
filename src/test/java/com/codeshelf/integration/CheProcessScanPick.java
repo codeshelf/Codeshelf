@@ -456,16 +456,17 @@ public class CheProcessScanPick extends ServerTest {
 		Item item1522LocD301 = locationD301.getStoredItemFromMasterIdAndUom("1522", "ea");
 		Assert.assertNull(item1522LocD301);
 
-		LOGGER.info("2c: check that item 1124 (GTIN 106) moved even though it scanned as 00106");
-		// DEV-937 case
+		// LOGGER.info("2c: check that item 1124 (GTIN 106) moved even though it scanned as 00106");
+		LOGGER.info("2c: check that item 1124 (GTIN 106) did not move as it scanned as 00106");  
+		// v20 undid this unwise DEV-937 case
 		Location locationD402 = facility.findSubLocationById("D402");
 		Location locationD501 = facility.findSubLocationById("D501");
 		Assert.assertNotNull(locationD402);
 		Assert.assertNotNull(locationD501);
 		Item item1124locD501 = locationD501.getStoredItemFromMasterIdAndUom("1124", "ea");
 		Item item1124locD402 = locationD402.getStoredItemFromMasterIdAndUom("1124", "ea");
-		Assert.assertNotNull(item1124locD402);
-		Assert.assertNull(item1124locD501);
+		Assert.assertNull(item1124locD402);
+		Assert.assertNotNull(item1124locD501);
 
 		commitTransaction();
 

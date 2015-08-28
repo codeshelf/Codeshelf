@@ -32,6 +32,7 @@ import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.edi.IEdiExportService;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
@@ -685,8 +686,13 @@ public class Facility extends Location {
 	/**
 	 * @return
 	 */
-	public IEdiService getEdiExportService() {
-		return SftpWIsEdiService.staticGetDao().findByDomainId(this, SFTPWIS_DOMAINID);
+	public IEdiExportService getEdiExportService() {
+		IEdiExportService service =  SftpWIsEdiService.staticGetDao().findByDomainId(this, SFTPWIS_DOMAINID);
+		if (service.isLinked()) {
+			return service;
+		} else {
+			return null;
+		}
 	}
 
 

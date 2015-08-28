@@ -76,7 +76,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 	DomainObjectCache<ItemMaster>						itemMasterCache			= null;
 	DomainObjectCache<OrderHeader>						orderHeaderCache		= null;
 	DomainObjectCache<LocationAlias>					locationAliasCache		= null;
-	HashMap<String, Gtin>								gtinCache				= null;
+	DomainObjectCache<Gtin>								gtinCache				= null;
 
 	private HashMap<String, Map<String, OrderDetail>>	orderlineMap;
 	private HashMap<String, Container>					containerMap;
@@ -103,25 +103,44 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		this.processorId = procId;
 		this.dateTimeParser = new DateTimeParser();
 	}
+	
+	private boolean isAccuThereforeHasTrunctatedGtins(){
+		// The goal here is to determine if Accu is running this instance
+		// OR if a unit test told us to deal with it.
+		if (importer.isTruncatedGtins()) // Only set in unit test context.
+			return true;
+		
+		// Tenant name should do it for us. Unfortunately, Accu is on default tenant. No help.
+		TenantPersistenceService theService = TenantPersistenceService.getInstance();
+		String thisTenantName = theService.getCurrentTenantIdentifier();
+		// how can we tell? Most accu orders have WORLD or LUNERA customerID
+		
+		// TODO Critical for Accu to set this
+		return false;
+	}
 
 	@Override
 	public void run() {
 		OutboundOrderBatch batch = importer.getBatchQueue().poll();
 		while (batch != null) {
 			// process batch
-			batch.setProcessingAttempts(batch.getProcessingAttempts() + 1);			
-			
+			batch.setProcessingAttempts(batch.getProcessingAttempts() + 1);
+
 			LOGGER.info("Worker #" + processorId + " is processing " + batch + " in " + batch.getProcessingAttempts() + ". attempt");
 
 			try {
+				
 				TenantPersistenceService.getInstance().beginTransaction();
+				
 				// attach facility to new session
 				Facility facility = Facility.staticGetDao().reload(this.facility);
-				
 
-				itemMasterCache = new DomainObjectCache<ItemMaster>(ItemMaster.staticGetDao(), "ItemMaster");
-				orderHeaderCache = new DomainObjectCache<OrderHeader>(OrderHeader.staticGetDao(), "OrderHeader");
-				locationAliasCache = new DomainObjectCache<LocationAlias>(LocationAlias.staticGetDao(), "LocationAlias");
+				itemMasterCache = new DomainObjectCache<ItemMaster>(ItemMaster.staticGetDao(), "ItemMaster", facility);
+				orderHeaderCache = new DomainObjectCache<OrderHeader>(OrderHeader.staticGetDao(), "OrderHeader", facility);
+				locationAliasCache = new DomainObjectCache<LocationAlias>(LocationAlias.staticGetDao(), "LocationAlias", facility);
+				gtinCache = new DomainObjectCache<Gtin>(Gtin.staticGetDao(), "Gtin", facility);
+				if (isAccuThereforeHasTrunctatedGtins())
+					gtinCache.setRequiresEntireDBInCache(true);
 
 				ArrayList<OrderHeader> orderSet = new ArrayList<OrderHeader>();
 
@@ -149,7 +168,9 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				LOGGER.info("LocationAlias cache populated with " + this.locationAliasCache.size() + " entries");
 
 				// cache gtin
-				gtinCache = generateGtinCache(facility);
+				gtinCache.reset();
+				gtinCache.setFetchOnMiss(true); // critical for Accu's truncated gtin situation
+				gtinCache.load(facility, batch.getGtinIds());
 				LOGGER.info("Gtin cache populated with " + this.gtinCache.size() + " entries");
 
 				// prefetch order details already associated with orders
@@ -200,7 +221,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				for (Container container : containers) {
 					containerMap.put(container.getDomainId(), container);
 				}
-								
+
 				// This marks the end of the prefetch process. Let's log what it took.
 				long msDurationOfPrefetch = System.currentTimeMillis() - this.startTime;
 				LOGGER.info("spent {} ms on order import prefetch", msDurationOfPrefetch);
@@ -212,23 +233,6 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				int lineCount = 1;
 				int count = 1, size = lines.size();
 				for (OutboundOrderCsvBean orderBean : lines) {
-					/*
-					// transform order bean with groovy script, if enabled
-					if (importer.getExtensionPointService().hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation)) {
-						long timeBeforeExtension = System.currentTimeMillis();
- 
-						Object[] params = { orderBean };
-						try {
-							orderBean = (OutboundOrderCsvBean) importer.getExtensionPointService()
-								.eval(ExtensionPointType.OrderImportBeanTransformation, params);
-						} catch (Exception e) {
-							LOGGER.error("Failed to evaluate OrderImportBeanTransformation extension point", e);
-						}
-						
-						importer.addToExtensionMsFromTimeBefore(timeBeforeExtension);
-
-					}
-					*/
 					// process order bean
 					try {
 						OrderHeader order = orderCsvBeanImport(orderBean, facility, processTime, count++ + "/" + size);
@@ -563,7 +567,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 			if (orderHeaderCache.containsKey(orderId)) {
 				LOGGER.error("{} key in cache, but OrderHeader not retrieved");
 			}
-			LOGGER.info("Creating OrderHeader: {} for facility: {}",orderId, inFacility);
+			LOGGER.info("Creating OrderHeader: {} for facility: {}", orderId, inFacility);
 			result = new OrderHeader(inFacility, inCsvBean.getOrderId(), OrderTypeEnum.OUTBOUND);
 			this.orderHeaderCache.put(result);
 			result.setStatus(OrderStatusEnum.RELEASED);
@@ -656,6 +660,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		final UomMaster inUomMaster,
 		final String gtinId) {
 		ItemMaster itemMaster = null;
+		boolean masterActuallyChanged = false;
 
 		//There should not be an ItemMaster and an auto-generated Gtin's ItemMaster at the same time
 		//This is due to Gtin's ItemMaster only being created when there isn't already an ItemMaster for that gtinId
@@ -690,7 +695,11 @@ public class OutboundOrderBatchProcessor implements Runnable {
 						LOGGER.info("Changing UOM of item location {} at {}", item.getItemId(), item.getItemLocationName());
 						item.setUomMaster(inUomMaster);
 						item.setDomainId(item.makeDomainId());
-						Item.staticGetDao().store(item);
+						try {
+							Item.staticGetDao().store(item);
+						} catch (DaoException e) {
+							LOGGER.error("updateItemMaster4 : item update", e);
+						}
 					}
 				}
 				gtin.setUomMaster(inUomMaster);
@@ -698,10 +707,19 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				this.itemMasterCache.remove(itemMaster);
 				itemMaster.setDomainId(inItemId);
 				itemMaster.setItemId(inItemId);
-				ItemMaster.staticGetDao().store(itemMaster);
+				itemMaster.setUpdated(inEdiProcessTime);
+				try {
+					ItemMaster.staticGetDao().store(itemMaster);
+				} catch (DaoException e) {
+					LOGGER.error("updateItemMaster1", e);
+				}
 				this.itemMasterCache.put(itemMaster);
 
-				Gtin.staticGetDao().store(gtin);
+				try {
+					Gtin.staticGetDao().store(gtin);
+				} catch (DaoException e) {
+					LOGGER.error("updateItemMaster2: gtin update", e);
+				}
 				LOGGER.info("Updated GTIN to to {}", gtin);
 			}
 		}
@@ -711,14 +729,14 @@ public class OutboundOrderBatchProcessor implements Runnable {
 			itemMaster = new ItemMaster(inFacility, inItemId, inUomMaster);
 			this.itemMasterCache.put(itemMaster);
 		}
+		masterActuallyChanged = !(itemMaster.getDescription() != null && itemMaster.getDescription().equals(inDescription)
+				&& itemMaster.getStandardUom().equals(inUomMaster) && itemMaster.getActive() != null
+				&& itemMaster.getActive() == true && itemMaster.getActive() != null);
 
 		// update only if modified or new
-		if (itemMaster.getDescription() != null && itemMaster.getDescription().equals(inDescription)
-				&& itemMaster.getStandardUom().equals(inUomMaster) && itemMaster.getActive() != null
-				&& itemMaster.getActive() == true && itemMaster.getActive() != null && itemMaster.getUpdated() == inEdiProcessTime) {
-			// already up to date
-		} else {
-			// new or updated. Not really logging this. Ok. Note that it does change default UOM of the master.			
+		if (masterActuallyChanged) {
+			// new or updated. Not really logging this. Ok. Note that it does change default UOM of the master.	
+			// note that if the master did not change, we do not setUpdated(); 
 			itemMaster.setDescription(inDescription);
 			itemMaster.setStandardUom(inUomMaster);
 			itemMaster.setActive(true);
@@ -726,7 +744,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 			try {
 				ItemMaster.staticGetDao().store(itemMaster);
 			} catch (DaoException e) {
-				LOGGER.error("updateItemMaster", e);
+				LOGGER.error("updateItemMaster3", e);
 			}
 		}
 		return itemMaster;
@@ -911,7 +929,9 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 		// Does this itemMaster already have a gtin that this id is a substring of, with matching uom?
 		Collection<Gtin> gtins = inItemMaster.getGtins().values();
-		LOGGER.debug("Master {} has these gtins {}", inItemMaster.getItemId(), gtins);
+		if (gtinCache.size() < 20) {
+			LOGGER.info("findGtinMatchOnItemMaster:Master {} has these gtins {}", inItemMaster.getItemId(), gtins); // yes, checking cache size, not gtins. a debug aid for unit test.
+		}
 		for (Gtin gtin : gtins) {
 			String thisId = gtin.getDomainId();
 			if (isSloppyGtinMatch(gtinId, thisId)) {
@@ -928,7 +948,9 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		// The test strippedLeadingZerosGtin has two inventory conversions to the same item master but different uom.
 		// case 4  leaves the somewhat odd situation of gtins for the same real master pointing at separate masters as the second one has not been converted yet.
 		Collection<Gtin> gtins2 = gtinCache.values();
-		LOGGER.debug("Cache has these gtins {}", gtins2);
+		if (gtinCache.size() < 20) {
+			LOGGER.info("findGtinMatchOnItemMaster: Cache has these gtins {}", gtins2); // a debug aid for unit test. Change to info
+		}
 		for (Gtin gtin2 : gtins2) {
 			boolean gtin2IsOnboarder = gtin2.gtinIsAnOnboardingManufacture();
 			String thisId2 = gtin2.getDomainId();
@@ -1048,22 +1070,30 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		} else {
 			oldDetailId = result.getDomainId();
 			setOldPreferredLocation(result.getPreferredLocation());
-			
+
 			//Check if detail's ItemMaster or UOM  changed since last time
 			boolean masterMatch = result.getItemMaster().equals(inItemMaster);
 			boolean uomMatch = UomNormalizer.normalizedEquals(result.getUomMasterId(), inUomMaster.getDomainId());
-			if (!masterMatch || !uomMatch){
-				String warning = String.format("OrderDetail %s changed from %s-%s to %s-%s.", detailId, result.getItemMasterId(), result.getUomMasterId(), inItemMaster.getDomainId(), inUomMaster.getDomainId());
+			if (!masterMatch || !uomMatch) {
+				String warning = String.format("OrderDetail %s changed from %s-%s to %s-%s.",
+					detailId,
+					result.getItemMasterId(),
+					result.getUomMasterId(),
+					inItemMaster.getDomainId(),
+					inUomMaster.getDomainId());
 				LOGGER.warn(warning);
 				//Find all (if any) work completed for the modified details. Create events for it.
 				//The following awkward wi removal is done to avoid concurrent modification exceptions on the detail's wi list 
-				while (!result.getWorkInstructions().isEmpty()){
+				while (!result.getWorkInstructions().isEmpty()) {
 					WorkInstruction wi = result.getWorkInstructions().get(0);
 					String eventWarning = warning + " Already picked " + wi.getActualQuantity() + " items.";
 					result.removeWorkInstruction(wi);
 					WorkInstruction.staticGetDao().delete(wi);
-					
-					WorkerEvent event = new WorkerEvent(WorkerEvent.EventType.DETAIL_WI_MISMATCHED, result.getFacility(), "Order Importer", eventWarning);
+
+					WorkerEvent event = new WorkerEvent(WorkerEvent.EventType.DETAIL_WI_MISMATCHED,
+						result.getFacility(),
+						"Order Importer",
+						eventWarning);
 					new NotificationService().saveEvent(event);
 				}
 			}
@@ -1077,7 +1107,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		if (preferredLocation != null) {
 			// check that location is valid
 			LocationAlias locationAlias = locationAliasCache.get(preferredLocation);
-			
+
 			if (locationAlias == null) {
 				// LOGGER.warn("location alias not found for preferredLocation: " + inCsvBean); // not much point to this warning. Will happen all the time.
 				// preferredLocation = "";
@@ -1222,17 +1252,6 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		}
 		*/
 		return domainMatch;
-	}
-
-	private HashMap<String, Gtin> generateGtinCache(Facility facility) {
-		HashMap<String, Gtin> cache = new HashMap<>();
-		HashMap<String, Object> criteriaParams = new HashMap<>();
-		criteriaParams.put("facilityId", facility.getPersistentId());
-		List<Gtin> gtins = Gtin.staticGetDao().findByFilter("gtinsByFacility", criteriaParams);
-		for (Gtin gtin : gtins) {
-			cache.put(gtin.getDomainId(), gtin);
-		}
-		return cache;
 	}
 
 	private OrderDetail getCachedOrderDetail(String orderId, String orderLineId) {

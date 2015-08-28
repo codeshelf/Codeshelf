@@ -439,9 +439,11 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_WALL, WAIT_TIME);
 		picker.scanSomething("L%WALL1");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
+
 		// For DEV-937. Assume it is "000gtin1514 that is scanned, but for various reasons we only got gtin1514 into the data base.
+		// v20 undid the unwise thing in DEV-937. We do not over match on scan that has longer gtin than database
 		picker.scanSomething("000gtin1514");
-		picker.waitForCheState(CheStateEnum.DO_PUT, WAIT_TIME);
+		picker.waitForCheState(CheStateEnum.NO_PUT_WORK, WAIT_TIME);
 		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		picker.scanCommand("CANCEL");

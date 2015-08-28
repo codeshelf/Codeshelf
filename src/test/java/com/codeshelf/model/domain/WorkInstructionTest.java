@@ -189,7 +189,6 @@ public class WorkInstructionTest extends HibernateTest {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();
 		WorkInstructionGenerator generator = new WorkInstructionGenerator();
-		
 		WorkInstruction wi = generator.generateWithNewStatus(facility);
 		wi.getLocation().getDao().store(wi.getLocation());
 		wi.getAssignedChe().getParent().getDao().store(wi.getAssignedChe().getParent());

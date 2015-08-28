@@ -4,9 +4,13 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.joda.time.DateTime;
+
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.LedSample;
+import com.codeshelf.edi.Generator;
+import com.codeshelf.edi.InventoryGenerator;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
@@ -19,16 +23,18 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerKind;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.ItemMaster;
+import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Point;
-import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.google.common.collect.ImmutableList;
 
 public class WorkInstructionGenerator {
+
+	private InventoryGenerator inventoryGenerator = new InventoryGenerator(null);
+	private Generator generator = new Generator();
 	
 	public List<WorkInstruction> generateCombinations(Facility facility, Timestamp assignedTime) {
 		ArrayList<WorkInstruction> wiCombos = new ArrayList<>();
@@ -49,6 +55,14 @@ public class WorkInstructionGenerator {
 		return generateWithStatusAndType(facility, WorkInstructionStatusEnum.NEW, WorkInstructionTypeEnum.ACTUAL, assignedTime);
 	}
 	
+	public WorkInstruction generateWithNewStatus(OrderDetail orderDetail, Che che) {
+		DateTime assignedTime = new DateTime().minus(10000);
+				
+		WorkInstruction wi = generateWithStatusAndType(orderDetail, WorkInstructionStatusEnum.NEW, WorkInstructionTypeEnum.ACTUAL, new Timestamp(assignedTime.getMillis()));
+		wi.setAssignedChe(che);
+		return wi;
+	}
+
 	public List<WorkInstruction> generateAllHousekeeping(Facility facility, WorkInstruction prevWi, WorkInstruction nextWi) {
 		ArrayList<WorkInstruction> wiCombos = new ArrayList<>();
 		for (WorkInstructionTypeEnum typeEnum : WorkInstructionTypeEnum.getHousekeepingTypeEnums()) {		
@@ -58,17 +72,10 @@ public class WorkInstructionGenerator {
 		return wiCombos;
 	}
 	
-	private WorkInstruction generateWithStatusAndType(Facility facility, WorkInstructionStatusEnum statusEnum, WorkInstructionTypeEnum typeEnum, Timestamp assignedTime) {
-		Aisle aisle=facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint());
+	private WorkInstruction generateWithStatusAndType(OrderDetail orderDetail, WorkInstructionStatusEnum statusEnum, WorkInstructionTypeEnum typeEnum, Timestamp assignedTime) {
+		Facility facility = orderDetail.getParent().getFacility();
+		Aisle aisle=facility.createAisle("A99", Point.getZeroPoint(), Point.getZeroPoint());
 		Aisle.staticGetDao().store(aisle);
-		
-		UomMaster uomMaster = facility.createUomMaster("UOMID");
-		UomMaster.staticGetDao().store(uomMaster);
-		ItemMaster itemMaster = facility.createItemMaster("ITEMID", "ITEMDESCRIPTION", uomMaster);
-		ItemMaster.staticGetDao().store(itemMaster);
-		OrderDetail orderDetail = generateValidOrderDetail(facility, itemMaster, uomMaster);
-		OrderDetail.staticGetDao().store(orderDetail);
-
 		Container container = 	
 				new Container("CONTID",
 							  facility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND),
@@ -76,12 +83,11 @@ public class WorkInstructionGenerator {
 		container.setParent(facility);
 		Container.staticGetDao().store(container);
 
+
 		//Che che1 = Che.staticGetDao().findByDomainId(facility.getNetworks().get(0), "CHE1");
 		Che che1 = Che.staticGetDao().findByDomainId(null, "CHE1");
 		
 		WorkInstruction workInstruction = WiFactory.createWorkInstruction(statusEnum, typeEnum, WiPurpose.WiPurposeOutboundPick, orderDetail, che1, assignedTime, container, aisle);
-		
-		
 		workInstruction.setStarted(  new Timestamp(System.currentTimeMillis()-5000));
 		workInstruction.setCompleted(new Timestamp(System.currentTimeMillis()-0000));
 
@@ -89,14 +95,10 @@ public class WorkInstructionGenerator {
 		workInstruction.setLedCmdStream(cmd);
 		
 		return workInstruction;
+		
 	}
 	
-	public WorkInstruction generateValid(Facility facility) {
-		return generateWithNewStatus(facility);
-	}
-	
-	//Move to order detail generator
-	private OrderDetail generateValidOrderDetail(Facility facility, ItemMaster itemMaster, UomMaster uom) {
+	private WorkInstruction generateWithStatusAndType(Facility facility, WorkInstructionStatusEnum statusEnum, WorkInstructionTypeEnum typeEnum, Timestamp assignedTime) {
 		OrderGroup orderGroup = OrderGroup.staticGetDao().findByDomainId(facility, "OG1");
 		if (orderGroup == null){
 			orderGroup = new OrderGroup("OG1");
@@ -104,18 +106,34 @@ public class WorkInstructionGenerator {
 			OrderGroup.staticGetDao().store(orderGroup);
 		}
 		
-		OrderHeader orderHeader = new OrderHeader(facility, "OH1", OrderTypeEnum.OUTBOUND);
-		orderHeader.setParent(facility);
-		
+		OrderHeader orderHeader = generateValidOrderHeader(facility);
 		orderGroup.addOrderHeader(orderHeader);
 		OrderHeader.staticGetDao().store(orderHeader);
-
-		OrderDetail detail = new OrderDetail("OD1", itemMaster, 5);
-		detail.setStatus(OrderStatusEnum.RELEASED);
-		detail.setUomMaster(uom);
-		orderHeader.addOrderDetail(detail);
-		return detail;	
+		
+		Item item = inventoryGenerator.generateItem(facility);
+		OrderDetail orderDetail = generateValidOrderDetail(orderHeader, item);
+		return generateWithStatusAndType(orderDetail, statusEnum, typeEnum, assignedTime);
 	}
 	
+	public WorkInstruction generateValid(Facility facility) {
+		return generateWithNewStatus(facility);
+	}
+	
+	public OrderHeader generateValidOrderHeader(Facility facility) {
+		OrderHeader orderHeader = new OrderHeader(facility, generator.generateString(), OrderTypeEnum.OUTBOUND);
+		OrderHeader.staticGetDao().store(orderHeader);
+		return orderHeader;
+	}
+	
+	//Move to order detail generator
+	public OrderDetail generateValidOrderDetail(OrderHeader orderHeader, Item item) {
+
+		OrderDetail detail = new OrderDetail(generator.generateString(), item.getParent(), generator.generateInt(1, 5));
+		detail.setStatus(OrderStatusEnum.RELEASED);
+		detail.setUomMaster(item.getUomMaster());
+		orderHeader.addOrderDetail(detail);
+		OrderDetail.staticGetDao().store(detail);
+		return detail;	
+	}	
 }
 

@@ -188,15 +188,8 @@ public class WorkInstructionCSVExporterTest extends MockDaoTest {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 
-		String expectedValue = "OH1";
-		
-		
 		WorkInstruction testWi = generateValidCompleteWorkInstruction(facility);
-		
-		OrderGroup orderGroup = new OrderGroup(expectedValue);
-		facility.addOrderGroup(orderGroup);
-		
-		orderGroup.addOrderHeader(testWi.getOrderDetail().getParent());
+		String expectedValue = testWi.getOrder().getDomainId();
 		
 		List<WorkInstruction> wiList = ImmutableList.of(testWi);
 		List<String[]> table = toTable(wiList);

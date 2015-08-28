@@ -80,6 +80,10 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	@Getter
 	ExtensionPointService								extensionPointService	= null;
 
+	@Setter
+	@Getter
+	boolean												truncatedGtins			= false;
+
 	@Inject
 	public OutboundOrderPrefetchCsvImporter(final EventProducer inProducer) {
 		super(inProducer);
@@ -277,7 +281,6 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 							lineNumList += ", " + lineNum;
 						}
 						orderImportBeanTransformationViolations.put(errorMessage, lineNumList);
-						//batchResult.addLineViolation(1, orderBean, errorMessage);
 					}
 				}
 			}
