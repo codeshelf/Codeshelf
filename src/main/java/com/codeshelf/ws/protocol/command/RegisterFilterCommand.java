@@ -83,8 +83,15 @@ public class RegisterFilterCommand extends CommandABC {
 				filter.setParams(processedParams);
 				filter.setCriteriaName(filterClause);
 				List<? extends IDomainObject> objectMatchList = filter.refreshMatchList();
-				this.wsConnection.registerObjectEventListener(filter);
-
+				
+				// DEV-1085  If this filter "maxed out", lets not register the listener as this makes a fairly severe load on the server.
+				// This means only small lists will live update.
+				if (!filter.tooBigToBeEfficientLister()){
+					this.wsConnection.registerObjectEventListener(filter);}
+				// Note that this does not register if filter maxes out. But nothing yet deals with a filter that starts small and grows.
+				else{
+					LOGGER.info("filter not registered because its results are too large. The corresponding client list view will not live update");
+				}
 				// generate response
 				List<Map<String, Object>> results = filter.getProperties(objectMatchList, EventType.Update);
 				if (results==null || results.size()==0) {
