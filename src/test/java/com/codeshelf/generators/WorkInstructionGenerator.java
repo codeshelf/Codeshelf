@@ -99,12 +99,17 @@ public class WorkInstructionGenerator {
 	}
 	
 	private WorkInstruction generateWithStatusAndType(Facility facility, WorkInstructionStatusEnum statusEnum, WorkInstructionTypeEnum typeEnum, Timestamp assignedTime) {
-		OrderGroup orderGroup = new OrderGroup("OG1");
-		facility.addOrderGroup(orderGroup);
-		OrderGroup.staticGetDao().store(orderGroup);
+		OrderGroup orderGroup = OrderGroup.staticGetDao().findByDomainId(facility, "OG1");
+		if (orderGroup == null){
+			orderGroup = new OrderGroup("OG1");
+			facility.addOrderGroup(orderGroup);
+			OrderGroup.staticGetDao().store(orderGroup);
+		}
+		
 		OrderHeader orderHeader = generateValidOrderHeader(facility);
 		orderGroup.addOrderHeader(orderHeader);
-		orderHeader.getDao().store(orderHeader);
+		OrderHeader.staticGetDao().store(orderHeader);
+		
 		Item item = inventoryGenerator.generateItem(facility);
 		OrderDetail orderDetail = generateValidOrderDetail(orderHeader, item);
 		return generateWithStatusAndType(orderDetail, statusEnum, typeEnum, assignedTime);

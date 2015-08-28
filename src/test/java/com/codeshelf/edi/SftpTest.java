@@ -20,10 +20,12 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.codeshelf.generators.WorkInstructionGenerator;
+import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.domain.AbstractSftpEdiService;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ExportReceipt;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.SftpOrdersEdiService;
 import com.codeshelf.model.domain.SftpWIsEdiService;
@@ -39,22 +41,29 @@ public class SftpTest extends HibernateTest {
 	private static final String	SFTP_TEST_HOST	= "sftp.codeshelf.com";
 	private static final String	SFTP_TEST_USERNAME	= "test";
 	private static final String	SFTP_TEST_PASSWORD	= "m80isrq411";
+	private WorkInstructionGenerator	wiGenerator	= new WorkInstructionGenerator();
+	private InventoryGenerator	inventoryGenerator = new InventoryGenerator(null);
 
 	@Test
 	public void testSftpWIs() throws InterruptedException, ExecutionException, TimeoutException, SftpException {
 		beginTransaction();
 		
-		getFacility();//trigger creation
+		Facility facility = getFacility();//trigger creation
 		Che che = getChe1();
 
 		SftpConfiguration config = setupConfiguration();
 		SftpWIsEdiService sftpWIs = configureSftpService(che.getFacility(), config, SftpWIsEdiService.class);
-		List<WorkInstruction> completeWIs = setupComputedWorkInstructionsForOrder(che, 2);
+		
+		OrderHeader orderHeader = generateOrder(facility, 2);
+		Assert.assertEquals(2, orderHeader.getOrderDetails().size());
+				
+		List<WorkInstruction> computedWIs = setupComputedWorkInstructionsForOrder(orderHeader, che);
 		commitTransaction();
 
 		beginTransaction();
-		OrderHeader completeOrder = completeWIs.get(0).getOrder();
-		for (WorkInstruction workInstruction : completeWIs) {
+		OrderHeader completeOrder = computedWIs.get(0).getOrder();
+		for (WorkInstruction workInstruction : computedWIs) {
+			workInstruction.setCompleteState("pickerA", workInstruction.getPlanQuantity());
 			sftpWIs.notifyWiComplete(workInstruction);
 		}
 		ExportReceipt receipt = sftpWIs.notifyOrderCompleteOnCart(completeOrder, che);
@@ -63,7 +72,8 @@ public class SftpTest extends HibernateTest {
 		
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		sftpWIs.downloadFile(receipt.getPath(), out);
-		assertMatches(completeOrder, completeWIs, che, new String(out.toByteArray(), StandardCharsets.ISO_8859_1));
+		String fileContents = new String(out.toByteArray(), StandardCharsets.ISO_8859_1);
+		assertMatches(completeOrder, computedWIs, che, fileContents);
 
 		} finally {
 			sftpWIs.delete(receipt.getPath());
@@ -91,14 +101,24 @@ public class SftpTest extends HibernateTest {
 
 
 
-	private List<WorkInstruction> setupComputedWorkInstructionsForOrder(Che che, int numWIs) {
-		WorkInstructionGenerator generator = new WorkInstructionGenerator();
+	private List<WorkInstruction> setupComputedWorkInstructionsForOrder(OrderHeader orderHeader, Che che) {
 		ArrayList<WorkInstruction> wis = new ArrayList<>();
-		for (int i = 0; i < numWIs; i++) {
-			WorkInstruction wi = generator.generateValid(che.getFacility());
+		for (OrderDetail  orderDetail : orderHeader.getOrderDetails()) {
+			WorkInstruction wi = wiGenerator.generateWithNewStatus(orderDetail, che);
 			wis.add(wi);
+			
 		}
 		return wis;
+		
+	}
+
+	private OrderHeader generateOrder(Facility facility, int numDetails) {
+		OrderHeader orderHeader = this.wiGenerator.generateValidOrderHeader(facility);
+		for (int i = 0; i < numDetails; i++) {
+			OrderDetail od = this.wiGenerator.generateValidOrderDetail(orderHeader, this.inventoryGenerator.generateItem(facility));
+			orderHeader.addOrderDetail(od);
+		}
+		return orderHeader;
 	}
 
 

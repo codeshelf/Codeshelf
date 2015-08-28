@@ -360,7 +360,8 @@ public class WorkServiceTest extends ServerTest {
 
 		LOGGER.info("1: Make the work instruction");
 		WorkInstruction wi = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
-
+		String orderId = wi.getOrderId();
+		String facilityId = wi.getFacility().getDomainId();
 		LOGGER.info("2: Extract as we would send it");
 		// format calls WorkInstructionCSVExporter.exportWorkInstructions() with the list of one wi
 		// The result is a header line, and the work instruction line.
@@ -383,13 +384,14 @@ public class WorkServiceTest extends ServerTest {
 		title = titleList.get(5);
 		Assert.assertEquals("\"orderId\"", title);
 
+		
 		LOGGER.info("3: Parse the second line of message. Check the 0th and 5th field values");
 		String line2 = br.readLine();
 		List<String> fieldList = new ArrayList<String>(Arrays.asList(line2.split(",")));
 		String field = fieldList.get(0);
-		Assert.assertEquals("\"F1\"", field);
+		Assert.assertEquals("\""+facilityId + "\"", field);
 		field = fieldList.get(5);
-		Assert.assertEquals("\"OH1\"", field);
+		Assert.assertEquals("\""+orderId + "\"", field);
 
 		commitTransaction();
 	}
