@@ -733,14 +733,13 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	 */
 	public boolean didOrderCompleteOnCart(Che wiChe) {
 		List<WorkInstruction> wiList = getWorkInstructionsThisOrderForCart(wiChe);
-		boolean foundIncomplete = false;
 		for (WorkInstruction wi : wiList) {
 			WorkInstructionStatusEnum wiStatus = wi.getStatus();
 			if (wiStatus == WorkInstructionStatusEnum.INPROGRESS || wiStatus == WorkInstructionStatusEnum.NEW) {
-				foundIncomplete = true;
+				return false;
 			}
 		}
-		return !foundIncomplete;
+		return true;
 	}
 
 	/**
