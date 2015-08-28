@@ -158,6 +158,11 @@ public class Gtin extends DomainObjectTreeABC<ItemMaster> {
 				return gtin;
 			}
 		}
+		
+		/*
+		 * Eliminate this in v20. We require that gtins in the database be the real gtin, which means the value that will be scanned.
+		 * Orders file import might pass gtin with stripped leading zeroes or something. That is dealt with in outboundOrderBatchProcessor
+		 * 
 		// If the GTIN was not found, we might have the odd case of leading zeroes. If so, EDI processing (especially a file that took a trip through a spreadsheet
 		// may have stripped the leading zeroes. Still scans with the zeroes, bu the data base may have the gtin/upc without.
 		if (scannedID.charAt(0) == '0') {
@@ -176,6 +181,7 @@ public class Gtin extends DomainObjectTreeABC<ItemMaster> {
 			}
 
 		}
+		*/
 
 		return null;
 	}

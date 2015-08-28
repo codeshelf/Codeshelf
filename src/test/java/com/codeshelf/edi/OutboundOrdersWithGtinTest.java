@@ -496,22 +496,34 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 
 		// probably need to wait here to allow the transactions to complete.
 		ThreadUtils.sleep(4000);
+		
+		LOGGER.info("1b: We should have two item masters, and two gtin now");
+		beginTransaction();
+		facility = facility.reload();
+		List<Gtin> gtins = Gtin.staticGetDao().getAll();
+		LOGGER.info("gtins {}", gtins);
+		Assert.assertEquals(2, gtins.size());
+		List<ItemMaster> masters = ItemMaster.staticGetDao().getAll();
+		LOGGER.info("masters {}", masters);
+		Assert.assertEquals(2, masters.size());
+		commitTransaction();
 
 		LOGGER.info("2: Load the orders file with the 4 gtins suffering from Core-E trunctionation to 12 characters");
-		beginTransaction();
+		LOGGER.info("   The gtin and master caches should have two");
+	beginTransaction();
 		facility = facility.reload();
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
 				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,123456789012"
 				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,123456789013"
 				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,80,case,123456789014"
 				+ "\r\n1,1,104,12/03/14 12:00,12/31/14 12:00,Item3,,80,case,123456789015";
-		importOrdersData(facility, firstCsvString);
+		importOrdersDataHandlingTruncatedGtins(facility, firstCsvString);
 		commitTransaction();
 
 		LOGGER.info("2b: See what gtin we have. Do we have 4 or 6? Answer 4. We successful transformed the itemLocations for item1/ea and item1/case");
 		beginTransaction();
 		facility = facility.reload();
-		List<Gtin> gtins = Gtin.staticGetDao().getAll();
+		gtins = Gtin.staticGetDao().getAll();
 		LOGGER.info("gtins {}", gtins);
 		Assert.assertEquals(4, gtins.size());
 		commitTransaction();
@@ -557,7 +569,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,12345678901334567"
 				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,80,case,12345678901434567"
 				+ "\r\n1,1,104,12/03/14 12:00,12/31/14 12:00,Item3,,80,case,12345678901534567";
-		importOrdersData(facility, firstCsvString);
+		importOrdersDataHandlingTruncatedGtins(facility, firstCsvString);
 		commitTransaction();
 
 		LOGGER.info("1b: See that we have 4 gtin now.");
@@ -574,7 +586,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		facility = facility.reload();
 		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
 				+ "\r\n2,2,2_01,12/03/14 12:00,12/31/14 12:00,Item1,,80,case,123456789012";
-		importOrdersData(facility, firstCsvString);
+		importOrdersDataHandlingTruncatedGtins(facility, firstCsvString);
 		commitTransaction();
 
 		LOGGER.info("2b: Import new order line for item1/case, but stripping off the front of the Gtin. This should do a GTIN case 5 match and not make a new gtin");
@@ -583,7 +595,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		facility = facility.reload();
 		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
 				+ "\r\n3,3,3_01,12/03/14 12:00,12/31/14 12:00,Item1,,80,case,678901234567";
-		importOrdersData(facility, firstCsvString);
+		importOrdersDataHandlingTruncatedGtins(facility, firstCsvString);
 		commitTransaction();
 
 		LOGGER.info("3: Import new order line for item1/each, but with an internal substring of Gtin. This does not match");
@@ -592,7 +604,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		facility = facility.reload();
 		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
 				+ "\r\n4,4,402,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,345678901334";
-		importOrdersData(facility, firstCsvString);
+		importOrdersDataHandlingTruncatedGtins(facility, firstCsvString);
 		commitTransaction();
 
 		beginTransaction();
@@ -607,7 +619,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		facility = facility.reload();
 		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
 				+ "\r\n5,5,501,12/03/14 12:00,12/31/14 12:00,Item2,,80,each,123456789014";
-		importOrdersData(facility, firstCsvString);
+		importOrdersDataHandlingTruncatedGtins(facility, firstCsvString);
 		commitTransaction();
 
 		beginTransaction();
@@ -645,7 +657,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
 				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,123456788"
 				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,123456789";
-		importOrdersData(facility, firstCsvString);
+		importOrdersDataHandlingTruncatedGtins(facility, firstCsvString);
 		commitTransaction();
 
 		LOGGER.info("2b: See what gtin we have. Do we have 2 or 4? Answer 2. They resolved due to trailing truncation match, which is good.");
@@ -673,7 +685,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
 				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,000123456788"
 				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,000123456789";
-		importOrdersData(facility, firstCsvString);
+		importOrdersDataHandlingTruncatedGtins(facility, firstCsvString);
 		commitTransaction();
 
 		LOGGER.info("3b: See what we have now. 2 or 4? Answer 2.");
@@ -703,7 +715,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
 				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,123456788"
 				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,123456789";
-		importOrdersData(facility, firstCsvString);
+		importOrdersDataHandlingTruncatedGtins(facility, firstCsvString);
 		commitTransaction();
 
 		LOGGER.info("4b: Still 2 gtin with leading zeros.");

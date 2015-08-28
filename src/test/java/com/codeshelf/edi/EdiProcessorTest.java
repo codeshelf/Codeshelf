@@ -423,6 +423,12 @@ public class EdiProcessorTest extends MockDaoTest {
 				//do nothing
 			}
 
+			@Override
+			public void setTruncatedGtins(boolean value) {
+				// Stub. Don't need to implement
+				
+			}
+
 		};
 	}
 }

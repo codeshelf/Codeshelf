@@ -80,6 +80,10 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	@Getter
 	ExtensionPointService								extensionPointService	= null;
 
+	@Setter
+	@Getter
+	boolean												truncatedGtins			= false;
+
 	@Inject
 	public OutboundOrderPrefetchCsvImporter(final EventProducer inProducer) {
 		super(inProducer);
@@ -255,14 +259,12 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			long timeBeforeExtension = System.currentTimeMillis();
 			for (OutboundOrderCsvBean orderBean : originalBeanList) {
 				// transform order bean with groovy script, if enabled
-				if (getExtensionPointService().hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation)) {
-					Object[] params = { orderBean };
-					try {
-						orderBean = (OutboundOrderCsvBean) getExtensionPointService().eval(ExtensionPointType.OrderImportBeanTransformation,
-							params);
-					} catch (Exception e) {
-						LOGGER.error("Failed to evaluate OrderImportBeanTransformation extension point", e);
-					}
+				Object[] params = { orderBean };
+				try {
+					orderBean = (OutboundOrderCsvBean) getExtensionPointService().eval(ExtensionPointType.OrderImportBeanTransformation,
+						params);
+				} catch (Exception e) {
+					LOGGER.error("Failed to evaluate OrderImportBeanTransformation extension point", e);
 				}
 			}
 			addToExtensionMsFromTimeBefore(timeBeforeExtension);

@@ -542,6 +542,13 @@ public abstract class MockDaoTest extends MinimalTest {
 		return importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
 	}
 
+	protected BatchResult<Object> importOrdersDataHandlingTruncatedGtins(Facility facility, String csvString) throws IOException {
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvOrderImporter importer = createOrderImporter();
+		importer.setTruncatedGtins(true); // kludge to test accus strange case
+		return importer.importOrdersFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+	}
+
 	protected boolean importSlotting(Facility facility, String csvString) {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvOrderLocationImporter importer = createOrderLocationImporter();

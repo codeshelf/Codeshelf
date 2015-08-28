@@ -294,6 +294,11 @@ public class DropboxRealTest extends ServerTest {
 					//do nothing
 				}
 				
+				@Override
+				public void setTruncatedGtins(boolean value) {
+					// stub. Don't need to implement					
+				}
+				
 				
 			};
 
