@@ -22,7 +22,7 @@ import org.junit.Test;
 import com.codeshelf.generators.WorkInstructionGenerator;
 import com.codeshelf.model.domain.AbstractSftpEdiService;
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.model.domain.EdiServiceABC.ExportReceipt;
+import com.codeshelf.model.domain.ExportReceipt;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.SftpOrdersEdiService;

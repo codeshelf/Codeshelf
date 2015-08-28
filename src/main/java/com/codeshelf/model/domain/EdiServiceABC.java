@@ -59,25 +59,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implements IEdiService {
 
-	public static class ExportReceipt {
-
-		private String	absoluteFilename;
-		private int	fileLength;
-
-		public ExportReceipt(String absoluteFilename, int fileLength) {
-			this.absoluteFilename = absoluteFilename;
-			this.fileLength = fileLength; 
-		}
-
-		public String getPath() {
-			return absoluteFilename;
-		}
-
-		public int getFileLength() {
-			return fileLength;
-		}
-	}
-
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(EdiServiceABC.class);
 
 	// The owning Facility.

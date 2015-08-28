@@ -7,8 +7,11 @@ import java.util.UUID;
 
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Item;
+import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Tier;
+import com.codeshelf.model.domain.UomMaster;
 import com.google.common.collect.Lists;
 
 public class InventoryGenerator {
@@ -33,6 +36,14 @@ public class InventoryGenerator {
 		itemImporter.importSlottedInventory(inventoryRecords, aisle.<Facility>getParentAtLevel(Facility.class), new Timestamp(System.currentTimeMillis()));
 	}
 
+	public Item generateItem(Facility facility) {
+		UomMaster uomMaster = facility.createUomMaster(generateUom());
+		UomMaster.staticGetDao().store(uomMaster);
+		ItemMaster itemMaster = facility.createItemMaster(generateItemId(), generateString(), uomMaster);
+		ItemMaster.staticGetDao().store(itemMaster);
+		return new Item(itemMaster, uomMaster);
+	}
+	
 	
 	@SuppressWarnings("deprecation")
 	private InventorySlottedCsvBean generateInventoryRecord(Location location, int cmFromLeft) {

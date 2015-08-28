@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Timer;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.OrderLocationFeedbackMessage;
+import com.codeshelf.edi.IEdiExportService;
 import com.codeshelf.edi.IEdiExportServiceProvider;
 import com.codeshelf.edi.WorkInstructionCSVExporter;
 import com.codeshelf.manager.User;
@@ -62,10 +63,8 @@ import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerUse;
 import com.codeshelf.model.domain.DomainObjectProperty;
-import com.codeshelf.model.domain.EdiServiceABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
-import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.Location;
@@ -75,7 +74,6 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
-import com.codeshelf.model.domain.SftpWIsEdiService;
 import com.codeshelf.model.domain.Slot;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
@@ -151,7 +149,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	public WorkService(LightService lightService) {
 		this(lightService, new IEdiExportServiceProvider() {
 			@Override
-			public IEdiService getWorkInstructionExporter(Facility facility) {
+			public IEdiExportService getWorkInstructionExporter(Facility facility) {
 				return facility.getEdiExportService();
 			}
 		});
@@ -715,7 +713,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		LOGGER.info("Order: {} added onto cart:{}", inOrder.getOrderId(), inChe.getDomainId());
 		// This is the PFSWeb variant. 
 		// Not sure if these should go singly.
-		EdiServiceABC theService = getAccumulatingOutputService(inOrder.getFacility());
+		IEdiExportService theService = getAccumulatingOutputService(inOrder.getFacility());
 		if (theService != null) {
 			theService.notifyOrderOnCart(inOrder, inChe);
 		}
@@ -731,7 +729,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	private void notifyRemoveOrderFromCart(OrderHeader inOrder, Che inChe) {
 		LOGGER.info("Order: {} removed from cart:{}", inOrder.getOrderId(), inChe.getDomainId());
 		// This is the PFSWeb variant. 
-		EdiServiceABC theService = getAccumulatingOutputService(inOrder.getFacility());
+		IEdiExportService theService = getAccumulatingOutputService(inOrder.getFacility());
 		if (theService != null) {
 			theService.notifyOrderRemoveFromCart(inOrder, inChe);
 		}
@@ -760,7 +758,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	* Three choices so far: not at all, to IronMQ, or to SFTP
 	*/
 	private void notifyEdiServiceCompletedWi(WorkInstruction inWi) {
-		// Replace with some selector
+		// TODO Replace with some selector
 		boolean wisToIronMQ = false;
 		boolean wisToSFTP = true;
 
@@ -775,7 +773,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		} else if (wisToSFTP) {
 			// This is the PFSWeb variant. Each work instruction is add to the specific EDI service and accumulated, then sent finally
 			// if the order is complete on the cart
-			EdiServiceABC theService = getAccumulatingOutputService(inWi.getFacility());
+			IEdiExportService theService = getAccumulatingOutputService(inWi.getFacility());
 			if (theService != null) {
 				theService.notifyWiComplete(inWi);
 				// then the slightly tricky part. Did this work instruction result in the order being complete on that cart?
@@ -790,13 +788,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 
 	}
 
-	private EdiServiceABC getAccumulatingOutputService(Facility facility) {
-		SftpWIsEdiService service =  facility.findEdiService(SftpWIsEdiService.class);
-		if (service != null && service.isLinked()) {
-			return service;
-		} else {
-			return null;
-		}
+	private IEdiExportService getAccumulatingOutputService(Facility facility) {
+		return this.exportServiceProvider.getWorkInstructionExporter(facility);
 	}
 
 	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
@@ -806,10 +799,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			try {
 				storedWi = persistWorkInstruction(incomingWI);
 				notifyEdiServiceCompletedWi(storedWi);
-			} catch (DaoException e) {
-				LOGGER.error("Unable to record work instruction: " + incomingWI, e);
-			}
-			if (storedWi != null) {
 				computeAndSendOrderFeedback(storedWi);
 				//If WI is on a PutWall, refresh PutWall feedback
 				OrderDetail detail = storedWi.getOrderDetail();
@@ -823,6 +812,8 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 						}
 					}
 				}
+			} catch (DaoException e) {
+				LOGGER.error("Unable to record work instruction: " + incomingWI, e);
 			}
 		} else {
 			throw new IllegalArgumentException("Could not find che for id: " + cheId);
@@ -1814,7 +1805,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			// exportWorkInstructions2() uses the bean. exportWorkInstructions() the old way
 			String messageBody = wiCSVExporter.exportWorkInstructions2(ImmutableList.of(inWorkInstruction));
 			Facility facility = inWorkInstruction.getParent();
-			IEdiService ediExportService = exportServiceProvider.getWorkInstructionExporter(facility);
+			IEdiExportService ediExportService = exportServiceProvider.getWorkInstructionExporter(facility);
 			WIMessage wiMessage = new WIMessage(ediExportService, messageBody);
 			completedWorkInstructions.add(wiMessage);
 		}
@@ -1838,10 +1829,10 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 *
 	 */
 	private static class WIMessage {
-		private IEdiService	exportService;
+		private IEdiExportService	exportService;
 		private String		messageBody;
 
-		public WIMessage(IEdiService exportService, String messageBody) {
+		public WIMessage(IEdiExportService exportService, String messageBody) {
 			super();
 			this.exportService = exportService;
 			this.messageBody = messageBody;
@@ -2067,7 +2058,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			boolean sent = false;
 			while (!sent) {
 				try {
-					IEdiService ediExportService = exportMessage.exportService;
+					IEdiExportService ediExportService = exportMessage.exportService;
 					ediExportService.sendWorkInstructionsToHost(exportMessage.messageBody);
 					sent = true;
 				} catch (IOException e) {

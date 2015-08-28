@@ -145,11 +145,7 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 		
 	}
 
-	@Override
-	public void sendWorkInstructionsToHost(String exportMessage) throws IOException {
-		// not implemented in this service
-	}
-
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public ITypedDao<SftpOrdersEdiService> getDao() {

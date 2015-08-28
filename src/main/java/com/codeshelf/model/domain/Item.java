@@ -110,6 +110,11 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	public Item() {
 	}
 
+	public Item(ItemMaster itemMaster, UomMaster uomMaster) {
+		setUomMaster(uomMaster);
+		itemMaster.addItemToMaster(this);
+	}
+
 	/**
 	 * This creates a standard domainId that keeps all of the items in different locations unique among a single ItemMaster.
 	 * @param inItemId

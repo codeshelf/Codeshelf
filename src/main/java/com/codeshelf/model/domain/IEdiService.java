@@ -5,8 +5,6 @@
  *******************************************************************************/
 package com.codeshelf.model.domain;
 
-import java.io.IOException;
-
 import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
@@ -27,6 +25,4 @@ public interface IEdiService extends IDomainObjectTree<Facility> {
 		ICsvCrossBatchImporter inCsvCrossBatchImporter,
 		ICsvAislesFileImporter inCsvAislesFileImporter);
 	
-	void sendWorkInstructionsToHost(final String exportMessage) throws IOException;
-
 }

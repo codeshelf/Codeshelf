@@ -8,11 +8,12 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
+import com.codeshelf.edi.IEdiExportService;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.EdiServiceABC;
 import com.codeshelf.model.domain.IDomainObject;
 
-class PhonyPFSWebExportService extends EdiServiceABC{
+class PhonyPFSWebExportService extends EdiServiceABC implements IEdiExportService {
 	public PhonyPFSWebExportService(){
 	}
 	

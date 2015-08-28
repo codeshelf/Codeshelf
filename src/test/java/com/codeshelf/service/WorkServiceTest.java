@@ -35,7 +35,9 @@ import org.mockito.invocation.InvocationOnMock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.edi.IEdiExportService;
 import com.codeshelf.edi.IEdiExportServiceProvider;
+import com.codeshelf.edi.InventoryGenerator;
 import com.codeshelf.edi.WorkInstructionCSVExporter;
 import com.codeshelf.generators.FacilityGenerator;
 import com.codeshelf.generators.WorkInstructionGenerator;
@@ -48,7 +50,6 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
@@ -66,7 +67,9 @@ public class WorkServiceTest extends ServerTest {
 	private static final Logger			LOGGER		= LoggerFactory.getLogger(WorkServiceTest.class);
 
 	private WorkInstructionGenerator	wiGenerator	= new WorkInstructionGenerator();
+	private InventoryGenerator	inventoryGenerator = new InventoryGenerator(null);
 	private FacilityGenerator			facilityGenerator;
+
 
 	@Override
 	public void doBefore() {
@@ -180,7 +183,7 @@ public class WorkServiceTest extends ServerTest {
 
 		LOGGER.info("1: get the facility");
 		Facility facility = facilityGenerator.generateValid();
-		UUID cheId = firstChe(facility);
+		UUID cheId = firstChe(facility).getPersistentId();
 
 		LOGGER.info("1: mock request, work server, and service factory");
 		ServiceMethodRequest request = new ServiceMethodRequest();
@@ -250,8 +253,8 @@ public class WorkServiceTest extends ServerTest {
 		}
 		when(workInstructionDao.findByFilter(anyList())).thenReturn(inputs);
 
-		UUID cheId = firstChe(facility);
-		List<WiSetSummary> workSummaries = workService.workAssignedSummary(cheId, facility.getPersistentId());
+		Che che = firstChe(facility);
+		List<WiSetSummary> workSummaries = workService.workAssignedSummary(che.getPersistentId(), facility.getPersistentId());
 
 		//since each timestamp is unique they will each get summarized into their own summary object
 		Assert.assertEquals(inputs.size(), workSummaries.size());
@@ -274,7 +277,7 @@ public class WorkServiceTest extends ServerTest {
 
 		UUID cheId = UUID.randomUUID();
 
-		createWorkService(Integer.MAX_VALUE, mock(IEdiService.class), 1L);
+		createWorkService(Integer.MAX_VALUE, mock(IEdiExportService.class), 1L);
 		WorkInstruction wiToRecord = generateValidWorkInstruction(facilityGenerator.generateValid(), new Timestamp(0));
 
 		this.<Che> useCustomDao(Che.class, mock(ITypedDao.class));
@@ -305,7 +308,7 @@ public class WorkServiceTest extends ServerTest {
 		WorkInstruction wiToRecord = generateValidWorkInstruction(facility, new Timestamp(0));
 		this.getTenantPersistenceService().commitTransaction();
 
-		IEdiService mockEdiExportService = mock(IEdiService.class);
+		IEdiExportService mockEdiExportService = mock(IEdiExportService.class);
 		createWorkService(Integer.MAX_VALUE, mockEdiExportService, 1L);
 
 		UUID cheId = UUID.randomUUID();
@@ -330,11 +333,12 @@ public class WorkServiceTest extends ServerTest {
 		verify(mockEdiExportService, never()).sendWorkInstructionsToHost(any(String.class));
 	}
 
+	
 	@Test
 	public void allWorkInstructionsSent() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
 
-		IEdiService mockEdiExportService = mock(IEdiService.class);
+		IEdiExportService mockEdiExportService = mock(IEdiExportService.class);
 
 		int total = 100;
 		createWorkService(total + 1, mockEdiExportService, 1L);
@@ -421,6 +425,21 @@ public class WorkServiceTest extends ServerTest {
 
 	@Test
 	public void accumulatorTestWithExtensions() throws IOException, InterruptedException {
+		beginTransaction();
+/*
+		IEdiService mockEdiExportService = mock(IEdiService.class);
+
+		int total = 100;
+		createWorkService(total + 1, mockEdiExportService, 1L);
+		List<WorkInstruction> wiList = generateValidWorkInstructions(total);
+		for (WorkInstruction wi : wiList) {
+			workService.exportWorkInstruction(wi);
+
+		}
+*/
+		commitTransaction();
+
+		
 		// What is a test with no asserts?  Not so great. Can see the output in the log/console, though. It works.
 
 		LOGGER.info("1: Add the orderOnCart, header, trailer, and content extensions");
@@ -491,26 +510,36 @@ public class WorkServiceTest extends ServerTest {
 		ExtensionPoint.staticGetDao().store(contentExt);
 
 		LOGGER.info("1: Make the work instruction");
-		WorkInstruction wi = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
-		Che wiChe = wi.getAssignedChe();
-		OrderDetail wiDetail = wi.getOrderDetail();
-		OrderHeader wiOrder = wiDetail.getParent();
+		
+		Che che = firstChe(facility);
+		OrderHeader orderHeader = wiGenerator.generateValidOrderHeader(facility);
+		OrderDetail orderDetail1 = wiGenerator.generateValidOrderDetail(orderHeader, inventoryGenerator.generateItem(facility));
+		OrderDetail orderDetail2 = wiGenerator.generateValidOrderDetail(orderHeader, inventoryGenerator.generateItem(facility));
+		List<WorkInstruction> wis = generateValidWorkInstruction(orderHeader, che, nextUniquePastTimestamp());
 		commitTransaction();
 
 		LOGGER.info("2: Create a phony EDI export service"); // needs an active transaction
 		// This is a real-ish service with meaningful overrides.
 		beginTransaction();
-		PhonyPFSWebExportService theService = new PhonyPFSWebExportService();
+		PhonyPFSWebExportService ediService = new PhonyPFSWebExportService();
+		createWorkService(100, ediService, 2000);
 		commitTransaction();
 
+		
 		LOGGER.info("3: notify order on cart"); // Use extension points
-		theService.notifyOrderOnCart(wiOrder, wiChe);
+		//theService.notifyOrderOnCart(wiOrder, che);
+
+		beginTransaction();
 
 		LOGGER.info("4: Accumulate the wi"); // this does not use extension points
-		theService.notifyWiComplete(wi);
+		for (WorkInstruction workInstruction : wis) {
+			workInstruction.setCompleteState("picker", workInstruction.getPlanQuantity());
+			this.workService.completeWorkInstruction(che.getPersistentId(), workInstruction);
+		}
+		commitTransaction();
 
 		LOGGER.info("5: Report on the order"); // Use extension points
-		theService.notifyOrderCompleteOnCart(wiOrder, wiChe);
+//		theService.notifyOrderCompleteOnCart(wiOrder, wiChe);
 	}
 
 	@Test
@@ -523,7 +552,7 @@ public class WorkServiceTest extends ServerTest {
 
 		String messageBody = format(wi);
 
-		IEdiService mockEdiExportService = mock(IEdiService.class);
+		IEdiExportService mockEdiExportService = mock(IEdiExportService.class);
 		doThrow(new IOException("test io")).doThrow(new IOException("second one"))
 			.doNothing()
 			.when(mockEdiExportService)
@@ -552,7 +581,7 @@ public class WorkServiceTest extends ServerTest {
 		WorkInstruction wi = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
 		String testMessage = format(wi);
 
-		IEdiService mockEdiExportService = mock(IEdiService.class);
+		IEdiExportService mockEdiExportService = mock(IEdiExportService.class);
 
 		List<Long> timings = new ArrayList<Long>();
 		doAnswer(new TimedExceptionAnswer(new IOException("test io"), timings)).doAnswer(new TimedExceptionAnswer(new IOException("test io"),
@@ -587,7 +616,7 @@ public class WorkServiceTest extends ServerTest {
 		Facility facility = facilityGenerator.generateValid();
 		WorkInstruction wi1 = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
 		WorkInstruction wi2 = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
-		IEdiService mockEdiExportService = mock(IEdiService.class);
+		IEdiExportService mockEdiExportService = mock(IEdiExportService.class);
 		doThrow(new RuntimeException("test io")).doNothing()
 			.when(mockEdiExportService)
 			.sendWorkInstructionsToHost(any(String.class));
@@ -617,7 +646,7 @@ public class WorkServiceTest extends ServerTest {
 		final int total = 100;
 		Lock callBlocker = new ReentrantLock();
 		callBlocker.lock();
-		final IEdiService mockEdiExportService = createBlockingService(callBlocker);
+		final IEdiExportService mockEdiExportService = createBlockingService(callBlocker);
 		doAnswer(new BlockedCall(callBlocker)).when(mockEdiExportService).sendWorkInstructionsToHost(any(String.class));
 
 		createWorkService(total + 1, mockEdiExportService, 1L);
@@ -649,7 +678,7 @@ public class WorkServiceTest extends ServerTest {
 
 		Lock callBlocker = new ReentrantLock();
 		callBlocker.lock();
-		IEdiService blockingService = createBlockingService(callBlocker);
+		IEdiExportService blockingService = createBlockingService(callBlocker);
 		createWorkService(capacity, blockingService, 1L);
 		int exportAttempts = 0;
 		for (WorkInstruction workInstruction : wiList) {
@@ -667,7 +696,7 @@ public class WorkServiceTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
-	private void createWorkService(int capacity, IEdiService ediService, long retryDelay) {
+	private void createWorkService(int capacity, IEdiExportService ediService, long retryDelay) {
 
 		IEdiExportServiceProvider provider = mock(IEdiExportServiceProvider.class);
 		when(provider.getWorkInstructionExporter(any(Facility.class))).thenReturn(ediService);
@@ -730,8 +759,8 @@ public class WorkServiceTest extends ServerTest {
 		}
 	}
 
-	private IEdiService createBlockingService(Lock callBlocker) throws IOException {
-		final IEdiService mockEdiExportService = mock(IEdiService.class);
+	private IEdiExportService createBlockingService(Lock callBlocker) throws IOException {
+		final IEdiExportService mockEdiExportService = mock(IEdiExportService.class);
 		doAnswer(new BlockedCall(callBlocker)).when(mockEdiExportService).sendWorkInstructionsToHost(any(String.class));
 		return mockEdiExportService;
 	}
@@ -751,20 +780,30 @@ public class WorkServiceTest extends ServerTest {
 		wi.setAssigned(timestamp);
 		return wi;
 	}
+	
+	private List<WorkInstruction> generateValidWorkInstruction(OrderHeader orderHeader, Che che, Timestamp timestamp) {
+		List<WorkInstruction> wis = new ArrayList<>();
+		for (OrderDetail orderDetail : orderHeader.getOrderDetails()) {
+			WorkInstruction wi = wiGenerator.generateWithNewStatus(orderDetail, che);
+			wi.setAssigned(timestamp);
+			wis.add(wi);
+		}
+		return wis;
+	}
 
 	private Timestamp nextUniquePastTimestamp() {
 		return new Timestamp(System.currentTimeMillis() - Math.abs(RandomUtils.nextLong()));
 	}
 
-	private UUID firstChe(Facility facility) {
-		UUID cheId = null;
+	private Che firstChe(Facility facility) {
+		Che firstChe = null;
 		for (CodeshelfNetwork network : facility.getNetworks()) {
 			for (Che che : network.getChes().values()) {
-				cheId = che.getPersistentId();
+				firstChe = che;
 				break;
 			}
 		}
-		return cheId;
+		return firstChe;
 	}
 
 }

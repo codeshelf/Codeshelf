@@ -14,6 +14,7 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
+import com.codeshelf.edi.IEdiExportService;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -22,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 @Entity
 @DiscriminatorValue("SFTP_WIS")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class SftpWIsEdiService extends AbstractSftpEdiService {
+public class SftpWIsEdiService extends AbstractSftpEdiService implements IEdiExportService {
 	public static class SftpWIsEdiServiceDao extends GenericDaoABC<SftpWIsEdiService> implements ITypedDao<SftpWIsEdiService> {
 		public final Class<SftpWIsEdiService> getDaoClass() {
 			return SftpWIsEdiService.class;

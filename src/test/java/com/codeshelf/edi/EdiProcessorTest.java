@@ -159,12 +159,6 @@ public class EdiProcessorTest extends MockDaoTest {
 			}
 
 			@Override
-			public void sendWorkInstructionsToHost(String inWiList) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
 			public Facility getParent() {
 				// TODO Auto-generated method stub
 				return null;
@@ -272,12 +266,6 @@ public class EdiProcessorTest extends MockDaoTest {
 				ICsvAislesFileImporter inCsvAislesFileImporter) {
 				unlinkedResult.processed = true;
 				return true;
-			}
-
-			@Override
-			public void sendWorkInstructionsToHost(String exportMessage) {
-				// TODO Auto-generated method stub
-
 			}
 
 			@Override
