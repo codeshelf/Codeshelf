@@ -102,6 +102,10 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 
 		this.startTime = System.currentTimeMillis();
 		this.spentDoingExtensionsMs = 0;
+		BatchResult<Object> batchResult = new BatchResult<Object>();
+		batchResult.setReceived(new Date(startTime));
+		batchResult.setStarted(new Date(startTime));
+		batchResult.setCompleted(new Date(startTime));
 
 		// make sure the facility is up-to-date
 		facility = facility.reload();
@@ -114,11 +118,11 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		} catch (Exception e) {
 			LOGGER.error("Failed to initialize extension point service", e);
 		}
-
-		BatchResult<Object> batchResult = new BatchResult<Object>();
-		batchResult.setReceived(new Date(startTime));
-		batchResult.setStarted(new Date(startTime));
-		batchResult.setCompleted(new Date(startTime));
+		
+		List<String> failedExtensions = extensionPointService.getFailedExtensions();
+		for (String e : failedExtensions) {
+			batchResult.addViolation("ExtensionService", null, "Extension failed to load and was deactivated: " + e);
+		}
 
 		// Get our LOCAPICK and SCANPICK configuration values. It will not change during importing one file.
 		this.locaPick = PropertyService.getInstance().getBooleanPropertyFromConfig(facility, DomainObjectProperty.LOCAPICK);
@@ -250,8 +254,9 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		}
 
 		// From v20 DEV-1075
-		// We need to run the order bean transforms before doing any caching or even assembling orderIds, gtins, etc. 
+		// We need to run the order bean transforms before doing any caching or even assembling orderIds, gtins, etc.
 		if (getExtensionPointService().hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation)) {
+			HashMap<String, String> orderImportBeanTransformationViolations = new HashMap<>();
 			long timeBeforeExtension = System.currentTimeMillis();
 			for (OutboundOrderCsvBean orderBean : originalBeanList) {
 				// transform order bean with groovy script, if enabled
@@ -261,9 +266,25 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 						orderBean = (OutboundOrderCsvBean) getExtensionPointService().eval(ExtensionPointType.OrderImportBeanTransformation,
 							params);
 					} catch (Exception e) {
-						LOGGER.error("Failed to evaluate OrderImportBeanTransformation extension point", e);
+						String lineNum = orderBean.getLineNumber().toString();
+						String errorMessage = "Failed to evaluate OrderImportBeanTransformation extension point on line(s) %s: " + e.toString();
+						String errorMessageLog = String.format(errorMessage, lineNum);
+						LOGGER.error(errorMessageLog);
+						String lineNumList = orderImportBeanTransformationViolations.get(errorMessage);
+						if (lineNumList == null) {
+							lineNumList = lineNum;
+						} else {
+							lineNumList += ", " + lineNum;
+						}
+						orderImportBeanTransformationViolations.put(errorMessage, lineNumList);
+						//batchResult.addLineViolation(1, orderBean, errorMessage);
 					}
 				}
+			}
+			for (String errorMsg : orderImportBeanTransformationViolations.keySet()){
+				String lineNumList = orderImportBeanTransformationViolations.get(errorMsg);
+				String errorWithLines = String.format(errorMsg, lineNumList);
+				batchResult.addViolation("OrderImportBeanTransformation", null, errorWithLines);
 			}
 			addToExtensionMsFromTimeBefore(timeBeforeExtension);
 		}

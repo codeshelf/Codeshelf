@@ -112,6 +112,7 @@ public class SftpTest extends HibernateTest {
 		String filename = Long.toString(System.currentTimeMillis())+"a.DAT";
 		String importFilename = config.getImportPath()+"/"+ filename;
 		String archiveFilename = config.getArchivePath()+"/"+ filename;
+		@SuppressWarnings("unused")
 		ExportReceipt receipt = sftpOrders.uploadAsFile("order data 1", importFilename);
 		try {
 		//String filename2 = config.getImportPath()+"/"+Long.toString(System.currentTimeMillis())+"b.DAT";

@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.UUID;
 
 import javax.script.ScriptException;
@@ -24,6 +25,8 @@ import com.codeshelf.service.ExtensionPointService;
 import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.testframework.ServerTest;
+import com.codeshelf.validation.BatchResult;
+import com.codeshelf.validation.FieldError;
 
 public class ScriptingServiceTest extends ServerTest {
 
@@ -36,10 +39,7 @@ public class ScriptingServiceTest extends ServerTest {
 
 		beginTransaction();
 		String text = "def OrderImportBeanTransformation(orderBean) { orderBean.description == 'abc' }";
-		ExtensionPoint needsScanScript = new ExtensionPoint(facility, ExtensionPointType.OrderImportBeanTransformation);
-		needsScanScript.setScript(text);
-		needsScanScript.setActive(true);
-		ExtensionPoint.staticGetDao().store(needsScanScript);
+		createExtension(facility, ExtensionPointType.OrderImportBeanTransformation, text);
 		commitTransaction();
 
 		beginTransaction();
@@ -71,10 +71,7 @@ public class ScriptingServiceTest extends ServerTest {
 		//test positive case when active
 		beginTransaction();
 		String text = "def OrderImportBeanTransformation(orderBean) { orderBean.description == 'abc' }";
-		ExtensionPoint needsScanScript = new ExtensionPoint(facility, ExtensionPointType.OrderImportBeanTransformation);
-		needsScanScript.setScript(text);
-		needsScanScript.setActive(true);
-		ExtensionPoint.staticGetDao().store(needsScanScript);
+		ExtensionPoint needsScanScript = createExtension(facility, ExtensionPointType.OrderImportBeanTransformation, text);
 		UUID persistentId = needsScanScript.getPersistentId();
 		commitTransaction();
 
@@ -125,10 +122,7 @@ public class ScriptingServiceTest extends ServerTest {
 		// define a rule to set needsscan for each picks, if not defined in import file
 		beginTransaction();
 		String text = "def OrderImportBeanTransformation(orderBean) { orderBean.needsScan = true; orderBean }";
-		ExtensionPoint needsScanScript = new ExtensionPoint(facility, ExtensionPointType.OrderImportBeanTransformation);
-		needsScanScript.setActive(true);
-		needsScanScript.setScript(text);
-		ExtensionPoint.staticGetDao().store(needsScanScript);
+		createExtension(facility, ExtensionPointType.OrderImportBeanTransformation, text);
 		commitTransaction();
 
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence,needsScan"
@@ -186,10 +180,7 @@ public class ScriptingServiceTest extends ServerTest {
 				"\r\n	    }" +
 				"\r\n   	return orderLine;" +
 				"\r\n  }";
-		ExtensionPoint needsScanScript = new ExtensionPoint(facility, ExtensionPointType.OrderImportBeanTransformation);
-		needsScanScript.setActive(true);
-		needsScanScript.setScript(text);
-		ExtensionPoint.staticGetDao().store(needsScanScript);
+		createExtension(facility, ExtensionPointType.OrderImportBeanTransformation, text);
 		commitTransaction();
 
 		
@@ -247,10 +238,7 @@ public class ScriptingServiceTest extends ServerTest {
 				"\r\n	    }" +
 				"\r\n   	return orderLine;" +
 				"\r\n  }";
-		ExtensionPoint needsScanScript = new ExtensionPoint(facility, ExtensionPointType.OrderImportBeanTransformation);
-		needsScanScript.setActive(true);
-		needsScanScript.setScript(text);
-		ExtensionPoint.staticGetDao().store(needsScanScript);
+		createExtension(facility, ExtensionPointType.OrderImportBeanTransformation, text);
 		
 		PropertyService.getInstance().changePropertyValue(facility, DomainObjectProperty.SCANPICK, "UPC");
 		commitTransaction();
@@ -424,12 +412,7 @@ public class ScriptingServiceTest extends ServerTest {
 
 		
 		beginTransaction();
-		ExtensionPoint extp = new ExtensionPoint(facility, ExtensionPointType.OrderImportCreateHeader);
-		extp.setScript(scriptText);
-		
-		extp.setActive(true);
-		
-		ExtensionPoint.staticGetDao().store(extp);
+		createExtension(facility, ExtensionPointType.OrderImportCreateHeader, scriptText);
 		commitTransaction();
 		
 /*
@@ -541,22 +524,9 @@ public class ScriptingServiceTest extends ServerTest {
 
 		
 		beginTransaction();
-		ExtensionPoint headerExtp = new ExtensionPoint(facility, ExtensionPointType.OrderImportCreateHeader);
-		headerExtp.setScript(headerText);		
-		headerExtp.setActive(true);		
-		ExtensionPoint.staticGetDao().store(headerExtp);
-		
-		ExtensionPoint lineExtp = new ExtensionPoint(facility, ExtensionPointType.OrderImportLineTransformation);
-		lineExtp.setScript(lineText);		
-		lineExtp.setActive(true);		
-		ExtensionPoint.staticGetDao().store(lineExtp);
-
-		ExtensionPoint beanExtp = new ExtensionPoint(facility, ExtensionPointType.OrderImportBeanTransformation);
-		beanExtp.setActive(true);
-		beanExtp.setScript(beanText);
-		ExtensionPoint.staticGetDao().store(beanExtp);
-
-		
+		createExtension(facility, ExtensionPointType.OrderImportCreateHeader, headerText);
+		createExtension(facility, ExtensionPointType.OrderImportLineTransformation, lineText);
+		createExtension(facility, ExtensionPointType.OrderImportBeanTransformation, beanText);		
 		commitTransaction();
 		
 		String csvString = "ADDMISSION^11243513^11243513^NM00806F^1^889789006171^11243513111112^99999^S7"
@@ -580,5 +550,147 @@ public class ScriptingServiceTest extends ServerTest {
 
 		commitTransaction();
 	}
+	
+	/**
+	 * This test proves an non-compilable groovy.
+	 * Trying to import orders will deactivate the extension
+	 */
+	@Test
+	public void badGroovyCompilationTest() throws IOException{
+		Facility facility = setUpSimpleNoSlotFacility();
 
+		beginTransaction();
+		LOGGER.info("1: Add a non-compilable extension");
+		String createLineTransformation = 
+				"	def XXX OrderImportLineTransformation(orderLine) {\n" + 
+				"    	orderLine.replace('^', ',');\n" + 
+				"	}";
+		ExtensionPoint extension = createExtension(facility, ExtensionPointType.OrderImportLineTransformation, createLineTransformation);
+		
+		LOGGER.info("2: Import orders");
+		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence,needsScan"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalapeo Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,yes"
+				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,no"
+				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,case,2012-09-26 11:31:01,2012-09-26 11:31:03,0,"
+				+ "\r\n1,USF314,COSTCO,123,123,10706972,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,";		
+		BatchResult<Object> result = importOrdersData(facility, csvString);
+		
+		LOGGER.info("3: Verify the violation that came from order importing");
+		List<FieldError> violations = result.getViolations();
+		Assert.assertEquals(1, violations.size());
+		FieldError violation = violations.get(0);
+		String message = violation.getMessage();
+		Assert.assertTrue(message.contains("Extension failed to load and was deactivated: OrderImportLineTransformation"));
+		Assert.assertTrue(message.contains("unable to resolve class XXX"));
+
+		LOGGER.info("4: Verify that the extension was deactivaed");
+		extension = ExtensionPoint.staticGetDao().reload(extension);
+		Assert.assertFalse(extension.isActive());
+		Assert.assertEquals(1, OrderHeader.staticGetDao().getAll().size());
+		Assert.assertEquals(4, OrderDetail.staticGetDao().getAll().size());
+		commitTransaction();
+	}
+	
+	/**
+	 * This test demonstrates error handling when OrderImportCreateHeader extension fails.
+	 * This will terminate order importing at once
+	 */
+	@Test
+	public void badGroovyErrorRuntimeCreateHeaderTest() throws IOException{
+		badGroovyErrorRuntimeTestHelper(ExtensionPointType.OrderImportCreateHeader);
+	}
+	
+	/**
+	 * This test demonstrates error handling when OrderImportHeaderTransformation extension fails.
+	 * This will terminate order importing at once
+	 */
+	@Test
+	public void badGroovyErrorRuntimeHeaderTransformationTest() throws IOException{
+		badGroovyErrorRuntimeTestHelper(ExtensionPointType.OrderImportHeaderTransformation);
+	}
+	
+	/**
+	 * This test demonstrates error handling when OrderImportLineTransformation extension fails.
+	 * This will terminate order importing at once
+	 */
+	@Test
+	public void badGroovyErrorRuntimeLineTransformationTest() throws IOException{
+		badGroovyErrorRuntimeTestHelper(ExtensionPointType.OrderImportLineTransformation);
+	}
+	
+	private void badGroovyErrorRuntimeTestHelper(ExtensionPointType type) throws IOException{
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		beginTransaction();
+		LOGGER.info("1: Add extension with a faulty call (it'll pass ExtensionService loading, but fail on runtime");
+		String script = 
+				"def " + type + "(param) { \n" + 
+				"    fake() \n" + 
+				"}";
+		createExtension(facility, type, script);
+		
+		LOGGER.info("2: Import orders");
+		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence,needsScan"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalapeo Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,yes"
+				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,no"
+				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,case,2012-09-26 11:31:01,2012-09-26 11:31:03,0,"
+				+ "\r\n1,USF314,COSTCO,123,123,10706972,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,";		
+		BatchResult<Object> result = importOrdersData(facility, csvString);
+
+		LOGGER.info("3: Verify violation");
+		List<FieldError> violations = result.getViolations();
+		Assert.assertEquals(1, violations.size());
+		FieldError violation = violations.get(0);
+		String message = violation.getMessage();
+		Assert.assertTrue(message.contains("Script type " + type));
+		Assert.assertTrue(message.contains("fake()"));
+
+		commitTransaction();
+	}
+	
+	/**
+	 * This test demonstrates error handling when OrderImportBeanTransformation extension fails.
+	 * Unlike the above "bad groovy" tests, this bad extension will generate a list of order file lines that it failed on
+	 * With bad code, it will fail on every line. However, the failures are grouped by error messages
+	 */
+	@Test
+	public void badGroovyErrorRuntimeBeanTransformationTest() throws IOException{
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		beginTransaction();
+		LOGGER.info("1: Add extension with a faulty call (it'll pass ExtensionService loading, but fail on runtime");
+		String script = 
+				"def OrderImportBeanTransformation(orderLine) { \n" + 
+				"    fake() \n" + 
+				"}";
+		createExtension(facility, ExtensionPointType.OrderImportBeanTransformation, script);
+		
+		LOGGER.info("2: Import orders");
+		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence,needsScan"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalapeo Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,yes"
+				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,no"
+				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,case,2012-09-26 11:31:01,2012-09-26 11:31:03,0,"
+				+ "\r\n1,USF314,COSTCO,123,123,10706972,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,";		
+		BatchResult<Object> result = importOrdersData(facility, csvString);
+
+		LOGGER.info("3: Verify violation");
+		List<FieldError> violations = result.getViolations();
+		Assert.assertEquals(1, violations.size());
+		FieldError violation = violations.get(0);
+		String message = violation.getMessage();
+		Assert.assertTrue(message.contains("Failed to evaluate OrderImportBeanTransformation extension point on line(s) 2, 3, 4, 5:"));
+		Assert.assertTrue(message.contains("fake()"));
+
+		commitTransaction();
+		
+	}
+
+	
+	private ExtensionPoint createExtension(Facility facility, ExtensionPointType type, String script){
+		ExtensionPoint extension = new ExtensionPoint(facility, type);
+		extension.setActive(true);
+		extension.setScript(script);
+		ExtensionPoint.staticGetDao().store(extension);
+		return extension;
+	}
 }
