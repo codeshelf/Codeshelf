@@ -55,6 +55,13 @@ public class SftpWIsEdiService extends AbstractSftpEdiService implements IEdiExp
 		return true;
 	}
 
+	/**
+	 * Override this to use the standard groovy WI transformation (and future ones) on your EDI service that includes output.
+	 */
+	@Override
+	protected boolean needsGroovyOutputExtensions() {
+		return true;
+	}
 
 	@Override
 	public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,

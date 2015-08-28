@@ -427,20 +427,6 @@ public class WorkServiceTest extends ServerTest {
 
 	@Test
 	public void accumulatorTestWithExtensions() throws IOException, InterruptedException {
-		beginTransaction();
-/*
-		IEdiService mockEdiExportService = mock(IEdiService.class);
-
-		int total = 100;
-		createWorkService(total + 1, mockEdiExportService, 1L);
-		List<WorkInstruction> wiList = generateValidWorkInstructions(total);
-		for (WorkInstruction wi : wiList) {
-			workService.exportWorkInstruction(wi);
-
-		}
-*/
-		commitTransaction();
-
 		
 		// What is a test with no asserts?  Not so great. Can see the output in the log/console, though. It works.
 
