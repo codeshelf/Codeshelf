@@ -247,7 +247,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				this.startTime = System.currentTimeMillis();
 				LOGGER.info(batch.getItemIds().size() + " distinct items found in batch");
 				preFetchCachesForOrderBatch(facility, batch);
-				
+
 				// process order file
 				List<OutboundOrderCsvBean> lines = batch.getLines();
 				//Check if destinationId, shipperId, or customerId values vary within individual orders
@@ -693,9 +693,14 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		// Try to find a matching manual-inventory Gtin
 		// This is a very important case for "inventory onboarding". Initial inventory scan of gtin make a phony item and item master.
 		// Now comes the good update where we have a chance to correct it. Log as WARN.
-		Gtin gtin = this.gtinCache.get(gtinId);
-		if (gtin == null)
-			gtin = findUniqueSubstringMatch(gtinId);
+		Gtin gtin = null;
+		if (gtinId == null || gtinId.isEmpty()) {
+			// do not query to find gtin like this. Even if it existed, we don't want it.
+		} else {
+			gtin = this.gtinCache.get(gtinId);
+			if (gtin == null)
+				gtin = findUniqueSubstringMatch(gtinId);
+		}
 		if (itemMaster == null && gtin != null) {
 
 			if (!gtinIsAnOnboardingManufacture(gtin)) {
@@ -887,7 +892,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 					// Change the GTIN based on the order file
 					// Cache maintenance!
 					gtinCache.remove(misMatchGtinForMaster);
-					
+
 					LOGGER.warn("GTIN_case_4b {} already exists. Changing it to {}", misMatchGtinForMaster, gtinId);
 					misMatchGtinForMaster.setDomainId(gtinId);
 					try {
