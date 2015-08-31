@@ -145,6 +145,15 @@ public class CriteriaRegistry {
 		orderDetailsByFacilityAndPartialQuery.setMaxRecords(HIGH_MAX_RECORDS);
 		indexedCriteria.put("orderDetailsByFacilityAndPartialQuery", orderDetailsByFacilityAndPartialQuery);
 
+		TypedCriteria itemMastersByParentAndPartialQuery = new TypedCriteria("from ItemMaster where parent.persistentId = :parentId "
+				+ " and active = true"
+				+ " and (	lower(domainId) 	LIKE lower(:partialQuery)"
+				+ "      or	lower(description)	LIKE lower(:partialQuery))",
+			"parentId", UUID.class,
+			"partialQuery", String.class);
+		itemMastersByParentAndPartialQuery.setMaxRecords(HIGH_MAX_RECORDS);
+		indexedCriteria.put("itemMastersByParentAndPartialQuery", itemMastersByParentAndPartialQuery);
+
 		indexedCriteria.put("orderDetailsByHeader",
 			new TypedCriteria("from OrderDetail where parent.persistentId = :theId and active = true",
 				"theId", UUID.class)); //the UI dynamically sets the "parent" with theId
@@ -174,10 +183,18 @@ public class CriteriaRegistry {
 			gtinsByFacility.setMaxRecords(MED_MAX_RECORDS);
 		indexedCriteria.put("gtinsByFacility", gtinsByFacility);
 
+		TypedCriteria gtinsByFacilityAndPartialQuery = new TypedCriteria("from Gtin where parent.parent.persistentId = :facilityId "
+				+ " and (	lower(domainId) 			LIKE lower(:partialQuery)"
+				+ "      or lower(parent.description) 	LIKE lower(:partialQuery)"
+				+ "      or lower(parent.domainId) 		LIKE lower(:partialQuery))",
+			"facilityId", UUID.class,
+			"partialQuery", String.class);
+		gtinsByFacilityAndPartialQuery.setMaxRecords(HIGH_MAX_RECORDS);
+		indexedCriteria.put("gtinsByFacilityAndPartialQuery", gtinsByFacilityAndPartialQuery);
+
 		indexedCriteria.put("orderLocationByFacility",
 			new TypedCriteria("from OrderLocation where active = true and parent.parent.persistentId = :facilityId",
-				"facilityId", UUID.class)); // could check that the location is active.
-
+				"facilityId", UUID.class)); // could check that the location is active.		
 	}
 
 	public TypedCriteria findByName(String name, Class<?> selectClass) {
