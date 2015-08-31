@@ -1,6 +1,5 @@
 package com.codeshelf.service;
 
-import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,15 +14,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.persistence.Transient;
-
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 
 import org.hibernate.criterion.Criterion;
@@ -35,9 +29,8 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Timer;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.OrderLocationFeedbackMessage;
-import com.codeshelf.edi.IEdiExportService;
-import com.codeshelf.edi.IEdiExportServiceProvider;
-import com.codeshelf.edi.WorkInstructionCSVExporter;
+import com.codeshelf.edi.EdiExporterProvider;
+import com.codeshelf.edi.FacilityEdiExporter;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
@@ -92,6 +85,7 @@ import com.codeshelf.ws.protocol.response.GetPutWallInstructionResponse;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
@@ -99,32 +93,17 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
-public class WorkService extends AbstractCodeshelfExecutionThreadService implements IApiService {
+public class WorkService extends AbstractCodeshelfIdleService implements IApiService {
 
 	private static final String			THREAD_CONTEXT_TAGS_KEY	= "tags";										// duplicated in CheDeviceLogic. Need a common place
 
-	public static final long			DEFAULT_RETRY_DELAY		= 10000L;
-	private static final String			SHUTDOWN_MESSAGE		= "*****SHUTDOWN*****";
-	public static final int				DEFAULT_CAPACITY		= Integer.MAX_VALUE;
 	private static Double				BAY_ALIGNMENT_FUDGE		= 0.25;
 
 	private static final Logger			LOGGER					= LoggerFactory.getLogger(WorkService.class);
-	private BlockingQueue<WIMessage>	completedWorkInstructions;
 
 	private final LightService			lightService;
 
-	@Getter
-	@Setter
-	private long						retryDelay;
-
-	@Getter
-	@Setter
-	private int							capacity;
-
-	private IEdiExportServiceProvider	exportServiceProvider;
-
-	@Transient
-	private WorkInstructionCSVExporter	wiCSVExporter;
+	private EdiExporterProvider	exportProvider;
 
 	@ToString
 	public static class Work {
@@ -146,21 +125,9 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	}
 
 	@Inject
-	public WorkService(LightService lightService) {
-		this(lightService, new IEdiExportServiceProvider() {
-			@Override
-			public IEdiExportService getWorkInstructionExporter(Facility facility) {
-				return facility.getEdiExportService();
-			}
-		});
-	}
-
-	public WorkService(LightService lightService, IEdiExportServiceProvider exportServiceProvider) {
+	public WorkService(LightService lightService, EdiExporterProvider exportProvider) {
 		this.lightService = lightService;
-		this.exportServiceProvider = exportServiceProvider;
-		this.wiCSVExporter = new WorkInstructionCSVExporter();
-		this.retryDelay = DEFAULT_RETRY_DELAY;
-		this.capacity = DEFAULT_CAPACITY;
+		this.exportProvider = exportProvider;
 	}
 
 	public final List<WorkInstruction> getWorkResults(final UUID facilityUUID, final Date startDate, final Date endDate) {
@@ -190,7 +157,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	 * @param inChe
 	 * @param inContainerIdList
 	 * @return
-	 */
+	 */ 
 	public final WorkList computeWorkInstructions(final Che inChe, final Map<String, String> positionToContainerMap) {
 		return computeWorkInstructions(inChe, positionToContainerMap, false);
 	}
@@ -713,9 +680,13 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		LOGGER.info("Order: {} added onto cart:{}", inOrder.getOrderId(), inChe.getDomainId());
 		// This is the PFSWeb variant. 
 		// Not sure if these should go singly.
-		IEdiExportService theService = getAccumulatingOutputService(inOrder.getFacility());
-		if (theService != null) {
-			theService.notifyOrderOnCart(inOrder, inChe);
+		try {
+			Optional<FacilityEdiExporter> theService = getFacilityEdiExporter(inOrder.getFacility());
+			if (theService.isPresent()) {
+				theService.get().notifyOrderOnCart(inOrder, inChe);
+			}
+		} catch(Exception e) {
+			LOGGER.warn("unable to export order addition message for order {} and che {}", inOrder ,inChe);
 		}
 	}
 
@@ -729,9 +700,13 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	private void notifyRemoveOrderFromCart(OrderHeader inOrder, Che inChe) {
 		LOGGER.info("Order: {} removed from cart:{}", inOrder.getOrderId(), inChe.getDomainId());
 		// This is the PFSWeb variant. 
-		IEdiExportService theService = getAccumulatingOutputService(inOrder.getFacility());
-		if (theService != null) {
-			theService.notifyOrderRemoveFromCart(inOrder, inChe);
+		try {
+			Optional<FacilityEdiExporter> theService = getFacilityEdiExporter(inOrder.getFacility());
+			if (theService.isPresent()) {
+				theService.get().notifyOrderRemoveFromCart(inOrder, inChe);
+			}
+		} catch (Exception e) {
+			LOGGER.warn("unable to export order removal message for order {} and che {}", inOrder ,inChe);
 		}
 	}
 	
@@ -758,38 +733,31 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 	* Three choices so far: not at all, to IronMQ, or to SFTP
 	*/
 	private void notifyEdiServiceCompletedWi(WorkInstruction inWi) {
-		// TODO Replace with some selector
-		boolean wisToIronMQ = false;
-		boolean wisToSFTP = true;
-
-		if (wisToIronMQ) {
-			// This is the IronMQ blow by blow variant. It queues messages directly on WorkService, which is suspect. Work service is
-			// singleton shared by many tenants. The message knows its service (the correct one), maybe this works for multi-tenancy.
-			try {
-				exportWorkInstruction(inWi);
-			} catch (IOException e) {
-				LOGGER.error("Unable to export work instruction: " + inWi, e);
-			}
-		} else if (wisToSFTP) {
-			// This is the PFSWeb variant. Each work instruction is add to the specific EDI service and accumulated, then sent finally
-			// if the order is complete on the cart
-			IEdiExportService theService = getAccumulatingOutputService(inWi.getFacility());
-			if (theService != null) {
-				theService.notifyWiComplete(inWi);
-				// then the slightly tricky part. Did this work instruction result in the order being complete on that cart?
+			
+		// This is the PFSWeb variant. Each work instruction is add to the specific EDI service and accumulated, then sent finally
+		// if the order is complete on the cart
+		 
+		//the implementation is either blow by blow or accumulating
+		try {
+			Optional<FacilityEdiExporter> theService = getFacilityEdiExporter(inWi.getFacility());
+			if (theService.isPresent()) {
 				Che wiChe = inWi.getAssignedChe();
 				OrderHeader wiOrder = inWi.getOrder();
+				theService.get().notifyWiComplete(wiOrder, wiChe, inWi);
+				// then the slightly tricky part. Did this work instruction result in the order being complete on that cart?
 				//Housekeeping WIs have null Details and (thus) Orders
 				if (wiOrder != null && wiOrder.didOrderCompleteOnCart(wiChe)) {
-					theService.notifyOrderCompleteOnCart(wiOrder, wiChe);
+					theService.get().notifyOrderCompleteOnCart(wiOrder, wiChe);
 				}
 			}
 		}
-
+		catch(Exception e) {
+			LOGGER.warn("Unable to export WorkInstruction {}", inWi, e );
+		}
 	}
 
-	private IEdiExportService getAccumulatingOutputService(Facility facility) {
-		return this.exportServiceProvider.getWorkInstructionExporter(facility);
+	private Optional<FacilityEdiExporter> getFacilityEdiExporter(Facility facility) throws Exception {
+		return Optional.fromNullable(this.exportProvider.getEdiExporter(facility));
 	}
 
 	public void completeWorkInstruction(UUID cheId, WorkInstruction incomingWI) {
@@ -1787,30 +1755,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		WorkInstructionSequencerABC.setSortCodesByCurrentSequence(sortedWIResults);
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * @param inWorkInstruction
-	 * @throws IOException
-	 * @throws InterruptedException
-	 */
-	void exportWorkInstruction(WorkInstruction inWorkInstruction) throws IOException {
-		// jr/hibernate  tracking down an error
-		if (completedWorkInstructions == null) {
-			// if queue not defined, just don't queue it
-			LOGGER.trace("null completedWorkInstructions in WorkService.exportWorkInstruction", new Exception());
-		} else if (inWorkInstruction == null) {
-			LOGGER.error("null input to WorkService.exportWorkInstruction", new Exception());
-		} else {
-			LOGGER.debug("Queueing work instruction: " + inWorkInstruction);
-			// exportWorkInstructions2() uses the bean. exportWorkInstructions() the old way
-			String messageBody = wiCSVExporter.exportWorkInstructions2(ImmutableList.of(inWorkInstruction));
-			Facility facility = inWorkInstruction.getParent();
-			IEdiExportService ediExportService = exportServiceProvider.getWorkInstructionExporter(facility);
-			WIMessage wiMessage = new WIMessage(ediExportService, messageBody);
-			completedWorkInstructions.add(wiMessage);
-		}
-	}
-
 	public List<WiSetSummary> workAssignedSummary(UUID cheId, UUID facilityId) {
 		WiSummarizer summarizer = new WiSummarizer();
 		summarizer.computeAssignedWiSummariesForChe(cheId, facilityId);
@@ -1821,22 +1765,6 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		WiSummarizer summarizer = new WiSummarizer();
 		summarizer.computeCompletedWiSummariesForChe(cheId, facilityId);
 		return summarizer.getSummaries();
-	}
-
-	/**
-	 * Simple struct to keep associate export settings
-	 * @author pmonteiro
-	 *
-	 */
-	private static class WIMessage {
-		private IEdiExportService	exportService;
-		private String		messageBody;
-
-		public WIMessage(IEdiExportService exportService, String messageBody) {
-			super();
-			this.exportService = exportService;
-			this.messageBody = messageBody;
-		}
 	}
 
 	private class GroupAndSortCodeComparator implements Comparator<WorkInstruction> {
@@ -2025,65 +1953,7 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 		return storedWi;
 	}
 
-	@Override
-	protected void run() throws Exception {
-		// run
-		//serviceThread = Thread.currentThread();
-		try {
-			boolean shutdownRequested = false;
-			while (isRunning() && !shutdownRequested) {
-				WIMessage exportMessage = null;
-				try {
-					exportMessage = completedWorkInstructions.take();
-				} catch (InterruptedException e1) {
-				}
-				if (exportMessage != null) {
-					if (exportMessage.messageBody.equals(SHUTDOWN_MESSAGE)) {
-						shutdownRequested = true;
-					} else {
-						processExportMessage(exportMessage);
-					}
-				}
-			}
-		} finally {
-			//serviceThread = null;
-			this.completedWorkInstructions = null;
-		}
-	}
 
-	private void processExportMessage(WIMessage exportMessage) {
-		//TenantPersistenceService.getInstance().beginTransaction();
-		try {
-			//transaction begun and closed after blocking call so that it is not held open
-			boolean sent = false;
-			while (!sent) {
-				try {
-					IEdiExportService ediExportService = exportMessage.exportService;
-					ediExportService.sendWorkInstructionsToHost(exportMessage.messageBody);
-					sent = true;
-				} catch (IOException e) {
-					LOGGER.warn("failure to send work instructions, retrying after: " + retryDelay, e);
-					Thread.sleep(retryDelay);
-				}
-			}
-			//TenantPersistenceService.getInstance().commitTransaction();
-		} catch (Exception e) {
-			//TenantPersistenceService.getInstance().rollbackTransaction();
-			LOGGER.error("Unexpected exception sending work instruction, skipping: " + exportMessage, e);
-		}
-	}
-
-	@Override
-	protected void triggerShutdown() {
-		WIMessage poison = new WorkService.WIMessage(null, WorkService.SHUTDOWN_MESSAGE);
-		this.completedWorkInstructions.offer(poison);
-	}
-
-	@Override
-	protected void startUp() throws Exception {
-		// initialize
-		this.completedWorkInstructions = new LinkedBlockingQueue<WIMessage>(this.capacity);
-	}
 
 	public boolean willOrderDetailGetWi(OrderDetail inOrderDetail) {
 		String sequenceKind = PropertyService.getInstance().getPropertyFromConfig(inOrderDetail.getFacility(),
@@ -2454,5 +2324,16 @@ public class WorkService extends AbstractCodeshelfExecutionThreadService impleme
 			changed = true;
 		}
 		return changed;
+	}
+
+	@Override
+	protected void startUp() throws Exception {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	protected void shutDown() throws Exception {
+		// TODO Auto-generated method stub
+		
 	}
 }

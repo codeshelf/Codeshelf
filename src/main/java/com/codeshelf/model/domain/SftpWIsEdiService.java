@@ -1,7 +1,5 @@
 package com.codeshelf.model.domain;
 
-import java.io.IOException;
-
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
@@ -14,7 +12,7 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
-import com.codeshelf.edi.IEdiExportService;
+import com.codeshelf.edi.EdiExportTransport;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -23,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 @Entity
 @DiscriminatorValue("SFTP_WIS")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class SftpWIsEdiService extends AbstractSftpEdiService implements IEdiExportService {
+public class SftpWIsEdiService extends AbstractSftpEdiService implements EdiExportTransport {
 	public static class SftpWIsEdiServiceDao extends GenericDaoABC<SftpWIsEdiService> implements ITypedDao<SftpWIsEdiService> {
 		public final Class<SftpWIsEdiService> getDaoClass() {
 			return SftpWIsEdiService.class;
@@ -46,23 +44,6 @@ public class SftpWIsEdiService extends AbstractSftpEdiService implements IEdiExp
 		return SFTP_SERVICE_NAME;
 	}
 
-	/**
-	 * Override this to use the standard output accumulator on your EDI service.
-	 * If the standard accumulator is not suitable, also override createEdiOutputAccumulator()
-	 */
-	@Override
-	protected boolean needsEdiOutputAccumulator() {
-		return true;
-	}
-
-	/**
-	 * Override this to use the standard groovy WI transformation (and future ones) on your EDI service that includes output.
-	 */
-	@Override
-	protected boolean needsGroovyOutputExtensions() {
-		return true;
-	}
-
 	@Override
 	public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
@@ -77,19 +58,25 @@ public class SftpWIsEdiService extends AbstractSftpEdiService implements IEdiExp
 	}
 
 	@Override
-	public void sendWorkInstructionsToHost(String exportMessage) throws IOException {
+	public void transportWiComplete(OrderHeader inOrder, Che inChe, String exportMessage) {
+	
+	}
+
+	@Override
+	public void transportOrderRemoveFromCart(OrderHeader inOrder, Che inChe, String message) {
+		// TODO Auto-generated method stub
+		
 	}
 	
-	
 	@Override
-	protected ExportReceipt shipOrderCompletedOnCart(OrderHeader inOrder, Che inChe, String contents) {
+	public ExportReceipt transportOrderCompleteOnCart(OrderHeader inOrder, Che inChe, String contents) {
 		String filename = String.format("COMPLETE_%s_%s_%s.DAT",  inOrder.getOrderId(), inChe.getDeviceGuidStr(), System.currentTimeMillis());
 		final String absoluteFilename = this.getConfiguration().getExportPath() + "/" + filename;
 		return uploadAsFile(contents, absoluteFilename);
 	}
 
 	@Override
-	protected void shipOrderOnCart(OrderHeader inOrder, Che inChe, String contents) {
+	public void transportOrderOnCart(OrderHeader inOrder, Che inChe, String contents) {
 		String filename = String.format("LOADED_%s_%s_%s.DAT",  inOrder.getOrderId(), inChe.getDeviceGuidStr(), System.currentTimeMillis());
 		final String absoluteFilename = this.getConfiguration().getExportPath() + "/" + filename;
 		try {
@@ -108,6 +95,7 @@ public class SftpWIsEdiService extends AbstractSftpEdiService implements IEdiExp
 	public static ITypedDao<SftpWIsEdiService> staticGetDao() {
 		return TenantPersistenceService.getInstance().getDao(SftpWIsEdiService.class);
 	}
+
 
 
 }

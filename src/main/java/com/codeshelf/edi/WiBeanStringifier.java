@@ -6,20 +6,25 @@
  *******************************************************************************/
 package com.codeshelf.edi;
 
-import groovy.lang.GroovyRuntimeException;
-
+import java.io.IOException;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.ArrayList;
 
 import lombok.Getter;
-import lombok.Setter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.ExtensionPointService;
 import com.codeshelf.service.ExtensionPointType;
+import com.google.common.collect.ImmutableList;
+import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
+import com.opencsv.bean.HeaderColumnNameMappingStrategy;
 
 /**
  * Built first for PFSWeb, this accumulates complete work instruction beans for sending later as small files organized by order.
@@ -27,66 +32,99 @@ import com.codeshelf.service.ExtensionPointType;
  * Later, change to a persistent list of the serialized bean to survive server restart.
  */
 public class WiBeanStringifier {
+	
 	@Getter
-	ArrayList<WorkInstructionCsvBean>	wiBeanList	= new ArrayList<WorkInstructionCsvBean>();
-	@Getter
-	ExtensionPointService				extensionPointService;
-	@Getter
-	Che									che;
-	@Getter
-	OrderHeader							order;
-	@Getter
-	@Setter
-	boolean								notifyingOrderOnCart;
+	private ExtensionPointService				extensionPointService;
 
 	private static final Logger			LOGGER		= LoggerFactory.getLogger(WiBeanStringifier.class);
 
 	public WiBeanStringifier() {
 	}
 
-	public WiBeanStringifier(OrderHeader inOrder,
-		Che inChe,
-		ArrayList<WorkInstructionCsvBean> inWiBeanList,
-		ExtensionPointService inExtensionPointService) {
+	public WiBeanStringifier(ExtensionPointService inExtensionPointService) {
 		extensionPointService = inExtensionPointService;
-		wiBeanList = inWiBeanList;
-		che = inChe;
-		order = inOrder;
-		// Some diagnostics
-		if (che == null || order == null) {
-			LOGGER.info("null objects passed to WiBeanStringifier");
-		}
 		if (extensionPointService == null) {
 			LOGGER.info("null extension service passed to WiBeanStringifier");
 		}
-		this.setNotifyingOrderOnCart(false);
 	}
+	
+	@SuppressWarnings({ "deprecation" })
+	public String stringifyWorkInstruction(WorkInstruction inWorkInstructions) throws IOException {
+		// Convert the WI into a CSV string.
+		StringWriter stringWriter = new StringWriter();
+		CSVWriter csvWriter = new CSVWriter(stringWriter);
+		
+		// Set up the mapper
+		// We are doing this via an import match the order shown
+		String headerString =WorkInstructionCsvBean.getCsvHeaderMatchingBean();
+		/*
+		String headerString = "facilityId, workInstructionId, type, status, orderGroupId, orderId, containerId,"
+				+ "itemId, uom, lotId, locationId, pickerId, planQuantity, actualQuantity, cheId,"
+				+ "assigned, started, completed"; // no version here
+		
 
-	public String stringify() {
+		private static final Integer	FACILITYID_POS			= 0;
+		private static final Integer	WORKINSTRUCTIONID_POS	= 1;
+		private static final Integer	TYPE_POS				= 2;
+		private static final Integer	STATUS_POS				= 3;
+		private static final Integer	ORDERGROUPID_POS		= 4;
+		private static final Integer	ORDERID_POS				= 5;
+		private static final Integer	CONTAINERID_POS			= 6;
+		private static final Integer	ITEMID_POS				= 7;
+		private static final Integer	UOM_POS					= 8;
+		private static final Integer	LOTID_POS				= 9;
+		private static final Integer	LOCATIONID_POS			= 10;
+		private static final Integer	PICKERID_POS			= 11;
+		private static final Integer	PLAN_QTY_POS			= 12;
+		private static final Integer	ACT_QTY_POS				= 13;
+		private static final Integer	CHEID_POS				= 14;
+		private static final Integer	ASSIGNED_POS			= 15;
+		private static final Integer	STARTED_POS				= 16;
+		private static final Integer	COMPLETED_POS			= 17;
+		private static final Integer	VERSION_POS				= 18;
+		 */
+		
+		
+		HeaderColumnNameMappingStrategy<WorkInstructionCsvBean> strategy = null;
+		try  {
+			StringReader reader = new StringReader(headerString);
+			CSVReader csvReader = new CSVReader(reader);
+			strategy = new HeaderColumnNameMappingStrategy<WorkInstructionCsvBean>();
+			strategy.setType(WorkInstructionCsvBean.class);
+			strategy.captureHeader(csvReader);
+
+		} catch (IOException e) {
+			csvWriter.close();
+			throw new RuntimeException("create mapping strategy: ", e);
+		}
+		
+		WorkInstructionCsvBean bean = new WorkInstructionCsvBean(inWorkInstructions);
 		try {
-		if (isNotifyingOrderOnCart()) {
-			return stringifyOrderOnCart();
-		} else {
-			return stringifyOrderComplete();
+			CsvExporter<WorkInstructionCsvBean> exporter = new CsvExporter<WorkInstructionCsvBean>();
+			exporter.setBeanList(ImmutableList.of(bean));
+			exporter.setStrategy(strategy);
+			exporter.writeRecords(csvWriter);
+			
+		} catch (RuntimeException e) {
+			csvWriter.close();
+			throw new RuntimeException("writing records: ", e);
 		}
-		}
-		catch (GroovyRuntimeException e) {
-			LOGGER.warn("Groovy error in WiBeanStringifier: {}", e);
-			return "";
-		}
+		
+		csvWriter.close();
+		return stringWriter.toString();
+
 	}
 
-	public String stringifyOrderOnCart() {
+	public String stringifyOrderOnCart(OrderHeader order, Che che) {
 
 		if (!hasExtensionPoint(ExtensionPointType.OrderOnCartContent)) {
 			return "";
 		}
-		OrderHeader order = getOrder();
 		String orderId = order.getOrderId();
 		String customerId = order.getCustomerId();
 		if (customerId == null)
 				customerId = "";
-		String cheId = getChe().getDomainId();
+		String cheId = che.getDomainId();
 		String content = "";
 		Object[] params = { orderId, cheId, customerId};
 		try {
@@ -98,9 +136,9 @@ public class WiBeanStringifier {
 		return content;
 	}
 
-	public String stringifyOrderComplete() {
+	public String stringifyOrderCompleteOnCart(OrderHeader inOrder, Che inChe, ArrayList<WorkInstructionCsvBean> inWiBeanList) {
 
-		if (wiBeanList.isEmpty()) {
+		if (inWiBeanList.isEmpty()) {
 			LOGGER.error("Nothing in bean list for WiBeanStringifier.stringifyOrderComplete()");
 			return "";
 		}
@@ -112,13 +150,13 @@ public class WiBeanStringifier {
 
 		// Get header, trailer.
 		String returnStr = "";
-		String header = getWiHeader();
-		String trailer = getWiTrailer();
+		String header = getWiHeader(inOrder, inChe);
+		String trailer = getWiTrailer(inOrder, inChe);
 		if (header != null && !header.isEmpty())
 			returnStr += header + "\n";
 
 		// contents.. Add the new line
-		for (WorkInstructionCsvBean wiBean : wiBeanList) {
+		for (WorkInstructionCsvBean wiBean : inWiBeanList) {
 			if (needContentExtension) {
 				returnStr += getWiCustomContent(groovyService, wiBean);
 			} else {
@@ -136,10 +174,10 @@ public class WiBeanStringifier {
 	 * Our default header is all the fields of the our native export bean.
 	 * But groovy extension may override. If override is null or empty, we do not add to the output file
 	 */
-	private String getWiHeader() {
+	private String getWiHeader(OrderHeader inOrder, Che inChe) {
 		if (hasExtensionPoint(ExtensionPointType.WorkInstructionExportCreateHeader)) {
-			String theOrderId = getOrder().getOrderId();
-			String theCheId = getChe().getDomainId();
+			String theOrderId = inOrder.getOrderId();
+			String theCheId = inChe.getDomainId();
 			Object[] params = { theOrderId, theCheId };
 			String header = "";
 			try {
@@ -157,10 +195,10 @@ public class WiBeanStringifier {
 	 * Our default trailer is null.
 	 * But groovy extension may override. If trailer is null or empty, we do not add to the output file
 	 */
-	private String getWiTrailer() {
+	private String getWiTrailer(OrderHeader inOrder, Che inChe) {
 		if (hasExtensionPoint(ExtensionPointType.WorkInstructionExportCreateTrailer)) {
-			String theOrderId = getOrder().getOrderId();
-			String theCheId = getChe().getDomainId();
+			String theOrderId = inOrder.getOrderId();
+			String theCheId = inChe.getDomainId();
 			Object[] params = { theOrderId, theCheId };
 			String header = "";
 			try {

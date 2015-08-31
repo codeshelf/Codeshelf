@@ -11,8 +11,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
@@ -28,10 +26,8 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.SftpOrdersEdiService;
 import com.codeshelf.model.domain.SftpWIsEdiService;
-import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.validation.BatchResult;
-import com.google.common.base.Strings;
 import com.jcraft.jsch.SftpException;
 
 
@@ -53,73 +49,28 @@ public class SftpTest extends HibernateTest {
 		SftpConfiguration config = setupConfiguration();
 		SftpWIsEdiService sftpWIs = configureSftpService(che.getFacility(), config, SftpWIsEdiService.class);
 		
+
 		OrderHeader orderHeader = generateOrder(facility, 2);
-		Assert.assertEquals(2, orderHeader.getOrderDetails().size());
-				
-		List<WorkInstruction> computedWIs = setupComputedWorkInstructionsForOrder(orderHeader, che);
 		commitTransaction();
 
 		beginTransaction();
-		OrderHeader completeOrder = computedWIs.get(0).getOrder();
-		for (WorkInstruction workInstruction : computedWIs) {
-			workInstruction.setCompleteState("pickerA", workInstruction.getPlanQuantity());
-			sftpWIs.notifyWiComplete(workInstruction);
-		}
-		ExportReceipt receipt = sftpWIs.notifyOrderCompleteOnCart(completeOrder, che);
+
+		String expectedContents = "ExportCompleteMessage";
+		ExportReceipt receipt = sftpWIs.transportOrderCompleteOnCart(orderHeader, che, "ExportCompleteMessage");
 		commitTransaction();
+
 		try {
 		
-		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		sftpWIs.downloadFile(receipt.getPath(), out);
-		String fileContents = new String(out.toByteArray(), StandardCharsets.ISO_8859_1);
-		assertMatches(completeOrder, computedWIs, che, fileContents);
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			sftpWIs.downloadFile(receipt.getPath(), out);
+			String fileContents = new String(out.toByteArray(), StandardCharsets.ISO_8859_1);
+			Assert.assertEquals(expectedContents, fileContents);
 
 		} finally {
 			sftpWIs.delete(receipt.getPath());
 			
 		}
 	}
-	
-	/**
-	 * Very broad matcher
-	 */
-	private void assertMatches(OrderHeader completeOrder, List<WorkInstruction> wis, Che che, String message) {
-		Assert.assertNotNull(Strings.emptyToNull(completeOrder.getOrderId()));
-		Assert.assertTrue("Message did not contain order id: " + completeOrder.getOrderId(), message.contains(completeOrder.getOrderId()));
-
-		Assert.assertNotNull(Strings.emptyToNull(che.getDomainId()));
-		Assert.assertTrue("Message did not contain che id: " + che.getDomainId(), message.contains(che.getDomainId()));
-		
-		for (WorkInstruction workInstruction : wis) {
-			Assert.assertTrue("Message did not contain item id: " + workInstruction.getItemId(), message.contains(workInstruction.getItemId()));
-			Assert.assertTrue("Message did not contain item id: " + workInstruction.getActualQuantity(), message.contains(String.valueOf(workInstruction.getActualQuantity())));
-			
-		}
-	}
-
-
-
-
-	private List<WorkInstruction> setupComputedWorkInstructionsForOrder(OrderHeader orderHeader, Che che) {
-		ArrayList<WorkInstruction> wis = new ArrayList<>();
-		for (OrderDetail  orderDetail : orderHeader.getOrderDetails()) {
-			WorkInstruction wi = wiGenerator.generateWithNewStatus(orderDetail, che);
-			wis.add(wi);
-			
-		}
-		return wis;
-		
-	}
-
-	private OrderHeader generateOrder(Facility facility, int numDetails) {
-		OrderHeader orderHeader = this.wiGenerator.generateValidOrderHeader(facility);
-		for (int i = 0; i < numDetails; i++) {
-			OrderDetail od = this.wiGenerator.generateValidOrderDetail(orderHeader, this.inventoryGenerator.generateItem(facility));
-			orderHeader.addOrderDetail(od);
-		}
-		return orderHeader;
-	}
-
 
 	@Test
 	public void testSftpOrders() throws IOException, SftpException, ExecutionException, TimeoutException, InterruptedException {
@@ -153,6 +104,18 @@ public class SftpTest extends HibernateTest {
 		}
 		commitTransaction();
 	}
+
+
+	private OrderHeader generateOrder(Facility facility, int numDetails) {
+		OrderHeader orderHeader = this.wiGenerator.generateValidOrderHeader(facility);
+		for (int i = 0; i < numDetails; i++) {
+			OrderDetail od = this.wiGenerator.generateValidOrderDetail(orderHeader, this.inventoryGenerator.generateItem(facility));
+			orderHeader.addOrderDetail(od);
+		}
+		return orderHeader;
+	}
+
+
 	
 	private SftpConfiguration setupConfiguration() {
 		SftpConfiguration config = new SftpConfiguration();

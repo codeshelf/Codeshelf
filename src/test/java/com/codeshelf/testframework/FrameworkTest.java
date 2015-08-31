@@ -35,6 +35,7 @@ import com.codeshelf.device.ClientConnectionManagerService;
 import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.device.SiteControllerMessageProcessor;
 import com.codeshelf.device.radio.RadioController;
+import com.codeshelf.edi.EdiExporterProvider;
 import com.codeshelf.email.EmailService;
 import com.codeshelf.email.TemplateService;
 import com.codeshelf.event.EventProducer;
@@ -626,7 +627,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	}
 
 	protected WorkService generateWorkService() {
-		return new WorkService(new LightService());
+		return new WorkService(new LightService(), new EdiExporterProvider());
 	}
 
 	protected final Facility generateTestFacility() {
