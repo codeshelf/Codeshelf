@@ -55,12 +55,12 @@ public class PalletizerService implements IApiService{
 			List<OrderLocation> orderLocations = order.getActiveOrderLocations();
 			if (!orderLocations.isEmpty()) {
 				location = orderLocations.get(0).getLocation();
+				info.setLocation(location.getBestUsableLocationName());
 			} else {
 				LOGGER.warn("Palletizer order {} doesn't have a location", storeId);
 			}
 		}
 		info.setOrderFound(true);
-		info.setLocation(location.getBestUsableLocationName());
 		//Create order detail, or reuse one from the same item in this order
 		OrderDetail detail = order.getOrderDetail(itemId);
 		ItemMaster itemMaster = null;

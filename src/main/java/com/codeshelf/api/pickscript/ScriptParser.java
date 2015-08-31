@@ -103,7 +103,7 @@ public class ScriptParser {
 				if (!varName.startsWith(":")) {
 					throw new Exception("Incorrect variable name '" + varName + "' in '" + line + "'; must start with ':'");
 				}
-				String variable[] = {varName, varValue};
+				String variable[] = {":\\b" + varName.substring(1) + "\\b", varValue};
 				variables.add(variable);
 				scriptLines.remove(0);
 			} else {

@@ -6,6 +6,7 @@ var :che1 		0x0000009B
 var :che2 		0x000001D9
 var :chePall	0x000000A3
 var :contr1 	0x00000064
+var :che10      0x00000164
 
 /* This is a multi
 line comment
@@ -32,6 +33,7 @@ createChe 0x000000A4 blue LINE_SCAN CHE_A4 CODECORPS3600
 createChe :che1 green SETUP_ORDERS CHE_A ORIGINALSERIAL
 createChe :che2 cyan SETUP_ORDERS CHE_B
 createChe :chePall orange PALLETIZER CHE_C
+createChe :che10 orange PALLETIZER :che10
 deleteAllPaths
 defPath p1 - 2.82 5.40 5.19 5.40 - 5.19 5.40 5.19 6.40 - 5.19 6.40 2.77 6.40
 defPath p2 - 2.60 7.40 5.28 7.40
@@ -46,8 +48,8 @@ deleteExtensionPoint WorkInstructionExportContent
 deleteExtensionPoint OrderImportBeanTransformation
 deleteExtensionPoint OrderImportCreateHeader
 deleteExtensionPoint OrderImportLineTransformation
-addExtensionPoint extensionBean OrderImportBeanTransformation inactive
-addExtensionPoint extensionLine OrderImportLineTransformation inactive
+addExtensionPoint extensionBean OrderImportBeanTransformation active
+addExtensionPoint extensionLine OrderImportLineTransformation active
 
 
 SERVER
@@ -79,9 +81,9 @@ scan cheC 10010002 PALLETIZER_PUT_ITEM
 
 STEP put wall
 SITE
-waitForDevices :che1 0x000000C8 :contr1 0x0000000AB
+waitForDevices :che1 :che2 :contr1 0x0000000AB
 defChe cheA :che1
-defChe cheB 0x000000C8
+defChe cheB :che2
 logout cheA
 loginSetup cheA Ilya1
 scan cheA X%ORDER_WALL PUT_WALL_SCAN_ORDER
@@ -111,7 +113,7 @@ STEP test remote control setup
 SITE
 //Define ches
 defChe cheA :che1
-defChe cheB 0x000000C8
+defChe cheB :che2
 defChe cheC 0x000000A4
 logout cheA cheB cheC
 loginRemote cheA Ilya1 CHE_B
@@ -125,7 +127,7 @@ STEP load orders on CHEs
 SITE
 //Define ches
 defChe cheA :che1
-defChe cheB 0x000000C8
+defChe cheB :che2
 logout cheA cheB
 //Set pick parameters [pickSpeed, frequency of skipping UPC, frequency of shorting an item]
 setParams pickSpeed=2 skipFreq=0.5 shortFreq=0.5
@@ -139,6 +141,6 @@ STEP pick CHEs
 SITE
 //Define ches
 defChe cheA :che1
-defChe cheB 0x000000C8
+defChe cheB :che2
 pickAll
 logout cheA cheB
