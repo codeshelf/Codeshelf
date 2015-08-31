@@ -9,6 +9,7 @@ deleteExtensionPoint WorkInstructionExportCreateTrailer
 deleteExtensionPoint WorkInstructionExportContent
 deleteExtensionPoint OrderImportBeanTransformation
 deleteExtensionPoint OrderImportCreateHeader
+deleteExtensionPoint OrderImportHeaderTransformation
 deleteExtensionPoint OrderImportLineTransformation
 addExtensionPoint pfs_orderOnCartContent OrderOnCartContent active
 addExtensionPoint pfs_wi_exportCreateHeader WorkInstructionExportCreateHeader active
@@ -17,13 +18,18 @@ addExtensionPoint pfs_wi_exportContent WorkInstructionExportContent active
 addExtensionPoint pfs_order_importbean OrderImportBeanTransformation active
 addExtensionPoint pfs_order_createheader OrderImportCreateHeader active
 addExtensionPoint pfs_order_importline OrderImportLineTransformation active
+/*
 deleteOrders 26688061 26688062 26688163 26688064 26688077 26688078 26688237 26688238 26688244
 importOrders 1213226
 importOrders 1213228
 importOrders 1213233
 importOrders 1213252
 importOrders 1213257
+*/
+deleteOrders 50090467 50090468 50090469
+importOrders B100000465
 
+STEP
 SITE
 waitForDevices :che1 :che2
 defChe che1 :che1
@@ -31,6 +37,8 @@ defChe che2 :che2
 logout che1 che2
 loginSetup che1 Ilya1
 loginSetup che2 Ilya1
-setupCart che1 26688061 26688062 26688163 26688064
-setupCart che2 26688077 26688078 26688237 26688238 26688244
+//setupCart che1 26688061 26688062 26688163 26688064
+//setupCart che2 26688077 26688078 26688237 26688238 26688244
+setupCart che1 50090467 50090468
+setupCart che2 50090469
 pickAll
