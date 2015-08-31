@@ -31,7 +31,7 @@ import com.codeshelf.validation.BatchResult;
 import com.jcraft.jsch.SftpException;
 
 
-public class SftpTest extends HibernateTest {
+public class SftpWIsEdiServiceTest extends HibernateTest {
 	
 	private static final String	SFTP_TEST_HOST	= "sftp.codeshelf.com";
 	private static final String	SFTP_TEST_USERNAME	= "test";
@@ -56,7 +56,7 @@ public class SftpTest extends HibernateTest {
 		beginTransaction();
 
 		String expectedContents = "ExportCompleteMessage";
-		ExportReceipt receipt = sftpWIs.transportOrderCompleteOnCart(orderHeader, che, "ExportCompleteMessage");
+		ExportReceipt receipt = sftpWIs.transportOrderOnCartFinished(orderHeader, che, "ExportCompleteMessage");
 		commitTransaction();
 
 		try {

@@ -52,7 +52,7 @@ public class FacilityAccumulatingExporter  implements FacilityEdiExporter {
 	public void notifyOrderOnCart(OrderHeader inOrder, Che inChe) {
 		String exportStr = stringifier.stringifyOrderOnCart(inOrder, inChe);
 		LOGGER.info(exportStr);
-		exportService.transportOrderOnCart(inOrder, inChe, exportStr);
+		exportService.transportOrderOnCartAdded(inOrder, inChe, exportStr);
 	}
 
 	/**
@@ -64,7 +64,7 @@ public class FacilityAccumulatingExporter  implements FacilityEdiExporter {
 		// This list has "complete" work instruction beans. The particular customer's EDI may need strange handling.
 		String exportStr = stringifier.stringifyOrderCompleteOnCart(inOrder, inChe, orderCheList);
 		LOGGER.info(exportStr);
-		return exportService.transportOrderCompleteOnCart(inOrder, inChe, exportStr);
+		return exportService.transportOrderOnCartFinished(inOrder, inChe, exportStr);
 	}
 
 	public void notifyOrderRemoveFromCart(OrderHeader inOrder, Che inChe) {

@@ -31,9 +31,9 @@ import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.testframework.ServerTest;
 import com.google.common.base.Strings;
 
-public class EdiExporterTest extends ServerTest {
+public class FacilityAccumulatingExporterTest extends ServerTest {
 
-	private static final Logger			LOGGER		= LoggerFactory.getLogger(EdiExporterTest.class);
+	private static final Logger			LOGGER		= LoggerFactory.getLogger(FacilityAccumulatingExporterTest.class);
 
 	private WorkInstructionGenerator	wiGenerator	= new WorkInstructionGenerator();
 	private InventoryGenerator	inventoryGenerator = new InventoryGenerator(null);
@@ -150,10 +150,10 @@ public class EdiExporterTest extends ServerTest {
 		ediExporter.notifyOrderCompleteOnCart(orderHeader, che);
 
 		//TODO verify message
-		verify(exportService).transportOrderOnCart(eq(orderHeader), eq(che), any(String.class));
+		verify(exportService).transportOrderOnCartAdded(eq(orderHeader), eq(che), any(String.class));
 
 		ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class); 
-		verify(exportService).transportOrderCompleteOnCart(eq(orderHeader), eq(che), messageCaptor.capture());
+		verify(exportService).transportOrderOnCartFinished(eq(orderHeader), eq(che), messageCaptor.capture());
 		String message = messageCaptor.getValue();
 		assertMatches(orderHeader, che, wis, message);
 		

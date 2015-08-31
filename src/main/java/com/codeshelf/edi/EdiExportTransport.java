@@ -10,10 +10,10 @@ public interface EdiExportTransport {
 	
 	void transportWiComplete(OrderHeader wiOrder, Che wiChe, String message);
 
-	ExportReceipt transportOrderCompleteOnCart(OrderHeader wiOrder, Che wiChe, String message);
+	ExportReceipt transportOrderOnCartFinished(OrderHeader wiOrder, Che wiChe, String message);
 
-	void transportOrderRemoveFromCart(OrderHeader inOrder, Che inChe, String message);
+	void transportOrderOnCartRemoved(OrderHeader inOrder, Che inChe, String message);
 
-	void transportOrderOnCart(OrderHeader inOrder, Che inChe, String message);
+	void transportOrderOnCartAdded(OrderHeader inOrder, Che inChe, String message);
 
 }
