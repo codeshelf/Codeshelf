@@ -21,6 +21,7 @@ import lombok.Setter;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.ErrorResponse;
+import com.codeshelf.edi.EdiExporterProvider;
 import com.codeshelf.edi.SftpConfiguration;
 import com.codeshelf.model.domain.AbstractSftpEdiService;
 import com.codeshelf.model.domain.DropboxService;
@@ -41,9 +42,12 @@ public class EDIGatewaysResource {
 	
 	@Setter
 	private Facility facility;
+
+	private EdiExporterProvider	provider;
 	
 	@Inject
-	public EDIGatewaysResource()  {
+	public EDIGatewaysResource(EdiExporterProvider provider)  {
+		this.provider = provider;
 	}
 
 	@GET
@@ -68,6 +72,7 @@ public class EDIGatewaysResource {
 			} else {
 				LOGGER.warn("unexpected EDI class {}", ediService.getClass());
 			}
+			provider.ediExportServiceUpdated(facility);
 			return BaseResponse.buildResponse(updatedEdiService);
 		} catch(Exception e) {
 			return new ErrorResponse().processException(e);

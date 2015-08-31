@@ -17,13 +17,22 @@ import lombok.Getter;
 import lombok.Setter;
 
 import com.codeshelf.api.BaseResponse;
+import com.codeshelf.edi.EdiExporterProvider;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.service.ExtensionPointType;
+import com.google.inject.Inject;
 
 public class ExtensionPointsResource {
 
+	
+	private EdiExporterProvider provider;
 
+	@Inject
+	ExtensionPointsResource(EdiExporterProvider provider) {
+		this.provider = provider;
+	}
+	
 	@Getter
 	@Setter
 	private Facility facility;
@@ -42,6 +51,7 @@ public class ExtensionPointsResource {
 		ExtensionPointType typeEnum = ExtensionPointType.valueOf(type); 
 		ExtensionPoint point = new ExtensionPoint(facility, typeEnum);
 		ExtensionPoint.staticGetDao().store(point);
+		provider.extensionPointsUpdated(facility);
 		return BaseResponse.buildResponse(point);
 	}
 
@@ -49,11 +59,12 @@ public class ExtensionPointsResource {
 	@Path("/{persistentId}")
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response create(@PathParam("persistentId") String extensionPointId, @FormParam("active") boolean active, @FormParam("script") String script) {
+	public Response update(@PathParam("persistentId") String extensionPointId, @FormParam("active") boolean active, @FormParam("script") String script) {
 		ExtensionPoint point = ExtensionPoint.staticGetDao().findByPersistentId(extensionPointId);
 		point.setScript(script);
 		point.setActive(active);
 		ExtensionPoint.staticGetDao().store(point);
+		provider.extensionPointsUpdated(facility);
 		return BaseResponse.buildResponse(point);
 	}
 
