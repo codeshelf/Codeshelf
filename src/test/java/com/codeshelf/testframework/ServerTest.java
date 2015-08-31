@@ -29,7 +29,7 @@ import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.util.ThreadUtils;
 
 public abstract class ServerTest extends HibernateTest {
-	private final static Logger	LOGGER				= LoggerFactory.getLogger(ServerTest.class);
+	private final static Logger	LOGGER	= LoggerFactory.getLogger(ServerTest.class);
 
 	@Override
 	Type getFrameworkType() {
@@ -307,8 +307,8 @@ public abstract class ServerTest extends HibernateTest {
 
 		LOGGER.info(statusStr + " " + inWi.getGroupAndSortCode() + " " + inWi.getContainerId() + " loc: "
 				+ inWi.getPickInstruction() + "(" + inWi.getNominalLocationId() + ")" + " count: " + inWi.getPlanQuantity()
-				+ " actual: " + inWi.getActualQuantity() + " SKU: " + sku + " order: " + inWi.getOrderId()
-				+ " desc.: " + inWi.getDescription());
+				+ " actual: " + inWi.getActualQuantity() + " SKU: " + sku + " order: " + inWi.getOrderId() + " desc.: "
+				+ inWi.getDescription());
 	}
 
 	public void logItemList(List<Item> inList) {
