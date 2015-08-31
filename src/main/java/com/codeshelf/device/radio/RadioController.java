@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.application.ContextLogging;
+import com.codeshelf.device.DeviceRestartCauseEnum;
 import com.codeshelf.flyweight.bitfields.NBitInteger;
 import com.codeshelf.flyweight.bitfields.OutOfRangeException;
 import com.codeshelf.flyweight.command.CommandAssocABC;
@@ -707,6 +708,10 @@ public class RadioController implements IRadioController {
 					status = CommandAssocAck.IS_NOT_ASSOCIATED;
 					return;
 				}
+				
+				DeviceRestartCauseEnum restartEnum = DeviceRestartCauseEnum.getRestartEnum(inCommand.getRestartCause());
+				Integer restartPC = inCommand.getRestartPC();
+				foundDevice.notifyAssociate("Restart cause: " + restartEnum.getName() + " PC: " + Integer.toHexString(restartPC));
 
 				if (deviceBecameActive) {
 					// Create and send an ack command to the remote that we think is in the running state.

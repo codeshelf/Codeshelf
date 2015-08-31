@@ -25,10 +25,6 @@ import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
 
 public abstract class PosConDeviceABC extends DeviceLogicABC {
-	private static final String				THREAD_CONTEXT_WORKER_KEY			= "worker";
-	private static final String				THREAD_CONTEXT_TAGS_KEY				= "tags";
-	private static final String				THREAD_CONTEXT_NETGUID_KEY			= "netguid";										// clone from private ContextLogging variable
-
 	private static final Logger				LOGGER								= LoggerFactory.getLogger(PosConDeviceABC.class);
 
 	@Accessors(prefix = "m")

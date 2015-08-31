@@ -29,6 +29,10 @@ import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
  *
  */
 public abstract class DeviceLogicABC implements INetworkDevice {
+	protected static final String				THREAD_CONTEXT_WORKER_KEY			= "worker";
+	protected static final String				THREAD_CONTEXT_TAGS_KEY				= "tags";
+	protected static final String				THREAD_CONTEXT_NETGUID_KEY			= "netguid";
+	
 	private static final Logger		LOGGER								= LoggerFactory.getLogger(DeviceLogicABC.class);
 
 	private byte					STARTING_ACK_NUM		= 1;
@@ -239,5 +243,15 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 		}
 
 		return curr;
+	}
+	
+	// --------------------------------------------------------------------------
+	public void notifyAssociate(String inputString) {
+		try {
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Associate");
+			LOGGER.info(inputString);
+		} finally {
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+		}
 	}
 }

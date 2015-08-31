@@ -205,5 +205,10 @@ public interface INetworkDevice {
 	 * If this device is a Che type with scanner, get its type.
 	 */
 	byte getScannerTypeCode();
+	
+	/**
+	 * Notify device association
+	 */
+	void notifyAssociate(String inString);
 
 }
