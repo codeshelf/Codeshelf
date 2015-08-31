@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
+import com.codeshelf.edi.EdiExportTransport;
 import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
@@ -55,7 +56,7 @@ import com.google.gson.annotations.SerializedName;
 @Entity
 @DiscriminatorValue("IRONMQ")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class IronMqService extends EdiServiceABC {
+public class IronMqService extends EdiServiceABC implements EdiExportTransport {
 
 	public static class IronMqServiceDao extends GenericDaoABC<IronMqService> implements ITypedDao<IronMqService> {
 		public final Class<IronMqService> getDaoClass() {
@@ -182,8 +183,9 @@ public class IronMqService extends EdiServiceABC {
 
 		return false;
 	}
-
-	public void sendWorkInstructionsToHost(final String exportMessage) throws IOException, IllegalStateException {
+	
+	@Override
+	public void transportWiComplete(OrderHeader wiOrder, Che wiChe, String exportMessage) throws IOException {
 		Optional<Queue> queue = getWorkInstructionQueue();
 		if (queue.isPresent()) {
 			LOGGER.debug("attempting send exportMessage: " + exportMessage);
@@ -243,6 +245,25 @@ public class IronMqService extends EdiServiceABC {
 		return (theCredentials != null
 				&& !Strings.isNullOrEmpty(theCredentials.getProjectId())
 				&& !Strings.isNullOrEmpty(theCredentials.getToken()));
+	}
+
+
+	@Override
+	public ExportReceipt transportOrderOnCartFinished(OrderHeader wiOrder, Che wiChe, String message) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void transportOrderOnCartRemoved(OrderHeader inOrder, Che inChe, String message) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void transportOrderOnCartAdded(OrderHeader inOrder, Che inChe, String message) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }
