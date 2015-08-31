@@ -33,7 +33,7 @@ public class IronMqServiceTest extends MockDaoTest {
 		Queue queue = mock(Queue.class);
 		IronMqService service = new IronMqService(createClientProvider("", "", queue));
 		service.storeCredentials("", "");
-		service.sendWorkInstructionsToHost("string");
+		service.transportWiComplete(mock(OrderHeader.class), mock(Che.class), "AMESSAGE");
 		Mockito.verifyZeroInteractions(queue);
 	}
 	
@@ -54,7 +54,7 @@ public class IronMqServiceTest extends MockDaoTest {
 		IronMqService service = new IronMqService(createClientProvider(projectId, token, queueForBadCredentials));
 		service.storeCredentials(projectId, token);
 		try {
-			service.sendWorkInstructionsToHost("AMESSAGE");
+			service.transportWiComplete(mock(OrderHeader.class), mock(Che.class), "AMESSAGE");
 			Assert.fail("should have thrown an IOException");
 		}
 		catch(IOException e) {
@@ -76,7 +76,7 @@ public class IronMqServiceTest extends MockDaoTest {
 		
 		IronMqService service = new IronMqService(provider);
 		service.storeCredentials(projectId, token);
-		service.sendWorkInstructionsToHost("AMESSAGE");
+		service.transportWiComplete(mock(OrderHeader.class), mock(Che.class), "AMESSAGE");
 	}
 
 	
@@ -92,7 +92,7 @@ public class IronMqServiceTest extends MockDaoTest {
 		IronMqService service = new IronMqService(provider);
 		service.storeCredentials(projectId, token);
 		try {
-			service.sendWorkInstructionsToHost("AMESSAGE");
+			service.transportWiComplete(mock(OrderHeader.class), mock(Che.class), "AMESSAGE");
 			Assert.fail("should have thrown an IOException");
 		}
 		catch(IOException e) {
@@ -113,7 +113,7 @@ public class IronMqServiceTest extends MockDaoTest {
 		IronMqService service = new IronMqService(provider);
 		service.storeCredentials(projectId, token);
 		try {
-			service.sendWorkInstructionsToHost("AMESSAGE");
+			service.transportWiComplete(mock(OrderHeader.class), mock(Che.class), "AMESSAGE");
 
 			Assert.fail("should have thrown an IOException");
 		}

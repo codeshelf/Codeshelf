@@ -9,6 +9,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import com.codeshelf.generators.FacilityGenerator;
 import com.codeshelf.model.EdiProviderEnum;
@@ -71,7 +72,7 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 
 		service.storeCredentials("540e1486364af100050000b4", "RzgIyO5FNeNAgZljs9x4um5UVqw");
 		String message = "TESTMESSAGE" + System.currentTimeMillis();
-		service.sendWorkInstructionsToHost(message);
+		service.transportWiComplete(Mockito.mock(OrderHeader.class), Mockito.mock(Che.class), message);
 		String[] messages = new String[0];
 		boolean found = false;
 		do {
@@ -102,7 +103,7 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 
 		service.storeCredentials("540e1486364af100050000b4", "BAD");
 		try {
-			service.sendWorkInstructionsToHost("TESTMESSAGE");
+			service.transportWiComplete(Mockito.mock(OrderHeader.class), Mockito.mock(Che.class), "TESTMESSAGE");
 			Assert.fail("Should have thrown IOException");
 		} catch(IOException e) {
 			e.printStackTrace();
@@ -124,7 +125,7 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 
 		service.storeCredentials("BAD", "RzgIyO5FNeNAgZljs9x4um5UVqw");
 		try {
-			service.sendWorkInstructionsToHost("TESTMESSAGE");
+			service.transportWiComplete(Mockito.mock(OrderHeader.class), Mockito.mock(Che.class), "TESTMESSAGE");
 			Assert.fail("Should have thrown IOException");
 		} catch(IOException e) {
 			e.printStackTrace();
