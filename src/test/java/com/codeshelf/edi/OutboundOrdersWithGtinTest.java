@@ -33,7 +33,7 @@ import com.codeshelf.util.ThreadUtils;
   *
  */
 public class OutboundOrdersWithGtinTest extends ServerTest {
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(OutboundOrdersWithGtinTest.class);
+	private final static Logger	LOGGER	= LoggerFactory.getLogger(OutboundOrdersWithGtinTest.class);
 
 	/*
 	 * If multiple gtins are created for an item we may return the incorrect gtin. We do not check if a gtin exists
@@ -106,13 +106,45 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 	}
 
 	/**
+	 * In one batch, encounter new itemMaster, gtin, etc. Then repeat for second order
+	 * Make sure we do not get duplicates.
+	 */
+	@Test
+	public final void testRepeatNewDomainObjects() throws IOException {
+		// initial order import
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		LOGGER.info("1: import 2 orders with same items and gtins");
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin"
+				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,Group1,gtin-1-each"
+				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,Group1,gtin-1-case"
+				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,80,each,Group1,gtin0000002"
+				+ "\r\n2,2,201,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,Group1,gtin-1-each"
+				+ "\r\n2,2,202,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,Group1,gtin-1-case"
+				+ "\r\n2,2,203,12/03/14 12:00,12/31/14 12:00,Item2,,80,each,Group1,gtin0000002";
+		beginTransaction();
+		importOrdersData(facility, firstCsvString);
+		commitTransaction();
+
+		LOGGER.info("2: Should have only 2 masters and 3 gtins");
+		// Note: when this fails, it still passes, but with ERROR in the logs. Now only get the gtin case 6 add new gtin 3 times.
+		beginTransaction();
+		facility = facility.reload();
+		List<Gtin> gtinList = Gtin.staticGetDao().getAll();
+		List<ItemMaster> masterList = ItemMaster.staticGetDao().getAll();
+		Assert.assertEquals(3, gtinList.size());
+		Assert.assertEquals(2, masterList.size());
+		commitTransaction();
+	}
+
+	/**
 	 * Reimport with variations 4 times. See assorted warnings.
 	 * In v20, yielding 13 WARN and one ERROR
 	 */
 	@Test
 	public final void testGtinReimport() throws IOException {
 		// initial order import
-		Facility facility = setUpSimpleNoSlotFacility();		
+		Facility facility = setUpSimpleNoSlotFacility();
 
 		LOGGER.info("--1: import orders. Normal item ids");
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin"
@@ -160,7 +192,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		facility = facility.reload();
 		List<Gtin> gtinList2 = Gtin.staticGetDao().getAll();
 		if (gtinList2.size() != 3)
-			LOGGER.warn("gtins: {}",gtinList2);
+			LOGGER.warn("gtins: {}", gtinList2);
 		Assert.assertEquals(3, gtinList2.size());
 		List<ItemMaster> masterList2 = ItemMaster.staticGetDao().getAll();
 		List<Item> itemList2 = Item.staticGetDao().getAll();
@@ -254,20 +286,18 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 	@Test
 	public final void testGtinReimportBeanTransform() throws IOException {
 		// initial order import
-		Facility facility = setUpSimpleNoSlotFacility();		
-		
+		Facility facility = setUpSimpleNoSlotFacility();
+
 		LOGGER.info("--1a: set up order bean transform to deal with commas in the itemId");
 		beginTransaction();
-		String beanText = "def OrderImportBeanTransformation(bean) {" +
-				"\r\n       bean.itemId = bean.itemId.replace(',', '')" +
-				"\r\n   	return bean;" +
-				"\r\n  }";
+		String beanText = "def OrderImportBeanTransformation(bean) {" + "\r\n       bean.itemId = bean.itemId.replace(',', '')"
+				+ "\r\n   	return bean;" + "\r\n  }";
 		ExtensionPoint beanExtp = new ExtensionPoint(facility, ExtensionPointType.OrderImportBeanTransformation);
 		beanExtp.setActive(true);
 		beanExtp.setScript(beanText);
 		ExtensionPoint.staticGetDao().store(beanExtp);
-		
-		commitTransaction();		
+
+		commitTransaction();
 
 		LOGGER.info("--1b: import orders. The itemId has internal commas");
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin"
@@ -315,7 +345,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		facility = facility.reload();
 		List<Gtin> gtinList2 = Gtin.staticGetDao().getAll();
 		if (gtinList2.size() != 3)
-			LOGGER.warn("gtins: {}",gtinList2);
+			LOGGER.warn("gtins: {}", gtinList2);
 		Assert.assertEquals(3, gtinList2.size());
 		List<ItemMaster> masterList2 = ItemMaster.staticGetDao().getAll();
 		List<Item> itemList2 = Item.staticGetDao().getAll();
@@ -496,7 +526,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 
 		// probably need to wait here to allow the transactions to complete.
 		ThreadUtils.sleep(4000);
-		
+
 		LOGGER.info("1b: We should have two item masters, and two gtin now");
 		beginTransaction();
 		facility = facility.reload();
@@ -510,7 +540,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 
 		LOGGER.info("2: Load the orders file with the 4 gtins suffering from Core-E trunctionation to 12 characters");
 		LOGGER.info("   The gtin and master caches should have two");
-	beginTransaction();
+		beginTransaction();
 		facility = facility.reload();
 		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,gtin"
 				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,123456789012"
@@ -739,6 +769,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		commitTransaction();
 
 	}
+
 	/**
 	 * Nipul did something in test that seemed to show dropping an orders file did not update a gtin on a master.
 	 * This test tries to reproduce
@@ -779,7 +810,7 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		gtins = Gtin.staticGetDao().getAll();
 		LOGGER.info("gtins {}", gtins);
 		Assert.assertEquals(2, gtins.size());
-		
+
 		LOGGER.info("2b: look for order 1");
 		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1");
 		Assert.assertNotNull(h1);
@@ -789,6 +820,5 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 
 		commitTransaction();
 	}
-
 
 }

@@ -103,20 +103,125 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		this.processorId = procId;
 		this.dateTimeParser = new DateTimeParser();
 	}
-	
-	private boolean isAccuThereforeHasTrunctatedGtins(){
+
+	private boolean isAccuThereforeHasTrunctatedGtins() {
 		// The goal here is to determine if Accu is running this instance
 		// OR if a unit test told us to deal with it.
 		if (importer.isTruncatedGtins()) // Only set in unit test context.
 			return true;
-		
+
 		// Tenant name should do it for us. Unfortunately, Accu is on default tenant. No help.
 		TenantPersistenceService theService = TenantPersistenceService.getInstance();
 		String thisTenantName = theService.getCurrentTenantIdentifier();
 		// how can we tell? Most accu orders have WORLD or LUNERA customerID
-		
+
 		// TODO Critical for Accu to set this
 		return false;
+	}
+
+	/**
+	 * Examines the data in the batch, and prefetches those domain objects and puts them in a cache.
+	 */
+	private void preFetchCachesForOrderBatch(Facility facility, OutboundOrderBatch batch) {
+
+		itemMasterCache = new DomainObjectCache<ItemMaster>(ItemMaster.staticGetDao(), "ItemMaster", facility);
+		orderHeaderCache = new DomainObjectCache<OrderHeader>(OrderHeader.staticGetDao(), "OrderHeader", facility);
+		locationAliasCache = new DomainObjectCache<LocationAlias>(LocationAlias.staticGetDao(), "LocationAlias", facility);
+		gtinCache = new DomainObjectCache<Gtin>(Gtin.staticGetDao(), "Gtin", facility);
+		if (isAccuThereforeHasTrunctatedGtins())
+			gtinCache.setRequiresEntireDBInCache(true);
+		// cache item master
+		itemMasterCache.reset();
+		itemMasterCache.setFetchOnMiss(false);
+		itemMasterCache.load(facility, batch.getItemIds());
+		LOGGER.info("ItemMaster cache populated with " + this.itemMasterCache.size() + " entries");
+
+		// cache order headers
+		orderHeaderCache.reset();
+		orderHeaderCache.setFetchOnMiss(false);
+		orderHeaderCache.load(facility, batch.getOrderIds());
+		LOGGER.info("OrderHeader cache populated with " + this.orderHeaderCache.size() + " entries");
+
+		// cache order headers
+		locationAliasCache.reset();
+		locationAliasCache.setFetchOnMiss(false);
+		locationAliasCache.load(facility, batch.getLocationIds());
+		LOGGER.info("LocationAlias cache populated with " + this.locationAliasCache.size() + " entries");
+
+		// cache gtin
+		gtinCache.reset();
+		gtinCache.setFetchOnMiss(true); // critical for Accu's truncated gtin situation
+		gtinCache.load(facility, batch.getGtinIds());
+		LOGGER.info("Gtin cache populated with " + this.gtinCache.size() + " entries");
+
+		// prefetch order details already associated with orders
+		this.orderChangeMap = new HashMap<String, Boolean>();
+		this.orderlineMap = new HashMap<String, Map<String, OrderDetail>>();
+		if (orderHeaderCache.size() == 0) {
+			LOGGER.info("Skipping order line loading, since all orders are new.");
+		} else {
+			LOGGER.info("Loading line items for " + orderHeaderCache.size() + " orders.");
+			Criteria criteria = OrderDetail.staticGetDao().createCriteria();
+			criteria.add(Restrictions.in("parent", orderHeaderCache.getAll()));
+			List<OrderDetail> orderDetails = OrderDetail.staticGetDao().findByCriteriaQuery(criteria);
+			for (OrderDetail line : orderDetails) {
+				Map<String, OrderDetail> l = this.orderlineMap.get(line.getOrderId());
+				if (l == null) {
+					l = new HashMap<String, OrderDetail>();
+					this.orderlineMap.put(line.getOrderId(), l);
+					this.orderChangeMap.put(line.getOrderId(), false);
+				}
+				l.put(line.getOrderDetailId(), line);
+			}
+		}
+
+		// prefetch container uses already associated with orders
+		this.containerUseMap = new HashMap<String, ContainerUse>();
+		if (orderHeaderCache.size() == 0) {
+			LOGGER.info("Skipping container use loading, since all orders are new.");
+		} else {
+			LOGGER.info("Loading container use for " + orderHeaderCache.size() + " orders.");
+			Criteria criteria = ContainerUse.staticGetDao().createCriteria();
+			criteria.add(Restrictions.in("orderHeader", orderHeaderCache.getAll()));
+			List<ContainerUse> containerUses = ContainerUse.staticGetDao().findByCriteriaQuery(criteria);
+			for (ContainerUse cu : containerUses) {
+				this.containerUseMap.put(cu.getOrderHeader().getOrderId(), cu);
+			}
+		}
+
+		// prefetch containers that are referenced in current order file.
+		// because of m:m container to use relationship, containers that have
+		// no active use are not deactivated here, but in a background process.
+		// this process only deals with data directly related to the order batch.
+		HashSet<String> containerIds = batch.getContainerIds();
+		this.containerMap = new HashMap<String, Container>();
+		Criteria criteria = Container.staticGetDao().createCriteria();
+		criteria.add(Restrictions.in("domainId", containerIds));
+		List<Container> containers = Container.staticGetDao().findByCriteriaQuery(criteria);
+		this.containerMap = new HashMap<String, Container>();
+		for (Container container : containers) {
+			containerMap.put(container.getDomainId(), container);
+		}
+
+		// This marks the end of the prefetch process. Let's log what it took.
+		long msDurationOfPrefetch = System.currentTimeMillis() - this.startTime;
+		LOGGER.info("spent {} ms on order import prefetch", msDurationOfPrefetch);
+
+	}
+
+	/**
+	 * This explicitly sets the cache member variables to null. Mainly to help detect references from elsewhere in the code when
+	 * The cache is not valid.
+	 */
+	private void releaseCachesCurrentBatch() {
+		itemMasterCache = null;
+		orderHeaderCache = null;
+		locationAliasCache = null;
+		gtinCache = null;
+		// sort of caches
+		orderChangeMap = null;
+		containerUseMap = null;
+		containerMap = null;
 	}
 
 	@Override
@@ -129,18 +234,11 @@ public class OutboundOrderBatchProcessor implements Runnable {
 			LOGGER.info("Worker #" + processorId + " is processing " + batch + " in " + batch.getProcessingAttempts() + ". attempt");
 
 			try {
-				
+
 				TenantPersistenceService.getInstance().beginTransaction();
-				
+
 				// attach facility to new session
 				Facility facility = Facility.staticGetDao().reload(this.facility);
-
-				itemMasterCache = new DomainObjectCache<ItemMaster>(ItemMaster.staticGetDao(), "ItemMaster", facility);
-				orderHeaderCache = new DomainObjectCache<OrderHeader>(OrderHeader.staticGetDao(), "OrderHeader", facility);
-				locationAliasCache = new DomainObjectCache<LocationAlias>(LocationAlias.staticGetDao(), "LocationAlias", facility);
-				gtinCache = new DomainObjectCache<Gtin>(Gtin.staticGetDao(), "Gtin", facility);
-				if (isAccuThereforeHasTrunctatedGtins())
-					gtinCache.setRequiresEntireDBInCache(true);
 
 				ArrayList<OrderHeader> orderSet = new ArrayList<OrderHeader>();
 
@@ -148,84 +246,8 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 				this.startTime = System.currentTimeMillis();
 				LOGGER.info(batch.getItemIds().size() + " distinct items found in batch");
-
-				// cache item master
-				itemMasterCache.reset();
-				itemMasterCache.setFetchOnMiss(false);
-				itemMasterCache.load(facility, batch.getItemIds());
-				LOGGER.info("ItemMaster cache populated with " + this.itemMasterCache.size() + " entries");
-
-				// cache order headers
-				orderHeaderCache.reset();
-				orderHeaderCache.setFetchOnMiss(false);
-				orderHeaderCache.load(facility, batch.getOrderIds());
-				LOGGER.info("OrderHeader cache populated with " + this.orderHeaderCache.size() + " entries");
-
-				// cache order headers
-				locationAliasCache.reset();
-				locationAliasCache.setFetchOnMiss(false);
-				locationAliasCache.load(facility, batch.getLocationIds());
-				LOGGER.info("LocationAlias cache populated with " + this.locationAliasCache.size() + " entries");
-
-				// cache gtin
-				gtinCache.reset();
-				gtinCache.setFetchOnMiss(true); // critical for Accu's truncated gtin situation
-				gtinCache.load(facility, batch.getGtinIds());
-				LOGGER.info("Gtin cache populated with " + this.gtinCache.size() + " entries");
-
-				// prefetch order details already associated with orders
-				this.orderChangeMap = new HashMap<String, Boolean>();
-				this.orderlineMap = new HashMap<String, Map<String, OrderDetail>>();
-				if (orderHeaderCache.size() == 0) {
-					LOGGER.info("Skipping order line loading, since all orders are new.");
-				} else {
-					LOGGER.info("Loading line items for " + orderHeaderCache.size() + " orders.");
-					Criteria criteria = OrderDetail.staticGetDao().createCriteria();
-					criteria.add(Restrictions.in("parent", orderHeaderCache.getAll()));
-					List<OrderDetail> orderDetails = OrderDetail.staticGetDao().findByCriteriaQuery(criteria);
-					for (OrderDetail line : orderDetails) {
-						Map<String, OrderDetail> l = this.orderlineMap.get(line.getOrderId());
-						if (l == null) {
-							l = new HashMap<String, OrderDetail>();
-							this.orderlineMap.put(line.getOrderId(), l);
-							this.orderChangeMap.put(line.getOrderId(), false);
-						}
-						l.put(line.getOrderDetailId(), line);
-					}
-				}
-
-				// prefetch container uses already associated with orders
-				this.containerUseMap = new HashMap<String, ContainerUse>();
-				if (orderHeaderCache.size() == 0) {
-					LOGGER.info("Skipping container use loading, since all orders are new.");
-				} else {
-					LOGGER.info("Loading container use for " + orderHeaderCache.size() + " orders.");
-					Criteria criteria = ContainerUse.staticGetDao().createCriteria();
-					criteria.add(Restrictions.in("orderHeader", orderHeaderCache.getAll()));
-					List<ContainerUse> containerUses = ContainerUse.staticGetDao().findByCriteriaQuery(criteria);
-					for (ContainerUse cu : containerUses) {
-						this.containerUseMap.put(cu.getOrderHeader().getOrderId(), cu);
-					}
-				}
-
-				// prefetch containers that are referenced in current order file.
-				// because of m:m container to use relationship, containers that have
-				// no active use are not deactivated here, but in a background process.
-				// this process only deals with data directly related to the order batch.
-				HashSet<String> containerIds = batch.getContainerIds();
-				this.containerMap = new HashMap<String, Container>();
-				Criteria criteria = Container.staticGetDao().createCriteria();
-				criteria.add(Restrictions.in("domainId", containerIds));
-				List<Container> containers = Container.staticGetDao().findByCriteriaQuery(criteria);
-				this.containerMap = new HashMap<String, Container>();
-				for (Container container : containers) {
-					containerMap.put(container.getDomainId(), container);
-				}
-
-				// This marks the end of the prefetch process. Let's log what it took.
-				long msDurationOfPrefetch = System.currentTimeMillis() - this.startTime;
-				LOGGER.info("spent {} ms on order import prefetch", msDurationOfPrefetch);
-
+				preFetchCachesForOrderBatch(facility, batch);
+				
 				// process order file
 				List<OutboundOrderCsvBean> lines = batch.getLines();
 				//Check if destinationId, shipperId, or customerId values vary within individual orders
@@ -330,6 +352,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				LOGGER.info("Failed to process " + batch, e);
 				TenantPersistenceService.getInstance().rollbackTransaction();
 			}
+			releaseCachesCurrentBatch();
 			// pull next batch off queue
 			batch = importer.getBatchQueue().poll();
 		}
@@ -786,7 +809,9 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		}
 		String gtinId = inCsvBean.getGtin();
 
-		Gtin result = Gtin.staticGetDao().findByDomainId(null, gtinId);
+		// Gtin result = Gtin.staticGetDao().findByDomainId(null, gtinId); // use cache here from v20
+		Gtin result = this.gtinCache.get(gtinId);
+
 		ItemMaster previousItemMaster = null;
 
 		/* Many cases possible!
@@ -860,11 +885,15 @@ public class OutboundOrderBatchProcessor implements Runnable {
 					return null;
 				} else {
 					// Change the GTIN based on the order file
+					// Cache maintenance!
+					gtinCache.remove(misMatchGtinForMaster);
+					
 					LOGGER.warn("GTIN_case_4b {} already exists. Changing it to {}", misMatchGtinForMaster, gtinId);
 					misMatchGtinForMaster.setDomainId(gtinId);
 					try {
 						Gtin.staticGetDao().store(misMatchGtinForMaster);
 						result = misMatchGtinForMaster;
+						gtinCache.put(result);
 					} catch (DaoException e) {
 						LOGGER.error("upsertGtinMap save", e);
 					}
@@ -877,9 +906,10 @@ public class OutboundOrderBatchProcessor implements Runnable {
 					inItemMaster.getItemId(),
 					inUomMaster.getUomMasterId());
 				result = inItemMaster.createGtin(gtinId, inUomMaster);
-
 				try {
 					Gtin.staticGetDao().store(result);
+					// be sure to add to the gtin cache. Otherwise new one, then repeat of same in same batch would yield double gtin.
+					gtinCache.put(result);
 				} catch (DaoException e) {
 					LOGGER.error("upsertGtinMap save", e);
 				}
