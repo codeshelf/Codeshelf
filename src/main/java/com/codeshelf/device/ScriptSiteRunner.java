@@ -24,7 +24,7 @@ import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.google.common.collect.Lists;
 
 public class ScriptSiteRunner {
-	private final static String TEMPLATE_DEF_CHE = "defChe <cheName> <cheGuid>";
+	private final static String TEMPLATE_DEF_CHE = "defChe (ches <cheName> <cheGuid>)";
 	private final static String TEMPLATE_LOGIN = "login <cheName> <workerId> [state]";
 	private final static String TEMPLATE_LOGIN_SETUP = "loginSetup <cheName> <workerId>";
 	private final static String TEMPLATE_LOGIN_REMOTE = "loginRemote <cheName> <workerId> <linkToChe>";
@@ -160,28 +160,32 @@ public class ScriptSiteRunner {
 	
 	/**
 	 * Expects to see command
-	 * defChe <cheName> <cheGuid>
+	 * defChe (ches <cheName> <cheGuid>)
 	 * @throws Exception
 	 */
 	private void processDefineCheCommand(String parts[]) throws Exception {
-		if (parts.length != 3){
+		int blockLength = 2;
+		if (parts.length < 3 || (parts.length - 1) % blockLength != 0 ){
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_DEF_CHE);
 		}
-		String cheName = parts[1];
-		NetGuid cheGuid = new NetGuid(parts[2]);
-		
-		//In case, the device has just been added to the system, wait for Server to send device info to Site
-		long start = System.currentTimeMillis(), now = System.currentTimeMillis();
-		while (now < start + 15 * 1000){
-			if (deviceManager.getDeviceByGuid(cheGuid) != null){
-				break;
+		int totalBlocks = (parts.length - 1) / blockLength;
+		for (int blockNum = 0; blockNum < totalBlocks; blockNum++) {
+			int offset = 1 + blockNum * blockLength;
+			String cheName = parts[offset + 0];
+			NetGuid cheGuid = new NetGuid(parts[offset + 1]);
+			//In case, the device has just been added to the system, wait for Server to send device info to Site
+			long start = System.currentTimeMillis(), now = System.currentTimeMillis();
+			while (now < start + 15 * 1000){
+				if (deviceManager.getDeviceByGuid(cheGuid) != null){
+					break;
+				}
+				Thread.sleep(1000);
+				now = System.currentTimeMillis();
 			}
-			Thread.sleep(1000);
-			now = System.currentTimeMillis();
+			
+			PickSimulator che = new PickSimulator(deviceManager, cheGuid);
+			ches.put(cheName, che);
 		}
-		
-		PickSimulator che = new PickSimulator(deviceManager, cheGuid);
-		ches.put(cheName, che);
 	}
 	
 	/**
