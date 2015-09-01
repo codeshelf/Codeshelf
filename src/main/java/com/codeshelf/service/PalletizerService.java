@@ -58,6 +58,8 @@ public class PalletizerService implements IApiService{
 				info.setLocation(location.getBestUsableLocationName());
 			} else {
 				LOGGER.warn("Palletizer order {} doesn't have a location", storeId);
+				info.setOrderFound(false);
+				return info;
 			}
 		}
 		info.setOrderFound(true);
@@ -125,8 +127,11 @@ public class PalletizerService implements IApiService{
 			order = OrderHeader.createEmptyOrderHeader(facility, orderId);
 			order.addOrderLocation(location);
 			OrderHeader.staticGetDao().store(order);
+		} else if (order.getActiveOrderLocations().isEmpty()){
+			order.addOrderLocation(location);
+			OrderHeader.staticGetDao().store(order);
 		} else {
-			LOGGER.warn("Somewhy processPalletizerNewLocationRequest() was called for an item {} that already has a order", itemId);
+			LOGGER.warn("Somewhy processPalletizerNewLocationRequest() was called for an item {} that already has an order with an active location", itemId);
 		}
 		return processPalletizerItemRequest(che, itemId);
 	}
