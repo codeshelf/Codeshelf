@@ -32,6 +32,7 @@ import com.opencsv.bean.HeaderColumnNameMappingStrategy;
  * Later, change to a persistent list of the serialized bean to survive server restart.
  */
 public class WiBeanStringifier {
+	private static final String NEWLINE = "\r\n";
 	
 	@Getter
 	private ExtensionPointService				extensionPointService;
@@ -153,7 +154,7 @@ public class WiBeanStringifier {
 		String header = getWiHeader(inOrder, inChe);
 		String trailer = getWiTrailer(inOrder, inChe);
 		if (header != null && !header.isEmpty())
-			returnStr += header + "\n";
+			returnStr += header + NEWLINE;
 
 		// contents.. Add the new line
 		for (WorkInstructionCsvBean wiBean : inWiBeanList) {
@@ -162,11 +163,11 @@ public class WiBeanStringifier {
 			} else {
 				returnStr += wiBean.getDefaultCsvContent();
 			}
-			returnStr += "\n";
+			returnStr += NEWLINE;
 		}
 
 		if (trailer != null && !trailer.isEmpty())
-			returnStr += trailer + "\n";
+			returnStr += trailer + NEWLINE;
 		return returnStr;
 	}
 
