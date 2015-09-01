@@ -343,23 +343,25 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 	@Override
 	public void deviceActive(INetworkDevice inNetworkDevice) {
-		if (inNetworkDevice instanceof CheDeviceLogic) {
-			if (isAttachedToServer) {
-				((CheDeviceLogic) inNetworkDevice).connectedToServer();
-			} else {
-				((CheDeviceLogic) inNetworkDevice).disconnectedFromServer();
-			}
-		} else if (inNetworkDevice instanceof PosManagerDeviceLogic) {
-			if (isAttachedToServer) {
-				((PosManagerDeviceLogic) inNetworkDevice).connectedToServer();
-			} else {
-				((PosManagerDeviceLogic) inNetworkDevice).disconnectedFromServer();
-			}
-		} else if (inNetworkDevice instanceof AisleDeviceLogic) {
-			if (isAttachedToServer) {
-				((AisleDeviceLogic) inNetworkDevice).connectedToServer();
-			} else {
-				((AisleDeviceLogic) inNetworkDevice).disconnectedFromServer();
+		synchronized (inNetworkDevice) {
+			if (inNetworkDevice instanceof CheDeviceLogic) {
+				if (isAttachedToServer) {
+					((CheDeviceLogic) inNetworkDevice).connectedToServer();
+				} else {
+					((CheDeviceLogic) inNetworkDevice).disconnectedFromServer();
+				}
+			} else if (inNetworkDevice instanceof PosManagerDeviceLogic) {
+				if (isAttachedToServer) {
+					((PosManagerDeviceLogic) inNetworkDevice).connectedToServer();
+				} else {
+					((PosManagerDeviceLogic) inNetworkDevice).disconnectedFromServer();
+				}
+			} else if (inNetworkDevice instanceof AisleDeviceLogic) {
+				if (isAttachedToServer) {
+					((AisleDeviceLogic) inNetworkDevice).connectedToServer();
+				} else {
+					((AisleDeviceLogic) inNetworkDevice).disconnectedFromServer();
+				}
 			}
 		}
 	}

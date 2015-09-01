@@ -62,6 +62,7 @@ And one more multi line comment here
 STEP palletizer
 SITE 
 waitForDevices :chePall
+defChe cheA :che1 cheB :che2 cheC 0x000000A4
 defChe cheC :chePall
 logout cheC
 login cheC Ilya1 PALLETIZER_SCAN_ITEM
@@ -109,8 +110,7 @@ scan cheA 3605970651558 DO_PICK
 STEP test remote control setup
 SITE
 //Define ches
-defChe cheA :che1 cheB :che2
-defChe cheC 0x000000A4
+defChe cheA :che1 cheB :che2 cheC 0x000000A4
 logout cheA cheB cheC
 loginRemote cheA Ilya1 CHE_B
 scan cheA X%SETUP 
