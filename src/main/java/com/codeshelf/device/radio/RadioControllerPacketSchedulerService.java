@@ -202,7 +202,7 @@ public class RadioControllerPacketSchedulerService {
 
 		mLastDeviceAckId.put(deviceAddr, inAckNum);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 *	Mark a queued packet as having been acknowledged. Will remove from sending queue.
@@ -221,10 +221,14 @@ public class RadioControllerPacketSchedulerService {
 	 */
 	private void deliverPackets() {
 
-		if (!mPendingNetMgmtPacketsQueue.isEmpty()) {
-			deliverNetMgmtPacket();
-		} else if (!mDeviceQueue.isEmpty() || !mSecondDeviceQueue.isEmpty()) {
-			deliverNextCommandPacket();
+		try {
+			if (!mPendingNetMgmtPacketsQueue.isEmpty()) {
+				deliverNetMgmtPacket();
+			} else if (!mDeviceQueue.isEmpty() || !mSecondDeviceQueue.isEmpty()) {
+				deliverNextCommandPacket();
+			}
+		} catch (Exception e) {
+			LOGGER.error("{}", e.toString());
 		}
 	}
 
@@ -468,7 +472,7 @@ public class RadioControllerPacketSchedulerService {
 		}
 
 		IPacket headPacket = deviceQueue.peekFirst();
-		
+
 		if (headPacket == null) {
 			return false;
 		}
@@ -489,11 +493,11 @@ public class RadioControllerPacketSchedulerService {
 	 *		Packet to check
 	 */
 	private boolean clearToSendCommandPacket(IPacket inPacket) {
-		
+
 		if (inPacket.getCommand().getCommandTypeEnum() == CommandGroupEnum.CONTROL) {
 			CommandControlABC command = (CommandControlABC) inPacket.getCommand();
-			
-			if(command.getExtendedCommandID().getValue() == CommandControlABC.ACK) {
+
+			if (command.getExtendedCommandID().getValue() == CommandControlABC.ACK) {
 				return true;
 			}
 		}
@@ -546,13 +550,14 @@ public class RadioControllerPacketSchedulerService {
 		lastAck = mLastDeviceAckId.get(device.getAddress());
 
 		packetAckIdUnsigned = packetAckId & 0xFF;
-		lastAckIdUnsigned = lastAck.byteValue() & 0xFF;
 
-		if (packetAckIdUnsigned == 0) {
+		if (lastAck != null) {
+			lastAckIdUnsigned = lastAck.byteValue() & 0xFF;
+		} else {
 			return true;
 		}
 
-		if (lastAck == null || lastAckIdUnsigned == 0) {
+		if (packetAckIdUnsigned == 0) {
 			return true;
 		}
 
