@@ -3,6 +3,7 @@ package com.codeshelf.edi;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Executors;
 
 import javax.script.ScriptException;
 
@@ -11,12 +12,15 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.service.ExtensionPointService;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 public class EdiExporterProvider {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(EdiExporterProvider.class);
 
 	private Map<UUID, EdiExportAccumulator> facilityEdiAccumulators = new HashMap<>();
 	private Map<UUID, FacilityEdiExporter> facilityEdiExporters = new HashMap<>();
+	private Map<UUID, ListeningExecutorService> facilityExecutorServices = new HashMap<>();
 		
 	public FacilityEdiExporter getEdiExporter(Facility facility) throws Exception {
 		//look up the export service for the facility
@@ -61,7 +65,14 @@ public class EdiExporterProvider {
 					accumulator = new EdiExportAccumulator();
 					facilityEdiAccumulators.put(facility.getPersistentId(), accumulator);
 				}
-				FacilityAccumulatingExporter exporter = new FacilityAccumulatingExporter(accumulator, stringifier, exportService);
+
+				ListeningExecutorService executor = facilityExecutorServices.get(facility.getPersistentId());
+				if (executor == null) {
+					executor = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+					facilityExecutorServices.put(facility.getPersistentId(), executor);
+				}
+
+				FacilityAccumulatingExporter exporter = new FacilityAccumulatingExporter(accumulator, executor, stringifier, exportService);
 				facilityEdiExporters.put(facility.getPersistentId(), exporter);
 			}
 		}

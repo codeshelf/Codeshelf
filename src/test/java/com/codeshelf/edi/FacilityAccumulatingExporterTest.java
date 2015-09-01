@@ -23,7 +23,6 @@ import javax.script.ScriptException;
 
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -44,10 +43,14 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.ExtensionPointService;
 import com.codeshelf.service.ExtensionPointType;
-import com.codeshelf.testframework.ServerTest;
+import com.codeshelf.testframework.HibernateTest;
 import com.google.common.base.Strings;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
-public class FacilityAccumulatingExporterTest extends ServerTest {
+public class FacilityAccumulatingExporterTest extends HibernateTest {
 
 	private static final Logger			LOGGER		= LoggerFactory.getLogger(FacilityAccumulatingExporterTest.class);
 
@@ -60,6 +63,15 @@ public class FacilityAccumulatingExporterTest extends ServerTest {
 	public void doBefore() {
 		super.doBefore();
 		facilityGenerator = new FacilityGenerator();
+	}
+	
+	private OrderHeader generateOrder(Facility facility, int numDetails) {
+		
+		OrderHeader orderHeader = wiGenerator.generateValidOrderHeader(facility);
+		for (int i = 0; i < numDetails; i++) {
+			wiGenerator.generateValidOrderDetail(orderHeader, inventoryGenerator.generateItem(facility));
+		}
+		return orderHeader;
 	}
 	
 	@Test
@@ -139,9 +151,7 @@ public class FacilityAccumulatingExporterTest extends ServerTest {
 		LOGGER.info("1: Make the work instruction");
 		
 		Che che = firstChe(facility);
-		OrderHeader orderHeader = wiGenerator.generateValidOrderHeader(facility);
-		wiGenerator.generateValidOrderDetail(orderHeader, inventoryGenerator.generateItem(facility));
-		wiGenerator.generateValidOrderDetail(orderHeader, inventoryGenerator.generateItem(facility));
+		OrderHeader orderHeader = generateOrder(facility, 2);
 		List<WorkInstruction> wis = generateValidWorkInstruction(orderHeader, che, nextUniquePastTimestamp());
 		commitTransaction();
 
@@ -152,10 +162,12 @@ public class FacilityAccumulatingExporterTest extends ServerTest {
 		WiBeanStringifier stringifier = new WiBeanStringifier(ExtensionPointService.createInstance(facility));
 		EdiExportTransport exportService = mock(EdiExportTransport.class);
 		EdiExportAccumulator accumulator = new EdiExportAccumulator();
-		FacilityEdiExporter ediExporter = new FacilityAccumulatingExporter(accumulator, stringifier, exportService);
+		ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+		FacilityEdiExporter ediExporter = new FacilityAccumulatingExporter(accumulator, executorService,  stringifier, exportService);
 		
 		LOGGER.info("3: notify order on cart"); // Use extension points
-		ediExporter.exportOrderOnCartAdded(orderHeader, che);
+		ArrayList<ListenableFuture<ExportReceipt>> receipts = new ArrayList<ListenableFuture<ExportReceipt>>();
+		receipts.add(ediExporter.exportOrderOnCartAdded(orderHeader, che));
 
 		LOGGER.info("4: Accumulate the wi"); // this does not use extension points
 		for (WorkInstruction workInstruction : wis) {
@@ -163,8 +175,9 @@ public class FacilityAccumulatingExporterTest extends ServerTest {
 			ediExporter.exportWiFinished(orderHeader, che, workInstruction);
 		}
 		LOGGER.info("5: Report on the order"); // Use extension points
-		ediExporter.exportOrderOnCartFinished(orderHeader, che);
+		receipts.add(ediExporter.exportOrderOnCartFinished(orderHeader, che));
 
+		Futures.allAsList(receipts);
 		//TODO verify message
 		verify(exportService).transportOrderOnCartAdded(eq(orderHeader), eq(che), any(String.class));
 
@@ -200,7 +213,9 @@ public class FacilityAccumulatingExporterTest extends ServerTest {
 		
 		
 		EdiExportTransport mockEdiTransport = mock(EdiExportTransport.class);
-		FacilityAccumulatingExporter subject = new FacilityAccumulatingExporter(mock(EdiExportAccumulator.class), mock(WiBeanStringifier.class), mockEdiTransport);
+		ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+
+		FacilityAccumulatingExporter subject = new FacilityAccumulatingExporter(mock(EdiExportAccumulator.class), executorService, mock(WiBeanStringifier.class), mockEdiTransport);
 
 		
 		
@@ -270,8 +285,8 @@ public class FacilityAccumulatingExporterTest extends ServerTest {
 			.thenThrow(new IOException("test io 2"))
 			.thenReturn(null);
 
-
-		FacilityAccumulatingExporter subject = new FacilityAccumulatingExporter(mock(EdiExportAccumulator.class), mockStringifier, mockEdiTransport);
+		ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+		FacilityAccumulatingExporter subject = new FacilityAccumulatingExporter(mock(EdiExportAccumulator.class), executorService,  mockStringifier, mockEdiTransport);
 		subject.exportOrderOnCartAdded(order1, che1);
 		
 		
@@ -291,7 +306,6 @@ public class FacilityAccumulatingExporterTest extends ServerTest {
 		commitTransaction();
 	}
 
-	@Ignore
 	@Test
 	public void workInstructionExportingIsNotBlocked() throws IOException, InterruptedException {
 
@@ -311,7 +325,10 @@ public class FacilityAccumulatingExporterTest extends ServerTest {
 		WiBeanStringifier mockStringifier = mock(WiBeanStringifier.class);
 		when(mockStringifier.stringifyOrderOnCartAdded(any(OrderHeader.class), eq(che1))).thenReturn(singleTestMessage);
 
-		final FacilityAccumulatingExporter subject = new FacilityAccumulatingExporter(mock(EdiExportAccumulator.class), mockStringifier, mockEdiTransport);
+		ListeningExecutorService executorService = MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor());
+
+		final FacilityAccumulatingExporter subject = new FacilityAccumulatingExporter(mock(EdiExportAccumulator.class),
+			executorService, mockStringifier, mockEdiTransport);
 
 		//block all transports
 		callBlocker.lock();
