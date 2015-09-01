@@ -1666,7 +1666,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		connectedToServer = true;
 		this.clearAllPosconsOnThisDevice();
 		redisplayState();
+		resetStateCounter(); // because we may get several overlapping associate calls
+	}
 
+	private void resetStateCounter() {
+		setSetStateStackCount(0);
 	}
 
 	private void redisplayState() {

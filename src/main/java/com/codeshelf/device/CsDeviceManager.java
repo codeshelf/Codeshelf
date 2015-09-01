@@ -92,7 +92,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	private TwoKeyMap<UUID, NetGuid, INetworkDevice>	mDeviceMap;
 
 	private Map<NetGuid, CheData>						mDeviceDataMap;
-	
+
 	@Getter
 	private IRadioController							radioController;
 
@@ -143,7 +143,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
 
 		mDeviceDataMap = new HashMap<NetGuid, CheData>();
-		
+
 		username = System.getProperty("websocket.username");
 		password = System.getProperty("websocket.password");
 
@@ -343,25 +343,23 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 	@Override
 	public void deviceActive(INetworkDevice inNetworkDevice) {
-		synchronized (inNetworkDevice) {
-			if (inNetworkDevice instanceof CheDeviceLogic) {
-				if (isAttachedToServer) {
-					((CheDeviceLogic) inNetworkDevice).connectedToServer();
-				} else {
-					((CheDeviceLogic) inNetworkDevice).disconnectedFromServer();
-				}
-			} else if (inNetworkDevice instanceof PosManagerDeviceLogic) {
-				if (isAttachedToServer) {
-					((PosManagerDeviceLogic) inNetworkDevice).connectedToServer();
-				} else {
-					((PosManagerDeviceLogic) inNetworkDevice).disconnectedFromServer();
-				}
-			} else if (inNetworkDevice instanceof AisleDeviceLogic) {
-				if (isAttachedToServer) {
-					((AisleDeviceLogic) inNetworkDevice).connectedToServer();
-				} else {
-					((AisleDeviceLogic) inNetworkDevice).disconnectedFromServer();
-				}
+		if (inNetworkDevice instanceof CheDeviceLogic) {
+			if (isAttachedToServer) {
+				((CheDeviceLogic) inNetworkDevice).connectedToServer();
+			} else {
+				((CheDeviceLogic) inNetworkDevice).disconnectedFromServer();
+			}
+		} else if (inNetworkDevice instanceof PosManagerDeviceLogic) {
+			if (isAttachedToServer) {
+				((PosManagerDeviceLogic) inNetworkDevice).connectedToServer();
+			} else {
+				((PosManagerDeviceLogic) inNetworkDevice).disconnectedFromServer();
+			}
+		} else if (inNetworkDevice instanceof AisleDeviceLogic) {
+			if (isAttachedToServer) {
+				((AisleDeviceLogic) inNetworkDevice).connectedToServer();
+			} else {
+				((AisleDeviceLogic) inNetworkDevice).disconnectedFromServer();
 			}
 		}
 	}
@@ -453,8 +451,12 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		CompleteWorkInstructionRequest req = new CompleteWorkInstructionRequest(inPersistentId.toString(), inWorkInstruction);
 		clientEndpoint.sendMessage(req);
 	}
-	
-	public void completePalletizerWi(final String inCheId, final UUID inPersistentId, final UUID wiId, final String userId, final Boolean shorted) {
+
+	public void completePalletizerWi(final String inCheId,
+		final UUID inPersistentId,
+		final UUID wiId,
+		final String userId,
+		final Boolean shorted) {
 		LOGGER.debug("Complete Palletizer WI: Che={}; WI={}; Short={}", inCheId, wiId, shorted);
 		PalletizerCompleteWiRequest req = new PalletizerCompleteWiRequest(inPersistentId.toString(), wiId, userId, shorted);
 		clientEndpoint.sendMessage(req);
@@ -464,15 +466,24 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	/* (non-Javadoc)
 	 * @see com.codeshelf.device.CsDeviceManager#inventoryScan(final UUID inCheId, final UUID inPersistentId, final String inLocationId, final String inGtin)
 	 */
-	public void inventoryUpdateScan(final UUID inPersistentId, final String inLocationId, final String inGtin, final String skuWallName) {
+	public void inventoryUpdateScan(final UUID inPersistentId,
+		final String inLocationId,
+		final String inGtin,
+		final String skuWallName) {
 		LOGGER.debug("Inventory update Scan: Che={}; Loc={}; GTIN={};", inPersistentId, inLocationId, inGtin);
 		InventoryUpdateRequest req = new InventoryUpdateRequest(inPersistentId.toString(), inGtin, inLocationId, skuWallName);
 		clientEndpoint.sendMessage(req);
 	}
-	
-	public void skuWallLocationDisambiguation(final UUID inPersistentId, final String inLocationId, final String inGtin, final String skuWallName) {
+
+	public void skuWallLocationDisambiguation(final UUID inPersistentId,
+		final String inLocationId,
+		final String inGtin,
+		final String skuWallName) {
 		LOGGER.debug("Inventory update Scan: Che={}; Loc={}; GTIN={};", inPersistentId, inLocationId, inGtin);
-		SkuWallLocationDisambiguationRequest req = new SkuWallLocationDisambiguationRequest(inPersistentId.toString(), inGtin, inLocationId, skuWallName);
+		SkuWallLocationDisambiguationRequest req = new SkuWallLocationDisambiguationRequest(inPersistentId.toString(),
+			inGtin,
+			inLocationId,
+			skuWallName);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -495,29 +506,33 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		InventoryLightLocationRequest req = new InventoryLightLocationRequest(inPersistentId.toString(), inLocation, isTape);
 		clientEndpoint.sendMessage(req);
 	}
-	
+
 	public void performInfoOrRemoveAction(InfoRequestType actionType, String location, String cheGuid, String chePersistentId) {
 		performInfoOrRemoveAction(actionType, location, cheGuid, chePersistentId, null);
 	}
-	
-	public void performInfoOrRemoveAction(InfoRequestType actionType, String location, String cheGuid, String chePersistentId, UUID removeItemId) {
+
+	public void performInfoOrRemoveAction(InfoRequestType actionType,
+		String location,
+		String cheGuid,
+		String chePersistentId,
+		UUID removeItemId) {
 		LOGGER.debug("sendInfoOrRemoveCommand: Che={};  Type ={}; Location={};", cheGuid, actionType, location);
 		InfoRequest req = new InfoRequest(actionType, chePersistentId, location, removeItemId);
 		clientEndpoint.sendMessage(req);
 	}
-	
+
 	public void palletizerItemRequest(String cheGuid, String chePersistentId, String item) {
 		LOGGER.debug("palletizerItemRequest: Che={};  Item={};", cheGuid, item);
 		PalletizerItemRequest req = new PalletizerItemRequest(chePersistentId, item);
 		clientEndpoint.sendMessage(req);
 	}
-	
+
 	public void palletizerNewOrderRequest(String cheGuid, String chePersistentId, String item, String location) {
 		LOGGER.debug("palletizerNewOrderRequest: Che={}, Item={}, Location={}", cheGuid, item, location);
 		PalletizerNewOrderRequest req = new PalletizerNewOrderRequest(chePersistentId, item, location);
 		clientEndpoint.sendMessage(req);
 	}
-	
+
 	public void palletizerRemoveOrderRequest(String cheGuid, String chePersistentId, String prefix, String scan) {
 		LOGGER.debug("palletizerRemoveOrderRequest: Che={}, Prefix={}, Scan={}", cheGuid, prefix, scan);
 		PalletizerRemoveOrderRequest req = new PalletizerRemoveOrderRequest(chePersistentId, prefix, scan);
@@ -905,17 +920,21 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			LOGGER.warn("Device not found in processPutWallInstructionResponse. CHE id={}", networkGuid);
 		}
 	}
-	
+
 	public void processTapeLocationDecodingResponse(String networkGuid, String decodedLocation) {
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
-			if (cheDevice instanceof SetupOrdersDeviceLogic){
-				((SetupOrdersDeviceLogic)cheDevice).setLocationId(decodedLocation);
+			if (cheDevice instanceof SetupOrdersDeviceLogic) {
+				((SetupOrdersDeviceLogic) cheDevice).setLocationId(decodedLocation);
 				if (cheDevice.getCheStateEnum() == CheStateEnum.SETUP_SUMMARY) {
-					LOGGER.info("Tape decoding {} received and saved, refreshing SETUP_SUMMARY. CHE id={}", decodedLocation, networkGuid);
+					LOGGER.info("Tape decoding {} received and saved, refreshing SETUP_SUMMARY. CHE id={}",
+						decodedLocation,
+						networkGuid);
 					cheDevice.setState(CheStateEnum.SETUP_SUMMARY);
 				} else {
-					LOGGER.info("Tape decoding {} received and saved, but device is no longer in SETUP_SUMMARY. CHE id={}", decodedLocation, networkGuid);
+					LOGGER.info("Tape decoding {} received and saved, but device is no longer in SETUP_SUMMARY. CHE id={}",
+						decodedLocation,
+						networkGuid);
 				}
 			} else {
 				LOGGER.warn("Device is not SetupOrdersDeviceLogic in processTapeLocationDecodingResponse. CHE id={}", networkGuid);
@@ -924,11 +943,11 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			LOGGER.warn("Device not found in processPutWallInstructionResponse. CHE id={}", networkGuid);
 		}
 	}
-	
+
 	public void processInfoResponse(String networkGuid, InfoPackage info) {
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
-			if (cheDevice instanceof SetupOrdersDeviceLogic){
+			if (cheDevice instanceof SetupOrdersDeviceLogic) {
 				if (info == null) {
 					LOGGER.info("INFO request returned with null info. This is normal. Thus, do not change CHE display");
 				} else {
@@ -942,11 +961,11 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			LOGGER.warn("Device not found in processInfoResponse. CHE id={}", networkGuid);
 		}
 	}
-	
+
 	public void processPalletizerItemResponse(String networkGuid, PalletizerInfo info) {
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
-			if (cheDevice instanceof ChePalletizerDeviceLogic){
+			if (cheDevice instanceof ChePalletizerDeviceLogic) {
 				((ChePalletizerDeviceLogic) cheDevice).processItemResponse(info);
 			} else {
 				LOGGER.warn("Device is not ChePalletizerDeviceLogic in processInfoResponse. CHE id={}", networkGuid);
@@ -955,11 +974,11 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			LOGGER.warn("Device not found in processPalletizerItemResponse. CHE id={}", networkGuid);
 		}
 	}
-	
+
 	public void processPalletizerRemoveResponse(String networkGuid, String error) {
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
-			if (cheDevice instanceof ChePalletizerDeviceLogic){
+			if (cheDevice instanceof ChePalletizerDeviceLogic) {
 				((ChePalletizerDeviceLogic) cheDevice).processRemoveResponse(error);
 			} else {
 				LOGGER.warn("Device is not ChePalletizerDeviceLogic in processRemoveResponse. CHE id={}", networkGuid);
@@ -968,7 +987,6 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			LOGGER.warn("Device not found in processPalletizerRemoveResponse. CHE id={}", networkGuid);
 		}
 	}
-
 
 	/** Two key actions from the associate response
 	 * 1) Immediately, in advance of networkUpdate that may come, modify and maintain the association map in the cheDeviceLogic
@@ -1200,7 +1218,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		@Getter
 		@Setter
 		NetGuid	associatedToRemoteCheGuid;
-		
+
 		@Getter
 		@Setter
 		String	workerNameUI;				// the ui-friendly name of the logged in worker
@@ -1320,12 +1338,12 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		CheData cheData = getOrCreateCheData(cheGuid);
 		cheData.setWorkerNameUI(workerName);
 	}
-	
+
 	public void setCheNameFromGuid(NetGuid cheGuid, String cheName) {
 		CheData cheData = getOrCreateCheData(cheGuid);
 		cheData.setCheName(cheName);
 	}
-	
+
 	private CheData getOrCreateCheData(NetGuid cheGuid) {
 		CheData cheData = mDeviceDataMap.get(cheGuid);
 		if (cheData == null) {
@@ -1360,13 +1378,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		else
 			return this.getCheDeviceByNetGuid(theGuid);
 	}
-	
+
 	/**
 	 * This function determines if any CHEs other that @sourceChe are using Poscons needed by @requestedWi
 	 */
 	protected String getPosconHolders(NetGuid sourceChe, String requestedPosconStream) {
 		StringBuilder posconHolders = new StringBuilder();
-		if (requestedPosconStream == null || requestedPosconStream.isEmpty()){
+		if (requestedPosconStream == null || requestedPosconStream.isEmpty()) {
 			return null;
 		}
 		List<PosControllerInstr> requestedPosconInstructions = PosConInstrGroupSerializer.deserializePosConInstrString(requestedPosconStream);
@@ -1375,13 +1393,14 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		}
 		List<String> requestedPoscons = Lists.newArrayList();
 		for (PosControllerInstr requestedPosconInstruction : requestedPosconInstructions) {
-			String requestedPoscon = posconKeygen(requestedPosconInstruction.getControllerId(), requestedPosconInstruction.getPosition());
+			String requestedPoscon = posconKeygen(requestedPosconInstruction.getControllerId(),
+				requestedPosconInstruction.getPosition());
 			requestedPoscons.add(requestedPoscon);
 		}
 		for (INetworkDevice networkDevice : mDeviceMap.values()) {
 			if (networkDevice instanceof CheDeviceLogic) {
 				CheDeviceLogic che = (CheDeviceLogic) networkDevice;
-				if (sourceChe.equals(che.getGuid())){
+				if (sourceChe.equals(che.getGuid())) {
 					continue;
 				}
 				List<WorkInstruction> wisOnChe = che.getActivePickWiList();
@@ -1393,7 +1412,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 					List<PosControllerInstr> posconInstructions = PosConInstrGroupSerializer.deserializePosConInstrString(posconStream);
 					for (PosControllerInstr posconInstruction : posconInstructions) {
 						String usedPoscon = posconKeygen(posconInstruction.getControllerId(), posconInstruction.getPosition());
-						if (requestedPoscons.contains(usedPoscon)){
+						if (requestedPoscons.contains(usedPoscon)) {
 							String cheDescription = getCheDescription(che);
 							posconHolders.append(che.getUserId()).append(" on ").append(cheDescription).append(", ");
 						}
@@ -1408,7 +1427,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			return posconHolders.substring(0, len - 2);
 		}
 	}
-	
+
 	private String getCheDescription(CheDeviceLogic che) {
 		CheData cheData = mDeviceDataMap.get(che.getGuid());
 		if (cheData != null) {
@@ -1419,7 +1438,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		}
 		return che.getMyGuidStr();
 	}
-	
+
 	private String posconKeygen(String controllerId, int posConIndex) {
 		return controllerId + "-" + posConIndex;
 	}
