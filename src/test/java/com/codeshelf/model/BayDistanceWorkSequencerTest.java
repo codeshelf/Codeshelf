@@ -1,6 +1,6 @@
 package com.codeshelf.model;
 
-import java.io.IOException;
+import java.io.IOException;	
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -21,7 +21,7 @@ import com.codeshelf.testframework.ServerTest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
 
-import edu.emory.mathcs.backport.java.util.Arrays;
+import java.util.Arrays;
 
 public class BayDistanceWorkSequencerTest extends ServerTest {
 	@Test

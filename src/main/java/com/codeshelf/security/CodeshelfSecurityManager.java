@@ -40,7 +40,7 @@ import com.codeshelf.manager.Tenant;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 
-import edu.emory.mathcs.backport.java.util.Arrays;
+import java.util.Arrays;
 
 public class CodeshelfSecurityManager extends AuthorizingSecurityManager implements WebSecurityManager {
 	static final private Logger	LOGGER						= LoggerFactory.getLogger(CodeshelfSecurityManager.class);

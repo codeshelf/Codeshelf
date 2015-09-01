@@ -1,6 +1,6 @@
-package com.codeshelf.security;
+package com.codeshelf.security;	
 
-import java.nio.ByteBuffer;
+import java.nio.ByteBuffer;	
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
@@ -18,7 +18,7 @@ import com.codeshelf.security.SessionFlags.Flag;
 import com.codeshelf.security.TokenSession.Status;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 
-import edu.emory.mathcs.backport.java.util.Arrays;
+import java.util.Arrays;
 
 public abstract class AbstractHmacTokenService extends AbstractCodeshelfIdleService {
 	static final Logger	LOGGER								= LoggerFactory.getLogger(AbstractHmacTokenService.class);
