@@ -6,6 +6,7 @@ import javax.persistence.Entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.edi.EdiFileWriteException;
 import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
@@ -58,7 +59,7 @@ public class SftpWIsEdiService extends AbstractSftpEdiService implements EdiExpo
 	}
 
 	@Override
-	public void transportWiComplete(OrderHeader inOrder, Che inChe, String exportMessage) {
+	public void transportWiFinished(OrderHeader inOrder, Che inChe, String exportMessage) {
 	
 	}
 
@@ -69,21 +70,17 @@ public class SftpWIsEdiService extends AbstractSftpEdiService implements EdiExpo
 	}
 	
 	@Override
-	public ExportReceipt transportOrderOnCartFinished(OrderHeader inOrder, Che inChe, String contents) {
+	public ExportReceipt transportOrderOnCartFinished(OrderHeader inOrder, Che inChe, String contents) throws EdiFileWriteException {
 		String filename = String.format("COMPLETE_%s_%s_%s.DAT",  inOrder.getOrderId(), inChe.getDeviceGuidStr(), System.currentTimeMillis());
 		final String absoluteFilename = this.getConfiguration().getExportPath() + "/" + filename;
 		return uploadAsFile(contents, absoluteFilename);
 	}
 
 	@Override
-	public void transportOrderOnCartAdded(OrderHeader inOrder, Che inChe, String contents) {
+	public ExportReceipt transportOrderOnCartAdded(OrderHeader inOrder, Che inChe, String contents) throws EdiFileWriteException {
 		String filename = String.format("LOADED_%s_%s_%s.DAT",  inOrder.getOrderId(), inChe.getDeviceGuidStr(), System.currentTimeMillis());
 		final String absoluteFilename = this.getConfiguration().getExportPath() + "/" + filename;
-		try {
-			uploadAsFile(contents, absoluteFilename);
-		} catch (Exception e) {
-			LOGGER.warn("Unable to upload {}\n Contents:\n{}", absoluteFilename,  contents, e);
-		}
+		return uploadAsFile(contents, absoluteFilename);
 	}
 
 	@SuppressWarnings("unchecked")

@@ -11,8 +11,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -28,7 +26,6 @@ import com.codeshelf.model.domain.SftpOrdersEdiService;
 import com.codeshelf.model.domain.SftpWIsEdiService;
 import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.validation.BatchResult;
-import com.jcraft.jsch.SftpException;
 
 
 public class SftpWIsEdiServiceTest extends HibernateTest {
@@ -40,7 +37,7 @@ public class SftpWIsEdiServiceTest extends HibernateTest {
 	private InventoryGenerator	inventoryGenerator = new InventoryGenerator(null);
 
 	@Test
-	public void testSftpWIs() throws InterruptedException, ExecutionException, TimeoutException, SftpException {
+	public void testSftpWIs() throws EdiFileWriteException {
 		beginTransaction();
 		
 		Facility facility = getFacility();//trigger creation
@@ -73,7 +70,7 @@ public class SftpWIsEdiServiceTest extends HibernateTest {
 	}
 
 	@Test
-	public void testSftpOrders() throws IOException, SftpException, ExecutionException, TimeoutException, InterruptedException {
+	public void testSftpOrders() throws IOException  {
 		beginTransaction();
 		SftpConfiguration config = setupConfiguration();
 		SftpOrdersEdiService sftpOrders = configureSftpService(getFacility(), config, SftpOrdersEdiService.class);

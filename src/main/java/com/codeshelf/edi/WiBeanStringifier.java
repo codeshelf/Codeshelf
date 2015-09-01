@@ -9,7 +9,7 @@ package com.codeshelf.edi;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.util.ArrayList;
+import java.util.List;
 
 import lombok.Getter;
 
@@ -115,7 +115,7 @@ public class WiBeanStringifier {
 
 	}
 
-	public String stringifyOrderOnCart(OrderHeader order, Che che) {
+	public String stringifyOrderOnCartAdded(OrderHeader order, Che che) {
 
 		if (!hasExtensionPoint(ExtensionPointType.OrderOnCartContent)) {
 			return "";
@@ -136,7 +136,7 @@ public class WiBeanStringifier {
 		return content;
 	}
 
-	public String stringifyOrderCompleteOnCart(OrderHeader inOrder, Che inChe, ArrayList<WorkInstructionCsvBean> inWiBeanList) {
+	public String stringifyOrderOnCartFinished(OrderHeader inOrder, Che inChe, List<WorkInstructionCsvBean> inWiBeanList) {
 
 		if (inWiBeanList.isEmpty()) {
 			LOGGER.error("Nothing in bean list for WiBeanStringifier.stringifyOrderComplete()");

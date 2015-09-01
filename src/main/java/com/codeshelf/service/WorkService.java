@@ -683,7 +683,7 @@ public class WorkService extends AbstractCodeshelfIdleService implements IApiSer
 		try {
 			Optional<FacilityEdiExporter> theService = getFacilityEdiExporter(inOrder.getFacility());
 			if (theService.isPresent()) {
-				theService.get().notifyOrderOnCart(inOrder, inChe);
+				theService.get().exportOrderOnCartAdded(inOrder, inChe);
 			}
 		} catch(Exception e) {
 			LOGGER.warn("unable to export order addition message for order {} and che {}", inOrder ,inChe);
@@ -703,7 +703,7 @@ public class WorkService extends AbstractCodeshelfIdleService implements IApiSer
 		try {
 			Optional<FacilityEdiExporter> theService = getFacilityEdiExporter(inOrder.getFacility());
 			if (theService.isPresent()) {
-				theService.get().notifyOrderRemoveFromCart(inOrder, inChe);
+				theService.get().exportOrderOnCartRemoved(inOrder, inChe);
 			}
 		} catch (Exception e) {
 			LOGGER.warn("unable to export order removal message for order {} and che {}", inOrder ,inChe);
@@ -743,11 +743,11 @@ public class WorkService extends AbstractCodeshelfIdleService implements IApiSer
 			if (theService.isPresent()) {
 				Che wiChe = inWi.getAssignedChe();
 				OrderHeader wiOrder = inWi.getOrder();
-				theService.get().notifyWiComplete(wiOrder, wiChe, inWi);
+				theService.get().exportWiFinished(wiOrder, wiChe, inWi);
 				// then the slightly tricky part. Did this work instruction result in the order being complete on that cart?
 				//Housekeeping WIs have null Details and (thus) Orders
 				if (wiOrder != null && wiOrder.didOrderCompleteOnCart(wiChe)) {
-					theService.get().notifyOrderCompleteOnCart(wiOrder, wiChe);
+					theService.get().exportOrderOnCartFinished(wiOrder, wiChe);
 				}
 			}
 		}

@@ -17,12 +17,12 @@ public interface EdiExportTransport {
 
 	boolean isLinked();
 	
-	void transportWiComplete(OrderHeader wiOrder, Che wiChe, String message) throws IOException;
+	void transportWiFinished(OrderHeader wiOrder, Che wiChe, String message) throws IOException;
 
-	ExportReceipt transportOrderOnCartFinished(OrderHeader wiOrder, Che wiChe, String message);
+	ExportReceipt transportOrderOnCartFinished(OrderHeader wiOrder, Che wiChe, String message) throws IOException;
 
-	void transportOrderOnCartRemoved(OrderHeader inOrder, Che inChe, String message);
+	void transportOrderOnCartRemoved(OrderHeader inOrder, Che inChe, String message) throws IOException;
 
-	void transportOrderOnCartAdded(OrderHeader inOrder, Che inChe, String message);
+	ExportReceipt transportOrderOnCartAdded(OrderHeader inOrder, Che inChe, String message) throws IOException;
 
 }

@@ -160,7 +160,7 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 		}
 	}
 	
-	synchronized public ExportReceipt uploadAsFile(final String fileContents, final String filename) {
+	synchronized public ExportReceipt uploadAsFile(final String fileContents, final String filename) throws EdiFileWriteException {
 		ChannelSftp sftp = connect();
 		try {
 			byte[] bytes = fileContents.getBytes(StandardCharsets.ISO_8859_1);
@@ -187,7 +187,7 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 		
 	}
 
-	synchronized public void delete(String path) {
+	synchronized public void delete(String path) throws EdiFileWriteException {
 		ChannelSftp sftp = connect();
 		try {
 			sftp.rm(path);
@@ -199,7 +199,7 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 	}
 
 
-	protected ArrayList<String> retrieveImportFileList() {
+	protected ArrayList<String> retrieveImportFileList() throws EdiFileWriteException {
 		Vector<?> fileList = null;
 		SftpConfiguration config = getConfiguration();
 		String importPath = config.getImportPath();
