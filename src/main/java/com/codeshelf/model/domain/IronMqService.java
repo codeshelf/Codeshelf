@@ -185,7 +185,7 @@ public class IronMqService extends EdiServiceABC implements EdiExportTransport {
 	}
 	
 	@Override
-	public void transportWiComplete(OrderHeader wiOrder, Che wiChe, String exportMessage) throws IOException {
+	public void transportWiFinished(OrderHeader wiOrder, Che wiChe, String exportMessage) throws IOException {
 		Optional<Queue> queue = getWorkInstructionQueue();
 		if (queue.isPresent()) {
 			LOGGER.debug("attempting send exportMessage: " + exportMessage);
@@ -261,7 +261,8 @@ public class IronMqService extends EdiServiceABC implements EdiExportTransport {
 	}
 
 	@Override
-	public void transportOrderOnCartAdded(OrderHeader inOrder, Che inChe, String message) {
+	public ExportReceipt transportOrderOnCartAdded(OrderHeader inOrder, Che inChe, String message) {
+		return null;
 		// TODO Auto-generated method stub
 		
 	}

@@ -7,12 +7,12 @@ import com.codeshelf.model.domain.WorkInstruction;
 
 public interface FacilityEdiExporter {
 
-	public void notifyWiComplete(OrderHeader inOrder, Che inChe, WorkInstruction inWi);
+	public void exportWiFinished(OrderHeader inOrder, Che inChe, WorkInstruction inWi);
 	
-	public void notifyOrderOnCart(OrderHeader inOrder, Che inChe);
+	public void exportOrderOnCartAdded(OrderHeader inOrder, Che inChe);
 
-	public ExportReceipt notifyOrderCompleteOnCart(OrderHeader inOrder, Che inChe);
+	public ExportReceipt exportOrderOnCartFinished(OrderHeader inOrder, Che inChe);
 
-	public void notifyOrderRemoveFromCart(OrderHeader inOrder, Che inChe);
+	public void exportOrderOnCartRemoved(OrderHeader inOrder, Che inChe);
 
 }

@@ -313,7 +313,7 @@ public class WorkServiceTest extends ServerTest {
 
 		workService.completeWorkInstruction(cheId, wiToRecord);
 
-		verify(mockEdiExportService, never()).notifyWiComplete(any(OrderHeader.class),  any(Che.class), any(WorkInstruction.class));
+		verify(mockEdiExportService, never()).exportWiFinished(any(OrderHeader.class),  any(Che.class), any(WorkInstruction.class));
 	}
 
 	
@@ -330,7 +330,7 @@ public class WorkServiceTest extends ServerTest {
 
 		}
 
-		verify(mockEdiExportService, Mockito.timeout(2000).times(total)).notifyWiComplete(any(OrderHeader.class),  any(Che.class), any(WorkInstruction.class));
+		verify(mockEdiExportService, Mockito.timeout(2000).times(total)).exportWiFinished(any(OrderHeader.class),  any(Che.class), any(WorkInstruction.class));
 
 		this.getTenantPersistenceService().commitTransaction();
 	}

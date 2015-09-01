@@ -4,11 +4,13 @@
  *******************************************************************************/
 package com.codeshelf.edi;
 
+import java.io.IOException;
+
 // --------------------------------------------------------------------------
 /**
  *  @author jon ranstrom
  */
-public class EdiFileWriteException extends RuntimeException {
+public class EdiFileWriteException extends IOException {
 	// Should this be an Exception? (checked). The java style police say so, but DaoException is not, and database errors are lumped with user input as
 	// something for checked exceptions.
 	// The point of this exception is to throw from some methods slightly deep in the call stack, and then catch at the bean reader level.

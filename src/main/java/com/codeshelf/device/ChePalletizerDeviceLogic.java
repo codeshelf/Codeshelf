@@ -73,9 +73,8 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 	@Override
 	protected void setState(final CheStateEnum inCheState) {
 		clearAffectedLedAndPoscons();
-		int priorCount = getSetStateStackCount();
 		try {
-			setSetStateStackCount(priorCount + 1);
+			setSetStateStackCount(getSetStateStackCount() + 1);
 			CheStateEnum previousState = mCheStateEnum;
 			boolean isSameState = previousState == inCheState;
 			mCheStateEnum = inCheState;
@@ -119,7 +118,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 					break;
 			}
 		} finally {
-			setSetStateStackCount(priorCount);
+			setSetStateStackCount(getSetStateStackCount() - 1);
 		}
 	}
 	

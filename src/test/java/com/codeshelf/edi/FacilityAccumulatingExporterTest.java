@@ -1,19 +1,34 @@
 package com.codeshelf.edi;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.script.ScriptException;
 
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-
-import static org.mockito.Mockito.*;
-
+import org.mockito.Mockito;
+import org.mockito.internal.stubbing.answers.Returns;
+import org.mockito.invocation.InvocationOnMock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +36,7 @@ import com.codeshelf.generators.FacilityGenerator;
 import com.codeshelf.generators.WorkInstructionGenerator;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.ExportReceipt;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
@@ -139,15 +155,15 @@ public class FacilityAccumulatingExporterTest extends ServerTest {
 		FacilityEdiExporter ediExporter = new FacilityAccumulatingExporter(accumulator, stringifier, exportService);
 		
 		LOGGER.info("3: notify order on cart"); // Use extension points
-		ediExporter.notifyOrderOnCart(orderHeader, che);
+		ediExporter.exportOrderOnCartAdded(orderHeader, che);
 
 		LOGGER.info("4: Accumulate the wi"); // this does not use extension points
 		for (WorkInstruction workInstruction : wis) {
 			workInstruction.setCompleteState("picker", workInstruction.getPlanQuantity());
-			ediExporter.notifyWiComplete(orderHeader, che, workInstruction);
+			ediExporter.exportWiFinished(orderHeader, che, workInstruction);
 		}
 		LOGGER.info("5: Report on the order"); // Use extension points
-		ediExporter.notifyOrderCompleteOnCart(orderHeader, che);
+		ediExporter.exportOrderOnCartFinished(orderHeader, che);
 
 		//TODO verify message
 		verify(exportService).transportOrderOnCartAdded(eq(orderHeader), eq(che), any(String.class));
@@ -157,10 +173,180 @@ public class FacilityAccumulatingExporterTest extends ServerTest {
 		String message = messageCaptor.getValue();
 		assertMatches(orderHeader, che, wis, message);
 		
-		verify(exportService, never()).transportWiComplete(any(OrderHeader.class), any(Che.class), any(String.class));
+		verify(exportService, never()).transportWiFinished(any(OrderHeader.class), any(Che.class), any(String.class));
+		commitTransaction();
+	}
+	
+	@Test
+	public void workInstructionContinuesOnRuntimeException() throws IOException, InterruptedException {
+		beginTransaction();
+
+		long expectedRetryDelay = 1L;
+		Facility facility = getFacility();
+		Che che1 = getChe1();
+		Che che2 = getChe2();
+		
+		OrderHeader order1 = wiGenerator.generateValidOrderHeader(facility);
+		wiGenerator.generateValidOrderDetail(order1, inventoryGenerator.generateItem(facility));
+		OrderHeader order2 = wiGenerator.generateValidOrderHeader(facility);
+		wiGenerator.generateValidOrderDetail(order2, inventoryGenerator.generateItem(facility));
+		OrderHeader order3 = wiGenerator.generateValidOrderHeader(facility);
+		wiGenerator.generateValidOrderDetail(order3, inventoryGenerator.generateItem(facility));
+
+		Assert.assertNotEquals(order1, order2);
+		Assert.assertNotEquals(order2, order3);
+		Assert.assertNotEquals(che1, che2);
+
+		
+		
+		EdiExportTransport mockEdiTransport = mock(EdiExportTransport.class);
+		FacilityAccumulatingExporter subject = new FacilityAccumulatingExporter(mock(EdiExportAccumulator.class), mock(WiBeanStringifier.class), mockEdiTransport);
+
+		
+		
+		when(mockEdiTransport.transportOrderOnCartAdded(any(OrderHeader.class), any(Che.class), any(String.class)))
+		.thenThrow(new RuntimeException("test io"))
+		.thenReturn(null);
+
+		doThrow(new RuntimeException("test io")).doNothing()
+			.when(mockEdiTransport)
+			.transportOrderOnCartRemoved(any(OrderHeader.class), any(Che.class), any(String.class));
+
+		doThrow(new RuntimeException("test io")).doNothing()
+			.when(mockEdiTransport)
+			.transportWiFinished(any(OrderHeader.class), any(Che.class), any(String.class));
+
+		when(mockEdiTransport.transportOrderOnCartFinished(any(OrderHeader.class), any(Che.class), any(String.class)))
+		.thenThrow(new RuntimeException("test io"))
+		.thenReturn(null);
+
+		subject.exportOrderOnCartAdded(order1, che1);
+		subject.exportOrderOnCartAdded(order2, che1);
+		subject.exportOrderOnCartAdded(order3, che2);
+		
+		//subject.exportOrderOnCartRemoved(order1, che1);
+		//subject.exportOrderOnCartRemoved(order2, che1);
+		//subject.exportOrderOnCartRemoved(order3, che2);
+
+		subject.exportWiFinished(order1, che1, generateValidWorkInstruction(order1, che1, nextUniquePastTimestamp()).get(0));
+		subject.exportWiFinished(order2, che1, generateValidWorkInstruction(order2, che1, nextUniquePastTimestamp()).get(0));
+		subject.exportWiFinished(order3, che2, generateValidWorkInstruction(order3, che2, nextUniquePastTimestamp()).get(0));
+
+		subject.exportOrderOnCartFinished(order1, che1);
+		subject.exportOrderOnCartFinished(order2, che1);
+		subject.exportOrderOnCartFinished(order3, che2);
+
+		//Wait up to a second per invocation to verify
+		// Normal behavior is to keep retrying on IOException but skip on runtime exception
+		//   in this case it should skip to the second one and send it
+		verify(mockEdiTransport, timeout((int) (expectedRetryDelay * 1000L)).times(3)).transportOrderOnCartAdded(any(OrderHeader.class), any(Che.class), any(String.class));
+		//not called for PFSweb
+		//verify(mockEdiTransport, timeout((int) (expectedRetryDelay * 1000L)).times(3)).transportOrderOnCartRemoved(any(OrderHeader.class), any(Che.class), any(String.class));
+		verify(mockEdiTransport, timeout((int) (expectedRetryDelay * 1000L)).times(3)).transportOrderOnCartFinished(any(OrderHeader.class), any(Che.class), any(String.class));
+		//not called for PFSweb
+		//verify(mockEdiTransport, timeout((int) (expectedRetryDelay * 1000L)).times(3)).transportWiFinished(any(OrderHeader.class), any(Che.class), any(String.class));
+
+		this.getTenantPersistenceService().commitTransaction();
+	}
+
+	@SuppressWarnings("unchecked")
+	@Test
+	public void workInstructionExportIsRetried() throws IOException, InterruptedException {
+		beginTransaction();
+
+		long expectedRetryDelay = 1L;
+		Facility facility = getFacility();
+		Che che1 = getChe1();
+		
+		OrderHeader order1 = wiGenerator.generateValidOrderHeader(facility);
+
+		String singleTestMessage = "ONLY MESSAGE RETRIED SEVERAL TIMES";
+		WiBeanStringifier mockStringifier = mock(WiBeanStringifier.class);
+		when(mockStringifier.stringifyOrderOnCartAdded(order1, che1)).thenReturn(singleTestMessage);
+		
+		EdiExportTransport mockEdiTransport = mock(EdiExportTransport.class);
+		when(mockEdiTransport.transportOrderOnCartAdded(any(OrderHeader.class), any(Che.class), any(String.class)))
+			.thenThrow(new IOException("test io"))
+			.thenThrow(new IOException("test io 2"))
+			.thenReturn(null);
+
+
+		FacilityAccumulatingExporter subject = new FacilityAccumulatingExporter(mock(EdiExportAccumulator.class), mockStringifier, mockEdiTransport);
+		subject.exportOrderOnCartAdded(order1, che1);
+		
+		
+		//Wait up to a second per invocation to verify
+		verify(mockEdiTransport, timeout((int) (expectedRetryDelay * 5000L)).times(3)).transportOrderOnCartAdded(eq(order1), eq(che1), eq(singleTestMessage));
+
+		when(mockStringifier.stringifyOrderOnCartFinished(eq(order1), eq(che1), any(List.class))).thenReturn(singleTestMessage);
+
+		when(mockEdiTransport.transportOrderOnCartFinished(any(OrderHeader.class), any(Che.class), any(String.class)))
+		.thenThrow(new IOException("test io"))
+		.thenThrow(new IOException("test io 2"))
+		.thenReturn(null);
+
+		subject.exportOrderOnCartFinished(order1, che1);
+		verify(mockEdiTransport, timeout((int) (expectedRetryDelay * 5000L)).times(3)).transportOrderOnCartFinished(eq(order1), eq(che1), eq(singleTestMessage));
+		
 		commitTransaction();
 	}
 
+	@Ignore
+	@Test
+	public void workInstructionExportingIsNotBlocked() throws IOException, InterruptedException {
+
+		this.getTenantPersistenceService().beginTransaction();
+
+		final int total = 30;
+		final Facility facility = getFacility();
+		final Che che1 = getChe1();
+
+
+		Lock callBlocker = new ReentrantLock();
+		EdiExportTransport mockEdiTransport = mock(EdiExportTransport.class);
+		when(mockEdiTransport.transportOrderOnCartAdded(any(OrderHeader.class), any(Che.class), any(String.class)))
+			.thenAnswer(new BlockedCall(callBlocker, new ExportReceipt("../../*.DAT", 500)));
+
+		String singleTestMessage = "ONLY MESSAGE NOT BLOCKED";
+		WiBeanStringifier mockStringifier = mock(WiBeanStringifier.class);
+		when(mockStringifier.stringifyOrderOnCartAdded(any(OrderHeader.class), eq(che1))).thenReturn(singleTestMessage);
+
+		final FacilityAccumulatingExporter subject = new FacilityAccumulatingExporter(mock(EdiExportAccumulator.class), mockStringifier, mockEdiTransport);
+
+		//block all transports
+		callBlocker.lock();
+
+
+		//Simulate multiple thread trying to send messages from several carts while the export transport is blocked
+		ExecutorService executor = Executors.newFixedThreadPool(3);
+		for (int i = 0; i < total; i++) {
+			final OrderHeader order = wiGenerator.generateValidOrderHeader(facility);
+			executor.execute(new Runnable() {
+
+				@Override
+				public void run() {
+					subject.exportOrderOnCartAdded(order, che1);
+				}
+				
+				
+			});
+		}
+		executor.shutdown();
+		Assert.assertTrue("Threads requesting export should not have been blocked", executor.awaitTermination(5L, TimeUnit.SECONDS));
+
+
+		//verify(subject, Mockito.timeout(2000).times(total)).exportWorkInstruction(any(WorkInstruction.class));
+
+		
+		//verify(mockEdiTransport, Mockito.times(1)).transportOrderOnCartAdded(any(OrderHeader.class), any(Che.class), any(String.class));
+		callBlocker.unlock();
+		verify(mockEdiTransport, Mockito.timeout(2000).times(total)).transportOrderOnCartAdded(any(OrderHeader.class), any(Che.class), any(String.class));
+
+		this.getTenantPersistenceService().commitTransaction();
+	}
+
+	
+	
 	private List<WorkInstruction> generateValidWorkInstruction(OrderHeader orderHeader, Che che, Timestamp timestamp) {
 		List<WorkInstruction> wis = new ArrayList<>();
 		for (OrderDetail orderDetail : orderHeader.getOrderDetails()) {
@@ -205,6 +391,26 @@ public class FacilityAccumulatingExporterTest extends ServerTest {
 			Assert.assertTrue("Message did not contain item id: " + workInstruction.getItemId(), message.contains(workInstruction.getItemId()));
 			Assert.assertTrue("Message did not contain item id: " + workInstruction.getActualQuantity(), message.contains(String.valueOf(workInstruction.getActualQuantity())));
 			
+		}
+	}
+	
+	
+	private class BlockedCall extends Returns {
+		private static final long	serialVersionUID	= 1L;
+
+		Lock						callBlocker;
+
+		public BlockedCall(Lock lock, ExportReceipt result) {
+			super(result);
+			this.callBlocker = lock;
+		}
+
+		@Override
+		public Object answer(InvocationOnMock invocation) throws Throwable {
+			this.callBlocker.lock();
+			this.callBlocker.unlock();
+			System.out.println("Completed");
+			return super.answer(invocation);
 		}
 	}
 	
@@ -256,35 +462,6 @@ public class FacilityAccumulatingExporterTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
-	@Test
-	public void workInstructionContinuesOnRuntimeException() throws IOException, InterruptedException {
-		this.getTenantPersistenceService().beginTransaction();
-
-		long expectedRetryDelay = 1L;
-		Facility facility = facilityGenerator.generateValid();
-		WorkInstruction wi1 = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
-		WorkInstruction wi2 = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
-		IEdiExportService mockEdiExportService = mock(IEdiExportService.class);
-		doThrow(new RuntimeException("test io")).doNothing()
-			.when(mockEdiExportService)
-			.sendWorkInstructionsToHost(any(String.class));
-
-		createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
-		workService.exportWorkInstruction(wi1);
-		workService.exportWorkInstruction(wi2);
-
-		//Wait up to a second per invocation to verify
-		// Normal behavior is to keep retrying the first on IOException
-		//   in this case it should skip to the second one and send it
-		Assert.assertNotEquals(wi1, wi2);
-
-		String export1 = format(wi1);
-		String export2 = format(wi2);
-		verify(mockEdiExportService, timeout((int) (expectedRetryDelay * 1000L)).times(1)).sendWorkInstructionsToHost(eq(export1));
-		verify(mockEdiExportService, timeout((int) (expectedRetryDelay * 1000L)).times(1)).sendWorkInstructionsToHost(eq(export2));
-
-		this.getTenantPersistenceService().commitTransaction();
-	}
 
 
 	 
@@ -344,30 +521,6 @@ public class FacilityAccumulatingExporterTest extends ServerTest {
 			}
 		}
 		callBlocker.unlock();
-		this.getTenantPersistenceService().commitTransaction();
-	}
-		@Test
-	public void workInstructionExportIsRetried() throws IOException, InterruptedException {
-		this.getTenantPersistenceService().beginTransaction();
-
-		long expectedRetryDelay = 1L;
-		Facility facility = facilityGenerator.generateValid();
-		WorkInstruction wi = generateValidWorkInstruction(facility, nextUniquePastTimestamp());
-
-		String messageBody = format(wi);
-
-		IEdiExportService mockEdiExportService = mock(IEdiExportService.class);
-		doThrow(new IOException("test io")).doThrow(new IOException("second one"))
-			.doNothing()
-			.when(mockEdiExportService)
-			.sendWorkInstructionsToHost(messageBody);
-
-		createWorkService(Integer.MAX_VALUE, mockEdiExportService, expectedRetryDelay);
-		workService.exportWorkInstruction(wi);
-
-		//Wait up to a second per invocation to verify
-		verify(mockEdiExportService, Mockito.timeout((int) (expectedRetryDelay * 5000L)).times(3)).sendWorkInstructionsToHost(eq(messageBody));
-
 		this.getTenantPersistenceService().commitTransaction();
 	}
 

@@ -72,7 +72,7 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 
 		service.storeCredentials("540e1486364af100050000b4", "RzgIyO5FNeNAgZljs9x4um5UVqw");
 		String message = "TESTMESSAGE" + System.currentTimeMillis();
-		service.transportWiComplete(Mockito.mock(OrderHeader.class), Mockito.mock(Che.class), message);
+		service.transportWiFinished(Mockito.mock(OrderHeader.class), Mockito.mock(Che.class), message);
 		String[] messages = new String[0];
 		boolean found = false;
 		do {
@@ -103,7 +103,7 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 
 		service.storeCredentials("540e1486364af100050000b4", "BAD");
 		try {
-			service.transportWiComplete(Mockito.mock(OrderHeader.class), Mockito.mock(Che.class), "TESTMESSAGE");
+			service.transportWiFinished(Mockito.mock(OrderHeader.class), Mockito.mock(Che.class), "TESTMESSAGE");
 			Assert.fail("Should have thrown IOException");
 		} catch(IOException e) {
 			e.printStackTrace();
@@ -125,7 +125,7 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 
 		service.storeCredentials("BAD", "RzgIyO5FNeNAgZljs9x4um5UVqw");
 		try {
-			service.transportWiComplete(Mockito.mock(OrderHeader.class), Mockito.mock(Che.class), "TESTMESSAGE");
+			service.transportWiFinished(Mockito.mock(OrderHeader.class), Mockito.mock(Che.class), "TESTMESSAGE");
 			Assert.fail("Should have thrown IOException");
 		} catch(IOException e) {
 			e.printStackTrace();
