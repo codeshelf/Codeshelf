@@ -39,12 +39,12 @@ public class RadioControllerPacketSchedulerService {
 	public static final float													MAP_LOAD_FACTOR					= (float) 0.75;												// Default Java load factor
 	public static final int														MAP_CONCURRENCY_LEVEL			= 4;
 
-	public static final long													NETWORK_PACKET_SPACING_MILLIS	= 2;
+	public static final long													NETWORK_PACKET_SPACING_MILLIS	= 3;
 	public static final long													DEVICE_PACKET_SPACING_MILLIS	= 30;
-	public static final long													DEVICE_ASSOC_SPACING_MILLIS		= 5;
+	public static final long													DEVICE_ASSOC_SPACING_MILLIS		= 0;
 
 	private static final int													ACK_SEND_RETRY_COUNT			= 20;															// matching v16. Used to be 20.
-	private static final long													MAX_PACKET_AGE_MILLIS			= 4000;
+	private static final long													MAX_PACKET_AGE_MILLIS			= 8000;
 
 	private final RadioControllerPacketIOService								packetIOService;
 

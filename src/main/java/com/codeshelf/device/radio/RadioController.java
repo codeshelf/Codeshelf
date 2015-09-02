@@ -598,7 +598,7 @@ public class RadioController implements IRadioController {
 					foundDevice.setHardwareVersion(inCommand.getHardwareVersion());
 					foundDevice.setFirmwareVersion(inCommand.getFirmwareVersion());
 
-					LOGGER.info("Device associated={}; Req={}", foundDevice.getGuid().getHexStringNoPrefix(), inCommand);
+					//LOGGER.info("Device associated={}; Req={}", foundDevice.getGuid().getHexStringNoPrefix(), inCommand);
 					if ((inCommand.getSystemStatus() & 0x02) > 0) {
 						LOGGER.debug(" Status: LVD");
 					}
@@ -715,6 +715,7 @@ public class RadioController implements IRadioController {
 
 				if (deviceBecameActive) {
 					// Create and send an ack command to the remote that we think is in the running state.
+					LOGGER.info("Device associated={}; Req={}", foundDevice.getGuid().getHexStringNoPrefix(), inCommand);
 					ackCmd = new CommandAssocAck(uid, new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, status));
 					sendCommandFrontQueue(ackCmd, inSrcAddr, false);
 					networkDeviceBecameActive(foundDevice);
