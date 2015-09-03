@@ -428,4 +428,8 @@ public class Che extends WirelessDeviceABC {
 		return returnStr;
 	}
 
+	public String getWorkerUi() {
+		Worker worker = getWorker();
+		return worker == null ? "" : worker.getWorkerNameUI();
+	}
 }
