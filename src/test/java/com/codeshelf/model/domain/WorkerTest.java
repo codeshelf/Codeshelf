@@ -31,7 +31,7 @@ public class WorkerTest extends HibernateTest {
 	@Before
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void init(){
-		WorkService workService = generateWorkService();
+		WorkService workService = mock(WorkService.class);
 		OrderService orderService = new OrderService();
 		NotificationService notificaitonService = new NotificationService();
 		

@@ -60,16 +60,6 @@ public class WorkServiceTest extends ServerTest {
 		facilityGenerator = new FacilityGenerator();
 	}
 
-	@Override
-	protected WorkService generateWorkService() {
-		return this.workService; // in this test, we set up the workService manually at the beginning of the test
-	}
-
-	@Override
-	public boolean ephemeralServicesShouldStartAutomatically() {
-		return false; // in this test, we start services manually after defining the work service to start
-	}
-
 	@Test
 	public void workResultActualOnly() {
 		//create order detail
@@ -136,7 +126,6 @@ public class WorkServiceTest extends ServerTest {
 	@Test
 	public void shortedWorkInstructionShortsOrderDetail() {
 		this.workService = new WorkService(mock(LightService.class), mock(EdiExporterProvider.class));
-		this.initializeEphemeralServiceManager();
 
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = facilityGenerator.generateValid();
@@ -221,7 +210,6 @@ public class WorkServiceTest extends ServerTest {
 	@Test
 	public void summariesAreSorted() {
 		this.workService = new WorkService(mock(LightService.class), mock(EdiExporterProvider.class));
-		this.initializeEphemeralServiceManager();
 
 		this.getTenantPersistenceService().beginTransaction();
 
@@ -342,7 +330,6 @@ public class WorkServiceTest extends ServerTest {
 		when(provider.getEdiExporter(any(Facility.class))).thenReturn(ediExporter);
 
 		this.workService = new WorkService(mock(LightService.class), provider);
-		this.initializeEphemeralServiceManager();
 	}
 
 	private List<WorkInstruction> generateValidWorkInstructions(int total) {
