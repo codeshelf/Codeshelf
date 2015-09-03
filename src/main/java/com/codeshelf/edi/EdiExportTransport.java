@@ -3,7 +3,7 @@ package com.codeshelf.edi;
 import java.io.IOException;
 
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.model.domain.ExportReceipt;
+import com.codeshelf.model.domain.FileExportReceipt;
 import com.codeshelf.model.domain.OrderHeader;
 
 /**
@@ -19,10 +19,10 @@ public interface EdiExportTransport {
 	
 	void transportWiFinished(OrderHeader wiOrder, Che wiChe, String message) throws IOException;
 
-	ExportReceipt transportOrderOnCartFinished(OrderHeader wiOrder, Che wiChe, String message) throws IOException;
+	FileExportReceipt transportOrderOnCartFinished(OrderHeader wiOrder, Che wiChe, String message) throws IOException;
 
 	void transportOrderOnCartRemoved(OrderHeader inOrder, Che inChe, String message) throws IOException;
 
-	ExportReceipt transportOrderOnCartAdded(OrderHeader inOrder, Che inChe, String message) throws IOException;
+	FileExportReceipt transportOrderOnCartAdded(OrderHeader inOrder, Che inChe, String message) throws IOException;
 
 }

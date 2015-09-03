@@ -18,6 +18,7 @@ import org.junit.Test;
 import com.codeshelf.generators.WorkInstructionGenerator;
 import com.codeshelf.model.domain.AbstractSftpEdiService;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.FileExportReceipt;
 import com.codeshelf.model.domain.ExportReceipt;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
@@ -53,7 +54,7 @@ public class SftpWIsEdiServiceTest extends HibernateTest {
 		beginTransaction();
 
 		String expectedContents = "ExportCompleteMessage";
-		ExportReceipt receipt = sftpWIs.transportOrderOnCartFinished(orderHeader, che, "ExportCompleteMessage");
+		FileExportReceipt receipt = sftpWIs.transportOrderOnCartFinished(orderHeader, che, "ExportCompleteMessage");
 		commitTransaction();
 
 		try {

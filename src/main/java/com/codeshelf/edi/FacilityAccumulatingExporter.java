@@ -10,59 +10,208 @@ package com.codeshelf.edi;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ExportReceipt;
+import com.codeshelf.model.domain.FileExportReceipt;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.service.AbstractCodeshelfExecutionThreadService;
+import com.github.rholder.retry.Attempt;
 import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
-import com.github.rholder.retry.StopStrategies;
+import com.github.rholder.retry.StopStrategy;
 import com.github.rholder.retry.WaitStrategies;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.util.concurrent.ForwardingBlockingQueue;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
 
 /**
  * Built first for PFSWeb, this accumulates complete work instruction beans for sending later as small files organized by order.
  * Currently only a memory list, lost upon server restart.
  * Later, change to a persistent list of the serialized bean to survive server restart.
  */
-public class FacilityAccumulatingExporter  implements FacilityEdiExporter {
+public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThreadService implements FacilityEdiExporter {
 
+	private static class FailExportReceipt implements ExportReceipt {
+
+		public FailExportReceipt(Throwable e) {
+			// TODO Auto-generated constructor stub
+		}
+
+	}
+
+	private class UnhandledExportReceipt implements ExportReceipt {
+
+	}
+
+	private class OrderOnCartFinishedExportMessage extends ExportMessage {
+
+		public OrderOnCartFinishedExportMessage(OrderHeader inOrder, Che inChe, String exportStr) {
+			super(inOrder, inChe, exportStr);
+		}
+
+	}
+
+	private class OrderOnCartAddedExportMessage extends ExportMessage {
+
+		public OrderOnCartAddedExportMessage(OrderHeader inOrder, Che inChe, String exportStr) {
+			super(inOrder, inChe, exportStr);
+		}
+		
+	}
+
+	//TODO implement evicting
+	private static class EvictingBlockingQueue<T> extends ForwardingBlockingQueue<T> {
+
+		private final BlockingQueue<T> delegate;
+		
+		public EvictingBlockingQueue(int capacity) {
+			this.delegate = new ArrayBlockingQueue<T>(capacity);
+		}
+		
+		@Override
+		protected BlockingQueue<T> delegate() {
+			return delegate;
+		}
+	}
+	
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(FacilityAccumulatingExporter.class);
+
+	private static final ExportMessage	POISON	= new ExportMessage(null, null,null);
 
 	@Getter
 	private EdiExportAccumulator accumulator; 
 
+	@Getter
+	@Setter
 	private WiBeanStringifier	stringifier;
 
+	@Getter
+	@Setter
 	private EdiExportTransport	exportService;
 
 	private Retryer<ExportReceipt> retryer;
 
-	private ListeningExecutorService executor; 
+	//private BlockingQueue<WorkEvent>	workQueue; 
+	private EvictingBlockingQueue<ExportMessage>	messageQueue; 
 	
-	public FacilityAccumulatingExporter(EdiExportAccumulator accumulator, ListeningExecutorService executorService, WiBeanStringifier stringifier, EdiExportTransport exportService) {
+//	private final long RELATIVE_EPOCH = new DateTime(2015, 9, 01, 0, 0).getMillis();
+
+	private Cache<ExportMessage, ExportReceipt>	receiptCache;
+	
+	public FacilityAccumulatingExporter(EdiExportAccumulator accumulator, WiBeanStringifier stringifier, EdiExportTransport exportService) {
+		super();
 		this.accumulator = accumulator;
 		this.stringifier = stringifier; 
 		this.exportService = exportService;
 		this.retryer = RetryerBuilder.<ExportReceipt>newBuilder()
 		        .retryIfExceptionOfType(IOException.class)
 		        .withWaitStrategy(WaitStrategies.fibonacciWait(100, 2, TimeUnit.MINUTES))
-		        .withStopStrategy(StopStrategies.stopAfterAttempt(15))
+		        .withStopStrategy(new StopStrategy() {
+
+					@SuppressWarnings("rawtypes")
+					@Override
+					public boolean shouldStop(Attempt failedAttempt) {
+						return (!isRunning());
+					}})
 		        .build();
-		this.executor = executorService;
+		this.messageQueue = new EvictingBlockingQueue<ExportMessage>(100);
+		this.receiptCache = CacheBuilder.newBuilder()
+				.maximumSize(50)
+				/*
+				.weigher(new Weigher<ExportMessage, ExportReceipt>() {
+
+					@Override
+					public int weigh(ExportMessage key, ExportReceipt value) {
+						// the newer it is the lighter it is (larger "epoch" will be more negative)
+						return -1 * Ints.saturatedCast(RELATIVE_EPOCH - key.getDateTime().getMillis());
+					}
+					
+				})*/
+				.build();
 	}
 	
+	@Override
+	protected void startUp() throws Exception {
+		
+	}
+
+	@Override
+	protected void triggerShutdown() {
+		this.messageQueue.drainTo(new ArrayList<ExportMessage>());
+		this.messageQueue.offer(POISON);
+	}
+
+
+	@Override
+	protected void run() throws InterruptedException {
+		while(isRunning() && !Thread.currentThread().isInterrupted()) {
+			ExportMessage message = null;
+			try {
+				message = this.messageQueue.take();
+				if (POISON.equals(message)) {
+					return;
+				}
+				ExportReceipt receipt = processMessage(message);
+				storeReceipt(message, receipt);
+				message.setReceipt(receipt);
+			} catch(RuntimeException e) {
+				LOGGER.warn("Unable to process message {}", message, e);
+;			}
+		}
+	}
+
+	private ExportReceipt processMessage(final ExportMessage message) {
+		ExportReceipt receipt;
+		try {
+			receipt = retryer.call(new Callable<ExportReceipt>() {
+				@Override
+				public ExportReceipt call() throws IOException {
+					if (message instanceof OrderOnCartAddedExportMessage) {
+						FileExportReceipt receipt =  getExportService().transportOrderOnCartAdded(message.getOrder(), message.getChe(), message.getContents());
+						LOGGER.info("Sent orderOnCartAdded {}", message.getContents());
+						return receipt;
+					} else if (message instanceof OrderOnCartFinishedExportMessage){
+						FileExportReceipt receipt=  exportService.transportOrderOnCartFinished(message.getOrder(), message.getChe(), message.getContents());
+						LOGGER.info("Sent orderOnCartFinished {}", message.getContents());
+						return receipt;
+					} else {
+						return new UnhandledExportReceipt();
+					}
+				}
+			});
+		} catch (ExecutionException e) {
+			LOGGER.error("Aborting sender retry for message {}", message, e);
+			receipt = new FailExportReceipt(e.getCause());
+		}
+		catch (RetryException e) {
+			LOGGER.error("Aborting sender retry for message {}", message, e);
+			receipt = new FailExportReceipt(e);
+		}
+		
+		return receipt;
+
+	}
+
+	private void storeReceipt(ExportMessage message, ExportReceipt receipt) {
+		receiptCache.put(message, receipt);
+		
+	}
+
 	public void exportWiFinished(OrderHeader inOrder, Che inChe, WorkInstruction inWi) {
 		accumulator.addWorkInstruction(inWi);
 			//TODO disabling blow by blow
@@ -72,22 +221,13 @@ public class FacilityAccumulatingExporter  implements FacilityEdiExporter {
 	
 	public ListenableFuture<ExportReceipt> exportOrderOnCartAdded(final OrderHeader inOrder, final Che inChe) {
 		final String exportStr = stringifier.stringifyOrderOnCartAdded(inOrder, inChe);
-		return submit(new Callable<ExportReceipt>() {
-			@Override
-			public ExportReceipt call() throws IOException {
-				try {
-					exportService.transportOrderOnCartAdded(inOrder, inChe, exportStr);
-					LOGGER.info("Sent orderOnCartAdded {}", exportStr);
-					return null;
-				} catch(RuntimeException e) {
-					LOGGER.error("Unable to send orderOnCartAdded message {}", exportStr, e);
-					return null;
-				}
-			}
-		});
+		ExportMessage exportMessage = new OrderOnCartAddedExportMessage(inOrder, inChe, exportStr);
+		messageQueue.offer(exportMessage);
+		return exportMessage;
 	}
 
 	public void exportOrderOnCartRemoved(OrderHeader inOrder, Che inChe) {
+//		messageQueue.offer(new ExportMessage(inOrder, inChe, exportStr));
 		// TODO Auto-generated method stub
 		
 	}
@@ -100,31 +240,9 @@ public class FacilityAccumulatingExporter  implements FacilityEdiExporter {
 		ArrayList<WorkInstructionCsvBean> orderCheList = accumulator.getAndRemoveWiBeansFor(inOrder.getOrderId(), inChe.getDomainId());
 		// This list has "complete" work instruction beans. The particular customer's EDI may need strange handling.
 		final String exportStr = stringifier.stringifyOrderOnCartFinished(inOrder, inChe, orderCheList);
-		return submit(new Callable<ExportReceipt>() {
-			@Override
-			public ExportReceipt call() throws IOException {
-				try {
-					ExportReceipt receipt=  exportService.transportOrderOnCartFinished(inOrder, inChe, exportStr);
-					LOGGER.info("Sent orderOnCartFinished {}", exportStr);
-					return receipt;
-				} catch(RuntimeException e) {
-					LOGGER.error("Unable to send orderOnCartFinished message {}", exportStr, e);
-					return null;
-				}
-			}
-		});
+		ExportMessage exportMessage = new OrderOnCartFinishedExportMessage(inOrder, inChe, exportStr); 
+		messageQueue.offer(exportMessage);
+		return exportMessage;
 	}
-
-	private ListenableFuture<ExportReceipt> submit(final Callable<ExportReceipt> transportCallable) {
-		return executor.submit(new Callable<ExportReceipt>() {
-			@Override
-			public ExportReceipt call() throws ExecutionException, RetryException  {
-				return retryer.call(transportCallable);
-			}
-		});
-		
-	}
-
-
 
 }
