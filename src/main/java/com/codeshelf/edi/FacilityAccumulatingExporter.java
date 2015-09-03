@@ -33,6 +33,7 @@ import com.codeshelf.service.AbstractCodeshelfExecutionThreadService;
 import com.codeshelf.util.EvictingBlockingQueue;
 import com.github.rholder.retry.Attempt;
 import com.github.rholder.retry.RetryException;
+import com.github.rholder.retry.RetryListener;
 import com.github.rholder.retry.Retryer;
 import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategy;
@@ -87,6 +88,18 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 					public boolean shouldStop(Attempt failedAttempt) {
 						return (!isRunning());
 					}})
+				.withRetryListener(new RetryListener() {
+
+					@SuppressWarnings("hiding")
+					@Override
+					public <ExportReceipt> void onRetry(Attempt<ExportReceipt> attempt) {
+						if (attempt.hasException()) {
+							String attemptToString = String.format("Attempt num: %d, time since first attempt (ms): %d", attempt.getAttemptNumber(), attempt.getDelaySinceFirstAttempt());
+							LOGGER.warn("Retrying edi export {} {}", FacilityAccumulatingExporter.this, attemptToString, attempt.getExceptionCause());
+						}//else was successful
+					}
+					
+				})
 		        .build();
 		this.messageQueue = new EvictingBlockingQueue<ExportMessage>(100);
 		this.receiptCache = CacheBuilder.newBuilder()
