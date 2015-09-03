@@ -14,7 +14,9 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.api.resources.subresources.EDIGatewaysResource;
 import com.codeshelf.device.ScriptSiteRunner;
+import com.codeshelf.edi.EdiExporterProvider;
 import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
@@ -49,6 +51,7 @@ import com.codeshelf.validation.BatchResult;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.google.common.collect.Lists;
 import com.google.inject.Provider;
+import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
 public class ScriptServerRunner {
@@ -71,6 +74,7 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_ASSIGN_TAPE_TO_TIER = "assignTapeToTier (assignments <tape id> <tier name>)";
 	private final static String TEMPLATE_DELETE_EXTENSION = "deleteExtensionPoint <type>";
 	private final static String TEMPLATE_ADD_EXTENSION = "addExtensionPoint <filename> <type> <active/inactive>";
+	private final static String TEMPLATE_SFTP = "sftp <'orders'/'wi'> <host> <port> <username> <password> <directories: in and out for orders, out for wi>";
 	private final static String TEMPLATE_WAIT_SECONDS = "waitSeconds <seconds>";
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScriptSiteRunner.class);
@@ -181,6 +185,8 @@ public class ScriptServerRunner {
 			processDeleteExtensionPointCommand(parts);
 		} else if (command.equalsIgnoreCase("addExtensionPoint")) {
 			processAddExtensionPointCommand(parts);
+		} else if (command.equalsIgnoreCase("sftp")) {
+			processSftpCommand(parts);
 		} else if (command.equalsIgnoreCase("waitSeconds")) {
 			processWaitSecondsCommand(parts);
 		} else if (command.startsWith("//")) {
@@ -630,6 +636,53 @@ public class ScriptServerRunner {
 		point.setScript(script);
 		point.setActive(active);
 		ExtensionPoint.staticGetDao().store(point);
+	}
+
+	/**
+	 * Expects to see command
+	 * sftp <'orders'/'wi'> <host> <port> <username> <password> <directories: in and out for orders, out for wi>
+	 * @throws Exception 
+	 */
+	private void processSftpCommand(String parts[]) throws Exception {
+		if (parts.length != 7 && parts.length != 8){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_SFTP);
+		}
+		String type = parts[1], host = parts[2], port = parts[3], username = parts[4], password = parts[5];
+		if ("**********".equals(password)){
+			throw new Exception("You used the password placeholder '**********' from the scripting documentation. If your server password actually is '**********', you are now stuck because I wanted to put this error message here");
+		}
+		boolean orders = false;
+		if ("orders".equalsIgnoreCase(type)){
+			orders = true;
+		} else if ("wi".equalsIgnoreCase(type)){
+			orders = false;
+		} else {
+			throw new Exception("Invalid type " + type + ". Expected 'orders' or 'wi'");
+		}
+		String serviceDomainId = orders?"SFTPORDERS":"SFTPWIS";
+		EDIGatewaysResource res = new EDIGatewaysResource(new EdiExporterProvider());
+		res.setFacility(facility);
+		//MultivaluedMapImpl <String, String> params = new MultiValueMap();
+		//HashMap<String, String> params = new HashMap<>();
+		MultivaluedMapImpl params = new MultivaluedMapImpl();
+		params.add("domainId", serviceDomainId);
+		params.add("host", host);
+		params.add("port", port);
+		params.add("username", username);
+		params.add("password", password);
+		if (orders) {
+			if (parts.length != 8) {
+				throwIncorrectNumberOfArgumentsException("sftp <'orders'/'wi'> <host> <port> <username> <password> <in directory> <out directory>");
+			}
+			params.add("importPath", parts[6]);
+			params.add("archivePath", parts[7]);
+		} else {
+			if (parts.length != 7) {
+				throwIncorrectNumberOfArgumentsException("sftp <'orders'/'wi'> <host> <port> <username> <password> <out directory>");
+			}
+			params.add("exportPath", parts[6]);
+		}
+		res.updateEdiService(serviceDomainId, params);
 	}
 
 	/**

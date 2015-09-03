@@ -230,7 +230,6 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager impleme
         	if(subject == null) {
         		throw new AuthorizationException("Roles required, but no subject available");
         	}
-            @SuppressWarnings("unchecked")
 			List<String> roleList = Arrays.asList(roles.value());
 			subject.checkRoles(roleList);
         }

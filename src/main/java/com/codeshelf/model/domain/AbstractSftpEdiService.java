@@ -204,7 +204,9 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 		SftpConfiguration config = getConfiguration();
 		String importPath = config.getImportPath();
 		try {
-			fileList = this.getChannel().ls(importPath);
+			if (getChannel() != null) {
+				fileList = this.getChannel().ls(importPath);
+			}
 		} catch (SftpException e) {
 			throw new EdiFileWriteException("Unable to list files from directory: " + importPath, e);
 		} 

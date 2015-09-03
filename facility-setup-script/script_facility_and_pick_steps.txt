@@ -1,4 +1,4 @@
-// This script sets up facility, imports orders, and performs picks
+// This script sets up facility, and demonstrates various CHE workflows
 
 var :site		5000
 var :channel	8
@@ -6,6 +6,9 @@ var :che1 		0x0000009B
 var :che2 		0x000001D9
 var :chePall	0x000000A3
 var :contr1 	0x00000064
+var :sftphost	sftp.codeshelf.com
+var :sftpuser	test
+var :sftppass	**********
 
 /* This is a multi
 line comment
@@ -19,6 +22,8 @@ editFacility F1 :site :channel
 createDummyOutline 1
 setProperty scanpick UPC
 setProperty invtmenu true
+sftp Orders	:sftphost 22 :sftpuser :sftppass in/ilya out/ilya/archive
+sftp Wi 	:sftphost 22 :sftpuser :sftppass out/ilya
 importAisles aisles
 importLocations locations
 setWall Aisle1 putwall

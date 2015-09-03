@@ -2192,38 +2192,44 @@ public class WorkService extends AbstractCodeshelfIdleService implements IApiSer
 		return true;
 	}
 
-	public String verifyBadgeAndGetWorkerName(Facility facility, String badge) {
+	public String verifyBadgeAndGetWorkerName(Che che, String badge) {
+		Facility facility = che.getFacility();
 		//Get global Authentication property value
 		String badgeAuthStr = PropertyService.getInstance().getPropertyFromConfig(facility, DomainObjectProperty.BADGEAUTH);
 		boolean badgeAuth = badgeAuthStr == null ? false : Boolean.parseBoolean(badgeAuthStr);
 		//Get active Worker with a matching badge id
 		Worker worker = Worker.findWorker(facility, badge);
-		if (badgeAuth) {
-			if (worker == null) {
-				//Authentication + unknown worker = failed
-				LOGGER.warn("Badge verification failed for unknown badge " + badge);
-				return null;
+		try {
+			if (badgeAuth) {
+				if (worker == null) {
+					//Authentication + unknown worker = failed
+					LOGGER.warn("Badge verification failed for unknown badge " + badge);
+					return null;
+				} else {
+					//Authentication + known worker = succeeded
+					return worker.getWorkerNameUI();
+				}
 			} else {
-				//Authentication + known worker = succeeded
-				return worker.getWorkerNameUI();
+				if (worker == null) {
+					//No authentication + unknown worker = succeeded + new worker
+					worker = new Worker();
+					worker.setFacility(facility);
+					worker.setActive(true);
+					worker.setLastName(badge);
+					worker.setBadgeId(badge);
+					worker.generateDomainId();
+					worker.setUpdated(new Timestamp(System.currentTimeMillis()));
+					Worker.staticGetDao().store(worker);
+					LOGGER.info("During badge verification created new Worker " + badge);
+					return worker.getWorkerNameUI();
+				} else {
+					//No authentication + known worker = succeeded
+					return worker.getWorkerNameUI();
+				}
 			}
-		} else {
-			if (worker == null) {
-				//No authentication + unknown worker = succeeded + new worker
-				worker = new Worker();
-				worker.setFacility(facility);
-				worker.setActive(true);
-				worker.setLastName(badge);
-				worker.setBadgeId(badge);
-				worker.generateDomainId();
-				worker.setUpdated(new Timestamp(System.currentTimeMillis()));
-				Worker.staticGetDao().store(worker);
-				LOGGER.info("During badge verification created new Worker " + badge);
-				return worker.getWorkerNameUI();
-			} else {
-				//No authentication + known worker = succeeded
-				return worker.getWorkerNameUI();
-			}
+		} finally {
+			che.setWorker(worker);
+			Che.staticGetDao().store(che);
 		}
 	}
 

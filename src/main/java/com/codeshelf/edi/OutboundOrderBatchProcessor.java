@@ -112,6 +112,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 		// Tenant name should do it for us. Unfortunately, Accu is on default tenant. No help.
 		TenantPersistenceService theService = TenantPersistenceService.getInstance();
+		@SuppressWarnings("unused")
 		String thisTenantName = theService.getCurrentTenantIdentifier();
 		// how can we tell? Most accu orders have WORLD or LUNERA customerID
 

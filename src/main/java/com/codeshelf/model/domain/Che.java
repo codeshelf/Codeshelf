@@ -15,6 +15,9 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
@@ -104,6 +107,13 @@ public class Che extends WirelessDeviceABC {
 	@OneToMany(mappedBy = "assignedChe")
 	@Getter
 	private List<WorkInstruction>	cheWorkInstructions	= new ArrayList<WorkInstruction>();
+	
+	@ManyToOne(optional = true, fetch = FetchType.LAZY)
+	@JoinColumn(name = "worker_persistentid")
+	@Getter
+	@Setter
+	private Worker					worker;
+
 
 	public Che(String domainId) {
 		this();

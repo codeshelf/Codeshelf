@@ -213,7 +213,6 @@ public class BayDistanceWorkSequencerTest extends ServerTest {
 
 		private Ordering<Location> ordering;
 		
-		@SuppressWarnings({ "unchecked" })
 		public StubLocationComparator(Location... locations) {
 			this.ordering = Ordering.explicit(Arrays.<Location>asList(locations));
 		}

@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.Worker;
 import com.codeshelf.service.ExtensionPointService;
 import com.codeshelf.service.ExtensionPointType;
 import com.google.common.collect.ImmutableList;
@@ -121,13 +122,9 @@ public class WiBeanStringifier {
 		if (!hasExtensionPoint(ExtensionPointType.OrderOnCartContent)) {
 			return "";
 		}
-		String orderId = order.getOrderId();
-		String customerId = order.getCustomerId();
-		if (customerId == null)
-				customerId = "";
-		String cheId = che.getDomainId();
 		String content = "";
-		Object[] params = { orderId, cheId, customerId};
+		OrderAndCheBean bean = new OrderAndCheBean(order, che);
+		Object[] params = {bean};
 		try {
 			content = (String) getExtensionPointService().eval(ExtensionPointType.OrderOnCartContent, params);
 		} catch (Exception e) {
@@ -177,9 +174,8 @@ public class WiBeanStringifier {
 	 */
 	private String getWiHeader(OrderHeader inOrder, Che inChe) {
 		if (hasExtensionPoint(ExtensionPointType.WorkInstructionExportCreateHeader)) {
-			String theOrderId = inOrder.getOrderId();
-			String theCheId = inChe.getDomainId();
-			Object[] params = { theOrderId, theCheId };
+			OrderAndCheBean bean = new OrderAndCheBean(inOrder, inChe);
+			Object[] params = {bean};
 			String header = "";
 			try {
 				header = (String) getExtensionPointService().eval(ExtensionPointType.WorkInstructionExportCreateHeader, params);
@@ -198,9 +194,8 @@ public class WiBeanStringifier {
 	 */
 	private String getWiTrailer(OrderHeader inOrder, Che inChe) {
 		if (hasExtensionPoint(ExtensionPointType.WorkInstructionExportCreateTrailer)) {
-			String theOrderId = inOrder.getOrderId();
-			String theCheId = inChe.getDomainId();
-			Object[] params = { theOrderId, theCheId };
+			OrderAndCheBean bean = new OrderAndCheBean(inOrder, inChe);
+			Object[] params = {bean};
 			String header = "";
 			try {
 				header = (String) getExtensionPointService().eval(ExtensionPointType.WorkInstructionExportCreateTrailer, params);
@@ -235,5 +230,24 @@ public class WiBeanStringifier {
 		if (extensionService  == null)
 			LOGGER.error("null extension point service when checking for: " + type);
 		return (extensionService != null && extensionService.hasExtensionPoint(type));
+	}
+	
+	@SuppressWarnings("unused")
+	private class OrderAndCheBean{
+		private String orderId;
+		private String customerId;
+		private String cheId;
+		private String worker;
+		
+		public OrderAndCheBean(OrderHeader order, Che che) {
+			orderId = order.getOrderId();
+			customerId = order.getCustomerId();
+			if (customerId == null){
+				customerId = "";
+			}
+			cheId = che.getDomainId();
+			Worker workerObj = che.getWorker();
+			worker = workerObj == null ? "" : workerObj.getDomainId();
+		}
 	}
 }
