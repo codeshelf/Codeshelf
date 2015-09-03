@@ -3,6 +3,7 @@ package com.codeshelf.edi;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import javax.script.ScriptException;
 
@@ -12,17 +13,12 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 import com.codeshelf.service.ExtensionPointService;
+import com.google.inject.Singleton;
 
+@Singleton
 public class EdiExporterProvider extends AbstractCodeshelfIdleService {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(EdiExporterProvider.class);
 
-	//per facility 
-	//  export queue 
-	//  
-	
-	
-	
-	private Map<UUID, EdiExportAccumulator> facilityEdiAccumulators = new HashMap<>();
 	private Map<UUID, FacilityEdiExporter> facilityEdiExporters = new HashMap<>();
 		
 	public FacilityEdiExporter getEdiExporter(Facility facility) throws Exception {
@@ -58,19 +54,20 @@ public class EdiExporterProvider extends AbstractCodeshelfIdleService {
 	}
 
 	private void updateEdiExporter(Facility facility) throws ScriptException {
-		EdiExportTransport exportService = facility.getEdiExportTransport();
-		if (exportService != null) {
+		EdiExportTransport exportTransport = facility.getEdiExportTransport();
+		if (exportTransport != null) {
 			ExtensionPointService extensionPointService = ExtensionPointService.createInstance(facility);
 			WiBeanStringifier stringifier = new WiBeanStringifier(extensionPointService);
-			synchronized (facilityEdiAccumulators) {
-				EdiExportAccumulator accumulator = facilityEdiAccumulators.get(facility.getPersistentId());
-				if (accumulator == null) {
-					accumulator = new EdiExportAccumulator();
-					facilityEdiAccumulators.put(facility.getPersistentId(), accumulator);
+			synchronized(facilityEdiExporters) {
+				FacilityEdiExporter exporter = facilityEdiExporters.get(facility.getPersistentId());
+				if (exporter == null) {
+					EdiExportAccumulator accumulator = new EdiExportAccumulator();
+					exporter = new FacilityAccumulatingExporter(accumulator, stringifier, exportTransport);
+					facilityEdiExporters.put(facility.getPersistentId(), exporter);
+				} else {
+					exporter.setEdiExportTransport(exportTransport);
+					exporter.setStringifier(stringifier);
 				}
-
-				FacilityAccumulatingExporter exporter = new FacilityAccumulatingExporter(accumulator, stringifier, exportService);
-				facilityEdiExporters.put(facility.getPersistentId(), exporter);
 			}
 		}
 	}
@@ -83,7 +80,20 @@ public class EdiExporterProvider extends AbstractCodeshelfIdleService {
 
 	@Override
 	protected void shutDown() throws Exception {
-		// TODO Auto-generated method stub
+		synchronized(facilityEdiExporters) {
+			for (FacilityEdiExporter exporter : facilityEdiExporters.values()) {
+				exporter.stopAsync();
+			};
+			
+			for (FacilityEdiExporter exporter : facilityEdiExporters.values()) {
+				try {
+					exporter.awaitTerminated(2, TimeUnit.SECONDS);
+				}catch(Exception e) {
+					LOGGER.error("Exporting service {} did not shtudown within 2 seconds", exporter, e);
+				}
+			};
+			
+		}
 		
 	}
 }

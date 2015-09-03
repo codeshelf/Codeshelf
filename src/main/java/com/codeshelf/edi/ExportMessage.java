@@ -16,6 +16,23 @@ import com.google.common.util.concurrent.ListenableFuture;
 @ToString(exclude={"contents"})
 public class ExportMessage extends AbstractFuture<ExportReceipt> implements ListenableFuture<ExportReceipt> {
 
+	public static class OrderOnCartFinishedExportMessage extends ExportMessage {
+
+		public OrderOnCartFinishedExportMessage(OrderHeader inOrder, Che inChe, String exportStr) {
+			super(inOrder, inChe, exportStr);
+		}
+
+	}
+
+	public static class OrderOnCartAddedExportMessage extends ExportMessage {
+
+		public OrderOnCartAddedExportMessage(OrderHeader inOrder, Che inChe, String exportStr) {
+			super(inOrder, inChe, exportStr);
+		}
+		
+	}
+
+	
 	@Getter
 	private OrderHeader	order;
 	

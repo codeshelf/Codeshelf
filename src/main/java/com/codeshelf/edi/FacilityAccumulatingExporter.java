@@ -10,8 +10,6 @@ package com.codeshelf.edi;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -22,12 +20,17 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.edi.ExportMessage.OrderOnCartAddedExportMessage;
+import com.codeshelf.edi.ExportMessage.OrderOnCartFinishedExportMessage;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ExportReceipt;
+import com.codeshelf.model.domain.ExportReceipt.FailExportReceipt;
+import com.codeshelf.model.domain.ExportReceipt.UnhandledExportReceipt;
 import com.codeshelf.model.domain.FileExportReceipt;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.AbstractCodeshelfExecutionThreadService;
+import com.codeshelf.util.EvictingBlockingQueue;
 import com.github.rholder.retry.Attempt;
 import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
@@ -36,7 +39,6 @@ import com.github.rholder.retry.StopStrategy;
 import com.github.rholder.retry.WaitStrategies;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.util.concurrent.ForwardingBlockingQueue;
 import com.google.common.util.concurrent.ListenableFuture;
 
 /**
@@ -46,49 +48,6 @@ import com.google.common.util.concurrent.ListenableFuture;
  */
 public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThreadService implements FacilityEdiExporter {
 
-	private static class FailExportReceipt implements ExportReceipt {
-
-		public FailExportReceipt(Throwable e) {
-			// TODO Auto-generated constructor stub
-		}
-
-	}
-
-	private class UnhandledExportReceipt implements ExportReceipt {
-
-	}
-
-	private class OrderOnCartFinishedExportMessage extends ExportMessage {
-
-		public OrderOnCartFinishedExportMessage(OrderHeader inOrder, Che inChe, String exportStr) {
-			super(inOrder, inChe, exportStr);
-		}
-
-	}
-
-	private class OrderOnCartAddedExportMessage extends ExportMessage {
-
-		public OrderOnCartAddedExportMessage(OrderHeader inOrder, Che inChe, String exportStr) {
-			super(inOrder, inChe, exportStr);
-		}
-		
-	}
-
-	//TODO implement evicting
-	private static class EvictingBlockingQueue<T> extends ForwardingBlockingQueue<T> {
-
-		private final BlockingQueue<T> delegate;
-		
-		public EvictingBlockingQueue(int capacity) {
-			this.delegate = new ArrayBlockingQueue<T>(capacity);
-		}
-		
-		@Override
-		protected BlockingQueue<T> delegate() {
-			return delegate;
-		}
-	}
-	
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(FacilityAccumulatingExporter.class);
 
 	private static final ExportMessage	POISON	= new ExportMessage(null, null,null);
@@ -102,7 +61,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 
 	@Getter
 	@Setter
-	private EdiExportTransport	exportService;
+	private EdiExportTransport	ediExportTransport;
 
 	private Retryer<ExportReceipt> retryer;
 
@@ -117,7 +76,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 		super();
 		this.accumulator = accumulator;
 		this.stringifier = stringifier; 
-		this.exportService = exportService;
+		this.ediExportTransport = exportService;
 		this.retryer = RetryerBuilder.<ExportReceipt>newBuilder()
 		        .retryIfExceptionOfType(IOException.class)
 		        .withWaitStrategy(WaitStrategies.fibonacciWait(100, 2, TimeUnit.MINUTES))
@@ -182,11 +141,11 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 				@Override
 				public ExportReceipt call() throws IOException {
 					if (message instanceof OrderOnCartAddedExportMessage) {
-						FileExportReceipt receipt =  getExportService().transportOrderOnCartAdded(message.getOrder(), message.getChe(), message.getContents());
+						FileExportReceipt receipt =  getEdiExportTransport().transportOrderOnCartAdded(message.getOrder(), message.getChe(), message.getContents());
 						LOGGER.info("Sent orderOnCartAdded {}", message.getContents());
 						return receipt;
 					} else if (message instanceof OrderOnCartFinishedExportMessage){
-						FileExportReceipt receipt=  exportService.transportOrderOnCartFinished(message.getOrder(), message.getChe(), message.getContents());
+						FileExportReceipt receipt=  getEdiExportTransport().transportOrderOnCartFinished(message.getOrder(), message.getChe(), message.getContents());
 						LOGGER.info("Sent orderOnCartFinished {}", message.getContents());
 						return receipt;
 					} else {
