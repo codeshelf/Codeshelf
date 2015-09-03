@@ -412,7 +412,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 			FileExportReceipt successReceipt = mock(FileExportReceipt.class);
 			EdiExportTransport goodEdiTransport = mock(EdiExportTransport.class);
 			when(goodEdiTransport.transportOrderOnCartAdded(eq(mockOrder), eq(mockChe), eq(singleTestMessage))).thenReturn(successReceipt);
-			subject.setExportService(goodEdiTransport);
+			subject.setEdiExportTransport(goodEdiTransport);
 			
 			Assert.assertEquals(successReceipt, futureReceipt.get(5, TimeUnit.SECONDS));
 		} finally {
