@@ -84,31 +84,31 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 		// TODO change to order bean and che bean so we do not have to anticipate every need as a separate parameter. 
 		// Never pass domain object to groovy.
 		// Note: PFS web is both fixed field length, and delimited. First field is message ID, I think; not length.
-		String onCartScript = "def OrderOnCartContent(orderId,cheId, customerId) { def returnStr = " //
+		String onCartScript = "def OrderOnCartContent(bean) { def returnStr = " //
 				+ "'0073' +'^'" //
 				+ "+ 'ORDERSTATUS'.padRight(20) +'^'" //
 				+ "+ '0'.padLeft(10,'0') +'^'" //
-				+ "+ orderId.padRight(20) +'^'" //
+				+ "+ bean.orderId.padRight(20) +'^'" //
 				+ "+ cheId.padRight(7) +'^'" //
-				+ "+ customerId.padRight(2) +'^'" //
+				+ "+ bean.customerId.padRight(2) +'^'" //
 				+ "+ 'OPEN'.padRight(15);" //
 				+ " return returnStr;}";
 
-		String headerScript = "def WorkInstructionExportCreateHeader(orderId,cheId) { def returnStr = " //
+		String headerScript = "def WorkInstructionExportCreateHeader(bean) { def returnStr = " //
 				+ "'0073' +'^'" //
 				+ "+ 'ORDERSTATUS'.padRight(20) +'^'" //
 				+ "+ '0'.padLeft(10,'0') +'^'" //
-				+ "+ orderId.padRight(20) +'^'" //
+				+ "+ bean.orderId.padRight(20) +'^'" //
 				+ "+ 'CHE'.padRight(20) +'^'" //
-				+ "+ cheId.padRight(20) +'^'" //
+				+ "+ bean.cheId.padRight(20) +'^'" //
 				+ "+ 'CLOSED'.padRight(15);" //
 				+ " return returnStr;}";
 
-		String trailerScript = "def WorkInstructionExportCreateTrailer(orderId,cheId) { def returnStr = " //
+		String trailerScript = "def WorkInstructionExportCreateTrailer(bean) { def returnStr = " //
 				+ "'0057' +'^'" //
 				+ "+ 'ENDORDER'.padRight(20) +'^'" //
 				+ "+ '0'.padLeft(10,'0') +'^'" //
-				+ "+ orderId.padRight(20);" //
+				+ "+ bean.orderId.padRight(20);" //
 				+ " return returnStr;}";
 
 		// This matches the short specification. Customer sent a longer specification with timestamps and user names.
