@@ -73,6 +73,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 	private int					mReadBufferPos;
 	private Boolean				mDeviceIsRunning		= false;
 	private Boolean				mPause					= false;
+	@SuppressWarnings("unused")
 	private int[] status = new int[3];			
 
 	// --------------------------------------------------------------------------
