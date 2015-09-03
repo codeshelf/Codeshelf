@@ -11,6 +11,7 @@ import org.apache.shiro.mgt.SecurityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.edi.EdiExporterProvider;
 import com.codeshelf.edi.EdiProcessorService;
 import com.codeshelf.email.EmailService;
 import com.codeshelf.email.TemplateService;
@@ -25,7 +26,6 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.security.TokenSessionService;
 import com.codeshelf.service.IPropertyService;
-import com.codeshelf.service.WorkService;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.inject.Inject;
 
@@ -44,9 +44,9 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 			final IPickDocumentGenerator inPickDocumentGenerator,
 			final WebApiServer inWebApiServer,
 			final ITenantManagerService tenantManagerService,
-			final WorkService workService,
 			final IMetricsService metricsService,
 			final WebSocketManagerService webSocketManagerService,
+			final EdiExporterProvider ediExporterProvider,
 			final IPropertyService propertyService,
 			final TokenSessionService authService,
 			final SecurityManager securityManager,
@@ -67,11 +67,11 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		this.registerService(tenantManagerService);
 		this.registerService(TenantPersistenceService.getMaybeRunningInstance()); 
 		this.registerService(ManagerPersistenceService.getMaybeRunningInstance());
-		this.registerService(workService);
 		this.registerService(metricsService);
 		this.registerService(webSocketManagerService);
 		this.registerService(propertyService);
 		this.registerService(authService);
+		this.registerService(ediExporterProvider);
 		this.registerService(ediProcessorService);
 		this.registerService(emailService);
 		this.registerService(templateService);

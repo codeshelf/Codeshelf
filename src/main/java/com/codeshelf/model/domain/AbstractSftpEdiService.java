@@ -1,6 +1,7 @@
 package com.codeshelf.model.domain;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -85,7 +86,7 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 	}
 
 	
-	synchronized protected ChannelSftp connect() {
+	synchronized protected ChannelSftp connect() throws IOException {
 		if (session != null || channel != null) {
 			LOGGER.error("tried to connect SFTP session, but was already open. forcing disconnect first.");
 			disconnect();
@@ -93,38 +94,39 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 
 		SftpConfiguration config = this.getConfiguration();
 		try {
-			session = jsch.getSession(config.getUsername(), config.getHost(), config.getPort());
-		} catch (JSchException e) {
-			LOGGER.error("Unexpected exception setting up SFTP connection, check site configuration", e);
-			return null;
-		}
-		session.setUserInfo(config);
-
-		// create sftp connection
-		try {
-			session.connect();
-		} catch (JSchException e) {
-			LOGGER.warn("Failed to connect to {}", toSftpChannelDebug(), e);
-			return null;
-		}
-
-		// connected, now create SFTP channel
-		try {
-			Channel c = session.openChannel("sftp");
-			if (c instanceof ChannelSftp) {
-				channel = (ChannelSftp) c;
-				channel.connect();
+			try {
+				session = jsch.getSession(config.getUsername(), config.getHost(), config.getPort());
+			} catch (JSchException e) {
+				throw new IOException(String.format("Failed to create SFTP session, check Edi configuration: %s", toSftpChannelDebug()), e);
 			}
-		} catch (JSchException e) {
-			LOGGER.warn("Connected, but failed to open channel {}", toSftpChannelDebug(), e);
-			channel = null;
+			session.setUserInfo(config);
+
+			// create sftp connection
+			try {
+				session.connect(config.getTimeOutMilliseconds());
+			} catch (JSchException e) {
+				throw new IOException(String.format("Failed to connect to SFTP server, check Edi configuration: %s", toSftpChannelDebug()), e);
+			}
+
+			// connected, now create SFTP channel
+			try {
+				Channel c = session.openChannel("sftp");
+				if (c instanceof ChannelSftp) {
+					channel = (ChannelSftp) c;
+					channel.connect();
+				}
+			} catch (JSchException e) {
+				throw new IOException(String.format("Failed to open channel, check Edi configuration: %s", toSftpChannelDebug()), e);
+			}
+			LOGGER.info("EDI service {} connected to {}", this.getServiceName(), toSftpChannelDebug());
+
+			return channel;
+		} finally {
+			if (channel == null) { 
+				disconnect(); // hang up if SFTP channel wasn't created
+			}
 		}
-		if (channel == null)
-			disconnect(); // hang up if SFTP channel wasn't created
 
-		LOGGER.info("EDI service {} connected to {}", this.getServiceName(), toSftpChannelDebug());
-
-		return channel;
 	}
 
 	
@@ -161,26 +163,24 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 	}
 	
 	synchronized public FileExportReceipt uploadAsFile(final String fileContents, final String filename) throws EdiFileWriteException {
-		ChannelSftp sftp = connect();
 		try {
+			ChannelSftp sftp = connect();
 			byte[] bytes = fileContents.getBytes(StandardCharsets.ISO_8859_1);
 			sftp.put(new ByteArrayInputStream(bytes), filename, ChannelSftp.OVERWRITE);
 			return new FileExportReceipt(filename, bytes.length);
-		} catch(SftpException e) {
+		} catch(SftpException | IOException  e) {
 			throw new EdiFileWriteException("Unable to put file: " + filename, e);
-		
-		} finally {
+		}finally {
 			disconnect();
 		}
 	}
 	
 	synchronized public void downloadFile(String absoluteFilename, OutputStream out) throws EdiFileWriteException {
-		ChannelSftp sftp = connect();
 		try {
+			ChannelSftp sftp = connect();
 			sftp.get(absoluteFilename, out);
-		} catch(SftpException e) { 
+		} catch(SftpException | IOException  e) {
 			throw new EdiFileWriteException("Unable to get file: " + absoluteFilename, e);
-		
 		} finally {
 			disconnect();
 		}
@@ -188,10 +188,10 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 	}
 
 	synchronized public void delete(String path) throws EdiFileWriteException {
-		ChannelSftp sftp = connect();
 		try {
+			ChannelSftp sftp = connect();
 			sftp.rm(path);
-		} catch(SftpException e) {
+		} catch(SftpException | IOException  e) {
 			throw new EdiFileWriteException("Unable to remove file: " + path, e);
 		} finally {
  			disconnect();

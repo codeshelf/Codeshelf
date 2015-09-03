@@ -6,6 +6,7 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.concurrent.TimeUnit;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -25,6 +26,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.util.StringUIConverter;
 import com.google.common.base.Strings;
+import com.google.common.primitives.Ints;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
@@ -81,6 +83,12 @@ public class SftpConfiguration implements UserInfo {
 	@Expose
 	private String					exportPath;
 
+	@Getter
+	@Setter
+	@Expose
+	private int 					timeOutMilliseconds;
+
+	
 	@Transient
 	static private SecretKeySpec	keySpec;
 	static {
@@ -126,6 +134,7 @@ public class SftpConfiguration implements UserInfo {
 		this.archivePath = archivePath;
 		this.exportPath = exportPath;
 		this.passwordEnc = null;
+		this.timeOutMilliseconds = Ints.saturatedCast(TimeUnit.SECONDS.toMillis(5));
 
 	}
 
@@ -236,5 +245,4 @@ public class SftpConfiguration implements UserInfo {
 	public String getUrl() {
 		return String.format("sftp://%s@%s:%d", username, host, (int) port);
 	}
-
 }

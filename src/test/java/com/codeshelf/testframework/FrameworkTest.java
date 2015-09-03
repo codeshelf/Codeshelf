@@ -123,6 +123,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	private static TokenSessionService				staticTokenSessionService;
 	private static EmailService						staticEmailService;
 	private static TemplateService					staticTemplateService;
+	private static EdiExporterProvider	            staticEdiExporterService;
 
 	// real non-mock instances
 	private static TenantPersistenceService			realTenantPersistenceService;
@@ -166,6 +167,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	protected TokenSessionService					tokenSessionService;
 	protected EmailService							emailService;
 	protected TemplateService						templateService;
+	protected EdiExporterProvider					ediExporterService;
 
 	protected IRadioController						radioController;
 
@@ -261,6 +263,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		staticTemplateService.startAsync();
 		ServiceUtility.awaitRunningOrThrow(staticTemplateService);
 
+		staticEdiExporterService = injector.getInstance(EdiExporterProvider.class);
 		staticPropertyService = injector.getInstance(IPropertyService.class);
 
 		staticWebSocketManagerService = injector.getInstance(WebSocketManagerService.class);
@@ -301,6 +304,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		// we cannot access other threads' contexts so we hope they cleaned up!
 		CodeshelfSecurityManager.removeContextIfPresent();
 
+		workService = new WorkService(new LightService(), staticEdiExporterService);
 		radioController = null;
 		deviceManager = null;
 		apiServer = null;
@@ -550,7 +554,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 			List<Service> services = new ArrayList<Service>();
 			services.add(staticWebSocketManagerService);
 			services.add(staticPropertyService);
-
+			services.add(staticEdiExporterService);
 			serverServiceManager = new ServiceManager(services);
 			try {
 				serverServiceManager.startAsync().awaitHealthy(60, TimeUnit.SECONDS);
@@ -614,20 +618,10 @@ public abstract class FrameworkTest implements IntegrationTest {
 	protected List<Service> generateEphemeralServices() {
 		List<Service> services = new ArrayList<Service>();
 
-		if (this.getFrameworkType().equals(Type.COMPLETE_SERVER)) {
-			this.workService = this.generateWorkService();
-			if (this.workService != null)
-				services.add(this.workService);
-		}
-
 		if (services.isEmpty()) {
 			services.add(new DummyService()); // suppress warning on empty service list
 		}
 		return services;
-	}
-
-	protected WorkService generateWorkService() {
-		return new WorkService(new LightService(), new EdiExporterProvider());
 	}
 
 	protected final Facility generateTestFacility() {

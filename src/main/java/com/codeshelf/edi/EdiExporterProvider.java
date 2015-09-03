@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.script.ScriptException;
 
@@ -42,6 +43,8 @@ public class EdiExporterProvider extends AbstractCodeshelfIdleService {
 			updateEdiExporter(facility);
 		} catch (ScriptException e) {
 			LOGGER.error("Unable to update EdiExporter for facility {}", facility, e);
+		} catch (TimeoutException e) {
+			LOGGER.error("Unable to update EdiExporter for facility {}", facility, e);
 		}
 	}
 	
@@ -50,10 +53,12 @@ public class EdiExporterProvider extends AbstractCodeshelfIdleService {
 			updateEdiExporter(facility);
 		} catch (ScriptException e) {
 			LOGGER.error("Unable to update EdiExporter for facility {}", facility, e);
+		} catch (TimeoutException e) {
+			LOGGER.error("Unable to update EdiExporter for facility {}", facility, e);
 		}
 	}
 
-	private void updateEdiExporter(Facility facility) throws ScriptException {
+	private void updateEdiExporter(Facility facility) throws ScriptException, TimeoutException {
 		EdiExportTransport exportTransport = facility.getEdiExportTransport();
 		if (exportTransport != null) {
 			ExtensionPointService extensionPointService = ExtensionPointService.createInstance(facility);
@@ -63,8 +68,10 @@ public class EdiExporterProvider extends AbstractCodeshelfIdleService {
 				if (exporter == null) {
 					EdiExportAccumulator accumulator = new EdiExportAccumulator();
 					exporter = new FacilityAccumulatingExporter(accumulator, stringifier, exportTransport);
+					exporter.startAsync().awaitRunning(5, TimeUnit.SECONDS);
 					facilityEdiExporters.put(facility.getPersistentId(), exporter);
 				} else {
+					LOGGER.info("Updating edi exporter for facility {}", facility);
 					exporter.setEdiExportTransport(exportTransport);
 					exporter.setStringifier(stringifier);
 				}

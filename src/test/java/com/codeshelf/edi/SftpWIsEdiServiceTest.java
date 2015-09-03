@@ -69,6 +69,21 @@ public class SftpWIsEdiServiceTest extends HibernateTest {
 			
 		}
 	}
+	
+	@Test
+	public void testBadConnectionThrowsCheckedException() {
+		beginTransaction();
+		SftpConfiguration config = setupConfiguration();
+		config.setPort(999);
+		SftpWIsEdiService subject = configureSftpService(getFacility(), config, SftpWIsEdiService.class);
+		try {
+			subject.uploadAsFile("CONTENTS", config.getExportPath() + "/wontgetthere");
+			Assert.fail("Should have throw an EdiFileWriteException");
+		} catch (EdiFileWriteException e) {
+			
+		}
+		commitTransaction();
+	}
 
 	@Test
 	public void testSftpOrders() throws IOException  {

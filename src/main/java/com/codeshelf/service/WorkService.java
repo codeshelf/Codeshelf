@@ -93,7 +93,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
-public class WorkService extends AbstractCodeshelfIdleService implements IApiService {
+public class WorkService implements IApiService {
 
 	private static final String			THREAD_CONTEXT_TAGS_KEY	= "tags";										// duplicated in CheDeviceLogic. Need a common place
 
@@ -2326,14 +2326,4 @@ public class WorkService extends AbstractCodeshelfIdleService implements IApiSer
 		return changed;
 	}
 
-	@Override
-	protected void startUp() throws Exception {
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	protected void shutDown() throws Exception {
-		// TODO Auto-generated method stub
-		
-	}
 }
