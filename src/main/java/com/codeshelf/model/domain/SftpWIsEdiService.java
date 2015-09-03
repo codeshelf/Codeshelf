@@ -70,14 +70,14 @@ public class SftpWIsEdiService extends AbstractSftpEdiService implements EdiExpo
 	}
 	
 	@Override
-	public ExportReceipt transportOrderOnCartFinished(OrderHeader inOrder, Che inChe, String contents) throws EdiFileWriteException {
+	public FileExportReceipt transportOrderOnCartFinished(OrderHeader inOrder, Che inChe, String contents) throws EdiFileWriteException {
 		String filename = String.format("COMPLETE_%s_%s_%s.DAT",  inOrder.getOrderId(), inChe.getDeviceGuidStr(), System.currentTimeMillis());
 		final String absoluteFilename = this.getConfiguration().getExportPath() + "/" + filename;
 		return uploadAsFile(contents, absoluteFilename);
 	}
 
 	@Override
-	public ExportReceipt transportOrderOnCartAdded(OrderHeader inOrder, Che inChe, String contents) throws EdiFileWriteException {
+	public FileExportReceipt transportOrderOnCartAdded(OrderHeader inOrder, Che inChe, String contents) throws EdiFileWriteException {
 		String filename = String.format("LOADED_%s_%s_%s.DAT",  inOrder.getOrderId(), inChe.getDeviceGuidStr(), System.currentTimeMillis());
 		final String absoluteFilename = this.getConfiguration().getExportPath() + "/" + filename;
 		return uploadAsFile(contents, absoluteFilename);

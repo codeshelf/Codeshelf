@@ -160,12 +160,12 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 		}
 	}
 	
-	synchronized public ExportReceipt uploadAsFile(final String fileContents, final String filename) throws EdiFileWriteException {
+	synchronized public FileExportReceipt uploadAsFile(final String fileContents, final String filename) throws EdiFileWriteException {
 		ChannelSftp sftp = connect();
 		try {
 			byte[] bytes = fileContents.getBytes(StandardCharsets.ISO_8859_1);
 			sftp.put(new ByteArrayInputStream(bytes), filename, ChannelSftp.OVERWRITE);
-			return new ExportReceipt(filename, bytes.length);
+			return new FileExportReceipt(filename, bytes.length);
 		} catch(SftpException e) {
 			throw new EdiFileWriteException("Unable to put file: " + filename, e);
 		

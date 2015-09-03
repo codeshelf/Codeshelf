@@ -249,7 +249,7 @@ public class IronMqService extends EdiServiceABC implements EdiExportTransport {
 
 
 	@Override
-	public ExportReceipt transportOrderOnCartFinished(OrderHeader wiOrder, Che wiChe, String message) {
+	public FileExportReceipt transportOrderOnCartFinished(OrderHeader wiOrder, Che wiChe, String message) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -261,7 +261,7 @@ public class IronMqService extends EdiServiceABC implements EdiExportTransport {
 	}
 
 	@Override
-	public ExportReceipt transportOrderOnCartAdded(OrderHeader inOrder, Che inChe, String message) {
+	public FileExportReceipt transportOrderOnCartAdded(OrderHeader inOrder, Che inChe, String message) {
 		return null;
 		// TODO Auto-generated method stub
 		
