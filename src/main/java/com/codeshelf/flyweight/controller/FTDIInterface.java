@@ -73,6 +73,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 	private int					mReadBufferPos;
 	private Boolean				mDeviceIsRunning		= false;
 	private Boolean				mPause					= false;
+	private int[] status = new int[3];			
 
 	// --------------------------------------------------------------------------
 	/**
@@ -289,12 +290,13 @@ public final class FTDIInterface extends SerialInterfaceABC {
 	private void checkReadBuffer() {
 		try {
 
-			int[] status = mJD2XXInterface.getStatus();
+			//int[] status = mJD2XXInterface.getStatus();
+			int bytesReady = mJD2XXInterface.getQueueStatus();
 			int mask = 0;
 			mask = mask | JD2XX.EVENT_RXCHAR;
 
-			if (!buffer.isFull() && status[0] > 0) {
-				int bytesToRead = Math.min(DEFAULT_BUFFER_SIZE - buffer.size(), status[0]);
+			if (!buffer.isFull() && bytesReady > 0){ 
+				int bytesToRead = Math.min(DEFAULT_BUFFER_SIZE - buffer.size(),  bytesReady);
 				//LOGGER.info("---------- Start read from FTDI ---------------------------------------------- ");
 				//LOGGER.info("------------- Radio has {} bytes", status[0]);
 				mReadBufferSize = mJD2XXInterface.read(mReadBuffer, 0, bytesToRead);
