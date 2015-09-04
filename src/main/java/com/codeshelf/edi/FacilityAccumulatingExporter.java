@@ -101,7 +101,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 					
 				})
 		        .build();
-		this.messageQueue = new EvictingBlockingQueue<ExportMessage>(100);
+		this.messageQueue = new EvictingBlockingQueue<ExportMessage>(250);
 		this.receiptCache = CacheBuilder.newBuilder()
 				.maximumSize(50)
 				/*
@@ -134,7 +134,10 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 		while(isRunning() && !Thread.currentThread().isInterrupted()) {
 			ExportMessage message = null;
 			try {
-				message = this.messageQueue.take();
+				message = this.messageQueue.poll(30, TimeUnit.SECONDS);
+				if (message == null) {
+					continue; //test guards again
+				}
 				if (POISON.equals(message)) {
 					return;
 				}
