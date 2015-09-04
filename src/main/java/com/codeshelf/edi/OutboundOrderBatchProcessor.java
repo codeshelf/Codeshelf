@@ -110,14 +110,14 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		if (importer.isTruncatedGtins()) // Only set in unit test context.
 			return true;
 
-		// Tenant name should do it for us. Unfortunately, Accu is on default tenant. No help.
+		// Tenant name should do it for us if Accu is set up with accu as tenant schema name. 
 		TenantPersistenceService theService = TenantPersistenceService.getInstance();
-		@SuppressWarnings("unused")
 		String thisTenantName = theService.getCurrentTenantIdentifier();
-		// how can we tell? Most accu orders have WORLD or LUNERA customerID
-
-		// TODO Critical for Accu to set this
-		return false;
+		if ("accu".equalsIgnoreCase(thisTenantName)) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	/**
