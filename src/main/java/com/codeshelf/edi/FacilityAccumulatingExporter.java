@@ -155,11 +155,11 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 				public ExportReceipt call() throws IOException {
 					if (message instanceof OrderOnCartAddedExportMessage) {
 						FileExportReceipt receipt =  getEdiExportTransport().transportOrderOnCartAdded(message.getOrder(), message.getChe(), message.getContents());
-						LOGGER.info("Sent orderOnCartAdded {}", message.getContents());
+						LOGGER.info("Sent orderOnCartAdded {}", message);
 						return receipt;
 					} else if (message instanceof OrderOnCartFinishedExportMessage){
 						FileExportReceipt receipt=  getEdiExportTransport().transportOrderOnCartFinished(message.getOrder(), message.getChe(), message.getContents());
-						LOGGER.info("Sent orderOnCartFinished {}", message.getContents());
+						LOGGER.info("Sent orderOnCartFinished {}", message);
 						return receipt;
 					} else {
 						return new UnhandledExportReceipt();
@@ -194,7 +194,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 	public ListenableFuture<ExportReceipt> exportOrderOnCartAdded(final OrderHeader inOrder, final Che inChe) {
 		final String exportStr = stringifier.stringifyOrderOnCartAdded(inOrder, inChe);
 		ExportMessage exportMessage = new OrderOnCartAddedExportMessage(inOrder, inChe, exportStr);
-		messageQueue.offer(exportMessage);
+		enqueue(exportMessage);
 		return exportMessage;
 	}
 
@@ -213,8 +213,12 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 		// This list has "complete" work instruction beans. The particular customer's EDI may need strange handling.
 		final String exportStr = stringifier.stringifyOrderOnCartFinished(inOrder, inChe, orderCheList);
 		ExportMessage exportMessage = new OrderOnCartFinishedExportMessage(inOrder, inChe, exportStr); 
-		messageQueue.offer(exportMessage);
+		enqueue(exportMessage);
 		return exportMessage;
 	}
 
+	private boolean enqueue(ExportMessage message) {
+		LOGGER.info("Enqueued message {} with contents {}", message, message.getContents());
+		return messageQueue.offer(message);
+	}
 }
