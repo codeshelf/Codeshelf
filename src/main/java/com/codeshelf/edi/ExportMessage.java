@@ -2,7 +2,6 @@ package com.codeshelf.edi;
 
 import groovy.transform.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.ToString;
 
 import org.joda.time.DateTime;
 
@@ -13,7 +12,6 @@ import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 
 @EqualsAndHashCode(excludes={"contents"})
-@ToString(exclude={"contents"})
 public class ExportMessage extends AbstractFuture<ExportReceipt> implements ListenableFuture<ExportReceipt> {
 
 	public static class OrderOnCartFinishedExportMessage extends ExportMessage {
@@ -55,5 +53,10 @@ public class ExportMessage extends AbstractFuture<ExportReceipt> implements List
 
 	public void setReceipt(ExportReceipt receipt) {
 		set(receipt);
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("%s: orderId: %s, che: %s, time: %s", this.getClass().getSimpleName(), order.getOrderId(), che.getDeviceGuidStr(), dateTime.toString());
 	}
 }
