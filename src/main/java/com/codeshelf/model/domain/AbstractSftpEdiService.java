@@ -74,9 +74,14 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 		sftpConfiguration = configuration;
 		lastProviderCredentials = configuration.toString();
 		this.setProviderCredentials(lastProviderCredentials);
-		if (getHasCredentials()) {
-			setServiceState(EdiServiceStateEnum.LINKED); // TODO: maybe add UX setup procedure to verify connection works
-		}
+		try {
+			connect();
+			disconnect();
+			setServiceState(EdiServiceStateEnum.LINKED); 
+		} catch (IOException e) {
+			LOGGER.warn("Failed testing credentials for {}", toSftpChannelDebug(), e);
+			setServiceState(EdiServiceStateEnum.LINK_FAILED); 
+		} 
 	}
 
 	@Override

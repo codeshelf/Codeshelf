@@ -38,6 +38,22 @@ public class SftpWIsEdiServiceTest extends HibernateTest {
 	private InventoryGenerator	inventoryGenerator = new InventoryGenerator(null);
 
 	@Test
+	public void testBadCredentialsRemainUnlinked() {
+		beginTransaction();
+		
+		Facility facility = getFacility();//trigger creation
+		SftpConfiguration config = setupConfiguration();
+		SftpWIsEdiService sftpWIs = configureSftpService(facility, config, SftpWIsEdiService.class);
+		Assert.assertTrue(sftpWIs.isLinked());
+
+		config.setPassword("BAD");
+		SftpWIsEdiService badSftpWIs = configureSftpService(facility, config, SftpWIsEdiService.class);
+		Assert.assertTrue("Should have been unlinked", !badSftpWIs.isLinked());
+
+		commitTransaction();
+	}
+	
+	@Test
 	public void testSftpWIs() throws EdiFileWriteException {
 		beginTransaction();
 		
@@ -154,8 +170,6 @@ public class SftpWIsEdiServiceTest extends HibernateTest {
 		
 		Assert.assertNotNull(sftpOrders);
 		config = sftpOrders.getConfiguration();
-		Assert.assertEquals(SFTP_TEST_USERNAME, config.getUsername());
-		Assert.assertEquals(SFTP_TEST_PASSWORD, config.getPassword());
 		return (T) sftpOrders;
 	}
 
