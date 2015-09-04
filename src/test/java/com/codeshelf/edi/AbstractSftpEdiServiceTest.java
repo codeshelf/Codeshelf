@@ -29,7 +29,7 @@ import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.validation.BatchResult;
 
 
-public class SftpWIsEdiServiceTest extends HibernateTest {
+public class AbstractSftpEdiServiceTest extends HibernateTest {
 	
 	private static final String	SFTP_TEST_HOST	= "sftp.codeshelf.com";
 	private static final String	SFTP_TEST_USERNAME	= "test";
