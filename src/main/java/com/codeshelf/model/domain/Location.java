@@ -822,11 +822,24 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 	}
 
+	/**
+	 * Returns the first (arbitrary) active alias for the location.
+	 * Returns null if no active ones found. 
+	 */
 	public LocationAlias getPrimaryAlias() {
+		return getActiveAliasOtherThan(null);
+	}
+
+	/**
+	 * Returns the first (arbitrary) active alias that is not the parameter alias.
+	 * If null passed in, then the first active alias is returned.
+	 * Returns null if no active ones found. 
+	 */
+	public LocationAlias getActiveAliasOtherThan(LocationAlias inAlias) {
 		LocationAlias result = null;
 
 		for (LocationAlias alias : aliases) {
-			if (alias.getActive()) {
+			if (alias.getActive() && !alias.equals(inAlias)) {
 				result = alias;
 				break;
 			}

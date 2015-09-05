@@ -31,7 +31,7 @@ import com.google.inject.Inject;
  */
 public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> implements ICsvLocationAliasImporter {
 
-	private static final Logger				LOGGER	= LoggerFactory.getLogger(LocationAliasCsvImporter.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(LocationAliasCsvImporter.class);
 
 	@Inject
 	public LocationAliasCsvImporter(final EventProducer inProducer) {
@@ -75,21 +75,51 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 
 	// --------------------------------------------------------------------------
 	/**
-	 * @param inFacility
-	 * @param inProcessTime
+	 *  deactivate previous location aliases if they now resolve to no or inactive location
 	 */
 	private void archiveCheckLocationAliases(final Facility inFacility, final Timestamp inProcessTime) {
+		// Finally, in v21, do something intelligent. DEV-475. Used to be if you uploaded a new aisle and aliases only for that aisle, you lost all prior aliases
+		// Dangerous before!
 		LOGGER.debug("Archive unreferenced location alias data");
 
 		// Inactivate the locations aliases that don't match the import timestamp.
-		// FIXME: replace with database query
-		List<LocationAlias> las = LocationAlias.staticGetDao().findByParent(inFacility);
-		for (LocationAlias locationAlias : las) {
+		int archiveCount = 0;
+		List<LocationAlias> aliasList = LocationAlias.staticGetDao().findByParent(inFacility);
+		for (LocationAlias locationAlias : aliasList) {
 			if (!locationAlias.getUpdated().equals(inProcessTime)) {
-				LOGGER.debug("Archive old locationAlias: " + locationAlias.getAlias());
-				locationAlias.setActive(false);
-				locationAlias.getDao().store(locationAlias);
+				Location theLoc = locationAlias.getMappedLocation();
+				boolean shouldDelete = theLoc == null || !theLoc.getActive();
+				if (!shouldDelete && theLoc != null) {
+					// We should do:
+					//    if the location we are pointing at has another active alias that matches this timestamp, then delete this in favor of that
+					// We are doing
+					//    if the location we are pointing at has another active alias, then delete this in favor of that
+					//    would need to iterate all the alias to find the best one otherwise
+					LocationAlias otherAlias = theLoc.getActiveAliasOtherThan(locationAlias);
+					if (otherAlias != null){
+						shouldDelete = true;
+						LOGGER.info("found other {}.",otherAlias);
+					}
+				}
+				if (shouldDelete) {
+					LOGGER.debug("Archive old locationAlias: " + locationAlias.getAlias());
+					if (theLoc != null) {
+						LOGGER.info("removing {}.",locationAlias);
+						theLoc.removeAlias(locationAlias);
+					}
+					locationAlias.setActive(false);
+
+					try {
+						locationAlias.getDao().store(locationAlias);
+						archiveCount++;
+					} catch (DaoException e) {
+						LOGGER.info("archiveCheckLocationAliases", e);
+					}
+				}
 			}
+		}
+		if (archiveCount > 0) {
+			LOGGER.info("Archived {} location aliases that are no longer relevant", archiveCount);
 		}
 	}
 
@@ -155,7 +185,11 @@ public class LocationAliasCsvImporter extends CsvImporter<LocationAliasCsvBean> 
 
 			result.setActive(true);
 			result.setUpdated(inEdiProcessTime);
-			LocationAlias.staticGetDao().store(result);
+			try {
+				LocationAlias.staticGetDao().store(result);
+			} catch (DaoException e) {
+				LOGGER.info("LocationAliases bean import", e);
+			}
 		}
 		return result;
 	}
