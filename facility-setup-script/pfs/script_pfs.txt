@@ -3,6 +3,7 @@ var :che2	0x000001D9
 
 STEP Import Orders
 SERVER
+setProperty WORKSEQR WorkSequence
 deleteExtensionPoint OrderOnCartContent
 deleteExtensionPoint WorkInstructionExportCreateHeader
 deleteExtensionPoint WorkInstructionExportCreateTrailer
@@ -39,6 +40,7 @@ loginSetup che1 Ilya1
 loginSetup che2 Ilya1
 //setupCart che1 26688061 26688062 26688163 26688064
 //setupCart che2 26688077 26688078 26688237 26688238 26688244
-setupCart che1 50090467 50090468
+//setupCart che1 50090467 50090468
 setupCart che2 50090469
-pickAll
+pick che2
+//pickAll
