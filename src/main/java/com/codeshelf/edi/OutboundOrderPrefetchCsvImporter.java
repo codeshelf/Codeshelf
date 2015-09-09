@@ -417,7 +417,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			LOGGER.info("Imported " + receipt);
 		} else {
 			receipt.setStatus(DataImportStatus.Failed);
-			LOGGER.error("Failed to import " + receipt);
+			LOGGER.warn("Failed to import " + receipt);
 		}
 
 		DataImportReceipt.staticGetDao().store(receipt);
