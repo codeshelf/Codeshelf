@@ -125,7 +125,7 @@ public class DataImportReceipt extends DomainObjectTreeABC<Facility> {
 	
 	@Override
 	public String toString() {
-		return ordersProcessed+" orders and "+linesProcessed+" lines in "+(completed.getTime()-started.getTime())/1000+" seconds";
+		return String.format("ImportDataReceipt filename: %s , orders:, %d, lines: %d, seconds: %d", filename, ordersProcessed, linesProcessed, (completed.getTime()-started.getTime())/1000);
 	}
 
 }
