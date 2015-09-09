@@ -192,7 +192,38 @@ public class FacilityResource {
 		r.setFacility(facility);
 		return r;
 	}
+	
+	@GET
+	@Path("/data/summary")
+	@RequiresPermissions("companion:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getDataSummary() {
+		Object response = new Object();
+		//Object response = workService.summarizeData();
+		return BaseResponse.buildResponse(response);
+	}
 
+	@DELETE
+	@Path("/data/wis")
+	@RequiresPermissions("companion:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response deleteWorkInstructions(@QueryParam("lastUpdatedBefore") TimestampParam  lastUpdatedBefore, @QueryParam("active") boolean active) {
+		Object response = new Object();
+		//Object response = workService.deleteWorkInstuctions(lastUpdateBefore.getValue(), active);
+		return BaseResponse.buildResponse(response);
+	}
+
+	@DELETE
+	@Path("/data/orders")
+	@RequiresPermissions("companion:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response deleteOrders(@QueryParam("lastUpdatedBefore") TimestampParam  lastUpdatedBefore, @QueryParam("active") boolean active) {
+		Object response = new Object();
+		//Object response = workService.deleteWorkInstuctions(lastUpdateBefore.getValue(), active);
+		return BaseResponse.buildResponse(response);
+	}
+
+	
     @GET
 	@Path("/work/instructions")
 	@RequiresPermissions("companion:view")
