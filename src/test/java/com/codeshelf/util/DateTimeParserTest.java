@@ -4,6 +4,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 
+import org.joda.time.DateTime;
+import org.joda.time.Duration;
+import org.joda.time.Period;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,6 +22,14 @@ public class DateTimeParserTest extends MinimalTest {
 		parser = new DateTimeParser();
 	}
 
+	@Test
+	public void testDaysAgoString() {
+		Date today = new Date(System.currentTimeMillis());
+		Date date = parseSingleDate("2 Days Ago");
+		Assert.assertTrue(date.before(today));
+		Assert.assertEquals(2, new Period(new DateTime(date), new DateTime(today)).getDays());
+	}
+	
 	@Test
 	public void testYearMonthDay24HrTimes() {
 		validateDateTime("2012-09-26 11:31:03", 2012, 9, 26, 11, 31, 03, TimeZone.getDefault());
