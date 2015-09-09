@@ -87,7 +87,6 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 				for(int ix = 0; ix < filesToImport.size(); ix++ ) {
 					String filename = filesToImport.get(ix);
 					
-					LOGGER.info("processing file: {}",filename);
 					if (!processImportFile(inCsvOrderImporter, filename))
 						failure = true;
 				}
@@ -103,10 +102,10 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 		boolean success = false;
 		if(filename.endsWith(FILENAME_SUFFIX_FAILED)) {
 			// ignore
-			LOGGER.debug("Found FAILED file in SFTP: {}",filename);
+			LOGGER.debug("Skipping FAILED file in SFTP: {}",filename);
 		} else if(filename.endsWith(FILENAME_SUFFIX_PROCESSING)) {
 			// warn
-			LOGGER.warn("Found incomplete PROCESSING file in SFTP: {}",filename);
+			LOGGER.warn("Skipping incomplete PROCESSING file in SFTP: {}",filename);
 		} else if(getConfiguration().matchOrdersFilename(filename)) {
 			// process this orders file
 			String originalPath = getConfiguration().getImportPath()+"/"+filename;
@@ -139,7 +138,7 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 			}
 						
 		} else {
-			LOGGER.warn("Unexpected file in SFTP EDI: {}",filename);
+			LOGGER.warn("Skipping unexpected file in SFTP EDI: {} {}", filename, toSftpChannelDebug());
 		}
 		return success;
 		
