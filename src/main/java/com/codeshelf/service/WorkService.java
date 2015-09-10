@@ -2482,6 +2482,15 @@ public class WorkService implements IApiService {
 	}
 
 	/**
+	 * Simpler API, so the UI does not have to set maxToPurgeAtOnce
+	 * That parameter is temporary, as at the moment, we just do an immediate delete on the current thread.
+	 * Later, we will have a chron job that deletes in batches.
+	 */
+	public void purgeOldObjects(int daysOldToCount, Facility inFacility, String className) {
+		purgeOldObjects(daysOldToCount, inFacility, className, 1000);
+	}
+
+		/**
 	 * The goal is to delete what reported on with the same parameters.
 	 * However, there are several sub-deletes, controlled by the className parameter
 	 * Logs an error on unsupported class name.
