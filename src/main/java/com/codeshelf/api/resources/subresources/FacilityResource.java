@@ -72,7 +72,9 @@ import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
@@ -207,9 +209,8 @@ public class FacilityResource {
 	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response deleteWorkInstructions(@QueryParam("daysOld") int daysOld) {
-		List<String> summary = ImmutableList.of();
-		//summary = workService.purgeWorkInstructions(daysOld, this.facility);
-		return BaseResponse.buildResponse(summary);
+		workService.purgeOldObjects(daysOld, this.facility, WorkInstruction.class);
+		return BaseResponse.buildResponse(null);
 	}
 
 	@DELETE
@@ -217,11 +218,18 @@ public class FacilityResource {
 	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response deleteOrders(@QueryParam("daysOld") int daysOld) {
-		List<String> summary = ImmutableList.of();
-		//summary = workService.purgeOrders(daysOld, this.facility);
-		return BaseResponse.buildResponse(summary);
+		workService.purgeOldObjects(daysOld, this.facility, OrderHeader.class);
+		return BaseResponse.buildResponse(null);
 	}
 
+	@DELETE
+	@Path("/data/containers")
+	@RequiresPermissions("facility:edit")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response deleteContainers(@QueryParam("daysOld") int daysOld) {
+		workService.purgeOldObjects(daysOld, this.facility, Container.class);
+		return BaseResponse.buildResponse(null);
+	}
 	
     @GET
 	@Path("/work/instructions")
