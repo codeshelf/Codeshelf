@@ -21,6 +21,7 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.CodeshelfNetwork;
+import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
@@ -227,7 +228,7 @@ public class DataArchiving extends ServerTest {
 	 * LOCAPICK off. This is location based pick with no UPC scan, using WorkSequence
 	 */
 	@Test
-	public final void testArchiveReporting() throws IOException {
+	public final void testArchiveReportAndPurge() throws IOException {
 		beginTransaction();
 
 		propertyService.turnOffHK(facility);
@@ -321,6 +322,20 @@ public class DataArchiving extends ServerTest {
 		workService.reportAchiveables(2, facility);
 		List<OrderHeader> orders2 = OrderHeader.staticGetDao().getAll();
 		Assert.assertEquals(1, orders2.size());
+		commitTransaction();
+
+		LOGGER.info("6: Call the Containers purge");
+		beginTransaction();
+		facility = facility.reload();
+		workService.purgeOldObjects(2, facility, "Container", 3); 
+		commitTransaction();
+		
+		LOGGER.info("6b: Report, via the work service call");
+		beginTransaction();
+		facility = facility.reload();
+		workService.reportAchiveables(2, facility);
+		List<Container> cntrs = Container.staticGetDao().getAll();
+		Assert.assertEquals(2, cntrs.size());
 		commitTransaction();
 
 	}
