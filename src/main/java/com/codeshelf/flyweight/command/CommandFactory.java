@@ -183,6 +183,14 @@ public final class CommandFactory {
 			case CommandControlABC.ACK:
 				result = new CommandControlAck();
 				break;
+				
+			case CommandControlABC.CREATE_SCAN:
+				result = new CommandControlCreateScan();
+				break;
+				
+			case CommandControlABC.CREATE_BUTTON:
+				result = new CommandControlCreateButton();
+				break;
 
 			default:
 				break;
