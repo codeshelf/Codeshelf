@@ -24,7 +24,6 @@ import lombok.ToString;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Order;
-import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -2326,18 +2325,23 @@ public class WorkService implements IApiService {
 		return changed;
 	}
 
-	/**
-	 * The goal is to report on objects that might be archived.
-	 * This requires that we be in a transaction in context
-	 */
-	public void reportAchiveables(int daysOldToCount, Facility inFacility) {
+	private Timestamp getDaysOldTimeStamp(int daysOldToCount) {
 		// Get our reference timestamp relative to now.
 		// One minute after the days counter to make unit tests that set things 2 days old return those on a 2 days old criteria.
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.DAY_OF_MONTH, (daysOldToCount * -1));
 		cal.add(Calendar.MINUTE, 1);
 		long desiredTimeLong = cal.getTimeInMillis();
-		Timestamp desiredTime = new Timestamp(desiredTimeLong);
+		return new Timestamp(desiredTimeLong);
+	}
+
+	/**
+	 * The goal is to report on objects that might be archived.
+	 * This requires that we be in a transaction in context
+	 */
+	public void reportAchiveables(int daysOldToCount, Facility inFacility) {
+		// Get our reference timestamp relative to now.
+		Timestamp desiredTime = getDaysOldTimeStamp(daysOldToCount);
 
 		UUID facilityUUID = inFacility.getPersistentId();
 
@@ -2409,4 +2413,94 @@ public class WorkService implements IApiService {
 		}
 
 	}
+
+	/**
+	 * This purge follows our parent child pattern
+	 */
+	private void purgeWorkInstructions(int daysOldToCount, Facility inFacility, int maxToPurgeAtOnce) {
+		Timestamp desiredTime = getDaysOldTimeStamp(daysOldToCount);
+		UUID facilityUUID = inFacility.getPersistentId();
+
+		List<WorkInstruction> wiList = WorkInstruction.staticGetDao()
+			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID),
+				Restrictions.lt("created", desiredTime)));
+		
+		int wantToPurge = wiList.size();
+		int willPurge = Math.min(wantToPurge, maxToPurgeAtOnce);
+		boolean partial = wantToPurge > willPurge;
+		if (partial)
+			LOGGER.info("purging only {}  of {} purgable work instructions", willPurge, wantToPurge);
+		else 
+			LOGGER.info("purging {} work instructions", willPurge);
+		int deletedCount = 0;
+		for (WorkInstruction wi : wiList) {
+			
+			OrderDetail detail = wi.getOrderDetail();
+			if (detail != null)
+				detail.removeWorkInstruction(wi);
+			Che che = wi.getAssignedChe();
+			if (che != null)
+				che.removeWorkInstruction(wi);
+			try {
+				WorkInstruction.staticGetDao().delete(wi);
+			} catch (DaoException e) {
+				LOGGER.error("purgeWorkInstructions", e);
+			}
+			deletedCount ++;
+			if (deletedCount >= willPurge)
+				break;
+		}
+	}
+
+	/**
+	 * This purge does not follow our parent child pattern.
+	 * It just deletes the master object, and assume the cascade will work correctly.
+	 * (This is what the current Companion delete orders does)
+	 */
+	private void purgeOrders(int daysOldToCount, Facility inFacility, int maxToPurgeAtOnce) {
+		Timestamp desiredTime = getDaysOldTimeStamp(daysOldToCount);
+		UUID facilityUUID = inFacility.getPersistentId();
+
+		List<OrderHeader> orders = OrderHeader.staticGetDao()
+			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID),
+				Restrictions.lt("dueDate", desiredTime)));
+
+		LOGGER.info("purging {} orders and owned related objects", orders.size());
+		for (OrderHeader order : orders) {
+			try {
+				OrderHeader.staticGetDao().delete(order);
+			} catch (DaoException e) {
+				LOGGER.error("purgeOrders", e);
+			}
+		}
+	}
+
+	/**
+	 * The goal is to delete what reported on with the same parameters.
+	 * However, there are several sub-deletes, controlled by the className parameter
+	 * Logs an error on unsupported class name.
+	 * This requires that we be in a transaction in context
+	 */
+	public void purgeOldObjects(int daysOldToCount, Facility inFacility, String className, int maxToPurgeAtOnce) {
+		if (className == null) {
+			LOGGER.error("null class name in purgeOldObjects");
+			return;
+		}
+		boolean foundGoodClassName = false;
+		// String nameToMatch = WorkInstruction.class.getName();
+		if (className.equalsIgnoreCase(WorkInstruction.class.getSimpleName())) {
+			foundGoodClassName = true;
+			purgeWorkInstructions(daysOldToCount, inFacility, maxToPurgeAtOnce);
+		}
+
+		if (className.equalsIgnoreCase(OrderHeader.class.getSimpleName())) {
+			foundGoodClassName = true;
+			purgeOrders(daysOldToCount, inFacility, maxToPurgeAtOnce);
+		}
+
+		if (!foundGoodClassName) {
+			LOGGER.error("unimplement class name: {} in purgeOldObjects", className);
+		}
+	}
+
 }
