@@ -3,6 +3,7 @@ package com.codeshelf.service;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -20,6 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.Getter;
 import lombok.ToString;
 
+import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Restrictions;
@@ -63,6 +65,7 @@ import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.LocationAlias;
 import com.codeshelf.model.domain.OrderDetail;
+import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.Path;
@@ -95,13 +98,13 @@ import com.google.inject.Inject;
 
 public class WorkService implements IApiService {
 
-	private static final String			THREAD_CONTEXT_TAGS_KEY	= "tags";										// duplicated in CheDeviceLogic. Need a common place
+	private static final String	THREAD_CONTEXT_TAGS_KEY	= "tags";										// duplicated in CheDeviceLogic. Need a common place
 
-	private static Double				BAY_ALIGNMENT_FUDGE		= 0.25;
+	private static Double		BAY_ALIGNMENT_FUDGE		= 0.25;
 
-	private static final Logger			LOGGER					= LoggerFactory.getLogger(WorkService.class);
+	private static final Logger	LOGGER					= LoggerFactory.getLogger(WorkService.class);
 
-	private final LightService			lightService;
+	private final LightService	lightService;
 
 	private EdiExporterProvider	exportProvider;
 
@@ -157,7 +160,7 @@ public class WorkService implements IApiService {
 	 * @param inChe
 	 * @param inContainerIdList
 	 * @return
-	 */ 
+	 */
 	public final WorkList computeWorkInstructions(final Che inChe, final Map<String, String> positionToContainerMap) {
 		return computeWorkInstructions(inChe, positionToContainerMap, false);
 	}
@@ -660,12 +663,12 @@ public class WorkService implements IApiService {
 	 * Need to map to the order then notify with order parameter
 	 */
 	private void notifyAddOrderToCart(ContainerUse inUse, Che inChe) {
-		if (inUse == null || inChe == null){
+		if (inUse == null || inChe == null) {
 			LOGGER.error("null value in notifyAddOrderToCart");
 			return;
 		}
 		OrderHeader order = inUse.getOrderHeader();
-		if (order == null){
+		if (order == null) {
 			LOGGER.warn("no order found for containerUse in notifyAddOrderToCart");
 			// Error? Probably not. GoodEggs had container uses that did not map to single outbound orders
 			return;
@@ -685,8 +688,8 @@ public class WorkService implements IApiService {
 			if (theService.isPresent()) {
 				theService.get().exportOrderOnCartAdded(inOrder, inChe);
 			}
-		} catch(Exception e) {
-			LOGGER.warn("unable to export order addition message for order {} and che {}", inOrder ,inChe);
+		} catch (Exception e) {
+			LOGGER.warn("unable to export order addition message for order {} and che {}", inOrder, inChe);
 		}
 	}
 
@@ -706,21 +709,21 @@ public class WorkService implements IApiService {
 				theService.get().exportOrderOnCartRemoved(inOrder, inChe);
 			}
 		} catch (Exception e) {
-			LOGGER.warn("unable to export order removal message for order {} and che {}", inOrder ,inChe);
+			LOGGER.warn("unable to export order removal message for order {} and che {}", inOrder, inChe);
 		}
 	}
-	
+
 	/**
 	 * During setup, we are really setting up containers, and not orders
 	 * Need to map to the order then notify with order parameter
 	 */
 	private void notifyRemoveOrderFromCart(ContainerUse inUse, Che inChe) {
-		if (inUse == null || inChe == null){
+		if (inUse == null || inChe == null) {
 			LOGGER.error("null value in notifyRemoveOrderFromCart");
 			return;
 		}
 		OrderHeader order = inUse.getOrderHeader();
-		if (order == null){
+		if (order == null) {
 			LOGGER.warn("no order found for containerUse in notifyRemoveOrderFromCart");
 			// Error? Probably not. GoodEggs had container uses that did not map to single outbound orders
 			return;
@@ -733,10 +736,10 @@ public class WorkService implements IApiService {
 	* Three choices so far: not at all, to IronMQ, or to SFTP
 	*/
 	private void notifyEdiServiceCompletedWi(WorkInstruction inWi) {
-			
+
 		// This is the PFSWeb variant. Each work instruction is add to the specific EDI service and accumulated, then sent finally
 		// if the order is complete on the cart
-		 
+
 		//the implementation is either blow by blow or accumulating
 		try {
 			Optional<FacilityEdiExporter> theService = getFacilityEdiExporter(inWi.getFacility());
@@ -750,9 +753,8 @@ public class WorkService implements IApiService {
 					theService.get().exportOrderOnCartFinished(wiOrder, wiChe);
 				}
 			}
-		}
-		catch(Exception e) {
-			LOGGER.warn("Unable to export WorkInstruction {}", inWi, e );
+		} catch (Exception e) {
+			LOGGER.warn("Unable to export WorkInstruction {}", inWi, e);
 		}
 	}
 
@@ -1953,8 +1955,6 @@ public class WorkService implements IApiService {
 		return storedWi;
 	}
 
-
-
 	public boolean willOrderDetailGetWi(OrderDetail inOrderDetail) {
 		String sequenceKind = PropertyService.getInstance().getPropertyFromConfig(inOrderDetail.getFacility(),
 			DomainObjectProperty.WORKSEQR);
@@ -2330,6 +2330,265 @@ public class WorkService implements IApiService {
 			changed = true;
 		}
 		return changed;
+	}
+
+	private Timestamp getDaysOldTimeStamp(int daysOldToCount) {
+		// Get our reference timestamp relative to now.
+		// One minute after the days counter to make unit tests that set things 2 days old return those on a 2 days old criteria.
+		Calendar cal = Calendar.getInstance();
+		cal.add(Calendar.DAY_OF_MONTH, (daysOldToCount * -1));
+		cal.add(Calendar.MINUTE, 1);
+		long desiredTimeLong = cal.getTimeInMillis();
+		return new Timestamp(desiredTimeLong);
+	}
+
+	/**
+	 * The goal is to report on objects that might be archived.
+	 * This requires that we be in a transaction in context
+	 */
+	public void reportAchiveables(int daysOldToCount, Facility inFacility) {
+		// Get our reference timestamp relative to now.
+		Timestamp desiredTime = getDaysOldTimeStamp(daysOldToCount);
+
+		UUID facilityUUID = inFacility.getPersistentId();
+
+		// Although an internal variable now, this is probably what would be returned to the UI
+		ArrayList<String> reportables = new ArrayList<String>();
+
+		String headerString = String.format("***Archivable Objects Summary. Objects older than %d days.***", daysOldToCount);
+		reportables.add(headerString);
+
+		// Work Instructions
+		int totalWiCount = WorkInstruction.staticGetDao()
+			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID)))
+			.size();
+		int archiveableWiCount = WorkInstruction.staticGetDao()
+			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID),
+				Restrictions.lt("created", desiredTime)))
+			.size();
+		String wiString = String.format(" WorkInstructions: %d archivable of %d total", archiveableWiCount, totalWiCount);
+		reportables.add(wiString);
+
+		String orderGroupString = String.format("*Objects that archive with orders... (Note, work instructions for those orders will also)*");
+		reportables.add(orderGroupString);
+
+		// Orders
+		int totalOrderCount = OrderHeader.staticGetDao()
+			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID)))
+			.size();
+		int archiveableOrderCount = OrderHeader.staticGetDao()
+			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID),
+				Restrictions.lt("dueDate", desiredTime)))
+			.size();
+		String orderString = String.format(" Orders: %d archivable of %d total", archiveableOrderCount, totalOrderCount);
+		reportables.add(orderString);
+
+		// Order Details
+		Criteria crit = OrderDetail.staticGetDao().createCriteria();
+		crit.createAlias("parent", "p");
+		crit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
+		int totalDetailCount = OrderDetail.staticGetDao().findByCriteriaQuery(crit).size();
+
+		Criteria crit2 = OrderDetail.staticGetDao().createCriteria();
+		crit2.createAlias("parent", "p");
+		crit2.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
+		crit2.add(Restrictions.lt("p.dueDate", desiredTime));
+		int archiveableDetailCount = OrderDetail.staticGetDao().findByCriteriaQuery(crit2).size();
+
+		String detailString = String.format(" Details: %d archivable of %d total", archiveableDetailCount, totalDetailCount);
+		reportables.add(detailString);
+
+		// ContainerUse
+		Criteria crit3 = ContainerUse.staticGetDao().createCriteria();
+		crit3.createAlias("parent", "p");
+		crit3.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
+		int totalUseCount = ContainerUse.staticGetDao().findByCriteriaQuery(crit3).size();
+
+		Criteria crit4 = ContainerUse.staticGetDao().createCriteria();
+		crit4.createAlias("parent", "p");
+		crit4.createAlias("orderHeader", "oh");
+		crit4.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
+		crit4.add(Restrictions.isNotNull("orderHeader"));
+		crit4.add(Restrictions.lt("oh.dueDate", desiredTime));
+		int archiveableUseCount = ContainerUse.staticGetDao().findByCriteriaQuery(crit4).size();
+
+		String useString = String.format(" ContainerUses: %d archivable of %d total", archiveableUseCount, totalUseCount);
+		reportables.add(useString);
+
+		String otherGroupString = String.format("*Additional objects that may archive with orders... (Note, not easy to determine how many will be purged until other objects are gone)*");
+		reportables.add(otherGroupString);
+
+		// Containers
+		Criteria crit5 = Container.staticGetDao().createCriteria();
+		crit5.createAlias("parent", "p");
+		crit5.add(Restrictions.eq("p.persistentId", facilityUUID));
+		int totalCntrCount = Container.staticGetDao().findByCriteriaQuery(crit5).size();
+		String cntrString = String.format(" Containers: %d total", totalCntrCount);
+		reportables.add(cntrString);
+
+		// OrderGroup
+		Criteria crit6 = OrderGroup.staticGetDao().createCriteria();
+		crit6.createAlias("parent", "p");
+		crit6.add(Restrictions.eq("p.persistentId", facilityUUID));
+		int totalGroupCount = OrderGroup.staticGetDao().findByCriteriaQuery(crit6).size();
+		String groupString = String.format(" OrderGroups: %d total", totalGroupCount);
+		reportables.add(groupString);
+
+		for (String s : reportables) {
+			LOGGER.info(s);
+		}
+
+	}
+
+	/**
+	 * This purge follows our parent child pattern
+	 */
+	private void purgeWorkInstructions(int daysOldToCount, Facility inFacility, int maxToPurgeAtOnce) {
+		Timestamp desiredTime = getDaysOldTimeStamp(daysOldToCount);
+		UUID facilityUUID = inFacility.getPersistentId();
+
+		List<WorkInstruction> wiList = WorkInstruction.staticGetDao()
+			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID),
+				Restrictions.lt("created", desiredTime)));
+
+		int wantToPurge = wiList.size();
+		int willPurge = Math.min(wantToPurge, maxToPurgeAtOnce);
+		boolean partial = wantToPurge > willPurge;
+		if (partial)
+			LOGGER.info("purging only {}  of {} purgable work instructions", willPurge, wantToPurge);
+		else
+			LOGGER.info("purging {} work instructions", willPurge);
+		int deletedCount = 0;
+		for (WorkInstruction wi : wiList) {
+
+			OrderDetail detail = wi.getOrderDetail();
+			if (detail != null)
+				detail.removeWorkInstruction(wi);
+			Che che = wi.getAssignedChe();
+			if (che != null)
+				che.removeWorkInstruction(wi);
+			try {
+				WorkInstruction.staticGetDao().delete(wi);
+			} catch (DaoException e) {
+				LOGGER.error("purgeWorkInstructions", e);
+			}
+			deletedCount++;
+			if (deletedCount >= willPurge)
+				break;
+		}
+	}
+
+	/**
+	 * This purge does not follow our parent child pattern.
+	 * It just deletes the master object, and assume the cascade will work correctly.
+	 * (This is what the current Companion delete orders does)
+	 */
+	private void purgeOrders(int daysOldToCount, Facility inFacility, int maxToPurgeAtOnce) {
+		Timestamp desiredTime = getDaysOldTimeStamp(daysOldToCount);
+		UUID facilityUUID = inFacility.getPersistentId();
+
+		List<OrderHeader> orders = OrderHeader.staticGetDao()
+			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID),
+				Restrictions.lt("dueDate", desiredTime)));
+
+		int wantToPurge = orders.size();
+		int willPurge = Math.min(wantToPurge, maxToPurgeAtOnce);
+		boolean partial = wantToPurge > willPurge;
+
+		if (partial)
+			LOGGER.info("purging only {}  of {} purgable orders and owned related objects", willPurge, wantToPurge);
+		else
+			LOGGER.info("purging {} orders and owned related objects", willPurge);
+		int deletedCount = 0;
+		for (OrderHeader order : orders) {
+			try {
+				order.delete();
+			} catch (DaoException e) {
+				LOGGER.error("purgeOrders", e);
+			}
+			deletedCount++;
+			if (deletedCount >= willPurge)
+				break;
+
+		}
+	}
+
+	/**
+	 * For many sites, we may get a new "container" for each order. If so, certainly the old containers should be purged
+	 * But we would like to avoid purging permanent containers if possible.
+		 */
+	private void purgeContainers(int daysOldToCount, Facility inFacility, int maxToPurgeAtOnce) {
+		UUID facilityUUID = inFacility.getPersistentId();
+		// The main concern is that we should not purge the container if there are any remaining ContainerUses
+		// Containers have an active flag. So, if inactive, probably worth purging anyway.
+
+		List<Container> cntrs = Container.staticGetDao()
+			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID)));
+
+		LOGGER.info("examining {} Containers to consider purging", cntrs.size());
+		int deletedCount = 0;
+		int loopCount = 0;
+		for (Container cntr : cntrs) {
+			boolean shouldDelete = false;
+			loopCount++;
+			LOGGER.info("loop count {}", loopCount);
+			if (cntr.getChildren().size() == 0) // getUses?
+				shouldDelete = true;
+
+			if (shouldDelete) {
+				try {
+					Container.staticGetDao().delete(cntr);
+				} catch (DaoException e) {
+					LOGGER.error("purgeContainers", e);
+				}
+				deletedCount++;
+				if (deletedCount >= maxToPurgeAtOnce)
+					break;
+
+			}
+		}
+	}
+
+	/**
+	 * Simpler API, so the UI does not have to set maxToPurgeAtOnce
+	 * That parameter is temporary, as at the moment, we just do an immediate delete on the current thread.
+	 * Later, we will have a chron job that deletes in batches.
+	 */
+	public void purgeOldObjects(int daysOldToCount, Facility inFacility, String className) {
+		purgeOldObjects(daysOldToCount, inFacility, className, 1000);
+	}
+
+	/**
+	* The goal is to delete what reported on with the same parameters.
+	* However, there are several sub-deletes, controlled by the className parameter
+	* Logs an error on unsupported class name.
+	* This requires that we be in a transaction in context
+	*/
+	public void purgeOldObjects(int daysOldToCount, Facility inFacility, String className, int maxToPurgeAtOnce) {
+		if (className == null) {
+			LOGGER.error("null class name in purgeOldObjects");
+			return;
+		}
+		boolean foundGoodClassName = false;
+		// String nameToMatch = WorkInstruction.class.getName();
+		if (className.equalsIgnoreCase(WorkInstruction.class.getSimpleName())) {
+			foundGoodClassName = true;
+			purgeWorkInstructions(daysOldToCount, inFacility, maxToPurgeAtOnce);
+		}
+
+		else if (className.equalsIgnoreCase(OrderHeader.class.getSimpleName())) {
+			foundGoodClassName = true;
+			purgeOrders(daysOldToCount, inFacility, maxToPurgeAtOnce);
+		}
+
+		else if (className.equalsIgnoreCase(Container.class.getSimpleName())) {
+			foundGoodClassName = true;
+			purgeContainers(daysOldToCount, inFacility, maxToPurgeAtOnce);
+		}
+
+		if (!foundGoodClassName) {
+			LOGGER.error("unimplement class name: {} in purgeOldObjects", className);
+		}
 	}
 
 }

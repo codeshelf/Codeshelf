@@ -29,7 +29,7 @@ import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.validation.BatchResult;
 
 
-public class SftpWIsEdiServiceTest extends HibernateTest {
+public class AbstractSftpEdiServiceTest extends HibernateTest {
 	
 	private static final String	SFTP_TEST_HOST	= "sftp.codeshelf.com";
 	private static final String	SFTP_TEST_USERNAME	= "test";
@@ -37,6 +37,22 @@ public class SftpWIsEdiServiceTest extends HibernateTest {
 	private WorkInstructionGenerator	wiGenerator	= new WorkInstructionGenerator();
 	private InventoryGenerator	inventoryGenerator = new InventoryGenerator(null);
 
+	@Test
+	public void testBadCredentialsRemainUnlinked() {
+		beginTransaction();
+		
+		Facility facility = getFacility();//trigger creation
+		SftpConfiguration config = setupConfiguration();
+		SftpWIsEdiService sftpWIs = configureSftpService(facility, config, SftpWIsEdiService.class);
+		Assert.assertTrue(sftpWIs.isLinked());
+
+		config.setPassword("BAD");
+		SftpWIsEdiService badSftpWIs = configureSftpService(facility, config, SftpWIsEdiService.class);
+		Assert.assertTrue("Should have been unlinked", !badSftpWIs.isLinked());
+
+		commitTransaction();
+	}
+	
 	@Test
 	public void testSftpWIs() throws EdiFileWriteException {
 		beginTransaction();
@@ -154,8 +170,6 @@ public class SftpWIsEdiServiceTest extends HibernateTest {
 		
 		Assert.assertNotNull(sftpOrders);
 		config = sftpOrders.getConfiguration();
-		Assert.assertEquals(SFTP_TEST_USERNAME, config.getUsername());
-		Assert.assertEquals(SFTP_TEST_PASSWORD, config.getPassword());
 		return (T) sftpOrders;
 	}
 

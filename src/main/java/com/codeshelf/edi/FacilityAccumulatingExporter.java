@@ -107,7 +107,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 					
 				})
 		        .build();
-		this.messageQueue = new EvictingBlockingQueue<ExportMessage>(100);
+		this.messageQueue = new EvictingBlockingQueue<ExportMessage>(250);
 		this.receiptCache = CacheBuilder.newBuilder()
 				.maximumSize(50)
 				/*
@@ -142,7 +142,10 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 			persistenceService.beginTransaction();
 			ExportMessage message = null;
 			try {
-				message = this.messageQueue.take();
+				message = this.messageQueue.poll(30, TimeUnit.SECONDS);
+				if (message == null) {
+					continue; //test guards again
+				}
 				if (POISON.equals(message)) {
 					return;
 				}
@@ -165,11 +168,11 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 				public ExportReceipt call() throws IOException {
 					if (message instanceof OrderOnCartAddedExportMessage) {
 						FileExportReceipt receipt =  getEdiExportTransport().transportOrderOnCartAdded(message.getOrder(), message.getChe(), message.getContents());
-						LOGGER.info("Sent orderOnCartAdded {}", message.getContents());
+						LOGGER.info("Sent orderOnCartAdded {}", message);
 						return receipt;
 					} else if (message instanceof OrderOnCartFinishedExportMessage){
 						FileExportReceipt receipt=  getEdiExportTransport().transportOrderOnCartFinished(message.getOrder(), message.getChe(), message.getContents());
-						LOGGER.info("Sent orderOnCartFinished {}", message.getContents());
+						LOGGER.info("Sent orderOnCartFinished {}", message);
 						return receipt;
 					} else {
 						return new UnhandledExportReceipt();
@@ -205,7 +208,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 		final String exportStr = stringifier.stringifyOrderOnCartAdded(inOrder, inChe);
 		ExportMessage exportMessage = new OrderOnCartAddedExportMessage(inOrder, inChe, exportStr);
 		persistMessage(inOrder.getFacility(), exportMessage);
-		messageQueue.offer(exportMessage);
+		enqueue(exportMessage);
 		return exportMessage;
 	}
 
@@ -225,8 +228,13 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 		final String exportStr = stringifier.stringifyOrderOnCartFinished(inOrder, inChe, orderCheList);
 		ExportMessage exportMessage = new OrderOnCartFinishedExportMessage(inOrder, inChe, exportStr);
 		persistMessage(inOrder.getFacility(), exportMessage);
-		messageQueue.offer(exportMessage);
+		enqueue(exportMessage);
 		return exportMessage;
+	}
+	
+	private boolean enqueue(ExportMessage message) {
+		LOGGER.info("Enqueued message {} with contents {}", message, message.getContents());
+		return messageQueue.offer(message);
 	}
 	
 	private void persistMessage(Facility facility, ExportMessage message){

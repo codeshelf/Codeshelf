@@ -18,7 +18,6 @@ import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -45,7 +44,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-@ToString(of = { "mappedLocation", "active" }, callSuper = true, doNotUseGetters = true)
 public class LocationAlias extends DomainObjectTreeABC<Facility> {
 
 	public static class LocationAliasDao extends GenericDaoABC<LocationAlias> implements ITypedDao<LocationAlias> {
@@ -125,6 +123,9 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 			// if the location is inactive, has brackets around it.
 		else
 			return "";
+	}
+	public String toString(){
+		return "LocationAlias(" +getDomainId() + " / " + getNominalLocationId() + ")";
 	}
 
 }
