@@ -2,7 +2,10 @@ package com.codeshelf.edi;
 
 import groovy.transform.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
+
+import java.util.UUID;
 
 import org.joda.time.DateTime;
 
@@ -44,6 +47,10 @@ public class ExportMessage extends AbstractFuture<ExportReceipt> implements List
 	
 	@Getter
 	private DateTime	dateTime;
+	
+	@Getter @Setter
+	private UUID		persistentId;
+	
 	
 	public ExportMessage(OrderHeader order, Che che, String contents) {
 		super();

@@ -10,6 +10,7 @@ package com.codeshelf.edi;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -17,15 +18,20 @@ import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.edi.ExportMessage.OrderOnCartAddedExportMessage;
 import com.codeshelf.edi.ExportMessage.OrderOnCartFinishedExportMessage;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.ExportMessageDB;
 import com.codeshelf.model.domain.ExportReceipt;
 import com.codeshelf.model.domain.ExportReceipt.FailExportReceipt;
 import com.codeshelf.model.domain.ExportReceipt.UnhandledExportReceipt;
+import com.codeshelf.persistence.SideTransaction;
+import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.FileExportReceipt;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
@@ -131,19 +137,23 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 
 	@Override
 	protected void run() throws InterruptedException {
+		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		while(isRunning() && !Thread.currentThread().isInterrupted()) {
+			persistenceService.beginTransaction();
 			ExportMessage message = null;
 			try {
 				message = this.messageQueue.take();
 				if (POISON.equals(message)) {
 					return;
 				}
+				persistMessageCompletion(message);
 				ExportReceipt receipt = processMessage(message);
 				storeReceipt(message, receipt);
 				message.setReceipt(receipt);
 			} catch(RuntimeException e) {
 				LOGGER.warn("Unable to process message {}", message, e);
-;			}
+			}
+			persistenceService.commitTransaction();
 		}
 	}
 
@@ -194,6 +204,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 	public ListenableFuture<ExportReceipt> exportOrderOnCartAdded(final OrderHeader inOrder, final Che inChe) {
 		final String exportStr = stringifier.stringifyOrderOnCartAdded(inOrder, inChe);
 		ExportMessage exportMessage = new OrderOnCartAddedExportMessage(inOrder, inChe, exportStr);
+		persistMessage(inOrder.getFacility(), exportMessage);
 		messageQueue.offer(exportMessage);
 		return exportMessage;
 	}
@@ -212,9 +223,36 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 		ArrayList<WorkInstructionCsvBean> orderCheList = accumulator.getAndRemoveWiBeansFor(inOrder.getOrderId(), inChe.getDomainId());
 		// This list has "complete" work instruction beans. The particular customer's EDI may need strange handling.
 		final String exportStr = stringifier.stringifyOrderOnCartFinished(inOrder, inChe, orderCheList);
-		ExportMessage exportMessage = new OrderOnCartFinishedExportMessage(inOrder, inChe, exportStr); 
+		ExportMessage exportMessage = new OrderOnCartFinishedExportMessage(inOrder, inChe, exportStr);
+		persistMessage(inOrder.getFacility(), exportMessage);
 		messageQueue.offer(exportMessage);
 		return exportMessage;
 	}
-
+	
+	private void persistMessage(Facility facility, ExportMessage message){
+		final ExportMessageDB exportMessageDB = new ExportMessageDB(facility, message);
+		try {
+			new SideTransaction<Void>() {
+				@Override
+				public Void task(Session session) {
+					session.save(exportMessageDB);
+					return null;
+				}
+			}.run();
+			message.setPersistentId(exportMessageDB.getPersistentId());
+		} catch (Exception e) {
+			LOGGER.warn("Encountered error saving ExportMessage to DB: {}", e);
+		}
+	}
+	
+	private void persistMessageCompletion(ExportMessage message){
+		UUID persistentId = message.getPersistentId();
+		if (persistentId != null) {
+			ExportMessageDB exportMessageDB = ExportMessageDB.staticGetDao().findByPersistentId(message.getPersistentId());
+			if (exportMessageDB != null) {
+				exportMessageDB.setActive(false);
+				ExportMessageDB.staticGetDao().store(exportMessageDB);
+			}
+		}
+	}
 }

@@ -121,6 +121,9 @@ public class Facility extends Location {
 
 	@OneToMany(mappedBy = "facility", orphanRemoval = true)
 	private List<Resolution>				resolutions;
+	
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
+	private List<ExportMessageDB>			exportMessages;
 
 	public Facility() {
 		super();

@@ -88,6 +88,10 @@ public abstract class AbstractPersistenceService extends AbstractCodeshelfIdleSe
 		return session;
 	}
 	
+	public Session openNewSession(){
+		return sessionFactory.openSession();
+	}
+	
 	public Statistics getStatistics() {
 		return this.sessionFactory.getStatistics();
 	}

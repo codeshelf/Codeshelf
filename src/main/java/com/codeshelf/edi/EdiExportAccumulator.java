@@ -10,8 +10,6 @@ package com.codeshelf.edi;
 
 import java.util.ArrayList;
 
-import lombok.Getter;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,8 +21,7 @@ import com.codeshelf.model.domain.WorkInstruction;
  * Later, change to a persistent list of the serialized bean to survive server restart.
  */
 public class EdiExportAccumulator {
-	@Getter
-	ArrayList<WorkInstructionCsvBean> wiBeanList = new ArrayList<WorkInstructionCsvBean>();
+	private ArrayList<WorkInstructionCsvBean> wiBeanList = new ArrayList<WorkInstructionCsvBean>();
 	
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(EdiExportAccumulator.class);
 	
