@@ -2343,6 +2343,10 @@ public class WorkService implements IApiService {
 		return new Timestamp(desiredTimeLong);
 	}
 
+	private void logStep(String s){
+		LOGGER.info(s);
+	}
+	
 	/**
 	 * The goal is to report on objects that might be archived.
 	 * This requires that we be in a transaction in context
@@ -2361,6 +2365,7 @@ public class WorkService implements IApiService {
 		String headerString = String.format("***Archivable Objects Summary. Objects older than %d days.***", daysOldToCount);
 		reportables.add(headerString);
 
+		logStep("Achiveables: query WorkInstruction"); // two queries
 		// Work Instructions
 		int totalWiCount = WorkInstruction.staticGetDao()
 			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID)))
@@ -2375,6 +2380,8 @@ public class WorkService implements IApiService {
 		String orderGroupString = String.format("*Objects that archive with orders... (Note, work instructions for those orders will also)*");
 		reportables.add(orderGroupString);
 
+		logStep("Achiveables: query OrderHeader"); // two queries
+
 		// Orders
 		int totalOrderCount = OrderHeader.staticGetDao()
 			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID)))
@@ -2385,6 +2392,8 @@ public class WorkService implements IApiService {
 			.size();
 		String orderString = String.format(" Orders: %d archivable of %d total", archiveableOrderCount, totalOrderCount);
 		reportables.add(orderString);
+
+		logStep("Achiveables: query OrderDetail"); // two queries
 
 		// Order Details
 		Criteria crit = OrderDetail.staticGetDao().createCriteria();
@@ -2402,6 +2411,7 @@ public class WorkService implements IApiService {
 		reportables.add(detailString);
 
 		// ContainerUse
+		logStep("Achiveables: query ContainerUse"); // two queries
 		Criteria crit3 = ContainerUse.staticGetDao().createCriteria();
 		crit3.createAlias("parent", "p");
 		crit3.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
@@ -2422,6 +2432,7 @@ public class WorkService implements IApiService {
 		reportables.add(otherGroupString);
 
 		// Containers
+		logStep("Achiveables: query Container"); // one query
 		Criteria crit5 = Container.staticGetDao().createCriteria();
 		crit5.createAlias("parent", "p");
 		crit5.add(Restrictions.eq("p.persistentId", facilityUUID));
@@ -2430,6 +2441,7 @@ public class WorkService implements IApiService {
 		reportables.add(cntrString);
 
 		// OrderGroup
+		logStep("Achiveables: query OrderGroup"); // one query
 		Criteria crit6 = OrderGroup.staticGetDao().createCriteria();
 		crit6.createAlias("parent", "p");
 		crit6.add(Restrictions.eq("p.persistentId", facilityUUID));
@@ -2479,7 +2491,12 @@ public class WorkService implements IApiService {
 			deletedCount++;
 			if (deletedCount >= willPurge)
 				break;
+			
+			if (deletedCount % 100 == 0)
+				LOGGER.info("deleted {} WorkInstructions ", deletedCount);
+
 		}
+		LOGGER.info("deleted {} WorkInstructions ", deletedCount);
 	}
 
 	/**
@@ -2513,8 +2530,11 @@ public class WorkService implements IApiService {
 			deletedCount++;
 			if (deletedCount >= willPurge)
 				break;
+			if (deletedCount % 100 == 0)
+				LOGGER.info("deleted {} Orders ", deletedCount);
 
 		}
+		LOGGER.info("deleted {} Orders ", deletedCount);
 	}
 
 	/**
@@ -2529,14 +2549,28 @@ public class WorkService implements IApiService {
 		List<Container> cntrs = Container.staticGetDao()
 			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID)));
 
+		// ContainerUse
+		Criteria crit = ContainerUse.staticGetDao().createCriteria();
+		crit.createAlias("parent", "p");
+		crit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
+		List<ContainerUse> uses = ContainerUse.staticGetDao().findByCriteriaQuery(crit);
+
 		LOGGER.info("examining {} Containers to consider purging", cntrs.size());
+
+		// Add each container that ContainerUse references to map
+		Map<UUID, Container> referencedMap = new HashMap<UUID, Container>();
+
+		for (ContainerUse cntrUse : uses) {
+			Container referencedCntr = cntrUse.getParent();
+			if (!referencedMap.containsKey(referencedCntr.getPersistentId())) {
+				referencedMap.put(referencedCntr.getPersistentId(), referencedCntr);
+			}
+		}
+
 		int deletedCount = 0;
-		int loopCount = 0;
 		for (Container cntr : cntrs) {
 			boolean shouldDelete = false;
-			loopCount++;
-			LOGGER.info("loop count {}", loopCount);
-			if (cntr.getChildren().size() == 0) // getUses?
+			if (!referencedMap.containsKey(cntr.getPersistentId())) // This container had no containerUses
 				shouldDelete = true;
 
 			if (shouldDelete) {
@@ -2548,9 +2582,13 @@ public class WorkService implements IApiService {
 				deletedCount++;
 				if (deletedCount >= maxToPurgeAtOnce)
 					break;
-
+	
+				if (deletedCount % 100 == 0)
+					LOGGER.info("deleted {} Containers ", deletedCount);
 			}
 		}
+		LOGGER.info("deleted {} Containers ", deletedCount);
+
 	}
 
 	/**
@@ -2574,7 +2612,7 @@ public class WorkService implements IApiService {
 			return;
 		}
 		daysOldToCount = floorDays(daysOldToCount);
-		
+
 		boolean foundGoodClassName = false;
 		// String nameToMatch = WorkInstruction.class.getName();
 		if (WorkInstruction.class.isAssignableFrom(inCls)) {
@@ -2600,6 +2638,5 @@ public class WorkService implements IApiService {
 	private int floorDays(int daysOldToCount) {
 		return Math.max(daysOldToCount, 1);
 	}
-	
 
 }
