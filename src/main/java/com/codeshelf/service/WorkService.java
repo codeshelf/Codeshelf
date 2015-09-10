@@ -2345,8 +2345,9 @@ public class WorkService implements IApiService {
 	/**
 	 * The goal is to report on objects that might be archived.
 	 * This requires that we be in a transaction in context
+	 * @return 
 	 */
-	public void reportAchiveables(int daysOldToCount, Facility inFacility) {
+	public List<String> reportAchiveables(int daysOldToCount, Facility inFacility) {
 		// Get our reference timestamp relative to now.
 		Timestamp desiredTime = getDaysOldTimeStamp(daysOldToCount);
 
@@ -2437,6 +2438,7 @@ public class WorkService implements IApiService {
 		for (String s : reportables) {
 			LOGGER.info(s);
 		}
+		return reportables;
 
 	}
 
