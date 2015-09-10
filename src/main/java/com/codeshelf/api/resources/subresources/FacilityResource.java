@@ -195,32 +195,31 @@ public class FacilityResource {
 	
 	@GET
 	@Path("/data/summary")
-	@RequiresPermissions("companion:view")
+	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getDataSummary() {
-		Object response = new Object();
-		//Object response = workService.summarizeData();
-		return BaseResponse.buildResponse(response);
+	public Response getDataSummary(@QueryParam("daysOld") int daysOld) {
+		List<String> summary = workService.reportAchiveables(daysOld, this.facility);
+		return BaseResponse.buildResponse(summary);
 	}
 
 	@DELETE
 	@Path("/data/wis")
-	@RequiresPermissions("companion:view")
+	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response deleteWorkInstructions(@QueryParam("lastUpdatedBefore") TimestampParam  lastUpdatedBefore, @QueryParam("active") boolean active) {
-		Object response = new Object();
-		//Object response = workService.deleteWorkInstuctions(lastUpdateBefore.getValue(), active);
-		return BaseResponse.buildResponse(response);
+	public Response deleteWorkInstructions(@QueryParam("daysOld") int daysOld) {
+		List<String> summary = ImmutableList.of();
+		//summary = workService.purgeWorkInstructions(daysOld, this.facility);
+		return BaseResponse.buildResponse(summary);
 	}
 
 	@DELETE
 	@Path("/data/orders")
-	@RequiresPermissions("companion:view")
+	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response deleteOrders(@QueryParam("lastUpdatedBefore") TimestampParam  lastUpdatedBefore, @QueryParam("active") boolean active) {
-		Object response = new Object();
-		//Object response = workService.deleteWorkInstuctions(lastUpdateBefore.getValue(), active);
-		return BaseResponse.buildResponse(response);
+	public Response deleteOrders(@QueryParam("daysOld") int daysOld) {
+		List<String> summary = ImmutableList.of();
+		//summary = workService.purgeOrders(daysOld, this.facility);
+		return BaseResponse.buildResponse(summary);
 	}
 
 	
