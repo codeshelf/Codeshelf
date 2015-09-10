@@ -89,6 +89,44 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		return header;
 	}
 
+	/**
+	 * Critical. Do not call DAO.delete(order) directly, as it may damage other object relationships.
+	 * This uses hibernate magic as much as possible to cascade the delete, but deals with known issues.
+	 * This requires that we be in an appropriate transaction already.
+	 */
+	public static void deleteOrder(OrderHeader order) {
+		// The order has a containerUse, that will be deleted. We want to get that delinked from its owning container and optional assignedChe
+		ContainerUse use = order.getContainerUse();
+		if (use != null) {
+			Container cntr = use.getParent();
+			Che che = use.getCurrentChe();
+			
+			if (cntr != null)
+				cntr.removeContainerUse(use);
+			if (che != null)
+				che.removeContainerUse(use);
+		}
+		// It seems likely that cascade delete of work instructions would damage the CHE wi list.
+		List<WorkInstruction> wis = order.getAllWorkInstructionsForOrder();
+		for (WorkInstruction wi: wis) {
+			Che che = wi.getAssignedChe();
+			if (che != null)
+				che.removeWorkInstruction(wi);
+		}
+		
+		OrderHeader.staticGetDao().delete(order);
+	}
+	
+	private List<WorkInstruction> getAllWorkInstructionsForOrder() {
+		ArrayList<WorkInstruction> allWiList = new ArrayList<WorkInstruction>();
+		for (OrderDetail detail :this.getOrderDetails()) {
+			for (WorkInstruction wi: detail.getWorkInstructions()) {
+				allWiList.add(wi);
+			}
+		}
+		return allWiList;
+	}
+
 	private static final Logger			LOGGER			= LoggerFactory.getLogger(OrderHeader.class);
 
 	// The parent facility.
@@ -723,7 +761,8 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	 */
 	public void delete() {
 		LOGGER.info("Deleting order {}", this);
-		OrderHeader.staticGetDao().delete(this);
+		// OrderHeader.staticGetDao().delete(this); dangerous. Damages Container as ContainerUse is deleted
+		OrderHeader.deleteOrder(this); // safe
 	}
 
 	/**

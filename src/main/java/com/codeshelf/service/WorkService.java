@@ -65,6 +65,7 @@ import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.LocationAlias;
 import com.codeshelf.model.domain.OrderDetail;
+import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.Path;
@@ -2414,6 +2415,25 @@ public class WorkService implements IApiService {
 		String useString = String.format(" ContainerUses: %d archivable of %d total", archiveableUseCount, totalUseCount);
 		reportables.add(useString);
 
+		String otherGroupString = String.format("*Additional objects that may archive with orders... (Note, not easy to determine how many will be purged until other objects are gone)*");
+		reportables.add(otherGroupString);
+
+		// Containers
+		Criteria crit5 = Container.staticGetDao().createCriteria();
+		crit5.createAlias("parent", "p");
+		crit5.add(Restrictions.eq("p.persistentId", facilityUUID));
+		int totalCntrCount = Container.staticGetDao().findByCriteriaQuery(crit5).size();
+		String cntrString = String.format(" Containers: %d total", totalCntrCount);
+		reportables.add(cntrString);
+
+		// OrderGroup
+		Criteria crit6 = OrderGroup.staticGetDao().createCriteria();
+		crit6.createAlias("parent", "p");
+		crit6.add(Restrictions.eq("p.persistentId", facilityUUID));
+		int totalGroupCount = OrderGroup.staticGetDao().findByCriteriaQuery(crit6).size();
+		String groupString = String.format(" OrderGroups: %d total", totalGroupCount);
+		reportables.add(groupString);
+
 		for (String s : reportables) {
 			LOGGER.info(s);
 		}
@@ -2430,17 +2450,17 @@ public class WorkService implements IApiService {
 		List<WorkInstruction> wiList = WorkInstruction.staticGetDao()
 			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID),
 				Restrictions.lt("created", desiredTime)));
-		
+
 		int wantToPurge = wiList.size();
 		int willPurge = Math.min(wantToPurge, maxToPurgeAtOnce);
 		boolean partial = wantToPurge > willPurge;
 		if (partial)
 			LOGGER.info("purging only {}  of {} purgable work instructions", willPurge, wantToPurge);
-		else 
+		else
 			LOGGER.info("purging {} work instructions", willPurge);
 		int deletedCount = 0;
 		for (WorkInstruction wi : wiList) {
-			
+
 			OrderDetail detail = wi.getOrderDetail();
 			if (detail != null)
 				detail.removeWorkInstruction(wi);
@@ -2452,7 +2472,7 @@ public class WorkService implements IApiService {
 			} catch (DaoException e) {
 				LOGGER.error("purgeWorkInstructions", e);
 			}
-			deletedCount ++;
+			deletedCount++;
 			if (deletedCount >= willPurge)
 				break;
 		}
@@ -2471,12 +2491,60 @@ public class WorkService implements IApiService {
 			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID),
 				Restrictions.lt("dueDate", desiredTime)));
 
-		LOGGER.info("purging {} orders and owned related objects", orders.size());
+		int wantToPurge = orders.size();
+		int willPurge = Math.min(wantToPurge, maxToPurgeAtOnce);
+		boolean partial = wantToPurge > willPurge;
+
+		if (partial)
+			LOGGER.info("purging only {}  of {} purgable orders and owned related objects", willPurge, wantToPurge);
+		else
+			LOGGER.info("purging {} orders and owned related objects", willPurge);
+		int deletedCount = 0;
 		for (OrderHeader order : orders) {
 			try {
-				OrderHeader.staticGetDao().delete(order);
+				order.delete();
 			} catch (DaoException e) {
 				LOGGER.error("purgeOrders", e);
+			}
+			deletedCount++;
+			if (deletedCount >= willPurge)
+				break;
+
+		}
+	}
+
+	/**
+	 * For many sites, we may get a new "container" for each order. If so, certainly the old containers should be purged
+	 * But we would like to avoid purging permanent containers if possible.
+		 */
+	private void purgeContainers(int daysOldToCount, Facility inFacility, int maxToPurgeAtOnce) {
+		UUID facilityUUID = inFacility.getPersistentId();
+		// The main concern is that we should not purge the container if there are any remaining ContainerUses
+		// Containers have an active flag. So, if inactive, probably worth purging anyway.
+
+		List<Container> cntrs = Container.staticGetDao()
+			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID)));
+
+		LOGGER.info("examining {} Containers to consider purging", cntrs.size());
+		int deletedCount = 0;
+		int loopCount = 0;
+		for (Container cntr : cntrs) {
+			boolean shouldDelete = false;
+			loopCount++;
+			LOGGER.info("loop count {}", loopCount);
+			if (cntr.getChildren().size() == 0) // getUses?
+				shouldDelete = true;
+
+			if (shouldDelete) {
+				try {
+					Container.staticGetDao().delete(cntr);
+				} catch (DaoException e) {
+					LOGGER.error("purgeContainers", e);
+				}
+				deletedCount++;
+				if (deletedCount >= maxToPurgeAtOnce)
+					break;
+
 			}
 		}
 	}
@@ -2490,12 +2558,12 @@ public class WorkService implements IApiService {
 		purgeOldObjects(daysOldToCount, inFacility, className, 1000);
 	}
 
-		/**
-	 * The goal is to delete what reported on with the same parameters.
-	 * However, there are several sub-deletes, controlled by the className parameter
-	 * Logs an error on unsupported class name.
-	 * This requires that we be in a transaction in context
-	 */
+	/**
+	* The goal is to delete what reported on with the same parameters.
+	* However, there are several sub-deletes, controlled by the className parameter
+	* Logs an error on unsupported class name.
+	* This requires that we be in a transaction in context
+	*/
 	public void purgeOldObjects(int daysOldToCount, Facility inFacility, String className, int maxToPurgeAtOnce) {
 		if (className == null) {
 			LOGGER.error("null class name in purgeOldObjects");
@@ -2508,9 +2576,14 @@ public class WorkService implements IApiService {
 			purgeWorkInstructions(daysOldToCount, inFacility, maxToPurgeAtOnce);
 		}
 
-		if (className.equalsIgnoreCase(OrderHeader.class.getSimpleName())) {
+		else if (className.equalsIgnoreCase(OrderHeader.class.getSimpleName())) {
 			foundGoodClassName = true;
 			purgeOrders(daysOldToCount, inFacility, maxToPurgeAtOnce);
+		}
+
+		else if (className.equalsIgnoreCase(Container.class.getSimpleName())) {
+			foundGoodClassName = true;
+			purgeContainers(daysOldToCount, inFacility, maxToPurgeAtOnce);
 		}
 
 		if (!foundGoodClassName) {
