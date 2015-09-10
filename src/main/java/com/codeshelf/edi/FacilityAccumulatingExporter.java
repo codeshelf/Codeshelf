@@ -155,8 +155,9 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 				message.setReceipt(receipt);
 			} catch(RuntimeException e) {
 				LOGGER.warn("Unable to process message {}", message, e);
+			} finally {
+				persistenceService.commitTransaction();
 			}
-			persistenceService.commitTransaction();
 		}
 	}
 
