@@ -269,7 +269,7 @@ public class DataArchiving extends ServerTest {
 		picker.scanCommand("LOGOUT");
 		picker.waitForCheState(CheStateEnum.IDLE, 4000);
 
-		LOGGER.info("2a: Look at the orders");
+		LOGGER.info("2a: Do a trivial count");
 		beginTransaction();
 		facility = facility.reload();
 
@@ -293,6 +293,34 @@ public class DataArchiving extends ServerTest {
 		beginTransaction();
 		facility = facility.reload();
 		workService.reportAchiveables(2, facility);
+		commitTransaction();
+
+		LOGGER.info("5: Call the work instruction purge, but artificially limit max delete to 4");
+		beginTransaction();
+		facility = facility.reload();
+		workService.purgeOldObjects(2, facility, "WorkInstruction", 4);
+		commitTransaction();
+		
+		LOGGER.info("5b: Report, via the work service call");
+		beginTransaction();
+		facility = facility.reload();
+		workService.reportAchiveables(2, facility);
+		List<WorkInstruction> wiList2 = WorkInstruction.staticGetDao().getAll();
+		Assert.assertEquals(4, wiList2.size());
+		commitTransaction();
+
+		LOGGER.info("6: Call the orders purge");
+		beginTransaction();
+		facility = facility.reload();
+		workService.purgeOldObjects(2, facility, "OrderHeader", 1000); // a more typical value?
+		commitTransaction();
+		
+		LOGGER.info("6b: Report, via the work service call");
+		beginTransaction();
+		facility = facility.reload();
+		workService.reportAchiveables(2, facility);
+		List<OrderHeader> orders2 = OrderHeader.staticGetDao().getAll();
+		Assert.assertEquals(1, orders2.size());
 		commitTransaction();
 
 	}
