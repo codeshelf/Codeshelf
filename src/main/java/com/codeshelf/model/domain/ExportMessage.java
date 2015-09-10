@@ -10,7 +10,7 @@ import javax.persistence.Table;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.codeshelf.edi.ExportMessage;
+import com.codeshelf.edi.ExportMessageFuture;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -21,18 +21,18 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "export_message_db")
+@Table(name = "export_message")
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class ExportMessageDB extends DomainObjectTreeABC<Facility>{
-	public static class ExportMessageDBDao extends GenericDaoABC<ExportMessageDB> implements ITypedDao<ExportMessageDB> {
-		public final Class<ExportMessageDB> getDaoClass() {
-			return ExportMessageDB.class;
+public class ExportMessage extends DomainObjectTreeABC<Facility>{
+	public static class ExportMessageDao extends GenericDaoABC<ExportMessage> implements ITypedDao<ExportMessage> {
+		public final Class<ExportMessage> getDaoClass() {
+			return ExportMessage.class;
 		}
 	}
 	
-	//private static final Logger		LOGGER				= LoggerFactory.getLogger(ExportMessageDB.class);
+	//private static final Logger		LOGGER				= LoggerFactory.getLogger(ExportMessage.class);
 	
 	@ManyToOne(optional = false, fetch=FetchType.EAGER)
 	@Getter
@@ -52,12 +52,12 @@ public class ExportMessageDB extends DomainObjectTreeABC<Facility>{
 
 
 	@SuppressWarnings("unchecked")
-	public final ITypedDao<ExportMessageDB> getDao() {
+	public final ITypedDao<ExportMessage> getDao() {
 		return staticGetDao();
 	}
 
-	public static ITypedDao<ExportMessageDB> staticGetDao() {
-		return TenantPersistenceService.getInstance().getDao(ExportMessageDB.class);
+	public static ITypedDao<ExportMessage> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(ExportMessage.class);
 	}
 
 	@Override
@@ -70,11 +70,11 @@ public class ExportMessageDB extends DomainObjectTreeABC<Facility>{
 		return getParent();
 	}
 	
-	public ExportMessageDB() {
+	public ExportMessage() {
 		super();
 	}
 	
-	public ExportMessageDB(Facility facility, ExportMessage message) {
+	public ExportMessage(Facility facility, ExportMessageFuture message) {
 		setParent(facility);
 		setContents(message.getContents());
 		setActive(true);

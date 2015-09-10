@@ -123,7 +123,7 @@ public class Facility extends Location {
 	private List<Resolution>				resolutions;
 	
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
-	private List<ExportMessageDB>			exportMessages;
+	private List<ExportMessage>				exportMessages;
 
 	public Facility() {
 		super();

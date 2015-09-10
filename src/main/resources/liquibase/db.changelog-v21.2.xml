@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog 
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog" 
+	logicalFilePath="db.changelog-v21.2.xml"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+    <changeSet author="ilya (generated)" id="1441393288395-4">
+        <createTable tableName="export_message">
+            <column name="persistentid" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="domainid" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="INT8">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="contents" type="CLOB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="parent_persistentid" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="default (generated)" id="1441393288395-5">
+        <addPrimaryKey columnNames="persistentid" constraintName="export_messagePK" tableName="export_message"/>
+    </changeSet>
+    <changeSet author="default (generated)" id="1441393288395-6">
+        <addForeignKeyConstraint baseColumnNames="parent_persistentid" baseTableName="export_message" constraintName="FK_di4asg4cjne5r9q622oya35x9" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="location"/>
+    </changeSet>
+</databaseChangeLog>

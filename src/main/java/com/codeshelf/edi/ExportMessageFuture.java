@@ -15,9 +15,9 @@ import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 
 @EqualsAndHashCode(excludes={"contents"})
-public class ExportMessage extends AbstractFuture<ExportReceipt> implements ListenableFuture<ExportReceipt> {
+public class ExportMessageFuture extends AbstractFuture<ExportReceipt> implements ListenableFuture<ExportReceipt> {
 
-	public static class OrderOnCartFinishedExportMessage extends ExportMessage {
+	public static class OrderOnCartFinishedExportMessage extends ExportMessageFuture {
 
 		public OrderOnCartFinishedExportMessage(OrderHeader inOrder, Che inChe, String exportStr) {
 			super(inOrder, inChe, exportStr);
@@ -25,7 +25,7 @@ public class ExportMessage extends AbstractFuture<ExportReceipt> implements List
 
 	}
 
-	public static class OrderOnCartAddedExportMessage extends ExportMessage {
+	public static class OrderOnCartAddedExportMessage extends ExportMessageFuture {
 
 		public OrderOnCartAddedExportMessage(OrderHeader inOrder, Che inChe, String exportStr) {
 			super(inOrder, inChe, exportStr);
@@ -50,7 +50,7 @@ public class ExportMessage extends AbstractFuture<ExportReceipt> implements List
 	private UUID		persistentId;
 	
 	
-	public ExportMessage(OrderHeader order, Che che, String contents) {
+	public ExportMessageFuture(OrderHeader order, Che che, String contents) {
 		super();
 		this.dateTime = new DateTime();
 		this.order = order;

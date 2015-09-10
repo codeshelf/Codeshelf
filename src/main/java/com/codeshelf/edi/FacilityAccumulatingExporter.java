@@ -22,10 +22,10 @@ import org.hibernate.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.edi.ExportMessage.OrderOnCartAddedExportMessage;
-import com.codeshelf.edi.ExportMessage.OrderOnCartFinishedExportMessage;
+import com.codeshelf.edi.ExportMessageFuture.OrderOnCartAddedExportMessage;
+import com.codeshelf.edi.ExportMessageFuture.OrderOnCartFinishedExportMessage;
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.model.domain.ExportMessageDB;
+import com.codeshelf.model.domain.ExportMessage;
 import com.codeshelf.model.domain.ExportReceipt;
 import com.codeshelf.model.domain.ExportReceipt.FailExportReceipt;
 import com.codeshelf.model.domain.ExportReceipt.UnhandledExportReceipt;
@@ -57,7 +57,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(FacilityAccumulatingExporter.class);
 
-	private static final ExportMessage	POISON	= new ExportMessage(null, null,null);
+	private static final ExportMessageFuture	POISON	= new ExportMessageFuture(null, null,null);
 
 	@Getter
 	private EdiExportAccumulator accumulator; 
@@ -73,11 +73,11 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 	private Retryer<ExportReceipt> retryer;
 
 	//private BlockingQueue<WorkEvent>	workQueue; 
-	private EvictingBlockingQueue<ExportMessage>	messageQueue; 
+	private EvictingBlockingQueue<ExportMessageFuture>	messageQueue; 
 	
 //	private final long RELATIVE_EPOCH = new DateTime(2015, 9, 01, 0, 0).getMillis();
 
-	private Cache<ExportMessage, ExportReceipt>	receiptCache;
+	private Cache<ExportMessageFuture, ExportReceipt>	receiptCache;
 	
 	public FacilityAccumulatingExporter(EdiExportAccumulator accumulator, WiBeanStringifier stringifier, EdiExportTransport exportService) {
 		super();
@@ -107,7 +107,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 					
 				})
 		        .build();
-		this.messageQueue = new EvictingBlockingQueue<ExportMessage>(250);
+		this.messageQueue = new EvictingBlockingQueue<ExportMessageFuture>(250);
 		this.receiptCache = CacheBuilder.newBuilder()
 				.maximumSize(50)
 				/*
@@ -130,7 +130,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 
 	@Override
 	protected void triggerShutdown() {
-		this.messageQueue.drainTo(new ArrayList<ExportMessage>());
+		this.messageQueue.drainTo(new ArrayList<ExportMessageFuture>());
 		this.messageQueue.offer(POISON);
 	}
 
@@ -140,7 +140,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		while(isRunning() && !Thread.currentThread().isInterrupted()) {
 			persistenceService.beginTransaction();
-			ExportMessage message = null;
+			ExportMessageFuture message = null;
 			try {
 				message = this.messageQueue.poll(30, TimeUnit.SECONDS);
 				if (message == null) {
@@ -160,7 +160,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 		}
 	}
 
-	private ExportReceipt processMessage(final ExportMessage message) {
+	private ExportReceipt processMessage(final ExportMessageFuture message) {
 		ExportReceipt receipt;
 		try {
 			receipt = retryer.call(new Callable<ExportReceipt>() {
@@ -192,7 +192,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 
 	}
 
-	private void storeReceipt(ExportMessage message, ExportReceipt receipt) {
+	private void storeReceipt(ExportMessageFuture message, ExportReceipt receipt) {
 		receiptCache.put(message, receipt);
 		
 	}
@@ -206,7 +206,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 	
 	public ListenableFuture<ExportReceipt> exportOrderOnCartAdded(final OrderHeader inOrder, final Che inChe) {
 		final String exportStr = stringifier.stringifyOrderOnCartAdded(inOrder, inChe);
-		ExportMessage exportMessage = new OrderOnCartAddedExportMessage(inOrder, inChe, exportStr);
+		ExportMessageFuture exportMessage = new OrderOnCartAddedExportMessage(inOrder, inChe, exportStr);
 		persistMessage(inOrder.getFacility(), exportMessage);
 		enqueue(exportMessage);
 		return exportMessage;
@@ -226,40 +226,40 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 		ArrayList<WorkInstructionCsvBean> orderCheList = accumulator.getAndRemoveWiBeansFor(inOrder.getOrderId(), inChe.getDomainId());
 		// This list has "complete" work instruction beans. The particular customer's EDI may need strange handling.
 		final String exportStr = stringifier.stringifyOrderOnCartFinished(inOrder, inChe, orderCheList);
-		ExportMessage exportMessage = new OrderOnCartFinishedExportMessage(inOrder, inChe, exportStr);
+		ExportMessageFuture exportMessage = new OrderOnCartFinishedExportMessage(inOrder, inChe, exportStr);
 		persistMessage(inOrder.getFacility(), exportMessage);
 		enqueue(exportMessage);
 		return exportMessage;
 	}
 	
-	private boolean enqueue(ExportMessage message) {
+	private boolean enqueue(ExportMessageFuture message) {
 		LOGGER.info("Enqueued message {} with contents {}", message, message.getContents());
 		return messageQueue.offer(message);
 	}
 	
-	private void persistMessage(Facility facility, ExportMessage message){
-		final ExportMessageDB exportMessageDB = new ExportMessageDB(facility, message);
+	private void persistMessage(Facility facility, ExportMessageFuture message){
+		final ExportMessage exportMessage = new ExportMessage(facility, message);
 		try {
 			new SideTransaction<Void>() {
 				@Override
 				public Void task(Session session) {
-					session.save(exportMessageDB);
+					session.save(exportMessage);
 					return null;
 				}
 			}.run();
-			message.setPersistentId(exportMessageDB.getPersistentId());
+			message.setPersistentId(exportMessage.getPersistentId());
 		} catch (Exception e) {
 			LOGGER.warn("Encountered error saving ExportMessage to DB: {}", e);
 		}
 	}
 	
-	private void persistMessageCompletion(ExportMessage message){
+	private void persistMessageCompletion(ExportMessageFuture message){
 		UUID persistentId = message.getPersistentId();
 		if (persistentId != null) {
-			ExportMessageDB exportMessageDB = ExportMessageDB.staticGetDao().findByPersistentId(message.getPersistentId());
-			if (exportMessageDB != null) {
-				exportMessageDB.setActive(false);
-				ExportMessageDB.staticGetDao().store(exportMessageDB);
+			ExportMessage exportMessage = ExportMessage.staticGetDao().findByPersistentId(message.getPersistentId());
+			if (exportMessage != null) {
+				exportMessage.setActive(false);
+				ExportMessage.staticGetDao().store(exportMessage);
 			}
 		}
 	}
