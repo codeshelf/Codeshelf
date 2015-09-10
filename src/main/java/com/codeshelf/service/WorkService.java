@@ -2337,6 +2337,10 @@ public class WorkService implements IApiService {
 		return new Timestamp(desiredTimeLong);
 	}
 
+	private void logStep(String s){
+		LOGGER.info(s);
+	}
+	
 	/**
 	 * The goal is to report on objects that might be archived.
 	 * This requires that we be in a transaction in context
@@ -2355,6 +2359,7 @@ public class WorkService implements IApiService {
 		String headerString = String.format("***Archivable Objects Summary. Objects older than %d days.***", daysOldToCount);
 		reportables.add(headerString);
 
+		logStep("Achiveables: query WorkInstruction"); // two queries
 		// Work Instructions
 		int totalWiCount = WorkInstruction.staticGetDao()
 			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID)))
@@ -2369,6 +2374,8 @@ public class WorkService implements IApiService {
 		String orderGroupString = String.format("*Objects that archive with orders... (Note, work instructions for those orders will also)*");
 		reportables.add(orderGroupString);
 
+		logStep("Achiveables: query OrderHeader"); // two queries
+
 		// Orders
 		int totalOrderCount = OrderHeader.staticGetDao()
 			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID)))
@@ -2379,6 +2386,8 @@ public class WorkService implements IApiService {
 			.size();
 		String orderString = String.format(" Orders: %d archivable of %d total", archiveableOrderCount, totalOrderCount);
 		reportables.add(orderString);
+
+		logStep("Achiveables: query OrderDetail"); // two queries
 
 		// Order Details
 		Criteria crit = OrderDetail.staticGetDao().createCriteria();
@@ -2396,6 +2405,7 @@ public class WorkService implements IApiService {
 		reportables.add(detailString);
 
 		// ContainerUse
+		logStep("Achiveables: query ContainerUse"); // two queries
 		Criteria crit3 = ContainerUse.staticGetDao().createCriteria();
 		crit3.createAlias("parent", "p");
 		crit3.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
@@ -2416,6 +2426,7 @@ public class WorkService implements IApiService {
 		reportables.add(otherGroupString);
 
 		// Containers
+		logStep("Achiveables: query Container"); // one query
 		Criteria crit5 = Container.staticGetDao().createCriteria();
 		crit5.createAlias("parent", "p");
 		crit5.add(Restrictions.eq("p.persistentId", facilityUUID));
@@ -2424,6 +2435,7 @@ public class WorkService implements IApiService {
 		reportables.add(cntrString);
 
 		// OrderGroup
+		logStep("Achiveables: query OrderGroup"); // one query
 		Criteria crit6 = OrderGroup.staticGetDao().createCriteria();
 		crit6.createAlias("parent", "p");
 		crit6.add(Restrictions.eq("p.persistentId", facilityUUID));
