@@ -60,6 +60,7 @@ import com.codeshelf.model.domain.ContainerUse;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
+import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.Location;
@@ -2348,6 +2349,7 @@ public class WorkService implements IApiService {
 	 * @return 
 	 */
 	public List<String> reportAchiveables(int daysOldToCount, Facility inFacility) {
+		daysOldToCount = floorDays(daysOldToCount);
 		// Get our reference timestamp relative to now.
 		Timestamp desiredTime = getDaysOldTimeStamp(daysOldToCount);
 
@@ -2556,8 +2558,8 @@ public class WorkService implements IApiService {
 	 * That parameter is temporary, as at the moment, we just do an immediate delete on the current thread.
 	 * Later, we will have a chron job that deletes in batches.
 	 */
-	public void purgeOldObjects(int daysOldToCount, Facility inFacility, String className) {
-		purgeOldObjects(daysOldToCount, inFacility, className, 1000);
+	public void purgeOldObjects(int daysOldToCount, Facility inFacility, Class<? extends IDomainObject> inCls) {
+		purgeOldObjects(daysOldToCount, inFacility, inCls, 1000);
 	}
 
 	/**
@@ -2566,31 +2568,38 @@ public class WorkService implements IApiService {
 	* Logs an error on unsupported class name.
 	* This requires that we be in a transaction in context
 	*/
-	public void purgeOldObjects(int daysOldToCount, Facility inFacility, String className, int maxToPurgeAtOnce) {
-		if (className == null) {
+	public void purgeOldObjects(int daysOldToCount, Facility inFacility, Class<? extends IDomainObject> inCls, int maxToPurgeAtOnce) {
+		if (inCls == null) {
 			LOGGER.error("null class name in purgeOldObjects");
 			return;
 		}
+		daysOldToCount = floorDays(daysOldToCount);
+		
 		boolean foundGoodClassName = false;
 		// String nameToMatch = WorkInstruction.class.getName();
-		if (className.equalsIgnoreCase(WorkInstruction.class.getSimpleName())) {
+		if (WorkInstruction.class.isAssignableFrom(inCls)) {
 			foundGoodClassName = true;
 			purgeWorkInstructions(daysOldToCount, inFacility, maxToPurgeAtOnce);
 		}
 
-		else if (className.equalsIgnoreCase(OrderHeader.class.getSimpleName())) {
+		else if (OrderHeader.class.isAssignableFrom(inCls)) {
 			foundGoodClassName = true;
 			purgeOrders(daysOldToCount, inFacility, maxToPurgeAtOnce);
 		}
 
-		else if (className.equalsIgnoreCase(Container.class.getSimpleName())) {
+		else if (Container.class.isAssignableFrom(inCls)) {
 			foundGoodClassName = true;
 			purgeContainers(daysOldToCount, inFacility, maxToPurgeAtOnce);
 		}
 
 		if (!foundGoodClassName) {
-			LOGGER.error("unimplement class name: {} in purgeOldObjects", className);
+			LOGGER.error("unimplement class name: {} in purgeOldObjects", inCls);
 		}
 	}
+
+	private int floorDays(int daysOldToCount) {
+		return Math.max(daysOldToCount, 1);
+	}
+	
 
 }
