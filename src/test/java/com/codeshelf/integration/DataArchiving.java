@@ -301,26 +301,28 @@ public class DataArchiving extends ServerTest {
 		beginTransaction();
 		facility = facility.reload();
 		workService.reportAchiveables(2, facility);
+		List<WorkInstruction> wiList2 = WorkInstruction.staticGetDao().getAll();
+		Assert.assertEquals(8, wiList2.size());
 		commitTransaction();
 
-		LOGGER.info("5: Call the work instruction purge, but artificially limit max delete to 4");
+		LOGGER.info("5: Call the work instruction purge with no limit specified (will limit to 1000, way more than we have)");
 		beginTransaction();
 		facility = facility.reload();
-		workService.purgeOldObjects(2, facility, WorkInstruction.class, 4);
+		workService.purgeOldObjects(4, facility, WorkInstruction.class);
 		commitTransaction();
 		
 		LOGGER.info("5b: Report, via the work service call");
 		beginTransaction();
 		facility = facility.reload();
 		workService.reportAchiveables(2, facility);
-		List<WorkInstruction> wiList2 = WorkInstruction.staticGetDao().getAll();
-		Assert.assertEquals(4, wiList2.size());
+		List<WorkInstruction> wiList3 = WorkInstruction.staticGetDao().getAll();
+		Assert.assertEquals(3, wiList3.size());
 		commitTransaction();
 
 		LOGGER.info("6: Call the orders purge");
 		beginTransaction();
 		facility = facility.reload();
-		workService.purgeOldObjects(2, facility, OrderHeader.class, 1000); // a more typical value?
+		workService.purgeOldObjects(2, facility, OrderHeader.class, 1000); // a typical value?
 		commitTransaction();
 		
 		LOGGER.info("6b: Report, via the work service call");
