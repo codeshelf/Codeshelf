@@ -100,7 +100,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		if (use != null) {
 			Container cntr = use.getParent();
 			Che che = use.getCurrentChe();
-			
+
 			if (cntr != null)
 				cntr.removeContainerUse(use);
 			if (che != null)
@@ -108,19 +108,19 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		}
 		// It seems likely that cascade delete of work instructions would damage the CHE wi list.
 		List<WorkInstruction> wis = order.getAllWorkInstructionsForOrder();
-		for (WorkInstruction wi: wis) {
+		for (WorkInstruction wi : wis) {
 			Che che = wi.getAssignedChe();
 			if (che != null)
 				che.removeWorkInstruction(wi);
 		}
-		
+
 		OrderHeader.staticGetDao().delete(order);
 	}
-	
+
 	private List<WorkInstruction> getAllWorkInstructionsForOrder() {
 		ArrayList<WorkInstruction> allWiList = new ArrayList<WorkInstruction>();
-		for (OrderDetail detail :this.getOrderDetails()) {
-			for (WorkInstruction wi: detail.getWorkInstructions()) {
+		for (OrderDetail detail : this.getOrderDetails()) {
+			for (WorkInstruction wi : detail.getWorkInstructions()) {
 				allWiList.add(wi);
 			}
 		}
@@ -289,6 +289,13 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	public OrderDetail getOrderDetail(String inOrderDetailId) {
 		return orderDetails.get(inOrderDetailId);
+	}
+
+	public void removeOrderDetail(OrderDetail orderDetail) {
+		if (orderDetail != null) {
+			orderDetail.setParent(null);
+			orderDetails.remove(orderDetail.getDomainId());
+		}
 	}
 
 	public void removeOrderDetail(String inOrderDetailId) {

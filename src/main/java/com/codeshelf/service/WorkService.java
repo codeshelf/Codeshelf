@@ -2343,10 +2343,11 @@ public class WorkService implements IApiService {
 		return new Timestamp(desiredTimeLong);
 	}
 
-	private void logStep(String s){
-		LOGGER.info(s);
+	private void logStep(String s) {
+		// LOGGER.info(s);
+		// fast enough with Projection.rowCount. No need to log.
 	}
-	
+
 	/**
 	 * The goal is to report on objects that might be archived.
 	 * This requires that we be in a transaction in context
@@ -2465,23 +2466,9 @@ public class WorkService implements IApiService {
 	}
 
 	/**
-	 * This purge follows our parent child pattern
+	 * delinks, then deletes
 	 */
-	private void purgeWorkInstructions(int daysOldToCount, Facility inFacility, int maxToPurgeAtOnce) {
-		Timestamp desiredTime = getDaysOldTimeStamp(daysOldToCount);
-		UUID facilityUUID = inFacility.getPersistentId();
-
-		List<WorkInstruction> wiList = WorkInstruction.staticGetDao()
-			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID),
-				Restrictions.lt("created", desiredTime)));
-
-		int wantToPurge = wiList.size();
-		int willPurge = Math.min(wantToPurge, maxToPurgeAtOnce);
-		boolean partial = wantToPurge > willPurge;
-		if (partial)
-			LOGGER.info("purging only {}  of {} purgable work instructions", willPurge, wantToPurge);
-		else
-			LOGGER.info("purging {} work instructions", willPurge);
+	private void safelyDeleteWorkInstructionList(List<WorkInstruction> wiList) {
 		int deletedCount = 0;
 		for (WorkInstruction wi : wiList) {
 
@@ -2494,33 +2481,105 @@ public class WorkService implements IApiService {
 			try {
 				WorkInstruction.staticGetDao().delete(wi);
 			} catch (DaoException e) {
-				LOGGER.error("purgeWorkInstructions", e);
+				LOGGER.error("safelyDeleteWorkInstructionList", e);
 			}
 			deletedCount++;
-			if (deletedCount >= willPurge)
-				break;
-			
+
 			if (deletedCount % 100 == 0)
 				LOGGER.info("deleted {} WorkInstructions ", deletedCount);
 
 		}
-		LOGGER.info("deleted {} WorkInstructions ", deletedCount);
+
+		if (deletedCount % 100 != 0)
+			LOGGER.info("deleted {} WorkInstructions ", deletedCount);
 	}
 
 	/**
-	 * This purge does not follow our parent child pattern.
-	 * It just deletes the master object, and assume the cascade will work correctly.
-	 * (This is what the current Companion delete orders does)
+	 * Assumes work instructions are already delinked. Normally call safelyDeleteWorkInstructionList first.
+	 * This delinks from the order.
+	 */
+	private void safelyDeleteDetailsList(List<OrderDetail> detailsList) {
+		int deletedCount = 0;
+		for (OrderDetail detail : detailsList) {
+
+			OrderHeader order = detail.getParent();
+			if (order != null)
+				order.removeOrderDetail(detail);
+
+			try {
+				OrderDetail.staticGetDao().delete(detail);
+			} catch (DaoException e) {
+				LOGGER.error("safelyDeleteDetailsList", e);
+			}
+			deletedCount++;
+
+			if (deletedCount % 100 == 0)
+				LOGGER.info("deleted {} OrderDetails ", deletedCount);
+
+		}
+		if (deletedCount % 100 != 0)
+			LOGGER.info("deleted {} OrderDetails ", deletedCount);
+	}
+
+	/**
+	 * This purge follows our parent child pattern
+	 */
+	private void purgeWorkInstructions(int daysOldToCount, Facility inFacility, int maxToPurgeAtOnce) {
+		Timestamp desiredTime = getDaysOldTimeStamp(daysOldToCount);
+		UUID facilityUUID = inFacility.getPersistentId();
+
+		/*
+		List<WorkInstruction> wiList = WorkInstruction.staticGetDao()
+			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID),
+				Restrictions.lt("created", desiredTime)));
+		*/
+
+		Criteria archiveableWisCrit = WorkInstruction.staticGetDao().createCriteria();
+		archiveableWisCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		archiveableWisCrit.add(Restrictions.lt("created", desiredTime));
+		int wantToPurge = WorkInstruction.staticGetDao().countByCriteriaQuery(archiveableWisCrit);
+
+		Criteria archiveableWisCrit2 = WorkInstruction.staticGetDao().createCriteria();
+		archiveableWisCrit2.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		archiveableWisCrit2.add(Restrictions.lt("created", desiredTime));
+		archiveableWisCrit2.setMaxResults(maxToPurgeAtOnce);
+		List<WorkInstruction> wiList = WorkInstruction.staticGetDao().findByCriteriaQuery(archiveableWisCrit2);
+
+		// int wantToPurge = wiList.size();
+		int willPurge = Math.min(wantToPurge, maxToPurgeAtOnce);
+		boolean partial = wantToPurge > willPurge;
+		if (partial)
+			LOGGER.info("purging only {}  of {} purgable work instructions", willPurge, wantToPurge);
+		else
+			LOGGER.info("purging {} work instructions", willPurge);
+
+		safelyDeleteWorkInstructionList(wiList);
+	}
+
+	/**
+	 * This purge assumes that order.delete() follows our parent child pattern. It is not done here.
 	 */
 	private void purgeOrders(int daysOldToCount, Facility inFacility, int maxToPurgeAtOnce) {
 		Timestamp desiredTime = getDaysOldTimeStamp(daysOldToCount);
 		UUID facilityUUID = inFacility.getPersistentId();
 
+		/*
 		List<OrderHeader> orders = OrderHeader.staticGetDao()
 			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID),
 				Restrictions.lt("dueDate", desiredTime)));
+		*/
+		Criteria archiveableOrderCrit = OrderHeader.staticGetDao().createCriteria();
+		archiveableOrderCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		archiveableOrderCrit.add(Restrictions.lt("dueDate", desiredTime));
+		int wantToPurge = OrderHeader.staticGetDao().countByCriteriaQuery(archiveableOrderCrit);
 
-		int wantToPurge = orders.size();
+		Criteria archiveableOrderCrit2 = OrderHeader.staticGetDao().createCriteria();
+		archiveableOrderCrit2.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		archiveableOrderCrit2.add(Restrictions.lt("dueDate", desiredTime));
+		archiveableOrderCrit2.setMaxResults(maxToPurgeAtOnce);
+		List<OrderHeader> orders = OrderHeader.staticGetDao().findByCriteriaQuery(archiveableOrderCrit2);
+
+		// int wantToPurge = orders.size();
 		int willPurge = Math.min(wantToPurge, maxToPurgeAtOnce);
 		boolean partial = wantToPurge > willPurge;
 
@@ -2528,6 +2587,36 @@ public class WorkService implements IApiService {
 			LOGGER.info("purging only {}  of {} purgable orders and owned related objects", willPurge, wantToPurge);
 		else
 			LOGGER.info("purging {} orders and owned related objects", willPurge);
+
+		// Trying to speed up by not relying quite so much on the hibernate delete cascade.
+		// Result: not much improvement in time. But much nicer logging about the process.
+		LOGGER.info("Phase 1 of order purge: assemble list of details for these orders");
+		List<OrderDetail> details = new ArrayList<OrderDetail>();
+		for (OrderHeader order : orders) {
+			List<OrderDetail> oneDetailSet = order.getOrderDetails();
+			details.addAll(oneDetailSet);
+		}
+		// Note: Phase 1 seems to run in n-squared time
+		// 500 orders with 2900 details assembles in 15 seconds
+		// 1000 orders with 5800 details assembles in 56 seconds
+		// So, big benefit to smaller batches. Would be nice to query for the orderDetails
+
+		// My test case did not have enough work instruction to know if this helped or not.
+		LOGGER.info("Phase 2 of order purge: assemble work instructions from the details");
+		List<WorkInstruction> wis = new ArrayList<WorkInstruction>();
+		for (OrderDetail detail : details) {
+			List<WorkInstruction> oneOrderWis = detail.getWorkInstructions();
+			wis.addAll(oneOrderWis);
+		}
+
+		LOGGER.info("Phase 3 of order purge: delete the assembled work instructions, which delinks from details and che.");
+		safelyDeleteWorkInstructionList(wis);
+
+		LOGGER.info("Phase 4 of order purge: delete the details");
+		safelyDeleteDetailsList(details);
+
+		LOGGER.info("Phase 5 of order purge: delete the orders which delinks from container");
+
 		int deletedCount = 0;
 		for (OrderHeader order : orders) {
 			try {
@@ -2536,13 +2625,15 @@ public class WorkService implements IApiService {
 				LOGGER.error("purgeOrders", e);
 			}
 			deletedCount++;
-			if (deletedCount >= willPurge)
-				break;
 			if (deletedCount % 100 == 0)
 				LOGGER.info("deleted {} Orders ", deletedCount);
 
 		}
-		LOGGER.info("deleted {} Orders ", deletedCount);
+		if (deletedCount % 100 != 0)
+			LOGGER.info("deleted {} Orders ", deletedCount);
+		// Note: after you see this, there is the transaction commit. That seems to run in linear time:
+		// 500 orders with 2900 details commits in 39 seconds
+		// 1000 orders with 5800 details commits in 76 seconds
 	}
 
 	/**
@@ -2554,10 +2645,11 @@ public class WorkService implements IApiService {
 		// The main concern is that we should not purge the container if there are any remaining ContainerUses
 		// Containers have an active flag. So, if inactive, probably worth purging anyway.
 
+		// We cannot limit the returned containers because we have no easy way to find the subset that do not have containerUse pointing at them. 
 		List<Container> cntrs = Container.staticGetDao()
 			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID)));
 
-		// ContainerUse
+		// ContainerUse. Can not limit, or we would make incorrect decisions about which were deleteable.
 		Criteria crit = ContainerUse.staticGetDao().createCriteria();
 		crit.createAlias("parent", "p");
 		crit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
@@ -2590,7 +2682,7 @@ public class WorkService implements IApiService {
 				deletedCount++;
 				if (deletedCount >= maxToPurgeAtOnce)
 					break;
-	
+
 				if (deletedCount % 100 == 0)
 					LOGGER.info("deleted {} Containers ", deletedCount);
 			}
@@ -2630,6 +2722,8 @@ public class WorkService implements IApiService {
 
 		else if (OrderHeader.class.isAssignableFrom(inCls)) {
 			foundGoodClassName = true;
+			// only do 500 orders at a time.
+			maxToPurgeAtOnce = Math.min(500, maxToPurgeAtOnce);
 			purgeOrders(daysOldToCount, inFacility, maxToPurgeAtOnce);
 		}
 
