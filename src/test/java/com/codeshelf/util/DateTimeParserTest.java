@@ -5,7 +5,6 @@ import java.util.Date;
 import java.util.TimeZone;
 
 import org.joda.time.DateTime;
-import org.joda.time.Duration;
 import org.joda.time.Period;
 import org.junit.Assert;
 import org.junit.Before;
