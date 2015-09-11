@@ -7,14 +7,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.junit.Assert;
+import org.junit.Test;
 
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.testframework.MockDaoTest;
+import com.codeshelf.testframework.HibernateTest;
 
-public class EdiExporterProviderTest extends MockDaoTest {
+public class EdiExporterProviderTest extends HibernateTest {
 	
-	//Temporarily disabling test - need help mocking a dao function
-	//@Test
+	@Test
 	public void testGetsEdiExporterWhenFacilityHasEdiService() throws Exception {
 		EdiExporterProvider subject = startEdiExporter();
 		beginTransaction();
