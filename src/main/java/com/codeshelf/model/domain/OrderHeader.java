@@ -760,7 +760,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	 * It is to be used for testing of Automated Pick Scripts, so that the same orders can be picked repeatedly
 	 */
 	public void delete() {
-		LOGGER.info("Deleting order {}", this);
+		// LOGGER.info("Deleting order {}", this); // too much! for orders purge or script runner purge
 		// OrderHeader.staticGetDao().delete(this); dangerous. Damages Container as ContainerUse is deleted
 		OrderHeader.deleteOrder(this); // safe
 	}

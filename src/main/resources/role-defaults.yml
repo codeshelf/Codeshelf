@@ -14,8 +14,9 @@ Maintenance:
   - "path:*"
   - "light:*"
 Upload:
-  - "order:import"
-  - "inventory:import"
+  - "order:*"
+  - "location:*"
+  - "inventory:*"
 Companion:
   - "companion:view"
 Browse:
@@ -31,9 +32,20 @@ Admin:
   - "path:*"
   - "light:*"
   - "inventory:*"
+  - "location:*"
   - "worker:*"
   - "event:*"
   - "user:*"
+  - "order:*"
+  - "workinstruction:*"
+View:
+  - "companion:view"
+  - "order:view"
+  - "workinstruction:view"
+  - "event:view"
+Supervise:
+  - "event:*"
+  - "worker:*"
 Configure:
   - "ws:login"
   - "ux:*" 

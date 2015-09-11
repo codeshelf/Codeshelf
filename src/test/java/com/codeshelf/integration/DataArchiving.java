@@ -201,7 +201,7 @@ public class DataArchiving extends ServerTest {
 	 * This function assumes we are in a valid transaction, with facility properly loaded
 	 * Sets the due date on the order back, and set the created date on the WI back
 	 */
-	private void makeOrderDaysOld(String orderId, int daysOld, Facility inFacility) {
+	private void makeDaysOldTestData(String orderId, int daysOld, Facility inFacility) {
 		OrderHeader oh = OrderHeader.staticGetDao().findByDomainId(inFacility, orderId);
 		if (oh == null) {
 			LOGGER.error(" bad order ID in makeOrderDaysOld");
@@ -280,40 +280,49 @@ public class DataArchiving extends ServerTest {
 		Assert.assertEquals(8, wiList.size());
 		commitTransaction();
 
+		LOGGER.info("2b: Report, that what is archivable on new data");
+		beginTransaction();
+		facility = facility.reload();
+		workService.reportAchiveables(2, facility);
+		commitTransaction();
+
+		
 		LOGGER.info("3: Make some of the orders 'old' ");
 		beginTransaction();
 		facility = facility.reload();
-		makeOrderDaysOld("10001", 1, facility);
-		makeOrderDaysOld("10002", 2, facility);
-		makeOrderDaysOld("10003", 3, facility);
-		makeOrderDaysOld("10004", 4, facility);
-		makeOrderDaysOld("10005", 5, facility);
+		makeDaysOldTestData("10001", 1, facility);
+		makeDaysOldTestData("10002", 2, facility);
+		makeDaysOldTestData("10003", 3, facility);
+		makeDaysOldTestData("10004", 4, facility);
+		makeDaysOldTestData("10005", 5, facility);
 		commitTransaction();
 		
 		LOGGER.info("4: Report, via the work service call");
 		beginTransaction();
 		facility = facility.reload();
 		workService.reportAchiveables(2, facility);
+		List<WorkInstruction> wiList2 = WorkInstruction.staticGetDao().getAll();
+		Assert.assertEquals(8, wiList2.size());
 		commitTransaction();
 
-		LOGGER.info("5: Call the work instruction purge, but artificially limit max delete to 4");
+		LOGGER.info("5: Call the work instruction purge with no limit specified (will limit to 1000, way more than we have)");
 		beginTransaction();
 		facility = facility.reload();
-		workService.purgeOldObjects(2, facility, "WorkInstruction", 4);
+		workService.purgeOldObjects(4, facility, WorkInstruction.class);
 		commitTransaction();
 		
 		LOGGER.info("5b: Report, via the work service call");
 		beginTransaction();
 		facility = facility.reload();
 		workService.reportAchiveables(2, facility);
-		List<WorkInstruction> wiList2 = WorkInstruction.staticGetDao().getAll();
-		Assert.assertEquals(4, wiList2.size());
+		List<WorkInstruction> wiList3 = WorkInstruction.staticGetDao().getAll();
+		Assert.assertEquals(3, wiList3.size());
 		commitTransaction();
 
 		LOGGER.info("6: Call the orders purge");
 		beginTransaction();
 		facility = facility.reload();
-		workService.purgeOldObjects(2, facility, "OrderHeader", 1000); // a more typical value?
+		workService.purgeOldObjects(2, facility, OrderHeader.class, 1000); // a typical value?
 		commitTransaction();
 		
 		LOGGER.info("6b: Report, via the work service call");
@@ -327,7 +336,7 @@ public class DataArchiving extends ServerTest {
 		LOGGER.info("6: Call the Containers purge");
 		beginTransaction();
 		facility = facility.reload();
-		workService.purgeOldObjects(2, facility, "Container", 3); 
+		workService.purgeOldObjects(2, facility, Container.class, 3); 
 		commitTransaction();
 		
 		LOGGER.info("6b: Report, via the work service call");

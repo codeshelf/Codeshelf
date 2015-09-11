@@ -22,6 +22,7 @@ import org.hibernate.QueryParameterException;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,19 +42,19 @@ import com.google.inject.Inject;
 @SuppressWarnings("unchecked")
 public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDao<T> {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(GenericDaoABC.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(GenericDaoABC.class);
 
-//	private static final Integer NO_MAX_RECORDS	= null; // indicates no maximum records
+	//	private static final Integer NO_MAX_RECORDS	= null; // indicates no maximum records
 
-	private ConvertUtilsBean converter;
+	private ConvertUtilsBean	converter;
 
 	@Inject
 	public GenericDaoABC() {
 		this.converter = new ConverterProvider().get();
 	}
-	
+
 	protected Session getCurrentSession() {
-		Session session = TenantPersistenceService.getInstance().getSession(); 
+		Session session = TenantPersistenceService.getInstance().getSession();
 		return session;
 	}
 
@@ -70,7 +71,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	}
 
 	public final T reload(T domainObject) {
-		if (domainObject==null) {
+		if (domainObject == null) {
 			return null;
 		}
 		T reloadedDomainObject = findByPersistentId(domainObject.getPersistentId());
@@ -84,18 +85,15 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	public List<T> findByParent(final IDomainObject parentObject) {
 		try {
 			Session session = getCurrentSession();
-	        Criteria criteria = session.createCriteria(getDaoClass());
+			Criteria criteria = session.createCriteria(getDaoClass());
 			if (parentObject != null) {
 				Class<T> clazz = getDaoClass();
 				if (clazz.equals(Facility.class)) {
-					criteria
-						.add(Restrictions.eq(IDomainObject.PARENT_ORG_PROPERTY,parentObject.getPersistentId()));
-				} 
-				else {
-					criteria
-						.add(Restrictions.eq(IDomainObject.PARENT_PROPERTY,parentObject.getPersistentId()));
+					criteria.add(Restrictions.eq(IDomainObject.PARENT_ORG_PROPERTY, parentObject.getPersistentId()));
+				} else {
+					criteria.add(Restrictions.eq(IDomainObject.PARENT_PROPERTY, parentObject.getPersistentId()));
 				}
-			} 
+			}
 			criteria.setCacheable(true);
 			List<T> results = criteria.list();
 			return results;
@@ -103,8 +101,8 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 			LOGGER.error("Failed to find object by domain ID", e);
 			return null;
 		}
-	}	
-	
+	}
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.codeshelf.model.dao.IGenericDao#findById(java.lang.String)
@@ -113,33 +111,27 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		String effectiveId = domainId;
 		try {
 			Session session = getCurrentSession();
-	        Criteria criteria = session.createCriteria(getDaoClass());
+			Criteria criteria = session.createCriteria(getDaoClass());
 			if (parentObject != null) {
 				Class<T> clazz = getDaoClass();
 				if (clazz.equals(Facility.class)) {
-					criteria
-						.add(Restrictions.eq(IDomainObject.ID_PROPERTY,effectiveId))
-						.add(Restrictions.eq(IDomainObject.PARENT_ORG_PROPERTY,parentObject.getPersistentId()));
-				} 
-				else {
-					criteria
-						.add(Restrictions.eq(IDomainObject.ID_PROPERTY,effectiveId))
-						.add(Restrictions.eq(IDomainObject.PARENT_PROPERTY,parentObject.getPersistentId()));
+					criteria.add(Restrictions.eq(IDomainObject.ID_PROPERTY, effectiveId))
+						.add(Restrictions.eq(IDomainObject.PARENT_ORG_PROPERTY, parentObject.getPersistentId()));
+				} else {
+					criteria.add(Restrictions.eq(IDomainObject.ID_PROPERTY, effectiveId))
+						.add(Restrictions.eq(IDomainObject.PARENT_PROPERTY, parentObject.getPersistentId()));
 				}
-			} 
-			else {
-				criteria.add(Restrictions.eq(IDomainObject.ID_PROPERTY,effectiveId));
+			} else {
+				criteria.add(Restrictions.eq(IDomainObject.ID_PROPERTY, effectiveId));
 			}
 			criteria.setCacheable(true);
 			List<T> results = criteria.list();
-			if (results.size()==0) {
+			if (results.size() == 0) {
 				return null;
-			}
-			else if (results.size()==1) {
+			} else if (results.size() == 1) {
 				return results.get(0);
-			}
-			else {
-				LOGGER.error(results.size()+" objects found matching domain ID "+domainId);
+			} else {
+				LOGGER.error(results.size() + " objects found matching domain ID " + domainId);
 				return null;
 			}
 		} catch (PersistenceException e) {
@@ -154,49 +146,49 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 */
 	public final List<T> findByPersistentIdList(List<UUID> inIdList) {
 		Session session = getCurrentSession();
-        Criteria criteria = session.createCriteria(getDaoClass());
-        criteria.add(Restrictions.in("persistentId", inIdList));
-        List<T> methodResultsList = (List<T>) criteria.list();
+		Criteria criteria = session.createCriteria(getDaoClass());
+		criteria.add(Restrictions.in("persistentId", inIdList));
+		List<T> methodResultsList = (List<T>) criteria.list();
 		return methodResultsList;
 	}
 
 	public final List<T> findByFilter(List<Criterion> inFilter) {
 		// If we have a valid filter then get the filtered objects.
 		Session session = getCurrentSession();
-        Criteria criteria = session.createCriteria(getDaoClass());
+		Criteria criteria = session.createCriteria(getDaoClass());
 		for (Criterion expression : inFilter) {
 			criteria.add(expression);
 		}
 		List<T> results = criteria.list();
 		return results;
 	}
-	
+
 	public final List<T> findByFilter(List<Criterion> inFilter, List<Order> inOrderBys) {
 		// If we have a valid filter then get the filtered objects.
 		Session session = getCurrentSession();
-        Criteria criteria = session.createCriteria(getDaoClass());
+		Criteria criteria = session.createCriteria(getDaoClass());
 		for (Criterion expression : inFilter) {
 			criteria.add(expression);
 		}
-		for(Order order: inOrderBys) {
+		for (Order order : inOrderBys) {
 			criteria.addOrder(order);
 		}
 		List<T> results = criteria.list();
 		return results;
 	}
-	
+
 	@Override
 	public boolean matchesFilter(String inCriteriaName, Map<String, Object> inArgs, UUID inPersistentId) {
 		String parameterName = "persistentIdToMatch";
 		TypedCriteria criteria = CriteriaRegistry.getInstance().findByName(inCriteriaName, this.getDaoClass());
-		Preconditions.checkNotNull(criteria, "Unable to find filter criteria with name: %s" , inCriteriaName);
+		Preconditions.checkNotNull(criteria, "Unable to find filter criteria with name: %s", inCriteriaName);
 		TypedCriteria singleObjectCriteria = criteria.addEqualsRestriction("persistentId", parameterName, UUID.class);
-		
+
 		HashMap<String, Object> newArgs = Maps.newHashMap(inArgs);
 		newArgs.put(parameterName, inPersistentId);
 		return (findByCriteria(singleObjectCriteria, newArgs, criteria.getMaxRecords()).isEmpty() == false);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
@@ -204,10 +196,10 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	public List<T> findByFilter(String inCriteriaName, Map<String, Object> inArgs) {
 		// create criteria using look-up table
 		TypedCriteria criteria = CriteriaRegistry.getInstance().findByName(inCriteriaName, this.getDaoClass());
-		Preconditions.checkNotNull(criteria, "Unable to find filter criteria with name: %s" , inCriteriaName);
+		Preconditions.checkNotNull(criteria, "Unable to find filter criteria with name: %s", inCriteriaName);
 		return findByCriteria(criteria, inArgs, criteria.getMaxRecords());
 	}
-	
+
 	protected List<T> findByCriteria(TypedCriteria criteria, Map<String, Object> inArgs, Integer maxRecords) {
 		Session session = getCurrentSession();
 		Query query = session.createQuery(criteria.getQuery());
@@ -224,11 +216,10 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 			}
 			try {
 				query.setParameter(name, convertedValue);
-			}
-			catch(QueryParameterException e) {
+			} catch (QueryParameterException e) {
 				throw new QueryParameterException("argument could not be found in query: " + name, criteria.getQuery(), e);
 			}
-		}		
+		}
 		if (maxRecords != null) {
 			;
 			List<T> results = query.setMaxResults(maxRecords).list();
@@ -241,7 +232,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 			return results;
 		}
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.codeshelf.model.dao.IGenericDao#store(java.lang.Object)
@@ -274,21 +265,28 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		Criteria criteria = session.createCriteria(getDaoClass());
 		return criteria;
 	}
-	
+
 	@Override
 	public List<T> findByCriteriaQuery(Criteria criteria) {
 		List<T> results = criteria.list();
 		return results;
 	}
-	
+
+	@Override
+	public final int countByCriteriaQuery(Criteria criteria) {
+		criteria.setProjection(Projections.rowCount());
+		Number value = (Number) criteria.uniqueResult();
+		return value.intValue();
+	}
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.codeshelf.model.dao.IGenericDao#getAll()
 	 */
 	public List<T> getAll() {
 		Session session = getCurrentSession();
-        Criteria criteria = session.createCriteria(getDaoClass());
-        criteria.setCacheable(true);
+		Criteria criteria = session.createCriteria(getDaoClass());
+		criteria.setCacheable(true);
 		List<T> results = criteria.list();
 		return results;
 	}
@@ -298,16 +296,15 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.codeshelf.model.dao.ITypedDao#getNextId(java.lang.Class)
 	 */
 	public final Object getNextId(final Class<?> beanType) {
-	    UUID persistentId = UUID.randomUUID();
-	    return persistentId;
+		UUID persistentId = UUID.randomUUID();
+		return persistentId;
 	}
 
-	
 	private void validateClass(Class<? extends IDomainObject> clazz) {
 		Class<?> expectedClass = this.getDaoClass();
-		if(!expectedClass.isAssignableFrom(clazz)) {
-			throw new DaoException("unexpected class used with DAO - expected "
-				+expectedClass.getSimpleName()+" but got "+clazz.getSimpleName());
+		if (!expectedClass.isAssignableFrom(clazz)) {
+			throw new DaoException("unexpected class used with DAO - expected " + expectedClass.getSimpleName() + " but got "
+					+ clazz.getSimpleName());
 		}
 	}
 }

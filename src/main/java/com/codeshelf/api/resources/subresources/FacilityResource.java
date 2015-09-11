@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -72,7 +73,9 @@ import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
@@ -192,7 +195,43 @@ public class FacilityResource {
 		r.setFacility(facility);
 		return r;
 	}
+	
+	@GET
+	@Path("/data/summary")
+	@RequiresPermissions("facility:edit")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getDataSummary(@QueryParam("daysOld") int daysOld) {
+		List<String> summary = workService.reportAchiveables(daysOld, this.facility);
+		return BaseResponse.buildResponse(summary);
+	}
 
+	@DELETE
+	@Path("/data/wis")
+	@RequiresPermissions("facility:edit")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response deleteWorkInstructions(@FormParam("daysOld") int daysOld) {
+		workService.purgeOldObjects(daysOld, this.facility, WorkInstruction.class);
+		return BaseResponse.buildResponse(null);
+	}
+
+	@DELETE
+	@Path("/data/orders")
+	@RequiresPermissions("facility:edit")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response deleteOrders(@FormParam("daysOld") int daysOld) {
+		workService.purgeOldObjects(daysOld, this.facility, OrderHeader.class);
+		return BaseResponse.buildResponse(null);
+	}
+
+	@DELETE
+	@Path("/data/containers")
+	@RequiresPermissions("facility:edit")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response deleteContainers(@FormParam("daysOld") int daysOld) {
+		workService.purgeOldObjects(daysOld, this.facility, Container.class);
+		return BaseResponse.buildResponse(null);
+	}
+	
     @GET
 	@Path("/work/instructions")
 	@RequiresPermissions("companion:view")

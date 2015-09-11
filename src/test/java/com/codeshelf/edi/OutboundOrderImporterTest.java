@@ -73,6 +73,20 @@ public class OutboundOrderImporterTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
+	@Test 
+	public void persistDataReceipt() {
+		beginTransaction();
+		ICsvOrderImporter subject = createOrderImporter();
+		BatchResult<?> batchResult = new BatchResult<Object>();
+		batchResult.setCompleted(new Date());
+		batchResult.setStarted(new Date());
+		subject.persistDataReceipt(getFacility(),
+			"testUser",
+			"testfilename",
+			System.currentTimeMillis(), 
+			batchResult);
+		commitTransaction();
+	}
 
 	@Test
 	public void testIntegerConversion() {

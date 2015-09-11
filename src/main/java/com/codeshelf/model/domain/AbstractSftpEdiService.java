@@ -237,7 +237,7 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 		return filesToImport;
 	}
 	
-	private String toSftpChannelDebug() {
+	protected String toSftpChannelDebug() {
 		SftpConfiguration config = getConfiguration();
 		return String.format("sftp://%s@%s:%d", 
 			config.getUsername(),
