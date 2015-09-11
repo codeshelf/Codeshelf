@@ -12,6 +12,7 @@ import java.util.UUID;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -208,7 +209,7 @@ public class FacilityResource {
 	@Path("/data/wis")
 	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response deleteWorkInstructions(@QueryParam("daysOld") int daysOld) {
+	public Response deleteWorkInstructions(@FormParam("daysOld") int daysOld) {
 		workService.purgeOldObjects(daysOld, this.facility, WorkInstruction.class);
 		return BaseResponse.buildResponse(null);
 	}
@@ -217,7 +218,7 @@ public class FacilityResource {
 	@Path("/data/orders")
 	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response deleteOrders(@QueryParam("daysOld") int daysOld) {
+	public Response deleteOrders(@FormParam("daysOld") int daysOld) {
 		workService.purgeOldObjects(daysOld, this.facility, OrderHeader.class);
 		return BaseResponse.buildResponse(null);
 	}
@@ -226,7 +227,7 @@ public class FacilityResource {
 	@Path("/data/containers")
 	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response deleteContainers(@QueryParam("daysOld") int daysOld) {
+	public Response deleteContainers(@FormParam("daysOld") int daysOld) {
 		workService.purgeOldObjects(daysOld, this.facility, Container.class);
 		return BaseResponse.buildResponse(null);
 	}
