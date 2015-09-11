@@ -51,6 +51,8 @@ public interface ITypedDao<T> {
 	Class<T> getDaoClass();
 
 	List<T> findByCriteriaQuery(Criteria criteria);
+	
+	int countByCriteriaQuery(Criteria criteria);
 
 	Criteria createCriteria();
 	

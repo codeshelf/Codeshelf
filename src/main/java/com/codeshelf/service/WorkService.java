@@ -2367,13 +2367,14 @@ public class WorkService implements IApiService {
 
 		logStep("Achiveables: query WorkInstruction"); // two queries
 		// Work Instructions
-		int totalWiCount = WorkInstruction.staticGetDao()
-			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID)))
-			.size();
-		int archiveableWiCount = WorkInstruction.staticGetDao()
-			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID),
-				Restrictions.lt("created", desiredTime)))
-			.size();
+		Criteria totalWisCrit = WorkInstruction.staticGetDao().createCriteria();
+		totalWisCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		int totalWiCount = WorkInstruction.staticGetDao().countByCriteriaQuery(totalWisCrit);
+
+		Criteria archiveableWisCrit = WorkInstruction.staticGetDao().createCriteria();
+		archiveableWisCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		archiveableWisCrit.add(Restrictions.lt("created", desiredTime));
+		int archiveableWiCount = WorkInstruction.staticGetDao().countByCriteriaQuery(archiveableWisCrit);
 		String wiString = String.format(" WorkInstructions: %d archivable of %d total", archiveableWiCount, totalWiCount);
 		reportables.add(wiString);
 
@@ -2383,47 +2384,53 @@ public class WorkService implements IApiService {
 		logStep("Achiveables: query OrderHeader"); // two queries
 
 		// Orders
-		int totalOrderCount = OrderHeader.staticGetDao()
-			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID)))
-			.size();
-		int archiveableOrderCount = OrderHeader.staticGetDao()
-			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID),
-				Restrictions.lt("dueDate", desiredTime)))
-			.size();
+		Criteria totalOrdersCrit = OrderHeader.staticGetDao().createCriteria();
+		totalOrdersCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		int totalOrderCount = OrderHeader.staticGetDao().countByCriteriaQuery(totalOrdersCrit);
+
+		Criteria archiveableOrderCrit = OrderHeader.staticGetDao().createCriteria();
+		archiveableOrderCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		archiveableOrderCrit.add(Restrictions.lt("dueDate", desiredTime));
+		int archiveableOrderCount = OrderHeader.staticGetDao().countByCriteriaQuery(archiveableOrderCrit);
+
 		String orderString = String.format(" Orders: %d archivable of %d total", archiveableOrderCount, totalOrderCount);
 		reportables.add(orderString);
 
 		logStep("Achiveables: query OrderDetail"); // two queries
 
 		// Order Details
-		Criteria crit = OrderDetail.staticGetDao().createCriteria();
-		crit.createAlias("parent", "p");
-		crit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
-		int totalDetailCount = OrderDetail.staticGetDao().findByCriteriaQuery(crit).size();
+		Criteria totalDetailsCrit = OrderDetail.staticGetDao().createCriteria();
+		totalDetailsCrit.createAlias("parent", "p");
+		totalDetailsCrit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
+		int totalDetailCount = OrderDetail.staticGetDao().countByCriteriaQuery(totalDetailsCrit);
+		// int totalDetailCount = OrderDetail.staticGetDao().findByCriteriaQuery(crit).size();
 
-		Criteria crit2 = OrderDetail.staticGetDao().createCriteria();
-		crit2.createAlias("parent", "p");
-		crit2.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
-		crit2.add(Restrictions.lt("p.dueDate", desiredTime));
-		int archiveableDetailCount = OrderDetail.staticGetDao().findByCriteriaQuery(crit2).size();
+		Criteria archiveableDetailsCrit = OrderDetail.staticGetDao().createCriteria();
+		archiveableDetailsCrit.createAlias("parent", "p");
+		archiveableDetailsCrit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
+		archiveableDetailsCrit.add(Restrictions.lt("p.dueDate", desiredTime));
+		int archiveableDetailCount = OrderDetail.staticGetDao().countByCriteriaQuery(archiveableDetailsCrit);
+		// int archiveableDetailCount = OrderDetail.staticGetDao().findByCriteriaQuery(crit2).size();
 
 		String detailString = String.format(" Details: %d archivable of %d total", archiveableDetailCount, totalDetailCount);
 		reportables.add(detailString);
 
 		// ContainerUse
 		logStep("Achiveables: query ContainerUse"); // two queries
-		Criteria crit3 = ContainerUse.staticGetDao().createCriteria();
-		crit3.createAlias("parent", "p");
-		crit3.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
-		int totalUseCount = ContainerUse.staticGetDao().findByCriteriaQuery(crit3).size();
+		Criteria totalUsesCrit = ContainerUse.staticGetDao().createCriteria();
+		totalUsesCrit.createAlias("parent", "p");
+		totalUsesCrit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
+		int totalUseCount = ContainerUse.staticGetDao().countByCriteriaQuery(totalUsesCrit);
+		// int totalUseCount = ContainerUse.staticGetDao().findByCriteriaQuery(crit3).size();
 
-		Criteria crit4 = ContainerUse.staticGetDao().createCriteria();
-		crit4.createAlias("parent", "p");
-		crit4.createAlias("orderHeader", "oh");
-		crit4.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
-		crit4.add(Restrictions.isNotNull("orderHeader"));
-		crit4.add(Restrictions.lt("oh.dueDate", desiredTime));
-		int archiveableUseCount = ContainerUse.staticGetDao().findByCriteriaQuery(crit4).size();
+		Criteria archiveableUsesCrit = ContainerUse.staticGetDao().createCriteria();
+		archiveableUsesCrit.createAlias("parent", "p");
+		archiveableUsesCrit.createAlias("orderHeader", "oh");
+		archiveableUsesCrit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
+		archiveableUsesCrit.add(Restrictions.isNotNull("orderHeader"));
+		archiveableUsesCrit.add(Restrictions.lt("oh.dueDate", desiredTime));
+		int archiveableUseCount = ContainerUse.staticGetDao().countByCriteriaQuery(archiveableUsesCrit);
+		// int archiveableUseCount = ContainerUse.staticGetDao().findByCriteriaQuery(crit4).size();
 
 		String useString = String.format(" ContainerUses: %d archivable of %d total", archiveableUseCount, totalUseCount);
 		reportables.add(useString);
@@ -2433,19 +2440,20 @@ public class WorkService implements IApiService {
 
 		// Containers
 		logStep("Achiveables: query Container"); // one query
-		Criteria crit5 = Container.staticGetDao().createCriteria();
-		crit5.createAlias("parent", "p");
-		crit5.add(Restrictions.eq("p.persistentId", facilityUUID));
-		int totalCntrCount = Container.staticGetDao().findByCriteriaQuery(crit5).size();
+		Criteria totalCntrsCrit = Container.staticGetDao().createCriteria();
+		totalCntrsCrit.createAlias("parent", "p");
+		totalCntrsCrit.add(Restrictions.eq("p.persistentId", facilityUUID));
+		int totalCntrCount = Container.staticGetDao().countByCriteriaQuery(totalCntrsCrit);
+		// int totalCntrCount = Container.staticGetDao().findByCriteriaQuery(crit5).size();
 		String cntrString = String.format(" Containers: %d total", totalCntrCount);
 		reportables.add(cntrString);
 
 		// OrderGroup
 		logStep("Achiveables: query OrderGroup"); // one query
-		Criteria crit6 = OrderGroup.staticGetDao().createCriteria();
-		crit6.createAlias("parent", "p");
-		crit6.add(Restrictions.eq("p.persistentId", facilityUUID));
-		int totalGroupCount = OrderGroup.staticGetDao().findByCriteriaQuery(crit6).size();
+		Criteria totalGroupsCrit = OrderGroup.staticGetDao().createCriteria();
+		totalGroupsCrit.createAlias("parent", "p");
+		totalGroupsCrit.add(Restrictions.eq("p.persistentId", facilityUUID));
+		int totalGroupCount = OrderGroup.staticGetDao().findByCriteriaQuery(totalGroupsCrit).size();
 		String groupString = String.format(" OrderGroups: %d total", totalGroupCount);
 		reportables.add(groupString);
 

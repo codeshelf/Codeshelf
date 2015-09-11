@@ -185,6 +185,12 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	public List<T> findByCriteriaQuery(Criteria criteria) {
 		throw new NotImplementedException();
 	}
+	
+	@Override
+	public int countByCriteriaQuery(Criteria criteria)
+	{
+		throw new NotImplementedException();
+	}
 
 	@Override
 	public Criteria createCriteria() {
