@@ -8,9 +8,7 @@ import java.util.UUID;
 
 import org.joda.time.DateTime;
 
-import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ExportReceipt;
-import com.codeshelf.model.domain.OrderHeader;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -19,26 +17,26 @@ public class ExportMessageFuture extends AbstractFuture<ExportReceipt> implement
 
 	public static class OrderOnCartFinishedExportMessage extends ExportMessageFuture {
 
-		public OrderOnCartFinishedExportMessage(OrderHeader inOrder, Che inChe, String exportStr) {
-			super(inOrder, inChe, exportStr);
+		public OrderOnCartFinishedExportMessage(String inOrderId, String inCheGuid, String exportStr) {
+			super(inOrderId, inCheGuid, exportStr);
 		}
 
 	}
 
 	public static class OrderOnCartAddedExportMessage extends ExportMessageFuture {
 
-		public OrderOnCartAddedExportMessage(OrderHeader inOrder, Che inChe, String exportStr) {
-			super(inOrder, inChe, exportStr);
+		public OrderOnCartAddedExportMessage(String inOrderId, String inCheGuid, String exportStr) {
+			super(inOrderId, inCheGuid, exportStr);
 		}
 		
 	}
 
 	
 	@Getter
-	private OrderHeader	order;
+	private String	orderId;
 	
 	@Getter
-	private Che	che;
+	private String	cheGuid;
 	
 	@Getter
 	private String	contents;
@@ -50,11 +48,11 @@ public class ExportMessageFuture extends AbstractFuture<ExportReceipt> implement
 	private UUID		persistentId;
 	
 	
-	public ExportMessageFuture(OrderHeader order, Che che, String contents) {
+	public ExportMessageFuture(String orderId, String cheGuid, String contents) {
 		super();
 		this.dateTime = new DateTime();
-		this.order = order;
-		this.che = che;
+		this.orderId = orderId;
+		this.cheGuid = cheGuid;
 		this.contents = contents;
 	}
 
@@ -64,6 +62,6 @@ public class ExportMessageFuture extends AbstractFuture<ExportReceipt> implement
 	
 	@Override
 	public String toString() {
-		return String.format("%s: orderId: %s, che: %s, time: %s", this.getClass().getSimpleName(), order.getOrderId(), che.getDeviceGuidStr(), dateTime.toString());
+		return String.format("%s: orderId: %s, che: %s, time: %s", this.getClass().getSimpleName(), orderId, cheGuid, dateTime.toString());
 	}
 }

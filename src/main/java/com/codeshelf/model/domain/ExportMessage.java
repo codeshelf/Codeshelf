@@ -3,6 +3,8 @@ package com.codeshelf.model.domain;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
@@ -11,6 +13,8 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.codeshelf.edi.ExportMessageFuture;
+import com.codeshelf.edi.ExportMessageFuture.OrderOnCartAddedExportMessage;
+import com.codeshelf.edi.ExportMessageFuture.OrderOnCartFinishedExportMessage;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -32,6 +36,7 @@ public class ExportMessage extends DomainObjectTreeABC<Facility>{
 		}
 	}
 	
+	public enum ExportMessageType {ORDER_ON_CART_ADDED, ORDER_ON_CART_FINISHED}
 	//private static final Logger		LOGGER				= LoggerFactory.getLogger(ExportMessage.class);
 	
 	@ManyToOne(optional = false, fetch=FetchType.EAGER)
@@ -49,6 +54,23 @@ public class ExportMessage extends DomainObjectTreeABC<Facility>{
 	@Getter @Setter
 	@JsonProperty
 	String contents;
+	
+	@Column(nullable = true, name = "type")
+	@Enumerated(value = EnumType.STRING)
+	@Getter
+	@Setter
+	@JsonProperty
+	private ExportMessageType	type;
+	
+	@Column(nullable = true, name = "orderid")
+	@Getter @Setter
+	@JsonProperty
+	private String	orderId;
+	
+	@Column(nullable = true, name = "cheguid")
+	@Getter @Setter
+	@JsonProperty
+	private String	cheGuid;
 
 
 	@SuppressWarnings("unchecked")
@@ -78,7 +100,23 @@ public class ExportMessage extends DomainObjectTreeABC<Facility>{
 		setParent(facility);
 		setContents(message.getContents());
 		setActive(true);
+		setOrderId(message.getOrderId());
+		setCheGuid(message.getCheGuid());
 		setDomainId(getDefaultDomainIdPrefix() + "_" + System.currentTimeMillis());
+		if (message instanceof OrderOnCartAddedExportMessage) {
+			setType(ExportMessageType.ORDER_ON_CART_ADDED);
+		} else if (message instanceof OrderOnCartFinishedExportMessage) {
+			setType(ExportMessageType.ORDER_ON_CART_FINISHED);
+		}
 	}
 
+	public ExportMessageFuture toExportMessageFuture(){
+		ExportMessageFuture exportMessage = null;
+		if (type == ExportMessageType.ORDER_ON_CART_ADDED) {
+			exportMessage = new OrderOnCartAddedExportMessage(getOrderId(), getCheGuid(), getContents());
+		} else if (type == ExportMessageType.ORDER_ON_CART_FINISHED) {
+			exportMessage = new OrderOnCartFinishedExportMessage(getOrderId(), getCheGuid(), getContents());
+		}
+		return exportMessage;
+	}
 }

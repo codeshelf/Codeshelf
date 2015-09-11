@@ -1299,20 +1299,27 @@ public class Facility extends Location {
 	}
 
 	public void delete() {
+		//See https://codeshelf.atlassian.net/wiki/pages/viewpage.action?pageId=24936525 for details
+		//Step 1 - WorkInstruction
 		List<WorkInstruction> workInstructions = WorkInstruction.staticGetDao().findByParent(this);
 		deleteCollection(workInstructions, WorkInstruction.staticGetDao());
-
+		
+		//Step 2 - OrderHeader, ContainerUse, OrderDetail, OrderLocation
 		List<OrderHeader> orderHeaders = OrderHeader.staticGetDao().findByParent(this);
 		deleteCollection(orderHeaders, OrderHeader.staticGetDao());
 
+		//Step 3 - ContainerKind, Container
 		deleteCollection(containerKinds.values(), ContainerKind.staticGetDao());
 
+		//Step 4 - ItemMaster, Item, Gtin
 		List<ItemMaster> itemMasters = ItemMaster.staticGetDao().findByParent(this);
 		deleteCollection(itemMasters, ItemMaster.staticGetDao());
 
+		//Step 4 - ExtensionPoint
 		List<ExtensionPoint> extensionPoints = ExtensionPoint.staticGetDao().findByParent(this);
 		deleteCollection(extensionPoints, ExtensionPoint.staticGetDao());
 
+		//Step 6 - Facility and remaining linked domain object
 		Facility.staticGetDao().delete(this);
 	}
 

@@ -33,4 +33,15 @@
     <changeSet author="default (generated)" id="1441393288395-6">
         <addForeignKeyConstraint baseColumnNames="parent_persistentid" baseTableName="export_message" constraintName="FK_di4asg4cjne5r9q622oya35x9" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="location"/>
     </changeSet>
+    <changeSet author="ilya (generated)" id="1441915443409-2">
+        <addColumn tableName="export_message">
+            <column name="type" type="varchar(255)"/>
+        </addColumn>
+        <addColumn tableName="export_message">
+            <column name="cheguid" type="varchar(255)"/>
+        </addColumn>
+        <addColumn tableName="export_message">
+            <column name="orderid" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

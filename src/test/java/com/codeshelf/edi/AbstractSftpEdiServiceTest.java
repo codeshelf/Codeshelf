@@ -70,7 +70,7 @@ public class AbstractSftpEdiServiceTest extends HibernateTest {
 		beginTransaction();
 
 		String expectedContents = "ExportCompleteMessage";
-		FileExportReceipt receipt = sftpWIs.transportOrderOnCartFinished(orderHeader, che, "ExportCompleteMessage");
+		FileExportReceipt receipt = sftpWIs.transportOrderOnCartFinished(orderHeader.getDomainId(), che.getDeviceGuidStr(), "ExportCompleteMessage");
 		commitTransaction();
 
 		try {

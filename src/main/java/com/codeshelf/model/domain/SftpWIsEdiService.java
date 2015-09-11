@@ -59,26 +59,26 @@ public class SftpWIsEdiService extends AbstractSftpEdiService implements EdiExpo
 	}
 
 	@Override
-	public void transportWiFinished(OrderHeader inOrder, Che inChe, String exportMessage) {
+	public void transportWiFinished(String inOrderId, String inCheGuid, String exportMessage) {
 	
 	}
 
 	@Override
-	public void transportOrderOnCartRemoved(OrderHeader inOrder, Che inChe, String message) {
+	public void transportOrderOnCartRemoved(String inOrderId, String inCheGuid, String message) {
 		// TODO Auto-generated method stub
 		
 	}
 	
 	@Override
-	public FileExportReceipt transportOrderOnCartFinished(OrderHeader inOrder, Che inChe, String contents) throws EdiFileWriteException {
-		String filename = String.format("COMPLETE_%s_%s_%s.DAT",  inOrder.getOrderId(), inChe.getDeviceGuidStr(), System.currentTimeMillis());
+	public FileExportReceipt transportOrderOnCartFinished(String inOrderId, String inCheGuid, String contents) throws EdiFileWriteException {
+		String filename = String.format("COMPLETE_%s_%s_%s.DAT",  inOrderId, inCheGuid, System.currentTimeMillis());
 		final String absoluteFilename = this.getConfiguration().getExportPath() + "/" + filename;
 		return uploadAsFile(contents, absoluteFilename);
 	}
 
 	@Override
-	public FileExportReceipt transportOrderOnCartAdded(OrderHeader inOrder, Che inChe, String contents) throws EdiFileWriteException {
-		String filename = String.format("LOADED_%s_%s_%s.DAT",  inOrder.getOrderId(), inChe.getDeviceGuidStr(), System.currentTimeMillis());
+	public FileExportReceipt transportOrderOnCartAdded(String inOrderId, String inCheGuid, String contents) throws EdiFileWriteException {
+		String filename = String.format("LOADED_%s_%s_%s.DAT",  inOrderId, inCheGuid, System.currentTimeMillis());
 		final String absoluteFilename = this.getConfiguration().getExportPath() + "/" + filename;
 		return uploadAsFile(contents, absoluteFilename);
 	}

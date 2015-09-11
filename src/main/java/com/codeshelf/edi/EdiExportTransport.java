@@ -2,9 +2,7 @@ package com.codeshelf.edi;
 
 import java.io.IOException;
 
-import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.FileExportReceipt;
-import com.codeshelf.model.domain.OrderHeader;
 
 /**
  * Implementations are only responsible for attempting transport to the host.
@@ -17,12 +15,12 @@ public interface EdiExportTransport {
 
 	boolean isLinked();
 	
-	void transportWiFinished(OrderHeader wiOrder, Che wiChe, String message) throws IOException;
+	void transportWiFinished(String wiOrderId, String wiCheGuid, String message) throws IOException;
 
-	FileExportReceipt transportOrderOnCartFinished(OrderHeader wiOrder, Che wiChe, String message) throws IOException;
+	FileExportReceipt transportOrderOnCartFinished(String wiOrderId, String wiCheGuid, String message) throws IOException;
 
-	void transportOrderOnCartRemoved(OrderHeader inOrder, Che inChe, String message) throws IOException;
+	void transportOrderOnCartRemoved(String inOrderId, String inCheGuid, String message) throws IOException;
 
-	FileExportReceipt transportOrderOnCartAdded(OrderHeader inOrder, Che inChe, String message) throws IOException;
+	FileExportReceipt transportOrderOnCartAdded(String inOrderId, String inCheGuid, String message) throws IOException;
 
 }

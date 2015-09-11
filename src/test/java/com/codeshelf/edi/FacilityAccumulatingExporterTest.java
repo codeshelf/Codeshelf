@@ -86,8 +86,9 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 	
 	@Test 
 	public void startUpImmediateShutdown() throws TimeoutException {
+		beginTransaction();
 		FacilityAccumulatingExporter subject = startExporter(mock(EdiExportAccumulator.class), mock(WiBeanStringifier.class), mock(EdiExportTransport.class));
-		
+		commitTransaction();
 		subject.exportOrderOnCartAdded(mock(OrderHeader.class), mock(Che.class));
 		subject.stopAsync().awaitTerminated(5, TimeUnit.SECONDS);
 	}
@@ -196,14 +197,14 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 
 		Futures.allAsList(receipts);
 		//TODO verify message
-		verify(exportService).transportOrderOnCartAdded(eq(orderHeader), eq(che), any(String.class));
+		verify(exportService).transportOrderOnCartAdded(eq(orderHeader.getDomainId()), eq(che.getDeviceGuidStr()), any(String.class));
 
 		ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class); 
-		verify(exportService).transportOrderOnCartFinished(eq(orderHeader), eq(che), messageCaptor.capture());
+		verify(exportService).transportOrderOnCartFinished(eq(orderHeader.getDomainId()), eq(che.getDeviceGuidStr()), messageCaptor.capture());
 		String message = messageCaptor.getValue();
 		assertMatches(orderHeader, che, wis, message);
 		
-		verify(exportService, never()).transportWiFinished(any(OrderHeader.class), any(Che.class), any(String.class));
+		verify(exportService, never()).transportWiFinished(any(String.class), any(String.class), any(String.class));
 		commitTransaction();
 	}
 	
@@ -233,20 +234,20 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 
 		FacilityAccumulatingExporter subject = startExporter(mock(EdiExportAccumulator.class), mock(WiBeanStringifier.class), mockEdiTransport);
 		try {
-		
-			when(mockEdiTransport.transportOrderOnCartAdded(any(OrderHeader.class), any(Che.class), any(String.class)))
+			beginTransaction();
+			when(mockEdiTransport.transportOrderOnCartAdded(any(String.class), any(String.class), any(String.class)))
 			.thenThrow(new RuntimeException("test io"))
 			.thenReturn(mock(FileExportReceipt.class));
 	
 			doThrow(new RuntimeException("test io")).doNothing()
 				.when(mockEdiTransport)
-				.transportOrderOnCartRemoved(any(OrderHeader.class), any(Che.class), any(String.class));
+				.transportOrderOnCartRemoved(any(String.class), any(String.class), any(String.class));
 	
 			doThrow(new RuntimeException("test io")).doNothing()
 				.when(mockEdiTransport)
-				.transportWiFinished(any(OrderHeader.class), any(Che.class), any(String.class));
+				.transportWiFinished(any(String.class), any(String.class), any(String.class));
 	
-			when(mockEdiTransport.transportOrderOnCartFinished(any(OrderHeader.class), any(Che.class), any(String.class)))
+			when(mockEdiTransport.transportOrderOnCartFinished(any(String.class), any(String.class), any(String.class)))
 			.thenThrow(new RuntimeException("test io"))
 			.thenReturn(mock(FileExportReceipt.class));
 	
@@ -269,12 +270,13 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 			//Wait up to a second per invocation to verify
 			// Normal behavior is to keep retrying on IOException but skip on runtime exception
 			//   in this case it should skip to the second one and send it
-			verify(mockEdiTransport, timeout((int) (expectedRetryDelay * 1000L)).times(3)).transportOrderOnCartAdded(any(OrderHeader.class), any(Che.class), any(String.class));
+			verify(mockEdiTransport, timeout((int) (expectedRetryDelay * 1000L)).times(3)).transportOrderOnCartAdded(any(String.class), any(String.class), any(String.class));
 			//not called for PFSweb
 			//verify(mockEdiTransport, timeout((int) (expectedRetryDelay * 1000L)).times(3)).transportOrderOnCartRemoved(any(OrderHeader.class), any(Che.class), any(String.class));
-			verify(mockEdiTransport, timeout((int) (expectedRetryDelay * 1000L)).times(3)).transportOrderOnCartFinished(any(OrderHeader.class), any(Che.class), any(String.class));
+			verify(mockEdiTransport, timeout((int) (expectedRetryDelay * 1000L)).times(3)).transportOrderOnCartFinished(any(String.class), any(String.class), any(String.class));
 			//not called for PFSweb
 			//verify(mockEdiTransport, timeout((int) (expectedRetryDelay * 1000L)).times(3)).transportWiFinished(any(OrderHeader.class), any(Che.class), any(String.class));
+			commitTransaction();
 		} finally {
 			subject.stopAsync().awaitTerminated(TERMINATION_SECONDS, TimeUnit.SECONDS);
 		}
@@ -297,7 +299,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 		when(mockStringifier.stringifyOrderOnCartAdded(order1, che1)).thenReturn(singleTestMessage);
 		
 		EdiExportTransport mockEdiTransport = mock(EdiExportTransport.class);
-		when(mockEdiTransport.transportOrderOnCartAdded(any(OrderHeader.class), any(Che.class), any(String.class)))
+		when(mockEdiTransport.transportOrderOnCartAdded(any(String.class), any(String.class), any(String.class)))
 			.thenThrow(new IOException("test io"))
 			.thenThrow(new IOException("test io 2"))
 			.thenReturn(null);
@@ -308,17 +310,17 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 			
 			
 			//Wait up to a second per invocation to verify
-			verify(mockEdiTransport, timeout((int) (expectedRetryDelay * 5000L)).times(3)).transportOrderOnCartAdded(eq(order1), eq(che1), eq(singleTestMessage));
+			verify(mockEdiTransport, timeout((int) (expectedRetryDelay * 5000L)).times(3)).transportOrderOnCartAdded(eq(order1.getDomainId()), eq(che1.getDeviceGuidStr()), eq(singleTestMessage));
 	
 			when(mockStringifier.stringifyOrderOnCartFinished(eq(order1), eq(che1), any(List.class))).thenReturn(singleTestMessage);
 	
-			when(mockEdiTransport.transportOrderOnCartFinished(any(OrderHeader.class), any(Che.class), any(String.class)))
+			when(mockEdiTransport.transportOrderOnCartFinished(any(String.class), any(String.class), any(String.class)))
 			.thenThrow(new IOException("test io"))
 			.thenThrow(new IOException("test io 2"))
 			.thenReturn(null);
 	
 			subject.exportOrderOnCartFinished(order1, che1);
-			verify(mockEdiTransport, timeout((int) (expectedRetryDelay * 5000L)).times(3)).transportOrderOnCartFinished(eq(order1), eq(che1), eq(singleTestMessage));
+			verify(mockEdiTransport, timeout((int) (expectedRetryDelay * 5000L)).times(3)).transportOrderOnCartFinished(eq(order1.getDomainId()), eq(che1.getDeviceGuidStr()), eq(singleTestMessage));
 		} finally {
 			subject.stopAsync().awaitTerminated(TERMINATION_SECONDS, TimeUnit.SECONDS);
 		}
@@ -331,13 +333,17 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 		this.getTenantPersistenceService().beginTransaction();
 
 		final int total = 30;
-		final Facility facility = getFacility();
+		Facility facility = getFacility();
+		this.getTenantPersistenceService().commitTransaction();
+		
+		this.getTenantPersistenceService().beginTransaction();
+		facility = facility.reload();
 		final Che che1 = getChe1();
 
 
 		Lock callBlocker = new ReentrantLock();
 		EdiExportTransport mockEdiTransport = mock(EdiExportTransport.class);
-		when(mockEdiTransport.transportOrderOnCartAdded(any(OrderHeader.class), any(Che.class), any(String.class)))
+		when(mockEdiTransport.transportOrderOnCartAdded(any(String.class), any(String.class), any(String.class)))
 			.thenAnswer(new BlockedCall(callBlocker, new FileExportReceipt("../../*.DAT", 500)));
 
 		String singleTestMessage = "ONLY MESSAGE NOT BLOCKED";
@@ -373,7 +379,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 			
 			//verify(mockEdiTransport, Mockito.times(1)).transportOrderOnCartAdded(any(OrderHeader.class), any(Che.class), any(String.class));
 			callBlocker.unlock();
-			verify(mockEdiTransport, Mockito.timeout(2000).times(total)).transportOrderOnCartAdded(any(OrderHeader.class), any(Che.class), any(String.class));
+			verify(mockEdiTransport, Mockito.timeout(2000).times(total)).transportOrderOnCartAdded(any(String.class), any(String.class), any(String.class));
 		} finally {
 			subject.stopAsync().awaitTerminated(TERMINATION_SECONDS, TimeUnit.SECONDS);
 		}
@@ -390,7 +396,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 		WiBeanStringifier mockStringifier = mock(WiBeanStringifier.class, new Returns(singleTestMessage));
 //		when(mockStringifier.stringifyOrderOnCartAdded(any(OrderHeader.class), any(Che.class))).thenReturn(singleTestMessage);
 
-		
+		beginTransaction();
 		final FacilityAccumulatingExporter subject = startExporter(mock(EdiExportAccumulator.class), mockStringifier, badEdiTransport);
 		try {
 			OrderHeader mockOrder = mock(OrderHeader.class);
@@ -411,12 +417,14 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 			
 			FileExportReceipt successReceipt = mock(FileExportReceipt.class);
 			EdiExportTransport goodEdiTransport = mock(EdiExportTransport.class);
-			when(goodEdiTransport.transportOrderOnCartAdded(eq(mockOrder), eq(mockChe), eq(singleTestMessage))).thenReturn(successReceipt);
+			//when(goodEdiTransport.transportOrderOnCartAdded(eq(mockOrder.getDomainId()), eq(mockChe.getDeviceGuidStr()), eq(singleTestMessage))).thenReturn(successReceipt);
+			when(goodEdiTransport.transportOrderOnCartAdded(any(String.class), any(String.class), eq(singleTestMessage))).thenReturn(successReceipt);
 			subject.setEdiExportTransport(goodEdiTransport);
 			
 			Assert.assertEquals(successReceipt, futureReceipt.get(5, TimeUnit.SECONDS));
 		} finally {
 			subject.stopAsync().awaitTerminated(TERMINATION_SECONDS, TimeUnit.SECONDS);
+			commitTransaction();
 		}
 	}
 	

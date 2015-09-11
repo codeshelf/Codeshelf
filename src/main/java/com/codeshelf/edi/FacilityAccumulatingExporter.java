@@ -10,6 +10,7 @@ package com.codeshelf.edi;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -19,6 +20,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import org.hibernate.Session;
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,6 +124,16 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 					
 				})*/
 				.build();
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("active", true));
+		List<ExportMessage> exportMessages = ExportMessage.staticGetDao().findByFilter(filterParams);
+		for (ExportMessage exportMessage : exportMessages){
+			ExportMessageFuture messageFuture = exportMessage.toExportMessageFuture();
+			if (messageFuture != null) {
+				enqueue(messageFuture);
+			}
+		}
+		return;
 	}
 	
 	@Override
@@ -168,11 +181,11 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 				@Override
 				public ExportReceipt call() throws IOException {
 					if (message instanceof OrderOnCartAddedExportMessage) {
-						FileExportReceipt receipt =  getEdiExportTransport().transportOrderOnCartAdded(message.getOrder(), message.getChe(), message.getContents());
+						FileExportReceipt receipt =  getEdiExportTransport().transportOrderOnCartAdded(message.getOrderId(), message.getCheGuid(), message.getContents());
 						LOGGER.info("Sent orderOnCartAdded {}", message);
 						return receipt;
 					} else if (message instanceof OrderOnCartFinishedExportMessage){
-						FileExportReceipt receipt=  getEdiExportTransport().transportOrderOnCartFinished(message.getOrder(), message.getChe(), message.getContents());
+						FileExportReceipt receipt=  getEdiExportTransport().transportOrderOnCartFinished(message.getOrderId(), message.getCheGuid(), message.getContents());
 						LOGGER.info("Sent orderOnCartFinished {}", message);
 						return receipt;
 					} else {
@@ -207,7 +220,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 	
 	public ListenableFuture<ExportReceipt> exportOrderOnCartAdded(final OrderHeader inOrder, final Che inChe) {
 		final String exportStr = stringifier.stringifyOrderOnCartAdded(inOrder, inChe);
-		ExportMessageFuture exportMessage = new OrderOnCartAddedExportMessage(inOrder, inChe, exportStr);
+		ExportMessageFuture exportMessage = new OrderOnCartAddedExportMessage(inOrder.getDomainId(), inChe.getDeviceGuidStr(), exportStr);
 		persistMessage(inOrder.getFacility(), exportMessage);
 		enqueue(exportMessage);
 		return exportMessage;
@@ -227,7 +240,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 		ArrayList<WorkInstructionCsvBean> orderCheList = accumulator.getAndRemoveWiBeansFor(inOrder.getOrderId(), inChe.getDomainId());
 		// This list has "complete" work instruction beans. The particular customer's EDI may need strange handling.
 		final String exportStr = stringifier.stringifyOrderOnCartFinished(inOrder, inChe, orderCheList);
-		ExportMessageFuture exportMessage = new OrderOnCartFinishedExportMessage(inOrder, inChe, exportStr);
+		ExportMessageFuture exportMessage = new OrderOnCartFinishedExportMessage(inOrder.getDomainId(), inChe.getDeviceGuidStr(), exportStr);
 		persistMessage(inOrder.getFacility(), exportMessage);
 		enqueue(exportMessage);
 		return exportMessage;
@@ -239,6 +252,14 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 	}
 	
 	private void persistMessage(Facility facility, ExportMessageFuture message){
+		if (facility == null) {
+			LOGGER.warn("Trying to persist an ExportMessage with null Facility. Possibly a test.");
+			return;
+		}
+		if (message.getContents() == null) {
+			LOGGER.warn("Trying to persist an ExportMessage with null Contents. Possibly a test.");
+			return;
+		}
 		final ExportMessage exportMessage = new ExportMessage(facility, message);
 		try {
 			new SideTransaction<Void>() {
