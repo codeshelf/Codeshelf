@@ -2563,11 +2563,8 @@ public class WorkService implements IApiService {
 		Timestamp desiredTime = getDaysOldTimeStamp(daysOldToCount);
 		UUID facilityUUID = inFacility.getPersistentId();
 
-		/*
-		List<OrderHeader> orders = OrderHeader.staticGetDao()
-			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID),
-				Restrictions.lt("dueDate", desiredTime)));
-		*/
+		LOGGER.info("Phase 1 of order purge: get the batch of orders to purge");
+
 		Criteria archiveableOrderCrit = OrderHeader.staticGetDao().createCriteria();
 		archiveableOrderCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
 		archiveableOrderCrit.add(Restrictions.lt("dueDate", desiredTime));
@@ -2590,7 +2587,7 @@ public class WorkService implements IApiService {
 
 		// Trying to speed up by not relying quite so much on the hibernate delete cascade.
 		// Result: not much improvement in time. But much nicer logging about the process.
-		LOGGER.info("Phase 1 of order purge: assemble list of details for these orders");
+		LOGGER.info("Phase 2 of order purge: assemble list of details for these orders");
 		List<OrderDetail> details = new ArrayList<OrderDetail>();
 		for (OrderHeader order : orders) {
 			List<OrderDetail> oneDetailSet = order.getOrderDetails();
@@ -2602,20 +2599,20 @@ public class WorkService implements IApiService {
 		// So, big benefit to smaller batches. Would be nice to query for the orderDetails
 
 		// My test case did not have enough work instruction to know if this helped or not.
-		LOGGER.info("Phase 2 of order purge: assemble work instructions from the details");
+		LOGGER.info("Phase 3 of order purge: assemble work instructions from the details");
 		List<WorkInstruction> wis = new ArrayList<WorkInstruction>();
 		for (OrderDetail detail : details) {
 			List<WorkInstruction> oneOrderWis = detail.getWorkInstructions();
 			wis.addAll(oneOrderWis);
 		}
 
-		LOGGER.info("Phase 3 of order purge: delete the assembled work instructions, which delinks from details and che.");
+		LOGGER.info("Phase 4 of order purge: delete the assembled work instructions, which delinks from details and che.");
 		safelyDeleteWorkInstructionList(wis);
 
-		LOGGER.info("Phase 4 of order purge: delete the details");
+		LOGGER.info("Phase 5 of order purge: delete the details");
 		safelyDeleteDetailsList(details);
 
-		LOGGER.info("Phase 5 of order purge: delete the orders which delinks from container");
+		LOGGER.info("Phase 6 of order purge: delete the orders which delinks from container");
 
 		int deletedCount = 0;
 		for (OrderHeader order : orders) {
