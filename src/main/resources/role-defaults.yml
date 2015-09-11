@@ -43,6 +43,7 @@ View:
   - "order:view"
   - "workinstruction:view"
   - "event:view"
+  - "worker:view"
 Supervise:
   - "event:*"
   - "worker:*"
