@@ -39,7 +39,7 @@ public class OrderBatchPerformanceTest {
 	final private static String	USERNAME	= "simulate@example.com";
 	final private static String	PASSWORD	= "testme";
 	// final private static String	FACILITY	= "7d16e862-32db-4270-8eda-aff14629aceb";
-	final private static String	FACILITY	= "6e85c5b1-3a36-4960-b6da-2393f9674d6a";
+	final private static String	FACILITY	= "d678cc4d-3251-4be1-bfec-199393705bba";
 
 	static {
 		JvmProperties.load("server");

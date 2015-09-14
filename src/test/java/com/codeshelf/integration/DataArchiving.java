@@ -349,4 +349,108 @@ public class DataArchiving extends ServerTest {
 
 	}
 
+	/**
+	 * This should not happen in production. Test the system behavior when orders and work instructions are purged and then
+	 * The cart keeps running to complete those jobs. (No delete message goes to site controller.)
+	 */
+	@Test
+	public final void testPurgeActiveJobs() throws IOException {
+		beginTransaction();
+
+		propertyService.turnOffHK(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, "WorkSequence");
+		setUpOrdersWithCntrGtinAndSequence(facility);
+		commitTransaction();
+
+		this.startSiteController();
+
+		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
+		Assert.assertEquals(CheStateEnum.IDLE, picker.getCurrentCheState());
+		picker.loginAndSetup("Picker #1");
+
+		LOGGER.info("1a: setup 5 orders on cart");
+		picker.setupContainer("10001", "1");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		picker.setupContainer("10002", "2");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		picker.setupContainer("10003", "3");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		picker.setupContainer("10004", "4");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		picker.setupContainer("10005", "5");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+
+		LOGGER.info("1b: START. Now we get some work. The point was to make the work instructions");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		List<WorkInstruction> allWiList = picker.getAllPicksList();
+		this.logWiList(allWiList);
+
+		LOGGER.info("2a: Do a trivial count");
+		beginTransaction();
+		facility = facility.reload();
+
+		List<OrderHeader> ordersList = OrderHeader.staticGetDao().getAll();
+		List<WorkInstruction> wiList = WorkInstruction.staticGetDao().getAll();
+		Assert.assertEquals(5, ordersList.size());
+		Assert.assertEquals(8, wiList.size());
+		commitTransaction();
+
+		LOGGER.info("2b: Report, that what is archivable on new data");
+		beginTransaction();
+		facility = facility.reload();
+		workService.reportAchiveables(2, facility);
+		commitTransaction();
+
+		
+		LOGGER.info("3: Make all of the orders  5 days 'old' ");
+		beginTransaction();
+		facility = facility.reload();
+		makeDaysOldTestData("10001", 5, facility);
+		makeDaysOldTestData("10002", 5, facility);
+		makeDaysOldTestData("10003", 5, facility);
+		makeDaysOldTestData("10004", 5, facility);
+		makeDaysOldTestData("10005", 5, facility);
+		commitTransaction();
+		
+		LOGGER.info("4: Call the work instruction purge with no limit specified (will limit to 1000, way more than we have)");
+		beginTransaction();
+		facility = facility.reload();
+		workService.purgeOldObjects(3, facility, WorkInstruction.class);
+		commitTransaction();
+		
+		LOGGER.info("5b: Report, via the work service call");
+		beginTransaction();
+		facility = facility.reload();
+		workService.reportAchiveables(2, facility);
+		List<WorkInstruction> wiList3 = WorkInstruction.staticGetDao().getAll();
+		Assert.assertEquals(0, wiList3.size());
+		commitTransaction();
+
+		LOGGER.info("6a: See the site controller WI list again, and screen");
+		LOGGER.info(picker.getLastCheDisplay());
+		allWiList = picker.getAllPicksList();
+		this.logWiList(allWiList);
+
+		LOGGER.info("6b: Do the next pick");
+		// this decomposes pickItemAuto
+		WorkInstruction wi = picker.getActivePick();
+		int button = picker.buttonFor(wi);
+		int quantity = wi.getPlanQuantity();
+		picker.pick(button, quantity);
+		
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		LOGGER.info(picker.getLastCheDisplay());
+		allWiList = picker.getAllPicksList();
+		this.logWiList(allWiList);
+				
+		LOGGER.info("7: Log out. Just an indication that failures were handled cleanly above, if these states still work.");
+		picker.logout(); // does a waitForCheState(CheStateEnum.IDLE
+		
+
+
+	}
+
 }

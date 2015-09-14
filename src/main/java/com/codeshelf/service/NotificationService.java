@@ -78,6 +78,12 @@ public class NotificationService implements IApiService{
 			UUID workInstructionId = message.getWorkInstructionId();
 			if (workInstructionId != null) {
 				WorkInstruction wi = WorkInstruction.staticGetDao().findByPersistentId(workInstructionId);
+				// It is possible, though bad and unlikely, that server has deleted a work instruction by the time site controller sends message to server about it.
+				// This dataflow is seen in DataArchiving.testPurgeActiveJobs()
+				if (wi == null) {
+					throw new NullPointerException(String.format("Work instruction does not exist for this persistentId: %s", workInstructionId.toString()));
+					// would get NPE just below in wi.getOrderDetail();
+				}
 				event.setWorkInstruction(wi);
 				OrderDetail orderDetail = wi.getOrderDetail();
 				if (orderDetail != null) {

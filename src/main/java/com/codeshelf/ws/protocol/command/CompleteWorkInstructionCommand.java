@@ -34,8 +34,12 @@ public class CompleteWorkInstructionCommand extends CommandABC {
 		UUID cheId = UUID.fromString(request.getDeviceId());
 		WorkInstruction incomingWI = request.getWorkInstruction();
 		CompleteWorkInstructionResponse response = new CompleteWorkInstructionResponse();
-		response.setWorkInstructionId(incomingWI.getPersistentId());
 		try {
+			if (incomingWI == null) {
+				throw new NullPointerException(String.format("could not find work instruction to complete for Che %s", cheId.toString()));
+			}
+			// Interesting. incomingWI is not null  in JUnit test DataArchiving.testPurgeActiveJobs(). But then completeWorkInstruction() will throw on the commit.
+			response.setWorkInstructionId(incomingWI.getPersistentId());
 			workService.completeWorkInstruction(cheId, incomingWI);
 			response.setStatus(ResponseStatus.Success);	
 		} catch(Exception e) {
