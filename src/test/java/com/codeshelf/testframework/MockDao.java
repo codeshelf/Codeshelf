@@ -86,6 +86,10 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	public final List<T> findByPersistentIdList(List<UUID> inPersistentIdList) {
 		throw new NotImplementedException();
 	}
+	
+	public final List<T> findByParentPersistentIdList(List<UUID> inIdList){
+		throw new NotImplementedException();
+	}
 
 	public final List<T> findByFilter(List<Criterion> inFilter) {
 		throw new NotImplementedException();

@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.Getter;
 import lombok.ToString;
 
+import org.apache.commons.lang.NotImplementedException;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Order;
@@ -2588,15 +2589,24 @@ public class WorkService implements IApiService {
 		// Trying to speed up by not relying quite so much on the hibernate delete cascade.
 		// Result: not much improvement in time. But much nicer logging about the process.
 		LOGGER.info("Phase 2 of order purge: assemble list of details for these orders");
+
+		List<UUID> uuidList = new ArrayList<UUID>();
+		for (OrderHeader order : orders) {
+			uuidList.add(order.getPersistentId());
+		}
+		// 500 orders with 2900 details assembles in 2 seconds using findByParentPersistentIdList
+		List<OrderDetail> details = OrderDetail.staticGetDao().findByParentPersistentIdList(uuidList);
+		/*
+		// seems to run in n-squared time
+		// 500 orders with 2900 details assembles in 15 seconds using this code
+		// 1000 orders with 5800 details assembles in 56 seconds using this code, so big benefit for smaller batches if we do it this way
 		List<OrderDetail> details = new ArrayList<OrderDetail>();
 		for (OrderHeader order : orders) {
 			List<OrderDetail> oneDetailSet = order.getOrderDetails();
 			details.addAll(oneDetailSet);
 		}
-		// Note: Phase 1 seems to run in n-squared time
-		// 500 orders with 2900 details assembles in 15 seconds
-		// 1000 orders with 5800 details assembles in 56 seconds
-		// So, big benefit to smaller batches. Would be nice to query for the orderDetails
+		*/
+		
 
 		// My test case did not have enough work instruction to know if this helped or not.
 		LOGGER.info("Phase 3 of order purge: assemble work instructions from the details");

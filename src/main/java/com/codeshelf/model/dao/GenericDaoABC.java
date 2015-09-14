@@ -152,6 +152,17 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		return methodResultsList;
 	}
 
+	/**
+	 * This may optimize a common need. Better than fetching an hydrating all then checking parent
+	 */
+	public final List<T> findByParentPersistentIdList(List<UUID> inIdList) {
+		Session session = getCurrentSession();
+		Criteria criteria = session.createCriteria(getDaoClass());
+		criteria.add(Restrictions.in("parent.persistentId", inIdList));
+		List<T> methodResultsList = (List<T>) criteria.list();
+		return methodResultsList;
+	}
+
 	public final List<T> findByFilter(List<Criterion> inFilter) {
 		// If we have a valid filter then get the filtered objects.
 		Session session = getCurrentSession();
