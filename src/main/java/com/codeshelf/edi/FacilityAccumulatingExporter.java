@@ -82,7 +82,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 
 	private Cache<ExportMessageFuture, ExportReceipt>	receiptCache;
 	
-	public FacilityAccumulatingExporter(EdiExportAccumulator accumulator, WiBeanStringifier stringifier, EdiExportTransport exportService) {
+	public FacilityAccumulatingExporter(Facility facility, EdiExportAccumulator accumulator, WiBeanStringifier stringifier, EdiExportTransport exportService) {
 		super();
 		this.accumulator = accumulator;
 		this.stringifier = stringifier; 
@@ -125,6 +125,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 				})*/
 				.build();
 		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("parent", facility));
 		filterParams.add(Restrictions.eq("active", true));
 		List<ExportMessage> exportMessages = ExportMessage.staticGetDao().findByFilter(filterParams);
 		for (ExportMessage exportMessage : exportMessages){

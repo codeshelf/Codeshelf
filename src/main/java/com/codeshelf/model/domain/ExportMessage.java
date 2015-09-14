@@ -114,8 +114,10 @@ public class ExportMessage extends DomainObjectTreeABC<Facility>{
 		ExportMessageFuture exportMessage = null;
 		if (type == ExportMessageType.ORDER_ON_CART_ADDED) {
 			exportMessage = new OrderOnCartAddedExportMessage(getOrderId(), getCheGuid(), getContents());
+			exportMessage.setPersistentId(getPersistentId());
 		} else if (type == ExportMessageType.ORDER_ON_CART_FINISHED) {
 			exportMessage = new OrderOnCartFinishedExportMessage(getOrderId(), getCheGuid(), getContents());
+			exportMessage.setPersistentId(getPersistentId());
 		}
 		return exportMessage;
 	}
