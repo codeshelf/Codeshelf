@@ -3,7 +3,7 @@ package com.codeshelf.persistence;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
-public abstract class SideTransaction<V> {	
+public abstract class SideTransaction<V> {
 	
 	public abstract V task(Session session);
 	
