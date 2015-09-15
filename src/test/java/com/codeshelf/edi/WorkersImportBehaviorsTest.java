@@ -49,6 +49,7 @@ public class WorkersImportBehaviorsTest extends ServerTest {
 		LOGGER.info("1: trivial import case. But non trivial in the sense that this file has only the badgeId field");
 		Facility facility = createFacility();
 
+		// Just doing a little stuff that we know works to get the test going.
 		beginTransaction();
 		readA1File(facility);
 		commitTransaction();
@@ -59,22 +60,33 @@ public class WorkersImportBehaviorsTest extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
+		LocationAlias aliasD1 = LocationAlias.staticGetDao().findByDomainId(facility, "D-1");
+		Assert.assertNotNull(aliasD1);
+		Assert.assertTrue(aliasD1.getActive());
+		commitTransaction();
+
+		// Now sart the real test case
+		beginTransaction();
 		facility = facility.reload();
 		String csvString = "badgeId\r\n" //
-				/*
 				+ "Badge_01\r\n" //
 				+ "Badge_02\r\n" //
 				+ "Badge_03\r\n" //
 				+ "Badge_04\r\n" //
-				*/
 				+ "Badge_05\r\n"; //
 		importWorkersData(facility, csvString);
 		commitTransaction();
 
 		beginTransaction();
 		// Worker not a child of facility, so reload facility does nothing
-		Worker worker5 = Worker.findTenantWorker("Badge_05");
-		Assert.assertNotNull(worker5);
+		Worker worker5a = Worker.findTenantWorker("Badge_05");
+		Assert.assertNotNull(worker5a);
+		
+		Worker worker5b = Worker.findWorker(facility, "Badge_05");
+		Assert.assertNotNull(worker5b);
+		
+		Assert.assertEquals(worker5a, worker5b);
+
 		commitTransaction();
 	}
 
@@ -92,11 +104,38 @@ public class WorkersImportBehaviorsTest extends ServerTest {
 		readA1Aliases(facility);
 		commitTransaction();
 
+			
 		beginTransaction();
-		LocationAlias aliasD1 = LocationAlias.staticGetDao().findByDomainId(facility, "D-1");
-		Assert.assertNotNull(aliasD1);
-		Assert.assertTrue(aliasD1.getActive());
+		facility = facility.reload();
+		String csvString = "badgeId, firstName, lastName\r\n" //
+				+ "Badge_01,Jay,Smith\r\n" //
+				+ "Badge_02,Kay,Smith\r\n" //
+				+ "Badge_03,Lori,Smith\r\n" //
+				+ "Badge_04,Mary,Smith\r\n" //
+				+ "Badge_05,Nancy,Smith\r\n"; //
+		importWorkersData(facility, csvString);
 		commitTransaction();
+
+		beginTransaction();
+		// Worker not a child of facility, so reload facility does nothing
+		Worker worker1 = Worker.findTenantWorker("Badge_01");
+		Assert.assertNotNull(worker1);
+		Assert.assertEquals("Jay", worker1.getFirstName());
+		worker1.setActive(false);
+		Worker.staticGetDao().store(worker1);
+
+		commitTransaction();
+
+		LOGGER.info("Show that inactive use is found by findTenantWork, but not by findActiveWorkerInFacility");
+		beginTransaction();
+		// Worker not a child of facility, so reload facility does nothing
+		Worker worker1a = Worker.findTenantWorker("Badge_01");
+		Assert.assertNotNull(worker1a);
+
+		Worker worker1b = Worker.findWorker(facility, "Badge_01");
+		Assert.assertNull(worker1b);
+		commitTransaction();
+
 
 	}
 
