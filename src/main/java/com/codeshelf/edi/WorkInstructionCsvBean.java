@@ -129,13 +129,9 @@ public class WorkInstructionCsvBean extends ExportCsvBeanABC {
 		setUom(inWi.getUomMasterId());
 		setLotId("");
 
-		//Default to location id
-		String locationStr = inWi.getLocationId();
-		//if there is alias use instead
-		if (inWi.getLocation().getAliases().size() > 0) {
-			LocationAlias locAlias = inWi.getLocation().getAliases().get(0);
-			locationStr = locAlias.getDomainId();
-		}
+		// Use the denormalized version on the work instruction. That usually will match the location alias that customer is using.
+		// Or, for location based pick, will match the location in the order detail
+		String locationStr = inWi.getPickInstruction();
 		setLocationId(locationStr);
 
 		String picker = getPickerId(); // this field is nullable on work instruction

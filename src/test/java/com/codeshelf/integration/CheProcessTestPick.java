@@ -27,6 +27,7 @@ import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.edi.SftpConfiguration;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.OrderStatusEnum;
@@ -34,12 +35,15 @@ import com.codeshelf.model.WiSetSummary;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
+import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Che.ProcessMode;
+import com.codeshelf.model.domain.AbstractSftpEdiService;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.LedController;
@@ -49,8 +53,11 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
+import com.codeshelf.model.domain.SftpWIsEdiService;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.service.ExtensionPointType;
+import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.UiUpdateService;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
@@ -1839,6 +1846,13 @@ public class CheProcessTestPick extends ServerTest {
 	 * This does just enough to trivially call work service apis to add order to cart, remove order, complete one work instruction but not complete
 	 * Complete second, completing the order, and removing a partially complete order. As well as an extra trip through setup summary 
 	 * to make sure we are not sending repeating messages for what was done before.
+	 * 
+	 * This is rather weak. Look in the console, and see these lines during cart setup
+	 * 2015-09-15T13:10:53,480 [INFO ] Order: 44444 added onto cart:CHE1 [] [] [] [5000] (com.codeshelf.service.WorkService)
+	 * 2015-09-15T13:10:53,490 [INFO ] Order: 22222 added onto cart:CHE1 [] [] [] [5000] (com.codeshelf.service.WorkService)
+	 * 2015-09-15T13:10:53,499 [INFO ] Order: 11111 added onto cart:CHE1 [] [] [] [5000] (com.codeshelf.service.WorkService)
+	 * These show the workService API was called, but in the end, there is no accumulating EDI service, so nothing is sent.
+	 *
 	 */
 	@Test
 	public void testEDIAccumulatorCalls() throws IOException {
@@ -1960,6 +1974,183 @@ public class CheProcessTestPick extends ServerTest {
 
 	}
 
+	/**
+	 * The intent is to do enough to cause the export beans to populate.
+	 * DEV-1127 from PFSWeb go live had location-based pick not populating the from location for the pick correctly.
+	 */
+	@Test
+	public void testEDIAccumulatorExportBean() throws IOException {
+		
+		LOGGER.info("1: Set up facility. Add the export extensions");
+		// somewhat cloned from FacilityAccumulatingExportTest
+		Facility facility = setUpSimpleNoSlotFacility();
+		
+		String onCartScript = "def OrderOnCartContent(bean) { def returnStr = " //
+				+ "'0073' +'^'" //
+				+ "+ 'ORDERSTATUS'.padRight(20) +'^'" //
+				+ "+ '0'.padLeft(10,'0') +'^'" //
+				+ "+ bean.orderId.padRight(20) +'^'" //
+				+ "+ bean.cheId.padRight(7) +'^'" //
+				+ "+ bean.customerId.padRight(2) +'^'" //
+				+ "+ 'OPEN'.padRight(15);" //
+				+ " return returnStr;}";
+
+		String headerScript = "def WorkInstructionExportCreateHeader(bean) { def returnStr = " //
+				+ "'0073' +'^'" //
+				+ "+ 'ORDERSTATUS'.padRight(20) +'^'" //
+				+ "+ '0'.padLeft(10,'0') +'^'" //
+				+ "+ bean.orderId.padRight(20) +'^'" //
+				+ "+ 'CHE'.padRight(20) +'^'" //
+				+ "+ bean.cheId.padRight(20) +'^'" //
+				+ "+ 'CLOSED'.padRight(15);" //
+				+ " return returnStr;}";
+
+		String trailerScript = "def WorkInstructionExportCreateTrailer(bean) { def returnStr = " //
+				+ "'0057' +'^'" //
+				+ "+ 'ENDORDER'.padRight(20) +'^'" //
+				+ "+ '0'.padLeft(10,'0') +'^'" //
+				+ "+ bean.orderId.padRight(20);" //
+				+ " return returnStr;}";
+
+		// This matches the short specification. Customer sent a longer specification with timestamps and user names.
+		String contentScript = "def WorkInstructionExportContent(bean) { def returnStr = " //
+				+ "'0090' +'^'" //
+				+ "+ 'PICKMISSIONSTATUS'.padRight(20) +'^'" //
+				+ "+ '0'.padLeft(10,'0') +'^'" //
+				+ "+ bean.orderId.padRight(20) +'^'" //
+				+ "+ bean.locationId.padRight(20) +'^'" //
+				+ "+ bean.planQuantity.padLeft(15,'0') +'^'" //
+				+ "+ bean.actualQuantity.padLeft(15,'0') +'^'" //
+				+ "+ bean.itemId.padRight(25);" //
+				+ " return returnStr;}";
+
+		beginTransaction();
+		facility.reload();
+		propertyService.turnOffHK(facility);
+		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.WORKSEQR);
+		if (theProperty != null) {
+			theProperty.setValue("WorkSequence");
+			PropertyDao.getInstance().store(theProperty);
+		}
+
+		
+		// For PFSWeb (and Dematic carts), the OrderOnCart is approximately the same as the work instruction header, 
+		// but this will not be universally true
+		ExtensionPoint onCartExt = new ExtensionPoint(facility, ExtensionPointType.OrderOnCartContent);
+		onCartExt.setScript(onCartScript);
+		onCartExt.setActive(true);
+		ExtensionPoint.staticGetDao().store(onCartExt);
+
+		ExtensionPoint headerExt = new ExtensionPoint(facility, ExtensionPointType.WorkInstructionExportCreateHeader);
+		headerExt.setScript(headerScript);
+		headerExt.setActive(true);
+		ExtensionPoint.staticGetDao().store(headerExt);
+
+		ExtensionPoint trailerExt = new ExtensionPoint(facility, ExtensionPointType.WorkInstructionExportCreateTrailer);
+		trailerExt.setScript(trailerScript);
+		trailerExt.setActive(true);
+		ExtensionPoint.staticGetDao().store(trailerExt);
+
+		ExtensionPoint contentExt = new ExtensionPoint(facility, ExtensionPointType.WorkInstructionExportContent);
+		contentExt.setScript(contentScript);
+		contentExt.setActive(true);
+		ExtensionPoint.staticGetDao().store(contentExt);
+
+		commitTransaction();
+
+		LOGGER.info("2: Load orders. No inventory, so uses locationA, etc. as the location-based pick");
+		beginTransaction();
+		facility.reload();
+
+		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n11111,11111,1,Test Item 1,1,each,locationA,1"
+				+ "\r\n22222,22222,2,Test Item 2,1,each,locationB,20"
+				+ "\r\n22222,22222,3,Test Item 3,1,each,locationC,30"
+				+ "\r\n44444,44444,5,Test Item 5,1,each,locationD,500"
+				+ "\r\n55555,55555,2,Test Item 2,1,each,locationA,20";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+		
+		beginTransaction();
+		facility.reload();
+		SftpConfiguration config = setupSftpOutConfiguration();
+		SftpWIsEdiService sftpWIs = configureSftpService(facility, config, SftpWIsEdiService.class);
+		Assert.assertTrue(sftpWIs.isLinked());
+		commitTransaction();
+
+
+		this.startSiteController();
+		// Start setting up cart etc
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+	
+		LOGGER.info("3a: Set up order 11111 at position 1");
+		picker.setupOrderIdAsContainer("11111", "1");
+
+		LOGGER.info("3b: Set up order 22222 at position 2");
+		picker.setupOrderIdAsContainer("22222", "2");
+
+		LOGGER.info("3c: Set up order 44444 at position 3");
+		picker.setupOrderIdAsContainer("44444", "3");
+
+		LOGGER.info("4: Start, getting the first pick");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		LOGGER.info(picker.getLastCheDisplay());
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		// Look in console for line like this. No easy way to get it for unit test
+		// 0073^ORDERSTATUS         ^0000000000^44444               ^CHE1   ^  ^OPEN            
+
+		// Did not set up order 55555. Therefore, 3 orders and 4 jobs
+		List<WorkInstruction> wiList = picker.getAllPicksList();
+		Assert.assertEquals(4, wiList.size());
+
+
+		picker.pickItemAuto();// This should complete order 11111, yielding the message from work service to the edi to send
+		// See line like this in the console
+		// 0090^PICKMISSIONSTATUS   ^0000000000^11111               ^locationA           ^000000000000001^000000000000001^1                        
+
+		// Just wasting some time to allow the EDI to process through
+		picker.logout();
+		picker.loginAndSetup("Picker #1");
+		picker.logout();
+		picker.loginAndSetup("Picker #1");
+		picker.logout();
+	}
+	
+	//++++++++++  SFTP configuration +++++++++++
+	
+	// our private sftp test place. Note: we need to maintain this SFTP endpoint for our testing
+	private static final String	SFTP_TEST_HOST	= "sftp.codeshelf.com";
+	private static final String	SFTP_TEST_USERNAME	= "test";
+	private static final String	SFTP_TEST_PASSWORD	= "m80isrq411";
+
+	private SftpConfiguration setupSftpOutConfiguration() {
+		SftpConfiguration config = new SftpConfiguration();
+		config.setHost(SFTP_TEST_HOST);
+		config.setUsername(SFTP_TEST_USERNAME);
+		config.setPassword(SFTP_TEST_PASSWORD);
+		config.setExportPath("/automated_tests/in");
+		config.setImportPath("/automated_tests/out");
+		config.setArchivePath("/automated_tests/out/archive");
+		return config;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private <T extends AbstractSftpEdiService> T configureSftpService(Facility facility, SftpConfiguration config, Class<T> class1) {
+		// ensure loads/saves configuration correctly
+		AbstractSftpEdiService sftpOrders = facility.findEdiService(class1); 
+		sftpOrders.setConfiguration(config);
+		sftpOrders.getDao().store(sftpOrders);
+		sftpOrders = (AbstractSftpEdiService) sftpOrders.getDao().findByDomainId(facility, sftpOrders.getDomainId());
+		
+		Assert.assertNotNull(sftpOrders);
+		config = sftpOrders.getConfiguration();
+		return (T) sftpOrders;
+	}
+	
+	//++++++++++   end SFTP configuration +++++++++++
 
 	@Test
 	public void testCheSetupErrors() throws IOException {
