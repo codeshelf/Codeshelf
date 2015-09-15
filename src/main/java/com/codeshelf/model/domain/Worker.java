@@ -37,64 +37,68 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Worker extends DomainObjectABC implements Validatable{
-	@SuppressWarnings("unused")
-	private static final Logger				LOGGER				= LoggerFactory.getLogger(Worker.class);
-	
+public class Worker extends DomainObjectABC implements Validatable {
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(Worker.class);
+
 	public static class WorkerDao extends GenericDaoABC<Worker> implements ITypedDao<Worker> {
 		public final Class<Worker> getDaoClass() {
 			return Worker.class;
 		}
 	}
-	
+
 	public static ITypedDao<Worker> staticGetDao() {
 		return TenantPersistenceService.getInstance().getDao(Worker.class);
 	}
 
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Setter
-	private Facility						facility;
-	
+	private Facility	facility;
+
 	@Column(nullable = false)
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
-	private Boolean							active;
-	
+	private Boolean		active;
+
 	@Column(nullable = true, name = "first_name")
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
-	private String							firstName;
+	private String		firstName;
 
 	@Column(nullable = false, name = "last_name")
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
-	private String							lastName;
-	
+	private String		lastName;
+
 	@Column(nullable = true, name = "middle_initial")
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
-	private String							middleInitial;
+	private String		middleInitial;
 
 	@Column(nullable = false, name = "badge_id")
-	@Getter @Setter
+	// @Getter @Setter Temporary for v21. Keep the database field, but migrate to using domainId for badgeId
 	@JsonProperty
-	private String							badgeId;
+	private String		badgeId;
 
 	@Column(nullable = true, name = "group_name")
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
-	private String							groupName;
+	private String		groupName;
 
 	@Column(nullable = true, name = "hr_id")
-	@Getter @Setter
+	@Getter
+	@Setter
 	@JsonProperty
-	private String							hrId;
-	
+	private String		hrId;
+
 	@Column(nullable = false)
 	@Setter
 	@JsonProperty
-	private Timestamp						updated;
-
+	private Timestamp	updated;
 
 	@Override
 	public String getDefaultDomainIdPrefix() {
@@ -111,28 +115,42 @@ public class Worker extends DomainObjectABC implements Validatable{
 	public Facility getFacility() {
 		return facility;
 	}
+
+	public void generateDomainId() {
+		// v21 domainId same as badge
+		// only null badgeId from unit test
+		if (badgeId == null) {
+			setDomainId("bad_worker_domain_id"); 
+			return;
+		}
+		
+		if (!badgeId.equals(getDomainId())) {
+			LOGGER.error("worker.generateDomainId() case found");
+			setDomainId(badgeId);
+		}
 	
-	public void generateDomainId(){
+		/*
 		String domainId = getDefaultDomainIdPrefix() + "-" + lastName;
 		if (firstName != null) {
 			domainId += "-" + firstName;
 		}
 		setDomainId(domainId);
+		*/
 	}
-	
+
 	@Override
 	public boolean isValid(ErrorResponse errors) {
 		getDomainId();
 		boolean allOK = true;
-		if (lastName == null || "".equals(lastName)){
+		if (lastName == null || "".equals(lastName)) {
 			errors.addErrorMissingBodyParam("lastName");
 			allOK = false;
 		}
-		if (badgeId == null || "".equals(badgeId)){
+		if (badgeId == null || "".equals(badgeId)) {
 			errors.addErrorMissingBodyParam("badgeId");
 			allOK = false;
 		}
-		if (active == null){
+		if (active == null) {
 			errors.addErrorMissingBodyParam("active");
 			allOK = false;
 		} else {
@@ -144,7 +162,7 @@ public class Worker extends DomainObjectABC implements Validatable{
 		}
 		return allOK;
 	}
-	
+
 	public void update(Worker updatedWorker) {
 		firstName = updatedWorker.getFirstName();
 		lastName = updatedWorker.getLastName();
@@ -156,8 +174,8 @@ public class Worker extends DomainObjectABC implements Validatable{
 		updated = new Timestamp(System.currentTimeMillis());
 		generateDomainId();
 	}
-	
-	private boolean isBadgeUnique(){
+
+	private boolean isBadgeUnique() {
 		//Allow saving inactive workers with non-unique badges
 		if (!active) {
 			return true;
@@ -166,15 +184,30 @@ public class Worker extends DomainObjectABC implements Validatable{
 		Worker matchingWorker = findWorker(facility, badgeId, getPersistentId());
 		return matchingWorker == null;
 	}
-	
+
+	/**
+	 * Find the worker with this badge ID across this tenant
+	 */
+	public static Worker findTenantWorker(String badgeId) {
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("domainId", badgeId));
+		List<Worker> workers = staticGetDao().findByFilter(filterParams);
+		if (workers == null || workers.isEmpty()) {
+			return null;
+		}
+		if (workers.size() > 1)
+			LOGGER.error("More than one worker with badge {} found in findTenantWorker", badgeId);
+		return workers.get(0);
+	}
+
 	public static Worker findWorker(Facility facility, String badgeId) {
 		return findWorker(facility, badgeId, null);
 	}
-	
+
 	public static Worker findWorker(Facility facility, String badgeId, UUID skipWorker) {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("facility", facility));
-		filterParams.add(Restrictions.eq("badgeId", badgeId));
+		filterParams.add(Restrictions.eq("domainId", badgeId));
 		filterParams.add(Restrictions.eq("active", true));
 		if (skipWorker != null) {
 			//Ignore provided Worker when needed
@@ -184,6 +217,8 @@ public class Worker extends DomainObjectABC implements Validatable{
 		if (workers == null || workers.isEmpty()) {
 			return null;
 		}
+		if (workers.size() > 1)
+			LOGGER.error("More than one worker with badge {} found in findWorker", badgeId);
 		return workers.get(0);
 	}
 
@@ -194,6 +229,20 @@ public class Worker extends DomainObjectABC implements Validatable{
 		if (!lastName.isEmpty()) {
 			return lastName;
 		}
+		return getBadgeId();
+	}
+
+	public String getBadgeId() {
+		return getDomainId();
+	}
+	
+	public String getBadgeField() { // temporary. Fetch the data of the old badge field
 		return badgeId;
 	}
+
+	public void setBadgeId(String inBadgeId) {
+		badgeId = inBadgeId; // temporary.
+		setDomainId(inBadgeId);
+	}
+
 }
