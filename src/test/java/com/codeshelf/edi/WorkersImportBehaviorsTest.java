@@ -92,7 +92,7 @@ public class WorkersImportBehaviorsTest extends ServerTest {
 
 	@Test
 	public final void workerTest2() {
-		LOGGER.info("1: Import A1 and its aliases");
+		LOGGER.info("1: Some basic setup");
 		Facility facility = createFacility();
 
 		beginTransaction();
@@ -104,7 +104,7 @@ public class WorkersImportBehaviorsTest extends ServerTest {
 		readA1Aliases(facility);
 		commitTransaction();
 
-			
+		LOGGER.info("2: Import 5 workers");		
 		beginTransaction();
 		facility = facility.reload();
 		String csvString = "badgeId, firstName, lastName\r\n" //
@@ -116,6 +116,7 @@ public class WorkersImportBehaviorsTest extends ServerTest {
 		importWorkersData(facility, csvString);
 		commitTransaction();
 
+		LOGGER.info("3: Inactivate one worker. Show how our APIs work");		
 		beginTransaction();
 		// Worker not a child of facility, so reload facility does nothing
 		Worker worker1 = Worker.findTenantWorker("Badge_01");
@@ -123,19 +124,53 @@ public class WorkersImportBehaviorsTest extends ServerTest {
 		Assert.assertEquals("Jay", worker1.getFirstName());
 		worker1.setActive(false);
 		Worker.staticGetDao().store(worker1);
-
 		commitTransaction();
 
-		LOGGER.info("Show that inactive use is found by findTenantWork, but not by findActiveWorkerInFacility");
+		LOGGER.info("3b: Show that inactive use is found by findTenantWork, but not by findActiveWorkerInFacility");
 		beginTransaction();
 		// Worker not a child of facility, so reload facility does nothing
 		Worker worker1a = Worker.findTenantWorker("Badge_01");
 		Assert.assertNotNull(worker1a);
+		Assert.assertFalse(worker1a.getActive());
 
 		Worker worker1b = Worker.findWorker(facility, "Badge_01");
 		Assert.assertNull(worker1b);
 		commitTransaction();
 
+		LOGGER.info("4: Reimport the same file. Show that it makes the worker active again.");		
+		beginTransaction();
+		facility = facility.reload();
+		String csvString2 = "badgeId, firstName, lastName\r\n" //
+				+ "Badge_01,Jay,Smith\r\n" //
+				+ "Badge_02,Kay,Smith\r\n" //
+				+ "Badge_03,Lori,Smith\r\n" //
+				+ "Badge_04,Mary,Smith\r\n" //
+				+ "Badge_05,Nancy,Smith\r\n"; //
+		importWorkersData(facility, csvString2);
+		commitTransaction();
+
+		LOGGER.info("4b: Prove that we reactivated the previous worker, and did not make a new one.");		
+		beginTransaction();
+		worker1a = Worker.staticGetDao().reload(worker1a);
+		Worker worker1c = Worker.findTenantWorker("Badge_01");
+		Assert.assertTrue(worker1a.getActive());
+		Assert.assertEquals(worker1a, worker1c);
+		commitTransaction();
+
+		LOGGER.info("5: Import a file that does not have some of the workers and adds more. The missing works should go inactive.");		
+		beginTransaction();
+		facility = facility.reload();
+		String csvString3 = "badgeId, firstName, lastName\r\n" //
+				+ "Badge_06,Jay,Smith\r\n" //
+				+ "Badge_07,Kay,Smith\r\n" //
+				+ "Badge_05,Nancy,Smith\r\n"; //
+		importWorkersData(facility, csvString3);
+		commitTransaction();
+
+		beginTransaction();
+		Worker worker2 = Worker.findTenantWorker("Badge_02");
+		// Assert.assertFalse(worker2.getActive());
+		commitTransaction();
 
 	}
 
