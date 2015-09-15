@@ -25,6 +25,7 @@ import com.google.common.collect.Lists;
 
 public class ScriptSiteRunner {
 	private final static String TEMPLATE_DEF_CHE = "defChe (ches <cheName> <cheGuid>)";
+	private final static String TEMPLATE_DEF_CHE_USE_RADIO = "defCheUseRadio (ches <cheName> <cheGuid>)";
 	private final static String TEMPLATE_LOGIN = "login <cheName> <workerId> [state]";
 	private final static String TEMPLATE_LOGIN_SETUP = "loginSetup <cheName> <workerId>";
 	private final static String TEMPLATE_LOGIN_REMOTE = "loginRemote <cheName> <workerId> <linkToChe>";
@@ -99,7 +100,9 @@ public class ScriptSiteRunner {
 		if (command.equalsIgnoreCase("cheExec")) {
 			processCheExecCommand(parts);
 		} else if (command.equalsIgnoreCase("defChe")) {
-			processDefineCheCommand(parts);
+			processDefineCheCommand(parts, false);
+		} else if (command.equalsIgnoreCase("defCheUseRadio")) {
+			processDefineCheCommand(parts, true);
 		} else if (command.equalsIgnoreCase("login")) {
 			processLoginCommand(parts);
 		} else if (command.equalsIgnoreCase("loginSetup")) {
@@ -128,7 +131,7 @@ public class ScriptSiteRunner {
 			processLogoutCommand(parts);
 		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [cheExec, defChe, login, loginSetup, loginRemote, scan, orderToWall, waitForState, setupCard, setParams, pick, pickAll, waitSeconds, waitForDevices, logout, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [cheExec, defChe, defCheUseRadio, login, loginSetup, loginRemote, scan, orderToWall, waitForState, setupCard, setParams, pick, pickAll, waitSeconds, waitForDevices, logout, //]");
 		}
 	}
 	
@@ -161,12 +164,18 @@ public class ScriptSiteRunner {
 	/**
 	 * Expects to see command
 	 * defChe (ches <cheName> <cheGuid>)
+	 * or
+	 * defCheUseRadio (ches <cheName> <cheGuid>)
 	 * @throws Exception
 	 */
-	private void processDefineCheCommand(String parts[]) throws Exception {
+	private void processDefineCheCommand(String parts[], boolean withRadio) throws Exception {
 		int blockLength = 2;
 		if (parts.length < 3 || (parts.length - 1) % blockLength != 0 ){
-			throwIncorrectNumberOfArgumentsException(TEMPLATE_DEF_CHE);
+			if (withRadio) {
+				throwIncorrectNumberOfArgumentsException(TEMPLATE_DEF_CHE_USE_RADIO);
+			} else {
+				throwIncorrectNumberOfArgumentsException(TEMPLATE_DEF_CHE);
+			}
 		}
 		int totalBlocks = (parts.length - 1) / blockLength;
 		for (int blockNum = 0; blockNum < totalBlocks; blockNum++) {
@@ -184,6 +193,7 @@ public class ScriptSiteRunner {
 			}
 			
 			PickSimulator che = new PickSimulator(deviceManager, cheGuid);
+			che.setUseRadio(withRadio);
 			ches.put(cheName, che);
 		}
 	}
@@ -503,7 +513,7 @@ public class ScriptSiteRunner {
 		if (state == CheStateEnum.SETUP_SUMMARY){
 			che.logout();
 			synchronized (lock) {
-				report.append("No work generated for the CHE\n");
+				report.append("No work generated for " + che.getCheDeviceLogic().getGuidNoPrefix() + "\n");
 			}
 			return;
 		}

@@ -3,8 +3,8 @@
 var :site		5000
 var :channel	8
 var :che1 		0x0000009B
-var :che2 		0x000001D9
-var :chePall	0x000000A3
+var :che2 		0x000000ED
+var :chePall	0x0000009D
 var :contr1 	0x00000064
 var :sftphost	sftp.codeshelf.com
 var :sftpuser	test
@@ -67,8 +67,7 @@ And one more multi line comment here
 STEP palletizer
 SITE 
 waitForDevices :chePall
-defChe cheA :che1 cheB :che2 cheC 0x000000A4
-defChe cheC :chePall
+defCheUseRadio cheC :chePall
 logout cheC
 login cheC Ilya1 PALLETIZER_SCAN_ITEM
 //Remove pallets, if any are loaded
@@ -86,8 +85,9 @@ scan cheC 10010002 PALLETIZER_PUT_ITEM
 STEP put wall
 SITE
 waitForDevices :che1 :che2 :contr1 0x0000000AB
-defChe cheA :che1 cheB :che2
-logout cheA
+defChe cheA :che1
+defCheUseRadio cheB :che2 cheC :chePall
+logout cheA cheB cheC
 loginSetup cheA Ilya1
 scan cheA X%ORDER_WALL PUT_WALL_SCAN_ORDER
 orderToWall cheA 26768709 %000000070050
@@ -115,7 +115,8 @@ scan cheA 3605970651558 DO_PICK
 STEP test remote control setup
 SITE
 //Define ches
-defChe cheA :che1 cheB :che2 cheC 0x000000A4
+defChe cheA :che1 cheC 0x000000A4
+defCheUseRadio cheB :che2
 logout cheA cheB cheC
 loginRemote cheA Ilya1 CHE_B
 scan cheA X%SETUP 
@@ -127,10 +128,9 @@ waitForState cheB SETUP_SUMMARY
 STEP load orders on CHEs
 SITE
 //Define ches
-defChe cheA :che1 cheB :che2
+defChe cheA :che1
+defCheUseRadio cheB :che2
 logout cheA cheB
-//Set pick parameters [pickSpeed, frequency of skipping UPC, frequency of shorting an item]
-setParams pickSpeed=2 skipFreq=0.5 shortFreq=0.5
 //Setup and run both CHEs together
 loginSetup cheA Ilya1
 loginSetup cheB Ilya2
@@ -140,6 +140,10 @@ setupCart cheB 26768718 26768719 26768720
 STEP pick CHEs
 SITE
 //Define ches
-defChe cheA :che1 cheB :che2
+defChe cheA :che1
+defCheUseRadio cheB :che2
+//Set pick parameters [pickSpeed, frequency of skipping UPC, frequency of shorting an item]
+//setParams pickSpeed=2 skipFreq=0.5 shortFreq=0.5
 pickAll
 logout cheA cheB
+//logout cheB

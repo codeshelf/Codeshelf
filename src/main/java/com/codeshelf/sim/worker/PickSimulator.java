@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,9 @@ import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.flyweight.command.CommandControlCreateButton;
+import com.codeshelf.flyweight.command.CommandControlCreateScan;
+import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.WorkInstruction;
@@ -24,10 +28,13 @@ public class PickSimulator {
 
 	@Getter
 	CheDeviceLogic				cheDeviceLogic;
+	
+	@Getter @Setter
+	private boolean 			useRadio 	= false;
 
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(PickSimulator.class);
 
-	private final int			WAIT_TIME	= 4000;
+	private final int			WAIT_TIME	= 6000;
 
 	public PickSimulator(CsDeviceManager deviceManager, String cheGuid) {
 		this(deviceManager, new NetGuid(cheGuid));
@@ -38,15 +45,6 @@ public class PickSimulator {
 		cheDeviceLogic = (CheDeviceLogic) deviceManager.getDeviceByGuid(cheGuid);
 		if (cheDeviceLogic == null) {
 			throw new IllegalArgumentException("No che found with guid: " + cheGuid);
-		}
-	}
-
-	private void scanUser(String pickerId) {
-		try {
-			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
-			cheDeviceLogic.scanCommandReceived("U%" + pickerId);
-		} finally {
-			ContextLogging.clearNetGuid();
 		}
 	}
 
@@ -126,10 +124,10 @@ public class PickSimulator {
 	public void setupOrderIdAsContainer(String orderId, String positionId) {
 		// DEV-518. Also accept the raw order ID as the containerId
 		scanOrderId(orderId);
-		waitForCheState(CheStateEnum.CONTAINER_POSITION, 1000);
+		waitForCheState(CheStateEnum.CONTAINER_POSITION, WAIT_TIME);
 
 		scanPosition(positionId);
-		waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 	}
 
 	/**
@@ -153,10 +151,10 @@ public class PickSimulator {
 	public void setupContainer(String containerId, String positionId) {
 		// used for normal success case of scan container, then position on cart.
 		scanContainer(containerId);
-		waitForThisOrLinkedCheState(CheStateEnum.CONTAINER_POSITION, 1000);
+		waitForThisOrLinkedCheState(CheStateEnum.CONTAINER_POSITION, WAIT_TIME);
 
 		scanPosition(positionId);
-		waitForThisOrLinkedCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		waitForThisOrLinkedCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 	}
 
 	public void startAndSkipReview(String location, int inComputeTimeOut, int inLocationTimeOut) {
@@ -188,7 +186,7 @@ public class PickSimulator {
 
 	public void logout() {
 		scanCommand("LOGOUT");
-		waitForCheState(CheStateEnum.IDLE, 1000);
+		waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
 	}
 
 	/**
@@ -206,22 +204,12 @@ public class PickSimulator {
 	public void scanCommand(String inCommand) {
 		// Valid commands currently are only START, SETUP, LOGOUT, SHORT, YES, NO, See https://codeshelf.atlassian.net/wiki/display/TD/Bar+Codes+in+Codeshelf+Application
 		checkExtraPercent(inCommand);
-		try {
-			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
-			cheDeviceLogic.scanCommandReceived("X%" + inCommand);
-		} finally {
-			ContextLogging.clearNetGuid();
-		}
+		scan("X%" + inCommand);
 	}
 
 	public void scanLocation(String inLocation) {
 		checkExtraPercent(inLocation);
-		try {
-			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
-			cheDeviceLogic.scanCommandReceived("L%" + inLocation);
-		} finally {
-			ContextLogging.clearNetGuid();
-		}
+		scan("L%" + inLocation);
 	}
 
 	/**
@@ -229,54 +217,48 @@ public class PickSimulator {
 	 */
 	public void scanContainer(String inContainerId) {
 		checkExtraPercent(inContainerId);
-		try {
-			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
-			cheDeviceLogic.scanCommandReceived("C%" + inContainerId);
-		} finally {
-			ContextLogging.clearNetGuid();
-		}
+		scan("C%" + inContainerId);
 	}
 
 	/**
 	 * Does not add C% or anything else to conform with Codeshelf scan specification. DEV-518. Also accept the raw order ID.
 	 */
 	public void scanOrderId(String inOrderId) {
-		try {
-			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
-			cheDeviceLogic.scanCommandReceived(inOrderId);
-		} finally {
-			ContextLogging.clearNetGuid();
-		}
+		scan(inOrderId);
 	}
 
 	/**
 	 * Same as scanOrderId. DEV-621. Just given this name for clarity of JUnit tests.
 	 */
 	public void scanOrderDetailId(String inOrderDetailId) {
-		try {
-			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
-			cheDeviceLogic.scanCommandReceived(inOrderDetailId);
-		} finally {
-			ContextLogging.clearNetGuid();
-		}
+		scan(inOrderDetailId);
 	}
 
 	/**
 	 * Same as scanOrderId. DEV-653. Just given this name for clarity of JUnit tests. (Scan the SKU, or UPC, or license plate)
 	 */
 	public void scanSomething(String inSomething) {
-		try {
-			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
-			cheDeviceLogic.scanCommandReceived(inSomething);
-		} finally {
-			ContextLogging.clearNetGuid();
-		}
+		scan(inSomething);
 	}
 
 	public void scanPosition(String inPositionId) {
+		scan("P%" + inPositionId);
+	}
+	
+	private void scanUser(String pickerId) {
+		scan("U%" + pickerId);
+	}
+	
+	private void scan(String scan) {
 		try {
 			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
-			cheDeviceLogic.scanCommandReceived("P%" + inPositionId);
+			if (useRadio) {
+				CommandControlCreateScan command = new CommandControlCreateScan(NetEndpoint.PRIMARY_ENDPOINT, scan);
+				cheDeviceLogic.sendRadioControllerCommand(command, true);
+				ThreadUtils.sleep(500);
+			} else {
+				cheDeviceLogic.scanCommandReceived(scan);
+			}
 		} finally {
 			ContextLogging.clearNetGuid();
 		}
@@ -285,7 +267,13 @@ public class PickSimulator {
 	public void buttonPress(int inPosition, int inQuantity) {
 		try {
 			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
-			cheDeviceLogic.simulateButtonPress(inPosition, inQuantity);
+			if (useRadio) {
+				CommandControlCreateButton command = new CommandControlCreateButton(NetEndpoint.PRIMARY_ENDPOINT, (byte)inPosition, (byte)inQuantity);
+				cheDeviceLogic.sendRadioControllerCommand(command, true);
+				ThreadUtils.sleep(500);
+			} else {
+				cheDeviceLogic.simulateButtonPress(inPosition, inQuantity);
+			}
 		} finally {
 			ContextLogging.clearNetGuid();
 		}

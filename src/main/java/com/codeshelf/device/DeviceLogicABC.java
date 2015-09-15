@@ -158,7 +158,7 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	 * A bottleneck for command so we can look at timing or whatever
 	 * Send the command to the the getAddress() of this device
 	 */
-	protected void sendRadioControllerCommand(ICommand inCommand, boolean inAckRequested) {
+	public void sendRadioControllerCommand(ICommand inCommand, boolean inAckRequested) {
 		if (this.isDeviceAssociated()) {
 			//waitLongEnough();
 			setLastRadioCommandSendForThisDevice(System.currentTimeMillis());
