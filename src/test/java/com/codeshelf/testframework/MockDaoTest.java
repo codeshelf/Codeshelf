@@ -13,10 +13,12 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
+import com.codeshelf.edi.ICsvWorkerImporter;
 import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.LocationAliasCsvImporter;
 import com.codeshelf.edi.OrderLocationCsvImporter;
 import com.codeshelf.edi.OutboundOrderPrefetchCsvImporter;
+import com.codeshelf.edi.WorkerCsvImporter;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
@@ -513,6 +515,9 @@ public abstract class MockDaoTest extends MinimalTest {
 	protected ICsvLocationAliasImporter createLocationAliasImporter() {
 		return new LocationAliasCsvImporter(this.eventProducer);
 	}
+	protected ICsvWorkerImporter createWorkerImporter() {
+		return new WorkerCsvImporter(this.eventProducer);
+	}
 	protected ICsvOrderImporter createOrderImporter() {
 		//return new OutboundOrderCsvImporter(this.eventProducer);
 		return new OutboundOrderPrefetchCsvImporter(this.eventProducer);
@@ -528,6 +533,12 @@ public abstract class MockDaoTest extends MinimalTest {
 		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 		ICsvLocationAliasImporter locationAliasImporter = createLocationAliasImporter();
 		return locationAliasImporter.importLocationAliasesFromCsvStream(new StringReader(locationsCsvString), facility, ediProcessTime);
+	}
+
+	protected boolean importWorkersData(Facility facility, String workersCsvString) {
+		Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+		ICsvWorkerImporter workerImporter = createWorkerImporter();
+		return workerImporter.importWorkersFromCsvStream(new StringReader(workersCsvString), facility, ediProcessTime);
 	}
 
 	protected void importInventoryData(Facility facility, String csvString) {
