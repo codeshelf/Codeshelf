@@ -116,6 +116,18 @@ public class OrderService implements IApiService {
 		return result;
 	}
 
+	public List<Object[]> findOrderHeaderReferences(Facility facility) {
+		Criteria criteria = OrderHeader.staticGetDao()
+				.createCriteria()
+				.setProjection(Projections.projectionList()
+					.add(Projections.property("domainId").as("orderDetailId")))
+				.add(Property.forName("parent").eq(facility))
+				.add(Property.forName("active").eq(true));
+		@SuppressWarnings("unchecked")
+		List<Object[]> result = (List<Object[]>) criteria.list();
+		return result;
+	}
+	
 	public List<Map<String, Object>> findOrderHeadersForStatus(Facility facility,
 		String[] propertyNames,
 		OrderStatusEnum[] orderStatusEnums) {
