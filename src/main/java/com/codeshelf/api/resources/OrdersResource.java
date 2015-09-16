@@ -42,8 +42,8 @@ public class OrdersResource {
 	@GET
 	@Path("/references")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getOrderReferences() {
-		List<Object[]> results = this.orderService.findOrderHeaderReferences(facility);
+	public Response getOrderReferences(@QueryParam("orderId") String orderIdSubstring) {
+		List<Object[]> results = this.orderService.findOrderHeaderReferences(facility, orderIdSubstring);
 		return BaseResponse.buildResponse(results);
 	
 	}

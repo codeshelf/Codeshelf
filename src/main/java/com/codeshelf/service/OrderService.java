@@ -21,6 +21,7 @@ import org.hibernate.Criteria;
 import org.hibernate.FetchMode;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.SimpleExpression;
@@ -116,13 +117,17 @@ public class OrderService implements IApiService {
 		return result;
 	}
 
-	public List<Object[]> findOrderHeaderReferences(Facility facility) {
+	public List<Object[]> findOrderHeaderReferences(Facility facility, String orderIdSubstring) {
 		Criteria criteria = OrderHeader.staticGetDao()
 				.createCriteria()
 				.setProjection(Projections.projectionList()
-					.add(Projections.property("domainId").as("orderDetailId")))
+					.add(Projections.property("domainId").as("orderId")))
 				.add(Property.forName("parent").eq(facility))
 				.add(Property.forName("active").eq(true));
+				if (orderIdSubstring != null) {
+					criteria.add(Property.forName("domainId").like(orderIdSubstring, MatchMode.ANYWHERE));
+				}
+		
 		@SuppressWarnings("unchecked")
 		List<Object[]> result = (List<Object[]>) criteria.list();
 		return result;
