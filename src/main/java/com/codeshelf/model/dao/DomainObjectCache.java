@@ -138,7 +138,7 @@ public class DomainObjectCache<T extends DomainObjectABC> {
 		}
 		// Looking for possible object cache bugs. If absolutely nothing, it might be reasonable--only new domainIds in the file.
 		if (objectCache.size() == 0) {
-			LOGGER.warn("{} cache: None loaded from database.", this.getCacheName());
+			LOGGER.debug("{} cache: None loaded from database.", this.getCacheName());
 		}
 	}
 
