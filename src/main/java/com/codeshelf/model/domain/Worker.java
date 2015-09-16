@@ -51,6 +51,7 @@ public class Worker extends DomainObjectABC implements Validatable {
 	}
 
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@Getter
 	@Setter
 	private Facility	facility;
 
@@ -96,6 +97,7 @@ public class Worker extends DomainObjectABC implements Validatable {
 	private String		hrId;
 
 	@Column(nullable = false)
+	@Getter
 	@Setter
 	@JsonProperty
 	private Timestamp	updated;
@@ -111,10 +113,12 @@ public class Worker extends DomainObjectABC implements Validatable {
 		return staticGetDao();
 	}
 
+	/*
 	@Override
 	public Facility getFacility() {
 		return facility;
 	}
+	*/
 
 	public void generateDomainId() {
 		// v21 domainId same as badge

@@ -10,7 +10,10 @@ import java.sql.Timestamp;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
+import org.hibernate.Criteria;
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +21,7 @@ import com.codeshelf.event.EventProducer;
 import com.codeshelf.event.EventSeverity;
 import com.codeshelf.event.EventTag;
 import com.codeshelf.model.dao.DaoException;
+import com.codeshelf.model.domain.ContainerUse;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.validation.InputValidationException;
@@ -76,13 +80,32 @@ public class WorkerCsvImporter extends CsvImporter<WorkerCsvBean> implements ICs
 	 *  deactivate any previous workers not referenced in this file
 	 */
 	private void archiveCheckWorkers(final Facility inFacility, final Timestamp inProcessTime) {
-		// Finally, in v21, do something intelligent. DEV-475. Used to be if you uploaded a new aisle and aliases only for that aisle, you lost all prior aliases
-		// Dangerous before!
 		LOGGER.debug("Archive unreferenced workers data");
 		int archiveCount = 0;
+		
+		// Our mission is to inactivate any active workers at this facility that were not represented in this file
+		// But leave other facility workers alone.
+		UUID facilityUUID = inFacility.getPersistentId();
+		Criteria criteria = Worker.staticGetDao().createCriteria();
+		criteria.add(Restrictions.eq("facility.persistentId", facilityUUID));
+		criteria.add(Restrictions.eq("active", true));
+
+		List<Worker> workers = Worker.staticGetDao().findByCriteriaQuery(criteria);
+		for (Worker worker : workers) {
+			if (!inProcessTime.equals(worker.getUpdated())) {
+				archiveCount++;
+				try {
+					worker.setActive(false);
+					Worker.staticGetDao().store(worker);
+				}
+				catch (DaoException e) {
+					LOGGER.error("archiveCheckWorkers", e);
+				}
+			}
+		}
 
 		if (archiveCount > 0) {
-			LOGGER.info("Archived {} location aliases that are no longer relevant", archiveCount);
+			LOGGER.info("Archived {} workers for this facility that were not in this workers import file", archiveCount);
 		}
 	}
 

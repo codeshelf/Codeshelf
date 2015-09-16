@@ -157,7 +157,7 @@ public class WorkersImportBehaviorsTest extends ServerTest {
 		Assert.assertEquals(worker1a, worker1c);
 		commitTransaction();
 
-		LOGGER.info("5: Import a file that does not have some of the workers and adds more. The missing works should go inactive.");		
+		LOGGER.info("5: Import a file that does not have some of the workers and adds more. The missing workers should go inactive.");		
 		beginTransaction();
 		facility = facility.reload();
 		String csvString3 = "badgeId, firstName, lastName\r\n" //
@@ -169,7 +169,15 @@ public class WorkersImportBehaviorsTest extends ServerTest {
 
 		beginTransaction();
 		Worker worker2 = Worker.findTenantWorker("Badge_02");
-		// Assert.assertFalse(worker2.getActive());
+		Assert.assertFalse(worker2.getActive());
+
+		// old, reread one still active
+		Worker worker5 = Worker.findTenantWorker("Badge_05");
+		Assert.assertTrue(worker5.getActive());
+
+		// new one active
+		Worker worker7 = Worker.findTenantWorker("Badge_07");
+		Assert.assertTrue(worker7.getActive());
 		commitTransaction();
 
 	}
