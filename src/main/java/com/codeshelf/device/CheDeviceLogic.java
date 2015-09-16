@@ -1957,7 +1957,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			return String.format("Scan mismatch at %s: expected sku %s (no upc found), received %s", pickInstructionLocation, sku, inScanStr);
 		}
 		if (inScanStr.equals(gtin)){
-			return null;
+			return "";
 		}
 		return String.format("Scan mismatch at %s: expected sku %s or upc %s, received %s", pickInstructionLocation, sku, gtin, inScanStr);
 	}
@@ -1976,7 +1976,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				return;
 			}
 			String errorStr = verifyWiField(wi, inScanStr);
-			if (errorStr.isEmpty()) {
+			if (errorStr == null || errorStr.isEmpty()) {
 				// clear usually not needed. Only after correcting a bad scan
 				clearAllPosconsOnThisDevice();
 				setState(CheStateEnum.DO_PICK);
