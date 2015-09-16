@@ -10,9 +10,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.LocationAlias;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.testframework.ServerTest;

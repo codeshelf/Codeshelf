@@ -21,7 +21,6 @@ import com.codeshelf.event.EventProducer;
 import com.codeshelf.event.EventSeverity;
 import com.codeshelf.event.EventTag;
 import com.codeshelf.model.dao.DaoException;
-import com.codeshelf.model.domain.ContainerUse;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.validation.InputValidationException;

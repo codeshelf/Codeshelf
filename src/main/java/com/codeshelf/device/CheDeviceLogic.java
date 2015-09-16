@@ -874,7 +874,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 					default:
 						String gtin = wi.getGtin();
 						
-						return "SCAN " + (gtin == null ? "?? Missing UPC" : gtin);
+						return "SCAN " + ((gtin == null || gtin.isEmpty()) ? "?? Missing UPC" : gtin);
 				}
 			} else {
 				switch (scanVerification) {
@@ -1097,7 +1097,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	@Override
 	public void scanCommandReceived(String inCommandStr) {
-
 		// TODO if passed from linked CHE, process it anyway.
 		if (!connectedToServer) {
 			LOGGER.debug("NotConnectedToServer: Ignoring scan command: " + inCommandStr);
@@ -1948,11 +1947,19 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			notifyWiVerb(inWi, WorkerEvent.EventType.SKIP_ITEM_SCAN, kLogAsWarn);
 			return "";
 		}
-		if (inScanStr.equals(inWi.getItemId()) || inScanStr.equals(inWi.getGtin())) {
+		String sku = inWi.getItemId();
+		String gtin = inWi.getGtin();
+		String pickInstructionLocation = inWi.getPickInstruction();
+		if (inScanStr.equals(sku)) {
 			return "";
 		}
-		String error = String.format("Scan mismatch: expected %s or %s, received %s", inWi.getItemId(), inWi.getGtin(), inScanStr);
-		return error;
+		if (gtin == null || gtin.isEmpty()) {
+			return String.format("Scan mismatch at %s: expected sku %s (no upc found), received %s", pickInstructionLocation, sku, inScanStr);
+		}
+		if (inScanStr.equals(gtin)){
+			return null;
+		}
+		return String.format("Scan mismatch at %s: expected sku %s or upc %s, received %s", pickInstructionLocation, sku, gtin, inScanStr);
 	}
 
 	// --------------------------------------------------------------------------
