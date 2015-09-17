@@ -1,5 +1,6 @@
 package com.codeshelf.service;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,6 +27,7 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.SimpleExpression;
 import org.hibernate.transform.AliasToBeanResultTransformer;
+import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,7 +119,7 @@ public class OrderService implements IApiService {
 		return result;
 	}
 
-	public List<Object[]> findOrderHeaderReferences(Facility facility, String orderIdSubstring) {
+	public List<Object[]> findOrderHeaderReferences(Facility facility, String orderIdSubstring, Interval dueDateInterval) {
 		Criteria criteria = OrderHeader.staticGetDao()
 				.createCriteria()
 				.setProjection(Projections.projectionList()
@@ -126,6 +128,11 @@ public class OrderService implements IApiService {
 				.add(Property.forName("active").eq(true));
 				if (orderIdSubstring != null) {
 					criteria.add(Property.forName("domainId").like(orderIdSubstring, MatchMode.ANYWHERE));
+				}
+				if (dueDateInterval != null) {
+					criteria.add(Property.forName("dueDate").between(
+						new Timestamp(dueDateInterval.getStartMillis()),
+						new Timestamp(dueDateInterval.getEndMillis())));
 				}
 		
 		@SuppressWarnings("unchecked")
