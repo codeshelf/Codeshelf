@@ -72,6 +72,7 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_DEF_PATH = "defPath <pathName> (segments '-' <start x> <start y> <end x> <end y>)";
 	private final static String TEMPLATE_ASSIGN_PATH_SGM_AISLE = "assignPathSgmToAisle <pathName> <segment id> <aisle name>";
 	private final static String TEMPLATE_ASSIGN_TAPE_TO_TIER = "assignTapeToTier (assignments <tape id> <tier name>)";
+	private final static String TEMPLATE_DELETE_ALL_EXTENSIONS = "deleteAllExtensionPoints";
 	private final static String TEMPLATE_DELETE_EXTENSION = "deleteExtensionPoint <type>";
 	private final static String TEMPLATE_ADD_EXTENSION = "addExtensionPoint <filename> <type> <active/inactive>";
 	private final static String TEMPLATE_SFTP = "sftp <'orders'/'wi'> <host> <port> <username> <password> <directories: in and out for orders, out for wi>";
@@ -181,6 +182,8 @@ public class ScriptServerRunner {
 			processAsignPathSegmentToAisleCommand(parts);
 		} else if (command.equalsIgnoreCase("assignTapeToTier")) {
 			processAsignTapeToTierCommand(parts);
+		} else if (command.equalsIgnoreCase("deleteAllExtensionPoints")) {
+			processDeleteAllExtensionPointsCommand(parts);
 		} else if (command.equalsIgnoreCase("deleteExtensionPoint")) {
 			processDeleteExtensionPointCommand(parts);
 		} else if (command.equalsIgnoreCase("addExtensionPoint")) {
@@ -193,7 +196,7 @@ public class ScriptServerRunner {
 		} else if  (command.equalsIgnoreCase("togglePutWall")) {
 			throw new Exception("Command togglePutWall has been deprecated due to an addition of Sku Walls. Instead, use " + TEMPLATE_SET_WALL);
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, deleteOrders, importOrders, importAisles, importLocations, importInventory, setController, setPoscons, setPosconToBay, setWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, assignTapeToTier, deleteExtensionPoint, addExtensionPoint, waitSeconds, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, deleteOrders, importOrders, importAisles, importLocations, importInventory, setController, setPoscons, setPosconToBay, setWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, assignTapeToTier, deleteAllExtensionPoints, deleteExtensionPoint, addExtensionPoint, waitSeconds, //]");
 		}
 	}
 
@@ -572,7 +575,21 @@ public class ScriptServerRunner {
 		}
 	}
 
-	
+	/**
+	 * Expects to see command
+	 * deleteAllExtensionPoints
+	 * @throws Exception 
+	 */
+	private void processDeleteAllExtensionPointsCommand(String parts[]) throws Exception {
+		if (parts.length != 1){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_DELETE_ALL_EXTENSIONS);
+		}
+		List<ExtensionPoint> extensions = ExtensionPoint.staticGetDao().findByParent(facility);
+		for (ExtensionPoint extension : extensions) {
+			ExtensionPoint.staticGetDao().delete(extension);
+		}
+	}
+
 	/**
 	 * Expects to see command
 	 * deleteExtensionPoint <type>

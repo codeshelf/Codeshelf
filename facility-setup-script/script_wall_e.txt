@@ -1,0 +1,36 @@
+var :che1  0x0000018D
+var :che2  0x00000154
+var :che3  0x00000161
+var :che4  0x0000018F
+var :che5  0x00000197
+var :che6  0x00000190
+var :che7  0x00000163
+var :che8  0x00000196
+var :che9  0x00000162
+var :che10 0x0000018E 
+
+STEP
+SERVER
+createChe :che1 green SETUP_ORDERS
+createChe :che2 green SETUP_ORDERS
+createChe :che3 green SETUP_ORDERS
+createChe :che4 green SETUP_ORDERS
+createChe :che5 green SETUP_ORDERS
+createChe :che6 green SETUP_ORDERS
+createChe :che7 green SETUP_ORDERS
+createChe :che8 green SETUP_ORDERS
+createChe :che9 green SETUP_ORDERS
+
+SITE
+waitForDevices :che1 :che2 :che3 :che4 :che5 :che6 :che7 :che8 :che9
+defCheUseRadio che1 :che1 che2 :che2 che3 :che3 che4 :che4 che5 :che5 che6 :che6 che7 :che7 che8 :che8 che9 :che9
+logout che1 che2 che3 che4 che5 che6 che7 che8 che9
+login che1 worker
+login che2 worker
+login che3 worker
+login che4 worker
+login che5 worker
+login che6 worker
+login che7 worker
+login che8 worker
+login che9 worker

@@ -191,6 +191,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 				case COMPUTE_WORK:
 					sendDisplayCommand(COMPUTE_WORK_MSG, EMPTY_MSG);
+					clearAllPosconsOnThisDevice();
 					break;
 
 				case GET_WORK:
@@ -967,7 +968,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	private void doNextPick() {
 		// We might call doNextPick after a normal complete, or a short pick confirm.
-		// We should not call it for any put wall cases; call doNextWallPut instead			
+		// We should not call it for any put wall cases; call doNextWallPut instead
+		mShortPickWi = null;
+		mShortPickQty = 0;
 		CheStateEnum state = getCheStateEnum();
 		if (state.equals(CheStateEnum.SHORT_PUT_CONFIRM) || state.equals(CheStateEnum.SHORT_PUT)
 				|| state.equals(CheStateEnum.DO_PUT))
@@ -1408,8 +1411,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					if (wi.isHousekeeping()) {
 						LOGGER.warn("Probable test error. Don't short a housekeeping. User error if happening in production");
 						invalidScanMsg(mCheStateEnum); // Invalid to short a housekeep
-					} else
+					} else {
 						setState(CheStateEnum.SHORT_PICK); // flashes all poscons with active jobs
+					}
 				} else {
 					// Stay in the same state - the scan made no sense.
 					invalidScanMsg(mCheStateEnum);

@@ -1,0 +1,18 @@
+var :che 0x000000ED
+
+STEP
+SERVER
+setProperty pickmult true
+deleteAllExtensionPoints
+deleteOrders 26768709 26768711 26768712 26768717 26768718 26768719 26768720
+importOrders orders_10
+
+SITE
+waitForDevices :che
+defChe che :che
+logout che
+loginSetup che worker
+setupCart che 26768712 26768718
+scan che X%START SETUP_SUMMARY
+scan che X%START SCAN_SOMETHING
+//scan che 3605970651558 DO_PICK
