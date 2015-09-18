@@ -13,6 +13,9 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import lombok.Setter;
 
 import com.codeshelf.api.BaseResponse;
@@ -24,6 +27,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
 public class OrdersResource {
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(OrdersResource.class);
 
 	private OrderService orderService;
 
@@ -33,6 +37,15 @@ public class OrdersResource {
 	@Inject 
 	public OrdersResource(OrderService orderService) {
 		this.orderService = orderService;
+	}
+
+	@GET
+	@Path("/references")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getOrderReferences(@QueryParam("orderId") String orderIdSubstring) {
+		List<Object[]> results = this.orderService.findOrderHeaderReferences(facility, orderIdSubstring);
+		return BaseResponse.buildResponse(results);
+	
 	}
 	
 	@GET
@@ -58,6 +71,24 @@ public class OrdersResource {
 		int result = this.orderService.deleteAll(this.facility);
 		return BaseResponse.buildResponse(ImmutableMap.<String, Integer>of("count", result));
 	}
+	
+	@GET
+	@Path("/{orderId}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getOrder(@PathParam("orderId") String orderDomainId, @QueryParam("properties") List<String> propertyNamesList) {
+		String[] propertyNames = propertyNamesList.toArray(new String[]{});
+		List<Map<String, Object>> results = this.orderService.findOrderHeadersForOrderId(facility, propertyNames, orderDomainId);
+		if (results.size() == 1) {
+			return BaseResponse.buildResponse(results.get(0));
+		} else if (results.size() == 0){
+			return BaseResponse.buildResponse(null);
+			
+		} else {
+			LOGGER.error("Found multiple orders for {} in facility {}", orderDomainId, facility); 
+			return BaseResponse.buildResponse(null);
+		}
+	}
+	
 	
 	@GET
 	@Path("/{orderId}/details")

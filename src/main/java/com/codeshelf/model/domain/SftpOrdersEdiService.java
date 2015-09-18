@@ -118,8 +118,7 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 			long receivedTime = System.currentTimeMillis();
 			// rename to .processing and begin
 			ChannelSftp sftp = getChannel();
-			sftp.rename(originalPath, processingPath);
-			
+			renameFile(sftp, originalPath, processingPath);
 			BatchResult<Object> results = null;
 			try(InputStream fileStream = sftp.get(processingPath)) {
 				InputStreamReader reader = new InputStreamReader(fileStream);
@@ -132,9 +131,9 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 			success = results.isSuccessful();
 			
 			if(success) {
-				sftp.rename(processingPath, archivePath);
+				renameFile(sftp, processingPath, archivePath);
 			} else {
-				sftp.rename(processingPath, failedPath);
+				renameFile(sftp, processingPath, failedPath);
 			}
 						
 		} else {
@@ -144,6 +143,15 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 		
 	}
 
+	private void renameFile(ChannelSftp sftp, String originalPath, String processingPath) throws IOException {
+		try {
+			sftp.rename(originalPath, processingPath);
+		} catch(SftpException e) {
+			String msg = String.format("unable to rename from %s to %s for %s", originalPath, processingPath, toSftpChannelDebug());
+			throw new IOException(msg, e);
+		}
+
+	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
