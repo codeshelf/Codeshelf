@@ -44,13 +44,7 @@ assignPathSgmToAisle p1 0 A1
 assignPathSgmToAisle p1 2 A2
 assignPathSgmToAisle p2 0 A3
 assignTapeToTier 0007 A1.B2.T1 0027 A2.B1.T1 000X A2.B2.T1
-deleteExtensionPoint OrderOnCartContent
-deleteExtensionPoint WorkInstructionExportCreateHeader
-deleteExtensionPoint WorkInstructionExportCreateTrailer
-deleteExtensionPoint WorkInstructionExportContent
-deleteExtensionPoint OrderImportBeanTransformation
-deleteExtensionPoint OrderImportCreateHeader
-deleteExtensionPoint OrderImportLineTransformation
+deleteAllExtensionPoints
 addExtensionPoint extensionBean OrderImportBeanTransformation active
 addExtensionPoint extensionLine OrderImportLineTransformation active
 
@@ -119,11 +113,9 @@ defChe cheA :che1 cheC 0x000000A4
 defCheUseRadio cheB :che2
 logout cheA cheB cheC
 loginRemote cheA Ilya1 CHE_B
-scan cheA X%SETUP 
-waitForState cheB CONTAINER_SELECT
+scan cheA X%SETUP CONTAINER_SELECT
 setupCart cheA 26768709 26768711 26768712 26768717 26768718 26768719 26768720
-scan cheA X%START
-waitForState cheB SETUP_SUMMARY
+scan cheA X%START SETUP_SUMMARY
 
 STEP load orders on CHEs
 SITE

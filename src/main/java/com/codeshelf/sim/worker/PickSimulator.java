@@ -35,6 +35,7 @@ public class PickSimulator {
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(PickSimulator.class);
 
 	private final int			WAIT_TIME	= 6000;
+	private final int			RADIO_SEND_DELAY = 500;
 
 	public PickSimulator(CsDeviceManager deviceManager, String cheGuid) {
 		this(deviceManager, new NetGuid(cheGuid));
@@ -255,7 +256,7 @@ public class PickSimulator {
 			if (useRadio) {
 				CommandControlCreateScan command = new CommandControlCreateScan(NetEndpoint.PRIMARY_ENDPOINT, scan);
 				cheDeviceLogic.sendRadioControllerCommand(command, true);
-				ThreadUtils.sleep(500);
+				ThreadUtils.sleep(RADIO_SEND_DELAY);
 			} else {
 				cheDeviceLogic.scanCommandReceived(scan);
 			}
@@ -270,7 +271,7 @@ public class PickSimulator {
 			if (useRadio) {
 				CommandControlCreateButton command = new CommandControlCreateButton(NetEndpoint.PRIMARY_ENDPOINT, (byte)inPosition, (byte)inQuantity);
 				cheDeviceLogic.sendRadioControllerCommand(command, true);
-				ThreadUtils.sleep(500);
+				ThreadUtils.sleep(RADIO_SEND_DELAY);
 			} else {
 				cheDeviceLogic.simulateButtonPress(inPosition, inQuantity);
 			}
@@ -476,7 +477,7 @@ public class PickSimulator {
 			timeoutInMillis,
 			currentState,
 			device.inSetState());
-		throw new IllegalStateException(theProblem);
+		throw new IllegalStateException(getCheDeviceLogic().getGuid() + ": " + theProblem);
 	}
 
 	public boolean hasLastSentInstruction(byte position) {

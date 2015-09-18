@@ -76,10 +76,10 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 	private boolean processOrders(ICsvOrderImporter inCsvOrderImporter) throws JSchException, SftpException, IOException {
 		boolean failure = false;
 		
-		connect();
+		ChannelSftp sftp = connect();
 
 		try {
-			ArrayList<String> filesToImport = retrieveImportFileList();
+			ArrayList<String> filesToImport = retrieveImportFileList(sftp);
 			// process all regular files found
 			if(filesToImport.size() == 0) {
 				LOGGER.info("No files to process at {}",getConfiguration().getUrl());
@@ -87,7 +87,7 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 				for(int ix = 0; ix < filesToImport.size(); ix++ ) {
 					String filename = filesToImport.get(ix);
 					
-					if (!processImportFile(inCsvOrderImporter, filename))
+					if (!processImportFile(sftp, inCsvOrderImporter, filename))
 						failure = true;
 				}
 			}
@@ -98,7 +98,7 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 		return !failure;
 	}
 
-	private boolean processImportFile(ICsvOrderImporter inCsvOrderImporter, String filename) throws SftpException, IOException {
+	private boolean processImportFile(ChannelSftp sftp, ICsvOrderImporter inCsvOrderImporter, String filename) throws SftpException, IOException {
 		boolean success = false;
 		if(filename.endsWith(FILENAME_SUFFIX_FAILED)) {
 			// ignore
@@ -117,7 +117,6 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 			// record receipt
 			long receivedTime = System.currentTimeMillis();
 			// rename to .processing and begin
-			ChannelSftp sftp = getChannel();
 			renameFile(sftp, originalPath, processingPath);
 			BatchResult<Object> results = null;
 			try(InputStream fileStream = sftp.get(processingPath)) {
