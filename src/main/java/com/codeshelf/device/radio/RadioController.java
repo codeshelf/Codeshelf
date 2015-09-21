@@ -898,26 +898,26 @@ public class RadioController implements IRadioController {
 		return mNextAddress;
 		*/
 		
-		NetAddress returnAddress = new NetAddress((byte) 127);
-
 		NetGuid theGuid = inNetworkDevice.getGuid();
 		// we want the last byte. Jeff says negative is ok as -110 is x97 and is interpreted in the air protocol as positive up to 255.
 		byte[] theBytes = theGuid.getParamValueAsByteArray();
 		int guidByteSize = NetGuid.NET_GUID_BYTES;
-		returnAddress = new NetAddress(theBytes[guidByteSize - 1]);
+		NetAddress returnAddress = new NetAddress(theBytes[guidByteSize - 1]);
 		// Now we must see if this is already in the map
 		boolean done = false;
 		boolean wentAround = false;
 		while (!done) {
 			// Do not allow a device to have the net address 255 which is used as the broadcast address!
-			if ((returnAddress.getValue() != 0xff) && (!mDeviceNetAddrMap.containsKey(returnAddress)))
+			// Do not allow a device to have the net address 0 which is used as the controller address!
+			if ((returnAddress.getValue() != 0xff) && (returnAddress.getValue() != 0x00) && (!mDeviceNetAddrMap.containsKey(returnAddress)))
 				done = true;
 			else {
 				// we would like unsigned byte
 				short unsignedValue = returnAddress.getValue();
 				if (unsignedValue >= 255) {
-					if (wentAround) { // some looping error. Bail
-						LOGGER.error("getBestNetAddressForDevice has loop error");
+					if (wentAround) { // some looping error, or we are full up. Bail
+						LOGGER.error("mDeviceNetAddrMap is full! Or getBestNetAddressForDevice has loop error. Giving out duplicate of fe (254) net address");
+						returnAddress.setValue((byte) 254);
 						return returnAddress; // or throw?
 					}
 					unsignedValue = 1;

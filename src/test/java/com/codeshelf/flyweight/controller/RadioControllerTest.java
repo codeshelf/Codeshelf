@@ -1,7 +1,6 @@
 /*******************************************************************************
  *  FlyWeightController
- *  Copyright (c) 2005, 2006, Jeffrey B. Williams, All rights reserved
- *  $Id: CommandControlTest.java,v 1.3 2013/09/05 03:26:03 jeffw Exp $
+ *  Copyright (c) 2015, Codeshelf, All rights reserved
  *******************************************************************************/
 
 package com.codeshelf.flyweight.controller;
@@ -38,7 +37,7 @@ public final class RadioControllerTest extends MinimalTest {
 
 	/**
 	 * Pretty kludge little thing, and dumb, which is good enough for testing as it forces rollover.
-	 * Anyway, say start 1, and it gives you addresses 1-10
+	 * Anyway, say start 1, and it gives you addresses 1-10. 
 	 */
 	private void add10MockDevices(IRadioController radioController, int startValue) {
 		if (startValue % 10 != 1) {
@@ -47,8 +46,8 @@ public final class RadioControllerTest extends MinimalTest {
 		}
 		for (int count = 0; count < 10; count++) {
 			Integer value = startValue + count;
-			String guidStr = "0x" + value.toString();
-			addMockDevice(radioController, guidStr);
+				String guidStr = "0x" + value.toString();
+				addMockDevice(radioController, guidStr);
 		}
 	}
 
@@ -167,7 +166,7 @@ public final class RadioControllerTest extends MinimalTest {
 
 	@Test
 	public void testRadioController3() {
-		// Check our 00 cases
+		// Check our 00 cases.
 		IRadioController radioController = new RadioController(Mockito.mock(IGatewayInterface.class));
 		addMockDevice(radioController, "0x700");
 		addMockDevice(radioController, "0x800");
@@ -186,14 +185,36 @@ public final class RadioControllerTest extends MinimalTest {
 		Assert.assertNotEquals(testDevice1.getAddress(), testDevice3.getAddress());
 		Assert.assertNotEquals(testDevice2.getAddress(), testDevice3.getAddress());
 
-		// Interesting. We are willing give out address 0, but we roll over to 1, and not to 0
-		// Is zero ok?
-		assertDeviceNetAddress(testDevice1, 0);
-		assertDeviceNetAddress(testDevice2, 1);
-		assertDeviceNetAddress(testDevice3, 2);
-		assertDeviceNetAddress(testDevice4, 3);
+		// We are not willing give out address 0, which we use for the controller address
+		assertDeviceNetAddress(testDevice1, 1); // Had a bug here.
+		assertDeviceNetAddress(testDevice2, 2);
+		assertDeviceNetAddress(testDevice3, 3);
+		assertDeviceNetAddress(testDevice4, 4);
 
 	}
+	
+
+	@Test
+	public void testRadioController5() {
+		// Check wrapping search
+		IRadioController radioController = new RadioController(Mockito.mock(IGatewayInterface.class));
+		addMockDevice(radioController, "0x701"); // gives out 1
+		addMockDevice(radioController, "0x702");// gives out 2
+		// skip 3
+		addMockDevice(radioController, "0x704");// gives out 4
+		addMockDevice(radioController, "0x7FE");// gives out 254
+		addMockDevice(radioController, "0x8FD");// gives out 253
+		addMockDevice(radioController, "0x9FD");// should wrap around, and find 3 as the first hole
+	
+		assertGuidsNetworkValue(radioController, "0x701", 1);
+		assertGuidsNetworkValue(radioController, "0x702", 2);
+		assertGuidsNetworkValue(radioController, "0x704", 4);
+		assertGuidsNetworkValue(radioController, "0x7FE", 254);
+		assertGuidsNetworkValue(radioController, "0x8FD", 253);
+		assertGuidsNetworkValue(radioController, "0x9FD", 3);
+
+	}
+
 
 	@Test
 	public void testRadioController4() {
@@ -202,6 +223,11 @@ public final class RadioControllerTest extends MinimalTest {
 
 		// This is going to fill up 1-10,11.20, etc. but skip over 0a, ob, oc, etc.
 		add10MockDevices(radioController, 101); // yields "0x101" though "0x110"
+		// show that this skipped 104, but did the rest
+		assertGuidsNetworkValue(radioController, "0x101", 1);
+		assertGuidsNetworkValue(radioController, "0x102", 2);
+		assertGuidsNetworkValue(radioController, "0x103", 3);
+		
 		add10MockDevices(radioController, 111);
 		add10MockDevices(radioController, 121);
 		add10MockDevices(radioController, 131);
@@ -211,11 +237,11 @@ public final class RadioControllerTest extends MinimalTest {
 		add10MockDevices(radioController, 171);
 		add10MockDevices(radioController, 181);
 		add10MockDevices(radioController, 191); // this ends at"0x200"
-		
+
 		// 191 faced no 91 conflict yet, so it will have the x91 value (145)
 		assertGuidsNetworkValue(radioController, "0x191", 145);
 
-		// lots of roller over searching
+		// lots of searching for unused addresses
 		add10MockDevices(radioController, 201);
 		add10MockDevices(radioController, 211);
 		add10MockDevices(radioController, 221);
@@ -227,7 +253,6 @@ public final class RadioControllerTest extends MinimalTest {
 		add10MockDevices(radioController, 281);
 		add10MockDevices(radioController, 291); // up to 200 filled slots now
 
-		
 		// fill to 250
 		add10MockDevices(radioController, 301);
 		add10MockDevices(radioController, 311);
@@ -236,24 +261,21 @@ public final class RadioControllerTest extends MinimalTest {
 		add10MockDevices(radioController, 341);
 
 		// and beyond
-		addMockDevice(radioController, "0x901");
-		addMockDevice(radioController, "0x902");
-		addMockDevice(radioController, "0x903");
-		addMockDevice(radioController, "0x904");
-		addMockDevice(radioController, "0x905");
-		addMockDevice(radioController, "0x906");
-		addMockDevice(radioController, "0x907");
-		addMockDevice(radioController, "0x908");
-		
-		// The last few will have all gotten net address 127
-		assertGuidsNetworkValue(radioController, "0x904", 253);
-		assertGuidsNetworkValue(radioController, "0x905", 254);
-		
-		// We wanted to give out 127 or 254 here, not 255. These as 255 spoil the network for all CHE.
-		assertGuidsNetworkValue(radioController, "0x906", 255);
-		assertGuidsNetworkValue(radioController, "0x907", 255);
-		assertGuidsNetworkValue(radioController, "0x908", 255);
+		add10MockDevices(radioController, 901);
 
+		// The last few will have all gotten net address 127
+		assertGuidsNetworkValue(radioController, "0x901", 251);
+		assertGuidsNetworkValue(radioController, "0x902", 252);
+		assertGuidsNetworkValue(radioController, "0x903", 253);
+		assertGuidsNetworkValue(radioController, "0x904", 254);
+		assertGuidsNetworkValue(radioController, "0x905", 254);
+
+		// We wanted to give out 127 or 254 here, not 255. Because 255 broadcast spoils the network for all CHE.
+		assertGuidsNetworkValue(radioController, "0x906", 254);
+		assertGuidsNetworkValue(radioController, "0x907", 254);
+		assertGuidsNetworkValue(radioController, "0x908", 254);
+		assertGuidsNetworkValue(radioController, "0x909", 254);
+		assertGuidsNetworkValue(radioController, "0x910", 254); 
 
 	}
 
