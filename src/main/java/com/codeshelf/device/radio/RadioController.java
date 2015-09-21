@@ -892,41 +892,43 @@ public class RadioController implements IRadioController {
 		
 	}
 
-	private byte getBestNetAddressForDevice(final INetworkDevice inNetworkDevice) {
+	private NetAddress getBestNetAddressForDevice(final INetworkDevice inNetworkDevice) {
 		/* DEV-639 old code was equivalent to
 		mNextAddress++;
 		return mNextAddress;
 		*/
-
+		
 		NetGuid theGuid = inNetworkDevice.getGuid();
 		// we want the last byte. Jeff says negative is ok as -110 is x97 and is interpreted in the air protocol as positive up to 255.
 		byte[] theBytes = theGuid.getParamValueAsByteArray();
 		int guidByteSize = NetGuid.NET_GUID_BYTES;
-		byte returnByte = theBytes[guidByteSize - 1];
+		NetAddress returnAddress = new NetAddress(theBytes[guidByteSize - 1]);
 		// Now we must see if this is already in the map
 		boolean done = false;
 		boolean wentAround = false;
 		while (!done) {
 			// Do not allow a device to have the net address 255 which is used as the broadcast address!
-			if ((returnByte != (byte)255) && (!mDeviceNetAddrMap.containsKey(returnByte)))
+			// Do not allow a device to have the net address 0 which is used as the controller address!
+			if ((returnAddress.getValue() != 0xff) && (returnAddress.getValue() != 0x00) && (!mDeviceNetAddrMap.containsKey(returnAddress)))
 				done = true;
 			else {
 				// we would like unsigned byte
-				int unsignedValue = (returnByte & 0xff);
+				short unsignedValue = returnAddress.getValue();
 				if (unsignedValue >= 255) {
-					if (wentAround) { // some looping error. Bail
-						LOGGER.error("getBestNetAddressForDevice has loop error");
-						return 127; // or throw?
+					if (wentAround) { // some looping error, or we are full up. Bail
+						LOGGER.error("mDeviceNetAddrMap is full! Or getBestNetAddressForDevice has loop error. Giving out duplicate of fe (254) net address");
+						returnAddress.setValue((byte) 254);
+						return returnAddress; // or throw?
 					}
 					unsignedValue = 1;
 					wentAround = true;
 				} else {
 					unsignedValue++;
 				}
-				returnByte = (byte) unsignedValue;
+				returnAddress.setValue((byte) unsignedValue);
 			}
 		}
-		return returnByte;
+		return returnAddress;
 	}
 
 	@Override
@@ -935,9 +937,9 @@ public class RadioController implements IRadioController {
 		try {
 			// If the device has no address then assign one.
 			if ((inNetworkDevice.getAddress() == null) || (inNetworkDevice.getAddress().equals(mServerAddress))) {
-				byte netAddressToUse = getBestNetAddressForDevice(inNetworkDevice);
-				LOGGER.info("Adding device with network address: {} ", netAddressToUse & 0xFF);
-				inNetworkDevice.setAddress(new NetAddress(netAddressToUse));
+				NetAddress netAddressToUse = getBestNetAddressForDevice(inNetworkDevice);
+				LOGGER.info("Adding device {} with network address: {} ", inNetworkDevice.getGuid(), netAddressToUse);
+				inNetworkDevice.setAddress(netAddressToUse);
 				// inNetworkDevice.setAddress(new NetAddress(mNextAddress++));
 			}
 
