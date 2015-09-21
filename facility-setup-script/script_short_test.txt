@@ -2,7 +2,7 @@ var :che 0x000000ED
 
 STEP
 SERVER
-setProperty pickmult true
+setProperty pickmult false
 deleteAllExtensionPoints
 deleteOrders 26768709 26768711 26768712 26768717 26768718 26768719 26768720
 importOrders orders_10
@@ -12,7 +12,14 @@ waitForDevices :che
 defChe che :che
 logout che
 loginSetup che worker
-setupCart che 26768712 26768718
+setupCart che 26768718
 scan che X%START SETUP_SUMMARY
 scan che X%START SCAN_SOMETHING
-//scan che 3605970651558 DO_PICK
+//Short first item
+scan che X%SHORT SCAN_SOMETHING_SHORT
+scan che X%YES DO_PICK
+//Skip BC housekeeping
+cheExec che pickItemAuto
+waitForState che SCAN_SOMETHING
+//Short second item
+scan che X%SHORT SCAN_SOMETHING_SHORT

@@ -1978,7 +1978,7 @@ public class CheProcessTestPick extends ServerTest {
 	 * The intent is to do enough to cause the export beans to populate.
 	 * DEV-1127 from PFSWeb go live had location-based pick not populating the from location for the pick correctly.
 	 */
-	@Test
+	//@Test
 	public void testEDIAccumulatorExportBean() throws IOException {
 		
 		LOGGER.info("1: Set up facility. Add the export extensions");

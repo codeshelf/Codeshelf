@@ -951,7 +951,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (wi != null) {
 				processShortPickYes(wi, mShortPickQty);
 			} else {
-				List<WorkInstruction> activeInstructions = getActivePickWiList();
+				//The getActivePickWiList() list may be modified during processShortPickYes(). That's why we are creating a copy of it here. to iterate through.
+				List<WorkInstruction> activeInstructions = new ArrayList<>(getActivePickWiList());
 				for (WorkInstruction activeInstruction : activeInstructions) {
 					processShortPickYes(activeInstruction, 0);
 				}
