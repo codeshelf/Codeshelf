@@ -44,7 +44,7 @@ public class APICallFilter implements Filter {
 				attrString = user.getUsername();
 			}
 			
-			LOGGER.info("API CALL: {} {}{} {}", method, url, queryString==null?"":"?"+queryString, attrString);
+			LOGGER.debug("API CALL: {} {}{} {}", method, url, queryString==null?"":"?"+queryString, attrString);
 			try {
 				filterChain.doFilter(request, response);
 			} catch(UnauthorizedException e) {
