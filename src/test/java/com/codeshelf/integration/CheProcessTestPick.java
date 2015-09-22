@@ -1698,6 +1698,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.buttonPress(2, 0);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 3000);
 		picker.scanCommand("NO");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
 		//Check Screens -- #1 it should be done so display solid, dim "oc"
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.BITENCODED_SEGMENTS_CODE);

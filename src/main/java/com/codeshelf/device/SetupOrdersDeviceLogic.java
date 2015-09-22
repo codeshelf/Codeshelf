@@ -260,14 +260,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 
 				case DO_PICK:
-					if (isSameState || previousState == CheStateEnum.GET_WORK || previousState == CheStateEnum.SCAN_SOMETHING) {
+					if (isSameState || previousState == CheStateEnum.GET_WORK || previousState == CheStateEnum.SCAN_SOMETHING || previousState == CheStateEnum.SHORT_PICK_CONFIRM) {
 						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 					}
 					showActivePicks(); // if setState(DO_PICK) is called, it always calls showActivePicks. fewer direct calls to showActivePicks elsewhere.
 					break;
 
 				case SCAN_SOMETHING:
-					if (isSameState || previousState == CheStateEnum.GET_WORK) {
+					if (isSameState || previousState == CheStateEnum.GET_WORK || previousState == CheStateEnum.SCAN_SOMETHING_SHORT) {
 						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 					}
 					showActivePicks(); // change this? DEV-653
