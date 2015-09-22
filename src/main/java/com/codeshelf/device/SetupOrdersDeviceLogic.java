@@ -239,6 +239,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 
 				case SHORT_PICK_CONFIRM:
+					clearAllPosconsOnThisDevice();
 					if (isSameState) {
 						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 					}
@@ -273,6 +274,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 
 				case SCAN_SOMETHING_SHORT: // this is like a short confirm.
+					clearAllPosconsOnThisDevice();
 					if (isSameState) {
 						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 					}

@@ -874,7 +874,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 					default:
 						String gtin = wi.getGtin();
 						
-						return "SCAN " + ((gtin == null || gtin.isEmpty()) ? "?? Missing UPC" : gtin);
+						return "SCAN " + ((gtin == null || gtin.isEmpty()) ? wi.getItemId() : gtin);
 				}
 			} else {
 				switch (scanVerification) {
