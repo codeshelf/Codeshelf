@@ -34,7 +34,6 @@ public class PickSimulator {
 
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(PickSimulator.class);
 
-	private final int			WAIT_TIME	= 6000;
 	private final int			RADIO_SEND_DELAY = 500;
 
 	public PickSimulator(CsDeviceManager deviceManager, String cheGuid) {
@@ -48,54 +47,58 @@ public class PickSimulator {
 			throw new IllegalArgumentException("No che found with guid: " + cheGuid);
 		}
 	}
+	
+	private int getWaitTime(){
+		return useRadio ? 6000 : 4000;
+	}
 
 	public void login(String pickerId) {
-		waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
+		waitForCheState(CheStateEnum.IDLE, getWaitTime());
 		scanUser(pickerId);
 		ArrayList<CheStateEnum> loginStates = Lists.newArrayList();
 		loginStates.add(CheStateEnum.SETUP_SUMMARY);
 		loginStates.add(CheStateEnum.READY);
 		loginStates.add(CheStateEnum.REMOTE);
 		loginStates.add(CheStateEnum.PALLETIZER_SCAN_ITEM);
-		waitForCheStates(loginStates, WAIT_TIME);
+		waitForCheStates(loginStates, getWaitTime());
 	}
 	
 	public void loginAndSetup(String pickerId) {
-		waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
+		waitForCheState(CheStateEnum.IDLE, getWaitTime());
 		scanUser(pickerId);
-		waitForCheStates(states(CheStateEnum.SETUP_SUMMARY, CheStateEnum.REMOTE), WAIT_TIME);
+		waitForCheStates(states(CheStateEnum.SETUP_SUMMARY, CheStateEnum.REMOTE), getWaitTime());
 		if (getCurrentCheState() == CheStateEnum.REMOTE){
 			scanCommand("CANCEL");
 			//Since we are going from state REMOTE to REMOTE, give CHE a bit of time to enter a transactional state
 			ThreadUtils.sleep(500);
-			waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+			waitForCheState(CheStateEnum.REMOTE, getWaitTime());
 			scanCommand("CANCEL");
-			waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
+			waitForCheState(CheStateEnum.SETUP_SUMMARY, getWaitTime());
 		}
 		scanCommand("SETUP");
-		waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		waitForCheState(CheStateEnum.CONTAINER_SELECT, getWaitTime());
 	}
 	
 	public void loginAndRemoteLink(String pickerId, String connectTo) {
-		waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
+		waitForCheState(CheStateEnum.IDLE, getWaitTime());
 		scanUser(pickerId);
 		//If this CHE was previously used as a remote controller, it will go into REMOTE state after the badge scan
-		waitForCheStates(states(CheStateEnum.SETUP_SUMMARY, CheStateEnum.REMOTE), WAIT_TIME);
+		waitForCheStates(states(CheStateEnum.SETUP_SUMMARY, CheStateEnum.REMOTE), getWaitTime());
 		//If CHE goes into SETUP_SUMMARY state, scan the REMOTE command to go to REMOTE state
 		if (getCurrentCheState() == CheStateEnum.SETUP_SUMMARY) {
 			scanCommand("REMOTE");
-			waitForCheState(CheStateEnum.REMOTE, WAIT_TIME);
+			waitForCheState(CheStateEnum.REMOTE, getWaitTime());
 		}
 		scanSomething("H%" + connectTo);
-		waitForCheState(CheStateEnum.REMOTE_LINKED, WAIT_TIME);
+		waitForCheState(CheStateEnum.REMOTE_LINKED, getWaitTime());
 	}
 
 	public void loginAndCheckState(String pickerId, CheStateEnum inState) {
-		waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
+		waitForCheState(CheStateEnum.IDLE, getWaitTime());
 		// This only does the login ("scan badge" scan). Especially in Line_Scan process, this is used in tests rather than loginAndSetup.
 		scanUser(pickerId);
 		// badge authorization now takes longer. Trip to server and back
-		waitForCheState(inState, WAIT_TIME);
+		waitForCheState(inState, getWaitTime());
 	}
 
 	public String getProcessType() {
@@ -106,7 +109,7 @@ public class PickSimulator {
 	public void setup() {
 		// The happy case. Scan setup needed after completing a cart run. Still logged in.
 		scanCommand("SETUP");
-		waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		waitForCheState(CheStateEnum.CONTAINER_SELECT, getWaitTime());
 	}
 
 	/**
@@ -117,18 +120,18 @@ public class PickSimulator {
 	public void inventoryViaTape(String gtin, String tapeScan) {
 		scanSomething(gtin);
 		// not really right. Stays in SCAN_GTIN state. Perhaps it should transition to other state and wait for server response to get back to state.
-		waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
+		waitForCheState(CheStateEnum.SCAN_GTIN, getWaitTime());
 		scanSomething(tapeScan);
-		waitForCheState(CheStateEnum.SCAN_GTIN, WAIT_TIME);
+		waitForCheState(CheStateEnum.SCAN_GTIN, getWaitTime());
 	}
 
 	public void setupOrderIdAsContainer(String orderId, String positionId) {
 		// DEV-518. Also accept the raw order ID as the containerId
 		scanOrderId(orderId);
-		waitForCheState(CheStateEnum.CONTAINER_POSITION, WAIT_TIME);
+		waitForCheState(CheStateEnum.CONTAINER_POSITION, getWaitTime());
 
 		scanPosition(positionId);
-		waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		waitForCheState(CheStateEnum.CONTAINER_SELECT, getWaitTime());
 	}
 
 	/**
@@ -144,18 +147,18 @@ public class PickSimulator {
 			LOGGER.error("location in setOrderToPutWall should not take percent. Just the alias name.");
 
 		scanSomething(orderId);
-		waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, WAIT_TIME);
+		waitForCheState(CheStateEnum.PUT_WALL_SCAN_LOCATION, getWaitTime());
 		scanLocation(locationName);
-		waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, WAIT_TIME);
+		waitForCheState(CheStateEnum.PUT_WALL_SCAN_ORDER, getWaitTime());
 	}
 
 	public void setupContainer(String containerId, String positionId) {
 		// used for normal success case of scan container, then position on cart.
 		scanContainer(containerId);
-		waitForThisOrLinkedCheState(CheStateEnum.CONTAINER_POSITION, WAIT_TIME);
+		waitForThisOrLinkedCheState(CheStateEnum.CONTAINER_POSITION, getWaitTime());
 
 		scanPosition(positionId);
-		waitForThisOrLinkedCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
+		waitForThisOrLinkedCheState(CheStateEnum.CONTAINER_SELECT, getWaitTime());
 	}
 
 	public void startAndSkipReview(String location, int inComputeTimeOut, int inLocationTimeOut) {
@@ -178,7 +181,7 @@ public class PickSimulator {
 	}
 
 	public void pickItemAuto() {
-		waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
+		waitForCheState(CheStateEnum.DO_PICK, getWaitTime());
 		WorkInstruction wi = getActivePick();
 		int button = buttonFor(wi);
 		int quantity = wi.getPlanQuantity();
@@ -187,7 +190,7 @@ public class PickSimulator {
 
 	public void logout() {
 		scanCommand("LOGOUT");
-		waitForCheState(CheStateEnum.IDLE, WAIT_TIME);
+		waitForCheState(CheStateEnum.IDLE, getWaitTime());
 	}
 
 	/**

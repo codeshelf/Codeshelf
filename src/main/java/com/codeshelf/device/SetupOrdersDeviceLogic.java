@@ -196,6 +196,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 				case GET_WORK:
 					sendDisplayCommand(GET_WORK_MSG, EMPTY_MSG);
+					clearAllPosconsOnThisDevice();
 					break;
 
 				case CONTAINER_SELECT:
