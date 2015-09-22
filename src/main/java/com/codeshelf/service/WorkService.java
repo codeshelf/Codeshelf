@@ -2728,8 +2728,8 @@ public class WorkService implements IApiService {
 
 		else if (OrderHeader.class.isAssignableFrom(inCls)) {
 			foundGoodClassName = true;
-			// only do 500 orders at a time.
-			maxToPurgeAtOnce = Math.min(500, maxToPurgeAtOnce);
+			// only do 200 orders at a time. See DEV-1144
+			maxToPurgeAtOnce = Math.min(200, maxToPurgeAtOnce);
 			purgeOrders(daysOldToCount, inFacility, maxToPurgeAtOnce);
 		}
 
