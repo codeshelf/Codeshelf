@@ -13,10 +13,11 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import lombok.Setter;
+
+import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import lombok.Setter;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.model.OrderStatusEnum;
@@ -42,8 +43,13 @@ public class OrdersResource {
 	@GET
 	@Path("/references")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getOrderReferences(@QueryParam("orderId") String orderIdSubstring) {
-		List<Object[]> results = this.orderService.findOrderHeaderReferences(facility, orderIdSubstring);
+	public Response getOrderReferences(@QueryParam("orderId") String orderIdSubstring, @QueryParam("dueDate") String dueDateSpec) {
+		
+		Interval dueDateInterval = null;
+		if (dueDateSpec != null) {
+			dueDateInterval = Interval.parse(dueDateSpec);
+		}
+		List<Object[]> results = this.orderService.findOrderHeaderReferences(facility, orderIdSubstring, dueDateInterval);
 		return BaseResponse.buildResponse(results);
 	
 	}
