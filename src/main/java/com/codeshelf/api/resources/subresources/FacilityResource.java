@@ -28,7 +28,6 @@ import javax.ws.rs.core.Response.Status;
 import lombok.Setter;
 
 import org.apache.commons.beanutils.BeanMap;
-import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.apache.commons.io.IOUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.hibernate.Criteria;
@@ -37,6 +36,7 @@ import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.exception.ConstraintViolationException;
 import org.joda.time.DateTime;
+import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -232,11 +232,25 @@ public class FacilityResource {
 		return BaseResponse.buildResponse(null);
 	}
 	
-    @GET
-	@Path("/work/instructions")
+	@GET
+	@Path("/work/instructions/references")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response findWorkInstructionReferences(@QueryParam("orderId") String orderIdSubstring, @QueryParam("assigned") String assigneddDateSpec) {
+		
+		Interval assigneddInterval = null;
+		if (assigneddDateSpec != null) {
+			assigneddInterval = Interval.parse(assigneddDateSpec);
+		}
+		List<Object[]> results = this.workService.findWorkInstructionReferences(facility, assigneddInterval);
+		return BaseResponse.buildResponse(results);
+	
+	}
+	
+	@GET
+	@Path("/work/instructions/{persistentId}")
 	@RequiresPermissions("companion:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getWorkInstructions(@QueryParam("properties") List<String> properties) {
+	public Response getWorkInstruction(@PathParam("persistentId") UUIDParam persistentId, @QueryParam("properties") List<String> propertyNamesList) {
     	String[] propertyNames = new String[] {
 
     			 "groupAndSortCode",
@@ -266,25 +280,17 @@ public class FacilityResource {
     			 "gtin",
     			 "needsScan"
     	};
-    	List<WorkInstruction> results = this.workService.getWorkInstructions(facility);
-		PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
-		ArrayList<Map<String, Object>> viewResults = new ArrayList<Map<String, Object>>();
-		for (WorkInstruction object : results) {
-			Map<String, Object> propertiesMap = new HashMap<>();
-			for (String propertyName : propertyNames) {
-				try {
-					Object resultObject = propertyUtils.getProperty(object, propertyName);
-					propertiesMap.put(propertyName, resultObject);
-				} catch(NoSuchMethodException e) {
-					// Minor problem. UI hierarchical view asks for same data field name for all object types in the view. Not really an error in most cases
-					LOGGER.debug("no property " +propertyName + " on object: " + object);
-				} catch(Exception e) {
-					LOGGER.warn("unexpected exception for property " +propertyName + " object: " + object, e);
-				}
-			}
-			viewResults.add(propertiesMap);
+
+		List<Map<String, Object>> results = this.workService.findtWorkInstructions(facility, propertyNames, persistentId.getValue());
+		if (results.size() == 1) {
+			return BaseResponse.buildResponse(results.get(0));
+		} else if (results.size() == 0){
+			return BaseResponse.buildResponse(null);
+			
+		} else {
+			LOGGER.error("Found multiple orders for {} in facility {}", persistentId, facility); 
+			return BaseResponse.buildResponse(null);
 		}
-		return BaseResponse.buildResponse(viewResults);
 	}
 
     @GET
