@@ -135,11 +135,12 @@ public class CriteriaRegistry {
 		orderDetailsByFacility.setMaxRecords(HIGH_MAX_RECORDS);
 		indexedCriteria.put("orderDetailsByFacility", orderDetailsByFacility);
 
+		// earlier experiment with shipper and customer did not work. Just too many.
+		// order number or itemId. Would be nice to do gtin, but that would require a complicated join as gtin is a function of itemMaster and uom.
 		TypedCriteria orderDetailsByFacilityAndPartialQuery = new TypedCriteria("from OrderDetail where parent.parent.persistentId = :facilityId "
 				+ " and active = true"
 				+ " and (parent.domainId      LIKE :partialQuery "
-				+ "      or parent.customerId LIKE :partialQuery"
-				+ "      or parent.shipperId  LIKE :partialQuery)",
+				+ " or itemMaster.domainId  LIKE :partialQuery)",
 			"facilityId", UUID.class,
 			"partialQuery", String.class);
 		orderDetailsByFacilityAndPartialQuery.setMaxRecords(HIGH_MAX_RECORDS);
