@@ -358,7 +358,7 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		minValue = posman.getLastSentPositionControllerMinQty((byte) 4);
 		Assert.assertEquals(toByte(3), displayValue);
 		Assert.assertEquals(toByte(0), minValue);
-		Assert.assertEquals(toByte(21), flashValue); // our flashing value
+		Assert.assertEquals(toByte(FLASH_VALUE), flashValue); // our flashing value
 
 		// button from the put wall. Let's see how this affected the poscon
 		posman.buttonPress(4, 1);
@@ -369,7 +369,7 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		minValue = posman.getLastSentPositionControllerMinQty((byte) 4);
 		Assert.assertEquals(toByte(3), displayValue);
 		Assert.assertEquals(toByte(0), minValue);
-		Assert.assertEquals(toByte(21), flashValue);
+		Assert.assertEquals(toByte(FLASH_VALUE), flashValue);
 
 		LOGGER.info("2c: Short confirm screen is up. Scan no to see how it recovers. Poscon display is back to original job.");
 		picker1.scanCommand("NO");
@@ -389,7 +389,7 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		picker1.scanCommand("YES");
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		// No active job on the poscon, so it should now show the state of the order.
-		// do a wait-for to avoid the interrmittent failure
+		// do a wait-for to avoid the intermittent failure
 		posman.waitForControllerDisplayValue((byte) 4, PosControllerInstr.BITENCODED_SEGMENTS_CODE, WAIT_TIME);
 
 		LOGGER.info("3a: Scan 1515 into wall2 will give two jobs. Short the first");
