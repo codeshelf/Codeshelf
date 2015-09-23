@@ -25,6 +25,7 @@ import lombok.ToString;
 import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
@@ -2753,13 +2754,16 @@ public class WorkService implements IApiService {
 		return Math.max(daysOldToCount, 1);
 	}
 
-	public List<Object[]> findWorkInstructionReferences(Facility facility, Interval assignedInterval) {
+	public List<Object[]> findWorkInstructionReferences(Facility facility, Interval assignedInterval, String itemIdSubstring) {
 		Criteria criteria = WorkInstruction.staticGetDao()
 				.createCriteria()
 				.setProjection(Projections.projectionList()
 					.add(Projections.property("persistentId").as("persistentId")))
 				.add(Property.forName("parent").eq(facility))
 				.add(Property.forName("type").in(ImmutableList.of(WorkInstructionTypeEnum.ACTUAL, WorkInstructionTypeEnum.PLAN)));
+				if (itemIdSubstring != null) {
+					criteria.add(Property.forName("itemId").like(itemIdSubstring, MatchMode.ANYWHERE));
+				}
 				if (assignedInterval != null) {
 					criteria.add(Property.forName("assigned").between(
 						new Timestamp(assignedInterval.getStartMillis()),
