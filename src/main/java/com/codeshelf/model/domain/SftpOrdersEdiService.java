@@ -67,7 +67,7 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 		try {
 			processOrders(inCsvOrderImporter);
 		} catch (JSchException | SftpException | IOException e) {
-			LOGGER.error("SFTP failure", e);
+			LOGGER.warn("SFTP failure while processing orders", e);
 			return false;
 		}
 		return true;
