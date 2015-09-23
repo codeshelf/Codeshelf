@@ -24,6 +24,7 @@ import lombok.ToString;
 
 import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.hibernate.Criteria;
+import org.hibernate.FetchMode;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Order;
@@ -31,6 +32,7 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.criterion.SimpleExpression;
+import org.hibernate.sql.JoinType;
 import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -2754,15 +2756,19 @@ public class WorkService implements IApiService {
 		return Math.max(daysOldToCount, 1);
 	}
 
-	public List<Object[]> findWorkInstructionReferences(Facility facility, Interval assignedInterval, String itemIdSubstring) {
+	public List<Object[]> findWorkInstructionReferences(Facility facility, Interval assignedInterval, String itemIdSubstring, String containerIdSubstring) {
 		Criteria criteria = WorkInstruction.staticGetDao()
 				.createCriteria()
 				.setProjection(Projections.projectionList()
 					.add(Projections.property("persistentId").as("persistentId")))
 				.add(Property.forName("parent").eq(facility))
 				.add(Property.forName("type").in(ImmutableList.of(WorkInstructionTypeEnum.ACTUAL, WorkInstructionTypeEnum.PLAN)));
-				if (itemIdSubstring != null) {
+				if (Strings.isNullOrEmpty(itemIdSubstring) == false) {
 					criteria.add(Property.forName("itemId").like(itemIdSubstring, MatchMode.ANYWHERE));
+				}
+				if (Strings.isNullOrEmpty(containerIdSubstring) == false) {
+					criteria.createCriteria("container")
+						.add(Property.forName("domainId").like(containerIdSubstring, MatchMode.ANYWHERE));
 				}
 				if (assignedInterval != null) {
 					criteria.add(Property.forName("assigned").between(
@@ -2783,7 +2789,6 @@ public class WorkService implements IApiService {
 		Criteria criteria = WorkInstruction.staticGetDao()
 				.createCriteria()
 				.add(Property.forName("parent").eq(facility))
-//				.add(Property.forName("active").eq(true))
 				.add(persistentIdProperty);
 
 		//long start = System.currentTimeMillis();

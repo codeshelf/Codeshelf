@@ -235,13 +235,13 @@ public class FacilityResource {
 	@GET
 	@Path("/work/instructions/references")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response findWorkInstructionReferences(@QueryParam("itemId") String itemIdSubstring, @QueryParam("assigned") String assigneddDateSpec) {
+	public Response findWorkInstructionReferences(@QueryParam("itemId") String itemIdSubstring, @QueryParam("containerId") String containerIdSubstring, @QueryParam("assigned") String assigneddDateSpec) {
 		
 		Interval assigneddInterval = null;
 		if (assigneddDateSpec != null) {
 			assigneddInterval = Interval.parse(assigneddDateSpec);
 		}
-		List<Object[]> results = this.workService.findWorkInstructionReferences(facility, assigneddInterval, itemIdSubstring);
+		List<Object[]> results = this.workService.findWorkInstructionReferences(facility, assigneddInterval, itemIdSubstring, containerIdSubstring);
 		return BaseResponse.buildResponse(results);
 	
 	}
