@@ -9,7 +9,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -1475,23 +1474,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 		picker.scanLocation("D301");
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
-		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-		
-		beginTransaction();
-		List<ExportMessage> messages = ExportMessage.staticGetDao().getAll();
-		System.out.println("*** Delete " + messages.size() + " messages");
-		for (ExportMessage message : messages){
-			ExportMessage.staticGetDao().delete(message);
-		}		
-		commitTransaction();
-
-		beginTransaction();
-		try {
-			DatabaseUtils.executeSQL(getDefaultTenant(), "TRUNCATE TABLE export_message;");
-		} catch (SQLException e) {
-			LOGGER.error("", e);
-		}
-		commitTransaction();
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);		
 	}
 
 	@Test
