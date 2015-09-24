@@ -27,6 +27,8 @@ import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.edi.EdiExporterProvider;
+import com.codeshelf.edi.FacilityEdiExporter;
 import com.codeshelf.edi.SftpConfiguration;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
@@ -39,10 +41,12 @@ import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Che.ProcessMode;
+import com.codeshelf.model.domain.ExportMessage.ExportMessageType;
 import com.codeshelf.model.domain.AbstractSftpEdiService;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.domain.ExportMessage;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
@@ -56,6 +60,7 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.SftpWIsEdiService;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.persistence.DatabaseUtils;
 import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.UiUpdateService;
@@ -293,11 +298,7 @@ public class CheProcessTestPick extends ServerTest {
 	@Test
 	public final void testStartWorkReverse() throws IOException {
 		// set up data for pick scenario
-		beginTransaction();
-
 		Facility facility = setUpSimpleNoSlotFacility();
-
-		commitTransaction();
 
 		for (Entry<String, String> entry : ThreadContext.getContext().entrySet()) {
 			LOGGER.info("ThreadContext: {} = {}", entry.getKey(), entry.getValue());
@@ -315,10 +316,7 @@ public class CheProcessTestPick extends ServerTest {
 		// JR: not sure what this test used to do. Does not work
 		
 		// set up data for pick scenario
-		beginTransaction();
-
 		Facility facility = setUpSimpleNoSlotFacility();
-		commitTransaction();
 
 		this.startSiteController();
 
@@ -348,10 +346,7 @@ public class CheProcessTestPick extends ServerTest {
 	//work items appear to be in the wrong order on normal forward
 	public final void testStartWorkForwardSkipToLocation() throws IOException {
 		// set up data for pick scenario
-		beginTransaction();
-
 		Facility facility = setUpSimpleNoSlotFacility();
-		commitTransaction();
 
 		this.startSiteController();
 
@@ -472,10 +467,7 @@ public class CheProcessTestPick extends ServerTest {
 
 	@Test
 	public final void testPick() throws IOException {
-		beginTransaction();
-
 		Facility facility = setUpSimpleNoSlotFacility();
-		commitTransaction();
 
 		this.startSiteController();
 
@@ -613,10 +605,7 @@ public class CheProcessTestPick extends ServerTest {
 
 	@Test
 	public final void testPickViaChe() throws IOException {
-		beginTransaction();
-
 		Facility facility = setUpSimpleNoSlotFacility();
-		commitTransaction();
 
 		this.startSiteController();
 
@@ -993,10 +982,8 @@ public class CheProcessTestPick extends ServerTest {
 	@Test
 	public final void testRouteWrap() throws IOException {
 		// create test data
-		beginTransaction();
 		Facility facility = setUpSimpleNoSlotFacility();
 		setUpSmallInventoryAndOrders(facility);
-		commitTransaction();
 
 		this.startSiteController();
 
@@ -1070,9 +1057,7 @@ public class CheProcessTestPick extends ServerTest {
 	@Test
 	public final void testRouteWrap2() throws IOException {
 		// Reproduce bug seen during MAT for v10
-		beginTransaction();
 		Facility facility = setUpZigzagSlottedFacility();
-		commitTransaction();
 
 		setUpBatchOrdersForZigzag(facility);
 
@@ -1489,7 +1474,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 		picker.scanLocation("D301");
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
-		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);		
 	}
 
 	@Test
@@ -1543,9 +1528,7 @@ public class CheProcessTestPick extends ServerTest {
 		// set up data for pick scenario
 
 		// set up data for pick scenario
-		beginTransaction();
 		Facility facility = setUpSimpleNoSlotFacility();
-		commitTransaction();
 
 		this.startSiteController();
 
@@ -1783,10 +1766,7 @@ public class CheProcessTestPick extends ServerTest {
 
 	@Test
 	public void testContainerReassignmentDuringCHESetup() throws IOException {
-		beginTransaction();
-
 		Facility facility = setUpSimpleNoSlotFacility();
-		commitTransaction();
 
 		this.startSiteController();
 
@@ -1979,8 +1959,8 @@ public class CheProcessTestPick extends ServerTest {
 	 * The intent is to do enough to cause the export beans to populate.
 	 * DEV-1127 from PFSWeb go live had location-based pick not populating the from location for the pick correctly.
 	 */
-	//@Test
-	public void testEDIAccumulatorExportBean() throws IOException {
+	@Test
+	public void testEDIAccumulatorExportBean() throws Exception {
 		
 		LOGGER.info("1: Set up facility. Add the export extensions");
 		// somewhat cloned from FacilityAccumulatingExportTest
@@ -2118,8 +2098,37 @@ public class CheProcessTestPick extends ServerTest {
 		picker.logout();
 		picker.loginAndSetup("Picker #1");
 		picker.logout();
+		
+		EdiExporterProvider exportProvider = workService.getExportProvider();
+		FacilityEdiExporter exporter = exportProvider.getEdiExporter(facility);
+		exporter.waitUntillQueueIsEmpty(20000);
+		
+		beginTransaction();
+		LOGGER.info("5: Verify sent messages");
+		List<ExportMessage> messages = ExportMessage.staticGetDao().getAll();
+		Assert.assertEquals(4,  messages.size());
+		for (ExportMessage message : messages) {
+			String orderId = message.getOrderId();
+			String expectedContents = null;
+			if ("11111".equals(orderId) && message.getType() == ExportMessageType.ORDER_ON_CART_FINISHED) {
+				expectedContents = 
+						"0073^ORDERSTATUS         ^0000000000^11111               ^CHE                 ^CHE1                ^CLOSED         \r\n" + 
+						"0090^PICKMISSIONSTATUS   ^0000000000^11111               ^locationA           ^000000000000001^000000000000001^1                        \r\n" + 
+						"0057^ENDORDER            ^0000000000^11111";
+			} else if ("11111".equals(orderId)) {
+				expectedContents = "0073^ORDERSTATUS         ^0000000000^11111               ^CHE1   ^  ^OPEN";
+			} else if ("22222".equals(orderId)) {
+				expectedContents = "0073^ORDERSTATUS         ^0000000000^22222               ^CHE1   ^  ^OPEN";
+			} else if ("44444".equals(orderId)) {
+				expectedContents = "0073^ORDERSTATUS         ^0000000000^44444               ^CHE1   ^  ^OPEN";
+			} else {
+				Assert.fail("Unexpected message: order = " + orderId + ", contents = " + message.getContents());
+			}
+			Assert.assertEquals(expectedContents, message.getContents().trim());
+		}
+		commitTransaction();
 	}
-	
+		
 	//++++++++++  SFTP configuration +++++++++++
 	
 	// our private sftp test place. Note: we need to maintain this SFTP endpoint for our testing
@@ -2155,10 +2164,7 @@ public class CheProcessTestPick extends ServerTest {
 
 	@Test
 	public void testCheSetupErrors() throws IOException {
-		beginTransaction();
-
 		Facility facility = setUpSimpleNoSlotFacility();
-		commitTransaction();
 
 		this.startSiteController();
 
@@ -2499,9 +2505,7 @@ public class CheProcessTestPick extends ServerTest {
 		final Byte kBLINK_FREQ = PosControllerInstr.BLINK_FREQ;
 		final Byte kSOLID_FREQ = PosControllerInstr.SOLID_FREQ;
 
-		beginTransaction();
 		Facility facility = setUpSimpleNoSlotFacility();
-		commitTransaction();
 
 		beginTransaction();
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"

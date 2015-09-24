@@ -19,7 +19,6 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
@@ -71,7 +70,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 @JsonIgnoreProperties({ "fullDomainId", "parentFullDomainId", "parentPersistentId", "className", "container", "itemMaster",
 		"location" })
-@ToString(of = { "type", "status", "orderDetail", "itemId", "planQuantity", "actualQuantity", "locationId" }, callSuper = true, doNotUseGetters = true)
 public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	public static class WorkInstructionDao extends GenericDaoABC<WorkInstruction> implements ITypedDao<WorkInstruction> {
@@ -647,6 +645,11 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		return needsScan;
 	}
 
+	public String toString() {
+		String orderId = getOrderId();
+		String msg = String.format("WorkInstruction type=%s, status=%s, orderId=%s, itemId=%s, plan=%s, actual=%s, pickInstruction=%s", type, status, orderId, itemId, planQuantity, actualQuantity, pickInstruction);
+		return msg;
+	}
 	
 	/* replaced by GTIN field
 	public String getGtinId() {
