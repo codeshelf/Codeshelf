@@ -859,7 +859,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		minValue = posman.getLastSentPositionControllerMinQty((byte) 4);
 		Assert.assertEquals(toByte(3), displayValue);
 		Assert.assertEquals(toByte(0), minValue);
-		Assert.assertEquals(toByte(21), flashValue); // our flashing value
+		Assert.assertEquals(toByte(FLASH_VALUE), flashValue); // our flashing value
 
 		// button from the put wall. Let's see how this affected the poscon
 		posman.buttonPress(4, 1);
@@ -870,7 +870,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		minValue = posman.getLastSentPositionControllerMinQty((byte) 4);
 		Assert.assertEquals(toByte(3), displayValue);
 		Assert.assertEquals(toByte(0), minValue);
-		Assert.assertEquals(toByte(21), flashValue);
+		Assert.assertEquals(toByte(FLASH_VALUE), flashValue);
 
 		LOGGER.info("2c: Short confirm screen is up. Scan no to see how it recovers. Poscon display is back to original job.");
 		picker1.scanCommand("NO");
@@ -994,7 +994,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Byte minValue = posman.getLastSentPositionControllerMinQty((byte) 4);
 		Assert.assertEquals(toByte(3), displayValue);
 		Assert.assertEquals(toByte(0), minValue);
-		Assert.assertEquals(toByte(21), flashValue); // our flashing value
+		Assert.assertEquals(toByte(FLASH_VALUE), flashValue); // our flashing value was 21
 
 		LOGGER.info("3b: Scan CANCEL, which cancels the job. Show that the poscon display is back to the order feedback");
 		picker1.scanCommand("CANCEL");
@@ -1012,7 +1012,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		minValue = posman.getLastSentPositionControllerMinQty((byte) 4);
 		Assert.assertEquals(toByte(3), displayValue);
 		Assert.assertEquals(toByte(0), minValue);
-		Assert.assertEquals(toByte(21), flashValue); // our flashing value
+		Assert.assertEquals(toByte(FLASH_VALUE), flashValue); // our flashing value
 
 		// button from the put wall. Let's see how this affected the poscon
 		posman.buttonPress(4, 1);
@@ -1023,7 +1023,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		minValue = posman.getLastSentPositionControllerMinQty((byte) 4);
 		Assert.assertEquals(toByte(3), displayValue);
 		Assert.assertEquals(toByte(0), minValue);
-		Assert.assertEquals(toByte(21), flashValue);
+		Assert.assertEquals(toByte(FLASH_VALUE), flashValue);
 
 		LOGGER.info("4b: Scan CANCEL, which cancels the job. Show that the poscon display is back to the order feedback");
 		picker1.scanCommand("CANCEL");

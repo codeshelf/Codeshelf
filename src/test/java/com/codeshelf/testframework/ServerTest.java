@@ -40,6 +40,8 @@ public abstract class ServerTest extends HibernateTest {
 	public boolean ephemeralServicesShouldStartAutomatically() {
 		return true;
 	}
+	
+	protected final int FLASH_VALUE = 32; //BLINK_FREQ						= (byte) 0x20; // used to be x15
 
 	// various server utilities
 	protected Facility setUpSimpleNoSlotFacility() {

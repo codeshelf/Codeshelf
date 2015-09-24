@@ -146,7 +146,7 @@ public class OrderService implements IApiService {
 		Criteria criteria = orderHeaderCriteria(facility).add(Property.forName("status").in(orderStatusEnums));
 		@SuppressWarnings("unchecked")
 		List<OrderHeader> results = (List<OrderHeader>) criteria.list();
-		return toOrderView(results, propertyNames);
+		return toPropertiesView(results, propertyNames);
 
 	}
 
@@ -166,15 +166,15 @@ public class OrderService implements IApiService {
 		Set<OrderHeader> results = new HashSet<>(joined);
 		//long stop = System.currentTimeMillis();
 		//System.out.println("Fetch " + results.size() + " " + (start-stop));
-		return toOrderView(results, propertyNames);
+		return toPropertiesView(results, propertyNames);
 	}
 
-	private List<Map<String, Object>> toOrderView(Collection<OrderHeader> results, String[] propertyNames) {
+	private List<Map<String, Object>> toPropertiesView(Collection<?> results, String[] propertyNames) {
 		PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
 		ArrayList<Map<String, Object>> viewResults = new ArrayList<Map<String, Object>>();
 		//long start = System.currentTimeMillis();
 
-		for (OrderHeader object : results) {
+		for (Object object : results) {
 			Map<String, Object> propertiesMap = new HashMap<>();
 			for (String propertyName : propertyNames) {
 				try {

@@ -9,6 +9,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -21,10 +22,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.Getter;
 import lombok.ToString;
 
+import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.hibernate.Criteria;
+import org.hibernate.FetchMode;
 import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Projections;
+import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.criterion.SimpleExpression;
+import org.hibernate.sql.JoinType;
+import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -2746,6 +2755,76 @@ public class WorkService implements IApiService {
 
 	private int floorDays(int daysOldToCount) {
 		return Math.max(daysOldToCount, 1);
+	}
+
+	public List<Object[]> findWorkInstructionReferences(Facility facility, Interval assignedInterval, String itemIdSubstring, String containerIdSubstring) {
+		Criteria criteria = WorkInstruction.staticGetDao()
+				.createCriteria()
+				.setProjection(Projections.projectionList()
+					.add(Projections.property("persistentId").as("persistentId")))
+				.add(Property.forName("parent").eq(facility))
+				.add(Property.forName("type").in(ImmutableList.of(WorkInstructionTypeEnum.ACTUAL, WorkInstructionTypeEnum.PLAN)));
+				if (Strings.isNullOrEmpty(itemIdSubstring) == false) {
+					criteria.add(Property.forName("itemId").like(itemIdSubstring, MatchMode.ANYWHERE));
+				}
+				if (Strings.isNullOrEmpty(containerIdSubstring) == false) {
+					criteria.createCriteria("container")
+						.add(Property.forName("domainId").like(containerIdSubstring, MatchMode.ANYWHERE));
+				}
+				if (assignedInterval != null) {
+					criteria.add(Property.forName("assigned").between(
+						new Timestamp(assignedInterval.getStartMillis()),
+						new Timestamp(assignedInterval.getEndMillis())));
+				}
+		
+		@SuppressWarnings("unchecked")
+		List<Object[]> result = (List<Object[]>) criteria.list();
+		return result;
+
+	}
+
+	public List<Map<String, Object>> findtWorkInstructions(Facility facility, String[] propertyNames, UUID persistentId) {
+		SimpleExpression persistentIdProperty = null;
+		persistentIdProperty = Property.forName("persistentId").eq(persistentId);
+
+		Criteria criteria = WorkInstruction.staticGetDao()
+				.createCriteria()
+				.add(Property.forName("parent").eq(facility))
+				.add(persistentIdProperty);
+
+		//long start = System.currentTimeMillis();
+		List<WorkInstruction> joined = (List<WorkInstruction>) criteria.list();
+		Set<WorkInstruction> results = new HashSet<>(joined);
+		//long stop = System.currentTimeMillis();
+		//System.out.println("Fetch " + results.size() + " " + (start-stop));
+		return toPropertiesView(results, propertyNames);
+	}
+	
+	private List<Map<String, Object>> toPropertiesView(Collection<?> results, String[] propertyNames) {
+		PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
+		ArrayList<Map<String, Object>> viewResults = new ArrayList<Map<String, Object>>();
+		//long start = System.currentTimeMillis();
+
+		for (Object object : results) {
+			Map<String, Object> propertiesMap = new HashMap<>();
+			for (String propertyName : propertyNames) {
+				try {
+					Object resultObject = propertyUtils.getProperty(object, propertyName);
+					propertiesMap.put(propertyName, resultObject);
+				} catch (NoSuchMethodException e) {
+					// Minor problem. UI hierarchical view asks for same data field name for all object types in the view. Not really an error in most cases
+					LOGGER.debug("no property " + propertyName + " on object: " + object);
+				} catch (Exception e) {
+					LOGGER.warn("unexpected exception for property " + propertyName + " object: " + object, e);
+				}
+			}
+			viewResults.add(propertiesMap);
+		}
+
+		//long stop = System.currentTimeMillis();
+		//System.out.println("TRANSFORM " +(stop-start));
+		return viewResults;
+
 	}
 
 }

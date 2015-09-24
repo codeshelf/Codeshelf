@@ -68,7 +68,8 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 			0x7F, 0x6F											};
 
 	//Display Refresh Freqs
-	public static final Byte	BLINK_FREQ						= (byte) 0x15;
+	public static final Byte	RAPIDBLINK_FREQ					= (byte) 0x15; // was not present
+	public static final Byte	BLINK_FREQ						= (byte) 0x20; // used to be 15
 	public static final Byte	SOLID_FREQ						= (byte) 0x00;
 
 	//Display Brightness
@@ -308,13 +309,16 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 
 	public enum Frequency {
 		SOLID,
-		BLINK;
+		BLINK,
+		RAPIDBLINK;
 
 		public Byte toByte() {
 			if (this == SOLID) {
 				return PosControllerInstr.SOLID_FREQ;
 			} else if (this == BLINK) {
 				return PosControllerInstr.BLINK_FREQ;
+			} else if (this == RAPIDBLINK) {
+				return PosControllerInstr.RAPIDBLINK_FREQ;
 			}
 			return null;
 		}
