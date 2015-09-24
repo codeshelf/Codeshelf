@@ -722,7 +722,8 @@ public class CheProcessScanPick extends ServerTest {
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 1);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.MIDDIM_DUTYCYCLE);
-		Assert.assertEquals(PosControllerInstr.RAPIDBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 1));
+		// Assert.assertEquals(PosControllerInstr.RAPIDBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 1));
+		Assert.assertEquals(PosControllerInstr.SOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 1));
 
 		LOGGER.info("1e: although the poscon shows the count, prove that the button press is not handled");
 		WorkInstruction wi = picker.nextActiveWi();
