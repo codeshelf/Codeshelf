@@ -43,7 +43,7 @@ public class CompleteWorkInstructionCommand extends CommandABC {
 			workService.completeWorkInstruction(cheId, incomingWI);
 			response.setStatus(ResponseStatus.Success);	
 		} catch(Exception e) {
-			LOGGER.error("Unable to process completed work instruction: " + incomingWI, e);
+			LOGGER.error("Unable to process completed work instruction: {}", incomingWI, e);
 			response.setStatus(ResponseStatus.Fail);
 		}
 		return response;
