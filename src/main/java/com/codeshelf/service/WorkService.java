@@ -107,6 +107,7 @@ public class WorkService implements IApiService {
 
 	private final LightService	lightService;
 
+	@Getter
 	private EdiExporterProvider	exportProvider;
 
 	@ToString

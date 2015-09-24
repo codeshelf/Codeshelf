@@ -76,7 +76,9 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 	private Retryer<ExportReceipt> retryer;
 
 	//private BlockingQueue<WorkEvent>	workQueue; 
-	private EvictingBlockingQueue<ExportMessageFuture>	messageQueue; 
+	private EvictingBlockingQueue<ExportMessageFuture>	messageQueue;
+	
+	private boolean sending = false;
 	
 //	private final long RELATIVE_EPOCH = new DateTime(2015, 9, 01, 0, 0).getMillis();
 
@@ -124,6 +126,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 					
 				})*/
 				.build();
+
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", facility));
 		filterParams.add(Restrictions.eq("active", true));
@@ -163,6 +166,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 				if (POISON.equals(message)) {
 					return;
 				}
+				sending = true;
 				persistMessageCompletion(message);
 				ExportReceipt receipt = processMessage(message);
 				storeReceipt(message, receipt);
@@ -170,6 +174,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 			} catch(RuntimeException e) {
 				LOGGER.warn("Unable to process message {}", message, e);
 			} finally {
+				sending = false;
 				persistenceService.commitTransaction();
 			}
 		}
@@ -285,5 +290,16 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 				ExportMessage.staticGetDao().store(exportMessage);
 			}
 		}
+	}
+
+	@Override
+	public void waitUntillQueueIsEmpty(int timeout){
+		long start = System.currentTimeMillis();
+		while (System.currentTimeMillis() - start < timeout){
+			if (messageQueue.isEmpty() && !sending){
+				return;
+			}
+		}
+		LOGGER.warn("FacilityAccumulatingExporter did not empty its queue in time");
 	}
 }

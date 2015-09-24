@@ -689,13 +689,13 @@ public class ScriptServerRunner {
 		params.add("password", password);
 		if (orders) {
 			if (parts.length != 8) {
-				throwIncorrectNumberOfArgumentsException("sftp <'orders'/'wi'> <host> <port> <username> <password> <in directory> <out directory>");
+				throwIncorrectNumberOfArgumentsException("sftp orders <host> <port> <username> <password> <in directory> <out directory>");
 			}
 			params.add("importPath", parts[6]);
 			params.add("archivePath", parts[7]);
 		} else {
 			if (parts.length != 7) {
-				throwIncorrectNumberOfArgumentsException("sftp <'orders'/'wi'> <host> <port> <username> <password> <out directory>");
+				throwIncorrectNumberOfArgumentsException("sftp wi <host> <port> <username> <password> <out directory>");
 			}
 			params.add("exportPath", parts[6]);
 		}
