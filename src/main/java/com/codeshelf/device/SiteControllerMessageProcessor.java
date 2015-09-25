@@ -88,6 +88,8 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 						deviceManager.setPickInfoValue(loginResponse.getPickInfoValue());
 						String pickMult = loginResponse.getPickMultValue();
 						deviceManager.setPickMultValue(Boolean.parseBoolean(pickMult));
+						String production = loginResponse.getProductionValue();
+						deviceManager.setProductionValue(Boolean.parseBoolean(production));
 						deviceManager.setContainerTypeValue(loginResponse.getContainerTypeValue());
 						deviceManager.setScanTypeValue(loginResponse.getScanTypeValue());
 						deviceManager.setSequenceKind(loginResponse.getSequenceKind());

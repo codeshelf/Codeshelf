@@ -23,6 +23,7 @@ import com.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.codeshelf.metrics.DropboxServiceHealthCheck;
 import com.codeshelf.metrics.EdiHealthCheck;
 import com.codeshelf.metrics.IMetricsService;
+import com.codeshelf.metrics.IsProductionServerHealthCheck;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.security.TokenSessionService;
@@ -114,7 +115,10 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		
 		DataQuantityHealthCheck dataQuantityCheck = new DataQuantityHealthCheck();
 		metricsService.registerHealthCheck(dataQuantityCheck);
-	}
+
+		IsProductionServerHealthCheck productionCheck = new IsProductionServerHealthCheck();
+		metricsService.registerHealthCheck(productionCheck);
+}
 
 	// --------------------------------------------------------------------------
 	/**

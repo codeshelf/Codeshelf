@@ -155,6 +155,9 @@ public class LoginCommand extends CommandABC {
 							String pickMultValue = properties.getPropertyFromConfig(facility, DomainObjectProperty.PICKMULT);
 							response.setPickMultValue(pickMultValue);
 
+							String responseValue = properties.getPropertyFromConfig(facility, DomainObjectProperty.PRODUCTION);
+							response.setProductionValue(responseValue);
+
 						} else { //ui client user
 							response.setAutoShortValue(false); // not read by client. No need to look it up.
 
