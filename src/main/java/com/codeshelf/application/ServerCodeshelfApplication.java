@@ -34,6 +34,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(ServerCodeshelfApplication.class);
 
 	private EdiProcessorService			ediProcessorService;
+	private EdiExporterProvider			ediExporterProvider;
 	private IPickDocumentGenerator	mPickDocumentGenerator;
 	
 	private WebSocketManagerService sessionManager;
@@ -57,6 +58,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		super(inWebApiServer);
 	
 		ediProcessorService = inEdiProcessorService;
+		this.ediExporterProvider = ediExporterProvider;
 		mPickDocumentGenerator = inPickDocumentGenerator;
 		sessionManager = webSocketManagerService;
 		this.metricsService = metricsService;
@@ -108,7 +110,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		DropboxServiceHealthCheck dbxCheck = new DropboxServiceHealthCheck();
 		metricsService.registerHealthCheck(dbxCheck);
 		
-		EdiHealthCheck ediCheck = new EdiHealthCheck(this.ediProcessorService);
+		EdiHealthCheck ediCheck = new EdiHealthCheck(this.ediProcessorService, ediExporterProvider);
 		metricsService.registerHealthCheck(ediCheck);
 	}
 
