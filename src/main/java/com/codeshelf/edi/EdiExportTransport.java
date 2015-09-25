@@ -22,5 +22,10 @@ public interface EdiExportTransport {
 	void transportOrderOnCartRemoved(String inOrderId, String inCheGuid, String message) throws IOException;
 
 	FileExportReceipt transportOrderOnCartAdded(String inOrderId, String inCheGuid, String message) throws IOException;
-
+	
+	long getLastSuccessTime();
+	
+	boolean testConnection();
+	
+	String getDomainId();
 }

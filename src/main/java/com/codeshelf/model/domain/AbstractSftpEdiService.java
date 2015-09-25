@@ -24,6 +24,8 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpException;
 
+import lombok.Getter;
+
 public abstract class AbstractSftpEdiService extends EdiServiceABC {
 	static final Logger	LOGGER				= LoggerFactory.getLogger(AbstractSftpEdiService.class);
 
@@ -39,6 +41,9 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 
 	@Transient
 	String				lastProviderCredentials = null; 
+	
+	@Getter
+	private long		lastSuccessTime = 0;
 
 	public AbstractSftpEdiService() {
 		super();
@@ -67,13 +72,19 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 		sftpConfiguration = configuration;
 		lastProviderCredentials = configuration.toString();
 		this.setProviderCredentials(lastProviderCredentials);
+		testConnection();
+	}
+	
+	synchronized public boolean testConnection(){
 		try {
 			connect();
 			disconnect();
-			setServiceState(EdiServiceStateEnum.LINKED); 
+			setServiceState(EdiServiceStateEnum.LINKED);
+			return true;
 		} catch (IOException e) {
 			LOGGER.warn("Failed testing credentials for {}", toSftpChannelDebug(), e);
-			setServiceState(EdiServiceStateEnum.LINK_FAILED); 
+			setServiceState(EdiServiceStateEnum.LINK_FAILED);
+			return false;
 		} 
 	}
 
@@ -119,7 +130,8 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 				throw new IOException(String.format("Failed to open channel, check Edi configuration: %s", toSftpChannelDebug()), e);
 			}
 			LOGGER.info("EDI service {} connected to {}", this.getServiceName(), toSftpChannelDebug());
-
+			
+			lastSuccessTime = System.currentTimeMillis();
 			return channel;
 		} finally {
 			if (channel == null) { 

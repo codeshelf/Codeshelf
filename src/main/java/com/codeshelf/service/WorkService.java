@@ -24,7 +24,6 @@ import lombok.ToString;
 
 import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.hibernate.Criteria;
-import org.hibernate.FetchMode;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Order;
@@ -32,7 +31,6 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.criterion.SimpleExpression;
-import org.hibernate.sql.JoinType;
 import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -2793,6 +2791,7 @@ public class WorkService implements IApiService {
 				.add(persistentIdProperty);
 
 		//long start = System.currentTimeMillis();
+		@SuppressWarnings("unchecked")
 		List<WorkInstruction> joined = (List<WorkInstruction>) criteria.list();
 		Set<WorkInstruction> results = new HashSet<>(joined);
 		//long stop = System.currentTimeMillis();

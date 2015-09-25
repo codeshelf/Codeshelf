@@ -60,7 +60,6 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.SftpWIsEdiService;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
-import com.codeshelf.persistence.DatabaseUtils;
 import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.UiUpdateService;

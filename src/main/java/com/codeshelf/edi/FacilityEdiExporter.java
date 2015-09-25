@@ -22,4 +22,10 @@ public interface FacilityEdiExporter extends Service {
 	public void setStringifier(WiBeanStringifier stringifier);
 
 	public void waitUntillQueueIsEmpty(int timeout);
+	
+	public long getLastSuccessTime();
+	
+	public boolean testConnection();
+	
+	public String getDomainId();
 }

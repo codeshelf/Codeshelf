@@ -75,6 +75,7 @@ public class ScriptSiteRunner {
 					LOGGER.info("Site script block completed");
 					report.append("***Site Script Segment Completed Successfully***\n");
 				} catch (Exception e) {
+					LOGGER.info("Logging out from all CHEs due to error");
 					try {logoutAll();} catch (Exception e1) {}
 					String error = CsExceptionUtils.exceptionToString(e);
 					report.append(error).append("Logging out from all CHEs due to this error\n");

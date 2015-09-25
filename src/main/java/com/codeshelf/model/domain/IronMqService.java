@@ -267,4 +267,15 @@ public class IronMqService extends EdiServiceABC implements EdiExportTransport {
 		
 	}
 
+	@Override
+	public long getLastSuccessTime() {
+		return 0;
+	}
+
+	@Override
+	public boolean testConnection() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 }

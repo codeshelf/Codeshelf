@@ -302,4 +302,19 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 		}
 		LOGGER.warn("FacilityAccumulatingExporter did not empty its queue in time");
 	}
+
+	@Override
+	public long getLastSuccessTime() {
+		return getEdiExportTransport().getLastSuccessTime();
+	}
+
+	@Override
+	public boolean testConnection() {
+		return getEdiExportTransport().testConnection();
+	}
+
+	@Override
+	public String getDomainId() {
+		return ediExportTransport.getDomainId();
+	}
 }
