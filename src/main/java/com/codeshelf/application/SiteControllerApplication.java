@@ -23,6 +23,7 @@ import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.metrics.AssociatedRadioHealthCheck;
 import com.codeshelf.metrics.ConnectedToServerHealthCheck;
 import com.codeshelf.metrics.IMetricsService;
+import com.codeshelf.metrics.IsProductionSiteControllerHealthCheck;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.RadioOnHealthCheck;
 import com.codeshelf.service.groovy.GroovyShellService;
@@ -97,6 +98,7 @@ public final class SiteControllerApplication extends CodeshelfApplication {
 		MetricsService.getInstance().registerHealthCheck(new RadioOnHealthCheck(this.deviceManager));
 		MetricsService.getInstance().registerHealthCheck(new ConnectedToServerHealthCheck(this.clientEndpoint));
 		MetricsService.getInstance().registerHealthCheck(new AssociatedRadioHealthCheck(this.deviceManager));
+		MetricsService.getInstance().registerHealthCheck(new IsProductionSiteControllerHealthCheck(this.deviceManager));
 	}
 
 	// --------------------------------------------------------------------------

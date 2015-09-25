@@ -13,3 +13,4 @@ Facility;SCANPICK;Disabled;"Enabling will require the picker to scan the picked 
 Facility;PICKMULT;false;"If true, get simultaneous pick instructions to several position controllers for a single SKU/location. Valid values: true, false"
 Facility;INVTMENU;false;"If true the UI will have a menu for viewing and managing inventory. Valid values: true, false"
 Facility;BADGEAUTH;false;"If true, only registered Workers will be able to log into CHEs. If false, creates default accounts for new badges. Valid values: true, false"
+Facility;PRODUCTION;false;"If true, Codeshelf monitoring aggressively alerts on failures. If false, monitoring does not alert. Valid values: true, false"

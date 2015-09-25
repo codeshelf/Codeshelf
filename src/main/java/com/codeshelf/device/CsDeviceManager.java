@@ -114,6 +114,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 	private boolean										autoShortValue				= true;											// log on set (below)
 	private boolean										pickMultValue				= false;											// log on set (below)
+	private boolean										productionValue				= false;											// log on set (below)
 
 	@Getter
 	@Setter
@@ -170,6 +171,15 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	public void setPickMultValue(boolean inValue) {
 		pickMultValue = inValue;
 		LOGGER.info("Site controller setting PICKMULT value = {}", inValue);
+	}
+
+	public boolean getProductionValue() {
+		return this.productionValue;
+	}
+
+	public void setProductionValue(boolean inValue) {
+		productionValue = inValue;
+		LOGGER.info("Site controller setting PRODUCTIN value = {}", inValue);
 	}
 
 	public boolean getAutoShortValue() {

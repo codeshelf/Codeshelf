@@ -82,6 +82,8 @@ public class DomainObjectProperty extends DomainObjectABC {
 	public final static String						Default_INVTMENU	= "false";
 	public final static String						BADGEAUTH			= "BADGEAUTH";
 	public final static String						Default_BADGEAUTH	= "false";
+	public final static String						PRODUCTION			= "PRODUCTION";
+	public final static String						Default_PRODUCTION	= "false";
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -138,6 +140,9 @@ public class DomainObjectProperty extends DomainObjectABC {
 		}
 		if (inParameterName.equals(BADGEAUTH)) {
 			return Default_BADGEAUTH;
+		}
+		if (inParameterName.equals(PRODUCTION)) {
+			return Default_PRODUCTION;
 		}
 		// Do not log an error if not pre-known
 		return null;
@@ -284,6 +289,8 @@ public class DomainObjectProperty extends DomainObjectABC {
 			return "true, false";
 		else if (myName.equals(BADGEAUTH))
 			return "true, false";
+		else if (myName.equals(PRODUCTION))
+			return "true, false";
 		else {
 			LOGGER.error("new DomainObjectProperty: " + myName + " has no validInputValues implementation");
 		}
@@ -331,6 +338,8 @@ public class DomainObjectProperty extends DomainObjectABC {
 		else if (myName.equals(INVTMENU))
 			return validate_boolean(trimmedValue);
 		else if (myName.equals(BADGEAUTH))
+			return validate_boolean(trimmedValue);
+		else if (myName.equals(PRODUCTION))
 			return validate_boolean(trimmedValue);
 		else {
 			LOGGER.error("new DomainObjectProperty: " + myName + " has no toCanonicalForm implementation");

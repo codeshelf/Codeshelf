@@ -8,45 +8,53 @@ import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Organization;
 
 public class LoginResponse extends ResponseABC {
-	@Getter @Setter
-	User user;
-	
-	@Getter @Setter
-	CodeshelfNetwork network;
-	
-	@Getter @Setter
-	Organization organization;
-	
-	@Getter @Setter
-	boolean autoShortValue;
+	@Getter
+	@Setter
+	User				user;
 
 	@Getter
 	@Setter
-	String					pickInfoValue;
+	CodeshelfNetwork	network;
 
 	@Getter
 	@Setter
-	String					containerTypeValue;
-	
-	@Getter
-	@Setter
-	String					scanTypeValue;
+	Organization		organization;
 
 	@Getter
 	@Setter
-	String					sequenceKind;
-	
-	@Getter
-	@Setter
-	String					pickMultValue;
-	
-	@Getter
-	@Setter
-	String[]				permissions;
+	boolean				autoShortValue;
 
 	@Getter
 	@Setter
-	String 					tenantName;
+	String				pickInfoValue;
+
+	@Getter
+	@Setter
+	String				containerTypeValue;
+
+	@Getter
+	@Setter
+	String				scanTypeValue;
+
+	@Getter
+	@Setter
+	String				sequenceKind;
+
+	@Getter
+	@Setter
+	String				pickMultValue;
+
+	@Getter
+	@Setter
+	String				productionValue;
+
+	@Getter
+	@Setter
+	String[]			permissions;
+
+	@Getter
+	@Setter
+	String				tenantName;
 
 	public LoginResponse() {
 	}
