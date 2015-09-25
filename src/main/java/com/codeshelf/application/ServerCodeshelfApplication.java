@@ -18,6 +18,7 @@ import com.codeshelf.email.TemplateService;
 import com.codeshelf.manager.service.ITenantManagerService;
 import com.codeshelf.manager.service.ManagerPersistenceService;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
+import com.codeshelf.metrics.DataQuantityHealthCheck;
 import com.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.codeshelf.metrics.DropboxServiceHealthCheck;
 import com.codeshelf.metrics.EdiHealthCheck;
@@ -110,6 +111,9 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		
 		EdiHealthCheck ediCheck = new EdiHealthCheck(this.ediProcessorService);
 		metricsService.registerHealthCheck(ediCheck);
+		
+		DataQuantityHealthCheck dataQuantityCheck = new DataQuantityHealthCheck();
+		metricsService.registerHealthCheck(dataQuantityCheck);
 	}
 
 	// --------------------------------------------------------------------------
