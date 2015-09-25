@@ -41,7 +41,7 @@ public abstract class ServerTest extends HibernateTest {
 		return true;
 	}
 	
-	protected final int FLASH_VALUE = 32; //BLINK_FREQ						= (byte) 0x20; // used to be x15
+	protected final int FLASH_VALUE = 21; //BLINK_FREQ						= (byte) 0x20 = 32; //  x15 = 21
 
 	// various server utilities
 	protected Facility setUpSimpleNoSlotFacility() {

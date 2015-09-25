@@ -251,7 +251,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			objectUpdateCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof RegisterFilterRequest) {
-			command = new RegisterFilterCommand(csSession, (RegisterFilterRequest) request, getObjectChangeBroadcaster());
+			command = new RegisterFilterCommand(csSession, (RegisterFilterRequest) request);
 			objectFilterCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof CreatePathRequest) {

@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.filter.EventType;
 import com.codeshelf.filter.Filter;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.ws.protocol.request.RegisterFilterRequest;
@@ -40,12 +39,9 @@ public class RegisterFilterCommand extends CommandABC {
 
 	private RegisterFilterRequest request;
 
-	private ObjectChangeBroadcaster	objectChangeBroadcaster;
-
-	public RegisterFilterCommand(WebSocketConnection session, RegisterFilterRequest request, ObjectChangeBroadcaster objectChangeBroadcaster) {
+	public RegisterFilterCommand(WebSocketConnection session, RegisterFilterRequest request) {
 		super(session);
 		this.request = request;
-		this.objectChangeBroadcaster = objectChangeBroadcaster;
 	}
 	
 	@Override
@@ -71,8 +67,6 @@ public class RegisterFilterCommand extends CommandABC {
 			@SuppressWarnings("unchecked")
 			Class<? extends IDomainObject> classObject = (Class<? extends IDomainObject>) Class.forName(objectClassName);
 			if (IDomainObject.class.isAssignableFrom(classObject)) {
-				this.objectChangeBroadcaster.registerDAOListener(wsConnection.getCurrentTenantIdentifier(), wsConnection, classObject);
-
 				ITypedDao<? extends IDomainObject> dao = TenantPersistenceService.getInstance().getDao(classObject);
 				// create listener
 				
