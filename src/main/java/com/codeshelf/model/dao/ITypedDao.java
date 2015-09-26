@@ -55,6 +55,9 @@ public interface ITypedDao<T> {
 	
 	int countByCriteriaQuery(Criteria criteria);
 
+	List<UUID> getUUIDListByCriteriaQuery(Criteria criteria);
+
 	Criteria createCriteria();
+
 	
 }

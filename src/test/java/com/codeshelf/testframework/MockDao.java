@@ -25,6 +25,7 @@ import org.apache.commons.lang.NotImplementedException;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Projections;
 
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.IDaoListener;
@@ -193,6 +194,11 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	@Override
 	public int countByCriteriaQuery(Criteria criteria)
 	{
+		throw new NotImplementedException();
+	}
+
+	@Override
+	public List<UUID> getUUIDListByCriteriaQuery(Criteria criteria) {
 		throw new NotImplementedException();
 	}
 
