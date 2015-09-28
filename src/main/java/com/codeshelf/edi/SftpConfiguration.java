@@ -87,6 +87,11 @@ public class SftpConfiguration implements UserInfo {
 	@Setter
 	@Expose
 	private int 					timeOutMilliseconds;
+	
+	@Getter
+	@Setter
+	@Expose
+	private Boolean					active;
 
 	
 	@Transient
