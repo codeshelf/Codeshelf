@@ -78,6 +78,12 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	@JsonProperty
 	private String					providerCredentials;
 	
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Boolean					active;
+	
 
 	public EdiServiceABC() {
 
