@@ -2582,7 +2582,8 @@ public class WorkService implements IApiService {
 		archiveableOrderCrit2.add(Restrictions.eq("parent.persistentId", facilityUUID));
 		archiveableOrderCrit2.add(Restrictions.lt("dueDate", desiredTime));
 		archiveableOrderCrit2.setMaxResults(maxToPurgeAtOnce);
-		List<OrderHeader> orders = OrderHeader.staticGetDao().findByCriteriaQuery(archiveableOrderCrit2);
+		// List<OrderHeader> orders = OrderHeader.staticGetDao().findByCriteriaQuery(archiveableOrderCrit2);
+		List<UUID> uuidList = OrderHeader.staticGetDao().getUUIDListByCriteriaQuery(archiveableOrderCrit2);
 
 		// int wantToPurge = orders.size();
 		int willPurge = Math.min(wantToPurge, maxToPurgeAtOnce);
@@ -2597,23 +2598,15 @@ public class WorkService implements IApiService {
 		// Result: not much improvement in time. But much nicer logging about the process.
 		LOGGER.info("Phase 2 of order purge: assemble list of details for these orders");
 
+		/*
 		List<UUID> uuidList = new ArrayList<UUID>();
 		for (OrderHeader order : orders) {
 			uuidList.add(order.getPersistentId());
 		}
+		*/
+
 		// 500 orders with 2900 details assembles in 2 seconds using findByParentPersistentIdList
 		List<OrderDetail> details = OrderDetail.staticGetDao().findByParentPersistentIdList(uuidList);
-		/*
-		// seems to run in n-squared time
-		// 500 orders with 2900 details assembles in 15 seconds using this code
-		// 1000 orders with 5800 details assembles in 56 seconds using this code, so big benefit for smaller batches if we do it this way
-		List<OrderDetail> details = new ArrayList<OrderDetail>();
-		for (OrderHeader order : orders) {
-			List<OrderDetail> oneDetailSet = order.getOrderDetails();
-			details.addAll(oneDetailSet);
-		}
-		*/
-		
 
 		// My test case did not have enough work instruction to know if this helped or not.
 		LOGGER.info("Phase 3 of order purge: assemble work instructions from the details");
@@ -2632,15 +2625,19 @@ public class WorkService implements IApiService {
 		LOGGER.info("Phase 6 of order purge: delete the orders which delinks from container");
 
 		int deletedCount = 0;
-		for (OrderHeader order : orders) {
+		// for (OrderHeader order : orders) {
+		for (UUID orderUuid : uuidList) {
 			try {
-				order.delete();
+				OrderHeader order = OrderHeader.staticGetDao().findByPersistentId(orderUuid);
+				if (order != null) {
+					order.delete();
+					deletedCount++;
+					if (deletedCount % 100 == 0)
+						LOGGER.info("deleted {} Orders ", deletedCount);
+				}
 			} catch (DaoException e) {
 				LOGGER.error("purgeOrders", e);
 			}
-			deletedCount++;
-			if (deletedCount % 100 == 0)
-				LOGGER.info("deleted {} Orders ", deletedCount);
 
 		}
 		if (deletedCount % 100 != 0)
@@ -2755,26 +2752,26 @@ public class WorkService implements IApiService {
 		return Math.max(daysOldToCount, 1);
 	}
 
-	public List<Object[]> findWorkInstructionReferences(Facility facility, Interval assignedInterval, String itemIdSubstring, String containerIdSubstring) {
+	public List<Object[]> findWorkInstructionReferences(Facility facility,
+		Interval assignedInterval,
+		String itemIdSubstring,
+		String containerIdSubstring) {
 		Criteria criteria = WorkInstruction.staticGetDao()
-				.createCriteria()
-				.setProjection(Projections.projectionList()
-					.add(Projections.property("persistentId").as("persistentId")))
-				.add(Property.forName("parent").eq(facility))
-				.add(Property.forName("type").in(ImmutableList.of(WorkInstructionTypeEnum.ACTUAL, WorkInstructionTypeEnum.PLAN)));
-				if (Strings.isNullOrEmpty(itemIdSubstring) == false) {
-					criteria.add(Property.forName("itemId").like(itemIdSubstring, MatchMode.ANYWHERE));
-				}
-				if (Strings.isNullOrEmpty(containerIdSubstring) == false) {
-					criteria.createCriteria("container")
-						.add(Property.forName("domainId").like(containerIdSubstring, MatchMode.ANYWHERE));
-				}
-				if (assignedInterval != null) {
-					criteria.add(Property.forName("assigned").between(
-						new Timestamp(assignedInterval.getStartMillis()),
-						new Timestamp(assignedInterval.getEndMillis())));
-				}
-		
+			.createCriteria()
+			.setProjection(Projections.projectionList().add(Projections.property("persistentId").as("persistentId")))
+			.add(Property.forName("parent").eq(facility))
+			.add(Property.forName("type").in(ImmutableList.of(WorkInstructionTypeEnum.ACTUAL, WorkInstructionTypeEnum.PLAN)));
+		if (Strings.isNullOrEmpty(itemIdSubstring) == false) {
+			criteria.add(Property.forName("itemId").like(itemIdSubstring, MatchMode.ANYWHERE));
+		}
+		if (Strings.isNullOrEmpty(containerIdSubstring) == false) {
+			criteria.createCriteria("container").add(Property.forName("domainId").like(containerIdSubstring, MatchMode.ANYWHERE));
+		}
+		if (assignedInterval != null) {
+			criteria.add(Property.forName("assigned").between(new Timestamp(assignedInterval.getStartMillis()),
+				new Timestamp(assignedInterval.getEndMillis())));
+		}
+
 		@SuppressWarnings("unchecked")
 		List<Object[]> result = (List<Object[]>) criteria.list();
 		return result;
@@ -2786,9 +2783,9 @@ public class WorkService implements IApiService {
 		persistentIdProperty = Property.forName("persistentId").eq(persistentId);
 
 		Criteria criteria = WorkInstruction.staticGetDao()
-				.createCriteria()
-				.add(Property.forName("parent").eq(facility))
-				.add(persistentIdProperty);
+			.createCriteria()
+			.add(Property.forName("parent").eq(facility))
+			.add(persistentIdProperty);
 
 		//long start = System.currentTimeMillis();
 		@SuppressWarnings("unchecked")
@@ -2798,7 +2795,7 @@ public class WorkService implements IApiService {
 		//System.out.println("Fetch " + results.size() + " " + (start-stop));
 		return toPropertiesView(results, propertyNames);
 	}
-	
+
 	private List<Map<String, Object>> toPropertiesView(Collection<?> results, String[] propertyNames) {
 		PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
 		ArrayList<Map<String, Object>> viewResults = new ArrayList<Map<String, Object>>();

@@ -70,7 +70,7 @@ public final class CommandControlScan extends CommandControlABC {
 		try {
 			inOutputStream.writePString(mCommandString);
 		} catch (IOException e) {
-			LOGGER.error("", e);
+			LOGGER.error("doToStream()", e);
 		}
 
 	}
@@ -85,7 +85,9 @@ public final class CommandControlScan extends CommandControlABC {
 		try {
 			mCommandString = inInputStream.readPString();
 		} catch (IOException e) {
-			LOGGER.error("", e);
+			LOGGER.error("doFromStream()", e);
+			// This commonly seen from BitFieldInputStream.java:228 throw. Not sure it needs to be an error.
+			//WARN on bad scan character
 		}
 
 	}

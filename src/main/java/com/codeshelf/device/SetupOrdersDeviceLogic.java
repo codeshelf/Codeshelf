@@ -907,7 +907,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (autoShortOn) {
 				LOGGER.error("Simultaneous work instructions turned off currently, so unexpected case in confirmShortPick. state: {}",
 					state);
-				LOGGER.error("wi = {}", mActivePickWiList.get(0)); // log the first to help understand
+				LOGGER.error("first wi from confirmShortPick error just before is: {}", mActivePickWiList.get(0)); // log the first to help understand
 			}
 			showActivePicks();
 		} else {
@@ -2349,7 +2349,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (!mDeviceManager.getPickMultValue()) {
 				LOGGER.error("Simultaneous work instructions turned off currently, so unexpected case in processNormalPick");
 				// let's log the first just for fun
-				LOGGER.error("wi = {}", mActivePickWiList.get(0));
+				LOGGER.error("first wi from processNormalPick error jsut before is: {}", mActivePickWiList.get(0));
 			}
 			showActivePicks();
 		} else {

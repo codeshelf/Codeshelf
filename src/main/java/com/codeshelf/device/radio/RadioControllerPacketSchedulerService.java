@@ -228,7 +228,7 @@ public class RadioControllerPacketSchedulerService {
 				deliverNextCommandPacket();
 			}
 		} catch (Exception e) {
-			LOGGER.error("{}", e.toString());
+			LOGGER.error("deliverPackets() {}", e.toString());
 		}
 	}
 
