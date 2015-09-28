@@ -88,9 +88,6 @@ public class RegisterFilterCommand extends CommandABC {
 				}
 				// generate response
 				List<Map<String, Object>> results = filter.getProperties(objectMatchList, EventType.Update);
-				if (results==null || results.size()==0) {
-					return null;
-				}
 				ObjectChangeResponse response = new ObjectChangeResponse();
 				response.setResults(results);
 				response.setStatus(ResponseStatus.Success);

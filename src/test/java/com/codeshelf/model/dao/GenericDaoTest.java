@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Restrictions;
 import org.junit.Assert;
 import org.junit.Test;
@@ -258,6 +260,75 @@ public class GenericDaoTest extends ServerTest {
 		}
 		t.commit();
 		Assert.assertEquals(2, totalFound);
+	}
+
+	@Test
+	public final void testCriteriaQueries() {
+		Session session = tenantPersistenceService.getSession();
+		Transaction t = session.beginTransaction();
+
+		Facility facility1= new Facility();
+		facility1.setDomainId("FXXA-TEST1");
+		facility1.setDescription("FXXA-TEST1");
+		Facility.staticGetDao().store(facility1);
+
+		Facility facility2 = new Facility();
+		facility2.setDomainId("FXXA-TEST2");
+		facility2.setDescription("FXXA-TEST2");
+		Facility.staticGetDao().store(facility2);
+		
+		Facility facility3 = new Facility();
+		facility3.setDomainId("FXXB-TEST3");
+		facility3.setDescription("FXXB-TEST3");
+		Facility.staticGetDao().store(facility3);
+		t.commit();
+
+		session = tenantPersistenceService.getSession();
+		t = session.beginTransaction();		
+		Criteria crit1 = Facility.staticGetDao().createCriteria();
+		crit1.add(Restrictions.eq("domainId", "FXXA-TEST1"));
+		List<Facility> facilities = Facility.staticGetDao().findByCriteriaQuery(crit1);
+		Assert.assertEquals(1, facilities.size());
+		Facility facility = facilities.get(0);
+		Assert.assertEquals(facility, facility1);
+		t.commit();
+
+		session = tenantPersistenceService.getSession();
+		t = session.beginTransaction();		
+		Criteria crit2 = Facility.staticGetDao().createCriteria();
+		crit2.add(Restrictions.ilike("domainId", "fxxa", MatchMode.ANYWHERE));
+		// crit2.add(Restrictions.like("domainId", "FXXA", MatchMode.ANYWHERE)); // also works
+		facilities = Facility.staticGetDao().findByCriteriaQuery(crit2);
+		Assert.assertEquals(2, facilities.size());
+		t.commit();
+
+		session = tenantPersistenceService.getSession();
+		t = session.beginTransaction();		
+		Criteria crit3 = Facility.staticGetDao().createCriteria();
+		crit3.add(Restrictions.like("domainId", "FXXA", MatchMode.ANYWHERE));
+		Assert.assertEquals(2, Facility.staticGetDao().countByCriteriaQuery(crit3));
+		t.commit();
+
+		session = tenantPersistenceService.getSession();
+		t = session.beginTransaction();		
+		Criteria crit4 = Facility.staticGetDao().createCriteria();
+		crit4.add(Restrictions.like("domainId", "FXXA", MatchMode.ANYWHERE));
+		List<UUID> ids = Facility.staticGetDao().getUUIDListByCriteriaQuery(crit4);
+		Assert.assertEquals(2, ids.size());
+		Assert.assertTrue(ids.contains(facility1.getPersistentId()));
+		Assert.assertTrue(ids.contains(facility2.getPersistentId()));
+		Assert.assertFalse(ids.contains(facility3.getPersistentId()));
+		t.commit();
+		
+		session = tenantPersistenceService.getSession();
+		t = session.beginTransaction();		
+		List<Facility> facilities2 = Facility.staticGetDao().findByPersistentIdList(ids);
+		Assert.assertEquals(2, facilities2.size());
+		Assert.assertTrue(facilities2.contains(facility1));
+		Assert.assertTrue(facilities2.contains(facility2));
+		Assert.assertFalse(facilities2.contains(facility3));
+		t.commit();
+
 	}
 
 }

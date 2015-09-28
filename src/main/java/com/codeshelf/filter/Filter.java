@@ -137,16 +137,11 @@ public class Filter implements ObjectEventListener {
 				LOGGER.warn("listener unable to find persistentId: " + domainPersistentId);
 			}
 		}
-		if (domainObjectList.size() > 0) {
-			List<Map<String, Object>> p = getProperties(domainObjectList, type);
-			if (p != null) {
-				ObjectChangeResponse response = new ObjectChangeResponse();
-				response.setResults(p);
-				response.setRequestId(this.id);
-				return response;
-			}
-		}
-		return null;
+		List<Map<String, Object>> p = getProperties(domainObjectList, type);
+		ObjectChangeResponse response = new ObjectChangeResponse();
+		response.setResults(p);
+		response.setRequestId(this.id);
+		return response;
 	}
 
 	public Map<String, Object> getPropertiesForDeleted(Class<? extends IDomainObject> inDomainClass, UUID inPersistentId) {
@@ -160,8 +155,8 @@ public class Filter implements ObjectEventListener {
 	}
 
 	public List<Map<String, Object>> getProperties(List<? extends IDomainObject> inDomainObjectList, EventType type) {
+		List<Map<String, Object>> resultsList = new ArrayList<Map<String, Object>>();
 		try {
-			List<Map<String, Object>> resultsList = new ArrayList<Map<String, Object>>();
 			for (IDomainObject matchedObject : inDomainObjectList) {
 				Map<String, Object> propertiesMap = new HashMap<String, Object>();
 				// Always include the class name and persistent ID in the results.
@@ -188,13 +183,10 @@ public class Filter implements ObjectEventListener {
 				}
 				resultsList.add(propertiesMap);
 			}
-			if (resultsList.size() > 0) {
-				return resultsList;
-			}
 		} catch (Exception e) {
 			LOGGER.error("Failed to get Listener properties", e);
 		}
-		return null;
+		return resultsList;
 	}
 
 	public List<? extends IDomainObject> refreshMatchList() {

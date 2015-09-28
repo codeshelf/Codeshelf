@@ -290,6 +290,15 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		return value.intValue();
 	}
 
+	@Override
+	public List<UUID> getUUIDListByCriteriaQuery(Criteria criteria) {
+		
+		criteria.setProjection( Projections.projectionList().add( Projections.property("persistentId"), "persistentId"));
+
+		List<UUID> ids=criteria.list();
+		return ids;
+	}
+
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.codeshelf.model.dao.IGenericDao#getAll()
