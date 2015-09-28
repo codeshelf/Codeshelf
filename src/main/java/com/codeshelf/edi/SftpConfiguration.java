@@ -90,7 +90,6 @@ public class SftpConfiguration implements UserInfo {
 	
 	@Getter
 	@Setter
-	@Expose
 	private Boolean					active;
 
 	
@@ -127,10 +126,10 @@ public class SftpConfiguration implements UserInfo {
 	}
 	
 	public SftpConfiguration() {
-		this("", 22, "", "", "", "");
+		this("", 22, "", "", "", "", false);
 	}
 
-	public SftpConfiguration(String host, Integer port, String username, String importPath, String archivePath, String exportPath) {
+	public SftpConfiguration(String host, Integer port, String username, String importPath, String archivePath, String exportPath, Boolean active) {
 		super();
 		this.host = host;
 		this.port = port;
@@ -139,6 +138,7 @@ public class SftpConfiguration implements UserInfo {
 		this.archivePath = archivePath;
 		this.exportPath = exportPath;
 		this.passwordEnc = null;
+		this.active = active;
 		this.timeOutMilliseconds = Ints.saturatedCast(TimeUnit.SECONDS.toMillis(5));
 
 	}

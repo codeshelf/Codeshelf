@@ -87,7 +87,7 @@ public class EDIGatewaysResource {
 	}
 
 	private IEdiService updateIronMqService(IronMqService ediService, MultivaluedMap<String, String> params) {
-		ediService.storeCredentials(params.getFirst("projectId"), params.getFirst("token"));
+		ediService.storeCredentials(params.getFirst("projectId"), params.getFirst("token"), params.getFirst("active"));
 		IronMqService.staticGetDao().store(ediService);
 		return ediService;
 	}

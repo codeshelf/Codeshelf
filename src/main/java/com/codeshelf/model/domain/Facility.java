@@ -766,7 +766,7 @@ public class Facility extends Location {
 		result.setDomainId("IRONMQ");
 		result.setServiceState(EdiServiceStateEnum.UNLINKED);
 		this.addEdiService(result);
-		result.storeCredentials("", ""); // non-null credentials
+		result.storeCredentials("", "", "true"); // non-null credentials
 		try {
 			IronMqService.staticGetDao().store(result);
 		} catch (DaoException e) {

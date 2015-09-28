@@ -17,7 +17,7 @@ public class IronMqServiceDaoTest extends MockDaoTest {
 			String originalCredentials = ironMqService.getProviderCredentials();
 			
 			IronMqService ironMqServiceByDao = IronMqService.staticGetDao().findByPersistentId(ironMqService.getPersistentId());
-			ironMqServiceByDao.storeCredentials("NEWPROJ", "NEWTOKEN");
+			ironMqServiceByDao.storeCredentials("NEWPROJ", "NEWTOKEN", "true");
 			String updatedCredentials = f.findEdiService(IronMqService.class).getProviderCredentials();
 			Assert.assertNotEquals(originalCredentials, updatedCredentials);
 			

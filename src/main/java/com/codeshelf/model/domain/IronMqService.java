@@ -142,15 +142,20 @@ public class IronMqService extends EdiServiceABC implements EdiExportTransport {
 		return IRONMQ_SERVICE_NAME;
 	}
 
-	private final void setCredentials(String projectId,  String token) {
+	private final void setCredentials(String projectId,  String token, String activeStr) {
 		IronMqService.Credentials credentials = new Credentials(projectId, token);
 		Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 		String json = gson.toJson(credentials);
 		setProviderCredentials(json);
+		if (activeStr == null || activeStr.isEmpty() || !"true".equalsIgnoreCase(activeStr)){
+			setActive(false);
+		} else {
+			setActive(true);
+		}
 	}
 
-	public void storeCredentials(String projectId,  String token) {
-		setCredentials(projectId, token);
+	public void storeCredentials(String projectId,  String token, String activeStr) {
+		setCredentials(projectId, token, activeStr);
 		if(getHasCredentials()) {
 			try {
 				Optional<Queue> queue = getWorkInstructionQueue();
