@@ -26,8 +26,8 @@ import com.jcraft.jsch.SftpException;
 
 import lombok.Getter;
 
-public abstract class AbstractSftpEdiService extends EdiServiceABC {
-	static final Logger	LOGGER				= LoggerFactory.getLogger(AbstractSftpEdiService.class);
+public abstract class SftpGateway extends EdiGateway {
+	static final Logger	LOGGER				= LoggerFactory.getLogger(SftpGateway.class);
 
 	@Transient
 	private JSch		jsch				= new JSch();
@@ -45,13 +45,13 @@ public abstract class AbstractSftpEdiService extends EdiServiceABC {
 	@Getter
 	private long		lastSuccessTime = 0;
 
-	public AbstractSftpEdiService() {
+	public SftpGateway() {
 		super();
 		setProvider(EdiProviderEnum.OTHER);
 		setServiceState(EdiServiceStateEnum.UNLINKED); // TODO: maybe add UX setup procedure to verify connection works
 	}
 	
-	public AbstractSftpEdiService(String domainId) {
+	public SftpGateway(String domainId) {
 		this();
 		setDomainId(domainId);
 	}

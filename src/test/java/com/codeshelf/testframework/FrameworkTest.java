@@ -35,7 +35,7 @@ import com.codeshelf.device.ClientConnectionManagerService;
 import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.device.SiteControllerMessageProcessor;
 import com.codeshelf.device.radio.RadioController;
-import com.codeshelf.edi.EdiExporterProvider;
+import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.email.EmailService;
 import com.codeshelf.email.TemplateService;
 import com.codeshelf.event.EventProducer;
@@ -123,7 +123,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	private static TokenSessionService				staticTokenSessionService;
 	private static EmailService						staticEmailService;
 	private static TemplateService					staticTemplateService;
-	private static EdiExporterProvider	            staticEdiExporterService;
+	private static EdiExportService	            staticEdiExporterService;
 
 	// real non-mock instances
 	private static TenantPersistenceService			realTenantPersistenceService;
@@ -167,7 +167,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	protected TokenSessionService					tokenSessionService;
 	protected EmailService							emailService;
 	protected TemplateService						templateService;
-	protected EdiExporterProvider					ediExporterService;
+	protected EdiExportService					ediExporterService;
 
 	protected IRadioController						radioController;
 
@@ -263,7 +263,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		staticTemplateService.startAsync();
 		ServiceUtility.awaitRunningOrThrow(staticTemplateService);
 
-		staticEdiExporterService = injector.getInstance(EdiExporterProvider.class);
+		staticEdiExporterService = injector.getInstance(EdiExportService.class);
 		staticPropertyService = injector.getInstance(IPropertyService.class);
 
 		staticWebSocketManagerService = injector.getInstance(WebSocketManagerService.class);

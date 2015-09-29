@@ -11,7 +11,7 @@ import org.apache.shiro.mgt.AuthorizingSecurityManager;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.codeshelf.edi.EdiProcessorService;
+import com.codeshelf.edi.EdiImportService;
 import com.codeshelf.model.dao.Result;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
@@ -37,7 +37,7 @@ public class CodeshelfApplicationTest extends ServerTest {
 	public void testStartStopApplication() {
 
 		Provider mockProvider= mock(Provider.class);
-		EdiProcessorService ediProcessorService = new EdiProcessorService(mockProvider,
+		EdiImportService ediProcessorService = new EdiImportService(mockProvider,
 			mockProvider,
 			mockProvider,
 			mockProvider,

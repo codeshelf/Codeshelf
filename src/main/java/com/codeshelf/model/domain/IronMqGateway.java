@@ -56,11 +56,11 @@ import com.google.gson.annotations.SerializedName;
 @Entity
 @DiscriminatorValue("IRONMQ")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class IronMqService extends EdiServiceABC implements EdiExportTransport {
+public class IronMqGateway extends EdiGateway implements EdiExportTransport {
 
-	public static class IronMqServiceDao extends GenericDaoABC<IronMqService> implements ITypedDao<IronMqService> {
-		public final Class<IronMqService> getDaoClass() {
-			return IronMqService.class;
+	public static class IronMqGatewayDao extends GenericDaoABC<IronMqGateway> implements ITypedDao<IronMqGateway> {
+		public final Class<IronMqGateway> getDaoClass() {
+			return IronMqGateway.class;
 		}
 	}
 
@@ -71,7 +71,7 @@ public class IronMqService extends EdiServiceABC implements EdiExportTransport {
 	public static final String		PROJECT_ID			= "";
 	public static final String		TOKEN				= "";
 
-	private static final Logger		LOGGER				= LoggerFactory.getLogger(IronMqService.class);
+	private static final Logger		LOGGER				= LoggerFactory.getLogger(IronMqGateway.class);
 
 	@Transient
 	private Counter exportCounter;
@@ -110,7 +110,7 @@ public class IronMqService extends EdiServiceABC implements EdiExportTransport {
 		private String	mToken;
 	}
 
-	public IronMqService() {
+	public IronMqGateway() {
 		this(new ClientProvider() {
 
 			@Override
@@ -121,7 +121,7 @@ public class IronMqService extends EdiServiceABC implements EdiExportTransport {
 		});
 	}
 
-	IronMqService(ClientProvider clientProvider) {
+	IronMqGateway(ClientProvider clientProvider) {
 		super();
 		this.setProvider(EdiProviderEnum.IRONMQ);
 		this.clientProvider = clientProvider;
@@ -130,12 +130,12 @@ public class IronMqService extends EdiServiceABC implements EdiExportTransport {
 	}
 
 	@SuppressWarnings("unchecked")
-	public final ITypedDao<IronMqService> getDao() {
+	public final ITypedDao<IronMqGateway> getDao() {
 		return staticGetDao();
 	}
 
-	public static ITypedDao<IronMqService> staticGetDao() {
-		return TenantPersistenceService.getInstance().getDao(IronMqService.class);
+	public static ITypedDao<IronMqGateway> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(IronMqGateway.class);
 	}
 
 	public final String getServiceName() {
@@ -143,7 +143,7 @@ public class IronMqService extends EdiServiceABC implements EdiExportTransport {
 	}
 
 	private final void setCredentials(String projectId,  String token, String activeStr) {
-		IronMqService.Credentials credentials = new Credentials(projectId, token);
+		IronMqGateway.Credentials credentials = new Credentials(projectId, token);
 		Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 		String json = gson.toJson(credentials);
 		setProviderCredentials(json);
@@ -162,21 +162,21 @@ public class IronMqService extends EdiServiceABC implements EdiExportTransport {
 				if (queue.isPresent()) {
 					queue.get().getInfoAboutQueue();
 					setServiceState(EdiServiceStateEnum.LINKED);
-					LOGGER.warn("IronMqService is linked, will export work instructions");
+					LOGGER.warn("IronMqGateway is linked, will export work instructions");
 				}
 				else {
 					LOGGER.warn("Unable to get queue or no credentials set");
 					setServiceState(EdiServiceStateEnum.UNLINKED);
-					LOGGER.warn("IronMqService is unlinked, will not export work instructions");
+					LOGGER.warn("IronMqGateway is unlinked, will not export work instructions");
 				}
 			}
 			catch(Exception e) {
 				LOGGER.warn("Unable to connect to iron mq with credentials", e);
 				setServiceState(EdiServiceStateEnum.UNLINKED);
-				LOGGER.warn("IronMqService is unlinked, will not export work instructions");
+				LOGGER.warn("IronMqGateway is unlinked, will not export work instructions");
 			}
 		}
-		IronMqService.staticGetDao().store(this); //This is the DAO the UI is listening to
+		IronMqGateway.staticGetDao().store(this); //This is the DAO the UI is listening to
 	}
 
 	public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
@@ -199,7 +199,7 @@ public class IronMqService extends EdiServiceABC implements EdiExportTransport {
 			LOGGER.debug("Sent work instructions to iron mq service");
 		}
 		else {
-			LOGGER.debug("Unable to send work instruction, no credentials for IronMqService");
+			LOGGER.debug("Unable to send work instruction, no credentials for IronMqGateway");
 		}
 	}
 
@@ -222,7 +222,7 @@ public class IronMqService extends EdiServiceABC implements EdiExportTransport {
 			}
 			return bodies;
 		} else {
-			throw new IllegalStateException("No queue or credentials configured for IronMqService");
+			throw new IllegalStateException("No queue or credentials configured for IronMqGateway");
 		}
 	}
 

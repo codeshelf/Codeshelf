@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxService.java,v 1.37 2013/09/18 00:40:08 jeffw Exp $
+ *  $Id: DropboxGateway.java,v 1.37 2013/09/18 00:40:08 jeffw Exp $
  *******************************************************************************/
 package com.codeshelf.model.domain;
 
@@ -65,17 +65,17 @@ import com.google.common.base.Strings;
 @Entity
 @DiscriminatorValue("DROPBOX")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class DropboxService extends EdiServiceABC {
+public class DropboxGateway extends EdiGateway {
 
-	public static class DropboxServiceDao extends GenericDaoABC<DropboxService> implements ITypedDao<DropboxService> {
-		public final Class<DropboxService> getDaoClass() {
-			return DropboxService.class;
+	public static class DropboxGatewayDao extends GenericDaoABC<DropboxGateway> implements ITypedDao<DropboxGateway> {
+		public final Class<DropboxGateway> getDaoClass() {
+			return DropboxGateway.class;
 		}
 	}
 
 	public static final String	DROPBOX_SERVICE_NAME	= "DROPBOX";
 
-	private static final Logger	LOGGER					= LoggerFactory.getLogger(DropboxService.class);
+	private static final Logger	LOGGER					= LoggerFactory.getLogger(DropboxGateway.class);
 
 	private static final String	APPKEY					= "0l3auhytaxn2q50";
 	private static final String	APPSECRET				= "5syhdiyq0bd2oxq";
@@ -104,7 +104,7 @@ public class DropboxService extends EdiServiceABC {
 	@JsonProperty
 	private String				dbCursor;
 
-	public DropboxService() {
+	public DropboxGateway() {
 		super();
 		setProvider(EdiProviderEnum.DROPBOX);
 	}
@@ -114,12 +114,12 @@ public class DropboxService extends EdiServiceABC {
 	}
 
 	@SuppressWarnings("unchecked")
-	public final ITypedDao<DropboxService> getDao() {
+	public final ITypedDao<DropboxGateway> getDao() {
 		return staticGetDao();
 	}
 
-	public static ITypedDao<DropboxService> staticGetDao() {
-		return TenantPersistenceService.getInstance().getDao(DropboxService.class);
+	public static ITypedDao<DropboxGateway> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(DropboxGateway.class);
 	}
 
 	@Override
@@ -202,7 +202,7 @@ public class DropboxService extends EdiServiceABC {
 					inCsvAislesFileImporter)) {
 					// If we've processed everything from the page correctly then save the current dbCursor, and get the next page
 					try {
-						DropboxService.staticGetDao().store(this);
+						DropboxGateway.staticGetDao().store(this);
 					} catch (DaoException e) {
 						LOGGER.error("", e);
 					}
@@ -411,7 +411,7 @@ public class DropboxService extends EdiServiceABC {
 
 		try {
 			setServiceState(EdiServiceStateEnum.LINKING);
-			DropboxService.staticGetDao().store(this);
+			DropboxGateway.staticGetDao().store(this);
 		} catch (DaoException e) {
 			LOGGER.error("Unable to change dropbox service state", e);
 		}
@@ -450,9 +450,9 @@ public class DropboxService extends EdiServiceABC {
 					setDbCursor("");
 					result = true;
 				}
-				DropboxService.staticGetDao().store(this);
+				DropboxGateway.staticGetDao().store(this);
 			} catch (DaoException e) {
-				LOGGER.error("Unable to store dropboxservice change after linking", e);
+				LOGGER.error("Unable to store dropbox gateway change after linking", e);
 			}
 		} catch (DbxException e) {
 			LOGGER.error("Unable to get accessToken for dropbox service", e);

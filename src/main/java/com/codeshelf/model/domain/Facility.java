@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.edi.EdiExportTransport;
+import com.codeshelf.edi.IEdiGateway;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
@@ -89,10 +90,10 @@ public class Facility extends Location {
 	@MapKey(name = "domainId")
 	private Map<String, ContainerKind>		containerKinds	= new HashMap<String, ContainerKind>();
 
-	@OneToMany(mappedBy = "parent", targetEntity = EdiServiceABC.class, orphanRemoval = true)
+	@OneToMany(mappedBy = "parent", targetEntity = EdiGateway.class, orphanRemoval = true)
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
-	private List<IEdiService>				ediServices		= new ArrayList<IEdiService>();
+	private List<IEdiGateway>				ediServices		= new ArrayList<IEdiGateway>();
 
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	@MapKey(name = "domainId")
@@ -240,7 +241,7 @@ public class Facility extends Location {
 		}
 	}
 
-	public void addEdiService(IEdiService inEdiService) {
+	public void addEdiService(IEdiGateway inEdiService) {
 		Facility previousFacility = inEdiService.getParent();
 		if (previousFacility == null) {
 			ediServices.add(inEdiService);
@@ -251,7 +252,7 @@ public class Facility extends Location {
 		}
 	}
 
-	public void removeEdiService(IEdiService inEdiService) {
+	public void removeEdiService(IEdiGateway inEdiService) {
 		if (this.ediServices.contains(inEdiService)) {
 			inEdiService.setParent(null);
 			ediServices.remove(inEdiService);
@@ -690,7 +691,7 @@ public class Facility extends Location {
 	 * @return
 	 */
 	public EdiExportTransport getEdiExportTransport() {
-		EdiExportTransport service =  SftpWIsEdiService.staticGetDao().findByDomainId(this, SFTPWIS_DOMAINID);
+		EdiExportTransport service =  SftpWiGateway.staticGetDao().findByDomainId(this, SFTPWIS_DOMAINID);
 		if (service.isLinked()) {
 			return service;
 		} else {
@@ -703,12 +704,12 @@ public class Facility extends Location {
 	/**
 	 * @return
 	 */
-	public DropboxService getDropboxService() {
-		DropboxService result = null;
+	public DropboxGateway getDropboxGateway() {
+		DropboxGateway result = null;
 
-		for (IEdiService ediService : getEdiServices()) {
-			if (Hibernate.getClass(ediService).equals(DropboxService.class)) {
-				result = (DropboxService) ediService;
+		for (IEdiGateway ediService : getEdiServices()) {
+			if (Hibernate.getClass(ediService).equals(DropboxGateway.class)) {
+				result = (DropboxGateway) ediService;
 				break;
 			}
 		}
@@ -718,35 +719,35 @@ public class Facility extends Location {
 	public void createDefaultEDIServices() {
 		// Create a first Dropbox Service entry for this facility.
 		@SuppressWarnings("unused")
-		DropboxService dropboxService = createDropboxService();
+		DropboxGateway dropboxGateway = createDropboxGateway();
 
 		// Create a first IronMQ Service entry for this facility.
 		try {
 			@SuppressWarnings("unused")
-			IronMqService ironMqService = createIronMqService();
+			IronMqGateway ironMqGateway = createIronMqGateway();
 		} catch (PSQLException e) {
 			LOGGER.error("failed to create ironMQ service");
 		}
 
-		storeSftpService(new SftpWIsEdiService(SFTPWIS_DOMAINID));
-		storeSftpService(new SftpOrdersEdiService("SFTPORDERS"));
+		storeSftpService(new SftpWiGateway(SFTPWIS_DOMAINID));
+		storeSftpService(new SftpOrderGateway("SFTPORDERS"));
 	}
 
 	// --------------------------------------------------------------------------
 	/**
 	 * @return
 	 */
-	private DropboxService createDropboxService() {
+	private DropboxGateway createDropboxGateway() {
 
-		DropboxService result = null;
+		DropboxGateway result = null;
 
-		result = new DropboxService();
+		result = new DropboxGateway();
 		result.setDomainId("DROPBOX");
 		result.setServiceState(EdiServiceStateEnum.UNLINKED);
 
 		this.addEdiService(result);
 		try {
-			DropboxService.staticGetDao().store(result);
+			DropboxGateway.staticGetDao().store(result);
 		} catch (DaoException e) {
 			LOGGER.error("", e);
 		}
@@ -758,17 +759,17 @@ public class Facility extends Location {
 	/**
 	 * @return
 	 */
-	private IronMqService createIronMqService() throws PSQLException {
+	private IronMqGateway createIronMqGateway() throws PSQLException {
 		// we saw the PSQL exception in staging test when the record could not be added
-		IronMqService result = null;
+		IronMqGateway result = null;
 
-		result = new IronMqService();
+		result = new IronMqGateway();
 		result.setDomainId("IRONMQ");
 		result.setServiceState(EdiServiceStateEnum.UNLINKED);
 		this.addEdiService(result);
 		result.storeCredentials("", "", "true"); // non-null credentials
 		try {
-			IronMqService.staticGetDao().store(result);
+			IronMqGateway.staticGetDao().store(result);
 		} catch (DaoException e) {
 			LOGGER.error("Failed to save IronMQ service", e);
 		}
@@ -777,7 +778,7 @@ public class Facility extends Location {
 	}
 
 
-	private void storeSftpService(AbstractSftpEdiService sftpEDI) {
+	private void storeSftpService(SftpGateway sftpEDI) {
 		this.addEdiService(sftpEDI);
 		try {
 			sftpEDI.getDao().store(sftpEDI);
@@ -1332,10 +1333,10 @@ public class Facility extends Location {
 		}
 	}
 	
-	public Collection<IEdiService> getLinkedEdiImportServices() {
+	public Collection<IEdiGateway> getLinkedEdiImportServices() {
 		//TODO only return services that implement import interface
-		ArrayList<IEdiService> importServices = new ArrayList<>();
-		for (IEdiService ediService : getEdiServices()) {
+		ArrayList<IEdiGateway> importServices = new ArrayList<>();
+		for (IEdiGateway ediService : getEdiServices()) {
 			if (ediService.isLinked()) {
 				importServices.add(ediService);
 			}
@@ -1344,8 +1345,8 @@ public class Facility extends Location {
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T extends IEdiService> T findEdiService(Class<T> cls) {
-		for (IEdiService ediService : getEdiServices()) {
+	public <T extends IEdiGateway> T findEdiService(Class<T> cls) {
+		for (IEdiGateway ediService : getEdiServices()) {
 			if (cls.isAssignableFrom(ediService.getClass())) {
 				return (T) ediService;
 			}
@@ -1353,8 +1354,8 @@ public class Facility extends Location {
 		return null;
 	}
 	
-	public IEdiService findEdiService(String domainId) {
-		for (IEdiService ediService : getEdiServices()) {
+	public IEdiGateway findEdiService(String domainId) {
+		for (IEdiGateway ediService : getEdiServices()) {
 			if (ediService.getDomainId().equals(domainId)) {
 				return ediService;
 			}

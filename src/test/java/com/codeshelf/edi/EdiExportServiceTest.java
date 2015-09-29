@@ -13,11 +13,11 @@ import org.mockito.Mockito;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.testframework.HibernateTest;
 
-public class EdiExporterProviderTest extends HibernateTest {
+public class EdiExportServiceTest extends HibernateTest {
 	
 	@Test
 	public void testGetsEdiExporterWhenFacilityHasEdiService() throws Exception {
-		EdiExporterProvider subject = startEdiExporter();
+		EdiExportService subject = startEdiExporter();
 		beginTransaction();
 
 		try {
@@ -35,9 +35,9 @@ public class EdiExporterProviderTest extends HibernateTest {
 		commitTransaction();
 	}
 
-	private EdiExporterProvider startEdiExporter() throws TimeoutException {
+	private EdiExportService startEdiExporter() throws TimeoutException {
 		// TODO Auto-generated method stub
-		EdiExporterProvider service = new EdiExporterProvider();
+		EdiExportService service = new EdiExportService();
 		service.startAsync().awaitRunning(5, TimeUnit.SECONDS);
 		return service;
 	}

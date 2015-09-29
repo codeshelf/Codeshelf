@@ -31,23 +31,23 @@ import com.jcraft.jsch.SftpException;
 @Entity
 @DiscriminatorValue("SFTP_ORDERS")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class SftpOrdersEdiService extends AbstractSftpEdiService {
-	public static class SftpOrdersEdiServiceDao extends GenericDaoABC<SftpOrdersEdiService> implements ITypedDao<SftpOrdersEdiService> {
-		public final Class<SftpOrdersEdiService> getDaoClass() {
-			return SftpOrdersEdiService.class;
+public class SftpOrderGateway extends SftpGateway {
+	public static class SftpOrderGatewayDao extends GenericDaoABC<SftpOrderGateway> implements ITypedDao<SftpOrderGateway> {
+		public final Class<SftpOrderGateway> getDaoClass() {
+			return SftpOrderGateway.class;
 		}
 	}
 
-	static final Logger			LOGGER						= LoggerFactory.getLogger(SftpOrdersEdiService.class);
+	static final Logger			LOGGER						= LoggerFactory.getLogger(SftpOrderGateway.class);
 	public static final String	SFTP_SERVICE_NAME			= "SFTP_ORDERS";
 	private static final String	FILENAME_SUFFIX_FAILED		= ".FAILED";
 	private static final String	FILENAME_SUFFIX_PROCESSING	= ".PROCESSING";
 
-	public SftpOrdersEdiService() {
+	public SftpOrderGateway() {
 		super();
 	}
 	
-	public SftpOrdersEdiService(String domainId) {
+	public SftpOrderGateway(String domainId) {
 		super(domainId);
 	}
 	
@@ -154,12 +154,12 @@ public class SftpOrdersEdiService extends AbstractSftpEdiService {
 	
 	@SuppressWarnings("unchecked")
 	@Override
-	public ITypedDao<SftpOrdersEdiService> getDao() {
+	public ITypedDao<SftpOrderGateway> getDao() {
 		return staticGetDao();
 	}
 
-	public static ITypedDao<SftpOrdersEdiService> staticGetDao() {
-		return TenantPersistenceService.getInstance().getDao(SftpOrdersEdiService.class);
+	public static ITypedDao<SftpOrderGateway> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(SftpOrderGateway.class);
 	}
 
 }

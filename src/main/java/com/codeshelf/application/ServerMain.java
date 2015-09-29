@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.CrossBatchCsvImporter;
-import com.codeshelf.edi.EdiExporterProvider;
+import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
@@ -126,7 +126,7 @@ public final class ServerMain {
 				bind(IPropertyService.class).to(PropertyService.class).in(Singleton.class);
 				
 				bind(WorkService.class).in(Singleton.class);
-				bind(EdiExporterProvider.class).in(Singleton.class);
+				bind(EdiExportService.class).in(Singleton.class);
 
 				requestStaticInjection(WebSocketManagerService.class);
 				bind(WebSocketManagerService.class).in(Singleton.class);

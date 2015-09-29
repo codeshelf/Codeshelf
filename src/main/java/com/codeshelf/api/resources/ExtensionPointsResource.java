@@ -17,7 +17,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import com.codeshelf.api.BaseResponse;
-import com.codeshelf.edi.EdiExporterProvider;
+import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.service.ExtensionPointType;
@@ -26,10 +26,10 @@ import com.google.inject.Inject;
 public class ExtensionPointsResource {
 
 	
-	private EdiExporterProvider provider;
+	private EdiExportService provider;
 
 	@Inject
-	ExtensionPointsResource(EdiExporterProvider provider) {
+	ExtensionPointsResource(EdiExportService provider) {
 		this.provider = provider;
 	}
 	

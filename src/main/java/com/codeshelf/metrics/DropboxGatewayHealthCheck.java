@@ -3,15 +3,15 @@ package com.codeshelf.metrics;
 import java.util.List;
 
 import com.codeshelf.manager.service.TenantManagerService;
-import com.codeshelf.model.domain.DropboxService;
+import com.codeshelf.model.domain.DropboxGateway;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.google.common.collect.Lists;
 
-public class DropboxServiceHealthCheck extends CodeshelfHealthCheck {
+public class DropboxGatewayHealthCheck extends CodeshelfHealthCheck {
 
-	public DropboxServiceHealthCheck() {
+	public DropboxGatewayHealthCheck() {
 		super("Dropbox service");
 	}
 
@@ -28,7 +28,7 @@ public class DropboxServiceHealthCheck extends CodeshelfHealthCheck {
 			TenantPersistenceService.getInstance().beginTransaction();
 			List<Facility> allFacilities = Facility.staticGetDao().getAll();
 			for (Facility facility : allFacilities) {
-				DropboxService service = facility.getDropboxService();
+				DropboxGateway service = facility.getDropboxGateway();
 				if (service != null) {
 					if (service.checkConnectivity() == false) {
 						failedFacilities.add(facility);

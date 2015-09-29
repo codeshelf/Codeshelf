@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.api.resources.subresources.EDIGatewaysResource;
 import com.codeshelf.device.ScriptSiteRunner;
-import com.codeshelf.edi.EdiExporterProvider;
+import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
@@ -677,7 +677,7 @@ public class ScriptServerRunner {
 			throw new Exception("Invalid type " + type + ". Expected 'orders' or 'wi'");
 		}
 		String serviceDomainId = orders?"SFTPORDERS":"SFTPWIS";
-		EDIGatewaysResource res = new EDIGatewaysResource(new EdiExporterProvider());
+		EDIGatewaysResource res = new EDIGatewaysResource(new EdiExportService());
 		res.setFacility(facility);
 		//MultivaluedMapImpl <String, String> params = new MultiValueMap();
 		//HashMap<String, String> params = new HashMap<>();

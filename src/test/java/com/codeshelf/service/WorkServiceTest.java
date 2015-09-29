@@ -22,7 +22,7 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.edi.EdiExporterProvider;
+import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.edi.FacilityEdiExporter;
 import com.codeshelf.generators.FacilityGenerator;
 import com.codeshelf.generators.WorkInstructionGenerator;
@@ -125,7 +125,7 @@ public class WorkServiceTest extends ServerTest {
 
 	@Test
 	public void shortedWorkInstructionShortsOrderDetail() {
-		this.workService = new WorkService(mock(LightService.class), mock(EdiExporterProvider.class));
+		this.workService = new WorkService(mock(LightService.class), mock(EdiExportService.class));
 
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = facilityGenerator.generateValid();
@@ -209,7 +209,7 @@ public class WorkServiceTest extends ServerTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void summariesAreSorted() {
-		this.workService = new WorkService(mock(LightService.class), mock(EdiExporterProvider.class));
+		this.workService = new WorkService(mock(LightService.class), mock(EdiExportService.class));
 
 		this.getTenantPersistenceService().beginTransaction();
 
@@ -326,7 +326,7 @@ public class WorkServiceTest extends ServerTest {
 
 	private void createWorkService(int capacity, FacilityEdiExporter ediExporter, long retryDelay) throws Exception {
 
-		EdiExporterProvider provider = mock(EdiExporterProvider.class);
+		EdiExportService provider = mock(EdiExportService.class);
 		when(provider.getEdiExporter(any(Facility.class))).thenReturn(ediExporter);
 
 		this.workService = new WorkService(mock(LightService.class), provider);

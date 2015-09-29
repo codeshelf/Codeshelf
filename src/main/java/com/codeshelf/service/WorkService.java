@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 import com.codahale.metrics.Timer;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.OrderLocationFeedbackMessage;
-import com.codeshelf.edi.EdiExporterProvider;
+import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.edi.FacilityEdiExporter;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
@@ -115,7 +115,7 @@ public class WorkService implements IApiService {
 	private final LightService	lightService;
 
 	@Getter
-	private EdiExporterProvider	exportProvider;
+	private EdiExportService	exportProvider;
 
 	@ToString
 	public static class Work {
@@ -137,7 +137,7 @@ public class WorkService implements IApiService {
 	}
 
 	@Inject
-	public WorkService(LightService lightService, EdiExporterProvider exportProvider) {
+	public WorkService(LightService lightService, EdiExportService exportProvider) {
 		this.lightService = lightService;
 		this.exportProvider = exportProvider;
 	}
