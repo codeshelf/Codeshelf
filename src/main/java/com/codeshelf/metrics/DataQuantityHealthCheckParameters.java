@@ -42,7 +42,12 @@ public class DataQuantityHealthCheckParameters extends ParameterSetBeanABC {
 
 	public int getMaxOrderDetailValue() {
 		try {
-			return Integer.valueOf(this.getMaxOrderDetail());
+			int value = Integer.valueOf(this.getMaxOrderDetail());
+			if (value < 1) {
+				LOGGER.warn("bad value for maxOrderDetail: {}", getMaxOrderDetail());
+				value = MAX_ORDERDETAIL;
+			}
+			return value;
 		} catch (NumberFormatException e) {
 			LOGGER.warn("bad value for maxOrderDetail: {}", getMaxOrderDetail());
 			return MAX_ORDERDETAIL;
@@ -51,16 +56,26 @@ public class DataQuantityHealthCheckParameters extends ParameterSetBeanABC {
 
 	public int getMaxWorkInstructionValue() {
 		try {
-			return Integer.valueOf(this.getMaxWorkInstruction());
+			int value = Integer.valueOf(this.getMaxWorkInstruction());
+			if (value < 1) {
+				LOGGER.warn("bad value for maxWorkInstruction: {}", getMaxWorkInstruction());
+				value = MAX_WORKINSTRUCTION;
+			}
+			return value;
 		} catch (NumberFormatException e) {
-			LOGGER.warn("bad value for maxWorkInstructionl: {}", getMaxWorkInstruction());
+			LOGGER.warn("bad value for maxWorkInstruction: {}", getMaxWorkInstruction());
 			return MAX_WORKINSTRUCTION;
 		}
 	}
 
 	public int getMaxOrderValue() {
 		try {
-			return Integer.valueOf(this.getMaxOrder());
+			int value = Integer.valueOf(this.getMaxOrder());
+			if (value < 1) {
+				LOGGER.warn("bad value for maxWorkOrder: {}", getMaxOrder());
+				value = MAX_ORDER;
+			}
+			return value;
 		} catch (NumberFormatException e) {
 			LOGGER.warn("bad value for maxWorkOrder: {}", getMaxOrder());
 			return MAX_ORDER;
@@ -69,7 +84,12 @@ public class DataQuantityHealthCheckParameters extends ParameterSetBeanABC {
 
 	public int getMaxContainerUseValue() {
 		try {
-			return Integer.valueOf(this.getMaxContainerUse());
+			int value = Integer.valueOf(this.getMaxContainerUse());
+			if (value < 1) {
+				LOGGER.warn("bad value for maxContainerUse: {}", getMaxContainerUse());
+				value = MAX_CONTAINERUSE;
+			}
+			return value;
 		} catch (NumberFormatException e) {
 			LOGGER.warn("bad value for maxContainerUse: {}", getMaxContainerUse());
 			return MAX_CONTAINERUSE;
@@ -81,7 +101,7 @@ public class DataQuantityHealthCheckParameters extends ParameterSetBeanABC {
 	 */
 	@Override
 	public String getParametersDescription() {
-		return String.format("maxOrder: %d , maxOrderDetail: %d , maxWorkInstruction: %d , maxContainerUse: %d",
+		return String.format("maxOrder: %d; , maxOrderDetail: %d; , maxWorkInstruction: %d; , maxContainerUse: %d;",
 			getMaxOrder(),
 			getMaxOrderDetailValue(),
 			getMaxWorkInstructionValue(),
