@@ -24,8 +24,8 @@ public class IronMqGatewayTest extends MockDaoTest {
 	public void doBefore() {
 		super.doBefore();
 		@SuppressWarnings("unchecked")
-		ITypedDao<IronMqGateway> mock = mock(ITypedDao.class);
-		super.useCustomDao(IronMqGateway.class, mock);
+		ITypedDao<EdiGateway> mock = mock(ITypedDao.class);
+		super.useCustomDao(EdiGateway.class, mock);
 	}
 	
 	@Test
