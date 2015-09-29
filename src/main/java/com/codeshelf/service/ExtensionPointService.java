@@ -12,6 +12,7 @@ import javax.script.ScriptException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.metrics.DataQuantityHealthCheckParameters;
 import com.codeshelf.model.domain.Facility;
 import com.google.common.collect.Lists;
 
@@ -24,12 +25,12 @@ public class ExtensionPointService {
 
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(ExtensionPointService.class);
 
-	ScriptEngine						engine;
+	ScriptEngine				engine;
 
-	HashSet<ExtensionPointType>			activeExtensions	= new HashSet<ExtensionPointType>();
-	
+	HashSet<ExtensionPointType>	activeExtensions	= new HashSet<ExtensionPointType>();
+
 	@Getter
-	private ArrayList<String>	failedExtensions 	= Lists.newArrayList();
+	private ArrayList<String>	failedExtensions	= Lists.newArrayList();
 
 	public ExtensionPointService(Facility facility) throws ScriptException {
 		initEngine();
@@ -56,7 +57,7 @@ public class ExtensionPointService {
 			if (cause instanceof GroovyRuntimeException) {
 				LOGGER.warn("Inactivating invalid extension " + ep.getDomainId(), e);
 				ep.setActive(false);
-				ExtensionPoint.staticGetDao().store(ep);				
+				ExtensionPoint.staticGetDao().store(ep);
 			} else {
 				throw e;
 			}
@@ -66,7 +67,6 @@ public class ExtensionPointService {
 	private void clearExtensionPoints() {
 		this.activeExtensions.clear();
 	}
-
 
 	public boolean hasExtensionPoint(ExtensionPointType extp) {
 		return this.activeExtensions.contains(extp);
@@ -80,8 +80,7 @@ public class ExtensionPointService {
 			if (ep.isActive()) {
 				LOGGER.info("Adding extension point " + ep.getType());
 				this.addExtensionPointIfValid(ep);
-			}
-			else {
+			} else {
 				LOGGER.info("Skipping inactive extension point " + ep.getType());
 			}
 		}
@@ -97,14 +96,28 @@ public class ExtensionPointService {
 		try {
 			result = inv.invokeFunction(ext.name(), params);
 		} catch (NoSuchMethodException e) {
-			throw new ScriptException("Script type " + ext + " does not contain method name " +  ext.name() + " or encountered parameter mismatch.\n" + e.getMessage());
+			throw new ScriptException("Script type " + ext + " does not contain method name " + ext.name()
+					+ " or encountered parameter mismatch.\n" + e.getMessage());
 		}
 		return result;
 	}
 
 	public static ExtensionPointService createInstance(Facility facility) throws ScriptException {
-		// new instance every time now.  would be good to re-use on a tenant/facility level.
+		// New instance every time now.  Would be good to re-use on a tenant/facility level.
 		return new ExtensionPointService(facility);
+	}
+
+	
+	public DataQuantityHealthCheckParameters getDataQuantityHealthCheckParameters() {
+		
+		DataQuantityHealthCheckParameters theBean = new DataQuantityHealthCheckParameters();
+		
+		if (hasExtensionPoint(ExtensionPointType.ParameterSetDataQuantityHealthCheck)) {
+			// eval the bean
+		}
+
+		return theBean;
+		
 	}
 
 }

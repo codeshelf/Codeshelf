@@ -692,7 +692,7 @@ public class Facility extends Location {
 	 */
 	public EdiExportTransport getEdiExportTransport() {
 		EdiExportTransport service =  SftpWiGateway.staticGetDao().findByDomainId(this, SFTPWIS_DOMAINID);
-		if (service.isLinked()) {
+		if (service != null && service.isLinked()) {
 			return service;
 		} else {
 			return null;
