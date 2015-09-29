@@ -6,6 +6,7 @@ import javax.persistence.Entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.edi.EdiExportTransport;
 import com.codeshelf.edi.EdiFileWriteException;
 import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
@@ -13,7 +14,6 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
-import com.codeshelf.edi.EdiExportTransport;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -22,21 +22,21 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 @Entity
 @DiscriminatorValue("SFTP_WIS")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class SftpWIsEdiService extends AbstractSftpEdiService implements EdiExportTransport {
-	public static class SftpWIsEdiServiceDao extends GenericDaoABC<SftpWIsEdiService> implements ITypedDao<SftpWIsEdiService> {
-		public final Class<SftpWIsEdiService> getDaoClass() {
-			return SftpWIsEdiService.class;
+public class SftpWiGateway extends SftpGateway implements EdiExportTransport {
+	public static class SftpWiGatewayDao extends GenericDaoABC<SftpWiGateway> implements ITypedDao<SftpWiGateway> {
+		public final Class<SftpWiGateway> getDaoClass() {
+			return SftpWiGateway.class;
 		}
 	}
 
-	static final Logger			LOGGER						= LoggerFactory.getLogger(SftpWIsEdiService.class);
+	static final Logger			LOGGER						= LoggerFactory.getLogger(SftpWiGateway.class);
 	public static final String	SFTP_SERVICE_NAME			= "SFTP_WIS";
 
-	public SftpWIsEdiService() {
+	public SftpWiGateway() {
 		super();
 	}
 	
-	public SftpWIsEdiService(String domainId) {
+	public SftpWiGateway(String domainId) {
 		super(domainId);
 	}
 
@@ -85,12 +85,12 @@ public class SftpWIsEdiService extends AbstractSftpEdiService implements EdiExpo
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public ITypedDao<SftpWIsEdiService> getDao() {
+	public ITypedDao<SftpWiGateway> getDao() {
 		return staticGetDao();
 	}
 
-	public static ITypedDao<SftpWIsEdiService> staticGetDao() {
-		return TenantPersistenceService.getInstance().getDao(SftpWIsEdiService.class);
+	public static ITypedDao<SftpWiGateway> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(SftpWiGateway.class);
 	}
 
 

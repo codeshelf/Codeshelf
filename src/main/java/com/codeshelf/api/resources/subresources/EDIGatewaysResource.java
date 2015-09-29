@@ -21,13 +21,13 @@ import lombok.Setter;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.ErrorResponse;
-import com.codeshelf.edi.EdiExporterProvider;
+import com.codeshelf.edi.EdiExportService;
+import com.codeshelf.edi.IEdiGateway;
 import com.codeshelf.edi.SftpConfiguration;
-import com.codeshelf.model.domain.AbstractSftpEdiService;
-import com.codeshelf.model.domain.DropboxService;
+import com.codeshelf.model.domain.DropboxGateway;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.IEdiService;
-import com.codeshelf.model.domain.IronMqService;
+import com.codeshelf.model.domain.IronMqGateway;
+import com.codeshelf.model.domain.SftpGateway;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
@@ -43,32 +43,32 @@ public class EDIGatewaysResource {
 	@Setter
 	private Facility facility;
 
-	private EdiExporterProvider	provider;
+	private EdiExportService	provider;
 	
 	@Inject
-	public EDIGatewaysResource(EdiExporterProvider provider)  {
+	public EDIGatewaysResource(EdiExportService provider)  {
 		this.provider = provider;
 	}
 
 	@GET
 	public Response getEdiServices() {
 		facility.getEdiServices();
-		return BaseResponse.buildResponse(new ArrayList<IEdiService>(facility.getEdiServices()));
+		return BaseResponse.buildResponse(new ArrayList<IEdiGateway>(facility.getEdiServices()));
 	}
 	@POST
 	@Path("/{domainId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public Response updateEdiService(@PathParam("domainId") String domainId, MultivaluedMap<String, String> params) {
-		IEdiService ediService = facility.findEdiService(domainId);
+		IEdiGateway ediService = facility.findEdiService(domainId);
 		try {
-			IEdiService updatedEdiService = null;
-			if (AbstractSftpEdiService.class.isAssignableFrom(ediService.getClass())) {
-				updatedEdiService = updateSftpService((AbstractSftpEdiService) ediService, params);
-			}else if (IronMqService.class.isAssignableFrom(ediService.getClass())) {
-				updatedEdiService = updateIronMqService((IronMqService) ediService, params);
-			} else if (DropboxService.class.isAssignableFrom(ediService.getClass())) {
-				updatedEdiService = updateDropboxService((DropboxService) ediService, params);
+			IEdiGateway updatedEdiService = null;
+			if (SftpGateway.class.isAssignableFrom(ediService.getClass())) {
+				updatedEdiService = updateSftpGateway((SftpGateway) ediService, params);
+			}else if (IronMqGateway.class.isAssignableFrom(ediService.getClass())) {
+				updatedEdiService = updateIronMqGateway((IronMqGateway) ediService, params);
+			} else if (DropboxGateway.class.isAssignableFrom(ediService.getClass())) {
+				updatedEdiService = updateDropboxGateway((DropboxGateway) ediService, params);
 			} else {
 				LOGGER.warn("unexpected EDI class {}", ediService.getClass());
 			}
@@ -79,22 +79,22 @@ public class EDIGatewaysResource {
 		}
 	}
 	
-	private IEdiService updateSftpService(AbstractSftpEdiService ediService, MultivaluedMap<String, String> params) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+	private IEdiGateway updateSftpGateway(SftpGateway ediService, MultivaluedMap<String, String> params) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		SftpConfiguration configuration = SftpConfiguration.updateFromMap(ediService.getConfiguration(), params);
 		ediService.setConfiguration(configuration);
 		ediService.getDao().store(ediService);
 		return ediService;
 	}
 
-	private IEdiService updateIronMqService(IronMqService ediService, MultivaluedMap<String, String> params) {
+	private IEdiGateway updateIronMqGateway(IronMqGateway ediService, MultivaluedMap<String, String> params) {
 		ediService.storeCredentials(params.getFirst("projectId"), params.getFirst("token"), params.getFirst("active"));
-		IronMqService.staticGetDao().store(ediService);
+		IronMqGateway.staticGetDao().store(ediService);
 		return ediService;
 	}
 
-	private IEdiService updateDropboxService(DropboxService ediService, MultivaluedMap<String, String> params) {
+	private IEdiGateway updateDropboxGateway(DropboxGateway ediService, MultivaluedMap<String, String> params) {
 		ediService.finishLink(params.getFirst("code"));
-		DropboxService.staticGetDao().store(ediService);
+		DropboxGateway.staticGetDao().store(ediService);
 		return ediService;
 	}
 
@@ -103,7 +103,7 @@ public class EDIGatewaysResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public Response dropbox() {
-		DropboxService ediService = facility.findEdiService(DropboxService.class);
+		DropboxGateway ediService = facility.findEdiService(DropboxGateway.class);
 		try {
 			String url = ediService.startLink();
 			return BaseResponse.buildResponse(ImmutableMap.of("url", url));

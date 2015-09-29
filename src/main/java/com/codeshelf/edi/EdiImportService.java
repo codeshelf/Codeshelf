@@ -22,7 +22,6 @@ import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.IEdiService;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
@@ -34,12 +33,12 @@ import com.google.inject.Provider;
 /**
  *  @author jeffw
  */
-public final class EdiProcessorService extends AbstractCodeshelfScheduledService {
+public final class EdiImportService extends AbstractCodeshelfScheduledService {
 
 	@Getter
 	int											periodSeconds			= 30;
 
-	private static final Logger					LOGGER					= LoggerFactory.getLogger(EdiProcessorService.class);
+	private static final Logger					LOGGER					= LoggerFactory.getLogger(EdiImportService.class);
 
 	private Provider<ICsvOrderImporter>			mCsvOrderImporter;
 	private Provider<ICsvOrderLocationImporter>	mCsvOrderLocationImporter;
@@ -60,7 +59,7 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 	BlockingQueue<String>						ediSignalQueue			= null;
 
 	@Inject
-	public EdiProcessorService(final Provider<ICsvOrderImporter> inCsvOrdersImporter,
+	public EdiImportService(final Provider<ICsvOrderImporter> inCsvOrdersImporter,
 		final Provider<ICsvInventoryImporter> inCsvInventoryImporter,
 		final Provider<ICsvLocationAliasImporter> inCsvLocationsImporter,
 		final Provider<ICsvOrderLocationImporter> inCsvOrderLocationImporter,
@@ -169,7 +168,7 @@ public final class EdiProcessorService extends AbstractCodeshelfScheduledService
 	//package level for testing
 	int doEdiForFacility(Facility facility) {
 		int numChecked = 0;
-		for (IEdiService ediService : facility.getLinkedEdiImportServices()) {
+		for (IEdiGateway ediService : facility.getLinkedEdiImportServices()) {
 			try {
 				if (ediService.getUpdatesFromHost(mCsvOrderImporter.get(),
 					mCsvOrderLocationImporter.get(),

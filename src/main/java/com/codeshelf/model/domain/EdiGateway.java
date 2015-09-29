@@ -25,6 +25,7 @@ import lombok.Setter;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.codeshelf.edi.IEdiGateway;
 import com.codeshelf.model.EdiProviderEnum;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -48,7 +49,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implements IEdiService {
+public abstract class EdiGateway extends DomainObjectTreeABC<Facility> implements IEdiGateway {
 
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Getter
@@ -85,7 +86,7 @@ public abstract class EdiServiceABC extends DomainObjectTreeABC<Facility> implem
 	private Boolean					active;
 	
 
-	public EdiServiceABC() {
+	public EdiGateway() {
 
 	}
 

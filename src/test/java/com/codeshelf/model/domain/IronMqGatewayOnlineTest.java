@@ -15,7 +15,7 @@ import com.codeshelf.model.EdiProviderEnum;
 import com.codeshelf.testframework.MockDaoTest;
 
 // TODO: should use mock DAO 
-public class IronMqServiceOnlineTest extends MockDaoTest {
+public class IronMqGatewayOnlineTest extends MockDaoTest {
 
 	private Map<String, String> tempPropertyRestore  = new HashMap<String, String>();
 	
@@ -37,8 +37,8 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 		}
 
 
-		//IronMqService.DAO = mock(ITypedDao.class);
-		//DropboxService.DAO = mock(ITypedDao.class);
+		//IronMqGateway.DAO = mock(ITypedDao.class);
+		//DropboxGateway.DAO = mock(ITypedDao.class);
 		//Facility.DAO = mock(ITypedDao.class);
 		//Organization.DAO = mock(ITypedDao.class);
 	}
@@ -64,7 +64,7 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 		FacilityGenerator facilityGenerator = new FacilityGenerator();
 		Facility facility = facilityGenerator.generateValid();
 		
-		IronMqService service = new IronMqService();
+		IronMqGateway service = new IronMqGateway();
 		service.setDomainId("IRONMQTEST");
 		service.setProvider(EdiProviderEnum.IRONMQ);
 		facility.addEdiService(service);
@@ -75,7 +75,7 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 		String[] messages = new String[0];
 		boolean found = false;
 		do {
-			messages = service.consumeMessages(IronMqService.MAX_NUM_MESSAGES, 5);
+			messages = service.consumeMessages(IronMqGateway.MAX_NUM_MESSAGES, 5);
 			for (int i = 0; i < messages.length; i++) {
 				String string = messages[i];
 				found = string.contains(message);
@@ -96,7 +96,7 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 		FacilityGenerator facilityGenerator = new FacilityGenerator();
 		Facility facility = facilityGenerator.generateValid();
 		
-		IronMqService service = new IronMqService();
+		IronMqGateway service = new IronMqGateway();
 		service.setDomainId("IRONMQTEST");
 		facility.addEdiService(service);
 
@@ -118,7 +118,7 @@ public class IronMqServiceOnlineTest extends MockDaoTest {
 		FacilityGenerator facilityGenerator = new FacilityGenerator();
 		Facility facility = facilityGenerator.generateValid();
 		
-		IronMqService service = new IronMqService();
+		IronMqGateway service = new IronMqGateway();
 		service.setDomainId("IRONMQTEST");
 		facility.addEdiService(service);
 

@@ -46,11 +46,11 @@
         <mapping class="com.codeshelf.model.domain.DomainObjectProperty"/>
         <mapping class="com.codeshelf.model.domain.DomainObjectPropertyDefault"/>
 
-        <mapping class="com.codeshelf.model.domain.EdiServiceABC"/>
-        <mapping class="com.codeshelf.model.domain.DropboxService"/>
-        <mapping class="com.codeshelf.model.domain.IronMqService"/>
-        <mapping class="com.codeshelf.model.domain.SftpOrdersEdiService"/>
-        <mapping class="com.codeshelf.model.domain.SftpWIsEdiService"/>
+        <mapping class="com.codeshelf.model.domain.EdiGateway"/>
+        <mapping class="com.codeshelf.model.domain.DropboxGateway"/>
+        <mapping class="com.codeshelf.model.domain.IronMqGateway"/>
+        <mapping class="com.codeshelf.model.domain.SftpOrderGateway"/>
+        <mapping class="com.codeshelf.model.domain.SftpWiGateway"/>
 
         <mapping class="com.codeshelf.model.domain.CodeshelfNetwork"/>
         <mapping class="com.codeshelf.model.domain.Che"/>

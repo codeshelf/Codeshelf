@@ -28,8 +28,8 @@ import com.codeshelf.service.ExtensionPointService;
 import com.google.inject.Singleton;
 
 @Singleton
-public class EdiExporterProvider extends AbstractCodeshelfIdleService {
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(EdiExporterProvider.class);
+public class EdiExportService extends AbstractCodeshelfIdleService {
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(EdiExportService.class);
 
 	private Map<UUID, FacilityEdiExporter> facilityEdiExporters = new HashMap<>();
 		

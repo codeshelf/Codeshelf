@@ -16,15 +16,15 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.codeshelf.generators.WorkInstructionGenerator;
-import com.codeshelf.model.domain.AbstractSftpEdiService;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.FileExportReceipt;
 import com.codeshelf.model.domain.ExportReceipt;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
-import com.codeshelf.model.domain.SftpOrdersEdiService;
-import com.codeshelf.model.domain.SftpWIsEdiService;
+import com.codeshelf.model.domain.SftpGateway;
+import com.codeshelf.model.domain.SftpOrderGateway;
+import com.codeshelf.model.domain.SftpWiGateway;
 import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.validation.BatchResult;
 
@@ -43,11 +43,11 @@ public class AbstractSftpEdiServiceTest extends HibernateTest {
 		
 		Facility facility = getFacility();//trigger creation
 		SftpConfiguration config = setupConfiguration();
-		SftpWIsEdiService sftpWIs = configureSftpService(facility, config, SftpWIsEdiService.class);
+		SftpWiGateway sftpWIs = configureSftpService(facility, config, SftpWiGateway.class);
 		Assert.assertTrue(sftpWIs.isLinked());
 
 		config.setPassword("BAD");
-		SftpWIsEdiService badSftpWIs = configureSftpService(facility, config, SftpWIsEdiService.class);
+		SftpWiGateway badSftpWIs = configureSftpService(facility, config, SftpWiGateway.class);
 		Assert.assertTrue("Should have been unlinked", !badSftpWIs.isLinked());
 
 		commitTransaction();
@@ -61,7 +61,7 @@ public class AbstractSftpEdiServiceTest extends HibernateTest {
 		Che che = getChe1();
 
 		SftpConfiguration config = setupConfiguration();
-		SftpWIsEdiService sftpWIs = configureSftpService(che.getFacility(), config, SftpWIsEdiService.class);
+		SftpWiGateway sftpWIs = configureSftpService(che.getFacility(), config, SftpWiGateway.class);
 		
 
 		OrderHeader orderHeader = generateOrder(facility, 2);
@@ -91,7 +91,7 @@ public class AbstractSftpEdiServiceTest extends HibernateTest {
 		beginTransaction();
 		SftpConfiguration config = setupConfiguration();
 		config.setPort(999);
-		SftpWIsEdiService subject = configureSftpService(getFacility(), config, SftpWIsEdiService.class);
+		SftpWiGateway subject = configureSftpService(getFacility(), config, SftpWiGateway.class);
 		try {
 			subject.uploadAsFile("CONTENTS", config.getExportPath() + "/wontgetthere");
 			Assert.fail("Should have throw an EdiFileWriteException");
@@ -105,7 +105,7 @@ public class AbstractSftpEdiServiceTest extends HibernateTest {
 	public void testSftpOrders() throws IOException  {
 		beginTransaction();
 		SftpConfiguration config = setupConfiguration();
-		SftpOrdersEdiService sftpOrders = configureSftpService(getFacility(), config, SftpOrdersEdiService.class);
+		SftpOrderGateway sftpOrders = configureSftpService(getFacility(), config, SftpOrderGateway.class);
 		// create a test file on the server to be processed
 		
 		String filename = Long.toString(System.currentTimeMillis())+"a.DAT";
@@ -158,15 +158,15 @@ public class AbstractSftpEdiServiceTest extends HibernateTest {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private <T extends AbstractSftpEdiService> T configureSftpService(Facility facility, SftpConfiguration config, Class<T> class1) {
+	private <T extends SftpGateway> T configureSftpService(Facility facility, SftpConfiguration config, Class<T> class1) {
 		
 		
 		
 		// ensure loads/saves configuration correctly
-		AbstractSftpEdiService sftpOrders = facility.findEdiService(class1); 
+		SftpGateway sftpOrders = facility.findEdiService(class1); 
 		sftpOrders.setConfiguration(config);
 		sftpOrders.getDao().store(sftpOrders);
-		sftpOrders = (AbstractSftpEdiService) sftpOrders.getDao().findByDomainId(facility, sftpOrders.getDomainId());
+		sftpOrders = (SftpGateway) sftpOrders.getDao().findByDomainId(facility, sftpOrders.getDomainId());
 		
 		Assert.assertNotNull(sftpOrders);
 		config = sftpOrders.getConfiguration();

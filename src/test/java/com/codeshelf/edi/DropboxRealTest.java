@@ -15,7 +15,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.model.domain.DropboxService;
+import com.codeshelf.model.domain.DropboxGateway;
 import com.codeshelf.model.domain.Facility;
 // import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.OrderHeader;
@@ -46,7 +46,7 @@ public class DropboxRealTest extends ServerTest {
 	// 2) Change LOCAL_DROPBOX_DIR
 	// 3) Uncomment @Test on the test functions below. For TeamCity, we only keep the stub testDBX0() as @test.
 	// 3b) Does it work? Or do you need to obtain your own credentials for your dropbox account? See above.
-	// 4) See DropboxService.handleImport(). Very complicated.
+	// 4) See DropboxGateway.handleImport(). Very complicated.
 	// Any change there requires someone to run these tests again.
 
 	private final static String			LOCAL_DROPBOX_DIR	= "/Users/jonranstrom/Dropbox/Apps/Codeshelf-Interface";
@@ -109,7 +109,7 @@ public class DropboxRealTest extends ServerTest {
 
 	// @Test
 	public final void testDBX1() throws IOException {
-		// This calls dropboxService.getUpdatesFromHost() directly
+		// This calls dropboxGateway.getUpdatesFromHost() directly
 
 		String facilityDirPath = "";
 		try {
@@ -150,17 +150,17 @@ public class DropboxRealTest extends ServerTest {
 			Assert.assertEquals((Integer) 3, detailCount);
 			*/
 
-			DropboxService dropboxService = facility.getDropboxService();
+			DropboxGateway dropboxGateway = facility.getDropboxGateway();
 
-			String ordersDirPath = dropboxService.getFacilityImportSubDirPath("orders"); // IMPORT_ORDERS_PATH
+			String ordersDirPath = dropboxGateway.getFacilityImportSubDirPath("orders"); // IMPORT_ORDERS_PATH
 			String orderFileFragment = "/testorder.csv";
 			String processedFragment = "/processed";
 			String fullOrdersDirPath = LOCAL_DROPBOX_DIR + ordersDirPath;
-			facilityDirPath = LOCAL_DROPBOX_DIR + dropboxService.getFacilityPath();
+			facilityDirPath = LOCAL_DROPBOX_DIR + dropboxGateway.getFacilityPath();
 
 			// No file present yet
 			LOGGER.info("calling dbx getUpdatesFromHost");
-			dropboxService.getUpdatesFromHost(mCsvOrderImporter,
+			dropboxGateway.getUpdatesFromHost(mCsvOrderImporter,
 				mCsvOrderLocationImporter,
 				mCsvInventoryImporter,
 				mCsvLocationAliasImporter,
@@ -181,7 +181,7 @@ public class DropboxRealTest extends ServerTest {
 			waitForDbxSynch();
 
 			LOGGER.info("second  call to getUpdatesFromHost, after new orders file written");
-			dropboxService.getUpdatesFromHost(mCsvOrderImporter,
+			dropboxGateway.getUpdatesFromHost(mCsvOrderImporter,
 				mCsvOrderLocationImporter,
 				mCsvInventoryImporter,
 				mCsvLocationAliasImporter,
@@ -237,18 +237,18 @@ public class DropboxRealTest extends ServerTest {
 			Assert.assertNotNull(facility);
 			LOGGER.info("facility DBX02 made");
 
-			DropboxService dropboxService = facility.getDropboxService();
+			DropboxGateway dropboxGateway = facility.getDropboxGateway();
 
 			final String csvString1 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 					+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 					+ "\r\n1,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 					+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0" + "\r\n";
 
-			String ordersDirPath = dropboxService.getFacilityImportSubDirPath("orders"); // IMPORT_ORDERS_PATH
+			String ordersDirPath = dropboxGateway.getFacilityImportSubDirPath("orders"); // IMPORT_ORDERS_PATH
 			String orderFileFragment = "/testorder.csv";
 			// String processedFragment = "/processed";
 			String fullOrdersDirPath = LOCAL_DROPBOX_DIR + ordersDirPath;
-			facilityDirPath = LOCAL_DROPBOX_DIR + dropboxService.getFacilityPath();
+			facilityDirPath = LOCAL_DROPBOX_DIR + dropboxGateway.getFacilityPath();
 
 			final String csvFilePath = fullOrdersDirPath + orderFileFragment;
 			try {
@@ -304,7 +304,7 @@ public class DropboxRealTest extends ServerTest {
 
 			LOGGER.info("START dbx getUpdatesFromHost for DBX02");
 			// testImporter instead of mCsvOrderImporter
-			dropboxService.getUpdatesFromHost(testImporter,
+			dropboxGateway.getUpdatesFromHost(testImporter,
 				mCsvOrderLocationImporter,
 				mCsvInventoryImporter,
 				mCsvLocationAliasImporter,
@@ -327,7 +327,7 @@ public class DropboxRealTest extends ServerTest {
 
 			LOGGER.info("START dbx getUpdatesFromHost for DBX02 after new file came");
 			// use the normal mCsvOrderImporter as we don't want to inject a new file again
-			dropboxService.getUpdatesFromHost(mCsvOrderImporter,
+			dropboxGateway.getUpdatesFromHost(mCsvOrderImporter,
 				mCsvOrderLocationImporter,
 				mCsvInventoryImporter,
 				mCsvLocationAliasImporter,
@@ -372,20 +372,20 @@ public class DropboxRealTest extends ServerTest {
 			Assert.assertNotNull(facility);
 			LOGGER.info("facility DBX03 made");
 
-			DropboxService dropboxService = facility.getDropboxService();
+			DropboxGateway dropboxGateway = facility.getDropboxGateway();
 
 			final String csvString1 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 					+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 					+ "\r\n1,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 					+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0" + "\r\n";
 
-			String ordersDirPath = dropboxService.getFacilityImportSubDirPath("orders"); // IMPORT_ORDERS_PATH
+			String ordersDirPath = dropboxGateway.getFacilityImportSubDirPath("orders"); // IMPORT_ORDERS_PATH
 			String orderFileFragment = "/testorder.csv";
 			String processingFileFragment = "/testorder.csv.processing";
 			String failedFileFragment = "/testorder.csv.FAILED";
 			String processedFragment = "/processed";
 			String fullOrdersDirPath = LOCAL_DROPBOX_DIR + ordersDirPath;
-			facilityDirPath = LOCAL_DROPBOX_DIR + dropboxService.getFacilityPath();
+			facilityDirPath = LOCAL_DROPBOX_DIR + dropboxGateway.getFacilityPath();
 
 			final String csvFilePath = fullOrdersDirPath + processingFileFragment;
 			try {
@@ -398,7 +398,7 @@ public class DropboxRealTest extends ServerTest {
 			waitForDbxSynch();
 
 			LOGGER.info("START dbx getUpdatesFromHost for DBX03");
-			dropboxService.getUpdatesFromHost(mCsvOrderImporter,
+			dropboxGateway.getUpdatesFromHost(mCsvOrderImporter,
 				mCsvOrderLocationImporter,
 				mCsvInventoryImporter,
 				mCsvLocationAliasImporter,
@@ -430,7 +430,7 @@ public class DropboxRealTest extends ServerTest {
 
 			LOGGER.info("START dbx getUpdatesFromHost for DBX03 after .FAILED file came");
 			// use the normal mCsvOrderImporter as we don't want to inject a new file again
-			dropboxService.getUpdatesFromHost(mCsvOrderImporter,
+			dropboxGateway.getUpdatesFromHost(mCsvOrderImporter,
 				mCsvOrderLocationImporter,
 				mCsvInventoryImporter,
 				mCsvLocationAliasImporter,

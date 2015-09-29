@@ -11,8 +11,8 @@ import org.apache.shiro.mgt.SecurityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.edi.EdiExporterProvider;
-import com.codeshelf.edi.EdiProcessorService;
+import com.codeshelf.edi.EdiExportService;
+import com.codeshelf.edi.EdiImportService;
 import com.codeshelf.email.EmailService;
 import com.codeshelf.email.TemplateService;
 import com.codeshelf.manager.service.ITenantManagerService;
@@ -20,7 +20,7 @@ import com.codeshelf.manager.service.ManagerPersistenceService;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.metrics.DataQuantityHealthCheck;
 import com.codeshelf.metrics.DatabaseConnectionHealthCheck;
-import com.codeshelf.metrics.DropboxServiceHealthCheck;
+import com.codeshelf.metrics.DropboxGatewayHealthCheck;
 import com.codeshelf.metrics.EdiHealthCheck;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.IsProductionServerHealthCheck;
@@ -35,21 +35,21 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(ServerCodeshelfApplication.class);
 
-	private EdiProcessorService			ediProcessorService;
-	private EdiExporterProvider			ediExporterProvider;
+	private EdiImportService			ediProcessorService;
+	private EdiExportService			ediExporterProvider;
 	private IPickDocumentGenerator	mPickDocumentGenerator;
 	
 	private WebSocketManagerService sessionManager;
 	private IMetricsService metricsService;
 	
 	@Inject
-	public ServerCodeshelfApplication(final EdiProcessorService inEdiProcessorService,
+	public ServerCodeshelfApplication(final EdiImportService inEdiProcessorService,
 			final IPickDocumentGenerator inPickDocumentGenerator,
 			final WebApiServer inWebApiServer,
 			final ITenantManagerService tenantManagerService,
 			final IMetricsService metricsService,
 			final WebSocketManagerService webSocketManagerService,
-			final EdiExporterProvider ediExporterProvider,
+			final EdiExportService ediExporterProvider,
 			final IPropertyService propertyService,
 			final TokenSessionService authService,
 			final SecurityManager securityManager,
@@ -109,7 +109,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		ActiveSiteControllerHealthCheck sessionCheck = new ActiveSiteControllerHealthCheck(this.sessionManager);
 		metricsService.registerHealthCheck(sessionCheck);
 
-		DropboxServiceHealthCheck dbxCheck = new DropboxServiceHealthCheck();
+		DropboxGatewayHealthCheck dbxCheck = new DropboxGatewayHealthCheck();
 		metricsService.registerHealthCheck(dbxCheck);
 		
 		EdiHealthCheck ediCheck = new EdiHealthCheck(this.ediProcessorService, ediExporterProvider);

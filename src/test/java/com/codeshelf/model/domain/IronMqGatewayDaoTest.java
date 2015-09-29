@@ -6,19 +6,19 @@ import org.postgresql.util.PSQLException;
 
 import com.codeshelf.testframework.MockDaoTest;
 
-public class IronMqServiceDaoTest extends MockDaoTest {
+public class IronMqGatewayDaoTest extends MockDaoTest {
 
 	@Test
 	public void updatedCredentialsAvailableToFacilityReference() throws PSQLException {
 		this.getTenantPersistenceService().beginTransaction();
 		try {
 			Facility f = createFacility();
-			IronMqService ironMqService = f.findEdiService(IronMqService.class);
-			String originalCredentials = ironMqService.getProviderCredentials();
+			IronMqGateway ironMqGateway = f.findEdiService(IronMqGateway.class);
+			String originalCredentials = ironMqGateway.getProviderCredentials();
 			
-			IronMqService ironMqServiceByDao = IronMqService.staticGetDao().findByPersistentId(ironMqService.getPersistentId());
-			ironMqServiceByDao.storeCredentials("NEWPROJ", "NEWTOKEN", "true");
-			String updatedCredentials = f.findEdiService(IronMqService.class).getProviderCredentials();
+			IronMqGateway ironMqGatewayByDao = IronMqGateway.staticGetDao().findByPersistentId(ironMqGateway.getPersistentId());
+			ironMqGatewayByDao.storeCredentials("NEWPROJ", "NEWTOKEN", "true");
+			String updatedCredentials = f.findEdiService(IronMqGateway.class).getProviderCredentials();
 			Assert.assertNotEquals(originalCredentials, updatedCredentials);
 			
 		} finally {

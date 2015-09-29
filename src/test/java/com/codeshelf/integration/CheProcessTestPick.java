@@ -27,7 +27,7 @@ import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.PosControllerInstr;
-import com.codeshelf.edi.EdiExporterProvider;
+import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.edi.FacilityEdiExporter;
 import com.codeshelf.edi.SftpConfiguration;
 import com.codeshelf.flyweight.command.ColorEnum;
@@ -42,7 +42,6 @@ import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.ExportMessage.ExportMessageType;
-import com.codeshelf.model.domain.AbstractSftpEdiService;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.DomainObjectProperty;
@@ -57,7 +56,8 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
-import com.codeshelf.model.domain.SftpWIsEdiService;
+import com.codeshelf.model.domain.SftpGateway;
+import com.codeshelf.model.domain.SftpWiGateway;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.service.ExtensionPointType;
@@ -2054,7 +2054,7 @@ public class CheProcessTestPick extends ServerTest {
 		beginTransaction();
 		facility.reload();
 		SftpConfiguration config = setupSftpOutConfiguration();
-		SftpWIsEdiService sftpWIs = configureSftpService(facility, config, SftpWIsEdiService.class);
+		SftpWiGateway sftpWIs = configureSftpService(facility, config, SftpWiGateway.class);
 		Assert.assertTrue(sftpWIs.isLinked());
 		commitTransaction();
 
@@ -2098,7 +2098,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.loginAndSetup("Picker #1");
 		picker.logout();
 		
-		EdiExporterProvider exportProvider = workService.getExportProvider();
+		EdiExportService exportProvider = workService.getExportProvider();
 		FacilityEdiExporter exporter = exportProvider.getEdiExporter(facility);
 		exporter.waitUntillQueueIsEmpty(20000);
 		
@@ -2147,12 +2147,12 @@ public class CheProcessTestPick extends ServerTest {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private <T extends AbstractSftpEdiService> T configureSftpService(Facility facility, SftpConfiguration config, Class<T> class1) {
+	private <T extends SftpGateway> T configureSftpService(Facility facility, SftpConfiguration config, Class<T> class1) {
 		// ensure loads/saves configuration correctly
-		AbstractSftpEdiService sftpOrders = facility.findEdiService(class1); 
+		SftpGateway sftpOrders = facility.findEdiService(class1); 
 		sftpOrders.setConfiguration(config);
 		sftpOrders.getDao().store(sftpOrders);
-		sftpOrders = (AbstractSftpEdiService) sftpOrders.getDao().findByDomainId(facility, sftpOrders.getDomainId());
+		sftpOrders = (SftpGateway) sftpOrders.getDao().findByDomainId(facility, sftpOrders.getDomainId());
 		
 		Assert.assertNotNull(sftpOrders);
 		config = sftpOrders.getConfiguration();

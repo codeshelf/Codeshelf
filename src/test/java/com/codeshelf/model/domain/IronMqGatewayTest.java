@@ -19,19 +19,19 @@ import org.mockito.Mockito;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.testframework.MockDaoTest;
 
-public class IronMqServiceTest extends MockDaoTest {
+public class IronMqGatewayTest extends MockDaoTest {
 	@Before
 	public void doBefore() {
 		super.doBefore();
 		@SuppressWarnings("unchecked")
-		ITypedDao<IronMqService> mock = mock(ITypedDao.class);
-		super.useCustomDao(IronMqService.class, mock);
+		ITypedDao<IronMqGateway> mock = mock(ITypedDao.class);
+		super.useCustomDao(IronMqGateway.class, mock);
 	}
 	
 	@Test
 	public void whenEmptyCredentialsThrowException() throws IOException {
 		Queue queue = mock(Queue.class);
-		IronMqService service = new IronMqService(createClientProvider("", "", queue));
+		IronMqGateway service = new IronMqGateway(createClientProvider("", "", queue));
 		service.storeCredentials("", "", "true");
 		service.transportWiFinished("AMESSAGE", "AMESSAGE", "AMESSAGE");
 		Mockito.verifyZeroInteractions(queue);
@@ -51,7 +51,7 @@ public class IronMqServiceTest extends MockDaoTest {
 		doThrow(new HTTPException(404, "Not found")).when(queueForBadCredentials).push(any(String.class));
 		
 		
-		IronMqService service = new IronMqService(createClientProvider(projectId, token, queueForBadCredentials));
+		IronMqGateway service = new IronMqGateway(createClientProvider(projectId, token, queueForBadCredentials));
 		service.storeCredentials(projectId, token, "true");
 		try {
 			service.transportWiFinished("AMESSAGE", "AMESSAGE", "AMESSAGE");
@@ -71,10 +71,10 @@ public class IronMqServiceTest extends MockDaoTest {
 		Queue queue = mock(Queue.class);
 		doReturn("MESSAGEID").when(queue).push(any(String.class));
 		
-		IronMqService.ClientProvider provider = createClientProvider(projectId, token, queue);
+		IronMqGateway.ClientProvider provider = createClientProvider(projectId, token, queue);
 		
 		
-		IronMqService service = new IronMqService(provider);
+		IronMqGateway service = new IronMqGateway(provider);
 		service.storeCredentials(projectId, token, "true");
 		service.transportWiFinished("AMESSAGE", "AMESSAGE", "AMESSAGE");
 	}
@@ -87,9 +87,9 @@ public class IronMqServiceTest extends MockDaoTest {
 
 		Queue queue = mock(Queue.class);
 		doThrow(new HTTPException(401,"Unauthorized")).when(queue).push(any(String.class));
-		IronMqService.ClientProvider provider = createClientProvider(projectId, token, queue);
+		IronMqGateway.ClientProvider provider = createClientProvider(projectId, token, queue);
 
-		IronMqService service = new IronMqService(provider);
+		IronMqGateway service = new IronMqGateway(provider);
 		service.storeCredentials(projectId, token, "true");
 		try {
 			service.transportWiFinished("AMESSAGE", "AMESSAGE", "AMESSAGE");
@@ -108,9 +108,9 @@ public class IronMqServiceTest extends MockDaoTest {
 
 		Queue queue = mock(Queue.class);
 		doThrow(new IOException()).when(queue).push(any(String.class));
-		IronMqService.ClientProvider provider = createClientProvider(projectId, token, queue);
+		IronMqGateway.ClientProvider provider = createClientProvider(projectId, token, queue);
 
-		IronMqService service = new IronMqService(provider);
+		IronMqGateway service = new IronMqGateway(provider);
 		service.storeCredentials(projectId, token, "true");
 		try {
 			service.transportWiFinished("AMESSAGE", "AMESSAGE", "AMESSAGE");
@@ -123,11 +123,11 @@ public class IronMqServiceTest extends MockDaoTest {
 		
 	}
 	
-	private IronMqService.ClientProvider createClientProvider(String projectId, String token, Queue queue) {
+	private IronMqGateway.ClientProvider createClientProvider(String projectId, String token, Queue queue) {
 		Client client = mock(Client.class);
 		doReturn(queue).when(client).queue(any(String.class));
 		
-		IronMqService.ClientProvider provider = mock(IronMqService.ClientProvider.class);
+		IronMqGateway.ClientProvider provider = mock(IronMqGateway.ClientProvider.class);
 		doReturn(client).when(provider).get(eq(projectId), eq(token));
 		return provider;
 	}

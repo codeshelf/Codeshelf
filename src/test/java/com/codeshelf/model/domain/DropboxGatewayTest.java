@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: DropboxServiceTest.java,v 1.6 2013/04/09 07:58:20 jeffw Exp $
+ *  $Id: DropboxGatewayTest.java,v 1.6 2013/04/09 07:58:20 jeffw Exp $
  *******************************************************************************/
 package com.codeshelf.model.domain;
 
@@ -25,7 +25,7 @@ import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.validation.BatchResult;
 
-public class DropboxServiceTest extends MockDaoTest {
+public class DropboxGatewayTest extends MockDaoTest {
 
 	/*
 	 * It's pretty easy to test and already connected DB account, but it's impossible to test the link process.
@@ -42,12 +42,12 @@ public class DropboxServiceTest extends MockDaoTest {
 
 		facility.createDefaultEDIServices();
 
-		DropboxService dropboxService = facility.getDropboxService();
+		DropboxGateway dropboxGateway = facility.getDropboxGateway();
 
-		dropboxService.setParent(facility);
-		dropboxService.setDomainId("DB");
-		dropboxService.setProviderCredentials(TEST_CREDENTIALS);
-		dropboxService.setServiceState(EdiServiceStateEnum.LINKED);
+		dropboxGateway.setParent(facility);
+		dropboxGateway.setDomainId("DB");
+		dropboxGateway.setProviderCredentials(TEST_CREDENTIALS);
+		dropboxGateway.setServiceState(EdiServiceStateEnum.LINKED);
 
 		ICsvOrderImporter orderImporter = mock(ICsvOrderImporter.class);
 		Mockito.when(
@@ -60,7 +60,7 @@ public class DropboxServiceTest extends MockDaoTest {
 		ICsvCrossBatchImporter crossBatchImporter = mock(ICsvCrossBatchImporter.class);
 		ICsvAislesFileImporter aislesFileImporter = mock(ICsvAislesFileImporter.class);
 		
-		dropboxService.getUpdatesFromHost(orderImporter,
+		dropboxGateway.getUpdatesFromHost(orderImporter,
 			orderLocationImporter,
 			inventoryImporter,
 			locationImporter,

@@ -44,8 +44,8 @@ public class ObjectMethodCommandTest extends MockDaoTest {
 		//Organization.setDao(orgDao);
 		/*
 		Facility.DAO = facDao;
-		DropboxService.DAO = dropboxDao;
-		IronMqService.DAO = ironMqDao;
+		DropboxGateway.DAO = dropboxDao;
+		IronMqGateway.DAO = ironMqDao;
 		//EdiServiceABC.DAO = ediServiceABCDao;
 		CodeshelfNetwork.DAO = netDao;
 		ContainerKind.DAO = containerKindDao;

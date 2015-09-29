@@ -2,8 +2,8 @@ package com.codeshelf.metrics;
 
 import java.util.List;
 
-import com.codeshelf.edi.EdiExporterProvider;
-import com.codeshelf.edi.EdiProcessorService;
+import com.codeshelf.edi.EdiExportService;
+import com.codeshelf.edi.EdiImportService;
 import com.codeshelf.edi.FacilityEdiExporter;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.service.TenantManagerService;
@@ -14,11 +14,11 @@ import com.codeshelf.security.CodeshelfSecurityManager;
 public class EdiHealthCheck extends CodeshelfHealthCheck {
 	final static int EDI_SERVICE_CYCLE_TIMEOUT_SECONDS = 60*5; // timeout if EDI takes longer than 5 mins
 	
-	private EdiProcessorService ediService;
-	private EdiExporterProvider ediExporterProvider;
+	private EdiImportService ediService;
+	private EdiExportService ediExporterProvider;
 	
 	
-	public EdiHealthCheck(EdiProcessorService ediService, EdiExporterProvider ediExporterProvider) {
+	public EdiHealthCheck(EdiImportService ediService, EdiExportService ediExporterProvider) {
 		super("EDI");
 		this.ediService = ediService;
 		this.ediExporterProvider = ediExporterProvider;
@@ -38,14 +38,14 @@ public class EdiHealthCheck extends CodeshelfHealthCheck {
 		if(secondsSinceLastSuccess > EDI_SERVICE_CYCLE_TIMEOUT_SECONDS) {
 			return Result.unhealthy(String.format("%d secs since last success", secondsSinceLastSuccess));
 		} //else
-		Result badSftpResult = testSFTPServices();
+		Result badSftpResult = testEDIServices();
 		if (badSftpResult != null) {
 			return badSftpResult;
 		} //else
 		return Result.healthy(OK);
 	}
 
-	private Result testSFTPServices(){
+	private Result testEDIServices(){
 		StringBuilder errors = new StringBuilder();
 		for (Tenant tenant : TenantManagerService.getInstance().getTenants()) {
 			try{
@@ -66,6 +66,16 @@ public class EdiHealthCheck extends CodeshelfHealthCheck {
 						}
 					}
 				}
+				/*
+				List<EdiServiceABC> ediServices = EdiServiceABC.staticGetDao().getAll();
+				for (EdiServiceABC ediSerivce : ediServices) {
+					if (ediSerivce.getActive()){
+						if (ediSerivce.getServiceState() != EdiServiceStateEnum.LINKED) {
+							errors.append(String.format("Active EDI service %s not linked, tenant: %s, facility: %s. ", ediSerivce.getDomainId(), tenant.getTenantIdentifier(), ediSerivce.getFacility().getDomainId()));
+						}
+					}
+				}
+				*/
 				TenantPersistenceService.getInstance().commitTransaction();
 			} catch (Exception e) {
 				TenantPersistenceService.getInstance().rollbackTransaction();
