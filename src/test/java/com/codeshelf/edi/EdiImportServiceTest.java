@@ -138,7 +138,6 @@ public class EdiImportServiceTest extends MockDaoTest {
 		getFacility();
 
 		IEdiGateway ediServiceLinked = new IEdiGateway() {
-
 			public boolean isLinked() {
 				return true;
 			}
@@ -261,7 +260,7 @@ public class EdiImportServiceTest extends MockDaoTest {
 			@Override
 			public Boolean getActive() {
 				// TODO Auto-generated method stub
-				return null;
+				return true;
 			}
 		};
 
@@ -388,13 +387,13 @@ public class EdiImportServiceTest extends MockDaoTest {
 			@Override
 			public Boolean getActive() {
 				// TODO Auto-generated method stub
-				return null;
+				return true;
 			}
 		};
 
 		Facility facility = getFacility();
-		facility.addEdiService(ediServiceUnlinked);
-		facility.addEdiService(ediServiceLinked);
+		facility.addEdiGateway(ediServiceUnlinked);
+		facility.addEdiGateway(ediServiceLinked);
 
 		Provider anyProvider = mock(Provider.class);
 		EdiImportService ediProcessorService = new EdiImportService(anyProvider,
