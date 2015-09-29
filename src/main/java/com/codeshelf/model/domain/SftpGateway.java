@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.edi.EdiFileWriteException;
 import com.codeshelf.edi.SftpConfiguration;
 import com.codeshelf.model.EdiProviderEnum;
-import com.codeshelf.model.EdiServiceStateEnum;
+import com.codeshelf.model.EdiGatewayStateEnum;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.ChannelSftp.LsEntry;
@@ -44,7 +44,7 @@ public abstract class SftpGateway extends EdiGateway {
 	public SftpGateway() {
 		super();
 		setProvider(EdiProviderEnum.OTHER);
-		setServiceState(EdiServiceStateEnum.UNLINKED); // TODO: maybe add UX setup procedure to verify connection works
+		setGatewayState(EdiGatewayStateEnum.UNLINKED); // TODO: maybe add UX setup procedure to verify connection works
 	}
 	
 	public SftpGateway(String domainId) {
@@ -76,11 +76,11 @@ public abstract class SftpGateway extends EdiGateway {
 		try {
 			connect();
 			disconnect();
-			setServiceState(EdiServiceStateEnum.LINKED);
+			setGatewayState(EdiGatewayStateEnum.LINKED);
 			return true;
 		} catch (IOException e) {
 			LOGGER.warn("Failed testing credentials for {}", toSftpChannelDebug(), e);
-			setServiceState(EdiServiceStateEnum.LINK_FAILED);
+			setGatewayState(EdiGatewayStateEnum.LINK_FAILED);
 			return false;
 		} 
 	}

@@ -37,7 +37,7 @@ import com.codeshelf.edi.IEdiGateway;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
-import com.codeshelf.model.EdiServiceStateEnum;
+import com.codeshelf.model.EdiGatewayStateEnum;
 import com.codeshelf.model.HeaderCounts;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.PositionTypeEnum;
@@ -93,7 +93,7 @@ public class Facility extends Location {
 	@OneToMany(mappedBy = "parent", targetEntity = EdiGateway.class, orphanRemoval = true)
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
-	private List<IEdiGateway>				ediServices		= new ArrayList<IEdiGateway>();
+	private List<IEdiGateway>				ediGateways		= new ArrayList<IEdiGateway>();
 
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	@MapKey(name = "domainId")
@@ -241,23 +241,23 @@ public class Facility extends Location {
 		}
 	}
 
-	public void addEdiService(IEdiGateway inEdiService) {
-		Facility previousFacility = inEdiService.getParent();
+	public void addEdiGateway(IEdiGateway inEdiGateway) {
+		Facility previousFacility = inEdiGateway.getParent();
 		if (previousFacility == null) {
-			ediServices.add(inEdiService);
-			inEdiService.setParent(this);
+			ediGateways.add(inEdiGateway);
+			inEdiGateway.setParent(this);
 		} else if (!previousFacility.equals(this)) {
-			LOGGER.error("cannot add EdiService " + inEdiService.getServiceName() + " to " + this.getDomainId()
+			LOGGER.error("cannot add EdiGateway " + inEdiGateway.getServiceName() + " to " + this.getDomainId()
 					+ " because it has not been removed from " + previousFacility.getDomainId());
 		}
 	}
 
-	public void removeEdiService(IEdiGateway inEdiService) {
-		if (this.ediServices.contains(inEdiService)) {
-			inEdiService.setParent(null);
-			ediServices.remove(inEdiService);
+	public void removeEdiGateway(IEdiGateway inEdiGateway) {
+		if (this.ediGateways.contains(inEdiGateway)) {
+			inEdiGateway.setParent(null);
+			ediGateways.remove(inEdiGateway);
 		} else {
-			LOGGER.error("cannot remove EdiService " + inEdiService.getDomainId() + " from " + this.getDomainId()
+			LOGGER.error("cannot remove EdiGateway " + inEdiGateway.getDomainId() + " from " + this.getDomainId()
 					+ " because it isn't found in children");
 		}
 	}
@@ -707,16 +707,16 @@ public class Facility extends Location {
 	public DropboxGateway getDropboxGateway() {
 		DropboxGateway result = null;
 
-		for (IEdiGateway ediService : getEdiServices()) {
-			if (Hibernate.getClass(ediService).equals(DropboxGateway.class)) {
-				result = (DropboxGateway) ediService;
+		for (IEdiGateway ediGateway : getEdiGateways()) {
+			if (Hibernate.getClass(ediGateway).equals(DropboxGateway.class)) {
+				result = (DropboxGateway) ediGateway;
 				break;
 			}
 		}
 		return result;
 	}
 
-	public void createDefaultEDIServices() {
+	public void createDefaultEDIGateways() {
 		// Create a first Dropbox Service entry for this facility.
 		@SuppressWarnings("unused")
 		DropboxGateway dropboxGateway = createDropboxGateway();
@@ -743,9 +743,9 @@ public class Facility extends Location {
 
 		result = new DropboxGateway();
 		result.setDomainId("DROPBOX");
-		result.setServiceState(EdiServiceStateEnum.UNLINKED);
+		result.setGatewayState(EdiGatewayStateEnum.UNLINKED);
 
-		this.addEdiService(result);
+		this.addEdiGateway(result);
 		try {
 			DropboxGateway.staticGetDao().store(result);
 		} catch (DaoException e) {
@@ -765,8 +765,8 @@ public class Facility extends Location {
 
 		result = new IronMqGateway();
 		result.setDomainId("IRONMQ");
-		result.setServiceState(EdiServiceStateEnum.UNLINKED);
-		this.addEdiService(result);
+		result.setGatewayState(EdiGatewayStateEnum.UNLINKED);
+		this.addEdiGateway(result);
 		result.storeCredentials("", "", "true"); // non-null credentials
 		try {
 			IronMqGateway.staticGetDao().store(result);
@@ -779,7 +779,7 @@ public class Facility extends Location {
 
 
 	private void storeSftpService(SftpGateway sftpEDI) {
-		this.addEdiService(sftpEDI);
+		this.addEdiGateway(sftpEDI);
 		try {
 			sftpEDI.getDao().store(sftpEDI);
 		} catch (DaoException e) {
@@ -1239,7 +1239,7 @@ public class Facility extends Location {
 		LOGGER.info("Creating facility " + inDomainId
 				+ " w/ all edi services, network, sitecon, sitecon user, generic container and 2 CHEs");
 
-		facility.createDefaultEDIServices();
+		facility.createDefaultEDIGateways();
 		// Create the default network for the facility.
 		CodeshelfNetwork network = facility.createNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
 
@@ -1333,31 +1333,31 @@ public class Facility extends Location {
 		}
 	}
 	
-	public Collection<IEdiGateway> getLinkedEdiImportServices() {
+	public Collection<IEdiGateway> getLinkedEdiImportGateway() {
 		//TODO only return services that implement import interface
 		ArrayList<IEdiGateway> importServices = new ArrayList<>();
-		for (IEdiGateway ediService : getEdiServices()) {
-			if (ediService.isLinked()) {
-				importServices.add(ediService);
+		for (IEdiGateway ediGateway : getEdiGateways()) {
+			if (ediGateway.isLinked()) {
+				importServices.add(ediGateway);
 			}
 		}
 		return importServices;
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T extends IEdiGateway> T findEdiService(Class<T> cls) {
-		for (IEdiGateway ediService : getEdiServices()) {
-			if (cls.isAssignableFrom(ediService.getClass())) {
-				return (T) ediService;
+	public <T extends IEdiGateway> T findEdiGateway(Class<T> cls) {
+		for (IEdiGateway ediGateway : getEdiGateways()) {
+			if (cls.isAssignableFrom(ediGateway.getClass())) {
+				return (T) ediGateway;
 			}
 		}
 		return null;
 	}
 	
-	public IEdiGateway findEdiService(String domainId) {
-		for (IEdiGateway ediService : getEdiServices()) {
-			if (ediService.getDomainId().equals(domainId)) {
-				return ediService;
+	public IEdiGateway findEdiGateway(String domainId) {
+		for (IEdiGateway ediGateway : getEdiGateways()) {
+			if (ediGateway.getDomainId().equals(domainId)) {
+				return ediGateway;
 			}
 		}
 		return null;

@@ -2149,7 +2149,7 @@ public class CheProcessTestPick extends ServerTest {
 	@SuppressWarnings("unchecked")
 	private <T extends SftpGateway> T configureSftpService(Facility facility, SftpConfiguration config, Class<T> class1) {
 		// ensure loads/saves configuration correctly
-		SftpGateway sftpOrders = facility.findEdiService(class1); 
+		SftpGateway sftpOrders = facility.findEdiGateway(class1); 
 		sftpOrders.setConfiguration(config);
 		sftpOrders.getDao().store(sftpOrders);
 		sftpOrders = (SftpGateway) sftpOrders.getDao().findByDomainId(facility, sftpOrders.getDomainId());

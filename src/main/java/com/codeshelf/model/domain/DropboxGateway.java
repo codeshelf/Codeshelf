@@ -32,7 +32,7 @@ import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.model.EdiProviderEnum;
-import com.codeshelf.model.EdiServiceStateEnum;
+import com.codeshelf.model.EdiGatewayStateEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.BatchResult;
@@ -104,12 +104,6 @@ public class DropboxGateway extends EdiGateway {
 	}
 
 	@Override
-	public boolean testConnection() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
 	@JsonProperty
 	public boolean getHasCredentials() {
 		return !Strings.isNullOrEmpty(getProviderCredentials());
@@ -145,7 +139,8 @@ public class DropboxGateway extends EdiGateway {
 	/**
 	 * Returns false if and only if it is configured and it fails to get account info
 	 */
-	public boolean checkConnectivity() {
+	@Override
+	public boolean testConnection() {
 		try {
 			DbxClient client = getClient();
 			if(client != null) {
@@ -397,7 +392,7 @@ public class DropboxGateway extends EdiGateway {
 	public String startLink() {
 
 		try {
-			setServiceState(EdiServiceStateEnum.LINKING);
+			setGatewayState(EdiGatewayStateEnum.LINKING);
 			DropboxGateway.staticGetDao().store(this);
 		} catch (DaoException e) {
 			LOGGER.error("Unable to change dropbox service state", e);
@@ -430,10 +425,10 @@ public class DropboxGateway extends EdiGateway {
 			try {
 				// We did get an access token.
 				if (accessToken == null) {
-					setServiceState(EdiServiceStateEnum.LINK_FAILED);
+					setGatewayState(EdiGatewayStateEnum.LINK_FAILED);
 				} else {
 					setProviderCredentials(accessToken);
-					setServiceState(EdiServiceStateEnum.LINKED);
+					setGatewayState(EdiGatewayStateEnum.LINKED);
 					setDbCursor("");
 					result = true;
 				}
@@ -756,7 +751,7 @@ public class DropboxGateway extends EdiGateway {
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
-	 * @see com.codeshelf.model.domain.IEdiService#sendCompletedWorkInstructions(java.util.List)
+	 * @see com.codeshelf.model.domain.IEdiGateway#sendCompletedWorkInstructions(java.util.List)
 	 */
 	public void sendWorkInstructionsToHost(final String exportMessage) {
 		// Do nothing at DropBox (for now).

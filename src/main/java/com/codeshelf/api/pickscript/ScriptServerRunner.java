@@ -699,7 +699,7 @@ public class ScriptServerRunner {
 			}
 			params.add("exportPath", parts[6]);
 		}
-		res.updateEdiService(serviceDomainId, params);
+		res.updateEdiGateway(serviceDomainId, params);
 	}
 
 	/**

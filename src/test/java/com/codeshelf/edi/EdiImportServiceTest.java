@@ -106,7 +106,7 @@ public class EdiImportServiceTest extends MockDaoTest {
 			Mockito.any(ICsvAislesFileImporter.class))).thenThrow(new RuntimeException("any"));
 		IEdiGateway goodService = mock(IEdiGateway.class);
 		Facility facility = mock(Facility.class);
-		Mockito.when(facility.getLinkedEdiImportServices()).thenReturn(ImmutableList.of(failingService, goodService));
+		Mockito.when(facility.getLinkedEdiImportGateway()).thenReturn(ImmutableList.of(failingService, goodService));
 		ediProcessorService.doEdiForFacility(facility);
 		verifyCalled(goodService);
 		
@@ -129,272 +129,15 @@ public class EdiImportServiceTest extends MockDaoTest {
 	public final void ediProcessorTest() {
 		LOGGER.info("starting ediProcessorTest");
 
-		final class Result {
-			public boolean	processed	= false;
-		}
 		final Result linkedResult = new Result();
 		final Result unlinkedResult = new Result();
 
 		getFacility();
-
-		IEdiGateway ediServiceLinked = new IEdiGateway() {
-
-			public boolean isLinked() {
-				return true;
-			}
-
-			public String getServiceName() {
-				return "LINKED";
-			}
-
-			public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrdersImporter,
-				ICsvOrderLocationImporter inCsvOrderLocationImporter,
-				ICsvInventoryImporter inCsvInventoryImporter,
-				ICsvLocationAliasImporter inCsvLocationsImporter,
-				ICsvCrossBatchImporter inCsvCrossBatchImporter,
-				ICsvAislesFileImporter inCsvAislesFileImporter) {
-				linkedResult.processed = true;
-				return true;
-			}
-
-			@Override
-			public Facility getParent() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setParent(Facility inParent) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public UUID getParentPersistentId() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public String getParentFullDomainId() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public String getFullDomainId() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public String getDefaultDomainIdPrefix() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public String getDomainId() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setDomainId(String inId) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public String getClassName() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public UUID getPersistentId() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setPersistentId(UUID inPersistentId) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public long getVersion() {
-				// TODO Auto-generated method stub
-				return 0;
-			}
-
-			@Override
-			public void setVersion(long inVersion) {
-				// TODO Auto-generated method stub
-			}
-
-			@Override
-			public <T extends IDomainObject> ITypedDao<T> getDao() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public Facility getFacility() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public Timestamp getLastSuccessTime() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public boolean testConnection() {
-				// TODO Auto-generated method stub
-				return false;
-			}
-
-			@Override
-			public Boolean getActive() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-		};
-
-		IEdiGateway ediServiceUnlinked = new IEdiGateway() {
-
-			public boolean isLinked() {
-				return false;
-			}
-
-			public String getServiceName() {
-				return "UNLINKED";
-			}
-
-			public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrdersImporter,
-				ICsvOrderLocationImporter iCsvOrderLocationImporter,
-				ICsvInventoryImporter inCsvInventoryImporter,
-				ICsvLocationAliasImporter inCsvLocationsImporter,
-				ICsvCrossBatchImporter inCsvCrossBatchImporter,
-				ICsvAislesFileImporter inCsvAislesFileImporter) {
-				unlinkedResult.processed = true;
-				return true;
-			}
-
-			@Override
-			public Facility getParent() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setParent(Facility inParent) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public UUID getParentPersistentId() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public String getParentFullDomainId() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public String getFullDomainId() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public String getDefaultDomainIdPrefix() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public String getDomainId() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setDomainId(String inId) {
-				// TODO Auto-generated method stub
-
-			}
-
-			@Override
-			public String getClassName() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public UUID getPersistentId() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public void setPersistentId(UUID inPersistentId) {
-				// TODO Auto-generated method stub
-			}
-
-			@Override
-			public long getVersion() {
-				// TODO Auto-generated method stub
-				return 0;
-			}
-
-			@Override
-			public void setVersion(long inVersion) {
-				// TODO Auto-generated method stub
-			}
-
-			@Override
-			public <T extends IDomainObject> ITypedDao<T> getDao() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public Facility getFacility() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public Timestamp getLastSuccessTime() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-
-			@Override
-			public boolean testConnection() {
-				// TODO Auto-generated method stub
-				return false;
-			}
-
-			@Override
-			public Boolean getActive() {
-				// TODO Auto-generated method stub
-				return null;
-			}
-		};
-
+		IEdiGateway ediGatewayLinked = new DummyGateway(true, linkedResult);
+		IEdiGateway ediGatewayUnlinked = new DummyGateway(false, unlinkedResult);
 		Facility facility = getFacility();
-		facility.addEdiService(ediServiceUnlinked);
-		facility.addEdiService(ediServiceLinked);
+		facility.addEdiGateway(ediGatewayUnlinked);
+		facility.addEdiGateway(ediGatewayLinked);
 
 		Provider anyProvider = mock(Provider.class);
 		EdiImportService ediProcessorService = new EdiImportService(anyProvider,
@@ -453,5 +196,124 @@ public class EdiImportServiceTest extends MockDaoTest {
 			}
 
 		};
+	}
+	
+	private final class Result {
+		public boolean	processed = false;
+	}
+
+	private class DummyGateway implements IEdiGateway{
+		private Result result;
+		private boolean linked;
+		
+		public DummyGateway(boolean linked, Result result) {
+			this.linked = linked;
+			this.result = result;
+		}
+		
+		public boolean isLinked() {
+			return linked;
+		}
+
+		public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrdersImporter,
+			ICsvOrderLocationImporter iCsvOrderLocationImporter,
+			ICsvInventoryImporter inCsvInventoryImporter,
+			ICsvLocationAliasImporter inCsvLocationsImporter,
+			ICsvCrossBatchImporter inCsvCrossBatchImporter,
+			ICsvAislesFileImporter inCsvAislesFileImporter) {
+			result.processed = true;
+			return true;
+		}
+
+		@Override
+		public String getServiceName() {
+			return "DUMMY";
+		}
+
+		@Override
+		public Facility getParent() {
+			return null;
+		}
+
+		@Override
+		public void setParent(Facility inParent) {
+		}
+
+		@Override
+		public UUID getParentPersistentId() {
+			return null;
+		}
+
+		@Override
+		public String getParentFullDomainId() {
+			return null;
+		}
+
+		@Override
+		public String getFullDomainId() {
+			return null;
+		}
+
+		@Override
+		public String getDefaultDomainIdPrefix() {
+			return null;
+		}
+
+		@Override
+		public String getDomainId() {
+			return null;
+		}
+
+		@Override
+		public void setDomainId(String inId) {
+		}
+
+		@Override
+		public String getClassName() {
+			return null;
+		}
+
+		@Override
+		public UUID getPersistentId() {
+			return null;
+		}
+
+		@Override
+		public void setPersistentId(UUID inPersistentId) {
+		}
+
+		@Override
+		public long getVersion() {
+			return 0;
+		}
+
+		@Override
+		public void setVersion(long inVersion) {
+		}
+
+		@Override
+		public <T extends IDomainObject> ITypedDao<T> getDao() {
+			return null;
+		}
+
+		@Override
+		public Facility getFacility() {
+			return null;
+		}
+
+		@Override
+		public Timestamp getLastSuccessTime() {
+			return null;
+		}
+
+		@Override
+		public boolean testConnection() {
+			return false;
+		}
+
+		@Override
+		public Boolean getActive() {
+			return true;
+		}
 	}
 }

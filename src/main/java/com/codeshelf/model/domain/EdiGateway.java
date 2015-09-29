@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiServiceABC.java,v 1.21 2013/09/18 00:40:08 jeffw Exp $
+ *  $Id: EdiGateway.java,v 1.21 2013/09/18 00:40:08 jeffw Exp $
  *******************************************************************************/
 package com.codeshelf.model.domain;
 
@@ -29,7 +29,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.codeshelf.edi.IEdiGateway;
 import com.codeshelf.model.EdiProviderEnum;
-import com.codeshelf.model.EdiServiceStateEnum;
+import com.codeshelf.model.EdiGatewayStateEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -89,7 +89,7 @@ public abstract class EdiGateway extends DomainObjectTreeABC<Facility> implement
 	@Getter
 	@Setter
 	@JsonProperty
-	private EdiServiceStateEnum		serviceState;
+	private EdiGatewayStateEnum		gatewayState;
 
 	// Access tokens and any other configuration to be interpreted by subclass.
 	// If the service requires storing a password, it should be obfuscated. 
@@ -117,7 +117,7 @@ public abstract class EdiGateway extends DomainObjectTreeABC<Facility> implement
 	}
 
 	public boolean isLinked() {
-		return EdiServiceStateEnum.LINKED.equals(this.getServiceState());
+		return EdiGatewayStateEnum.LINKED.equals(this.getGatewayState());
 	}
 
 	public Facility getFacility() {

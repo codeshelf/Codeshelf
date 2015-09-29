@@ -66,8 +66,8 @@ public class EdiHealthCheck extends CodeshelfHealthCheck {
 				}
 				*/
 				/*
-				List<EdiServiceABC> ediServices = EdiServiceABC.staticGetDao().getAll();
-				for (EdiServiceABC ediSerivce : ediServices) {
+				List<EdiGateway> ediGateways = EdiGateway.staticGetDao().getAll();
+				for (EdiGateway ediGateway : ediGateways) {
 					if (ediSerivce.getActive()){
 						if (ediSerivce.getServiceState() != EdiServiceStateEnum.LINKED) {
 							errors.append(String.format("Active EDI service %s not linked, tenant: %s, facility: %s. ", ediSerivce.getDomainId(), tenant.getTenantIdentifier(), ediSerivce.getFacility().getDomainId()));

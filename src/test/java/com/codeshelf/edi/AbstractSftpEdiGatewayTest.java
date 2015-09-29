@@ -29,7 +29,7 @@ import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.validation.BatchResult;
 
 
-public class AbstractSftpEdiServiceTest extends HibernateTest {
+public class AbstractSftpEdiGatewayTest extends HibernateTest {
 	
 	private static final String	SFTP_TEST_HOST	= "sftp.codeshelf.com";
 	private static final String	SFTP_TEST_USERNAME	= "test";
@@ -163,7 +163,7 @@ public class AbstractSftpEdiServiceTest extends HibernateTest {
 		
 		
 		// ensure loads/saves configuration correctly
-		SftpGateway sftpOrders = facility.findEdiService(class1); 
+		SftpGateway sftpOrders = facility.findEdiGateway(class1); 
 		sftpOrders.setConfiguration(config);
 		sftpOrders.getDao().store(sftpOrders);
 		sftpOrders = (SftpGateway) sftpOrders.getDao().findByDomainId(facility, sftpOrders.getDomainId());

@@ -64,18 +64,18 @@ public class IronMqGatewayOnlineTest extends MockDaoTest {
 		FacilityGenerator facilityGenerator = new FacilityGenerator();
 		Facility facility = facilityGenerator.generateValid();
 		
-		IronMqGateway service = new IronMqGateway();
-		service.setDomainId("IRONMQTEST");
-		service.setProvider(EdiProviderEnum.IRONMQ);
-		facility.addEdiService(service);
+		IronMqGateway gateway = new IronMqGateway();
+		gateway.setDomainId("IRONMQTEST");
+		gateway.setProvider(EdiProviderEnum.IRONMQ);
+		facility.addEdiGateway(gateway);
 
-		service.storeCredentials("540e1486364af100050000b4", "RzgIyO5FNeNAgZljs9x4um5UVqw", "true");
+		gateway.storeCredentials("540e1486364af100050000b4", "RzgIyO5FNeNAgZljs9x4um5UVqw", "true");
 		String message = "TESTMESSAGE" + System.currentTimeMillis();
-		service.transportWiFinished("AMESSAGE", "AMESSAGE", message);
+		gateway.transportWiFinished("AMESSAGE", "AMESSAGE", message);
 		String[] messages = new String[0];
 		boolean found = false;
 		do {
-			messages = service.consumeMessages(IronMqGateway.MAX_NUM_MESSAGES, 5);
+			messages = gateway.consumeMessages(IronMqGateway.MAX_NUM_MESSAGES, 5);
 			for (int i = 0; i < messages.length; i++) {
 				String string = messages[i];
 				found = string.contains(message);
@@ -96,13 +96,13 @@ public class IronMqGatewayOnlineTest extends MockDaoTest {
 		FacilityGenerator facilityGenerator = new FacilityGenerator();
 		Facility facility = facilityGenerator.generateValid();
 		
-		IronMqGateway service = new IronMqGateway();
-		service.setDomainId("IRONMQTEST");
-		facility.addEdiService(service);
+		IronMqGateway gateway = new IronMqGateway();
+		gateway.setDomainId("IRONMQTEST");
+		facility.addEdiGateway(gateway);
 
-		service.storeCredentials("540e1486364af100050000b4", "BAD", "true");
+		gateway.storeCredentials("540e1486364af100050000b4", "BAD", "true");
 		try {
-			service.transportWiFinished("AMESSAGE", "AMESSAGE", "AMESSAGE");
+			gateway.transportWiFinished("AMESSAGE", "AMESSAGE", "AMESSAGE");
 			Assert.fail("Should have thrown IOException");
 		} catch(IOException e) {
 			e.printStackTrace();
@@ -118,13 +118,13 @@ public class IronMqGatewayOnlineTest extends MockDaoTest {
 		FacilityGenerator facilityGenerator = new FacilityGenerator();
 		Facility facility = facilityGenerator.generateValid();
 		
-		IronMqGateway service = new IronMqGateway();
-		service.setDomainId("IRONMQTEST");
-		facility.addEdiService(service);
+		IronMqGateway gateway = new IronMqGateway();
+		gateway.setDomainId("IRONMQTEST");
+		facility.addEdiGateway(gateway);
 
-		service.storeCredentials("BAD", "RzgIyO5FNeNAgZljs9x4um5UVqw", "true");
+		gateway.storeCredentials("BAD", "RzgIyO5FNeNAgZljs9x4um5UVqw", "true");
 		try {
-			service.transportWiFinished("AMESSAGE", "AMESSAGE", "AMESSAGE");
+			gateway.transportWiFinished("AMESSAGE", "AMESSAGE", "AMESSAGE");
 			Assert.fail("Should have thrown IOException");
 		} catch(IOException e) {
 			e.printStackTrace();

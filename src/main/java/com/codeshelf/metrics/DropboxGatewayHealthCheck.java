@@ -30,7 +30,7 @@ public class DropboxGatewayHealthCheck extends CodeshelfHealthCheck {
 			for (Facility facility : allFacilities) {
 				DropboxGateway service = facility.getDropboxGateway();
 				if (service != null) {
-					if (service.checkConnectivity() == false) {
+					if (service.testConnection() == false) {
 						failedFacilities.add(facility);
 					}
 				} 
