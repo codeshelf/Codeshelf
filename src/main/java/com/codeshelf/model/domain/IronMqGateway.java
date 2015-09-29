@@ -36,7 +36,7 @@ import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.EdiProviderEnum;
-import com.codeshelf.model.EdiServiceStateEnum;
+import com.codeshelf.model.EdiGatewayStateEnum;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
@@ -149,18 +149,18 @@ public class IronMqGateway extends EdiGateway implements IEdiExportGateway {
 				Optional<Queue> queue = getWorkInstructionQueue();
 				if (queue.isPresent()) {
 					queue.get().getInfoAboutQueue();
-					setServiceState(EdiServiceStateEnum.LINKED);
+					setGatewayState(EdiGatewayStateEnum.LINKED);
 					LOGGER.warn("IronMqGateway is linked, will export work instructions");
 				}
 				else {
 					LOGGER.warn("Unable to get queue or no credentials set");
-					setServiceState(EdiServiceStateEnum.UNLINKED);
+					setGatewayState(EdiGatewayStateEnum.UNLINKED);
 					LOGGER.warn("IronMqGateway is unlinked, will not export work instructions");
 				}
 			}
 			catch(Exception e) {
 				LOGGER.warn("Unable to connect to iron mq with credentials", e);
-				setServiceState(EdiServiceStateEnum.UNLINKED);
+				setGatewayState(EdiGatewayStateEnum.UNLINKED);
 				LOGGER.warn("IronMqGateway is unlinked, will not export work instructions");
 			}
 		}

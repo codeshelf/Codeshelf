@@ -106,7 +106,7 @@ public class EdiImportServiceTest extends MockDaoTest {
 			Mockito.any(ICsvAislesFileImporter.class))).thenThrow(new RuntimeException("any"));
 		IEdiGateway goodService = mock(IEdiGateway.class);
 		Facility facility = mock(Facility.class);
-		Mockito.when(facility.getLinkedEdiImportServices()).thenReturn(ImmutableList.of(failingService, goodService));
+		Mockito.when(facility.getLinkedEdiImportGateway()).thenReturn(ImmutableList.of(failingService, goodService));
 		ediProcessorService.doEdiForFacility(facility);
 		verifyCalled(goodService);
 		
@@ -133,11 +133,11 @@ public class EdiImportServiceTest extends MockDaoTest {
 		final Result unlinkedResult = new Result();
 
 		getFacility();
-		IEdiGateway ediServiceLinked = new DummyGateway(true, linkedResult);
-		IEdiGateway ediServiceUnlinked = new DummyGateway(false, unlinkedResult);
+		IEdiGateway ediGatewayLinked = new DummyGateway(true, linkedResult);
+		IEdiGateway ediGatewayUnlinked = new DummyGateway(false, unlinkedResult);
 		Facility facility = getFacility();
-		facility.addEdiGateway(ediServiceUnlinked);
-		facility.addEdiGateway(ediServiceLinked);
+		facility.addEdiGateway(ediGatewayUnlinked);
+		facility.addEdiGateway(ediGatewayLinked);
 
 		Provider anyProvider = mock(Provider.class);
 		EdiImportService ediProcessorService = new EdiImportService(anyProvider,

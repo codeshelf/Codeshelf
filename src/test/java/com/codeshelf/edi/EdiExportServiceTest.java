@@ -16,7 +16,7 @@ import com.codeshelf.testframework.HibernateTest;
 public class EdiExportServiceTest extends HibernateTest {
 	
 	@Test
-	public void testGetsEdiExporterWhenFacilityHasEdiService() throws Exception {
+	public void testGetsEdiExporterWhenFacilityHasEdiGateway() throws Exception {
 		EdiExportService subject = startEdiExporter();
 		beginTransaction();
 

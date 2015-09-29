@@ -84,7 +84,7 @@ public class DropboxRealTest extends ServerTest {
 		LedController controller3 = network.findOrCreateLedController(inOrganizationName, new NetGuid("0x00000013"));
 		*/
 		
-		facility.createDefaultEDIServices();
+		facility.createDefaultEDIGateways();
 		
 		return facility;
 	}

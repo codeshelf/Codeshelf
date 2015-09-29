@@ -21,7 +21,7 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
-import com.codeshelf.model.EdiServiceStateEnum;
+import com.codeshelf.model.EdiGatewayStateEnum;
 import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.validation.BatchResult;
 
@@ -40,14 +40,14 @@ public class DropboxGatewayTest extends MockDaoTest {
 		Facility facility = new Facility();
 		facility.setFacilityId("TEST1");
 
-		facility.createDefaultEDIServices();
+		facility.createDefaultEDIGateways();
 
 		DropboxGateway dropboxGateway = facility.getDropboxGateway();
 
 		dropboxGateway.setParent(facility);
 		dropboxGateway.setDomainId("DB");
 		dropboxGateway.setProviderCredentials(TEST_CREDENTIALS);
-		dropboxGateway.setServiceState(EdiServiceStateEnum.LINKED);
+		dropboxGateway.setGatewayState(EdiGatewayStateEnum.LINKED);
 
 		ICsvOrderImporter orderImporter = mock(ICsvOrderImporter.class);
 		Mockito.when(

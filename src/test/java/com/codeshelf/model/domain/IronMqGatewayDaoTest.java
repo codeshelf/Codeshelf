@@ -13,12 +13,12 @@ public class IronMqGatewayDaoTest extends MockDaoTest {
 		this.getTenantPersistenceService().beginTransaction();
 		try {
 			Facility f = createFacility();
-			IronMqGateway ironMqGateway = f.findEdiService(IronMqGateway.class);
+			IronMqGateway ironMqGateway = f.findEdiGateway(IronMqGateway.class);
 			String originalCredentials = ironMqGateway.getProviderCredentials();
 			
 			IronMqGateway ironMqGatewayByDao = (IronMqGateway)EdiGateway.staticGetDao().findByPersistentId(ironMqGateway.getPersistentId());
 			ironMqGatewayByDao.storeCredentials("NEWPROJ", "NEWTOKEN", "true");
-			String updatedCredentials = f.findEdiService(IronMqGateway.class).getProviderCredentials();
+			String updatedCredentials = f.findEdiGateway(IronMqGateway.class).getProviderCredentials();
 			Assert.assertNotEquals(originalCredentials, updatedCredentials);
 			
 		} finally {
