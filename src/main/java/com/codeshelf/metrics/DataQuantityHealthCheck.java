@@ -1,5 +1,6 @@
 package com.codeshelf.metrics;
 
+
 import java.util.List;
 import java.util.UUID;
 
@@ -17,18 +18,13 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.service.ExtensionPointService;
 
 public class DataQuantityHealthCheck extends CodeshelfHealthCheck {
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(DataQuantityHealthCheck.class);
 
-	final static int			MAX_ORDERDETAIL		= 100000;
-	final static int			MAX_WORKINSTRUCTION	= 100000;
-	final static int			MAX_ORDER			= 40000;
-	final static int			MAX_CONTAINERUSE	= 40000;
-	
-	int failedFacilityCount = 0;
-	int totalFacilityCount = 0;
-
+	int							failedFacilityCount	= 0;
+	int							totalFacilityCount	= 0;
 
 	public DataQuantityHealthCheck() {
 		super("DataQuantity");
@@ -65,20 +61,20 @@ public class DataQuantityHealthCheck extends CodeshelfHealthCheck {
 	private void checkFacilitiesForTenant(Tenant tenant) {
 		int totalFacilitiesThisTenant = 0;
 		int badFacilitiesThisTenant = 0;
-		
+
 		try {
 			TenantPersistenceService.getInstance().beginTransaction();
 			List<Facility> allFacilities = Facility.staticGetDao().getAll();
 			totalFacilitiesThisTenant = allFacilities.size();
 			for (Facility facility : allFacilities) {
-				if (!checkFacilityOk(facility)){
+				if (!checkFacilityOk(facility)) {
 					badFacilitiesThisTenant++;
 				}
 			}
 		} finally {
 			TenantPersistenceService.getInstance().rollbackTransaction(); // we did not change anything
 		}
-		
+
 		totalFacilityCount += totalFacilitiesThisTenant;
 		failedFacilityCount += badFacilitiesThisTenant;
 
@@ -86,9 +82,28 @@ public class DataQuantityHealthCheck extends CodeshelfHealthCheck {
 
 	private boolean checkFacilityOk(Facility inFacility) {
 		boolean foundFacilityProblem = false;
+		
+		int			MAX_ORDERDETAIL		= 100000;
+		int			MAX_WORKINSTRUCTION	= 100000;
+		int			MAX_ORDER			= 40000;
+		int			MAX_CONTAINERUSE	= 40000;
+
+
+		try {
+			ExtensionPointService theService = ExtensionPointService.createInstance(inFacility);
+			DataQuantityHealthCheckParameters params = theService.getDataQuantityHealthCheckParameters();
+			MAX_ORDERDETAIL = params.getMaxOrderDetailValue();
+			MAX_WORKINSTRUCTION = params.getMaxWorkInstructionValue();
+			MAX_ORDER = params.getMaxOrderValue();
+			MAX_CONTAINERUSE = params.getMaxContainerUseValue();
+		
+
+		} catch (javax.script.ScriptException e) {
+			LOGGER.error("checkFacilityOk", e);
+		}
 
 		UUID facilityUUID = inFacility.getPersistentId();
-		
+
 		// we might want to ask the facility for its personal limits.
 
 		// Work Instructions
@@ -99,7 +114,7 @@ public class DataQuantityHealthCheck extends CodeshelfHealthCheck {
 			foundFacilityProblem = true;
 			reportQuantityProblem(inFacility, totalWiCount, MAX_WORKINSTRUCTION, "WorkInstruction");
 		}
-		
+
 		// Orders
 		Criteria totalOrdersCrit = OrderHeader.staticGetDao().createCriteria();
 		totalOrdersCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
@@ -132,8 +147,12 @@ public class DataQuantityHealthCheck extends CodeshelfHealthCheck {
 		return !foundFacilityProblem;
 	}
 
-	private void reportQuantityProblem(Facility facility,int totalObjectCount, int maxObject, String objectKind) {
-		LOGGER.warn("HealthCheck failure for {}. {} count: {} > recommended limit: {}", facility, objectKind, totalObjectCount, maxObject);
+	private void reportQuantityProblem(Facility facility, int totalObjectCount, int maxObject, String objectKind) {
+		LOGGER.warn("HealthCheck failure for {}. {} count: {} > recommended limit: {}",
+			facility,
+			objectKind,
+			totalObjectCount,
+			maxObject);
 
 	}
 

@@ -1,0 +1,8 @@
+/**
+ * Sets the maximum values that health check should cause alerts for
+ */
+def ParameterSetDataQuantityHealthCheck(bean) {
+    bean.maxOrderDetail = 100000;
+    
+    return bean;
+}
