@@ -67,7 +67,7 @@ public class IronMqGatewayOnlineTest extends MockDaoTest {
 		IronMqGateway service = new IronMqGateway();
 		service.setDomainId("IRONMQTEST");
 		service.setProvider(EdiProviderEnum.IRONMQ);
-		facility.addEdiService(service);
+		facility.addEdiGateway(service);
 
 		service.storeCredentials("540e1486364af100050000b4", "RzgIyO5FNeNAgZljs9x4um5UVqw", "true");
 		String message = "TESTMESSAGE" + System.currentTimeMillis();
@@ -98,7 +98,7 @@ public class IronMqGatewayOnlineTest extends MockDaoTest {
 		
 		IronMqGateway service = new IronMqGateway();
 		service.setDomainId("IRONMQTEST");
-		facility.addEdiService(service);
+		facility.addEdiGateway(service);
 
 		service.storeCredentials("540e1486364af100050000b4", "BAD", "true");
 		try {
@@ -120,7 +120,7 @@ public class IronMqGatewayOnlineTest extends MockDaoTest {
 		
 		IronMqGateway service = new IronMqGateway();
 		service.setDomainId("IRONMQTEST");
-		facility.addEdiService(service);
+		facility.addEdiGateway(service);
 
 		service.storeCredentials("BAD", "RzgIyO5FNeNAgZljs9x4um5UVqw", "true");
 		try {

@@ -104,12 +104,6 @@ public class DropboxGateway extends EdiGateway {
 	}
 
 	@Override
-	public boolean testConnection() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
 	@JsonProperty
 	public boolean getHasCredentials() {
 		return !Strings.isNullOrEmpty(getProviderCredentials());
@@ -145,7 +139,8 @@ public class DropboxGateway extends EdiGateway {
 	/**
 	 * Returns false if and only if it is configured and it fails to get account info
 	 */
-	public boolean checkConnectivity() {
+	@Override
+	public boolean testConnection() {
 		try {
 			DbxClient client = getClient();
 			if(client != null) {

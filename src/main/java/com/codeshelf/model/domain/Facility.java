@@ -241,23 +241,23 @@ public class Facility extends Location {
 		}
 	}
 
-	public void addEdiService(IEdiGateway inEdiService) {
-		Facility previousFacility = inEdiService.getParent();
+	public void addEdiGateway(IEdiGateway inEdiGateway) {
+		Facility previousFacility = inEdiGateway.getParent();
 		if (previousFacility == null) {
-			ediServices.add(inEdiService);
-			inEdiService.setParent(this);
+			ediServices.add(inEdiGateway);
+			inEdiGateway.setParent(this);
 		} else if (!previousFacility.equals(this)) {
-			LOGGER.error("cannot add EdiService " + inEdiService.getServiceName() + " to " + this.getDomainId()
+			LOGGER.error("cannot add EdiService " + inEdiGateway.getServiceName() + " to " + this.getDomainId()
 					+ " because it has not been removed from " + previousFacility.getDomainId());
 		}
 	}
 
-	public void removeEdiService(IEdiGateway inEdiService) {
-		if (this.ediServices.contains(inEdiService)) {
-			inEdiService.setParent(null);
-			ediServices.remove(inEdiService);
+	public void removeEdiGateway(IEdiGateway inEdiGateway) {
+		if (this.ediServices.contains(inEdiGateway)) {
+			inEdiGateway.setParent(null);
+			ediServices.remove(inEdiGateway);
 		} else {
-			LOGGER.error("cannot remove EdiService " + inEdiService.getDomainId() + " from " + this.getDomainId()
+			LOGGER.error("cannot remove EdiService " + inEdiGateway.getDomainId() + " from " + this.getDomainId()
 					+ " because it isn't found in children");
 		}
 	}
@@ -745,7 +745,7 @@ public class Facility extends Location {
 		result.setDomainId("DROPBOX");
 		result.setServiceState(EdiServiceStateEnum.UNLINKED);
 
-		this.addEdiService(result);
+		this.addEdiGateway(result);
 		try {
 			DropboxGateway.staticGetDao().store(result);
 		} catch (DaoException e) {
@@ -766,7 +766,7 @@ public class Facility extends Location {
 		result = new IronMqGateway();
 		result.setDomainId("IRONMQ");
 		result.setServiceState(EdiServiceStateEnum.UNLINKED);
-		this.addEdiService(result);
+		this.addEdiGateway(result);
 		result.storeCredentials("", "", "true"); // non-null credentials
 		try {
 			IronMqGateway.staticGetDao().store(result);
@@ -779,7 +779,7 @@ public class Facility extends Location {
 
 
 	private void storeSftpService(SftpGateway sftpEDI) {
-		this.addEdiService(sftpEDI);
+		this.addEdiGateway(sftpEDI);
 		try {
 			sftpEDI.getDao().store(sftpEDI);
 		} catch (DaoException e) {

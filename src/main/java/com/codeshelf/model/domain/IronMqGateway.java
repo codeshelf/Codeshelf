@@ -123,6 +123,12 @@ public class IronMqGateway extends EdiGateway implements IEdiExportGateway {
 	public final String getServiceName() {
 		return IRONMQ_SERVICE_NAME;
 	}
+	
+	@Override
+	public boolean testConnection() {
+		Optional<Queue> queue = getWorkInstructionQueue();
+		return queue.isPresent();
+	}
 
 	private final void setCredentials(String projectId,  String token, String activeStr) {
 		IronMqGateway.Credentials credentials = new Credentials(projectId, token);
@@ -253,11 +259,4 @@ public class IronMqGateway extends EdiGateway implements IEdiExportGateway {
 		// TODO Auto-generated method stub
 		
 	}
-
-	@Override
-	public boolean testConnection() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
 }
