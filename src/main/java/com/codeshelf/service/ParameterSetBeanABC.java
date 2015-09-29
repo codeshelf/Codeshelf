@@ -7,6 +7,8 @@ public abstract class ParameterSetBeanABC {
 		super();
 	}
 	
-
+	public String getParametersDescription() {
+		return "need to implement getParametersDescription";
+	}
 
 }

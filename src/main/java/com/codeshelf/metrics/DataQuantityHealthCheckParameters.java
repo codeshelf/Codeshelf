@@ -56,5 +56,11 @@ public class DataQuantityHealthCheckParameters extends ParameterSetBeanABC {
 	public int getMaxContainerUseValue(){
 		return Integer.valueOf(this.getMaxContainerUse());
 	}
+	
+	@Override
+	public String getParametersDescription() {
+		return String.format("maxOrder: %s , maxOrderDetail: %s , maxWorkInstruction: %s , maxContainerUse: %s", maxOrder, maxOrderDetail, maxWorkInstruction, maxContainerUse);
+	}
+
 
 }
