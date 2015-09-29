@@ -26,11 +26,11 @@ public final class CommandAssocCheck extends CommandAssocABC {
 	public static final int		DEVICE_VERSION_BYTES	= 8;
 
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(CommandAssocCheck.class);
-	private int					mRestartDataLen = 2;
+	private int					mRestartDataLen			= 2;
 
 	private byte				mBatteryLevel;
 	private byte				mRestartCause;
-	private byte[]				mRestartData = new byte[mRestartDataLen];
+	private byte[]				mRestartData			= new byte[mRestartDataLen];
 	private int					mRestartPC;
 
 	// --------------------------------------------------------------------------
@@ -58,8 +58,8 @@ public final class CommandAssocCheck extends CommandAssocABC {
 	 */
 	@Override
 	public String doToString() {
-		return Integer.toHexString(ASSOC_CHECK_COMMAND) + " CHECK" + super.doToString() + " batt= " + mBatteryLevel + 
-				"reboot= " + mRestartCause;
+		return Integer.toHexString(ASSOC_CHECK_COMMAND) + " CHECK" + super.doToString() + " batt= " + mBatteryLevel + "reboot= "
+				+ mRestartCause;
 	}
 
 	/* --------------------------------------------------------------------------
@@ -76,7 +76,7 @@ public final class CommandAssocCheck extends CommandAssocABC {
 			inOutputStream.writeBytes(mRestartData, mRestartDataLen);
 			inOutputStream.writeInt(mRestartPC);
 		} catch (IOException e) {
-			LOGGER.error("", e);
+			LOGGER.error("CommandAssociateCheck.doToStream", e);
 		}
 	}
 
@@ -93,15 +93,18 @@ public final class CommandAssocCheck extends CommandAssocABC {
 			mRestartCause = inInputStream.readByte();
 			inInputStream.readBytes(mRestartData, mRestartDataLen);
 			mRestartPC = inInputStream.readInt();
-			
+
 			if (mBatteryLevel < 0) {
 				mBatteryLevel = 0;
 			} else if (mBatteryLevel > 100) {
 				mBatteryLevel = 100;
 			}
+		} catch (java.io.EOFException e) {
+			LOGGER.error("CommandAssociateCheck message too short", e);
 		} catch (IOException e) {
-			LOGGER.error("", e);
+			LOGGER.error("CommandAssociateCheck.doFromStream", e);
 		}
+
 	}
 
 	/* --------------------------------------------------------------------------
@@ -124,12 +127,12 @@ public final class CommandAssocCheck extends CommandAssocABC {
 	public byte getRestartCause() {
 		return mRestartCause;
 	}
-	
+
 	public byte[] getRestartData() {
 		return mRestartData;
 	}
-	
-	public int	getRestartPC() {
+
+	public int getRestartPC() {
 		return mRestartPC;
 	}
 }

@@ -320,7 +320,7 @@ public class RadioController implements IRadioController {
 			}
 
 		} else {
-			LOGGER.error("Command was null");
+			LOGGER.error("RadioController receiveCommand: Command was null", new Exception()); // give the stack trace
 		}
 	}
 
