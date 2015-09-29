@@ -24,8 +24,6 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpException;
 
-import lombok.Getter;
-
 public abstract class SftpGateway extends EdiGateway {
 	static final Logger	LOGGER				= LoggerFactory.getLogger(SftpGateway.class);
 
@@ -42,9 +40,6 @@ public abstract class SftpGateway extends EdiGateway {
 	@Transient
 	String				lastProviderCredentials = null; 
 	
-	@Getter
-	private long		lastSuccessTime = 0;
-
 	public SftpGateway() {
 		super();
 		setProvider(EdiProviderEnum.OTHER);
@@ -131,8 +126,8 @@ public abstract class SftpGateway extends EdiGateway {
 				throw new IOException(String.format("Failed to open channel, check Edi configuration: %s", toSftpChannelDebug()), e);
 			}
 			LOGGER.info("EDI service {} connected to {}", this.getServiceName(), toSftpChannelDebug());
-			
-			lastSuccessTime = System.currentTimeMillis();
+			 
+			setLastSuccessTime(System.currentTimeMillis());
 			return channel;
 		} finally {
 			if (channel == null) { 

@@ -20,5 +20,8 @@ public interface IEdiGateway extends IDomainObjectTree<Facility> {
 		ICsvLocationAliasImporter inCsvLocationsImporter,
 		ICsvCrossBatchImporter inCsvCrossBatchImporter,
 		ICsvAislesFileImporter inCsvAislesFileImporter);
+
+	public Long getLastSuccessTime();
 	
+	public boolean testConnection();
 }

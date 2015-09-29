@@ -245,6 +245,18 @@ public class EdiImportServiceTest extends MockDaoTest {
 				// TODO Auto-generated method stub
 				return null;
 			}
+
+			@Override
+			public Long getLastSuccessTime() {
+				// TODO Auto-generated method stub
+				return 0L;
+			}
+
+			@Override
+			public boolean testConnection() {
+				// TODO Auto-generated method stub
+				return false;
+			}
 		};
 
 		IEdiGateway ediServiceUnlinked = new IEdiGateway() {
@@ -353,6 +365,18 @@ public class EdiImportServiceTest extends MockDaoTest {
 			public Facility getFacility() {
 				// TODO Auto-generated method stub
 				return null;
+			}
+
+			@Override
+			public Long getLastSuccessTime() {
+				// TODO Auto-generated method stub
+				return 0L;
+			}
+
+			@Override
+			public boolean testConnection() {
+				// TODO Auto-generated method stub
+				return false;
 			}
 		};
 

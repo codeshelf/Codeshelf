@@ -6,7 +6,7 @@ import javax.persistence.Entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.edi.EdiExportTransport;
+import com.codeshelf.edi.IEdiExportGateway;
 import com.codeshelf.edi.EdiFileWriteException;
 import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
@@ -14,21 +14,12 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
-import com.codeshelf.model.dao.GenericDaoABC;
-import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
 @Entity
 @DiscriminatorValue("SFTP_WIS")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class SftpWiGateway extends SftpGateway implements EdiExportTransport {
-	public static class SftpWiGatewayDao extends GenericDaoABC<SftpWiGateway> implements ITypedDao<SftpWiGateway> {
-		public final Class<SftpWiGateway> getDaoClass() {
-			return SftpWiGateway.class;
-		}
-	}
-
+public class SftpWiGateway extends SftpGateway implements IEdiExportGateway {
 	static final Logger			LOGGER						= LoggerFactory.getLogger(SftpWiGateway.class);
 	public static final String	SFTP_SERVICE_NAME			= "SFTP_WIS";
 
@@ -82,17 +73,4 @@ public class SftpWiGateway extends SftpGateway implements EdiExportTransport {
 		final String absoluteFilename = this.getConfiguration().getExportPath() + "/" + filename;
 		return uploadAsFile(contents, absoluteFilename);
 	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public ITypedDao<SftpWiGateway> getDao() {
-		return staticGetDao();
-	}
-
-	public static ITypedDao<SftpWiGateway> staticGetDao() {
-		return TenantPersistenceService.getInstance().getDao(SftpWiGateway.class);
-	}
-
-
-
 }

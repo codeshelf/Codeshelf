@@ -34,9 +34,6 @@ import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.model.EdiProviderEnum;
 import com.codeshelf.model.EdiServiceStateEnum;
 import com.codeshelf.model.dao.DaoException;
-import com.codeshelf.model.dao.GenericDaoABC;
-import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.BatchResult;
 import com.dropbox.core.DbxAccountInfo;
@@ -66,13 +63,6 @@ import com.google.common.base.Strings;
 @DiscriminatorValue("DROPBOX")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class DropboxGateway extends EdiGateway {
-
-	public static class DropboxGatewayDao extends GenericDaoABC<DropboxGateway> implements ITypedDao<DropboxGateway> {
-		public final Class<DropboxGateway> getDaoClass() {
-			return DropboxGateway.class;
-		}
-	}
-
 	public static final String	DROPBOX_SERVICE_NAME	= "DROPBOX";
 
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(DropboxGateway.class);
@@ -113,13 +103,10 @@ public class DropboxGateway extends EdiGateway {
 		return DROPBOX_SERVICE_NAME;
 	}
 
-	@SuppressWarnings("unchecked")
-	public final ITypedDao<DropboxGateway> getDao() {
-		return staticGetDao();
-	}
-
-	public static ITypedDao<DropboxGateway> staticGetDao() {
-		return TenantPersistenceService.getInstance().getDao(DropboxGateway.class);
+	@Override
+	public boolean testConnection() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 	@Override

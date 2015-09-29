@@ -26,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
-import com.codeshelf.edi.EdiExportTransport;
+import com.codeshelf.edi.IEdiExportGateway;
 import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
@@ -37,9 +37,6 @@ import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.EdiProviderEnum;
 import com.codeshelf.model.EdiServiceStateEnum;
-import com.codeshelf.model.dao.GenericDaoABC;
-import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
@@ -56,13 +53,7 @@ import com.google.gson.annotations.SerializedName;
 @Entity
 @DiscriminatorValue("IRONMQ")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class IronMqGateway extends EdiGateway implements EdiExportTransport {
-
-	public static class IronMqGatewayDao extends GenericDaoABC<IronMqGateway> implements ITypedDao<IronMqGateway> {
-		public final Class<IronMqGateway> getDaoClass() {
-			return IronMqGateway.class;
-		}
-	}
+public class IronMqGateway extends EdiGateway implements IEdiExportGateway {
 
 	public static final String		IRONMQ_SERVICE_NAME	= "IRONMQ";
 	public static final int 		MAX_NUM_MESSAGES = 100;
@@ -127,15 +118,6 @@ public class IronMqGateway extends EdiGateway implements EdiExportTransport {
 		this.clientProvider = clientProvider;
 		exportCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS,"exports.ironmq");
 
-	}
-
-	@SuppressWarnings("unchecked")
-	public final ITypedDao<IronMqGateway> getDao() {
-		return staticGetDao();
-	}
-
-	public static ITypedDao<IronMqGateway> staticGetDao() {
-		return TenantPersistenceService.getInstance().getDao(IronMqGateway.class);
 	}
 
 	public final String getServiceName() {
@@ -270,11 +252,6 @@ public class IronMqGateway extends EdiGateway implements EdiExportTransport {
 		return null;
 		// TODO Auto-generated method stub
 		
-	}
-
-	@Override
-	public long getLastSuccessTime() {
-		return 0;
 	}
 
 	@Override

@@ -32,7 +32,7 @@ import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.edi.EdiExportTransport;
+import com.codeshelf.edi.IEdiExportGateway;
 import com.codeshelf.edi.IEdiGateway;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.manager.User;
@@ -690,8 +690,8 @@ public class Facility extends Location {
 	/**
 	 * @return
 	 */
-	public EdiExportTransport getEdiExportTransport() {
-		EdiExportTransport service =  SftpWiGateway.staticGetDao().findByDomainId(this, SFTPWIS_DOMAINID);
+	public IEdiExportGateway getEdiExportTransport() {
+		IEdiExportGateway service =  (SftpWiGateway)EdiGateway.staticGetDao().findByDomainId(this, SFTPWIS_DOMAINID);
 		if (service != null && service.isLinked()) {
 			return service;
 		} else {

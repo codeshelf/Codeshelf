@@ -18,9 +18,6 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
-import com.codeshelf.model.dao.GenericDaoABC;
-import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.BatchResult;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -32,12 +29,6 @@ import com.jcraft.jsch.SftpException;
 @DiscriminatorValue("SFTP_ORDERS")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class SftpOrderGateway extends SftpGateway {
-	public static class SftpOrderGatewayDao extends GenericDaoABC<SftpOrderGateway> implements ITypedDao<SftpOrderGateway> {
-		public final Class<SftpOrderGateway> getDaoClass() {
-			return SftpOrderGateway.class;
-		}
-	}
-
 	static final Logger			LOGGER						= LoggerFactory.getLogger(SftpOrderGateway.class);
 	public static final String	SFTP_SERVICE_NAME			= "SFTP_ORDERS";
 	private static final String	FILENAME_SUFFIX_FAILED		= ".FAILED";
@@ -150,16 +141,5 @@ public class SftpOrderGateway extends SftpGateway {
 			throw new IOException(msg, e);
 		}
 
-	}
-	
-	@SuppressWarnings("unchecked")
-	@Override
-	public ITypedDao<SftpOrderGateway> getDao() {
-		return staticGetDao();
-	}
-
-	public static ITypedDao<SftpOrderGateway> staticGetDao() {
-		return TenantPersistenceService.getInstance().getDao(SftpOrderGateway.class);
-	}
-
+	}	
 }

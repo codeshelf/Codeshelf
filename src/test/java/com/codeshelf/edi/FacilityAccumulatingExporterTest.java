@@ -78,7 +78,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 		return orderHeader;
 	}
 	
-	private FacilityAccumulatingExporter startExporter(Facility facility, EdiExportAccumulator accumulator, WiBeanStringifier stringifier, EdiExportTransport exportTransport) throws TimeoutException {
+	private FacilityAccumulatingExporter startExporter(Facility facility, EdiExportAccumulator accumulator, WiBeanStringifier stringifier, IEdiExportGateway exportTransport) throws TimeoutException {
 		FacilityAccumulatingExporter subject = new FacilityAccumulatingExporter(facility, accumulator, stringifier, exportTransport);
 		subject.startAsync().awaitRunning(5, TimeUnit.SECONDS);
 		return subject;
@@ -87,7 +87,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 	@Test 
 	public void startUpImmediateShutdown() throws TimeoutException {
 		beginTransaction();
-		FacilityAccumulatingExporter subject = startExporter(getFacility(), mock(EdiExportAccumulator.class), mock(WiBeanStringifier.class), mock(EdiExportTransport.class));
+		FacilityAccumulatingExporter subject = startExporter(getFacility(), mock(EdiExportAccumulator.class), mock(WiBeanStringifier.class), mock(IEdiExportGateway.class));
 		commitTransaction();
 		subject.exportOrderOnCartAdded(mock(OrderHeader.class), mock(Che.class));
 		subject.stopAsync().awaitTerminated(5, TimeUnit.SECONDS);
@@ -179,7 +179,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 		beginTransaction();
 		
 		WiBeanStringifier stringifier = new WiBeanStringifier(ExtensionPointService.createInstance(facility));
-		EdiExportTransport exportService = mock(EdiExportTransport.class);
+		IEdiExportGateway exportService = mock(IEdiExportGateway.class);
 		EdiExportAccumulator accumulator = new EdiExportAccumulator();
 		FacilityAccumulatingExporter ediExporter = startExporter(facility, accumulator, stringifier, exportService);
 		
@@ -230,7 +230,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 
 		
 		
-		EdiExportTransport mockEdiTransport = mock(EdiExportTransport.class);
+		IEdiExportGateway mockEdiTransport = mock(IEdiExportGateway.class);
 
 		FacilityAccumulatingExporter subject = startExporter(facility, mock(EdiExportAccumulator.class), mock(WiBeanStringifier.class), mockEdiTransport);
 		try {
@@ -298,7 +298,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 		WiBeanStringifier mockStringifier = mock(WiBeanStringifier.class);
 		when(mockStringifier.stringifyOrderOnCartAdded(order1, che1)).thenReturn(singleTestMessage);
 		
-		EdiExportTransport mockEdiTransport = mock(EdiExportTransport.class);
+		IEdiExportGateway mockEdiTransport = mock(IEdiExportGateway.class);
 		when(mockEdiTransport.transportOrderOnCartAdded(any(String.class), any(String.class), any(String.class)))
 			.thenThrow(new IOException("test io"))
 			.thenThrow(new IOException("test io 2"))
@@ -342,7 +342,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 
 
 		Lock callBlocker = new ReentrantLock();
-		EdiExportTransport mockEdiTransport = mock(EdiExportTransport.class);
+		IEdiExportGateway mockEdiTransport = mock(IEdiExportGateway.class);
 		when(mockEdiTransport.transportOrderOnCartAdded(any(String.class), any(String.class), any(String.class)))
 			.thenAnswer(new BlockedCall(callBlocker, new FileExportReceipt("../../*.DAT", 500)));
 
@@ -388,7 +388,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 
 	@Test
 	public void testEdiTransportFixable() throws IOException, TimeoutException, InterruptedException, ExecutionException {
-		EdiExportTransport badEdiTransport = mock(EdiExportTransport.class, new ThrowsException(new IOException("badly configured")));
+		IEdiExportGateway badEdiTransport = mock(IEdiExportGateway.class, new ThrowsException(new IOException("badly configured")));
 		//when(badEdiTransport.transportOrderOnCartAdded(any(OrderHeader.class), any(Che.class), any(String.class)))
 		//	.thenThrow(new IOException("badly configured"));
 
@@ -417,7 +417,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 			
 			
 			FileExportReceipt successReceipt = mock(FileExportReceipt.class);
-			EdiExportTransport goodEdiTransport = mock(EdiExportTransport.class);
+			IEdiExportGateway goodEdiTransport = mock(IEdiExportGateway.class);
 			//when(goodEdiTransport.transportOrderOnCartAdded(eq(mockOrder.getDomainId()), eq(mockChe.getDeviceGuidStr()), eq(singleTestMessage))).thenReturn(successReceipt);
 			when(goodEdiTransport.transportOrderOnCartAdded(any(String.class), any(String.class), eq(singleTestMessage))).thenReturn(successReceipt);
 			subject.setEdiExportTransport(goodEdiTransport);

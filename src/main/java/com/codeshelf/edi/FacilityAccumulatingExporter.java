@@ -71,7 +71,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 
 	@Getter
 	@Setter
-	private EdiExportTransport	ediExportTransport;
+	private IEdiExportGateway	ediExportTransport;
 
 	private Retryer<ExportReceipt> retryer;
 
@@ -84,7 +84,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 
 	private Cache<ExportMessageFuture, ExportReceipt>	receiptCache;
 	
-	public FacilityAccumulatingExporter(Facility facility, EdiExportAccumulator accumulator, WiBeanStringifier stringifier, EdiExportTransport exportService) {
+	public FacilityAccumulatingExporter(Facility facility, EdiExportAccumulator accumulator, WiBeanStringifier stringifier, IEdiExportGateway exportService) {
 		super();
 		this.accumulator = accumulator;
 		this.stringifier = stringifier; 
@@ -301,16 +301,6 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 			}
 		}
 		LOGGER.warn("FacilityAccumulatingExporter did not empty its queue in time");
-	}
-
-	@Override
-	public long getLastSuccessTime() {
-		return getEdiExportTransport().getLastSuccessTime();
-	}
-
-	@Override
-	public boolean testConnection() {
-		return getEdiExportTransport().testConnection();
 	}
 
 	@Override

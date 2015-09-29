@@ -23,7 +23,7 @@ public class EdiExportServiceTest extends HibernateTest {
 		try {
 			Facility facility = getFacility();
 			Facility mockedFacility = Mockito.spy(facility);
-			when(mockedFacility.getEdiExportTransport()).thenReturn(mock(EdiExportTransport.class));
+			when(mockedFacility.getEdiExportTransport()).thenReturn(mock(IEdiExportGateway.class));
 			
 			Assert.assertNotNull(subject.getEdiExporter(mockedFacility));
 			Assert.assertTrue(subject.getEdiExporter(mockedFacility).isRunning());

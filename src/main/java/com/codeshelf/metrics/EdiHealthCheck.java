@@ -1,13 +1,9 @@
 package com.codeshelf.metrics;
 
-import java.util.List;
-
 import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.edi.EdiImportService;
-import com.codeshelf.edi.FacilityEdiExporter;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.service.TenantManagerService;
-import com.codeshelf.model.domain.Facility;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 
@@ -15,6 +11,7 @@ public class EdiHealthCheck extends CodeshelfHealthCheck {
 	final static int EDI_SERVICE_CYCLE_TIMEOUT_SECONDS = 60*5; // timeout if EDI takes longer than 5 mins
 	
 	private EdiImportService ediService;
+	@SuppressWarnings("unused")
 	private EdiExportService ediExporterProvider;
 	
 	
@@ -51,6 +48,7 @@ public class EdiHealthCheck extends CodeshelfHealthCheck {
 			try{
 				CodeshelfSecurityManager.setContext(CodeshelfSecurityManager.getUserContextSYSTEM(), tenant);
 				TenantPersistenceService.getInstance().beginTransaction();
+				/*
 				List<Facility> facilities = Facility.staticGetDao().getAll();
 				for (Facility facility : facilities) {
 					FacilityEdiExporter exporter = ediExporterProvider.getEdiExporter(facility);
@@ -66,6 +64,7 @@ public class EdiHealthCheck extends CodeshelfHealthCheck {
 						}
 					}
 				}
+				*/
 				/*
 				List<EdiServiceABC> ediServices = EdiServiceABC.staticGetDao().getAll();
 				for (EdiServiceABC ediSerivce : ediServices) {

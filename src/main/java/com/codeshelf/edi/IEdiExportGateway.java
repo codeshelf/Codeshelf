@@ -11,7 +11,7 @@ import com.codeshelf.model.domain.FileExportReceipt;
  * @author pmonteiro
  *
  */
-public interface EdiExportTransport {
+public interface IEdiExportGateway {
 
 	boolean isLinked();
 	
@@ -22,10 +22,6 @@ public interface EdiExportTransport {
 	void transportOrderOnCartRemoved(String inOrderId, String inCheGuid, String message) throws IOException;
 
 	FileExportReceipt transportOrderOnCartAdded(String inOrderId, String inCheGuid, String message) throws IOException;
-	
-	long getLastSuccessTime();
-	
-	boolean testConnection();
 	
 	String getDomainId();
 }

@@ -28,6 +28,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.codeshelf.edi.IEdiGateway;
 import com.codeshelf.model.EdiProviderEnum;
 import com.codeshelf.model.EdiServiceStateEnum;
+import com.codeshelf.model.dao.GenericDaoABC;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -50,6 +53,21 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class EdiGateway extends DomainObjectTreeABC<Facility> implements IEdiGateway {
+	public static class EdiGatewayDao extends GenericDaoABC<EdiGateway> implements ITypedDao<EdiGateway> {
+		public final Class<EdiGateway> getDaoClass() {
+			return EdiGateway.class;
+		}
+	}
+
+	public static ITypedDao<EdiGateway> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(EdiGateway.class);
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public ITypedDao<EdiGateway> getDao() {
+		return staticGetDao();
+	}
 
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Getter
@@ -84,6 +102,12 @@ public abstract class EdiGateway extends DomainObjectTreeABC<Facility> implement
 	@Setter
 	@JsonProperty
 	private Boolean					active;
+
+	@Column(nullable = true, name = "last_success_time")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Long					lastSuccessTime			= 0L;
 	
 
 	public EdiGateway() {

@@ -17,15 +17,11 @@ public interface FacilityEdiExporter extends Service {
 
 	public void exportOrderOnCartRemoved(OrderHeader inOrder, Che inChe);
 	
-	public void setEdiExportTransport(EdiExportTransport transport);
+	public void setEdiExportTransport(IEdiExportGateway transport);
 
 	public void setStringifier(WiBeanStringifier stringifier);
 
 	public void waitUntillQueueIsEmpty(int timeout);
-	
-	public long getLastSuccessTime();
-	
-	public boolean testConnection();
 	
 	public String getDomainId();
 }
