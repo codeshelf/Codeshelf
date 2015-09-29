@@ -247,9 +247,9 @@ public class EdiImportServiceTest extends MockDaoTest {
 			}
 
 			@Override
-			public Long getLastSuccessTime() {
+			public Timestamp getLastSuccessTime() {
 				// TODO Auto-generated method stub
-				return 0L;
+				return null;
 			}
 
 			@Override
@@ -368,9 +368,9 @@ public class EdiImportServiceTest extends MockDaoTest {
 			}
 
 			@Override
-			public Long getLastSuccessTime() {
+			public Timestamp getLastSuccessTime() {
 				// TODO Auto-generated method stub
-				return 0L;
+				return null;
 			}
 
 			@Override

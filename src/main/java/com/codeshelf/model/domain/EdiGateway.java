@@ -5,6 +5,8 @@
  *******************************************************************************/
 package com.codeshelf.model.domain;
 
+import java.sql.Timestamp;
+
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
@@ -107,7 +109,7 @@ public abstract class EdiGateway extends DomainObjectTreeABC<Facility> implement
 	@Getter
 	@Setter
 	@JsonProperty
-	private Long					lastSuccessTime			= 0L;
+	private Timestamp				lastSuccessTime;
 	
 
 	public EdiGateway() {

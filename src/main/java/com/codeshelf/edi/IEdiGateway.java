@@ -5,6 +5,8 @@
  *******************************************************************************/
 package com.codeshelf.edi;
 
+import java.sql.Timestamp;
+
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObjectTree;
 
@@ -21,7 +23,7 @@ public interface IEdiGateway extends IDomainObjectTree<Facility> {
 		ICsvCrossBatchImporter inCsvCrossBatchImporter,
 		ICsvAislesFileImporter inCsvAislesFileImporter);
 
-	public Long getLastSuccessTime();
+	public Timestamp getLastSuccessTime();
 	
 	public boolean testConnection();
 }

@@ -10,4 +10,12 @@
             <column name="last_success_time" type="int8"/>
         </addColumn>
     </changeSet>
+    <changeSet author="ilya (generated)" id="1443550752047-3">
+   		<dropColumn columnName="last_success_time" tableName="edi_service" />
+    </changeSet>
+    <changeSet author="ilya (generated)" id="1443550752047-4">
+        <addColumn tableName="edi_service">
+            <column name="last_success_time" type="timestamp"/>
+        </addColumn>  
+    </changeSet>
 </databaseChangeLog>
