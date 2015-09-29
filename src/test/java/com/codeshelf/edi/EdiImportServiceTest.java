@@ -257,6 +257,12 @@ public class EdiImportServiceTest extends MockDaoTest {
 				// TODO Auto-generated method stub
 				return false;
 			}
+
+			@Override
+			public Boolean getActive() {
+				// TODO Auto-generated method stub
+				return null;
+			}
 		};
 
 		IEdiGateway ediServiceUnlinked = new IEdiGateway() {
@@ -377,6 +383,12 @@ public class EdiImportServiceTest extends MockDaoTest {
 			public boolean testConnection() {
 				// TODO Auto-generated method stub
 				return false;
+			}
+
+			@Override
+			public Boolean getActive() {
+				// TODO Auto-generated method stub
+				return null;
 			}
 		};
 

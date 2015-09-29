@@ -15,6 +15,8 @@ public interface IEdiGateway extends IDomainObjectTree<Facility> {
 	String getServiceName();
 
 	boolean isLinked();
+	
+	Boolean getActive();
 
 	boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,

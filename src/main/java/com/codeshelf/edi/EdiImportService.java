@@ -168,27 +168,29 @@ public final class EdiImportService extends AbstractCodeshelfScheduledService {
 	//package level for testing
 	int doEdiForFacility(Facility facility) {
 		int numChecked = 0;
-		for (IEdiGateway ediService : facility.getLinkedEdiImportServices()) {
-			try {
-				if (ediService.getUpdatesFromHost(mCsvOrderImporter.get(),
-					mCsvOrderLocationImporter.get(),
-					mCsvInventoryImporter.get(),
-					mCsvLocationAliasImporter.get(),
-					mCsvCrossBatchImporter.get(),
-					mCsvAislesFileImporter.get())) {
-					numChecked++;
-					// Signal other threads that we've just processed new EDI.
-					try {
-						ediSignalThread = Thread.currentThread();
-						ediSignalQueue.put(ediService.getServiceName());
-					} catch (InterruptedException e) {
-						LOGGER.error("Failed to signal other threads that we've just processed n EDI", e);
-					} finally {
-						ediSignalThread = null;
+		for (IEdiGateway ediService : facility.getLinkedEdiImportServices()) { 
+			if (Boolean.TRUE.equals(ediService.getActive())){
+				try {
+					if (ediService.getUpdatesFromHost(mCsvOrderImporter.get(),
+						mCsvOrderLocationImporter.get(),
+						mCsvInventoryImporter.get(),
+						mCsvLocationAliasImporter.get(),
+						mCsvCrossBatchImporter.get(),
+						mCsvAislesFileImporter.get())) {
+						numChecked++;
+						// Signal other threads that we've just processed new EDI.
+						try {
+							ediSignalThread = Thread.currentThread();
+							ediSignalQueue.put(ediService.getServiceName());
+						} catch (InterruptedException e) {
+							LOGGER.error("Failed to signal other threads that we've just processed n EDI", e);
+						} finally {
+							ediSignalThread = null;
+						}
 					}
+				} catch(Exception e) {
+					LOGGER.warn("EDI import update failed for service  {}", ediService, e);
 				}
-			} catch(Exception e) {
-				LOGGER.warn("EDI import update failed for service  {}", ediService, e);
 			}
 		}
 		return numChecked;
