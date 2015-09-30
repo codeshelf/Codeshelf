@@ -690,10 +690,10 @@ public class Facility extends Location {
 	/**
 	 * @return
 	 */
-	public IEdiExportGateway getEdiExportTransport() {
-		IEdiExportGateway service =  (SftpWiGateway)EdiGateway.staticGetDao().findByDomainId(this, SFTPWIS_DOMAINID);
-		if (service != null && service.isLinked()) {
-			return service;
+	public IEdiExportGateway getEdiExportGateway() {
+		IEdiExportGateway gateway =  (SftpWiGateway)EdiGateway.staticGetDao().findByDomainId(this, SFTPWIS_DOMAINID);
+		if (gateway != null && gateway.isLinked()) {
+			return gateway;
 		} else {
 			return null;
 		}

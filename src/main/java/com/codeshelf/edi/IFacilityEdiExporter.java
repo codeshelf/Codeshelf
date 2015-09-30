@@ -17,7 +17,7 @@ public interface IFacilityEdiExporter extends Service {
 
 	public void exportOrderOnCartRemoved(OrderHeader inOrder, Che inChe);
 	
-	public void setEdiExportTransport(IEdiExportGateway transport);
+	public void setEdiExportGateway(IEdiExportGateway gateway);
 
 	public void setStringifier(WiBeanStringifier stringifier);
 

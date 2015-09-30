@@ -20,12 +20,12 @@ import com.codeshelf.model.domain.WorkInstruction;
  * Currently only a memory list, lost upon server restart.
  * Later, change to a persistent list of the serialized bean to survive server restart.
  */
-public class EdiExportAccumulator {
+public class EdiExportQueue {
 	private ArrayList<WorkInstructionCsvBean> wiBeanList = new ArrayList<WorkInstructionCsvBean>();
 	
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(EdiExportAccumulator.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(EdiExportQueue.class);
 	
-	public EdiExportAccumulator() {
+	public EdiExportQueue() {
 	}
 	
 	/**

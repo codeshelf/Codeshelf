@@ -34,13 +34,11 @@ public class EdiExportService extends AbstractCodeshelfIdleService {
 	private Map<UUID, IFacilityEdiExporter> facilityEdiExporters = new HashMap<>();
 		
 	public IFacilityEdiExporter getEdiExporter(Facility facility) throws Exception {
-		//look up the export service for the facility
-		// > WI > WIRecord/OrderRecord/CheRecord > WIMessage > Queue > Transport Tasks
-		//retry
-		//capacity
-		//messageFormatter
-		//return facility.getEdiExportService();
-		
+		//See if the current export gateway is enabled or disabled by user
+		IEdiExportGateway gateway = facility.getEdiExportGateway();
+		if (!gateway.isActive()){
+			return null;
+		}
 		synchronized(facilityEdiExporters) {
 			if (!facilityEdiExporters.containsKey(facility.getPersistentId())) {
 				updateEdiExporter(facility);
@@ -70,21 +68,20 @@ public class EdiExportService extends AbstractCodeshelfIdleService {
 	}
 
 	private void updateEdiExporter(Facility facility) throws ScriptException, TimeoutException {
-		IEdiExportGateway exportTransport = facility.getEdiExportTransport();
-		if (exportTransport != null) {
+		IEdiExportGateway exportGateway = facility.getEdiExportGateway();
+		if (exportGateway != null) {
 			ExtensionPointService extensionPointService = ExtensionPointService.createInstance(facility);
 			WiBeanStringifier stringifier = new WiBeanStringifier(extensionPointService);
 			synchronized(facilityEdiExporters) {
 				IFacilityEdiExporter exporter = facilityEdiExporters.get(facility.getPersistentId());
 				if (exporter == null) {
-					exporter = new FacilityAccumulatingExporter(facility, stringifier, exportTransport);
+					exporter = new FacilityAccumulatingExporter(facility);
 					exporter.startAsync().awaitRunning(5, TimeUnit.SECONDS);
 					facilityEdiExporters.put(facility.getPersistentId(), exporter);
-				} else {
-					LOGGER.info("Updating edi exporter for facility {}", facility);
-					exporter.setEdiExportTransport(exportTransport);
-					exporter.setStringifier(stringifier);
 				}
+				LOGGER.info("Updating edi exporter for facility {}", facility);
+				exporter.setEdiExportGateway(exportGateway);
+				exporter.setStringifier(stringifier);
 			}
 		}
 	}
@@ -111,6 +108,21 @@ public class EdiExportService extends AbstractCodeshelfIdleService {
 				}
 			};	
 		}		
+	}
+	
+	public void stopEdiExporter(Facility facility){
+		synchronized(facilityEdiExporters) {
+			IFacilityEdiExporter exporter = facilityEdiExporters.remove(facility);
+			if (exporter != null) {
+				exporter.waitUntillQueueIsEmpty(60000);
+				exporter.startAsync();
+				try {
+					exporter.awaitTerminated(2, TimeUnit.SECONDS);
+				}catch(Exception e) {
+					LOGGER.error("Exporting service {} did not shtudown within 2 seconds", exporter, e);
+				}
+			}
+		}
 	}
 	
 	private boolean doExportEdiForTenant(Tenant tenant) {

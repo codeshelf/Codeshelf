@@ -11,12 +11,12 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObjectTree;
 
 public interface IEdiGateway extends IDomainObjectTree<Facility> {
-
+	
 	String getServiceName();
 
 	boolean isLinked();
 	
-	Boolean getActive();
+	boolean isActive();
 
 	boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,

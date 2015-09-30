@@ -78,8 +78,10 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 		return orderHeader;
 	}
 	
-	private FacilityAccumulatingExporter startExporter(Facility facility, WiBeanStringifier stringifier, IEdiExportGateway exportTransport) throws TimeoutException {
-		FacilityAccumulatingExporter subject = new FacilityAccumulatingExporter(facility, stringifier, exportTransport);
+	private FacilityAccumulatingExporter startExporter(Facility facility, WiBeanStringifier stringifier, IEdiExportGateway exportGateway) throws TimeoutException {
+		FacilityAccumulatingExporter subject = new FacilityAccumulatingExporter(facility);
+		subject.setStringifier(stringifier);
+		subject.setEdiExportGateway(exportGateway);
 		subject.startAsync().awaitRunning(5, TimeUnit.SECONDS);
 		return subject;
 	}
@@ -416,10 +418,10 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 			
 			
 			FileExportReceipt successReceipt = mock(FileExportReceipt.class);
-			IEdiExportGateway goodEdiTransport = mock(IEdiExportGateway.class);
+			IEdiExportGateway goodEdiGateway = mock(IEdiExportGateway.class);
 			//when(goodEdiTransport.transportOrderOnCartAdded(eq(mockOrder.getDomainId()), eq(mockChe.getDeviceGuidStr()), eq(singleTestMessage))).thenReturn(successReceipt);
-			when(goodEdiTransport.transportOrderOnCartAdded(any(String.class), any(String.class), eq(singleTestMessage))).thenReturn(successReceipt);
-			subject.setEdiExportTransport(goodEdiTransport);
+			when(goodEdiGateway.transportOrderOnCartAdded(any(String.class), any(String.class), eq(singleTestMessage))).thenReturn(successReceipt);
+			subject.setEdiExportGateway(goodEdiGateway);
 			
 			Assert.assertEquals(successReceipt, futureReceipt.get(5, TimeUnit.SECONDS));
 		} finally {

@@ -11,10 +11,7 @@ import com.codeshelf.model.domain.FileExportReceipt;
  * @author pmonteiro
  *
  */
-public interface IEdiExportGateway {
-
-	boolean isLinked();
-	
+public interface IEdiExportGateway extends IEdiGateway {
 	void transportWiFinished(String wiOrderId, String wiCheGuid, String message) throws IOException;
 
 	FileExportReceipt transportOrderOnCartFinished(String wiOrderId, String wiCheGuid, String message) throws IOException;

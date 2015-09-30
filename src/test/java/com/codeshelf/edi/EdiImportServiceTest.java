@@ -312,7 +312,7 @@ public class EdiImportServiceTest extends MockDaoTest {
 		}
 
 		@Override
-		public Boolean getActive() {
+		public boolean isActive() {
 			return true;
 		}
 	}

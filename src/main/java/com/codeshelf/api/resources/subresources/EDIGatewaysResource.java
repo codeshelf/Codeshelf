@@ -25,6 +25,7 @@ import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.edi.IEdiGateway;
 import com.codeshelf.edi.SftpConfiguration;
 import com.codeshelf.model.domain.DropboxGateway;
+import com.codeshelf.model.domain.EdiGateway;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IronMqGateway;
 import com.codeshelf.model.domain.SftpGateway;
@@ -82,19 +83,19 @@ public class EDIGatewaysResource {
 	private IEdiGateway updateSftpGateway(SftpGateway ediGateway, MultivaluedMap<String, String> params) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 		SftpConfiguration configuration = SftpConfiguration.updateFromMap(ediGateway.getConfiguration(), params);
 		ediGateway.setConfiguration(configuration);
-		ediGateway.getDao().store(ediGateway);
+		EdiGateway.staticGetDao().store(ediGateway);
 		return ediGateway;
 	}
 
 	private IEdiGateway updateIronMqGateway(IronMqGateway ediGateway, MultivaluedMap<String, String> params) {
 		ediGateway.storeCredentials(params.getFirst("projectId"), params.getFirst("token"), params.getFirst("active"));
-		IronMqGateway.staticGetDao().store(ediGateway);
+		EdiGateway.staticGetDao().store(ediGateway);
 		return ediGateway;
 	}
 
 	private IEdiGateway updateDropboxGateway(DropboxGateway ediGateway, MultivaluedMap<String, String> params) {
 		ediGateway.finishLink(params.getFirst("code"));
-		DropboxGateway.staticGetDao().store(ediGateway);
+		EdiGateway.staticGetDao().store(ediGateway);
 		return ediGateway;
 	}
 

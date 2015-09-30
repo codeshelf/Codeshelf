@@ -63,7 +63,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 	private static final ExportMessageFuture	POISON	= new ExportMessageFuture(null, null,null);
 
 	@Getter
-	private EdiExportAccumulator accumulator = new EdiExportAccumulator(); 
+	private EdiExportQueue accumulator = new EdiExportQueue(); 
 
 	@Getter
 	@Setter
@@ -71,7 +71,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 
 	@Getter
 	@Setter
-	private IEdiExportGateway	ediExportTransport;
+	private IEdiExportGateway	ediExportGateway;
 
 	private Retryer<ExportReceipt> retryer;
 
@@ -84,10 +84,8 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 
 	private Cache<ExportMessageFuture, ExportReceipt>	receiptCache;
 	
-	public FacilityAccumulatingExporter(Facility facility, WiBeanStringifier stringifier, IEdiExportGateway exportService) {
+	public FacilityAccumulatingExporter(Facility facility) {
 		super();
-		this.stringifier = stringifier; 
-		this.ediExportTransport = exportService;
 		this.retryer = RetryerBuilder.<ExportReceipt>newBuilder()
 		        .retryIfExceptionOfType(IOException.class)
 		        .withWaitStrategy(WaitStrategies.fibonacciWait(100, 2, TimeUnit.MINUTES))
@@ -186,11 +184,11 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 				@Override
 				public ExportReceipt call() throws IOException {
 					if (message instanceof OrderOnCartAddedExportMessage) {
-						FileExportReceipt receipt =  getEdiExportTransport().transportOrderOnCartAdded(message.getOrderId(), message.getCheGuid(), message.getContents());
+						FileExportReceipt receipt =  getEdiExportGateway().transportOrderOnCartAdded(message.getOrderId(), message.getCheGuid(), message.getContents());
 						LOGGER.info("Sent orderOnCartAdded {}", message);
 						return receipt;
 					} else if (message instanceof OrderOnCartFinishedExportMessage){
-						FileExportReceipt receipt=  getEdiExportTransport().transportOrderOnCartFinished(message.getOrderId(), message.getCheGuid(), message.getContents());
+						FileExportReceipt receipt = getEdiExportGateway().transportOrderOnCartFinished(message.getOrderId(), message.getCheGuid(), message.getContents());
 						LOGGER.info("Sent orderOnCartFinished {}", message);
 						return receipt;
 					} else {
@@ -301,9 +299,9 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 		}
 		LOGGER.warn("FacilityAccumulatingExporter did not empty its queue in time");
 	}
-
+	
 	@Override
 	public String getDomainId() {
-		return ediExportTransport.getDomainId();
+		return getEdiExportGateway().getDomainId();
 	}
 }

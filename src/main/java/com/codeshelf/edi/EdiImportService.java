@@ -169,7 +169,7 @@ public final class EdiImportService extends AbstractCodeshelfScheduledService {
 	int doEdiForFacility(Facility facility) {
 		int numChecked = 0;
 		for (IEdiGateway ediGateway : facility.getLinkedEdiImportGateway()) { 
-			if (Boolean.TRUE.equals(ediGateway.getActive())){
+			if (ediGateway.isActive()){
 				try {
 					if (ediGateway.getUpdatesFromHost(mCsvOrderImporter.get(),
 						mCsvOrderLocationImporter.get(),

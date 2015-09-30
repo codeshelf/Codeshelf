@@ -100,7 +100,6 @@ public abstract class EdiGateway extends DomainObjectTreeABC<Facility> implement
 	private String					providerCredentials;
 	
 	@Column(nullable = true)
-	@Getter
 	@Setter
 	@JsonProperty
 	private Boolean					active;
@@ -131,5 +130,11 @@ public abstract class EdiGateway extends DomainObjectTreeABC<Facility> implement
 	@JsonProperty
 	public abstract boolean getHasCredentials();
 
-
+	@Override
+	public boolean isActive() {
+		if (active == null){
+			return false;
+		}
+		return active;
+	}
 }
