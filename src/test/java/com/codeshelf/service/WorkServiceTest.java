@@ -23,7 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.edi.EdiExportService;
-import com.codeshelf.edi.FacilityEdiExporter;
+import com.codeshelf.edi.IFacilityEdiExporter;
 import com.codeshelf.generators.FacilityGenerator;
 import com.codeshelf.generators.WorkInstructionGenerator;
 import com.codeshelf.model.OrderStatusEnum;
@@ -248,7 +248,7 @@ public class WorkServiceTest extends ServerTest {
 
 		UUID cheId = UUID.randomUUID();
 
-		createWorkService(Integer.MAX_VALUE, mock(FacilityEdiExporter.class), 1L);
+		createWorkService(Integer.MAX_VALUE, mock(IFacilityEdiExporter.class), 1L);
 		WorkInstruction wiToRecord = generateValidWorkInstruction(facilityGenerator.generateValid(), new Timestamp(0));
 
 		this.<Che> useCustomDao(Che.class, mock(ITypedDao.class));
@@ -279,7 +279,7 @@ public class WorkServiceTest extends ServerTest {
 		WorkInstruction wiToRecord = generateValidWorkInstruction(facility, new Timestamp(0));
 		this.getTenantPersistenceService().commitTransaction();
 
-		FacilityEdiExporter mockEdiExportService = mock(FacilityEdiExporter.class);
+		IFacilityEdiExporter mockEdiExportService = mock(IFacilityEdiExporter.class);
 		createWorkService(Integer.MAX_VALUE, mockEdiExportService, 1L);
 
 		UUID cheId = UUID.randomUUID();
@@ -309,7 +309,7 @@ public class WorkServiceTest extends ServerTest {
 	public void allWorkInstructionsSent() throws Exception {
 		this.getTenantPersistenceService().beginTransaction();
 
-		FacilityEdiExporter mockEdiExportService = mock(FacilityEdiExporter.class);
+		IFacilityEdiExporter mockEdiExportService = mock(IFacilityEdiExporter.class);
 		int total = 100;
 		createWorkService(total + 1, mockEdiExportService, 1L);
 		List<WorkInstruction> wiList = generateValidWorkInstructions(total);
@@ -324,7 +324,7 @@ public class WorkServiceTest extends ServerTest {
 	}
 
 
-	private void createWorkService(int capacity, FacilityEdiExporter ediExporter, long retryDelay) throws Exception {
+	private void createWorkService(int capacity, IFacilityEdiExporter ediExporter, long retryDelay) throws Exception {
 
 		EdiExportService provider = mock(EdiExportService.class);
 		when(provider.getEdiExporter(any(Facility.class))).thenReturn(ediExporter);

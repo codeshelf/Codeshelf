@@ -28,7 +28,7 @@ import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.edi.EdiExportService;
-import com.codeshelf.edi.FacilityEdiExporter;
+import com.codeshelf.edi.IFacilityEdiExporter;
 import com.codeshelf.edi.SftpConfiguration;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
@@ -2099,7 +2099,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.logout();
 		
 		EdiExportService exportProvider = workService.getExportProvider();
-		FacilityEdiExporter exporter = exportProvider.getEdiExporter(facility);
+		IFacilityEdiExporter exporter = exportProvider.getEdiExporter(facility);
 		exporter.waitUntillQueueIsEmpty(20000);
 		
 		beginTransaction();

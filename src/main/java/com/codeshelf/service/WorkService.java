@@ -39,7 +39,7 @@ import com.codahale.metrics.Timer;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.OrderLocationFeedbackMessage;
 import com.codeshelf.edi.EdiExportService;
-import com.codeshelf.edi.FacilityEdiExporter;
+import com.codeshelf.edi.IFacilityEdiExporter;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
@@ -693,7 +693,7 @@ public class WorkService implements IApiService {
 		// This is the PFSWeb variant. 
 		// Not sure if these should go singly.
 		try {
-			Optional<FacilityEdiExporter> theService = getFacilityEdiExporter(inOrder.getFacility());
+			Optional<IFacilityEdiExporter> theService = getFacilityEdiExporter(inOrder.getFacility());
 			if (theService.isPresent()) {
 				theService.get().exportOrderOnCartAdded(inOrder, inChe);
 			}
@@ -713,7 +713,7 @@ public class WorkService implements IApiService {
 		LOGGER.info("Order: {} removed from cart:{}", inOrder.getOrderId(), inChe.getDomainId());
 		// This is the PFSWeb variant. 
 		try {
-			Optional<FacilityEdiExporter> theService = getFacilityEdiExporter(inOrder.getFacility());
+			Optional<IFacilityEdiExporter> theService = getFacilityEdiExporter(inOrder.getFacility());
 			if (theService.isPresent()) {
 				theService.get().exportOrderOnCartRemoved(inOrder, inChe);
 			}
@@ -751,7 +751,7 @@ public class WorkService implements IApiService {
 
 		//the implementation is either blow by blow or accumulating
 		try {
-			Optional<FacilityEdiExporter> theService = getFacilityEdiExporter(inWi.getFacility());
+			Optional<IFacilityEdiExporter> theService = getFacilityEdiExporter(inWi.getFacility());
 			if (theService.isPresent()) {
 				Che wiChe = inWi.getAssignedChe();
 				OrderHeader wiOrder = inWi.getOrder();
@@ -767,7 +767,7 @@ public class WorkService implements IApiService {
 		}
 	}
 
-	private Optional<FacilityEdiExporter> getFacilityEdiExporter(Facility facility) throws Exception {
+	private Optional<IFacilityEdiExporter> getFacilityEdiExporter(Facility facility) throws Exception {
 		return Optional.fromNullable(this.exportProvider.getEdiExporter(facility));
 	}
 

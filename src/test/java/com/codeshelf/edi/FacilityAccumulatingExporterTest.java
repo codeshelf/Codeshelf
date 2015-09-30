@@ -78,8 +78,8 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 		return orderHeader;
 	}
 	
-	private FacilityAccumulatingExporter startExporter(Facility facility, EdiExportAccumulator accumulator, WiBeanStringifier stringifier, IEdiExportGateway exportTransport) throws TimeoutException {
-		FacilityAccumulatingExporter subject = new FacilityAccumulatingExporter(facility, accumulator, stringifier, exportTransport);
+	private FacilityAccumulatingExporter startExporter(Facility facility, WiBeanStringifier stringifier, IEdiExportGateway exportTransport) throws TimeoutException {
+		FacilityAccumulatingExporter subject = new FacilityAccumulatingExporter(facility, stringifier, exportTransport);
 		subject.startAsync().awaitRunning(5, TimeUnit.SECONDS);
 		return subject;
 	}
@@ -87,7 +87,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 	@Test 
 	public void startUpImmediateShutdown() throws TimeoutException {
 		beginTransaction();
-		FacilityAccumulatingExporter subject = startExporter(getFacility(), mock(EdiExportAccumulator.class), mock(WiBeanStringifier.class), mock(IEdiExportGateway.class));
+		FacilityAccumulatingExporter subject = startExporter(getFacility(), mock(WiBeanStringifier.class), mock(IEdiExportGateway.class));
 		commitTransaction();
 		subject.exportOrderOnCartAdded(mock(OrderHeader.class), mock(Che.class));
 		subject.stopAsync().awaitTerminated(5, TimeUnit.SECONDS);
@@ -180,8 +180,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 		
 		WiBeanStringifier stringifier = new WiBeanStringifier(ExtensionPointService.createInstance(facility));
 		IEdiExportGateway exportService = mock(IEdiExportGateway.class);
-		EdiExportAccumulator accumulator = new EdiExportAccumulator();
-		FacilityAccumulatingExporter ediExporter = startExporter(facility, accumulator, stringifier, exportService);
+		FacilityAccumulatingExporter ediExporter = startExporter(facility, stringifier, exportService);
 		
 		LOGGER.info("3: notify order on cart"); // Use extension points
 		ArrayList<ListenableFuture<ExportReceipt>> receipts = new ArrayList<ListenableFuture<ExportReceipt>>();
@@ -232,7 +231,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 		
 		IEdiExportGateway mockEdiTransport = mock(IEdiExportGateway.class);
 
-		FacilityAccumulatingExporter subject = startExporter(facility, mock(EdiExportAccumulator.class), mock(WiBeanStringifier.class), mockEdiTransport);
+		FacilityAccumulatingExporter subject = startExporter(facility, mock(WiBeanStringifier.class), mockEdiTransport);
 		try {
 			beginTransaction();
 			when(mockEdiTransport.transportOrderOnCartAdded(any(String.class), any(String.class), any(String.class)))
@@ -304,7 +303,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 			.thenThrow(new IOException("test io 2"))
 			.thenReturn(null);
 
-		FacilityAccumulatingExporter subject = startExporter(facility, mock(EdiExportAccumulator.class), mockStringifier, mockEdiTransport);
+		FacilityAccumulatingExporter subject = startExporter(facility, mockStringifier, mockEdiTransport);
 		try {
 			subject.exportOrderOnCartAdded(order1, che1);
 			
@@ -350,7 +349,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 		WiBeanStringifier mockStringifier = mock(WiBeanStringifier.class);
 		when(mockStringifier.stringifyOrderOnCartAdded(any(OrderHeader.class), eq(che1))).thenReturn(singleTestMessage);
 
-		final FacilityAccumulatingExporter subject = startExporter(facility, mock(EdiExportAccumulator.class), mockStringifier, mockEdiTransport);
+		final FacilityAccumulatingExporter subject = startExporter(facility, mockStringifier, mockEdiTransport);
 		try {
 			//block all transports
 			callBlocker.lock();
@@ -398,7 +397,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 
 		beginTransaction();
 		Facility facility = getFacility();
-		final FacilityAccumulatingExporter subject = startExporter(facility, mock(EdiExportAccumulator.class), mockStringifier, badEdiTransport);
+		final FacilityAccumulatingExporter subject = startExporter(facility, mockStringifier, badEdiTransport);
 		try {
 			OrderHeader mockOrder = mock(OrderHeader.class);
 			Che mockChe = mock(Che.class);

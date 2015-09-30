@@ -56,14 +56,14 @@ import com.google.common.util.concurrent.ListenableFuture;
  * Currently only a memory list, lost upon server restart.
  * Later, change to a persistent list of the serialized bean to survive server restart.
  */
-public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThreadService implements FacilityEdiExporter {
+public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThreadService implements IFacilityEdiExporter {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(FacilityAccumulatingExporter.class);
 
 	private static final ExportMessageFuture	POISON	= new ExportMessageFuture(null, null,null);
 
 	@Getter
-	private EdiExportAccumulator accumulator; 
+	private EdiExportAccumulator accumulator = new EdiExportAccumulator(); 
 
 	@Getter
 	@Setter
@@ -84,9 +84,8 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 
 	private Cache<ExportMessageFuture, ExportReceipt>	receiptCache;
 	
-	public FacilityAccumulatingExporter(Facility facility, EdiExportAccumulator accumulator, WiBeanStringifier stringifier, IEdiExportGateway exportService) {
+	public FacilityAccumulatingExporter(Facility facility, WiBeanStringifier stringifier, IEdiExportGateway exportService) {
 		super();
-		this.accumulator = accumulator;
 		this.stringifier = stringifier; 
 		this.ediExportTransport = exportService;
 		this.retryer = RetryerBuilder.<ExportReceipt>newBuilder()

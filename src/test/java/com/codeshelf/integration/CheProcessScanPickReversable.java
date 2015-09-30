@@ -23,10 +23,7 @@ public class CheProcessScanPickReversable extends ServerTest {
 	private static final int	WAIT_TIME	= 4000;
 
 	private PickSimulator setupTestPicker() throws IOException {
-		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpOneAisleFourBaysFlatFacilityWithOrders();
-
-		this.getTenantPersistenceService().commitTransaction();
 
 		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
 

@@ -31,9 +31,9 @@ import com.google.inject.Singleton;
 public class EdiExportService extends AbstractCodeshelfIdleService {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(EdiExportService.class);
 
-	private Map<UUID, FacilityEdiExporter> facilityEdiExporters = new HashMap<>();
+	private Map<UUID, IFacilityEdiExporter> facilityEdiExporters = new HashMap<>();
 		
-	public FacilityEdiExporter getEdiExporter(Facility facility) throws Exception {
+	public IFacilityEdiExporter getEdiExporter(Facility facility) throws Exception {
 		//look up the export service for the facility
 		// > WI > WIRecord/OrderRecord/CheRecord > WIMessage > Queue > Transport Tasks
 		//retry
@@ -75,10 +75,9 @@ public class EdiExportService extends AbstractCodeshelfIdleService {
 			ExtensionPointService extensionPointService = ExtensionPointService.createInstance(facility);
 			WiBeanStringifier stringifier = new WiBeanStringifier(extensionPointService);
 			synchronized(facilityEdiExporters) {
-				FacilityEdiExporter exporter = facilityEdiExporters.get(facility.getPersistentId());
+				IFacilityEdiExporter exporter = facilityEdiExporters.get(facility.getPersistentId());
 				if (exporter == null) {
-					EdiExportAccumulator accumulator = new EdiExportAccumulator();
-					exporter = new FacilityAccumulatingExporter(facility, accumulator, stringifier, exportTransport);
+					exporter = new FacilityAccumulatingExporter(facility, stringifier, exportTransport);
 					exporter.startAsync().awaitRunning(5, TimeUnit.SECONDS);
 					facilityEdiExporters.put(facility.getPersistentId(), exporter);
 				} else {
@@ -100,11 +99,11 @@ public class EdiExportService extends AbstractCodeshelfIdleService {
 	@Override
 	protected void shutDown() throws Exception {
 		synchronized(facilityEdiExporters) {
-			for (FacilityEdiExporter exporter : facilityEdiExporters.values()) {
+			for (IFacilityEdiExporter exporter : facilityEdiExporters.values()) {
 				exporter.stopAsync();
 			};
 			
-			for (FacilityEdiExporter exporter : facilityEdiExporters.values()) {
+			for (IFacilityEdiExporter exporter : facilityEdiExporters.values()) {
 				try {
 					exporter.awaitTerminated(2, TimeUnit.SECONDS);
 				}catch(Exception e) {

@@ -7,7 +7,7 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 
-public interface FacilityEdiExporter extends Service {
+public interface IFacilityEdiExporter extends Service {
 
 	public void exportWiFinished(OrderHeader inOrder, Che inChe, WorkInstruction inWi);
 	
