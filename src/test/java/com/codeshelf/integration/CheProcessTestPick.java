@@ -350,7 +350,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.startSiteController();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
 				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
@@ -359,7 +359,7 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,1,1,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -416,7 +416,7 @@ public class CheProcessTestPick extends ServerTest {
 
 	private PickSimulator startReverseWork(Facility facility) throws IOException {
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
 				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
@@ -425,7 +425,7 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 
 		String csvString2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,1,1,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -471,7 +471,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.startSiteController();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
 		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
@@ -486,7 +486,7 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 
 		Location locationD403 = facility.findSubLocationById("D403");
 		Location locationD402 = facility.findSubLocationById("D402");
@@ -496,7 +496,7 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Item 1123 exists in case and each.
@@ -511,7 +511,7 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 
 		// We should have one order with 3 details. Only 2 of which are fulfillable.
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
@@ -531,20 +531,20 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
 		propertyService.turnOffHK(facility);
 		commitTransaction();
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		// Set up a cart for order 12345, which will generate work instructions
 		Che che1 = Che.staticGetDao().findByPersistentId(this.che1PersistentId);
 		workService.setUpCheContainerFromString(che1, "12345");
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		che1 = Che.staticGetDao().reload(che1);
 		List<WorkInstruction> aList = workService.getWorkInstructions(che1, "");
 		int wiCount = aList.size();
@@ -556,12 +556,12 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		propertyService.restoreHKDefaults(facility); // set it back
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		che1 = Che.staticGetDao().reload(che1);
 		List<WorkInstruction> wiListAfterScan = workService.getWorkInstructions(che1, "D402");
 		Integer wiCountAfterScan = wiListAfterScan.size();
@@ -609,7 +609,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.startSiteController();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 
 		// We are going to put cases in A3 and each in A2. Also showing variation in EA/each, etc.
 		// 402 and 403 are in A2, the each aisle. 502 and 503 are in A3, the case aisle, on a separate path.
@@ -624,7 +624,7 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 
 		Location locationD402 = facility.findSubLocationById("D402");
 
@@ -634,7 +634,7 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Item 1123 exists in case and each.
 		// Item 1493 exists in case only. Order for each should short.
@@ -648,7 +648,7 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 
 		// We should have one order with 3 details. Only 2 of which are fulfillable.
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
@@ -671,7 +671,7 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		propertyService.turnOffHK(facility);
 		commitTransaction();
 
@@ -682,7 +682,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.startAndSkipReview("D403", 8000, 5000);
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		propertyService.restoreHKDefaults(facility);
 		commitTransaction();
 
@@ -726,7 +726,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		// Verify only two containers made
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		List<Container> containers = Container.staticGetDao().findByParent(facility);
 		Assert.assertEquals(2, containers.size());
 		propertyService.turnOffHK(facility);
@@ -1226,7 +1226,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.startSiteController();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		// Outbound order. No group. Using 5 digit order number and preassigned container number.
 		// Order 11111 has two items in stock (Item 1 and Item 2)
 		// Order 22222 has 1 item in stock (Item 1) and 1 immediate short (Item 5 which is out of stock)
@@ -1246,7 +1246,7 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		// Start setting up cart etc
 		List<Container> containers = Container.staticGetDao().findByParent(facility);
 		//Make sure we have 4 orders/containers
@@ -1532,7 +1532,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.startSiteController();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
 		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -1544,7 +1544,7 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -1555,13 +1555,13 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		propertyService.turnOffHK(facility);
 		commitTransaction();
 
 		// Start setting up cart etc
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		List<Container> containers = Container.staticGetDao().findByParent(facility);
 		//Make sure we have 4 orders/containers
 		Assert.assertEquals(4, containers.size());
@@ -1770,7 +1770,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.startSiteController();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
 		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -1782,7 +1782,7 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -1793,7 +1793,7 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		propertyService.turnOffHK(facility);
 		commitTransaction();
 
@@ -1816,7 +1816,7 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 2) == (byte) 11);
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		propertyService.restoreHKDefaults(facility);
 		commitTransaction();
 
@@ -2005,7 +2005,7 @@ public class CheProcessTestPick extends ServerTest {
 				+ " return returnStr;}";
 
 		beginTransaction();
-		facility.reload();
+		facility = facility.reload();
 		propertyService.turnOffHK(facility);
 		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.WORKSEQR);
 		if (theProperty != null) {
@@ -2040,7 +2040,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		LOGGER.info("2: Load orders. No inventory, so uses locationA, etc. as the location-based pick");
 		beginTransaction();
-		facility.reload();
+		facility = facility.reload();
 
 		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
 				+ "\r\n11111,11111,1,Test Item 1,1,each,locationA,1"
@@ -2052,7 +2052,7 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 		
 		beginTransaction();
-		facility.reload();
+		facility = facility.reload();
 		SftpConfiguration config = setupSftpOutConfiguration();
 		SftpWiGateway sftpWIs = configureSftpService(facility, config, SftpWiGateway.class);
 		Assert.assertTrue(sftpWIs.isLinked());
@@ -2126,6 +2126,24 @@ public class CheProcessTestPick extends ServerTest {
 			Assert.assertEquals(expectedContents, message.getContents().trim());
 		}
 		commitTransaction();
+		
+		LOGGER.info("6: Investigate whether deleting the work intruction also sends out pickMissionStatus");
+		beginTransaction();
+		facility = facility.reload();
+		OrderHeader oh = OrderHeader.staticGetDao().findByDomainId(facility, "11111"); // this one completed
+		oh.delete(); // This will cascade to delete the completed work instructions
+		OrderHeader oh2 = OrderHeader.staticGetDao().findByDomainId(facility, "22222"); // this one not completed
+		oh2.delete(); // This will cascade to delete the uncompleted work instructions
+		commitTransaction();
+		
+		// Just waste some time
+		picker.loginAndSetup("Picker #1");
+		picker.logout();
+		picker.loginAndSetup("Picker #1");
+		picker.logout();
+		exporter.waitUntillQueueIsEmpty(20000);
+
+		
 	}
 		
 	//++++++++++  SFTP configuration +++++++++++
@@ -2168,7 +2186,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.startSiteController();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
 		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
@@ -2180,7 +2198,7 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -2191,7 +2209,7 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 
 		propertyService.turnOffHK(facility);
 		commitTransaction();
@@ -2366,7 +2384,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		LOGGER.info("1a: leave LOCAPICK off, set WORKSEQR, turn off housekeeping, set PICKMULT");
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		Assert.assertNotNull(facility);
 		propertyService.changePropertyValue(facility, DomainObjectProperty.PICKMULT, Boolean.toString(true));
 		propertyService.changePropertyValue(facility,
@@ -2519,7 +2537,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		LOGGER.info("1a: leave LOCAPICK off, set WORKSEQR, turn off housekeeping, set PICKMULT");
 		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
+		facility = facility.reload();
 		Assert.assertNotNull(facility);
 		propertyService.changePropertyValue(facility, DomainObjectProperty.PICKMULT, Boolean.toString(true));
 		propertyService.changePropertyValue(facility,
