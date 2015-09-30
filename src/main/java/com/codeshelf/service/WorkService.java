@@ -777,6 +777,13 @@ public class WorkService implements IApiService {
 			WorkInstruction storedWi = null;
 			try {
 				storedWi = persistWorkInstruction(incomingWI);
+				if (storedWi == null) {
+					// happens only if site controller completed a work instruction that server recently deleted
+					LOGGER.error(" Cannot complete this work instruction as server could not find it in database {}", incomingWI);
+					// No point in throwing here. A throw would return response.fail to site controller and CHE screen, but there is nothing
+					// the CHE/worker can do about it. Let's just succeed.
+					return;
+				}					
 				notifyEdiServiceCompletedWi(storedWi);
 				computeAndSendOrderFeedback(storedWi);
 				//If WI is on a PutWall, refresh PutWall feedback
@@ -1937,7 +1944,10 @@ public class WorkService implements IApiService {
 		UUID wiId = updatedWi.getPersistentId();
 		WorkInstruction storedWi = WorkInstruction.staticGetDao().findByPersistentId(wiId);
 		if (storedWi == null) {
-			throw new InputValidationException(updatedWi, "persistentId", wiId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
+			LOGGER.error("Server does not have this work instruction. May have recently deleted it: {}", updatedWi);
+			// The wi deserialized from site controller, so we have that reference, but if server deleted it, it no longer has it in the database
+			return null; // instead of throw			
+			// throw new InputValidationException(updatedWi, "persistentId", wiId, ErrorCode.FIELD_REFERENCE_NOT_FOUND);
 		}
 		storedWi.setPickerId(updatedWi.getPickerId());
 		storedWi.setActualQuantity(updatedWi.getActualQuantity());
