@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.metrics.DataQuantityHealthCheckParameters;
+import com.codeshelf.model.DataPurgeParameters;
 import com.codeshelf.model.domain.Facility;
 import com.google.common.collect.Lists;
 
@@ -107,7 +108,7 @@ public class ExtensionPointService {
 		return new ExtensionPointService(facility);
 	}
 
-	
+   // Methods to get the parameter beans	
 	public DataQuantityHealthCheckParameters getDataQuantityHealthCheckParameters() {
 		
 		DataQuantityHealthCheckParameters theBean = new DataQuantityHealthCheckParameters();
@@ -116,8 +117,19 @@ public class ExtensionPointService {
 			// eval the bean
 		}
 
-		return theBean;
-		
+		return theBean;	
 	}
+	
+	public DataPurgeParameters getDataPurgeParameters() {
+		
+		DataPurgeParameters theBean = new DataPurgeParameters();
+		
+		if (hasExtensionPoint(ExtensionPointType.ParameterSetDataPurge)) {
+			// eval the bean
+		}
+
+		return theBean;		
+	}
+
 
 }
