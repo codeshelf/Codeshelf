@@ -2660,19 +2660,32 @@ public class WorkService implements IApiService {
 		List<Container> cntrs = Container.staticGetDao()
 			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID)));
 
+		Map<UUID, Container> referencedMap = new HashMap<UUID, Container>();
+
+		LOGGER.info("examining {} Containers to consider purging", cntrs.size());
+		LOGGER.info("examining ContainerUses linked to containers");
 		// ContainerUse. Can not limit, or we would make incorrect decisions about which were deleteable.
 		Criteria crit = ContainerUse.staticGetDao().createCriteria();
 		crit.createAlias("parent", "p");
 		crit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
 		List<ContainerUse> uses = ContainerUse.staticGetDao().findByCriteriaQuery(crit);
 
-		LOGGER.info("examining {} Containers to consider purging", cntrs.size());
-
 		// Add each container that ContainerUse references to map
-		Map<UUID, Container> referencedMap = new HashMap<UUID, Container>();
-
 		for (ContainerUse cntrUse : uses) {
 			Container referencedCntr = cntrUse.getParent();
+			if (!referencedMap.containsKey(referencedCntr.getPersistentId())) {
+				referencedMap.put(referencedCntr.getPersistentId(), referencedCntr);
+			}
+		}
+
+		LOGGER.info("examining WorkInstructions linked to containers");
+		Criteria crit2 = WorkInstruction.staticGetDao().createCriteria();
+		crit2.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByCriteriaQuery(crit2);
+
+		// Add each container that the work instruction references to map
+		for (WorkInstruction wi : wis) {
+			Container referencedCntr = wi.getContainer();
 			if (!referencedMap.containsKey(referencedCntr.getPersistentId())) {
 				referencedMap.put(referencedCntr.getPersistentId(), referencedCntr);
 			}
@@ -2681,7 +2694,7 @@ public class WorkService implements IApiService {
 		int deletedCount = 0;
 		for (Container cntr : cntrs) {
 			boolean shouldDelete = false;
-			if (!referencedMap.containsKey(cntr.getPersistentId())) // This container had no containerUses
+			if (!referencedMap.containsKey(cntr.getPersistentId())) // This container had no containerUses and no work instructions
 				shouldDelete = true;
 
 			if (shouldDelete) {

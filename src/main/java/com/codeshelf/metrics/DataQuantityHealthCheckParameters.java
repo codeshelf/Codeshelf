@@ -102,7 +102,7 @@ public class DataQuantityHealthCheckParameters extends ParameterSetBeanABC {
 	@Override
 	public String getParametersDescription() {
 		return String.format("maxOrder: %d; , maxOrderDetail: %d; , maxWorkInstruction: %d; , maxContainerUse: %d;",
-			getMaxOrder(),
+			getMaxOrderValue(),
 			getMaxOrderDetailValue(),
 			getMaxWorkInstructionValue(),
 			getMaxContainerUseValue());
