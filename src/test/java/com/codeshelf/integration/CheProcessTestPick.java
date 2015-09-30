@@ -2055,6 +2055,7 @@ public class CheProcessTestPick extends ServerTest {
 		facility = facility.reload();
 		SftpConfiguration config = setupSftpOutConfiguration();
 		SftpWiGateway sftpWIs = configureSftpService(facility, config, SftpWiGateway.class);
+		sftpWIs.setActive(true);
 		Assert.assertTrue(sftpWIs.isLinked());
 		commitTransaction();
 
