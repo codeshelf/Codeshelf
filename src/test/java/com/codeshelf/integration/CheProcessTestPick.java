@@ -2098,11 +2098,11 @@ public class CheProcessTestPick extends ServerTest {
 		picker.loginAndSetup("Picker #1");
 		picker.logout();
 		
+		beginTransaction();
 		EdiExportService exportProvider = workService.getExportProvider();
 		IFacilityEdiExporter exporter = exportProvider.getEdiExporter(facility);
 		exporter.waitUntillQueueIsEmpty(20000);
 		
-		beginTransaction();
 		LOGGER.info("5: Verify sent messages");
 		List<ExportMessage> messages = ExportMessage.staticGetDao().getAll();
 		Assert.assertEquals(4,  messages.size());
