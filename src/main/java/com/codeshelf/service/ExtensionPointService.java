@@ -1,26 +1,29 @@
 package com.codeshelf.service;
 
+import groovy.lang.GroovyRuntimeException;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+import lombok.Getter;
+
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.metrics.DataQuantityHealthCheckParameters;
 import com.codeshelf.model.DataPurgeParameters;
-import com.codeshelf.model.domain.Facility;
-import com.google.common.collect.Lists;
-
-import groovy.lang.GroovyRuntimeException;
-import lombok.Getter;
-
 import com.codeshelf.model.domain.ExtensionPoint;
+import com.codeshelf.model.domain.Facility;
+import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
 
 public class ExtensionPointService {
 
@@ -33,9 +36,12 @@ public class ExtensionPointService {
 	@Getter
 	private ArrayList<String>	failedExtensions	= Lists.newArrayList();
 
+	private UUID	facilityPersistentId;
+
 	public ExtensionPointService(Facility facility) throws ScriptException {
 		initEngine();
 		load(facility);
+		facilityPersistentId = facility.getPersistentId();
 	}
 
 	private void initEngine() throws ScriptException {
@@ -81,7 +87,7 @@ public class ExtensionPointService {
 			if (ep.isActive()) {
 				LOGGER.info("Adding extension point " + ep.getType());
 				this.addExtensionPointIfValid(ep);
-			} else {
+			} else { 
 				LOGGER.info("Skipping inactive extension point " + ep.getType());
 			}
 		}
@@ -110,6 +116,27 @@ public class ExtensionPointService {
 
 	// Methods to get the parameter beans	
 	//+++++++++++++++++++++++++++++++++++++++
+
+	public Optional<ExtensionPoint> getExtensionPoint(ExtensionPointType type) {
+		@SuppressWarnings("unchecked")
+		List<ExtensionPoint> eps = ExtensionPoint.staticGetDao().createCriteria()
+				.add(Restrictions.eq("type", type))
+				.createCriteria("parent")
+					.add(Restrictions.eq("persistentId", facilityPersistentId))
+				.list();
+		if (eps.size() == 1) {
+			return Optional.of(eps.get(0));
+		} else if (eps.size() < 1) {
+			LOGGER.warn("Fould multiple extension points for type {} in faciltiy {}");
+		}	 
+		return Optional.absent();
+		
+	}
+
+	public Optional<ExtensionPoint> getDataQuantityHealthCheckExtensionPoint() {
+		return this.getExtensionPoint(ExtensionPointType.ParameterSetDataQuantityHealthCheck);
+	}
+	
 	public DataQuantityHealthCheckParameters getDataQuantityHealthCheckParameters() {
 
 		DataQuantityHealthCheckParameters theBean = new DataQuantityHealthCheckParameters();
@@ -139,5 +166,6 @@ public class ExtensionPointService {
 		}
 		return theBean;
 	}
+
 
 }
