@@ -28,6 +28,7 @@ import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.edi.EdiExportService;
+import com.codeshelf.edi.IEdiExportGateway;
 import com.codeshelf.edi.IFacilityEdiExporter;
 import com.codeshelf.edi.SftpConfiguration;
 import com.codeshelf.flyweight.command.ColorEnum;
@@ -2143,8 +2144,108 @@ public class CheProcessTestPick extends ServerTest {
 		picker.loginAndSetup("Picker #1");
 		picker.logout();
 		exporter.waitUntillQueueIsEmpty(20000);
-
+	}
+	
+	@Test
+	public void testEDIActiveFlag() throws Exception {
+		Facility facility = setUpSimpleNoSlotFacility();
 		
+		beginTransaction();
+		facility = facility.reload();
+		LOGGER.info("1: Set up OrderOnCartContent extension, import orders, set up active sftp exporter");
+		propertyService.changePropertyValue(facility,
+			DomainObjectProperty.WORKSEQR,
+			WorkInstructionSequencerType.WorkSequence.toString());
+		
+		String onCartScript = "def OrderOnCartContent(bean) { def returnStr = " //
+				+ "'0073' +'^'" //
+				+ "+ 'ORDERSTATUS'.padRight(20) +'^'" //
+				+ "+ '0'.padLeft(10,'0') +'^'" //
+				+ "+ bean.orderId.padRight(20) +'^'" //
+				+ "+ bean.cheId.padRight(7) +'^'" //
+				+ "+ bean.customerId.padRight(2) +'^'" //
+				+ "+ 'OPEN'.padRight(15);" //
+				+ " return returnStr;}";
+		ExtensionPoint onCartExt = new ExtensionPoint(facility, ExtensionPointType.OrderOnCartContent);
+		onCartExt.setScript(onCartScript);
+		onCartExt.setActive(true);
+		ExtensionPoint.staticGetDao().store(onCartExt);
+
+		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n11111,11111,1,Test Item 1,1,each,loc1,0"
+				+ "\r\n22222,22222,2,Test Item 2,1,each,loc2,0"
+				+ "\r\n33333,33333,3,Test Item 3,1,each,loc3,0";
+		importOrdersData(facility, csvOrders);
+		
+		SftpConfiguration config = setupSftpOutConfiguration();
+		config.setActive(true);
+		configureSftpService(facility, config, SftpWiGateway.class);
+		commitTransaction();
+		
+		LOGGER.info("2: Load first order on cart");
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+		picker.setupOrderIdAsContainer("11111", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		Assert.assertEquals("1 job", picker.getLastCheDisplayString(2).trim());
+		
+		beginTransaction();
+		LOGGER.info("3: Confirm that a correct message had been created and sent");
+		facility = facility.reload();
+		EdiExportService exportProvider = workService.getExportProvider();
+		IFacilityEdiExporter exporter = exportProvider.getEdiExporter(facility);
+		exporter.waitUntillQueueIsEmpty(20000);
+		List<ExportMessage> messages = ExportMessage.staticGetDao().getAll();
+		Assert.assertEquals(1, messages.size());
+		ExportMessage message = messages.get(0);
+		Assert.assertEquals("0073^ORDERSTATUS         ^0000000000^11111               ^CHE1   ^  ^OPEN", message.getContents().trim());
+		
+		LOGGER.info("4: Inactivate sftp exporter");
+		IEdiExportGateway exportGateway = facility.getEdiExportGateway();
+		exportGateway.setActive(false);
+		exportProvider.ediExportServiceUpdated(facility);
+		commitTransaction();
+		
+		LOGGER.info("5: Load second order on cart");
+		picker.scanCommand("SETUP");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		picker.setupOrderIdAsContainer("22222", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		Assert.assertEquals("1 job", picker.getLastCheDisplayString(2).trim());
+		
+		LOGGER.info("6: Assert that Exporter service is disabled, and that no additional messages were created");
+		beginTransaction();
+		facility = facility.reload();
+		exporter = exportProvider.getEdiExporter(facility);
+		Assert.assertNull(exporter);
+		messages = ExportMessage.staticGetDao().getAll();
+		Assert.assertEquals(1, messages.size());
+		
+		LOGGER.info("7: Activate sftp exporter");
+		exportGateway = facility.getEdiExportGateway();
+		exportGateway.setActive(true);
+		exportProvider.ediExportServiceUpdated(facility);
+		commitTransaction();
+		
+		LOGGER.info("8: Load third order on cart");
+		picker.scanCommand("SETUP");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		picker.setupOrderIdAsContainer("33333", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		Assert.assertEquals("1 job", picker.getLastCheDisplayString(2).trim());
+
+		LOGGER.info("9: Assert than a single new message was created");
+		beginTransaction();
+		facility = facility.reload();
+		exporter = exportProvider.getEdiExporter(facility);
+		exporter.waitUntillQueueIsEmpty(20000);
+		messages = ExportMessage.staticGetDao().getAll();
+		Assert.assertEquals(2, messages.size());
+		commitTransaction();
 	}
 		
 	//++++++++++  SFTP configuration +++++++++++

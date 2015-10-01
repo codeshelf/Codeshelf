@@ -31,6 +31,7 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
+import com.codeshelf.edi.IEdiImportGateway;
 import com.codeshelf.model.EdiProviderEnum;
 import com.codeshelf.model.EdiGatewayStateEnum;
 import com.codeshelf.model.dao.DaoException;
@@ -62,7 +63,7 @@ import com.google.common.base.Strings;
 @Entity
 @DiscriminatorValue("DROPBOX")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class DropboxGateway extends EdiGateway {
+public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 	public static final String	DROPBOX_SERVICE_NAME	= "DROPBOX";
 
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(DropboxGateway.class);

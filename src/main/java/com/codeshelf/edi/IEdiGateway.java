@@ -17,13 +17,8 @@ public interface IEdiGateway extends IDomainObjectTree<Facility> {
 	boolean isLinked();
 	
 	boolean isActive();
-
-	boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
-		ICsvOrderLocationImporter inCsvOrderLocationImporter,
-		ICsvInventoryImporter inCsvInventoryImporter,
-		ICsvLocationAliasImporter inCsvLocationsImporter,
-		ICsvCrossBatchImporter inCsvCrossBatchImporter,
-		ICsvAislesFileImporter inCsvAislesFileImporter);
+	
+	void setActive(Boolean active);
 
 	public Timestamp getLastSuccessTime();
 	

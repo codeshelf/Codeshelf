@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.edi.IEdiExportGateway;
 import com.codeshelf.edi.IEdiGateway;
+import com.codeshelf.edi.IEdiImportGateway;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
@@ -1333,12 +1334,12 @@ public class Facility extends Location {
 		}
 	}
 	
-	public Collection<IEdiGateway> getLinkedEdiImportGateway() {
+	public Collection<IEdiImportGateway> getLinkedEdiImportGateway() {
 		//TODO only return services that implement import interface
-		ArrayList<IEdiGateway> importServices = new ArrayList<>();
+		ArrayList<IEdiImportGateway> importServices = new ArrayList<>();
 		for (IEdiGateway ediGateway : getEdiGateways()) {
-			if (ediGateway.isLinked()) {
-				importServices.add(ediGateway);
+			if (ediGateway instanceof IEdiImportGateway && ediGateway.isLinked()) {
+				importServices.add((IEdiImportGateway)ediGateway);
 			}
 		}
 		return importServices;

@@ -8,12 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.edi.IEdiExportGateway;
 import com.codeshelf.edi.EdiFileWriteException;
-import com.codeshelf.edi.ICsvAislesFileImporter;
-import com.codeshelf.edi.ICsvCrossBatchImporter;
-import com.codeshelf.edi.ICsvInventoryImporter;
-import com.codeshelf.edi.ICsvLocationAliasImporter;
-import com.codeshelf.edi.ICsvOrderImporter;
-import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
 @Entity
@@ -34,19 +28,6 @@ public class SftpWiGateway extends SftpGateway implements IEdiExportGateway {
 	@Override
 	public String getServiceName() {
 		return SFTP_SERVICE_NAME;
-	}
-
-	@Override
-	public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrderImporter,
-		ICsvOrderLocationImporter inCsvOrderLocationImporter,
-		ICsvInventoryImporter inCsvInventoryImporter,
-		ICsvLocationAliasImporter inCsvLocationsImporter,
-		ICsvCrossBatchImporter inCsvCrossBatchImporter,
-		ICsvAislesFileImporter inCsvAislesFileImporter) {
-
-		// not implemented in this service
-
-		return true;
 	}
 
 	@Override

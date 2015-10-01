@@ -18,6 +18,7 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
+import com.codeshelf.edi.IEdiImportGateway;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.BatchResult;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -28,7 +29,7 @@ import com.jcraft.jsch.SftpException;
 @Entity
 @DiscriminatorValue("SFTP_ORDERS")
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class SftpOrderGateway extends SftpGateway {
+public class SftpOrderGateway extends SftpGateway implements IEdiImportGateway{
 	static final Logger			LOGGER						= LoggerFactory.getLogger(SftpOrderGateway.class);
 	public static final String	SFTP_SERVICE_NAME			= "SFTP_ORDERS";
 	private static final String	FILENAME_SUFFIX_FAILED		= ".FAILED";

@@ -36,7 +36,7 @@ public class EdiExportService extends AbstractCodeshelfIdleService {
 	public IFacilityEdiExporter getEdiExporter(Facility facility) throws Exception {
 		//See if the current export gateway is enabled or disabled by user
 		IEdiExportGateway gateway = facility.getEdiExportGateway();
-		if (!gateway.isActive()){
+		if (gateway == null || !gateway.isActive()){
 			return null;
 		}
 		synchronized(facilityEdiExporters) {
@@ -73,15 +73,19 @@ public class EdiExportService extends AbstractCodeshelfIdleService {
 			ExtensionPointService extensionPointService = ExtensionPointService.createInstance(facility);
 			WiBeanStringifier stringifier = new WiBeanStringifier(extensionPointService);
 			synchronized(facilityEdiExporters) {
-				IFacilityEdiExporter exporter = facilityEdiExporters.get(facility.getPersistentId());
-				if (exporter == null) {
-					exporter = new FacilityAccumulatingExporter(facility);
-					exporter.startAsync().awaitRunning(5, TimeUnit.SECONDS);
-					facilityEdiExporters.put(facility.getPersistentId(), exporter);
+				if (exportGateway.isActive()) {
+					IFacilityEdiExporter exporter = facilityEdiExporters.get(facility.getPersistentId());
+					if (exporter == null) {
+						exporter = new FacilityAccumulatingExporter(facility);
+						exporter.startAsync().awaitRunning(5, TimeUnit.SECONDS);
+						facilityEdiExporters.put(facility.getPersistentId(), exporter);
+					}
+					LOGGER.info("Updating edi exporter for facility {}", facility);
+					exporter.setEdiExportGateway(exportGateway);
+					exporter.setStringifier(stringifier);
+				} else {
+					stopEdiExporter(facility);
 				}
-				LOGGER.info("Updating edi exporter for facility {}", facility);
-				exporter.setEdiExportGateway(exportGateway);
-				exporter.setStringifier(stringifier);
 			}
 		}
 	}
@@ -112,10 +116,10 @@ public class EdiExportService extends AbstractCodeshelfIdleService {
 	
 	public void stopEdiExporter(Facility facility){
 		synchronized(facilityEdiExporters) {
-			IFacilityEdiExporter exporter = facilityEdiExporters.remove(facility);
+			IFacilityEdiExporter exporter = facilityEdiExporters.remove(facility.getPersistentId());
 			if (exporter != null) {
 				exporter.waitUntillQueueIsEmpty(60000);
-				exporter.startAsync();
+				exporter.stopAsync();
 				try {
 					exporter.awaitTerminated(2, TimeUnit.SECONDS);
 				}catch(Exception e) {

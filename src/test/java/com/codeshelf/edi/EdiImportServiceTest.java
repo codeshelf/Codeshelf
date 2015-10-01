@@ -96,7 +96,7 @@ public class EdiImportServiceTest extends MockDaoTest {
 			anyProvider,
 			anyProvider);
 		
-		IEdiGateway failingService = mock(IEdiGateway.class);
+		IEdiImportGateway failingService = mock(IEdiImportGateway.class);
 		Mockito.when(failingService.getUpdatesFromHost(
 			Mockito.any(ICsvOrderImporter.class),
 			Mockito.any(ICsvOrderLocationImporter.class),
@@ -104,7 +104,7 @@ public class EdiImportServiceTest extends MockDaoTest {
 			Mockito.any(ICsvLocationAliasImporter.class),
 			Mockito.any(ICsvCrossBatchImporter.class),
 			Mockito.any(ICsvAislesFileImporter.class))).thenThrow(new RuntimeException("any"));
-		IEdiGateway goodService = mock(IEdiGateway.class);
+		IEdiImportGateway goodService = mock(IEdiImportGateway.class);
 		Facility facility = mock(Facility.class);
 		Mockito.when(facility.getLinkedEdiImportGateway()).thenReturn(ImmutableList.of(failingService, goodService));
 		ediProcessorService.doEdiForFacility(facility);
@@ -112,7 +112,7 @@ public class EdiImportServiceTest extends MockDaoTest {
 		
 	}
 	
-	private void verifyCalled(IEdiGateway service) {
+	private void verifyCalled(IEdiImportGateway service) {
 		Mockito.verify(service, Mockito.atMost(1)).getUpdatesFromHost(
 			Mockito.any(ICsvOrderImporter.class),
 			Mockito.any(ICsvOrderLocationImporter.class),
@@ -202,7 +202,7 @@ public class EdiImportServiceTest extends MockDaoTest {
 		public boolean	processed = false;
 	}
 
-	private class DummyGateway implements IEdiGateway{
+	private class DummyGateway implements IEdiImportGateway{
 		private Result result;
 		private boolean linked;
 		
@@ -314,6 +314,12 @@ public class EdiImportServiceTest extends MockDaoTest {
 		@Override
 		public boolean isActive() {
 			return true;
+		}
+
+		@Override
+		public void setActive(Boolean active) {
+			// TODO Auto-generated method stub
+			
 		}
 	}
 }

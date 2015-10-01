@@ -95,6 +95,8 @@ public class EDIGatewaysResource {
 
 	private IEdiGateway updateDropboxGateway(DropboxGateway ediGateway, MultivaluedMap<String, String> params) {
 		ediGateway.finishLink(params.getFirst("code"));
+		String activeStr = params.getFirst("active");
+		ediGateway.setActive("true".equalsIgnoreCase(activeStr));
 		EdiGateway.staticGetDao().store(ediGateway);
 		return ediGateway;
 	}
