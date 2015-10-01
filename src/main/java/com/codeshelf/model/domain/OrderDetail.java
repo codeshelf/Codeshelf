@@ -25,7 +25,6 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -63,7 +62,6 @@ import com.google.common.collect.Sets;
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-@ToString(of = { "status", "quantity", "itemMaster", "uomMaster", "active" }, callSuper = true, doNotUseGetters = true)
 public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	public static class OrderDetailDao extends GenericDaoABC<OrderDetail> implements ITypedDao<OrderDetail> {
@@ -152,7 +150,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	private String							preferredLocation;
 
 	@Getter
-	@OneToMany(mappedBy = "orderDetail", orphanRemoval=true)
+	@OneToMany(mappedBy = "orderDetail", orphanRemoval = true)
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	private List<WorkInstruction>			workInstructions			= new ArrayList<WorkInstruction>();
 
@@ -165,7 +163,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Column(nullable = true, name = "needs_scan")
 	@Setter
 	@JsonProperty
-	private Boolean needsScan = false;
+	private Boolean							needsScan					= false;
 
 	public OrderDetail() {
 		this(null, null, 0);
@@ -228,10 +226,6 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		}
 	}
 
-	public String getParentOrderID() {
-		return parent.getDomainId();
-	}
-
 	public String getUomMasterId() {
 		UomMaster uomMaster = getUomMaster();
 		if (uomMaster != null) {
@@ -254,6 +248,10 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	public String getOrderId() {
 		return getParent().getOrderId();
+	}
+
+	public String getDetailStatusName() {
+		return getStatus().getName();
 	}
 
 	public String getShipperId() {
@@ -532,18 +530,18 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	}
 
 	public Boolean getNeedsScan() {
-		if (needsScan==null) {
+		if (needsScan == null) {
 			return false;
 		}
 		return needsScan;
 	}
 
 	// meta fields for UI
-	public String getCustomerId(){
+	public String getCustomerId() {
 		return getParent().getCustomerId(); // parent cannot be null
 	}
 
-	public String getDestinationId(){
+	public String getDestinationId() {
 		return getParent().getDestinationId(); // parent cannot be null
 	}
 
@@ -592,5 +590,17 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 		LOGGER.info("Archived: {} OrderDetails", numArchived);
 		return numArchived;
+	}
+
+	@Override
+	public String toString() {
+		//  originally @ToString(of = { "status", "quantity", "itemMaster", "uomMaster", "active" }, callSuper = true, doNotUseGetters = true)
+		return String.format("OrderDetail:(order:%s; sku:%s; uom:%s; quant:%d; status:%s; active:%b )",
+			getOrderId(),
+			getItemMasterId(),
+			getUomMasterId(),
+			getQuantity(),
+			getDetailStatusName(),
+			getActive());
 	}
 }
