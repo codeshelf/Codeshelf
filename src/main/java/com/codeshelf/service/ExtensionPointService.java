@@ -108,28 +108,35 @@ public class ExtensionPointService {
 		return new ExtensionPointService(facility);
 	}
 
-   // Methods to get the parameter beans	
+	// Methods to get the parameter beans	
 	public DataQuantityHealthCheckParameters getDataQuantityHealthCheckParameters() {
-		
+
 		DataQuantityHealthCheckParameters theBean = new DataQuantityHealthCheckParameters();
-		
+		Object[] params = { theBean };
+
 		if (hasExtensionPoint(ExtensionPointType.ParameterSetDataQuantityHealthCheck)) {
-			// eval the bean
+			try {
+				theBean = (DataQuantityHealthCheckParameters) this.eval(ExtensionPointType.ParameterSetDataQuantityHealthCheck, params);
+			} catch (ScriptException e) {
+				LOGGER.error("ParameterSetDataQuantityHealthCheck groovy threw", e);
+			}
 		}
-
-		return theBean;	
+		return theBean;
 	}
-	
+
 	public DataPurgeParameters getDataPurgeParameters() {
-		
+
 		DataPurgeParameters theBean = new DataPurgeParameters();
-		
+		Object[] params = { theBean };
+
 		if (hasExtensionPoint(ExtensionPointType.ParameterSetDataPurge)) {
-			// eval the bean
+			try {
+				theBean = (DataPurgeParameters) this.eval(ExtensionPointType.ParameterSetDataPurge, params);
+			} catch (ScriptException e) {
+				LOGGER.error("ParameterSetDataPurge groovy threw", e);
+			}
 		}
-
-		return theBean;		
+		return theBean;
 	}
-
 
 }

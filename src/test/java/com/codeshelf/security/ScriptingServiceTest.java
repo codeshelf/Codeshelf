@@ -72,7 +72,7 @@ public class ScriptingServiceTest extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		beginTransaction();
-		String text = "def ParameterSetDataPurge(bean) { bean.orderBatch == '10' }";
+		String text = "def ParameterSetDataPurge(bean) { bean.orderBatch = '10'; return bean; }";
 		createExtension(facility, ExtensionPointType.ParameterSetDataPurge, text);
 		commitTransaction();
 
@@ -84,8 +84,7 @@ public class ScriptingServiceTest extends ServerTest {
 			// positive test. groovy exists
 			assertEquals(true,ss.hasExtensionPoint(ExtensionPointType.ParameterSetDataPurge));
 			DataPurgeParameters purgeParams = ss.getDataPurgeParameters();
-			// Assert.assertEquals(10, params.getOrderBatchValue()); // does not eval the script yet
-			Assert.assertEquals(200, purgeParams.getOrderBatchValue());
+			Assert.assertEquals(10, purgeParams.getOrderBatchValue());
 			
 			// Do the negative test. No groovy extension exists
 			assertEquals(false,ss.hasExtensionPoint(ExtensionPointType.ParameterSetDataQuantityHealthCheck));
