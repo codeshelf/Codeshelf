@@ -109,6 +109,7 @@ public class ExtensionPointService {
 	}
 
 	// Methods to get the parameter beans	
+	//+++++++++++++++++++++++++++++++++++++++
 	public DataQuantityHealthCheckParameters getDataQuantityHealthCheckParameters() {
 
 		DataQuantityHealthCheckParameters theBean = new DataQuantityHealthCheckParameters();
