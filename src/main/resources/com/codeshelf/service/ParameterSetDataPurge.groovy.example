@@ -1,8 +1,8 @@
 /**
  * Sets the maximum values that health check should cause alerts for
  */
-def ParameterSetDataQuantityHealthCheck(bean) {
-    bean.maxOrderDetail = '100000';
+def DataPurgeParameters(bean) {
+    bean.orderBatch = '10';
     
     return bean;
 }

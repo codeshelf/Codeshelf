@@ -16,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.edi.OutboundOrderCsvBean;
+import com.codeshelf.metrics.DataQuantityHealthCheckParameters;
+import com.codeshelf.model.DataPurgeParameters;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
@@ -63,6 +65,42 @@ public class ScriptingServiceTest extends ServerTest {
 		commitTransaction();
 
 	}
+	
+	@Test
+	public void parameterBeansTest() {
+
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		beginTransaction();
+		String text = "def ParameterSetDataPurge(bean) { bean.orderBatch = '10'; return bean; }";
+		createExtension(facility, ExtensionPointType.ParameterSetDataPurge, text);
+		commitTransaction();
+
+		beginTransaction();
+		try {
+			// init service
+			ExtensionPointService ss = ExtensionPointService.createInstance(facility);
+			
+			// positive test. groovy exists
+			assertEquals(true,ss.hasExtensionPoint(ExtensionPointType.ParameterSetDataPurge));
+			DataPurgeParameters purgeParams = ss.getDataPurgeParameters();
+			Assert.assertEquals(10, purgeParams.getOrderBatchValue());
+			
+			// Do the negative test. No groovy extension exists
+			assertEquals(false,ss.hasExtensionPoint(ExtensionPointType.ParameterSetDataQuantityHealthCheck));
+			// but we still get a good bean with useful defaults
+			DataQuantityHealthCheckParameters dataQuanityParams = ss.getDataQuantityHealthCheckParameters();
+			// Warning. This will fail when the default changes. Just change this test
+			Assert.assertEquals(40000, dataQuanityParams.getMaxContainerUseValue()); 
+		
+		}
+		catch (ScriptException e) {
+			LOGGER.error("", e);
+			fail(e.toString());
+		}
+		commitTransaction();
+	}
+
 
 	@Test
 	public void inactiveScriptsStopRunning() throws ScriptException {

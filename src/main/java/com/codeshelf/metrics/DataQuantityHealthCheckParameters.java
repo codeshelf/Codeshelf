@@ -3,9 +3,6 @@ package com.codeshelf.metrics;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.codeshelf.service.ParameterSetBeanABC;
 
 public class DataQuantityHealthCheckParameters extends ParameterSetBeanABC {
@@ -30,8 +27,6 @@ public class DataQuantityHealthCheckParameters extends ParameterSetBeanABC {
 	@Setter
 	protected String			maxContainerUse;
 
-	private static final Logger	LOGGER				= LoggerFactory.getLogger(DataQuantityHealthCheckParameters.class);
-
 	public DataQuantityHealthCheckParameters() {
 		super();
 		maxOrderDetail = Integer.toString(MAX_ORDERDETAIL);
@@ -41,59 +36,19 @@ public class DataQuantityHealthCheckParameters extends ParameterSetBeanABC {
 	}
 
 	public int getMaxOrderDetailValue() {
-		try {
-			int value = Integer.valueOf(this.getMaxOrderDetail());
-			if (value < 1) {
-				LOGGER.warn("bad value for maxOrderDetail: {}", getMaxOrderDetail());
-				value = MAX_ORDERDETAIL;
-			}
-			return value;
-		} catch (NumberFormatException e) {
-			LOGGER.warn("bad value for maxOrderDetail: {}", getMaxOrderDetail());
-			return MAX_ORDERDETAIL;
-		}
+		return getCleanValue("maxOrderDetail", getMaxOrderDetail(), MAX_ORDERDETAIL);
 	}
 
 	public int getMaxWorkInstructionValue() {
-		try {
-			int value = Integer.valueOf(this.getMaxWorkInstruction());
-			if (value < 1) {
-				LOGGER.warn("bad value for maxWorkInstruction: {}", getMaxWorkInstruction());
-				value = MAX_WORKINSTRUCTION;
-			}
-			return value;
-		} catch (NumberFormatException e) {
-			LOGGER.warn("bad value for maxWorkInstruction: {}", getMaxWorkInstruction());
-			return MAX_WORKINSTRUCTION;
-		}
+		return getCleanValue("maxWorkInstruction", getMaxWorkInstruction(), MAX_WORKINSTRUCTION);
 	}
 
 	public int getMaxOrderValue() {
-		try {
-			int value = Integer.valueOf(this.getMaxOrder());
-			if (value < 1) {
-				LOGGER.warn("bad value for maxWorkOrder: {}", getMaxOrder());
-				value = MAX_ORDER;
-			}
-			return value;
-		} catch (NumberFormatException e) {
-			LOGGER.warn("bad value for maxWorkOrder: {}", getMaxOrder());
-			return MAX_ORDER;
-		}
+		return getCleanValue("maxWorkOrder", getMaxOrder(), MAX_ORDER);
 	}
 
 	public int getMaxContainerUseValue() {
-		try {
-			int value = Integer.valueOf(this.getMaxContainerUse());
-			if (value < 1) {
-				LOGGER.warn("bad value for maxContainerUse: {}", getMaxContainerUse());
-				value = MAX_CONTAINERUSE;
-			}
-			return value;
-		} catch (NumberFormatException e) {
-			LOGGER.warn("bad value for maxContainerUse: {}", getMaxContainerUse());
-			return MAX_CONTAINERUSE;
-		}
+		return getCleanValue("maxContainerUse", getMaxContainerUse(), MAX_CONTAINERUSE);
 	}
 
 	/**

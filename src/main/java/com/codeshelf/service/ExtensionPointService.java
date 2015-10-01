@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.metrics.DataQuantityHealthCheckParameters;
+import com.codeshelf.model.DataPurgeParameters;
 import com.codeshelf.model.domain.Facility;
 import com.google.common.collect.Lists;
 
@@ -107,17 +108,36 @@ public class ExtensionPointService {
 		return new ExtensionPointService(facility);
 	}
 
-	
+	// Methods to get the parameter beans	
+	//+++++++++++++++++++++++++++++++++++++++
 	public DataQuantityHealthCheckParameters getDataQuantityHealthCheckParameters() {
-		
-		DataQuantityHealthCheckParameters theBean = new DataQuantityHealthCheckParameters();
-		
-		if (hasExtensionPoint(ExtensionPointType.ParameterSetDataQuantityHealthCheck)) {
-			// eval the bean
-		}
 
+		DataQuantityHealthCheckParameters theBean = new DataQuantityHealthCheckParameters();
+		Object[] params = { theBean };
+
+		if (hasExtensionPoint(ExtensionPointType.ParameterSetDataQuantityHealthCheck)) {
+			try {
+				theBean = (DataQuantityHealthCheckParameters) this.eval(ExtensionPointType.ParameterSetDataQuantityHealthCheck, params);
+			} catch (ScriptException e) {
+				LOGGER.error("ParameterSetDataQuantityHealthCheck groovy threw", e);
+			}
+		}
 		return theBean;
-		
+	}
+
+	public DataPurgeParameters getDataPurgeParameters() {
+
+		DataPurgeParameters theBean = new DataPurgeParameters();
+		Object[] params = { theBean };
+
+		if (hasExtensionPoint(ExtensionPointType.ParameterSetDataPurge)) {
+			try {
+				theBean = (DataPurgeParameters) this.eval(ExtensionPointType.ParameterSetDataPurge, params);
+			} catch (ScriptException e) {
+				LOGGER.error("ParameterSetDataPurge groovy threw", e);
+			}
+		}
+		return theBean;
 	}
 
 }

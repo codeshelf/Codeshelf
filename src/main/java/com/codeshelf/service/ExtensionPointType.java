@@ -24,7 +24,9 @@ public enum ExtensionPointType {
 	WorkInstructionExportCreateHeader,
 	WorkInstructionExportCreateTrailer,
 	WorkInstructionExportLineTransformation,
-	ParameterSetDataQuantityHealthCheck;
+	ParameterSetDataQuantityHealthCheck,
+	ParameterSetDataPurge;
+;
 
 	/**
 	 * Example script associated with the type 
@@ -70,6 +72,7 @@ public enum ExtensionPointType {
 				return ExtensionPointGroup.EdiExportGroup;
 
 			case ParameterSetDataQuantityHealthCheck:
+			case ParameterSetDataPurge:
 				return ExtensionPointGroup.ParameterSetGroup;
 
 			default:
