@@ -318,8 +318,10 @@ public class EdiImportServiceTest extends MockDaoTest {
 
 		@Override
 		public void setActive(Boolean active) {
-			// TODO Auto-generated method stub
-			
+		}
+
+		@Override
+		public void updateLastSuccessTime() {
 		}
 	}
 }

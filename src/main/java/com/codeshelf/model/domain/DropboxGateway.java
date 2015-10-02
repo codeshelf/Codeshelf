@@ -168,7 +168,7 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 					inCsvCrossBatchImporter,
 					inCsvAislesFileImporter);
 			}
-			setLastSuccessTime(new Timestamp(System.currentTimeMillis()));
+			updateLastSuccessTime();
 		}
 
 		return result;

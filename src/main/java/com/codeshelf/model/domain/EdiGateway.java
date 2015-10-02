@@ -106,7 +106,6 @@ public abstract class EdiGateway extends DomainObjectTreeABC<Facility> implement
 
 	@Column(nullable = true, name = "last_success_time")
 	@Getter
-	@Setter
 	@JsonProperty
 	private Timestamp				lastSuccessTime;
 	
@@ -136,5 +135,12 @@ public abstract class EdiGateway extends DomainObjectTreeABC<Facility> implement
 			return false;
 		}
 		return active;
+	}
+	
+	public void updateLastSuccessTime(){
+		Timestamp now = new Timestamp(System.currentTimeMillis());
+		if (lastSuccessTime == null || now.getTime() - lastSuccessTime.getTime() > 60000) {
+			lastSuccessTime = now;
+		}
 	}
 }

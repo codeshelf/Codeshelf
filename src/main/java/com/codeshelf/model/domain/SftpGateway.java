@@ -4,7 +4,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Vector;
 
@@ -128,7 +127,7 @@ public abstract class SftpGateway extends EdiGateway {
 			}
 			LOGGER.info("EDI service {} connected to {}", this.getServiceName(), toSftpChannelDebug());
 			 
-			setLastSuccessTime(new Timestamp(System.currentTimeMillis()));
+			updateLastSuccessTime();
 			return channel;
 		} finally {
 			if (channel == null) { 

@@ -22,5 +22,7 @@ public interface IEdiGateway extends IDomainObjectTree<Facility> {
 
 	public Timestamp getLastSuccessTime();
 	
+	public void updateLastSuccessTime();
+	
 	public boolean testConnection();
 }
