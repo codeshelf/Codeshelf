@@ -50,6 +50,10 @@ import com.dropbox.core.DbxWebAuthNoRedirect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.annotations.Expose;
 
 // --------------------------------------------------------------------------
 /**
@@ -98,6 +102,34 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 	public DropboxGateway() {
 		super();
 		setProvider(EdiProviderEnum.DROPBOX);
+	}
+
+	public static class DropboxCredentials {
+		@Getter @Setter
+		@Expose
+		private String	code;
+
+		public DropboxCredentials(String code) {
+			this.code = code;
+		}
+		
+		@Override
+		public String toString() {
+			Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+			return gson.toJson(this);
+		}
+	}
+	
+	private DropboxCredentials getCredentials() {
+		Gson mGson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+		DropboxCredentials credentials = null;
+		try {
+			credentials = mGson.fromJson(getProviderCredentials(), DropboxCredentials.class);
+		} catch (JsonSyntaxException e) {
+			LOGGER.info("Error parsing Dropbox credentials. Attempting to update legacy credentials. {}", e);
+			getFacility().dropboxLegacyCredentialsCleanup();
+		}
+		return credentials;
 	}
 
 	public final String getServiceName() {
@@ -265,13 +297,11 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 	/**
 	 */
 	private DbxClient getClient() {
-
 		DbxClient result = null;
-
-		String credentials = getProviderCredentials();
+		DropboxCredentials credentials = getCredentials();
 		if (credentials != null) {
 			DbxRequestConfig config = new DbxRequestConfig("Codeshelf Interface", Locale.getDefault().toString());
-			result = new DbxClient(config, credentials);
+			result = new DbxClient(config, credentials.getCode());
 		}
 		return result;
 	}
@@ -428,7 +458,8 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 				if (accessToken == null) {
 					setGatewayState(EdiGatewayStateEnum.LINK_FAILED);
 				} else {
-					setProviderCredentials(accessToken);
+					DropboxCredentials credentials = new DropboxCredentials(accessToken);
+					setProviderCredentials(credentials.toString());
 					setGatewayState(EdiGatewayStateEnum.LINKED);
 					setDbCursor("");
 					result = true;

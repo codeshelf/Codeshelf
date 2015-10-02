@@ -53,9 +53,10 @@ public class EDIGatewaysResource {
 
 	@GET
 	public Response getEdiGateways() {
-		facility.getEdiGateways();
+		facility.dropboxLegacyCredentialsCleanup();
 		return BaseResponse.buildResponse(new ArrayList<IEdiGateway>(facility.getEdiGateways()));
 	}
+	
 	@POST
 	@Path("/{domainId}")
 	@Produces(MediaType.APPLICATION_JSON)

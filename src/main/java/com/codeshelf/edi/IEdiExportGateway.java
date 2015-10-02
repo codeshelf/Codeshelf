@@ -19,6 +19,4 @@ public interface IEdiExportGateway extends IEdiGateway {
 	void transportOrderOnCartRemoved(String inOrderId, String inCheGuid, String message) throws IOException;
 
 	FileExportReceipt transportOrderOnCartAdded(String inOrderId, String inCheGuid, String message) throws IOException;
-	
-	String getDomainId();
 }

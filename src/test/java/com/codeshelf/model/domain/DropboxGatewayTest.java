@@ -22,6 +22,7 @@ import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.model.EdiGatewayStateEnum;
+import com.codeshelf.model.domain.DropboxGateway.DropboxCredentials;
 import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.validation.BatchResult;
 
@@ -46,7 +47,7 @@ public class DropboxGatewayTest extends MockDaoTest {
 
 		dropboxGateway.setParent(facility);
 		dropboxGateway.setDomainId("DB");
-		dropboxGateway.setProviderCredentials(TEST_CREDENTIALS);
+		dropboxGateway.setProviderCredentials(new DropboxCredentials(TEST_CREDENTIALS).toString());
 		dropboxGateway.setGatewayState(EdiGatewayStateEnum.LINKED);
 
 		ICsvOrderImporter orderImporter = mock(ICsvOrderImporter.class);
