@@ -153,6 +153,10 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 
 		// Make sure we believe that we're properly registered with the service before we try to contact it.
 		if (isLinked()) {
+			if (!testConnection()){
+				LOGGER.warn("Dropbox connection error");
+				return result;
+			}
 
 			DbxClient client = getClient();
 			if (client != null) {
@@ -164,6 +168,7 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 					inCsvCrossBatchImporter,
 					inCsvAislesFileImporter);
 			}
+			setLastSuccessTime(new Timestamp(System.currentTimeMillis()));
 		}
 
 		return result;
@@ -780,7 +785,7 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 		}
 		return toPath;
 	}
-
+	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.codeshelf.model.domain.IEdiGateway#sendCompletedWorkInstructions(java.util.List)
