@@ -11,6 +11,7 @@ import java.util.UUID;
 import javax.script.ScriptException;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,11 +35,28 @@ public class ScriptingServiceTest extends ServerTest {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScriptingServiceTest.class);
 
+	//-XX:PermSize=30M -XX:MaxPermSize=60M 
+	@Test
+	@Ignore
+	public void permgentest() {
+		Facility facility = setUpSimpleNoSlotFacility();
+		for (int i = 0; i < 100000; i++) {
+			evalScripts(facility);
+			if (i % 100 == 0) {
+				System.out.println("test " + i);
+			}
+		}
+	}
+	
+		
 	@Test
 	public void evalScriptTest() {
-
 		Facility facility = setUpSimpleNoSlotFacility();
-
+		evalScripts(facility);
+	}
+	
+	private void evalScripts(Facility facility) {
+		
 		beginTransaction();
 		String text = "def OrderImportBeanTransformation(orderBean) { orderBean.description == 'abc' }";
 		createExtension(facility, ExtensionPointType.OrderImportBeanTransformation, text);
