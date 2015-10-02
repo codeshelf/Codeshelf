@@ -25,7 +25,6 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 
 import org.hibernate.Query;
 import org.hibernate.Session;
@@ -63,7 +62,6 @@ import com.google.common.collect.Sets;
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-@ToString(of = { "status", "quantity", "itemMaster", "uomMaster", "active" }, callSuper = true, doNotUseGetters = true)
 public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	public static class OrderDetailDao extends GenericDaoABC<OrderDetail> implements ITypedDao<OrderDetail> {
@@ -152,7 +150,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	private String							preferredLocation;
 
 	@Getter
-	@OneToMany(mappedBy = "orderDetail", orphanRemoval=true)
+	@OneToMany(mappedBy = "orderDetail", orphanRemoval = true)
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	private List<WorkInstruction>			workInstructions			= new ArrayList<WorkInstruction>();
 
@@ -165,7 +163,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Column(nullable = true, name = "needs_scan")
 	@Setter
 	@JsonProperty
-	private Boolean needsScan = false;
+	private Boolean							needsScan					= false;
 
 	public OrderDetail() {
 		this(null, null, 0);
@@ -213,8 +211,10 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			workInstructions.add(inWorkInstruction);
 			inWorkInstruction.setOrderDetail(this);
 		} else if (!previousOrderDetail.equals(this)) {
-			LOGGER.error("cannot add WorkInstruction " + inWorkInstruction.getDomainId() + " to " + this.getDomainId()
-					+ " because it has not been removed from " + previousOrderDetail.getDomainId());
+			LOGGER.error("cannot add WorkInstruction for item:{} to detail for order:{} because it has not been removed from detail for {}",
+				inWorkInstruction.getItemId(),
+				this.getOrderId(),
+				previousOrderDetail.getOrderId());
 		}
 	}
 
@@ -223,13 +223,10 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			inWorkInstruction.setParent(null);
 			workInstructions.remove(inWorkInstruction);
 		} else {
-			LOGGER.error("cannot remove WorkInstruction " + inWorkInstruction.getDomainId() + " from " + this.getDomainId()
-					+ " because it isn't found in children");
+			LOGGER.error("cannot remove WorkInstruction for item:{} from detail for order:{} because it isn't found in children",
+				inWorkInstruction.getItemId(),
+				this.getOrderId());
 		}
-	}
-
-	public String getParentOrderID() {
-		return parent.getDomainId();
 	}
 
 	public String getUomMasterId() {
@@ -237,7 +234,8 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		if (uomMaster != null) {
 			return uomMaster.getDomainId();
 		} else {
-			LOGGER.error("Unexpected null uomMaster for detail: " + this);
+			// careful. Would recurse if no uomMaster and we report in terms of "this" or toString()
+			LOGGER.error("Unexpected null uomMaster for detail for order:{} item:{}", getOrderId(), getItemMasterId());
 			return "";
 		}
 	}
@@ -247,17 +245,32 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		if (itemMaster != null) {
 			return itemMaster.getDomainId();
 		} else {
-			LOGGER.error("Unexpected null itemMaster for detail: " + this);
+			// careful. Would recurse if no itemMaster and we report in terms of "this" or toString()
+			LOGGER.error("Unexpected null itemMaster for detail for order:{}", getOrderId());
 			return "";
 		}
 	}
 
 	public String getOrderId() {
-		return getParent().getOrderId();
+		// can an OrderDetail not have a parent? In the OrderDetailTest it can
+		OrderHeader oh = getParent();
+		if (oh != null)
+			return oh.getOrderId();
+		else
+			return "";
+	}
+
+	public String getDetailStatusName() {
+		return getStatus().getName();
 	}
 
 	public String getShipperId() {
-		return getParent().getShipperId();
+		// can an OrderDetail not have a parent? In the OrderDetailTest it can
+		OrderHeader oh = getParent();
+		if (oh != null)
+			return oh.getShipperId();
+		else
+			return "";
 	}
 
 	/**
@@ -532,18 +545,18 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	}
 
 	public Boolean getNeedsScan() {
-		if (needsScan==null) {
+		if (needsScan == null) {
 			return false;
 		}
 		return needsScan;
 	}
 
 	// meta fields for UI
-	public String getCustomerId(){
+	public String getCustomerId() {
 		return getParent().getCustomerId(); // parent cannot be null
 	}
 
-	public String getDestinationId(){
+	public String getDestinationId() {
 		return getParent().getDestinationId(); // parent cannot be null
 	}
 
@@ -592,5 +605,17 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 		LOGGER.info("Archived: {} OrderDetails", numArchived);
 		return numArchived;
+	}
+
+	@Override
+	public String toString() {
+		//  originally @ToString(of = { "status", "quantity", "itemMaster", "uomMaster", "active" }, callSuper = true, doNotUseGetters = true)
+		return String.format("OrderDetail:(order:%s; sku:%s; uom:%s; quant:%d; status:%s; active:%b )",
+			getOrderId(),
+			getItemMasterId(),
+			getUomMasterId(),
+			getQuantity(),
+			getDetailStatusName(),
+			getActive());
 	}
 }

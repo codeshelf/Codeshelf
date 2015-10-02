@@ -13,6 +13,13 @@ import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.testframework.MockDaoTest;
 
+/**
+ * This test violates database constraints all over the place that cannot happen for real.
+ * The test covers reevaluateStatus(), which is a fairly complicated function.
+ * Also, perhaps important, the test side effects call OrderDetail.toString() with very bad OrderDetail objects.
+ * If toString() call helper functions that when they error, indirectly call toString(), you get recursion. So this
+ * test make sure we do not have any dangerous recursions in OrderDetail reporting.
+ */
 public class OrderDetailTest extends MockDaoTest {
 
 	ITypedDao<OrderDetail> mockDao;
