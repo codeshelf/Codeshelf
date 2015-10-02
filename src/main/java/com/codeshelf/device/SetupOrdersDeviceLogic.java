@@ -64,7 +64,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// The location the CHE scanned as starting point. Note: this initializes from che.getLastScannedLocation(), but then is maintained locally.
 	@Accessors(prefix = "m")
-	@Getter @Setter
+	@Getter
+	@Setter
 	private String								mLocationId;
 
 	// If the CHE is in PUT_WALL process, the wall currently getting work instructions for
@@ -72,7 +73,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Getter
 	@Setter
 	private String								mPutWallName;
-	
+
 	// When putting items into Sku wall, save here if another wall holds the required item
 	@Accessors(prefix = "m")
 	@Getter
@@ -83,23 +84,23 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Getter
 	@Setter
 	private String								mLastPutWallItemScan;
-	
+
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
 	private CheStateEnum						mRememberEnteringWallOrInventoryState	= CheStateEnum.CONTAINER_SELECT;
-	
+
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
 	private CheStateEnum						mRememberEnteringInfoState				= CheStateEnum.PUT_WALL_SCAN_ITEM;
-	
+
 	//Save result of the last INFO request
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
 	private InfoPackage							mInfo;
-	
+
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
@@ -119,9 +120,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private int									mRememberPriorShorts					= 0;
 
 	private final boolean						useNewCheScreen							= true;
-	
-	private String 								mBusyPosconHolders						= null;
-	private String 								mIgnoreExistingHoldersOnThesePoscons	= null;
+
+	private String								mBusyPosconHolders						= null;
+	private String								mIgnoreExistingHoldersOnThesePoscons	= null;
 
 	private boolean								mSetupMixHasPutwall						= false;
 	private boolean								mSetupMixHasCntrOrder					= false;
@@ -260,7 +261,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 
 				case DO_PICK:
-					if (isSameState || previousState == CheStateEnum.GET_WORK || previousState == CheStateEnum.SCAN_SOMETHING || previousState == CheStateEnum.SHORT_PICK_CONFIRM) {
+					if (isSameState || previousState == CheStateEnum.GET_WORK || previousState == CheStateEnum.SCAN_SOMETHING
+							|| previousState == CheStateEnum.SHORT_PICK_CONFIRM) {
 						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 					}
 					showActivePicks(); // if setState(DO_PICK) is called, it always calls showActivePicks. fewer direct calls to showActivePicks elsewhere.
@@ -310,9 +312,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					line3 = "Into wall: " + mPutWallName;
 					sendDisplayCommand(SCAN_LOCATION_MSG, line2, line3, CANCEL_TO_EXIT_MSG);
 					break;
-					
+
 				case SKU_WALL_ALTERNATE_WALL_AVAILABLE:
-					if (mAlternatePutWall.equalsIgnoreCase("other walls")){
+					if (mAlternatePutWall.equalsIgnoreCase("other walls")) {
 						line1 = "In other walls";
 						line2 = "Scan other wall";
 					} else {
@@ -323,7 +325,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					line4 = "Or CANCEL " + mLastPutWallItemScan;
 					sendDisplayCommand(line1, line2, line3, line4);
 					break;
-										
+
 				case NO_PUT_WORK:
 					// we would like to say "No work for item in wall2"
 					String itemID = getLastPutWallItemScan();
@@ -334,7 +336,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				case DO_PUT:
 					showActivePicks();
 					break;
-					
+
 				case PUT_WALL_POSCON_BUSY:
 					showPosconBusyScreen();
 					break;
@@ -346,11 +348,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				case INFO_RETRIEVAL:
 					sendDisplayCommand("RETRIEVING INFO", EMPTY_MSG);
 					break;
-					
+
 				case INFO_DISPLAY:
 					displayInfo();
 					break;
-					
+
 				case REMOVE_CONFIRMATION:
 					displayRemoveInfo();
 					break;
@@ -359,7 +361,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					sendDisplayCommand(SELECT_POSITION_MSG, REMOVE_CONTAINER_MSG, EMPTY_MSG, CANCEL_TO_EXIT_MSG);
 					showContainerAssainments();
 					break;
-					
+
 				case REMOTE:
 					sendRemoteStateScreen();
 					break;
@@ -579,13 +581,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 
 	}
-	
+
 	protected void infoCommandReceived() {
 		switch (mCheStateEnum) {
 			case IDLE:
 				displayDeviceInfo();
 				break;
-			case SCAN_GTIN: 	//Inventory scan
+			case SCAN_GTIN: //Inventory scan
 			case PUT_WALL_SCAN_WALL:
 			case PUT_WALL_SCAN_ITEM:
 				setInfo(null);
@@ -598,20 +600,20 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			default:
 		}
 	}
-	
+
 	protected void removeCommandReceived() {
-		switch (mCheStateEnum){
+		switch (mCheStateEnum) {
 			case INFO_DISPLAY:
 				InfoPackage info = getInfo();
 				if (info == null || !info.isSomethingToRemove()) {
 					sendDisplayCommand(REMOVE_NOTHING_MSG, EMPTY_MSG, EMPTY_MSG, CANCEL_TO_CONTINUE_MSG);
 					break;
 				}
-				switch (getRememberEnteringInfoState()){
-					case SCAN_GTIN: 				//Inventory->Info
+				switch (getRememberEnteringInfoState()) {
+					case SCAN_GTIN: //Inventory->Info
 						setState(CheStateEnum.REMOVE_CONFIRMATION);
-						break;					
-					case PUT_WALL_SCAN_WALL:		//PutWall->Info
+						break;
+					case PUT_WALL_SCAN_WALL: //PutWall->Info
 					case PUT_WALL_SCAN_ITEM:
 						setState(CheStateEnum.REMOVE_CONFIRMATION);
 						break;
@@ -681,31 +683,31 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				priorState = getRememberEnteringWallOrInventoryState();
 				setState(priorState);
 				break;
-			
+
 			case INFO_PROMPT:
 				priorState = getRememberEnteringInfoState();
 				setState(priorState);
 				break;
-				
+
 			case INFO_RETRIEVAL:
 			case INFO_DISPLAY:
 				setInfo(null);
 				setState(CheStateEnum.INFO_PROMPT);
 				break;
-				
+
 			case REMOVE_CONFIRMATION:
 				setState(CheStateEnum.INFO_DISPLAY);
 				break;
-				
+
 			case REMOVE_CHE_CONTAINER:
 				setState(CheStateEnum.CONTAINER_SELECT);
 				break;
-				
+
 			case SKU_WALL_SCAN_GTIN_LOCATION:
 			case SKU_WALL_ALTERNATE_WALL_AVAILABLE:
 				setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
 				break;
-				
+
 			case DO_PUT:
 			case SHORT_PUT:
 			case SHORT_PUT_CONFIRM:
@@ -777,20 +779,31 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 				processPutWallItemScan("", getLastPutWallItemScan());
 				break;
-				
+
 			case INFO_DISPLAY:
-				InfoRequestType type = YES_COMMAND.equals(inScanStr) ? InfoRequestType.LIGHT_COMPLETE_ORDERS : InfoRequestType.LIGHT_INCOMPLETE_ORDERS;
-				mDeviceManager.performInfoOrRemoveAction(type, getLastScannedInfoLocation(), getGuidNoPrefix(), getPersistentId().toString());
+				InfoRequestType type = YES_COMMAND.equals(inScanStr) ? InfoRequestType.LIGHT_COMPLETE_ORDERS
+						: InfoRequestType.LIGHT_INCOMPLETE_ORDERS;
+				mDeviceManager.performInfoOrRemoveAction(type,
+					getLastScannedInfoLocation(),
+					getGuidNoPrefix(),
+					getPersistentId().toString());
 				break;
-				
+
 			case REMOVE_CONFIRMATION:
-				if (YES_COMMAND.equalsIgnoreCase(inScanStr)){
-					if (getRememberEnteringInfoState() == CheStateEnum.SCAN_GTIN){
+				if (YES_COMMAND.equalsIgnoreCase(inScanStr)) {
+					if (getRememberEnteringInfoState() == CheStateEnum.SCAN_GTIN) {
 						InfoPackage info = getInfo();
 						UUID removeItemId = info == null ? null : info.getRemoveItemId();
-						mDeviceManager.performInfoOrRemoveAction(InfoRequestType.REMOVE_INVENTORY, getLastScannedInfoLocation(), getGuidNoPrefix(), getPersistentId().toString(), removeItemId);
+						mDeviceManager.performInfoOrRemoveAction(InfoRequestType.REMOVE_INVENTORY,
+							getLastScannedInfoLocation(),
+							getGuidNoPrefix(),
+							getPersistentId().toString(),
+							removeItemId);
 					} else {
-						mDeviceManager.performInfoOrRemoveAction(InfoRequestType.REMOVE_WALL_ORDERS, getLastScannedInfoLocation(), getGuidNoPrefix(), getPersistentId().toString());
+						mDeviceManager.performInfoOrRemoveAction(InfoRequestType.REMOVE_WALL_ORDERS,
+							getLastScannedInfoLocation(),
+							getGuidNoPrefix(),
+							getPersistentId().toString());
 					}
 					setInfo(null);
 					setState(CheStateEnum.INFO_PROMPT);
@@ -798,7 +811,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					setState(CheStateEnum.INFO_DISPLAY);
 				}
 				break;
-				
+
 			default:
 				// Stay in the same state - the scan made no sense.
 				invalidScanMsg(mCheStateEnum);
@@ -1040,7 +1053,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				//result of getOneActiveWorkInstruction() is guaranteed by selectNextActivePicks() not to be null 
 				WorkInstruction nextWi = getOneActiveWorkInstruction();
 				String posconStream = nextWi.getPosConCmdStream();
-				if (posconStream != null && posconStream.equals(mIgnoreExistingHoldersOnThesePoscons)){
+				if (posconStream != null && posconStream.equals(mIgnoreExistingHoldersOnThesePoscons)) {
 					//CHE arrived here from scanning YES on the POSCON_BUSY screen.
 					//Continue without checking if needed Poscons are in use by another CHE
 					mIgnoreExistingHoldersOnThesePoscons = null;
@@ -1054,13 +1067,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 						mBusyPosconHolders = posconHolders;
 						setState(CheStateEnum.PUT_WALL_POSCON_BUSY);
 					}
-				}				
+				}
 			} else {
 				// no side effects needed? processPickComplete() is the corollary
 				setState(CheStateEnum.PUT_WALL_SCAN_ITEM);
 			}
 		}
-	}	
+	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -1636,29 +1649,29 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case PUT_WALL_SCAN_WALL:
 				processPutWallScanWall(inScanPrefixStr, inContent);
 				break;
-				
+
 			case SKU_WALL_SCAN_GTIN_LOCATION:
 				processSkuWallNewLocationScan(inScanPrefixStr, inContent);
 				break;
-				
+
 			case SKU_WALL_ALTERNATE_WALL_AVAILABLE:
 				processSkuWallLocationDisambiguation(inScanPrefixStr, inContent);
 				break;
-				
+
 			case INFO_PROMPT:
 			case INFO_DISPLAY:
 				processInfoLocationScan(inScanPrefixStr, inContent);
 				break;
-				
+
 			case REMOVE_CHE_CONTAINER:
-				if ("P%".equalsIgnoreCase(inScanPrefixStr)){
+				if ("P%".equalsIgnoreCase(inScanPrefixStr)) {
 					byte position = Byte.parseByte(inContent);
 					clearContainerAssignmentAtIndex(position);
 					clearOnePosconOnThisDevice(position);
 					setState(CheStateEnum.CONTAINER_SELECT);
 				}
 				break;
-				
+
 			case REMOTE:
 				processCheLinkScan(inScanPrefixStr, inContent);
 				break;
@@ -1698,11 +1711,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 		for (Entry<String, String> entry : mPositionToContainerMap.entrySet()) {
 			String containerId = entry.getValue();
-			Byte position = Byte.valueOf(entry.getKey());
+			String posId = entry.getKey();
+			Byte position = 0;
+			try {
+				position = Byte.valueOf(posId);
+			} catch (NumberFormatException e) {
+				LOGGER.warn("bad position value:, {} in entry map", posId);
+				continue; // do not do this feedback at all, but allow to do the rest.
+			}
 
 			Byte value = 0;
 			boolean needBitEncodedA = false;
-			//Use the last 1-2 characters of the containerId iff the container is numeric.
+			//Use the last 1-2 characters of the containerId if the container is numeric.
 			//Otherwise stick to the default character "a"
 
 			if (!StringUtils.isEmpty(containerId) && StringUtils.isNumeric(containerId)) {
@@ -1711,20 +1731,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				} else {
 					value = Byte.valueOf(containerId.substring(containerId.length() - 2));
 				}
-			}
-			else {
+			} else {
 				needBitEncodedA = true; // "a"				
 			}
-			
+
 			if (needBitEncodedA) {
 				instructions.add(new PosControllerInstr(position,
 					PosControllerInstr.BITENCODED_SEGMENTS_CODE,
 					PosControllerInstr.BITENCODED_LED_A,
 					PosControllerInstr.BITENCODED_LED_BLANK,
 					PosControllerInstr.SOLID_FREQ,
-					PosControllerInstr.MED_DUTYCYCLE));				
-			}
-			else if (value >= 0 && value < 10) {
+					PosControllerInstr.MED_DUTYCYCLE));
+			} else if (value >= 0 && value < 10) {
 				//If we are going to pass a single 0 <= digit < 10 like 9, then we must show "09" instead of just 9.
 				instructions.add(new PosControllerInstr(position,
 					PosControllerInstr.BITENCODED_SEGMENTS_CODE,
@@ -1959,7 +1977,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			else
 				line1 = String.format("%s orders ", orderCountStr);
 		} else {
-			if (locStr.startsWith(TAPE_PREFIX)){
+			if (locStr.startsWith(TAPE_PREFIX)) {
 				mDeviceManager.requestTapeDecoding(getGuid().getHexStringNoPrefix(), getPersistentId(), locStr);
 			}
 			locStr = StringUtils.leftPad(locStr, 9); // Always right justifying the location
@@ -2287,9 +2305,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		notifyPutWallResponse(inWorkItemList, wallType);
 		boolean noWork = inWorkItemList == null || inWorkItemList.size() == 0;
 		if (noWork) {
-			if (Location.PUTWALL_USAGE.equals(wallType)){
+			if (Location.PUTWALL_USAGE.equals(wallType)) {
 				setState(CheStateEnum.NO_PUT_WORK);
-			} else if (Location.SKUWALL_USAGE.equals(wallType)){
+			} else if (Location.SKUWALL_USAGE.equals(wallType)) {
 				if (wallName == null) {
 					setState(CheStateEnum.SKU_WALL_SCAN_GTIN_LOCATION);
 				} else {
@@ -2303,7 +2321,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			mAllPicksWiList.addAll(inWorkItemList);
 			//When putting into SKU walls, workers can switch walls, if their items is in another wall.
 			//Not applicable for PUT walls, so ignore this unless wallName is explicitly provided
-			if (wallName != null){
+			if (wallName != null) {
 				mPutWallName = wallName;
 			}
 			doNextWallPut(); // should set the state
@@ -2447,11 +2465,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			WorkInstruction wi = getWorkInstructionForContainerId(containerId);
 			if (wi == null) {
 				// Simply ignore button presses when there is no work instruction.
-			} else if (wi.isHousekeeping()){
+			} else if (wi.isHousekeeping()) {
 				// for housekeeping, any button press count. We will plug in a value of 0.  Version 3.0 poscons send value of -1.
 				// version 2.0 sends value of 0.
 				processNormalPick(wi, 0);
-			}else {
+			} else {
 				if (inQuantity >= wi.getPlanMinQuantity()) {
 					processNormalPick(wi, inQuantity);
 				} else {
@@ -2663,7 +2681,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (inSpecialCode == BAY_COMPLETE_CODE) {
 			codeUnderstood = true;
 			minToSend = PosControllerInstr.BITENCODED_LED_C; // this is the right one, so it spells "bc"
-			maxToSend = PosControllerInstr.BITENCODED_LED_B;			
+			maxToSend = PosControllerInstr.BITENCODED_LED_B;
 		} else if (inSpecialCode == REPEAT_CONTAINER_CODE) {
 			codeUnderstood = true;
 			minToSend = PosControllerInstr.BITENCODED_LED_R; // this is the right one
@@ -2712,8 +2730,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 		return 0;
 	}
-	
-	private void showPosconBusyScreen(){
+
+	private void showPosconBusyScreen() {
 		String line1 = String.format(POSCON_BUSY_LINE_1, getOneActiveWorkInstruction().getPickInstruction());
 		String line2 = "By " + mBusyPosconHolders;
 		sendDisplayCommand(line1, line2, POSCON_BUSY_LINE_3, POSCON_BUSY_LINE_4);
@@ -2797,7 +2815,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		}
 	}
-	
+
 	protected void processSkuWallNewLocationScan(String inScanPrefixStr, String inScanStr) {
 		if (TAPE_PREFIX.equals(inScanPrefixStr)) {
 			inScanStr = TAPE_PREFIX + inScanStr;
@@ -2805,7 +2823,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		mDeviceManager.inventoryUpdateScan(this.getPersistentId(), inScanStr, mLastPutWallItemScan, mPutWallName);
 		setState(CheStateEnum.COMPUTE_WORK);
 	}
-	
+
 	protected void processSkuWallLocationDisambiguation(String inScanPrefixStr, String inScanStr) {
 		if (TAPE_PREFIX.equals(inScanPrefixStr)) {
 			inScanStr = TAPE_PREFIX + inScanStr;
@@ -2813,8 +2831,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		mDeviceManager.skuWallLocationDisambiguation(this.getPersistentId(), inScanStr, mLastPutWallItemScan, mPutWallName);
 		setState(CheStateEnum.COMPUTE_WORK);
 	}
-	
-	private void processInfoLocationScan(String prefix, String location){
+
+	private void processInfoLocationScan(String prefix, String location) {
 		if (CheDeviceLogic.TAPE_PREFIX.equals(prefix)) {
 			location = prefix + location;
 		}
@@ -2824,31 +2842,43 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case PUT_WALL_SCAN_WALL:
 			case PUT_WALL_SCAN_ITEM:
 				setState(CheStateEnum.INFO_RETRIEVAL);
-				mDeviceManager.performInfoOrRemoveAction(InfoRequestType.GET_WALL_LOCATION_INFO, location, getGuidNoPrefix(), getPersistentId().toString());
+				mDeviceManager.performInfoOrRemoveAction(InfoRequestType.GET_WALL_LOCATION_INFO,
+					location,
+					getGuidNoPrefix(),
+					getPersistentId().toString());
 				break;
-			case SCAN_GTIN:	//Inventory mode
+			case SCAN_GTIN: //Inventory mode
 				setState(CheStateEnum.INFO_RETRIEVAL);
-				mDeviceManager.performInfoOrRemoveAction(InfoRequestType.GET_INVENTORY_INFO, location, getGuidNoPrefix(), getPersistentId().toString());
+				mDeviceManager.performInfoOrRemoveAction(InfoRequestType.GET_INVENTORY_INFO,
+					location,
+					getGuidNoPrefix(),
+					getPersistentId().toString());
 				break;
-			default:				
+			default:
 		}
 	}
-	
-	private void displayInfo(){
+
+	private void displayInfo() {
 		InfoPackage info = getInfo();
 		if (info == null) {
 			sendDisplayCommand("NO INFO RECEIVED", "CANCEL to exit");
 		} else {
-			sendDisplayCommand(info.getDisplayInfoLine(0), info.getDisplayInfoLine(1), info.getDisplayInfoLine(2), info.getDisplayInfoLine(3));
+			sendDisplayCommand(info.getDisplayInfoLine(0),
+				info.getDisplayInfoLine(1),
+				info.getDisplayInfoLine(2),
+				info.getDisplayInfoLine(3));
 		}
 	}
-	
-	private void displayRemoveInfo(){
+
+	private void displayRemoveInfo() {
 		InfoPackage info = getInfo();
 		if (info == null) {
 			sendDisplayCommand("NO INFO RECEIVED", "CANCEL to exit");
 		} else {
-			sendDisplayCommand(info.getDisplayRemoveLine(0), info.getDisplayRemoveLine(1), info.getDisplayRemoveLine(2), info.getDisplayRemoveLine(3));
+			sendDisplayCommand(info.getDisplayRemoveLine(0),
+				info.getDisplayRemoveLine(1),
+				info.getDisplayRemoveLine(2),
+				info.getDisplayRemoveLine(3));
 		}
-	}	
+	}
 }

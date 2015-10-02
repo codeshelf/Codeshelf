@@ -211,8 +211,10 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			workInstructions.add(inWorkInstruction);
 			inWorkInstruction.setOrderDetail(this);
 		} else if (!previousOrderDetail.equals(this)) {
-			LOGGER.error("cannot add WorkInstruction " + inWorkInstruction.getDomainId() + " to " + this.getDomainId()
-					+ " because it has not been removed from " + previousOrderDetail.getDomainId());
+			LOGGER.error("cannot add WorkInstruction for item:{} to detail for order:{} because it has not been removed from detail for {}",
+				inWorkInstruction.getItemId(),
+				this.getOrderId(),
+				previousOrderDetail.getOrderId());
 		}
 	}
 
@@ -221,8 +223,9 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			inWorkInstruction.setParent(null);
 			workInstructions.remove(inWorkInstruction);
 		} else {
-			LOGGER.error("cannot remove WorkInstruction " + inWorkInstruction.getDomainId() + " from " + this.getDomainId()
-					+ " because it isn't found in children");
+			LOGGER.error("cannot remove WorkInstruction for item:{} from detail for order:{} because it isn't found in children",
+				inWorkInstruction.getItemId(),
+				this.getOrderId());
 		}
 	}
 
@@ -231,7 +234,8 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		if (uomMaster != null) {
 			return uomMaster.getDomainId();
 		} else {
-			LOGGER.error("Unexpected null uomMaster for detail: " + this);
+			// careful. Would recurse if no uomMaster and we report in terms of "this" or toString()
+			LOGGER.error("Unexpected null uomMaster for detail for order:{} item:{}", getOrderId(), getItemMasterId());
 			return "";
 		}
 	}
@@ -241,13 +245,19 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		if (itemMaster != null) {
 			return itemMaster.getDomainId();
 		} else {
-			LOGGER.error("Unexpected null itemMaster for detail: " + this);
+			// careful. Would recurse if no itemMaster and we report in terms of "this" or toString()
+			LOGGER.error("Unexpected null itemMaster for detail for order:{}", getOrderId());
 			return "";
 		}
 	}
 
 	public String getOrderId() {
-		return getParent().getOrderId();
+		// can an OrderDetail not have a parent? In the OrderDetailTest it can
+		OrderHeader oh = getParent();
+		if (oh != null)
+			return oh.getOrderId();
+		else
+			return "";
 	}
 
 	public String getDetailStatusName() {
@@ -255,7 +265,12 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	}
 
 	public String getShipperId() {
-		return getParent().getShipperId();
+		// can an OrderDetail not have a parent? In the OrderDetailTest it can
+		OrderHeader oh = getParent();
+		if (oh != null)
+			return oh.getShipperId();
+		else
+			return "";
 	}
 
 	/**

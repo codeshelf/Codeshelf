@@ -210,12 +210,19 @@ public class WorkService implements IApiService {
 						this.notifyAddOrderToCart(thisUse, inChe);
 					}
 
+					Integer posconIndex = 0;
 					try {
-						Integer posconIndex = Integer.parseInt(e.getKey());
-						thisUse.setPosconIndex(posconIndex);
-						ContainerUse.staticGetDao().store(thisUse);
-					} catch (Exception ex) {
-						LOGGER.error("Failed to update container use " + thisUse, ex);
+						posconIndex = Integer.parseInt(e.getKey());
+					} catch (NumberFormatException ex2) {
+						LOGGER.warn("Failed to update position on ContainerUse {} because position was {}", containerId, e.getKey());
+					}
+					if (posconIndex != 0) {
+						try {
+							thisUse.setPosconIndex(posconIndex);
+							ContainerUse.staticGetDao().store(thisUse);
+						} catch (Exception ex) {
+							LOGGER.error("Failed to update container use " + thisUse, ex);
+						}
 					}
 				}
 			} else {
@@ -781,7 +788,7 @@ public class WorkService implements IApiService {
 					// No point in throwing here. A throw would return response.fail to site controller and CHE screen, but there is nothing
 					// the CHE/worker can do about it. Let's just succeed.
 					return;
-				}					
+				}
 				notifyEdiServiceCompletedWi(storedWi);
 				computeAndSendOrderFeedback(storedWi);
 				//If WI is on a PutWall, refresh PutWall feedback
@@ -2358,11 +2365,12 @@ public class WorkService implements IApiService {
 		DomainObjectManager doMananager = new DomainObjectManager(inFacility);
 		doMananager.purgeOldObjects(daysOldToCount, inCls, 1000);
 	}
-	
+
 	public List<String> reportAchiveables(int daysOldToCount, Facility inFacility) {
 		DomainObjectManager doMananager = new DomainObjectManager(inFacility);
-		return doMananager.reportAchiveables(daysOldToCount);		
+		return doMananager.reportAchiveables(daysOldToCount);
 	}
+
 	/**
 	 * Only a testing API, to cover maxToPurgeAtOnce
 	 */
