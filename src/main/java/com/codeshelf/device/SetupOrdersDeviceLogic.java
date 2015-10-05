@@ -918,9 +918,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (mActivePickWiList.size() > 0) {
 			// If there's more active picks then show them.
 			if (autoShortOn) {
-				LOGGER.error("Simultaneous work instructions turned off currently, so unexpected case in confirmShortPick. state: {}",
-					state);
-				LOGGER.error("first wi from confirmShortPick error just before is: {}", mActivePickWiList.get(0)); // log the first to help understand
+				LOGGER.error("Simultaneous work instructions turned off currently, so unexpected case in confirmShortPick. state: {}; First wi is {}",
+					state, mActivePickWiList.get(0));
 			}
 			showActivePicks();
 		} else {
