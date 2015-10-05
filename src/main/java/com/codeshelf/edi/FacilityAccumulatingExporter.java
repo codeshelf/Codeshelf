@@ -184,11 +184,13 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 				@Override
 				public ExportReceipt call() throws IOException {
 					if (message instanceof OrderOnCartAddedExportMessage) {
-						FileExportReceipt receipt =  getEdiExportGateway().transportOrderOnCartAdded(message.getOrderId(), message.getCheGuid(), message.getContents());
+						FileExportReceipt receipt =  ediExportGateway.transportOrderOnCartAdded(message.getOrderId(), message.getCheGuid(), message.getContents());
+						ediExportGateway.updateLastSuccessTime();
 						LOGGER.info("Sent orderOnCartAdded {}", message);
 						return receipt;
 					} else if (message instanceof OrderOnCartFinishedExportMessage){
-						FileExportReceipt receipt = getEdiExportGateway().transportOrderOnCartFinished(message.getOrderId(), message.getCheGuid(), message.getContents());
+						FileExportReceipt receipt = ediExportGateway.transportOrderOnCartFinished(message.getOrderId(), message.getCheGuid(), message.getContents());
+						ediExportGateway.updateLastSuccessTime();
 						LOGGER.info("Sent orderOnCartFinished {}", message);
 						return receipt;
 					} else {

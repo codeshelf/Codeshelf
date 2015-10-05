@@ -126,8 +126,6 @@ public abstract class SftpGateway extends EdiGateway {
 				throw new IOException(String.format("Failed to open channel, check Edi configuration: %s", toSftpChannelDebug()), e);
 			}
 			LOGGER.info("EDI service {} connected to {}", this.getServiceName(), toSftpChannelDebug());
-			 
-			updateLastSuccessTime();
 			return channel;
 		} finally {
 			if (channel == null) { 

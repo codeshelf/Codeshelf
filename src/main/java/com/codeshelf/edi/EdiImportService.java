@@ -168,7 +168,7 @@ public final class EdiImportService extends AbstractCodeshelfScheduledService {
 	//package level for testing
 	int doEdiForFacility(Facility facility) {
 		int numChecked = 0;
-		for (IEdiImportGateway ediGateway : facility.getLinkedEdiImportGateway()) { 
+		for (IEdiImportGateway ediGateway : facility.getLinkedEdiImportGateways()) { 
 			if (ediGateway.isActive()){
 				try {
 					if (ediGateway.getUpdatesFromHost(mCsvOrderImporter.get(),
@@ -177,6 +177,7 @@ public final class EdiImportService extends AbstractCodeshelfScheduledService {
 						mCsvLocationAliasImporter.get(),
 						mCsvCrossBatchImporter.get(),
 						mCsvAislesFileImporter.get())) {
+						ediGateway.updateLastSuccessTime();
 						numChecked++;
 						// Signal other threads that we've just processed new EDI.
 						try {

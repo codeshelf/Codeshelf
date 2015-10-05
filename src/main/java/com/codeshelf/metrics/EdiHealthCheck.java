@@ -1,9 +1,15 @@
 package com.codeshelf.metrics;
 
+import java.util.List;
+
 import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.edi.EdiImportService;
+import com.codeshelf.edi.IEdiExportGateway;
+import com.codeshelf.edi.IEdiGateway;
+import com.codeshelf.edi.IEdiImportGateway;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.service.TenantManagerService;
+import com.codeshelf.model.domain.EdiGateway;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 
@@ -48,33 +54,29 @@ public class EdiHealthCheck extends CodeshelfHealthCheck {
 			try{
 				CodeshelfSecurityManager.setContext(CodeshelfSecurityManager.getUserContextSYSTEM(), tenant);
 				TenantPersistenceService.getInstance().beginTransaction();
-				/*
-				List<Facility> facilities = Facility.staticGetDao().getAll();
-				for (Facility facility : facilities) {
-					FacilityEdiExporter exporter = ediExporterProvider.getEdiExporter(facility);
-					if (exporter == null) {
+				
+				List<EdiGateway> ediGateways = EdiGateway.staticGetDao().getAll();
+				for (IEdiGateway ediGateway : ediGateways){
+					//Skip inactive EDI gateways
+					if (!ediGateway.isActive()){
 						continue;
 					}
-					long lastSuccessTime = exporter.getLastSuccessTime();
-					long secondsSinceLastSuccess = (System.currentTimeMillis() - lastSuccessTime)/1000; 
-					if(secondsSinceLastSuccess > EDI_SERVICE_CYCLE_TIMEOUT_SECONDS) {
-						boolean goodConnection = exporter.testConnection();
-						if (!goodConnection) {
-							errors.append(String.format("Bad SFTP exporter %s, tenant: %s, facility: %s. ", exporter.getDomainId(), tenant.getTenantIdentifier(), facility.getDomainId()));
+					if(!ediGateway.isLinked()) {
+						//Check if EDI gateway is linked
+						errors.append(String.format("Active EDI service %s not linked, tenant: %s, facility: %s. ", ediGateway.getDomainId(), tenant.getTenantIdentifier(), ediGateway.getFacility().getDomainId()));
+					} else if (ediGateway instanceof IEdiImportGateway) {
+						//Check if active EDI importer has checked for new files recently
+						long timeSinceLastImportCheck = System.currentTimeMillis() - ediGateway.getLastSuccessTime().getTime();
+						if (timeSinceLastImportCheck > EDI_SERVICE_CYCLE_TIMEOUT_SECONDS * 1000){
+							errors.append(String.format("Active EDI import service hadn't had a successful check since %s, tenant: %s, facility: %s. ", ediGateway.getLastSuccessTime(), tenant.getTenantIdentifier(), ediGateway.getFacility().getDomainId()));
+						}
+					} else if (ediGateway instanceof IEdiExportGateway) {
+						//Check if EDI exporter can connect to destination
+						if (!ediGateway.testConnection()){
+							errors.append(String.format("Active EDI service %s connection error, tenant: %s, facility: %s. ", ediGateway.getDomainId(), tenant.getTenantIdentifier(), ediGateway.getFacility().getDomainId()));
 						}
 					}
 				}
-				*/
-				/*
-				List<EdiGateway> ediGateways = EdiGateway.staticGetDao().getAll();
-				for (EdiGateway ediGateway : ediGateways) {
-					if (ediSerivce.getActive()){
-						if (ediSerivce.getServiceState() != EdiServiceStateEnum.LINKED) {
-							errors.append(String.format("Active EDI service %s not linked, tenant: %s, facility: %s. ", ediSerivce.getDomainId(), tenant.getTenantIdentifier(), ediSerivce.getFacility().getDomainId()));
-						}
-					}
-				}
-				*/
 				TenantPersistenceService.getInstance().commitTransaction();
 			} catch (Exception e) {
 				TenantPersistenceService.getInstance().rollbackTransaction();

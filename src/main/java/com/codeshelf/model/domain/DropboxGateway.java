@@ -149,29 +149,35 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
 		ICsvCrossBatchImporter inCsvCrossBatchImporter,
 		ICsvAislesFileImporter inCsvAislesFileImporter) {
-		boolean result = false;
 
 		// Make sure we believe that we're properly registered with the service before we try to contact it.
-		if (isLinked()) {
-			if (!testConnection()){
-				LOGGER.warn("Dropbox connection error");
-				return result;
-			}
-
-			DbxClient client = getClient();
-			if (client != null) {
-				result = checkForChangedDocuments(client,
-					inCsvOrderImporter,
-					inCsvOrderLocationImporter,
-					inCsvInventoryImporter,
-					inCsvLocationAliasImporter,
-					inCsvCrossBatchImporter,
-					inCsvAislesFileImporter);
-			}
-			updateLastSuccessTime();
+		if (!isLinked()) {
+			return false;
+		} 
+		if (!testConnection()){
+			LOGGER.warn("Dropbox connection error");
+			return false;
 		}
 
-		return result;
+		DbxClient client = getClient();
+		if (client != null && ensureBaseDirectories(client)) {
+			DbxDelta<DbxEntry> page = getNextPage(client);
+			while ((page != null) && (page.entries.size() > 0)) {
+				iteratePage(client, page, inCsvOrderImporter, inCsvOrderLocationImporter, inCsvInventoryImporter, inCsvLocationAliasImporter, inCsvCrossBatchImporter, inCsvAislesFileImporter);
+				// If we've processed everything from the page correctly then save the current dbCursor, and get the next page
+				try {
+					DropboxGateway.staticGetDao().store(this);
+				} catch (DaoException e) {
+					LOGGER.error("", e);
+				}
+				if (page.hasMore) {
+					page = getNextPage(client);
+				} else {
+					page = null;
+				}
+			}
+		}
+		return true;
 	}
 
 	/**
@@ -195,48 +201,7 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 		return true;
 	}
 	// --------------------------------------------------------------------------
-	/**
-	 * @param inClientSession
-	 */
-	private boolean checkForChangedDocuments(DbxClient inClient,
-		ICsvOrderImporter inCsvOrderImporter,
-		ICsvOrderLocationImporter inCsvOrderLocationImporter,
-		ICsvInventoryImporter inCsvInventoryImporter,
-		ICsvLocationAliasImporter inCsvLocationAliasImporter,
-		ICsvCrossBatchImporter inCsvCrossBatchImporter,
-		ICsvAislesFileImporter inCsvAislesFileImporter) {
-		boolean result = false;
 
-		if (ensureBaseDirectories(inClient)) {
-			DbxDelta<DbxEntry> page = getNextPage(inClient);
-			while ((page != null) && (page.entries.size() > 0)) {
-				// Signal that we got some deltas
-				result = true;
-				if (iteratePage(inClient,
-					page,
-					inCsvOrderImporter,
-					inCsvOrderLocationImporter,
-					inCsvInventoryImporter,
-					inCsvLocationAliasImporter,
-					inCsvCrossBatchImporter,
-					inCsvAislesFileImporter)) {
-					// If we've processed everything from the page correctly then save the current dbCursor, and get the next page
-					try {
-						DropboxGateway.staticGetDao().store(this);
-					} catch (DaoException e) {
-						LOGGER.error("", e);
-					}
-
-					if (page.hasMore) {
-						page = getNextPage(inClient);
-					} else {
-						page = null;
-					}
-				}
-			}
-		}
-		return result;
-	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -262,7 +227,7 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 	 * @param inClientSession
 	 * @param inPage
 	 */
-	private boolean iteratePage(DbxClient inClient,
+	private void iteratePage(DbxClient inClient,
 		DbxDelta<DbxEntry> inPage,
 		ICsvOrderImporter inCsvOrderImporter,
 		ICsvOrderLocationImporter inCsvOrderLocationImporter,
@@ -270,21 +235,11 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 		ICsvLocationAliasImporter inCsvLocationAliasImporter,
 		ICsvCrossBatchImporter inCsvCrossBatchImporter,
 		ICsvAislesFileImporter inCsvAislesFileImporter) {
-		boolean result = true;
-
 		for (DbxDelta.Entry<DbxEntry> entry : inPage.entries) {
 			LOGGER.trace("Dropbox found: " + entry.lcPath);
 			try {
-				if (entry.metadata != null) {
-					// Add, or modify.
-					result &= processEntry(inClient,
-						entry,
-						inCsvOrderImporter,
-						inCsvOrderLocationImporter,
-						inCsvInventoryImporter,
-						inCsvLocationAliasImporter,
-						inCsvCrossBatchImporter,
-						inCsvAislesFileImporter);
+				if (entry.metadata != null && entry.lcPath.startsWith(getFacilityImportPath()) && entry.metadata.isFile()) {
+					handleImport(inClient, entry, inCsvOrderImporter, inCsvOrderLocationImporter, inCsvInventoryImporter, inCsvLocationAliasImporter, inCsvCrossBatchImporter, inCsvAislesFileImporter);
 				}
 			} catch (RuntimeException e) {
 				LOGGER.error("", e);
@@ -294,8 +249,6 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 				// result = false;
 			}
 		}
-
-		return result;
 	}
 
 	// --------------------------------------------------------------------------
@@ -481,33 +434,6 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 	}
 
 	// --------------------------------------------------------------------------
-	/**
-	 * @param inEntry
-	 */
-	private boolean processEntry(DbxClient inClient,
-		DbxDelta.Entry<DbxEntry> inEntry,
-		ICsvOrderImporter inCsvOrderImporter,
-		ICsvOrderLocationImporter inCsvOrderLocationImporter,
-		ICsvInventoryImporter inCsvInventoryImporter,
-		ICsvLocationAliasImporter inCsvLocationAliasImporter,
-		ICsvCrossBatchImporter inCsvCrossBatchImporter,
-		ICsvAislesFileImporter inCsvAislesFileImporter) {
-		boolean result = true;
-
-		if (inEntry.lcPath.startsWith(getFacilityImportPath())) {
-			if (inEntry.metadata.isFile()) {
-				handleImport(inClient,
-					inEntry,
-					inCsvOrderImporter,
-					inCsvOrderLocationImporter,
-					inCsvInventoryImporter,
-					inCsvLocationAliasImporter,
-					inCsvCrossBatchImporter,
-					inCsvAislesFileImporter);
-			}
-		}
-		return result;
-	}
 
 	// --------------------------------------------------------------------------
 	/**

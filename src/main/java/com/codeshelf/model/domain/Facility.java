@@ -1336,7 +1336,7 @@ public class Facility extends Location {
 		}
 	}
 	
-	public Collection<IEdiImportGateway> getLinkedEdiImportGateway() {
+	public List<IEdiImportGateway> getLinkedEdiImportGateways() {
 		//TODO only return services that implement import interface
 		ArrayList<IEdiImportGateway> importServices = new ArrayList<>();
 		for (IEdiGateway ediGateway : getEdiGateways()) {

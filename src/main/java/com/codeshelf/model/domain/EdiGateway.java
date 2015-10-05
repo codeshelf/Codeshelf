@@ -142,5 +142,6 @@ public abstract class EdiGateway extends DomainObjectTreeABC<Facility> implement
 		if (lastSuccessTime == null || now.getTime() - lastSuccessTime.getTime() > 60000) {
 			lastSuccessTime = now;
 		}
+		EdiGateway.staticGetDao().store(this);
 	}
 }
