@@ -449,8 +449,26 @@ public class DataArchiving extends ServerTest {
 		LOGGER.info("7: Log out. Just an indication that failures were handled cleanly above, if these states still work.");
 		picker.logout(); // does a waitForCheState(CheStateEnum.IDLE
 		
+	}
+	/**
+	 * The tested function does not do anything except produce and log an output string that
+	 * is convenience to transform into a test script
+	 */
+	@Test
+	public final void testSetupManyCartsWithOrders() throws IOException {
+		beginTransaction();
 
+		propertyService.turnOffHK(facility);
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, "WorkSequence");
+		setUpOrdersWithCntrGtinAndSequence(facility);
+		commitTransaction();
+		
+		beginTransaction();
+		facility = facility.reload();
+		String inputString = "2 CHE1 CHE2 CHE3";				
+		String outputString = workService.setupManyCartsWithOrders(facility, inputString);
+		LOGGER.info(outputString);
+		commitTransaction();
 
 	}
-
 }

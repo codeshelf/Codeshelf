@@ -206,12 +206,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					} else {
 						sendDisplayCommand(getContainerSetupMsg(), OR_START_WORK_MSG, EMPTY_MSG, SHOWING_ORDER_IDS_MSG);
 					}
-					showContainerAssainments();
+					showContainerAssignments();
 					break;
 
 				case CONTAINER_POSITION:
 					sendDisplayCommand(SELECT_POSITION_MSG, EMPTY_MSG);
-					showContainerAssainments();
+					showContainerAssignments();
 					break;
 
 				case CONTAINER_POSITION_INVALID:
@@ -359,7 +359,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 				case REMOVE_CHE_CONTAINER:
 					sendDisplayCommand(SELECT_POSITION_MSG, REMOVE_CONTAINER_MSG, EMPTY_MSG, CANCEL_TO_EXIT_MSG);
-					showContainerAssainments();
+					showContainerAssignments();
 					break;
 
 				case REMOTE:
@@ -1703,7 +1703,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**
 	 * This shows all the positions already assigned to containers in the mContainersMap
 	 */
-	private void showContainerAssainments() {
+	private void showContainerAssignments() {
 		if (mPositionToContainerMap.isEmpty()) {
 			LOGGER.debug("No Container Assaigments to send");
 			return;
