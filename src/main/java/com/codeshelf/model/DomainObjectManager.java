@@ -448,5 +448,18 @@ public class DomainObjectManager {
 	private int floorDays(int daysOldToCount) {
 		return Math.max(daysOldToCount, 1);
 	}
-
+	
+	/**
+	 * This function unrelated to data purge. Used in a test function
+	 * Get up maxNeeded orders that are active and not complete
+	 */
+	public List<OrderHeader> getSomeUncompletedOrders(int maxNeeded){
+		UUID facilityUUID = getFacility().getPersistentId();
+		Criteria orderCrit = OrderHeader.staticGetDao().createCriteria();
+		orderCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		orderCrit.add(Restrictions.ne("status",OrderStatusEnum.COMPLETE));
+		orderCrit.add(Restrictions.eq("active",true));
+		return OrderHeader.staticGetDao().findByCriteriaQuery(orderCrit);
+	
+	}
 }

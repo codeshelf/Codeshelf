@@ -4,7 +4,12 @@ import lombok.Getter;
 import lombok.Setter;
 
 import com.codeshelf.service.ParameterSetBeanABC;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
+@JsonAutoDetect(getterVisibility=Visibility.PUBLIC_ONLY, fieldVisibility=Visibility.NONE)
 public class DataQuantityHealthCheckParameters extends ParameterSetBeanABC {
 	// This follows our model of all groovy beans are strings
 
@@ -16,15 +21,19 @@ public class DataQuantityHealthCheckParameters extends ParameterSetBeanABC {
 
 	@Getter
 	@Setter
+	@JsonIgnore
 	protected String			maxOrderDetail;
 	@Getter
 	@Setter
+	@JsonIgnore
 	protected String			maxWorkInstruction;
 	@Getter
 	@Setter
+	@JsonIgnore
 	protected String			maxOrder;
 	@Getter
 	@Setter
+	@JsonIgnore
 	protected String			maxContainerUse;
 
 	public DataQuantityHealthCheckParameters() {

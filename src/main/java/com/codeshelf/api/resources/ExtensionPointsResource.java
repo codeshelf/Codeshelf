@@ -2,6 +2,7 @@ package com.codeshelf.api.resources;
 
 import java.util.List;
 
+import javax.script.ScriptException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
@@ -17,11 +18,14 @@ import lombok.Getter;
 import lombok.Setter;
 
 import com.codeshelf.api.BaseResponse;
+import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.service.ExtensionPointService;
 import com.codeshelf.service.ExtensionPointType;
 import com.google.inject.Inject;
+import com.sun.jersey.api.client.ClientResponse.Status;
 
 public class ExtensionPointsResource {
 

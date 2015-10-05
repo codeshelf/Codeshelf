@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.script.ScriptException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
@@ -74,15 +75,18 @@ import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
+import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.service.ExtensionPointService;
 import com.codeshelf.service.NotificationService;
 import com.codeshelf.service.NotificationService.WorkerEventTypeGroup;
 import com.codeshelf.service.OrderService;
+import com.codeshelf.service.ParameterSetBeanABC;
 import com.codeshelf.service.ProductivitySummaryList;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.UiUpdateService;
@@ -92,6 +96,7 @@ import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.MoreObjects;
+import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
@@ -195,6 +200,27 @@ public class FacilityResource {
 		r.setFacility(facility);
 		return r;
 	}
+	
+	@GET
+	@Path("/healthchecks/{type}/configuration")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getHealthCheckConfig(@PathParam("type") String healthCheckType) throws ScriptException {
+		if ("DataQuantity".equalsIgnoreCase(healthCheckType)) {
+			ExtensionPointService epService = ExtensionPointService.createInstance(facility);
+			Optional<ExtensionPoint> extensionPoint = epService.getDataQuantityHealthCheckExtensionPoint();
+			ParameterSetBeanABC parameterSet = 	epService.getDataQuantityHealthCheckParameters();
+		    Map<String, Object> responseMap = new HashMap<>();
+			responseMap.put("parameterSet", parameterSet);
+			responseMap.put("extensionPoint", extensionPoint.orNull());
+			return BaseResponse.buildResponse(responseMap);
+		} else {
+			ErrorResponse error = new ErrorResponse();
+			error.addBadParameter("type", healthCheckType);
+			return BaseResponse.buildResponse(error, Response.Status.BAD_REQUEST);
+		}
+	}
+	
 	
 	@GET
 	@Path("/data/summary")
@@ -739,4 +765,6 @@ public class FacilityResource {
 			return errors.processException(e);
 		}
 	}
+	
+	
 }

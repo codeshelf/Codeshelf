@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -35,18 +36,22 @@ import com.codeshelf.application.JvmProperties;
 
 public class OrderBatchPerformanceTest {
 
-	final private static String	BASE_URL	= "http://localhost:8181/";
-	final private static String	USERNAME	= "simulate@example.com";
-	final private static String	PASSWORD	= "testme";
+	final private static String	BASE_URL				= "http://localhost:8181/";
+	final private static String	USERNAME				= "simulate@example.com";
+	final private static String	PASSWORD				= "testme";
 	// final private static String	FACILITY	= "7d16e862-32db-4270-8eda-aff14629aceb";
-	final private static String	FACILITY	= "d678cc4d-3251-4be1-bfec-199393705bba";
+	final private static String	FACILITY				= "d678cc4d-3251-4be1-bfec-199393705bba";
+
+	// Set this to something like "24 CHE1 CHE2 CHE3'
+	// To look up active orders and distribute 24 to each of the 3 CHE.
+	final private static String	SCRIPTCREATETEMPLATE	= "";
 
 	static {
 		JvmProperties.load("server");
 	}
 
-	private static final Logger	LOGGER		= LoggerFactory.getLogger(OrderBatchPerformanceTest.class);
-	private static NumberFormat	formatter	= new DecimalFormat("#0.00");
+	private static final Logger	LOGGER					= LoggerFactory.getLogger(OrderBatchPerformanceTest.class);
+	private static NumberFormat	formatter				= new DecimalFormat("#0.00");
 
 	CloseableHttpClient			client;
 	HttpClientContext			context;
@@ -125,6 +130,28 @@ public class OrderBatchPerformanceTest {
 		return response;
 	}
 
+	@SuppressWarnings("unused")
+	private void postScriptTemplate() throws ClientProtocolException, IOException {
+		// Paul, can you hook this up?
+		LOGGER.info("Examining orders and creating script commands for optional use");
+		// This will fire the SCRIPTCREATETEMPLATE string to the REST API. Transformed string is logged and returned.
+		String url = BASE_URL + "api/facilities/" + FACILITY + "/function/";
+
+		HttpPost postRequest = new HttpPost(url);
+		ArrayList<NameValuePair> postParameters = new ArrayList<>();
+		postParameters.add(new BasicNameValuePair("function", "setupManyCartsWithOrders"));
+		postParameters.add(new BasicNameValuePair("parameterString", SCRIPTCREATETEMPLATE));
+		postRequest.setEntity(new UrlEncodedFormEntity(postParameters));
+		client.execute(postRequest);
+
+		// move the function as you wish. Currently, it would call through to WorkService.setupManyCartsWithOrders() with SCRIPTCREATETEMPLATE as the string parameter.
+
+		//Send request
+		HttpResponse response = client.execute(postRequest, context);
+		HttpEntity entity = response.getEntity();
+		EntityUtils.consume(entity);
+	}
+
 	public static void main(String[] args) {
 
 		LOGGER.info("Directory name argument is: " + args[0]);
@@ -193,6 +220,17 @@ public class OrderBatchPerformanceTest {
 		long end = System.currentTimeMillis();
 		double duration = ((double) (end - start)) / 1000;
 		LOGGER.info("Import performance test completed in " + formatter.format(duration) + "s");
+
+		if (!SCRIPTCREATETEMPLATE.isEmpty()) {
+			// Paul, can you hook this up?  
+			// not sure why this complains about static caller when postFile above does not
+			try {
+				// postScriptTemplate();
+			} catch (Exception e) {
+				LOGGER.error("Exception while posting script template for transformation", e);
+			}
+		}
+
 		System.exit(0);
 	}
 }

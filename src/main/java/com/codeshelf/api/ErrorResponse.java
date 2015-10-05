@@ -70,4 +70,9 @@ public class ErrorResponse {
 	public Response buildResponse() {
 		return BaseResponse.buildResponse(this, status);
 	}
+
+	public void addBadParameter(String paramValue, String paramName) {
+		addError(String.format("Bad paramerter value: %s for parameter: %s", paramValue, paramName));
+		
+	}
 }
