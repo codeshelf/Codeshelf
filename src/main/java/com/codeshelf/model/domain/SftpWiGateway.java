@@ -1,5 +1,7 @@
 package com.codeshelf.model.domain;
 
+import java.util.List;
+
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
@@ -7,8 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.edi.IEdiExportGateway;
+import com.codeshelf.edi.SftpConfiguration;
 import com.codeshelf.edi.EdiFileWriteException;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.jcraft.jsch.SftpStatVFS;
 
 @Entity
 @DiscriminatorValue("SFTP_WIS")
@@ -53,5 +57,12 @@ public class SftpWiGateway extends SftpGateway implements IEdiExportGateway {
 		String filename = String.format("LOADED_%s_%s_%s.DAT",  inOrderId, inCheGuid, System.currentTimeMillis());
 		final String absoluteFilename = this.getConfiguration().getExportPath() + "/" + filename;
 		return uploadAsFile(contents, absoluteFilename);
+	}
+
+	@Override
+	public List<String> checkForAvailableSpaceIssues(long minAvailableFiles, long minAvailableSpaceMB) throws EdiFileWriteException{
+		SftpConfiguration conf = getConfiguration();
+		SftpStatVFS stats = getDirectoryStats(conf.getExportPath());
+		return checkForAvailableSpaceIssues(minAvailableFiles, minAvailableSpaceMB, stats);
 	}
 }

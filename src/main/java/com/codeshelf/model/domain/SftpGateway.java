@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
 
 import javax.persistence.Transient;
@@ -23,6 +24,7 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import com.jcraft.jsch.SftpException;
+import com.jcraft.jsch.SftpStatVFS;
 
 public abstract class SftpGateway extends EdiGateway {
 	static final Logger	LOGGER				= LoggerFactory.getLogger(SftpGateway.class);
@@ -231,5 +233,34 @@ public abstract class SftpGateway extends EdiGateway {
 			config.getUsername(),
 			config.getHost(),
 			config.getPort());
+	}
+	
+	public SftpStatVFS getDirectoryStats(String dir) throws EdiFileWriteException{
+		try {
+			ChannelSftp sftp = connect();
+			return sftp.statVFS(dir);
+		} catch(SftpException | IOException  e) {
+			throw new EdiFileWriteException("Unable to get directory statistics: " + dir, e);
+		} finally {
+			disconnect();
+		}
+	}
+	
+	public abstract List<String> checkForAvailableSpaceIssues(long minAvailableFiles, long minAvailableSpaceMB) throws EdiFileWriteException;
+	
+	protected List<String> checkForAvailableSpaceIssues(long minAvailableFiles, long minAvailableSpaceMB, SftpStatVFS stats) {
+		List<String> issues = new ArrayList<>();
+		if (stats == null) {
+			return issues;	//Not expected to happen
+		}
+		long availSpaceMB = stats.getAvailForNonRoot() / 1024;
+		long availFiles = stats.getAvailINodes();
+		if (availSpaceMB < minAvailableSpaceMB){
+			issues.add("Export/Archive directory only has " + availSpaceMB + "MB available instead of the required " + minAvailableSpaceMB + "MB");
+		}
+		if (availFiles < minAvailableFiles){
+			issues.add("Export/Archive directory can only hold " + availFiles + " more files instead of the required " + minAvailableFiles);
+		}
+		return issues;
 	}
 }

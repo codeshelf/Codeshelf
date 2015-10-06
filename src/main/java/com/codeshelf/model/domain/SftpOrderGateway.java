@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -12,6 +13,7 @@ import javax.persistence.Entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.edi.EdiFileWriteException;
 import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
@@ -19,12 +21,14 @@ import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.edi.IEdiImportGateway;
+import com.codeshelf.edi.SftpConfiguration;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.BatchResult;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.SftpException;
+import com.jcraft.jsch.SftpStatVFS;
 
 @Entity
 @DiscriminatorValue("SFTP_ORDERS")
@@ -142,5 +146,12 @@ public class SftpOrderGateway extends SftpGateway implements IEdiImportGateway{
 			throw new IOException(msg, e);
 		}
 
+	}
+
+	@Override
+	public List<String> checkForAvailableSpaceIssues(long minAvailableFiles, long minAvailableSpaceMB) throws EdiFileWriteException {
+		SftpConfiguration conf = getConfiguration();
+		SftpStatVFS stats = getDirectoryStats(conf.getArchivePath());
+		return checkForAvailableSpaceIssues(minAvailableFiles, minAvailableSpaceMB, stats);
 	}	
 }

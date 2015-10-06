@@ -10,6 +10,7 @@ import com.codeshelf.edi.IEdiImportGateway;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.domain.EdiGateway;
+import com.codeshelf.model.domain.SftpGateway;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 
@@ -61,19 +62,26 @@ public class EdiHealthCheck extends CodeshelfHealthCheck {
 					if (!ediGateway.isActive()){
 						continue;
 					}
+					String header = String.format("Issue with active EDI service %s.%s.%s: ", tenant.getTenantIdentifier(), ediGateway.getFacility().getDomainId(), ediGateway.getDomainId());
 					if(!ediGateway.isLinked()) {
 						//Check if EDI gateway is linked
-						errors.append(String.format("Active EDI service %s not linked, tenant: %s, facility: %s. ", ediGateway.getDomainId(), tenant.getTenantIdentifier(), ediGateway.getFacility().getDomainId()));
+						errors.append(header + "not linked. ");
 					} else if (ediGateway instanceof IEdiImportGateway) {
 						//Check if active EDI importer has checked for new files recently
 						long timeSinceLastImportCheck = System.currentTimeMillis() - ediGateway.getLastSuccessTime().getTime();
 						if (timeSinceLastImportCheck > EDI_SERVICE_CYCLE_TIMEOUT_SECONDS * 1000){
-							errors.append(String.format("Active EDI import service hadn't had a successful check since %s, tenant: %s, facility: %s. ", ediGateway.getLastSuccessTime(), tenant.getTenantIdentifier(), ediGateway.getFacility().getDomainId()));
+							errors.append(header + "hadn't had a successful check since " + ediGateway.getLastSuccessTime() + ". ");
 						}
 					} else if (ediGateway instanceof IEdiExportGateway) {
 						//Check if EDI exporter can connect to destination
 						if (!ediGateway.testConnection()){
-							errors.append(String.format("Active EDI service %s connection error, tenant: %s, facility: %s. ", ediGateway.getDomainId(), tenant.getTenantIdentifier(), ediGateway.getFacility().getDomainId()));
+							errors.append(header + "connection error. ");
+						}
+					}
+					if (ediGateway instanceof SftpGateway) {
+						List<String> availableSpaceIssues = ((SftpGateway)ediGateway).checkForAvailableSpaceIssues(500, 200);
+						for (String availableSpaceIssue : availableSpaceIssues){
+							errors.append(header + availableSpaceIssue + ". ");
 						}
 					}
 				}
