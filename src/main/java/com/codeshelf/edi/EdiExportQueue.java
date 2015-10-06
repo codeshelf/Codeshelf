@@ -9,11 +9,14 @@ package com.codeshelf.edi;
 
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.util.CompareNullChecker;
 
 /**
  * Built first for PFSWeb, this accumulates complete work instruction beans for sending later as small files organized by order.
@@ -50,7 +53,43 @@ public class EdiExportQueue {
 	}
 	
 	/**
+	 * Comparator to order the beans by timeComplete, then itemId
+	 * Note: it might be possible in some test runs that sometimes orders are done at same time and sometimes off by a second, therefore changing the sort.
+	 * If so, we can change this.
+	 */
+	private class WiBeanComparator implements Comparator<WorkInstructionCsvBean> {
+		// Sort the beans in a determinant manner. Ideally, by order of completion.
+
+		@Override
+		public int compare(WorkInstructionCsvBean bean1, WorkInstructionCsvBean bean2) {
+			// The bean has the timestamp as a string. Should work well enough. However, sometimes the complete or short time is equivalent.
+			// Not great. But remember, we want determinancy first. Doubt any host will care too much about the order.
+			int value = CompareNullChecker.compareNulls(bean1.getCompleted(), bean2.getCompleted());
+			if (value != 0)
+				return value;
+			
+			value = bean1.getCompleted().compareTo(bean2.getCompleted());
+			if (value != 0)
+				return value;
+			
+			// secondary sort: item. Should be only one item for one order.
+			String item1Name = bean1.getItemId();
+			String item2Name = bean2.getItemId();
+			value = CompareNullChecker.compareNulls(item1Name, item2Name);
+			if (value != 0)
+				return value;
+			value = item1Name.compareTo(item2Name);
+			if (value == 0){
+				LOGGER.error("strange case in WiBeanComparator-- not unique by time and item");
+			}
+				return value;
+		}
+	}
+
+	
+	/**
 	 * In the same order as the main list, return a sublist of beans for this orderId
+	 * Sort it, so that our tests are not intermittent
 	 */
 	public ArrayList<WorkInstructionCsvBean> getAndRemoveWiBeansFor(String inOrderId){
 		ArrayList<WorkInstructionCsvBean> returnList = new ArrayList<WorkInstructionCsvBean>();
@@ -66,11 +105,13 @@ public class EdiExportQueue {
 		for (WorkInstructionCsvBean bean: returnList){
 			wiBeanList.remove(bean);
 		}
+		Collections.sort(returnList, new WiBeanComparator());
 		return returnList;
 	}
 
 	/**
 	 * In the same order as the main list, return a sublist of beans for this orderId and Che
+	 * Sort it, so that our tests are not intermittent
 	 */
 	public ArrayList<WorkInstructionCsvBean> getAndRemoveWiBeansFor(String inOrderId, String inCheId){
 		ArrayList<WorkInstructionCsvBean> returnList = new ArrayList<WorkInstructionCsvBean>();
@@ -86,6 +127,7 @@ public class EdiExportQueue {
 		for (WorkInstructionCsvBean bean: returnList){
 			wiBeanList.remove(bean);
 		}
+		Collections.sort(returnList, new WiBeanComparator());
 		return returnList;
 	}
 	

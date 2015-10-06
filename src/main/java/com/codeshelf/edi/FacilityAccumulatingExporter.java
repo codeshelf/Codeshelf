@@ -242,7 +242,13 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 	 * This is initially tailored to PFSWeb data interchange, mimicking Dematic cart
 	 */
 	public ListenableFuture<ExportReceipt> exportOrderOnCartFinished(final OrderHeader inOrder, final Che inChe) {
-		ArrayList<WorkInstructionCsvBean> orderCheList = accumulator.getAndRemoveWiBeansFor(inOrder.getOrderId(), inChe.getDomainId());
+		
+		// DEV-1188 we have a choice here. Represent only the picks done by this CHE, or represent all completed picks.
+		// this CHE only
+		// ArrayList<WorkInstructionCsvBean> orderCheList = accumulator.getAndRemoveWiBeansFor(inOrder.getOrderId(), inChe.getDomainId());
+		// Completed by any CHE, but attribute all to the final CHE
+		ArrayList<WorkInstructionCsvBean> orderCheList = accumulator.getAndRemoveWiBeansFor(inOrder.getOrderId());
+				
 		// This list has "complete" work instruction beans. The particular customer's EDI may need strange handling.
 		final String exportStr = stringifier.stringifyOrderOnCartFinished(inOrder, inChe, orderCheList);
 		ExportMessageFuture exportMessage = new OrderOnCartFinishedExportMessage(inOrder.getDomainId(), inChe.getDeviceGuidStr(), exportStr);
