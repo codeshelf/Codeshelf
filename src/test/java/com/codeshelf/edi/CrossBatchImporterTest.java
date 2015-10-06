@@ -416,7 +416,7 @@ public class CrossBatchImporterTest extends ServerTest {
 	}
 
 	/*
-	 * TODO this might be better pulled into a higher level EdiProcessor test that goes across crossbatch and outbound
+	 * TODO this might be better pulled into a higher level EdiImport test that goes across crossbatch and outbound
 	 */
 	@Test
 	public final void testSendOrdersAfterCrossBatch() throws IOException {

@@ -37,7 +37,7 @@ public class CodeshelfApplicationTest extends ServerTest {
 	public void testStartStopApplication() {
 
 		Provider mockProvider= mock(Provider.class);
-		EdiImportService ediProcessorService = new EdiImportService(mockProvider,
+		EdiImportService ediImportService = new EdiImportService(mockProvider,
 			mockProvider,
 			mockProvider,
 			mockProvider,
@@ -47,7 +47,7 @@ public class CodeshelfApplicationTest extends ServerTest {
 
 		WebApiServer adminServer = new WebApiServer();
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(
-			ediProcessorService,
+			ediImportService,
 			pickDocumentGenerator,
 			adminServer,
 			this.tenantManagerService,

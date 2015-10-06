@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessorTest.java,v 1.9 2013/07/22 04:30:36 jeffw Exp $
+ *  $Id: EdiImportServiceTest.java,v 1.9 2013/07/22 04:30:36 jeffw Exp $
  *******************************************************************************/
 package com.codeshelf.edi;
 
@@ -63,14 +63,14 @@ public class EdiImportServiceTest extends MockDaoTest {
 		Mockito.when(failingInstanceProvider.get()).thenReturn(generateFailingImporter());
 		Provider anyProvider = mock(Provider.class);
 
-		EdiImportService ediProcessorService = new EdiImportService(failingInstanceProvider,
+		EdiImportService ediImportService = new EdiImportService(failingInstanceProvider,
 			anyProvider,
 			anyProvider,
 			anyProvider,
 			anyProvider,
 			anyProvider);
 		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
-		ediProcessorService.setEdiSignalQueue(testBlockingQueue);
+		ediImportService.setEdiSignalQueue(testBlockingQueue);
 
 		getFacility();
 
@@ -78,7 +78,7 @@ public class EdiImportServiceTest extends MockDaoTest {
 		MetricsService.setInstance(metrics);	// will be restored to normal values by framework
 
 		this.ephemeralServices = new ArrayList<Service>();
-		ephemeralServices.add(ediProcessorService);
+		ephemeralServices.add(ediImportService);
 		ephemeralServices.add(metrics);
 		this.initializeEphemeralServiceManager();
 	}
@@ -89,7 +89,7 @@ public class EdiImportServiceTest extends MockDaoTest {
 		Provider anyProvider = mock(Provider.class);
 
 		@SuppressWarnings("unchecked")
-		EdiImportService ediProcessorService = new EdiImportService(anyProvider,
+		EdiImportService ediImportService = new EdiImportService(anyProvider,
 			anyProvider,
 			anyProvider,
 			anyProvider,
@@ -107,7 +107,7 @@ public class EdiImportServiceTest extends MockDaoTest {
 		IEdiImportGateway goodService = mock(IEdiImportGateway.class);
 		Facility facility = mock(Facility.class);
 		Mockito.when(facility.getLinkedEdiImportGateways()).thenReturn(ImmutableList.of(failingService, goodService));
-		ediProcessorService.doEdiForFacility(facility);
+		ediImportService.doEdiForFacility(facility);
 		verifyCalled(goodService);
 		
 	}
@@ -126,8 +126,8 @@ public class EdiImportServiceTest extends MockDaoTest {
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	@Test
-	public final void ediProcessorTest() {
-		LOGGER.info("starting ediProcessorTest");
+	public final void ediImportServiceTest() {
+		LOGGER.info("starting ediImportServiceTest");
 
 		final Result linkedResult = new Result();
 		final Result unlinkedResult = new Result();
@@ -140,7 +140,7 @@ public class EdiImportServiceTest extends MockDaoTest {
 		facility.addEdiGateway(ediGatewayLinked);
 
 		Provider anyProvider = mock(Provider.class);
-		EdiImportService ediProcessorService = new EdiImportService(anyProvider,
+		EdiImportService ediImportService = new EdiImportService(anyProvider,
 			anyProvider,
 			anyProvider,
 			anyProvider,
@@ -151,14 +151,14 @@ public class EdiImportServiceTest extends MockDaoTest {
 		MetricsService.setInstance(metrics);	// will be restored to normal values by framework
 
 		this.ephemeralServices = new ArrayList<Service>();
-		ephemeralServices.add(ediProcessorService);
+		ephemeralServices.add(ediImportService);
 		ephemeralServices.add(metrics);
 		CodeshelfSecurityManager.removeContext();
 
 		this.initializeEphemeralServiceManager();
 
 		try {
-			// Sleep will switch us to the EdiProcessor thread.
+			// Sleep will switch us to the EdiImportService thread.
 			Thread.sleep(2000);
 		} catch (InterruptedException e) {
 		}

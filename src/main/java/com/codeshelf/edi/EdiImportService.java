@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: EdiProcessor.java,v 1.20 2013/04/11 18:11:12 jeffw Exp $
+ *  $Id: EdiImportService.java,v 1.20 2013/04/11 18:11:12 jeffw Exp $
  *******************************************************************************/
 package com.codeshelf.edi;
 
@@ -86,7 +86,7 @@ public final class EdiImportService extends AbstractCodeshelfScheduledService {
 		}
 		ediProcessingTimer = MetricsService.getInstance().createTimer(MetricsGroup.EDI, "processing-time");
 
-		LOGGER.info("starting ediProcessorService");
+		LOGGER.info("starting EdiImportService");
 	}
 
 	@Override

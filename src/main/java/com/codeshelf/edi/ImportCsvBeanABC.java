@@ -1,7 +1,7 @@
 /*******************************************************************************
  *  CodeShelf
  *  Copyright (c) 2005-2012, Jeffrey B. Williams, All rights reserved
- *  $Id: IEdiProcessor.java,v 1.3 2013/03/19 01:19:59 jeffw Exp $
+ *  $Id: ImportCsvBeanABC.java,v 1.3 2013/03/19 01:19:59 jeffw Exp $
  *******************************************************************************/
 package com.codeshelf.edi;
 

@@ -184,7 +184,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 				@Override
 				public ExportReceipt call() throws IOException {
 					if (message instanceof OrderOnCartAddedExportMessage) {
-						FileExportReceipt receipt =  ediExportGateway.transportOrderOnCartAdded(message.getOrderId(), message.getCheGuid(), message.getContents());
+						FileExportReceipt receipt = ediExportGateway.transportOrderOnCartAdded(message.getOrderId(), message.getCheGuid(), message.getContents());
 						ediExportGateway.updateLastSuccessTime();
 						LOGGER.info("Sent orderOnCartAdded {}", message);
 						return receipt;

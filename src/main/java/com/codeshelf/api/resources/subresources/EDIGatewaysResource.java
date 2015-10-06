@@ -74,7 +74,7 @@ public class EDIGatewaysResource {
 			} else {
 				LOGGER.warn("unexpected EDI class {}", ediGateway.getClass());
 			}
-			provider.ediExportServiceUpdated(facility);
+			provider.updateEdiExporterSafe(facility);
 			return BaseResponse.buildResponse(updatedEdiGateway);
 		} catch(Exception e) {
 			return new ErrorResponse().processException(e);

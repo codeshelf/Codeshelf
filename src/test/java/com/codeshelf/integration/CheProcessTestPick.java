@@ -80,7 +80,7 @@ public class CheProcessTestPick extends ServerTest {
 	public CheProcessTestPick() {
 
 	}
-
+	
 	private Facility setUpZigzagSlottedFacility() {
 		// This returns a facility with aisle A1 and A2, with path between, with two bays with several tiers each.
 		// This is the zigzag/cross-batch portion of the MAT as of v10
@@ -2205,7 +2205,7 @@ public class CheProcessTestPick extends ServerTest {
 		LOGGER.info("4: Inactivate sftp exporter");
 		IEdiExportGateway exportGateway = facility.getEdiExportGateway();
 		exportGateway.setActive(false);
-		exportProvider.ediExportServiceUpdated(facility);
+		exportProvider.updateEdiExporter(facility);
 		commitTransaction();
 		
 		LOGGER.info("5: Load second order on cart");
@@ -2227,7 +2227,7 @@ public class CheProcessTestPick extends ServerTest {
 		LOGGER.info("7: Activate sftp exporter");
 		exportGateway = facility.getEdiExportGateway();
 		exportGateway.setActive(true);
-		exportProvider.ediExportServiceUpdated(facility);
+		exportProvider.updateEdiExporterSafe(facility);
 		commitTransaction();
 		
 		LOGGER.info("8: Load third order on cart");

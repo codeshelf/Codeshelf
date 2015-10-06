@@ -6,6 +6,8 @@
 package com.codeshelf.model.domain;
 
 import java.sql.Timestamp;
+import java.util.HashMap;
+import java.util.UUID;
 
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
@@ -55,6 +57,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class EdiGateway extends DomainObjectTreeABC<Facility> implements IEdiGateway {
+	private static HashMap<UUID, Timestamp> lastSuccessTimes = new HashMap<>();
+	
 	public static class EdiGatewayDao extends GenericDaoABC<EdiGateway> implements ITypedDao<EdiGateway> {
 		public final Class<EdiGateway> getDaoClass() {
 			return EdiGateway.class;
@@ -104,12 +108,6 @@ public abstract class EdiGateway extends DomainObjectTreeABC<Facility> implement
 	@JsonProperty
 	private Boolean					active;
 
-	@Column(nullable = true, name = "last_success_time")
-	@Getter
-	@JsonProperty
-	private Timestamp				lastSuccessTime;
-	
-
 	public EdiGateway() {
 
 	}
@@ -137,11 +135,12 @@ public abstract class EdiGateway extends DomainObjectTreeABC<Facility> implement
 		return active;
 	}
 	
-	public void updateLastSuccessTime(){
-		Timestamp now = new Timestamp(System.currentTimeMillis());
-		if (lastSuccessTime == null || now.getTime() - lastSuccessTime.getTime() > 60000) {
-			lastSuccessTime = now;
-		}
-		EdiGateway.staticGetDao().store(this);
+	public synchronized Timestamp getLastSuccessTime(){
+		Timestamp time = lastSuccessTimes.get(getPersistentId());
+		return time == null ? new Timestamp(0) : time;
+	}
+	
+	public synchronized void updateLastSuccessTime(){
+		lastSuccessTimes.put(getPersistentId(), new Timestamp(System.currentTimeMillis()));
 	}
 }

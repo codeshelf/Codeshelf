@@ -46,18 +46,8 @@ public class EdiExportService extends AbstractCodeshelfIdleService {
 			return facilityEdiExporters.get(facility.getPersistentId());
 		}
 	}
-	
-	public void extensionPointsUpdated(Facility facility) {
-		try {
-			updateEdiExporter(facility);
-		} catch (ScriptException e) {
-			LOGGER.error("Unable to update EdiExporter for facility {}", facility, e);
-		} catch (TimeoutException e) {
-			LOGGER.error("Unable to update EdiExporter for facility {}", facility, e);
-		}
-	}
-	
-	public void ediExportServiceUpdated(Facility facility) {
+		
+	public void updateEdiExporterSafe(Facility facility) {
 		try {
 			updateEdiExporter(facility);
 		} catch (ScriptException e) {
@@ -67,7 +57,7 @@ public class EdiExportService extends AbstractCodeshelfIdleService {
 		}
 	}
 
-	private void updateEdiExporter(Facility facility) throws ScriptException, TimeoutException {
+	public void updateEdiExporter(Facility facility) throws ScriptException, TimeoutException {
 		IEdiExportGateway exportGateway = facility.getEdiExportGateway();
 		if (exportGateway != null) {
 			ExtensionPointService extensionPointService = ExtensionPointService.createInstance(facility);

@@ -18,13 +18,13 @@ public class EdiHealthCheck extends CodeshelfHealthCheck {
 	
 	private EdiImportService ediService;
 	@SuppressWarnings("unused")
-	private EdiExportService ediExporterProvider;
+	private EdiExportService ediExportService;
 	
 	
-	public EdiHealthCheck(EdiImportService ediService, EdiExportService ediExporterProvider) {
+	public EdiHealthCheck(EdiImportService ediService, EdiExportService ediExportService) {
 		super("EDI");
 		this.ediService = ediService;
-		this.ediExporterProvider = ediExporterProvider;
+		this.ediExportService = ediExportService;
 	}
 
 	@Override

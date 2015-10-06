@@ -35,21 +35,21 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(ServerCodeshelfApplication.class);
 
-	private EdiImportService			ediProcessorService;
-	private EdiExportService			ediExporterProvider;
+	private EdiImportService			ediImportService;
+	private EdiExportService			ediExportService;
 	private IPickDocumentGenerator	mPickDocumentGenerator;
 	
 	private WebSocketManagerService sessionManager;
 	private IMetricsService metricsService;
 	
 	@Inject
-	public ServerCodeshelfApplication(final EdiImportService inEdiProcessorService,
+	public ServerCodeshelfApplication(final EdiImportService inEdiProcessService,
 			final IPickDocumentGenerator inPickDocumentGenerator,
 			final WebApiServer inWebApiServer,
 			final ITenantManagerService tenantManagerService,
 			final IMetricsService metricsService,
 			final WebSocketManagerService webSocketManagerService,
-			final EdiExportService ediExporterProvider,
+			final EdiExportService ediExportService,
 			final IPropertyService propertyService,
 			final TokenSessionService authService,
 			final SecurityManager securityManager,
@@ -59,8 +59,8 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 			
 		super(inWebApiServer);
 	
-		ediProcessorService = inEdiProcessorService;
-		this.ediExporterProvider = ediExporterProvider;
+		ediImportService = inEdiProcessService;
+		this.ediExportService = ediExportService;
 		mPickDocumentGenerator = inPickDocumentGenerator;
 		sessionManager = webSocketManagerService;
 		this.metricsService = metricsService;
@@ -75,8 +75,8 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		this.registerService(webSocketManagerService);
 		this.registerService(propertyService);
 		this.registerService(authService);
-		this.registerService(ediExporterProvider);
-		this.registerService(ediProcessorService);
+		this.registerService(ediExportService);
+		this.registerService(ediImportService);
 		this.registerService(emailService);
 		this.registerService(templateService);
 		if (schedulingService!=null) this.registerService(schedulingService);
@@ -96,7 +96,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	protected void doStartup() throws Exception {
 
 		// Start the pick document generator process;
-		mPickDocumentGenerator.startProcessor(this.ediProcessorService.getEdiSignalQueue());
+		mPickDocumentGenerator.startProcessor(this.ediImportService.getEdiSignalQueue());
 
 		startApiServer(null,Integer.getInteger("api.port"));
 		startTsdbReporter();
@@ -112,7 +112,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		DropboxGatewayHealthCheck dbxCheck = new DropboxGatewayHealthCheck();
 		metricsService.registerHealthCheck(dbxCheck);
 		
-		EdiHealthCheck ediCheck = new EdiHealthCheck(this.ediProcessorService, ediExporterProvider);
+		EdiHealthCheck ediCheck = new EdiHealthCheck(this.ediImportService, ediExportService);
 		metricsService.registerHealthCheck(ediCheck);
 		
 		DataQuantityHealthCheck dataQuantityCheck = new DataQuantityHealthCheck();
