@@ -52,11 +52,11 @@ import com.google.common.base.Strings;
  * There are other specialized services: LightService, PropertyService, WorkService
  * Much easier to add a new function to this than to create a new service.
  */
-public class UiUpdateService implements IApiService {
+public class UiUpdateBehavior implements IApiBehavior {
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(UiUpdateService.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(UiUpdateBehavior.class);
 
-	public UiUpdateService() {
+	public UiUpdateBehavior() {
 	}
 
 	public Item storeItem(String facilityId,

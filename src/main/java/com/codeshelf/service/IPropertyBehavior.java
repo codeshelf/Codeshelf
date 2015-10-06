@@ -7,7 +7,7 @@ import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
 
-public interface IPropertyService extends CodeshelfService, IApiService {
+public interface IPropertyBehavior extends CodeshelfService, IApiBehavior {
 	// direct getter/setter
 	public DomainObjectProperty getProperty(IDomainObject object, String name);
 	public void changePropertyValue(final Facility inFacility, final String inPropertyName, final String inNewStringValue);		

@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.validation.MethodArgumentException;
 import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
 import com.codeshelf.ws.protocol.response.GetPutWallInstructionResponse;
@@ -21,11 +21,11 @@ public class ComputePutWallInstructionCommand extends CommandABC {
 
 	private ComputePutWallInstructionRequest	request;
 
-	private WorkService							workService;
+	private WorkBehavior							workService;
 
 	public ComputePutWallInstructionCommand(WebSocketConnection connection,
 		ComputePutWallInstructionRequest request,
-		WorkService workService) {
+		WorkBehavior workService) {
 		super(connection);
 		this.request = request;
 		this.workService = workService;

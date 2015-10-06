@@ -40,7 +40,7 @@ import com.codeshelf.model.domain.SiteController;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.ws.protocol.message.CheStatusMessage;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.google.common.util.concurrent.Service;
@@ -121,14 +121,14 @@ public class WebSocketConnection implements IDaoListener {
 
 	private ExecutorService								executorService;
 
-	WorkService											workService;
+	WorkBehavior											workService;
 
 	// track individual tasks
 	Set<Future<?>>										pendingFutures					= new ConcurrentHashSet<Future<?>>();
 
 	private static final int							NUM_FUTURES_CLEANUP_THRESHOLD	= 5;
 
-	public WebSocketConnection(Session session, ExecutorService sharedExecutor, WorkService workService) {
+	public WebSocketConnection(Session session, ExecutorService sharedExecutor, WorkBehavior workService) {
 		this.wsSession = session;
 		this.workService = workService;
 		this.executorService = sharedExecutor;

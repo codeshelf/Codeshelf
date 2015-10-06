@@ -31,14 +31,14 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
-public class InventoryService implements IApiService {
+public class InventoryBehavior implements IApiBehavior {
 
 	int							TAPEID_LENGTH	= 12;
-	LightService				lightService;
-	private static final Logger	LOGGER			= LoggerFactory.getLogger(InventoryService.class);
+	LightBehavior				lightService;
+	private static final Logger	LOGGER			= LoggerFactory.getLogger(InventoryBehavior.class);
 
 	@Inject
-	public InventoryService(LightService inLightService) {
+	public InventoryBehavior(LightBehavior inLightService) {
 		this.lightService = inLightService;
 	}
 

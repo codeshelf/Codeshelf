@@ -31,18 +31,18 @@ import com.google.inject.Inject;
 import lombok.Getter;
 import lombok.Setter;
 
-public class InfoService implements IApiService{
-	private LightService lightService;
-	private WorkService workService;
+public class InfoBehavior implements IApiBehavior{
+	private LightBehavior lightService;
+	private WorkBehavior workService;
 	//The following 3 variables enable item cycling when scannin the same location
 	private String lastScannedInventoryLocation = null;
 	private short numRepeatedInventoryScans = 0; 
 	private int numItemsInClosestLocation = 0;
 
-	private static final Logger	LOGGER			= LoggerFactory.getLogger(InfoService.class);
+	private static final Logger	LOGGER			= LoggerFactory.getLogger(InfoBehavior.class);
 	
 	@Inject
-	public InfoService(LightService inLightService, WorkService inWorkService) {
+	public InfoBehavior(LightBehavior inLightService, WorkBehavior inWorkService) {
 		this.lightService = inLightService;
 		this.workService = inWorkService;
 	}

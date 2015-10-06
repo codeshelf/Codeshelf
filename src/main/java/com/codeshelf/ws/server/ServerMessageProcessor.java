@@ -17,12 +17,12 @@ import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
-import com.codeshelf.service.InfoService;
-import com.codeshelf.service.InventoryService;
-import com.codeshelf.service.NotificationService;
-import com.codeshelf.service.PalletizerService;
-import com.codeshelf.service.ServiceFactory;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.InfoBehavior;
+import com.codeshelf.service.InventoryBehavior;
+import com.codeshelf.service.NotificationBehavior;
+import com.codeshelf.service.PalletizerBehavior;
+import com.codeshelf.service.BehaviorFactory;
+import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.ws.protocol.command.LinkRemoteCheCommand;
 import com.codeshelf.ws.protocol.command.CommandABC;
 import com.codeshelf.ws.protocol.command.CompleteWorkInstructionCommand;
@@ -124,15 +124,15 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	private final Counter			palletizerCompleteWiCounter;
 	private final Timer				requestProcessingTimer;
 
-	private ServiceFactory			serviceFactory;
+	private BehaviorFactory			behaviorFactory;
 	private ConvertUtilsBean		converter;
 
 	private WebSocketManagerService	sessionManager;
 
 	@Inject
-	public ServerMessageProcessor(ServiceFactory serviceFactory, ConvertUtilsBean converter, WebSocketManagerService sessionManager) {
+	public ServerMessageProcessor(BehaviorFactory serviceFactory, ConvertUtilsBean converter, WebSocketManagerService sessionManager) {
 		LOGGER.debug("Creating " + this.getClass().getSimpleName());
-		this.serviceFactory = serviceFactory;
+		this.behaviorFactory = serviceFactory;
 		this.converter = converter;
 		this.sessionManager = sessionManager;
 
@@ -199,32 +199,32 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		} else if (request instanceof CompleteWorkInstructionRequest) {
 			command = new CompleteWorkInstructionCommand(csSession,
 				(CompleteWorkInstructionRequest) request,
-				serviceFactory.getServiceInstance(WorkService.class));
+				behaviorFactory.getInstance(WorkBehavior.class));
 			completeWiCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof VerifyBadgeRequest) {
 			VerifyBadgeRequest req = (VerifyBadgeRequest) request;
-			command = new VerifyBadgeCommand(csSession, req, serviceFactory.getServiceInstance(WorkService.class));
+			command = new VerifyBadgeCommand(csSession, req, behaviorFactory.getInstance(WorkBehavior.class));
 			applicationRequestCounter.inc();
 		} else if (request instanceof ComputeWorkRequest) {
 			ComputeWorkRequest req = (ComputeWorkRequest) request;
-			command = new ComputeWorkCommand(csSession, req, serviceFactory.getServiceInstance(WorkService.class));
+			command = new ComputeWorkCommand(csSession, req, behaviorFactory.getInstance(WorkBehavior.class));
 			computeWorkCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof ComputeDetailWorkRequest) {
 			command = new ComputeDetailWorkCommand(csSession,
 				(ComputeDetailWorkRequest) request,
-				serviceFactory.getServiceInstance(WorkService.class));
+				behaviorFactory.getInstance(WorkBehavior.class));
 			applicationRequestCounter.inc();
 		} else if (request instanceof ComputePutWallInstructionRequest) {
 			command = new ComputePutWallInstructionCommand(csSession,
 				(ComputePutWallInstructionRequest) request,
-				serviceFactory.getServiceInstance(WorkService.class));
+				behaviorFactory.getInstance(WorkBehavior.class));
 			applicationRequestCounter.inc();
 		} else if (request instanceof LinkRemoteCheRequest) {
 			command = new LinkRemoteCheCommand(csSession,
 				(LinkRemoteCheRequest) request,
-				serviceFactory.getServiceInstance(WorkService.class));
+				behaviorFactory.getInstance(WorkBehavior.class));
 			applicationRequestCounter.inc();
 		} else if (request instanceof ObjectGetRequest) {
 			command = new ObjectGetCommand(csSession, (ObjectGetRequest) request);
@@ -247,7 +247,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			objectPropertiesCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof ServiceMethodRequest) {
-			command = new ServiceMethodCommand(csSession, (ServiceMethodRequest) request, serviceFactory, converter);
+			command = new ServiceMethodCommand(csSession, (ServiceMethodRequest) request, behaviorFactory, converter);
 			objectUpdateCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof RegisterFilterRequest) {
@@ -261,26 +261,26 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		} else if (request instanceof InventoryUpdateRequest) {
 			command = new InventoryUpdateCommand(csSession,
 				(InventoryUpdateRequest) request,
-				serviceFactory.getServiceInstance(InventoryService.class),
-				serviceFactory.getServiceInstance(WorkService.class));
+				behaviorFactory.getInstance(InventoryBehavior.class),
+				behaviorFactory.getInstance(WorkBehavior.class));
 			inventoryUpdateRequestCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof InventoryLightItemRequest) {
 			command = new InventoryLightItemCommand(csSession,
 				(InventoryLightItemRequest) request,
-				serviceFactory.getServiceInstance(InventoryService.class));
+				behaviorFactory.getInstance(InventoryBehavior.class));
 			inventoryLightItemRequestCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof InventoryLightLocationRequest) {
 			command = new InventoryLightLocationCommand(csSession,
 				(InventoryLightLocationRequest) request,
-				serviceFactory.getServiceInstance(InventoryService.class));
+				behaviorFactory.getInstance(InventoryBehavior.class));
 			inventoryLightLocationRequestCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof PutWallPlacementRequest) {
 			command = new PutWallPlacementCommand(csSession,
 				(PutWallPlacementRequest) request,
-				serviceFactory.getServiceInstance(WorkService.class));
+				behaviorFactory.getInstance(WorkBehavior.class));
 			putWallPlacementCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof TapeLocationDecodingRequest) {
@@ -290,28 +290,28 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		} else if (request instanceof SkuWallLocationDisambiguationRequest) {
 			command = new SkuWallLocationDisambiguationCommand(csSession,
 				(SkuWallLocationDisambiguationRequest) request,
-				serviceFactory.getServiceInstance(InventoryService.class),
-				serviceFactory.getServiceInstance(WorkService.class));
+				behaviorFactory.getInstance(InventoryBehavior.class),
+				behaviorFactory.getInstance(WorkBehavior.class));
 			skuWallLocationDisambiguationCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof InfoRequest) {
-			command = new InfoCommand(csSession, (InfoRequest) request, serviceFactory.getServiceInstance(InfoService.class));
+			command = new InfoCommand(csSession, (InfoRequest) request, behaviorFactory.getInstance(InfoBehavior.class));
 			informationRequestCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof PalletizerItemRequest) {
-			command = new PalletizerItemCommand(csSession, (PalletizerItemRequest) request, serviceFactory.getServiceInstance(PalletizerService.class));
+			command = new PalletizerItemCommand(csSession, (PalletizerItemRequest) request, behaviorFactory.getInstance(PalletizerBehavior.class));
 			palletizerItemCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof PalletizerNewOrderRequest) {
-			command = new PalletizerNewOrderCommand(csSession, (PalletizerNewOrderRequest) request, serviceFactory.getServiceInstance(PalletizerService.class));
+			command = new PalletizerNewOrderCommand(csSession, (PalletizerNewOrderRequest) request, behaviorFactory.getInstance(PalletizerBehavior.class));
 			palletizerNewOrderCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof PalletizerRemoveOrderRequest) {
-			command = new PalletizerRemoveOrderCommand(csSession, (PalletizerRemoveOrderRequest) request, serviceFactory.getServiceInstance(PalletizerService.class));
+			command = new PalletizerRemoveOrderCommand(csSession, (PalletizerRemoveOrderRequest) request, behaviorFactory.getInstance(PalletizerBehavior.class));
 			palletizerRemoveOrderCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof PalletizerCompleteWiRequest) {
-			command = new PalletizerCompleteWiCommand(csSession, (PalletizerCompleteWiRequest) request, serviceFactory.getServiceInstance(PalletizerService.class));
+			command = new PalletizerCompleteWiCommand(csSession, (PalletizerCompleteWiRequest) request, behaviorFactory.getInstance(PalletizerBehavior.class));
 			palletizerCompleteWiCounter.inc();
 			applicationRequestCounter.inc();
 		} else {
@@ -379,8 +379,8 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		} else if (message instanceof NotificationMessage) {
 			try {
 				notificationCounter.inc();
-				NotificationService service = serviceFactory.getServiceInstance(NotificationService.class);
-				service.saveEvent((NotificationMessage) message);
+				NotificationBehavior behavior = behaviorFactory.getInstance(NotificationBehavior.class);
+				behavior.saveEvent((NotificationMessage) message);
 			} catch (RuntimeException e) {
 				LOGGER.warn(String.format("Unable to save event for session %s and message %s", session,  message), e); //using string format so that exeption can be supplied
 			}

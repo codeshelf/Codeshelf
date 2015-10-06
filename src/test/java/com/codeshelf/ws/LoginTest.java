@@ -8,7 +8,7 @@ import com.codeshelf.application.JvmProperties;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.service.ServiceFactory;
+import com.codeshelf.service.BehaviorFactory;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.protocol.request.LoginRequest;
@@ -24,7 +24,7 @@ public class LoginTest extends ServerTest {
 	@Override
 	public void doBefore() {
 		super.doBefore();
-		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.webSocketManagerService);
+		processor = new ServerMessageProcessor(Mockito.mock(BehaviorFactory.class), new ConverterProvider().get(), this.webSocketManagerService);
 
 	}
 

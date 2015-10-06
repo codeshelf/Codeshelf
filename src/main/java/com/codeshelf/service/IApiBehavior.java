@@ -1,5 +1,5 @@
 package com.codeshelf.service;
 
-public interface IApiService {
+public interface IApiBehavior {
 
 }

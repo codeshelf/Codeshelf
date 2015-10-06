@@ -5,8 +5,8 @@ import java.util.UUID;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
-import com.codeshelf.service.InventoryService;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.InventoryBehavior;
+import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
 import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.protocol.request.SkuWallLocationDisambiguationRequest;
@@ -17,11 +17,11 @@ import com.codeshelf.ws.server.WebSocketConnection;
 
 public class SkuWallLocationDisambiguationCommand extends CommandABC {
 	private SkuWallLocationDisambiguationRequest request;
-	private InventoryService inventoryService;
-	private WorkService workService;
+	private InventoryBehavior inventoryService;
+	private WorkBehavior workService;
 	
 	
-	public SkuWallLocationDisambiguationCommand(WebSocketConnection connection, SkuWallLocationDisambiguationRequest request, InventoryService inventoryService, WorkService workService) {
+	public SkuWallLocationDisambiguationCommand(WebSocketConnection connection, SkuWallLocationDisambiguationRequest request, InventoryBehavior inventoryService, WorkBehavior workService) {
 		super(connection);
 		this.request = request;
 		this.inventoryService = inventoryService;

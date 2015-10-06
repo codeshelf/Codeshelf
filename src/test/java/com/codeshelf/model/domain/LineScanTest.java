@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
-import com.codeshelf.service.ServiceFactory;
+import com.codeshelf.service.BehaviorFactory;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.validation.ErrorCode;
@@ -33,7 +33,7 @@ public class LineScanTest extends ServerTest {
 	public void initTest() throws IOException {
 		beginTransaction();
 		Facility facility = createFacility(); 
-		ServiceFactory serviceFactory = new ServiceFactory(workService, null, null, null, null, null, null, null, null);
+		BehaviorFactory serviceFactory = new BehaviorFactory(workService, null, null, null, null, null, null, null, null);
 		commitTransaction();
 
 		processor = new ServerMessageProcessor(serviceFactory, new ConverterProvider().get(), this.webSocketManagerService);

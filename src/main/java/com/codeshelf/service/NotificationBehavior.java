@@ -32,14 +32,14 @@ import com.codeshelf.ws.protocol.message.NotificationMessage;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
-public class NotificationService implements IApiService{
+public class NotificationBehavior implements IApiBehavior{
 	
-	private static final Logger			LOGGER				= LoggerFactory.getLogger(NotificationService.class);
+	private static final Logger			LOGGER				= LoggerFactory.getLogger(NotificationBehavior.class);
 	
 	private static final EnumSet<WorkerEvent.EventType> SAVE_ONLY = EnumSet.of(WorkerEvent.EventType.SKIP_ITEM_SCAN, WorkerEvent.EventType.SHORT, WorkerEvent.EventType.COMPLETE, WorkerEvent.EventType.DETAIL_WI_MISMATCHED);
 	
 	@Inject
-	public NotificationService() {
+	public NotificationBehavior() {
 	}
 	
 	public WorkerEvent saveEvent(WorkerEvent event) {

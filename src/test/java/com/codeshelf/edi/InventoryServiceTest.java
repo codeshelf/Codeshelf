@@ -18,7 +18,7 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.LocationAlias;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.UomMaster;
-import com.codeshelf.service.UiUpdateService;
+import com.codeshelf.service.UiUpdateBehavior;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.validation.InputValidationException;
 
@@ -30,7 +30,7 @@ public class InventoryServiceTest extends ServerTest {
 
 
 	private UUID facilityId;
-	private UiUpdateService uiUpdate = new UiUpdateService();
+	private UiUpdateBehavior uiUpdate = new UiUpdateBehavior();
 	
 	@Before
 	public void initTest() throws IOException {

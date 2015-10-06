@@ -38,9 +38,9 @@ import com.codeshelf.report.PickDocumentGenerator;
 import com.codeshelf.security.CodeshelfRealm;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.TokenSessionService;
-import com.codeshelf.service.IPropertyService;
+import com.codeshelf.service.IPropertyBehavior;
 import com.codeshelf.service.PropertyService;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.server.CsServerEndPoint;
@@ -123,9 +123,9 @@ public final class ServerMain {
 				bind(IMetricsService.class).to(MetricsService.class).in(Singleton.class);
 
 				requestStaticInjection(PropertyService.class);
-				bind(IPropertyService.class).to(PropertyService.class).in(Singleton.class);
+				bind(IPropertyBehavior.class).to(PropertyService.class).in(Singleton.class);
 				
-				bind(WorkService.class).in(Singleton.class);
+				bind(WorkBehavior.class).in(Singleton.class);
 				bind(EdiExportService.class).in(Singleton.class);
 
 				requestStaticInjection(WebSocketManagerService.class);

@@ -26,7 +26,7 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.WorkBehavior;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -36,7 +36,7 @@ import com.google.common.collect.ImmutableList;
  */
 public class DomainObjectManager {
 
-	private static final Logger	LOGGER					= LoggerFactory.getLogger(WorkService.class);
+	private static final Logger	LOGGER					= LoggerFactory.getLogger(WorkBehavior.class);
 	
 	@Getter
 	private Facility facility;

@@ -102,15 +102,15 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
-public class WorkService implements IApiService {
+public class WorkBehavior implements IApiBehavior {
 
 	private static final String	THREAD_CONTEXT_TAGS_KEY	= "tags";										// duplicated in CheDeviceLogic. Need a common place
 
 	private static Double		BAY_ALIGNMENT_FUDGE		= 0.25;
 
-	private static final Logger	LOGGER					= LoggerFactory.getLogger(WorkService.class);
+	private static final Logger	LOGGER					= LoggerFactory.getLogger(WorkBehavior.class);
 
-	private final LightService	lightService;
+	private final LightBehavior	lightService;
 
 	@Getter
 	private EdiExportService	exportProvider;
@@ -135,7 +135,7 @@ public class WorkService implements IApiService {
 	}
 
 	@Inject
-	public WorkService(LightService lightService, EdiExportService exportProvider) {
+	public WorkBehavior(LightBehavior lightService, EdiExportService exportProvider) {
 		this.lightService = lightService;
 		this.exportProvider = exportProvider;
 	}
@@ -152,7 +152,7 @@ public class WorkService implements IApiService {
 	/**
 	 * Seems a bit silly, but we do not have a good means to get hold of services. Test framework has the work service, so this is the best kludge.
 	 */
-	public LightService getLightService() {
+	public LightBehavior getLightService() {
 		return this.lightService;
 	}
 
@@ -2450,67 +2450,5 @@ public class WorkService implements IApiService {
 
 	}
 
-	/**
-	 * This takes a string in that is really a list of parameters
-	 * "24 CHE1, CHE2, CHE3, CHE4"
-	 * And produces an output string that is really separate usable script lines
-	 * "setupCart CHE1 26768709 26768711 26768712 26768717 etc. /n
-	 * setupCart CHE2 26768718 26768719 26768720 etc."
-	 * 
-	 * It queries for uncompleted orders in the current facility and distributes them among the CHEs
-	 * It does not (currently) validate that the CHE names are valid
-	 */
-	public String setupManyCartsWithOrders(Facility inFacility, String inputString) {
-		String returnStr = "";
 
-		// 1: parse the tokens
-		String delims = "[ ]+";
-		String[] tokens = inputString.split(delims);
-		int tokenCount = tokens.length;
-		if (tokenCount < 2) {
-			LOGGER.error("bad parameter for setupManyCartsWithOrders: {}", inputString);
-			return returnStr;
-		}
-		String countStr = tokens[0];
-		int ordersPerChe = 0;
-		try {
-			ordersPerChe = Integer.valueOf(countStr);
-		} catch (NumberFormatException e) {
-			// ordersPerChe will be 0, which logs the error
-		}
-		if (ordersPerChe < 1 || ordersPerChe > 100) {
-			LOGGER.error("bad count parameter for setupManyCartsWithOrders: {}", countStr);
-			return returnStr;
-		}
-
-		// Find the orders. We can limit the search to ordersPerChe * number of che
-		int numberOfChe = tokenCount - 1;
-		int ordersNeeded = ordersPerChe * numberOfChe;
-		DomainObjectManager doMananager = new DomainObjectManager(inFacility);
-		List<OrderHeader> orders = doMananager.getSomeUncompletedOrders(ordersNeeded);
-		int ordersRetrieved = orders.size();
-		int ordersUsed = 0;
-		for (int cheIndex = 1; cheIndex <= numberOfChe; cheIndex++) {
-			if (ordersUsed < ordersRetrieved) {
-				// start a new line, unless it is the first one
-				if (ordersUsed > 0)
-					returnStr += "\n";
-				returnStr += "loginSetup " + tokens[cheIndex] + " " + tokens[cheIndex] + "\n";
-				returnStr += "setupCart " + tokens[cheIndex] + " "; 
-			}
-			for (int orderIndex = 1; orderIndex <= ordersPerChe; orderIndex++) {
-				// add orders, unless we have run out
-				if (ordersUsed < ordersRetrieved) {
-					OrderHeader oh = orders.get(ordersUsed);
-					returnStr += oh.getOrderId() + " "; // add orderId(space)
-					ordersUsed++;
-				}
-			}
-		}
-
-		LOGGER.info("setupManyCartsWithOrders called with: {}", inputString);
-		LOGGER.info("setupManyCartsWithOrders is returning the following line(s)");
-		LOGGER.info(returnStr);
-		return returnStr;
-	}
 }

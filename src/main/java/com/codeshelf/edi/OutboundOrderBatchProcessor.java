@@ -42,7 +42,7 @@ import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
-import com.codeshelf.service.NotificationService;
+import com.codeshelf.service.NotificationBehavior;
 import com.codeshelf.util.DateTimeParser;
 import com.codeshelf.util.UomNormalizer;
 import com.codeshelf.validation.BatchResult;
@@ -1130,7 +1130,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 						result.getFacility(),
 						"Order Importer",
 						eventWarning);
-					new NotificationService().saveEvent(event);
+					new NotificationBehavior().saveEvent(event);
 				}
 			}
 		}

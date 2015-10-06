@@ -33,7 +33,7 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.LightService;
+import com.codeshelf.service.LightBehavior;
 import com.codeshelf.util.SequenceNumber;
 import com.google.common.base.Strings;
 
@@ -443,14 +443,14 @@ public class WiFactory {
 	private static void setPosConInstructions(WorkInstruction wi, List<OrderLocation> locations) {
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 		for (OrderLocation location : locations) {
-			LightService.getInstructionsForPosConRange(wi.getParent(), wi, location.getLocation(), instructions, null);
+			LightBehavior.getInstructionsForPosConRange(wi.getParent(), wi, location.getLocation(), instructions, null);
 		}
 		setPosConInstructionsHelper(wi, instructions);
 	}
 
 	private static void setPosConInstructions(WorkInstruction wi, Location location) {
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
-		LightService.getInstructionsForPosConRange(wi.getParent(), wi, location, instructions, null);
+		LightBehavior.getInstructionsForPosConRange(wi.getParent(), wi, location, instructions, null);
 		setPosConInstructionsHelper(wi, instructions);
 	}
 

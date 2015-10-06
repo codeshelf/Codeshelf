@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.ws.protocol.request.CompleteWorkInstructionRequest;
 import com.codeshelf.ws.protocol.response.CompleteWorkInstructionResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
@@ -21,9 +21,9 @@ public class CompleteWorkInstructionCommand extends CommandABC {
 
 	final private CompleteWorkInstructionRequest request;
 
-	final private WorkService workService;
+	final private WorkBehavior workService;
 	
-	public CompleteWorkInstructionCommand(WebSocketConnection connection, CompleteWorkInstructionRequest request, WorkService workService) {
+	public CompleteWorkInstructionCommand(WebSocketConnection connection, CompleteWorkInstructionRequest request, WorkBehavior workService) {
 		super(connection);
 		this.request = request;
 		this.workService = workService;

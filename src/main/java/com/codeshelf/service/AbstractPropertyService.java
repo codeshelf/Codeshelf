@@ -10,7 +10,7 @@ import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
 
-public abstract class AbstractPropertyService extends AbstractCodeshelfIdleService implements IPropertyService {
+public abstract class AbstractPropertyService extends AbstractCodeshelfIdleService implements IPropertyBehavior {
 	private final Logger LOGGER = LoggerFactory.getLogger(AbstractPropertyService.class);
 	
 	/**

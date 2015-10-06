@@ -17,7 +17,7 @@ import org.mockito.runners.MockitoJUnitRunner;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Point;
-import com.codeshelf.service.ServiceFactory;
+import com.codeshelf.service.BehaviorFactory;
 import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.io.JsonEncoder;
@@ -78,7 +78,7 @@ public class FacilityOutlineTest extends MockDaoTest {
 		} catch (EncodeException e) {
 		}		
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.webSocketManagerService);
+		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(BehaviorFactory.class), new ConverterProvider().get(), this.webSocketManagerService);
 		ResponseABC response = processor.handleRequest(this.getMockWsConnection(), request);
 		Assert.assertTrue(response instanceof ObjectMethodResponse);
 		
@@ -124,7 +124,7 @@ public class FacilityOutlineTest extends MockDaoTest {
 			Assert.fail("Failed to seriaize request");
 		}
 		
-		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.webSocketManagerService);
+		ServerMessageProcessor processor = new ServerMessageProcessor(Mockito.mock(BehaviorFactory.class), new ConverterProvider().get(), this.webSocketManagerService);
 		ResponseABC response = processor.handleRequest(this.getMockWsConnection(), request);
 
 		Assert.assertTrue(response instanceof ObjectUpdateResponse);

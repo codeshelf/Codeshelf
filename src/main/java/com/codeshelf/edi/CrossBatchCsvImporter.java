@@ -32,8 +32,8 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.UomMaster;
-import com.codeshelf.service.WorkService;
-import com.codeshelf.service.WorkService.Work;
+import com.codeshelf.service.WorkBehavior;
+import com.codeshelf.service.WorkBehavior.Work;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
@@ -50,11 +50,11 @@ public class CrossBatchCsvImporter extends CsvImporter<CrossBatchCsvBean> implem
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(CrossBatchCsvImporter.class);
 
-	private WorkService	mWorkService;
+	private WorkBehavior	mWorkService;
 
 	@Inject
 	public CrossBatchCsvImporter(final EventProducer inProducer,
-		final WorkService inWorkService) {
+		final WorkBehavior inWorkService) {
 
 		super(inProducer);
 		mWorkService = inWorkService;

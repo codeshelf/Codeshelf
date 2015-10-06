@@ -21,23 +21,23 @@ public class PropertyService extends AbstractPropertyService {
 	ConcurrentHashMap<String,ConcurrentMap<String,DomainObjectProperty>> propertyCache = new ConcurrentHashMap<String,ConcurrentMap<String,DomainObjectProperty>>();
 	
 	@Inject
-	private static IPropertyService theInstance = null;
+	private static IPropertyBehavior theInstance = null;
 
 	@Inject
 	public PropertyService() {
 	}
-	public static IPropertyService getMaybeRunningInstance() {
+	public static IPropertyBehavior getMaybeRunningInstance() {
 		return theInstance;
 	}
 	public static boolean exists() {
 		return (theInstance != null);
 	}
-	public static IPropertyService getInstance() {
+	public static IPropertyBehavior getInstance() {
 		// not self initializing, better static inject it first...
 		ServiceUtility.awaitRunningOrThrow(theInstance);
 		return theInstance;
 	}
-	public static void setInstance(IPropertyService instance) {
+	public static void setInstance(IPropertyBehavior instance) {
 		// for testing only!
 		theInstance = instance;
 	}

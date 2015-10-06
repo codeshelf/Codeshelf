@@ -1,6 +1,6 @@
 package com.codeshelf.ws.protocol.response;
 
-import com.codeshelf.service.PalletizerService.PalletizerInfo;
+import com.codeshelf.service.PalletizerBehavior.PalletizerInfo;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -22,21 +22,21 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.service.OrderService;
-import com.codeshelf.service.OrderService.OrderDetailView;
+import com.codeshelf.service.OrderBehavior;
+import com.codeshelf.service.OrderBehavior.OrderDetailView;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
 public class OrdersResource {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(OrdersResource.class);
 
-	private OrderService orderService;
+	private OrderBehavior orderService;
 
 	@Setter
 	private Facility facility;
 	
 	@Inject 
-	public OrdersResource(OrderService orderService) {
+	public OrdersResource(OrderBehavior orderService) {
 		this.orderService = orderService;
 	}
 

@@ -23,7 +23,7 @@ import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.TokenSession;
 import com.codeshelf.security.TokenSession.Status;
 import com.codeshelf.security.TokenSessionService;
-import com.codeshelf.service.IPropertyService;
+import com.codeshelf.service.IPropertyBehavior;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.ws.protocol.request.LoginRequest;
 import com.codeshelf.ws.protocol.response.LoginResponse;
@@ -134,7 +134,7 @@ public class LoginCommand extends CommandABC {
 
 						// AUTOSHRT needed for sitecon, not UX clients, but go ahead and populate.
 						if (network != null) {
-							IPropertyService properties = PropertyService.getInstance();
+							IPropertyBehavior properties = PropertyService.getInstance();
 
 							Facility facility = network.getParent();
 							String valueStr = properties.getPropertyFromConfig(facility, DomainObjectProperty.AUTOSHRT);

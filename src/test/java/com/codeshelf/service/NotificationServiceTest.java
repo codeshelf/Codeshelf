@@ -13,7 +13,7 @@ import com.codeshelf.generators.WorkInstructionGenerator;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
-import com.codeshelf.service.NotificationService.WorkerEventTypeGroup;
+import com.codeshelf.service.NotificationBehavior.WorkerEventTypeGroup;
 import com.codeshelf.testframework.HibernateTest;
 import com.google.common.collect.ImmutableMap;
 
@@ -26,7 +26,7 @@ public class NotificationServiceTest extends HibernateTest {
 		this.getTenantPersistenceService().beginTransaction();
 		Che che = getTestChe();
 		
-		NotificationService service = new NotificationService();
+		NotificationBehavior service = new NotificationBehavior();
 		service.saveEvent(createEvent(eventTime, WorkerEvent.EventType.COMPLETE, che));
 		service.saveEvent(createEvent(eventTime, WorkerEvent.EventType.COMPLETE, che));
 		service.saveEvent(createEvent(eventTime, WorkerEvent.EventType.SHORT, che));
@@ -101,7 +101,7 @@ public class NotificationServiceTest extends HibernateTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		NotificationService service = new NotificationService();
+		NotificationBehavior service = new NotificationBehavior();
 		storePickEvent(service, che, eventTime);
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -132,7 +132,7 @@ public class NotificationServiceTest extends HibernateTest {
 	}
 
 	
-	private void storePickEvent(NotificationService service, Che che, DateTime eventTime) {
+	private void storePickEvent(NotificationBehavior service, Che che, DateTime eventTime) {
 		WorkerEvent event = createEvent(eventTime, WorkerEvent.EventType.COMPLETE, che);
 		service.saveEvent(event);
 	}

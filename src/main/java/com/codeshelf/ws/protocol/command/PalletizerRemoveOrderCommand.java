@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.service.PalletizerService;
+import com.codeshelf.service.PalletizerBehavior;
 import com.codeshelf.ws.protocol.request.PalletizerRemoveOrderRequest;
 import com.codeshelf.ws.protocol.response.PalletizerRemoveOrderResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
@@ -18,9 +18,9 @@ public class PalletizerRemoveOrderCommand extends CommandABC{
 
 	private PalletizerRemoveOrderRequest	request;
 
-	private PalletizerService				palletizerService;
+	private PalletizerBehavior				palletizerService;
 
-	public PalletizerRemoveOrderCommand(WebSocketConnection connection, PalletizerRemoveOrderRequest request, PalletizerService palletizerService) {
+	public PalletizerRemoveOrderCommand(WebSocketConnection connection, PalletizerRemoveOrderRequest request, PalletizerBehavior palletizerService) {
 		super(connection);
 		this.request = request;
 		this.palletizerService = palletizerService;

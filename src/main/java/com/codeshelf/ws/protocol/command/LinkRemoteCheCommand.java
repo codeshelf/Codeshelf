@@ -6,7 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.validation.MethodArgumentException;
 import com.codeshelf.ws.protocol.request.LinkRemoteCheRequest;
 import com.codeshelf.ws.protocol.response.LinkRemoteCheResponse;
@@ -19,9 +19,9 @@ public class LinkRemoteCheCommand extends CommandABC {
 
 	private LinkRemoteCheRequest	request;
 
-	private WorkService					workService;
+	private WorkBehavior					workService;
 
-	public LinkRemoteCheCommand(WebSocketConnection connection, LinkRemoteCheRequest request, WorkService workService) {
+	public LinkRemoteCheCommand(WebSocketConnection connection, LinkRemoteCheRequest request, WorkBehavior workService) {
 		super(connection);
 		this.request = request;
 		this.workService = workService;

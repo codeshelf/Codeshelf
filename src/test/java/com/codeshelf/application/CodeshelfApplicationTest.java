@@ -16,7 +16,7 @@ import com.codeshelf.model.dao.Result;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
 import com.codeshelf.security.TokenSessionService;
-import com.codeshelf.service.DummyPropertyService;
+import com.codeshelf.service.DummyPropertyBehavior;
 import com.codeshelf.testframework.ServerTest;
 import com.google.inject.Provider;
 
@@ -54,7 +54,7 @@ public class CodeshelfApplicationTest extends ServerTest {
 			this.metricsService,
 			this.webSocketManagerService,
 			this.ediExporterService,
-			new DummyPropertyService(),
+			new DummyPropertyBehavior(),
 			new TokenSessionService(),
 			mock(AuthorizingSecurityManager.class),
 			null,

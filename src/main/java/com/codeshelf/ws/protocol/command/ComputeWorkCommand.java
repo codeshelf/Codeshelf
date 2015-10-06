@@ -17,7 +17,7 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest;
 import com.codeshelf.ws.protocol.response.ComputeWorkResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
@@ -30,9 +30,9 @@ public class ComputeWorkCommand extends CommandABC {
 
 	private ComputeWorkRequest	request;
 
-	private WorkService			workService;
+	private WorkBehavior			workService;
 
-	public ComputeWorkCommand(WebSocketConnection connection, ComputeWorkRequest request, WorkService workService) {
+	public ComputeWorkCommand(WebSocketConnection connection, ComputeWorkRequest request, WorkBehavior workService) {
 		super(connection);
 		this.request = request;
 		this.workService = workService;

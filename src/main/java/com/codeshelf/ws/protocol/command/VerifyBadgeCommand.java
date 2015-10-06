@@ -5,7 +5,7 @@ import java.util.UUID;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.ws.protocol.request.VerifyBadgeRequest;
 import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
@@ -16,9 +16,9 @@ import com.codeshelf.ws.server.WebSocketConnection;
 public class VerifyBadgeCommand extends CommandABC {
 
 	private VerifyBadgeRequest	request;
-	private WorkService			workService;
+	private WorkBehavior			workService;
 
-	public VerifyBadgeCommand(WebSocketConnection connection, VerifyBadgeRequest request, WorkService workService) {
+	public VerifyBadgeCommand(WebSocketConnection connection, VerifyBadgeRequest request, WorkBehavior workService) {
 		super(connection);
 		this.request = request;
 		this.workService = workService;

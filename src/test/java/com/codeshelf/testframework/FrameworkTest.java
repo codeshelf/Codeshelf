@@ -68,12 +68,12 @@ import com.codeshelf.security.CodeshelfRealm;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.TokenSessionService;
 import com.codeshelf.security.UserContext;
-import com.codeshelf.service.IPropertyService;
-import com.codeshelf.service.InventoryService;
-import com.codeshelf.service.LightService;
+import com.codeshelf.service.IPropertyBehavior;
+import com.codeshelf.service.InventoryBehavior;
+import com.codeshelf.service.LightBehavior;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.ServiceUtility;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.client.CsClientEndpoint;
 import com.codeshelf.ws.client.MessageCoordinator;
@@ -118,7 +118,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	// app server static (reused) services
 	private static WebSocketManagerService			staticWebSocketManagerService;
 	private static IMetricsService					staticMetricsService;
-	private static IPropertyService					staticPropertyService;
+	private static IPropertyBehavior					staticPropertyService;
 	private static ServerMessageProcessor			staticServerMessageProcessor;
 	private static TokenSessionService				staticTokenSessionService;
 	private static EmailService						staticEmailService;
@@ -150,8 +150,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 	// instance services
 	protected ServiceManager						ephemeralServiceManager;
-	protected WorkService							workService;
-	protected InventoryService						inventoryService;
+	protected WorkBehavior							workService;
+	protected InventoryBehavior						inventoryService;
 	protected EventProducer							eventProducer				= new EventProducer();
 	protected WebApiServer							apiServer;
 
@@ -162,7 +162,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	@Getter
 	protected CsDeviceManager						deviceManager;
 	protected WebSocketManagerService				webSocketManagerService;
-	protected IPropertyService						propertyService;
+	protected IPropertyBehavior						propertyService;
 	protected IMetricsService						metricsService;
 	protected TokenSessionService					tokenSessionService;
 	protected EmailService							emailService;
@@ -209,7 +209,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 				bind(IMetricsService.class).to(DummyMetricsService.class).in(Singleton.class);
 
 				requestStaticInjection(PropertyService.class);
-				bind(IPropertyService.class).to(PropertyService.class).in(Singleton.class);
+				bind(IPropertyBehavior.class).to(PropertyService.class).in(Singleton.class);
 
 				bind(WebSocketContainer.class).toInstance(ContainerProvider.getWebSocketContainer());
 
@@ -264,7 +264,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		ServiceUtility.awaitRunningOrThrow(staticTemplateService);
 
 		staticEdiExporterService = injector.getInstance(EdiExportService.class);
-		staticPropertyService = injector.getInstance(IPropertyService.class);
+		staticPropertyService = injector.getInstance(IPropertyBehavior.class);
 
 		staticWebSocketManagerService = injector.getInstance(WebSocketManagerService.class);
 		staticServerMessageProcessor = injector.getInstance(ServerMessageProcessor.class);
@@ -304,7 +304,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		// we cannot access other threads' contexts so we hope they cleaned up!
 		CodeshelfSecurityManager.removeContextIfPresent();
 
-		workService = new WorkService(new LightService(), staticEdiExporterService);
+		workService = new WorkBehavior(new LightBehavior(), staticEdiExporterService);
 		radioController = null;
 		deviceManager = null;
 		apiServer = null;

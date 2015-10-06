@@ -21,7 +21,7 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.WorkBehavior;
 import com.google.inject.Inject;
 
 public class CheResource {
@@ -29,10 +29,10 @@ public class CheResource {
 	@Setter
 	private Che che;
 	
-	private WorkService workService;
+	private WorkBehavior workService;
 	
 	@Inject
-	public CheResource(WorkService workService) {
+	public CheResource(WorkBehavior workService) {
 		this.workService = workService;
 	}
 	

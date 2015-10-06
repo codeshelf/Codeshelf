@@ -36,17 +36,17 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.service.ExtensionPointType;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.WorkBehavior;
 import com.google.inject.Inject;
 
 @Path("/test")
 @RequiresAuthentication
 public class TestingResource {
 	private TenantPersistenceService persistence = TenantPersistenceService.getInstance();
-	private WorkService workService;
+	private WorkBehavior workService;
 
 	@Inject
-	public TestingResource(WorkService workService) {
+	public TestingResource(WorkBehavior workService) {
 		this.workService = workService;
 	}
 

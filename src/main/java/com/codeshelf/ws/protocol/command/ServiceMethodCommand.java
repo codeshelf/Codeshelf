@@ -9,8 +9,8 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.service.IApiService;
-import com.codeshelf.service.ServiceFactory;
+import com.codeshelf.service.IApiBehavior;
+import com.codeshelf.service.BehaviorFactory;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
@@ -28,14 +28,14 @@ public class ServiceMethodCommand extends CommandABC {
 
 	private ServiceMethodRequest	request;
 
-	private ServiceFactory	serviceFactory;
+	private BehaviorFactory	behaviorFactory;
 
 	private ConvertUtilsBean	converter;
 
-	public ServiceMethodCommand(WebSocketConnection connection, ServiceMethodRequest request, ServiceFactory serviceFactory, ConvertUtilsBean converter) {
+	public ServiceMethodCommand(WebSocketConnection connection, ServiceMethodRequest request, BehaviorFactory serviceFactory, ConvertUtilsBean converter) {
 		super(connection);
 		this.request = request;
-		this.serviceFactory = serviceFactory;
+		this.behaviorFactory = serviceFactory;
 		this.converter = converter;
 	}
 
@@ -70,7 +70,7 @@ public class ServiceMethodCommand extends CommandABC {
 			Method method = null;
 			// First we find the parent object (by it's ID).
 			@SuppressWarnings("unchecked")
-			Class<IApiService> classObject = (Class<IApiService>) Class.forName(className).asSubclass(IApiService.class);
+			Class<IApiBehavior> classObject = (Class<IApiBehavior>) Class.forName(className).asSubclass(IApiBehavior.class);
 			for (Method classMethod : classObject.getMethods()) {
 				if (classMethod.getName().equals(methodName)) {
 					if (methodArgs.size() == classMethod.getParameterTypes().length) {
@@ -81,9 +81,9 @@ public class ServiceMethodCommand extends CommandABC {
 			};
 			if (method != null) {
 				try {
-					Object serviceObject = serviceFactory.getServiceInstance(classObject);
+					Object behaviorObject = behaviorFactory.getInstance(classObject);
 					Object[] convertedArgs = convertArguments(method, methodArgs);
-					Object methodResult = method.invoke(serviceObject, convertedArgs);
+					Object methodResult = method.invoke(behaviorObject, convertedArgs);
 					response.setResults(methodResult);
 					response.setStatus(ResponseStatus.Success);
 					return response;

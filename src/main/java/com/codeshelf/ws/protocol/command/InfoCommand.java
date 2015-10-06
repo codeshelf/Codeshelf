@@ -6,8 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.service.InfoService;
-import com.codeshelf.service.InfoService.InfoPackage;
+import com.codeshelf.service.InfoBehavior;
+import com.codeshelf.service.InfoBehavior.InfoPackage;
 import com.codeshelf.ws.protocol.request.InfoRequest;
 import com.codeshelf.ws.protocol.response.InfoResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
@@ -16,10 +16,10 @@ import com.codeshelf.ws.server.WebSocketConnection;
 
 public class InfoCommand extends CommandABC{
 	private static final Logger	LOGGER = LoggerFactory.getLogger(InfoCommand.class);
-	final private InfoService infoService;
+	final private InfoBehavior infoService;
 	private InfoRequest request;
 	
-	public InfoCommand(WebSocketConnection connection, InfoRequest request, InfoService infoService) {
+	public InfoCommand(WebSocketConnection connection, InfoRequest request, InfoBehavior infoService) {
 		super(connection);
 		this.request = request;
 		this.infoService = infoService;

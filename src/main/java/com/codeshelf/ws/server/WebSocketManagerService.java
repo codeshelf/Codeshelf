@@ -28,7 +28,7 @@ import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.AbstractCodeshelfScheduledService;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.ws.protocol.message.KeepAlive;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.request.PingRequest;
@@ -84,7 +84,7 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 	private Counter										totalSessionsCounter;
 
 	boolean												resetting				= false;
-	WorkService											workService;
+	WorkBehavior											workService;
 
 	private IMetricsService	metricsService;
 	
@@ -92,7 +92,7 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 	private static WebSocketManagerService theInstance = null;
 	
 	@Inject 
-	WebSocketManagerService(IMetricsService metricsService, WorkService workService) {
+	WebSocketManagerService(IMetricsService metricsService, WorkBehavior workService) {
 		this.metricsService = metricsService;
 		this.workService = workService;
 		
