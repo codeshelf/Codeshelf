@@ -1951,15 +1951,9 @@ public class CheProcessTestPick extends ServerTest {
 	}
 
 	/**
-	 * The intent is to do enough to cause the export beans to populate.
-	 * DEV-1127 from PFSWeb go live had location-based pick not populating the from location for the pick correctly.
+	 * Requires to be in a transaction already
 	 */
-	@Test
-	public void testEDIAccumulatorExportBean() throws Exception {
-
-		LOGGER.info("1: Set up facility. Add the export extensions");
-		// somewhat cloned from FacilityAccumulatingExportTest
-		Facility facility = setUpSimpleNoSlotFacility();
+	private void addPfswebExtensions(Facility inFacility) {
 
 		String onCartScript = "def OrderOnCartContent(bean) { def returnStr = " //
 				+ "'0073' +'^'" //
@@ -2000,6 +1994,41 @@ public class CheProcessTestPick extends ServerTest {
 				+ "+ bean.itemId.padRight(25);" //
 				+ " return returnStr;}";
 
+		// For PFSWeb (and Dematic carts), the OrderOnCart is approximately the same as the work instruction header, 
+		// but this will not be universally true
+		ExtensionPoint onCartExt = new ExtensionPoint(inFacility, ExtensionPointType.OrderOnCartContent);
+		onCartExt.setScript(onCartScript);
+		onCartExt.setActive(true);
+		ExtensionPoint.staticGetDao().store(onCartExt);
+
+		ExtensionPoint headerExt = new ExtensionPoint(inFacility, ExtensionPointType.WorkInstructionExportCreateHeader);
+		headerExt.setScript(headerScript);
+		headerExt.setActive(true);
+		ExtensionPoint.staticGetDao().store(headerExt);
+
+		ExtensionPoint trailerExt = new ExtensionPoint(inFacility, ExtensionPointType.WorkInstructionExportCreateTrailer);
+		trailerExt.setScript(trailerScript);
+		trailerExt.setActive(true);
+		ExtensionPoint.staticGetDao().store(trailerExt);
+
+		ExtensionPoint contentExt = new ExtensionPoint(inFacility, ExtensionPointType.WorkInstructionExportContent);
+		contentExt.setScript(contentScript);
+		contentExt.setActive(true);
+		ExtensionPoint.staticGetDao().store(contentExt);
+
+	}
+
+	/**
+	 * The intent is to do enough to cause the export beans to populate.
+	 * DEV-1127 from PFSWeb go live had location-based pick not populating the from location for the pick correctly.
+	 */
+	@Test
+	public void testEDIAccumulatorExportBean() throws Exception {
+
+		LOGGER.info("1: Set up facility. Add the export extensions");
+		// somewhat cloned from FacilityAccumulatingExportTest
+		Facility facility = setUpSimpleNoSlotFacility();
+
 		beginTransaction();
 		facility = facility.reload();
 		propertyService.turnOffHK(facility);
@@ -2009,27 +2038,7 @@ public class CheProcessTestPick extends ServerTest {
 			PropertyDao.getInstance().store(theProperty);
 		}
 
-		// For PFSWeb (and Dematic carts), the OrderOnCart is approximately the same as the work instruction header, 
-		// but this will not be universally true
-		ExtensionPoint onCartExt = new ExtensionPoint(facility, ExtensionPointType.OrderOnCartContent);
-		onCartExt.setScript(onCartScript);
-		onCartExt.setActive(true);
-		ExtensionPoint.staticGetDao().store(onCartExt);
-
-		ExtensionPoint headerExt = new ExtensionPoint(facility, ExtensionPointType.WorkInstructionExportCreateHeader);
-		headerExt.setScript(headerScript);
-		headerExt.setActive(true);
-		ExtensionPoint.staticGetDao().store(headerExt);
-
-		ExtensionPoint trailerExt = new ExtensionPoint(facility, ExtensionPointType.WorkInstructionExportCreateTrailer);
-		trailerExt.setScript(trailerScript);
-		trailerExt.setActive(true);
-		ExtensionPoint.staticGetDao().store(trailerExt);
-
-		ExtensionPoint contentExt = new ExtensionPoint(facility, ExtensionPointType.WorkInstructionExportContent);
-		contentExt.setScript(contentScript);
-		contentExt.setActive(true);
-		ExtensionPoint.staticGetDao().store(contentExt);
+		addPfswebExtensions(facility);
 
 		commitTransaction();
 
@@ -2133,6 +2142,350 @@ public class CheProcessTestPick extends ServerTest {
 		picker.loginAndSetup("Picker #1");
 		picker.logout();
 		exporter.waitUntillQueueIsEmpty(20000);
+	}
+
+	/**
+	 * This is to replicate
+	 */
+	@Test
+	public void testChangeCartMidOrder() throws Exception {
+
+		LOGGER.info("1: Set up facility. Add the export extensions");
+		// somewhat cloned from FacilityAccumulatingExportTest
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		beginTransaction();
+		facility = facility.reload();
+		propertyService.turnOffHK(facility);
+		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.WORKSEQR);
+		if (theProperty != null) {
+			theProperty.setValue("WorkSequence");
+			PropertyDao.getInstance().store(theProperty);
+		}
+		addPfswebExtensions(facility);
+		commitTransaction();
+
+		LOGGER.info("2: Load orders. No inventory, so uses locationA, etc. as the location-based pick");
+		beginTransaction();
+		facility = facility.reload();
+
+		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n11111,11111,1,Test Item 1,1,each,locationA,1" + "\r\n11111,11111,2,Test Item 2,1,each,locationB,20"
+				+ "\r\n11111,11111,3,Test Item 3,1,each,locationC,30" + "\r\n11111,11111,5,Test Item 5,1,each,locationD,500"
+				+ "\r\n22222,22222,2,Test Item 2,1,each,locationB,20" + "\r\n22222,22222,3,Test Item 3,1,each,locationC,30"
+				+ "\r\n44444,44444,5,Test Item 5,1,each,locationD,500" + "\r\n55555,55555,2,Test Item 2,1,each,locationA,20";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+
+		beginTransaction();
+		facility = facility.reload();
+		SftpConfiguration config = setupSftpOutConfiguration();
+		SftpWiGateway sftpWIs = configureSftpService(facility, config, SftpWiGateway.class);
+		sftpWIs.setActive(true);
+		Assert.assertTrue(sftpWIs.isLinked());
+		commitTransaction();
+
+		this.startSiteController();
+		// Start setting up cart etc
+		PickSimulator picker = createPickSim(cheGuid1);
+		PickSimulator picker2 = createPickSim(cheGuid2);
+		picker.loginAndSetup("Picker #1");
+
+		LOGGER.info("3a: Set up order 11111 at position 1");
+		picker.setupOrderIdAsContainer("11111", "1");
+
+		LOGGER.info("3b: Set up order 22222 at position 2");
+		picker.setupOrderIdAsContainer("22222", "2");
+
+		LOGGER.info("3c: Set up order 44444 at position 3");
+		picker.setupOrderIdAsContainer("44444", "3");
+
+		LOGGER.info("4: Start, getting the first pick");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		LOGGER.info(picker.getLastCheDisplay());
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		// Look in console for line like this. No easy way to get it for unit test
+		// 0073^ORDERSTATUS         ^0000000000^44444               ^CHE1   ^  ^OPEN            
+
+		// Did not set up order 55555. Therefore, 3 orders and 7 jobs
+		List<WorkInstruction> wiList = picker.getAllPicksList();
+		logWiList(wiList);
+		Assert.assertEquals(7, wiList.size());
+
+		LOGGER.info("5: Do the first 4 picks. That is three for 11111 and one for 11111");
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+
+		LOGGER.info("5b: Verify 3 jobs left. 7 in all picks list but 4 complete");
+		wiList = picker.getAllPicksList();
+		logWiList(wiList);
+
+		LOGGER.info("6a: Log out from this CHE");
+		picker.logout();
+
+		LOGGER.info("6b: Same person log in to other CHE");
+		picker2.loginAndSetup("Picker #1");
+
+		LOGGER.info("6c: Set up orders onto second cart");
+		picker2.setupOrderIdAsContainer("11111", "1");
+		picker2.setupOrderIdAsContainer("22222", "2");
+		// do not set up 44444 on second cart. Mainly so we have only one order-on-cart message to check contents of.
+
+		LOGGER.info("6d: Start, getting the first pick");
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		wiList = picker2.getAllPicksList();
+		logWiList(wiList);
+		Assert.assertEquals(2, wiList.size());
+
+		LOGGER.info("7a: Complete this first pick, for 22222. That should complete the order. 2 picks, both attributed to CHE2");
+		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.pickItemAuto();
+
+		LOGGER.info("7: Complete this pick for 11111. That should complete the order. 4 picks, all attributed to CHE2");
+		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.pickItemAuto();
+
+		beginTransaction();
+		EdiExportService exportProvider = workService.getExportProvider();
+		IFacilityEdiExporter exporter = exportProvider.getEdiExporter(facility);
+		exporter.waitUntillQueueIsEmpty(20000);
+
+		LOGGER.info("5: Verify sent messages");
+		List<ExportMessage> messages = ExportMessage.staticGetDao().getAll();
+		Assert.assertEquals(7, messages.size());
+		for (ExportMessage message : messages) {
+			String orderId = message.getOrderId();
+			String expectedContents = null;
+			if ("11111".equals(orderId) && message.getType() == ExportMessageType.ORDER_ON_CART_FINISHED) {
+				expectedContents = "0073^ORDERSTATUS         ^0000000000^11111               ^CHE                 ^CHE2                ^CLOSED         \r\n"
+						+ "0090^PICKMISSIONSTATUS   ^0000000000^11111               ^locationA           ^000000000000001^000000000000001^1                        \r\n"
+						+ "0090^PICKMISSIONSTATUS   ^0000000000^11111               ^locationB           ^000000000000001^000000000000001^2                        \r\n"
+						+ "0090^PICKMISSIONSTATUS   ^0000000000^11111               ^locationC           ^000000000000001^000000000000001^3                        \r\n"
+						+ "0090^PICKMISSIONSTATUS   ^0000000000^11111               ^locationD           ^000000000000001^000000000000001^5                        \r\n"
+						+ "0057^ENDORDER            ^0000000000^11111";
+			} else if ("22222".equals(orderId) && message.getType() == ExportMessageType.ORDER_ON_CART_FINISHED) {
+
+				expectedContents = "0073^ORDERSTATUS         ^0000000000^22222               ^CHE                 ^CHE2                ^CLOSED         \r\n"
+						+ "0090^PICKMISSIONSTATUS   ^0000000000^22222               ^locationB           ^000000000000001^000000000000001^2                        \r\n"
+						+ "0090^PICKMISSIONSTATUS   ^0000000000^22222               ^locationC           ^000000000000001^000000000000001^3                        \r\n"
+						+ "0057^ENDORDER            ^0000000000^22222";
+			} else if ("44444".equals(orderId)) {
+				expectedContents = "0073^ORDERSTATUS         ^0000000000^44444               ^CHE1   ^  ^OPEN";
+			} else if ("22222".equals(orderId) && message.getType() == ExportMessageType.ORDER_ON_CART_ADDED) {
+				expectedContents = ""; // don't check. There are two ORDER_ON_CART_ADDED
+			} else if ("11111".equals(orderId) && message.getType() == ExportMessageType.ORDER_ON_CART_ADDED) {
+				expectedContents = ""; // don't check. There are two ORDER_ON_CART_ADDED
+			} else {
+				Assert.fail("Unexpected message: order = " + orderId + ", contents = " + message.getContents());
+			}
+			if (!expectedContents.isEmpty())
+				Assert.assertEquals(expectedContents, message.getContents().trim());
+		}
+		commitTransaction();
+	}
+
+	/**
+	 * This is to replicate
+	 */
+	@Test
+	public void testShortAndCompleteOtherCart() throws Exception {
+
+		LOGGER.info("1: Set up facility. Add the export extensions");
+		// somewhat cloned from FacilityAccumulatingExportTest
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		beginTransaction();
+		facility = facility.reload();
+		propertyService.turnOffHK(facility);
+		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.WORKSEQR);
+		if (theProperty != null) {
+			theProperty.setValue("WorkSequence");
+			PropertyDao.getInstance().store(theProperty);
+		}
+		addPfswebExtensions(facility);
+		commitTransaction();
+
+		LOGGER.info("2: Load orders. No inventory, so uses locationA, etc. as the location-based pick");
+		beginTransaction();
+		facility = facility.reload();
+
+		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n11111,11111,1,Test Item 1,1,each,locationA,1" + "\r\n11111,11111,2,Test Item 2,3,each,locationB,20"
+				+ "\r\n11111,11111,3,Test Item 3,1,each,locationC,30" + "\r\n11111,11111,5,Test Item 5,1,each,locationD,500"
+				+ "\r\n22222,22222,2,Test Item 2,1,each,locationB,20" + "\r\n22222,22222,3,Test Item 3,1,each,locationC,30"
+				+ "\r\n44444,44444,5,Test Item 5,1,each,locationD,500" + "\r\n55555,55555,2,Test Item 2,1,each,locationA,20";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+
+		beginTransaction();
+		facility = facility.reload();
+		SftpConfiguration config = setupSftpOutConfiguration();
+		SftpWiGateway sftpWIs = configureSftpService(facility, config, SftpWiGateway.class);
+		sftpWIs.setActive(true);
+		Assert.assertTrue(sftpWIs.isLinked());
+		commitTransaction();
+
+		this.startSiteController();
+		// Start setting up cart etc
+		PickSimulator picker = createPickSim(cheGuid1);
+		PickSimulator picker2 = createPickSim(cheGuid2);
+		picker.loginAndSetup("Picker #1");
+
+		LOGGER.info("3a: Set up order 11111 at position 1");
+		picker.setupOrderIdAsContainer("11111", "1");
+
+		LOGGER.info("3b: Set up order 22222 at position 2");
+		picker.setupOrderIdAsContainer("22222", "2");
+
+		LOGGER.info("3c: Set up order 44444 at position 3");
+		picker.setupOrderIdAsContainer("44444", "3");
+
+		LOGGER.info("4: Start, getting the first pick");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		LOGGER.info(picker.getLastCheDisplay());
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		// Did not set up order 55555. Therefore, 3 orders and 7 jobs
+		List<WorkInstruction> wiList = picker.getAllPicksList();
+		logWiList(wiList);
+		Assert.assertEquals(7, wiList.size());
+
+		LOGGER.info("5: Do the first pick, then short the second. This yields incomplete pick of 11111 and autoshort of 22222.");
+		picker.pickItemAuto();
+		WorkInstruction wi = picker.getActivePick();
+		int button = picker.buttonFor(wi);
+		int quantity = wi.getPlanQuantity();
+		Assert.assertEquals(3, quantity); // just making sure this test case stays stable
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 3000);
+		picker.pick(button, 1);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 3000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		LOGGER.info("6: Scan START and START, resulting in recomputing jobs. Get new jobs for the short");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		wiList = picker.getAllPicksList();
+		logWiList(wiList);
+		Assert.assertEquals(6, wiList.size()); // we picked the first job above. Comes back completed? No. Not so great cart feedback for this case.
+
+		LOGGER.info("6b: Short 1111 again. This will short ahead 22222 again.");
+		wi = picker.getActivePick();
+		button = picker.buttonFor(wi);
+		quantity = wi.getPlanQuantity();
+		Assert.assertEquals(2, quantity); // just making sure this test case stays stable
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 3000);
+		picker.pick(button, 0);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 3000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		LOGGER.info("7: Log out");
+		picker.logout();
+
+		LOGGER.info("7b: Same person log in to other CHE");
+		picker2.loginAndSetup("Picker #1");
+
+		LOGGER.info("7c: Set up orders onto second cart");
+		picker2.setupOrderIdAsContainer("11111", "1");
+		picker2.setupOrderIdAsContainer("22222", "2");
+		// do not set up 44444 on second cart. Mainly so we have only one order-on-cart message to check contents of.
+
+		LOGGER.info("7d: Start, getting the first pick");
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		wiList = picker2.getAllPicksList();
+		logWiList(wiList);
+		Assert.assertEquals(5, wiList.size()); // the same 6 jobs other cart had, except no 44444 job.
+
+		LOGGER.info("8a: Complete the pick. Not shorted.");
+		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.pickItemAuto();
+
+		LOGGER.info("8b: Complete picking. Except short the very last one. All attributed to CHE2");
+		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.pickItemAuto();
+		picker2.pickItemAuto();
+		picker2.pickItemAuto(); // this completes order 22222
+		ThreadUtils.sleep(300); // let server side logging play out before continuing.
+
+		LOGGER.info("8c: Screen state right before shorting");
+		picker2.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		LOGGER.info(picker2.getLastCheDisplay());
+
+		wi = picker2.getActivePick();
+		button = picker2.buttonFor(wi);
+		quantity = wi.getPlanQuantity();
+		Assert.assertEquals(1, quantity); // just making sure this test case stays stable
+		picker2.scanCommand("SHORT");
+		picker2.waitForCheState(CheStateEnum.SHORT_PICK, 3000);
+		picker2.pick(button, 0);
+		picker2.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 3000);
+		picker2.scanCommand("YES");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+
+		LOGGER.info("8d: Finished shorting the last job");
+
+		beginTransaction();
+		EdiExportService exportProvider = workService.getExportProvider();
+		IFacilityEdiExporter exporter = exportProvider.getEdiExporter(facility);
+		exporter.waitUntillQueueIsEmpty(20000);
+
+		LOGGER.info("9: Verify sent messages");
+		// Comoplicated. Show a 1 of 3 for item 2 on 11111, then 0 of 2 for item 2 11111 (the short)
+		List<ExportMessage> messages = ExportMessage.staticGetDao().getAll();
+		Assert.assertEquals(7, messages.size());
+		for (ExportMessage message : messages) {
+			String orderId = message.getOrderId();
+			String expectedContents = null;
+			if ("11111".equals(orderId) && message.getType() == ExportMessageType.ORDER_ON_CART_FINISHED) {
+				expectedContents = "0073^ORDERSTATUS         ^0000000000^11111               ^CHE                 ^CHE2                ^CLOSED         \r\n"
+						+ "0090^PICKMISSIONSTATUS   ^0000000000^11111               ^locationA           ^000000000000001^000000000000001^1                        \r\n"
+						+ "0090^PICKMISSIONSTATUS   ^0000000000^11111               ^locationB           ^000000000000003^000000000000001^2                        \r\n"
+						+ "0090^PICKMISSIONSTATUS   ^0000000000^11111               ^locationB           ^000000000000002^000000000000000^2                        \r\n"
+						+ "0090^PICKMISSIONSTATUS   ^0000000000^11111               ^locationB           ^000000000000002^000000000000002^2                        \r\n"
+						+ "0090^PICKMISSIONSTATUS   ^0000000000^11111               ^locationC           ^000000000000001^000000000000001^3                        \r\n"
+						+ "0090^PICKMISSIONSTATUS   ^0000000000^11111               ^locationD           ^000000000000001^000000000000000^5                        \r\n"
+						+ "0057^ENDORDER            ^0000000000^11111";
+			} else if ("22222".equals(orderId) && message.getType() == ExportMessageType.ORDER_ON_CART_FINISHED) {
+
+				expectedContents = "0073^ORDERSTATUS         ^0000000000^22222               ^CHE                 ^CHE2                ^CLOSED         \r\n"
+						+ "0090^PICKMISSIONSTATUS   ^0000000000^22222               ^locationB           ^000000000000001^000000000000000^2                        \r\n"
+						+ "0090^PICKMISSIONSTATUS   ^0000000000^22222               ^locationB           ^000000000000001^000000000000000^2                        \r\n"
+						+ "0090^PICKMISSIONSTATUS   ^0000000000^22222               ^locationB           ^000000000000001^000000000000001^2                        \r\n"
+						+ "0090^PICKMISSIONSTATUS   ^0000000000^22222               ^locationC           ^000000000000001^000000000000001^3                        \r\n"
+						+ "0057^ENDORDER            ^0000000000^22222";
+			} else if ("44444".equals(orderId)) {
+				expectedContents = "0073^ORDERSTATUS         ^0000000000^44444               ^CHE1   ^  ^OPEN";
+			} else if ("22222".equals(orderId) && message.getType() == ExportMessageType.ORDER_ON_CART_ADDED) {
+				expectedContents = ""; // don't check. There are two ORDER_ON_CART_ADDED
+			} else if ("11111".equals(orderId) && message.getType() == ExportMessageType.ORDER_ON_CART_ADDED) {
+				expectedContents = ""; // don't check. There are two ORDER_ON_CART_ADDED
+			} else {
+				Assert.fail("Unexpected message: order = " + orderId + ", contents = " + message.getContents());
+			}
+			if (!expectedContents.isEmpty())
+				Assert.assertEquals(expectedContents, message.getContents().trim());
+		}
+		commitTransaction();
 	}
 
 	@Test
