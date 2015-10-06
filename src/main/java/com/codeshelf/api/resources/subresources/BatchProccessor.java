@@ -1,6 +1,6 @@
 package com.codeshelf.api.resources.subresources;
 
-interface BatchCallable {
+interface BatchProccessor {
 
 	int doSetup();
 

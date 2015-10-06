@@ -15,18 +15,18 @@ import com.google.common.base.Stopwatch;
 
 public abstract class TenantCallable implements Callable<Report>{
 	private static final Logger LOGGER	= LoggerFactory.getLogger(TenantCallable.class);
-	private BatchCallable	delegate;
+	private BatchProccessor	delegate;
 	private Stopwatch runTiming;
 	private Thread runningThread;
 	private Tenant tenant;
 	private UserContext userContext;
 	private boolean cancelled = false;
 	
-	public TenantCallable(BatchCallable delegate, Tenant tenant) {
+	public TenantCallable(BatchProccessor delegate, Tenant tenant) {
 		this(delegate, tenant, CodeshelfSecurityManager.getUserContextSYSTEM());
 	}
 
-	public TenantCallable(BatchCallable delegate, Tenant tenant, UserContext userContext) {
+	public TenantCallable(BatchProccessor delegate, Tenant tenant, UserContext userContext) {
 		this.tenant = tenant;
 		this.userContext = userContext;
 		this.delegate = delegate;
