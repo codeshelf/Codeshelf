@@ -47,8 +47,8 @@ import com.codeshelf.ws.protocol.response.ServiceMethodResponse;
 import com.codeshelf.ws.server.ServerMessageProcessor;
 import com.google.common.collect.ImmutableList;
 
-public class WorkServiceTest extends ServerTest {
-	private static final Logger			LOGGER		= LoggerFactory.getLogger(WorkServiceTest.class);
+public class WorkBehaviorTest extends ServerTest {
+	private static final Logger			LOGGER		= LoggerFactory.getLogger(WorkBehaviorTest.class);
 
 	private WorkInstructionGenerator	wiGenerator	= new WorkInstructionGenerator();
 	private FacilityGenerator			facilityGenerator;
