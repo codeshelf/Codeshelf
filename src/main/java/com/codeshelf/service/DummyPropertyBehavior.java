@@ -4,7 +4,7 @@ import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
 
-public class DummyPropertyService extends AbstractPropertyService {
+public class DummyPropertyBehavior extends AbstractPropertyService {
 
 	@Override
 	public DomainObjectProperty getProperty(IDomainObject object, String name) {

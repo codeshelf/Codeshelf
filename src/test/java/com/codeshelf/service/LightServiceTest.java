@@ -93,7 +93,7 @@ public class LightServiceTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 		
 		LOGGER.info("4: mockProp.getPropertyAsColor");
-		IPropertyBehavior mockProp = Mockito.spy(new DummyPropertyService());
+		IPropertyBehavior mockProp = Mockito.spy(new DummyPropertyBehavior());
 		ArrayList<Service> services = new ArrayList<Service>(1);
 		services.add(mockProp);
 		ServiceManager serviceManager = new ServiceManager(services); // todo: shortcut method to start/destroy service for single test

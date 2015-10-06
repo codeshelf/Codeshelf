@@ -159,14 +159,14 @@ public class WorkServiceTest extends ServerTest {
 
 		LOGGER.info("1: mock request, work server, and service factory");
 		ServiceMethodRequest request = new ServiceMethodRequest();
-		request.setClassName("WorkService"); //the ux would use strings
+		request.setClassName("WorkBehavior"); //the ux would use strings
 		request.setMethodName("workAssignedSummary");
 		request.setMethodArgs(ImmutableList.of(cheId.toString(), facility.getPersistentId().toString()));
-		WorkBehavior workService = mock(WorkBehavior.class);
-		when(workService.workAssignedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary> emptyList());
-		BehaviorFactory factory = new BehaviorFactory(workService,
+		WorkBehavior workBehavior = mock(WorkBehavior.class);
+		when(workBehavior.workAssignedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary> emptyList());
+		BehaviorFactory factory = new BehaviorFactory(workBehavior,
 			mock(LightBehavior.class),
-			mock(DummyPropertyService.class),
+			mock(DummyPropertyBehavior.class),
 			mock(UiUpdateBehavior.class),
 			mock(OrderBehavior.class),
 			mock(InventoryBehavior.class),
@@ -183,14 +183,14 @@ public class WorkServiceTest extends ServerTest {
 		Assert.assertTrue(responseABC.isSuccess());
 
 		ServiceMethodRequest request2 = new ServiceMethodRequest();
-		request2.setClassName("WorkService"); //the ux would use strings
+		request2.setClassName("WorkBehavior"); //the ux would use strings
 		request2.setMethodName("workCompletedSummary");
 		request2.setMethodArgs(ImmutableList.of(cheId.toString(), facility.getPersistentId().toString()));
 		WorkBehavior workService2 = mock(WorkBehavior.class);
 		when(workService2.workCompletedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary> emptyList());
 		BehaviorFactory factory2 = new BehaviorFactory(workService2,
 			mock(LightBehavior.class),
-			mock(DummyPropertyService.class),
+			mock(DummyPropertyBehavior.class),
 			mock(UiUpdateBehavior.class),
 			mock(OrderBehavior.class),
 			mock(InventoryBehavior.class),
