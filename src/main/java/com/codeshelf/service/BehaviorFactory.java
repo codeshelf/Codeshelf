@@ -7,34 +7,34 @@ import com.google.inject.Inject;
 
 public class BehaviorFactory { //BehaviorFactory
 
-	private HashMap<Class<? extends IApiBehavior>, IApiBehavior> mServices;
+	private HashMap<Class<? extends IApiBehavior>, IApiBehavior> mBehaviors;
 
 	@Inject
-	public BehaviorFactory(WorkBehavior workService,
-		LightBehavior lightService,
-		IPropertyBehavior propertyService,
-		UiUpdateBehavior uiUpdateService,
-		OrderBehavior orderService,
+	public BehaviorFactory(WorkBehavior workBehavior,
+		LightBehavior lightBehavior,
+		IPropertyBehavior propertyBehavior,
+		UiUpdateBehavior uiUpdateBehavior,
+		OrderBehavior orderBehavior,
 		InventoryBehavior inventoryService,
-		NotificationBehavior notificationService,
-		InfoBehavior infoService,
-		PalletizerBehavior palletizerService) {
-		mServices = Maps.newHashMap();
-		mServices.put(WorkBehavior.class, workService); //WorkBehavior
-		mServices.put(LightBehavior.class, lightService); //LightBehavior
-		mServices.put(PropertyService.class, propertyService);  //PropertyBehavior
-		mServices.put(UiUpdateBehavior.class, uiUpdateService); //UiUpdateBehavior
-		mServices.put(OrderBehavior.class, orderService); //OrderBehavior
-		mServices.put(InventoryBehavior.class, inventoryService); //InventoryBehavior
-		mServices.put(NotificationBehavior.class, notificationService); //NotificationBehavior
-		mServices.put(InfoBehavior.class, infoService); //InfoBehavior
-		mServices.put(PalletizerBehavior.class, palletizerService); //PalletizerBehavior
+		NotificationBehavior notificationBehavior,
+		InfoBehavior infoBehavior,
+		PalletizerBehavior palletizerBehavior) {
+		mBehaviors = Maps.newHashMap();
+		mBehaviors.put(WorkBehavior.class, workBehavior); //WorkBehavior
+		mBehaviors.put(LightBehavior.class, lightBehavior); //LightBehavior
+		mBehaviors.put(PropertyService.class, propertyBehavior);  //PropertyBehavior
+		mBehaviors.put(UiUpdateBehavior.class, uiUpdateBehavior); //UiUpdateBehavior
+		mBehaviors.put(OrderBehavior.class, orderBehavior); //OrderBehavior
+		mBehaviors.put(InventoryBehavior.class, inventoryService); //InventoryBehavior
+		mBehaviors.put(NotificationBehavior.class, notificationBehavior); //NotificationBehavior
+		mBehaviors.put(InfoBehavior.class, infoBehavior); //InfoBehavior
+		mBehaviors.put(PalletizerBehavior.class, palletizerBehavior); //PalletizerBehavior
 		//TestBehavior 
 	}
 
 	@SuppressWarnings("unchecked")
-	public <T extends IApiBehavior> T getServiceInstance(Class<T> classObject) {
-		IApiBehavior service = mServices.get(classObject);
-		return (T) service;
+	public <T extends IApiBehavior> T getInstance(Class<T> classObject) {
+		IApiBehavior behavior = mBehaviors.get(classObject);
+		return (T) behavior;
 	}
 }

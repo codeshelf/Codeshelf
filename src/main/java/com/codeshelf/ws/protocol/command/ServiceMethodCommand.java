@@ -28,14 +28,14 @@ public class ServiceMethodCommand extends CommandABC {
 
 	private ServiceMethodRequest	request;
 
-	private BehaviorFactory	serviceFactory;
+	private BehaviorFactory	behaviorFactory;
 
 	private ConvertUtilsBean	converter;
 
 	public ServiceMethodCommand(WebSocketConnection connection, ServiceMethodRequest request, BehaviorFactory serviceFactory, ConvertUtilsBean converter) {
 		super(connection);
 		this.request = request;
-		this.serviceFactory = serviceFactory;
+		this.behaviorFactory = serviceFactory;
 		this.converter = converter;
 	}
 
@@ -81,9 +81,9 @@ public class ServiceMethodCommand extends CommandABC {
 			};
 			if (method != null) {
 				try {
-					Object serviceObject = serviceFactory.getServiceInstance(classObject);
+					Object behaviorObject = behaviorFactory.getInstance(classObject);
 					Object[] convertedArgs = convertArguments(method, methodArgs);
-					Object methodResult = method.invoke(serviceObject, convertedArgs);
+					Object methodResult = method.invoke(behaviorObject, convertedArgs);
 					response.setResults(methodResult);
 					response.setStatus(ResponseStatus.Success);
 					return response;
