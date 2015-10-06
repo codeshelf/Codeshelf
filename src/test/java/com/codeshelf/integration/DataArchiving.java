@@ -31,8 +31,10 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.service.TestBehavior;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * @author jon ranstrom
@@ -465,8 +467,10 @@ public class DataArchiving extends ServerTest {
 		
 		beginTransaction();
 		facility = facility.reload();
-		String inputString = "2 CHE1 CHE2 CHE3";				
-		String outputString = workService.setupManyCartsWithOrders(facility, inputString);
+		TestBehavior testBehavior = new TestBehavior();
+		String outputString = testBehavior.setupManyCartsWithOrders(facility, 
+			ImmutableMap.of("ordersPerChe", String.valueOf(2),
+							"ches", "CHE1 CHE2 CHE3"));
 		LOGGER.info(outputString);
 		commitTransaction();
 

@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -33,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.application.JvmProperties;
+import com.google.common.collect.ImmutableList;
 
 public class OrderBatchPerformanceTest {
 
@@ -41,11 +41,12 @@ public class OrderBatchPerformanceTest {
 	final private static String	PASSWORD				= "testme";
 	// final private static String	FACILITY	= "7d16e862-32db-4270-8eda-aff14629aceb";
 	final private static String	FACILITY				= "d678cc4d-3251-4be1-bfec-199393705bba";
-
 	// Set this to something like "24 CHE1 CHE2 CHE3'
 	// To look up active orders and distribute 24 to each of the 3 CHE.
-	final private static String	SCRIPTCREATETEMPLATE	= "";
-
+	final private static List<BasicNameValuePair> POST_PARAMETER_TEMPLATE = ImmutableList.of(
+		new BasicNameValuePair("ordersPerChe", "24"),
+		new BasicNameValuePair("ches", "CHE1 CHE2 CHE3"));
+	
 	static {
 		JvmProperties.load("server");
 	}
@@ -130,18 +131,14 @@ public class OrderBatchPerformanceTest {
 		return response;
 	}
 
-	@SuppressWarnings("unused")
 	private void postScriptTemplate() throws ClientProtocolException, IOException {
 		// Paul, can you hook this up?
 		LOGGER.info("Examining orders and creating script commands for optional use");
 		// This will fire the SCRIPTCREATETEMPLATE string to the REST API. Transformed string is logged and returned.
-		String url = BASE_URL + "api/facilities/" + FACILITY + "/function/";
+		String url = BASE_URL + "api/facilities/" + FACILITY + "/test/setupManyCartsWithOrders";
 
 		HttpPost postRequest = new HttpPost(url);
-		ArrayList<NameValuePair> postParameters = new ArrayList<>();
-		postParameters.add(new BasicNameValuePair("function", "setupManyCartsWithOrders"));
-		postParameters.add(new BasicNameValuePair("parameterString", SCRIPTCREATETEMPLATE));
-		postRequest.setEntity(new UrlEncodedFormEntity(postParameters));
+		postRequest.setEntity(new UrlEncodedFormEntity(POST_PARAMETER_TEMPLATE));
 		client.execute(postRequest);
 
 		// move the function as you wish. Currently, it would call through to WorkService.setupManyCartsWithOrders() with SCRIPTCREATETEMPLATE as the string parameter.
@@ -211,7 +208,10 @@ public class OrderBatchPerformanceTest {
 						br.close();
 					}
 				} catch (IOException e) {
-					LOGGER.error("Failed to close stream", e);
+					LOGGER.error("Failed "
+							+ ""
+							+ ""
+							+ "to close stream", e);
 				}
 			}
 			numProcessed++;
@@ -221,11 +221,9 @@ public class OrderBatchPerformanceTest {
 		double duration = ((double) (end - start)) / 1000;
 		LOGGER.info("Import performance test completed in " + formatter.format(duration) + "s");
 
-		if (!SCRIPTCREATETEMPLATE.isEmpty()) {
-			// Paul, can you hook this up?  
-			// not sure why this complains about static caller when postFile above does not
+		if (!POST_PARAMETER_TEMPLATE.isEmpty()) {
 			try {
-				// postScriptTemplate();
+				test.postScriptTemplate();
 			} catch (Exception e) {
 				LOGGER.error("Exception while posting script template for transformation", e);
 			}

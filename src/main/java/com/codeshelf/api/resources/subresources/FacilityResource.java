@@ -89,6 +89,7 @@ import com.codeshelf.service.OrderBehavior;
 import com.codeshelf.service.ParameterSetBeanABC;
 import com.codeshelf.service.ProductivitySummaryList;
 import com.codeshelf.service.PropertyService;
+import com.codeshelf.service.TestBehavior;
 import com.codeshelf.service.UiUpdateBehavior;
 import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.ws.protocol.message.CheDisplayMessage;
@@ -161,6 +162,14 @@ public class FacilityResource {
 	public EDIGatewaysResource getEdiResource() throws Exception {
 		EDIGatewaysResource r = resourceContext.getResource(EDIGatewaysResource.class);
 	    r.setFacility(facility);
+	    return r;
+	}
+
+	@Path("/test")
+	public TestResource getTestResource() throws Exception {
+		TestResource r = resourceContext.getResource(TestResource.class);
+	    r.setFacility(facility);
+	    r.setTestBehavior(new TestBehavior());
 	    return r;
 	}
 
