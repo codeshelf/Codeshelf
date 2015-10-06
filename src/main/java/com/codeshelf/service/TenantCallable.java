@@ -1,4 +1,4 @@
-package com.codeshelf.api.resources.subresources;
+package com.codeshelf.service;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;

@@ -1,4 +1,4 @@
-package com.codeshelf.api.resources.subresources;
+package com.codeshelf.service;
 
 interface BatchProccessor {
 
