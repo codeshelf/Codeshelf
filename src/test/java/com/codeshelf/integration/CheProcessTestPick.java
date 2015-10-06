@@ -2047,8 +2047,10 @@ public class CheProcessTestPick extends ServerTest {
 		facility = facility.reload();
 
 		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
-				+ "\r\n11111,11111,1,Test Item 1,1,each,locationA,1" + "\r\n22222,22222,2,Test Item 2,1,each,locationB,20"
-				+ "\r\n22222,22222,3,Test Item 3,1,each,locationC,30" + "\r\n44444,44444,5,Test Item 5,1,each,locationD,500"
+				+ "\r\n11111,11111,1,Test Item 1,1,each,locationA,1" //
+				+ "\r\n22222,22222,2,Test Item 2,1,each,locationB,20" //
+				+ "\r\n22222,22222,3,Test Item 3,1,each,locationC,30" //				
+				+ "\r\n44444,44444,5,Test Item 5,1,each,locationD,500" //
 				+ "\r\n55555,55555,2,Test Item 2,1,each,locationA,20";
 		importOrdersData(facility, csvOrders);
 		commitTransaction();
@@ -2170,10 +2172,14 @@ public class CheProcessTestPick extends ServerTest {
 		facility = facility.reload();
 
 		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
-				+ "\r\n11111,11111,1,Test Item 1,1,each,locationA,1" + "\r\n11111,11111,2,Test Item 2,1,each,locationB,20"
-				+ "\r\n11111,11111,3,Test Item 3,1,each,locationC,30" + "\r\n11111,11111,5,Test Item 5,1,each,locationD,500"
-				+ "\r\n22222,22222,2,Test Item 2,1,each,locationB,20" + "\r\n22222,22222,3,Test Item 3,1,each,locationC,30"
-				+ "\r\n44444,44444,5,Test Item 5,1,each,locationD,500" + "\r\n55555,55555,2,Test Item 2,1,each,locationA,20";
+				+ "\r\n11111,11111,1,Test Item 1,1,each,locationA,1" //
+				+ "\r\n11111,11111,2,Test Item 2,1,each,locationB,20" //
+				+ "\r\n11111,11111,3,Test Item 3,1,each,locationC,30" //
+				+ "\r\n11111,11111,5,Test Item 5,1,each,locationD,500" //
+				+ "\r\n22222,22222,2,Test Item 2,1,each,locationB,20" //
+				+ "\r\n22222,22222,3,Test Item 3,1,each,locationC,30" //
+				+ "\r\n44444,44444,5,Test Item 5,1,each,locationD,500" //
+				+ "\r\n55555,55555,2,Test Item 2,1,each,locationA,20";
 		importOrdersData(facility, csvOrders);
 		commitTransaction();
 
@@ -2318,10 +2324,14 @@ public class CheProcessTestPick extends ServerTest {
 		facility = facility.reload();
 
 		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
-				+ "\r\n11111,11111,1,Test Item 1,1,each,locationA,1" + "\r\n11111,11111,2,Test Item 2,3,each,locationB,20"
-				+ "\r\n11111,11111,3,Test Item 3,1,each,locationC,30" + "\r\n11111,11111,5,Test Item 5,1,each,locationD,500"
-				+ "\r\n22222,22222,2,Test Item 2,1,each,locationB,20" + "\r\n22222,22222,3,Test Item 3,1,each,locationC,30"
-				+ "\r\n44444,44444,5,Test Item 5,1,each,locationD,500" + "\r\n55555,55555,2,Test Item 2,1,each,locationA,20";
+				+ "\r\n11111,11111,1,Test Item 1,1,each,locationA,1" //
+				+ "\r\n11111,11111,2,Test Item 2,3,each,locationB,20" //
+				+ "\r\n11111,11111,3,Test Item 3,1,each,locationC,30" //
+				+ "\r\n11111,11111,5,Test Item 5,1,each,locationD,500" //
+				+ "\r\n22222,22222,2,Test Item 2,1,each,locationB,20" //
+				+ "\r\n22222,22222,3,Test Item 3,1,each,locationC,30" //
+				+ "\r\n44444,44444,5,Test Item 5,1,each,locationD,500" //
+				+ "\r\n55555,55555,2,Test Item 2,1,each,locationA,20";
 		importOrdersData(facility, csvOrders);
 		commitTransaction();
 
@@ -2488,6 +2498,123 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 	}
 
+	/**
+	 * This is to replicate
+	 */
+	@Test
+	public void testShortAheadFinishesOrder() throws Exception {
+
+		LOGGER.info("1: Set up facility. Add the export extensions");
+		// somewhat cloned from FacilityAccumulatingExportTest
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		beginTransaction();
+		facility = facility.reload();
+		propertyService.turnOffHK(facility);
+		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.WORKSEQR);
+		if (theProperty != null) {
+			theProperty.setValue("WorkSequence");
+			PropertyDao.getInstance().store(theProperty);
+		}
+		addPfswebExtensions(facility);
+		commitTransaction();
+
+		LOGGER.info("2: Load orders. No inventory, so uses locationA, etc. as the location-based pick");
+		beginTransaction();
+		facility = facility.reload();
+
+		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n11111,11111,1,Test Item 1,1,each,locationA,1" //
+				+ "\r\n22222,22222,1,Test Item 1,1,each,locationA,1" //
+				+ "\r\n44444,44444,5,Test Item 5,1,each,locationD,500" //
+				+ "\r\n55555,55555,2,Test Item 2,1,each,locationA,20";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+
+		beginTransaction();
+		facility = facility.reload();
+		SftpConfiguration config = setupSftpOutConfiguration();
+		SftpWiGateway sftpWIs = configureSftpService(facility, config, SftpWiGateway.class);
+		sftpWIs.setActive(true);
+		Assert.assertTrue(sftpWIs.isLinked());
+		commitTransaction();
+
+		this.startSiteController();
+		// Start setting up cart etc
+		PickSimulator picker = createPickSim(cheGuid1);
+		PickSimulator picker2 = createPickSim(cheGuid2);
+		picker.loginAndSetup("Picker #1");
+
+		LOGGER.info("3a: Set up order 11111 at position 1");
+		picker.setupOrderIdAsContainer("11111", "1");
+
+		LOGGER.info("3b: Set up order 22222 at position 2");
+		picker.setupOrderIdAsContainer("22222", "2");
+
+		LOGGER.info("3c: Set up order 44444 at position 3");
+		picker.setupOrderIdAsContainer("44444", "3");
+
+		LOGGER.info("4: Start, getting the first pick");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		LOGGER.info(picker.getLastCheDisplay());
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		// Did not set up order 55555. Therefore, 3 orders and 3 jobs
+		List<WorkInstruction> wiList = picker.getAllPicksList();
+		logWiList(wiList);
+		Assert.assertEquals(3, wiList.size());
+
+		LOGGER.info("5: Short the first pick, which auto-shorts the second. This yields incomplete pick of 11111 and 22222.");
+		WorkInstruction wi = picker.getActivePick();
+		int button = picker.buttonFor(wi);
+		int quantity = wi.getPlanQuantity();
+		Assert.assertEquals(1, quantity); // just making sure this test case stays stable
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 3000);
+		picker.pick(button, 0);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 3000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+
+		beginTransaction();
+		EdiExportService exportProvider = workService.getExportProvider();
+		IFacilityEdiExporter exporter = exportProvider.getEdiExporter(facility);
+		exporter.waitUntillQueueIsEmpty(20000);
+
+		LOGGER.info("6: Verify sent messages");
+		// Comoplicated. Show a 1 of 3 for item 2 on 11111, then 0 of 2 for item 2 11111 (the short)
+		List<ExportMessage> messages = ExportMessage.staticGetDao().getAll();
+		Assert.assertEquals(5, messages.size());
+		for (ExportMessage message : messages) {
+			String orderId = message.getOrderId();
+			String expectedContents = null;
+			if ("11111".equals(orderId) && message.getType() == ExportMessageType.ORDER_ON_CART_FINISHED) {
+				expectedContents = "0073^ORDERSTATUS         ^0000000000^11111               ^CHE                 ^CHE1                ^CLOSED         \r\n"
+						+ "0090^PICKMISSIONSTATUS   ^0000000000^11111               ^locationA           ^000000000000001^000000000000000^1                        \r\n"
+						+ "0057^ENDORDER            ^0000000000^11111";
+			} else if ("22222".equals(orderId) && message.getType() == ExportMessageType.ORDER_ON_CART_FINISHED) {
+
+				expectedContents = "0073^ORDERSTATUS         ^0000000000^22222               ^CHE                 ^CHE1                ^CLOSED         \r\n"
+						+ "0090^PICKMISSIONSTATUS   ^0000000000^22222               ^locationA           ^000000000000001^000000000000000^1                        \r\n"
+						+ "0057^ENDORDER            ^0000000000^22222";
+			} else if ("44444".equals(orderId)) {
+				expectedContents = "0073^ORDERSTATUS         ^0000000000^44444               ^CHE1   ^  ^OPEN";
+			} else if ("22222".equals(orderId) && message.getType() == ExportMessageType.ORDER_ON_CART_ADDED) {
+				expectedContents = ""; // don't check. There are two ORDER_ON_CART_ADDED
+			} else if ("11111".equals(orderId) && message.getType() == ExportMessageType.ORDER_ON_CART_ADDED) {
+				expectedContents = ""; // don't check. There are two ORDER_ON_CART_ADDED
+			} else {
+				Assert.fail("Unexpected message: order = " + orderId + ", contents = " + message.getContents());
+			}
+			if (!expectedContents.isEmpty())
+				Assert.assertEquals(expectedContents, message.getContents().trim());
+		}
+		commitTransaction();
+	}
+
 	@Test
 	public void testEDIActiveFlag() throws Exception {
 		Facility facility = setUpSimpleNoSlotFacility();
@@ -2514,7 +2641,8 @@ public class CheProcessTestPick extends ServerTest {
 		ExtensionPoint.staticGetDao().store(onCartExt);
 
 		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
-				+ "\r\n11111,11111,1,Test Item 1,1,each,loc1,0" + "\r\n22222,22222,2,Test Item 2,1,each,loc2,0"
+				+ "\r\n11111,11111,1,Test Item 1,1,each,loc1,0" //
+				+ "\r\n22222,22222,2,Test Item 2,1,each,loc2,0" //
 				+ "\r\n33333,33333,3,Test Item 3,1,each,loc3,0";
 		importOrdersData(facility, csvOrders);
 
