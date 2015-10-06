@@ -15,7 +15,7 @@ import com.codeshelf.manager.User;
 import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.testframework.MinimalTest;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.google.common.collect.ImmutableSet;
@@ -33,7 +33,7 @@ public class SessionManagerTest extends MinimalTest {
 	protected List<Service> generateEphemeralServices() {
 		IMetricsService metrics = new DummyMetricsService();
 		MetricsService.setInstance(metrics);
-		sessionManager = new WebSocketManagerService(metrics, Mockito.mock(WorkService.class)); //this.webSocketManagerService;
+		sessionManager = new WebSocketManagerService(metrics, Mockito.mock(WorkBehavior.class)); //this.webSocketManagerService;
 		WebSocketManagerService.setInstance(sessionManager);
 
 		ArrayList<Service> services = new ArrayList<Service>();

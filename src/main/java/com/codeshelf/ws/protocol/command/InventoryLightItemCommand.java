@@ -6,7 +6,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.service.InventoryService;
+import com.codeshelf.service.InventoryBehavior;
 import com.codeshelf.ws.protocol.request.InventoryLightItemRequest;
 import com.codeshelf.ws.protocol.response.InventoryLightItemResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
@@ -19,9 +19,9 @@ public class InventoryLightItemCommand extends CommandABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ComputeWorkCommand.class);
 
 	private InventoryLightItemRequest request;
-	private InventoryService inventoryService;
+	private InventoryBehavior inventoryService;
 	
-	public InventoryLightItemCommand(WebSocketConnection connection, InventoryLightItemRequest request, InventoryService inventoryService) {
+	public InventoryLightItemCommand(WebSocketConnection connection, InventoryLightItemRequest request, InventoryBehavior inventoryService) {
 		super(connection);
 		this.request = request;
 		this.inventoryService = inventoryService;

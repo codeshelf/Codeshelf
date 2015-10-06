@@ -39,7 +39,7 @@ import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.util.ASCIIAlphanumericComparator;
 import com.codeshelf.util.UomNormalizer;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -408,7 +408,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	/**
 	 * Currently only called for outbound order detail. Only outbound details produce work instructions currently, even though some are part of crossbatch case.
 	 */
-	public boolean willProduceWi(WorkService workService) {
+	public boolean willProduceWi(WorkBehavior workService) {
 		return workService.willOrderDetailGetWi(this);
 	}
 
@@ -417,7 +417,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	 * If the order header is crossbatch, leave blank. If outbound, then Y or -. Other types not implemented. Return ??
 	 * Advanced: If already completed work instruction: C. If short and not complete yet: s
 	 */
-	public String getWillProduceWiUi(WorkService workService) {
+	public String getWillProduceWiUi(WorkBehavior workService) {
 		OrderTypeEnum myParentType = getParentOrderType();
 		if (myParentType == OrderTypeEnum.CROSS)
 			return "";

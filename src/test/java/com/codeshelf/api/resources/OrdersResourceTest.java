@@ -13,7 +13,7 @@ import com.codeshelf.api.resources.subresources.ImportResource;
 import com.codeshelf.edi.OutboundOrderPrefetchCsvImporter;
 import com.codeshelf.event.EventProducer;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.service.OrderService;
+import com.codeshelf.service.OrderBehavior;
 import com.codeshelf.testframework.ServerTest;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 
@@ -45,7 +45,7 @@ public class OrdersResourceTest extends ServerTest {
 		commitTransaction();
 		
 		beginTransaction();
-		OrdersResource ordersResource = new OrdersResource(new OrderService());
+		OrdersResource ordersResource = new OrdersResource(new OrderBehavior());
 		ordersResource.setFacility(facility);
 		Response response = ordersResource.deleteOrders();
 		commitTransaction();

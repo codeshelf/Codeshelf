@@ -23,7 +23,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.persistence.TenantPersistenceService;
-import com.codeshelf.service.ServiceFactory;
+import com.codeshelf.service.BehaviorFactory;
 import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.protocol.command.ArgsClass;
@@ -43,7 +43,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class CreatePathCommandTest extends HibernateTest {
 
 	@Mock
-	private ServiceFactory mockServiceFactory;
+	private BehaviorFactory mockServiceFactory;
 
 	@Test
 	public void testPojo() throws JsonGenerationException, JsonMappingException, IOException {

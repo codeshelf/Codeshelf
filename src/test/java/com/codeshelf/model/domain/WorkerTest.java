@@ -16,11 +16,11 @@ import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.resources.WorkersResource;
 import com.codeshelf.api.resources.subresources.FacilityResource;
 import com.codeshelf.api.resources.subresources.WorkerResource;
-import com.codeshelf.service.NotificationService;
-import com.codeshelf.service.OrderService;
+import com.codeshelf.service.NotificationBehavior;
+import com.codeshelf.service.OrderBehavior;
 import com.codeshelf.service.PropertyService;
-import com.codeshelf.service.UiUpdateService;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.UiUpdateBehavior;
+import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.testframework.HibernateTest;
 import com.google.inject.Provider;
 
@@ -31,16 +31,16 @@ public class WorkerTest extends HibernateTest {
 	@Before
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void init(){
-		WorkService workService = mock(WorkService.class);
-		OrderService orderService = new OrderService();
-		NotificationService notificaitonService = new NotificationService();
+		WorkBehavior workService = mock(WorkBehavior.class);
+		OrderBehavior orderService = new OrderBehavior();
+		NotificationBehavior notificaitonService = new NotificationBehavior();
 		
 		Provider anyProvider = mock(Provider.class);
 		facilityResource = new FacilityResource(workService, 
 			orderService, 
 			notificaitonService, 
 			webSocketManagerService, 
-			new UiUpdateService(), 
+			new UiUpdateBehavior(), 
 			new PropertyService(),
 			anyProvider, 
 			anyProvider, 

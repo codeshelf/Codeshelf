@@ -14,7 +14,7 @@ import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
-import com.codeshelf.service.PalletizerService.PalletizerInfo;
+import com.codeshelf.service.PalletizerBehavior.PalletizerInfo;
 import com.google.common.collect.Lists;
 
 /**

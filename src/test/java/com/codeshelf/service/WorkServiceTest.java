@@ -125,7 +125,7 @@ public class WorkServiceTest extends ServerTest {
 
 	@Test
 	public void shortedWorkInstructionShortsOrderDetail() {
-		this.workService = new WorkService(mock(LightService.class), mock(EdiExportService.class));
+		this.workService = new WorkBehavior(mock(LightBehavior.class), mock(EdiExportService.class));
 
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = facilityGenerator.generateValid();
@@ -162,17 +162,17 @@ public class WorkServiceTest extends ServerTest {
 		request.setClassName("WorkService"); //the ux would use strings
 		request.setMethodName("workAssignedSummary");
 		request.setMethodArgs(ImmutableList.of(cheId.toString(), facility.getPersistentId().toString()));
-		WorkService workService = mock(WorkService.class);
+		WorkBehavior workService = mock(WorkBehavior.class);
 		when(workService.workAssignedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary> emptyList());
-		ServiceFactory factory = new ServiceFactory(workService,
-			mock(LightService.class),
+		BehaviorFactory factory = new BehaviorFactory(workService,
+			mock(LightBehavior.class),
 			mock(DummyPropertyService.class),
-			mock(UiUpdateService.class),
-			mock(OrderService.class),
-			mock(InventoryService.class),
-			mock(NotificationService.class),
-			mock(InfoService.class),
-			mock(PalletizerService.class));
+			mock(UiUpdateBehavior.class),
+			mock(OrderBehavior.class),
+			mock(InventoryBehavior.class),
+			mock(NotificationBehavior.class),
+			mock(InfoBehavior.class),
+			mock(PalletizerBehavior.class));
 		this.getTenantPersistenceService().commitTransaction();
 
 		IMessageProcessor processor = new ServerMessageProcessor(factory,
@@ -186,17 +186,17 @@ public class WorkServiceTest extends ServerTest {
 		request2.setClassName("WorkService"); //the ux would use strings
 		request2.setMethodName("workCompletedSummary");
 		request2.setMethodArgs(ImmutableList.of(cheId.toString(), facility.getPersistentId().toString()));
-		WorkService workService2 = mock(WorkService.class);
+		WorkBehavior workService2 = mock(WorkBehavior.class);
 		when(workService2.workCompletedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary> emptyList());
-		ServiceFactory factory2 = new ServiceFactory(workService2,
-			mock(LightService.class),
+		BehaviorFactory factory2 = new BehaviorFactory(workService2,
+			mock(LightBehavior.class),
 			mock(DummyPropertyService.class),
-			mock(UiUpdateService.class),
-			mock(OrderService.class),
-			mock(InventoryService.class),
-			mock(NotificationService.class),
-			mock(InfoService.class),
-			mock(PalletizerService.class));
+			mock(UiUpdateBehavior.class),
+			mock(OrderBehavior.class),
+			mock(InventoryBehavior.class),
+			mock(NotificationBehavior.class),
+			mock(InfoBehavior.class),
+			mock(PalletizerBehavior.class));
 		IMessageProcessor processor2 = new ServerMessageProcessor(factory2,
 			new ConverterProvider().get(),
 			this.webSocketManagerService);
@@ -209,7 +209,7 @@ public class WorkServiceTest extends ServerTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void summariesAreSorted() {
-		this.workService = new WorkService(mock(LightService.class), mock(EdiExportService.class));
+		this.workService = new WorkBehavior(mock(LightBehavior.class), mock(EdiExportService.class));
 
 		this.getTenantPersistenceService().beginTransaction();
 
@@ -330,7 +330,7 @@ public class WorkServiceTest extends ServerTest {
 		EdiExportService provider = mock(EdiExportService.class);
 		when(provider.getEdiExporter(any(Facility.class))).thenReturn(ediExporter);
 
-		this.workService = new WorkService(mock(LightService.class), provider);
+		this.workService = new WorkBehavior(mock(LightBehavior.class), provider);
 	}
 
 	private List<WorkInstruction> generateValidWorkInstructions(int total) {

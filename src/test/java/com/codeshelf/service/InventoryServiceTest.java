@@ -52,8 +52,8 @@ public class InventoryServiceTest extends ServerTest {
 	
 	@Test
 	public void testInventoryService() {
-		LightService ls = new LightService();
-		this.inventoryService = new InventoryService(ls);
+		LightBehavior ls = new LightBehavior();
+		this.inventoryService = new InventoryBehavior(ls);
 		this.initializeEphemeralServiceManager();
 		
 		this.getTenantPersistenceService().beginTransaction();
@@ -122,8 +122,8 @@ public class InventoryServiceTest extends ServerTest {
 	
 	@Test
 	public void testAssignLocationTapeId(){
-		LightService ls = new LightService();
-		this.inventoryService = new InventoryService(ls);
+		LightBehavior ls = new LightBehavior();
+		this.inventoryService = new InventoryBehavior(ls);
 		this.initializeEphemeralServiceManager();
 		
 		this.getTenantPersistenceService().beginTransaction();

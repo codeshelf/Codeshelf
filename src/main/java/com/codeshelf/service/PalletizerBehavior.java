@@ -29,13 +29,13 @@ import com.google.inject.Inject;
 import lombok.Getter;
 import lombok.Setter;
 
-public class PalletizerService implements IApiService{
-	private LightService lightService;
+public class PalletizerBehavior implements IApiBehavior{
+	private LightBehavior lightService;
 	
-	private static final Logger			LOGGER					= LoggerFactory.getLogger(WorkService.class);
+	private static final Logger			LOGGER					= LoggerFactory.getLogger(WorkBehavior.class);
 	
 	@Inject
-	public PalletizerService(LightService inLightService) {
+	public PalletizerBehavior(LightBehavior inLightService) {
 		this.lightService = inLightService;
 	}
 

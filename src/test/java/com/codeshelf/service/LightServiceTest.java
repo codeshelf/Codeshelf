@@ -93,7 +93,7 @@ public class LightServiceTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 		
 		LOGGER.info("4: mockProp.getPropertyAsColor");
-		IPropertyService mockProp = Mockito.spy(new DummyPropertyService());
+		IPropertyBehavior mockProp = Mockito.spy(new DummyPropertyService());
 		ArrayList<Service> services = new ArrayList<Service>(1);
 		services.add(mockProp);
 		ServiceManager serviceManager = new ServiceManager(services); // todo: shortcut method to start/destroy service for single test
@@ -108,7 +108,7 @@ public class LightServiceTest extends ServerTest {
 		});
 		
 		LOGGER.info("5: new LightService");
-		LightService lightService = new LightService();
+		LightBehavior lightService = new LightBehavior();
 		WebSocketManagerService webSocketManagerService = mock(WebSocketManagerService.class);
 		WebSocketManagerService.setInstance(webSocketManagerService);
 
@@ -292,7 +292,7 @@ public class LightServiceTest extends ServerTest {
 		
 		ColorEnum color = ColorEnum.RED;
 		
-		LightService lightService = new LightService();
+		LightBehavior lightService = new LightBehavior();
 		List<Location> locations = Lists.newArrayList();
 		locations.add(parent);
 		lightService.lightChildLocations(facility, locations, color);

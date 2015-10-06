@@ -18,7 +18,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.LightService;
+import com.codeshelf.service.LightBehavior;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.util.ThreadUtils;
 
@@ -107,7 +107,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = getFacility();
-		LightService lightService = workService.getLightService();
+		LightBehavior lightService = workService.getLightService();
 		lightService.lightLocation(facility.getPersistentId().toString(), "P11");
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -677,7 +677,7 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Assert.assertEquals(63, ((Short) slot.getLastLedNumAlongPath()).intValue());
 
 		LOGGER.info("1: send location lighting message for slot P12 with leds from 35 to 63");
-		LightService lightService = workService.getLightService();
+		LightBehavior lightService = workService.getLightService();
 		lightService.lightLocation(theFacility.getPersistentId().toString(), "P12");
 		commitTransaction();
 		// Look in the console to see what got sent.

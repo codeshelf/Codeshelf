@@ -27,7 +27,7 @@ import com.codeshelf.metrics.IsProductionServerHealthCheck;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.security.TokenSessionService;
-import com.codeshelf.service.IPropertyService;
+import com.codeshelf.service.IPropertyBehavior;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.inject.Inject;
 
@@ -50,7 +50,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 			final IMetricsService metricsService,
 			final WebSocketManagerService webSocketManagerService,
 			final EdiExportService ediExporterProvider,
-			final IPropertyService propertyService,
+			final IPropertyBehavior propertyService,
 			final TokenSessionService authService,
 			final SecurityManager securityManager,
 			final SchedulingService schedulingService,

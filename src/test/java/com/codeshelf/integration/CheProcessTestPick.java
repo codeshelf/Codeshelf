@@ -63,7 +63,7 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.service.PropertyService;
-import com.codeshelf.service.UiUpdateService;
+import com.codeshelf.service.UiUpdateBehavior;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
@@ -2447,7 +2447,7 @@ public class CheProcessTestPick extends ServerTest {
 	@Test
 	public void getDefaultProcessMode() {
 		beginTransaction();
-		UiUpdateService service = new UiUpdateService();
+		UiUpdateBehavior service = new UiUpdateBehavior();
 		Facility facility = getFacility();
 		CodeshelfNetwork network = this.getNetwork();
 		Che che = network.createChe("0x00000004", new NetGuid("0x00000004"));

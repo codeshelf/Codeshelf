@@ -6,8 +6,8 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.service.InventoryService;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.InventoryBehavior;
+import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
 import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.protocol.response.InventoryUpdateResponse;
@@ -21,10 +21,10 @@ public class InventoryUpdateCommand extends CommandABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ComputeWorkCommand.class);
 
 	private InventoryUpdateRequest request;
-	private InventoryService inventoryService;
-	private WorkService workService;
+	private InventoryBehavior inventoryService;
+	private WorkBehavior workService;
 	
-	public InventoryUpdateCommand(WebSocketConnection connection, InventoryUpdateRequest request, InventoryService inventoryService, WorkService workService) {
+	public InventoryUpdateCommand(WebSocketConnection connection, InventoryUpdateRequest request, InventoryBehavior inventoryService, WorkBehavior workService) {
 		super(connection);
 		this.request = request;
 		this.inventoryService = inventoryService;

@@ -16,8 +16,8 @@ import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Point;
-import com.codeshelf.service.ServiceFactory;
-import com.codeshelf.service.UiUpdateService;
+import com.codeshelf.service.BehaviorFactory;
+import com.codeshelf.service.UiUpdateBehavior;
 import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.protocol.request.ObjectUpdateRequest;
@@ -35,7 +35,7 @@ public class CreateCheTest extends MockDaoTest {
 	@Before
 	public void doBefore() {
 		super.doBefore();
-		processor = new ServerMessageProcessor(Mockito.mock(ServiceFactory.class), new ConverterProvider().get(), this.webSocketManagerService);
+		processor = new ServerMessageProcessor(Mockito.mock(BehaviorFactory.class), new ConverterProvider().get(), this.webSocketManagerService);
 	}
 
 	
@@ -45,7 +45,7 @@ public class CreateCheTest extends MockDaoTest {
 		Facility facility = createFacility();
 		Facility.staticGetDao().store(facility);		
 		
-		UiUpdateService service = new UiUpdateService();
+		UiUpdateBehavior service = new UiUpdateBehavior();
 		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL");
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -65,7 +65,7 @@ public class CreateCheTest extends MockDaoTest {
 		Facility facility = createFacility();
 		Facility.staticGetDao().store(facility);		
 		
-		UiUpdateService service = new UiUpdateService();
+		UiUpdateBehavior service = new UiUpdateBehavior();
 		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL");
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -273,7 +273,7 @@ public class CreateCheTest extends MockDaoTest {
 	public void cheUpdateFromUISuccess() {
 		this.getTenantPersistenceService().beginTransaction();
 		Che che = createTestChe("0x00000002");
-		UiUpdateService service = new UiUpdateService();
+		UiUpdateBehavior service = new UiUpdateBehavior();
 		service.updateChe(che.getPersistentId().toString(),"Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL");
 		java.util.UUID cheid = che.getPersistentId();
 		this.getTenantPersistenceService().commitTransaction();
@@ -292,7 +292,7 @@ public class CreateCheTest extends MockDaoTest {
 	public void cheUpdateFromUIFail() {
 		this.getTenantPersistenceService().beginTransaction();
 		Che che = createTestChe("0x00000003");
-		UiUpdateService service = new UiUpdateService();
+		UiUpdateBehavior service = new UiUpdateBehavior();
 		String persistentId = che.getPersistentId().toString();
 		//Update che successfully
 		service.updateChe(persistentId, "Test Device", "Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL");

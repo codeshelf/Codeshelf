@@ -83,14 +83,14 @@ import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.service.ExtensionPointService;
-import com.codeshelf.service.NotificationService;
-import com.codeshelf.service.NotificationService.WorkerEventTypeGroup;
-import com.codeshelf.service.OrderService;
+import com.codeshelf.service.NotificationBehavior;
+import com.codeshelf.service.NotificationBehavior.WorkerEventTypeGroup;
+import com.codeshelf.service.OrderBehavior;
 import com.codeshelf.service.ParameterSetBeanABC;
 import com.codeshelf.service.ProductivitySummaryList;
 import com.codeshelf.service.PropertyService;
-import com.codeshelf.service.UiUpdateService;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.UiUpdateBehavior;
+import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.ws.protocol.message.CheDisplayMessage;
 import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
@@ -110,11 +110,11 @@ public class FacilityResource {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(FacilityResource.class);
 
 	
-	private final WorkService	workService;
-	private final OrderService orderService;
-	private final NotificationService notificationService;
+	private final WorkBehavior	workService;
+	private final OrderBehavior orderService;
+	private final NotificationBehavior notificationService;
 	private final WebSocketManagerService webSocketManagerService;
-	private final UiUpdateService uiUpdateService;
+	private final UiUpdateBehavior uiUpdateService;
 	private final PropertyService propertyService;
 	private final Provider<ICsvAislesFileImporter> aislesImporterProvider;
 	private final Provider<ICsvLocationAliasImporter> locationsImporterProvider;
@@ -128,11 +128,11 @@ public class FacilityResource {
 	private ResourceContext resourceContext;
 
 	@Inject
-	public FacilityResource(WorkService workService,
-		OrderService orderService,
-		NotificationService notificationService,
+	public FacilityResource(WorkBehavior workService,
+		OrderBehavior orderService,
+		NotificationBehavior notificationService,
 		WebSocketManagerService webSocketManagerService,
-		UiUpdateService uiUpdateService,
+		UiUpdateBehavior uiUpdateService,
 		PropertyService propertyService,
 		Provider<ICsvAislesFileImporter> aislesImporterProvider,
 		Provider<ICsvLocationAliasImporter> locationsImporterProvider,

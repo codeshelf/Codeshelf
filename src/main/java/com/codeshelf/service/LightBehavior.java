@@ -41,9 +41,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
-public class LightService implements IApiService {
+public class LightBehavior implements IApiBehavior {
 
-	private static final Logger		LOGGER						= LoggerFactory.getLogger(LightService.class);
+	private static final Logger		LOGGER						= LoggerFactory.getLogger(LightBehavior.class);
 
 	private final static ColorEnum	defaultColor				= ColorEnum.RED;
 	private final static int		defaultLightDurationSeconds	= 20;
@@ -54,7 +54,7 @@ public class LightService implements IApiService {
 	private final static int		defaultLedsToLight			= 4;											// IMPORTANT. This should be synched with WIFactory.maxLedsToLight
 
 	@Inject
-	public LightService() {
+	public LightBehavior() {
 	}
 
 	// --------------------------------------------------------------------------

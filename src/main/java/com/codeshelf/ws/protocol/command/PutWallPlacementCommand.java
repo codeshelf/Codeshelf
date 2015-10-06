@@ -5,7 +5,7 @@ import java.util.UUID;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.service.WorkService;
+import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.ws.protocol.request.PutWallPlacementRequest;
 import com.codeshelf.ws.protocol.response.PutWallPlacementResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
@@ -16,9 +16,9 @@ import com.codeshelf.ws.server.WebSocketConnection;
 public class PutWallPlacementCommand extends CommandABC{
 	private PutWallPlacementRequest request;
 	
-	private WorkService	workService;
+	private WorkBehavior	workService;
 	
-	public PutWallPlacementCommand(WebSocketConnection connection, PutWallPlacementRequest request, WorkService workService) {
+	public PutWallPlacementCommand(WebSocketConnection connection, PutWallPlacementRequest request, WorkBehavior workService) {
 		super(connection);
 		this.request = request;
 		this.workService = workService;

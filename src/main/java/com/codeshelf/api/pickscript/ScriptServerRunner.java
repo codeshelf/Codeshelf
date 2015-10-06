@@ -45,7 +45,7 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.service.PropertyService;
-import com.codeshelf.service.UiUpdateService;
+import com.codeshelf.service.UiUpdateBehavior;
 import com.codeshelf.util.CsExceptionUtils;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
@@ -80,7 +80,7 @@ public class ScriptServerRunner {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScriptSiteRunner.class);
 	private final UUID facilityId;
-	private final UiUpdateService uiUpdateService;
+	private final UiUpdateBehavior uiUpdateService;
 	private final PropertyService propertyService;
 	private final Provider<ICsvOrderImporter> orderImporterProvider;
 	private final Provider<ICsvAislesFileImporter> aisleImporterProvider;
@@ -94,7 +94,7 @@ public class ScriptServerRunner {
 	public ScriptServerRunner(
 		UUID facilityId,
 		FormDataMultiPart postBody,
-		UiUpdateService uiUpdateService,
+		UiUpdateBehavior uiUpdateService,
 		PropertyService propertyService,
 		Provider<ICsvAislesFileImporter> aisleImporterProvider,
 		Provider<ICsvLocationAliasImporter> locationsImporterProvider,

@@ -102,15 +102,15 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
-public class WorkService implements IApiService {
+public class WorkBehavior implements IApiBehavior {
 
 	private static final String	THREAD_CONTEXT_TAGS_KEY	= "tags";										// duplicated in CheDeviceLogic. Need a common place
 
 	private static Double		BAY_ALIGNMENT_FUDGE		= 0.25;
 
-	private static final Logger	LOGGER					= LoggerFactory.getLogger(WorkService.class);
+	private static final Logger	LOGGER					= LoggerFactory.getLogger(WorkBehavior.class);
 
-	private final LightService	lightService;
+	private final LightBehavior	lightService;
 
 	@Getter
 	private EdiExportService	exportProvider;
@@ -135,7 +135,7 @@ public class WorkService implements IApiService {
 	}
 
 	@Inject
-	public WorkService(LightService lightService, EdiExportService exportProvider) {
+	public WorkBehavior(LightBehavior lightService, EdiExportService exportProvider) {
 		this.lightService = lightService;
 		this.exportProvider = exportProvider;
 	}
@@ -152,7 +152,7 @@ public class WorkService implements IApiService {
 	/**
 	 * Seems a bit silly, but we do not have a good means to get hold of services. Test framework has the work service, so this is the best kludge.
 	 */
-	public LightService getLightService() {
+	public LightBehavior getLightService() {
 		return this.lightService;
 	}
 

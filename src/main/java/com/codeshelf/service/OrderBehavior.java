@@ -49,7 +49,7 @@ import com.codeshelf.util.UomNormalizer;
  *
  *
  */
-public class OrderService implements IApiService {
+public class OrderBehavior implements IApiBehavior {
 
 	@EqualsAndHashCode(of = { "orderId", "orderDetailId" })
 	public static class OrderDetailView {
@@ -105,7 +105,7 @@ public class OrderService implements IApiService {
 
 	}
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(OrderService.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(OrderBehavior.class);
 
 	public Collection<ItemView> itemsInQuantityOrder(Session session, UUID facilityUUID) {
 		@SuppressWarnings("unchecked")

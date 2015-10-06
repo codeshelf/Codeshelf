@@ -12,7 +12,7 @@ import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Tier;
-import com.codeshelf.service.UiUpdateService;
+import com.codeshelf.service.UiUpdateBehavior;
 import com.codeshelf.testframework.HibernateTest;
 
 public class CreateControllerTest extends HibernateTest{
@@ -21,7 +21,7 @@ public class CreateControllerTest extends HibernateTest{
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = getFacility();
 		Facility.staticGetDao().store(facility);
-		UiUpdateService service = new UiUpdateService();
+		UiUpdateBehavior service = new UiUpdateBehavior();
 		UUID controllerId = service.addController(facility.getPersistentId().toString(), "1a", "Poscons");
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -38,7 +38,7 @@ public class CreateControllerTest extends HibernateTest{
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();
 		Facility.staticGetDao().store(facility);
-		UiUpdateService service = new UiUpdateService();
+		UiUpdateBehavior service = new UiUpdateBehavior();
 		UUID controllerId = service.addController(facility.getPersistentId().toString(), "1a", "Poscons");
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -62,7 +62,7 @@ public class CreateControllerTest extends HibernateTest{
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpFacilityWithAisles();
 		Facility.staticGetDao().store(facility);
-		UiUpdateService service = new UiUpdateService();
+		UiUpdateBehavior service = new UiUpdateBehavior();
 		UUID controllerId = service.addController(facility.getPersistentId().toString(), "1a", "Poscons");
 		LedController controller = LedController.staticGetDao().findByPersistentId(controllerId);
 		//Retrieve an aisle and an unrelated tier
