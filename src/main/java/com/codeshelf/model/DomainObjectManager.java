@@ -275,6 +275,70 @@ public class DomainObjectManager {
 	}
 
 	/**
+	 * This returns the full list of UUIDs of OrderHeaders whose dueDate is older than daysOld before now.
+	 */
+	public List<UUID> getOrderUuidsToPurge(int daysOld) {
+		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
+		UUID facilityUUID = getFacility().getPersistentId();
+		Criteria orderCrit = OrderHeader.staticGetDao().createCriteria();
+		orderCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		orderCrit.add(Restrictions.lt("dueDate", desiredTime));
+		List<UUID> uuidList = OrderHeader.staticGetDao().getUUIDListByCriteriaQuery(orderCrit);
+		return uuidList;
+	}
+	
+	/**
+	 * Purge these orders, and related objects, all in the current transaction.
+	 * This imposes a max at one time limit of 100. We expect small values per transaction in production
+	 */
+	public void purgeSomeOrders(List<UUID> orderUuids){
+		final int MAX_ORDER_PURGE = 100;
+		int wantToPurge = orderUuids.size();
+		int willPurge = Math.min(wantToPurge, MAX_ORDER_PURGE);
+		if (wantToPurge > MAX_ORDER_PURGE) {
+			LOGGER.error("Limiting order delete batch size to {}. Called for {}.", MAX_ORDER_PURGE, wantToPurge);
+		}
+		
+		// Trying to speed up by not relying quite so much on the hibernate delete cascade.
+		// Result: not much improvement in time. But much nicer logging about the process. (changed to debug logging now)
+		LOGGER.debug("Phase 2 of order purge: assemble list of details for these orders");
+
+		List<OrderDetail> details = OrderDetail.staticGetDao().findByParentPersistentIdList(orderUuids);
+
+		LOGGER.debug("Phase 3 of order purge: assemble work instructions from the details");
+		List<WorkInstruction> wis = new ArrayList<WorkInstruction>();
+		for (OrderDetail detail : details) {
+			List<WorkInstruction> oneOrderWis = detail.getWorkInstructions();
+			wis.addAll(oneOrderWis);
+		}
+
+		LOGGER.debug("Phase 4 of order purge: delete the assembled work instructions, which delinks from details and che.");
+		safelyDeleteWorkInstructionList(wis);
+
+		LOGGER.debug("Phase 5 of order purge: delete the details");
+		safelyDeleteDetailsList(details);
+
+		LOGGER.debug("Phase 6 of order purge: delete the orders which delinks from container");
+
+		int deletedCount = 0;
+		for (UUID orderUuid : orderUuids) {
+			// just protection against bad call
+			if (deletedCount > willPurge)
+				break;
+			try {
+				OrderHeader order = OrderHeader.staticGetDao().findByPersistentId(orderUuid);
+				if (order != null) {
+					order.delete();
+					deletedCount++;
+				}
+			} catch (DaoException e) {
+				LOGGER.error("purgeOrders", e);
+			}
+
+		}
+	}
+
+	/**
 	 * This purge assumes that order.delete() follows our parent child pattern. It is not done here.
 	 */
 	private void purgeOrders(int daysOldToCount, int maxToPurgeAtOnce) {
@@ -303,58 +367,9 @@ public class DomainObjectManager {
 			LOGGER.info("purging only {}  of {} purgable orders and owned related objects", willPurge, wantToPurge);
 		else
 			LOGGER.info("purging {} orders and owned related objects", willPurge);
+		
+		purgeSomeOrders(uuidList);
 
-		// Trying to speed up by not relying quite so much on the hibernate delete cascade.
-		// Result: not much improvement in time. But much nicer logging about the process.
-		LOGGER.info("Phase 2 of order purge: assemble list of details for these orders");
-
-		/*
-		List<UUID> uuidList = new ArrayList<UUID>();
-		for (OrderHeader order : orders) {
-			uuidList.add(order.getPersistentId());
-		}
-		*/
-
-		// 500 orders with 2900 details assembles in 2 seconds using findByParentPersistentIdList
-		List<OrderDetail> details = OrderDetail.staticGetDao().findByParentPersistentIdList(uuidList);
-
-		// My test case did not have enough work instruction to know if this helped or not.
-		LOGGER.info("Phase 3 of order purge: assemble work instructions from the details");
-		List<WorkInstruction> wis = new ArrayList<WorkInstruction>();
-		for (OrderDetail detail : details) {
-			List<WorkInstruction> oneOrderWis = detail.getWorkInstructions();
-			wis.addAll(oneOrderWis);
-		}
-
-		LOGGER.info("Phase 4 of order purge: delete the assembled work instructions, which delinks from details and che.");
-		safelyDeleteWorkInstructionList(wis);
-
-		LOGGER.info("Phase 5 of order purge: delete the details");
-		safelyDeleteDetailsList(details);
-
-		LOGGER.info("Phase 6 of order purge: delete the orders which delinks from container");
-
-		int deletedCount = 0;
-		// for (OrderHeader order : orders) {
-		for (UUID orderUuid : uuidList) {
-			try {
-				OrderHeader order = OrderHeader.staticGetDao().findByPersistentId(orderUuid);
-				if (order != null) {
-					order.delete();
-					deletedCount++;
-					if (deletedCount % 100 == 0)
-						LOGGER.info("deleted {} Orders ", deletedCount);
-				}
-			} catch (DaoException e) {
-				LOGGER.error("purgeOrders", e);
-			}
-
-		}
-		if (deletedCount % 100 != 0)
-			LOGGER.info("deleted {} Orders ", deletedCount);
-		// Note: after you see this, there is the transaction commit. That seems to run in linear time:
-		// 500 orders with 2900 details commits in 39 seconds
-		// 1000 orders with 5800 details commits in 76 seconds
 	}
 
 	/**

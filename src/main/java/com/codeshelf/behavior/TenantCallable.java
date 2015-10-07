@@ -58,7 +58,7 @@ public class TenantCallable implements Callable<BatchReport>{
 		//persistenceService.saveOrUpdate(report);
 	}
 	
-	public BatchReport call() throws Exception {
+	public BatchReport call() {
 		runTiming.start();
 		BatchReport report = new BatchReport(DateTime.now());
 		try {
@@ -73,7 +73,7 @@ public class TenantCallable implements Callable<BatchReport>{
 			} catch (Exception e) {
 				persistenceService.rollbackTransaction();
 				report.setException(e);
-				throw e;
+				return report;
 			}
 
 			int batchCount = 0;
@@ -88,6 +88,7 @@ public class TenantCallable implements Callable<BatchReport>{
 					persistenceService.rollbackTransaction();
 					LOGGER.warn("Received exception during batch: {}", batchCount, e);
 					report.setException(e);
+					return report;
 				}
 			} 
 		} finally {
@@ -98,17 +99,16 @@ public class TenantCallable implements Callable<BatchReport>{
 					report.setCancelled();
 				}
 				persistenceService.beginTransaction();
-				int completeCount = delegate.doTeardown();
-				report.setCount(completeCount);
+				delegate.doTeardown();
 				saveReport(report);
 				persistenceService.commitTransaction();
-				if (cancelled != null) {
-					cancelled.set(null); //signal cancel is complete
-				}
 			} catch (Exception e) {
 				persistenceService.rollbackTransaction();
 				LOGGER.warn("Exception during final cleanup of {}", delegate, e);
 			} finally {
+				if (cancelled != null) {
+					cancelled.set(null); //signal cancel is complete
+				}
 				CodeshelfSecurityManager.removeContextIfPresent();
 			}
 		}

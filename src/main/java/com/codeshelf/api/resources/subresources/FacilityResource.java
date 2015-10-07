@@ -67,7 +67,6 @@ import com.codeshelf.api.responses.ItemDisplay;
 import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.api.responses.WorkerDisplay;
-import com.codeshelf.behavior.BatchProcessor;
 import com.codeshelf.behavior.NotificationBehavior;
 import com.codeshelf.behavior.NotificationBehavior.WorkerEventTypeGroup;
 import com.codeshelf.behavior.OrderBehavior;
@@ -87,6 +86,8 @@ import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
+import com.codeshelf.model.DataPurgeParameters;
+import com.codeshelf.model.PurgeProcessor;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
@@ -116,29 +117,28 @@ import com.sun.jersey.multipart.FormDataMultiPart;
 
 public class FacilityResource {
 
-	private static final Logger	LOGGER = LoggerFactory.getLogger(FacilityResource.class);
+	private static final Logger							LOGGER			= LoggerFactory.getLogger(FacilityResource.class);
 
-	
-	private final WorkBehavior	workService;
-	private final OrderBehavior orderService;
-	private final NotificationBehavior notificationService;
-	private final WebSocketManagerService webSocketManagerService;
-	private final UiUpdateBehavior uiUpdateService;
-	private final PropertyService propertyService;
-	private final Provider<ICsvAislesFileImporter> aislesImporterProvider;
-	private final Provider<ICsvLocationAliasImporter> locationsImporterProvider;
-	private final Provider<ICsvInventoryImporter> inventoryImporterProvider;
-	private final Provider<ICsvOrderImporter> orderImporterProvider;
+	private final WorkBehavior							workService;
+	private final OrderBehavior							orderService;
+	private final NotificationBehavior					notificationService;
+	private final WebSocketManagerService				webSocketManagerService;
+	private final UiUpdateBehavior						uiUpdateService;
+	private final PropertyService						propertyService;
+	private final Provider<ICsvAislesFileImporter>		aislesImporterProvider;
+	private final Provider<ICsvLocationAliasImporter>	locationsImporterProvider;
+	private final Provider<ICsvInventoryImporter>		inventoryImporterProvider;
+	private final Provider<ICsvOrderImporter>			orderImporterProvider;
 
 	//TODO hacked here to prevent multiple executions
-	private static final ExecutorService purgeExecutor = Executors.newSingleThreadExecutor();
-	private static TenantCallable lastExecutionTask; 
-	
+	private static final ExecutorService				purgeExecutor	= Executors.newSingleThreadExecutor();
+	private static TenantCallable						lastExecutionTask;
+
 	@Setter
-	private Facility facility;
+	private Facility									facility;
 
 	@Context
-	private ResourceContext resourceContext;
+	private ResourceContext								resourceContext;
 
 	@Inject
 	public FacilityResource(WorkBehavior workService,
@@ -166,36 +166,35 @@ public class FacilityResource {
 	@Path("/import")
 	public ImportResource getImportResource() throws Exception {
 		ImportResource r = resourceContext.getResource(ImportResource.class);
-	    r.setFacility(facility);
-	    return r;
+		r.setFacility(facility);
+		return r;
 	}
 
 	@Path("/edigateways")
 	public EDIGatewaysResource getEdiResource() throws Exception {
 		EDIGatewaysResource r = resourceContext.getResource(EDIGatewaysResource.class);
-	    r.setFacility(facility);
-	    return r;
+		r.setFacility(facility);
+		return r;
 	}
 
 	@Path("/test")
 	public TestResource getTestResource() throws Exception {
 		TestResource r = resourceContext.getResource(TestResource.class);
-	    r.setFacility(facility);
-	    r.setTestBehavior(new TestBehavior());
-	    return r;
+		r.setFacility(facility);
+		r.setTestBehavior(new TestBehavior());
+		return r;
 	}
 
-	
 	@DELETE
 	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response detete(){
+	public Response detete() {
 		try {
 			facility.delete(webSocketManagerService);
 			return BaseResponse.buildResponse("Facility Deleted");
 		} catch (ConstraintViolationException e) {
 			SQLException se = e.getSQLException();
-			if (se != null){
+			if (se != null) {
 				return new ErrorResponse().processException(se);
 			} else {
 				return new ErrorResponse().processException(e);
@@ -205,14 +204,12 @@ public class FacilityResource {
 		}
 	}
 
-	
 	@Path("/orders")
 	public OrdersResource getOrders() {
 		OrdersResource r = resourceContext.getResource(OrdersResource.class);
-	    r.setFacility(facility);
-	    return r;
+		r.setFacility(facility);
+		return r;
 	}
-
 
 	@Path("/extensionpoints")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -221,7 +218,7 @@ public class FacilityResource {
 		r.setFacility(facility);
 		return r;
 	}
-	
+
 	@GET
 	@Path("/healthchecks/{type}/configuration")
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
@@ -230,8 +227,8 @@ public class FacilityResource {
 		if ("DataQuantity".equalsIgnoreCase(healthCheckType)) {
 			ExtensionPointService epService = ExtensionPointService.createInstance(facility);
 			Optional<ExtensionPoint> extensionPoint = epService.getDataQuantityHealthCheckExtensionPoint();
-			ParameterSetBeanABC parameterSet = 	epService.getDataQuantityHealthCheckParameters();
-		    Map<String, Object> responseMap = new HashMap<>();
+			ParameterSetBeanABC parameterSet = epService.getDataQuantityHealthCheckParameters();
+			Map<String, Object> responseMap = new HashMap<>();
 			responseMap.put("parameterSet", parameterSet);
 			responseMap.put("extensionPoint", extensionPoint.orNull());
 			return BaseResponse.buildResponse(responseMap);
@@ -241,14 +238,15 @@ public class FacilityResource {
 			return BaseResponse.buildResponse(error, Response.Status.BAD_REQUEST);
 		}
 	}
-	
-	
+
 	@GET
 	@Path("/data/summary")
 	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getDataSummary() {
-		List<String> summary = workService.reportAchiveables(20, this.facility);
+	public Response getDataSummary() throws ScriptException {
+		ExtensionPointService service = ExtensionPointService.createInstance(facility);
+		DataPurgeParameters params = service.getDataPurgeParameters();
+		List<String> summary = workService.reportAchiveables(params.getPurgeAfterDaysValue(), this.facility);
 		return BaseResponse.buildResponse(summary);
 	}
 
@@ -260,41 +258,17 @@ public class FacilityResource {
 		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		UserContext userContext = CodeshelfSecurityManager.getCurrentUserContext();
-		TenantCallable purgeCallable = new TenantCallable(persistenceService, tenant, userContext, new BatchProcessor(){
+		TenantCallable purgeCallable = new TenantCallable(persistenceService, tenant, userContext, new PurgeProcessor(facility));
 
-			@Override
-			public int doSetup() {
-				// TODO Auto-generated method stub
-				return 0;
-			}
-
-			@Override
-			public int doBatch(int batchCount) {
-				// TODO Auto-generated method stub
-				return 0;
-			}
-
-			@Override
-			public int doTeardown() {
-				// TODO Auto-generated method stub
-				return 0;
-			}
-
-			@Override
-			public boolean isDone() {
-				// TODO Auto-generated method stub
-				return true;
-			}});		
-		
 		//TODO do better prevention
 		if (lastExecutionTask != null && lastExecutionTask.isRunning()) {
 			LOGGER.info("Cancelling data purge task {}", lastExecutionTask);
-				ListenableFuture<Void> cancelLast = lastExecutionTask.cancel();
-				try {
-					cancelLast.get(2, TimeUnit.SECONDS);
-				} catch (InterruptedException | ExecutionException | TimeoutException e) {
-					LOGGER.warn("Last purge task cancellation did not complete after 2 seconds: {}", lastExecutionTask, e);
-				}
+			ListenableFuture<Void> cancelLast = lastExecutionTask.cancel();
+			try {
+				cancelLast.get(2, TimeUnit.SECONDS);
+			} catch (InterruptedException | ExecutionException | TimeoutException e) {
+				LOGGER.warn("Last purge task cancellation did not complete after 2 seconds: {}", lastExecutionTask, e);
+			}
 		}
 		lastExecutionTask = purgeCallable;
 		LOGGER.info("Submitted data purge task {}", purgeCallable);
@@ -305,73 +279,58 @@ public class FacilityResource {
 	@GET
 	@Path("/work/instructions/references")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response findWorkInstructionReferences(@QueryParam("itemId") String itemIdSubstring, @QueryParam("containerId") String containerIdSubstring, @QueryParam("assigned") String assigneddDateSpec) {
-		
+	public Response findWorkInstructionReferences(@QueryParam("itemId") String itemIdSubstring,
+		@QueryParam("containerId") String containerIdSubstring,
+		@QueryParam("assigned") String assigneddDateSpec) {
+
 		Interval assigneddInterval = null;
 		if (assigneddDateSpec != null) {
 			assigneddInterval = Interval.parse(assigneddDateSpec);
 		}
-		List<Object[]> results = this.workService.findWorkInstructionReferences(facility, assigneddInterval, itemIdSubstring, containerIdSubstring);
+		List<Object[]> results = this.workService.findWorkInstructionReferences(facility,
+			assigneddInterval,
+			itemIdSubstring,
+			containerIdSubstring);
 		return BaseResponse.buildResponse(results);
-	
+
 	}
-	
+
 	@GET
 	@Path("/work/instructions/{persistentId}")
 	@RequiresPermissions("companion:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getWorkInstruction(@PathParam("persistentId") UUIDParam persistentId, @QueryParam("properties") List<String> propertyNamesList) {
-    	String[] propertyNames = new String[] {
+	public Response getWorkInstruction(@PathParam("persistentId") UUIDParam persistentId,
+		@QueryParam("properties") List<String> propertyNamesList) {
+		String[] propertyNames = new String[] {
 
-    			 "groupAndSortCode",
-    			 "pickerId",
-    			 "type",
-    			 "assigned",
-    			 "completed",
-    			 "pickInstructionUi",
-    			 "nominalLocationId",
-    			 "wiPosAlongPath",
-    			 "description",
-    			 "itemMasterId",
-    			 "planQuantity",
-    			 "uomMasterId",
-    			 "uomNormalized",
-    			 "orderId",
-    			 "orderDetailId",
-    			 "containerId",
-    			 "assignedCheName",
-    			 "domainId",
-    			 "persistentId",
-    			 "status",
-    			 "planMinQuantity",
-    			 "planMaxQuantity",
-    			 "actualQuantity",
-    			 "litLedsForWi",
-    			 "gtin",
-    			 "needsScan"
-    	};
+		"groupAndSortCode", "pickerId", "type", "assigned", "completed", "pickInstructionUi", "nominalLocationId",
+				"wiPosAlongPath", "description", "itemMasterId", "planQuantity", "uomMasterId", "uomNormalized", "orderId",
+				"orderDetailId", "containerId", "assignedCheName", "domainId", "persistentId", "status", "planMinQuantity",
+				"planMaxQuantity", "actualQuantity", "litLedsForWi", "gtin", "needsScan" };
 
 		List<Map<String, Object>> results = this.workService.findtWorkInstructions(facility, propertyNames, persistentId.getValue());
 		if (results.size() == 1) {
 			return BaseResponse.buildResponse(results.get(0));
-		} else if (results.size() == 0){
+		} else if (results.size() == 0) {
 			return BaseResponse.buildResponse(null);
-			
+
 		} else {
-			LOGGER.error("Found multiple orders for {} in facility {}", persistentId, facility); 
+			LOGGER.error("Found multiple orders for {} in facility {}", persistentId, facility);
 			return BaseResponse.buildResponse(null);
 		}
 	}
 
-    @GET
+	@GET
 	@Path("/work/results")
 	@RequiresPermissions("companion:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getWorkResults(@QueryParam("startTimestamp") TimestampParam startTimestamp, @QueryParam("endTimestamp") TimestampParam endTimestamp) {
-    	List<WorkInstruction> results = this.workService.getWorkResults(facility.getPersistentId(), startTimestamp.getValue(), endTimestamp.getValue());
+	public Response getWorkResults(@QueryParam("startTimestamp") TimestampParam startTimestamp,
+		@QueryParam("endTimestamp") TimestampParam endTimestamp) {
+		List<WorkInstruction> results = this.workService.getWorkResults(facility.getPersistentId(),
+			startTimestamp.getValue(),
+			endTimestamp.getValue());
 		return BaseResponse.buildResponse(results);
 	}
-
 
 	@GET
 	@Path("/work/topitems")
@@ -416,7 +375,10 @@ public class FacilityResource {
 		}
 		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		Session session = persistenceService.getSession();
-		ProductivitySummaryList.StatusSummary summary = orderService.statusSummary(session, facility.getPersistentId(), aggregate, filterName);
+		ProductivitySummaryList.StatusSummary summary = orderService.statusSummary(session,
+			facility.getPersistentId(),
+			aggregate,
+			filterName);
 
 		return BaseResponse.buildResponse(summary);
 	}
@@ -433,7 +395,6 @@ public class FacilityResource {
 		List<Che> ches = Che.staticGetDao().findByCriteriaQuery(cheCriteria);
 		return BaseResponse.buildResponse(ches);
 	}
-
 
 	@GET
 	@Path("/workers")
@@ -456,11 +417,11 @@ public class FacilityResource {
 		try {
 			worker.setFacility(facility);
 			worker.generateDomainId();
-			if (worker.getActive() == null){
+			if (worker.getActive() == null) {
 				worker.setActive(true);
 			}
 			worker.setUpdated(new Timestamp(System.currentTimeMillis()));
-			if (!worker.isValid(errors)){
+			if (!worker.isValid(errors)) {
 				errors.setStatus(Status.BAD_REQUEST);
 				return errors.buildResponse();
 			}
@@ -477,13 +438,12 @@ public class FacilityResource {
 	@Path("events")
 	@RequiresPermissions("event:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response searchEvents(
-		@QueryParam("type") List<EventTypeParam> typeParamList,
+	public Response searchEvents(@QueryParam("type") List<EventTypeParam> typeParamList,
 		@QueryParam("itemId") String itemId,
 		@QueryParam("location") String location,
 		@QueryParam("workerId") String workerId,
 		@QueryParam("groupBy") String groupBy,
-		@QueryParam("resolved") Boolean resolved ) {
+		@QueryParam("resolved") Boolean resolved) {
 		ErrorResponse errors = new ErrorResponse();
 		try {
 			List<Criterion> filterParams = new ArrayList<Criterion>();
@@ -505,23 +465,20 @@ public class FacilityResource {
 
 			//If "resolved" parameter not provided, return, both, resolved and unresolved events
 			if (resolved != null) {
-				if (resolved){
+				if (resolved) {
 					filterParams.add(Restrictions.isNotNull("resolution"));
 				} else {
 					filterParams.add(Restrictions.isNull("resolution"));
 				}
 			}
 
-			
-			
 			if (!Strings.isNullOrEmpty(itemId)) {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
 				ResultDisplay result = new ResultDisplay();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
 					ItemDisplay itemDisplayKey = new ItemDisplay(eventDisplay);
-					if (itemId.equals(itemDisplayKey.getItemId()) &&
-						location.equals(itemDisplayKey.getLocation())) {
+					if (itemId.equals(itemDisplayKey.getItemId()) && location.equals(itemDisplayKey.getLocation())) {
 						result.add(new BeanMap(eventDisplay));
 					}
 				}
@@ -539,8 +496,6 @@ public class FacilityResource {
 				return BaseResponse.buildResponse(result);
 			}
 
-
-
 			if ("item".equals(groupBy)) {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
 				Map<ItemDisplay, Integer> issuesByItem = new HashMap<>();
@@ -548,7 +503,7 @@ public class FacilityResource {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
 					ItemDisplay itemDisplayKey = new ItemDisplay(eventDisplay);
 					Integer count = MoreObjects.firstNonNull(issuesByItem.get(itemDisplayKey), 0);
-					issuesByItem.put(itemDisplayKey, count+1);
+					issuesByItem.put(itemDisplayKey, count + 1);
 				}
 
 				ResultDisplay result = new ResultDisplay(ItemDisplay.ItemComparator);
@@ -559,14 +514,14 @@ public class FacilityResource {
 					result.add(values);
 				}
 				return BaseResponse.buildResponse(result);
-			} else if ("worker".equals(groupBy)) {	
+			} else if ("worker".equals(groupBy)) {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
 				Map<WorkerDisplay, Integer> issuesByWorker = new HashMap<>();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
 					WorkerDisplay workerDisplayKey = new WorkerDisplay(eventDisplay);
 					Integer count = MoreObjects.firstNonNull(issuesByWorker.get(workerDisplayKey), 0);
-					issuesByWorker.put(workerDisplayKey, count+1);
+					issuesByWorker.put(workerDisplayKey, count + 1);
 				}
 
 				ResultDisplay result = new ResultDisplay(WorkerDisplay.ItemComparator);
@@ -577,10 +532,10 @@ public class FacilityResource {
 					result.add(values);
 				}
 				return BaseResponse.buildResponse(result);
-			} else if ("type".equals(groupBy)){
+			} else if ("type".equals(groupBy)) {
 				List<WorkerEventTypeGroup> issuesByType = notificationService.groupWorkerEventsByType(facility, resolved);
 				ResultDisplay result = new ResultDisplay(issuesByType.size());
-		        result.addAll(issuesByType);	
+				result.addAll(issuesByType);
 				return BaseResponse.buildResponse(result);
 			} else {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
@@ -590,7 +545,6 @@ public class FacilityResource {
 				}
 				return BaseResponse.buildResponse(result);
 			}
-
 
 		} catch (Exception e) {
 			errors.processException(e);
@@ -602,10 +556,12 @@ public class FacilityResource {
 	@Path("pickrate")
 	@RequiresPermissions("event:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response pickRate(@QueryParam("startTimestamp") TimestampParam startDateParam, @QueryParam("endTimestamp") TimestampParam endDateParam) {
+	public Response pickRate(@QueryParam("startTimestamp") TimestampParam startDateParam,
+		@QueryParam("endTimestamp") TimestampParam endDateParam) {
 		ErrorResponse errors = new ErrorResponse();
 		try {
-			List<PickRate> pickRates = notificationService.getPickRate(new DateTime(startDateParam.getValue()), new DateTime(endDateParam.getValue()));
+			List<PickRate> pickRates = notificationService.getPickRate(new DateTime(startDateParam.getValue()),
+				new DateTime(endDateParam.getValue()));
 			return BaseResponse.buildResponse(pickRates);
 		} catch (Exception e) {
 			return errors.processException(e);
@@ -617,7 +573,7 @@ public class FacilityResource {
 	@RequiresPermissions("che:simulate")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response runScriptSteps(FormDataMultiPart body){
+	public Response runScriptSteps(FormDataMultiPart body) {
 		try {
 			ErrorResponse errors = new ErrorResponse();
 
@@ -648,21 +604,21 @@ public class FacilityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response runScript(@QueryParam("script_step_id") UUIDParam scriptStepId,
 		@QueryParam("timeout_min") Integer timeoutMin,
-		FormDataMultiPart body){
+		FormDataMultiPart body) {
 		TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 		try {
 			ErrorResponse errors = new ErrorResponse();
-			
+
 			//Verify that this Script Server Runner was called with an active transaction, and close it.
 			//The Server and Site script runners below will manage transactions themselves
 			if (!persistence.hasAnyActiveTransactions()) {
 				errors.addError("Server Error: FacilityResponse.runScript() called without an active transaction");
 				return errors.buildResponse();
-			}			
+			}
 			UUID facilityId = facility.getPersistentId();
 			persistence.commitTransaction();
 
-			if (!BaseResponse.isUUIDValid(scriptStepId, "script_step_id", errors)){
+			if (!BaseResponse.isUUIDValid(scriptStepId, "script_step_id", errors)) {
 				return errors.buildResponse();
 			}
 
@@ -707,7 +663,7 @@ public class FacilityResource {
 				nextStepError.addError(error);
 				return BaseResponse.buildResponse(nextStepError, Status.BAD_REQUEST);
 			}
-			
+
 			ScriptStep nextStep = scriptStep.nextStep();
 			if (nextStep == null) {
 				return BaseResponse.buildResponse(new ScriptStep(report.toString()));
@@ -724,13 +680,13 @@ public class FacilityResource {
 			}
 		}
 	}
-	
-	private ScriptMessage runSiteScript(StepPart part, int timeoutMin){
+
+	private ScriptMessage runSiteScript(StepPart part, int timeoutMin) {
 		ScriptMessage errorMesage = new ScriptMessage();
 		TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 		//Test is Site Controller is running
 		Result siteHealth = new ActiveSiteControllerHealthCheck(webSocketManagerService).execute();
-		if (!siteHealth.isHealthy()){ 
+		if (!siteHealth.isHealthy()) {
 			errorMesage.setMessageError("Site controller problem: " + siteHealth.getMessage());
 			return errorMesage;
 		}
@@ -750,13 +706,13 @@ public class FacilityResource {
 			ScriptMessage siteResponseMessage = ScriptSiteCallPool.waitForSiteResponse(id, timeoutMin);
 			if (siteResponseMessage == null) {
 				errorMesage.setMessageError("Site request timed out");
-				return errorMesage; 
+				return errorMesage;
 			}
 			return siteResponseMessage;
 		} catch (Exception e) {
 			persistence.rollbackTransaction();
 			errorMesage.setMessageError("Site request failed: " + e.getMessage());
-			return errorMesage; 
+			return errorMesage;
 		}
 	}
 
@@ -767,7 +723,7 @@ public class FacilityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response performHardwareAction(HardwareRequest req) {
 		ErrorResponse errors = new ErrorResponse();
-		if (!req.isValid(errors)){
+		if (!req.isValid(errors)) {
 			return errors.buildResponse();
 		}
 		try {
@@ -777,12 +733,15 @@ public class FacilityResource {
 			List<LedSample> ledSamples = new ArrayList<LedSample>();
 
 			if (req.getLights() != null) {
-				for (LightRequest light :req.getLights()){
+				for (LightRequest light : req.getLights()) {
 					ledSamples.add(new LedSample(light.getPosition(), light.getColor()));
 				}
 
-				LedCmdGroup ledCmdGroup = new LedCmdGroup(req.getLightController(), req.getLightChannel(), (short)0, ledSamples);
-				LightLedsInstruction instruction = new LightLedsInstruction(req.getLightController(), req.getLightChannel(), req.getLightDuration(), ImmutableList.of(ledCmdGroup));
+				LedCmdGroup ledCmdGroup = new LedCmdGroup(req.getLightController(), req.getLightChannel(), (short) 0, ledSamples);
+				LightLedsInstruction instruction = new LightLedsInstruction(req.getLightController(),
+					req.getLightChannel(),
+					req.getLightDuration(),
+					ImmutableList.of(ledCmdGroup));
 				LedInstrListMessage lightMessage = new LedInstrListMessage(instruction);
 				webSocketManagerService.sendMessage(users, lightMessage);
 			}
@@ -790,7 +749,11 @@ public class FacilityResource {
 			//CHE MESSAGES
 			if (req.getCheMessages() != null) {
 				for (CheDisplayRequest cheReq : req.getCheMessages()) {
-					CheDisplayMessage cheMessage = new CheDisplayMessage(cheReq.getChe(), cheReq.getLine1(), cheReq.getLine2(), cheReq.getLine3(), cheReq.getLine4());
+					CheDisplayMessage cheMessage = new CheDisplayMessage(cheReq.getChe(),
+						cheReq.getLine1(),
+						cheReq.getLine2(),
+						cheReq.getLine3(),
+						cheReq.getLine4());
 					webSocketManagerService.sendMessage(users, cheMessage);
 				}
 			}
@@ -809,6 +772,5 @@ public class FacilityResource {
 			return errors.processException(e);
 		}
 	}
-	
-	
+
 }

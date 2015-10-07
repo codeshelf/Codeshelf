@@ -5,11 +5,9 @@ import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -29,7 +27,7 @@ public class TenantCallableTest {
 		when(singleLoop.doSetup()).thenReturn(2);
 		when(singleLoop.isDone()).thenReturn(false, true);
 		when(singleLoop.doBatch(any(Integer.class))).thenReturn(2);
-		when(singleLoop.doTeardown()).thenReturn(2);
+		//when(singleLoop.doTeardown()).thenReturn(2);
 		
 		TenantCallable subject = new TenantCallable(mock(TenantPersistenceService.class), mock(Tenant.class), mock(UserContext.class), singleLoop);
 		subject.call();
@@ -37,7 +35,7 @@ public class TenantCallableTest {
 	}
 	
 	@Test
-	public void testCancel() throws TimeoutException, InterruptedException, ExecutionException {
+	public void testCancel() throws Exception {
 		final SettableFuture<Object> inDoBatch = SettableFuture.create();
 		final SettableFuture<Object> waitForCancel = SettableFuture.create();
 		
@@ -73,10 +71,7 @@ public class TenantCallableTest {
 		
 		when(loopThree.doSetup()).thenReturn(5);
 		when(loopThree.isDone()).thenReturn(false, false, false, true);
-		when(loopThree.doBatch(eq(0))).thenReturn(2);
-		when(loopThree.doBatch(eq(1))).thenReturn(4);
-		when(loopThree.doBatch(eq(2))).thenReturn(5);
-		when(loopThree.doTeardown()).thenReturn(5);
+		when(loopThree.doBatch(any(Integer.class))).thenReturn(2, 4, 5);
 
 		TenantPersistenceService mockPersistence = mock(TenantPersistenceService.class);
 		TenantCallable subject = new TenantCallable(mockPersistence, mock(Tenant.class), mock(UserContext.class), loopThree);
