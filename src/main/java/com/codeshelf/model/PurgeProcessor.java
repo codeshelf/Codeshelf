@@ -3,8 +3,6 @@ package com.codeshelf.model;
 import java.util.List;
 import java.util.UUID;
 
-import javax.script.ScriptException;
-
 import lombok.Getter;
 import lombok.Setter;
 
@@ -47,17 +45,12 @@ public class PurgeProcessor implements BatchProcessor {
 	 *  Unfortunately, we cannot really know how many containers or wis will be purged until after the order purge is done.
 	 */
 	@Override
-	public int doSetup() {
+	public int doSetup() throws Exception {
 		setPurgePhase(PurgePhase.PurgePhaseSetup);
 		facility = facility.reload();
 		// get our purge parameters
-		ExtensionPointService ss;
-		try {
-			ss = ExtensionPointService.createInstance(facility);
-			purgeParams = ss.getDataPurgeParameters();
-		} catch (ScriptException e) {
-			LOGGER.error("PurgeProcessor setup", e);
-		}
+		ExtensionPointService ss = ExtensionPointService.createInstance(facility);
+		purgeParams = ss.getDataPurgeParameters();
 		
 		DomainObjectManager doMananager = new DomainObjectManager(facility);
 		// doMananager.getOrderUuidsToPurge(daysOldToCount, inCls, 1000);
@@ -67,15 +60,14 @@ public class PurgeProcessor implements BatchProcessor {
 	}
 
 	@Override
-	public int doBatch(int batchCount) {
+	public int doBatch(int batchCount) throws Exception {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
-	public int doTeardown() {
-		// TODO Auto-generated method stub
-		return 0;
+	public void doTeardown() {
+
 	}
 
 	@Override

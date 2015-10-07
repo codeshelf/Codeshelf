@@ -2,11 +2,11 @@ package com.codeshelf.behavior;
 
 public interface BatchProcessor {
 
-	int doSetup();
+	int doSetup() throws Exception;
 
-	int doBatch(int batchCount);
+	int doBatch(int batchCount) throws Exception;
 
-	int doTeardown();
+	void doTeardown();
 
 	boolean isDone();
 	
