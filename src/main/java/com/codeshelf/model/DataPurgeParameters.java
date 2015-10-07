@@ -9,10 +9,10 @@ public class DataPurgeParameters extends ParameterSetBeanABC {
 	// This follows our model of all groovy beans are strings
 
 	// default values
-	final static int			PURGEAFTERDAYS			= 10;
-	final static int			WORKINSTRUCTION_BATCH	= 1000;
-	final static int			ORDER_BATCH				= 200;
-	final static int			CONTAINER_BATCH			= 1000;
+	final static int			PURGEAFTERDAYS			= 20;
+	final static int			WORKINSTRUCTION_BATCH	= 50;
+	final static int			ORDER_BATCH				= 5;
+	final static int			CONTAINER_BATCH			= 50;
 
 	@Getter
 	@Setter

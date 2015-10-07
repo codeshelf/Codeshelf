@@ -16,23 +16,30 @@ import com.codeshelf.service.ExtensionPointService;
 public class PurgeProcessor implements BatchProcessor {
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(PurgeProcessor.class);
 
-	Facility					facility;
-	DataPurgeParameters			purgeParams			= null;
-	List<UUID>					ordersToPurge		= null;
-	List<UUID>					containersToPurge	= null;
-	List<UUID>					wisToPurge			= null;
+	Facility			facility;
+	DataPurgeParameters	purgeParams				= null;
+	List<UUID>			ordersUuidsToPurge		= null;
+	List<UUID>			containerUuidsToPurge	= null;
+	List<UUID>			wiUuidsToPurge			= null;
 
 	enum PurgePhase {
 		PurgePhaseInit,
 		PurgePhaseSetup,
 		PurgePhaseOrders,
 		PurgePhaseContainers,
-		PurgePhaseWis
+		PurgePhaseWis,
+		PurgePhaseDone
 	}
 
 	@Setter
 	@Getter
 	PurgePhase	purgePhase;
+
+	@Setter
+	@Getter
+	int			ordersToPurge;
+	@Getter
+	int			ordersPurged	= 0;
 
 	public PurgeProcessor(Facility inFacility) {
 		facility = inFacility;
@@ -51,18 +58,62 @@ public class PurgeProcessor implements BatchProcessor {
 		// get our purge parameters
 		ExtensionPointService ss = ExtensionPointService.createInstance(facility);
 		purgeParams = ss.getDataPurgeParameters();
-		
+
 		DomainObjectManager doMananager = new DomainObjectManager(facility);
-		// doMananager.getOrderUuidsToPurge(daysOldToCount, inCls, 1000);
+		ordersUuidsToPurge = doMananager.getOrderUuidsToPurge(purgeParams.getPurgeAfterDaysValue());
+		setOrdersToPurge(ordersUuidsToPurge.size());
 
+		setPurgePhase(PurgePhase.PurgePhaseOrders);
+		return getOrdersToPurge();
+	}
 
-		return 0;
+	private int purgeOrderBatch() {
+		List<UUID> orderBatch = subUuidListAndRemoveFromInList(ordersUuidsToPurge, purgeParams.getOrderBatchValue());
+		DomainObjectManager doMananager = new DomainObjectManager(facility);
+		return doMananager.purgeSomeOrders(orderBatch);
+	}
+
+	/**
+	 *  Pass in a list. We want to get back the sublist, and remove items from the passed in list.
+	 *  (Would be ok also to replace the passed in list if we returned a two parameter class.)
+	 */
+	private List<UUID> subUuidListAndRemoveFromInList(List<UUID> inList, int subCount) {
+		int countNeeded = Math.min(subCount, inList.size());
+
+		List<UUID> returnList = inList.subList(0, countNeeded - 1);
+		inList.removeAll(returnList);
+		return returnList;
+
 	}
 
 	@Override
 	public int doBatch(int batchCount) throws Exception {
-		// TODO Auto-generated method stub
-		return 0;
+		PurgePhase currentPhase = getPurgePhase();
+		if (currentPhase == PurgePhase.PurgePhaseOrders) {
+			// we want to know if we are done with orders. One quite reliable way to know is if the orders list size decreased.
+			// If non-zero, but it did not decrease, lets log an error and call it done so we are not stuck forever.
+			int startSize = ordersUuidsToPurge.size();
+			if (startSize > 0)
+				ordersPurged += purgeOrderBatch();
+			int endSize = ordersUuidsToPurge.size();
+			if (endSize == startSize || endSize == 0) {
+				setPurgePhase(PurgePhase.PurgePhaseWis);
+				if (endSize > 0 ){
+					LOGGER.error("orders purge did not progress. Bailing out. Leaving {} orders that should have been purged");
+				}
+			}
+		} else if (currentPhase == PurgePhase.PurgePhaseWis) {
+			setPurgePhase(PurgePhase.PurgePhaseContainers);
+		} else if (currentPhase == PurgePhase.PurgePhaseContainers) {
+			setPurgePhase(PurgePhase.PurgePhaseDone);
+		} else {
+			LOGGER.error("Unexpected phase in PurgeProcessor doBatch {}", currentPhase);
+			setPurgePhase(PurgePhase.PurgePhaseDone);
+		}
+
+		// kind of weak, but order deletion is the way slow part. 
+		// Once through with orders, we continuously report the same doneness for the rest of the purge.
+		return ordersPurged;
 	}
 
 	@Override
@@ -72,8 +123,7 @@ public class PurgeProcessor implements BatchProcessor {
 
 	@Override
 	public boolean isDone() {
-		// TODO Auto-generated method stub
-		return false;
-	}
+		return getPurgePhase() == PurgePhase.PurgePhaseDone;
 
+	}
 }

@@ -90,6 +90,7 @@ public class TenantCallable implements Callable<BatchReport>{
 					report.setException(e);
 					return report;
 				}
+				batchCount++;
 			} 
 		} finally {
 			try {
