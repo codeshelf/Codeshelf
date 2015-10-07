@@ -12,21 +12,25 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
 import com.google.common.base.Stopwatch;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
 
-public abstract class TenantCallable implements Callable<Report>{
+public class TenantCallable implements Callable<BatchReport>{
 	private static final Logger LOGGER	= LoggerFactory.getLogger(TenantCallable.class);
-	private BatchProccessor	delegate;
+	private BatchProcessor	delegate;
 	private Stopwatch runTiming;
 	private Thread runningThread;
 	private Tenant tenant;
 	private UserContext userContext;
-	private boolean cancelled = false;
+	private SettableFuture<Void> cancelled = null;
+	private TenantPersistenceService	persistenceService;
 	
-	public TenantCallable(BatchProccessor delegate, Tenant tenant) {
-		this(delegate, tenant, CodeshelfSecurityManager.getUserContextSYSTEM());
+	public TenantCallable(TenantPersistenceService persistenceService, Tenant tenant, BatchProcessor delegate) {
+		this(persistenceService, tenant, CodeshelfSecurityManager.getUserContextSYSTEM(), delegate);
 	}
 
-	public TenantCallable(BatchProccessor delegate, Tenant tenant, UserContext userContext) {
+	public TenantCallable(TenantPersistenceService persistenceService, Tenant tenant, UserContext userContext, BatchProcessor delegate) {
+		this.persistenceService = persistenceService;
 		this.tenant = tenant;
 		this.userContext = userContext;
 		this.delegate = delegate;
@@ -41,67 +45,78 @@ public abstract class TenantCallable implements Callable<Report>{
 		return runTiming.isRunning();
 	}
 	
-	public boolean cancel() {
-		//TODO review thread safety
+	public ListenableFuture<Void> cancel() {
+		cancelled = SettableFuture.create();
 		if (runningThread != null) {
 			runningThread.interrupt();
 		} 
-		cancelled = true;
 		return cancelled;
 	}
 
-	private void saveReport(Report report) {
+	private void saveReport(BatchReport report) {
 		LOGGER.info("Saving batch report {}", report);
-		//TenantPersistenceService.getInstance().getSession().save(report);
+		//persistenceService.saveOrUpdate(report);
 	}
 	
-	public Report call() throws Exception {
-		Report report = new Report(DateTime.now());
+	public BatchReport call() throws Exception {
+		runTiming.start();
+		BatchReport report = new BatchReport(DateTime.now());
 		try {
 			runningThread = Thread.currentThread();
 			CodeshelfSecurityManager.setContext(userContext, tenant);
-			TenantPersistenceService.getInstance().beginTransaction();
+			persistenceService.beginTransaction();
 			try {
 				int totalTodo = delegate.doSetup();
 				report.setTotal(totalTodo);
 				saveReport(report);
-				TenantPersistenceService.getInstance().commitTransaction();
+				persistenceService.commitTransaction();
 			} catch (Exception e) {
-				TenantPersistenceService.getInstance().rollbackTransaction();
+				persistenceService.rollbackTransaction();
 				report.setException(e);
 				throw e;
 			}
 
 			int batchCount = 0;
-			while(!cancelled && !runningThread.isInterrupted() && !delegate.isDone()) {
-				TenantPersistenceService.getInstance().beginTransaction();
+			while(cancelled == null && !runningThread.isInterrupted() && !delegate.isDone()) {
+				persistenceService.beginTransaction();
 				try {
 					int completeCount = delegate.doBatch(batchCount);
-					report.setComplete(completeCount);
+					report.setCount(completeCount);
 					saveReport(report);
-					TenantPersistenceService.getInstance().commitTransaction();
+					persistenceService.commitTransaction();
 				} catch (Exception e) {
-					TenantPersistenceService.getInstance().rollbackTransaction();
+					persistenceService.rollbackTransaction();
+					LOGGER.warn("Received exception during batch: {}", batchCount, e);
 					report.setException(e);
-					throw e;
 				}
 			} 
 		} finally {
 			try {
-				TenantPersistenceService.getInstance().beginTransaction();
-				delegate.doTeardown();
+				runningThread = null;
+				runTiming.stop();
+				if (cancelled != null) {
+					report.setCancelled();
+				}
+				persistenceService.beginTransaction();
+				int completeCount = delegate.doTeardown();
+				report.setCount(completeCount);
 				saveReport(report);
-				TenantPersistenceService.getInstance().commitTransaction();
-				
+				persistenceService.commitTransaction();
+				if (cancelled != null) {
+					cancelled.set(null); //signal cancel is complete
+				}
 			} catch (Exception e) {
-				TenantPersistenceService.getInstance().rollbackTransaction();
-				throw e;
+				persistenceService.rollbackTransaction();
+				LOGGER.warn("Exception during final cleanup of {}", delegate, e);
+			} finally {
+				CodeshelfSecurityManager.removeContextIfPresent();
 			}
 		}
-		CodeshelfSecurityManager.removeContextIfPresent();
-		runningThread = null;
-		runTiming.stop();
 		return report;
+	}
+	
+	public String toString() {
+		return String.format("TenantCallable: tenant: %s, user: %s, processor: %s", tenant, userContext, delegate);
 	}
 
 }

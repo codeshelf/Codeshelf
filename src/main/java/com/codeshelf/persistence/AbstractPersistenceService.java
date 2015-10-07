@@ -144,6 +144,10 @@ public abstract class AbstractPersistenceService extends AbstractCodeshelfIdleSe
 		return session;
 	}
 
+	public void saveOrUpdate(Object o) {
+		getSession().saveOrUpdate(o);
+	}
+	
 	@Override
 	public Transaction beginTransaction() {
 		Session session = getSession();

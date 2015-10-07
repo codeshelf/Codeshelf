@@ -9,11 +9,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.script.ScriptException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -63,13 +67,15 @@ import com.codeshelf.api.responses.ItemDisplay;
 import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.api.responses.WorkerDisplay;
+import com.codeshelf.behavior.BatchProcessor;
 import com.codeshelf.behavior.NotificationBehavior;
+import com.codeshelf.behavior.NotificationBehavior.WorkerEventTypeGroup;
 import com.codeshelf.behavior.OrderBehavior;
 import com.codeshelf.behavior.ProductivitySummaryList;
+import com.codeshelf.behavior.TenantCallable;
 import com.codeshelf.behavior.TestBehavior;
 import com.codeshelf.behavior.UiUpdateBehavior;
 import com.codeshelf.behavior.WorkBehavior;
-import com.codeshelf.behavior.NotificationBehavior.WorkerEventTypeGroup;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedInstrListMessage;
 import com.codeshelf.device.LedSample;
@@ -78,17 +84,18 @@ import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.security.UserContext;
 import com.codeshelf.service.ExtensionPointService;
 import com.codeshelf.service.ParameterSetBeanABC;
 import com.codeshelf.service.PropertyService;
@@ -101,6 +108,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.sun.jersey.api.core.ResourceContext;
@@ -122,6 +130,10 @@ public class FacilityResource {
 	private final Provider<ICsvInventoryImporter> inventoryImporterProvider;
 	private final Provider<ICsvOrderImporter> orderImporterProvider;
 
+	//TODO hacked here to prevent multiple executions
+	private static final ExecutorService purgeExecutor = Executors.newSingleThreadExecutor();
+	private static TenantCallable lastExecutionTask; 
+	
 	@Setter
 	private Facility facility;
 
@@ -235,38 +247,61 @@ public class FacilityResource {
 	@Path("/data/summary")
 	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getDataSummary(@QueryParam("daysOld") int daysOld) {
-		List<String> summary = workService.reportAchiveables(daysOld, this.facility);
+	public Response getDataSummary() {
+		List<String> summary = workService.reportAchiveables(20, this.facility);
 		return BaseResponse.buildResponse(summary);
 	}
 
 	@DELETE
-	@Path("/data/wis")
+	@Path("/data/purge")
 	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response deleteWorkInstructions(@FormParam("daysOld") int daysOld) {
-		workService.purgeOldObjects(daysOld, this.facility, WorkInstruction.class);
+	public Response deleteOldObjects() {
+		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+		UserContext userContext = CodeshelfSecurityManager.getCurrentUserContext();
+		TenantCallable purgeCallable = new TenantCallable(persistenceService, tenant, userContext, new BatchProcessor(){
+
+			@Override
+			public int doSetup() {
+				// TODO Auto-generated method stub
+				return 0;
+			}
+
+			@Override
+			public int doBatch(int batchCount) {
+				// TODO Auto-generated method stub
+				return 0;
+			}
+
+			@Override
+			public int doTeardown() {
+				// TODO Auto-generated method stub
+				return 0;
+			}
+
+			@Override
+			public boolean isDone() {
+				// TODO Auto-generated method stub
+				return true;
+			}});		
+		
+		//TODO do better prevention
+		if (lastExecutionTask != null && lastExecutionTask.isRunning()) {
+			LOGGER.info("Cancelling data purge task {}", lastExecutionTask);
+				ListenableFuture<Void> cancelLast = lastExecutionTask.cancel();
+				try {
+					cancelLast.get(2, TimeUnit.SECONDS);
+				} catch (InterruptedException | ExecutionException | TimeoutException e) {
+					LOGGER.warn("Last purge task cancellation did not complete after 2 seconds: {}", lastExecutionTask, e);
+				}
+		}
+		lastExecutionTask = purgeCallable;
+		LOGGER.info("Submitted data purge task {}", purgeCallable);
+		purgeExecutor.submit(purgeCallable);
 		return BaseResponse.buildResponse(null);
 	}
 
-	@DELETE
-	@Path("/data/orders")
-	@RequiresPermissions("facility:edit")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response deleteOrders(@FormParam("daysOld") int daysOld) {
-		workService.purgeOldObjects(daysOld, this.facility, OrderHeader.class);
-		return BaseResponse.buildResponse(null);
-	}
-
-	@DELETE
-	@Path("/data/containers")
-	@RequiresPermissions("facility:edit")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response deleteContainers(@FormParam("daysOld") int daysOld) {
-		workService.purgeOldObjects(daysOld, this.facility, Container.class);
-		return BaseResponse.buildResponse(null);
-	}
-	
 	@GET
 	@Path("/work/instructions/references")
 	@Produces(MediaType.APPLICATION_JSON)
