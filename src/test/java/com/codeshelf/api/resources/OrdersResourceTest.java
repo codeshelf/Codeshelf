@@ -10,10 +10,10 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.codeshelf.api.resources.subresources.ImportResource;
+import com.codeshelf.behavior.OrderBehavior;
 import com.codeshelf.edi.OutboundOrderPrefetchCsvImporter;
 import com.codeshelf.event.EventProducer;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.service.OrderBehavior;
 import com.codeshelf.testframework.ServerTest;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 

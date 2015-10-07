@@ -1,4 +1,4 @@
-package com.codeshelf.service;
+package com.codeshelf.behavior;
 
 import java.util.List;
 import java.util.Map;
@@ -9,11 +9,11 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.codeshelf.api.responses.PickRate;
+import com.codeshelf.behavior.NotificationBehavior.WorkerEventTypeGroup;
 import com.codeshelf.generators.WorkInstructionGenerator;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
-import com.codeshelf.service.NotificationBehavior.WorkerEventTypeGroup;
 import com.codeshelf.testframework.HibernateTest;
 import com.google.common.collect.ImmutableMap;
 

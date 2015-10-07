@@ -9,8 +9,8 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.codeshelf.api.ParameterUtils;
+import com.codeshelf.behavior.TestBehavior;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.service.TestBehavior;
 import com.sun.jersey.api.representation.Form;
 
 public class TestResourceTest {

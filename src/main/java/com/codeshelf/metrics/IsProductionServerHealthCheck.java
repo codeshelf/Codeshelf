@@ -2,13 +2,13 @@ package com.codeshelf.metrics;
 
 import java.util.List;
 
+import com.codeshelf.behavior.IPropertyBehavior;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
-import com.codeshelf.service.IPropertyBehavior;
 import com.codeshelf.service.PropertyService;
 
 public class IsProductionServerHealthCheck extends CodeshelfHealthCheck {

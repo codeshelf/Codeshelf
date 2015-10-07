@@ -20,6 +20,7 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.NotificationBehavior;
 import com.codeshelf.event.EventProducer;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
@@ -42,7 +43,6 @@ import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
-import com.codeshelf.service.NotificationBehavior;
 import com.codeshelf.util.DateTimeParser;
 import com.codeshelf.util.UomNormalizer;
 import com.codeshelf.validation.BatchResult;

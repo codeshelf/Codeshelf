@@ -1,4 +1,4 @@
-package com.codeshelf.service;
+package com.codeshelf.behavior;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -46,6 +46,7 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Tier;
+import com.codeshelf.service.PropertyService;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.message.MessageABC;

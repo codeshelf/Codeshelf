@@ -9,8 +9,8 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.service.IApiBehavior;
-import com.codeshelf.service.BehaviorFactory;
+import com.codeshelf.behavior.BehaviorFactory;
+import com.codeshelf.behavior.IApiBehavior;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;

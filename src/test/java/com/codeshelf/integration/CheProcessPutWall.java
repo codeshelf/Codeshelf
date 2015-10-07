@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.LightBehavior;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.PosControllerInstr;
@@ -18,7 +19,6 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.LightBehavior;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.util.ThreadUtils;
 

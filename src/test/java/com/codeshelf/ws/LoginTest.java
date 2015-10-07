@@ -5,10 +5,10 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import com.codeshelf.application.JvmProperties;
+import com.codeshelf.behavior.BehaviorFactory;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.service.BehaviorFactory;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.protocol.request.LoginRequest;

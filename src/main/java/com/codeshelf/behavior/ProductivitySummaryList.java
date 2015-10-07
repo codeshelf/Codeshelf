@@ -1,4 +1,4 @@
-package com.codeshelf.service;
+package com.codeshelf.behavior;
 
 import java.util.HashMap;
 import java.util.List;

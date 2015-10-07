@@ -1,4 +1,4 @@
-package com.codeshelf.service;
+package com.codeshelf.behavior;
 
 import org.joda.time.DateTime;
 

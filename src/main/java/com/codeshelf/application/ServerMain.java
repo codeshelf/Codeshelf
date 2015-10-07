@@ -13,6 +13,8 @@ import org.apache.shiro.realm.Realm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.IPropertyBehavior;
+import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.CrossBatchCsvImporter;
 import com.codeshelf.edi.EdiExportService;
@@ -38,9 +40,7 @@ import com.codeshelf.report.PickDocumentGenerator;
 import com.codeshelf.security.CodeshelfRealm;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.TokenSessionService;
-import com.codeshelf.service.IPropertyBehavior;
 import com.codeshelf.service.PropertyService;
-import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.server.CsServerEndPoint;

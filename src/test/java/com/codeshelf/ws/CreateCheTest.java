@@ -9,6 +9,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import com.codeshelf.behavior.BehaviorFactory;
+import com.codeshelf.behavior.UiUpdateBehavior;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.domain.Che;
@@ -16,8 +18,6 @@ import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Point;
-import com.codeshelf.service.BehaviorFactory;
-import com.codeshelf.service.UiUpdateBehavior;
 import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.protocol.request.ObjectUpdateRequest;

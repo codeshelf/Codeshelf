@@ -1,7 +1,8 @@
-package com.codeshelf.service;
+package com.codeshelf.behavior;
 
 import java.util.HashMap;
 
+import com.codeshelf.service.PropertyService;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 

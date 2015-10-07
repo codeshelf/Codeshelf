@@ -16,6 +16,7 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
@@ -26,7 +27,6 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.WorkBehavior;
 import com.google.common.collect.ImmutableList;
 
 /**

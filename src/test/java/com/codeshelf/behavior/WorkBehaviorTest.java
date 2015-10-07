@@ -1,4 +1,4 @@
-package com.codeshelf.service;
+package com.codeshelf.behavior;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyList;

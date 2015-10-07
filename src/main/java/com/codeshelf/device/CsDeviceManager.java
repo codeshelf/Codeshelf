@@ -20,6 +20,8 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.InfoBehavior.InfoPackage;
+import com.codeshelf.behavior.PalletizerBehavior.PalletizerInfo;
 import com.codeshelf.device.PosControllerInstr.PosConInstrGroupSerializer;
 import com.codeshelf.flyweight.bitfields.OutOfRangeException;
 import com.codeshelf.flyweight.command.CommandControlPosconBroadcast;
@@ -37,8 +39,6 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.InfoBehavior.InfoPackage;
-import com.codeshelf.service.PalletizerBehavior.PalletizerInfo;
 import com.codeshelf.util.PcapRecord;
 import com.codeshelf.util.PcapRingBuffer;
 import com.codeshelf.util.TwoKeyMap;

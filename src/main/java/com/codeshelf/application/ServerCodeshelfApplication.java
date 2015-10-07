@@ -11,6 +11,7 @@ import org.apache.shiro.mgt.SecurityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.IPropertyBehavior;
 import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.edi.EdiImportService;
 import com.codeshelf.email.EmailService;
@@ -27,7 +28,6 @@ import com.codeshelf.metrics.IsProductionServerHealthCheck;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.security.TokenSessionService;
-import com.codeshelf.service.IPropertyBehavior;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.inject.Inject;
 

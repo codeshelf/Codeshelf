@@ -4,8 +4,8 @@ import java.util.UUID;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
+import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.ws.protocol.request.PutWallPlacementRequest;
 import com.codeshelf.ws.protocol.response.PutWallPlacementResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;

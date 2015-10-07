@@ -1,4 +1,4 @@
-package com.codeshelf.service;
+package com.codeshelf.behavior;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,6 +23,7 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
+import com.codeshelf.service.PropertyService;
 import com.codeshelf.ws.protocol.request.InfoRequest;
 import com.codeshelf.ws.protocol.request.InfoRequest.InfoRequestType;
 import com.google.common.collect.Lists;

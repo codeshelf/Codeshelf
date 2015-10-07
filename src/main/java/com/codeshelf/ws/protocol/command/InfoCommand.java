@@ -5,9 +5,9 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.InfoBehavior;
+import com.codeshelf.behavior.InfoBehavior.InfoPackage;
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.service.InfoBehavior;
-import com.codeshelf.service.InfoBehavior.InfoPackage;
 import com.codeshelf.ws.protocol.request.InfoRequest;
 import com.codeshelf.ws.protocol.response.InfoResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;

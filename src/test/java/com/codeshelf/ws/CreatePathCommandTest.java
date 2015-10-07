@@ -16,6 +16,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import com.codeshelf.behavior.BehaviorFactory;
 import com.codeshelf.filter.Filter;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
@@ -23,7 +24,6 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.persistence.TenantPersistenceService;
-import com.codeshelf.service.BehaviorFactory;
 import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.protocol.command.ArgsClass;

@@ -22,6 +22,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.ErrorResponse;
+import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.InventoryCsvImporter;
@@ -36,7 +37,6 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.service.ExtensionPointType;
-import com.codeshelf.service.WorkBehavior;
 import com.google.inject.Inject;
 
 @Path("/test")

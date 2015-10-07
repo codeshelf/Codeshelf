@@ -1,4 +1,4 @@
-package com.codeshelf.service;
+package com.codeshelf.behavior;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -83,6 +83,7 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.SingleWorkItem;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.model.domain.Worker;
+import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.CompareNullChecker;
 import com.codeshelf.util.UomNormalizer;
 import com.codeshelf.validation.BatchResult;

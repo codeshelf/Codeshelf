@@ -6,8 +6,8 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.service.InventoryBehavior;
-import com.codeshelf.service.WorkBehavior;
+import com.codeshelf.behavior.InventoryBehavior;
+import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
 import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.protocol.response.InventoryUpdateResponse;

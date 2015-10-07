@@ -16,6 +16,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.TestBehavior;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionSequencerType;
@@ -31,7 +32,6 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.TestBehavior;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 import com.google.common.collect.ImmutableMap;

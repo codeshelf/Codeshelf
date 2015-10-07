@@ -3,6 +3,7 @@ package com.codeshelf.service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.IPropertyBehavior;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.HousekeepingInjector.BayChangeChoice;
 import com.codeshelf.model.HousekeepingInjector.RepeatPosChoice;

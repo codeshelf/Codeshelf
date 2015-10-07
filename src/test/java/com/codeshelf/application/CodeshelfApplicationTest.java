@@ -11,12 +11,12 @@ import org.apache.shiro.mgt.AuthorizingSecurityManager;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.codeshelf.behavior.DummyPropertyBehavior;
 import com.codeshelf.edi.EdiImportService;
 import com.codeshelf.model.dao.Result;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.report.PickDocumentGenerator;
 import com.codeshelf.security.TokenSessionService;
-import com.codeshelf.service.DummyPropertyBehavior;
 import com.codeshelf.testframework.ServerTest;
 import com.google.inject.Provider;
 

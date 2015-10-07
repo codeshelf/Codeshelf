@@ -5,6 +5,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.IPropertyBehavior;
 import com.codeshelf.filter.NetworkChangeListener;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
@@ -23,7 +24,6 @@ import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.TokenSession;
 import com.codeshelf.security.TokenSession.Status;
 import com.codeshelf.security.TokenSessionService;
-import com.codeshelf.service.IPropertyBehavior;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.ws.protocol.request.LoginRequest;
 import com.codeshelf.ws.protocol.response.LoginResponse;

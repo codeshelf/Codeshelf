@@ -6,7 +6,7 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.service.InventoryBehavior;
+import com.codeshelf.behavior.InventoryBehavior;
 import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
 import com.codeshelf.ws.protocol.response.InventoryLightLocationResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;

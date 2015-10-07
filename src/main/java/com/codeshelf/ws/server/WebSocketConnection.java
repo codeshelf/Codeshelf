@@ -26,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Timer;
+import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.filter.ObjectEventListener;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.metrics.MetricsGroup;
@@ -40,7 +41,6 @@ import com.codeshelf.model.domain.SiteController;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
-import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.ws.protocol.message.CheStatusMessage;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.google.common.util.concurrent.Service;

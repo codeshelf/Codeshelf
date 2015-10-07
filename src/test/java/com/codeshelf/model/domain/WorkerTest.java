@@ -16,11 +16,11 @@ import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.resources.WorkersResource;
 import com.codeshelf.api.resources.subresources.FacilityResource;
 import com.codeshelf.api.resources.subresources.WorkerResource;
-import com.codeshelf.service.NotificationBehavior;
-import com.codeshelf.service.OrderBehavior;
+import com.codeshelf.behavior.NotificationBehavior;
+import com.codeshelf.behavior.OrderBehavior;
+import com.codeshelf.behavior.UiUpdateBehavior;
+import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.service.PropertyService;
-import com.codeshelf.service.UiUpdateBehavior;
-import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.testframework.HibernateTest;
 import com.google.inject.Provider;
 

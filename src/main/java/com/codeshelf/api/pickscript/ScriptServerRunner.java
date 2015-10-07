@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.api.resources.subresources.EDIGatewaysResource;
+import com.codeshelf.behavior.UiUpdateBehavior;
 import com.codeshelf.device.ScriptSiteRunner;
 import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.edi.ICsvAislesFileImporter;
@@ -45,7 +46,6 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.service.PropertyService;
-import com.codeshelf.service.UiUpdateBehavior;
 import com.codeshelf.util.CsExceptionUtils;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.ws.protocol.message.ScriptMessage;

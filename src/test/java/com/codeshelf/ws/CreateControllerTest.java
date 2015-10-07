@@ -6,13 +6,13 @@ import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.codeshelf.behavior.UiUpdateBehavior;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Tier;
-import com.codeshelf.service.UiUpdateBehavior;
 import com.codeshelf.testframework.HibernateTest;
 
 public class CreateControllerTest extends HibernateTest{

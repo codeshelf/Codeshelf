@@ -16,8 +16,8 @@ import lombok.Setter;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.ParameterUtils;
+import com.codeshelf.behavior.TestBehavior;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.service.TestBehavior;
 
 public class TestResource {
 

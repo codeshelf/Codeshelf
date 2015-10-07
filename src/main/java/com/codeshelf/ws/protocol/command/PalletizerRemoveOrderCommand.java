@@ -5,8 +5,8 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PalletizerBehavior;
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.service.PalletizerBehavior;
 import com.codeshelf.ws.protocol.request.PalletizerRemoveOrderRequest;
 import com.codeshelf.ws.protocol.response.PalletizerRemoveOrderResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;

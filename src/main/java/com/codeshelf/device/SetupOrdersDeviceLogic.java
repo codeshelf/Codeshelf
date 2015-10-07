@@ -25,6 +25,7 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.InfoBehavior.InfoPackage;
 import com.codeshelf.flyweight.command.CommandControlPosconBroadcast;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
@@ -36,7 +37,6 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
-import com.codeshelf.service.InfoBehavior.InfoPackage;
 import com.codeshelf.util.CompareNullChecker;
 import com.codeshelf.ws.protocol.request.InfoRequest.InfoRequestType;
 import com.codeshelf.ws.protocol.request.PutWallPlacementRequest;

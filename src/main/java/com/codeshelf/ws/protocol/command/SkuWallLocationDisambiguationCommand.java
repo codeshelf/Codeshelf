@@ -2,11 +2,11 @@ package com.codeshelf.ws.protocol.command;
 
 import java.util.UUID;
 
+import com.codeshelf.behavior.InventoryBehavior;
+import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
-import com.codeshelf.service.InventoryBehavior;
-import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.ws.protocol.request.ComputePutWallInstructionRequest;
 import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.protocol.request.SkuWallLocationDisambiguationRequest;

@@ -1,6 +1,6 @@
 package com.codeshelf.ws.protocol.response;
 
-import com.codeshelf.service.InfoBehavior.InfoPackage;
+import com.codeshelf.behavior.InfoBehavior.InfoPackage;
 
 import lombok.Getter;
 import lombok.Setter;

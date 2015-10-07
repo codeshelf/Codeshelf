@@ -17,6 +17,8 @@ import javax.persistence.PersistenceException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.WorkBehavior;
+import com.codeshelf.behavior.WorkBehavior.Work;
 import com.codeshelf.event.EventProducer;
 import com.codeshelf.event.EventSeverity;
 import com.codeshelf.event.EventTag;
@@ -32,8 +34,6 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.UomMaster;
-import com.codeshelf.service.WorkBehavior;
-import com.codeshelf.service.WorkBehavior.Work;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;

@@ -10,9 +10,9 @@ import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.BehaviorFactory;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
-import com.codeshelf.service.BehaviorFactory;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.validation.ErrorCode;

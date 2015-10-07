@@ -5,8 +5,8 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.validation.MethodArgumentException;
 import com.codeshelf.ws.protocol.request.LinkRemoteCheRequest;
 import com.codeshelf.ws.protocol.response.LinkRemoteCheResponse;

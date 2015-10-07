@@ -1,4 +1,4 @@
-package com.codeshelf.service;
+package com.codeshelf.behavior;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;

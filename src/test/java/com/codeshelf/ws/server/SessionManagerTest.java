@@ -10,12 +10,12 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
-import com.codeshelf.service.WorkBehavior;
 import com.codeshelf.testframework.MinimalTest;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.google.common.collect.ImmutableSet;

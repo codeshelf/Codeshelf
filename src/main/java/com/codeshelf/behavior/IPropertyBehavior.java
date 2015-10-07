@@ -1,4 +1,4 @@
-package com.codeshelf.service;
+package com.codeshelf.behavior;
 
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.HousekeepingInjector.BayChangeChoice;
@@ -6,6 +6,7 @@ import com.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
+import com.codeshelf.service.CodeshelfService;
 
 public interface IPropertyBehavior extends CodeshelfService, IApiBehavior {
 	// direct getter/setter

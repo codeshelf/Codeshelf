@@ -9,6 +9,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.codeshelf.behavior.UiUpdateBehavior;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
@@ -18,7 +19,6 @@ import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.LocationAlias;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.UomMaster;
-import com.codeshelf.service.UiUpdateBehavior;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.validation.InputValidationException;
 

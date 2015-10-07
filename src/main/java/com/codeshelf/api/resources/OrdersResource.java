@@ -20,10 +20,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.api.BaseResponse;
+import com.codeshelf.behavior.OrderBehavior;
+import com.codeshelf.behavior.OrderBehavior.OrderDetailView;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.service.OrderBehavior;
-import com.codeshelf.service.OrderBehavior.OrderDetailView;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
