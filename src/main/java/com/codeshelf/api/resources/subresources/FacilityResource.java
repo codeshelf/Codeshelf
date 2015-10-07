@@ -87,6 +87,7 @@ import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
+import com.codeshelf.model.DataPurgeParameters;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
@@ -242,8 +243,10 @@ public class FacilityResource {
 	@Path("/data/summary")
 	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getDataSummary() {
-		List<String> summary = workService.reportAchiveables(20, this.facility);
+	public Response getDataSummary() throws ScriptException {
+		ExtensionPointService service = ExtensionPointService.createInstance(facility);
+		DataPurgeParameters params = service.getDataPurgeParameters();
+		List<String> summary = workService.reportAchiveables(params.getPurgeAfterDaysValue(), this.facility);
 		return BaseResponse.buildResponse(summary);
 	}
 
