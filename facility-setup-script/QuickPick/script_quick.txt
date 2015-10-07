@@ -1,0 +1,24 @@
+var :che 0x000000ED
+
+STEP Load order on che
+SERVER
+setProperty pickmult true
+//setProperty WORKSEQR BayDistance
+setProperty WORKSEQR WorkSequence
+deleteAllExtensionPoints
+deleteOrders 1111
+importOrders orders_quick
+
+SITE
+waitForDevices :che
+defChe che :che
+logout che
+loginSetup che worker
+setupCart che 1111
+scan che X%START SETUP_SUMMARY
+scan che X%START SCAN_SOMETHING
+
+STEP Pick order
+SITE
+defChe che :che
+pickAll

@@ -5,6 +5,8 @@ import java.sql.Timestamp;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Cache;
@@ -25,21 +27,25 @@ import lombok.Setter;
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class WIBeanDBStorage extends DomainObjectABC{
+public class WIBeanDBStorage extends DomainObjectTreeABC<Facility>{
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@Getter @Setter
+	protected Facility		parent;
+
 	@Column(nullable = false, columnDefinition = "TEXT")
 	@Getter @Setter
 	@JsonProperty
-	String bean;
+	String 					bean;
 	
 	@Column(nullable = false)
 	@Getter @Setter
 	@JsonProperty
-	private Boolean	active;
+	private Boolean			active;
 	
 	@Column(nullable = false)
 	@Getter @Setter
 	@JsonProperty
-	private Timestamp updated;
+	private Timestamp 		updated;
 
 	public static class WIBeanDBStorageDao extends GenericDaoABC<WIBeanDBStorage> implements ITypedDao<WIBeanDBStorage> {
 		public final Class<WIBeanDBStorage> getDaoClass() {
@@ -63,6 +69,7 @@ public class WIBeanDBStorage extends DomainObjectABC{
 	}
 	
 	public WIBeanDBStorage(WorkInstructionCsvBean bean) {
+		setParent(bean.getFacility());
 		setActive(true);
 		setDomainId(getDefaultDomainIdPrefix() + "_" + System.currentTimeMillis());
 		setUpdated(new Timestamp(System.currentTimeMillis()));
@@ -78,6 +85,6 @@ public class WIBeanDBStorage extends DomainObjectABC{
 
 	@Override
 	public Facility getFacility() {
-		return null;
+		return getParent();
 	}
 }

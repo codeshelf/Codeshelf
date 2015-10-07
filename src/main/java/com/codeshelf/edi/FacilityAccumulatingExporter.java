@@ -37,6 +37,7 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.FileExportReceipt;
 import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.WIBeanDBStorage;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.AbstractCodeshelfExecutionThreadService;
 import com.codeshelf.util.EvictingBlockingQueue;
@@ -124,6 +125,7 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 				})*/
 				.build();
 
+		//Load unsent Export Messages from DB
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", facility));
 		filterParams.add(Restrictions.eq("active", true));
@@ -134,7 +136,12 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 				enqueue(messageFuture);
 			}
 		}
-		return;
+		
+		//Load unprocessed WI Beans from DB
+		List<WIBeanDBStorage> savedWIBeans = WIBeanDBStorage.staticGetDao().findByFilter(filterParams);
+		for (WIBeanDBStorage savedWIBean : savedWIBeans){
+			accumulator.restoreWorkInstructionBeanFromDB(savedWIBean);
+		}
 	}
 	
 	@Override

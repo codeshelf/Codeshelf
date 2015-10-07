@@ -13,6 +13,7 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.google.gson.Gson;
@@ -33,8 +34,6 @@ public class WorkInstructionCsvBean extends ExportCsvBeanABC {
 	// Potentially missing fields: description, gtin.  lotId is probably superfluous.
 	// Note that for bean export, null field will export as "null" instead of "". We want "". See handling on pickerId
 
-	@Getter @Setter @Expose
-	protected UUID		facilityPersistentId;
 	@Getter @Setter @Expose
 	protected String	facilityId;
 	@Getter @Setter @Expose
@@ -73,6 +72,8 @@ public class WorkInstructionCsvBean extends ExportCsvBeanABC {
 	protected String	completed;
 	
 	@Getter @Setter
+	protected Facility	facility;
+	@Getter @Setter
 	private UUID		persistentId;
 
 	/**
@@ -94,7 +95,7 @@ public class WorkInstructionCsvBean extends ExportCsvBeanABC {
 	}
 	
 	public WorkInstructionCsvBean(WorkInstruction inWi) {
-		setFacilityPersistentId(inWi.getParentPersistentId());
+		setFacility(inWi.getFacility());
 		setFacilityId(inWi.getParent().getDomainId());
 		setWorkInstructionId(inWi.getDomainId());
 		setType(inWi.getType().toString());

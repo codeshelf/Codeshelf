@@ -59,9 +59,17 @@ public class EdiExportQueue {
 			WIBeanDBStorage.staticGetDao().store(wiBeanDB);
 			wiBean.setPersistentId(wiBeanDB.getPersistentId());
 		}
-		wiBeanList.add(wiBean);
+		wiBeanList.add(wiBean);		
+	}
+	
+	public void restoreWorkInstructionBeanFromDB(WIBeanDBStorage savedBean) {
+		WorkInstructionCsvBean bean = WorkInstructionCsvBean.fromString(savedBean.getBean());
+		bean.setFacility(savedBean.getFacility());
+		bean.setPersistentId(savedBean.getPersistentId());
+		wiBeanList.add(bean);
 		
 	}
+
 	
 	/**
 	 * Comparator to order the beans by timeComplete, then itemId

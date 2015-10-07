@@ -30,4 +30,14 @@
     <changeSet author="ilya (generated)" id="1444235841816-4">
         <addPrimaryKey columnNames="persistentid" constraintName="wi_beanPK" tableName="wi_bean"/>
     </changeSet>
+    <changeSet author="ilya (generated)" id="1444248290875-3">
+        <addColumn tableName="wi_bean">
+            <column name="parent_persistentid" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+    <changeSet author="ilya (generated)" id="1444248290875-4">
+        <addForeignKeyConstraint baseColumnNames="parent_persistentid" baseTableName="wi_bean" constraintName="FK_dilmc0w8g24v9sg7ord010d2b" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="location"/>
+    </changeSet>
 </databaseChangeLog>
