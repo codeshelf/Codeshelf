@@ -1,5 +1,6 @@
 package com.codeshelf.model;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -80,7 +81,7 @@ public class PurgeProcessor implements BatchProcessor {
 	private List<UUID> subUuidListAndRemoveFromInList(List<UUID> inList, int subCount) {
 		int countNeeded = Math.min(subCount, inList.size());
 
-		List<UUID> returnList = inList.subList(0, countNeeded - 1);
+		List<UUID> returnList = new ArrayList<UUID>(inList.subList(0, countNeeded - 1));
 		inList.removeAll(returnList);
 		return returnList;
 
