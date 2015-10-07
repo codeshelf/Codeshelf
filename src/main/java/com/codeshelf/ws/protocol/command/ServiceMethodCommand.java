@@ -53,8 +53,8 @@ public class ServiceMethodCommand extends CommandABC {
 			response.setErrors(errors);
 			return response;
 		}
-		if (!className.startsWith("com.codeshelf.service.")) {
-			className = "com.codeshelf.service." + className;
+		if (!className.startsWith("com.codeshelf.behavior.")) {
+			className = "com.codeshelf.behavior." + className;
 		}
 
 		String methodName = request.getMethodName();
