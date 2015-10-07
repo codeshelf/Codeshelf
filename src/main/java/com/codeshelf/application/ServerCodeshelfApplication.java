@@ -25,6 +25,7 @@ import com.codeshelf.metrics.DropboxGatewayHealthCheck;
 import com.codeshelf.metrics.EdiHealthCheck;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.IsProductionServerHealthCheck;
+import com.codeshelf.metrics.PicksActivityHealthCheck;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.security.TokenSessionService;
@@ -120,6 +121,10 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 
 		IsProductionServerHealthCheck productionCheck = new IsProductionServerHealthCheck();
 		metricsService.registerHealthCheck(productionCheck);
+		
+		PicksActivityHealthCheck picksActivityCheck = new PicksActivityHealthCheck();
+		metricsService.registerHealthCheck(picksActivityCheck);
+
 }
 
 	// --------------------------------------------------------------------------

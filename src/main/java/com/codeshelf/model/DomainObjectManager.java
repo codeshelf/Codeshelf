@@ -36,13 +36,23 @@ import com.google.common.collect.ImmutableList;
  */
 public class DomainObjectManager {
 
-	private static final Logger	LOGGER					= LoggerFactory.getLogger(WorkBehavior.class);
-	
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(WorkBehavior.class);
+
 	@Getter
-	private Facility facility;
-	
-	public DomainObjectManager(Facility inFacility){
+	private Facility			facility;
+
+	public DomainObjectManager(Facility inFacility) {
 		facility = inFacility;
+	}
+
+	public class FacilityPickParameters {
+		@Getter
+		private int	picksLastOneHour			= 0;
+		@Getter
+		private int	picksLastTwentyFourHours	= 0;
+
+		FacilityPickParameters() {
+		}
 	}
 
 	private Timestamp getDaysOldTimeStamp(int daysOldToCount) {
@@ -50,11 +60,19 @@ public class DomainObjectManager {
 		// One minute after the days counter to make unit tests that set things 2 days old return those on a 2 days old criteria.
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.DAY_OF_MONTH, (daysOldToCount * -1));
+		// add a minute is useful for purging test. For activity last one day, the minute add is kind of wrong. 
 		cal.add(Calendar.MINUTE, 1);
 		long desiredTimeLong = cal.getTimeInMillis();
 		return new Timestamp(desiredTimeLong);
 	}
 
+	private Timestamp getHoursOldTimeStamp(int hoursOldToCount) {
+		Calendar cal = Calendar.getInstance();
+		cal.add(Calendar.HOUR, (hoursOldToCount * -1));
+		// Don't add or subtract a minute for this one. Just do what it says.
+		long desiredTimeLong = cal.getTimeInMillis();
+		return new Timestamp(desiredTimeLong);
+	}
 
 	/**
 	 * The goal is to report on objects that might be archived.
@@ -407,7 +425,6 @@ public class DomainObjectManager {
 
 	}
 
-
 	/**
 	* The goal is to delete what reported on with the same parameters.
 	* However, there are several sub-deletes, controlled by the className parameter
@@ -448,18 +465,47 @@ public class DomainObjectManager {
 	private int floorDays(int daysOldToCount) {
 		return Math.max(daysOldToCount, 1);
 	}
-	
+
 	/**
 	 * This function unrelated to data purge. Used in a test function
-	 * Get up maxNeeded orders that are active and not complete
+	 * Get up to maxNeeded orders that are active and not complete
 	 */
-	public List<OrderHeader> getSomeUncompletedOrders(int maxNeeded){
+	public List<OrderHeader> getSomeUncompletedOrders(int maxNeeded) {
 		UUID facilityUUID = getFacility().getPersistentId();
 		Criteria orderCrit = OrderHeader.staticGetDao().createCriteria();
 		orderCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		orderCrit.add(Restrictions.ne("status",OrderStatusEnum.COMPLETE));
-		orderCrit.add(Restrictions.eq("active",true));
+		orderCrit.add(Restrictions.ne("status", OrderStatusEnum.COMPLETE));
+		orderCrit.add(Restrictions.eq("active", true));
+		orderCrit.setMaxResults(maxNeeded);
 		return OrderHeader.staticGetDao().findByCriteriaQuery(orderCrit);
-	
+	}
+
+	/**
+	 * This function is used for the PickActivityHealthCheck. Query is somewhat similar to the purge queries.
+	 */
+	public FacilityPickParameters getFacilityPickParameters() {
+		FacilityPickParameters params = new FacilityPickParameters();
+
+		Timestamp dayOldTime = getDaysOldTimeStamp(1);
+		Timestamp hourOldTime = getHoursOldTimeStamp(1);
+		UUID facilityUUID = getFacility().getPersistentId();
+
+		Criteria wiDayCrit = WorkInstruction.staticGetDao().createCriteria();
+		wiDayCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		// Actual, with a complete time, should exclude housekeeping. Includes picks, putwall puts, and other things.
+		wiDayCrit.add(Restrictions.eq("type", WorkInstructionTypeEnum.ACTUAL));
+		wiDayCrit.add(Restrictions.gt("completed", dayOldTime));
+		int completedThisDay = WorkInstruction.staticGetDao().countByCriteriaQuery(wiDayCrit);
+		params.picksLastTwentyFourHours = completedThisDay;
+
+		Criteria wiHourCrit = WorkInstruction.staticGetDao().createCriteria();
+		wiHourCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		// Actual, with a complete time, should exclude housekeeping. Includes picks, putwall puts, and other things.
+		wiHourCrit.add(Restrictions.eq("type", WorkInstructionTypeEnum.ACTUAL));
+		wiHourCrit.add(Restrictions.gt("completed", hourOldTime));
+		int completedThisHour = WorkInstruction.staticGetDao().countByCriteriaQuery(wiHourCrit);
+		params.picksLastOneHour = completedThisHour;
+
+		return params;
 	}
 }
