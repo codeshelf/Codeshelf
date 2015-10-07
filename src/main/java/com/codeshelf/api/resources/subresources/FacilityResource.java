@@ -67,7 +67,6 @@ import com.codeshelf.api.responses.ItemDisplay;
 import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.api.responses.WorkerDisplay;
-import com.codeshelf.behavior.BatchProcessor;
 import com.codeshelf.behavior.NotificationBehavior;
 import com.codeshelf.behavior.NotificationBehavior.WorkerEventTypeGroup;
 import com.codeshelf.behavior.OrderBehavior;
@@ -88,6 +87,7 @@ import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.DataPurgeParameters;
+import com.codeshelf.model.PurgeProcessor;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
@@ -258,32 +258,7 @@ public class FacilityResource {
 		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		UserContext userContext = CodeshelfSecurityManager.getCurrentUserContext();
-		TenantCallable purgeCallable = new TenantCallable(persistenceService, tenant, userContext, new BatchProcessor() {
-
-			@Override
-			public int doSetup() {
-				// TODO Auto-generated method stub
-				return 0;
-			}
-
-			@Override
-			public int doBatch(int batchCount) {
-				// TODO Auto-generated method stub
-				return 0;
-			}
-
-			@Override
-			public int doTeardown() {
-				// TODO Auto-generated method stub
-				return 0;
-			}
-
-			@Override
-			public boolean isDone() {
-				// TODO Auto-generated method stub
-				return true;
-			}
-		});
+		TenantCallable purgeCallable = new TenantCallable(persistenceService, tenant, userContext, new PurgeProcessor(facility));
 
 		//TODO do better prevention
 		if (lastExecutionTask != null && lastExecutionTask.isRunning()) {
