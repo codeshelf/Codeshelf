@@ -8,13 +8,16 @@ package com.codeshelf.edi;
 
 
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.domain.WIBeanDBStorage;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.util.CompareNullChecker;
 
@@ -35,7 +38,9 @@ public class EdiExportQueue {
 	 * A means to reset and get rid of leftover garbage.
 	 */
 	public void clearAll() {
-		wiBeanList.clear();
+		for (WorkInstructionCsvBean bean : wiBeanList) {
+			removeWI(bean);
+		}
 	}
 	
 	/**
@@ -49,7 +54,13 @@ public class EdiExportQueue {
 	
 	public void addWorkInstruction(WorkInstruction inWi) {
 		WorkInstructionCsvBean wiBean = new WorkInstructionCsvBean(inWi);
+		if (!inWi.isHousekeeping()){
+			WIBeanDBStorage wiBeanDB = new WIBeanDBStorage(wiBean);
+			WIBeanDBStorage.staticGetDao().store(wiBeanDB);
+			wiBean.setPersistentId(wiBeanDB.getPersistentId());
+		}
 		wiBeanList.add(wiBean);
+		
 	}
 	
 	/**
@@ -103,7 +114,7 @@ public class EdiExportQueue {
 			}
 		}
 		for (WorkInstructionCsvBean bean: returnList){
-			wiBeanList.remove(bean);
+			removeWI(bean);
 		}
 		Collections.sort(returnList, new WiBeanComparator());
 		return returnList;
@@ -125,10 +136,21 @@ public class EdiExportQueue {
 			}
 		}
 		for (WorkInstructionCsvBean bean: returnList){
-			wiBeanList.remove(bean);
+			removeWI(bean);
 		}
 		Collections.sort(returnList, new WiBeanComparator());
 		return returnList;
+	}
+	
+	private void removeWI(WorkInstructionCsvBean bean) {
+		UUID savedPersistentId = bean.getPersistentId();
+		if (savedPersistentId != null) {
+			WIBeanDBStorage beanDB = WIBeanDBStorage.staticGetDao().findByPersistentId(savedPersistentId.toString());
+			beanDB.setActive(false);
+			beanDB.setUpdated(new Timestamp(System.currentTimeMillis()));
+			WIBeanDBStorage.staticGetDao().store(beanDB);
+		}
+		wiBeanList.remove(bean);
 	}
 	
 }

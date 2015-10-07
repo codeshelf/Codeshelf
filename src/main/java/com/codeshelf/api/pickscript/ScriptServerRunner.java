@@ -683,6 +683,7 @@ public class ScriptServerRunner {
 		//HashMap<String, String> params = new HashMap<>();
 		MultivaluedMapImpl params = new MultivaluedMapImpl();
 		params.add("domainId", serviceDomainId);
+		params.add("active", "true");
 		params.add("host", host);
 		params.add("port", port);
 		params.add("username", username);

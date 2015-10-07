@@ -1958,7 +1958,9 @@ public class WorkBehavior implements IApiBehavior {
 		storedWi.setPickerId(updatedWi.getPickerId());
 		storedWi.setActualQuantity(updatedWi.getActualQuantity());
 		storedWi.setStatus(updatedWi.getStatus());
-		storedWi.setType(WorkInstructionTypeEnum.ACTUAL);
+		if (storedWi.getType() == WorkInstructionTypeEnum.PLAN) {
+			storedWi.setType(WorkInstructionTypeEnum.ACTUAL);
+		}
 		storedWi.setStarted(updatedWi.getStarted());
 		storedWi.setCompleted(updatedWi.getCompleted());
 		WorkInstruction.staticGetDao().store(storedWi);

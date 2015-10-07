@@ -8,11 +8,16 @@ package com.codeshelf.edi;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.UUID;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.Expose;
 
 /**
  * This is our "native" WI bean. We have default header to match the default csv content
@@ -28,60 +33,47 @@ public class WorkInstructionCsvBean extends ExportCsvBeanABC {
 	// Potentially missing fields: description, gtin.  lotId is probably superfluous.
 	// Note that for bean export, null field will export as "null" instead of "". We want "". See handling on pickerId
 
-	@Getter
-	@Setter
+	@Getter @Setter @Expose
+	protected UUID		facilityPersistentId;
+	@Getter @Setter @Expose
 	protected String	facilityId;
-	@Getter
-	@Setter
+	@Getter @Setter @Expose
 	protected String	workInstructionId;
-	@Getter
-	@Setter
+	@Getter @Setter @Expose
 	protected String	type;
-	@Getter
-	@Setter
+	@Getter @Setter @Expose
 	protected String	status;
-	@Getter
-	@Setter
+	@Getter @Setter @Expose
 	protected String	orderGroupId;
-	@Getter
-	@Setter
+	@Getter @Setter @Expose
 	protected String	orderId;
-	@Getter
-	@Setter
+	@Getter @Setter @Expose
 	protected String	containerId;
-	@Getter
-	@Setter
+	@Getter @Setter @Expose
 	protected String	itemId;
-	@Getter
-	@Setter
+	@Getter @Setter @Expose
 	protected String	uom;
-	@Getter
-	@Setter
+	@Getter @Setter @Expose
 	protected String	lotId;
-	@Getter
-	@Setter
+	@Getter @Setter @Expose
 	protected String	cheId;
-	@Getter
-	@Setter
+	@Getter @Setter @Expose
 	protected String	locationId;
-	@Getter
-	@Setter
+	@Getter @Setter @Expose
 	protected String	pickerId;
-	@Getter
-	@Setter
+	@Getter @Setter @Expose
 	protected String	planQuantity;
-	@Getter
-	@Setter
+	@Getter @Setter @Expose
 	protected String	actualQuantity;
-	@Getter
-	@Setter
+	@Getter @Setter @Expose
 	protected String	assigned;
-	@Getter
-	@Setter
+	@Getter @Setter @Expose
 	protected String	started;
-	@Getter
-	@Setter
+	@Getter @Setter @Expose
 	protected String	completed;
+	
+	@Getter @Setter
+	private UUID		persistentId;
 
 	/**
 	 * This does NOT automatically define the order the fields are written out. Matches the old IronMQ format
@@ -102,6 +94,7 @@ public class WorkInstructionCsvBean extends ExportCsvBeanABC {
 	}
 	
 	public WorkInstructionCsvBean(WorkInstruction inWi) {
+		setFacilityPersistentId(inWi.getParentPersistentId());
 		setFacilityId(inWi.getParent().getDomainId());
 		setWorkInstructionId(inWi.getDomainId());
 		setType(inWi.getType().toString());
@@ -150,5 +143,16 @@ public class WorkInstructionCsvBean extends ExportCsvBeanABC {
 		setStarted(formatDate(inWi.getStarted()));
 		setCompleted(formatDate(inWi.getCompleted()));
 	}
+	
+	@Override
+	public String toString() {
+		Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+		return gson.toJson(this);
+	}
 
+	static public WorkInstructionCsvBean fromString(String string) {
+		Gson mGson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+		WorkInstructionCsvBean bean = mGson.fromJson(string, WorkInstructionCsvBean.class);
+		return bean;
+	}
 }

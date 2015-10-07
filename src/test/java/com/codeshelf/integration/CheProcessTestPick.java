@@ -10,6 +10,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.UUID;
@@ -33,6 +34,7 @@ import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.edi.IEdiExportGateway;
 import com.codeshelf.edi.IFacilityEdiExporter;
 import com.codeshelf.edi.SftpConfiguration;
+import com.codeshelf.edi.WorkInstructionCsvBean;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.OrderStatusEnum;
@@ -61,6 +63,7 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.SftpGateway;
 import com.codeshelf.model.domain.SftpWiGateway;
+import com.codeshelf.model.domain.WIBeanDBStorage;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.service.ExtensionPointType;
@@ -2103,9 +2106,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.logout();
 
 		beginTransaction();
-		EdiExportService exportProvider = workService.getExportProvider();
-		IFacilityEdiExporter exporter = exportProvider.getEdiExporter(facility);
-		exporter.waitUntillQueueIsEmpty(20000);
+		waitForExporterThreadToEmpty(facility);
 
 		LOGGER.info("5: Verify sent messages");
 		List<ExportMessage> messages = ExportMessage.staticGetDao().getAll();
@@ -2137,6 +2138,7 @@ public class CheProcessTestPick extends ServerTest {
 		oh.delete(); // This will cascade to delete the completed work instructions
 		OrderHeader oh2 = OrderHeader.staticGetDao().findByDomainId(facility, "22222"); // this one not completed
 		oh2.delete(); // This will cascade to delete the uncompleted work instructions
+		waitForExporterThreadToEmpty(facility);
 		commitTransaction();
 
 		// Just waste some time
@@ -2144,7 +2146,6 @@ public class CheProcessTestPick extends ServerTest {
 		picker.logout();
 		picker.loginAndSetup("Picker #1");
 		picker.logout();
-		exporter.waitUntillQueueIsEmpty(20000);
 	}
 
 	/**
@@ -2297,6 +2298,7 @@ public class CheProcessTestPick extends ServerTest {
 			if (!expectedContents.isEmpty())
 				Assert.assertEquals(expectedContents, message.getContents().trim());
 		}
+		waitForExporterThreadToEmpty(facility);
 		commitTransaction();
 	}
 
@@ -2497,6 +2499,7 @@ public class CheProcessTestPick extends ServerTest {
 			if (!expectedContents.isEmpty())
 				Assert.assertEquals(expectedContents, message.getContents().trim());
 		}
+		waitForExporterThreadToEmpty(facility);
 		commitTransaction();
 	}
 
@@ -2544,6 +2547,7 @@ public class CheProcessTestPick extends ServerTest {
 		this.startSiteController();
 		// Start setting up cart etc
 		PickSimulator picker = createPickSim(cheGuid1);
+		@SuppressWarnings("unused")
 		PickSimulator picker2 = createPickSim(cheGuid2);
 		picker.loginAndSetup("Picker #1");
 
@@ -2614,6 +2618,7 @@ public class CheProcessTestPick extends ServerTest {
 			if (!expectedContents.isEmpty())
 				Assert.assertEquals(expectedContents, message.getContents().trim());
 		}
+		waitForExporterThreadToEmpty(facility);
 		commitTransaction();
 	}
 
@@ -2717,9 +2722,73 @@ public class CheProcessTestPick extends ServerTest {
 		exporter.waitUntillQueueIsEmpty(20000);
 		messages = ExportMessage.staticGetDao().getAll();
 		Assert.assertEquals(2, messages.size());
+		waitForExporterThreadToEmpty(facility);
 		commitTransaction();
 	}
 
+	@Test
+	public void testWIBeanPersistence() throws Exception {
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		beginTransaction();
+		
+		LOGGER.info("1: Load Order, set up active sftp exporter");
+		facility = facility.reload();
+		propertyService.changePropertyValue(facility,
+			DomainObjectProperty.WORKSEQR,
+			WorkInstructionSequencerType.WorkSequence.toString());
+
+		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n11111,11111,1,Test Item 1,1,each,loc1,0" //
+				+ "\r\n11111,11111,2,Test Item 2,1,each,loc2,0" //
+				+ "\r\n11111,11111,3,Test Item 3,1,each,loc3,0";
+		importOrdersData(facility, csvOrders);
+
+		SftpConfiguration config = setupSftpOutConfiguration();
+		SftpWiGateway sftpWIs = configureSftpService(facility, config, SftpWiGateway.class);
+		sftpWIs.setActive(true);
+
+		commitTransaction();
+		
+		LOGGER.info("2: Pick all 3 items in the order");
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+		picker.setupOrderIdAsContainer("11111", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		Assert.assertEquals("3 jobs", picker.getLastCheDisplayString(2).trim());
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.pickItemAuto();		//Pick 1
+		picker.pickItemAuto();		//Housekeeping
+		picker.pickItemAuto();		//Pick 2
+		picker.pickItemAuto();		//Housekeeping
+		picker.pickItemAuto();		//Pick 3
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 400000);
+		
+		LOGGER.info("3: Assert that exported WI beans have been correctly saved and updated in the wi_bean table");
+		ThreadUtils.sleep(2000);	//Give server time to save and send all 3 WIs
+		beginTransaction();
+		List<WIBeanDBStorage> savedWIBeans = WIBeanDBStorage.staticGetDao().getAll();
+		Assert.assertEquals(3, savedWIBeans.size());
+		HashSet<String> expectedItems = new HashSet<>();
+		expectedItems.add("1");
+		expectedItems.add("2");
+		expectedItems.add("3");
+		for (WIBeanDBStorage savedWIBean : savedWIBeans) {
+			Assert.assertFalse(savedWIBean.getActive());
+			WorkInstructionCsvBean bean = WorkInstructionCsvBean.fromString(savedWIBean.getBean());
+			Assert.assertEquals("11111", bean.getOrderId());
+			Assert.assertNotNull(expectedItems.remove(bean.getItemId()));
+		}
+		Assert.assertTrue(expectedItems.isEmpty());
+		facility = facility.reload();
+		waitForExporterThreadToEmpty(facility);
+		commitTransaction();
+
+	}
+	
 	//++++++++++  SFTP configuration +++++++++++
 
 	// our private sftp test place. Note: we need to maintain this SFTP endpoint for our testing
@@ -2752,6 +2821,12 @@ public class CheProcessTestPick extends ServerTest {
 	}
 
 	//++++++++++   end SFTP configuration +++++++++++
+	
+	private void waitForExporterThreadToEmpty(Facility facility) throws Exception {
+		EdiExportService exportProvider = workService.getExportProvider();
+		IFacilityEdiExporter exporter = exportProvider.getEdiExporter(facility);
+		exporter.waitUntillQueueIsEmpty(20000);
+	}
 
 	@Test
 	public void testCheSetupErrors() throws IOException {
