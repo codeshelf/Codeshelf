@@ -18,6 +18,7 @@ import org.apache.logging.log4j.ThreadContext;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -2150,6 +2151,7 @@ public class CheProcessTestPick extends ServerTest {
 	 * This is to replicate
 	 */
 	@Test
+	@Ignore //Temporarily ignored to see if it is affecting test runs on TC
 	public void testChangeCartMidOrder() throws Exception {
 
 		LOGGER.info("1: Set up facility. Add the export extensions");
