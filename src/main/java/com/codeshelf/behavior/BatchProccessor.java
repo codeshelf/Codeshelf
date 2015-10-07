@@ -6,7 +6,7 @@ interface BatchProccessor {
 
 	int doBatch(int batchCount);
 
-	void doTeardown();
+	int doTeardown();
 
 	boolean isDone();
 	
