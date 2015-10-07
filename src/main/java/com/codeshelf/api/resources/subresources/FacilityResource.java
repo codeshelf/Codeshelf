@@ -9,6 +9,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.script.ScriptException;
 import javax.ws.rs.Consumes;
@@ -63,13 +68,15 @@ import com.codeshelf.api.responses.ItemDisplay;
 import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.api.responses.WorkerDisplay;
+import com.codeshelf.behavior.BatchProcessor;
 import com.codeshelf.behavior.NotificationBehavior;
+import com.codeshelf.behavior.NotificationBehavior.WorkerEventTypeGroup;
 import com.codeshelf.behavior.OrderBehavior;
 import com.codeshelf.behavior.ProductivitySummaryList;
+import com.codeshelf.behavior.TenantCallable;
 import com.codeshelf.behavior.TestBehavior;
 import com.codeshelf.behavior.UiUpdateBehavior;
 import com.codeshelf.behavior.WorkBehavior;
-import com.codeshelf.behavior.NotificationBehavior.WorkerEventTypeGroup;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedInstrListMessage;
 import com.codeshelf.device.LedSample;
@@ -78,6 +85,7 @@ import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.domain.Che;
@@ -89,6 +97,8 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.security.UserContext;
 import com.codeshelf.service.ExtensionPointService;
 import com.codeshelf.service.ParameterSetBeanABC;
 import com.codeshelf.service.PropertyService;
@@ -101,6 +111,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.sun.jersey.api.core.ResourceContext;
@@ -122,6 +133,10 @@ public class FacilityResource {
 	private final Provider<ICsvInventoryImporter> inventoryImporterProvider;
 	private final Provider<ICsvOrderImporter> orderImporterProvider;
 
+	//TODO hacked here to prevent multiple executions
+	private static final ExecutorService purgeExecutor = Executors.newSingleThreadExecutor();
+	private static TenantCallable lastExecutionTask; 
+	
 	@Setter
 	private Facility facility;
 
@@ -240,6 +255,68 @@ public class FacilityResource {
 		return BaseResponse.buildResponse(summary);
 	}
 
+	@DELETE
+	@Path("/data/purge")
+	@RequiresPermissions("facility:edit")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response deleteOldObjects(final @FormParam("daysOld") int daysOld) {
+		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+		UserContext userContext = CodeshelfSecurityManager.getCurrentUserContext();
+		TenantCallable purgeCallable = new TenantCallable(persistenceService, tenant, userContext, new BatchProcessor() {
+
+			private boolean	done = false;
+			@Override
+			public int doSetup() {
+				return 1;
+			}
+
+			@Override
+			public int doBatch(int batchCount) {
+				//TODO do smaller batches of each
+				Facility reloadedFacility = FacilityResource.this.facility.reload();
+				workService.purgeOldObjects(daysOld, reloadedFacility, OrderHeader.class);
+				workService.purgeOldObjects(daysOld, reloadedFacility, WorkInstruction.class);
+				workService.purgeOldObjects(daysOld, reloadedFacility, Container.class);
+				deleteWorkInstructions(daysOld);
+				deleteContainers(daysOld);
+				LOGGER.info("Async Purge Task Complete");
+				done  = true;
+				return 1;
+			}
+
+			@Override
+			public int doTeardown() {
+				return 1;
+			}
+
+			@Override
+			public boolean isDone() {
+				return done;
+			}
+			
+			@Override
+			public String toString() {
+				return "PurgeAllAtOnceProcessor daysOld " + daysOld;
+			}
+		});
+		//TODO do better prevention
+		if (lastExecutionTask != null && lastExecutionTask.isRunning()) {
+			LOGGER.info("Cancelling data purge task {}", lastExecutionTask);
+				ListenableFuture<Void> cancelLast = lastExecutionTask.cancel();
+				try {
+					cancelLast.get(2, TimeUnit.SECONDS);
+				} catch (InterruptedException | ExecutionException | TimeoutException e) {
+					LOGGER.warn("Last purge task cancellation did not complete after 2 seconds: {}", lastExecutionTask, e);
+				}
+		}
+		lastExecutionTask = purgeCallable;
+		LOGGER.info("Submitted data purge task {}", purgeCallable);
+		purgeExecutor.submit(purgeCallable);
+		return BaseResponse.buildResponse(null);
+	}
+
+	
 	@DELETE
 	@Path("/data/wis")
 	@RequiresPermissions("facility:edit")

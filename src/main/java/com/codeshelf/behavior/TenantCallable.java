@@ -13,11 +13,12 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
 import com.google.common.base.Stopwatch;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
 public class TenantCallable implements Callable<BatchReport>{
 	private static final Logger LOGGER	= LoggerFactory.getLogger(TenantCallable.class);
-	private BatchProccessor	delegate;
+	private BatchProcessor	delegate;
 	private Stopwatch runTiming;
 	private Thread runningThread;
 	private Tenant tenant;
@@ -25,11 +26,11 @@ public class TenantCallable implements Callable<BatchReport>{
 	private SettableFuture<Void> cancelled = null;
 	private TenantPersistenceService	persistenceService;
 	
-	public TenantCallable(TenantPersistenceService persistenceService, BatchProccessor delegate, Tenant tenant) {
-		this(persistenceService, delegate, tenant, CodeshelfSecurityManager.getUserContextSYSTEM());
+	public TenantCallable(TenantPersistenceService persistenceService, Tenant tenant, BatchProcessor delegate) {
+		this(persistenceService, tenant, CodeshelfSecurityManager.getUserContextSYSTEM(), delegate);
 	}
 
-	public TenantCallable(TenantPersistenceService persistenceService, BatchProccessor delegate, Tenant tenant, UserContext userContext) {
+	public TenantCallable(TenantPersistenceService persistenceService, Tenant tenant, UserContext userContext, BatchProcessor delegate) {
 		this.persistenceService = persistenceService;
 		this.tenant = tenant;
 		this.userContext = userContext;
@@ -45,7 +46,7 @@ public class TenantCallable implements Callable<BatchReport>{
 		return runTiming.isRunning();
 	}
 	
-	public Future<Void> cancel() {
+	public ListenableFuture<Void> cancel() {
 		cancelled = SettableFuture.create();
 		if (runningThread != null) {
 			runningThread.interrupt();
@@ -113,6 +114,10 @@ public class TenantCallable implements Callable<BatchReport>{
 			}
 		}
 		return report;
+	}
+	
+	public String toString() {
+		return String.format("TenantCallable: tenant: %s, user: %s, processor: %s", tenant, userContext, delegate);
 	}
 
 }

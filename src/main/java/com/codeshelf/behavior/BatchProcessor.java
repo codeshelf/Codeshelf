@@ -1,6 +1,6 @@
 package com.codeshelf.behavior;
 
-interface BatchProccessor {
+public interface BatchProcessor {
 
 	int doSetup();
 
@@ -9,5 +9,7 @@ interface BatchProccessor {
 	int doTeardown();
 
 	boolean isDone();
+	
+	public String toString();
 	
 }

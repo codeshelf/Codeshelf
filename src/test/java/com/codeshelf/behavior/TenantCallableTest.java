@@ -25,13 +25,13 @@ public class TenantCallableTest {
 
 	@Test
 	public void testSimple() throws Exception {
-		BatchProccessor singleLoop = mock(BatchProccessor.class); 
+		BatchProcessor singleLoop = mock(BatchProcessor.class); 
 		when(singleLoop.doSetup()).thenReturn(2);
 		when(singleLoop.isDone()).thenReturn(false, true);
 		when(singleLoop.doBatch(any(Integer.class))).thenReturn(2);
 		when(singleLoop.doTeardown()).thenReturn(2);
 		
-		TenantCallable subject = new TenantCallable(mock(TenantPersistenceService.class), singleLoop, mock(Tenant.class), mock(UserContext.class));
+		TenantCallable subject = new TenantCallable(mock(TenantPersistenceService.class), mock(Tenant.class), mock(UserContext.class), singleLoop);
 		subject.call();
 		Assert.assertTrue(subject.getTotalTime() > 0);
 	}
@@ -41,7 +41,7 @@ public class TenantCallableTest {
 		final SettableFuture<Object> inDoBatch = SettableFuture.create();
 		final SettableFuture<Object> waitForCancel = SettableFuture.create();
 		
-		BatchProccessor singleLoop = mock(BatchProccessor.class); 
+		BatchProcessor singleLoop = mock(BatchProcessor.class); 
 		when(singleLoop.doSetup()).thenReturn(2);
 		when(singleLoop.isDone()).thenReturn(false);
 		when(singleLoop.doBatch(any(Integer.class))).thenAnswer(new Answer<Integer>() {
@@ -58,7 +58,7 @@ public class TenantCallableTest {
 			}});
 
 		
-		TenantCallable subject = new TenantCallable(mock(TenantPersistenceService.class), singleLoop, mock(Tenant.class), mock(UserContext.class));
+		TenantCallable subject = new TenantCallable(mock(TenantPersistenceService.class), mock(Tenant.class), mock(UserContext.class), singleLoop);
 		Future<BatchReport> cancelledResult = Executors.newSingleThreadExecutor().submit(subject);
 		inDoBatch.get(2, TimeUnit.SECONDS); //ensures we got to doBatch at least
 		subject.cancel().get(2, TimeUnit.SECONDS);
@@ -69,7 +69,7 @@ public class TenantCallableTest {
 
 	@Test
 	public void testProgressReport() throws Exception {
-		BatchProccessor loopThree = mock(BatchProccessor.class); 
+		BatchProcessor loopThree = mock(BatchProcessor.class); 
 		
 		when(loopThree.doSetup()).thenReturn(5);
 		when(loopThree.isDone()).thenReturn(false, false, false, true);
@@ -79,7 +79,7 @@ public class TenantCallableTest {
 		when(loopThree.doTeardown()).thenReturn(5);
 
 		TenantPersistenceService mockPersistence = mock(TenantPersistenceService.class);
-		TenantCallable subject = new TenantCallable(mockPersistence, loopThree, mock(Tenant.class), mock(UserContext.class));
+		TenantCallable subject = new TenantCallable(mockPersistence, mock(Tenant.class), mock(UserContext.class), loopThree);
 		BatchReport result = subject.call();
 		Assert.assertEquals(BatchReport.Status.COMPLETE, result.getStatus());
 		Assert.assertEquals(5, result.getCompleteCount());
