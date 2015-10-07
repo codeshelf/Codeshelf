@@ -18,7 +18,6 @@ import java.util.concurrent.TimeoutException;
 import javax.script.ScriptException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
-import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -89,10 +88,8 @@ import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
@@ -250,8 +247,8 @@ public class FacilityResource {
 	@Path("/data/summary")
 	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getDataSummary(@QueryParam("daysOld") int daysOld) {
-		List<String> summary = workService.reportAchiveables(daysOld, this.facility);
+	public Response getDataSummary() {
+		List<String> summary = workService.reportAchiveables(20, this.facility);
 		return BaseResponse.buildResponse(summary);
 	}
 
@@ -259,47 +256,36 @@ public class FacilityResource {
 	@Path("/data/purge")
 	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response deleteOldObjects(final @FormParam("daysOld") int daysOld) {
+	public Response deleteOldObjects() {
 		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
 		UserContext userContext = CodeshelfSecurityManager.getCurrentUserContext();
-		TenantCallable purgeCallable = new TenantCallable(persistenceService, tenant, userContext, new BatchProcessor() {
+		TenantCallable purgeCallable = new TenantCallable(persistenceService, tenant, userContext, new BatchProcessor(){
 
-			private boolean	done = false;
 			@Override
 			public int doSetup() {
-				return 1;
+				// TODO Auto-generated method stub
+				return 0;
 			}
 
 			@Override
 			public int doBatch(int batchCount) {
-				//TODO do smaller batches of each
-				Facility reloadedFacility = FacilityResource.this.facility.reload();
-				workService.purgeOldObjects(daysOld, reloadedFacility, OrderHeader.class);
-				workService.purgeOldObjects(daysOld, reloadedFacility, WorkInstruction.class);
-				workService.purgeOldObjects(daysOld, reloadedFacility, Container.class);
-				deleteWorkInstructions(daysOld);
-				deleteContainers(daysOld);
-				LOGGER.info("Async Purge Task Complete");
-				done  = true;
-				return 1;
+				// TODO Auto-generated method stub
+				return 0;
 			}
 
 			@Override
 			public int doTeardown() {
-				return 1;
+				// TODO Auto-generated method stub
+				return 0;
 			}
 
 			@Override
 			public boolean isDone() {
-				return done;
-			}
-			
-			@Override
-			public String toString() {
-				return "PurgeAllAtOnceProcessor daysOld " + daysOld;
-			}
-		});
+				// TODO Auto-generated method stub
+				return true;
+			}});		
+		
 		//TODO do better prevention
 		if (lastExecutionTask != null && lastExecutionTask.isRunning()) {
 			LOGGER.info("Cancelling data purge task {}", lastExecutionTask);
@@ -316,34 +302,6 @@ public class FacilityResource {
 		return BaseResponse.buildResponse(null);
 	}
 
-	
-	@DELETE
-	@Path("/data/wis")
-	@RequiresPermissions("facility:edit")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response deleteWorkInstructions(@FormParam("daysOld") int daysOld) {
-		workService.purgeOldObjects(daysOld, this.facility, WorkInstruction.class);
-		return BaseResponse.buildResponse(null);
-	}
-
-	@DELETE
-	@Path("/data/orders")
-	@RequiresPermissions("facility:edit")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response deleteOrders(@FormParam("daysOld") int daysOld) {
-		workService.purgeOldObjects(daysOld, this.facility, OrderHeader.class);
-		return BaseResponse.buildResponse(null);
-	}
-
-	@DELETE
-	@Path("/data/containers")
-	@RequiresPermissions("facility:edit")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response deleteContainers(@FormParam("daysOld") int daysOld) {
-		workService.purgeOldObjects(daysOld, this.facility, Container.class);
-		return BaseResponse.buildResponse(null);
-	}
-	
 	@GET
 	@Path("/work/instructions/references")
 	@Produces(MediaType.APPLICATION_JSON)
