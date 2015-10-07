@@ -26,7 +26,7 @@ import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.IsProductionSiteControllerHealthCheck;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.RadioOnHealthCheck;
-import com.codeshelf.service.groovy.GroovyShellService;
+import com.codeshelf.shell.groovy.GroovyShellService;
 import com.codeshelf.ws.client.CsClientEndpoint;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;

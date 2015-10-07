@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.codeshelf.service.groovy;
+package com.codeshelf.shell.groovy;
 
 import java.io.IOException;
 import java.net.ServerSocket;

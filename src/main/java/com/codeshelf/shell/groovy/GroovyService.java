@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.codeshelf.service.groovy;
+package com.codeshelf.shell.groovy;
 
 import groovy.lang.Binding;
 import groovy.lang.GroovyClassLoader;
