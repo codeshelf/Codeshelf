@@ -2154,6 +2154,9 @@ public class CheProcessTestPick extends ServerTest {
 	@Ignore //Temporarily ignored to see if it is affecting test runs on TC
 	public void testChangeCartMidOrder() throws Exception {
 
+		// Let's see what is taking time. 12 seconds for this test.
+		long t0 = System.currentTimeMillis();
+
 		LOGGER.info("1: Set up facility. Add the export extensions");
 		// somewhat cloned from FacilityAccumulatingExportTest
 		Facility facility = setUpSimpleNoSlotFacility();
@@ -2166,8 +2169,17 @@ public class CheProcessTestPick extends ServerTest {
 			theProperty.setValue("WorkSequence");
 			PropertyDao.getInstance().store(theProperty);
 		}
+		
+		long t1 = System.currentTimeMillis();
+		if (t1 - t0 > 1000)
+			LOGGER.info("___t1 is {}ms", t1 - t0);
+
 		addPfswebExtensions(facility);
 		commitTransaction();
+
+		long t2 = System.currentTimeMillis();
+		if (t2 - t1 > 1000)
+			LOGGER.info("___t2 is {}ms", t2 - t1);
 
 		LOGGER.info("2: Load orders. No inventory, so uses locationA, etc. as the location-based pick");
 		beginTransaction();
@@ -2185,6 +2197,10 @@ public class CheProcessTestPick extends ServerTest {
 		importOrdersData(facility, csvOrders);
 		commitTransaction();
 
+		long t3 = System.currentTimeMillis();
+		if (t3 - t2 > 1000)
+			LOGGER.info("___t3 is {}ms", t3 - t2);
+
 		beginTransaction();
 		facility = facility.reload();
 		SftpConfiguration config = setupSftpOutConfiguration();
@@ -2192,6 +2208,10 @@ public class CheProcessTestPick extends ServerTest {
 		sftpWIs.setActive(true);
 		Assert.assertTrue(sftpWIs.isLinked());
 		commitTransaction();
+
+		long t4 = System.currentTimeMillis();
+		if (t4 - t3 > 1000)
+			LOGGER.info("___t4 is {}ms", t4 - t3);
 
 		this.startSiteController();
 		// Start setting up cart etc
@@ -2231,6 +2251,10 @@ public class CheProcessTestPick extends ServerTest {
 		LOGGER.info("5b: Verify 3 jobs left. 7 in all picks list but 4 complete");
 		wiList = picker.getAllPicksList();
 		logWiList(wiList);
+		
+		long t5 = System.currentTimeMillis();
+		if (t5 - t4 > 1000)
+			LOGGER.info("___t5 is {}ms", t5 - t4);
 
 		LOGGER.info("6a: Log out from this CHE");
 		picker.logout();
@@ -2261,10 +2285,18 @@ public class CheProcessTestPick extends ServerTest {
 		LOGGER.info(picker2.getLastCheDisplay());
 		picker2.pickItemAuto();
 
+		long t6 = System.currentTimeMillis();
+		if (t6 - t5 > 1000)
+			LOGGER.info("___t6 is {}ms", t6- t5);
+
 		beginTransaction();
 		EdiExportService exportProvider = workService.getExportProvider();
 		IFacilityEdiExporter exporter = exportProvider.getEdiExporter(facility);
 		exporter.waitUntillQueueIsEmpty(20000);
+
+		long t7 = System.currentTimeMillis();
+		if (t7 - t6 > 1000)
+			LOGGER.info("___t7 is {}ms", t7- t6);
 
 		LOGGER.info("5: Verify sent messages");
 		List<ExportMessage> messages = ExportMessage.staticGetDao().getAll();
@@ -2298,6 +2330,11 @@ public class CheProcessTestPick extends ServerTest {
 				Assert.assertEquals(expectedContents, message.getContents().trim());
 		}
 		commitTransaction();
+		
+		long t8 = System.currentTimeMillis();
+		if (t8 - t7 > 1000)
+			LOGGER.info("___t8 is {}ms", t8- t7);
+
 	}
 
 	/**
@@ -2544,7 +2581,6 @@ public class CheProcessTestPick extends ServerTest {
 		this.startSiteController();
 		// Start setting up cart etc
 		PickSimulator picker = createPickSim(cheGuid1);
-		PickSimulator picker2 = createPickSim(cheGuid2);
 		picker.loginAndSetup("Picker #1");
 
 		LOGGER.info("3a: Set up order 11111 at position 1");
