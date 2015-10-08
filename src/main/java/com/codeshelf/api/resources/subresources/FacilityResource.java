@@ -224,10 +224,23 @@ public class FacilityResource {
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getHealthCheckConfig(@PathParam("type") String healthCheckType) throws ScriptException {
+		Optional<ExtensionPoint> extensionPoint = null;
+		ParameterSetBeanABC parameterSet = null;
 		if ("DataQuantity".equalsIgnoreCase(healthCheckType)) {
 			ExtensionPointService epService = ExtensionPointService.createInstance(facility);
-			Optional<ExtensionPoint> extensionPoint = epService.getDataQuantityHealthCheckExtensionPoint();
-			ParameterSetBeanABC parameterSet = epService.getDataQuantityHealthCheckParameters();
+			extensionPoint = epService.getDataQuantityHealthCheckExtensionPoint();
+			parameterSet = epService.getDataQuantityHealthCheckParameters();
+			Map<String, Object> responseMap = new HashMap<>();
+			responseMap.put("parameterSet", parameterSet);
+			responseMap.put("extensionPoint", extensionPoint.orNull());
+			return BaseResponse.buildResponse(responseMap);
+		} else if ("DataPurge".equalsIgnoreCase(healthCheckType)) {
+			ExtensionPointService epService = ExtensionPointService.createInstance(facility);
+			extensionPoint = epService.getDataPurgeExtensionPoint();
+			parameterSet = epService.getDataPurgeParameters();
+		} 
+		
+		if (extensionPoint != null && parameterSet != null) {
 			Map<String, Object> responseMap = new HashMap<>();
 			responseMap.put("parameterSet", parameterSet);
 			responseMap.put("extensionPoint", extensionPoint.orNull());
