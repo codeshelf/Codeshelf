@@ -204,7 +204,7 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 		if (inWi.getActualQuantity() != null) {
 			setActualQuantity(String.valueOf(inWi.getActualQuantity()));
 		}
-		if (detail.getQuantity() != null) {
+		if (detail != null && detail.getQuantity() != null) {
 			setDetailQuantity(String.valueOf(detail.getQuantity()));
 		}
 
