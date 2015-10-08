@@ -291,7 +291,7 @@ public class DomainObjectManager {
 	 * Purge these orders, and related objects, all in the current transaction.
 	 * This imposes a max at one time limit of 100. We expect small values per transaction in production
 	 */
-	public void purgeSomeOrders(List<UUID> orderUuids){
+	public int purgeSomeOrders(List<UUID> orderUuids){
 		final int MAX_ORDER_PURGE = 100;
 		int wantToPurge = orderUuids.size();
 		int willPurge = Math.min(wantToPurge, MAX_ORDER_PURGE);
@@ -334,8 +334,8 @@ public class DomainObjectManager {
 			} catch (DaoException e) {
 				LOGGER.error("purgeOrders", e);
 			}
-
 		}
+		return deletedCount;
 	}
 
 	/**
