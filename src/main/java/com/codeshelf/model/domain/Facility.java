@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.edi.IEdiExportGateway;
 import com.codeshelf.edi.IEdiGateway;
 import com.codeshelf.edi.IEdiImportGateway;
+import com.codeshelf.edi.WorkInstructionCsvBean;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
@@ -128,6 +129,9 @@ public class Facility extends Location {
 	
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	private List<ExportMessage>				exportMessages;
+
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
+	private List<WorkInstructionCsvBean>	workInstrcutionBeans;
 
 	public Facility() {
 		super();

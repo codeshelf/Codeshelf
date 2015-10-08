@@ -14,6 +14,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.service.ExtensionPointService;
 
 public class PurgeProcessor implements BatchProcessor {
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(PurgeProcessor.class);
 
 	Facility					facility;
@@ -52,6 +53,7 @@ public class PurgeProcessor implements BatchProcessor {
 		ExtensionPointService ss = ExtensionPointService.createInstance(facility);
 		purgeParams = ss.getDataPurgeParameters();
 		
+		@SuppressWarnings("unused")
 		DomainObjectManager doMananager = new DomainObjectManager(facility);
 		// doMananager.getOrderUuidsToPurge(daysOldToCount, inCls, 1000);
 

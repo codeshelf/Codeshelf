@@ -63,7 +63,6 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.SftpGateway;
 import com.codeshelf.model.domain.SftpWiGateway;
-import com.codeshelf.model.domain.WIBeanDBStorage;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.service.ExtensionPointType;
@@ -2805,17 +2804,16 @@ public class CheProcessTestPick extends ServerTest {
 		LOGGER.info("3: Assert that exported WI beans have been correctly saved and updated in the wi_bean table");
 		ThreadUtils.sleep(2000);	//Give server time to save and send all 3 WIs
 		beginTransaction();
-		List<WIBeanDBStorage> savedWIBeans = WIBeanDBStorage.staticGetDao().getAll();
+		List<WorkInstructionCsvBean> savedWIBeans = WorkInstructionCsvBean.staticGetDao().getAll();
 		Assert.assertEquals(3, savedWIBeans.size());
 		HashSet<String> expectedItems = new HashSet<>();
 		expectedItems.add("1");
 		expectedItems.add("2");
 		expectedItems.add("3");
-		for (WIBeanDBStorage savedWIBean : savedWIBeans) {
+		for (WorkInstructionCsvBean savedWIBean : savedWIBeans) {
 			Assert.assertFalse(savedWIBean.getActive());
-			WorkInstructionCsvBean bean = WorkInstructionCsvBean.fromString(savedWIBean.getBean());
-			Assert.assertEquals("11111", bean.getOrderId());
-			Assert.assertNotNull(expectedItems.remove(bean.getItemId()));
+			Assert.assertEquals("11111", savedWIBean.getOrderId());
+			Assert.assertNotNull(expectedItems.remove(savedWIBean.getItemId()));
 		}
 		Assert.assertTrue(expectedItems.isEmpty());
 		facility = facility.reload();

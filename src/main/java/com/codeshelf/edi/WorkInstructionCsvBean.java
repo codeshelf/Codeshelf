@@ -8,14 +8,29 @@ package com.codeshelf.edi;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.UUID;
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 
+import javax.persistence.Cacheable;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.dao.GenericDaoABC;
+import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.domain.DomainObjectTreeABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.persistence.TenantPersistenceService;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.Expose;
@@ -24,45 +39,63 @@ import com.google.gson.annotations.Expose;
  * This is our "native" WI bean. We have default header to match the default csv content
  *
  */
-public class WorkInstructionCsvBean extends ExportCsvBeanABC {
+@Entity
+@Table(name = "work_instruction_bean")
+@Cacheable
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+@JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
+public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 
-	static final Logger	LOGGER	= LoggerFactory.getLogger(WorkInstructionCsvBean.class);
-
-	public WorkInstructionCsvBean() {
-	};
+	@SuppressWarnings("unused")
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(WorkInstructionCsvBean.class);
+	private static final SimpleDateFormat timestampFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 	
 	// Potentially missing fields: description, gtin.  lotId is probably superfluous.
 	// Note that for bean export, null field will export as "null" instead of "". We want "". See handling on pickerId
 
-	@Getter @Setter @Expose
+	@ManyToOne(optional = false, fetch=FetchType.LAZY)
+	@Getter @Setter
+	protected Facility		parent;
+
+	@Column(nullable = false)
+	@Getter @Setter
+	private Boolean			active;
+	
+	@Column(nullable = false)
+	@Getter @Setter
+	private Timestamp 		updated;
+	
+	@Setter @Getter @Expose @Column(name = "line_number")
+	private Integer 	lineNumber;
+	@Getter @Setter @Expose @Column(name = "facility_id")
 	protected String	facilityId;
-	@Getter @Setter @Expose
+	@Getter @Setter @Expose @Column(name = "work_instruction_id")
 	protected String	workInstructionId;
 	@Getter @Setter @Expose
 	protected String	type;
 	@Getter @Setter @Expose
 	protected String	status;
-	@Getter @Setter @Expose
+	@Getter @Setter @Expose @Column(name = "order_group_id")
 	protected String	orderGroupId;
-	@Getter @Setter @Expose
+	@Getter @Setter @Expose @Column(name = "order_id")
 	protected String	orderId;
-	@Getter @Setter @Expose
+	@Getter @Setter @Expose @Column(name = "container_id")
 	protected String	containerId;
-	@Getter @Setter @Expose
+	@Getter @Setter @Expose @Column(name = "item_id")
 	protected String	itemId;
 	@Getter @Setter @Expose
 	protected String	uom;
-	@Getter @Setter @Expose
+	@Getter @Setter @Expose @Column(name = "lot_id")
 	protected String	lotId;
-	@Getter @Setter @Expose
+	@Getter @Setter @Expose @Column(name = "che_id")
 	protected String	cheId;
-	@Getter @Setter @Expose
+	@Getter @Setter @Expose @Column(name = "location_id")
 	protected String	locationId;
-	@Getter @Setter @Expose
+	@Getter @Setter @Expose @Column(name = "picker_id")
 	protected String	pickerId;
-	@Getter @Setter @Expose
+	@Getter @Setter @Expose @Column(name = "plan_quantity")
 	protected String	planQuantity;
-	@Getter @Setter @Expose
+	@Getter @Setter @Expose @Column(name = "actual_quantity")
 	protected String	actualQuantity;
 	@Getter @Setter @Expose
 	protected String	assigned;
@@ -71,10 +104,33 @@ public class WorkInstructionCsvBean extends ExportCsvBeanABC {
 	@Getter @Setter @Expose
 	protected String	completed;
 	
-	@Getter @Setter
-	protected Facility	facility;
-	@Getter @Setter
-	private UUID		persistentId;
+	public static class WorkInstructionCsvBeanDao extends GenericDaoABC<WorkInstructionCsvBean> implements ITypedDao<WorkInstructionCsvBean> {
+		public final Class<WorkInstructionCsvBean> getDaoClass() {
+			return WorkInstructionCsvBean.class;
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public final ITypedDao<WorkInstructionCsvBean> getDao() {
+		return staticGetDao();
+	}
+
+
+	public static ITypedDao<WorkInstructionCsvBean> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(WorkInstructionCsvBean.class);
+	}
+	
+	@Override
+	public String getDefaultDomainIdPrefix() {
+		return "WIBean";
+	}
+
+
+	@Override
+	public Facility getFacility() {
+		return getParent();
+	}
 
 	/**
 	 * This does NOT automatically define the order the fields are written out. Matches the old IronMQ format
@@ -94,8 +150,14 @@ public class WorkInstructionCsvBean extends ExportCsvBeanABC {
 				+","+ assigned+","+ started+","+ completed; 
 	}
 	
+	public WorkInstructionCsvBean() {
+	};
+	
 	public WorkInstructionCsvBean(WorkInstruction inWi) {
-		setFacility(inWi.getFacility());
+		setDomainId(getDefaultDomainIdPrefix() + "_" + System.currentTimeMillis());
+		setParent(inWi.getFacility());
+		setActive(true);
+		setUpdated(new Timestamp(System.currentTimeMillis()));
 		setFacilityId(inWi.getParent().getDomainId());
 		setWorkInstructionId(inWi.getDomainId());
 		setType(inWi.getType().toString());
@@ -143,6 +205,16 @@ public class WorkInstructionCsvBean extends ExportCsvBeanABC {
 		setAssigned(formatDate(inWi.getAssigned()));
 		setStarted(formatDate(inWi.getStarted()));
 		setCompleted(formatDate(inWi.getCompleted()));
+	}
+	
+	private String formatDate(Timestamp time) {
+		if (time == null) {
+			return "";
+		} else {
+			synchronized(timestampFormatter) {
+				return timestampFormatter.format(time);
+			}
+		}
 	}
 	
 	@Override

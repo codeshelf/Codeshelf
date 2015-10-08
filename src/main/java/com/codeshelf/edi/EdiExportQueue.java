@@ -17,7 +17,6 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.model.domain.WIBeanDBStorage;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.util.CompareNullChecker;
 
@@ -55,19 +54,13 @@ public class EdiExportQueue {
 	public void addWorkInstruction(WorkInstruction inWi) {
 		WorkInstructionCsvBean wiBean = new WorkInstructionCsvBean(inWi);
 		if (!inWi.isHousekeeping()){
-			WIBeanDBStorage wiBeanDB = new WIBeanDBStorage(wiBean);
-			WIBeanDBStorage.staticGetDao().store(wiBeanDB);
-			wiBean.setPersistentId(wiBeanDB.getPersistentId());
+			WorkInstructionCsvBean.staticGetDao().store(wiBean);
 		}
 		wiBeanList.add(wiBean);		
 	}
 	
-	public void restoreWorkInstructionBeanFromDB(WIBeanDBStorage savedBean) {
-		WorkInstructionCsvBean bean = WorkInstructionCsvBean.fromString(savedBean.getBean());
-		bean.setFacility(savedBean.getFacility());
-		bean.setPersistentId(savedBean.getPersistentId());
-		wiBeanList.add(bean);
-		
+	public void restoreWorkInstructionBeanFromDB(WorkInstructionCsvBean savedBean) {
+		wiBeanList.add(savedBean);		
 	}
 
 	
@@ -153,10 +146,9 @@ public class EdiExportQueue {
 	private void removeWI(WorkInstructionCsvBean bean) {
 		UUID savedPersistentId = bean.getPersistentId();
 		if (savedPersistentId != null) {
-			WIBeanDBStorage beanDB = WIBeanDBStorage.staticGetDao().findByPersistentId(savedPersistentId.toString());
-			beanDB.setActive(false);
-			beanDB.setUpdated(new Timestamp(System.currentTimeMillis()));
-			WIBeanDBStorage.staticGetDao().store(beanDB);
+			bean.setActive(false);
+			bean.setUpdated(new Timestamp(System.currentTimeMillis()));
+			WorkInstructionCsvBean.staticGetDao().store(bean);
 		}
 		wiBeanList.remove(bean);
 	}

@@ -80,7 +80,7 @@
         <mapping class="com.codeshelf.model.domain.Resolution"/>
         <mapping class="com.codeshelf.model.domain.ExtensionPoint"/>
         <mapping class="com.codeshelf.model.domain.ExportMessage"/>
-        <mapping class="com.codeshelf.model.domain.WIBeanDBStorage"/>
+        <mapping class="com.codeshelf.edi.WorkInstructionCsvBean"/>
 
     </session-factory>
 </hibernate-configuration>

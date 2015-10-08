@@ -37,7 +37,6 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.FileExportReceipt;
 import com.codeshelf.model.domain.OrderHeader;
-import com.codeshelf.model.domain.WIBeanDBStorage;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.AbstractCodeshelfExecutionThreadService;
 import com.codeshelf.util.EvictingBlockingQueue;
@@ -138,8 +137,8 @@ public class FacilityAccumulatingExporter  extends AbstractCodeshelfExecutionThr
 		}
 		
 		//Load unprocessed WI Beans from DB
-		List<WIBeanDBStorage> savedWIBeans = WIBeanDBStorage.staticGetDao().findByFilter(filterParams);
-		for (WIBeanDBStorage savedWIBean : savedWIBeans){
+		List<WorkInstructionCsvBean> savedWIBeans = WorkInstructionCsvBean.staticGetDao().findByFilter(filterParams);
+		for (WorkInstructionCsvBean savedWIBean : savedWIBeans){
 			accumulator.restoreWorkInstructionBeanFromDB(savedWIBean);
 		}
 	}
