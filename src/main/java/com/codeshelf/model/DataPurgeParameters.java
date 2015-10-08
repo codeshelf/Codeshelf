@@ -61,5 +61,13 @@ public class DataPurgeParameters extends ParameterSetBeanABC {
 			getOrderBatchValue(),
 			getContainerBatchValue());
 	}
+	
+	/**
+	 * Giving the sanitized values, rather than the raw values. Could go either way.
+	 */
+	@Override	
+	public String toString(){
+		return getParametersDescription();
+	}
 
 }
