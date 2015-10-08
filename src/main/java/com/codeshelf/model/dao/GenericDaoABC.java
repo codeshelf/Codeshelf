@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.codeshelf.model.dao;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -156,11 +157,15 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * This may optimize a common need. Better than fetching an hydrating all then checking parent
 	 */
 	public final List<T> findByParentPersistentIdList(List<UUID> inIdList) {
-		Session session = getCurrentSession();
-		Criteria criteria = session.createCriteria(getDaoClass());
-		criteria.add(Restrictions.in("parent.persistentId", inIdList));
-		List<T> methodResultsList = (List<T>) criteria.list();
-		return methodResultsList;
+		if (inIdList != null && inIdList.isEmpty()) {
+			return Collections.<T>emptyList(); //empty WHERE X IN () causes syntax issue in postgres
+		} else {
+			Session session = getCurrentSession();
+			Criteria criteria = session.createCriteria(getDaoClass());
+			criteria.add(Restrictions.in("parent.persistentId", inIdList));
+			List<T> methodResultsList = (List<T>) criteria.list();
+			return methodResultsList;
+		}
 	}
 
 	public final List<T> findByFilter(List<Criterion> inFilter) {
