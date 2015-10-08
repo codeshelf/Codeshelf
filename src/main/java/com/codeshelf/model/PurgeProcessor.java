@@ -15,13 +15,13 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.service.ExtensionPointService;
 
 public class PurgeProcessor implements BatchProcessor {
-	private static final Logger	LOGGER				= LoggerFactory.getLogger(PurgeProcessor.class);
+	private static final Logger	LOGGER					= LoggerFactory.getLogger(PurgeProcessor.class);
 
-	Facility			facility;
-	DataPurgeParameters	purgeParams				= null;
-	List<UUID>			ordersUuidsToPurge		= null;
-	List<UUID>			containerUuidsToPurge	= null;
-	List<UUID>			wiUuidsToPurge			= null;
+	Facility					facility;
+	DataPurgeParameters			purgeParams				= null;
+	List<UUID>					ordersUuidsToPurge		= null;
+	List<UUID>					containerUuidsToPurge	= null;
+	List<UUID>					wiUuidsToPurge			= null;
 
 	enum PurgePhase {
 		PurgePhaseInit,
@@ -99,7 +99,7 @@ public class PurgeProcessor implements BatchProcessor {
 			int endSize = ordersUuidsToPurge.size();
 			if (endSize == startSize || endSize == 0) {
 				setPurgePhase(PurgePhase.PurgePhaseWis);
-				if (endSize > 0 ){
+				if (endSize > 0) {
 					LOGGER.error("orders purge did not progress. Bailing out. Leaving {} orders that should have been purged");
 				}
 			}
