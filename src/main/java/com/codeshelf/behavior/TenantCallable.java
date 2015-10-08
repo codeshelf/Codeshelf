@@ -92,6 +92,9 @@ public class TenantCallable implements Callable<BatchReport>{
 				}
 				batchCount++;
 			} 
+			if (delegate.isDone()) {
+				report.setComplete();
+			}
 		} finally {
 			try {
 				runningThread = null;
