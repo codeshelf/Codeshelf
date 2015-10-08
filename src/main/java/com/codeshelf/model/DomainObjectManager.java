@@ -286,7 +286,132 @@ public class DomainObjectManager {
 		List<UUID> uuidList = OrderHeader.staticGetDao().getUUIDListByCriteriaQuery(orderCrit);
 		return uuidList;
 	}
-	
+
+	/**
+	 * This returns the full list of UUIDs of workInstructions whose created date is older than daysOld before now.
+	 */
+	public List<UUID> getWorkInstructionUuidsToPurge(int daysOld) {
+		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
+		UUID facilityUUID = getFacility().getPersistentId();
+		Criteria wiCrit = WorkInstruction.staticGetDao().createCriteria();
+		wiCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		wiCrit.add(Restrictions.lt("created", desiredTime));
+		List<UUID> uuidList = WorkInstruction.staticGetDao().getUUIDListByCriteriaQuery(wiCrit);
+		return uuidList;
+	}
+
+	/**
+	 * This returns the full list of UUIDs of Containers to delete.
+	 * Does not directly respect the daysOld parameter. There is no good timestamp on the container.
+	 * Indirect because containerUse and Wis will be deleted first by timestamp. Container only deletes after those that reference it are gone.
+	 */
+	public List<UUID> getCntrUuidsToPurge(int daysOld) {
+		List<UUID> returnList = new ArrayList<UUID>();
+		
+		UUID facilityUUID = getFacility().getPersistentId();
+		// The main concern is that we should not purge the container if there are any remaining ContainerUses
+		// Containers have an active flag. So, if inactive, probably worth purging anyway.
+
+		// We cannot limit the returned containers because we have no easy way to find the subset that do not have containerUse pointing at them. 
+		List<Container> cntrs = Container.staticGetDao()
+			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID)));
+
+		Map<UUID, Container> referencedMap = new HashMap<UUID, Container>();
+
+		LOGGER.info("examining ContainerUses linked to containers");
+		// ContainerUse. Can not limit, or we would make incorrect decisions about which were deleteable.
+		Criteria crit = ContainerUse.staticGetDao().createCriteria();
+		crit.createAlias("parent", "p");
+		crit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
+		List<ContainerUse> uses = ContainerUse.staticGetDao().findByCriteriaQuery(crit);
+
+		// Add each container that ContainerUse references to map
+		for (ContainerUse cntrUse : uses) {
+			Container referencedCntr = cntrUse.getParent();
+			if (!referencedMap.containsKey(referencedCntr.getPersistentId())) {
+				referencedMap.put(referencedCntr.getPersistentId(), referencedCntr);
+			}
+		}
+
+		LOGGER.info("examining WorkInstructions linked to containers");
+		Criteria crit2 = WorkInstruction.staticGetDao().createCriteria();
+		crit2.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByCriteriaQuery(crit2);
+
+		// Add each container that the work instruction references to map
+		for (WorkInstruction wi : wis) {
+			Container referencedCntr = wi.getContainer();
+			if (!referencedMap.containsKey(referencedCntr.getPersistentId())) {
+				referencedMap.put(referencedCntr.getPersistentId(), referencedCntr);
+			}
+		}
+
+		for (Container cntr : cntrs) {
+			if (!referencedMap.containsKey(cntr.getPersistentId())) // This container had no containerUses and no work instructions
+				// nothing references it. Add it UUID to the list
+				returnList.add(cntr.getPersistentId());
+			}		
+		return returnList;
+	}
+
+	/**
+	 * Purge these containers all in the current transaction.
+	 */
+	public int purgeSomeCntrs(List<UUID> cntrUuids){
+		final int MAX_CNTR_PURGE = 500;
+		int wantToPurge = cntrUuids.size();
+		int willPurge = Math.min(wantToPurge, MAX_CNTR_PURGE);
+		if (wantToPurge > MAX_CNTR_PURGE) {
+			LOGGER.error("Limiting container delete batch size to {}. Called for {}.", MAX_CNTR_PURGE, wantToPurge);
+		}
+		int deletedCount = 0;
+		for (UUID cntrUuid : cntrUuids) {
+			// just protection against bad call
+			if (deletedCount > willPurge)
+				break;
+			try {
+				Container cntr = Container.staticGetDao().findByPersistentId(cntrUuid);
+				if (cntr != null) {
+					Container.staticGetDao().delete(cntr);
+					// This could fail! Make a new ContainerUse or WorkInstruction for a container after the uuid list was created.
+					// Too expensive to check again, and will not happen much. Let the database error catch it.
+					deletedCount++;
+				}
+			} catch (DaoException e) {
+				LOGGER.error("purgeSomeCntrs", e);
+			}
+		}
+		return deletedCount;
+	}
+
+	/**
+	 * Purge these work instructions all in the current transaction.
+	 */
+	public int purgeSomeWis(List<UUID> wiUuids){
+		final int MAX_WI_PURGE = 500;
+		int wantToPurge = wiUuids.size();
+		int willPurge = Math.min(wantToPurge, MAX_WI_PURGE);
+		if (wantToPurge > MAX_WI_PURGE) {
+			LOGGER.error("Limiting work instruction delete batch size to {}. Called for {}.", MAX_WI_PURGE, wantToPurge);
+		}
+		int deletedCount = 0;
+		for (UUID wiUuid : wiUuids) {
+			// just protection against bad call
+			if (deletedCount > willPurge)
+				break;
+			try {
+				WorkInstruction wi = WorkInstruction.staticGetDao().findByPersistentId(wiUuid);
+				if (wi != null) {
+					WorkInstruction.staticGetDao().delete(wi);
+					deletedCount++;
+				}
+			} catch (DaoException e) {
+				LOGGER.error("purgeSomeWis", e);
+			}
+		}
+		return deletedCount;
+	}
+
 	/**
 	 * Purge these orders, and related objects, all in the current transaction.
 	 * This imposes a max at one time limit of 100. We expect small values per transaction in production

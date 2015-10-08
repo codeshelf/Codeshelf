@@ -41,6 +41,10 @@ public class PurgeProcessor implements BatchProcessor {
 	int			ordersToPurge;
 	@Getter
 	int			ordersPurged	= 0;
+	@Getter
+	int			wisPurged		= 0;
+	@Getter
+	int			cntrsPurged		= 0;
 
 	public PurgeProcessor(Facility inFacility) {
 		facility = inFacility;
@@ -62,20 +66,63 @@ public class PurgeProcessor implements BatchProcessor {
 
 		LOGGER.info("Starting data purge with these parameters: {}", purgeParams);
 
-		DomainObjectManager doMananager = new DomainObjectManager(facility);
-		ordersUuidsToPurge = doMananager.getOrderUuidsToPurge(purgeParams.getPurgeAfterDaysValue());
-		setOrdersToPurge(ordersUuidsToPurge.size());
-
+		buildOrdersList(); //must be called here instead of in doBatch() so we can return something about the size of the job
+		
 		setPurgePhase(PurgePhase.PurgePhaseOrders);
 		return getOrdersToPurge();
 	}
+
+	private void buildWiList() {
+		if (wiUuidsToPurge != null)
+			LOGGER.error("buildWiList should be called only once");
+		DomainObjectManager doMananager = new DomainObjectManager(facility);
+		wiUuidsToPurge = doMananager.getWorkInstructionUuidsToPurge(purgeParams.getPurgeAfterDaysValue());
+		LOGGER.info("Starting work instruction purge. {} work instructions.", wiUuidsToPurge.size());
+	}
+
+	private int purgeWiBatch() {
+		if (wiUuidsToPurge.isEmpty()) {
+			LOGGER.error("unexpected state for purgeWiBatch");
+			return 0;
+		}
+		List<UUID> wiBatch = subUuidListAndRemoveFromInList(wiUuidsToPurge, purgeParams.getWorkInstructionBatchValue());
+		DomainObjectManager doMananager = new DomainObjectManager(facility);
+		return doMananager.purgeSomeWis(wiBatch);
+	}
+	
+	private void buildOrdersList() {
+		if (ordersUuidsToPurge != null)
+			LOGGER.error("buildCntrList should be called only once");
+		DomainObjectManager doMananager = new DomainObjectManager(facility);
+		ordersUuidsToPurge = doMananager.getOrderUuidsToPurge(purgeParams.getPurgeAfterDaysValue());
+		setOrdersToPurge(ordersUuidsToPurge.size()); // record the starting size of the job
+		LOGGER.info("Starting orders and associated objects purge. {} orders",ordersUuidsToPurge.size());
+	}
+
+	private void buildCntrList() {
+		if (containerUuidsToPurge != null)
+			LOGGER.error("buildCntrList should be called only once");
+		DomainObjectManager doMananager = new DomainObjectManager(facility);
+		containerUuidsToPurge = doMananager.getCntrUuidsToPurge(purgeParams.getPurgeAfterDaysValue());
+		LOGGER.info("Starting containers purge. {} containers", containerUuidsToPurge.size());
+	}
+
+	private int purgeCntrBatch() {
+		if (containerUuidsToPurge.isEmpty()) {
+			LOGGER.error("unexpected state for purgeCntrBatch");
+			return 0;
+		}
+		List<UUID> wiBatch = subUuidListAndRemoveFromInList(containerUuidsToPurge, purgeParams.getWorkInstructionBatchValue());
+		DomainObjectManager doMananager = new DomainObjectManager(facility);
+		return doMananager.purgeSomeCntrs(wiBatch);
+	}
+
 
 	private int purgeOrderBatch() {
 		if (ordersUuidsToPurge.isEmpty()) {
 			LOGGER.error("unexpected state for purgeOrderBatch");
 			return 0;
 		}
-
 		List<UUID> orderBatch = subUuidListAndRemoveFromInList(ordersUuidsToPurge, purgeParams.getOrderBatchValue());
 		DomainObjectManager doMananager = new DomainObjectManager(facility);
 		return doMananager.purgeSomeOrders(orderBatch);
@@ -91,7 +138,6 @@ public class PurgeProcessor implements BatchProcessor {
 		List<UUID> returnList = new ArrayList<UUID>(inList.subList(0, countNeeded));
 		inList.removeAll(returnList);
 		return returnList;
-
 	}
 
 	@Override
@@ -114,9 +160,31 @@ public class PurgeProcessor implements BatchProcessor {
 				}
 			}
 		} else if (currentPhase == PurgePhase.PurgePhaseWis) {
-			setPurgePhase(PurgePhase.PurgePhaseContainers);
+			if (wiUuidsToPurge == null)
+				buildWiList();
+			int startSize = wiUuidsToPurge.size();
+			if (startSize > 0)
+				wisPurged += purgeWiBatch();
+			int endSize = wiUuidsToPurge.size();
+			if (endSize == startSize || endSize == 0) {
+				setPurgePhase(PurgePhase.PurgePhaseContainers);
+				if (endSize > 0) {
+					LOGGER.error("work instructions purge did not progress. Bailing out. Leaving {} work instructions that should have been purged");
+				}
+			}
 		} else if (currentPhase == PurgePhase.PurgePhaseContainers) {
-			setPurgePhase(PurgePhase.PurgePhaseDone);
+			if (containerUuidsToPurge == null)
+				buildCntrList();
+			int startSize = containerUuidsToPurge.size();
+			if (startSize > 0)
+				cntrsPurged += purgeCntrBatch();
+			int endSize = containerUuidsToPurge.size();
+			if (endSize == startSize || endSize == 0) {
+				setPurgePhase(PurgePhase.PurgePhaseDone);
+				if (endSize > 0) {
+					LOGGER.error("container purge did not progress. Bailing out. Leaving {} containers that should have been purged");
+				}
+			}
 		} else {
 			LOGGER.error("Unexpected phase in PurgeProcessor doBatch {}", currentPhase);
 			setPurgePhase(PurgePhase.PurgePhaseDone);
