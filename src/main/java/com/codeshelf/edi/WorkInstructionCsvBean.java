@@ -27,6 +27,7 @@ import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.DomainObjectTreeABC;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -97,6 +98,8 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 	protected String	planQuantity;
 	@Getter @Setter @Expose @Column(name = "actual_quantity")
 	protected String	actualQuantity;
+	@Getter @Setter @Expose @Column(name = "detail_quantity")
+	protected String	detailQuantity;
 	@Getter @Setter @Expose
 	protected String	assigned;
 	@Getter @Setter @Expose
@@ -137,8 +140,8 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 	 */
 	public static String getCsvHeaderMatchingBean(){
 		return "facilityId, workInstructionId, type, status, orderGroupId, orderId, containerId,"
-				+ "itemId, uom, lotId, locationId, pickerId, planQuantity, actualQuantity, cheId,"
-				+ "assigned, started, completed"; // no version here
+				+ "itemId, uom, lotId, locationId, pickerId, planQuantity, actualQuantity, detailQuantity,"
+				+ "cheId, assigned, started, completed"; // no version here
 	}
 	
 	/**
@@ -146,8 +149,8 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 	 */
 	public String getDefaultCsvContent(){
 		return facilityId +","+ workInstructionId+","+ type+","+ status+","+ orderGroupId+","+ orderId+","+ containerId
-				+","+ itemId+","+ uom+","+ lotId+","+ locationId+","+ pickerId+","+ planQuantity+","+ actualQuantity+","+ cheId
-				+","+ assigned+","+ started+","+ completed; 
+				+","+ itemId+","+ uom+","+ lotId+","+ locationId+","+ pickerId+","+ planQuantity+","+ actualQuantity+","+ detailQuantity
+				+"," + cheId + ","+ assigned+","+ started+","+ completed; 
 	}
 	
 	public WorkInstructionCsvBean() {
@@ -163,11 +166,12 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 		setType(inWi.getType().toString());
 		setStatus(inWi.getStatus().toString());
 
+		OrderDetail detail = inWi.getOrderDetail();
 		// groups are optional!
 		String groupStr = "";
 		// from v5, housekeeping wi may have no detail
-		if (inWi.getOrderDetail() != null) {
-			OrderGroup theGroup = inWi.getOrderDetail().getParent().getOrderGroup();
+		if (detail != null) {
+			OrderGroup theGroup = detail.getParent().getOrderGroup();
 			if (theGroup != null)
 				groupStr = theGroup.getDomainId();
 		}
@@ -175,8 +179,8 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 
 		// from v5, housekeeping wi may have no detail
 		String orderStr = "";
-		if (inWi.getOrderDetail() != null)
-			orderStr = inWi.getOrderDetail().getOrderId();
+		if (detail != null)
+			orderStr = detail.getOrderId();
 		setOrderId(orderStr);
 
 		setContainerId(inWi.getContainerId());
@@ -199,6 +203,9 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 		}
 		if (inWi.getActualQuantity() != null) {
 			setActualQuantity(String.valueOf(inWi.getActualQuantity()));
+		}
+		if (detail.getQuantity() != null) {
+			setDetailQuantity(String.valueOf(detail.getQuantity()));
 		}
 
 		setCheId(inWi.getAssignedCheName());

@@ -58,4 +58,9 @@
     <changeSet author="default (generated)" id="1444260387623-10">
         <dropTable tableName="wi_bean"/>
     </changeSet>
+    <changeSet author="default (generated)" id="1444327995673-2">
+        <addColumn tableName="work_instruction_bean">
+            <column name="detail_quantity" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
