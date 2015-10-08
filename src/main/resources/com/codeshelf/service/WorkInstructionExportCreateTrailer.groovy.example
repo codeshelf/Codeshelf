@@ -1,7 +1,7 @@
 /**
  * provide a trailer
  */
-def WorkInstructionCreateTrailer(orderId) {
+def WorkInstructionCreateTrailer(bean) {
     trailer = ""
      return trailer;
 }

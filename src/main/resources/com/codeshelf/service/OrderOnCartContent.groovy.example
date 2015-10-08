@@ -1,7 +1,7 @@
 /**
  * produce the message in customer format
  */
-def OrderOnCartContent(orderId, cheId) {
+def OrderOnCartContent(bean) {
     msg = ""
-     return msg;
+    return msg;
 }

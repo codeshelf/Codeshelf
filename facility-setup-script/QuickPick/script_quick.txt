@@ -3,7 +3,6 @@ var :che 0x000000ED
 STEP Load order on che
 SERVER
 setProperty pickmult true
-//setProperty WORKSEQR BayDistance
 setProperty WORKSEQR WorkSequence
 deleteAllExtensionPoints
 deleteOrders 1111

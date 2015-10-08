@@ -6,6 +6,10 @@ import java.io.InputStream;
 import lombok.Getter;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.codeshelf.model.domain.OrderHeader;
 
 /**
  * Example scripts are read from the src/main/resources/com/codeshelf/service for use as default examples.
@@ -33,6 +37,8 @@ public enum ExtensionPointType {
 	 */
 	@Getter
 	private String	exampleScript;
+	
+	private final Logger LOGGER	= LoggerFactory.getLogger(ExtensionPointType.class);
 
 	private ExtensionPointType() {
 		String resourceName = this.name() + ".groovy.example";
@@ -40,7 +46,8 @@ public enum ExtensionPointType {
 			if (resource != null) {
 				this.exampleScript = IOUtils.toString(resource, "UTF-8");
 			} else {
-				throw new RuntimeException("Unable to load example script for the ExtensionPointType at " + resourceName);
+				this.exampleScript = generateDefaultScript(this.name());
+				LOGGER.error("Unable to load example script for the ExtensionPointType at " + resourceName + ". Defaulting to an empty script instead.");
 			}
 		} catch (IOException e) {
 			throw new RuntimeException("Unable to load example script for the ExtensionPointType at " + resourceName, e);
@@ -84,4 +91,10 @@ public enum ExtensionPointType {
 		return getExtensionGroup() == ExtensionPointGroup.ParameterSetGroup;
 	}
 
+	private String generateDefaultScript(String name) {
+		return 
+				"def " + name + "(parameter) {\n" +
+				"	//Provide the appropriate script before activating this extension\n"+
+				"}";
+	}
 }

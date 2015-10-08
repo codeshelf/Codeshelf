@@ -1,7 +1,7 @@
 /**
  * provide a header
  */
-def WorkInstructionCreateHeader(orderId, cheId) {
+def WorkInstructionCreateHeader(bean) {
     header = ""
      return header;
 }
