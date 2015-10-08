@@ -2151,7 +2151,8 @@ public class CheProcessTestPick extends ServerTest {
 	 * This is to replicate
 	 */
 	@Test
-	@Ignore //Temporarily ignored to see if it is affecting test runs on TC
+	@Ignore
+	//Temporarily ignored to see if it is affecting test runs on TC
 	public void testChangeCartMidOrder() throws Exception {
 
 		// Let's see what is taking time. 12 seconds for this test.
@@ -2169,7 +2170,7 @@ public class CheProcessTestPick extends ServerTest {
 			theProperty.setValue("WorkSequence");
 			PropertyDao.getInstance().store(theProperty);
 		}
-		
+
 		long t1 = System.currentTimeMillis();
 		if (t1 - t0 > 1000)
 			LOGGER.info("___t1 is {}ms", t1 - t0);
@@ -2251,7 +2252,7 @@ public class CheProcessTestPick extends ServerTest {
 		LOGGER.info("5b: Verify 3 jobs left. 7 in all picks list but 4 complete");
 		wiList = picker.getAllPicksList();
 		logWiList(wiList);
-		
+
 		long t5 = System.currentTimeMillis();
 		if (t5 - t4 > 1000)
 			LOGGER.info("___t5 is {}ms", t5 - t4);
@@ -2287,7 +2288,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		long t6 = System.currentTimeMillis();
 		if (t6 - t5 > 1000)
-			LOGGER.info("___t6 is {}ms", t6- t5);
+			LOGGER.info("___t6 is {}ms", t6 - t5);
 
 		beginTransaction();
 		EdiExportService exportProvider = workService.getExportProvider();
@@ -2296,7 +2297,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		long t7 = System.currentTimeMillis();
 		if (t7 - t6 > 1000)
-			LOGGER.info("___t7 is {}ms", t7- t6);
+			LOGGER.info("___t7 is {}ms", t7 - t6);
 
 		LOGGER.info("5: Verify sent messages");
 		List<ExportMessage> messages = ExportMessage.staticGetDao().getAll();
@@ -2331,10 +2332,10 @@ public class CheProcessTestPick extends ServerTest {
 		}
 		waitForExporterThreadToEmpty(facility);
 		commitTransaction();
-		
+
 		long t8 = System.currentTimeMillis();
 		if (t8 - t7 > 1000)
-			LOGGER.info("___t8 is {}ms", t8- t7);
+			LOGGER.info("___t8 is {}ms", t8 - t7);
 
 	}
 
@@ -2618,7 +2619,6 @@ public class CheProcessTestPick extends ServerTest {
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
-
 		beginTransaction();
 		EdiExportService exportProvider = workService.getExportProvider();
 		IFacilityEdiExporter exporter = exportProvider.getEdiExporter(facility);
@@ -2765,7 +2765,7 @@ public class CheProcessTestPick extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		beginTransaction();
-		
+
 		LOGGER.info("1: Load Order, set up active sftp exporter");
 		facility = facility.reload();
 		propertyService.changePropertyValue(facility,
@@ -2783,7 +2783,7 @@ public class CheProcessTestPick extends ServerTest {
 		sftpWIs.setActive(true);
 
 		commitTransaction();
-		
+
 		LOGGER.info("2: Pick all 3 items in the order");
 		startSiteController();
 		PickSimulator picker = createPickSim(cheGuid1);
@@ -2794,15 +2794,15 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals("3 jobs", picker.getLastCheDisplayString(2).trim());
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		picker.pickItemAuto();		//Pick 1
-		picker.pickItemAuto();		//Housekeeping
-		picker.pickItemAuto();		//Pick 2
-		picker.pickItemAuto();		//Housekeeping
-		picker.pickItemAuto();		//Pick 3
+		picker.pickItemAuto(); //Pick 1
+		picker.pickItemAuto(); //Housekeeping
+		picker.pickItemAuto(); //Pick 2
+		picker.pickItemAuto(); //Housekeeping
+		picker.pickItemAuto(); //Pick 3
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 400000);
-		
+
 		LOGGER.info("3: Assert that exported WI beans have been correctly saved and updated in the wi_bean table");
-		ThreadUtils.sleep(2000);	//Give server time to save and send all 3 WIs
+		ThreadUtils.sleep(2000); //Give server time to save and send all 3 WIs
 		beginTransaction();
 		List<WorkInstructionCsvBean> savedWIBeans = WorkInstructionCsvBean.staticGetDao().getAll();
 		Assert.assertEquals(3, savedWIBeans.size());
@@ -2821,7 +2821,7 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 
 	}
-	
+
 	//++++++++++  SFTP configuration +++++++++++
 
 	// our private sftp test place. Note: we need to maintain this SFTP endpoint for our testing
@@ -2854,7 +2854,7 @@ public class CheProcessTestPick extends ServerTest {
 	}
 
 	//++++++++++   end SFTP configuration +++++++++++
-	
+
 	private void waitForExporterThreadToEmpty(Facility facility) throws Exception {
 		EdiExportService exportProvider = workService.getExportProvider();
 		IFacilityEdiExporter exporter = exportProvider.getEdiExporter(facility);
@@ -3506,4 +3506,85 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals("6 jobs", picker.getLastCheDisplayString(2).trim());
 		picker.logout();
 	}
+
+	/**
+	 * The intent is to setup the cart before orders are loaded
+	 * PFSWeb asked/complained about this feature 
+	 */
+	@Test
+	public void testCartSetupBeforeOrder() throws Exception {
+
+		LOGGER.info("1: Set up facility. Add the export extensions");
+		// somewhat cloned from FacilityAccumulatingExportTest
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		beginTransaction();
+		facility = facility.reload();
+		propertyService.turnOffHK(facility);
+		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.WORKSEQR);
+		if (theProperty != null) {
+			theProperty.setValue("WorkSequence");
+			PropertyDao.getInstance().store(theProperty);
+		}
+
+		commitTransaction();
+
+		LOGGER.info("2: Load only one relevant order. No inventory, so uses locationA, etc. as the location-based pick");
+		beginTransaction();
+		facility = facility.reload();
+
+		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n11111,11111,1,Test Item 1,1,each,locationA,1" //
+				+ "\r\n55555,55555,2,Test Item 2,1,each,locationA,20";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+
+		this.startSiteController();
+		// Start setting up cart etc
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+
+		LOGGER.info("3a: Set up order 11111 at position 1");
+		picker.setupOrderIdAsContainer("11111", "1");
+
+		LOGGER.info("3b: Set up order 22222 at position 2");
+		picker.setupOrderIdAsContainer("22222", "2");
+
+		LOGGER.info("3c: Set up order 44444 at position 3");
+		picker.setupOrderIdAsContainer("44444", "3");
+
+		LOGGER.info("4: Start, getting the first pick");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		LOGGER.info(picker.getLastCheDisplay());
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		List<WorkInstruction> wiList = picker.getAllPicksList();
+		Assert.assertEquals(1, wiList.size());
+
+		LOGGER.info("5: Now load orders 22222 and 44444");
+		beginTransaction();
+		facility = facility.reload();
+
+		String csvOrders2 = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n22222,22222,2,Test Item 2,1,each,locationB,20" //
+				+ "\r\n22222,22222,3,Test Item 3,1,each,locationC,30" //				
+				+ "\r\n44444,44444,5,Test Item 5,1,each,locationD,500";
+		importOrdersData(facility, csvOrders2);
+		commitTransaction();
+
+		LOGGER.info("6: Pick the one and only job");
+		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		LOGGER.info(picker.getLastCheDisplay());
+		
+		LOGGER.info("7: Start, which will find the other jobs");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		
+		wiList = picker.getAllPicksList();
+		Assert.assertEquals(3, wiList.size());
+	}
+
 }

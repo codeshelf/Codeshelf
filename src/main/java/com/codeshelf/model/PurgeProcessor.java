@@ -59,6 +59,9 @@ public class PurgeProcessor implements BatchProcessor {
 		// get our purge parameters
 		ExtensionPointService ss = ExtensionPointService.createInstance(facility);
 		purgeParams = ss.getDataPurgeParameters();
+
+		LOGGER.info("Starting data purge with these parameters: {}", purgeParams);
+
 		DomainObjectManager doMananager = new DomainObjectManager(facility);
 		ordersUuidsToPurge = doMananager.getOrderUuidsToPurge(purgeParams.getPurgeAfterDaysValue());
 		setOrdersToPurge(ordersUuidsToPurge.size());
@@ -68,6 +71,11 @@ public class PurgeProcessor implements BatchProcessor {
 	}
 
 	private int purgeOrderBatch() {
+		if (ordersUuidsToPurge.isEmpty()) {
+			LOGGER.error("unexpected state for purgeOrderBatch");
+			return 0;
+		}
+
 		List<UUID> orderBatch = subUuidListAndRemoveFromInList(ordersUuidsToPurge, purgeParams.getOrderBatchValue());
 		DomainObjectManager doMananager = new DomainObjectManager(facility);
 		return doMananager.purgeSomeOrders(orderBatch);
@@ -89,6 +97,9 @@ public class PurgeProcessor implements BatchProcessor {
 	@Override
 	public int doBatch(int batchCount) throws Exception {
 		PurgePhase currentPhase = getPurgePhase();
+		// in almost every case, need to reload facility, so do it centrally
+		facility = facility.reload();
+
 		if (currentPhase == PurgePhase.PurgePhaseOrders) {
 			// we want to know if we are done with orders. One quite reliable way to know is if the orders list size decreased.
 			// If non-zero, but it did not decrease, lets log an error and call it done so we are not stuck forever.
