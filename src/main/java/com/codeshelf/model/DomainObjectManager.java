@@ -306,8 +306,11 @@ public class DomainObjectManager {
 	 * Indirect because containerUse and Wis will be deleted first by timestamp. Container only deletes after those that reference it are gone.
 	 */
 	public List<UUID> getCntrUuidsToPurge(int daysOld) {
+		// Time this routine as this might be a bit slow
+		long startMillis = System.currentTimeMillis();
+
 		List<UUID> returnList = new ArrayList<UUID>();
-		
+
 		UUID facilityUUID = getFacility().getPersistentId();
 		// The main concern is that we should not purge the container if there are any remaining ContainerUses
 		// Containers have an active flag. So, if inactive, probably worth purging anyway.
@@ -350,14 +353,18 @@ public class DomainObjectManager {
 			if (!referencedMap.containsKey(cntr.getPersistentId())) // This container had no containerUses and no work instructions
 				// nothing references it. Add it UUID to the list
 				returnList.add(cntr.getPersistentId());
-			}		
+		}
+		long endMillis = System.currentTimeMillis();
+		if (startMillis - endMillis > 1000)
+			LOGGER.info("Took {}ms to determine that {} containers should be deleted", startMillis - endMillis, returnList.size());
+
 		return returnList;
 	}
 
 	/**
 	 * Purge these containers all in the current transaction.
 	 */
-	public int purgeSomeCntrs(List<UUID> cntrUuids){
+	public int purgeSomeCntrs(List<UUID> cntrUuids) {
 		final int MAX_CNTR_PURGE = 500;
 		int wantToPurge = cntrUuids.size();
 		int willPurge = Math.min(wantToPurge, MAX_CNTR_PURGE);
@@ -387,7 +394,7 @@ public class DomainObjectManager {
 	/**
 	 * Purge these work instructions all in the current transaction.
 	 */
-	public int purgeSomeWis(List<UUID> wiUuids){
+	public int purgeSomeWis(List<UUID> wiUuids) {
 		final int MAX_WI_PURGE = 500;
 		int wantToPurge = wiUuids.size();
 		int willPurge = Math.min(wantToPurge, MAX_WI_PURGE);
@@ -416,14 +423,14 @@ public class DomainObjectManager {
 	 * Purge these orders, and related objects, all in the current transaction.
 	 * This imposes a max at one time limit of 100. We expect small values per transaction in production
 	 */
-	public int purgeSomeOrders(List<UUID> orderUuids){
+	public int purgeSomeOrders(List<UUID> orderUuids) {
 		final int MAX_ORDER_PURGE = 100;
 		int wantToPurge = orderUuids.size();
 		int willPurge = Math.min(wantToPurge, MAX_ORDER_PURGE);
 		if (wantToPurge > MAX_ORDER_PURGE) {
 			LOGGER.error("Limiting order delete batch size to {}. Called for {}.", MAX_ORDER_PURGE, wantToPurge);
 		}
-		
+
 		// Trying to speed up by not relying quite so much on the hibernate delete cascade.
 		// Result: not much improvement in time. But much nicer logging about the process. (changed to debug logging now)
 		LOGGER.debug("Phase 2 of order purge: assemble list of details for these orders");
@@ -492,7 +499,7 @@ public class DomainObjectManager {
 			LOGGER.info("purging only {}  of {} purgable orders and owned related objects", willPurge, wantToPurge);
 		else
 			LOGGER.info("purging {} orders and owned related objects", willPurge);
-		
+
 		purgeSomeOrders(uuidList);
 
 	}
