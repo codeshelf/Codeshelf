@@ -32,6 +32,7 @@ import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.LocationAliasCsvImporter;
 import com.codeshelf.edi.OrderLocationCsvImporter;
 import com.codeshelf.edi.OutboundOrderPrefetchCsvImporter;
+import com.codeshelf.edi.WorkerCsvImporter;
 import com.codeshelf.model.domain.DataImportReceipt;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.security.CodeshelfSecurityManager;
@@ -51,6 +52,7 @@ public class ImportResource {
 	private LocationAliasCsvImporter locationAliasImporter;
 	private OutboundOrderPrefetchCsvImporter outboundOrderImporter;
 	private InventoryCsvImporter inventoryImporter;
+	private WorkerCsvImporter	workerImporter;
 	
 	@Setter
 	private Facility facility;
@@ -60,12 +62,14 @@ public class ImportResource {
 		OrderLocationCsvImporter orderLocationImporter, 
 		LocationAliasCsvImporter locationAliasImporter,  
 		OutboundOrderPrefetchCsvImporter outboundOrderImporter,
-		InventoryCsvImporter inventoryImporter) {
+		InventoryCsvImporter inventoryImporter,
+		WorkerCsvImporter workerImporter) {
 		this.aislesFileCsvImporter = aislesFileCsvImporter;
 		//this.orderLocationImporter = orderLocationImporter;
 		this.locationAliasImporter = locationAliasImporter;
 		this.outboundOrderImporter = outboundOrderImporter;
 		this.inventoryImporter = inventoryImporter;
+		this.workerImporter = workerImporter;
 	}
 	
 	@POST
@@ -110,6 +114,31 @@ public class ImportResource {
 			return new ErrorResponse().processException(e);
 		} 
 	}
+	
+	@POST
+	@Path("/workers")
+	@RequiresPermissions("order:import")
+	@Consumes(MediaType.MULTIPART_FORM_DATA)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response uploadWorkers(
+        @FormDataParam("file") InputStream fileInputStream,
+        @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
+		
+		try {
+			long receivedTime = System.currentTimeMillis();
+			Reader reader = new InputStreamReader(fileInputStream);
+			
+			boolean result = this.workerImporter.importWorkersFromCsvStream(reader, facility, new java.sql.Timestamp(receivedTime));
+			if (result) {
+				return BaseResponse.buildResponse(null, Status.OK);				
+			}
+			return BaseResponse.buildResponse(null, Status.INTERNAL_SERVER_ERROR);
+		}
+		catch (Exception e) {
+			return new ErrorResponse().processException(e);
+		} 
+	}
+	
 
 	@POST
 	@Path("/orders")
