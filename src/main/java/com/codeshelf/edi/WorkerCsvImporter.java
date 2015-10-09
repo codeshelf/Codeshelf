@@ -139,7 +139,7 @@ public class WorkerCsvImporter extends CsvImporter<WorkerCsvBean> implements ICs
 
 		Facility newFacility = inFacility;
 		String newFirst = inCsvBean.getFirstName();
-		String newLast = inCsvBean.getFirstName();
+		String newLast = inCsvBean.getLastName();
 		String newHr = inCsvBean.getHumanResourcesId();
 		String newGroup = inCsvBean.getWorkGroupName();
 

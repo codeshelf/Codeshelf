@@ -106,7 +106,7 @@ public class WorkersImportBehaviorsTest extends ServerTest {
 		beginTransaction();
 		facility = facility.reload();
 		String csvString = "badgeId, firstName, lastName\r\n" //
-				+ "Badge_01,Jay,Smith\r\n" //
+				+ "Badge_01,Jay,Smith 01\r\n" //
 				+ "Badge_02,Kay,Smith\r\n" //
 				+ "Badge_03,Lori,Smith\r\n" //
 				+ "Badge_04,Mary,Smith\r\n" //
@@ -130,6 +130,7 @@ public class WorkersImportBehaviorsTest extends ServerTest {
 		Worker worker1a = Worker.findTenantWorker("Badge_01");
 		Assert.assertNotNull(worker1a);
 		Assert.assertFalse(worker1a.getActive());
+		Assert.assertEquals("Smith 01",  worker1a.getLastName());
 
 		Worker worker1b = Worker.findWorker(facility, "Badge_01");
 		Assert.assertNull(worker1b);
