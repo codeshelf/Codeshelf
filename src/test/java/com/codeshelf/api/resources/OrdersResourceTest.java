@@ -39,7 +39,7 @@ public class OrdersResourceTest extends ServerTest {
 						+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 						+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 						+ "\r\n1,USF314,COSTCO,120,931,10706962,Sun Ripened Dried Tomato Pesto 24oz,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";;
-		ImportResource resource = new ImportResource(null, null, null, new OutboundOrderPrefetchCsvImporter(Mockito.mock(EventProducer.class)) , null);
+		ImportResource resource = new ImportResource(null, null, null, new OutboundOrderPrefetchCsvImporter(Mockito.mock(EventProducer.class)) , null, null);
 		resource.setFacility(facility);
 		resource.uploadOrders(new ByteArrayInputStream(orders.getBytes("UTF-8")), Mockito.mock(FormDataContentDisposition.class));
 		commitTransaction();
