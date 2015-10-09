@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 
@@ -30,6 +31,7 @@ import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.device.SetupOrdersDeviceLogic;
 import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.edi.IEdiExportGateway;
 import com.codeshelf.edi.IFacilityEdiExporter;
@@ -39,6 +41,7 @@ import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WiSetSummary;
+import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
@@ -3366,6 +3369,62 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);
 	}
 
+	@Test
+	public final void simulPickShortOrderCountIssue() throws IOException {
+		Facility facility = setUpSimpleNoSlotFacility();
+		
+		beginTransaction();
+		
+		facility = facility.reload();
+		
+		propertyService.changePropertyValue(facility, DomainObjectProperty.PICKMULT, Boolean.toString(true));
+		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
+
+		String csvOrders = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,gtin,destinationid,shipperId,customerId,dueDate\n" + 
+				"1111,1,ItemS1,,11,each,LocX24,1111,1,,1,10,20,\n" +
+				"1111,2,ItemS2,,12,each,LocX25,1111,1,,1,10,20,\n" +
+				"2222,3,ItemS1,,22,each,LocX24,2222,1,,1,10,20,\n" +
+				"2222,4,ItemS2,,23,each,LocX25,2222,1,,1,10,20,\n";
+		importOrdersData(facility, csvOrders);
+
+		commitTransaction();
+		
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+
+		LOGGER.info("1b: setup two orders, that will have 3 work instructions. The first two are same SKU/Location so should be done as simultaneous WI ");
+		picker.loginAndSetup("Picker #1");
+		picker.setupOrderIdAsContainer("1111", "1");
+		picker.setupOrderIdAsContainer("2222", "2");
+
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		Assert.assertEquals(11, (int)picker.getLastSentPositionControllerDisplayValue(1));
+		Assert.assertEquals(22, (int)picker.getLastSentPositionControllerDisplayValue(2));
+		
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING_SHORT, 4000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		SetupOrdersDeviceLogic device = (SetupOrdersDeviceLogic)picker.getCheDeviceLogic();
+		Map<String, WorkInstructionCount> countMap = device.getMContainerToWorkInstructionCountMap();
+		WorkInstructionCount countOrder1 = countMap.get("1111");
+		WorkInstructionCount countOrder2 = countMap.get("2222");
+		Assert.assertNotNull(countOrder1);
+		Assert.assertNotNull(countOrder2);
+		
+		Assert.assertEquals(1, countOrder1.getGoodCount());
+		Assert.assertEquals(1, countOrder1.getShortCount());
+		Assert.assertEquals(1, countOrder2.getGoodCount());
+		Assert.assertEquals(1, countOrder2.getShortCount());
+		return;
+	}
+
 	/**
 	 * This test verifies that the "bay change" displays disappears after the button is pressed,
 	 * and a different CHE poscon displays the quantity for the next pick
@@ -3586,5 +3645,4 @@ public class CheProcessTestPick extends ServerTest {
 		wiList = picker.getAllPicksList();
 		Assert.assertEquals(3, wiList.size());
 	}
-
 }

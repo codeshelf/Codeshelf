@@ -1,9 +1,11 @@
 orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,gtin,destinationid,shipperId,customerId,dueDate
-1111,1,ItemS1,single short no scan,3,each,LocX24,1111,10,,1,10,20,
-1111,2,ItemS2,single short with scan,4,each,LocX25,1111,2,,1,10,20,
-1111,3,ItemS3,multi short no scan,5,each,LocX26,1111,1,,1,10,20,12/31/14 12:00 PM
-1111,4,ItemS4,multi short with scan,6,each,LocX27,1111,4,,1,10,20,
-2222,5,ItemS3,,7,each,LocX26,2222,1,,1,10,20,12/31/14 12:00 PM
-2222,6,ItemS4,,8,each,LocX27,2222,4,,1,10,20,12/31/14 12:01 PM
-3333,7,ItemS3,,9,each,LocX26,3333,1,,1,10,20,
-4444,8,ItemS3,,10,each,LocX26,4444,1,,1,10,20,
+1111,1,ItemS1,,3,each,LocX24,1111,2,,1,10,20,
+1111,2,ItemS2,,4,each,LocX25,1111,2,,1,10,20,
+1111,3,ItemS3,,5,each,LocX26,1111,2,,1,10,20,12/31/14 12:00 PM
+1111,4,ItemS4,,6,each,LocX27,1111,1,,1,10,20,
+2222,5,ItemS2,,7,each,LocX25,2222,2,,1,10,20,12/31/14 12:00 PM
+2222,6,ItemS3,,8,each,LocX26,2222,2,,1,10,20,12/31/14 12:01 PM
+2222,7,ItemS4,,9,each,LocX27,2222,2,,1,10,20,
+3333,8,ItemS3,,10,each,LocX26,3333,2,,1,10,20,
+3333,9,ItemS4,,11,each,LocX27,3333,2,,1,10,20,
+4444,10,ItemS4,,12,each,LocX27,4444,2,,1,10,20,

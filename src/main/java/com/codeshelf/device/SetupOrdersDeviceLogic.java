@@ -56,6 +56,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	// This always exists, but map may be empty if PUT_WALL prior to container setup, or reduced meaning if PUT_WALL after work complete on this path.
 
 	//Map of containers to work instruction counts
+	@Getter
 	private Map<String, WorkInstructionCount>	mContainerToWorkInstructionCountMap;
 	// Careful: this initializes as null, and only exists if there was successful return of the response from server. It must always be null checked.
 
@@ -865,6 +866,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * then update our local counts
 	 */
 	protected void doShortTransaction(final WorkInstruction inWi, final Integer inActualPickQuantity) {
+		if (inWi.isAlreadyShorted()) {
+			return;
+		}
+		inWi.setAlreadyShorted(true);
+
 		// CheDeviceLogic does the main shorting transactions
 		super.doShortTransaction(inWi, inActualPickQuantity);
 
