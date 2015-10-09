@@ -109,7 +109,7 @@ public class ScriptingServiceTest extends ServerTest {
 			// but we still get a good bean with useful defaults
 			DataQuantityHealthCheckParameters dataQuanityParams = ss.getDataQuantityHealthCheckParameters();
 			// Warning. This will fail when the default changes. Just change this test
-			Assert.assertEquals(40000, dataQuanityParams.getMaxContainerUseValue()); 
+			Assert.assertEquals(200000, dataQuanityParams.getMaxContainerUseValue()); 
 		
 		}
 		catch (ScriptException e) {
