@@ -57,11 +57,15 @@ public class WorkerCsvImporter extends CsvImporter<WorkerCsvBean> implements ICs
 					Worker worker = workerCsvBeanImport(workerBean, inFacility, inProcessTime);
 					if (worker != null) {
 						produceRecordSuccessEvent(workerBean);
+					} else {
+						result &= false;
 					}
 				} catch (InputValidationException e) {
+					result &= false;
 					produceRecordViolationEvent(EventSeverity.WARN, e, workerBean);
 					LOGGER.warn("Unable to process record: " + workerBean, e);
 				} catch (Exception e) {
+					result &= false;
 					produceRecordViolationEvent(EventSeverity.ERROR, e, workerBean);
 					LOGGER.error("Unable to process record: " + workerBean, e);
 				}
