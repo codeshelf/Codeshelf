@@ -11,7 +11,8 @@ public enum EventTag {
 	LOCATION_ALIAS,
 	INVENTORY_SLOTTED,
 	ORDER_CROSSBATCH, 
-	LOCATION;
+	LOCATION, 
+	WORKER;
 	
 	public static Set<EventTag> tags(EventTag... inTags) {
 		return Sets.newHashSet(inTags);

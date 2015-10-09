@@ -190,7 +190,7 @@ public class WorkerCsvImporter extends CsvImporter<WorkerCsvBean> implements ICs
 
 	@Override
 	protected Set<EventTag> getEventTagsForImporter() {
-		return EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS);
+		return EnumSet.of(EventTag.IMPORT, EventTag.WORKER);
 	}
 
 }
