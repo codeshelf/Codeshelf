@@ -100,10 +100,11 @@ public class ExtensionPointService {
 		}
 		Invocable inv = (Invocable) engine;
 		Object result = null;
+		String functionName = ext.name();
 		try {
-			result = inv.invokeFunction(ext.name(), params);
+			result = inv.invokeFunction(functionName, params);
 		} catch (NoSuchMethodException e) {
-			throw new ScriptException("Script type " + ext + " does not contain method name " + ext.name()
+			throw new ScriptException("Script type " + ext + " does not contain method name " + functionName
 					+ " or encountered parameter mismatch.\n" + e.getMessage());
 		}
 		return result;
@@ -121,15 +122,19 @@ public class ExtensionPointService {
 		@SuppressWarnings("unchecked")
 		List<ExtensionPoint> eps = ExtensionPoint.staticGetDao().createCriteria()
 				.add(Restrictions.eq("type", type))
-				.createCriteria("parent")
-					.add(Restrictions.eq("persistentId", facilityPersistentId))
+				.add(Restrictions.eq("parent.persistentId", facilityPersistentId))
 				.list();
-		if (eps.size() == 1) {
-			return Optional.of(eps.get(0));
+		if (eps.size() > 1) {
+			LOGGER.warn("Fould multiple extension points for type {} in faciltiy {}");
 		} else if (eps.size() < 1) {
 			LOGGER.warn("Fould multiple extension points for type {} in faciltiy {}");
-		}	 
-		return Optional.absent();
+		} 	 
+		
+		if (eps.size() >= 1) {
+			return Optional.of(eps.get(0));
+		} else { 
+			return Optional.absent();
+		}
 		
 	}
 
@@ -160,11 +165,19 @@ public class ExtensionPointService {
 		if (hasExtensionPoint(ExtensionPointType.ParameterSetDataPurge)) {
 			try {
 				theBean = (DataPurgeParameters) this.eval(ExtensionPointType.ParameterSetDataPurge, params);
+				if (theBean == null) {
+					LOGGER.error("ExtensionPointType.ParameterSetDataPurge is returning null bean, using defaults");
+					theBean = new DataPurgeParameters();
+				}
 			} catch (ScriptException e) {
 				LOGGER.error("ParameterSetDataPurge groovy threw", e);
 			}
 		}
 		return theBean;
+	}
+
+	public Optional<ExtensionPoint> getDataPurgeExtensionPoint() {
+		return this.getExtensionPoint(ExtensionPointType.ParameterSetDataPurge);
 	}
 
 

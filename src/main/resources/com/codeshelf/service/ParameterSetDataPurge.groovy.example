@@ -1,8 +1,7 @@
 /**
  * Sets the maximum values that health check should cause alerts for
  */
-def DataPurgeParameters(bean) {
-    bean.orderBatch = '10';
-    
-    return bean;
+def ParameterSetDataPurge(bean) {
+     bean.orderBatch = '15';
+     return bean;
 }

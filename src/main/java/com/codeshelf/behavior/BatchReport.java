@@ -54,9 +54,14 @@ class BatchReport {
 		}
 		this.completeCount = count;
 	}
-	
+
+	public void setComplete() {
+		setStatus(Status.COMPLETE);
+	}
+
 	public String toString() { 
 		return String.format("BatchReport: status: %s, completeCount: %d, total: %d", status, completeCount, total);
 	}
+
 	
 }
