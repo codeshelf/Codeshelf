@@ -57,11 +57,15 @@ public class WorkerCsvImporter extends CsvImporter<WorkerCsvBean> implements ICs
 					Worker worker = workerCsvBeanImport(workerBean, inFacility, inProcessTime);
 					if (worker != null) {
 						produceRecordSuccessEvent(workerBean);
+					} else {
+						result &= false;
 					}
 				} catch (InputValidationException e) {
+					result &= false;
 					produceRecordViolationEvent(EventSeverity.WARN, e, workerBean);
 					LOGGER.warn("Unable to process record: " + workerBean, e);
 				} catch (Exception e) {
+					result &= false;
 					produceRecordViolationEvent(EventSeverity.ERROR, e, workerBean);
 					LOGGER.error("Unable to process record: " + workerBean, e);
 				}
@@ -139,7 +143,7 @@ public class WorkerCsvImporter extends CsvImporter<WorkerCsvBean> implements ICs
 
 		Facility newFacility = inFacility;
 		String newFirst = inCsvBean.getFirstName();
-		String newLast = inCsvBean.getFirstName();
+		String newLast = inCsvBean.getLastName();
 		String newHr = inCsvBean.getHumanResourcesId();
 		String newGroup = inCsvBean.getWorkGroupName();
 
@@ -190,7 +194,7 @@ public class WorkerCsvImporter extends CsvImporter<WorkerCsvBean> implements ICs
 
 	@Override
 	protected Set<EventTag> getEventTagsForImporter() {
-		return EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS);
+		return EnumSet.of(EventTag.IMPORT, EventTag.WORKER);
 	}
 
 }

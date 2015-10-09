@@ -44,7 +44,7 @@ public class WorkerCsvBean extends ImportCsvBeanABC {
 		return strip(badgeId);
 	}
 
-	public final String getlastName() {
+	public final String getLastName() {
 		return strip(lastName);
 	}
 	public final String getWorkGroupName() {

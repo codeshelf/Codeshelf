@@ -466,25 +466,30 @@ public class WebSocketConnection implements IDaoListener {
 			return;
 		}
 		if (getNextCheRefresh() >= 0 && System.currentTimeMillis() > getNextCheRefresh()) {
+			String siteControllerId = this.currentUserContext.getUsername();
 			try {
 				TenantPersistenceService.getInstance().beginTransaction();
-				SiteController siteController = SiteController.staticGetDao().findByDomainId(null,
-					this.currentUserContext.getUsername());
-				CodeshelfNetwork network = siteController.getParent();
-				List<Che> ches = Che.staticGetDao().findByParent(network);
-				if (ches != null) {
-					LOGGER.info("Sending " + ches.size() + " Che updates to site controller "
-							+ this.getCurrentUserContext().getUsername());
-					for (Che che : ches) {
-						CheStatusMessage msg = new CheStatusMessage(che);
-						this.sendMessage(msg);
-					}
+				SiteController siteController = SiteController.staticGetDao().findByDomainId(null, siteControllerId);
+				if (siteController == null) {
+					LOGGER.error("SiteController {} not found in any facility for tenant {}, probable misconfigured site controller or facility", siteControllerId, this.currentTenant);
+					this.setNextCheRefresh(System.currentTimeMillis() + updateFailureDelay);
 				}
-				// this.nextCheRefresh = System.currentTimeMillis() + this.cheUpdateInterval;
-				this.nextCheRefresh = -1; // do not refresh periodically
+				else {
+					CodeshelfNetwork network = siteController.getParent();
+					List<Che> ches = Che.staticGetDao().findByParent(network);
+					if (ches != null) {
+						LOGGER.info("Sending {} Che updates to site controller {}", ches.size(), siteControllerId);
+						for (Che che : ches) {
+							CheStatusMessage msg = new CheStatusMessage(che);
+							this.sendMessage(msg);
+						}
+					}
+					// this.nextCheRefresh = System.currentTimeMillis() + this.cheUpdateInterval;
+					this.nextCheRefresh = -1; // do not refresh periodically
+				}
 				TenantPersistenceService.getInstance().commitTransaction();
 			} catch (Exception e) {
-				LOGGER.error("Failed to send che updates to site controller " + this.getCurrentUserContext().getUsername(), e);
+				LOGGER.error("Failed to send che updates to site controller {}, ", siteControllerId, e);
 				this.setNextCheRefresh(System.currentTimeMillis() + updateFailureDelay);
 
 			} finally {
