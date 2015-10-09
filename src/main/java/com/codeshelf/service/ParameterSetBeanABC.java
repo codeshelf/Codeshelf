@@ -11,9 +11,7 @@ public abstract class ParameterSetBeanABC {
 		super();
 	}
 	
-	public String getParametersDescription() {
-		return "need to implement getParametersDescription";
-	}
+	abstract public String getParametersDescription();
 
 	/**
 	 * See callers for usage. This is useful only for integer values represented by strings in our groovy extension.

@@ -867,6 +867,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	protected void doShortTransaction(final WorkInstruction inWi, final Integer inActualPickQuantity) {
 		if (inWi.isAlreadyShorted()) {
+			//Prevent multiple shorting of the same WI on a single "SHORT" scan
 			return;
 		}
 		inWi.setAlreadyShorted(true);

@@ -19,6 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.metrics.DataQuantityHealthCheckParameters;
+import com.codeshelf.metrics.EdiFreeSpaceHealthCheckParamaters;
 import com.codeshelf.model.DataPurgeParameters;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
@@ -181,4 +182,26 @@ public class ExtensionPointService {
 	}
 
 
+	public EdiFreeSpaceHealthCheckParamaters getEdiFreeSpaceParameters() {
+
+		EdiFreeSpaceHealthCheckParamaters theBean = new EdiFreeSpaceHealthCheckParamaters();
+		Object[] params = { theBean };
+
+		if (hasExtensionPoint(ExtensionPointType.ParameterEdiFreeSpaceHealthCheck)) {
+			try {
+				theBean = (EdiFreeSpaceHealthCheckParamaters) this.eval(ExtensionPointType.ParameterEdiFreeSpaceHealthCheck, params);
+				if (theBean == null) {
+					LOGGER.error("ExtensionPointType.EdiFreeSpaceHealthCheckParamaters is returning null bean, using defaults");
+					theBean = new EdiFreeSpaceHealthCheckParamaters();
+				}
+			} catch (ScriptException e) {
+				LOGGER.error("EdiFreeSpaceHealthCheckParamaters groovy threw", e);
+			}
+		}
+		return theBean;
+	}
+	
+	public Optional<ExtensionPoint> getEdiFreeSpaceExtensionPoint() {
+		return this.getExtensionPoint(ExtensionPointType.ParameterEdiFreeSpaceHealthCheck);
+	}
 }

@@ -13,6 +13,7 @@ import com.codeshelf.model.domain.EdiGateway;
 import com.codeshelf.model.domain.SftpGateway;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.service.ExtensionPointService;
 
 public class EdiHealthCheck extends CodeshelfHealthCheck {
 	final static int EDI_SERVICE_CYCLE_TIMEOUT_SECONDS = 60*5; // timeout if EDI takes longer than 5 mins
@@ -79,7 +80,11 @@ public class EdiHealthCheck extends CodeshelfHealthCheck {
 						}
 					}
 					if (ediGateway instanceof SftpGateway) {
-						List<String> availableSpaceIssues = ((SftpGateway)ediGateway).checkForAvailableSpaceIssues(500, 200);
+						ExtensionPointService theService = ExtensionPointService.createInstance(ediGateway.getFacility());
+						EdiFreeSpaceHealthCheckParamaters params = theService.getEdiFreeSpaceParameters();
+						int minAvailableFiles = params.getMinAvailableFilesValue();
+						int minAvailableSpaceMB = params.getMinAvailableSpaceMBValue();
+						List<String> availableSpaceIssues = ((SftpGateway)ediGateway).checkForAvailableSpaceIssues(minAvailableFiles, minAvailableSpaceMB);
 						for (String availableSpaceIssue : availableSpaceIssues){
 							errors.append(header + availableSpaceIssue + ". ");
 						}

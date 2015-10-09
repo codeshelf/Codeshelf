@@ -1,0 +1,8 @@
+/**
+ * Sets the maximum values that health check should cause alerts for
+ */
+def ParameterSetDataPurge(bean) {
+     bean.minAvailableFiles = '500';
+     bean.minAvailableSpaceMB = '20';
+     return bean;
+}

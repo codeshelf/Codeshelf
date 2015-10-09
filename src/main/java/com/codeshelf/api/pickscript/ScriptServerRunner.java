@@ -630,7 +630,7 @@ public class ScriptServerRunner {
 		try {
 			typeEnum = ExtensionPointType.valueOf(typeStr);
 		} catch (IllegalArgumentException e) {
-			throw new Exception("Illegal type '" + typeStr + "' for an extension point. [OrderImportBeanTransformation/OrderImportHeaderTransformation/OrderImportLineTransformation]");
+			throw new Exception("Illegal type '" + typeStr + "' for an extension point.");
 		}
 		ArrayList<Criterion> filter = Lists.newArrayList();
 		filter.add(Restrictions.eq("parent", facility));

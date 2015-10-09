@@ -27,7 +27,8 @@ public enum ExtensionPointType {
 	WorkInstructionExportCreateTrailer,
 	WorkInstructionExportLineTransformation,
 	ParameterSetDataQuantityHealthCheck,
-	ParameterSetDataPurge;
+	ParameterSetDataPurge,
+	ParameterEdiFreeSpaceHealthCheck;
 ;
 
 	/**

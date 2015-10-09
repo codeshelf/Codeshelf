@@ -238,6 +238,10 @@ public class FacilityResource {
 			ExtensionPointService epService = ExtensionPointService.createInstance(facility);
 			extensionPoint = epService.getDataPurgeExtensionPoint();
 			parameterSet = epService.getDataPurgeParameters();
+		} else if ("edi".equalsIgnoreCase(healthCheckType)) {
+			ExtensionPointService epService = ExtensionPointService.createInstance(facility);
+			extensionPoint = epService.getEdiFreeSpaceExtensionPoint();
+			parameterSet = epService.getEdiFreeSpaceParameters();
 		} 
 		
 		if (extensionPoint != null && parameterSet != null) {

@@ -8,7 +8,6 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
-import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
