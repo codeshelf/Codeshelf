@@ -13,10 +13,10 @@ public class DataQuantityHealthCheckParameters extends ParameterSetBeanABC {
 	// This follows our model of all groovy beans are strings
 
 	// default values
-	final static int			MAX_ORDERDETAIL		= 90000;
-	final static int			MAX_WORKINSTRUCTION	= 50000;
-	final static int			MAX_ORDER			= 40000;
-	final static int			MAX_CONTAINERUSE	= 40000;
+	final static int			MAX_ORDERDETAIL		= 200000;
+	final static int			MAX_WORKINSTRUCTION	= 200000;
+	final static int			MAX_ORDER			= 200000;
+	final static int			MAX_CONTAINERUSE	= 200000;
 
 	@Getter
 	@Setter
