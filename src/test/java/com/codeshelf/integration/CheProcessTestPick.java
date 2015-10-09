@@ -3381,6 +3381,7 @@ public class CheProcessTestPick extends ServerTest {
 		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
 		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
 
+		LOGGER.info("1: upload 2 identical orders");
 		String csvOrders = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,gtin,destinationid,shipperId,customerId,dueDate\n" + 
 				"1111,1,ItemS1,,11,each,LocX24,1111,1,,1,10,20,\n" +
 				"1111,2,ItemS2,,12,each,LocX25,1111,1,,1,10,20,\n" +
@@ -3393,7 +3394,7 @@ public class CheProcessTestPick extends ServerTest {
 		startSiteController();
 		PickSimulator picker = createPickSim(cheGuid1);
 
-		LOGGER.info("1b: setup two orders, that will have 3 work instructions. The first two are same SKU/Location so should be done as simultaneous WI ");
+		LOGGER.info("2: load 2 orders on the CHE");
 		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("1111", "1");
 		picker.setupOrderIdAsContainer("2222", "2");
@@ -3406,18 +3407,19 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(11, (int)picker.getLastSentPositionControllerDisplayValue(1));
 		Assert.assertEquals(22, (int)picker.getLastSentPositionControllerDisplayValue(2));
 		
+		LOGGER.info("3: Short the first pair of items");
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING_SHORT, 4000);
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 		
+		LOGGER.info("4: Assert that order counts are correct");
 		SetupOrdersDeviceLogic device = (SetupOrdersDeviceLogic)picker.getCheDeviceLogic();
 		Map<String, WorkInstructionCount> countMap = device.getMContainerToWorkInstructionCountMap();
 		WorkInstructionCount countOrder1 = countMap.get("1111");
 		WorkInstructionCount countOrder2 = countMap.get("2222");
 		Assert.assertNotNull(countOrder1);
 		Assert.assertNotNull(countOrder2);
-		
 		Assert.assertEquals(1, countOrder1.getGoodCount());
 		Assert.assertEquals(1, countOrder1.getShortCount());
 		Assert.assertEquals(1, countOrder2.getGoodCount());
@@ -3644,5 +3646,88 @@ public class CheProcessTestPick extends ServerTest {
 		
 		wiList = picker.getAllPicksList();
 		Assert.assertEquals(3, wiList.size());
+	}
+	
+	@Test
+	public final void testPressWrongButton() throws IOException {
+		Facility facility = setUpSimpleNoSlotFacility();
+		
+		LOGGER.info("1: Upload 2 orders");
+		beginTransaction();
+		facility = facility.reload();
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
+		String csvOrders = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,gtin,destinationid,shipperId,customerId,dueDate\n" + 
+				"1111,1,ItemS1,,11,each,LocX24,1111,1,,1,10,20,\n" +
+				"2222,2,ItemS2,,22,each,LocX25,2222,2,,1,10,20,\n" +
+				"2222,3,ItemS3,,33,each,LocX26,2222,3,,1,10,20,\n";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+		
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+
+		LOGGER.info("2: Load 2 orders on cart");
+		picker.loginAndSetup("Picker #1");
+		picker.setupOrderIdAsContainer("1111", "1");
+		picker.setupOrderIdAsContainer("2222", "2");
+
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		
+		LOGGER.info("3: Complete order 1, and ensure its poscon shows 'OC'");
+		Assert.assertEquals(11, (int)picker.getLastSentPositionControllerDisplayValue(1));
+		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, picker.getLastSentPositionControllerDisplayValue(1));
+		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_O, picker.getLastSentPositionControllerMaxQty((byte)1));
+		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_C, picker.getLastSentPositionControllerMinQty((byte)1));
+		
+		LOGGER.info("4: When picking for order 2, press button for order 1, ensure that nothing changes");
+		Assert.assertEquals(22, (int)picker.getLastSentPositionControllerDisplayValue(2));
+		picker.buttonPress(1);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		Assert.assertEquals(22, (int)picker.getLastSentPositionControllerDisplayValue(2));
+		
+		LOGGER.info("5: Pick first item in order 1, ensure that Housekeeping comes up on poscon 2");
+		picker.buttonPress(2);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, picker.getLastSentPositionControllerDisplayValue(2));
+		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_R, picker.getLastSentPositionControllerMinQty((byte)2));
+		
+		LOGGER.info("6: Press poscon 1, ensure that nothing changes");
+		picker.buttonPress(1);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, picker.getLastSentPositionControllerDisplayValue(2));
+		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_R, picker.getLastSentPositionControllerMinQty((byte)2));
+
+		LOGGER.info("7: Press poscon 2, ensure that the second item in order 2 is displayed");
+		picker.buttonPress(2);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		Assert.assertEquals(33, (int)picker.getLastSentPositionControllerDisplayValue(2));
+		
+		LOGGER.info("8: Scan SHORT, wait for poscon 2 to blink");
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 4000);
+		Assert.assertEquals(33, (int)picker.getLastSentPositionControllerDisplayValue(2));
+		Assert.assertEquals(PosControllerInstr.BLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte)2));
+		
+		LOGGER.info("9: Press poscon 1, ensure that nothing changes");
+		picker.buttonPress(1);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 4000);
+		Assert.assertEquals(33, (int)picker.getLastSentPositionControllerDisplayValue(2));
+		Assert.assertEquals(PosControllerInstr.BLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte)2));
+
+		LOGGER.info("10: Press poscon 2, ensure that picking is done and poscon 2 now shows '=='");
+		picker.buttonPress(2, 1);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 4000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, picker.getLastSentPositionControllerDisplayValue(2));
+		Assert.assertEquals(PosControllerInstr.BITENCODED_TOP_BOTTOM, picker.getLastSentPositionControllerMaxQty((byte)2));
+		Assert.assertEquals(PosControllerInstr.BITENCODED_TOP_BOTTOM, picker.getLastSentPositionControllerMinQty((byte)2));
+
 	}
 }

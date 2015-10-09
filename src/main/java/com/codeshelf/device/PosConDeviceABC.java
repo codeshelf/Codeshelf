@@ -8,6 +8,7 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -330,7 +331,28 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		try {
 			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
 			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Button");
-			LOGGER.info("Button #{} pressed with quantity {}", buttonNum, showingQuantity);
+			if (showingQuantity >= 0) {
+				LOGGER.info("Button #{} pressed with quantity {}", buttonNum, showingQuantity);
+			} else {
+				String display = "unexpected value " + showingQuantity;
+				byte displayedValue = getLastSentPositionControllerDisplayValue((byte)buttonNum);
+				if (displayedValue == PosControllerInstr.BITENCODED_SEGMENTS_CODE){
+					byte min = getLastSentPositionControllerMinQty((byte)buttonNum);
+					byte max = getLastSentPositionControllerMaxQty((byte)buttonNum);
+					display = "unexpected segmented value " + max + "-" + min;
+					if (max == PosControllerInstr.BITENCODED_LED_DASH && min == PosControllerInstr.BITENCODED_LED_DASH){
+						display = "dash";
+					} else if (max == PosControllerInstr.BITENCODED_TOP_BOTTOM && min == PosControllerInstr.BITENCODED_TOP_BOTTOM){
+						display = "double dash";
+					} else if (max == PosControllerInstr.BITENCODED_TRIPLE_DASH && min == PosControllerInstr.BITENCODED_TRIPLE_DASH){
+						display = "triple dash";
+					} else if (max == PosControllerInstr.BITENCODED_LED_O && min == PosControllerInstr.BITENCODED_LED_C){
+						display = "OC (order complete)";
+					}
+				}
+				LOGGER.info("Button #{} pressed with {}", buttonNum, display);
+			}
+			
 		} finally {
 			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
 			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
@@ -345,7 +367,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		mDeviceManager.sendNotificationMessage(message);
 		*/
 	}
-
+	
 	protected void notifyOffCheButton(int buttonNum, int showingQuantity, String fromGuidId) {
 		try {
 			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());

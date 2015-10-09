@@ -282,6 +282,10 @@ public class PickSimulator {
 			ContextLogging.clearNetGuid();
 		}
 	}
+	
+	public void buttonPress(int inPosition) {
+		buttonPress(inPosition, getLastSentPositionControllerDisplayValue(inPosition));
+	}
 
 	// Useful, primitive methods for checking the result after some actions
 	public int countRemainingJobs() {
