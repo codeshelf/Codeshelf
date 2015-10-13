@@ -24,7 +24,7 @@ public class TenantCallable implements Callable<BatchReport> {
 	private UserContext					userContext;
 	private SettableFuture<Void>		cancelled					= null;
 	private TenantPersistenceService	persistenceService;
-	private long						lastLoggedTimeDurationMs	= 0;
+	private long						lastLoggedTimeMs = 0;
 
 	public TenantCallable(TenantPersistenceService persistenceService, Tenant tenant, BatchProcessor delegate) {
 		this(persistenceService, tenant, CodeshelfSecurityManager.getUserContextSYSTEM(), delegate);
@@ -69,10 +69,13 @@ public class TenantCallable implements Callable<BatchReport> {
 	 * For our incremental reporting, do not log too often, even if we persist results more frequently
 	 */
 	private void saveReport(BatchReport report, int batchNumber) {
-		long newTotalDuration = getTotalTime();
-		if (newTotalDuration - lastLoggedTimeDurationMs > 10000) {
+		
+		long nowMs = System.currentTimeMillis();
+		if (lastLoggedTimeMs == 0) // a rather weak one-time initialization
+			lastLoggedTimeMs = nowMs;
+		if (nowMs - lastLoggedTimeMs > 10000) {
 			LOGGER.info("Batch {}. Saving batch report {}", batchNumber, report);
-			lastLoggedTimeDurationMs = newTotalDuration;
+			lastLoggedTimeMs = nowMs;
 		}
 		//persistenceService.saveOrUpdate(report);
 	}

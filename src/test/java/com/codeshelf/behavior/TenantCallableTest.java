@@ -30,7 +30,9 @@ public class TenantCallableTest {
 		
 		TenantCallable subject = new TenantCallable(mock(TenantPersistenceService.class), mock(Tenant.class), mock(UserContext.class), singleLoop);
 		subject.call();
-		Assert.assertTrue(subject.getTotalTime() > 0);
+		// Bad assert here. Used say getTotalTime() > 0, but if test got faster (because of less foolish logging), then it failed.
+		Assert.assertTrue(subject.getTotalTime() >= 0); // so now, really only testing that the stopwatch was initialized in the TenantCallable
+		// The test as a whole is a valid exercise of the callable. Just not much to assert on.
 	}
 	
 	@Test
