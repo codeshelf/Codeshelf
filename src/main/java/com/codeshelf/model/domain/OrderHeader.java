@@ -30,10 +30,12 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,12 +120,14 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	}
 
 	private List<WorkInstruction> getAllWorkInstructionsForOrder() {
+		
 		ArrayList<WorkInstruction> allWiList = new ArrayList<WorkInstruction>();
 		for (OrderDetail detail : this.getOrderDetails()) {
 			for (WorkInstruction wi : detail.getWorkInstructions()) {
 				allWiList.add(wi);
 			}
 		}
+		
 		return allWiList;
 	}
 

@@ -78,6 +78,7 @@ public class TenantCallable implements Callable<BatchReport>{
 
 			int batchCount = 0;
 			while(cancelled == null && !runningThread.isInterrupted() && !delegate.isDone()) {
+				batchCount++; // pre-increment. First batch is 1, not zero
 				persistenceService.beginTransaction();
 				try {
 					int completeCount = delegate.doBatch(batchCount);
@@ -90,7 +91,6 @@ public class TenantCallable implements Callable<BatchReport>{
 					report.setException(e);
 					return report;
 				}
-				batchCount++;
 			} 
 			if (delegate.isDone()) {
 				report.setComplete();

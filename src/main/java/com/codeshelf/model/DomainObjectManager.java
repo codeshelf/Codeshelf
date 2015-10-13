@@ -214,15 +214,17 @@ public class DomainObjectManager {
 
 	/**
 	 * Assumes work instructions are already delinked. Normally call safelyDeleteWorkInstructionList first.
-	 * This delinks from the order.
+	 * This does not delink from the order. Therefore, unsafe if we have a reference to the order .
 	 */
+/*	
 	private void safelyDeleteDetailsList(List<OrderDetail> detailsList) {
 		int deletedCount = 0;
+		
 		for (OrderDetail detail : detailsList) {
 
 			OrderHeader order = detail.getParent();
 			if (order != null)
-				order.removeOrderDetail(detail);
+				order.removeOrderDetail(detail);			
 
 			try {
 				OrderDetail.staticGetDao().delete(detail);
@@ -238,6 +240,7 @@ public class DomainObjectManager {
 		if (deletedCount % 100 != 0)
 			LOGGER.info("deleted {} OrderDetails ", deletedCount);
 	}
+*/	
 
 	/**
 	 * This purge follows our parent child pattern
@@ -431,6 +434,8 @@ public class DomainObjectManager {
 			LOGGER.error("Limiting order delete batch size to {}. Called for {}.", MAX_ORDER_PURGE, wantToPurge);
 		}
 
+		/*  back to simple order.delete()
+		 * 
 		// Trying to speed up by not relying quite so much on the hibernate delete cascade.
 		// Result: not much improvement in time. But much nicer logging about the process. (changed to debug logging now)
 		LOGGER.debug("Phase 2 of order purge: assemble list of details for these orders");
@@ -451,6 +456,8 @@ public class DomainObjectManager {
 		safelyDeleteDetailsList(details);
 
 		LOGGER.debug("Phase 6 of order purge: delete the orders which delinks from container");
+		*/
+
 
 		int deletedCount = 0;
 		for (UUID orderUuid : orderUuids) {
