@@ -79,7 +79,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		ICsvOrderImporter subject = createOrderImporter();
 		BatchResult<?> batchResult = new BatchResult<Object>();
 		batchResult.setCompleted(new Date());
-		batchResult.setStarted(new Date());
+		batchResult.setReceived(new Date());
 		subject.persistDataReceipt(getFacility(),
 			"testUser",
 			"testfilename",

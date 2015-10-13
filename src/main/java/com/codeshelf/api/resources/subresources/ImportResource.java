@@ -33,7 +33,7 @@ import com.codeshelf.edi.LocationAliasCsvImporter;
 import com.codeshelf.edi.OrderLocationCsvImporter;
 import com.codeshelf.edi.OutboundOrderPrefetchCsvImporter;
 import com.codeshelf.edi.WorkerCsvImporter;
-import com.codeshelf.model.domain.DataImportReceipt;
+import com.codeshelf.model.domain.ImportReceipt;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.BatchResult;
@@ -197,7 +197,7 @@ public class ImportResource {
 			if (endTimestamp != null) {
 				filter.add(Restrictions.le("started", endTimestamp.getValue()));
 			}
-			List<DataImportReceipt> receipts = DataImportReceipt.staticGetDao().findByFilter(filter);
+			List<ImportReceipt> receipts = ImportReceipt.staticGetDao().findByFilter(filter);
 			return BaseResponse.buildResponse(receipts);
 		}
 		catch (Exception e) {

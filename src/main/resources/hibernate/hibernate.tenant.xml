@@ -74,7 +74,7 @@
         <mapping class="com.codeshelf.model.domain.WorkInstruction"/>
         <mapping class="com.codeshelf.model.domain.WorkArea"/>
         <mapping class="com.codeshelf.model.domain.Gtin"/>
-        <mapping class="com.codeshelf.model.domain.DataImportReceipt"/>
+        <mapping class="com.codeshelf.model.domain.ImportReceipt"/>
         <mapping class="com.codeshelf.model.domain.Worker"/>
         <mapping class="com.codeshelf.model.domain.WorkerEvent"/>
         <mapping class="com.codeshelf.model.domain.Resolution"/>

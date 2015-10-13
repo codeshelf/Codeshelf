@@ -1,6 +1,7 @@
 package com.codeshelf.model.domain;
 
 import java.util.Date;
+import java.util.List;
 
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
@@ -30,11 +31,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class DataImportReceipt extends DomainObjectTreeABC<Facility> {
+public class ImportReceipt extends DomainObjectTreeABC<Facility> {
 
-	public static class DataImportReceiptDao extends GenericDaoABC<DataImportReceipt> implements ITypedDao<DataImportReceipt> {
-		public final Class<DataImportReceipt> getDaoClass() {
-			return DataImportReceipt.class;
+	public static class ImportReceiptDao extends GenericDaoABC<ImportReceipt> implements ITypedDao<ImportReceipt> {
+		public final Class<ImportReceipt> getDaoClass() {
+			return ImportReceipt.class;
 		}
 	}	
 	
@@ -50,15 +51,8 @@ public class DataImportReceipt extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	@Temporal(TemporalType.TIMESTAMP)
 	private Date received;
-	
-	@Column(nullable = false)
-	@Getter
-	@Setter
-	@JsonProperty
-	@Temporal(TemporalType.TIMESTAMP)
-	private Date started;
-	
-	@Column(nullable = false)
+		
+	@Column(nullable = true)
 	@Getter
 	@Setter
 	@JsonProperty
@@ -86,13 +80,13 @@ public class DataImportReceipt extends DomainObjectTreeABC<Facility> {
 	@Column(nullable = false, length=20)
 	@Enumerated(EnumType.STRING)
 	@Getter @Setter
-	DataImportType type = DataImportType.Orders;
+	ImportType type = ImportType.Orders;
 	
 	@Column(nullable = true, length=20)
 	@Enumerated(EnumType.STRING)
 	@JsonProperty
 	@Getter @Setter
-	DataImportStatus status;
+	ImportStatus status;
 	
 	@Column(nullable = true)
 	@JsonProperty
@@ -104,18 +98,33 @@ public class DataImportReceipt extends DomainObjectTreeABC<Facility> {
 	@Getter @Setter
 	String filename;
 	
+	@Column(nullable = true, columnDefinition = "TEXT", name = "order_ids")
+	@Getter @Setter
+	@JsonProperty
+	String orderIds;
+
+	@Column(nullable = true, columnDefinition = "TEXT", name = "item_ids")
+	@Getter @Setter
+	@JsonProperty
+	String itemIds;
+
+	@Column(nullable = true, columnDefinition = "TEXT")
+	@Getter @Setter
+	@JsonProperty
+	String gtins;
+	
 	@Override
 	public String getDefaultDomainIdPrefix() {
 		return "IMPORT-";
 	}
 	
 	@SuppressWarnings("unchecked")
-	public final ITypedDao<DataImportReceipt> getDao() {
+	public final ITypedDao<ImportReceipt> getDao() {
 		return staticGetDao();
 	}
 	
-	public static ITypedDao<DataImportReceipt> staticGetDao() {
-		return TenantPersistenceService.getInstance().getDao(DataImportReceipt.class);
+	public static ITypedDao<ImportReceipt> staticGetDao() {
+		return TenantPersistenceService.getInstance().getDao(ImportReceipt.class);
 	}
 
 	@Override
@@ -125,7 +134,31 @@ public class DataImportReceipt extends DomainObjectTreeABC<Facility> {
 	
 	@Override
 	public String toString() {
-		return String.format("ImportDataReceipt filename: %s , orders:, %d, lines: %d, seconds: %d", filename, ordersProcessed, linesProcessed, (completed.getTime()-started.getTime())/1000);
+		return String.format("ImportDataReceipt filename: %s , orders:, %d, lines: %d, seconds: %d", filename, ordersProcessed, linesProcessed, (completed.getTime()-received.getTime())/1000);
+	}
+	
+	public void setOrderIdsList(List<String> list) {
+		setOrderIds(listToCsv(list));
+	}
+	
+	public void setItemIdsList(List<String> list) {
+		setItemIds(listToCsv(list));
+	}
+
+	public void setGtinsList(List<String> list) {
+		setGtins(listToCsv(list));
+	}
+
+	private String listToCsv(List<String> list) {
+		StringBuilder csv = new StringBuilder();
+		for (String item : list) {
+			if (item != null && !item.isEmpty()) {
+				csv.append(item).append(",");
+			}
+		}
+		int csvLen = csv.length();
+		//If any items given, cut off the last comma
+		return csvLen > 0 ? csv.substring(0, csvLen - 1) : null;
 	}
 
 }

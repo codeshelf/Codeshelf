@@ -1,6 +1,6 @@
 package com.codeshelf.model.domain;
 
-public enum DataImportStatus {
+public enum ImportStatus {
 	Queued,
 	InProcess,
 	Completed,

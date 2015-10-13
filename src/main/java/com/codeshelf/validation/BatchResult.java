@@ -26,11 +26,6 @@ public class BatchResult<T> {
 	@Setter
 	private Date received;
 	
-	@Getter
-	@Setter
-	@JsonProperty
-	private Date started;
-	
 	@Column(nullable = false)
 	@Getter
 	@Setter
@@ -47,6 +42,21 @@ public class BatchResult<T> {
 	@JsonProperty
 	int linesProcessed = 0;
 	
+	@Getter
+	@Setter
+	@JsonProperty
+	List<String> orderIds = new ArrayList<>();
+
+	@Getter
+	@Setter
+	@JsonProperty
+	List<String> itemIds = new ArrayList<>();
+
+	@Getter
+	@Setter
+	@JsonProperty
+	List<String> gtins = new ArrayList<>();
+
 	@Getter
 	private List<FieldError> violations;
 	

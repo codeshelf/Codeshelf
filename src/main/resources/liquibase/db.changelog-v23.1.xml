@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog 
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog" 
+	logicalFilePath="db.changelog-v23.1.xml"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+    <changeSet author="ilya (generated)" id="1444763546731-4">
+        <addColumn tableName="import_receipt">
+            <column name="gtins" type="CLOB"/>
+        </addColumn>
+        <addColumn tableName="import_receipt">
+            <column name="item_ids" type="CLOB"/>
+        </addColumn>
+        <addColumn tableName="import_receipt">
+            <column name="order_ids" type="CLOB"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="ilya (generated)" id="1444767694605-3">
+        <dropColumn columnName="started" tableName="import_receipt"/>
+        <dropNotNullConstraint columnDataType="timestamp" columnName="completed" tableName="import_receipt"/>
+    </changeSet>
+</databaseChangeLog>

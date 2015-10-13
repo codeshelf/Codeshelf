@@ -25,8 +25,8 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.event.EventProducer;
 import com.codeshelf.event.EventTag;
-import com.codeshelf.model.domain.DataImportReceipt;
-import com.codeshelf.model.domain.DataImportStatus;
+import com.codeshelf.model.domain.ImportReceipt;
+import com.codeshelf.model.domain.ImportStatus;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
@@ -108,7 +108,6 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		this.spentDoingExtensionsMs = 0;
 		BatchResult<Object> batchResult = new BatchResult<Object>();
 		batchResult.setReceived(new Date(startTime));
-		batchResult.setStarted(new Date(startTime));
 		batchResult.setCompleted(new Date(startTime));
 
 		// make sure the facility is up-to-date
@@ -298,12 +297,16 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 
 		// create list of order batches
 		Set<String> orderIds = new HashSet<String>();
+		Set<String> itemIds = new HashSet<String>();
+		Set<String> gtins = new HashSet<String>();
 		Set<String> orderGroupIds = new HashSet<String>();
 		Map<String, OutboundOrderBatch> orderBatches = new HashMap<String, OutboundOrderBatch>();
 		//For readability, the first non-header line is indexed "2"
 		for (OutboundOrderCsvBean orderBean : originalBeanList) {
 			String orderId = orderBean.orderId;
 			orderIds.add(orderId);
+			itemIds.add(orderBean.getItemId());
+			gtins.add(orderBean.getGtin());
 			String orderGroupId = orderBean.getOrderGroupId();
 			if (orderGroupId != null) {
 				orderGroupIds.add(orderGroupId);
@@ -394,33 +397,37 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		batchResult.setCompleted(new Date(endTime));
 		batchResult.setOrdersProcessed(numOrders);
 		batchResult.setLinesProcessed(numLineItems);
+		batchResult.setOrderIds(new ArrayList<>(orderIds));
+		batchResult.setItemIds(new ArrayList<>(itemIds));
+		batchResult.setGtins(new ArrayList<>(gtins));
 		return batchResult;
 	}
 
 	@Override
 	public void persistDataReceipt(Facility facility, String username, String filename, long received, BatchResult<?> results) {
 
-		DataImportReceipt receipt = new DataImportReceipt();
+		ImportReceipt receipt = new ImportReceipt();
 		receipt.setUsername(username);
 		receipt.setFilename(filename);
 		receipt.setReceived(new Date(received));
-		receipt.setStarted(results.getStarted());
 		receipt.setCompleted(results.getCompleted());
 		receipt.setOrdersProcessed(results.getOrdersProcessed());
 		receipt.setLinesProcessed(results.getLinesProcessed());
 		receipt.setLinesFailed(results.getViolations().size());
-
+		receipt.setOrderIdsList(results.getOrderIds());
+		receipt.setItemIdsList(results.getItemIds());
+		receipt.setGtinsList(results.getGtins());
 		receipt.setParent(facility);
-		receipt.setDomainId("Import-" + results.getStarted());
+		receipt.setDomainId("Import-" + results.getReceived());
 		if (results.isSuccessful()) {
-			receipt.setStatus(DataImportStatus.Completed);
+			receipt.setStatus(ImportStatus.Completed);
 			LOGGER.info("Imported " + receipt);
 		} else {
-			receipt.setStatus(DataImportStatus.Failed);
+			receipt.setStatus(ImportStatus.Failed);
 			LOGGER.warn("Failed to import " + receipt);
 		}
 
-		DataImportReceipt.staticGetDao().store(receipt);
+		ImportReceipt.staticGetDao().store(receipt);
 
 	}
 

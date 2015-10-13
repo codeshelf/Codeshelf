@@ -119,7 +119,7 @@ public class Facility extends Location {
 	private List<Worker>					workers;
 
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
-	private List<DataImportReceipt>			dataImportReceipts;
+	private List<ImportReceipt>				dataImportReceipts;
 
 	@OneToMany(mappedBy = "facility", orphanRemoval = true)
 	private List<WorkerEvent>				workerEvents;
