@@ -24,6 +24,7 @@ import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.DeviceType;
+import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
@@ -298,7 +299,7 @@ public class ScriptServerRunner {
 		ICsvOrderImporter orderImporter = orderImporterProvider.get();
 		BatchResult<Object> results = orderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
 		String username = CodeshelfSecurityManager.getCurrentUserContext().getUsername();
-		orderImporter.persistDataReceipt(facility, username, filename + ".csv", receivedTime, results);
+		orderImporter.persistDataReceipt(facility, username, filename + ".csv", receivedTime, EdiTransportType.SCRIPT, results);
 	}
 
 	/**

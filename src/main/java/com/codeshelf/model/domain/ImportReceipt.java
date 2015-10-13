@@ -20,6 +20,7 @@ import lombok.Setter;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -112,6 +113,13 @@ public class ImportReceipt extends DomainObjectTreeABC<Facility> {
 	@Getter @Setter
 	@JsonProperty
 	String gtins;
+	
+	@Column(nullable = true, name = "transport_type")
+	@Enumerated(value = EnumType.STRING)
+	@Setter
+	@JsonProperty
+	private EdiTransportType		transportType;
+
 	
 	@Override
 	public String getDefaultDomainIdPrefix() {

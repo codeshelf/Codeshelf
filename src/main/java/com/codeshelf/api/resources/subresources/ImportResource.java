@@ -34,6 +34,7 @@ import com.codeshelf.edi.OrderLocationCsvImporter;
 import com.codeshelf.edi.OutboundOrderPrefetchCsvImporter;
 import com.codeshelf.edi.WorkerCsvImporter;
 import com.codeshelf.model.domain.ImportReceipt;
+import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.BatchResult;
@@ -156,7 +157,7 @@ public class ImportResource {
 			
 			BatchResult<Object> results = this.outboundOrderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
 			String username = CodeshelfSecurityManager.getCurrentUserContext().getUsername();
-			this.outboundOrderImporter.persistDataReceipt(facility, username, contentDispositionHeader.getFileName(), receivedTime, results);
+			this.outboundOrderImporter.persistDataReceipt(facility, username, contentDispositionHeader.getFileName(), receivedTime, EdiTransportType.APP, results);
 			return BaseResponse.buildResponse(results, Status.OK);				
 		}
 		catch (Exception e) {

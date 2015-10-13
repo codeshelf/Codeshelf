@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
+import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
@@ -185,7 +186,7 @@ public class EdiImportServiceTest extends MockDaoTest {
 			}
 			
 			@Override
-			public void persistDataReceipt(Facility facility, String username, String filename, long receivedTime, BatchResult<?> result) {
+			public void persistDataReceipt(Facility facility, String username, String filename, long receivedTime, EdiTransportType tranportType, BatchResult<?> result) {
 				//do nothing
 			}
 

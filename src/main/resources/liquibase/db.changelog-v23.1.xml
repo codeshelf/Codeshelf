@@ -20,4 +20,13 @@
         <dropColumn columnName="started" tableName="import_receipt"/>
         <dropNotNullConstraint columnDataType="timestamp" columnName="completed" tableName="import_receipt"/>
     </changeSet>
+    <changeSet author="ilya (generated)" id="1444769457393-3">
+    	<renameColumn oldColumnName="provider" newColumnName="transporter" tableName="edi_service"/>
+    </changeSet>
+    <changeSet author="ilya (generated)" id="1444769457393-4">
+    	<renameColumn oldColumnName="transporter" newColumnName="transport_type" tableName="edi_service"/>
+    	<addColumn tableName="import_receipt">
+            <column name="transport_type" type="VARCHAR(255)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

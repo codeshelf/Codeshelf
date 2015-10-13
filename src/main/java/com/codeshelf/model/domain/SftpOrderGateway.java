@@ -22,6 +22,7 @@ import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.edi.IEdiImportGateway;
 import com.codeshelf.edi.SftpConfiguration;
+import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.BatchResult;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -121,7 +122,7 @@ public class SftpOrderGateway extends SftpGateway implements IEdiImportGateway{
 			}
 			String username = CodeshelfSecurityManager.getCurrentUserContext().getUsername();
 			//long receivedTime = 1000 * file.getAttrs().getMTime();
-			inCsvOrderImporter.persistDataReceipt(getParent(), username, filename, receivedTime, results);
+			inCsvOrderImporter.persistDataReceipt(getParent(), username, filename, receivedTime, EdiTransportType.SFTP, results);
 
 			success = results.isSuccessful();
 			

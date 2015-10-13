@@ -30,7 +30,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.codeshelf.edi.IEdiGateway;
-import com.codeshelf.model.EdiProviderEnum;
+import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.model.EdiGatewayStateEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
@@ -81,11 +81,11 @@ public abstract class EdiGateway extends DomainObjectTreeABC<Facility> implement
 	private Facility				parent;
 
 	// The provider.
-	@Column(nullable = false)
+	@Column(nullable = false, name = "transport_type")
 	@Enumerated(value = EnumType.STRING)
 	@Setter
 	@JsonProperty
-	private EdiProviderEnum			provider;
+	private EdiTransportType		transportType;
 
 	// Service state.
 	@Column(nullable = false, name = "service_state")

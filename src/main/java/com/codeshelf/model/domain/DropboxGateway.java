@@ -32,7 +32,7 @@ import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.edi.IEdiImportGateway;
-import com.codeshelf.model.EdiProviderEnum;
+import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.model.EdiGatewayStateEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.security.CodeshelfSecurityManager;
@@ -101,7 +101,7 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 
 	public DropboxGateway() {
 		super();
-		setProvider(EdiProviderEnum.DROPBOX);
+		setTransportType(EdiTransportType.DROPBOX);
 	}
 
 	public static class DropboxCredentials {
@@ -554,7 +554,7 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 					processedAttempt = true;
 					BatchResult<Object> results = inCsvOrderImporter.importOrdersFromCsvStream(reader, getParent(), ediProcessTime);
 					String username = CodeshelfSecurityManager.getCurrentUserContext().getUsername();
-					inCsvOrderImporter.persistDataReceipt(getParent(), username, dbxFile.name, dbxFile.clientMtime.getTime(),  results);
+					inCsvOrderImporter.persistDataReceipt(getParent(), username, dbxFile.name, dbxFile.clientMtime.getTime(), EdiTransportType.DROPBOX, results);
 
 					success = results.isSuccessful();
 

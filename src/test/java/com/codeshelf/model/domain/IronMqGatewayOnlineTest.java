@@ -11,7 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.codeshelf.generators.FacilityGenerator;
-import com.codeshelf.model.EdiProviderEnum;
+import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.testframework.MockDaoTest;
 
 // TODO: should use mock DAO 
@@ -66,7 +66,7 @@ public class IronMqGatewayOnlineTest extends MockDaoTest {
 		
 		IronMqGateway gateway = new IronMqGateway();
 		gateway.setDomainId("IRONMQTEST");
-		gateway.setProvider(EdiProviderEnum.IRONMQ);
+		gateway.setTransportType(EdiTransportType.IRONMQ);
 		facility.addEdiGateway(gateway);
 
 		gateway.storeCredentials("540e1486364af100050000b4", "RzgIyO5FNeNAgZljs9x4um5UVqw", "true");

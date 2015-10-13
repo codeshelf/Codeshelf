@@ -27,6 +27,7 @@ import com.codeshelf.event.EventProducer;
 import com.codeshelf.event.EventTag;
 import com.codeshelf.model.domain.ImportReceipt;
 import com.codeshelf.model.domain.ImportStatus;
+import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
@@ -404,9 +405,10 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	}
 
 	@Override
-	public void persistDataReceipt(Facility facility, String username, String filename, long received, BatchResult<?> results) {
+	public void persistDataReceipt(Facility facility, String username, String filename, long received, EdiTransportType tranportType, BatchResult<?> results) {
 
 		ImportReceipt receipt = new ImportReceipt();
+		receipt.setTransportType(tranportType);
 		receipt.setUsername(username);
 		receipt.setFilename(filename);
 		receipt.setReceived(new Date(received));

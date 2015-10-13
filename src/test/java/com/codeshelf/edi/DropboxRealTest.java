@@ -15,6 +15,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.model.domain.DropboxGateway;
 import com.codeshelf.model.domain.Facility;
 // import com.codeshelf.model.domain.LedController;
@@ -290,7 +291,7 @@ public class DropboxRealTest extends ServerTest {
 				}
 				
 				@Override
-				public void persistDataReceipt(Facility facility, String username, String filename, long receivedTime, BatchResult<?> result) {
+				public void persistDataReceipt(Facility facility, String username, String filename, long receivedTime, EdiTransportType tranportType, BatchResult<?> result) {
 					//do nothing
 				}
 				

@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.model.HeaderCounts;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.PickStrategyEnum;
@@ -83,7 +84,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		subject.persistDataReceipt(getFacility(),
 			"testUser",
 			"testfilename",
-			System.currentTimeMillis(), 
+			System.currentTimeMillis(),
+			EdiTransportType.OTHER,
 			batchResult);
 		commitTransaction();
 	}

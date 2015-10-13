@@ -35,7 +35,7 @@ import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
-import com.codeshelf.model.EdiProviderEnum;
+import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.model.EdiGatewayStateEnum;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.google.common.base.Optional;
@@ -114,7 +114,7 @@ public class IronMqGateway extends EdiGateway implements IEdiExportGateway {
 
 	IronMqGateway(ClientProvider clientProvider) {
 		super();
-		this.setProvider(EdiProviderEnum.IRONMQ);
+		this.setTransportType(EdiTransportType.IRONMQ);
 		this.clientProvider = clientProvider;
 		exportCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS,"exports.ironmq");
 

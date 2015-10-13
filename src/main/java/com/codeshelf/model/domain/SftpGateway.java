@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.edi.EdiFileWriteException;
 import com.codeshelf.edi.SftpConfiguration;
-import com.codeshelf.model.EdiProviderEnum;
+import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.model.EdiGatewayStateEnum;
 import com.jcraft.jsch.Channel;
 import com.jcraft.jsch.ChannelSftp;
@@ -44,7 +44,7 @@ public abstract class SftpGateway extends EdiGateway {
 	
 	public SftpGateway() {
 		super();
-		setProvider(EdiProviderEnum.OTHER);
+		setTransportType(EdiTransportType.SFTP);
 		setGatewayState(EdiGatewayStateEnum.UNLINKED); // TODO: maybe add UX setup procedure to verify connection works
 	}
 	

@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.sql.Timestamp;
 
+import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.validation.BatchResult;
 
@@ -25,6 +26,6 @@ public interface ICsvOrderImporter {
 	
 	void setTruncatedGtins(boolean value);
 	
-	void persistDataReceipt(Facility facility, String username, String filename, long receivedTime,  BatchResult<?> result);
+	void persistDataReceipt(Facility facility, String username, String filename, long receivedTime, EdiTransportType tranportType, BatchResult<?> result);
 
 }
