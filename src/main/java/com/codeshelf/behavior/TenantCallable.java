@@ -15,21 +15,25 @@ import com.google.common.base.Stopwatch;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
-public class TenantCallable implements Callable<BatchReport>{
-	private static final Logger LOGGER	= LoggerFactory.getLogger(TenantCallable.class);
-	private BatchProcessor	delegate;
-	private Stopwatch runTiming;
-	private Thread runningThread;
-	private Tenant tenant;
-	private UserContext userContext;
-	private SettableFuture<Void> cancelled = null;
+public class TenantCallable implements Callable<BatchReport> {
+	private static final Logger			LOGGER						= LoggerFactory.getLogger(TenantCallable.class);
+	private BatchProcessor				delegate;
+	private Stopwatch					runTiming;
+	private Thread						runningThread;
+	private Tenant						tenant;
+	private UserContext					userContext;
+	private SettableFuture<Void>		cancelled					= null;
 	private TenantPersistenceService	persistenceService;
-	
+	private long						lastLoggedTimeDurationMs	= 0;
+
 	public TenantCallable(TenantPersistenceService persistenceService, Tenant tenant, BatchProcessor delegate) {
 		this(persistenceService, tenant, CodeshelfSecurityManager.getUserContextSYSTEM(), delegate);
 	}
 
-	public TenantCallable(TenantPersistenceService persistenceService, Tenant tenant, UserContext userContext, BatchProcessor delegate) {
+	public TenantCallable(TenantPersistenceService persistenceService,
+		Tenant tenant,
+		UserContext userContext,
+		BatchProcessor delegate) {
 		this.persistenceService = persistenceService;
 		this.tenant = tenant;
 		this.userContext = userContext;
@@ -40,24 +44,39 @@ public class TenantCallable implements Callable<BatchReport>{
 	public long getTotalTime() {
 		return runTiming.elapsed(TimeUnit.MILLISECONDS);
 	}
-	
+
 	public boolean isRunning() {
 		return runTiming.isRunning();
 	}
-	
+
 	public ListenableFuture<Void> cancel() {
 		cancelled = SettableFuture.create();
 		if (runningThread != null) {
 			runningThread.interrupt();
-		} 
+		}
 		return cancelled;
 	}
 
+	/**
+	 * This always logs. Called this way at start and end and upon exception
+	 */
 	private void saveReport(BatchReport report) {
 		LOGGER.info("Saving batch report {}", report);
 		//persistenceService.saveOrUpdate(report);
 	}
-	
+
+	/**
+	 * For our incremental reporting, do not log too often, even if we persist results more frequently
+	 */
+	private void saveReport(BatchReport report, int batchNumber) {
+		long newTotalDuration = getTotalTime();
+		if (newTotalDuration - lastLoggedTimeDurationMs > 10000) {
+			LOGGER.info("Batch {}. Saving batch report {}", batchNumber, report);
+			lastLoggedTimeDurationMs = newTotalDuration;
+		}
+		//persistenceService.saveOrUpdate(report);
+	}
+
 	public BatchReport call() {
 		runTiming.start();
 		BatchReport report = new BatchReport(DateTime.now());
@@ -77,13 +96,13 @@ public class TenantCallable implements Callable<BatchReport>{
 			}
 
 			int batchCount = 0;
-			while(cancelled == null && !runningThread.isInterrupted() && !delegate.isDone()) {
+			while (cancelled == null && !runningThread.isInterrupted() && !delegate.isDone()) {
 				batchCount++; // pre-increment. First batch is 1, not zero
 				persistenceService.beginTransaction();
 				try {
 					int completeCount = delegate.doBatch(batchCount);
 					report.setCount(completeCount);
-					saveReport(report);
+					saveReport(report, batchCount);
 					persistenceService.commitTransaction();
 				} catch (Exception e) {
 					persistenceService.rollbackTransaction();
@@ -91,7 +110,7 @@ public class TenantCallable implements Callable<BatchReport>{
 					report.setException(e);
 					return report;
 				}
-			} 
+			}
 			if (delegate.isDone()) {
 				report.setComplete();
 			}
@@ -118,7 +137,7 @@ public class TenantCallable implements Callable<BatchReport>{
 		}
 		return report;
 	}
-	
+
 	public String toString() {
 		return String.format("TenantCallable: tenant: %s, user: %s, processor: %s", tenant, userContext, delegate);
 	}
