@@ -25,7 +25,10 @@ public class PicksActivityHealthCheck extends CodeshelfHealthCheck {
 	@Override
 	protected Result check() throws Exception {
 
-		List<Tenant> tenants = TenantManagerService.getInstance().getTenants();
+		picksLastOneHour	= 0;
+		picksLast24Hours	= 0;
+		
+		List<Tenant> tenants = TenantManagerService.getInstance().getTenants();		
 		for (Tenant tenant : tenants) {
 			try {
 				CodeshelfSecurityManager.setContext(CodeshelfSecurityManager.getUserContextSYSTEM(), tenant);
