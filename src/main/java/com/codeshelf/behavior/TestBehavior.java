@@ -35,8 +35,7 @@ public class TestBehavior {
 			// ordersPerChe will be 0, which logs the error
 		}
 		if (ordersPerChe < 1 || ordersPerChe > 100) {
-			LOGGER.error("bad count parameter for setupManyCartsWithOrders oredersPerChe: {}", countStr);
-			return returnStr;
+			throw new IllegalArgumentException(String.format("bad count parameter for setupManyCartsWithOrders ordersPerChe: %s", countStr));
 		}
 
 		String ches = input.get("ches");
@@ -45,8 +44,7 @@ public class TestBehavior {
 		String[] cheNames = ches.split(delims);
 		int numberOfChe = cheNames.length;
 		if (numberOfChe < 1) {
-			LOGGER.error("bad parameter for setupManyCartsWithOrders ches parameter: {}", ches);
-			return returnStr;
+			throw new IllegalArgumentException(String.format("bad count parameter for setupManyCartsWithOrders ches: %s", ches));
 		}
 		
 		
