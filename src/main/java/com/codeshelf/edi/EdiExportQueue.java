@@ -6,8 +6,6 @@
  *******************************************************************************/
 package com.codeshelf.edi;
 
-
-
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,13 +24,13 @@ import com.codeshelf.util.CompareNullChecker;
  * Later, change to a persistent list of the serialized bean to survive server restart.
  */
 public class EdiExportQueue {
-	private ArrayList<WorkInstructionCsvBean> wiBeanList = new ArrayList<WorkInstructionCsvBean>();
-	
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(EdiExportQueue.class);
-	
+	private ArrayList<WorkInstructionCsvBean>	wiBeanList	= new ArrayList<WorkInstructionCsvBean>();
+
+	private static final Logger					LOGGER		= LoggerFactory.getLogger(EdiExportQueue.class);
+
 	public EdiExportQueue() {
 	}
-	
+
 	/**
 	 * A means to reset and get rid of leftover garbage.
 	 */
@@ -41,29 +39,27 @@ public class EdiExportQueue {
 			removeWI(bean);
 		}
 	}
-	
+
 	/**
 	 * A simple diagnostic to help identify leftover garbage.
 	 */
-	public void reportSize(){
+	public void reportSize() {
 		LOGGER.info("{} work instructions in list", wiBeanList.size());
 		// Would be nice to name "in {} orders, on {} che"
 	}
 
-	
 	public void addWorkInstruction(WorkInstruction inWi) {
 		WorkInstructionCsvBean wiBean = new WorkInstructionCsvBean(inWi);
-		if (!inWi.isHousekeeping()){
+		if (!inWi.isHousekeeping()) {
 			WorkInstructionCsvBean.staticGetDao().store(wiBean);
 		}
-		wiBeanList.add(wiBean);		
-	}
-	
-	public void restoreWorkInstructionBeanFromDB(WorkInstructionCsvBean savedBean) {
-		wiBeanList.add(savedBean);		
+		wiBeanList.add(wiBean);
 	}
 
-	
+	public void restoreWorkInstructionBeanFromDB(WorkInstructionCsvBean savedBean) {
+		wiBeanList.add(savedBean);
+	}
+
 	/**
 	 * Comparator to order the beans by timeComplete, then itemId
 	 * Note: it might be possible in some test runs that sometimes orders are done at same time and sometimes off by a second, therefore changing the sort.
@@ -79,11 +75,11 @@ public class EdiExportQueue {
 			int value = CompareNullChecker.compareNulls(bean1.getCompleted(), bean2.getCompleted());
 			if (value != 0)
 				return value;
-			
+
 			value = bean1.getCompleted().compareTo(bean2.getCompleted());
 			if (value != 0)
 				return value;
-			
+
 			// secondary sort: item. Should be only one item for one order.
 			String item1Name = bean1.getItemId();
 			String item2Name = bean2.getItemId();
@@ -91,30 +87,29 @@ public class EdiExportQueue {
 			if (value != 0)
 				return value;
 			value = item1Name.compareTo(item2Name);
-			if (value == 0){
-				LOGGER.error("strange case in WiBeanComparator-- not unique by time and item");
+			if (value == 0) {
+				LOGGER.error("WiBeanComparator-- not unique by time and item. Order:{}; item:{}", bean1.getOrderId(), item1Name);
 			}
-				return value;
+			return value;
 		}
 	}
 
-	
 	/**
 	 * In the same order as the main list, return a sublist of beans for this orderId
 	 * Sort it, so that our tests are not intermittent
 	 */
-	public ArrayList<WorkInstructionCsvBean> getAndRemoveWiBeansFor(String inOrderId){
+	public ArrayList<WorkInstructionCsvBean> getAndRemoveWiBeansFor(String inOrderId) {
 		ArrayList<WorkInstructionCsvBean> returnList = new ArrayList<WorkInstructionCsvBean>();
-		if (inOrderId == null || inOrderId.isEmpty()){
+		if (inOrderId == null || inOrderId.isEmpty()) {
 			LOGGER.error("Bad call to getAndRemoveWiBeansFor orderId");
-			return returnList;			
+			return returnList;
 		}
-		for (WorkInstructionCsvBean bean: wiBeanList){
+		for (WorkInstructionCsvBean bean : wiBeanList) {
 			if (inOrderId.equals(bean.getOrderId())) {
 				returnList.add(bean);
 			}
 		}
-		for (WorkInstructionCsvBean bean: returnList){
+		for (WorkInstructionCsvBean bean : returnList) {
 			removeWI(bean);
 		}
 		Collections.sort(returnList, new WiBeanComparator());
@@ -125,24 +120,24 @@ public class EdiExportQueue {
 	 * In the same order as the main list, return a sublist of beans for this orderId and Che
 	 * Sort it, so that our tests are not intermittent
 	 */
-	public ArrayList<WorkInstructionCsvBean> getAndRemoveWiBeansFor(String inOrderId, String inCheId){
+	public ArrayList<WorkInstructionCsvBean> getAndRemoveWiBeansFor(String inOrderId, String inCheId) {
 		ArrayList<WorkInstructionCsvBean> returnList = new ArrayList<WorkInstructionCsvBean>();
-		if (inOrderId == null || inOrderId.isEmpty() || inCheId == null || inCheId.isEmpty()){
+		if (inOrderId == null || inOrderId.isEmpty() || inCheId == null || inCheId.isEmpty()) {
 			LOGGER.error("Bad call to getAndRemoveWiBeansFor orderId and cheId");
-			return returnList;			
+			return returnList;
 		}
-		for (WorkInstructionCsvBean bean: wiBeanList){
+		for (WorkInstructionCsvBean bean : wiBeanList) {
 			if (inOrderId.equals(bean.getOrderId()) && inCheId.equals(bean.getCheId())) {
 				returnList.add(bean);
 			}
 		}
-		for (WorkInstructionCsvBean bean: returnList){
+		for (WorkInstructionCsvBean bean : returnList) {
 			removeWI(bean);
 		}
 		Collections.sort(returnList, new WiBeanComparator());
 		return returnList;
 	}
-	
+
 	private void removeWI(WorkInstructionCsvBean bean) {
 		UUID savedPersistentId = bean.getPersistentId();
 		if (savedPersistentId != null) {
@@ -152,5 +147,5 @@ public class EdiExportQueue {
 		}
 		wiBeanList.remove(bean);
 	}
-	
+
 }
