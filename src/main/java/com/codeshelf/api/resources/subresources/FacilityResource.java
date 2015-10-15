@@ -213,9 +213,10 @@ public class FacilityResource {
 
 	@Path("/extensionpoints")
 	@Produces(MediaType.APPLICATION_JSON)
-	public ExtensionPointsResource getExtensionPoints() {
+	public ExtensionPointsResource getExtensionPoints() throws ScriptException {
 		ExtensionPointsResource r = resourceContext.getResource(ExtensionPointsResource.class);
-		r.setFacility(facility);
+		ExtensionPointService extensionPointService = ExtensionPointService.createInstance(facility);
+		r.setExtensionPointService(extensionPointService);
 		return r;
 	}
 
@@ -226,7 +227,7 @@ public class FacilityResource {
 	public Response getHealthCheckConfig(@PathParam("type") String healthCheckType) throws ScriptException {
 		Optional<ExtensionPoint> extensionPoint = null;
 		ParameterSetBeanABC parameterSet = null;
-		if ("DataQuantity".equalsIgnoreCase(healthCheckType)) {
+		if ("ParameterSetDataQuantityHealthCheck".equalsIgnoreCase(healthCheckType)) {
 			ExtensionPointService epService = ExtensionPointService.createInstance(facility);
 			extensionPoint = epService.getDataQuantityHealthCheckExtensionPoint();
 			parameterSet = epService.getDataQuantityHealthCheckParameters();
@@ -234,11 +235,11 @@ public class FacilityResource {
 			responseMap.put("parameterSet", parameterSet);
 			responseMap.put("extensionPoint", extensionPoint.orNull());
 			return BaseResponse.buildResponse(responseMap);
-		} else if ("DataPurge".equalsIgnoreCase(healthCheckType)) {
+		} else if ("ParameterSetDataPurge".equalsIgnoreCase(healthCheckType)) {
 			ExtensionPointService epService = ExtensionPointService.createInstance(facility);
 			extensionPoint = epService.getDataPurgeExtensionPoint();
 			parameterSet = epService.getDataPurgeParameters();
-		} else if ("edi".equalsIgnoreCase(healthCheckType)) {
+		} else if ("ParameterEdiFreeSpaceHealthCheck".equalsIgnoreCase(healthCheckType)) {
 			ExtensionPointService epService = ExtensionPointService.createInstance(facility);
 			extensionPoint = epService.getEdiFreeSpaceExtensionPoint();
 			parameterSet = epService.getEdiFreeSpaceParameters();
