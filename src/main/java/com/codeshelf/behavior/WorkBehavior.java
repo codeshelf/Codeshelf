@@ -184,12 +184,15 @@ public class WorkBehavior implements IApiBehavior {
 		priorCntrUses.addAll(inChe.getUses());
 		ArrayList<ContainerUse> newCntrUses = new ArrayList<ContainerUse>();
 
-		// Set new uses on the CHE.
-		// FIXME: retrieve all containers in one shot from the database
+		
+		HashMap<String, Container> containersHash = prefetchContainers(facility, positionToContainerMap);
+		IFacilityEdiExporter ediExporter = prefetchFacilityEdiExporter(facility);		
 		List<Container> containerList = new ArrayList<Container>();
+		// Set new uses on the CHE.
 		for (Entry<String, String> e : positionToContainerMap.entrySet()) {
 			String containerId = e.getValue();
-			Container container = Container.staticGetDao().findByDomainId(facility, containerId);
+			//Container container = Container.staticGetDao().findByDomainId(facility, containerId);
+			Container container = containersHash.get(containerId);
 			if (container != null) {
 				// add to the list that will generate work instructions
 				containerList.add(container);
@@ -203,14 +206,13 @@ public class WorkBehavior implements IApiBehavior {
 					}
 					if (previousChe == null) {
 						inChe.addContainerUse(thisUse);
-						this.notifyAddOrderToCart(thisUse, inChe);
+						this.notifyAddOrderToCart(thisUse, inChe, ediExporter);
 					} else if (!previousChe.equals(inChe)) {
 						previousChe.removeContainerUse(thisUse);
 						// notify remove?
 						inChe.addContainerUse(thisUse);
-						this.notifyAddOrderToCart(thisUse, inChe);
+						this.notifyAddOrderToCart(thisUse, inChe, ediExporter);
 					}
-
 					Integer posconIndex = 0;
 					try {
 						posconIndex = Integer.parseInt(e.getKey());
@@ -241,7 +243,6 @@ public class WorkBehavior implements IApiBehavior {
 				}
 			}
 		}
-
 		// DEV-492 remove previous container uses.
 		// just to avoid a long hang after this first runs against old data with hundreds of stale uses, limit to 50.
 		int cleanCount = 0;
@@ -262,16 +263,14 @@ public class WorkBehavior implements IApiBehavior {
 		}
 
 		Timestamp theTime = now();
-
 		// Get all of the OUTBOUND work instructions.
 		WorkList workList = generateOutboundInstructions(facility, inChe, containerList, theTime);
 		//wiResultList.addAll(generateOutboundInstructions(facility, inChe, containerList, theTime));
-
+		
 		// Get all of the CROSS work instructions.
 		//wiResultList.addAll(generateCrossWallInstructions(facility, inChe, containerList, theTime));
 		List<WorkInstruction> crossInstructions = generateCrossWallInstructions(facility, inChe, containerList, theTime);
 		workList.getInstructions().addAll(crossInstructions);
-
 		if (workList.getInstructions().isEmpty() && workList.getDetails().isEmpty()) {
 			LOGGER.info("Calling PutWallOrderGenerator. containerList:{} positionToContainerMap:{}",
 				containerList,
@@ -677,7 +676,7 @@ public class WorkBehavior implements IApiBehavior {
 	 * During setup, we are really setting up containers, and not orders
 	 * Need to map to the order then notify with order parameter
 	 */
-	private void notifyAddOrderToCart(ContainerUse inUse, Che inChe) {
+	private void notifyAddOrderToCart(ContainerUse inUse, Che inChe, IFacilityEdiExporter ediExporter) {
 		if (inUse == null || inChe == null) {
 			LOGGER.error("null value in notifyAddOrderToCart");
 			return;
@@ -688,23 +687,13 @@ public class WorkBehavior implements IApiBehavior {
 			// Error? Probably not. GoodEggs had container uses that did not map to single outbound orders
 			return;
 		}
-		notifyAddOrderToCart(order, inChe);
-	}
-
-	/**
-	 * Two choices so far: not at all, or to SFTP
-	 */
-	private void notifyAddOrderToCart(OrderHeader inOrder, Che inChe) {
-		LOGGER.info("Order: {} added onto cart:{}", inOrder.getOrderId(), inChe.getDomainId());
-		// This is the PFSWeb variant. 
-		// Not sure if these should go singly.
-		try {
-			Optional<IFacilityEdiExporter> theService = getFacilityEdiExporter(inOrder.getFacility());
-			if (theService.isPresent()) {
-				theService.get().exportOrderOnCartAdded(inOrder, inChe);
+		LOGGER.info("Order: {} added onto cart:{}", order.getOrderId(), inChe.getDomainId());
+		if (ediExporter != null){
+			try {
+				ediExporter.exportOrderOnCartAdded(order, inChe);
+			} catch (Exception e) {
+				LOGGER.warn("unable to export order addition message for order {} and che {}", order, inChe);
 			}
-		} catch (Exception e) {
-			LOGGER.warn("unable to export order addition message for order {} and che {}", inOrder, inChe);
 		}
 	}
 
@@ -883,7 +872,8 @@ public class WorkBehavior implements IApiBehavior {
 		Timestamp theTime = now();
 
 		Facility inFacility = inChe.getFacility();
-		SingleWorkItem workItem = makeWIForOutbound(orderDetail, inChe, null, null, inFacility, inFacility.getPaths());
+		String workSeqr = PropertyService.getInstance().getPropertyFromConfig(inFacility, DomainObjectProperty.WORKSEQR);
+		SingleWorkItem workItem = makeWIForOutbound(orderDetail, inChe, null, null, inFacility, inFacility.getPaths(), workSeqr, null);
 		WorkInstruction aWi = null;
 		// workItem will contain an Instruction if an item was found on some path or an OrderDetail if it was not.
 		// In LinePick, we are OK with items without a location. So, if does return with OrderDetail, just create an Instruction manually.
@@ -1508,12 +1498,13 @@ public class WorkBehavior implements IApiBehavior {
 		final Che inChe,
 		final List<Container> inContainerList,
 		final Timestamp inTime) {
-
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		List<OrderDetail> uncompletedDetails = new ArrayList<OrderDetail>();
 
 		// To proceed, there should container use linked to outbound order
 		// We want to add all orders represented in the container list because these containers (or for Accu, fake containers representing the order) were scanned for this CHE to do.
+		String workSeqr = PropertyService.getInstance().getPropertyFromConfig(facility, DomainObjectProperty.WORKSEQR);
+		HashMap<String, Location> prefetchedPreferredLocations = prefetchPreferredLocations(facility, inContainerList);
 		for (Container container : inContainerList) {
 			OrderHeader order = container.getCurrentOrderHeader();
 			if (order != null && order.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
@@ -1531,7 +1522,9 @@ public class WorkBehavior implements IApiBehavior {
 								container,
 								inTime,
 								facility,
-								facility.getPaths()); // Could be normal WI, or a short WI
+								facility.getPaths(),
+								workSeqr,
+								prefetchedPreferredLocations); // Could be normal WI, or a short WI
 							if (workItem.getDetail() != null) {
 								uncompletedDetails.add(workItem.getDetail());
 							}
@@ -1575,7 +1568,69 @@ public class WorkBehavior implements IApiBehavior {
 		workList.setDetails(uncompletedDetails);
 		return workList;
 	}
-
+	
+	private HashMap<String, Container> prefetchContainers(Facility facility, Map<String, String> positionToContainerMap){
+		List<String> neededDomainIds = new ArrayList<>();
+		HashMap<String, Container> containersHash = new HashMap<>();
+		//Make a list of required container domain ids
+		for (Entry<String, String> e : positionToContainerMap.entrySet()) {
+			neededDomainIds.add(e.getValue());
+		}
+		//Search for those containers 
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("parent", facility));
+		filterParams.add(Restrictions.in("domainId", neededDomainIds));
+		List<Container> containers = Container.staticGetDao().findByFilter(filterParams);
+		//Hash the results
+		for (Container container : containers){
+			containersHash.put(container.getDomainId(), container);
+		}
+		return containersHash;
+	}
+	
+	private HashMap<String, Location> prefetchPreferredLocations(Facility facility, List<Container> inContainerList){
+		List<LocationAlias> aliases = LocationAlias.staticGetDao().findByParent(facility);
+		HashMap<String, LocationAlias> aliasesHash = new HashMap<>();
+		for (LocationAlias alias : aliases){
+			aliasesHash.put(alias.getDomainId(), alias);
+		}
+		HashMap<String, Location> preferredLocations = new HashMap<>();
+		String preferredLocationStr = null;
+		Location location = null;
+		LocationAlias alias = null;
+		for (Container container : inContainerList) {
+			OrderHeader order = container.getCurrentOrderHeader();
+			if (order != null && order.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
+				for (OrderDetail orderDetail : order.getOrderDetails()) {
+					preferredLocationStr = orderDetail.getPreferredLocation();
+					if (!Strings.isNullOrEmpty(preferredLocationStr) && !preferredLocations.containsKey(preferredLocationStr)) {
+						alias = aliasesHash.get(preferredLocationStr);
+						if (alias != null && alias.getActive()) {
+							location = alias.getMappedLocation();
+						} else {
+							location = facility.getLocations().get(preferredLocationStr);
+						}
+						preferredLocations.put(preferredLocationStr, location);
+					}
+				}
+			}
+		}
+		return preferredLocations;
+	}
+	
+	private IFacilityEdiExporter prefetchFacilityEdiExporter(Facility facility){
+		IFacilityEdiExporter ediExporter = null;
+		try {
+			Optional<IFacilityEdiExporter> ediExporterOptional = getFacilityEdiExporter(facility);
+			if (ediExporterOptional.isPresent()) {
+				ediExporter = ediExporterOptional.get();
+			}
+		} catch (Exception e) {
+			LOGGER.error("Unable to retrieve edi exporter for facility " + facility.getDomainId(), e);
+		}
+		return ediExporter;
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Find all of the OUTBOUND orders that need items held in containers holding CROSS orders.
@@ -1658,8 +1713,9 @@ public class WorkBehavior implements IApiBehavior {
 		final Container inContainer,
 		final Timestamp inTime,
 		final Facility inFacility,
-		final List<Path> paths) throws DaoException {
-
+		final List<Path> paths,
+		final String workSeqr,
+		final HashMap<String, Location> prefetchedPreferredLocations) throws DaoException {
 		WorkInstruction resultWi = null;
 		SingleWorkItem resultWork = new SingleWorkItem();
 		ItemMaster itemMaster = inOrderDetail.getItemMaster();
@@ -1667,18 +1723,22 @@ public class WorkBehavior implements IApiBehavior {
 		// DEV-637 note: The code here only works if there is inventory on a path. If the detail has a workSequence,
 		// we can make the work instruction anyway.
 		Location location = null;
-		String workSeqr = PropertyService.getInstance().getPropertyFromConfig(inFacility, DomainObjectProperty.WORKSEQR);
 		if (WorkInstructionSequencerType.WorkSequence.toString().equals(workSeqr)) {
 			if (inOrderDetail.getWorkSequence() != null) {
 				String preferredLocationStr = inOrderDetail.getPreferredLocation();
 				if (!Strings.isNullOrEmpty(preferredLocationStr)) {
-					location = inFacility.findLocationById(preferredLocationStr);
+					//location = inFacility.findLocationById(preferredLocationStr);
+					if (prefetchedPreferredLocations == null) {
+						location = inFacility.findLocationById(preferredLocationStr);
+					} else {
+						location = prefetchedPreferredLocations.get(preferredLocationStr);
+					}
 					if (location == null) {
 						location = inFacility.getUnspecifiedLocation();
 					} else if (!location.isActive()) {
 						LOGGER.warn("Unexpected inactive location for preferred Location: {}", location);
 						location = inFacility.getUnspecifiedLocation();
-					}
+					} 
 				} else {
 					LOGGER.warn("Wanted workSequence mode but need locationId for detail: {}", inOrderDetail);
 				}
@@ -1704,13 +1764,11 @@ public class WorkBehavior implements IApiBehavior {
 				}
 			}
 		}
-
 		if (location == null) {
 
 			// Need to improve? Do we already have a short WI for this order detail? If so, do we really want to make another?
 			// This should be moderately rare, although it happens in our test case over and over. User has to scan order/container to cart to make this happen.
 			deleteExistingShortWiToFacility(inOrderDetail);
-
 			//Based on our preferences, either auto-short an instruction for a detail that can't be found on the path, or don't and add that detail to the list
 			if (doAutoShortInstructions()) {
 				// If there is no location to send the Selector then create a PLANNED, SHORT WI for this order detail.

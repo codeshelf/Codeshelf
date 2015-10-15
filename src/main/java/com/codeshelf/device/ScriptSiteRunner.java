@@ -525,7 +525,7 @@ public class ScriptSiteRunner {
 		//Iterate over instructions, picking items, until no instructions left
 		while(true){
 			Thread.sleep(pickPauseMs);
-			WorkInstruction instruction = che.getActivePick();
+			WorkInstruction instruction = che.getFirstActivePick();
 			if (instruction == null) {
 				break;
 			} else if (instruction.isHousekeeping()) {
@@ -553,7 +553,7 @@ public class ScriptSiteRunner {
 					LOGGER.info("Short Item");
 					che.scanCommand("SHORT");
 					che.waitForCheState(CheStateEnum.SHORT_PICK, WAIT_TIMEOUT);
-					int button = che.buttonFor(che.getActivePick());
+					int button = che.buttonFor(instruction);
 					che.pick(button,0);
 					che.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, WAIT_TIMEOUT);
 					che.scanCommand("YES");
@@ -566,7 +566,7 @@ public class ScriptSiteRunner {
 		String msg = "Completed CHE run";
 		LOGGER.info(msg);
 	}
-
+	
 	private boolean chance(double percentage) {
 		double rnd = rnd_gen.nextDouble();
 		return rnd < percentage;

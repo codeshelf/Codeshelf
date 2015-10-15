@@ -182,7 +182,7 @@ public class PickSimulator {
 
 	public void pickItemAuto() {
 		waitForCheState(CheStateEnum.DO_PICK, getWaitTime());
-		WorkInstruction wi = getActivePick();
+		WorkInstruction wi = getFirstActivePick();
 		int button = buttonFor(wi);
 		int quantity = wi.getPlanQuantity();
 		pick(button, quantity);
@@ -349,6 +349,16 @@ public class PickSimulator {
 			return activeList.get(0);
 		else {
 			throw new IllegalStateException("More than one active pick. Use getActivePickList() instead"); // and know what you are doing.
+		}
+	}
+	
+	
+	public WorkInstruction getFirstActivePick() {
+		List<WorkInstruction> instructions = getActivePickList();
+		if (instructions == null || instructions.isEmpty()) {
+			return null;
+		} else {
+			return instructions.get(0);
 		}
 	}
 
