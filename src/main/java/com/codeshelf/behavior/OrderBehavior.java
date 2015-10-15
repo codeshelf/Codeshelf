@@ -1,6 +1,8 @@
 package com.codeshelf.behavior;
 
-import java.sql.Timestamp;
+import static com.codeshelf.model.dao.GenericDaoABC.createIntervalRestriction;
+import static com.codeshelf.model.dao.GenericDaoABC.createSubstringRestriction;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -22,7 +24,6 @@ import org.hibernate.Criteria;
 import org.hibernate.FetchMode;
 import org.hibernate.Query;
 import org.hibernate.Session;
-import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.SimpleExpression;
@@ -42,6 +43,7 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.util.CompareNullChecker;
 import com.codeshelf.util.UomNormalizer;
+import com.google.common.base.Strings;
 
 /**
  * Functionality that reports and manipulates the Orders model (ie. OrderHeader, OrderGroups and OrderDetails).
@@ -126,13 +128,11 @@ public class OrderBehavior implements IApiBehavior {
 					.add(Projections.property("domainId").as("orderId")))
 				.add(Property.forName("parent").eq(facility))
 				.add(Property.forName("active").eq(true));
-				if (orderIdSubstring != null) {
-					criteria.add(Property.forName("domainId").like(orderIdSubstring, MatchMode.ANYWHERE));
-				}
+				if (!Strings.isNullOrEmpty(orderIdSubstring)) {
+					criteria.add(createSubstringRestriction("domainId", orderIdSubstring));
+				}		
 				if (dueDateInterval != null) {
-					criteria.add(Property.forName("dueDate").between(
-						new Timestamp(dueDateInterval.getStartMillis()),
-						new Timestamp(dueDateInterval.getEndMillis())));
+					criteria.add(createIntervalRestriction("dueDate", dueDateInterval));
 				}
 		
 		@SuppressWarnings("unchecked")

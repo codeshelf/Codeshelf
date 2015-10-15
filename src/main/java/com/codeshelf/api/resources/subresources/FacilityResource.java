@@ -41,13 +41,13 @@ import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.exception.ConstraintViolationException;
 import org.joda.time.DateTime;
-import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.EventTypeParam;
+import com.codeshelf.api.BaseResponse.IntervalParam;
 import com.codeshelf.api.BaseResponse.TimestampParam;
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.ErrorResponse;
@@ -299,14 +299,9 @@ public class FacilityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response findWorkInstructionReferences(@QueryParam("itemId") String itemIdSubstring,
 		@QueryParam("containerId") String containerIdSubstring,
-		@QueryParam("assigned") String assigneddDateSpec) {
-
-		Interval assigneddInterval = null;
-		if (assigneddDateSpec != null) {
-			assigneddInterval = Interval.parse(assigneddDateSpec);
-		}
+		@QueryParam("assigned") IntervalParam assignedDateSpec) {
 		List<Object[]> results = this.workService.findWorkInstructionReferences(facility,
-			assigneddInterval,
+			assignedDateSpec.getValue(),
 			itemIdSubstring,
 			containerIdSubstring);
 		return BaseResponse.buildResponse(results);

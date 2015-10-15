@@ -1,5 +1,8 @@
 package com.codeshelf.api.resources.subresources;
 
+import static com.codeshelf.model.dao.GenericDaoABC.createIntervalRestriction;
+import static com.codeshelf.model.dao.GenericDaoABC.createSubstringRestriction;
+
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -23,9 +26,10 @@ import lombok.Setter;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
+import org.joda.time.Interval;
 
 import com.codeshelf.api.BaseResponse;
-import com.codeshelf.api.BaseResponse.TimestampParam;
+import com.codeshelf.api.BaseResponse.IntervalParam;
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.InventoryCsvImporter;
@@ -33,11 +37,12 @@ import com.codeshelf.edi.LocationAliasCsvImporter;
 import com.codeshelf.edi.OrderLocationCsvImporter;
 import com.codeshelf.edi.OutboundOrderPrefetchCsvImporter;
 import com.codeshelf.edi.WorkerCsvImporter;
-import com.codeshelf.model.domain.ImportReceipt;
 import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.ImportReceipt;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.BatchResult;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
@@ -188,15 +193,25 @@ public class ImportResource {
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getImportReceipts(@QueryParam("startTimestamp") TimestampParam startTimestamp, @QueryParam("endTimestamp") TimestampParam endTimestamp) {
+	public Response getImportReceipts(@QueryParam("received") IntervalParam received, 
+									  @QueryParam("orderIds") String orderIds, 
+									  @QueryParam("itemIds") String itemIds,
+									  @QueryParam("gtins") String gtins) {
 		try {
 			ArrayList<Criterion> filter = Lists.newArrayList();
 			filter.add(Restrictions.eq("parent", facility));
-			if (startTimestamp != null) {
-				filter.add(Restrictions.ge("started", startTimestamp.getValue()));
+			Interval receivedInterval = received.getValue();
+			if (receivedInterval != null) {
+				filter.add(createIntervalRestriction("received", receivedInterval));
 			}
-			if (endTimestamp != null) {
-				filter.add(Restrictions.le("started", endTimestamp.getValue()));
+			if (!Strings.isNullOrEmpty(orderIds)) {
+				filter.add(createSubstringRestriction("orderIds", orderIds));
+			}
+			if (!Strings.isNullOrEmpty(itemIds)) {
+				filter.add(createSubstringRestriction("itemIds", itemIds));
+			}
+			if (!Strings.isNullOrEmpty(gtins)) {
+				filter.add(createSubstringRestriction("gtins", gtins));
 			}
 			List<ImportReceipt> receipts = ImportReceipt.staticGetDao().findByFilter(filter);
 			return BaseResponse.buildResponse(receipts);
