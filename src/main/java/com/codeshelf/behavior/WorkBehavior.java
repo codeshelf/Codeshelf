@@ -1,5 +1,8 @@
 package com.codeshelf.behavior;
 
+import static com.codeshelf.model.dao.GenericDaoABC.createIntervalRestriction;
+import static com.codeshelf.model.dao.GenericDaoABC.createSubstringRestriction;
+
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,7 +27,6 @@ import lombok.ToString;
 import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
-import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
@@ -2449,15 +2451,15 @@ public class WorkBehavior implements IApiBehavior {
 			.setProjection(Projections.projectionList().add(Projections.property("persistentId").as("persistentId")))
 			.add(Property.forName("parent").eq(facility))
 			.add(Property.forName("type").in(ImmutableList.of(WorkInstructionTypeEnum.ACTUAL, WorkInstructionTypeEnum.PLAN)));
-		if (Strings.isNullOrEmpty(itemIdSubstring) == false) {
-			criteria.add(Property.forName("itemId").like(itemIdSubstring, MatchMode.ANYWHERE));
+		if (!Strings.isNullOrEmpty(itemIdSubstring)) {
+			criteria.add(createSubstringRestriction("itemId", itemIdSubstring));
 		}
-		if (Strings.isNullOrEmpty(containerIdSubstring) == false) {
-			criteria.createCriteria("container").add(Property.forName("domainId").like(containerIdSubstring, MatchMode.ANYWHERE));
+		if (!Strings.isNullOrEmpty(containerIdSubstring)) {
+			criteria.createCriteria("container")
+				.add(createSubstringRestriction("domainId", containerIdSubstring));
 		}
 		if (assignedInterval != null) {
-			criteria.add(Property.forName("assigned").between(new Timestamp(assignedInterval.getStartMillis()),
-				new Timestamp(assignedInterval.getEndMillis())));
+			criteria.add(createIntervalRestriction("assigned", assignedInterval));
 		}
 
 		@SuppressWarnings("unchecked")

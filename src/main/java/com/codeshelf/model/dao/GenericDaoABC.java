@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.codeshelf.model.dao;
 
+import java.sql.Timestamp;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -22,9 +23,12 @@ import org.hibernate.Query;
 import org.hibernate.QueryParameterException;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
+import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
+import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -331,5 +335,15 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 			throw new DaoException("unexpected class used with DAO - expected " + expectedClass.getSimpleName() + " but got "
 					+ clazz.getSimpleName());
 		}
+	}
+	
+	public static Criterion createSubstringRestriction(String propertyName, String substring) {
+		return Restrictions.ilike(propertyName, substring, MatchMode.ANYWHERE);
+	}
+	
+	public static Criterion createIntervalRestriction(String propertyName, Interval interval) {
+		return Property.forName(propertyName).between(
+			new Timestamp(interval.getStartMillis()),
+			new Timestamp(interval.getEndMillis()));
 	}
 }

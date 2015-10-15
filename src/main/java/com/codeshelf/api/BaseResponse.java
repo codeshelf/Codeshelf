@@ -9,6 +9,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.Response.Status;
 
+import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,6 +109,21 @@ public abstract class BaseResponse {
 		
 	}
 
+	public static class IntervalParam extends AbstractParam<Interval> {
+
+		public IntervalParam(String str) {
+			super(str);
+		}
+
+		@Override
+		protected Interval parse(String intervalSpec) {
+			Interval dueDateInterval = null;
+			if (intervalSpec != null) {
+				dueDateInterval = Interval.parse(intervalSpec);
+			}
+			return dueDateInterval;
+		}
+	}
 	
 	public static class TimestampParam extends AbstractParam<Date> {
 

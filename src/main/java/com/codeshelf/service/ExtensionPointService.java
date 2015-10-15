@@ -37,12 +37,13 @@ public class ExtensionPointService {
 	@Getter
 	private ArrayList<String>	failedExtensions	= Lists.newArrayList();
 
-	private UUID	facilityPersistentId;
+	@Getter
+	private Facility	facility;
 
 	public ExtensionPointService(Facility facility) throws ScriptException {
 		initEngine();
 		load(facility);
-		facilityPersistentId = facility.getPersistentId();
+		this.facility = facility;
 	}
 
 	private void initEngine() throws ScriptException {
@@ -123,7 +124,7 @@ public class ExtensionPointService {
 		@SuppressWarnings("unchecked")
 		List<ExtensionPoint> eps = ExtensionPoint.staticGetDao().createCriteria()
 				.add(Restrictions.eq("type", type))
-				.add(Restrictions.eq("parent.persistentId", facilityPersistentId))
+				.add(Restrictions.eq("parent.persistentId", facility.getPersistentId()))
 				.list();
 		if (eps.size() > 1) {
 			LOGGER.warn("Fould multiple extension points for type {} in faciltiy {}");
@@ -203,5 +204,38 @@ public class ExtensionPointService {
 	
 	public Optional<ExtensionPoint> getEdiFreeSpaceExtensionPoint() {
 		return this.getExtensionPoint(ExtensionPointType.ParameterEdiFreeSpaceHealthCheck);
+	}
+
+	public List<ExtensionPoint> getAllExtensions() {
+		@SuppressWarnings("unchecked")
+		List<ExtensionPoint> eps = ExtensionPoint.staticGetDao().createCriteria()
+				.add(Restrictions.eq("parent.persistentId", facility.getPersistentId()))
+				.list();
+		return eps;
+	}
+
+	public ExtensionPoint findById(UUID extensionPointId) {
+		ExtensionPoint point = ExtensionPoint.staticGetDao().findByPersistentId(extensionPointId);
+		return point;
+	}
+	
+	public ExtensionPoint createExtensionPoint(ExtensionPointType typeEnum) throws ScriptException {
+		ExtensionPoint point = new ExtensionPoint(facility.reload(), typeEnum);
+		store(point);
+		return point;
+	}
+
+	public ExtensionPoint update(ExtensionPoint point) throws ScriptException {
+		store(point);
+		return point;
+	}
+
+	private ExtensionPoint store(ExtensionPoint point) throws ScriptException {
+		ExtensionPoint.staticGetDao().store(point);
+		if (point.isActive()) {
+			LOGGER.info("Adding extension point " + point.getType());
+			this.addExtensionPointIfValid(point);
+		}
+		return point;
 	}
 }

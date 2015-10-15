@@ -37,7 +37,7 @@ public class EdiFreeSpaceHealthCheckParamaters extends ParameterSetBeanABC {
 
 	@Override
 	public String getParametersDescription() {
-		return String.format("minAvailableFiles: %d; , minAvailableSpaceMB: %d;",
+		return String.format("minAvailableFiles: %d; minAvailableSpaceMB: %d;",
 			getMinAvailableFilesValue(),
 			getMinAvailableSpaceMBValue());
 	}

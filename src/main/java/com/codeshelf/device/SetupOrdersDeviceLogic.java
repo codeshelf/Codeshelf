@@ -1379,11 +1379,29 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 	}
 
+	/**
+	 * This de-clones lots of code. Assumes it is called from mPositionToContainerMap. This will log the error if there is bad data in the system so caller does not need to.
+	 * We think that is prevented now. Part of DEV-1222
+	 * A return code of 0 is basically an error. Calling code should silently not process this case and move on.
+	 */
+	private byte getPositionValue(Entry<String, String> entry) {
+		String thisKeyValue = entry.getKey();
+		byte position = 0;
+		try {
+			position = Byte.valueOf(thisKeyValue);
+		} catch (NumberFormatException e) {
+			LOGGER.info("getPositionValue found bad value in position map", e);
+			// DEV-1222 catch and move on. Better than skipping feedback on all poscons just because one position got bad data.
+		}
+		return position;
+	}
+
 	private byte[] getUsedPositionsByteArray() {
 		BitSet usedPositions = new BitSet();
 		for (Entry<String, String> entry : mPositionToContainerMap.entrySet()) {
-			Byte position = Byte.valueOf(entry.getKey());
-			usedPositions.set(position);
+			byte position = getPositionValue(entry);
+			if (position != 0)
+				usedPositions.set(position);
 		}
 		byte[] data = usedPositions.toByteArray();
 		return data;
@@ -1717,15 +1735,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 		for (Entry<String, String> entry : mPositionToContainerMap.entrySet()) {
-			String containerId = entry.getValue();
-			String posId = entry.getKey();
-			Byte position = 0;
-			try {
-				position = Byte.valueOf(posId);
-			} catch (NumberFormatException e) {
-				LOGGER.warn("bad position value:, {} in entry map", posId);
-				continue; // do not do this feedback at all, but allow to do the rest.
+
+			byte position = getPositionValue(entry);
+			if (position == 0) {
+				continue;
 			}
+			String containerId = entry.getValue();
 
 			Byte value = 0;
 			boolean needBitEncodedA = false;
@@ -2071,7 +2086,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		for (Entry<String, String> containerMapEntry : mPositionToContainerMap.entrySet()) {
 			String containerId = containerMapEntry.getValue();
-			byte position = Byte.valueOf(containerMapEntry.getKey());
+			byte position = getPositionValue(containerMapEntry);
+			if (position == 0) {
+				continue;
+			}
+
 			WorkInstructionCount wiCount = mContainerToWorkInstructionCountMap.get(containerId);
 
 			//if wiCount is 0 then the server did have any WIs for the order.
@@ -2139,7 +2158,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (PosControllerInstr.POSITION_ALL == inPosition) {
 			for (Entry<String, String> containerMapEntry : mPositionToContainerMap.entrySet()) {
 				String containerId = containerMapEntry.getValue();
-				byte position = Byte.valueOf(containerMapEntry.getKey());
+				byte position = getPositionValue(containerMapEntry);
+				if (position == 0) {
+					continue;
+				}
+
 				WorkInstructionCount wiCount = mContainerToWorkInstructionCountMap.get(containerId);
 				PosControllerInstr instr = this.getCartRunFeedbackInstructionForCount(wiCount, position);
 				if (instr != null) {
@@ -2171,6 +2194,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	private void processContainerPosition(final String inScanPrefixStr, String inScanStr) {
 		if (POSITION_PREFIX.equals(inScanPrefixStr)) {
+			//DEV-1222 make sure we have a good position before adding it to our map
+			if (StringUtils.isEmpty(inScanStr) || !StringUtils.isNumeric(inScanStr)) {
+				LOGGER.warn("Bad position scan: {}{}", inScanPrefixStr, inScanStr);
+				setState(CheStateEnum.CONTAINER_POSITION_INVALID);
+				return;
+			}
+
 			if (mPositionToContainerMap.get(inScanStr) == null) {
 				mPositionToContainerMap.put(inScanStr, mContainerInSetup);
 
@@ -2704,7 +2734,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 		for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
 			if (mapEntry.getValue().equals(inContainerId)) {
-				PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(mapEntry.getKey()),
+				byte position = getPositionValue(mapEntry);
+				if (position == 0) {
+					continue;
+				}
+
+				PosControllerInstr instruction = new PosControllerInstr(position,
 					valueToSend,
 					minToSend,
 					maxToSend,
@@ -2732,7 +2767,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// must we do linear search? The code does throughout. Seems like map direct lookup would be fine.
 		for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
 			if (mapEntry.getValue().equals(inContainerId)) {
-				return Byte.valueOf(mapEntry.getKey());
+				byte position = getPositionValue(mapEntry);
+				return position; // no need to bail on return value zero, as this function is supposed to return zero in that case.
 			}
 		}
 		return 0;
