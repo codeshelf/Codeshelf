@@ -262,11 +262,13 @@ public class HousekeepingInjector {
 	public static List<WorkInstruction> addHouseKeepingAndSaveSort(Facility inFacility, List<WorkInstruction> inSortedWiList) {
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		WorkInstruction lastWi = null;
+		BayChangeChoice bayChangeChoice = getBayChangeChoice(inFacility);
+		RepeatPosChoice repeatPosChoice = getRepeatPosChoice(inFacility);
 		for (WorkInstruction wi : inSortedWiList) {
 			List<WorkInstructionTypeEnum> theHousekeepingTypeList = wisNeedHouseKeepingBetween(lastWi,
 				wi,
-				getBayChangeChoice(inFacility),
-				getRepeatPosChoice(inFacility));
+				bayChangeChoice,
+				repeatPosChoice);
 			// returns null if nothing to do. If non-null, then at lease one in the list.
 			if (theHousekeepingTypeList != null) {
 				for (WorkInstructionTypeEnum theType : theHousekeepingTypeList) {
