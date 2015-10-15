@@ -1382,8 +1382,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private byte[] getUsedPositionsByteArray() {
 		BitSet usedPositions = new BitSet();
 		for (Entry<String, String> entry : mPositionToContainerMap.entrySet()) {
-			Byte position = Byte.valueOf(entry.getKey());
-			usedPositions.set(position);
+			String thisKeyValue = entry.getKey();
+			try {
+				Byte position = Byte.valueOf(thisKeyValue);
+				usedPositions.set(position);
+			} catch (NumberFormatException e) {
+				LOGGER.error("getUsedPositionsByteArray(): non-numeric value: {} in position map", thisKeyValue);
+				// DEV-1222 catch and move on. Better than skipping feedback on all poscons just because one position got bad data.
+			}
 		}
 		byte[] data = usedPositions.toByteArray();
 		return data;
@@ -1723,7 +1729,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			try {
 				position = Byte.valueOf(posId);
 			} catch (NumberFormatException e) {
-				LOGGER.warn("bad position value:, {} in entry map", posId);
+				LOGGER.warn("showContainerAssignments(): bad position value:, {} in entry map", posId);
 				continue; // do not do this feedback at all, but allow to do the rest.
 			}
 
@@ -2071,7 +2077,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		for (Entry<String, String> containerMapEntry : mPositionToContainerMap.entrySet()) {
 			String containerId = containerMapEntry.getValue();
-			byte position = Byte.valueOf(containerMapEntry.getKey());
+			byte position = 0;
+			try {
+				position = Byte.valueOf(containerMapEntry.getKey());
+			} catch (NumberFormatException e) {
+				position = 0;
+			}
+			if (position == 0) {
+				LOGGER.error("showCartSetupFeedback(): Bad value in containerMap: {}", containerMapEntry.getKey());
+				continue; // DEV-1222 	better to do other poscons than throw and do none as we did before		
+			}
 			WorkInstructionCount wiCount = mContainerToWorkInstructionCountMap.get(containerId);
 
 			//if wiCount is 0 then the server did have any WIs for the order.
@@ -2139,7 +2154,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (PosControllerInstr.POSITION_ALL == inPosition) {
 			for (Entry<String, String> containerMapEntry : mPositionToContainerMap.entrySet()) {
 				String containerId = containerMapEntry.getValue();
-				byte position = Byte.valueOf(containerMapEntry.getKey());
+				byte position = 0;
+				try {
+					position = Byte.valueOf(containerMapEntry.getKey());
+				} catch (NumberFormatException e) {
+					position = 0;
+				}
+				if (position == 0) {
+					LOGGER.error("showCartRunFeedbackIfNeeded(): bad position key in container map");
+					continue; // DEV-1222
+				}
+
 				WorkInstructionCount wiCount = mContainerToWorkInstructionCountMap.get(containerId);
 				PosControllerInstr instr = this.getCartRunFeedbackInstructionForCount(wiCount, position);
 				if (instr != null) {
@@ -2704,7 +2729,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 		for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
 			if (mapEntry.getValue().equals(inContainerId)) {
-				PosControllerInstr instruction = new PosControllerInstr(Byte.valueOf(mapEntry.getKey()),
+				byte position = 0;
+				try {
+					position = Byte.valueOf(mapEntry.getKey());
+				} catch (NumberFormatException e) {
+					position = 0;
+				}
+				if (position == 0) {
+					LOGGER.error("showHouseKeepingDisplayOnPoscon(): bad key  value in container map {}", mapEntry.getKey());
+					continue; // DEV-1222 better than skipping all poscons
+				}
+				PosControllerInstr instruction = new PosControllerInstr(position,
 					valueToSend,
 					minToSend,
 					maxToSend,
@@ -2732,7 +2767,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// must we do linear search? The code does throughout. Seems like map direct lookup would be fine.
 		for (Entry<String, String> mapEntry : mPositionToContainerMap.entrySet()) {
 			if (mapEntry.getValue().equals(inContainerId)) {
-				return Byte.valueOf(mapEntry.getKey());
+				try {
+				return Byte.valueOf(mapEntry.getKey());}
+				catch (NumberFormatException e) {
+					LOGGER.error("getPosconIndexOfContainerId(): bad key value in container map");
+					return 0;
+				}
 			}
 		}
 		return 0;
