@@ -14,8 +14,6 @@ import org.junit.Test;
 import com.codeshelf.behavior.DummyPropertyBehavior;
 import com.codeshelf.edi.EdiImportService;
 import com.codeshelf.model.dao.Result;
-import com.codeshelf.report.IPickDocumentGenerator;
-import com.codeshelf.report.PickDocumentGenerator;
 import com.codeshelf.security.TokenSessionService;
 import com.codeshelf.testframework.ServerTest;
 import com.google.inject.Provider;
@@ -43,12 +41,10 @@ public class CodeshelfApplicationTest extends ServerTest {
 			mockProvider,
 			mockProvider,
 			mockProvider);
-		IPickDocumentGenerator pickDocumentGenerator = new PickDocumentGenerator();
 
 		WebApiServer adminServer = new WebApiServer();
 		final ServerCodeshelfApplication application = new ServerCodeshelfApplication(
 			ediImportService,
-			pickDocumentGenerator,
 			adminServer,
 			this.tenantManagerService,
 			this.metricsService,
