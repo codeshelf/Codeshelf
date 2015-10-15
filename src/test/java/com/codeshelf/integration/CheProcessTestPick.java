@@ -1480,6 +1480,67 @@ public class CheProcessTestPick extends ServerTest {
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 	}
 
+	//DEV-1222 test case of double scan of position like "P%6P%6"
+	@Test
+	public final void testDoublePositionScan() throws IOException {
+
+		// set up data for pick scenario
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		// We are going to put everything in A1 and A2 since they are on the same path.
+		//Item 5 is out of stock and item 6 is case only.
+		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
+				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
+				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
+				+ "4,D401,Test Item 4,1,EA,6/25/14 12:00,66\r\n" //
+				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
+		beginTransaction();
+		importInventoryData(facility, csvInventory);
+		propertyService.turnOffHK(facility);
+		commitTransaction();
+
+		this.startSiteController();
+
+		beginTransaction();
+		facility = facility.reload();
+		// Outbound order. No group. Using 5 digit order number and preassigned container number.
+		// Order 1 has two items in stock (Item 1 and Item 2)
+		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,2,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,22222,22222,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+
+		PickSimulator picker = createPickSim(cheGuid1);
+
+		LOGGER.info("1: simulate a double scan coming in");
+		picker.loginAndSetup("Picker #1");
+		picker.scanOrderId("11111");
+		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 3000);
+
+		picker.scanSomething("P%1P%1");
+		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION_INVALID, 3000);
+
+		LOGGER.info("2: clear and continue with second order");
+		picker.scanSomething("X%CANCEL");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
+
+		picker.setupOrderIdAsContainer("22222", "2");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		picker.scanLocation("D301");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		LOGGER.info("3: check poscons"); // before DEV-1222, the bad value would be in the position map. And then the system would throw before displaying the good poscon 2.
+		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue(), 1);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2), PosControllerInstr.BRIGHT_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 2), PosControllerInstr.SOLID_FREQ);
+
+		picker.logout();
+		}
+
 	@Test
 	public final void noInventoryCartRunFeedback() throws IOException {
 		// One good result for this, so the cart has something to run. And one no inventory.

@@ -2196,6 +2196,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	private void processContainerPosition(final String inScanPrefixStr, String inScanStr) {
 		if (POSITION_PREFIX.equals(inScanPrefixStr)) {
+			//DEV-1222 make sure we have a good position before adding it to our map
+			if (StringUtils.isEmpty(inScanStr) || !StringUtils.isNumeric(inScanStr)) {
+				LOGGER.warn("Bad position scan: {}{}",inScanPrefixStr, inScanStr );
+				setState(CheStateEnum.CONTAINER_POSITION_INVALID);
+				return;
+			}
+			
 			if (mPositionToContainerMap.get(inScanStr) == null) {
 				mPositionToContainerMap.put(inScanStr, mContainerInSetup);
 
