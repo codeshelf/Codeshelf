@@ -265,7 +265,7 @@ public class WiFactory {
 							resultWi.getPersistentId(), inOrderDetail.getDomainId(), facility.getDomainId() );
 				}
 				else {
-					LOGGER.info("Recyle existing PLAN wi for {} from OrderDetail:{}", wi.getItemId(), inOrderDetail.getDomainId());
+					LOGGER.info("Recycle existing PLAN wi for {} from OrderDetail:{}", wi.getItemId(), inOrderDetail.getDomainId());
 					// If you chase the code through, you will see that although the wi itself is recycled, every field is redone as if it were new.
 				}
 				break;
