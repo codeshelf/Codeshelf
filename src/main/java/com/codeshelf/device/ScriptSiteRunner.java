@@ -9,6 +9,7 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,7 @@ import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.util.CsExceptionUtils;
+import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.google.common.collect.Lists;
 
@@ -31,6 +33,7 @@ public class ScriptSiteRunner {
 	private final static String TEMPLATE_LOGIN_REMOTE = "loginRemote <cheName> <workerId> <linkToChe>";
 	private final static String TEMPLATE_SCAN = "scan <cheName> <scan> [expectedState]";
 	private final static String TEMPLATE_SETUP_CART = "setupCart <cheName> <containers>";
+	private final static String TEMPLATE_SETUP_MANY = "setupMany <'start'/'stop'>";
 	private final static String TEMPLATE_WAIT_FOR_STATES = "waitForState <cheName> <states>";
 	private final static String TEMPLATE_SET_PARAMS = "setParams (assignments 'pickSpeed'/'skipFreq'/'shortFreq'=<value>)";
 	private final static String TEMPLATE_PICK = "pick <cheNames>";
@@ -49,6 +52,8 @@ public class ScriptSiteRunner {
 	private final CsDeviceManager deviceManager;
 	private static final Object lock = new Object();
 	private Random rnd_gen = new Random(0);
+	private boolean accumulatingSetupCommands = false;
+	private List<String[]> accumulatedSetupCommands = new ArrayList<>();
 	
 	public ScriptSiteRunner(CsDeviceManager deviceManager) {
 		this.deviceManager = deviceManager;
@@ -118,6 +123,8 @@ public class ScriptSiteRunner {
 			processWaitForStatesCommand(parts);
 		} else if (command.equalsIgnoreCase("setupCart")) {
 			processSetupCartCommand(parts);
+		} else if (command.equalsIgnoreCase("setupMany")) {
+			processSetupManyCommand(parts);
 		} else if (command.equalsIgnoreCase("setParams")) {
 			processSetParamsCommand(parts);
 		} else if (command.equalsIgnoreCase("pick")) {
@@ -132,7 +139,7 @@ public class ScriptSiteRunner {
 			processLogoutCommand(parts);
 		} else if (command.startsWith("//")) {
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [cheExec, defChe, defCheUseRadio, login, loginSetup, loginRemote, scan, orderToWall, waitForState, setupCard, setParams, pick, pickAll, waitSeconds, waitForDevices, logout, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [cheExec, defChe, defCheUseRadio, login, loginSetup, loginRemote, scan, orderToWall, waitForState, setupCard, setupMany, setParams, pick, pickAll, waitSeconds, waitForDevices, logout, //]");
 		}
 	}
 	
@@ -352,14 +359,70 @@ public class ScriptSiteRunner {
 		if (parts.length < 3){
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_SETUP_CART);
 		}
-		String cheName = parts[1];
-		PickSimulator che = getChe(cheName);
-		che.waitForThisOrLinkedCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIMEOUT);
-		String container;
-		for (int i = 2; i < parts.length; i++){
-			container = parts[i];
-			if (container != null && !container.isEmpty()){
-				che.setupContainer(parts[i], (i-1)+"");
+		if (accumulatingSetupCommands) {
+			accumulatedSetupCommands.add(parts);
+		} else {
+			String cheName = parts[1];
+			PickSimulator che = getChe(cheName);
+			che.waitForThisOrLinkedCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIMEOUT);
+			String container;
+			for (int i = 2; i < parts.length; i++){
+				container = parts[i];
+				if (container != null && !container.isEmpty()){
+					che.setupContainer(parts[i], (i-1)+"");
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Expects to see command
+	 * setupMany <'start'/'end'>
+	 * @throws Exception
+	 */
+	private void processSetupManyCommand(String parts[]) throws Exception {
+		if (parts.length != 2){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_SETUP_MANY);
+		}
+		String action = parts[1];
+		boolean start = "start".equalsIgnoreCase(action), stop = "stop".equalsIgnoreCase(action);
+		if (!start && !stop){
+			throw new Exception("Unknown setupMany parameter " + action + ". Need to be 'start' or 'stop'");
+		}
+		if (start){
+			if (accumulatingSetupCommands){
+				throw new Exception("Running 'setupMany start' without closing the previously open block with 'setupMany stop'");
+			}
+			accumulatedSetupCommands.clear();
+			accumulatingSetupCommands = true;
+		} else {
+			if (!accumulatingSetupCommands){
+				throw new Exception("Running 'setupMany stop' without previously opening the block with 'setupMany start'");
+			}
+			accumulatingSetupCommands = false;
+			final AtomicBoolean failed = new AtomicBoolean(false);
+			ExecutorService executor = Executors.newFixedThreadPool(accumulatedSetupCommands.size());
+			for (final String[] commands : accumulatedSetupCommands) {
+					Runnable runnable = new Runnable() {
+						@Override
+						public void run() {
+							try {
+								processSetupCartCommand(commands);
+							} catch (Exception e) {
+								report.append(CsExceptionUtils.exceptionToString(e)).append("\n");
+								synchronized (failed) {
+									failed.set(true);
+								}
+							}
+						}
+					};
+					executor.execute(runnable);
+			}
+			executor.shutdown();
+			executor.awaitTermination(5, TimeUnit.MINUTES);
+			accumulatedSetupCommands.clear();
+			if (failed.get()) {
+				throw new Exception("Error executing the 'setupMany' block");
 			}
 		}
 	}
@@ -459,6 +522,11 @@ public class ScriptSiteRunner {
 	private void processPickAllCommand() throws Exception{
 		LOGGER.info("Start che picks");
 		ExecutorService executor = Executors.newFixedThreadPool(ches.size());
+		//Sequentially generate work for all CHEs
+		for (PickSimulator che : ches.values()) {
+			generateWork(che);
+		}
+		//Pick items
 		for (final PickSimulator che : ches.values()) {
 			if (che != null) {
 				Runnable runnable = new Runnable() {
@@ -489,10 +557,11 @@ public class ScriptSiteRunner {
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_PICK);
 		}
 		PickSimulator che = getChe(parts[1]);
+		generateWork(che);
 		pick(che);
 	}
 	
-	private void pick(PickSimulator che) throws Exception{
+	private void generateWork(PickSimulator che) {
 		//At this point, CHE should already have containers set up. Start START to advance to Pick or Review stage
 		che.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 		ArrayList<CheStateEnum> states = Lists.newArrayList();
@@ -504,12 +573,14 @@ public class ScriptSiteRunner {
 		
 		//If CHE is in a Review stage, scan START again to advance to Pick stage
 		if (state == CheStateEnum.SETUP_SUMMARY){
-			Thread.sleep(pickPauseMs);
+			ThreadUtils.sleep(pickPauseMs);
 			che.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
 			che.waitForCheStates(states, 25000);
 		}
-		
-		state = che.getCurrentCheState();
+	}
+	
+	private void pick(PickSimulator che) throws Exception{
+		CheStateEnum state = che.getCurrentCheState();
 		//If Che immediately arrives at the end-of-work state, stop processing this order
 		if (state == CheStateEnum.SETUP_SUMMARY){
 			che.logout();
