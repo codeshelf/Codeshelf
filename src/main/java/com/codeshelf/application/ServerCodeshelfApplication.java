@@ -51,7 +51,6 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 			final IPropertyBehavior propertyService,
 			final TokenSessionService authService,
 			final SecurityManager securityManager,
-			final SchedulingService schedulingService,
 			final EmailService emailService,
 			final TemplateService templateService) {
 			
@@ -76,7 +75,6 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		this.registerService(ediImportService);
 		this.registerService(emailService);
 		this.registerService(templateService);
-		if (schedulingService!=null) this.registerService(schedulingService);
 	}
 
 	// --------------------------------------------------------------------------

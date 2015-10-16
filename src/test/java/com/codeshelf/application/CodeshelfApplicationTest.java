@@ -53,7 +53,6 @@ public class CodeshelfApplicationTest extends ServerTest {
 			new DummyPropertyBehavior(),
 			new TokenSessionService(),
 			mock(AuthorizingSecurityManager.class),
-			null,
 			this.emailService,
 			this.templateService);
 

@@ -18,7 +18,7 @@ public class ServiceUtility {
 
 	public static void awaitTerminatedOrThrow(CodeshelfService service) {
 		try {
-			service.awaitRunning(DEFAULT_SHUTDOWN_WAIT_SECONDS, TimeUnit.SECONDS);
+			service.awaitTerminated(DEFAULT_SHUTDOWN_WAIT_SECONDS, TimeUnit.SECONDS);
 		} catch (TimeoutException e) {
 			throw new IllegalStateException("timeout initializing "+service.serviceName(),e);
 		}
