@@ -1956,6 +1956,7 @@ public class WorkBehavior implements IApiBehavior {
 		// Hibernate version has test failing with database lock here, so pull out the query
 		List<WorkInstruction> filterWiList = WorkInstruction.staticGetDao().findByFilter(filterParams);
 		Location unspecifiedMaster = inChe.getFacility().getUnspecifiedLocation();
+		Path chePath = inChe.getActivePath();
 		for (WorkInstruction wi : filterWiList) {
 			// Very unlikely. But if some wLocationABCs were deleted between start work and scan starting location, let's not give out the "deleted" wis
 			// Note: puts may have had multiple order locations, now quite denormalized on WI fields and hard to decompose.  We just take the first as the WI location.
@@ -1965,8 +1966,7 @@ public class WorkBehavior implements IApiBehavior {
 			if (loc == null)
 				LOGGER.error("getWorkInstructions found active work instruction with null location"); // new log message from v8. Don't expect any null.
 			else if (loc.isActive()) { //unlikely that location got deleted between complete work instructions and scan location
-				Path chePath = inChe.getActivePath();
-				boolean locatioOnPath = isLocatioOnPath(loc, inChe.getActivePath());
+				boolean locatioOnPath = isLocatioOnPath(loc, chePath);
 				OrderDetail detail = wi.getOrderDetail();
 				boolean preferredDetail = detail == null ? false : detail.isPreferredDetail();
 				boolean unspecifiedLoc = loc == unspecifiedMaster;
