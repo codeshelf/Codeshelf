@@ -265,7 +265,11 @@ public class WiFactory {
 							resultWi.getPersistentId(), inOrderDetail.getDomainId(), facility.getDomainId() );
 				}
 				else {
-					LOGGER.info("Recycle existing PLAN wi for {} from OrderDetail:{}", wi.getItemId(), inOrderDetail.getDomainId());
+					// This seems to happen only when order was set up on one cart, then set up later on another cart.
+					if (inChe != null)
+						LOGGER.info("Recycle existing PLAN wi for {} from OrderDetail:{}.  New che: {}/{}", wi.getItemId(), inOrderDetail.getDomainId(), inChe.getDomainId(), inChe.getDeviceGuidStrNoPrefix());
+					else 
+						LOGGER.info("Recycle existing PLAN wi for {} from OrderDetail:{}", wi.getItemId(), inOrderDetail.getDomainId());
 					// If you chase the code through, you will see that although the wi itself is recycled, every field is redone as if it were new.
 				}
 				break;
