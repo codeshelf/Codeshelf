@@ -775,8 +775,11 @@ public class WorkBehavior implements IApiBehavior {
 			try {
 				storedWi = persistWorkInstruction(incomingWI);
 				if (storedWi == null) {
+					String orderId = incomingWI.getContainerId();
+					String cheName = che.getDomainId();
+					String guidStr = che.getDeviceGuidStrNoPrefix();
 					// happens only if site controller completed a work instruction that server recently deleted
-					LOGGER.error(" Cannot complete this work instruction as server could not find it in database {}", incomingWI);
+					LOGGER.error("Cannot complete work instruction for order/cntr:{} from {}/{} because server could not find it in database {}",orderId, cheName, guidStr, incomingWI);
 					// No point in throwing here. A throw would return response.fail to site controller and CHE screen, but there is nothing
 					// the CHE/worker can do about it. Let's just succeed.
 					return;
