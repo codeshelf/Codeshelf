@@ -120,6 +120,9 @@ public class CheProcessPickExceptions extends ServerTest {
 		picker.logout();
 	}
 
+	/**
+	 * Shows that reimport order with different count after cart is set up does not change the existing WI persistent ID. In fact, the WI is not updated
+	 */
 	@Test
 	public final void reimportDifferentOrders() throws IOException {
 
@@ -218,6 +221,109 @@ public class CheProcessPickExceptions extends ServerTest {
 		LOGGER.info(picker.getLastCheDisplay());
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		picker.logout();
+	}
+
+	/**
+	 * Order has item. Setup cart. Order does not have item. Then order has item
+	 */
+	@Test
+	public final void reimportDeleteAndPutBack() throws IOException {
+
+		// set up data for pick scenario
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		// We are going to put everything in A1 and A2 since they are on the same path.
+		//Item 5 is out of stock and item 6 is case only.
+		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
+				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
+				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
+				+ "4,D401,Test Item 4,1,EA,6/25/14 12:00,66\r\n" //
+				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
+		beginTransaction();
+		importInventoryData(facility, csvInventory);
+		propertyService.turnOffHK(facility);
+		commitTransaction();
+
+		this.startSiteController();
+
+		beginTransaction();
+		facility = facility.reload();
+		// Item 9x not in inventory so will not get a plan made.
+		String csvOrders = "preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n11111,11111,11111.1,1,Test Item 1,2,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n11111,11111,11111.2,9x,Test Item 9x,2,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n22222,22222,22222.1,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n22222,22222,22222.2,9x,Test Item 9x,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+
+		PickSimulator picker = createPickSim(cheGuid1);
+
+		LOGGER.info("1: set up cart with two orders and start");
+		picker.loginAndSetup("Picker #1");
+		picker.setupOrderIdAsContainer("11111", "1");
+		picker.setupOrderIdAsContainer("22222", "2");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		picker.scanLocation("D301");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		LOGGER.info("2: Let's get the UUIDs of the work instructions");
+		beginTransaction();
+		List<WorkInstruction> wis = picker.getServerVersionAllPicksList();
+		Assert.assertEquals(2, wis.size());
+		UUID wi1aId = wis.get(0).getPersistentId();
+		UUID wi2aId = wis.get(1).getPersistentId();
+		commitTransaction();
+
+		LOGGER.info("3: Import. But the orders have removed those items");
+		beginTransaction();
+		facility = facility.reload();
+		String csvOrders2 = "preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n11111,11111,11111.2,9x,Test Item 9x,2,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n22222,22222,22222.2,9x,Test Item 9x,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+		importOrdersData(facility, csvOrders2);
+		commitTransaction();
+
+		LOGGER.info("4: Let's get the UUIDs of the work instructions. Are they the same?");
+		beginTransaction();
+		List<WorkInstruction> wis2 = picker.getServerVersionAllPicksList();
+		Assert.assertEquals(2, wis2.size());
+		UUID wi1bId = wis2.get(0).getPersistentId();
+		UUID wi2bId = wis2.get(1).getPersistentId();
+		commitTransaction();
+
+		Assert.assertEquals(wi1aId, wi1bId);
+		Assert.assertEquals(wi2aId, wi2bId);
+
+		LOGGER.info("5: Complete one pick. This yields a WARN about completing for an inactive order detail");
+		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+	
+		LOGGER.info("6: Import the original file again, reactivating the details.");
+		beginTransaction();
+		facility = facility.reload();
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+
+		LOGGER.info("6: Let's get the UUIDs of the work instructions. Are they the same?");
+		beginTransaction();
+		List<WorkInstruction> wis3 = picker.getServerVersionAllPicksList();
+		Assert.assertEquals(2, wis3.size());
+		UUID wi1cId = wis3.get(0).getPersistentId();
+		UUID wi2cId = wis3.get(1).getPersistentId();
+		commitTransaction();
+
+		Assert.assertEquals(wi1cId, wi1bId);
+		Assert.assertEquals(wi2cId, wi2bId);
+
+	
+		LOGGER.info("5: Complete one pick. Works");
+		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 
 		picker.logout();
 	}
@@ -430,7 +536,7 @@ public class CheProcessPickExceptions extends ServerTest {
 	}
 
 	/**
-	 * This is basically a control test for finishOrderAfterMovedToOtherCart
+	 * Shows that we get new persistent ID for work instruction when setting up cart again.
 	 */
 	@Test
 	public final void doubleSetupSameCart() throws IOException {
@@ -515,6 +621,112 @@ public class CheProcessPickExceptions extends ServerTest {
 		WorkInstruction wi1b = WorkInstruction.staticGetDao().findByPersistentId(wi1bId);
 		Assert.assertNotNull(wi1b);
 		OrderDetail detail = wi1b.getOrderDetail();
+		Assert.assertEquals(OrderStatusEnum.COMPLETE, detail.getStatus());
+		commitTransaction();
+
+		picker.logout();
+	}
+
+	/**
+	 * Shows that we get new persistent ID each START or REVERSE
+	 */
+	@Test
+	public final void repeatedStartReverse() throws IOException {
+
+		// set up data for pick scenario
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		// We are going to put everything in A1 and A2 since they are on the same path.
+		//Item 5 is out of stock and item 6 is case only.
+		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
+				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
+				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
+				+ "4,D401,Test Item 4,1,EA,6/25/14 12:00,66\r\n" //
+				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
+		beginTransaction();
+		importInventoryData(facility, csvInventory);
+		propertyService.turnOffHK(facility);
+		commitTransaction();
+
+		this.startSiteController();
+
+		beginTransaction();
+		facility = facility.reload();
+		// Outbound order. No group. Using 5 digit order number and preassigned container number.
+		// Order 1 has two items in stock (Item 1 and Item 2)
+		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,2,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,22222,22222,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+
+		PickSimulator picker = createPickSim(cheGuid1);
+
+		LOGGER.info("1a: set up cart with two orders and start");
+		picker.loginAndSetup("Picker #1");
+		picker.setupOrderIdAsContainer("11111", "1");
+		picker.setupOrderIdAsContainer("22222", "2");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		picker.scanLocation("D301");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		LOGGER.info("1b: Let's get the UUIDs of the work instructions");
+		beginTransaction();
+		List<WorkInstruction> wis = picker.getServerVersionAllPicksList();
+		Assert.assertEquals(2, wis.size());
+		UUID wi1aId = wis.get(0).getPersistentId();
+		UUID wi2aId = wis.get(1).getPersistentId();
+		commitTransaction();
+
+		LOGGER.info("2a: Cart 1 did nothing yet. Logout and start again, but don't set up again");
+		picker.logout();
+		picker.scanSomething("U%Picker #1");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		LOGGER.info("2b: Let's get the UUIDs of the work instructions. Are they the same? No! They could be.");
+		beginTransaction();
+		List<WorkInstruction> wis2 = picker.getServerVersionAllPicksList();
+		Assert.assertEquals(2, wis2.size());
+		UUID wi1bId = wis2.get(0).getPersistentId();
+		UUID wi2bId = wis2.get(1).getPersistentId();
+		commitTransaction();
+
+		Assert.assertNotEquals(wi1aId, wi1bId);
+		Assert.assertNotEquals(wi2aId, wi2bId);
+
+		LOGGER.info("3a: Cart 1 did nothing yet. REVERSE");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		picker.scanCommand("REVERSE");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		LOGGER.info("3b: Let's get the UUIDs of the work instructions. Are they the same? No! They could be.");
+		beginTransaction();
+		List<WorkInstruction> wis3 = picker.getServerVersionAllPicksList();
+		Assert.assertEquals(2, wis3.size());
+		UUID wi1cId = wis3.get(0).getPersistentId();
+		UUID wi2cId = wis3.get(1).getPersistentId();
+		commitTransaction();
+
+		Assert.assertNotEquals(wi1cId, wi1bId);
+		Assert.assertNotEquals(wi2cId, wi2bId);
+
+		LOGGER.info("5: What happens if picker 1 then tries to complete the pick? Works fine.");
+		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		beginTransaction();
+		facility = facility.reload();
+		WorkInstruction wi1b = WorkInstruction.staticGetDao().findByPersistentId(wi1bId);
+		Assert.assertNull(wi1b);
+		WorkInstruction wi1c = WorkInstruction.staticGetDao().findByPersistentId(wi1cId);
+		Assert.assertNotNull(wi1c);
+		OrderDetail detail = wi1c.getOrderDetail();
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, detail.getStatus());
 		commitTransaction();
 
