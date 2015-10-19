@@ -215,7 +215,7 @@ public class FacilityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public ExtensionPointsResource getExtensionPoints() throws ScriptException {
 		ExtensionPointsResource r = resourceContext.getResource(ExtensionPointsResource.class);
-		ExtensionPointService extensionPointService = ExtensionPointService.createInstance(facility);
+		ExtensionPointService extensionPointService = ExtensionPointService.getInstance(facility);
 		r.setExtensionPointService(extensionPointService);
 		return r;
 	}
@@ -228,7 +228,7 @@ public class FacilityResource {
 		Optional<ExtensionPoint> extensionPoint = null;
 		ParameterSetBeanABC parameterSet = null;
 		if ("ParameterSetDataQuantityHealthCheck".equalsIgnoreCase(healthCheckType)) {
-			ExtensionPointService epService = ExtensionPointService.createInstance(facility);
+			ExtensionPointService epService = ExtensionPointService.getInstance(facility);
 			extensionPoint = epService.getDataQuantityHealthCheckExtensionPoint();
 			parameterSet = epService.getDataQuantityHealthCheckParameters();
 			Map<String, Object> responseMap = new HashMap<>();
@@ -236,11 +236,11 @@ public class FacilityResource {
 			responseMap.put("extensionPoint", extensionPoint.orNull());
 			return BaseResponse.buildResponse(responseMap);
 		} else if ("ParameterSetDataPurge".equalsIgnoreCase(healthCheckType)) {
-			ExtensionPointService epService = ExtensionPointService.createInstance(facility);
+			ExtensionPointService epService = ExtensionPointService.getInstance(facility);
 			extensionPoint = epService.getDataPurgeExtensionPoint();
 			parameterSet = epService.getDataPurgeParameters();
 		} else if ("ParameterEdiFreeSpaceHealthCheck".equalsIgnoreCase(healthCheckType)) {
-			ExtensionPointService epService = ExtensionPointService.createInstance(facility);
+			ExtensionPointService epService = ExtensionPointService.getInstance(facility);
 			extensionPoint = epService.getEdiFreeSpaceExtensionPoint();
 			parameterSet = epService.getEdiFreeSpaceParameters();
 		} 
@@ -262,7 +262,7 @@ public class FacilityResource {
 	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getDataSummary() throws ScriptException {
-		ExtensionPointService service = ExtensionPointService.createInstance(facility);
+		ExtensionPointService service = ExtensionPointService.getInstance(facility);
 		DataPurgeParameters params = service.getDataPurgeParameters();
 		List<String> summary = workService.reportAchiveables(params.getPurgeAfterDaysValue(), this.facility);
 		return BaseResponse.buildResponse(summary);

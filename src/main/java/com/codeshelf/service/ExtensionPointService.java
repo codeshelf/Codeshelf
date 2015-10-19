@@ -112,7 +112,7 @@ public class ExtensionPointService {
 		return result;
 	}
 
-	public static ExtensionPointService createInstance(Facility facility) throws ScriptException {
+	public static ExtensionPointService getInstance(Facility facility) throws ScriptException {
 		// New instance every time now.  Would be good to re-use on a tenant/facility level.
 		return new ExtensionPointService(facility);
 	}

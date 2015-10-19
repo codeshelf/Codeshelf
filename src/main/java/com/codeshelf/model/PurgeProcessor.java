@@ -61,7 +61,7 @@ public class PurgeProcessor implements BatchProcessor {
 		setPurgePhase(PurgePhase.PurgePhaseSetup);
 		facility = facility.reload();
 		// get our purge parameters
-		ExtensionPointService ss = ExtensionPointService.createInstance(facility);
+		ExtensionPointService ss = ExtensionPointService.getInstance(facility);
 		purgeParams = ss.getDataPurgeParameters();
 
 		LOGGER.info("Starting data purge with these parameters: {}", purgeParams);

@@ -180,7 +180,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 		// This is a real-ish service with meaningful overrides.
 		beginTransaction();
 		
-		WiBeanStringifier stringifier = new WiBeanStringifier(ExtensionPointService.createInstance(facility));
+		WiBeanStringifier stringifier = new WiBeanStringifier(ExtensionPointService.getInstance(facility));
 		IEdiExportGateway exportService = mock(IEdiExportGateway.class);
 		FacilityAccumulatingExporter ediExporter = startExporter(facility, stringifier, exportService);
 		

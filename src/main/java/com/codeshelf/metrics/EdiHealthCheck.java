@@ -80,7 +80,7 @@ public class EdiHealthCheck extends CodeshelfHealthCheck {
 						}
 					}
 					if (ediGateway instanceof SftpGateway) {
-						ExtensionPointService theService = ExtensionPointService.createInstance(ediGateway.getFacility());
+						ExtensionPointService theService = ExtensionPointService.getInstance(ediGateway.getFacility());
 						EdiFreeSpaceHealthCheckParamaters params = theService.getEdiFreeSpaceParameters();
 						int minAvailableFiles = params.getMinAvailableFilesValue();
 						int minAvailableSpaceMB = params.getMinAvailableSpaceMBValue();

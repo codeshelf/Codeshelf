@@ -60,7 +60,7 @@ public class EdiExportService extends AbstractCodeshelfIdleService {
 	public void updateEdiExporter(Facility facility) throws ScriptException, TimeoutException {
 		IEdiExportGateway exportGateway = facility.getEdiExportGateway();
 		if (exportGateway != null) {
-			ExtensionPointService extensionPointService = ExtensionPointService.createInstance(facility);
+			ExtensionPointService extensionPointService = ExtensionPointService.getInstance(facility);
 			WiBeanStringifier stringifier = new WiBeanStringifier(extensionPointService);
 			synchronized(facilityEdiExporters) {
 				if (exportGateway.isActive()) {

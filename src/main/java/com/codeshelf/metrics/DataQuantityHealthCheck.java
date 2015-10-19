@@ -90,7 +90,7 @@ public class DataQuantityHealthCheck extends CodeshelfHealthCheck {
 
 
 		try {
-			ExtensionPointService theService = ExtensionPointService.createInstance(inFacility);
+			ExtensionPointService theService = ExtensionPointService.getInstance(inFacility);
 			DataQuantityHealthCheckParameters params = theService.getDataQuantityHealthCheckParameters();
 			MAX_ORDERDETAIL = params.getMaxOrderDetailValue();
 			MAX_WORKINSTRUCTION = params.getMaxWorkInstructionValue();

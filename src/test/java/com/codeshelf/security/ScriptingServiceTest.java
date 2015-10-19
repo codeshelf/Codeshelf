@@ -65,7 +65,7 @@ public class ScriptingServiceTest extends ServerTest {
 		beginTransaction();
 		try {
 			// init service
-			ExtensionPointService ss = ExtensionPointService.createInstance(facility);
+			ExtensionPointService ss = ExtensionPointService.getInstance(facility);
 			assertEquals(true,ss.hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation));
 			// positive test
 			OutboundOrderCsvBean bean1 = new OutboundOrderCsvBean();
@@ -97,7 +97,7 @@ public class ScriptingServiceTest extends ServerTest {
 		beginTransaction();
 		try {
 			// init service
-			ExtensionPointService ss = ExtensionPointService.createInstance(facility);
+			ExtensionPointService ss = ExtensionPointService.getInstance(facility);
 			
 			// positive test. groovy exists
 			assertEquals(true,ss.hasExtensionPoint(ExtensionPointType.ParameterSetDataPurge));
@@ -132,7 +132,7 @@ public class ScriptingServiceTest extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		ExtensionPointService ss = ExtensionPointService.createInstance(facility);
+		ExtensionPointService ss = ExtensionPointService.getInstance(facility);
 		OutboundOrderCsvBean bean1 = new OutboundOrderCsvBean();
 		bean1.setDescription("abc");
 		assertEval(ss, bean1, true);
@@ -147,7 +147,7 @@ public class ScriptingServiceTest extends ServerTest {
 
 		beginTransaction();
 		facility.reload();
-		ExtensionPointService newSS = ExtensionPointService.createInstance(facility);
+		ExtensionPointService newSS = ExtensionPointService.getInstance(facility);
 
 		assertFalse(newSS.hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation));
 

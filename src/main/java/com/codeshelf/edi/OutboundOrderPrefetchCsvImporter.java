@@ -117,7 +117,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		// initialize scripting service
 		try {
 			long timeBeforeExtension = System.currentTimeMillis();
-			extensionPointService = ExtensionPointService.createInstance(facility);
+			extensionPointService = ExtensionPointService.getInstance(facility);
 			addToExtensionMsFromTimeBefore(timeBeforeExtension);
 		} catch (Exception e) {
 			LOGGER.error("Failed to initialize extension point service", e);
