@@ -7,6 +7,7 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -526,6 +527,20 @@ public class PickSimulator {
 		return cheDeviceLogic.getLastSentPositionControllerMaxQty(position);
 	}
 	
+	public void assertPosconDisplayOc(int inPosition){
+		byte position = (byte) inPosition;
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, getLastSentPositionControllerDisplayValue(position));
+		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_C, getLastSentPositionControllerMinQty(position));
+		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_O, getLastSentPositionControllerMaxQty(position));
+	}
+
+	public void assertPosconDisplayDash(int inPosition){
+		byte position = (byte) inPosition;
+		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, getLastSentPositionControllerDisplayValue(position));
+		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_DASH, getLastSentPositionControllerMinQty(position));
+		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_DASH, getLastSentPositionControllerMaxQty(position));
+	}
+
 	/**
 	 * Returns the picker's own device, unless it is in REMOTE_LINKED state. In which case it returns the link-to device
 	 */

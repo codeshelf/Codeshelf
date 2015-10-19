@@ -206,6 +206,13 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		}
 		return currentValue;
 	}
+	
+	/**
+	 * override this if the button has a distinct purpose, such as representing a particular order ID
+	 */
+	protected String getButtonPurpose(int buttonNum){
+		return null;
+	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -331,6 +338,10 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
 			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Button");
 			if (showingQuantity >= 0) {
+				String forContainer = getButtonPurpose(buttonNum);
+				if (forContainer != null)
+					LOGGER.info("Button #{} pressed with quantity {} for order/cntr:{}", buttonNum, showingQuantity, forContainer);
+				else
 				LOGGER.info("Button #{} pressed with quantity {}", buttonNum, showingQuantity);
 			} else {
 				String display = "unexpected value " + showingQuantity;

@@ -2426,6 +2426,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		return mPositionToContainerMap.get(Integer.toString(inButtonNum));
 	}
 
+	@Override
+	protected String getButtonPurpose(int buttonNum){
+		return getContainerIdFromButtonNum(buttonNum);
+	}
+
 	private void clearContainerAssignmentAtIndex(byte posconIndex) {
 		// careful: POSITION_ALL is zero
 		if (PosControllerInstr.POSITION_ALL.equals(posconIndex))

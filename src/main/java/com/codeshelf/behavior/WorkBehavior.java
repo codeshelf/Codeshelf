@@ -234,9 +234,9 @@ public class WorkBehavior implements IApiBehavior {
 				// Does this deserve a warn? At minimum, the containerId might be a valid put wall name for the SKU pick process.
 				Location loc = facility.findSubLocationById(containerId);
 				if (loc == null) {
-					LOGGER.warn("Unknown container/order ID: {} in computeWorkInstructions for {}",
+					LOGGER.warn("Unknown container/order ID: {} in computeWorkInstructions for {}/{}",
 						containerId,
-						inChe.getDomainId());
+						inChe.getDomainId(), inChe.getDeviceGuidStrNoPrefix());
 				} else if (!loc.isPutWallLocation()) {
 					LOGGER.warn("Location: {} scanned in computeWorkInstructions for {}, but not a put wall",
 						containerId,
@@ -775,8 +775,11 @@ public class WorkBehavior implements IApiBehavior {
 			try {
 				storedWi = persistWorkInstruction(incomingWI);
 				if (storedWi == null) {
+					String orderId = incomingWI.getContainerId();
+					String cheName = che.getDomainId();
+					String guidStr = che.getDeviceGuidStrNoPrefix();
 					// happens only if site controller completed a work instruction that server recently deleted
-					LOGGER.error(" Cannot complete this work instruction as server could not find it in database {}", incomingWI);
+					LOGGER.error("Cannot complete work instruction for order/cntr:{} from {}/{} because server could not find it in database {}",orderId, cheName, guidStr, incomingWI);
 					// No point in throwing here. A throw would return response.fail to site controller and CHE screen, but there is nothing
 					// the CHE/worker can do about it. Let's just succeed.
 					return;
@@ -1330,7 +1333,7 @@ public class WorkBehavior implements IApiBehavior {
 		//Log time if over 2 seconds
 		Long wrapComputeDurationMs = System.currentTimeMillis() - startTimestamp;
 		if (wrapComputeDurationMs > 2000) {
-			LOGGER.warn("GetWork() took {}; totalWis={};", wrapComputeDurationMs, wrappedRouteWiList.size());
+			LOGGER.warn("GetWork() took {}; totalWis={}; for {}/{}", wrapComputeDurationMs, wrappedRouteWiList.size(), inChe.getDomainId(), inChe.getDeviceGuidStrNoPrefix());
 		}
 		Timer timer = MetricsService.getInstance().createTimer(MetricsGroup.WSS, "cheWorkFromLocation");
 		timer.update(wrapComputeDurationMs, TimeUnit.MILLISECONDS);

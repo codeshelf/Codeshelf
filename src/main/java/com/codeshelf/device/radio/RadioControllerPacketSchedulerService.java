@@ -24,11 +24,12 @@ import com.codeshelf.flyweight.command.CommandControlABC;
 import com.codeshelf.flyweight.command.CommandGroupEnum;
 import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
+import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.INetworkDevice;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public class RadioControllerPacketSchedulerService {
-	private static final Logger													LOGGER							= LoggerFactory.getLogger(RadioController.class);
+	private static final Logger													LOGGER							= LoggerFactory.getLogger(RadioControllerPacketSchedulerService.class);
 
 	public static final int														MAX_QUEUED_PACKETS_PER_DEVICE	= 50;
 	public static final int														MAX_QUEUED_NET_MGMT_PACKETS		= 50;
@@ -36,14 +37,14 @@ public class RadioControllerPacketSchedulerService {
 	public static final int														MAX_NUM_BLOCKING_PEEKS			= 2;
 
 	public static final int														MAP_INIT_SIZE					= 50;
-	public static final float													MAP_LOAD_FACTOR					= (float) 0.75;												// Default Java load factor
+	public static final float													MAP_LOAD_FACTOR					= (float) 0.75;														// Default Java load factor
 	public static final int														MAP_CONCURRENCY_LEVEL			= 4;
 
 	public static final long													NETWORK_PACKET_SPACING_MILLIS	= 3;
 	public static final long													DEVICE_PACKET_SPACING_MILLIS	= 30;
 	public static final long													DEVICE_ASSOC_SPACING_MILLIS		= 0;
 
-	private static final int													ACK_SEND_RETRY_COUNT			= 20;															// matching v16. Used to be 20.
+	private static final int													ACK_SEND_RETRY_COUNT			= 20;																	// matching v16. Used to be 20.
 	private static final long													MAX_PACKET_AGE_MILLIS			= 8000;
 
 	private final RadioControllerPacketIOService								packetIOService;
@@ -285,7 +286,7 @@ public class RadioControllerPacketSchedulerService {
 
 			packet = devicePacketdeque.peek();
 
-			if (clearToSendCommandPacket(packet)) {
+			if (clearToSendCommandPacket(packet, inDevice)) {
 
 				// Remove packet from queue if it does not require an ack
 				if (!packet.getRequiresAck()) {
@@ -491,8 +492,10 @@ public class RadioControllerPacketSchedulerService {
 	 *
 	 *	@param inPacket
 	 *		Packet to check
+	 *	@param inDevice
+	 *		Informative only. Used for error logging
 	 */
-	private boolean clearToSendCommandPacket(IPacket inPacket) {
+	private boolean clearToSendCommandPacket(IPacket inPacket, INetworkDevice inDevice) {
 
 		if (inPacket.getCommand().getCommandTypeEnum() == CommandGroupEnum.CONTROL) {
 			CommandControlABC command = (CommandControlABC) inPacket.getCommand();
@@ -516,7 +519,14 @@ public class RadioControllerPacketSchedulerService {
 		}
 
 		if (inPacket.getSendCount() > ACK_SEND_RETRY_COUNT) {
-			LOGGER.warn("Not sending packet - Exceeded retry count. Packet {}", inPacket);
+			// for v22, lets log the Guid if we can know it.
+			NetGuid addr = inDevice.getGuid();
+			String guidStr = "?";
+			if (addr != null)
+				guidStr = addr.getHexStringNoPrefix();
+			LOGGER.warn("Not sending packet to {} - Exceeded retry count. (Not acked yet, but sometimes the message made it.) {}",
+				guidStr,
+				inPacket);
 			return false;
 		}
 
