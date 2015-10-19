@@ -25,7 +25,7 @@ public class TestBehavior {
 	 * It does not (currently) validate that the CHE names are valid
 	 */
 	public String setupManyCartsWithOrders(Facility inFacility, Map<String, String> input) {
-		String returnStr = "";
+		StringBuilder loginCommands = new StringBuilder(), setupCommands = new StringBuilder();
 
 		String countStr = input.get("ordersPerChe");
 		int ordersPerChe = 0;
@@ -53,26 +53,25 @@ public class TestBehavior {
 		List<OrderHeader> orders = doMananager.getSomeUncompletedOrders(ordersNeeded);
 		int ordersRetrieved = orders.size();
 		int ordersUsed = 0;
-		for (int cheIndex = 0; cheIndex <= numberOfChe; cheIndex++) {
+		for (int cheIndex = 0; cheIndex < numberOfChe; cheIndex++) {
 			if (ordersUsed < ordersRetrieved) {
-				// start a new line, unless it is the first one
-				if (ordersUsed > 0)
-					returnStr += "\n";
-				returnStr += "loginSetup " + cheNames[cheIndex] + " " + cheNames[cheIndex] + "\n";
-				returnStr += "setupCart " + cheNames[cheIndex] + " "; 
+				loginCommands.append(String.format("loginSetup %s %s\n", cheNames[cheIndex], cheNames[cheIndex]));
+				setupCommands.append(String.format("setupCart %s ", cheNames[cheIndex]));
 			}
 			for (int orderIndex = 1; orderIndex <= ordersPerChe; orderIndex++) {
 				// add orders, unless we have run out
 				if (ordersUsed < ordersRetrieved) {
 					OrderHeader oh = orders.get(ordersUsed);
-					returnStr += oh.getOrderId() + " "; // add orderId(space)
 					ordersUsed++;
+					setupCommands.append(oh.getOrderId()).append(" ");
 				}
 			}
+			setupCommands.append("\n");
 		}
 
 		LOGGER.info("setupManyCartsWithOrders called with: {}", input);
 		LOGGER.info("setupManyCartsWithOrders is returning the following line(s)");
+		String returnStr = loginCommands.toString() + "setupMany start\n" + setupCommands.toString() + "setupMany stop\n";
 		LOGGER.info(returnStr);
 		return returnStr;
 	}

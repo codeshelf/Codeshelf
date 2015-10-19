@@ -227,8 +227,10 @@ public class OutboundOrderBatchProcessor implements Runnable {
 
 	@Override
 	public void run() {
+		int batchCount = 0, numBatches = importer.getBatchQueue().size();
 		OutboundOrderBatch batch = importer.getBatchQueue().poll();
 		while (batch != null) {
+			batchCount++;
 			// process batch
 			batch.setProcessingAttempts(batch.getProcessingAttempts() + 1);
 
@@ -258,7 +260,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				for (OutboundOrderCsvBean orderBean : lines) {
 					// process order bean
 					try {
-						OrderHeader order = orderCsvBeanImport(orderBean, facility, processTime, count++ + "/" + size);
+						OrderHeader order = orderCsvBeanImport(orderBean, facility, processTime, batchCount + "/" + numBatches + " " + count++ + "/" + size);
 						if ((order != null) && (!orderSet.contains(order))) {
 							orderSet.add(order);
 						}
