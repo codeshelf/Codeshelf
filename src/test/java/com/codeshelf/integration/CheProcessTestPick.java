@@ -2117,7 +2117,9 @@ public class CheProcessTestPick extends ServerTest {
 				+ "\r\n11111,11111,1,Test Item 1,1,each,locationA,1" //
 				+ "\r\n22222,22222,2,Test Item 2,1,each,locationB,20" //
 				+ "\r\n22222,22222,3,Test Item 3,1,each,locationC,30" //				
-				+ "\r\n44444,44444,5,Test Item 5,1,each,locationD,500" //
+				+ "\r\n44444,44444,5,Test Item 5,1,each,locationD,502" //
+				+ "\r\n44444,44444,6,Test Item 6,1,each,locationE,501" //
+				+ "\r\n44444,44444,7,Test Item 7,1,each,locationF,500" //
 				+ "\r\n55555,55555,2,Test Item 2,1,each,locationA,20";
 		importOrdersData(facility, csvOrders);
 		commitTransaction();
@@ -2153,9 +2155,8 @@ public class CheProcessTestPick extends ServerTest {
 		// Look in console for line like this. No easy way to get it for unit test
 		// 0073^ORDERSTATUS         ^0000000000^44444               ^CHE1   ^  ^OPEN            
 
-		// Did not set up order 55555. Therefore, 3 orders and 4 jobs
 		List<WorkInstruction> wiList = picker.getAllPicksList();
-		Assert.assertEquals(4, wiList.size());
+		Assert.assertEquals(6, wiList.size());
 
 		picker.pickItemAuto();// This should complete order 11111, yielding the message from work service to the edi to send
 		// See line like this in the console
@@ -2203,7 +2204,21 @@ public class CheProcessTestPick extends ServerTest {
 		oh2.delete(); // This will cascade to delete the uncompleted work instructions
 		waitForExporterThreadToEmpty(facility);
 		commitTransaction();
-
+		
+		LOGGER.info("7: Go through START which will not bring the deleted 22222 back. Then complete the 3 44444 jobs.");
+		picker.loginAndSetup("Picker #1");
+		LOGGER.info("3c: Set up order 44444 at position 3");
+		picker.setupOrderIdAsContainer("44444", "3");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		picker.logout();
+		// Above is just to see 3 jobs in 1 order to force the beans to sort
+		
 		// Just waste some time
 		picker.loginAndSetup("Picker #1");
 		picker.logout();
