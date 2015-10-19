@@ -20,7 +20,7 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
-import com.codeshelf.service.ExtensionPointService;
+import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.service.ExtensionPointType;
 import com.google.common.collect.ImmutableList;
 import com.opencsv.CSVReader;
@@ -36,14 +36,14 @@ public class WiBeanStringifier {
 	private static final String NEWLINE = "\r\n";
 	
 	@Getter
-	private ExtensionPointService				extensionPointService;
+	private ExtensionPointEngine				extensionPointService;
 
 	private static final Logger			LOGGER		= LoggerFactory.getLogger(WiBeanStringifier.class);
 
 	public WiBeanStringifier() {
 	}
 
-	public WiBeanStringifier(ExtensionPointService inExtensionPointService) {
+	public WiBeanStringifier(ExtensionPointEngine inExtensionPointService) {
 		extensionPointService = inExtensionPointService;
 		if (extensionPointService == null) {
 			LOGGER.info("null extension service passed to WiBeanStringifier");
@@ -142,7 +142,7 @@ public class WiBeanStringifier {
 		}
 
 		boolean needContentExtension = false;
-		ExtensionPointService groovyService = getExtensionPointService();
+		ExtensionPointEngine groovyService = getExtensionPointService();
 		if (hasExtensionPoint(ExtensionPointType.WorkInstructionExportContent))
 			needContentExtension = true;
 
@@ -212,7 +212,7 @@ public class WiBeanStringifier {
 	 * Remember, there might be no header. Or the header may not at all specify the order of field in content lines.
 	 * We need a easily understood (brain-dead) way for groovy extension to write out lines using data from our bean.
 	 */
-	private String getWiCustomContent(ExtensionPointService inServiceType, WorkInstructionCsvBean inWiBean) {
+	private String getWiCustomContent(ExtensionPointEngine inServiceType, WorkInstructionCsvBean inWiBean) {
 		String content = "";
 		Object[] params = { inWiBean };
 		try {
@@ -226,10 +226,10 @@ public class WiBeanStringifier {
 
 	
 	private boolean hasExtensionPoint(ExtensionPointType type) {
-		ExtensionPointService extensionService = getExtensionPointService();
+		ExtensionPointEngine extensionService = getExtensionPointService();
 		if (extensionService  == null)
 			LOGGER.error("null extension point service when checking for: " + type);
-		return (extensionService != null && extensionService.hasExtensionPoint(type));
+		return (extensionService != null && extensionService.hasActiveExtensionPoint(type));
 	}
 	
 	@SuppressWarnings("unused")

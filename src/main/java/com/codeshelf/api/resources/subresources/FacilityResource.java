@@ -97,7 +97,7 @@ import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
-import com.codeshelf.service.ExtensionPointService;
+import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.service.ParameterSetBeanABC;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.ws.protocol.message.CheDisplayMessage;
@@ -215,7 +215,7 @@ public class FacilityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public ExtensionPointsResource getExtensionPoints() throws ScriptException {
 		ExtensionPointsResource r = resourceContext.getResource(ExtensionPointsResource.class);
-		ExtensionPointService extensionPointService = ExtensionPointService.createInstance(facility);
+		ExtensionPointEngine extensionPointService = ExtensionPointEngine.getInstance(facility);
 		r.setExtensionPointService(extensionPointService);
 		return r;
 	}
@@ -228,7 +228,7 @@ public class FacilityResource {
 		Optional<ExtensionPoint> extensionPoint = null;
 		ParameterSetBeanABC parameterSet = null;
 		if ("ParameterSetDataQuantityHealthCheck".equalsIgnoreCase(healthCheckType)) {
-			ExtensionPointService epService = ExtensionPointService.createInstance(facility);
+			ExtensionPointEngine epService = ExtensionPointEngine.getInstance(facility);
 			extensionPoint = epService.getDataQuantityHealthCheckExtensionPoint();
 			parameterSet = epService.getDataQuantityHealthCheckParameters();
 			Map<String, Object> responseMap = new HashMap<>();
@@ -236,11 +236,11 @@ public class FacilityResource {
 			responseMap.put("extensionPoint", extensionPoint.orNull());
 			return BaseResponse.buildResponse(responseMap);
 		} else if ("ParameterSetDataPurge".equalsIgnoreCase(healthCheckType)) {
-			ExtensionPointService epService = ExtensionPointService.createInstance(facility);
+			ExtensionPointEngine epService = ExtensionPointEngine.getInstance(facility);
 			extensionPoint = epService.getDataPurgeExtensionPoint();
 			parameterSet = epService.getDataPurgeParameters();
 		} else if ("ParameterEdiFreeSpaceHealthCheck".equalsIgnoreCase(healthCheckType)) {
-			ExtensionPointService epService = ExtensionPointService.createInstance(facility);
+			ExtensionPointEngine epService = ExtensionPointEngine.getInstance(facility);
 			extensionPoint = epService.getEdiFreeSpaceExtensionPoint();
 			parameterSet = epService.getEdiFreeSpaceParameters();
 		} 
@@ -262,7 +262,7 @@ public class FacilityResource {
 	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getDataSummary() throws ScriptException {
-		ExtensionPointService service = ExtensionPointService.createInstance(facility);
+		ExtensionPointEngine service = ExtensionPointEngine.getInstance(facility);
 		DataPurgeParameters params = service.getDataPurgeParameters();
 		List<String> summary = workService.reportAchiveables(params.getPurgeAfterDaysValue(), this.facility);
 		return BaseResponse.buildResponse(summary);

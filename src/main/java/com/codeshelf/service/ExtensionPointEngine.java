@@ -3,6 +3,7 @@ package com.codeshelf.service;
 import groovy.lang.GroovyRuntimeException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
@@ -26,10 +27,11 @@ import com.codeshelf.model.domain.Facility;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 
-public class ExtensionPointService {
+public class ExtensionPointEngine {
 
-	private static final Logger	LOGGER				= LoggerFactory.getLogger(ExtensionPointService.class);
-
+	private static final Logger	LOGGER				= LoggerFactory.getLogger(ExtensionPointEngine.class);
+	private static final HashMap<UUID, ExtensionPointEngine> facilityEngines = new HashMap<>();
+	
 	ScriptEngine				engine;
 
 	HashSet<ExtensionPointType>	activeExtensions	= new HashSet<ExtensionPointType>();
@@ -40,7 +42,7 @@ public class ExtensionPointService {
 	@Getter
 	private Facility	facility;
 
-	public ExtensionPointService(Facility facility) throws ScriptException {
+	public ExtensionPointEngine(Facility facility) throws ScriptException {
 		initEngine();
 		load(facility);
 		this.facility = facility;
@@ -54,7 +56,9 @@ public class ExtensionPointService {
 		}
 	}
 
-	private void addExtensionPointIfValid(ExtensionPoint ep) throws ScriptException {
+	
+	
+	private void activateExtensionPointIfValid(ExtensionPoint ep) throws ScriptException {
 		ExtensionPointType extp = ep.getType();
 		String functionScript = ep.getScript();
 		try {
@@ -73,22 +77,23 @@ public class ExtensionPointService {
 		}
 	}
 
-	private void clearExtensionPoints() {
-		this.activeExtensions.clear();
+	private void inactivateExtensionPoint(ExtensionPoint ep) throws ScriptException {
+		ExtensionPointType extp = ep.getType();
+		this.activeExtensions.remove(extp);
 	}
 
-	public boolean hasExtensionPoint(ExtensionPointType extp) {
+	public boolean hasActiveExtensionPoint(ExtensionPointType extp) {
 		return this.activeExtensions.contains(extp);
 	}
 
 	private List<ExtensionPoint> load(Facility facility) throws ScriptException {
 		List<ExtensionPoint> eps = ExtensionPoint.staticGetDao().findByParent(facility);
-		this.clearExtensionPoints();
+		this.activeExtensions.clear();
 		failedExtensions.clear();
 		for (ExtensionPoint ep : eps) {
 			if (ep.isActive()) {
 				LOGGER.info("Adding extension point " + ep.getType());
-				this.addExtensionPointIfValid(ep);
+				this.activateExtensionPointIfValid(ep);
 			} else { 
 				LOGGER.info("Skipping inactive extension point " + ep.getType());
 			}
@@ -112,9 +117,15 @@ public class ExtensionPointService {
 		return result;
 	}
 
-	public static ExtensionPointService createInstance(Facility facility) throws ScriptException {
-		// New instance every time now.  Would be good to re-use on a tenant/facility level.
-		return new ExtensionPointService(facility);
+	public static ExtensionPointEngine getInstance(Facility facility) throws ScriptException {
+		synchronized(facilityEngines) {
+			ExtensionPointEngine engine = facilityEngines.get(facility.getPersistentId());
+			if (engine == null) {
+				engine = new ExtensionPointEngine(facility);
+				facilityEngines.put(facility.getPersistentId(), engine);
+			}
+			return engine;
+		}
 	}
 
 	// Methods to get the parameter beans	
@@ -149,7 +160,7 @@ public class ExtensionPointService {
 		DataQuantityHealthCheckParameters theBean = new DataQuantityHealthCheckParameters();
 		Object[] params = { theBean };
 
-		if (hasExtensionPoint(ExtensionPointType.ParameterSetDataQuantityHealthCheck)) {
+		if (hasActiveExtensionPoint(ExtensionPointType.ParameterSetDataQuantityHealthCheck)) {
 			try {
 				theBean = (DataQuantityHealthCheckParameters) this.eval(ExtensionPointType.ParameterSetDataQuantityHealthCheck, params);
 			} catch (ScriptException e) {
@@ -164,7 +175,7 @@ public class ExtensionPointService {
 		DataPurgeParameters theBean = new DataPurgeParameters();
 		Object[] params = { theBean };
 
-		if (hasExtensionPoint(ExtensionPointType.ParameterSetDataPurge)) {
+		if (hasActiveExtensionPoint(ExtensionPointType.ParameterSetDataPurge)) {
 			try {
 				theBean = (DataPurgeParameters) this.eval(ExtensionPointType.ParameterSetDataPurge, params);
 				if (theBean == null) {
@@ -188,7 +199,7 @@ public class ExtensionPointService {
 		EdiFreeSpaceHealthCheckParamaters theBean = new EdiFreeSpaceHealthCheckParamaters();
 		Object[] params = { theBean };
 
-		if (hasExtensionPoint(ExtensionPointType.ParameterEdiFreeSpaceHealthCheck)) {
+		if (hasActiveExtensionPoint(ExtensionPointType.ParameterEdiFreeSpaceHealthCheck)) {
 			try {
 				theBean = (EdiFreeSpaceHealthCheckParamaters) this.eval(ExtensionPointType.ParameterEdiFreeSpaceHealthCheck, params);
 				if (theBean == null) {
@@ -219,23 +230,37 @@ public class ExtensionPointService {
 		return point;
 	}
 	
-	public ExtensionPoint createExtensionPoint(ExtensionPointType typeEnum) throws ScriptException {
+	public ExtensionPoint create(ExtensionPointType typeEnum) throws ScriptException {
 		ExtensionPoint point = new ExtensionPoint(facility.reload(), typeEnum);
 		store(point);
 		return point;
 	}
 
+	public ExtensionPoint create(ExtensionPoint point) throws ScriptException {
+		store(point);
+		return point;
+	}
+
+	
 	public ExtensionPoint update(ExtensionPoint point) throws ScriptException {
 		store(point);
 		return point;
 	}
 
+	public void delete(ExtensionPoint point) {
+		ExtensionPoint.staticGetDao().delete(point);
+	}
+
 	private ExtensionPoint store(ExtensionPoint point) throws ScriptException {
 		ExtensionPoint.staticGetDao().store(point);
 		if (point.isActive()) {
-			LOGGER.info("Adding extension point " + point.getType());
-			this.addExtensionPointIfValid(point);
+			LOGGER.info("Activating extension point " + point.getType());
+			this.activateExtensionPointIfValid(point);
+		} else {
+			LOGGER.info("Inactivating extension point " + point.getType());
+			inactivateExtensionPoint(point);
 		}
 		return point;
 	}
+
 }

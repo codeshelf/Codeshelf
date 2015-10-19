@@ -18,7 +18,7 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
-import com.codeshelf.service.ExtensionPointService;
+import com.codeshelf.service.ExtensionPointEngine;
 
 public class DataQuantityHealthCheck extends CodeshelfHealthCheck {
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(DataQuantityHealthCheck.class);
@@ -90,7 +90,7 @@ public class DataQuantityHealthCheck extends CodeshelfHealthCheck {
 
 
 		try {
-			ExtensionPointService theService = ExtensionPointService.createInstance(inFacility);
+			ExtensionPointEngine theService = ExtensionPointEngine.getInstance(inFacility);
 			DataQuantityHealthCheckParameters params = theService.getDataQuantityHealthCheckParameters();
 			MAX_ORDERDETAIL = params.getMaxOrderDetailValue();
 			MAX_WORKINSTRUCTION = params.getMaxWorkInstructionValue();

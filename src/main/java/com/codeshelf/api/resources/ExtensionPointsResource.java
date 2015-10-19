@@ -21,7 +21,7 @@ import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.model.domain.ExtensionPoint;
-import com.codeshelf.service.ExtensionPointService;
+import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.service.ExtensionPointType;
 import com.google.inject.Inject;
 
@@ -37,7 +37,7 @@ public class ExtensionPointsResource {
 	
 	@Getter
 	@Setter
-	private ExtensionPointService extensionPointService;
+	private ExtensionPointEngine extensionPointService;
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
@@ -51,7 +51,7 @@ public class ExtensionPointsResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response create(@FormParam("type") String type) throws ScriptException {
 		ExtensionPointType typeEnum = ExtensionPointType.valueOf(type); 
-		ExtensionPoint point = extensionPointService.createExtensionPoint(typeEnum);
+		ExtensionPoint point = extensionPointService.create(typeEnum);
 		provider.updateEdiExporterSafe(extensionPointService.getFacility());
 		return BaseResponse.buildResponse(point);
 	}

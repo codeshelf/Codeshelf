@@ -45,7 +45,7 @@ import com.codeshelf.model.domain.FileExportReceipt;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.ExtensionPointService;
+import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.testframework.HibernateTest;
 import com.google.common.base.Strings;
@@ -147,27 +147,28 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 		beginTransaction();
 		Facility facility = facilityGenerator.generateValid();
 
+		ExtensionPointEngine  extensionPointEngine = ExtensionPointEngine.getInstance(facility);
 		// For PFSWeb (and Dematic carts), the OrderOnCart is approximately the same as the work instruction header, 
 		// but this will not be universally true
 		ExtensionPoint onCartExt = new ExtensionPoint(facility, ExtensionPointType.OrderOnCartContent);
 		onCartExt.setScript(onCartScript);
 		onCartExt.setActive(true);
-		ExtensionPoint.staticGetDao().store(onCartExt);
+		extensionPointEngine.create(onCartExt);
 
 		ExtensionPoint headerExt = new ExtensionPoint(facility, ExtensionPointType.WorkInstructionExportCreateHeader);
 		headerExt.setScript(headerScript);
 		headerExt.setActive(true);
-		ExtensionPoint.staticGetDao().store(headerExt);
+		extensionPointEngine.create(headerExt);
 
 		ExtensionPoint trailerExt = new ExtensionPoint(facility, ExtensionPointType.WorkInstructionExportCreateTrailer);
 		trailerExt.setScript(trailerScript);
 		trailerExt.setActive(true);
-		ExtensionPoint.staticGetDao().store(trailerExt);
+		extensionPointEngine.create(trailerExt);
 
 		ExtensionPoint contentExt = new ExtensionPoint(facility, ExtensionPointType.WorkInstructionExportContent);
 		contentExt.setScript(contentScript);
 		contentExt.setActive(true);
-		ExtensionPoint.staticGetDao().store(contentExt);
+		extensionPointEngine.create(contentExt);
 
 		LOGGER.info("1: Make the work instruction");
 		
@@ -180,7 +181,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 		// This is a real-ish service with meaningful overrides.
 		beginTransaction();
 		
-		WiBeanStringifier stringifier = new WiBeanStringifier(ExtensionPointService.createInstance(facility));
+		WiBeanStringifier stringifier = new WiBeanStringifier(ExtensionPointEngine.getInstance(facility));
 		IEdiExportGateway exportService = mock(IEdiExportGateway.class);
 		FacilityAccumulatingExporter ediExporter = startExporter(facility, stringifier, exportService);
 		

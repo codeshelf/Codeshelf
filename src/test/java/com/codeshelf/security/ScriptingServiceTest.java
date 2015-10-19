@@ -24,7 +24,7 @@ import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
-import com.codeshelf.service.ExtensionPointService;
+import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.testframework.ServerTest;
@@ -38,7 +38,7 @@ public class ScriptingServiceTest extends ServerTest {
 	//-XX:PermSize=30M -XX:MaxPermSize=60M 
 	@Test
 	@Ignore
-	public void permgentest() {
+	public void permgentest() throws ScriptException {
 		Facility facility = setUpSimpleNoSlotFacility();
 		for (int i = 0; i < 100000; i++) {
 			evalScripts(facility);
@@ -50,12 +50,12 @@ public class ScriptingServiceTest extends ServerTest {
 	
 		
 	@Test
-	public void evalScriptTest() {
+	public void evalScriptTest() throws ScriptException {
 		Facility facility = setUpSimpleNoSlotFacility();
 		evalScripts(facility);
 	}
 	
-	private void evalScripts(Facility facility) {
+	private void evalScripts(Facility facility) throws ScriptException {
 		
 		beginTransaction();
 		String text = "def OrderImportBeanTransformation(orderBean) { orderBean.description == 'abc' }";
@@ -65,8 +65,8 @@ public class ScriptingServiceTest extends ServerTest {
 		beginTransaction();
 		try {
 			// init service
-			ExtensionPointService ss = ExtensionPointService.createInstance(facility);
-			assertEquals(true,ss.hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation));
+			ExtensionPointEngine ss = ExtensionPointEngine.getInstance(facility);
+			assertEquals(true,ss.hasActiveExtensionPoint(ExtensionPointType.OrderImportBeanTransformation));
 			// positive test
 			OutboundOrderCsvBean bean1 = new OutboundOrderCsvBean();
 			bean1.setDescription("abc");
@@ -85,7 +85,7 @@ public class ScriptingServiceTest extends ServerTest {
 	}
 	
 	@Test
-	public void parameterBeansTest() {
+	public void parameterBeansTest() throws ScriptException {
 
 		Facility facility = setUpSimpleNoSlotFacility();
 
@@ -97,15 +97,15 @@ public class ScriptingServiceTest extends ServerTest {
 		beginTransaction();
 		try {
 			// init service
-			ExtensionPointService ss = ExtensionPointService.createInstance(facility);
+			ExtensionPointEngine ss = ExtensionPointEngine.getInstance(facility);
 			
 			// positive test. groovy exists
-			assertEquals(true,ss.hasExtensionPoint(ExtensionPointType.ParameterSetDataPurge));
+			assertEquals(true,ss.hasActiveExtensionPoint(ExtensionPointType.ParameterSetDataPurge));
 			DataPurgeParameters purgeParams = ss.getDataPurgeParameters();
 			Assert.assertEquals(10, purgeParams.getOrderBatchValue());
 			
 			// Do the negative test. No groovy extension exists
-			assertEquals(false,ss.hasExtensionPoint(ExtensionPointType.ParameterSetDataQuantityHealthCheck));
+			assertEquals(false,ss.hasActiveExtensionPoint(ExtensionPointType.ParameterSetDataQuantityHealthCheck));
 			// but we still get a good bean with useful defaults
 			DataQuantityHealthCheckParameters dataQuanityParams = ss.getDataQuantityHealthCheckParameters();
 			// Warning. This will fail when the default changes. Just change this test
@@ -132,7 +132,7 @@ public class ScriptingServiceTest extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		ExtensionPointService ss = ExtensionPointService.createInstance(facility);
+		ExtensionPointEngine ss = ExtensionPointEngine.getInstance(facility);
 		OutboundOrderCsvBean bean1 = new OutboundOrderCsvBean();
 		bean1.setDescription("abc");
 		assertEval(ss, bean1, true);
@@ -140,16 +140,16 @@ public class ScriptingServiceTest extends ServerTest {
 
 		//test case when INACTIVE
 		beginTransaction();
-		ExtensionPoint extpt = ExtensionPoint.staticGetDao().findByPersistentId(persistentId);
+		ExtensionPoint extpt = ss.findById(persistentId);
 		extpt.setActive(false);
-		ExtensionPoint.staticGetDao().store(extpt);
+		ss.update(extpt);
 		commitTransaction();
 
 		beginTransaction();
 		facility.reload();
-		ExtensionPointService newSS = ExtensionPointService.createInstance(facility);
+		ExtensionPointEngine newSS = ExtensionPointEngine.getInstance(facility);
 
-		assertFalse(newSS.hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation));
+		assertFalse(newSS.hasActiveExtensionPoint(ExtensionPointType.OrderImportBeanTransformation));
 
 		OutboundOrderCsvBean sameBean = new OutboundOrderCsvBean();
 		sameBean.setDescription("abc");
@@ -163,7 +163,7 @@ public class ScriptingServiceTest extends ServerTest {
 		commitTransaction();
 	}
 
-	private void assertEval(ExtensionPointService ss, OutboundOrderCsvBean bean, boolean expected) throws ScriptException {
+	private void assertEval(ExtensionPointEngine ss, OutboundOrderCsvBean bean, boolean expected) throws ScriptException {
 		Object[] data1 = {bean};
 		Object result1 = ss.eval(ExtensionPointType.OrderImportBeanTransformation, data1);
 		assertEquals(expected,result1);
@@ -171,7 +171,7 @@ public class ScriptingServiceTest extends ServerTest {
 	}
 
 	@Test
-	public void orderBeanTransformationTest() throws IOException {
+	public void orderBeanTransformationTest() throws IOException, ScriptException {
 
 		Facility facility = setUpSimpleNoSlotFacility();
 
@@ -222,7 +222,7 @@ public class ScriptingServiceTest extends ServerTest {
 	}
 
 	@Test
-	public void orderBeanAccuCustomerIdBasedNeedsScanTest() throws IOException {
+	public void orderBeanAccuCustomerIdBasedNeedsScanTest() throws IOException, ScriptException {
 		Facility facility = setUpSimpleNoSlotFacility();
 		// define a rule to set needsscan for a specific customer
 
@@ -280,7 +280,7 @@ public class ScriptingServiceTest extends ServerTest {
 	}
 
 	@Test
-	public void orderBeanOverrideUPCtoFalse() throws IOException {
+	public void orderBeanOverrideUPCtoFalse() throws IOException, ScriptException {
 		Facility facility = setUpSimpleNoSlotFacility();
 		// define a rule to set needsscan for a specific customer
 
@@ -400,14 +400,15 @@ public class ScriptingServiceTest extends ServerTest {
 	
 	
 	@Test
-	public void orderHeaderTransformationTest() throws IOException {
+	public void orderHeaderTransformationTest() throws IOException, ScriptException {
 
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		beginTransaction();
 		ExtensionPoint extp = new ExtensionPoint(facility, ExtensionPointType.OrderImportHeaderTransformation);
 		extp.setActive(true);
-		ExtensionPoint.staticGetDao().store(extp);
+		ExtensionPointEngine engine = ExtensionPointEngine.getInstance(facility);
+		engine.create(extp);
 		commitTransaction();
 
 		String csvString = "orderGroupId^shipmentId^customerId^preAssignedContainerId^orderId^itemId^description^quantity^uom^orderDate^dueDate^workSequence^needsScan"
@@ -452,7 +453,7 @@ public class ScriptingServiceTest extends ServerTest {
 	}
 
 	@Test
-	public void orderHeaderCreateTest() throws IOException {
+	public void orderHeaderCreateTest() throws IOException, ScriptException {
 
 		String desiredHeader = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence,needsScan";
 
@@ -561,7 +562,7 @@ public class ScriptingServiceTest extends ServerTest {
 	}
 
 	@Test
-	public void pfsWebExtensionsTest() throws IOException {
+	public void pfsWebExtensionsTest() throws IOException, ScriptException {
 
 		// MESSAGETYPE field is not understood by Codeshelf.
 		String desiredHeader = "MESSAGETYPE,preAssignedContainerId,orderId,locationId,quantity,itemId,orderDetailId,workSequence,customerId";
@@ -610,9 +611,10 @@ public class ScriptingServiceTest extends ServerTest {
 	/**
 	 * This test proves an non-compilable groovy.
 	 * Trying to import orders will deactivate the extension
+	 * @throws ScriptException 
 	 */
 	@Test
-	public void badGroovyCompilationTest() throws IOException{
+	public void badGroovyCompilationTest() throws IOException, ScriptException{
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		beginTransaction();
@@ -650,31 +652,34 @@ public class ScriptingServiceTest extends ServerTest {
 	/**
 	 * This test demonstrates error handling when OrderImportCreateHeader extension fails.
 	 * This will terminate order importing at once
+	 * @throws ScriptException 
 	 */
 	@Test
-	public void badGroovyErrorRuntimeCreateHeaderTest() throws IOException{
+	public void badGroovyErrorRuntimeCreateHeaderTest() throws IOException, ScriptException{
 		badGroovyErrorRuntimeTestHelper(ExtensionPointType.OrderImportCreateHeader);
 	}
 	
 	/**
 	 * This test demonstrates error handling when OrderImportHeaderTransformation extension fails.
 	 * This will terminate order importing at once
+	 * @throws ScriptException 
 	 */
 	@Test
-	public void badGroovyErrorRuntimeHeaderTransformationTest() throws IOException{
+	public void badGroovyErrorRuntimeHeaderTransformationTest() throws IOException, ScriptException{
 		badGroovyErrorRuntimeTestHelper(ExtensionPointType.OrderImportHeaderTransformation);
 	}
 	
 	/**
 	 * This test demonstrates error handling when OrderImportLineTransformation extension fails.
 	 * This will terminate order importing at once
+	 * @throws ScriptException 
 	 */
 	@Test
-	public void badGroovyErrorRuntimeLineTransformationTest() throws IOException{
+	public void badGroovyErrorRuntimeLineTransformationTest() throws IOException, ScriptException{
 		badGroovyErrorRuntimeTestHelper(ExtensionPointType.OrderImportLineTransformation);
 	}
 	
-	private void badGroovyErrorRuntimeTestHelper(ExtensionPointType type) throws IOException{
+	private void badGroovyErrorRuntimeTestHelper(ExtensionPointType type) throws IOException, ScriptException{
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		beginTransaction();
@@ -708,9 +713,10 @@ public class ScriptingServiceTest extends ServerTest {
 	 * This test demonstrates error handling when OrderImportBeanTransformation extension fails.
 	 * Unlike the above "bad groovy" tests, this bad extension will generate a list of order file lines that it failed on
 	 * With bad code, it will fail on every line. However, the failures are grouped by error messages
+	 * @throws ScriptException 
 	 */
 	@Test
-	public void badGroovyErrorRuntimeBeanTransformationTest() throws IOException{
+	public void badGroovyErrorRuntimeBeanTransformationTest() throws IOException, ScriptException{
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		beginTransaction();
@@ -742,11 +748,10 @@ public class ScriptingServiceTest extends ServerTest {
 	}
 
 	
-	private ExtensionPoint createExtension(Facility facility, ExtensionPointType type, String script){
+	private ExtensionPoint createExtension(Facility facility, ExtensionPointType type, String script) throws ScriptException{
 		ExtensionPoint extension = new ExtensionPoint(facility, type);
 		extension.setActive(true);
 		extension.setScript(script);
-		ExtensionPoint.staticGetDao().store(extension);
-		return extension;
+		return ExtensionPointEngine.getInstance(facility).create(extension);
 	}
 }

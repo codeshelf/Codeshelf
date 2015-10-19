@@ -35,8 +35,6 @@ import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.persistence.TenantPersistenceService;
-import com.codeshelf.report.IPickDocumentGenerator;
-import com.codeshelf.report.PickDocumentGenerator;
 import com.codeshelf.security.CodeshelfRealm;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.TokenSessionService;
@@ -135,9 +133,6 @@ public final class ServerMain {
 				
 				bind(ICodeshelfApplication.class).to(ServerCodeshelfApplication.class);
 	
-				bind(IPickDocumentGenerator.class).to(PickDocumentGenerator.class);
-				
-				//bind(ICsvOrderImporter.class).to(OutboundOrderCsvImporter.class);
 				bind(ICsvOrderImporter.class).to(OutboundOrderPrefetchCsvImporter.class);
 				bind(ICsvInventoryImporter.class).to(InventoryCsvImporter.class);
 				bind(ICsvLocationAliasImporter.class).to(LocationAliasCsvImporter.class);

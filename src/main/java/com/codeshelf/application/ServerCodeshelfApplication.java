@@ -27,7 +27,6 @@ import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.IsProductionServerHealthCheck;
 import com.codeshelf.metrics.PicksActivityHealthCheck;
 import com.codeshelf.persistence.TenantPersistenceService;
-import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.security.TokenSessionService;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.inject.Inject;
@@ -38,14 +37,12 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 
 	private EdiImportService			ediImportService;
 	private EdiExportService			ediExportService;
-	private IPickDocumentGenerator	mPickDocumentGenerator;
 	
 	private WebSocketManagerService sessionManager;
 	private IMetricsService metricsService;
 	
 	@Inject
 	public ServerCodeshelfApplication(final EdiImportService inEdiProcessService,
-			final IPickDocumentGenerator inPickDocumentGenerator,
 			final WebApiServer inWebApiServer,
 			final ITenantManagerService tenantManagerService,
 			final IMetricsService metricsService,
@@ -54,7 +51,6 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 			final IPropertyBehavior propertyService,
 			final TokenSessionService authService,
 			final SecurityManager securityManager,
-			final SchedulingService schedulingService,
 			final EmailService emailService,
 			final TemplateService templateService) {
 			
@@ -62,7 +58,6 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	
 		ediImportService = inEdiProcessService;
 		this.ediExportService = ediExportService;
-		mPickDocumentGenerator = inPickDocumentGenerator;
 		sessionManager = webSocketManagerService;
 		this.metricsService = metricsService;
 		
@@ -80,7 +75,6 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		this.registerService(ediImportService);
 		this.registerService(emailService);
 		this.registerService(templateService);
-		if (schedulingService!=null) this.registerService(schedulingService);
 	}
 
 	// --------------------------------------------------------------------------
@@ -95,9 +89,6 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	/**
 	 */
 	protected void doStartup() throws Exception {
-
-		// Start the pick document generator process;
-		mPickDocumentGenerator.startProcessor(this.ediImportService.getEdiSignalQueue());
 
 		startApiServer(null,Integer.getInteger("api.port"));
 		startTsdbReporter();
@@ -132,7 +123,6 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	 */
 	protected void doShutdown() {
 		LOGGER.info("Stopping application");
-		mPickDocumentGenerator.stopProcessor();
 		this.stopApiServer();
 
 	}

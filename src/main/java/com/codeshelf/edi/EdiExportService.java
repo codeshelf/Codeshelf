@@ -24,7 +24,7 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
-import com.codeshelf.service.ExtensionPointService;
+import com.codeshelf.service.ExtensionPointEngine;
 import com.google.inject.Singleton;
 
 @Singleton
@@ -60,8 +60,8 @@ public class EdiExportService extends AbstractCodeshelfIdleService {
 	public void updateEdiExporter(Facility facility) throws ScriptException, TimeoutException {
 		IEdiExportGateway exportGateway = facility.getEdiExportGateway();
 		if (exportGateway != null) {
-			ExtensionPointService extensionPointService = ExtensionPointService.createInstance(facility);
-			WiBeanStringifier stringifier = new WiBeanStringifier(extensionPointService);
+			ExtensionPointEngine extensionPointEngine = ExtensionPointEngine.getInstance(facility);
+			WiBeanStringifier stringifier = new WiBeanStringifier(extensionPointEngine);
 			synchronized(facilityEdiExporters) {
 				if (exportGateway.isActive()) {
 					IFacilityEdiExporter exporter = facilityEdiExporters.get(facility.getPersistentId());
