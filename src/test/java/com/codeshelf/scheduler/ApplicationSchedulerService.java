@@ -1,15 +1,11 @@
 package com.codeshelf.scheduler;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 
-import org.mockito.asm.tree.MultiANewArrayInsnNode;
 import org.quartz.Scheduler;
 import org.quartz.impl.DirectSchedulerFactory;
-import org.quartz.impl.StdSchedulerFactory;
 import org.quartz.simpl.RAMJobStore;
 import org.quartz.simpl.SimpleThreadPool;
 import org.slf4j.Logger;
@@ -26,7 +22,6 @@ import com.codeshelf.security.UserContext;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 import com.codeshelf.service.ServiceUtility;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Service;
