@@ -51,7 +51,7 @@ public class ExtensionPointsResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response create(@FormParam("type") String type) throws ScriptException {
 		ExtensionPointType typeEnum = ExtensionPointType.valueOf(type); 
-		ExtensionPoint point = extensionPointService.createExtensionPoint(typeEnum);
+		ExtensionPoint point = extensionPointService.create(typeEnum);
 		provider.updateEdiExporterSafe(extensionPointService.getFacility());
 		return BaseResponse.buildResponse(point);
 	}

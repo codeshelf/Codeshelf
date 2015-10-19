@@ -58,7 +58,7 @@ public class ExtensionPointEngine {
 
 	
 	
-	private void addExtensionPointIfValid(ExtensionPoint ep) throws ScriptException {
+	private void activateExtensionPointIfValid(ExtensionPoint ep) throws ScriptException {
 		ExtensionPointType extp = ep.getType();
 		String functionScript = ep.getScript();
 		try {
@@ -77,28 +77,23 @@ public class ExtensionPointEngine {
 		}
 	}
 
-	private void removeExtensionPoint(ExtensionPoint ep) throws ScriptException {
+	private void inactivateExtensionPoint(ExtensionPoint ep) throws ScriptException {
 		ExtensionPointType extp = ep.getType();
 		this.activeExtensions.remove(extp);
 	}
 
-	
-	private void clearExtensionPoints() {
-		this.activeExtensions.clear();
-	}
-
-	public boolean hasExtensionPoint(ExtensionPointType extp) {
+	public boolean hasActiveExtensionPoint(ExtensionPointType extp) {
 		return this.activeExtensions.contains(extp);
 	}
 
 	private List<ExtensionPoint> load(Facility facility) throws ScriptException {
 		List<ExtensionPoint> eps = ExtensionPoint.staticGetDao().findByParent(facility);
-		this.clearExtensionPoints();
+		this.activeExtensions.clear();
 		failedExtensions.clear();
 		for (ExtensionPoint ep : eps) {
 			if (ep.isActive()) {
 				LOGGER.info("Adding extension point " + ep.getType());
-				this.addExtensionPointIfValid(ep);
+				this.activateExtensionPointIfValid(ep);
 			} else { 
 				LOGGER.info("Skipping inactive extension point " + ep.getType());
 			}
@@ -165,7 +160,7 @@ public class ExtensionPointEngine {
 		DataQuantityHealthCheckParameters theBean = new DataQuantityHealthCheckParameters();
 		Object[] params = { theBean };
 
-		if (hasExtensionPoint(ExtensionPointType.ParameterSetDataQuantityHealthCheck)) {
+		if (hasActiveExtensionPoint(ExtensionPointType.ParameterSetDataQuantityHealthCheck)) {
 			try {
 				theBean = (DataQuantityHealthCheckParameters) this.eval(ExtensionPointType.ParameterSetDataQuantityHealthCheck, params);
 			} catch (ScriptException e) {
@@ -180,7 +175,7 @@ public class ExtensionPointEngine {
 		DataPurgeParameters theBean = new DataPurgeParameters();
 		Object[] params = { theBean };
 
-		if (hasExtensionPoint(ExtensionPointType.ParameterSetDataPurge)) {
+		if (hasActiveExtensionPoint(ExtensionPointType.ParameterSetDataPurge)) {
 			try {
 				theBean = (DataPurgeParameters) this.eval(ExtensionPointType.ParameterSetDataPurge, params);
 				if (theBean == null) {
@@ -204,7 +199,7 @@ public class ExtensionPointEngine {
 		EdiFreeSpaceHealthCheckParamaters theBean = new EdiFreeSpaceHealthCheckParamaters();
 		Object[] params = { theBean };
 
-		if (hasExtensionPoint(ExtensionPointType.ParameterEdiFreeSpaceHealthCheck)) {
+		if (hasActiveExtensionPoint(ExtensionPointType.ParameterEdiFreeSpaceHealthCheck)) {
 			try {
 				theBean = (EdiFreeSpaceHealthCheckParamaters) this.eval(ExtensionPointType.ParameterEdiFreeSpaceHealthCheck, params);
 				if (theBean == null) {
@@ -235,24 +230,19 @@ public class ExtensionPointEngine {
 		return point;
 	}
 	
-	public ExtensionPoint createExtensionPoint(ExtensionPointType typeEnum) throws ScriptException {
+	public ExtensionPoint create(ExtensionPointType typeEnum) throws ScriptException {
 		ExtensionPoint point = new ExtensionPoint(facility.reload(), typeEnum);
 		store(point);
 		return point;
 	}
 
-	public ExtensionPoint createExtensionPoint(ExtensionPoint point) throws ScriptException {
+	public ExtensionPoint create(ExtensionPoint point) throws ScriptException {
 		store(point);
 		return point;
 	}
 
 	
 	public ExtensionPoint update(ExtensionPoint point) throws ScriptException {
-		if (point.isActive()) {
-			addExtensionPointIfValid(point);
-		} else {
-			removeExtensionPoint(point);
-		}
 		store(point);
 		return point;
 	}
@@ -264,8 +254,11 @@ public class ExtensionPointEngine {
 	private ExtensionPoint store(ExtensionPoint point) throws ScriptException {
 		ExtensionPoint.staticGetDao().store(point);
 		if (point.isActive()) {
-			LOGGER.info("Adding extension point " + point.getType());
-			this.addExtensionPointIfValid(point);
+			LOGGER.info("Activating extension point " + point.getType());
+			this.activateExtensionPointIfValid(point);
+		} else {
+			LOGGER.info("Inactivating extension point " + point.getType());
+			inactivateExtensionPoint(point);
 		}
 		return point;
 	}

@@ -66,7 +66,7 @@ public class ScriptingServiceTest extends ServerTest {
 		try {
 			// init service
 			ExtensionPointEngine ss = ExtensionPointEngine.getInstance(facility);
-			assertEquals(true,ss.hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation));
+			assertEquals(true,ss.hasActiveExtensionPoint(ExtensionPointType.OrderImportBeanTransformation));
 			// positive test
 			OutboundOrderCsvBean bean1 = new OutboundOrderCsvBean();
 			bean1.setDescription("abc");
@@ -100,12 +100,12 @@ public class ScriptingServiceTest extends ServerTest {
 			ExtensionPointEngine ss = ExtensionPointEngine.getInstance(facility);
 			
 			// positive test. groovy exists
-			assertEquals(true,ss.hasExtensionPoint(ExtensionPointType.ParameterSetDataPurge));
+			assertEquals(true,ss.hasActiveExtensionPoint(ExtensionPointType.ParameterSetDataPurge));
 			DataPurgeParameters purgeParams = ss.getDataPurgeParameters();
 			Assert.assertEquals(10, purgeParams.getOrderBatchValue());
 			
 			// Do the negative test. No groovy extension exists
-			assertEquals(false,ss.hasExtensionPoint(ExtensionPointType.ParameterSetDataQuantityHealthCheck));
+			assertEquals(false,ss.hasActiveExtensionPoint(ExtensionPointType.ParameterSetDataQuantityHealthCheck));
 			// but we still get a good bean with useful defaults
 			DataQuantityHealthCheckParameters dataQuanityParams = ss.getDataQuantityHealthCheckParameters();
 			// Warning. This will fail when the default changes. Just change this test
@@ -149,7 +149,7 @@ public class ScriptingServiceTest extends ServerTest {
 		facility.reload();
 		ExtensionPointEngine newSS = ExtensionPointEngine.getInstance(facility);
 
-		assertFalse(newSS.hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation));
+		assertFalse(newSS.hasActiveExtensionPoint(ExtensionPointType.OrderImportBeanTransformation));
 
 		OutboundOrderCsvBean sameBean = new OutboundOrderCsvBean();
 		sameBean.setDescription("abc");
@@ -408,7 +408,7 @@ public class ScriptingServiceTest extends ServerTest {
 		ExtensionPoint extp = new ExtensionPoint(facility, ExtensionPointType.OrderImportHeaderTransformation);
 		extp.setActive(true);
 		ExtensionPointEngine engine = ExtensionPointEngine.getInstance(facility);
-		engine.createExtensionPoint(extp);
+		engine.create(extp);
 		commitTransaction();
 
 		String csvString = "orderGroupId^shipmentId^customerId^preAssignedContainerId^orderId^itemId^description^quantity^uom^orderDate^dueDate^workSequence^needsScan"
@@ -752,6 +752,6 @@ public class ScriptingServiceTest extends ServerTest {
 		ExtensionPoint extension = new ExtensionPoint(facility, type);
 		extension.setActive(true);
 		extension.setScript(script);
-		return ExtensionPointEngine.getInstance(facility).createExtensionPoint(extension);
+		return ExtensionPointEngine.getInstance(facility).create(extension);
 	}
 }

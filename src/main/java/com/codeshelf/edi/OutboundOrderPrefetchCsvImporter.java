@@ -142,8 +142,8 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		// DEV-978 extension point can fully supply the header.  However, that should not be done with OrderImportHeaderTransformation
 		// Note: this works by passing in a good java string that is empty, and getting back a non-empty string.
 		String extensionSuppliedHeader = "";
-		if (extensionPointService.hasExtensionPoint(ExtensionPointType.OrderImportCreateHeader)) {
-			if (extensionPointService.hasExtensionPoint(ExtensionPointType.OrderImportHeaderTransformation)) {
+		if (extensionPointService.hasActiveExtensionPoint(ExtensionPointType.OrderImportCreateHeader)) {
+			if (extensionPointService.hasActiveExtensionPoint(ExtensionPointType.OrderImportHeaderTransformation)) {
 				LOGGER.warn("OrderImportCreateHeader extension ignored because OrderImportHeaderTransformation is also on. Please turn one off.");
 				// Want an EDI notify event here?
 			} else {
@@ -169,13 +169,13 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		}
 
 		// transform order lines/header, if extension point is defined
-		if (extensionPointService.hasExtensionPoint(ExtensionPointType.OrderImportLineTransformation)
-				|| extensionPointService.hasExtensionPoint(ExtensionPointType.OrderImportHeaderTransformation)
-				|| extensionPointService.hasExtensionPoint(ExtensionPointType.OrderImportCreateHeader)) {
+		if (extensionPointService.hasActiveExtensionPoint(ExtensionPointType.OrderImportLineTransformation)
+				|| extensionPointService.hasActiveExtensionPoint(ExtensionPointType.OrderImportHeaderTransformation)
+				|| extensionPointService.hasActiveExtensionPoint(ExtensionPointType.OrderImportCreateHeader)) {
 			BufferedReader br = new BufferedReader(inCsvReader);
 			StringBuffer buffer = new StringBuffer();
 			// process file header
-			if (getExtensionPointService().hasExtensionPoint(ExtensionPointType.OrderImportHeaderTransformation)) {
+			if (getExtensionPointService().hasActiveExtensionPoint(ExtensionPointType.OrderImportHeaderTransformation)) {
 				LOGGER.info("Order import header transformation is enabled");
 				try {
 					String header = br.readLine();
@@ -208,7 +208,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 				}
 			}
 			// process file body
-			if (getExtensionPointService().hasExtensionPoint(ExtensionPointType.OrderImportLineTransformation)) {
+			if (getExtensionPointService().hasActiveExtensionPoint(ExtensionPointType.OrderImportLineTransformation)) {
 				try {
 					String line = null;
 					while ((line = br.readLine()) != null) {
@@ -259,12 +259,12 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 
 		// From v20 DEV-1075
 		// We need to run the order bean transforms before doing any caching or even assembling orderIds, gtins, etc.
-		if (getExtensionPointService().hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation)) {
+		if (getExtensionPointService().hasActiveExtensionPoint(ExtensionPointType.OrderImportBeanTransformation)) {
 			HashMap<String, String> orderImportBeanTransformationViolations = new HashMap<>();
 			long timeBeforeExtension = System.currentTimeMillis();
 			for (OutboundOrderCsvBean orderBean : originalBeanList) {
 				// transform order bean with groovy script, if enabled
-				if (getExtensionPointService().hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation)) {
+				if (getExtensionPointService().hasActiveExtensionPoint(ExtensionPointType.OrderImportBeanTransformation)) {
 					Object[] params = { orderBean };
 					try {
 						orderBean = (OutboundOrderCsvBean) getExtensionPointService().eval(ExtensionPointType.OrderImportBeanTransformation,

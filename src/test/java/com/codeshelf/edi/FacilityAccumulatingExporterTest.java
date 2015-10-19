@@ -153,22 +153,22 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 		ExtensionPoint onCartExt = new ExtensionPoint(facility, ExtensionPointType.OrderOnCartContent);
 		onCartExt.setScript(onCartScript);
 		onCartExt.setActive(true);
-		extensionPointEngine.createExtensionPoint(onCartExt);
+		extensionPointEngine.create(onCartExt);
 
 		ExtensionPoint headerExt = new ExtensionPoint(facility, ExtensionPointType.WorkInstructionExportCreateHeader);
 		headerExt.setScript(headerScript);
 		headerExt.setActive(true);
-		extensionPointEngine.createExtensionPoint(headerExt);
+		extensionPointEngine.create(headerExt);
 
 		ExtensionPoint trailerExt = new ExtensionPoint(facility, ExtensionPointType.WorkInstructionExportCreateTrailer);
 		trailerExt.setScript(trailerScript);
 		trailerExt.setActive(true);
-		extensionPointEngine.createExtensionPoint(trailerExt);
+		extensionPointEngine.create(trailerExt);
 
 		ExtensionPoint contentExt = new ExtensionPoint(facility, ExtensionPointType.WorkInstructionExportContent);
 		contentExt.setScript(contentScript);
 		contentExt.setActive(true);
-		extensionPointEngine.createExtensionPoint(contentExt);
+		extensionPointEngine.create(contentExt);
 
 		LOGGER.info("1: Make the work instruction");
 		

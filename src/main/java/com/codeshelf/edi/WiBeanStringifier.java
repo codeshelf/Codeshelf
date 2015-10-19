@@ -229,7 +229,7 @@ public class WiBeanStringifier {
 		ExtensionPointEngine extensionService = getExtensionPointService();
 		if (extensionService  == null)
 			LOGGER.error("null extension point service when checking for: " + type);
-		return (extensionService != null && extensionService.hasExtensionPoint(type));
+		return (extensionService != null && extensionService.hasActiveExtensionPoint(type));
 	}
 	
 	@SuppressWarnings("unused")

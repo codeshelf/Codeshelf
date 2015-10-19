@@ -651,7 +651,7 @@ public class ScriptServerRunner {
 		ExtensionPoint point = new ExtensionPoint(facility, typeEnum);
 		point.setScript(script);
 		point.setActive(active);
-		engine.createExtensionPoint(point);
+		engine.create(point);
 	}
 
 	/**
