@@ -1333,7 +1333,7 @@ public class WorkBehavior implements IApiBehavior {
 		//Log time if over 2 seconds
 		Long wrapComputeDurationMs = System.currentTimeMillis() - startTimestamp;
 		if (wrapComputeDurationMs > 2000) {
-			LOGGER.warn("GetWork() took {}; totalWis={};", wrapComputeDurationMs, wrappedRouteWiList.size());
+			LOGGER.warn("GetWork() took {}; totalWis={}; for {}/{}", wrapComputeDurationMs, wrappedRouteWiList.size(), inChe.getDomainId(), inChe.getDeviceGuidStrNoPrefix());
 		}
 		Timer timer = MetricsService.getInstance().createTimer(MetricsGroup.WSS, "cheWorkFromLocation");
 		timer.update(wrapComputeDurationMs, TimeUnit.MILLISECONDS);
