@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.behavior.BatchProcessor;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.service.ExtensionPointService;
+import com.codeshelf.service.ExtensionPointEngine;
 
 public class PurgeProcessor implements BatchProcessor {
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(PurgeProcessor.class);
@@ -61,7 +61,7 @@ public class PurgeProcessor implements BatchProcessor {
 		setPurgePhase(PurgePhase.PurgePhaseSetup);
 		facility = facility.reload();
 		// get our purge parameters
-		ExtensionPointService ss = ExtensionPointService.getInstance(facility);
+		ExtensionPointEngine ss = ExtensionPointEngine.getInstance(facility);
 		purgeParams = ss.getDataPurgeParameters();
 
 		LOGGER.info("Starting data purge with these parameters: {}", purgeParams);

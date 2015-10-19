@@ -35,7 +35,7 @@ import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.service.PropertyService;
-import com.codeshelf.service.ExtensionPointService;
+import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.util.DateTimeParser;
 import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.validation.BatchResult;
@@ -79,7 +79,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	int													numWorkerThreads		= 1;
 
 	@Getter
-	ExtensionPointService								extensionPointService	= null;
+	ExtensionPointEngine								extensionPointService	= null;
 
 	@Setter
 	@Getter
@@ -117,7 +117,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		// initialize scripting service
 		try {
 			long timeBeforeExtension = System.currentTimeMillis();
-			extensionPointService = ExtensionPointService.getInstance(facility);
+			extensionPointService = ExtensionPointEngine.getInstance(facility);
 			addToExtensionMsFromTimeBefore(timeBeforeExtension);
 		} catch (Exception e) {
 			LOGGER.error("Failed to initialize extension point service", e);

@@ -24,7 +24,7 @@ import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
-import com.codeshelf.service.ExtensionPointService;
+import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.testframework.ServerTest;
@@ -65,7 +65,7 @@ public class ScriptingServiceTest extends ServerTest {
 		beginTransaction();
 		try {
 			// init service
-			ExtensionPointService ss = ExtensionPointService.getInstance(facility);
+			ExtensionPointEngine ss = ExtensionPointEngine.getInstance(facility);
 			assertEquals(true,ss.hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation));
 			// positive test
 			OutboundOrderCsvBean bean1 = new OutboundOrderCsvBean();
@@ -97,7 +97,7 @@ public class ScriptingServiceTest extends ServerTest {
 		beginTransaction();
 		try {
 			// init service
-			ExtensionPointService ss = ExtensionPointService.getInstance(facility);
+			ExtensionPointEngine ss = ExtensionPointEngine.getInstance(facility);
 			
 			// positive test. groovy exists
 			assertEquals(true,ss.hasExtensionPoint(ExtensionPointType.ParameterSetDataPurge));
@@ -132,7 +132,7 @@ public class ScriptingServiceTest extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		ExtensionPointService ss = ExtensionPointService.getInstance(facility);
+		ExtensionPointEngine ss = ExtensionPointEngine.getInstance(facility);
 		OutboundOrderCsvBean bean1 = new OutboundOrderCsvBean();
 		bean1.setDescription("abc");
 		assertEval(ss, bean1, true);
@@ -147,7 +147,7 @@ public class ScriptingServiceTest extends ServerTest {
 
 		beginTransaction();
 		facility.reload();
-		ExtensionPointService newSS = ExtensionPointService.getInstance(facility);
+		ExtensionPointEngine newSS = ExtensionPointEngine.getInstance(facility);
 
 		assertFalse(newSS.hasExtensionPoint(ExtensionPointType.OrderImportBeanTransformation));
 
@@ -163,7 +163,7 @@ public class ScriptingServiceTest extends ServerTest {
 		commitTransaction();
 	}
 
-	private void assertEval(ExtensionPointService ss, OutboundOrderCsvBean bean, boolean expected) throws ScriptException {
+	private void assertEval(ExtensionPointEngine ss, OutboundOrderCsvBean bean, boolean expected) throws ScriptException {
 		Object[] data1 = {bean};
 		Object result1 = ss.eval(ExtensionPointType.OrderImportBeanTransformation, data1);
 		assertEquals(expected,result1);

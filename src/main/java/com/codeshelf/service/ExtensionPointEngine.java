@@ -26,9 +26,9 @@ import com.codeshelf.model.domain.Facility;
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 
-public class ExtensionPointService {
+public class ExtensionPointEngine {
 
-	private static final Logger	LOGGER				= LoggerFactory.getLogger(ExtensionPointService.class);
+	private static final Logger	LOGGER				= LoggerFactory.getLogger(ExtensionPointEngine.class);
 
 	ScriptEngine				engine;
 
@@ -40,7 +40,7 @@ public class ExtensionPointService {
 	@Getter
 	private Facility	facility;
 
-	public ExtensionPointService(Facility facility) throws ScriptException {
+	public ExtensionPointEngine(Facility facility) throws ScriptException {
 		initEngine();
 		load(facility);
 		this.facility = facility;
@@ -112,9 +112,9 @@ public class ExtensionPointService {
 		return result;
 	}
 
-	public static ExtensionPointService getInstance(Facility facility) throws ScriptException {
+	public static ExtensionPointEngine getInstance(Facility facility) throws ScriptException {
 		// New instance every time now.  Would be good to re-use on a tenant/facility level.
-		return new ExtensionPointService(facility);
+		return new ExtensionPointEngine(facility);
 	}
 
 	// Methods to get the parameter beans	

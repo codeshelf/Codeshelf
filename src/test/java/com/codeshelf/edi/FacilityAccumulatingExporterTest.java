@@ -45,7 +45,7 @@ import com.codeshelf.model.domain.FileExportReceipt;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.ExtensionPointService;
+import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.testframework.HibernateTest;
 import com.google.common.base.Strings;
@@ -180,7 +180,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 		// This is a real-ish service with meaningful overrides.
 		beginTransaction();
 		
-		WiBeanStringifier stringifier = new WiBeanStringifier(ExtensionPointService.getInstance(facility));
+		WiBeanStringifier stringifier = new WiBeanStringifier(ExtensionPointEngine.getInstance(facility));
 		IEdiExportGateway exportService = mock(IEdiExportGateway.class);
 		FacilityAccumulatingExporter ediExporter = startExporter(facility, stringifier, exportService);
 		
