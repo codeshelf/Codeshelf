@@ -2214,8 +2214,11 @@ public class CheProcessTestPick extends ServerTest {
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 		picker.logout();
 		// Above is just to see 3 jobs in 1 order to force the beans to sort
 		
