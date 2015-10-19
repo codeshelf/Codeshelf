@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 
+import lombok.Getter;
+
 import org.joda.time.DateTime;
 import org.quartz.CronExpression;
 import org.quartz.CronScheduleBuilder;
@@ -29,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.ScheduledJobType;
+import com.codeshelf.model.domain.DomainObjectABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
@@ -86,6 +89,7 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 
 	private Tenant	tenant;
 
+	@Getter
 	private Facility	facility;
 	
 	private Map<ScheduledJobType, DateTime> lastFiredTimes;
@@ -185,4 +189,5 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		}
 		return Optional.fromNullable(lastTime);
 	}
+
 }
