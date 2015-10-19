@@ -147,27 +147,28 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 		beginTransaction();
 		Facility facility = facilityGenerator.generateValid();
 
+		ExtensionPointEngine  extensionPointEngine = ExtensionPointEngine.getInstance(facility);
 		// For PFSWeb (and Dematic carts), the OrderOnCart is approximately the same as the work instruction header, 
 		// but this will not be universally true
 		ExtensionPoint onCartExt = new ExtensionPoint(facility, ExtensionPointType.OrderOnCartContent);
 		onCartExt.setScript(onCartScript);
 		onCartExt.setActive(true);
-		ExtensionPoint.staticGetDao().store(onCartExt);
+		extensionPointEngine.createExtensionPoint(onCartExt);
 
 		ExtensionPoint headerExt = new ExtensionPoint(facility, ExtensionPointType.WorkInstructionExportCreateHeader);
 		headerExt.setScript(headerScript);
 		headerExt.setActive(true);
-		ExtensionPoint.staticGetDao().store(headerExt);
+		extensionPointEngine.createExtensionPoint(headerExt);
 
 		ExtensionPoint trailerExt = new ExtensionPoint(facility, ExtensionPointType.WorkInstructionExportCreateTrailer);
 		trailerExt.setScript(trailerScript);
 		trailerExt.setActive(true);
-		ExtensionPoint.staticGetDao().store(trailerExt);
+		extensionPointEngine.createExtensionPoint(trailerExt);
 
 		ExtensionPoint contentExt = new ExtensionPoint(facility, ExtensionPointType.WorkInstructionExportContent);
 		contentExt.setScript(contentScript);
 		contentExt.setActive(true);
-		ExtensionPoint.staticGetDao().store(contentExt);
+		extensionPointEngine.createExtensionPoint(contentExt);
 
 		LOGGER.info("1: Make the work instruction");
 		

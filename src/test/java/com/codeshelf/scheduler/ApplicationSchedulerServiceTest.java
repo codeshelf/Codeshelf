@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import com.codeshelf.application.FacilitySchedulerService;
 import com.codeshelf.manager.Tenant;
+import com.codeshelf.manager.service.ITenantManagerService;
 import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Point;
@@ -27,11 +28,12 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 	
 	@Test
 	public void startsAndStopsAllFacilitySchedulersAcrossTenants() {
+		ITenantManagerService tenantManager = TenantManagerService.getInstance();
 		Set<UUID> facilityIds = new HashSet<>();
 		List<String> tenants = ImmutableList.of("tenant1", "tenant2");
 		int count = 0;
 		for (String tenantName : tenants) {
-			Tenant tenant = TenantManagerService.getInstance().createTenant(tenantName, tenantName, TenantManagerService.DEFAULT_SHARD_NAME);
+			Tenant tenant = tenantManager.createTenant(tenantName, tenantName, TenantManagerService.DEFAULT_SHARD_NAME);
 			TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 			CodeshelfSecurityManager.removeContextIfPresent();
 			CodeshelfSecurityManager.setContext(CodeshelfSecurityManager.getUserContextSYSTEM(), tenant);
@@ -63,7 +65,11 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 
 		subject.stopAsync();
 		ServiceUtility.awaitTerminatedOrThrow(subject);
-
+		for (String name : tenants) {
+			Tenant tenant = tenantManager.getTenantByName(name);
+			TenantManagerService.getInstance().deleteTenant(tenant);
+		}
+		CodeshelfSecurityManager.removeContextIfPresent();
 	}
 	
 	@Test

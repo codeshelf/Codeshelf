@@ -3,6 +3,7 @@ package com.codeshelf.service;
 import groovy.lang.GroovyRuntimeException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
@@ -29,7 +30,8 @@ import com.google.common.collect.Lists;
 public class ExtensionPointEngine {
 
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(ExtensionPointEngine.class);
-
+	private static final HashMap<UUID, ExtensionPointEngine> facilityEngines = new HashMap<>();
+	
 	ScriptEngine				engine;
 
 	HashSet<ExtensionPointType>	activeExtensions	= new HashSet<ExtensionPointType>();
@@ -54,6 +56,8 @@ public class ExtensionPointEngine {
 		}
 	}
 
+	
+	
 	private void addExtensionPointIfValid(ExtensionPoint ep) throws ScriptException {
 		ExtensionPointType extp = ep.getType();
 		String functionScript = ep.getScript();
@@ -73,6 +77,12 @@ public class ExtensionPointEngine {
 		}
 	}
 
+	private void removeExtensionPoint(ExtensionPoint ep) throws ScriptException {
+		ExtensionPointType extp = ep.getType();
+		this.activeExtensions.remove(extp);
+	}
+
+	
 	private void clearExtensionPoints() {
 		this.activeExtensions.clear();
 	}
@@ -113,8 +123,14 @@ public class ExtensionPointEngine {
 	}
 
 	public static ExtensionPointEngine getInstance(Facility facility) throws ScriptException {
-		// New instance every time now.  Would be good to re-use on a tenant/facility level.
-		return new ExtensionPointEngine(facility);
+		synchronized(facilityEngines) {
+			ExtensionPointEngine engine = facilityEngines.get(facility.getPersistentId());
+			if (engine == null) {
+				engine = new ExtensionPointEngine(facility);
+				facilityEngines.put(facility.getPersistentId(), engine);
+			}
+			return engine;
+		}
 	}
 
 	// Methods to get the parameter beans	
@@ -225,9 +241,24 @@ public class ExtensionPointEngine {
 		return point;
 	}
 
-	public ExtensionPoint update(ExtensionPoint point) throws ScriptException {
+	public ExtensionPoint createExtensionPoint(ExtensionPoint point) throws ScriptException {
 		store(point);
 		return point;
+	}
+
+	
+	public ExtensionPoint update(ExtensionPoint point) throws ScriptException {
+		if (point.isActive()) {
+			addExtensionPointIfValid(point);
+		} else {
+			removeExtensionPoint(point);
+		}
+		store(point);
+		return point;
+	}
+
+	public void delete(ExtensionPoint point) {
+		ExtensionPoint.staticGetDao().delete(point);
 	}
 
 	private ExtensionPoint store(ExtensionPoint point) throws ScriptException {
@@ -238,4 +269,5 @@ public class ExtensionPointEngine {
 		}
 		return point;
 	}
+
 }

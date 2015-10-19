@@ -3,14 +3,11 @@ package com.codeshelf.api.pickscript;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.io.IOUtils;
-import org.hibernate.criterion.Criterion;
-import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,6 +27,7 @@ import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
@@ -41,16 +39,16 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.ScannerTypeEnum;
 import com.codeshelf.model.domain.Tier;
-import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.Vertex;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.CsExceptionUtils;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
-import com.google.common.collect.Lists;
+import com.google.common.base.Optional;
 import com.google.inject.Provider;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.sun.jersey.multipart.FormDataMultiPart;
@@ -585,9 +583,11 @@ public class ScriptServerRunner {
 		if (parts.length != 1){
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_DELETE_ALL_EXTENSIONS);
 		}
-		List<ExtensionPoint> extensions = ExtensionPoint.staticGetDao().findByParent(facility);
+		ExtensionPointEngine engine = ExtensionPointEngine.getInstance(facility);
+
+		List<ExtensionPoint> extensions = engine.getAllExtensions();
 		for (ExtensionPoint extension : extensions) {
-			ExtensionPoint.staticGetDao().delete(extension);
+			engine.delete(extension);
 		}
 	}
 
@@ -607,12 +607,10 @@ public class ScriptServerRunner {
 		} catch (IllegalArgumentException e) {
 			throw new Exception("Illegal type '" + typeStr + "' for an extension point. [OrderImportBeanTransformation,OrderImportHeaderTransformation,OrderImportCreateHeader,OrderImportLineTransformationOrderOnCartContent,WorkInstructionExportContent,WorkInstructionExportCreateHeader,WorkInstructionExportCreateTrailer,WorkInstructionExportLineTransformation]");
 		}
-		ArrayList<Criterion> filter = Lists.newArrayList();
-		filter.add(Restrictions.eq("parent", facility));
-		filter.add(Restrictions.eq("type", typeEnum));
-		List<ExtensionPoint> extensions = ExtensionPoint.staticGetDao().findByFilter(filter);
-		for (ExtensionPoint extension : extensions) {
-			ExtensionPoint.staticGetDao().delete(extension);
+		ExtensionPointEngine engine = ExtensionPointEngine.getInstance(facility);
+		Optional<ExtensionPoint> point = engine.getExtensionPoint(typeEnum);
+		if (point.isPresent()) {
+			engine.delete(point.get());
 		}
 	}
 
@@ -633,13 +631,13 @@ public class ScriptServerRunner {
 		} catch (IllegalArgumentException e) {
 			throw new Exception("Illegal type '" + typeStr + "' for an extension point.");
 		}
-		ArrayList<Criterion> filter = Lists.newArrayList();
-		filter.add(Restrictions.eq("parent", facility));
-		filter.add(Restrictions.eq("type", typeEnum));
-		List<ExtensionPoint> existingExtensions = ExtensionPoint.staticGetDao().findByFilter(filter);
-		if (!existingExtensions.isEmpty()) {
+		
+		ExtensionPointEngine engine = ExtensionPointEngine.getInstance(facility);
+		
+		if (engine.getExtensionPoint(typeEnum) != null) {
 			throw new Exception(typeEnum + " extension already exists in this facility. Run 'deleteExtensionPoint " + typeEnum + "' to delete it.");
 		}
+
 		boolean active = true;
 		if ("active".equalsIgnoreCase(state)) {
 			active = true;
@@ -653,7 +651,7 @@ public class ScriptServerRunner {
 		ExtensionPoint point = new ExtensionPoint(facility, typeEnum);
 		point.setScript(script);
 		point.setActive(active);
-		ExtensionPoint.staticGetDao().store(point);
+		engine.createExtensionPoint(point);
 	}
 
 	/**
