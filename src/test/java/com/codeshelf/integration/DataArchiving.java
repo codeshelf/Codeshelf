@@ -7,9 +7,13 @@ package com.codeshelf.integration;
 
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.UUID;
 
+import org.hibernate.Criteria;
+import org.hibernate.criterion.Restrictions;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.behavior.TestBehavior;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.model.DomainObjectManager;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -32,6 +37,7 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 import com.google.common.collect.ImmutableMap;
@@ -201,7 +207,8 @@ public class DataArchiving extends ServerTest {
 
 	/**
 	 * This function assumes we are in a valid transaction, with facility properly loaded
-	 * Sets the due date on the order back, and set the created date on the WI back
+	 * Sets the due date on the order back, and set the created date on the WI back.
+	 * Also, find any existing worker events for that order, and change the create date on them.
 	 */
 	private void makeDaysOldTestData(String orderId, int daysOld, Facility inFacility) {
 		OrderHeader oh = OrderHeader.staticGetDao().findByDomainId(inFacility, orderId);
@@ -217,13 +224,28 @@ public class DataArchiving extends ServerTest {
 		oh.setDueDate(desiredTime);
 		OrderHeader.staticGetDao().store(oh);
 		
+		List<WorkInstruction> wis = new ArrayList<WorkInstruction>();
 		List<OrderDetail> details = oh.getOrderDetails();
 		for (OrderDetail detail : details) {
 			for (WorkInstruction wi : detail.getWorkInstructions()) {
 				wi.setCreated(desiredTime);
+				wis.add(wi);
 				WorkInstruction.staticGetDao().store(wi);
 			}
-		}		
+		}	
+		
+		// for every work instruction that we set to old above, find its event(s) and set to old
+		for (WorkInstruction wi : wis) {
+			Criteria eventCrit = WorkerEvent.staticGetDao().createCriteria();
+			eventCrit.add(Restrictions.eq("workInstruction", wi));
+			List<WorkerEvent> events = WorkerEvent.staticGetDao().findByCriteriaQuery(eventCrit);
+			for (WorkerEvent event : events) {
+				event.setCreated(desiredTime);
+				WorkerEvent.staticGetDao().store(event);
+			}			
+		}
+
+		
 	}
 
 	/**
@@ -264,7 +286,12 @@ public class DataArchiving extends ServerTest {
 		List<WorkInstruction> allWiList = picker.getAllPicksList();
 		this.logWiList(allWiList);
 
-		LOGGER.info("1c: Dump the cart. This keeps the old work instructions");
+		LOGGER.info("1c: START. Do a few picks. This will make COMPLETE workerEvents");
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+		picker.pickItemAuto();
+
+		LOGGER.info("1d: Dump the cart. This keeps the old work instructions");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		picker.scanCommand("SETUP");
@@ -324,7 +351,9 @@ public class DataArchiving extends ServerTest {
 		LOGGER.info("6: Call the orders purge");
 		beginTransaction();
 		facility = facility.reload();
-		workService.purgeOldObjects(2, facility, OrderHeader.class, 1000); // a typical value?
+		DomainObjectManager doMananager = new DomainObjectManager(facility);		
+		List<UUID> orderIdsToPurge = doMananager.getOrderUuidsToPurge(2);
+		doMananager.purgeSomeOrders(orderIdsToPurge);		
 		commitTransaction();
 		
 		LOGGER.info("6b: Report, via the work service call");
@@ -347,6 +376,26 @@ public class DataArchiving extends ServerTest {
 		workService.reportAchiveables(2, facility);
 		List<Container> cntrs = Container.staticGetDao().getAll();
 		Assert.assertEquals(2, cntrs.size());
+		commitTransaction();
+
+		LOGGER.info("7: Call the WorkerEvent purge");
+		beginTransaction();
+		facility = facility.reload();
+		// three COMPLETE workerEvents were generated above
+		List<WorkerEvent> events = WorkerEvent.staticGetDao().getAll();
+		Assert.assertEquals(3, events.size());
+		// Now purge
+		DomainObjectManager doManager = new DomainObjectManager(facility);		
+		List<UUID> workerEventIdsToPurge = doManager.getWorkerEventUuidsToPurge(2);
+		doMananager.purgeSomeWorkerEvents(workerEventIdsToPurge);		
+		commitTransaction();
+		
+		LOGGER.info("7b: Report, via the work service call");
+		beginTransaction();
+		facility = facility.reload();
+		workService.reportAchiveables(2, facility);
+		events = WorkerEvent.staticGetDao().getAll();
+		Assert.assertEquals(0, events.size());
 		commitTransaction();
 
 	}

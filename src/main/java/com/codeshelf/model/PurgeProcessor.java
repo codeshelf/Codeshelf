@@ -22,6 +22,7 @@ public class PurgeProcessor implements BatchProcessor {
 	List<UUID>					ordersUuidsToPurge		= null;
 	List<UUID>					containerUuidsToPurge	= null;
 	List<UUID>					wiUuidsToPurge			= null;
+	List<UUID>					workerEventUuidsToPurge	= null;
 
 	enum PurgePhase {
 		PurgePhaseInit,
@@ -29,6 +30,7 @@ public class PurgeProcessor implements BatchProcessor {
 		PurgePhaseOrders,
 		PurgePhaseContainers,
 		PurgePhaseWis,
+		PurgePhaseWorkerEvents,
 		PurgePhaseDone
 	}
 
@@ -39,12 +41,17 @@ public class PurgeProcessor implements BatchProcessor {
 	@Setter
 	@Getter
 	int			ordersToPurge;
+	@Setter
 	@Getter
-	int			ordersPurged	= 0;
+	int			workerEventsToPurge;
 	@Getter
-	int			wisPurged		= 0;
+	int			ordersPurged		= 0;
 	@Getter
-	int			cntrsPurged		= 0;
+	int			wisPurged			= 0;
+	@Getter
+	int			cntrsPurged			= 0;
+	@Getter
+	int			workerEventsPurged	= 0;
 
 	public PurgeProcessor(Facility inFacility) {
 		facility = inFacility;
@@ -55,6 +62,7 @@ public class PurgeProcessor implements BatchProcessor {
 	 *  This needs to return a count of how many "things" it is going to do.
 	 *  And assemble and remember what doBatch is going to do. This is called in an appropriate transaction
 	 *  Unfortunately, we cannot really know how many containers or wis will be purged until after the order purge is done.
+	 *  This returns the sum of orders to purge, and workerEvents to purge
 	 */
 	@Override
 	public int doSetup() throws Exception {
@@ -66,10 +74,11 @@ public class PurgeProcessor implements BatchProcessor {
 
 		LOGGER.info("Starting data purge with these parameters: {}", purgeParams);
 
+		buildWorkerEventList();
 		buildOrdersList(); //must be called here instead of in doBatch() so we can return something about the size of the job
 
 		setPurgePhase(PurgePhase.PurgePhaseOrders);
-		return getOrdersToPurge();
+		return (getOrdersToPurge() + getWorkerEventsToPurge());
 	}
 
 	private void buildWiList() {
@@ -92,11 +101,41 @@ public class PurgeProcessor implements BatchProcessor {
 
 	private void buildOrdersList() {
 		if (ordersUuidsToPurge != null)
-			LOGGER.error("buildCntrList should be called only once");
+			LOGGER.error("buildOrdersList should be called only once");
 		DomainObjectManager doMananager = new DomainObjectManager(facility);
 		ordersUuidsToPurge = doMananager.getOrderUuidsToPurge(purgeParams.getPurgeAfterDaysValue());
 		setOrdersToPurge(ordersUuidsToPurge.size()); // record the starting size of the job
 		LOGGER.info("Starting orders and associated objects purge. {} orders", ordersUuidsToPurge.size());
+	}
+	
+	private int purgeOrderBatch() {
+		if (ordersUuidsToPurge.isEmpty()) {
+			LOGGER.error("unexpected state for purgeOrderBatch");
+			return 0;
+		}
+		List<UUID> orderBatch = subUuidListAndRemoveFromInList(ordersUuidsToPurge, purgeParams.getOrderBatchValue());
+		DomainObjectManager doMananager = new DomainObjectManager(facility);
+		return doMananager.purgeSomeOrders(orderBatch);
+	}
+
+	private void buildWorkerEventList() {
+		// This could be combined into buildOrdersList with the current structure.
+		// This is called in doSetup. We just keep the list around
+		if (workerEventUuidsToPurge != null)
+			LOGGER.error("buildWorkerEventList should be called only once");
+		DomainObjectManager doMananager = new DomainObjectManager(facility);
+		workerEventUuidsToPurge = doMananager.getWorkerEventUuidsToPurge(purgeParams.getPurgeAfterDaysValue());
+		setWorkerEventsToPurge(workerEventUuidsToPurge.size()); // record this component of the starting size of the job
+	}
+
+	private int purgeWorkerEventBatch() {
+		if (workerEventUuidsToPurge.isEmpty()) {
+			LOGGER.error("unexpected state for purgeWorkerEventBatch");
+			return 0;
+		}
+		List<UUID> eventBatch = subUuidListAndRemoveFromInList(workerEventUuidsToPurge, purgeParams.getWorkerEventBatchValue());
+		DomainObjectManager doMananager = new DomainObjectManager(facility);
+		return doMananager.purgeSomeCntrs(eventBatch);
 	}
 
 	private void buildCntrList() {
@@ -112,19 +151,9 @@ public class PurgeProcessor implements BatchProcessor {
 			LOGGER.error("unexpected state for purgeCntrBatch");
 			return 0;
 		}
-		List<UUID> wiBatch = subUuidListAndRemoveFromInList(containerUuidsToPurge, purgeParams.getWorkInstructionBatchValue());
+		List<UUID> cntrBatch = subUuidListAndRemoveFromInList(containerUuidsToPurge, purgeParams.getContainerBatchValue());
 		DomainObjectManager doMananager = new DomainObjectManager(facility);
-		return doMananager.purgeSomeCntrs(wiBatch);
-	}
-
-	private int purgeOrderBatch() {
-		if (ordersUuidsToPurge.isEmpty()) {
-			LOGGER.error("unexpected state for purgeOrderBatch");
-			return 0;
-		}
-		List<UUID> orderBatch = subUuidListAndRemoveFromInList(ordersUuidsToPurge, purgeParams.getOrderBatchValue());
-		DomainObjectManager doMananager = new DomainObjectManager(facility);
-		return doMananager.purgeSomeOrders(orderBatch);
+		return doMananager.purgeSomeCntrs(cntrBatch);
 	}
 
 	/**
@@ -156,7 +185,7 @@ public class PurgeProcessor implements BatchProcessor {
 				setPurgePhase(PurgePhase.PurgePhaseWis);
 				LOGGER.info("Total: purged {} orders", ordersPurged);
 				if (endSize > 0) {
-					LOGGER.error("orders purge did not progress. Bailing out. Leaving {} orders that should have been purged");
+					LOGGER.error("orders purge did not progress. Bailing out. Leaving {} orders that should have been purged", endSize);
 				}
 			} else if (batchCount % 10 == 0) {
 				LOGGER.info("incremental total: purged {} orders", ordersPurged);
@@ -172,7 +201,7 @@ public class PurgeProcessor implements BatchProcessor {
 				LOGGER.info("Total: purged {} work instructions", wisPurged);
 				setPurgePhase(PurgePhase.PurgePhaseContainers);
 				if (endSize > 0) {
-					LOGGER.error("work instructions purge did not progress. Bailing out. Leaving {} work instructions that should have been purged");
+					LOGGER.error("work instructions purge did not progress. Bailing out. Leaving {} work instructions that should have been purged", endSize);
 				}
 			} else if (batchCount % 10 == 0) {
 				LOGGER.info("incremental total: purged {} work instructions", wisPurged);
@@ -186,13 +215,33 @@ public class PurgeProcessor implements BatchProcessor {
 			int endSize = containerUuidsToPurge.size();
 			if (endSize == startSize || endSize == 0) {
 				LOGGER.info("Total: purged {} containers", cntrsPurged);
-				setPurgePhase(PurgePhase.PurgePhaseDone);
+				setPurgePhase(PurgePhase.PurgePhaseWorkerEvents);
 				if (endSize > 0) {
-					LOGGER.error("container purge did not progress. Bailing out. Leaving {} containers that should have been purged");
+					LOGGER.error("container purge did not progress. Bailing out. Leaving {} containers that should have been purged", endSize);
 				}
 			} else if (batchCount % 10 == 0) {
 				LOGGER.info("incremental total: purged {} containers", cntrsPurged);
 			}
+		} else if (currentPhase == PurgePhase.PurgePhaseWorkerEvents) {
+			if (workerEventUuidsToPurge == null) {
+				LOGGER.error("Expected worker event list in PurgePhaseWorkerEvents.Bailing out.");
+				setPurgePhase(PurgePhase.PurgePhaseDone);
+			}			
+			
+			int startSize = workerEventUuidsToPurge.size();
+			if (startSize > 0)
+				workerEventsPurged += purgeWorkerEventBatch();
+			int endSize = workerEventUuidsToPurge.size();
+			if (endSize == startSize || endSize == 0) {
+				setPurgePhase(PurgePhase.PurgePhaseDone);
+				LOGGER.info("Total: purged {} worker events", workerEventsPurged);
+				if (endSize > 0) {
+					LOGGER.error("workerEvents purge did not progress. Bailing out. Leaving {} workerEvents that should have been purged", endSize);
+				}
+			} else if (batchCount % 10 == 0) {
+				LOGGER.info("incremental total: purged {} workerEvents", workerEventsPurged);
+			}
+
 		} else {
 			LOGGER.error("Unexpected phase in PurgeProcessor doBatch {}", currentPhase);
 			setPurgePhase(PurgePhase.PurgePhaseDone);
