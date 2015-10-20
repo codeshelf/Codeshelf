@@ -243,7 +243,6 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 	}
 
-	@SuppressWarnings("unused")
 	private void setUpBatchOrdersForZigzag(Facility inFacility) throws IOException {
 		// Setting up containers 2,3,7,11 to match the bug
 
@@ -272,7 +271,7 @@ public class CheProcessTestPick extends ServerTest {
 				+ "1001dry,D-35\r\n"
 				+ "1003dry,D-22\r\n" + "1006dry,D-100\r\n" + "1016dry,D-76\r\n" + "1007dry,D-99\r\n";
 		inFacility = Facility.staticGetDao().reload(inFacility);
-		boolean result = importSlotting(inFacility, csvSlotting);
+		importSlotting(inFacility, csvSlotting);
 		commitTransaction();
 
 		// Batches file. Only containers 2,3,7,11
@@ -704,7 +703,6 @@ public class CheProcessTestPick extends ServerTest {
 	}
 
 	@Test
-	@SuppressWarnings("unused")
 	public final void testCheProcess1() throws IOException {
 		// Test cases:
 		// 1) If no work, immediately comes to NO_WORK after start. (Before v6, it came to all work complete.)
@@ -930,7 +928,6 @@ public class CheProcessTestPick extends ServerTest {
 		// In this, we see 2nd wi is user short, and third a short ahead. Item 1555 should have got an immediate short.
 		WorkInstruction userShortWi = serverWiList2.get(1);
 		WorkInstruction shortAheadWi = serverWiList2.get(2);
-		WorkInstruction immediateShortWi = null;
 
 		// wait here because doButton above takes some time to percolate over to server side.
 		// Below, che1b.getCheWorkInstructions() should have the completed work instruction. Get a staleObjectState exception if it changes to slow.
@@ -952,20 +949,13 @@ public class CheProcessTestPick extends ServerTest {
 		List<WorkInstruction> cheWis2 = che1b.getCheWorkInstructions();
 		Assert.assertNotNull(cheWis2);
 
-		for (WorkInstruction cheWi : cheWis2) {
-			if (cheWi.getItemMasterId().equals("1555"))
-				immediateShortWi = cheWi;
-		}
 		Assert.assertNotNull(userShortWi);
 		Assert.assertNotNull(shortAheadWi);
-		//Auto-shorting functionality disabled 02/03/2015
-		//Assert.assertNotNull(immediateShortWi);
-		//logOneWi(immediateShortWi);
+
 		logOneWi(userShortWi);
 		logOneWi(shortAheadWi);
 		// All should have the same assign time
 		Assert.assertEquals(shortAheadWi.getAssigned(), userShortWi.getAssigned());
-		//Assert.assertEquals(immediateShortWi.getAssigned(), shortAheadWi.getAssigned());
 
 		propertyService.restoreHKDefaults(facility);
 
@@ -1123,7 +1113,6 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals("D-99", wi.getPickInstruction());
 	}
 
-	@SuppressWarnings("unused")
 	@Test
 	public final void twoChesCrossBatch() throws IOException {
 		// Reproduce DEV-592 seen during MAT for v10
@@ -1182,12 +1171,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		Assert.assertEquals(1, picker2.countActiveJobs());
 		WorkInstruction wi = picker2.nextActiveWi();
-
-		int button = picker2.buttonFor(wi);
-		int quant = wi.getPlanQuantity();
 		Assert.assertEquals("D-76", wi.getPickInstruction());
-
-		//picker2.simulateCommitByChangingTransaction(this.persistenceService);
 
 		commitTransaction();
 	}
