@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -27,6 +28,8 @@ import com.codeshelf.model.domain.SftpOrderGateway;
 import com.codeshelf.model.domain.SftpWiGateway;
 import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.validation.BatchResult;
+import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.SftpException;
 
 
 public class AbstractSftpEdiGatewayTest extends HibernateTest {
@@ -102,36 +105,56 @@ public class AbstractSftpEdiGatewayTest extends HibernateTest {
 	}
 
 	@Test
-	public void testSftpOrders() throws IOException  {
+	public void testSftpImportOrder() throws IOException, JSchException, SftpException  {
 		beginTransaction();
 		SftpConfiguration config = setupConfiguration();
 		SftpOrderGateway sftpOrders = configureSftpService(getFacility(), config, SftpOrderGateway.class);
-		// create a test file on the server to be processed
-		
 		String filename = Long.toString(System.currentTimeMillis())+"a.DAT";
-		String importFilename = config.getImportPath()+"/"+ filename;
-		String archiveFilename = config.getArchivePath()+"/"+ filename;
+		String archiveFilename = testImportFile(sftpOrders, filename);// create a test file on the server to be processed
+		sftpOrders.delete(archiveFilename);
+		commitTransaction();
+	}
+
+	@Test
+	public void testReprocessSameFile() throws IOException, JSchException, SftpException {
+		beginTransaction();
+		SftpConfiguration config = setupConfiguration();
+		SftpOrderGateway sftpOrders = configureSftpService(getFacility(), config, SftpOrderGateway.class);
+		String filename = Long.toString(System.currentTimeMillis())+"a.DAT";
+		String archiveFilename =   testImportFile(sftpOrders, filename);
+		String archiveFilename2 =  testImportFile(sftpOrders, filename);
+		
+		try {
+			Assert.assertNotEquals(archiveFilename, archiveFilename2);
+		}
+		finally {
+			//cleanup
+			sftpOrders.delete(archiveFilename);
+			sftpOrders.delete(archiveFilename2);
+			
+		}
+		
+		commitTransaction();
+		
+	}
+	
+	private String testImportFile(SftpOrderGateway sftpOrders, String baseFilename) throws IOException, JSchException, SftpException {
+		String importFilename = sftpOrders.getConfiguration().getImportPath() + "/" + baseFilename;
 		@SuppressWarnings("unused")
 		ExportReceipt receipt = sftpOrders.uploadAsFile("order data 1", importFilename);
-		try {
-		//String filename2 = config.getImportPath()+"/"+Long.toString(System.currentTimeMillis())+"b.DAT";
-		//uploadTestFile(sftpOrders,filename2,"order data 2");
 
 		ICsvOrderImporter mockImporter = mock(ICsvOrderImporter.class);
 		@SuppressWarnings("unchecked")
 		BatchResult<Object> mockBatchResult = mock(BatchResult.class);
 		when(mockBatchResult.isSuccessful()).thenReturn(true);
 		when(mockImporter.importOrdersFromCsvStream(any(Reader.class), any(Facility.class), any(Timestamp.class))).thenReturn(mockBatchResult);
-
+		
 		// now connect and process that file
-		sftpOrders.getUpdatesFromHost(mockImporter ,null,null,null,null,null);		
+		Map<String, String> processedOrderPaths = sftpOrders.processOrders(mockImporter);		
 		
 		// file was processed and result checked
 		verify(mockBatchResult,times(1)).isSuccessful();
-		} finally {
-			sftpOrders.delete(archiveFilename);
-		}
-		commitTransaction();
+		return processedOrderPaths.get(baseFilename);
 	}
 
 
