@@ -6,7 +6,10 @@
  *******************************************************************************/
 package com.codeshelf.model.domain;
 
+import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -29,6 +32,8 @@ import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Restrictions;
 import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,12 +47,15 @@ import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.EdiGatewayStateEnum;
 import com.codeshelf.model.HeaderCounts;
+import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.DropboxGateway.DropboxCredentials;
+import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.PropertyService;
@@ -1307,7 +1315,7 @@ public class Facility extends Location {
 	}
 
 	public void delete() {
-		//See https://codeshelf.atlassian.net/wiki/pages/viewpage.action?pageId=24936525 for details
+		//See https://codeshelf.atlassian.net/wiki/pages/viewpage.action?pageId=24936525 (CD_0096) for details
 		//Step 1 - WorkInstruction
 		List<WorkInstruction> workInstructions = WorkInstruction.staticGetDao().findByParent(this);
 		deleteCollection(workInstructions, WorkInstruction.staticGetDao());
@@ -1392,5 +1400,136 @@ public class Facility extends Location {
 			}
 			dropboxLegacyCleanupDone = true;
 		}
+	}
+	
+	public void computeMetrics(){
+		Calendar cal = Calendar.getInstance();
+		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
+		cal.set(Calendar.HOUR_OF_DAY, 0);
+		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MILLISECOND, 0);
+		Timestamp metricsCollectionStartUTC = new Timestamp(cal.getTimeInMillis());
+		cal.add(Calendar.DATE, 1);
+		Timestamp metricsCollectionEndUTC = new Timestamp(cal.getTimeInMillis());
+		
+		FacilityMetric metric = getMetric(metricsCollectionStartUTC);
+		metric.setUpdated(new Timestamp(System.currentTimeMillis()));
+		metric.setTz(cal.getTimeZone().getID());
+		metric.setDateLocalUI(format.format(cal.getTime()));
+		metric.setDomainId(metric.getDefaultDomainIdPrefix() + "-" + getDomainId() + "-" + metric.getDateLocalUI());
+		
+		computeOrderMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
+		computeDetailMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
+		computeHousekeepingMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
+		computeEventMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
+		
+		FacilityMetric.staticGetDao().store(metric);
+	}
+	
+	private void computeOrderMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc){
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("parent", this));
+		filterParams.add(Restrictions.eq("status", OrderStatusEnum.COMPLETE));
+		filterParams.add(Restrictions.ge("updated", startUtc));
+		filterParams.add(Restrictions.le("updated", endUtc));
+		int ordersPicked = OrderHeader.staticGetDao().countByFilter(filterParams);
+		metric.setOrdersPicked(ordersPicked);		
+	}
+	
+	private void computeDetailMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc){
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("status", OrderStatusEnum.COMPLETE));
+		filterParams.add(Restrictions.ge("updated", startUtc));
+		filterParams.add(Restrictions.le("updated", endUtc));
+		List<OrderDetail> details = OrderDetail.staticGetDao().findByFilter(filterParams);
+		int linesTotal = 0, linesEach = 0, linesCase = 0, linesOther = 0;
+		int countTotal = 0, countEach = 0, countCase = 0, countOther = 0;
+		for (OrderDetail detail : details) {
+			if (!this.equals(detail.getFacility())){
+				continue;
+			}
+			int actual = detail.getActualPickedItems();
+			linesTotal++;
+			countTotal += actual;
+			String uomId = detail.getUomMasterId();
+			if (UomNormalizer.isEach(uomId)){
+				linesEach++;
+				countEach += actual;
+			} else if (UomNormalizer.isCase(uomId)){
+				linesCase++;
+				countCase += actual;
+			} else {
+				linesOther++;
+				countOther += actual;
+			}
+		}
+		metric.setLinesPicked(linesTotal);
+		metric.setLinesPickedEach(linesEach);
+		metric.setLinesPickedCase(linesCase);
+		metric.setLinesPickedOther(linesOther);
+		metric.setCountPicked(countTotal);
+		metric.setCountPickedEach(countEach);
+		metric.setCountPickedCase(countCase);
+		metric.setCountPickedOther(countOther);
+	}
+	
+	private void computeHousekeepingMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc){
+		List<WorkInstructionTypeEnum> housekeepingTypes = new ArrayList<>();
+		housekeepingTypes.add(WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+		housekeepingTypes.add(WorkInstructionTypeEnum.HK_REPEATPOS);
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("parent", this));
+		filterParams.add(Restrictions.in("type", housekeepingTypes));
+		filterParams.add(Restrictions.eq("status", OrderStatusEnum.COMPLETE));
+		filterParams.add(Restrictions.ge("completed", startUtc));
+		filterParams.add(Restrictions.le("completed", endUtc));
+		int housekeepingInstructionsCount = WorkInstruction.staticGetDao().countByFilter(filterParams);
+		metric.setHouseKeeping(housekeepingInstructionsCount);		
+	}
+	
+	private void computeEventMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc){
+		List<EventType> shortEventTypes = new ArrayList<>();
+		shortEventTypes.add(EventType.SHORT);
+		shortEventTypes.add(EventType.SHORT_AHEAD);
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("facility", this));
+		filterParams.add(Restrictions.in("eventType", shortEventTypes));
+		filterParams.add(Restrictions.ge("created", startUtc));
+		filterParams.add(Restrictions.le("created", endUtc));
+		int shortEventsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
+		metric.setShortEvents(shortEventsCount);
+		
+		filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("facility", this));
+		filterParams.add(Restrictions.eq("eventType", EventType.SKIP_ITEM_SCAN));
+		filterParams.add(Restrictions.ge("created", startUtc));
+		filterParams.add(Restrictions.le("created", endUtc));
+		int skipEventsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
+		metric.setSkipScanEvents(skipEventsCount);
+	}
+	
+	private FacilityMetric getMetric(Timestamp date){
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("parent", this));
+		filterParams.add(Restrictions.eq("date", date));
+		List<FacilityMetric> metrics = FacilityMetric.staticGetDao().findByFilter(filterParams);
+		FacilityMetric metric = null;
+		if (metrics.isEmpty()) {
+			metric = new FacilityMetric();
+			metric.setParent(this);
+			metric.setDate(date);
+		} else if (metrics.size() == 1){
+			metric = metrics.get(0);
+		} else {
+			LOGGER.warn("Found more than one FacilityMertic for facility " + getDomainId() + " at " + date + ". Using latest one.");
+			Timestamp latestTs = new Timestamp(0);
+			for (FacilityMetric metricCheck : metrics) {
+				if (metricCheck.getUpdated().after(latestTs)){
+					metric = metricCheck;
+				}
+			}
+		}
+		return metric;
 	}
 }

@@ -298,6 +298,19 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		Number value = (Number) criteria.uniqueResult();
 		return value.intValue();
 	}
+	
+	@Override
+	public final int countByFilter(List<Criterion> inFilter) {
+		Session session = getCurrentSession();
+		Criteria criteria = session.createCriteria(getDaoClass());
+		for (Criterion expression : inFilter) {
+			criteria.add(expression);
+		}
+		criteria.setProjection(Projections.rowCount());
+		Number value = (Number) criteria.uniqueResult();
+		return value.intValue();
+	}
+
 
 	@Override
 	public List<UUID> getUUIDListByCriteriaQuery(Criteria criteria) {

@@ -617,4 +617,14 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			getDetailStatusName(),
 			getActive());
 	}
+	
+	public int getActualPickedItems(){
+		int total = 0;
+		for (WorkInstruction wi : workInstructions){
+			if (wi.getActualQuantity() != null) {
+				total += wi.getActualQuantity();
+			}
+		}
+		return total;
+	}
 }

@@ -54,6 +54,7 @@ public interface ITypedDao<T> {
 	List<T> findByCriteriaQuery(Criteria criteria);
 	
 	int countByCriteriaQuery(Criteria criteria);
+	int countByFilter(List<Criterion> inFilter);
 
 	List<UUID> getUUIDListByCriteriaQuery(Criteria criteria);
 

@@ -52,6 +52,10 @@ public class UomNormalizer {
 	public static boolean isEach(String inUom){
 		return normalizedEquals(EACH, inUom);
 	}
+	
+	public static boolean isCase(String inUom){
+		return normalizedEquals(CASE, inUom);
+	}
 
 	public static List<String> variants(String normalizedString) {
 		return variants.get(normalizedString);

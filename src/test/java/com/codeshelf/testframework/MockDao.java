@@ -195,6 +195,12 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 	{
 		throw new NotImplementedException();
 	}
+	
+	@Override
+	public int countByFilter(List<Criterion> inFilter)
+	{
+		throw new NotImplementedException();
+	}
 
 	@Override
 	public List<UUID> getUUIDListByCriteriaQuery(Criteria criteria) {

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog 
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog" 
+	logicalFilePath="db.changelog-v23.2.xml"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+    <changeSet author="ilya (generated)" id="1445359390776-4">
+        <createTable tableName="facility_metric">
+            <column name="persistentid" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="domainid" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="INT8">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tz" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date_local_ui" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="orders_picked" type="INT4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="count_picked" type="int4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="count_picked_case" type="INT4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="count_picked_each" type="INT4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="count_picked_other" type="INT4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lines_picked" type="int4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lines_picked_case" type="INT4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lines_picked_each" type="INT4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lines_picked_other" type="INT4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="house_keeping" type="INT4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="palletizer_puts" type="INT4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="put_wall_puts" type="INT4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="replenish_puts" type="INT4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="short_events" type="INT4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="skip_scan_events" type="INT4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sku_wall_puts" type="INT4">
+                <constraints nullable="false"/>
+            </column>
+            <column name="parent_persistentid" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="ilya (generated)" id="1445359390776-5">
+        <addPrimaryKey columnNames="persistentid" constraintName="facility_metrPK" tableName="facility_metric"/>
+    </changeSet>
+    <changeSet author="ilya (generated)" id="1445359390776-6">
+        <addForeignKeyConstraint baseColumnNames="parent_persistentid" baseTableName="facility_metric" constraintName="FK_byxtrdelcx8jwebbc8tto8avi" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="location"/>
+    </changeSet>    
+</databaseChangeLog>

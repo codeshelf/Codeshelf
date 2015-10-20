@@ -51,7 +51,7 @@ public class ScriptSiteRunner {
 	private StringBuilder report = new StringBuilder();
 	private final CsDeviceManager deviceManager;
 	private static final Object lock = new Object();
-	private Random rnd_gen = new Random(0);
+	private Random rnd_gen = new Random(System.currentTimeMillis());
 	private boolean accumulatingSetupCommands = false;
 	private List<String[]> accumulatedSetupCommands = new ArrayList<>();
 	
@@ -76,6 +76,9 @@ public class ScriptSiteRunner {
 				try {
 					for (String line : lines) {
 						processLine(line);
+					}
+					if (accumulatingSetupCommands) {
+						throw new Exception("'setupMany' block wasn't closed with 'setupMany stop'");
 					}
 					LOGGER.info("Site script block completed");
 					report.append("***Site Script Segment Completed Successfully***\n");

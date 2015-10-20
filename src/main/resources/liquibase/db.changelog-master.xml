@@ -74,4 +74,5 @@
     <include file="db.changelog-v22.4.xml" relativeToChangelogFile="true" />
     
     <include file="db.changelog-v23.1.xml" relativeToChangelogFile="true" />
+    <include file="db.changelog-v23.2.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>

@@ -7,6 +7,7 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -92,4 +93,21 @@ public class FacilitiesResource {
 			return new ErrorResponse().processException(e);
 		}
 	}
+	
+	@PUT
+	@Path("/metrics")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response computeMetrics(){
+		try {
+			List<Facility> facilies = Facility.staticGetDao().getAll();
+			for (Facility facility : facilies) {
+				facility.computeMetrics();
+			}
+			int size = facilies.size();
+			return BaseResponse.buildResponse("Updated metrics for " + facilies.size() + (size == 1? " facility" : " facilities"));
+		} catch (Exception e) {
+			return new ErrorResponse().processException(e);
+		}
+	}
+	
 }

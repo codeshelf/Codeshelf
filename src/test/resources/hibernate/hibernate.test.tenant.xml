@@ -89,6 +89,6 @@
         <mapping class="com.codeshelf.model.domain.ExtensionPoint"/>
         <mapping class="com.codeshelf.model.domain.ExportMessage"/>
         <mapping class="com.codeshelf.edi.WorkInstructionCsvBean"/>
-
+		<mapping class="com.codeshelf.model.domain.FacilityMetric"/>
     </session-factory>
 </hibernate-configuration>

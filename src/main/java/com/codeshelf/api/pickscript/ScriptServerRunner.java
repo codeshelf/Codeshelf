@@ -633,8 +633,8 @@ public class ScriptServerRunner {
 		}
 		
 		ExtensionPointEngine engine = ExtensionPointEngine.getInstance(facility);
-		
-		if (engine.getExtensionPoint(typeEnum) != null) {
+		Optional<ExtensionPoint> extension = engine.getExtensionPoint(typeEnum);
+		if (extension != null && extension.isPresent()) {
 			throw new Exception(typeEnum + " extension already exists in this facility. Run 'deleteExtensionPoint " + typeEnum + "' to delete it.");
 		}
 
