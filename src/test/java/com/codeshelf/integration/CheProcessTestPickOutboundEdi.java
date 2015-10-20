@@ -252,6 +252,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 	 * The intent is to do enough to cause the export beans to populate.
 	 * DEV-1127 from PFSWeb go live had location-based pick not populating the from location for the pick correctly.
 	 */
+	@Ignore
 	@Test
 	public void testEDIAccumulatorExportBean() throws Exception {
 
@@ -393,7 +394,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 	}
 
 	/**
-	 * This is to replicate
+	 * This is to replicate the situation seen at PFSWeb
 	 */
 	@Test
 	@Ignore
@@ -585,8 +586,9 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 	}
 
 	/**
-	 * This is to replicate
+	 * Exploring other cart change scenarios
 	 */
+	@Ignore
 	@Test
 	public void testShortAndCompleteOtherCart() throws Exception {
 
@@ -786,7 +788,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 	}
 
 	/**
-	 * This is to replicate
+	 * See what happens if the short ahead finishes the order. Answer, the file is sent.
 	 */
 	@Test
 	public void testShortAheadFinishesOrder() throws Exception {
