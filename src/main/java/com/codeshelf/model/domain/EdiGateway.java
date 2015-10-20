@@ -58,7 +58,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class EdiGateway extends DomainObjectTreeABC<Facility> implements IEdiGateway {
-	private static final String	TIME_FORMAT	= "HH-mm-ss";
+	private static final String	TIME_FORMAT	= "HH-mm-ss-SSS";
 
 	private static HashMap<UUID, Timestamp> lastSuccessTimes = new HashMap<>();
 	
