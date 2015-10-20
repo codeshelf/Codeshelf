@@ -5,11 +5,14 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +29,7 @@ import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.BatchResult;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.google.common.base.Optional;
 import com.jcraft.jsch.ChannelSftp;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.SftpException;
@@ -70,9 +74,9 @@ public class SftpOrderGateway extends SftpGateway implements IEdiImportGateway{
 		return true;
 	}
 
-	private boolean processOrders(ICsvOrderImporter inCsvOrderImporter) throws JSchException, SftpException, IOException {
-		boolean failure = false;
-		
+	//package primarily for test without refactoring all gateways getUpdatesFromHost
+	public Map<String, String> processOrders(ICsvOrderImporter inCsvOrderImporter) throws JSchException, SftpException, IOException {
+		Map<String, String> filesProcessed = new HashMap<>(); 
 		ChannelSftp sftp = connect();
 
 		try {
@@ -81,22 +85,29 @@ public class SftpOrderGateway extends SftpGateway implements IEdiImportGateway{
 			if(filesToImport.size() == 0) {
 				LOGGER.info("No files to process at {}",getConfiguration().getUrl());
 			} else {
-				for(int ix = 0; ix < filesToImport.size(); ix++ ) {
+				int total = filesToImport.size();
+				for(int ix = 0; ix < total; ix++ ) {
 					String filename = filesToImport.get(ix);
-					
-					if (!processImportFile(sftp, inCsvOrderImporter, filename))
-						failure = true;
+					filesProcessed.put(filename, null);
+					try {
+						Optional<String> finalPath = processImportFile(sftp, inCsvOrderImporter, filename);
+						if (finalPath.isPresent()) {
+							filesProcessed.put(filename, finalPath.get());
+						} 
+					}
+					catch(Exception e) {
+						LOGGER.warn("Unexpected exception processing file {} in gateway {}", filename, this.toSftpChannelDebug(), e);
+					}
 				}
 			}
 		} finally {			
 			disconnect();
 		}
-
-		return !failure;
+		return filesProcessed;
 	}
 
-	private boolean processImportFile(ChannelSftp sftp, ICsvOrderImporter inCsvOrderImporter, String filename) throws SftpException, IOException {
-		boolean success = false;
+	private Optional<String> processImportFile(ChannelSftp sftp, ICsvOrderImporter inCsvOrderImporter, String filename) throws SftpException, IOException {
+		Optional<String> finalFilePath = Optional.absent();
 		if(filename.endsWith(FILENAME_SUFFIX_FAILED)) {
 			// ignore
 			LOGGER.debug("Skipping FAILED file in SFTP: {}",filename);
@@ -105,16 +116,22 @@ public class SftpOrderGateway extends SftpGateway implements IEdiImportGateway{
 			LOGGER.warn("Skipping incomplete PROCESSING file in SFTP: {}",filename);
 		} else if(getConfiguration().matchOrdersFilename(filename)) {
 			// process this orders file
+			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 			String originalPath = getConfiguration().getImportPath()+"/"+filename;
 			String processingPath = originalPath + FILENAME_SUFFIX_PROCESSING;
 			String failedPath = originalPath + FILENAME_SUFFIX_FAILED;
-			String archivePath = getConfiguration().getArchivePath()+"/"+filename;
-			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
+			String baseArchivePath = FilenameUtils.removeExtension(getConfiguration().getArchivePath() + "/" + filename);
+
+			String archivePath  = String.format("%s.%s.%s",
+				baseArchivePath,
+				safeTimestamp(ediProcessTime.getTime()),
+				FilenameUtils.getExtension(filename));
 
 			// record receipt
 			long receivedTime = System.currentTimeMillis();
 			// rename to .processing and begin
 			renameFile(sftp, originalPath, processingPath);
+			finalFilePath = Optional.of(processingPath);
 			BatchResult<Object> results = null;
 			try(InputStream fileStream = sftp.get(processingPath)) {
 				InputStreamReader reader = new InputStreamReader(fileStream);
@@ -124,18 +141,18 @@ public class SftpOrderGateway extends SftpGateway implements IEdiImportGateway{
 			//long receivedTime = 1000 * file.getAttrs().getMTime();
 			inCsvOrderImporter.persistDataReceipt(getParent(), username, filename, receivedTime, EdiTransportType.SFTP, results);
 
-			success = results.isSuccessful();
-			
-			if(success) {
+			if(results.isSuccessful()) {
 				renameFile(sftp, processingPath, archivePath);
+				finalFilePath = Optional.of(archivePath);
 			} else {
 				renameFile(sftp, processingPath, failedPath);
+				finalFilePath = Optional.of(failedPath);
 			}
 						
 		} else {
 			LOGGER.warn("Skipping unexpected file in SFTP EDI: {} {}", filename, toSftpChannelDebug());
 		}
-		return success;
+		return finalFilePath;
 		
 	}
 

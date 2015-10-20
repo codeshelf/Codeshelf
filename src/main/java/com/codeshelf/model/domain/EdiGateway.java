@@ -6,6 +6,7 @@
 package com.codeshelf.model.domain;
 
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -57,6 +58,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class EdiGateway extends DomainObjectTreeABC<Facility> implements IEdiGateway {
+	private static final String	TIME_FORMAT	= "HH-mm-ss-SSS";
+
 	private static HashMap<UUID, Timestamp> lastSuccessTimes = new HashMap<>();
 	
 	public static class EdiGatewayDao extends GenericDaoABC<EdiGateway> implements ITypedDao<EdiGateway> {
@@ -142,5 +145,9 @@ public abstract class EdiGateway extends DomainObjectTreeABC<Facility> implement
 	
 	public synchronized void updateLastSuccessTime(){
 		lastSuccessTimes.put(getPersistentId(), new Timestamp(System.currentTimeMillis()));
+	}
+
+	protected String safeTimestamp(long time) {
+		return new SimpleDateFormat(TIME_FORMAT).format(time);
 	}
 }

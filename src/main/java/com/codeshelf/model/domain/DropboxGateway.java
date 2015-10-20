@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.Locale;
 
 import javax.persistence.Column;
@@ -32,8 +31,8 @@ import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
 import com.codeshelf.edi.IEdiImportGateway;
-import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.model.EdiGatewayStateEnum;
+import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.validation.BatchResult;
@@ -90,8 +89,6 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 
 	private static final String	EXPORT_DIR_PATH			= "export";
 	private static final String	EXPORT_WIS_PATH			= "work";
-
-	private static final String	TIME_FORMAT				= "HH-mm-ss";
 
 	@Column(nullable = true, name = "db_cursor")
 	@Getter
@@ -628,8 +625,10 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 		try {
 			if (inClient.getMetadata(toPath) != null) {
 				// The to path already exists.  Tack on some extra versioning.
-				toPath = FilenameUtils.removeExtension(toPath) + "."
-						+ new SimpleDateFormat(TIME_FORMAT).format(System.currentTimeMillis()) + ".csv";
+				toPath = String.format("%s.%s.%s",
+						FilenameUtils.removeExtension(toPath),
+						safeTimestamp(System.currentTimeMillis()),
+						"csv");
 			}
 		} catch (DbxException e) {
 			LOGGER.error("avoidFileNameCollision", e);

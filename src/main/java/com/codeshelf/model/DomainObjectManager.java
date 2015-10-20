@@ -27,6 +27,7 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.WorkerEvent;
 import com.google.common.collect.ImmutableList;
 
 /**
@@ -291,6 +292,18 @@ public class DomainObjectManager {
 	}
 
 	/**
+	 * This returns the full list of UUIDs of WorkerEvents whose event date is older than daysOld before now.
+	 */
+	public List<UUID> getWorkerEventUuidsToPurge(int daysOld) {
+		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
+		UUID facilityUUID = getFacility().getPersistentId();
+		Criteria eventCrit = WorkerEvent.staticGetDao().createCriteria();
+		eventCrit.add(Restrictions.eq("facility.persistentId", facilityUUID));
+		eventCrit.add(Restrictions.lt("created", desiredTime));
+		List<UUID> uuidList = WorkerEvent.staticGetDao().getUUIDListByCriteriaQuery(eventCrit);
+		return uuidList;
+	}
+	/**
 	 * This returns the full list of UUIDs of workInstructions whose created date is older than daysOld before now.
 	 */
 	public List<UUID> getWorkInstructionUuidsToPurge(int daysOld) {
@@ -389,6 +402,34 @@ public class DomainObjectManager {
 				}
 			} catch (DaoException e) {
 				LOGGER.error("purgeSomeCntrs", e);
+			}
+		}
+		return deletedCount;
+	}
+
+	/**
+	 * Purge these containers all in the current transaction.
+	 */
+	public int purgeSomeWorkerEvents(List<UUID> workerEventUuids) {
+		final int MAX_EVENT_PURGE = 500;
+		int wantToPurge = workerEventUuids.size();
+		int willPurge = Math.min(wantToPurge, MAX_EVENT_PURGE);
+		if (wantToPurge > MAX_EVENT_PURGE) {
+			LOGGER.error("Limiting workerEvent delete batch size to {}. Called for {}.", MAX_EVENT_PURGE, wantToPurge);
+		}
+		int deletedCount = 0;
+		for (UUID eventUuid : workerEventUuids) {
+			// just protection against bad call
+			if (deletedCount > willPurge)
+				break;
+			try {
+				WorkerEvent event = WorkerEvent.staticGetDao().findByPersistentId(eventUuid);
+				if (event != null) {
+					WorkerEvent.staticGetDao().delete(event);
+					deletedCount++;
+				}
+			} catch (DaoException e) {
+				LOGGER.error("purgeSomeWorkerEvents", e);
 			}
 		}
 		return deletedCount;

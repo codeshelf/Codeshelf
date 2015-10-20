@@ -92,9 +92,9 @@ public class FacilitySchedulerServiceTest {
 		ScheduledJobType completedType = future.get(40, TimeUnit.SECONDS);
 		Optional<DateTime> timeAfterTrigger = subject.getPreviousFireTime(testType);
 		
-		Assert.assertEquals(testType, completedType);
-		Assert.assertTrue(timeBeforeTrigger.isBefore(timeAfterTrigger.get()));
-		Assert.assertFalse(subject.isJobRunning(testType));
+		Assert.assertEquals("completed type was unexpected", testType, completedType);
+		Assert.assertTrue("job does not appear to have been triggered", timeBeforeTrigger.isBefore(timeAfterTrigger.get()));
+		Assert.assertFalse("job should not still be running", subject.isJobRunning(testType));
 	}
 	
 	@Test
