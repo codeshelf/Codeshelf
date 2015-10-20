@@ -933,8 +933,13 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		importOrdersData(facility, csvOrders);
 
 		SftpConfiguration config = setupSftpOutConfiguration();
-		config.setActive(true);
-		configureSftpService(facility, config, SftpWiGateway.class);
+		// config.setActive(true);
+		//configureSftpService(facility, config, SftpWiGateway.class);
+		
+		SftpWiGateway sftpWIs = configureSftpService(facility, config, SftpWiGateway.class);
+		sftpWIs.setActive(true);
+		Assert.assertTrue(sftpWIs.isLinked());
+
 		commitTransaction();
 
 		LOGGER.info("2: Load first order on cart");
