@@ -525,6 +525,9 @@ public class ScriptSiteRunner {
 	 */
 	private void processPickAllCommand() throws Exception{
 		LOGGER.info("Start che picks");
+		for (PickSimulator che : ches.values()){
+			generateWork(che);
+		}
 		ExecutorService executor = Executors.newFixedThreadPool(ches.size());
 		//Pick items
 		for (final PickSimulator che : ches.values()) {
@@ -557,6 +560,7 @@ public class ScriptSiteRunner {
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_PICK);
 		}
 		PickSimulator che = getChe(parts[1]);
+		generateWork(che);
 		pick(che);
 	}
 	
@@ -579,8 +583,6 @@ public class ScriptSiteRunner {
 	}
 	
 	private void pick(PickSimulator che) throws Exception{
-		generateWork(che);
-		
 		CheStateEnum state = che.getCurrentCheState();
 		//If Che immediately arrives at the end-of-work state, stop processing this order
 		if (state == CheStateEnum.SETUP_SUMMARY){

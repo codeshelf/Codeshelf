@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 
+import javax.ws.rs.core.Response;
+
 import org.apache.logging.log4j.ThreadContext;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
@@ -23,6 +25,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.api.resources.FacilitiesResource;
 import com.codeshelf.behavior.UiUpdateBehavior;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
@@ -46,6 +49,7 @@ import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.FacilityMetric;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
@@ -2726,4 +2730,106 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(PosControllerInstr.BITENCODED_TOP_BOTTOM, picker.getLastSentPositionControllerMinQty((byte)2));
 
 	}
+	
+	@Test
+	public final void testFacilityMetric() throws IOException {
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		beginTransaction();
+		facility = facility.reload();
+		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "UPC");
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, "WorkSequence");
+
+		LOGGER.info("1: Import orders");
+		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n1111,1111,Item 1,Item Descr 1,1,each,locationA,1" //
+				+ "\r\n2222,2222,Item 2,Item Descr 2,2,ea,locationB,2" //
+				+ "\r\n2222,2222,Item 3,Item Descr 3,3,PK,locationC,3" //
+				+ "\r\n3333,3333,Item 4,Item Descr 4,4,cs,locationD,4" //
+				+ "\r\n3333,3333,Item 5,Item Descr 5,5,case,locationE,5" //
+				+ "\r\n3333,3333,Item 6,Item Descr 6,6,uom1,locationF,6" //
+				+ "\r\n4444,4444,Item 7,Item Descr 7,7,uom2,locationA,7";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+		
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+
+		LOGGER.info("2: Load orders on cart");
+		picker.loginAndSetup("Picker #1");
+		picker.setupOrderIdAsContainer("1111", "1");
+		picker.setupOrderIdAsContainer("2222", "2");
+		picker.setupOrderIdAsContainer("3333", "3");
+		picker.setupOrderIdAsContainer("4444", "4");
+		
+		LOGGER.info("3: Compute work");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		Assert.assertEquals("4 orders\n7 jobs\n\nSTART (or SETUP)\n", picker.getLastCheDisplay());
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		LOGGER.info("4: Pick orders, with 1 short and 2 skip-scans");
+		//Item 1
+		picker.scanSomething("Item 1");
+		picker.pickItemAuto();
+		//Item 2
+		picker.logCheDisplay();
+		picker.scanSomething("SKIPSCAN");
+		picker.logCheDisplay();
+		picker.pickItemAuto();
+		//Housekeeping
+		picker.pickItemAuto();
+		//Item 3
+		picker.scanSomething("SKIPSCAN");
+		picker.pickItemAuto();
+		//Item 4
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING_SHORT, 4000);
+		picker.scanCommand("YES");
+		//Housekeeping
+		picker.pickItemAuto();
+		//Item 5
+		picker.scanSomething("Item 5");
+		picker.pickItemAuto();
+		//Housekeeping
+		picker.pickItemAuto();
+		//Item 6
+		picker.scanSomething("Item 6");
+		picker.pickItemAuto();
+		//Item 7
+		picker.scanSomething("Item 7");
+		picker.pickItemAuto();
+		
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		ThreadUtils.sleep(1000);
+		
+		beginTransaction();
+		LOGGER.info("5: Generate metrics for the day");
+		FacilitiesResource resource = new FacilitiesResource(webSocketManagerService);
+		Response response = resource.computeMetrics(null);
+		Assert.assertEquals(200, response.getStatus());
+		
+		LOGGER.info("5: Retrieve and verify metrics");
+		List<FacilityMetric> metrics = FacilityMetric.staticGetDao().getAll();
+		Assert.assertEquals(1, metrics.size());
+		FacilityMetric metric = metrics.get(0);
+		//One order wasn't completed due to a short
+		Assert.assertEquals(3, (int)metric.getOrdersPicked());
+		Assert.assertEquals(24, (int)metric.getCountPicked());
+		//Each = 'each' + 'ea' + 'pk'
+		Assert.assertEquals(6, (int)metric.getCountPickedEach());
+		Assert.assertEquals(5, (int)metric.getCountPickedCase());
+		Assert.assertEquals(13, (int)metric.getCountPickedOther());
+		Assert.assertEquals(6, (int)metric.getLinesPicked());
+		Assert.assertEquals(3, (int)metric.getLinesPickedEach());
+		Assert.assertEquals(1, (int)metric.getLinesPickedCase());
+		Assert.assertEquals(2, (int)metric.getLinesPickedOther());
+		Assert.assertEquals(3, (int)metric.getHouseKeeping());
+		Assert.assertEquals(1, (int)metric.getShortEvents());
+		Assert.assertEquals(2, (int)metric.getSkipScanEvents());
+
+		commitTransaction();
+	}
+
 }
