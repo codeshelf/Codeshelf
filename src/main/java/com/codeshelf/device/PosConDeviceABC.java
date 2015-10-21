@@ -236,7 +236,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Work_Instruction");
 			// Pretty goofy code duplication, but can avoid some run time execution if loglevel would not result in this logging
 			if (needWarn)
-				LOGGER.info("{} for order/cntr:{} item:{} location:{}",
+				LOGGER.warn("{} for order/cntr:{} item:{} location:{}",
 					inVerb,
 					orderId,
 					inWi.getItemId(),

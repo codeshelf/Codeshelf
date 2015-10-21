@@ -21,12 +21,14 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.DomainObjectABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
 import com.google.common.collect.ImmutableList;
@@ -47,6 +49,40 @@ public class NotificationBehavior implements IApiBehavior{
 		return event;
 	}
 
+	public void saveFinishedWI(WorkInstruction wi) {
+		EventType type = null;
+		if (wi.getStatus().equals(WorkInstructionStatusEnum.COMPLETE)) {
+			type = EventType.COMPLETE;
+		} else if(wi.getStatus().equals(WorkInstructionStatusEnum.SHORT))  {
+			type = EventType.SHORT;
+		} else {
+			return;
+		}
+		if (!SAVE_ONLY.contains(type)) {
+			return;
+		}
+	
+		LOGGER.info("Saving workerEvent {} from {}", type, wi.getAssignedChe());
+		WorkerEvent event = new WorkerEvent();
+		Che device = wi.getAssignedChe();
+		event.setDeviceGuid(device.getDeviceGuidStr());
+		event.setFacility(device.getFacility());
+		event.setDevicePersistentId(device.getPersistentId().toString());
+		
+		event.setCreated(wi.getCompleted());
+		event.setEventType(type);
+		event.setWorkerId(wi.getPickerId());
+		event.setWorkInstruction(wi);
+		event.setWorkInstruction(wi);
+		OrderDetail orderDetail = wi.getOrderDetail();
+		if (orderDetail != null) {
+			event.setOrderDetailId(orderDetail.getPersistentId());
+		}
+		event.generateDomainId();
+		WorkerEvent.staticGetDao().store(event);
+
+	}
+	
 	public void saveEvent(NotificationMessage message) {
 		if (!SAVE_ONLY.contains(message.getEventType())) {
 			return;

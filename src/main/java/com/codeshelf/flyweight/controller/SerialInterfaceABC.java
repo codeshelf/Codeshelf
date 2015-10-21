@@ -224,7 +224,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 						LOGGER.debug("Receive packet: " + result.toString());
 					hexDumpArray(nextFrameArray);
 				} catch (Exception e) {
-					LOGGER.error("", e);
+					LOGGER.error("Failed to receive packet from network id {}", inMyNetworkId, e);
 				} finally {
 					ContextLogging.clearNetGuid();
 				}
