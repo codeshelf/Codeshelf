@@ -1450,6 +1450,9 @@ public class Facility extends Location {
 				continue;
 			}
 			int actual = detail.getActualPickedItems();
+			if (actual == 0) {
+				continue;
+			}
 			linesTotal++;
 			countTotal += actual;
 			String uomId = detail.getUomMasterId();

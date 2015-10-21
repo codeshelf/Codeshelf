@@ -45,6 +45,7 @@ public class ScriptSiteRunner {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScriptSiteRunner.class);
 	private static final int WAIT_TIMEOUT = 4000;
+	private static final int COMPUTE_WORK_TIMEOUT = 35000;
 	private int pickPauseMs = 0;
 	private double chanceSkipUpc = 0, chanceShort = 0;
 	private HashMap<String, PickSimulator> ches = new HashMap<>();
@@ -525,10 +526,6 @@ public class ScriptSiteRunner {
 	private void processPickAllCommand() throws Exception{
 		LOGGER.info("Start che picks");
 		ExecutorService executor = Executors.newFixedThreadPool(ches.size());
-		//Sequentially generate work for all CHEs
-		for (PickSimulator che : ches.values()) {
-			generateWork(che);
-		}
 		//Pick items
 		for (final PickSimulator che : ches.values()) {
 			if (che != null) {
@@ -560,7 +557,6 @@ public class ScriptSiteRunner {
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_PICK);
 		}
 		PickSimulator che = getChe(parts[1]);
-		generateWork(che);
 		pick(che);
 	}
 	
@@ -571,18 +567,20 @@ public class ScriptSiteRunner {
 		states.add(CheStateEnum.SETUP_SUMMARY);
 		states.add(CheStateEnum.DO_PICK);
 		states.add(CheStateEnum.SCAN_SOMETHING);
-		che.waitForCheStates(states, 25000);
+		che.waitForCheStates(states, COMPUTE_WORK_TIMEOUT);
 		CheStateEnum state = che.getCurrentCheState();
 		
 		//If CHE is in a Review stage, scan START again to advance to Pick stage
 		if (state == CheStateEnum.SETUP_SUMMARY){
 			ThreadUtils.sleep(pickPauseMs);
 			che.scanCommand(CheDeviceLogic.STARTWORK_COMMAND);
-			che.waitForCheStates(states, 25000);
+			che.waitForCheStates(states, COMPUTE_WORK_TIMEOUT);
 		}
 	}
 	
 	private void pick(PickSimulator che) throws Exception{
+		generateWork(che);
+		
 		CheStateEnum state = che.getCurrentCheState();
 		//If Che immediately arrives at the end-of-work state, stop processing this order
 		if (state == CheStateEnum.SETUP_SUMMARY){
@@ -640,7 +638,7 @@ public class ScriptSiteRunner {
 		String msg = "Completed CHE run";
 		LOGGER.info(msg);
 	}
-	
+		
 	private boolean chance(double percentage) {
 		double rnd = rnd_gen.nextDouble();
 		return rnd < percentage;
