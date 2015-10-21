@@ -10,10 +10,10 @@ public class DataPurgeParameters extends ParameterSetBeanABC {
 
 	// default values
 	final static int	PURGEAFTERDAYS			= 20;
-	final static int	WORKINSTRUCTION_BATCH	= 50;
+	final static int	WORKINSTRUCTION_BATCH	= 50; // applies to work instructions, WorkerEvent, event resolution, and work instruction export bean
 	final static int	ORDER_BATCH				= 5;
 	final static int	CONTAINER_BATCH			= 50;
-	final static int	WORKEREVENT_BATCH		= 50;
+	final static int	EDIHISTORY_BATCH		= 50; // applies to import receipts and export messages
 
 	@Getter
 	@Setter
@@ -29,7 +29,7 @@ public class DataPurgeParameters extends ParameterSetBeanABC {
 	protected String	containerBatch;
 	@Getter
 	@Setter
-	protected String	workerEventBatch;
+	protected String	ediHistoryBatch;
 
 	public DataPurgeParameters() {
 		super();
@@ -37,7 +37,7 @@ public class DataPurgeParameters extends ParameterSetBeanABC {
 		workInstructionBatch = Integer.toString(WORKINSTRUCTION_BATCH);
 		orderBatch = Integer.toString(ORDER_BATCH);
 		containerBatch = Integer.toString(CONTAINER_BATCH);
-		workerEventBatch = Integer.toString(WORKEREVENT_BATCH);
+		ediHistoryBatch = Integer.toString(EDIHISTORY_BATCH);
 	}
 
 	public int getPurgeAfterDaysValue() {
@@ -56,8 +56,8 @@ public class DataPurgeParameters extends ParameterSetBeanABC {
 		return getCleanValue("containerBatch", getContainerBatch(), CONTAINER_BATCH);
 	}
 
-	public int getWorkerEventBatchValue() {
-		return getCleanValue("workerEventBatch", getWorkerEventBatch(), WORKEREVENT_BATCH);
+	public int getEdiHistoryBatchValue() {
+		return getCleanValue("workerEventBatch", getEdiHistoryBatch(), EDIHISTORY_BATCH);
 	}
 
 	/**
@@ -70,7 +70,7 @@ public class DataPurgeParameters extends ParameterSetBeanABC {
 			getWorkInstructionBatchValue(),
 			getOrderBatchValue(),
 			getContainerBatchValue(),
-			getWorkerEventBatchValue());
+			getEdiHistoryBatchValue());
 	}
 
 	/**

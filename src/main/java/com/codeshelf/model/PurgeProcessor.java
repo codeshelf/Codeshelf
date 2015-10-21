@@ -133,9 +133,9 @@ public class PurgeProcessor implements BatchProcessor {
 			LOGGER.error("unexpected state for purgeWorkerEventBatch");
 			return 0;
 		}
-		List<UUID> eventBatch = subUuidListAndRemoveFromInList(workerEventUuidsToPurge, purgeParams.getWorkerEventBatchValue());
+		List<UUID> eventBatch = subUuidListAndRemoveFromInList(workerEventUuidsToPurge, purgeParams.getWorkInstructionBatchValue()); // use this parameter for the WorkerEvent batch size
 		DomainObjectManager doMananager = new DomainObjectManager(facility);
-		return doMananager.purgeSomeCntrs(eventBatch);
+		return doMananager.purgeSomeWorkerEvents(eventBatch);
 	}
 
 	private void buildCntrList() {

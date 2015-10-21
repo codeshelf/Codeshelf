@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.behavior.WorkBehavior;
+import com.codeshelf.edi.WorkInstructionCsvBean;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
@@ -26,6 +27,7 @@ import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.Resolution;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.google.common.collect.ImmutableList;
@@ -277,7 +279,7 @@ public class DomainObjectManager {
 
 		safelyDeleteWorkInstructionList(wiList);
 	}
-
+	
 	/**
 	 * This returns the full list of UUIDs of OrderHeaders whose dueDate is older than daysOld before now.
 	 */
@@ -303,6 +305,20 @@ public class DomainObjectManager {
 		List<UUID> uuidList = WorkerEvent.staticGetDao().getUUIDListByCriteriaQuery(eventCrit);
 		return uuidList;
 	}
+	
+	/**
+	 * This returns the full list of UUIDs of WorkInstructionCsvBean whose update date is older than daysOld before now.
+	 */
+	public List<UUID> getWorkInstructionCsvBeanUuidsToPurge(int daysOld) {
+		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
+		UUID facilityUUID = getFacility().getPersistentId();
+		Criteria eventCrit = WorkInstructionCsvBean.staticGetDao().createCriteria();
+		eventCrit.add(Restrictions.eq("facility.persistentId", facilityUUID));
+		eventCrit.add(Restrictions.lt("updated", desiredTime));
+		List<UUID> uuidList = WorkInstructionCsvBean.staticGetDao().getUUIDListByCriteriaQuery(eventCrit);
+		return uuidList;
+	}
+
 	/**
 	 * This returns the full list of UUIDs of workInstructions whose created date is older than daysOld before now.
 	 */
@@ -408,7 +424,8 @@ public class DomainObjectManager {
 	}
 
 	/**
-	 * Purge these containers all in the current transaction.
+	 * Purge these WorkerEvents all in the current transaction.
+	 * And any Resolution objects the events point to.
 	 */
 	public int purgeSomeWorkerEvents(List<UUID> workerEventUuids) {
 		final int MAX_EVENT_PURGE = 500;
@@ -425,6 +442,12 @@ public class DomainObjectManager {
 			try {
 				WorkerEvent event = WorkerEvent.staticGetDao().findByPersistentId(eventUuid);
 				if (event != null) {
+					// Worker events are a little special. They may or may not have a resolution. If so, delete the resolution, no matter the date on the resolution.
+					Resolution resolution = event.getResolution();
+					if (resolution != null) {
+						event.setResolution(null); // necessary?
+						Resolution.staticGetDao().delete(resolution);
+					}					
 					WorkerEvent.staticGetDao().delete(event);
 					deletedCount++;
 				}
@@ -444,6 +467,34 @@ public class DomainObjectManager {
 		int willPurge = Math.min(wantToPurge, MAX_WI_PURGE);
 		if (wantToPurge > MAX_WI_PURGE) {
 			LOGGER.error("Limiting work instruction delete batch size to {}. Called for {}.", MAX_WI_PURGE, wantToPurge);
+		}
+		int deletedCount = 0;
+		for (UUID wiUuid : wiUuids) {
+			// just protection against bad call
+			if (deletedCount > willPurge)
+				break;
+			try {
+				WorkInstruction wi = WorkInstruction.staticGetDao().findByPersistentId(wiUuid);
+				if (wi != null) {
+					WorkInstruction.staticGetDao().delete(wi);
+					deletedCount++;
+				}
+			} catch (DaoException e) {
+				LOGGER.error("purgeSomeWis", e);
+			}
+		}
+		return deletedCount;
+	}
+
+	/**
+	 * Purge these work instruction beans all in the current transaction.
+	 */
+	public int purgeSomeWiCsvBeans(List<UUID> wiUuids) {
+		final int MAX_WIBEAN_PURGE = 500;
+		int wantToPurge = wiUuids.size();
+		int willPurge = Math.min(wantToPurge, MAX_WIBEAN_PURGE);
+		if (wantToPurge > MAX_WIBEAN_PURGE) {
+			LOGGER.error("Limiting work instruction csv bean delete batch size to {}. Called for {}.", MAX_WIBEAN_PURGE, wantToPurge);
 		}
 		int deletedCount = 0;
 		for (UUID wiUuid : wiUuids) {
