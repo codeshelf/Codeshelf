@@ -19,6 +19,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -1378,6 +1379,10 @@ public class Facility extends Location {
 		return null;
 	}
 	
+	public TimeZone getTimeZone(){
+		return TimeZone.getTimeZone("US/Mountain");
+	}
+	
 	@Transient
 	private boolean dropboxLegacyCleanupDone = false;
 	
@@ -1404,11 +1409,13 @@ public class Facility extends Location {
 	
 	public void computeMetrics(){
 		Calendar cal = Calendar.getInstance();
+		cal.setTimeZone(getTimeZone());
 		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
 		cal.set(Calendar.HOUR_OF_DAY, 0);
 		cal.set(Calendar.MINUTE, 0);
 		cal.set(Calendar.SECOND, 0);
 		cal.set(Calendar.MILLISECOND, 0);
+		String dateLocalUI = format.format(cal.getTime());
 		Timestamp metricsCollectionStartUTC = new Timestamp(cal.getTimeInMillis());
 		cal.add(Calendar.DATE, 1);
 		Timestamp metricsCollectionEndUTC = new Timestamp(cal.getTimeInMillis());
@@ -1416,7 +1423,7 @@ public class Facility extends Location {
 		FacilityMetric metric = getMetric(metricsCollectionStartUTC);
 		metric.setUpdated(new Timestamp(System.currentTimeMillis()));
 		metric.setTz(cal.getTimeZone().getID());
-		metric.setDateLocalUI(format.format(cal.getTime()));
+		metric.setDateLocalUI(dateLocalUI);
 		metric.setDomainId(metric.getDefaultDomainIdPrefix() + "-" + getDomainId() + "-" + metric.getDateLocalUI());
 		
 		computeOrderMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
