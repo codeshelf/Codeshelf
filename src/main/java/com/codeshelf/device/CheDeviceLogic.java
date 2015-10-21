@@ -321,6 +321,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	public boolean usesNewCheScreen() {
 		return false; // SetupOrderDeviceLogic will override
 	}
+	
+	public void testOnlySetState(final CheStateEnum inCheState){
+		setState(inCheState);
+	}
 
 	protected boolean alreadyScannedSkuOrUpcOrLpnThisWi(WorkInstruction inWi) {
 		return false;
@@ -1007,11 +1011,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	}
 
 	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.codeshelf.flyweight.controller.INetworkDevice#start()
+	/* 
+	 * This happens after reassociate. Warning: restartEnum may be null!
 	 */
 	@Override
-	public final void startDevice() {
+	public final void startDevice(DeviceRestartCauseEnum restartEnum) {
 		LOGGER.info("Start CHE controller (after association) ");
 
 		// setState(mCheStateEnum);  Always, after start, there is the device associate chain and redisplay which will call setState(mCheStateEnum);
@@ -1019,6 +1023,19 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		// Let's force a short wait after associate
 		setLastRadioCommandSendForThisDevice(System.currentTimeMillis());
+		
+		if (restartEnum != null && restartEnum == DeviceRestartCauseEnum.USER_RESTART){
+			adjustStateForUserReset();
+		}
+	}
+	
+	// --------------------------------------------------------------------------
+	/* 
+	 * Called by CheDeviceLogic.startDevice() if the cause was a user reset
+	 */
+	protected void adjustStateForUserReset(){
+		// Do nothing, as this is really an abstract class. 
+		// Could handle verifying badge state here I suppose
 	}
 
 	/**

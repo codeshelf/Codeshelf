@@ -104,7 +104,12 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		return CsDeviceManager.DEVICETYPE_LED;
 	}
 
-	public void startDevice() {
+	// --------------------------------------------------------------------------
+	/* 
+	 * This happens after reassociate. Warning: restartEnum may be null!
+	 */
+	@Override
+	public void startDevice(DeviceRestartCauseEnum restartEnum) {
 		LOGGER.info("Start aisle controller (after association " + getMyGuidStr());
 		//		short position = 1;
 		//		sendLightCommand(CommandControlLed.CHANNEL1, position, ColorEnum.BLUE, CommandControlLed.EFFECT_SOLID);

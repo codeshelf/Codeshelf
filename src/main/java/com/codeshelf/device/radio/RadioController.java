@@ -718,7 +718,7 @@ public class RadioController implements IRadioController {
 					LOGGER.info("Device associated={}; Req={}", foundDevice.getGuid().getHexStringNoPrefix(), inCommand);
 					ackCmd = new CommandAssocAck(uid, new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, status));
 					sendCommandFrontQueue(ackCmd, inSrcAddr, false);
-					networkDeviceBecameActive(foundDevice);
+					networkDeviceBecameActive(foundDevice, restartEnum);
 				}
 			} finally {
 				ContextLogging.clearNetGuid();
@@ -822,11 +822,12 @@ public class RadioController implements IRadioController {
 	 * @param inSession
 	 *            The device that just became active.
 	 */
-	private void networkDeviceBecameActive(INetworkDevice inNetworkDevice) {
+	private void networkDeviceBecameActive(INetworkDevice inNetworkDevice, DeviceRestartCauseEnum restartEnum) {
 		ContextLogging.setNetGuid(inNetworkDevice.getGuid());
+		LOGGER.info("networkDeviceBecameActive called");
 		try {
 			inNetworkDevice.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED);
-			inNetworkDevice.startDevice();
+			inNetworkDevice.startDevice(restartEnum);
 			for (IRadioControllerEventListener radioEventListener : mEventListeners) {
 				radioEventListener.deviceActive(inNetworkDevice);
 			}

@@ -59,8 +59,12 @@ public class PosManagerDeviceLogic extends PosConDeviceABC {
 		return CsDeviceManager.DEVICETYPE_POS_CON_CTRL;
 	}
 
+	// --------------------------------------------------------------------------
+	/* 
+	 * This happens after reassociate. Warning: restartEnum may be null!
+	 */
 	@Override
-	public void startDevice() {
+	public void startDevice(DeviceRestartCauseEnum restartEnum) {
 		LOGGER.info("Start PosCon controller(after association " + getMyGuidStr());
 		updatePosCons();
 	}
