@@ -784,6 +784,9 @@ public class WorkBehavior implements IApiBehavior {
 					// the CHE/worker can do about it. Let's just succeed.
 					return;
 				}
+				if (!storedWi.isHousekeeping()) {
+					new NotificationBehavior().saveFinishedWI(storedWi);
+				}
 				notifyEdiServiceCompletedWi(storedWi);
 				computeAndSendOrderFeedback(storedWi);
 				//If WI is on a PutWall, refresh PutWall feedback
