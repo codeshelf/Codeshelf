@@ -21,12 +21,12 @@ public class CompleteWorkInstructionCommand extends CommandABC {
 
 	final private CompleteWorkInstructionRequest request;
 
-	final private WorkBehavior workService;
+	final private WorkBehavior workBehavior;
 	
 	public CompleteWorkInstructionCommand(WebSocketConnection connection, CompleteWorkInstructionRequest request, WorkBehavior workService) {
 		super(connection);
 		this.request = request;
-		this.workService = workService;
+		this.workBehavior = workService;
 	}
 
 	@Override
@@ -40,7 +40,7 @@ public class CompleteWorkInstructionCommand extends CommandABC {
 			}
 			// Interesting. incomingWI is not null  in JUnit test DataArchiving.testPurgeActiveJobs(). But then completeWorkInstruction() will throw on the commit.
 			response.setWorkInstructionId(incomingWI.getPersistentId());
-			workService.completeWorkInstruction(cheId, incomingWI);
+			workBehavior.completeWorkInstruction(cheId, incomingWI);
 			response.setStatus(ResponseStatus.Success);	
 		} catch(Exception e) {
 			LOGGER.error("Unable to process completed work instruction: {}", incomingWI, e);
