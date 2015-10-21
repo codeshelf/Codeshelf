@@ -47,6 +47,10 @@ public class RadioControllerPacketSchedulerService {
 	private static final int													ACK_SEND_RETRY_COUNT			= 20;																	// matching v16. Used to be 20.
 	private static final long													MAX_PACKET_AGE_MILLIS			= 8000;
 
+	// DEV-1240 These yield log info messages when hit 
+	private static final int													ACK_LOG_MANY_RETRY_1			= 8;
+	private static final int													ACK_LOG_MANY_RETRY_2			= 15;
+
 	private final RadioControllerPacketIOService								packetIOService;
 
 	// FIXME - Huffa - It might be interesting to test this with a blocking queues rather than linked ones.
@@ -518,7 +522,8 @@ public class RadioControllerPacketSchedulerService {
 			return false;
 		}
 
-		if (inPacket.getSendCount() > ACK_SEND_RETRY_COUNT) {
+		int retryNumber = inPacket.getSendCount();
+		if (retryNumber > ACK_SEND_RETRY_COUNT) {
 			// for v22, lets log the Guid if we can know it.
 			NetGuid addr = inDevice.getGuid();
 			String guidStr = "?";
@@ -535,7 +540,20 @@ public class RadioControllerPacketSchedulerService {
 			return false;
 		}
 
+		// DEV-1240 Help us understand a little better if we are doing lots of retries
+		if (retryNumber == ACK_LOG_MANY_RETRY_1 || retryNumber == ACK_LOG_MANY_RETRY_2) {
+			logManyRetries(retryNumber, inDevice, inPacket); // but still return true
+		}
+
 		return true;
+	}
+
+	private void logManyRetries(int howMany, INetworkDevice inDevice, IPacket inPacket) {
+		NetGuid addr = inDevice.getGuid();
+		String guidStr = "?";
+		if (addr != null)
+			guidStr = addr.getHexStringNoPrefix();
+		LOGGER.warn("Retry number {} for {}; packet:{}", howMany, guidStr, inPacket);
 	}
 
 	// --------------------------------------------------------------------------

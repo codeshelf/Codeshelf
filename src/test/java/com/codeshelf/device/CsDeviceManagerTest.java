@@ -89,7 +89,7 @@ public class CsDeviceManagerTest extends MockDaoTest {
 		// DEV-459  additions. Need at least one associated CHE to see a CHE display message. Critical for above tests of disconnect or unattached.
 		for(CheDeviceLogic theCheDevice : deviceManager.getCheControllers()) {
 			theCheDevice.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
-			theCheDevice.startDevice();
+			theCheDevice.startDevice(null); // not specifying reastart reason
 		}
 
 		return deviceManager;

@@ -159,6 +159,33 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private String getForWallMessageLine() {
 		return String.format("FOR %s", getPutWallName());
 	}
+	
+	// --------------------------------------------------------------------------
+	/* 
+	 * Called by CheDeviceLogic.startDevice() if the cause was a user reset
+	 * We use this to break out of "half-states" where we are waiting for a response from the server that will likely never come
+	 */
+	@Override
+	protected void adjustStateForUserReset(){
+		CheStateEnum currentState = getCheStateEnum();
+		switch (currentState) {
+			case VERIFYING_BADGE: 
+				setState(CheStateEnum.IDLE);
+				LOGGER.info("Breaking {} out of verify badge state", this.getGuidNoPrefix());
+				break;
+			case GET_WORK: 
+			case COMPUTE_WORK: 
+				setState(CheStateEnum.SETUP_SUMMARY);
+				LOGGER.info("Breaking {} out of compute work state", this.getGuidNoPrefix());
+				break;
+			default:
+				// Are there more half-states?
+				// After scan UPC?
+				// After putwall or sku wall scan waiting for plan?
+		}
+		
+	}
+
 
 	// --------------------------------------------------------------------------
 	/**

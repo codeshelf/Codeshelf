@@ -5,6 +5,7 @@
  *******************************************************************************/
 package com.codeshelf.flyweight.controller;
 
+import com.codeshelf.device.DeviceRestartCauseEnum;
 import com.codeshelf.flyweight.command.CommandControlButton;
 import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetGuid;
@@ -96,9 +97,10 @@ public interface INetworkDevice {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * We get this message when the device first starts on the network.
+	 * We get this message when the device first starts on the network. And after reconnects
+	 * Warning: restartEnum may be null. Often is as used in unit tests
 	 */
-	void startDevice();
+	void startDevice(DeviceRestartCauseEnum restartEnum);
 
 	// --------------------------------------------------------------------------
 	/**

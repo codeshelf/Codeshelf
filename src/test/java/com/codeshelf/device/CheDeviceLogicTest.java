@@ -71,7 +71,7 @@ public class CheDeviceLogicTest extends MockDaoTest {
 			null);
 
 		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
-		cheDeviceLogic.startDevice();
+		cheDeviceLogic.startDevice(null); // not specifying restart reason
 
 		cheDeviceLogic.scanCommandReceived("U%PICKER1");
 
@@ -118,7 +118,7 @@ public class CheDeviceLogicTest extends MockDaoTest {
 			null);
 
 		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
-		cheDeviceLogic.startDevice();
+		cheDeviceLogic.startDevice(null); // not specifying restart reason
 
 		cheDeviceLogic.scanCommandReceived("U%PICKER1");
 
@@ -145,7 +145,7 @@ public class CheDeviceLogicTest extends MockDaoTest {
 			null);
 
 		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
-		cheDeviceLogic.startDevice();
+		cheDeviceLogic.startDevice(null); // not specifying restart reason
 
 		cheDeviceLogic.disconnectedFromServer();
 
@@ -172,7 +172,7 @@ public class CheDeviceLogicTest extends MockDaoTest {
 			null);
 
 		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
-		cheDeviceLogic.startDevice();
+		cheDeviceLogic.startDevice(null); // not specifying restart reason
 
 		cheDeviceLogic.disconnectedFromServer();
 
@@ -207,5 +207,58 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		*/
 
 	}
+	
+	/**
+	 * Purpose of test is to see what happens during reassociate after CHE reset if CHE was in an odd state.
+	 */
+	@Test
+	public void reconnectFromOddStates() {
+		IRadioController radioController = mock(IRadioController.class);
+
+		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(),
+			new NetGuid("0xABC"),
+			mock(CsDeviceManager.class),
+			radioController,
+			null);
+
+		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
+		cheDeviceLogic.startDevice(null); // not specifying restart reason
+		Assert.assertEquals(CheStateEnum.IDLE,cheDeviceLogic.getCheStateEnum());
+		
+		LOGGER.info("1a: from idle, disconnect  from server and reconnect back to idle");
+		// "Disconnect from server, reconnect, means CHE and site controller are fine, but site controller lost server connection.
+		// Not so relevant to this test
+		cheDeviceLogic.disconnectedFromServer();
+		cheDeviceLogic.connectedToServer();
+		Assert.assertEquals(CheStateEnum.IDLE,cheDeviceLogic.getCheStateEnum());
+		
+		LOGGER.info("1b: from idle, reconnect to site controller: back to idle");
+		cheDeviceLogic.startDevice(DeviceRestartCauseEnum.USER_RESTART);
+		Assert.assertEquals(CheStateEnum.IDLE,cheDeviceLogic.getCheStateEnum());
+
+		LOGGER.info("2: from container select, reconnect back to same. Just a generic case of going back to existing state");
+		cheDeviceLogic.testOnlySetState(CheStateEnum.CONTAINER_SELECT);
+		cheDeviceLogic.startDevice(DeviceRestartCauseEnum.WATCHDOG_TIMEOUT);
+		Assert.assertEquals(CheStateEnum.CONTAINER_SELECT,cheDeviceLogic.getCheStateEnum());
+
+		LOGGER.info("2b: from verify badge, manual reset does change state");
+		cheDeviceLogic.testOnlySetState(CheStateEnum.VERIFYING_BADGE);
+		cheDeviceLogic.startDevice(DeviceRestartCauseEnum.USER_RESTART);
+		Assert.assertEquals(CheStateEnum.IDLE,cheDeviceLogic.getCheStateEnum());
+		
+		LOGGER.info("3: from compute work or get work, reconnect back to setup_summary on manual reset.");
+		cheDeviceLogic.testOnlySetState(CheStateEnum.COMPUTE_WORK);
+		cheDeviceLogic.startDevice(DeviceRestartCauseEnum.USER_RESTART);
+		Assert.assertEquals(CheStateEnum.SETUP_SUMMARY,cheDeviceLogic.getCheStateEnum());
+		cheDeviceLogic.testOnlySetState(CheStateEnum.GET_WORK);
+		cheDeviceLogic.startDevice(DeviceRestartCauseEnum.USER_RESTART);
+		Assert.assertEquals(CheStateEnum.SETUP_SUMMARY,cheDeviceLogic.getCheStateEnum());
+
+		LOGGER.info("3b: non-manual reset does not");
+		cheDeviceLogic.testOnlySetState(CheStateEnum.COMPUTE_WORK);
+		cheDeviceLogic.startDevice(DeviceRestartCauseEnum.SMAC_ERROR); // saw a few of these at PFSWeb
+		Assert.assertEquals(CheStateEnum.COMPUTE_WORK,cheDeviceLogic.getCheStateEnum());
+	}
+
 
 }
