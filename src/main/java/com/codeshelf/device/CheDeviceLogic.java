@@ -1019,7 +1019,19 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		// Let's force a short wait after associate
 		setLastRadioCommandSendForThisDevice(System.currentTimeMillis());
+		
+		adjustStateForUserReset(); // Well, in v22, all resets to have a much smaller code merge.
 	}
+	
+	// --------------------------------------------------------------------------
+	/* 
+	 * Called by CheDeviceLogic.startDevice() if the cause was a user reset
+	 */
+	protected void adjustStateForUserReset(){
+		// Do nothing, as this is really an abstract class. 
+		// Could handle verifying badge state here I suppose
+	}
+
 
 	/**
 	 * @return - Returns the PosControllerInstr for the position given the count if any is warranted. Null otherwise.
