@@ -19,13 +19,10 @@ import com.codeshelf.email.TemplateService;
 import com.codeshelf.manager.service.ITenantManagerService;
 import com.codeshelf.manager.service.ManagerPersistenceService;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
-import com.codeshelf.metrics.DataQuantityHealthCheck;
 import com.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.codeshelf.metrics.DropboxGatewayHealthCheck;
-import com.codeshelf.metrics.EdiHealthCheck;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.IsProductionServerHealthCheck;
-import com.codeshelf.metrics.PicksActivityHealthCheck;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.report.IPickDocumentGenerator;
 import com.codeshelf.security.TokenSessionService;
@@ -113,17 +110,20 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		DropboxGatewayHealthCheck dbxCheck = new DropboxGatewayHealthCheck();
 		metricsService.registerHealthCheck(dbxCheck);
 		
+		IsProductionServerHealthCheck productionCheck = new IsProductionServerHealthCheck();
+		metricsService.registerHealthCheck(productionCheck);
+
+		/*
 		EdiHealthCheck ediCheck = new EdiHealthCheck(this.ediImportService, ediExportService);
 		metricsService.registerHealthCheck(ediCheck);
 		
 		DataQuantityHealthCheck dataQuantityCheck = new DataQuantityHealthCheck();
 		metricsService.registerHealthCheck(dataQuantityCheck);
 
-		IsProductionServerHealthCheck productionCheck = new IsProductionServerHealthCheck();
-		metricsService.registerHealthCheck(productionCheck);
 		
 		PicksActivityHealthCheck picksActivityCheck = new PicksActivityHealthCheck();
 		metricsService.registerHealthCheck(picksActivityCheck);
+		*/
 
 }
 
