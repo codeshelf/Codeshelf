@@ -228,9 +228,7 @@ public class CsClientEndpoint {
 	public final void onError(Throwable cause) {
 		if (sessionErrorCounter != null)
 			sessionErrorCounter.inc();
-		// LOGGER.error("WebSocket: " + cause.getMessage());
-		// Saw this with a cause being a NPE, but no stack trace available. Error was just swallowed.
-		LOGGER.error("WebSocket errorClass:{} message:{}", cause.getClass().getSimpleName(), cause.getMessage());
+		LOGGER.error("WebSocket unhandled exception", cause);
 		// To track down add java exception breakpoint of the class that is logged, and reproduce.
 	}
 
