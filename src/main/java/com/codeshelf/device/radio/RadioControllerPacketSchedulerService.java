@@ -1,5 +1,8 @@
 package com.codeshelf.device.radio;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+
 /**
  * 
  * 
@@ -15,6 +18,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -74,10 +78,16 @@ public class RadioControllerPacketSchedulerService {
 	private final ScheduledExecutorService										packetSendService				= Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("pckt-schd")
 																													.setPriority(Thread.MAX_PRIORITY)
 																													.build());
+	
+	// Statistics collection
+	private static final int													REPORT_INTERVAL_SECS			= 60 * 5;
+	private packetSchedulerStatsCollector										statsCollector;
+	private final ScheduledExecutorService										schedulerReportService			 = Executors.newScheduledThreadPool(1);
 
 	// --------------------------------------------------------------------------
 	public RadioControllerPacketSchedulerService(RadioControllerPacketIOService inPacketIOService) {
 		this.packetIOService = inPacketIOService;
+		statsCollector = new packetSchedulerStatsCollector();
 	}
 
 	// --------------------------------------------------------------------------
@@ -90,6 +100,8 @@ public class RadioControllerPacketSchedulerService {
 				deliverPackets();
 			}
 		}, 0, NETWORK_PACKET_SPACING_MILLIS, TimeUnit.MILLISECONDS);
+		
+		schedulerReportService.scheduleAtFixedRate(statsCollector, REPORT_INTERVAL_SECS, REPORT_INTERVAL_SECS, TimeUnit.SECONDS);
 	}
 
 	// --------------------------------------------------------------------------
@@ -125,6 +137,7 @@ public class RadioControllerPacketSchedulerService {
 		// Add new packet to the end of the queue
 		deque.addLast(inPacket);
 		addDeviceToQueue(mDeviceQueue, inDevice);
+		statsCollector.updateQueueStats(deque.size());
 		//LOGGER.warn("Device queue: {}", mDeviceQueue.toString());
 	}
 
@@ -252,6 +265,11 @@ public class RadioControllerPacketSchedulerService {
 		packet = getNextPacketForDevice(device);
 
 		if (packet != null) {
+			// Increment stats
+			if (packet.getSendCount() == 0) {
+				statsCollector.incrementPacketsSent();
+			}
+			
 			// Send packet
 			sendPacket(packet);
 
@@ -414,7 +432,7 @@ public class RadioControllerPacketSchedulerService {
 	 */
 	private void sendPacket(IPacket inPacket) {
 		//LOGGER.info("Sending packet {}", inPacket.toString());
-		try {
+		try {		
 			packetIOService.handleOutboundPacket(inPacket);
 		} finally {
 			mLastPacketSentTime.set(System.currentTimeMillis());
@@ -515,6 +533,7 @@ public class RadioControllerPacketSchedulerService {
 
 		if (!packetNewerThanLastAcked(inPacket)) {
 			LOGGER.debug("Not sending packet - Has been ack'd. {} Packet {}", inPacket.getAckId(), inPacket.toString());
+			statsCollector.updateResendStats(inPacket.getSendCount());
 			return false;
 		}
 
@@ -527,11 +546,13 @@ public class RadioControllerPacketSchedulerService {
 			LOGGER.warn("Not sending packet to {} - Exceeded retry count. (Not acked yet, but sometimes the message made it.) {}",
 				guidStr,
 				inPacket);
+			statsCollector.incrementDroppedCount();
 			return false;
 		}
 
 		if (System.currentTimeMillis() - inPacket.getCreateTimeMillis() > MAX_PACKET_AGE_MILLIS) {
 			LOGGER.warn("Not sending packet - Exceeded max packet age. Packet {}", inPacket);
+			statsCollector.incrementDroppedCount();
 			return false;
 		}
 
@@ -686,5 +707,126 @@ public class RadioControllerPacketSchedulerService {
 		mSecondDeviceQueue.remove(inDevice);
 		mPendingPacketsMap.remove(inDevice.getAddress());
 		mLastDeviceAckId.remove(inDevice.getAddress());
+	}
+	
+	public void updateSendingStats(){
+		
+	}
+	
+	private class packetSchedulerStatsCollector implements Runnable {
+		
+		private Logger	LOGGER		= LoggerFactory.getLogger(RadioControllerPacketSchedulerService.class);
+		
+		AtomicInteger totalPacketsSent;
+		AtomicInteger sumResends, maxResends, minResends;
+		AtomicInteger sumDropped;
+		
+		AtomicInteger sumQueueDepth, maxQueueDepth, minQueueDepth;
+		AtomicInteger queueSampleSize;
+		
+		long st = 0;
+		NumberFormat formatter = new DecimalFormat("#0.00");
+		
+		packetSchedulerStatsCollector() {
+			
+			totalPacketsSent = new AtomicInteger(0);
+			sumResends = new AtomicInteger(0);
+			maxResends = new AtomicInteger(0);
+			minResends = new AtomicInteger(0);
+			sumDropped = new AtomicInteger(0);
+			
+			sumQueueDepth = new AtomicInteger(0);
+			maxQueueDepth = new AtomicInteger(0);
+			minQueueDepth = new AtomicInteger(0);
+			queueSampleSize = new AtomicInteger(0);
+			
+			st = System.currentTimeMillis();
+		}
+		
+		@Override
+		public void run() {
+			LOGGER.info(getResendDropStats());
+			LOGGER.info(getQueueStats());
+			reset();
+		}
+		
+		public void incrementDroppedCount() {
+			sumDropped.incrementAndGet();
+		}
+		
+		public void incrementPacketsSent() {
+			totalPacketsSent.incrementAndGet();
+		}
+		
+		// Not perfectly thread safe but it's good enough
+		// Don't want to introduce too much locking
+		public void updateResendStats(int inResendCount) {
+			int currentResends = sumResends.get();
+			
+			if (inResendCount > currentResends) {
+				maxResends.set(inResendCount);
+			} else if (inResendCount < currentResends) {
+				minResends.set(inResendCount);
+			}
+				
+			sumResends.addAndGet(inResendCount);
+		}
+		
+		public void updateQueueStats(int inQueueDepth) {
+			int currentQueueSum = sumQueueDepth.get();
+			
+			if (inQueueDepth > currentQueueSum) {
+				maxQueueDepth.set(inQueueDepth);
+			} else if (inQueueDepth < currentQueueSum) {
+				minQueueDepth.set(inQueueDepth);
+			}
+			
+			sumQueueDepth.addAndGet(inQueueDepth);
+			queueSampleSize.incrementAndGet();
+		}
+		
+		public void reset() {
+			totalPacketsSent.set(0);
+			sumResends.set(0);
+			maxResends.set(0);
+			minResends.set(0);
+			sumDropped.set(0);
+			
+			sumQueueDepth.set(0);
+			maxQueueDepth.set(0);
+			minQueueDepth.set(0);
+			queueSampleSize.set(0);
+			
+			st = System.currentTimeMillis();
+		}
+		
+		private String getResendDropStats() {
+			double meanRetries = 0;
+			double time = getMeasuredTimeSec();
+			
+			if (totalPacketsSent.get() > 0) {
+				meanRetries = sumResends.get() / totalPacketsSent.get();
+			}
+			
+			return new String("CMD Packet Resend Report - Average resend count: " + formatter.format(meanRetries) + 
+				" Max resends: " + maxResends.get() + " Min resends: " + minResends.get()  + "Elapsed time: " + formatter.format(time) + " (secs)");
+		}
+		
+		private String getQueueStats() {
+			double meanDepth = 0;
+			double time = getMeasuredTimeSec();
+			
+			if (queueSampleSize.get() > 0) {
+				meanDepth = sumQueueDepth.get() / queueSampleSize.get();
+			}
+			
+			return new String("CMD Packet Queue Report - Average queue depth: " + formatter.format(meanDepth) + 
+				" Max depth: " + maxQueueDepth.get() + " Min depth: " + minQueueDepth.get() + "Elapsed time: " + formatter.format(time) + " (secs)");
+		}
+		
+		private double getMeasuredTimeSec() {
+			double time_seconds = (System.currentTimeMillis() - st) / 1000;
+			return time_seconds;
+		}
 	}
 }
