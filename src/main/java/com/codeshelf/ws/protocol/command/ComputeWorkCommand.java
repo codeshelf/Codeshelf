@@ -51,6 +51,20 @@ public class ComputeWorkCommand extends CommandABC {
 			AtomicBoolean pathChanged = new AtomicBoolean(false);
 			Boolean reverse = request.getReversePickOrder();
 
+			/*
+			// Activate this only for use with CheProcessTestPickPerformance. Make profiling of the guts of server work easier.
+			LOGGER.error("doing 9 extra compute work computations. Make sure this does not escape into production.");
+			for (int n = 1; n<= 9; n++){
+				WorkList allWorkList2 = workService.computeWorkInstructions(che, positionToContainerMap, reverse);
+				List<WorkInstruction> instructionsOnPath2 = workService.getWorkInstructions(che,
+					request.getLocationId(),
+					reverse,
+					pathChanged);
+				Map<String, WorkInstructionCount> containerToCountMap2 = computeContainerWorkInstructionCounts(allWorkList2,
+					instructionsOnPath2);			
+			}
+			*/
+			
 			// Get the work instructions for this CHE at this location for the given containers.
 			WorkList allWorkList = workService.computeWorkInstructions(che, positionToContainerMap, reverse);
 
