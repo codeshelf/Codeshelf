@@ -575,10 +575,18 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			resetCollection();
 		}
 		
+		// --------------------------------------------------------------------------
+		/**
+		 *  Start collection
+		 */
 		public void startCollecting() {
 			resetCollection();
 		}
 		
+		// --------------------------------------------------------------------------
+		/**
+		 * Reset all collection counters
+		 */
 		public void resetCollection() {
 			totalPacketsSent.set(0);
 			totalPacketsRcvd.set(0);
@@ -587,16 +595,29 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			st = System.currentTimeMillis();
 		}
 		
+		// --------------------------------------------------------------------------
+		/**
+		 *  Update sent byte count
+		 */
 		public void updateSentStats(int inByteCount) {
 			totalPacketsSent.incrementAndGet();
 			totalBytesSent.addAndGet(inByteCount);
 		}
 		
+		// --------------------------------------------------------------------------
+		/**
+		 *  Update received byte count
+		 */
 		public void updateRcvdStats(int inByteCount) {;
 			totalPacketsRcvd.incrementAndGet();
 			totalBytesRcvd.addAndGet(inByteCount);
 		}
 		
+		// --------------------------------------------------------------------------
+		/**
+		 *	Get send data report
+		 *@return String
+		 */
 		private String getSentReport() {
 			double time = getMeasuredTimeSec();
 			double data_throughput = (totalBytesSent.get() * 8) / time;
@@ -606,6 +627,11 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 				" Total Packets sent: " + totalPacketsSent + " Packet Throughput: " + formatter.format(packet_throughput) + "/sec" + " Elapsed time: " + formatter.format(time) + " (secs)");
 		}
 		
+		// --------------------------------------------------------------------------
+		/**
+		 *  Get received data report
+		 *  @return String
+		 */
 		private String getReceivedReport() {
 			double time = getMeasuredTimeSec();
 			double data_throughput = (totalBytesRcvd.get() * 8) / time;
@@ -615,6 +641,11 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 				" Total Packets recv: " + totalPacketsRcvd + " Packet Throughput: " + formatter.format(packet_throughput) + "/sec" + " Elapsed time: " + formatter.format(time) + " (secs)");
 		}
 		
+		// --------------------------------------------------------------------------
+		/**
+		 *  Get elapsed time in seconds
+		 *  @return double - elapsed time
+		 */
 		private double getMeasuredTimeSec() {
 			double time_seconds = (System.currentTimeMillis() - st) / 1000;
 			return time_seconds;

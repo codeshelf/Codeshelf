@@ -767,17 +767,30 @@ public class RadioControllerPacketSchedulerService {
 			LOGGER.info(getQueueStats());
 			reset();
 		}
-		
+	
+		// --------------------------------------------------------------------------
+		/**
+		 * Increment dropped packet counter
+		 */
 		public void incrementDroppedCount() {
 			sumDropped.incrementAndGet();
 		}
 		
+		// --------------------------------------------------------------------------
+		/**
+		 * Increment sent packet counter - should not include resends
+		 */
 		public void incrementPacketsSent() {
 			totalPacketsSent.incrementAndGet();
 		}
 		
 		// Not perfectly thread safe but it's good enough
 		// Don't want to introduce too much locking
+
+		// --------------------------------------------------------------------------
+		/**
+		 * Update resend stats
+		 */
 		public void updateResendStats(int inResendCount) {
 			int currentResends = sumResends.get();
 			
@@ -790,6 +803,10 @@ public class RadioControllerPacketSchedulerService {
 			sumResends.addAndGet(inResendCount);
 		}
 		
+		// --------------------------------------------------------------------------
+		/**
+		 * Update queue stats
+		 */		
 		public void updateQueueStats(int inQueueDepth) {
 			int currentQueueSum = sumQueueDepth.get();
 			
@@ -803,6 +820,11 @@ public class RadioControllerPacketSchedulerService {
 			queueSampleSize.incrementAndGet();
 		}
 		
+		
+		// --------------------------------------------------------------------------
+		/**
+		 * Reset collection counters
+		 */
 		public void reset() {
 			totalPacketsSent.set(0);
 			sumResends.set(0);
@@ -818,6 +840,11 @@ public class RadioControllerPacketSchedulerService {
 			st = System.currentTimeMillis();
 		}
 		
+		// --------------------------------------------------------------------------
+		/**
+		 *  Get packet success report
+		 *  @return String
+		 */
 		private String getResendDropStats() {
 			double meanRetries = 0;
 			double time = getMeasuredTimeSec();
@@ -829,7 +856,12 @@ public class RadioControllerPacketSchedulerService {
 			return new String("CMD Packet Success Report - Average resend count: " + formatter.format(meanRetries) + 
 				" Max resends: " + maxResends.get() + " Min resends: " + minResends.get() + "Dropped: "+ sumDropped.get() + "Elapsed time: " + formatter.format(time) + " (secs)");
 		}
-		
+
+		// --------------------------------------------------------------------------
+		/**
+		 *  Get packet queues report
+		 *  @return String
+		 */
 		private String getQueueStats() {
 			double meanDepth = 0;
 			double time = getMeasuredTimeSec();
@@ -842,6 +874,11 @@ public class RadioControllerPacketSchedulerService {
 				" Max depth: " + maxQueueDepth.get() + " Min depth: " + minQueueDepth.get() + "Elapsed time: " + formatter.format(time) + " (secs)");
 		}
 		
+		// --------------------------------------------------------------------------
+		/**
+		 *  Get elapsed time in seconds
+		 *  @return double - elapsed time
+		 */
 		private double getMeasuredTimeSec() {
 			double time_seconds = (System.currentTimeMillis() - st) / 1000;
 			return time_seconds;
