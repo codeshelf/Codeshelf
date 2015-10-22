@@ -2812,7 +2812,10 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(200, response.getStatus());
 		
 		LOGGER.info("6: Retrieve and verify metrics");
-		FacilityMetric metric = (FacilityMetric)facilityResourse.getMetrics(null).getEntity();
+		@SuppressWarnings("unchecked")
+		List<FacilityMetric> metricList = (List<FacilityMetric>)facilityResourse.getMetrics().getEntity();
+		Assert.assertEquals(1, metricList.size());
+		FacilityMetric metric = metricList.get(0);
 		//One order wasn't completed due to a short
 		Assert.assertEquals(3, (int)metric.getOrdersPicked());
 		Assert.assertEquals(24, (int)metric.getCountPicked());

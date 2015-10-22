@@ -790,10 +790,10 @@ public class FacilityResource {
 	@GET
 	@Path("/metrics")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getMetrics(@QueryParam("date") String dateStr){
+	public Response getMetrics(){
 		try {
-			FacilityMetric metric = facility.getMetrics(dateStr);
-			return BaseResponse.buildResponse(metric);
+			List<FacilityMetric> facilityMetrics = FacilityMetric.staticGetDao().findByParent(facility);
+			return BaseResponse.buildResponse(facilityMetrics);
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
 		}

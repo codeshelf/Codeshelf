@@ -1407,25 +1407,30 @@ public class Facility extends Location {
 			dropboxLegacyCleanupDone = true;
 		}
 	}
-	
-	public FacilityMetric getMetrics(String dateStr) throws Exception{
-		Calendar cal = getDateForMetrics(dateStr, getTimeZone());
-		Timestamp metricsCollectionStartUTC = new Timestamp(cal.getTimeInMillis());
-		FacilityMetric metric = getMetrics(metricsCollectionStartUTC, false);
-		return metric;
-	}
-	
+		
 	public void computeMetrics(String dateStr) throws Exception{
 		TimeZone facilityTimeZone = getTimeZone();
+		Calendar cal = Calendar.getInstance(facilityTimeZone);
+		if (dateStr != null) {
+			SimpleDateFormat dayFormat = new SimpleDateFormat("yyyy-MM-dd");
+			dayFormat.setTimeZone(facilityTimeZone);
+			Date date = dayFormat.parse(dateStr);
+			cal.setTime(date);
+		}
+		cal.set(Calendar.HOUR_OF_DAY, 0);
+		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MILLISECOND, 0);
+		
 		SimpleDateFormat outFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
 		outFormat.setTimeZone(facilityTimeZone);
-		Calendar cal = getDateForMetrics(dateStr, facilityTimeZone);
 		String dateLocalUI = outFormat.format(cal.getTime());
+		
 		Timestamp metricsCollectionStartUTC = new Timestamp(cal.getTimeInMillis());
 		cal.add(Calendar.DATE, 1);
 		Timestamp metricsCollectionEndUTC = new Timestamp(cal.getTimeInMillis());
 		
-		FacilityMetric metric = getMetrics(metricsCollectionStartUTC, true);
+		FacilityMetric metric = getMetrics(metricsCollectionStartUTC);
 		metric.setUpdated(new Timestamp(System.currentTimeMillis()));
 		metric.setTz(cal.getTimeZone().getID());
 		metric.setDateLocalUI(dateLocalUI);
@@ -1441,21 +1446,6 @@ public class Facility extends Location {
 		computeHousekeepingMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
 		computeEventMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
 		FacilityMetric.staticGetDao().store(metric);
-	}
-	
-	private Calendar getDateForMetrics(String dateStr, TimeZone facilityTimeZone) throws Exception{
-		Calendar cal = Calendar.getInstance(facilityTimeZone);
-		if (dateStr != null) {
-			SimpleDateFormat dayFormat = new SimpleDateFormat("yyyy-MM-dd");
-			dayFormat.setTimeZone(facilityTimeZone);
-			Date date = dayFormat.parse(dateStr);
-			cal.setTime(date);
-		}
-		cal.set(Calendar.HOUR_OF_DAY, 0);
-		cal.set(Calendar.MINUTE, 0);
-		cal.set(Calendar.SECOND, 0);
-		cal.set(Calendar.MILLISECOND, 0);
-		return cal;
 	}
 	
 	private int computeOrderMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc){
@@ -1544,20 +1534,16 @@ public class Facility extends Location {
 		metric.setSkipScanEvents(skipEventsCount);
 	}
 	
-	private FacilityMetric getMetrics(Timestamp date, boolean createNewIfNeeded){
+	private FacilityMetric getMetrics(Timestamp date){
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", this));
 		filterParams.add(Restrictions.eq("date", date));
 		List<FacilityMetric> metrics = FacilityMetric.staticGetDao().findByFilter(filterParams);
 		FacilityMetric metric = null;
 		if (metrics.isEmpty()) {
-			if (createNewIfNeeded) {
-				metric = new FacilityMetric();
-				metric.setParent(this);
-				metric.setDate(date);
-			} else {
-				return null;
-			}
+			metric = new FacilityMetric();
+			metric.setParent(this);
+			metric.setDate(date);
 		} else if (metrics.size() == 1){
 			metric = metrics.get(0);
 		} else {
