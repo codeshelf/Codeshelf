@@ -826,8 +826,8 @@ public class RadioControllerPacketSchedulerService {
 				meanRetries = sumResends.get() / totalPacketsSent.get();
 			}
 			
-			return new String("CMD Packet Resend Report - Average resend count: " + formatter.format(meanRetries) + 
-				" Max resends: " + maxResends.get() + " Min resends: " + minResends.get()  + "Elapsed time: " + formatter.format(time) + " (secs)");
+			return new String("CMD Packet Success Report - Average resend count: " + formatter.format(meanRetries) + 
+				" Max resends: " + maxResends.get() + " Min resends: " + minResends.get() + "Dropped: "+ sumDropped.get() + "Elapsed time: " + formatter.format(time) + " (secs)");
 		}
 		
 		private String getQueueStats() {
