@@ -96,7 +96,7 @@ public class PurgeProcessor implements BatchProcessor {
 		}
 		List<UUID> wiBatch = subUuidListAndRemoveFromInList(wiUuidsToPurge, purgeParams.getWorkInstructionBatchValue());
 		DomainObjectManager doMananager = new DomainObjectManager(facility);
-		return doMananager.purgeSomeWis(wiBatch);
+		return doMananager.purgeSomeWorkInstructions(wiBatch);
 	}
 
 	private void buildOrdersList() {

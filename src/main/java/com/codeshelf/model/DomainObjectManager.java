@@ -23,7 +23,6 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerUse;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
@@ -186,99 +185,6 @@ public class DomainObjectManager {
 
 	}
 
-	/**
-	 * delinks, then deletes
-	 */
-	private void safelyDeleteWorkInstructionList(List<WorkInstruction> wiList) {
-		int deletedCount = 0;
-		for (WorkInstruction wi : wiList) {
-
-			OrderDetail detail = wi.getOrderDetail();
-			if (detail != null)
-				detail.removeWorkInstruction(wi);
-			Che che = wi.getAssignedChe();
-			if (che != null)
-				che.removeWorkInstruction(wi);
-			try {
-				WorkInstruction.staticGetDao().delete(wi);
-			} catch (DaoException e) {
-				LOGGER.error("safelyDeleteWorkInstructionList", e);
-			}
-			deletedCount++;
-
-			if (deletedCount % 100 == 0)
-				LOGGER.info("deleted {} WorkInstructions ", deletedCount);
-
-		}
-
-		if (deletedCount % 100 != 0)
-			LOGGER.info("deleted {} WorkInstructions ", deletedCount);
-	}
-
-	/**
-	 * Assumes work instructions are already delinked. Normally call safelyDeleteWorkInstructionList first.
-	 * This does not delink from the order. Therefore, unsafe if we have a reference to the order .
-	 */
-/*	
-	private void safelyDeleteDetailsList(List<OrderDetail> detailsList) {
-		int deletedCount = 0;
-		
-		for (OrderDetail detail : detailsList) {
-
-			OrderHeader order = detail.getParent();
-			if (order != null)
-				order.removeOrderDetail(detail);			
-
-			try {
-				OrderDetail.staticGetDao().delete(detail);
-			} catch (DaoException e) {
-				LOGGER.error("safelyDeleteDetailsList", e);
-			}
-			deletedCount++;
-
-			if (deletedCount % 100 == 0)
-				LOGGER.info("deleted {} OrderDetails ", deletedCount);
-
-		}
-		if (deletedCount % 100 != 0)
-			LOGGER.info("deleted {} OrderDetails ", deletedCount);
-	}
-*/	
-
-	/**
-	 * This purge follows our parent child pattern
-	 */
-	private void purgeWorkInstructions(int daysOldToCount, int maxToPurgeAtOnce) {
-		Timestamp desiredTime = getDaysOldTimeStamp(daysOldToCount);
-		UUID facilityUUID = getFacility().getPersistentId();
-
-		/*
-		List<WorkInstruction> wiList = WorkInstruction.staticGetDao()
-			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID),
-				Restrictions.lt("created", desiredTime)));
-		*/
-
-		Criteria archiveableWisCrit = WorkInstruction.staticGetDao().createCriteria();
-		archiveableWisCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		archiveableWisCrit.add(Restrictions.lt("created", desiredTime));
-		int wantToPurge = WorkInstruction.staticGetDao().countByCriteriaQuery(archiveableWisCrit);
-
-		Criteria archiveableWisCrit2 = WorkInstruction.staticGetDao().createCriteria();
-		archiveableWisCrit2.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		archiveableWisCrit2.add(Restrictions.lt("created", desiredTime));
-		archiveableWisCrit2.setMaxResults(maxToPurgeAtOnce);
-		List<WorkInstruction> wiList = WorkInstruction.staticGetDao().findByCriteriaQuery(archiveableWisCrit2);
-
-		// int wantToPurge = wiList.size();
-		int willPurge = Math.min(wantToPurge, maxToPurgeAtOnce);
-		boolean partial = wantToPurge > willPurge;
-		if (partial)
-			LOGGER.info("purging only {}  of {} purgable work instructions", willPurge, wantToPurge);
-		else
-			LOGGER.info("purging {} work instructions", willPurge);
-
-		safelyDeleteWorkInstructionList(wiList);
-	}
 	
 	/**
 	 * This returns the full list of UUIDs of OrderHeaders whose dueDate is older than daysOld before now.
@@ -461,7 +367,7 @@ public class DomainObjectManager {
 	/**
 	 * Purge these work instructions all in the current transaction.
 	 */
-	public int purgeSomeWis(List<UUID> wiUuids) {
+	public int purgeSomeWorkInstructions(List<UUID> wiUuids) {
 		final int MAX_WI_PURGE = 500;
 		int wantToPurge = wiUuids.size();
 		int willPurge = Math.min(wantToPurge, MAX_WI_PURGE);
@@ -476,11 +382,19 @@ public class DomainObjectManager {
 			try {
 				WorkInstruction wi = WorkInstruction.staticGetDao().findByPersistentId(wiUuid);
 				if (wi != null) {
+					// Work instructions are in lists for various parents. Make sure they are removed.
+					OrderDetail detail = wi.getOrderDetail();
+					if (detail != null)
+						detail.removeWorkInstruction(wi);
+					Che che = wi.getAssignedChe();
+					if (che != null)
+						che.removeWorkInstruction(wi);					
+					
 					WorkInstruction.staticGetDao().delete(wi);
 					deletedCount++;
 				}
 			} catch (DaoException e) {
-				LOGGER.error("purgeSomeWis", e);
+				LOGGER.error("purgeSomeWorkInstructions", e);
 			}
 		}
 		return deletedCount;
@@ -567,145 +481,6 @@ public class DomainObjectManager {
 			}
 		}
 		return deletedCount;
-	}
-
-	/**
-	 * This purge assumes that order.delete() follows our parent child pattern. It is not done here.
-	 */
-	private void purgeOrders(int daysOldToCount, int maxToPurgeAtOnce) {
-		Timestamp desiredTime = getDaysOldTimeStamp(daysOldToCount);
-		UUID facilityUUID = getFacility().getPersistentId();
-
-		LOGGER.info("Phase 1 of order purge: get the batch of orders to purge");
-
-		Criteria archiveableOrderCrit = OrderHeader.staticGetDao().createCriteria();
-		archiveableOrderCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		archiveableOrderCrit.add(Restrictions.lt("dueDate", desiredTime));
-		int wantToPurge = OrderHeader.staticGetDao().countByCriteriaQuery(archiveableOrderCrit);
-
-		Criteria archiveableOrderCrit2 = OrderHeader.staticGetDao().createCriteria();
-		archiveableOrderCrit2.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		archiveableOrderCrit2.add(Restrictions.lt("dueDate", desiredTime));
-		archiveableOrderCrit2.setMaxResults(maxToPurgeAtOnce);
-		// List<OrderHeader> orders = OrderHeader.staticGetDao().findByCriteriaQuery(archiveableOrderCrit2);
-		List<UUID> uuidList = OrderHeader.staticGetDao().getUUIDListByCriteriaQuery(archiveableOrderCrit2);
-
-		// int wantToPurge = orders.size();
-		int willPurge = Math.min(wantToPurge, maxToPurgeAtOnce);
-		boolean partial = wantToPurge > willPurge;
-
-		if (partial)
-			LOGGER.info("purging only {}  of {} purgable orders and owned related objects", willPurge, wantToPurge);
-		else
-			LOGGER.info("purging {} orders and owned related objects", willPurge);
-
-		purgeSomeOrders(uuidList);
-
-	}
-
-	/**
-	 * For many sites, we may get a new "container" for each order. If so, certainly the old containers should be purged
-	 * But we would like to avoid purging permanent containers if possible.
-		 */
-	private void purgeContainers(int daysOldToCount, int maxToPurgeAtOnce) {
-		UUID facilityUUID = getFacility().getPersistentId();
-		// The main concern is that we should not purge the container if there are any remaining ContainerUses
-		// Containers have an active flag. So, if inactive, probably worth purging anyway.
-
-		// We cannot limit the returned containers because we have no easy way to find the subset that do not have containerUse pointing at them. 
-		List<Container> cntrs = Container.staticGetDao()
-			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID)));
-
-		Map<UUID, Container> referencedMap = new HashMap<UUID, Container>();
-
-		LOGGER.info("examining {} Containers to consider purging", cntrs.size());
-		LOGGER.info("examining ContainerUses linked to containers");
-		// ContainerUse. Can not limit, or we would make incorrect decisions about which were deleteable.
-		Criteria crit = ContainerUse.staticGetDao().createCriteria();
-		crit.createAlias("parent", "p");
-		crit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
-		List<ContainerUse> uses = ContainerUse.staticGetDao().findByCriteriaQuery(crit);
-
-		// Add each container that ContainerUse references to map
-		for (ContainerUse cntrUse : uses) {
-			Container referencedCntr = cntrUse.getParent();
-			if (!referencedMap.containsKey(referencedCntr.getPersistentId())) {
-				referencedMap.put(referencedCntr.getPersistentId(), referencedCntr);
-			}
-		}
-
-		LOGGER.info("examining WorkInstructions linked to containers");
-		Criteria crit2 = WorkInstruction.staticGetDao().createCriteria();
-		crit2.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByCriteriaQuery(crit2);
-
-		// Add each container that the work instruction references to map
-		for (WorkInstruction wi : wis) {
-			Container referencedCntr = wi.getContainer();
-			if (!referencedMap.containsKey(referencedCntr.getPersistentId())) {
-				referencedMap.put(referencedCntr.getPersistentId(), referencedCntr);
-			}
-		}
-
-		int deletedCount = 0;
-		for (Container cntr : cntrs) {
-			boolean shouldDelete = false;
-			if (!referencedMap.containsKey(cntr.getPersistentId())) // This container had no containerUses and no work instructions
-				shouldDelete = true;
-
-			if (shouldDelete) {
-				try {
-					Container.staticGetDao().delete(cntr);
-				} catch (DaoException e) {
-					LOGGER.error("purgeContainers", e);
-				}
-				deletedCount++;
-				if (deletedCount >= maxToPurgeAtOnce)
-					break;
-
-				if (deletedCount % 100 == 0)
-					LOGGER.info("deleted {} Containers ", deletedCount);
-			}
-		}
-		LOGGER.info("deleted {} Containers ", deletedCount);
-
-	}
-
-	/**
-	* The goal is to delete what reported on with the same parameters.
-	* However, there are several sub-deletes, controlled by the className parameter
-	* Logs an error on unsupported class name.
-	* This requires that we be in a transaction in context
-	*/
-	public void purgeOldObjects(int daysOldToCount, Class<? extends IDomainObject> inCls, int maxToPurgeAtOnce) {
-		if (inCls == null) {
-			LOGGER.error("null class name in purgeOldObjects");
-			return;
-		}
-		daysOldToCount = floorDays(daysOldToCount);
-
-		boolean foundGoodClassName = false;
-		// String nameToMatch = WorkInstruction.class.getName();
-		if (WorkInstruction.class.isAssignableFrom(inCls)) {
-			foundGoodClassName = true;
-			purgeWorkInstructions(daysOldToCount, maxToPurgeAtOnce);
-		}
-
-		else if (OrderHeader.class.isAssignableFrom(inCls)) {
-			foundGoodClassName = true;
-			// only do 200 orders at a time. See DEV-1144
-			maxToPurgeAtOnce = Math.min(200, maxToPurgeAtOnce);
-			purgeOrders(daysOldToCount, maxToPurgeAtOnce);
-		}
-
-		else if (Container.class.isAssignableFrom(inCls)) {
-			foundGoodClassName = true;
-			purgeContainers(daysOldToCount, maxToPurgeAtOnce);
-		}
-
-		if (!foundGoodClassName) {
-			LOGGER.error("unimplement class name: {} in purgeOldObjects", inCls);
-		}
 	}
 
 	private int floorDays(int daysOldToCount) {
