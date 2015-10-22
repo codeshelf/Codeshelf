@@ -1,5 +1,7 @@
 package com.codeshelf.model.domain;
 
+import java.sql.Timestamp;
+
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -71,6 +73,12 @@ public class ExportMessage extends DomainObjectTreeABC<Facility>{
 	@Getter @Setter
 	@JsonProperty
 	private String	cheGuid;
+	
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private Timestamp					created;
 
 
 	@SuppressWarnings("unchecked")
@@ -108,6 +116,7 @@ public class ExportMessage extends DomainObjectTreeABC<Facility>{
 		} else if (message instanceof OrderOnCartFinishedExportMessage) {
 			setType(ExportMessageType.ORDER_ON_CART_FINISHED);
 		}
+		setCreated(new Timestamp(System.currentTimeMillis()));
 	}
 
 	public ExportMessageFuture toExportMessageFuture(){
