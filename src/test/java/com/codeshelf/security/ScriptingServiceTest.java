@@ -35,7 +35,9 @@ public class ScriptingServiceTest extends ServerTest {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScriptingServiceTest.class);
 
-	//-XX:PermSize=30M -XX:MaxPermSize=60M 
+	//This test used to fail with settings as  low as this -XX:PermSize=30M -XX:MaxPermSize=60M
+	//since moving to a single ScriptEngine per facility this will complete without PermGenError and 
+	// without changing the garbage collector
 	@Test
 	@Ignore
 	public void permgentest() throws ScriptException {

@@ -62,6 +62,7 @@ public class ExtensionPointEngine {
 		ExtensionPointType extp = ep.getType();
 		String functionScript = ep.getScript();
 		try {
+			LOGGER.info("Activating extension point " + ep.getType());
 			engine.eval(functionScript);
 			this.activeExtensions.add(extp);
 		} catch (ScriptException e) {
@@ -78,6 +79,7 @@ public class ExtensionPointEngine {
 	}
 
 	private void inactivateExtensionPoint(ExtensionPoint ep) throws ScriptException {
+		LOGGER.info("Inactivating extension point " + ep.getType());
 		ExtensionPointType extp = ep.getType();
 		this.activeExtensions.remove(extp);
 	}
@@ -254,11 +256,9 @@ public class ExtensionPointEngine {
 	private ExtensionPoint store(ExtensionPoint point) throws ScriptException {
 		ExtensionPoint.staticGetDao().store(point);
 		if (point.isActive()) {
-			LOGGER.info("Activating extension point " + point.getType());
 			this.activateExtensionPointIfValid(point);
 		} else {
-			LOGGER.info("Inactivating extension point " + point.getType());
-			inactivateExtensionPoint(point);
+			this.inactivateExtensionPoint(point);
 		}
 		return point;
 	}
