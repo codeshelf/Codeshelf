@@ -7,11 +7,9 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -21,7 +19,6 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.ErrorResponse;
-import com.codeshelf.api.BaseResponse.TimestampParam;
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.resources.subresources.FacilityResource;
 import com.codeshelf.api.responses.FacilityShort;
@@ -44,7 +41,7 @@ public class FacilitiesResource {
 	
 	@Path("{id}")
 	@RequiresPermissions("companion:view")
-	public FacilityResource getManufacturer(@PathParam("id") UUIDParam uuidParam) throws Exception {
+	public FacilityResource getFacility(@PathParam("id") UUIDParam uuidParam) throws Exception {
 		Facility facility = Facility.staticGetDao().findByPersistentId(uuidParam.getValue());
 		if (facility == null) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
@@ -94,22 +91,5 @@ public class FacilitiesResource {
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
 		}
-	}
-	
-	@PUT
-	@Path("/metrics")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response computeMetrics(@QueryParam("date") TimestampParam date){
-		try {
-			List<Facility> facilies = Facility.staticGetDao().getAll();
-			for (Facility facility : facilies) {
-				facility.computeMetrics();
-			}
-			int size = facilies.size();
-			return BaseResponse.buildResponse("Updated metrics for " + facilies.size() + (size == 1? " facility" : " facilities"));
-		} catch (Exception e) {
-			return new ErrorResponse().processException(e);
-		}
-	}
-	
+	}	
 }
