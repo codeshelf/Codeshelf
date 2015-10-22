@@ -804,8 +804,8 @@ public class FacilityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response computeMetrics(@QueryParam("date") String dateStr){
 		try {
-			facility.computeMetrics(dateStr);
-			return BaseResponse.buildResponse("Updated metrics for facility");
+			FacilityMetric metric = facility.computeMetrics(dateStr);
+			return BaseResponse.buildResponse(metric);
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
 		}

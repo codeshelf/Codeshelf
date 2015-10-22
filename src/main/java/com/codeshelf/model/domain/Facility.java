@@ -1408,7 +1408,7 @@ public class Facility extends Location {
 		}
 	}
 		
-	public void computeMetrics(String dateStr) throws Exception{
+	public FacilityMetric computeMetrics(String dateStr) throws Exception{
 		TimeZone facilityTimeZone = getTimeZone();
 		Calendar cal = Calendar.getInstance(facilityTimeZone);
 		if (dateStr != null) {
@@ -1438,14 +1438,16 @@ public class Facility extends Location {
 		
 		int ordersPickedCalculated = computeOrderMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
 		int ordersPickedOld = metric.getOrdersPicked();
+		//Suspected data loss over time. Do not update old Metric data.
 		if (ordersPickedCalculated < ordersPickedOld / 10){
-			return;
+			return metric;
 		}
 		metric.setOrdersPicked(ordersPickedCalculated);
 		computeDetailMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
 		computeHousekeepingMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
 		computeEventMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
 		FacilityMetric.staticGetDao().store(metric);
+		return metric;
 	}
 	
 	private int computeOrderMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc){
