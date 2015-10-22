@@ -25,7 +25,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.api.resources.FacilitiesResource;
+import com.codeshelf.api.resources.subresources.FacilityResource;
 import com.codeshelf.behavior.UiUpdateBehavior;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
@@ -2732,7 +2732,7 @@ public class CheProcessTestPick extends ServerTest {
 	}
 	
 	@Test
-	public final void testFacilityMetric() throws IOException {
+	public final void testFacilityMetric() throws Exception {
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		beginTransaction();
@@ -2802,18 +2802,17 @@ public class CheProcessTestPick extends ServerTest {
 		picker.pickItemAuto();
 		
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
-		ThreadUtils.sleep(1000);
+		ThreadUtils.sleep(1500);
 		
 		beginTransaction();
 		LOGGER.info("5: Generate metrics for the day");
-		FacilitiesResource resource = new FacilitiesResource(webSocketManagerService);
-		Response response = resource.computeMetrics(null);
+		FacilityResource facilityResourse = new FacilityResource(workService, null, null, webSocketManagerService, null, null, null, null, null, null);
+		facilityResourse.setFacility(facility);
+		Response response = facilityResourse.computeMetrics(null);
 		Assert.assertEquals(200, response.getStatus());
 		
-		LOGGER.info("5: Retrieve and verify metrics");
-		List<FacilityMetric> metrics = FacilityMetric.staticGetDao().getAll();
-		Assert.assertEquals(1, metrics.size());
-		FacilityMetric metric = metrics.get(0);
+		LOGGER.info("6: Retrieve and verify metrics");
+		FacilityMetric metric = (FacilityMetric)facilityResourse.getMetrics(null).getEntity();
 		//One order wasn't completed due to a short
 		Assert.assertEquals(3, (int)metric.getOrdersPicked());
 		Assert.assertEquals(24, (int)metric.getCountPicked());

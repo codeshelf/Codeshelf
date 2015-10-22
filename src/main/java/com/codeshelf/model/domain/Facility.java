@@ -13,6 +13,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -1407,41 +1408,65 @@ public class Facility extends Location {
 		}
 	}
 	
-	public void computeMetrics(){
-		Calendar cal = Calendar.getInstance();
-		cal.setTimeZone(getTimeZone());
-		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
-		cal.set(Calendar.HOUR_OF_DAY, 0);
-		cal.set(Calendar.MINUTE, 0);
-		cal.set(Calendar.SECOND, 0);
-		cal.set(Calendar.MILLISECOND, 0);
-		String dateLocalUI = format.format(cal.getTime());
+	public FacilityMetric getMetrics(String dateStr) throws Exception{
+		Calendar cal = getDateForMetrics(dateStr, getTimeZone());
+		Timestamp metricsCollectionStartUTC = new Timestamp(cal.getTimeInMillis());
+		FacilityMetric metric = getMetrics(metricsCollectionStartUTC, false);
+		return metric;
+	}
+	
+	public void computeMetrics(String dateStr) throws Exception{
+		TimeZone facilityTimeZone = getTimeZone();
+		SimpleDateFormat outFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
+		outFormat.setTimeZone(facilityTimeZone);
+		Calendar cal = getDateForMetrics(dateStr, facilityTimeZone);
+		String dateLocalUI = outFormat.format(cal.getTime());
 		Timestamp metricsCollectionStartUTC = new Timestamp(cal.getTimeInMillis());
 		cal.add(Calendar.DATE, 1);
 		Timestamp metricsCollectionEndUTC = new Timestamp(cal.getTimeInMillis());
 		
-		FacilityMetric metric = getMetric(metricsCollectionStartUTC);
+		FacilityMetric metric = getMetrics(metricsCollectionStartUTC, true);
 		metric.setUpdated(new Timestamp(System.currentTimeMillis()));
 		metric.setTz(cal.getTimeZone().getID());
 		metric.setDateLocalUI(dateLocalUI);
 		metric.setDomainId(metric.getDefaultDomainIdPrefix() + "-" + getDomainId() + "-" + metric.getDateLocalUI());
 		
-		computeOrderMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
+		int ordersPickedCalculated = computeOrderMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
+		int ordersPickedOld = metric.getOrdersPicked();
+		if (ordersPickedCalculated < ordersPickedOld / 10){
+			return;
+		}
+		metric.setOrdersPicked(ordersPickedCalculated);
 		computeDetailMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
 		computeHousekeepingMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
 		computeEventMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
-		
 		FacilityMetric.staticGetDao().store(metric);
 	}
 	
-	private void computeOrderMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc){
+	private Calendar getDateForMetrics(String dateStr, TimeZone facilityTimeZone) throws Exception{
+		Calendar cal = Calendar.getInstance(facilityTimeZone);
+		if (dateStr != null) {
+			SimpleDateFormat dayFormat = new SimpleDateFormat("yyyy-MM-dd");
+			dayFormat.setTimeZone(facilityTimeZone);
+			Date date = dayFormat.parse(dateStr);
+			cal.setTime(date);
+		}
+		cal.set(Calendar.HOUR_OF_DAY, 0);
+		cal.set(Calendar.MINUTE, 0);
+		cal.set(Calendar.SECOND, 0);
+		cal.set(Calendar.MILLISECOND, 0);
+		return cal;
+	}
+	
+	private int computeOrderMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc){
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", this));
 		filterParams.add(Restrictions.eq("status", OrderStatusEnum.COMPLETE));
 		filterParams.add(Restrictions.ge("updated", startUtc));
 		filterParams.add(Restrictions.le("updated", endUtc));
 		int ordersPicked = OrderHeader.staticGetDao().countByFilter(filterParams);
-		metric.setOrdersPicked(ordersPicked);		
+		return ordersPicked;
+				
 	}
 	
 	private void computeDetailMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc){
@@ -1519,16 +1544,20 @@ public class Facility extends Location {
 		metric.setSkipScanEvents(skipEventsCount);
 	}
 	
-	private FacilityMetric getMetric(Timestamp date){
+	private FacilityMetric getMetrics(Timestamp date, boolean createNewIfNeeded){
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", this));
 		filterParams.add(Restrictions.eq("date", date));
 		List<FacilityMetric> metrics = FacilityMetric.staticGetDao().findByFilter(filterParams);
 		FacilityMetric metric = null;
 		if (metrics.isEmpty()) {
-			metric = new FacilityMetric();
-			metric.setParent(this);
-			metric.setDate(date);
+			if (createNewIfNeeded) {
+				metric = new FacilityMetric();
+				metric.setParent(this);
+				metric.setDate(date);
+			} else {
+				return null;
+			}
 		} else if (metrics.size() == 1){
 			metric = metrics.get(0);
 		} else {

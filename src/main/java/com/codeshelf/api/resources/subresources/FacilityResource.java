@@ -91,6 +91,7 @@ import com.codeshelf.model.PurgeProcessor;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.FacilityMetric;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
@@ -786,4 +787,27 @@ public class FacilityResource {
 		}
 	}
 
+	@GET
+	@Path("/metrics")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getMetrics(@QueryParam("date") String dateStr){
+		try {
+			FacilityMetric metric = facility.getMetrics(dateStr);
+			return BaseResponse.buildResponse(metric);
+		} catch (Exception e) {
+			return new ErrorResponse().processException(e);
+		}
+	}
+
+	@PUT
+	@Path("/metrics")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response computeMetrics(@QueryParam("date") String dateStr){
+		try {
+			facility.computeMetrics(dateStr);
+			return BaseResponse.buildResponse("Updated metrics for facility");
+		} catch (Exception e) {
+			return new ErrorResponse().processException(e);
+		}
+	}
 }
