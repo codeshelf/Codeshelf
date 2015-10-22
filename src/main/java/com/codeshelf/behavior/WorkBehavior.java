@@ -69,7 +69,6 @@ import com.codeshelf.model.domain.ContainerUse;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
-import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.Location;
@@ -2425,27 +2424,9 @@ public class WorkBehavior implements IApiBehavior {
 		return changed;
 	}
 
-	/**
-	 * Simpler API, so the UI does not have to set maxToPurgeAtOnce
-	 * That parameter is temporary, as at the moment, we just do an immediate delete on the current thread.
-	 * Later, we will have a chron job that deletes in batches.
-	 */
-	public void purgeOldObjects(int daysOldToCount, Facility inFacility, Class<? extends IDomainObject> inCls) {
-		DomainObjectManager doMananager = new DomainObjectManager(inFacility);
-		doMananager.purgeOldObjects(daysOldToCount, inCls, 1000);
-	}
-
 	public List<String> reportAchiveables(int daysOldToCount, Facility inFacility) {
 		DomainObjectManager doMananager = new DomainObjectManager(inFacility);
 		return doMananager.reportAchiveables(daysOldToCount);
-	}
-
-	/**
-	 * Only a testing API, to cover maxToPurgeAtOnce
-	 */
-	public void purgeOldObjects(int daysOldToCount, Facility inFacility, Class<? extends IDomainObject> inCls, int maxToPurgeAtOnce) {
-		DomainObjectManager doMananager = new DomainObjectManager(inFacility);
-		doMananager.purgeOldObjects(daysOldToCount, inCls, maxToPurgeAtOnce);
 	}
 
 	public List<Object[]> findWorkInstructionReferences(Facility facility,

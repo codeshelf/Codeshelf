@@ -2,6 +2,7 @@ package com.codeshelf.model;
 
 import java.sql.Timestamp;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import org.joda.time.DateTime;
@@ -19,27 +20,40 @@ public class DomainObjectManagerTest extends HibernateTest {
 	 * But not under H2
 	 */
 	@Test
-	public void testPurgeSomeOrdersWithEmpty() {
+	public void testSomePurgesWithEmptyList() {
 		beginTransaction();
 		Facility facility = getFacility();
 		DomainObjectManager subject = new DomainObjectManager(facility);
-		subject.purgeSomeOrders(Collections.<UUID>emptyList());
+		
+		Assert.assertEquals(0, subject.purgeSomeOrders(Collections.<UUID>emptyList()));
+		Assert.assertEquals(0, subject.purgeSomeWiCsvBeans(Collections.<UUID>emptyList()));
+		Assert.assertEquals(0, subject.purgeSomeWorkInstructions(Collections.<UUID>emptyList()));
+		Assert.assertEquals(0, subject.purgeSomeWorkerEvents(Collections.<UUID>emptyList()));
+		Assert.assertEquals(0, subject.purgeSomeCntrs(Collections.<UUID>emptyList()));
+				
 		commitTransaction();
 	}
 
 	@Test
 	public void testPurgeOrdersWithNoDetails() {
+		// Also minimally covers getOrderUuidsToPurge();
+
 		beginTransaction();
 		Facility facility = getFacility();
-		OrderHeader oh = createOrderHeader("1", OrderTypeEnum.OUTBOUND,  facility,  null);
 		
+		OrderHeader oh = createOrderHeader("1", OrderTypeEnum.OUTBOUND,  facility,  null);		
 		oh.setDueDate(new Timestamp(new DateTime().minusDays(2).getMillis()));
+		UUID ohId = oh.getPersistentId();
+		commitTransaction();
+
+		beginTransaction();	
 		DomainObjectManager subject = new DomainObjectManager(facility);
-		subject.purgeOldObjects(1, OrderHeader.class,  5);
+		List<UUID> ohIds = subject.getOrderUuidsToPurge(1);
+		Assert.assertEquals(1, subject.purgeSomeOrders(ohIds));
 		commitTransaction();
 
 		beginTransaction();
-		Assert.assertNull(OrderHeader.staticGetDao().findByPersistentId(oh.getPersistentId()));
+		Assert.assertNull(OrderHeader.staticGetDao().findByPersistentId(ohId));
 		commitTransaction();
 
 	}

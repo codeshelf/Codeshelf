@@ -216,14 +216,14 @@ public class DataArchiving extends ServerTest {
 			LOGGER.error(" bad order ID in makeOrderDaysOld");
 			return;
 		}
-			
+
 		Calendar cal = Calendar.getInstance();
 		cal.add(Calendar.DAY_OF_MONTH, (daysOld * -1));
 		long desiredTimeLong = cal.getTimeInMillis();
 		Timestamp desiredTime = new Timestamp(desiredTimeLong);
 		oh.setDueDate(desiredTime);
 		OrderHeader.staticGetDao().store(oh);
-		
+
 		List<WorkInstruction> wis = new ArrayList<WorkInstruction>();
 		List<OrderDetail> details = oh.getOrderDetails();
 		for (OrderDetail detail : details) {
@@ -232,8 +232,8 @@ public class DataArchiving extends ServerTest {
 				wis.add(wi);
 				WorkInstruction.staticGetDao().store(wi);
 			}
-		}	
-		
+		}
+
 		// for every work instruction that we set to old above, find its event(s) and set to old
 		for (WorkInstruction wi : wis) {
 			Criteria eventCrit = WorkerEvent.staticGetDao().createCriteria();
@@ -242,10 +242,9 @@ public class DataArchiving extends ServerTest {
 			for (WorkerEvent event : events) {
 				event.setCreated(desiredTime);
 				WorkerEvent.staticGetDao().store(event);
-			}			
+			}
 		}
 
-		
 	}
 
 	/**
@@ -315,7 +314,6 @@ public class DataArchiving extends ServerTest {
 		workService.reportAchiveables(2, facility);
 		commitTransaction();
 
-		
 		LOGGER.info("3: Make some of the orders 'old' ");
 		beginTransaction();
 		facility = facility.reload();
@@ -325,7 +323,7 @@ public class DataArchiving extends ServerTest {
 		makeDaysOldTestData("10004", 4, facility);
 		makeDaysOldTestData("10005", 5, facility);
 		commitTransaction();
-		
+
 		LOGGER.info("4: Report, via the work service call");
 		beginTransaction();
 		facility = facility.reload();
@@ -334,12 +332,14 @@ public class DataArchiving extends ServerTest {
 		Assert.assertEquals(8, wiList2.size());
 		commitTransaction();
 
-		LOGGER.info("5: Call the work instruction purge with no limit specified (will limit to 1000, way more than we have)");
+		LOGGER.info("5: Call the work instruction purge ");
 		beginTransaction();
 		facility = facility.reload();
-		workService.purgeOldObjects(4, facility, WorkInstruction.class);
+		DomainObjectManager doManager3 = new DomainObjectManager(facility);
+		List<UUID> workInstructionsToPurge = doManager3.getWorkInstructionUuidsToPurge(4);
+		doManager3.purgeSomeWorkInstructions(workInstructionsToPurge);
 		commitTransaction();
-		
+
 		LOGGER.info("5b: Report, via the work service call");
 		beginTransaction();
 		facility = facility.reload();
@@ -351,11 +351,11 @@ public class DataArchiving extends ServerTest {
 		LOGGER.info("6: Call the orders purge");
 		beginTransaction();
 		facility = facility.reload();
-		DomainObjectManager doMananager = new DomainObjectManager(facility);		
+		DomainObjectManager doMananager = new DomainObjectManager(facility);
 		List<UUID> orderIdsToPurge = doMananager.getOrderUuidsToPurge(2);
-		doMananager.purgeSomeOrders(orderIdsToPurge);		
+		Assert.assertEquals(4, doMananager.purgeSomeOrders(orderIdsToPurge));
 		commitTransaction();
-		
+
 		LOGGER.info("6b: Report, via the work service call");
 		beginTransaction();
 		facility = facility.reload();
@@ -364,38 +364,28 @@ public class DataArchiving extends ServerTest {
 		Assert.assertEquals(1, orders2.size());
 		commitTransaction();
 
-		LOGGER.info("6: Call the Containers purge");
+		LOGGER.info("7: Call the Containers purge. A little confusing. Containers purge is not so much age of container as lack of any more ContainerUse");
 		beginTransaction();
 		facility = facility.reload();
-		workService.purgeOldObjects(2, facility, Container.class, 3); 
-		commitTransaction();
-		
-		LOGGER.info("6b: Report, via the work service call");
-		beginTransaction();
-		facility = facility.reload();
-		workService.reportAchiveables(2, facility);
+		workService.reportAchiveables(3, facility);
+		DomainObjectManager doManager = new DomainObjectManager(facility);
+		List<UUID> cntrIdsToPurge = doManager.getCntrUuidsToPurge(3);
+		Assert.assertEquals(4, doManager.purgeSomeCntrs(cntrIdsToPurge));
 		List<Container> cntrs = Container.staticGetDao().getAll();
-		Assert.assertEquals(2, cntrs.size());
+		Assert.assertEquals(1, cntrs.size());
 		commitTransaction();
 
-		LOGGER.info("7: Call the WorkerEvent purge");
+		LOGGER.info("8: Call the WorkerEvent purge");
 		beginTransaction();
 		facility = facility.reload();
 		// three COMPLETE workerEvents were generated above
 		List<WorkerEvent> events = WorkerEvent.staticGetDao().getAll();
 		Assert.assertEquals(3, events.size());
 		// Now purge
-		DomainObjectManager doManager = new DomainObjectManager(facility);		
-		List<UUID> workerEventIdsToPurge = doManager.getWorkerEventUuidsToPurge(2);
-		doMananager.purgeSomeWorkerEvents(workerEventIdsToPurge);		
-		commitTransaction();
-		
-		LOGGER.info("7b: Report, via the work service call");
-		beginTransaction();
-		facility = facility.reload();
-		workService.reportAchiveables(2, facility);
-		events = WorkerEvent.staticGetDao().getAll();
-		Assert.assertEquals(0, events.size());
+		DomainObjectManager doManager2 = new DomainObjectManager(facility);
+		List<UUID> workerEventIdsToPurge = doManager2.getWorkerEventUuidsToPurge(2);
+		Assert.assertEquals(3, doManager2.purgeSomeWorkerEvents(workerEventIdsToPurge));
+		Assert.assertEquals(0, WorkerEvent.staticGetDao().getAll().size());
 		commitTransaction();
 
 	}
@@ -455,7 +445,6 @@ public class DataArchiving extends ServerTest {
 		workService.reportAchiveables(2, facility);
 		commitTransaction();
 
-		
 		LOGGER.info("3: Make all of the orders  5 days 'old' ");
 		beginTransaction();
 		facility = facility.reload();
@@ -465,13 +454,17 @@ public class DataArchiving extends ServerTest {
 		makeDaysOldTestData("10004", 5, facility);
 		makeDaysOldTestData("10005", 5, facility);
 		commitTransaction();
-		
-		LOGGER.info("4: Call the work instruction purge with no limit specified (will limit to 1000, way more than we have)");
+
+		LOGGER.info("4: Call the work instruction purge. All 8 will archive as they are all older than 2 days old");
+		// Normally, we would purge orders first, that get any referenced work instructions. This tests safety in the other direction
 		beginTransaction();
 		facility = facility.reload();
-		workService.purgeOldObjects(3, facility, WorkInstruction.class);
+		DomainObjectManager doManager = new DomainObjectManager(facility);
+		workService.reportAchiveables(2, facility);
+		List<UUID> workInstructionIdsToPurge = doManager.getWorkInstructionUuidsToPurge(2);
+		Assert.assertEquals(8, doManager.purgeSomeWorkInstructions(workInstructionIdsToPurge));
 		commitTransaction();
-		
+
 		LOGGER.info("5b: Report, via the work service call");
 		beginTransaction();
 		facility = facility.reload();
@@ -491,16 +484,25 @@ public class DataArchiving extends ServerTest {
 		int button = picker.buttonFor(wi);
 		int quantity = wi.getPlanQuantity();
 		picker.pick(button, quantity);
-		
+
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		LOGGER.info(picker.getLastCheDisplay());
 		allWiList = picker.getAllPicksList();
 		this.logWiList(allWiList);
-				
-		LOGGER.info("7: Log out. Just an indication that failures were handled cleanly above, if these states still work.");
+
+		LOGGER.info("7: Call the order purge. Basically checks that hibernate handling of work iinstruction purge was ok");
+		beginTransaction();
+		facility = facility.reload();
+		DomainObjectManager doManager2 = new DomainObjectManager(facility);
+		List<UUID> ordersToPurge = doManager2.getOrderUuidsToPurge(2);
+		Assert.assertEquals(5, doManager2.purgeSomeOrders(ordersToPurge));
+		commitTransaction();
+
+		LOGGER.info("8: Log out. Just an indication that failures were handled cleanly above, if these states still work.");
 		picker.logout(); // does a waitForCheState(CheStateEnum.IDLE
-		
+
 	}
+
 	/**
 	 * The tested function does not do anything except produce and log an output string that
 	 * is convenience to transform into a test script
@@ -513,13 +515,12 @@ public class DataArchiving extends ServerTest {
 		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, "WorkSequence");
 		setUpOrdersWithCntrGtinAndSequence(facility);
 		commitTransaction();
-		
+
 		beginTransaction();
 		facility = facility.reload();
 		TestBehavior testBehavior = new TestBehavior();
-		String outputString = testBehavior.setupManyCartsWithOrders(facility, 
-			ImmutableMap.of("ordersPerChe", String.valueOf(2),
-							"ches", "CHE1 CHE2 CHE3"));
+		String outputString = testBehavior.setupManyCartsWithOrders(facility,
+			ImmutableMap.of("ordersPerChe", String.valueOf(2), "ches", "CHE1 CHE2 CHE3"));
 		LOGGER.info(outputString);
 		commitTransaction();
 
