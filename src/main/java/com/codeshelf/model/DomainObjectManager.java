@@ -16,7 +16,6 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.edi.WorkInstructionCsvBean;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.ITypedDao;
@@ -80,6 +79,12 @@ public class DomainObjectManager {
 		return new Timestamp(desiredTimeLong);
 	}
 
+	private String getArchivableString(String objectName, Criteria totalQuery, Criteria archiveQuery, ITypedDao<?> inDao) {
+		int totalCount = inDao.countByCriteriaQuery(totalQuery);
+		int archiveCount = inDao.countByCriteriaQuery(archiveQuery);
+		return String.format(" %-19s: %4d archivable of %6d total", objectName, archiveCount, totalCount);
+	}
+
 	/**
 	 * The goal is to report on objects that might be archived.
 	 * This requires that we be in a transaction in context
@@ -92,7 +97,7 @@ public class DomainObjectManager {
 
 		UUID facilityUUID = getFacility().getPersistentId();
 
-		// Although an internal variable now, this is probably what would be returned to the UI
+		// used for logging, and the thing returned
 		ArrayList<String> reportables = new ArrayList<String>();
 
 		String headerString = String.format("***Archivable Objects Summary. Objects older than %d days.***", daysOldToCount);
@@ -101,54 +106,45 @@ public class DomainObjectManager {
 		// Work Instructions
 		Criteria totalWisCrit = WorkInstruction.staticGetDao().createCriteria();
 		totalWisCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		int totalWiCount = WorkInstruction.staticGetDao().countByCriteriaQuery(totalWisCrit);
 
 		Criteria archiveableWisCrit = WorkInstruction.staticGetDao().createCriteria();
 		archiveableWisCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
 		archiveableWisCrit.add(Restrictions.lt("created", desiredTime));
-		int archiveableWiCount = WorkInstruction.staticGetDao().countByCriteriaQuery(archiveableWisCrit);
-		String wiString = String.format(" WorkInstructions: %d archivable of %d total", archiveableWiCount, totalWiCount);
-		reportables.add(wiString);
 
-		String orderGroupString = String.format("*Objects that archive with orders... (Note, work instructions for those orders will also)*");
-		reportables.add(orderGroupString);
+		reportables.add(getArchivableString("WorkInstruction",
+			totalWisCrit,
+			archiveableWisCrit,
+			WorkInstruction.staticGetDao()));
 
 		// Orders
 		Criteria totalOrdersCrit = OrderHeader.staticGetDao().createCriteria();
 		totalOrdersCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		int totalOrderCount = OrderHeader.staticGetDao().countByCriteriaQuery(totalOrdersCrit);
 
 		Criteria archiveableOrderCrit = OrderHeader.staticGetDao().createCriteria();
 		archiveableOrderCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
 		archiveableOrderCrit.add(Restrictions.lt("dueDate", desiredTime));
-		int archiveableOrderCount = OrderHeader.staticGetDao().countByCriteriaQuery(archiveableOrderCrit);
 
-		String orderString = String.format(" Orders: %d archivable of %d total", archiveableOrderCount, totalOrderCount);
-		reportables.add(orderString);
+		reportables.add(getArchivableString("Order", totalOrdersCrit, archiveableOrderCrit, OrderHeader.staticGetDao()));
 
 		// Order Details
 		Criteria totalDetailsCrit = OrderDetail.staticGetDao().createCriteria();
 		totalDetailsCrit.createAlias("parent", "p");
 		totalDetailsCrit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
-		int totalDetailCount = OrderDetail.staticGetDao().countByCriteriaQuery(totalDetailsCrit);
-		// int totalDetailCount = OrderDetail.staticGetDao().findByCriteriaQuery(crit).size();
 
 		Criteria archiveableDetailsCrit = OrderDetail.staticGetDao().createCriteria();
 		archiveableDetailsCrit.createAlias("parent", "p");
 		archiveableDetailsCrit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
 		archiveableDetailsCrit.add(Restrictions.lt("p.dueDate", desiredTime));
-		int archiveableDetailCount = OrderDetail.staticGetDao().countByCriteriaQuery(archiveableDetailsCrit);
-		// int archiveableDetailCount = OrderDetail.staticGetDao().findByCriteriaQuery(crit2).size();
 
-		String detailString = String.format(" Details: %d archivable of %d total", archiveableDetailCount, totalDetailCount);
-		reportables.add(detailString);
+		reportables.add(getArchivableString("OrderDetail",
+			totalDetailsCrit,
+			archiveableDetailsCrit,
+			OrderDetail.staticGetDao()));
 
 		// ContainerUse
 		Criteria totalUsesCrit = ContainerUse.staticGetDao().createCriteria();
 		totalUsesCrit.createAlias("parent", "p");
 		totalUsesCrit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
-		int totalUseCount = ContainerUse.staticGetDao().countByCriteriaQuery(totalUsesCrit);
-		// int totalUseCount = ContainerUse.staticGetDao().findByCriteriaQuery(crit3).size();
 
 		Criteria archiveableUsesCrit = ContainerUse.staticGetDao().createCriteria();
 		archiveableUsesCrit.createAlias("parent", "p");
@@ -156,13 +152,67 @@ public class DomainObjectManager {
 		archiveableUsesCrit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
 		archiveableUsesCrit.add(Restrictions.isNotNull("orderHeader"));
 		archiveableUsesCrit.add(Restrictions.lt("oh.dueDate", desiredTime));
-		int archiveableUseCount = ContainerUse.staticGetDao().countByCriteriaQuery(archiveableUsesCrit);
-		// int archiveableUseCount = ContainerUse.staticGetDao().findByCriteriaQuery(crit4).size();
 
-		String useString = String.format(" ContainerUses: %d archivable of %d total", archiveableUseCount, totalUseCount);
-		reportables.add(useString);
+		reportables.add(getArchivableString("ContainerUse",
+			totalUsesCrit,
+			archiveableUsesCrit,
+			ContainerUse.staticGetDao()));
 
-		String otherGroupString = String.format("*Additional objects that may archive with orders... (Note, not easy to determine how many will be purged until other objects are gone)*");
+		// ImportReceipts
+		Criteria totalReceiptCrit = ImportReceipt.staticGetDao().createCriteria();
+		totalReceiptCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+
+		Criteria archiveableReceiptCrit = ImportReceipt.staticGetDao().createCriteria();
+		archiveableReceiptCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		archiveableReceiptCrit.add(Restrictions.lt("received", desiredTime));
+
+		reportables.add(getArchivableString("ImportReceipt",
+			totalReceiptCrit,
+			archiveableReceiptCrit,
+			ImportReceipt.staticGetDao()));
+
+		// ExportMessages
+		Criteria totalMessageCrit = ExportMessage.staticGetDao().createCriteria();
+		totalMessageCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+
+		Criteria archiveableMessageCrit = ExportMessage.staticGetDao().createCriteria();
+		archiveableMessageCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		archiveableMessageCrit.add(Restrictions.lt("created", desiredTime));
+
+		reportables.add(getArchivableString("ExportMessage",
+			totalMessageCrit,
+			archiveableMessageCrit,
+			ExportMessage.staticGetDao()));
+
+		// WorkInstructionBeans
+		Criteria totalBeanCrit = WorkInstructionCsvBean.staticGetDao().createCriteria();
+		totalBeanCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+
+		Criteria archiveableBeanCrit = WorkInstructionCsvBean.staticGetDao().createCriteria();
+		archiveableBeanCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		archiveableBeanCrit.add(Restrictions.lt("updated", desiredTime));
+
+		reportables.add(getArchivableString("WorkInstructionBean",
+			totalBeanCrit,
+			archiveableBeanCrit,
+			WorkInstructionCsvBean.staticGetDao()));
+
+		// WorkerEvents
+		Criteria totalEventCrit = WorkerEvent.staticGetDao().createCriteria();
+		totalEventCrit.add(Restrictions.eq("facility.persistentId", facilityUUID));
+
+		Criteria archiveableEventCrit = WorkerEvent.staticGetDao().createCriteria();
+		archiveableEventCrit.add(Restrictions.eq("facility.persistentId", facilityUUID));
+		archiveableEventCrit.add(Restrictions.lt("created", desiredTime));
+
+		reportables.add(getArchivableString("WorkerEvent",
+			totalEventCrit,
+			archiveableEventCrit,
+			WorkerEvent.staticGetDao()));
+
+		// Objects where it is not easy to know how many will be be deleted until all of the above purges are done
+
+		String otherGroupString = String.format("*Additional object totals (Some of these may archive)*");
 		reportables.add(otherGroupString);
 
 		// Containers
@@ -170,8 +220,7 @@ public class DomainObjectManager {
 		totalCntrsCrit.createAlias("parent", "p");
 		totalCntrsCrit.add(Restrictions.eq("p.persistentId", facilityUUID));
 		int totalCntrCount = Container.staticGetDao().countByCriteriaQuery(totalCntrsCrit);
-		// int totalCntrCount = Container.staticGetDao().findByCriteriaQuery(crit5).size();
-		String cntrString = String.format(" Containers: %d total", totalCntrCount);
+		String cntrString = String.format(" Container          : %6d total", totalCntrCount);
 		reportables.add(cntrString);
 
 		// OrderGroup
@@ -179,7 +228,7 @@ public class DomainObjectManager {
 		totalGroupsCrit.createAlias("parent", "p");
 		totalGroupsCrit.add(Restrictions.eq("p.persistentId", facilityUUID));
 		int totalGroupCount = OrderGroup.staticGetDao().findByCriteriaQuery(totalGroupsCrit).size();
-		String groupString = String.format(" OrderGroups: %d total", totalGroupCount);
+		String groupString = String.format(" OrderGroup         : %6d total", totalGroupCount);
 		reportables.add(groupString);
 
 		for (String s : reportables) {
@@ -189,7 +238,6 @@ public class DomainObjectManager {
 
 	}
 
-	
 	/**
 	 * This returns the full list of UUIDs of OrderHeaders whose dueDate is older than daysOld before now.
 	 */
@@ -215,7 +263,7 @@ public class DomainObjectManager {
 		List<UUID> uuidList = WorkerEvent.staticGetDao().getUUIDListByCriteriaQuery(eventCrit);
 		return uuidList;
 	}
-	
+
 	/**
 	 * This returns the full list of UUIDs of WorkInstructionCsvBean whose update date is older than daysOld before now.
 	 */
@@ -383,7 +431,7 @@ public class DomainObjectManager {
 					if (resolution != null) {
 						event.setResolution(null); // necessary?
 						Resolution.staticGetDao().delete(resolution);
-					}					
+					}
 					WorkerEvent.staticGetDao().delete(event);
 					deletedCount++;
 				}
@@ -419,8 +467,8 @@ public class DomainObjectManager {
 						detail.removeWorkInstruction(wi);
 					Che che = wi.getAssignedChe();
 					if (che != null)
-						che.removeWorkInstruction(wi);					
-					
+						che.removeWorkInstruction(wi);
+
 					WorkInstruction.staticGetDao().delete(wi);
 					deletedCount++;
 				}
@@ -448,7 +496,7 @@ public class DomainObjectManager {
 		final int MAX_RECEIPT_PURGE = 500;
 		return simplePurge(receiptUuids, MAX_RECEIPT_PURGE, ImportReceipt.staticGetDao());
 	}
-	
+
 	/**
 	 * Purge these work instruction beans all in the current transaction.
 	 * No complexities, so may call through to the simple batch purge
@@ -480,11 +528,11 @@ public class DomainObjectManager {
 		return deletedCount;
 		*/
 	}
-	
+
 	/**
 	 * Purge objects that have no complex relationships requiring fancier code
 	 */
-	private int simplePurge(List<UUID> objectUuids, int programMaxBatch, ITypedDao<?> theDao){
+	private int simplePurge(List<UUID> objectUuids, int programMaxBatch, ITypedDao<?> theDao) {
 		int wantToPurge = objectUuids.size();
 		int willPurge = Math.min(wantToPurge, programMaxBatch);
 		if (wantToPurge > programMaxBatch) {
@@ -543,7 +591,6 @@ public class DomainObjectManager {
 
 		LOGGER.debug("Phase 6 of order purge: delete the orders which delinks from container");
 		*/
-
 
 		int deletedCount = 0;
 		for (UUID orderUuid : orderUuids) {
