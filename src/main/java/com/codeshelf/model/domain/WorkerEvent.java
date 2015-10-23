@@ -42,7 +42,7 @@ public class WorkerEvent extends DomainObjectABC {
 	}
 
 	public enum EventType {
-		LOGIN, SKIP_ITEM_SCAN, BUTTON, WI, SHORT, SHORT_AHEAD, COMPLETE, CANCEL_PUT, DETAIL_WI_MISMATCHED;
+		LOGIN, SKIP_ITEM_SCAN, BUTTON, WI, SHORT, SHORT_AHEAD, COMPLETE, CANCEL_PUT, DETAIL_WI_MISMATCHED, PALLERIZER_PUT;
 		
 		public String getName() {
 			return name();

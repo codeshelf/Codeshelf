@@ -1534,6 +1534,14 @@ public class Facility extends Location {
 		filterParams.add(Restrictions.le("created", endUtc));
 		int skipEventsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
 		metric.setSkipScanEvents(skipEventsCount);
+		
+		filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("facility", this));
+		filterParams.add(Restrictions.eq("eventType", EventType.PALLERIZER_PUT));
+		filterParams.add(Restrictions.ge("created", startUtc));
+		filterParams.add(Restrictions.le("created", endUtc));
+		int palletizerPutsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
+		metric.setPalletizerPuts(palletizerPutsCount);
 	}
 	
 	private FacilityMetric getMetrics(Timestamp date){

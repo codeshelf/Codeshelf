@@ -268,7 +268,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 	private void processIdleStateScan(String scanPrefix, String scanBody) {
 		if (USER_PREFIX.equals(scanPrefix) || isEmpty(scanPrefix)) {
 			clearAllPosconsOnThisDevice();
-			this.setUserId(scanPrefix);
+			this.setUserId(scanBody);
 			setState(CheStateEnum.VERIFYING_BADGE);
 			mDeviceManager.verifyBadge(getGuid().getHexStringNoPrefix(), getPersistentId(), scanBody);
 		} else {
@@ -312,7 +312,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 			return;
 		}
 		mDeviceManager.completePalletizerWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi.getPersistentId(), mUserId, false);
-		notifyWiVerb(wi, WorkerEvent.EventType.COMPLETE, kLogAsInfo);
+		notifyWiVerb(wi, WorkerEvent.EventType.PALLERIZER_PUT, kLogAsInfo);
 	}
 	
 	private void clearAffectedLedAndPoscons(){
