@@ -1550,7 +1550,14 @@ public class Facility extends Location {
 		filterParams.add(Restrictions.le("created", endUtc));
 		int putwallPutsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
 		metric.setPutWallPuts(putwallPutsCount);
-
+		
+		filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("facility", this));
+		filterParams.add(Restrictions.eq("eventType", EventType.SKUWALL_PUT));
+		filterParams.add(Restrictions.ge("created", startUtc));
+		filterParams.add(Restrictions.le("created", endUtc));
+		int skuwallPutsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
+		metric.setSkuWallPuts(skuwallPutsCount);
 	}
 	
 	private FacilityMetric getMetrics(Timestamp date){

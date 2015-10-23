@@ -43,7 +43,8 @@ public class NotificationBehavior implements IApiBehavior{
 																		EventType.COMPLETE,
 																		EventType.DETAIL_WI_MISMATCHED,
 																		EventType.PALLERIZER_PUT,
-																		EventType.PUTWALL_PUT);
+																		EventType.PUTWALL_PUT,
+																		EventType.SKUWALL_PUT);
 	
 	@Inject
 	public NotificationBehavior() {
