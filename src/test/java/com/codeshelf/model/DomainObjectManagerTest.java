@@ -61,7 +61,7 @@ public class DomainObjectManagerTest extends HibernateTest {
 
 	@Test
 	public void testPurgeOrdersWithNoDetails() {
-		// Also minimally covers getOrderUuidsToPurge();
+		// Also minimally covers getOrderUuidsToPurge() and reportAchiveables()
 
 		beginTransaction();
 		Facility facility = getFacility();
@@ -73,12 +73,13 @@ public class DomainObjectManagerTest extends HibernateTest {
 
 		beginTransaction();	
 		DomainObjectManager subject = new DomainObjectManager(facility);
+		subject.reportAchiveables(1);
 		List<UUID> ohIds = subject.getOrderUuidsToPurge(1);
 		Assert.assertEquals(1, subject.purgeSomeOrders(ohIds));
 		commitTransaction();
 
 		beginTransaction();
-		Assert.assertNull(OrderHeader.staticGetDao().findByPersistentId(ohId));
+		Assert.assertNull(OrderHeader.staticGetDao().findByPersistentId(ohId));		
 		commitTransaction();
 
 	}
