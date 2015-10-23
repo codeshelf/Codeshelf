@@ -46,7 +46,7 @@ public class ScriptSiteRunner {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScriptSiteRunner.class);
 	private static final int WAIT_TIMEOUT = 4000;
 	private static final int COMPUTE_WORK_TIMEOUT = 35000;
-	private int pickPauseMs = 0;
+	private int pickPauseMs = 0, staggerMs = 0;
 	private double chanceSkipUpc = 0, chanceShort = 0;
 	private HashMap<String, PickSimulator> ches = new HashMap<>();
 	private StringBuilder report = new StringBuilder();
@@ -315,7 +315,7 @@ public class ScriptSiteRunner {
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_SET_PARAMS);
 		}
 		HashSet<String> madeAssignments = new HashSet<>();
-		String pickSpeedName = "pickSpeed", skipFreqName = "skipFreq", shortFreqName = "shortFreq";
+		String pickSpeedName = "pickSpeed", skipFreqName = "skipFreq", shortFreqName = "shortFreq", staggerName = "stagger";
 		String assignment[], name, value;
 		for (int i = 1; i < parts.length; i++) {
 			assignment = parts[i].split("=");
@@ -331,19 +331,25 @@ public class ScriptSiteRunner {
 			madeAssignments.add(name);
 			//Save property value
 			if (name.equalsIgnoreCase(pickSpeedName)) {
-				int pickPauseSecMax = 2 * 60, pickPauseSec = Integer.parseInt(value);
+				double pickPauseSecMax = 2 * 60, pickPauseSec = Double.parseDouble(value);
 				if (pickPauseSec > pickPauseSecMax) {
 					throw new Exception("Tring to set pickSpeed to " + pickPauseSec + " seconds. Max value = " + pickPauseSecMax);
 				}
-				pickPauseMs = pickPauseSec * 1000;
+				pickPauseMs = (int)(pickPauseSec * 1000);
 			} else if (name.equalsIgnoreCase(skipFreqName)) {
 				chanceSkipUpc = Double.parseDouble(value);
 				validateFrequency(chanceSkipUpc, skipFreqName);
 			} else if (name.equalsIgnoreCase(shortFreqName)) {
 				chanceShort = Double.parseDouble(value);
 				validateFrequency(chanceShort, shortFreqName);
+			} else if (name.equalsIgnoreCase(staggerName)) {
+				double staggerSecMax = 2 * 60, staggerSec = Double.parseDouble(value);
+				if (staggerSec > staggerSecMax) {
+					throw new Exception("Tring to set stagger to " + staggerSec + " seconds. Max value = " + staggerSecMax);
+				}
+				staggerMs = (int)(staggerSec * 1000);
 			} else {
-				throw new Exception(String.format("Unknown pick property name %s [%s/%s/%s]", name, pickSpeedName, skipFreqName, shortFreqName));
+				throw new Exception(String.format("Unknown pick property name %s [%s/%s/%s/%s]", name, pickSpeedName, skipFreqName, shortFreqName, staggerName));
 			}
 		}
 	}
@@ -375,6 +381,7 @@ public class ScriptSiteRunner {
 				if (container != null && !container.isEmpty()){
 					che.setupContainer(parts[i], (i-1)+"");
 				}
+				ThreadUtils.sleep(pickPauseMs);
 			}
 		}
 	}
@@ -421,6 +428,7 @@ public class ScriptSiteRunner {
 						}
 					};
 					executor.execute(runnable);
+					ThreadUtils.sleep(staggerMs);
 			}
 			executor.shutdown();
 			executor.awaitTermination(5, TimeUnit.MINUTES);
@@ -525,25 +533,21 @@ public class ScriptSiteRunner {
 	 */
 	private void processPickAllCommand() throws Exception{
 		LOGGER.info("Start che picks");
-		for (PickSimulator che : ches.values()){
-			generateWork(che);
-		}
 		ExecutorService executor = Executors.newFixedThreadPool(ches.size());
-		//Pick items
-		for (final PickSimulator che : ches.values()) {
-			if (che != null) {
-				Runnable runnable = new Runnable() {
-					@Override
-					public void run() {
-						try {
-							pick(che);
-						} catch (Exception e) {
-							report.append(CsExceptionUtils.exceptionToString(e)).append("\n");
-						}
+		for (final PickSimulator che : ches.values()){
+			generateWork(che);
+			Runnable runnable = new Runnable() {
+				@Override
+				public void run() {
+					try {
+						pick(che);
+					} catch (Exception e) {
+						report.append(CsExceptionUtils.exceptionToString(e)).append("\n");
 					}
-				};
-				executor.execute(runnable);
-			}
+				}
+			};
+			executor.execute(runnable);
+			ThreadUtils.sleep(staggerMs);
 		}
 		executor.shutdown();
 		executor.awaitTermination(5, TimeUnit.MINUTES);
