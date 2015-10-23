@@ -273,11 +273,11 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	@Setter
 	@JsonProperty
 	private WiPurpose					purpose				= null;
-	
+
 	@Transient
 	@Getter
 	@Setter
-	private boolean 					alreadyShorted 		= false;
+	private boolean						alreadyShorted		= false;
 
 	public WorkInstruction() {
 	}
@@ -301,7 +301,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		setCompleted(new Timestamp(System.currentTimeMillis()));
 		setStatus(WorkInstructionStatusEnum.COMPLETE);
 	}
-	
+
 	public void setShortState(String inPickerId, int inQuantity) {
 		setActualQuantity(inQuantity);
 		setPickerId(inPickerId);
@@ -309,7 +309,6 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		setStatus(WorkInstructionStatusEnum.SHORT);
 	}
 
-	
 	// Denormalized for serialized WIs at the site controller.
 	public void setContainer(Container inContainer) {
 		container = inContainer;
@@ -523,6 +522,19 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	// --------------------------------------------------------------------------
 	/**
 	 * For a UI meta field
+	 */
+	public String getWorkSequenceUi() {
+		Integer detailSequence = getWorkSequence();
+		if (detailSequence == null)
+			return "";
+		else {
+			return detailSequence.toString();
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * For a UI meta field
 	 * @return
 	 */
 	public String getNominalLocationId() {
@@ -653,10 +665,17 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	public String toString() {
 		String orderId = getOrderId();
-		String msg = String.format("WorkInstruction type=%s, status=%s, orderId=%s, itemId=%s, plan=%s, actual=%s, pickInstruction=%s", type, status, orderId, itemId, planQuantity, actualQuantity, pickInstruction);
+		String msg = String.format("WorkInstruction type=%s, status=%s, orderId=%s, itemId=%s, plan=%s, actual=%s, pickInstruction=%s",
+			type,
+			status,
+			orderId,
+			itemId,
+			planQuantity,
+			actualQuantity,
+			pickInstruction);
 		return msg;
 	}
-	
+
 	/* replaced by GTIN field
 	public String getGtinId() {
 		// remember, house keeping WIs may not have order detail. It is nullable. Other kinds of work instruction also may not.
