@@ -44,7 +44,7 @@ public class ExtensionPointEngine {
 
 	public ExtensionPointEngine(Facility facility) throws ScriptException {
 		initEngine();
-		load(facility);
+		loadAllExtensionPoints(facility);
 		this.facility = facility;
 	}
 
@@ -57,50 +57,61 @@ public class ExtensionPointEngine {
 	}
 
 	
-	
-	private void activateExtensionPointIfValid(ExtensionPoint ep) throws ScriptException {
+	/**
+	 * Record that the extension point is valid and active or throw
+	 */
+	private void activateExtensionPoint(ExtensionPoint ep) throws ScriptException {
 		ExtensionPointType extp = ep.getType();
-		String functionScript = ep.getScript();
-		try {
-			LOGGER.info("Activating extension point " + ep.getType());
-			engine.eval(functionScript);
-			this.activeExtensions.add(extp);
-		} catch (ScriptException e) {
-			failedExtensions.add(extp + " " + e);
-			Throwable cause = e.getCause();
-			if (cause instanceof GroovyRuntimeException) {
-				LOGGER.warn("Inactivating invalid extension " + ep.getDomainId(), e);
-				ep.setActive(false);
-				ExtensionPoint.staticGetDao().store(ep);
-			} else {
-				throw e;
-			}
-		}
+		this.activeExtensions.add(extp);
 	}
 
 	private void inactivateExtensionPoint(ExtensionPoint ep) throws ScriptException {
 		LOGGER.info("Inactivating extension point " + ep.getType());
 		ExtensionPointType extp = ep.getType();
 		this.activeExtensions.remove(extp);
+		//TODO may consider building a noop version for each type that can be evaluated into the engine
 	}
 
 	public boolean hasActiveExtensionPoint(ExtensionPointType extp) {
 		return this.activeExtensions.contains(extp);
 	}
 
-	private List<ExtensionPoint> load(Facility facility) throws ScriptException {
+	private List<ExtensionPoint> loadAllExtensionPoints(Facility facility) throws ScriptException {
 		List<ExtensionPoint> eps = ExtensionPoint.staticGetDao().findByParent(facility);
 		this.activeExtensions.clear();
 		failedExtensions.clear();
 		for (ExtensionPoint ep : eps) {
-			if (ep.isActive()) {
-				LOGGER.info("Adding extension point " + ep.getType());
-				this.activateExtensionPointIfValid(ep);
-			} else { 
-				LOGGER.info("Skipping inactive extension point " + ep.getType());
+			try {
+				if (ep.isActive()) {
+					try {
+						loadExtensionPoint(ep);
+						this.activateExtensionPoint(ep);
+					} catch (ScriptException e) {
+						failedExtensions.add(ep + " " + e);
+						Throwable cause = e.getCause();
+						if (cause instanceof GroovyRuntimeException) {
+							LOGGER.warn("Inactivating invalid extension " + ep.getDomainId(), e);
+							ep.setActive(false);
+							ExtensionPoint.staticGetDao().store(ep);
+						} else {
+							throw e;
+						}
+					}
+	
+					
+				} else { 
+					LOGGER.info("Skipping inactive extension point " + ep.getType());
+				}
+			} catch(Exception e) {
+				LOGGER.error("Extension point {} for facility {} could not be loaded skipping", ep.getType(), facility);
 			}
 		}
 		return eps;
+	}
+
+	private void loadExtensionPoint(ExtensionPoint ep) throws ScriptException {
+		LOGGER.info("Loading extension point " + ep.getType());
+		engine.eval(ep.getScript());
 	}
 
 	public Object eval(ExtensionPointType ext, Object[] params) throws ScriptException {
@@ -254,12 +265,13 @@ public class ExtensionPointEngine {
 	}
 
 	private ExtensionPoint store(ExtensionPoint point) throws ScriptException {
-		ExtensionPoint.staticGetDao().store(point);
+		loadExtensionPoint(point);
 		if (point.isActive()) {
-			this.activateExtensionPointIfValid(point);
+			this.activateExtensionPoint(point);
 		} else {
 			this.inactivateExtensionPoint(point);
 		}
+		ExtensionPoint.staticGetDao().store(point);
 		return point;
 	}
 
