@@ -18,6 +18,7 @@ import java.util.concurrent.TimeoutException;
 import javax.script.ScriptException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -799,10 +800,10 @@ public class FacilityResource {
 		}
 	}
 
-	@PUT
+	@POST
 	@Path("/metrics")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response computeMetrics(@QueryParam("date") String dateStr){
+	public Response computeMetrics(@FormParam("date") String dateStr){
 		try {
 			FacilityMetric metric = facility.computeMetrics(dateStr);
 			return BaseResponse.buildResponse(metric);
