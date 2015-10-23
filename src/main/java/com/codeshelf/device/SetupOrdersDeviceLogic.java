@@ -37,6 +37,7 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.util.CompareNullChecker;
 import com.codeshelf.ws.protocol.request.InfoRequest.InfoRequestType;
 import com.codeshelf.ws.protocol.request.PutWallPlacementRequest;
@@ -2402,7 +2403,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		inWi.setCompleteState(mUserId, inQuantity);
 
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
-		notifyWiVerb(inWi, WorkerEvent.EventType.COMPLETE, kLogAsInfo);
+		EventType eventType = EventType.COMPLETE; 
+		if (getCheStateEnum() == CheStateEnum.DO_PUT) {
+			if (inWi.getOrderDetail() == null) {
+				eventType = EventType.SKUWALL_PUT;
+			} else {
+				eventType = EventType.PUTWALL_PUT;
+			}
+		}
+		notifyWiVerb(inWi, eventType, kLogAsInfo);
 
 		mActivePickWiList.remove(inWi);
 

@@ -38,7 +38,13 @@ public class NotificationBehavior implements IApiBehavior{
 	
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(NotificationBehavior.class);
 	
-	private static final EnumSet<WorkerEvent.EventType> SAVE_ONLY = EnumSet.of(EventType.SKIP_ITEM_SCAN, EventType.SHORT, EventType.COMPLETE, EventType.DETAIL_WI_MISMATCHED, EventType.PALLERIZER_PUT);
+	private static final EnumSet<WorkerEvent.EventType>	SAVE_ONLY	= EnumSet.of(EventType.SKIP_ITEM_SCAN,
+																		EventType.SHORT,
+																		EventType.COMPLETE,
+																		EventType.DETAIL_WI_MISMATCHED,
+																		EventType.PALLERIZER_PUT,
+																		EventType.PUTWALL_PUT,
+																		EventType.SKUWALL_PUT);
 	
 	@Inject
 	public NotificationBehavior() {
