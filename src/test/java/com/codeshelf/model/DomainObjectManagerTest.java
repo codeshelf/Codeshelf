@@ -30,9 +30,34 @@ public class DomainObjectManagerTest extends HibernateTest {
 		Assert.assertEquals(0, subject.purgeSomeWorkInstructions(Collections.<UUID>emptyList()));
 		Assert.assertEquals(0, subject.purgeSomeWorkerEvents(Collections.<UUID>emptyList()));
 		Assert.assertEquals(0, subject.purgeSomeCntrs(Collections.<UUID>emptyList()));
-				
+		Assert.assertEquals(0, subject.purgeSomeImportReceipts(Collections.<UUID>emptyList()));
+		Assert.assertEquals(0, subject.purgeSomeExportMessages(Collections.<UUID>emptyList()));
+			
 		commitTransaction();
 	}
+	
+	/**
+	 * This barely tests execution
+	 * Hopefully, will fail if the query is bad, even if the table is empty.
+	 * Note: did fail as desired for JR on Mac during development
+	 */
+	@Test
+	public void testClassListQueries() {
+		beginTransaction();
+		Facility facility = getFacility();
+		DomainObjectManager subject = new DomainObjectManager(facility);
+		
+		Assert.assertEquals(0, subject.getOrderUuidsToPurge(1).size());
+		Assert.assertEquals(0, subject.getWorkerEventUuidsToPurge(1).size());
+		Assert.assertEquals(0, subject.getWorkInstructionCsvBeanUuidsToPurge(1).size());
+		Assert.assertEquals(0, subject.getExportMessageUuidsToPurge(1).size());
+		Assert.assertEquals(0, subject.getImportReceiptUuidsToPurge(1).size());
+		Assert.assertEquals(0, subject.getWorkInstructionUuidsToPurge(1).size());
+		Assert.assertEquals(0, subject.getCntrUuidsToPurge(1).size());
+			
+		commitTransaction();
+	}
+
 
 	@Test
 	public void testPurgeOrdersWithNoDetails() {

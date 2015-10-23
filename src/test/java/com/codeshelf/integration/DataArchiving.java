@@ -505,7 +505,8 @@ public class DataArchiving extends ServerTest {
 
 	/**
 	 * The tested function does not do anything except produce and log an output string that
-	 * is convenience to transform into a test script
+	 * is convenient to transform into a test script.
+	 * This does not really belong here, but is hardly worth a separate test class
 	 */
 	@Test
 	public final void testSetupManyCartsWithOrders() throws IOException {

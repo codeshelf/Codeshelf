@@ -4,15 +4,18 @@ import lombok.Getter;
 import lombok.Setter;
 
 import org.joda.time.DateTime;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 class BatchReport {
+
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(BatchReport.class);
 
 	public enum Status {
 		INPROGRESS,
 		CANCELLED,
 		COMPLETE,
-		FAILED
-		
+		FAILED		
 	}
 	
 	@Getter
@@ -45,6 +48,7 @@ class BatchReport {
 	public void setException(Exception e) {
 		if (e != null) {
 			setStatus(Status.FAILED);
+			LOGGER.error("BatchReport setting to FAILED due to exception", e);
 		}
 	}
 

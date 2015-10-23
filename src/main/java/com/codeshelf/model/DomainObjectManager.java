@@ -19,10 +19,14 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.edi.WorkInstructionCsvBean;
 import com.codeshelf.model.dao.DaoException;
+import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerUse;
+import com.codeshelf.model.domain.DomainObjectABC;
+import com.codeshelf.model.domain.ExportMessage;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.ImportReceipt;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
@@ -38,7 +42,7 @@ import com.google.common.collect.ImmutableList;
  */
 public class DomainObjectManager {
 
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(WorkBehavior.class);
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectManager.class);
 
 	@Getter
 	private Facility			facility;
@@ -219,9 +223,35 @@ public class DomainObjectManager {
 		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
 		UUID facilityUUID = getFacility().getPersistentId();
 		Criteria eventCrit = WorkInstructionCsvBean.staticGetDao().createCriteria();
-		eventCrit.add(Restrictions.eq("facility.persistentId", facilityUUID));
+		eventCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
 		eventCrit.add(Restrictions.lt("updated", desiredTime));
 		List<UUID> uuidList = WorkInstructionCsvBean.staticGetDao().getUUIDListByCriteriaQuery(eventCrit);
+		return uuidList;
+	}
+
+	/**
+	 * This returns the full list of UUIDs of ExportMessage record whose created date is older than daysOld before now.
+	 */
+	public List<UUID> getExportMessageUuidsToPurge(int daysOld) {
+		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
+		UUID facilityUUID = getFacility().getPersistentId();
+		Criteria eventCrit = ExportMessage.staticGetDao().createCriteria();
+		eventCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		eventCrit.add(Restrictions.lt("created", desiredTime));
+		List<UUID> uuidList = ExportMessage.staticGetDao().getUUIDListByCriteriaQuery(eventCrit);
+		return uuidList;
+	}
+
+	/**
+	 * This returns the full list of UUIDs of ImportReceipt whose receive date is older than daysOld before now.
+	 */
+	public List<UUID> getImportReceiptUuidsToPurge(int daysOld) {
+		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
+		UUID facilityUUID = getFacility().getPersistentId();
+		Criteria eventCrit = ImportReceipt.staticGetDao().createCriteria();
+		eventCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		eventCrit.add(Restrictions.lt("received", desiredTime));
+		List<UUID> uuidList = ImportReceipt.staticGetDao().getUUIDListByCriteriaQuery(eventCrit);
 		return uuidList;
 	}
 
@@ -366,6 +396,7 @@ public class DomainObjectManager {
 
 	/**
 	 * Purge these work instructions all in the current transaction.
+	 * Work instructions must be delinked from owning detail and che as they have lazy loaded lists
 	 */
 	public int purgeSomeWorkInstructions(List<UUID> wiUuids) {
 		final int MAX_WI_PURGE = 500;
@@ -401,28 +432,77 @@ public class DomainObjectManager {
 	}
 
 	/**
-	 * Purge these work instruction beans all in the current transaction.
+	 * Purge these export message records all in the current transaction.
+	 * No complexities, so may call through to the simple batch purge
 	 */
-	public int purgeSomeWiCsvBeans(List<UUID> wiUuids) {
+	public int purgeSomeExportMessages(List<UUID> receiptUuids) {
+		final int MAX_MESSAGE_PURGE = 500;
+		return simplePurge(receiptUuids, MAX_MESSAGE_PURGE, ExportMessage.staticGetDao());
+	}
+
+	/**
+	 * Purge these import receipts all in the current transaction.
+	 * No complexities, so may call through to the simple batch purge
+	 */
+	public int purgeSomeImportReceipts(List<UUID> receiptUuids) {
+		final int MAX_RECEIPT_PURGE = 500;
+		return simplePurge(receiptUuids, MAX_RECEIPT_PURGE, ImportReceipt.staticGetDao());
+	}
+	
+	/**
+	 * Purge these work instruction beans all in the current transaction.
+	 * No complexities, so may call through to the simple batch purge
+	 */
+	public int purgeSomeWiCsvBeans(List<UUID> wiBeanUuids) {
 		final int MAX_WIBEAN_PURGE = 500;
-		int wantToPurge = wiUuids.size();
+		return simplePurge(wiBeanUuids, MAX_WIBEAN_PURGE, WorkInstructionCsvBean.staticGetDao());
+		/*
+		int wantToPurge = wiBeanUuids.size();
 		int willPurge = Math.min(wantToPurge, MAX_WIBEAN_PURGE);
 		if (wantToPurge > MAX_WIBEAN_PURGE) {
 			LOGGER.error("Limiting work instruction csv bean delete batch size to {}. Called for {}.", MAX_WIBEAN_PURGE, wantToPurge);
 		}
 		int deletedCount = 0;
-		for (UUID wiUuid : wiUuids) {
+		for (UUID wiBeanUuid : wiBeanUuids) {
 			// just protection against bad call
 			if (deletedCount > willPurge)
 				break;
 			try {
-				WorkInstruction wi = WorkInstruction.staticGetDao().findByPersistentId(wiUuid);
-				if (wi != null) {
-					WorkInstruction.staticGetDao().delete(wi);
+				WorkInstructionCsvBean bean = WorkInstructionCsvBean.staticGetDao().findByPersistentId(wiBeanUuid);
+				if (bean != null) {
+					WorkInstructionCsvBean.staticGetDao().delete(bean);
 					deletedCount++;
 				}
 			} catch (DaoException e) {
-				LOGGER.error("purgeSomeWis", e);
+				LOGGER.error("purgeSomeWiCsvBeans", e);
+			}
+		}
+		return deletedCount;
+		*/
+	}
+	
+	/**
+	 * Purge objects that have no complex relationships requiring fancier code
+	 */
+	private int simplePurge(List<UUID> objectUuids, int programMaxBatch, ITypedDao<?> theDao){
+		int wantToPurge = objectUuids.size();
+		int willPurge = Math.min(wantToPurge, programMaxBatch);
+		if (wantToPurge > programMaxBatch) {
+			LOGGER.error("Limiting purge delete batch size to {}. Called for {}.", programMaxBatch, wantToPurge);
+		}
+		int deletedCount = 0;
+		for (UUID objectUuid : objectUuids) {
+			// just protection against bad call
+			if (deletedCount > willPurge)
+				break;
+			try {
+				DomainObjectABC object = (DomainObjectABC) theDao.findByPersistentId(objectUuid);
+				if (object != null) {
+					theDao.delete(object);
+					deletedCount++;
+				}
+			} catch (DaoException e) {
+				LOGGER.error("simplePurge", e);
 			}
 		}
 		return deletedCount;
