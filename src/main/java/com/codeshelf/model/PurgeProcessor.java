@@ -59,19 +59,14 @@ public class PurgeProcessor implements BatchProcessor {
 	PurgePhase	purgePhase;
 
 	@Setter
-	@Getter
 	int			ordersToPurge				= 0;
 	@Setter
-	@Getter
 	int			workerEventsToPurge			= 0;
 	@Setter
-	@Getter
 	int			workInstructionBeansToPurge	= 0;
 	@Setter
-	@Getter
-	int			ediReceiptsToPurge			= 0;
+	int			importReceiptsToPurge		= 0;
 	@Setter
-	@Getter
 	int			exportMessagesToPurge		= 0;
 	// We do not pretend to track resolutions, work instructions, or containers
 
@@ -79,7 +74,7 @@ public class PurgeProcessor implements BatchProcessor {
 	int			ordersPurged				= 0;
 	int			workerEventsPurged			= 0;
 	int			workInstructionBeansPurged	= 0;
-	int			ediReceiptsPurged			= 0;
+	int			importReceiptsPurged		= 0;
 	int			exportMessagesPurged		= 0;
 	int			wisPurged					= 0;
 	int			cntrsPurged					= 0;
@@ -90,10 +85,54 @@ public class PurgeProcessor implements BatchProcessor {
 	}
 
 	/**
+	 * This function gives the order of phases worked in the purge.
+	 * Obviously, this starts from PurgePhaseSetup
+	 */
+	private void setNextPurgePhase(PurgePhase currentPhase) {
+		PurgePhase nextPhase = PurgePhase.PurgePhaseDone;
+		switch (currentPhase) {
+			case PurgePhaseSetup:
+				nextPhase = PurgePhase.PurgePhaseWorkerEvents;
+				// It is good to do work events before any work instruction is deleted.
+				break;
+			case PurgePhaseWorkerEvents:
+				nextPhase = PurgePhase.PurgePhaseOrders; // deletes orders, details, many container uses and work instructions.
+				break;
+			case PurgePhaseOrders:
+				nextPhase = PurgePhase.PurgePhaseWis; // gets old work instructions that orders delete did not reference.
+				break;
+			case PurgePhaseWis:
+				nextPhase = PurgePhase.PurgePhaseContainers; // gets all unreferenced containers currently.
+				break;
+			case PurgePhaseContainers:
+				nextPhase = PurgePhase.PurgePhaseWorkInstructionBeans;
+				break;
+			case PurgePhaseWorkInstructionBeans:
+				nextPhase = PurgePhase.PurgePhaseExportMessages;
+				break;
+			case PurgePhaseExportMessages:
+				nextPhase = PurgePhase.PurgePhaseImportReceipts;
+				break;
+			case PurgePhaseImportReceipts:
+				nextPhase = PurgePhase.PurgePhaseDone;
+				break;
+			default:
+				LOGGER.error("unexpected or unimplemented phase in setNextPurgePhase(). Setting to DONE");
+		}
+		setPurgePhase(nextPhase);
+	}
+
+	/**
 	 * Only count progress against the things we knew the size of at the start. (Exclude containers, orderGroups. Although we knew WIs at the start we don't count the ones deleted via orders.).
 	 */
 	private int getProgressCount() {
-		return ordersPurged + workerEventsPurged + workInstructionBeansPurged + ediReceiptsPurged + exportMessagesPurged;
+		return ordersPurged + workerEventsPurged + workInstructionBeansPurged + importReceiptsPurged + exportMessagesPurged;
+	}
+	/**
+	 * Should match getProgressCount(). Assumes the counts are all set from the pre-built lists.
+	 */
+	private int getSizeOfJob() {
+		return ordersToPurge + workerEventsToPurge + workInstructionBeansToPurge + importReceiptsToPurge + exportMessagesToPurge;
 	}
 
 	/**
@@ -104,7 +143,11 @@ public class PurgeProcessor implements BatchProcessor {
 	 */
 	@Override
 	public int doSetup() throws Exception {
+		// This kicks off the the purge phase state machine. No more calls to setPurgePhase. 
+		// Only call setNextPurgePhase(currentPhase) as this does at the end of the function.
 		setPurgePhase(PurgePhase.PurgePhaseSetup);
+		PurgePhase currentPhase = this.getPurgePhase();
+
 		facility = facility.reload();
 		// get our purge parameters
 		ExtensionPointEngine ss = ExtensionPointEngine.getInstance(facility);
@@ -143,8 +186,8 @@ public class PurgeProcessor implements BatchProcessor {
 
 		// do not do work instructions or containers
 
-		setPurgePhase(PurgePhase.PurgePhaseOrders);
-		return (getOrdersToPurge() + getWorkerEventsToPurge());
+		setNextPurgePhase(currentPhase);
+		return getSizeOfJob();
 	}
 
 	private int getBatchSize(PurgePhase inWhatToPurge) {
@@ -264,10 +307,9 @@ public class PurgeProcessor implements BatchProcessor {
 
 	private void buildImportReceiptList() {
 		importReceiptUuidsToPurge = buildUuidList(PurgePhase.PurgePhaseImportReceipts);
-		setEdiReceiptsToPurge(importReceiptUuidsToPurge.size()); // record this component of the starting size of the job
+		setImportReceiptsToPurge(importReceiptUuidsToPurge.size()); // record this component of the starting size of the job
 	}
 
-	@SuppressWarnings("unused")
 	private int purgeImportReceiptBatch() {
 		return purgeBatch(importReceiptUuidsToPurge, PurgePhase.PurgePhaseImportReceipts);
 	}
@@ -277,9 +319,17 @@ public class PurgeProcessor implements BatchProcessor {
 		setWorkInstructionBeansToPurge(workInstructionBeanUuidsToPurge.size()); // record this component of the starting size of the job
 	}
 
+	private int purgeWorkInstructionBeanBatch() {
+		return purgeBatch(workInstructionBeanUuidsToPurge, PurgePhase.PurgePhaseWorkInstructionBeans);
+	}
+
 	private void buildExportMessageList() {
 		exportMessageUuidsToPurge = buildUuidList(PurgePhase.PurgePhaseExportMessages);
 		setExportMessagesToPurge(exportMessageUuidsToPurge.size()); // record this component of the starting size of the job
+	}
+
+	private int purgeExportMessageBatch() {
+		return purgeBatch(exportMessageUuidsToPurge, PurgePhase.PurgePhaseExportMessages);
 	}
 
 	// work instructions and containers do not have build functions because they are not built in advance
@@ -303,6 +353,11 @@ public class PurgeProcessor implements BatchProcessor {
 		return returnList;
 	}
 
+	/**
+	 * Performs one batch of the purge process. What it does depends on the purge phase.
+	 * In each if block, just make sure you have the correct list, purgeXxxBatch(), and xxxPurged counter.
+	 * A couple of the phases do not have pre-built lists, so build their list as the phase is entered the first time.
+	 */
 	@Override
 	public int doBatch(int batchCount) throws Exception {
 		PurgePhase currentPhase = getPurgePhase();
@@ -310,79 +365,74 @@ public class PurgeProcessor implements BatchProcessor {
 		facility = facility.reload();
 
 		if (currentPhase == PurgePhase.PurgePhaseOrders) {
-			// we want to know if we are done with orders. One quite reliable way to know is if the orders list size decreased.
-			// If non-zero, but it did not decrease, lets log an error and call it done so we are not stuck forever.
+			if (complainNoList(currentPhase, orderUuidsToPurge)) {
+				return getProgressCount();
+			}
 			int startSize = orderUuidsToPurge.size();
 			if (startSize > 0)
 				ordersPurged += purgeOrderBatch();
 			int endSize = orderUuidsToPurge.size();
-			if (endSize == startSize || endSize == 0) {
-				setPurgePhase(PurgePhase.PurgePhaseWis);
-				LOGGER.info("Total: purged {} orders", ordersPurged);
-				if (endSize > 0) {
-					LOGGER.error("orders purge did not progress. Bailing out. Leaving {} orders that should have been purged",
-						endSize);
-				}
-			} else if (batchCount % 10 == 0) {
-				LOGGER.info("incremental total: purged {} orders", ordersPurged);
-			}
+			advanceAndReport(currentPhase, startSize, endSize, ordersPurged, batchCount);
 
 		} else if (currentPhase == PurgePhase.PurgePhaseWis) {
+			// Work instructions does not have a pre-built list
 			if (wiUuidsToPurge == null)
 				wiUuidsToPurge = buildUuidList(PurgePhase.PurgePhaseWis);
 			int startSize = wiUuidsToPurge.size();
 			if (startSize > 0)
 				wisPurged += purgeWiBatch();
 			int endSize = wiUuidsToPurge.size();
-			if (endSize == startSize || endSize == 0) {
-				LOGGER.info("Total: purged {} work instructions", wisPurged);
-				setPurgePhase(PurgePhase.PurgePhaseContainers);
-				if (endSize > 0) {
-					LOGGER.error("work instructions purge did not progress. Bailing out. Leaving {} work instructions that should have been purged",
-						endSize);
-				}
-			} else if (batchCount % 10 == 0) {
-				LOGGER.info("incremental total: purged {} work instructions", wisPurged);
-			}
+			advanceAndReport(currentPhase, startSize, endSize, wisPurged, batchCount);
 
 		} else if (currentPhase == PurgePhase.PurgePhaseContainers) {
+			// Containers does not have a pre-built list
 			if (containerUuidsToPurge == null)
 				containerUuidsToPurge = buildUuidList(PurgePhase.PurgePhaseContainers);
 			int startSize = containerUuidsToPurge.size();
 			if (startSize > 0)
 				cntrsPurged += purgeCntrBatch();
 			int endSize = containerUuidsToPurge.size();
-			if (endSize == startSize || endSize == 0) {
-				LOGGER.info("Total: purged {} containers", cntrsPurged);
-				setPurgePhase(PurgePhase.PurgePhaseWorkerEvents);
-				if (endSize > 0) {
-					LOGGER.error("container purge did not progress. Bailing out. Leaving {} containers that should have been purged",
-						endSize);
-				}
-			} else if (batchCount % 10 == 0) {
-				LOGGER.info("incremental total: purged {} containers", cntrsPurged);
-			}
+			advanceAndReport(currentPhase, startSize, endSize, cntrsPurged, batchCount);
 
 		} else if (currentPhase == PurgePhase.PurgePhaseWorkerEvents) {
-			if (workerEventUuidsToPurge == null) {
-				LOGGER.error("Expected worker event list in PurgePhaseWorkerEvents.Bailing out.");
-				setPurgePhase(PurgePhase.PurgePhaseDone);
+			if (complainNoList(currentPhase, workerEventUuidsToPurge)) {
+				return getProgressCount();
 			}
-
 			int startSize = workerEventUuidsToPurge.size();
 			if (startSize > 0)
 				workerEventsPurged += purgeWorkerEventBatch();
 			int endSize = workerEventUuidsToPurge.size();
-			if (endSize == startSize || endSize == 0) {
-				setPurgePhase(PurgePhase.PurgePhaseDone);
-				LOGGER.info("Total: purged {} worker events", workerEventsPurged);
-				if (endSize > 0) {
-					LOGGER.error("workerEvents purge did not progress. Bailing out. Leaving {} workerEvents that should have been purged",
-						endSize);
-				}
-			} else if (batchCount % 10 == 0) {
-				LOGGER.info("incremental total: purged {} workerEvents", workerEventsPurged);
+			advanceAndReport(currentPhase, startSize, endSize, workerEventsPurged, batchCount);
+
+		} else if (currentPhase == PurgePhase.PurgePhaseExportMessages) {
+			if (complainNoList(currentPhase, exportMessageUuidsToPurge)) {
+				return getProgressCount();
 			}
+			int startSize = exportMessageUuidsToPurge.size();
+			if (startSize > 0)
+				exportMessagesPurged += purgeExportMessageBatch();
+			int endSize = exportMessageUuidsToPurge.size();
+			advanceAndReport(currentPhase, startSize, endSize, exportMessagesPurged, batchCount);
+
+		} else if (currentPhase == PurgePhase.PurgePhaseImportReceipts) {
+			if (complainNoList(currentPhase, importReceiptUuidsToPurge)) {
+				return getProgressCount();
+			}
+			int startSize = importReceiptUuidsToPurge.size();
+			if (startSize > 0)
+				importReceiptsPurged += purgeImportReceiptBatch();
+			int endSize = importReceiptUuidsToPurge.size();
+			advanceAndReport(currentPhase, startSize, endSize, importReceiptsPurged, batchCount);
+
+		} else if (currentPhase == PurgePhase.PurgePhaseWorkInstructionBeans) {
+			if (complainNoList(currentPhase, workInstructionBeanUuidsToPurge)) {
+				return getProgressCount();
+			}
+			int startSize = workInstructionBeanUuidsToPurge.size();
+			if (startSize > 0)
+				workInstructionBeansPurged += purgeWorkInstructionBeanBatch();
+			int endSize = workInstructionBeanUuidsToPurge.size();
+			advanceAndReport(currentPhase, startSize, endSize, workInstructionBeansPurged, batchCount);
 
 		} else {
 			LOGGER.error("Unexpected phase in PurgeProcessor doBatch {}", currentPhase);
@@ -390,6 +440,40 @@ public class PurgeProcessor implements BatchProcessor {
 		}
 
 		return getProgressCount();
+	}
+
+	/**
+	 * Declone and enforce this common error check pattern. 
+	 * Large side effect: advances to the next phase if this return true.
+	 */
+	private boolean complainNoList(PurgePhase currentPhase, List<UUID> inList) {
+		if (inList == null) {
+			LOGGER.error("Expected list for phase {}. Bailing out.", currentPhase);
+			setNextPurgePhase(currentPhase);
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	* Declone and enforce this common pattern. Advances and/or reports only if appropriate
+	* Large side effect: may advance to the next phase
+	*/
+	private void advanceAndReport(PurgePhase currentPhase, int startSize, int endSize, int totalThisObjectPurged, int batchCount) {
+		// we want to know if we are done with the phase. One quite reliable way to know is if the object list size decreased.
+		// If non-zero, but it did not decrease, lets log an error and call it done so we are not stuck forever.
+		if (endSize == startSize || endSize == 0) {
+			LOGGER.info("Total: purged {} {}", totalThisObjectPurged, currentPhase);
+			if (endSize > 0) {
+				LOGGER.error("{} purge did not progress. Bailing out. Leaving {} that should have been purged",
+					currentPhase,
+					endSize);
+			}
+			setNextPurgePhase(currentPhase);
+		} else if (batchCount % 10 == 0) {
+			LOGGER.info("incremental total: purged {} {}", totalThisObjectPurged, currentPhase);
+		}
 	}
 
 	@Override

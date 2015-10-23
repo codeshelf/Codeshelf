@@ -16,7 +16,6 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.edi.WorkInstructionCsvBean;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.ITypedDao;
