@@ -622,11 +622,29 @@ public class ScriptingServiceTest extends ServerTest {
 		beginTransaction();
 		LOGGER.info("1: Add a non-compilable extension");
 		String createLineTransformation = 
-				"	def XXX OrderImportLineTransformation(orderLine) {\n" + 
+				"	def OrderImportLineTransformation(orderLine) {\n" + 
 				"    	orderLine.replace('^', ',');\n" + 
 				"	}";
 		ExtensionPoint extension = createExtension(facility, ExtensionPointType.OrderImportLineTransformation, createLineTransformation);
+		LOGGER.info("4: Verify that the extension was deactivaed");
+		ExtensionPoint createdExtension = ExtensionPointEngine.getInstance(facility).findById(extension.getPersistentId());
+		Assert.assertTrue(createdExtension.isActive());
 		
+		String badGroovy = 
+				"	def o() {";
+		
+		try {
+			updateExtension(facility, ExtensionPointType.OrderImportLineTransformation, badGroovy);
+			fail("should have thrown an exception when updating bad groovy");
+		} catch(Exception e) {
+			
+		}
+		
+		ExtensionPoint afterUpdate = ExtensionPointEngine.getInstance(facility).findById(extension.getPersistentId());
+		Assert.assertTrue(afterUpdate.isActive());
+		Assert.assertEquals(createdExtension.getScript(), afterUpdate.getScript());
+		
+/* not sure this can be tested any longer 		
 		LOGGER.info("2: Import orders");
 		String csvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence,needsScan"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalapeo Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0,yes"
@@ -648,6 +666,7 @@ public class ScriptingServiceTest extends ServerTest {
 		Assert.assertFalse(extension.isActive());
 		Assert.assertEquals(1, OrderHeader.staticGetDao().getAll().size());
 		Assert.assertEquals(4, OrderDetail.staticGetDao().getAll().size());
+*/
 		commitTransaction();
 	}
 	
@@ -756,4 +775,12 @@ public class ScriptingServiceTest extends ServerTest {
 		extension.setScript(script);
 		return ExtensionPointEngine.getInstance(facility).create(extension);
 	}
+
+	private ExtensionPoint updateExtension(Facility facility, ExtensionPointType type, String script) throws ScriptException{
+		ExtensionPoint extension = new ExtensionPoint(facility, type);
+		extension.setActive(true);
+		extension.setScript(script);
+		return ExtensionPointEngine.getInstance(facility).update(extension);
+	}
+
 }
