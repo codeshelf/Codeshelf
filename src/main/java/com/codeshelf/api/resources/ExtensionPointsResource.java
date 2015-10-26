@@ -11,7 +11,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -20,8 +19,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import com.codeshelf.api.BaseResponse;
-import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.BaseResponse.UUIDParam;
+import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.service.ExtensionPointEngine;
