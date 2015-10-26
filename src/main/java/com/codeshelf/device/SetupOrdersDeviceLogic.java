@@ -1554,12 +1554,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 
 	@Override
-	public void processResultOfVerifyBadge(Boolean verified) {
+	public void processResultOfVerifyBadge(Boolean verified, String workerId) {
 		if (mCheStateEnum.equals(CheStateEnum.VERIFYING_BADGE) || mCheStateEnum.equals(CheStateEnum.IDLE)) {
 			if (verified) {
 				// finishLogin();
 				clearAllPosconsOnThisDevice();
-
+				setUserId(workerId);
 				notifyCheWorkerVerb("LOG IN", "");
 
 				// If I am linked, and I just logged in, let's go to the REMOTE screen to show the worker what she is linked to.

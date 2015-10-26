@@ -168,10 +168,11 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	}
 	
 	@Override
-	public void processResultOfVerifyBadge(Boolean verified) {
+	public void processResultOfVerifyBadge(Boolean verified, String workerId) {
 		if (mCheStateEnum == CheStateEnum.VERIFYING_BADGE) {
 			if (verified) {
 				clearAllPosconsOnThisDevice();
+				setUserId(workerId);
 				setState(CheStateEnum.READY);
 			} else {
 				setState(CheStateEnum.IDLE);
