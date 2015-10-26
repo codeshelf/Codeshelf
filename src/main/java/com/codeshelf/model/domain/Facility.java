@@ -83,7 +83,7 @@ import com.google.common.base.Strings;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Facility extends Location {
 
-	private static final String	SFTPWIS_DOMAINID	= "SFTPWIS";
+	private static final String	SFTPWIS_DOMAINID				= "SFTPWIS";
 
 	private static final String	UNSPECIFIED_LOCATION_DOMAINID	= "FACILITY_UNSPECIFIED";
 
@@ -136,7 +136,7 @@ public class Facility extends Location {
 
 	@OneToMany(mappedBy = "facility", orphanRemoval = true)
 	private List<Resolution>				resolutions;
-	
+
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	private List<ExportMessage>				exportMessages;
 
@@ -337,7 +337,7 @@ public class Facility extends Location {
 		if (foundMaster == null) {
 			List<UomMaster> masters = this.getUomMasters();
 			for (UomMaster master : masters) {
-				if (UomNormalizer.normalizedEquals(inUomMasterId, master.getUomMasterId())){
+				if (UomNormalizer.normalizedEquals(inUomMasterId, master.getUomMasterId())) {
 					foundMaster = master;
 					break;
 				}
@@ -708,14 +708,13 @@ public class Facility extends Location {
 	 * @return
 	 */
 	public IEdiExportGateway getEdiExportGateway() {
-		IEdiExportGateway gateway = (SftpWiGateway)EdiGateway.staticGetDao().findByDomainId(this, SFTPWIS_DOMAINID);
+		IEdiExportGateway gateway = (SftpWiGateway) EdiGateway.staticGetDao().findByDomainId(this, SFTPWIS_DOMAINID);
 		if (gateway != null && gateway.isLinked()) {
 			return gateway;
 		} else {
 			return null;
 		}
 	}
-
 
 	// --------------------------------------------------------------------------
 	/**
@@ -794,7 +793,6 @@ public class Facility extends Location {
 		return result;
 	}
 
-
 	private void storeSftpService(SftpGateway sftpEDI) {
 		this.addEdiGateway(sftpEDI);
 		try {
@@ -803,10 +801,8 @@ public class Facility extends Location {
 			LOGGER.error("Failed to save {} service", sftpEDI.getClass().toString(), e);
 		}
 
-
 	}
 
-	
 	// --------------------------------------------------------------------------
 	/**
 	 */
@@ -1321,7 +1317,7 @@ public class Facility extends Location {
 		//Step 1 - WorkInstruction
 		List<WorkInstruction> workInstructions = WorkInstruction.staticGetDao().findByParent(this);
 		deleteCollection(workInstructions, WorkInstruction.staticGetDao());
-		
+
 		//Step 2 - OrderHeader, ContainerUse, OrderDetail, OrderLocation
 		List<OrderHeader> orderHeaders = OrderHeader.staticGetDao().findByParent(this);
 		deleteCollection(orderHeaders, OrderHeader.staticGetDao());
@@ -1349,13 +1345,13 @@ public class Facility extends Location {
 			dao.delete((IDomainObject) object);
 		}
 	}
-	
+
 	public List<IEdiImportGateway> getLinkedEdiImportGateways() {
 		//TODO only return services that implement import interface
 		ArrayList<IEdiImportGateway> importServices = new ArrayList<>();
 		for (IEdiGateway ediGateway : getEdiGateways()) {
 			if (ediGateway instanceof IEdiImportGateway && ediGateway.isLinked()) {
-				importServices.add((IEdiImportGateway)ediGateway);
+				importServices.add((IEdiImportGateway) ediGateway);
 			}
 		}
 		return importServices;
@@ -1370,7 +1366,7 @@ public class Facility extends Location {
 		}
 		return null;
 	}
-	
+
 	public IEdiGateway findEdiGateway(String domainId) {
 		for (IEdiGateway ediGateway : getEdiGateways()) {
 			if (ediGateway.getDomainId().equals(domainId)) {
@@ -1379,27 +1375,27 @@ public class Facility extends Location {
 		}
 		return null;
 	}
-	
-	public TimeZone getTimeZone(){
+
+	public TimeZone getTimeZone() {
 		return TimeZone.getTimeZone("US/Mountain");
 	}
-	
+
 	@Transient
-	private boolean dropboxLegacyCleanupDone = false;
-	
+	private boolean	dropboxLegacyCleanupDone	= false;
+
 	/**
 	 * This function deals with pre-v22  way of storing Dropbox credentials.
 	 * The authentication key used to be stored as a string instead of a Json object. 
 	 * This function corrects that.
 	 */
-	public void dropboxLegacyCredentialsCleanup(){
-		if (!dropboxLegacyCleanupDone){
+	public void dropboxLegacyCredentialsCleanup() {
+		if (!dropboxLegacyCleanupDone) {
 			List<EdiGateway> ediGateways = EdiGateway.staticGetDao().findByParent(this);
-			for (IEdiGateway ediGateway : ediGateways){
+			for (IEdiGateway ediGateway : ediGateways) {
 				if (ediGateway instanceof DropboxGateway) {
-					DropboxGateway dropboxGateway = (DropboxGateway)ediGateway;
+					DropboxGateway dropboxGateway = (DropboxGateway) ediGateway;
 					String credentials = dropboxGateway.getProviderCredentials();
-					if (credentials == null || !credentials.startsWith("{")){
+					if (credentials == null || !credentials.startsWith("{")) {
 						dropboxGateway.setProviderCredentials(new DropboxCredentials(credentials).toString());
 					}
 				}
@@ -1407,8 +1403,8 @@ public class Facility extends Location {
 			dropboxLegacyCleanupDone = true;
 		}
 	}
-		
-	public FacilityMetric computeMetrics(String dateStr) throws Exception{
+
+	public FacilityMetric computeMetrics(String dateStr) throws Exception {
 		TimeZone facilityTimeZone = getTimeZone();
 		Calendar cal = Calendar.getInstance(facilityTimeZone);
 		if (dateStr != null) {
@@ -1421,25 +1417,29 @@ public class Facility extends Location {
 		cal.set(Calendar.MINUTE, 0);
 		cal.set(Calendar.SECOND, 0);
 		cal.set(Calendar.MILLISECOND, 0);
-		
+
 		SimpleDateFormat outFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss");
 		outFormat.setTimeZone(facilityTimeZone);
 		String dateLocalUI = outFormat.format(cal.getTime());
-		
+
 		Timestamp metricsCollectionStartUTC = new Timestamp(cal.getTimeInMillis());
 		cal.add(Calendar.DATE, 1);
 		Timestamp metricsCollectionEndUTC = new Timestamp(cal.getTimeInMillis());
-		
+
 		FacilityMetric metric = getMetrics(metricsCollectionStartUTC);
 		metric.setUpdated(new Timestamp(System.currentTimeMillis()));
 		metric.setTz(cal.getTimeZone().getID());
 		metric.setDateLocalUI(dateLocalUI);
 		metric.setDomainId(metric.getDefaultDomainIdPrefix() + "-" + getDomainId() + "-" + metric.getDateLocalUI());
-		
+
 		int ordersPickedCalculated = computeOrderMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
 		int ordersPickedOld = metric.getOrdersPicked();
 		//Suspected data loss over time. Do not update old Metric data.
-		if (ordersPickedCalculated < ordersPickedOld / 10){
+		if (ordersPickedCalculated < ordersPickedOld / 2) {
+			LOGGER.warn("Not updating facility daily metric for {}. Probably data was purged so it is better to keep the old value of {} picks rather than update to {}.",
+				dateStr,
+				ordersPickedOld,
+				ordersPickedCalculated);
 			return metric;
 		}
 		metric.setOrdersPicked(ordersPickedCalculated);
@@ -1449,8 +1449,8 @@ public class Facility extends Location {
 		FacilityMetric.staticGetDao().store(metric);
 		return metric;
 	}
-	
-	private int computeOrderMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc){
+
+	private int computeOrderMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc) {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", this));
 		filterParams.add(Restrictions.eq("status", OrderStatusEnum.COMPLETE));
@@ -1458,10 +1458,10 @@ public class Facility extends Location {
 		filterParams.add(Restrictions.le("updated", endUtc));
 		int ordersPicked = OrderHeader.staticGetDao().countByFilter(filterParams);
 		return ordersPicked;
-				
+
 	}
-	
-	private void computeDetailMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc){
+
+	private void computeDetailMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc) {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("status", OrderStatusEnum.COMPLETE));
 		filterParams.add(Restrictions.ge("updated", startUtc));
@@ -1470,7 +1470,7 @@ public class Facility extends Location {
 		int linesTotal = 0, linesEach = 0, linesCase = 0, linesOther = 0;
 		int countTotal = 0, countEach = 0, countCase = 0, countOther = 0;
 		for (OrderDetail detail : details) {
-			if (!this.equals(detail.getFacility())){
+			if (!this.equals(detail.getFacility())) {
 				continue;
 			}
 			int actual = detail.getActualPickedItems();
@@ -1480,10 +1480,10 @@ public class Facility extends Location {
 			linesTotal++;
 			countTotal += actual;
 			String uomId = detail.getUomMasterId();
-			if (UomNormalizer.isEach(uomId)){
+			if (UomNormalizer.isEach(uomId)) {
 				linesEach++;
 				countEach += actual;
-			} else if (UomNormalizer.isCase(uomId)){
+			} else if (UomNormalizer.isCase(uomId)) {
 				linesCase++;
 				countCase += actual;
 			} else {
@@ -1500,8 +1500,8 @@ public class Facility extends Location {
 		metric.setCountPickedCase(countCase);
 		metric.setCountPickedOther(countOther);
 	}
-	
-	private void computeHousekeepingMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc){
+
+	private void computeHousekeepingMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc) {
 		List<WorkInstructionTypeEnum> housekeepingTypes = new ArrayList<>();
 		housekeepingTypes.add(WorkInstructionTypeEnum.HK_BAYCOMPLETE);
 		housekeepingTypes.add(WorkInstructionTypeEnum.HK_REPEATPOS);
@@ -1512,10 +1512,10 @@ public class Facility extends Location {
 		filterParams.add(Restrictions.ge("completed", startUtc));
 		filterParams.add(Restrictions.le("completed", endUtc));
 		int housekeepingInstructionsCount = WorkInstruction.staticGetDao().countByFilter(filterParams);
-		metric.setHouseKeeping(housekeepingInstructionsCount);		
+		metric.setHouseKeeping(housekeepingInstructionsCount);
 	}
-	
-	private void computeEventMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc){
+
+	private void computeEventMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc) {
 		List<EventType> shortEventTypes = new ArrayList<>();
 		shortEventTypes.add(EventType.SHORT);
 		shortEventTypes.add(EventType.SHORT_AHEAD);
@@ -1526,7 +1526,7 @@ public class Facility extends Location {
 		filterParams.add(Restrictions.le("created", endUtc));
 		int shortEventsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
 		metric.setShortEvents(shortEventsCount);
-		
+
 		filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("facility", this));
 		filterParams.add(Restrictions.eq("eventType", EventType.SKIP_ITEM_SCAN));
@@ -1534,7 +1534,7 @@ public class Facility extends Location {
 		filterParams.add(Restrictions.le("created", endUtc));
 		int skipEventsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
 		metric.setSkipScanEvents(skipEventsCount);
-		
+
 		filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("facility", this));
 		filterParams.add(Restrictions.eq("eventType", EventType.PALLERIZER_PUT));
@@ -1542,7 +1542,7 @@ public class Facility extends Location {
 		filterParams.add(Restrictions.le("created", endUtc));
 		int palletizerPutsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
 		metric.setPalletizerPuts(palletizerPutsCount);
-		
+
 		filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("facility", this));
 		filterParams.add(Restrictions.eq("eventType", EventType.PUTWALL_PUT));
@@ -1550,7 +1550,7 @@ public class Facility extends Location {
 		filterParams.add(Restrictions.le("created", endUtc));
 		int putwallPutsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
 		metric.setPutWallPuts(putwallPutsCount);
-		
+
 		filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("facility", this));
 		filterParams.add(Restrictions.eq("eventType", EventType.SKUWALL_PUT));
@@ -1559,8 +1559,8 @@ public class Facility extends Location {
 		int skuwallPutsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
 		metric.setSkuWallPuts(skuwallPutsCount);
 	}
-	
-	private FacilityMetric getMetrics(Timestamp date){
+
+	private FacilityMetric getMetrics(Timestamp date) {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", this));
 		filterParams.add(Restrictions.eq("date", date));
@@ -1570,13 +1570,13 @@ public class Facility extends Location {
 			metric = new FacilityMetric();
 			metric.setParent(this);
 			metric.setDate(date);
-		} else if (metrics.size() == 1){
+		} else if (metrics.size() == 1) {
 			metric = metrics.get(0);
 		} else {
 			LOGGER.warn("Found more than one FacilityMertic for facility " + getDomainId() + " at " + date + ". Using latest one.");
 			Timestamp latestTs = new Timestamp(0);
 			for (FacilityMetric metricCheck : metrics) {
-				if (metricCheck.getUpdated().after(latestTs)){
+				if (metricCheck.getUpdated().after(latestTs)) {
 					metric = metricCheck;
 				}
 			}
