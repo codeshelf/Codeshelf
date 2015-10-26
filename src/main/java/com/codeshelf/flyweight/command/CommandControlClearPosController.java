@@ -107,5 +107,13 @@ public final class CommandControlClearPosController extends CommandControlABC {
 	protected int doComputeCommandSize() {
 		return super.doComputeCommandSize() + REQUEST_COMMAND_BYTES;
 	}
+	
 
+	// --------------------------------------------------------------------------
+	/**
+	*  @return
+	*/
+	public int getResendDelay() {
+		return DEFAULT_RESEND_DELAY;
+	}
 }

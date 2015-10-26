@@ -80,4 +80,13 @@ public final class CommandControlClearDisplay extends CommandControlABC {
 		return null;
 	}
 
+	
+
+	// --------------------------------------------------------------------------
+	/**
+	*  @return
+	*/
+	public int getResendDelay() {
+		return DEFAULT_RESEND_DELAY;
+	}
 }

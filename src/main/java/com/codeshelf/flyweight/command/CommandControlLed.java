@@ -162,4 +162,13 @@ public final class CommandControlLed extends CommandControlABC {
 		return super.doComputeCommandSize() + CHANNEL_BYTES + EFFECT_BYTES + SAMPLE_COUNT_BYTES
 				+ (mSamples.size() * ONE_SAMPLE_BYTES);
 	}
+	
+
+	// --------------------------------------------------------------------------
+	/**
+	*  @return
+	*/
+	public int getResendDelay() {
+		return DEFAULT_RESEND_DELAY;
+	}
 }

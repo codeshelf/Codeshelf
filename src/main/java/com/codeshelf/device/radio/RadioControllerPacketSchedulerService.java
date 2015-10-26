@@ -279,6 +279,7 @@ public class RadioControllerPacketSchedulerService {
 
 			// Update last send time for device
 			device.setLastPacketSentTime(System.currentTimeMillis());
+			device.setLastSentPacket(packet);
 		} else {
 			LOGGER.debug("No packet to send");
 		}
@@ -453,13 +454,19 @@ public class RadioControllerPacketSchedulerService {
 
 	private boolean clearToSendToDevice(INetworkDevice inDevice) {
 
-		long lastReceivedTime = 0; //System.currentTimeMillis();
-		long lastSentTime = 0; //System.currentTimeMillis();
+		long lastReceivedTime = 0;
+		long lastSentTime = 0;
 		long minDifference = 0;
 		long currTime = System.currentTimeMillis();
+		int packetDelayRequirement = 0;
 
 		if (inDevice == null) {
 			return false;
+		}
+		
+		IPacket lastPacketSent = inDevice.getLastSentPacket();
+		if(lastPacketSent != null) {
+			packetDelayRequirement = lastPacketSent.getCommand().getResendDelay();
 		}
 
 		lastReceivedTime = 0; //inDevice.getLastPacketReceivedTime();
@@ -474,7 +481,7 @@ public class RadioControllerPacketSchedulerService {
 				return true;
 			}
 		} else {
-			if (minDifference < DEVICE_PACKET_SPACING_MILLIS) {
+			if (minDifference < DEVICE_PACKET_SPACING_MILLIS || minDifference < packetDelayRequirement) {
 				return false;
 			} else {
 				return true;

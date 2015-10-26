@@ -1,6 +1,8 @@
 package com.codeshelf.flyweight.command;
 
 public class CommandControlPosconSetup extends CommandControlABC{
+	private static final int RESEND_DELAY = 0;
+	
 	/**
 	 *  This is the constructor to use to create a data command to send to the network.
 	 *  @param inEndpoint	The end point to send the command.
@@ -20,5 +22,13 @@ public class CommandControlPosconSetup extends CommandControlABC{
 	@Override
 	protected String doToString() {
 		return null;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	*  @return
+	*/
+	public int getResendDelay() {
+		return RESEND_DELAY;
 	}
 }

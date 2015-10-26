@@ -104,4 +104,13 @@ public class CommandControlAck extends CommandControlABC {
 	protected int doComputeCommandSize() {
 		return super.doComputeCommandSize() + ACK_COMMAND_BYTES;
 	}
+	
+
+	// --------------------------------------------------------------------------
+	/**
+	*  @return
+	*/
+	public int getResendDelay() {
+		return DEFAULT_RESEND_DELAY;
+	}
 }

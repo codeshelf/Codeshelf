@@ -42,6 +42,7 @@ public final class CommandControlSetPosController extends CommandControlABC {
 
 	private static final Logger			LOGGER					= LoggerFactory.getLogger(CommandControlSetPosController.class);
 
+	private static final int			RESEND_DELAY			= 60;
 	private static final int			INSTRUCTION_COUNT_BYTES	= 1;
 	private static final int			ONE_INSTRUCTION_BYTES	= 6;
 
@@ -140,5 +141,14 @@ public final class CommandControlSetPosController extends CommandControlABC {
 	@Override
 	protected int doComputeCommandSize() {
 		return super.doComputeCommandSize() + INSTRUCTION_COUNT_BYTES + (mInstructions.size() * ONE_INSTRUCTION_BYTES);
+	}
+	
+
+	// --------------------------------------------------------------------------
+	/**
+	*  @return
+	*/
+	public int getResendDelay() {
+		return RESEND_DELAY;
 	}
 }

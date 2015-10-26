@@ -145,4 +145,12 @@ public final class CommandControlDisplaySingleLineMessage extends CommandControl
 		return builder.toString();
 	}
 
+
+	// --------------------------------------------------------------------------
+	/**
+	*  @return
+	*/
+	public int getResendDelay() {
+		return DEFAULT_RESEND_DELAY;
+	}
 }

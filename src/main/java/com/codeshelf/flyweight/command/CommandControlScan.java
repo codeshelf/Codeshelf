@@ -25,7 +25,6 @@ import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
  *  @author jeffw
  */
 public final class CommandControlScan extends CommandControlABC {
-
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CommandControlScan.class);
 
 	@Accessors(prefix = "m")
@@ -99,4 +98,12 @@ public final class CommandControlScan extends CommandControlABC {
 		return super.doComputeCommandSize() + mCommandString.length();
 	}
 
+
+	// --------------------------------------------------------------------------
+	/**
+	*  @return
+	*/
+	public int getResendDelay() {
+		return DEFAULT_RESEND_DELAY;
+	}
 }
