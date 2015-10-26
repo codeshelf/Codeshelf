@@ -27,6 +27,8 @@ import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
  */
 @EqualsAndHashCode(callSuper = true, doNotUseGetters = true)
 public abstract class CommandControlABC extends ExtendedCommandABC {
+	
+	protected static final int	DEFAULT_RESEND_DELAY		= 0;
 
 	public static final int		COMMAND_CONTROL_HDR_BYTES	= 1;
 	public static final int		MAX_CONTROL_BYTES			= ICommand.MAX_COMMAND_BYTES - COMMAND_CONTROL_HDR_BYTES;
@@ -94,5 +96,4 @@ public abstract class CommandControlABC extends ExtendedCommandABC {
 	protected int doComputeCommandSize() {
 		return super.doComputeCommandSize() + COMMAND_CONTROL_HDR_BYTES;
 	}
-
 }

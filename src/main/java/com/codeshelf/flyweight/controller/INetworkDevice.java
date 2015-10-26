@@ -7,6 +7,7 @@ package com.codeshelf.flyweight.controller;
 
 import com.codeshelf.device.DeviceRestartCauseEnum;
 import com.codeshelf.flyweight.command.CommandControlButton;
+import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetGuid;
 
@@ -212,5 +213,15 @@ public interface INetworkDevice {
 	 * Notify device association
 	 */
 	void notifyAssociate(String inString);
-
+	
+	/**
+	 * Get last packet sent to device
+	 * @return Ipacket of last packt or NULL if no previous packet
+	 */
+	IPacket getLastSentPacket();
+	
+	/**
+	 * Set last packet sent
+	 */
+	void setLastSentPacket(IPacket inPacket);
 }

@@ -100,5 +100,14 @@ public class CommandControlCreateScan extends CommandControlABC {
 	protected int doComputeCommandSize() {
 		return super.doComputeCommandSize() + LENGTH_BYTES + mScanString.length();
 	}
+	
+
+	// --------------------------------------------------------------------------
+	/**
+	*  @return
+	*/
+	public int getResendDelay() {
+		return DEFAULT_RESEND_DELAY;
+	}
 
 }

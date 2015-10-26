@@ -28,6 +28,8 @@ import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
  *  @author jeffw
  */
 public abstract class CommandNetMgmtABC extends ExtendedCommandABC {
+	
+	public static final int		RESEND_DELAY			= 0;
 
 	public static final byte	NETSETUP_COMMAND		= 0;
 	public static final byte	NETCHECK_COMMAND		= 1;
@@ -92,5 +94,13 @@ public abstract class CommandNetMgmtABC extends ExtendedCommandABC {
 	protected int doComputeCommandSize() {
 		return NETMGMT_HEADER_BYTES;
 	}
+	
 
+	// --------------------------------------------------------------------------
+	/**
+	*  @return
+	*/
+	public int getResendDelay() {
+		return RESEND_DELAY;
+	}
 }

@@ -38,5 +38,14 @@ public class CommandControlPosconBroadcast extends CommandControlABC{
 	protected String doToString() {
 		return null;
 	}
+	
+
+	// --------------------------------------------------------------------------
+	/**
+	*  @return
+	*/
+	public int getResendDelay() {
+		return DEFAULT_RESEND_DELAY;
+	}
 
 }

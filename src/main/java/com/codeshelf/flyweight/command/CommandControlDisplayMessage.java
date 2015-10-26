@@ -143,5 +143,14 @@ public final class CommandControlDisplayMessage extends CommandControlABC {
 				.append(getLine4MessageStr()).append(System.lineSeparator());
 		return builder.toString();
 	}
+	
+
+	// --------------------------------------------------------------------------
+	/**
+	*  @return
+	*/
+	public int getResendDelay() {
+		return DEFAULT_RESEND_DELAY;
+	}
 
 }

@@ -18,6 +18,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import com.codeshelf.flyweight.command.ICommand;
+import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.INetworkDevice;
@@ -103,6 +104,11 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	@Getter
 	@Setter
 	long							mLastRadioCommandSendForThisDevice	= 0;
+	
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	protected IPacket				mLastSentPacket;
 
 	private AtomicLong				mLastPacketReceivedTime	= new AtomicLong(System.currentTimeMillis());
 	private AtomicLong				mLastPacketSentTime		= new AtomicLong(System.currentTimeMillis());

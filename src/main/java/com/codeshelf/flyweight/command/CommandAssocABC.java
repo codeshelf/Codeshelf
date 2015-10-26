@@ -32,14 +32,16 @@ import com.codeshelf.flyweight.bitfields.OutOfRangeException;
  */
 public abstract class CommandAssocABC extends ExtendedCommandABC {
 
+	public static final int RESEND_DELAY = 0; // Association messages are not resent
+
 	public static final byte	ASSOC_REQ_COMMAND	= 0;
 	public static final byte	ASSOC_RESP_COMMAND	= 1;
 	public static final byte	ASSOC_CHECK_COMMAND	= 2;
 	public static final byte	ASSOC_ACK_COMMAND	= 3;
 
-	private static final Logger	LOGGER				= LoggerFactory.getLogger(CommandAssocABC.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(CommandAssocABC.class);
 
-	private String				mGUID;
+	private String mGUID;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -135,5 +137,13 @@ public abstract class CommandAssocABC extends ExtendedCommandABC {
 	 */
 	public final String getGUID() {
 		return mGUID;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	*  @return
+	*/
+	public int getResendDelay() {
+		return RESEND_DELAY;
 	}
 }

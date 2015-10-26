@@ -82,4 +82,10 @@ public interface ICommand {
 	 * @return
 	 */
 	byte[] getAckData();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the resend delay time in ms for this command
+	 */
+	int getResendDelay();
 }
