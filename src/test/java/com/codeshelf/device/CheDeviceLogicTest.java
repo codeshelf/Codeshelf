@@ -45,7 +45,6 @@ public class CheDeviceLogicTest extends MockDaoTest {
 	// The rest are passing but do not assume they are working correctly. If there is a new failure here, evaluate carefully. These unit tests
 	// are much faster to run than the integration tests, but these are only better if they are absolutely clear about what the Che process is.
 
-
 	@Test
 	public void showsCompleteWorkAfterPicks() {
 		this.getTenantPersistenceService().beginTransaction();
@@ -103,7 +102,6 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		verifyDisplayOfMockitoObj(ordered.verify(radioController), "COMPLETE");
 		 */
 	}
-
 
 	@Test
 	public void showsNoMoreWorkWhenNoWIs() {
@@ -207,7 +205,7 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		*/
 
 	}
-	
+
 	/**
 	 * Purpose of test is to see what happens during reassociate after CHE reset if CHE was in an odd state.
 	 */
@@ -223,42 +221,94 @@ public class CheDeviceLogicTest extends MockDaoTest {
 
 		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
 		cheDeviceLogic.startDevice(null); // not specifying restart reason
-		Assert.assertEquals(CheStateEnum.IDLE,cheDeviceLogic.getCheStateEnum());
-		
+		Assert.assertEquals(CheStateEnum.IDLE, cheDeviceLogic.getCheStateEnum());
+
 		LOGGER.info("1a: from idle, disconnect  from server and reconnect back to idle");
 		// "Disconnect from server, reconnect, means CHE and site controller are fine, but site controller lost server connection.
 		// Not so relevant to this test
 		cheDeviceLogic.disconnectedFromServer();
 		cheDeviceLogic.connectedToServer();
-		Assert.assertEquals(CheStateEnum.IDLE,cheDeviceLogic.getCheStateEnum());
-		
+		Assert.assertEquals(CheStateEnum.IDLE, cheDeviceLogic.getCheStateEnum());
+
 		LOGGER.info("1b: from idle, reconnect to site controller: back to idle");
 		cheDeviceLogic.startDevice(DeviceRestartCauseEnum.USER_RESTART);
-		Assert.assertEquals(CheStateEnum.IDLE,cheDeviceLogic.getCheStateEnum());
+		Assert.assertEquals(CheStateEnum.IDLE, cheDeviceLogic.getCheStateEnum());
 
 		LOGGER.info("2: from container select, reconnect back to same. Just a generic case of going back to existing state");
 		cheDeviceLogic.testOnlySetState(CheStateEnum.CONTAINER_SELECT);
 		cheDeviceLogic.startDevice(DeviceRestartCauseEnum.WATCHDOG_TIMEOUT);
-		Assert.assertEquals(CheStateEnum.CONTAINER_SELECT,cheDeviceLogic.getCheStateEnum());
+		Assert.assertEquals(CheStateEnum.CONTAINER_SELECT, cheDeviceLogic.getCheStateEnum());
 
 		LOGGER.info("2b: from verify badge, manual reset does change state");
 		cheDeviceLogic.testOnlySetState(CheStateEnum.VERIFYING_BADGE);
 		cheDeviceLogic.startDevice(DeviceRestartCauseEnum.USER_RESTART);
-		Assert.assertEquals(CheStateEnum.IDLE,cheDeviceLogic.getCheStateEnum());
-		
+		Assert.assertEquals(CheStateEnum.IDLE, cheDeviceLogic.getCheStateEnum());
+
 		LOGGER.info("3: from compute work or get work, reconnect back to setup_summary on manual reset.");
 		cheDeviceLogic.testOnlySetState(CheStateEnum.COMPUTE_WORK);
 		cheDeviceLogic.startDevice(DeviceRestartCauseEnum.USER_RESTART);
-		Assert.assertEquals(CheStateEnum.SETUP_SUMMARY,cheDeviceLogic.getCheStateEnum());
+		Assert.assertEquals(CheStateEnum.SETUP_SUMMARY, cheDeviceLogic.getCheStateEnum());
 		cheDeviceLogic.testOnlySetState(CheStateEnum.GET_WORK);
 		cheDeviceLogic.startDevice(DeviceRestartCauseEnum.USER_RESTART);
-		Assert.assertEquals(CheStateEnum.SETUP_SUMMARY,cheDeviceLogic.getCheStateEnum());
+		Assert.assertEquals(CheStateEnum.SETUP_SUMMARY, cheDeviceLogic.getCheStateEnum());
 
 		LOGGER.info("3b: non-manual reset does not");
 		cheDeviceLogic.testOnlySetState(CheStateEnum.COMPUTE_WORK);
 		cheDeviceLogic.startDevice(DeviceRestartCauseEnum.SMAC_ERROR); // saw a few of these at PFSWeb
-		Assert.assertEquals(CheStateEnum.COMPUTE_WORK,cheDeviceLogic.getCheStateEnum());
+		Assert.assertEquals(CheStateEnum.COMPUTE_WORK, cheDeviceLogic.getCheStateEnum());
 	}
 
+	/**
+	 * A very weak test, but did replicate bug DEV-1257
+	 */
+	@Test
+	public void lateServerResponseTest() {
+		IRadioController radioController = mock(IRadioController.class);
 
+		SetupOrdersDeviceLogic cheDeviceLogic = new SetupOrdersDeviceLogic(UUID.randomUUID(),
+			new NetGuid("0xABC"),
+			mock(CsDeviceManager.class),
+			radioController,
+			null);
+
+		cheDeviceLogic.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED); // Always call this with startDevice, as this says the device is associated.
+		cheDeviceLogic.startDevice(null); // not specifying restart reason
+		Assert.assertEquals(CheStateEnum.IDLE, cheDeviceLogic.getCheStateEnum());
+
+		LOGGER.info("1a: from idle, see that compute work response does not go directly to setup_summary. (Expect late... error)");
+		cheDeviceLogic.testOnlySetState(CheStateEnum.IDLE);
+		cheDeviceLogic.processWorkInstructionCounts(0, null);
+		Assert.assertEquals(CheStateEnum.IDLE, cheDeviceLogic.getCheStateEnum());
+
+		LOGGER.info("1b: Same, but with count = 1, but still null map. (Expect late... error, but no error on the null map.)"); // should this be silent?
+		cheDeviceLogic.processWorkInstructionCounts(1, null);
+		Assert.assertEquals(CheStateEnum.IDLE, cheDeviceLogic.getCheStateEnum());
+
+		LOGGER.info("1c: compute work response from verifying badge");
+		cheDeviceLogic.testOnlySetState(CheStateEnum.VERIFYING_BADGE);
+		cheDeviceLogic.processWorkInstructionCounts(0, null);
+		Assert.assertEquals(CheStateEnum.VERIFYING_BADGE, cheDeviceLogic.getCheStateEnum()); // CHE reset will force to idle
+
+		LOGGER.info("1d: compute work response from do pick");
+		cheDeviceLogic.testOnlySetState(CheStateEnum.DO_PICK);
+		cheDeviceLogic.processWorkInstructionCounts(0, null);
+		Assert.assertEquals(CheStateEnum.DO_PICK, cheDeviceLogic.getCheStateEnum()); // CHE reset will force to idle
+
+		LOGGER.info("2a: from idle, see that getWorkInstructions response does not go directly to setup_summary. (Expect late... error)");
+		cheDeviceLogic.testOnlySetState(CheStateEnum.IDLE);
+		cheDeviceLogic.assignWork(null, null);
+		Assert.assertEquals(CheStateEnum.IDLE, cheDeviceLogic.getCheStateEnum());
+		
+		LOGGER.info("2b: getWorkInstructions response from verifying badge");
+		cheDeviceLogic.testOnlySetState(CheStateEnum.VERIFYING_BADGE);
+		cheDeviceLogic.assignWork(null, null);
+		Assert.assertEquals(CheStateEnum.VERIFYING_BADGE, cheDeviceLogic.getCheStateEnum());
+
+		LOGGER.info("2c: cgetWorkInstructions response from do pick");
+		cheDeviceLogic.testOnlySetState(CheStateEnum.DO_PICK);
+		cheDeviceLogic.assignWork(null, null);
+		Assert.assertEquals(CheStateEnum.DO_PICK, cheDeviceLogic.getCheStateEnum());
+
+
+	}
 }
