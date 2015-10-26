@@ -1829,6 +1829,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	public void processWorkInstructionCounts(final Integer totalWorkInstructionCount,
 		final Map<String, WorkInstructionCount> containerToWorkInstructionCountMap) {
+		// DEV-1257 do not accept if in wrong state. Should only only accept from one state?
+		CheStateEnum currentState = this.getCheStateEnum();
+		if (currentState == CheStateEnum.IDLE || currentState == CheStateEnum.VERIFYING_BADGE || currentState == CheStateEnum.DO_PICK) {
+			LOGGER.error("Late WorkInstructionCounts response from server. Current state is {}. Doing nothing.");
+			// We certainly do not want to transition to SETUP_SUMMARY state after clearing our badge ID. Should we redo the container map anyway? Not sure.
+			return;
+		}		
 
 		//Store counts
 		this.mContainerToWorkInstructionCountMap = containerToWorkInstructionCountMap;
@@ -2341,6 +2348,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Only not final because we let CsDeviceManager call this generically.
 	 */
 	public void assignWork(final List<WorkInstruction> inWorkItemList, String message) {
+		
+		// DEV-1257 do not accept if in wrong state. Should only only accept from one state?
+		CheStateEnum currentState = this.getCheStateEnum();
+		if (currentState == CheStateEnum.IDLE || currentState == CheStateEnum.VERIFYING_BADGE || currentState == CheStateEnum.DO_PICK) {
+			LOGGER.error("Late assignWork response from server. Current state is {}. Doing nothing.");
+			// We certainly do not want to transition to SETUP_SUMMARY state if we logged out and do not have a badge ID any more.
+			return;
+		}		
+
 		if (inWorkItemList == null || inWorkItemList.size() == 0) {
 			setState(CheStateEnum.SETUP_SUMMARY);
 		} else {
