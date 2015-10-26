@@ -84,9 +84,8 @@ public final class CommandControlScan extends CommandControlABC {
 		try {
 			mCommandString = inInputStream.readPString();
 		} catch (IOException e) {
-			LOGGER.warn("CommandControlScan.doFromStream() could not read stream", e);
-			// This commonly seen from BitFieldInputStream.java:228 throw. Not sure it needs to be an error.
-			//WARN on bad scan character
+			LOGGER.warn("CommandControlScan.doFromStream() could not read stream. (Stack trace shown, but this exception is swallowed here.)", e);
+			// This can be reproduced by slow unplug/replug of wired scanner.
 		}
 	}
 
