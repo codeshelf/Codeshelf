@@ -8,8 +8,12 @@ public class VerifyBadgeResponse extends DeviceResponseABC {
 	private Boolean verified = false;
 	
 	@Getter @Setter
+	private String workerId;
+	
+	@Getter @Setter
 	private String workerNameUI;
 	
 	@Getter @Setter
 	private String cheName;
+
 }

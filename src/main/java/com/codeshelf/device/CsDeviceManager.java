@@ -876,7 +876,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 				verified = false;
 			}
 			setWorkerNameFromGuid(cheDevice.getGuid(), response.getWorkerNameUI());
-			cheDevice.processResultOfVerifyBadge(verified);
+			cheDevice.processResultOfVerifyBadge(verified, response.getWorkerId());
 			setCheNameFromGuid(new NetGuid(cheGuid), response.getCheName());
 		} else {
 			LOGGER.warn("Unable to process Verify Badge response for CHE id={} CHE not found", cheGuid);

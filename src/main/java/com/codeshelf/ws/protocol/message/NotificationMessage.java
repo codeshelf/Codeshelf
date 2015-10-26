@@ -34,7 +34,7 @@ public class NotificationMessage extends DeviceMessageABC{
 		this(new DateTime(), deviceClass, devicePersistentId, deviceGuid, userId, eventType);
 	}
 	
-	public NotificationMessage(final DateTime timestamp, final Class<?> deviceClass, final UUID devicePersistentId, final String deviceGuid, final String userId, final WorkerEvent.EventType eventType) {
+	private NotificationMessage(final DateTime timestamp, final Class<?> deviceClass, final UUID devicePersistentId, final String deviceGuid, final String userId, final WorkerEvent.EventType eventType) {
 		this.deviceClass = deviceClass;
 		this.devicePersistentId = devicePersistentId;
 		this.workerId = userId;

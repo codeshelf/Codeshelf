@@ -2014,7 +2014,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 	}
 
-	public void processResultOfVerifyBadge(Boolean verified) {
+	public void processResultOfVerifyBadge(Boolean verified, String workerId) {
 		// To be overridden by SetupOrderDeviceLogic and LineScanDeviceLogic
 	}
 

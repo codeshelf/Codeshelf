@@ -324,10 +324,11 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 	}
 	
 	@Override
-	public void processResultOfVerifyBadge(Boolean verified) {
+	public void processResultOfVerifyBadge(Boolean verified, String workerId) {
 		if (mCheStateEnum.equals(CheStateEnum.VERIFYING_BADGE) || mCheStateEnum.equals(CheStateEnum.IDLE)) {
 			if (verified) {
 				clearAllPosconsOnThisDevice();
+				setUserId(workerId);
 				notifyCheWorkerVerb("LOG IN", "");
 				setState(CheStateEnum.PALLETIZER_SCAN_ITEM);
 			} else {
