@@ -104,17 +104,19 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		DropboxGatewayHealthCheck dbxCheck = new DropboxGatewayHealthCheck();
 		metricsService.registerHealthCheck(dbxCheck);
 		
+		IsProductionServerHealthCheck productionCheck = new IsProductionServerHealthCheck();
+		metricsService.registerHealthCheck(productionCheck);
+		
+		/*
+		PicksActivityHealthCheck picksActivityCheck = new PicksActivityHealthCheck();
+		metricsService.registerHealthCheck(picksActivityCheck);
+
 		EdiHealthCheck ediCheck = new EdiHealthCheck(this.ediImportService, ediExportService);
 		metricsService.registerHealthCheck(ediCheck);
 		
 		DataQuantityHealthCheck dataQuantityCheck = new DataQuantityHealthCheck();
 		metricsService.registerHealthCheck(dataQuantityCheck);
-
-		IsProductionServerHealthCheck productionCheck = new IsProductionServerHealthCheck();
-		metricsService.registerHealthCheck(productionCheck);
-		
-		PicksActivityHealthCheck picksActivityCheck = new PicksActivityHealthCheck();
-		metricsService.registerHealthCheck(picksActivityCheck);
+		*/
 
 }
 
