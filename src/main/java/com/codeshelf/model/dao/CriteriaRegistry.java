@@ -195,7 +195,17 @@ public class CriteriaRegistry {
 
 		indexedCriteria.put("orderLocationByFacility",
 			new TypedCriteria("from OrderLocation where active = true and parent.parent.persistentId = :facilityId",
-				"facilityId", UUID.class)); // could check that the location is active.		
+				"facilityId", UUID.class)); // could check that the location is active.
+		
+		indexedCriteria.put("orderLocationByFacilityAndLocationAll",
+			new TypedCriteria("from OrderLocation where location.persistentId = :locationId and parent.parent.persistentId = :facilityId",
+				"facilityId", UUID.class,
+				"locationId", UUID.class));
+		
+		indexedCriteria.put("orderLocationByFacilityAndLocationActive",
+			new TypedCriteria("from OrderLocation where location.persistentId = :locationId and parent.parent.persistentId = :facilityId and active = true ",
+				"facilityId", UUID.class,
+				"locationId", UUID.class)); // could check that the location is active.
 	}
 
 	public TypedCriteria findByName(String name, Class<?> selectClass) {

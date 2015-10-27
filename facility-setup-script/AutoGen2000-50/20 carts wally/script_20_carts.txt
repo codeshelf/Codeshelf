@@ -10,7 +10,7 @@ var :che9 		0x00000119
 var :che10 		0x00000190
 var :che11 		0x00000163
 var :che12 		0x00000196
-var :che13 		0x00000192
+var :che13 		0x00000162
 var :che14 		0x00000197
 var :che15 		0x000000D1
 var :che16 		0x000000F3
