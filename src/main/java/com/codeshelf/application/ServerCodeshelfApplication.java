@@ -19,13 +19,10 @@ import com.codeshelf.email.TemplateService;
 import com.codeshelf.manager.service.ITenantManagerService;
 import com.codeshelf.manager.service.ManagerPersistenceService;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
-import com.codeshelf.metrics.DataQuantityHealthCheck;
 import com.codeshelf.metrics.DatabaseConnectionHealthCheck;
 import com.codeshelf.metrics.DropboxGatewayHealthCheck;
-import com.codeshelf.metrics.EdiHealthCheck;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.IsProductionServerHealthCheck;
-import com.codeshelf.metrics.PicksActivityHealthCheck;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.TokenSessionService;
 import com.codeshelf.ws.server.WebSocketManagerService;
@@ -36,7 +33,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(ServerCodeshelfApplication.class);
 
 	private EdiImportService			ediImportService;
-	private EdiExportService			ediExportService;
+	// private EdiExportService			ediExportService;
 	
 	private WebSocketManagerService sessionManager;
 	private IMetricsService metricsService;
@@ -57,7 +54,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		super(inWebApiServer);
 	
 		ediImportService = inEdiProcessService;
-		this.ediExportService = ediExportService;
+		// this.ediExportService = ediExportService;
 		sessionManager = webSocketManagerService;
 		this.metricsService = metricsService;
 		
