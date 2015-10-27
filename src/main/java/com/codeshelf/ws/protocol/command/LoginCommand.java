@@ -134,6 +134,7 @@ public class LoginCommand extends CommandABC {
 
 						// AUTOSHRT needed for sitecon, not UX clients, but go ahead and populate.
 						if (network != null) {
+							LOGGER.warn("Site Controller logging in: {}", authUser);
 							IPropertyBehavior properties = PropertyService.getInstance();
 
 							Facility facility = network.getParent();

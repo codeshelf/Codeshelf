@@ -58,9 +58,10 @@ public class CsServerEndPoint {
 	public void onOpen(Session session, EndpointConfig ec) {
 		//String url = session.getRequestURI().toASCIIString();
 		WebSocketConnection conn = webSocketManagerService.getWebSocketConnectionForSession(session);
+		UserContext user = null;
 		if (conn != null) {
 			LOGGER.error("onOpen webSocketManager already had a connection for this session");
-			UserContext user = conn.getCurrentUserContext();
+			user = conn.getCurrentUserContext();
 			Tenant tenant = conn.getCurrentTenant();
 			String lastTenantId = conn.getLastTenantIdentifier();
 			if (user != null || tenant != null || lastTenantId != null) {
@@ -71,7 +72,8 @@ public class CsServerEndPoint {
 		}
 		session.setMaxIdleTimeout(1000 * 60 * idleTimeOut);
 		LOGGER.info("WS Session Started: " + session.getId() + ", timeout: " + session.getMaxIdleTimeout());
-
+		// Look at login command processing to get a warn on site controller connect
+		
 		webSocketManagerService.sessionStarted(session); // this will create WebSocketConnection for session
 	}
 
@@ -129,8 +131,9 @@ public class CsServerEndPoint {
 					}
 					if (needTransaction) {
 						TenantPersistenceService.getInstance().commitTransaction();
-						LOGGER.debug("Committed transaction for request "+request);
-					};
+						LOGGER.debug("Committed transaction for request " + request);
+					}
+					;
 					needTransaction = false;
 				} finally {
 					if (needTransaction)
@@ -155,7 +158,12 @@ public class CsServerEndPoint {
 	public void onClose(Session session, CloseReason reason) {
 		UserContext user = webSocketManagerService.getWebSocketConnectionForSession(session).getCurrentUserContext();
 		try {
-			LOGGER.info(String.format("WS Session %s for user %s closed because of %s", session.getId(), user, reason));
+			String logstr = String.format("WS Session %s for user %s closed because of %s", session.getId(), user, reason);
+			if (user.isSiteController()) {
+				LOGGER.warn("Site controller: {}",logstr);
+			} else {
+				LOGGER.info(logstr);
+			}
 			webSocketManagerService.sessionEnded(session);
 		} finally {
 			CodeshelfSecurityManager.removeContextIfPresent();
