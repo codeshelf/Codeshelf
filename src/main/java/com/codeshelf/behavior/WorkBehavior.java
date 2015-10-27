@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -27,7 +26,6 @@ import lombok.ToString;
 import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
-import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
@@ -140,22 +138,6 @@ public class WorkBehavior implements IApiBehavior {
 	public WorkBehavior(LightBehavior lightService, EdiExportService exportProvider) {
 		this.lightService = lightService;
 		this.exportProvider = exportProvider;
-	}
-
-	public final List<WorkInstruction> getWorkResults(final UUID facilityUUID, final Date startDate, final Date endDate) {
-		//select persistentid, type, status, picker_id, completed, actual_quantity from capella.work_instruction where 
-		// type = 'ACTUAL' and date_trunc('day', completed) = timestamp '2015-03-11' order by completed
-		return WorkInstruction.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("type",
-			WorkInstructionTypeEnum.ACTUAL), Restrictions.eq("parent.persistentId", facilityUUID), Restrictions.ge("completed",
-			new Timestamp(startDate.getTime())), Restrictions.lt("completed", new Timestamp(endDate.getTime()))),
-			ImmutableList.of(Order.asc("completed")));
-	}
-
-	/**
-	 * Seems a bit silly, but we do not have a good means to get hold of services. Test framework has the work service, so this is the best kludge.
-	 */
-	public LightBehavior getLightService() {
-		return this.lightService;
 	}
 
 	// --------------------------------------------------------------------------

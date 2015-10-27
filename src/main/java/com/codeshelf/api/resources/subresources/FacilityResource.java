@@ -93,7 +93,6 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.FacilityMetric;
-import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -336,18 +335,6 @@ public class FacilityResource {
 	}
 
 	@GET
-	@Path("/work/results")
-	@RequiresPermissions("companion:view")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getWorkResults(@QueryParam("startTimestamp") TimestampParam startTimestamp,
-		@QueryParam("endTimestamp") TimestampParam endTimestamp) {
-		List<WorkInstruction> results = this.workService.getWorkResults(facility.getPersistentId(),
-			startTimestamp.getValue(),
-			endTimestamp.getValue());
-		return BaseResponse.buildResponse(results);
-	}
-
-	@GET
 	@Path("/work/topitems")
 	@RequiresPermissions("companion:view")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -357,17 +344,6 @@ public class FacilityResource {
 		return BaseResponse.buildResponse(this.orderService.itemsInQuantityOrder(session, facility.getPersistentId()));
 	}
 
-	/*
-	@GET
-	@Path("/groupinstructions")
-	@RequiresPermissions("companion:view")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getGroupInstructions(@QueryParam("group") String groupName) {
-		List<WorkInstruction> instructions = orderService.getGroupShortInstructions(facility.getPersistentId(), groupName);
-		return BaseResponse.buildResponse(instructions);
-	}*/
-
-	@GET
 	@Path("filters")
 	@RequiresPermissions("companion:view")
 	@Produces(MediaType.APPLICATION_JSON)
