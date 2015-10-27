@@ -10,7 +10,7 @@ var :che9 		0x00000119
 var :che10 		0x00000190
 var :che11 		0x00000163
 var :che12 		0x00000196
-var :che13 		0x00000192
+var :che13 		0x00000162
 var :che14 		0x00000197
 var :che15 		0x000000D1
 var :che16 		0x000000F3
@@ -18,8 +18,8 @@ var :che17 		0x000000E7
 var :che18 		0x000000D4
 var :che19 		0x00000113
 var :che20 		0x000000EC
-var :che21 		0x0000013C
-var :che22 		0x0000014C
+var :che21 		0x00000102
+var :che22 		0x000000E9
 var :che23 		0x0000012B
 var :che24 		0x000000E5
 var :che25 		0x00000068
@@ -35,7 +35,7 @@ var :che34 		0x00000148
 var :che35 		0x00000135
 var :che36 		0x000000D0
 var :che37 		0x000000FF
-var :che38 		0x00000141
+var :che38 		0x0000011E
 var :che39 		0x000000F8
 var :che40 		0x00000145
 var :che41 		0x000001D2
@@ -157,7 +157,7 @@ logout CHE31 CHE32 CHE33 CHE34 CHE35 CHE36 CHE37 CHE38 CHE39 CHE40
 logout CHE41 CHE42 CHE43 CHE44 CHE45 CHE46 CHE47 CHE48 CHE49 CHE50
 logout CHE51 CHE52 CHE53 CHE54 CHE55 CHE56 CHE57 CHE58 CHE59 CHE60
 logout CHE61 CHE62 CHE63 CHE64 CHE65 CHE66 CHE67 CHE68 CHE69 CHE70
-setParams pickSpeed=0.5 skipFreq=0 shortFreq=0 stagger=3
+setParams pickSpeed=0.5 skipFreq=0 shortFreq=0 stagger=1.5
 loginSetup CHE1 CHE1
 loginSetup CHE2 CHE2
 loginSetup CHE3 CHE3

@@ -2,8 +2,8 @@ package com.codeshelf.device;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
@@ -48,7 +48,7 @@ public class ScriptSiteRunner {
 	private static final int COMPUTE_WORK_TIMEOUT = 35000;
 	private int pickPauseMs = 0, staggerMs = 0;
 	private double chanceSkipUpc = 0, chanceShort = 0;
-	private HashMap<String, PickSimulator> ches = new HashMap<>();
+	private LinkedHashMap<String, PickSimulator> ches = new LinkedHashMap<>();	//LinkedHashMap allows iteration in order of insertion
 	private StringBuilder report = new StringBuilder();
 	private final CsDeviceManager deviceManager;
 	private static final Object lock = new Object();

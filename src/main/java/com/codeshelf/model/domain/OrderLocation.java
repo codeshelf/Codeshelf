@@ -6,9 +6,8 @@
 package com.codeshelf.model.domain;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
@@ -32,6 +31,7 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 
 // --------------------------------------------------------------------------
@@ -145,21 +145,16 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	 * Somewaht similar to OrderLocationCsvImporter.deleteLocation.
 	 */
 	public static List<OrderLocation> findOrderLocationsAtLocation(final Location inLocation, final Facility inFacility, final boolean activeOnly) {
-
-		ArrayList<OrderLocation> olList = new ArrayList<OrderLocation>();
-
-		List<OrderHeader> orders = OrderHeader.staticGetDao().findByParent(inFacility);
-		for (OrderHeader order : orders) {
-			// For every OrderLocation at this location, delete it.
-			Iterator<OrderLocation> iter = order.getOrderLocations().iterator();
-			while (iter.hasNext()) {
-				OrderLocation orderLocation = iter.next();
-				if (orderLocation.getLocation().equals(inLocation) && (!activeOnly || orderLocation.getActive())) {
-					olList.add(orderLocation);
-				}
-			}
+		Map<String, Object> filterArgs = ImmutableMap.<String, Object> of(
+			"facilityId", inFacility.getPersistentId(),
+			"locationId", inLocation.getPersistentId());
+		List<OrderLocation> orderLocations = null;
+		if (activeOnly){
+			orderLocations = OrderLocation.staticGetDao().findByFilter("orderLocationByFacilityAndLocationActive", filterArgs);
+		} else {
+			orderLocations = OrderLocation.staticGetDao().findByFilter("orderLocationByFacilityAndLocationAll", filterArgs);
 		}
-		return olList;
+		return orderLocations;
 	}
 	
 	public static List<OrderLocation> findOrderLocationsAtLocationAndChildren(Location inLocation, Facility inFacility, boolean activeOnly) {
