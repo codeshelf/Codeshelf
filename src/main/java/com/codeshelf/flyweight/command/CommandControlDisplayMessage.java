@@ -36,6 +36,7 @@ public final class CommandControlDisplayMessage extends CommandControlABC {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CommandControlDisplayMessage.class);
 	
 	private static final int LENGTH_BYTES = 4;
+	private static final int MS_RESEND_DELAY_SCREEN_MSG = 100;
 
 	@Accessors(prefix = "m")
 	@Getter
@@ -150,7 +151,7 @@ public final class CommandControlDisplayMessage extends CommandControlABC {
 	*  @return
 	*/
 	public int getResendDelay() {
-		return DEFAULT_RESEND_DELAY;
+		return MS_RESEND_DELAY_SCREEN_MSG;
 	}
 
 }

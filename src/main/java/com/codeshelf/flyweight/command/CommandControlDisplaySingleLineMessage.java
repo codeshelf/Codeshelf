@@ -30,6 +30,7 @@ public final class CommandControlDisplaySingleLineMessage extends CommandControl
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CommandControlDisplaySingleLineMessage.class);
 	
 	private static final int LENGTH_BYTES = 9;
+	private static final int MS_RESEND_DELAY_SINGLE_LINE_MSG = 100;
 
 	//Supported display fonts
 	public static final byte	ARIAL16						= 1;
@@ -151,6 +152,6 @@ public final class CommandControlDisplaySingleLineMessage extends CommandControl
 	*  @return
 	*/
 	public int getResendDelay() {
-		return DEFAULT_RESEND_DELAY;
+		return MS_RESEND_DELAY_SINGLE_LINE_MSG;
 	}
 }
