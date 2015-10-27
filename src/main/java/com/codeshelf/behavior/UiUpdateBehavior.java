@@ -240,6 +240,11 @@ public class UiUpdateBehavior implements IApiBehavior {
 
 	public ProcessMode getDefaultProcessMode(String cheId) {
 		// an artifact of new CHE dialog is we want the process type before we have a persistent ID
+		return ProcessMode.SETUP_ORDERS;
+		// Change v24. no-aisle facility used to yield LINE_SCAN. Now setup orders.
+		// Instead of this mechanism, might want new CHE to be the modal value among existing CHE.
+
+		/*
 		if (cheId == null || cheId.isEmpty()) {
 			return ProcessMode.SETUP_ORDERS;
 		}
@@ -254,6 +259,7 @@ public class UiUpdateBehavior implements IApiBehavior {
 		filterParams.add(Restrictions.eq("parent", facility));
 		List<Aisle> aisled = Aisle.staticGetDao().findByFilter(filterParams);
 		return (aisled.isEmpty()) ? ProcessMode.LINE_SCAN : ProcessMode.SETUP_ORDERS;
+		*/
 	}
 	
 	public void posConSetup(String deviceId, boolean isChe){

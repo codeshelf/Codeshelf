@@ -81,6 +81,7 @@ public class CheProcessTestPick extends ServerTest {
 	private Facility setUpZigzagSlottedFacility() {
 		// This returns a facility with aisle A1 and A2, with path between, with two bays with several tiers each.
 		// This is the zigzag/cross-batch portion of the MAT as of v10
+		LOGGER.info("START zigzag aisles");
 
 		String csvAisles = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,zigzagB1S1Side,12.85,43.45,X,120\r\n" //
@@ -113,6 +114,8 @@ public class CheProcessTestPick extends ServerTest {
 		importAislesData(getFacility(), csvAisles);
 		commitTransaction();
 
+		LOGGER.info("END zigzag aisles");
+
 		// Get the aisle
 		beginTransaction();
 		Aisle aisle1 = Aisle.staticGetDao().findByDomainId(getFacility(), "A1");
@@ -128,6 +131,8 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertNotNull(aisle2);
 		aisle2.associatePathSegment(persistStr);
 		commitTransaction();
+
+		LOGGER.info("START location aliases");
 
 		String csvAliases = "mappedLocationId,locationAlias\r\n" //
 				+ "A1.B1.T1.S1,D-96\r\n" + "A1.B1.T1.S2,D-97\r\n" + "A1.B1.T1.S3,D-98\r\n"
@@ -181,11 +186,14 @@ public class CheProcessTestPick extends ServerTest {
 				+ "A2.B2.T5.S1	D-5\r\n"
 				+ "A2.B2.T5.S2	D-4\r\n" + "A2.B2.T5.S3	D-3\r\n" + "A2.B2.T5.S4	D-2\r\n"
 				*/
-				+ "A2.B2.T5.S5,D-1\r\n";
+				+ "A2.B2.T5.S5,D-1\r\n";	
+
 		beginTransaction();
 		Facility fac = getFacility().reload();
 		importLocationAliasesData(fac, csvAliases);
 		commitTransaction();
+
+		LOGGER.info("END location aliases");
 
 		beginTransaction();
 		fac = fac.reload();
@@ -1041,86 +1049,13 @@ public class CheProcessTestPick extends ServerTest {
 		this.tenantPersistenceService.commitTransaction();
 	}
 
-	@Test
-	public final void testRouteWrap2() throws IOException {
-		// Reproduce bug seen during MAT for v10
-		Facility facility = setUpZigzagSlottedFacility();
 
-		setUpBatchOrdersForZigzag(facility);
-
-		this.startSiteController();
-
-		// perform pick operation
-		// mPropertyService.turnOffHK(); // leave housekeeping on for this test, because we found the bug with it on.
-
-		// Set up a cart for orders 12345 and 1111, which will generate work instructions
-		PickSimulator picker = createPickSim(cheGuid1);
-		picker.loginAndSetup("Picker #1");
-
-		LOGGER.info("Case 1: Scan ");
-		// The case is to set up batch containers 2,3,7,11. Start location D-26 is ok (no wrap). Start location D-76 has a wrap.
-		picker.setupContainer("2", "4");
-		picker.setupContainer("3", "5");
-		picker.setupContainer("7", "14");
-		picker.setupContainer("11", "15");
-		// Taking more than 3 seconds for the recompute and wrap.
-		picker.scanCommand("START");
-
-		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
-		picker.scanLocation("D-76");
-		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-
-		LOGGER.info("List the work instructions as the server sees them");
-		beginTransaction();
-		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
-		logWiList(serverWiList);
-
-		Assert.assertEquals(1, picker.countActiveJobs());
-		WorkInstruction wi = picker.nextActiveWi();
-
-		Che che1 = Che.staticGetDao().findByPersistentId(this.che1PersistentId);
-		assertWIColor(wi, che1);
-		int button = picker.buttonFor(wi);
-		int quant = wi.getPlanQuantity();
-		Assert.assertEquals("D-76", wi.getPickInstruction());
-		commitTransaction();
-		// D-76 is interesting. Actually last tier on the path in that tier, so our code normalizes back the the bay posAlongPath.
-		// D-76 comes up first in the list compared to the other two in that bay only because it has the top tier location and we sort top down.
-
-		// pick first item. 7 left (3 housekeeps)
-		picker.pick(button, quant);
-		picker.waitForCheState(CheStateEnum.DO_PICK, 1000);
-		Assert.assertEquals(7, picker.countRemainingJobs());
-
-		LOGGER.info("Case 2: Pick the 2nd and 3rd jobs");
-		wi = picker.nextActiveWi();
-		button = picker.buttonFor(wi);
-		quant = wi.getPlanQuantity();
-		picker.pick(button, quant);
-		picker.waitForCheState(CheStateEnum.DO_PICK, 1000);
-		Assert.assertEquals(6, picker.countRemainingJobs());
-		Assert.assertEquals("D-100", wi.getPickInstruction());
-
-		// fourth job
-		wi = picker.nextActiveWi();
-		button = picker.buttonFor(wi);
-		quant = wi.getPlanQuantity();
-		picker.pick(button, quant);
-		Assert.assertEquals(5, picker.countRemainingJobs());
-		Assert.assertEquals("", wi.getPickInstruction()); // a housekeep
-
-		// fifth job
-		wi = picker.nextActiveWi();
-		button = picker.buttonFor(wi);
-		quant = wi.getPlanQuantity();
-		picker.pick(button, quant);
-		Assert.assertEquals("D-99", wi.getPickInstruction());
-	}
 
 	@Test
 	public final void twoChesCrossBatch() throws IOException {
 		// Reproduce DEV-592 seen during MAT for v10
-		// This test case setup similarly to testRouteWrap2
+		// And incorporate testRouteWrap2 as the second part of this test, that checks basic wrapping
+		// This test runs a little long, but  remember is is really two tests. Slow part is setting up the aisles.
 		Facility facility = setUpZigzagSlottedFacility();
 
 		setUpBatchOrdersForZigzag(facility);
@@ -1175,9 +1110,46 @@ public class CheProcessTestPick extends ServerTest {
 
 		Assert.assertEquals(1, picker2.countActiveJobs());
 		WorkInstruction wi = picker2.nextActiveWi();
+		int button = picker2.buttonFor(wi);
+		int quant = wi.getPlanQuantity();
 		Assert.assertEquals("D-76", wi.getPickInstruction());
-
 		commitTransaction();
+		
+		// This carries on as the old routewrap2 test did
+
+		// D-76 is interesting. Actually last tier on the path in that tier, so our code normalizes back the the bay posAlongPath.
+		// D-76 comes up first in the list compared to the other two in that bay only because it has the top tier location and we sort top down.
+		picker = null; // to force NPE if we call it below
+
+		// pick first item. 7 left (3 housekeeps)
+		picker2.pick(button, quant);
+		picker2.waitForCheState(CheStateEnum.DO_PICK, 1000);
+		Assert.assertEquals(7, picker2.countRemainingJobs());
+
+		LOGGER.info("Case 2: Pick the 2nd and 3rd jobs");
+		wi = picker2.nextActiveWi();
+		button = picker2.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker2.pick(button, quant);
+		picker2.waitForCheState(CheStateEnum.DO_PICK, 1000);
+		Assert.assertEquals(6, picker2.countRemainingJobs());
+		Assert.assertEquals("D-100", wi.getPickInstruction());
+
+		// fourth job
+		wi = picker2.nextActiveWi();
+		button = picker2.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker2.pick(button, quant);
+		Assert.assertEquals(5, picker2.countRemainingJobs());
+		Assert.assertEquals("", wi.getPickInstruction()); // a housekeep
+
+		// fifth job
+		wi = picker2.nextActiveWi();
+		button = picker2.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker2.pick(button, quant);
+		Assert.assertEquals("D-99", wi.getPickInstruction());
+
 	}
 
 	@Test
@@ -2028,18 +2000,20 @@ public class CheProcessTestPick extends ServerTest {
 	}
 
 	@Test
-	public void getDefaultProcessMode() {
+	public void testDefaultProcessMode() {
 		beginTransaction();
 		UiUpdateBehavior service = new UiUpdateBehavior();
 		Facility facility = getFacility();
 		CodeshelfNetwork network = this.getNetwork();
 		Che che = network.createChe("0x00000004", new NetGuid("0x00000004"));
 
-		//Get default mode in a facility without aisles
+		// Get default mode in a facility without aisles
+		// Change v24. no-aisle facility used to yield LINE_SCAN. Now setup orders.
 		ProcessMode processMode = service.getDefaultProcessMode(che.getPersistentId().toString());
-		Assert.assertEquals("Expected Line_Scan as default process mode in a facility with no aisles",
+		Assert.assertEquals("Expected SETUP_ORDERS as default process mode in a facility with no aisles",
 			processMode,
-			ProcessMode.LINE_SCAN);
+			ProcessMode.SETUP_ORDERS);
+		// Instead of this mechanism, might want new CHE to be the modal value among existing CHE.
 
 		//Get default mode in a facility with aisles
 		Aisle aisle = facility.createAisle("A1", Point.getZeroPoint(), Point.getZeroPoint().add(5.0, 0.0));
