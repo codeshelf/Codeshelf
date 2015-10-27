@@ -33,7 +33,8 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(ServerCodeshelfApplication.class);
 
 	private EdiImportService			ediImportService;
-	// private EdiExportService			ediExportService;
+    @SuppressWarnings("unused")
+	private EdiExportService			ediExportService;
 	
 	private WebSocketManagerService sessionManager;
 	private IMetricsService metricsService;
@@ -54,7 +55,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		super(inWebApiServer);
 	
 		ediImportService = inEdiProcessService;
-		// this.ediExportService = ediExportService;
+		this.ediExportService = ediExportService;
 		sessionManager = webSocketManagerService;
 		this.metricsService = metricsService;
 		
