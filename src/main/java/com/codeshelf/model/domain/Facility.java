@@ -142,6 +142,9 @@ public class Facility extends Location {
 
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	private List<WorkInstructionCsvBean>	workInstrcutionBeans;
+	
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
+	private List<FacilityMetric>			faciiltyMetrics;
 
 	public Facility() {
 		super();
