@@ -312,7 +312,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 			return;
 		}
 		mDeviceManager.completePalletizerWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi.getPersistentId(), mUserId, false);
-		notifyWiVerb(wi, WorkerEvent.EventType.PALLERIZER_PUT, kLogAsInfo);
+		notifyWiVerb(wi, WorkerEvent.EventType.PALLETIZER_PUT, kLogAsInfo);
 	}
 	
 	private void clearAffectedLedAndPoscons(){

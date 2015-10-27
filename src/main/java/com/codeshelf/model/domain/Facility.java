@@ -143,6 +143,9 @@ public class Facility extends Location {
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	private List<WorkInstructionCsvBean>	workInstrcutionBeans;
 
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
+	private List<FacilityMetric>			faciiltyMetrics;
+	
 	public Facility() {
 		super();
 	}
@@ -1537,7 +1540,7 @@ public class Facility extends Location {
 
 		filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("facility", this));
-		filterParams.add(Restrictions.eq("eventType", EventType.PALLERIZER_PUT));
+		filterParams.add(Restrictions.eq("eventType", EventType.PALLETIZER_PUT));
 		filterParams.add(Restrictions.ge("created", startUtc));
 		filterParams.add(Restrictions.le("created", endUtc));
 		int palletizerPutsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
