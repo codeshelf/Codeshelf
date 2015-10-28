@@ -1,13 +1,11 @@
 package com.codeshelf.behavior;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import org.hibernate.Criteria;
-import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +19,6 @@ import com.codeshelf.manager.User;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -240,6 +237,11 @@ public class UiUpdateBehavior implements IApiBehavior {
 
 	public ProcessMode getDefaultProcessMode(String cheId) {
 		// an artifact of new CHE dialog is we want the process type before we have a persistent ID
+		return ProcessMode.SETUP_ORDERS;
+		// Change v24. no-aisle facility used to yield LINE_SCAN. Now setup orders.
+		// Instead of this mechanism, might want new CHE to be the modal value among existing CHE.
+
+		/*
 		if (cheId == null || cheId.isEmpty()) {
 			return ProcessMode.SETUP_ORDERS;
 		}
@@ -254,6 +256,7 @@ public class UiUpdateBehavior implements IApiBehavior {
 		filterParams.add(Restrictions.eq("parent", facility));
 		List<Aisle> aisled = Aisle.staticGetDao().findByFilter(filterParams);
 		return (aisled.isEmpty()) ? ProcessMode.LINE_SCAN : ProcessMode.SETUP_ORDERS;
+		*/
 	}
 	
 	public void posConSetup(String deviceId, boolean isChe){

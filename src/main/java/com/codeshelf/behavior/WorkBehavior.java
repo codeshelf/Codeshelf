@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -27,7 +26,6 @@ import lombok.ToString;
 import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
-import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
@@ -90,7 +88,6 @@ import com.codeshelf.util.UomNormalizer;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.MethodArgumentException;
-import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.response.GetOrderDetailWorkResponse;
 import com.codeshelf.ws.protocol.response.GetPutWallInstructionResponse;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
@@ -140,22 +137,6 @@ public class WorkBehavior implements IApiBehavior {
 	public WorkBehavior(LightBehavior lightService, EdiExportService exportProvider) {
 		this.lightService = lightService;
 		this.exportProvider = exportProvider;
-	}
-
-	public final List<WorkInstruction> getWorkResults(final UUID facilityUUID, final Date startDate, final Date endDate) {
-		//select persistentid, type, status, picker_id, completed, actual_quantity from capella.work_instruction where 
-		// type = 'ACTUAL' and date_trunc('day', completed) = timestamp '2015-03-11' order by completed
-		return WorkInstruction.staticGetDao().findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("type",
-			WorkInstructionTypeEnum.ACTUAL), Restrictions.eq("parent.persistentId", facilityUUID), Restrictions.ge("completed",
-			new Timestamp(startDate.getTime())), Restrictions.lt("completed", new Timestamp(endDate.getTime()))),
-			ImmutableList.of(Order.asc("completed")));
-	}
-
-	/**
-	 * Seems a bit silly, but we do not have a good means to get hold of services. Test framework has the work service, so this is the best kludge.
-	 */
-	public LightBehavior getLightService() {
-		return this.lightService;
 	}
 
 	// --------------------------------------------------------------------------
@@ -377,7 +358,7 @@ public class WorkBehavior implements IApiBehavior {
 		return null;
 	}
 
-	private int sendMessage(Set<User> users, MessageABC message) { // TODO
+	private int sendMessage(Set<User> users, OrderLocationFeedbackMessage message) { // TODO
 		// See this comment in LightService: "Use the light service API as our general sendMessage API"
 		return lightService.sendMessage(users, message);
 	}
@@ -416,6 +397,42 @@ public class WorkBehavior implements IApiBehavior {
 
 		}
 	}
+	
+	private void computeAndSendOrderFeedbackForSlots(OrderLocation orderLocation, boolean isLastOfGroup) {
+		if (orderLocation == null) {
+			LOGGER.error("null input to computeAndSendOrderFeedbackForSlots");
+			return;
+		}
+		try {
+			if (orderLocationDeservesSlotFeedback(orderLocation)) {
+				Facility facility = orderLocation.getFacility();
+				final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(orderLocation, isLastOfGroup);
+				sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
+			}
+		}
+
+		finally {
+
+		}
+	}
+
+	private void sendBayFeedBack(Bay bay, OrderStatusSummary orderCounts, boolean isLastOfGroup) {
+		LOGGER.info("sending feedback for bay {}. Complete:{} Remain:{} Short:{}",
+			bay.getBestUsableLocationName(),
+			orderCounts.getCompleteCount(),
+			orderCounts.getRemainingCount(),
+			orderCounts.getShortCount());
+
+		// Actually, using the same old message with only remainingCount added, so only need that value.
+		// If this object is enhanced to track inprogress separately, then we would pass the inprogress plus other remaining in the message.
+		// Do the send here
+
+		Facility facility = bay.getFacility();
+		int remain = orderCounts.getRemainingCount();
+		final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(bay, remain, isLastOfGroup);
+		sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
+	}
+
 
 	private boolean locIsActivePutwallLocation(Location inLoc) {
 		if (inLoc != null && inLoc.isActive()) {
@@ -467,23 +484,6 @@ public class WorkBehavior implements IApiBehavior {
 		return (Bay) loc.getParentAtLevel(Bay.class);
 	}
 
-	private void computeAndSendOrderFeedbackForSlots(OrderLocation orderLocation, boolean isLastOfGroup) {
-		if (orderLocation == null) {
-			LOGGER.error("null input to computeAndSendOrderFeedbackForSlots");
-			return;
-		}
-		try {
-			if (orderLocationDeservesSlotFeedback(orderLocation)) {
-				Facility facility = orderLocation.getFacility();
-				final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(orderLocation, isLastOfGroup);
-				sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
-			}
-		}
-
-		finally {
-
-		}
-	}
 
 	private class BayLocationComparator implements Comparator<OrderLocation> {
 		// Sort the OrderLocations such that all for the same bay will be together.
@@ -504,23 +504,6 @@ public class WorkBehavior implements IApiBehavior {
 
 			return ol1LocName.compareTo(ol2LocName);
 		}
-	}
-
-	private void sendBayFeedBack(Bay bay, OrderStatusSummary orderCounts, boolean isLastOfGroup) {
-		LOGGER.info("sending feedback for bay {}. Complete:{} Remain:{} Short:{}",
-			bay.getBestUsableLocationName(),
-			orderCounts.getCompleteCount(),
-			orderCounts.getRemainingCount(),
-			orderCounts.getShortCount());
-
-		// Actually, using the same old message with only remainingCount added, so only need that value.
-		// If this object is enhanced to track inprogress separately, then we would pass the inprogress plus other remaining in the message.
-		// Do the send here
-
-		Facility facility = bay.getFacility();
-		int remain = orderCounts.getRemainingCount();
-		final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(bay, remain, isLastOfGroup);
-		sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
 	}
 
 	/**
@@ -945,10 +928,24 @@ public class WorkBehavior implements IApiBehavior {
 		}
 
 		if (putWallLoc.isPutWallLocation()) {
-			response = getOrderWallInstructionsForItem(facility, inChe, itemOrUpc, putWallLoc);
+			response = new GetPutWallInstructionResponse();
+			response.setWallType(Location.PUTWALL_USAGE);
+			List<WorkInstruction> wiList = getOrderWallInstructionsForItem(facility, inChe, itemOrUpc, putWallLoc);
+			if (wiList == null) {
+				response.setStatus(ResponseStatus.Fail);
+			} else {
+				response.setWorkInstructions(wiList);
+			}
 			return response;
 		} else if (putWallLoc.isSkuWallLocation()) {
-			response = getSkuWallInstructionsForItem(facility, inChe, itemOrUpc, putWallLoc);
+			response = new GetPutWallInstructionResponse();
+			response.setWallType(Location.SKUWALL_USAGE);
+
+			SkuWallInstructions skuWallInstructions = getSkuWallInstructionsForItem(facility, inChe, itemOrUpc, putWallLoc);
+			if (skuWallInstructions != null) {
+				response.setWallName(skuWallInstructions.wallName);
+				response.setWorkInstructions(skuWallInstructions.workInstructions);
+			}
 			return response;
 		} else {
 			LOGGER.warn("Location {} is a wall, but neither a Put wall, nor a Sku wall", putWallName);
@@ -956,12 +953,16 @@ public class WorkBehavior implements IApiBehavior {
 		}
 	}
 
-	private GetPutWallInstructionResponse getSkuWallInstructionsForItem(final Facility facility,
+	private static class SkuWallInstructions {
+		private String wallName;
+		private List<WorkInstruction> workInstructions;
+	}
+	
+	private SkuWallInstructions getSkuWallInstructionsForItem(final Facility facility,
 		final Che che,
 		final String itemOrUpc,
 		final Location locationInWall) {
-		GetPutWallInstructionResponse response = new GetPutWallInstructionResponse();
-		response.setWallType(Location.SKUWALL_USAGE);
+		SkuWallInstructions skuWallInstructions = new SkuWallInstructions();
 		Location skuWallLoc = locationInWall.getWall(Location.SKUWALL_USAGE);
 		Gtin gtin = Gtin.getGtinForFacility(facility, itemOrUpc);
 		if (gtin == null) {
@@ -971,7 +972,7 @@ public class WorkBehavior implements IApiBehavior {
 			} else {
 				LOGGER.warn("Found item id, but require Gtin for Sku wall {}", itemOrUpc);
 			}
-			return response;
+			return null;
 		}
 
 		Item item = skuWallLoc.findItemInLocationAndChildren(gtin.getParent(), gtin.getUomMaster());
@@ -980,11 +981,11 @@ public class WorkBehavior implements IApiBehavior {
 				itemOrUpc,
 				skuWallLoc.getNominalLocationId());
 			String alternateWallName = findSkuWallWithItem(facility, gtin.getParent(), gtin.getUomMaster());
-			response.setWallName(alternateWallName);
+			skuWallInstructions.wallName = alternateWallName;
 		}
 		if (item == null) {
 			LOGGER.warn("Did not find item for Gtin {}", itemOrUpc);
-			return response;
+			return skuWallInstructions;
 		}
 
 		WorkInstruction wi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
@@ -996,9 +997,9 @@ public class WorkBehavior implements IApiBehavior {
 			new Timestamp(System.currentTimeMillis()));
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		wiResultList.add(wi);
-		response.setWorkInstructions(wiResultList);
-		response.setWallName(skuWallLoc.getBestUsableLocationName());
-		return response;
+		skuWallInstructions.workInstructions = wiResultList;
+		skuWallInstructions.wallName = skuWallLoc.getBestUsableLocationName(); 
+		return skuWallInstructions;
 	}
 
 	private String findSkuWallWithItem(Facility facility, ItemMaster itemMaster, UomMaster uomMaster) {
@@ -1023,7 +1024,7 @@ public class WorkBehavior implements IApiBehavior {
 		return foundWall;
 	}
 
-	private GetPutWallInstructionResponse getOrderWallInstructionsForItem(final Facility facility,
+	private List<WorkInstruction> getOrderWallInstructionsForItem(final Facility facility,
 		final Che che,
 		final String itemOrUpc,
 		final Location putWallLoc) {
@@ -1034,14 +1035,11 @@ public class WorkBehavior implements IApiBehavior {
 		// 4) If the order (from the order location) is active, find any order details for it that match the item
 		// 5) make the work instruction to the orderlocation location. (There may be several work instructions for the request.)
 		// 6) sort via our usual sequencer.
-		GetPutWallInstructionResponse response = new GetPutWallInstructionResponse();
-		response.setWallType(Location.PUTWALL_USAGE);
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		ItemMaster master = getItemMasterFromScanValue(facility, itemOrUpc);
 		if (master == null) {
 			LOGGER.warn("Did not find item master from {}", itemOrUpc);
-			response.setStatus(ResponseStatus.Fail);
-			return response;
+			return null;
 		}
 		// 2 putWallLoc is probably a bay, but could be an aisle or in weird cases tier or slot. Could putwall "slots" be tiers or bays? assume not for now.
 		List<Location> putWallSlots = putWallLoc.getActiveChildrenAtLevel(Slot.class);
@@ -1090,8 +1088,7 @@ public class WorkBehavior implements IApiBehavior {
 			sortAndSaveActionableWIs(facility, wiResultList, false); // all of these should be actionable.
 		}
 
-		response.setWorkInstructions(wiResultList);
-		return response;
+		return wiResultList;
 
 	}
 

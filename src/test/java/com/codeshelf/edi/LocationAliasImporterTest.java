@@ -63,7 +63,8 @@ public class LocationAliasImporterTest extends MockDaoTest {
 		EventProducer producer = mock(EventProducer.class);
 		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(producer);
 		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
-		verify(producer, times(2)).produceEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.INFO), any(ImportCsvBeanABC.class));
+		// show that we get a DEBUG level event from this.
+		verify(producer, times(2)).produceEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.DEBUG), any(ImportCsvBeanABC.class));
 		verify(producer, Mockito.never()).produceViolationEvent(any(Set.class), any(EventSeverity.class),  any(Exception.class), any(Object.class));
 
 		this.getTenantPersistenceService().commitTransaction();
@@ -86,8 +87,9 @@ public class LocationAliasImporterTest extends MockDaoTest {
 		EventProducer producer = mock(EventProducer.class);
 		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(producer);
 		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		// show that we get a WARN level event from this, and not the usual debug level event.
 		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Errors.class), any(ImportCsvBeanABC.class));
-		verify(producer, Mockito.never()).produceEvent(any(Set.class), eq(EventSeverity.INFO), any(Object.class));
+		verify(producer, Mockito.never()).produceEvent(any(Set.class), eq(EventSeverity.DEBUG), any(Object.class));
 		
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -106,8 +108,9 @@ public class LocationAliasImporterTest extends MockDaoTest {
 		EventProducer producer = mock(EventProducer.class);
 		ICsvLocationAliasImporter importer = new LocationAliasCsvImporter(producer);
 		importer.importLocationAliasesFromCsvStream(new StringReader(csvString), facility, ediProcessTime);
+		// show that we get a WARN level event from this, and not the usual debug level event.
 		verify(producer, times(1)).produceViolationEvent(eq(EnumSet.of(EventTag.IMPORT, EventTag.LOCATION_ALIAS)), eq(EventSeverity.WARN), any(Errors.class), any(ImportCsvBeanABC.class));
-		verify(producer, Mockito.never()).produceEvent(any(Set.class), eq(EventSeverity.INFO),  any(Object.class));
+		verify(producer, Mockito.never()).produceEvent(any(Set.class), eq(EventSeverity.DEBUG),  any(Object.class));
 
 		this.getTenantPersistenceService().commitTransaction();
 	}

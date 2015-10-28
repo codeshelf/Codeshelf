@@ -341,44 +341,6 @@ public class OrderBehavior implements IApiBehavior {
 		return summary;
 	}
 
-	/*
-
-	public List<WorkInstruction> getGroupShortInstructions(UUID facilityId, String groupNameIn) throws NotFoundException {
-		//Get Facility
-		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
-		if (facility == null) {
-			throw new NotFoundException("Facility " + facilityId + " does not exist");
-		}
-		//If group name provided, confirm that such group exists
-		boolean allGroups = groupNameIn == null, undefined = OrderGroup.UNDEFINED.equalsIgnoreCase(groupNameIn);
-		if (!(allGroups || undefined)) {
-			OrderGroup group = OrderGroup.staticGetDao().findByDomainId(facility, groupNameIn);
-			if (group == null) {
-				throw new NotFoundException("Group " + groupNameIn + " had not been created");
-			}
-		}
-		//Get all instructions and filter those matching the requirements
-		List<WorkInstruction> instructions = WorkInstruction.staticGetDao().findByFilter(CriteriaRegistry.ALL_BY_PARENT,
-			ImmutableMap.<String, Object> of("parentId", facilityId));
-		List<WorkInstruction> filtered = new ArrayList<>();
-		for (WorkInstruction instruction : instructions) {
-			if (instruction.isHousekeeping() || instruction.getStatus() != WorkInstructionStatusEnum.SHORT) {
-				continue;
-			}
-			OrderDetail detail = instruction.getOrderDetail();
-			if (detail == null) {
-				continue;
-			}
-			OrderHeader header = detail.getParent();
-			String groupName = header.getOrderGroup() == null ? OrderGroup.UNDEFINED : header.getOrderGroup().getDomainId();
-			if (allGroups || groupName.equals(groupNameIn)) {
-				filtered.add(instruction);
-			}
-		}
-		return filtered;
-	}
-	*/
-
 	/***
 	 * This is initial work to get supported filters. Right now it is just a name, but is expected to become a set of objects.
 	 * This MAY converge with filters in codeshelf.filter somehow.

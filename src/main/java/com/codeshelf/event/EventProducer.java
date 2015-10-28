@@ -19,13 +19,13 @@ import com.google.common.collect.ImmutableMap;
 public class EventProducer {
 	//Currently only this one implementation. The design is expected to evolve to extract "EventProducer" as an interface and make a different implementation
 	//// For instance this would be a LoggingEventProducer if it is worthwhile to keep around
-	
-	private static final Logger LOGGER = LoggerFactory.getLogger(EventProducer.class);
+
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(EventProducer.class);
 
 	public void produceEvent(Set<EventTag> inTags, EventSeverity inEventSeverity, Object inRelatedObject) {
 		produceEvent(EventInterval.INSTANTANEOUS, inTags, inEventSeverity, inRelatedObject);
 	}
-	
+
 	public void produceViolationEvent(Set<EventTag> inTags, EventSeverity inSeverity, Exception inException, Object inRelatedObject) {
 		produceExceptionEvent(EventInterval.INSTANTANEOUS, inTags, inSeverity, inException, inRelatedObject);
 	}
@@ -38,17 +38,25 @@ public class EventProducer {
 		produceErrorsEvent(EventInterval.INSTANTANEOUS, inTags, inSeverity, inViolations, inRelatedObject);
 	}
 
-	private void produceErrorsEvent(EventInterval inInterval, Set<EventTag> inTags, EventSeverity inSeverity, Object inErrors, Object inRelatedObject) {
+	private void produceErrorsEvent(EventInterval inInterval,
+		Set<EventTag> inTags,
+		EventSeverity inSeverity,
+		Object inErrors,
+		Object inRelatedObject) {
 		MoreObjects.ToStringHelper messageHelper = baseEventSerialization(inInterval, inTags, inSeverity, inRelatedObject);
-		
+
 		String logMessage = messageHelper.add("violations", inErrors).toString();
 		log(inSeverity, logMessage);
 	}
-	
-	private void produceExceptionEvent(EventInterval inInterval, Set<EventTag> inTags, EventSeverity inSeverity, Exception inException, Object inRelatedObject) {
+
+	private void produceExceptionEvent(EventInterval inInterval,
+		Set<EventTag> inTags,
+		EventSeverity inSeverity,
+		Exception inException,
+		Object inRelatedObject) {
 		MoreObjects.ToStringHelper messageHelper = baseEventSerialization(inInterval, inTags, inSeverity, inRelatedObject);
 		String logMessage = messageHelper.toString();
-		
+
 		if (inException != null) {
 			if (inSeverity.equals(EventSeverity.WARN)) {
 				LOGGER.warn(logMessage, inException);
@@ -58,7 +66,7 @@ public class EventProducer {
 		} else {
 			if (inSeverity.equals(EventSeverity.WARN)) {
 				LOGGER.warn(logMessage, inException);
-			} else if (inSeverity.equals(EventSeverity.ERROR)){
+			} else if (inSeverity.equals(EventSeverity.ERROR)) {
 				LOGGER.error(logMessage, inException);
 			} else {
 				LOGGER.info(logMessage);
@@ -66,21 +74,33 @@ public class EventProducer {
 		}
 	}
 
+	/**
+	 * An obvious goal is to log at the level of the severity. We don't have that hooked up very well. 
+	 * This first kludgy bit for DEV-1261
+	 */
 	private void produceEvent(EventInterval inInterval, Set<EventTag> inTags, EventSeverity inSeverity, Object inRelatedObject) {
-		MoreObjects.ToStringHelper messageHelper = baseEventSerialization(EventInterval.INSTANTANEOUS, inTags, EventSeverity.INFO, inRelatedObject);
-		LOGGER.info(messageHelper.toString());
+		// DEV-1261 from v24, these events are DEBUG level
+		// Let's skip the extraneous processing if we will not log it. If it comes in as DEBUG, don't log unless this logger is set to debug.
+		if (!inSeverity.equals(EventSeverity.DEBUG) || LOGGER.isDebugEnabled()) {
+			MoreObjects.ToStringHelper messageHelper = baseEventSerialization(EventInterval.INSTANTANEOUS,
+				inTags,
+				inSeverity,
+				inRelatedObject);
+			// here we would want to call LOGGER.info, LOGGER.warn, etc based on inSeverity.
+			LOGGER.debug(messageHelper.toString());
+		}
 	}
 
 	private void log(EventSeverity inSeverity, String logMessage) {
 		if (inSeverity.equals(EventSeverity.WARN)) {
 			LOGGER.warn(logMessage);
-		} else if (inSeverity.equals(EventSeverity.ERROR)){
+		} else if (inSeverity.equals(EventSeverity.ERROR)) {
 			LOGGER.error(logMessage);
 		} else {
 			LOGGER.info(logMessage);
 		}
 	}
-	
+
 	/**
 	 * Produce an event that begins at some point in time and ends at some future point in time.
 	 * This interval can be closed explicitly with the "end" method or utilizing resource autoclosing with:
@@ -93,11 +113,13 @@ public class EventProducer {
 	 *  Which will produce a begin and end event with the same event context information
 	 * 
 	 */
-	public EventIntervalContext produceEventInterval(final Set<EventTag> inTags, final EventSeverity inEventSeverity, final Object inRelatedObject) {
+	public EventIntervalContext produceEventInterval(final Set<EventTag> inTags,
+		final EventSeverity inEventSeverity,
+		final Object inRelatedObject) {
 		produceEvent(EventInterval.BEGIN, inTags, inEventSeverity, inRelatedObject);
 
 		return new EventIntervalContext() {
-			
+
 			@Override
 			public void end() {
 				produceEvent(EventInterval.END, inTags, inEventSeverity, inRelatedObject);
@@ -109,16 +131,19 @@ public class EventProducer {
 	 *  An AutoCloseable context object that produces a corresponding END event for an event that had a BEGIN
 	 */
 	public static abstract class EventIntervalContext implements AutoCloseable {
-		
+
 		public abstract void end();
-		
+
 		@Override
 		public void close() {
 			end();
 		}
 	}
 
-	private MoreObjects.ToStringHelper baseEventSerialization(EventInterval inInterval, Set<EventTag> inTags, EventSeverity inSeverity, Object inRelatedObject) {
+	private MoreObjects.ToStringHelper baseEventSerialization(EventInterval inInterval,
+		Set<EventTag> inTags,
+		EventSeverity inSeverity,
+		Object inRelatedObject) {
 		Map<String, ?> namedValues = Collections.emptyMap();
 		if (inRelatedObject != null) {
 			namedValues = ImmutableMap.of("relatedObject", inRelatedObject);
@@ -140,5 +165,5 @@ public class EventProducer {
 		LOGGER.error(logMessage);
 	}
 	*/
-	
+
 }

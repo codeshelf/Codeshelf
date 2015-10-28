@@ -107,8 +107,8 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = getFacility();
-		LightBehavior lightService = workService.getLightService();
-		lightService.lightLocation(facility.getPersistentId().toString(), "P11");
+		LightBehavior lightBehavior = new LightBehavior();
+		lightBehavior.lightLocation(facility.getPersistentId().toString(), "P11");
 		this.getTenantPersistenceService().commitTransaction();
 
 		// lightLocation() led to new message back to update the posman display. There is no state to wait for.
@@ -677,8 +677,8 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		Assert.assertEquals(63, ((Short) slot.getLastLedNumAlongPath()).intValue());
 
 		LOGGER.info("1: send location lighting message for slot P12 with leds from 35 to 63");
-		LightBehavior lightService = workService.getLightService();
-		lightService.lightLocation(theFacility.getPersistentId().toString(), "P12");
+		LightBehavior lightBehavior = new LightBehavior();
+		lightBehavior.lightLocation(theFacility.getPersistentId().toString(), "P12");
 		commitTransaction();
 		// Look in the console to see what got sent.
 
