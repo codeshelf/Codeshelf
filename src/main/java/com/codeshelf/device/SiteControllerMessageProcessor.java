@@ -282,7 +282,10 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 		try {
 			this.setDeviceContext(request);
 
-			LOGGER.info("Request received for processing: " + request);
+			// DEV-1261 was info before v24. Most requests lead to informative logging downstream, so this is a poor duplicate.
+			// But we run the risk of losing information about new request types that do not log well. We might need to add
+			// a RequestABC function asking just that: "do you log well? or do you want this lousy logging?"
+			LOGGER.debug("Request received for processing: {}", request);
 			CommandABC command = null;
 			ResponseABC response = null;
 

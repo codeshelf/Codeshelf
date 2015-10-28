@@ -47,7 +47,8 @@ public abstract class CsvImporter<T> {
 	}
 
 	protected void produceRecordSuccessEvent(Object inRelatedObject) {
-		mEventProducer.produceEvent(getEventTagsForImporter(), EventSeverity.INFO, inRelatedObject);
+		// DEV-1261 from v24, reduce these to DEBUG from INFO
+		mEventProducer.produceEvent(getEventTagsForImporter(), EventSeverity.DEBUG, inRelatedObject);
 	}
 
 	protected void produceRecordViolationEvent(EventSeverity inSeverity, List<?> violations, Object inRelatedObject) {
