@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.UUID;
 
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
@@ -1463,34 +1464,41 @@ public class Facility extends Location {
 		return ordersPicked;
 
 	}
-
+	
 	private void computeDetailMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc) {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("status", OrderStatusEnum.COMPLETE));
-		filterParams.add(Restrictions.ge("updated", startUtc));
-		filterParams.add(Restrictions.le("updated", endUtc));
-		List<OrderDetail> details = OrderDetail.staticGetDao().findByFilter(filterParams);
+		filterParams.add(Restrictions.eq("parent", this));
+		filterParams.add(Restrictions.isNotNull("orderDetail"));
+		filterParams.add(Restrictions.eq("type", WorkInstructionTypeEnum.ACTUAL));
+		filterParams.add(Restrictions.ge("completed", startUtc));
+		filterParams.add(Restrictions.le("completed", endUtc));
+		filterParams.add(Restrictions.gt("actualQuantity", 0));
+		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByFilter(filterParams);
+		HashSet<UUID> visitedDetails = new HashSet<>();
+		UUID detailId = null;
 		int linesTotal = 0, linesEach = 0, linesCase = 0, linesOther = 0;
 		int countTotal = 0, countEach = 0, countCase = 0, countOther = 0;
-		for (OrderDetail detail : details) {
-			if (!this.equals(detail.getFacility())) {
-				continue;
+		int linesIncrement = 0, actual;
+		for (WorkInstruction wi : wis) {
+			actual = wi.getActualQuantity();
+			detailId = wi.getOrderDetail().getPersistentId();
+			String uomId = wi.getUomMasterId();
+			if (!visitedDetails.contains(detailId)) {
+				visitedDetails.add(detailId);
+				linesIncrement = 1;
+			} else {
+				linesIncrement = 0;
 			}
-			int actual = detail.getActualPickedItems();
-			if (actual == 0) {
-				continue;
-			}
-			linesTotal++;
-			countTotal += actual;
-			String uomId = detail.getUomMasterId();
+			linesTotal += linesIncrement;
+			countTotal += actual;			
 			if (UomNormalizer.isEach(uomId)) {
-				linesEach++;
+				linesEach += linesIncrement;
 				countEach += actual;
 			} else if (UomNormalizer.isCase(uomId)) {
-				linesCase++;
+				linesCase += linesIncrement;
 				countCase += actual;
 			} else {
-				linesOther++;
+				linesOther += linesIncrement;
 				countOther += actual;
 			}
 		}
