@@ -135,33 +135,33 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		itemMasterCache.reset();
 		itemMasterCache.setFetchOnMiss(false);
 		itemMasterCache.load(facility, batch.getItemIds());
-		LOGGER.info("ItemMaster cache populated with " + this.itemMasterCache.size() + " entries");
+		LOGGER.debug("ItemMaster cache populated with {} entries", this.itemMasterCache.size());
 
 		// cache order headers
 		orderHeaderCache.reset();
 		orderHeaderCache.setFetchOnMiss(false);
 		orderHeaderCache.load(facility, batch.getOrderIds());
-		LOGGER.info("OrderHeader cache populated with " + this.orderHeaderCache.size() + " entries");
+		LOGGER.debug("OrderHeader cache populated with {} entries", this.orderHeaderCache.size());
 
 		// cache order headers
 		locationAliasCache.reset();
 		locationAliasCache.setFetchOnMiss(false);
 		locationAliasCache.load(facility, batch.getLocationIds());
-		LOGGER.info("LocationAlias cache populated with " + this.locationAliasCache.size() + " entries");
+		LOGGER.debug("LocationAlias cache populated with {} entries", this.locationAliasCache.size());
 
 		// cache gtin
 		gtinCache.reset();
 		gtinCache.setFetchOnMiss(true); // critical for Accu's truncated gtin situation
 		gtinCache.load(facility, batch.getGtinIds());
-		LOGGER.info("Gtin cache populated with " + this.gtinCache.size() + " entries");
+		LOGGER.debug("Gtin cache populated with {} entries", this.gtinCache.size());
 
 		// prefetch order details already associated with orders
 		this.orderChangeMap = new HashMap<String, Boolean>();
 		this.orderlineMap = new HashMap<String, Map<String, OrderDetail>>();
 		if (orderHeaderCache.size() == 0) {
-			LOGGER.info("Skipping order line loading, since all orders are new.");
+			LOGGER.debug("Skipping order line loading, since all orders are new.");
 		} else {
-			LOGGER.info("Loading line items for " + orderHeaderCache.size() + " orders.");
+			LOGGER.debug("Loading line items for {} orders.", orderHeaderCache.size());
 			Criteria criteria = OrderDetail.staticGetDao().createCriteria();
 			criteria.add(Restrictions.in("parent", orderHeaderCache.getAll()));
 			List<OrderDetail> orderDetails = OrderDetail.staticGetDao().findByCriteriaQuery(criteria);
@@ -179,9 +179,9 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		// prefetch container uses already associated with orders
 		this.containerUseMap = new HashMap<String, ContainerUse>();
 		if (orderHeaderCache.size() == 0) {
-			LOGGER.info("Skipping container use loading, since all orders are new.");
+			LOGGER.debug("Skipping container use loading, since all orders are new.");
 		} else {
-			LOGGER.info("Loading container use for " + orderHeaderCache.size() + " orders.");
+			LOGGER.debug("Loading container use for {} orders.", orderHeaderCache.size());
 			Criteria criteria = ContainerUse.staticGetDao().createCriteria();
 			criteria.add(Restrictions.in("orderHeader", orderHeaderCache.getAll()));
 			List<ContainerUse> containerUses = ContainerUse.staticGetDao().findByCriteriaQuery(criteria);
@@ -305,7 +305,9 @@ public class OutboundOrderBatchProcessor implements Runnable {
 					if (e.getValue()) {
 						OrderHeader order = this.orderHeaderCache.get(e.getKey());
 						if (!isEmptyOrder.get(order.getOrderId())) {
-							LOGGER.info("Order " + order + " changed during import");
+							// The intent was to log if anything about the order changed from one import to another.
+							// However, it seemed to log a change on the second line for one order in the same file.  DEV-1261
+							// LOGGER.info("Order " + order + " changed during import");
 							if (!order.getActive() || order.getStatus() != OrderStatusEnum.RELEASED) {
 								LOGGER.info("Order " + order + " reactivated. Status set to 'released'.");
 								order.setActive(true);
