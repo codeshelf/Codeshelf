@@ -50,9 +50,9 @@ import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.EdiGatewayStateEnum;
 import com.codeshelf.model.HeaderCounts;
-import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
@@ -1436,108 +1436,99 @@ public class Facility extends Location {
 		metric.setDateLocalUI(dateLocalUI);
 		metric.setDomainId(metric.getDefaultDomainIdPrefix() + "-" + getDomainId() + "-" + metric.getDateLocalUI());
 
-		int ordersPickedCalculated = computeOrderMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
-		int ordersPickedOld = metric.getOrdersPicked();
-		//Suspected data loss over time. Do not update old Metric data.
-		if (ordersPickedCalculated < ordersPickedOld / 2) {
-			LOGGER.warn("Not updating facility daily metric for {}. Probably data was purged so it is better to keep the old value of {} picks rather than update to {}.",
-				dateStr,
-				ordersPickedOld,
-				ordersPickedCalculated);
-			return metric;
+		boolean goodData = computeWiMetricsSuccess(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
+		if (goodData){
+			computeEventMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
 		}
-		metric.setOrdersPicked(ordersPickedCalculated);
-		computeDetailMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
-		computeHousekeepingMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
-		computeEventMetrics(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
 		FacilityMetric.staticGetDao().store(metric);
 		return metric;
 	}
 
-	private int computeOrderMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc) {
+	private boolean computeWiMetricsSuccess(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc) {
+		List<WorkInstructionTypeEnum> wiTypes = new ArrayList<>();
+		wiTypes.add(WorkInstructionTypeEnum.ACTUAL);
+		wiTypes.add(WorkInstructionTypeEnum.HK_BAYCOMPLETE);
+		wiTypes.add(WorkInstructionTypeEnum.HK_REPEATPOS);
+		List<WorkInstructionStatusEnum> wiStatuses = new ArrayList<>();
+		wiStatuses.add(WorkInstructionStatusEnum.COMPLETE);
+		wiStatuses.add(WorkInstructionStatusEnum.SHORT);
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", this));
-		filterParams.add(Restrictions.eq("status", OrderStatusEnum.COMPLETE));
-		filterParams.add(Restrictions.ge("updated", startUtc));
-		filterParams.add(Restrictions.le("updated", endUtc));
-		int ordersPicked = OrderHeader.staticGetDao().countByFilter(filterParams);
-		return ordersPicked;
-
-	}
-	
-	private void computeDetailMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc) {
-		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("parent", this));
-		filterParams.add(Restrictions.isNotNull("orderDetail"));
-		filterParams.add(Restrictions.eq("type", WorkInstructionTypeEnum.ACTUAL));
+		filterParams.add(Restrictions.in("status", wiStatuses));
+		filterParams.add(Restrictions.in("type", wiTypes));
 		filterParams.add(Restrictions.ge("completed", startUtc));
 		filterParams.add(Restrictions.le("completed", endUtc));
-		filterParams.add(Restrictions.gt("actualQuantity", 0));
 		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByFilter(filterParams);
 		HashSet<UUID> visitedDetails = new HashSet<>();
-		UUID detailId = null;
+		HashSet<UUID> visitedOrders = new HashSet<>();
+		WorkInstructionStatusEnum status = null;
+		OrderDetail detail;
+		UUID orderId;
 		int linesTotal = 0, linesEach = 0, linesCase = 0, linesOther = 0;
 		int countTotal = 0, countEach = 0, countCase = 0, countOther = 0;
-		int linesIncrement = 0, actual;
+		int actual, linesIncrement = 0, housekeeping = 0, ordersPicked = 0, shorts = 0;
+
 		for (WorkInstruction wi : wis) {
-			actual = wi.getActualQuantity();
-			detailId = wi.getOrderDetail().getPersistentId();
 			String uomId = wi.getUomMasterId();
-			if (!visitedDetails.contains(detailId)) {
-				visitedDetails.add(detailId);
-				linesIncrement = 1;
+			if (wi.isHousekeeping()) {
+				housekeeping++;
 			} else {
-				linesIncrement = 0;
-			}
-			linesTotal += linesIncrement;
-			countTotal += actual;			
-			if (UomNormalizer.isEach(uomId)) {
-				linesEach += linesIncrement;
-				countEach += actual;
-			} else if (UomNormalizer.isCase(uomId)) {
-				linesCase += linesIncrement;
-				countCase += actual;
-			} else {
-				linesOther += linesIncrement;
-				countOther += actual;
+				status = wi.getStatus();
+				actual = wi.getActualQuantity();
+				detail = wi.getOrderDetail();
+				if (visitedDetails.contains(detail.getPersistentId())) {
+					linesIncrement = 0;
+				} else {
+					linesIncrement = 1;
+					visitedDetails.add(detail.getPersistentId());
+					orderId = detail.getParent().getPersistentId();
+					if (!visitedOrders.contains(orderId)) {
+						ordersPicked++;
+						visitedOrders.add(orderId);
+					}
+				}
+				linesTotal += linesIncrement;
+				countTotal += actual;
+				if (UomNormalizer.isEach(uomId)) {
+					linesEach += linesIncrement;
+					countEach += actual;
+				} else if (UomNormalizer.isCase(uomId)) {
+					linesCase += linesIncrement;
+					countCase += actual;
+				} else {
+					linesOther += linesIncrement;
+					countOther += actual;
+				}
+				if (status == WorkInstructionStatusEnum.SHORT) {
+					shorts++;
+				}
 			}
 		}
-		metric.setLinesPicked(linesTotal);
-		metric.setLinesPickedEach(linesEach);
-		metric.setLinesPickedCase(linesCase);
-		metric.setLinesPickedOther(linesOther);
-		metric.setCountPicked(countTotal);
-		metric.setCountPickedEach(countEach);
-		metric.setCountPickedCase(countCase);
-		metric.setCountPickedOther(countOther);
-	}
-
-	private void computeHousekeepingMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc) {
-		List<WorkInstructionTypeEnum> housekeepingTypes = new ArrayList<>();
-		housekeepingTypes.add(WorkInstructionTypeEnum.HK_BAYCOMPLETE);
-		housekeepingTypes.add(WorkInstructionTypeEnum.HK_REPEATPOS);
-		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("parent", this));
-		filterParams.add(Restrictions.in("type", housekeepingTypes));
-		filterParams.add(Restrictions.eq("status", OrderStatusEnum.COMPLETE));
-		filterParams.add(Restrictions.ge("completed", startUtc));
-		filterParams.add(Restrictions.le("completed", endUtc));
-		int housekeepingInstructionsCount = WorkInstruction.staticGetDao().countByFilter(filterParams);
-		metric.setHouseKeeping(housekeepingInstructionsCount);
+		int ordersPickedOld = metric.getOrdersPicked();
+		if (ordersPicked < ordersPickedOld / 2) {
+			LOGGER.warn("Not updating facility daily metric for {}. Probably data was purged so it is better to keep the old value of {} picks rather than update to {}.",
+				metric.getDateLocalUI(),
+				ordersPickedOld,
+				ordersPicked);
+			return false;
+		} else {
+			metric.setOrdersPicked(ordersPicked);
+			metric.setLinesPicked(linesTotal);
+			metric.setLinesPickedEach(linesEach);
+			metric.setLinesPickedCase(linesCase);
+			metric.setLinesPickedOther(linesOther);
+			metric.setCountPicked(countTotal);
+			metric.setCountPickedEach(countEach);
+			metric.setCountPickedCase(countCase);
+			metric.setCountPickedOther(countOther);
+			metric.setHouseKeeping(housekeeping);
+			metric.setShortEvents(shorts);
+			return true;
+		}
 	}
 
 	private void computeEventMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc) {
-		List<EventType> shortEventTypes = new ArrayList<>();
-		shortEventTypes.add(EventType.SHORT);
-		shortEventTypes.add(EventType.SHORT_AHEAD);
 		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", this));
-		filterParams.add(Restrictions.in("eventType", shortEventTypes));
-		filterParams.add(Restrictions.ge("created", startUtc));
-		filterParams.add(Restrictions.le("created", endUtc));
-		int shortEventsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
-		metric.setShortEvents(shortEventsCount);
-
 		filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("facility", this));
 		filterParams.add(Restrictions.eq("eventType", EventType.SKIP_ITEM_SCAN));
