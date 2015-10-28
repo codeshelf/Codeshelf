@@ -75,10 +75,16 @@ public class FacilitiesResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response recreateFacility(@PathParam("domainId") String domainId) {
 		Facility facility = Facility.staticGetDao().findByDomainId(null, domainId);
-		String description = facility.getDescription();
-		facility.delete(webSocketManagerService);
-		Facility recreatedFacility = Facility.createFacility(domainId, description, Point.getZeroPoint());
-		return BaseResponse.buildResponse(recreatedFacility);
+		if (facility != null) {
+			String description = facility.getDescription();
+			facility.delete(webSocketManagerService);
+			Facility recreatedFacility = Facility.createFacility(domainId, description, Point.getZeroPoint());
+			return BaseResponse.buildResponse(recreatedFacility);
+		} else {
+			ErrorResponse response = new ErrorResponse();
+			response.addBadParameter("domainId", domainId);
+			return response.buildResponse();
+		}
 	}
 	
 	
