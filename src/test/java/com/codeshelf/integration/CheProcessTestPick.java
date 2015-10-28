@@ -2816,16 +2816,15 @@ public class CheProcessTestPick extends ServerTest {
 		List<FacilityMetric> metricList = (List<FacilityMetric>)facilityResourse.getMetrics().getEntity();
 		Assert.assertEquals(1, metricList.size());
 		FacilityMetric metric = metricList.get(0);
-		//One order wasn't completed due to a short
-		Assert.assertEquals(3, (int)metric.getOrdersPicked());
+		Assert.assertEquals(4, (int)metric.getOrdersPicked());
 		Assert.assertEquals(24, (int)metric.getCountPicked());
 		//Each = 'each' + 'ea' + 'pk'
 		Assert.assertEquals(6, (int)metric.getCountPickedEach());
 		Assert.assertEquals(5, (int)metric.getCountPickedCase());
 		Assert.assertEquals(13, (int)metric.getCountPickedOther());
-		Assert.assertEquals(6, (int)metric.getLinesPicked());
+		Assert.assertEquals(7, (int)metric.getLinesPicked());
 		Assert.assertEquals(3, (int)metric.getLinesPickedEach());
-		Assert.assertEquals(1, (int)metric.getLinesPickedCase());
+		Assert.assertEquals(2, (int)metric.getLinesPickedCase());
 		Assert.assertEquals(2, (int)metric.getLinesPickedOther());
 		Assert.assertEquals(3, (int)metric.getHouseKeeping());
 		Assert.assertEquals(1, (int)metric.getShortEvents());
