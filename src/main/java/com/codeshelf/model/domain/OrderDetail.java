@@ -532,6 +532,8 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			setStatus(OrderStatusEnum.SHORT);
 		}
 		if (!priorStatus.equals(getStatus())) {
+			// logged at info in v22 with a string builder. Removed in v23. Let have it debug and efficient from v24 forward.
+			LOGGER.debug("Changed status of order detail, was: {}; now: {}", priorStatus, this);
 			this.getDao().store(this);
 			return true;
 		} else {
