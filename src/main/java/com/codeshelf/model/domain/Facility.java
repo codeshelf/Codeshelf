@@ -49,6 +49,7 @@ import com.codeshelf.model.EdiGatewayStateEnum;
 import com.codeshelf.model.HeaderCounts;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.PositionTypeEnum;
+import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
@@ -1444,12 +1445,13 @@ public class Facility extends Location {
 
 		for (WorkInstruction wi : wis) {
 			String uomId = wi.getUomMasterId();
-			if (wi.isHousekeeping()) {
+			if (wi.isHousekeeping() || WiPurpose.WiPurposeHousekeep.equals(wi.getPurpose())) {
 				housekeeping++;
 			} else {
 				status = wi.getStatus();
 				actual = wi.getActualQuantity();
 				detail = wi.getOrderDetail();
+				
 				if (visitedDetails.contains(detail.getPersistentId())) {
 					linesIncrement = 0;
 				} else {
