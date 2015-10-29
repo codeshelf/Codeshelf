@@ -1130,6 +1130,11 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);
 	}
 
+	/**
+	 * The purpose is to have a relatively high number of orders set up on the cart, to examine messages sent out to the poscons.
+	 * Mostly done by looking at log console, and not by asserting anything.
+	 * Also review for "efficiency" of the logging: relatively few logged messages, but with all the information one would want.
+	 */
 	@Test
 	public final void checkManyPosconsMessages() throws IOException {
 	LOGGER.info("1: Set up facility. Add the export extensions");
@@ -1213,6 +1218,19 @@ public class CheProcessTestPickFeedback extends ServerTest {
 	picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 	picker.logCheDisplay();
 	Assert.assertEquals(1, (int) picker.getLastSentPositionControllerDisplayValue(1));
+	
+	LOGGER.info("3a: Complete a few, just to see some oc values come. Complete the first.");
+	picker.pickItemAuto();
+	LOGGER.info("3b: Complete the secone");
+	picker.pickItemAuto();
+	LOGGER.info("3a: Complete the third");
+	picker.pickItemAuto();
+	
+	LOGGER.info("4: Back to Setup summary screen");
+	picker.scanCommand("START");
+	picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+	// This shows a sort of bug in the log/console. See the that the feedback message coming back from the server does not have completes
+	// for positions 1,2, and 3. But site controller still remembers. If the site controller had to restart, probably would not get the "oc" that we get.
 
 }
 	
