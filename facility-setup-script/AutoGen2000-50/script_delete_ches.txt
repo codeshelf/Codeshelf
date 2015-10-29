@@ -1,0 +1,80 @@
+var :che1 		0x0000014A
+var :che2 		0x00000134
+var :che3 		0x00000161
+var :che4 		0x0000018F
+var :che5 		0x00000133
+var :che6 		0x000000DF
+var :che7 		0x00000105
+var :che8 		0x0000010A
+var :che9 		0x00000119
+var :che10 		0x00000190
+var :che11 		0x00000163
+var :che12 		0x00000196
+var :che13 		0x00000162
+var :che14 		0x00000197
+var :che15 		0x000000D1
+var :che16 		0x000000F3
+var :che17 		0x000000E7
+var :che18 		0x000000D4
+var :che19 		0x00000113
+var :che20 		0x000000EC
+var :che21 		0x00000102
+var :che22 		0x000000E9
+var :che23 		0x0000012B
+var :che24 		0x000000E5
+var :che25 		0x00000068
+var :che26 		0x0000010E
+var :che27 		0x00000122
+var :che28 		0x000000D8
+var :che29 		0x00000127
+var :che30 		0x00000114
+var :che31 		0x0000013E
+var :che32 		0x00000132
+var :che33 		0x00000154
+var :che34 		0x00000148
+var :che35 		0x00000135
+var :che36 		0x000000D0
+var :che37 		0x000000FF
+var :che38 		0x0000011E
+var :che39 		0x000000F8
+var :che40 		0x00000145
+var :che41 		0x000001D2
+var :che42 		0x000000E2
+var :che43 		0x0000011F
+var :che44 		0x00000136
+var :che45 		0x000000DE
+var :che46 		0x000000CD
+var :che47 		0x00000142
+var :che48 		0x00000121
+var :che49 		0x000000CE
+var :che50 		0x000000FA
+var :che51 		0x0000011C
+var :che52 		0x00000069
+var :che53 		0x000000EF
+var :che54 		0x000000D3
+var :che55 		0x0000006D
+var :che56 		0x00000146
+var :che57 		0x00000101
+var :che58 		0x000000DC
+var :che59 		0x000000FD
+var :che60 		0x000000FE
+var :che61 		0x00000104
+var :che62 		0x000000FB
+var :che63 		0x00000107
+var :che64 		0x0000012D
+var :che65 		0x0000010C
+var :che66 		0x0000011B
+var :che67 		0x000000EA
+var :che68 		0x000000D9
+var :che69 		0x0000012F
+var :che70 		0x0000013B
+
+STEP
+SERVER
+deleteChes :che1  :che2  :che3  :che4  :che5  :che6  :che7  :che8  :che9  :che10 
+deleteChes :che11 :che12 :che13 :che14 :che15 :che16 :che17 :che18 :che19 :che20
+deleteChes :che21 :che22 :che23 :che24 :che25 :che26 :che27 :che28 :che29 :che30
+deleteChes :che31 :che32 :che33 :che34 :che35 :che36 :che37 :che38 :che39 :che40
+deleteChes :che41 :che42 :che43 :che44 :che45 :che46 :che47 :che48 :che49 :che50
+deleteChes :che51 :che52 :che53 :che54 :che55 :che56 :che57 :che58 :che59 :che60
+deleteChes :che61 :che62 :che63 :che64 :che65 :che66 :che67 :che68 :che69 :che70

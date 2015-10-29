@@ -4,7 +4,9 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.apache.commons.io.IOUtils;
@@ -20,6 +22,7 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.flyweight.command.ColorEnum;
+import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.model.PositionTypeEnum;
@@ -49,6 +52,7 @@ import com.codeshelf.util.CsExceptionUtils;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Provider;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
 import com.sun.jersey.multipart.FormDataMultiPart;
@@ -67,6 +71,7 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_SET_POSCON_TO_BAY = "setPosconToBay (assignments <bay name> <controller> <poscon id>)";
 	private final static String TEMPLATE_SET_WALL = "setWall <aisle> <off/putwall/skuwall>";
 	private final static String TEMPLATE_CREATE_CHE = "createChe <che> <color> <mode> [name] [scannerType]";
+	private final static String TEMPLATE_DELETE_CHES = "deleteChes (<ches>)";
 	private final static String TEMPLATE_DELETE_ALL_PATHS = "deleteAllPaths";
 	private final static String TEMPLATE_DEF_PATH = "defPath <pathName> (segments '-' <start x> <start y> <end x> <end y>)";
 	private final static String TEMPLATE_ASSIGN_PATH_SGM_AISLE = "assignPathSgmToAisle <pathName> <segment id> <aisle name>";
@@ -79,7 +84,7 @@ public class ScriptServerRunner {
 	
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScriptSiteRunner.class);
 	private final UUID facilityId;
-	private final UiUpdateBehavior uiUpdateService;
+	private final UiUpdateBehavior uiUpdateBehavior;
 	private final PropertyService propertyService;
 	private final Provider<ICsvOrderImporter> orderImporterProvider;
 	private final Provider<ICsvAislesFileImporter> aisleImporterProvider;
@@ -93,7 +98,7 @@ public class ScriptServerRunner {
 	public ScriptServerRunner(
 		UUID facilityId,
 		FormDataMultiPart postBody,
-		UiUpdateBehavior uiUpdateService,
+		UiUpdateBehavior uiUpdateBehavior,
 		PropertyService propertyService,
 		Provider<ICsvAislesFileImporter> aisleImporterProvider,
 		Provider<ICsvLocationAliasImporter> locationsImporterProvider,
@@ -101,7 +106,7 @@ public class ScriptServerRunner {
 		Provider<ICsvOrderImporter> orderImporterProvider) { 
 		this.facilityId = facilityId;
 		this.postBody = postBody;
-		this.uiUpdateService = uiUpdateService;
+		this.uiUpdateBehavior = uiUpdateBehavior;
 		this.propertyService = propertyService;
 		this.aisleImporterProvider = aisleImporterProvider;
 		this.locationsImporterProvider = locationsImporterProvider;
@@ -173,6 +178,8 @@ public class ScriptServerRunner {
 			processSetWallCommand(parts);
 		} else if (command.equalsIgnoreCase("createChe")) {
 			processCreateCheCommand(parts);
+		} else if (command.equalsIgnoreCase("deleteChes")) {
+			processDeleteChesCommand(parts);
 		} else if (command.equalsIgnoreCase("deleteAllPaths")) {
 			processDeleteAllPathsCommand(parts);
 		} else if (command.equalsIgnoreCase("defPath")) {
@@ -195,7 +202,7 @@ public class ScriptServerRunner {
 		} else if  (command.equalsIgnoreCase("togglePutWall")) {
 			throw new Exception("Command togglePutWall has been deprecated due to an addition of Sku Walls. Instead, use " + TEMPLATE_SET_WALL);
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, deleteOrders, importOrders, importAisles, importLocations, importInventory, setController, setPoscons, setPosconToBay, setWall, createChe, deleteAllPaths, defPath, assignPathSgmToAisle, assignTapeToTier, deleteAllExtensionPoints, deleteExtensionPoint, addExtensionPoint, waitSeconds, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, deleteOrders, importOrders, importAisles, importLocations, importInventory, setController, setPoscons, setPosconToBay, setWall, createChe, deleteChes, deleteAllPaths, defPath, assignPathSgmToAisle, assignTapeToTier, deleteAllExtensionPoints, deleteExtensionPoint, addExtensionPoint, waitSeconds, //]");
 		}
 	}
 
@@ -368,7 +375,7 @@ public class ScriptServerRunner {
 		String controllerChannel = parts[4];
 
 		//Find or create Controller
-		LedController controller = uiUpdateService.addControllerCallWithObjects(facility, controllerName, type);
+		LedController controller = uiUpdateBehavior.addControllerCallWithObjects(facility, controllerName, type);
 		
 		//Find Location
 		String locationName = parts[1];
@@ -431,7 +438,7 @@ public class ScriptServerRunner {
 			int offset = 1 + blockNum * blockLength;
 			String bayName = parts[offset + 0], controllerName = parts[offset + 1], posconId = parts[offset + 2];
 			//Find or create Controller
-			LedController controller = uiUpdateService.addControllerCallWithObjects(facility, controllerName, DeviceType.Poscons.toString());
+			LedController controller = uiUpdateBehavior.addControllerCallWithObjects(facility, controllerName, DeviceType.Poscons.toString());
 			//Assign poscon to Bay
 			Bay bay = findBay(bayName);
 			bay.setPosconAssignment(controller.getPersistentId().toString(), posconId);
@@ -480,9 +487,40 @@ public class ScriptServerRunner {
 		//Create or update CHE
 		Che che = Che.staticGetDao().findByDomainId(facility.getNetworks().get(0), domainId);
 		if (che == null) {
-			uiUpdateService.addChe(facility.getPersistentId().toString(), domainId, null, color, controllerId, mode, scannerType);
+			uiUpdateBehavior.addChe(facility.getPersistentId().toString(), domainId, null, color, controllerId, mode, scannerType);
 		} else {
-			uiUpdateService.updateChe(che.getPersistentId().toString(), domainId, null, color, controllerId, mode, scannerType);
+			uiUpdateBehavior.updateChe(che.getPersistentId().toString(), domainId, null, color, controllerId, mode, scannerType);
+		}
+	}
+
+	/**
+	 * Expects to see command
+	 * deleteChes (<ches>)
+	 * @throws Exception 
+	 */
+	private void processDeleteChesCommand(String parts[]) throws Exception {
+		int len = parts.length;
+		if (len < 2){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_DELETE_CHES);
+		}
+		String cheGuidStr = null;
+		NetGuid cheGuid = null;
+		HashSet<String> cheGuidsToDelete = new HashSet<>();
+		//Make a list of Che Guids that this script command wants to delete  
+		for (int i = 1; i < len; i++){
+			cheGuidStr = parts[i];
+			cheGuid = new NetGuid(cheGuidStr);
+			cheGuidsToDelete.add(cheGuid.getHexStringNoPrefix());
+		}
+		//Iterate over all Ches in this facility and find matches to the Guids in script command 
+		Map<String, Object> filterArgs = ImmutableMap.<String, Object> of("facilityId", facility.getPersistentId());
+		List<Che> allChes = Che.staticGetDao().findByFilter("cheByFacility", filterArgs);
+		for (Che che : allChes) {
+			if (facility.equals(che.getFacility())){
+				if (cheGuidsToDelete.contains(che.getDeviceGuidStrNoPrefix())){
+					uiUpdateBehavior.deleteChe(che.getPersistentId().toString());
+				}
+			}
 		}
 	}
 

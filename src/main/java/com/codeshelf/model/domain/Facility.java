@@ -1529,7 +1529,6 @@ public class Facility extends Location {
 
 	private void computeEventMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc) {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("facility", this));
 		filterParams.add(Restrictions.eq("eventType", EventType.SKIP_ITEM_SCAN));
 		filterParams.add(Restrictions.ge("created", startUtc));
