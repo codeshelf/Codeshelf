@@ -26,9 +26,6 @@ import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
-import javax.persistence.Transient;
-
-import lombok.Getter;
 
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
@@ -56,7 +53,6 @@ import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.model.domain.DropboxGateway.DropboxCredentials;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
@@ -67,6 +63,8 @@ import com.codeshelf.ws.server.WebSocketManagerService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
+
+import lombok.Getter;
 
 // --------------------------------------------------------------------------
 /**
@@ -1381,30 +1379,6 @@ public class Facility extends Location {
 
 	public TimeZone getTimeZone() {
 		return TimeZone.getTimeZone("US/Mountain");
-	}
-
-	@Transient
-	private boolean	dropboxLegacyCleanupDone	= false;
-
-	/**
-	 * This function deals with pre-v22  way of storing Dropbox credentials.
-	 * The authentication key used to be stored as a string instead of a Json object. 
-	 * This function corrects that.
-	 */
-	public void dropboxLegacyCredentialsCleanup() {
-		if (!dropboxLegacyCleanupDone) {
-			List<EdiGateway> ediGateways = EdiGateway.staticGetDao().findByParent(this);
-			for (IEdiGateway ediGateway : ediGateways) {
-				if (ediGateway instanceof DropboxGateway) {
-					DropboxGateway dropboxGateway = (DropboxGateway) ediGateway;
-					String credentials = dropboxGateway.getProviderCredentials();
-					if (credentials == null || !credentials.startsWith("{")) {
-						dropboxGateway.setProviderCredentials(new DropboxCredentials(credentials).toString());
-					}
-				}
-			}
-			dropboxLegacyCleanupDone = true;
-		}
 	}
 
 	public FacilityMetric computeMetrics(String dateStr) throws Exception {

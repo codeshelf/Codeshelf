@@ -53,7 +53,6 @@ public class EDIGatewaysResource {
 
 	@GET
 	public Response getEdiGateways() {
-		facility.dropboxLegacyCredentialsCleanup();
 		return BaseResponse.buildResponse(new ArrayList<IEdiGateway>(facility.getEdiGateways()));
 	}
 	
