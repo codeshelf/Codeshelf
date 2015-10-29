@@ -93,6 +93,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 						deviceManager.setContainerTypeValue(loginResponse.getContainerTypeValue());
 						deviceManager.setScanTypeValue(loginResponse.getScanTypeValue());
 						deviceManager.setSequenceKind(loginResponse.getSequenceKind());
+						deviceManager.setOrdersubValue(loginResponse.getOrdersubValue());
 						// attached has the huge side effect of getting all CHEs and setting up device logic for them. Better have the config values first.
 						deviceManager.attached(network);
 					} else {

@@ -132,6 +132,10 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	@Getter
 	@Setter
 	private String										sequenceKind				= "BayDistance";
+	
+	@Getter
+	@Setter
+	private String										ordersubValue				= "Disabled";
 
 	@Getter
 	CsClientEndpoint									clientEndpoint;

@@ -1379,7 +1379,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		else if (inScanPrefixStr.isEmpty() || CONTAINER_PREFIX.equals(inScanPrefixStr) || LOCATION_PREFIX.equals(inScanPrefixStr)) {
 
-			mContainerInSetup = inScanStr;
+			mContainerInSetup = extractContainerIdFromScan(inScanStr);
 			// Check to see if this container is already setup in a position.
 
 			byte currentAssignment = getPosconIndexOfContainerId(mContainerInSetup);
@@ -1404,6 +1404,48 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		} else {
 			setState(CheStateEnum.CONTAINER_SELECTION_INVALID);
 		}
+	}
+	
+	/**
+	 * Returns a portion of the Container scan is the ORDERSUB property is set
+	 * Start and End indexies work the following way: "1-1" returns the first char in the scan. "2-4" returns 3 chars starting with the second, etc.
+	 */
+	private String extractContainerIdFromScan(String scan) {
+		String orderSubProp = mDeviceManager.getOrdersubValue();
+		if (orderSubProp == null || orderSubProp.isEmpty() || "Disabled".equalsIgnoreCase(orderSubProp)){
+			return scan;
+		}
+		if (scan.contains("%")) {
+			return scan;
+		}
+		String parts[] = orderSubProp.split("-");
+		if (parts.length != 2) {
+			LOGGER.warn("Invalid ORDERSUB {}. Using full order scan.", orderSubProp);
+			return scan;
+		}
+		int start = 0, end = 0;
+		try {
+			start = Integer.parseInt(parts[0].trim());
+			end = Integer.parseInt(parts[1].trim());
+		} catch (NumberFormatException e ) {
+			LOGGER.warn("Invalid ORDERSUB {}. Unable to parse start and end. Using full order scan.", orderSubProp);
+			return scan;
+		}
+		if (start > end) {
+			LOGGER.warn("Invalid ORDERSUB {}. Start is larger than end. Using full order scan.", orderSubProp);
+			return scan;
+		}
+		if (start < 1) {
+			LOGGER.warn("Invalid ORDERSUB {}. Start is less than 1. Using full order scan.", orderSubProp);
+			return scan;
+		}
+		//Adjust for 1-indexed properties
+		start--;
+		int scanLen = scan.length();
+		if (end > scanLen) {
+			end = scanLen;
+		}
+		return scan.substring(start, end);
 	}
 
 	/**

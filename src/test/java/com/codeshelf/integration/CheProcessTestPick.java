@@ -59,6 +59,7 @@ import com.codeshelf.service.PropertyService;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
+import com.codeshelf.validation.InputValidationException;
 import com.google.common.base.Strings;
 
 /**
@@ -1512,4 +1513,57 @@ public class CheProcessTestPick extends ServerTest {
 		commitTransaction();
 	}
 
+	@Test
+	public final void testOrdersub() throws Exception {
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		beginTransaction();
+		facility = facility.reload();
+		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, "WorkSequence");
+		
+		LOGGER.info("1: Verify that invalid ORDERSUB values are not accepted");
+		Assert.assertEquals("Disabled", propertyService.getPropertyFromConfig(facility, DomainObjectProperty.ORDERSUB));
+		assertInvalidPropertyValue(facility, DomainObjectProperty.ORDERSUB, "xxxx");
+		Assert.assertEquals("Disabled", propertyService.getPropertyFromConfig(facility, DomainObjectProperty.ORDERSUB));
+		assertInvalidPropertyValue(facility, DomainObjectProperty.ORDERSUB, "4 5");
+		Assert.assertEquals("Disabled", propertyService.getPropertyFromConfig(facility, DomainObjectProperty.ORDERSUB));
+		assertInvalidPropertyValue(facility, DomainObjectProperty.ORDERSUB, "-4 - 5");
+		Assert.assertEquals("Disabled", propertyService.getPropertyFromConfig(facility, DomainObjectProperty.ORDERSUB));
+		assertInvalidPropertyValue(facility, DomainObjectProperty.ORDERSUB, "6 - 5");
+		Assert.assertEquals("Disabled", propertyService.getPropertyFromConfig(facility, DomainObjectProperty.ORDERSUB));
+		
+		LOGGER.info("2: Set valid ORDERSUB");
+		propertyService.changePropertyValue(facility, DomainObjectProperty.ORDERSUB, "5 - 8");
+		Assert.assertEquals("5-8", propertyService.getPropertyFromConfig(facility, DomainObjectProperty.ORDERSUB));
+		
+
+		LOGGER.info("3: Import order");
+		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n1111,1111,Item 1,Item Descr 1,1,each,locationA,1" //
+				+ "\r\n1111,1111,Item 2,Item Descr 2,2,ea,locationB,2" //
+				+ "\r\n1111,1111,Item 3,Item Descr 3,3,PK,locationC,3";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+		
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+
+		LOGGER.info("4: Scan barcode conbtaining orderId");
+		picker.loginAndSetup("Picker #1");
+		picker.setupOrderIdAsContainer("xxxx1111xx", "1");
+		
+		LOGGER.info("5: Verify that the orderId was successfully extracted using the ORDERSUB property");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		Assert.assertEquals("1 order\n3 jobs\n\nSTART (or SETUP)\n", picker.getLastCheDisplay());
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);		
+	}
+	
+	private void assertInvalidPropertyValue(Facility facility, String propertyName, String propertyValue) {
+		try {
+			propertyService.changePropertyValue(facility, propertyName, propertyValue);
+			Assert.fail("Test did not throw exception when setting invalid value " + propertyValue + " for property " + propertyName);
+		} catch (InputValidationException e) {}
+	}
 }

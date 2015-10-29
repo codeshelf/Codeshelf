@@ -56,6 +56,10 @@ public class LoginResponse extends ResponseABC {
 	@Setter
 	String				tenantName;
 
+	@Getter
+	@Setter
+	String				ordersubValue;
+
 	public LoginResponse() {
 	}
 

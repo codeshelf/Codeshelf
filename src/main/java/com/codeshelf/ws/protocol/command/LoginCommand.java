@@ -158,6 +158,9 @@ public class LoginCommand extends CommandABC {
 
 							String responseValue = properties.getPropertyFromConfig(facility, DomainObjectProperty.PRODUCTION);
 							response.setProductionValue(responseValue);
+							
+							String ordersubValue = properties.getPropertyFromConfig(facility, DomainObjectProperty.ORDERSUB);
+							response.setOrdersubValue(ordersubValue);
 
 						} else { //ui client user
 							response.setAutoShortValue(false); // not read by client. No need to look it up.

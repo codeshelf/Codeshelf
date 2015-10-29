@@ -494,7 +494,7 @@ public class DomainObjectProperty extends DomainObjectABC {
 		try {
 			int start = Integer.parseInt(parts[0].trim());
 			int end   = Integer.parseInt(parts[1].trim());
-			if (start < end) {
+			if (start <= end) {
 				return start + "-" + end;
 			}
 		} catch (NumberFormatException e) {
