@@ -20,10 +20,12 @@ import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.device.SetupOrdersDeviceLogic;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionSequencerType;
+import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.service.PropertyService;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 
@@ -1128,6 +1130,92 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);
 	}
 
+	@Test
+	public final void checkManyPosconsMessages() throws IOException {
+	LOGGER.info("1: Set up facility. Add the export extensions");
+	// somewhat cloned from FacilityAccumulatingExportTest
+	Facility facility = setUpSimpleNoSlotFacility();
+
+	beginTransaction();
+	facility = facility.reload();
+	propertyService.turnOffHK(facility);
+	DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.WORKSEQR);
+	if (theProperty != null) {
+		theProperty.setValue("WorkSequence");
+		PropertyDao.getInstance().store(theProperty);
+	}
+	commitTransaction();
+
+	LOGGER.info("2: Load orders. No inventory, so uses locationA, etc. as the location-based pick");
+	beginTransaction();
+	facility = facility.reload();
+
+	String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+			+ "\r\n1,1,1,Test Item 1,1,each,locationA,1" //
+			+ "\r\n2,2,2,Test Item 2,3,each,locationB,2" //
+			+ "\r\n3,3,3,Test Item 3,1,each,locationC,3" //
+			+ "\r\n4,4,4,Test Item 4,1,each,locationD,4" //
+			+ "\r\n5,5,5,Test Item 5,1,each,locationE,5" //
+			+ "\r\n6,6,6,Test Item 6,1,each,locationF,6" //
+			+ "\r\n7,7,7,Test Item 7,3,each,locationG,7" //
+			+ "\r\n8,8,8,Test Item 8,1,each,locationH,8" //
+			+ "\r\n9,9,9,Test Item 9,1,each,locationI,9" //
+			+ "\r\n10,10,10,Test Item 10,1,each,locationJ,10" //
+			+ "\r\n11,11,11,Test Item 11,1,each,locationK,11" //
+			+ "\r\n12,12,12,Test Item 12,3,each,locationL,12" //
+			+ "\r\n13,13,13,Test Item 13,1,each,locationM,13" //
+			+ "\r\n14,14,14,Test Item 14,1,each,locationN,14" //
+			+ "\r\n15,15,15,Test Item 15,1,each,locationO,15" //
+			+ "\r\n16,16,16,Test Item 16,1,each,locationP,16" //
+			+ "\r\n17,17,17,Test Item 17,3,each,locationQ,17" //
+			+ "\r\n18,18,18,Test Item 18,1,each,locationR,18" //
+			+ "\r\n19,19,19,Test Item 19,1,each,locationS,19" //
+			+ "\r\n20,20,20,Test Item 20,1,each,locationT,20"; //
+
+	importOrdersData(facility, csvOrders);
+	commitTransaction();
+	
+	startSiteController();
+	PickSimulator picker = createPickSim(cheGuid1);
+
+	LOGGER.info("2: load 2 orders on the CHE");
+	picker.loginAndSetup("Picker #1");
+	picker.setupOrderIdAsContainer("1", "1");
+	picker.setupOrderIdAsContainer("2", "2");
+	picker.setupOrderIdAsContainer("3", "3");
+	picker.setupOrderIdAsContainer("4", "4");
+	picker.setupOrderIdAsContainer("5", "5");
+	picker.setupOrderIdAsContainer("6", "6");
+	picker.setupOrderIdAsContainer("7", "7");
+	picker.setupOrderIdAsContainer("8", "8");
+	picker.setupOrderIdAsContainer("9", "9");
+	picker.setupOrderIdAsContainer("10", "10");
+	picker.setupOrderIdAsContainer("11", "11");
+	picker.setupOrderIdAsContainer("12", "12");
+	picker.setupOrderIdAsContainer("13", "13");
+	picker.setupOrderIdAsContainer("14", "14");
+	picker.setupOrderIdAsContainer("15", "15");
+	picker.setupOrderIdAsContainer("16", "16");
+	picker.setupOrderIdAsContainer("17", "17");
+	picker.setupOrderIdAsContainer("18", "18");
+	LOGGER.info("2b: finished 18, add 19");
+	picker.setupOrderIdAsContainer("19", "19");
+	LOGGER.info("2c: finished 19, add 20");
+	picker.setupOrderIdAsContainer("20", "20");
+	LOGGER.info("2d: finished 20");
+	// 1-9 yields "digits" which is just the number shift to left display
+	Assert.assertEquals(11, (int) picker.getLastSentPositionControllerDisplayValue(11));
+	picker.scanCommand("START");
+	picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+	picker.logCheDisplay();
+	Assert.assertEquals(1, (int) picker.getLastSentPositionControllerDisplayValue(11)); // only one job
+	picker.scanCommand("START");
+	picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+	picker.logCheDisplay();
+	Assert.assertEquals(1, (int) picker.getLastSentPositionControllerDisplayValue(1));
+
+}
+	
 	@Test
 	public final void simulPickShortOrderCountIssue() throws IOException {
 		Facility facility = setUpSimpleNoSlotFacility();

@@ -160,22 +160,22 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private String getForWallMessageLine() {
 		return String.format("FOR %s", getPutWallName());
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* 
 	 * Called by CheDeviceLogic.startDevice() if the cause was a user reset
 	 * We use this to break out of "half-states" where we are waiting for a response from the server that will likely never come
 	 */
 	@Override
-	protected void adjustStateForUserReset(){
+	protected void adjustStateForUserReset() {
 		CheStateEnum currentState = getCheStateEnum();
 		switch (currentState) {
-			case VERIFYING_BADGE: 
+			case VERIFYING_BADGE:
 				setState(CheStateEnum.IDLE);
 				LOGGER.info("Breaking {} out of verify badge state", this.getGuidNoPrefix());
 				break;
-			case GET_WORK: 
-			case COMPUTE_WORK: 
+			case GET_WORK:
+			case COMPUTE_WORK:
 				setState(CheStateEnum.SETUP_SUMMARY);
 				LOGGER.info("Breaking {} out of compute work state", this.getGuidNoPrefix());
 				break;
@@ -184,9 +184,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				// After scan UPC?
 				// After putwall or sku wall scan waiting for plan?
 		}
-		
-	}
 
+	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -1831,11 +1830,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		final Map<String, WorkInstructionCount> containerToWorkInstructionCountMap) {
 		// DEV-1257 do not accept if in wrong state. Should only only accept from one state?
 		CheStateEnum currentState = this.getCheStateEnum();
-		if (currentState == CheStateEnum.IDLE || currentState == CheStateEnum.VERIFYING_BADGE || currentState == CheStateEnum.DO_PICK) {
+		if (currentState == CheStateEnum.IDLE || currentState == CheStateEnum.VERIFYING_BADGE
+				|| currentState == CheStateEnum.DO_PICK) {
 			LOGGER.error("Late WorkInstructionCounts response from server. Current state is {}. Doing nothing.");
 			// We certainly do not want to transition to SETUP_SUMMARY state after clearing our badge ID. Should we redo the container map anyway? Not sure.
 			return;
-		}		
+		}
 
 		//Store counts
 		this.mContainerToWorkInstructionCountMap = containerToWorkInstructionCountMap;
@@ -2119,6 +2119,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
 
+		// v24 DEV-1261 lets log a single large line instead of multiple lines for many poscons. Hint: may want to summarize wiCount further in the future.
+		String toLogStr = "";
+
 		for (Entry<String, String> containerMapEntry : mPositionToContainerMap.entrySet()) {
 			String containerId = containerMapEntry.getValue();
 			byte position = getPositionValue(containerMapEntry);
@@ -2142,7 +2145,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				LOGGER.info("Position {} got no WIs. Causes: no path defined, unknown container id, no inventory", position);
 			} else {
 				byte count = (byte) wiCount.getGoodCount();
-				LOGGER.info("{} at pos:{} -- {}",containerId, position, wiCount);
+				if (toLogStr.isEmpty())
+					toLogStr = "Position values: ";
+				toLogStr += String.format("%n%s at pos:%d -- %s", containerId, position, wiCount.toString());
+				// LOGGER.info("{} at pos:{} -- {}",containerId, position, wiCount);
 				if (count == 0) {
 					//0 good WI's
 
@@ -2165,6 +2171,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 			}
 		}
+		if (!toLogStr.isEmpty())
+			LOGGER.info(toLogStr);
 
 		//Show counts on position controllers
 		sendPositionControllerInstructions(instructions);
@@ -2348,14 +2356,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * Only not final because we let CsDeviceManager call this generically.
 	 */
 	public void assignWork(final List<WorkInstruction> inWorkItemList, String message) {
-		
+
 		// DEV-1257 do not accept if in wrong state. Should only only accept from one state?
 		CheStateEnum currentState = this.getCheStateEnum();
-		if (currentState == CheStateEnum.IDLE || currentState == CheStateEnum.VERIFYING_BADGE || currentState == CheStateEnum.DO_PICK) {
+		if (currentState == CheStateEnum.IDLE || currentState == CheStateEnum.VERIFYING_BADGE
+				|| currentState == CheStateEnum.DO_PICK) {
 			LOGGER.error("Late assignWork response from server. Current state is {}. Doing nothing.");
 			// We certainly do not want to transition to SETUP_SUMMARY state if we logged out and do not have a badge ID any more.
 			return;
-		}		
+		}
 
 		if (inWorkItemList == null || inWorkItemList.size() == 0) {
 			setState(CheStateEnum.SETUP_SUMMARY);
@@ -2419,7 +2428,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		inWi.setCompleteState(mUserId, inQuantity);
 
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
-		EventType eventType = EventType.COMPLETE; 
+		EventType eventType = EventType.COMPLETE;
 		if (getCheStateEnum() == CheStateEnum.DO_PUT) {
 			if (inWi.getOrderDetail() == null) {
 				eventType = EventType.SKUWALL_PUT;
@@ -2479,7 +2488,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 
 	@Override
-	protected String getButtonPurpose(int buttonNum){
+	protected String getButtonPurpose(int buttonNum) {
 		return getContainerIdFromButtonNum(buttonNum);
 	}
 

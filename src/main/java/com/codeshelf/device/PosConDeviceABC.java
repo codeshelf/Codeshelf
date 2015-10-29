@@ -25,7 +25,7 @@ import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
 
 public abstract class PosConDeviceABC extends DeviceLogicABC {
-	private static final Logger				LOGGER								= LoggerFactory.getLogger(PosConDeviceABC.class);
+	private static final Logger				LOGGER	= LoggerFactory.getLogger(PosConDeviceABC.class);
 
 	@Accessors(prefix = "m")
 	@Getter
@@ -44,22 +44,23 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		// Much better than LOGGER.info("{}: Sending PosCon Instructions {}", this.getMyGuidStr(), inInstructions);
 
 		String header = "Sending PosCon Instructions";
-		final int logGroupSize = 3;
+		final int logGroupSize = 10; // Would be nice if this corresponded to grouping in packets, but this is arbitrary for logging.
 		int intructionCount = 0;
 		int totalCount = inInstructions.size();
+		// v24 DEV-1261 lets log a single large line instead of multiple lines for many instructions.
 		String toLogStr = "";
 		for (PosControllerInstr instr : inInstructions) {
 			intructionCount++;
 			if (intructionCount == 1) {
-				toLogStr = String.format("%s %s", header, instr.conciseDescription());
-			} else {
-				toLogStr = String.format("%s %s", toLogStr, instr.conciseDescription());
+				toLogStr += String.format("%s%n", header);
 			}
+			toLogStr += String.format("%s", instr.superConciseDescription());
 			if ((intructionCount == totalCount) || (intructionCount % logGroupSize == 0)) {
-				notifyPoscons(toLogStr);
-				toLogStr = "";
+				toLogStr += String.format("%n");
 			}
 		}
+		if (!toLogStr.isEmpty())
+			notifyPoscons(toLogStr);
 	}
 
 	protected void sendPositionControllerInstructions(List<PosControllerInstr> inInstructions) {
@@ -206,11 +207,11 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		}
 		return currentValue;
 	}
-	
+
 	/**
 	 * override this if the button has a distinct purpose, such as representing a particular order ID
 	 */
-	protected String getButtonPurpose(int buttonNum){
+	protected String getButtonPurpose(int buttonNum) {
 		return null;
 	}
 
@@ -342,27 +343,27 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 				if (forContainer != null)
 					LOGGER.info("Button #{} pressed with quantity {} for order/cntr:{}", buttonNum, showingQuantity, forContainer);
 				else
-				LOGGER.info("Button #{} pressed with quantity {}", buttonNum, showingQuantity);
+					LOGGER.info("Button #{} pressed with quantity {}", buttonNum, showingQuantity);
 			} else {
 				String display = "unexpected value " + showingQuantity;
-				byte displayedValue = getLastSentPositionControllerDisplayValue((byte)buttonNum);
-				if (displayedValue == PosControllerInstr.BITENCODED_SEGMENTS_CODE){
-					byte min = getLastSentPositionControllerMinQty((byte)buttonNum);
-					byte max = getLastSentPositionControllerMaxQty((byte)buttonNum);
+				byte displayedValue = getLastSentPositionControllerDisplayValue((byte) buttonNum);
+				if (displayedValue == PosControllerInstr.BITENCODED_SEGMENTS_CODE) {
+					byte min = getLastSentPositionControllerMinQty((byte) buttonNum);
+					byte max = getLastSentPositionControllerMaxQty((byte) buttonNum);
 					display = "unexpected segmented value " + max + "-" + min;
-					if (max == PosControllerInstr.BITENCODED_LED_DASH && min == PosControllerInstr.BITENCODED_LED_DASH){
+					if (max == PosControllerInstr.BITENCODED_LED_DASH && min == PosControllerInstr.BITENCODED_LED_DASH) {
 						display = "dash";
-					} else if (max == PosControllerInstr.BITENCODED_TOP_BOTTOM && min == PosControllerInstr.BITENCODED_TOP_BOTTOM){
+					} else if (max == PosControllerInstr.BITENCODED_TOP_BOTTOM && min == PosControllerInstr.BITENCODED_TOP_BOTTOM) {
 						display = "double dash";
-					} else if (max == PosControllerInstr.BITENCODED_TRIPLE_DASH && min == PosControllerInstr.BITENCODED_TRIPLE_DASH){
+					} else if (max == PosControllerInstr.BITENCODED_TRIPLE_DASH && min == PosControllerInstr.BITENCODED_TRIPLE_DASH) {
 						display = "triple dash";
-					} else if (max == PosControllerInstr.BITENCODED_LED_O && min == PosControllerInstr.BITENCODED_LED_C){
+					} else if (max == PosControllerInstr.BITENCODED_LED_O && min == PosControllerInstr.BITENCODED_LED_C) {
 						display = "OC (order complete)";
 					}
 				}
 				LOGGER.info("Button #{} pressed with {}", buttonNum, display);
 			}
-			
+
 		} finally {
 			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
 			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
@@ -377,7 +378,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		mDeviceManager.sendNotificationMessage(message);
 		*/
 	}
-	
+
 	protected void notifyOffCheButton(int buttonNum, int showingQuantity, String fromGuidId) {
 		try {
 			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
