@@ -1208,8 +1208,17 @@ public class CheProcessTestPickFeedback extends ServerTest {
 	LOGGER.info("2c: finished 19, add 20");
 	picker.setupOrderIdAsContainer("20", "20");
 	LOGGER.info("2d: finished 20");
-	// 1-9 yields "digits" which is just the number shift to left display
+	
+	LOGGER.info("3a: Move order 20 to position 21");
+	picker.setupOrderIdAsContainer("20", "21");
+
+	// 1-9 yields "digits" which is just the number shifted to left display. Seems bad, but not very important. Only happens if someone is 
+	// setting up order number or preassigned container that is only one digit. Aside from tests, almost always there are more digits.
+	// (Stupid feature. Thankfully, we do not have to do this for pick counts. We should undo this feature.)
 	Assert.assertEquals(11, (int) picker.getLastSentPositionControllerDisplayValue(11));
+
+	LOGGER.info("4: Scan start twice, getting to picking state");
+	
 	picker.scanCommand("START");
 	picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 	picker.logCheDisplay();
@@ -1219,14 +1228,14 @@ public class CheProcessTestPickFeedback extends ServerTest {
 	picker.logCheDisplay();
 	Assert.assertEquals(1, (int) picker.getLastSentPositionControllerDisplayValue(1));
 	
-	LOGGER.info("3a: Complete a few, just to see some oc values come. Complete the first.");
+	LOGGER.info("5a: Complete a few, just to see some oc values come. Complete the first.");
 	picker.pickItemAuto();
-	LOGGER.info("3b: Complete the secone");
+	LOGGER.info("5b: Complete the secone");
 	picker.pickItemAuto();
-	LOGGER.info("3a: Complete the third");
+	LOGGER.info("5a: Complete the third");
 	picker.pickItemAuto();
 	
-	LOGGER.info("4: Back to Setup summary screen");
+	LOGGER.info("6: Back to Setup summary screen");
 	picker.scanCommand("START");
 	picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 	// This shows a sort of bug in the log/console. See the that the feedback message coming back from the server does not have completes

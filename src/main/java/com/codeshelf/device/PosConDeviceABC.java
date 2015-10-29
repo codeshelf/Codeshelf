@@ -40,13 +40,14 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		return null;
 	}
 
+	/**
+	 * Logs the entire batch in one message. Use the notifyXXX mechanism to include the tags.
+	 */
 	private void logOnePosconBatch(final List<PosControllerInstr> inInstructions) {
 		// Much better than LOGGER.info("{}: Sending PosCon Instructions {}", this.getMyGuidStr(), inInstructions);
 
 		String header = "Sending PosCon Instructions";
-		final int logGroupSize = 10; // Would be nice if this corresponded to grouping in packets, but this is arbitrary for logging.
 		int intructionCount = 0;
-		int totalCount = inInstructions.size();
 		// v24 DEV-1261 lets log a single large line instead of multiple lines for many instructions.
 		String toLogStr = "";
 		for (PosControllerInstr instr : inInstructions) {
@@ -55,10 +56,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 				toLogStr += String.format("%s%n", header);
 			}
 			toLogStr += String.format("%s", instr.superConciseDescription());
-			if ((intructionCount == totalCount) || (intructionCount % logGroupSize == 0)) {
-				toLogStr += String.format("%n");
 			}
-		}
 		if (!toLogStr.isEmpty())
 			notifyPoscons(toLogStr);
 	}
