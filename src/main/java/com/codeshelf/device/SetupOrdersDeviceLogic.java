@@ -1442,6 +1442,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		//Adjust for 1-indexed properties
 		start--;
 		int scanLen = scan.length();
+		if (start > scanLen) {
+			start = scanLen;
+		}
 		if (end > scanLen) {
 			end = scanLen;
 		}
