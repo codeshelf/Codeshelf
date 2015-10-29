@@ -47,7 +47,7 @@ public class DropboxGatewayTest extends MockDaoTest {
 
 		dropboxGateway.setParent(facility);
 		dropboxGateway.setDomainId("DB");
-		dropboxGateway.setProviderCredentials(new DropboxCredentials(TEST_CREDENTIALS).toString());
+		dropboxGateway.setProviderCredentials(new DropboxCredentials("", TEST_CREDENTIALS).toString());
 		dropboxGateway.setGatewayState(EdiGatewayStateEnum.LINKED);
 
 		ICsvOrderImporter orderImporter = mock(ICsvOrderImporter.class);

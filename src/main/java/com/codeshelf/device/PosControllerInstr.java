@@ -35,11 +35,11 @@ import com.google.gson.reflect.TypeToken;
 @Accessors(prefix = "m")
 public class PosControllerInstr extends MessageABC implements Validatable {
 
-	public static final Byte	POSITION_ALL					= 0;
+	public static final Byte	POSITION_ALL				= 0;
 
 	// Position controllers can only show 99 items, so we use numbers above 99 for special instructions.
 	// We started with 255 and worked down just in case we some day go higher than 99.
-	public static final Byte	ZERO_QTY						= (byte) 0;
+	public static final Byte	ZERO_QTY					= (byte) 0;
 
 	// Older codes used through v16
 	// public static final Byte	BAY_COMPLETE_CODE				= (byte) 254;											// sort of fake quantities for now
@@ -47,38 +47,38 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 	// public static final Byte	REPEAT_CONTAINER_CODE			= (byte) 252;
 
 	// bit encodings used now for all but simple numbers
-	public static final Byte	BITENCODED_SEGMENTS_CODE		= (byte) 240;
+	public static final Byte	BITENCODED_SEGMENTS_CODE	= (byte) 240;
 	// Bit-encoded LED display characters.
 	// https://en.wikipedia.org/wiki/Seven-segment_display
 	// MSB->LSB the segments are encoded DP, G, F, E, D, C, B, A
-	public static final Byte	BITENCODED_LED_BLANK			= 0x00;
-	public static final Byte	BITENCODED_LED_DASH				= 0x40;
-	public static final Byte	BITENCODED_LED_O				= 0x5C;												// small o
-	public static final Byte	BITENCODED_LED_C				= 0x58;												// small c
-	public static final Byte	BITENCODED_LED_E				= 0x79;												// cap E
-	public static final Byte	BITENCODED_TRIPLE_DASH			= 0x49;
-	public static final Byte	BITENCODED_TOP_BOTTOM			= 0x09;
+	public static final Byte	BITENCODED_LED_BLANK		= 0x00;
+	public static final Byte	BITENCODED_LED_DASH			= 0x40;
+	public static final Byte	BITENCODED_LED_O			= 0x5C;												// small o
+	public static final Byte	BITENCODED_LED_C			= 0x58;												// small c
+	public static final Byte	BITENCODED_LED_E			= 0x79;												// cap E
+	public static final Byte	BITENCODED_TRIPLE_DASH		= 0x49;
+	public static final Byte	BITENCODED_TOP_BOTTOM		= 0x09;
 	// these are the bit encoded versions of the old value kludges. Necessary for 3.1 poscon
-	public static final Byte	BITENCODED_LED_B				= 0x7C;												// b
-	public static final Byte	BITENCODED_LED_A				= 0x5E;												// a
-	public static final Byte	BITENCODED_LED_R				= 0x50;												// r
+	public static final Byte	BITENCODED_LED_B			= 0x7C;												// b
+	public static final Byte	BITENCODED_LED_A			= 0x5E;												// a
+	public static final Byte	BITENCODED_LED_R			= 0x50;												// r
 
 	//Any array mapping digits to their BITENCODED_LED bytes. Digit 9 is at the end of the array.
-	public static final byte[]	BITENCODED_DIGITS				= new byte[] { 0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07,
-			0x7F, 0x6F											};
+	public static final byte[]	BITENCODED_DIGITS			= new byte[] { 0x3F, 0x06, 0x5B, 0x4F, 0x66, 0x6D, 0x7D, 0x07, 0x7F,
+			0x6F											};
 
 	//Display Refresh Freqs
-	public static final Byte	RAPIDBLINK_FREQ					= (byte) 0x15; // not yet used
-	public static final Byte	BLINK_FREQ						= (byte) 0x15; // may want to change to 20
-	public static final Byte	SOLID_FREQ						= (byte) 0x00;
+	public static final Byte	RAPIDBLINK_FREQ				= (byte) 0x15;											// not yet used
+	public static final Byte	BLINK_FREQ					= (byte) 0x15;											// may want to change to 20
+	public static final Byte	SOLID_FREQ					= (byte) 0x00;
 
 	//Display Brightness
-	public static final Byte	DIM_DUTYCYCLE					= (byte) 0xFD;
-	public static final Byte	MIDDIM_DUTYCYCLE				= (byte) 0xF6;
-	public static final Byte	MED_DUTYCYCLE					= (byte) 0xF0;
-	public static final Byte	BRIGHT_DUTYCYCLE				= (byte) 0x40;
+	public static final Byte	DIM_DUTYCYCLE				= (byte) 0xFD;
+	public static final Byte	MIDDIM_DUTYCYCLE			= (byte) 0xF6;
+	public static final Byte	MED_DUTYCYCLE				= (byte) 0xF0;
+	public static final Byte	BRIGHT_DUTYCYCLE			= (byte) 0x40;
 
-	private static final Logger	LOGGER							= LoggerFactory.getLogger(PosControllerInstr.class);
+	private static final Logger	LOGGER						= LoggerFactory.getLogger(PosControllerInstr.class);
 
 	@Accessors(prefix = "m")
 	@Getter
@@ -125,7 +125,7 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private long				mPostedToPosConController		= 0;
+	private long				mPostedToPosConController	= 0;
 
 	//----------------------------------------------------
 	@Accessors(prefix = "m")
@@ -163,13 +163,13 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 
 	@Accessors(prefix = "m")
 	@Getter
-	private boolean				mRemoveAll						= false;
+	private boolean				mRemoveAll					= false;
 
 	@Accessors(prefix = "m")
 	@Getter
-	private List<Byte>			mRemovePos						= new ArrayList<Byte>();
+	private List<Byte>			mRemovePos					= new ArrayList<Byte>();
 
-	private String				mRemoveError					= null;
+	private String				mRemoveError				= null;
 
 	public PosControllerInstr() {
 	}
@@ -324,6 +324,47 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 		}
 	}
 
+	private String translateQty(Byte reqValue, Byte minValue, Byte maxValue) {
+		if (minValue != maxValue)
+			return String.format("value:%d min:%d, max:%d", reqValue, minValue, maxValue);
+		else if (reqValue == null)
+			return "value:?"; // error?
+		else
+			return String.format("value:%d", reqValue);
+	}
+
+	private String translateBitEncoding(Byte minValue, Byte maxValue) {
+		String summary = "??";
+		if (minValue == BITENCODED_LED_DASH)
+			summary = "'dash'";
+		else if (minValue == BITENCODED_LED_C) { // currently bc or oc are our choices.
+			if (maxValue == BITENCODED_LED_O)
+				summary = "'oc'";
+			else
+				summary = "'bc'";
+		} else if (minValue == BITENCODED_LED_E)
+			summary = "'E'";
+		else if (minValue == BITENCODED_LED_A)
+			summary = "'a'";
+		else if (minValue == BITENCODED_LED_R)
+			summary = "'r'";
+		else if (minValue == BITENCODED_TRIPLE_DASH)
+			summary = "'triple dash'";
+		else if (minValue == BITENCODED_TOP_BOTTOM)
+			summary = "'double dash'";
+		else
+		// Remember the "order feedback" possibilities;
+		// we might be doing "00" or "08" for last digits of order ID, or "a" if not digits.
+		if (maxValue == PosControllerInstr.BITENCODED_DIGITS[0]) {
+			summary = "'digits'"; // with the leading zero. Would take a little code to get it back
+		} else {
+			LOGGER.error("unhandled case in PosControllerInstr.conciseDescription(). BitEncoded flag, with min:{}, max:{}",
+				minValue,
+				maxValue);
+		}
+		return summary;
+	}
+
 	/**
 	 * Very concise, human interpretable description of contents for one poscon. Not json.
 	 * This is about what goes out to the site controller, so we would never show the source field, for example. We would add color when that is implemented.
@@ -351,35 +392,31 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 		} else {
 			Byte minValue = getMinQty();
 			Byte maxValue = getMaxQty();
-			String summary = "??";
-			if (minValue == BITENCODED_LED_DASH)
-				summary = "'dash'";
-			else if (minValue == BITENCODED_LED_C) {  // currently bc or oc are our choices.
-				if (maxValue == BITENCODED_LED_O)
-					summary = "'oc'";
-				else
-					summary = "'bc'";
-			} else if (minValue == BITENCODED_LED_E)
-				summary = "'E'";
-			else if (minValue == BITENCODED_LED_A)
-				summary = "'a'";
-			else if (minValue == BITENCODED_LED_R)
-				summary = "'r'";
-			else if (minValue == BITENCODED_TRIPLE_DASH)
-				summary = "'triple dash'";
-			else if (minValue == BITENCODED_TOP_BOTTOM)
-				summary = "'double dash'";
-			else
-			// Remember the "order feedback" possibilities;
-			// we might be doing "00" or "08" for last digits of order ID, or "a" if not digits.
-			if (maxValue == PosControllerInstr.BITENCODED_DIGITS[0]) {
-				summary = "'digits'"; // with the leading zero. Would take a little code to get it back
-			} else {
-				LOGGER.error("unhandled case in PosControllerInstr.conciseDescription(). BitEncoded flag, with min:{}, max:{}",
-					getMinQty(),
-					getMaxQty());
-			}
+			String summary = translateBitEncoding(minValue, maxValue);
 			desc = String.format("[pos:%s %s freq:%s, duty:%d]", posString, summary, freq, getDutyCycle());
+		}
+		return desc;
+	}
+
+	/**
+	 * Super concise. Loses some detail.
+	 */
+	public String superConciseDescription() {
+		Byte value = getReqQty();
+		Byte position = getPosition();
+		String posString = position.toString();
+		if (position == 0)
+			posString = "all";
+		String desc;
+		if (value != BITENCODED_SEGMENTS_CODE) {
+			String v = translateQty(getReqQty(), getMinQty(), getMaxQty());
+			desc = String.format("[pos:%s %s]",
+				posString,v);
+		} else {
+			Byte minValue = getMinQty();
+			Byte maxValue = getMaxQty();
+			String summary = translateBitEncoding(minValue, maxValue);
+			desc = String.format("[pos:%s %s]", posString, summary);
 		}
 		return desc;
 	}

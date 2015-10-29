@@ -166,9 +166,8 @@ public class WorkBehavior implements IApiBehavior {
 		priorCntrUses.addAll(inChe.getUses());
 		ArrayList<ContainerUse> newCntrUses = new ArrayList<ContainerUse>();
 
-		
 		HashMap<String, Container> containersHash = prefetchContainers(facility, positionToContainerMap);
-		IFacilityEdiExporter ediExporter = prefetchFacilityEdiExporter(facility);		
+		IFacilityEdiExporter ediExporter = prefetchFacilityEdiExporter(facility);
 		List<Container> containerList = new ArrayList<Container>();
 		// Set new uses on the CHE.
 		for (Entry<String, String> e : positionToContainerMap.entrySet()) {
@@ -216,7 +215,8 @@ public class WorkBehavior implements IApiBehavior {
 				if (loc == null) {
 					LOGGER.warn("Unknown container/order ID: {} in computeWorkInstructions for {}/{}",
 						containerId,
-						inChe.getDomainId(), inChe.getDeviceGuidStrNoPrefix());
+						inChe.getDomainId(),
+						inChe.getDeviceGuidStrNoPrefix());
 				} else if (!loc.isPutWallLocation()) {
 					LOGGER.warn("Location: {} scanned in computeWorkInstructions for {}, but not a put wall",
 						containerId,
@@ -248,7 +248,7 @@ public class WorkBehavior implements IApiBehavior {
 		// Get all of the OUTBOUND work instructions.
 		WorkList workList = generateOutboundInstructions(facility, inChe, containerList, theTime);
 		//wiResultList.addAll(generateOutboundInstructions(facility, inChe, containerList, theTime));
-		
+
 		// Get all of the CROSS work instructions.
 		//wiResultList.addAll(generateCrossWallInstructions(facility, inChe, containerList, theTime));
 		List<WorkInstruction> crossInstructions = generateCrossWallInstructions(facility, inChe, containerList, theTime);
@@ -397,7 +397,7 @@ public class WorkBehavior implements IApiBehavior {
 
 		}
 	}
-	
+
 	private void computeAndSendOrderFeedbackForSlots(OrderLocation orderLocation, boolean isLastOfGroup) {
 		if (orderLocation == null) {
 			LOGGER.error("null input to computeAndSendOrderFeedbackForSlots");
@@ -432,7 +432,6 @@ public class WorkBehavior implements IApiBehavior {
 		final OrderLocationFeedbackMessage orderLocMsg = new OrderLocationFeedbackMessage(bay, remain, isLastOfGroup);
 		sendMessage(facility.getSiteControllerUsers(), orderLocMsg);
 	}
-
 
 	private boolean locIsActivePutwallLocation(Location inLoc) {
 		if (inLoc != null && inLoc.isActive()) {
@@ -483,7 +482,6 @@ public class WorkBehavior implements IApiBehavior {
 		Location loc = orderLocation.getLocation();
 		return (Bay) loc.getParentAtLevel(Bay.class);
 	}
-
 
 	private class BayLocationComparator implements Comparator<OrderLocation> {
 		// Sort the OrderLocations such that all for the same bay will be together.
@@ -671,8 +669,10 @@ public class WorkBehavior implements IApiBehavior {
 			// Error? Probably not. GoodEggs had container uses that did not map to single outbound orders
 			return;
 		}
-		LOGGER.info("Order: {} added onto cart:{}", order.getOrderId(), inChe.getDomainId());
-		if (ediExporter != null){
+
+		// LOGGER.info("Order: {} added onto cart:{}/{} at pos:{}", ,,,inUse.getPositionOnCart()// containerUse not updated yet. Too bad
+		LOGGER.info("Order: {} added onto cart:{}/{}", order.getOrderId(), inChe.getDomainId(), inChe.getDeviceGuidStrNoPrefix());
+		if (ediExporter != null) {
 			try {
 				ediExporter.exportOrderOnCartAdded(order, inChe);
 			} catch (Exception e) {
@@ -761,7 +761,11 @@ public class WorkBehavior implements IApiBehavior {
 					String cheName = che.getDomainId();
 					String guidStr = che.getDeviceGuidStrNoPrefix();
 					// happens only if site controller completed a work instruction that server recently deleted
-					LOGGER.error("Cannot complete work instruction for order/cntr:{} from {}/{} because server could not find it in database {}",orderId, cheName, guidStr, incomingWI);
+					LOGGER.error("Cannot complete work instruction for order/cntr:{} from {}/{} because server could not find it in database {}",
+						orderId,
+						cheName,
+						guidStr,
+						incomingWI);
 					// No point in throwing here. A throw would return response.fail to site controller and CHE screen, but there is nothing
 					// the CHE/worker can do about it. Let's just succeed.
 					return;
@@ -863,7 +867,14 @@ public class WorkBehavior implements IApiBehavior {
 
 		Facility inFacility = inChe.getFacility();
 		String workSeqr = PropertyService.getInstance().getPropertyFromConfig(inFacility, DomainObjectProperty.WORKSEQR);
-		SingleWorkItem workItem = makeWIForOutbound(orderDetail, inChe, null, null, inFacility, inFacility.getPaths(), workSeqr, null);
+		SingleWorkItem workItem = makeWIForOutbound(orderDetail,
+			inChe,
+			null,
+			null,
+			inFacility,
+			inFacility.getPaths(),
+			workSeqr,
+			null);
 		WorkInstruction aWi = null;
 		// workItem will contain an Instruction if an item was found on some path or an OrderDetail if it was not.
 		// In LinePick, we are OK with items without a location. So, if does return with OrderDetail, just create an Instruction manually.
@@ -954,10 +965,10 @@ public class WorkBehavior implements IApiBehavior {
 	}
 
 	private static class SkuWallInstructions {
-		private String wallName;
-		private List<WorkInstruction> workInstructions;
+		private String					wallName;
+		private List<WorkInstruction>	workInstructions;
 	}
-	
+
 	private SkuWallInstructions getSkuWallInstructionsForItem(final Facility facility,
 		final Che che,
 		final String itemOrUpc,
@@ -998,7 +1009,7 @@ public class WorkBehavior implements IApiBehavior {
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		wiResultList.add(wi);
 		skuWallInstructions.workInstructions = wiResultList;
-		skuWallInstructions.wallName = skuWallLoc.getBestUsableLocationName(); 
+		skuWallInstructions.wallName = skuWallLoc.getBestUsableLocationName();
 		return skuWallInstructions;
 	}
 
@@ -1332,7 +1343,11 @@ public class WorkBehavior implements IApiBehavior {
 		//Log time if over 2 seconds
 		Long wrapComputeDurationMs = System.currentTimeMillis() - startTimestamp;
 		if (wrapComputeDurationMs > 2000) {
-			LOGGER.warn("GetWork() took {}ms; totalWis={}; for {}/{}", wrapComputeDurationMs, wrappedRouteWiList.size(), inChe.getDomainId(), inChe.getDeviceGuidStrNoPrefix());
+			LOGGER.warn("GetWork() took {}ms; totalWis={}; for {}/{}",
+				wrapComputeDurationMs,
+				wrappedRouteWiList.size(),
+				inChe.getDomainId(),
+				inChe.getDeviceGuidStrNoPrefix());
 		}
 		Timer timer = MetricsService.getInstance().createTimer(MetricsGroup.WSS, "cheWorkFromLocation");
 		timer.update(wrapComputeDurationMs, TimeUnit.MILLISECONDS);
@@ -1572,8 +1587,8 @@ public class WorkBehavior implements IApiBehavior {
 		workList.setDetails(uncompletedDetails);
 		return workList;
 	}
-	
-	private HashMap<String, Container> prefetchContainers(Facility facility, Map<String, String> positionToContainerMap){
+
+	private HashMap<String, Container> prefetchContainers(Facility facility, Map<String, String> positionToContainerMap) {
 		List<String> neededDomainIds = new ArrayList<>();
 		HashMap<String, Container> containersHash = new HashMap<>();
 		//Make a list of required container domain ids
@@ -1586,16 +1601,16 @@ public class WorkBehavior implements IApiBehavior {
 		filterParams.add(Restrictions.in("domainId", neededDomainIds));
 		List<Container> containers = Container.staticGetDao().findByFilter(filterParams);
 		//Hash the results
-		for (Container container : containers){
+		for (Container container : containers) {
 			containersHash.put(container.getDomainId(), container);
 		}
 		return containersHash;
 	}
-	
-	private HashMap<String, Location> prefetchPreferredLocations(Facility facility, List<Container> inContainerList){
+
+	private HashMap<String, Location> prefetchPreferredLocations(Facility facility, List<Container> inContainerList) {
 		List<LocationAlias> aliases = LocationAlias.staticGetDao().findByParent(facility);
 		HashMap<String, LocationAlias> aliasesHash = new HashMap<>();
-		for (LocationAlias alias : aliases){
+		for (LocationAlias alias : aliases) {
 			aliasesHash.put(alias.getDomainId(), alias);
 		}
 		HashMap<String, Location> preferredLocations = new HashMap<>();
@@ -1621,8 +1636,8 @@ public class WorkBehavior implements IApiBehavior {
 		}
 		return preferredLocations;
 	}
-	
-	private IFacilityEdiExporter prefetchFacilityEdiExporter(Facility facility){
+
+	private IFacilityEdiExporter prefetchFacilityEdiExporter(Facility facility) {
 		IFacilityEdiExporter ediExporter = null;
 		try {
 			Optional<IFacilityEdiExporter> ediExporterOptional = getFacilityEdiExporter(facility);
@@ -1634,7 +1649,7 @@ public class WorkBehavior implements IApiBehavior {
 		}
 		return ediExporter;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Find all of the OUTBOUND orders that need items held in containers holding CROSS orders.
@@ -1742,7 +1757,7 @@ public class WorkBehavior implements IApiBehavior {
 					} else if (!location.isActive()) {
 						LOGGER.warn("Unexpected inactive location for preferred Location: {}", location);
 						location = inFacility.getUnspecifiedLocation();
-					} 
+					}
 				} else {
 					LOGGER.warn("Wanted workSequence mode but need locationId for detail: {}", inOrderDetail);
 				}
@@ -2439,8 +2454,7 @@ public class WorkBehavior implements IApiBehavior {
 			criteria.add(createSubstringRestriction("itemId", itemIdSubstring));
 		}
 		if (!Strings.isNullOrEmpty(containerIdSubstring)) {
-			criteria.createCriteria("container")
-				.add(createSubstringRestriction("domainId", containerIdSubstring));
+			criteria.createCriteria("container").add(createSubstringRestriction("domainId", containerIdSubstring));
 		}
 		if (assignedInterval != null) {
 			criteria.add(createIntervalRestriction("assigned", assignedInterval));
@@ -2496,6 +2510,5 @@ public class WorkBehavior implements IApiBehavior {
 		return viewResults;
 
 	}
-
 
 }

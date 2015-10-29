@@ -210,5 +210,13 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 		
 		return "";
 	}
+	
+	public String getPositionOnCart(){
+		Integer pos = this.getPosconIndex();
+		if (pos == null)
+			return "";
+		else
+			return pos.toString();
+	}
 
 }

@@ -17,9 +17,6 @@ import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +50,9 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.Expose;
+
+import lombok.Getter;
+import lombok.Setter;
 
 // --------------------------------------------------------------------------
 /**
@@ -102,12 +102,24 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 	}
 
 	public static class DropboxCredentials {
+		public static final String CURRENT_VERSION = "3.0";
+
+		@Getter @Setter
+		@Expose
+		private String	version;
+		
 		@Getter @Setter
 		@Expose
 		private String	code;
 
-		public DropboxCredentials(String code) {
+		@Getter @Setter
+		@Expose
+		private String	accessToken;
+
+		public DropboxCredentials(String code, String accessToken) {
 			this.code = code;
+			this.accessToken = accessToken;
+			this.version = CURRENT_VERSION;
 		}
 		
 		@Override
@@ -120,11 +132,22 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 	private DropboxCredentials getCredentials() {
 		Gson mGson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 		DropboxCredentials credentials = null;
+		String rawProviderCredentials = getProviderCredentials();
 		try {
-			credentials = mGson.fromJson(getProviderCredentials(), DropboxCredentials.class);
+			credentials = mGson.fromJson(rawProviderCredentials, DropboxCredentials.class);
+			//any parsable json that didn't have version field had accessCode in code field (v2.0)
+			if (!DropboxCredentials.CURRENT_VERSION.equals(credentials.getVersion())) {  
+				//probably had a prior accessToken stored in code
+				credentials = new DropboxCredentials("", credentials.getCode());
+				this.setProviderCredentials(credentials.toString());
+				this.getDao().store(this);
+			}
 		} catch (JsonSyntaxException e) {
-			LOGGER.info("Error parsing Dropbox credentials. Attempting to update legacy credentials. {}", e);
-			getFacility().dropboxLegacyCredentialsCleanup();
+			//when not valid json probably was plain string (v1.0) and needs to be turned into accessToken
+			String accessToken = rawProviderCredentials;
+			credentials = new DropboxCredentials("", accessToken);
+			this.setProviderCredentials(credentials.toString());
+			this.getDao().store(this);
 		}
 		return credentials;
 	}
@@ -136,7 +159,8 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 	@Override
 	@JsonProperty
 	public boolean getHasCredentials() {
-		return !Strings.isNullOrEmpty(getProviderCredentials());
+		return !Strings.isNullOrEmpty(getProviderCredentials()) &&
+			   !Strings.isNullOrEmpty(getCredentials().getAccessToken());
 	}
 
 	@Override
@@ -254,10 +278,10 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 	private DbxClient getClient() {
 		DbxClient result = null;
 		DropboxCredentials credentials = getCredentials();
-		if (credentials != null) {
+		if (credentials != null && !Strings.isNullOrEmpty(credentials.getAccessToken())) {
 			DbxRequestConfig config = new DbxRequestConfig("Codeshelf Interface", Locale.getDefault().toString());
-			result = new DbxClient(config, credentials.getCode());
-		}
+			result = new DbxClient(config, credentials.getAccessToken());
+		} 
 		return result;
 	}
 
@@ -398,36 +422,41 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 	 * @param inAuthInfo
 	 */
 	public boolean finishLink(final String inDbxCode) {
-
-		boolean result = false;
-
-		try {
-			DbxAppInfo appInfo = new DbxAppInfo(APPKEY, APPSECRET);
-			DbxRequestConfig config = new DbxRequestConfig("Codeshelf Interface", Locale.getDefault().toString());
-			DbxWebAuthNoRedirect webAuth = new DbxWebAuthNoRedirect(config, appInfo);
-			DbxAuthFinish authFinish = webAuth.finish(inDbxCode);
-			String accessToken = authFinish.accessToken;
+		if (!Strings.isNullOrEmpty(inDbxCode) && !inDbxCode.equals(this.getCredentials().getCode())) {
+			boolean result = false;
 
 			try {
-				// We did get an access token.
-				if (accessToken == null) {
-					setGatewayState(EdiGatewayStateEnum.LINK_FAILED);
-				} else {
-					DropboxCredentials credentials = new DropboxCredentials(accessToken);
-					setProviderCredentials(credentials.toString());
-					setGatewayState(EdiGatewayStateEnum.LINKED);
-					setDbCursor("");
-					result = true;
-				}
-				DropboxGateway.staticGetDao().store(this);
-			} catch (DaoException e) {
-				LOGGER.error("Unable to store dropbox gateway change after linking", e);
-			}
-		} catch (DbxException e) {
-			LOGGER.error("Unable to get accessToken for dropbox service", e);
-		}
+				DbxAppInfo appInfo = new DbxAppInfo(APPKEY, APPSECRET);
+				DbxRequestConfig config = new DbxRequestConfig("Codeshelf Interface", Locale.getDefault().toString());
+				DbxWebAuthNoRedirect webAuth = new DbxWebAuthNoRedirect(config, appInfo);
+				DbxAuthFinish authFinish = webAuth.finish(inDbxCode);
+				String accessToken = authFinish.accessToken;
 
-		return result;
+				try {
+					// We did get an access token.
+					if (accessToken == null) {
+						setGatewayState(EdiGatewayStateEnum.LINK_FAILED);
+					} else {
+						DropboxCredentials credentials = new DropboxCredentials(inDbxCode, accessToken);
+						setProviderCredentials(credentials.toString());
+						setGatewayState(EdiGatewayStateEnum.LINKED);
+						setDbCursor("");
+						result = true;
+					}
+					DropboxGateway.staticGetDao().store(this);
+				} catch (DaoException e) {
+					LOGGER.error("Unable to store dropbox gateway change after linking", e);
+				}
+			} catch (DbxException e) {
+				LOGGER.error("Unable to get accessToken for dropbox service", e);
+			}
+
+			return result;
+			
+		}
+		else {
+			return true;
+		}
 	}
 
 	// --------------------------------------------------------------------------
