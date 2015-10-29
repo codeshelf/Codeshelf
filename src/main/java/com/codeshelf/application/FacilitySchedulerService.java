@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
 
 import lombok.Getter;
@@ -24,6 +25,7 @@ import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
+import org.quartz.UnableToInterruptJobException;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.quartz.listeners.JobListenerSupport;
 import org.slf4j.Logger;
@@ -31,11 +33,14 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.ScheduledJobType;
+import com.codeshelf.model.TestJob;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.AbstractFuture;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 
 /*
@@ -54,6 +59,34 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		
 	}
 	
+	private class JobFuture<T> extends AbstractFuture<T> {
+		
+		private ScheduledJobType type;
+		
+		public JobFuture(ScheduledJobType type) {
+			this.type = type;
+		}
+		
+		public boolean set(T o) {
+			return super.set(o);
+		}
+		public boolean setException(Throwable t) {
+			return super.setException(t);
+		}
+
+		@Override
+		protected void interruptTask() {
+			super.interruptTask();
+			try {
+				FacilitySchedulerService.this.scheduler.interrupt(this.type.getKey());
+			} catch (UnableToInterruptJobException e) {
+				this.setException(e);
+			}
+		}
+		
+		
+	}
+	
 	private static class FutureResolver extends JobListenerSupport {
 		private static final String FUTURE_PROPERTY = "future";
 		@Override
@@ -65,9 +98,9 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		public void jobWasExecuted(JobExecutionContext context, JobExecutionException jobException) {
 			super.jobWasExecuted(context, jobException);
 			Object value = context.getMergedJobDataMap().get(FUTURE_PROPERTY);
-			if (value != null && value instanceof SettableFuture) {
+			if (value != null && value instanceof JobFuture) {
 				@SuppressWarnings("unchecked")
-				SettableFuture<ScheduledJobType> future = (SettableFuture<ScheduledJobType>) value;
+				JobFuture<ScheduledJobType> future = (JobFuture<ScheduledJobType>) value;
 				if (jobException != null) {
 					future.setException(jobException);
 				} else {
@@ -165,7 +198,7 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 	}
 
 	public Future<ScheduledJobType> trigger(ScheduledJobType type) throws SchedulerException {
-		Future<ScheduledJobType> future = SettableFuture.create();
+		Future<ScheduledJobType> future = new JobFuture<ScheduledJobType>(type);		
 		lastFiredTimes.put(type, DateTime.now());
 		scheduler.triggerJob(type.getKey(), new JobDataMap(ImmutableMap.of(FutureResolver.FUTURE_PROPERTY, future)));
 		return future;
@@ -187,6 +220,11 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 			}
 		}
 		return Optional.fromNullable(lastTime);
+	}
+
+	public List<JobExecutionContext> getRunningJobs() throws SchedulerException {
+		List<JobExecutionContext> runningJobs = scheduler.getCurrentlyExecutingJobs();
+		return runningJobs;
 	}
 
 }
