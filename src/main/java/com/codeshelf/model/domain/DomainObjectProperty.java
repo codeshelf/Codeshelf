@@ -84,6 +84,8 @@ public class DomainObjectProperty extends DomainObjectABC {
 	public final static String						Default_BADGEAUTH	= "false";
 	public final static String						PRODUCTION			= "PRODUCTION";
 	public final static String						Default_PRODUCTION	= "false";
+	public final static String						ORDERSUB			= "ORDERSUB";
+	public final static String						Default_ORDERSUB	= "Disabled";
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -143,6 +145,9 @@ public class DomainObjectProperty extends DomainObjectABC {
 		}
 		if (inParameterName.equals(PRODUCTION)) {
 			return Default_PRODUCTION;
+		}
+		if (inParameterName.equals(ORDERSUB)) {
+			return Default_ORDERSUB;
 		}
 		// Do not log an error if not pre-known
 		return null;
@@ -291,6 +296,8 @@ public class DomainObjectProperty extends DomainObjectABC {
 			return "true, false";
 		else if (myName.equals(PRODUCTION))
 			return "true, false";
+		else if (myName.equals(ORDERSUB))
+			return "Disabled, <start>-<end>";
 		else {
 			LOGGER.error("new DomainObjectProperty: " + myName + " has no validInputValues implementation");
 		}
@@ -341,6 +348,8 @@ public class DomainObjectProperty extends DomainObjectABC {
 			return validate_boolean(trimmedValue);
 		else if (myName.equals(PRODUCTION))
 			return validate_boolean(trimmedValue);
+		else if (myName.equals(ORDERSUB))
+			return validate_ordersub(trimmedValue);
 		else {
 			LOGGER.error("new DomainObjectProperty: " + myName + " has no toCanonicalForm implementation");
 		}
@@ -472,6 +481,25 @@ public class DomainObjectProperty extends DomainObjectABC {
 				return theColor.getName();
 			}
 		}
+	}
+	
+	private String validate_ordersub(String inValue) {
+		if (Default_ORDERSUB.equalsIgnoreCase(inValue)) {
+			return inValue;
+		}
+		String parts[] = inValue.split("-");
+		if (parts.length != 2) {
+			return null;
+		}
+		try {
+			int start = Integer.parseInt(parts[0].trim());
+			int end   = Integer.parseInt(parts[1].trim());
+			if (start < end) {
+				return start + "-" + end;
+			}
+		} catch (NumberFormatException e) {
+		}
+		return null;
 	}
 
 	private String validate_boolean(String inValue) {
