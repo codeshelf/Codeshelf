@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
 
 import lombok.Getter;
@@ -33,15 +32,12 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.ScheduledJobType;
-import com.codeshelf.model.TestJob;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractFuture;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.SettableFuture;
 
 /*
  * This service class schedules jobs that are executed periodically while
