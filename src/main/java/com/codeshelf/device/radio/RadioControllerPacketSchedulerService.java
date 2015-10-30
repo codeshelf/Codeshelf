@@ -459,9 +459,25 @@ public class RadioControllerPacketSchedulerService {
 		long minDifference = 0;
 		long currTime = System.currentTimeMillis();
 		int packetDelayRequirement = 0;
-
+		IPacket packet = null;
+		ConcurrentLinkedDeque<IPacket> devicePacketdeque;
+		
 		if (inDevice == null) {
 			return false;
+		}
+		
+		devicePacketdeque = mPendingPacketsMap.get(inDevice.getAddress());
+		if (devicePacketdeque != null) {
+			packet = devicePacketdeque.peek();
+		}
+		
+		// It's always ok to send ack messages
+		if (packet != null && packet.getCommand().getCommandTypeEnum() == CommandGroupEnum.CONTROL) {
+			CommandControlABC command = (CommandControlABC) packet.getCommand();
+
+			if (command.getExtendedCommandID().getValue() == CommandControlABC.ACK) {
+				return true;
+			}
 		}
 		
 		IPacket lastPacketSent = inDevice.getLastSentPacket();
