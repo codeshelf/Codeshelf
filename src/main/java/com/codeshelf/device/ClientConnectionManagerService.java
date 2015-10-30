@@ -102,7 +102,7 @@ public class ClientConnectionManagerService extends AbstractCodeshelfScheduledSe
 				}
 			}
 		} catch (Exception e) {
-			LOGGER.error("Unexpected exception handling keepalive (continuing)", e);
+			LOGGER.error("Unexpected exception in runOneIteration(); (continuing)", e);
 		}
 	}
 
@@ -113,12 +113,14 @@ public class ClientConnectionManagerService extends AbstractCodeshelfScheduledSe
 		try {
 			if (!clientEndpoint.isConnected()) {
 				LOGGER.warn("Not connected to server.  Trying to connect.");
-				clientEndpoint.connect();
+				clientEndpoint.connect(); // we see this throw an IOException when site controller cannot connect to app server
 			}
 		} catch (ConnectException e) {
-			LOGGER.warn("Failed to connect WebSocket: "+e.getMessage());
+			LOGGER.warn("Failed to connect WebSocket: ", e);
+		} catch (IOException e) {
+			LOGGER.warn("Failed to connect WebSocket: ", e);
 		} catch (Exception e) {
-			LOGGER.error("exception connecting websocket client (continuing)", e); 
+			LOGGER.error("Unexpected exception connecting websocket client", e); 
 		}
 	}
 
