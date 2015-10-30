@@ -791,6 +791,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 	 * See what happens if the short ahead finishes the order. Answer, the file is sent.
 	 */
 	@Test
+	@Ignore
 	public void testShortAheadFinishesOrder() throws Exception {
 
 		LOGGER.info("1: Set up facility. Add the export extensions");
@@ -904,6 +905,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 	}
 
 	@Test
+	@Ignore
 	public void testEDIActiveFlag() throws Exception {
 		Facility facility = setUpSimpleNoSlotFacility();
 
