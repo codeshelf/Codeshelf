@@ -120,6 +120,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Getter
 	@Setter
 	private int									mRememberPriorShorts					= 0;
+	
+	private String								mLastAssignedPoscon						= null;
 
 	private final boolean						useNewCheScreen							= true;
 
@@ -234,12 +236,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					} else {
 						sendDisplayCommand(getContainerSetupMsg(), OR_START_WORK_MSG, EMPTY_MSG, SHOWING_ORDER_IDS_MSG);
 					}
-					showContainerAssignments();
+					if (previousState != CheStateEnum.CONTAINER_POSITION){
+						showContainerAssignments();
+					} else {
+						showLatestContainerAssignment();
+					}					
 					break;
 
 				case CONTAINER_POSITION:
 					sendDisplayCommand(SELECT_POSITION_MSG, EMPTY_MSG);
-					showContainerAssignments();
+					if (previousState != CheStateEnum.CONTAINER_SELECT){
+						showContainerAssignments();
+					}
 					break;
 
 				case CONTAINER_POSITION_INVALID:
@@ -1457,10 +1465,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * A return code of 0 is basically an error. Calling code should silently not process this case and move on.
 	 */
 	private byte getPositionValue(Entry<String, String> entry) {
-		String thisKeyValue = entry.getKey();
+		return getPositionValue(entry.getKey());
+	}
+	
+	private byte getPositionValue(String value) {
 		byte position = 0;
 		try {
-			position = Byte.valueOf(thisKeyValue);
+			position = Byte.valueOf(value);
 		} catch (NumberFormatException e) {
 			LOGGER.info("getPositionValue found bad value in position map", e);
 			// DEV-1222 catch and move on. Better than skipping feedback on all poscons just because one position got bad data.
@@ -1813,46 +1824,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				continue;
 			}
 			String containerId = entry.getValue();
-
-			Byte value = 0;
-			boolean needBitEncodedA = false;
-			//Use the last 1-2 characters of the containerId if the container is numeric.
-			//Otherwise stick to the default character "a"
-
-			if (!StringUtils.isEmpty(containerId) && StringUtils.isNumeric(containerId)) {
-				if (containerId.length() == 1) {
-					value = Byte.valueOf(containerId);
-				} else {
-					value = Byte.valueOf(containerId.substring(containerId.length() - 2));
-				}
-			} else {
-				needBitEncodedA = true; // "a"
-			}
-
-			if (needBitEncodedA) {
-				instructions.add(new PosControllerInstr(position,
-					PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-					PosControllerInstr.BITENCODED_LED_A,
-					PosControllerInstr.BITENCODED_LED_BLANK,
-					PosControllerInstr.SOLID_FREQ,
-					PosControllerInstr.MED_DUTYCYCLE));
-			} else if (value >= 0 && value < 10) {
-				//If we are going to pass a single 0 <= digit < 10 like 9, then we must show "09" instead of just 9.
-				instructions.add(new PosControllerInstr(position,
-					PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-					PosControllerInstr.BITENCODED_DIGITS[value],
-					PosControllerInstr.BITENCODED_DIGITS[0],
-					PosControllerInstr.SOLID_FREQ,
-					PosControllerInstr.MED_DUTYCYCLE));
-			} else {
-				instructions.add(new PosControllerInstr(position,
-					value,
-					value,
-					value,
-					PosControllerInstr.SOLID_FREQ,
-					PosControllerInstr.MED_DUTYCYCLE));
-
-			}
+			PosControllerInstr instruction = generatePosconInstruction(position, containerId);
+			instructions.add(instruction);
 		}
 		LOGGER.debug("Sending Container Assaignments {}", instructions);
 
@@ -1863,6 +1836,61 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		sendRadioControllerCommand(broadcast, true);
 
 		sendPositionControllerInstructions(instructions);
+	}
+	
+	private void showLatestContainerAssignment() {
+		if (mLastAssignedPoscon == null) {
+			return;
+		}
+		String containerId = mPositionToContainerMap.get(mLastAssignedPoscon);
+		byte position = getPositionValue(mLastAssignedPoscon);
+		mLastAssignedPoscon = null;
+		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
+		PosControllerInstr instruction = generatePosconInstruction(position, containerId);
+		instructions.add(instruction);
+		LOGGER.debug("Sending Latest Container Assaignment {}", instructions);
+		sendPositionControllerInstructions(instructions);
+	}
+	
+	private PosControllerInstr generatePosconInstruction(byte position, String containerId){
+		Byte value = 0;
+		boolean needBitEncodedA = false;
+		//Use the last 1-2 characters of the containerId if the container is numeric.
+		//Otherwise stick to the default character "a"
+
+		if (!StringUtils.isEmpty(containerId) && StringUtils.isNumeric(containerId)) {
+			if (containerId.length() == 1) {
+				value = Byte.valueOf(containerId);
+			} else {
+				value = Byte.valueOf(containerId.substring(containerId.length() - 2));
+			}
+		} else {
+			needBitEncodedA = true; // "a"
+		}
+
+		if (needBitEncodedA) {
+			return new PosControllerInstr(position,
+				PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+				PosControllerInstr.BITENCODED_LED_A,
+				PosControllerInstr.BITENCODED_LED_BLANK,
+				PosControllerInstr.SOLID_FREQ,
+				PosControllerInstr.MED_DUTYCYCLE);
+		} else if (value >= 0 && value < 10) {
+			//If we are going to pass a single 0 <= digit < 10 like 9, then we must show "09" instead of just 9.
+			return new PosControllerInstr(position,
+				PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+				PosControllerInstr.BITENCODED_DIGITS[value],
+				PosControllerInstr.BITENCODED_DIGITS[0],
+				PosControllerInstr.SOLID_FREQ,
+				PosControllerInstr.MED_DUTYCYCLE);
+		} else {
+			return new PosControllerInstr(position,
+				value,
+				value,
+				value,
+				PosControllerInstr.SOLID_FREQ,
+				PosControllerInstr.MED_DUTYCYCLE);
+		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -2291,7 +2319,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			if (mPositionToContainerMap.get(inScanStr) == null) {
 				mPositionToContainerMap.put(inScanStr, mContainerInSetup);
-
+				mLastAssignedPoscon = inScanStr;
+				
 				// This one is kind of funny. We go straight from scan badge to setup, or after setup command. We will choose as our event
 				// the first order association to poscon.
 				if (mPositionToContainerMap.values().size() == 1) {
