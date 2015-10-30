@@ -1750,7 +1750,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		
 		String createOrderHeader = 
 				"def OrderImportCreateHeader(orderHeader) { \n" + 
-				"	orderHeader= \"orderId, orderDetailId, itemId, description, quantity, uom, preAssignedContainerId, locationId, workSequence, gtin, needsScan\"\n" + 
+				"	orderHeader= \"orderId, orderDetailId, itemId, description, quantity, uom, preAssignedContainerId, locationId, workSequence, gtin\"\n" + 
 				"}\n";
 		String transformOrderBean = 
 				"def OrderImportBeanTransformation(bean) {\n" + 
