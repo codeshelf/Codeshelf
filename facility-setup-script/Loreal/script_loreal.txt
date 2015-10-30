@@ -4,7 +4,7 @@ STEP
 SERVER
 deleteAllExtensionPoints
 addExtensionPoint loreal_order_createheader OrderImportCreateHeader active
-addExtensionPoint loreal_order_importline OrderImportLineTransformation active
+addExtensionPoint loreal_order_importbean OrderImportBeanTransformation active
 deleteOrders 2105334827
 importOrders orders
 

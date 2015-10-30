@@ -1,7 +1,7 @@
-def OrderImportLineTransformation(orderLine) {
-	fields = orderLine.split(",")
-	needsScan = determineNeedsScan(fields[7]);
-    orderLine = orderLine + ", " + needsScan;
+def OrderImportBeanTransformation(bean) {
+	needsScan = determineNeedsScan(bean.locationId);
+	bean.needsScan = needsScan.toString();
+	return bean;
 }
 
 def determineNeedsScan(locationId){

@@ -1752,11 +1752,11 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"def OrderImportCreateHeader(orderHeader) { \n" + 
 				"	orderHeader= \"orderId, orderDetailId, itemId, description, quantity, uom, preAssignedContainerId, locationId, workSequence, gtin, needsScan\"\n" + 
 				"}\n";
-		String importOrderLine = 
-				"def OrderImportLineTransformation(orderLine) {\n" + 
-				"	fields = orderLine.split(\",\")\n" + 
-				"	needsScan = determineNeedsScan(fields[7]);\n" + 
-				"    orderLine = orderLine + \", \" + needsScan;\n" + 
+		String transformOrderBean = 
+				"def OrderImportBeanTransformation(bean) {\n" + 
+				"	needsScan = determineNeedsScan(bean.locationId);\n" + 
+				"	bean.needsScan = needsScan.toString();\n" + 
+				"	return bean;\n" +
 				"}\n" + 
 				"\n" + 
 				"def determineNeedsScan(locationId){\n" + 
@@ -1772,10 +1772,10 @@ public class OutboundOrderImporterTest extends ServerTest {
 		extensionHeader.setScript(createOrderHeader);
 		extensionHeader.setActive(true);
 		engine.create(extensionHeader);
-		ExtensionPoint extensionLine = new ExtensionPoint(facility, ExtensionPointType.OrderImportLineTransformation);
-		extensionLine.setScript(importOrderLine);
-		extensionLine.setActive(true);
-		engine.create(extensionLine);
+		ExtensionPoint extensionBean = new ExtensionPoint(facility, ExtensionPointType.OrderImportBeanTransformation);
+		extensionBean.setScript(transformOrderBean);
+		extensionBean.setActive(true);
+		engine.create(extensionBean);
 
 
 		String ordersStringNormal = 
