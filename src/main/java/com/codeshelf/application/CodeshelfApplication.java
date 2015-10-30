@@ -31,10 +31,26 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Service.State;
 import com.google.common.util.concurrent.ServiceManager;
+import com.google.common.util.concurrent.ServiceManager.Listener;
 import com.google.inject.Inject;
 
 public abstract class CodeshelfApplication implements ICodeshelfApplication {
+
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(CodeshelfApplication.class);
+	private static class LoggingListener extends Listener {
+
+		@Override
+		public void healthy() {
+			super.healthy();
+			LOGGER.info("All services are now healthy");
+		}
+
+		@Override
+		public void failure(Service service) {
+			super.failure(service);
+			LOGGER.error("service failed {}", service, service.failureCause());
+		}
+	}
 
 	private boolean				mIsRunning	= true;
 
@@ -117,6 +133,7 @@ public abstract class CodeshelfApplication implements ICodeshelfApplication {
 			services.add(new DummyService());
 		
 		serviceManager = new ServiceManager(services);
+		serviceManager.addListener(new LoggingListener());
 		LOGGER.info("About to start application services: {}",serviceManager.servicesByState().toString());
 		serviceManager.startAsync();
 		try {

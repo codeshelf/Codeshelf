@@ -86,32 +86,39 @@ public final class EdiImportService extends AbstractCodeshelfScheduledService {
 		}
 		ediProcessingTimer = MetricsService.getInstance().createTimer(MetricsGroup.EDI, "processing-time");
 
-		LOGGER.info("starting EdiImportService");
+		LOGGER.info("starting EDI import check");
 	}
 
 	@Override
 	protected void runOneIteration() throws Exception {
-		CodeshelfSecurityManager.removeContextIfPresent(); // shared thread, maybe other was aborted
-
-		LOGGER.trace("Begin EDI process for all tenants.");
-
-		int numTenants = 0;
-		int successfulTenants = 0;
-
-		for (Tenant tenant : TenantManagerService.getInstance().getTenants()) {
-			numTenants++;
-			if(doEdiForTenant(tenant)) {
-				successfulTenants++;
+		try {
+			CodeshelfSecurityManager.removeContextIfPresent(); // shared thread, maybe other was aborted
+			LOGGER.trace("Begin EDI import check for all tenants.");
+	
+			int numTenants = 0;
+			int successfulTenants = 0;
+	
+			for (Tenant tenant : TenantManagerService.getInstance().getTenants()) {
+				try {
+					numTenants++;
+					if(doEdiForTenant(tenant)) {
+						successfulTenants++;
+					}
+				} catch(Exception e) {
+					LOGGER.warn("Unable to do EDI import check for tenant {}", tenant);
+				}
 			}
-		}
-		if(numTenants == successfulTenants) {
-			synchronized(this.lastSuccessTime) {
-				this.lastSuccessTime = System.currentTimeMillis();
+			if(numTenants == successfulTenants) {
+				synchronized(this.lastSuccessTime) {
+					this.lastSuccessTime = System.currentTimeMillis();
+				}
 			}
-		}
-		synchronized(this.lastNumTenants) {
-			this.lastNumTenants = numTenants;
-			this.lastSuccessfulTenants = successfulTenants;
+			synchronized(this.lastNumTenants) {
+				this.lastNumTenants = numTenants;
+				this.lastSuccessfulTenants = successfulTenants;
+			}
+		} catch(Exception e) {
+			LOGGER.warn("failed during EDI import check", e);
 		}
 	}
 	
@@ -150,16 +157,17 @@ public final class EdiImportService extends AbstractCodeshelfScheduledService {
 			LOGGER.error("Unable to process edi for tenant " + tenant.getId(), e);
 		} finally {
 			long endTime = System.currentTimeMillis();
-			if (timerContext != null)
+			if (timerContext != null) {
 				timerContext.stop();
+			}
 			LOGGER.info("Checked for updates from {} EDI services for tenant {} in {}s",
-				numChecked,
-				tenant.getName(),
-				(endTime - startTime) / 1000);
+					numChecked,
+					tenant.getName(),
+					(endTime - startTime) / 1000);
 			CodeshelfSecurityManager.removeContext();
 			if (!completed) {
-				TenantPersistenceService.getInstance().rollbackTransaction();
 				LOGGER.warn("EDI process did not complete successfully for tenant {}", tenant.getName());
+				TenantPersistenceService.getInstance().rollbackTransaction();
 			}
 		}
 		return completed;
@@ -190,7 +198,7 @@ public final class EdiImportService extends AbstractCodeshelfScheduledService {
 						}
 					}
 				} catch(Exception e) {
-					LOGGER.warn("EDI import update failed for service  {}", ediGateway, e);
+					LOGGER.warn("EDI import update failed for service {}", ediGateway, e);
 				}
 			}
 		}
