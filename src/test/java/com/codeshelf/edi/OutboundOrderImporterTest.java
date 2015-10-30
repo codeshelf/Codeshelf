@@ -29,6 +29,7 @@ import com.codeshelf.model.PickStrategyEnum;
 import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.Item;
@@ -38,6 +39,8 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Point;
+import com.codeshelf.service.ExtensionPointEngine;
+import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.validation.BatchResult;
@@ -1740,6 +1743,63 @@ public class OutboundOrderImporterTest extends ServerTest {
 		commitTransaction();
 	}
 	
+	@Test
+	public final void testLorealOrders() throws Exception{
+		beginTransaction();
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
+		
+		String createOrderHeader = 
+				"def OrderImportCreateHeader(orderHeader) { \n" + 
+				"	orderHeader= \"orderId, orderDetailId, itemId, description, quantity, uom, preAssignedContainerId, locationId, workSequence, gtin, needsScan\"\n" + 
+				"}\n";
+		String importOrderLine = 
+				"def OrderImportLineTransformation(orderLine) {\n" + 
+				"	fields = orderLine.split(\",\")\n" + 
+				"	needsScan = determineNeedsScan(fields[7]);\n" + 
+				"    orderLine = orderLine + \", \" + needsScan;\n" + 
+				"}\n" + 
+				"\n" + 
+				"def determineNeedsScan(locationId){\n" + 
+				"	if (locationId.length() < 5 || locationId[0] != \"T\"){\n" + 
+				"		return false;\n" + 
+				"	}\n" + 
+				"	tierId = locationId[4];\n" + 
+				"	return [1:\"A\",2:\"C\"].containsValue(tierId)\n" + 
+				"}";
+
+		ExtensionPointEngine engine = ExtensionPointEngine.getInstance(facility);
+		ExtensionPoint extensionHeader = new ExtensionPoint(facility, ExtensionPointType.OrderImportCreateHeader);
+		extensionHeader.setScript(createOrderHeader);
+		extensionHeader.setActive(true);
+		engine.create(extensionHeader);
+		ExtensionPoint extensionLine = new ExtensionPoint(facility, ExtensionPointType.OrderImportLineTransformation);
+		extensionLine.setScript(importOrderLine);
+		extensionLine.setActive(true);
+		engine.create(extensionLine);
+
+
+		String ordersStringNormal = 
+				"2105334827,2105334827.1,10043585,KL SUNFLOWER SHAMPOO COLOR 500ML,1,EA,731781354,T116C5,1150,3605975054118\n" + 
+				"2105334827,2105334827.2,10059617,KL CLEARLY CORRECTIVE 30ML,1,EA,731781354,T124D3,120,3605970202637\n" + 
+				"2105334827,2105334827.3,10012841,KL ULTRA FACIAL MOISTURIZER 75ML,1,EA,731781354,T121C3,4500,3700194712068";
+		BatchResult<Object> result = importOrdersData(facility, ordersStringNormal);
+		Assert.assertTrue(result.isSuccessful());
+		Assert.assertEquals(1, result.getOrdersProcessed());
+		Assert.assertEquals(3, result.getLinesProcessed());
+		
+		OrderHeader header = OrderHeader.staticGetDao().findByDomainId(facility, "2105334827");
+		Assert.assertNotNull(header);
+		OrderDetail detail1 = header.getOrderDetail("2105334827.1");
+		OrderDetail detail2 = header.getOrderDetail("2105334827.2");
+		OrderDetail detail3 = header.getOrderDetail("2105334827.3");
+		Assert.assertNotNull(detail1);
+		Assert.assertNotNull(detail2);
+		Assert.assertNotNull(detail3);
+		Assert.assertTrue(detail1.getNeedsScan());
+		Assert.assertFalse(detail2.getNeedsScan());
+		Assert.assertTrue(detail3.getNeedsScan());
+		commitTransaction();
+	}
 	/**
 	 * This is not generally useful. It gets absolutely all orders and groups, not even limiting to the facility.
 	 * Then assumes that all are represented in the groupExpectations and headerExpectations and complains if one is found not in expectations. You cannot chain imports and only check the results for

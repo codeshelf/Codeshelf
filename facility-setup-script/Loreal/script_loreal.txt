@@ -1,0 +1,17 @@
+var :che1 		0x0000009B
+
+STEP
+SERVER
+deleteAllExtensionPoints
+addExtensionPoint loreal_order_createheader OrderImportCreateHeader active
+addExtensionPoint loreal_order_importline OrderImportLineTransformation active
+deleteOrders 2105334827
+importOrders orders
+
+SITE
+defChe che1 :che1
+logout che1
+loginSetup che1 Ilya1
+setupCart che1 731781354
+scan che1 X%START SETUP_SUMMARY
+scan che1 X%START
