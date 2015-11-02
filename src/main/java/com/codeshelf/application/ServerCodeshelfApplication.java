@@ -24,6 +24,7 @@ import com.codeshelf.metrics.DropboxGatewayHealthCheck;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.IsProductionServerHealthCheck;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.scheduler.ApplicationSchedulerService;
 import com.codeshelf.security.TokenSessionService;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.inject.Inject;
@@ -50,7 +51,8 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 			final TokenSessionService authService,
 			final SecurityManager securityManager,
 			final EmailService emailService,
-			final TemplateService templateService) {
+			final TemplateService templateService,
+			final ApplicationSchedulerService schedulerService) {
 			
 		super(inWebApiServer);
 	
@@ -73,6 +75,7 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		this.registerService(ediImportService);
 		this.registerService(emailService);
 		this.registerService(templateService);
+		this.registerService(schedulerService);
 	}
 
 	// --------------------------------------------------------------------------

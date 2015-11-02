@@ -37,6 +37,7 @@ import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.scheduler.ApplicationSchedulerService;
 import com.codeshelf.security.CodeshelfRealm;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.TokenSessionService;
@@ -130,6 +131,9 @@ public final class ServerMain {
 
 				requestStaticInjection(WebSocketManagerService.class);
 				bind(WebSocketManagerService.class).in(Singleton.class);
+				
+				bind(ApplicationSchedulerService.class).in(Singleton.class);
+				
 				
 				bind(GuiceFilter.class);
 				
