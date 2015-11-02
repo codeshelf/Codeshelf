@@ -30,6 +30,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.Worker;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.google.gson.Gson;
@@ -94,6 +95,8 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 	protected String	locationId;
 	@Getter @Setter @Expose @Column(name = "picker_id")
 	protected String	pickerId;
+	@Getter @Setter @Expose @Column(name = "picker_name")
+	protected String	pickerName;
 	@Getter @Setter @Expose @Column(name = "plan_quantity")
 	protected String	planQuantity;
 	@Getter @Setter @Expose @Column(name = "actual_quantity")
@@ -193,11 +196,16 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 		String locationStr = inWi.getPickInstruction();
 		setLocationId(locationStr);
 
-		String picker = getPickerId(); // this field is nullable on work instruction
-		if (picker == null)
-			picker = "";
-		setPickerId(picker);
-
+		String pickerId = inWi.getPickerId(); // this field is nullable on work instruction
+		if (pickerId == null)
+			pickerId = "";
+		setPickerId(pickerId);
+		
+		Worker worker = Worker.findTenantWorker(pickerId); 
+		if (worker != null) {
+			setPickerName(worker.getWorkerNameUI());
+		}
+		
 		if (inWi.getPlanQuantity() != null) {
 			setPlanQuantity(String.valueOf(inWi.getPlanQuantity()));
 		}

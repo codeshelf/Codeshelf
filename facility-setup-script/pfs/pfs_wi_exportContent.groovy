@@ -7,7 +7,12 @@ def WorkInstructionExportContent(bean) {
 		bean.locationId.padRight(20),
 		bean.planQuantity.padLeft(15,'0'),
 		bean.actualQuantity.padLeft(15,'0'),
-		bean.itemId.padRight(25)
+		bean.itemId.padRight(25),
+		bean.assigned,
+		bean.completed,
+		bean.orderId.padRight(20),
+		bean.pickerId.padRight(11),
+		bean.pickerName.padRight(8)
 	];
 	return fields.join('^');
 }
