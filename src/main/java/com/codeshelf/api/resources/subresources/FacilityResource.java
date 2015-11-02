@@ -84,6 +84,7 @@ import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
+import com.codeshelf.edi.ICsvWorkerImporter;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
@@ -130,6 +131,7 @@ public class FacilityResource {
 	private final Provider<ICsvLocationAliasImporter>	locationsImporterProvider;
 	private final Provider<ICsvInventoryImporter>		inventoryImporterProvider;
 	private final Provider<ICsvOrderImporter>			orderImporterProvider;
+	private final Provider<ICsvWorkerImporter>			workerImporterProvider;
 
 	//TODO hacked here to prevent multiple executions
 	private static final ExecutorService				purgeExecutor	= Executors.newSingleThreadExecutor();
@@ -151,7 +153,8 @@ public class FacilityResource {
 		Provider<ICsvAislesFileImporter> aislesImporterProvider,
 		Provider<ICsvLocationAliasImporter> locationsImporterProvider,
 		Provider<ICsvInventoryImporter> inventoryImporterProvider,
-		Provider<ICsvOrderImporter> orderImporterProvider) {
+		Provider<ICsvOrderImporter> orderImporterProvider,
+		Provider<ICsvWorkerImporter> workerImporterProvider) {
 		this.orderService = orderService;
 		this.workService = workService;
 		this.webSocketManagerService = webSocketManagerService;
@@ -162,6 +165,7 @@ public class FacilityResource {
 		this.locationsImporterProvider = locationsImporterProvider;
 		this.inventoryImporterProvider = inventoryImporterProvider;
 		this.orderImporterProvider = orderImporterProvider;
+		this.workerImporterProvider = workerImporterProvider;
 	}
 
 	@Path("/import")
@@ -564,7 +568,7 @@ public class FacilityResource {
 	@RequiresPermissions("che:simulate")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response runScriptSteps(FormDataMultiPart body) {
+	public Response processScript(FormDataMultiPart body) {
 		try {
 			ErrorResponse errors = new ErrorResponse();
 
@@ -629,7 +633,8 @@ public class FacilityResource {
 				aislesImporterProvider,
 				locationsImporterProvider,
 				inventoryImporterProvider,
-				orderImporterProvider);
+				orderImporterProvider,
+				workerImporterProvider);
 			String error = null;
 			//Process script parts
 			while (!scriptParts.isEmpty()) {

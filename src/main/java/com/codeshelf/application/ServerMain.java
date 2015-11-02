@@ -24,10 +24,12 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
+import com.codeshelf.edi.ICsvWorkerImporter;
 import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.LocationAliasCsvImporter;
 import com.codeshelf.edi.OrderLocationCsvImporter;
 import com.codeshelf.edi.OutboundOrderPrefetchCsvImporter;
+import com.codeshelf.edi.WorkerCsvImporter;
 import com.codeshelf.email.EmailService;
 import com.codeshelf.email.TemplateService;
 import com.codeshelf.manager.service.ITenantManagerService;
@@ -139,6 +141,7 @@ public final class ServerMain {
 				bind(ICsvOrderLocationImporter.class).to(OrderLocationCsvImporter.class);
 				bind(ICsvAislesFileImporter.class).to(AislesFileCsvImporter.class);
 				bind(ICsvCrossBatchImporter.class).to(CrossBatchCsvImporter.class);
+				bind(ICsvWorkerImporter.class).to(WorkerCsvImporter.class);
 
 				// jetty websocket
 				bind(IMessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);

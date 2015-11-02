@@ -45,6 +45,7 @@ public class WorkerTest extends HibernateTest {
 			anyProvider, 
 			anyProvider, 
 			anyProvider, 
+			anyProvider,
 			anyProvider);
 		Facility facility = getFacility();
 		facilityResource.setFacility(facility);
