@@ -1,5 +1,6 @@
 package com.codeshelf.application;
 
+import java.text.ParseException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +37,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractFuture;
 
@@ -50,7 +52,7 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 
 		@Override
 		public void execute(JobExecutionContext context) throws JobExecutionException {
-			LOGGER.warn("Scheduled a job that has no implementation");
+			LOGGER.warn("Scheduled a job that has no implementation {}", context);
 		}
 		
 	}
@@ -134,6 +136,11 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 	@Override
 	protected void startUp() throws Exception {
 		scheduler.start();
+		for (ScheduledJobType jobType : ScheduledJobType.values()) {
+			if (jobType.isDefaultOnOff()) {
+				schedule(jobType.getDefaultSchedule(), jobType);
+			}
+		}
 	}
 
 	@Override
@@ -141,23 +148,35 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		scheduler.shutdown(true);
 	}
 
-	public Map<String, Class<? extends Job>> getJobs() throws SchedulerException  {
-		HashMap<String, Class<? extends Job>> jobs = new HashMap<>();
+	public CronExpression findSchedule(ScheduledJobType type) throws SchedulerException {
+		return getJobs().get(type);
+		
+	}
+	
+	public Map<ScheduledJobType, CronExpression>  getJobs() throws SchedulerException  {
+		HashMap<ScheduledJobType, CronExpression> jobs = new HashMap<>();
 		Set<JobKey> jobKeys = scheduler.getJobKeys(GroupMatcher.anyJobGroup()); //throw this
 		for (JobKey jobKey : jobKeys) {
-			JobDetail jobDetail;
-			try {
-				jobDetail = scheduler.getJobDetail(jobKey);
-				List<? extends Trigger> triggers = scheduler.getTriggersOfJob(jobKey);
-				for (Trigger trigger : triggers) {
-					if (trigger instanceof CronTrigger) {
-						CronTrigger cronTrigger = (CronTrigger) trigger;
-						jobs.put(cronTrigger.getCronExpression(), jobDetail.getJobClass());
+			Optional<ScheduledJobType> type = ScheduledJobType.findByKey(jobKey);
+			if (type.isPresent()) {
+				try {
+					List<? extends Trigger> triggers = scheduler.getTriggersOfJob(jobKey);
+					for (Trigger trigger : triggers) {
+						if (trigger instanceof CronTrigger) {
+							CronTrigger cronTrigger = (CronTrigger) trigger;
+							String expression = cronTrigger.getCronExpression();
+							try {
+								jobs.put(type.get(), new CronExpression(expression));
+							} catch (ParseException e) {
+								LOGGER.warn("Unable to parse cron expression {} for jobKey {}", expression, jobKey, e);
+							}
+						}
 					}
-				}
-			} catch (SchedulerException e1) {
-				LOGGER.error("", e1);
-				//todo indicate list is partial
+				} catch (SchedulerException e) {
+					LOGGER.warn("Unable to return schedules for jobKey {}", jobKey, e);
+				} 
+			} else {
+				LOGGER.error("Unable to find type matching key {}", jobKey);
 			}
 		}
 		return jobs;
@@ -170,17 +189,18 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		map.put("tenant", tenant);
 		map.put("userContext", systemUserContext);
 		map.put(TYPE_PROPERTY, jobType);
-		JobDetail archivingJob = JobBuilder.newJob(jobType.getJobClass())
+		JobDetail jobDetail = JobBuilder.newJob(jobType.getJobClass())
                 .withIdentity(jobType.getKey())
                 .usingJobData(map).build();
 
 		Trigger trigger = TriggerBuilder
 	            .newTrigger()
-	            .withIdentity(exp1.getExpressionSummary())
+	            .withIdentity(jobType.getKey().toString())
 	            .withSchedule(CronScheduleBuilder.cronSchedule(exp1))
 	            .build();
-		scheduler.deleteJob(archivingJob.getKey());
-		scheduler.scheduleJob(archivingJob, trigger);
+		scheduler.unscheduleJob(trigger.getKey());
+		scheduler.deleteJob(jobType.getKey());
+		scheduler.scheduleJob(jobDetail, trigger);
 	}
 
 	public boolean isJobRunning(ScheduledJobType jobType) throws SchedulerException {
@@ -221,6 +241,11 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 	public List<JobExecutionContext> getRunningJobs() throws SchedulerException {
 		List<JobExecutionContext> runningJobs = scheduler.getCurrentlyExecutingJobs();
 		return runningJobs;
+	}
+
+	public boolean hasFacility(Facility facility) {
+		Preconditions.checkNotNull(facility, "facility cannot be null");
+		return (this.facility.getPersistentId().equals(facility.getPersistentId()));
 	}
 
 }

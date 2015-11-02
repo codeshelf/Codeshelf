@@ -57,21 +57,20 @@ public class FacilitySchedulerServiceTest {
 
 	@Test
 	public void testRescheduleJobClass() throws ParseException, SchedulerException  {
-		
+		ScheduledJobType type = ScheduledJobType.Test;
 		CronExpression firstExp = new CronExpression("0 0 2 * * ?");
-		subject.schedule(firstExp, ScheduledJobType.DatabasePurge);
+		subject.schedule(firstExp, type);
 
 		CronExpression secondExp = new CronExpression("0 0 3 * * ?");
 		CronExpression sameSecondExp = new CronExpression("0 0 3 * * ?");
 		
 		
-		subject.schedule(secondExp, ScheduledJobType.DatabasePurge);
-		Map<String, ?> scheduledJobs = subject.getJobs();
+		subject.schedule(secondExp, type);
+		Map<ScheduledJobType, CronExpression> scheduledJobs = subject.getJobs();
 
 		Assert.assertEquals(secondExp.getCronExpression(), sameSecondExp.getCronExpression());
 		Assert.assertNotEquals(firstExp, secondExp);
-		Assert.assertEquals(1, scheduledJobs.size());
-		Assert.assertTrue(scheduledJobs.containsKey(secondExp.getCronExpression()));
+		Assert.assertEquals(secondExp.getCronExpression(), scheduledJobs.get(type).getCronExpression());
 
 	}
 	
@@ -191,8 +190,22 @@ public class FacilitySchedulerServiceTest {
 	}
 
 	@Test
-	public void viewJobSchedules() {
+	public void viewJobSchedules() throws ParseException, SchedulerException {
+		CronExpression firstExp = new CronExpression("0 0 2 * * ?");
+		ScheduledJobType testType = ScheduledJobType.Test;	
+		subject.schedule(firstExp, testType);
+
+		CronExpression secondExp = new CronExpression("0 0 3 * * ?");
+		ScheduledJobType otherType = ScheduledJobType.DatabasePurge;	//any will do 
+		subject.schedule(secondExp, otherType);
 		
+		Map<ScheduledJobType, CronExpression> jobs = subject.getJobs();
+		Assert.assertTrue(jobs.keySet().contains(testType));
+		Assert.assertTrue(jobs.keySet().contains(otherType));
+		Assert.assertEquals(firstExp.getCronExpression(), jobs.get(testType).getCronExpression());
+		Assert.assertEquals(secondExp.getCronExpression(), jobs.get(otherType).getCronExpression());
+
+
 	}
 
 	

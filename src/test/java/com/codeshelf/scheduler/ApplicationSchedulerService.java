@@ -21,6 +21,8 @@ import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 import com.codeshelf.service.ServiceUtility;
+import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
@@ -74,6 +76,18 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 		ServiceUtility.awaitTerminatedOrThrow(facilitySchedulerServiceManager);
 	}
 
+	public Optional<FacilitySchedulerService> findService(Facility facility) {
+		Preconditions.checkNotNull(facility, "facility cannot be null");
+		for (Service  service : facilitySchedulerServiceManager.servicesByState().values()) {
+			if (service instanceof FacilitySchedulerService) {
+				if (((FacilitySchedulerService) service).hasFacility(facility)) {
+					return Optional.of((FacilitySchedulerService) service);
+				}
+			}
+		}
+		return Optional.absent();
+	}
+	
 	public Multimap<State, FacilitySchedulerService> getServicesByState() {
 		Multimap<State, FacilitySchedulerService> services = ArrayListMultimap.create(); 
 		for (Entry<State, Service> serviceEntry : facilitySchedulerServiceManager.servicesByState().entries()) {

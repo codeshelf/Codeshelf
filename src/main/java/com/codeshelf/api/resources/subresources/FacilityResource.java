@@ -190,6 +190,14 @@ public class FacilityResource {
 		return r;
 	}
 
+	@Path("/scheduledjobs")
+	public ScheduledJobsResource getScheduledJobResource() throws Exception {
+		ScheduledJobsResource r = resourceContext.getResource(ScheduledJobsResource.class);
+		r.setFacility(facility);
+		return r;
+	}
+
+	
 	@DELETE
 	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
