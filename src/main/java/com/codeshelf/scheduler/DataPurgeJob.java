@@ -1,4 +1,4 @@
-package com.codeshelf.model;
+package com.codeshelf.scheduler;
 
 import org.quartz.Job;
 import org.quartz.JobExecutionContext;
@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.behavior.TenantCallable;
 import com.codeshelf.manager.Tenant;
+import com.codeshelf.model.PurgeProcessor;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;

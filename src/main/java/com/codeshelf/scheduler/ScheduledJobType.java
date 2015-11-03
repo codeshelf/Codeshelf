@@ -1,4 +1,4 @@
-package com.codeshelf.model;
+package com.codeshelf.scheduler;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -10,6 +10,7 @@ import org.quartz.Job;
 import org.quartz.JobKey;
 
 import com.codeshelf.application.FacilitySchedulerService.NotImplementedJob;
+import com.codeshelf.model.TestJob;
 import com.google.common.base.Optional;
 
 /**

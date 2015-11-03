@@ -24,9 +24,9 @@ import org.quartz.SchedulerException;
 import org.quartz.impl.DirectSchedulerFactory;
 
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.model.ScheduledJobType;
 import com.codeshelf.model.TestJob;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.scheduler.ScheduledJobType;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
 import com.google.common.base.Optional;
