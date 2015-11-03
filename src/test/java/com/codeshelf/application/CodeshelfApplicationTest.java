@@ -56,7 +56,7 @@ public class CodeshelfApplicationTest extends ServerTest {
 			mock(AuthorizingSecurityManager.class),
 			this.emailService,
 			this.templateService,
-			mock(ApplicationSchedulerService.class));
+			new ApplicationSchedulerService());
 
 		final Result checkAppRunning = new Result();
 

@@ -32,8 +32,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.model.ScheduledJobType;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.scheduler.ScheduledJobType;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 import com.google.common.base.Optional;
