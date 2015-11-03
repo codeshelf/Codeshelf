@@ -10,6 +10,7 @@ import lombok.Setter;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
@@ -50,7 +51,7 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(WorkInstructionCsvBean.class);
-	private static final SimpleDateFormat timestampFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+	private static final SimpleDateFormat timestampFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
 	// Potentially missing fields: description, gtin.  lotId is probably superfluous.
 	// Note that for bean export, null field will export as "null" instead of "". We want "". See handling on pickerId
@@ -215,18 +216,21 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 		if (detail != null && detail.getQuantity() != null) {
 			setDetailQuantity(String.valueOf(detail.getQuantity()));
 		}
-
+		
 		setCheId(inWi.getAssignedCheName());
-		setAssigned(formatDate(inWi.getAssigned()));
-		setStarted(formatDate(inWi.getStarted()));
-		setCompleted(formatDate(inWi.getCompleted()));
+		
+		TimeZone tz = inWi.getFacility().getTimeZone();
+		setAssigned(formatDate(inWi.getAssigned(), tz));
+		setStarted(formatDate(inWi.getStarted(), tz));
+		setCompleted(formatDate(inWi.getCompleted(), tz));
 	}
 	
-	private String formatDate(Timestamp time) {
+	private String formatDate(Timestamp time, TimeZone tz) {
 		if (time == null) {
 			return "";
 		} else {
 			synchronized(timestampFormatter) {
+				timestampFormatter.setTimeZone(tz);
 				return timestampFormatter.format(time);
 			}
 		}
