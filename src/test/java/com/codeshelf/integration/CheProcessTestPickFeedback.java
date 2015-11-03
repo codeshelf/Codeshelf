@@ -294,10 +294,10 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 
-		//Make sure we have a bright 1 on the poscon
+		//Make sure we have a bright blinking 1 on the poscon
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 1);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.BRIGHT_DUTYCYCLE);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.SOLID_FREQ);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.BLINK_FREQ);
 
 		//COMPLETE FIRST ITEM
 		picker.pick(1, 1);
@@ -372,7 +372,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue(), 1);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2), PosControllerInstr.BRIGHT_DUTYCYCLE);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 2), PosControllerInstr.SOLID_FREQ);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 2), PosControllerInstr.BLINK_FREQ);
 
 		picker.logout();
 	}
@@ -1028,7 +1028,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertEquals(2, picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue());
 		Assert.assertEquals(5, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());
 
-		LOGGER.info("2a: SHORT now. This should make all 3 poscons flash on their number");
+		LOGGER.info("2a: SHORT now. This should make all 3 poscons showing solid numbers");
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 4000);
 
@@ -1036,9 +1036,9 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertEquals(PosControllerInstr.BRIGHT_DUTYCYCLE, picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1));
 		Assert.assertEquals(PosControllerInstr.BRIGHT_DUTYCYCLE, picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2));
 		Assert.assertEquals(PosControllerInstr.BRIGHT_DUTYCYCLE, picker.getLastSentPositionControllerDisplayDutyCycle((byte) 3));
-		Assert.assertEquals(kBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 1));
-		Assert.assertEquals(kBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 2));
-		Assert.assertEquals(kBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 3));
+		Assert.assertEquals(kSOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 1));
+		Assert.assertEquals(kSOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 2));
+		Assert.assertEquals(kSOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 3));
 
 		LOGGER.info("2c: Screen shows the location, SKU, and total to pick");
 		line1 = picker.getLastCheDisplayString(1);
@@ -1053,10 +1053,10 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		picker.pick(1, 1);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 4000);
 
-		LOGGER.info("3b: Poscon 1 goes out. 2 and 3 still flashing.");
+		LOGGER.info("3b: Poscon 1 goes out. 2 and 3 still solid.");
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
-		Assert.assertEquals(kBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 2));
-		Assert.assertEquals(kBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 3));
+		Assert.assertEquals(kSOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 2));
+		Assert.assertEquals(kSOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 3));
 
 		LOGGER.info("3c: Screen shows same location, SKU. Total counts down.");
 		line1 = picker.getLastCheDisplayString(1);
@@ -1074,7 +1074,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
 
-		LOGGER.info("4b: Say no to confirm. Should be back at DO_PICK. Nothing flashing");
+		LOGGER.info("4b: Say no to confirm. Should be back at DO_PICK. Flashing");
 		line2 = picker.getLastCheDisplayString(2);
 		Assert.assertEquals(line2, CheDeviceLogic.YES_NO_MSG);
 		picker.scanCommand("NO");
@@ -1082,8 +1082,8 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		Assert.assertEquals(2, picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue());
 		Assert.assertEquals(5, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());
-		Assert.assertEquals(kSOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 2));
-		Assert.assertEquals(kSOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 3));
+		Assert.assertEquals(kBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 2));
+		Assert.assertEquals(kBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 3));
 
 		LOGGER.info("5a: This time short and confirm");
 		picker.scanCommand("SHORT");
@@ -1422,17 +1422,17 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		Assert.assertEquals(33, (int) picker.getLastSentPositionControllerDisplayValue(2));
 
-		LOGGER.info("8: Scan SHORT, wait for poscon 2 to blink");
+		LOGGER.info("8: Scan SHORT, wait for poscon 2 to be solid");
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 4000);
 		Assert.assertEquals(33, (int) picker.getLastSentPositionControllerDisplayValue(2));
-		Assert.assertEquals(PosControllerInstr.BLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 2));
+		Assert.assertEquals(PosControllerInstr.SOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 2));
 
 		LOGGER.info("9: Press poscon 1, ensure that nothing changes");
 		picker.buttonPress(1);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 4000);
 		Assert.assertEquals(33, (int) picker.getLastSentPositionControllerDisplayValue(2));
-		Assert.assertEquals(PosControllerInstr.BLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 2));
+		Assert.assertEquals(PosControllerInstr.SOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 2));
 
 		LOGGER.info("10: Press poscon 2, ensure that picking is done and poscon 2 now shows '=='");
 		picker.buttonPress(2, 1);

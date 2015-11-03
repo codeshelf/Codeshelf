@@ -711,7 +711,7 @@ public class CheProcessScanPick extends ServerTest {
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 
-		LOGGER.info("1d: scan a valid location. This does the usual, but with SCANPICK, it goes to SCAN_SOMETHING state. The brightness is different");
+		LOGGER.info("1d: scan a valid location. This does the usual, but with SCANPICK, it goes to SCAN_SOMETHING state. The flink frequency is different");
 		picker.scanLocation("D303");
 
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
@@ -721,9 +721,8 @@ public class CheProcessScanPick extends ServerTest {
 		logWiList(scWiList);
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 1);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.MIDDIM_DUTYCYCLE);
-		// Assert.assertEquals(PosControllerInstr.RAPIDBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 1));
-		Assert.assertEquals(PosControllerInstr.SOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 1));
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.BRIGHT_DUTYCYCLE);
+		Assert.assertEquals(PosControllerInstr.RAPIDBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 1));
 
 		LOGGER.info("1e: although the poscon shows the count, prove that the button press is not handled");
 		WorkInstruction wi = picker.nextActiveWi();
@@ -737,11 +736,11 @@ public class CheProcessScanPick extends ServerTest {
 		WorkInstruction wi2 = picker.nextActiveWi();
 		Assert.assertEquals(wi, wi2);
 
-		LOGGER.info("1f: scan the SKU. This data has 1493. After the scan, the brightness increases again.");
+		LOGGER.info("1f: scan the SKU. This data has 1493. After the scan, the blink frequency slows down.");
 		picker.scanSomething("1493");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.BRIGHT_DUTYCYCLE);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.SOLID_FREQ);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.BLINK_FREQ);
 
 		LOGGER.info("1g: now the button press works");
 		wi = picker.nextActiveWi();

@@ -1922,17 +1922,17 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (getCheStateEnum() == CheStateEnum.SHORT_PICK)
 			minQuantityForPositionController = byteValueForPositionDisplay(0); // allow shorts to decrement on position controller down to zero
 
-		byte freq = PosControllerInstr.SOLID_FREQ;
+		byte freq = PosControllerInstr.BLINK_FREQ;
 		byte brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
 		if (this.getCheStateEnum().equals(CheStateEnum.SCAN_SOMETHING)) { // a little weak feedback that the poscon button press will not work
-			brightness = PosControllerInstr.MIDDIM_DUTYCYCLE;
-			// freq = PosControllerInstr.RAPIDBLINK_FREQ;
+			//brightness = PosControllerInstr.MIDDIM_DUTYCYCLE;
+			freq = PosControllerInstr.RAPIDBLINK_FREQ;
 		}
 
-		// blink is an indicator that decrement button is active, usually as a consequence of short pick. (Max difference is also possible for discretionary picks)
+		// solid is an indicator that decrement button is active, usually as a consequence of short pick. (Max difference is also possible for discretionary picks)
 		if (planQuantityForPositionController != minQuantityForPositionController
 				|| planQuantityForPositionController != maxQuantityForPositionController) {
-			freq = PosControllerInstr.BLINK_FREQ; // Bug?  should be BLINK_FREQ
+			freq = PosControllerInstr.SOLID_FREQ;
 			brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
 		}
 

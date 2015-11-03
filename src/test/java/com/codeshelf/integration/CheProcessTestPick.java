@@ -689,7 +689,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).byteValue(), 1);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.BRIGHT_DUTYCYCLE);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.SOLID_FREQ);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.BLINK_FREQ);
 
 		Assert.assertEquals(1, picker.countActiveJobs());
 		WorkInstruction currentWI = picker.nextActiveWi();
@@ -832,7 +832,7 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(wi.getItemId(), "1124");
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) button),
 			PosControllerInstr.BRIGHT_DUTYCYCLE);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) button), PosControllerInstr.SOLID_FREQ);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) button), PosControllerInstr.BLINK_FREQ);
 
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
 
@@ -996,7 +996,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).byteValue(), (byte) 1);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2), PosControllerInstr.BRIGHT_DUTYCYCLE);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 2), PosControllerInstr.SOLID_FREQ);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 2), PosControllerInstr.BLINK_FREQ);
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 1));
 
 		// WARNING: whenever getting work instructions via the picker, it is in the context that the site controller has. For example
