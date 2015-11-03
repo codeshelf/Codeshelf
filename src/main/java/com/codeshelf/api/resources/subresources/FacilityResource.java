@@ -21,7 +21,6 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -52,9 +51,6 @@ import com.codeshelf.api.BaseResponse.IntervalParam;
 import com.codeshelf.api.BaseResponse.TimestampParam;
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.ErrorResponse;
-import com.codeshelf.api.HardwareRequest;
-import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
-import com.codeshelf.api.HardwareRequest.LightRequest;
 import com.codeshelf.api.pickscript.ScriptParser;
 import com.codeshelf.api.pickscript.ScriptParser.ScriptStep;
 import com.codeshelf.api.pickscript.ScriptServerRunner;
@@ -76,10 +72,6 @@ import com.codeshelf.behavior.TenantCallable;
 import com.codeshelf.behavior.TestBehavior;
 import com.codeshelf.behavior.UiUpdateBehavior;
 import com.codeshelf.behavior.WorkBehavior;
-import com.codeshelf.device.LedCmdGroup;
-import com.codeshelf.device.LedInstrListMessage;
-import com.codeshelf.device.LedSample;
-import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
@@ -102,14 +94,11 @@ import com.codeshelf.security.UserContext;
 import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.service.ParameterSetBeanABC;
 import com.codeshelf.service.PropertyService;
-import com.codeshelf.ws.protocol.message.CheDisplayMessage;
-import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
@@ -717,63 +706,6 @@ public class FacilityResource {
 			persistence.rollbackTransaction();
 			errorMesage.setMessageError("Site request failed: " + e.getMessage());
 			return errorMesage;
-		}
-	}
-
-	@PUT
-	@Path("hardware")
-	@RequiresPermissions("companion:view")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response performHardwareAction(HardwareRequest req) {
-		ErrorResponse errors = new ErrorResponse();
-		if (!req.isValid(errors)) {
-			return errors.buildResponse();
-		}
-		try {
-			Set<User> users = facility.getSiteControllerUsers();
-
-			//LIGHTS
-			List<LedSample> ledSamples = new ArrayList<LedSample>();
-
-			if (req.getLights() != null) {
-				for (LightRequest light : req.getLights()) {
-					ledSamples.add(new LedSample(light.getPosition(), light.getColor()));
-				}
-
-				LedCmdGroup ledCmdGroup = new LedCmdGroup(req.getLightController(), req.getLightChannel(), (short) 0, ledSamples);
-				LightLedsInstruction instruction = new LightLedsInstruction(req.getLightController(),
-					req.getLightChannel(),
-					req.getLightDuration(),
-					ImmutableList.of(ledCmdGroup));
-				LedInstrListMessage lightMessage = new LedInstrListMessage(instruction);
-				webSocketManagerService.sendMessage(users, lightMessage);
-			}
-
-			//CHE MESSAGES
-			if (req.getCheMessages() != null) {
-				for (CheDisplayRequest cheReq : req.getCheMessages()) {
-					CheDisplayMessage cheMessage = new CheDisplayMessage(cheReq.getChe(),
-						cheReq.getLine1(),
-						cheReq.getLine2(),
-						cheReq.getLine3(),
-						cheReq.getLine4());
-					webSocketManagerService.sendMessage(users, cheMessage);
-				}
-			}
-
-			//POSCON MESSAGES
-			if (req.getPosConInstructions() != null) {
-				for (PosControllerInstr posInstr : req.getPosConInstructions()) {
-					posInstr.prepareObject();
-					Thread.sleep(1000);
-					webSocketManagerService.sendMessage(users, posInstr);
-				}
-			}
-
-			return BaseResponse.buildResponse("Commands Sent");
-		} catch (Exception e) {
-			return errors.processException(e);
 		}
 	}
 

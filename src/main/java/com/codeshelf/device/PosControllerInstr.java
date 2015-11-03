@@ -144,18 +144,6 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 
 	@Accessors(prefix = "m")
 	@Getter
-	@SerializedName(value = "frequency")
-	@Expose
-	private Frequency			mFrequency;
-
-	@Accessors(prefix = "m")
-	@Getter
-	@SerializedName(value = "brightness")
-	@Expose
-	private Brightness			mBrightness;
-
-	@Accessors(prefix = "m")
-	@Getter
 	@Setter
 	@Expose
 	@SerializedName(value = "remove")
@@ -273,55 +261,6 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 			}
 		}
 		return valid;
-	}
-
-	public void prepareObject() {
-		if (mMinQty == null) {
-			mMinQty = mReqQty;
-		}
-		if (mMaxQty == null) {
-			mMaxQty = mReqQty;
-		}
-		if (mFrequency != null) {
-			mFreq = mFrequency.toByte();
-		}
-		if (mBrightness != null) {
-			mDutyCycle = mBrightness.toByte();
-		}
-	}
-
-	public enum Brightness {
-		BRIGHT,
-		MEDIUM,
-		DIM;
-
-		public Byte toByte() {
-			if (this == BRIGHT) {
-				return PosControllerInstr.BRIGHT_DUTYCYCLE;
-			} else if (this == MEDIUM) {
-				return PosControllerInstr.MED_DUTYCYCLE;
-			} else if (this == DIM) {
-				return PosControllerInstr.DIM_DUTYCYCLE;
-			}
-			return null;
-		}
-	}
-
-	public enum Frequency {
-		SOLID,
-		BLINK,
-		RAPIDBLINK;
-
-		public Byte toByte() {
-			if (this == SOLID) {
-				return PosControllerInstr.SOLID_FREQ;
-			} else if (this == BLINK) {
-				return PosControllerInstr.BLINK_FREQ;
-			} else if (this == RAPIDBLINK) {
-				return PosControllerInstr.RAPIDBLINK_FREQ;
-			}
-			return null;
-		}
 	}
 
 	private String translateQty(Byte reqValue, Byte minValue, Byte maxValue) {
@@ -463,7 +402,12 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 			result = mGson.fromJson(inInstrString, collectionType);
 
 			for (PosControllerInstr instr : result) {
-				instr.prepareObject();
+				if (instr.mMinQty == null) {
+					instr.mMinQty = instr.mReqQty;
+				}
+				if (instr.mMaxQty == null) {
+					instr.mMaxQty = instr.mReqQty;
+				}
 			}
 
 			return result;
