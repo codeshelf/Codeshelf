@@ -568,8 +568,7 @@ public class DomainObjectManager {
 			LOGGER.error("Limiting order delete batch size to {}. Called for {}.", MAX_ORDER_PURGE, wantToPurge);
 		}
 
-		/*  back to simple order.delete()
-		 * 
+		//  back to simple order.delete() 
 		// Trying to speed up by not relying quite so much on the hibernate delete cascade.
 		// Result: not much improvement in time. But much nicer logging about the process. (changed to debug logging now)
 		LOGGER.debug("Phase 2 of order purge: assemble list of details for these orders");
@@ -590,7 +589,7 @@ public class DomainObjectManager {
 		safelyDeleteDetailsList(details);
 
 		LOGGER.debug("Phase 6 of order purge: delete the orders which delinks from container");
-		*/
+		
 
 		int deletedCount = 0;
 		for (UUID orderUuid : orderUuids) {
@@ -610,6 +609,58 @@ public class DomainObjectManager {
 		return deletedCount;
 	}
 
+	private void safelyDeleteWorkInstructionList(List<WorkInstruction> wiList) {
+		int deletedCount = 0;
+		for (WorkInstruction wi : wiList) {
+
+			OrderDetail detail = wi.getOrderDetail();
+			if (detail != null)
+				detail.removeWorkInstruction(wi);
+			Che che = wi.getAssignedChe();
+			if (che != null)
+				che.removeWorkInstruction(wi);
+			try {
+				WorkInstruction.staticGetDao().delete(wi);
+			} catch (DaoException e) {
+				LOGGER.error("safelyDeleteWorkInstructionList", e);
+			}
+			deletedCount++;
+
+			if (deletedCount % 100 == 0)
+				LOGGER.info("deleted {} WorkInstructions ", deletedCount);
+
+		}
+
+		if (deletedCount % 100 != 0)
+			LOGGER.info("deleted {} WorkInstructions ", deletedCount);
+	}
+	
+	private void safelyDeleteDetailsList(List<OrderDetail> detailsList) {
+		int deletedCount = 0;
+		
+		for (OrderDetail detail : detailsList) {
+
+			OrderHeader order = detail.getParent();
+			if (order != null)
+				order.removeOrderDetail(detail);			
+
+			try {
+				OrderDetail.staticGetDao().delete(detail);
+			} catch (DaoException e) {
+				LOGGER.error("safelyDeleteDetailsList", e);
+			}
+			deletedCount++;
+
+			if (deletedCount % 100 == 0)
+				LOGGER.info("deleted {} OrderDetails ", deletedCount);
+
+		}
+		if (deletedCount % 100 != 0)
+			LOGGER.info("deleted {} OrderDetails ", deletedCount);
+	}
+
+
+	
 	private int floorDays(int daysOldToCount) {
 		return Math.max(daysOldToCount, 1);
 	}
