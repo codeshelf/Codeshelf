@@ -11,8 +11,16 @@ def WorkInstructionExportContent(bean) {
 		bean.assigned,
 		bean.completed,
 		bean.orderId.padRight(20),
-		bean.pickerId.padRight(11),
-		bean.pickerName.padRight(8)
+		padRightAndTruncateTo(bean.badge, 11),
+		padRightAndTruncateTo(bean.worker, 11)
 	];
 	return fields.join('^');
+}
+
+def padRightAndTruncateTo(str, size) {
+	if (str.length() >= size){
+		return str.substring(0, size);
+	} else {
+		return str.padRight(size);
+	}
 }

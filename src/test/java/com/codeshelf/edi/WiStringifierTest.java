@@ -1,7 +1,6 @@
 package com.codeshelf.edi;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -14,7 +13,6 @@ import java.util.List;
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +23,6 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.testframework.MockDaoTest;
-import com.google.common.collect.ImmutableList;
 
 public class WiStringifierTest extends MockDaoTest {
 	private static final Logger			LOGGER		= LoggerFactory.getLogger(WiStringifierTest.class);

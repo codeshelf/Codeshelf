@@ -94,10 +94,10 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 	protected String	cheId;
 	@Getter @Setter @Expose @Column(name = "location_id")
 	protected String	locationId;
-	@Getter @Setter @Expose @Column(name = "picker_id")
-	protected String	pickerId;
-	@Getter @Setter @Expose @Column(name = "picker_name")
-	protected String	pickerName;
+	@Getter @Setter @Expose @Column(name = "badge")
+	protected String	badge;
+	@Getter @Setter @Expose @Column(name = "worker")
+	protected String	worker;
 	@Getter @Setter @Expose @Column(name = "plan_quantity")
 	protected String	planQuantity;
 	@Getter @Setter @Expose @Column(name = "actual_quantity")
@@ -144,7 +144,7 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 	 */
 	public static String getCsvHeaderMatchingBean(){
 		return "facilityId, workInstructionId, type, status, orderGroupId, orderId, containerId,"
-				+ "itemId, uom, lotId, locationId, pickerId, planQuantity, actualQuantity, detailQuantity,"
+				+ "itemId, uom, lotId, locationId, badge, worker, planQuantity, actualQuantity, detailQuantity,"
 				+ "cheId, assigned, started, completed"; // no version here
 	}
 	
@@ -153,7 +153,7 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 	 */
 	public String getDefaultCsvContent(){
 		return facilityId +","+ workInstructionId+","+ type+","+ status+","+ orderGroupId+","+ orderId+","+ containerId
-				+","+ itemId+","+ uom+","+ lotId+","+ locationId+","+ pickerId+","+ planQuantity+","+ actualQuantity+","+ detailQuantity
+				+","+ itemId+","+ uom+","+ lotId+","+ locationId+","+ badge+","+ worker+ ","+planQuantity+","+ actualQuantity+","+ detailQuantity
 				+"," + cheId + ","+ assigned+","+ started+","+ completed; 
 	}
 	
@@ -200,11 +200,11 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 		String pickerId = inWi.getPickerId(); // this field is nullable on work instruction
 		if (pickerId == null)
 			pickerId = "";
-		setPickerId(pickerId);
+		setBadge(pickerId);
 		
 		Worker worker = Worker.findTenantWorker(pickerId); 
 		if (worker != null) {
-			setPickerName(worker.getWorkerNameUI());
+			setWorker(worker.getWorkerNameUI());
 		}
 		
 		if (inWi.getPlanQuantity() != null) {
