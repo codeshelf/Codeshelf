@@ -68,7 +68,7 @@ public class NotificationBehavior implements IApiBehavior{
 			return;
 		}
 	
-		LOGGER.info("Saving workerEvent {} from {}", type, wi.getAssignedChe());
+		LOGGER.info("Saving WorkerEvent {} from {} for {}", type, wi.getAssignedChe(), wi.getPickerId());
 		WorkerEvent event = new WorkerEvent();
 		Che device = wi.getAssignedChe();
 		event.setDeviceGuid(device.getDeviceGuidStr());
