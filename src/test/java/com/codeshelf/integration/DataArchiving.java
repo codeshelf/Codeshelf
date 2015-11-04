@@ -378,14 +378,14 @@ public class DataArchiving extends ServerTest {
 		LOGGER.info("8: Call the WorkerEvent purge");
 		beginTransaction();
 		facility = facility.reload();
-		// three COMPLETE workerEvents were generated above
+		// three COMPLETE workerEvents (+ Login and Logout) were generated above
 		List<WorkerEvent> events = WorkerEvent.staticGetDao().getAll();
-		Assert.assertEquals(3, events.size());
+		Assert.assertEquals(5, events.size());
 		// Now purge
 		DomainObjectManager doManager2 = new DomainObjectManager(facility);
 		List<UUID> workerEventIdsToPurge = doManager2.getWorkerEventUuidsToPurge(2);
 		Assert.assertEquals(3, doManager2.purgeSomeWorkerEvents(workerEventIdsToPurge));
-		Assert.assertEquals(0, WorkerEvent.staticGetDao().getAll().size());
+		Assert.assertEquals(2, WorkerEvent.staticGetDao().getAll().size());
 		commitTransaction();
 
 	}
