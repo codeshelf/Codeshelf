@@ -120,7 +120,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Getter
 	@Setter
 	private int									mRememberPriorShorts					= 0;
-	
+
 	private String								mLastAssignedPoscon						= null;
 
 	private final boolean						useNewCheScreen							= true;
@@ -236,16 +236,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					} else {
 						sendDisplayCommand(getContainerSetupMsg(), OR_START_WORK_MSG, EMPTY_MSG, SHOWING_ORDER_IDS_MSG);
 					}
-					if (previousState != CheStateEnum.CONTAINER_POSITION){
+					if (previousState != CheStateEnum.CONTAINER_POSITION) {
 						showContainerAssignments();
 					} else {
 						showLatestContainerAssignment();
-					}					
+					}
 					break;
 
 				case CONTAINER_POSITION:
 					sendDisplayCommand(SELECT_POSITION_MSG, EMPTY_MSG);
-					if (previousState != CheStateEnum.CONTAINER_SELECT){
+					if (previousState != CheStateEnum.CONTAINER_SELECT) {
 						showContainerAssignments();
 					}
 					break;
@@ -1413,14 +1413,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			setState(CheStateEnum.CONTAINER_SELECTION_INVALID);
 		}
 	}
-	
+
 	/**
 	 * Returns a portion of the Container scan is the ORDERSUB property is set
 	 * Start and End indexies work the following way: "1-1" returns the first char in the scan. "2-4" returns 3 chars starting with the second, etc.
 	 */
 	private String extractContainerIdFromScan(String scan) {
 		String orderSubProp = mDeviceManager.getOrdersubValue();
-		if (orderSubProp == null || orderSubProp.isEmpty() || "Disabled".equalsIgnoreCase(orderSubProp)){
+		if (orderSubProp == null || orderSubProp.isEmpty() || "Disabled".equalsIgnoreCase(orderSubProp)) {
 			return scan;
 		}
 		if (scan.contains("%")) {
@@ -1435,7 +1435,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		try {
 			start = Integer.parseInt(parts[0].trim());
 			end = Integer.parseInt(parts[1].trim());
-		} catch (NumberFormatException e ) {
+		} catch (NumberFormatException e) {
 			LOGGER.warn("Invalid ORDERSUB {}. Unable to parse start and end. Using full order scan.", orderSubProp);
 			return scan;
 		}
@@ -1467,7 +1467,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private byte getPositionValue(Entry<String, String> entry) {
 		return getPositionValue(entry.getKey());
 	}
-	
+
 	private byte getPositionValue(String value) {
 		byte position = 0;
 		try {
@@ -1837,7 +1837,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		sendPositionControllerInstructions(instructions);
 	}
-	
+
 	private void showLatestContainerAssignment() {
 		if (mLastAssignedPoscon == null) {
 			return;
@@ -1851,8 +1851,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		LOGGER.debug("Sending Latest Container Assaignment {}", instructions);
 		sendPositionControllerInstructions(instructions);
 	}
-	
-	private PosControllerInstr generatePosconInstruction(byte position, String containerId){
+
+	private PosControllerInstr generatePosconInstruction(byte position, String containerId) {
 		Byte value = 0;
 		boolean needBitEncodedA = false;
 		//Use the last 1-2 characters of the containerId if the container is numeric.
@@ -2320,7 +2320,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (mPositionToContainerMap.get(inScanStr) == null) {
 				mPositionToContainerMap.put(inScanStr, mContainerInSetup);
 				mLastAssignedPoscon = inScanStr;
-				
+
 				// This one is kind of funny. We go straight from scan badge to setup, or after setup command. We will choose as our event
 				// the first order association to poscon.
 				if (mPositionToContainerMap.values().size() == 1) {
@@ -2655,7 +2655,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					if (inQuantity == maxCountForPositionControllerDisplay && planQuantity > maxCountForPositionControllerDisplay)
 						processNormalPick(wi, planQuantity); // Assume all were picked. No way for user to tell if more than 98 given.
 					else {
-						processShortPickOrPut(wi, inQuantity);
+						// DEV-1287 See other part of the fix in notifyButton(). If that does not throw, this will hit.
+						// Is it legitimate? Just someone pushing a button on "--" or "oc"? If so, change to a warn, or perhaps,
+						// Improve getLastSentPositionControllerDisplayValue to not send null for a legitimate case.
+						if (inQuantity < 0) {
+							LOGGER.error("Button #{}: Unnexpected value {} in processButtonPress", inButtonNum, inQuantity);						
+						} else {
+							processShortPickOrPut(wi, inQuantity);
+						}
 					}
 				}
 			}

@@ -56,7 +56,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 				toLogStr += String.format("%s%n", header);
 			}
 			toLogStr += String.format("%s", instr.superConciseDescription());
-			}
+		}
 		if (!toLogStr.isEmpty())
 			notifyPoscons(toLogStr);
 	}
@@ -344,22 +344,31 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 					LOGGER.info("Button #{} pressed with quantity {}", buttonNum, showingQuantity);
 			} else {
 				String display = "unexpected value " + showingQuantity;
-				byte displayedValue = getLastSentPositionControllerDisplayValue((byte) buttonNum);
-				if (displayedValue == PosControllerInstr.BITENCODED_SEGMENTS_CODE) {
-					byte min = getLastSentPositionControllerMinQty((byte) buttonNum);
-					byte max = getLastSentPositionControllerMaxQty((byte) buttonNum);
-					display = "unexpected segmented value " + max + "-" + min;
-					if (max == PosControllerInstr.BITENCODED_LED_DASH && min == PosControllerInstr.BITENCODED_LED_DASH) {
-						display = "dash";
-					} else if (max == PosControllerInstr.BITENCODED_TOP_BOTTOM && min == PosControllerInstr.BITENCODED_TOP_BOTTOM) {
-						display = "double dash";
-					} else if (max == PosControllerInstr.BITENCODED_TRIPLE_DASH && min == PosControllerInstr.BITENCODED_TRIPLE_DASH) {
-						display = "triple dash";
-					} else if (max == PosControllerInstr.BITENCODED_LED_O && min == PosControllerInstr.BITENCODED_LED_C) {
-						display = "OC (order complete)";
+				// DEV-1287 getLastSentPositionControllerDisplayValue may return null. Don't NPE by directly assigning it to a byte
+				Byte displayedByteValue = getLastSentPositionControllerDisplayValue((byte) buttonNum);
+				if (displayedByteValue == null) {
+					display = "??";
+					LOGGER.error("unhandled value in notifyButton. showingQuantity is {}, but getLast returns null", showingQuantity);
+				} else {
+					byte displayedValue = displayedByteValue;
+					if (displayedValue == PosControllerInstr.BITENCODED_SEGMENTS_CODE) {
+						byte min = getLastSentPositionControllerMinQty((byte) buttonNum);
+						byte max = getLastSentPositionControllerMaxQty((byte) buttonNum);
+						display = "unexpected segmented value " + max + "-" + min;
+						if (max == PosControllerInstr.BITENCODED_LED_DASH && min == PosControllerInstr.BITENCODED_LED_DASH) {
+							display = "dash";
+						} else if (max == PosControllerInstr.BITENCODED_TOP_BOTTOM
+								&& min == PosControllerInstr.BITENCODED_TOP_BOTTOM) {
+							display = "double dash";
+						} else if (max == PosControllerInstr.BITENCODED_TRIPLE_DASH
+								&& min == PosControllerInstr.BITENCODED_TRIPLE_DASH) {
+							display = "triple dash";
+						} else if (max == PosControllerInstr.BITENCODED_LED_O && min == PosControllerInstr.BITENCODED_LED_C) {
+							display = "OC (order complete)";
+						}
 					}
 				}
-				LOGGER.info("Button #{} pressed with {}", buttonNum, display);
+				LOGGER.warn("Button #{} pressed with {}", buttonNum, display);
 			}
 
 		} finally {

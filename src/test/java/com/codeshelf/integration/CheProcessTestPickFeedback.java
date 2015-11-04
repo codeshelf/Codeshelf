@@ -478,25 +478,25 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		picker.startAndSkipReview("D301", 3000, 3000);
 		//picker.simulateCommitByChangingTransaction(this.persistenceService);
 
-		//Check Screens -- Everything should be clear except the one we are picked #1, #4 immediate short and #3 unknown order id
+		LOGGER.info("1a: Check Screens. Positions 2 and 5 blank now as they will have work when it comes");
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 5));
 
-		//Case 3: Unknown order id so display dim, solid, --
+		LOGGER.info("1b: Position 3 has unknown order id so display dim, solid, --");
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 3), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 3), PosControllerInstr.SOLID_FREQ);
 
-		// Case 4: Had no inventory. Does not autoshort, so single dash for detail-no-WI
+		LOGGER.info("1c: Position 4 had no inventory. Does not autoshort, so single dash for detail-no-WI");
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 4), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 4), PosControllerInstr.BITENCODED_LED_DASH);
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 4), PosControllerInstr.BITENCODED_LED_DASH);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 4), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 4), PosControllerInstr.SOLID_FREQ);
 
-		//Make sure position 1 shows the proper item count for picking
+		LOGGER.info("1d: Position 1 has the active pick. Show the count");
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 1);
 
 		// Look at the screen
@@ -510,29 +510,31 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertEquals("QTY 1", line3); // This may change soon. Just update this line.
 		Assert.assertEquals("", line4);
 
+		LOGGER.info("2: Do the first pick");
 		picker.pick(1, 1);
-		//picker.simulateCommitByChangingTransaction(this.persistenceService);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
-		//Check Screens -- #1 it should be done so display solid, dim "oc"
+		LOGGER.info("2b: position 1 done, so display dim oc");
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_C);
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_O);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.SOLID_FREQ);
-		//5 should stay null
+
+		LOGGER.info("2c: position 5 remains blank");
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 5));
 
-		//Make sure position 2 shows the proper item count for picking
+		LOGGER.info("2d: position 2 has the next active job. Show the count");
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue(), 1);
 
-		//Case 3: Unknown order id so display dim, solid, --
+		LOGGER.info("2e: position 3 still showing -- for unknown order");
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 3), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 3), PosControllerInstr.SOLID_FREQ);
 
-		// Case 4: Had no inventory. Does not autoshort, so single dash for detail-no-WI
+		LOGGER.info("2f: position 3 still showing -- for no inventory");
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 4), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 4), PosControllerInstr.BITENCODED_LED_DASH);
 		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 4), PosControllerInstr.BITENCODED_LED_DASH);
@@ -545,6 +547,17 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertEquals("D302", line1);
 		// Important: this next line shows DEV-691 result. Two picks in a row from same spot, so total for that SKU is 2, not 1.
 		Assert.assertEquals("QTY 2", line3); // This may change soon. Just update this line.
+
+		// DEV-1287 it turns out the --, oc, etc. can/must allow button press to come through. Simulate one of them
+		LOGGER.info("3a: What happens when worker erroneously press button on --?  See 'Button #4 pressed with dash' in the log");
+		picker.pick(4, -97);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		// DEV-1287 hard to actually replicate this bug. Would need to send out the -68 value with the bit encoded 240 first, then come back
+		// with a negative value. Good enough test for now.
+		LOGGER.info("3b: Simulate a bug. Unknown value coming in due to incomplete implemention of new display code.   See 'Button #4 pressed with dash' in the log");
+		picker.pick(4, -68);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
 		/**
 		 * Now we will do a short pick and cancel it and make sure we never lose feedback.
@@ -1137,112 +1150,112 @@ public class CheProcessTestPickFeedback extends ServerTest {
 	 */
 	@Test
 	public final void checkManyPosconsMessages() throws IOException {
-	LOGGER.info("1: Set up facility. Add the export extensions");
-	// somewhat cloned from FacilityAccumulatingExportTest
-	Facility facility = setUpSimpleNoSlotFacility();
+		LOGGER.info("1: Set up facility. Add the export extensions");
+		// somewhat cloned from FacilityAccumulatingExportTest
+		Facility facility = setUpSimpleNoSlotFacility();
 
-	beginTransaction();
-	facility = facility.reload();
-	propertyService.turnOffHK(facility);
-	DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.WORKSEQR);
-	if (theProperty != null) {
-		theProperty.setValue("WorkSequence");
-		PropertyDao.getInstance().store(theProperty);
+		beginTransaction();
+		facility = facility.reload();
+		propertyService.turnOffHK(facility);
+		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.WORKSEQR);
+		if (theProperty != null) {
+			theProperty.setValue("WorkSequence");
+			PropertyDao.getInstance().store(theProperty);
+		}
+		commitTransaction();
+
+		LOGGER.info("2: Load orders. No inventory, so uses locationA, etc. as the location-based pick");
+		beginTransaction();
+		facility = facility.reload();
+
+		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n1,1,1,Test Item 1,1,each,locationA,1" //
+				+ "\r\n2,2,2,Test Item 2,3,each,locationB,2" //
+				+ "\r\n3,3,3,Test Item 3,1,each,locationC,3" //
+				+ "\r\n4,4,4,Test Item 4,1,each,locationD,4" //
+				+ "\r\n5,5,5,Test Item 5,1,each,locationE,5" //
+				+ "\r\n6,6,6,Test Item 6,1,each,locationF,6" //
+				+ "\r\n7,7,7,Test Item 7,3,each,locationG,7" //
+				+ "\r\n8,8,8,Test Item 8,1,each,locationH,8" //
+				+ "\r\n9,9,9,Test Item 9,1,each,locationI,9" //
+				+ "\r\n10,10,10,Test Item 10,1,each,locationJ,10" //
+				+ "\r\n11,11,11,Test Item 11,1,each,locationK,11" //
+				+ "\r\n12,12,12,Test Item 12,3,each,locationL,12" //
+				+ "\r\n13,13,13,Test Item 13,1,each,locationM,13" //
+				+ "\r\n14,14,14,Test Item 14,1,each,locationN,14" //
+				+ "\r\n15,15,15,Test Item 15,1,each,locationO,15" //
+				+ "\r\n16,16,16,Test Item 16,1,each,locationP,16" //
+				+ "\r\n17,17,17,Test Item 17,3,each,locationQ,17" //
+				+ "\r\n18,18,18,Test Item 18,1,each,locationR,18" //
+				+ "\r\n19,19,19,Test Item 19,1,each,locationS,19" //
+				+ "\r\n20,20,20,Test Item 20,1,each,locationT,20"; //
+
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+
+		LOGGER.info("2: load 2 orders on the CHE");
+		picker.loginAndSetup("Picker #1");
+		picker.setupOrderIdAsContainer("1", "1");
+		picker.setupOrderIdAsContainer("2", "2");
+		picker.setupOrderIdAsContainer("3", "3");
+		picker.setupOrderIdAsContainer("4", "4");
+		picker.setupOrderIdAsContainer("5", "5");
+		picker.setupOrderIdAsContainer("6", "6");
+		picker.setupOrderIdAsContainer("7", "7");
+		picker.setupOrderIdAsContainer("8", "8");
+		picker.setupOrderIdAsContainer("9", "9");
+		picker.setupOrderIdAsContainer("10", "10");
+		picker.setupOrderIdAsContainer("11", "11");
+		picker.setupOrderIdAsContainer("12", "12");
+		picker.setupOrderIdAsContainer("13", "13");
+		picker.setupOrderIdAsContainer("14", "14");
+		picker.setupOrderIdAsContainer("15", "15");
+		picker.setupOrderIdAsContainer("16", "16");
+		picker.setupOrderIdAsContainer("17", "17");
+		picker.setupOrderIdAsContainer("18", "18");
+		LOGGER.info("2b: finished 18, add 19");
+		picker.setupOrderIdAsContainer("19", "19");
+		LOGGER.info("2c: finished 19, add 20");
+		picker.setupOrderIdAsContainer("20", "20");
+		LOGGER.info("2d: finished 20");
+
+		LOGGER.info("3a: Move order 20 to position 21");
+		picker.setupOrderIdAsContainer("20", "21");
+
+		// 1-9 yields "digits" which is just the number shifted to left display. Seems bad, but not very important. Only happens if someone is 
+		// setting up order number or preassigned container that is only one digit. Aside from tests, almost always there are more digits.
+		// (Stupid feature. Thankfully, we do not have to do this for pick counts. We should undo this feature.)
+		Assert.assertEquals(11, (int) picker.getLastSentPositionControllerDisplayValue(11));
+
+		LOGGER.info("4: Scan start twice, getting to picking state");
+
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.logCheDisplay();
+		Assert.assertEquals(1, (int) picker.getLastSentPositionControllerDisplayValue(11)); // only one job
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.logCheDisplay();
+		Assert.assertEquals(1, (int) picker.getLastSentPositionControllerDisplayValue(1));
+
+		LOGGER.info("5a: Complete a few, just to see some oc values come. Complete the first.");
+		picker.pickItemAuto();
+		LOGGER.info("5b: Complete the secone");
+		picker.pickItemAuto();
+		LOGGER.info("5a: Complete the third");
+		picker.pickItemAuto();
+
+		LOGGER.info("6: Back to Setup summary screen");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		// This shows a sort of bug in the log/console. See the that the feedback message coming back from the server does not have completes
+		// for positions 1,2, and 3. But site controller still remembers. If the site controller had to restart, probably would not get the "oc" that we get.
+
 	}
-	commitTransaction();
 
-	LOGGER.info("2: Load orders. No inventory, so uses locationA, etc. as the location-based pick");
-	beginTransaction();
-	facility = facility.reload();
-
-	String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
-			+ "\r\n1,1,1,Test Item 1,1,each,locationA,1" //
-			+ "\r\n2,2,2,Test Item 2,3,each,locationB,2" //
-			+ "\r\n3,3,3,Test Item 3,1,each,locationC,3" //
-			+ "\r\n4,4,4,Test Item 4,1,each,locationD,4" //
-			+ "\r\n5,5,5,Test Item 5,1,each,locationE,5" //
-			+ "\r\n6,6,6,Test Item 6,1,each,locationF,6" //
-			+ "\r\n7,7,7,Test Item 7,3,each,locationG,7" //
-			+ "\r\n8,8,8,Test Item 8,1,each,locationH,8" //
-			+ "\r\n9,9,9,Test Item 9,1,each,locationI,9" //
-			+ "\r\n10,10,10,Test Item 10,1,each,locationJ,10" //
-			+ "\r\n11,11,11,Test Item 11,1,each,locationK,11" //
-			+ "\r\n12,12,12,Test Item 12,3,each,locationL,12" //
-			+ "\r\n13,13,13,Test Item 13,1,each,locationM,13" //
-			+ "\r\n14,14,14,Test Item 14,1,each,locationN,14" //
-			+ "\r\n15,15,15,Test Item 15,1,each,locationO,15" //
-			+ "\r\n16,16,16,Test Item 16,1,each,locationP,16" //
-			+ "\r\n17,17,17,Test Item 17,3,each,locationQ,17" //
-			+ "\r\n18,18,18,Test Item 18,1,each,locationR,18" //
-			+ "\r\n19,19,19,Test Item 19,1,each,locationS,19" //
-			+ "\r\n20,20,20,Test Item 20,1,each,locationT,20"; //
-
-	importOrdersData(facility, csvOrders);
-	commitTransaction();
-	
-	startSiteController();
-	PickSimulator picker = createPickSim(cheGuid1);
-
-	LOGGER.info("2: load 2 orders on the CHE");
-	picker.loginAndSetup("Picker #1");
-	picker.setupOrderIdAsContainer("1", "1");
-	picker.setupOrderIdAsContainer("2", "2");
-	picker.setupOrderIdAsContainer("3", "3");
-	picker.setupOrderIdAsContainer("4", "4");
-	picker.setupOrderIdAsContainer("5", "5");
-	picker.setupOrderIdAsContainer("6", "6");
-	picker.setupOrderIdAsContainer("7", "7");
-	picker.setupOrderIdAsContainer("8", "8");
-	picker.setupOrderIdAsContainer("9", "9");
-	picker.setupOrderIdAsContainer("10", "10");
-	picker.setupOrderIdAsContainer("11", "11");
-	picker.setupOrderIdAsContainer("12", "12");
-	picker.setupOrderIdAsContainer("13", "13");
-	picker.setupOrderIdAsContainer("14", "14");
-	picker.setupOrderIdAsContainer("15", "15");
-	picker.setupOrderIdAsContainer("16", "16");
-	picker.setupOrderIdAsContainer("17", "17");
-	picker.setupOrderIdAsContainer("18", "18");
-	LOGGER.info("2b: finished 18, add 19");
-	picker.setupOrderIdAsContainer("19", "19");
-	LOGGER.info("2c: finished 19, add 20");
-	picker.setupOrderIdAsContainer("20", "20");
-	LOGGER.info("2d: finished 20");
-	
-	LOGGER.info("3a: Move order 20 to position 21");
-	picker.setupOrderIdAsContainer("20", "21");
-
-	// 1-9 yields "digits" which is just the number shifted to left display. Seems bad, but not very important. Only happens if someone is 
-	// setting up order number or preassigned container that is only one digit. Aside from tests, almost always there are more digits.
-	// (Stupid feature. Thankfully, we do not have to do this for pick counts. We should undo this feature.)
-	Assert.assertEquals(11, (int) picker.getLastSentPositionControllerDisplayValue(11));
-
-	LOGGER.info("4: Scan start twice, getting to picking state");
-	
-	picker.scanCommand("START");
-	picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
-	picker.logCheDisplay();
-	Assert.assertEquals(1, (int) picker.getLastSentPositionControllerDisplayValue(11)); // only one job
-	picker.scanCommand("START");
-	picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-	picker.logCheDisplay();
-	Assert.assertEquals(1, (int) picker.getLastSentPositionControllerDisplayValue(1));
-	
-	LOGGER.info("5a: Complete a few, just to see some oc values come. Complete the first.");
-	picker.pickItemAuto();
-	LOGGER.info("5b: Complete the secone");
-	picker.pickItemAuto();
-	LOGGER.info("5a: Complete the third");
-	picker.pickItemAuto();
-	
-	LOGGER.info("6: Back to Setup summary screen");
-	picker.scanCommand("START");
-	picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
-	// This shows a sort of bug in the log/console. See the that the feedback message coming back from the server does not have completes
-	// for positions 1,2, and 3. But site controller still remembers. If the site controller had to restart, probably would not get the "oc" that we get.
-
-}
-	
 	@Test
 	public final void simulPickShortOrderCountIssue() throws IOException {
 		Facility facility = setUpSimpleNoSlotFacility();
