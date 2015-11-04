@@ -96,7 +96,7 @@ public class NotificationBehavior implements IApiBehavior{
 		boolean save_completed=false;
 		try {
 			TenantPersistenceService.getInstance().beginTransaction();
-			LOGGER.info("Saving notification from {}: {}", message.getNetGuidStr(), message.getEventType());
+			LOGGER.info("Saving WorkerEvent {} from {} for {}", message.getEventType(), message.getNetGuidStr(), message.getWorkerId());
 			WorkerEvent event = new WorkerEvent();
 
 			Class<?> deviceClass = message.getDeviceClass();
