@@ -62,6 +62,7 @@ import com.codeshelf.ws.protocol.request.InventoryLightItemRequest;
 import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
 import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.protocol.request.LoginRequest;
+import com.codeshelf.ws.protocol.request.LogoutRequest;
 import com.codeshelf.ws.protocol.request.PalletizerCompleteWiRequest;
 import com.codeshelf.ws.protocol.request.PalletizerItemRequest;
 import com.codeshelf.ws.protocol.request.PalletizerNewOrderRequest;
@@ -440,6 +441,15 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			clientEndpoint.sendMessage(message);
 		}
 	}
+	
+	public void sendLogoutRequest(final String inCheId, final UUID inPersistentId, final String workerId) {
+		LOGGER.debug("Logout: Che={};", inCheId);
+		String cheId = inPersistentId.toString();
+		LogoutRequest req = new LogoutRequest(workerId);
+		req.setDeviceId(cheId);
+		clientEndpoint.sendMessage(req);
+	}
+
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)

@@ -36,6 +36,7 @@ import com.codeshelf.ws.protocol.command.InventoryLightItemCommand;
 import com.codeshelf.ws.protocol.command.InventoryLightLocationCommand;
 import com.codeshelf.ws.protocol.command.InventoryUpdateCommand;
 import com.codeshelf.ws.protocol.command.LoginCommand;
+import com.codeshelf.ws.protocol.command.LogoutCommand;
 import com.codeshelf.ws.protocol.command.ObjectDeleteCommand;
 import com.codeshelf.ws.protocol.command.ObjectGetCommand;
 import com.codeshelf.ws.protocol.command.ObjectMethodCommand;
@@ -68,6 +69,7 @@ import com.codeshelf.ws.protocol.request.InventoryLightItemRequest;
 import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
 import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.protocol.request.LoginRequest;
+import com.codeshelf.ws.protocol.request.LogoutRequest;
 import com.codeshelf.ws.protocol.request.ObjectDeleteRequest;
 import com.codeshelf.ws.protocol.request.ObjectGetRequest;
 import com.codeshelf.ws.protocol.request.ObjectMethodRequest;
@@ -122,6 +124,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 	private final Counter			palletizerNewOrderCounter;
 	private final Counter			palletizerRemoveOrderCounter;
 	private final Counter			palletizerCompleteWiCounter;
+	private final Counter			logoutCounter;
 	private final Timer				requestProcessingTimer;
 
 	private BehaviorFactory			behaviorFactory;
@@ -166,6 +169,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		palletizerNewOrderCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.palletizer_new_order");
 		palletizerRemoveOrderCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.palletizer_remove_order");
 		palletizerCompleteWiCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.palletizer_complete_wi");
+		logoutCounter = metricsService.createCounter(MetricsGroup.WSS, "requests.logout");
 	}
 
 	ObjectChangeBroadcaster getObjectChangeBroadcaster() {
@@ -313,6 +317,10 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		} else if (request instanceof PalletizerCompleteWiRequest) {
 			command = new PalletizerCompleteWiCommand(csSession, (PalletizerCompleteWiRequest) request, behaviorFactory.getInstance(PalletizerBehavior.class));
 			palletizerCompleteWiCounter.inc();
+			applicationRequestCounter.inc();
+		} else if (request instanceof LogoutRequest) {
+			command = new LogoutCommand(csSession, (LogoutRequest) request, behaviorFactory.getInstance(WorkBehavior.class));
+			logoutCounter.inc();
 			applicationRequestCounter.inc();
 		} else {
 			LOGGER.error("invalid message {} for user {}", request.getClass().getSimpleName(), user.getUsername());

@@ -2344,6 +2344,20 @@ public class WorkBehavior implements IApiBehavior {
 			return null;
 		}
 	}
+	
+	public void logoutWorkerFromChe(Che che, String workerId){
+		if (workerId != null) {
+			Worker worker = Worker.findWorker(che.getFacility(), workerId);
+			if (worker != null) {
+				worker.setLastLogout(new Timestamp(System.currentTimeMillis()));
+				Worker.staticGetDao().store(worker);
+				WorkerEvent logoutEvent = new WorkerEvent(new DateTime(), EventType.LOGOUT, che, workerId);
+				WorkerEvent.staticGetDao().store(logoutEvent);
+			} else {
+				LOGGER.warn("Trying to logout from {} with non-existent worker {}", che.getDeviceGuidStr(), workerId);
+			}
+		}
+	}
 
 	/**
 	 * Primary API to set a mobile CHE association to other CHE.

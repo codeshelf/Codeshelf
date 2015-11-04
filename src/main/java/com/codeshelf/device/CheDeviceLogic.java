@@ -1429,9 +1429,12 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			breakLinkDueToLocalCheActivity(linkedMobileGuid);
 		}
 
+		//Send logout notification to server
+		mDeviceManager.sendLogoutRequest(getGuid().getHexStringNoPrefix(), getPersistentId(), getUserId());
+
 		// many side effects. Primarily clearing leds and poscons and setting state to idle
 		_logoutSideEffects();
-		mDeviceManager.setWorkerNameFromGuid(getGuid(), null);
+		mDeviceManager.setWorkerNameFromGuid(getGuid(), null);		
 	}
 
 	// --------------------------------------------------------------------------

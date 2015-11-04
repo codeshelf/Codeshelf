@@ -117,7 +117,9 @@ public class Worker extends DomainObjectABC implements Validatable {
 	
 	@Column(nullable = true, name = "last_che_persistent_id")
 	@Type(type="com.codeshelf.persistence.DialectUUIDType")
-	@Getter @Setter
+	@Getter 
+	@Setter
+	@JsonProperty
 	private UUID 		lastChePersistentId;
 
 
