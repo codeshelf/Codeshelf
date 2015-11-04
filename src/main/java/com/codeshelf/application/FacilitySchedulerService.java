@@ -182,7 +182,7 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		return jobs;
 	}
 
-	public void schedule(CronExpression exp1, ScheduledJobType jobType) throws SchedulerException {
+	public void schedule(CronExpression cronExpression, ScheduledJobType jobType) throws SchedulerException {
 		// create and schedule  job
 		JobDataMap map = new JobDataMap();
 		map.put("facility", facility);
@@ -196,11 +196,12 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		Trigger trigger = TriggerBuilder
 	            .newTrigger()
 	            .withIdentity(jobType.getKey().toString())
-	            .withSchedule(CronScheduleBuilder.cronSchedule(exp1))
+	            .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
 	            .build();
 		scheduler.unscheduleJob(trigger.getKey());
 		scheduler.deleteJob(jobType.getKey());
 		scheduler.scheduleJob(jobDetail, trigger);
+		LOGGER.info("Scheduled {} for {}", jobType, cronExpression);
 	}
 
 	public boolean isJobRunning(ScheduledJobType jobType) throws SchedulerException {

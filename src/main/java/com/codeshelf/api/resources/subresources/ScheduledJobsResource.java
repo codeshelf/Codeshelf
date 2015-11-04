@@ -23,6 +23,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.scheduler.ApplicationSchedulerService;
 import com.codeshelf.scheduler.ScheduledJobType;
 import com.google.common.base.Optional;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
@@ -48,11 +49,11 @@ public class ScheduledJobsResource {
 		if (facilityScheduler.isPresent()) {
 			ScheduledJobType type = ScheduledJobType.valueOf(typeStr);
 			CronExpression expression = facilityScheduler.get().findSchedule(type);
+			String cronExpression = "";
 			if (expression != null) {
-				return BaseResponse.buildResponse(ImmutableMap.of("cronExpression", expression.getCronExpression()));
-			} else {
-				return BaseResponse.buildResponse(null, Status.NOT_FOUND);
+				cronExpression = expression.getCronExpression();
 			}
+			return BaseResponse.buildResponse(ImmutableMap.of("cronExpression", cronExpression));
 		} else {
 			return BaseResponse.buildResponse(null, Status.NOT_FOUND);
 		}

@@ -32,7 +32,7 @@ public enum ScheduledJobType {
 			"Purge old data.",
 			"0 0 2 * * ?",
 			"ParameterSetDataPurge",
-			false,
+			true,
 			ScheduledJobCategory.DATABASE,
 			ScheduledJobCategory.PURGE),
 	DatabaseSizeCheck(NotImplementedJob.class,
