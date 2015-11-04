@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+    <changeSet author="pmonteiro (generated)" id="1446679808082-4">
+        <createTable tableName="scheduled_job">
+            <column name="persistentid" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+            <column name="domainid" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="version" type="INT8">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="BOOLEAN">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cron_expression" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated" type="timestamp"/>
+            <column name="parent_persistentid" type="uuid">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="pmonteiro (generated)" id="1446679808082-5">
+        <addPrimaryKey columnNames="persistentid" constraintName="scheduled_jobPK" tableName="scheduled_job"/>
+    </changeSet>
+    <changeSet author="pmonteiro (generated)" id="1446679808082-6">
+        <addForeignKeyConstraint baseColumnNames="parent_persistentid" baseTableName="scheduled_job" constraintName="FK_facility" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="location"/>
+    </changeSet>
+</databaseChangeLog>

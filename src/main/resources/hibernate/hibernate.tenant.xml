@@ -82,5 +82,6 @@
         <mapping class="com.codeshelf.model.domain.ExportMessage"/>
         <mapping class="com.codeshelf.edi.WorkInstructionCsvBean"/>
         <mapping class="com.codeshelf.model.domain.FacilityMetric"/>
+        <mapping class="com.codeshelf.model.domain.ScheduledJob"/>
     </session-factory>
 </hibernate-configuration>

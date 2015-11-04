@@ -60,25 +60,25 @@
 	<include file="db.changelog-v19.1.xml" relativeToChangelogFile="true" />
 	<include file="db.changelog-v19.2.xml" relativeToChangelogFile="true" />
 	<include file="db.changelog-v19.3.xml" relativeToChangelogFile="true" />
-    
+
     <include file="db.changelog-v20.1.xml" relativeToChangelogFile="true" />
     <include file="db.changelog-v20.2.xml" relativeToChangelogFile="true" />
     <include file="db.changelog-v20.3.xml" relativeToChangelogFile="true" />
-    
+
     <include file="db.changelog-v21.1.xml" relativeToChangelogFile="true" />
     <include file="db.changelog-v21.2.xml" relativeToChangelogFile="true" />
-    
+
     <include file="db.changelog-v22.1.xml" relativeToChangelogFile="true" />
     <include file="db.changelog-v22.2.xml" relativeToChangelogFile="true" />
     <include file="db.changelog-v22.3.xml" relativeToChangelogFile="true" />
     <include file="db.changelog-v22.4.xml" relativeToChangelogFile="true" />
-    
+
     <include file="db.changelog-v23.1.xml" relativeToChangelogFile="true" />
     <include file="db.changelog-v23.2.xml" relativeToChangelogFile="true" />
     <include file="db.changelog-v23.3.xml" relativeToChangelogFile="true" />
-    
+
     <include file="db.changelog-v24.1.xml" relativeToChangelogFile="true" />
     <include file="db.changelog-v24.2.xml" relativeToChangelogFile="true" />
-    
     <include file="db.changelog-v25.1.xml" relativeToChangelogFile="true" />
+    <include file="db.changelog-v25.2.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>
