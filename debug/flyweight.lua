@@ -337,9 +337,9 @@ function control(tvb, pkt, root, flyweight_tree)
     pkt.cols.info = "Set Pos Controller"
     local sample_tree = control_tree:add_packet_field(fwfields.f_control_pos_samples, tvb:range(8,1), ENC_BIG_ENDIAN)
     pkt.cols.info:append(" count: "..f_control_pos_samples_field().display)
-    local samples = tvb:range(10,1):uint()
+    local samples = tvb:range(8,1):uint()
     for sample = 0, samples - 1, 1 do
-      local offset = sample * 4
+      local offset = sample * 6
       sample_tree:add_packet_field(fwfields.f_control_pos_num, tvb:range(offset + 9,1), ENC_BIG_ENDIAN)
       sample_tree:add_packet_field(fwfields.f_control_pos_reqval, tvb:range(offset + 10,1), ENC_BIG_ENDIAN)
       sample_tree:add_packet_field(fwfields.f_control_pos_minval, tvb:range(offset + 11,1), ENC_BIG_ENDIAN)
