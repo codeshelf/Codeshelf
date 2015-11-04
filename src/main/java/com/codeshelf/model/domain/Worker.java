@@ -17,6 +17,7 @@ import lombok.Setter;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.Type;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
@@ -101,6 +102,24 @@ public class Worker extends DomainObjectABC implements Validatable {
 	@Setter
 	@JsonProperty
 	private Timestamp	updated;
+	
+	@Column(nullable = true, name = "last_login")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Timestamp	lastLogin;
+
+	@Column(nullable = true, name = "last_logout")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Timestamp	lastLogout;
+	
+	@Column(nullable = true, name = "last_che_persistent_id")
+	@Type(type="com.codeshelf.persistence.DialectUUIDType")
+	@Getter @Setter
+	private UUID 		lastChePersistentId;
+
 
 	@Override
 	public String getDefaultDomainIdPrefix() {

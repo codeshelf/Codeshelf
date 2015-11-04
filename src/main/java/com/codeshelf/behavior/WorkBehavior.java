@@ -30,6 +30,7 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.criterion.SimpleExpression;
+import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,6 +83,8 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.SingleWorkItem;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.model.domain.Worker;
+import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.CompareNullChecker;
 import com.codeshelf.util.UomNormalizer;
@@ -2308,10 +2311,8 @@ public class WorkBehavior implements IApiBehavior {
 				if (worker == null) {
 					//Authentication + unknown worker = failed
 					LOGGER.warn("Badge verification failed for unknown badge " + badge);
-					return null;
 				} else {
 					//Authentication + known worker = succeeded
-					return worker.getWorkerNameUI();
 				}
 			} else {
 				if (worker == null) {
@@ -2323,17 +2324,24 @@ public class WorkBehavior implements IApiBehavior {
 					worker.setBadgeId(badge);
 					worker.generateDomainId();
 					worker.setUpdated(new Timestamp(System.currentTimeMillis()));
-					Worker.staticGetDao().store(worker);
 					LOGGER.info("During badge verification created new Worker " + badge);
-					return worker.getWorkerNameUI();
 				} else {
 					//No authentication + known worker = succeeded
-					return worker.getWorkerNameUI();
 				}
 			}
 		} finally {
 			che.setWorker(worker);
 			Che.staticGetDao().store(che);
+		}
+		if (worker != null) {
+			worker.setLastLogin(new Timestamp(System.currentTimeMillis()));
+			worker.setLastChePersistentId(che.getPersistentId());
+			Worker.staticGetDao().store(worker);
+			WorkerEvent loginEvent = new WorkerEvent(new DateTime(), EventType.LOGIN, che, badge);
+			WorkerEvent.staticGetDao().store(loginEvent);
+			return worker.getWorkerNameUI();
+		} else {
+			return null;
 		}
 	}
 
