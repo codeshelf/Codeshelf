@@ -287,4 +287,19 @@ public class Worker extends DomainObjectABC implements Validatable {
 		}
 		return null;
 	}
+	
+	public WorkerHourlyMetric getLatestActiveHourlyMetricBeforeTime(Timestamp timestamp){
+		Timestamp latestTime = new Timestamp(0);
+		WorkerHourlyMetric latestMetric = null;
+		if (workerMetrics != null){
+			for (WorkerHourlyMetric metric : workerMetrics){
+				Timestamp foundTime = metric.getHourTimestamp();
+				if (metric.isSessionActive() && foundTime.before(timestamp) && foundTime.after(latestTime)){
+					latestTime = foundTime;
+					latestMetric = metric;
+				}
+			}
+		}
+		return latestMetric;
+	}
 }

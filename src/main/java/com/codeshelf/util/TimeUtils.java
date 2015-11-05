@@ -16,4 +16,8 @@ public class TimeUtils {
 		Timestamp out = new Timestamp(cal.getTimeInMillis());
 		return out;
 	}
+	
+	public static Timestamp addTime(Timestamp t, long increment){
+		return new Timestamp(t.getTime() + increment);
+	}
 }

@@ -28,40 +28,57 @@ public class WorkerHourlyMetricBehavior implements IApiBehavior{
 	}
 	
 	protected void metricCloseSession(Worker worker){
+		Timestamp loginTime = worker.getLastLogin();
 		Timestamp logoutTime = worker.getLastLogout();
 		WorkerHourlyMetric metric = worker.getHourlyMetric(logoutTime);
 		if (metric != null) {
 			//If an ongoing metric was found, close it
-			updateMetricDuration(metric, worker.getLastLogin(), logoutTime);
+			updateMetricDuration(metric, logoutTime);
 		} else {
-			//If an ongoing metric was not found, this likely indicates that a worker logged in during the last hour, and made no picks during this one.
-			//Create a new metric and update it with the time worker was logged in during the current hour.
-			Timestamp beginningOfHour = TimeUtils.truncateTimeToHour(logoutTime);
-			//Decide when to start the session for this hour metric: if a worker last logged in after the start of the hour, set it then, if not - set it to the beginning of the hour
-			Timestamp sessionStart = beginningOfHour.after(worker.getLastLogin()) ? beginningOfHour : worker.getLastLogin();
-			metric = new WorkerHourlyMetric(worker, sessionStart);
-			updateMetricDuration(metric, sessionStart, logoutTime);
-			
-			//Try to find an ongoing metric from the last hour. Extend it to the end of its hour and close it
-			WorkerHourlyMetric previousMetric = worker.getHourlyMetric(new Timestamp(logoutTime.getTime() - TimeUtils.MILLISECOUNDS_IN_HOUR));
-			if (previousMetric != null){
-				extendMetricDurationTillEndOfHour(previousMetric);
+			Timestamp beginningOfCurrentHour = TimeUtils.truncateTimeToHour(logoutTime);
+			Timestamp currentMetricSessionStart = beginningOfCurrentHour;
+			//Try to find a metric with an active session in the past
+			WorkerHourlyMetric latestMetric = worker.getLatestActiveHourlyMetricBeforeTime(beginningOfCurrentHour);
+			if (latestMetric == null){
+				if (loginTime.after(beginningOfCurrentHour)) {
+					//If no past metrics found, and the login occurred after the beginning of the current hour,
+					currentMetricSessionStart = loginTime;
+				}
+			} else {
+				//If a past metric with an active session was found, extend it to the end of its hour
+				//Additionally, generate metrics for all full hours between then and now 
+				extendMetricDurationTillEndOfHour(latestMetric);
+				Timestamp historicalFillerTimestamp = TimeUtils.addTime(latestMetric.getHourTimestamp(), TimeUtils.MILLISECOUNDS_IN_HOUR);
+				while (historicalFillerTimestamp.before(beginningOfCurrentHour)){
+					WorkerHourlyMetric historicalFillerMetric = new WorkerHourlyMetric(worker, historicalFillerTimestamp);
+					extendMetricDurationTillEndOfHour(historicalFillerMetric);
+					historicalFillerTimestamp = TimeUtils.addTime(historicalFillerTimestamp, TimeUtils.MILLISECOUNDS_IN_HOUR);
+				}
 			}
+			
+			//Finally, create a metric for the current hour
+			metric = new WorkerHourlyMetric(worker, currentMetricSessionStart);
+			updateMetricDuration(metric, logoutTime);
 		}
 	}
 	
 	private void extendMetricDurationTillEndOfHour(WorkerHourlyMetric metric) {
-		Timestamp hourEnd = new Timestamp(metric.getHourTimestamp().getTime() + TimeUtils.MILLISECOUNDS_IN_HOUR);
-		updateMetricDuration(metric, metric.getLastSessionStart(), hourEnd);
+		Timestamp hourEnd = TimeUtils.addTime(metric.getHourTimestamp(), TimeUtils.MILLISECOUNDS_IN_HOUR);
+		updateMetricDuration(metric, hourEnd);
 	}
 	
-	private void updateMetricDuration(WorkerHourlyMetric metric, Timestamp sessionStart, Timestamp sessionEnd) {
+	private void updateMetricDuration(WorkerHourlyMetric metric, Timestamp sessionEnd) {
 		if (!metric.isSessionActive()){
 			LOGGER.warn("Trying to close inactive metric {}", metric.getDomainId());
 			return;
 		}
-		int sessionDurationMin = (int)((sessionEnd.getTime() - sessionStart.getTime()) / TimeUtils.MILLISECOUNDS_IN_MINUTE);
-		metric.setLoggedInDurationMin(metric.getLoggedInDurationMin() + sessionDurationMin);
+		int sessionDurationMin = (int)((sessionEnd.getTime() - metric.getLastSessionStart().getTime()) / TimeUtils.MILLISECOUNDS_IN_MINUTE);
+		int metricDurationMin = metric.getLoggedInDurationMin() + sessionDurationMin;
+		if (metricDurationMin > 60) {
+			LOGGER.warn("Trying to set duration of metric {} to {} minutes. Reducing time to 60 min. Please investigate.", metric.getDomainId(), metricDurationMin);
+			metricDurationMin = 60;
+		}
+		metric.setLoggedInDurationMin(metricDurationMin);
 		metric.setSessionActive(false);
 		WorkerHourlyMetric.staticGetDao().store(metric);
 	}
