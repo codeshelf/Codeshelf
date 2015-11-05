@@ -41,7 +41,7 @@ public class IsProductionServerHealthCheck extends CodeshelfHealthCheck {
 
 		if (productionFacilityCount == 0) {
 			// Not unhealthy. Just the answer to IsProduction
-			return Result.unhealthy("No production sites among %d facilities in %d tenants.", totalFacilityCount, totalTenantCount);
+			return unhealthy("No production sites among %d facilities in %d tenants.", totalFacilityCount, totalTenantCount);
 		} else {
 			return Result.healthy("Found %d production sites among %d facilities in %d tenants.",
 				productionFacilityCount,

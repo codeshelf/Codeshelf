@@ -32,16 +32,16 @@ public class EdiHealthCheck extends CodeshelfHealthCheck {
 	@Override
 	protected Result check() throws Exception {
 		if(!ediService.isRunning()) {
-			return Result.unhealthy("EDI not running");
+			return unhealthy("EDI not running");
 		} //else
 		String err = ediService.getErrorStatus();
 		if(err != null) {
-			return Result.unhealthy(err);
+			return unhealthy(err);
 		} //else
 		long lastSuccessTime = ediService.getLastSuccessTime();
-		long secondsSinceLastSuccess = (System.currentTimeMillis() - lastSuccessTime)/1000; 
+		long secondsSinceLastSuccess = (System.currentTimeMillis() - lastSuccessTime)/1000;
 		if(secondsSinceLastSuccess > EDI_SERVICE_CYCLE_TIMEOUT_SECONDS) {
-			return Result.unhealthy(String.format("%d secs since last success", secondsSinceLastSuccess));
+			return unhealthy(String.format("%d secs since last success", secondsSinceLastSuccess));
 		} //else
 		Result badSftpResult = testEDIServices();
 		if (badSftpResult != null) {
@@ -101,6 +101,6 @@ public class EdiHealthCheck extends CodeshelfHealthCheck {
 		if (errors.length() == 0) {
 			return null;
 		}
-		return Result.unhealthy(errors.toString());
+		return unhealthy(errors.toString());
 	}
 }
