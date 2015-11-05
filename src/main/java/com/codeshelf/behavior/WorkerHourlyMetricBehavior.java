@@ -5,7 +5,9 @@ import java.sql.Timestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Worker;
+import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.model.domain.WorkerHourlyMetric;
 import com.codeshelf.util.TimeUtils;
 
@@ -28,14 +30,20 @@ public class WorkerHourlyMetricBehavior implements IApiBehavior{
 	}
 	
 	protected void metricCloseSession(Worker worker){
-		Timestamp loginTime = worker.getLastLogin();
 		Timestamp logoutTime = worker.getLastLogout();
-		WorkerHourlyMetric metric = worker.getHourlyMetric(logoutTime);
-		if (metric != null) {
-			//If an ongoing metric was found, close it
-			updateMetricDuration(metric, logoutTime);
-		} else {
-			Timestamp beginningOfCurrentHour = TimeUtils.truncateTimeToHour(logoutTime);
+		WorkerHourlyMetric metric = produceMetric(worker, logoutTime);
+		updateMetricDuration(metric, logoutTime);
+	}
+	
+	/**
+	 * Thus function retrieves or generates a Mertic for the requested hour
+	 * It will also fill in metrics between the last metric with an active session, and the requested time 
+	 */
+	protected WorkerHourlyMetric produceMetric(Worker worker, Timestamp time) {
+		Timestamp loginTime = worker.getLastLogin();
+		WorkerHourlyMetric metric = worker.getHourlyMetric(time);
+		if (metric == null){
+			Timestamp beginningOfCurrentHour = TimeUtils.truncateTimeToHour(time);
 			Timestamp currentMetricSessionStart = beginningOfCurrentHour;
 			//Try to find a metric with an active session in the past
 			WorkerHourlyMetric latestMetric = worker.getLatestActiveHourlyMetricBeforeTime(beginningOfCurrentHour);
@@ -57,9 +65,9 @@ public class WorkerHourlyMetricBehavior implements IApiBehavior{
 			}
 			
 			//Finally, create a metric for the current hour
-			metric = new WorkerHourlyMetric(worker, currentMetricSessionStart);
-			updateMetricDuration(metric, logoutTime);
+			metric = new WorkerHourlyMetric(worker, currentMetricSessionStart);			
 		}
+		return metric;
 	}
 	
 	private void extendMetricDurationTillEndOfHour(WorkerHourlyMetric metric) {
@@ -80,6 +88,27 @@ public class WorkerHourlyMetricBehavior implements IApiBehavior{
 		}
 		metric.setLoggedInDurationMin(metricDurationMin);
 		metric.setSessionActive(false);
+		WorkerHourlyMetric.staticGetDao().store(metric);
+	}
+	
+	protected void recordEvent(Facility facility, String pickerId, EventType type) {
+		Worker worker = Worker.findWorker(facility, pickerId);
+		if (worker == null) {
+			LOGGER.warn("Trying to update metrics for non-existent worker {}", pickerId);
+			return;
+		}
+		boolean completeEvent = type == EventType.COMPLETE, shortEvent = type == EventType.SHORT;
+		if (!completeEvent && !shortEvent){
+			LOGGER.warn("Trying to update metrics for an unexpected event type {}", type);
+			return;
+		}
+		WorkerHourlyMetric metric = produceMetric(worker, new Timestamp(System.currentTimeMillis()));
+		metric.setPicks(metric.getPicks() + 1);
+		if (completeEvent) {
+			metric.setCompletes(metric.getCompletes() + 1);
+		} else if (shortEvent){
+			metric.setShorts(metric.getShorts() + 1);
+		}
 		WorkerHourlyMetric.staticGetDao().store(metric);
 	}
 }

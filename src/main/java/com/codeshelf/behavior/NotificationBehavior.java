@@ -46,6 +46,8 @@ public class NotificationBehavior implements IApiBehavior{
 																		EventType.PUTWALL_PUT,
 																		EventType.SKUWALL_PUT);
 	
+	private final WorkerHourlyMetricBehavior	workerHourlyMetricBehavior = new WorkerHourlyMetricBehavior();
+	
 	@Inject
 	public NotificationBehavior() {
 	}
@@ -86,7 +88,9 @@ public class NotificationBehavior implements IApiBehavior{
 		}
 		event.generateDomainId();
 		WorkerEvent.staticGetDao().store(event);
-
+		
+		//Save Complete or Short event into WorkerHourlyMetric
+		workerHourlyMetricBehavior.recordEvent(wi.getFacility(), wi.getPickerId(), type);
 	}
 	
 	public void saveEvent(NotificationMessage message) {
