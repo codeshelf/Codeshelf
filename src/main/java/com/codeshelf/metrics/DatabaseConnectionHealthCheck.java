@@ -23,6 +23,6 @@ public class DatabaseConnectionHealthCheck extends CodeshelfHealthCheck {
     	if(ex == null) {
             return Result.healthy("Database is reachable");
     	} // else
-        return Result.unhealthy(ex);
+        return unhealthy(ex);
     }
 }
