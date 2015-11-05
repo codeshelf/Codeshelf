@@ -957,13 +957,23 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 
 		// If AUTOSHRT if off, there still might be other jobs in active pick list. If on, any remaining there would be shorted and removed.
-		if (mActivePickWiList.size() > 0) {
+		int afterActiveCount = mActivePickWiList.size();
+		if (afterActiveCount > 0) {
 			// If there's more active picks then show them.
-			if (autoShortOn) {
-				LOGGER.error("Simultaneous work instructions turned off currently, so unexpected case in confirmShortPick. state: {}",
-					state);
-				LOGGER.error("first wi from confirmShortPick error just before is: {}", mActivePickWiList.get(0)); // log the first to help understand
+			if (autoShortOn) { 
+				/* JR says: DEV-1234 we used to error here, and probably should. Our short-ahead logic is wrong. See comments in 
+				 * SetupOrdersDeviceLogic.selectNextActivePicks(). The only reason this is not an error is because this got called multiple
+				 * times for short ahead situation. On the first call, mActivePickWiList.size is zero as expected, and falls through below to doNextPick()
+				 * which populates the next active pick list state. The subsequent call to this then looks like an error.
+				WorkInstruction firstWiInList = mActivePickWiList.get(0);
+				LOGGER.error("Unexpected situation in processShortPickYes. state:{} active_count:{} first_active_wi:{}",
+					state, afterActiveCount, firstWiInList, new RuntimeException());
+				*/
+
 			}
+			// Related to DEV-1234 silliness. This showActivePicks() is not needed if we actually shorted ahead. It causes superfluous drawing instructions.
+			// But it is needed if not shorting ahead. Then we need to show the rest of the active jobs as there is no other state transition and redraw. 
+			// Cannot add an else without doing other kludgy checks above. Don't. If you embark on this, but the LOGGER.error() back and then fix short aheads properly.
 			showActivePicks();
 		} else {
 			// There's no more active picks, so move to the next set.
@@ -1012,6 +1022,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				//The getActivePickWiList() list may be modified during processShortPickYes(). That's why we are creating a copy of it here. to iterate through.
 				List<WorkInstruction> activeInstructions = new ArrayList<>(getActivePickWiList());
 				for (WorkInstruction activeInstruction : activeInstructions) {
+					/* JR says "not good". But the bailing wire is ok for now, supported by excellent unit test.
+					 CheProcessTestPickFeedback.simulPickShortOrderCountIssue() demonstrates the problem.
+					 The problem is side effects of processShortPickYes() remake the active pick list. That is, it calls doNextPick().
+					 But really, we should call doNextPick() from here, and not multiple times within that loop. Beside the DEV-1234 silliness
+					 we get superfluous poscon and screen draws.
+					 See more comments in SetupOrdersDeviceLogic.processShortPickYes()
+					*/
 					processShortPickYes(activeInstruction, 0);
 				}
 			}
@@ -1148,6 +1165,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		boolean result = false;
 
+		// TODO temp
+		LOGGER.warn("clear active picks");
 		mActivePickWiList.clear(); // repopulate from mAllPicksWiList.
 
 		// Loop through each container to see if there is a WI for that container at the next location.
@@ -2513,6 +2532,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		notifyWiVerb(inWi, eventType, kLogAsInfo);
 
 		mActivePickWiList.remove(inWi);
+		// TODO temp
+		LOGGER.warn("remove {} from active picks", inWi.getItemId());
+
 
 		CheStateEnum state = getCheStateEnum();
 

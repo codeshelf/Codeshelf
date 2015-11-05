@@ -1271,10 +1271,13 @@ public class CheProcessTestPickFeedback extends ServerTest {
 			WorkInstructionSequencerType.WorkSequence.toString());
 
 		LOGGER.info("1: upload 2 identical orders");
-		String csvOrders = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,gtin,destinationid,shipperId,customerId,dueDate\n"
-				+ "1111,1,ItemS1,,11,each,LocX24,1111,1,,1,10,20,\n"
-				+ "1111,2,ItemS2,,12,each,LocX25,1111,1,,1,10,20,\n"
-				+ "2222,3,ItemS1,,22,each,LocX24,2222,1,,1,10,20,\n" + "2222,4,ItemS2,,23,each,LocX25,2222,1,,1,10,20,\n";
+		String csvOrders = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence\n"
+				+ "1111,1,ItemS1,,11,each,LocX24,1111,1\n" //
+				+ "1111,2,ItemS2,,12,each,LocX25,1111,2\n" //
+				+ "2222,3,ItemS1,,22,each,LocX24,2222,1\n" //
+				+ "2222,4,ItemS2,,23,each,LocX25,2222,2\n" //
+				+ "3333,5,ItemS3,,5,each,LocX33,3333,3\n" //
+				+ "4444,6,ItemS4,,5,each,LocX44,4444,4\n";
 		importOrdersData(facility, csvOrders);
 
 		commitTransaction();
@@ -1282,10 +1285,12 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		startSiteController();
 		PickSimulator picker = createPickSim(cheGuid1);
 
-		LOGGER.info("2: load 2 orders on the CHE");
+		LOGGER.info("2: load orders on the CHE. First two have 2 items each");
 		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("1111", "1");
 		picker.setupOrderIdAsContainer("2222", "2");
+		picker.setupOrderIdAsContainer("3333", "3");
+		picker.setupOrderIdAsContainer("4444", "4");
 
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
@@ -1296,12 +1301,23 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertEquals(22, (int) picker.getLastSentPositionControllerDisplayValue(2));
 
 		LOGGER.info("3: Short the first pair of items");
+		LOGGER.info("3a: See active jobs befor the short");
+		List<WorkInstruction> wis = picker.getActivePickList();
+		this.logWiList(wis);
+
+		LOGGER.info("3b: Short the first pair of items");
+		// In this case two got shorted, leading to active jobs of two
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING_SHORT, 4000);
 		picker.scanCommand("YES");
+		// See the DEV-1234 ERROR here
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		picker.logCheDisplay();
+		LOGGER.info("3c: See active jobs after the short");
+		List<WorkInstruction> wis2 = picker.getActivePickList();
+		this.logWiList(wis2);
 
-		LOGGER.info("4: Assert that order counts are correct");
+		LOGGER.info("4: Assert that order counts are correct for the first two orders");
 		SetupOrdersDeviceLogic device = (SetupOrdersDeviceLogic) picker.getCheDeviceLogic();
 		Map<String, WorkInstructionCount> countMap = device.getMContainerToWorkInstructionCountMap();
 		WorkInstructionCount countOrder1 = countMap.get("1111");
@@ -1310,9 +1326,31 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertNotNull(countOrder2);
 		Assert.assertEquals(1, countOrder1.getGoodCount());
 		Assert.assertEquals(1, countOrder1.getShortCount());
+
 		Assert.assertEquals(1, countOrder2.getGoodCount());
 		Assert.assertEquals(1, countOrder2.getShortCount());
-		return;
+
+		// This concludes the main point of the test.
+		// Now just looking for the DEV-1234 situation.
+		LOGGER.info("5: Short (with short ahead) the next item");
+		// This case differs in we two got shorted, leading to active jobs of only one
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING_SHORT, 4000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+
+		LOGGER.info("6: Short the next item");
+		// This case differs in only one got shorted, leading to active jobs of only one
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING_SHORT, 4000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+
+		LOGGER.info("7: press the button of a poscon showing the double dash short");
+		picker.scanSomething("SKIPSCAN");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.pick(1, -68); // just made up the value. The code actually looks at what we last sent out if not in shorting mode where we can increment/decrement		
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);		
 	}
 
 	/**
