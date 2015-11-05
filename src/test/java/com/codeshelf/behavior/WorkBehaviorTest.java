@@ -125,7 +125,7 @@ public class WorkBehaviorTest extends ServerTest {
 
 	@Test
 	public void shortedWorkInstructionShortsOrderDetail() {
-		this.workService = new WorkBehavior(mock(LightBehavior.class), mock(EdiExportService.class));
+		this.workService = new WorkBehavior(mock(LightBehavior.class), mock(EdiExportService.class), mock(WorkerHourlyMetricBehavior.class));
 
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = facilityGenerator.generateValid();
@@ -172,7 +172,8 @@ public class WorkBehaviorTest extends ServerTest {
 			mock(InventoryBehavior.class),
 			mock(NotificationBehavior.class),
 			mock(InfoBehavior.class),
-			mock(PalletizerBehavior.class));
+			mock(PalletizerBehavior.class),
+			mock(WorkerHourlyMetricBehavior.class));
 		this.getTenantPersistenceService().commitTransaction();
 
 		IMessageProcessor processor = new ServerMessageProcessor(factory,
@@ -196,7 +197,8 @@ public class WorkBehaviorTest extends ServerTest {
 			mock(InventoryBehavior.class),
 			mock(NotificationBehavior.class),
 			mock(InfoBehavior.class),
-			mock(PalletizerBehavior.class));
+			mock(PalletizerBehavior.class),
+			mock(WorkerHourlyMetricBehavior.class));
 		IMessageProcessor processor2 = new ServerMessageProcessor(factory2,
 			new ConverterProvider().get(),
 			this.webSocketManagerService);
@@ -209,7 +211,7 @@ public class WorkBehaviorTest extends ServerTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void summariesAreSorted() {
-		this.workService = new WorkBehavior(mock(LightBehavior.class), mock(EdiExportService.class));
+		this.workService = new WorkBehavior(mock(LightBehavior.class), mock(EdiExportService.class), mock(WorkerHourlyMetricBehavior.class));
 
 		this.getTenantPersistenceService().beginTransaction();
 
@@ -330,7 +332,7 @@ public class WorkBehaviorTest extends ServerTest {
 		EdiExportService provider = mock(EdiExportService.class);
 		when(provider.getEdiExporter(any(Facility.class))).thenReturn(ediExporter);
 
-		this.workService = new WorkBehavior(mock(LightBehavior.class), provider);
+		this.workService = new WorkBehavior(mock(LightBehavior.class), provider, mock(WorkerHourlyMetricBehavior.class));
 	}
 
 	private List<WorkInstruction> generateValidWorkInstructions(int total) {

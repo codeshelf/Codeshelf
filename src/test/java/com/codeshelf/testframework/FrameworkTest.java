@@ -35,6 +35,7 @@ import com.codeshelf.behavior.IPropertyBehavior;
 import com.codeshelf.behavior.InventoryBehavior;
 import com.codeshelf.behavior.LightBehavior;
 import com.codeshelf.behavior.WorkBehavior;
+import com.codeshelf.behavior.WorkerHourlyMetricBehavior;
 import com.codeshelf.device.ClientConnectionManagerService;
 import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.device.SiteControllerMessageProcessor;
@@ -304,7 +305,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		// we cannot access other threads' contexts so we hope they cleaned up!
 		CodeshelfSecurityManager.removeContextIfPresent();
 
-		workService = new WorkBehavior(new LightBehavior(), staticEdiExporterService);
+		workService = new WorkBehavior(new LightBehavior(), staticEdiExporterService, new WorkerHourlyMetricBehavior());
 		radioController = null;
 		deviceManager = null;
 		apiServer = null;

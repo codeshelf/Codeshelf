@@ -112,7 +112,8 @@ public class WorkBehavior implements IApiBehavior {
 
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(WorkBehavior.class);
 
-	private final LightBehavior	lightService;
+	private final LightBehavior					lightBehavior;
+	private final WorkerHourlyMetricBehavior	workerHourlyMetricBehavior;
 
 	@Getter
 	private EdiExportService	exportProvider;
@@ -137,9 +138,10 @@ public class WorkBehavior implements IApiBehavior {
 	}
 
 	@Inject
-	public WorkBehavior(LightBehavior lightService, EdiExportService exportProvider) {
-		this.lightService = lightService;
+	public WorkBehavior(LightBehavior lightService, EdiExportService exportProvider, WorkerHourlyMetricBehavior workerHourlyMetricBehavior) {
+		this.lightBehavior = lightService;
 		this.exportProvider = exportProvider;
+		this.workerHourlyMetricBehavior = workerHourlyMetricBehavior;
 	}
 
 	// --------------------------------------------------------------------------
@@ -363,7 +365,7 @@ public class WorkBehavior implements IApiBehavior {
 
 	private int sendMessage(Set<User> users, OrderLocationFeedbackMessage message) { // TODO
 		// See this comment in LightService: "Use the light service API as our general sendMessage API"
-		return lightService.sendMessage(users, message);
+		return lightBehavior.sendMessage(users, message);
 	}
 
 	private void computeAndSendOrderFeedback(WorkInstruction incomingWI) {
@@ -2279,7 +2281,7 @@ public class WorkBehavior implements IApiBehavior {
 
 		if (locToLight.isLightableAisleController()) {
 			// We can flash the LED
-			lightService.flashOneLocationInColor(locToLight, che.getColor(), facility);
+			lightBehavior.flashOneLocationInColor(locToLight, che.getColor(), facility);
 		}
 		// As for the poscons, it is a fairly expensive query if one poscon per bay. 
 		// Could optimize a little here as we know the bay. But for reduced cost put wall
@@ -2339,6 +2341,7 @@ public class WorkBehavior implements IApiBehavior {
 			Worker.staticGetDao().store(worker);
 			WorkerEvent loginEvent = new WorkerEvent(new DateTime(), EventType.LOGIN, che, badge);
 			WorkerEvent.staticGetDao().store(loginEvent);
+			workerHourlyMetricBehavior.metricOpenSession(worker);
 			return worker.getWorkerNameUI();
 		} else {
 			return null;
@@ -2346,19 +2349,24 @@ public class WorkBehavior implements IApiBehavior {
 	}
 	
 	public void logoutWorkerFromChe(Che che, String workerId){
-		if (workerId != null) {
-			Worker worker = Worker.findWorker(che.getFacility(), workerId);
-			if (worker != null) {
-				worker.setLastLogout(new Timestamp(System.currentTimeMillis()));
-				Worker.staticGetDao().store(worker);
-				WorkerEvent logoutEvent = new WorkerEvent(new DateTime(), EventType.LOGOUT, che, workerId);
-				WorkerEvent.staticGetDao().store(logoutEvent);
-			} else {
-				LOGGER.warn("Trying to logout from {} with non-existent worker {}", che.getDeviceGuidStr(), workerId);
-			}
+		if (workerId == null) {
+			//Possibly, a LOGOUT scan when not logged in
+			return;
+		}
+		
+		Worker worker = Worker.findWorker(che.getFacility(), workerId);
+		if (worker != null) {
+			worker.setLastLogout(new Timestamp(System.currentTimeMillis()));
+			Worker.staticGetDao().store(worker);
+			WorkerEvent logoutEvent = new WorkerEvent(new DateTime(), EventType.LOGOUT, che, workerId);
+			WorkerEvent.staticGetDao().store(logoutEvent);
+			
+			workerHourlyMetricBehavior.metricCloseSession(worker);
+		} else {
+			LOGGER.warn("Trying to logout from {} with non-existent worker {}", che.getDeviceGuidStr(), workerId);
 		}
 	}
-
+	
 	/**
 	 * Primary API to set a mobile CHE association to other CHE.
 	 * This enforces consistency. Therefore may unexpectedly clear another CHE's association.
