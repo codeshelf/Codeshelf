@@ -531,10 +531,16 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		LOGGER.info("7: Complete this pick for 11111. That should complete the order. 4 picks, all attributed to CHE2");
 		LOGGER.info(picker2.getLastCheDisplay());
 		picker2.pickItemAuto();
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 
 		long t6 = System.currentTimeMillis();
 		if (t6 - t5 > 1000)
-			LOGGER.info("___t6 is {}ms", t6 - t5);
+			LOGGER.info("___t6 is {}ms", t6 - t5);		
+		/*
+		 * See [ERROR] Received processStateSetup when map is not empty. How?
+		 * See DEV-1196. waitUntillQueueIsEmpty() takes a while. When site controller logs in to server, the server waits a few seconds, then sends out the CHE init messages. Most units run too fast to see this. But this one does not.
+		 * In production, we would not expect to see this error as it should be impossible get carts set up in those few seconds before the init is done.
+		 */
 
 		beginTransaction();
 		EdiExportService exportProvider = workService.getExportProvider();
@@ -545,7 +551,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		if (t7 - t6 > 1000)
 			LOGGER.info("___t7 is {}ms", t7 - t6);
 
-		LOGGER.info("5: Verify sent messages");
+		LOGGER.info("8: Verify sent messages");
 		List<ExportMessage> messages = ExportMessage.staticGetDao().getAll();
 		Assert.assertEquals(7, messages.size());
 		for (ExportMessage message : messages) {
