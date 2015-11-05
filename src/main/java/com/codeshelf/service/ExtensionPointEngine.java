@@ -151,9 +151,9 @@ public class ExtensionPointEngine {
 				.add(Restrictions.eq("parent.persistentId", facility.getPersistentId()))
 				.list();
 		if (eps.size() > 1) {
-			LOGGER.warn("Fould multiple extension points for type {} in faciltiy {}");
+			LOGGER.warn("Fould multiple extension points for type {} in faciltiy {}", type, facility);
 		} else if (eps.size() < 1) {
-			LOGGER.warn("Fould multiple extension points for type {} in faciltiy {}");
+			LOGGER.warn("Fould multiple extension points for type {} in faciltiy {}", type, facility);
 		} 	 
 		
 		if (eps.size() >= 1) {
