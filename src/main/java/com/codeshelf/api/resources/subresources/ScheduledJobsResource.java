@@ -23,7 +23,6 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.scheduler.ApplicationSchedulerService;
 import com.codeshelf.scheduler.ScheduledJobType;
 import com.google.common.base.Optional;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 
