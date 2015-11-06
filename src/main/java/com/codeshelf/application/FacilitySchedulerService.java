@@ -211,10 +211,14 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 	}
 
 	public Future<ScheduledJobType> trigger(ScheduledJobType type) throws SchedulerException {
-		Future<ScheduledJobType> future = new JobFuture<ScheduledJobType>(type);		
-		lastFiredTimes.put(type, DateTime.now());
-		scheduler.triggerJob(type.getKey(), new JobDataMap(ImmutableMap.of(FutureResolver.FUTURE_PROPERTY, future)));
-		return future;
+		if (!isRunningJob(type)) {
+			Future<ScheduledJobType> future = new JobFuture<ScheduledJobType>(type);		
+			lastFiredTimes.put(type, DateTime.now());
+			scheduler.triggerJob(type.getKey(), new JobDataMap(ImmutableMap.of(FutureResolver.FUTURE_PROPERTY, future)));
+			return future;
+		} else {
+			throw new SchedulerException(String.format("type %s is already running for facility %s", type, this.facility));
+		}
 	}
 
 	public Optional<DateTime> getPreviousFireTime(ScheduledJobType type) throws SchedulerException {
@@ -235,6 +239,15 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		return Optional.fromNullable(lastTime);
 	}
 
+	private boolean isRunningJob(ScheduledJobType type) throws SchedulerException {
+		List<JobExecutionContext> runningJobs = scheduler.getCurrentlyExecutingJobs();
+		for (JobExecutionContext jobExecutionContext : runningJobs) {
+			boolean found = jobExecutionContext.getJobDetail().getKey().equals(type.getKey());
+			if (found) return found;
+		}
+		return false;
+	}
+	
 	public List<JobExecutionContext> getRunningJobs() throws SchedulerException {
 		List<JobExecutionContext> runningJobs = scheduler.getCurrentlyExecutingJobs();
 		return runningJobs;

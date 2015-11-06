@@ -107,8 +107,28 @@ public class FacilitySchedulerServiceTest {
 	}
 	
 	@Test
-	public void noManualJobIfRunning() {
+	public void noManualJobIfRunning() throws Exception {
+		CronExpression firstExp = new CronExpression("0 0 2 * * ?");
+		ScheduledJobType testType = ScheduledJobType.Test;	
 		
+		subject.schedule(firstExp, testType);
+		Assert.assertFalse(subject.isJobRunning(testType));
+		
+		Optional<DateTime> neverTriggered = subject.getPreviousFireTime(testType);
+		Assert.assertFalse(neverTriggered.isPresent());
+		Future<ScheduledJobType> future1 = subject.trigger(testType);
+		TestJob job1 = TestJob.pollInstance();
+		job1.awaitRunning();
+		try {
+			Future<ScheduledJobType> future2 = subject.trigger(testType);
+			Assert.fail("Should have prevented trigger while running");
+		} catch(SchedulerException e) {
+			
+		}
+		Assert.assertTrue(job1.isRunning());
+		job1.proceed();
+		future1.get(2, TimeUnit.SECONDS);
+
 	}
 	
 	@Test
