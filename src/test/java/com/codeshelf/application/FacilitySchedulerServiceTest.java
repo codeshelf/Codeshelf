@@ -208,5 +208,18 @@ public class FacilitySchedulerServiceTest {
 
 	}
 
-	
+
+	@Test
+	public void passesFacilityContextToJob() throws SchedulerException, InterruptedException, TimeoutException, BrokenBarrierException, ParseException, ExecutionException {
+		CronExpression firstExp = new CronExpression("0 0 2 * * ?");
+		ScheduledJobType testType = ScheduledJobType.Test;	
+		subject.schedule(firstExp, testType);
+		Future<ScheduledJobType> future = subject.trigger(testType);
+		TestJob job = TestJob.pollInstance();
+		job.awaitRunning();
+		job.proceed();
+		future.get(5, TimeUnit.SECONDS);
+		Assert.assertEquals(subject.getTenant(), job.getExecutionTenant());
+		Assert.assertEquals(subject.getFacility(), job.getExecutionFacility());
+	}
 }

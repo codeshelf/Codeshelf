@@ -22,9 +22,7 @@ import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.ServiceUtility;
 import com.codeshelf.testframework.HibernateTest;
 import com.google.common.base.Optional;
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Service.State;
 
@@ -32,26 +30,26 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 
 	@Test
 	public void persistScheduledJobs() throws Exception {
-		//note that this test intended to test multitenant but couldn't get tenant session to switch back and forth effectively 
+		//note that this test intended to test multitenant but couldn't get tenant session to switch back and forth effectively
 		//ListMultimap<Tenant, Facility> tenantFacilities = createTenantFacilities();
 		//System.out.println(tenantFacilities.entries());
 		beginTransaction();
 		Facility facility1 = Facility.createFacility("F20", "", Point.getZeroPoint());
 		facility1.getDao().store(facility1);
 		commitTransaction();
-		
-		
+
+
 		final ApplicationSchedulerService subject = new ApplicationSchedulerService();
 		subject.startAsync();
 		subject.awaitRunningOrThrow();
-		
+
 		final String testExpression = "0 0 2 * * ?";
 		beginTransaction();
 		ScheduledJob testJob = new ScheduledJob(facility1.reload(), ScheduledJobType.Test, testExpression);
 		subject.scheduleJob(testJob);
 		commitTransaction();
-		
-/*		
+
+/*
 		for (final Entry<Tenant, Facility> entry : tenantFacilities.entries()) {
 			new AsTenant(entry.getKey()) {
 				public void doTransaction() throws Exception {
@@ -81,22 +79,22 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 				Map<ScheduledJobType, CronExpression> jobs = service.get().getJobs();
 				Assert.assertEquals(testExpression, jobs.get(ScheduledJobType.Test).getCronExpression());
 			}
-		}*/		
+		}*/
 	}
 
 	@Test
 	public void updateScheduledJobs() throws Exception {
-		//note that this test intended to test multitenant but couldn't get tenant session to switch back and forth effectively 
+		//note that this test intended to test multitenant but couldn't get tenant session to switch back and forth effectively
 		//		ListMultimap<Tenant, Facility> tenantFacilities = createTenantFacilities();
 		beginTransaction();
 		Facility facility1 = Facility.createFacility("F35", "", Point.getZeroPoint());
 		facility1.getDao().store(facility1);
 		commitTransaction();
-		
+
 		final ApplicationSchedulerService subject = new ApplicationSchedulerService();
 		subject.startAsync();
 		subject.awaitRunningOrThrow();
-		
+
 		final String initialExpression = "0 0 2 * * ?";
 		final String updatedExpression = "0 0 3 * * ?";
 
@@ -110,7 +108,7 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 		subject.scheduleJob(updatedJob);
 		commitTransaction();
 
-		
+
 		/*
 		for (final Entry<Tenant, Facility> entry : tenantFacilities.entries()) {
 			new AsTenant(entry.getKey()) {
@@ -122,7 +120,7 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 					ScheduledJob updatedJob = new ScheduledJob(entry.getValue().reload(), ScheduledJobType.Test, updatedExpression);
 					subject.scheduleJob(updatedJob);
 				}
-				
+
 			}.run();
 		}*/
 
@@ -131,7 +129,7 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 		if (service.isPresent()) {
 			Map<ScheduledJobType, CronExpression> jobs = service.get().getJobs();
 			Assert.assertEquals(updatedExpression, jobs.get(ScheduledJobType.Test).getCronExpression());
-		}	
+		}
 		commitTransaction();
 
 		/*
@@ -144,13 +142,13 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 					if (service.isPresent()) {
 						Map<ScheduledJobType, CronExpression> jobs = service.get().getJobs();
 						Assert.assertEquals(updatedExpression, jobs.get(ScheduledJobType.Test).getCronExpression());
-					}	
+					}
 				}
 			}.run();
-		}*/		
+		}*/
 	}
 
-	
+
 	@Test
 	public void startsAndStopsAllFacilitySchedulersAcrossTenants() {
 		ITenantManagerService tenantManager = TenantManagerService.getInstance();
@@ -163,27 +161,27 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 			CodeshelfSecurityManager.removeContextIfPresent();
 			CodeshelfSecurityManager.setContext(CodeshelfSecurityManager.getUserContextSYSTEM(), tenant);
 			persistence.beginTransaction();
-			
+
 			Facility facility1 = Facility.createFacility("F"+count++, "", Point.getZeroPoint());
 			persistence.getDao(Facility.class).store(facility1);
 			facilityIds.add(facility1.getPersistentId());
-			
+
 			Facility facility2 = Facility.createFacility("F"+count++, "", Point.getZeroPoint());
 			persistence.getDao(Facility.class).store(facility2);
 			facilityIds.add(facility2.getPersistentId());
-			
+
 			persistence.commitTransaction();
 		}
-		
+
 		ApplicationSchedulerService subject = new ApplicationSchedulerService();
 		subject.startAsync();
 		ServiceUtility.awaitRunningOrThrow(subject);
-		
-		
+
+
 		Multimap<State, FacilitySchedulerService> services=  subject.getServicesByState();
 		for (FacilitySchedulerService service: services.values()) {
 			Assert.assertEquals(State.RUNNING, service.state()); //only once through and shoyuld be running
-			UUID facilityIdToFind = service.getFacility().getPersistentId(); 
+			UUID facilityIdToFind = service.getFacility().getPersistentId();
 			Assert.assertTrue("Did not find service for faclitity " + service.getFacility(), facilityIds.remove(facilityIdToFind));
 		}
 		Assert.assertTrue("Didn't find " + facilityIds, facilityIds.isEmpty());
@@ -196,23 +194,23 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 		}
 		CodeshelfSecurityManager.removeContextIfPresent();
 	}
-	
+
 	@Test
 	public void testStartsNewFacilitySchedulerForNewFacilityOfTenant() {
-		
+
 	}
-	
+
 	@Test
 	public void testSchedulesDefaultedOnFacilityRecreate() {
-		
+
 	}
 
 	@Test
 	public void viewSchedulesAcrossTenantByFacility() {
-		
+
 	}
 
-	@SuppressWarnings("unused")
+	/*
 	private ListMultimap<Tenant, Facility> createTenantFacilities() throws Exception {
 		final ListMultimap<Tenant, Facility> tenantFacilities = ArrayListMultimap.create();
 		ITenantManagerService tenantManager = TenantManagerService.getInstance();
@@ -227,7 +225,7 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 					Facility facility1 = Facility.createFacility("F"+loopCount, "", Point.getZeroPoint());
 					facility1.getDao().store(facility1);
 					tenantFacilities.put(tenant, facility1);
-					
+
 					Facility facility2 = Facility.createFacility("F"+(loopCount+1), "", Point.getZeroPoint());
 					facility2.getDao().store(facility2);
 					tenantFacilities.put(tenant, facility2);
@@ -236,15 +234,15 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 		}
 		return tenantFacilities;
 	}
-	
+
 	private static abstract class AsTenant  {
 
 		private Tenant tenant;
-		
+
 		public AsTenant(Tenant tenant) {
 			this.tenant = tenant;
 		}
-		
+
 		public void run() throws Exception {
 			// TODO Auto-generated method stub
 			TenantPersistenceService persistence = TenantPersistenceService.getInstance();
@@ -259,7 +257,8 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 				CodeshelfSecurityManager.removeContextIfPresent();
 			}
 		}
-		
+
 		protected abstract void doTransaction() throws Exception;
 	}
+	*/
 }

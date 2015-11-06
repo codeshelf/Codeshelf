@@ -12,14 +12,17 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.jetty.util.BlockingArrayQueue;
-import org.quartz.InterruptableJob;
-import org.quartz.Job;
-import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TestJob implements Job, InterruptableJob {
+import com.codeshelf.manager.Tenant;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.scheduler.AbstractFacilityJob;
+
+import lombok.Getter;
+
+public class TestJob extends AbstractFacilityJob {
 
 	public static final Object CANCELLED = new Object();
 	
@@ -30,6 +33,11 @@ public class TestJob implements Job, InterruptableJob {
 	private CyclicBarrier runBarrier= new CyclicBarrier(2);
 	private AtomicBoolean isRunning = new AtomicBoolean(false);
 	private AtomicBoolean  isCancelled = new AtomicBoolean(false);
+
+	@Getter
+	private Tenant executionTenant;
+	@Getter
+	private Facility executionFacility;
 	
 	public TestJob() {
 		LOGGER.info("Constructing TestJob instance");
@@ -75,8 +83,10 @@ public class TestJob implements Job, InterruptableJob {
 		runBarrier.await(5, TimeUnit.SECONDS); //failsafe for test completion
 	}
 	
-	@Override
-	public void execute(JobExecutionContext context) throws JobExecutionException {
+	protected Object doFacilityExecute(Tenant tenant, Facility facility) throws JobExecutionException {
+		executionFacility = facility;
+		executionTenant = tenant;
+		
 		try {
 			monitor.lock();
 			isRunning.set(true);
@@ -95,7 +105,7 @@ public class TestJob implements Job, InterruptableJob {
 			runBarrier.await(5, TimeUnit.SECONDS); //failsafe for test completion
 			isRunning.set(false);
 			LOGGER.info("Completed test job");
-			context.setResult(new Object());
+			return new Object();
 		} catch (InterruptedException | TimeoutException e) {
 			throw new JobExecutionException(e);
 		} catch(BrokenBarrierException e) {

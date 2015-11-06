@@ -117,6 +117,7 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 
 	private UserContext	systemUserContext;
 
+	@Getter
 	private Tenant	tenant;
 
 	@Getter
