@@ -212,6 +212,7 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 		
 	}
 
+	@SuppressWarnings("unused")
 	private ListMultimap<Tenant, Facility> createTenantFacilities() throws Exception {
 		final ListMultimap<Tenant, Facility> tenantFacilities = ArrayListMultimap.create();
 		ITenantManagerService tenantManager = TenantManagerService.getInstance();
