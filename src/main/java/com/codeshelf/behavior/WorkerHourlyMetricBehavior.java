@@ -14,7 +14,7 @@ import com.codeshelf.util.TimeUtils;
 public class WorkerHourlyMetricBehavior implements IApiBehavior{
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(WorkerHourlyMetricBehavior.class);
 	
-	protected void metricOpenSession(Worker worker) {
+	public void metricOpenSession(Worker worker) {
 		Timestamp loginTime = worker.getLastLogin();
 		//Try to find a metric for this hour
 		WorkerHourlyMetric metric = worker.getHourlyMetric(loginTime);
@@ -29,7 +29,7 @@ public class WorkerHourlyMetricBehavior implements IApiBehavior{
 		}
 	}
 	
-	protected void metricCloseSession(Worker worker){
+	public void metricCloseSession(Worker worker){
 		Timestamp logoutTime = worker.getLastLogout();
 		WorkerHourlyMetric metric = produceMetric(worker, logoutTime);
 		updateMetricDuration(metric, logoutTime);
@@ -39,7 +39,7 @@ public class WorkerHourlyMetricBehavior implements IApiBehavior{
 	 * Thus function retrieves or generates a Mertic for the requested hour
 	 * It will also fill in metrics between the last metric with an active session, and the requested time 
 	 */
-	protected WorkerHourlyMetric produceMetric(Worker worker, Timestamp time) {
+	private WorkerHourlyMetric produceMetric(Worker worker, Timestamp time) {
 		Timestamp loginTime = worker.getLastLogin();
 		WorkerHourlyMetric metric = worker.getHourlyMetric(time);
 		if (metric == null){
@@ -65,7 +65,7 @@ public class WorkerHourlyMetricBehavior implements IApiBehavior{
 			}
 			
 			//Finally, create a metric for the current hour
-			metric = new WorkerHourlyMetric(worker, currentMetricSessionStart);			
+			metric = new WorkerHourlyMetric(worker, currentMetricSessionStart);
 		}
 		return metric;
 	}
@@ -91,7 +91,7 @@ public class WorkerHourlyMetricBehavior implements IApiBehavior{
 		WorkerHourlyMetric.staticGetDao().store(metric);
 	}
 	
-	protected void recordEvent(Facility facility, String pickerId, EventType type) {
+	public void recordEvent(Facility facility, String pickerId, EventType type) {
 		Worker worker = Worker.findWorker(facility, pickerId);
 		if (worker == null) {
 			LOGGER.warn("Trying to update metrics for non-existent worker {}", pickerId);
