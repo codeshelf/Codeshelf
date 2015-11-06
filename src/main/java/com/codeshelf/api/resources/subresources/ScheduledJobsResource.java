@@ -69,4 +69,15 @@ public class ScheduledJobsResource {
 		}
 	}
 
+	@POST
+	@Path("/{type}/trigger")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response updateSchedule(@PathParam("type") String typeStr) throws SchedulerException {
+		ScheduledJobType type = ScheduledJobType.valueOf(typeStr);
+		schedulerService.triggerJob(facility, type);
+		return BaseResponse.buildResponse(null);
+	}
+
+	
 }
