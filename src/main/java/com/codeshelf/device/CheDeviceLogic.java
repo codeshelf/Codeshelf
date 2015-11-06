@@ -109,15 +109,15 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					SCAN_PUTWALL_NAME_MSG					= cheLine("SCAN WALL NAME");
 	protected static final String					NO_WORK_FOR								= cheLine("NO WORK FOR");
 	protected static final String					SCAN_ITEM_OR_CANCEL						= cheLine("SCAN ITEM OR CANCEL");
-	
+
 	//For Sku wall
 	protected static final String					SCAN_LOCATION_MSG						= cheLine("SCAN LOCATION");
 	public static final String						CANCEL_TO_EXIT_MSG						= cheLine("CANCEL to exit");
-	
+
 	//For Remove command
 	protected static final String					REMOVE_CONTAINER_MSG					= cheLine("To remove order");
 	protected static final String					REMOVE_NOTHING_MSG						= cheLine("NOTHING TO REMOVE");
-	
+
 	//For Palletizer
 	protected static final String					PALL_NEW_ORDER_1_MSG					= cheLine("Scan New Location");
 	protected static final String					PALL_NEW_ORDER_2_MSG					= cheLine("For Store ");
@@ -127,10 +127,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					PALL_REMOVE_1_MSG						= cheLine("Scan License");
 	protected static final String					PALL_REMOVE_2_MSG						= cheLine("Or Location");
 	protected static final String					PALL_REMOVE_3_MSG						= cheLine("To Close Pallet");
-	
+
 	//To repeat: !!!DO NOT CREATE LINES LONGER THAN 20 CHARACTERS!!! using cheLine()
 	//Causes untraceable error during Site initialization
-	
+
 	//For Poscon Busy
 	protected static final String					POSCON_BUSY_LINE_1						= "Poscon for %s busy";
 	protected static final String					POSCON_BUSY_LINE_3						= "Scan YES after they come";
@@ -216,7 +216,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Getter
 	@Setter
 	private String									lastPutWallOrderScan;
-	
+
 	// Fields for REMOTE linked CHEs
 	@Accessors(prefix = "m")
 	@Getter
@@ -227,13 +227,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Getter
 	@Setter
 	private NetGuid									mLinkedFromCheGuid						= null;
-	
+
 	private WorkInstruction							verifyWi								= null;
-	
+
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private ScannerTypeEnum	mScannerTypeEnum = ScannerTypeEnum.ORIGINALSERIAL;
+	private ScannerTypeEnum							mScannerTypeEnum						= ScannerTypeEnum.ORIGINALSERIAL;
 
 	/**
 	 * We have only one inventory state, not two. Essentially another state by whether or not we think we have a valid
@@ -283,7 +283,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 		setState(CheStateEnum.SCAN_GTIN);
 	}
-	
+
 	protected enum ScanNeededToVerifyPick {
 		NO_SCAN_TO_VERIFY("disabled"),
 		UPC_SCAN_TO_VERIFY("UPC"),
@@ -321,8 +321,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	public boolean usesNewCheScreen() {
 		return false; // SetupOrderDeviceLogic will override
 	}
-	
-	public void testOnlySetState(final CheStateEnum inCheState){
+
+	public void testOnlySetState(final CheStateEnum inCheState) {
 		setState(inCheState);
 	}
 
@@ -357,19 +357,19 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		String scanPickValue = mDeviceManager.getScanTypeValue();
 		return ScanNeededToVerifyPick.stringToScanPickEnum(scanPickValue);
 	}
-	
+
 	public String getScanVerificationTypeUI() {
 		String type = mDeviceManager.getScanTypeValue();
-		if ("Disabled".equalsIgnoreCase(type)){
+		if ("Disabled".equalsIgnoreCase(type)) {
 			type = "UPC";
 		}
 		return type;
 	}
-	
+
 	public String getScanVerificationType() {
 		return ScanNeededToVerifyPick.scanPickEnumToString(getScanVerificationTypeEnum());
 	}
-	
+
 	public void updateConfigurationFromManager() {
 		// We might want this, as if workSequence, then start location is far less relevant
 		@SuppressWarnings("unused")
@@ -379,7 +379,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	public CheDeviceLogic(final UUID inPersistentId,
 		final NetGuid inGuid,
 		final CsDeviceManager inDeviceManager,
-		final IRadioController inRadioController, Che che) {
+		final IRadioController inRadioController,
+		Che che) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
 
 		mCheStateEnum = CheStateEnum.IDLE;
@@ -869,15 +870,15 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (CheStateEnum.SHORT_PICK == mCheStateEnum || CheStateEnum.SHORT_PUT == mCheStateEnum) {
 			return "DECREMENT POSITION";
 		} else if (CheStateEnum.SCAN_SOMETHING == mCheStateEnum) {
-		// kind of funny. States are uniformly defined, so this works even from wrong object
+			// kind of funny. States are uniformly defined, so this works even from wrong object
 			ScanNeededToVerifyPick scanVerification = getScanVerificationTypeEnum();
-			if (wi.equals(verifyWi)){
+			if (wi.equals(verifyWi)) {
 				switch (scanVerification) {
 					case SKU_SCAN_TO_VERIFY:
 						return "SCAN " + wi.getItemId();
 					default:
 						String gtin = wi.getGtin();
-						
+
 						return "SCAN " + ((gtin == null || gtin.isEmpty()) ? wi.getItemId() : gtin);
 				}
 			} else {
@@ -1023,17 +1024,17 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		// Let's force a short wait after associate
 		setLastRadioCommandSendForThisDevice(System.currentTimeMillis());
-		
-		if (restartEnum != null && restartEnum == DeviceRestartCauseEnum.USER_RESTART){
+
+		if (restartEnum != null && restartEnum == DeviceRestartCauseEnum.USER_RESTART) {
 			adjustStateForUserReset();
 		}
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/* 
 	 * Called by CheDeviceLogic.startDevice() if the cause was a user reset
 	 */
-	protected void adjustStateForUserReset(){
+	protected void adjustStateForUserReset() {
 		// Do nothing, as this is really an abstract class. 
 		// Could handle verifying badge state here I suppose
 	}
@@ -1434,7 +1435,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 		// many side effects. Primarily clearing leds and poscons and setting state to idle
 		_logoutSideEffects();
-		mDeviceManager.setWorkerNameFromGuid(getGuid(), null);		
+		mDeviceManager.setWorkerNameFromGuid(getGuid(), null);
 	}
 
 	// --------------------------------------------------------------------------
@@ -1469,7 +1470,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected void processCommandCancel() {
 		LOGGER.error("processCommandCancel() needs override");
 	}
-	
 
 	// --------------------------------------------------------------------------
 	/**
@@ -1975,12 +1975,19 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			return "";
 		}
 		if (gtin == null || gtin.isEmpty()) {
-			return String.format("Scan mismatch at %s: expected sku %s (no upc found), received %s", pickInstructionLocation, sku, inScanStr);
+			return String.format("Scan mismatch at %s: expected sku %s (no upc found), received %s",
+				pickInstructionLocation,
+				sku,
+				inScanStr);
 		}
-		if (inScanStr.equals(gtin)){
+		if (inScanStr.equals(gtin)) {
 			return "";
 		}
-		return String.format("Scan mismatch at %s: expected sku %s or upc %s, received %s", pickInstructionLocation, sku, gtin, inScanStr);
+		return String.format("Scan mismatch at %s: expected sku %s or upc %s, received %s",
+			pickInstructionLocation,
+			sku,
+			gtin,
+			inScanStr);
 	}
 
 	// --------------------------------------------------------------------------
@@ -2014,6 +2021,44 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			invalidScanMsg(mCheStateEnum);
 			verifyWi = wi;
 			sendDisplayWorkInstruction(getOneActiveWorkInstruction());
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * This is a scan while in DO_PICK state. Usual case is this came after an unnecessary scan
+	 */
+	protected void processPickVerifyScan(final String inScanPrefixStr, String inScanStr) {
+		WorkInstruction wi = getOneActiveWorkInstruction();
+		if (inScanPrefixStr.isEmpty()) {
+			if (wi == null) {
+				LOGGER.error("unanticipated no active WI in processPickVerifyScan");
+				invalidScanMsg(mCheStateEnum);
+				return;
+			}
+			// only reevaluate if the wi needs a scan
+			if (!wi.getNeedsScan()) {
+				setState(getCheStateEnum()); // forces redraw
+				return;
+			}
+
+			String errorStr = verifyWiField(wi, inScanStr);
+			if (errorStr == null || errorStr.isEmpty()) {
+				// clear usually not needed. Only after correcting a bad scan
+				notifyExtraInfo("Unnecessary extra scan of correct item/UPC", kLogAsInfo);
+				clearAllPosconsOnThisDevice();
+				setState(CheStateEnum.DO_PICK);
+			} else {
+				notifyExtraInfo("Unanticipated extra scan; incorrect item/UPC. Changing state back", kLogAsWarn);
+
+				// Still a problem here. Worker had done a scan and did not need another, then scanned wrong one. We want to basically forget
+				// The worker had done the good scan. However, that is remembered by the complete work instruction, so it cannot be forgotten.
+				setState(CheStateEnum.SCAN_SOMETHING);
+
+			}
+		} else {
+			// Just redraw current screen?
+			setState(getCheStateEnum());
 		}
 	}
 
@@ -2360,8 +2405,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			LOGGER.warn("processScreenCommandFromLinkedChe called from state:{}. Not drawing", state);
 		}
 	}
-	
-	protected void displayDeviceInfo(){
+
+	protected void displayDeviceInfo() {
 		String deviceType = "UNKNOWN";
 		if (this instanceof SetupOrdersDeviceLogic) {
 			deviceType = "SETUP ORDERS";
@@ -2374,7 +2419,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	}
 
 	@Override
-	public byte getScannerTypeCode() {			
+	public byte getScannerTypeCode() {
 		return getScannerTypeEnum().getValue();
 	}
 }
