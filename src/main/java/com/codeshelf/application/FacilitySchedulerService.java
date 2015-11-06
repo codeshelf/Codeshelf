@@ -136,11 +136,6 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 	@Override
 	protected void startUp() throws Exception {
 		scheduler.start();
-		for (ScheduledJobType jobType : ScheduledJobType.values()) {
-			if (jobType.isDefaultOnOff()) {
-				schedule(jobType.getDefaultSchedule(), jobType);
-			}
-		}
 	}
 
 	@Override

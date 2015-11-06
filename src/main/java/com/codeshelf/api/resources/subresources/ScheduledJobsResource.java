@@ -11,15 +11,14 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 
 import org.quartz.CronExpression;
 import org.quartz.SchedulerException;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.ErrorResponse;
-import com.codeshelf.application.FacilitySchedulerService;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.ScheduledJob;
 import com.codeshelf.scheduler.ApplicationSchedulerService;
 import com.codeshelf.scheduler.ScheduledJobType;
 import com.google.common.base.Optional;
@@ -44,18 +43,13 @@ public class ScheduledJobsResource {
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getSchedule(@PathParam("type") String typeStr) throws SchedulerException {
-		Optional<FacilitySchedulerService> facilityScheduler = schedulerService.findService(facility);
-		if (facilityScheduler.isPresent()) {
-			ScheduledJobType type = ScheduledJobType.valueOf(typeStr);
-			CronExpression expression = facilityScheduler.get().findSchedule(type);
-			String cronExpression = "";
-			if (expression != null) {
-				cronExpression = expression.getCronExpression();
-			}
-			return BaseResponse.buildResponse(ImmutableMap.of("cronExpression", cronExpression));
-		} else {
-			return BaseResponse.buildResponse(null, Status.NOT_FOUND);
-		}
+		ScheduledJobType type = ScheduledJobType.valueOf(typeStr);
+		Optional<CronExpression > schedule = schedulerService.findSchedule(facility, type);
+		String cronExpression = "";
+		if (schedule.isPresent()) {
+			cronExpression = schedule.get().getCronExpression();
+		} 
+		return BaseResponse.buildResponse(ImmutableMap.of("cronExpression", cronExpression));
 	}
 
 	@POST
@@ -63,21 +57,15 @@ public class ScheduledJobsResource {
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response updateSchedule(@PathParam("type") String typeStr, @FormParam("cronExpression") String cronExpression) throws SchedulerException {
-		Optional<FacilitySchedulerService> facilityScheduler = schedulerService.findService(facility);
-		if (facilityScheduler.isPresent()) {
-			ScheduledJobType type = ScheduledJobType.valueOf(typeStr);
-			try {
-				CronExpression newCronExpression = new CronExpression(cronExpression);
-				facilityScheduler.get().schedule(newCronExpression, type);
-				return BaseResponse.buildResponse(ImmutableMap.of("cronExpression", newCronExpression));
-			}
-			catch(ParseException e) {
-				ErrorResponse response = new ErrorResponse();
-				response.addBadParameter(cronExpression, "cronExpression");
-				return response.buildResponse();
-			}
-		} else {
-			return BaseResponse.buildResponse(null, Status.NOT_FOUND);
+		ScheduledJobType type = ScheduledJobType.valueOf(typeStr);
+		try {
+			schedulerService.scheduleJob(new ScheduledJob(facility, type, cronExpression));
+			return BaseResponse.buildResponse(ImmutableMap.of("cronExpression", cronExpression));
+		}
+		catch(ParseException e) {
+			ErrorResponse response = new ErrorResponse();
+			response.addBadParameter(cronExpression, "cronExpression");
+			return response.buildResponse();
 		}
 	}
 
