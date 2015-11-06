@@ -10,9 +10,13 @@ import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import org.quartz.CronExpression;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.scheduler.ScheduledJobType;
@@ -22,9 +26,17 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "scheduled_job")
+@Table(name = "scheduled_job", uniqueConstraints={
+		@UniqueConstraint(columnNames= {"parent_persistentid", "type"})
+})
 public class ScheduledJob extends DomainObjectTreeABC<Facility> {
-
+	static final private Logger	LOGGER						= LoggerFactory.getLogger(ScheduledJob.class);
+	
+	public static class ScheduledJobDao extends GenericDaoABC<ScheduledJob> implements ITypedDao<ScheduledJob> {
+		public final Class<ScheduledJob> getDaoClass() {
+			return ScheduledJob.class;
+		}
+	}
 	// The parent facility.
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Getter
@@ -39,8 +51,6 @@ public class ScheduledJob extends DomainObjectTreeABC<Facility> {
 	private ScheduledJobType 			type;
 	
 	@Column(nullable = false, name="cron_expression")
-	@Getter
-	@Setter
 	@JsonProperty
 	private String 				cronExpression;
 
@@ -51,10 +61,10 @@ public class ScheduledJob extends DomainObjectTreeABC<Facility> {
 	private String 						name;
 	
 	@Column(nullable = false)
-	@Getter
+	@Getter()
 	@Setter
 	@JsonProperty
-	private Boolean						active;
+	private boolean						active;
 	
 	@Column(nullable = true)
 	@Getter
@@ -72,7 +82,22 @@ public class ScheduledJob extends DomainObjectTreeABC<Facility> {
 		this.setDomainId(type.name());
 		this.setName(type.name());
 		this.setType(type);
-		this.setCronExpression(new CronExpression(cronExpression).getCronExpression());
+		this.setActive(true);
+		this.cronExpression = new CronExpression(cronExpression).getCronExpression();
+	}
+
+	public CronExpression getCronExpression() {
+		try {
+			return new CronExpression(cronExpression);
+		} catch(ParseException e) {
+			//cronExpression is validated before saving
+			LOGGER.error("Cron expression was saved but unparsable {}", cronExpression, e);
+			return null;
+		}
+	}
+
+	public void setCronExpression(CronExpression cronExpression) {
+		this.cronExpression = cronExpression.getCronExpression();
 	}
 	
 	@Override
@@ -94,5 +119,6 @@ public class ScheduledJob extends DomainObjectTreeABC<Facility> {
 	public Facility getFacility() {
 		return getParent();
 	}
+
 
 }
