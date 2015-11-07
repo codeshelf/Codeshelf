@@ -87,6 +87,19 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 	
 	private static class FutureResolver extends JobListenerSupport {
 		private static final String FUTURE_PROPERTY = "future";
+
+		public static JobFuture<ScheduledJobType> getFuture(JobExecutionContext context) {
+			Object value = context.getMergedJobDataMap().get(FUTURE_PROPERTY);
+			if (value != null && value instanceof JobFuture) {
+				@SuppressWarnings("unchecked")
+				JobFuture<ScheduledJobType> future = (JobFuture<ScheduledJobType>) value;
+				return future;
+			} else {
+				LOGGER.error("should have had a future for job instance {}", context);
+				return null;
+			}
+		}
+		
 		@Override
 		public String getName() {
 			return "futureResolver";
@@ -95,10 +108,8 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		@Override
 		public void jobWasExecuted(JobExecutionContext context, JobExecutionException jobException) {
 			super.jobWasExecuted(context, jobException);
-			Object value = context.getMergedJobDataMap().get(FUTURE_PROPERTY);
-			if (value != null && value instanceof JobFuture) {
-				@SuppressWarnings("unchecked")
-				JobFuture<ScheduledJobType> future = (JobFuture<ScheduledJobType>) value;
+			JobFuture<ScheduledJobType> future = getFuture(context);
+			if (future != null) {
 				if (jobException != null) {
 					future.setException(jobException);
 				} else {
@@ -200,18 +211,18 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		LOGGER.info("Scheduled {} for {}", jobType, cronExpression);
 	}
 
-	public boolean isJobRunning(ScheduledJobType jobType) throws SchedulerException {
+	public Optional<JobFuture<ScheduledJobType>> hasRunningJob(ScheduledJobType jobType) throws SchedulerException {
 		for (JobExecutionContext context : scheduler.getCurrentlyExecutingJobs()) {
 			ScheduledJobType runningType = (ScheduledJobType) context.getMergedJobDataMap().get(TYPE_PROPERTY);
 			if (jobType != null && runningType.equals(jobType)) {
-				return true;
+				return Optional.of(FutureResolver.getFuture(context));
 			}
 		};
-		return false;
+		return Optional.absent();
 	}
 
 	public Future<ScheduledJobType> trigger(ScheduledJobType type) throws SchedulerException {
-		if (!isRunningJob(type)) {
+		if (!hasRunningJob(type).isPresent()) {
 			Future<ScheduledJobType> future = new JobFuture<ScheduledJobType>(type);		
 			lastFiredTimes.put(type, DateTime.now());
 			scheduler.triggerJob(type.getKey(), new JobDataMap(ImmutableMap.of(FutureResolver.FUTURE_PROPERTY, future)));
@@ -221,6 +232,15 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		}
 	}
 
+	public boolean cancelJob(ScheduledJobType type) throws SchedulerException {
+		Optional<JobFuture<ScheduledJobType>> hasRunningJob = hasRunningJob(type);
+		if(hasRunningJob.isPresent()) {
+			return hasRunningJob.get().cancel(true);
+		} else {
+			return false;
+		}
+	}
+	
 	public Optional<DateTime> getPreviousFireTime(ScheduledJobType type) throws SchedulerException {
 		DateTime lastTime = lastFiredTimes.get(type);
 		List<? extends Trigger> triggers = scheduler.getTriggersOfJob(type.getKey());
@@ -239,15 +259,6 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		return Optional.fromNullable(lastTime);
 	}
 
-	private boolean isRunningJob(ScheduledJobType type) throws SchedulerException {
-		List<JobExecutionContext> runningJobs = scheduler.getCurrentlyExecutingJobs();
-		for (JobExecutionContext jobExecutionContext : runningJobs) {
-			boolean found = jobExecutionContext.getJobDetail().getKey().equals(type.getKey());
-			if (found) return found;
-		}
-		return false;
-	}
-	
 	public List<JobExecutionContext> getRunningJobs() throws SchedulerException {
 		List<JobExecutionContext> runningJobs = scheduler.getCurrentlyExecutingJobs();
 		return runningJobs;

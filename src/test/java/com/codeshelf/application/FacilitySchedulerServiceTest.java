@@ -87,7 +87,7 @@ public class FacilitySchedulerServiceTest {
 		CronExpression firstExp = new CronExpression("0 0 2 * * ?");
 		ScheduledJobType testType = ScheduledJobType.Test;	
 		subject.schedule(firstExp, testType);
-		Assert.assertFalse(subject.isJobRunning(testType));
+		Assert.assertFalse(subject.hasRunningJob(testType).isPresent());
 		Optional<DateTime> neverTriggered = subject.getPreviousFireTime(testType);
 		Assert.assertFalse(neverTriggered.isPresent());
 		
@@ -103,7 +103,7 @@ public class FacilitySchedulerServiceTest {
 		
 		Assert.assertEquals("completed type was unexpected", testType, completedType);
 		Assert.assertTrue(String.format("job does not appear to have been triggered before: %s, after %s", timeAfterTrigger, timeAfterTrigger), timeBeforeTrigger.isBefore(timeAfterTrigger.get()));
-		Assert.assertFalse("job should not still be running", subject.isJobRunning(testType));
+		Assert.assertFalse("job should not still be running", subject.hasRunningJob(testType).isPresent());
 	}
 	
 	@Test
@@ -112,7 +112,7 @@ public class FacilitySchedulerServiceTest {
 		ScheduledJobType testType = ScheduledJobType.Test;	
 		
 		subject.schedule(firstExp, testType);
-		Assert.assertFalse(subject.isJobRunning(testType));
+		Assert.assertFalse(subject.hasRunningJob(testType).isPresent());
 		
 		Optional<DateTime> neverTriggered = subject.getPreviousFireTime(testType);
 		Assert.assertFalse(neverTriggered.isPresent());
@@ -120,7 +120,7 @@ public class FacilitySchedulerServiceTest {
 		TestJob job1 = TestJob.pollInstance();
 		job1.awaitRunning();
 		try {
-			Future<ScheduledJobType> future2 = subject.trigger(testType);
+			subject.trigger(testType);
 			Assert.fail("Should have prevented trigger while running");
 		} catch(SchedulerException e) {
 			
@@ -169,7 +169,7 @@ public class FacilitySchedulerServiceTest {
 
 		TestJob control = TestJob.pollInstance();
 		control.awaitRunning();
-		Assert.assertTrue("job was not able to be cancelled", future.cancel(true));
+		Assert.assertTrue("job was not able to be cancelled", subject.cancelJob(testType));
 		try {
 			future.get();
 			Assert.fail("should have been cancelled");

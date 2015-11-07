@@ -150,4 +150,12 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 		}
 		return Optional.absent();
 	}
+
+	public boolean cancelJob(Facility facility, ScheduledJobType type) throws SchedulerException {
+		Optional<FacilitySchedulerService> service = findService(facility);
+		if (service.isPresent()) {
+			return service.get().cancelJob(type);
+		}
+		return false;
+	}
 }
