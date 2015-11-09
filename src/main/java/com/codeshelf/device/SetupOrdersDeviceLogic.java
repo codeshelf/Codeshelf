@@ -3009,12 +3009,19 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			return;
 		}
 		CheStateEnum state = getCheStateEnum();
+		
+		// DEV-1261.  We now realize that if site controller loses connection to server and reconnects, then the server triggers its
+		// che state initialization just as if site controller had quit and restarted. Anyway, these messages may come at any time, so
+		// it is not an error if the device logic is not in setup phase. However, let's keep the site controller's state and not replace it
+		// with the server state. Hence the returns.
 		if (!state.equals(CheStateEnum.IDLE)) {
-			LOGGER.error("Received processStateSetup in state {}", state);
+			LOGGER.info("Received processStateSetup in state {}. Normal occurrence only if site controller just reconnected to server.", state);
+			// errors here through v24. Then returns as here.
 			return;
 		}
 		if (!mPositionToContainerMap.isEmpty()) {
-			LOGGER.error("Received processStateSetup when map is not empty. How?");
+			LOGGER.error("Received processStateSetup in IDLE state when map is not empty. Normal occurrence only if site controller just reconnected to server.");
+			// errors here through v24. Then returns as here.
 			return;
 		}
 		for (Map.Entry<String, Integer> entry : positionMap.entrySet()) {
