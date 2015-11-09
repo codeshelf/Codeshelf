@@ -10,14 +10,15 @@ import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.edi.CrossBatchCsvImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.LedController;
@@ -212,9 +213,7 @@ public abstract class ServerTest extends HibernateTest {
 		CodeshelfNetwork network = getNetwork();
 		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
 
-		propertyService.changePropertyValue(getFacility(),
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.BayDistance.toString());
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		commitTransaction();
 
 		beginTransaction();

@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.api.resources.subresources.FacilityResource;
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.behavior.UiUpdateBehavior;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.LedCmdGroup;
@@ -32,17 +33,16 @@ import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WiSetSummary;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
-import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.FacilityMetric;
 import com.codeshelf.model.domain.Item;
@@ -55,7 +55,6 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
@@ -433,8 +432,6 @@ public class CheProcessTestPick extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,2,2,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,3,3,3,Test Item 3,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvString2);
-		commitTransaction();
-		beginTransaction();
 
 		// Start setting up cart etc
 		PickSimulator picker = createPickSim(cheGuid1);
@@ -535,7 +532,7 @@ public class CheProcessTestPick extends ServerTest {
 		facility = facility.reload();
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 		beginTransaction();
 		facility = facility.reload();
@@ -558,7 +555,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		beginTransaction();
 		facility = facility.reload();
-		propertyService.restoreHKDefaults(facility); // set it back
+		PropertyBehavior.restoreHKDefaults(facility); // set it back
 		commitTransaction();
 
 		beginTransaction();
@@ -673,7 +670,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		beginTransaction();
 		facility = facility.reload();
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		// Set up a cart for order 12345, which will generate work instructions
@@ -684,7 +681,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		beginTransaction();
 		facility = facility.reload();
-		propertyService.restoreHKDefaults(facility);
+		PropertyBehavior.restoreHKDefaults(facility);
 		commitTransaction();
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).byteValue(), 1);
@@ -729,7 +726,7 @@ public class CheProcessTestPick extends ServerTest {
 		facility = facility.reload();
 		List<Container> containers = Container.staticGetDao().findByParent(facility);
 		Assert.assertEquals(2, containers.size());
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		this.startSiteController();
@@ -965,7 +962,7 @@ public class CheProcessTestPick extends ServerTest {
 		// All should have the same assign time
 		Assert.assertEquals(shortAheadWi.getAssigned(), userShortWi.getAssigned());
 
-		propertyService.restoreHKDefaults(facility);
+		PropertyBehavior.restoreHKDefaults(facility);
 
 		commitTransaction();
 	}
@@ -992,7 +989,7 @@ public class CheProcessTestPick extends ServerTest {
 		picker.setupContainer("11111", "2");
 		// Taking more than 3 seconds for the recompute and wrap.
 		picker.startAndSkipReview("D301", 5000, 3000);
-		propertyService.restoreHKDefaults(facility);
+		PropertyBehavior.restoreHKDefaults(facility);
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).byteValue(), (byte) 1);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2), PosControllerInstr.BRIGHT_DUTYCYCLE);
@@ -1183,7 +1180,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		beginTransaction();
 		facility = facility.reload();
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		// Start setting up cart etc
@@ -1206,7 +1203,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		beginTransaction();
 		facility = facility.reload();
-		propertyService.restoreHKDefaults(facility);
+		PropertyBehavior.restoreHKDefaults(facility);
 		commitTransaction();
 
 	}
@@ -1254,16 +1251,16 @@ public class CheProcessTestPick extends ServerTest {
 		setUpOneAisleFourBaysFlatFacilityWithOrders();
 
 		beginTransaction();
-		propertyService.turnOffHK(getFacility());
+		PropertyBehavior.turnOffHK(getFacility());
 		commitTransaction();
-
+		
 		startSiteController();
 		PickSimulator picker = createPickSim(cheGuid1);
 		LOGGER.info("1: Load order onto CHE. Verify that there are 7 items on the path");
 		picker.loginAndSetup("Picker1");
 		picker.setupContainer("1", "1");
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 400000);
 		Assert.assertEquals("7 jobs", picker.getLastCheDisplayString(2).trim());
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
@@ -1342,12 +1339,8 @@ public class CheProcessTestPick extends ServerTest {
 
 		beginTransaction();
 		facility = facility.reload();
-		propertyService.turnOffHK(facility);
-		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.WORKSEQR);
-		if (theProperty != null) {
-			theProperty.setValue("WorkSequence");
-			PropertyDao.getInstance().store(theProperty);
-		}
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
 
 		commitTransaction();
 
@@ -1409,16 +1402,14 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(3, wiList.size());
 	}
 	
-
-	
 	@Test
 	public final void testFacilityMetric() throws Exception {
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		beginTransaction();
 		facility = facility.reload();
-		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "UPC");
-		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, "WorkSequence");
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "UPC");
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
 
 		LOGGER.info("1: Import orders");
 		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
@@ -1430,6 +1421,8 @@ public class CheProcessTestPick extends ServerTest {
 				+ "\r\n3333,3333,Item 6,Item Descr 6,6,uom1,locationF,6" //
 				+ "\r\n4444,4444,Item 7,Item Descr 7,7,uom2,locationA,7";
 		importOrdersData(facility, csvOrders);
+		commitTransaction();
+		beginTransaction();
 		commitTransaction();
 		
 		startSiteController();
@@ -1486,7 +1479,7 @@ public class CheProcessTestPick extends ServerTest {
 		
 		beginTransaction();
 		LOGGER.info("5: Generate metrics for the day");
-		FacilityResource facilityResourse = new FacilityResource(workService, null, null, webSocketManagerService, null, null, null, null, null, null, null);
+		FacilityResource facilityResourse = new FacilityResource(workService, null, null, webSocketManagerService, null, null, null, null, null, null);
 		facilityResourse.setFacility(facility);
 		Response response = facilityResourse.computeMetrics(null);
 		Assert.assertEquals(200, response.getStatus());
@@ -1519,22 +1512,22 @@ public class CheProcessTestPick extends ServerTest {
 
 		beginTransaction();
 		facility = facility.reload();
-		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, "WorkSequence");
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
 		
 		LOGGER.info("1: Verify that invalid ORDERSUB values are not accepted");
-		Assert.assertEquals("Disabled", propertyService.getPropertyFromConfig(facility, DomainObjectProperty.ORDERSUB));
-		assertInvalidPropertyValue(facility, DomainObjectProperty.ORDERSUB, "xxxx");
-		Assert.assertEquals("Disabled", propertyService.getPropertyFromConfig(facility, DomainObjectProperty.ORDERSUB));
-		assertInvalidPropertyValue(facility, DomainObjectProperty.ORDERSUB, "4 5");
-		Assert.assertEquals("Disabled", propertyService.getPropertyFromConfig(facility, DomainObjectProperty.ORDERSUB));
-		assertInvalidPropertyValue(facility, DomainObjectProperty.ORDERSUB, "-4 - 5");
-		Assert.assertEquals("Disabled", propertyService.getPropertyFromConfig(facility, DomainObjectProperty.ORDERSUB));
-		assertInvalidPropertyValue(facility, DomainObjectProperty.ORDERSUB, "6 - 5");
-		Assert.assertEquals("Disabled", propertyService.getPropertyFromConfig(facility, DomainObjectProperty.ORDERSUB));
+		Assert.assertEquals("Disabled", PropertyBehavior.getProperty(facility, FacilityPropertyType.ORDERSUB));
+		assertInvalidPropertyValue(facility, FacilityPropertyType.ORDERSUB, "xxxx");
+		Assert.assertEquals("Disabled", PropertyBehavior.getProperty(facility, FacilityPropertyType.ORDERSUB));
+		assertInvalidPropertyValue(facility, FacilityPropertyType.ORDERSUB, "4 5");
+		Assert.assertEquals("Disabled", PropertyBehavior.getProperty(facility, FacilityPropertyType.ORDERSUB));
+		assertInvalidPropertyValue(facility, FacilityPropertyType.ORDERSUB, "-4 - 5");
+		Assert.assertEquals("Disabled", PropertyBehavior.getProperty(facility, FacilityPropertyType.ORDERSUB));
+		assertInvalidPropertyValue(facility, FacilityPropertyType.ORDERSUB, "6 - 5");
+		Assert.assertEquals("Disabled", PropertyBehavior.getProperty(facility, FacilityPropertyType.ORDERSUB));
 		
 		LOGGER.info("2: Set valid ORDERSUB");
-		propertyService.changePropertyValue(facility, DomainObjectProperty.ORDERSUB, "5 - 8");
-		Assert.assertEquals("5-8", propertyService.getPropertyFromConfig(facility, DomainObjectProperty.ORDERSUB));
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.ORDERSUB, "5 - 8");
+		Assert.assertEquals("5-8", PropertyBehavior.getProperty(facility, FacilityPropertyType.ORDERSUB));
 		
 
 		LOGGER.info("3: Import order");
@@ -1560,10 +1553,10 @@ public class CheProcessTestPick extends ServerTest {
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);		
 	}
 	
-	private void assertInvalidPropertyValue(Facility facility, String propertyName, String propertyValue) {
+	private void assertInvalidPropertyValue(Facility facility, FacilityPropertyType type, String propertyValue) {
 		try {
-			propertyService.changePropertyValue(facility, propertyName, propertyValue);
-			Assert.fail("Test did not throw exception when setting invalid value " + propertyValue + " for property " + propertyName);
+			PropertyBehavior.setProperty(facility, type, propertyValue);
+			Assert.fail("Test did not throw exception when setting invalid value " + propertyValue + " for property " + type.name());
 		} catch (InputValidationException e) {}
 	}
 }

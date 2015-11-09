@@ -10,7 +10,7 @@ import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.FacilityProperty;
 import com.codeshelf.ws.protocol.request.ObjectPropertiesRequest;
-import com.codeshelf.ws.protocol.response.ObjectPropertiesResponseNew;
+import com.codeshelf.ws.protocol.response.ObjectPropertiesResponse;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
@@ -20,12 +20,10 @@ public class ObjectPropertiesCommand extends CommandABC {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(ObjectPropertiesCommand.class);
 
 	private ObjectPropertiesRequest request;
-	private PropertyBehavior propertyBehavior;
 		
-	public ObjectPropertiesCommand(WebSocketConnection connection, ObjectPropertiesRequest request, PropertyBehavior propertyBehavior) {
+	public ObjectPropertiesCommand(WebSocketConnection connection, ObjectPropertiesRequest request) {
 		super(connection);
 		this.request = request;
-		this.propertyBehavior = propertyBehavior;
 	}
 	
 	/*
@@ -100,12 +98,12 @@ public class ObjectPropertiesCommand extends CommandABC {
 	*/
 	
 	@Override
-	public ObjectPropertiesResponseNew exec() {
-		ObjectPropertiesResponseNew response = new ObjectPropertiesResponseNew();
+	public ObjectPropertiesResponse exec() {
+		ObjectPropertiesResponse response = new ObjectPropertiesResponse();
 		String persistentId = request.getPersistentId();
 		Facility facility = Facility.staticGetDao().findByPersistentId(persistentId);
 		if (facility != null) {
-			List<FacilityProperty> properties = propertyBehavior.getAllProperties(facility);
+			List<FacilityProperty> properties = PropertyBehavior.getAllProperties(facility);
 			response.setResults(properties);
 			response.setStatus(ResponseStatus.Success);
 			return response;

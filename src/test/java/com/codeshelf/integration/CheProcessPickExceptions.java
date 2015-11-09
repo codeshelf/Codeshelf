@@ -14,6 +14,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
@@ -52,7 +53,7 @@ public class CheProcessPickExceptions extends ServerTest {
 				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
 		beginTransaction();
 		importInventoryData(facility, csvInventory);
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		this.startSiteController();
@@ -139,7 +140,7 @@ public class CheProcessPickExceptions extends ServerTest {
 				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
 		beginTransaction();
 		importInventoryData(facility, csvInventory);
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		this.startSiteController();
@@ -244,7 +245,7 @@ public class CheProcessPickExceptions extends ServerTest {
 				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
 		beginTransaction();
 		importInventoryData(facility, csvInventory);
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		this.startSiteController();
@@ -347,7 +348,7 @@ public class CheProcessPickExceptions extends ServerTest {
 				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
 		beginTransaction();
 		importInventoryData(facility, csvInventory);
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		this.startSiteController();
@@ -453,7 +454,7 @@ public class CheProcessPickExceptions extends ServerTest {
 				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
 		beginTransaction();
 		importInventoryData(facility, csvInventory);
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		this.startSiteController();
@@ -554,7 +555,7 @@ public class CheProcessPickExceptions extends ServerTest {
 				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
 		beginTransaction();
 		importInventoryData(facility, csvInventory);
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		this.startSiteController();
@@ -646,7 +647,7 @@ public class CheProcessPickExceptions extends ServerTest {
 				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
 		beginTransaction();
 		importInventoryData(facility, csvInventory);
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		this.startSiteController();

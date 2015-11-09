@@ -6,13 +6,12 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.model.domain.Bay;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.PropertyService;
 
 public class HousekeepingInjector {
 	// For multi-tenancy, this must convert from a static usage object to having one HousekeepingInjector per facility.
@@ -37,7 +36,8 @@ public class HousekeepingInjector {
 	}
 
 	public static RepeatPosChoice getRepeatPosChoice(Facility inFacility) {
-		String repeatValue = PropertyService.getInstance().getPropertyFromConfig(inFacility, DomainObjectProperty.RPEATPOS);		
+		String repeatValue = PropertyBehavior.getProperty(inFacility, FacilityPropertyType.RPEATPOS);
+		repeatValue = PropertyBehavior.toCanonicalForm(FacilityPropertyType.RPEATPOS, repeatValue);
 		// These should be in the canonical form. See DomainObjectProperty toCanonicalForm().
 		if (repeatValue.equals("None"))
 			return RepeatPosChoice.RepeatPosNone;
@@ -51,9 +51,9 @@ public class HousekeepingInjector {
 		}
 	}
 
-
 	public static BayChangeChoice getBayChangeChoice(Facility inFacility) {
-		String bayValue = PropertyService.getInstance().getPropertyFromConfig(inFacility, DomainObjectProperty.BAYCHANG);
+		String bayValue = PropertyBehavior.getProperty(inFacility, FacilityPropertyType.BAYCHANG);
+		bayValue = PropertyBehavior.toCanonicalForm(FacilityPropertyType.BAYCHANG, bayValue);
 		// These should be in the canonical form. See DomainObjectProperty toCanonicalForm().
 		if (bayValue.equals("None"))
 			return BayChangeChoice.BayChangeNone;

@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.api.resources.subresources.EDIGatewaysResource;
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.behavior.UiUpdateBehavior;
 import com.codeshelf.device.ScriptSiteRunner;
 import com.codeshelf.edi.EdiExportService;
@@ -26,13 +27,12 @@ import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.EdiTransportType;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.PositionTypeEnum;
-import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Che.ProcessMode;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
@@ -48,7 +48,6 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.service.ExtensionPointType;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.CsExceptionUtils;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
@@ -87,7 +86,6 @@ public class ScriptServerRunner {
 	private static final Logger LOGGER = LoggerFactory.getLogger(ScriptSiteRunner.class);
 	private final UUID facilityId;
 	private final UiUpdateBehavior uiUpdateBehavior;
-	private final PropertyService propertyService;
 	private final Provider<ICsvOrderImporter> orderImporterProvider;
 	private final Provider<ICsvAislesFileImporter> aisleImporterProvider;
 	private final Provider<ICsvLocationAliasImporter> locationsImporterProvider;
@@ -102,7 +100,6 @@ public class ScriptServerRunner {
 		UUID facilityId,
 		FormDataMultiPart postBody,
 		UiUpdateBehavior uiUpdateBehavior,
-		PropertyService propertyService,
 		Provider<ICsvAislesFileImporter> aisleImporterProvider,
 		Provider<ICsvLocationAliasImporter> locationsImporterProvider,
 		Provider<ICsvInventoryImporter> inventoryImporterProvider,
@@ -111,7 +108,6 @@ public class ScriptServerRunner {
 		this.facilityId = facilityId;
 		this.postBody = postBody;
 		this.uiUpdateBehavior = uiUpdateBehavior;
-		this.propertyService = propertyService;
 		this.aisleImporterProvider = aisleImporterProvider;
 		this.locationsImporterProvider = locationsImporterProvider;
 		this.inventoryImporterProvider = inventoryImporterProvider;
@@ -269,11 +265,11 @@ public class ScriptServerRunner {
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_SET_PROPERTY);
 		}
 		String name = parts[1].toUpperCase();
-		DomainObjectProperty property = PropertyDao.getInstance().getPropertyWithDefault(facility, name);
-		if (property == null) {
+		FacilityPropertyType type = FacilityPropertyType.valueOf(name);
+		if (type == null) {
 			throw new Exception("Property " + name + " doesn't exist");
 		}
-		propertyService.changePropertyValue(facility, name, parts[2]);
+		PropertyBehavior.setProperty(facility, type, parts[2]);
 	}
 
 	/**

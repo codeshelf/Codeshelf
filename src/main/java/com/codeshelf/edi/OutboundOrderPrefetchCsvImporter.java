@@ -23,18 +23,18 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.event.EventProducer;
 import com.codeshelf.event.EventTag;
 import com.codeshelf.model.domain.ImportReceipt;
 import com.codeshelf.model.domain.ImportStatus;
 import com.codeshelf.model.EdiTransportType;
-import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.service.ExtensionPointType;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.util.DateTimeParser;
 import com.codeshelf.util.ThreadUtils;
@@ -129,14 +129,11 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		}
 
 		// Get our LOCAPICK and SCANPICK configuration values. It will not change during importing one file.
-		this.locaPick = PropertyService.getInstance().getBooleanPropertyFromConfig(facility, DomainObjectProperty.LOCAPICK);
-
+		this.locaPick = PropertyBehavior.getPropertyAsBoolean(facility, FacilityPropertyType.LOCAPICK);
 		this.scanPick = false;
-		DomainObjectProperty scanPickProp = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
-		if (scanPickProp != null) {
-			if (!DomainObjectProperty.Default_SCANPICK.equals(scanPickProp.getValue())) {
-				this.scanPick = true;
-			}
+		String scanPickProp = PropertyBehavior.getProperty(facility, FacilityPropertyType.SCANPICK);
+		if (!PropertyBehavior.Default_SCANPICK.equals(scanPickProp)) {
+			this.scanPick = true;
 		}
 
 		// DEV-978 extension point can fully supply the header.  However, that should not be done with OrderImportHeaderTransformation

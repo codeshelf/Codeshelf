@@ -16,7 +16,6 @@ import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
-import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.DomainObjectABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
@@ -135,8 +134,6 @@ public class TenantPersistenceService extends AbstractPersistenceService {
         t.commit();
 
         t = this.beginTransaction();
-        // create or update tenant default settings
-        PropertyDao.getInstance().syncPropertyDefaults();
         t.commit();
 	}
 

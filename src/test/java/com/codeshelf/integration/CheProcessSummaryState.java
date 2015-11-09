@@ -8,13 +8,14 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerUse;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
@@ -35,9 +36,7 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 	 * Naturally, must use WorkSequence
 	 */
 	protected Facility getUnmodeledFacility() throws IOException {
-		propertyService.changePropertyValue(getFacility(),
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
 
 		// Look's like CHE1 is reused as is test to test.
 		Che che1 = Che.staticGetDao().findByDomainId(getNetwork(), "CHE1");

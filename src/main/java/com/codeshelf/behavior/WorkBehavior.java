@@ -44,6 +44,7 @@ import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.DomainObjectManager;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.HousekeepingInjector;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderStatusSummary;
@@ -65,7 +66,6 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerUse;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.Item;
@@ -85,7 +85,6 @@ import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.CompareNullChecker;
 import com.codeshelf.util.UomNormalizer;
 import com.codeshelf.validation.BatchResult;
@@ -871,7 +870,7 @@ public class WorkBehavior implements IApiBehavior {
 		Timestamp theTime = now();
 
 		Facility inFacility = inChe.getFacility();
-		String workSeqr = PropertyService.getInstance().getPropertyFromConfig(inFacility, DomainObjectProperty.WORKSEQR);
+		String workSeqr = PropertyBehavior.getProperty(inFacility, FacilityPropertyType.WORKSEQR);
 		SingleWorkItem workItem = makeWIForOutbound(orderDetail,
 			inChe,
 			null,
@@ -1527,7 +1526,7 @@ public class WorkBehavior implements IApiBehavior {
 
 		// To proceed, there should container use linked to outbound order
 		// We want to add all orders represented in the container list because these containers (or for Accu, fake containers representing the order) were scanned for this CHE to do.
-		String workSeqr = PropertyService.getInstance().getPropertyFromConfig(facility, DomainObjectProperty.WORKSEQR);
+		String workSeqr = PropertyBehavior.getProperty(facility, FacilityPropertyType.WORKSEQR);
 		HashMap<String, Location> prefetchedPreferredLocations = prefetchPreferredLocations(facility, inContainerList);
 		for (Container container : inContainerList) {
 			OrderHeader order = container.getCurrentOrderHeader();
@@ -2065,8 +2064,7 @@ public class WorkBehavior implements IApiBehavior {
 	}
 
 	public boolean willOrderDetailGetWi(OrderDetail inOrderDetail) {
-		String sequenceKind = PropertyService.getInstance().getPropertyFromConfig(inOrderDetail.getFacility(),
-			DomainObjectProperty.WORKSEQR);
+		String sequenceKind = PropertyBehavior.getProperty(inOrderDetail.getFacility(), FacilityPropertyType.WORKSEQR);
 		WorkInstructionSequencerType sequenceKindEnum = WorkInstructionSequencerType.parse(sequenceKind);
 
 		OrderTypeEnum myParentType = inOrderDetail.getParentOrderType();
@@ -2304,7 +2302,7 @@ public class WorkBehavior implements IApiBehavior {
 	public String verifyBadgeAndGetWorkerName(Che che, String badge) {
 		Facility facility = che.getFacility();
 		//Get global Authentication property value
-		String badgeAuthStr = PropertyService.getInstance().getPropertyFromConfig(facility, DomainObjectProperty.BADGEAUTH);
+		String badgeAuthStr = PropertyBehavior.getProperty(facility, FacilityPropertyType.BADGEAUTH);
 		boolean badgeAuth = badgeAuthStr == null ? false : Boolean.parseBoolean(badgeAuthStr);
 		//Get active Worker with a matching badge id
 		Worker worker = Worker.findWorker(facility, badge);

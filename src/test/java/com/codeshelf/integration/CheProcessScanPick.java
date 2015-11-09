@@ -15,16 +15,17 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerUse;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.LedController;
@@ -188,9 +189,7 @@ public class CheProcessScanPick extends ServerTest {
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
 
-		propertyService.changePropertyValue(getFacility(),
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.BayDistance.toString());
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 
 		commitTransaction();
 		return facility;
@@ -294,8 +293,8 @@ public class CheProcessScanPick extends ServerTest {
 	public final void testPickWithUpcScan() throws IOException {
 		beginTransaction();
 
-		propertyService.turnOffHK(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "UPC");
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.SCANPICK, "UPC");
 		setUpOrdersWithCntrGtinAndSequence(facility);
 		commitTransaction();
 
@@ -371,10 +370,10 @@ public class CheProcessScanPick extends ServerTest {
 
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.LOCAPICK, Boolean.toString(true));
 
 		setUpLineScanOrdersNoCntrWithGtin(facility);
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		picker.loginAndSetup("Picker #1");
@@ -493,10 +492,10 @@ public class CheProcessScanPick extends ServerTest {
 
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.LOCAPICK, Boolean.toString(true));
 
 		setUpLineScanOrdersNoCntrWithGtin(facility);
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("0a: scan INVENTORY and make sure we stay idle");
@@ -587,10 +586,10 @@ public class CheProcessScanPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.LOCAPICK, Boolean.toString(true));
 
 		setUpLineScanOrdersWithCntr(facility);
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		picker.loginAndSetup("Picker #1");
@@ -652,9 +651,9 @@ public class CheProcessScanPick extends ServerTest {
 		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
-		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.LOCAPICK, Boolean.toString(true));
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.SCANPICK, "SKU");
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		beginTransaction();
@@ -880,11 +879,11 @@ public class CheProcessScanPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
-		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.LOCAPICK, Boolean.toString(true));
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.SCANPICK, "SKU");
 
 		setUpLineScanOrdersWithCntr(facility);
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		CsDeviceManager manager = this.getDeviceManager();
@@ -934,12 +933,10 @@ public class CheProcessScanPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
-		propertyService.changePropertyValue(facility,
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.LOCAPICK, Boolean.toString(false));
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
 
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
@@ -971,7 +968,7 @@ public class CheProcessScanPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, Boolean.toString(true));
 		this.setUpOrdersItemsOnSamePath(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -1062,13 +1059,11 @@ public class CheProcessScanPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, Boolean.toString(false));
 		// we are not setting SCANPICK for this test. Only about sequencing
-		propertyService.changePropertyValue(facility,
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
 
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		beginTransaction();
@@ -1115,7 +1110,7 @@ public class CheProcessScanPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, Boolean.toString(true));
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -1178,12 +1173,10 @@ public class CheProcessScanPick extends ServerTest {
 	@Test
 	public final void testPfswebScanPicks() throws IOException {
 		beginTransaction();
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
-		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
-		propertyService.changePropertyValue(facility,
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.WorkSequence.toString());
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, Boolean.toString(false));
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "SKU");
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		beginTransaction();

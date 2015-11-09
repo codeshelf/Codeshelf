@@ -22,13 +22,13 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.model.EdiTransportType;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.HeaderCounts;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.PickStrategyEnum;
-import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Container;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
@@ -41,7 +41,6 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.service.ExtensionPointType;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.validation.BatchResult;
 
@@ -1064,11 +1063,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertEquals(0, items.size()); // No inventory created
 
 		// Now set up for next case.
-		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
-		if (theProperty != null) {
-			theProperty.setValue(true);
-			PropertyDao.getInstance().store(theProperty);
-		}
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, "true");
 		this.getTenantPersistenceService().commitTransaction();
 
 		// Read the same file again, but this time LOCAPICK is true
@@ -1101,11 +1096,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		loadSmallAislesAndLocations(facility);
 
 		LOGGER.info("2: Set LOCAPICK = true");
-		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
-		if (theProperty != null) {
-			theProperty.setValue(true);
-			PropertyDao.getInstance().store(theProperty);
-		}
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, "true");
 		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("3: Read the orders file, which has some preferred locations");

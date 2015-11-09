@@ -15,15 +15,15 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.edi.IEdiExportGateway;
 import com.codeshelf.edi.IFacilityEdiExporter;
 import com.codeshelf.edi.SftpConfiguration;
 import com.codeshelf.edi.WorkInstructionCsvBean;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.WorkInstructionSequencerType;
-import com.codeshelf.model.dao.PropertyDao;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.ExportMessage;
 import com.codeshelf.model.domain.ExportMessage.ExportMessageType;
 import com.codeshelf.model.domain.ExtensionPoint;
@@ -33,7 +33,6 @@ import com.codeshelf.model.domain.SftpGateway;
 import com.codeshelf.model.domain.SftpWiGateway;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.service.ExtensionPointType;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
@@ -67,7 +66,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 		beginTransaction();
 		facility.reload();
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		beginTransaction();
@@ -262,12 +261,8 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 
 		beginTransaction();
 		facility = facility.reload();
-		propertyService.turnOffHK(facility);
-		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.WORKSEQR);
-		if (theProperty != null) {
-			theProperty.setValue("WorkSequence");
-			PropertyDao.getInstance().store(theProperty);
-		}
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
 
 		addPfswebExtensions(facility);
 
@@ -410,12 +405,8 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 
 		beginTransaction();
 		facility = facility.reload();
-		propertyService.turnOffHK(facility);
-		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.WORKSEQR);
-		if (theProperty != null) {
-			theProperty.setValue("WorkSequence");
-			PropertyDao.getInstance().store(theProperty);
-		}
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
 
 		long t1 = System.currentTimeMillis();
 		if (t1 - t0 > 1000)
@@ -604,12 +595,8 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 
 		beginTransaction();
 		facility = facility.reload();
-		propertyService.turnOffHK(facility);
-		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.WORKSEQR);
-		if (theProperty != null) {
-			theProperty.setValue("WorkSequence");
-			PropertyDao.getInstance().store(theProperty);
-		}
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
 		addPfswebExtensions(facility);
 		commitTransaction();
 
@@ -806,12 +793,8 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 
 		beginTransaction();
 		facility = facility.reload();
-		propertyService.turnOffHK(facility);
-		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.WORKSEQR);
-		if (theProperty != null) {
-			theProperty.setValue("WorkSequence");
-			PropertyDao.getInstance().store(theProperty);
-		}
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
 		addPfswebExtensions(facility);
 		commitTransaction();
 
@@ -918,9 +901,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		beginTransaction();
 		facility = facility.reload();
 		LOGGER.info("1: Set up OrderOnCartContent extension, import orders, set up active sftp exporter");
-		propertyService.changePropertyValue(facility,
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
 
 		String onCartScript = "def OrderOnCartContent(bean) { def returnStr = " //
 				+ "'0073' +'^'" //
@@ -1028,9 +1009,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 
 		LOGGER.info("1: Load Order, set up active sftp exporter");
 		facility = facility.reload();
-		propertyService.changePropertyValue(facility,
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
 
 		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
 				+ "\r\n11111,11111,1,Test Item 1,1,each,loc1,0" //

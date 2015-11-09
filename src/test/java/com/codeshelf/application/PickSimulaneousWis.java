@@ -11,6 +11,7 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
@@ -202,7 +203,7 @@ public class PickSimulaneousWis extends ServerTest {
 		Assert.assertNotNull(theChe);
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		// Set up a cart for the five orders, which will generate work instructions. (Tweak the order. 12001/1123 should be the first WI by the path.
 		workService.setUpCheContainerFromString(theChe, "12004,12005,12001,12002,12003");
 		this.getTenantPersistenceService().commitTransaction();
@@ -223,7 +224,7 @@ public class PickSimulaneousWis extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		propertyService.restoreHKDefaults(facility);
+		PropertyBehavior.restoreHKDefaults(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		Integer wiCountAfterScan = wiListAfterScan.size();

@@ -11,7 +11,6 @@ import org.apache.shiro.mgt.SecurityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.behavior.IPropertyBehavior;
 import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.edi.EdiImportService;
 import com.codeshelf.email.EmailService;
@@ -47,7 +46,6 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 			final IMetricsService metricsService,
 			final WebSocketManagerService webSocketManagerService,
 			final EdiExportService ediExportService,
-			final IPropertyBehavior propertyService,
 			final TokenSessionService authService,
 			final SecurityManager securityManager,
 			final EmailService emailService,
@@ -69,7 +67,6 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		this.registerService(ManagerPersistenceService.getMaybeRunningInstance());
 		this.registerService(metricsService);
 		this.registerService(webSocketManagerService);
-		this.registerService(propertyService);
 		this.registerService(authService);
 		this.registerService(ediExportService);
 		this.registerService(ediImportService);

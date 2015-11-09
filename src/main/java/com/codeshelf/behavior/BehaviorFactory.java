@@ -2,7 +2,6 @@ package com.codeshelf.behavior;
 
 import java.util.HashMap;
 
-import com.codeshelf.service.PropertyService;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
@@ -13,7 +12,6 @@ public class BehaviorFactory { //BehaviorFactory
 	@Inject
 	public BehaviorFactory(WorkBehavior workBehavior,
 		LightBehavior lightBehavior,
-		IPropertyBehavior propertyBehavior,
 		UiUpdateBehavior uiUpdateBehavior,
 		OrderBehavior orderBehavior,
 		InventoryBehavior inventoryService,
@@ -25,7 +23,6 @@ public class BehaviorFactory { //BehaviorFactory
 		mBehaviors = Maps.newHashMap();
 		mBehaviors.put(WorkBehavior.class, workBehavior);
 		mBehaviors.put(LightBehavior.class, lightBehavior);
-		mBehaviors.put(PropertyService.class, propertyBehavior);
 		mBehaviors.put(UiUpdateBehavior.class, uiUpdateBehavior);
 		mBehaviors.put(OrderBehavior.class, orderBehavior);
 		mBehaviors.put(InventoryBehavior.class, inventoryService);
@@ -33,7 +30,6 @@ public class BehaviorFactory { //BehaviorFactory
 		mBehaviors.put(InfoBehavior.class, infoBehavior);
 		mBehaviors.put(PalletizerBehavior.class, palletizerBehavior);
 		mBehaviors.put(WorkerHourlyMetricBehavior.class, workerHourlyMetricBehavior);
-		mBehaviors.put(PropertyBehavior.class, propertyBehaviorNew);
 		//TestBehavior 
 	}
 

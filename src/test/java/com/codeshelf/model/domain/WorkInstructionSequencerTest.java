@@ -11,6 +11,8 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.codeshelf.behavior.PropertyBehavior;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.testframework.ServerTest;
 import com.eaio.uuid.UUID;
@@ -134,9 +136,9 @@ public class WorkInstructionSequencerTest extends ServerTest {
 		Assert.assertEquals((Integer) 4, detailCount);
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		// Set up a cart for order 12345, which will generate work instructions
-		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		this.getTenantPersistenceService().commitTransaction();
 		
 		this.getTenantPersistenceService().beginTransaction();

@@ -16,7 +16,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.FacilityProperty;
 import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.ws.protocol.request.ObjectPropertiesRequest;
-import com.codeshelf.ws.protocol.response.ObjectPropertiesResponseNew;
+import com.codeshelf.ws.protocol.response.ObjectPropertiesResponse;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 
 public class ObjectPropertyCommandTest extends HibernateTest {
@@ -29,14 +29,13 @@ public class ObjectPropertyCommandTest extends HibernateTest {
 		beginTransaction();
 
 		Facility facility=createFacility();
-		PropertyBehavior behavior = new PropertyBehavior();
 		FacilityPropertyType type = FacilityPropertyType.TIMEZONE;
-		behavior.setProperty(facility, type, "US/EASTERN");
+		PropertyBehavior.setProperty(facility, type, "US/EASTERN");
 
 		ObjectPropertiesRequest req =  new ObjectPropertiesRequest();
 		req.setPersistentId(facility.getPersistentId().toString());
-		ObjectPropertiesCommand command = new ObjectPropertiesCommand(null, req, new PropertyBehavior());
-		ObjectPropertiesResponseNew resp = (ObjectPropertiesResponseNew) command.exec();
+		ObjectPropertiesCommand command = new ObjectPropertiesCommand(null, req);
+		ObjectPropertiesResponse resp = (ObjectPropertiesResponse) command.exec();
 		
 		assertNotNull(resp);
 		assertEquals(ResponseStatus.Success, resp.getStatus());

@@ -38,6 +38,7 @@ import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.edi.IEdiExportGateway;
 import com.codeshelf.edi.IEdiGateway;
 import com.codeshelf.edi.IEdiImportGateway;
@@ -59,7 +60,6 @@ import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.UomNormalizer;
 import com.codeshelf.ws.protocol.message.DisconnectSiteControllerMessage;
 import com.codeshelf.ws.server.WebSocketManagerService;
@@ -1057,7 +1057,7 @@ public class Facility extends Location {
 	@JsonProperty("hasCrossBatchOrders")
 	public boolean hasCrossBatchOrders() {
 		// DEV-582 ties this to the config parameter. Used to be inferred from the data
-		String theValue = PropertyService.getInstance().getPropertyFromConfig(this, DomainObjectProperty.CROSSBCH);
+		String theValue = PropertyBehavior.getProperty(this, FacilityPropertyType.CROSSBCH);
 		boolean result = Boolean.parseBoolean(theValue);
 		return result;
 	}
@@ -1566,15 +1566,5 @@ public class Facility extends Location {
 			}
 		}
 		return metric;
-	}
-	
-	public FacilityProperty getProperty(FacilityPropertyType type) {
-		return facilityProperties.get(type.name());
-	}
-	
-	public void setProperty(FacilityProperty property) {
-		if (!facilityProperties.containsKey(property.getName())){
-			facilityProperties.put(property.getName(), property);
-		}
-	}
+	}	
 }

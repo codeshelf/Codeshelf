@@ -166,7 +166,6 @@ public class WorkBehaviorTest extends ServerTest {
 		when(workBehavior.workAssignedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary> emptyList());
 		BehaviorFactory factory = new BehaviorFactory(workBehavior,
 			mock(LightBehavior.class),
-			mock(DummyPropertyBehavior.class),
 			mock(UiUpdateBehavior.class),
 			mock(OrderBehavior.class),
 			mock(InventoryBehavior.class),
@@ -192,7 +191,6 @@ public class WorkBehaviorTest extends ServerTest {
 		when(workService2.workCompletedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary> emptyList());
 		BehaviorFactory factory2 = new BehaviorFactory(workService2,
 			mock(LightBehavior.class),
-			mock(DummyPropertyBehavior.class),
 			mock(UiUpdateBehavior.class),
 			mock(OrderBehavior.class),
 			mock(InventoryBehavior.class),

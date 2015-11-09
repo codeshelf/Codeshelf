@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.LedInstrListMessage;
@@ -657,7 +658,7 @@ public class InventoryImporterTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -682,7 +683,7 @@ public class InventoryImporterTest extends ServerTest {
 
 		List<WorkInstruction> wiListAfterScan = workService.getWorkInstructions(theChe, "D403");
 
-		propertyService.restoreHKDefaults(facility);
+		PropertyBehavior.restoreHKDefaults(facility);
 
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		// Now getting 2. Something is wrong!

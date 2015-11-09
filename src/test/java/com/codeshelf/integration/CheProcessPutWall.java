@@ -9,12 +9,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.behavior.LightBehavior;
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Tier;
@@ -1052,9 +1053,9 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 
 		this.getTenantPersistenceService().beginTransaction();
 		LOGGER.info("1: Set up with all possibly interfering configurations set.");
-		propertyService.changePropertyValue(getFacility(), DomainObjectProperty.PICKMULT, Boolean.toString(true));
-		propertyService.changePropertyValue(getFacility(), DomainObjectProperty.SCANPICK, "UPC");
-		propertyService.changePropertyValue(getFacility(), DomainObjectProperty.AUTOSHRT, Boolean.toString(false));
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.PICKMULT, Boolean.toString(true));
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.SCANPICK, "UPC");
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.AUTOSHRT, Boolean.toString(false));
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();

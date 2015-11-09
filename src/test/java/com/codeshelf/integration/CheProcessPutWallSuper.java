@@ -5,13 +5,14 @@ import java.util.List;
 
 import org.junit.Assert;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.DeviceType;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.LedController;
@@ -308,9 +309,7 @@ public class CheProcessPutWallSuper extends ServerTest {
 		assertTrue(slot.isLightable());
 		assertTrue(slot.isLightableAisleController());
 
-		propertyService.changePropertyValue(getFacility(),
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.BayDistance.toString());
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		commitTransaction();
 
 		return facility;

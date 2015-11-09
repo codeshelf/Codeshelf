@@ -20,7 +20,6 @@ import com.codeshelf.behavior.NotificationBehavior;
 import com.codeshelf.behavior.OrderBehavior;
 import com.codeshelf.behavior.UiUpdateBehavior;
 import com.codeshelf.behavior.WorkBehavior;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.testframework.HibernateTest;
 import com.google.inject.Provider;
 
@@ -41,7 +40,6 @@ public class WorkerTest extends HibernateTest {
 			notificaitonService, 
 			webSocketManagerService, 
 			new UiUpdateBehavior(), 
-			new PropertyService(),
 			anyProvider, 
 			anyProvider, 
 			anyProvider, 

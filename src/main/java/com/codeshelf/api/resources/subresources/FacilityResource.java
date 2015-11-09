@@ -93,7 +93,6 @@ import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.service.ParameterSetBeanABC;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.MoreObjects;
@@ -115,7 +114,6 @@ public class FacilityResource {
 	private final NotificationBehavior					notificationService;
 	private final WebSocketManagerService				webSocketManagerService;
 	private final UiUpdateBehavior						uiUpdateService;
-	private final PropertyService						propertyService;
 	private final Provider<ICsvAislesFileImporter>		aislesImporterProvider;
 	private final Provider<ICsvLocationAliasImporter>	locationsImporterProvider;
 	private final Provider<ICsvInventoryImporter>		inventoryImporterProvider;
@@ -138,7 +136,6 @@ public class FacilityResource {
 		NotificationBehavior notificationService,
 		WebSocketManagerService webSocketManagerService,
 		UiUpdateBehavior uiUpdateService,
-		PropertyService propertyService,
 		Provider<ICsvAislesFileImporter> aislesImporterProvider,
 		Provider<ICsvLocationAliasImporter> locationsImporterProvider,
 		Provider<ICsvInventoryImporter> inventoryImporterProvider,
@@ -149,7 +146,6 @@ public class FacilityResource {
 		this.webSocketManagerService = webSocketManagerService;
 		this.notificationService = notificationService;
 		this.uiUpdateService = uiUpdateService;
-		this.propertyService = propertyService;
 		this.aislesImporterProvider = aislesImporterProvider;
 		this.locationsImporterProvider = locationsImporterProvider;
 		this.inventoryImporterProvider = inventoryImporterProvider;
@@ -626,7 +622,6 @@ public class FacilityResource {
 			ScriptServerRunner serverScriptRunner = new ScriptServerRunner(facilityId,
 				body,
 				uiUpdateService,
-				propertyService,
 				aislesImporterProvider,
 				locationsImporterProvider,
 				inventoryImporterProvider,

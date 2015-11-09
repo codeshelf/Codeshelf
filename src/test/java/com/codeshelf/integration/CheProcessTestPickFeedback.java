@@ -14,18 +14,17 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.device.SetupOrdersDeviceLogic;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionSequencerType;
-import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Container;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 
@@ -85,7 +84,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,a6,a6,3,Test Item 3,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvOrders);
 
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		beginTransaction();
@@ -230,7 +229,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 6), PosControllerInstr.SOLID_FREQ);
 
 		beginTransaction();
-		propertyService.restoreHKDefaults(facility);
+		PropertyBehavior.restoreHKDefaults(facility);
 		commitTransaction();
 	}
 
@@ -251,7 +250,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
 		beginTransaction();
 		importInventoryData(facility, csvInventory);
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		this.startSiteController();
@@ -333,7 +332,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
 		beginTransaction();
 		importInventoryData(facility, csvInventory);
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		this.startSiteController();
@@ -387,7 +386,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
 				+ "4,D401,Test Item 4,6,EA,6/25/14 12:00,66\r\n";
 		importInventoryData(facility, csvInventory);
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		beginTransaction();
@@ -457,7 +456,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 
 		beginTransaction();
 		facility = facility.reload();
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		// Start setting up cart etc
@@ -667,7 +666,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 4), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 4), PosControllerInstr.SOLID_FREQ);
 
-		propertyService.restoreHKDefaults(facility);
+		PropertyBehavior.restoreHKDefaults(facility);
 		commitTransaction();
 	}
 
@@ -703,7 +702,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		beginTransaction();
 		facility = facility.reload();
 
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		// Start setting up cart etc
@@ -811,7 +810,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));
 
-		propertyService.restoreHKDefaults(facility);
+		PropertyBehavior.restoreHKDefaults(facility);
 
 		commitTransaction();
 	}
@@ -845,11 +844,9 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		beginTransaction();
 		facility = facility.reload();
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.PICKMULT, Boolean.toString(true));
-		propertyService.changePropertyValue(facility,
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.WorkSequence.toString());
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.PICKMULT, Boolean.toString(true));
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 		this.startSiteController(); // after all the parameter changes
 
@@ -998,11 +995,9 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		beginTransaction();
 		facility = facility.reload();
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.PICKMULT, Boolean.toString(true));
-		propertyService.changePropertyValue(facility,
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.WorkSequence.toString());
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.PICKMULT, Boolean.toString(true));
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 		this.startSiteController(); // after all the parameter changes
 
@@ -1156,12 +1151,8 @@ public class CheProcessTestPickFeedback extends ServerTest {
 
 		beginTransaction();
 		facility = facility.reload();
-		propertyService.turnOffHK(facility);
-		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.WORKSEQR);
-		if (theProperty != null) {
-			theProperty.setValue("WorkSequence");
-			PropertyDao.getInstance().store(theProperty);
-		}
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
 		commitTransaction();
 
 		LOGGER.info("2: Load orders. No inventory, so uses locationA, etc. as the location-based pick");
@@ -1264,11 +1255,9 @@ public class CheProcessTestPickFeedback extends ServerTest {
 
 		facility = facility.reload();
 
-		propertyService.changePropertyValue(facility, DomainObjectProperty.PICKMULT, Boolean.toString(true));
-		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
-		propertyService.changePropertyValue(facility,
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.PICKMULT, Boolean.toString(true));
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "SKU");
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
 
 		LOGGER.info("1: upload 2 identical orders");
 		String csvOrders = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence\n"
@@ -1418,9 +1407,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		LOGGER.info("1: Upload 2 orders");
 		beginTransaction();
 		facility = facility.reload();
-		propertyService.changePropertyValue(facility,
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
 		String csvOrders = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,gtin,destinationid,shipperId,customerId,dueDate\n"
 				+ "1111,1,ItemS1,,11,each,LocX24,1111,1,,1,10,20,\n"
 				+ "2222,2,ItemS2,,22,each,LocX25,2222,2,,1,10,20,\n"

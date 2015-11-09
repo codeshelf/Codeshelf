@@ -33,11 +33,12 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.LotHandlingEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.ASCIIAlphanumericComparator;
 import com.codeshelf.util.UomNormalizer;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -409,7 +410,7 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 		String thisUomId = inUom.getUomMasterId();
 		boolean thisItemEach = UomNormalizer.isEach(thisUomId);
 		Facility facility = inLocation.getFacility();
-		boolean eachMult = PropertyService.getInstance().getBooleanPropertyFromConfig(facility, DomainObjectProperty.EACHMULT);
+		boolean eachMult = PropertyBehavior.getPropertyAsBoolean(facility, FacilityPropertyType.EACHMULT);
 		boolean isLocationSkuWall = inLocation.isSkuWallLocation();
 		for (Item item : getItems()) {
 			boolean isItemInSkuWall = item.getStoredLocation().isSkuWallLocation();

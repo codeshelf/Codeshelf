@@ -8,20 +8,19 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.DeviceType;
-import com.codeshelf.model.dao.PropertyDao;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Tier;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
@@ -81,12 +80,7 @@ public class CheProcessInfoAndRemoveCommands extends ServerTest{
 		LedController controller = network.findOrCreateLedController("PosMan1", new NetGuid(POSMANID1));
 		controller.setDeviceType(DeviceType.Poscons);
 		b1.setPosconAssignment(controller.getPersistentId().toString(), "1");
-
-		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
-		if (theProperty != null) {
-			theProperty.setValue("UPC");
-			PropertyDao.getInstance().store(theProperty);
-		}
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "UPC");
 		
 		this.getTenantPersistenceService().commitTransaction();
 		

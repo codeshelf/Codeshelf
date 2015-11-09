@@ -9,9 +9,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.behavior.UiUpdateBehavior;
-import com.codeshelf.model.dao.PropertyDao;
-import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
@@ -78,10 +78,7 @@ public class InventoryServiceTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility=Facility.staticGetDao().findByPersistentId(facilityId);
 
-		PropertyDao propDao = PropertyDao.getInstance();
-		DomainObjectProperty eachmultProp = propDao.getPropertyWithDefault(facility, DomainObjectProperty.EACHMULT);
-		Assert.assertNotNull(eachmultProp);
-		boolean eachMult = eachmultProp.getBooleanValue();
+		boolean eachMult = PropertyBehavior.getPropertyAsBoolean(facility, FacilityPropertyType.EACHMULT);
 		Assert.assertEquals("EACHMULT is supposed to be FALSE by default",false, eachMult);		
 		
 		String testUom = "EA";
@@ -105,9 +102,7 @@ public class InventoryServiceTest extends ServerTest {
 
 		// set eachmult to true and make sure only one item exists
 		this.getTenantPersistenceService().beginTransaction();
-		eachmultProp = propDao.getPropertyWithDefault(facility, DomainObjectProperty.EACHMULT);
-		eachmultProp.setValue(true);
-		propDao.store(eachmultProp);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.EACHMULT, "true");
 		itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, "10700589");
 		List<Item> items = itemMaster.getItemsOfUom(testUom);
 		Assert.assertEquals(1,items.size());

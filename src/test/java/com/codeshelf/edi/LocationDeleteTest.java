@@ -14,6 +14,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.HeaderCounts;
@@ -285,7 +286,7 @@ public class LocationDeleteTest extends ServerTest {
 		// Assume all is good.  Other tests in this class will not need to check these things.
 
 		// Turn off housekeeping work instructions so as to not confuse the counts
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		// Set up a cart for container 11, which should generate work instructions for orders 123 and 456.
 		workService.setUpCheContainerFromString(theChe, "11");
 
@@ -296,7 +297,7 @@ public class LocationDeleteTest extends ServerTest {
 
 		List<WorkInstruction> wiListAfterScan = workService.getWorkInstructions(theChe, "D-36"); // this is earliest on path
 
-		propertyService.restoreHKDefaults(facility);
+		PropertyBehavior.restoreHKDefaults(facility);
 
 		Integer wiCountAfterScan = wiListAfterScan.size();
 		Assert.assertEquals((Integer) 2, wiCountAfterScan);

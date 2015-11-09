@@ -13,7 +13,6 @@ import org.apache.shiro.realm.Realm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.behavior.IPropertyBehavior;
 import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.CrossBatchCsvImporter;
@@ -41,7 +40,6 @@ import com.codeshelf.scheduler.ApplicationSchedulerService;
 import com.codeshelf.security.CodeshelfRealm;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.TokenSessionService;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.server.CsServerEndPoint;
@@ -123,9 +121,6 @@ public final class ServerMain {
 				requestStaticInjection(MetricsService.class);
 				bind(IMetricsService.class).to(MetricsService.class).in(Singleton.class);
 
-				requestStaticInjection(PropertyService.class);
-				bind(IPropertyBehavior.class).to(PropertyService.class).in(Singleton.class);
-				
 				bind(WorkBehavior.class).in(Singleton.class);
 				bind(EdiExportService.class).in(Singleton.class);
 

@@ -347,7 +347,7 @@ public class UiUpdateBehavior implements IApiBehavior {
 			return;
 		}
 		FacilityPropertyType type = FacilityPropertyType.valueOf(name);
-		new PropertyBehavior().setProperty(facility, type, value);
+		PropertyBehavior.setProperty(facility, type, value);
 	}
 
 }

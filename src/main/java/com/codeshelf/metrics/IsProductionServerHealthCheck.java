@@ -2,14 +2,13 @@ package com.codeshelf.metrics;
 
 import java.util.List;
 
-import com.codeshelf.behavior.IPropertyBehavior;
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.service.TenantManagerService;
-import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
-import com.codeshelf.service.PropertyService;
 
 public class IsProductionServerHealthCheck extends CodeshelfHealthCheck {
 	
@@ -72,10 +71,7 @@ public class IsProductionServerHealthCheck extends CodeshelfHealthCheck {
 
 	}
 
-	private boolean isProductionFacility(Facility inFacility) {			
-		IPropertyBehavior properties = PropertyService.getInstance();
-		return properties.getBooleanPropertyFromConfig(inFacility, DomainObjectProperty.PRODUCTION);
+	private boolean isProductionFacility(Facility inFacility) {
+		return PropertyBehavior.getPropertyAsBoolean(inFacility, FacilityPropertyType.PRODUCTION);
 	}
-
-
 }

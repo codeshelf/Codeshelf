@@ -13,15 +13,15 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.flyweight.command.NetGuid;
-import com.codeshelf.model.dao.PropertyDao;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.LedController;
@@ -31,7 +31,6 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
@@ -732,13 +731,9 @@ public class CheProcessLineScan extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
-		if (theProperty != null) {
-			theProperty.setValue(true);
-			PropertyDao.getInstance().store(theProperty);
-		}
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, "true");
 		setUpLineScanOrdersWithCntr(facility);
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		picker.loginAndSetup("Picker #1");
@@ -780,11 +775,7 @@ public class CheProcessLineScan extends ServerTest {
 		Facility facility = setUpSmallNoSlotFacility();
 
 		beginTransaction();
-		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
-		if (scanPickProperty != null) {
-			scanPickProperty.setValue("SKU");
-			PropertyDao.getInstance().store(scanPickProperty);
-		}
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "SKU");
 		// we need to set che1 to be in line scan mode
 		CodeshelfNetwork network = getNetwork();
 		Che che1 = network.getChe("CHE1");
@@ -954,11 +945,7 @@ public class CheProcessLineScan extends ServerTest {
 		Facility facility = setUpSmallNoSlotFacility();
 
 		beginTransaction();
-		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
-		if (scanPickProperty != null) {
-			scanPickProperty.setValue("SKU");
-			PropertyDao.getInstance().store(scanPickProperty);
-		}
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "SKU");
 		// we need to set che1 to be in line scan mode
 		CodeshelfNetwork network = getNetwork();
 		Che che1 = network.getChe("CHE1");
@@ -1067,11 +1054,7 @@ public class CheProcessLineScan extends ServerTest {
 		Facility facility = setUpSmallNoSlotFacility();
 
 		beginTransaction();
-		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
-		if (scanPickProperty != null) {
-			scanPickProperty.setValue("SKU");
-			PropertyDao.getInstance().store(scanPickProperty);
-		}
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "SKU");
 		// we need to set che1 to be in line scan mode
 		CodeshelfNetwork network = getNetwork();
 		Che che1 = network.getChe("CHE1");
@@ -1138,11 +1121,7 @@ public class CheProcessLineScan extends ServerTest {
 		Facility facility = setUpSmallNoSlotFacility();
 
 		beginTransaction();
-		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
-		if (theProperty != null) {
-			theProperty.setValue(true);
-			PropertyDao.getInstance().store(theProperty);
-		}
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, "true");
 		commitTransaction();
 
 		beginTransaction();
@@ -1250,11 +1229,7 @@ public class CheProcessLineScan extends ServerTest {
 		Facility facility = setUpSmallNoSlotFacility();
 
 		this.getTenantPersistenceService().beginTransaction();
-		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
-		if (theProperty != null) {
-			theProperty.setValue(true);
-			PropertyDao.getInstance().store(theProperty);
-		}
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, "true");
 
 		setUpLineScanOrdersNoCntrWithGtin(facility);
 

@@ -5,18 +5,22 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.FacilityPropertyType;
+import com.codeshelf.model.HousekeepingInjector.BayChangeChoice;
+import com.codeshelf.model.HousekeepingInjector.RepeatPosChoice;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.FacilityProperty;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 
-public class PropertyBehavior implements IApiBehavior{
+public class PropertyBehavior{
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(PropertyBehavior.class);
 	
 	public final static String						BAYCHANG			= "BAYCHANG";
@@ -54,35 +58,60 @@ public class PropertyBehavior implements IApiBehavior{
 	public final static String						ORDERSUB			= "ORDERSUB";
 	public final static String						Default_ORDERSUB	= "Disabled";
 	
-	public void setProperty(Facility facility, FacilityPropertyType type, String value) {
+	public static String getProperty(Facility facility, FacilityPropertyType type){
+		FacilityProperty property = retrieveProperty(facility, type);
+		if (property == null) {
+			return type.getDefaultValue();
+		} else {
+			return property.getValue();
+		}
+	}
+	
+	public static boolean getPropertyAsBoolean(Facility inFacility, FacilityPropertyType type) {
+		String property = getProperty(inFacility, type);
+		return Boolean.parseBoolean(property);
+	}
+
+	public static ColorEnum getPropertyAsColor(Facility facility, FacilityPropertyType type, ColorEnum defaultColor) {
+		String property = getProperty(facility, type);
+		if (property == null) {
+			return defaultColor;
+		}
+		return ColorEnum.valueOf(property);
+	}
+
+	public static int getPropertyAsInt(Facility facility, FacilityPropertyType type, int defaultValue) {
+		String property = getProperty(facility, type);
+		return Integer.parseInt(property);
+	}
+	
+	public static void setProperty(Facility facility, FacilityPropertyType type, String value) {
 		// The UI may have passed a string that is close enough. But we want to force it to our canonical forms.
 		String canonicalForm = toCanonicalForm(type, value);
 		String validationResult = validateNewStringValue(type, value, canonicalForm);
 		// null means no error
 		if (validationResult != null) {
 			LOGGER.warn("Property validation rejection: " + validationResult);
-			DefaultErrors errors = new DefaultErrors(getClass());
+			DefaultErrors errors = new DefaultErrors(PropertyBehavior.class);
 			String instruction = type.name() + " valid values: " + validInputValues(type);
 			errors.rejectValue(value, instruction, ErrorCode.FIELD_INVALID); // "{0} invalid. {1}"
 			throw new InputValidationException(errors);
 		}
 
 		// storing the string version, so type does not matter. We assume all validation happened so the value is ok to go to the database.
-		FacilityProperty property = facility.getProperty(type);
+		FacilityProperty property = retrieveProperty(facility, type);
 		if (property == null) {
 			property = new FacilityProperty(facility, type);
 		}
 		property.setValue(canonicalForm);
-		facility.setProperty(property);
-		FacilityProperty.staticGetDao().store(property);
-				
+		FacilityProperty.staticGetDao().store(property);			
 	}
 		
-	public List<FacilityProperty> getAllProperties(Facility facility){
+	public static List<FacilityProperty> getAllProperties(Facility facility){
 		List<FacilityProperty> properties = new ArrayList<>();
 		FacilityProperty property = null;
 		for (FacilityPropertyType type : FacilityPropertyType.values()){
-			property = facility.getProperty(type);
+			property = retrieveProperty(facility, type);
 			if (property == null) {
 				property = new FacilityProperty(facility, type);
 			}
@@ -91,12 +120,69 @@ public class PropertyBehavior implements IApiBehavior{
 		}
 		return properties;
 	}
+	
+	public static void restoreHKDefaults(Facility inFacility) {
+		setRepeatPosChoice(inFacility, RepeatPosChoice.RepeatPosContainerOnly);
+		setBayChangeChoice(inFacility, BayChangeChoice.BayChangeBayChange);
+	}
+
+	public static void turnOffHK(Facility facility) {
+		setRepeatPosChoice(facility, RepeatPosChoice.RepeatPosNone);
+		setBayChangeChoice(facility, BayChangeChoice.BayChangeNone);
+	}
+	
+	private static FacilityProperty retrieveProperty(Facility facility, FacilityPropertyType type){
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("parent", facility));
+		filterParams.add(Restrictions.eq("name", type.name()));
+		List<FacilityProperty> properties = FacilityProperty.staticGetDao().findByFilter(filterParams);
+		int size = properties.size();
+		if (size > 1) {
+			LOGGER.warn("{} {} properies found for facility {}", size, type.name(), facility.getDomainId());
+		}
+		return size == 0 ? null : properties.get(0);
+	}
+
+	private static void setBayChangeChoice(Facility facility, BayChangeChoice inBayChangeChoice) {
+		switch(inBayChangeChoice){
+			case BayChangeNone:
+				setProperty(facility, FacilityPropertyType.BAYCHANG, "None");
+				break;
+			case BayChangeBayChange:
+				setProperty(facility, FacilityPropertyType.BAYCHANG, "BayChange");
+				break;
+			case BayChangePathSegmentChange:
+				setProperty(facility, FacilityPropertyType.BAYCHANG, "PathSegmentChange");
+				break;
+			case BayChangeExceptSamePathDistance:
+				setProperty(facility, FacilityPropertyType.BAYCHANG, "BayChangeExceptAcrossAisle");
+				break;
+			default:
+				LOGGER.error("unknown value in setBayChangeChoice");
+		}
+	}
+	
+	private static void setRepeatPosChoice(Facility facility, RepeatPosChoice inRepeatPosChoice) {
+		switch(inRepeatPosChoice){
+			case RepeatPosNone:
+				setProperty(facility, FacilityPropertyType.RPEATPOS, "None");
+				break;
+			case RepeatPosContainerOnly:
+				setProperty(facility, FacilityPropertyType.RPEATPOS, "ContainerOnly");
+				break;
+			case RepeatPosContainerAndCount:
+				setProperty(facility, FacilityPropertyType.RPEATPOS, "ContainerAndCount");
+				break;
+			default:
+				LOGGER.error("unknown value in setRepeatPosChoice");
+		}
+	}
 
 	/**
 	 * Converts things like "baychange" to "BayChange" or "Red" to "RED".
 	 * Return null if there is no likely match.
 	 */
-	public String toCanonicalForm(FacilityPropertyType type, String inValue) {
+	public static String toCanonicalForm(FacilityPropertyType type, String inValue) {
 		if (inValue == null)
 			return null;
 		String trimmedValue = inValue.trim();
@@ -146,7 +232,7 @@ public class PropertyBehavior implements IApiBehavior{
 		return null;
 	}
 	
-	private String validate_scantype(String inValue) {
+	private static String validate_scantype(String inValue) {
 		// valid values are "Disabled, SKU, UPC"
 		final String disabled = "Disabled";
 		final String sku = "SKU";
@@ -162,7 +248,7 @@ public class PropertyBehavior implements IApiBehavior{
 			return null;
 	}
 
-	private String validate_baychang(String inValue) {
+	private static String validate_baychang(String inValue) {
 		// valid values are "None, BayChange, BayChangeExceptAcrossAisle, PathSegmentChange"
 		final String noneStr = "None";
 		final String bayStr = "BayChange";
@@ -181,7 +267,7 @@ public class PropertyBehavior implements IApiBehavior{
 			return null;
 	}
 
-	private String validate_pickinfo(String inValue) {
+	private static String validate_pickinfo(String inValue) {
 		// valid values are "SKU, Description, Both"
 		final String sku = "SKU";
 		final String desc = "Description";
@@ -197,7 +283,7 @@ public class PropertyBehavior implements IApiBehavior{
 		return null;
 	}
 
-	private String validate_containertype(String inValue) {
+	private static String validate_containertype(String inValue) {
 		// valid values are "SKU, Description, Both"
 		final String order = "Order";
 		final String container = "Container";
@@ -210,7 +296,7 @@ public class PropertyBehavior implements IApiBehavior{
 		return null;
 	}
 
-	private String validate_rpeatpos(String inValue) {
+	private static String validate_rpeatpos(String inValue) {
 		// valid values"
 		final String noneStr = "None";
 		final String cntrStr = "ContainerOnly";
@@ -226,7 +312,7 @@ public class PropertyBehavior implements IApiBehavior{
 			return null;
 	}
 
-	private String validate_workseqr(String inValue) {
+	private static String validate_workseqr(String inValue) {
 		// valid values
 		// We had a "bay distance top tier last" for Accu, but then they decided not to use it. We thought it was a bad idea.
 		// Still, there will certainly be other work sequences in the future.
@@ -241,7 +327,7 @@ public class PropertyBehavior implements IApiBehavior{
 			return null;
 	}
 
-	private String validate_integer_in(String inValue, Integer minValue, Integer maxValue) {
+	private static String validate_integer_in(String inValue, Integer minValue, Integer maxValue) {
 		// return null if value is not a valid integer or is not in range.
 		Integer theValue;
 		try {
@@ -255,7 +341,7 @@ public class PropertyBehavior implements IApiBehavior{
 			return null;
 	}
 
-	private String validate_color_not_black(String inValue) {
+	private static String validate_color_not_black(String inValue) {
 		String colorStr = inValue.toUpperCase(Locale.ENGLISH); // English as it will match the Enum as we have it in code.
 		ColorEnum theColor = null;
 		try {
@@ -273,7 +359,7 @@ public class PropertyBehavior implements IApiBehavior{
 		}
 	}
 	
-	private String validate_ordersub(String inValue) {
+	private static String validate_ordersub(String inValue) {
 		if (Default_ORDERSUB.equalsIgnoreCase(inValue)) {
 			return inValue;
 		}
@@ -295,7 +381,7 @@ public class PropertyBehavior implements IApiBehavior{
 		return null;
 	}
 	
-	private String validate_timezone(String inValue) {
+	private static String validate_timezone(String inValue) {
 		String validIds[] = TimeZone.getAvailableIDs();
 		for (String validId : validIds) {
 			if (validId.equalsIgnoreCase(inValue)){
@@ -305,7 +391,7 @@ public class PropertyBehavior implements IApiBehavior{
 		return null;
 	}
 
-	private String validate_boolean(String inValue) {
+	private static String validate_boolean(String inValue) {
 		// Our liquidbase table/default definitions is using lower case
 		final String trueStr = "true";
 		final String falseStr = "false";
@@ -322,7 +408,7 @@ public class PropertyBehavior implements IApiBehavior{
 	 * Validation API. Simple validation types. Then specifics. Eventually there may be fairly elaborate application-level checks.
 	 * Return null if no errors.
 	 */
-	public String validateNewStringValue(FacilityPropertyType type, String inValue, String inCanonicalForm) {
+	private static String validateNewStringValue(FacilityPropertyType type, String inValue, String inCanonicalForm) {
 		String returnValue = null;
 		if (inValue == null)
 			return ("null value");
@@ -335,7 +421,7 @@ public class PropertyBehavior implements IApiBehavior{
 		return returnValue;
 	}
 
-	public String validInputValues(FacilityPropertyType type) {
+	private static String validInputValues(FacilityPropertyType type) {
 		// Find out which one we are
 		String myName = type.name();
 		if (myName.equals(BAYCHANG))
