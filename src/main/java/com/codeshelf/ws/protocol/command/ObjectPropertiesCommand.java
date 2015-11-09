@@ -1,21 +1,16 @@
 package com.codeshelf.ws.protocol.command;
 
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.model.dao.ITypedDao;
-import com.codeshelf.model.dao.PropertyDao;
-import com.codeshelf.model.domain.DomainObjectProperty;
-import com.codeshelf.model.domain.IDomainObject;
-import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.behavior.PropertyBehavior;
+import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.FacilityProperty;
 import com.codeshelf.ws.protocol.request.ObjectPropertiesRequest;
-import com.codeshelf.ws.protocol.response.ObjectPropertiesResponse;
-import com.codeshelf.ws.protocol.response.ResponseABC;
+import com.codeshelf.ws.protocol.response.ObjectPropertiesResponseNew;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
@@ -25,13 +20,15 @@ public class ObjectPropertiesCommand extends CommandABC {
 	private static final Logger	LOGGER = LoggerFactory.getLogger(ObjectPropertiesCommand.class);
 
 	private ObjectPropertiesRequest request;
+	private PropertyBehavior propertyBehavior;
 		
-	public ObjectPropertiesCommand(WebSocketConnection connection, ObjectPropertiesRequest request) {
+	public ObjectPropertiesCommand(WebSocketConnection connection, ObjectPropertiesRequest request, PropertyBehavior propertyBehavior) {
 		super(connection);
 		this.request = request;
+		this.propertyBehavior = propertyBehavior;
 	}
 	
-
+	/*
 	@Override
 	public ResponseABC exec() {
 		String className = request.getClassName();
@@ -100,5 +97,23 @@ public class ObjectPropertiesCommand extends CommandABC {
 		response.setStatusMessage("Unable to retrieve object properties");
 		return response;
 	}
-
+	*/
+	
+	@Override
+	public ObjectPropertiesResponseNew exec() {
+		ObjectPropertiesResponseNew response = new ObjectPropertiesResponseNew();
+		String persistentId = request.getPersistentId();
+		Facility facility = Facility.staticGetDao().findByPersistentId(persistentId);
+		if (facility != null) {
+			List<FacilityProperty> properties = propertyBehavior.getAllProperties(facility);
+			response.setResults(properties);
+			response.setStatus(ResponseStatus.Success);
+			return response;
+		}
+		LOGGER.warn("Unable to find Facility {} to retrieve its properties", persistentId);
+		response.setStatus(ResponseStatus.Fail);
+		response.setStatusMessage("Unable to find Facility " + persistentId + " to retrieve its properties");
+		return response;
+	}
+	
 }

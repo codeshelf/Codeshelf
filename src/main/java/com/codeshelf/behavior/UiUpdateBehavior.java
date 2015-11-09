@@ -17,6 +17,7 @@ import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.manager.User;
 import com.codeshelf.model.DeviceType;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Che;
@@ -338,4 +339,15 @@ public class UiUpdateBehavior implements IApiBehavior {
 		}
 		ledDao.delete(controller);
 	}
+	
+	public void updateFacilityProperty(String facilityId, String name, String value) {
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
+		if (facility == null) {
+			LOGGER.error("Unable to find facility {}", facilityId);
+			return;
+		}
+		FacilityPropertyType type = FacilityPropertyType.valueOf(name);
+		new PropertyBehavior().setProperty(facility, type, value);
+	}
+
 }

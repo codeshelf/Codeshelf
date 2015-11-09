@@ -46,6 +46,7 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.EdiGatewayStateEnum;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.HeaderCounts;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.PositionTypeEnum;
@@ -145,6 +146,12 @@ public class Facility extends Location {
 	
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	private List<FacilityMetric>			faciiltyMetrics;
+	
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
+	@MapKey(name = "name")
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+	private Map<String, FacilityProperty>	facilityProperties	= new HashMap<String, FacilityProperty>();
+
 
 	public Facility() {
 		super();
@@ -1559,5 +1566,15 @@ public class Facility extends Location {
 			}
 		}
 		return metric;
+	}
+	
+	public FacilityProperty getProperty(FacilityPropertyType type) {
+		return facilityProperties.get(type.name());
+	}
+	
+	public void setProperty(FacilityProperty property) {
+		if (!facilityProperties.containsKey(property.getName())){
+			facilityProperties.put(property.getName(), property);
+		}
 	}
 }

@@ -14,6 +14,7 @@ import com.codeshelf.behavior.InfoBehavior;
 import com.codeshelf.behavior.InventoryBehavior;
 import com.codeshelf.behavior.NotificationBehavior;
 import com.codeshelf.behavior.PalletizerBehavior;
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.metrics.IMetricsService;
@@ -247,7 +248,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			objectUpdateCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof ObjectPropertiesRequest) {
-			command = new ObjectPropertiesCommand(csSession, (ObjectPropertiesRequest) request);
+			command = new ObjectPropertiesCommand(csSession, (ObjectPropertiesRequest) request, behaviorFactory.getInstance(PropertyBehavior.class));
 			objectPropertiesCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof ServiceMethodRequest) {

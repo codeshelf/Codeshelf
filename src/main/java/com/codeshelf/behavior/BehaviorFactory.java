@@ -20,7 +20,8 @@ public class BehaviorFactory { //BehaviorFactory
 		NotificationBehavior notificationBehavior,
 		InfoBehavior infoBehavior,
 		PalletizerBehavior palletizerBehavior,
-		WorkerHourlyMetricBehavior workerHourlyMetricBehavior) {
+		WorkerHourlyMetricBehavior workerHourlyMetricBehavior,
+		PropertyBehavior propertyBehaviorNew) {
 		mBehaviors = Maps.newHashMap();
 		mBehaviors.put(WorkBehavior.class, workBehavior);
 		mBehaviors.put(LightBehavior.class, lightBehavior);
@@ -32,6 +33,7 @@ public class BehaviorFactory { //BehaviorFactory
 		mBehaviors.put(InfoBehavior.class, infoBehavior);
 		mBehaviors.put(PalletizerBehavior.class, palletizerBehavior);
 		mBehaviors.put(WorkerHourlyMetricBehavior.class, workerHourlyMetricBehavior);
+		mBehaviors.put(PropertyBehavior.class, propertyBehaviorNew);
 		//TestBehavior 
 	}
 

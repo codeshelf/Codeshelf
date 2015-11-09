@@ -2,22 +2,21 @@ package com.codeshelf.ws.protocol.command;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 
 import java.util.List;
-import java.util.Map;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.model.dao.PropertyDao;
-import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.model.domain.DomainObjectPropertyDefault;
+import com.codeshelf.behavior.PropertyBehavior;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.FacilityProperty;
 import com.codeshelf.testframework.HibernateTest;
 import com.codeshelf.ws.protocol.request.ObjectPropertiesRequest;
-import com.codeshelf.ws.protocol.response.ObjectPropertiesResponse;
+import com.codeshelf.ws.protocol.response.ObjectPropertiesResponseNew;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 
 public class ObjectPropertyCommandTest extends HibernateTest {
@@ -27,49 +26,29 @@ public class ObjectPropertyCommandTest extends HibernateTest {
 
 	@Test
 	public void testObjectPropertyCommandUsingDefault() {
-		PropertyDao cfgServ = PropertyDao.getInstance();
-
 		beginTransaction();
-		Facility facilityx=createFacility();
-		CodeshelfNetwork network = facilityx.getNetworks().get(0);
-		
-		List<DomainObjectPropertyDefault> types = cfgServ.getPropertyDefaults(network);
-		assertNotNull(types);
-		assertEquals(0, types.size());
-		DomainObjectPropertyDefault type = cfgServ.getPropertyDefault(network,"test-prop");
-		assertNull(type);
-		assertEquals(0, types.size());
-		commitTransaction();
 
-		// add config type
-		beginTransaction();
-		DomainObjectPropertyDefault type1 = new DomainObjectPropertyDefault("test-prop",network.getClassName(),"Default-Value-1","Property-Description-1");
-		cfgServ.store(type1);
-		commitTransaction();
+		Facility facility=createFacility();
+		PropertyBehavior behavior = new PropertyBehavior();
+		FacilityPropertyType type = FacilityPropertyType.TIMEZONE;
+		behavior.setProperty(facility, type, "US/EASTERN");
 
-		// retrieve property via command
-		beginTransaction();
 		ObjectPropertiesRequest req =  new ObjectPropertiesRequest();
-		req.setClassName(network.getClassName());
-		req.setPersistentId(network.getPersistentId().toString());
+		req.setPersistentId(facility.getPersistentId().toString());
+		ObjectPropertiesCommand command = new ObjectPropertiesCommand(null, req, new PropertyBehavior());
+		ObjectPropertiesResponseNew resp = (ObjectPropertiesResponseNew) command.exec();
 		
-		ObjectPropertiesCommand command = new ObjectPropertiesCommand(null, req);
-		ObjectPropertiesResponse resp = (ObjectPropertiesResponse) command.exec();
 		assertNotNull(resp);
 		assertEquals(ResponseStatus.Success, resp.getStatus());
-		
-		assertEquals(resp.getClassName(),network.getClassName());
-		assertEquals(resp.getPersistentId(),network.getPersistentId().toString());
-		// The response now has results, and not the raw persistable properties. Do not look for properties.		
-		// test the response results
-		List<Map<String, Object>> results = resp.getResults();
+		List<FacilityProperty> results = resp.getResults();
 		assertNotNull(results);
-		assertEquals(results.size(), 1);
-		Map<String, Object> oneResult = results.get(0);
-		assertEquals(oneResult.size(), 7); // see setDefaultPropertyNames().
-		assertEquals(oneResult.get("name"), "test-prop");
-		assertEquals(oneResult.get("description"), "Property-Description-1");
-
+		boolean timezoneCorrect = false;
+		for (FacilityProperty property : results) {
+			if (type.name().equals(property.getName()) && "US/EASTERN".equalsIgnoreCase(property.getValue())){
+				timezoneCorrect = true;
+			}
+		}
+		Assert.assertTrue(timezoneCorrect);
 		
 		commitTransaction();
 	}	

@@ -173,7 +173,8 @@ public class WorkBehaviorTest extends ServerTest {
 			mock(NotificationBehavior.class),
 			mock(InfoBehavior.class),
 			mock(PalletizerBehavior.class),
-			mock(WorkerHourlyMetricBehavior.class));
+			mock(WorkerHourlyMetricBehavior.class),
+			mock(PropertyBehavior.class));
 		this.getTenantPersistenceService().commitTransaction();
 
 		IMessageProcessor processor = new ServerMessageProcessor(factory,
@@ -198,7 +199,8 @@ public class WorkBehaviorTest extends ServerTest {
 			mock(NotificationBehavior.class),
 			mock(InfoBehavior.class),
 			mock(PalletizerBehavior.class),
-			mock(WorkerHourlyMetricBehavior.class));
+			mock(WorkerHourlyMetricBehavior.class),
+			mock(PropertyBehavior.class));
 		IMessageProcessor processor2 = new ServerMessageProcessor(factory2,
 			new ConverterProvider().get(),
 			this.webSocketManagerService);

@@ -33,7 +33,7 @@ public class LineScanTest extends ServerTest {
 	public void initTest() throws IOException {
 		beginTransaction();
 		Facility facility = createFacility(); 
-		BehaviorFactory serviceFactory = new BehaviorFactory(workService, null, null, null, null, null, null, null, null, null);
+		BehaviorFactory serviceFactory = new BehaviorFactory(workService, null, null, null, null, null, null, null, null, null, null);
 		commitTransaction();
 
 		processor = new ServerMessageProcessor(serviceFactory, new ConverterProvider().get(), this.webSocketManagerService);

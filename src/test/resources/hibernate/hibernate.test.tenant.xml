@@ -92,5 +92,6 @@
 		<mapping class="com.codeshelf.model.domain.FacilityMetric"/>
         <mapping class="com.codeshelf.model.domain.ScheduledJob"/>
         <mapping class="com.codeshelf.model.domain.WorkerHourlyMetric"/>
+        <mapping class="com.codeshelf.model.domain.FacilityProperty"/>
     </session-factory>
 </hibernate-configuration>

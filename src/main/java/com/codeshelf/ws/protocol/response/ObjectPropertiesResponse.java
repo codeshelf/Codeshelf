@@ -25,8 +25,8 @@ public class ObjectPropertiesResponse extends ResponseABC {
 	@Getter @Setter
 	String persistentId;
 
-	@Setter @Getter
-	List<DomainObjectProperty> properties;
+	//@Setter @Getter
+	//List<DomainObjectProperty> properties;
 	
 	@Getter @Setter
 	List<Map<String, Object>> results;
