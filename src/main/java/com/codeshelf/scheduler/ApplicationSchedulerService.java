@@ -133,11 +133,29 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 		}
 	}
 
+
+	public void triggerJob(Facility facility, ScheduledJobType type) throws SchedulerException {
+		Optional<FacilitySchedulerService> service = findService(facility);
+		if (service.isPresent()) {
+			service.get().trigger(type);
+		} else {
+			LOGGER.warn("Unable to trigger requested job {} for {}", type, facility);
+		}
+	}
+	
 	public Optional<CronExpression> findSchedule(Facility facility, ScheduledJobType type) throws SchedulerException {
 		Optional<FacilitySchedulerService> service = findService(facility);
 		if (service.isPresent()) {
 			return Optional.fromNullable(service.get().getJobs().get(type));
 		}
 		return Optional.absent();
+	}
+
+	public boolean cancelJob(Facility facility, ScheduledJobType type) throws SchedulerException {
+		Optional<FacilitySchedulerService> service = findService(facility);
+		if (service.isPresent()) {
+			return service.get().cancelJob(type);
+		}
+		return false;
 	}
 }

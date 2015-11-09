@@ -29,18 +29,18 @@ import com.google.common.collect.Lists;
 
 public class ExtensionPointEngine {
 
-	private static final Logger	LOGGER				= LoggerFactory.getLogger(ExtensionPointEngine.class);
-	private static final HashMap<UUID, ExtensionPointEngine> facilityEngines = new HashMap<>();
-	
-	ScriptEngine				engine;
+	private static final Logger									LOGGER				= LoggerFactory.getLogger(ExtensionPointEngine.class);
+	private static final HashMap<UUID, ExtensionPointEngine>	facilityEngines		= new HashMap<>();
 
-	HashSet<ExtensionPointType>	activeExtensions	= new HashSet<ExtensionPointType>();
+	ScriptEngine												engine;
 
-	@Getter
-	private ArrayList<String>	failedExtensions	= Lists.newArrayList();
+	HashSet<ExtensionPointType>									activeExtensions	= new HashSet<ExtensionPointType>();
 
 	@Getter
-	private Facility	facility;
+	private ArrayList<String>									failedExtensions	= Lists.newArrayList();
+
+	@Getter
+	private Facility											facility;
 
 	public ExtensionPointEngine(Facility facility) throws ScriptException {
 		initEngine();
@@ -56,7 +56,6 @@ public class ExtensionPointEngine {
 		}
 	}
 
-	
 	/**
 	 * Record that the extension point is valid and active or throw
 	 */
@@ -97,12 +96,11 @@ public class ExtensionPointEngine {
 							throw e;
 						}
 					}
-	
-					
-				} else { 
+
+				} else {
 					LOGGER.info("Skipping inactive extension point " + ep.getType());
 				}
-			} catch(Exception e) {
+			} catch (Exception e) {
 				LOGGER.error("Extension point {} for facility {} could not be loaded skipping", ep.getType(), facility);
 			}
 		}
@@ -131,7 +129,7 @@ public class ExtensionPointEngine {
 	}
 
 	public static ExtensionPointEngine getInstance(Facility facility) throws ScriptException {
-		synchronized(facilityEngines) {
+		synchronized (facilityEngines) {
 			ExtensionPointEngine engine = facilityEngines.get(facility.getPersistentId());
 			if (engine == null) {
 				engine = new ExtensionPointEngine(facility);
@@ -146,28 +144,27 @@ public class ExtensionPointEngine {
 
 	public Optional<ExtensionPoint> getExtensionPoint(ExtensionPointType type) {
 		@SuppressWarnings("unchecked")
-		List<ExtensionPoint> eps = ExtensionPoint.staticGetDao().createCriteria()
-				.add(Restrictions.eq("type", type))
-				.add(Restrictions.eq("parent.persistentId", facility.getPersistentId()))
-				.list();
+		List<ExtensionPoint> eps = ExtensionPoint.staticGetDao()
+			.createCriteria()
+			.add(Restrictions.eq("type", type))
+			.add(Restrictions.eq("parent.persistentId", facility.getPersistentId()))
+			.list();
 		if (eps.size() > 1) {
-			LOGGER.warn("Fould multiple extension points for type {} in faciltiy {}", type, facility);
-		} else if (eps.size() < 1) {
-			LOGGER.warn("Fould multiple extension points for type {} in faciltiy {}", type, facility);
-		} 	 
-		
+			LOGGER.warn("Found {} extension points for type {} in facility {}", eps.size(), type, facility);
+		} // no extension point is fine. Means we should use the default
+
 		if (eps.size() >= 1) {
 			return Optional.of(eps.get(0));
-		} else { 
+		} else {
 			return Optional.absent();
 		}
-		
+
 	}
 
 	public Optional<ExtensionPoint> getDataQuantityHealthCheckExtensionPoint() {
 		return this.getExtensionPoint(ExtensionPointType.ParameterSetDataQuantityHealthCheck);
 	}
-	
+
 	public DataQuantityHealthCheckParameters getDataQuantityHealthCheckParameters() {
 
 		DataQuantityHealthCheckParameters theBean = new DataQuantityHealthCheckParameters();
@@ -175,7 +172,8 @@ public class ExtensionPointEngine {
 
 		if (hasActiveExtensionPoint(ExtensionPointType.ParameterSetDataQuantityHealthCheck)) {
 			try {
-				theBean = (DataQuantityHealthCheckParameters) this.eval(ExtensionPointType.ParameterSetDataQuantityHealthCheck, params);
+				theBean = (DataQuantityHealthCheckParameters) this.eval(ExtensionPointType.ParameterSetDataQuantityHealthCheck,
+					params);
 			} catch (ScriptException e) {
 				LOGGER.error("ParameterSetDataQuantityHealthCheck groovy threw", e);
 			}
@@ -206,7 +204,6 @@ public class ExtensionPointEngine {
 		return this.getExtensionPoint(ExtensionPointType.ParameterSetDataPurge);
 	}
 
-
 	public EdiFreeSpaceHealthCheckParamaters getEdiFreeSpaceParameters() {
 
 		EdiFreeSpaceHealthCheckParamaters theBean = new EdiFreeSpaceHealthCheckParamaters();
@@ -225,16 +222,17 @@ public class ExtensionPointEngine {
 		}
 		return theBean;
 	}
-	
+
 	public Optional<ExtensionPoint> getEdiFreeSpaceExtensionPoint() {
 		return this.getExtensionPoint(ExtensionPointType.ParameterEdiFreeSpaceHealthCheck);
 	}
 
 	public List<ExtensionPoint> getAllExtensions() {
 		@SuppressWarnings("unchecked")
-		List<ExtensionPoint> eps = ExtensionPoint.staticGetDao().createCriteria()
-				.add(Restrictions.eq("parent.persistentId", facility.getPersistentId()))
-				.list();
+		List<ExtensionPoint> eps = ExtensionPoint.staticGetDao()
+			.createCriteria()
+			.add(Restrictions.eq("parent.persistentId", facility.getPersistentId()))
+			.list();
 		return eps;
 	}
 
@@ -242,7 +240,7 @@ public class ExtensionPointEngine {
 		ExtensionPoint point = ExtensionPoint.staticGetDao().findByPersistentId(extensionPointId);
 		return point;
 	}
-	
+
 	public ExtensionPoint create(ExtensionPointType typeEnum) throws ScriptException {
 		ExtensionPoint point = new ExtensionPoint(facility.reload(), typeEnum);
 		store(point);
@@ -254,7 +252,6 @@ public class ExtensionPointEngine {
 		return point;
 	}
 
-	
 	public ExtensionPoint update(ExtensionPoint point) throws ScriptException {
 		store(point);
 		return point;

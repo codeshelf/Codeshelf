@@ -87,7 +87,7 @@ public class FacilitySchedulerServiceTest {
 		CronExpression firstExp = new CronExpression("0 0 2 * * ?");
 		ScheduledJobType testType = ScheduledJobType.Test;	
 		subject.schedule(firstExp, testType);
-		Assert.assertFalse(subject.isJobRunning(testType));
+		Assert.assertFalse(subject.hasRunningJob(testType).isPresent());
 		Optional<DateTime> neverTriggered = subject.getPreviousFireTime(testType);
 		Assert.assertFalse(neverTriggered.isPresent());
 		
@@ -103,12 +103,32 @@ public class FacilitySchedulerServiceTest {
 		
 		Assert.assertEquals("completed type was unexpected", testType, completedType);
 		Assert.assertTrue(String.format("job does not appear to have been triggered before: %s, after %s", timeAfterTrigger, timeAfterTrigger), timeBeforeTrigger.isBefore(timeAfterTrigger.get()));
-		Assert.assertFalse("job should not still be running", subject.isJobRunning(testType));
+		Assert.assertFalse("job should not still be running", subject.hasRunningJob(testType).isPresent());
 	}
 	
 	@Test
-	public void noManualJobIfRunning() {
+	public void noManualJobIfRunning() throws Exception {
+		CronExpression firstExp = new CronExpression("0 0 2 * * ?");
+		ScheduledJobType testType = ScheduledJobType.Test;	
 		
+		subject.schedule(firstExp, testType);
+		Assert.assertFalse(subject.hasRunningJob(testType).isPresent());
+		
+		Optional<DateTime> neverTriggered = subject.getPreviousFireTime(testType);
+		Assert.assertFalse(neverTriggered.isPresent());
+		Future<ScheduledJobType> future1 = subject.trigger(testType);
+		TestJob job1 = TestJob.pollInstance();
+		job1.awaitRunning();
+		try {
+			subject.trigger(testType);
+			Assert.fail("Should have prevented trigger while running");
+		} catch(SchedulerException e) {
+			
+		}
+		Assert.assertTrue(job1.isRunning());
+		job1.proceed();
+		future1.get(2, TimeUnit.SECONDS);
+
 	}
 	
 	@Test
@@ -149,7 +169,7 @@ public class FacilitySchedulerServiceTest {
 
 		TestJob control = TestJob.pollInstance();
 		control.awaitRunning();
-		Assert.assertTrue("job was not able to be cancelled", future.cancel(true));
+		Assert.assertTrue("job was not able to be cancelled", subject.cancelJob(testType));
 		try {
 			future.get();
 			Assert.fail("should have been cancelled");
@@ -208,5 +228,18 @@ public class FacilitySchedulerServiceTest {
 
 	}
 
-	
+
+	@Test
+	public void passesFacilityContextToJob() throws SchedulerException, InterruptedException, TimeoutException, BrokenBarrierException, ParseException, ExecutionException {
+		CronExpression firstExp = new CronExpression("0 0 2 * * ?");
+		ScheduledJobType testType = ScheduledJobType.Test;	
+		subject.schedule(firstExp, testType);
+		Future<ScheduledJobType> future = subject.trigger(testType);
+		TestJob job = TestJob.pollInstance();
+		job.awaitRunning();
+		job.proceed();
+		future.get(5, TimeUnit.SECONDS);
+		Assert.assertEquals(subject.getTenant(), job.getExecutionTenant());
+		Assert.assertEquals(subject.getFacility(), job.getExecutionFacility());
+	}
 }

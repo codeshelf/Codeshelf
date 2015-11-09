@@ -69,4 +69,26 @@ public class ScheduledJobsResource {
 		}
 	}
 
+	//TODO This will probably change to return a resource that you can then DELETE to cancel
+	@POST
+	@Path("/{type}/trigger")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response updateSchedule(@PathParam("type") String typeStr) throws SchedulerException {
+		ScheduledJobType type = ScheduledJobType.valueOf(typeStr);
+		schedulerService.triggerJob(facility, type);
+		return BaseResponse.buildResponse(null);
+	}
+
+	//TODO This will probably change to a resource representing  the running job
+	@POST
+	@Path("/{type}/cancel")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response cancelRun(@PathParam("type") String typeStr) throws SchedulerException {
+		ScheduledJobType type = ScheduledJobType.valueOf(typeStr);
+		boolean result = schedulerService.cancelJob(facility, type);
+		return BaseResponse.buildResponse(result);
+	}
+	
 }

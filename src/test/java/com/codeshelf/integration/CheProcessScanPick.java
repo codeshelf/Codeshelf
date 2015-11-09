@@ -456,7 +456,7 @@ public class CheProcessScanPick extends ServerTest {
 		Assert.assertNull(item1522LocD301);
 
 		// LOGGER.info("2c: check that item 1124 (GTIN 106) moved even though it scanned as 00106");
-		LOGGER.info("2c: check that item 1124 (GTIN 106) did not move as it scanned as 00106");  
+		LOGGER.info("2c: check that item 1124 (GTIN 106) did not move as it scanned as 00106");
 		// v20 undid this unwise DEV-937 case
 		Location locationD402 = facility.findSubLocationById("D402");
 		Location locationD501 = facility.findSubLocationById("D501");
@@ -1234,6 +1234,7 @@ public class CheProcessScanPick extends ServerTest {
 		LOGGER.info("2a_c :Scan the correct SKU; advance.");
 		picker.scanSomething("1522");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
 		WorkInstruction wi = picker.nextActiveWi();
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
@@ -1262,6 +1263,154 @@ public class CheProcessScanPick extends ServerTest {
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 		LOGGER.info("2d :The fourth job needs a scan.  Logout as the rest is not interesting.");
+
+		picker.logout();
+	}
+
+	/**
+	 * For  DEV-1295. Did revised screen message go out?
+	 * Seemed like screen redraw did not go after a scan sometimes
+	 */
+	@Test
+	public final void pfswebScanProcessErrors() throws IOException {
+		beginTransaction();
+		propertyService.changePropertyValue(facility, DomainObjectProperty.PICKMULT, Boolean.toString(true));
+		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "UPC");
+		propertyService.changePropertyValue(facility,
+			DomainObjectProperty.WORKSEQR,
+			WorkInstructionSequencerType.WorkSequence.toString());
+		propertyService.turnOffHK(facility);
+		commitTransaction();
+
+		beginTransaction();
+		setUpOrdersWithCntrAndSequence(facility);
+		commitTransaction();
+
+		this.startSiteController(); // after all the parameter changes
+
+		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
+		picker.loginAndSetup("Picker #1");
+
+		LOGGER.info("1a: setup two orders on the cart. Several of the details have unmodelled preferred locations");
+		picker.setupContainer("12345", "1");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		picker.setupContainer("11111", "2");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+
+		LOGGER.info("1b: START. Now we get some work. 8 jobs, only 3 with modeled locations");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+
+		List<WorkInstruction> scWiList = picker.getAllPicksList();
+		logWiList(scWiList);
+		/*
+				{ "1522", "D601" }, // 
+				{ "1522", "D601" }, //
+				{ "1523", "D602" }, //
+				{ "1124", "D603" }, //
+				{ "1555", "D604" }, //
+				{ "1122", "D401" }, //
+				{ "1123", "D301" }, // 
+				{ "1493", "D302" } //
+		*/
+		LOGGER.info("2a_a :The first job needs a scan.");
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
+		Assert.assertEquals("1522", picker.getLastCheDisplayString(2));
+		Assert.assertEquals("QTY 4", picker.getLastCheDisplayString(3)); // This line may change due to function changes. Just update it
+		Assert.assertEquals("SCAN UPC NEEDED", picker.getLastCheDisplayString(4));
+
+		LOGGER.info("2a_b :Try to pick it directly.");
+		WorkInstruction wi = picker.nextActiveWi();
+		int button = picker.buttonFor(wi);
+		int quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitInSameState(CheStateEnum.SCAN_SOMETHING, 2000);
+		picker.logCheDisplay();
+
+		LOGGER.info("2b_a :Scan an invalid SKU, verify that CHE specifies the needed SKU.");
+		picker.scanSomething("bad_sku");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
+		Assert.assertEquals("1522", picker.getLastCheDisplayString(2));
+		Assert.assertEquals("QTY 4", picker.getLastCheDisplayString(3)); // This line may change due to function changes. Just update it
+		Assert.assertEquals("SCAN 1522", picker.getLastCheDisplayString(4));
+
+		LOGGER.info("2b_b :Try to pick it now.");
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitInSameState(CheStateEnum.SCAN_SOMETHING, 2000);
+		picker.logCheDisplay();
+
+		LOGGER.info("2b_c :Scan the correct SKU; advance.");
+		picker.scanSomething("1522");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+		LOGGER.info("2c :The second job does not need a scan. The quantity counted down as the first is complete.");
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
+		Assert.assertEquals("1522", picker.getLastCheDisplayString(2));
+		Assert.assertEquals("QTY 3", picker.getLastCheDisplayString(3)); // This line may change due to function changes. Just update it
+		Assert.assertEquals("", picker.getLastCheDisplayString(4));
+
+		LOGGER.info("3a: Although worker should do the last 1522 pick without a scan, scan 1522 again.");
+		picker.scanSomething("1522");
+		// For this, we want to revaluate. And we want new screen to go out since user did scan. (Perhaps previous message had been dropped.) That is DEV-1295 
+		picker.waitInSameState(CheStateEnum.DO_PICK, 2000);
+
+		LOGGER.info("3b: Although worker should do the last 1522 pick, scan a different SKU");
+		picker.scanSomething("1523");
+		// For this, we want to revaluate and if not correct, go back to SCAN_SOMETHING state
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
+		Assert.assertEquals("1522", picker.getLastCheDisplayString(2));
+		Assert.assertEquals("QTY 3", picker.getLastCheDisplayString(3)); // This line may change due to function changes. Just update it
+		Assert.assertEquals("SCAN UPC NEEDED", picker.getLastCheDisplayString(4));
+
+		LOGGER.info("3c: Pick not allowed yet");
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitInSameState(CheStateEnum.SCAN_SOMETHING, 2000);
+
+		LOGGER.info("3d: Scan the right thing");
+		picker.scanSomething("1522");
+		// For this, we want to revaluate and if not correct, go back to SCAN_SOMETHING state
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
+		Assert.assertEquals("1522", picker.getLastCheDisplayString(2));
+		Assert.assertEquals("QTY 3", picker.getLastCheDisplayString(3)); // This line may change due to function changes. Just update it
+		Assert.assertEquals("", picker.getLastCheDisplayString(4));
+
+		LOGGER.info("3e: Now pick");
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitInSameState(CheStateEnum.SCAN_SOMETHING, 2000);
+
+		LOGGER.info("3f :This job needs a scan.");
+		Assert.assertEquals("D602", picker.getLastCheDisplayString(1));
+		Assert.assertEquals("1523", picker.getLastCheDisplayString(2));
+		Assert.assertEquals("QTY 1", picker.getLastCheDisplayString(3)); // This line may change due to function changes. Just update it
+		picker.scanSomething("1523");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		LOGGER.info("4 :The fourth job needs a scan.  Logout as the rest is not interesting.");
 
 		picker.logout();
 	}

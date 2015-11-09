@@ -427,6 +427,20 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		}
 	}
 
+	protected void notifyExtraInfo(String theInfo, boolean needWarn) {
+		try {
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Information");
+			if (needWarn)
+				LOGGER.warn(theInfo);
+			else
+				LOGGER.info(theInfo);
+		} finally {
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+		}
+	}
+	
 	//--------------------------
 	/**
 	 * CHE_DISPLAY notifies

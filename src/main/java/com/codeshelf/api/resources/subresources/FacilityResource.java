@@ -9,11 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import javax.script.ScriptException;
 import javax.ws.rs.Consumes;
@@ -29,8 +24,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-
-import lombok.Setter;
 
 import org.apache.commons.beanutils.BeanMap;
 import org.apache.commons.io.IOUtils;
@@ -68,7 +61,6 @@ import com.codeshelf.behavior.NotificationBehavior;
 import com.codeshelf.behavior.NotificationBehavior.WorkerEventTypeGroup;
 import com.codeshelf.behavior.OrderBehavior;
 import com.codeshelf.behavior.ProductivitySummaryList;
-import com.codeshelf.behavior.TenantCallable;
 import com.codeshelf.behavior.TestBehavior;
 import com.codeshelf.behavior.UiUpdateBehavior;
 import com.codeshelf.behavior.WorkBehavior;
@@ -77,11 +69,9 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvWorkerImporter;
-import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.DataPurgeParameters;
-import com.codeshelf.model.PurgeProcessor;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
@@ -89,8 +79,6 @@ import com.codeshelf.model.domain.FacilityMetric;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
-import com.codeshelf.security.CodeshelfSecurityManager;
-import com.codeshelf.security.UserContext;
 import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.service.ParameterSetBeanABC;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
@@ -99,11 +87,12 @@ import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.sun.jersey.api.core.ResourceContext;
 import com.sun.jersey.multipart.FormDataMultiPart;
+
+import lombok.Setter;
 
 public class FacilityResource {
 
@@ -119,10 +108,6 @@ public class FacilityResource {
 	private final Provider<ICsvInventoryImporter>		inventoryImporterProvider;
 	private final Provider<ICsvOrderImporter>			orderImporterProvider;
 	private final Provider<ICsvWorkerImporter>			workerImporterProvider;
-
-	//TODO hacked here to prevent multiple executions
-	private static final ExecutorService				purgeExecutor	= Executors.newSingleThreadExecutor();
-	private static TenantCallable						lastExecutionTask;
 
 	@Setter
 	private Facility									facility;
@@ -264,32 +249,6 @@ public class FacilityResource {
 		DataPurgeParameters params = service.getDataPurgeParameters();
 		List<String> summary = workService.reportAchiveables(params.getPurgeAfterDaysValue(), this.facility);
 		return BaseResponse.buildResponse(summary);
-	}
-
-	@DELETE
-	@Path("/data/purge")
-	@RequiresPermissions("facility:edit")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response deleteOldObjects() {
-		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
-		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
-		UserContext userContext = CodeshelfSecurityManager.getCurrentUserContext();
-		TenantCallable purgeCallable = new TenantCallable(persistenceService, tenant, userContext, new PurgeProcessor(facility));
-
-		//TODO do better prevention
-		if (lastExecutionTask != null && lastExecutionTask.isRunning()) {
-			LOGGER.info("Cancelling data purge task {}", lastExecutionTask);
-			ListenableFuture<Void> cancelLast = lastExecutionTask.cancel();
-			try {
-				cancelLast.get(2, TimeUnit.SECONDS);
-			} catch (InterruptedException | ExecutionException | TimeoutException e) {
-				LOGGER.warn("Last purge task cancellation did not complete after 2 seconds: {}", lastExecutionTask, e);
-			}
-		}
-		lastExecutionTask = purgeCallable;
-		LOGGER.info("Submitted data purge task {}", purgeCallable);
-		purgeExecutor.submit(purgeCallable);
-		return BaseResponse.buildResponse(null);
 	}
 
 	@GET
