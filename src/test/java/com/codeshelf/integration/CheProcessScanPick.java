@@ -1274,12 +1274,10 @@ public class CheProcessScanPick extends ServerTest {
 	@Test
 	public final void pfswebScanProcessErrors() throws IOException {
 		beginTransaction();
-		propertyService.changePropertyValue(facility, DomainObjectProperty.PICKMULT, Boolean.toString(true));
-		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "UPC");
-		propertyService.changePropertyValue(facility,
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.WorkSequence.toString());
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.PICKMULT, Boolean.toString(true));
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "UPC");
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		beginTransaction();
