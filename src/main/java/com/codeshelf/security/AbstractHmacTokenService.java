@@ -31,7 +31,22 @@ public abstract class AbstractHmacTokenService extends AbstractCodeshelfIdleServ
 
 	private static final String	HMAC_ALGORITHM	= "HmacSHA1";
 	private static final int	TOKEN_VERSION	= 3;
-	private Mac	mac;
+	private static final ThreadLocal<Mac>	mac = new ThreadLocal<Mac>() {
+
+		@Override
+		protected Mac initialValue() {
+			String secret = System.getProperty("auth.token.secret");
+			SecretKeySpec hmacKey = new SecretKeySpec(secret.getBytes(), HMAC_ALGORITHM);
+			try {
+				Mac mac = Mac.getInstance(HMAC_ALGORITHM);
+				mac.init(hmacKey);
+				return mac;
+			} catch (InvalidKeyException | NoSuchAlgorithmException e) {
+				throw new RuntimeException("Unexpected exception creating HMAC", e);
+			}
+		}
+		
+	};
 
 	public AbstractHmacTokenService() {
 		super();
@@ -41,13 +56,6 @@ public abstract class AbstractHmacTokenService extends AbstractCodeshelfIdleServ
 	
 	// subclass must call initializeHmac before using tokens
 	protected void initializeHmac(String secret) {
-		SecretKeySpec hmacKey = new SecretKeySpec(secret.getBytes(), HMAC_ALGORITHM);
-		try {
-			mac = Mac.getInstance(HMAC_ALGORITHM);
-			mac.init(hmacKey);
-		} catch (InvalidKeyException | NoSuchAlgorithmException e) {
-			throw new RuntimeException("Unexpected exception creating HMAC", e);
-		}
 	}
 
 	// subclass should implement method(s) to authenticate and get a token by calling this method
@@ -106,9 +114,8 @@ public abstract class AbstractHmacTokenService extends AbstractCodeshelfIdleServ
 		hmac_data.put(sessionFlags.getPacked());
 	
 		byte[] hmac_signature;
-		synchronized (mac) {
-			hmac_signature = mac.doFinal(hmac_data.array());
-		}
+		hmac_signature = mac.get().doFinal(hmac_data.array());
+
 		ByteBuffer hmac = ByteBuffer.allocate(hmac_data.position() + hmac_signature.length);
 		hmac.put(hmac_data.array());
 		hmac.put(hmac_signature);
