@@ -198,8 +198,8 @@ public class FacilityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public ExtensionPointsResource getExtensionPoints() throws ScriptException {
 		ExtensionPointsResource r = resourceContext.getResource(ExtensionPointsResource.class);
-		ExtensionPointEngine extensionPointService = ExtensionPointEngine.getInstance(facility);
-		r.setExtensionPointService(extensionPointService);
+		ExtensionPointEngine extensionPointEngine = ExtensionPointEngine.getInstance(facility);
+		r.setExtensionPointEngine(extensionPointEngine);
 		return r;
 	}
 
