@@ -269,4 +269,8 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		return (this.facility.getPersistentId().equals(facility.getPersistentId()));
 	}
 
+	public boolean removeJob(ScheduledJobType type) throws SchedulerException {
+		return scheduler.deleteJob(type.getKey());
+	}
+
 }

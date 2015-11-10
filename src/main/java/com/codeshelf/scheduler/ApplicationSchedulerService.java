@@ -39,7 +39,6 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
-import com.sun.corba.se.impl.orbutil.closure.Future;
 
 public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 	static final private Logger	LOGGER						= LoggerFactory.getLogger(ApplicationSchedulerService.class);
@@ -200,5 +199,18 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 		}
 		
 		return Collections.emptyList();
+	}
+
+	public boolean removeJob(Facility facility, ScheduledJobType type) throws SchedulerException {
+		Optional<FacilitySchedulerService> service = findService(facility);
+		if (service.isPresent()) {
+			boolean result = service.get().removeJob(type);
+			ScheduledJob foundJob = ScheduledJob.staticGetDao().findByDomainId(facility, type.name());
+			if (foundJob != null) {
+				ScheduledJob.staticGetDao().delete(foundJob);
+			}
+			return result;
+		}
+		return false;
 	}
 }

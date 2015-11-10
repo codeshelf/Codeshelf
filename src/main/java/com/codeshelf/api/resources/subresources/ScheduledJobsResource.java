@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -118,5 +119,16 @@ public class ScheduledJobsResource {
 		boolean result = schedulerService.cancelJob(facility, type);
 		return BaseResponse.buildResponse(result);
 	}
+
+	@DELETE
+	@Path("/{type}")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response deleteJob(@PathParam("type") String typeStr) throws SchedulerException {
+		ScheduledJobType type = ScheduledJobType.valueOf(typeStr);
+		boolean result = schedulerService.removeJob(facility, type);
+		return BaseResponse.buildResponse(result);
+	}
+
 	
 }
