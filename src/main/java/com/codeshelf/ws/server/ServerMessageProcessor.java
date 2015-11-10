@@ -40,7 +40,7 @@ import com.codeshelf.ws.protocol.command.LogoutCommand;
 import com.codeshelf.ws.protocol.command.ObjectDeleteCommand;
 import com.codeshelf.ws.protocol.command.ObjectGetCommand;
 import com.codeshelf.ws.protocol.command.ObjectMethodCommand;
-import com.codeshelf.ws.protocol.command.ObjectPropertiesCommand;
+import com.codeshelf.ws.protocol.command.FacilityPropertiesCommand;
 import com.codeshelf.ws.protocol.command.ObjectUpdateCommand;
 import com.codeshelf.ws.protocol.command.PalletizerCompleteWiCommand;
 import com.codeshelf.ws.protocol.command.PalletizerItemCommand;
@@ -73,7 +73,7 @@ import com.codeshelf.ws.protocol.request.LogoutRequest;
 import com.codeshelf.ws.protocol.request.ObjectDeleteRequest;
 import com.codeshelf.ws.protocol.request.ObjectGetRequest;
 import com.codeshelf.ws.protocol.request.ObjectMethodRequest;
-import com.codeshelf.ws.protocol.request.ObjectPropertiesRequest;
+import com.codeshelf.ws.protocol.request.FacilityPropertiesRequest;
 import com.codeshelf.ws.protocol.request.ObjectUpdateRequest;
 import com.codeshelf.ws.protocol.request.PalletizerCompleteWiRequest;
 import com.codeshelf.ws.protocol.request.PalletizerItemRequest;
@@ -246,8 +246,8 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			command = new ObjectMethodCommand(csSession, (ObjectMethodRequest) request);
 			objectUpdateCounter.inc();
 			applicationRequestCounter.inc();
-		} else if (request instanceof ObjectPropertiesRequest) {
-			command = new ObjectPropertiesCommand(csSession, (ObjectPropertiesRequest) request);
+		} else if (request instanceof FacilityPropertiesRequest) {
+			command = new FacilityPropertiesCommand(csSession, (FacilityPropertiesRequest) request);
 			objectPropertiesCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof ServiceMethodRequest) {

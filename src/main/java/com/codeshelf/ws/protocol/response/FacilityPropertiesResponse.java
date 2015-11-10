@@ -7,7 +7,7 @@ import com.codeshelf.model.domain.FacilityProperty;
 import lombok.Getter;
 import lombok.Setter;
 
-public class ObjectPropertiesResponse extends ResponseABC {
+public class FacilityPropertiesResponse extends ResponseABC {
 	@Getter @Setter
 	private List<FacilityProperty> results;
 }
