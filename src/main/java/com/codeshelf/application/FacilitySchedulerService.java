@@ -57,7 +57,7 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		
 	}
 	
-	private class JobFuture<T> extends AbstractFuture<T> {
+	public class JobFuture<T> extends AbstractFuture<T> {
 		
 		private ScheduledJobType type;
 		

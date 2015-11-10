@@ -1,9 +1,13 @@
 package com.codeshelf.scheduler;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
+import org.joda.time.DateTime;
 import org.quartz.CronExpression;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
@@ -14,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.application.FacilitySchedulerService;
+import com.codeshelf.application.FacilitySchedulerService.JobFuture;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.service.ITenantManagerService;
 import com.codeshelf.manager.service.TenantManagerService;
@@ -25,6 +30,8 @@ import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 import com.codeshelf.service.ServiceUtility;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
@@ -32,12 +39,26 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
+import com.sun.corba.se.impl.orbutil.closure.Future;
 
 public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 	static final private Logger	LOGGER						= LoggerFactory.getLogger(ApplicationSchedulerService.class);
 
 	private ServiceManager	facilitySchedulerServiceManager;
 
+	@JsonAutoDetect(fieldVisibility=Visibility.ANY)
+	public static class ScheduledJobView {
+		ScheduledJobType type;
+		String cronExpression;
+		Date nextScheduled;
+		
+		ScheduledJobView(ScheduledJobType type, CronExpression cronExpression) {
+			this.type = type;
+			this.cronExpression = cronExpression.getCronExpression();
+			this.nextScheduled = cronExpression.getNextValidTimeAfter(DateTime.now().toDate());
+		}
+	}
+	
 	@Override
 	protected void startUp() throws Exception {
 		ITenantManagerService tenantService =  TenantManagerService.getInstance();
@@ -157,5 +178,21 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 			return service.get().cancelJob(type);
 		}
 		return false;
+	}
+
+	public List<ScheduledJobView> getScheduledJobs(Facility facility) throws SchedulerException {
+		Optional<FacilitySchedulerService> service = findService(facility);
+		ArrayList<ScheduledJobView> jobViews = new ArrayList<ScheduledJobView>();
+		if (service.isPresent()) {
+			Map<ScheduledJobType, CronExpression> jobs = service.get().getJobs();
+			for (Entry<ScheduledJobType, CronExpression> entry : jobs.entrySet()) {
+				ScheduledJobType jobType = entry.getKey();
+				Optional<JobFuture<ScheduledJobType>> future = service.get().hasRunningJob(jobType);
+				jobViews.add(new ScheduledJobView(entry.getKey(), entry.getValue()));
+			}
+			return jobViews;
+		}
+		
+		return Collections.emptyList();
 	}
 }

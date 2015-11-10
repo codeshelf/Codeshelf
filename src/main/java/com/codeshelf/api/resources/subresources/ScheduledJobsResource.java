@@ -1,6 +1,7 @@
 package com.codeshelf.api.resources.subresources;
 
 import java.text.ParseException;
+import java.util.List;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
@@ -20,6 +21,7 @@ import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.ScheduledJob;
 import com.codeshelf.scheduler.ApplicationSchedulerService;
+import com.codeshelf.scheduler.ApplicationSchedulerService.ScheduledJobView;
 import com.codeshelf.scheduler.ScheduledJobType;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
@@ -36,6 +38,13 @@ public class ScheduledJobsResource {
 	@Inject
 	public ScheduledJobsResource(ApplicationSchedulerService service) {
 		schedulerService = service;
+	}
+	
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getScheduledJobs() throws SchedulerException {
+		List<ScheduledJobView> jobs = schedulerService.getScheduledJobs(facility);
+		return BaseResponse.buildResponse(jobs);
 	}
 	
 	@GET
