@@ -12,6 +12,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import org.quartz.CronExpression;
 import org.quartz.SchedulerException;
@@ -46,6 +47,24 @@ public class ScheduledJobsResource {
 		List<ScheduledJobView> jobs = schedulerService.getScheduledJobs(facility);
 		return BaseResponse.buildResponse(jobs);
 	}
+
+	@POST
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response create(@FormParam("type") String type) {
+		ScheduledJobType typeEnum = ScheduledJobType.valueOf(type); 
+		try {
+			ScheduledJob job = new ScheduledJob(this.facility, typeEnum, typeEnum.getDefaultSchedule());
+			schedulerService.scheduleJob(job);
+			return BaseResponse.buildResponse(job);
+		} catch(Exception e) {
+			ErrorResponse response = new ErrorResponse();
+			response.addError(e.getMessage());
+			response.setStatus(Status.BAD_REQUEST);
+			return response.buildResponse();
+		}
+	}
+
 	
 	@GET
 	@Path("/{type}/schedule")

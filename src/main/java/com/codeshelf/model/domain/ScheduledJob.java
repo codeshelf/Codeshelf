@@ -76,14 +76,17 @@ public class ScheduledJob extends DomainObjectTreeABC<Facility> {
 		super();
 	}
 
-	
-	public ScheduledJob(Facility facility, ScheduledJobType type, String cronExpression) throws ParseException {
+	public ScheduledJob(Facility facility, ScheduledJobType type, CronExpression cronExpression)  {
 		this.setParent(facility);
 		this.setDomainId(type.name());
 		this.setName(type.name());
 		this.setType(type);
 		this.setActive(true);
-		this.cronExpression = new CronExpression(cronExpression).getCronExpression();
+		this.cronExpression = cronExpression.getCronExpression();
+	}
+	
+	public ScheduledJob(Facility facility, ScheduledJobType type, String cronExpression) throws ParseException {
+		this(facility, type, new CronExpression(cronExpression));
 	}
 
 	public CronExpression getCronExpression() {
