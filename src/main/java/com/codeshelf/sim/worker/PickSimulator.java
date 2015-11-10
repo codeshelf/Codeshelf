@@ -459,6 +459,21 @@ public class PickSimulator {
 	}
 	
 	/**
+	 * This is called in test when we expect nothing much to happen.
+	 * Use this sparingly! The test slows by this much each call.
+	 */
+	public void waitInSameState(CheStateEnum state, int millisToWait) {
+		CheStateEnum startingState = cheDeviceLogic.getCheStateEnum();
+		if (!startingState.equals(state)) {
+			throw new IllegalStateException(getCheDeviceLogic().getGuid() + ": did not start in expected state");
+		}
+		ThreadUtils.sleep(millisToWait);
+		if (!startingState.equals(cheDeviceLogic.getCheStateEnum())) {
+			throw new IllegalStateException(getCheDeviceLogic().getGuid() + ": did not remain in same state");
+		}
+	}
+
+	/**
 	 * Wait for specified state. Throw if state does not come in time, causing the test to fail.
 	 */
 	private void waitForDeviceState(CheDeviceLogic device, CheStateEnum state, int timeoutInMillis) {

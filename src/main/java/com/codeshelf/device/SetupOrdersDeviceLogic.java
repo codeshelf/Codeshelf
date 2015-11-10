@@ -1711,12 +1711,20 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case SETUP_SUMMARY:
-			case DO_PICK:
-				// At any time during the pick we can change locations.
 				// At summary, we can change location/path
 				if (inScanPrefixStr.equals(LOCATION_PREFIX) || inScanPrefixStr.equals(TAPE_PREFIX)) {
 					processLocationScan(inScanPrefixStr, inContent);
 				}
+				break;
+				
+			case DO_PICK:
+				// At any time during the pick we can change locations.
+				if (inScanPrefixStr.equals(LOCATION_PREFIX) || inScanPrefixStr.equals(TAPE_PREFIX)) {
+					processLocationScan(inScanPrefixStr, inContent);
+				}
+				// DEV-1295.  If the user scanned something, at minimum redraw stuff.
+				// But more importantly, what this is multi-pick not needing another scan, but worker scans a different item?
+				processPickVerifyScan(inScanPrefixStr, inContent);
 				break;
 
 			case SCAN_SOMETHING:
@@ -2948,6 +2956,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**
 	 * Attempt to guess if we already must have scanned this one.
 	 * For DEV-692.  Our allPicksList should be sorted and still have recently completed work.
+	 * DEV-1295 complexity. What if worker scanned once correctly, then although did not need to scan, then scanned incorrectly?
 	 */
 	@Override
 	protected boolean alreadyScannedSkuOrUpcOrLpnThisWi(WorkInstruction inWi) {

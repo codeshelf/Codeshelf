@@ -2014,6 +2014,44 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 	}
 
+	// --------------------------------------------------------------------------
+	/**
+	 * This is a scan while in DO_PICK state. Usual case is this came after an unnecessary scan
+	 */
+	protected void processPickVerifyScan(final String inScanPrefixStr, String inScanStr) {
+		WorkInstruction wi = getOneActiveWorkInstruction();
+		if (inScanPrefixStr.isEmpty()) {
+			if (wi == null) {
+				LOGGER.error("unanticipated no active WI in processPickVerifyScan");
+				invalidScanMsg(mCheStateEnum);
+				return;
+			}
+			// only reevaluate if the wi needs a scan
+			if (!wi.getNeedsScan()) {
+				setState(getCheStateEnum()); // forces redraw
+				return;
+			}
+				
+			String errorStr = verifyWiField(wi, inScanStr);
+			if (errorStr == null || errorStr.isEmpty()) {
+				// clear usually not needed. Only after correcting a bad scan
+				notifyExtraInfo("Unnecessary extra scan of correct item/UPC", kLogAsInfo);
+				clearAllPosconsOnThisDevice();
+				setState(CheStateEnum.DO_PICK);
+			} else {
+				notifyExtraInfo("Unanticipated extra scan; incorrect item/UPC. Changing state back", kLogAsWarn);
+				
+				// Still a problem here. Worker had done a scan and did not need another, then scanned wrong one. We want to basically forget
+				// The worker had done the good scan. However, that is remembered by the complete work instruction, so it cannot be forgotten.
+				setState(CheStateEnum.SCAN_SOMETHING);
+				
+			}
+		} else {
+			// Just redraw current screen?
+			setState(getCheStateEnum());
+		}
+	}
+
 	public void processResultOfVerifyBadge(Boolean verified, String workerId) {
 		// To be overridden by SetupOrderDeviceLogic and LineScanDeviceLogic
 	}
