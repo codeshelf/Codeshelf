@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
@@ -30,7 +31,7 @@ public class OrderReimportTest extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		beginTransaction();
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		this.startSiteController();
@@ -118,7 +119,7 @@ public class OrderReimportTest extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		beginTransaction();
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		this.startSiteController();
@@ -230,7 +231,7 @@ public class OrderReimportTest extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		beginTransaction();
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		this.startSiteController();
@@ -342,7 +343,7 @@ public class OrderReimportTest extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		beginTransaction();
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		this.startSiteController();
@@ -454,7 +455,7 @@ public class OrderReimportTest extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		beginTransaction();
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		this.startSiteController();

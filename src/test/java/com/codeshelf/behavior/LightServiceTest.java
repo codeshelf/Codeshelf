@@ -1,11 +1,9 @@
 package com.codeshelf.behavior;
 
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,9 +16,6 @@ import java.util.concurrent.TimeoutException;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +33,6 @@ import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
@@ -46,7 +40,6 @@ import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.Tier;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.message.MessageABC;
@@ -94,19 +87,9 @@ public class LightServiceTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 		
 		LOGGER.info("4: mockProp.getPropertyAsColor");
-		IPropertyBehavior mockProp = Mockito.spy(new DummyPropertyBehavior());
 		ArrayList<Service> services = new ArrayList<Service>(1);
-		services.add(mockProp);
 		ServiceManager serviceManager = new ServiceManager(services); // todo: shortcut method to start/destroy service for single test
 		serviceManager.startAsync().awaitHealthy();
-		PropertyService.setInstance(mockProp);
-		
-		when(mockProp.getPropertyAsColor(any(IDomainObject.class), anyString(), any(ColorEnum.class))).then(new Answer<ColorEnum>() {
-		    @Override
-		    public ColorEnum answer(InvocationOnMock invocation) throws Throwable {
-		    	return ColorEnum.RED;
-		    }
-		});
 		
 		LOGGER.info("5: new LightService");
 		LightBehavior lightService = new LightBehavior();

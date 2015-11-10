@@ -125,7 +125,7 @@ public class WorkBehaviorTest extends ServerTest {
 
 	@Test
 	public void shortedWorkInstructionShortsOrderDetail() {
-		this.workService = new WorkBehavior(mock(LightBehavior.class), mock(EdiExportService.class));
+		this.workService = new WorkBehavior(mock(LightBehavior.class), mock(EdiExportService.class), mock(WorkerHourlyMetricBehavior.class));
 
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = facilityGenerator.generateValid();
@@ -166,13 +166,14 @@ public class WorkBehaviorTest extends ServerTest {
 		when(workBehavior.workAssignedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary> emptyList());
 		BehaviorFactory factory = new BehaviorFactory(workBehavior,
 			mock(LightBehavior.class),
-			mock(DummyPropertyBehavior.class),
 			mock(UiUpdateBehavior.class),
 			mock(OrderBehavior.class),
 			mock(InventoryBehavior.class),
 			mock(NotificationBehavior.class),
 			mock(InfoBehavior.class),
-			mock(PalletizerBehavior.class));
+			mock(PalletizerBehavior.class),
+			mock(WorkerHourlyMetricBehavior.class),
+			mock(PropertyBehavior.class));
 		this.getTenantPersistenceService().commitTransaction();
 
 		IMessageProcessor processor = new ServerMessageProcessor(factory,
@@ -190,13 +191,14 @@ public class WorkBehaviorTest extends ServerTest {
 		when(workService2.workCompletedSummary(eq(cheId), eq(facility.getPersistentId()))).thenReturn(Collections.<WiSetSummary> emptyList());
 		BehaviorFactory factory2 = new BehaviorFactory(workService2,
 			mock(LightBehavior.class),
-			mock(DummyPropertyBehavior.class),
 			mock(UiUpdateBehavior.class),
 			mock(OrderBehavior.class),
 			mock(InventoryBehavior.class),
 			mock(NotificationBehavior.class),
 			mock(InfoBehavior.class),
-			mock(PalletizerBehavior.class));
+			mock(PalletizerBehavior.class),
+			mock(WorkerHourlyMetricBehavior.class),
+			mock(PropertyBehavior.class));
 		IMessageProcessor processor2 = new ServerMessageProcessor(factory2,
 			new ConverterProvider().get(),
 			this.webSocketManagerService);
@@ -209,7 +211,7 @@ public class WorkBehaviorTest extends ServerTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void summariesAreSorted() {
-		this.workService = new WorkBehavior(mock(LightBehavior.class), mock(EdiExportService.class));
+		this.workService = new WorkBehavior(mock(LightBehavior.class), mock(EdiExportService.class), mock(WorkerHourlyMetricBehavior.class));
 
 		this.getTenantPersistenceService().beginTransaction();
 
@@ -330,7 +332,7 @@ public class WorkBehaviorTest extends ServerTest {
 		EdiExportService provider = mock(EdiExportService.class);
 		when(provider.getEdiExporter(any(Facility.class))).thenReturn(ediExporter);
 
-		this.workService = new WorkBehavior(mock(LightBehavior.class), provider);
+		this.workService = new WorkBehavior(mock(LightBehavior.class), provider, mock(WorkerHourlyMetricBehavior.class));
 	}
 
 	private List<WorkInstruction> generateValidWorkInstructions(int total) {

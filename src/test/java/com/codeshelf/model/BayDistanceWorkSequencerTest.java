@@ -8,7 +8,7 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.LocationAlias;
@@ -16,7 +16,6 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.testframework.ServerTest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Ordering;
@@ -58,7 +57,7 @@ public class BayDistanceWorkSequencerTest extends ServerTest {
 	}
 
 	private WorkInstructionSequencerABC getWorkSequenceSequencer(Facility facility) {
-		PropertyService.getInstance().changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
 		WorkInstructionSequencerABC sequencer = WorkInstructionSequencerFactory.createSequencer(facility);
 		return sequencer;
 	}

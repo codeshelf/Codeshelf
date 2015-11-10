@@ -2,7 +2,6 @@ package com.codeshelf.behavior;
 
 import java.util.HashMap;
 
-import com.codeshelf.service.PropertyService;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 
@@ -13,23 +12,24 @@ public class BehaviorFactory { //BehaviorFactory
 	@Inject
 	public BehaviorFactory(WorkBehavior workBehavior,
 		LightBehavior lightBehavior,
-		IPropertyBehavior propertyBehavior,
 		UiUpdateBehavior uiUpdateBehavior,
 		OrderBehavior orderBehavior,
 		InventoryBehavior inventoryService,
 		NotificationBehavior notificationBehavior,
 		InfoBehavior infoBehavior,
-		PalletizerBehavior palletizerBehavior) {
+		PalletizerBehavior palletizerBehavior,
+		WorkerHourlyMetricBehavior workerHourlyMetricBehavior,
+		PropertyBehavior propertyBehaviorNew) {
 		mBehaviors = Maps.newHashMap();
-		mBehaviors.put(WorkBehavior.class, workBehavior); //WorkBehavior
-		mBehaviors.put(LightBehavior.class, lightBehavior); //LightBehavior
-		mBehaviors.put(PropertyService.class, propertyBehavior);  //PropertyBehavior
-		mBehaviors.put(UiUpdateBehavior.class, uiUpdateBehavior); //UiUpdateBehavior
-		mBehaviors.put(OrderBehavior.class, orderBehavior); //OrderBehavior
-		mBehaviors.put(InventoryBehavior.class, inventoryService); //InventoryBehavior
-		mBehaviors.put(NotificationBehavior.class, notificationBehavior); //NotificationBehavior
-		mBehaviors.put(InfoBehavior.class, infoBehavior); //InfoBehavior
-		mBehaviors.put(PalletizerBehavior.class, palletizerBehavior); //PalletizerBehavior
+		mBehaviors.put(WorkBehavior.class, workBehavior);
+		mBehaviors.put(LightBehavior.class, lightBehavior);
+		mBehaviors.put(UiUpdateBehavior.class, uiUpdateBehavior);
+		mBehaviors.put(OrderBehavior.class, orderBehavior);
+		mBehaviors.put(InventoryBehavior.class, inventoryService);
+		mBehaviors.put(NotificationBehavior.class, notificationBehavior);
+		mBehaviors.put(InfoBehavior.class, infoBehavior);
+		mBehaviors.put(PalletizerBehavior.class, palletizerBehavior);
+		mBehaviors.put(WorkerHourlyMetricBehavior.class, workerHourlyMetricBehavior);
 		//TestBehavior 
 	}
 

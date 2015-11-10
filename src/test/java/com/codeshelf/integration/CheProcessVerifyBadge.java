@@ -9,10 +9,11 @@ import org.hibernate.criterion.Restrictions;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheStateEnum;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Che.ProcessMode;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.sim.worker.PickSimulator;
@@ -26,7 +27,7 @@ public class CheProcessVerifyBadge extends ServerTest {
 	private void init(boolean badgeAuth) {
 		this.getTenantPersistenceService().beginTransaction();
 		//Set BADGEAUTH
-		propertyService.changePropertyValue(getFacility(),DomainObjectProperty.BADGEAUTH, badgeAuth ? "true" : "false");
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.BADGEAUTH, badgeAuth ? "true" : "false");
 		//Set CHE2 to LINE_SCAN mode
 		Che che2 = Che.staticGetDao().findByDomainId(getNetwork(), cheId2);
 		che2.setProcessMode(ProcessMode.LINE_SCAN);

@@ -45,7 +45,7 @@ public class DropboxGatewayHealthCheck extends CodeshelfHealthCheck {
 			return Result.healthy("All %d facilities dropbox connections OK", numFacilities);
 		}
 		else {
-			return Result.unhealthy("%d of %d facilities dropbox connections failed", failedFacilities.size(), numFacilities);			
+			return unhealthy("%d of %d facilities dropbox connections failed", failedFacilities.size(), numFacilities);			
 		}
 
 	}

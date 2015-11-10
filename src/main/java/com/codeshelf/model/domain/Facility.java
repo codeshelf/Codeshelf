@@ -38,6 +38,7 @@ import org.postgresql.util.PSQLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.edi.IEdiExportGateway;
 import com.codeshelf.edi.IEdiGateway;
 import com.codeshelf.edi.IEdiImportGateway;
@@ -46,6 +47,7 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.EdiGatewayStateEnum;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.HeaderCounts;
 import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.PositionTypeEnum;
@@ -58,7 +60,6 @@ import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.UomNormalizer;
 import com.codeshelf.ws.protocol.message.DisconnectSiteControllerMessage;
 import com.codeshelf.ws.server.WebSocketManagerService;
@@ -145,6 +146,12 @@ public class Facility extends Location {
 	
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	private List<FacilityMetric>			faciiltyMetrics;
+	
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
+	@MapKey(name = "name")
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+	private Map<String, FacilityProperty>	facilityProperties	= new HashMap<String, FacilityProperty>();
+
 
 	public Facility() {
 		super();
@@ -1050,7 +1057,7 @@ public class Facility extends Location {
 	@JsonProperty("hasCrossBatchOrders")
 	public boolean hasCrossBatchOrders() {
 		// DEV-582 ties this to the config parameter. Used to be inferred from the data
-		String theValue = PropertyService.getInstance().getPropertyFromConfig(this, DomainObjectProperty.CROSSBCH);
+		String theValue = PropertyBehavior.getProperty(this, FacilityPropertyType.CROSSBCH);
 		boolean result = Boolean.parseBoolean(theValue);
 		return result;
 	}
@@ -1559,5 +1566,5 @@ public class Facility extends Location {
 			}
 		}
 		return metric;
-	}
+	}	
 }

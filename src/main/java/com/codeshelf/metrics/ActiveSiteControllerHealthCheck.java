@@ -38,7 +38,7 @@ public class ActiveSiteControllerHealthCheck extends CodeshelfHealthCheck {
     		}
     	}
     	if (c==0) {
-        	return Result.unhealthy("No site controllers connected");
+        	return unhealthy("No site controllers connected");
     	} // else check for failing upgrades
 
     	int badVersions = 0;
@@ -49,10 +49,10 @@ public class ActiveSiteControllerHealthCheck extends CodeshelfHealthCheck {
     		}
     	}
     	if(badVersions > 0) {
-    		return Result.unhealthy(badVersions+" site controllers have not been upgraded");
+    		return unhealthy(badVersions+" site controllers have not been upgraded");
     	} // else
-    	
+
     	return Result.healthy(c+" site controllers connected");
-    	
+
     }
 }

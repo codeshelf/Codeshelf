@@ -24,9 +24,9 @@ import org.quartz.SchedulerException;
 import org.quartz.impl.DirectSchedulerFactory;
 
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.model.ScheduledJobType;
 import com.codeshelf.model.TestJob;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.scheduler.ScheduledJobType;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
 import com.google.common.base.Optional;
@@ -57,21 +57,20 @@ public class FacilitySchedulerServiceTest {
 
 	@Test
 	public void testRescheduleJobClass() throws ParseException, SchedulerException  {
-		
+		ScheduledJobType type = ScheduledJobType.Test;
 		CronExpression firstExp = new CronExpression("0 0 2 * * ?");
-		subject.schedule(firstExp, ScheduledJobType.DatabasePurge);
+		subject.schedule(firstExp, type);
 
 		CronExpression secondExp = new CronExpression("0 0 3 * * ?");
 		CronExpression sameSecondExp = new CronExpression("0 0 3 * * ?");
 		
 		
-		subject.schedule(secondExp, ScheduledJobType.DatabasePurge);
-		Map<String, ?> scheduledJobs = subject.getJobs();
+		subject.schedule(secondExp, type);
+		Map<ScheduledJobType, CronExpression> scheduledJobs = subject.getJobs();
 
 		Assert.assertEquals(secondExp.getCronExpression(), sameSecondExp.getCronExpression());
 		Assert.assertNotEquals(firstExp, secondExp);
-		Assert.assertEquals(1, scheduledJobs.size());
-		Assert.assertTrue(scheduledJobs.containsKey(secondExp.getCronExpression()));
+		Assert.assertEquals(secondExp.getCronExpression(), scheduledJobs.get(type).getCronExpression());
 
 	}
 	
@@ -88,7 +87,7 @@ public class FacilitySchedulerServiceTest {
 		CronExpression firstExp = new CronExpression("0 0 2 * * ?");
 		ScheduledJobType testType = ScheduledJobType.Test;	
 		subject.schedule(firstExp, testType);
-		Assert.assertFalse(subject.isJobRunning(testType));
+		Assert.assertFalse(subject.hasRunningJob(testType).isPresent());
 		Optional<DateTime> neverTriggered = subject.getPreviousFireTime(testType);
 		Assert.assertFalse(neverTriggered.isPresent());
 		
@@ -104,12 +103,32 @@ public class FacilitySchedulerServiceTest {
 		
 		Assert.assertEquals("completed type was unexpected", testType, completedType);
 		Assert.assertTrue(String.format("job does not appear to have been triggered before: %s, after %s", timeAfterTrigger, timeAfterTrigger), timeBeforeTrigger.isBefore(timeAfterTrigger.get()));
-		Assert.assertFalse("job should not still be running", subject.isJobRunning(testType));
+		Assert.assertFalse("job should not still be running", subject.hasRunningJob(testType).isPresent());
 	}
 	
 	@Test
-	public void noManualJobIfRunning() {
+	public void noManualJobIfRunning() throws Exception {
+		CronExpression firstExp = new CronExpression("0 0 2 * * ?");
+		ScheduledJobType testType = ScheduledJobType.Test;	
 		
+		subject.schedule(firstExp, testType);
+		Assert.assertFalse(subject.hasRunningJob(testType).isPresent());
+		
+		Optional<DateTime> neverTriggered = subject.getPreviousFireTime(testType);
+		Assert.assertFalse(neverTriggered.isPresent());
+		Future<ScheduledJobType> future1 = subject.trigger(testType);
+		TestJob job1 = TestJob.pollInstance();
+		job1.awaitRunning();
+		try {
+			subject.trigger(testType);
+			Assert.fail("Should have prevented trigger while running");
+		} catch(SchedulerException e) {
+			
+		}
+		Assert.assertTrue(job1.isRunning());
+		job1.proceed();
+		future1.get(2, TimeUnit.SECONDS);
+
 	}
 	
 	@Test
@@ -150,7 +169,7 @@ public class FacilitySchedulerServiceTest {
 
 		TestJob control = TestJob.pollInstance();
 		control.awaitRunning();
-		Assert.assertTrue("job was not able to be cancelled", future.cancel(true));
+		Assert.assertTrue("job was not able to be cancelled", subject.cancelJob(testType));
 		try {
 			future.get();
 			Assert.fail("should have been cancelled");
@@ -191,9 +210,36 @@ public class FacilitySchedulerServiceTest {
 	}
 
 	@Test
-	public void viewJobSchedules() {
+	public void viewJobSchedules() throws ParseException, SchedulerException {
+		CronExpression firstExp = new CronExpression("0 0 2 * * ?");
+		ScheduledJobType testType = ScheduledJobType.Test;	
+		subject.schedule(firstExp, testType);
+
+		CronExpression secondExp = new CronExpression("0 0 3 * * ?");
+		ScheduledJobType otherType = ScheduledJobType.DatabasePurge;	//any will do 
+		subject.schedule(secondExp, otherType);
 		
+		Map<ScheduledJobType, CronExpression> jobs = subject.getJobs();
+		Assert.assertTrue(jobs.keySet().contains(testType));
+		Assert.assertTrue(jobs.keySet().contains(otherType));
+		Assert.assertEquals(firstExp.getCronExpression(), jobs.get(testType).getCronExpression());
+		Assert.assertEquals(secondExp.getCronExpression(), jobs.get(otherType).getCronExpression());
+
+
 	}
 
-	
+
+	@Test
+	public void passesFacilityContextToJob() throws SchedulerException, InterruptedException, TimeoutException, BrokenBarrierException, ParseException, ExecutionException {
+		CronExpression firstExp = new CronExpression("0 0 2 * * ?");
+		ScheduledJobType testType = ScheduledJobType.Test;	
+		subject.schedule(firstExp, testType);
+		Future<ScheduledJobType> future = subject.trigger(testType);
+		TestJob job = TestJob.pollInstance();
+		job.awaitRunning();
+		job.proceed();
+		future.get(5, TimeUnit.SECONDS);
+		Assert.assertEquals(subject.getTenant(), job.getExecutionTenant());
+		Assert.assertEquals(subject.getFacility(), job.getExecutionFacility());
+	}
 }

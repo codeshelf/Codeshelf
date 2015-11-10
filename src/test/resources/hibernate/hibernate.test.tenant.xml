@@ -51,9 +51,6 @@
         <mapping class="com.codeshelf.model.domain.Slot"/>
         <mapping class="com.codeshelf.model.domain.UnspecifiedLocation"/>
 
-        <mapping class="com.codeshelf.model.domain.DomainObjectProperty"/>
-        <mapping class="com.codeshelf.model.domain.DomainObjectPropertyDefault"/>
-
         <mapping class="com.codeshelf.model.domain.EdiGateway"/>
         <mapping class="com.codeshelf.model.domain.DropboxGateway"/>
         <mapping class="com.codeshelf.model.domain.IronMqGateway"/>
@@ -90,5 +87,8 @@
         <mapping class="com.codeshelf.model.domain.ExportMessage"/>
         <mapping class="com.codeshelf.edi.WorkInstructionCsvBean"/>
 		<mapping class="com.codeshelf.model.domain.FacilityMetric"/>
+        <mapping class="com.codeshelf.model.domain.ScheduledJob"/>
+        <mapping class="com.codeshelf.model.domain.WorkerHourlyMetric"/>
+        <mapping class="com.codeshelf.model.domain.FacilityProperty"/>
     </session-factory>
 </hibernate-configuration>

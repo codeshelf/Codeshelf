@@ -31,10 +31,10 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.application.DummyService;
 import com.codeshelf.application.JvmProperties;
 import com.codeshelf.application.WebApiServer;
-import com.codeshelf.behavior.IPropertyBehavior;
 import com.codeshelf.behavior.InventoryBehavior;
 import com.codeshelf.behavior.LightBehavior;
 import com.codeshelf.behavior.WorkBehavior;
+import com.codeshelf.behavior.WorkerHourlyMetricBehavior;
 import com.codeshelf.device.ClientConnectionManagerService;
 import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.device.SiteControllerMessageProcessor;
@@ -72,7 +72,6 @@ import com.codeshelf.security.CodeshelfRealm;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.TokenSessionService;
 import com.codeshelf.security.UserContext;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.service.ServiceUtility;
 import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.client.CsClientEndpoint;
@@ -118,7 +117,6 @@ public abstract class FrameworkTest implements IntegrationTest {
 	// app server static (reused) services
 	private static WebSocketManagerService			staticWebSocketManagerService;
 	private static IMetricsService					staticMetricsService;
-	private static IPropertyBehavior					staticPropertyService;
 	private static ServerMessageProcessor			staticServerMessageProcessor;
 	private static TokenSessionService				staticTokenSessionService;
 	private static EmailService						staticEmailService;
@@ -162,7 +160,6 @@ public abstract class FrameworkTest implements IntegrationTest {
 	@Getter
 	protected CsDeviceManager						deviceManager;
 	protected WebSocketManagerService				webSocketManagerService;
-	protected IPropertyBehavior						propertyService;
 	protected IMetricsService						metricsService;
 	protected TokenSessionService					tokenSessionService;
 	protected EmailService							emailService;
@@ -207,9 +204,6 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 				requestStaticInjection(MetricsService.class);
 				bind(IMetricsService.class).to(DummyMetricsService.class).in(Singleton.class);
-
-				requestStaticInjection(PropertyService.class);
-				bind(IPropertyBehavior.class).to(PropertyService.class).in(Singleton.class);
 
 				bind(WebSocketContainer.class).toInstance(ContainerProvider.getWebSocketContainer());
 
@@ -264,7 +258,6 @@ public abstract class FrameworkTest implements IntegrationTest {
 		ServiceUtility.awaitRunningOrThrow(staticTemplateService);
 
 		staticEdiExporterService = injector.getInstance(EdiExportService.class);
-		staticPropertyService = injector.getInstance(IPropertyBehavior.class);
 
 		staticWebSocketManagerService = injector.getInstance(WebSocketManagerService.class);
 		staticServerMessageProcessor = injector.getInstance(ServerMessageProcessor.class);
@@ -287,8 +280,6 @@ public abstract class FrameworkTest implements IntegrationTest {
 		// reset all services to defaults 
 		webSocketManagerService = staticWebSocketManagerService;
 		WebSocketManagerService.setInstance(webSocketManagerService);
-		propertyService = staticPropertyService;
-		PropertyService.setInstance(propertyService);
 		metricsService = staticMetricsService;
 		MetricsService.setInstance(metricsService);
 		tokenSessionService = staticTokenSessionService;
@@ -304,7 +295,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		// we cannot access other threads' contexts so we hope they cleaned up!
 		CodeshelfSecurityManager.removeContextIfPresent();
 
-		workService = new WorkBehavior(new LightBehavior(), staticEdiExporterService);
+		workService = new WorkBehavior(new LightBehavior(), staticEdiExporterService, new WorkerHourlyMetricBehavior());
 		radioController = null;
 		deviceManager = null;
 		apiServer = null;
@@ -395,7 +386,6 @@ public abstract class FrameworkTest implements IntegrationTest {
 		}
 
 		webSocketManagerService = null;
-		propertyService = null;
 		metricsService = null;
 		tokenSessionService = null;
 		emailService = null;
@@ -553,7 +543,6 @@ public abstract class FrameworkTest implements IntegrationTest {
 			// initialize server for the first time
 			List<Service> services = new ArrayList<Service>();
 			services.add(staticWebSocketManagerService);
-			services.add(staticPropertyService);
 			services.add(staticEdiExporterService);
 			serverServiceManager = new ServiceManager(services);
 			try {

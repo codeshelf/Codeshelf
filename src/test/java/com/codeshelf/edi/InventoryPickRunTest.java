@@ -10,18 +10,17 @@ import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
-// domain objects needed
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.WorkInstructionSequencerType;
-import com.codeshelf.model.dao.PropertyDao;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
@@ -33,7 +32,6 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.testframework.ServerTest;
 
 /**
@@ -275,8 +273,8 @@ public class InventoryPickRunTest extends ServerTest {
 		beginTransaction();
 		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
 		Assert.assertNotNull(facility);
-		propertyService.turnOffHK(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		commitTransaction();
 
 		// Inventory
@@ -323,7 +321,7 @@ public class InventoryPickRunTest extends ServerTest {
 		Assert.assertEquals("1831", wi5.getItemId());
 		Assert.assertEquals("1524", wi10.getItemId());
 
-		propertyService.restoreHKDefaults(facility);
+		PropertyBehavior.restoreHKDefaults(facility);
 
 		// Need more cases for BayDistanceTopLast.
 
@@ -377,8 +375,8 @@ public class InventoryPickRunTest extends ServerTest {
 		for (OrderDetail detail : order.getOrderDetails()) {
 			String theUiField = detail.getWillProduceWiUi(workService);
 		}
-		propertyService.turnOffHK(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		this.getTenantPersistenceService().commitTransaction();
 
 		// Now ready to run the cart
@@ -398,7 +396,7 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		Assert.assertEquals("1125", wi5.getItemId());
 		Assert.assertEquals("1525", wi10.getItemId());
 
-		propertyService.restoreHKDefaults(facility);
+		PropertyBehavior.restoreHKDefaults(facility);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -443,8 +441,8 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		CodeshelfNetwork theNetwork = facility.getNetworks().get(0);
 		Che theChe = theNetwork.getChe("CHE1");
 
-		propertyService.turnOffHK(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		LOGGER.info("Set up CHE for order 12000.");
 		WorkList workList = workService.setUpCheContainerFromString(theChe, "12000");
 		Integer theSize = workList.getInstructions().size();
@@ -461,7 +459,7 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		theSize = workList.getDetails().size();
 		Assert.assertEquals((Integer) 2, theSize); // Before DEV-609, this had 12
 
-		propertyService.restoreHKDefaults(facility);
+		PropertyBehavior.restoreHKDefaults(facility);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -479,11 +477,7 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		Assert.assertNotNull(facility);
 
 		LOGGER.info("1: Set LOCAPICK = true.  Leave EACHMULT = false");
-		DomainObjectProperty theProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.LOCAPICK);
-		if (theProperty != null) {
-			theProperty.setValue(true);
-			PropertyDao.getInstance().store(theProperty);
-		}
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, "true");
 		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("2: Read the orders file, which has some preferred locations");
@@ -512,8 +506,8 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		che1.setLastScannedLocation("D-27");
 		Che.staticGetDao().store(che1);
 
-		propertyService.turnOffHK(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		List<WorkInstruction> wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
 		logWiList(wiList);
 		Integer theSize = wiList.size();
@@ -532,8 +526,8 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		this.getTenantPersistenceService().beginTransaction();
 
 		facility = Facility.staticGetDao().reload(facility);
-		propertyService.turnOffHK(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 		wiList = startWorkFromBeginning(facility, "CHE1", "10,11");
 		logWiList(wiList);
 		theSize = wiList.size();
@@ -549,7 +543,7 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
 		Assert.assertNotNull(facility);
 		LOGGER.info("0. Set WORKSEQR = BayDistance.");
-		PropertyService.getInstance().changePropertyValue(facility, DomainObjectProperty.WORKSEQR, "BayDistance");
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "BayDistance");
 		commitTransaction();
 		
 		// Inventory
@@ -597,7 +591,7 @@ LOGGER.info("Set up CHE for order 12000. Should get 4 jobs on B1T2, the two on B
 		Facility facility = setUpSimpleNonSlottedFacility("InvP_01");
 		Assert.assertNotNull(facility);
 		LOGGER.info("1: Set WORKSEQR = WorkSequence.");
-		PropertyService.getInstance().changePropertyValue(facility, DomainObjectProperty.WORKSEQR, "WorkSequence");
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
 		commitTransaction();
 		
 		// Inventory

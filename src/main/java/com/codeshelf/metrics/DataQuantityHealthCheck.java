@@ -51,7 +51,7 @@ public class DataQuantityHealthCheck extends CodeshelfHealthCheck {
 		if (failedFacilityCount == 0) {
 			return Result.healthy("Data quantity for %d facilities in %d tenants ok.", totalFacilityCount, totalTenantCount);
 		} else {
-			return Result.unhealthy("Data quantity for %d of %d facilities in %d tenants outside of limits. See log.",
+			return unhealthy("Data quantity for %d of %d facilities in %d tenants outside of limits. See log.",
 				failedFacilityCount,
 				totalFacilityCount,
 				totalTenantCount);

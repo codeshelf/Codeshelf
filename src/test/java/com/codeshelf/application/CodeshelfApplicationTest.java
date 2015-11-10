@@ -11,9 +11,9 @@ import org.apache.shiro.mgt.AuthorizingSecurityManager;
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.codeshelf.behavior.DummyPropertyBehavior;
 import com.codeshelf.edi.EdiImportService;
 import com.codeshelf.model.dao.Result;
+import com.codeshelf.scheduler.ApplicationSchedulerService;
 import com.codeshelf.security.TokenSessionService;
 import com.codeshelf.testframework.ServerTest;
 import com.google.inject.Provider;
@@ -50,11 +50,11 @@ public class CodeshelfApplicationTest extends ServerTest {
 			this.metricsService,
 			this.webSocketManagerService,
 			this.ediExporterService,
-			new DummyPropertyBehavior(),
 			new TokenSessionService(),
 			mock(AuthorizingSecurityManager.class),
 			this.emailService,
-			this.templateService);
+			this.templateService,
+			new ApplicationSchedulerService());
 
 		final Result checkAppRunning = new Result();
 

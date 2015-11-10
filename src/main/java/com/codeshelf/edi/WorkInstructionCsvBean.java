@@ -10,6 +10,7 @@ import lombok.Setter;
 
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
@@ -30,6 +31,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.Worker;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.google.gson.Gson;
@@ -49,7 +51,7 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(WorkInstructionCsvBean.class);
-	private static final SimpleDateFormat timestampFormatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+	private static final SimpleDateFormat timestampFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
 	// Potentially missing fields: description, gtin.  lotId is probably superfluous.
 	// Note that for bean export, null field will export as "null" instead of "". We want "". See handling on pickerId
@@ -92,8 +94,10 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 	protected String	cheId;
 	@Getter @Setter @Expose @Column(name = "location_id")
 	protected String	locationId;
-	@Getter @Setter @Expose @Column(name = "picker_id")
-	protected String	pickerId;
+	@Getter @Setter @Expose @Column(name = "badge")
+	protected String	badge;
+	@Getter @Setter @Expose @Column(name = "worker")
+	protected String	worker;
 	@Getter @Setter @Expose @Column(name = "plan_quantity")
 	protected String	planQuantity;
 	@Getter @Setter @Expose @Column(name = "actual_quantity")
@@ -140,7 +144,7 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 	 */
 	public static String getCsvHeaderMatchingBean(){
 		return "facilityId, workInstructionId, type, status, orderGroupId, orderId, containerId,"
-				+ "itemId, uom, lotId, locationId, pickerId, planQuantity, actualQuantity, detailQuantity,"
+				+ "itemId, uom, lotId, locationId, badge, worker, planQuantity, actualQuantity, detailQuantity,"
 				+ "cheId, assigned, started, completed"; // no version here
 	}
 	
@@ -149,7 +153,7 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 	 */
 	public String getDefaultCsvContent(){
 		return facilityId +","+ workInstructionId+","+ type+","+ status+","+ orderGroupId+","+ orderId+","+ containerId
-				+","+ itemId+","+ uom+","+ lotId+","+ locationId+","+ pickerId+","+ planQuantity+","+ actualQuantity+","+ detailQuantity
+				+","+ itemId+","+ uom+","+ lotId+","+ locationId+","+ badge+","+ worker+ ","+planQuantity+","+ actualQuantity+","+ detailQuantity
 				+"," + cheId + ","+ assigned+","+ started+","+ completed; 
 	}
 	
@@ -193,11 +197,16 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 		String locationStr = inWi.getPickInstruction();
 		setLocationId(locationStr);
 
-		String picker = getPickerId(); // this field is nullable on work instruction
-		if (picker == null)
-			picker = "";
-		setPickerId(picker);
-
+		String pickerId = inWi.getPickerId(); // this field is nullable on work instruction
+		if (pickerId == null)
+			pickerId = "";
+		setBadge(pickerId);
+		
+		Worker worker = Worker.findTenantWorker(pickerId); 
+		if (worker != null) {
+			setWorker(worker.getWorkerNameUI());
+		}
+		
 		if (inWi.getPlanQuantity() != null) {
 			setPlanQuantity(String.valueOf(inWi.getPlanQuantity()));
 		}
@@ -207,18 +216,21 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 		if (detail != null && detail.getQuantity() != null) {
 			setDetailQuantity(String.valueOf(detail.getQuantity()));
 		}
-
+		
 		setCheId(inWi.getAssignedCheName());
-		setAssigned(formatDate(inWi.getAssigned()));
-		setStarted(formatDate(inWi.getStarted()));
-		setCompleted(formatDate(inWi.getCompleted()));
+		
+		TimeZone tz = inWi.getFacility().getTimeZone();
+		setAssigned(formatDate(inWi.getAssigned(), tz));
+		setStarted(formatDate(inWi.getStarted(), tz));
+		setCompleted(formatDate(inWi.getCompleted(), tz));
 	}
 	
-	private String formatDate(Timestamp time) {
+	private String formatDate(Timestamp time, TimeZone tz) {
 		if (time == null) {
 			return "";
 		} else {
 			synchronized(timestampFormatter) {
+				timestampFormatter.setTimeZone(tz);
 				return timestampFormatter.format(time);
 			}
 		}

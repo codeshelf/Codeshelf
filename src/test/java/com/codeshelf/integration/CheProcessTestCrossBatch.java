@@ -14,6 +14,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
@@ -227,7 +228,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 	public final void basicCrossBatchRun() throws IOException {
 		beginTransaction();
 		Facility facility = setUpSimpleSlottedFacility();
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		UUID facId = facility.getPersistentId();
 		commitTransaction();
 
@@ -252,7 +253,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 5000);
 		picker.scanLocation("D-36");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-		propertyService.restoreHKDefaults(facility);
+		PropertyBehavior.restoreHKDefaults(facility);
 
 		LOGGER.info("List the work instructions as the server sees them");
 		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
@@ -291,7 +292,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		beginTransaction();
 		Facility facility = setUpSimpleSlottedFacility();
 		UUID facId = facility.getPersistentId();
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		setUpGroup1OrdersAndSlotting(facility);
@@ -316,7 +317,7 @@ public class CheProcessTestCrossBatch extends ServerTest {
 		picker.setupContainer("11", "6"); // Good one gives two work instruction
 
 		picker.startAndSkipReview("D-36", 5000, 3000);
-		propertyService.restoreHKDefaults(facility);
+		PropertyBehavior.restoreHKDefaults(facility);
 
 		Assert.assertEquals(3, picker.countRemainingJobs());
 		LOGGER.info("List the work instructions as the server sees them");

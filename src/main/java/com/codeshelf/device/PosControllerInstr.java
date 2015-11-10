@@ -68,15 +68,15 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 			0x6F											};
 
 	//Display Refresh Freqs
-	public static final Byte	RAPIDBLINK_FREQ				= (byte) 0x15;											// not yet used
+	public static final Byte	RAPIDBLINK_FREQ				= (byte) 0x09;
 	public static final Byte	BLINK_FREQ					= (byte) 0x15;											// may want to change to 20
 	public static final Byte	SOLID_FREQ					= (byte) 0x00;
 
 	//Display Brightness
-	public static final Byte	DIM_DUTYCYCLE				= (byte) 0xFD;
-	public static final Byte	MIDDIM_DUTYCYCLE			= (byte) 0xF6;
-	public static final Byte	MED_DUTYCYCLE				= (byte) 0xF0;
-	public static final Byte	BRIGHT_DUTYCYCLE			= (byte) 0x40;
+	public static final Byte	DIM_DUTYCYCLE				= (byte) 0xFD;	//-3
+	public static final Byte	MIDDIM_DUTYCYCLE			= (byte) 0xF6;	//-10
+	public static final Byte	MED_DUTYCYCLE				= (byte) 0xF0;	//-16
+	public static final Byte	BRIGHT_DUTYCYCLE			= (byte) 0x40;	//64
 
 	private static final Logger	LOGGER						= LoggerFactory.getLogger(PosControllerInstr.class);
 
@@ -141,18 +141,6 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 	@Expose
 	@SerializedName(value = "sourceId")
 	private String				mSourceId;
-
-	@Accessors(prefix = "m")
-	@Getter
-	@SerializedName(value = "frequency")
-	@Expose
-	private Frequency			mFrequency;
-
-	@Accessors(prefix = "m")
-	@Getter
-	@SerializedName(value = "brightness")
-	@Expose
-	private Brightness			mBrightness;
 
 	@Accessors(prefix = "m")
 	@Getter
@@ -273,55 +261,6 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 			}
 		}
 		return valid;
-	}
-
-	public void prepareObject() {
-		if (mMinQty == null) {
-			mMinQty = mReqQty;
-		}
-		if (mMaxQty == null) {
-			mMaxQty = mReqQty;
-		}
-		if (mFrequency != null) {
-			mFreq = mFrequency.toByte();
-		}
-		if (mBrightness != null) {
-			mDutyCycle = mBrightness.toByte();
-		}
-	}
-
-	public enum Brightness {
-		BRIGHT,
-		MEDIUM,
-		DIM;
-
-		public Byte toByte() {
-			if (this == BRIGHT) {
-				return PosControllerInstr.BRIGHT_DUTYCYCLE;
-			} else if (this == MEDIUM) {
-				return PosControllerInstr.MED_DUTYCYCLE;
-			} else if (this == DIM) {
-				return PosControllerInstr.DIM_DUTYCYCLE;
-			}
-			return null;
-		}
-	}
-
-	public enum Frequency {
-		SOLID,
-		BLINK,
-		RAPIDBLINK;
-
-		public Byte toByte() {
-			if (this == SOLID) {
-				return PosControllerInstr.SOLID_FREQ;
-			} else if (this == BLINK) {
-				return PosControllerInstr.BLINK_FREQ;
-			} else if (this == RAPIDBLINK) {
-				return PosControllerInstr.RAPIDBLINK_FREQ;
-			}
-			return null;
-		}
 	}
 
 	private String translateQty(Byte reqValue, Byte minValue, Byte maxValue) {
@@ -463,7 +402,12 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 			result = mGson.fromJson(inInstrString, collectionType);
 
 			for (PosControllerInstr instr : result) {
-				instr.prepareObject();
+				if (instr.mMinQty == null) {
+					instr.mMinQty = instr.mReqQty;
+				}
+				if (instr.mMaxQty == null) {
+					instr.mMaxQty = instr.mReqQty;
+				}
 			}
 
 			return result;

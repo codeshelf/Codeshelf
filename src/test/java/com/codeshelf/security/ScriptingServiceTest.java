@@ -16,17 +16,17 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.edi.OutboundOrderCsvBean;
 import com.codeshelf.metrics.DataQuantityHealthCheckParameters;
 import com.codeshelf.model.DataPurgeParameters;
-import com.codeshelf.model.domain.DomainObjectProperty;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.service.ExtensionPointType;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.validation.FieldError;
@@ -243,8 +243,8 @@ public class ScriptingServiceTest extends ServerTest {
 
 		
 		beginTransaction();
-		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
-		Assert.assertEquals("Disabled", scanPickProperty.getValue());
+		String scanPickProperty = PropertyBehavior.getProperty(facility, FacilityPropertyType.SCANPICK);
+		Assert.assertEquals("Disabled", scanPickProperty);
 		commitTransaction();
 
 		String csvString = "orderId,orderDetailId, orderDate, dueDate,itemId,description,quantity,uom,preAssignedContainerId, gtin, customerId"
@@ -298,14 +298,14 @@ public class ScriptingServiceTest extends ServerTest {
 				"\r\n  }";
 		createExtension(facility, ExtensionPointType.OrderImportBeanTransformation, text);
 		
-		PropertyService.getInstance().changePropertyValue(facility, DomainObjectProperty.SCANPICK, "UPC");
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "UPC");
 		commitTransaction();
 
 		
 		beginTransaction();
 		
-		DomainObjectProperty scanPickProperty = PropertyService.getInstance().getProperty(facility, DomainObjectProperty.SCANPICK);
-		Assert.assertEquals("UPC", scanPickProperty.getValue());
+		String scanPickProperty = PropertyBehavior.getProperty(facility, FacilityPropertyType.SCANPICK);
+		Assert.assertEquals("UPC", scanPickProperty);
 		commitTransaction();
 
 		String csvString = "orderId,orderDetailId, orderDate, dueDate,itemId,description,quantity,uom,preAssignedContainerId, gtin, customerId"

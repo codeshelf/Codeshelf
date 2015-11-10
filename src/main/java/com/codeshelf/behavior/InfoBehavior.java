@@ -14,16 +14,15 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.CodeshelfTape;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.CodeshelfTape.TapeLocation;
 import com.codeshelf.model.OrderStatusEnum;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.ws.protocol.request.InfoRequest;
 import com.codeshelf.ws.protocol.request.InfoRequest.InfoRequestType;
 import com.google.common.collect.Lists;
@@ -128,7 +127,7 @@ public class InfoBehavior implements IApiBehavior{
 			if (incompleteDetails == 0) {
 				//Leave last line blank
 			} else if (incompleteDetails == 1) {
-				String scanType = PropertyService.getInstance().getPropertyFromConfig(facility, DomainObjectProperty.SCANPICK);
+				String scanType = PropertyBehavior.getProperty(facility, FacilityPropertyType.SCANPICK);
 				String gtin = singleRemainingDetail.getGtinId();
 				if ("UPC".equalsIgnoreCase(scanType) && !gtin.isEmpty()){
 					info[3] = "Remain: " + singleRemainingDetail.getGtinId();
@@ -238,7 +237,7 @@ public class InfoBehavior implements IApiBehavior{
 			return infoPackage;
 		}
 		Item closestItem = getClosestItem(location, locationStr);
-		String scanType = PropertyService.getInstance().getPropertyFromConfig(facility, DomainObjectProperty.SCANPICK);
+		String scanType = PropertyBehavior.getProperty(facility, FacilityPropertyType.SCANPICK);
 		String itemId = null;
 		boolean showGtin = "UPC".equalsIgnoreCase(scanType);
 		info[0] = location.getBestUsableLocationName();

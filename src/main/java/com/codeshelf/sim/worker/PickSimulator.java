@@ -29,13 +29,14 @@ public class PickSimulator {
 
 	@Getter
 	CheDeviceLogic				cheDeviceLogic;
-	
-	@Getter @Setter
-	private boolean 			useRadio 	= false;
 
-	private static final Logger	LOGGER		= LoggerFactory.getLogger(PickSimulator.class);
+	@Getter
+	@Setter
+	private boolean				useRadio			= false;
 
-	private final int			RADIO_SEND_DELAY = 500;
+	private static final Logger	LOGGER				= LoggerFactory.getLogger(PickSimulator.class);
+
+	private final int			RADIO_SEND_DELAY	= 500;
 
 	public PickSimulator(CsDeviceManager deviceManager, String cheGuid) {
 		this(deviceManager, new NetGuid(cheGuid));
@@ -48,8 +49,8 @@ public class PickSimulator {
 			throw new IllegalArgumentException("No che found with guid: " + cheGuid);
 		}
 	}
-	
-	private int getWaitTime(){
+
+	private int getWaitTime() {
 		return useRadio ? 6000 : 4000;
 	}
 
@@ -63,12 +64,12 @@ public class PickSimulator {
 		loginStates.add(CheStateEnum.PALLETIZER_SCAN_ITEM);
 		waitForCheStates(loginStates, getWaitTime());
 	}
-	
+
 	public void loginAndSetup(String pickerId) {
 		waitForCheState(CheStateEnum.IDLE, getWaitTime());
 		scanUser(pickerId);
 		waitForCheStates(states(CheStateEnum.SETUP_SUMMARY, CheStateEnum.REMOTE), getWaitTime());
-		if (getCurrentCheState() == CheStateEnum.REMOTE){
+		if (getCurrentCheState() == CheStateEnum.REMOTE) {
 			scanCommand("CANCEL");
 			//Since we are going from state REMOTE to REMOTE, give CHE a bit of time to enter a transactional state
 			ThreadUtils.sleep(500);
@@ -79,7 +80,7 @@ public class PickSimulator {
 		scanCommand("SETUP");
 		waitForCheState(CheStateEnum.CONTAINER_SELECT, getWaitTime());
 	}
-	
+
 	public void loginAndRemoteLink(String pickerId, String connectTo) {
 		waitForCheState(CheStateEnum.IDLE, getWaitTime());
 		scanUser(pickerId);
@@ -249,11 +250,11 @@ public class PickSimulator {
 	public void scanPosition(String inPositionId) {
 		scan("P%" + inPositionId);
 	}
-	
+
 	private void scanUser(String pickerId) {
 		scan("U%" + pickerId);
 	}
-	
+
 	private void scan(String scan) {
 		try {
 			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
@@ -273,7 +274,9 @@ public class PickSimulator {
 		try {
 			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
 			if (useRadio) {
-				CommandControlCreateButton command = new CommandControlCreateButton(NetEndpoint.PRIMARY_ENDPOINT, (byte)inPosition, (byte)inQuantity);
+				CommandControlCreateButton command = new CommandControlCreateButton(NetEndpoint.PRIMARY_ENDPOINT,
+					(byte) inPosition,
+					(byte) inQuantity);
 				cheDeviceLogic.sendRadioControllerCommand(command, true);
 				ThreadUtils.sleep(RADIO_SEND_DELAY);
 			} else {
@@ -283,7 +286,7 @@ public class PickSimulator {
 			ContextLogging.clearNetGuid();
 		}
 	}
-	
+
 	public void buttonPress(int inPosition) {
 		buttonPress(inPosition, getLastSentPositionControllerDisplayValue(inPosition));
 	}
@@ -311,7 +314,7 @@ public class PickSimulator {
 	public CheStateEnum getCurrentCheState() {
 		return cheDeviceLogic.getCheStateEnum();
 	}
-	
+
 	public CheStateEnum getThisOrLinkedCurrentCheState() {
 		return getDeviceToAsk().getCheStateEnum();
 	}
@@ -352,8 +355,7 @@ public class PickSimulator {
 			throw new IllegalStateException("More than one active pick. Use getActivePickList() instead"); // and know what you are doing.
 		}
 	}
-	
-	
+
 	public WorkInstruction getFirstActivePick() {
 		List<WorkInstruction> instructions = getActivePickList();
 		if (instructions == null || instructions.isEmpty()) {
@@ -424,7 +426,7 @@ public class PickSimulator {
 	 */
 	public void waitForLinkedCheState(CheStateEnum state, int timeoutInMillis) {
 		CheDeviceLogic deviceToAsk = getDeviceToAsk();
-		if (deviceToAsk.equals(cheDeviceLogic)){
+		if (deviceToAsk.equals(cheDeviceLogic)) {
 			String theProblem = "picker's CHE not linked";
 			throw new IllegalStateException(theProblem);
 		}
@@ -438,26 +440,40 @@ public class PickSimulator {
 	public void waitForCheState(CheStateEnum state, int timeoutInMillis) {
 		waitForDeviceState(cheDeviceLogic, state, timeoutInMillis);
 	}
-	
+
 	/**
 	 * If this CHE is linked, wait for state on another che. If now, wait for state on this CHE
 	 */
 	public void waitForThisOrLinkedCheState(CheStateEnum state, int timeoutInMillis) {
 		waitForDeviceState(getDeviceToAsk(), state, timeoutInMillis);
 	}
-	
+
 	/**
 	 * If this CHE is linked, wait for state on another che. If now, wait for state on this CHE
 	 */
 	public void waitForThisOrLinkedCheStates(ArrayList<CheStateEnum> states, int timeoutInMillis) {
 		waitForDeviceStates(getDeviceToAsk(), states, timeoutInMillis);
 	}
-	
-	
+
 	public void waitForCheStates(ArrayList<CheStateEnum> states, int timeoutInMillis) {
 		waitForDeviceStates(cheDeviceLogic, states, timeoutInMillis);
 	}
-	
+
+	/**
+	 * This is called in test when we expect nothing much to happen.
+	 * Use this sparingly! The test slows by this much each call.
+	 */
+	public void waitInSameState(CheStateEnum state, int millisToWait) {
+		CheStateEnum startingState = cheDeviceLogic.getCheStateEnum();
+		if (!startingState.equals(state)) {
+			throw new IllegalStateException(getCheDeviceLogic().getGuid() + ": did not start in expected state");
+		}
+		ThreadUtils.sleep(millisToWait);
+		if (!startingState.equals(cheDeviceLogic.getCheStateEnum())) {
+			throw new IllegalStateException(getCheDeviceLogic().getGuid() + ": did not remain in same state");
+		}
+	}
+
 	/**
 	 * Wait for specified state. Throw if state does not come in time, causing the test to fail.
 	 */
@@ -526,15 +542,15 @@ public class PickSimulator {
 	public Byte getLastSentPositionControllerMaxQty(byte position) {
 		return cheDeviceLogic.getLastSentPositionControllerMaxQty(position);
 	}
-	
-	public void assertPosconDisplayOc(int inPosition){
+
+	public void assertPosconDisplayOc(int inPosition) {
 		byte position = (byte) inPosition;
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, getLastSentPositionControllerDisplayValue(position));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_C, getLastSentPositionControllerMinQty(position));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_O, getLastSentPositionControllerMaxQty(position));
 	}
 
-	public void assertPosconDisplayDash(int inPosition){
+	public void assertPosconDisplayDash(int inPosition) {
 		byte position = (byte) inPosition;
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, getLastSentPositionControllerDisplayValue(position));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_DASH, getLastSentPositionControllerMinQty(position));
@@ -582,14 +598,14 @@ public class PickSimulator {
 	public void forceDeviceToMatchManagerConfiguration() {
 		cheDeviceLogic.updateConfigurationFromManager();
 	}
-	
+
 	public static ArrayList<CheStateEnum> states(CheStateEnum state1, CheStateEnum state2) {
 		ArrayList<CheStateEnum> states = Lists.newArrayListWithCapacity(2);
 		states.add(state1);
 		states.add(state2);
 		return states;
 	}
-	
+
 	public static ArrayList<CheStateEnum> states(CheStateEnum state1, CheStateEnum state2, CheStateEnum state3) {
 		ArrayList<CheStateEnum> states = Lists.newArrayListWithCapacity(2);
 		states.add(state1);

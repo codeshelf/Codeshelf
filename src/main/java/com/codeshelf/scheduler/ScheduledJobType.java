@@ -1,12 +1,17 @@
-package com.codeshelf.model;
+package com.codeshelf.scheduler;
 
 import lombok.Getter;
 import lombok.experimental.Accessors;
 
+import java.text.ParseException;
+
+import org.quartz.CronExpression;
 import org.quartz.Job;
 import org.quartz.JobKey;
 
 import com.codeshelf.application.FacilitySchedulerService.NotImplementedJob;
+import com.codeshelf.model.TestJob;
+import com.google.common.base.Optional;
 
 /**
  * The kinds of jobs we schedule. In general, only one job of each kind can run at a time at one facility.
@@ -19,56 +24,59 @@ public enum ScheduledJobType {
 
 	AccumulateDailyMetrics(NotImplementedJob.class,
 			"Summarize previous day's completed work instructions.",
-			"0 01 * * *",
+			"0 1 0 * * ?",
 			null,
-			true,
+			false,
 			ScheduledJobCategory.METRIC),
 	DatabasePurge(DataPurgeJob.class,
 			"Purge old data.",
-			"0 20 * * *",
+			"0 2 0 * * ?",
 			"ParameterSetDataPurge",
-			false,
+			true,
 			ScheduledJobCategory.DATABASE,
 			ScheduledJobCategory.PURGE),
 	DatabaseSizeCheck(NotImplementedJob.class,
 			"Gather total data size for health check.",
-			"0 21 * * *",
+			"0 3 0 * * ?",
 			"ParameterSetDataQuantityHealthCheck",
-			true,
+			false,
 			ScheduledJobCategory.DATABASE,
 			ScheduledJobCategory.CHECK),
 	EdiSizeCheck(NotImplementedJob.class,
 			"Check EDI directories for health check.",
-			"0 21 * * *",
+			"0 4 0 * * ?",
 			"ParameterEdiFreeSpaceHealthCheck",
 			false,
 			ScheduledJobCategory.EDI,
 			ScheduledJobCategory.CHECK),
 	EdiPurge(NotImplementedJob.class,
 			"Clean old files out of EDI directories",
-			"0 01 * * *",
+			"0 5 0 * * ?",
 			null,
-			false),
+			false,
+			ScheduledJobCategory.EDI,
+			ScheduledJobCategory.PURGE
+	),
 			
 	PutWallLightRefresher(NotImplementedJob.class,
 			"Periodically make sure putwall lights are current.",
-			"0 20 * * *",
+			"0 6 0 * * ?",
 			null,
 			false,
 			ScheduledJobCategory.PUTWALL,
 			ScheduledJobCategory.REFRESHER),
 	EdiImport(NotImplementedJob.class,
 			"Check each file-based importer for new files",
-			"0 20 * * *",
+			"0 7 0 * * ?",
 			null,
-			true,
+			false, //TODO implement job
 			ScheduledJobCategory.EDI),
 	Test(TestJob.class,
-				"Test job to test trigger rules",
-				"0 20 * * *",
-				null,
-				false,
-				ScheduledJobCategory.TEST);
+			"Test job to test trigger rules",
+			"5 0 0 * * ?",
+			null,
+			false,
+			ScheduledJobCategory.TEST);
 			
 
 	@Getter
@@ -77,9 +85,9 @@ public enum ScheduledJobType {
 	@Getter
 	@Accessors(prefix = "m")
 	private String	mJobDescription;
-	@Getter
+
 	@Accessors(prefix = "m")
-	private String	mDefaultSchedule;
+	private CronExpression	mDefaultSchedule;
 	@Getter
 	@Accessors(prefix = "m")
 	private String	mParameterExtensionName;
@@ -98,11 +106,28 @@ public enum ScheduledJobType {
 	ScheduledJobType(Class<? extends Job> jobClass, String jobDescription, String defaultSchedule, String parameterExtensionName, boolean onOff, ScheduledJobCategory... categories) {
 		mJobClass = jobClass;
 		mJobDescription = jobDescription;
-		mDefaultSchedule = defaultSchedule;
+		try {
+			mDefaultSchedule = new CronExpression(defaultSchedule);
+		} catch (ParseException e) {
+			throw new RuntimeException("Unable to parse cron expression: " + defaultSchedule, e);
+		}
 		mParameterExtensionName = parameterExtensionName;
 		mDefaultOnOff = onOff;
 		mCategories = categories;
 		mKey = new JobKey(this.name());
+	}
+
+	public CronExpression getDefaultSchedule() {
+		return mDefaultSchedule;
+	}
+	
+	public static Optional<ScheduledJobType> findByKey(JobKey jobKey) {
+		for (ScheduledJobType type : values()) {
+			if (type.getKey().equals(jobKey)) {
+				return Optional.of(type);
+			}
+		}
+		return Optional.absent();
 	}
 
 }

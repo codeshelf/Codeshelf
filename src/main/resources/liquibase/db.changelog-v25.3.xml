@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog 
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog" 
+	logicalFilePath="db.changelog-v25.3.xml"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+	<changeSet author="ilya (generated)" id="1446745580585-4">
+		<createTable tableName="worker_hourly_metric">
+			<column name="persistentid" type="UUID">
+				<constraints nullable="false" />
+			</column>
+			<column name="domainid" type="VARCHAR(255)">
+				<constraints nullable="false" />
+			</column>
+			<column name="version" type="INT8">
+				<constraints nullable="false" />
+			</column>
+			<column name="hour_timestamp" type="timestamp">
+				<constraints nullable="false" />
+			</column>
+			<column name="last_session_start" type="timestamp">
+				<constraints nullable="false" />
+			</column>
+			<column name="session_active" type="BOOLEAN">
+				<constraints nullable="false" />
+			</column>
+			<column name="loggedin_duration_min" type="INT4">
+				<constraints nullable="false" />
+			</column>
+			<column name="picks" type="INT4">
+				<constraints nullable="false" />
+			</column>
+			<column name="completes" type="INT4">
+				<constraints nullable="false" />
+			</column>
+			<column name="shorts" type="INT4">
+				<constraints nullable="false" />
+			</column>
+			<column name="parent_persistentid" type="UUID">
+				<constraints nullable="false" />
+			</column>
+		</createTable>
+	</changeSet>
+    <changeSet author="ilya (generated)" id="1446745580585-5">
+        <addPrimaryKey columnNames="persistentid" constraintName="worker_hourlyPK" tableName="worker_hourly_metric"/>
+        <addForeignKeyConstraint baseColumnNames="parent_persistentid" baseTableName="worker_hourly_metric" constraintName="FK_r8jjbsi9xaa53u63wlwuowthf" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="worker"/>
+    </changeSet>
+</databaseChangeLog>

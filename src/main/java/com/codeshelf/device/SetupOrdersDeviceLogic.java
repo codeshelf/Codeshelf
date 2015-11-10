@@ -120,7 +120,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Getter
 	@Setter
 	private int									mRememberPriorShorts					= 0;
-	
+
 	private String								mLastAssignedPoscon						= null;
 
 	private final boolean						useNewCheScreen							= true;
@@ -236,16 +236,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					} else {
 						sendDisplayCommand(getContainerSetupMsg(), OR_START_WORK_MSG, EMPTY_MSG, SHOWING_ORDER_IDS_MSG);
 					}
-					if (previousState != CheStateEnum.CONTAINER_POSITION){
+					if (previousState != CheStateEnum.CONTAINER_POSITION) {
 						showContainerAssignments();
 					} else {
 						showLatestContainerAssignment();
-					}					
+					}
 					break;
 
 				case CONTAINER_POSITION:
 					sendDisplayCommand(SELECT_POSITION_MSG, EMPTY_MSG);
-					if (previousState != CheStateEnum.CONTAINER_SELECT){
+					if (previousState != CheStateEnum.CONTAINER_SELECT) {
 						showContainerAssignments();
 					}
 					break;
@@ -957,13 +957,23 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 
 		// If AUTOSHRT if off, there still might be other jobs in active pick list. If on, any remaining there would be shorted and removed.
-		if (mActivePickWiList.size() > 0) {
+		int afterActiveCount = mActivePickWiList.size();
+		if (afterActiveCount > 0) {
 			// If there's more active picks then show them.
 			if (autoShortOn) {
-				LOGGER.error("Simultaneous work instructions turned off currently, so unexpected case in confirmShortPick. state: {}",
-					state);
-				LOGGER.error("first wi from confirmShortPick error just before is: {}", mActivePickWiList.get(0)); // log the first to help understand
+				/* JR says: DEV-1234 we used to error here, and probably should. Our short-ahead logic is wrong. See comments in 
+				 * SetupOrdersDeviceLogic.selectNextActivePicks(). The only reason this is not an error is because this got called multiple
+				 * times for short ahead situation. On the first call, mActivePickWiList.size is zero as expected, and falls through below to doNextPick()
+				 * which populates the next active pick list state. The subsequent call to this then looks like an error.
+				WorkInstruction firstWiInList = mActivePickWiList.get(0);
+				LOGGER.error("Unexpected situation in processShortPickYes. state:{} active_count:{} first_active_wi:{}",
+					state, afterActiveCount, firstWiInList, new RuntimeException());
+				*/
+
 			}
+			// Related to DEV-1234 silliness. This showActivePicks() is not needed if we actually shorted ahead. It causes superfluous drawing instructions.
+			// But it is needed if not shorting ahead. Then we need to show the rest of the active jobs as there is no other state transition and redraw. 
+			// Cannot add an else without doing other kludgy checks above. Don't. If you embark on this, but the LOGGER.error() back and then fix short aheads properly.
 			showActivePicks();
 		} else {
 			// There's no more active picks, so move to the next set.
@@ -1012,6 +1022,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				//The getActivePickWiList() list may be modified during processShortPickYes(). That's why we are creating a copy of it here. to iterate through.
 				List<WorkInstruction> activeInstructions = new ArrayList<>(getActivePickWiList());
 				for (WorkInstruction activeInstruction : activeInstructions) {
+					/* JR says "not good". But the bailing wire is ok for now, supported by excellent unit test.
+					 CheProcessTestPickFeedback.simulPickShortOrderCountIssue() demonstrates the problem.
+					 The problem is side effects of processShortPickYes() remake the active pick list. That is, it calls doNextPick().
+					 But really, we should call doNextPick() from here, and not multiple times within that loop. Beside the DEV-1234 silliness
+					 we get superfluous poscon and screen draws.
+					 See more comments in SetupOrdersDeviceLogic.processShortPickYes()
+					*/
 					processShortPickYes(activeInstruction, 0);
 				}
 			}
@@ -1147,7 +1164,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		boolean doMultipleWiPicks = mDeviceManager.getPickMultValue(); // DEV-451
 
 		boolean result = false;
-
 		mActivePickWiList.clear(); // repopulate from mAllPicksWiList.
 
 		// Loop through each container to see if there is a WI for that container at the next location.
@@ -1413,14 +1429,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			setState(CheStateEnum.CONTAINER_SELECTION_INVALID);
 		}
 	}
-	
+
 	/**
 	 * Returns a portion of the Container scan is the ORDERSUB property is set
 	 * Start and End indexies work the following way: "1-1" returns the first char in the scan. "2-4" returns 3 chars starting with the second, etc.
 	 */
 	private String extractContainerIdFromScan(String scan) {
 		String orderSubProp = mDeviceManager.getOrdersubValue();
-		if (orderSubProp == null || orderSubProp.isEmpty() || "Disabled".equalsIgnoreCase(orderSubProp)){
+		if (orderSubProp == null || orderSubProp.isEmpty() || "Disabled".equalsIgnoreCase(orderSubProp)) {
 			return scan;
 		}
 		if (scan.contains("%")) {
@@ -1435,7 +1451,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		try {
 			start = Integer.parseInt(parts[0].trim());
 			end = Integer.parseInt(parts[1].trim());
-		} catch (NumberFormatException e ) {
+		} catch (NumberFormatException e) {
 			LOGGER.warn("Invalid ORDERSUB {}. Unable to parse start and end. Using full order scan.", orderSubProp);
 			return scan;
 		}
@@ -1467,7 +1483,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private byte getPositionValue(Entry<String, String> entry) {
 		return getPositionValue(entry.getKey());
 	}
-	
+
 	private byte getPositionValue(String value) {
 		byte position = 0;
 		try {
@@ -1711,12 +1727,20 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case SETUP_SUMMARY:
-			case DO_PICK:
-				// At any time during the pick we can change locations.
 				// At summary, we can change location/path
 				if (inScanPrefixStr.equals(LOCATION_PREFIX) || inScanPrefixStr.equals(TAPE_PREFIX)) {
 					processLocationScan(inScanPrefixStr, inContent);
 				}
+				break;
+
+			case DO_PICK:
+				// At any time during the pick we can change locations.
+				if (inScanPrefixStr.equals(LOCATION_PREFIX) || inScanPrefixStr.equals(TAPE_PREFIX)) {
+					processLocationScan(inScanPrefixStr, inContent);
+				}
+				// DEV-1295.  If the user scanned something, at minimum redraw stuff.
+				// But more importantly, what this is multi-pick not needing another scan, but worker scans a different item?
+				processPickVerifyScan(inScanPrefixStr, inContent);
 				break;
 
 			case SCAN_SOMETHING:
@@ -1837,7 +1861,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		sendPositionControllerInstructions(instructions);
 	}
-	
+
 	private void showLatestContainerAssignment() {
 		if (mLastAssignedPoscon == null) {
 			return;
@@ -1851,8 +1875,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		LOGGER.debug("Sending Latest Container Assaignment {}", instructions);
 		sendPositionControllerInstructions(instructions);
 	}
-	
-	private PosControllerInstr generatePosconInstruction(byte position, String containerId){
+
+	private PosControllerInstr generatePosconInstruction(byte position, String containerId) {
 		Byte value = 0;
 		boolean needBitEncodedA = false;
 		//Use the last 1-2 characters of the containerId if the container is numeric.
@@ -2320,7 +2344,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (mPositionToContainerMap.get(inScanStr) == null) {
 				mPositionToContainerMap.put(inScanStr, mContainerInSetup);
 				mLastAssignedPoscon = inScanStr;
-				
+
 				// This one is kind of funny. We go straight from scan badge to setup, or after setup command. We will choose as our event
 				// the first order association to poscon.
 				if (mPositionToContainerMap.values().size() == 1) {
@@ -2655,7 +2679,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					if (inQuantity == maxCountForPositionControllerDisplay && planQuantity > maxCountForPositionControllerDisplay)
 						processNormalPick(wi, planQuantity); // Assume all were picked. No way for user to tell if more than 98 given.
 					else {
-						processShortPickOrPut(wi, inQuantity);
+						// DEV-1287 See other part of the fix in notifyButton(). If that does not throw, this will hit.
+						// Is it legitimate? Just someone pushing a button on "--" or "oc"? If so, change to a warn, or perhaps,
+						// Improve getLastSentPositionControllerDisplayValue to not send null for a legitimate case.
+						if (inQuantity < 0) {
+							LOGGER.error("Button #{}: Unnexpected value {} in processButtonPress", inButtonNum, inQuantity);
+						} else {
+							processShortPickOrPut(wi, inQuantity);
+						}
 					}
 				}
 			}
@@ -2948,6 +2979,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**
 	 * Attempt to guess if we already must have scanned this one.
 	 * For DEV-692.  Our allPicksList should be sorted and still have recently completed work.
+	 * DEV-1295 complexity. What if worker scanned once correctly, then although did not need to scan, then scanned incorrectly?
 	 */
 	@Override
 	protected boolean alreadyScannedSkuOrUpcOrLpnThisWi(WorkInstruction inWi) {
@@ -2977,12 +3009,19 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			return;
 		}
 		CheStateEnum state = getCheStateEnum();
+		
+		// DEV-1261.  We now realize that if site controller loses connection to server and reconnects, then the server triggers its
+		// che state initialization just as if site controller had quit and restarted. Anyway, these messages may come at any time, so
+		// it is not an error if the device logic is not in setup phase. However, let's keep the site controller's state and not replace it
+		// with the server state. Hence the returns.
 		if (!state.equals(CheStateEnum.IDLE)) {
-			LOGGER.error("Received processStateSetup in state {}", state);
+			LOGGER.info("Received processStateSetup in state {}. Normal occurrence only if site controller just reconnected to server.", state);
+			// errors here through v24. Then returns as here.
 			return;
 		}
 		if (!mPositionToContainerMap.isEmpty()) {
-			LOGGER.error("Received processStateSetup when map is not empty. How?");
+			LOGGER.error("Received processStateSetup in IDLE state when map is not empty. Normal occurrence only if site controller just reconnected to server.");
+			// errors here through v24. Then returns as here.
 			return;
 		}
 		for (Map.Entry<String, Integer> entry : positionMap.entrySet()) {

@@ -11,7 +11,6 @@ import org.apache.shiro.mgt.SecurityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.behavior.IPropertyBehavior;
 import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.edi.EdiImportService;
 import com.codeshelf.email.EmailService;
@@ -24,6 +23,7 @@ import com.codeshelf.metrics.DropboxGatewayHealthCheck;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.IsProductionServerHealthCheck;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.scheduler.ApplicationSchedulerService;
 import com.codeshelf.security.TokenSessionService;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.inject.Inject;
@@ -46,11 +46,11 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 			final IMetricsService metricsService,
 			final WebSocketManagerService webSocketManagerService,
 			final EdiExportService ediExportService,
-			final IPropertyBehavior propertyService,
 			final TokenSessionService authService,
 			final SecurityManager securityManager,
 			final EmailService emailService,
-			final TemplateService templateService) {
+			final TemplateService templateService,
+			final ApplicationSchedulerService schedulerService) {
 			
 		super(inWebApiServer);
 	
@@ -67,12 +67,12 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		this.registerService(ManagerPersistenceService.getMaybeRunningInstance());
 		this.registerService(metricsService);
 		this.registerService(webSocketManagerService);
-		this.registerService(propertyService);
 		this.registerService(authService);
 		this.registerService(ediExportService);
 		this.registerService(ediImportService);
 		this.registerService(emailService);
 		this.registerService(templateService);
+		this.registerService(schedulerService);
 	}
 
 	// --------------------------------------------------------------------------

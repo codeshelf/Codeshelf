@@ -30,6 +30,7 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.criterion.SimpleExpression;
+import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +44,7 @@ import com.codeshelf.manager.User;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.DomainObjectManager;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.HousekeepingInjector;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderStatusSummary;
@@ -64,7 +66,6 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerUse;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.Item;
@@ -82,7 +83,8 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.SingleWorkItem;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.codeshelf.model.domain.Worker;
-import com.codeshelf.service.PropertyService;
+import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.util.CompareNullChecker;
 import com.codeshelf.util.UomNormalizer;
 import com.codeshelf.validation.BatchResult;
@@ -109,7 +111,8 @@ public class WorkBehavior implements IApiBehavior {
 
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(WorkBehavior.class);
 
-	private final LightBehavior	lightService;
+	private final LightBehavior					lightBehavior;
+	private final WorkerHourlyMetricBehavior	workerHourlyMetricBehavior;
 
 	@Getter
 	private EdiExportService	exportProvider;
@@ -134,9 +137,10 @@ public class WorkBehavior implements IApiBehavior {
 	}
 
 	@Inject
-	public WorkBehavior(LightBehavior lightService, EdiExportService exportProvider) {
-		this.lightService = lightService;
+	public WorkBehavior(LightBehavior lightService, EdiExportService exportProvider, WorkerHourlyMetricBehavior workerHourlyMetricBehavior) {
+		this.lightBehavior = lightService;
 		this.exportProvider = exportProvider;
+		this.workerHourlyMetricBehavior = workerHourlyMetricBehavior;
 	}
 
 	// --------------------------------------------------------------------------
@@ -360,7 +364,7 @@ public class WorkBehavior implements IApiBehavior {
 
 	private int sendMessage(Set<User> users, OrderLocationFeedbackMessage message) { // TODO
 		// See this comment in LightService: "Use the light service API as our general sendMessage API"
-		return lightService.sendMessage(users, message);
+		return lightBehavior.sendMessage(users, message);
 	}
 
 	private void computeAndSendOrderFeedback(WorkInstruction incomingWI) {
@@ -866,7 +870,7 @@ public class WorkBehavior implements IApiBehavior {
 		Timestamp theTime = now();
 
 		Facility inFacility = inChe.getFacility();
-		String workSeqr = PropertyService.getInstance().getPropertyFromConfig(inFacility, DomainObjectProperty.WORKSEQR);
+		String workSeqr = PropertyBehavior.getProperty(inFacility, FacilityPropertyType.WORKSEQR);
 		SingleWorkItem workItem = makeWIForOutbound(orderDetail,
 			inChe,
 			null,
@@ -1522,7 +1526,7 @@ public class WorkBehavior implements IApiBehavior {
 
 		// To proceed, there should container use linked to outbound order
 		// We want to add all orders represented in the container list because these containers (or for Accu, fake containers representing the order) were scanned for this CHE to do.
-		String workSeqr = PropertyService.getInstance().getPropertyFromConfig(facility, DomainObjectProperty.WORKSEQR);
+		String workSeqr = PropertyBehavior.getProperty(facility, FacilityPropertyType.WORKSEQR);
 		HashMap<String, Location> prefetchedPreferredLocations = prefetchPreferredLocations(facility, inContainerList);
 		for (Container container : inContainerList) {
 			OrderHeader order = container.getCurrentOrderHeader();
@@ -2060,8 +2064,7 @@ public class WorkBehavior implements IApiBehavior {
 	}
 
 	public boolean willOrderDetailGetWi(OrderDetail inOrderDetail) {
-		String sequenceKind = PropertyService.getInstance().getPropertyFromConfig(inOrderDetail.getFacility(),
-			DomainObjectProperty.WORKSEQR);
+		String sequenceKind = PropertyBehavior.getProperty(inOrderDetail.getFacility(), FacilityPropertyType.WORKSEQR);
 		WorkInstructionSequencerType sequenceKindEnum = WorkInstructionSequencerType.parse(sequenceKind);
 
 		OrderTypeEnum myParentType = inOrderDetail.getParentOrderType();
@@ -2276,7 +2279,7 @@ public class WorkBehavior implements IApiBehavior {
 
 		if (locToLight.isLightableAisleController()) {
 			// We can flash the LED
-			lightService.flashOneLocationInColor(locToLight, che.getColor(), facility);
+			lightBehavior.flashOneLocationInColor(locToLight, che.getColor(), facility);
 		}
 		// As for the poscons, it is a fairly expensive query if one poscon per bay. 
 		// Could optimize a little here as we know the bay. But for reduced cost put wall
@@ -2299,7 +2302,7 @@ public class WorkBehavior implements IApiBehavior {
 	public String verifyBadgeAndGetWorkerName(Che che, String badge) {
 		Facility facility = che.getFacility();
 		//Get global Authentication property value
-		String badgeAuthStr = PropertyService.getInstance().getPropertyFromConfig(facility, DomainObjectProperty.BADGEAUTH);
+		String badgeAuthStr = PropertyBehavior.getProperty(facility, FacilityPropertyType.BADGEAUTH);
 		boolean badgeAuth = badgeAuthStr == null ? false : Boolean.parseBoolean(badgeAuthStr);
 		//Get active Worker with a matching badge id
 		Worker worker = Worker.findWorker(facility, badge);
@@ -2308,10 +2311,8 @@ public class WorkBehavior implements IApiBehavior {
 				if (worker == null) {
 					//Authentication + unknown worker = failed
 					LOGGER.warn("Badge verification failed for unknown badge " + badge);
-					return null;
 				} else {
 					//Authentication + known worker = succeeded
-					return worker.getWorkerNameUI();
 				}
 			} else {
 				if (worker == null) {
@@ -2323,20 +2324,47 @@ public class WorkBehavior implements IApiBehavior {
 					worker.setBadgeId(badge);
 					worker.generateDomainId();
 					worker.setUpdated(new Timestamp(System.currentTimeMillis()));
-					Worker.staticGetDao().store(worker);
 					LOGGER.info("During badge verification created new Worker " + badge);
-					return worker.getWorkerNameUI();
 				} else {
 					//No authentication + known worker = succeeded
-					return worker.getWorkerNameUI();
 				}
 			}
 		} finally {
 			che.setWorker(worker);
 			Che.staticGetDao().store(che);
 		}
+		if (worker != null) {
+			worker.setLastLogin(new Timestamp(System.currentTimeMillis()));
+			worker.setLastChePersistentId(che.getPersistentId());
+			Worker.staticGetDao().store(worker);
+			WorkerEvent loginEvent = new WorkerEvent(new DateTime(), EventType.LOGIN, che, badge);
+			WorkerEvent.staticGetDao().store(loginEvent);
+			workerHourlyMetricBehavior.metricOpenSession(worker);
+			return worker.getWorkerNameUI();
+		} else {
+			return null;
+		}
 	}
-
+	
+	public void logoutWorkerFromChe(Che che, String workerId){
+		if (workerId == null) {
+			//Possibly, a LOGOUT scan when not logged in
+			return;
+		}
+		
+		Worker worker = Worker.findWorker(che.getFacility(), workerId);
+		if (worker != null) {
+			worker.setLastLogout(new Timestamp(System.currentTimeMillis()));
+			Worker.staticGetDao().store(worker);
+			WorkerEvent logoutEvent = new WorkerEvent(new DateTime(), EventType.LOGOUT, che, workerId);
+			WorkerEvent.staticGetDao().store(logoutEvent);
+			
+			workerHourlyMetricBehavior.metricCloseSession(worker);
+		} else {
+			LOGGER.warn("Trying to logout from {} with non-existent worker {}", che.getDeviceGuidStr(), workerId);
+		}
+	}
+	
 	/**
 	 * Primary API to set a mobile CHE association to other CHE.
 	 * This enforces consistency. Therefore may unexpectedly clear another CHE's association.

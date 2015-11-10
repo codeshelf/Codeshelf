@@ -1,5 +1,6 @@
 package com.codeshelf.application;
 
+import java.text.ParseException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -31,11 +32,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.model.ScheduledJobType;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.scheduler.ScheduledJobType;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractFuture;
 
@@ -50,12 +52,12 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 
 		@Override
 		public void execute(JobExecutionContext context) throws JobExecutionException {
-			LOGGER.warn("Scheduled a job that has no implementation");
+			LOGGER.warn("Scheduled a job that has no implementation {}", context);
 		}
 		
 	}
 	
-	private class JobFuture<T> extends AbstractFuture<T> {
+	public class JobFuture<T> extends AbstractFuture<T> {
 		
 		private ScheduledJobType type;
 		
@@ -85,6 +87,19 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 	
 	private static class FutureResolver extends JobListenerSupport {
 		private static final String FUTURE_PROPERTY = "future";
+
+		public static JobFuture<ScheduledJobType> getFuture(JobExecutionContext context) {
+			Object value = context.getMergedJobDataMap().get(FUTURE_PROPERTY);
+			if (value != null && value instanceof JobFuture) {
+				@SuppressWarnings("unchecked")
+				JobFuture<ScheduledJobType> future = (JobFuture<ScheduledJobType>) value;
+				return future;
+			} else {
+				LOGGER.error("should have had a future for job instance {}", context);
+				return null;
+			}
+		}
+		
 		@Override
 		public String getName() {
 			return "futureResolver";
@@ -93,10 +108,8 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		@Override
 		public void jobWasExecuted(JobExecutionContext context, JobExecutionException jobException) {
 			super.jobWasExecuted(context, jobException);
-			Object value = context.getMergedJobDataMap().get(FUTURE_PROPERTY);
-			if (value != null && value instanceof JobFuture) {
-				@SuppressWarnings("unchecked")
-				JobFuture<ScheduledJobType> future = (JobFuture<ScheduledJobType>) value;
+			JobFuture<ScheduledJobType> future = getFuture(context);
+			if (future != null) {
 				if (jobException != null) {
 					future.setException(jobException);
 				} else {
@@ -115,6 +128,7 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 
 	private UserContext	systemUserContext;
 
+	@Getter
 	private Tenant	tenant;
 
 	@Getter
@@ -141,65 +155,92 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		scheduler.shutdown(true);
 	}
 
-	public Map<String, Class<? extends Job>> getJobs() throws SchedulerException  {
-		HashMap<String, Class<? extends Job>> jobs = new HashMap<>();
+	public CronExpression findSchedule(ScheduledJobType type) throws SchedulerException {
+		return getJobs().get(type);
+		
+	}
+	
+	public Map<ScheduledJobType, CronExpression>  getJobs() throws SchedulerException  {
+		HashMap<ScheduledJobType, CronExpression> jobs = new HashMap<>();
 		Set<JobKey> jobKeys = scheduler.getJobKeys(GroupMatcher.anyJobGroup()); //throw this
 		for (JobKey jobKey : jobKeys) {
-			JobDetail jobDetail;
-			try {
-				jobDetail = scheduler.getJobDetail(jobKey);
-				List<? extends Trigger> triggers = scheduler.getTriggersOfJob(jobKey);
-				for (Trigger trigger : triggers) {
-					if (trigger instanceof CronTrigger) {
-						CronTrigger cronTrigger = (CronTrigger) trigger;
-						jobs.put(cronTrigger.getCronExpression(), jobDetail.getJobClass());
+			Optional<ScheduledJobType> type = ScheduledJobType.findByKey(jobKey);
+			if (type.isPresent()) {
+				try {
+					List<? extends Trigger> triggers = scheduler.getTriggersOfJob(jobKey);
+					for (Trigger trigger : triggers) {
+						if (trigger instanceof CronTrigger) {
+							CronTrigger cronTrigger = (CronTrigger) trigger;
+							String expression = cronTrigger.getCronExpression();
+							try {
+								jobs.put(type.get(), new CronExpression(expression));
+							} catch (ParseException e) {
+								LOGGER.warn("Unable to parse cron expression {} for jobKey {}", expression, jobKey, e);
+							}
+						}
 					}
-				}
-			} catch (SchedulerException e1) {
-				LOGGER.error("", e1);
-				//todo indicate list is partial
+				} catch (SchedulerException e) {
+					LOGGER.warn("Unable to return schedules for jobKey {}", jobKey, e);
+				} 
+			} else {
+				LOGGER.error("Unable to find type matching key {}", jobKey);
 			}
 		}
 		return jobs;
 	}
 
-	public void schedule(CronExpression exp1, ScheduledJobType jobType) throws SchedulerException {
+	public void schedule(CronExpression cronExpression, ScheduledJobType jobType) throws SchedulerException {
 		// create and schedule  job
 		JobDataMap map = new JobDataMap();
 		map.put("facility", facility);
 		map.put("tenant", tenant);
 		map.put("userContext", systemUserContext);
 		map.put(TYPE_PROPERTY, jobType);
-		JobDetail archivingJob = JobBuilder.newJob(jobType.getJobClass())
+		JobDetail jobDetail = JobBuilder.newJob(jobType.getJobClass())
                 .withIdentity(jobType.getKey())
                 .usingJobData(map).build();
 
 		Trigger trigger = TriggerBuilder
 	            .newTrigger()
-	            .withIdentity(exp1.getExpressionSummary())
-	            .withSchedule(CronScheduleBuilder.cronSchedule(exp1))
+	            .withIdentity(jobType.getKey().toString())
+	            .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
 	            .build();
-		scheduler.deleteJob(archivingJob.getKey());
-		scheduler.scheduleJob(archivingJob, trigger);
+		scheduler.unscheduleJob(trigger.getKey());
+		scheduler.deleteJob(jobType.getKey());
+		scheduler.scheduleJob(jobDetail, trigger);
+		LOGGER.info("Scheduled {} for {}", jobType, cronExpression);
 	}
 
-	public boolean isJobRunning(ScheduledJobType jobType) throws SchedulerException {
+	public Optional<JobFuture<ScheduledJobType>> hasRunningJob(ScheduledJobType jobType) throws SchedulerException {
 		for (JobExecutionContext context : scheduler.getCurrentlyExecutingJobs()) {
 			ScheduledJobType runningType = (ScheduledJobType) context.getMergedJobDataMap().get(TYPE_PROPERTY);
 			if (jobType != null && runningType.equals(jobType)) {
-				return true;
+				return Optional.of(FutureResolver.getFuture(context));
 			}
 		};
-		return false;
+		return Optional.absent();
 	}
 
 	public Future<ScheduledJobType> trigger(ScheduledJobType type) throws SchedulerException {
-		Future<ScheduledJobType> future = new JobFuture<ScheduledJobType>(type);		
-		lastFiredTimes.put(type, DateTime.now());
-		scheduler.triggerJob(type.getKey(), new JobDataMap(ImmutableMap.of(FutureResolver.FUTURE_PROPERTY, future)));
-		return future;
+		if (!hasRunningJob(type).isPresent()) {
+			Future<ScheduledJobType> future = new JobFuture<ScheduledJobType>(type);		
+			lastFiredTimes.put(type, DateTime.now());
+			scheduler.triggerJob(type.getKey(), new JobDataMap(ImmutableMap.of(FutureResolver.FUTURE_PROPERTY, future)));
+			return future;
+		} else {
+			throw new SchedulerException(String.format("type %s is already running for facility %s", type, this.facility));
+		}
 	}
 
+	public boolean cancelJob(ScheduledJobType type) throws SchedulerException {
+		Optional<JobFuture<ScheduledJobType>> hasRunningJob = hasRunningJob(type);
+		if(hasRunningJob.isPresent()) {
+			return hasRunningJob.get().cancel(true);
+		} else {
+			return false;
+		}
+	}
+	
 	public Optional<DateTime> getPreviousFireTime(ScheduledJobType type) throws SchedulerException {
 		DateTime lastTime = lastFiredTimes.get(type);
 		List<? extends Trigger> triggers = scheduler.getTriggersOfJob(type.getKey());
@@ -221,6 +262,15 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 	public List<JobExecutionContext> getRunningJobs() throws SchedulerException {
 		List<JobExecutionContext> runningJobs = scheduler.getCurrentlyExecutingJobs();
 		return runningJobs;
+	}
+
+	public boolean hasFacility(Facility facility) {
+		Preconditions.checkNotNull(facility, "facility cannot be null");
+		return (this.facility.getPersistentId().equals(facility.getPersistentId()));
+	}
+
+	public boolean removeJob(ScheduledJobType type) throws SchedulerException {
+		return scheduler.deleteJob(type.getKey());
 	}
 
 }

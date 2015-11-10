@@ -13,8 +13,6 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -70,8 +68,6 @@ public class EdiImportServiceTest extends MockDaoTest {
 			anyProvider,
 			anyProvider,
 			anyProvider);
-		BlockingQueue<String> testBlockingQueue = new ArrayBlockingQueue<>(100);
-		ediImportService.setEdiSignalQueue(testBlockingQueue);
 
 		getFacility();
 

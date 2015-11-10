@@ -24,16 +24,15 @@ import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.device.PosControllerInstrList;
 import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.manager.User;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.LedRange;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.server.WebSocketManagerService;
@@ -65,7 +64,7 @@ public class LightBehavior implements IApiBehavior {
 	public void lightLocation(final String facilityPersistentId, final String inLocationNominalId) {
 		final Facility facility = checkFacility(facilityPersistentId);
 		Location theLocation = checkLocation(facility, inLocationNominalId);
-		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
+		ColorEnum color = PropertyBehavior.getPropertyAsColor(facility, FacilityPropertyType.LIGHTCLR, defaultColor);
 		lightLocationServerCall(theLocation, color);
 	}
 
@@ -99,8 +98,8 @@ public class LightBehavior implements IApiBehavior {
 		getInstructionsForPosConRange(facility, null, locations, instructions, affectedControllers);
 		PosControllerInstrList posMessage = new PosControllerInstrList(instructions);
 		sendMessage(facility.getSiteControllerUsers(), posMessage);
-		int lightDuration = PropertyService.getInstance().getPropertyAsInt(facility,
-			DomainObjectProperty.LIGHTSEC,
+		int lightDuration = PropertyBehavior.getPropertyAsInt(facility,
+			FacilityPropertyType.LIGHTSEC,
 			defaultLightDurationSeconds);
 		//Extinguish all PosCons in affected controllers after some time. This will not affect displayed instructions send from other devices (such as CHEs)
 		new Timer().schedule(new TimerTask() {
@@ -151,7 +150,7 @@ public class LightBehavior implements IApiBehavior {
 
 	public void lightInventory(final String facilityPersistentId, final String inLocationNominalId) {
 		Facility facility = checkFacility(facilityPersistentId);
-		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
+		ColorEnum color = PropertyBehavior.getPropertyAsColor(facility, FacilityPropertyType.LIGHTCLR, defaultColor);
 		Location theLocation = checkLocation(facility, inLocationNominalId);
 		List<Item> items = theLocation.getInventoryInWorkingOrder();
 		lightItemsSpecificColor(facilityPersistentId, items, color);
@@ -166,7 +165,7 @@ public class LightBehavior implements IApiBehavior {
 	 */
 	public void lightItem(final String facilityPersistentId, final String inItemPersistentId) {
 		Facility facility = checkFacility(facilityPersistentId);
-		ColorEnum color = PropertyService.getInstance().getPropertyAsColor(facility, DomainObjectProperty.LIGHTCLR, defaultColor);
+		ColorEnum color = PropertyBehavior.getPropertyAsColor(facility, FacilityPropertyType.LIGHTCLR, defaultColor);
 		lightItemSpecificColor(facilityPersistentId, inItemPersistentId, color);
 	}
 
@@ -515,8 +514,8 @@ public class LightBehavior implements IApiBehavior {
 		final ColorEnum inColor,
 		Location inLocation,
 		final LedRange ledRange) {
-		int lightDuration = PropertyService.getInstance().getPropertyAsInt(facility,
-			DomainObjectProperty.LIGHTSEC,
+		int lightDuration = PropertyBehavior.getPropertyAsInt(facility,
+			FacilityPropertyType.LIGHTSEC,
 			defaultLightDurationSeconds);
 
 		LedController controller = inLocation.getEffectiveLedController();

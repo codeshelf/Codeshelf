@@ -45,6 +45,7 @@ import com.dropbox.core.DbxRequestConfig;
 import com.dropbox.core.DbxWebAuthNoRedirect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -129,14 +130,14 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 		}
 	}
 	
-	private DropboxCredentials getCredentials() {
+	private Optional<DropboxCredentials> getCredentials() {
 		Gson mGson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
 		DropboxCredentials credentials = null;
 		String rawProviderCredentials = getProviderCredentials();
 		try {
 			credentials = mGson.fromJson(rawProviderCredentials, DropboxCredentials.class);
 			//any parsable json that didn't have version field had accessCode in code field (v2.0)
-			if (!DropboxCredentials.CURRENT_VERSION.equals(credentials.getVersion())) {  
+			if (credentials != null && !DropboxCredentials.CURRENT_VERSION.equals(credentials.getVersion())) {  
 				//probably had a prior accessToken stored in code
 				credentials = new DropboxCredentials("", credentials.getCode());
 				this.setProviderCredentials(credentials.toString());
@@ -149,7 +150,7 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 			this.setProviderCredentials(credentials.toString());
 			this.getDao().store(this);
 		}
-		return credentials;
+		return Optional.fromNullable(credentials);
 	}
 
 	public final String getServiceName() {
@@ -160,7 +161,8 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 	@JsonProperty
 	public boolean getHasCredentials() {
 		return !Strings.isNullOrEmpty(getProviderCredentials()) &&
-			   !Strings.isNullOrEmpty(getCredentials().getAccessToken());
+				getCredentials().isPresent() &&
+			   !Strings.isNullOrEmpty(getCredentials().get().getAccessToken());
 	}
 
 	@Override
@@ -277,10 +279,10 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 	 */
 	private DbxClient getClient() {
 		DbxClient result = null;
-		DropboxCredentials credentials = getCredentials();
-		if (credentials != null && !Strings.isNullOrEmpty(credentials.getAccessToken())) {
+		Optional<DropboxCredentials> credentials = getCredentials();
+		if (credentials.isPresent() && !Strings.isNullOrEmpty(credentials.get().getAccessToken())) {
 			DbxRequestConfig config = new DbxRequestConfig("Codeshelf Interface", Locale.getDefault().toString());
-			result = new DbxClient(config, credentials.getAccessToken());
+			result = new DbxClient(config, credentials.get().getAccessToken());
 		} 
 		return result;
 	}
@@ -422,7 +424,11 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 	 * @param inAuthInfo
 	 */
 	public boolean finishLink(final String inDbxCode) {
-		if (!Strings.isNullOrEmpty(inDbxCode) && !inDbxCode.equals(this.getCredentials().getCode())) {
+		String priorCode = null;
+		if (this.getCredentials().isPresent()) {
+			priorCode = this.getCredentials().get().getCode();
+		}
+		if (!Strings.isNullOrEmpty(inDbxCode) && !inDbxCode.equals(priorCode)) {
 			boolean result = false;
 
 			try {

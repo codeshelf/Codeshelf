@@ -9,11 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import javax.script.ScriptException;
 import javax.ws.rs.Consumes;
@@ -21,7 +16,6 @@ import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
-import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -30,8 +24,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-
-import lombok.Setter;
 
 import org.apache.commons.beanutils.BeanMap;
 import org.apache.commons.io.IOUtils;
@@ -52,9 +44,6 @@ import com.codeshelf.api.BaseResponse.IntervalParam;
 import com.codeshelf.api.BaseResponse.TimestampParam;
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.ErrorResponse;
-import com.codeshelf.api.HardwareRequest;
-import com.codeshelf.api.HardwareRequest.CheDisplayRequest;
-import com.codeshelf.api.HardwareRequest.LightRequest;
 import com.codeshelf.api.pickscript.ScriptParser;
 import com.codeshelf.api.pickscript.ScriptParser.ScriptStep;
 import com.codeshelf.api.pickscript.ScriptServerRunner;
@@ -72,23 +61,17 @@ import com.codeshelf.behavior.NotificationBehavior;
 import com.codeshelf.behavior.NotificationBehavior.WorkerEventTypeGroup;
 import com.codeshelf.behavior.OrderBehavior;
 import com.codeshelf.behavior.ProductivitySummaryList;
-import com.codeshelf.behavior.TenantCallable;
 import com.codeshelf.behavior.TestBehavior;
 import com.codeshelf.behavior.UiUpdateBehavior;
 import com.codeshelf.behavior.WorkBehavior;
-import com.codeshelf.device.LedCmdGroup;
-import com.codeshelf.device.LedInstrListMessage;
-import com.codeshelf.device.LedSample;
-import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
-import com.codeshelf.manager.Tenant;
+import com.codeshelf.edi.ICsvWorkerImporter;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.DataPurgeParameters;
-import com.codeshelf.model.PurgeProcessor;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
@@ -96,25 +79,20 @@ import com.codeshelf.model.domain.FacilityMetric;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
-import com.codeshelf.security.CodeshelfSecurityManager;
-import com.codeshelf.security.UserContext;
 import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.service.ParameterSetBeanABC;
-import com.codeshelf.service.PropertyService;
-import com.codeshelf.ws.protocol.message.CheDisplayMessage;
-import com.codeshelf.ws.protocol.message.LightLedsInstruction;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.sun.jersey.api.core.ResourceContext;
 import com.sun.jersey.multipart.FormDataMultiPart;
+
+import lombok.Setter;
 
 public class FacilityResource {
 
@@ -125,15 +103,11 @@ public class FacilityResource {
 	private final NotificationBehavior					notificationService;
 	private final WebSocketManagerService				webSocketManagerService;
 	private final UiUpdateBehavior						uiUpdateService;
-	private final PropertyService						propertyService;
 	private final Provider<ICsvAislesFileImporter>		aislesImporterProvider;
 	private final Provider<ICsvLocationAliasImporter>	locationsImporterProvider;
 	private final Provider<ICsvInventoryImporter>		inventoryImporterProvider;
 	private final Provider<ICsvOrderImporter>			orderImporterProvider;
-
-	//TODO hacked here to prevent multiple executions
-	private static final ExecutorService				purgeExecutor	= Executors.newSingleThreadExecutor();
-	private static TenantCallable						lastExecutionTask;
+	private final Provider<ICsvWorkerImporter>			workerImporterProvider;
 
 	@Setter
 	private Facility									facility;
@@ -147,21 +121,21 @@ public class FacilityResource {
 		NotificationBehavior notificationService,
 		WebSocketManagerService webSocketManagerService,
 		UiUpdateBehavior uiUpdateService,
-		PropertyService propertyService,
 		Provider<ICsvAislesFileImporter> aislesImporterProvider,
 		Provider<ICsvLocationAliasImporter> locationsImporterProvider,
 		Provider<ICsvInventoryImporter> inventoryImporterProvider,
-		Provider<ICsvOrderImporter> orderImporterProvider) {
+		Provider<ICsvOrderImporter> orderImporterProvider,
+		Provider<ICsvWorkerImporter> workerImporterProvider) {
 		this.orderService = orderService;
 		this.workService = workService;
 		this.webSocketManagerService = webSocketManagerService;
 		this.notificationService = notificationService;
 		this.uiUpdateService = uiUpdateService;
-		this.propertyService = propertyService;
 		this.aislesImporterProvider = aislesImporterProvider;
 		this.locationsImporterProvider = locationsImporterProvider;
 		this.inventoryImporterProvider = inventoryImporterProvider;
 		this.orderImporterProvider = orderImporterProvider;
+		this.workerImporterProvider = workerImporterProvider;
 	}
 
 	@Path("/import")
@@ -186,6 +160,14 @@ public class FacilityResource {
 		return r;
 	}
 
+	@Path("/scheduledjobs")
+	public ScheduledJobsResource getScheduledJobResource() throws Exception {
+		ScheduledJobsResource r = resourceContext.getResource(ScheduledJobsResource.class);
+		r.setFacility(facility);
+		return r;
+	}
+
+	
 	@DELETE
 	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -216,8 +198,8 @@ public class FacilityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public ExtensionPointsResource getExtensionPoints() throws ScriptException {
 		ExtensionPointsResource r = resourceContext.getResource(ExtensionPointsResource.class);
-		ExtensionPointEngine extensionPointService = ExtensionPointEngine.getInstance(facility);
-		r.setExtensionPointService(extensionPointService);
+		ExtensionPointEngine extensionPointEngine = ExtensionPointEngine.getInstance(facility);
+		r.setExtensionPointEngine(extensionPointEngine);
 		return r;
 	}
 
@@ -267,32 +249,6 @@ public class FacilityResource {
 		DataPurgeParameters params = service.getDataPurgeParameters();
 		List<String> summary = workService.reportAchiveables(params.getPurgeAfterDaysValue(), this.facility);
 		return BaseResponse.buildResponse(summary);
-	}
-
-	@DELETE
-	@Path("/data/purge")
-	@RequiresPermissions("facility:edit")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response deleteOldObjects() {
-		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
-		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
-		UserContext userContext = CodeshelfSecurityManager.getCurrentUserContext();
-		TenantCallable purgeCallable = new TenantCallable(persistenceService, tenant, userContext, new PurgeProcessor(facility));
-
-		//TODO do better prevention
-		if (lastExecutionTask != null && lastExecutionTask.isRunning()) {
-			LOGGER.info("Cancelling data purge task {}", lastExecutionTask);
-			ListenableFuture<Void> cancelLast = lastExecutionTask.cancel();
-			try {
-				cancelLast.get(2, TimeUnit.SECONDS);
-			} catch (InterruptedException | ExecutionException | TimeoutException e) {
-				LOGGER.warn("Last purge task cancellation did not complete after 2 seconds: {}", lastExecutionTask, e);
-			}
-		}
-		lastExecutionTask = purgeCallable;
-		LOGGER.info("Submitted data purge task {}", purgeCallable);
-		purgeExecutor.submit(purgeCallable);
-		return BaseResponse.buildResponse(null);
 	}
 
 	@GET
@@ -564,7 +520,7 @@ public class FacilityResource {
 	@RequiresPermissions("che:simulate")
 	@Consumes(MediaType.MULTIPART_FORM_DATA)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response runScriptSteps(FormDataMultiPart body) {
+	public Response processScript(FormDataMultiPart body) {
 		try {
 			ErrorResponse errors = new ErrorResponse();
 
@@ -625,11 +581,11 @@ public class FacilityResource {
 			ScriptServerRunner serverScriptRunner = new ScriptServerRunner(facilityId,
 				body,
 				uiUpdateService,
-				propertyService,
 				aislesImporterProvider,
 				locationsImporterProvider,
 				inventoryImporterProvider,
-				orderImporterProvider);
+				orderImporterProvider,
+				workerImporterProvider);
 			String error = null;
 			//Process script parts
 			while (!scriptParts.isEmpty()) {
@@ -704,63 +660,6 @@ public class FacilityResource {
 			persistence.rollbackTransaction();
 			errorMesage.setMessageError("Site request failed: " + e.getMessage());
 			return errorMesage;
-		}
-	}
-
-	@PUT
-	@Path("hardware")
-	@RequiresPermissions("companion:view")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response performHardwareAction(HardwareRequest req) {
-		ErrorResponse errors = new ErrorResponse();
-		if (!req.isValid(errors)) {
-			return errors.buildResponse();
-		}
-		try {
-			Set<User> users = facility.getSiteControllerUsers();
-
-			//LIGHTS
-			List<LedSample> ledSamples = new ArrayList<LedSample>();
-
-			if (req.getLights() != null) {
-				for (LightRequest light : req.getLights()) {
-					ledSamples.add(new LedSample(light.getPosition(), light.getColor()));
-				}
-
-				LedCmdGroup ledCmdGroup = new LedCmdGroup(req.getLightController(), req.getLightChannel(), (short) 0, ledSamples);
-				LightLedsInstruction instruction = new LightLedsInstruction(req.getLightController(),
-					req.getLightChannel(),
-					req.getLightDuration(),
-					ImmutableList.of(ledCmdGroup));
-				LedInstrListMessage lightMessage = new LedInstrListMessage(instruction);
-				webSocketManagerService.sendMessage(users, lightMessage);
-			}
-
-			//CHE MESSAGES
-			if (req.getCheMessages() != null) {
-				for (CheDisplayRequest cheReq : req.getCheMessages()) {
-					CheDisplayMessage cheMessage = new CheDisplayMessage(cheReq.getChe(),
-						cheReq.getLine1(),
-						cheReq.getLine2(),
-						cheReq.getLine3(),
-						cheReq.getLine4());
-					webSocketManagerService.sendMessage(users, cheMessage);
-				}
-			}
-
-			//POSCON MESSAGES
-			if (req.getPosConInstructions() != null) {
-				for (PosControllerInstr posInstr : req.getPosConInstructions()) {
-					posInstr.prepareObject();
-					Thread.sleep(1000);
-					webSocketManagerService.sendMessage(users, posInstr);
-				}
-			}
-
-			return BaseResponse.buildResponse("Commands Sent");
-		} catch (Exception e) {
-			return errors.processException(e);
 		}
 	}
 

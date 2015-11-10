@@ -5,15 +5,15 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.behavior.IPropertyBehavior;
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.filter.NetworkChangeListener;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.dao.ObjectChangeBroadcaster;
 import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Organization;
 import com.codeshelf.model.domain.Point;
@@ -24,7 +24,6 @@ import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.TokenSession;
 import com.codeshelf.security.TokenSession.Status;
 import com.codeshelf.security.TokenSessionService;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.ws.protocol.request.LoginRequest;
 import com.codeshelf.ws.protocol.response.LoginResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
@@ -135,31 +134,30 @@ public class LoginCommand extends CommandABC {
 						// AUTOSHRT needed for sitecon, not UX clients, but go ahead and populate.
 						if (network != null) {
 							LOGGER.warn("Site Controller logging in: {}", authUser);
-							IPropertyBehavior properties = PropertyService.getInstance();
 
 							Facility facility = network.getParent();
-							String valueStr = properties.getPropertyFromConfig(facility, DomainObjectProperty.AUTOSHRT);
+							String valueStr = PropertyBehavior.getProperty(facility, FacilityPropertyType.AUTOSHRT);
 							response.setAutoShortValue(Boolean.parseBoolean(valueStr));
 
-							String pickInfo = properties.getPropertyFromConfig(facility, DomainObjectProperty.PICKINFO);
+							String pickInfo = PropertyBehavior.getProperty(facility, FacilityPropertyType.PICKINFO);
 							response.setPickInfoValue(pickInfo);
 
-							String containerType = properties.getPropertyFromConfig(facility, DomainObjectProperty.CNTRTYPE);
+							String containerType = PropertyBehavior.getProperty(facility, FacilityPropertyType.CNTRTYPE);
 							response.setContainerTypeValue(containerType);
 
-							String scanType = properties.getPropertyFromConfig(facility, DomainObjectProperty.SCANPICK);
+							String scanType = PropertyBehavior.getProperty(facility, FacilityPropertyType.SCANPICK);
 							response.setScanTypeValue(scanType);
 
-							String sequenceKind = properties.getPropertyFromConfig(facility, DomainObjectProperty.WORKSEQR);
+							String sequenceKind = PropertyBehavior.getProperty(facility, FacilityPropertyType.WORKSEQR);
 							response.setSequenceKind(sequenceKind);
 
-							String pickMultValue = properties.getPropertyFromConfig(facility, DomainObjectProperty.PICKMULT);
+							String pickMultValue = PropertyBehavior.getProperty(facility, FacilityPropertyType.PICKMULT);
 							response.setPickMultValue(pickMultValue);
 
-							String responseValue = properties.getPropertyFromConfig(facility, DomainObjectProperty.PRODUCTION);
+							String responseValue = PropertyBehavior.getProperty(facility, FacilityPropertyType.PRODUCTION);
 							response.setProductionValue(responseValue);
 							
-							String ordersubValue = properties.getPropertyFromConfig(facility, DomainObjectProperty.ORDERSUB);
+							String ordersubValue = PropertyBehavior.getProperty(facility, FacilityPropertyType.ORDERSUB);
 							response.setOrdersubValue(ordersubValue);
 
 						} else { //ui client user

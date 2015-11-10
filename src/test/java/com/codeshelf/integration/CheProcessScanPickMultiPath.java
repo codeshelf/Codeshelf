@@ -8,15 +8,16 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
@@ -35,12 +36,10 @@ public class CheProcessScanPickMultiPath extends ServerTest {
 
 		beginTransaction();
 		LOGGER.info("1a: leave LOCAPICK off, SCANPICK off, set BayDistance, no housekeeping");
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
-		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "Disabled");
-		propertyService.changePropertyValue(facility,
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.BayDistance.toString());
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, Boolean.toString(false));
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "Disabled");
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 		
 		this.startSiteController();

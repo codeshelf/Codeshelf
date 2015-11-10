@@ -13,7 +13,6 @@ import org.apache.shiro.realm.Realm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.behavior.IPropertyBehavior;
 import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.CrossBatchCsvImporter;
@@ -24,10 +23,12 @@ import com.codeshelf.edi.ICsvInventoryImporter;
 import com.codeshelf.edi.ICsvLocationAliasImporter;
 import com.codeshelf.edi.ICsvOrderImporter;
 import com.codeshelf.edi.ICsvOrderLocationImporter;
+import com.codeshelf.edi.ICsvWorkerImporter;
 import com.codeshelf.edi.InventoryCsvImporter;
 import com.codeshelf.edi.LocationAliasCsvImporter;
 import com.codeshelf.edi.OrderLocationCsvImporter;
 import com.codeshelf.edi.OutboundOrderPrefetchCsvImporter;
+import com.codeshelf.edi.WorkerCsvImporter;
 import com.codeshelf.email.EmailService;
 import com.codeshelf.email.TemplateService;
 import com.codeshelf.manager.service.ITenantManagerService;
@@ -35,10 +36,10 @@ import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.scheduler.ApplicationSchedulerService;
 import com.codeshelf.security.CodeshelfRealm;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.TokenSessionService;
-import com.codeshelf.service.PropertyService;
 import com.codeshelf.util.ConverterProvider;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.server.CsServerEndPoint;
@@ -120,14 +121,14 @@ public final class ServerMain {
 				requestStaticInjection(MetricsService.class);
 				bind(IMetricsService.class).to(MetricsService.class).in(Singleton.class);
 
-				requestStaticInjection(PropertyService.class);
-				bind(IPropertyBehavior.class).to(PropertyService.class).in(Singleton.class);
-				
 				bind(WorkBehavior.class).in(Singleton.class);
 				bind(EdiExportService.class).in(Singleton.class);
 
 				requestStaticInjection(WebSocketManagerService.class);
 				bind(WebSocketManagerService.class).in(Singleton.class);
+				
+				bind(ApplicationSchedulerService.class).in(Singleton.class);
+				
 				
 				bind(GuiceFilter.class);
 				
@@ -139,6 +140,7 @@ public final class ServerMain {
 				bind(ICsvOrderLocationImporter.class).to(OrderLocationCsvImporter.class);
 				bind(ICsvAislesFileImporter.class).to(AislesFileCsvImporter.class);
 				bind(ICsvCrossBatchImporter.class).to(CrossBatchCsvImporter.class);
+				bind(ICsvWorkerImporter.class).to(WorkerCsvImporter.class);
 
 				// jetty websocket
 				bind(IMessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);

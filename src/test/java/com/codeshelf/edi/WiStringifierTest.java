@@ -1,5 +1,7 @@
 package com.codeshelf.edi;
 
+import static org.mockito.Mockito.mock;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
@@ -16,8 +18,10 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.generators.FacilityGenerator;
 import com.codeshelf.generators.WorkInstructionGenerator;
+import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.Worker;
 import com.codeshelf.testframework.MockDaoTest;
 
 public class WiStringifierTest extends MockDaoTest {
@@ -32,6 +36,7 @@ public class WiStringifierTest extends MockDaoTest {
 		facilityGenerator = new FacilityGenerator();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void workInstructionMessageContent() throws IOException, InterruptedException {
 		beginTransaction();
@@ -46,6 +51,10 @@ public class WiStringifierTest extends MockDaoTest {
 		LOGGER.info("2: Extract as we would send it");
 		// format calls WorkInstructionCSVExporter.exportWorkInstructions() with the list of one wi
 		// The result is a header line, and the work instruction line.
+		
+		@SuppressWarnings("rawtypes")
+		ITypedDao dao = mock(ITypedDao.class);
+		useCustomDao(Worker.class, dao);
 		
 		String messageBody = subject.stringifyWorkInstruction(wi);
 

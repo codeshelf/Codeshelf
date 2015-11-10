@@ -20,7 +20,7 @@ public class IsProductionSiteControllerHealthCheck extends CodeshelfHealthCheck 
 			return Result.healthy("Connected to production facility.");
 		} else {
 			// Not unhealthy. Just the answer to IsProduction
-			return Result.unhealthy("Not connected to production facility.");
+			return unhealthy("Not connected to production facility.");
 		}
 	}
 

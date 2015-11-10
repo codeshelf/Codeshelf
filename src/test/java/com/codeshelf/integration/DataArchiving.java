@@ -20,15 +20,16 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.behavior.TestBehavior;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.DomainObjectManager;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
@@ -182,9 +183,7 @@ public class DataArchiving extends ServerTest {
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
 
-		propertyService.changePropertyValue(getFacility(),
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.BayDistance.toString());
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 
 		commitTransaction();
 		return facility;
@@ -254,8 +253,8 @@ public class DataArchiving extends ServerTest {
 	public final void testArchiveReportAndPurge() throws IOException {
 		beginTransaction();
 
-		propertyService.turnOffHK(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, "WorkSequence");
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
 		setUpOrdersWithCntrGtinAndSequence(facility);
 		commitTransaction();
 
@@ -378,14 +377,14 @@ public class DataArchiving extends ServerTest {
 		LOGGER.info("8: Call the WorkerEvent purge");
 		beginTransaction();
 		facility = facility.reload();
-		// three COMPLETE workerEvents were generated above
+		// three COMPLETE workerEvents (+ Login and Logout) were generated above
 		List<WorkerEvent> events = WorkerEvent.staticGetDao().getAll();
-		Assert.assertEquals(3, events.size());
+		Assert.assertEquals(5, events.size());
 		// Now purge
 		DomainObjectManager doManager2 = new DomainObjectManager(facility);
 		List<UUID> workerEventIdsToPurge = doManager2.getWorkerEventUuidsToPurge(2);
 		Assert.assertEquals(3, doManager2.purgeSomeWorkerEvents(workerEventIdsToPurge));
-		Assert.assertEquals(0, WorkerEvent.staticGetDao().getAll().size());
+		Assert.assertEquals(2, WorkerEvent.staticGetDao().getAll().size());
 		commitTransaction();
 
 	}
@@ -398,8 +397,8 @@ public class DataArchiving extends ServerTest {
 	public final void testPurgeActiveJobs() throws IOException {
 		beginTransaction();
 
-		propertyService.turnOffHK(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, "WorkSequence");
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
 		setUpOrdersWithCntrGtinAndSequence(facility);
 		commitTransaction();
 
@@ -512,8 +511,8 @@ public class DataArchiving extends ServerTest {
 	public final void testSetupManyCartsWithOrders() throws IOException {
 		beginTransaction();
 
-		propertyService.turnOffHK(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.WORKSEQR, "WorkSequence");
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
 		setUpOrdersWithCntrGtinAndSequence(facility);
 		commitTransaction();
 

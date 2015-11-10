@@ -6,12 +6,7 @@
 package com.codeshelf.edi;
 
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-
-import lombok.Getter;
-import lombok.Setter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +23,8 @@ import com.codeshelf.security.UserContext;
 import com.codeshelf.service.AbstractCodeshelfScheduledService;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+
+import lombok.Getter;
 
 // --------------------------------------------------------------------------
 /**
@@ -48,15 +45,10 @@ public final class EdiImportService extends AbstractCodeshelfScheduledService {
 	private Provider<ICsvCrossBatchImporter>	mCsvCrossBatchImporter;
 
 	private Timer								ediProcessingTimer;
-	private Thread								ediSignalThread			= null;
 
 	Integer										lastNumTenants			= 0;
 	int											lastSuccessfulTenants	= 0;
 	Long										lastSuccessTime			= 0L;
-
-	@Getter
-	@Setter
-	BlockingQueue<String>						ediSignalQueue			= null;
 
 	@Inject
 	public EdiImportService(final Provider<ICsvOrderImporter> inCsvOrdersImporter,
@@ -80,38 +72,41 @@ public final class EdiImportService extends AbstractCodeshelfScheduledService {
 
 	@Override
 	protected void startUp() throws Exception {
-		if (this.ediSignalQueue == null) {
-			this.ediSignalQueue = new ArrayBlockingQueue<>(100);
-			//throw new NullPointerException("couldn't start EDI processer, signal queue is null");
-		}
 		ediProcessingTimer = MetricsService.getInstance().createTimer(MetricsGroup.EDI, "processing-time");
 
-		LOGGER.info("starting EdiImportService");
+		LOGGER.info("starting EDI import check");
 	}
 
 	@Override
 	protected void runOneIteration() throws Exception {
-		CodeshelfSecurityManager.removeContextIfPresent(); // shared thread, maybe other was aborted
-
-		LOGGER.trace("Begin EDI process for all tenants.");
-
-		int numTenants = 0;
-		int successfulTenants = 0;
-
-		for (Tenant tenant : TenantManagerService.getInstance().getTenants()) {
-			numTenants++;
-			if(doEdiForTenant(tenant)) {
-				successfulTenants++;
+		try {
+			CodeshelfSecurityManager.removeContextIfPresent(); // shared thread, maybe other was aborted
+			LOGGER.trace("Begin EDI import check for all tenants.");
+	
+			int numTenants = 0;
+			int successfulTenants = 0;
+	
+			for (Tenant tenant : TenantManagerService.getInstance().getTenants()) {
+				try {
+					numTenants++;
+					if(doEdiForTenant(tenant)) {
+						successfulTenants++;
+					}
+				} catch(Exception e) {
+					LOGGER.warn("Unable to do EDI import check for tenant {}", tenant, e);
+				}
 			}
-		}
-		if(numTenants == successfulTenants) {
-			synchronized(this.lastSuccessTime) {
-				this.lastSuccessTime = System.currentTimeMillis();
+			if(numTenants == successfulTenants) {
+				synchronized(this.lastSuccessTime) {
+					this.lastSuccessTime = System.currentTimeMillis();
+				}
 			}
-		}
-		synchronized(this.lastNumTenants) {
-			this.lastNumTenants = numTenants;
-			this.lastSuccessfulTenants = successfulTenants;
+			synchronized(this.lastNumTenants) {
+				this.lastNumTenants = numTenants;
+				this.lastSuccessfulTenants = successfulTenants;
+			}
+		} catch(Exception e) {
+			LOGGER.warn("failed during EDI import check", e);
 		}
 	}
 	
@@ -150,16 +145,18 @@ public final class EdiImportService extends AbstractCodeshelfScheduledService {
 			LOGGER.error("Unable to process edi for tenant " + tenant.getId(), e);
 		} finally {
 			long endTime = System.currentTimeMillis();
-			if (timerContext != null)
+			if (timerContext != null) {
 				timerContext.stop();
+			}
 			LOGGER.info("Checked for updates from {} EDI services for tenant {} in {}s",
-				numChecked,
-				tenant.getName(),
-				(endTime - startTime) / 1000);
+					numChecked,
+					tenant.getName(),
+					(endTime - startTime) / 1000);
 			CodeshelfSecurityManager.removeContext();
+
 			if (!completed) {
-				TenantPersistenceService.getInstance().rollbackTransaction();
 				LOGGER.warn("EDI process did not complete successfully for tenant {}", tenant.getName());
+				TenantPersistenceService.getInstance().rollbackTransaction();
 			}
 		}
 		return completed;
@@ -179,18 +176,9 @@ public final class EdiImportService extends AbstractCodeshelfScheduledService {
 						mCsvAislesFileImporter.get())) {
 						ediGateway.updateLastSuccessTime();
 						numChecked++;
-						// Signal other threads that we've just processed new EDI.
-						try {
-							ediSignalThread = Thread.currentThread();
-							ediSignalQueue.put(ediGateway.getServiceName());
-						} catch (InterruptedException e) {
-							LOGGER.error("Failed to signal other threads that we've just processed n EDI", e);
-						} finally {
-							ediSignalThread = null;
-						}
 					}
 				} catch(Exception e) {
-					LOGGER.warn("EDI import update failed for service  {}", ediGateway, e);
+					LOGGER.warn("EDI import update failed for service {}", ediGateway, e);
 				}
 			}
 		}
@@ -199,8 +187,7 @@ public final class EdiImportService extends AbstractCodeshelfScheduledService {
 
 	@Override
 	protected void shutDown() throws Exception {
-		if (ediSignalThread != null)
-			ediSignalThread.interrupt();
+		LOGGER.info("{} is being shutdown", this);
 	}
 
 	@Override

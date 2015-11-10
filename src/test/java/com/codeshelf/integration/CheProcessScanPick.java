@@ -15,16 +15,17 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.ContainerUse;
-import com.codeshelf.model.domain.DomainObjectProperty;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.LedController;
@@ -188,9 +189,7 @@ public class CheProcessScanPick extends ServerTest {
 		tier.setLedChannel(channel1);
 		tier.getDao().store(tier);
 
-		propertyService.changePropertyValue(getFacility(),
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.BayDistance.toString());
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
 
 		commitTransaction();
 		return facility;
@@ -294,8 +293,8 @@ public class CheProcessScanPick extends ServerTest {
 	public final void testPickWithUpcScan() throws IOException {
 		beginTransaction();
 
-		propertyService.turnOffHK(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "UPC");
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.SCANPICK, "UPC");
 		setUpOrdersWithCntrGtinAndSequence(facility);
 		commitTransaction();
 
@@ -371,10 +370,10 @@ public class CheProcessScanPick extends ServerTest {
 
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.LOCAPICK, Boolean.toString(true));
 
 		setUpLineScanOrdersNoCntrWithGtin(facility);
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		picker.loginAndSetup("Picker #1");
@@ -457,7 +456,7 @@ public class CheProcessScanPick extends ServerTest {
 		Assert.assertNull(item1522LocD301);
 
 		// LOGGER.info("2c: check that item 1124 (GTIN 106) moved even though it scanned as 00106");
-		LOGGER.info("2c: check that item 1124 (GTIN 106) did not move as it scanned as 00106");  
+		LOGGER.info("2c: check that item 1124 (GTIN 106) did not move as it scanned as 00106");
 		// v20 undid this unwise DEV-937 case
 		Location locationD402 = facility.findSubLocationById("D402");
 		Location locationD501 = facility.findSubLocationById("D501");
@@ -493,10 +492,10 @@ public class CheProcessScanPick extends ServerTest {
 
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.LOCAPICK, Boolean.toString(true));
 
 		setUpLineScanOrdersNoCntrWithGtin(facility);
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("0a: scan INVENTORY and make sure we stay idle");
@@ -587,10 +586,10 @@ public class CheProcessScanPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.LOCAPICK, Boolean.toString(true));
 
 		setUpLineScanOrdersWithCntr(facility);
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		picker.loginAndSetup("Picker #1");
@@ -652,9 +651,9 @@ public class CheProcessScanPick extends ServerTest {
 		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
-		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.LOCAPICK, Boolean.toString(true));
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.SCANPICK, "SKU");
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		beginTransaction();
@@ -711,7 +710,7 @@ public class CheProcessScanPick extends ServerTest {
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 
-		LOGGER.info("1d: scan a valid location. This does the usual, but with SCANPICK, it goes to SCAN_SOMETHING state. The brightness is different");
+		LOGGER.info("1d: scan a valid location. This does the usual, but with SCANPICK, it goes to SCAN_SOMETHING state. The flink frequency is different");
 		picker.scanLocation("D303");
 
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
@@ -721,9 +720,8 @@ public class CheProcessScanPick extends ServerTest {
 		logWiList(scWiList);
 
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue(), 1);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.MIDDIM_DUTYCYCLE);
-		// Assert.assertEquals(PosControllerInstr.RAPIDBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 1));
-		Assert.assertEquals(PosControllerInstr.SOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 1));
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.BRIGHT_DUTYCYCLE);
+		Assert.assertEquals(PosControllerInstr.RAPIDBLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq((byte) 1));
 
 		LOGGER.info("1e: although the poscon shows the count, prove that the button press is not handled");
 		WorkInstruction wi = picker.nextActiveWi();
@@ -737,11 +735,11 @@ public class CheProcessScanPick extends ServerTest {
 		WorkInstruction wi2 = picker.nextActiveWi();
 		Assert.assertEquals(wi, wi2);
 
-		LOGGER.info("1f: scan the SKU. This data has 1493. After the scan, the brightness increases again.");
+		LOGGER.info("1f: scan the SKU. This data has 1493. After the scan, the blink frequency slows down.");
 		picker.scanSomething("1493");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.BRIGHT_DUTYCYCLE);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.SOLID_FREQ);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.BLINK_FREQ);
 
 		LOGGER.info("1g: now the button press works");
 		wi = picker.nextActiveWi();
@@ -881,11 +879,11 @@ public class CheProcessScanPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
-		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.LOCAPICK, Boolean.toString(true));
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.SCANPICK, "SKU");
 
 		setUpLineScanOrdersWithCntr(facility);
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		CsDeviceManager manager = this.getDeviceManager();
@@ -935,12 +933,10 @@ public class CheProcessScanPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
-		propertyService.changePropertyValue(facility,
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.LOCAPICK, Boolean.toString(false));
+		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
 
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.startSiteController();
@@ -972,7 +968,7 @@ public class CheProcessScanPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, Boolean.toString(true));
 		this.setUpOrdersItemsOnSamePath(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -1063,13 +1059,11 @@ public class CheProcessScanPick extends ServerTest {
 		commitTransaction();
 
 		beginTransaction();
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, Boolean.toString(false));
 		// we are not setting SCANPICK for this test. Only about sequencing
-		propertyService.changePropertyValue(facility,
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
 
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		beginTransaction();
@@ -1116,7 +1110,7 @@ public class CheProcessScanPick extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		Assert.assertNotNull(facility);
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(true));
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, Boolean.toString(true));
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -1179,12 +1173,10 @@ public class CheProcessScanPick extends ServerTest {
 	@Test
 	public final void testPfswebScanPicks() throws IOException {
 		beginTransaction();
-		propertyService.changePropertyValue(facility, DomainObjectProperty.LOCAPICK, Boolean.toString(false));
-		propertyService.changePropertyValue(facility, DomainObjectProperty.SCANPICK, "SKU");
-		propertyService.changePropertyValue(facility,
-			DomainObjectProperty.WORKSEQR,
-			WorkInstructionSequencerType.WorkSequence.toString());
-		propertyService.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.LOCAPICK, Boolean.toString(false));
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "SKU");
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyBehavior.turnOffHK(facility);
 		commitTransaction();
 
 		beginTransaction();
@@ -1242,6 +1234,7 @@ public class CheProcessScanPick extends ServerTest {
 		LOGGER.info("2a_c :Scan the correct SKU; advance.");
 		picker.scanSomething("1522");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
 		WorkInstruction wi = picker.nextActiveWi();
 		int button = picker.buttonFor(wi);
 		int quant = wi.getPlanQuantity();
@@ -1270,6 +1263,152 @@ public class CheProcessScanPick extends ServerTest {
 		picker.pick(button, quant);
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 		LOGGER.info("2d :The fourth job needs a scan.  Logout as the rest is not interesting.");
+
+		picker.logout();
+	}
+
+	/**
+	 * For  DEV-1295. Did revised screen message go out?
+	 * Seemed like screen redraw did not go after a scan sometimes
+	 */
+	@Test
+	public final void pfswebScanProcessErrors() throws IOException {
+		beginTransaction();
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.PICKMULT, Boolean.toString(true));
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "UPC");
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyBehavior.turnOffHK(facility);
+		commitTransaction();
+
+		beginTransaction();
+		setUpOrdersWithCntrAndSequence(facility);
+		commitTransaction();
+
+		this.startSiteController(); // after all the parameter changes
+
+		PickSimulator picker = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");
+		picker.loginAndSetup("Picker #1");
+
+		LOGGER.info("1a: setup two orders on the cart. Several of the details have unmodelled preferred locations");
+		picker.setupContainer("12345", "1");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+		picker.setupContainer("11111", "2");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 1000);
+
+		LOGGER.info("1b: START. Now we get some work. 8 jobs, only 3 with modeled locations");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+
+		List<WorkInstruction> scWiList = picker.getAllPicksList();
+		logWiList(scWiList);
+		/*
+				{ "1522", "D601" }, // 
+				{ "1522", "D601" }, //
+				{ "1523", "D602" }, //
+				{ "1124", "D603" }, //
+				{ "1555", "D604" }, //
+				{ "1122", "D401" }, //
+				{ "1123", "D301" }, // 
+				{ "1493", "D302" } //
+		*/
+		LOGGER.info("2a_a :The first job needs a scan.");
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
+		Assert.assertEquals("1522", picker.getLastCheDisplayString(2));
+		Assert.assertEquals("QTY 4", picker.getLastCheDisplayString(3)); // This line may change due to function changes. Just update it
+		Assert.assertEquals("SCAN UPC NEEDED", picker.getLastCheDisplayString(4));
+
+		LOGGER.info("2a_b :Try to pick it directly.");
+		WorkInstruction wi = picker.nextActiveWi();
+		int button = picker.buttonFor(wi);
+		int quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitInSameState(CheStateEnum.SCAN_SOMETHING, 2000);
+		picker.logCheDisplay();
+
+		LOGGER.info("2b_a :Scan an invalid SKU, verify that CHE specifies the needed SKU.");
+		picker.scanSomething("bad_sku");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
+		Assert.assertEquals("1522", picker.getLastCheDisplayString(2));
+		Assert.assertEquals("QTY 4", picker.getLastCheDisplayString(3)); // This line may change due to function changes. Just update it
+		Assert.assertEquals("SCAN 1522", picker.getLastCheDisplayString(4));
+
+		LOGGER.info("2b_b :Try to pick it now.");
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitInSameState(CheStateEnum.SCAN_SOMETHING, 2000);
+		picker.logCheDisplay();
+
+		LOGGER.info("2b_c :Scan the correct SKU; advance.");
+		picker.scanSomething("1522");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+		LOGGER.info("2c :The second job does not need a scan. The quantity counted down as the first is complete.");
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
+		Assert.assertEquals("1522", picker.getLastCheDisplayString(2));
+		Assert.assertEquals("QTY 3", picker.getLastCheDisplayString(3)); // This line may change due to function changes. Just update it
+		Assert.assertEquals("", picker.getLastCheDisplayString(4));
+
+		LOGGER.info("3a: Although worker should do the last 1522 pick without a scan, scan 1522 again.");
+		picker.scanSomething("1522");
+		// For this, we want to revaluate. And we want new screen to go out since user did scan. (Perhaps previous message had been dropped.) That is DEV-1295 
+		picker.waitInSameState(CheStateEnum.DO_PICK, 2000);
+
+		LOGGER.info("3b: Although worker should do the last 1522 pick, scan a different SKU");
+		picker.scanSomething("1523");
+		// For this, we want to revaluate and if not correct, go back to SCAN_SOMETHING state
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
+		Assert.assertEquals("1522", picker.getLastCheDisplayString(2));
+		Assert.assertEquals("QTY 3", picker.getLastCheDisplayString(3)); // This line may change due to function changes. Just update it
+		Assert.assertEquals("SCAN UPC NEEDED", picker.getLastCheDisplayString(4));
+
+		LOGGER.info("3c: Pick not allowed yet");
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitInSameState(CheStateEnum.SCAN_SOMETHING, 2000);
+
+		LOGGER.info("3d: Scan the right thing");
+		picker.scanSomething("1522");
+		// For this, we want to revaluate and if not correct, go back to SCAN_SOMETHING state
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		Assert.assertEquals("D601", picker.getLastCheDisplayString(1));
+		Assert.assertEquals("1522", picker.getLastCheDisplayString(2));
+		Assert.assertEquals("QTY 3", picker.getLastCheDisplayString(3)); // This line may change due to function changes. Just update it
+		Assert.assertEquals("", picker.getLastCheDisplayString(4));
+
+		LOGGER.info("3e: Now pick");
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitInSameState(CheStateEnum.SCAN_SOMETHING, 2000);
+
+		LOGGER.info("3f :This job needs a scan.");
+		Assert.assertEquals("D602", picker.getLastCheDisplayString(1));
+		Assert.assertEquals("1523", picker.getLastCheDisplayString(2));
+		Assert.assertEquals("QTY 1", picker.getLastCheDisplayString(3)); // This line may change due to function changes. Just update it
+		picker.scanSomething("1523");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		wi = picker.nextActiveWi();
+		button = picker.buttonFor(wi);
+		quant = wi.getPlanQuantity();
+		picker.pick(button, quant);
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		LOGGER.info("4 :The fourth job needs a scan.  Logout as the rest is not interesting.");
 
 		picker.logout();
 	}

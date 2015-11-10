@@ -21,8 +21,6 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.device.LedSample;
 import com.codeshelf.device.PosControllerInstr;
-import com.codeshelf.device.PosControllerInstr.Brightness;
-import com.codeshelf.device.PosControllerInstr.Frequency;
 import com.codeshelf.device.PosManagerDeviceLogic;
 import com.codeshelf.edi.AislesFileCsvImporter.ControllerLayout;
 import com.codeshelf.flyweight.command.NetGuid;
@@ -148,10 +146,10 @@ public class PutwallTest extends MockDaoTest {
 		//Use commands sent to controller's own device to take a deeper look at PosCon displays
 		
 		//SEND INSTRUCTIONS (from CHE's and from the PosCon controller itself)
-		mController.addPosConInstrFor(che1Guid, null, (byte)2, (byte)50, (byte)40, (byte)60, Frequency.SOLID.toByte(), Brightness.BRIGHT.toByte());
-		mController.addPosConInstrFor(che1Guid, null, (byte)4, (byte)6, (byte)3, (byte)9, Frequency.BLINK.toByte(), Brightness.DIM.toByte());
-		mController.addPosConInstrFor(che2Guid, null, (byte)4, (byte)60, (byte)30, (byte)90, Frequency.BLINK.toByte(), Brightness.DIM.toByte());
-		mController.addPosConInstrFor(mControllerGuid, null, (byte)3, (byte)65, (byte)35, (byte)95, Frequency.SOLID.toByte(), Brightness.MEDIUM.toByte());
+		mController.addPosConInstrFor(che1Guid, null, (byte)2, (byte)50, (byte)40, (byte)60, PosControllerInstr.SOLID_FREQ, PosControllerInstr.BRIGHT_DUTYCYCLE);
+		mController.addPosConInstrFor(che1Guid, null, (byte)4, (byte)6, (byte)3, (byte)9, PosControllerInstr.BLINK_FREQ, PosControllerInstr.DIM_DUTYCYCLE);
+		mController.addPosConInstrFor(che2Guid, null, (byte)4, (byte)60, (byte)30, (byte)90, PosControllerInstr.BLINK_FREQ, PosControllerInstr.DIM_DUTYCYCLE);
+		mController.addPosConInstrFor(mControllerGuid, null, (byte)3, (byte)65, (byte)35, (byte)95, PosControllerInstr.SOLID_FREQ, PosControllerInstr.MED_DUTYCYCLE);
 		mController.updatePosCons(true);
 		
 		//Test what was saved
@@ -159,10 +157,10 @@ public class PutwallTest extends MockDaoTest {
 		PosControllerInstr instr2 = mController.getPosConInstrFor(che1Guid, (byte)4);
 		PosControllerInstr instr3 = mController.getPosConInstrFor(che2Guid, (byte)4);
 		PosControllerInstr instr4 = mController.getPosConInstrFor(mControllerGuid, (byte)3);
-		assertInstruction(instr1, null, (byte)2, (byte)50, (byte)40, (byte)60, Frequency.SOLID.toByte(), Brightness.BRIGHT.toByte());
-		assertInstruction(instr2, null, (byte)4, (byte)6, (byte)3, (byte)9, Frequency.BLINK.toByte(), Brightness.DIM.toByte());
-		assertInstruction(instr3, null, (byte)4, (byte)60, (byte)30, (byte)90, Frequency.BLINK.toByte(), Brightness.DIM.toByte());
-		assertInstruction(instr4, null, (byte)3, (byte)65, (byte)35, (byte)95, Frequency.SOLID.toByte(), Brightness.MEDIUM.toByte());
+		assertInstruction(instr1, null, (byte)2, (byte)50, (byte)40, (byte)60, PosControllerInstr.SOLID_FREQ, PosControllerInstr.BRIGHT_DUTYCYCLE);
+		assertInstruction(instr2, null, (byte)4, (byte)6, (byte)3, (byte)9, PosControllerInstr.BLINK_FREQ, PosControllerInstr.DIM_DUTYCYCLE);
+		assertInstruction(instr3, null, (byte)4, (byte)60, (byte)30, (byte)90, PosControllerInstr.BLINK_FREQ, PosControllerInstr.DIM_DUTYCYCLE);
+		assertInstruction(instr4, null, (byte)3, (byte)65, (byte)35, (byte)95, PosControllerInstr.SOLID_FREQ, PosControllerInstr.MED_DUTYCYCLE);
 				
 		//Test what is being displyaed
 		Map<Byte, PosControllerInstr> displayed = mController.getPosToLastSetIntrMap();
@@ -220,30 +218,34 @@ public class PutwallTest extends MockDaoTest {
 	
 	@Test
 	public void testSerializer() {
+		String dim = PosControllerInstr.DIM_DUTYCYCLE.toString();
+		String bright = PosControllerInstr.BRIGHT_DUTYCYCLE.toString();
+		String solid = PosControllerInstr.SOLID_FREQ.toString();
+		String blink = PosControllerInstr.BLINK_FREQ.toString();
 		String message = 
 				"[\n" + 
 				"    {\n" + 
 				"      \"controllerId\":\"0x0000002D\",\n" + 
 				"      \"position\":1,\n" + 
 				"      \"reqQty\":47,\n" + 
-				"      \"brightness\":\"DIM\",\n" + 
-				"      \"frequency\":\"BLINK\"\n" + 
+				"      \"dutyCycle\":\"" + dim + "\",\n" + 
+				"      \"freq\":\"" + blink + "\"\n" + 
 				"    },\n" + 
 				"    {\n" + 
 				"      \"controllerId\":\"0x0000002D\",\n" + 
 				"      \"position\":2,\n" + 
 				"      \"reqQty\":10,\n" + 
 				"      \"maxQty\":60,\n" + 
-				"      \"brightness\":\"DIM\",\n" + 
-				"      \"frequency\":\"SOLID\"\n" + 
+				"      \"dutyCycle\":\"" + dim + "\",\n" + 
+				"      \"freq\":\"" + solid + "\"\n" + 
 				"    },\n" +
 				"    {\n" + 
 				"      \"controllerId\":\"0x0000002D\",\n" + 
 				"      \"position\":2,\n" + 
 				"      \"reqQty\":20,\n" + 
 				"      \"maxQty\":70,\n" +
-				"      \"brightness\":\"BRIGHT\",\n" + 
-				"      \"frequency\":\"SOLID\"\n" + 
+				"      \"dutyCycle\":\"" + bright + "\",\n" + 
+				"      \"freq\":\"" + solid + "\"\n" + 
 				"    }\n" + 
 				"]";
 		mController.lightExtraPosCons(message);
@@ -252,8 +254,8 @@ public class PutwallTest extends MockDaoTest {
 		PosControllerInstr instr1 = mController.getPosConInstrFor(mControllerGuid, (byte)1);
 		PosControllerInstr instr2 = mController.getPosConInstrFor(mControllerGuid, (byte)2);
 		
-		assertInstruction(instr1, null, (byte)1, (byte)47, (byte)47, (byte)47, Frequency.BLINK.toByte(), Brightness.DIM.toByte());
-		assertInstruction(instr2, null, (byte)2, (byte)20, (byte)20, (byte)70, Frequency.SOLID.toByte(), Brightness.BRIGHT.toByte());
+		assertInstruction(instr1, null, (byte)1, (byte)47, (byte)47, (byte)47, PosControllerInstr.BLINK_FREQ, PosControllerInstr.DIM_DUTYCYCLE);
+		assertInstruction(instr2, null, (byte)2, (byte)20, (byte)20, (byte)70, PosControllerInstr.SOLID_FREQ, PosControllerInstr.BRIGHT_DUTYCYCLE);
 	}
 	
 	private void assertInstruction(PosControllerInstr instruction, LedSample inLedSample, Byte position, Byte quantity, Byte min, Byte max, Byte frequency, Byte brightness) {

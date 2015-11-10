@@ -56,7 +56,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 				toLogStr += String.format("%s%n", header);
 			}
 			toLogStr += String.format("%s", instr.superConciseDescription());
-			}
+		}
 		if (!toLogStr.isEmpty())
 			notifyPoscons(toLogStr);
 	}
@@ -344,22 +344,31 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 					LOGGER.info("Button #{} pressed with quantity {}", buttonNum, showingQuantity);
 			} else {
 				String display = "unexpected value " + showingQuantity;
-				byte displayedValue = getLastSentPositionControllerDisplayValue((byte) buttonNum);
-				if (displayedValue == PosControllerInstr.BITENCODED_SEGMENTS_CODE) {
-					byte min = getLastSentPositionControllerMinQty((byte) buttonNum);
-					byte max = getLastSentPositionControllerMaxQty((byte) buttonNum);
-					display = "unexpected segmented value " + max + "-" + min;
-					if (max == PosControllerInstr.BITENCODED_LED_DASH && min == PosControllerInstr.BITENCODED_LED_DASH) {
-						display = "dash";
-					} else if (max == PosControllerInstr.BITENCODED_TOP_BOTTOM && min == PosControllerInstr.BITENCODED_TOP_BOTTOM) {
-						display = "double dash";
-					} else if (max == PosControllerInstr.BITENCODED_TRIPLE_DASH && min == PosControllerInstr.BITENCODED_TRIPLE_DASH) {
-						display = "triple dash";
-					} else if (max == PosControllerInstr.BITENCODED_LED_O && min == PosControllerInstr.BITENCODED_LED_C) {
-						display = "OC (order complete)";
+				// DEV-1287 getLastSentPositionControllerDisplayValue may return null. Don't NPE by directly assigning it to a byte
+				Byte displayedByteValue = getLastSentPositionControllerDisplayValue((byte) buttonNum);
+				if (displayedByteValue == null) {
+					display = "??";
+					LOGGER.error("unhandled value in notifyButton. showingQuantity is {}, but getLast returns null", showingQuantity);
+				} else {
+					byte displayedValue = displayedByteValue;
+					if (displayedValue == PosControllerInstr.BITENCODED_SEGMENTS_CODE) {
+						byte min = getLastSentPositionControllerMinQty((byte) buttonNum);
+						byte max = getLastSentPositionControllerMaxQty((byte) buttonNum);
+						display = "unexpected segmented value " + max + "-" + min;
+						if (max == PosControllerInstr.BITENCODED_LED_DASH && min == PosControllerInstr.BITENCODED_LED_DASH) {
+							display = "dash";
+						} else if (max == PosControllerInstr.BITENCODED_TOP_BOTTOM
+								&& min == PosControllerInstr.BITENCODED_TOP_BOTTOM) {
+							display = "double dash";
+						} else if (max == PosControllerInstr.BITENCODED_TRIPLE_DASH
+								&& min == PosControllerInstr.BITENCODED_TRIPLE_DASH) {
+							display = "triple dash";
+						} else if (max == PosControllerInstr.BITENCODED_LED_O && min == PosControllerInstr.BITENCODED_LED_C) {
+							display = "OC (order complete)";
+						}
 					}
 				}
-				LOGGER.info("Button #{} pressed with {}", buttonNum, display);
+				LOGGER.warn("Button #{} pressed with {}", buttonNum, display);
 			}
 
 		} finally {
@@ -418,6 +427,20 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		}
 	}
 
+	protected void notifyExtraInfo(String theInfo, boolean needWarn) {
+		try {
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Information");
+			if (needWarn)
+				LOGGER.warn(theInfo);
+			else
+				LOGGER.info(theInfo);
+		} finally {
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+		}
+	}
+	
 	//--------------------------
 	/**
 	 * CHE_DISPLAY notifies

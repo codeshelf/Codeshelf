@@ -10,6 +10,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -17,6 +18,7 @@ import lombok.Setter;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.Type;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
@@ -27,6 +29,7 @@ import com.codeshelf.api.Validatable;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.util.TimeUtils;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -39,7 +42,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Worker extends DomainObjectABC implements Validatable {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Worker.class);
-
+	
 	public static class WorkerDao extends GenericDaoABC<Worker> implements ITypedDao<Worker> {
 		public final Class<Worker> getDaoClass() {
 			return Worker.class;
@@ -101,6 +104,28 @@ public class Worker extends DomainObjectABC implements Validatable {
 	@Setter
 	@JsonProperty
 	private Timestamp	updated;
+	
+	@Column(nullable = true, name = "last_login")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Timestamp	lastLogin;
+
+	@Column(nullable = true, name = "last_logout")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Timestamp	lastLogout;
+	
+	@Column(nullable = true, name = "last_che_persistent_id")
+	@Type(type="com.codeshelf.persistence.DialectUUIDType")
+	@Getter 
+	@Setter
+	@JsonProperty
+	private UUID 		lastChePersistentId;
+	
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
+	private List<WorkerHourlyMetric>	workerMetrics;
 
 	@Override
 	public String getDefaultDomainIdPrefix() {
@@ -248,5 +273,33 @@ public class Worker extends DomainObjectABC implements Validatable {
 		badgeId = inBadgeId; // temporary.
 		setDomainId(inBadgeId);
 	}
-
+	
+	public WorkerHourlyMetric getHourlyMetric(Timestamp timestamp){
+		//If this function is hurting performance, it can be changed to make a direct DB call for the metric object. 
+		long requestedTime = timestamp.getTime();
+		if (workerMetrics != null) {
+			for (WorkerHourlyMetric metric : workerMetrics){
+				long foundTime = metric.getHourTimestamp().getTime();
+				if (requestedTime >= foundTime && requestedTime < foundTime + TimeUtils.MILLISECOUNDS_IN_HOUR){
+					return metric;
+				}
+			}
+		}
+		return null;
+	}
+	
+	public WorkerHourlyMetric getLatestActiveHourlyMetricBeforeTime(Timestamp timestamp){
+		Timestamp latestTime = new Timestamp(0);
+		WorkerHourlyMetric latestMetric = null;
+		if (workerMetrics != null){
+			for (WorkerHourlyMetric metric : workerMetrics){
+				Timestamp foundTime = metric.getHourTimestamp();
+				if (metric.isSessionActive() && foundTime.before(timestamp) && foundTime.after(latestTime)){
+					latestTime = foundTime;
+					latestMetric = metric;
+				}
+			}
+		}
+		return latestMetric;
+	}
 }
