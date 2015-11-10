@@ -34,4 +34,11 @@
         <addPrimaryKey columnNames="persistentid" constraintName="facility_propPK" tableName="facility_property"/>
         <addForeignKeyConstraint baseColumnNames="parent_persistentid" baseTableName="facility_property" constraintName="FK_smq60hjeel5lr3ffpoad379bk" deferrable="false" initiallyDeferred="false" referencedColumnNames="persistentid" referencedTableName="location"/>
     </changeSet>
+    <changeSet author="ilya (generated)" id="1447178648126-4">
+        <dropForeignKeyConstraint baseTableName="property" constraintName="FK_qu6khdgpwqh39yjrpx6yxdiph"/>
+    </changeSet>
+    <changeSet author="ilya (generated)" id="1447178648126-5">
+        <dropTable tableName="property"/>
+        <dropTable tableName="property_default"/>
+    </changeSet>
 </databaseChangeLog>

@@ -51,9 +51,6 @@
         <mapping class="com.codeshelf.model.domain.Slot"/>
         <mapping class="com.codeshelf.model.domain.UnspecifiedLocation"/>
 
-        <mapping class="com.codeshelf.model.domain.DomainObjectProperty"/>
-        <mapping class="com.codeshelf.model.domain.DomainObjectPropertyDefault"/>
-
         <mapping class="com.codeshelf.model.domain.EdiGateway"/>
         <mapping class="com.codeshelf.model.domain.DropboxGateway"/>
         <mapping class="com.codeshelf.model.domain.IronMqGateway"/>
