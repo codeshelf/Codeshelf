@@ -623,7 +623,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			double data_throughput = (totalBytesSent.get() * 8) / time;
 			double packet_throughput = totalPacketsSent.get() / time;
 			
-			return new String("Raido Sent Report - Total bytes sent: " + totalBytesSent.get() + " Data Througput: " + formatter.format(data_throughput) + " bps" +
+			return new String("Radio Sent Report - Total bytes sent: " + totalBytesSent.get() + " Data Througput: " + formatter.format(data_throughput) + " bps" +
 				" Total Packets sent: " + totalPacketsSent + " Packet Throughput: " + formatter.format(packet_throughput) + "/sec" + " Elapsed time: " + formatter.format(time) + " (secs)");
 		}
 		
