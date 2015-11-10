@@ -51,11 +51,13 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 		ScheduledJobType type;
 		String cronExpression;
 		Date nextScheduled;
+		boolean running;
 		
-		ScheduledJobView(ScheduledJobType type, CronExpression cronExpression) {
+		ScheduledJobView(ScheduledJobType type, CronExpression cronExpression, boolean running) {
 			this.type = type;
 			this.cronExpression = cronExpression.getCronExpression();
 			this.nextScheduled = cronExpression.getNextValidTimeAfter(DateTime.now().toDate());
+			this.running = running;
 		}
 	}
 	
@@ -188,7 +190,11 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 			for (Entry<ScheduledJobType, CronExpression> entry : jobs.entrySet()) {
 				ScheduledJobType jobType = entry.getKey();
 				Optional<JobFuture<ScheduledJobType>> future = service.get().hasRunningJob(jobType);
-				jobViews.add(new ScheduledJobView(entry.getKey(), entry.getValue()));
+				boolean running = false;
+				if(future.isPresent()) {
+					running = !future.get().isDone();
+				}
+				jobViews.add(new ScheduledJobView(entry.getKey(), entry.getValue(), running));
 			}
 			return jobViews;
 		}
