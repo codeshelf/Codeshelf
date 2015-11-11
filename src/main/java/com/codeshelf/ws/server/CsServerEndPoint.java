@@ -25,6 +25,7 @@ import com.codeshelf.ws.io.JsonDecoder;
 import com.codeshelf.ws.io.JsonEncoder;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.protocol.message.MessageABC;
+import com.codeshelf.ws.protocol.message.NotificationMessage;
 import com.codeshelf.ws.protocol.request.LoginRequest;
 import com.codeshelf.ws.protocol.request.RequestABC;
 import com.codeshelf.ws.protocol.response.ResponseABC;
@@ -99,7 +100,12 @@ public class CsServerEndPoint {
 						msgName,
 						setUserContext.getUsername(),
 						setTenantContext.getId());
-				} else {
+				} else if (NotificationMessage.class.isAssignableFrom(message.getClass())) {
+					NotificationMessage noteMessage = (NotificationMessage) message;
+					// So far, only site controller producing notification messages. Taking the user name as that.
+					LOGGER.info("Got {} message. Device={}; siteController={}", noteMessage.getEventType(), noteMessage.getDevicePersistentId(),setUserContext.getUsername());
+				}
+				else {
 					LOGGER.info("Got message {} from user {} on tenant {}",
 						msgName,
 						setUserContext.getUsername(),
