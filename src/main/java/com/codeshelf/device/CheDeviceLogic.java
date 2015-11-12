@@ -71,7 +71,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	// Currently, these cannot be longer than 20 characters.
 	// "SCAN START LOCATION" is at the 20 limit. If you change to "SCAN STARTING LOCATION", you get very bad behavior. The class loader will not find the CheDeviceLogic. Repeating throws.	
 	protected static final String					EMPTY_MSG								= cheLine("");
-	protected static final String					INVALID_SCAN_MSG						= cheLine("INVALID");
+	protected static final String					INVALID_SCAN_MSG						= cheLine("INVALID SCAN");
 	protected static final String					SCAN_USERID_MSG							= cheLine("SCAN BADGE");
 	protected static final String					SCAN_START_LOCATION_MSG					= cheLine("SCAN START LOCATION");
 	protected static final String					OR_START_WORK_MSG						= cheLine("OR START WORK");
