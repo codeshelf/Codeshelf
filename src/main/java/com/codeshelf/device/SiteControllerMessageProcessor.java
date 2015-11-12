@@ -24,6 +24,7 @@ import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
 import com.codeshelf.ws.protocol.request.PingRequest;
 import com.codeshelf.ws.protocol.request.RequestABC;
+import com.codeshelf.ws.protocol.response.GenericDeviceResponse;
 import com.codeshelf.ws.protocol.response.LinkRemoteCheResponse;
 import com.codeshelf.ws.protocol.response.CompleteWorkInstructionResponse;
 import com.codeshelf.ws.protocol.response.ComputeWorkResponse;
@@ -194,36 +195,42 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 						devodingResponse.getDecodedLocation());
 				}
 			}
-			
+
 			else if (response instanceof InfoResponse) {
 				InfoResponse infoResponse = (InfoResponse) response;
 				if (response.getStatus() == ResponseStatus.Success) {
 					this.deviceManager.processInfoResponse(infoResponse.getNetworkGuid(), infoResponse.getInfo());
 				}
 			}
-			
+
 			else if (response instanceof PalletizerItemResponse) {
 				PalletizerItemResponse palletizerResponse = (PalletizerItemResponse) response;
 				if (response.getStatus() == ResponseStatus.Success) {
-					this.deviceManager.processPalletizerItemResponse(palletizerResponse.getNetworkGuid(), palletizerResponse.getInfo());
+					this.deviceManager.processPalletizerItemResponse(palletizerResponse.getNetworkGuid(),
+						palletizerResponse.getInfo());
 				}
 			}
-			
+
 			else if (response instanceof PalletizerRemoveOrderResponse) {
 				PalletizerRemoveOrderResponse palletizerRemoveResponse = (PalletizerRemoveOrderResponse) response;
 				if (response.getStatus() == ResponseStatus.Success) {
-					this.deviceManager.processPalletizerRemoveResponse(palletizerRemoveResponse.getNetworkGuid(), palletizerRemoveResponse.getError());
+					this.deviceManager.processPalletizerRemoveResponse(palletizerRemoveResponse.getNetworkGuid(),
+						palletizerRemoveResponse.getError());
 				}
 			}
-			
+
 			// Handle server-side errors
 			else if (response instanceof FailureResponse) {
 				FailureResponse failureResponse = (FailureResponse) response;
 				this.deviceManager.processFailureResponse(failureResponse);
 			}
 
+			else if (response instanceof GenericDeviceResponse) {
+				// Currently LogoutCommand and  PalletizerCompleteWiCommand produce generic DeviceResponseABC
+			}
+
 			else {
-				LOGGER.warn("Failed to handle response " + response);
+				LOGGER.warn("Failed to handle response {}", response);
 			}
 		} finally {
 			this.clearDeviceContext();

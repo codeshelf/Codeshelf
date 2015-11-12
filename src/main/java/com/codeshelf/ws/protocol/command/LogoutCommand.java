@@ -5,7 +5,7 @@ import java.util.UUID;
 import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.ws.protocol.request.LogoutRequest;
-import com.codeshelf.ws.protocol.response.DeviceResponseABC;
+import com.codeshelf.ws.protocol.response.GenericDeviceResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
@@ -22,7 +22,7 @@ public class LogoutCommand extends CommandABC{
 
 	@Override
 	public ResponseABC exec() {
-		DeviceResponseABC response = new DeviceResponseABC();
+		GenericDeviceResponse response = new GenericDeviceResponse();
 		String cheId = request.getDeviceId();
 		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
 		if (che != null) {

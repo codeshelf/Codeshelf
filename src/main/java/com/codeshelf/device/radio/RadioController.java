@@ -526,7 +526,8 @@ public class RadioController implements IRadioController {
 	private void processAssocCmd(CommandAssocABC inCommand, NetAddress inSrcAddr) {
 
 		// Figure out what kind of associate sub-command we have.
-		String rememberedGuid = ContextLogging.rememberThenSetNetGuid(inCommand.getGUID());
+		// Already in guid context from handleInbountPacket, so do not need rememberThenSetNetGuid
+		// String rememberedGuid = ContextLogging.rememberThenSetNetGuid(inCommand.getGUID());
 		try {
 			switch (inCommand.getExtendedCommandID().getValue()) {
 				case CommandAssocABC.ASSOC_REQ_COMMAND:
@@ -548,7 +549,7 @@ public class RadioController implements IRadioController {
 				default:
 			}
 		} finally {
-			ContextLogging.restoreNetGuid(rememberedGuid);
+			// ContextLogging.restoreNetGuid(rememberedGuid);
 		}
 
 	}
@@ -667,7 +668,8 @@ public class RadioController implements IRadioController {
 		INetworkDevice foundDevice = mDeviceGuidMap.get(new NetGuid("0x" + uid));
 
 		if (foundDevice != null) {
-			String rememberedGuid = ContextLogging.rememberThenSetNetGuid(foundDevice.getGuid());
+			// Already in guid context from handleInbountPacket, so do not need rememberThenSetNetGuid
+			// String rememberedGuid = ContextLogging.rememberThenSetNetGuid(foundDevice.getGuid());
 			try {
 				CommandAssocAck ackCmd;
 				LOGGER.info("Assoc check for {}", foundDevice);
@@ -721,7 +723,7 @@ public class RadioController implements IRadioController {
 					networkDeviceBecameActive(foundDevice, restartEnum);
 				}
 			} finally {
-				ContextLogging.restoreNetGuid(rememberedGuid);
+				// ContextLogging.restoreNetGuid(rememberedGuid);
 			}
 		}
 	}
@@ -751,7 +753,8 @@ public class RadioController implements IRadioController {
 	 * @param inSrcAddr
 	 */
 	private void sendPacketAck(INetworkDevice device, final byte inAckId, final NetworkId inNetId, final NetAddress inSrcAddr) {
-		String rememberedGuid = ContextLogging.rememberThenSetNetGuid(device.getGuid());
+		// Already in guid context from handleInbountPacket, so do not need rememberThenSetNetGuid
+		// String rememberedGuid = ContextLogging.rememberThenSetNetGuid(device.getGuid());
 		try {
 			LOGGER.info("ACKing packet: ackId={}; netId={}; srcAddr={}", inAckId, inNetId, inSrcAddr);
 			device.setLastIncomingAckId(inAckId);
@@ -763,7 +766,7 @@ public class RadioController implements IRadioController {
 			
 			packetSchedulerService.addAckPacketToSchedule(ackPacket, device);
 		} finally {
-			ContextLogging.restoreNetGuid(rememberedGuid);
+			// ContextLogging.restoreNetGuid(rememberedGuid);
 		}
 
 	}
@@ -825,7 +828,8 @@ public class RadioController implements IRadioController {
 	 *            The device that just became active.
 	 */
 	private void networkDeviceBecameActive(INetworkDevice inNetworkDevice, DeviceRestartCauseEnum restartEnum) {
-		String rememberedGuid = ContextLogging.rememberThenSetNetGuid(inNetworkDevice.getGuid());
+		// Already in guid context from handleInbountPacket, so do not need rememberThenSetNetGuid
+		// String rememberedGuid = ContextLogging.rememberThenSetNetGuid(inNetworkDevice.getGuid());
 		LOGGER.info("networkDeviceBecameActive called");
 		try {
 			inNetworkDevice.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED);
@@ -834,7 +838,7 @@ public class RadioController implements IRadioController {
 				radioEventListener.deviceActive(inNetworkDevice);
 			}
 		} finally {
-			ContextLogging.restoreNetGuid(rememberedGuid);
+			// ContextLogging.restoreNetGuid(rememberedGuid);
 		}
 
 	}
@@ -851,7 +855,8 @@ public class RadioController implements IRadioController {
 
 		INetworkDevice device = mDeviceNetAddrMap.get(inSrcAddr);
 		if (device != null) {
-			String rememberedGuid = ContextLogging.rememberThenSetNetGuid(device.getGuid());
+			// Already in guid context from handleInbountPacket, so do not need rememberThenSetNetGuid
+		//	String rememberedGuid = ContextLogging.rememberThenSetNetGuid(device.getGuid());
 			try {
 				switch (inCommand.getExtendedCommandID().getValue()) {
 					case CommandControlABC.SCAN:
@@ -878,7 +883,7 @@ public class RadioController implements IRadioController {
 						break;
 				}
 			} finally {
-				ContextLogging.restoreNetGuid(rememberedGuid);
+				// ContextLogging.restoreNetGuid(rememberedGuid);
 			}
 		}
 
