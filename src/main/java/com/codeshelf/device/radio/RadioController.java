@@ -526,7 +526,7 @@ public class RadioController implements IRadioController {
 	private void processAssocCmd(CommandAssocABC inCommand, NetAddress inSrcAddr) {
 
 		// Figure out what kind of associate sub-command we have.
-		ContextLogging.setNetGuid(inCommand.getGUID());
+		String rememberedGuid = ContextLogging.rememberThenSetNetGuid(inCommand.getGUID());
 		try {
 			switch (inCommand.getExtendedCommandID().getValue()) {
 				case CommandAssocABC.ASSOC_REQ_COMMAND:
@@ -548,7 +548,7 @@ public class RadioController implements IRadioController {
 				default:
 			}
 		} finally {
-			ContextLogging.clearNetGuid();
+			ContextLogging.restoreNetGuid(rememberedGuid);
 		}
 
 	}
@@ -591,7 +591,7 @@ public class RadioController implements IRadioController {
 			INetworkDevice foundDevice = mDeviceGuidMap.get(theGuid);
 
 			if (foundDevice != null) {
-				ContextLogging.setNetGuid(foundDevice.getGuid());
+				String rememberedGuid = ContextLogging.rememberThenSetNetGuid(foundDevice.getGuid());
 				try {
 
 					foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.SETUP);
@@ -639,7 +639,7 @@ public class RadioController implements IRadioController {
 					
 					foundDevice.setDeviceStateEnum(NetworkDeviceStateEnum.ASSIGN_SENT);
 				} finally {
-					ContextLogging.clearNetGuid();
+					ContextLogging.restoreNetGuid(rememberedGuid);
 				}
 			}
 		}
@@ -667,7 +667,7 @@ public class RadioController implements IRadioController {
 		INetworkDevice foundDevice = mDeviceGuidMap.get(new NetGuid("0x" + uid));
 
 		if (foundDevice != null) {
-			ContextLogging.setNetGuid(foundDevice.getGuid());
+			String rememberedGuid = ContextLogging.rememberThenSetNetGuid(foundDevice.getGuid());
 			try {
 				CommandAssocAck ackCmd;
 				LOGGER.info("Assoc check for {}", foundDevice);
@@ -721,7 +721,7 @@ public class RadioController implements IRadioController {
 					networkDeviceBecameActive(foundDevice, restartEnum);
 				}
 			} finally {
-				ContextLogging.clearNetGuid();
+				ContextLogging.restoreNetGuid(rememberedGuid);
 			}
 		}
 	}
@@ -751,7 +751,7 @@ public class RadioController implements IRadioController {
 	 * @param inSrcAddr
 	 */
 	private void sendPacketAck(INetworkDevice device, final byte inAckId, final NetworkId inNetId, final NetAddress inSrcAddr) {
-		ContextLogging.setNetGuid(device.getGuid());
+		String rememberedGuid = ContextLogging.rememberThenSetNetGuid(device.getGuid());
 		try {
 			LOGGER.info("ACKing packet: ackId={}; netId={}; srcAddr={}", inAckId, inNetId, inSrcAddr);
 			device.setLastIncomingAckId(inAckId);
@@ -763,7 +763,7 @@ public class RadioController implements IRadioController {
 			
 			packetSchedulerService.addAckPacketToSchedule(ackPacket, device);
 		} finally {
-			ContextLogging.clearNetGuid();
+			ContextLogging.restoreNetGuid(rememberedGuid);
 		}
 
 	}
@@ -778,8 +778,10 @@ public class RadioController implements IRadioController {
 		}
 
 		INetworkDevice device = this.mDeviceNetAddrMap.get(packetSourceAddress);
+		// null device is a possibility here. Therefore, somewhat unusual handling of rememberedGuid
+		String rememberedGuid = ContextLogging.getNetGuid();	
 		if (device != null) {
-			ContextLogging.setNetGuid(device.getGuid());
+			rememberedGuid = ContextLogging.rememberThenSetNetGuid(device.getGuid());
 			device.setLastPacketReceivedTime(System.currentTimeMillis());
 		}
 
@@ -810,7 +812,7 @@ public class RadioController implements IRadioController {
 				}
 //			}
 		} finally {
-			ContextLogging.clearNetGuid();
+			ContextLogging.restoreNetGuid(rememberedGuid);
 		}
 
 	}
@@ -823,7 +825,7 @@ public class RadioController implements IRadioController {
 	 *            The device that just became active.
 	 */
 	private void networkDeviceBecameActive(INetworkDevice inNetworkDevice, DeviceRestartCauseEnum restartEnum) {
-		ContextLogging.setNetGuid(inNetworkDevice.getGuid());
+		String rememberedGuid = ContextLogging.rememberThenSetNetGuid(inNetworkDevice.getGuid());
 		LOGGER.info("networkDeviceBecameActive called");
 		try {
 			inNetworkDevice.setDeviceStateEnum(NetworkDeviceStateEnum.STARTED);
@@ -832,7 +834,7 @@ public class RadioController implements IRadioController {
 				radioEventListener.deviceActive(inNetworkDevice);
 			}
 		} finally {
-			ContextLogging.clearNetGuid();
+			ContextLogging.restoreNetGuid(rememberedGuid);
 		}
 
 	}
@@ -849,7 +851,7 @@ public class RadioController implements IRadioController {
 
 		INetworkDevice device = mDeviceNetAddrMap.get(inSrcAddr);
 		if (device != null) {
-			ContextLogging.setNetGuid(device.getGuid());
+			String rememberedGuid = ContextLogging.rememberThenSetNetGuid(device.getGuid());
 			try {
 				switch (inCommand.getExtendedCommandID().getValue()) {
 					case CommandControlABC.SCAN:
@@ -876,7 +878,7 @@ public class RadioController implements IRadioController {
 						break;
 				}
 			} finally {
-				ContextLogging.clearNetGuid();
+				ContextLogging.restoreNetGuid(rememberedGuid);
 			}
 		}
 
@@ -934,7 +936,7 @@ public class RadioController implements IRadioController {
 
 	@Override
 	public synchronized final void addNetworkDevice(final INetworkDevice inNetworkDevice) {
-		ContextLogging.setNetGuid(inNetworkDevice.getGuid());
+		String rememberedGuid = ContextLogging.rememberThenSetNetGuid(inNetworkDevice.getGuid());
 		try {
 			// If the device has no address then assign one.
 			if ((inNetworkDevice.getAddress() == null) || (inNetworkDevice.getAddress().equals(mServerAddress))) {
@@ -948,7 +950,7 @@ public class RadioController implements IRadioController {
 			mDeviceNetAddrMap.put(inNetworkDevice.getAddress(), inNetworkDevice);
 
 		} finally {
-			ContextLogging.clearNetGuid();
+			ContextLogging.restoreNetGuid(rememberedGuid);
 		}
 
 	}
@@ -963,13 +965,13 @@ public class RadioController implements IRadioController {
 	 */
 	@Override
 	public synchronized final void removeNetworkDevice(INetworkDevice inNetworkDevice) {
-		ContextLogging.setNetGuid(inNetworkDevice.getGuid());
+		String rememberedGuid = ContextLogging.rememberThenSetNetGuid(inNetworkDevice.getGuid());
 		try {
 			mDeviceGuidMap.remove(inNetworkDevice.getGuid());
 			mDeviceNetAddrMap.remove(inNetworkDevice.getAddress());
 			packetSchedulerService.removeDevice(inNetworkDevice);
 		} finally {
-			ContextLogging.clearNetGuid();
+			ContextLogging.restoreNetGuid(rememberedGuid);
 		}
 	}
 
