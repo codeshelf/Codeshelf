@@ -415,7 +415,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 							frameBuffer[bytesReceived++] = (byte) nextByte;
 						} catch (ArrayIndexOutOfBoundsException e) {
 							// Note the error and send the full frame up for handling.
-							LOGGER.error("", e);
+							LOGGER.error("Serial framing error", e);
 							bytesReceived = MAX_FRAME_BYTES;
 							break loop;
 						}
