@@ -58,6 +58,7 @@ public class IronMqGatewayOnlineTest extends MockDaoTest {
 		}
 	}
 	
+	@Ignore
 	@Test //TODO Tests Connectivity. Could put into a Category that commonly excludes
 	public void networkConnectionTest() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
@@ -89,8 +90,6 @@ public class IronMqGatewayOnlineTest extends MockDaoTest {
 		this.getTenantPersistenceService().commitTransaction();
 	}
 	
-	
-	@Ignore
 	@Test //TODO Tests Connectivity. Could put into a Category that commonly excludes
 	public void badTokenTest() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
