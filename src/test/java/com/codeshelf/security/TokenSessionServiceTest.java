@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.security.TokenSession.Status;
 import com.codeshelf.testframework.MockDaoTest;
+import com.codeshelf.util.ThreadUtils;
 
 public class TokenSessionServiceTest extends MockDaoTest {
 	static final Logger	LOGGER	= LoggerFactory.getLogger(TokenSessionServiceTest.class);
@@ -70,10 +71,16 @@ public class TokenSessionServiceTest extends MockDaoTest {
 
 		ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 		CompletionService<TokenSession> completionService = new ExecutorCompletionService<TokenSession>(executorService);
-		int TOTAL = 2;
+		int TOTAL = 1000;
 		final Set<String> tokenSet = new HashSet<String>();
+		
+		// We think the millisecond time stamp is a component of the token creation. If same session, tenant, ms, make get duplicate token.
+		// So, contrived here to separate by two ms.
+		long previousTimeStamp = System.currentTimeMillis();
+
 		for (int i = 0; i < TOTAL; i++) {
 			final int userId = i;
+			previousTimeStamp = System.currentTimeMillis();
 			completionService.submit(new Callable<TokenSession>() {
 
 				@Override
@@ -86,6 +93,10 @@ public class TokenSessionServiceTest extends MockDaoTest {
 				}
 
 			});
+			ThreadUtils.sleep(2);
+			if (System.currentTimeMillis() == previousTimeStamp){
+				LOGGER.error("might get a failure"); // Never see this, but still get a failure sometimes. only 999 of 1000 unique tokens
+			}
 		}
 		for (int i = 0; i < TOTAL; i++) {
 			TokenSession resp = completionService.take().get();
@@ -145,7 +156,8 @@ public class TokenSessionServiceTest extends MockDaoTest {
 
 		// has valid timestamp
 		Assert.assertTrue(resp.getTokenTimestamp() <= System.currentTimeMillis());
-		Assert.assertTrue(resp.getTokenTimestamp() > System.currentTimeMillis() - 1000);
+		// was 1000 ms, but now we are intentionally creating them slower.
+		Assert.assertTrue(resp.getTokenTimestamp() > System.currentTimeMillis() - 10000);
 
 	}
 
