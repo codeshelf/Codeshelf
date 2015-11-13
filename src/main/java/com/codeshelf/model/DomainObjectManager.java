@@ -3,6 +3,7 @@ package com.codeshelf.model;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,10 +112,7 @@ public class DomainObjectManager {
 		archiveableWisCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
 		archiveableWisCrit.add(Restrictions.lt("created", desiredTime));
 
-		reportables.add(getArchivableString("WorkInstruction",
-			totalWisCrit,
-			archiveableWisCrit,
-			WorkInstruction.staticGetDao()));
+		reportables.add(getArchivableString("WorkInstruction", totalWisCrit, archiveableWisCrit, WorkInstruction.staticGetDao()));
 
 		// Orders
 		Criteria totalOrdersCrit = OrderHeader.staticGetDao().createCriteria();
@@ -136,10 +134,7 @@ public class DomainObjectManager {
 		archiveableDetailsCrit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
 		archiveableDetailsCrit.add(Restrictions.lt("p.dueDate", desiredTime));
 
-		reportables.add(getArchivableString("OrderDetail",
-			totalDetailsCrit,
-			archiveableDetailsCrit,
-			OrderDetail.staticGetDao()));
+		reportables.add(getArchivableString("OrderDetail", totalDetailsCrit, archiveableDetailsCrit, OrderDetail.staticGetDao()));
 
 		// ContainerUse
 		Criteria totalUsesCrit = ContainerUse.staticGetDao().createCriteria();
@@ -153,10 +148,7 @@ public class DomainObjectManager {
 		archiveableUsesCrit.add(Restrictions.isNotNull("orderHeader"));
 		archiveableUsesCrit.add(Restrictions.lt("oh.dueDate", desiredTime));
 
-		reportables.add(getArchivableString("ContainerUse",
-			totalUsesCrit,
-			archiveableUsesCrit,
-			ContainerUse.staticGetDao()));
+		reportables.add(getArchivableString("ContainerUse", totalUsesCrit, archiveableUsesCrit, ContainerUse.staticGetDao()));
 
 		// ImportReceipts
 		Criteria totalReceiptCrit = ImportReceipt.staticGetDao().createCriteria();
@@ -166,10 +158,7 @@ public class DomainObjectManager {
 		archiveableReceiptCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
 		archiveableReceiptCrit.add(Restrictions.lt("received", desiredTime));
 
-		reportables.add(getArchivableString("ImportReceipt",
-			totalReceiptCrit,
-			archiveableReceiptCrit,
-			ImportReceipt.staticGetDao()));
+		reportables.add(getArchivableString("ImportReceipt", totalReceiptCrit, archiveableReceiptCrit, ImportReceipt.staticGetDao()));
 
 		// ExportMessages
 		Criteria totalMessageCrit = ExportMessage.staticGetDao().createCriteria();
@@ -179,10 +168,7 @@ public class DomainObjectManager {
 		archiveableMessageCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
 		archiveableMessageCrit.add(Restrictions.lt("created", desiredTime));
 
-		reportables.add(getArchivableString("ExportMessage",
-			totalMessageCrit,
-			archiveableMessageCrit,
-			ExportMessage.staticGetDao()));
+		reportables.add(getArchivableString("ExportMessage", totalMessageCrit, archiveableMessageCrit, ExportMessage.staticGetDao()));
 
 		// WorkInstructionBeans
 		Criteria totalBeanCrit = WorkInstructionCsvBean.staticGetDao().createCriteria();
@@ -205,10 +191,7 @@ public class DomainObjectManager {
 		archiveableEventCrit.add(Restrictions.eq("facility.persistentId", facilityUUID));
 		archiveableEventCrit.add(Restrictions.lt("created", desiredTime));
 
-		reportables.add(getArchivableString("WorkerEvent",
-			totalEventCrit,
-			archiveableEventCrit,
-			WorkerEvent.staticGetDao()));
+		reportables.add(getArchivableString("WorkerEvent", totalEventCrit, archiveableEventCrit, WorkerEvent.staticGetDao()));
 
 		// Objects where it is not easy to know how many will be be deleted until all of the above purges are done
 
@@ -556,6 +539,18 @@ public class DomainObjectManager {
 		return deletedCount;
 	}
 
+	private final List<WorkInstruction> findByDetailPersistentIdList(List<UUID> inIdList) {
+		if (inIdList != null && inIdList.isEmpty()) {
+			return Collections.<WorkInstruction> emptyList(); //empty WHERE X IN () causes syntax issue in postgres
+		} else {
+			Criteria criteria = WorkInstruction.staticGetDao().createCriteria();
+			criteria.add(Restrictions.in("orderDetail.persistentId", inIdList));
+			@SuppressWarnings("unchecked")
+			List<WorkInstruction> wiResultsList = (List<WorkInstruction>) criteria.list();
+			return wiResultsList;
+		}
+	}
+
 	/**
 	 * Purge these orders, and related objects, all in the current transaction.
 	 * This imposes a max at one time limit of 100. We expect small values per transaction in production
@@ -576,11 +571,18 @@ public class DomainObjectManager {
 		List<OrderDetail> details = OrderDetail.staticGetDao().findByParentPersistentIdList(orderUuids);
 
 		LOGGER.debug("Phase 3 of order purge: assemble work instructions from the details");
+		/*
 		List<WorkInstruction> wis = new ArrayList<WorkInstruction>();
 		for (OrderDetail detail : details) {
 			List<WorkInstruction> oneOrderWis = detail.getWorkInstructions();
 			wis.addAll(oneOrderWis);
 		}
+		*/
+		List<UUID> detailUuids = new ArrayList<UUID>();
+		for (OrderDetail detail : details) {
+			detailUuids.add(detail.getPersistentId());
+		}
+		List<WorkInstruction> wis = findByDetailPersistentIdList(detailUuids);
 
 		LOGGER.debug("Phase 4 of order purge: delete the assembled work instructions, which delinks from details and che.");
 		safelyDeleteWorkInstructionList(wis);
@@ -589,7 +591,6 @@ public class DomainObjectManager {
 		safelyDeleteDetailsList(details);
 
 		LOGGER.debug("Phase 6 of order purge: delete the orders which delinks from container");
-		
 
 		int deletedCount = 0;
 		for (UUID orderUuid : orderUuids) {
@@ -634,15 +635,15 @@ public class DomainObjectManager {
 		if (deletedCount % 100 != 0)
 			LOGGER.info("deleted {} WorkInstructions ", deletedCount);
 	}
-	
+
 	private void safelyDeleteDetailsList(List<OrderDetail> detailsList) {
 		int deletedCount = 0;
-		
+
 		for (OrderDetail detail : detailsList) {
 
 			OrderHeader order = detail.getParent();
 			if (order != null)
-				order.removeOrderDetail(detail);			
+				order.removeOrderDetail(detail);
 
 			try {
 				OrderDetail.staticGetDao().delete(detail);
@@ -659,8 +660,6 @@ public class DomainObjectManager {
 			LOGGER.info("deleted {} OrderDetails ", deletedCount);
 	}
 
-
-	
 	private int floorDays(int daysOldToCount) {
 		return Math.max(daysOldToCount, 1);
 	}
