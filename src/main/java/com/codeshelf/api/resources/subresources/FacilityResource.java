@@ -301,6 +301,7 @@ public class FacilityResource {
 		return BaseResponse.buildResponse(this.orderService.itemsInQuantityOrder(session, facility.getPersistentId()));
 	}
 
+	@GET
 	@Path("filters")
 	@RequiresPermissions("companion:view")
 	@Produces(MediaType.APPLICATION_JSON)
