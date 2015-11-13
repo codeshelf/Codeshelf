@@ -8,6 +8,7 @@ addExtensionPoint loreal_order_importbean OrderImportBeanTransformation active
 deleteOrders 2105334827
 importOrders orders
 
+STEP
 SITE
 defChe che1 :che1
 logout che1

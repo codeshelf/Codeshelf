@@ -256,8 +256,8 @@ public class PickSimulator {
 	}
 
 	private void scan(String scan) {
+		String rememberedGuid = ContextLogging.rememberThenSetNetGuid(cheDeviceLogic.getGuid());
 		try {
-			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
 			if (useRadio) {
 				CommandControlCreateScan command = new CommandControlCreateScan(NetEndpoint.PRIMARY_ENDPOINT, scan);
 				cheDeviceLogic.sendRadioControllerCommand(command, true);
@@ -266,13 +266,13 @@ public class PickSimulator {
 				cheDeviceLogic.scanCommandReceived(scan);
 			}
 		} finally {
-			ContextLogging.clearNetGuid();
+			ContextLogging.restoreNetGuid(rememberedGuid);
 		}
 	}
 
 	public void buttonPress(int inPosition, int inQuantity) {
+		String rememberedGuid = ContextLogging.rememberThenSetNetGuid(cheDeviceLogic.getGuid());
 		try {
-			ContextLogging.setNetGuid(cheDeviceLogic.getGuid());
 			if (useRadio) {
 				CommandControlCreateButton command = new CommandControlCreateButton(NetEndpoint.PRIMARY_ENDPOINT,
 					(byte) inPosition,
@@ -283,7 +283,7 @@ public class PickSimulator {
 				cheDeviceLogic.simulateButtonPress(inPosition, inQuantity);
 			}
 		} finally {
-			ContextLogging.clearNetGuid();
+			ContextLogging.restoreNetGuid(rememberedGuid);
 		}
 	}
 

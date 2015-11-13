@@ -28,12 +28,12 @@ import com.codeshelf.ws.protocol.response.LinkRemoteCheResponse;
 import com.codeshelf.ws.protocol.response.CompleteWorkInstructionResponse;
 import com.codeshelf.ws.protocol.response.ComputeWorkResponse;
 import com.codeshelf.ws.protocol.response.FailureResponse;
+import com.codeshelf.ws.protocol.response.GenericDeviceResponse;
 import com.codeshelf.ws.protocol.response.GetOrderDetailWorkResponse;
 import com.codeshelf.ws.protocol.response.GetPutWallInstructionResponse;
 import com.codeshelf.ws.protocol.response.InfoResponse;
 import com.codeshelf.ws.protocol.response.InventoryUpdateResponse;
 import com.codeshelf.ws.protocol.response.LoginResponse;
-import com.codeshelf.ws.protocol.response.LogoutResponseABC;
 import com.codeshelf.ws.protocol.response.PalletizerItemResponse;
 import com.codeshelf.ws.protocol.response.PalletizerRemoveOrderResponse;
 import com.codeshelf.ws.protocol.response.PutWallPlacementResponse;
@@ -217,8 +217,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				}
 			}
 			
-			else if (response instanceof LogoutResponseABC) {
-				//At the moment, there is no need to do anything here
+			else if (response instanceof GenericDeviceResponse) {
 			}
 			
 			// Handle server-side errors

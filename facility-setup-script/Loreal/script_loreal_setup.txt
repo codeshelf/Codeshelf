@@ -1,0 +1,5 @@
+STEP
+SERVER
+deleteAllExtensionPoints
+addExtensionPoint loreal_order_createheader OrderImportCreateHeader active
+addExtensionPoint loreal_order_importbean OrderImportBeanTransformation active

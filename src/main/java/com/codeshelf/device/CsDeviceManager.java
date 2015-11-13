@@ -607,7 +607,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		if (!isAttachedToServer)
 			return; // don't get stuck in a loop if device manager is requesting disconnection
 
-		LOGGER.info("Unattached from server");
+		LOGGER.warn("Unattached from server. Sending out 'Server unavailable; please wait...' messages");
 		isAttachedToServer = false;
 		for (INetworkDevice networkDevice : mDeviceMap.values()) {
 			if (networkDevice instanceof CheDeviceLogic) {
@@ -632,7 +632,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	@Override
 	public void disconnected() {
 		unattached();
-		LOGGER.info("Disconnected from server");
+		LOGGER.warn("Disconnected from server");
 	}
 
 	@SuppressWarnings("unused")

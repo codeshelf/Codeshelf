@@ -224,9 +224,12 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			}
 			if ((LOGGER.isDebugEnabled() && (result != null))) {
 				ICommand command = result.getCommand();
+				// unknown guid is a possibility here. Therefore, somewhat unusual handling of rememberedGuid
+				String rememberedGuid = ContextLogging.getNetGuid();	
+
 				if (command instanceof CommandAssocABC) {
 					CommandAssocABC assocCmd = (CommandAssocABC) command;
-					ContextLogging.setNetGuid(assocCmd.getGUID());
+					rememberedGuid = ContextLogging.rememberThenSetNetGuid(assocCmd.getGUID());
 				}
 				try {
 					boolean isMerelyNetManagementTraffic = false;
@@ -241,7 +244,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 				} catch (Exception e) {
 					LOGGER.error("Failed to receive packet from network id {}", inMyNetworkId, e);
 				} finally {
-					ContextLogging.clearNetGuid();
+					ContextLogging.restoreNetGuid(rememberedGuid);
 				}
 			}
 		}
