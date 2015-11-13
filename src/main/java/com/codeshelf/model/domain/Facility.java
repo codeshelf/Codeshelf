@@ -1387,10 +1387,16 @@ public class Facility extends Location {
 	}
 
 	public TimeZone getTimeZone() {
-		return TimeZone.getTimeZone("US/Mountain");
+		String tzId = PropertyBehavior.getProperty(this, FacilityPropertyType.TIMEZONE);
+		TimeZone tz = TimeZone.getTimeZone(tzId);
+		String parsedTzId = tz.getID();
+		if (!tzId.equalsIgnoreCase(parsedTzId)){
+			LOGGER.warn("Unable to parse saved timezone {}. Defaulting to {}", tzId, parsedTzId);
+		}
+		return tz;
 	}
 
-	public FacilityMetric computeMetrics(String dateStr) throws Exception {
+	public FacilityMetric computeMetrics(String dateStr, boolean forceRecalculate) throws Exception {
 		TimeZone facilityTimeZone = getTimeZone();
 		Calendar cal = Calendar.getInstance(facilityTimeZone);
 		if (dateStr != null) {
@@ -1413,6 +1419,15 @@ public class Facility extends Location {
 		Timestamp metricsCollectionEndUTC = new Timestamp(cal.getTimeInMillis());
 
 		FacilityMetric metric = getMetrics(metricsCollectionStartUTC);
+		if (metric != null && !forceRecalculate) {
+			LOGGER.info("Returning previously saved FacilityMetrics value for {} ", metricsCollectionStartUTC);
+			return metric;
+		}
+		if (metric == null) {
+			metric = new FacilityMetric();
+			metric.setParent(this);
+			metric.setDate(metricsCollectionStartUTC);
+		}
 		metric.setUpdated(new Timestamp(System.currentTimeMillis()));
 		metric.setTz(cal.getTimeZone().getID());
 		metric.setDateLocalUI(dateLocalUI);
@@ -1550,13 +1565,9 @@ public class Facility extends Location {
 		filterParams.add(Restrictions.eq("date", date));
 		List<FacilityMetric> metrics = FacilityMetric.staticGetDao().findByFilter(filterParams);
 		FacilityMetric metric = null;
-		if (metrics.isEmpty()) {
-			metric = new FacilityMetric();
-			metric.setParent(this);
-			metric.setDate(date);
-		} else if (metrics.size() == 1) {
+		if (metrics.size() == 1) {
 			metric = metrics.get(0);
-		} else {
+		} else if (metrics.size() > 1) {
 			LOGGER.warn("Found more than one FacilityMertic for facility " + getDomainId() + " at " + date + ". Using latest one.");
 			Timestamp latestTs = new Timestamp(0);
 			for (FacilityMetric metricCheck : metrics) {
@@ -1567,4 +1578,5 @@ public class Facility extends Location {
 		}
 		return metric;
 	}	
+
 }

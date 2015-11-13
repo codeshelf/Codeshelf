@@ -1481,7 +1481,7 @@ public class CheProcessTestPick extends ServerTest {
 		LOGGER.info("5: Generate metrics for the day");
 		FacilityResource facilityResourse = new FacilityResource(workService, null, null, webSocketManagerService, null, null, null, null, null, null);
 		facilityResourse.setFacility(facility);
-		Response response = facilityResourse.computeMetrics(null);
+		Response response = facilityResourse.computeMetrics(null, true);
 		Assert.assertEquals(200, response.getStatus());
 		
 		LOGGER.info("6: Retrieve and verify metrics");

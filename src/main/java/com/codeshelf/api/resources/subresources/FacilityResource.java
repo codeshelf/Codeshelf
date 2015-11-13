@@ -13,6 +13,7 @@ import java.util.UUID;
 import javax.script.ScriptException;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -300,6 +301,7 @@ public class FacilityResource {
 		return BaseResponse.buildResponse(this.orderService.itemsInQuantityOrder(session, facility.getPersistentId()));
 	}
 
+	@GET
 	@Path("filters")
 	@RequiresPermissions("companion:view")
 	@Produces(MediaType.APPLICATION_JSON)
@@ -678,9 +680,10 @@ public class FacilityResource {
 	@POST
 	@Path("/metrics")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response computeMetrics(@FormParam("date") String dateStr){
+	public Response computeMetrics(@FormParam("date") String dateStr, 
+								   @FormParam("forceRecalculate") @DefaultValue(value = "false") boolean forceRecalculate){
 		try {
-			FacilityMetric metric = facility.computeMetrics(dateStr);
+			FacilityMetric metric = facility.computeMetrics(dateStr, forceRecalculate);
 			return BaseResponse.buildResponse(metric);
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
