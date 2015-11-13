@@ -20,12 +20,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Table(name = "facility_property")
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
+@ToString(of = {"parent", "name", "value"})
 public class FacilityProperty extends DomainObjectTreeABC<Facility>{
 	public static class FacilityPropertyDao extends GenericDaoABC<FacilityProperty> implements ITypedDao<FacilityProperty> {
 		public final Class<FacilityProperty> getDaoClass() {
