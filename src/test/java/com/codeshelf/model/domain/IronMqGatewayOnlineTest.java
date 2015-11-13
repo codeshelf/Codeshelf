@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.codeshelf.generators.FacilityGenerator;
@@ -89,6 +90,7 @@ public class IronMqGatewayOnlineTest extends MockDaoTest {
 	}
 	
 	
+	@Ignore
 	@Test //TODO Tests Connectivity. Could put into a Category that commonly excludes
 	public void badTokenTest() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();

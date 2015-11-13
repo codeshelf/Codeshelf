@@ -20,6 +20,7 @@ import com.codeshelf.generators.FacilityGenerator;
 import com.codeshelf.generators.WorkInstructionGenerator;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.FacilityProperty;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.testframework.MockDaoTest;
@@ -55,6 +56,7 @@ public class WiStringifierTest extends MockDaoTest {
 		@SuppressWarnings("rawtypes")
 		ITypedDao dao = mock(ITypedDao.class);
 		useCustomDao(Worker.class, dao);
+		useCustomDao(FacilityProperty.class, dao);
 		
 		String messageBody = subject.stringifyWorkInstruction(wi);
 
