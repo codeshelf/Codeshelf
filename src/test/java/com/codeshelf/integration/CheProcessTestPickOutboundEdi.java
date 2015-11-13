@@ -6,6 +6,7 @@
 package com.codeshelf.integration;
 
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.List;
 
@@ -173,9 +174,12 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 3000);
 		picker.logCheDisplay();
 
-		LOGGER.info("3b: then go to first pick again. Make sure we do not send twice");
-		// picker.scanCommand("START");
-		//picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		LOGGER.info("4: no files produced. Check that");		
+		beginTransaction();
+		facility.reload();
+		List<ExportMessage> exportList = ExportMessage.staticGetDao().getAll();
+		Assert.assertEquals(0, exportList.size());
+		commitTransaction();
 
 	}
 
@@ -366,7 +370,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		
 		LOGGER.info("7: Go through START which will not bring the deleted 22222 back. Then complete the 3 44444 jobs.");
 		picker.loginAndSetup("Picker #1");
-		LOGGER.info("3c: Set up order 44444 at position 3");
+		LOGGER.info("7b: Set up order 44444 at position 3");
 		picker.setupOrderIdAsContainer("44444", "3");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
@@ -386,7 +390,32 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		picker.logout();
 		picker.loginAndSetup("Picker #1");
 		picker.logout();
+		
+		LOGGER.info("8: Five files produced. 3 order on cart, and two order finished on cart");		
+		beginTransaction();
+		facility.reload();
+		List<ExportMessage> exportList = ExportMessage.staticGetDao().getAll();
+		Assert.assertEquals(5, exportList.size());
+		// let's check some fields
+		for (ExportMessage exMes : exportList) {
+			validateExportMessage(exMes);
+		}
+		
+		commitTransaction();
+
 	}
+	
+	/**
+	 * Trivial validator
+	 */
+	private void validateExportMessage(ExportMessage exMes){
+		Timestamp messageTime = exMes.getCreated();
+		Assert.assertNotNull(messageTime);
+		Assert.assertTrue(messageTime.getTime() > System.currentTimeMillis() - 20000); // created within the last 20 seconds.
+		Assert.assertNotNull(exMes.getDomainId());
+		Assert.assertNotNull(exMes.getContents());
+	}
+	
 
 	/**
 	 * This is to replicate the situation seen at PFSWeb
@@ -1057,6 +1086,18 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		Assert.assertTrue(expectedItems.isEmpty());
 		facility = facility.reload();
 		waitForExporterThreadToEmpty(facility);
+		commitTransaction();
+
+		LOGGER.info("4: Two files produced.");		
+		beginTransaction();
+		facility.reload();
+		List<ExportMessage> exportList = ExportMessage.staticGetDao().getAll();
+		Assert.assertEquals(2, exportList.size());
+		// let's check some fields
+		for (ExportMessage exMes : exportList) {
+			validateExportMessage(exMes);
+		}
+		
 		commitTransaction();
 
 	}
