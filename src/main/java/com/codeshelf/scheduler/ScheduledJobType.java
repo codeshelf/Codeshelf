@@ -22,12 +22,18 @@ import com.google.common.base.Optional;
  */
 public enum ScheduledJobType {
 
-	AccumulateDailyMetrics(NotImplementedJob.class,
+	AccumulateDailyMetrics(AccumulateDailyMetricsJob.class,
 			"Summarize previous day's completed work instructions.",
 			"0 1 0 * * ?",
 			null,
 			false,
 			ScheduledJobCategory.METRIC),
+	CheckActiveSiteControllerHealth(NotImplementedJob.class,
+			"Check Active Site Controllers.",
+			"*/10 1 0 * * ?",
+			null,
+			false,
+			ScheduledJobCategory.CHECK),
 	DatabasePurge(DataPurgeJob.class,
 			"Purge old data.",
 			"0 2 0 * * ?",
@@ -55,9 +61,7 @@ public enum ScheduledJobType {
 			null,
 			false,
 			ScheduledJobCategory.EDI,
-			ScheduledJobCategory.PURGE
-	),
-			
+			ScheduledJobCategory.PURGE),
 	PutWallLightRefresher(NotImplementedJob.class,
 			"Periodically make sure putwall lights are current.",
 			"0 6 0 * * ?",
