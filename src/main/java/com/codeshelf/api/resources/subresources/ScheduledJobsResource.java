@@ -85,10 +85,12 @@ public class ScheduledJobsResource {
 	@Path("/{type}/schedule")
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response updateSchedule(@PathParam("type") String typeStr, @FormParam("cronExpression") String cronExpression) throws SchedulerException {
+	public Response updateSchedule(@PathParam("type") String typeStr, @FormParam("active") boolean active, @FormParam("cronExpression") String cronExpression) throws SchedulerException {
 		ScheduledJobType type = ScheduledJobType.valueOf(typeStr);
 		try {
-			schedulerService.scheduleJob(new ScheduledJob(facility, type, cronExpression));
+			ScheduledJob job = new ScheduledJob(facility, type, cronExpression);
+			job.setActive(active);
+			schedulerService.scheduleJob(job);
 			return BaseResponse.buildResponse(ImmutableMap.of("cronExpression", cronExpression));
 		}
 		catch(ParseException e) {
