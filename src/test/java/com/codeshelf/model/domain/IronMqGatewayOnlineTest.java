@@ -8,17 +8,18 @@ import java.util.Map.Entry;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.codeshelf.generators.FacilityGenerator;
 import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.testframework.MockDaoTest;
 
-// TODO: should use mock DAO 
+// TODO: should use mock DAO
 public class IronMqGatewayOnlineTest extends MockDaoTest {
 
 	private Map<String, String> tempPropertyRestore  = new HashMap<String, String>();
-	
+
 	@Before
 	public void doBefore() {
 		super.doBefore();
@@ -29,8 +30,8 @@ public class IronMqGatewayOnlineTest extends MockDaoTest {
 				"javax.net.ssl.trustStore",
 				"javax.net.ssl.trustStorePassword",
 				"javax.net.ssl.trustStoreType",
-				
-				
+
+
 		};
 		for (String key : keys) {
 			tempPropertyRestore.put(key, System.clearProperty(key));
@@ -56,14 +57,15 @@ public class IronMqGatewayOnlineTest extends MockDaoTest {
 			}
 		}
 	}
-	
+
 	@Test //TODO Tests Connectivity. Could put into a Category that commonly excludes
+    @Ignore
 	public void networkConnectionTest() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		
+
 		FacilityGenerator facilityGenerator = new FacilityGenerator();
 		Facility facility = facilityGenerator.generateValid();
-		
+
 		IronMqGateway gateway = new IronMqGateway();
 		gateway.setDomainId("IRONMQTEST");
 		gateway.setTransportType(EdiTransportType.IRONMQ);
@@ -84,18 +86,18 @@ public class IronMqGatewayOnlineTest extends MockDaoTest {
 		}
 		while(messages.length > 0);
 		Assert.assertTrue("Did not find work instruction message: " + message, found);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
-	
+
+
 	@Test //TODO Tests Connectivity. Could put into a Category that commonly excludes
 	public void badTokenTest() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
 
 		FacilityGenerator facilityGenerator = new FacilityGenerator();
 		Facility facility = facilityGenerator.generateValid();
-		
+
 		IronMqGateway gateway = new IronMqGateway();
 		gateway.setDomainId("IRONMQTEST");
 		facility.addEdiGateway(gateway);
@@ -107,7 +109,7 @@ public class IronMqGatewayOnlineTest extends MockDaoTest {
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
@@ -117,7 +119,7 @@ public class IronMqGatewayOnlineTest extends MockDaoTest {
 
 		FacilityGenerator facilityGenerator = new FacilityGenerator();
 		Facility facility = facilityGenerator.generateValid();
-		
+
 		IronMqGateway gateway = new IronMqGateway();
 		gateway.setDomainId("IRONMQTEST");
 		facility.addEdiGateway(gateway);
@@ -129,7 +131,7 @@ public class IronMqGatewayOnlineTest extends MockDaoTest {
 		} catch(IOException e) {
 			e.printStackTrace();
 
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 }
 	}
