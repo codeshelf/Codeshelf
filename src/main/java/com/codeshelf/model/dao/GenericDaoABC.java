@@ -172,7 +172,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		}
 	}
 
-	public final List<T> findByFilter(List<Criterion> inFilter) {
+	public final List<T> findByFilter(List<? extends Criterion> inFilter) {
 		// If we have a valid filter then get the filtered objects.
 		Session session = getCurrentSession();
 		Criteria criteria = session.createCriteria(getDaoClass());
@@ -183,7 +183,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		return results;
 	}
 
-	public final List<T> findByFilter(List<Criterion> inFilter, List<Order> inOrderBys) {
+	public final List<T> findByFilter(List<? extends Criterion> inFilter, List<Order> inOrderBys) {
 		// If we have a valid filter then get the filtered objects.
 		Session session = getCurrentSession();
 		Criteria criteria = session.createCriteria(getDaoClass());

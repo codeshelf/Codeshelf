@@ -91,12 +91,12 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 		throw new NotImplementedException();
 	}
 
-	public final List<T> findByFilter(List<Criterion> inFilter) {
+	public final List<T> findByFilter(List<? extends Criterion> inFilter) {
 		throw new NotImplementedException();
 	}
 
 	@Override
-	public List<T> findByFilter(List<Criterion> inFilter, List<Order> inOrderBys) {
+	public List<T> findByFilter(List<? extends Criterion> inFilter, List<Order> inOrderBys) {
 		throw new NotImplementedException();
 	}
 

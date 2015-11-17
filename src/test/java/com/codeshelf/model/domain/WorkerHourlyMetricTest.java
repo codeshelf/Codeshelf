@@ -33,7 +33,8 @@ public class WorkerHourlyMetricTest extends HibernateTest{
 		Worker.staticGetDao().store(worker);
 		behavior.metricOpenSession(worker);
 		
-		List<WorkerHourlyMetric> metrics = WorkerHourlyMetric.staticGetDao().getAll();
+		
+		List<WorkerHourlyMetric> metrics = behavior.findMetrics(worker);
 		Assert.assertEquals(1, metrics.size());
 		WorkerHourlyMetric metric = metrics.get(0);
 		Assert.assertEquals(testTime, metric.getLastSessionStart());
@@ -49,7 +50,7 @@ public class WorkerHourlyMetricTest extends HibernateTest{
 		Worker.staticGetDao().store(worker);
 		behavior.metricCloseSession(worker);
 		
-		metric = WorkerHourlyMetric.staticGetDao().getAll().get(0);
+		metric = behavior.findMetrics(worker).get(0);
 		Assert.assertEquals(5, (int)metric.getLoggedInDurationMin());
 		Assert.assertFalse(metric.isSessionActive());
 		commitTransaction();
@@ -61,7 +62,7 @@ public class WorkerHourlyMetricTest extends HibernateTest{
 		worker.setLastLogin(testTime);
 		Worker.staticGetDao().store(worker);
 		behavior.metricOpenSession(worker);
-		metric = WorkerHourlyMetric.staticGetDao().getAll().get(0);
+		metric = behavior.findMetrics(worker).get(0);
 		Assert.assertEquals(5, (int)metric.getLoggedInDurationMin());
 		Assert.assertTrue(metric.isSessionActive());
 		commitTransaction();
@@ -72,7 +73,7 @@ public class WorkerHourlyMetricTest extends HibernateTest{
 		testTime = TimeUtils.addTime(testTime, 15 * TimeUtils.MILLISECOUNDS_IN_MINUTE);
 		worker.setLastLogout(testTime);
 		behavior.metricCloseSession(worker);
-		metric = WorkerHourlyMetric.staticGetDao().getAll().get(0);
+		metric = behavior.findMetrics(worker).get(0);
 		Assert.assertEquals(20, (int)metric.getLoggedInDurationMin());
 		Assert.assertFalse(metric.isSessionActive());
 		commitTransaction();
@@ -102,7 +103,7 @@ public class WorkerHourlyMetricTest extends HibernateTest{
 		Timestamp beginningOfHourB = TimeUtils.truncateTimeToHour(testTime);
 		worker.setLastLogout(testTime);
 		behavior.metricCloseSession(worker);
-		List<WorkerHourlyMetric> metrics = WorkerHourlyMetric.staticGetDao().getAll();
+		List<WorkerHourlyMetric> metrics = behavior.findMetrics(worker);
 		Assert.assertEquals(4, metrics.size());
 		for (WorkerHourlyMetric metric : metrics){
 			Assert.assertFalse(metric.isSessionActive());
