@@ -219,7 +219,7 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 				}
 				jobViews.add(new ScheduledJobView(job, running));
 			}
-			jobViews.sort(SORT_BY_TYPE);
+			Collections.sort(jobViews, SORT_BY_TYPE);
 			return jobViews;
 		}
 		
