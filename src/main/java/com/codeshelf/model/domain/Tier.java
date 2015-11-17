@@ -300,6 +300,39 @@ public class Tier extends Location {
 		}
 	}
 
+	/**
+	 * DEV-1312 kludge to offset leds for each slot in a tier.
+	 */
+	public void offSetTierLeds(int offset) {
+		LOGGER.info("Offsetting first/last LED by {} for each slot in {}", offset, this);
+		List<Slot> slotList = this.getActiveChildrenAtLevel(Slot.class);
+		if (slotList.size() == 0) {
+			return;
+		}
+		// Don't really need to sort these as we do something common for each regardless. But follow the pattern.
+		Collections.sort(slotList, new SlotIDComparator());
+
+		// adjust first and last for each slot. Don't worry about the tier values?
+		ListIterator<Slot> li = null;
+		li = slotList.listIterator();
+		while (li.hasNext()) {
+			Slot slot = (Slot) li.next();
+			short firstLed = (short) (slot.getFirstLedNumAlongPath() + offset);
+			short lastLed = (short) (slot.getLastLedNumAlongPath() + offset);
+			if (firstLed > lastLed) {
+				LOGGER.error("offSetTierLeds. How are first/last inverted? Skipping");
+				continue;
+			}
+			if (firstLed <= 0) {
+				LOGGER.warn("offSetTierLeds. User gave bad value leading to value <1. Skipping");
+				continue;
+			}
+			slot.setFirstLedNumAlongPath(firstLed);
+			slot.setLastLedNumAlongPath(lastLed);
+			Slot.staticGetDao().store(slot);
+		}
+	}
+
 	public void setPoscons(int startingIndex) {
 		setPoscons(startingIndex, false);
 	}
@@ -311,7 +344,13 @@ public class Tier extends Location {
 			return;
 		}
 		if (ledController.getDeviceType() != DeviceType.Poscons) {
-			LOGGER.warn("Failed to set poscons on " + this + ": LedController " + ledController + " is not of device type Poscon.");
+			// DEV-1312 kludge for Loreal pilot
+			if (ledController.getDeviceType() == DeviceType.Lights) {
+				offSetTierLeds(startingIndex);
+			} else {
+				LOGGER.warn("Failed to set poscons on " + this + ": LedController " + ledController
+						+ " is not of device type Poscon.");
+			}
 			return;
 		}
 
