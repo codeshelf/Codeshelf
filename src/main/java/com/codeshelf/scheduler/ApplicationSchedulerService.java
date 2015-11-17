@@ -2,6 +2,7 @@ package com.codeshelf.scheduler;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
@@ -34,18 +35,34 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 
+import lombok.Getter;
+
 public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 	static final private Logger	LOGGER						= LoggerFactory.getLogger(ApplicationSchedulerService.class);
+
+	private static final Comparator<ScheduledJobView> SORT_BY_TYPE = new Comparator<ScheduledJobView>() {
+
+		@Override
+		public int compare(ScheduledJobView o1, ScheduledJobView o2) {
+			return ComparisonChain.start()
+				.compareTrueFirst(o1 != null, o2 != null)
+				.compare(o1.getType().name(), o2.getType().name())
+				.result();
+		}
+
+	};
 
 	private ServiceManager	facilitySchedulerServiceManager;
 
 	@JsonAutoDetect(fieldVisibility=Visibility.ANY)
 	public static class ScheduledJobView {
+		@Getter
 		ScheduledJobType type;
 		String cronExpression;
 		Date nextScheduled;
@@ -80,6 +97,7 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 						SimpleThreadPool threadPool = new SimpleThreadPool(1, Thread.MIN_PRIORITY);
 						schedulerFactory.createScheduler(schedulerName, schedulerName, threadPool, new RAMJobStore());
 						Scheduler facilityScheduler = schedulerFactory.getScheduler(schedulerName);
+//						facilityScheduler.setJobFactory(YourFactory.class);
 						FacilitySchedulerService service = new FacilitySchedulerService(facilityScheduler, systemUser, tenant, facility);
 						
 						for (ScheduledJobType jobType : ScheduledJobType.values()) {
@@ -201,6 +219,7 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 				}
 				jobViews.add(new ScheduledJobView(job, running));
 			}
+			jobViews.sort(SORT_BY_TYPE);
 			return jobViews;
 		}
 		
