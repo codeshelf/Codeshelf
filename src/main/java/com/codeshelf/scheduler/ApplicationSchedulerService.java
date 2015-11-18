@@ -165,7 +165,7 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 			if (job.isActive()) {
 				service.get().schedule(job.getCronExpression(), job.getType());
 			} else {
-				service.get().cancelJob(job.getType());
+				service.get().unschedule(job.getType());
 			}
 			ScheduledJob foundJob = job.getDao().findByDomainId(job.getParent(), job.getDomainId());
 			if (foundJob != null) {
