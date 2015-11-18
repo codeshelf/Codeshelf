@@ -899,6 +899,21 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertEquals("Sku1", line2);
 		Assert.assertEquals("QTY 1", line3);
 
+		LOGGER.info("2d: poscon message dropped. User is confused. Press button 2 two times more");
+		// DEV-1318 case. We definitely sent out "oc" to position 2, but let's assume the CHE did not get it to the poscon, so the poscon is
+		// is still showing the value 2. The user might just push that button again.
+		// In v24, we did nothing at all. We should either send out the correct value for that poscon again, or do the entire CHE/poscon display again.
+		picker.pick(2, 2);
+		picker.waitInSameState(CheStateEnum.DO_PICK, 1500); // give a chance to see in the console what messages go out.
+		picker.pick(2, 2);
+		picker.waitInSameState(CheStateEnum.DO_PICK, 1500); // give a chance to see in the console what messages go out.
+
+		LOGGER.info("2e: Some other button press comes in. Should not happen, but unit test can.");
+		// This provides test coverage for the other WARN case in SetupOrdersDeviceLogic.processButtonPress()
+		picker.pick(4, 1);
+		picker.waitInSameState(CheStateEnum.DO_PICK, 1500); // give a chance to see in the console what messages go out.
+		// cannot currently assert on anything to know new messages went out. Only see in the console.
+
 		LOGGER.info("3a: Complete the first poscon");
 		picker.pick(1, 1);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
