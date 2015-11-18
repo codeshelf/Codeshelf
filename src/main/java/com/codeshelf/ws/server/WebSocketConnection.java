@@ -121,7 +121,7 @@ public class WebSocketConnection implements IDaoListener {
 
 	private ExecutorService								executorService;
 
-	WorkBehavior											workService;
+	WorkBehavior										workService;
 
 	// track individual tasks
 	Set<Future<?>>										pendingFutures					= new ConcurrentHashSet<Future<?>>();
@@ -149,15 +149,11 @@ public class WebSocketConnection implements IDaoListener {
 				sent = true;
 			}
 		} catch (IOException e) {
-			LOGGER.warn("Failed to send " + message.getClass().getSimpleName() + " message on session {}: {}",
-				this.getSessionId(),
-				e.getMessage());
+			LOGGER.warn("Failed to send {} message on session {}", message.getClass().getSimpleName(), this.getSessionId(), e);
 		} catch (WebSocketException e) {
-			LOGGER.warn("Failed to send " + message.getClass().getSimpleName() + " message on session {}: {}",
-				this.getSessionId(),
-				e.getMessage());
+			LOGGER.warn("Failed to send {} message on session {}", message.getClass().getSimpleName(), this.getSessionId(), e);
 		} catch (Exception e) {
-			LOGGER.error("Unexpected exception encoding/sending " + message.getClass().getSimpleName() + " message", e);
+			LOGGER.error("Unexpected exception encoding/sending {} message", message.getClass().getSimpleName(), e);
 		}
 		return sent;
 	}
@@ -471,10 +467,11 @@ public class WebSocketConnection implements IDaoListener {
 				TenantPersistenceService.getInstance().beginTransaction();
 				SiteController siteController = SiteController.staticGetDao().findByDomainId(null, siteControllerId);
 				if (siteController == null) {
-					LOGGER.error("SiteController {} not found in any facility for tenant {}, probable misconfigured site controller or facility", siteControllerId, this.currentTenant);
+					LOGGER.error("SiteController {} not found in any facility for tenant {}, probable misconfigured site controller or facility",
+						siteControllerId,
+						this.currentTenant);
 					this.setNextCheRefresh(System.currentTimeMillis() + updateFailureDelay);
-				}
-				else {
+				} else {
 					CodeshelfNetwork network = siteController.getParent();
 					List<Che> ches = Che.staticGetDao().findByParent(network);
 					if (ches != null) {
