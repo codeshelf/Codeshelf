@@ -1743,6 +1743,14 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"def OrderImportCreateHeader(orderHeader) { \n" + 
 				"	orderHeader= \"orderId, orderDetailId, itemId, description, quantity, uom, preAssignedContainerId, locationId, workSequence, gtin\"\n" + 
 				"}\n";
+
+/*
+ * Loreal pilot: requirements become known.
+ * F aisle has 5 character names. All positions need scan.
+ * T aisle has 6 character names like T108D7. For those, no scan if bay is even (like 108), and need scan if odd (like T111C3)
+ * Virtual position is currently named T999B1. That is odd, so correctly needs scan.		
+ */
+		
 		String transformOrderBean = 
 				"def OrderImportBeanTransformation(bean) {\n" + 
 				"	needsScan = determineNeedsScan(bean.locationId);\n" + 
@@ -1751,11 +1759,15 @@ public class OutboundOrderImporterTest extends ServerTest {
 				"}\n" + 
 				"\n" + 
 				"def determineNeedsScan(locationId){\n" + 
-				"	if (locationId.length() < 5 || locationId[0] != \"T\"){\n" + 
-				"		return false;\n" + 
-				"	}\n" + 
-				"	tierId = locationId[4];\n" + 
-				"	return [1:\"A\",2:\"C\"].containsValue(tierId)\n" + 
+				"	if (locationId.length() < 5 ){\n" + 
+				"		return true;}\n" + 
+				"	if (locationId[0] == \"F\"){\n" + 
+				"		return true;}\n" + 
+				"	if (locationId[0] == \"T\"){\n" + 
+				"		bayLastChar = locationId[3];\n" + 
+				"		return [1:\"1\",2:\"3\",3:\"5\",4:\"7\",9:\"C\"].containsValue(bayLastChar)}\n" + 
+
+				"	return false;\n" + 
 				"}";
 
 		ExtensionPointEngine engine = ExtensionPointEngine.getInstance(facility);
@@ -1771,7 +1783,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		String ordersStringNormal = 
 				"2105334827,2105334827.1,10043585,KL SUNFLOWER SHAMPOO COLOR 500ML,1,EA,731781354,T116C5,1150,3605975054118\n" + 
-				"2105334827,2105334827.2,10059617,KL CLEARLY CORRECTIVE 30ML,1,EA,731781354,T124D3,120,3605970202637\n" + 
+				"2105334827,2105334827.2,10059617,KL CLEARLY CORRECTIVE 30ML,1,EA,731781354,F24D3,120,3605970202637\n" + 
 				"2105334827,2105334827.3,10012841,KL ULTRA FACIAL MOISTURIZER 75ML,1,EA,731781354,T121C3,4500,3700194712068";
 		BatchResult<Object> result = importOrdersData(facility, ordersStringNormal);
 		Assert.assertTrue(result.isSuccessful());
@@ -1786,8 +1798,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertNotNull(detail1);
 		Assert.assertNotNull(detail2);
 		Assert.assertNotNull(detail3);
-		Assert.assertTrue(detail1.getNeedsScan());
-		Assert.assertFalse(detail2.getNeedsScan());
+		Assert.assertFalse(detail1.getNeedsScan());
+		Assert.assertTrue(detail2.getNeedsScan());
 		Assert.assertTrue(detail3.getNeedsScan());
 		commitTransaction();
 	}
