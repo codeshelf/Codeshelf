@@ -2,12 +2,9 @@ package com.codeshelf.scheduler;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.Map.Entry;
 
-import org.joda.time.DateTime;
 import org.quartz.CronExpression;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
@@ -31,34 +28,17 @@ import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 import com.codeshelf.service.ServiceUtility;
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 import com.google.inject.Inject;
 
-import lombok.Getter;
-
 public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 	static final private Logger	LOGGER						= LoggerFactory.getLogger(ApplicationSchedulerService.class);
-
-	private static final Comparator<ScheduledJobView> SORT_BY_TYPE = new Comparator<ScheduledJobView>() {
-
-		@Override
-		public int compare(ScheduledJobView o1, ScheduledJobView o2) {
-			return ComparisonChain.start()
-				.compareTrueFirst(o1 != null, o2 != null)
-				.compare(o1.getType().name(), o2.getType().name())
-				.result();
-		}
-
-	};
 
 	private ServiceManager	facilitySchedulerServiceManager;
 	private JobFactory jobFactory;
@@ -70,24 +50,6 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 	@Inject
 	public ApplicationSchedulerService(JobFactory jobFactory) {
 		this.jobFactory = jobFactory;
-	}
-	
-	@JsonAutoDetect(fieldVisibility=Visibility.ANY)
-	public static class ScheduledJobView {
-		@Getter
-		ScheduledJobType type;
-		String cronExpression;
-		Date nextScheduled;
-		boolean running;
-		boolean active;
-		
-		ScheduledJobView(ScheduledJob job, boolean running) {
-			this.type = job.getType();
-			this.cronExpression = job.getCronExpression().getCronExpression();
-			this.nextScheduled = job.getCronExpression().getNextValidTimeAfter(DateTime.now().toDate());
-			this.running = running;
-			this.active = job.isActive();
-		}
 	}
 	
 	@Override
@@ -232,7 +194,7 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 				}
 				jobViews.add(new ScheduledJobView(job, running));
 			}
-			Collections.sort(jobViews, SORT_BY_TYPE);
+			Collections.sort(jobViews, ScheduledJobView.SORT_BY_TYPE);
 			return jobViews;
 		}
 		
