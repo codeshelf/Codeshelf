@@ -95,7 +95,6 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 				JobFuture<ScheduledJobType> future = (JobFuture<ScheduledJobType>) value;
 				return future;
 			} else {
-				LOGGER.error("should have had a future for job instance {}", context);
 				return null;
 			}
 		}
