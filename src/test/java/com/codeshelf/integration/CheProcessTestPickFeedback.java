@@ -823,6 +823,74 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertTrue(picker.getLastSentPositionControllerMinQty(position) == PosControllerInstr.BITENCODED_LED_E);
 
 	}
+	
+	/**
+	 * Related to DEV-1318. What happens if a poscon goes from pick 1, to pick 2, and the 2 message was dropped so the worker presses the 1 again. Does it short?
+	 */
+	@Test
+	public final void droppedPosconMsg() throws IOException {
+
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		beginTransaction();
+		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n1,USF314,COSTCO,11111,11111,Sku1,Test Item 1,1,each,LocA,1"
+				+ "\r\n1,USF314,COSTCO,11111,11111,Sku3,Test Item 3,2,each,LocB,2";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+
+		LOGGER.info("1a: leave LOCAPICK off, set WORKSEQR, turn off housekeeping, set PICKMULT");
+		beginTransaction();
+		facility = facility.reload();
+		Assert.assertNotNull(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.PICKMULT, Boolean.toString(true));
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
+		PropertyBehavior.turnOffHK(facility);
+		commitTransaction();
+		this.startSiteController(); // after all the parameter changes
+
+		PickSimulator picker = createPickSim(cheGuid1);
+
+		LOGGER.info("1b: setup the order");
+		picker.loginAndSetup("Picker #1");
+		picker.setupOrderIdAsContainer("11111", "1");
+
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+		LOGGER.info("1c: see pick count: 1");
+		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
+
+		LOGGER.info("2a: Complete the job");
+		picker.pick(1, 1);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+		LOGGER.info("2b: see pick count: 2 for next job. This is what we sent out");
+		Assert.assertEquals(2, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
+
+		LOGGER.info("3: Assume the poscon message was dropped. It is still showing the flashing 1, so that is all that can be sent.");
+		picker.pick(1, 1);
+		picker.waitInSameState(CheStateEnum.DO_PICK, 2000);
+		// This yields [ERROR] unanticipated state in processShortPickOrPut DO_PICK
+		// Not too helpful in understanding the cause was a dropped che->poscon message.
+		// However, the resend is good to set the poscon right.
+		Assert.assertEquals(2, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
+
+		LOGGER.info("4: Did not set up realistically, but instead of prior completed job being a 1 count, what if it was 4 and we dropped that poscon clear?.");
+		// bug here, which might be detectable. But then there is the undetectable case of next job wanting the same count with no housekeeping.
+		/*
+		picker.pick(1, 4);
+		picker.waitInSameState(CheStateEnum.DO_PICK, 2000);
+		*/
+
+		LOGGER.info("5: Complete the job. which mostly proves it was not completed above");
+		picker.pick(1, 2);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+
+	}
+
 
 	@Test
 	public final void basicSimulPick() throws IOException {

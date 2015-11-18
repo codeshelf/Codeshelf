@@ -1613,6 +1613,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			setState(state); // forces out the usual side effects, if any. None so far, beyond redoing the CHE display and che poscons.
 		} else {
 			LOGGER.error("unanticipated state in processShortPickOrPut {}", state);
+			setState(state); // because we want to force che and poscon redraw.  DEV-1318 (this part not in v24
 		}
 		mShortPickWi = inWi;
 		mShortPickQty = inQuantity;
