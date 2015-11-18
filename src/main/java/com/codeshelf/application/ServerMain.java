@@ -10,6 +10,7 @@ import org.apache.commons.beanutils.ConvertUtilsBean;
 import org.apache.shiro.guice.aop.ShiroAopModule;
 import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.realm.Realm;
+import org.quartz.spi.JobFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +18,7 @@ import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.edi.AislesFileCsvImporter;
 import com.codeshelf.edi.CrossBatchCsvImporter;
 import com.codeshelf.edi.EdiExportService;
+import com.codeshelf.edi.EdiImportService;
 import com.codeshelf.edi.ICsvAislesFileImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.edi.ICsvInventoryImporter;
@@ -37,6 +39,7 @@ import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.scheduler.ApplicationSchedulerService;
+import com.codeshelf.scheduler.GuiceJobFactory;
 import com.codeshelf.security.CodeshelfRealm;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.TokenSessionService;
@@ -94,7 +97,7 @@ public final class ServerMain {
 
 	public static ICodeshelfApplication startApplication(Injector dynamicInjector) throws Exception {
 		ICodeshelfApplication application = dynamicInjector.getInstance(ServerCodeshelfApplication.class);
-
+		
 		application.startServices(); // this includes persistence and such, probably has to start before anything else
 
 		CsServerEndPoint.setWebSocketManagerService(dynamicInjector.getInstance(WebSocketManagerService.class));
@@ -141,6 +144,8 @@ public final class ServerMain {
 				bind(ICsvAislesFileImporter.class).to(AislesFileCsvImporter.class);
 				bind(ICsvCrossBatchImporter.class).to(CrossBatchCsvImporter.class);
 				bind(ICsvWorkerImporter.class).to(WorkerCsvImporter.class);
+				
+				bind(JobFactory.class).to(GuiceJobFactory.class);
 
 				// jetty websocket
 				bind(IMessageProcessor.class).to(ServerMessageProcessor.class).in(Singleton.class);
@@ -160,6 +165,11 @@ public final class ServerMain {
 				requestStaticInjection(TemplateService.class);
 				bind(TemplateService.class).in(Singleton.class);
 				
+				requestStaticInjection(EdiImportService.class);
+				bind(EdiImportService.class).in(Singleton.class);
+				
+				requestStaticInjection(EdiExportService.class);
+				bind(EdiExportService.class).in(Singleton.class);
 			}
 					
 		}, 

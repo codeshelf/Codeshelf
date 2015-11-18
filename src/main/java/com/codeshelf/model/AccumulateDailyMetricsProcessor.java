@@ -4,22 +4,15 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import com.codeshelf.behavior.BatchProcessor;
 import com.codeshelf.model.domain.Facility;
 
-public class AccumulateDailyMetricsProcessor implements BatchProcessor{
+public class AccumulateDailyMetricsProcessor extends SingleBatchProcessorABC{
 	private Facility facility;
-	private boolean done = false;
-
+	
 	public AccumulateDailyMetricsProcessor(Facility facility) {
 		this.facility = facility;
 	}
 	
-	@Override
-	public int doSetup() throws Exception {
-		return 1;
-	}
-
 	@Override
 	public int doBatch(int batchCount) throws Exception {
 		facility = facility.reload();
@@ -35,18 +28,7 @@ public class AccumulateDailyMetricsProcessor implements BatchProcessor{
 		
 		facility.computeMetrics(dateStr, true);
 		
-		done = true;
+		setDone(true);;
 		return 1;
 	}
-
-	@Override
-	public void doTeardown() {
-		
-	}
-
-	@Override
-	public boolean isDone() {
-		return done;
-	}
-
 }

@@ -3,16 +3,12 @@ package com.codeshelf.metrics;
 import java.sql.SQLException;
 
 import com.codeshelf.manager.service.TenantManagerService;
+import com.codeshelf.model.domain.Facility;
 import com.codeshelf.persistence.DatabaseUtils;
 
-public class DatabaseConnectionHealthCheck extends CodeshelfHealthCheck {
-
-	public DatabaseConnectionHealthCheck() {
-		super("Database Connection");
-	}
-	
+public class DatabaseConnectionHealthCheck extends HealthCheckRefreshJob{
     @Override
-    protected Result check() throws Exception {
+    public void check(Facility facility) throws Exception {    	
     	SQLException ex = null;
     	try {
 			DatabaseUtils.executeSQL(TenantManagerService.getInstance().getInitialTenant(),"SELECT 1;");
@@ -21,8 +17,9 @@ public class DatabaseConnectionHealthCheck extends CodeshelfHealthCheck {
 		}
 
     	if(ex == null) {
-            return Result.healthy("Database is reachable");
-    	} // else
-        return unhealthy(ex);
+    		saveResults(facility, true, "Database is reachable");
+    	} else {
+    		saveResults(facility, false, ex.getMessage());
+    	}
     }
 }

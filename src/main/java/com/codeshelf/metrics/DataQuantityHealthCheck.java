@@ -1,7 +1,5 @@
 package com.codeshelf.metrics;
 
-
-import java.util.List;
 import java.util.UUID;
 
 import org.hibernate.Criteria;
@@ -9,75 +7,25 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.manager.Tenant;
-import com.codeshelf.manager.service.TenantManagerService;
 import com.codeshelf.model.domain.ContainerUse;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
-import com.codeshelf.persistence.TenantPersistenceService;
-import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.ExtensionPointEngine;
 
-public class DataQuantityHealthCheck extends CodeshelfHealthCheck {
+public class DataQuantityHealthCheck extends HealthCheckRefreshJob{
+	
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(DataQuantityHealthCheck.class);
 
-	int							failedFacilityCount	= 0;
-	int							totalFacilityCount	= 0;
-
-	public DataQuantityHealthCheck() {
-		super("DataQuantity");
-	}
-
 	@Override
-	protected Result check() throws Exception {
-
-		int totalTenantCount = 0;
-		failedFacilityCount = 0;
-		totalFacilityCount = 0;
-
-		List<Tenant> tenants = TenantManagerService.getInstance().getTenants();
-		totalTenantCount = tenants.size();
-		for (Tenant tenant : tenants) {
-			try {
-				CodeshelfSecurityManager.setContext(CodeshelfSecurityManager.getUserContextSYSTEM(), tenant);
-				checkFacilitiesForTenant(tenant);
-			} finally {
-				CodeshelfSecurityManager.removeContext();
-			}
-		}
-
-		if (failedFacilityCount == 0) {
-			return Result.healthy("Data quantity for %d facilities in %d tenants ok.", totalFacilityCount, totalTenantCount);
+	public void check(Facility facility) throws Exception {
+		boolean success = checkFacilityOk(facility);
+		if (success) {
+			saveResults(facility, true, "Data quantity ok");
 		} else {
-			return unhealthy("Data quantity for %d of %d facilities in %d tenants outside of limits. See log.",
-				failedFacilityCount,
-				totalFacilityCount,
-				totalTenantCount);
+			saveResults(facility, false, "Data quantity outside of limits. See log");
 		}
-	}
-
-	private void checkFacilitiesForTenant(Tenant tenant) {
-		int totalFacilitiesThisTenant = 0;
-		int badFacilitiesThisTenant = 0;
-
-		try {
-			TenantPersistenceService.getInstance().beginTransaction();
-			List<Facility> allFacilities = Facility.staticGetDao().getAll();
-			totalFacilitiesThisTenant = allFacilities.size();
-			for (Facility facility : allFacilities) {
-				if (!checkFacilityOk(facility)) {
-					badFacilitiesThisTenant++;
-				}
-			}
-		} finally {
-			TenantPersistenceService.getInstance().rollbackTransaction(); // we did not change anything
-		}
-
-		totalFacilityCount += totalFacilitiesThisTenant;
-		failedFacilityCount += badFacilitiesThisTenant;
-
 	}
 
 	private boolean checkFacilityOk(Facility inFacility) {
@@ -153,7 +101,5 @@ public class DataQuantityHealthCheck extends CodeshelfHealthCheck {
 			objectKind,
 			totalObjectCount,
 			maxObject);
-
 	}
-
 }

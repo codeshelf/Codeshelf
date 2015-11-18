@@ -8,7 +8,7 @@ import com.codahale.metrics.health.HealthCheck;
 import lombok.Getter;
 
 public abstract class CodeshelfHealthCheck extends HealthCheck {
-
+	private static final Logger		LOGGER	= LoggerFactory.getLogger(CodeshelfHealthCheck.class);
 	public static final String	OK	= "OK";
 	
 	@Getter
@@ -19,19 +19,16 @@ public abstract class CodeshelfHealthCheck extends HealthCheck {
 	}
 	
 	protected Result unhealthy(String message) {
-		Logger	LOGGER						= LoggerFactory.getLogger(this.getClass());
 		LOGGER.warn("Healthcheck unhealthy: {}", message);
 		return Result.unhealthy(message);
 	}
 
 	protected Result unhealthy(String messageFormat, Object... args) {
-		Logger	LOGGER						= LoggerFactory.getLogger(this.getClass());
 		LOGGER.warn("Healthcheck unhealthy: {}", String.format(messageFormat, args));
 		return Result.unhealthy(messageFormat, args);
 	}
 		
 	protected Result unhealthy(Throwable throwable) {
-		Logger	LOGGER						= LoggerFactory.getLogger(this.getClass());
 		LOGGER.warn("Healthcheck unhealthy", throwable);
 		return Result.unhealthy(throwable);
 	}

@@ -1,4 +1,4 @@
-package com.codeshelf.behavior;
+package com.codeshelf.model;
 
 public interface BatchProcessor {
 

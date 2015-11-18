@@ -17,11 +17,8 @@ import com.codeshelf.email.EmailService;
 import com.codeshelf.email.TemplateService;
 import com.codeshelf.manager.service.ITenantManagerService;
 import com.codeshelf.manager.service.ManagerPersistenceService;
-import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
-import com.codeshelf.metrics.DatabaseConnectionHealthCheck;
-import com.codeshelf.metrics.DropboxGatewayHealthCheck;
+import com.codeshelf.metrics.CachedHealthCheck.*;
 import com.codeshelf.metrics.IMetricsService;
-import com.codeshelf.metrics.IsProductionServerHealthCheck;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.scheduler.ApplicationSchedulerService;
 import com.codeshelf.security.TokenSessionService;
@@ -33,10 +30,9 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(ServerCodeshelfApplication.class);
 
 	private EdiImportService			ediImportService;
-    @SuppressWarnings("unused")
+	@SuppressWarnings("unused")
 	private EdiExportService			ediExportService;
 	
-	private WebSocketManagerService sessionManager;
 	private IMetricsService metricsService;
 	
 	@Inject
@@ -56,7 +52,6 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 	
 		ediImportService = inEdiProcessService;
 		this.ediExportService = ediExportService;
-		sessionManager = webSocketManagerService;
 		this.metricsService = metricsService;
 		
 		SecurityUtils.setSecurityManager(securityManager);
@@ -93,30 +88,14 @@ public final class ServerCodeshelfApplication extends CodeshelfApplication {
 		registerSystemMetrics();
 
 		// create server-specific health checks
-		DatabaseConnectionHealthCheck dbCheck = new DatabaseConnectionHealthCheck();
-		metricsService.registerHealthCheck(dbCheck);
-
-		ActiveSiteControllerHealthCheck sessionCheck = new ActiveSiteControllerHealthCheck(this.sessionManager);
-		metricsService.registerHealthCheck(sessionCheck);
-
-		DropboxGatewayHealthCheck dbxCheck = new DropboxGatewayHealthCheck();
-		metricsService.registerHealthCheck(dbxCheck);
-		
-		IsProductionServerHealthCheck productionCheck = new IsProductionServerHealthCheck();
-		metricsService.registerHealthCheck(productionCheck);
-		
-		/*
-		PicksActivityHealthCheck picksActivityCheck = new PicksActivityHealthCheck();
-		metricsService.registerHealthCheck(picksActivityCheck);
-
-		EdiHealthCheck ediCheck = new EdiHealthCheck(this.ediImportService, ediExportService);
-		metricsService.registerHealthCheck(ediCheck);
-		
-		DataQuantityHealthCheck dataQuantityCheck = new DataQuantityHealthCheck();
-		metricsService.registerHealthCheck(dataQuantityCheck);
-		*/
-
-}
+		metricsService.registerHealthCheck(new CachedEdiHealthCheck());
+		metricsService.registerHealthCheck(new CachedActiveSiteControllerHealthCheck());
+		metricsService.registerHealthCheck(new CachedDatabaseConnectionHealthCheck());
+		metricsService.registerHealthCheck(new CachedDataQuantityHealthCheck());
+		metricsService.registerHealthCheck(new CachedDropboxGatewayHealthCheck());
+		metricsService.registerHealthCheck(new CachedIsProductionServerHealthCheck());
+		metricsService.registerHealthCheck(new CachedPicksActivityHealthCheck());
+	}
 
 	// --------------------------------------------------------------------------
 	/**

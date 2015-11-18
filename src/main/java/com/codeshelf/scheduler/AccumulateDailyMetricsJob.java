@@ -25,7 +25,6 @@ public class AccumulateDailyMetricsJob  extends AbstractFacilityJob {
 		callable = new TenantCallable(persistenceService, tenant, systemUser, new AccumulateDailyMetricsProcessor(facility));
 		LOGGER.info("Starting daily facility metric accumulating job");
 		callable.call();
-		LOGGER.info("Daily facility metric accumulating job finished");
 		return null;
 	}
 

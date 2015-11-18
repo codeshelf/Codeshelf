@@ -14,6 +14,7 @@ import org.quartz.SchedulerException;
 import org.quartz.impl.DirectSchedulerFactory;
 import org.quartz.simpl.RAMJobStore;
 import org.quartz.simpl.SimpleThreadPool;
+import org.quartz.spi.JobFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,12 +40,23 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
+import com.google.inject.Inject;
 
 public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 	static final private Logger	LOGGER						= LoggerFactory.getLogger(ApplicationSchedulerService.class);
 
 	private ServiceManager	facilitySchedulerServiceManager;
+	private JobFactory jobFactory;
 
+	public ApplicationSchedulerService() {
+		this(null);
+	}
+	
+	@Inject
+	public ApplicationSchedulerService(JobFactory jobFactory) {
+		this.jobFactory = jobFactory;
+	}
+	
 	@JsonAutoDetect(fieldVisibility=Visibility.ANY)
 	public static class ScheduledJobView {
 		ScheduledJobType type;
@@ -79,8 +91,10 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 						SimpleThreadPool threadPool = new SimpleThreadPool(1, Thread.MIN_PRIORITY);
 						schedulerFactory.createScheduler(schedulerName, schedulerName, threadPool, new RAMJobStore());
 						Scheduler facilityScheduler = schedulerFactory.getScheduler(schedulerName);
+						if (jobFactory != null){
+							facilityScheduler.setJobFactory(jobFactory);
+						}
 						FacilitySchedulerService service = new FacilitySchedulerService(facilityScheduler, systemUser, tenant, facility);
-						
 						for (ScheduledJobType jobType : ScheduledJobType.values()) {
 							if (jobType.isDefaultOnOff()) {
 								service.schedule(jobType.getDefaultSchedule(), jobType);

@@ -11,7 +11,6 @@ import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.behavior.BatchProcessor;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.service.ExtensionPointEngine;
 

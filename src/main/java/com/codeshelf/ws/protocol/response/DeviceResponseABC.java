@@ -3,7 +3,7 @@ package com.codeshelf.ws.protocol.response;
 import lombok.Getter;
 import lombok.Setter;
 
-public class DeviceResponseABC extends ResponseABC{
+public abstract class DeviceResponseABC extends ResponseABC{
 	@Getter	@Setter
 	String			networkGuid;
 	

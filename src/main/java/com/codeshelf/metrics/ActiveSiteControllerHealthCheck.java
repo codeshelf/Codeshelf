@@ -5,31 +5,24 @@ import java.util.List;
 
 import com.codeshelf.manager.User;
 import com.codeshelf.manager.service.TenantManagerService;
+import com.codeshelf.model.domain.Facility;
 import com.codeshelf.ws.server.WebSocketConnection;
-import com.codeshelf.ws.server.WebSocketConnection.State;
 import com.codeshelf.ws.server.WebSocketManagerService;
+import com.google.inject.Inject;
+import com.codeshelf.ws.server.WebSocketConnection.State;
 
-/**
- * health check fails if there are NO site controllers connected
- * OR (new) if there is any site controller, connected or not, that seems to be failing upgrade attempts. 
- * (i.e. it needs upgrade + has multiple login attempts failing due to bad version) 
- * 
- * @author ivan
- *
- */
-public class ActiveSiteControllerHealthCheck extends CodeshelfHealthCheck {
-
+public class ActiveSiteControllerHealthCheck extends HealthCheckRefreshJob{
 	private static final int	MAX_BAD_VERSION_LOGIN_TRIES	= 40; // about 20 minutes of trying to log in
 	
 	WebSocketManagerService sessionManager;
 	
+	@Inject
 	public ActiveSiteControllerHealthCheck(WebSocketManagerService sessionManager) {
-		super("Active Site Controllers");
 		this.sessionManager = sessionManager;
 	}
 	
     @Override
-    protected Result check() throws Exception {
+    public void check(Facility facility) throws Exception {
     	Collection<WebSocketConnection> sessions = sessionManager.getWebSocketConnections();
     	int c=0;
     	for (WebSocketConnection session : sessions) {
@@ -38,7 +31,8 @@ public class ActiveSiteControllerHealthCheck extends CodeshelfHealthCheck {
     		}
     	}
     	if (c==0) {
-        	return unhealthy("No site controllers connected");
+    		saveResults(facility, false, "No site controllers connected");
+    		return;
     	} // else check for failing upgrades
 
     	int badVersions = 0;
@@ -49,10 +43,9 @@ public class ActiveSiteControllerHealthCheck extends CodeshelfHealthCheck {
     		}
     	}
     	if(badVersions > 0) {
-    		return unhealthy(badVersions+" site controllers have not been upgraded");
+    		saveResults(facility, false, badVersions+" site controllers have not been upgraded");
+    		return;
     	} // else
-
-    	return Result.healthy(c+" site controllers connected");
-
+    	saveResults(facility, true, badVersions+" site controllers have not been upgraded");
     }
 }

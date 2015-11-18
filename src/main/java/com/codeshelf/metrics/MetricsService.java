@@ -76,10 +76,10 @@ public class MetricsService extends AbstractCodeshelfIdleService implements IMet
 
 	@Override
 	public void registerHealthCheck(CodeshelfHealthCheck healthCheck) {
-		getHealthCheckRegistry().register(healthCheck.getName(), healthCheck);
+		getHealthCheckRegistry().register(healthCheck.getClass().getSimpleName(), healthCheck);
 		LOGGER.info("Registered Healthcheck " + healthCheck);
 	}
-
+	
 	@Override
 	public Counter createCounter(MetricsGroup group, String metricName) {
 		String fullName = getFullName(group, metricName);

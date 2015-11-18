@@ -10,6 +10,13 @@ import org.quartz.Job;
 import org.quartz.JobKey;
 
 import com.codeshelf.application.FacilitySchedulerService.NotImplementedJob;
+import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
+import com.codeshelf.metrics.DataQuantityHealthCheck;
+import com.codeshelf.metrics.DatabaseConnectionHealthCheck;
+import com.codeshelf.metrics.DropboxGatewayHealthCheck;
+import com.codeshelf.metrics.EdiHealthCheck;
+import com.codeshelf.metrics.IsProductionServerHealthCheck;
+import com.codeshelf.metrics.PicksActivityHealthCheck;
 import com.codeshelf.model.TestJob;
 import com.google.common.base.Optional;
 
@@ -28,11 +35,17 @@ public enum ScheduledJobType {
 			null,
 			false,
 			ScheduledJobCategory.METRIC),
-	CheckActiveSiteControllerHealth(NotImplementedJob.class,
+	CheckActiveSiteControllerHealth(ActiveSiteControllerHealthCheck.class,
 			"Check Active Site Controllers.",
-			"*/10 1 0 * * ?",
+			"0 1/10 * * * ?",
 			null,
-			false,
+			true,
+			ScheduledJobCategory.CHECK),
+	DatabaseConnection(DatabaseConnectionHealthCheck.class,
+			"Test database connection.",
+			"0 2/10 * * * ?",
+			null,
+			true,
 			ScheduledJobCategory.CHECK),
 	DatabasePurge(DataPurgeJob.class,
 			"Purge old data.",
@@ -41,14 +54,20 @@ public enum ScheduledJobType {
 			true,
 			ScheduledJobCategory.DATABASE,
 			ScheduledJobCategory.PURGE),
-	DatabaseSizeCheck(NotImplementedJob.class,
+	DatabaseSizeCheck(DataQuantityHealthCheck.class,
 			"Gather total data size for health check.",
 			"0 3 0 * * ?",
 			"ParameterSetDataQuantityHealthCheck",
-			false,
+			true,
 			ScheduledJobCategory.DATABASE,
 			ScheduledJobCategory.CHECK),
-	EdiSizeCheck(NotImplementedJob.class,
+	DropboxCheck(DropboxGatewayHealthCheck.class,
+			"Test Dropbox connection.",
+			"0 * * * * ?",
+			null,
+			true,
+			ScheduledJobCategory.CHECK),
+	EdiSizeCheck(EdiHealthCheck.class,
 			"Check EDI directories for health check.",
 			"0 4 0 * * ?",
 			"ParameterEdiFreeSpaceHealthCheck",
@@ -56,12 +75,25 @@ public enum ScheduledJobType {
 			ScheduledJobCategory.EDI,
 			ScheduledJobCategory.CHECK),
 	EdiPurge(NotImplementedJob.class,
-			"Clean old files out of EDI directories",
+			"Clean old files out of EDI directories.",
 			"0 5 0 * * ?",
 			null,
 			false,
 			ScheduledJobCategory.EDI,
 			ScheduledJobCategory.PURGE),
+	IsProductionServer(IsProductionServerHealthCheck.class,
+			"Check if Production Property is Set.",
+			"0 3/10 * * * ?",
+			null,
+			true,
+			ScheduledJobCategory.CHECK),
+	PicksActivity(PicksActivityHealthCheck.class,
+			"Check Picks Activity.",
+			"0 8 * * * ?",
+			null,
+			true,
+			ScheduledJobCategory.CHECK,
+			ScheduledJobCategory.DATABASE),
 	PutWallLightRefresher(NotImplementedJob.class,
 			"Periodically make sure putwall lights are current.",
 			"0 6 0 * * ?",

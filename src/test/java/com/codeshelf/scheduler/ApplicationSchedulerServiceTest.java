@@ -39,7 +39,7 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 		commitTransaction();
 
 
-		final ApplicationSchedulerService subject = new ApplicationSchedulerService();
+		final ApplicationSchedulerService subject = new ApplicationSchedulerService(null);
 		subject.startAsync();
 		subject.awaitRunningOrThrow();
 

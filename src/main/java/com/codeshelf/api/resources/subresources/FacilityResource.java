@@ -80,6 +80,7 @@ import com.codeshelf.model.domain.FacilityMetric;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.scheduler.CachedHealthCheckResults;
 import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.service.ParameterSetBeanABC;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
@@ -630,15 +631,18 @@ public class FacilityResource {
 		}
 	}
 
-	private ScriptMessage runSiteScript(StepPart part, int timeoutMin) {
+	private ScriptMessage runSiteScript(StepPart part, int timeoutMin) throws Exception {
 		ScriptMessage errorMesage = new ScriptMessage();
 		TenantPersistenceService persistence = TenantPersistenceService.getInstance();
-		//Test is Site Controller is running
-		Result siteHealth = new ActiveSiteControllerHealthCheck(webSocketManagerService).execute();
+		
+		//Test if Site Controller is running
+		new ActiveSiteControllerHealthCheck(webSocketManagerService).check(facility);
+		Result siteHealth = CachedHealthCheckResults.getJobResult(ActiveSiteControllerHealthCheck.class.getSimpleName());
 		if (!siteHealth.isHealthy()) {
 			errorMesage.setMessageError("Site controller problem: " + siteHealth.getMessage());
 			return errorMesage;
 		}
+		
 		persistence.beginTransaction();
 		try {
 			facility = Facility.staticGetDao().reload(facility);

@@ -14,6 +14,7 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import com.codeshelf.manager.Tenant;
+import com.codeshelf.model.BatchProcessor;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.UserContext;
 import com.google.common.util.concurrent.SettableFuture;
