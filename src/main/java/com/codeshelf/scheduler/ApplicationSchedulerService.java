@@ -2,9 +2,9 @@ package com.codeshelf.scheduler;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import org.joda.time.DateTime;
@@ -36,14 +36,29 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.ServiceManager;
 import com.google.inject.Inject;
 
+import lombok.Getter;
+
 public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 	static final private Logger	LOGGER						= LoggerFactory.getLogger(ApplicationSchedulerService.class);
+
+	private static final Comparator<ScheduledJobView> SORT_BY_TYPE = new Comparator<ScheduledJobView>() {
+
+		@Override
+		public int compare(ScheduledJobView o1, ScheduledJobView o2) {
+			return ComparisonChain.start()
+				.compareTrueFirst(o1 != null, o2 != null)
+				.compare(o1.getType().name(), o2.getType().name())
+				.result();
+		}
+
+	};
 
 	private ServiceManager	facilitySchedulerServiceManager;
 	private JobFactory jobFactory;
@@ -59,16 +74,19 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 	
 	@JsonAutoDetect(fieldVisibility=Visibility.ANY)
 	public static class ScheduledJobView {
+		@Getter
 		ScheduledJobType type;
 		String cronExpression;
 		Date nextScheduled;
 		boolean running;
+		boolean active;
 		
-		ScheduledJobView(ScheduledJobType type, CronExpression cronExpression, boolean running) {
-			this.type = type;
-			this.cronExpression = cronExpression.getCronExpression();
-			this.nextScheduled = cronExpression.getNextValidTimeAfter(DateTime.now().toDate());
+		ScheduledJobView(ScheduledJob job, boolean running) {
+			this.type = job.getType();
+			this.cronExpression = job.getCronExpression().getCronExpression();
+			this.nextScheduled = job.getCronExpression().getNextValidTimeAfter(DateTime.now().toDate());
 			this.running = running;
+			this.active = job.isActive();
 		}
 	}
 	
@@ -154,17 +172,21 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 		return ImmutableMultimap.copyOf(services);
 	}
 
-	public void scheduleJob(ScheduledJob testJob) throws SchedulerException {
-		Optional<FacilitySchedulerService> service = findService(testJob.getFacility());
+	public void scheduleJob(ScheduledJob job) throws SchedulerException {
+		Optional<FacilitySchedulerService> service = findService(job.getFacility());
 		if (service.isPresent()) {
-			service.get().schedule(testJob.getCronExpression(), testJob.getType());
-			ScheduledJob foundJob = testJob.getDao().findByDomainId(testJob.getParent(), testJob.getDomainId());
-			if (foundJob != null) {
-				foundJob.setCronExpression(testJob.getCronExpression());
-				foundJob.setActive(testJob.isActive());
-				testJob.getDao().store(foundJob);
+			if (job.isActive()) {
+				service.get().schedule(job.getCronExpression(), job.getType());
 			} else {
-				testJob.getDao().store(testJob);
+				service.get().unschedule(job.getType());
+			}
+			ScheduledJob foundJob = job.getDao().findByDomainId(job.getParent(), job.getDomainId());
+			if (foundJob != null) {
+				foundJob.setCronExpression(job.getCronExpression());
+				foundJob.setActive(job.isActive());
+				job.getDao().store(foundJob);
+			} else {
+				job.getDao().store(job);
 			}
 		}
 	}
@@ -196,19 +218,21 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 	}
 
 	public List<ScheduledJobView> getScheduledJobs(Facility facility) throws SchedulerException {
+		
+		
 		Optional<FacilitySchedulerService> service = findService(facility);
 		ArrayList<ScheduledJobView> jobViews = new ArrayList<ScheduledJobView>();
 		if (service.isPresent()) {
-			Map<ScheduledJobType, CronExpression> jobs = service.get().getJobs();
-			for (Entry<ScheduledJobType, CronExpression> entry : jobs.entrySet()) {
-				ScheduledJobType jobType = entry.getKey();
-				Optional<JobFuture<ScheduledJobType>> future = service.get().hasRunningJob(jobType);
+			List<ScheduledJob> foundJobs = ScheduledJob.staticGetDao().findByParent(facility);
+			for (ScheduledJob job : foundJobs) {
+				Optional<JobFuture<ScheduledJobType>> future = service.get().hasRunningJob(job.getType());
 				boolean running = false;
 				if(future.isPresent()) {
 					running = !future.get().isDone();
 				}
-				jobViews.add(new ScheduledJobView(entry.getKey(), entry.getValue(), running));
+				jobViews.add(new ScheduledJobView(job, running));
 			}
+			Collections.sort(jobViews, SORT_BY_TYPE);
 			return jobViews;
 		}
 		

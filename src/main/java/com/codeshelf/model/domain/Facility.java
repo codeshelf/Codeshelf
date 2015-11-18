@@ -1397,6 +1397,7 @@ public class Facility extends Location {
 	}
 
 	public FacilityMetric computeMetrics(String dateStr, boolean forceRecalculate) throws Exception {
+		LOGGER.info("Computing Facility Daily Metric for {}", dateStr);
 		TimeZone facilityTimeZone = getTimeZone();
 		Calendar cal = Calendar.getInstance(facilityTimeZone);
 		if (dateStr != null) {

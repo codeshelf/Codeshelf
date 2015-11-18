@@ -95,7 +95,6 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 				JobFuture<ScheduledJobType> future = (JobFuture<ScheduledJobType>) value;
 				return future;
 			} else {
-				LOGGER.error("should have had a future for job instance {}", context);
 				return null;
 			}
 		}
@@ -211,6 +210,11 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		LOGGER.info("Scheduled {} for {}", jobType, cronExpression);
 	}
 
+	public boolean unschedule(ScheduledJobType type) throws SchedulerException {
+		cancelJob(type);
+		return scheduler.deleteJob(type.getKey());
+	}
+	
 	public Optional<JobFuture<ScheduledJobType>> hasRunningJob(ScheduledJobType jobType) throws SchedulerException {
 		for (JobExecutionContext context : scheduler.getCurrentlyExecutingJobs()) {
 			ScheduledJobType runningType = (ScheduledJobType) context.getMergedJobDataMap().get(TYPE_PROPERTY);

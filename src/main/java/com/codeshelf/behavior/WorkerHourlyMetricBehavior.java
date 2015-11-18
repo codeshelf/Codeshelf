@@ -1,7 +1,9 @@
 package com.codeshelf.behavior;
 
 import java.sql.Timestamp;
+import java.util.List;
 
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,6 +12,7 @@ import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.model.domain.WorkerHourlyMetric;
 import com.codeshelf.util.TimeUtils;
+import com.google.common.collect.ImmutableList;
 
 public class WorkerHourlyMetricBehavior implements IApiBehavior{
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(WorkerHourlyMetricBehavior.class);
@@ -34,6 +37,29 @@ public class WorkerHourlyMetricBehavior implements IApiBehavior{
 		WorkerHourlyMetric metric = produceMetric(worker, logoutTime);
 		updateMetricDuration(metric, logoutTime);
 	}
+
+	public void recordEvent(Facility facility, String pickerId, EventType type) {
+		Worker worker = Worker.findWorker(facility, pickerId);
+		if (worker == null) {
+			LOGGER.warn("Trying to update metrics for non-existent worker {}", pickerId);
+			return;
+		}
+		boolean completeEvent = type == EventType.COMPLETE, shortEvent = type == EventType.SHORT;
+		if (!completeEvent && !shortEvent){
+			LOGGER.warn("Trying to update metrics for an unexpected event type {}", type);
+			return;
+		}
+		WorkerHourlyMetric metric = produceMetric(worker, new Timestamp(System.currentTimeMillis()));
+		metric.setPicks(metric.getPicks() + 1);
+		if (completeEvent) {
+			metric.setCompletes(metric.getCompletes() + 1);
+		} else if (shortEvent){
+			metric.setShorts(metric.getShorts() + 1);
+		}
+		WorkerHourlyMetric.staticGetDao().store(metric);
+	}
+
+	
 	
 	/**
 	 * Thus function retrieves or generates a Mertic for the requested hour
@@ -90,25 +116,9 @@ public class WorkerHourlyMetricBehavior implements IApiBehavior{
 		metric.setSessionActive(false);
 		WorkerHourlyMetric.staticGetDao().store(metric);
 	}
-	
-	public void recordEvent(Facility facility, String pickerId, EventType type) {
-		Worker worker = Worker.findWorker(facility, pickerId);
-		if (worker == null) {
-			LOGGER.warn("Trying to update metrics for non-existent worker {}", pickerId);
-			return;
-		}
-		boolean completeEvent = type == EventType.COMPLETE, shortEvent = type == EventType.SHORT;
-		if (!completeEvent && !shortEvent){
-			LOGGER.warn("Trying to update metrics for an unexpected event type {}", type);
-			return;
-		}
-		WorkerHourlyMetric metric = produceMetric(worker, new Timestamp(System.currentTimeMillis()));
-		metric.setPicks(metric.getPicks() + 1);
-		if (completeEvent) {
-			metric.setCompletes(metric.getCompletes() + 1);
-		} else if (shortEvent){
-			metric.setShorts(metric.getShorts() + 1);
-		}
-		WorkerHourlyMetric.staticGetDao().store(metric);
+
+	public List<WorkerHourlyMetric> findMetrics(Worker worker) {
+		return WorkerHourlyMetric.staticGetDao().findByFilter(ImmutableList.of(Restrictions.eq("parent", worker)));
 	}
+	
 }

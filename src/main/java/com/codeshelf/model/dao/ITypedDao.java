@@ -34,8 +34,8 @@ public interface ITypedDao<T> {
 	List<T> findByPersistentIdList(List<UUID> inPersistentIdList);
 	List<T> findByParentPersistentIdList(List<UUID> inIdList);
 
-	List<T> findByFilter(List<Criterion> inFilter);
-	List<T> findByFilter(List<Criterion> inFilter, List<Order> inOrderBys);
+	List<T> findByFilter(List<? extends Criterion> inFilter);
+	List<T> findByFilter(List<? extends Criterion> inFilter, List<Order> inOrderBys);
 
 	List<T> findByFilter(String criteriaName, Map<String, Object> inFilterArgs);
 

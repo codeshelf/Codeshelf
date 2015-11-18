@@ -214,9 +214,13 @@ public class DomainObjectManager {
 		String groupString = String.format(" OrderGroup         : %6d total", totalGroupCount);
 		reportables.add(groupString);
 
+		String toLogStr = "";
 		for (String s : reportables) {
-			LOGGER.info(s);
+			// from v25, lets log as a single string
+			// LOGGER.info(s);
+			toLogStr += String.format("%s%n", s);
 		}
+		LOGGER.info(toLogStr);
 		return reportables;
 
 	}
