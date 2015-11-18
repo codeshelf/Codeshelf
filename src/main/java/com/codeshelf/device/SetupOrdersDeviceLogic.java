@@ -2661,11 +2661,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		String containerId = getContainerIdFromButtonNum(inButtonNum);
 		if (containerId == null) {
-			// Simply ignore button presses when there is no container.
+			// DEV-1318 don't just  ignore button presses when there is no container.
+			LOGGER.warn("Ignore button because no order/container associated to button. But refreshing the displays."); // DEV-1318
+			setState(mCheStateEnum);
+			return;
 		} else {
 			WorkInstruction wi = getWorkInstructionForContainerId(containerId);
 			if (wi == null) {
-				// Simply ignore button presses when there is no work instruction.
+				// DEV-1318 Most likely cause of no work instruction is it was just completed, but the poscon message did not get through to the poscon
+				// Therefore, user is pressing the button again. Let's make sure we send out the poscon again and not just silently ignore button press
+				LOGGER.warn("Not processing button because no work instruction remains at that position. But refreshing the displays.");
+				setState(mCheStateEnum);
+				return;
 			} else if (wi.isHousekeeping()) {
 				// for housekeeping, any button press count. We will plug in a value of 0.  Version 3.0 poscons send value of -1.
 				// version 2.0 sends value of 0.
