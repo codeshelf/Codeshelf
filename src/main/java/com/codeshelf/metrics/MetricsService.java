@@ -76,7 +76,7 @@ public class MetricsService extends AbstractCodeshelfIdleService implements IMet
 
 	@Override
 	public void registerHealthCheck(CodeshelfHealthCheck healthCheck) {
-		getHealthCheckRegistry().register(healthCheck.getClass().getSimpleName(), healthCheck);
+		getHealthCheckRegistry().register(healthCheck.getName(), healthCheck);
 		LOGGER.info("Registered Healthcheck " + healthCheck);
 	}
 	
