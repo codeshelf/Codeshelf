@@ -27,6 +27,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Service.State;
 
 public class ApplicationSchedulerServiceTest extends HibernateTest {
+	@SuppressWarnings("unused")
 	private static String GOOD_CRONEXPRESSION = "0 0 2 * * ?";
 	
 	@Test
