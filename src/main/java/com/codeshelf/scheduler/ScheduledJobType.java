@@ -32,7 +32,7 @@ public enum ScheduledJobType {
 	AccumulateDailyMetrics(AccumulateDailyMetricsJob.class,
 			"Summarize previous day's completed work instructions.",
 			"0 1 0 * * ?",
-			false,
+			true,
 			false,
 			ScheduledJobCategory.METRIC),
 	CheckActiveSiteControllerHealth(ActiveSiteControllerHealthCheck.class,
