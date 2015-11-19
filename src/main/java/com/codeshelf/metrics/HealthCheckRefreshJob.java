@@ -63,10 +63,19 @@ public abstract class HealthCheckRefreshJob extends AbstractFacilityJob {
 		}
 		
 		@Override
-		public int doBatch(int batchCount) throws Exception { 
-			check(facility.reload());
-			setDone(true);
-			return 1;
+		public int doBatch(int batchCount) throws Exception {
+			Facility reloadedFacility = facility.reload();
+			if (reloadedFacility != null) {
+				check(reloadedFacility);
+				setDone(true);
+				return 1;
+			} else {
+				LoggerFactory.getLogger(this.getClass())
+					.warn("facility {} no longer exists for healthcheck job {} exiting batch", facility, this);
+				setDone(true);
+				return 1;
+			}
 		}
 	}
+	
 }
