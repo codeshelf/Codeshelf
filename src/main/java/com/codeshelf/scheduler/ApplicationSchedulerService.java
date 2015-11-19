@@ -2,7 +2,10 @@ package com.codeshelf.scheduler;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.hibernate.criterion.Restrictions;
@@ -194,22 +197,30 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 	}
 
 	public List<ScheduledJobView> getScheduledJobs(Facility facility) throws SchedulerException {
-		
-		
 		Optional<FacilitySchedulerService> service = findService(facility);
-		ArrayList<ScheduledJobView> jobViews = new ArrayList<ScheduledJobView>();
+		Map<ScheduledJobType, ScheduledJobView> jobViews = new HashMap<ScheduledJobType, ScheduledJobView>();
 		if (service.isPresent()) {
-			List<ScheduledJob> foundJobs = ScheduledJob.staticGetDao().findByParent(facility);
-			for (ScheduledJob job : foundJobs) {
-				Optional<JobFuture<ScheduledJobType>> future = service.get().hasRunningJob(job.getType());
+			Map<ScheduledJobType, CronExpression> jobs = service.get().getJobs();
+			for (ScheduledJobType type : EnumSet.allOf(ScheduledJobType.class)) {
 				boolean running = false;
-				if(future.isPresent()) {
-					running = !future.get().isDone();
+				if (jobs.containsKey(type)) {
+					Optional<JobFuture<ScheduledJobType>> future = service.get().hasRunningJob(type);
+					if(future.isPresent()) {
+						running = !future.get().isDone();
+					}
 				}
-				jobViews.add(new ScheduledJobView(job, running));
+
+				ScheduledJob foundJob = findByType(facility, type);
+				if (foundJob != null) {
+					jobViews.put(type, new ScheduledJobView(foundJob, running));
+				}
+				else if (type.isDefaultOnOff()){
+					jobViews.put(type, new ScheduledJobView(type, running));
+				}
 			}
-			Collections.sort(jobViews, ScheduledJobView.SORT_BY_TYPE);
-			return jobViews;
+			ArrayList<ScheduledJobView> viewCollection = new ArrayList<>(jobViews.values());
+			Collections.sort(viewCollection, ScheduledJobView.SORT_BY_TYPE);
+			return viewCollection;
 		}
 		
 		return Collections.emptyList();
@@ -219,12 +230,17 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 		Optional<FacilitySchedulerService> service = findService(facility);
 		if (service.isPresent()) {
 			boolean result = service.get().removeJob(type);
-			ScheduledJob foundJob = ScheduledJob.staticGetDao().findByDomainId(facility, type.name());
+			ScheduledJob foundJob = findByType(facility, type);
 			if (foundJob != null) {
 				ScheduledJob.staticGetDao().delete(foundJob);
 			}
 			return result;
 		}
 		return false;
+	}
+	
+	private ScheduledJob findByType(Facility facility, ScheduledJobType type) {
+		ScheduledJob foundJob = ScheduledJob.staticGetDao().findByDomainId(facility, type.name());
+		return foundJob;
 	}
 }
