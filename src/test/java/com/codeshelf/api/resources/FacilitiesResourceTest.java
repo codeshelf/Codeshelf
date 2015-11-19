@@ -17,11 +17,13 @@ public class FacilitiesResourceTest extends ServerTest {
 		String domainId = facility.getDomainId();
 		commitTransaction();	
 		beginTransaction();
-		FacilitiesResource resource = new FacilitiesResource(this.webSocketManagerService);
+		FacilitiesResource resource = new FacilitiesResource(this.webSocketManagerService, this.applicationSchedulerService);
 		Response response = resource.recreateFacility(domainId);
 		Facility newFacility = (Facility) response.getEntity();
 		commitTransaction();	
 		Assert.assertNotEquals(facility.getPersistentId(), newFacility.getPersistentId());
 		Assert.assertEquals(facility.getDomainId(), newFacility.getDomainId());
+		Assert.assertTrue(!this.applicationSchedulerService.findService(facility).isPresent());
+		Assert.assertTrue(this.applicationSchedulerService.findService(newFacility).orNull().isRunning());
 	}
 }

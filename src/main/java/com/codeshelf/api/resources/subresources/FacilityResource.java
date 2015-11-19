@@ -83,6 +83,7 @@ import com.codeshelf.model.domain.FacilityMetric;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.scheduler.ApplicationSchedulerService;
 import com.codeshelf.scheduler.CachedHealthCheckResults;
 import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.service.ParameterSetBeanABC;
@@ -107,6 +108,7 @@ public class FacilityResource {
 	private final OrderBehavior							orderService;
 	private final NotificationBehavior					notificationService;
 	private final WebSocketManagerService				webSocketManagerService;
+	private final ApplicationSchedulerService applicationSchedulerService;
 	private final UiUpdateBehavior						uiUpdateService;
 	private final Provider<ICsvAislesFileImporter>		aislesImporterProvider;
 	private final Provider<ICsvLocationAliasImporter>	locationsImporterProvider;
@@ -125,16 +127,21 @@ public class FacilityResource {
 		OrderBehavior orderService,
 		NotificationBehavior notificationService,
 		WebSocketManagerService webSocketManagerService,
+		ApplicationSchedulerService applicationSchedulerService,
 		UiUpdateBehavior uiUpdateService,
 		Provider<ICsvAislesFileImporter> aislesImporterProvider,
 		Provider<ICsvLocationAliasImporter> locationsImporterProvider,
 		Provider<ICsvInventoryImporter> inventoryImporterProvider,
 		Provider<ICsvOrderImporter> orderImporterProvider,
 		Provider<ICsvWorkerImporter> workerImporterProvider) {
+
+		
 		this.orderService = orderService;
 		this.workService = workService;
 		this.webSocketManagerService = webSocketManagerService;
+		this.applicationSchedulerService = applicationSchedulerService;
 		this.notificationService = notificationService;
+		
 		this.uiUpdateService = uiUpdateService;
 		this.aislesImporterProvider = aislesImporterProvider;
 		this.locationsImporterProvider = locationsImporterProvider;
@@ -176,8 +183,9 @@ public class FacilityResource {
 	@DELETE
 	@RequiresPermissions("facility:edit")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response detete() {
+	public Response delete() {
 		try {
+			applicationSchedulerService.stopFacility(facility);
 			facility.delete(webSocketManagerService);
 			return BaseResponse.buildResponse("Facility Deleted");
 		} catch (ConstraintViolationException e) {

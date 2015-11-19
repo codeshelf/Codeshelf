@@ -9,6 +9,7 @@ import java.util.UUID;
 import org.junit.Assert;
 import org.junit.Test;
 import org.quartz.CronExpression;
+import org.quartz.SchedulerException;
 
 import com.codeshelf.application.FacilitySchedulerService;
 import com.codeshelf.manager.Tenant;
@@ -214,15 +215,54 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 	}
 */
 	@Test
-	public void testStartsNewFacilitySchedulerForNewFacilityOfTenant() {
-
+	public void testStartsNewFacilitySchedulerForNewFacilityOfTenant() throws SchedulerException {
+		ApplicationSchedulerService subject = new ApplicationSchedulerService();
+		subject.startAsync();
+		ServiceUtility.awaitRunningOrThrow(subject);
+		try {
+			Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+			setupFacility(subject, tenant);
+		} finally {
+			subject.stopAsync();
+			subject.awaitTerminatedOrThrow();
+		}
 	}
 
 	@Test
-	public void testSchedulesDefaultedOnFacilityRecreate() {
-
+	public void testStopsOnFacilityRemoval() throws SchedulerException {
+		ApplicationSchedulerService subject = new ApplicationSchedulerService();
+		subject.startAsync();
+		ServiceUtility.awaitRunningOrThrow(subject);
+		try {
+			Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+			Facility facility = setupFacility(subject, tenant);
+			subject.stopFacility(facility);
+		} finally {
+			subject.stopAsync();
+			subject.awaitTerminatedOrThrow();
+		}
 	}
 
+	private Facility setupFacility(ApplicationSchedulerService subject, Tenant tenant) throws SchedulerException {
+			
+			TenantPersistenceService persistence = TenantPersistenceService.getInstance();
+			persistence.beginTransaction();
+
+			Facility newFacility = Facility.createFacility("FNew", "", Point.getZeroPoint());
+			persistence.getDao(Facility.class).store(newFacility);
+			persistence.commitTransaction();
+
+			persistence.beginTransaction();
+			Facility reloaded = newFacility.reload(); 
+
+			FacilitySchedulerService service = subject.startFacility(tenant, reloaded);
+			service.awaitRunningOrThrow();
+			
+			persistence.commitTransaction();
+			return reloaded;
+		
+	}
+	
 	@Test
 	public void viewSchedulesAcrossTenantByFacility() {
 
