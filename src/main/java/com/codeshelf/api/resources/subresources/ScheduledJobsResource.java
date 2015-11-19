@@ -56,7 +56,7 @@ public class ScheduledJobsResource {
 		ScheduledJobType typeEnum = ScheduledJobType.valueOf(type); 
 		try {
 			ScheduledJob job = new ScheduledJob(this.facility, typeEnum, typeEnum.getDefaultSchedule());
-			schedulerService.scheduleJob(job);
+			schedulerService.updateScheduledJob(job);
 			return BaseResponse.buildResponse(job);
 		} catch(Exception e) {
 			ErrorResponse response = new ErrorResponse();
@@ -90,7 +90,7 @@ public class ScheduledJobsResource {
 		try {
 			ScheduledJob job = new ScheduledJob(facility, type, cronExpression);
 			job.setActive(active);
-			schedulerService.scheduleJob(job);
+			schedulerService.updateScheduledJob(job);
 			return BaseResponse.buildResponse(ImmutableMap.of("cronExpression", cronExpression));
 		}
 		catch(ParseException e) {

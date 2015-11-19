@@ -27,7 +27,8 @@ import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Service.State;
 
 public class ApplicationSchedulerServiceTest extends HibernateTest {
-
+	private static String GOOD_CRONEXPRESSION = "0 0 2 * * ?";
+	
 	@Test
 	public void persistScheduledJobs() throws Exception {
 		//note that this test intended to test multitenant but couldn't get tenant session to switch back and forth effectively
@@ -46,7 +47,7 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 		final String testExpression = "0 0 2 * * ?";
 		beginTransaction();
 		ScheduledJob testJob = new ScheduledJob(facility1.reload(), ScheduledJobType.Test, testExpression);
-		subject.scheduleJob(testJob);
+		subject.updateScheduledJob(testJob);
 		commitTransaction();
 
 /*
@@ -100,12 +101,12 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 
 		beginTransaction();
 		ScheduledJob initialJob = new ScheduledJob(facility1.reload(), ScheduledJobType.Test, initialExpression);
-		subject.scheduleJob(initialJob);
+		subject.updateScheduledJob(initialJob);
 		commitTransaction();
 
 		beginTransaction();
 		ScheduledJob updatedJob = new ScheduledJob(facility1.reload(), ScheduledJobType.Test, updatedExpression);
-		subject.scheduleJob(updatedJob);
+		subject.updateScheduledJob(updatedJob);
 		commitTransaction();
 
 
@@ -194,7 +195,23 @@ public class ApplicationSchedulerServiceTest extends HibernateTest {
 		}
 		CodeshelfSecurityManager.removeContextIfPresent();
 	}
-
+	
+	/*
+	@Test
+	
+	public void inactiveJobsNotScheduled() {
+		ApplicationSchedulerService subject = new ApplicationSchedulerService();
+		subject.startAsync();
+		ServiceUtility.awaitRunningOrThrow(subject);
+		try {
+			ScheduledJob inactiveJob = new ScheduledJob(facility, ScheduledJobType.Test, GOOD_CRONEXPRESSION);
+			subject.scheduleJob();
+		} finally {
+			subject.stopAsync();
+			subject.awaitTerminatedOrThrow();
+		}
+	}
+*/
 	@Test
 	public void testStartsNewFacilitySchedulerForNewFacilityOfTenant() {
 

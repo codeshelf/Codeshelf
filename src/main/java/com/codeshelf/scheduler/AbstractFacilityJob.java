@@ -10,6 +10,10 @@ import com.codeshelf.model.domain.Facility;
 
 public abstract class AbstractFacilityJob implements Job, InterruptableJob {
 
+	public static void disabled(Facility facility, Class<? extends Job> healthCheckClass) {
+		CachedHealthCheckResults.saveJobResult(healthCheckClass.getSimpleName(), facility, true, "check disabled");
+	}
+	
 	@Override
 	final public void execute(JobExecutionContext context) throws JobExecutionException {
 		Facility facility = (Facility) context.getMergedJobDataMap().get("facility");
