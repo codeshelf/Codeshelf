@@ -26,7 +26,8 @@ public class CachedHealthCheckResults {
 			return null;
 		}
 		Iterator<UUID> facilityIterator = facilityResults.keySet().iterator();
-		boolean success = true;
+		boolean success = true, sameMessage = true, singleFacility = facilityResults.size() == 1;
+		String repeatingMessage = null;
 		StringBuilder combinedMessage = new StringBuilder();
 	    while (facilityIterator.hasNext()) {
 	    	UUID facilityPersId = facilityIterator.next();
@@ -35,15 +36,22 @@ public class CachedHealthCheckResults {
 	    		success = false;
 	    	}
 	    	combinedMessage.append(String.format("Facility %s - %s: %s. ", facilityResult.facilityId, facilityResult.success ? "PASS" : "FAIL", facilityResult.message));
+	    	if (repeatingMessage == null) {
+	    		repeatingMessage = facilityResult.message;
+	    	} else if (!repeatingMessage.equals(facilityResult.message)){
+	    		sameMessage = false;
+	    	}
 	    }
 	    String combinedMessageStr = combinedMessage.toString();
 	    if (!combinedMessageStr.isEmpty()) {
 	    	combinedMessageStr = combinedMessageStr.substring(0, combinedMessageStr.length()-1);
 	    }
 	    if (success) {
-	    	return Result.healthy(combinedMessageStr);
-	    } else {
+	    	return Result.healthy("Pass");
+	    } else if (singleFacility || !sameMessage){
 	    	return Result.unhealthy(combinedMessageStr);
+	    } else {
+	    	return Result.unhealthy("Multiple Facilities: " + repeatingMessage);
 	    }
 	}
 	

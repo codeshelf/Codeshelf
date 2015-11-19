@@ -17,7 +17,7 @@ public class PicksActivityHealthCheck extends HealthCheckRefreshJob {
 		picksLastOneHour = 0;
 		picksLast24Hours = 0;
 		checkFacilityActivity(facility);
-		String message = String.format("WorkInstructions completed last 1 hr:  %d; last 24 hrs: %d.", picksLastOneHour, picksLast24Hours);
+		String message = String.format("WorkInstructions completed last 1 hr:  %d; last 24 hrs: %d", picksLastOneHour, picksLast24Hours);
 		saveResults(facility, true, message);
 	}
 

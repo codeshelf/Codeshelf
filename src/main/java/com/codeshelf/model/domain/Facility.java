@@ -151,6 +151,9 @@ public class Facility extends Location {
 	@MapKey(name = "name")
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	private Map<String, FacilityProperty>	facilityProperties	= new HashMap<String, FacilityProperty>();
+	
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
+	private List<ScheduledJob>			scheduledJobs;
 
 
 	public Facility() {
