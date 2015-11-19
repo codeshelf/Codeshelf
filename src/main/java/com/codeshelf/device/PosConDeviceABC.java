@@ -213,6 +213,14 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		return null;
 	}
 
+	/**
+	 * override this if your che device sets poscon to a state where they can send, but shouldn't, and you know if it is a bad send.
+	 * Return empty string for normal no-error.
+	 */
+	protected String tellIfNotLegitimateButtonPress(int buttonNum, int showingQuantity) {
+		return "";
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * These notifyXXX functions  with warn parameter might get hooked up to Codeshelf Companion tables someday. 
@@ -338,7 +346,11 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Button");
 			if (showingQuantity >= 0) {
 				String forContainer = getButtonPurpose(buttonNum);
-				if (forContainer != null)
+				String reasonBadButtonPress = tellIfNotLegitimateButtonPress(buttonNum, showingQuantity);
+				if (!reasonBadButtonPress.isEmpty()) {
+					LOGGER.info(reasonBadButtonPress);					
+				}
+				else if (forContainer != null)
 					LOGGER.info("Button #{} pressed with quantity {} for order/cntr:{}", buttonNum, showingQuantity, forContainer);
 				else
 					LOGGER.info("Button #{} pressed with quantity {}", buttonNum, showingQuantity);
