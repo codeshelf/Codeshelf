@@ -8,8 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 
-import lombok.Getter;
-
 import org.joda.time.DateTime;
 import org.quartz.CronExpression;
 import org.quartz.CronScheduleBuilder;
@@ -40,6 +38,8 @@ import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractFuture;
+
+import lombok.Getter;
 
 /*
  * This service class schedules jobs that are executed periodically while
@@ -207,6 +207,9 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 		scheduler.unscheduleJob(trigger.getKey());
 		scheduler.deleteJob(jobType.getKey());
 		scheduler.scheduleJob(jobDetail, trigger);
+		if (jobType.isTriggerOnEnable()) {
+			scheduler.triggerJob(jobType.getKey());
+		}
 		LOGGER.info("Scheduled {} for {}", jobType, cronExpression);
 	}
 
