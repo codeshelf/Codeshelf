@@ -3,7 +3,10 @@ package com.codeshelf.api.resources.subresources;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -684,9 +687,18 @@ public class FacilityResource {
 	@POST
 	@Path("/metrics")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response computeMetrics(@FormParam("date") String dateStr, 
+	public Response computeMetrics(@FormParam("date") TimestampParam dateParam, 
 								   @FormParam("forceRecalculate") @DefaultValue(value = "false") boolean forceRecalculate){
 		try {
+			String dateStr = null;
+			if (dateParam != null) {
+				Date date = dateParam.getValue();
+				if (date == null){
+					throw new Exception("Unparseable date: \"" + dateParam.getRawValue() + "\"");
+				}
+				DateFormat outFormat = new SimpleDateFormat("yyyy-MM-dd"); 
+				dateStr = outFormat.format(date);
+			}
 			FacilityMetric metric = facility.computeMetrics(dateStr, forceRecalculate);
 			return BaseResponse.buildResponse(metric);
 		} catch (Exception e) {
