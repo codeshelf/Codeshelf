@@ -85,22 +85,13 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 							List<ScheduledJob> jobs = dao.findByFilter(ImmutableList.of(Restrictions.eq("parent", facility),
 																						Restrictions.eq("type", jobType)));
 							if (jobs.isEmpty()) {
-								if (jobType.isDefaultOnOff()) {
-									service.schedule(jobType.getDefaultSchedule(), jobType);
-								} else {
-									AbstractFacilityJob.disabled(facility, jobType.getJobClass());
-								}
+								syncByJobType(service, jobType);
 							} else {
 								if (jobs.size() > 1) {
 									LOGGER.warn("should not have more than one scheduled job for {} in facility {}", jobType, facility);
 								}
-								
 								ScheduledJob job = jobs.get(0);
-								if (job.isActive()) {
-									service.schedule(job.getCronExpression(), job.getType());
-								} else {
-									AbstractFacilityJob.disabled(facility, jobType.getJobClass());
-								}
+								syncByConfig(service, job);
 							}
 						}
 						services.add(service);
@@ -119,6 +110,7 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 		ServiceUtility.awaitRunningOrThrow(facilitySchedulerServiceManager);
 	}
 	
+
 	@Override
 	protected void shutDown() throws Exception {
 		facilitySchedulerServiceManager.stopAsync();
@@ -150,15 +142,9 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 
 	public void updateScheduledJob(ScheduledJob job) throws SchedulerException {
 		Facility facility = job.getFacility();
-		ScheduledJobType type = job.getType();
 		Optional<FacilitySchedulerService> service = findService(facility);
 		if (service.isPresent()) {
-			if (job.isActive()) {
-				service.get().schedule(job.getCronExpression(), type);
-			} else {
-				service.get().unschedule(type);
-				AbstractFacilityJob.disabled(facility, type.getJobClass());
-			}
+			syncByConfig(service.get(), job);
 			ScheduledJob foundJob = job.getDao().findByDomainId(job.getParent(), job.getDomainId());
 			if (foundJob != null) {
 				foundJob.setCronExpression(job.getCronExpression());
@@ -234,6 +220,7 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 			if (foundJob != null) {
 				ScheduledJob.staticGetDao().delete(foundJob);
 			}
+			syncByJobType(service.get(), type);
 			return result;
 		}
 		return false;
@@ -243,4 +230,24 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 		ScheduledJob foundJob = ScheduledJob.staticGetDao().findByDomainId(facility, type.name());
 		return foundJob;
 	}
+
+	private void syncByConfig(FacilitySchedulerService service, ScheduledJob job) throws SchedulerException {
+		ScheduledJobType type = job.getType();
+		if (job.isActive()) {
+			service.schedule(job.getCronExpression(), type);
+		} else {
+			service.unschedule(type);
+			AbstractFacilityJob.disabled(service.getFacility(), type.getJobClass());
+		}
+		
+	}
+	
+	private void syncByJobType(FacilitySchedulerService service, ScheduledJobType jobType) throws SchedulerException {
+		if (jobType.isDefaultOnOff()) {
+			service.schedule(jobType.getDefaultSchedule(), jobType);
+		} else {
+			AbstractFacilityJob.disabled(service.getFacility(), jobType.getJobClass());
+		}
+	}
+
 }
