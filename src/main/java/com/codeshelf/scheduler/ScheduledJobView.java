@@ -28,8 +28,6 @@ public class ScheduledJobView {
 		}
 
 	};
-
-
 	
 	@Getter
 	ScheduledJobType type;
@@ -37,8 +35,24 @@ public class ScheduledJobView {
 	List<Date> futureScheduled;
 	boolean running;
 	boolean active;
+	boolean usingDefaults;
+
+	public ScheduledJobView(ScheduledJobType jobType, boolean running) {
+		this.type = jobType;
+		this.cronExpression = jobType.getDefaultSchedule().getCronExpression();
+		futureScheduled = new ArrayList<Date>();
+		Date lastDate = DateTime.now().toDate();
+		for(int i = 0; i < 3; i++) {
+			lastDate = jobType.getDefaultSchedule().getNextValidTimeAfter(lastDate);
+			futureScheduled.add(lastDate);
+		}
+		this.running = running;
+		this.active = jobType.isDefaultOnOff();
+		this.usingDefaults = true;
+	}
+
 	
-	ScheduledJobView(ScheduledJob job, boolean running) {
+	public ScheduledJobView(ScheduledJob job, boolean running) {
 		this.type = job.getType();
 		this.cronExpression = job.getCronExpression().getCronExpression();
 		futureScheduled = new ArrayList<Date>();
@@ -49,5 +63,6 @@ public class ScheduledJobView {
 		}
 		this.running = running;
 		this.active = job.isActive();
+		this.usingDefaults = false;
 	}
 }
