@@ -1,5 +1,7 @@
 package com.codeshelf.ws.server;
 
+import java.io.IOException;
+
 import javax.websocket.CloseReason;
 import javax.websocket.EndpointConfig;
 import javax.websocket.OnClose;
@@ -29,9 +31,15 @@ import com.codeshelf.ws.protocol.message.NotificationMessage;
 import com.codeshelf.ws.protocol.request.LoginRequest;
 import com.codeshelf.ws.protocol.request.RequestABC;
 import com.codeshelf.ws.protocol.response.ResponseABC;
+import com.codeshelf.ws.protocol.response.ResponseStatus;
+import com.codeshelf.ws.server.CsServerEndPoint.AuthenticationException;
 
 @ServerEndpoint(value = "/", encoders = { JsonEncoder.class }, decoders = { JsonDecoder.class }, configurator = WebSocketConfigurator.class)
 public class CsServerEndPoint {
+
+	public class AuthenticationException extends Exception {
+
+	}
 
 	private static final Logger				LOGGER		= LoggerFactory.getLogger(CsServerEndPoint.class);
 
@@ -79,7 +87,7 @@ public class CsServerEndPoint {
 	}
 
 	@OnMessage(maxMessageSize = JsonEncoder.WEBSOCKET_MAX_MESSAGE_SIZE)
-	public void onMessage(Session session, MessageABC message) {
+	public void onMessage(Session session, MessageABC message) throws AuthenticationException {
 		messageCounter.inc();
 		UserContext setUserContext = null;
 		Tenant setTenantContext = null;
@@ -132,6 +140,14 @@ public class CsServerEndPoint {
 						// send response to client
 						LOGGER.debug("Sending response " + response + " for request " + request);
 						csSession.sendMessage(response);
+						if (ResponseStatus.Authentication_Failed.equals(response.getStatus())) {
+							LOGGER.warn("login failed {}", response);
+							try {
+								session.close();
+							} catch (IOException e) {
+								LOGGER.error("failed to close session after login failure", e);
+							}
+						}
 					} else {
 						LOGGER.warn("No response generated for request " + request);
 					}
@@ -162,15 +178,8 @@ public class CsServerEndPoint {
 
 	@OnClose
 	public void onClose(Session session, CloseReason reason) {
-		UserContext user = webSocketManagerService.getWebSocketConnectionForSession(session).getCurrentUserContext();
 		try {
-			String logstr = String.format("WS Session %s for user %s closed because of %s", session.getId(), user, reason);
-			if (user.isSiteController()) {
-				LOGGER.warn("Site controller: {}",logstr);
-			} else {
-				LOGGER.info(logstr);
-			}
-			webSocketManagerService.sessionEnded(session);
+			webSocketManagerService.sessionEnded(session, reason);
 		} finally {
 			CodeshelfSecurityManager.removeContextIfPresent();
 		}
@@ -178,7 +187,7 @@ public class CsServerEndPoint {
 
 	@OnError
 	public void onError(Session session, Throwable cause) {
-		LOGGER.error("WebSocket error", cause);
+		LOGGER.error("WebSocket error for session {}", session, cause);
 	}
 
 	//Injected see ServerMain

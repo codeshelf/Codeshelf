@@ -136,7 +136,7 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 		return wsConnection;
 	}
 
-	public synchronized void sessionEnded(Session session) {
+	public synchronized void sessionEnded(Session session, CloseReason reason) {
 		if (this.state() != State.RUNNING) {
 			LOGGER.warn("sessionEnded called while service state is {}", this.state().toString());
 			return; // called while shutting down or resetting - this should only happen in tests
@@ -144,9 +144,15 @@ public class WebSocketManagerService extends AbstractCodeshelfScheduledService {
 		String sessionId = session.getId();
 		WebSocketConnection wsConnection = activeConnections.get(sessionId);
 		if (wsConnection != null) {
+			UserContext user = getWebSocketConnectionForSession(session).getCurrentUserContext();
+			String logstr = String.format("WS Session %s for user %s closed because of %s", session.getId(), user, reason);
+			if (user != null && user.isSiteController()) {
+				LOGGER.warn("Site controller: {}", logstr);
+			} else {
+				LOGGER.info(logstr);
+			}
 			wsConnection.disconnect();
 			activeConnections.remove(sessionId);
-			LOGGER.debug("WS Connection " + session.getId() + " ended"); // reason should be logged by endpoint
 			updateCounters();
 		} else {
 			LOGGER.warn("sessionEnded: session id " + sessionId + " not found");

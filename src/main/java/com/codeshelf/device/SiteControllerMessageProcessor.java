@@ -102,7 +102,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 					}
 				}
 				if (!attached) {
-					LOGGER.warn("Failed to attach network: " + response.getStatusMessage());
+					LOGGER.warn("Failed to attach network: {} ", response);
 					try {
 						this.deviceManager.unattached();
 						clientEndpoint.disconnect();
