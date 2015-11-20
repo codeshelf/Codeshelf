@@ -1,8 +1,10 @@
 package com.codeshelf.security;	
 
-import java.nio.ByteBuffer;	
+import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.concurrent.ThreadLocalRandom;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -18,8 +20,6 @@ import com.codeshelf.security.SessionFlags.Flag;
 import com.codeshelf.security.TokenSession.Status;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 
-import java.util.Arrays;
-
 public abstract class AbstractHmacTokenService extends AbstractCodeshelfIdleService {
 	static final Logger	LOGGER								= LoggerFactory.getLogger(AbstractHmacTokenService.class);
 
@@ -32,7 +32,6 @@ public abstract class AbstractHmacTokenService extends AbstractCodeshelfIdleServ
 	private static final String	HMAC_ALGORITHM	= "HmacSHA1";
 	private static final int	TOKEN_VERSION	= 3;
 	private static final ThreadLocal<Mac>	mac = new ThreadLocal<Mac>() {
-
 		@Override
 		protected Mac initialValue() {
 			String secret = System.getProperty("auth.token.secret");
@@ -66,23 +65,26 @@ public abstract class AbstractHmacTokenService extends AbstractCodeshelfIdleServ
 			sessionStart = timestamp;
 		if (sessionFlags == null)
 			sessionFlags = new SessionFlags();
-		byte[] rawHmac = createHmacBytes(userId, tenantId, timestamp, sessionStart, sessionFlags);
-		return encodeToken(rawHmac);
+		int random = ThreadLocalRandom.current().nextInt();
+		byte[] rawHmac = createHmacBytes(userId, tenantId, timestamp, sessionStart, random, sessionFlags);
+		String lastToken = encodeToken(rawHmac);
+		return lastToken;
 	}
 
 	public TokenSession checkToken(String value) {
 		TokenSession resp = null;
 		if(value != null) {
 			ByteBuffer hmac = ByteBuffer.wrap(decodeToken(value));
-			if (hmac.remaining() == (4 + 4 + 4 + 8 + 8 + 1 + 20)) {
+			if (hmac.remaining() == (4 + 4 + 4 + 8 + 8 + 4 + 1 + 20)) {
 				int version = hmac.getInt();
 				if (version == TOKEN_VERSION) {
 					int userId = hmac.getInt();
 					int tenantId = hmac.getInt();
 					long timestamp = hmac.getLong();
 					long sessionStart = hmac.getLong();
+					int random = hmac.getInt();
 					SessionFlags sessionFlags = new SessionFlags(hmac.get());
-					byte[] matchHmac = createHmacBytes(userId, tenantId, timestamp, sessionStart, sessionFlags);
+					byte[] matchHmac = createHmacBytes(userId, tenantId, timestamp, sessionStart, random, sessionFlags);
 					if (Arrays.equals(hmac.array(), matchHmac)) {
 						resp = respondToValidToken(userId, tenantId, timestamp, sessionStart, sessionFlags);
 					} else {
@@ -104,13 +106,14 @@ public abstract class AbstractHmacTokenService extends AbstractCodeshelfIdleServ
 		return resp;
 	}
 
-	private byte[] createHmacBytes(int userId, int tenantId, long timestamp, Long sessionStart, SessionFlags sessionFlags) {
-		ByteBuffer hmac_data = ByteBuffer.allocate(4 + 4 + 4 + 8 + 8 + 1);
+	private byte[] createHmacBytes(int userId, int tenantId, long timestamp, Long sessionStart, int random, SessionFlags sessionFlags) {
+		ByteBuffer hmac_data = ByteBuffer.allocate(4 + 4 + 4 + 8 + 8 + 4 + 1);
 		hmac_data.putInt(TOKEN_VERSION);
 		hmac_data.putInt(userId);
 		hmac_data.putInt(tenantId);
 		hmac_data.putLong(timestamp);
 		hmac_data.putLong(sessionStart);
+		hmac_data.putInt(random);
 		hmac_data.put(sessionFlags.getPacked());
 	
 		byte[] hmac_signature;
