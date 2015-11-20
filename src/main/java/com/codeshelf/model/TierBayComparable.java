@@ -5,7 +5,7 @@ import java.util.Comparator;
 import com.codeshelf.model.domain.Tier;
 
 public class TierBayComparable implements Comparator<Tier> {
-	// For the tierRight and tierLeft aisle types. 
+	// For the tierB1S1Side and tierNotB1S1Side aisle types. 
 
 	public int compare(Tier inLoc1, Tier inLoc2) {
 
