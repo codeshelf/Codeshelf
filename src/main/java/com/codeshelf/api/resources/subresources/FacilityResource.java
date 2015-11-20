@@ -704,6 +704,9 @@ public class FacilityResource {
 				if (date == null){
 					throw new Exception("Unparseable date: \"" + dateParam.getRawValue() + "\"");
 				}
+				if (date.after(new Date())){
+					throw new Exception("Provice a past date");
+				}
 				DateFormat outFormat = new SimpleDateFormat("yyyy-MM-dd"); 
 				dateStr = outFormat.format(date);
 			}
