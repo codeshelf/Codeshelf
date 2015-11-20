@@ -56,11 +56,11 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		zigzagB1S1Side,
 		zigzagNotB1S1Side,
 		tierB1S1Side,
-		tierNotB1S1Side,
-		zigzagLeft, //deprecated, use zigzagB1S1Side
-		zigzagRight, //deprecated, use zigzagNotB1S1Side
-		tierRight,  //deprecated, use tierB1S1Side
-		tierLeft,   //deprecated, use tierNotB1S1Side
+		tierNotB1S1Side
+		// zigzagLeft, //deprecated, use zigzagB1S1Side
+		// zigzagRight, //deprecated, use zigzagNotB1S1Side
+		// tierRight,  //deprecated, use tierB1S1Side
+		// tierLeft,   //deprecated, use tierNotB1S1Side
 	}
 	
 	private static double			CM_PER_M		= 100D;
@@ -585,10 +585,9 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 
 		if (tierSortNeeded) {
 			Collections.sort(mTiersThisAisle, new TierBayComparable());
-		} else if (controllerLedPattern.equalsIgnoreCase(ControllerLayout.zigzagLeft.name()) || controllerLedPattern.equalsIgnoreCase(ControllerLayout.zigzagB1S1Side.name())) {
+		} else if (controllerLedPattern.equalsIgnoreCase(ControllerLayout.zigzagB1S1Side.name())) {
 			Collections.sort(mTiersThisAisle, new ZigzagLeftComparable());
-		} else if (controllerLedPattern.equalsIgnoreCase(ControllerLayout.zigzagRight.name())
-				|| controllerLedPattern.equalsIgnoreCase(ControllerLayout.zigzagNotB1S1Side.name())) {
+		} else if (controllerLedPattern.equalsIgnoreCase(ControllerLayout.zigzagNotB1S1Side.name())) {
 			Collections.sort(mTiersThisAisle, new ZigzagRightComparable());
 			intialZigTierDirectionIncrease = false;
 		}
@@ -600,7 +599,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		ListIterator<Tier> li = null;
 
 		boolean forwardIterationNeeded = true;
-		if (controllerLedPattern.equalsIgnoreCase(ControllerLayout.tierRight.name()) || controllerLedPattern.equalsIgnoreCase(ControllerLayout.tierNotB1S1Side.name())) {
+		if (controllerLedPattern.equalsIgnoreCase(ControllerLayout.tierNotB1S1Side.name())) {
 			forwardIterationNeeded = false;
 		}
 		// default is then "tierB1S1Side"
