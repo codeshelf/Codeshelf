@@ -260,7 +260,8 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				for (OutboundOrderCsvBean orderBean : lines) {
 					// process order bean
 					try {
-						OrderHeader order = orderCsvBeanImport(orderBean, facility, processTime, batchCount + "/" + numBatches + " " + count++ + "/" + size);
+						OrderHeader order = orderCsvBeanImport(orderBean, facility, processTime, batchCount + "/" + numBatches
+								+ " " + count++ + "/" + size);
 						if ((order != null) && (!orderSet.contains(order))) {
 							orderSet.add(order);
 						}
@@ -1259,6 +1260,10 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		return result;
 	}
 
+	/**
+	 * Change this for v25, and lat v24 for Loreal
+	 * Find the detail. If orderDetailId is provided, use it.
+	 */
 	private OrderDetail findOrderDetail(String orderId, String domainId, ItemMaster item, UomMaster uom) {
 		// find by domain id
 		//OrderDetail domainMatch = header.getOrderDetail(domainId);
@@ -1278,19 +1283,17 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		for (OrderDetail detail : details) {
 			String examinedKey = genItemUomKey(detail.getItemMaster(), detail.getUomMaster());
 			if (genItemUomKey(item, uom).equals(examinedKey) && detail.getActive()) {
-				return detail;
+				// DEV-1323 new for Loreal.  If given a detail ID, don't return a matching one with different ID.
+				if (detail.getDomainId().equals(domainId)) {
+					return detail;
+				} else {
+					LOGGER.warn("Order {}: Detail {} found to have same SKU/UOM as {}, but treating them separately",
+						orderId,
+						domainId,
+						detail.getDomainId());
+				}
 			}
 		}
-		/*
-		List<OrderDetail> details = header.getOrderDetails();
-		String examinedKey;
-		for (OrderDetail detail : details) {
-			examinedKey = genItemUomKey(detail.getItemMaster(), detail.getUomMaster());
-			if (genItemUomKey(item, uom).equals(examinedKey) && detail.getActive()){
-				return detail;
-			}
-		}
-		*/
 		return domainMatch;
 	}
 

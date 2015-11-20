@@ -76,7 +76,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
-	@Test 
+	@Test
 	public void persistDataReceipt() {
 		beginTransaction();
 		ICsvOrderImporter subject = createOrderImporter();
@@ -123,7 +123,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,120,931,10706962,Sun Ripened Dried Tomato Pesto 24oz,1,each,2012-09-26 11:31:01,,0";
 		importOrdersData(facility, csvString);
 		commitTransaction();
-		
+
 		beginTransaction();
 		facility = facility.reload();
 		OrderGroup orderGroup = facility.getOrderGroup("1");
@@ -149,13 +149,13 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertNotNull(detail931b); // this works, find by itemId within an order.
 		Assert.assertEquals(detail931b, detail931);
 		Assert.assertEquals(detail931DomainID, "10706962-each"); // This is the itemID from file above.
-		
+
 		String expectedDateStr = OutboundOrderCsvBean.getDefaultDueDate();
-		SimpleDateFormat parserSDF = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");		
+		SimpleDateFormat parserSDF = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
 		Date expectedDate = parserSDF.parse(expectedDateStr);
 		Timestamp dueDate931 = order931.getDueDate();
-		Assert.assertEquals(expectedDate.getTime(), dueDate931.getTime());	//Verify the auto-filled due date
-		
+		Assert.assertEquals(expectedDate.getTime(), dueDate931.getTime()); //Verify the auto-filled due date
+
 		commitTransaction();
 	}
 
@@ -202,7 +202,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n7,7,7.5,,,TO-SC-U9T,9 Three Compartment Unbleached Clamshel,2,EA,,pick,D13,";
 		importOrdersData(facility, csvString);
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "1");
@@ -255,7 +255,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "1,PARALLEL,789,2150,Thingamajig,125,each,2012-09-26 11:31:03,2012-09-26 11:31:01\r\n" //
 				+ "1,PARALLEL,789,2170,Doodad,125,each,2012-09-26 11:31:03,2012-09-26 11:31:01";
 		importOrdersData(facility, csvString);
-		
+
 		// If not specified, default to serial
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "123");
 
@@ -281,7 +281,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "1,FEDEX,456,4550,Gadget,450,case,2012-09-26 11:31:01,2012-09-26 11:31:01\r\n" //
 				+ "1,,789,3007,Dealybob,300,case,2012-09-26 11:31:02,2012-09-26 11:31:01\r\n";
 		importOrdersData(facility, csvString);
-		
+
 		OrderHeader o123 = OrderHeader.staticGetDao().findByDomainId(facility, "123");
 		OrderHeader o456 = OrderHeader.staticGetDao().findByDomainId(facility, "456");
 		OrderHeader o789 = OrderHeader.staticGetDao().findByDomainId(facility, "789");
@@ -312,7 +312,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "1,CONTAINER1,789,2150,Thingamajig,125,each,2012-09-26 11:31:03,2012-09-26 11:31:01\r\n" //
 				+ "1,CONTAINER1,789,2170,Doodad,125,each,2012-09-26 11:31:03,2012-09-26 11:31:01";
 		importOrdersData(facility, csvString);
-		
+
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "789");
 
 		Assert.assertNotNull(order);
@@ -395,14 +395,14 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 		importOrdersData(facility, firstOrderBatchCsv);
-		
+
 		HeaderCounts theCounts = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts.mActiveHeaders == 3);
 		Assert.assertTrue(theCounts.mActiveDetails == 11);
 		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 		// Now import a smaller list of orders, but more than one.
 		String secondOrderBatchCsv = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalapeno Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
@@ -415,12 +415,12 @@ public class OutboundOrderImporterTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		importOrdersData(facility, secondOrderBatchCsv);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
-		
+
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
@@ -460,7 +460,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,789,789,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 		importOrdersData(facility, firstOrderBatchCsv);
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		HeaderCounts theCounts = facility.countOutboundOrders();
 		Assert.assertEquals(3, theCounts.mTotalHeaders);
@@ -474,16 +474,16 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 		importOrdersData(facility, secondOrderBatchCsv);
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
-		Assert.assertEquals(theCounts2.mTotalHeaders,3);
-		Assert.assertEquals(theCounts2.mActiveHeaders,1);
-		Assert.assertEquals(theCounts2.mActiveDetails,2);
-		Assert.assertEquals(theCounts2.mActiveCntrUses,1);
-		Assert.assertEquals(theCounts2.mInactiveDetailsOnActiveOrders,0);
-		Assert.assertEquals(theCounts2.mInactiveCntrUsesOnActiveOrders,0);
+		Assert.assertEquals(theCounts2.mTotalHeaders, 3);
+		Assert.assertEquals(theCounts2.mActiveHeaders, 1);
+		Assert.assertEquals(theCounts2.mActiveDetails, 2);
+		Assert.assertEquals(theCounts2.mActiveCntrUses, 1);
+		Assert.assertEquals(theCounts2.mInactiveDetailsOnActiveOrders, 0);
+		Assert.assertEquals(theCounts2.mInactiveCntrUsesOnActiveOrders, 0);
 
 		// Order 789 should exist and be active.
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "789");
@@ -525,7 +525,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,					1,0,5,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
 		importOrdersData(facility, csvString);
-		
+
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "123");
 		Assert.assertNotNull(order);
 
@@ -686,15 +686,18 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertTrue(theCounts.mActiveDetails == 11);
 		Assert.assertTrue(theCounts.mActiveCntrUses == 3);
 		commitTransaction();
-		
+
 		// This is a very odd test. Above had one set of headers, and this a different set. Could happen for different customers maybe, but here same customer and same orders.
-		// So, what happens to the details? The answer is the old details all updated with the new ids. In this case, the new IDs are the "item-uom" pairs
+		// So, what happens to the details? 
+		// The answer through v24 was the old details all updated with the new ids. In this case, the new IDs are the "item-uom" pairs
+		// But DEV-1323 gives precedence to the order detail ID. No detail ID field in this file, so we get the default ID as "10700589-each"
+		// It will not match the previous "item-uom" pair because the detail ID is different.
 		String secondCsvString = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape�����������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape�����������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,456,456,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
@@ -712,16 +715,20 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		Assert.assertNotNull(order);
 		orderDetail = order.getOrderDetail("123.1");
-		Assert.assertNull(orderDetail);
+		// prior to DEV-1323, the detail was not found because it got renamed.
+		Assert.assertNotNull(orderDetail);
+		Assert.assertFalse(orderDetail.getActive()); // but not active because not represented in this file with this order ID.
 		orderDetail = order.getOrderDetail("10700589-each");
 		Assert.assertNotNull(orderDetail);
+		Assert.assertTrue(orderDetail.getActive());
 
 		// Find inactive 456.1 and new active 10711111 and 10722222
 		order = OrderHeader.staticGetDao().findByDomainId(facility, "456");
 
 		Assert.assertNotNull(order);
 		orderDetail = order.getOrderDetail("456.1");
-		Assert.assertNull(orderDetail);
+		Assert.assertNotNull(orderDetail);
+		Assert.assertFalse(orderDetail.getActive()); // but not active because not represented in this file with this order ID.
 		orderDetail = order.getOrderDetail("10711111-each");
 		Assert.assertNotNull(orderDetail);
 		orderDetail = order.getOrderDetail("10722222-each");
@@ -731,7 +738,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertTrue(theCounts2.mTotalHeaders == 3);
 		Assert.assertTrue(theCounts2.mActiveHeaders == 2);
 		Assert.assertTrue(theCounts2.mActiveDetails == 8);
-		Assert.assertTrue(theCounts2.mInactiveDetailsOnActiveOrders == 1);
+		Assert.assertEquals(9, theCounts2.mInactiveDetailsOnActiveOrders); // Used to be 1 before the DEV-1323 changes
 		Assert.assertTrue(theCounts2.mActiveCntrUses == 2);
 
 		commitTransaction();
@@ -842,7 +849,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 		// import files
 		getTenantPersistenceService().beginTransaction();
 		String withOneEmptyQuantity = "preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
@@ -903,7 +910,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 				+ "\r\nUSF314,COSTCO,789,789,789.2,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 		importOrdersData(facility, firstCsvString);
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 		// check order stats
 		this.getTenantPersistenceService().beginTransaction();
 		HeaderCounts theCounts = facility.countOutboundOrders();
@@ -914,7 +921,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		// and import exact same file again
 		importOrdersData(facility, firstCsvString);
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 		// check order stats again
 		this.getTenantPersistenceService().beginTransaction();
 		HeaderCounts theCounts2 = facility.countOutboundOrders();
@@ -942,53 +949,53 @@ public class OutboundOrderImporterTest extends ServerTest {
 		// See, works same as if matching the group
 		HeaderCounts theCounts3 = facility.countOutboundOrders();
 		Assert.assertTrue(theCounts3.mTotalHeaders == 3);
-		Assert.assertEquals(theCounts3.mActiveHeaders,3);
-		Assert.assertEquals(theCounts3.mActiveDetails,10);
-		Assert.assertEquals(theCounts3.mInactiveDetailsOnActiveOrders,1);
-		Assert.assertEquals(theCounts3.mInactiveCntrUsesOnActiveOrders,0);
-		Assert.assertEquals(theCounts3.mActiveCntrUses,3);
+		Assert.assertEquals(theCounts3.mActiveHeaders, 3);
+		Assert.assertEquals(theCounts3.mActiveDetails, 10);
+		Assert.assertEquals(theCounts3.mInactiveDetailsOnActiveOrders, 1);
+		Assert.assertEquals(theCounts3.mInactiveCntrUsesOnActiveOrders, 0);
+		Assert.assertEquals(theCounts3.mActiveCntrUses, 3);
 
 		// Can a customer update a single order or detail by setting the count to zero
 		String fourthCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\nUSF314,COSTCO,123,123,123.3,10706962,Authentic Pizza Sauces,0,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, fourthCsvString);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		HeaderCounts theCounts4 = facility.countOutboundOrders();
-		Assert.assertEquals(theCounts4.mTotalHeaders,3);
-		Assert.assertEquals(theCounts4.mActiveHeaders,2);
-		Assert.assertEquals(theCounts4.mActiveDetails,7);
-		Assert.assertEquals(theCounts4.mInactiveDetailsOnActiveOrders,0);
-		Assert.assertEquals(theCounts4.mInactiveCntrUsesOnActiveOrders,0);
-		Assert.assertEquals(theCounts4.mActiveCntrUses,2);
+		Assert.assertEquals(theCounts4.mTotalHeaders, 3);
+		Assert.assertEquals(theCounts4.mActiveHeaders, 2);
+		Assert.assertEquals(theCounts4.mActiveDetails, 7);
+		Assert.assertEquals(theCounts4.mInactiveDetailsOnActiveOrders, 0);
+		Assert.assertEquals(theCounts4.mInactiveCntrUsesOnActiveOrders, 0);
+		Assert.assertEquals(theCounts4.mActiveCntrUses, 2);
 
 		// So, can a customer update the count on a single item? 123.2 going to 3.
 		String fifthCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\nUSF314,COSTCO,123,123,123.2,10706952,Italian Homemade Style Basil Pesto,3,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, fifthCsvString);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		// Well, yes. Looks like that detail was cleanly updated without bothering anything else.
 		HeaderCounts theCounts5 = facility.countOutboundOrders();
-		Assert.assertEquals(theCounts5.mTotalHeaders,3);
-		Assert.assertEquals(theCounts5.mActiveHeaders,3);
-		Assert.assertEquals(theCounts5.mActiveDetails,8);
-		Assert.assertEquals(theCounts5.mInactiveDetailsOnActiveOrders,3);
-		Assert.assertEquals(theCounts5.mInactiveCntrUsesOnActiveOrders,0);
-		Assert.assertEquals(theCounts5.mActiveCntrUses,3);
+		Assert.assertEquals(theCounts5.mTotalHeaders, 3);
+		Assert.assertEquals(theCounts5.mActiveHeaders, 3);
+		Assert.assertEquals(theCounts5.mActiveDetails, 8);
+		Assert.assertEquals(theCounts5.mInactiveDetailsOnActiveOrders, 3);
+		Assert.assertEquals(theCounts5.mInactiveCntrUsesOnActiveOrders, 0);
+		Assert.assertEquals(theCounts5.mActiveCntrUses, 3);
 
 		// re-submit order with three items instead of five
 		String sixthCsvString = "shipmentId,customerId,preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\nUSF314,COSTCO,456,456,456.1,10711111,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,4,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\nUSF314,COSTCO,456,456,456.2,10722222,Italian Homemade Style Basil Pesto,4,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\nUSF314,COSTCO,456,456,456.3,10706962,Authentic Pizza Sauces,4,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
-		
+
 		importOrdersData(facility, sixthCsvString);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
@@ -1151,7 +1158,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		importOrdersData(facility, csvString2);
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		LOGGER.info("6: Check that we got new item locations for SKU0001, and moved the old one for SKU0004, ");
@@ -1168,7 +1175,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Item items4b = items4.get(0);
 		UUID persist4b = items4b.getPersistentId();
 
-		Assert.assertEquals(persist4a, persist4b);  // just moved the EA item since EACHMULT is false.
+		Assert.assertEquals(persist4a, persist4b); // just moved the EA item since EACHMULT is false.
 		this.getTenantPersistenceService().commitTransaction();
 
 		LOGGER.info("7: Move the 10.1 SKU0001 order at D34. But add another SKU0001 order at D34. SKU0001 hould have two itemLocations after that.");
@@ -1195,8 +1202,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		facility = Facility.staticGetDao().reload(facility);
 
 		String csvString4 = "orderId,preassignedContainerId,orderDetailId,itemId,description,quantity,uom,gtin,type,locationId,cmFromLeft"
-				+ "\r\n14,14,14.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D13,"
-				+ "\r\n14,14,14.2,SKU0003,Spoon 6in.,1,CS,,pick,D21,";
+				+ "\r\n14,14,14.1,SKU0001,16 OZ. PAPER BOWLS,3,CS,,pick,D13," + "\r\n14,14,14.2,SKU0003,Spoon 6in.,1,CS,,pick,D21,";
 
 		importOrdersData(facility, csvString4);
 
@@ -1239,23 +1245,23 @@ public class OutboundOrderImporterTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
-				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" +
-				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1" +
-				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1";
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId"
+				+ "\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1"
+				+ "\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1"
+				+ "\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1";
 		importOrdersData(facility, firstCsvString);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
-				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" +
-				"\r\n4,4,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1";
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId"
+				+ "\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1"
+				+ "\r\n4,4,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1";
 		importOrdersData(facility, secondCsvString);
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
-		
+
 		HashMap<String, Boolean> groupExpectations = new HashMap<String, Boolean>();
 		groupExpectations.put("Group1", true);
 		HashMap<String, Boolean> headerExpectations = new HashMap<String, Boolean>();
@@ -1276,22 +1282,22 @@ public class OutboundOrderImporterTest extends ServerTest {
 		beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom" +
-				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a" +
-				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a" +
-				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a";
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom"
+				+ "\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a"
+				+ "\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a"
+				+ "\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a";
 		importOrdersData(facility, firstCsvString);
 		commitTransaction();
-		
+
 		beginTransaction();
-		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom" +
-				"\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a" +
-				"\r\n4,4,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a";
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom"
+				+ "\r\n3,3,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a"
+				+ "\r\n4,4,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a";
 		importOrdersData(facility, secondCsvString);
 		commitTransaction();
-		
+
 		beginTransaction();
-		facility = facility.reload();		
+		facility = facility.reload();
 		HashMap<String, Boolean> groupExpectations = new HashMap<String, Boolean>();
 		groupExpectations.put("Group1", true);
 		HashMap<String, Boolean> headerExpectations = new HashMap<String, Boolean>();
@@ -1308,23 +1314,23 @@ public class OutboundOrderImporterTest extends ServerTest {
 		beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
-				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" +
-				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1" +
-				"\r\n3,3,347,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group2";
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId"
+				+ "\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1"
+				+ "\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1"
+				+ "\r\n3,3,347,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group2";
 		importOrdersData(facility, firstCsvString);
 		commitTransaction();
 
 		beginTransaction();
-		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
-				"\r\n4,4,349,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2" +
-				"\r\n5,5,350,12/03/14 12:00,12/31/14 12:00,Item8,,50,a,Group2";
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId"
+				+ "\r\n4,4,349,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2"
+				+ "\r\n5,5,350,12/03/14 12:00,12/31/14 12:00,Item8,,50,a,Group2";
 		importOrdersData(facility, secondCsvString);
 		commitTransaction();
-		
+
 		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
-		
+
 		HashMap<String, Boolean> groupExpectations = new HashMap<String, Boolean>();
 		groupExpectations.put("Group1", true);
 		groupExpectations.put("Group2", true);
@@ -1345,9 +1351,9 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 
 		LOGGER.info("1: Read tiny orders for for group 1, 2 orders with one detail each.");
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
-				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" +
-				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1";
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId"
+				+ "\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1"
+				+ "\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1";
 		importOrdersData(facility, firstCsvString);
 		commitTransaction();
 
@@ -1356,11 +1362,11 @@ public class OutboundOrderImporterTest extends ServerTest {
 		OrderGroup group1a = header1a.getOrderGroup();
 		Assert.assertNotNull(group1a);
 		Assert.assertEquals("Group1", group1a.getDomainId());
-		
+
 		LOGGER.info("2: As if the orders were pushed to later group, same orders except for group2.");
-		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
-				"\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group2" +
-				"\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2";
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId"
+				+ "\r\n1,1,345,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group2"
+				+ "\r\n2,2,346,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2";
 		importOrdersData(facility, secondCsvString);
 		commitTransaction();
 
@@ -1386,8 +1392,8 @@ public class OutboundOrderImporterTest extends ServerTest {
 		headerExpectations.put("2", true);
 		headerExpectations.put("99", true); // just showing  the limit of the test function. Order 99 does not exist. No error reported.
 		assertArchiveStatuses(groupExpectations, headerExpectations);
-	    */
-		
+		*/
+
 		LOGGER.info("  We showed that the orders are the same objects. They changed owner groups.");
 		commitTransaction();
 	}
@@ -1404,11 +1410,11 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 
 		LOGGER.info("1: Read orders for for group 1, as if it is morning wave");
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
-				"\r\n1,1,1.1,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1" +
-				"\r\n1,1,1.2,12/03/14 12:00,12/31/14 12:00,Item16,,90,a,Group1" +
-				"\r\n2,2,2.1,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1" +
-				"\r\n3,3,3.1,12/03/14 12:00,12/31/14 12:00,Item9,,100,a,Group1";
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId"
+				+ "\r\n1,1,1.1,12/03/14 12:00,12/31/14 12:00,Item15,,90,a,Group1"
+				+ "\r\n1,1,1.2,12/03/14 12:00,12/31/14 12:00,Item16,,90,a,Group1"
+				+ "\r\n2,2,2.1,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group1"
+				+ "\r\n3,3,3.1,12/03/14 12:00,12/31/14 12:00,Item9,,100,a,Group1";
 		importOrdersData(facility, firstCsvString);
 
 		this.getTenantPersistenceService().commitTransaction();
@@ -1423,7 +1429,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertNotNull(detail1_2a);
 		OrderHeader header2a = OrderHeader.staticGetDao().findByDomainId(facility, "2");
 		Assert.assertNotNull(header2a);
-		OrderHeader header3a = OrderHeader.staticGetDao().findByDomainId(facility, "3"); 
+		OrderHeader header3a = OrderHeader.staticGetDao().findByDomainId(facility, "3");
 		OrderDetail detail3_1a = header3a.getOrderDetail("3.1");
 
 		LOGGER.info("2: Partially complete order 1. Fully complete order 3. Leave order 2 uncompleted.");
@@ -1435,9 +1441,9 @@ public class OutboundOrderImporterTest extends ServerTest {
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
 		LOGGER.info("3: As if remaining work is reassigned to a later wave, push what is left to group2.");
-		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
-				"\r\n1,1,1.2,12/03/14 12:00,12/31/14 12:00,Item16,,90,a,Group2" +
-				"\r\n2,2,2.1,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2";
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId"
+				+ "\r\n1,1,1.2,12/03/14 12:00,12/31/14 12:00,Item16,,90,a,Group2"
+				+ "\r\n2,2,2.1,12/03/14 12:00,12/31/14 12:00,Item7,,100,a,Group2";
 		importOrdersData(facility, secondCsvString);
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -1446,14 +1452,14 @@ public class OutboundOrderImporterTest extends ServerTest {
 
 		OrderGroup orderGroup1b = facility.getOrderGroup("Group1");
 		OrderGroup orderGroup2b = facility.getOrderGroup("Group2");
-		OrderHeader header1b = OrderHeader.staticGetDao().findByDomainId(facility, "1"); 
+		OrderHeader header1b = OrderHeader.staticGetDao().findByDomainId(facility, "1");
 		OrderDetail detail1_1b = header1b.getOrderDetail("1.1");
 		Assert.assertNotNull(detail1_1b);
 		OrderDetail detail1_2b = header1b.getOrderDetail("1.2");
 		Assert.assertNotNull(detail1_2b);
-		OrderHeader header2b = OrderHeader.staticGetDao().findByDomainId(facility, "2"); 
+		OrderHeader header2b = OrderHeader.staticGetDao().findByDomainId(facility, "2");
 		Assert.assertNotNull(header2b);
-		OrderHeader header3b = OrderHeader.staticGetDao().findByDomainId(facility, "3"); 
+		OrderHeader header3b = OrderHeader.staticGetDao().findByDomainId(facility, "3");
 		OrderDetail detail3_1b = header3b.getOrderDetail("3.1");
 		Assert.assertNotNull(detail3_1b);
 
@@ -1485,19 +1491,19 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 		//Test that if orderDetailId is provided, it becomes detail's id. If not, then use the item-uom combination.
 		//Also confirm that detail ids can be reused across orders
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
-				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,90,each,Group1" +
-				"\r\n1,1,,12/03/14 12:00,12/31/14 12:00,Item2,,100,each,Group1" +
-				"\r\n2,2,101,12/03/14 12:00,12/31/14 12:00,Item3,,90,each,Group1" +
-				"\r\n2,2,,12/03/14 12:00,12/31/14 12:00,Item2,,90,each,Group1";
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId"
+				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,90,each,Group1"
+				+ "\r\n1,1,,12/03/14 12:00,12/31/14 12:00,Item2,,100,each,Group1"
+				+ "\r\n2,2,101,12/03/14 12:00,12/31/14 12:00,Item3,,90,each,Group1"
+				+ "\r\n2,2,,12/03/14 12:00,12/31/14 12:00,Item2,,90,each,Group1";
 		importOrdersData(facility, firstCsvString);
 
-		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1"); 
+		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1");
 		OrderDetail d1_1 = h1.getOrderDetail("101");
 		assertActiveOrderDetail(d1_1);
 		OrderDetail d1_2 = h1.getOrderDetail("Item2-each");
 		assertActiveOrderDetail(d1_2);
-		OrderHeader h2 = OrderHeader.staticGetDao().findByDomainId(facility, "2"); 
+		OrderHeader h2 = OrderHeader.staticGetDao().findByDomainId(facility, "2");
 		OrderDetail d2_1 = h2.getOrderDetail("101");
 		assertActiveOrderDetail(d2_1);
 		OrderDetail d2_2 = h2.getOrderDetail("Item2-each");
@@ -1511,22 +1517,26 @@ public class OutboundOrderImporterTest extends ServerTest {
 	public final void testOrderDetailIdDuplicates() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId" +
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId"
+				+
 				//Repeating orderDetailId - leave last one
-				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,9,each,Group1" +
-				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item2,,10,each,Group1" +
-				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item3,,11,each,Group1" +
+				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,9,each,Group1"
+				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item2,,10,each,Group1"
+				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item3,,11,each,Group1"
+				+
 				//Repeating item-uom - leave last one. In this case, also loose orderDetailId.
-				"\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item4,,9,each,Group1" +
-				"\r\n1,1,,12/03/14 12:00,12/31/14 12:00,Item4,,10,each,Group1" +
+				"\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item4,,9,each,Group1"
+				+ "\r\n1,1,,12/03/14 12:00,12/31/14 12:00,Item4,,10,each,Group1"
+				+
 				//Same item, but different uom - OK
-				"\r\n1,1,,12/03/14 12:00,12/31/14 12:00,Item4,,10,cs,Group1" +
+				"\r\n1,1,,12/03/14 12:00,12/31/14 12:00,Item4,,10,cs,Group1"
+				+
 				//Other order - OK
-				"\r\n2,2,101,12/03/14 12:00,12/31/14 12:00,Item1,,9,each,Group1" +
-				"\r\n2,2,,12/03/14 12:00,12/31/14 12:00,Item4,,10,each,Group1";
+				"\r\n2,2,101,12/03/14 12:00,12/31/14 12:00,Item1,,9,each,Group1"
+				+ "\r\n2,2,,12/03/14 12:00,12/31/14 12:00,Item4,,10,each,Group1";
 		importOrdersData(facility, firstCsvString);
 
-		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1"); 
+		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1");
 
 		OrderDetail d1_1 = h1.getOrderDetail("101");
 		assertActiveOrderDetail(d1_1);
@@ -1539,7 +1549,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 		OrderDetail d1_3 = h1.getOrderDetail("Item4-cs");
 		assertActiveOrderDetail(d1_2);
 
-		OrderHeader h2 = OrderHeader.staticGetDao().findByDomainId(facility, "2"); 
+		OrderHeader h2 = OrderHeader.staticGetDao().findByDomainId(facility, "2");
 
 		OrderDetail d2_1 = h2.getOrderDetail("101");
 		assertActiveOrderDetail(d2_1);
@@ -1550,56 +1560,59 @@ public class OutboundOrderImporterTest extends ServerTest {
 	}
 
 	@Test
-	public final void testPreferedSequence() throws IOException{
+	public final void testPreferedSequence() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,workSequence" +
-				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,90,each,Group1,1" +
-				"\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item2,,100,each,Group1,2" +
-				"\r\n2,2,201,12/03/14 12:00,12/31/14 12:00,Item3,,90,each,Group1," +
-				"\r\n2,2,202,12/03/14 12:00,12/31/14 12:00,Item2,,90,each,Group1,2";
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,workSequence"
+				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,90,each,Group1,1"
+				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item2,,100,each,Group1,2"
+				+ "\r\n2,2,201,12/03/14 12:00,12/31/14 12:00,Item3,,90,each,Group1,"
+				+ "\r\n2,2,202,12/03/14 12:00,12/31/14 12:00,Item2,,90,each,Group1,2";
 		importOrdersData(facility, firstCsvString);
 
-		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1"); 
+		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1");
 		OrderDetail d1_1 = h1.getOrderDetail("101");
-		Assert.assertEquals(d1_1.getWorkSequence(), (Integer)1);
+		Assert.assertEquals(d1_1.getWorkSequence(), (Integer) 1);
 		OrderDetail d1_2 = h1.getOrderDetail("102");
-		Assert.assertEquals(d1_2.getWorkSequence(), (Integer)2);
+		Assert.assertEquals(d1_2.getWorkSequence(), (Integer) 2);
 
-		OrderHeader h2 = OrderHeader.staticGetDao().findByDomainId(facility, "2"); 
+		OrderHeader h2 = OrderHeader.staticGetDao().findByDomainId(facility, "2");
 		OrderDetail d2_1 = h2.getOrderDetail("201");
 		Assert.assertNull(d2_1.getWorkSequence());
 		OrderDetail d2_2 = h2.getOrderDetail("202");
-		Assert.assertEquals(d2_2.getWorkSequence(), (Integer)2);
+		Assert.assertEquals(d2_2.getWorkSequence(), (Integer) 2);
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
+
 	/*
 	 * If multiple gtins are created for an item we may return the incorrect gtin. We do not check if a gtin exists
 	 * for an item before creating a new one. Probably good to do in the future if this becomes an issue, however,
 	 * multiple gtins for identical items does not make sense.
 	 */
 	@Test
-	public final void testGtin() throws IOException{
+	public final void testGtin() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
-		
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin" +
-				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,90,each,Group1,1" +
-				"\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item2,,100,each,Group1,2" +
-				"\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,100,each,Group1,3" +	// Create new gtin for existing item. Not well supported
-				"\r\n2,2,201,12/03/14 12:00,12/31/14 12:00,Item3,,90,each,Group1,4" +
-				"\r\n2,2,202,12/03/14 12:00,12/31/14 12:00,Item3,,90,cs,Group1,4" +		// Repeat gtin for diff UOM
-				"\r\n2,2,203,12/03/14 12:00,12/31/14 12:00,Item4,,90,each,Group1,5" +
-				"\r\n2,2,204,12/03/14 12:00,12/31/14 12:00,Item5,,90,each,Group1,5" +	// Repeat gtin for different item
-				"\r\n2,2,205,12/03/14 12:00,12/31/14 12:00,Item5,,90,cs,Group1,6";		// Create new gtin for new UOM
+
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin"
+				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,90,each,Group1,1"
+				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item2,,100,each,Group1,2"
+				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,100,each,Group1,3"
+				+ // Create new gtin for existing item. Not well supported
+				"\r\n2,2,201,12/03/14 12:00,12/31/14 12:00,Item3,,90,each,Group1,4"
+				+ "\r\n2,2,202,12/03/14 12:00,12/31/14 12:00,Item3,,90,cs,Group1,4"
+				+ // Repeat gtin for diff UOM
+				"\r\n2,2,203,12/03/14 12:00,12/31/14 12:00,Item4,,90,each,Group1,5"
+				+ "\r\n2,2,204,12/03/14 12:00,12/31/14 12:00,Item5,,90,each,Group1,5" + // Repeat gtin for different item
+				"\r\n2,2,205,12/03/14 12:00,12/31/14 12:00,Item5,,90,cs,Group1,6"; // Create new gtin for new UOM
 		importOrdersData(facility, firstCsvString);
 
-		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1"); 
+		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1");
 		OrderDetail d1_1 = h1.getOrderDetail("101");
 		Gtin d1_1_gtin = d1_1.getItemMaster().getGtinForUom(d1_1.getUomMaster());
 		Assert.assertEquals("1", d1_1_gtin.getDomainId());
-		
+
 		/*
 		 * This tests unsupported functionality of multiple GTINs for the same item
 		 * 2 or 3 would be "correct" answers
@@ -1609,48 +1622,48 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Gtin d1_2_gtin = d1_2.getItemMaster().getGtinForUom(d1_2.getUomMaster());
 		Assert.assertEquals("2", d1_2_gtin.getDomainId());
 		*/
-		
-		OrderHeader h2 = OrderHeader.staticGetDao().findByDomainId(facility, "2"); 
+
+		OrderHeader h2 = OrderHeader.staticGetDao().findByDomainId(facility, "2");
 		OrderDetail d2_1 = h2.getOrderDetail("201");
 		Gtin d2_1_gtin = d2_1.getItemMaster().getGtinForUom(d2_1.getUomMaster());
 		// there was a d2_1_gtin for detail 102. But it got converted on the line commented // Repeat gtin for diff UOM
 		// So, now we will not find the gtin for the previous UOM
 		Assert.assertNull(d2_1_gtin);
-		
+
 		OrderDetail d2_2 = h2.getOrderDetail("202");
 		Gtin d2_2_gtin = d2_2.getItemMaster().getGtinForUom(d2_2.getUomMaster());
 		Assert.assertNotNull(d2_2_gtin); // this was the converted one
-		
+
 		OrderDetail d2_3 = h2.getOrderDetail("203");
 		Gtin d2_3_gtin = d2_3.getItemMaster().getGtinForUom(d2_3.getUomMaster());
 		Assert.assertEquals("5", d2_3_gtin.getDomainId());
-		
+
 		OrderDetail d2_4 = h2.getOrderDetail("204");
 		Gtin d2_4_gtin = d2_4.getItemMaster().getGtinForUom(d2_4.getUomMaster());
 		Assert.assertNull(d2_4_gtin);
-		
+
 		OrderDetail d2_5 = h2.getOrderDetail("205");
 		Gtin d2_5_gtin = d2_5.getItemMaster().getGtinForUom(d2_5.getUomMaster());
 		Assert.assertEquals("6", d2_5_gtin.getDomainId());
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
 	@Test
-	public final void testGtinReimport() throws IOException{
+	public final void testGtinReimport() throws IOException {
 		// initial order import
 		beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
-		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin" +
-				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,Group1,gtin-1-each" +
-				"\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,Group1,gtin-1-case" +
-				"\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,80,each,Group1,gtin-2";
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin"
+				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,Group1,gtin-1-each"
+				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,Group1,gtin-1-case"
+				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,80,each,Group1,gtin-2";
 		importOrdersData(facility, firstCsvString);
 		commitTransaction();
 
 		// check gtin
 		beginTransaction();
-		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1"); 
+		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1");
 		OrderDetail d1_1 = h1.getOrderDetail("101");
 		Gtin d1_1_gtin = d1_1.getItemMaster().getGtinForUom(d1_1.getUomMaster());
 		Assert.assertEquals("gtin-1-each", d1_1_gtin.getDomainId());
@@ -1662,16 +1675,16 @@ public class OutboundOrderImporterTest extends ServerTest {
 		// modify gtin
 		beginTransaction();
 		facility = Facility.staticGetDao().findByPersistentId(facilityId);
-		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin" +
-				"\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,Group1,gtin-1-each-mod" +
-				"\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,Group1,gtin-1-case" +
-				"\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,80,each,Group1,gtin-2";
+		firstCsvString = "orderId,preAssignedContainerId,orderDetailId,orderDate,dueDate,itemId,description,quantity,uom,orderGroupId,gtin"
+				+ "\r\n1,1,101,12/03/14 12:00,12/31/14 12:00,Item1,,70,each,Group1,gtin-1-each-mod"
+				+ "\r\n1,1,102,12/03/14 12:00,12/31/14 12:00,Item1,,70,case,Group1,gtin-1-case"
+				+ "\r\n1,1,103,12/03/14 12:00,12/31/14 12:00,Item2,,80,each,Group1,gtin-2";
 		importOrdersData(facility, firstCsvString);
 		commitTransaction();
 
 		// check gtin again
 		beginTransaction();
-		h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1"); 
+		h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1");
 		d1_1 = h1.getOrderDetail("101");
 		d1_1_gtin = d1_1.getItemMaster().getGtinForUom(d1_1.getUomMaster());
 		Assert.assertEquals("gtin-1-each-mod", d1_1_gtin.getDomainId());
@@ -1682,26 +1695,26 @@ public class OutboundOrderImporterTest extends ServerTest {
 	}
 
 	@Test
-	public final void testFailedLinesCounter() throws IOException{
+	public final void testFailedLinesCounter() throws IOException {
 		beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
 		LOGGER.info("1: No errors");
-		String ordersStringNormal = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId\n" +
-				"order1,detail1,item1,description1,5,each,LocX24,cont1\n" + 
-				"order1,detail2,item2,description2,5,each,LocX25,cont1\n" +
-				"order2,detail3,item3,description3,5,each,LocX26,cont2\n" +
-				"order2,detail4,item4,description4,5,each,LocX27,cont2\n";
+		String ordersStringNormal = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId\n"
+				+ "order1,detail1,item1,description1,5,each,LocX24,cont1\n"
+				+ "order1,detail2,item2,description2,5,each,LocX25,cont1\n"
+				+ "order2,detail3,item3,description3,5,each,LocX26,cont2\n"
+				+ "order2,detail4,item4,description4,5,each,LocX27,cont2\n";
 		BatchResult<Object> result = importOrdersData(facility, ordersStringNormal);
 		Assert.assertEquals(4, result.getLinesProcessed());
 		Assert.assertEquals(2, result.getOrdersProcessed());
 		Assert.assertEquals(0, result.getViolations().size());
-		
+
 		LOGGER.info("2: Bad header causes all lines to fail");
-		String ordersStringBadHeader = "orderId,orderDetailId,itemXId,description,quantity,uom,locationId,preAssignedContainerId\n" +
-				"order1,detail1,item1,description1,5,each,LocX24,cont1\n" + 
-				"order1,detail2,item2,description2,5,each,LocX25,cont1\n" +
-				"order2,detail3,item3,description3,5,each,LocX26,cont2\n" +
-				"order2,detail4,item4,description4,5,each,LocX27,cont2\n";
+		String ordersStringBadHeader = "orderId,orderDetailId,itemXId,description,quantity,uom,locationId,preAssignedContainerId\n"
+				+ "order1,detail1,item1,description1,5,each,LocX24,cont1\n"
+				+ "order1,detail2,item2,description2,5,each,LocX25,cont1\n"
+				+ "order2,detail3,item3,description3,5,each,LocX26,cont2\n"
+				+ "order2,detail4,item4,description4,5,each,LocX27,cont2\n";
 		result = importOrdersData(facility, ordersStringBadHeader);
 		Assert.assertEquals(4, result.getLinesProcessed());
 		Assert.assertEquals(2, result.getOrdersProcessed());
@@ -1710,65 +1723,60 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertTrue(result.getViolations().get(1).getMessage().contains("Required field 'itemId' is null"));
 		Assert.assertTrue(result.getViolations().get(2).getMessage().contains("Required field 'itemId' is null"));
 		Assert.assertTrue(result.getViolations().get(3).getMessage().contains("Required field 'itemId' is null"));
-		
+
 		LOGGER.info("3: Missing order id");
-		String ordersStringMissingOrderId = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId\n" +
-				"order1,detail1,item1,description1,5,each,LocX24,cont1\n" + 
-				",detail2,item2,description2,5,each,LocX25,cont1\n" +
-				"order2,detail3,item3,description3,5,each,LocX26,cont2\n" +
-				"order2,detail4,item4,description4,5,each,LocX27,cont2\n";
+		String ordersStringMissingOrderId = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId\n"
+				+ "order1,detail1,item1,description1,5,each,LocX24,cont1\n"
+				+ ",detail2,item2,description2,5,each,LocX25,cont1\n"
+				+ "order2,detail3,item3,description3,5,each,LocX26,cont2\n"
+				+ "order2,detail4,item4,description4,5,each,LocX27,cont2\n";
 		result = importOrdersData(facility, ordersStringMissingOrderId);
 		Assert.assertEquals(1, result.getViolations().size());
-		Assert.assertTrue(result.getViolations().get(0).getMessage().contains("Errors on line 3: \nRequired field 'orderId' is empty"));
-		
+		Assert.assertTrue(result.getViolations()
+			.get(0)
+			.getMessage()
+			.contains("Errors on line 3: \nRequired field 'orderId' is empty"));
+
 		LOGGER.info("3: Missing item id");
-		String ordersStringMissingDetailId = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId\n" +
-				"order1,detail1,item1,description1,5,each,LocX24,cont1\n" + 
-				"order1,detail2,item2,description2,5,each,LocX25,cont1\n" +
-				"order2,detail3,,description3,5,each,LocX26,cont2\n" +
-				"order2,detail4,item4,description4,5,each,LocX27,cont2\n";
+		String ordersStringMissingDetailId = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId\n"
+				+ "order1,detail1,item1,description1,5,each,LocX24,cont1\n"
+				+ "order1,detail2,item2,description2,5,each,LocX25,cont1\n"
+				+ "order2,detail3,,description3,5,each,LocX26,cont2\n"
+				+ "order2,detail4,item4,description4,5,each,LocX27,cont2\n";
 		result = importOrdersData(facility, ordersStringMissingDetailId);
 		Assert.assertEquals(1, result.getViolations().size());
-		Assert.assertTrue(result.getViolations().get(0).getMessage().contains("Errors on line 4: \nRequired field 'itemId' is empty"));
+		Assert.assertTrue(result.getViolations()
+			.get(0)
+			.getMessage()
+			.contains("Errors on line 4: \nRequired field 'itemId' is empty"));
 
 		commitTransaction();
 	}
-	
+
 	@Test
-	public final void testLorealOrders() throws Exception{
+	public final void testLorealOrders() throws Exception {
 		beginTransaction();
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
-		
-		String createOrderHeader = 
-				"def OrderImportCreateHeader(orderHeader) { \n" + 
-				"	orderHeader= \"orderId, orderDetailId, itemId, description, quantity, uom, preAssignedContainerId, locationId, workSequence, gtin\"\n" + 
-				"}\n";
 
-/*
- * Loreal pilot: requirements become known.
- * F aisle has 5 character names. All positions need scan.
- * T aisle has 6 character names like T108D7. For those, no scan if bay is even (like 108), and need scan if odd (like T111C3)
- * Virtual position is currently named T999B1. That is odd, so correctly needs scan.		
- */
-		
-		String transformOrderBean = 
-				"def OrderImportBeanTransformation(bean) {\n" + 
-				"	needsScan = determineNeedsScan(bean.locationId);\n" + 
-				"	bean.needsScan = needsScan.toString();\n" + 
-				"	return bean;\n" +
-				"}\n" + 
-				"\n" + 
-				"def determineNeedsScan(locationId){\n" + 
-				"	if (locationId.length() < 5 ){\n" + 
-				"		return true;}\n" + 
-				"	if (locationId[0] == \"F\"){\n" + 
-				"		return true;}\n" + 
-				"	if (locationId[0] == \"T\"){\n" + 
-				"		bayLastChar = locationId[3];\n" + 
-				"		return [1:\"1\",2:\"3\",3:\"5\",4:\"7\",9:\"C\"].containsValue(bayLastChar)}\n" + 
+		String createOrderHeader = "def OrderImportCreateHeader(orderHeader) { \n"
+				+ "	orderHeader= \"orderId, orderDetailId, itemId, description, quantity, uom, preAssignedContainerId, locationId, workSequence, gtin\"\n"
+				+ "}\n";
 
-				"	return false;\n" + 
-				"}";
+		/*
+		 * Loreal pilot: requirements become known.
+		 * F aisle has 5 character names. All positions need scan.
+		 * T aisle has 6 character names like T108D7. For those, no scan if bay is even (like 108), and need scan if odd (like T111C3)
+		 * Virtual position is currently named T999B1. That is odd, so correctly needs scan.		
+		 */
+
+		String transformOrderBean = "def OrderImportBeanTransformation(bean) {\n"
+				+ "	needsScan = determineNeedsScan(bean.locationId);\n" + "	bean.needsScan = needsScan.toString();\n"
+				+ "	return bean;\n" + "}\n" + "\n" + "def determineNeedsScan(locationId){\n" + "	if (locationId.length() < 5 ){\n"
+				+ "		return true;}\n" + "	if (locationId[0] == \"F\"){\n" + "		return true;}\n" + "	if (locationId[0] == \"T\"){\n"
+				+ "		bayLastChar = locationId[3];\n"
+				+ "		return [1:\"1\",2:\"3\",3:\"5\",4:\"7\",9:\"C\"].containsValue(bayLastChar)}\n" +
+
+				"	return false;\n" + "}";
 
 		ExtensionPointEngine engine = ExtensionPointEngine.getInstance(facility);
 		ExtensionPoint extensionHeader = new ExtensionPoint(facility, ExtensionPointType.OrderImportCreateHeader);
@@ -1780,16 +1788,14 @@ public class OutboundOrderImporterTest extends ServerTest {
 		extensionBean.setActive(true);
 		engine.create(extensionBean);
 
-
-		String ordersStringNormal = 
-				"2105334827,2105334827.1,10043585,KL SUNFLOWER SHAMPOO COLOR 500ML,1,EA,731781354,T116C5,1150,3605975054118\n" + 
-				"2105334827,2105334827.2,10059617,KL CLEARLY CORRECTIVE 30ML,1,EA,731781354,F24D3,120,3605970202637\n" + 
-				"2105334827,2105334827.3,10012841,KL ULTRA FACIAL MOISTURIZER 75ML,1,EA,731781354,T121C3,4500,3700194712068";
+		String ordersStringNormal = "2105334827,2105334827.1,10043585,KL SUNFLOWER SHAMPOO COLOR 500ML,1,EA,731781354,T116C5,1150,3605975054118\n"
+				+ "2105334827,2105334827.2,10059617,KL CLEARLY CORRECTIVE 30ML,1,EA,731781354,F24D3,120,3605970202637\n"
+				+ "2105334827,2105334827.3,10012841,KL ULTRA FACIAL MOISTURIZER 75ML,1,EA,731781354,T121C3,4500,3700194712068";
 		BatchResult<Object> result = importOrdersData(facility, ordersStringNormal);
 		Assert.assertTrue(result.isSuccessful());
 		Assert.assertEquals(1, result.getOrdersProcessed());
 		Assert.assertEquals(3, result.getLinesProcessed());
-		
+
 		OrderHeader header = OrderHeader.staticGetDao().findByDomainId(facility, "2105334827");
 		Assert.assertNotNull(header);
 		OrderDetail detail1 = header.getOrderDetail("2105334827.1");
@@ -1803,6 +1809,85 @@ public class OutboundOrderImporterTest extends ServerTest {
 		Assert.assertTrue(detail3.getNeedsScan());
 		commitTransaction();
 	}
+
+	/**
+	 * Although not done as a Loreal test with their extensions, these are Loreal cases.  Oddness:
+	 * 1) Loreal will change the detailId on us.
+	 * 2) Loreal may send two or more details with the same SKU/UOM for an order, expecting us to pick enough for all these lines.
+	 */
+	@Test
+	public final void testRepeatedDetails() throws IOException {
+		// initial order import.  This has repeated lines for same SKU/UOM.  One sort of host error, repeating an order detail ID.
+		beginTransaction();
+		Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
+		String firstCsvString = "orderId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom,gtin"
+				+ "\r\n1001,1001,1001.1,ITEM01,Item 1,1,each,gtin-ITEM01"//
+				+ "\r\n1001,1001,1001.2,ITEM01,Item 1,2,each,gtin-ITEM01"//
+				+ "\r\n1002,1002,1002.1,ITEM02,Item 2,1,each,gtin-ITEM02"//
+				+ "\r\n1002,1002,1002.2,ITEM02,Item 2,2,each,gtin-ITEM02"//
+				+ "\r\n1002,1002,1002.3,ITEM02,Item 2,3,each,gtin-ITEM02"//
+				+ "\r\n1002,1002,1002.3,ITEM02,Item 2,4,each,gtin-ITEM02"; // this is a repeat line, which will update to 4 count
+		importOrdersData(facility, firstCsvString);
+		commitTransaction();
+
+		// Covers the DEV-1323 changes. Previously, 1001.1, 1002.1, and 1002.2 would be null
+		beginTransaction();
+		facility = facility.reload();
+		OrderHeader h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1001");
+		OrderDetail d1_1 = h1.getOrderDetail("1001.1");
+		Assert.assertNotNull(d1_1);
+		OrderDetail d1_2 = h1.getOrderDetail("1001.2");
+		Assert.assertNotNull(d1_2);
+		Assert.assertNotEquals(d1_1, d1_2);
+
+		OrderHeader h2 = OrderHeader.staticGetDao().findByDomainId(facility, "1002");
+		OrderDetail d2_1 = h2.getOrderDetail("1002.1");
+		Assert.assertNotNull(d1_1);
+		OrderDetail d2_2 = h2.getOrderDetail("1002.2");
+		Assert.assertNotNull(d2_2);
+		OrderDetail d2_3 = h2.getOrderDetail("1002.3");
+		Assert.assertNotNull(d2_3);
+		Assert.assertEquals((Integer) 4, d2_3.getQuantity());
+		commitTransaction();
+
+		// re-import with changes.  This shows how Loreal will totally change the order line (SKU) for a detail.
+		// And delete a line, which changes the ID on everything. (Note: this will wreck completed work instructions.)
+		beginTransaction();
+		facility = facility.reload();
+		String secondCsvString = "orderId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom,gtin"
+				+ "\r\n1001,1001,1001.1,ITEM01,Item 1,1,each,gtin-ITEM01"//
+				+ "\r\n1001,1001,1001.2,ITEM02,Item 2,2,each,gtin-ITEM02"//
+				+ "\r\n1002,1002,1002.1,ITEM02,Item 2,3,each,gtin-ITEM02";//
+		importOrdersData(facility, secondCsvString);
+		commitTransaction();
+
+		// Covers the DEV-1323 changes. Previously, 1001.1, 1002.1, and 1002.2 would be null
+		beginTransaction();
+		facility = facility.reload();
+		h1 = OrderHeader.staticGetDao().findByDomainId(facility, "1001");
+		d1_1 = h1.getOrderDetail("1001.1");
+		Assert.assertNotNull(d1_1);
+		Assert.assertTrue(d1_1.getActive());
+		d1_2 = h1.getOrderDetail("1001.2");
+		Assert.assertNotNull(d1_2);
+		Assert.assertNotEquals(d1_1, d1_2);
+		Assert.assertTrue(d1_2.getActive());
+
+		h2 = OrderHeader.staticGetDao().findByDomainId(facility, "1002");
+		d2_1 = h2.getOrderDetail("1002.1");
+		Assert.assertNotNull(d1_1);
+		Assert.assertTrue(d2_1.getActive());
+		d2_2 = h2.getOrderDetail("1002.2");
+		Assert.assertNotNull(d2_2);
+		Assert.assertFalse(d2_2.getActive());
+		d2_3 = h2.getOrderDetail("1002.3");
+		Assert.assertNotNull(d2_3);
+		Assert.assertEquals((Integer) 4, d2_3.getQuantity());
+		Assert.assertFalse(d2_3.getActive());
+		commitTransaction();
+
+	}
+
 	/**
 	 * This is not generally useful. It gets absolutely all orders and groups, not even limiting to the facility.
 	 * Then assumes that all are represented in the groupExpectations and headerExpectations and complains if one is found not in expectations. You cannot chain imports and only check the results for
@@ -1820,13 +1905,18 @@ public class OutboundOrderImporterTest extends ServerTest {
 		}
 	}
 
-	private void assertArchiveStatusesHelper(HashMap<String, Boolean> expectations, String domainId, Boolean active, String examinedLevel) {
+	private void assertArchiveStatusesHelper(HashMap<String, Boolean> expectations,
+		String domainId,
+		Boolean active,
+		String examinedLevel) {
 		System.out.println(examinedLevel + " " + domainId + " " + active);
 		Boolean expected = expectations.get(domainId);
 		Assert.assertNotNull("Encountered an unexpected " + examinedLevel + " " + domainId, expected);
-		String message = String.format("Expected %s '%s' to be %s; instead was %s.", examinedLevel, domainId, expected?"active":"inactive", active?"active":"inactive");
+		String message = String.format("Expected %s '%s' to be %s; instead was %s.", examinedLevel, domainId, expected ? "active"
+				: "inactive", active ? "active" : "inactive");
 		Assert.assertEquals(message, expected, active);
 	}
+
 	//******************** private helpers ***********************
 
 	private Facility getTestFacility(String orgId, String facilityId) {
@@ -1861,13 +1951,13 @@ public class OutboundOrderImporterTest extends ServerTest {
 			Timestamp ediProcessTime = new Timestamp(System.currentTimeMillis());
 			return createOrderImporter().importOrdersFromCsvStream(reader, facility, ediProcessTime);
 		} finally {
-			if(stream != null) {
+			if (stream != null) {
 				stream.close();
 			}
 		}
 	}
 
-	private void assertActiveOrderDetail(OrderDetail detail){
+	private void assertActiveOrderDetail(OrderDetail detail) {
 		Assert.assertNotNull(detail);
 		Assert.assertTrue("Expected an active Order Detail. Got inactive instead", detail.getActive());
 	}
