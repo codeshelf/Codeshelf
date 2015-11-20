@@ -1,6 +1,7 @@
 package com.codeshelf.manager.service;
 
 import lombok.Getter;
+import lombok.ToString;
 
 import org.hibernate.cfg.Configuration;
 
@@ -8,6 +9,7 @@ import com.codeshelf.persistence.AbstractPersistenceService;
 import com.codeshelf.persistence.DatabaseCredentials;
 import com.codeshelf.persistence.EventListenerIntegrator;
 
+@ToString(of={"url", "username", "schemaName"}, callSuper=false)
 public class ManagerPersistenceService extends AbstractPersistenceService implements DatabaseCredentials {
 	private static final String MASTER_CHANGELOG_NAME = "liquibase/mgr.changelog-master.xml";
 	

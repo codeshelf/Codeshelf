@@ -105,7 +105,7 @@ public abstract class AbstractPersistenceService extends AbstractCodeshelfIdleSe
 			try {
 				DatabaseUtils.executeSQL(superCred,"CREATE SCHEMA IF NOT EXISTS "+cred.getSchemaName());
 			} catch (SQLException e) {
-				throw new RuntimeException("Cannot start, failed to verify/create schema (check db admin rights)",e);
+				throw new RuntimeException("Cannot start, failed to verify/create schema '" + cred.getSchemaName() +"'(check db admin rights) " + superCred, e);
 			}
 
 			// liquibase -> postgres
