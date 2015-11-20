@@ -2590,6 +2590,24 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		return getContainerIdFromButtonNum(buttonNum);
 	}
 
+	/**
+	 * override this if your che device sets poscon to a state where they can send, but shouldn't, and you know if it is a bad send
+	 * For our purpose, the easy case is when we need a scan. 
+	 * Could get more elaborate about button presses on "oc", etc, but that is handled elsewhere
+	 */
+	@Override
+	protected String tellIfNotLegitimateButtonPress(int buttonNum, int showingQuantity) {
+		CheStateEnum state = getCheStateEnum();
+		switch (state) {
+			case SCAN_SOMETHING:
+			case SCAN_SOMETHING_SHORT:
+				return String.format("Need to scan, so ignoring button #%d quantity %d", buttonNum, showingQuantity);
+
+			default:
+				return ""; // Return empty string for normal non-error condition
+		}
+	}
+
 	private void clearContainerAssignmentAtIndex(byte posconIndex) {
 		// careful: POSITION_ALL is zero
 		if (PosControllerInstr.POSITION_ALL.equals(posconIndex))
@@ -3016,13 +3034,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			return;
 		}
 		CheStateEnum state = getCheStateEnum();
-		
+
 		// DEV-1261.  We now realize that if site controller loses connection to server and reconnects, then the server triggers its
 		// che state initialization just as if site controller had quit and restarted. Anyway, these messages may come at any time, so
 		// it is not an error if the device logic is not in setup phase. However, let's keep the site controller's state and not replace it
 		// with the server state. Hence the returns.
 		if (!state.equals(CheStateEnum.IDLE)) {
-			LOGGER.info("Received processStateSetup in state {}. Normal occurrence only if site controller just reconnected to server.", state);
+			LOGGER.info("Received processStateSetup in state {}. Normal occurrence only if site controller just reconnected to server.",
+				state);
 			// errors here through v24. Then returns as here.
 			return;
 		}

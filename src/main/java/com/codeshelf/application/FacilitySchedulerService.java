@@ -151,6 +151,10 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 
 	@Override
 	protected void shutDown() throws Exception {
+		List<JobExecutionContext> runningJobs = getRunningJobs();
+		for (JobExecutionContext jobExecutionContext : runningJobs) {
+			scheduler.interrupt(jobExecutionContext.getJobDetail().getKey()); 
+		}
 		scheduler.shutdown(true);
 	}
 

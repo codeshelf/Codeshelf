@@ -16,27 +16,36 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.quartz.SchedulerException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codeshelf.api.BaseResponse;
-import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.BaseResponse.UUIDParam;
+import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.resources.subresources.FacilityResource;
 import com.codeshelf.api.responses.FacilityShort;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Point;
+import com.codeshelf.scheduler.ApplicationSchedulerService;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
 
 @Path("/facilities")
 public class FacilitiesResource {
+	private static final Logger LOGGER = LoggerFactory.getLogger(FacilitiesResource.class);
+
 	@Context
 	private ResourceContext resourceContext;
 	private final WebSocketManagerService webSocketManagerService;
+	private final ApplicationSchedulerService applicationSchedulerService;
 	
 	@Inject
-	public FacilitiesResource(WebSocketManagerService webSocketManagerService){
+	public FacilitiesResource(WebSocketManagerService webSocketManagerService, ApplicationSchedulerService applicationSchedulerService){
 		this.webSocketManagerService = webSocketManagerService;
+		this.applicationSchedulerService = applicationSchedulerService;
 	}
 	
 	@Path("{id}")
@@ -77,8 +86,15 @@ public class FacilitiesResource {
 		Facility facility = Facility.staticGetDao().findByDomainId(null, domainId);
 		if (facility != null) {
 			String description = facility.getDescription();
+			applicationSchedulerService.stopFacility(facility);
 			facility.delete(webSocketManagerService);
+
 			Facility recreatedFacility = Facility.createFacility(domainId, description, Point.getZeroPoint());
+			try {
+				applicationSchedulerService.startFacility(CodeshelfSecurityManager.getCurrentTenant(), recreatedFacility);
+			} catch (SchedulerException e) {
+				LOGGER.error("Unable to start the scheduler for the newly recreated facility {}", recreatedFacility, e);
+			}
 			return BaseResponse.buildResponse(recreatedFacility);
 		} else {
 			ErrorResponse response = new ErrorResponse();

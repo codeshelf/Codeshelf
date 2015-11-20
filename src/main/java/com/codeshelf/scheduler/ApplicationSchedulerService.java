@@ -6,7 +6,6 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.hibernate.criterion.Restrictions;
 import org.quartz.CronExpression;
@@ -39,13 +38,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.Service;
-import com.google.common.util.concurrent.ServiceManager;
 import com.google.inject.Inject;
 
 public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
-	static final private Logger	LOGGER						= LoggerFactory.getLogger(ApplicationSchedulerService.class);
+	static final private Logger	LOGGER	= LoggerFactory.getLogger(ApplicationSchedulerService.class);
 
-	private ServiceManager	facilitySchedulerServiceManager;
+	private List<FacilitySchedulerService> services;
 	private JobFactory jobFactory;
 
 	public ApplicationSchedulerService() {
@@ -55,6 +53,7 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 	@Inject
 	public ApplicationSchedulerService(JobFactory jobFactory) {
 		this.jobFactory = jobFactory;
+		this.services = new ArrayList<FacilitySchedulerService>();
 	}
 	
 	@Override
@@ -62,8 +61,6 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 		ITenantManagerService tenantService =  TenantManagerService.getInstance();
 		TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 		
-		DirectSchedulerFactory schedulerFactory = DirectSchedulerFactory.getInstance();
-		List<FacilitySchedulerService> services = new ArrayList<FacilitySchedulerService>();
 		for (Tenant tenant : tenantService.getTenants()) {
 			UserContext systemUser = CodeshelfSecurityManager.getUserContextSYSTEM();
 			CodeshelfSecurityManager.setContext(systemUser, tenant);
@@ -72,29 +69,7 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 				List<Facility> facilities = persistence.getDao(Facility.class).getAll();
 				for (Facility facility : facilities) {
 					try {
-						String schedulerName = String.format("%s.%s", tenant.getTenantIdentifier(), facility.getDomainId());
-						SimpleThreadPool threadPool = new SimpleThreadPool(1, Thread.MIN_PRIORITY);
-						schedulerFactory.createScheduler(schedulerName, schedulerName, threadPool, new RAMJobStore());
-						Scheduler facilityScheduler = schedulerFactory.getScheduler(schedulerName);
-						if (jobFactory != null){
-							facilityScheduler.setJobFactory(jobFactory);
-						}
-						FacilitySchedulerService service = new FacilitySchedulerService(facilityScheduler, systemUser, tenant, facility);
-						for (ScheduledJobType jobType : ScheduledJobType.values()) {
-							ITypedDao<ScheduledJob> dao = persistence.getDao(ScheduledJob.class);
-							List<ScheduledJob> jobs = dao.findByFilter(ImmutableList.of(Restrictions.eq("parent", facility),
-																						Restrictions.eq("type", jobType)));
-							if (jobs.isEmpty()) {
-								syncByJobType(service, jobType);
-							} else {
-								if (jobs.size() > 1) {
-									LOGGER.warn("should not have more than one scheduled job for {} in facility {}", jobType, facility);
-								}
-								ScheduledJob job = jobs.get(0);
-								syncByConfig(service, job);
-							}
-						}
-						services.add(service);
+						startFacility(tenant, facility);
 					} catch(Exception e) {
 						LOGGER.error("Unable to start scheduler service for facility {}", facility, e);
 					}
@@ -105,27 +80,23 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 				throw e;
 			}
 		}
-		facilitySchedulerServiceManager = new ServiceManager(services);
-		facilitySchedulerServiceManager.startAsync();
-		ServiceUtility.awaitRunningOrThrow(facilitySchedulerServiceManager);
+		ServiceUtility.awaitRunningOrThrow(services);
 	}
 	
 
 	@Override
 	protected void shutDown() throws Exception {
-		facilitySchedulerServiceManager.stopAsync();
-		ServiceUtility.awaitTerminatedOrThrow(facilitySchedulerServiceManager);
+		ServiceUtility.stopAsync(services);
+		ServiceUtility.awaitTerminatedOrThrow(services);
 	}
 
 	
 	
 	public Optional<FacilitySchedulerService> findService(Facility facility) {
 		Preconditions.checkNotNull(facility, "facility cannot be null");
-		for (Service  service : facilitySchedulerServiceManager.servicesByState().values()) {
-			if (service instanceof FacilitySchedulerService) {
-				if (((FacilitySchedulerService) service).hasFacility(facility)) {
-					return Optional.of((FacilitySchedulerService) service);
-				}
+		for (FacilitySchedulerService  service : services) {
+			if (service.hasFacility(facility)) {
+				return Optional.of((FacilitySchedulerService) service);
 			}
 		}
 		return Optional.absent();
@@ -133,11 +104,11 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 	
 	public Multimap<State, FacilitySchedulerService> getServicesByState() {
 		//This method returns typed services instead of Service superclass
-		Multimap<State, FacilitySchedulerService> services = ArrayListMultimap.create(); 
-		for (Entry<State, Service> serviceEntry : facilitySchedulerServiceManager.servicesByState().entries()) {
-			services.put(serviceEntry.getKey(), (FacilitySchedulerService) serviceEntry.getValue()); 
+		Multimap<State, FacilitySchedulerService> servicesByState = ArrayListMultimap.create(); 
+		for (Service  service : services) {
+			servicesByState.put(service.state(), (FacilitySchedulerService) service); 
 		}
-		return ImmutableMultimap.copyOf(services);
+		return ImmutableMultimap.copyOf(servicesByState);
 	}
 
 	public void updateScheduledJob(ScheduledJob job) throws SchedulerException {
@@ -247,6 +218,46 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 			service.schedule(jobType.getDefaultSchedule(), jobType);
 		} else {
 			AbstractFacilityJob.disabled(service.getFacility(), jobType.getJobClass());
+		}
+	}
+
+	public FacilitySchedulerService startFacility(Tenant tenant, Facility facility) throws SchedulerException {
+		String schedulerName = String.format("%s.%s.%s", tenant.getTenantIdentifier(), facility.getDomainId(), facility.getPersistentId());
+		SimpleThreadPool threadPool = new SimpleThreadPool(1, Thread.MIN_PRIORITY);
+		DirectSchedulerFactory schedulerFactory = DirectSchedulerFactory.getInstance();
+		schedulerFactory.createScheduler(schedulerName, schedulerName, threadPool, new RAMJobStore());
+		Scheduler facilityScheduler = schedulerFactory.getScheduler(schedulerName);
+		if (jobFactory != null){
+			facilityScheduler.setJobFactory(jobFactory);
+		}
+		UserContext systemUser = CodeshelfSecurityManager.getUserContextSYSTEM();
+		FacilitySchedulerService service = new FacilitySchedulerService(facilityScheduler, systemUser, tenant, facility);
+		for (ScheduledJobType jobType : ScheduledJobType.values()) {
+			ITypedDao<ScheduledJob> dao = ScheduledJob.staticGetDao();
+			List<ScheduledJob> jobs = dao.findByFilter(ImmutableList.of(Restrictions.eq("parent", facility),
+																		Restrictions.eq("type", jobType)));
+			if (jobs.isEmpty()) {
+				syncByJobType(service, jobType);
+			} else {
+				if (jobs.size() > 1) {
+					LOGGER.warn("should not have more than one scheduled job for {} in facility {}", jobType, facility);
+				}
+				ScheduledJob job = jobs.get(0);
+				syncByConfig(service, job);
+			}
+		}
+		service.startAsync();
+		ServiceUtility.awaitRunningOrThrow(service);
+		services.add(service);
+		return service;
+	}
+
+	public void stopFacility(Facility facility) {
+		Optional<FacilitySchedulerService> service = findService(facility);
+		if (service.isPresent()) {
+			service.get().stopAsync();
+			ServiceUtility.awaitTerminatedOrThrow(service.get());
+			services.remove(service);
 		}
 	}
 

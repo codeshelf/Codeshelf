@@ -25,6 +25,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.mockito.Mockito;
+import org.quartz.spi.JobFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,6 +69,8 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.persistence.AbstractPersistenceService;
 import com.codeshelf.persistence.DatabaseUtils;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.scheduler.ApplicationSchedulerService;
+import com.codeshelf.scheduler.GuiceJobFactory;
 import com.codeshelf.security.CodeshelfRealm;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.TokenSessionService;
@@ -116,6 +119,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 	// app server static (reused) services
 	private static WebSocketManagerService			staticWebSocketManagerService;
+	private static ApplicationSchedulerService   	staticApplicationSchedulerService;
 	private static IMetricsService					staticMetricsService;
 	private static ServerMessageProcessor			staticServerMessageProcessor;
 	private static TokenSessionService				staticTokenSessionService;
@@ -160,6 +164,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 	@Getter
 	protected CsDeviceManager						deviceManager;
 	protected WebSocketManagerService				webSocketManagerService;
+	protected ApplicationSchedulerService			applicationSchedulerService;
 	protected IMetricsService						metricsService;
 	protected TokenSessionService					tokenSessionService;
 	protected EmailService							emailService;
@@ -199,6 +204,11 @@ public abstract class FrameworkTest implements IntegrationTest {
 				requestStaticInjection(WebSocketManagerService.class);
 				bind(WebSocketManagerService.class).in(Singleton.class);
 
+				bind(JobFactory.class).to(GuiceJobFactory.class);
+				bind(ApplicationSchedulerService.class).in(Singleton.class);
+
+
+				
 				requestStaticInjection(TenantManagerService.class);
 				bind(ITenantManagerService.class).to(TenantManagerService.class).in(Singleton.class);
 
@@ -260,6 +270,7 @@ public abstract class FrameworkTest implements IntegrationTest {
 		staticEdiExporterService = injector.getInstance(EdiExportService.class);
 
 		staticWebSocketManagerService = injector.getInstance(WebSocketManagerService.class);
+		staticApplicationSchedulerService = injector.getInstance(ApplicationSchedulerService.class);
 		staticServerMessageProcessor = injector.getInstance(ServerMessageProcessor.class);
 
 		// site controller services
@@ -279,6 +290,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 
 		// reset all services to defaults 
 		webSocketManagerService = staticWebSocketManagerService;
+		applicationSchedulerService = staticApplicationSchedulerService;
+		
 		WebSocketManagerService.setInstance(webSocketManagerService);
 		metricsService = staticMetricsService;
 		MetricsService.setInstance(metricsService);

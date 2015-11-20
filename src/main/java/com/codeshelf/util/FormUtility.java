@@ -34,7 +34,7 @@ public class FormUtility {
 					error = true;
 					break;
 				} else {
-					result.put(key, values.get(0)); // ok field
+					result.put(key, values.get(0).trim()); // ok field
 				}
 			} else {
 				LOGGER.warn("unrecognized field {}", key);
