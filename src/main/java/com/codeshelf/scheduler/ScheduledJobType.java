@@ -28,7 +28,7 @@ import lombok.experimental.Accessors;
  * @author jon ranstrom
  */
 public enum ScheduledJobType {
-
+	//Please add new tasks to https://codeshelf.atlassian.net/wiki/display/TD/Health+Checks+And+Other+Scheduled+tasks
 	AccumulateDailyMetrics(AccumulateDailyMetricsJob.class,
 			"Summarize previous day's completed work instructions.",
 			"0 1 0 * * ?",
@@ -38,7 +38,7 @@ public enum ScheduledJobType {
 	CheckActiveSiteControllerHealth(ActiveSiteControllerHealthCheck.class,
 			"Check Active Site Controllers.",
 			"0 1/10 * * * ?",
-			false,
+			true,
 			true,
 			ScheduledJobCategory.CHECK),
 	DatabaseConnection(DatabaseConnectionHealthCheck.class,
@@ -63,7 +63,7 @@ public enum ScheduledJobType {
 			ScheduledJobCategory.CHECK),
 	DropboxCheck(DropboxGatewayHealthCheck.class,
 			"Test Dropbox connection.",
-			"0 * * * * ?",
+			"0 3/10 * * * ?",
 			true,
 			true,
 			ScheduledJobCategory.CHECK),
@@ -84,7 +84,7 @@ public enum ScheduledJobType {
 	IsProductionServer(IsProductionServerHealthCheck.class,
 			"Check if Production Property is Set.",
 			"0 3/10 * * * ?",
-			true,
+			false,
 			true,
 			ScheduledJobCategory.CHECK),
 	PicksActivity(PicksActivityHealthCheck.class,
