@@ -938,7 +938,8 @@ public class AisleImporterTest extends MockDaoTest {
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,,,,,\r\n" //
 				+ "Bay,B1,,,,,,\r\n" //
-				+ "Tier,T1,,,,,,\r\n" + "Aisle,A52,CLONE(A51),,,,,,,,\r\n"; //
+				+ "Tier,T1,,,,,,\r\n" //
+				+ "Aisle,A52,CLONE(A51),,,,,,,,\r\n"; //
 		importAislesData(facility, csvString2);
 
 		Aisle A512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
@@ -1545,7 +1546,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,2,32,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,tierNotB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"//
+				+ "Aisle,A54,,,,,tierNotB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; //
@@ -1608,7 +1610,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && NUMBER OF LEDS CHANGED
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" //
+				+ "Aisle,A54,,,,,,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; //
@@ -1676,7 +1679,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,2,32,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,zigzagB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" //
+				+ "Aisle,A54,,,,,zigzagB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; //
@@ -1739,7 +1743,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && NUMBER OF LEDS CHANGED
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,zigzagB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" //
+				+ "Aisle,A54,,,,,zigzagB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; // 
@@ -1806,7 +1811,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,2,32,0,,\r\n"// 
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"//
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,zigzagNotB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" //
+				+ "Aisle,A54,,,,,zigzagNotB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; // */
@@ -1870,7 +1876,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && LED COUNT CHANGE!
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,zigzagNotB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" //
+				+ "Aisle,A54,,,,,zigzagNotB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; // */
