@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.Future;
 
 import org.joda.time.DateTime;
@@ -175,8 +176,11 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 						if (trigger instanceof CronTrigger) {
 							CronTrigger cronTrigger = (CronTrigger) trigger;
 							String expression = cronTrigger.getCronExpression();
+							TimeZone timezone = cronTrigger.getTimeZone();
 							try {
-								jobs.put(type.get(), new CronExpression(expression));
+								CronExpression cronExpressionObj = new CronExpression(expression);
+								cronExpressionObj.setTimeZone(timezone);
+								jobs.put(type.get(), cronExpressionObj);
 							} catch (ParseException e) {
 								LOGGER.warn("Unable to parse cron expression {} for jobKey {}", expression, jobKey, e);
 							}
@@ -194,6 +198,8 @@ public class FacilitySchedulerService extends AbstractCodeshelfIdleService {
 
 	public void schedule(CronExpression cronExpression, ScheduledJobType jobType) throws SchedulerException {
 		// create and schedule  job
+		cronExpression.setTimeZone(facility.getTimeZone());
+		
 		JobDataMap map = new JobDataMap();
 		map.put("facility", facility);
 		map.put("tenant", tenant);

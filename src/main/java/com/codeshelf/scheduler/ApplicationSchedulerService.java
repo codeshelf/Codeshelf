@@ -172,7 +172,7 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 					jobViews.put(type, new ScheduledJobView(foundJob, running));
 				}
 				else if (type.isDefaultOnOff()){
-					jobViews.put(type, new ScheduledJobView(type, running));
+					jobViews.put(type, new ScheduledJobView(type, facility.getTimeZone(), running));
 				}
 			}
 			ArrayList<ScheduledJobView> viewCollection = new ArrayList<>(jobViews.values());
@@ -215,7 +215,7 @@ public class ApplicationSchedulerService extends AbstractCodeshelfIdleService {
 	
 	private void syncByJobType(FacilitySchedulerService service, ScheduledJobType jobType) throws SchedulerException {
 		if (jobType.isDefaultOnOff()) {
-			service.schedule(jobType.getDefaultSchedule(), jobType);
+			service.schedule(jobType.getDefaultSchedule(service.getFacility().getTimeZone()), jobType);
 		} else {
 			AbstractFacilityJob.disabled(service.getFacility(), jobType.getJobClass());
 		}

@@ -55,7 +55,7 @@ public class ScheduledJobsResource {
 	public Response create(@FormParam("type") String type) {
 		ScheduledJobType typeEnum = ScheduledJobType.valueOf(type); 
 		try {
-			ScheduledJob job = new ScheduledJob(this.facility, typeEnum, typeEnum.getDefaultSchedule());
+			ScheduledJob job = new ScheduledJob(this.facility, typeEnum, typeEnum.getDefaultSchedule(this.facility.getTimeZone()));
 			schedulerService.updateScheduledJob(job);
 			return BaseResponse.buildResponse(job);
 		} catch(Exception e) {

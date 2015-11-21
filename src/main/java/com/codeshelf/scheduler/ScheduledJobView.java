@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import org.joda.time.DateTime;
 
@@ -37,13 +38,13 @@ public class ScheduledJobView {
 	boolean active;
 	boolean usingDefaults;
 
-	public ScheduledJobView(ScheduledJobType jobType, boolean running) {
+	public ScheduledJobView(ScheduledJobType jobType, TimeZone timeZone, boolean running) {
 		this.type = jobType;
-		this.cronExpression = jobType.getDefaultSchedule().getCronExpression();
+		this.cronExpression = jobType.getDefaultSchedule(timeZone).getCronExpression();
 		futureScheduled = new ArrayList<Date>();
 		Date lastDate = DateTime.now().toDate();
 		for(int i = 0; i < 3; i++) {
-			lastDate = jobType.getDefaultSchedule().getNextValidTimeAfter(lastDate);
+			lastDate = jobType.getDefaultSchedule(timeZone).getNextValidTimeAfter(lastDate);
 			futureScheduled.add(lastDate);
 		}
 		this.running = running;

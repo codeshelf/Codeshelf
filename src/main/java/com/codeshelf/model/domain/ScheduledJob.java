@@ -91,7 +91,9 @@ public class ScheduledJob extends DomainObjectTreeABC<Facility> {
 
 	public CronExpression getCronExpression() {
 		try {
-			return new CronExpression(cronExpression);
+			CronExpression expression =  new CronExpression(cronExpression);
+			expression.setTimeZone(getParent().getTimeZone());
+			return expression;
 		} catch(ParseException e) {
 			//cronExpression is validated before saving
 			LOGGER.error("Cron expression was saved but unparsable {}", cronExpression, e);

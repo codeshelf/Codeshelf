@@ -1,10 +1,12 @@
 package com.codeshelf.application;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -17,6 +19,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.quartz.CronExpression;
 import org.quartz.JobExecutionContext;
 import org.quartz.Scheduler;
@@ -34,6 +37,7 @@ import com.google.common.base.Optional;
 public class FacilitySchedulerServiceTest {
 
 	private FacilitySchedulerService subject;
+	private Facility facility;
 	
 	@Before
 	public void setUp() throws SchedulerException, ParseException {
@@ -42,7 +46,9 @@ public class FacilitySchedulerServiceTest {
 		
 		UserContext systemUser = CodeshelfSecurityManager.getUserContextSYSTEM();
 		Tenant tenant = mock(Tenant.class);
-		Facility facility = mock(Facility.class);
+		facility = mock(Facility.class);
+		
+		when(facility.getTimeZone()).thenReturn(TimeZone.getTimeZone(TimeZone.getAvailableIDs()[1]));
 		subject = new FacilitySchedulerService(scheduler, systemUser, tenant, facility);
 		subject.startAsync();
 		subject.awaitRunningOrThrow();
@@ -55,6 +61,17 @@ public class FacilitySchedulerServiceTest {
 		subject.awaitTerminatedOrThrow();
 	}
 
+	@Test
+	public void cronExpressionMatchFacilityTimeZone() throws SchedulerException, ParseException {
+		ScheduledJobType type = ScheduledJobType.Test;
+		CronExpression firstExp = new CronExpression("0 0 2 * * ?");
+		Assert.assertNotEquals(firstExp.getTimeZone(), facility.getTimeZone());
+		
+		subject.schedule(firstExp, type);
+		CronExpression expression = subject.findSchedule(type);
+		Assert.assertEquals(expression.getTimeZone(), facility.getTimeZone());
+	}
+	
 	@Test
 	public void testRescheduleJobClass() throws ParseException, SchedulerException  {
 		ScheduledJobType type = ScheduledJobType.Test;

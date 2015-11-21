@@ -1,6 +1,7 @@
 package com.codeshelf.scheduler;
 
 import java.text.ParseException;
+import java.util.TimeZone;
 
 import org.quartz.CronExpression;
 import org.quartz.Job;
@@ -15,6 +16,7 @@ import com.codeshelf.metrics.EdiHealthCheck;
 import com.codeshelf.metrics.IsProductionServerHealthCheck;
 import com.codeshelf.metrics.PicksActivityHealthCheck;
 import com.codeshelf.model.TestJob;
+import com.codeshelf.model.domain.Facility;
 import com.google.common.base.Optional;
 
 import lombok.Getter;
@@ -156,8 +158,14 @@ public enum ScheduledJobType {
 		mKey = new JobKey(this.name());
 	}
 
-	public CronExpression getDefaultSchedule() {
-		return mDefaultSchedule;
+	public CronExpression getDefaultSchedule(TimeZone timeZone) {
+		try {
+			CronExpression rightTimeZone = new CronExpression(mDefaultSchedule.getCronExpression());
+			rightTimeZone.setTimeZone(timeZone);
+			return rightTimeZone;
+		} catch (ParseException e) {
+			throw new RuntimeException("Unable to parse cron expression: " + mDefaultSchedule, e);
+		}
 	}
 	
 	public static Optional<ScheduledJobType> findByKey(JobKey jobKey) {
