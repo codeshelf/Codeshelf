@@ -80,12 +80,11 @@ public class TokenSessionServiceTest extends MockDaoTest {
 
 		for (int i = 0; i < TOTAL; i++) {
 			final int userId = i;
-			previousTimeStamp = System.currentTimeMillis();
 			completionService.submit(new Callable<TokenSession>() {
 
 				@Override
 				public TokenSession call() throws Exception {
-					String token2 = auth.testCreateToken(0, userId);
+					String token2 = auth.testCreateToken(userId, 0);
 					tokenSet.add(token2);
 					Cookie cookie = auth.createAuthCookie(token2);
 					TokenSession resp = auth.checkAuthCookie(cookie);
@@ -93,10 +92,6 @@ public class TokenSessionServiceTest extends MockDaoTest {
 				}
 
 			});
-			ThreadUtils.sleep(2);
-			if (System.currentTimeMillis() == previousTimeStamp){
-				LOGGER.error("might get a failure"); // Never see this, but still get a failure sometimes. only 999 of 1000 unique tokens
-			}
 		}
 		for (int i = 0; i < TOTAL; i++) {
 			TokenSession resp = completionService.take().get();

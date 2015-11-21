@@ -43,7 +43,7 @@ public class OrderLocationImporterTest extends ServerTest {
 		String singleSlot = "D-21";
 		doSingleSlotOrder(facility, "01111", singleSlot);
 		doSingleSlotOrder(facility, "02222", singleSlot);
-		
+
 		OrderHeader order1 = OrderHeader.staticGetDao().findByDomainId(facility, "01111");
 		OrderHeader order2 = OrderHeader.staticGetDao().findByDomainId(facility, "02222");
 
@@ -52,7 +52,7 @@ public class OrderLocationImporterTest extends ServerTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
 	/*
 	 * TODO probably better to move to a higher level test across slotting and orders
 	 */
@@ -61,7 +61,7 @@ public class OrderLocationImporterTest extends ServerTest {
 		beginTransaction();
 		Facility facility = getTestFacility("O-SLOTTING9", "F-SLOTTING9");
 		setupTestLocations(facility);
-		
+
 		// **************
 		// Now a slotting file.  No orders yet. This is the out of order situation.	 Normally we want orders before slotting.
 		String slottingCsv = "orderId,locationId\r\n" //
@@ -81,9 +81,9 @@ public class OrderLocationImporterTest extends ServerTest {
 
 		OrderHeader order3333 = OrderHeader.staticGetDao().findByDomainId(facility, "03333");
 		Assert.assertNotNull("Should have still processed the other lines after an error", order3333); // after fix, will have a header
-		Assert.assertEquals("Should have still processed the other lines after an error",1, order3333.getOrderLocations().size());
+		Assert.assertEquals("Should have still processed the other lines after an error", 1, order3333.getOrderLocations().size());
 		commitTransaction();
-		
+
 		beginTransaction();
 		// **************
 		// Now the orders file. The 01111 line has detailId 01111.1. The other two leave the detail blank, so will get a default name.
@@ -105,7 +105,7 @@ public class OrderLocationImporterTest extends ServerTest {
 
 		OrderDetail orderDetail = order1111.getOrderDetail("01111.1");
 		Assert.assertNotNull(orderDetail);
-		
+
 		// Make sure we can lookup all of the locations for order O1111. This pretty much proves it.
 		Assert.assertEquals(2, order1111.getOrderLocations().size());
 
@@ -129,11 +129,11 @@ public class OrderLocationImporterTest extends ServerTest {
 		Facility facility = getTestFacility("ORG-testSlotUpdate", "F-testSlotUpdate");
 
 		doSingleSlotOrder(facility, "01111", "D-21");
-		
+
 		String singleSlotUpdateCsv = "orderId,locationId\r\n" //
 				+ "01111, D-22\r\n"; //
 		Assert.assertTrue(importSlotting(facility, singleSlotUpdateCsv));
-		
+
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "01111");
 
 		Assert.assertEquals(1, order.getOrderLocations().size());
@@ -141,7 +141,7 @@ public class OrderLocationImporterTest extends ServerTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
 	/**
 	 * Given an initial slotting
 	 * When the order is moved 
@@ -154,35 +154,32 @@ public class OrderLocationImporterTest extends ServerTest {
 		Facility facility = getTestFacility("ORG-testOnlyActiveSlotsReturned", "F-testOnlyActiveSlotsReturned");
 		setupTestLocations(facility);
 
-		String initialSlotFile = new SlotFileBuilder()
-			.slot("01111", "D-21")
+		String initialSlotFile = new SlotFileBuilder().slot("01111", "D-21")
 			.slot("01112", "D-22")
 			.slot("01113", "D-23")
 			.slot("01114", "D-24")
 			.build();
-		
+
 		Assert.assertTrue("Failed to import slotting file", importSlotting(facility, initialSlotFile));
 
 		String orderId = "01111";
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
 		Assert.assertNotNull("OrderHeader: " + orderId + " not found", order);
 		assertOrderHasLocation(facility, order, "D-21");
-		
-		String modifySlots = new SlotFileBuilder()
-		.slot("01111", "D-23")
-		.slot("01112", "D-21")
-		.slot("01113", "D-22")
+
+		String modifySlots = new SlotFileBuilder().slot("01111", "D-23")
+			.slot("01112", "D-21")
+			.slot("01113", "D-22")
 			.slot("01114", "D-24")
-		.build();
-	
+			.build();
+
 		Assert.assertTrue("Failed to import slotting file", importSlotting(facility, modifySlots));
 
-		String rotateAgain = new SlotFileBuilder()
-		.slot("01111", "D-22")
-		.slot("01112", "D-23")
-		.slot("01113", "D-21")
+		String rotateAgain = new SlotFileBuilder().slot("01111", "D-22")
+			.slot("01112", "D-23")
+			.slot("01113", "D-21")
 			.slot("01114", "D-24")
-		.build();
+			.build();
 
 		Assert.assertTrue(importSlotting(facility, rotateAgain));
 
@@ -194,7 +191,7 @@ public class OrderLocationImporterTest extends ServerTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
 	@Test
 	public final void testSlotsResetWhenOrdersUnsorted() {
 		this.getTenantPersistenceService().beginTransaction();
@@ -203,19 +200,19 @@ public class OrderLocationImporterTest extends ServerTest {
 
 		doSingleSlotOrder(facility, "01111", "D-21");
 		doSingleSlotOrder(facility, "02222", "D-22");
-		
+
 		String multiOrderSlotUpdateCsv = "orderId,locationId\r\n" //
 				+ "01111, D-22\r\n" //
 				+ "02222, D-23\r\n" //
 				+ "01111, D-21\r\n"; //
 		Assert.assertTrue(importSlotting(facility, multiOrderSlotUpdateCsv));
-		
+
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "01111");
 
 		Assert.assertEquals(2, order.getOrderLocations().size());
 		assertOrderHasLocation(facility, order, "D-21");
 		assertOrderHasLocation(facility, order, "D-22");
-		
+
 		OrderHeader order02222 = OrderHeader.staticGetDao().findByDomainId(facility, "02222");
 
 		Assert.assertEquals(1, order02222.getOrderLocations().size());
@@ -229,51 +226,51 @@ public class OrderLocationImporterTest extends ServerTest {
 	 * 	When a slotting file contains 1 null location and 1 real location for that order
 	 *  Then the order has 1 location
 	 * 
-     */	
+	 */
 	@Test
 	public final void testReduceOrderLocationsWithResetLine() {
 		this.getTenantPersistenceService().beginTransaction();
-		
+
 		Facility facility = getTestFacility("ORG-testReduceOrderLocations", "F-testReduceOrderLocations");
-		
+
 		doMultiSlotOrder(facility, "01111", "D-21", "D-22");
 
 		String singleSlotCsv = "orderId,locationId\r\n" //
 				+ "01111, \r\n" // reset
 				+ "01111, D-21\r\n"; //
 		Assert.assertTrue(importSlotting(facility, singleSlotCsv));
-		
+
 		OrderHeader o1 = OrderHeader.staticGetDao().findByDomainId(facility, "01111");
 		Assert.assertEquals(1, o1.getOrderLocations().size());
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
-	
 	/**
 	 * Given an initial order with 2 locations
 	 * 	When a slotting file contains 1 null location and 1 real location for that order
 	 *  Then the order has 1 location
 	 * 
-     */	
+	 */
 	@Test
 	public final void testReduceOrderLocationsWithSingleLineUpdate() {
 		this.getTenantPersistenceService().beginTransaction();
 
-		Facility facility = getTestFacility("ORG-testReduceOrderLocationsWithSingleLineUpdate", "F-testReduceOrderLocationsWithSingleLineUpdate");
-		
+		Facility facility = getTestFacility("ORG-testReduceOrderLocationsWithSingleLineUpdate",
+			"F-testReduceOrderLocationsWithSingleLineUpdate");
+
 		doMultiSlotOrder(facility, "01111", "D-21", "D-22");
 
 		String singleSlotCsv = "orderId,locationId\r\n" //
 				+ "01111, D-23\r\n"; //
 		Assert.assertTrue(importSlotting(facility, singleSlotCsv));
-		
+
 		OrderHeader o1 = OrderHeader.staticGetDao().findByDomainId(facility, "01111");
 		Assert.assertEquals(1, o1.getOrderLocations().size());
-		
+
 		this.getTenantPersistenceService().commitTransaction();
 	}
-		
+
 	@Test
 	public final void testLocationAliasImporterFromCsvStream() {
 		this.getTenantPersistenceService().beginTransaction();
@@ -351,7 +348,7 @@ public class OrderLocationImporterTest extends ServerTest {
 		Bay bayA2B1 = aisleA2.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
 		Bay.staticGetDao().store(bayA2B1);
 
-		Bay bayA2B2 = aisleA2.createBay( "B2", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay bayA2B2 = aisleA2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		Bay.staticGetDao().store(bayA2B2);
 
 		Aisle aisleA3 = facility.createAisle("A3", Point.getZeroPoint(), Point.getZeroPoint());
@@ -360,7 +357,7 @@ public class OrderLocationImporterTest extends ServerTest {
 		Bay bayA3B1 = aisleA3.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
 		Bay.staticGetDao().store(bayA3B1);
 
-		Bay bayA3B2 = aisleA3.createBay( "B2", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay bayA3B2 = aisleA3.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		Bay.staticGetDao().store(bayA3B2);
 
 		// This order location should get blanked out by the import.
@@ -395,7 +392,7 @@ public class OrderLocationImporterTest extends ServerTest {
 
 		boolean result = importSlotting(facility, csvString);
 		Assert.assertTrue(result);
-		
+
 		// Make sure we can lookup all of the locations for order O1111.
 		Assert.assertEquals(3, order1111.getOrderLocations().size());
 
@@ -488,13 +485,13 @@ public class OrderLocationImporterTest extends ServerTest {
 		Bay bayA1B2 = aisleA1.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
 		Bay.staticGetDao().store(bayA1B2);
 
-		Bay bayA1B3 = aisleA1.createBay( "B3", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay bayA1B3 = aisleA1.createBay("B3", Point.getZeroPoint(), Point.getZeroPoint());
 		Bay.staticGetDao().store(bayA1B3);
 
 		Aisle aisleA2 = facility.createAisle("A2", Point.getZeroPoint(), Point.getZeroPoint());
 		Aisle.staticGetDao().store(aisleA2);
 
-		Bay bayA2B1 = aisleA2.createBay( "B1", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay bayA2B1 = aisleA2.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
 		Bay.staticGetDao().store(bayA2B1);
 
 		Bay bayA2B2 = aisleA2.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
@@ -503,7 +500,7 @@ public class OrderLocationImporterTest extends ServerTest {
 		Aisle aisleA3 = facility.createAisle("A3", Point.getZeroPoint(), Point.getZeroPoint());
 		Aisle.staticGetDao().store(aisleA3);
 
-		Bay bayA3B1 = aisleA3.createBay( "B1", Point.getZeroPoint(), Point.getZeroPoint());
+		Bay bayA3B1 = aisleA3.createBay("B1", Point.getZeroPoint(), Point.getZeroPoint());
 		Bay.staticGetDao().store(bayA3B1);
 
 		Bay bayA3B2 = aisleA3.createBay("B2", Point.getZeroPoint(), Point.getZeroPoint());
@@ -564,7 +561,7 @@ public class OrderLocationImporterTest extends ServerTest {
 		// --------
 		// Import it again - and rerun all the same tests.
 		importSlotting(facility, csvString);
-		
+
 		// Make sure we can lookup all of the locations for order O1111.
 		Assert.assertEquals(3, order1111.getOrderLocations().size());
 
@@ -587,15 +584,16 @@ public class OrderLocationImporterTest extends ServerTest {
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
+
 	private void setupTestLocations(Facility facility) {
 		// **************
 		// First a trivial aisle
 		String aisleCsv = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A9,,,,,TierLeft,12.85,43.45,X,120,\r\n" //
+				+ "Aisle,A9,,,,,tierNotB1S1Side,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,244,,,,,\r\n" //
 				+ "Tier,T1,,8,80,0,,\r\n"; //
-		Assert.assertTrue(importAislesData(facility, aisleCsv));;
+		Assert.assertTrue(importAislesData(facility, aisleCsv));
+		;
 		Aisle aisle = Aisle.staticGetDao().findByDomainId(facility, "A9");
 		Assert.assertNotNull(aisle);
 		Location location = facility.findSubLocationById("A9.B1.T1.S1");
@@ -614,7 +612,7 @@ public class OrderLocationImporterTest extends ServerTest {
 				+ "A9.B1.T1.S5, D-25\r\n" //
 				+ "A9.B1.T1.S6, D-26\r\n"; //
 		// Leaving S7 and S8 unknown
-		
+
 		Assert.assertTrue(importLocationAliasesData(facility, locationAliasCsv));
 		Location locationByAlias = facility.findSubLocationById("D-21");
 		Assert.assertNotNull(locationByAlias);
@@ -624,24 +622,24 @@ public class OrderLocationImporterTest extends ServerTest {
 		doLocationSetup(facility);
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();		
+		this.getTenantPersistenceService().beginTransaction();
 		String multiSlotCsv = "orderId,locationId\r\n"; //
 		for (int i = 0; i < locations.length; i++) {
 			String locationId = locations[i];
-			multiSlotCsv += orderId + ", " + locationId + "\r\n"; 
+			multiSlotCsv += orderId + ", " + locationId + "\r\n";
 		}
 		Assert.assertTrue(importSlotting(facility, multiSlotCsv));
 		this.getTenantPersistenceService().commitTransaction();
 
-		this.getTenantPersistenceService().beginTransaction();		
+		this.getTenantPersistenceService().beginTransaction();
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
 		Assert.assertNotNull("OrderHeader: " + orderId + "not found", order);
 		Assert.assertEquals(locations.length, order.getOrderLocations().size());
 	}
-	
+
 	private void doSingleSlotOrder(Facility facility, String orderId, String locationId) {
 		doLocationSetup(facility);
-		
+
 		String doubleSlotCsv = "orderId,locationId\r\n" //
 				+ orderId + ", " + locationId + "\r\n"; //
 		Assert.assertTrue(importSlotting(facility, doubleSlotCsv));
@@ -657,12 +655,12 @@ public class OrderLocationImporterTest extends ServerTest {
 	private void doLocationSetup(Facility facility) {
 		// First a trivial aisle
 		String aisleCsv = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
-				+ "Aisle,A9,,,,,TierLeft,12.85,43.45,X,120,\r\n" //
+				+ "Aisle,A9,,,,,tierNotB1S1Side,12.85,43.45,X,120,\r\n" //
 				+ "Bay,B1,244,,,,,\r\n" //
 				+ "Tier,T1,,8,80,0,,\r\n"; //
-		
+
 		Assert.assertTrue(importAislesData(facility, aisleCsv));
-		
+
 		String locationsCsv = "mappedLocationId,locationAlias\r\n" //
 				+ "A9, D\r\n" //
 				+ "A9.B1, DB\r\n" //
@@ -672,12 +670,12 @@ public class OrderLocationImporterTest extends ServerTest {
 				+ "A9.B1.T1.S3, D-23\r\n"; //
 		Assert.assertTrue(importLocationAliasesData(facility, locationsCsv));
 	}
-	
+
 	private Facility getTestFacility(String orgId, String facilityId) {
 		Facility facility = Facility.createFacility(facilityId, "TEST", Point.getZeroPoint());
 		return facility;
 	}
-	
+
 	private void assertOrderHasLocation(Facility facility, OrderHeader order, String locationAlias) {
 		Location mappedLocation = facility.findSubLocationById(locationAlias);
 		//String orderLocationId = OrderLocation.makeDomainId(order, mappedLocation);
@@ -685,20 +683,20 @@ public class OrderLocationImporterTest extends ServerTest {
 		boolean found = false;
 		for (OrderLocation orderLocation : order.getOrderLocations()) {
 			found = orderLocation.getLocation().getPersistentId().equals(mappedLocation.getPersistentId());
-			if (found) break;
+			if (found)
+				break;
 		}
 		Assert.assertTrue("Unable to find order location " + locationAlias + " for order: " + order, found);
 	}
-	
 
 	private static class SlotFileBuilder {
-		StringBuilder file = new StringBuilder("orderId,locationId\r\n");
-		
+		StringBuilder	file	= new StringBuilder("orderId,locationId\r\n");
+
 		public SlotFileBuilder slot(String orderHeaderId, String slotLocationId) {
 			file.append(orderHeaderId + ", " + slotLocationId + "\r\n");
 			return this;
 		}
-		
+
 		public String build() {
 			return file.toString();
 		}

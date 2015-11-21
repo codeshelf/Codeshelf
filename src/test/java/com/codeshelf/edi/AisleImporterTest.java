@@ -938,7 +938,8 @@ public class AisleImporterTest extends MockDaoTest {
 		String csvString2 = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A51,,,,,,,,,\r\n" //
 				+ "Bay,B1,,,,,,\r\n" //
-				+ "Tier,T1,,,,,,\r\n" + "Aisle,A52,CLONE(A51),,,,,,,,\r\n"; //
+				+ "Tier,T1,,,,,,\r\n" //
+				+ "Aisle,A52,CLONE(A51),,,,,,,,\r\n"; //
 		importAislesData(facility, csvString2);
 
 		Aisle A512 = Aisle.staticGetDao().findByDomainId(facility, "A51");
@@ -1545,7 +1546,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,2,32,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,tierNotB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n"//
+				+ "Aisle,A54,,,,,tierNotB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; //
@@ -1608,7 +1610,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && NUMBER OF LEDS CHANGED
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" //
+				+ "Aisle,A54,,,,,,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; //
@@ -1676,7 +1679,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,2,32,0,,\r\n" //
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,zigzagB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" //
+				+ "Aisle,A54,,,,,zigzagB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; //
@@ -1739,7 +1743,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && NUMBER OF LEDS CHANGED
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,zigzagB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" //
+				+ "Aisle,A54,,,,,zigzagB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; // 
@@ -1806,7 +1811,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,2,32,0,,\r\n"// 
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n"//
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,zigzagNotB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" //
+				+ "Aisle,A54,,,,,zigzagNotB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; // */
@@ -1870,7 +1876,8 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Tier,T2,,4,32,0,,\r\n" //
 				+ "Tier,T3,,0,40,0,,\r\n" // NO SLOTS && LED COUNT CHANGE!
 				+ "Aisle,A52,Clone(A51),,,,,12.85,48.45,X,120\r\n" //
-				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" + "Aisle,A54,,,,,zigzagNotB1S1Side,12.85,58.45,X,120\r\n" //
+				+ "Aisle,A53,Clone(A52),,,,,12.85,53.45,X,120\r\n" //
+				+ "Aisle,A54,,,,,zigzagNotB1S1Side,12.85,58.45,X,120\r\n" //
 				+ "Bay,B1,115,,,,,\r\n" //
 				+ "Tier,T1,,4,32,0,,\r\n" //
 				+ "Tier,T2,,4,32,0,,\r\n"; // */
@@ -3007,6 +3014,109 @@ public class AisleImporterTest extends MockDaoTest {
 		this.getTenantPersistenceService().commitTransaction();
 		Assert.assertTrue(slotB1T1S5.getActive());
 		Assert.assertTrue(slotB1T1S5.getLedChannel() == 3);
+	}
+
+	/**
+	 * Per CD_0129. LED offsets account for gaps between bays, primarily used for tier-wise layout although it could be applied to zigzag (if you can understand how to apply it--dioubtful)
+	 * Also check that cloning bays works as specified, without taking the offset as the offset is likely to need changing.
+	 * Also check that aisle clone does take the bay offsets.
+	 * Offset in tier or bay lines goes in controllerLED field.
+	 * 
+	 * Environmental lights are 12.5cm per addressable element. Divided evenly, that is 19.5 elements per 8 feet.
+	 * 8-foot rack is 243.75 cm.  Our best light tube have 80 LEDs within that, with a small gap per end.
+	 */
+	@Test
+	public final void testBasicEnvironmentalConfig() {
+		beginTransaction();
+
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A71,,,,,tierB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,244,,,,\r\n" //
+				+ "Tier,T1,,10,20,0,,\r\n" //
+				+ "Bay,B2,Clone(B1),,,,\r\n"; //
+		Facility facility = Facility.createFacility("F-CLONE71", "TEST", Point.getZeroPoint());
+		importAislesData(facility, csvString);
+		commitTransaction();
+
+		LOGGER.info("1: Check the tier first/last");
+		beginTransaction();
+		facility = facility.reload();
+		assertLeds(facility, "A71.B1.T1", 1, 20);
+
+		LOGGER.info("2: Current algorithm is giving one element each for a 10/20 configuration. Check B1");
+		assertSingleLedElement(facility, "A71.B1.T1.S1", 1);
+		assertSingleLedElement(facility, "A71.B1.T1.S2", 3);
+		assertSingleLedElement(facility, "A71.B1.T1.S3", 5);
+		assertSingleLedElement(facility, "A71.B1.T1.S4", 7);
+		assertSingleLedElement(facility, "A71.B1.T1.S5", 9);
+		assertSingleLedElement(facility, "A71.B1.T1.S6", 11);
+		assertSingleLedElement(facility, "A71.B1.T1.S7", 13);
+		assertSingleLedElement(facility, "A71.B1.T1.S8", 15);
+		assertSingleLedElement(facility, "A71.B1.T1.S9", 17);
+		assertSingleLedElement(facility, "A71.B1.T1.S10", 19);
+
+		LOGGER.info("3: Check the end slots of B2. Should be symetrical");
+		assertSingleLedElement(facility, "A71.B2.T1.S1", 21);
+		assertSingleLedElement(facility, "A71.B2.T1.S10", 39);
+
+		commitTransaction();
+
+	}
+
+	private Short toShort(int value) {
+		return (short) value;
+	}
+
+	private void assertSingleLedElement(Facility inFacility, String locId, int expectedLed) {
+		assertLeds(inFacility, locId, expectedLed, expectedLed);
+	}
+
+	private void assertLeds(Facility inFacility, String locId, int expectedFirst, int expectedLast) {
+		Location loc = inFacility.findSubLocationById(locId);
+		Assert.assertEquals(toShort(expectedFirst), loc.getFirstLedNumAlongPath());
+		Assert.assertEquals(toShort(expectedLast), loc.getLastLedNumAlongPath());
+	}
+
+	@Test
+	public final void testBayLedOffsets() {
+		beginTransaction();
+
+		// A71 definition has value 3 in controllerLED field for the tier line. Show that it does nothing
+		// A72 definition has value 3 in controllerLED field for the bay line. Show that offsets
+		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
+				+ "Aisle,A71,,,,,tierB1S1Side,12.85,43.45,X,120\r\n" //
+				+ "Bay,B1,244,,,,\r\n" //
+				+ "Tier,T1,,10,20,0,3,\r\n" //
+				+ "Bay,B2,Clone(B1),,,,\r\n" //
+				+ "Aisle,A72,,,,,tierB1S1Side,12.85,63.45,X,120\r\n" //
+				+ "Bay,B1,244,,,,\r\n" //
+				+ "Tier,T1,,10,20,0,,\r\n" //
+				+ "Bay,B2,Clone(B1),,,,3\r\n"; //
+
+		Facility facility = Facility.createFacility("F-CLONE71", "TEST", Point.getZeroPoint());
+		importAislesData(facility, csvString);
+		commitTransaction();
+
+		LOGGER.info("1: Check the end slots of Aisle 71 B1 and B2.");
+		beginTransaction();
+		facility = facility.reload();
+		assertLeds(facility, "A71.B1.T1", 1, 20);
+		assertLeds(facility, "A71.B2.T1", 21, 40);
+		assertSingleLedElement(facility, "A71.B1.T1.S1", 1);
+		assertSingleLedElement(facility, "A71.B1.T1.S10", 19);
+		assertSingleLedElement(facility, "A71.B2.T1.S1", 21);
+		assertSingleLedElement(facility, "A71.B2.T1.S10", 39);
+
+		LOGGER.info("2: Check the end slots of Aisle 72 B1 and B2.");
+		assertLeds(facility, "A72.B1.T1", 1, 20);
+		assertLeds(facility, "A72.B2.T1", 21, 40);
+		assertSingleLedElement(facility, "A72.B1.T1.S1", 1);
+		assertSingleLedElement(facility, "A72.B1.T1.S10", 19);
+		assertSingleLedElement(facility, "A72.B2.T1.S1", 21);
+		assertSingleLedElement(facility, "A72.B2.T1.S10", 39);
+
+		commitTransaction();
+
 	}
 
 }

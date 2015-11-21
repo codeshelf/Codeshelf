@@ -56,44 +56,44 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		zigzagB1S1Side,
 		zigzagNotB1S1Side,
 		tierB1S1Side,
-		tierNotB1S1Side,
-		zigzagLeft, //deprecated, use zigzagB1S1Side
-		zigzagRight, //deprecated, use zigzagNotB1S1Side
-		tierRight,  //deprecated, use tierB1S1Side
-		tierLeft,   //deprecated, use tierNotB1S1Side
+		tierNotB1S1Side
+		// zigzagLeft, //deprecated, use zigzagB1S1Side
+		// zigzagRight, //deprecated, use zigzagNotB1S1Side
+		// tierRight,  //deprecated, use tierB1S1Side
+		// tierLeft,   //deprecated, use tierNotB1S1Side
 	}
-	
-	private static double			CM_PER_M		= 100D;
-	private static int				maxSlotForTier	= 30;
 
-	private static final Logger		LOGGER			= LoggerFactory.getLogger(AislesFileCsvImporter.class);
+	private static double		CM_PER_M		= 100D;
+	private static int			maxSlotForTier	= 30;
 
-	private Facility				mFacility;
+	private static final Logger	LOGGER			= LoggerFactory.getLogger(AislesFileCsvImporter.class);
+
+	private Facility			mFacility;
 	// keep track of the file read. This instead of a state machine and other structures
-	private Aisle					mLastReadAisle;
-	private Bay						mLastReadBay;
-	private Bay						mLastReadBayForVertices;
+	private Aisle				mLastReadAisle;
+	private Bay					mLastReadBay;
+	private Bay					mLastReadBayForVertices;
 	@SuppressWarnings("unused")
-	private Tier					mLastReadTier;
-	private int						mBayCountThisAisle;
-	private int						mTierCountThisBay;
+	private Tier				mLastReadTier;
+	private int					mBayCountThisAisle;
+	private int					mTierCountThisBay;
 
 	// values from the file that will be in the bean
-	private String					mControllerLed;
-	private Short					mLedsPerTier;
-	private Integer					mBayLengthCm;
-	private Integer					mTierFloorCm;
-	private boolean					mIsOrientationX;
-	private Integer					mDepthCm;
+	private String				mControllerLed;
+	private Short				mLedsPerTier;
+	private Integer				mBayLengthCm;
+	private Integer				mTierFloorCm;
+	private boolean				mIsOrientationX;
+	private Integer				mDepthCm;
 
 	// short term memory
-	private String					mLastControllerLed;
-	private boolean					mBeanReadIsClone;
+	private String				mLastControllerLed;
+	private boolean				mBeanReadIsClone;
 
-	private List<Tier>				mTiersThisAisle;
+	private List<Tier>			mTiersThisAisle;
 	private Map<UUID, Location>	mAisleLocationsMapThatMayBecomeInactive;
-	private Map<UUID, Location> mLocationsNotToClone;
-	private Location mLastReadLocation;
+	private Map<UUID, Location>	mLocationsNotToClone;
+	private Location			mLastReadLocation;
 
 	private String getAppropriateControllerLed() {
 		if (mLastControllerLed.isEmpty())
@@ -109,9 +109,9 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 
 	@Inject
 	public AislesFileCsvImporter(final EventProducer inProducer) {
-		
+
 		super(inProducer);
-		
+
 		mLastReadAisle = null;
 		mLastReadBay = null;
 		mLastReadBayForVertices = null;
@@ -134,12 +134,10 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	/* (non-Javadoc)
 	 * @see com.codeshelf.edi.ICsvImporter#importInventoryFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
 	 */
-	public final boolean importAislesFileFromCsvStream(Reader inCsvReader,
-		Facility inFacility,
-		Timestamp inProcessTime) {
- 		boolean result = true;
+	public final boolean importAislesFileFromCsvStream(Reader inCsvReader, Facility inFacility, Timestamp inProcessTime) {
+		boolean result = true;
 
- 		mLocationsNotToClone = new HashMap<UUID, Location>();
+		mLocationsNotToClone = new HashMap<UUID, Location>();
 		mFacility = inFacility;
 
 		List<AislesFileCsvBean> aislesFileBeanList = toCsvBean(inCsvReader, AislesFileCsvBean.class);
@@ -152,7 +150,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			for (AislesFileCsvBean aislesFileBean : aislesFileBeanList) {
 				Aisle lastAisle = mLastReadAisle;
 				mBeanReadIsClone = false;
-				
+
 				// Fairly simple error handling. Throw anywhere in the read with EdiFileReadException. Causes skip to next aisle, if any
 				try {
 					// This creates one location: aisle, bay, tier; (tier also creates slots). 
@@ -166,13 +164,13 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				} catch (EdiFileReadException e) {
 					produceRecordViolationEvent(EventSeverity.WARN, e, aislesFileBean);
 					LOGGER.warn("Unable to process record: " + aislesFileBean, e);
-					
+
 					// Add the Aisle/Bay to the list of locations we should not clone from
 					mLocationsNotToClone.put(mLastReadLocation.getPersistentId(), mLastReadLocation);
-					
+
 					// If some bay operation failed in an aisle we do not want to be able
 					// to clone that aisle and repeat the incorrect configuration
-					if ( mLastReadLocation.isBay() ) {
+					if (mLastReadLocation.isBay()) {
 						mLocationsNotToClone.put(mLastReadAisle.getPersistentId(), mLastReadAisle);
 					}
 
@@ -196,9 +194,9 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 					// starting an aisle copied mLastReadBay to mLastReadBayForVertices and cleared mLastReadBay
 					// do not do makeUnusedLocationsInactive() here. Done in the aisle bean read if a new aisle
 				}
-				
+
 				// We processed a clone. Now we need an aisle again
-				if (mBeanReadIsClone){
+				if (mBeanReadIsClone) {
 					needAisleBean = true;
 				}
 			}
@@ -224,6 +222,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	}
 
 	private class ZigzagLeftComparable implements Comparator<Tier> {
+		// Misnamed as zigzagLeft is deprecated. zigzagB1S1SideComparable would be the name.
 		// We want B1T2, B1T1, B2T2, B2T1. Incrementing Bay. Decrementing Tier. Would not sort right for more than 9 tiers.
 		public int compare(Tier inLoc1, Tier inLoc2) {
 
@@ -245,6 +244,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	}
 
 	private class ZigzagRightComparable implements Comparator<Tier> {
+		// Misnamed as zigzagRight is deprecated. zigzagNotB1S1SideComparable would be the name.
 		// We want B2T2, B2T1, B1T2, B1T1. Decrementing Bay. Decrementing Tier. Would not sort right for more than 9 tiers.
 		public int compare(Tier inLoc1, Tier inLoc2) {
 
@@ -285,8 +285,8 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 
 		List<? extends Location> locationList = inTier.getActiveChildren();
 
-		for(Location probableSlot : locationList) { 			
-			slotList.add(TenantPersistenceService.<Location,Slot>deproxify(Slot.class,probableSlot));
+		for (Location probableSlot : locationList) {
+			slotList.add(TenantPersistenceService.<Location, Slot> deproxify(Slot.class, probableSlot));
 		}
 		//slotList.addAll(slotCollection);
 
@@ -353,13 +353,12 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			}
 			// A correction for v4.1, mostly for good eggs. Do not set more than 4 leds.
 			// And if <= halfway through the slot, take it out of the upper. else the lower.
-			
+
 			// Walmart palletizer kludge. Perhaps should be in aisles file. If it looks like a full 105cm light tube per slot, don't
 			// limit to only 4 LEDs.
 			if (lastLitLed - firstLitLed > 25) {
 				// let it be. Not the guard business decreased the 32 to 28 or 29 left for the slot.
-			}
-			else if (lastLitLed - firstLitLed > kMaxLedsPerSlot) {
+			} else if (lastLitLed - firstLitLed > kMaxLedsPerSlot) {
 				if (slotIndex > slotCount / 2)
 					firstLitLed = (short) (lastLitLed - kMaxLedsPerSlot + 1);
 				else
@@ -585,10 +584,9 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 
 		if (tierSortNeeded) {
 			Collections.sort(mTiersThisAisle, new TierBayComparable());
-		} else if (controllerLedPattern.equalsIgnoreCase(ControllerLayout.zigzagLeft.name()) || controllerLedPattern.equalsIgnoreCase(ControllerLayout.zigzagB1S1Side.name())) {
+		} else if (controllerLedPattern.equalsIgnoreCase(ControllerLayout.zigzagB1S1Side.name())) {
 			Collections.sort(mTiersThisAisle, new ZigzagLeftComparable());
-		} else if (controllerLedPattern.equalsIgnoreCase(ControllerLayout.zigzagRight.name())
-				|| controllerLedPattern.equalsIgnoreCase(ControllerLayout.zigzagNotB1S1Side.name())) {
+		} else if (controllerLedPattern.equalsIgnoreCase(ControllerLayout.zigzagNotB1S1Side.name())) {
 			Collections.sort(mTiersThisAisle, new ZigzagRightComparable());
 			intialZigTierDirectionIncrease = false;
 		}
@@ -600,7 +598,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		ListIterator<Tier> li = null;
 
 		boolean forwardIterationNeeded = true;
-		if (controllerLedPattern.equalsIgnoreCase(ControllerLayout.tierRight.name()) || controllerLedPattern.equalsIgnoreCase(ControllerLayout.tierNotB1S1Side.name())) {
+		if (controllerLedPattern.equalsIgnoreCase(ControllerLayout.tierNotB1S1Side.name())) {
 			forwardIterationNeeded = false;
 		}
 		// default is then "tierB1S1Side"
@@ -985,57 +983,56 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	 * @param inCloneInstruction
 	 * Determine if this is a clone attempt, and return the aisle to clone from
 	 */
-	private Aisle getAisleToClone(String inCloneInstruction){
+	private Aisle getAisleToClone(String inCloneInstruction) {
 		// Does this take the form of "Clone(A51)"?  DEV-618
 		if (inCloneInstruction == null || inCloneInstruction.isEmpty())
 			return null;
-		
+
 		// something in the field
 		String cloneInstruction = inCloneInstruction.toUpperCase();
 		String subPart = cloneInstruction.substring(0, 6);
-		if (subPart.equals("CLONE(")){
+		if (subPart.equals("CLONE(")) {
 			int totLength = cloneInstruction.length();
-			if (totLength > 6 && cloneInstruction.substring(totLength - 1, totLength).equals(")")){
-				String aisleName =  cloneInstruction.substring(6, totLength - 1);
+			if (totLength > 6 && cloneInstruction.substring(totLength - 1, totLength).equals(")")) {
+				String aisleName = cloneInstruction.substring(6, totLength - 1);
 				// find the aisle to clone
 				return Aisle.staticGetDao().findByDomainId(mFacility, aisleName);
 			}
 		}
-		
+
 		LOGGER.warn("Could not interpret " + inCloneInstruction + ". Nothing done.");
 		return null;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inCloneInstruction
 	 * Determine if this is a clone attempt, and return the bay to clone from
 	 */
-	private Bay getBayToClone(String inCloneInstruction){
+	private Bay getBayToClone(String inCloneInstruction) {
 		// Does this take the form of "Clone(B1)"?
 		if (inCloneInstruction == null || inCloneInstruction.isEmpty())
 			return null;
-		
+
 		// something in the field
 		String cloneInstruction = inCloneInstruction.toUpperCase();
-		if (cloneInstruction.contains("CLONE")){
+		if (cloneInstruction.contains("CLONE")) {
 			String subPart = cloneInstruction.substring(0, 6);
-			if (subPart.equals("CLONE(")){
+			if (subPart.equals("CLONE(")) {
 				int totLength = cloneInstruction.length();
-				if (totLength > 6 && cloneInstruction.substring(totLength - 1, totLength).equals(")")){
-					String aisleName =  cloneInstruction.substring(6, totLength - 1);
-					// find the aisle to clone
+				if (totLength > 6 && cloneInstruction.substring(totLength - 1, totLength).equals(")")) {
+					String aisleName = cloneInstruction.substring(6, totLength - 1);
+					// find the bay to clone
 					return Bay.staticGetDao().findByDomainId(mLastReadAisle, aisleName);
 				}
 			}
 			LOGGER.warn("Could not interpret " + inCloneInstruction + ". Nothing done.");
 		}
-		
+
 		// Either we could not interpret or it's not a clone instruction
 		return null;
 	}
-	
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inAisle
@@ -1045,121 +1042,119 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		// assume tierB1S1Side. Example corner case is if there is an aisle with two bays
 		// the first bay only has one tier and the second bay has two tiers. The aisle could
 		// be defined as zigzag, however, this would determine it to be tier configuration!
-		
+
 		// Default to tierB1S1Side
 		String ledConfig = "tierB1S1Side";
-		
+
 		List<Tier> tiers = new ArrayList<Tier>();
 		List<? extends Location> tierList = null;
-		
+
 		List<Bay> bays = new ArrayList<Bay>();
 		List<? extends Location> allBaysList = null;
-		
+
 		allBaysList = inAisle.getActiveChildren();
 		@SuppressWarnings("unchecked")
 		Collection<? extends Bay> bayCollection = (Collection<? extends Bay>) allBaysList;
 		bays.addAll(bayCollection);
 		Collections.sort(bays, new BayComparable());
-		
-		
-		if (bays != null && bays.size() > 0){
+
+		if (bays != null && bays.size() > 0) {
 			tierList = Bay.staticGetDao().findByDomainId(inAisle, "B1").getActiveChildren();
 			@SuppressWarnings("unchecked")
 			Collection<? extends Tier> tierCollection = (Collection<? extends Tier>) tierList;
 			tiers.addAll(tierCollection);
 			Collections.sort(tiers, new TierBayComparable());
-						
-			if (tiers.size() == 1){
+
+			if (tiers.size() == 1) {
 				// We assume tier configuration as zigzag does not make sense
-				
-				if (tiers.get(0).getFirstLedNumAlongPath() == 1){
+
+				if (tiers.get(0).getFirstLedNumAlongPath() == 1) {
 					ledConfig = "tierB1S1Side";
 				} else {
 					ledConfig = "tierNotB1S1Side";
 				}
-				
-			} else if (tiers.size() > 1){
+
+			} else if (tiers.size() > 1) {
 				// Check for tier configuration
-				
-				if (tiers.get(0).getFirstLedNumAlongPath() == tiers.get(1).getFirstLedNumAlongPath()){
-					
+
+				if (tiers.get(0).getFirstLedNumAlongPath() == tiers.get(1).getFirstLedNumAlongPath()) {
+
 					// Check for tierB1S1Side or tiernotB1S1
-					if (tiers.get(0).getFirstLedNumAlongPath() == 1){
+					if (tiers.get(0).getFirstLedNumAlongPath() == 1) {
 						ledConfig = "tierB1S1Side";
 					} else {
 						ledConfig = "tierNotB1S1Side";
 					}
 				} else {
-					
+
 					// Want check the first led number in the top tier of the first bay
-					if (tiers.get(tiers.size()-1).getFirstLedNumAlongPath() == 1){
+					if (tiers.get(tiers.size() - 1).getFirstLedNumAlongPath() == 1) {
 						ledConfig = "zigzagB1S1Side";
 					} else {
 						ledConfig = "zigzagNotB1S1Side";
 					}
-					
+
 				}
 			} else {
 				// There are no tiers
 				// We assume tier configuration as zigzag does not make sense
-				
-				if (bays.get(0).getFirstLedNumAlongPath() == 1){
+
+				if (bays.get(0).getFirstLedNumAlongPath() == 1) {
 					ledConfig = "tierB1S1Side";
 				} else {
 					ledConfig = "tierNotB1S1Side";
 				}
 			}
 		}
-		
+
 		return ledConfig;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param bayToCloneFrom
 	 */
-	private boolean cloneBayTiers(Bay bayToCloneFrom){
-		
+	private boolean cloneBayTiers(Bay bayToCloneFrom) {
+
 		// Determine LED configuration
-		boolean ledsIncrease = true;			
-		
+		boolean ledsIncrease = true;
+
 		// We know and can set led count on this tier.
 		// Can we know the led increase direction yet? Not necessarily for zigzag bay, but can for the other aisle types
-		if (mControllerLed.equalsIgnoreCase("tierRight") || mControllerLed.equalsIgnoreCase("tierNotB1S1Side"))
+		if (mControllerLed.equalsIgnoreCase("tierNotB1S1Side"))
 			ledsIncrease = false;
 		// Knowable, but a bit tricky for the multi-controller aisle case. If this tier is in B3, within B1>B5;, ledsIncrease would be false.
 
-		
 		// Get tiers to clone and sort. Order is important.
 		List<Tier> tiers = new ArrayList<Tier>();
 		List<? extends Location> tiersList = bayToCloneFrom.getActiveChildren();
 		@SuppressWarnings("unchecked")
 		Collection<? extends Tier> tierCollection = (Collection<? extends Tier>) tiersList;
-		
+
 		tiers.addAll(tierCollection);
 		Collections.sort(tiers, new TierBayComparable());
-		
+
 		// Clone the tiers
-		for (Tier tier : tiers){
+		for (Tier tier : tiers) {
 			List<Location> slots = tier.getActiveChildren();
-			
+
 			// This call to getMTransientLedsThisTier potentially unsafe!
 			// Not sure this "contains" logic safely determines is the tier is still in memory
 			short ledsForTier = 0;
-			if (mTiersThisAisle.contains(tier)){
+			if (mTiersThisAisle.contains(tier)) {
 				ledsForTier = tier.getMTransientLedsThisTier();
 			} else {
 				// We abort the bay clone because the tier we are cloning is no longer in memory
 				// We cannot get the led count from the tier
-				LOGGER.warn("Unable to clone tier: " + tier.getDomainId() + 
-					". Tier was not created. Please retry or manually enter.");
-				LOGGER.error("Unable to clone tier: " + tier.getDomainId() + 
-					". Memory reference of tier to clone from was not found.");
+				LOGGER.warn("Unable to clone tier: " + tier.getDomainId()
+						+ ". Tier was not created. Please retry or manually enter.");
+				LOGGER.error("Unable to clone tier: " + tier.getDomainId()
+						+ ". Memory reference of tier to clone from was not found.");
 			}
-			
+
 			Tier newTier = editOrCreateOneTier(tier.getDomainId(), slots.size(), ledsForTier, ledsIncrease);
-			
-			if (newTier != null){
+
+			if (newTier != null) {
 				mLastReadTier = newTier;
 				// Add this tier to our aisle tier list for later led calculations
 				mTiersThisAisle.add(newTier);
@@ -1168,10 +1163,10 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				throw new EdiFileReadException("Cloning tier failed. Tier not created. Unknown error");
 			}
 		}
-		
+
 		return true;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inCsvBean
@@ -1183,8 +1178,8 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		String errorMsg = inCsvBean.validateBean();
 		if (errorMsg != null) {
 			throw new InputValidationException(inCsvBean, errorMsg);
-		} 
-		
+		}
+
 		boolean returnThisIsAisleBean = false;
 
 		LOGGER.info(inCsvBean.toString());
@@ -1204,25 +1199,25 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		// Figure out what kind of bin we have.
 		if (binType.equalsIgnoreCase("aisle")) {
 			returnThisIsAisleBean = true;
-			
+
 			Aisle aisleToCloneFrom = getAisleToClone(lengthCm);
-			
+
 			// Check that the aisleToCloneFrom actually exists
-			if ( lengthCm.toUpperCase().contains("CLONE") && aisleToCloneFrom == null ){
+			if (lengthCm.toUpperCase().contains("CLONE") && aisleToCloneFrom == null) {
 				LOGGER.warn("Unable to complete clone request: " + lengthCm + ". Aisle does not exist.");
 				return false;
 			}
-			
+
 			// If we are cloning an aisle make sure it's not in our black list
-			if ( aisleToCloneFrom != null && mLocationsNotToClone.containsKey(aisleToCloneFrom.getPersistentId()) ) {
+			if (aisleToCloneFrom != null && mLocationsNotToClone.containsKey(aisleToCloneFrom.getPersistentId())) {
 				LOGGER.warn("Unable to clone aisle: " + aisleToCloneFrom.getDomainId() + ". A create/update"
-						+ " operation on this aisle failed earlier. Please review error logs and aisle definition"
-						+ " of aisle " + aisleToCloneFrom.getDomainId() + ".");
+						+ " operation on this aisle failed earlier. Please review error logs and aisle definition" + " of aisle "
+						+ aisleToCloneFrom.getDomainId() + ".");
 				return false;
 			}
-			
+
 			// Check that we are not cloning the aisle that we are defining
-			if ( aisleToCloneFrom != null && aisleToCloneFrom.getDomainId().equals(nominalDomainID) ) {
+			if (aisleToCloneFrom != null && aisleToCloneFrom.getDomainId().equals(nominalDomainID)) {
 				LOGGER.warn("Cannot define and clone the same aisle in the same line! Did nothing.");
 				return false;
 			}
@@ -1252,12 +1247,12 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			// remember what we had if we are resetting these.
 			mLastControllerLed = mControllerLed;
 
-			mControllerLed = controllerLed; //tierRight, tierLeft, zigzagRight, zigzagLeft, or "B1>B5;B6<B10;B11>B18;B19<B20"
+			mControllerLed = controllerLed; //zigzagB1S1Side,zigzagNotB1S1Side,tierB1S1Side,tierNotB1S1Side, (future, maybe "B1>B5;B6<B10;B11>B18;B19<B20")
 			mIsOrientationX = !(orientation.equalsIgnoreCase("Y")); // make garbage in default to X	
-	
+
 			// Remember the depth of the last aisle. Used for finalizing previous aisle before cloning
 			int lastDepthCm = 0;
-			if (mDepthCm != null )
+			if (mDepthCm != null)
 				lastDepthCm = mDepthCm;
 			mDepthCm = depthCm;
 
@@ -1280,15 +1275,15 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				mTierCountThisBay = 0;
 
 				// DEV-618 Are we cloning another aisle? Instructions in the lengthCm field
-				
+
 				if (aisleToCloneFrom != null) {
-					
-					LOGGER.info("Cloning aisle "+ aisleToCloneFrom.getDomainId() +" as specified.");
+
+					LOGGER.info("Cloning aisle " + aisleToCloneFrom.getDomainId() + " as specified.");
 
 					mBeanReadIsClone = true;
 
 					// First we need to finalize the previous aisle if one exists
-					if (lastAisle != null && lastAisle != mLastReadAisle){
+					if (lastAisle != null && lastAisle != mLastReadAisle) {
 						// Have to load the depth of the previous aisle to set correct depth when finalizing
 						mDepthCm = lastDepthCm;
 						finalizeTiersInThisAisle(lastAisle);
@@ -1301,65 +1296,65 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 					newAisle.setAnchorPoint(anchorPoint);
 
 					// Determine LED configuration
-					boolean ledsIncrease = true;			
+					boolean ledsIncrease = true;
 					mControllerLed = getLedConfiguration(aisleToCloneFrom);
-					if (!controllerLed.isEmpty() && !controllerLed.equalsIgnoreCase(mControllerLed)){
-						LOGGER.warn("Cloning does not allow change of led orientation. " 
-								+ "Using led orientation of aisle " + aisleToCloneFrom.getDomainId());
+					if (!controllerLed.isEmpty() && !controllerLed.equalsIgnoreCase(mControllerLed)) {
+						LOGGER.warn("Cloning does not allow change of led orientation. " + "Using led orientation of aisle "
+								+ aisleToCloneFrom.getDomainId());
 					}
 
 					// We know and can set led count on this tier.
 					// Can we know the led increase direction yet? Not necessarily for zigzag bay, but can for the other aisle types
-					if (mControllerLed.equalsIgnoreCase("tierRight") || mControllerLed.equalsIgnoreCase("tierNotB1S1Side"))
+					if (mControllerLed.equalsIgnoreCase("tierNotB1S1Side"))
 						ledsIncrease = false;
 					// Knowable, but a bit tricky for the multi-controller aisle case. If this tier is in B3, within B1>B5;, ledsIncrease would be false.
 
 					// Check orientation
 					mIsOrientationX = aisleToCloneFrom.isLocationXOriented();
-					if ( !orientation.isEmpty() && mIsOrientationX && !orientation.toUpperCase().equals("X")){
-						LOGGER.warn("Cloning does not allow change of orientXorY. " 
-								+ "Using orientation of aisle " + aisleToCloneFrom.getDomainId());
+					if (!orientation.isEmpty() && mIsOrientationX && !orientation.toUpperCase().equals("X")) {
+						LOGGER.warn("Cloning does not allow change of orientXorY. " + "Using orientation of aisle "
+								+ aisleToCloneFrom.getDomainId());
 					}
 
 					// Check the depth
 					Vertex V3 = Vertex.staticGetDao().findByDomainId(aisleToCloneFrom, "V03");
 					double depth = 0.0;
-					
-					if (aisleToCloneFrom.isLocationXOriented()){
+
+					if (aisleToCloneFrom.isLocationXOriented()) {
 						depth = V3.getPosY();
 					} else {
 						depth = V3.getPosX();
 					}
-					
-					int cloneAisleDepthCm = Math.round((int)(depth*CM_PER_M));
+
+					int cloneAisleDepthCm = Math.round((int) (depth * CM_PER_M));
 					//FIXME should not report warning if there is no depth specified
-					if (mDepthCm != cloneAisleDepthCm){
-						LOGGER.warn("Cloning does not allow change of depth. "
-								+ "Using depth of aisle " + aisleToCloneFrom.getDomainId());
+					if (mDepthCm != cloneAisleDepthCm) {
+						LOGGER.warn("Cloning does not allow change of depth. " + "Using depth of aisle "
+								+ aisleToCloneFrom.getDomainId());
 						mDepthCm = cloneAisleDepthCm;
 					}
 
 					// Clone bays and tiers
 					List<Bay> bays = new ArrayList<Bay>();
 					List<? extends Location> bayList = null;
-					
+
 					bayList = aisleToCloneFrom.getActiveChildren();
 					@SuppressWarnings("unchecked")
 					Collection<? extends Bay> allBayCollection = (Collection<? extends Bay>) bayList;
 					bays.addAll(allBayCollection);
 					Collections.sort(bays, new BayComparable());
-					
-					for (Bay bay : bays){
+
+					for (Bay bay : bays) {
 						Point endPoint = bay.getPickFaceEndPoint();
-						
-						if (bay.isLocationXOriented()){
+
+						if (bay.isLocationXOriented()) {
 							mBayLengthCm = (int) Math.round((endPoint.getX() * CM_PER_M));
 						} else {
 							mBayLengthCm = (int) Math.round((endPoint.getY() * CM_PER_M));
 						}
-						
+
 						Bay newBay = editOrCreateOneBay(bay.getDomainId(), mBayLengthCm);
-						
+
 						if (newBay != null) {
 							mLastReadBay = newBay;
 							mBayCountThisAisle++;
@@ -1371,29 +1366,29 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 						} else {
 							throw new EdiFileReadException("Bay not created. Unknown error");
 						}
-						
+
 						// Clone tiers
 						List<Tier> tiers = new ArrayList<Tier>();
 						List<? extends Location> tiersList = bay.getActiveChildren();
 						@SuppressWarnings("unchecked")
 						Collection<? extends Tier> tierCollection = (Collection<? extends Tier>) tiersList;
-						
+
 						tiers.addAll(tierCollection);
 						Collections.sort(tiers, new TierBayComparable());
-						
-						for (Location tier : tiers){
+
+						for (Location tier : tiers) {
 							List<Location> slots = tier.getActiveChildren();
-							
-							mLedsPerTier = (short)(tier.getLastLedNumAlongPath() - tier.getFirstLedNumAlongPath());
-							
+
+							mLedsPerTier = (short) (tier.getLastLedNumAlongPath() - tier.getFirstLedNumAlongPath());
+
 							// If there are LEDs on the tier correct the count
-							if ( mLedsPerTier != 0){
-								mLedsPerTier = (short)(mLedsPerTier + 1);
+							if (mLedsPerTier != 0) {
+								mLedsPerTier = (short) (mLedsPerTier + 1);
 							}
-							
+
 							Tier newTier = editOrCreateOneTier(tier.getDomainId(), slots.size(), mLedsPerTier, ledsIncrease);
-							
-							if (newTier != null){
+
+							if (newTier != null) {
 								mLastReadTier = newTier;
 								// Add this tier to our aisle tier list for later led calculations
 								mTiersThisAisle.add(newTier);
@@ -1401,7 +1396,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 							} else {
 								throw new EdiFileReadException("Tier not created. Unknown error");
 							}
-						}			
+						}
 					}
 				}
 			}
@@ -1413,28 +1408,28 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				return false;
 
 			Bay bayToCloneFrom = getBayToClone(lengthCm);
-			
+
 			// Check that the bayToCloneFrom actually exists
-			if ( lengthCm.toUpperCase().contains("CLONE") && bayToCloneFrom == null ){
+			if (lengthCm.toUpperCase().contains("CLONE") && bayToCloneFrom == null) {
 				LOGGER.warn("Unable to complete clone request: " + lengthCm + ". Bay does not exist.");
 				return false;
 			}
-			
+
 			// If we are cloning make sure the bay is not in our black list
-			if ( bayToCloneFrom != null && mLocationsNotToClone.containsKey(bayToCloneFrom.getPersistentId())) {
+			if (bayToCloneFrom != null && mLocationsNotToClone.containsKey(bayToCloneFrom.getPersistentId())) {
 				LOGGER.warn("Unable to clone bay: " + bayToCloneFrom.getPersistentId() + ". An create/update"
 						+ "operation on this bay failed earlier. Please review error logs and bay definition.");
 				return false;
 			}
-			
+
 			// Check that we are not cloning the aisle that we are defining
-			if ( bayToCloneFrom != null && bayToCloneFrom.getDomainId().equals(nominalDomainID) ) {
+			if (bayToCloneFrom != null && bayToCloneFrom.getDomainId().equals(nominalDomainID)) {
 				LOGGER.warn("Cannot define and clone the same bay in the same line! Did nothing.");
 				return false;
 			}
-			
+
 			Integer intValueLengthCm = 122; // Giving default length of 4 foot bay. Not that this is common; I want people to notice.
-			
+
 			// Get length from input file or bay to clone from
 			if (bayToCloneFrom == null) {
 				try {
@@ -1443,13 +1438,13 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				}
 			} else {
 				Point endPoint = bayToCloneFrom.getPickFaceEndPoint();
-				if (bayToCloneFrom.isLocationXOriented()){
-					intValueLengthCm = (int)Math.round(endPoint.getX() * CM_PER_M);
+				if (bayToCloneFrom.isLocationXOriented()) {
+					intValueLengthCm = (int) Math.round(endPoint.getX() * CM_PER_M);
 				} else {
-					intValueLengthCm = (int)Math.round(endPoint.getY() * CM_PER_M);
+					intValueLengthCm = (int) Math.round(endPoint.getY() * CM_PER_M);
 				}
 			}
-			
+
 			Bay newBay = editOrCreateOneBay(nominalDomainID, intValueLengthCm);
 
 			if (newBay != null) {
@@ -1461,12 +1456,12 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				// null out tier
 				mLastReadTier = null;
 				mTierCountThisBay = 0;
-				
+
 				if (bayToCloneFrom != null) {
-					LOGGER.info("Cloning bay "+ bayToCloneFrom.getDomainId() +" as specified.");
+					LOGGER.info("Cloning bay " + bayToCloneFrom.getDomainId() + " as specified.");
 					cloneBayTiers(bayToCloneFrom);
 				}
-				
+
 			} else {
 				throw new EdiFileReadException("Bay not created. Unknown error");
 			}
@@ -1511,7 +1506,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			// Can we know the led increase direction yet? Not necessarily for zigzag bay, but can for the other aisle types
 			boolean ledsIncrease = true;
 			String controllerLedPattern = getAppropriateControllerLed();
-			if (controllerLedPattern.equalsIgnoreCase("tierRight") || controllerLedPattern.equalsIgnoreCase("tierNotB1S1Side"))
+			if (controllerLedPattern.equalsIgnoreCase("tierNotB1S1Side"))
 				ledsIncrease = false;
 			// Knowable, but a bit tricky for the multi-controller aisle case. If this tier is in B3, within B1>B5;, ledsIncrease would be false.
 
@@ -1536,6 +1531,6 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	@Override
 	protected Set<EventTag> getEventTagsForImporter() {
 		return EnumSet.of(EventTag.IMPORT, EventTag.LOCATION);
-	}	
-	
+	}
+
 }

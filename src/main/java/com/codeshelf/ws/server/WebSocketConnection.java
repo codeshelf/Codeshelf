@@ -392,7 +392,7 @@ public class WebSocketConnection implements IDaoListener {
 		}
 		// don't try to unregister listeners if service is shutting down, or if there's never been an authenticated user
 		if (TenantPersistenceService.getMaybeRunningInstance().state().equals(Service.State.RUNNING)
-				|| this.lastTenantIdentifier == null) {
+				&& this.lastTenantIdentifier != null) {
 			//TODO these are registered by RegisterListenerCommands. This dependency should be inverted
 			ObjectChangeBroadcaster ocb = TenantPersistenceService.getInstance()
 				.getEventListenerIntegrator()

@@ -182,7 +182,7 @@ public class LightServiceTest extends ServerTest {
 	public final void lightAisleWhenSomeDisassociated() throws IOException, InterruptedException, ExecutionException {
 		this.getTenantPersistenceService().beginTransaction();
 
-		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.tierLeft);
+		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.tierNotB1S1Side);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -211,7 +211,7 @@ public class LightServiceTest extends ServerTest {
 	public final void lightBayWhenSomeDisassociated() throws IOException, InterruptedException, ExecutionException {
 		this.getTenantPersistenceService().beginTransaction();
 
-		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.tierLeft);
+		Facility facility = setupPhysicalSlottedFacility("XB06", ControllerLayout.tierNotB1S1Side);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -430,7 +430,7 @@ public class LightServiceTest extends ServerTest {
 			controller2.addLocation(aisle2);
 			aisle2.setLedChannel(channel1);
 			aisle2.getDao().store(aisle2);
-		} else if (controllerLayout.equals(ControllerLayout.tierLeft)) {
+		} else if (controllerLayout.equals(ControllerLayout.tierNotB1S1Side)) {
 			Tier tier1 = (Tier) facility.findSubLocationById("A1.B1.T1");
 			tier1.setControllerChannel(controller1.getPersistentId().toString(), String.valueOf(channel1), Tier.ALL_TIERS_IN_AISLE);
 			tier1.getDao().store(tier1);

@@ -46,7 +46,7 @@ public class PutwallTest extends MockDaoTest {
 	@Test
 	public final void posconModeTest() {
 
-		String controllerLayoutStr = ControllerLayout.tierLeft.name();
+		String controllerLayoutStr = ControllerLayout.tierNotB1S1Side.name();
 
 		String csvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\r\n" //
 				+ "Aisle,A1,,,,,"+ controllerLayoutStr +",12.85,43.45,X,40,Y\r\n" //
