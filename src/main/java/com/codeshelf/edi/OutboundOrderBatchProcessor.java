@@ -590,18 +590,21 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		// result = inFacility.getOrderHeader(inCsvBean.getOrderId());
 		String orderId = inCsvBean.getOrderId();
 		result = this.orderHeaderCache.get(orderId);
-
+		OrderTypeEnum type = OrderTypeEnum.OUTBOUND;
+		if ("replenish".equalsIgnoreCase(inCsvBean.operationType)){
+			type = OrderTypeEnum.REPLENISH;
+		}
 		if (result == null) {
 			if (orderHeaderCache.containsKey(orderId)) {
 				LOGGER.error("{} key in cache, but OrderHeader not retrieved");
 			}
 			LOGGER.info("Creating OrderHeader: {} for facility: {}", orderId, inFacility);
-			result = new OrderHeader(inFacility, inCsvBean.getOrderId(), OrderTypeEnum.OUTBOUND);
+			result = new OrderHeader(inFacility, inCsvBean.getOrderId(), type);
 			this.orderHeaderCache.put(result);
 			result.setStatus(OrderStatusEnum.RELEASED);
 		}
 
-		result.setOrderType(OrderTypeEnum.OUTBOUND);
+		result.setOrderType(type);
 		result.setCustomerId(inCsvBean.getCustomerId());
 		result.setShipperId(inCsvBean.getShipperId());
 		result.setDestinationId(inCsvBean.getDestinationId());
@@ -1091,7 +1094,22 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		}
 
 		//result = inOrder.getOrderDetail(detailId);
-		result = findOrderDetail(inOrder.getOrderId(), detailId, inItemMaster, inUomMaster);
+		result = findOrderDetail(inOrder.getOrderId(), detailId, inItemMaster, inUomMaster, inOrder.getOrderType() == OrderTypeEnum.REPLENISH);
+		
+		//DEV-1307 REPLENISH orders
+		if (inOrder.getOrderType() == OrderTypeEnum.REPLENISH){
+			if (result == null) {
+				detailId += "-" + System.currentTimeMillis();
+			} else {
+				result.reevaluateStatus();
+				if (result.getStatus() == OrderStatusEnum.COMPLETE){
+					detailId += "-" + System.currentTimeMillis();
+					result = null;
+				} else {
+					
+				}
+			}
+		}
 
 		// DEV-596 if existing order detail had a preferredLocation, we need remember what it was.
 		setOldPreferredLocation(null);
@@ -1259,7 +1277,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		return result;
 	}
 
-	private OrderDetail findOrderDetail(String orderId, String domainId, ItemMaster item, UomMaster uom) {
+	private OrderDetail findOrderDetail(String orderId, String domainId, ItemMaster item, UomMaster uom, boolean replenish) {
 		// find by domain id
 		//OrderDetail domainMatch = header.getOrderDetail(domainId);
 		OrderDetail domainMatch = getCachedOrderDetail(orderId, domainId);
@@ -1277,7 +1295,11 @@ public class OutboundOrderBatchProcessor implements Runnable {
 			return null;
 		for (OrderDetail detail : details) {
 			String examinedKey = genItemUomKey(detail.getItemMaster(), detail.getUomMaster());
-			if (genItemUomKey(item, uom).equals(examinedKey) && detail.getActive()) {
+			String genKey = genItemUomKey(item, uom);
+			if (genKey.equals(examinedKey) && detail.getActive()) {
+				return detail;
+			}
+			if (replenish && detail.getActive() && examinedKey != null && examinedKey.startsWith(genKey)) {
 				return detail;
 			}
 		}

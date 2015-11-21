@@ -31,7 +31,7 @@ public enum ScheduledJobType {
 	//Please add new tasks to https://codeshelf.atlassian.net/wiki/display/TD/Health+Checks+And+Other+Scheduled+tasks
 	AccumulateDailyMetrics(AccumulateDailyMetricsJob.class,
 			"Summarize previous day's completed work instructions.",
-			"0 1 0 * * ?",
+			"0 0 4 * * ?",
 			true,
 			false,
 			ScheduledJobCategory.METRIC),

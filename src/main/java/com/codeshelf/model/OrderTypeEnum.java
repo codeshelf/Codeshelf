@@ -10,17 +10,17 @@ package com.codeshelf.model;
  *  @author jeffw
  */
 public enum OrderTypeEnum {
-	// @EnumValue("INVALID")
+	INVALID, OUTBOUND, INBOUND, CROSS, REPLENISH;
+	/*
 	INVALID(OrderTypeNum.INVALID, "INVALID"),
 	// Outbound customer orders picked from inventory.
-	// @EnumValue("OUTBOUND")
 	OUTBOUND(OrderTypeNum.OUTBOUND, "OUTBOUND"),
 	// Inbound orders to put material into inventory.
-	// @EnumValue("PUT")
 	INBOUND(OrderTypeNum.INBOUND, "INBOUND"),
 	// Orders the cross the facility to fill outbound customer orders on a CrossWall.
-	// @EnumValue("CROSS")
-	CROSS(OrderTypeNum.CROSS, "CROSS");
+	CROSS(OrderTypeNum.CROSS, "CROSS"),
+	REPLENISH(OrderTypeNum.REPLENISH, "REPLENISH");
+	
 
 	private int		mValue;
 	private String	mName;
@@ -46,6 +46,10 @@ public enum OrderTypeEnum {
 				result = OrderTypeEnum.CROSS;
 				break;
 
+			case OrderTypeNum.REPLENISH:
+				result = OrderTypeEnum.REPLENISH;
+				break;
+
 			default:
 				result = OrderTypeEnum.INVALID;
 				break;
@@ -69,8 +73,10 @@ public enum OrderTypeEnum {
 		static final byte	OUTBOUND	= 0;
 		static final byte	INBOUND		= 1;
 		static final byte	CROSS		= 2;
+		static final byte	REPLENISH	= 3;
 
 		private OrderTypeNum() {
 		};
 	}
+	*/
 }

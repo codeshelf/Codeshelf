@@ -1530,7 +1530,7 @@ public class WorkBehavior implements IApiBehavior {
 		HashMap<String, Location> prefetchedPreferredLocations = prefetchPreferredLocations(facility, inContainerList);
 		for (Container container : inContainerList) {
 			OrderHeader order = container.getCurrentOrderHeader();
-			if (order != null && order.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
+			if (order != null && (order.getOrderType().equals(OrderTypeEnum.OUTBOUND) || order.getOrderType().equals(OrderTypeEnum.REPLENISH))) {
 				boolean orderDetailChanged = false;
 				for (OrderDetail orderDetail : order.getOrderDetails()) {
 					if (!orderDetail.getActive()) {
