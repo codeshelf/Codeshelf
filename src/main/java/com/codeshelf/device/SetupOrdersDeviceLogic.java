@@ -486,6 +486,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				removeCommandReceived();
 				break;
 
+			case LOW_COMMAND:
+				lowCommandReceived();
+				break;
+
 			default:
 
 				//Legacy Behavior
@@ -660,6 +664,20 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.REMOVE_CHE_CONTAINER);
 				break;
 			default:
+		}
+	}
+	
+	private void lowCommandReceived() {
+		switch (mCheStateEnum){
+			case SCAN_SOMETHING:
+			case SCAN_SOMETHING_SHORT:
+			case SCAN_GTIN:
+			case DO_PUT:
+			case DO_PICK:
+				notifyWiVerb(getOneActiveWorkInstruction(), EventType.LOW, false);
+				break;
+			default:
+				LOGGER.warn("LOW command is not available from state {}", mCheStateEnum);
 		}
 	}
 

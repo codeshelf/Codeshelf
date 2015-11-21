@@ -44,7 +44,8 @@ public class NotificationBehavior implements IApiBehavior{
 																		EventType.DETAIL_WI_MISMATCHED,
 																		EventType.PALLETIZER_PUT,
 																		EventType.PUTWALL_PUT,
-																		EventType.SKUWALL_PUT);
+																		EventType.SKUWALL_PUT,
+																		EventType.LOW);
 	
 	private final WorkerHourlyMetricBehavior	workerHourlyMetricBehavior = new WorkerHourlyMetricBehavior();
 	
