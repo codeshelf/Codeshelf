@@ -16,7 +16,6 @@ import com.codeshelf.metrics.EdiHealthCheck;
 import com.codeshelf.metrics.IsProductionServerHealthCheck;
 import com.codeshelf.metrics.PicksActivityHealthCheck;
 import com.codeshelf.model.TestJob;
-import com.codeshelf.model.domain.Facility;
 import com.google.common.base.Optional;
 
 import lombok.Getter;

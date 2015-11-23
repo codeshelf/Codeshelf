@@ -19,7 +19,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.quartz.CronExpression;
 import org.quartz.JobExecutionContext;
 import org.quartz.Scheduler;

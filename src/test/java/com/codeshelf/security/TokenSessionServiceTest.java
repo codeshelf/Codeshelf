@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.security.TokenSession.Status;
 import com.codeshelf.testframework.MockDaoTest;
-import com.codeshelf.util.ThreadUtils;
 
 public class TokenSessionServiceTest extends MockDaoTest {
 	static final Logger	LOGGER	= LoggerFactory.getLogger(TokenSessionServiceTest.class);
@@ -76,6 +75,7 @@ public class TokenSessionServiceTest extends MockDaoTest {
 		
 		// We think the millisecond time stamp is a component of the token creation. If same session, tenant, ms, make get duplicate token.
 		// So, contrived here to separate by two ms.
+		@SuppressWarnings("unused")
 		long previousTimeStamp = System.currentTimeMillis();
 
 		for (int i = 0; i < TOTAL; i++) {

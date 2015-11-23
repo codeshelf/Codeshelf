@@ -655,6 +655,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		}
 		try {
 			result.setUpdated(inEdiProcessTime);
+			result.reevaluateOrderAndDetails();
 			OrderHeader.staticGetDao().store(result);
 		} catch (DaoException e) {
 			LOGGER.error("updateOrderHeader", e);
@@ -1106,8 +1107,6 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				if (result.getStatus() == OrderStatusEnum.COMPLETE){
 					detailId += "-" + System.currentTimeMillis();
 					result = null;
-				} else {
-					
 				}
 			}
 		}
