@@ -29,7 +29,8 @@ public class CheProcessReplen extends ServerTest{
 		beginTransaction();
 		Facility facility = getFacility();
 		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.WorkSequence.toString());
-		commitTransaction();		
+		PropertyBehavior.turnOffHK(facility);
+		commitTransaction();
 	}
 	
 	@Test
@@ -54,9 +55,10 @@ public class CheProcessReplen extends ServerTest{
 	@Test
 	public void replenishPickAndReimport() throws IOException{
 		beginTransaction();
-		String orders = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,gtin,destinationid,shipperId,customerId,dueDate,operationType\n" + 
-				"Item7,,Item7,,1,each,LocX26,Item7,0,,,,,,replenish\n";
-		importOrdersData(getFacility().reload(), orders);
+		String orders1 = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,gtin,destinationid,shipperId,customerId,dueDate,operationType\n" + 
+				"Item7,,Item7,,1,each,LocX26,Item7,0,,,,,,replenish\n" +
+				"Item7,,Item7,,1,each,LocX27,Item7,1,,,,,,replenish\n";
+		importOrdersData(getFacility().reload(), orders1);
 		commitTransaction();
 		
 		startSiteController();
@@ -66,13 +68,16 @@ public class CheProcessReplen extends ServerTest{
 		picker.setupContainer("Item7", "1");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
-		Assert.assertEquals("1 order\n1 job\n\nSTART (or SETUP)\n", picker.getLastCheDisplay());
+		Assert.assertEquals("1 order\n2 jobs\n\nSTART (or SETUP)\n", picker.getLastCheDisplay());
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		Assert.assertEquals("LocX26\nItem7\nQTY 1\n\n", picker.getLastCheDisplay());
 		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		Assert.assertEquals("LocX27\nItem7\nQTY 1\n\n", picker.getLastCheDisplay());
+		picker.pickItemAuto();
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
-		Assert.assertEquals("1 order\n0 jobs\n1 done\nSETUP\n", picker.getLastCheDisplay());
+		Assert.assertEquals("1 order\n0 jobs\n2 done\nSETUP\n", picker.getLastCheDisplay());
 		
 		LOGGER.info("2: Verify that no more work remains of that order");
 		picker.scanCommand("START");
@@ -87,7 +92,10 @@ public class CheProcessReplen extends ServerTest{
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, order.getStatus());
 		
 		LOGGER.info("4: Re-import order, verify that it reopened");
-		importOrdersData(getFacility().reload(), orders);
+		String orders2 = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,gtin,destinationid,shipperId,customerId,dueDate,operationType\n" + 
+				"Item7,,Item7,,1,each,LocX27,Item7,1,,,,,,replenish\n";
+
+		importOrdersData(getFacility().reload(), orders2);
 		commitTransaction();
 		
 		beginTransaction();
@@ -99,10 +107,10 @@ public class CheProcessReplen extends ServerTest{
 		LOGGER.info("5: Perform another replenish run");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		Assert.assertEquals("LocX26\nItem7\nQTY 1\n\n", picker.getLastCheDisplay());
+		Assert.assertEquals("LocX27\nItem7\nQTY 1\n\n", picker.getLastCheDisplay());
 		picker.pickItemAuto();
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
-		Assert.assertEquals("1 order\n0 jobs\n2 done\nSETUP\n", picker.getLastCheDisplay());
+		Assert.assertEquals("1 order\n0 jobs\n3 done\nSETUP\n", picker.getLastCheDisplay());
 
 	}
 

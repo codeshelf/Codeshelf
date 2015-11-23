@@ -1095,20 +1095,20 @@ public class OutboundOrderBatchProcessor implements Runnable {
 			detailId = genItemUomKey(inItemMaster, inUomMaster);
 		}
 
-		//result = inOrder.getOrderDetail(detailId);
-		result = findOrderDetail(inOrder.getOrderId(), detailId, inItemMaster, inUomMaster, inOrder.getOrderType() == OrderTypeEnum.REPLENISH);
-		
-		//DEV-1307 REPLENISH orders
 		if (inOrder.getOrderType() == OrderTypeEnum.REPLENISH){
-			if (result == null) {
-				detailId += "-" + System.currentTimeMillis();
-			} else {
+			//DEV-1307 REPLENISH orders
+			result = findReplenishOrderDetail(inFacility, inOrder.getOrderId(), inItemMaster, inUomMaster, inCsvBean.getLocationId());
+			if (result != null) {
 				result.reevaluateStatus();
 				if (result.getStatus() == OrderStatusEnum.COMPLETE){
-					detailId += "-" + System.currentTimeMillis();
 					result = null;
 				}
 			}
+			if (result == null) {
+				detailId += "-" + System.currentTimeMillis();
+			}
+		} else {
+			result = findOrderDetail(inOrder.getOrderId(), detailId, inItemMaster, inUomMaster);
 		}
 
 		// DEV-596 if existing order detail had a preferredLocation, we need remember what it was.
@@ -1281,7 +1281,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 	 * Change this for v25, and lat v24 for Loreal
 	 * Find the detail. If orderDetailId is provided, use it.
 	 */
-	private OrderDetail findOrderDetail(String orderId, String domainId, ItemMaster item, UomMaster uom, boolean replenish) {
+	private OrderDetail findOrderDetail(String orderId, String domainId, ItemMaster item, UomMaster uom) {
 		// find by domain id
 		//OrderDetail domainMatch = header.getOrderDetail(domainId);
 		OrderDetail domainMatch = getCachedOrderDetail(orderId, domainId);
@@ -1310,11 +1310,27 @@ public class OutboundOrderBatchProcessor implements Runnable {
 						domainId,
 						detail.getDomainId());
 				}
-			} else if (replenish && detail.getActive() && examinedKey != null && examinedKey.startsWith(genKey)) {
-				return detail;
 			}
 		}
 		return domainMatch;
+	}
+	
+	private OrderDetail findReplenishOrderDetail(Facility facility, String orderId, ItemMaster item, UomMaster uom, String prefLocStr) {
+		Map<String, OrderDetail> itemMap = this.orderlineMap.get(orderId);
+		if (itemMap == null || itemMap.isEmpty()) {
+			return null;
+		}
+		Collection<OrderDetail> details = itemMap.values();
+		for (OrderDetail detail : details) {
+			String detPrefLocStr = detail.getPreferredLocation();
+			Location detPrefLoc = detPrefLocStr == null ? null : facility.findSubLocationById(detPrefLocStr);
+			Location prefLoc = prefLocStr == null ? null : facility.findSubLocationById(prefLocStr);
+			boolean prefLocationMatch = (prefLocStr == null && detPrefLocStr == null) || (prefLocStr != null && prefLocStr.equals(detPrefLocStr)) || (prefLoc != null && prefLoc.equals(detPrefLoc));
+			if (detail.getItemMaster().equals(item) && detail.getUomMaster().equalsNormalized(uom) && prefLocationMatch) {
+				return detail;
+			}
+		}
+		return null;
 	}
 
 	private OrderDetail getCachedOrderDetail(String orderId, String orderLineId) {
