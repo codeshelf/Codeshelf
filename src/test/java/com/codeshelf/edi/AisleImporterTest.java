@@ -3088,10 +3088,15 @@ public class AisleImporterTest extends MockDaoTest {
 				+ "Bay,B1,244,,,,\r\n" //
 				+ "Tier,T1,,10,20,0,3,\r\n" //
 				+ "Bay,B2,Clone(B1),,,,\r\n" //
+				+ "Bay,B3,Clone(B1),,,,\r\n" //
 				+ "Aisle,A72,,,,,tierB1S1Side,12.85,63.45,X,120\r\n" //
 				+ "Bay,B1,244,,,,\r\n" //
 				+ "Tier,T1,,10,20,0,,\r\n" //
-				+ "Bay,B2,Clone(B1),,,,3\r\n"; //
+				+ "Bay,B2,Clone(B1),,,,3\r\n" //
+				+ "Bay,B3,Clone(B2),,,,a\r\n" //
+				+ "Bay,B4,Clone(B1),,,,-1\r\n"//
+				+ "Bay,B5,244,,,,-1\r\n" //
+				+ "Tier,T1,,10,20,0,5,\r\n";//
 
 		Facility facility = Facility.createFacility("F-CLONE71", "TEST", Point.getZeroPoint());
 		importAislesData(facility, csvString);
@@ -3106,14 +3111,29 @@ public class AisleImporterTest extends MockDaoTest {
 		assertSingleLedElement(facility, "A71.B1.T1.S10", 19);
 		assertSingleLedElement(facility, "A71.B2.T1.S1", 21);
 		assertSingleLedElement(facility, "A71.B2.T1.S10", 39);
+		assertSingleLedElement(facility, "A71.B3.T1.S1", 41);
+		assertSingleLedElement(facility, "A71.B3.T1.S10", 59);
 
-		LOGGER.info("2: Check the end slots of Aisle 72 B1 and B2.");
+		LOGGER.info("2: Check the end slots of Aisle 72 B1 and B2. B2 is offset +3");
 		assertLeds(facility, "A72.B1.T1", 1, 20);
 		assertLeds(facility, "A72.B2.T1", 21, 40);
 		assertSingleLedElement(facility, "A72.B1.T1.S1", 1);
 		assertSingleLedElement(facility, "A72.B1.T1.S10", 19);
-		assertSingleLedElement(facility, "A72.B2.T1.S1", 21);
-		assertSingleLedElement(facility, "A72.B2.T1.S10", 39);
+		assertSingleLedElement(facility, "A72.B2.T1.S1", 24);
+		assertSingleLedElement(facility, "A72.B2.T1.S10", 42);
+
+		LOGGER.info("3: Check the clone cases. the main point is the offsets do not accumulate");
+		LOGGER.info("3a: B3 cloned B2 with offset a which should yield warn and zero");
+		LOGGER.info("3b: Check the clone cases. B4 cloned B1 with offset 1");
+		assertSingleLedElement(facility, "A72.B3.T1.S1", 41);
+		assertSingleLedElement(facility, "A72.B3.T1.S10", 59);
+		assertSingleLedElement(facility, "A72.B4.T1.S1", 60);
+		assertSingleLedElement(facility, "A72.B4.T1.S10", 78);
+
+		LOGGER.info("4: See the bay offset apply even if not the clone case");
+		// Here we have an error value for value in a tier line
+		assertSingleLedElement(facility, "A72.B5.T1.S1", 80);
+		assertSingleLedElement(facility, "A72.B5.T1.S10", 98);
 
 		commitTransaction();
 
