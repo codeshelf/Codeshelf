@@ -59,4 +59,17 @@ public class EventResource {
 		}
 	}
 
+	@POST
+	@Path("replenish")
+	@RequiresPermissions("event:edit")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response creaateReplenishOrderForEvent() {
+		ErrorResponse errors = new ErrorResponse();
+		try {
+			return BaseResponse.buildResponse("OK");
+		} catch (Exception e) {
+			return errors.processException(e);
+		}		
+	}
+
 }
