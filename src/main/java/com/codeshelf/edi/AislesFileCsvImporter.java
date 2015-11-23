@@ -89,6 +89,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	// short term memory
 	private String				mLastControllerLed;
 	private boolean				mBeanReadIsClone;
+	private Short				mLedOffsetValue;
 
 	private List<Tier>			mTiersThisAisle;
 	private Map<UUID, Location>	mAisleLocationsMapThatMayBecomeInactive;
@@ -272,7 +273,12 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 	 * @param inGuardLow
 	 * @param inGuardHigh
 	 */
-	private void setSlotLeds(Tier inTier, short inLedCountThisTier, boolean inSlotLedsIncrease, int inGuardLow, int inGuardHigh) {
+	private void setSlotLeds(Tier inTier,
+		short inLedCountThisTier,
+		boolean inSlotLedsIncrease,
+		int inGuardLow,
+		int inGuardHigh,
+		short bayLedOffset) {
 		// If light tube extends the full length of the tier (rather than coming up a bit short), recommend inGuardLow = 2 and inGuardHigh = 1.
 		// Any remainder slot will essentially inGuardHigh += 1 until on slots until the remainder runs out.
 
@@ -372,8 +378,9 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				LOGGER.warn("Algorithm error in setSlotLeds");
 			}
 
-			thisSlot.setFirstLedNumAlongPath((short) (firstLitLed));
-			thisSlot.setLastLedNumAlongPath((short) (lastLitLed));
+			// DEV-1324 Apply the bay led offset last, without messing up much else
+			thisSlot.setFirstLedNumAlongPath((short) (firstLitLed + bayLedOffset));
+			thisSlot.setLastLedNumAlongPath((short) (lastLitLed + bayLedOffset));
 			thisSlot.setLowerLedNearAnchor(inSlotLedsIncrease);
 			// transaction?
 			Slot.staticGetDao().store(thisSlot);
@@ -392,6 +399,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		// would be more obvious with an inOut parameter
 		// returns the value of last led position in this tier, so that the next tier knows where to start.
 		short returnValue = 0;
+		short bayLedOffset = inTier.getTransientLedOffset();
 		short ledCount = inTier.getMTransientLedsThisTier();
 		short thisTierStartLed = (short) (inLastLedNumber + 1);
 		short thisTierEndLed = (short) (inLastLedNumber + ledCount);
@@ -406,7 +414,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 			// Common case-pick: no leds installed, so just set zeros.
 		} else {
 
-			inTier.setFirstLedNumAlongPath(thisTierStartLed);
+			inTier.setFirstLedNumAlongPath(thisTierStartLed); // DEV-1324 need to add the offsets here? Probably
 			inTier.setLastLedNumAlongPath(thisTierEndLed);
 			inTier.setLowerLedNearAnchor(inTier.isMTransientLedsIncrease());
 			// transaction?
@@ -416,9 +424,9 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		// Now the tricky bit of setting the slot leds
 		boolean directionIncrease = inTier.isMTransientLedsIncrease();
 		if (ledCount == 32) // kludge for GoodEggs
-			setSlotLeds(inTier, ledCount, directionIncrease, 0, 0); // Guards set at low = 2 and high = 1. Could come from file.
+			setSlotLeds(inTier, ledCount, directionIncrease, 0, 0, bayLedOffset); // Guards set at low = 2 and high = 1. Could come from file.
 		else
-			setSlotLeds(inTier, ledCount, directionIncrease, 2, 1); // Guards set at low = 2 and high = 1. Could come from file.
+			setSlotLeds(inTier, ledCount, directionIncrease, 2, 1, bayLedOffset); // Guards set at low = 2 and high = 1. Could come from file.
 
 		return returnValue;
 	}
@@ -807,6 +815,9 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		// Set our transient fields
 		tier.setMTransientLedsThisTier(inLedsThisTier);
 		tier.setMTransientLedsIncrease(inLedsIncrease);
+		tier.setTransientLedOffset(mLedOffsetValue);
+		if (mLedOffsetValue != 0)
+			LOGGER.info("Tier {} transientOffset set to {}", tier, mLedOffsetValue);
 
 		if (inSlotCount > 0) {
 			// Now make or edit the slots		
@@ -1185,7 +1196,29 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		LOGGER.info(inCsvBean.toString());
 
 		String binType = inCsvBean.getBinType();
-		String controllerLed = inCsvBean.getControllerLed();
+		if (binType.equalsIgnoreCase("aisle")) {
+			returnThisIsAisleBean = true;
+		}
+		// DEV-1324 let's only allow this to be set on aisle lines
+		String controllerLed = "";
+		String controllerLedValue = inCsvBean.getControllerLed();
+		if (binType.equalsIgnoreCase("aisle"))
+			controllerLed = controllerLedValue;
+		else if (binType.equalsIgnoreCase("bay")) {
+			// On a bay line, set or clear offset. Leave it alone on tier lines.
+			mLedOffsetValue = 0;
+			if (controllerLedValue != null && !controllerLedValue.isEmpty())
+				try {
+					mLedOffsetValue = Short.valueOf(controllerLedValue);
+				} catch (NumberFormatException e) {
+					LOGGER.warn("bad offset value {} in aisles file.", controllerLedValue);
+				}
+		} else if (binType.equalsIgnoreCase("tier")) {
+			if (controllerLedValue != null && !controllerLedValue.isEmpty()) {
+				LOGGER.warn("May not have offset value in TIER line. File had {}", controllerLedValue);
+			}
+		}
+
 		String lengthCm = inCsvBean.getLengthCm();
 		String anchorX = inCsvBean.getAnchorX();
 		String anchorY = inCsvBean.getAnchorY();
@@ -1196,7 +1229,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 		String orientation = inCsvBean.getOrientXorY();
 		String depthCMString = inCsvBean.getDepthCm();
 
-		// Figure out what kind of bin we have.
+		// if an aisle bean
 		if (binType.equalsIgnoreCase("aisle")) {
 			returnThisIsAisleBean = true;
 
@@ -1435,6 +1468,7 @@ public class AislesFileCsvImporter extends CsvImporter<AislesFileCsvBean> implem
 				try {
 					intValueLengthCm = Integer.valueOf(lengthCm);
 				} catch (NumberFormatException e) {
+					LOGGER.warn("bad cm Length value {} in aisles file. 122cm is applied", lengthCm);
 				}
 			} else {
 				Point endPoint = bayToCloneFrom.getPickFaceEndPoint();

@@ -18,6 +18,7 @@ import javax.persistence.Transient;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,6 +82,13 @@ public class Tier extends Location {
 	@Getter
 	@Setter
 	private boolean				mTransientLedsIncrease;
+
+	@Transient
+	@Column(nullable = true)
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private short				mTransientLedOffset;
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Tier.class);
 
@@ -436,9 +444,9 @@ public class Tier extends Location {
 		if ("".equals(inTapeGuidString)) {
 			Integer value = getTapeId();
 			if (value != null && value > 0) {
-				LOGGER.info("Clearing tape Id on tier {}.",
-					this.getBestUsableLocationName());
-				setTapeId(null);}
+				LOGGER.info("Clearing tape Id on tier {}.", this.getBestUsableLocationName());
+				setTapeId(null);
+			}
 			return; // either way, return so we o not throw below.
 		}
 
