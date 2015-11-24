@@ -288,7 +288,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				for (Map<String, OrderDetail> orderlines : allOrderLines) {
 					for (OrderDetail line : orderlines.values()) {
 						// deactivate out-dated items
-						if (line.getActive() == true && !line.getUpdated().equals(processTime)) {
+						if (line.getActive() == true && !line.getUpdated().equals(processTime) && line.getParentOrderType() != OrderTypeEnum.REPLENISH) {
 							line.setActive(false);
 							OrderDetail.staticGetDao().store(line);
 							LOGGER.info("Deactivating order item " + line);
@@ -1106,6 +1106,8 @@ public class OutboundOrderBatchProcessor implements Runnable {
 			}
 			if (result == null) {
 				detailId += "-" + System.currentTimeMillis();
+			} else {
+				detailId = result.getDomainId();
 			}
 		} else {
 			result = findOrderDetail(inOrder.getOrderId(), detailId, inItemMaster, inUomMaster);

@@ -1,0 +1,2 @@
+orderId,itemId,quantity,uom,locationId,preAssignedContainerId,workSequence,operationType
+gtin7,Item7,1,each,LocX26,gtin7,0,replenish
