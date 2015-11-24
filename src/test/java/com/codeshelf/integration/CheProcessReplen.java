@@ -90,7 +90,6 @@ public class CheProcessReplen extends ServerTest{
 		
 		LOGGER.info("2: Verify that no more work remains of that order");
 		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.GET_WORK, 4000);
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		
 		beginTransaction();
