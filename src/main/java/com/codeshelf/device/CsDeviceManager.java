@@ -892,6 +892,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		Map<String, WorkInstructionCount> containerToWorkInstructionCountMap) {
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
+			LOGGER.info("accepting server's work instruction counts, but not the wis, into device {}", cheDevice.getGuidNoPrefix());
 			cheDevice.processWorkInstructionCounts(workInstructionCount, containerToWorkInstructionCountMap);
 		} else {
 			LOGGER.warn("Unable to assign work count to CHE id={} CHE not found", networkGuid);
@@ -901,6 +902,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	public void processGetWorkResponse(String networkGuid, List<WorkInstruction> workInstructions, String message) {
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
+			LOGGER.info("accepting server's work instructions into device {}", cheDevice.getGuidNoPrefix());
 			cheDevice.assignWork(workInstructions, message);
 		} else {
 			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", networkGuid);

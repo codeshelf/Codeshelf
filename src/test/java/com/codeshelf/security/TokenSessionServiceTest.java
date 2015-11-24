@@ -57,7 +57,74 @@ public class TokenSessionServiceTest extends MockDaoTest {
 		resp = auth.checkAuthCookie(cookies);
 		Assert.assertEquals(Status.INVALID_TOKEN,resp.getStatus());		
 	}
-	
+
+	// TODO
+	/*
+	@Ignore
+	@Test
+	public void multipleThreadCreateCheck() throws InterruptedException, ExecutionException {
+		final TokenSessionService auth = new TokenSessionService().initialize();
+
+		ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+		CompletionService<TokenSession> completionService = new ExecutorCompletionService<TokenSession>(executorService);
+		int TOTAL = 1000;
+		final Set<String> tokenSet = new HashSet<String>();
+		
+		// We think the millisecond time stamp is a component of the token creation. If same session, tenant, ms, make get duplicate token.
+		// So, contrived here to separate by two ms.
+		@SuppressWarnings("unused")
+		long previousTimeStamp = System.currentTimeMillis();
+
+		for (int i = 0; i < TOTAL; i++) {
+			final int userId = i;
+			completionService.submit(new Callable<TokenSession>() {
+
+				@Override
+				public TokenSession call() throws Exception {
+					String token2 = auth.testCreateToken(userId, 0);
+					tokenSet.add(token2);
+					Cookie cookie = auth.createAuthCookie(token2);
+					TokenSession resp = auth.checkAuthCookie(cookie);
+					return resp;
+				}
+
+			});
+		}
+		for (int i = 0; i < TOTAL; i++) {
+			TokenSession resp = completionService.take().get();
+			assertActive(resp, 0);
+		}
+		Assert.assertEquals("Tokens were not unique", TOTAL, tokenSet.size());
+	}
+*/
+	/**
+	 * The purpose of this is to see how MacOS, windows, linux does with milliseconds. That is a key parameter for the Mac token generation.
+	 * Windows 7 used to give the same millisecond for about 7 ms. This test seems to show that sometimes MacOS can give same for 2ms
+	 * That give a 2 ms window for two token creates from the same source to get identical token.
+	 */
+	/*
+	@Test
+	public void milliSecondBehavior() {
+		long startTimeStamp = System.currentTimeMillis();
+		long endTime = startTimeStamp + 100;
+		long thisTimeStamp = startTimeStamp;
+		LOGGER.info("millis:{}", thisTimeStamp);
+		long prevTimeStamp = thisTimeStamp;
+		int msCount = 0;
+		while (thisTimeStamp <= endTime) {
+			thisTimeStamp = System.currentTimeMillis();
+			if (prevTimeStamp != thisTimeStamp) {
+				msCount++;
+				if (thisTimeStamp != prevTimeStamp + 1) {
+					LOGGER.error(String.format("Slow (skipped a ms or clock not so good) at %d ms", msCount));
+					// Assert.fail(String.format("Slow (skipped a ms or clock not so good) at %d ms", msCount));
+				}
+				prevTimeStamp = thisTimeStamp;
+				LOGGER.info("millis:{}", thisTimeStamp);				
+			}
+		}
+	}
+*/
 	@Test
 	public void passwordHashTest() {
 		TokenSessionService auth = new TokenSessionService().initialize();

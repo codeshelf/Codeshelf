@@ -255,7 +255,7 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		LOGGER.info("3b: non-manual reset does not");
 		cheDeviceLogic.testOnlySetState(CheStateEnum.COMPUTE_WORK);
 		cheDeviceLogic.startDevice(DeviceRestartCauseEnum.SMAC_ERROR); // saw a few of these at PFSWeb
-		Assert.assertEquals(CheStateEnum.COMPUTE_WORK, cheDeviceLogic.getCheStateEnum());
+		Assert.assertEquals(CheStateEnum.SETUP_SUMMARY, cheDeviceLogic.getCheStateEnum());
 	}
 
 	/**
@@ -306,8 +306,9 @@ public class CheDeviceLogicTest extends MockDaoTest {
 
 		LOGGER.info("2c: cgetWorkInstructions response from do pick");
 		cheDeviceLogic.testOnlySetState(CheStateEnum.DO_PICK);
+		// DEV-1331 late compute work response throws back to setup summary
 		cheDeviceLogic.assignWork(null, null);
-		Assert.assertEquals(CheStateEnum.DO_PICK, cheDeviceLogic.getCheStateEnum());
+		Assert.assertEquals(CheStateEnum.SETUP_SUMMARY, cheDeviceLogic.getCheStateEnum());
 
 
 	}

@@ -169,17 +169,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * We use this to break out of "half-states" where we are waiting for a response from the server that will likely never come
 	 */
 	@Override
-	protected void adjustStateForUserReset() {
+	protected void adjustStateForCheconReset() {
 		CheStateEnum currentState = getCheStateEnum();
 		switch (currentState) {
 			case VERIFYING_BADGE:
 				setState(CheStateEnum.IDLE);
-				LOGGER.info("Breaking {} out of verify badge state", this.getGuidNoPrefix());
+				LOGGER.warn("Breaking {} out of verify badge state", this.getGuidNoPrefix());
 				break;
 			case GET_WORK:
 			case COMPUTE_WORK:
 				setState(CheStateEnum.SETUP_SUMMARY);
-				LOGGER.info("Breaking {} out of compute work state", this.getGuidNoPrefix());
+				LOGGER.warn("Breaking {} out of compute work state", this.getGuidNoPrefix());
 				break;
 			default:
 				// Are there more half-states?
@@ -2441,13 +2441,21 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		// DEV-1257 do not accept if in wrong state. Should only only accept from one state?
 		CheStateEnum currentState = this.getCheStateEnum();
-		if (currentState == CheStateEnum.IDLE || currentState == CheStateEnum.VERIFYING_BADGE
-				|| currentState == CheStateEnum.DO_PICK) {
-			LOGGER.error("Late assignWork response from server. Current state is {}. Doing nothing.");
+		if (currentState == CheStateEnum.IDLE || currentState == CheStateEnum.VERIFYING_BADGE) {
+			LOGGER.error("Late assignWork response from server. Current state is {}. Doing nothing.", currentState);
 			// We certainly do not want to transition to SETUP_SUMMARY state if we logged out and do not have a badge ID any more.
 			return;
 		}
+		// DEV-1331 If we are already picking, and we get this, we are in grave danger. Server has changed out its work instructions
+		// We have to go back to a state where the user must scan start again.
+		if (currentState == CheStateEnum.DO_PICK) {
+			LOGGER.error("Late assignWork response from server. Current state is {}. Transition back to summary.", currentState);
+			// We certainly do not want to transition to SETUP_SUMMARY state if we logged out and do not have a badge ID any more.
+			setState(CheStateEnum.SETUP_SUMMARY);
+			return;
+		}
 
+		
 		if (inWorkItemList == null || inWorkItemList.size() == 0) {
 			setState(CheStateEnum.SETUP_SUMMARY);
 		} else {
