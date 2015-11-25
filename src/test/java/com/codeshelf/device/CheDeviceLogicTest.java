@@ -292,7 +292,7 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		LOGGER.info("1d: compute work response from do pick");
 		cheDeviceLogic.testOnlySetState(CheStateEnum.DO_PICK);
 		cheDeviceLogic.processWorkInstructionCounts(0, null);
-		Assert.assertEquals(CheStateEnum.DO_PICK, cheDeviceLogic.getCheStateEnum()); // CHE reset will force to idle
+		Assert.assertEquals(CheStateEnum.SETUP_SUMMARY, cheDeviceLogic.getCheStateEnum()); // CHE reset will force to idle
 
 		LOGGER.info("2a: from idle, see that getWorkInstructions response does not go directly to setup_summary. (Expect late... error)");
 		cheDeviceLogic.testOnlySetState(CheStateEnum.IDLE);
