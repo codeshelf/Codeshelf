@@ -2423,6 +2423,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		rememberCompletesAndShorts(); // is this right?
 
+		// New late v24 DEV-1331 part 2
+		if (mAllPicksWiList.size() > 0) {
+			LOGGER.info("Clearing work instructions as asking server for update");
+			mActivePickWiList.clear();
+			mAllPicksWiList.clear();
+		}
+
 		//Duplicate map to avoid later changes
 		Map<String, String> positionToContainerMapCopy = new HashMap<String, String>(mPositionToContainerMap);
 		LOGGER.info("Sending {} positions to server in computeCheWork", positionToContainerMapCopy.size());
@@ -2455,7 +2462,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			return;
 		}
 
-		
 		if (inWorkItemList == null || inWorkItemList.size() == 0) {
 			setState(CheStateEnum.SETUP_SUMMARY);
 		} else {

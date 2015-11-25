@@ -103,16 +103,16 @@ import com.google.inject.Inject;
 
 public class WorkBehavior implements IApiBehavior {
 
-	private static final String	THREAD_CONTEXT_TAGS_KEY	= "tags";										// duplicated in CheDeviceLogic. Need a common place
+	private static final String					THREAD_CONTEXT_TAGS_KEY	= "tags";										// duplicated in CheDeviceLogic. Need a common place
 
-	private static Double		BAY_ALIGNMENT_FUDGE		= 0.25;
+	private static Double						BAY_ALIGNMENT_FUDGE		= 0.25;
 
-	private static final Logger	LOGGER					= LoggerFactory.getLogger(WorkBehavior.class);
+	private static final Logger					LOGGER					= LoggerFactory.getLogger(WorkBehavior.class);
 
 	private final LightBehavior	lightService;
 
 	@Getter
-	private EdiExportService	exportProvider;
+	private EdiExportService					exportProvider;
 
 	@ToString
 	public static class Work {
@@ -269,7 +269,8 @@ public class WorkBehavior implements IApiBehavior {
 		//sortAndSaveActionableWIs(facility, wiResultList);
 		sortAndSaveActionableWIs(facility, workList.getInstructions(), reverse);
 
-		LOGGER.info("TOTAL WIs {}", workList.getInstructions());
+		// Better logging DEV-1331 Part 2
+		LOGGER.info("New WIs for {} after computeWorkInstructions {}", inChe.getDeviceGuidStrNoPrefix(), workList.getInstructions());
 
 		//Return original full list
 		return workList;

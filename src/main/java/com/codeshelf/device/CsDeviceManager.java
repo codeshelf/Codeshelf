@@ -387,7 +387,8 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		final UUID inPersistentId,
 		final Map<String, String> positionToContainerMap,
 		final Boolean reverse) {
-		LOGGER.debug("Compute work: Che={}; Container={}", inCheId, positionToContainerMap);
+		// DEV-1331 part 2 logging . need the guid
+		LOGGER.info("COMPUTE_WORK from {}", inCheId);
 		String cheId = inPersistentId.toString();
 		ComputeWorkRequest req = new ComputeWorkRequest(ComputeWorkPurpose.COMPUTE_WORK,
 			cheId,
@@ -451,7 +452,8 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		final Map<String, String> positionToContainerMap,
 		final Boolean reversePickOrder,
 		final Boolean reverseOrderFromLastTime) {
-		LOGGER.debug("Get work: Che={}; Loc={}", inCheId, inLocationId);
+		// DEV-1331 part 2 logging . need the guid
+		LOGGER.info("GET_WORK from {}; Loc={}", inCheId, inLocationId);
 		String cheId = inPersistentId.toString();
 		ComputeWorkRequest req = new ComputeWorkRequest(ComputeWorkPurpose.GET_WORK,
 			cheId,
