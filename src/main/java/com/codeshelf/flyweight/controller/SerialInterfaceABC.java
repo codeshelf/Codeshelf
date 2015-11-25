@@ -240,7 +240,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 						LOGGER.trace("Receive packet: " + result.toString());
 					else
 						LOGGER.debug("Receive packet: " + result.toString());
-					//hexDumpArray(nextFrameArray);
+					hexDumpArray(nextFrameArray);
 				} catch (Exception e) {
 					LOGGER.error("Failed to receive packet from network id {}", inMyNetworkId, e);
 				} finally {
