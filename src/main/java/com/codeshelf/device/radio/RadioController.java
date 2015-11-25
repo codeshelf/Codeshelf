@@ -70,7 +70,7 @@ public class RadioController implements IRadioController {
 
 	private static final long							CTRL_START_DELAY_MILLIS		= 5;
 
-	private static final long							NETCHECK_RATE_MILLIS		= 750;
+	private static final long							NETCHECK_RATE_MILLIS		= 500;
 
 	private static final int							MAX_CHANNEL_VALUE			= 255;
 
