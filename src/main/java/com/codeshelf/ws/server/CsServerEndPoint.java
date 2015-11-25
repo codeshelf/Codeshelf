@@ -100,8 +100,8 @@ public class CsServerEndPoint {
 						setUserContext.getUsername(),
 						setTenantContext.getId());
 				} else {
-					LOGGER.info("Got message {} from user {} on tenant {}",
-						msgName,
+					LOGGER.debug("Got message {} from user {} on tenant {}",
+						message,
 						setUserContext.getUsername(),
 						setTenantContext.getId());
 				}

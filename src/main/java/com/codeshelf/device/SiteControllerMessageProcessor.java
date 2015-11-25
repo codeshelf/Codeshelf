@@ -64,7 +64,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 		try {
 			this.setDeviceContext(response);
 
-			LOGGER.info("Response received:" + response);
+			LOGGER.info("Response received: {}", response);
 			if (response.getStatus() != ResponseStatus.Success) {
 				LOGGER.warn("Response:{} failed for request:{} statusMsg: {}",
 					response.getClass().getSimpleName(),
