@@ -105,17 +105,17 @@ import com.google.inject.Inject;
 
 public class WorkBehavior implements IApiBehavior {
 
-	private static final String	THREAD_CONTEXT_TAGS_KEY	= "tags";										// duplicated in CheDeviceLogic. Need a common place
+	private static final String					THREAD_CONTEXT_TAGS_KEY	= "tags";										// duplicated in CheDeviceLogic. Need a common place
 
-	private static Double		BAY_ALIGNMENT_FUDGE		= 0.25;
+	private static Double						BAY_ALIGNMENT_FUDGE		= 0.25;
 
-	private static final Logger	LOGGER					= LoggerFactory.getLogger(WorkBehavior.class);
+	private static final Logger					LOGGER					= LoggerFactory.getLogger(WorkBehavior.class);
 
 	private final LightBehavior					lightBehavior;
 	private final WorkerHourlyMetricBehavior	workerHourlyMetricBehavior;
 
 	@Getter
-	private EdiExportService	exportProvider;
+	private EdiExportService					exportProvider;
 
 	@ToString
 	public static class Work {
@@ -137,7 +137,9 @@ public class WorkBehavior implements IApiBehavior {
 	}
 
 	@Inject
-	public WorkBehavior(LightBehavior lightService, EdiExportService exportProvider, WorkerHourlyMetricBehavior workerHourlyMetricBehavior) {
+	public WorkBehavior(LightBehavior lightService,
+		EdiExportService exportProvider,
+		WorkerHourlyMetricBehavior workerHourlyMetricBehavior) {
 		this.lightBehavior = lightService;
 		this.exportProvider = exportProvider;
 		this.workerHourlyMetricBehavior = workerHourlyMetricBehavior;
@@ -273,7 +275,8 @@ public class WorkBehavior implements IApiBehavior {
 		//sortAndSaveActionableWIs(facility, wiResultList);
 		sortAndSaveActionableWIs(facility, workList.getInstructions(), reverse);
 
-		LOGGER.info("TOTAL WIs {}", workList.getInstructions());
+		// Better logging DEV-1331 Part 2
+		LOGGER.info("New WIs for {} after computeWorkInstructions {}", inChe.getDeviceGuidStrNoPrefix(), workList.getInstructions());
 
 		//Return original full list
 		return workList;
@@ -1530,7 +1533,8 @@ public class WorkBehavior implements IApiBehavior {
 		HashMap<String, Location> prefetchedPreferredLocations = prefetchPreferredLocations(facility, inContainerList);
 		for (Container container : inContainerList) {
 			OrderHeader order = container.getCurrentOrderHeader();
-			if (order != null && (order.getOrderType().equals(OrderTypeEnum.OUTBOUND) || order.getOrderType().equals(OrderTypeEnum.REPLENISH))) {
+			if (order != null
+					&& (order.getOrderType().equals(OrderTypeEnum.OUTBOUND) || order.getOrderType().equals(OrderTypeEnum.REPLENISH))) {
 				boolean orderDetailChanged = false;
 				for (OrderDetail orderDetail : order.getOrderDetails()) {
 					if (!orderDetail.getActive()) {
@@ -2345,26 +2349,26 @@ public class WorkBehavior implements IApiBehavior {
 			return null;
 		}
 	}
-	
-	public void logoutWorkerFromChe(Che che, String workerId){
+
+	public void logoutWorkerFromChe(Che che, String workerId) {
 		if (workerId == null) {
 			//Possibly, a LOGOUT scan when not logged in
 			return;
 		}
-		
+
 		Worker worker = Worker.findWorker(che.getFacility(), workerId);
 		if (worker != null) {
 			worker.setLastLogout(new Timestamp(System.currentTimeMillis()));
 			Worker.staticGetDao().store(worker);
 			WorkerEvent logoutEvent = new WorkerEvent(new DateTime(), EventType.LOGOUT, che, workerId);
 			WorkerEvent.staticGetDao().store(logoutEvent);
-			
+
 			workerHourlyMetricBehavior.metricCloseSession(worker);
 		} else {
 			LOGGER.warn("Trying to logout from {} with non-existent worker {}", che.getDeviceGuidStr(), workerId);
 		}
 	}
-	
+
 	/**
 	 * Primary API to set a mobile CHE association to other CHE.
 	 * This enforces consistency. Therefore may unexpectedly clear another CHE's association.
