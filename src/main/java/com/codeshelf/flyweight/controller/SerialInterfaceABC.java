@@ -8,12 +8,12 @@ package com.codeshelf.flyweight.controller;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+//import java.text.DecimalFormat;
+//import java.text.NumberFormat;
+//import java.util.concurrent.Executors;
+//import java.util.concurrent.ScheduledExecutorService;
+//import java.util.concurrent.TimeUnit;
+//import java.util.concurrent.atomic.AtomicInteger;
 
 import lombok.Setter;
 
@@ -60,9 +60,9 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 	@SuppressWarnings("unused")
 	private boolean					mPause					= false;
 	
-	private static final int							REPORT_INTERVAL_SECS	= 60 * 5;
-	private final ScheduledExecutorService				radioReportService = Executors.newScheduledThreadPool(1);
-	private radioTrafficCollector						mRadioStats;
+	//private static final int							REPORT_INTERVAL_SECS	= 60 * 5;
+	//private final ScheduledExecutorService				radioReportService = Executors.newScheduledThreadPool(1);
+	//private radioTrafficCollector						mRadioStats;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -127,9 +127,9 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			mIsStarted = true;
 		}
 		
-		mRadioStats = new radioTrafficCollector(LOGGER);
-		mRadioStats.startCollecting();
-		this.radioReportService.scheduleAtFixedRate(mRadioStats, REPORT_INTERVAL_SECS, REPORT_INTERVAL_SECS, TimeUnit.SECONDS);
+		//mRadioStats = new radioTrafficCollector(LOGGER);
+		//mRadioStats.startCollecting();
+		//this.radioReportService.scheduleAtFixedRate(mRadioStats, REPORT_INTERVAL_SECS, REPORT_INTERVAL_SECS, TimeUnit.SECONDS);
 	}
 
 	/* --------------------------------------------------------------------------
@@ -210,7 +210,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			packet = new Packet();
 			if (nextFrameArray.length > 0) {
 				packet.fromStream(inputStream, nextFrameArray.length);
-				mRadioStats.updateRcvdStats(nextFrameArray.length);
+				//RadioStats.updateRcvdStats(nextFrameArray.length);
 			}
 
 			if ((packet.getNetworkId().equals(inMyNetworkId))
@@ -237,7 +237,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 						LOGGER.trace("Receive packet: " + result.toString());
 					else
 						LOGGER.debug("Receive packet: " + result.toString());
-					hexDumpArray(nextFrameArray);
+					//hexDumpArray(nextFrameArray);
 				} catch (Exception e) {
 					LOGGER.error("Failed to receive packet from network id {}", inMyNetworkId, e);
 				} finally {
@@ -278,7 +278,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		// Write the bytes to the serial interface.
 		
 		sendFrame(inPacket, byteArrayStream);
-		mRadioStats.updateSentStats(byteArrayStream.size());
+		//mRadioStats.updateSentStats(byteArrayStream.size());
 	}
 
 	// --------------------------------------------------------------------------
@@ -550,105 +550,106 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		mPause = false;
 	}
 	
-	private class radioTrafficCollector implements Runnable {
-		private long st;
-		private AtomicInteger totalPacketsSent, totalPacketsRcvd;
-		private AtomicInteger totalBytesSent, totalBytesRcvd;
-		
-		NumberFormat formatter = new DecimalFormat("#0.00");
-		
-		private Logger logger;
-		
-		public radioTrafficCollector(Logger inLogger) {
-			this.logger = inLogger;
-			
-			totalBytesSent = new AtomicInteger();
-			totalBytesRcvd  = new AtomicInteger();
-			totalPacketsSent = new AtomicInteger();
-			totalPacketsRcvd  = new AtomicInteger();
-		}
-		
-		@Override
-		public void run() {
-			logger.info(getSentReport());
-			logger.info(getReceivedReport());
-			resetCollection();
-		}
-		
-		// --------------------------------------------------------------------------
-		/**
-		 *  Start collection
-		 */
-		public void startCollecting() {
-			resetCollection();
-		}
-		
-		// --------------------------------------------------------------------------
-		/**
-		 * Reset all collection counters
-		 */
-		public void resetCollection() {
-			totalPacketsSent.set(0);
-			totalPacketsRcvd.set(0);
-			totalBytesSent.set(0);
-			totalBytesRcvd.set(0);
-			st = System.currentTimeMillis();
-		}
-		
-		// --------------------------------------------------------------------------
-		/**
-		 *  Update sent byte count
-		 */
-		public void updateSentStats(int inByteCount) {
-			totalPacketsSent.incrementAndGet();
-			totalBytesSent.addAndGet(inByteCount);
-		}
-		
-		// --------------------------------------------------------------------------
-		/**
-		 *  Update received byte count
-		 */
-		public void updateRcvdStats(int inByteCount) {;
-			totalPacketsRcvd.incrementAndGet();
-			totalBytesRcvd.addAndGet(inByteCount);
-		}
-		
-		// --------------------------------------------------------------------------
-		/**
-		 *	Get send data report
-		 *@return String
-		 */
-		private String getSentReport() {
-			double time = getMeasuredTimeSec();
-			double data_throughput = (totalBytesSent.get() * 8) / time;
-			double packet_throughput = totalPacketsSent.get() / time;
-			
-			return new String("Raido Sent Report - Total bytes sent: " + totalBytesSent.get() + " Data Througput: " + formatter.format(data_throughput) + " bps" +
-				" Total Packets sent: " + totalPacketsSent + " Packet Throughput: " + formatter.format(packet_throughput) + "/sec" + " Elapsed time: " + formatter.format(time) + " (secs)");
-		}
-		
-		// --------------------------------------------------------------------------
-		/**
-		 *  Get received data report
-		 *  @return String
-		 */
-		private String getReceivedReport() {
-			double time = getMeasuredTimeSec();
-			double data_throughput = (totalBytesRcvd.get() * 8) / time;
-			double packet_throughput = totalPacketsRcvd.get() / time;
-			
-			return new String("Radio Rcvd Report - Total bytes recv: " + totalBytesRcvd.get() + " Data Througput: " + formatter.format(data_throughput) + " bps" +
-				" Total Packets recv: " + totalPacketsRcvd + " Packet Throughput: " + formatter.format(packet_throughput) + "/sec" + " Elapsed time: " + formatter.format(time) + " (secs)");
-		}
-		
-		// --------------------------------------------------------------------------
-		/**
-		 *  Get elapsed time in seconds
-		 *  @return double - elapsed time
-		 */
-		private double getMeasuredTimeSec() {
-			double time_seconds = (System.currentTimeMillis() - st) / 1000;
-			return time_seconds;
-		}
-	}
+//	private class radioTrafficCollector implements Runnable {
+//		private long st;
+//		private AtomicInteger totalPacketsSent, totalPacketsRcvd;
+//		private AtomicInteger totalBytesSent, totalBytesRcvd;
+//		
+//		NumberFormat formatter = new DecimalFormat("#0.00");
+//		
+//		private Logger logger;
+//		
+//		public radioTrafficCollector(Logger inLogger) {
+//			this.logger = inLogger;
+//			
+//			totalBytesSent = new AtomicInteger();
+//			totalBytesRcvd  = new AtomicInteger();
+//			totalPacketsSent = new AtomicInteger();
+//			totalPacketsRcvd  = new AtomicInteger();
+//		}
+//		
+//		@Override
+//		public void run() {
+//			logger.info(getSentReport());
+//			logger.info(getReceivedReport());
+//			resetCollection();
+//		}
+//		
+//		// --------------------------------------------------------------------------
+//		/**
+//		 *  Start collection
+//		 */
+//		public void startCollecting() {
+//			resetCollection();
+//		}
+//		
+//		// --------------------------------------------------------------------------
+//		/**
+//		 * Reset all collection counters
+//		 */
+//		public void resetCollection() {
+//			totalPacketsSent.set(0);
+//			totalPacketsRcvd.set(0);
+//			totalBytesSent.set(0);
+//			totalBytesRcvd.set(0);
+//			st = System.currentTimeMillis();
+//		}
+//		
+//		// --------------------------------------------------------------------------
+//		/**
+//		 *  Update sent byte count
+//		 */
+//		public void updateSentStats(int inByteCount) {
+//			totalPacketsSent.incrementAndGet();
+//			totalBytesSent.addAndGet(inByteCount);
+//		}
+//		
+//		// --------------------------------------------------------------------------
+//		/**
+//		 *  Update received byte count
+//		 */
+//		public void updateRcvdStats(int inByteCount) {;
+//			totalPacketsRcvd.incrementAndGet();
+//			totalBytesRcvd.addAndGet(inByteCount);
+//		}
+//		
+//		// --------------------------------------------------------------------------
+//		/**
+//		 *	Get send data report
+//		 *@return String
+//		 */
+//		private String getSentReport() {
+//			double time = getMeasuredTimeSec();
+//			double data_throughput = (totalBytesSent.get() * 8) / time;
+//			double packet_throughput = totalPacketsSent.get() / time;
+//			
+//			return new String("Radio Sent Report - Total bytes sent: " + totalBytesSent.get() + " Data Througput: " + formatter.format(data_throughput) + " bps" +
+//				" Total Packets sent: " + totalPacketsSent + " Packet Throughput: " + formatter.format(packet_throughput) + "/sec" + " Elapsed time: " + formatter.format(time) + " (secs)");
+//		}
+//		
+//		// --------------------------------------------------------------------------
+//		/**
+//		 *  Get received data report
+//		 *  @return String
+//		 */
+//		private String getReceivedReport() {
+//			double time = getMeasuredTimeSec();
+//			double data_throughput = (totalBytesRcvd.get() * 8) / time;
+//			double packet_throughput = totalPacketsRcvd.get() / time;
+//			
+//			return new String("Radio Rcvd Report - Total bytes recv: " + totalBytesRcvd.get() + " Data Througput: " + formatter.format(data_throughput) + " bps" +
+//				" Total Packets recv: " + totalPacketsRcvd + " Packet Throughput: " + formatter.format(packet_throughput) + "/sec" + " Elapsed time: " + formatter.format(time) + " (secs)");
+//		}
+//		
+//		// --------------------------------------------------------------------------
+//		/**
+//		 *  Get elapsed time in seconds
+//		 *  @return double - elapsed time
+//		 */
+//		private double getMeasuredTimeSec() {
+//			double time_seconds = (System.currentTimeMillis() - st) / 1000;
+//			return time_seconds;
+//		}
+//	}
+
 }

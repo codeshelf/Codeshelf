@@ -17,6 +17,7 @@ import org.apache.commons.collections.buffer.CircularFifoBuffer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.Packet;
 
 /**
@@ -30,6 +31,9 @@ import com.codeshelf.flyweight.command.Packet;
 public final class FTDIInterface extends SerialInterfaceABC {
 
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(FTDIInterface.class);
+	
+	private static final int		NUM_PKTS_DROP			= 10;
+	private static final int		MAX_PACKET_BYTES		= IPacket.MAX_PACKET_BYTES;
 
 	//	private static final int	TX_TIMEOUT_MILLIS	= 100;
 	//	private static final int	RX_TIMEOUT_MILLIS	= 100;
@@ -296,7 +300,10 @@ public final class FTDIInterface extends SerialInterfaceABC {
 			int mask = 0;
 			mask = mask | JD2XX.EVENT_RXCHAR;
 
-			if (!buffer.isFull() && bytesReady > 0){ 
+			if (bytesReady > (NUM_PKTS_DROP * MAX_PACKET_BYTES)) {
+				LOGGER.warn("Purgin the JD2XX RX buffer! Packets backlogged {} bytes", bytesReady);
+				mJD2XXInterface.purge(JD2XX.PURGE_RX);
+			} else if (!buffer.isFull() && bytesReady > 0){ 
 				int bytesToRead = Math.min(DEFAULT_BUFFER_SIZE - buffer.size(),  bytesReady);
 				//LOGGER.info("---------- Start read from FTDI ---------------------------------------------- ");
 				//LOGGER.info("------------- Radio has {} bytes", status[0]);
@@ -308,9 +315,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 				for (int i = 0; i < mReadBufferSize; i++) {
 					buffer.add(mReadBuffer[i]);
 				}
-
 			}
-
 		} catch (IOException e) {
 			resetInterface();
 		} catch (IndexOutOfBoundsException e) {
