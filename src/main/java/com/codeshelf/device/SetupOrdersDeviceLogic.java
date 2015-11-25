@@ -1945,10 +1945,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		final Map<String, WorkInstructionCount> containerToWorkInstructionCountMap) {
 		// DEV-1257 do not accept if in wrong state. Should only only accept from one state?
 		CheStateEnum currentState = this.getCheStateEnum();
-		if (currentState == CheStateEnum.IDLE || currentState == CheStateEnum.VERIFYING_BADGE
-				|| currentState == CheStateEnum.DO_PICK) {
-			LOGGER.error("Late WorkInstructionCounts response from server. Current state is {}. Doing nothing.");
+		if (currentState == CheStateEnum.IDLE || currentState == CheStateEnum.VERIFYING_BADGE) {
+			LOGGER.error("Late WorkInstructionCounts response from server. Current state is {}. Doing nothing.", currentState);
 			// We certainly do not want to transition to SETUP_SUMMARY state after clearing our badge ID. Should we redo the container map anyway? Not sure.
+			return;
+		}
+		// DEV-1331 part 3 If we are already picking, and we get this, we are in grave danger. Server has changed out its work instructions.
+		// We have to go back to a state where the user must scan start again.
+		if (currentState == CheStateEnum.DO_PICK) {
+			LOGGER.error("Late WorkInstructionCounts response from server. Current state is {}. Transition back to summary.", currentState);
+			setState(CheStateEnum.SETUP_SUMMARY);
 			return;
 		}
 
