@@ -32,6 +32,7 @@ import com.codeshelf.ws.io.JsonEncoder;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.protocol.message.KeepAlive;
 import com.codeshelf.ws.protocol.message.MessageABC;
+import com.codeshelf.ws.protocol.request.DeviceRequestABC;
 import com.codeshelf.ws.protocol.request.RequestABC;
 import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.google.inject.Inject;
@@ -270,6 +271,10 @@ public class CsClientEndpoint {
 			if (message instanceof RequestABC) {
 				// keep track of request
 				CsClientEndpoint.messageCoordinator.registerRequest((RequestABC) message);
+				
+				if (message instanceof DeviceRequestABC) {
+					LOGGER.info("Request sent: {}", message);
+				}
 			}
 			session.getBasicRemote().sendObject(message);
 			this.messageSent();

@@ -11,4 +11,9 @@ public class DeviceResponseABC extends ResponseABC{
 	public final String getDeviceIdentifier() {
 		return getNetworkGuid();
 	}
+	
+	public String toString() {
+		return String.format("%s(requestId=%s, deviceId=%s, status=%s, statusMessage=%s)", this.getClass().getSimpleName(), requestId, getDeviceIdentifier(), status, statusMessage);
+	}
+
 }
