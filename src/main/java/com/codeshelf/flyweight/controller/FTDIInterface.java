@@ -374,11 +374,17 @@ public final class FTDIInterface extends SerialInterfaceABC {
 	 * @see com.gadgetworks.controller.SerialInterfaceABC#writeByte(byte)
 	 */
 	protected void writeByte(byte inByte) {
+		int bytesWritten = 0;
+		
 		try {
-			mJD2XXInterface.write(inByte);
+			bytesWritten = mJD2XXInterface.write(inByte);
 		} catch (IOException e) {
 			LOGGER.error("Failed to send data", e.getMessage());
 			resetInterface();
+		}
+		
+		if (bytesWritten != 1) {
+			LOGGER.error("Radio did not write byte!");
 		}
 	};
 
@@ -388,17 +394,24 @@ public final class FTDIInterface extends SerialInterfaceABC {
 	 */
 	protected void writeBytes(byte[] inBytes, int inLength) {
 		long startTime = System.currentTimeMillis();
+		int bytesWritten = 0;
 		try {
 			//			long now = System.currentTimeMillis();
-			mJD2XXInterface.write(inBytes, 0, inLength);
+			bytesWritten = mJD2XXInterface.write(inBytes, 0, inLength);
 			//			System.out.println("Frame: " + inLength + " delay: " + (System.currentTimeMillis() - now));
+		
 		} catch (IOException e) {
 			LOGGER.error("Failed to send data", e);
 			resetInterface();
 		}
+		
 		long endTime = System.currentTimeMillis();
 		if ((endTime - startTime) > 20) {
 			LOGGER.info("-------> Sendframe took: " + (endTime - startTime));
+		}
+		
+		if (bytesWritten != inLength) {
+			LOGGER.error("Radio did not write all the bytes! Wrote {} of {}", bytesWritten, inLength);
 		}
 	}
 	
