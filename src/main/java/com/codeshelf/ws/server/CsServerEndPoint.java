@@ -23,12 +23,19 @@ import com.codeshelf.ws.io.JsonDecoder;
 import com.codeshelf.ws.io.JsonEncoder;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.protocol.message.MessageABC;
+import com.codeshelf.ws.protocol.request.DeviceRequestABC;
 import com.codeshelf.ws.protocol.request.LoginRequest;
 import com.codeshelf.ws.protocol.request.RequestABC;
 import com.codeshelf.ws.protocol.response.ResponseABC;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
+import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
 import lombok.Getter;
 
 @ServerEndpoint(value = "/", encoders = { JsonEncoder.class }, decoders = { JsonDecoder.class }, configurator = WebSocketConfigurator.class)
@@ -39,10 +46,6 @@ public class CsServerEndPoint {
 	@Getter
 	private final TenantPersistenceService	tenantPersistenceService;
 
-	
-	private final ExecutorService executorService;
-
-	
 	private static Counter					messageCounter;
 
 	//These are singletons injected at startup. 
@@ -54,11 +57,13 @@ public class CsServerEndPoint {
 	// time to close session after mins of inactivity
 	int										idleTimeOut	= 60;
 
+	private HashMap<String, ExecutorService> devicePools;
+
 	
 	public CsServerEndPoint() {
 		tenantPersistenceService = TenantPersistenceService.getInstance();
 		messageCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS, "messages.received");
-		executorService = Executors.newFixedThreadPool(6);
+		devicePools = new HashMap<>();
 	}
 
 	@OnOpen
@@ -193,7 +198,22 @@ public class CsServerEndPoint {
 						}
 					}
 				};
-				executorService.submit(messageHandlingTask);
+
+				if (message instanceof DeviceRequestABC) {
+					String deviceIdentifier = ((DeviceRequestABC) message).getDeviceIdentifier();
+					if (deviceIdentifier != null) {
+						synchronized(devicePools) {
+							ExecutorService devicePool = devicePools.get(deviceIdentifier);
+							if (devicePool == null) {
+								devicePool = createPool(deviceIdentifier);
+								devicePools.put(deviceIdentifier, devicePool);
+							}
+							devicePool.submit(messageHandlingTask);
+						}
+					}
+				} else {
+					messageHandlingTask.run();
+				}
 			} else {
 				// handle all other messages
 				LOGGER.debug("Received message on session " + csSession + ": " + message);
@@ -206,6 +226,14 @@ public class CsServerEndPoint {
 				CodeshelfSecurityManager.removeContext();
 			}
 		}
+	}
+
+	private ExecutorService createPool(String deviceIdentifier) {
+		// TODO Auto-generated method stub
+		ThreadFactoryBuilder builder = new ThreadFactoryBuilder()
+				.setNameFormat("wss-message-" + deviceIdentifier + "-%d")
+				.setThreadFactory(Executors.defaultThreadFactory());
+		return new ThreadPoolExecutor(0, 1, 1, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(), builder.build(), new ThreadPoolExecutor.CallerRunsPolicy());
 	}
 
 	@OnClose
