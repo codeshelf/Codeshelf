@@ -289,6 +289,8 @@ public class DataArchiving extends ServerTest {
 		picker.pickItemAuto();
 		picker.pickItemAuto();
 		picker.pickItemAuto();
+		// Important: do not wait for state do_pick here.
+		// This replicates the hibernate stale object error if coded wrong. Intermittent!
 
 		LOGGER.info("1d: Dump the cart. This keeps the old work instructions");
 		picker.scanCommand("START");

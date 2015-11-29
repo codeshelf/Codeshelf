@@ -61,6 +61,7 @@ import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.validation.InputValidationException;
+import com.codeshelf.ws.server.CsServerEndPoint;
 import com.google.common.base.Strings;
 
 /**
@@ -70,6 +71,14 @@ import com.google.common.base.Strings;
 public class CheProcessTestPick extends ServerTest {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessTestPick.class);
+
+	
+	
+	@Override
+	public void doAfter() {
+		super.doAfter();
+		LOGGER.info("Device pools: " + CsServerEndPoint.getDevicePools());
+	}
 
 	public CheProcessTestPick() {
 
