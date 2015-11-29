@@ -83,9 +83,32 @@ public class CsServerEndPoint {
 		
 		webSocketManagerService.sessionStarted(session); // this will create WebSocketConnection for session
 	}
+	
+	/** 
+	 * This should give the answer based on 
+	 * If a che message, does this che already have thread processing earlier message?
+	 * Or is there already one more messages in queue waiting to be processed?
+	 * For either, return false
+	 */
+	private boolean okToProcessOnThreadNow(final MessageABC message){
+		return true;
+	}
+
+	/**
+	 * Save enough information so that we can later dequeue and execute as if the message just came
+	 */
+	private void queueCheMessage(Session session, final MessageABC message){
+		
+	}
 
 	@OnMessage(maxMessageSize = JsonEncoder.WEBSOCKET_MAX_MESSAGE_SIZE)
 	public void onMessage(Session session, final MessageABC message) {
+		if (!okToProcessOnThreadNow(message)){
+			LOGGER.info("queueing message as che has messages ahead of it.");
+			queueCheMessage(session,message);
+			return;
+		}
+		
 		messageCounter.inc();
 		UserContext setUserContext = null;
 		Tenant setTenantContext = null;
