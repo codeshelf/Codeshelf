@@ -32,6 +32,7 @@ import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -65,12 +66,11 @@ public class CsServerEndPoint {
 	// time to close session after mins of inactivity
 	int										idleTimeOut	= 60;
 
-	private HashMap<String, ExecutorService> devicePools;
+	private static HashMap<String, ExecutorService> devicePools = new HashMap<>();
 
 	public CsServerEndPoint() {
 		tenantPersistenceService = TenantPersistenceService.getInstance();
 		messageCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS, "messages.received");
-		devicePools = new HashMap<>();
 	}
 
 	@OnOpen
@@ -253,6 +253,10 @@ public class CsServerEndPoint {
 			throw new IllegalArgumentException("MessageProcessor should only be initialized once");
 		}
 		iMessageProcessor = instance;
+	}
+
+	public static Map<String, ExecutorService> getDevicePools() {
+		return devicePools;
 	}
 
 }
