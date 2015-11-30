@@ -26,11 +26,27 @@ import com.codeshelf.ws.server.WebSocketConnection;
 
 @RequiresPermissions("wi:get")
 public class ComputeWorkCommand extends CommandABC {
-	private static final Logger	LOGGER	= LoggerFactory.getLogger(ComputeWorkCommand.class);
+	private static final Logger	LOGGER								= LoggerFactory.getLogger(ComputeWorkCommand.class);
 
 	private ComputeWorkRequest	request;
 
-	private WorkBehavior			workService;
+	private WorkBehavior		workService;
+
+	final int					computeDurationLimit				= 5000;
+	final int					getWorkInstructionsDurationLimit	= 2000;
+	final int					computeCountsDurationLimit			= 1000;
+
+	private void logTimeSpentIfTooLong(long durationSpent, long durationLimit, String description, String cheName, String cheGuid) {
+		if (durationSpent > durationLimit) {
+			LOGGER.warn("{} took {}ms for {}/{}", description, durationSpent, cheName, cheGuid);
+		}
+		// Add metrics regardless? Future
+		/*
+		Timer timer = MetricsService.getInstance().createTimer(MetricsGroup.WSS, "cheWorkFromLocation");
+		timer.update(wrapComputeDurationMs, TimeUnit.MILLISECONDS);
+		*/
+
+	}
 
 	public ComputeWorkCommand(WebSocketConnection connection, ComputeWorkRequest request, WorkBehavior workService) {
 		super(connection);
@@ -65,19 +81,40 @@ public class ComputeWorkCommand extends CommandABC {
 					instructionsOnPath2);			
 			}
 			*/
-			
+
+			// Three potentially slow parts. Time and log them
+			long timestamp0 = System.currentTimeMillis();
+
 			// Get the work instructions for this CHE at this location for the given containers.
 			WorkList allWorkList = workService.computeWorkInstructions(che, positionToContainerMap, reverse);
+			long timestamp1 = System.currentTimeMillis();
+			logTimeSpentIfTooLong(timestamp1 - timestamp0,
+				computeDurationLimit,
+				"computeWorkInstructions()",
+				che.getDomainId(),
+				networkGuid);
 
 			// Get work instructions with housekeeping
 			List<WorkInstruction> instructionsOnPath = workService.getWorkInstructions(che,
 				request.getLocationId(),
 				reverse,
 				pathChanged);
+			long timestamp2 = System.currentTimeMillis();
+			logTimeSpentIfTooLong(timestamp2 - timestamp1,
+				getWorkInstructionsDurationLimit,
+				"getWorkInstructions()",
+				che.getDomainId(),
+				networkGuid);
 
 			//Get the counts
 			Map<String, WorkInstructionCount> containerToCountMap = computeContainerWorkInstructionCounts(allWorkList,
 				instructionsOnPath);
+			long timestamp3 = System.currentTimeMillis();
+			logTimeSpentIfTooLong(timestamp3 - timestamp2,
+				computeCountsDurationLimit,
+				"computeCountsDurationLimit()",
+				che.getDomainId(),
+				networkGuid);
 
 			// create response
 			response.setWorkInstructions(instructionsOnPath);

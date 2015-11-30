@@ -11,4 +11,10 @@ public class DeviceRequestABC extends RequestABC {
 	public String getDeviceIdentifier() {
 		return getDeviceId();
 	}
+	
+	@Override
+	public String toString() {
+		return String.format("%s(requestId=%s, deviceUUID=%s)", this.getClass().getSimpleName(), getMessageId(), deviceId);
+	}
+	
 }

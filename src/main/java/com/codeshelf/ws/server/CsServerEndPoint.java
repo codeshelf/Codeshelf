@@ -38,6 +38,8 @@ public class CsServerEndPoint {
 
 	public class AuthenticationException extends Exception {
 
+		private static final long serialVersionUID = 1L;
+
 	}
 
 	private static final Logger				LOGGER		= LoggerFactory.getLogger(CsServerEndPoint.class);
@@ -113,8 +115,8 @@ public class CsServerEndPoint {
 					LOGGER.info("Got {} message. Device={}; siteController={}", noteMessage.getEventType(), noteMessage.getDevicePersistentId(),setUserContext.getUsername());
 				}
 				else {
-					LOGGER.info("Got message {} from user {} on tenant {}",
-						msgName,
+					LOGGER.debug("Got message {} from user {} on tenant {}",
+						message,
 						setUserContext.getUsername(),
 						setTenantContext.getId());
 				}

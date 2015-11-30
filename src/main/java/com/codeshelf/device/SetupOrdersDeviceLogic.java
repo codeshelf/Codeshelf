@@ -172,17 +172,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * We use this to break out of "half-states" where we are waiting for a response from the server that will likely never come
 	 */
 	@Override
-	protected void adjustStateForUserReset() {
+	protected void adjustStateForCheconReset() {
 		CheStateEnum currentState = getCheStateEnum();
 		switch (currentState) {
 			case VERIFYING_BADGE:
 				setState(CheStateEnum.IDLE);
-				LOGGER.info("Breaking {} out of verify badge state", this.getGuidNoPrefix());
+				LOGGER.warn("Breaking {} out of verify badge state", this.getGuidNoPrefix());
 				break;
 			case GET_WORK:
 			case COMPUTE_WORK:
 				setState(CheStateEnum.SETUP_SUMMARY);
-				LOGGER.info("Breaking {} out of compute work state", this.getGuidNoPrefix());
+				LOGGER.warn("Breaking {} out of compute work state", this.getGuidNoPrefix());
 				break;
 			default:
 				// Are there more half-states?
@@ -669,9 +669,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			default:
 		}
 	}
-	
+
 	private void lowCommandReceived() {
-		switch (mCheStateEnum){
+		switch (mCheStateEnum) {
 			case SCAN_SOMETHING:
 			case SCAN_SOMETHING_SHORT:
 			case SCAN_GTIN:
@@ -1940,10 +1940,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		final Map<String, WorkInstructionCount> containerToWorkInstructionCountMap) {
 		// DEV-1257 do not accept if in wrong state. Should only only accept from one state?
 		CheStateEnum currentState = this.getCheStateEnum();
-		if (currentState == CheStateEnum.IDLE || currentState == CheStateEnum.VERIFYING_BADGE
-				|| currentState == CheStateEnum.DO_PICK) {
-			LOGGER.error("Late WorkInstructionCounts response from server. Current state is {}. Doing nothing.");
+		if (currentState == CheStateEnum.IDLE || currentState == CheStateEnum.VERIFYING_BADGE) {
+			LOGGER.error("Late WorkInstructionCounts response from server. Current state is {}. Doing nothing.", currentState);
 			// We certainly do not want to transition to SETUP_SUMMARY state after clearing our badge ID. Should we redo the container map anyway? Not sure.
+			return;
+		}
+		// DEV-1331 part 3 If we are already picking, and we get this, we are in grave danger. Server has changed out its work instructions.
+		// We have to go back to a state where the user must scan start again.
+		if (currentState == CheStateEnum.DO_PICK) {
+			LOGGER.error("Late WorkInstructionCounts response from server. Current state is {}. Transition back to summary.", currentState);
+			setState(CheStateEnum.SETUP_SUMMARY);
 			return;
 		}
 
@@ -2452,6 +2458,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		rememberCompletesAndShorts(); // is this right?
 
+		// New late v24 DEV-1331 part 2
+		if (mAllPicksWiList.size() > 0) {
+			LOGGER.info("Clearing work instructions as asking server for update");
+			mActivePickWiList.clear();
+			mAllPicksWiList.clear();
+		}
+
 		//Duplicate map to avoid later changes
 		Map<String, String> positionToContainerMapCopy = new HashMap<String, String>(mPositionToContainerMap);
 		LOGGER.info("Sending {} positions to server in computeCheWork", positionToContainerMapCopy.size());
@@ -2470,10 +2483,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		// DEV-1257 do not accept if in wrong state. Should only only accept from one state?
 		CheStateEnum currentState = this.getCheStateEnum();
-		if (currentState == CheStateEnum.IDLE || currentState == CheStateEnum.VERIFYING_BADGE
-				|| currentState == CheStateEnum.DO_PICK) {
-			LOGGER.error("Late assignWork response from server. Current state is {}. Doing nothing.");
+		if (currentState == CheStateEnum.IDLE || currentState == CheStateEnum.VERIFYING_BADGE) {
+			LOGGER.error("Late assignWork response from server. Current state is {}. Doing nothing.", currentState);
 			// We certainly do not want to transition to SETUP_SUMMARY state if we logged out and do not have a badge ID any more.
+			return;
+		}
+		// DEV-1331 If we are already picking, and we get this, we are in grave danger. Server has changed out its work instructions
+		// We have to go back to a state where the user must scan start again.
+		if (currentState == CheStateEnum.DO_PICK) {
+			LOGGER.error("Late assignWork response from server. Current state is {}. Transition back to summary.", currentState);
+			// We certainly do not want to transition to SETUP_SUMMARY state if we logged out and do not have a badge ID any more.
+			setState(CheStateEnum.SETUP_SUMMARY);
 			return;
 		}
 

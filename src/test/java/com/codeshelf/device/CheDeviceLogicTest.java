@@ -255,7 +255,7 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		LOGGER.info("3b: non-manual reset does not");
 		cheDeviceLogic.testOnlySetState(CheStateEnum.COMPUTE_WORK);
 		cheDeviceLogic.startDevice(DeviceRestartCauseEnum.SMAC_ERROR); // saw a few of these at PFSWeb
-		Assert.assertEquals(CheStateEnum.COMPUTE_WORK, cheDeviceLogic.getCheStateEnum());
+		Assert.assertEquals(CheStateEnum.SETUP_SUMMARY, cheDeviceLogic.getCheStateEnum());
 	}
 
 	/**
@@ -292,7 +292,7 @@ public class CheDeviceLogicTest extends MockDaoTest {
 		LOGGER.info("1d: compute work response from do pick");
 		cheDeviceLogic.testOnlySetState(CheStateEnum.DO_PICK);
 		cheDeviceLogic.processWorkInstructionCounts(0, null);
-		Assert.assertEquals(CheStateEnum.DO_PICK, cheDeviceLogic.getCheStateEnum()); // CHE reset will force to idle
+		Assert.assertEquals(CheStateEnum.SETUP_SUMMARY, cheDeviceLogic.getCheStateEnum()); // CHE reset will force to idle
 
 		LOGGER.info("2a: from idle, see that getWorkInstructions response does not go directly to setup_summary. (Expect late... error)");
 		cheDeviceLogic.testOnlySetState(CheStateEnum.IDLE);
@@ -306,8 +306,9 @@ public class CheDeviceLogicTest extends MockDaoTest {
 
 		LOGGER.info("2c: cgetWorkInstructions response from do pick");
 		cheDeviceLogic.testOnlySetState(CheStateEnum.DO_PICK);
+		// DEV-1331 late compute work response throws back to setup summary
 		cheDeviceLogic.assignWork(null, null);
-		Assert.assertEquals(CheStateEnum.DO_PICK, cheDeviceLogic.getCheStateEnum());
+		Assert.assertEquals(CheStateEnum.SETUP_SUMMARY, cheDeviceLogic.getCheStateEnum());
 
 
 	}

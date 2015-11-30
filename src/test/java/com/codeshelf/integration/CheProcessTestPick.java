@@ -28,6 +28,7 @@ import com.codeshelf.api.resources.subresources.FacilityResource;
 import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.behavior.UiUpdateBehavior;
 import com.codeshelf.device.CheStateEnum;
+import com.codeshelf.device.DeviceRestartCauseEnum;
 import com.codeshelf.device.LedCmdGroup;
 import com.codeshelf.device.LedCmdGroupSerializer;
 import com.codeshelf.device.PosControllerInstr;
@@ -1559,4 +1560,72 @@ public class CheProcessTestPick extends ServerTest {
 			Assert.fail("Test did not throw exception when setting invalid value " + propertyValue + " for property " + type.name());
 		} catch (InputValidationException e) {}
 	}
+	
+	/**
+	 * For DEV-1331, related to DEV-1257
+	 */
+	@Test
+	public final void testStateReset() throws IOException {
+		// create test data
+		Facility facility = setUpSimpleNoSlotFacility();
+		setUpSmallInventoryAndOrders(facility);
+
+		this.startSiteController();
+
+		// Set up a cart for orders 12345 and 1111, which will generate work instructions
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+
+		LOGGER.info("1: set up two orders that will lead to work");
+		picker.setupContainer("12345", "1");
+		picker.setupContainer("11111", "2");
+		picker.startAndSkipReview("D301", 5000, 3000);
+		
+		beginTransaction();
+		List<WorkInstruction> serverWiList = picker.getServerVersionAllPicksList();
+		List<WorkInstruction> siteconWiList = picker.getAllPicksList();
+		UUID serverFirstWi = serverWiList.get(0).getPersistentId();
+		UUID siteconFirstWi = siteconWiList.get(0).getPersistentId();
+		Assert.assertEquals(serverFirstWi, siteconFirstWi); // same persistentId?		
+		commitTransaction();
+		
+		LOGGER.info("2: log out, another logs in and starts. Shows that work instructions change.");
+		picker.logout();
+		picker.login("Picker #2");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		beginTransaction();
+		List<WorkInstruction> serverWiList2 = picker.getServerVersionAllPicksList();
+		List<WorkInstruction> siteconWiList2 = picker.getAllPicksList();
+		UUID serverFirstWi2 = serverWiList2.get(0).getPersistentId();
+		UUID siteconFirstWi2 = siteconWiList2.get(0).getPersistentId();
+		Assert.assertEquals(serverFirstWi2, siteconFirstWi2); // same persistentId		
+		Assert.assertNotEquals(serverFirstWi, siteconFirstWi2); // not same persistentId?		
+		commitTransaction();
+		
+		LOGGER.info("3: Somewhat simulate the response never came. Still in get work state");
+		picker.getCheDeviceLogic().testOnlySetState(CheStateEnum.COMPUTE_WORK);
+		
+		LOGGER.info("3b: And the che reset");
+		// picker.getCheDeviceLogic().startDevice(DeviceRestartCauseEnum.WATCHDOG_TIMEOUT);
+		picker.getCheDeviceLogic().startDevice(DeviceRestartCauseEnum.USER_RESTART);
+		// picker.waitForCheState(CheStateEnum.COMPUTE_WORK, 3000);
+		// picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		beginTransaction();
+		List<WorkInstruction> serverWiList3 = picker.getServerVersionAllPicksList();
+		List<WorkInstruction> siteconWiList3 = picker.getAllPicksList();
+		UUID serverFirstWi3 = serverWiList3.get(0).getPersistentId();
+		UUID siteconFirstWi3 = siteconWiList3.get(0).getPersistentId();
+		Assert.assertEquals(serverFirstWi3, siteconFirstWi3); // same persistentId		
+		commitTransaction();
+
+
+	}
+
 }

@@ -388,7 +388,8 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		final UUID inPersistentId,
 		final Map<String, String> positionToContainerMap,
 		final Boolean reverse) {
-		LOGGER.debug("Compute work: Che={}; Container={}", inCheId, positionToContainerMap);
+		// DEV-1331 part 2 logging . need the guid
+		LOGGER.info("COMPUTE_WORK from {}", inCheId);
 		String cheId = inPersistentId.toString();
 		ComputeWorkRequest req = new ComputeWorkRequest(ComputeWorkPurpose.COMPUTE_WORK,
 			cheId,
@@ -461,7 +462,8 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		final Map<String, String> positionToContainerMap,
 		final Boolean reversePickOrder,
 		final Boolean reverseOrderFromLastTime) {
-		LOGGER.debug("Get work: Che={}; Loc={}", inCheId, inLocationId);
+		// DEV-1331 part 2 logging . need the guid
+		LOGGER.info("GET_WORK from {}; Loc={}", inCheId, inLocationId);
 		String cheId = inPersistentId.toString();
 		ComputeWorkRequest req = new ComputeWorkRequest(ComputeWorkPurpose.GET_WORK,
 			cheId,
@@ -902,6 +904,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		Map<String, WorkInstructionCount> containerToWorkInstructionCountMap) {
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
+			LOGGER.info("accepting server's work instruction counts, but not the wis, into device {}", cheDevice.getGuidNoPrefix());
 			cheDevice.processWorkInstructionCounts(workInstructionCount, containerToWorkInstructionCountMap);
 		} else {
 			LOGGER.warn("Unable to assign work count to CHE id={} CHE not found", networkGuid);
@@ -911,6 +914,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	public void processGetWorkResponse(String networkGuid, List<WorkInstruction> workInstructions, String message) {
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
+			LOGGER.info("accepting server's work instructions into device {}", cheDevice.getGuidNoPrefix());
 			cheDevice.assignWork(workInstructions, message);
 		} else {
 			LOGGER.warn("Unable to assign work to CHE id={} CHE not found", networkGuid);

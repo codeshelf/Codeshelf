@@ -1026,8 +1026,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		// Let's force a short wait after associate
 		setLastRadioCommandSendForThisDevice(System.currentTimeMillis());
 
-		if (restartEnum != null && restartEnum == DeviceRestartCauseEnum.USER_RESTART) {
-			adjustStateForUserReset();
+		// DEV-1331 Always adjust, and not just on user restart
+		if (restartEnum != null /* && restartEnum == DeviceRestartCauseEnum.USER_RESTART*/) {
+			adjustStateForCheconReset();
 		}
 	}
 
@@ -1035,7 +1036,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	/* 
 	 * Called by CheDeviceLogic.startDevice() if the cause was a user reset
 	 */
-	protected void adjustStateForUserReset() {
+	protected void adjustStateForCheconReset() {
 		// Do nothing, as this is really an abstract class. 
 		// Could handle verifying badge state here I suppose
 	}

@@ -360,6 +360,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			if (timerContext != null)
 				timerContext.stop();
 		}
+		LOGGER.info("Response returned for processing: {}", response);
 		// ...and return the response
 		return response;
 	}
