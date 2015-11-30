@@ -1347,10 +1347,13 @@ public class WorkBehavior implements IApiBehavior {
 			wrappedRouteWiList = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, wrappedRouteWiList);
 		}
 
+		// Remove this. See ComputeWorkCommand for more complete handling
+		/*
 		//Log time if over 2 seconds
 		Long wrapComputeDurationMs = System.currentTimeMillis() - startTimestamp;
 		if (wrapComputeDurationMs > 2000) {
-			LOGGER.warn("GetWork() took {}ms; totalWis={}; for {}/{}",
+			// This is query for and sort of work instructions we just made.
+			LOGGER.warn("getWorkInstructions(), part of getting work, took {}ms; totalWis={}; for {}/{}",
 				wrapComputeDurationMs,
 				wrappedRouteWiList.size(),
 				inChe.getDomainId(),
@@ -1358,6 +1361,7 @@ public class WorkBehavior implements IApiBehavior {
 		}
 		Timer timer = MetricsService.getInstance().createTimer(MetricsGroup.WSS, "cheWorkFromLocation");
 		timer.update(wrapComputeDurationMs, TimeUnit.MILLISECONDS);
+		*/
 
 		return wrappedRouteWiList;
 	}
