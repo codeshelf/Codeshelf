@@ -145,7 +145,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 				
 			case YES_COMMAND:
 			case NO_COMMAND:
-				yesOrNoCommandReceived(inScanStr);
+				processCommandYesOrNo(inScanStr);
 				break;
 
 			case REMOVE_COMMAND:
@@ -163,7 +163,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 	}
 	
 	@Override
-	protected void yesOrNoCommandReceived(final String inScanStr) {
+	protected void processCommandYesOrNo(final String inScanStr) {
 		switch (mCheStateEnum) {
 			case PALLETIZER_DAMAGED:
 				if (YES_COMMAND.equalsIgnoreCase(inScanStr)) {

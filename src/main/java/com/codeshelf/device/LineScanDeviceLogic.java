@@ -86,7 +86,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 
 			case YES_COMMAND:
 			case NO_COMMAND:
-				yesOrNoCommandReceived(inScanStr);
+				processCommandYesOrNo(inScanStr);
 				break;
 
 			case CLEAR_COMMAND:
@@ -394,7 +394,7 @@ public class LineScanDeviceLogic extends CheDeviceLogic {
 	 * Two uses: confirm scan, or abandon job check 
 	 */
 	@Override
-	protected void yesOrNoCommandReceived(final String inScanStr) {
+	protected void processCommandYesOrNo(final String inScanStr) {
 		boolean answeredYes = inScanStr.equals(YES_COMMAND);
 		// do not use Boolean.parseBoolean(inScanStr); as it returns false for "YES".
 

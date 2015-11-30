@@ -222,4 +222,46 @@ public class CheProcessReplen extends ServerTest{
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		Assert.assertEquals("2 orders\n0 jobs\n3 done\nSETUP\n", picker.getLastCheDisplay());
 	}
+	
+	@Test
+	public void lowCommandTest() throws IOException{
+		beginTransaction();
+		String orders1 = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,gtin,destinationid,shipperId,customerId,dueDate,operationType\n" + 
+				"Item7,,Item7,,1,each,LocX26,Item7,0,,,,,,replenish\n" +
+				"Item7,,Item7,,1,each,LocX27,Item7,1,,,,,,replenish\n";
+		importOrdersData(getFacility().reload(), orders1);
+		commitTransaction();
+
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Worker1");
+		picker.setupContainer("Item7", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		Assert.assertEquals("1 order\n2 jobs\n\nSTART (or SETUP)\n", picker.getLastCheDisplay());
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		Assert.assertEquals("LocX26\nItem7\nQTY 1\n\n", picker.getLastCheDisplay());
+
+		picker.scanCommand("LOW");
+		picker.waitForCheState(CheStateEnum.LOW_CONFIRM, 4000);
+		Assert.assertEquals("CONFIRM LOW\nSCAN YES OR NO\n\n\n", picker.getLastCheDisplay());
+		picker.scanCommand("NO");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.scanCommand("LOW");
+		picker.waitForCheState(CheStateEnum.LOW_CONFIRM, 4000);
+		picker.scanCommand("CANCEL");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.scanCommand("LOW");
+		picker.waitForCheState(CheStateEnum.LOW_CONFIRM, 4000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
+		beginTransaction();
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("eventType", EventType.LOW));
+		List<WorkerEvent> lowEvents = WorkerEvent.staticGetDao().findByFilter(filterParams);
+		Assert.assertEquals(1, lowEvents.size());
+		commitTransaction();
+	}
 }

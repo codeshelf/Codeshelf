@@ -77,6 +77,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					OR_START_WORK_MSG						= cheLine("OR START WORK");
 	protected static final String					SELECT_POSITION_MSG						= cheLine("SELECT POSITION");
 	protected static final String					SHORT_PICK_CONFIRM_MSG					= cheLine("CONFIRM SHORT");
+	protected static final String					LOW_CONFIRM_MSG							= cheLine("CONFIRM LOW");
 	public static final String						YES_NO_MSG								= cheLine("SCAN YES OR NO");						// public for test
 	protected static final String					NO_CONTAINERS_SETUP_MSG					= cheLine("NO SETUP CONTAINERS");
 	protected static final String					POSITION_IN_USE_MSG						= cheLine("POSITION IN USE");
@@ -1486,7 +1487,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * The user scanned YES or NO.
 	 * @param inScanStr
 	 */
-	protected void yesOrNoCommandReceived(final String inScanStr) {
+	protected void processCommandYesOrNo(final String inScanStr) {
 		LOGGER.error("yesOrNoCommandReceived() needs override");
 	}
 

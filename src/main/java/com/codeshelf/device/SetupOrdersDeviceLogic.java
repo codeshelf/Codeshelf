@@ -97,6 +97,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Getter
 	@Setter
 	private CheStateEnum						mRememberEnteringInfoState				= CheStateEnum.PUT_WALL_SCAN_ITEM;
+	
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private CheStateEnum						mRememberEnteringLowState				= CheStateEnum.SCAN_SOMETHING;
 
 	//Save result of the last INFO request
 	@Accessors(prefix = "m")
@@ -416,6 +421,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					enterLinkedState();
 					break;
 
+				case LOW_CONFIRM:
+					sendDisplayCommand(LOW_CONFIRM_MSG, YES_NO_MSG);
+					break;
 				default:
 					break;
 			}
@@ -453,7 +461,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case YES_COMMAND:
 			case NO_COMMAND:
-				yesOrNoCommandReceived(inScanStr);
+				processCommandYesOrNo(inScanStr);
 				break;
 
 			case CLEAR_COMMAND:
@@ -490,7 +498,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case LOW_COMMAND:
-				lowCommandReceived();
+				processCommandLow();
 				break;
 
 			default:
@@ -670,14 +678,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 	}
 
-	private void lowCommandReceived() {
+	private void processCommandLow() {
 		switch (mCheStateEnum) {
 			case SCAN_SOMETHING:
 			case SCAN_SOMETHING_SHORT:
 			case SCAN_GTIN:
 			case DO_PUT:
 			case DO_PICK:
-				notifyWiVerb(getOneActiveWorkInstruction(), EventType.LOW, false);
+				setRememberEnteringLowState(mCheStateEnum);
+				setState(CheStateEnum.LOW_CONFIRM);
 				break;
 			default:
 				LOGGER.warn("LOW command is not available from state {}", mCheStateEnum);
@@ -781,6 +790,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 				break;
 
+			case LOW_CONFIRM:
+				setState(getRememberEnteringLowState());
+				break;
+				
 			default:
 				//Reset ourselves
 				//Ideally we shouldn't have to clear poscons here
@@ -797,7 +810,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 * @param inScanStr
 	 */
 	@Override
-	protected void yesOrNoCommandReceived(final String inScanStr) {
+	protected void processCommandYesOrNo(final String inScanStr) {
 
 		switch (mCheStateEnum) {
 		//In the error states we must go to CLEAR_ERROR_SCAN_INVALID
@@ -869,6 +882,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 				break;
 
+			case LOW_CONFIRM:
+				if (YES_COMMAND.equalsIgnoreCase(inScanStr)){
+					notifyWiVerb(getOneActiveWorkInstruction(), EventType.LOW, false);
+				}
+				setState(getRememberEnteringLowState());
+				break;
+				
 			default:
 				// Stay in the same state - the scan made no sense.
 				invalidScanMsg(mCheStateEnum);
