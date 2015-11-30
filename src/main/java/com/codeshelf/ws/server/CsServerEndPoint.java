@@ -11,8 +11,6 @@ import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 
-import lombok.Getter;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,11 +25,21 @@ import com.codeshelf.ws.io.JsonDecoder;
 import com.codeshelf.ws.io.JsonEncoder;
 import com.codeshelf.ws.protocol.message.IMessageProcessor;
 import com.codeshelf.ws.protocol.message.MessageABC;
-import com.codeshelf.ws.protocol.message.NotificationMessage;
+import com.codeshelf.ws.protocol.request.DeviceRequestABC;
 import com.codeshelf.ws.protocol.request.LoginRequest;
 import com.codeshelf.ws.protocol.request.RequestABC;
 import com.codeshelf.ws.protocol.response.ResponseABC;
-import com.codeshelf.ws.protocol.response.ResponseStatus;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
+
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+import lombok.Getter;
 
 @ServerEndpoint(value = "/", encoders = { JsonEncoder.class }, decoders = { JsonDecoder.class }, configurator = WebSocketConfigurator.class)
 public class CsServerEndPoint {
@@ -49,7 +57,7 @@ public class CsServerEndPoint {
 
 	private static Counter					messageCounter;
 
-	//These are singletons injected at startup. 
+	//These are singletons injected at startup.
 	//  This allows us to avoid trying to hook Guice into the object creation  process of javax.websocket/Jetty
 	//     but allow Guice to control object creation for these singletons
 	private static IMessageProcessor		iMessageProcessor;
@@ -58,10 +66,11 @@ public class CsServerEndPoint {
 	// time to close session after mins of inactivity
 	int										idleTimeOut	= 60;
 
+	private static HashMap<String, ExecutorService> devicePools = new HashMap<>();
+
 	public CsServerEndPoint() {
 		tenantPersistenceService = TenantPersistenceService.getInstance();
 		messageCounter = MetricsService.getInstance().createCounter(MetricsGroup.WSS, "messages.received");
-
 	}
 
 	@OnOpen
@@ -83,20 +92,22 @@ public class CsServerEndPoint {
 		session.setMaxIdleTimeout(1000 * 60 * idleTimeOut);
 		LOGGER.info("WS Session Started: " + session.getId() + ", timeout: " + session.getMaxIdleTimeout());
 		// Look at login command processing to get a warn on site controller connect
-		
+
 		webSocketManagerService.sessionStarted(session); // this will create WebSocketConnection for session
 	}
 
 	@OnMessage(maxMessageSize = JsonEncoder.WEBSOCKET_MAX_MESSAGE_SIZE)
-	public void onMessage(Session session, MessageABC message) throws AuthenticationException {
+	public void onMessage(Session session, final MessageABC message) {
 		messageCounter.inc();
 		UserContext setUserContext = null;
 		Tenant setTenantContext = null;
 		try {
-			WebSocketConnection csSession = webSocketManagerService.getWebSocketConnectionForSession(session);
+			final WebSocketConnection csSession = webSocketManagerService.getWebSocketConnectionForSession(session);
 			setUserContext = csSession.getCurrentUserContext();
 			setTenantContext = csSession.getCurrentTenant();
 			String msgName = message.getClass().getSimpleName();
+
+
 			if (setUserContext == null) {
 				LOGGER.info("Got message {} and user is null (tenant exists = {})", msgName, (setTenantContext != null));
 			} else if (setTenantContext == null) {
@@ -128,41 +139,70 @@ public class CsServerEndPoint {
 				LOGGER.debug("Received response on session " + csSession + ": " + response);
 				iMessageProcessor.handleResponse(csSession, response);
 			} else if (message instanceof RequestABC) {
-				boolean needTransaction = !(message instanceof LoginRequest);
+				Runnable messageHandlingTask = new Runnable() {
 
-				if (needTransaction)
-					TenantPersistenceService.getInstance().beginTransaction();
-				try {
-					RequestABC request = (RequestABC) message;
-					LOGGER.debug("Received request on session " + csSession + ": " + request);
-					// pass request to processor to execute command
-					ResponseABC response = iMessageProcessor.handleRequest(csSession, request);
-					if (response != null) {
-						// send response to client
-						LOGGER.debug("Sending response " + response + " for request " + request);
-						csSession.sendMessage(response);
-						if (ResponseStatus.Authentication_Failed.equals(response.getStatus())) {
-							LOGGER.warn("login failed {}", response);
-							try {
-								session.close();
-							} catch (IOException e) {
-								LOGGER.error("failed to close session after login failure", e);
+					@Override
+					public void run() {
+						UserContext setUserContext = csSession.getCurrentUserContext();
+						Tenant setTenantContext = csSession.getCurrentTenant();
+						String msgName = message.getClass().getSimpleName();
+						if (setUserContext == null) {
+							LOGGER.info("Got message {} and user is null (tenant exists = {})", msgName, (setTenantContext != null));
+						} else if (setTenantContext == null) {
+							LOGGER.error("Got message {} from user {} but no tenant context", msgName, setUserContext.getUsername());
+						} else {
+							// ok. set context, and log. But simple keep alives log only at debug level.
+							CodeshelfSecurityManager.setContext(setUserContext, setTenantContext);
+						}
+						boolean needTransaction = !(message instanceof LoginRequest);
+
+						if (needTransaction)
+							TenantPersistenceService.getInstance().beginTransaction();
+						try {
+							RequestABC request = (RequestABC) message;
+							LOGGER.debug("Received request on session " + csSession + ": " + request);
+							// pass request to processor to execute command
+							ResponseABC response = iMessageProcessor.handleRequest(csSession, request);
+							if (response != null) {
+								// send response to client
+								LOGGER.debug("Sending response " + response + " for request " + request);
+								csSession.sendMessage(response);
+							} else {
+								LOGGER.warn("No response generated for request " + request);
+							}
+							if (needTransaction) {
+								TenantPersistenceService.getInstance().commitTransaction();
+								LOGGER.debug("Committed transaction for request " + request);
+							}
+							;
+							needTransaction = false;
+						} catch (RuntimeException e) {
+							LOGGER.error("Unexpected exception during message handling: " + message, e);
+						} finally {
+							if (needTransaction)
+								TenantPersistenceService.getInstance().rollbackTransaction();
+							if (setUserContext != null || setTenantContext != null) {
+								CodeshelfSecurityManager.removeContext();
 							}
 						}
-					} else {
-						LOGGER.warn("No response generated for request " + request);
 					}
-					if (needTransaction) {
-						TenantPersistenceService.getInstance().commitTransaction();
-						LOGGER.debug("Committed transaction for request " + request);
-					}
-					;
-					needTransaction = false;
-				} finally {
-					if (needTransaction)
-						TenantPersistenceService.getInstance().rollbackTransaction();
-				}
+				};
 
+				if (message instanceof DeviceRequestABC) {
+					String deviceIdentifier = ((DeviceRequestABC) message).getDeviceIdentifier();
+					if (deviceIdentifier != null) {
+						synchronized(devicePools) {
+							ExecutorService devicePool = devicePools.get(deviceIdentifier);
+							if (devicePool == null) {
+								devicePool = createPool(deviceIdentifier);
+								devicePools.put(deviceIdentifier, devicePool);
+							}
+							devicePool.submit(messageHandlingTask);
+						}
+					}
+				} else {
+					messageHandlingTask.run();
+				}
 			} else {
 				// handle all other messages
 				LOGGER.debug("Received message on session " + csSession + ": " + message);
@@ -175,6 +215,14 @@ public class CsServerEndPoint {
 				CodeshelfSecurityManager.removeContext();
 			}
 		}
+	}
+
+	private ExecutorService createPool(String deviceIdentifier) {
+		// TODO Auto-generated method stub
+		ThreadFactoryBuilder builder = new ThreadFactoryBuilder()
+				.setNameFormat("wss-message-" + deviceIdentifier + "-%d")
+				.setThreadFactory(Executors.defaultThreadFactory());
+		return new ThreadPoolExecutor(0, 1, 1, TimeUnit.MINUTES, new LinkedBlockingQueue<Runnable>(), builder.build(), new ThreadPoolExecutor.CallerRunsPolicy());
 	}
 
 	@OnClose
@@ -205,6 +253,10 @@ public class CsServerEndPoint {
 			throw new IllegalArgumentException("MessageProcessor should only be initialized once");
 		}
 		iMessageProcessor = instance;
+	}
+
+	public static Map<String, ExecutorService> getDevicePools() {
+		return devicePools;
 	}
 
 }
