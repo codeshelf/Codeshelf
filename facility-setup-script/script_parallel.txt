@@ -1,0 +1,6 @@
+STEP
+SITE
+defChe che1 0x0000009B che2 0x000000ED
+logout che1 che2
+scan che1 Worker1
+scan che2 Worker2

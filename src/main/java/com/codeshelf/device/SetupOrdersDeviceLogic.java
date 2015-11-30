@@ -39,6 +39,7 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.util.CompareNullChecker;
+import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.protocol.request.InfoRequest.InfoRequestType;
 import com.codeshelf.ws.protocol.request.PutWallPlacementRequest;
 
@@ -130,6 +131,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	private boolean								mSetupMixHasPutwall						= false;
 	private boolean								mSetupMixHasCntrOrder					= false;
+	
+	private final MultiPickInfo					mMultiPickInfo							= new MultiPickInfo();
 
 	private static int							BAY_COMPLETE_CODE						= 1;
 	private static int							REPEAT_CONTAINER_CODE					= 2;
@@ -203,7 +206,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			CheStateEnum previousState = mCheStateEnum;
 			boolean isSameState = previousState == inCheState;
 			mCheStateEnum = inCheState;
-			LOGGER.debug("Switching to state: {} isSameState: {}", inCheState, isSameState);
+			LOGGER.info("Switching to state: {} isSameState: {}", inCheState, isSameState);
 
 			switch (inCheState) {
 				case IDLE:
@@ -964,8 +967,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		notifyWiVerb(inWi, WorkerEvent.EventType.SHORT, kLogAsWarn);
 		doShortTransaction(inWi, inPicked);
 
-		CheStateEnum state = getCheStateEnum();
-
 		clearLedAndPosConControllersForWi(inWi); // wrong? What about any short aheads?
 
 		// Depends on AUTOSHRT parameter
@@ -994,11 +995,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			// Cannot add an else without doing other kludgy checks above. Don't. If you embark on this, but the LOGGER.error() back and then fix short aheads properly.
 			showActivePicks();
 		} else {
-			// There's no more active picks, so move to the next set.
-			if (state.equals(CheStateEnum.SHORT_PUT_CONFIRM))
-				doNextWallPut();
-			else
-				doNextPick();
+			doNextItemWithPossibleFlashingThread();
 		}
 	}
 
@@ -1183,6 +1180,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		boolean result = false;
 		mActivePickWiList.clear(); // repopulate from mAllPicksWiList.
+		mMultiPickInfo.reset();
 
 		// Loop through each container to see if there is a WI for that container at the next location.
 		// The "next location" is the first location we find for the next pick.
@@ -1214,6 +1212,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 						LOGGER.error("Not adding work instruction to active list again {}", wi);
 					} else {
 						mActivePickWiList.add(wi);
+						mMultiPickInfo.addWi(getPosconIndexOfWi(wi));
 					}
 
 					result = true;
@@ -1222,10 +1221,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				}
 			}
 		}
-		/*
-			}
-		} */
-
 		return result;
 	}
 
@@ -2556,8 +2551,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		mActivePickWiList.remove(inWi);
 
-		CheStateEnum state = getCheStateEnum();
-
 		if (feedbackCountersValid()) { // makes sure mContainerToWorkInstructionCountMap not null
 			// maintain the CHE feedback, but not for put wall puts. Not DO_PUT. And not SHORT_PUT state.
 			//Decrement count if this is a non-HK WI
@@ -2586,10 +2579,45 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			showActivePicks();
 		} else {
 			// There's no more active picks, so move to the next set.
-			if (state == CheStateEnum.DO_PUT)
-				doNextWallPut();
-			else
-				doNextPick();
+			doNextItemWithPossibleFlashingThread();
+		}
+	}
+	
+	private void doNextItemWithPossibleFlashingThread(){
+		if (mMultiPickInfo.isPerformingMultiPick()){
+			Thread doNextItemThread = new Thread(new Runnable() {
+				@Override
+				public void run() {
+					ThreadUtils.sleep(200);
+					List<PosControllerInstr> instructions = new ArrayList<>();
+					for (Byte position : mMultiPickInfo.getPositions()){
+						PosControllerInstr instr = new PosControllerInstr(position,
+									PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+									PosControllerInstr.BITENCODED_TRIPLE_DASH,
+									PosControllerInstr.BITENCODED_TRIPLE_DASH,
+									PosControllerInstr.BLINK_FREQ.byteValue(),
+									PosControllerInstr.BRIGHT_DUTYCYCLE.byteValue());
+						instructions.add(instr);
+					}
+					sendPositionControllerInstructions(instructions);
+					ThreadUtils.sleep(800);
+					clearAllPosconsOnThisDevice();
+					doNextItem();
+				}
+			});
+			doNextItemThread.start();
+		} else {
+			System.out.println("*** Don't Start Blinking Thread");
+			doNextItem();
+		}
+	}
+	
+	private void doNextItem(){
+		CheStateEnum state = getCheStateEnum();
+		if (state == CheStateEnum.DO_PUT || state.equals(CheStateEnum.SHORT_PUT_CONFIRM)) {
+			doNextWallPut();
+		} else {
+			doNextPick();
 		}
 	}
 
@@ -3146,5 +3174,25 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				info.getDisplayRemoveLine(2),
 				info.getDisplayRemoveLine(3));
 		}
+	}
+	
+	private static class MultiPickInfo {
+		@Getter
+		private final List<Byte> positions = new ArrayList<>();
+		
+		public void reset(){
+			positions.clear();
+		}
+		
+		public void addWi(Byte position){
+			if (position != null){
+				positions.add(position);
+			}
+		}
+		
+		public boolean isPerformingMultiPick(){
+			return positions.size() > 1;
+		}
+		
 	}
 }

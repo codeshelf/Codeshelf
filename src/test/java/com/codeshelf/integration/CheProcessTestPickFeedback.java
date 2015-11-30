@@ -27,6 +27,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
+import com.codeshelf.util.ThreadUtils;
 
 /**
  * This test class focuses primarily on poscon feedback issues
@@ -998,6 +999,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 
 		LOGGER.info("3b: Poscon 1 gets the next job, poscon 2 remains oc. 3 still null/blank");
+		ThreadUtils.sleep(1000);
 		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 3));

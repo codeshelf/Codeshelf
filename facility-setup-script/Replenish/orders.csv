@@ -1,4 +1,4 @@
 orderId,orderDetailId,itemId,quantity,uom,locationId,preAssignedContainerId,workSequence,gtin
-1111,1,Item1,3,each,LocX25,1111,1,gtinx1
-1111,2,Item2,4,each,LocX24,1111,2,
-2222,3,Item1,10,each,LocX27,2222,3,gtinx1
+1111,1,ItemX1,3,each,LocX25,1111,1,gtin21
+1111,2,ItemX2,4,each,LocX24,1111,2,
+2222,3,ItemX1,10,each,LocX27,2222,1,gtin21

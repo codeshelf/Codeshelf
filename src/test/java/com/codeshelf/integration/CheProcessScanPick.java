@@ -1395,7 +1395,7 @@ public class CheProcessScanPick extends ServerTest {
 		button = picker.buttonFor(wi);
 		quant = wi.getPlanQuantity();
 		picker.pick(button, quant);
-		picker.waitInSameState(CheStateEnum.SCAN_SOMETHING, 2000);
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 
 		LOGGER.info("3f :This job needs a scan.");
 		Assert.assertEquals("D602", picker.getLastCheDisplayString(1));
