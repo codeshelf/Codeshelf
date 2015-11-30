@@ -17,7 +17,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import lombok.Getter;
@@ -35,14 +34,11 @@ import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codahale.metrics.Timer;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.OrderLocationFeedbackMessage;
 import com.codeshelf.edi.EdiExportService;
 import com.codeshelf.edi.IFacilityEdiExporter;
 import com.codeshelf.manager.User;
-import com.codeshelf.metrics.MetricsGroup;
-import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.DomainObjectManager;
 import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.HousekeepingInjector;
@@ -1258,7 +1254,6 @@ public class WorkBehavior implements IApiBehavior {
 		final String inScannedLocationId,
 		final Boolean reversePickOrder,
 		final AtomicBoolean pathChanged) {
-		long startTimestamp = System.currentTimeMillis();
 		Facility facility = inChe.getFacility();
 
 		// This may be called with null inScannedLocationId for a simple START scan
@@ -1347,21 +1342,7 @@ public class WorkBehavior implements IApiBehavior {
 			wrappedRouteWiList = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, wrappedRouteWiList);
 		}
 
-		// Remove this. See ComputeWorkCommand for more complete handling
-		/*
-		//Log time if over 2 seconds
-		Long wrapComputeDurationMs = System.currentTimeMillis() - startTimestamp;
-		if (wrapComputeDurationMs > 2000) {
-			// This is query for and sort of work instructions we just made.
-			LOGGER.warn("getWorkInstructions(), part of getting work, took {}ms; totalWis={}; for {}/{}",
-				wrapComputeDurationMs,
-				wrappedRouteWiList.size(),
-				inChe.getDomainId(),
-				inChe.getDeviceGuidStrNoPrefix());
-		}
-		Timer timer = MetricsService.getInstance().createTimer(MetricsGroup.WSS, "cheWorkFromLocation");
-		timer.update(wrapComputeDurationMs, TimeUnit.MILLISECONDS);
-		*/
+		// Remove timer that used to be here. See ComputeWorkCommand for more complete handling
 
 		return wrappedRouteWiList;
 	}
