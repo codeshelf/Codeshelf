@@ -80,10 +80,10 @@ public class CheProcessReplen extends ServerTest{
 		Assert.assertEquals("1 order\n2 jobs\n\nSTART (or SETUP)\n", picker.getLastCheDisplay());
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		Assert.assertEquals("LocX26\nItem7\nQTY 1\n\n", picker.getLastCheDisplay());
+		Assert.assertEquals("LocX26\nReplen Item7\n\n\n", picker.getLastCheDisplay());
 		picker.pickItemAuto();
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		Assert.assertEquals("LocX27\nItem7\nQTY 1\n\n", picker.getLastCheDisplay());
+		Assert.assertEquals("LocX27\nReplen Item7\n\n\n", picker.getLastCheDisplay());
 		picker.pickItemAuto();
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		Assert.assertEquals("1 order\n0 jobs\n2 done\nSETUP\n", picker.getLastCheDisplay());
@@ -116,7 +116,7 @@ public class CheProcessReplen extends ServerTest{
 		LOGGER.info("5: Perform another replenish run");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		Assert.assertEquals("LocX27\nItem7\nQTY 1\n\n", picker.getLastCheDisplay());
+		Assert.assertEquals("LocX27\nReplen Item7\n\n\n", picker.getLastCheDisplay());
 		picker.pickItemAuto();
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		Assert.assertEquals("1 order\n0 jobs\n3 done\nSETUP\n", picker.getLastCheDisplay());
@@ -205,17 +205,17 @@ public class CheProcessReplen extends ServerTest{
 		Assert.assertEquals("2 orders\n3 jobs\n\nSTART (or SETUP)\n", picker.getLastCheDisplay());
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
-		Assert.assertEquals("Item1", picker.getLastCheDisplayString(2));
+		Assert.assertEquals("Replen Item1", picker.getLastCheDisplayString(2));
 		picker.scanSomething("gtinx1");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		picker.pickItemAuto();
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
-		Assert.assertEquals("Item1", picker.getLastCheDisplayString(2));
+		Assert.assertEquals("Replen Item1", picker.getLastCheDisplayString(2));
 		picker.scanSomething("gtinx1");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		picker.pickItemAuto();
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
-		Assert.assertEquals("Item2", picker.getLastCheDisplayString(2));
+		Assert.assertEquals("Replen Item2", picker.getLastCheDisplayString(2));
 		picker.scanSomething("Item2");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		picker.pickItemAuto();
@@ -242,7 +242,7 @@ public class CheProcessReplen extends ServerTest{
 		Assert.assertEquals("1 order\n1 job\n\nSTART (or SETUP)\n", picker.getLastCheDisplay());
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		Assert.assertEquals("LocX26\nItem7\nQTY 1\n\n", picker.getLastCheDisplay());
+		Assert.assertEquals("LocX26\nReplen Item7\n\n\n", picker.getLastCheDisplay());
 
 		LOGGER.info("3: Perform 3 LOW_CONFIRM workflows");
 		picker.scanCommand("LOW");

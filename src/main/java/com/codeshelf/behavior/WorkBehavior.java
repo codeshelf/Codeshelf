@@ -268,7 +268,7 @@ public class WorkBehavior implements IApiBehavior {
 		
 		Timestamp theTime = now();
 		// Get all of the OUTBOUND work instructions.
-		WorkList workList = generateOutboundInstructions(facility, inChe, containerList, theTime);
+		WorkList workList = generateOutboundAndReplenishInstructions(facility, inChe, containerList, theTime);
 		//wiResultList.addAll(generateOutboundInstructions(facility, inChe, containerList, theTime));
 
 		// Get all of the CROSS work instructions.
@@ -890,7 +890,7 @@ public class WorkBehavior implements IApiBehavior {
 
 		Facility inFacility = inChe.getFacility();
 		String workSeqr = PropertyBehavior.getProperty(inFacility, FacilityPropertyType.WORKSEQR);
-		SingleWorkItem workItem = makeWIForOutbound(orderDetail,
+		SingleWorkItem workItem = makeWIForOutboundOrReplenish(orderDetail,
 			inChe,
 			null,
 			null,
@@ -1525,7 +1525,7 @@ public class WorkBehavior implements IApiBehavior {
 	 * @param inTime
 	 * @return
 	 */
-	private WorkList generateOutboundInstructions(final Facility facility,
+	private WorkList generateOutboundAndReplenishInstructions(final Facility facility,
 		final Che inChe,
 		final List<Container> inContainerList,
 		final Timestamp inTime) {
@@ -1549,7 +1549,7 @@ public class WorkBehavior implements IApiBehavior {
 					if (orderDetail.getQuantity() > 0) {
 						try {
 							// Pass facility as the default location of a short WI..
-							SingleWorkItem workItem = makeWIForOutbound(orderDetail,
+							SingleWorkItem workItem = makeWIForOutboundOrReplenish(orderDetail,
 								inChe,
 								container,
 								inTime,
@@ -1740,7 +1740,7 @@ public class WorkBehavior implements IApiBehavior {
 	 * The result is a SingleWorkItem, which has the WI created, or reference to OrderDetail it could not make an order for.
 	 * From DEV-724, give out work from the path the CHE is on only.
 	 */
-	private SingleWorkItem makeWIForOutbound(final OrderDetail inOrderDetail,
+	private SingleWorkItem makeWIForOutboundOrReplenish(final OrderDetail inOrderDetail,
 		final Che inChe,
 		final Container inContainer,
 		final Timestamp inTime,
@@ -1752,6 +1752,7 @@ public class WorkBehavior implements IApiBehavior {
 		SingleWorkItem resultWork = new SingleWorkItem();
 		ItemMaster itemMaster = inOrderDetail.getItemMaster();
 
+		WiPurpose purpose = inOrderDetail.getParentOrderType() == OrderTypeEnum.REPLENISH ? WiPurpose.WiPurposeReplenishPut : WiPurpose.WiPurposeOutboundPick;
 		// DEV-637 note: The code here only works if there is inventory on a path. If the detail has a workSequence,
 		// we can make the work instruction anyway.
 		Location location = null;
@@ -1797,7 +1798,6 @@ public class WorkBehavior implements IApiBehavior {
 			}
 		}
 		if (location == null) {
-
 			// Need to improve? Do we already have a short WI for this order detail? If so, do we really want to make another?
 			// This should be moderately rare, although it happens in our test case over and over. User has to scan order/container to cart to make this happen.
 			deleteExistingShortWiToFacility(inOrderDetail);
@@ -1806,7 +1806,7 @@ public class WorkBehavior implements IApiBehavior {
 				// If there is no location to send the Selector then create a PLANNED, SHORT WI for this order detail.
 				resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.SHORT,
 					WorkInstructionTypeEnum.ACTUAL,
-					WiPurpose.WiPurposeOutboundPick,
+					purpose,
 					inOrderDetail,
 					inChe,
 					inTime,
@@ -1826,7 +1826,7 @@ public class WorkBehavior implements IApiBehavior {
 		} else {
 			resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
 				WorkInstructionTypeEnum.PLAN,
-				WiPurpose.WiPurposeOutboundPick,
+				purpose,
 				inOrderDetail,
 				inChe,
 				inTime,

@@ -768,7 +768,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	private void sendDisplayWorkInstruction(WorkInstruction wi) {
 		String planQtyStr = getWICountStringForCheDisplay(wi);
-		boolean skipQtyDisplay = WiPurpose.WiPurposeSkuWallPut.equals(wi.getPurpose());
+		boolean replenish = WiPurpose.WiPurposeReplenishPut.equals(wi.getPurpose());
+		boolean skipQtyDisplay = WiPurpose.WiPurposeSkuWallPut.equals(wi.getPurpose()) || replenish;
 
 		String[] pickInfoLines = { "", "", "" };
 
@@ -848,6 +849,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			}
 
 			pickInfoLines[1] = quantity;
+		}
+		
+		if (replenish) {
+			pickInfoLines[0] = "Replen " + pickInfoLines[0];
+			if (pickInfoLines[0].length() > 40){
+				pickInfoLines[0] = pickInfoLines[0].substring(0, 40);
+				LOGGER.warn("Truncating top line due to Replen addition", wi);
+			}
 		}
 
 		// get "DECREMENT POSITION" or other instruction
