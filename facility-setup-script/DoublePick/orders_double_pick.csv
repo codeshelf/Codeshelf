@@ -1,3 +1,6 @@
-orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,gtin,destinationid,shipperId,customerId,dueDate
-1111,1,ItemS1,,11,each,LocX24,1111,1,,1,10,20,
-2222,2,ItemS1,,22,each,LocX24,2222,1,,1,10,20,12/31/14 12:00 PM
+orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,gtin
+1111,1,ItemS1,,11,each,LocX24,1111,1,
+1111,2,ItemS2,,20,each,LocX24,1111,2,
+1111,3,ItemS3,,33,each,LocX24,1111,3,
+2222,4,ItemS1,,22,each,LocX24,2222,1,
+2222,5,ItemS3,,44,each,LocX24,2222,3,

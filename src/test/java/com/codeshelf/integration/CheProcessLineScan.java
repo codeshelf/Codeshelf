@@ -333,9 +333,7 @@ public class CheProcessLineScan extends ServerTest {
 	@Test
 	public final void testSiteParamConfig() throws IOException {
 
-		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
-		this.getTenantPersistenceService().commitTransaction();
 
 		beginTransaction();
 		setUpLineScanOrdersNoCntr(facility);
@@ -392,9 +390,7 @@ public class CheProcessLineScan extends ServerTest {
 	@Test
 	public final void testLineScanProcessExceptions() throws IOException {
 
-		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
-		commitTransaction();
 
 		beginTransaction();
 		setUpLineScanOrdersNoCntr(facility);
@@ -515,9 +511,7 @@ public class CheProcessLineScan extends ServerTest {
 	@Test
 	public final void testLineScanShorts() throws IOException {
 
-		beginTransaction();
 		Facility facility = setUpSmallNoSlotFacility();
-		commitTransaction();
 
 		beginTransaction();
 		setUpLineScanOrdersNoCntr(facility);

@@ -246,6 +246,26 @@ public class WorkBehavior implements IApiBehavior {
 			}
 		}
 
+		boolean replenishOnly = true;
+		//Determine if there are any non-Replenish orders on the che
+		for (Container container : containerList) {
+			OrderHeader order = container.getCurrentOrderHeader();
+			if (order != null && order.getOrderType() != OrderTypeEnum.REPLENISH){
+				replenishOnly = false;
+			}
+		}
+		//If yes, remove all Replenish orders from the list
+		if (!replenishOnly){
+			for (Iterator<Container> containerIterator = containerList.iterator(); containerIterator.hasNext();) {
+			    Container container = containerIterator.next();
+			    OrderHeader order = container.getCurrentOrderHeader();
+			    if (order != null && order.getOrderType() == OrderTypeEnum.REPLENISH) {
+			    	//Safely remove current container from the list
+			    	containerIterator.remove();
+			    }
+			}
+		}
+		
 		Timestamp theTime = now();
 		// Get all of the OUTBOUND work instructions.
 		WorkList workList = generateOutboundInstructions(facility, inChe, containerList, theTime);

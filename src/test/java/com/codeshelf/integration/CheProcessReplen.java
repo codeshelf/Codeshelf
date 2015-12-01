@@ -225,24 +225,26 @@ public class CheProcessReplen extends ServerTest{
 	
 	@Test
 	public void lowCommandTest() throws IOException{
+		LOGGER.info("1: Import Replenish order");
 		beginTransaction();
 		String orders1 = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,gtin,destinationid,shipperId,customerId,dueDate,operationType\n" + 
-				"Item7,,Item7,,1,each,LocX26,Item7,0,,,,,,replenish\n" +
-				"Item7,,Item7,,1,each,LocX27,Item7,1,,,,,,replenish\n";
+				"Item7,,Item7,,1,each,LocX26,Item7,0,,,,,,replenish\n";
 		importOrdersData(getFacility().reload(), orders1);
 		commitTransaction();
 
 		startSiteController();
+		LOGGER.info("2: Load order on CHE");
 		PickSimulator picker = createPickSim(cheGuid1);
 		picker.loginAndSetup("Worker1");
 		picker.setupContainer("Item7", "1");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
-		Assert.assertEquals("1 order\n2 jobs\n\nSTART (or SETUP)\n", picker.getLastCheDisplay());
+		Assert.assertEquals("1 order\n1 job\n\nSTART (or SETUP)\n", picker.getLastCheDisplay());
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		Assert.assertEquals("LocX26\nItem7\nQTY 1\n\n", picker.getLastCheDisplay());
 
+		LOGGER.info("3: Perform 3 LOW_CONFIRM workflows");
 		picker.scanCommand("LOW");
 		picker.waitForCheState(CheStateEnum.LOW_CONFIRM, 4000);
 		Assert.assertEquals("CONFIRM LOW\nSCAN YES OR NO\n\n\n", picker.getLastCheDisplay());
@@ -257,6 +259,7 @@ public class CheProcessReplen extends ServerTest{
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 
+		LOGGER.info("4: Verify that a sngle LOW event was created");
 		beginTransaction();
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("eventType", EventType.LOW));
@@ -264,4 +267,36 @@ public class CheProcessReplen extends ServerTest{
 		Assert.assertEquals(1, lowEvents.size());
 		commitTransaction();
 	}
+	
+	@Test
+	public void replenishMixedCheTest() throws IOException{
+		LOGGER.info("1: Import a Replenish and non-Replenish order");
+		beginTransaction();
+		String orders1 =   "orderId,orderDetailId,itemId,quantity,uom,locationId,preAssignedContainerId,workSequence,operationType\n" + 
+				"Item7,,Item7,1,each,LocX26,Item7,0,replenish\n" +
+				"1111,1,Item1,3,each,LocX25,1111,1,\n" +
+				"1111,2,Item2,3,each,LocX25,1111,1,\n" +
+				"1111,3,Item3,3,each,LocX25,1111,1,\n";
+		importOrdersData(getFacility().reload(), orders1);
+		commitTransaction();
+		
+		startSiteController();
+		
+		LOGGER.info("2: Load a Replenish order on CHE. Verify generated work.");
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Worker1");
+		picker.setupContainer("Item7", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		Assert.assertEquals("1 order\n1 job\n\nSTART (or SETUP)\n", picker.getLastCheDisplay());
+
+		LOGGER.info("3: Load a Replenish and a non-Replenish order on CHE. Verify that only non-Replenish order has work.");
+		picker.scanCommand("SETUP");
+		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 4000);
+		picker.setupContainer("Item7", "1");
+		picker.setupContainer("1111", "2");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 400000);
+		Assert.assertEquals("1 order\n3 jobs\n\nSTART (or SETUP)\n", picker.getLastCheDisplay());
+	}	
 }
