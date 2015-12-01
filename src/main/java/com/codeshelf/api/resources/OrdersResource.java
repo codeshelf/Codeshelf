@@ -20,11 +20,15 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.IntervalParam;
+import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.behavior.OrderBehavior;
 import com.codeshelf.behavior.OrderBehavior.OrderDetailView;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.WorkerEvent;
+import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 public class OrdersResource {
@@ -99,4 +103,20 @@ public class OrdersResource {
 		return BaseResponse.buildResponse(results);
 	}
 
+	@GET
+	@Path("/{orderId}/events")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getOrderEvents(@PathParam("orderId") String orderDomainId) {
+		List<WorkerEvent> workerEvents = this.orderService.getOrderEventsForOrderId(facility, orderDomainId);
+		List<EventDisplay> results = Lists.transform(workerEvents, new Function<WorkerEvent, EventDisplay>() {
+			@Override
+			public EventDisplay apply(WorkerEvent event) {
+				EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
+				return eventDisplay;
+			}
+		});
+		return BaseResponse.buildResponse(results);
+	}
+
+	
 }
