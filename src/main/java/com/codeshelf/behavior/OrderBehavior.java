@@ -24,6 +24,8 @@ import org.hibernate.Criteria;
 import org.hibernate.FetchMode;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.hibernate.criterion.DetachedCriteria;
+import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.SimpleExpression;
@@ -32,6 +34,7 @@ import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.OrderBehavior.OrderDetailView;
 import com.codeshelf.behavior.ProductivitySummaryList.StatusSummary;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.OrderStatusEnum;
@@ -39,6 +42,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.util.CompareNullChecker;
@@ -230,6 +234,24 @@ public class OrderBehavior implements IApiBehavior {
 			.list();
 	}
 
+	@SuppressWarnings("unchecked")
+	public List<WorkerEvent> getOrderEventsForOrderId(Facility facility, String orderDomainId) {
+		DetachedCriteria detailUUIDs = DetachedCriteria.forClass(OrderDetail.class)
+				.createAlias("parent", "order")
+				.add(Property.forName("order.domainId").eq(orderDomainId))
+				.add(Property.forName("order.parent").eq(facility))
+				.add(Property.forName("active").eq(true))
+				.setProjection(Property.forName("persistentId"));
+		
+		return WorkerEvent.staticGetDao()
+				.createCriteria()
+				.add(Property.forName("orderDetailId").in(detailUUIDs))
+				.addOrder(Order.asc("created"))
+				.list();
+	}
+
+
+	
 	public List<OrderDetailView> findOrderDetailsForStatus(Session session, UUID facilityUUID, OrderStatusEnum orderStatusEnum) {
 		@SuppressWarnings("unchecked")
 		List<OrderDetailView> result = session.createQuery(
