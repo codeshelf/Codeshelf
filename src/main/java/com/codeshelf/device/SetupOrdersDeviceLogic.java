@@ -978,23 +978,19 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 	}
 
-	// --------------------------------------------------------------------------
-	/**
-	 * Process the Yes after a short. Very complicated for simultaneous picks
-	 */
-	protected void processShortPickYes(final WorkInstruction inWi, int inPicked) {
-
-		notifyWiVerb(inWi, WorkerEvent.EventType.SHORT, kLogAsWarn);
-		doShortTransaction(inWi, inPicked);
-
-		clearLedAndPosConControllersForWi(inWi); // wrong? What about any short aheads?
-
-		// Depends on AUTOSHRT parameter
+	protected void processShortPickYes(final List<WorkInstruction> inWiList, int inPicked) {
 		boolean autoShortOn = mDeviceManager.getAutoShortValue();
-		if (autoShortOn) {
-			doShortAheads(inWi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
-		}
+		for (WorkInstruction wi : inWiList){
+			notifyWiVerb(wi, WorkerEvent.EventType.SHORT, kLogAsWarn);
+			doShortTransaction(wi, inPicked);
 
+			clearLedAndPosConControllersForWi(wi); // wrong? What about any short aheads?
+
+			// Depends on AUTOSHRT parameter
+			if (autoShortOn) {
+				doShortAheads(wi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
+			}			
+		}
 		// If AUTOSHRT if off, there still might be other jobs in active pick list. If on, any remaining there would be shorted and removed.
 		int afterActiveCount = mActivePickWiList.size();
 		if (afterActiveCount > 0) {
@@ -1017,6 +1013,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		} else {
 			doNextItemWithPossibleFlashingThread();
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Process the Yes after a short. Very complicated for simultaneous picks
+	 */
+	protected void processShortPickYes(final WorkInstruction inWi, int inPicked) {
+		List<WorkInstruction> wiList = new ArrayList<>();
+		wiList.add(inWi);
+		processShortPickYes(wiList, inPicked);
 	}
 
 	// --------------------------------------------------------------------------
@@ -1056,16 +1062,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			} else {
 				//The getActivePickWiList() list may be modified during processShortPickYes(). That's why we are creating a copy of it here. to iterate through.
 				List<WorkInstruction> activeInstructions = new ArrayList<>(getActivePickWiList());
-				for (WorkInstruction activeInstruction : activeInstructions) {
-					/* JR says "not good". But the bailing wire is ok for now, supported by excellent unit test.
-					 CheProcessTestPickFeedback.simulPickShortOrderCountIssue() demonstrates the problem.
-					 The problem is side effects of processShortPickYes() remake the active pick list. That is, it calls doNextPick().
-					 But really, we should call doNextPick() from here, and not multiple times within that loop. Beside the DEV-1234 silliness
-					 we get superfluous poscon and screen draws.
-					 See more comments in SetupOrdersDeviceLogic.processShortPickYes()
-					*/
-					processShortPickYes(activeInstruction, 0);
-				}
+				processShortPickYes(activeInstructions, 0);
 			}
 		} else {
 			// Just return to showing the active picks.
@@ -2647,7 +2644,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			});
 			doNextItemThread.start();
 		} else {
-			System.out.println("*** Don't Start Blinking Thread");
 			doNextItem();
 		}
 	}
