@@ -98,8 +98,9 @@ local NET_CMDS = {[0] = "NetSetup", [1] = "NetCheck", [2] = "NetIntfTest" }
 local NET_CHECK_TYPES = { [1] = "Req", [2] = "Resp"}
 
 local ASSOC_CMDS = {[0] = "AssocReq", [1] = "AssocResp", [2] = "AssocCheck", [3] = "AssocACK" }
+local ASSOC_RESTART_CAUSES = {[0] = "Unknown", [1] = "User Restart", [2] = "Hard Fault", [3] = "WatchDog Timeout", [4] = "Response Timeout", [5] = "Tx Buffer Full", [6] = "Rx Buffer Full", [7] = "SMAC Error", [9] = "Other", [10] = "Power On"}
 
-local CONTROL_CMDS = {[0] = "Scan", [1] = "Message", [2] = "LED", [3] = "Set PosCtl", [4] = "Clr PosCtl", [5] = "Button", [6] = "Message Single", [7] = "Clear Display" }
+local CONTROL_CMDS = {[0] = "Scan", [1] = "Message", [2] = "LED", [3] = "Set PosCtl", [4] = "Clr PosCtl", [5] = "Button", [6] = "Message Single", [7] = "Clear Display", [10] = "CMD Ack" }
 local EFFECTS = {[0] = "Solid", [1] = "Flash", [2] = "Error", [3] = "Motel" }
 
 flyweightproto = Proto("flyweight","Flyweight Protocol")
@@ -131,6 +132,11 @@ fwfields.f_assoc_resp_addr = ProtoField.uint8("flyweight.assoc.resp.addr" , "Ass
 fwfields.f_assoc_resp_netid = ProtoField.uint8("flyweight.assoc.resp.netid" , "Assigned NetId", base.DEC, NET_IDS, 0x0f)
 fwfields.f_assoc_resp_sleep_sec = ProtoField.uint8("flyweight.assoc.resp.sleep" , "Sleep Sec", base.DEC)
 
+fwfields.f_assoc_batt_lvl = ProtoField.uint8("flyweight.assoc.chck.battlvl" , "Batt Lvl", base.DEC)
+fwfields.f_assoc_restart_cause = ProtoField.uint8("flyweight.assoc.chck.restartcause" , "Restart Cause", base.DEC, ASSOC_RESTART_CAUSES)
+fwfields.f_assoc_restart_data = ProtoField.uint8("flyweight.assoc.chck.restartdata" , "Restart Data", base.DEC)
+fwfields.f_assoc_restart_pc = ProtoField.uint8("flyweight.assoc.chck.restartpc" , "Restart PC", base.DEC)
+
 fwfields.f_info_cmd = ProtoField.uint8("flyweight.info.cmd" , "Type", base.DEC)
 
 fwfields.f_control_cmd = ProtoField.uint8("flyweight.control.cmd" , "Type", base.DEC, CONTROL_CMDS)
@@ -149,6 +155,9 @@ fwfields.f_control_pos_minval = ProtoField.uint8("flyweight.pos.minval" , "MinVa
 fwfields.f_control_pos_maxval = ProtoField.uint8("flyweight.pos.maxval" , "MaxVal", base.DEC)
 fwfields.f_control_pos_pwmfreq = ProtoField.uint8("flyweight.pos.freq" , "Freq", base.DEC)
 fwfields.f_control_pos_pwmduty = ProtoField.uint8("flyweight.pos.duty" , "Duty", base.DEC)
+
+fwfields.f_control_ack_num = ProtoField.uint8("flyweight.ack.acknum" , "AckNum", base.DEC)
+fwfields.f_control_ack_lqi = ProtoField.uint8("flyweight.ack.lqi" , "AckLQI" , base.DEC)
 
 fwfields.f_msgone_msg = ProtoField.string("flyweight.msgone.msg" , "Message", ftypes.STRING)
 fwfields.f_msgone_font = ProtoField.uint8("flyweight.msgone.font" , "Font", base.DEC)
@@ -286,6 +295,10 @@ function assoc(tvb, pkt, root, flyweight_tree)
     assoc_tree:add_packet_field(fwfields.f_assoc_resp_sleep_sec, tvb:range(18,1), ENC_BIG_ENDIAN)
   elseif assoc_cmd == 2 then
     pkt.cols.info = "AssocCheck".." GUID: "..guid
+    assoc_tree:add_packet_field(fwfields.f_assoc_batt_lvl, tvb:range(16,1), ENC_BIG_ENDIAN)
+    assoc_tree:add_packet_field(fwfields.f_assoc_restart_cause, tvb:range(17,1), ENC_BIG_ENDIAN)
+    assoc_tree:add_packet_field(fwfields.f_assoc_restart_data, tvb:range(18,2), ENC_BIG_ENDIAN)
+    assoc_tree:add_packet_field(fwfields.f_assoc_restart_pc, tvb:range(19,1), ENC_BIG_ENDIAN)
   elseif assoc_cmd == 3 then
     pkt.cols.info = "AssocAck".." GUID: "..guid
   end
@@ -367,6 +380,11 @@ function control(tvb, pkt, root, flyweight_tree)
     pkt.cols.info = "Clear Display"
     local data_dissector = Dissector.get("data")
     data_dissector:call(tvb(8):tvb(), pkt, root)
+   elseif control_cmd == 10 then
+   	local ack_id = tvb:range(8,1):uint()
+   	pkt.cols.info = "CMD Ack "..ack_id
+   	control_tree:add_packet_field(fwfields.f_control_ack_num, tvb:range(8, 1), ENC_BIG_ENDIAN)
+    control_tree:add_packet_field(fwfields.f_control_ack_lqi, tvb:range(9, 1), ENC_BIG_ENDIAN)
   end
 
 end
