@@ -2,6 +2,7 @@ package com.codeshelf.ws.server;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -256,6 +257,19 @@ public class CsServerEndPoint {
 
 	public static Map<String, ExecutorService> getDevicePools() {
 		return devicePools;
+	}
+
+	public static void shutdownDevicePools() {
+		for (Entry<String, ExecutorService> entry : devicePools.entrySet()) {
+			ExecutorService pool = entry.getValue();
+			pool.shutdownNow();
+			try {
+				pool.awaitTermination(5, TimeUnit.SECONDS);
+			} catch (InterruptedException e) {
+				LOGGER.error("Time out waiting for shutdown of device pool: {} {}", entry.getKey(), pool);
+			}
+		}// TODO Auto-generated method stub
+		devicePools.clear();
 	}
 
 }

@@ -382,6 +382,8 @@ public abstract class FrameworkTest implements IntegrationTest {
 		if (staticWebSocketManagerService.isRunning()) {
 			staticWebSocketManagerService.reset();
 		}
+		
+		CsServerEndPoint.shutdownDevicePools();
 
 		CsClientEndpoint.setEventListener(null);
 		CsClientEndpoint.setMessageProcessor(null);
