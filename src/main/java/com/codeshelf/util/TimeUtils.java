@@ -4,8 +4,9 @@ import java.sql.Timestamp;
 import java.util.Calendar;
 
 public class TimeUtils {
-	public static final long MILLISECOUNDS_IN_HOUR = 1000 * 60 * 60;
 	public static final long MILLISECOUNDS_IN_MINUTE = 1000 * 60;
+	public static final long MILLISECOUNDS_IN_HOUR = MILLISECOUNDS_IN_MINUTE * 60;
+	public static final long MILLISECOUNDS_IN_DAY = MILLISECOUNDS_IN_HOUR * 24;
 	
 	public static Timestamp truncateTimeToHour(Timestamp in) {
 		Calendar cal = Calendar.getInstance();
