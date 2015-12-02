@@ -136,6 +136,19 @@ public class DomainObjectManager {
 
 		reportables.add(getArchivableString("OrderDetail", totalDetailsCrit, archiveableDetailsCrit, OrderDetail.staticGetDao()));
 
+		// Replenish Order Details
+		Criteria totalReplenishDetailsCrit = OrderDetail.staticGetDao().createCriteria();
+		totalReplenishDetailsCrit.createAlias("parent", "p");
+		totalReplenishDetailsCrit.add(Restrictions.eq("p.orderType", OrderTypeEnum.REPLENISH));
+
+		Criteria archiveableReplenishDetailsCrit = OrderDetail.staticGetDao().createCriteria();
+		archiveableReplenishDetailsCrit.createAlias("parent", "p");
+		archiveableReplenishDetailsCrit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
+		archiveableReplenishDetailsCrit.add(Restrictions.eq("p.orderType", OrderTypeEnum.REPLENISH));
+		archiveableReplenishDetailsCrit.add(Restrictions.lt("updated", desiredTime));
+		
+		reportables.add(getArchivableString("ReplenOrderDetail", totalReplenishDetailsCrit, archiveableReplenishDetailsCrit, OrderDetail.staticGetDao()));
+
 		// ContainerUse
 		Criteria totalUsesCrit = ContainerUse.staticGetDao().createCriteria();
 		totalUsesCrit.createAlias("parent", "p");
@@ -234,7 +247,22 @@ public class DomainObjectManager {
 		Criteria orderCrit = OrderHeader.staticGetDao().createCriteria();
 		orderCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
 		orderCrit.add(Restrictions.lt("dueDate", desiredTime));
-		List<UUID> uuidList = OrderHeader.staticGetDao().getUUIDListByCriteriaQuery(orderCrit);
+		List<UUID> uuidList = OrderDetail.staticGetDao().getUUIDListByCriteriaQuery(orderCrit);
+		return uuidList;
+	}
+
+	/**
+	 * This returns the full list of UUIDs of OrderDetails from Replenish orders whose 'updated' value is older than daysOld before now.
+	 */
+	public List<UUID> getReplenishDetailsUuidsToPurge(int daysOld) {
+		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
+		UUID facilityUUID = getFacility().getPersistentId();		
+		Criteria detailsCrit = OrderDetail.staticGetDao().createCriteria();
+		detailsCrit.createAlias("parent", "p");
+		detailsCrit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
+		detailsCrit.add(Restrictions.eq("p.orderType", OrderTypeEnum.REPLENISH));
+		detailsCrit.add(Restrictions.lt("updated", desiredTime));
+		List<UUID> uuidList = OrderDetail.staticGetDao().getUUIDListByCriteriaQuery(detailsCrit);
 		return uuidList;
 	}
 
@@ -555,6 +583,27 @@ public class DomainObjectManager {
 		}
 	}
 
+	public int purgeSomeReplenishDetails(List<UUID> detailUuids) {
+		final int MAX_DETAIL_PURGE = 500;
+		int wantToPurge = detailUuids.size();
+		int willPurge = Math.min(wantToPurge, MAX_DETAIL_PURGE);
+		if (wantToPurge > MAX_DETAIL_PURGE) {
+			LOGGER.error("Limiting replenishDetail delete batch size to {}. Called for {}.", MAX_DETAIL_PURGE, wantToPurge);
+		}
+		List<UUID> uuidsToPurge = detailUuids.subList(0, willPurge);
+		LOGGER.debug("Phase 1 of Replenish detail purge: retrieve details and wis to purge.");
+		List<OrderDetail> details = OrderDetail.staticGetDao().findByPersistentIdList(uuidsToPurge);
+		List<WorkInstruction> wis = findByDetailPersistentIdList(uuidsToPurge);
+		
+		LOGGER.debug("Phase 2 of Replenish detail purge: delete the assembled work instructions, which delinks from details and che.");
+		safelyDeleteWorkInstructionList(wis);
+		
+		LOGGER.debug("Phase 3 of Replenish detail purge: delete the details");
+		int deletedDetailCount = safelyDeleteDetailsList(details);
+		
+		return deletedDetailCount;
+	}
+	
 	/**
 	 * Purge these orders, and related objects, all in the current transaction.
 	 * This imposes a max at one time limit of 100. We expect small values per transaction in production
@@ -640,7 +689,7 @@ public class DomainObjectManager {
 			LOGGER.info("deleted {} WorkInstructions ", deletedCount);
 	}
 
-	private void safelyDeleteDetailsList(List<OrderDetail> detailsList) {
+	private int safelyDeleteDetailsList(List<OrderDetail> detailsList) {
 		int deletedCount = 0;
 
 		for (OrderDetail detail : detailsList) {
@@ -662,6 +711,7 @@ public class DomainObjectManager {
 		}
 		if (deletedCount % 100 != 0)
 			LOGGER.info("deleted {} OrderDetails ", deletedCount);
+		return deletedCount;
 	}
 
 	private int floorDays(int daysOldToCount) {

@@ -56,7 +56,6 @@ public class ComputeWorkCommand extends CommandABC {
 
 	@Override
 	public ResponseABC exec() {
-		long start  = System.currentTimeMillis();
 		ComputeWorkResponse response = new ComputeWorkResponse();
 		response.setPurpose(request.getPurpose());
 		String cheId = request.getDeviceId();
@@ -123,7 +122,6 @@ public class ComputeWorkCommand extends CommandABC {
 			response.setNetworkGuid(networkGuid);
 			response.setPathChanged(pathChanged.get());
 			response.setStatus(ResponseStatus.Success);
-			System.out.println("Compute Work Done in " + (System.currentTimeMillis() - start));
 			return response;
 		}
 		response.setStatusMessage("Can't find CHE with id " + cheId);
