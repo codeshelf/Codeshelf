@@ -60,7 +60,7 @@ public class EventResource {
 			if (resolution == null) {
 				resolution = new Resolution();
 			}
-			resolution.setFacility(event.getFacility());
+			resolution.setParent(event.getFacility());
 			resolution.setDomainId(event.getDomainId());
 			resolution.setResolvedBy(resolvedBy);
 			resolution.setTimestamp(new Timestamp(System.currentTimeMillis()));

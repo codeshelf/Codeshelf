@@ -40,7 +40,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Worker extends DomainObjectABC implements Validatable {
+public class Worker extends DomainObjectTreeABC<Facility> implements Validatable {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Worker.class);
 	
 	public static class WorkerDao extends GenericDaoABC<Worker> implements ITypedDao<Worker> {
@@ -55,7 +55,6 @@ public class Worker extends DomainObjectABC implements Validatable {
 
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@Getter
-	@Setter
 	private Facility	facility;
 
 	@Column(nullable = false)
@@ -138,12 +137,15 @@ public class Worker extends DomainObjectABC implements Validatable {
 		return staticGetDao();
 	}
 
-	/*
 	@Override
-	public Facility getFacility() {
-		return facility;
+	public Facility getParent() {
+		return getFacility();
 	}
-	*/
+
+	@Override
+	public void setParent(Facility inParent) {
+		this.facility = inParent;
+	}
 
 	public void generateDomainId() {
 		// v21 domainId same as badge

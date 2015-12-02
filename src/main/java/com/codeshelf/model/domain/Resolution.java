@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Resolution extends DomainObjectABC {
+public class Resolution extends DomainObjectTreeABC<Facility> {
 	public static class ResolutionDao extends GenericDaoABC<Resolution> implements ITypedDao<Resolution> {
 		public final Class<Resolution> getDaoClass() {
 			return Resolution.class;
@@ -34,7 +34,7 @@ public class Resolution extends DomainObjectABC {
 	}
 	
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Setter
+	@Getter
 	private Facility						facility;
 
 	@Column(nullable = false)
@@ -63,7 +63,12 @@ public class Resolution extends DomainObjectABC {
 	}
 
 	@Override
-	public Facility getFacility() {
-		return facility;
+	public Facility getParent() {
+		return getFacility();
+	}
+
+	@Override
+	public void setParent(Facility inParent) {
+		this.facility = inParent;
 	}
 }

@@ -34,7 +34,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class WorkerEvent extends DomainObjectABC {
+public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 	public static class WorkerEventDao extends GenericDaoABC<WorkerEvent> implements ITypedDao<WorkerEvent> {
 		public final Class<WorkerEvent> getDaoClass() {
 			return WorkerEvent.class;
@@ -54,7 +54,7 @@ public class WorkerEvent extends DomainObjectABC {
 	}
 
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Setter
+	@Getter
 	private Facility						facility;
 
 	@ManyToOne(optional = true, fetch = FetchType.LAZY)
@@ -117,7 +117,7 @@ public class WorkerEvent extends DomainObjectABC {
 		setDeviceGuid(che.getDeviceGuidStr());
 		setDevicePersistentId(che.getPersistentId().toString());
 		setEventType(eventType);
-		setFacility(che.getFacility());
+		setParent(che.getFacility());
 		setWorkerId(workerId);
 		generateDomainId();
 	}
@@ -125,12 +125,22 @@ public class WorkerEvent extends DomainObjectABC {
 	public WorkerEvent(WorkerEvent.EventType eventType, Facility facility, String workerId, String description) {
 		setCreated(new Timestamp(System.currentTimeMillis()));
 		setEventType(eventType);
-		setFacility(facility);
+		setParent(facility);
 		setWorkerId(workerId);
 		setDevicePersistentId("");
 		setDeviceGuid("");
 		setDescription(description);
 		generateDomainId();
+	}
+	
+	@Override
+	public Facility getParent() {
+		return getFacility();
+	}
+
+	@Override
+	public void setParent(Facility inParent) {
+		this.facility = inParent;
 	}
 	
 	public void setDescription(String description){
@@ -149,11 +159,6 @@ public class WorkerEvent extends DomainObjectABC {
 	@SuppressWarnings("unchecked")
 	public final ITypedDao<WorkerEvent> getDao() {
 		return staticGetDao();
-	}
-
-	@Override
-	public Facility getFacility() {
-		return facility;
 	}
 
 	public void generateDomainId(){

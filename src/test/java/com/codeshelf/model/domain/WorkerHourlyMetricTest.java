@@ -121,7 +121,7 @@ public class WorkerHourlyMetricTest extends HibernateTest{
 	
 	private Worker createWorker(Facility facility, String badge) {
 		Worker worker = new Worker();
-		worker.setFacility(facility);
+		worker.setParent(facility);
 		worker.setActive(true);
 		worker.setLastName(badge);
 		worker.setBadgeId(badge);

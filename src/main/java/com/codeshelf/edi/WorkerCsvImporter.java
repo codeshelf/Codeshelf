@@ -165,7 +165,7 @@ public class WorkerCsvImporter extends CsvImporter<WorkerCsvBean> implements ICs
 			}
 		}
 
-		result.setFacility(newFacility);
+		result.setParent(newFacility);
 		result.setFirstName(newFirst);
 		// If last name field is missing or blank, force the badgeId there
 		if (newLast != null && !newLast.isEmpty())

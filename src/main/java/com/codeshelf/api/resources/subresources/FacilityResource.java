@@ -376,7 +376,7 @@ public class FacilityResource {
 	public Response createWorker(Worker worker) {
 		ErrorResponse errors = new ErrorResponse();
 		try {
-			worker.setFacility(facility);
+			worker.setParent(facility);
 			worker.generateDomainId();
 			if (worker.getActive() == null) {
 				worker.setActive(true);

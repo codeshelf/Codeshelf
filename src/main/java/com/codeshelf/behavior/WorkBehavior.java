@@ -2327,7 +2327,7 @@ public class WorkBehavior implements IApiBehavior {
 				if (worker == null) {
 					//No authentication + unknown worker = succeeded + new worker
 					worker = new Worker();
-					worker.setFacility(facility);
+					worker.setParent(facility);
 					worker.setActive(true);
 					worker.setLastName(badge);
 					worker.setBadgeId(badge);

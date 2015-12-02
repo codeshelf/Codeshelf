@@ -36,7 +36,7 @@ public class WorkerResource {
 		try {
 			//Set fields in the new objects for validation
 			updatedWorker.setPersistentId(worker.getPersistentId());
-			updatedWorker.setFacility(worker.getFacility());
+			updatedWorker.setParent(worker.getFacility());
 			if (!updatedWorker.isValid(errors)){
 				errors.setStatus(Status.BAD_REQUEST);
 				return errors.buildResponse();

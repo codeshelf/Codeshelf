@@ -155,7 +155,7 @@ public class CheProcessVerifyBadge extends ServerTest {
 	
 	private Worker createWorker(Facility facility, String lastName, String badgeId){
 		Worker worker = new Worker();
-		worker.setFacility(facility);
+		worker.setParent(facility);
 		worker.setLastName(lastName);
 		worker.setBadgeId(badgeId);
 		worker.setActive(true);

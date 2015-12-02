@@ -75,7 +75,7 @@ public class NotificationBehavior implements IApiBehavior{
 		WorkerEvent event = new WorkerEvent();
 		Che device = wi.getAssignedChe();
 		event.setDeviceGuid(device.getDeviceGuidStr());
-		event.setFacility(device.getFacility());
+		event.setParent(device.getFacility());
 		event.setDevicePersistentId(device.getPersistentId().toString());
 		
 		event.setCreated(wi.getCompleted());
@@ -115,7 +115,7 @@ public class NotificationBehavior implements IApiBehavior{
 				throw new IllegalArgumentException(String.format("unable to find %s device %s (%s)", deviceClass, message.getDevicePersistentId(), message.getNetGuidStr()));
 			}
 			event.setDeviceGuid(new NetGuid(message.getNetGuidStr()).toString());
-			event.setFacility(device.getFacility());
+			event.setParent(device.getFacility());
 			event.setDevicePersistentId(device.getPersistentId().toString());
 			
 			event.setCreated(new Timestamp(message.getTimestamp()));
