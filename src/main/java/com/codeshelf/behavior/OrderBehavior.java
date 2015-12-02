@@ -15,10 +15,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-
 import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.hibernate.Criteria;
 import org.hibernate.FetchMode;
@@ -38,6 +34,7 @@ import com.codeshelf.behavior.ProductivitySummaryList.StatusSummary;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
@@ -47,6 +44,10 @@ import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.util.CompareNullChecker;
 import com.codeshelf.util.UomNormalizer;
 import com.google.common.base.Strings;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Functionality that reports and manipulates the Orders model (ie. OrderHeader, OrderGroups and OrderDetails).
@@ -78,6 +79,10 @@ public class OrderBehavior implements IApiBehavior {
 		@Setter
 		private int				planQuantity;
 		@Getter
+		@Setter
+		private String			preferredLocation
+;
+		@Getter
 		private OrderStatusEnum	status;
 
 		public void setStatusEnum(OrderStatusEnum statusEnum) {
@@ -88,6 +93,24 @@ public class OrderBehavior implements IApiBehavior {
 			status = OrderStatusEnum.valueOf(statusString);
 		}
 
+		public String getGtin() {
+			//TODO hopefully fast enough
+			@SuppressWarnings("unchecked")
+			List<Object> results = Gtin.staticGetDao().createCriteria()
+				.createAlias("parent", "im")
+				.createAlias("uomMaster", "um")
+				.add(Property.forName("im.domainId").eq(getItemId()))
+				.add(Property.forName("um.domainId").eq(UomNormalizer.normalizeString(getUom())))
+				.setProjection(Property.forName("domainId"))
+				.setCacheable(true)
+				.setMaxResults(1)
+				.list();
+			if (results.size() > 0) {
+				return (String) results.get(0);
+			} else {
+				return "";
+			}
+		}
 	}
 
 	public static class ItemView {
@@ -212,6 +235,8 @@ public class OrderBehavior implements IApiBehavior {
 
 	@SuppressWarnings("unchecked")
 	public List<OrderDetailView> getOrderDetailsForOrderId(Facility facility, String orderDomainId) {
+		//NOTE: gtin retrieved in the OrderDetailView not sure how to join it in well in Criteria
+		
 		return (List<OrderDetailView>) OrderDetail.staticGetDao()
 			.createCriteria()
 			.createAlias("itemMaster", "im")
@@ -225,6 +250,7 @@ public class OrderBehavior implements IApiBehavior {
 				.add(Projections.property("description").as("description"))
 				.add(Projections.property("quantity").as("planQuantity"))
 				.add(Projections.property("status").as("statusEnum"))
+				.add(Projections.property("preferredLocation").as("preferredLocation"))
 				.add(Projections.property("im.domainId"), "itemId")
 				.add(Projections.property("um.domainId").as("uom"))
 				.add(Projections.property("order.domainId").as("orderId")))
