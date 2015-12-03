@@ -57,12 +57,6 @@ public class ContainerUse extends DomainObjectTreeABC<Container> {
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ContainerUse.class);
 
-	// The container used.
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
-	@Getter
-	@Setter
-	private Container			parent;
-
 	// Use date.
 	@Column(nullable = false,name="used_on")
 	@Getter

@@ -7,8 +7,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Cache;
@@ -40,11 +38,6 @@ public class ExportMessage extends DomainObjectTreeABC<Facility>{
 	
 	public enum ExportMessageType {ORDER_ON_CART_ADDED, ORDER_ON_CART_FINISHED}
 	//private static final Logger		LOGGER				= LoggerFactory.getLogger(ExportMessage.class);
-	
-	@ManyToOne(optional = false, fetch=FetchType.EAGER)
-	@Getter
-	@Setter
-	protected Facility			parent;
 	
 	@Column(nullable = false)
 	@Getter

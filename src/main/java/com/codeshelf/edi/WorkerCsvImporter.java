@@ -90,7 +90,7 @@ public class WorkerCsvImporter extends CsvImporter<WorkerCsvBean> implements ICs
 		// But leave other facility workers alone.
 		UUID facilityUUID = inFacility.getPersistentId();
 		Criteria criteria = Worker.staticGetDao().createCriteria();
-		criteria.add(Restrictions.eq("facility.persistentId", facilityUUID));
+		criteria.add(Restrictions.eq("parent.persistentId", facilityUUID));
 		criteria.add(Restrictions.eq("active", true));
 
 		List<Worker> workers = Worker.staticGetDao().findByCriteriaQuery(criteria);

@@ -8,8 +8,6 @@ package com.codeshelf.model.domain;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -53,12 +51,6 @@ public class Vertex extends DomainObjectTreeABC<Location> {
 
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Vertex.class);
-
-	// The owning location.
-	@ManyToOne(optional = false,fetch=FetchType.LAZY)
-	@Getter
-	@Setter
-	private Location			parent;
 
 	@NonNull
 	@Getter

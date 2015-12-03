@@ -7,8 +7,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
@@ -37,11 +35,6 @@ public class ScheduledJob extends DomainObjectTreeABC<Facility> {
 			return ScheduledJob.class;
 		}
 	}
-	// The parent facility.
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private Facility					parent;
 
 	@Column(nullable = false, name = "type")
 	@Enumerated(value = EnumType.STRING)

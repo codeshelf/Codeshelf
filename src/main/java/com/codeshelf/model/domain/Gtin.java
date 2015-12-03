@@ -57,12 +57,6 @@ public class Gtin extends DomainObjectTreeABC<ItemMaster> {
 		}
 	}
 
-	// The owning location.
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private ItemMaster	parent;
-
 	// The actual UoM.
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@JoinColumn(name = "uom_master_persistentid")

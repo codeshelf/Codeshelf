@@ -4,8 +4,8 @@ import java.util.List;
 
 import com.codeshelf.edi.EdiImportService;
 import com.codeshelf.edi.IEdiExportGateway;
-import com.codeshelf.edi.IEdiGateway;
 import com.codeshelf.edi.IEdiImportGateway;
+import com.codeshelf.model.domain.EdiGateway;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.SftpGateway;
 import com.codeshelf.service.ExtensionPointEngine;
@@ -53,8 +53,8 @@ public class EdiHealthCheck extends HealthCheckRefreshJob{
 
 	private String testEDIServices(Facility facility) throws Exception{
 		StringBuilder errors = new StringBuilder();
-		List<IEdiGateway> ediGateways = facility.getEdiGateways();
-		for (IEdiGateway ediGateway : ediGateways){
+		List<EdiGateway> ediGateways = facility.getEdiGateways();
+		for (EdiGateway ediGateway : ediGateways){
 			//Skip inactive EDI gateways
 			if (!ediGateway.isActive()){
 				continue;

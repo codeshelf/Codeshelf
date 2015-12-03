@@ -198,10 +198,10 @@ public class DomainObjectManager {
 
 		// WorkerEvents
 		Criteria totalEventCrit = WorkerEvent.staticGetDao().createCriteria();
-		totalEventCrit.add(Restrictions.eq("facility.persistentId", facilityUUID));
+		totalEventCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
 
 		Criteria archiveableEventCrit = WorkerEvent.staticGetDao().createCriteria();
-		archiveableEventCrit.add(Restrictions.eq("facility.persistentId", facilityUUID));
+		archiveableEventCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
 		archiveableEventCrit.add(Restrictions.lt("created", desiredTime));
 
 		reportables.add(getArchivableString("WorkerEvent", totalEventCrit, archiveableEventCrit, WorkerEvent.staticGetDao()));
@@ -273,7 +273,7 @@ public class DomainObjectManager {
 		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
 		UUID facilityUUID = getFacility().getPersistentId();
 		Criteria eventCrit = WorkerEvent.staticGetDao().createCriteria();
-		eventCrit.add(Restrictions.eq("facility.persistentId", facilityUUID));
+		eventCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
 		eventCrit.add(Restrictions.lt("created", desiredTime));
 		List<UUID> uuidList = WorkerEvent.staticGetDao().getUUIDListByCriteriaQuery(eventCrit);
 		return uuidList;

@@ -71,12 +71,6 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 
 	private static final Comparator<String>	asciiAlphanumericComparator	= new ASCIIAlphanumericComparator();
 
-	// The parent facility.
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private Facility						parent;
-
 	// The description.
 	@Column(nullable = true)
 	@Getter

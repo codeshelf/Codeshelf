@@ -188,7 +188,7 @@ public class NotificationBehavior implements IApiBehavior{
         criteria.setProjection(Projections.projectionList()
         		.add(Projections.groupProperty("eventType"), "eventType")
         		.add(Projections.rowCount(), "count"))
-        	.add(Restrictions.eq("facility", facility));
+        	.add(Restrictions.eq("parent", facility));
         	if (resolved){
         		criteria.add(Restrictions.isNotNull("resolution"));
         	} else {

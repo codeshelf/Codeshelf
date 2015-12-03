@@ -74,11 +74,6 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private Timestamp updated;
 
-	// The parent facility.
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
-	@Getter
-	private Facility parent;
-
 	@OneToMany(mappedBy = "parent")
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
@@ -117,10 +112,6 @@ public class Container extends DomainObjectTreeABC<Facility> {
 
 	public Facility getFacility() {
 		return getParent();
-	}
-
-	public void setParent(Facility inParent) {
-		parent = inParent;
 	}
 
 	public List<? extends IDomainObject> getChildren() {

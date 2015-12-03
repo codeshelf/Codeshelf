@@ -82,12 +82,6 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	@SuppressWarnings("unused")
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(WorkInstruction.class);
 
-	// The parent is the facility
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private Facility					parent;
-
 	// Type.
 	@Column(nullable = false)
 	@Enumerated(value = EnumType.STRING)

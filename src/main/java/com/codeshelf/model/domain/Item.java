@@ -62,12 +62,6 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Item.class);
 
-	// The owning location.
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private ItemMaster			parent;
-
 	// The stored location.
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@JoinColumn(name = "stored_location_persistentid")
@@ -151,7 +145,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 	public String getItemId() {
-		return parent.getItemId();
+		return getParent().getItemId();
 	}
 
 	public void setStoredLocation(final Location inStoredLocation) {

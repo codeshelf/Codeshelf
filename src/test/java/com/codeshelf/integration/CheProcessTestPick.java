@@ -1314,7 +1314,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		LOGGER.info("6: Ensure that the currect Detail-WI-Mismatch events were created due to some work aldeady been done to the changed details");
 		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", getFacility()));
+		filterParams.add(Restrictions.eq("parent", getFacility()));
 		filterParams.add(Restrictions.eq("eventType", WorkerEvent.EventType.DETAIL_WI_MISMATCHED));
 		List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
 		Assert.assertEquals(2, events.size());

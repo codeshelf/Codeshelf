@@ -8,8 +8,6 @@ import java.util.UUID;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -52,10 +50,6 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 	public static ITypedDao<Worker> staticGetDao() {
 		return TenantPersistenceService.getInstance().getDao(Worker.class);
 	}
-
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	private Facility	facility;
 
 	@Column(nullable = false)
 	@Getter
@@ -138,15 +132,10 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 	}
 
 	@Override
-	public Facility getParent() {
-		return getFacility();
+	public Facility getFacility() {
+		return getParent();
 	}
-
-	@Override
-	public void setParent(Facility inParent) {
-		this.facility = inParent;
-	}
-
+	
 	public void generateDomainId() {
 		// v21 domainId same as badge
 		// only null badgeId from unit test
@@ -212,7 +201,7 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 			return true;
 		}
 		//Try to find another active worker with the same badge
-		Worker matchingWorker = findWorker(facility, badgeId, getPersistentId());
+		Worker matchingWorker = findWorker(getParent(), badgeId, getPersistentId());
 		return matchingWorker == null;
 	}
 
@@ -237,7 +226,7 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 
 	public static Worker findWorker(Facility facility, String badgeId, UUID skipWorker) {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", facility));
+		filterParams.add(Restrictions.eq("parent", facility));
 		filterParams.add(Restrictions.eq("domainId", badgeId));
 		filterParams.add(Restrictions.eq("active", true));
 		if (skipWorker != null) {

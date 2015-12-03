@@ -11,9 +11,7 @@ import java.util.List;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -54,12 +52,6 @@ public class WorkArea extends DomainObjectTreeABC<Path> {
 
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(WorkArea.class);
-
-	// The parent facility.
-	@OneToOne(optional = false, fetch=FetchType.LAZY)
-	@Getter
-	@Setter
-	private Path parent;
 
 	// The work area ID.
 	@Column(nullable = false,name="work_area_id")

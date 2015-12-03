@@ -5,8 +5,6 @@ import java.sql.Timestamp;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Cache;
@@ -32,11 +30,6 @@ public class FacilityMetric extends DomainObjectTreeABC<Facility>{
 			return FacilityMetric.class;
 		}
 	}
-
-	@ManyToOne(optional = false, fetch=FetchType.EAGER)
-	@Getter
-	@Setter
-	protected Facility	parent;
 
 	@Column(nullable = false)
 	@Getter

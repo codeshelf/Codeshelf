@@ -53,10 +53,6 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 		return TenantPersistenceService.getInstance().getDao(WorkerEvent.class);
 	}
 
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	private Facility						facility;
-
 	@ManyToOne(optional = true, fetch = FetchType.LAZY)
 	@Getter @Setter
 	private Resolution						resolution;
@@ -134,13 +130,8 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 	}
 	
 	@Override
-	public Facility getParent() {
-		return getFacility();
-	}
-
-	@Override
-	public void setParent(Facility inParent) {
-		this.facility = inParent;
+	public Facility getFacility() {
+		return getParent();
 	}
 	
 	public void setDescription(String description){

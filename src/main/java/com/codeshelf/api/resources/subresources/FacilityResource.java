@@ -363,7 +363,7 @@ public class FacilityResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getAllWorkersInFacility() {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", facility));
+		filterParams.add(Restrictions.eq("parent", facility));
 		List<Worker> workers = Worker.staticGetDao().findByFilter(filterParams);
 		return BaseResponse.buildResponse(workers);
 	}
@@ -408,7 +408,7 @@ public class FacilityResource {
 		ErrorResponse errors = new ErrorResponse();
 		try {
 			List<Criterion> filterParams = new ArrayList<Criterion>();
-			filterParams.add(Restrictions.eq("facility", facility));
+			filterParams.add(Restrictions.eq("parent", facility));
 			//If any "type" parameters are provided, filter accordingly
 			List<WorkerEvent.EventType> typeList = Lists.newArrayList();
 			for (EventTypeParam type : typeParamList) {

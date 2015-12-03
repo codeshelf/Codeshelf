@@ -74,12 +74,6 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 	private static final Comparator<String>	asciiAlphanumericComparator	= new ASCIIAlphanumericComparator();
 
-	// The owning order header.
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private OrderHeader						parent;
-
 	// The collective order status.
 	@Column(nullable = false)
 	@Enumerated(value = EnumType.STRING)
@@ -460,14 +454,14 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	}
 
 	public String getGroupUi() {
-		OrderGroup theGroup = parent.getOrderGroup();
+		OrderGroup theGroup = getParent().getOrderGroup();
 		if (theGroup == null)
 			return "";
 		return theGroup.getDomainId();
 	}
 
 	public String getOrderLocationAliasIds() {
-		return parent.getOrderLocationAliasIds();
+		return getParent().getOrderLocationAliasIds();
 	}
 
 	/**

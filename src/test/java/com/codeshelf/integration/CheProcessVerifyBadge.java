@@ -166,7 +166,7 @@ public class CheProcessVerifyBadge extends ServerTest {
 	
 	private Worker findWorker(Facility facility, String badgeId) {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", facility));
+		filterParams.add(Restrictions.eq("parent", facility));
 		filterParams.add(Restrictions.eq("badgeId", badgeId));
 		filterParams.add(Restrictions.eq("active", true));
 		List<Worker> workers = Worker.staticGetDao().findByFilter(filterParams);

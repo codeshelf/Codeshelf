@@ -188,7 +188,6 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	@MapKey(name = "domainId")
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
-	@Setter
 	private Map<String, Location>		locations		= new HashMap<String, Location>();
 
 	// The location aliases for this location.
@@ -222,12 +221,6 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	@Getter
 	@Setter
 	private Boolean						active;
-
-	// The owning location.
-	@ManyToOne(optional = true, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private Location					parent;
 
 	@Column(nullable = false, name = "pick_face_end_pos_type")
 	@Enumerated(value = EnumType.STRING)
@@ -335,7 +328,11 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	}
 
 	public List<Location> getChildren() {
-		return new ArrayList<Location>(getLocations().values());
+		ArrayList<Location> children = new ArrayList<Location>(getLocations().values());
+		if (this instanceof Facility && children.contains(this)) {
+			children.remove(this);
+		}
+		return children;
 	}
 
 	public List<Location> getActiveChildren() {
@@ -573,7 +570,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 
 		IDomainObject oldParent = inLocation.getParent();
 		if (oldParent == null) {
-			locations.put(inLocation.getDomainId(), inLocation);
+			getLocations().put(inLocation.getDomainId(), inLocation);
 			inLocation.setParent(this);
 		} else if (!oldParent.equals(this)) {
 			LOGGER.error("cannot add Location " + inLocation.getDomainId() + " to " + this.getClassName() + " "
@@ -600,7 +597,7 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		} // else
 
 		// Hibernate: This result is going to get cast, so deproxify here to avoid problems.
-		return TenantPersistenceService.<Location> deproxify(locations.get(inLocationId));
+		return TenantPersistenceService.<Location> deproxify(getLocations().get(inLocationId));
 	}
 
 	// --------------------------------------------------------------------------
@@ -608,10 +605,10 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 	 * @see com.codeshelf.model.domain.LocationABC#removeLocation(java.lang.String)
 	 */
 	public void removeLocation(String inLocationId) {
-		Location location = locations.get(inLocationId);
+		Location location = getLocations().get(inLocationId);
 		if (location != null) {
 			location.setParent(null);
-			locations.remove(inLocationId);
+			getLocations().remove(inLocationId);
 		} else {
 			LOGGER.error("cannot remove SubLocationABC " + inLocationId + " from " + this.getDomainId()
 					+ " because it isn't found in children");

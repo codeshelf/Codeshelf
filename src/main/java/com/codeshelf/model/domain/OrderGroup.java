@@ -16,8 +16,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -64,12 +62,6 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	public final static String			DEFAULT_ORDER_GROUP_DESC_PREFIX	= "Order group - ";
 
 	private static final Logger			LOGGER							= LoggerFactory.getLogger(OrderGroup.class);
-
-	// The parent facility.
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
-	@Getter
-	@Setter
-	private Facility					parent;
 
 	// The collective order status.
 	@Column(nullable = false)

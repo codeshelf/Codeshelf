@@ -5,8 +5,6 @@ import java.sql.Timestamp;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import lombok.Getter;
@@ -33,10 +31,6 @@ public class Resolution extends DomainObjectTreeABC<Facility> {
 		}
 	}
 	
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	private Facility						facility;
-
 	@Column(nullable = false)
 	@Getter @Setter
 	@JsonProperty
@@ -63,12 +57,7 @@ public class Resolution extends DomainObjectTreeABC<Facility> {
 	}
 
 	@Override
-	public Facility getParent() {
-		return getFacility();
-	}
-
-	@Override
-	public void setParent(Facility inParent) {
-		this.facility = inParent;
+	public Facility getFacility() {
+		return getParent();
 	}
 }

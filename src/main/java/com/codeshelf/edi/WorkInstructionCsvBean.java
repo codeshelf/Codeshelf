@@ -15,8 +15,6 @@ import java.util.TimeZone;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.Cache;
@@ -55,10 +53,6 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 	
 	// Potentially missing fields: description, gtin.  lotId is probably superfluous.
 	// Note that for bean export, null field will export as "null" instead of "". We want "". See handling on pickerId
-
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
-	@Getter @Setter
-	protected Facility		parent;
 
 	@Column(nullable = false)
 	@Getter @Setter

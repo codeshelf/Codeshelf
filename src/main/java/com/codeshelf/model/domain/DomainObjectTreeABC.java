@@ -7,23 +7,35 @@ package com.codeshelf.model.domain;
 
 import java.util.UUID;
 
+import javax.persistence.FetchType;
+import javax.persistence.ManyToOne;
+import javax.persistence.MappedSuperclass;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import lombok.Getter;
+import lombok.Setter;
+
 /**
  * @author jeffw
  *
  */
 
+@MappedSuperclass
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public abstract class DomainObjectTreeABC<P extends IDomainObject> extends DomainObjectABC implements IDomainObjectTree<P> {
 
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(DomainObjectTreeABC.class);
 
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+	@Getter @Setter
+	private P	parent;
+	
 	public DomainObjectTreeABC() {
 		super();
 	}
@@ -40,7 +52,7 @@ public abstract class DomainObjectTreeABC<P extends IDomainObject> extends Domai
 	public String getFullDomainId() {
 		return getParentFullDomainId() + "." + getDomainId();
 	}
-
+	
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
 	 * @see com.codeshelf.model.domain.IDomainObject#getFullParentDomainId()

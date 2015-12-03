@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog 
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog" 
+	logicalFilePath="db.changelog-v25.7.xml"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+	<changeSet author="ilya (generated)" id="1449093847921-5">
+		<renameColumn tableName="worker" oldColumnName="facility_persistentid" newColumnName="parent_persistentid"/>
+    </changeSet>
+    <changeSet author="ilya (generated)" id="1449093847921-6">
+		<renameColumn tableName="resolution" oldColumnName="facility_persistentid" newColumnName="parent_persistentid"/>
+		<renameColumn tableName="event_worker" oldColumnName="facility_persistentid" newColumnName="parent_persistentid"/>
+    </changeSet>
+    <changeSet author="ilya (generated)" id="1449093847921-7">
+        <sql dbms="postgresql" stripComments="true">
+        	UPDATE ${database.defaultSchemaName}.location
+            SET parent_persistentid = persistentid
+            WHERE dtype = 'FACILITY'
+        </sql>
+    </changeSet>
+    <changeSet author="ilya (generated)" id="1449093847921-8">
+       	<dropUniqueConstraint constraintName="uc_work_area_parent_persistentid" tableName="work_area"/>
+       	<addNotNullConstraint columnDataType="uuid" columnName="parent_persistentid" tableName="location"/>
+    </changeSet>
+</databaseChangeLog>

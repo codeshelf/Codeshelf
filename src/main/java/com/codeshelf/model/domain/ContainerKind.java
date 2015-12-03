@@ -9,8 +9,6 @@ import java.util.List;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -50,12 +48,6 @@ public class ContainerKind extends DomainObjectTreeABC<Facility> {
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(ContainerKind.class);
 
 	public static final String	DEFAULT_CONTAINER_KIND	= "DEFAULT";
-
-	// The parent facility.
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
-	@Getter
-	@Setter
-	private Facility parent;
 
 	// The container class ID.
 	@Column(nullable = false,name="class_id")

@@ -105,10 +105,10 @@ public class Facility extends Location {
 	@MapKey(name = "domainId")
 	private Map<String, ContainerKind>		containerKinds	= new HashMap<String, ContainerKind>();
 
-	@OneToMany(mappedBy = "parent", targetEntity = EdiGateway.class, orphanRemoval = true)
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
-	private List<IEdiGateway>				ediGateways		= new ArrayList<IEdiGateway>();
+	private List<EdiGateway>				ediGateways		= new ArrayList<EdiGateway>();
 
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	@MapKey(name = "domainId")
@@ -126,16 +126,16 @@ public class Facility extends Location {
 	@MapKey(name = "domainId")
 	private Map<String, UomMaster>			uomMasters		= new HashMap<String, UomMaster>();
 
-	@OneToMany(mappedBy = "facility", orphanRemoval = true)
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	private List<Worker>					workers;
 
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	private List<ImportReceipt>				dataImportReceipts;
 
-	@OneToMany(mappedBy = "facility", orphanRemoval = true)
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	private List<WorkerEvent>				workerEvents;
 
-	@OneToMany(mappedBy = "facility", orphanRemoval = true)
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	private List<Resolution>				resolutions;
 
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
@@ -148,9 +148,8 @@ public class Facility extends Location {
 	private List<FacilityMetric>			faciiltyMetrics;
 	
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
-	@MapKey(name = "name")
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-	private Map<String, FacilityProperty>	facilityProperties	= new HashMap<String, FacilityProperty>();
+	private List<FacilityProperty>	facilityProperties;
 	
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	private List<ScheduledJob>			scheduledJobs;
@@ -158,6 +157,9 @@ public class Facility extends Location {
 
 	public Facility() {
 		super();
+		//Since all Domain Tree obects now have to have a parent, set Facility as it's own parent.
+		//Make sure not to fall into any endless loops with this
+		setParent(this);
 	}
 
 	@Override
@@ -271,7 +273,7 @@ public class Facility extends Location {
 		}
 	}
 
-	public void addEdiGateway(IEdiGateway inEdiGateway) {
+	public void addEdiGateway(EdiGateway inEdiGateway) {
 		Facility previousFacility = inEdiGateway.getParent();
 		if (previousFacility == null) {
 			ediGateways.add(inEdiGateway);
@@ -282,7 +284,7 @@ public class Facility extends Location {
 		}
 	}
 
-	public void removeEdiGateway(IEdiGateway inEdiGateway) {
+	public void removeEdiGateway(EdiGateway inEdiGateway) {
 		if (this.ediGateways.contains(inEdiGateway)) {
 			inEdiGateway.setParent(null);
 			ediGateways.remove(inEdiGateway);
@@ -1187,16 +1189,6 @@ public class Facility extends Location {
 		return null;
 	}
 
-	@Override
-	public void setParent(Location inParent) {
-		if (inParent != null) {
-			String msg = "tried to set Facility " + this.getDomainId() + " parent to non-null " + inParent.getClassName() + " "
-					+ inParent.getDomainId();
-			LOGGER.error(msg);
-			throw new UnsupportedOperationException(msg);
-		}
-	}
-
 	public UomMaster createUomMaster(String inDomainId) {
 		UomMaster uomMaster = UomMaster.staticGetDao().findByDomainId(this, inDomainId);
 		if (uomMaster == null) {
@@ -1531,7 +1523,7 @@ public class Facility extends Location {
 
 	private void computeEventMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc) {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", this));
+		filterParams.add(Restrictions.eq("parent", this));
 		filterParams.add(Restrictions.eq("eventType", EventType.SKIP_ITEM_SCAN));
 		filterParams.add(Restrictions.ge("created", startUtc));
 		filterParams.add(Restrictions.le("created", endUtc));
@@ -1539,7 +1531,7 @@ public class Facility extends Location {
 		metric.setSkipScanEvents(skipEventsCount);
 
 		filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", this));
+		filterParams.add(Restrictions.eq("parent", this));
 		filterParams.add(Restrictions.eq("eventType", EventType.PALLETIZER_PUT));
 		filterParams.add(Restrictions.ge("created", startUtc));
 		filterParams.add(Restrictions.le("created", endUtc));
@@ -1547,7 +1539,7 @@ public class Facility extends Location {
 		metric.setPalletizerPuts(palletizerPutsCount);
 
 		filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", this));
+		filterParams.add(Restrictions.eq("parent", this));
 		filterParams.add(Restrictions.eq("eventType", EventType.PUTWALL_PUT));
 		filterParams.add(Restrictions.ge("created", startUtc));
 		filterParams.add(Restrictions.le("created", endUtc));
@@ -1555,7 +1547,7 @@ public class Facility extends Location {
 		metric.setPutWallPuts(putwallPutsCount);
 
 		filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", this));
+		filterParams.add(Restrictions.eq("parent", this));
 		filterParams.add(Restrictions.eq("eventType", EventType.SKUWALL_PUT));
 		filterParams.add(Restrictions.ge("created", startUtc));
 		filterParams.add(Restrictions.le("created", endUtc));

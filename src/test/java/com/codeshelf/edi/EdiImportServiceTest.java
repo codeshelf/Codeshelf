@@ -12,9 +12,7 @@ import java.io.Reader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
-import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -24,10 +22,7 @@ import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.EdiTransportType;
-import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.IDomainObject;
-import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.validation.BatchResult;
 import com.google.common.collect.ImmutableList;
@@ -121,49 +116,6 @@ public class EdiImportServiceTest extends MockDaoTest {
 		
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	@Test
-	public final void ediImportServiceTest() {
-		LOGGER.info("starting ediImportServiceTest");
-
-		final Result linkedResult = new Result();
-		final Result unlinkedResult = new Result();
-
-		getFacility();
-		IEdiGateway ediGatewayLinked = new DummyGateway(true, linkedResult);
-		IEdiGateway ediGatewayUnlinked = new DummyGateway(false, unlinkedResult);
-		Facility facility = getFacility();
-		facility.addEdiGateway(ediGatewayUnlinked);
-		facility.addEdiGateway(ediGatewayLinked);
-
-		Provider anyProvider = mock(Provider.class);
-		EdiImportService ediImportService = new EdiImportService(anyProvider,
-			anyProvider,
-			anyProvider,
-			anyProvider,
-			anyProvider,
-			anyProvider);
-
-		IMetricsService metrics = new DummyMetricsService();
-		MetricsService.setInstance(metrics);	// will be restored to normal values by framework
-
-		this.ephemeralServices = new ArrayList<Service>();
-		ephemeralServices.add(ediImportService);
-		ephemeralServices.add(metrics);
-		CodeshelfSecurityManager.removeContext();
-
-		this.initializeEphemeralServiceManager();
-
-		try {
-			// Sleep will switch us to the EdiImportService thread.
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-		}
-
-		Assert.assertTrue(linkedResult.processed);
-		Assert.assertFalse(unlinkedResult.processed);
-
-	}
 
 	private ICsvOrderImporter generateFailingImporter() {
 		return new ICsvOrderImporter() {
@@ -193,132 +145,5 @@ public class EdiImportServiceTest extends MockDaoTest {
 			}
 
 		};
-	}
-	
-	private final class Result {
-		public boolean	processed = false;
-	}
-
-	private class DummyGateway implements IEdiImportGateway{
-		private Result result;
-		private boolean linked;
-		
-		public DummyGateway(boolean linked, Result result) {
-			this.linked = linked;
-			this.result = result;
-		}
-		
-		public boolean isLinked() {
-			return linked;
-		}
-
-		public boolean getUpdatesFromHost(ICsvOrderImporter inCsvOrdersImporter,
-			ICsvOrderLocationImporter iCsvOrderLocationImporter,
-			ICsvInventoryImporter inCsvInventoryImporter,
-			ICsvLocationAliasImporter inCsvLocationsImporter,
-			ICsvCrossBatchImporter inCsvCrossBatchImporter,
-			ICsvAislesFileImporter inCsvAislesFileImporter) {
-			result.processed = true;
-			return true;
-		}
-
-		@Override
-		public String getServiceName() {
-			return "DUMMY";
-		}
-
-		@Override
-		public Facility getParent() {
-			return null;
-		}
-
-		@Override
-		public void setParent(Facility inParent) {
-		}
-
-		@Override
-		public UUID getParentPersistentId() {
-			return null;
-		}
-
-		@Override
-		public String getParentFullDomainId() {
-			return null;
-		}
-
-		@Override
-		public String getFullDomainId() {
-			return null;
-		}
-
-		@Override
-		public String getDefaultDomainIdPrefix() {
-			return null;
-		}
-
-		@Override
-		public String getDomainId() {
-			return null;
-		}
-
-		@Override
-		public void setDomainId(String inId) {
-		}
-
-		@Override
-		public String getClassName() {
-			return null;
-		}
-
-		@Override
-		public UUID getPersistentId() {
-			return null;
-		}
-
-		@Override
-		public void setPersistentId(UUID inPersistentId) {
-		}
-
-		@Override
-		public long getVersion() {
-			return 0;
-		}
-
-		@Override
-		public void setVersion(long inVersion) {
-		}
-
-		@Override
-		public <T extends IDomainObject> ITypedDao<T> getDao() {
-			return null;
-		}
-
-		@Override
-		public Facility getFacility() {
-			return null;
-		}
-
-		@Override
-		public Timestamp getLastSuccessTime() {
-			return null;
-		}
-
-		@Override
-		public boolean testConnection() {
-			return false;
-		}
-
-		@Override
-		public boolean isActive() {
-			return true;
-		}
-
-		@Override
-		public void setActive(Boolean active) {
-		}
-
-		@Override
-		public void updateLastSuccessTime() {
-		}
 	}
 }

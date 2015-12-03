@@ -131,12 +131,6 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 
 	private static final Logger			LOGGER			= LoggerFactory.getLogger(OrderHeader.class);
 
-	// The parent facility.
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private Facility					parent;
-
 	// The order type.
 	@Column(nullable = false, name = "order_type")
 	@Enumerated(value = EnumType.STRING)

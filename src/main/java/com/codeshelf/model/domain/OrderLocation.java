@@ -49,7 +49,7 @@ import com.google.common.collect.Lists;
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-@ToString(of = { "location", "parent", "active" }, callSuper = true, doNotUseGetters = true)
+@ToString(of = { "location", "active" }, callSuper = true, doNotUseGetters = true)
 public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 
 	public static class OrderLocationDao extends GenericDaoABC<OrderLocation> implements ITypedDao<OrderLocation> {
@@ -78,12 +78,6 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	@Setter
 	@JsonProperty
 	private Timestamp			updated;
-
-	// The owning order.
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private OrderHeader			parent;
 
 	// --------------------------------------------------------------------------
 	/**

@@ -17,10 +17,8 @@ import javax.persistence.DiscriminatorType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
 import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
@@ -77,11 +75,6 @@ public abstract class EdiGateway extends DomainObjectTreeABC<Facility> implement
 	public ITypedDao<EdiGateway> getDao() {
 		return staticGetDao();
 	}
-
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private Facility				parent;
 
 	// The provider.
 	@Column(nullable = false, name = "transport_type")

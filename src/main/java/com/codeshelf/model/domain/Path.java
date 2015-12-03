@@ -19,7 +19,6 @@ import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -68,12 +67,6 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	public static final String			DOMAIN_PREFIX				= "P";
 
 	private static final Logger			LOGGER						= LoggerFactory.getLogger(Path.class);
-
-	// The parent facility.
-	@ManyToOne(optional = false,fetch=FetchType.LAZY)
-	@Getter
-	@Setter
-	private Facility					parent;
 
 	// The path description.
 	@Column(nullable = false)
