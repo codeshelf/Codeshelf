@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +16,6 @@ import java.util.UUID;
 
 import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.hibernate.Criteria;
-import org.hibernate.FetchMode;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.DetachedCriteria;
@@ -30,6 +28,7 @@ import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.behavior.ProductivitySummaryList.StatusSummary;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.OrderStatusEnum;
@@ -166,33 +165,47 @@ public class OrderBehavior implements IApiBehavior {
 		return result;
 	}
 	
-	public List<Map<String, Object>> findOrderHeadersForStatus(Facility facility,
+	public ResultDisplay<Map<String, Object>> findOrderHeadersForStatus(Facility facility,
 		String[] propertyNames,
 		OrderStatusEnum[] orderStatusEnums) {
 		Criteria criteria = orderHeaderCriteria(facility).add(Property.forName("status").in(orderStatusEnums));
 		@SuppressWarnings("unchecked")
 		List<OrderHeader> results = (List<OrderHeader>) criteria.list();
-		return toPropertiesView(results, propertyNames);
+		return new ResultDisplay<Map<String, Object>>(toPropertiesView(results, propertyNames));
 
 	}
 
-	public List<Map<String, Object>> findOrderHeadersForOrderId(Facility facility, String[] propertyNames, String orderId) {
-
+	public ResultDisplay<Map<String, Object>> findOrderHeadersForOrderId(Facility facility, String[] propertyNames, String orderId, Integer limit) {
+		final String orderIdPropertyName = "domainId"; 
 		SimpleExpression orderIdProperty = null;
 		if (orderId != null && orderId.indexOf('*') >= 0) {
-			orderIdProperty = Property.forName("domainId").like(orderId.replace('*', '%'));
+			orderIdProperty = Property.forName(orderIdPropertyName).like(orderId.replace('*', '%'));
 		} else {
-			orderIdProperty = Property.forName("domainId").eq(orderId);
+			orderIdProperty = Property.forName(orderIdPropertyName).eq(orderId);
 		}
 
-		Criteria criteria = orderHeaderCriteria(facility).add(orderIdProperty);
-		@SuppressWarnings("unchecked")
+		Criteria criteria = orderHeaderCriteria(facility)
+				.add(orderIdProperty);
+		
+		//Turn into a count query
+		Criteria countCriteria = criteria.setProjection(Projections.rowCount());
+		Long total = (Long) countCriteria.uniqueResult();
+
+		//Turn back into entity query
+		criteria.setProjection(null);
+		criteria.setResultTransformer(Criteria.ROOT_ENTITY);
+		criteria.addOrder(Order.desc(orderIdPropertyName));
+		if (limit != null) {
+			criteria.setMaxResults(limit);
+		}
+		
+			@SuppressWarnings("unchecked")
 		//long start = System.currentTimeMillis();
-		List<OrderHeader> joined = (List<OrderHeader>) criteria.list();
-		Set<OrderHeader> results = new HashSet<>(joined);
+		List<OrderHeader> results = (List<OrderHeader>) criteria.list();
 		//long stop = System.currentTimeMillis();
 		//System.out.println("Fetch " + results.size() + " " + (start-stop));
-		return toPropertiesView(results, propertyNames);
+		ResultDisplay<Map<String, Object>> resultDisplay = new ResultDisplay<Map<String, Object>>(total, toPropertiesView(results, propertyNames));
+		return resultDisplay;
 	}
 
 	private List<Map<String, Object>> toPropertiesView(Collection<?> results, String[] propertyNames) {
@@ -225,9 +238,10 @@ public class OrderBehavior implements IApiBehavior {
 	private Criteria orderHeaderCriteria(Facility facility) {
 		Criteria criteria = OrderHeader.staticGetDao()
 			.createCriteria()
-			.setFetchMode("orderDetails", FetchMode.JOIN)
-			.setFetchMode("containerUse", FetchMode.JOIN)
-			.setFetchMode("containerUse.parent", FetchMode.JOIN)
+			//Remove eager fetch that produces multiple entities in the list
+			//.setFetchMode("orderDetails", FetchMode.JOIN)
+			//.setFetchMode("containerUse", FetchMode.JOIN)
+			//.setFetchMode("containerUse.parent", FetchMode.JOIN)
 			.add(Property.forName("parent").eq(facility));
 		return criteria;
 

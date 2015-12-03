@@ -435,7 +435,7 @@ public class FacilityResource {
 
 			if (!Strings.isNullOrEmpty(itemId)) {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
-				ResultDisplay result = new ResultDisplay();
+				ResultDisplay<BeanMap> result = new ResultDisplay<>();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
 					ItemDisplay itemDisplayKey = new ItemDisplay(eventDisplay);
@@ -446,7 +446,7 @@ public class FacilityResource {
 				return BaseResponse.buildResponse(result);
 			} else if (!Strings.isNullOrEmpty(workerId)) {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
-				ResultDisplay result = new ResultDisplay();
+				ResultDisplay<BeanMap> result = new ResultDisplay<>();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
 					WorkerDisplay workerDisplayKey = new WorkerDisplay(eventDisplay);
@@ -467,7 +467,7 @@ public class FacilityResource {
 					issuesByItem.put(itemDisplayKey, count + 1);
 				}
 
-				ResultDisplay result = new ResultDisplay(ItemDisplay.ItemComparator);
+				ResultDisplay<Map<Object, Object>> result = new ResultDisplay<>(ItemDisplay.ItemComparator);
 				for (Map.Entry<ItemDisplay, Integer> issuesByItemEntry : issuesByItem.entrySet()) {
 					Map<Object, Object> values = new HashMap<>();
 					values.putAll(new BeanMap(issuesByItemEntry.getKey()));
@@ -485,7 +485,7 @@ public class FacilityResource {
 					issuesByWorker.put(workerDisplayKey, count + 1);
 				}
 
-				ResultDisplay result = new ResultDisplay(WorkerDisplay.ItemComparator);
+				ResultDisplay<Map<Object, Object>> result = new ResultDisplay<>(WorkerDisplay.ItemComparator);
 				for (Map.Entry<WorkerDisplay, Integer> issuesByWorkerEntry : issuesByWorker.entrySet()) {
 					Map<Object, Object> values = new HashMap<>();
 					values.putAll(new BeanMap(issuesByWorkerEntry.getKey()));
@@ -495,12 +495,12 @@ public class FacilityResource {
 				return BaseResponse.buildResponse(result);
 			} else if ("type".equals(groupBy)) {
 				List<WorkerEventTypeGroup> issuesByType = notificationService.groupWorkerEventsByType(facility, resolved);
-				ResultDisplay result = new ResultDisplay(issuesByType.size());
+				ResultDisplay<WorkerEventTypeGroup> result = new ResultDisplay<>(issuesByType.size());
 				result.addAll(issuesByType);
 				return BaseResponse.buildResponse(result);
 			} else {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
-				ResultDisplay result = new ResultDisplay(events.size());
+				ResultDisplay<BeanMap> result = new ResultDisplay<>(events.size());
 				for (WorkerEvent event : events) {
 					result.add(new BeanMap(EventDisplay.createEventDisplay(event)));
 				}
