@@ -46,6 +46,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 	public static final int			READ_SLEEP_MILLIS		= 10;
 	public static final int			READ_RECOVER_MILLIS		= 5000;
 	public static final int			WAIT_INTERFACE_MILLIS	= 5;
+	public static final int			LQI_SIZE				= 1;
 
 	private static final Logger		LOGGER					= LoggerFactory.getLogger(SerialInterfaceABC.class);
 
@@ -202,15 +203,20 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			}
 			*/
 		} else {
-
+			
 			ByteArrayInputStream byteArray = new ByteArrayInputStream(nextFrameArray);
 			BitFieldInputStream inputStream = new BitFieldInputStream(byteArray, true);
 
 			// Receive the next packet.
 			packet = new Packet();
 			if (nextFrameArray.length > 0) {
-				packet.fromStream(inputStream, nextFrameArray.length);
+				// Do not include LQI as packet data
+				packet.fromStream(inputStream, nextFrameArray.length - LQI_SIZE);
 				//RadioStats.updateRcvdStats(nextFrameArray.length);
+				
+				// LQI of packet is in the last byte of the frame
+				byte lqi = nextFrameArray[nextFrameArray.length - LQI_SIZE];
+				packet.setLQI(lqi);
 			}
 
 			if ((packet.getNetworkId().equals(inMyNetworkId))
@@ -470,7 +476,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		//			mSerialOutputStream.write(IGatewayInterface.END);
 		//			mSerialOutputStream.flush();
 		buffer[bufPos++] = IGatewayInterface.END;
-		//		buffer[bufPos++] = IGatewayInterface.END; // XXX HUFFA - used for KW2 Gateway buffer issues.
+		buffer[bufPos++] = IGatewayInterface.END; // XXX HUFFA - used for KW2 Gateway buffer issues.
 		//		buffer[bufPos+1] = IGatewayInterface.END;
 
 		//clrRTS();

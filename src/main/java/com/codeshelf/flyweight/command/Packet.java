@@ -87,6 +87,7 @@ public final class Packet implements IPacket {
 	private byte					mAckId;
 	private volatile AckStateEnum	mAckState;
 	private byte[]					mAckData;
+	private byte					mLQI;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -418,5 +419,22 @@ public final class Packet implements IPacket {
 	@Override
 	public void setPacketType(byte inPacketType) {
 		mPacketType.setValue(inPacketType);
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Set the LQI of the packet 
+	 * @param lqi
+	 */
+	public void setLQI(byte inLQI) {
+		mLQI = inLQI;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the lqi of the packet
+	 */
+	public byte getLQI() {
+		return mLQI;
 	}
 }
