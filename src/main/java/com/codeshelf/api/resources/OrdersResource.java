@@ -1,6 +1,5 @@
 package com.codeshelf.api.resources;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -13,14 +12,13 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import lombok.Setter;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.IntervalParam;
 import com.codeshelf.api.responses.EventDisplay;
+import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.behavior.OrderBehavior;
 import com.codeshelf.behavior.OrderBehavior.OrderDetailView;
 import com.codeshelf.model.OrderStatusEnum;
@@ -30,6 +28,8 @@ import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
+
+import lombok.Setter;
 
 public class OrdersResource {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(OrdersResource.class);
@@ -55,12 +55,12 @@ public class OrdersResource {
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getOrders(@QueryParam("status") String status, @QueryParam("orderId") String orderIdValue, @QueryParam("properties") List<String> propertyNamesList) {
+	public Response getOrders(@QueryParam("status") String status, @QueryParam("orderId") String orderIdValue, @QueryParam("properties") List<String> propertyNamesList, @QueryParam("limit") Integer limit) {
 		String[] propertyNames = propertyNamesList.toArray(new String[]{});
 
-		List<Map<String, Object>> results = Collections.emptyList();
+		ResultDisplay<Map<String, Object>> results = new ResultDisplay<>();
 		if (orderIdValue != null) {
-			results = this.orderService.findOrderHeadersForOrderId(facility, propertyNames, orderIdValue);
+			results = this.orderService.findOrderHeadersForOrderId(facility, propertyNames, orderIdValue, limit);
 		} else if (status != null) {
 	    	results = this.orderService.findOrderHeadersForStatus(facility, propertyNames, new OrderStatusEnum[]{OrderStatusEnum.valueOf(status)});
 		} else {
@@ -82,9 +82,9 @@ public class OrdersResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getOrder(@PathParam("orderId") String orderDomainId, @QueryParam("properties") List<String> propertyNamesList) {
 		String[] propertyNames = propertyNamesList.toArray(new String[]{});
-		List<Map<String, Object>> results = this.orderService.findOrderHeadersForOrderId(facility, propertyNames, orderDomainId);
+		ResultDisplay<Map<String, Object>> results = this.orderService.findOrderHeadersForOrderId(facility, propertyNames, orderDomainId, null);
 		if (results.size() == 1) {
-			return BaseResponse.buildResponse(results.get(0));
+			return BaseResponse.buildResponse(results.getResults().iterator().next());
 		} else if (results.size() == 0){
 			return BaseResponse.buildResponse(null);
 			
