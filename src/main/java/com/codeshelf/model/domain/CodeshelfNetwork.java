@@ -45,7 +45,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 
 @Entity
-@Table(name = "network",uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid"})}) // only one network per facility is supported currently
+@Table(name = "network",uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainId"})}) // only one network per facility is supported currently
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)

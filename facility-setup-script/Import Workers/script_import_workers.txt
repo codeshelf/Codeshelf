@@ -1,3 +1,0 @@
-STEP
-SERVER
-importWorkers workers

@@ -21,7 +21,11 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
-@Table(name = "site_controller",uniqueConstraints = {@UniqueConstraint(columnNames = {"domainid"}), @UniqueConstraint(columnNames = {"parent_persistentid", "device_guid"})})
+@Table(name = "site_controller",uniqueConstraints = {
+		@UniqueConstraint(columnNames = {"domainid"}), 
+		@UniqueConstraint(columnNames = {"parent_persistentid", "device_guid"}),
+		@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})
+})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)

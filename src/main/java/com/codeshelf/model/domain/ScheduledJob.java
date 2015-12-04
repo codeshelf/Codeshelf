@@ -25,7 +25,8 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "scheduled_job", uniqueConstraints={
-		@UniqueConstraint(columnNames= {"parent_persistentid", "type"})
+		@UniqueConstraint(columnNames= {"parent_persistentid", "type"}),
+		@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})
 })
 public class ScheduledJob extends DomainObjectTreeABC<Facility> {
 	static final private Logger	LOGGER						= LoggerFactory.getLogger(ScheduledJob.class);
