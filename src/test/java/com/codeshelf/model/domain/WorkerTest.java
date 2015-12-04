@@ -88,25 +88,20 @@ public class WorkerTest extends HibernateTest {
 	}
 	
 	@Test
-	public void testCreateWorkerDuplicateBadge(){
+	public void testCreateWorkerOverwriteOld(){
 		this.getTenantPersistenceService().beginTransaction();
 		//Save a worker
 		Worker worker1 = createWorkerObject(true, "FirstName_1", "LastName_1", null, "abc123", null, null);
 		Response response = facilityResource.createWorker(worker1);
 		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
 		
-		//Allow saving an inactive worker with the same badge
+		//Overwrite old worker with a new one with the same badge
 		Worker worker2 = createWorkerObject(false, "FirstName_2", "LastName_2", null, "abc123", null, null);
 		response = facilityResource.createWorker(worker2);
 		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
-		
-		//Don't allow saving an active worker with the same badge
-		Worker worker3 = createWorkerObject(true, "FirstName_3", "LastName_3", null, "abc123", null, null);
-		response = facilityResource.createWorker(worker3);
-		Assert.assertEquals(HttpServletResponse.SC_BAD_REQUEST, response.getStatus());
-		ErrorResponse errorResponse = (ErrorResponse)response.getEntity();
-		ArrayList<String> errors = errorResponse.getErrors();
-		Assert.assertEquals("Active worker with badge abc123 already exists", errors.get(0));
+		List<Worker> workers = Worker.staticGetDao().getAll();
+		Assert.assertEquals(1, workers.size());
+		compareWorkers(worker2, workers.get(0));
 		
 		this.getTenantPersistenceService().commitTransaction();
 	}
@@ -178,23 +173,16 @@ public class WorkerTest extends HibernateTest {
 		Assert.assertEquals(HttpServletResponse.SC_BAD_REQUEST, response.getStatus());
 		ErrorResponse errorResponse = (ErrorResponse)response.getEntity();
 		ArrayList<String> errors = errorResponse.getErrors();
-		Assert.assertEquals("Active worker with badge abc123 already exists", errors.get(0));
+		Assert.assertEquals("Another worker with badge abc123 already exists", errors.get(0));
 		
-		//Confirm that a Worker can be saved with a duplicate badge while inactive
+		//Confirm that a Worker still can't be saved, even when another worker is inactive
 		worker2UpdateRequest.setActive(false);
-		response = workerResource.updateWorker(worker2UpdateRequest);
-		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
-		Worker worker2Updated = (Worker)response.getEntity();
-		compareWorkers(worker2UpdateRequest, worker2Updated);
-
-		//Confirm that an inactive Worker can't be activated if it had a duplicate badge
-		worker2UpdateRequest.setActive(true);
 		response = workerResource.updateWorker(worker2UpdateRequest);
 		Assert.assertEquals(HttpServletResponse.SC_BAD_REQUEST, response.getStatus());
 		errorResponse = (ErrorResponse)response.getEntity();
 		errors = errorResponse.getErrors();
-		Assert.assertEquals("Active worker with badge abc123 already exists", errors.get(0));
-		
+		Assert.assertEquals("Another worker with badge abc123 already exists", errors.get(0));
+
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
@@ -258,7 +246,6 @@ public class WorkerTest extends HibernateTest {
 	}
 	
 	private void compareWorkers(Worker expected, Worker actual) {
-		Assert.assertEquals(expected.getFacility(), actual.getFacility());
 		Assert.assertEquals(expected.getActive(), actual.getActive());
 		Assert.assertEquals(expected.getFirstName(), actual.getFirstName());
 		Assert.assertEquals(expected.getLastName(), actual.getLastName());

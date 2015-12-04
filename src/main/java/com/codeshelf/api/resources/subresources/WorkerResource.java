@@ -1,12 +1,12 @@
 package com.codeshelf.api.resources.subresources;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 
 import lombok.Setter;
 
@@ -34,11 +34,12 @@ public class WorkerResource {
 	public Response updateWorker(Worker updatedWorker) {
 		ErrorResponse errors = new ErrorResponse();
 		try {
-			//Set fields in the new objects for validation
-			updatedWorker.setPersistentId(worker.getPersistentId());
-			updatedWorker.setParent(worker.getFacility());
-			if (!updatedWorker.isValid(errors)){
-				errors.setStatus(Status.BAD_REQUEST);
+			if (!updatedWorker.isValid(errors)){ 
+				return errors.buildResponse();
+			}
+			Worker workerWithSameBadge = Worker.findTenantWorker(updatedWorker.getBadgeId());
+			if (workerWithSameBadge != null && !worker.equals(workerWithSameBadge)) {
+				errors.addError("Another worker with badge " + updatedWorker.getBadgeId() + " already exists");
 				return errors.buildResponse();
 			}
 			//Update old object with new values
@@ -51,4 +52,19 @@ public class WorkerResource {
 			return errors.processException(e);
 		}
 	}
+	
+	@DELETE
+	@RequiresPermissions("worker:edit")
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response deleteWorker(Worker updatedWorker) {
+		ErrorResponse errors = new ErrorResponse();
+		try {
+			Worker.staticGetDao().delete(worker);
+			return BaseResponse.buildResponse("Not yet implemented");
+		} catch (Exception e) {
+			return errors.processException(e);
+		}
+	}
+
 }

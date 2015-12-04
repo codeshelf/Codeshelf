@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.behavior.PropertyBehavior;
+import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
@@ -630,6 +631,77 @@ public class CheProcessPickExceptions extends ServerTest {
 		OrderDetail detail = wi1b.getOrderDetail();
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, detail.getStatus());
 		commitTransaction();
+
+		picker.logout();
+	}
+
+	/**
+	 * Attempt to reproduce same worker completing earlier work instruction due to slow getwork/computework.
+	 * Not yet achieved.
+	 */
+	@Test
+	public final void completeAfterSlowComputeWork() throws IOException {
+
+		// set up data for pick scenario
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		// We are going to put everything in A1 and A2 since they are on the same path.
+		//Item 5 is out of stock and item 6 is case only.
+		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
+				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
+				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
+				+ "4,D401,Test Item 4,1,EA,6/25/14 12:00,66\r\n" //
+				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
+		beginTransaction();
+		importInventoryData(facility, csvInventory);
+		PropertyBehavior.turnOffHK(facility);
+		commitTransaction();
+
+		beginTransaction();
+		facility = facility.reload();
+		// Outbound order. No group. Using 5 digit order number and preassigned container number.
+		// Order 1 has two items in stock (Item 1 and Item 2)
+		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,2,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,22222,22222,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+
+		this.startSiteController();
+
+		PickSimulator picker = createPickSim(cheGuid1);
+
+		LOGGER.info("1: set up cart with two orders and start, then back to summary state");
+		picker.loginAndSetup("Picker #1");
+		picker.setupOrderIdAsContainer("11111", "1");
+		picker.setupOrderIdAsContainer("22222", "2");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		picker.scanLocation("D301");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		
+		LOGGER.info("1b: Get the site controller job for this first computation");
+		WorkInstruction wi = picker.getFirstActivePick();
+		int button = picker.buttonFor(wi);
+		int quantity = wi.getPlanQuantity();
+		
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+
+
+		LOGGER.info("2: START, don't wait, force the state change");
+		// In production it happens like this: start, slow computing. Reset CHE, goes back a state (avoids being stuck if the message would never come.)
+	    // Then START, waiting for response, the first response finally comes. Completes the first job. In the mean time,
+		// the server has redone the work instruction. That response goes to site controller, but sc will not absorbe
+		// the new plans while in pick state.
+		CheDeviceLogic logic = picker.getCheDeviceLogic();
+		picker.scanCommand("START");
+		logic.testOnlySetState(CheStateEnum.DO_PICK);
+		
+		LOGGER.info("3: This pick should send old wi to server");
+		picker.pick(button, quantity);
+
 
 		picker.logout();
 	}
