@@ -158,20 +158,11 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 		if (!badgeId.equals(getDomainId())) {
 			LOGGER.error("worker.generateDomainId() case found");
 			setDomainId(badgeId);
-		}
-	
-		/*
-		String domainId = getDefaultDomainIdPrefix() + "-" + lastName;
-		if (firstName != null) {
-			domainId += "-" + firstName;
-		}
-		setDomainId(domainId);
-		*/
+		}	
 	}
 
 	@Override
 	public boolean isValid(ErrorResponse errors) {
-		getDomainId();
 		boolean allOK = true;
 		if (lastName == null || "".equals(lastName)) {
 			errors.addErrorMissingBodyParam("lastName");
@@ -184,12 +175,6 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 		if (active == null) {
 			errors.addErrorMissingBodyParam("active");
 			allOK = false;
-		} else {
-			//If (active == null), the validation will fail. No need to check for badge uniqueness
-			if (!isBadgeUnique()) {
-				errors.addError("Active worker with badge " + badgeId + " already exists");
-				allOK = false;
-			}
 		}
 		return allOK;
 	}
@@ -206,11 +191,8 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 		generateDomainId();
 	}
 
-	private boolean isBadgeUnique() {
-		//Allow saving inactive workers with non-unique badges
-		if (!active) {
-			return true;
-		}
+	//TODO now that badges are unique in Tenant, do we still need this?
+	public boolean isBadgeUnique() {
 		//Try to find another active worker with the same badge
 		Worker matchingWorker = findWorker(facility, badgeId, getPersistentId());
 		return matchingWorker == null;
@@ -235,6 +217,7 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 		return findWorker(facility, badgeId, null);
 	}
 
+	//TODO now that badges are unique in Tenant, do we still need 'skipWorker' field
 	public static Worker findWorker(Facility facility, String badgeId, UUID skipWorker) {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("facility", facility));
@@ -303,5 +286,5 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 			}
 		}
 		return latestMetric;
-	}
+	}	
 }

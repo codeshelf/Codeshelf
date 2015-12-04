@@ -383,8 +383,12 @@ public class FacilityResource {
 			}
 			worker.setUpdated(new Timestamp(System.currentTimeMillis()));
 			if (!worker.isValid(errors)) {
-				errors.setStatus(Status.BAD_REQUEST);
 				return errors.buildResponse();
+			}
+			Worker existingWorker = Worker.findTenantWorker(worker.getDomainId());
+			if (existingWorker != null){
+				existingWorker.update(worker);
+				worker = existingWorker;
 			}
 			UUID id = worker.getPersistentId();
 			Worker.staticGetDao().store(worker);
