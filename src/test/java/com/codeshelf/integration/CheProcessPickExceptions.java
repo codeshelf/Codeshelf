@@ -680,28 +680,26 @@ public class CheProcessPickExceptions extends ServerTest {
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 		picker.scanLocation("D301");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-		
+
 		LOGGER.info("1b: Get the site controller job for this first computation");
 		WorkInstruction wi = picker.getFirstActivePick();
 		int button = picker.buttonFor(wi);
 		int quantity = wi.getPlanQuantity();
-		
+
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 
-
 		LOGGER.info("2: START, don't wait, force the state change");
 		// In production it happens like this: start, slow computing. Reset CHE, goes back a state (avoids being stuck if the message would never come.)
-	    // Then START, waiting for response, the first response finally comes. Completes the first job. In the mean time,
+		// Then START, waiting for response, the first response finally comes. Completes the first job. In the mean time,
 		// the server has redone the work instruction. That response goes to site controller, but sc will not absorbe
 		// the new plans while in pick state.
 		CheDeviceLogic logic = picker.getCheDeviceLogic();
 		picker.scanCommand("START");
 		logic.testOnlySetState(CheStateEnum.DO_PICK);
-		
+
 		LOGGER.info("3: This pick should send old wi to server");
 		picker.pick(button, quantity);
-
 
 		picker.logout();
 	}
