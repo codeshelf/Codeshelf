@@ -24,7 +24,7 @@
        	<addNotNullConstraint columnDataType="uuid" columnName="parent_persistentid" tableName="location"/>
     </changeSet>
     <changeSet author="ilya (generated)" id="1449093847921-9">
-        <addUniqueConstraint columnNames="device_guid" constraintName="UC_CHE_DEVICE_GUID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="che"/>
+        <addUniqueConstraint columnNames="parent_persistentid, device_guid" constraintName="UC_CHE_PARENT_PERSISTENTID_DEVICE_GUID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="che"/>
         <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_CHE_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="che"/>
         <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_CONTAINER_KIND_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="container_kind"/>
         <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_CONTAINER_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="container"/>
@@ -56,6 +56,6 @@
         <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_WORK_AREA_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="work_area"/>
         <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_WORK_INSTRUCTION_BEAN_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="work_instruction_bean"/>
         <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_WORK_INSTRUCTION_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="work_instruction"/>
-        <dropUniqueConstraint constraintName="uc_network_parent_persistentid" tableName="network"/>    
+        <dropUniqueConstraint constraintName="uc_network_parent_persistentid" tableName="network"/>
     </changeSet>
 </databaseChangeLog>

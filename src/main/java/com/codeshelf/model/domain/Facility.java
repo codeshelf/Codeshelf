@@ -340,7 +340,7 @@ public class Facility extends Location {
 	}
 
 	public UomMaster getUomMaster(String inUomMasterId) {
-		return uomMasters.get(inUomMasterId);
+		return UomMaster.staticGetDao().findByDomainId(this, inUomMasterId);
 	}
 
 	/*

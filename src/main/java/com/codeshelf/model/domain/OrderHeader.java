@@ -399,7 +399,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	}
 
 	public OrderLocation getOrderLocation(String inOrderLocationId) {
-		return orderLocations.get(inOrderLocationId);
+		return OrderLocation.staticGetDao().findByDomainId(this, inOrderLocationId);
 	}
 
 	public void removeOrderLocation(OrderLocation inOrderLocation) {

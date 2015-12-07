@@ -53,7 +53,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 
 @Entity
-@Table(name = "che", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"}),@UniqueConstraint(columnNames = {"device_guid"})})
+@Table(name = "che", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"}),@UniqueConstraint(columnNames = {"parent_persistentid", "device_guid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)

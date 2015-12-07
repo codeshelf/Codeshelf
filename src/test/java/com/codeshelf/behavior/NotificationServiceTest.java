@@ -23,14 +23,17 @@ public class NotificationServiceTest extends HibernateTest {
 	
 	@Test
 	public void testGroupByType() {
+		DateTime eventTime2 = new DateTime(eventTime.getMillis() + 5);
+		DateTime eventTime3 = new DateTime(eventTime.getMillis() + 10);
+		DateTime eventTime4 = new DateTime(eventTime.getMillis() + 15);
 		this.getTenantPersistenceService().beginTransaction();
 		Che che = getTestChe();
 		
 		NotificationBehavior service = new NotificationBehavior();
 		service.saveEvent(createEvent(eventTime, WorkerEvent.EventType.COMPLETE, che));
-		service.saveEvent(createEvent(eventTime, WorkerEvent.EventType.COMPLETE, che));
-		service.saveEvent(createEvent(eventTime, WorkerEvent.EventType.SHORT, che));
-		service.saveEvent(createEvent(eventTime, WorkerEvent.EventType.SKIP_ITEM_SCAN, che));
+		service.saveEvent(createEvent(eventTime2, WorkerEvent.EventType.COMPLETE, che));
+		service.saveEvent(createEvent(eventTime3, WorkerEvent.EventType.SHORT, che));
+		service.saveEvent(createEvent(eventTime4, WorkerEvent.EventType.SKIP_ITEM_SCAN, che));
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
