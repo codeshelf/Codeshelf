@@ -222,7 +222,7 @@ public class WorkerTest extends HibernateTest {
 	}
 
 	private WorkerResource getWorkerResource(Worker worker) throws Exception {
-		WorkerResource workerResource = new WorkerResource();
+		WorkerResource workerResource = new WorkerResource(null);
 		workerResource.setWorker(worker);
 		return workerResource;
 	}

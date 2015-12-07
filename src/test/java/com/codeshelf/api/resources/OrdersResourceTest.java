@@ -45,7 +45,7 @@ public class OrdersResourceTest extends ServerTest {
 		commitTransaction();
 		
 		beginTransaction();
-		OrdersResource ordersResource = new OrdersResource(new OrderBehavior());
+		OrdersResource ordersResource = new OrdersResource(new OrderBehavior(), null);
 		ordersResource.setFacility(facility);
 		Response response = ordersResource.deleteOrders();
 		commitTransaction();
