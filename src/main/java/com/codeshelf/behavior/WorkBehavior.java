@@ -250,22 +250,22 @@ public class WorkBehavior implements IApiBehavior {
 		//Determine if there are any non-Replenish orders on the che
 		for (Container container : containerList) {
 			OrderHeader order = container.getCurrentOrderHeader();
-			if (order != null && order.getOrderType() != OrderTypeEnum.REPLENISH){
+			if (order != null && order.getOrderType() != OrderTypeEnum.REPLENISH) {
 				replenishOnly = false;
 			}
 		}
 		//If yes, remove all Replenish orders from the list
-		if (!replenishOnly){
+		if (!replenishOnly) {
 			for (Iterator<Container> containerIterator = containerList.iterator(); containerIterator.hasNext();) {
-			    Container container = containerIterator.next();
-			    OrderHeader order = container.getCurrentOrderHeader();
-			    if (order != null && order.getOrderType() == OrderTypeEnum.REPLENISH) {
-			    	//Safely remove current container from the list
-			    	containerIterator.remove();
-			    }
+				Container container = containerIterator.next();
+				OrderHeader order = container.getCurrentOrderHeader();
+				if (order != null && order.getOrderType() == OrderTypeEnum.REPLENISH) {
+					//Safely remove current container from the list
+					containerIterator.remove();
+				}
 			}
 		}
-		
+
 		Timestamp theTime = now();
 		// Get all of the OUTBOUND work instructions.
 		WorkList workList = generateOutboundAndReplenishInstructions(facility, inChe, containerList, theTime);
@@ -783,8 +783,10 @@ public class WorkBehavior implements IApiBehavior {
 					String orderId = incomingWI.getContainerId();
 					String cheName = che.getDomainId();
 					String guidStr = che.getDeviceGuidStrNoPrefix();
+					String verb = incomingWI.getStatusString(); // either COMPLETE or SHORT
 					// happens only if site controller completed a work instruction that server recently deleted
-					LOGGER.error("Cannot complete work instruction for order/cntr:{} from {}/{} because server could not find it in database {}",
+					LOGGER.error("Cannot {} work instruction for order/cntr:{} from {}/{} because server could not find it in database {}",
+						verb,
 						orderId,
 						cheName,
 						guidStr,
@@ -1752,7 +1754,8 @@ public class WorkBehavior implements IApiBehavior {
 		SingleWorkItem resultWork = new SingleWorkItem();
 		ItemMaster itemMaster = inOrderDetail.getItemMaster();
 
-		WiPurpose purpose = inOrderDetail.getParentOrderType() == OrderTypeEnum.REPLENISH ? WiPurpose.WiPurposeReplenishPut : WiPurpose.WiPurposeOutboundPick;
+		WiPurpose purpose = inOrderDetail.getParentOrderType() == OrderTypeEnum.REPLENISH ? WiPurpose.WiPurposeReplenishPut
+				: WiPurpose.WiPurposeOutboundPick;
 		// DEV-637 note: The code here only works if there is inventory on a path. If the detail has a workSequence,
 		// we can make the work instruction anyway.
 		Location location = null;
