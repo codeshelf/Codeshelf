@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -23,6 +24,7 @@ import com.codeshelf.edi.IEdiExportGateway;
 import com.codeshelf.edi.IFacilityEdiExporter;
 import com.codeshelf.edi.SftpConfiguration;
 import com.codeshelf.edi.WorkInstructionCsvBean;
+import com.codeshelf.model.DomainObjectManager;
 import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.ExportMessage;
@@ -1097,8 +1099,29 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		for (ExportMessage exMes : exportList) {
 			validateExportMessage(exMes);
 		}
+
+		LOGGER.info("5a: Check export message object purge. Set up null timestamp to mimic v23");		
+		// Just part of DEV-1361. These are the only tests that produce ExportMessage objects in our normal way. Test the purge
+		// Before v24, export message had no timestamp field, so on data conversion, it converted to null. Purge those.
+		ExportMessage changedMes = exportList.get(0);
+		Assert.assertNotNull(changedMes.getCreated());
 		
+		changedMes.setCreated(null);
+		// changedMes.setCreated(DomainObjectManager.getDaysOldTimeStamp(3));
+		
+		ExportMessage.staticGetDao().store(changedMes);
 		commitTransaction();
+		
+		LOGGER.info("5b: Call the export message purge. Should see the one message purge with the null time stamp.");
+		beginTransaction();
+		facility = facility.reload();
+		DomainObjectManager doManager = new DomainObjectManager(facility);
+		workService.reportAchiveables(2, facility);
+		List<UUID> exportMessagesToPurge = doManager.getExportMessageUuidsToPurge(2);
+		Assert.assertEquals(1, exportMessagesToPurge.size());
+		Assert.assertEquals(1, doManager.purgeSomeExportMessages(exportMessagesToPurge));
+		commitTransaction();
+		
 
 	}
 

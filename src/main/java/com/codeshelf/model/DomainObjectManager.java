@@ -62,7 +62,7 @@ public class DomainObjectManager {
 		}
 	}
 
-	private Timestamp getDaysOldTimeStamp(int daysOldToCount) {
+	public static Timestamp getDaysOldTimeStamp(int daysOldToCount) {
 		// Get our reference timestamp relative to now.
 		// One minute after the days counter to make unit tests that set things 2 days old return those on a 2 days old criteria.
 		Calendar cal = Calendar.getInstance();
@@ -303,14 +303,27 @@ public class DomainObjectManager {
 	 * Therefore, add null to this criterion
 	 */
 	private Criteria getExportMessagePurgeCriterion(Timestamp desiredTime, UUID facilityUUID) {
-		Criteria eventCrit = ExportMessage.staticGetDao().createCriteria();
+		Criteria msgCrit = ExportMessage.staticGetDao().createCriteria();
+		
+		/*  This works */
+		// warning .eq("created", null) does not work. Use isNull()
 		Disjunction or = Restrictions.disjunction();
-		or.add(Restrictions.eq("created", null));
+		or.add(Restrictions.isNull("created"));
 		or.add(Restrictions.lt("created", desiredTime));
-
-		eventCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		eventCrit.add(or);
-		return eventCrit;
+		msgCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		msgCrit.add(or);
+		// */
+		
+		/* This also works
+		// Expression :  (c1 OR c2) AND (c3) 
+		Criterion c1 = Restrictions.isNull("created");
+		Criterion c2 = Restrictions.lt("created", desiredTime);
+		Criterion c3 = Restrictions.eq("parent.persistentId", facilityUUID);
+		Criterion c4 = Restrictions.and(Restrictions.or(c1, c2), c3);
+		msgCrit.add(c4);
+		*/
+		
+		return msgCrit;
 	}
 
 	/**
@@ -319,8 +332,8 @@ public class DomainObjectManager {
 	public List<UUID> getExportMessageUuidsToPurge(int daysOld) {
 		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
 		UUID facilityUUID = getFacility().getPersistentId();
-		Criteria eventCrit = getExportMessagePurgeCriterion(desiredTime, facilityUUID);
-		List<UUID> uuidList = ExportMessage.staticGetDao().getUUIDListByCriteriaQuery(eventCrit);
+		Criteria msgCrit = getExportMessagePurgeCriterion(desiredTime, facilityUUID);
+		List<UUID> uuidList = ExportMessage.staticGetDao().getUUIDListByCriteriaQuery(msgCrit);
 		return uuidList;
 	}
 
