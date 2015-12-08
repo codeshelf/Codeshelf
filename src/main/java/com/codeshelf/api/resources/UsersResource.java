@@ -83,7 +83,8 @@ public class UsersResource {
 			String roleList = cleanInput.get("roles");
 			Set<UserRole> roles = null;
 			if(roleList != null) {
-				roles = TenantManagerService.getInstance().getUserRoles(roleList, false);
+				boolean allowRestricted = currentCodeshelfUser();
+				roles = TenantManagerService.getInstance().getUserRoles(roleList, allowRestricted);
 			} 
 			if(roles != null) {
 				// must have a role
@@ -140,7 +141,8 @@ public class UsersResource {
 				String roleList = cleanInput.get("roles");
 				Set<UserRole> roles = null; 
 				if(roleList != null) {
-					roles = TenantManagerService.getInstance().getUserRoles(roleList, false);
+					boolean allowRestricted = currentCodeshelfUser();
+					roles = TenantManagerService.getInstance().getUserRoles(roleList, allowRestricted);
 					if(roles != null) {
 						LOGGER.info("Edited roles for user {}: {}",username,roleList);
 						user.setRoles(roles);
@@ -177,6 +179,7 @@ public class UsersResource {
 		return Response.status(Status.BAD_REQUEST).build();
 	}
 
+
 	@Path("{id}/reset")
 	@POST
 	@RequiresPermissions("user:edit")
@@ -199,4 +202,10 @@ public class UsersResource {
 		LOGGER.info("Invalid request to reset recovery tries");
 		return Response.status(Status.BAD_REQUEST).build();
 	}
+	
+	private boolean currentCodeshelfUser() {
+		String username = CodeshelfSecurityManager.getCurrentUserContext().getUsername();
+		return username.endsWith("@codeshelf.com");
+	}
+
 }
