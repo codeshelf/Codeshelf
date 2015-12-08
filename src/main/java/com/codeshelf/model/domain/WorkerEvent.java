@@ -89,12 +89,6 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 	@Getter @Setter
 	private UUID							orderDetailId;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "work_instruction_persistentid", foreignKey=@ForeignKey(name="none", value=ConstraintMode.NO_CONSTRAINT ))
-	@Type(type="com.codeshelf.persistence.DialectUUIDType")
-	@Getter @Setter
-	private WorkInstruction							workInstruction;
-
 	@Column(nullable = true, name = "work_instruction_persistentid", insertable=false, updatable=false)
 	@Type(type="com.codeshelf.persistence.DialectUUIDType")
 	@Getter @Setter
@@ -104,6 +98,12 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 	@Getter
 	@JsonProperty
 	private String							description;
+	
+	@Column(nullable = true)
+	@Getter @Setter
+	@JsonProperty
+	private String							location;
+
 
 	public WorkerEvent() {
 		setCreated(new Timestamp(System.currentTimeMillis()));

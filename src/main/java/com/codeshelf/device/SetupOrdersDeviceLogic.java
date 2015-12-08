@@ -2625,7 +2625,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			Thread doNextItemThread = new Thread(new Runnable() {
 				@Override
 				public void run() {
-					ThreadUtils.sleep(200);
 					List<PosControllerInstr> instructions = new ArrayList<>();
 					PosControllerInstr instr = new PosControllerInstr((byte)0,
 								PosControllerInstr.BITENCODED_SEGMENTS_CODE,

@@ -61,4 +61,9 @@
     <changeSet author="ilya (generated)" id="1449599790127-2">
         <dropUniqueConstraint constraintName="uc_import_receipt_parent_persistentid_domainid" tableName="import_receipt"/>
     </changeSet>
+    <changeSet author="ilya (generated)" id="1449608779162-2">
+        <addColumn tableName="event_worker">
+            <column name="location" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
