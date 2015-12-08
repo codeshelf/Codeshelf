@@ -93,7 +93,10 @@ public class EventResource {
 			UomMaster uom = detail.getUomMaster();
 			Gtin gtin = itemMaster.getGtinForUom(uom);
 			String scannableId = gtin == null ? itemMaster.getDomainId() : gtin.getDomainId();
-			String location = event.getWorkInstruction().getPickInstruction();
+			String location = event.getLocation();
+			if (location == null){
+				location = "";
+			}
 			String orders = String.format(
 					"orderId,itemId,quantity,uom,locationId,preAssignedContainerId,workSequence,operationType\n" + 
 					"%s,%s,1,%s,%s,%s,0,replenish",
