@@ -108,11 +108,7 @@ public class DomainObjectManager {
 		// Work Instructions
 		Criteria totalWisCrit = WorkInstruction.staticGetDao().createCriteria();
 		totalWisCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-
-		Criteria archiveableWisCrit = WorkInstruction.staticGetDao().createCriteria();
-		archiveableWisCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		archiveableWisCrit.add(Restrictions.lt("created", desiredTime));
-
+		Criteria archiveableWisCrit = getWiPurgeCriterion(desiredTime, facilityUUID);
 		reportables.add(getArchivableString("WorkInstruction", totalWisCrit, archiveableWisCrit, WorkInstruction.staticGetDao()));
 
 		// Orders
@@ -137,13 +133,7 @@ public class DomainObjectManager {
 		Criteria totalReplenishDetailsCrit = OrderDetail.staticGetDao().createCriteria();
 		totalReplenishDetailsCrit.createAlias("parent", "p");
 		totalReplenishDetailsCrit.add(Restrictions.eq("p.orderType", OrderTypeEnum.REPLENISH));
-
-		Criteria archiveableReplenishDetailsCrit = OrderDetail.staticGetDao().createCriteria();
-		archiveableReplenishDetailsCrit.createAlias("parent", "p");
-		archiveableReplenishDetailsCrit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
-		archiveableReplenishDetailsCrit.add(Restrictions.eq("p.orderType", OrderTypeEnum.REPLENISH));
-		archiveableReplenishDetailsCrit.add(Restrictions.lt("updated", desiredTime));
-
+		Criteria archiveableReplenishDetailsCrit = getReplenishDetailsPurgeCriterion(desiredTime, facilityUUID);
 		reportables.add(getArchivableString("ReplenOrderDetail",
 			totalReplenishDetailsCrit,
 			archiveableReplenishDetailsCrit,
@@ -166,11 +156,7 @@ public class DomainObjectManager {
 		// ImportReceipts
 		Criteria totalReceiptCrit = ImportReceipt.staticGetDao().createCriteria();
 		totalReceiptCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-
-		Criteria archiveableReceiptCrit = ImportReceipt.staticGetDao().createCriteria();
-		archiveableReceiptCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		archiveableReceiptCrit.add(Restrictions.lt("received", desiredTime));
-
+		Criteria archiveableReceiptCrit = getImportReceiptPurgeCriterion(desiredTime, facilityUUID);
 		reportables.add(getArchivableString("ImportReceipt", totalReceiptCrit, archiveableReceiptCrit, ImportReceipt.staticGetDao()));
 
 		// ExportMessages
@@ -248,16 +234,24 @@ public class DomainObjectManager {
 	}
 
 	/**
-	 * This returns the full list of UUIDs of OrderDetails from Replenish orders whose 'updated' value is older than daysOld before now.
+	 * The common criterion for replenish details purge. 
 	 */
-	public List<UUID> getReplenishDetailsUuidsToPurge(int daysOld) {
-		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
-		UUID facilityUUID = getFacility().getPersistentId();
+	private Criteria getReplenishDetailsPurgeCriterion(Timestamp desiredTime, UUID facilityUUID) {
 		Criteria detailsCrit = OrderDetail.staticGetDao().createCriteria();
 		detailsCrit.createAlias("parent", "p");
 		detailsCrit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
 		detailsCrit.add(Restrictions.eq("p.orderType", OrderTypeEnum.REPLENISH));
 		detailsCrit.add(Restrictions.lt("updated", desiredTime));
+		return detailsCrit;
+	}
+
+	/**
+	 * This returns the full list of UUIDs of OrderDetails from Replenish orders whose 'updated' value is older than daysOld before now.
+	 */
+	public List<UUID> getReplenishDetailsUuidsToPurge(int daysOld) {
+		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
+		UUID facilityUUID = getFacility().getPersistentId();
+		Criteria detailsCrit = getReplenishDetailsPurgeCriterion(desiredTime, facilityUUID);
 		List<UUID> uuidList = OrderDetail.staticGetDao().getUUIDListByCriteriaQuery(detailsCrit);
 		return uuidList;
 	}
@@ -331,16 +325,34 @@ public class DomainObjectManager {
 	}
 
 	/**
+	 * The common criterion for WorkInstructionCsvBean purge. 
+	 */
+	private Criteria getImportReceiptPurgeCriterion(Timestamp desiredTime, UUID facilityUUID) {
+		Criteria receiptCrit = ImportReceipt.staticGetDao().createCriteria();
+		receiptCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		receiptCrit.add(Restrictions.lt("received", desiredTime));
+		return receiptCrit;
+	}
+
+	/**
 	 * This returns the full list of UUIDs of ImportReceipt whose receive date is older than daysOld before now.
 	 */
 	public List<UUID> getImportReceiptUuidsToPurge(int daysOld) {
 		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
 		UUID facilityUUID = getFacility().getPersistentId();
-		Criteria eventCrit = ImportReceipt.staticGetDao().createCriteria();
-		eventCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		eventCrit.add(Restrictions.lt("received", desiredTime));
-		List<UUID> uuidList = ImportReceipt.staticGetDao().getUUIDListByCriteriaQuery(eventCrit);
+		Criteria receiptCrit = getImportReceiptPurgeCriterion(desiredTime, facilityUUID);
+		List<UUID> uuidList = ImportReceipt.staticGetDao().getUUIDListByCriteriaQuery(receiptCrit);
 		return uuidList;
+	}
+
+	/**
+	 * The common criterion for WorkInstructionCsvBean purge. 
+	 */
+	private Criteria getWiPurgeCriterion(Timestamp desiredTime, UUID facilityUUID) {
+		Criteria wiCrit = WorkInstruction.staticGetDao().createCriteria();
+		wiCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		wiCrit.add(Restrictions.lt("created", desiredTime));
+		return wiCrit;
 	}
 
 	/**
@@ -349,9 +361,7 @@ public class DomainObjectManager {
 	public List<UUID> getWorkInstructionUuidsToPurge(int daysOld) {
 		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
 		UUID facilityUUID = getFacility().getPersistentId();
-		Criteria wiCrit = WorkInstruction.staticGetDao().createCriteria();
-		wiCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		wiCrit.add(Restrictions.lt("created", desiredTime));
+		Criteria wiCrit = getWiPurgeCriterion(desiredTime, facilityUUID);
 		List<UUID> uuidList = WorkInstruction.staticGetDao().getUUIDListByCriteriaQuery(wiCrit);
 		return uuidList;
 	}
@@ -544,29 +554,6 @@ public class DomainObjectManager {
 	public int purgeSomeWiCsvBeans(List<UUID> wiBeanUuids) {
 		final int MAX_WIBEAN_PURGE = 500;
 		return simplePurge(wiBeanUuids, MAX_WIBEAN_PURGE, WorkInstructionCsvBean.staticGetDao());
-		/*
-		int wantToPurge = wiBeanUuids.size();
-		int willPurge = Math.min(wantToPurge, MAX_WIBEAN_PURGE);
-		if (wantToPurge > MAX_WIBEAN_PURGE) {
-			LOGGER.error("Limiting work instruction csv bean delete batch size to {}. Called for {}.", MAX_WIBEAN_PURGE, wantToPurge);
-		}
-		int deletedCount = 0;
-		for (UUID wiBeanUuid : wiBeanUuids) {
-			// just protection against bad call
-			if (deletedCount > willPurge)
-				break;
-			try {
-				WorkInstructionCsvBean bean = WorkInstructionCsvBean.staticGetDao().findByPersistentId(wiBeanUuid);
-				if (bean != null) {
-					WorkInstructionCsvBean.staticGetDao().delete(bean);
-					deletedCount++;
-				}
-			} catch (DaoException e) {
-				LOGGER.error("purgeSomeWiCsvBeans", e);
-			}
-		}
-		return deletedCount;
-		*/
 	}
 
 	/**
