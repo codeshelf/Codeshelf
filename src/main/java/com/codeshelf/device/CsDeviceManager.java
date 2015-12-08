@@ -391,7 +391,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		// DEV-1331 part 2 logging . need the guid
 		LOGGER.info("COMPUTE_WORK from {}", inCheId);
 		String cheId = inPersistentId.toString();
-		ComputeWorkRequest req = new ComputeWorkRequest(ComputeWorkPurpose.COMPUTE_WORK,
+		ComputeWorkRequest req = new ComputeWorkRequest(ComputeWorkPurpose.COMPUTING_WORK,
 			cheId,
 			null,
 			positionToContainerMap,
@@ -465,7 +465,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		// DEV-1331 part 2 logging . need the guid
 		LOGGER.info("GET_WORK from {}; Loc={}", inCheId, inLocationId);
 		String cheId = inPersistentId.toString();
-		ComputeWorkRequest req = new ComputeWorkRequest(ComputeWorkPurpose.GET_WORK,
+		ComputeWorkRequest req = new ComputeWorkRequest(ComputeWorkPurpose.GETTING_WORK,
 			cheId,
 			inLocationId,
 			positionToContainerMap,

@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class ComputeWorkRequest extends DeviceRequestABC {
-	public enum ComputeWorkPurpose {COMPUTE_WORK, GET_WORK}
+	public enum ComputeWorkPurpose {COMPUTING_WORK, GETTING_WORK}
 	
 	@Getter
 	private ComputeWorkPurpose purpose;
