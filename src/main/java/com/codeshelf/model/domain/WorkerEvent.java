@@ -5,13 +5,10 @@ import java.util.UUID;
 
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
-import javax.persistence.ConstraintMode;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
-import javax.persistence.ForeignKey;
-import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
@@ -61,13 +58,13 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 	@Column(nullable = false)
 	@Getter @Setter
 	@JsonProperty
-	private Timestamp created;
+	private Timestamp 						created;
 
 	@Column(nullable = false, name = "event_type")
 	@Enumerated(EnumType.STRING)
 	@Getter @Setter
 	@JsonProperty
-	private WorkerEvent.EventType						eventType;
+	private WorkerEvent.EventType			eventType;
 
 	@Column(nullable = false, name = "device_persistentid")
 	@Getter @Setter
@@ -89,10 +86,10 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 	@Getter @Setter
 	private UUID							orderDetailId;
 
-	@Column(nullable = true, name = "work_instruction_persistentid", insertable=false, updatable=false)
+	@Column(nullable = true, name = "work_instruction_persistentid")
 	@Type(type="com.codeshelf.persistence.DialectUUIDType")
 	@Getter @Setter
-	private UUID 		workInstructionId;
+	private UUID 							workInstructionId;
 
 	@Column(nullable = true, name = "description")
 	@Getter
