@@ -15,7 +15,7 @@ import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
 
 public class ComputeWorkResponse extends DeviceResponseABC {
 	@Getter @Setter
-	private ComputeWorkPurpose purpose = ComputeWorkPurpose.COMPUTE_WORK;
+	private ComputeWorkPurpose purpose = ComputeWorkPurpose.COMPUTING_WORK;
 	
 	@Getter @Setter
 	Integer	totalGoodWorkInstructions = null;

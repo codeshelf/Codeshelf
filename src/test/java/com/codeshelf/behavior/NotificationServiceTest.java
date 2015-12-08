@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
+import org.joda.time.Interval;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -37,7 +38,7 @@ public class NotificationServiceTest extends HibernateTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		List<WorkerEventTypeGroup> groupedCounts = service.groupWorkerEventsByType(getFacility(), false);
+		List<WorkerEventTypeGroup> groupedCounts = service.groupWorkerEventsByType(getFacility(), new Interval(eventTime.minus(1), eventTime4.plus(1)), false);
 		Assert.assertEquals(3, groupedCounts.size());
 		Map<WorkerEvent.EventType, Long> expectedValues = ImmutableMap.of(
 			WorkerEvent.EventType.COMPLETE, 2L,

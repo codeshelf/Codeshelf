@@ -16,12 +16,14 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.transform.AliasToBeanResultTransformer;
 import org.joda.time.DateTime;
+import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.DomainObjectABC;
 import com.codeshelf.model.domain.Facility;
@@ -187,12 +189,13 @@ public class NotificationBehavior implements IApiBehavior{
 	}
 
 	@SuppressWarnings("unchecked")
-	public List<WorkerEventTypeGroup> groupWorkerEventsByType(Facility facility, boolean resolved) {
+	public List<WorkerEventTypeGroup> groupWorkerEventsByType(Facility facility, Interval createdInterval, boolean resolved) {
         Criteria criteria = WorkerEvent.staticGetDao().createCriteria();
         criteria.setProjection(Projections.projectionList()
         		.add(Projections.groupProperty("eventType"), "eventType")
         		.add(Projections.rowCount(), "count"))
-        	.add(Restrictions.eq("parent", facility));
+        	.add(Restrictions.eq("parent", facility))
+        	.add(GenericDaoABC.createIntervalRestriction("created", createdInterval));
         	if (resolved){
         		criteria.add(Restrictions.isNotNull("resolution"));
         	} else {
