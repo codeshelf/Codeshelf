@@ -88,10 +88,14 @@ public class NotificationBehavior implements IApiBehavior{
 			event.setOrderDetailId(orderDetail.getPersistentId());
 		}
 		event.generateDomainId();
-		WorkerEvent.staticGetDao().store(event);
-		
-		//Save Complete or Short event into WorkerHourlyMetric
-		workerHourlyMetricBehavior.recordEvent(wi.getFacility(), wi.getPickerId(), type);
+		WorkerEvent existingEventWithSameDomain = WorkerEvent.staticGetDao().findByDomainId(device.getFacility(), event.getDomainId());
+		if (existingEventWithSameDomain == null){
+			WorkerEvent.staticGetDao().store(event);
+			//Save Complete or Short event into WorkerHourlyMetric
+			workerHourlyMetricBehavior.recordEvent(wi.getFacility(), wi.getPickerId(), type);			
+		} else {
+			LOGGER.warn("Event " + event.getDomainId() + " already exists. Not creating another one.");
+		}
 	}
 	
 	public void saveEvent(NotificationMessage message) {

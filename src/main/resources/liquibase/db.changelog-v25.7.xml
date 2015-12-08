@@ -58,4 +58,7 @@
         <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_WORK_INSTRUCTION_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="work_instruction"/>
         <dropUniqueConstraint constraintName="uc_network_parent_persistentid" tableName="network"/>
     </changeSet>
+    <changeSet author="ilya (generated)" id="1449599790127-2">
+        <dropUniqueConstraint constraintName="uc_import_receipt_parent_persistentid_domainid" tableName="import_receipt"/>
+    </changeSet>
 </databaseChangeLog>

@@ -11,7 +11,6 @@ import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -27,7 +26,8 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
-@Table(name = "import_receipt", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
+//Below constraint is disabled to give PFS time to purge their duplicate receipts. Re-enabling this is DEV-1364
+@Table(name = "import_receipt"/*, uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})}*/)
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -116,7 +116,7 @@ public class ImportReceipt extends DomainObjectTreeABC<Facility> {
 	
 	@Override
 	public String getDefaultDomainIdPrefix() {
-		return "IMPORT-";
+		return "IMPORT";
 	}
 	
 	@SuppressWarnings("unchecked")

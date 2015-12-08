@@ -403,7 +403,6 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 
 	@Override
 	public void persistDataReceipt(Facility facility, String username, String filename, long received, EdiTransportType tranportType, BatchResult<?> results) {
-
 		ImportReceipt receipt = new ImportReceipt();
 		receipt.setTransportType(tranportType);
 		receipt.setUsername(username);
@@ -417,7 +416,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		receipt.setItemIdsList(results.getItemIds());
 		receipt.setGtinsList(results.getGtins());
 		receipt.setParent(facility);
-		receipt.setDomainId("Import-" + results.getReceived());
+		receipt.setDomainId(receipt.getDefaultDomainIdPrefix() + "_" + receipt.getType() + "_" + results.getReceived().getTime());
 		if (results.isSuccessful()) {
 			receipt.setStatus(ImportStatus.Completed);
 			LOGGER.info("Imported " + receipt);
