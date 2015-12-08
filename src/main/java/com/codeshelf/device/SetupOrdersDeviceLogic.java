@@ -137,8 +137,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private boolean								mSetupMixHasPutwall						= false;
 	private boolean								mSetupMixHasCntrOrder					= false;
 	
-	private final MultiPickInfo					mMultiPickInfo							= new MultiPickInfo();
-
 	private static int							BAY_COMPLETE_CODE						= 1;
 	private static int							REPEAT_CONTAINER_CODE					= 2;
 
@@ -980,7 +978,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	protected void processShortPickYes(final List<WorkInstruction> inWiList, int inPicked) {
 		boolean autoShortOn = mDeviceManager.getAutoShortValue();
+		boolean housekeeping = true;
 		for (WorkInstruction wi : inWiList){
+			if (!wi.isHousekeeping()){
+				housekeeping = false;
+			}
 			notifyWiVerb(wi, WorkerEvent.EventType.SHORT, kLogAsWarn);
 			doShortTransaction(wi, inPicked);
 
@@ -1011,7 +1013,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			// Cannot add an else without doing other kludgy checks above. Don't. If you embark on this, but the LOGGER.error() back and then fix short aheads properly.
 			showActivePicks();
 		} else {
-			doNextItemWithPossibleFlashingThread();
+			doNextItemWithPossibleFlashingThread(housekeeping);
 		}
 	}
 
@@ -1197,7 +1199,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		boolean result = false;
 		mActivePickWiList.clear(); // repopulate from mAllPicksWiList.
-		mMultiPickInfo.reset();
 
 		// Loop through each container to see if there is a WI for that container at the next location.
 		// The "next location" is the first location we find for the next pick.
@@ -1229,7 +1230,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 						LOGGER.error("Not adding work instruction to active list again {}", wi);
 					} else {
 						mActivePickWiList.add(wi);
-						mMultiPickInfo.addWi(getPosconIndexOfWi(wi));
 					}
 
 					result = true;
@@ -2616,26 +2616,24 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			showActivePicks();
 		} else {
 			// There's no more active picks, so move to the next set.
-			doNextItemWithPossibleFlashingThread();
+			doNextItemWithPossibleFlashingThread(inWi.isHousekeeping());
 		}
 	}
 	
-	private void doNextItemWithPossibleFlashingThread(){
-		if (mMultiPickInfo.isPerformingMultiPick()){
+	private void doNextItemWithPossibleFlashingThread(boolean housekeeping){
+		if (mDeviceManager.getPickMultValue() && !housekeeping){
 			Thread doNextItemThread = new Thread(new Runnable() {
 				@Override
 				public void run() {
 					ThreadUtils.sleep(200);
 					List<PosControllerInstr> instructions = new ArrayList<>();
-					for (Byte position : mMultiPickInfo.getPositions()){
-						PosControllerInstr instr = new PosControllerInstr(position,
-									PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-									PosControllerInstr.BITENCODED_TRIPLE_DASH,
-									PosControllerInstr.BITENCODED_TRIPLE_DASH,
-									PosControllerInstr.BLINK_FREQ.byteValue(),
-									PosControllerInstr.BRIGHT_DUTYCYCLE.byteValue());
-						instructions.add(instr);
-					}
+					PosControllerInstr instr = new PosControllerInstr((byte)0,
+								PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+								PosControllerInstr.BITENCODED_TRIPLE_DASH,
+								PosControllerInstr.BITENCODED_TRIPLE_DASH,
+								PosControllerInstr.BLINK_FREQ.byteValue(),
+								PosControllerInstr.BRIGHT_DUTYCYCLE.byteValue());
+					instructions.add(instr);
 					sendPositionControllerInstructions(instructions);
 					ThreadUtils.sleep(800);
 					clearAllPosconsOnThisDevice();
@@ -3210,25 +3208,5 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				info.getDisplayRemoveLine(2),
 				info.getDisplayRemoveLine(3));
 		}
-	}
-	
-	private static class MultiPickInfo {
-		@Getter
-		private final List<Byte> positions = new ArrayList<>();
-		
-		public void reset(){
-			positions.clear();
-		}
-		
-		public void addWi(Byte position){
-			if (position != null){
-				positions.add(position);
-			}
-		}
-		
-		public boolean isPerformingMultiPick(){
-			return positions.size() > 1;
-		}
-		
 	}
 }
