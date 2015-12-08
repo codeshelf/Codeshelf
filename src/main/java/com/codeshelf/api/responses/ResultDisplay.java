@@ -16,7 +16,7 @@ public class ResultDisplay<T> {
 	private Collection<T> results;
 	
 	public ResultDisplay() {
-		this(null, new TreeSet<T>());
+		this(0);
 	}
 	
 	public ResultDisplay(long explicitTotal) {

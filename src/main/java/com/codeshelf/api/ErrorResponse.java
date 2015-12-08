@@ -30,6 +30,14 @@ public class ErrorResponse {
 	@Getter
 	private ArrayList<String> errors;
 
+	public ErrorResponse() {
+		
+	}
+	
+	public ErrorResponse(String error) {
+		addError(error);
+	}
+	
 	public void addError(String error) {
 		if (errors == null) {errors = new ArrayList<>();}
 		errors.add(error);

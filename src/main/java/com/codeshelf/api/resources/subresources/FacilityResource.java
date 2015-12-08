@@ -1,5 +1,6 @@
 package com.codeshelf.api.resources.subresources;
 
+
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -76,6 +77,7 @@ import com.codeshelf.edi.ICsvWorkerImporter;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.DataPurgeParameters;
+import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
@@ -407,6 +409,7 @@ public class FacilityResource {
 		@QueryParam("itemId") String itemId,
 		@QueryParam("location") String location,
 		@QueryParam("workerId") String workerId,
+		@QueryParam("created") IntervalParam created,
 		@QueryParam("groupBy") String groupBy,
 		@QueryParam("resolved") Boolean resolved) {
 		ErrorResponse errors = new ErrorResponse();
@@ -435,6 +438,9 @@ public class FacilityResource {
 				} else {
 					filterParams.add(Restrictions.isNull("resolution"));
 				}
+			}
+			if (created != null) {
+				filterParams.add(GenericDaoABC.createIntervalRestriction("created", created.getValue()));
 			}
 
 			if (!Strings.isNullOrEmpty(itemId)) {
@@ -498,7 +504,8 @@ public class FacilityResource {
 				}
 				return BaseResponse.buildResponse(result);
 			} else if ("type".equals(groupBy)) {
-				List<WorkerEventTypeGroup> issuesByType = notificationService.groupWorkerEventsByType(facility, resolved);
+				
+				List<WorkerEventTypeGroup> issuesByType = notificationService.groupWorkerEventsByType(facility, created.getValue(), resolved);
 				ResultDisplay<WorkerEventTypeGroup> result = new ResultDisplay<>(issuesByType.size());
 				result.addAll(issuesByType);
 				return BaseResponse.buildResponse(result);

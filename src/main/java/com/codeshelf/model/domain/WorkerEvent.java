@@ -16,9 +16,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Type;
@@ -29,6 +26,9 @@ import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "event_worker", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
@@ -156,5 +156,9 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 	public void generateDomainId(){
 		String domainId = getDefaultDomainIdPrefix() + "_" + getDeviceGuid() + "_" + getEventType() + "_" + getCreated().getTime();
 		setDomainId(domainId);
+	}
+	
+	public String toString() {
+		return String.format("%s(facility: %s, eventType: %s, persistentId: %s", this.getClass().getSimpleName(), getParent(), eventType, getPersistentId());
 	}
 }
