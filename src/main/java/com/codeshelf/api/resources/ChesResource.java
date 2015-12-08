@@ -12,6 +12,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -19,22 +20,33 @@ import javax.ws.rs.core.Response;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
+import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.resources.subresources.CheResource;
+import com.codeshelf.api.responses.EventDisplay;
+import com.codeshelf.api.responses.ResultDisplay;
+import com.codeshelf.behavior.WorkHistoryBehavior;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.ws.server.CsServerEndPoint;
+import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
 
 @Path("/ches")
 public class ChesResource {
 	@Context
 	private ResourceContext resourceContext;
+	private WorkHistoryBehavior workHistoryBehavior;
 	private static ScriptEngine engine;
 
 	static {
 		ScriptEngineManager factory = new ScriptEngineManager();
 		engine = factory.getEngineByName("groovy");
 
+	}
+
+	@Inject
+	ChesResource(WorkHistoryBehavior workHistoryBehavior) {
+		this.workHistoryBehavior = workHistoryBehavior;
 	}
 	
 	@GET
@@ -72,4 +84,13 @@ public class ChesResource {
 	    return r;
 	}
 
+	@GET
+	@Path("/{id}/events")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getEvents(@PathParam("id") UUIDParam uuidParam, @QueryParam("limit") Integer limit) {
+		ResultDisplay<EventDisplay> results = this.workHistoryBehavior.getEventsForCheId(uuidParam, limit);
+		return BaseResponse.buildResponse(results);
+	}
+
+	
 }

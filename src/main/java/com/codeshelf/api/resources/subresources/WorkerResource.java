@@ -4,21 +4,33 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
-import lombok.Setter;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.ErrorResponse;
+import com.codeshelf.api.responses.EventDisplay;
+import com.codeshelf.api.responses.ResultDisplay;
+import com.codeshelf.behavior.WorkHistoryBehavior;
 import com.codeshelf.model.domain.Worker;
+import com.google.inject.Inject;
+
+import lombok.Setter;
 
 public class WorkerResource {
 	@Setter
 	private Worker worker;
+	private WorkHistoryBehavior workHistoryBehavior;
+	
+	@Inject
+	public WorkerResource(WorkHistoryBehavior workHistoryBehavior) {
+		this.workHistoryBehavior = workHistoryBehavior;
+	}
 	
 	@GET
 	@RequiresPermissions("worker:view")
@@ -67,4 +79,14 @@ public class WorkerResource {
 		}
 	}
 
+	@GET
+	@Path("/events")
+	@RequiresPermissions("worker:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getEvents(@QueryParam("limit") Integer limit) throws Exception {
+		ResultDisplay<EventDisplay> results = workHistoryBehavior.getEventsForWorkerId(worker.getFacility(), worker.getBadgeId(), limit);
+		return BaseResponse.buildResponse(results);
+	}
+
+	
 }

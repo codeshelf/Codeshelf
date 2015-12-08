@@ -21,12 +21,10 @@ import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.behavior.OrderBehavior;
 import com.codeshelf.behavior.OrderBehavior.OrderDetailView;
+import com.codeshelf.behavior.WorkHistoryBehavior;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
-import com.codeshelf.model.domain.WorkerEvent;
-import com.google.common.base.Function;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 import lombok.Setter;
@@ -38,10 +36,13 @@ public class OrdersResource {
 
 	@Setter
 	private Facility facility;
+
+	private WorkHistoryBehavior workHistoryBehavior;
 	
 	@Inject 
-	public OrdersResource(OrderBehavior orderService) {
+	public OrdersResource(OrderBehavior orderService, WorkHistoryBehavior workHistoryBehavior) {
 		this.orderService = orderService;
+		this.workHistoryBehavior = workHistoryBehavior;
 	}
 
 	@GET
@@ -107,14 +108,7 @@ public class OrdersResource {
 	@Path("/{orderId}/events")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getOrderEvents(@PathParam("orderId") String orderDomainId) {
-		List<WorkerEvent> workerEvents = this.orderService.getOrderEventsForOrderId(facility, orderDomainId);
-		List<EventDisplay> results = Lists.transform(workerEvents, new Function<WorkerEvent, EventDisplay>() {
-			@Override
-			public EventDisplay apply(WorkerEvent event) {
-				EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
-				return eventDisplay;
-			}
-		});
+		List<EventDisplay> results= this.workHistoryBehavior.getOrderEventsForOrderId(facility, orderDomainId);
 		return BaseResponse.buildResponse(results);
 	}
 
