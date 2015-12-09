@@ -2435,4 +2435,8 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	public byte getScannerTypeCode() {
 		return getScannerTypeEnum().getValue();
 	}
+
+	protected void removeStolenCntr(String inCntr) {
+		LOGGER.error("need override for removeCntr()");		
+	}
 }

@@ -9,8 +9,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
@@ -95,6 +97,8 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 	private Map<NetGuid, CheData>						mDeviceDataMap;
 
+	private Map<String, String>							mTotalCntrVsDeviceMap;
+
 	@Getter
 	private IRadioController							radioController;
 
@@ -133,7 +137,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	@Getter
 	@Setter
 	private String										sequenceKind				= "BayDistance";
-	
+
 	@Getter
 	@Setter
 	private String										ordersubValue				= "Disabled";
@@ -150,6 +154,8 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
 
 		mDeviceDataMap = new HashMap<NetGuid, CheData>();
+
+		mTotalCntrVsDeviceMap = new HashMap<String, String>();
 
 		username = System.getProperty("websocket.username");
 		password = System.getProperty("websocket.password");
@@ -381,8 +387,84 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	}
 
 	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.codeshelf.device.CsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
+	/* 
+	 * For DEV-1347 find in our local storage. Or find by asking each device logic
+	 * Return null if not found
+	 */
+	private String findDeviceNameWithContainer(String inOrderCntrId) {
+		return mTotalCntrVsDeviceMap.get(inOrderCntrId);
+	}
+
+	private void removeOldAndRememberNew(final String inCheId, final Map<String, String> positionToContainerMap) {
+		if (inCheId == null || positionToContainerMap == null) {
+			LOGGER.error("removeOldAndRememberNew had null input");
+			return;
+		}
+
+		// remove old
+		//   Java 8 this approach is cool!   mTotalCntrVsDeviceMap.entrySet().removeIf(e-> <boolean expression> );
+		LOGGER.debug("mTotalCntrVsDeviceMap removing all values for {}", inCheId);
+		for (Iterator<Map.Entry<String, String>> it = mTotalCntrVsDeviceMap.entrySet().iterator(); it.hasNext();) {
+			Map.Entry<String, String> entry = it.next();
+			if (inCheId.equals(entry.getValue())) {
+				it.remove();
+			}
+		}
+
+		// put back new
+		for (Map.Entry<String, String> entry : positionToContainerMap.entrySet()) {
+			LOGGER.debug("mTotalCntrVsDeviceMap.put {}/{}", entry.getValue(), inCheId);
+			mTotalCntrVsDeviceMap.put(entry.getValue(), inCheId);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/* 
+	 * For DEV-1347 this is where we find the device logic and tell it to remove that cntr/order from its positionToContainerMap
+	 */
+	private void tellDeviceRemoveCntr(final String inCheGuid, final String inCntr) {
+		// The value is as "000001bf"
+		CheDeviceLogic logic = this.getCheDeviceByControllerId(inCheGuid);
+		if (logic == null) {
+			LOGGER.error("Expected to find deviceLogic for {}", inCheGuid);
+		} else {
+			logic.removeStolenCntr(inCntr);
+		}
+
+	}
+
+	// --------------------------------------------------------------------------
+	/* 
+	 * For DEV-1347 if another CHE puts the container on, remove from other CHE.
+	 * This is the "simple" use case. Might be overly simple. What if two CHE are running the same order for picks on different routes? 
+	 * If so, this implementation is wrong. (mTotalCntrVsDeviceMap says only one CHE at a time as the container.) To support that, change
+	 * mTotalCntrVsDeviceMap to mTotalCntrOnRouteVsDeviceMap, keyed by Cntr and route or area.
+	 */
+	private void evaluateContainerConflictsAndRememberNew(final String inCheId, final Map<String, String> positionToContainerMap) {
+
+		// 1) Iterate over the new container assignments. We care if any are on another CHE. No op necessary if on this CHE.	
+		for (Map.Entry<String, String> entry : positionToContainerMap.entrySet()) {
+			String deviceName = findDeviceNameWithContainer(entry.getValue());
+			if (deviceName != null && !deviceName.equals(inCheId)) {
+				LOGGER.warn("Removing {} from {} as we are adding it to {} at position {}",
+					entry.getValue(),
+					deviceName,
+					inCheId,
+					entry.getKey());
+				// Tell the device to remove this container. And remove from our map
+				tellDeviceRemoveCntr(deviceName, entry.getValue());
+				mTotalCntrVsDeviceMap.remove(entry.getValue());
+			}
+		}
+
+		// 2) Replace all of this CHEs entries with this map's values. Not necessary if just using the individual device logic data.
+		// See findDeviceNameWithContainer() for what we are doing.
+		removeOldAndRememberNew(inCheId, positionToContainerMap);
+	}
+
+	// --------------------------------------------------------------------------
+	/* This is the "Computing Work" call
+	 * 
 	 */
 	public void computeCheWork(final String inCheId,
 		final UUID inPersistentId,
@@ -391,6 +473,11 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		// DEV-1331 part 2 logging . need the guid
 		LOGGER.info("COMPUTE_WORK from {}", inCheId);
 		String cheId = inPersistentId.toString();
+
+		// DEV-1347 we are sending this request to server, locking in these containers to a device.  If another device has a contaienr,
+		// can we pull it off?
+		evaluateContainerConflictsAndRememberNew(inCheId, positionToContainerMap);
+
 		ComputeWorkRequest req = new ComputeWorkRequest(ComputeWorkPurpose.COMPUTING_WORK,
 			cheId,
 			null,
@@ -436,13 +523,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 	public void sendNotificationMessage(final NotificationMessage message) {
 		//no longer sending worker events messages.  Using completeWorkInstruction on WorkBehavior instead
-		if(!WorkerEvent.EventType.COMPLETE.equals(message.getEventType())
-		    && !WorkerEvent.EventType.SHORT.equals(message.getEventType())) {
+		if (!WorkerEvent.EventType.COMPLETE.equals(message.getEventType())
+				&& !WorkerEvent.EventType.SHORT.equals(message.getEventType())) {
 			LOGGER.debug("Notify: Device={}; type={}", message.getDevicePersistentId(), message.getEventType());
 			clientEndpoint.sendMessage(message);
 		}
 	}
-	
+
 	public void sendLogoutRequest(final String inCheId, final UUID inPersistentId, final String workerId) {
 		LOGGER.debug("Logout: Che={};", inCheId);
 		String cheId = inPersistentId.toString();
@@ -450,7 +537,6 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		req.setDeviceId(cheId);
 		clientEndpoint.sendMessage(req);
 	}
-
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)

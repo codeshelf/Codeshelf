@@ -445,8 +445,12 @@ public class CheProcessPickExceptions extends ServerTest {
 		picker.logout();
 	}
 
+	/**
+	 * The "difficult" (for the worker) case of picker walking away ready to pick, then the box is stolen to another cart. 
+	 * If this picker does not setup and just completes the job, deal with it. 
+	 */
 	@Test
-	public final void finishOrderAfterMovedToOtherCart() throws IOException {
+	public final void pickingOrderMovedToOtherCart() throws IOException {
 
 		// set up data for pick scenario
 		Facility facility = setUpSimpleNoSlotFacility();
@@ -472,17 +476,19 @@ public class CheProcessPickExceptions extends ServerTest {
 		// Order 1 has two items in stock (Item 1 and Item 2)
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,2,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,22222,22222,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+				+ "\r\n1,USF314,COSTCO,22222,22222,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,33333,33333,3,Test Item 3,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvOrders);
 		commitTransaction();
 
 		PickSimulator picker = createPickSim(cheGuid1);
 		PickSimulator picker2 = createPickSim(cheGuid2);
 
-		LOGGER.info("1: set up cart with two orders and start");
+		LOGGER.info("1: set up cart with three orders and start");
 		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("11111", "1");
 		picker.setupOrderIdAsContainer("22222", "2");
+		picker.setupOrderIdAsContainer("33333", "3");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 		picker.scanLocation("D301");
@@ -491,12 +497,12 @@ public class CheProcessPickExceptions extends ServerTest {
 		LOGGER.info("2: Let's get the UUIDs of the work instructions");
 		beginTransaction();
 		List<WorkInstruction> wis = picker.getServerVersionAllPicksList();
-		Assert.assertEquals(2, wis.size());
+		Assert.assertEquals(3, wis.size());
 		UUID wi1aId = wis.get(0).getPersistentId();
 		UUID wi2aId = wis.get(1).getPersistentId();
 		commitTransaction();
 
-		LOGGER.info("3: Cart 1 did nothing yet. Set up those orders on Cart 2");
+		LOGGER.info("3: Cart 1 did nothing yet. Set up two of the orders on Cart 2");
 		picker2.loginAndSetup("Picker #2");
 		picker2.setupOrderIdAsContainer("11111", "1");
 		picker2.setupOrderIdAsContainer("22222", "2");
@@ -516,9 +522,22 @@ public class CheProcessPickExceptions extends ServerTest {
 		Assert.assertNotEquals(wi1aId, wi1bId);
 		Assert.assertNotEquals(wi2aId, wi2bId);
 
-		LOGGER.info("5: What happens if picker 1 then tries to complete the pick? Nothing much. Get some server errors");
+		// DEV-1347 major change
+		// This is the "difficult" case of picker walking away ready to pick, then the box is stolen to another cart. If this picker does not setup and just completes the job
+		// deal with it as elegantly as possible.
+		LOGGER.info("5: What happens if picker 1 then tries to complete the pick? Picker1's che was notified the cntr was stolen away, so it warns and goes to setup state.");
 		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+	
+		LOGGER.info("5b: But two STARTs needed, to go through the recompute and get the feedback right.");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		List<WorkInstruction> wis3 = picker.getAllPicksList();
+		Assert.assertEquals(1, wis3.size());
+
+		LOGGER.info("5c: Able to complete only the one job that was not stolen");
 		picker.pickItemAuto();
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 		beginTransaction();
@@ -527,7 +546,7 @@ public class CheProcessPickExceptions extends ServerTest {
 		Assert.assertNull(wi1a);
 		commitTransaction();
 
-		LOGGER.info("6: What happens if picker 2 then tries to complete the pick? Works fine.");
+		LOGGER.info("6: What happens if picker 2 then tries to complete the picks for the containers stolen away? Works fine.");
 		picker2.pickItemAuto();
 		picker2.waitForCheState(CheStateEnum.DO_PICK, 3000);
 		picker2.pickItemAuto();
@@ -542,6 +561,87 @@ public class CheProcessPickExceptions extends ServerTest {
 
 		picker.logout();
 	}
+	
+	/**
+	 * The more normal case of picker being in the middle of picking to other orders, as an order is stolen to another cart. 
+	 * At the end of the SKU pick or multi-pick, forces to setup state to deal with it. 
+	 */
+	@Test
+	public final void nonPickingOrderMovedToOtherCart() throws IOException {
+
+		// set up data for pick scenario
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		// We are going to put everything in A1 and A2 since they are on the same path.
+		//Item 5 is out of stock and item 6 is case only.
+		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
+				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
+				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
+				+ "4,D401,Test Item 4,1,EA,6/25/14 12:00,66\r\n" //
+				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
+		beginTransaction();
+		importInventoryData(facility, csvInventory);
+		PropertyBehavior.turnOffHK(facility);
+		commitTransaction();
+
+		this.startSiteController();
+
+		beginTransaction();
+		facility = facility.reload();
+		// Outbound order. No group. Using 5 digit order number and preassigned container number.
+		// Order 1 has two items in stock (Item 1 and Item 2)
+		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,2,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,22222,22222,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,33333,33333,3,Test Item 3,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+
+		PickSimulator picker = createPickSim(cheGuid1);
+		PickSimulator picker2 = createPickSim(cheGuid2);
+
+		LOGGER.info("1: set up cart with three orders and start");
+		picker.loginAndSetup("Picker #1");
+		picker.setupOrderIdAsContainer("11111", "1");
+		picker.setupOrderIdAsContainer("22222", "2");
+		picker.setupOrderIdAsContainer("33333", "3");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		picker.scanLocation("D301");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		LOGGER.info("3: Cart 1 did nothing yet. Set up order 33333 on Cart 2");
+		picker2.loginAndSetup("Picker #2");
+		picker2.setupOrderIdAsContainer("33333", "3");
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		picker2.scanLocation("D301");
+		picker2.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+		// DEV-1347 major change
+		LOGGER.info("5: Picker 1 is allowed to finish that pick. But then back to summary screen to force a recompute. Two STARTs, to get the feedback counts right");
+		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		List<WorkInstruction> wis3 = picker.getAllPicksList();
+		Assert.assertEquals(1, wis3.size());
+
+		LOGGER.info("5b: Able to complete the other job that was not stolen");
+		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+
+		LOGGER.info("6: What happens if picker 2 then tries to complete the pick for the container stolen away? Works fine.");
+		picker2.pickItemAuto();
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+
+		picker.logout();
+		picker2.logout();
+	}
+
 
 	/**
 	 * Shows that we get new persistent ID for work instruction when setting up cart again.

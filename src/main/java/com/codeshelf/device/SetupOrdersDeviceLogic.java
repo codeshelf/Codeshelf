@@ -62,6 +62,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private Map<String, WorkInstructionCount>	mContainerToWorkInstructionCountMap;
 	// Careful: this initializes as null, and only exists if there was successful return of the response from server. It must always be null checked.
 
+	private List<String>						mStolenCntrs;
+
 	// Transient. The CHE has scanned this container, and will add to container map if it learns the poscon position.
 	private String								mContainerInSetup;
 
@@ -97,7 +99,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Getter
 	@Setter
 	private CheStateEnum						mRememberEnteringInfoState				= CheStateEnum.PUT_WALL_SCAN_ITEM;
-	
+
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
@@ -136,7 +138,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	private boolean								mSetupMixHasPutwall						= false;
 	private boolean								mSetupMixHasCntrOrder					= false;
-	
+
 	private static int							BAY_COMPLETE_CODE						= 1;
 	private static int							REPEAT_CONTAINER_CODE					= 2;
 
@@ -148,6 +150,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController, che);
 
 		mPositionToContainerMap = new HashMap<String, String>();
+		mStolenCntrs = new ArrayList<String>();
 
 		updateConfigurationFromManager();
 		// For DEV-776, 778, we want to initialize to know the path location the CHE last scanned onto.
@@ -221,6 +224,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 
 				case SETUP_SUMMARY:
+					if (mStolenCntrs.size() > 0) {
+						adjustForStolenCntrs(); // DEV-1347
+					}
 					sendSummaryScreen();
 					// We also want cart feedback, including active work instruction counts per poscon
 					this.showCartSetupFeedback();
@@ -791,7 +797,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case LOW_CONFIRM:
 				setState(getRememberEnteringLowState());
 				break;
-				
+
 			default:
 				//Reset ourselves
 				//Ideally we shouldn't have to clear poscons here
@@ -881,12 +887,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				break;
 
 			case LOW_CONFIRM:
-				if (YES_COMMAND.equalsIgnoreCase(inScanStr)){
+				if (YES_COMMAND.equalsIgnoreCase(inScanStr)) {
 					notifyWiVerb(getOneActiveWorkInstruction(), EventType.LOW, false);
 				}
 				setState(getRememberEnteringLowState());
 				break;
-				
+
 			default:
 				// Stay in the same state - the scan made no sense.
 				invalidScanMsg(mCheStateEnum);
@@ -979,8 +985,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	protected void processShortPickYes(final List<WorkInstruction> inWiList, int inPicked) {
 		boolean autoShortOn = mDeviceManager.getAutoShortValue();
 		boolean housekeeping = true;
-		for (WorkInstruction wi : inWiList){
-			if (!wi.isHousekeeping()){
+		for (WorkInstruction wi : inWiList) {
+			if (!wi.isHousekeeping()) {
 				housekeeping = false;
 			}
 			notifyWiVerb(wi, WorkerEvent.EventType.SHORT, kLogAsWarn);
@@ -991,7 +997,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			// Depends on AUTOSHRT parameter
 			if (autoShortOn) {
 				doShortAheads(wi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
-			}			
+			}
 		}
 		// If AUTOSHRT if off, there still might be other jobs in active pick list. If on, any remaining there would be shorted and removed.
 		int afterActiveCount = mActivePickWiList.size();
@@ -1073,10 +1079,42 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 
 	// --------------------------------------------------------------------------
+	/**  DEV-1347
+	 *   Remove the containers known to have been stolen, then go to summary state so all work is recomputed without those
+	 */
+	private void adjustForStolenCntrs() {
+		if (mStolenCntrs.size() == 0) {
+			LOGGER.error("adjustForStolenCntrs() not called as expected");
+		}
+		// adjust all. We will be entering SETUP_SUMMARY now, so all will be recomputed
+		
+		//   Java 8 this approach is cool!   mPositionToContainerMap.entrySet().removeIf(e-> <boolean expression> );
+		LOGGER.warn("removing containers stolen by other cart(s):{}. Will then need to recompute.", mStolenCntrs);
+		for (Iterator<Map.Entry<String, String>> it = mPositionToContainerMap.entrySet().iterator(); it.hasNext();) {
+			Map.Entry<String, String> entry = it.next();
+			if (mStolenCntrs.contains(entry.getValue())) {
+				it.remove();
+			}
+		}
+		
+		// pretty kludgy flag. Test START from SETUP_SUMMARY it needs to ask all from the server again. Necessary to get our feedback right.
+		mContainerToWorkInstructionCountMap = null;
+
+		// then clear the stolen containers
+		mStolenCntrs.clear();
+	}
+
+	// --------------------------------------------------------------------------
 	/**  doNextPick has a major side effect of setState(DO_PICK) if there is more work.
 	 *   Then setState(DO_PICK) calls showActivePicks()
 	 */
 	private void doNextPick() {
+		// DEV-1347 do not proceed is some other CHE has stolen a container
+		if (mStolenCntrs.size() > 0) {
+			setState(CheStateEnum.SETUP_SUMMARY);
+			return;
+		}
+
 		// We might call doNextPick after a normal complete, or a short pick confirm.
 		// We should not call it for any put wall cases; call doNextWallPut instead
 		mShortPickWi = null;
@@ -1212,7 +1250,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (state != CheStateEnum.GET_PUT_INSTRUCTION && state != CheStateEnum.DO_PUT
 					&& state != CheStateEnum.SHORT_PUT_CONFIRM && state != CheStateEnum.COMPUTE_WORK)
 				if (getPosconIndexOfWi(wi) == 0) {
-					LOGGER.error("{} not in container map. State is {}", wi.getContainerId(), state);
+					LOGGER.error("{} not in container map. State is {}. In selectNextActivePicks()", wi.getContainerId(), state);
 					break;
 				}
 
@@ -1965,7 +2003,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// DEV-1331 part 3 If we are already picking, and we get this, we are in grave danger. Server has changed out its work instructions.
 		// We have to go back to a state where the user must scan start again.
 		if (currentState == CheStateEnum.DO_PICK) {
-			LOGGER.error("Late WorkInstructionCounts response from server. Current state is {}. Transition back to summary.", currentState);
+			LOGGER.error("Late WorkInstructionCounts response from server. Current state is {}. Transition back to summary.",
+				currentState);
 			setState(CheStateEnum.SETUP_SUMMARY);
 			return;
 		}
@@ -2619,19 +2658,19 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			doNextItemWithPossibleFlashingThread(inWi.isHousekeeping());
 		}
 	}
-	
-	private void doNextItemWithPossibleFlashingThread(boolean housekeeping){
-		if (mDeviceManager.getPickMultValue() && !housekeeping){
+
+	private void doNextItemWithPossibleFlashingThread(boolean housekeeping) {
+		if (mDeviceManager.getPickMultValue() && !housekeeping) {
 			Thread doNextItemThread = new Thread(new Runnable() {
 				@Override
 				public void run() {
 					List<PosControllerInstr> instructions = new ArrayList<>();
-					PosControllerInstr instr = new PosControllerInstr((byte)0,
-								PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-								PosControllerInstr.BITENCODED_TRIPLE_DASH,
-								PosControllerInstr.BITENCODED_TRIPLE_DASH,
-								PosControllerInstr.BLINK_FREQ.byteValue(),
-								PosControllerInstr.BRIGHT_DUTYCYCLE.byteValue());
+					PosControllerInstr instr = new PosControllerInstr((byte) 0,
+						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+						PosControllerInstr.BITENCODED_TRIPLE_DASH,
+						PosControllerInstr.BITENCODED_TRIPLE_DASH,
+						PosControllerInstr.BLINK_FREQ.byteValue(),
+						PosControllerInstr.BRIGHT_DUTYCYCLE.byteValue());
 					instructions.add(instr);
 					sendPositionControllerInstructions(instructions);
 					ThreadUtils.sleep(800);
@@ -2644,8 +2683,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			doNextItem();
 		}
 	}
-	
-	private void doNextItem(){
+
+	private void doNextItem() {
 		CheStateEnum state = getCheStateEnum();
 		if (state == CheStateEnum.DO_PUT || state.equals(CheStateEnum.SHORT_PUT_CONFIRM)) {
 			doNextWallPut();
@@ -2701,6 +2740,19 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					mContainerToWorkInstructionCountMap.remove(containerId);
 			}
 		}
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * DEV-1347	This device log could be in any state. What we generally want to accomplish is remove the container from the map, and recompute the work instructions
+	 * without that order. But we do not want to interrupt this che in the middle of a pick, especially in a multi-pick.
+	 * Let's post this to a queue, then upon completion of the SKU (where we multi-flash), instead of next pick, remove the container and go back to summary state.
+	 */
+	@Override
+	protected void removeStolenCntr(String inCntr) {
+		// Remember, this is called by other cheDeviceLogic during it's setup. Does it log in the other's context?
+		LOGGER.debug("queue to remove {} from {}", inCntr, this.getGuidNoPrefix());
+		mStolenCntrs.add(inCntr);
 	}
 
 	// --------------------------------------------------------------------------
@@ -2762,6 +2814,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			LOGGER.warn("Ignore button because no order/container associated to button. But refreshing the displays."); // DEV-1318
 			setState(mCheStateEnum);
 			return;
+		} else if (this.mStolenCntrs.contains(containerId)) {
+			// DEV-1347. Refuse to complete this job is the container was just stolen by another CHE, as the server's work instruction will not match
+			// This is the worst case of being in the middle of a pick concerning the stolen container. Usually dealt with between picks without confusing the worker much.
+			LOGGER.warn("Not completing job for {} because it was taken by another cart", containerId);
+			// Recover is not too elegant.
+			setState(CheStateEnum.SETUP_SUMMARY);			
 		} else {
 			WorkInstruction wi = getWorkInstructionForContainerId(containerId);
 			if (wi == null) {
