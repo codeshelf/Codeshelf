@@ -21,7 +21,8 @@ import com.google.gson.annotations.SerializedName;
 public class LedSample {
 
 	public static final byte	OFF			= (byte) 0x00;
-	public static final byte	ON_			= (byte) 0xfe;
+	public static final byte	ON_			= (byte) 0xfe; // brightness for full on value.
+	// public static final byte	ON_			= (byte) 0x09; // bright enough, especially for environmental lights.
 
 	public static final byte[]	LED_RED		= { ON_, OFF, OFF };
 	public static final byte[]	LED_GREEN	= { OFF, ON_, OFF };
