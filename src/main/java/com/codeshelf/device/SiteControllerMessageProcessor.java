@@ -125,7 +125,8 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 					if (response.getStatus() == ResponseStatus.Success) {
 						this.deviceManager.processComputeWorkResponse(computeWorkResponse.getNetworkGuid(),
 							computeWorkResponse.getTotalGoodWorkInstructions(),
-							computeWorkResponse.getContainerToWorkInstructionCountMap());
+							computeWorkResponse.getContainerToWorkInstructionCountMap(),
+							computeWorkResponse.getReplenishRun());
 					}
 				} else {
 					if (response.getStatus() == ResponseStatus.Success) {

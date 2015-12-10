@@ -986,10 +986,12 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 	public void processComputeWorkResponse(String networkGuid,
 		Integer workInstructionCount,
-		Map<String, WorkInstructionCount> containerToWorkInstructionCountMap) {
+		Map<String, WorkInstructionCount> containerToWorkInstructionCountMap,
+		boolean isReplenishRun) {
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			LOGGER.info("accepting server's work instruction counts, but not the wis, into device {}", cheDevice.getGuidNoPrefix());
+			cheDevice.setReplenishRun(isReplenishRun);
 			cheDevice.processWorkInstructionCounts(workInstructionCount, containerToWorkInstructionCountMap);
 		} else {
 			LOGGER.warn("Unable to assign work count to CHE id={} CHE not found", networkGuid);
@@ -1313,7 +1315,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			}
 		}
 	}
-
+	
 	@Override
 	public void capture(byte[] packet) {
 		PcapRecord pcap = new PcapRecord(packet);

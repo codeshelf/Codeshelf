@@ -2200,20 +2200,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		orderCountStr = StringUtils.leftPad(orderCountStr, 3);
 		String locStr = getLocationId(); // this might be null the very first time.
 		String line1;
+		String ordersOrReplen = getReplenishRun() ? "replen" : (orderCount == 1) ? "order " : "orders";
 		if (locStr == null) {
-			if (orderCount == 1)
-				line1 = String.format("%s order  ", orderCountStr);
-			else
-				line1 = String.format("%s orders ", orderCountStr);
+			line1 = String.format("%s %s ", orderCountStr, ordersOrReplen);
 		} else {
 			if (locStr.startsWith(TAPE_PREFIX)) {
 				mDeviceManager.requestTapeDecoding(getGuid().getHexStringNoPrefix(), getPersistentId(), locStr);
 			}
 			locStr = StringUtils.leftPad(locStr, 9); // Always right justifying the location
-			if (orderCount == 1)
-				line1 = String.format("%s order  %s", orderCountStr, locStr);
-			else
-				line1 = String.format("%s orders %s", orderCountStr, locStr);
+			line1 = String.format("%s %s %s", orderCountStr, ordersOrReplen, locStr);
 		}
 
 		int pickCount = getCountOfGoodJobsOnSetupPath();

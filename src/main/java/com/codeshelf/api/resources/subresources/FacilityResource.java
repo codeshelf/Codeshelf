@@ -3,7 +3,6 @@ package com.codeshelf.api.resources.subresources;
 
 import java.io.InputStream;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -83,7 +82,6 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.FacilityMetric;
-import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.scheduler.ApplicationSchedulerService;

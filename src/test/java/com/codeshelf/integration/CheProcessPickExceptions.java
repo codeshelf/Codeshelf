@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
-import com.codeshelf.device.SetupOrdersDeviceLogic;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;

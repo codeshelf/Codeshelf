@@ -237,6 +237,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Setter
 	private ScannerTypeEnum							mScannerTypeEnum						= ScannerTypeEnum.ORIGINALSERIAL;
 
+	@Accessors(prefix = "m") @Getter @Setter
+	private Boolean									mReplenishRun								 = false;
+
 	/**
 	 * We have only one inventory state, not two. Essentially another state by whether or not we think we have a valid
 	 * gtin or item id in lastScanedGTIN.  This is fairly complicated. We desire:
