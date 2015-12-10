@@ -2473,7 +2473,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					if (mPositionToContainerMap.values().size() > 0) {
 						startWork(inScanStr);
 					} else {
-						// should we do anything?
+						LOGGER.error("Not sending request work because container map is empty"); // DEV-1370
+						// new error in v25. Don't know how often we get here in production. Only one unit test in CheProcessPickExceptions hits this.
 					}
 
 				} else { // normal case

@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
+import com.codeshelf.device.SetupOrdersDeviceLogic;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
@@ -560,6 +561,27 @@ public class CheProcessPickExceptions extends ServerTest {
 		commitTransaction();
 
 		picker.logout();
+		picker2.logout();
+		
+		// For DEV-1370. At PFSWeb, worker got far ahead of computeWork response, so got out of state. In the end
+		// was able to submit get work for an empty cart, which led to a SQL error. Try to replicate.
+		LOGGER.info("7: Empty compute work scenarios");
+		picker2.loginAndSetup("Picker #2");
+		picker2.scanCommand("START");
+		// not allowed by normal process		
+		picker2.waitForCheState(CheStateEnum.NO_CONTAINERS_SETUP, 3000);
+		picker2.scanCommand("CANCEL");
+		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
+
+		LOGGER.info("7b: Force to state, then start. This does not send the request either");		
+		CheDeviceLogic logic = picker2.getCheDeviceLogic();
+		logic.testOnlySetState(CheStateEnum.SETUP_SUMMARY);
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		
+		picker2.logout();
+
 	}
 	
 	/**

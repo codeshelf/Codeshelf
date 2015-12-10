@@ -1610,6 +1610,12 @@ public class WorkBehavior implements IApiBehavior {
 		for (Entry<String, String> e : positionToContainerMap.entrySet()) {
 			neededDomainIds.add(e.getValue());
 		}
+		// DEV-1370 Restrictions.in( empty list) results in a SQL error. Avoid
+		if (neededDomainIds.isEmpty()) {
+			LOGGER.error("bailing out of prefetchContainers whne the container list is empty");			
+			return containersHash; // This use to throw. Now return more elegantly. This is empty.
+		}
+		
 		//Search for those containers 
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", facility));
