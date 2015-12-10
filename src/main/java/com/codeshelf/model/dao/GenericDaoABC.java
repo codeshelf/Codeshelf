@@ -23,11 +23,11 @@ import org.hibernate.Query;
 import org.hibernate.QueryParameterException;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
-import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.criterion.SimpleExpression;
 import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -349,9 +349,28 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 					+ clazz.getSimpleName());
 		}
 	}
+
+	//side effect of changing the query temporarily since cloning isn't really supported
+	public static long countCriteria(Criteria criteria) {
+		//Turn into a count query
+		Criteria countCriteria = criteria.setProjection(Projections.rowCount());
+		Long total = (Long) countCriteria.uniqueResult();
+
+		//Turn back into entity query
+		criteria.setProjection(null);
+		criteria.setResultTransformer(Criteria.ROOT_ENTITY);
+		return total;
+	}
+
 	
-	public static Criterion createSubstringRestriction(String propertyName, String substring) {
-		return Restrictions.ilike(propertyName, substring, MatchMode.ANYWHERE);
+	public static SimpleExpression createSubstringRestriction(String propertyName, String substring) {
+		SimpleExpression property = null;
+		if (substring != null && substring.indexOf('*') >= 0) {
+			property = Property.forName(propertyName).like(substring.replace('*', '%'));
+		} else {
+			property = Property.forName(propertyName).eq(substring);
+		}
+		return property;
 	}
 	
 	public static Criterion createIntervalRestriction(String propertyName, Interval interval) {

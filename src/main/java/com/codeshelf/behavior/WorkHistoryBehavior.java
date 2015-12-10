@@ -1,11 +1,12 @@
 package com.codeshelf.behavior;
 
+import static com.codeshelf.model.dao.GenericDaoABC.countCriteria;
+
 import java.util.List;
 
 import org.hibernate.Criteria;
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Order;
-import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 
 import com.codeshelf.api.BaseResponse.UUIDParam;
@@ -62,7 +63,7 @@ public class WorkHistoryBehavior {
 		
 		Criteria criteria = WorkerEvent.staticGetDao()
 		.createCriteria()
-		.add(Property.forName("facility").eq(facility))
+		.add(Property.forName("parent").eq(facility))
 		.add(Property.forName("workerId").eq(badgeId));
 		long total = countCriteria(criteria);
 		
@@ -74,17 +75,6 @@ public class WorkHistoryBehavior {
 		return new ResultDisplay<>(total, mapToEventDisplay(entities));
 	}
 	
-	//side effect of changing the query temporarily since cloning isn't really supported
-	private long countCriteria(Criteria criteria) {
-		//Turn into a count query
-		Criteria countCriteria = criteria.setProjection(Projections.rowCount());
-		Long total = (Long) countCriteria.uniqueResult();
-
-		//Turn back into entity query
-		criteria.setProjection(null);
-		criteria.setResultTransformer(Criteria.ROOT_ENTITY);
-		return total;
-	}
 
 	private List<EventDisplay> mapToEventDisplay(List<WorkerEvent> workerEvents) {
 		//Lazily convert worker event to event for display

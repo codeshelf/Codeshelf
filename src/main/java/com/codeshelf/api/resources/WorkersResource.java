@@ -1,5 +1,7 @@
 package com.codeshelf.api.resources;
 
+import static com.codeshelf.model.dao.GenericDaoABC.countCriteria;
+
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
@@ -10,17 +12,23 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.hibernate.Criteria;
+import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Property;
 
 import com.codeshelf.api.BaseResponse;
-import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.BaseResponse.UUIDParam;
+import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.resources.subresources.WorkerResource;
+import com.codeshelf.api.responses.ResultDisplay;
+import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Worker;
 import com.sun.jersey.api.core.ResourceContext;
@@ -60,9 +68,24 @@ public class WorkersResource {
 	@GET
 	@RequiresPermissions("worker:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getAllWorkers() {
-		List<Worker> workers = Worker.staticGetDao().getAll();
-		return BaseResponse.buildResponse(workers);
+	public Response getAllWorkers(@QueryParam("badgeId") String badgeId, @QueryParam("limit") Integer limit) {
+		Criteria criteria= Worker.staticGetDao().createCriteria();
+
+		if (facility != null) {
+			criteria.add(Property.forName("parent").eq(facility));
+		}
+		if (badgeId !=  null) {
+			criteria.add(GenericDaoABC.createSubstringRestriction("badgeId", badgeId));
+		}
+			
+		long total = countCriteria(criteria);
+		
+		criteria
+		.addOrder(Order.asc("badgeId"))
+		.setMaxResults(limit);
+		@SuppressWarnings("unchecked")
+		List<Worker> entities = criteria.list();
+		return BaseResponse.buildResponse(new ResultDisplay<>(total, entities));
 	}
 	
 	@POST
