@@ -63,7 +63,7 @@ public class WorkHistoryBehavior {
 		
 		Criteria criteria = WorkerEvent.staticGetDao()
 		.createCriteria()
-		.add(Property.forName("facility").eq(facility))
+		.add(Property.forName("parent").eq(facility))
 		.add(Property.forName("workerId").eq(badgeId));
 		long total = countCriteria(criteria);
 		

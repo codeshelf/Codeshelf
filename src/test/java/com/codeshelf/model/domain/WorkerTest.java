@@ -21,6 +21,7 @@ import com.codeshelf.behavior.NotificationBehavior;
 import com.codeshelf.behavior.OrderBehavior;
 import com.codeshelf.behavior.UiUpdateBehavior;
 import com.codeshelf.behavior.WorkBehavior;
+import com.codeshelf.behavior.WorkHistoryBehavior;
 import com.codeshelf.testframework.HibernateTest;
 import com.google.inject.Provider;
 
@@ -188,6 +189,17 @@ public class WorkerTest extends HibernateTest {
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
+	@Test
+	public void getWorkerEvents() throws Exception {
+		this.getTenantPersistenceService().beginTransaction();
+		Worker worker1 = createWorkerObject(true, "FirstName_1", "LastName_1", null, "abc123", null, null);
+		Response response = workersResource.createWorker(worker1);
+		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		
+		WorkerResource workerResource = getWorkerResource(worker1);
+		workerResource.getEvents(15);
+		this.getTenantPersistenceService().commitTransaction();
+	}
 	
 	@Test
 	public void testGetAllWorkers() throws Exception {
@@ -215,10 +227,11 @@ public class WorkerTest extends HibernateTest {
 	}
 
 	private WorkerResource getWorkerResource(Worker worker) throws Exception {
-		WorkerResource workerResource = new WorkerResource(null);
+		WorkerResource workerResource = new WorkerResource(new WorkHistoryBehavior());
 		workerResource.setWorker(worker);
 		return workerResource;
 	}
+
 	
 	private Worker createWorkerObject(Boolean active,
 		String firstName,
