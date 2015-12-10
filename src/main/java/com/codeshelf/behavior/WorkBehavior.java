@@ -1640,7 +1640,8 @@ public class WorkBehavior implements IApiBehavior {
 		LocationAlias alias = null;
 		for (Container container : inContainerList) {
 			OrderHeader order = container.getCurrentOrderHeader();
-			if (order != null && order.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
+			OrderTypeEnum type = order.getOrderType();
+			if (order != null && (type == OrderTypeEnum.OUTBOUND || type == OrderTypeEnum.REPLENISH)) {
 				for (OrderDetail orderDetail : order.getOrderDetails()) {
 					preferredLocationStr = orderDetail.getPreferredLocation();
 					if (!Strings.isNullOrEmpty(preferredLocationStr) && !preferredLocations.containsKey(preferredLocationStr)) {
