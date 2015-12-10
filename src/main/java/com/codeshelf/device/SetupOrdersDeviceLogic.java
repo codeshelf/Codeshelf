@@ -2819,6 +2819,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			// This is the worst case of being in the middle of a pick concerning the stolen container. Usually dealt with between picks without confusing the worker much.
 			LOGGER.warn("Not completing job for {} because it was taken by another cart", containerId);
 			// Recover is not too elegant.
+			for (WorkInstruction wi : mActivePickWiList) {
+				clearLedAndPosConControllersForWi(wi);
+			}
 			setState(CheStateEnum.SETUP_SUMMARY);			
 		} else {
 			WorkInstruction wi = getWorkInstructionForContainerId(containerId);
