@@ -16,6 +16,7 @@ import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.resources.WorkersResource;
 import com.codeshelf.api.resources.subresources.FacilityResource;
 import com.codeshelf.api.resources.subresources.WorkerResource;
+import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.behavior.NotificationBehavior;
 import com.codeshelf.behavior.OrderBehavior;
 import com.codeshelf.behavior.UiUpdateBehavior;
@@ -202,23 +203,14 @@ public class WorkerTest extends HibernateTest {
 		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
 
 		//Retrieve the saved Workers in Facility.
-		response = workersResource.getAllWorkers();
+		response = workersResource.getAllWorkers(null, 20);
 		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
 		@SuppressWarnings("unchecked")
-		List<Worker> workers = (List<Worker>)response.getEntity();
-		//Note that the order of Workers in the list isn't enforced. Could break test if something changes in the back.
+		ArrayList<Worker> workers = new ArrayList<>(((ResultDisplay<Worker>)response.getEntity()).getResults());
+		//Note that the order of Workers is defaulted by badgeId
 		compareWorkers(worker1, workers.get(0));
 		compareWorkers(worker2, workers.get(1));
 		
-		//Retrieve all saved Workers in DB.
-		response = workersResource.getAllWorkers();
-		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
-		@SuppressWarnings("unchecked")
-		List<Worker> workersDB = (List<Worker>)response.getEntity();
-		//Note that the order of Workers in the list isn't enforced. Could break test if something changes in the back.
-		compareWorkers(worker1, workersDB.get(0));
-		compareWorkers(worker2, workersDB.get(1));
-
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
