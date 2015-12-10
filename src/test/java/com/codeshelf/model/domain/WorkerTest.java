@@ -49,6 +49,7 @@ public class WorkerTest extends HibernateTest {
 		Facility facility = getFacility();
 		facilityResource.setFacility(facility);
 		workersResource = new WorkersResource();
+		workersResource.setFacility(facility);
 	}
 	
 	@Test
@@ -57,14 +58,14 @@ public class WorkerTest extends HibernateTest {
 	
 		//Create Worker with all fields set
 		Worker workerFull = createWorkerObject(true, "FirstName", "LastName", "MI", "abc123", "GroupName", "hr123");
-		Response response = facilityResource.createWorker(workerFull);
+		Response response = workersResource.createWorker(workerFull);
 		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
 		Worker savedWorkerFull = (Worker)response.getEntity();
 		compareWorkers(workerFull, savedWorkerFull);
 		
 		//Create Worker with only required fields set
 		Worker workerMinimal = createWorkerObject(null, "FirstName_Min", "LastName_Min", null, "abc456", null, null);
-		response = facilityResource.createWorker(workerMinimal);
+		response = workersResource.createWorker(workerMinimal);
 		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
 		Worker savedWorkerMinimal = (Worker)response.getEntity();
 		compareWorkers(workerMinimal, savedWorkerMinimal);
@@ -77,7 +78,7 @@ public class WorkerTest extends HibernateTest {
 		this.getTenantPersistenceService().beginTransaction();
 		
 		Worker workerEmpty = new Worker();
-		Response response = facilityResource.createWorker(workerEmpty);
+		Response response = workersResource.createWorker(workerEmpty);
 		Assert.assertEquals(HttpServletResponse.SC_BAD_REQUEST, response.getStatus());
 		ErrorResponse errorResponse = (ErrorResponse)response.getEntity();
 		ArrayList<String> errors = errorResponse.getErrors();
@@ -92,12 +93,12 @@ public class WorkerTest extends HibernateTest {
 		this.getTenantPersistenceService().beginTransaction();
 		//Save a worker
 		Worker worker1 = createWorkerObject(true, "FirstName_1", "LastName_1", null, "abc123", null, null);
-		Response response = facilityResource.createWorker(worker1);
+		Response response = workersResource.createWorker(worker1);
 		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
 		
 		//Overwrite old worker with a new one with the same badge
 		Worker worker2 = createWorkerObject(false, "FirstName_2", "LastName_2", null, "abc123", null, null);
-		response = facilityResource.createWorker(worker2);
+		response = workersResource.createWorker(worker2);
 		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
 		List<Worker> workers = Worker.staticGetDao().getAll();
 		Assert.assertEquals(1, workers.size());
@@ -112,7 +113,7 @@ public class WorkerTest extends HibernateTest {
 		
 		//Save a worker
 		Worker workerOiginal = createWorkerObject(true, "FirstName", "LastName", "MI", "abc123", "GroupName", "hr123");
-		Response response = facilityResource.createWorker(workerOiginal);
+		Response response = workersResource.createWorker(workerOiginal);
 		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
 		Worker workerSaved = (Worker)response.getEntity();
 		compareWorkers(workerOiginal, workerSaved);
@@ -134,7 +135,7 @@ public class WorkerTest extends HibernateTest {
 		
 		//Save a worker
 		Worker workerOiginal = createWorkerObject(true, "FirstName", "LastName", null, "abc123", null, null);
-		Response response = facilityResource.createWorker(workerOiginal);
+		Response response = workersResource.createWorker(workerOiginal);
 		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
 		Worker workerSaved = (Worker)response.getEntity();
 		compareWorkers(workerOiginal, workerSaved);
@@ -159,11 +160,11 @@ public class WorkerTest extends HibernateTest {
 		
 		//Save two workers
 		Worker worker1 = createWorkerObject(true, "FirstName_1", "LastName_1", null, "abc123", null, null);
-		Response response = facilityResource.createWorker(worker1);
+		Response response = workersResource.createWorker(worker1);
 		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
 		
 		Worker worker2 = createWorkerObject(true, "FirstName_2", "LastName_2", null, "def456", null, null);
-		response = facilityResource.createWorker(worker2);
+		response = workersResource.createWorker(worker2);
 		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
 
 		//Try to update second worker with badgeId of the first worker
@@ -188,20 +189,20 @@ public class WorkerTest extends HibernateTest {
 
 	
 	@Test
-	public void testGetAllWorkers() {
+	public void testGetAllWorkers() throws Exception {
 		this.getTenantPersistenceService().beginTransaction();
 			
 		//Save two workers
 		Worker worker1 = createWorkerObject(true, "FirstName_1", "LastName_1", null, "abc123", null, null);
-		Response response = facilityResource.createWorker(worker1);
+		Response response = workersResource.createWorker(worker1);
 		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
 		
 		Worker worker2 = createWorkerObject(true, "FirstName_2", "LastName_2", null, "def456", null, null);
-		response = facilityResource.createWorker(worker2);
+		response = workersResource.createWorker(worker2);
 		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
 
 		//Retrieve the saved Workers in Facility.
-		response = facilityResource.getAllWorkersInFacility();
+		response = workersResource.getAllWorkers();
 		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
 		@SuppressWarnings("unchecked")
 		List<Worker> workers = (List<Worker>)response.getEntity();

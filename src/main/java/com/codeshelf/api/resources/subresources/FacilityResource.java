@@ -57,6 +57,7 @@ import com.codeshelf.api.pickscript.ScriptStepParser;
 import com.codeshelf.api.pickscript.ScriptStepParser.StepPart;
 import com.codeshelf.api.resources.ExtensionPointsResource;
 import com.codeshelf.api.resources.OrdersResource;
+import com.codeshelf.api.resources.WorkersResource;
 import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.ItemDisplay;
 import com.codeshelf.api.responses.PickRate;
@@ -166,6 +167,14 @@ public class FacilityResource {
 		return r;
 	}
 
+	@Path("/workers")
+	public WorkersResource getWorkersResource() throws Exception {
+		WorkersResource r = resourceContext.getResource(WorkersResource.class);
+		r.setFacility(facility);
+		return r;
+	}
+
+	
 	@Path("/test")
 	public TestResource getTestResource() throws Exception {
 		TestResource r = resourceContext.getResource(TestResource.class);
@@ -359,47 +368,6 @@ public class FacilityResource {
 		return BaseResponse.buildResponse(ches);
 	}
 
-	@GET
-	@Path("/workers")
-	@RequiresPermissions("worker:view")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getAllWorkersInFacility() {
-		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("parent", facility));
-		List<Worker> workers = Worker.staticGetDao().findByFilter(filterParams);
-		return BaseResponse.buildResponse(workers);
-	}
-
-	@POST
-	@Path("/workers")
-	@RequiresPermissions("worker:edit")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response createWorker(Worker worker) {
-		ErrorResponse errors = new ErrorResponse();
-		try {
-			worker.setParent(facility);
-			worker.generateDomainId();
-			if (worker.getActive() == null) {
-				worker.setActive(true);
-			}
-			worker.setUpdated(new Timestamp(System.currentTimeMillis()));
-			if (!worker.isValid(errors)) {
-				return errors.buildResponse();
-			}
-			Worker existingWorker = Worker.findTenantWorker(worker.getDomainId());
-			if (existingWorker != null){
-				existingWorker.update(worker);
-				worker = existingWorker;
-			}
-			UUID id = worker.getPersistentId();
-			Worker.staticGetDao().store(worker);
-			Worker createdWorker = Worker.staticGetDao().findByPersistentId(id);
-			return BaseResponse.buildResponse(createdWorker);
-		} catch (Exception e) {
-			return errors.processException(e);
-		}
-	}
 
 	@GET
 	@Path("events")
