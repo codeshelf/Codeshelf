@@ -79,7 +79,7 @@ public class GenericDaoTest extends ServerTest {
 		for (String name : facilityIds) {
 			LOGGER.info("name in string list: {}", name);
 		}
-		if (foundOrganizationList.size() >1)
+		if (foundOrganizationList.size() > 1)
 			LOGGER.error("Really looks like Restrictions.in() not working as expected.");
 		Assert.assertEquals(2, foundOrganizationList.size()); // should assert to 1
 
