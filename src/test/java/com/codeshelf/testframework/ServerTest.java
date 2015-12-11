@@ -42,8 +42,8 @@ public abstract class ServerTest extends HibernateTest {
 	public boolean ephemeralServicesShouldStartAutomatically() {
 		return true;
 	}
-	
-	protected final int FLASH_VALUE = 21; //BLINK_FREQ						= (byte) 0x20 = 32; //  x15 = 21
+
+	protected final int	FLASH_VALUE	= 21;	//BLINK_FREQ						= (byte) 0x20 = 32; //  x15 = 21
 
 	// various server utilities
 	protected Facility setUpSimpleNoSlotFacility() {
@@ -214,7 +214,9 @@ public abstract class ServerTest extends HibernateTest {
 		CodeshelfNetwork network = getNetwork();
 		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
 
-		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		PropertyBehavior.setProperty(getFacility(),
+			FacilityPropertyType.WORKSEQR,
+			WorkInstructionSequencerType.BayDistance.toString());
 		commitTransaction();
 
 		beginTransaction();
@@ -421,8 +423,9 @@ public abstract class ServerTest extends HibernateTest {
 	 * This is about waiting for a specific item to be made and persist
 	 * This must not be called in a transaction as it does its own transactions
 	 * Can we generalize with a callable?
+	 * NULL locationName is ok. If so, just match the itemId, and trust it will be unique. Not too carefully checked, but it will log an error
 	 */
-	public void waitForItemLocation(Facility inFacility, String itemId, String locationName, long millisToWait){
+	public void waitForItemLocation(Facility inFacility, String itemId, String locationName, long millisToWait) {
 		ThreadUtils.sleep(250);
 		long start = System.currentTimeMillis();
 		Item resultItem = null;
@@ -435,22 +438,26 @@ public abstract class ServerTest extends HibernateTest {
 				// Is there an item at the location?
 				List<Item> items = master.getItems();
 				for (Item item : items) {
-					if (item.getItemLocationName().equals(locationName))
-						resultItem = item;
+					if (locationName == null || item.getItemLocationName().equals(locationName)) {
+						if (resultItem == null) {
+							resultItem = item;
+						} else {
+							LOGGER.error("Expected unique item in waitForItemLocation(). Found extra match");
+						}
+					}
 				}
 			}
 			commitTransaction();
-			
+
 			if (resultItem != null) {
 				return; // Could change the function to return the item
 			}
 			ThreadUtils.sleep(200); // retry every 200ms
 		}
 		Assert.fail(String.format("Did not encounter Item in %dms.", millisToWait));
-		
+
 	}
 
-	
 	public void verifyCheDisplay(PickSimulator picker, String exp1, String exp2, String exp3, String exp4) {
 		String disp1 = picker.getLastCheDisplayString(1).trim();
 		String disp2 = picker.getLastCheDisplayString(2).trim();

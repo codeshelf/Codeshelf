@@ -440,8 +440,8 @@ public class CheProcessInventory extends ServerTest {
 		picker.inventoryViaTape("gtin9998", "%004299980250");
 		picker.inventoryViaTape("gtin9999", "%004299990250");
 
-		// probably need to wait here to allow the transactions to complete.
-		ThreadUtils.sleep(4000);
+		// Need to wait here to allow the transactions to complete.
+		waitForItemLocation(facility, "gtin9999", null, 4000); // null for location string, so just find the 1 item.
 
 		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
