@@ -49,7 +49,6 @@ public class GenericDaoTest extends ServerTest {
 	@Test
 	public final void testInRestrictions() {
 		// DEV-1370 event seemed to show Restrictions.in of an empty list led to a SQL error
-		List<String> facilityIds = new ArrayList<>();
 		beginTransaction();
 
 		Facility facility1 = Facility.createFacility("INTEST1", "INTEST1", Point.getZeroPoint());
@@ -62,16 +61,17 @@ public class GenericDaoTest extends ServerTest {
 		LOGGER.info("1: Restrictions.in for an empty list. Did not reproduce the SQL error");
 		beginTransaction();
 		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.in("domainId", facilityIds));
+		filterParams.add(Restrictions.in("domainId", new ArrayList<>()));
 		List<Facility> foundOrganizationList = Facility.staticGetDao().findByFilter(filterParams);
 		Assert.assertEquals(0, foundOrganizationList.size());
 		commitTransaction();
 
 		LOGGER.info("2: Restrictions.in for a proper string list");
+		List<String> facilityIds = new ArrayList<>();
 		facilityIds.add("INTEST2");
 		beginTransaction();
 		List<Criterion> filterParams2 = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.in("domainId", facilityIds));
+		filterParams2.add(Restrictions.in("domainId", facilityIds));
 		foundOrganizationList = Facility.staticGetDao().findByFilter(filterParams2);
 		for (Facility facility : foundOrganizationList) {
 			LOGGER.info("Facility domainId: {}", facility.getDomainId());
@@ -79,9 +79,7 @@ public class GenericDaoTest extends ServerTest {
 		for (String name : facilityIds) {
 			LOGGER.info("name in string list: {}", name);
 		}
-		if (foundOrganizationList.size() > 1)
-			LOGGER.error("Really looks like Restrictions.in() not working as expected.");
-		Assert.assertEquals(2, foundOrganizationList.size()); // should assert to 1
+		Assert.assertEquals("returned two many facilities", 1, foundOrganizationList.size()); 
 
 		commitTransaction();
 
