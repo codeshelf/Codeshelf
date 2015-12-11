@@ -197,7 +197,7 @@ public class Che extends WirelessDeviceABC {
 		// Delete any planned WIs for this CHE.
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("assignedChe.persistentId", getPersistentId()));
-		filterParams.add(Restrictions.in("type", wiTypes));
+		filterParams.add(Restrictions.in("type", wiTypes)); // empty .in() guard not needed here
 		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByFilter(filterParams);
 		for (WorkInstruction wi : wis) {
 			try {

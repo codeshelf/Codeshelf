@@ -208,8 +208,12 @@ public class InfoBehavior implements IApiBehavior{
 	
 	private List<OrderLocation> getOrderLocationsInLocation(Location location) {
 		List<Location> sublocations = location.getAllDescendants();
+		if (sublocations.isEmpty()) {
+			LOGGER.warn("Empty location list. Skipping query");
+			return new ArrayList<OrderLocation>();
+		}
 		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.in("location", sublocations));
+		filterParams.add(Restrictions.in("location", sublocations)); // empty .in() guard present
 		filterParams.add(Restrictions.eq("active", true));
 		List<OrderLocation> orderLocations = OrderLocation.staticGetDao().findByFilter(filterParams);
 		return orderLocations;

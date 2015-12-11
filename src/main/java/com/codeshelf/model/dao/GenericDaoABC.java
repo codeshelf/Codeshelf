@@ -150,11 +150,15 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
 	 */
 	public final List<T> findByPersistentIdList(List<UUID> inIdList) {
-		Session session = getCurrentSession();
-		Criteria criteria = session.createCriteria(getDaoClass());
-		criteria.add(Restrictions.in("persistentId", inIdList));
-		List<T> methodResultsList = (List<T>) criteria.list();
-		return methodResultsList;
+		if (inIdList != null && inIdList.isEmpty()) {
+			return Collections.<T> emptyList(); //empty WHERE X IN () causes syntax issue in postgres
+		} else {
+			Session session = getCurrentSession();
+			Criteria criteria = session.createCriteria(getDaoClass());
+			criteria.add(Restrictions.in("persistentId", inIdList)); // empty .in() guard present
+			List<T> methodResultsList = (List<T>) criteria.list();
+			return methodResultsList;
+		}
 	}
 
 	/**
@@ -162,11 +166,11 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 */
 	public final List<T> findByParentPersistentIdList(List<UUID> inIdList) {
 		if (inIdList != null && inIdList.isEmpty()) {
-			return Collections.<T>emptyList(); //empty WHERE X IN () causes syntax issue in postgres
+			return Collections.<T> emptyList(); //empty WHERE X IN () causes syntax issue in postgres
 		} else {
 			Session session = getCurrentSession();
 			Criteria criteria = session.createCriteria(getDaoClass());
-			criteria.add(Restrictions.in("parent.persistentId", inIdList));
+			criteria.add(Restrictions.in("parent.persistentId", inIdList)); // empty .in() guard present
 			List<T> methodResultsList = (List<T>) criteria.list();
 			return methodResultsList;
 		}
@@ -298,7 +302,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		Number value = (Number) criteria.uniqueResult();
 		return value.intValue();
 	}
-	
+
 	@Override
 	public final int countByFilter(List<Criterion> inFilter) {
 		Session session = getCurrentSession();
@@ -311,13 +315,12 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		return value.intValue();
 	}
 
-
 	@Override
 	public List<UUID> getUUIDListByCriteriaQuery(Criteria criteria) {
-		
-		criteria.setProjection( Projections.projectionList().add( Projections.property("persistentId"), "persistentId"));
 
-		List<UUID> ids=criteria.list();
+		criteria.setProjection(Projections.projectionList().add(Projections.property("persistentId"), "persistentId"));
+
+		List<UUID> ids = criteria.list();
 		return ids;
 	}
 
@@ -362,7 +365,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		return total;
 	}
 
-	
 	public static SimpleExpression createSubstringRestriction(String propertyName, String substring) {
 		SimpleExpression property = null;
 		if (substring != null && substring.indexOf('*') >= 0) {
@@ -372,10 +374,9 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		}
 		return property;
 	}
-	
+
 	public static Criterion createIntervalRestriction(String propertyName, Interval interval) {
-		return Property.forName(propertyName).between(
-			new Timestamp(interval.getStartMillis()),
+		return Property.forName(propertyName).between(new Timestamp(interval.getStartMillis()),
 			new Timestamp(interval.getEndMillis()));
 	}
 }

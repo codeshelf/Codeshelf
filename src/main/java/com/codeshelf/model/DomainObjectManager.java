@@ -601,7 +601,7 @@ public class DomainObjectManager {
 			return Collections.<WorkInstruction> emptyList(); //empty WHERE X IN () causes syntax issue in postgres
 		} else {
 			Criteria criteria = WorkInstruction.staticGetDao().createCriteria();
-			criteria.add(Restrictions.in("orderDetail.persistentId", inIdList));
+			criteria.add(Restrictions.in("orderDetail.persistentId", inIdList)); // empty .in() guard present
 			@SuppressWarnings("unchecked")
 			List<WorkInstruction> wiResultsList = (List<WorkInstruction>) criteria.list();
 			return wiResultsList;

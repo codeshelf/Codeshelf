@@ -124,7 +124,7 @@ public class DomainObjectCache<T extends DomainObjectABC> {
 		} else {
 			crit.add(Restrictions.eq("parent.persistentId", persistentId));
 		}
-		crit.add(Restrictions.in("domainId", domainIds));
+		crit.add(Restrictions.in("domainId", domainIds)); // empty .in() guard present
 		// little bit of a hack: sort by update time stamp for item
 		// master to implement LRU prefetching.  would be better to have 
 		// update time stamp on all domain objects.

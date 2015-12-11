@@ -1,12 +1,17 @@
 package com.codeshelf.behavior;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Restrictions;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.DomainObjectManager;
+import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderHeader;
 
@@ -74,5 +79,17 @@ public class TestBehavior {
 		String returnStr = loginCommands.toString() + "setupMany start\n" + setupCommands.toString() + "setupMany stop\n";
 		LOGGER.info(returnStr);
 		return returnStr;
+	}
+	
+	public String testCriteriaInClause(Facility inFacility, Map<String, String> input) {
+		//TODO this fails under POSTGRES but not hibernate
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("parent", inFacility));
+		filterParams.add(Restrictions.in("domainId", new String[]{})); // empty .in() guard not present as this is the test for DEV-1370
+		List<Container> containers = Container.staticGetDao().findByFilter(filterParams);
+		// just to use it and avoid warning
+		Assert.assertNotNull(containers);
+		return null;
+		
 	}
 }

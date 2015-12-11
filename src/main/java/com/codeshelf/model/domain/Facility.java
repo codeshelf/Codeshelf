@@ -1447,8 +1447,8 @@ public class Facility extends Location {
 		wiStatuses.add(WorkInstructionStatusEnum.SHORT);
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", this));
-		filterParams.add(Restrictions.in("status", wiStatuses));
-		filterParams.add(Restrictions.in("type", wiTypes));
+		filterParams.add(Restrictions.in("status", wiStatuses)); // empty .in() guard not needed here
+		filterParams.add(Restrictions.in("type", wiTypes)); // empty .in() guard not needed here
 		filterParams.add(Restrictions.ge("completed", startUtc));
 		filterParams.add(Restrictions.le("completed", endUtc));
 		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByFilter(filterParams);
