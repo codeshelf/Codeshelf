@@ -156,7 +156,7 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 	};
 	
 	public WorkInstructionCsvBean(WorkInstruction inWi) {
-		setDomainId(getDefaultDomainIdPrefix() + "_" + System.currentTimeMillis());
+		setDomainId(getDefaultDomainIdPrefix() + "_" + inWi.getPersistentId() + "_" + System.currentTimeMillis());
 		setParent(inWi.getFacility());
 		setActive(true);
 		setUpdated(new Timestamp(System.currentTimeMillis()));

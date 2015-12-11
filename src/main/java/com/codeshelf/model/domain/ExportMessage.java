@@ -104,7 +104,7 @@ public class ExportMessage extends DomainObjectTreeABC<Facility>{
 		setActive(true);
 		setOrderId(message.getOrderId());
 		setCheGuid(message.getCheGuid());
-		setDomainId(getDefaultDomainIdPrefix() + "_" + System.currentTimeMillis());
+		setDomainId(getDefaultDomainIdPrefix() + "_" + message.getOrderId() + "_" + System.currentTimeMillis());
 		if (message instanceof OrderOnCartAddedExportMessage) {
 			setType(ExportMessageType.ORDER_ON_CART_ADDED);
 		} else if (message instanceof OrderOnCartFinishedExportMessage) {
