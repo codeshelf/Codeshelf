@@ -1619,7 +1619,7 @@ public class WorkBehavior implements IApiBehavior {
 		//Search for those containers 
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", facility));
-		filterParams.add(Restrictions.in("domainId", neededDomainIds));
+		filterParams.add(Restrictions.in("domainId", neededDomainIds)); // empty .in() guard present
 		List<Container> containers = Container.staticGetDao().findByFilter(filterParams);
 		//Hash the results
 		for (Container container : containers) {
@@ -1982,7 +1982,7 @@ public class WorkBehavior implements IApiBehavior {
 
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("assignedChe", inChe));
-		filterParams.add(Restrictions.in("type", wiTypes));
+		filterParams.add(Restrictions.in("type", wiTypes)); // empty .in() guard not needed here
 		if (getBeforePosition) {
 			filterParams.add(Restrictions.le("posAlongPath", inFromStartingPosition));
 		} else {

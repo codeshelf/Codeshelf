@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
+import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,8 +85,10 @@ public class TestBehavior {
 		//TODO this fails under POSTGRES but not hibernate
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", inFacility));
-		filterParams.add(Restrictions.in("domainId", new String[]{}));
+		filterParams.add(Restrictions.in("domainId", new String[]{})); // empty .in() guard not present as this is the test for DEV-1370
 		List<Container> containers = Container.staticGetDao().findByFilter(filterParams);
+		// just to use it and avoid warning
+		Assert.assertNotNull(containers);
 		return null;
 		
 	}

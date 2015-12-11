@@ -390,7 +390,7 @@ public class FacilityResource {
 				}
 			}
 			if (!typeList.isEmpty()) {
-				filterParams.add(Restrictions.in("eventType", typeList));
+				filterParams.add(Restrictions.in("eventType", typeList)); // empty .in() guard present
 			}
 
 			if (!Strings.isNullOrEmpty(itemId)) {
