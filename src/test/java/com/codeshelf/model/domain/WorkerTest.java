@@ -85,7 +85,7 @@ public class WorkerTest extends HibernateTest {
 		ErrorResponse errorResponse = (ErrorResponse)response.getEntity();
 		ArrayList<String> errors = errorResponse.getErrors();
 		Assert.assertEquals("Missing body param 'lastName'", errors.get(0));
-		Assert.assertEquals("Missing body param 'badgeId'", errors.get(1));
+		Assert.assertEquals("Missing body param 'domainId'", errors.get(1));
 		
 		this.getTenantPersistenceService().commitTransaction();		
 	}
@@ -150,7 +150,7 @@ public class WorkerTest extends HibernateTest {
 		ErrorResponse errorResponse = (ErrorResponse)response.getEntity();
 		ArrayList<String> errors = errorResponse.getErrors();
 		Assert.assertEquals("Missing body param 'lastName'", errors.get(0));
-		Assert.assertEquals("Missing body param 'badgeId'", errors.get(1));
+		Assert.assertEquals("Missing body param 'domainId'", errors.get(1));
 
 		this.getTenantPersistenceService().commitTransaction();
 	}
