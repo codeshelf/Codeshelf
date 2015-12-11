@@ -68,7 +68,7 @@ public class PosControllerInstr extends MessageABC implements Validatable {
 			0x6F											};
 
 	//Display Refresh Freqs
-	public static final Byte	RAPIDBLINK_FREQ				= (byte) 0x09;
+	public static final Byte	RAPIDBLINK_FREQ				= (byte) 0x07;
 	public static final Byte	BLINK_FREQ					= (byte) 0x15;											// may want to change to 20
 	public static final Byte	SOLID_FREQ					= (byte) 0x00;
 
