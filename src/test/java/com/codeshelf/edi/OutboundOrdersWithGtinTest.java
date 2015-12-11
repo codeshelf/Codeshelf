@@ -682,8 +682,8 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		picker.inventoryViaTape("000123456788", "L%D301"); // 
 		picker.inventoryViaTape("000123456789", "L%D302"); // 
 
-		// probably need to wait here to allow the transactions to complete.
-		ThreadUtils.sleep(4000);
+		// Need to wait here to allow the transactions to complete.
+		waitForItemLocation(facility, "000123456789", "D302", 4000);
 
 		LOGGER.info("2: Load the orders file that had those two truncated. Do they match up?");
 		beginTransaction();
