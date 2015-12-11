@@ -1640,8 +1640,7 @@ public class WorkBehavior implements IApiBehavior {
 		LocationAlias alias = null;
 		for (Container container : inContainerList) {
 			OrderHeader order = container.getCurrentOrderHeader();
-			OrderTypeEnum type = order.getOrderType();
-			if (order != null && (type == OrderTypeEnum.OUTBOUND || type == OrderTypeEnum.REPLENISH)) {
+			if (order != null && (order.getOrderType() == OrderTypeEnum.OUTBOUND || order.getOrderType() == OrderTypeEnum.REPLENISH)) {
 				for (OrderDetail orderDetail : order.getOrderDetails()) {
 					preferredLocationStr = orderDetail.getPreferredLocation();
 					if (!Strings.isNullOrEmpty(preferredLocationStr) && !preferredLocations.containsKey(preferredLocationStr)) {
@@ -2340,8 +2339,7 @@ public class WorkBehavior implements IApiBehavior {
 					worker.setParent(facility);
 					worker.setActive(true);
 					worker.setLastName(badge);
-					worker.setBadgeId(badge);
-					worker.generateDomainId();
+					worker.setDomainId(badge);
 					worker.setUpdated(new Timestamp(System.currentTimeMillis()));
 					LOGGER.info("During badge verification created new Worker " + badge);
 				} else {

@@ -75,16 +75,19 @@ public class WorkersResource {
 			criteria.add(Property.forName("parent").eq(facility));
 		}
 		if (badgeId !=  null) {
-			criteria.add(GenericDaoABC.createSubstringRestriction("badgeId", badgeId));
+			criteria.add(GenericDaoABC.createSubstringRestriction("domainId", badgeId));
 		}
 			
 		long total = countCriteria(criteria);
 		
 		criteria
-		.addOrder(Order.asc("badgeId"))
+		.addOrder(Order.asc("domainId"))
 		.setMaxResults(limit);
 		@SuppressWarnings("unchecked")
 		List<Worker> entities = criteria.list();
+		for (Worker worker : entities){
+			worker.setBadgeId(worker.getDomainId());
+		}
 		return BaseResponse.buildResponse(new ResultDisplay<>(total, entities));
 	}
 	
@@ -96,7 +99,6 @@ public class WorkersResource {
 		ErrorResponse errors = new ErrorResponse();
 		try {
 			worker.setParent(facility);
-			worker.generateDomainId();
 			if (worker.getActive() == null) {
 				worker.setActive(true);
 			}
@@ -104,6 +106,7 @@ public class WorkersResource {
 			if (!worker.isValid(errors)) {
 				return errors.buildResponse();
 			}
+			worker.setDomainId(worker.getBadgeId());
 			Worker existingWorker = Worker.findTenantWorker(worker.getDomainId());
 			if (existingWorker != null){
 				existingWorker.update(worker);

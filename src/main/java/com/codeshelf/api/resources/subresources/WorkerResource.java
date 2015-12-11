@@ -36,6 +36,7 @@ public class WorkerResource {
 	@RequiresPermissions("worker:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getWorker() {
+		worker.setBadgeId(worker.getDomainId());
 		return BaseResponse.buildResponse(worker);
 	}
 	
@@ -49,7 +50,8 @@ public class WorkerResource {
 			if (!updatedWorker.isValid(errors)){ 
 				return errors.buildResponse();
 			}
-			Worker workerWithSameBadge = Worker.findTenantWorker(updatedWorker.getBadgeId());
+			updatedWorker.setDomainId(updatedWorker.getBadgeId());
+			Worker workerWithSameBadge = Worker.findTenantWorker(updatedWorker.getDomainId());
 			if (workerWithSameBadge != null && !worker.equals(workerWithSameBadge)) {
 				errors.addError("Another worker with badge " + updatedWorker.getBadgeId() + " already exists");
 				return errors.buildResponse();
@@ -84,7 +86,7 @@ public class WorkerResource {
 	@RequiresPermissions("worker:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getEvents(@QueryParam("limit") Integer limit) throws Exception {
-		ResultDisplay<EventDisplay> results = workHistoryBehavior.getEventsForWorkerId(worker.getFacility(), worker.getBadgeId(), limit);
+		ResultDisplay<EventDisplay> results = workHistoryBehavior.getEventsForWorkerId(worker.getFacility(), worker.getDomainId(), limit);
 		return BaseResponse.buildResponse(results);
 	}
 

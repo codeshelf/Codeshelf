@@ -124,8 +124,7 @@ public class WorkerHourlyMetricTest extends HibernateTest{
 		worker.setParent(facility);
 		worker.setActive(true);
 		worker.setLastName(badge);
-		worker.setBadgeId(badge);
-		worker.generateDomainId();
+		worker.setDomainId(badge);
 		worker.setUpdated(new Timestamp(System.currentTimeMillis()));
 		return worker;
 		

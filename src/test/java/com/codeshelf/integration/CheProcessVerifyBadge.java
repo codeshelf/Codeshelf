@@ -141,33 +141,32 @@ public class CheProcessVerifyBadge extends ServerTest {
 		//Verify that no new workers were created, and the old workers are unchanged
 		this.getTenantPersistenceService().beginTransaction();
 		Worker foundWorker1 = findWorker(getFacility(), WORKER1);
-		verifyWorker(foundWorker1, worker1.getFacility(), worker1.getLastName(), worker1.getBadgeId());
+		verifyWorker(foundWorker1, worker1.getFacility(), worker1.getLastName(), worker1.getDomainId());
 		Worker foundWorker2 = findWorker(getFacility(), WORKER2);
-		verifyWorker(foundWorker2, worker2.getFacility(), worker2.getLastName(), worker2.getBadgeId());
+		verifyWorker(foundWorker2, worker2.getFacility(), worker2.getLastName(), worker2.getDomainId());
 		this.getTenantPersistenceService().commitTransaction();
 	}
 	
 	private void verifyWorker(Worker worker, Facility facility, String lastName, String badgeId){
 		Assert.assertEquals(facility, worker.getFacility());
 		Assert.assertEquals(lastName, worker.getLastName());
-		Assert.assertEquals(badgeId, worker.getBadgeId());		
+		Assert.assertEquals(badgeId, worker.getDomainId());		
 	}
 	
 	private Worker createWorker(Facility facility, String lastName, String badgeId){
 		Worker worker = new Worker();
 		worker.setParent(facility);
 		worker.setLastName(lastName);
-		worker.setBadgeId(badgeId);
+		worker.setDomainId(badgeId);
 		worker.setActive(true);
 		worker.setUpdated(new Timestamp(System.currentTimeMillis()));
-		worker.generateDomainId();
 		return worker;
 	}
 	
 	private Worker findWorker(Facility facility, String badgeId) {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", facility));
-		filterParams.add(Restrictions.eq("badgeId", badgeId));
+		filterParams.add(Restrictions.eq("domainId", badgeId));
 		filterParams.add(Restrictions.eq("active", true));
 		List<Worker> workers = Worker.staticGetDao().findByFilter(filterParams);
 		if (workers == null){

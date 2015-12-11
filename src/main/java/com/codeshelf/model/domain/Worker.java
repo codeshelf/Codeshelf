@@ -10,6 +10,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
@@ -76,9 +77,10 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 	@JsonProperty
 	private String		middleInitial;
 
-	@Column(nullable = false, name = "badge_id")
-	// @Getter @Setter Temporary for v21. Keep the database field, but migrate to using domainId for badgeId
+	@Getter
+	@Setter
 	@JsonProperty
+	@Transient
 	private String		badgeId;
 
 	@Column(nullable = true, name = "group_name")
@@ -137,20 +139,6 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 		return getParent();
 	}
 	
-	public void generateDomainId() {
-		// v21 domainId same as badge
-		// only null badgeId from unit test
-		if (badgeId == null) {
-			setDomainId("bad_worker_domain_id"); 
-			return;
-		}
-		
-		if (!badgeId.equals(getDomainId())) {
-			LOGGER.error("worker.generateDomainId() case found");
-			setDomainId(badgeId);
-		}	
-	}
-
 	@Override
 	public boolean isValid(ErrorResponse errors) {
 		boolean allOK = true;
@@ -170,22 +158,15 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 	}
 
 	public void update(Worker updatedWorker) {
+		setDomainId(updatedWorker.getDomainId());
 		firstName = updatedWorker.getFirstName();
 		lastName = updatedWorker.getLastName();
 		middleInitial = updatedWorker.getMiddleInitial();
 		active = updatedWorker.getActive();
-		badgeId = updatedWorker.getBadgeId();
+		badgeId = updatedWorker.getDomainId();
 		groupName = updatedWorker.getGroupName();
 		hrId = updatedWorker.getHrId();
 		updated = new Timestamp(System.currentTimeMillis());
-		generateDomainId();
-	}
-
-	//TODO now that badges are unique in Tenant, do we still need this?
-	public boolean isBadgeUnique() {
-		//Try to find another active worker with the same badge
-		Worker matchingWorker = findWorker(getParent(), badgeId, getPersistentId());
-		return matchingWorker == null;
 	}
 
 	/**
@@ -233,22 +214,9 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 		if (!lastName.isEmpty()) {
 			return lastName;
 		}
-		return getBadgeId();
-	}
-
-	public String getBadgeId() {
 		return getDomainId();
 	}
-	
-	public String getBadgeField() { // temporary. Fetch the data of the old badge field
-		return badgeId;
-	}
 
-	public void setBadgeId(String inBadgeId) {
-		badgeId = inBadgeId; // temporary.
-		setDomainId(inBadgeId);
-	}
-	
 	public WorkerHourlyMetric getHourlyMetric(Timestamp timestamp){
 		//If this function is hurting performance, it can be changed to make a direct DB call for the metric object. 
 		long requestedTime = timestamp.getTime();

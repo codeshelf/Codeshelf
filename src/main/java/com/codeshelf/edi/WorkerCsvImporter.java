@@ -137,7 +137,7 @@ public class WorkerCsvImporter extends CsvImporter<WorkerCsvBean> implements ICs
 		if (result == null) {
 			// create a new worker
 			result = new Worker();
-			result.setBadgeId(badgeId); // sets domainId
+			result.setDomainId(badgeId); // sets domainId
 			isNewWorker = true;
 		}
 
@@ -183,7 +183,7 @@ public class WorkerCsvImporter extends CsvImporter<WorkerCsvBean> implements ICs
 		}
 
 		try {
-			if (result.getBadgeField() == null || result.getDomainId() == null)
+			if (result.getDomainId() == null || result.getDomainId() == null)
 				LOGGER.error("storing bad worker. How?");
 			Worker.staticGetDao().store(result);
 		} catch (DaoException e) {

@@ -256,7 +256,7 @@ public class WorkerTest extends HibernateTest {
 		Assert.assertEquals(expected.getFirstName(), actual.getFirstName());
 		Assert.assertEquals(expected.getLastName(), actual.getLastName());
 		Assert.assertEquals(expected.getMiddleInitial(), actual.getMiddleInitial());
-		Assert.assertEquals(expected.getBadgeId(), actual.getBadgeId());
+		Assert.assertEquals(expected.getDomainId(), actual.getDomainId());
 		Assert.assertEquals(expected.getGroupName(), actual.getGroupName());
 		Assert.assertEquals(expected.getHrId(), actual.getHrId());
 	}
