@@ -31,6 +31,7 @@ import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Worker;
+import com.google.common.base.MoreObjects;
 import com.sun.jersey.api.core.ResourceContext;
 
 @Path("/workers")
@@ -79,7 +80,7 @@ public class WorkersResource {
 		}
 			
 		long total = countCriteria(criteria);
-		
+		limit = MoreObjects.firstNonNull(limit, 15);
 		criteria
 		.addOrder(Order.asc("badgeId"))
 		.setMaxResults(limit);
