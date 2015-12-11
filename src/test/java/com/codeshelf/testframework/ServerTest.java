@@ -21,6 +21,7 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
+import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.Path;
@@ -416,6 +417,40 @@ public abstract class ServerTest extends HibernateTest {
 		}
 	}
 
+	/**
+	 * This is about waiting for a specific item to be made and persist
+	 * This must not be called in a transaction as it does its own transactions
+	 * Can we generalize with a callable?
+	 */
+	public void waitForItemLocation(Facility inFacility, String itemId, String locationName, long millisToWait){
+		ThreadUtils.sleep(250);
+		long start = System.currentTimeMillis();
+		Item resultItem = null;
+		while (System.currentTimeMillis() - start < millisToWait) {
+
+			beginTransaction();
+			inFacility = inFacility.reload();
+			ItemMaster master = ItemMaster.staticGetDao().findByDomainId(inFacility, itemId);
+			if (master != null) {
+				// Is there an item at the location?
+				List<Item> items = master.getItems();
+				for (Item item : items) {
+					if (item.getItemLocationName().equals(locationName))
+						resultItem = item;
+				}
+			}
+			commitTransaction();
+			
+			if (resultItem != null) {
+				return; // Could change the function to return the item
+			}
+			ThreadUtils.sleep(200); // retry every 200ms
+		}
+		Assert.fail(String.format("Did not encounter Item in %dms.", millisToWait));
+		
+	}
+
+	
 	public void verifyCheDisplay(PickSimulator picker, String exp1, String exp2, String exp3, String exp4) {
 		String disp1 = picker.getLastCheDisplayString(1).trim();
 		String disp2 = picker.getLastCheDisplayString(2).trim();
