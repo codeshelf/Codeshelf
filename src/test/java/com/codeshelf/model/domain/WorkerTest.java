@@ -245,7 +245,7 @@ public class WorkerTest extends HibernateTest {
 		worker.setFirstName(firstName);
 		worker.setLastName(lastName);
 		worker.setMiddleInitial(middleInitial);
-		worker.setBadgeId(badgeId);
+		worker.setDomainId(badgeId);
 		worker.setGroupName(groupName);
 		worker.setHrId(hrId);
 		return worker;

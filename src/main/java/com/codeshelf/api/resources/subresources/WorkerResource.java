@@ -36,7 +36,6 @@ public class WorkerResource {
 	@RequiresPermissions("worker:view")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getWorker() {
-		worker.setBadgeId(worker.getDomainId());
 		return BaseResponse.buildResponse(worker);
 	}
 	
@@ -50,10 +49,9 @@ public class WorkerResource {
 			if (!updatedWorker.isValid(errors)){ 
 				return errors.buildResponse();
 			}
-			updatedWorker.setDomainId(updatedWorker.getBadgeId());
 			Worker workerWithSameBadge = Worker.findTenantWorker(updatedWorker.getDomainId());
 			if (workerWithSameBadge != null && !worker.equals(workerWithSameBadge)) {
-				errors.addError("Another worker with badge " + updatedWorker.getBadgeId() + " already exists");
+				errors.addError("Another worker with badge " + updatedWorker.getDomainId() + " already exists");
 				return errors.buildResponse();
 			}
 			//Update old object with new values

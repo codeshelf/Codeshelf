@@ -86,9 +86,6 @@ public class WorkersResource {
 		.setMaxResults(limit);
 		@SuppressWarnings("unchecked")
 		List<Worker> entities = criteria.list();
-		for (Worker worker : entities){
-			worker.setBadgeId(worker.getDomainId());
-		}
 		return BaseResponse.buildResponse(new ResultDisplay<>(total, entities));
 	}
 	
@@ -107,7 +104,6 @@ public class WorkersResource {
 			if (!worker.isValid(errors)) {
 				return errors.buildResponse();
 			}
-			worker.setDomainId(worker.getBadgeId());
 			Worker existingWorker = Worker.findTenantWorker(worker.getDomainId());
 			if (existingWorker != null){
 				existingWorker.update(worker);

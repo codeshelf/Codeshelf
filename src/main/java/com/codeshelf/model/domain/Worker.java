@@ -10,7 +10,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
@@ -77,12 +76,6 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 	@JsonProperty
 	private String		middleInitial;
 
-	@Getter
-	@Setter
-	@JsonProperty
-	@Transient
-	private String		badgeId;
-
 	@Column(nullable = true, name = "group_name")
 	@Getter
 	@Setter
@@ -146,8 +139,8 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 			errors.addErrorMissingBodyParam("lastName");
 			allOK = false;
 		}
-		if (badgeId == null || "".equals(badgeId)) {
-			errors.addErrorMissingBodyParam("badgeId");
+		if (getDomainId() == null || "".equals(getDomainId())) {
+			errors.addErrorMissingBodyParam("domainId");
 			allOK = false;
 		}
 		if (active == null) {
@@ -163,7 +156,6 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 		lastName = updatedWorker.getLastName();
 		middleInitial = updatedWorker.getMiddleInitial();
 		active = updatedWorker.getActive();
-		badgeId = updatedWorker.getDomainId();
 		groupName = updatedWorker.getGroupName();
 		hrId = updatedWorker.getHrId();
 		updated = new Timestamp(System.currentTimeMillis());
