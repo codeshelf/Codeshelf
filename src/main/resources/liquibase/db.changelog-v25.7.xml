@@ -35,7 +35,6 @@
         <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_FACILITY_METRIC_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="facility_metric"/>
         <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_FACILITY_PROPERTY_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="facility_property"/>
         <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_GTIN_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="gtin"/>
-        <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_IMPORT_RECEIPT_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="import_receipt"/>
         <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_ITEM_DDC_GROUP_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="item_ddc_group"/>
         <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_ITEM_MASTER_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="item_master"/>
         <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_ITEM_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="item"/>
@@ -57,9 +56,6 @@
         <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_WORK_INSTRUCTION_BEAN_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="work_instruction_bean"/>
         <addUniqueConstraint columnNames="parent_persistentid, domainid" constraintName="UC_WORK_INSTRUCTION_PARENT_PERSISTENTID_DOMAINID" deferrable="false" disabled="false" initiallyDeferred="false" tableName="work_instruction"/>
         <dropUniqueConstraint constraintName="uc_network_parent_persistentid" tableName="network"/>
-    </changeSet>
-    <changeSet author="ilya (generated)" id="1449599790127-2">
-        <dropUniqueConstraint constraintName="uc_import_receipt_parent_persistentid_domainid" tableName="import_receipt"/>
     </changeSet>
     <changeSet author="ilya (generated)" id="1449608779162-2">
         <addColumn tableName="event_worker">
