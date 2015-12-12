@@ -33,7 +33,6 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
-import com.codeshelf.util.ThreadUtils;
 
 /**
  * @author jon ranstrom
@@ -1261,9 +1260,7 @@ public class CheProcessLineScan extends ServerTest {
 		picker.waitForCheState(CheStateEnum.SCAN_GTIN, 1000);
 		
 		// Intermittent failure here. Site controller may have returned immediately after sending the message to server.
-		// But now we query the server for the result. Might not be there quite yet.
-		ThreadUtils.sleep(2000);
-		// Would be better to have a "wait for" function that slept 100 ms at a time, and looked for the result.
+		waitForItemLocation(facility, "200", "D302", 4000);
 
 		this.getTenantPersistenceService().beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);

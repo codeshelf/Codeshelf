@@ -15,6 +15,7 @@ import com.codeshelf.edi.CrossBatchCsvImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.FacilityPropertyType;
+import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
@@ -24,6 +25,7 @@ import com.codeshelf.model.domain.Item;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
@@ -417,6 +419,39 @@ public abstract class ServerTest extends HibernateTest {
 			Assert.fail(String.format("Did not encounter requested object in %dms after %d checks.", maxTimeToWaitMillis, count));
 			return null;
 		}
+	}
+
+	/**
+	 * Wait to find the named order header having this status
+	 */
+	public void waitForOrderStatus(Facility inFacility,
+		String orderId,
+		OrderStatusEnum expectedStatus,
+		boolean expectedActive,
+		long millisToWait) {
+		ThreadUtils.sleep(250);
+		long start = System.currentTimeMillis();
+		OrderHeader resultOrder = null;
+		while (System.currentTimeMillis() - start < millisToWait) {
+
+			beginTransaction();
+			inFacility = inFacility.reload();
+			OrderHeader order = OrderHeader.staticGetDao().findByDomainId(inFacility, orderId);
+			if (order != null) {
+				OrderStatusEnum status = order.getStatus();
+				if (expectedStatus == null || expectedStatus.equals(status)) {
+					if (expectedActive == order.getActive())
+						resultOrder = order;
+				}
+			}
+			commitTransaction();
+
+			if (resultOrder != null) {
+				return; // Could change the function to return the order header
+			}
+			ThreadUtils.sleep(200); // retry every 200ms
+		}
+		Assert.fail(String.format("Order did not reach desired state in %dms.", millisToWait));
 	}
 
 	/**

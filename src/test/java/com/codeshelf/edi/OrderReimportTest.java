@@ -19,7 +19,6 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
-import com.codeshelf.util.ThreadUtils;
 
 public class OrderReimportTest extends ServerTest {
 	@SuppressWarnings("unused")
@@ -188,14 +187,7 @@ public class OrderReimportTest extends ServerTest {
 		picker.logout();	
 		
 		// verify order status
-		ThreadUtils.sleep(2000);
-		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
-		status = order.getStatus();
-		assertEquals(OrderStatusEnum.COMPLETE, status);
-		assertEquals(true, order.getActive());
-		commitTransaction();
+		waitForOrderStatus(facility,"12345", OrderStatusEnum.COMPLETE, true, 2000);
 		
 		// re-import order with different order lines
 		beginTransaction();
@@ -300,14 +292,7 @@ public class OrderReimportTest extends ServerTest {
 		picker.logout();	
 		
 		// verify order status
-		ThreadUtils.sleep(2000);
-		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
-		status = order.getStatus();
-		assertEquals(OrderStatusEnum.COMPLETE, status);
-		assertEquals(true, order.getActive());
-		commitTransaction();
+		waitForOrderStatus(facility,"12345", OrderStatusEnum.COMPLETE, true, 2000);
 		
 		// re-import order with one order line added
 		beginTransaction();
@@ -412,14 +397,7 @@ public class OrderReimportTest extends ServerTest {
 		picker.logout();	
 		
 		// verify order status
-		ThreadUtils.sleep(2000);
-		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
-		status = order.getStatus();
-		assertEquals(OrderStatusEnum.COMPLETE, status);
-		assertEquals(true, order.getActive());
-		commitTransaction();
+		waitForOrderStatus(facility,"12345", OrderStatusEnum.COMPLETE, true, 2000);
 		
 		// re-import order with one order line added
 		beginTransaction();
@@ -524,14 +502,7 @@ public class OrderReimportTest extends ServerTest {
 		picker.logout();	
 		
 		// verify order status
-		ThreadUtils.sleep(2000);
-		beginTransaction();
-		facility = Facility.staticGetDao().reload(facility);
-		order = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
-		status = order.getStatus();
-		assertEquals(OrderStatusEnum.COMPLETE, status);
-		assertEquals(true, order.getActive());
-		commitTransaction();
+		waitForOrderStatus(facility,"12345", OrderStatusEnum.COMPLETE, true, 2000);
 		
 		// re-import order with one order line added
 		beginTransaction();

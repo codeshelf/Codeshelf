@@ -30,7 +30,6 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
-import com.codeshelf.util.ThreadUtils;
 
 /**
  * @author jon ranstrom

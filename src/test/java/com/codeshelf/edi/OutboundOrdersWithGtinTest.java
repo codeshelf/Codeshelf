@@ -27,7 +27,6 @@ import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
-import com.codeshelf.util.ThreadUtils;
 
 /**
   *
