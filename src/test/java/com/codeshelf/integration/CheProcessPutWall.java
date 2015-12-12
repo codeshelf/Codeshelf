@@ -221,6 +221,8 @@ public class CheProcessPutWall extends CheProcessPutWallSuper {
 		picker2.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
 		assertAsynchPosconValue(posman, 1, 2); //Expect quantity "2" for item "1122" on picker1
 
+		ThreadUtils.sleep(1000);
+		
 		LOGGER.info("6: Press poscon button to pick for Picker1.");
 		posman.buttonPress(1, 2);
 		picker1.waitForCheState(CheStateEnum.PUT_WALL_SCAN_ITEM, WAIT_TIME);
