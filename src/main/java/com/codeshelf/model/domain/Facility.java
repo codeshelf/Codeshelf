@@ -1230,7 +1230,7 @@ public class Facility extends Location {
 	}
 
 	synchronized public Location getUnspecifiedLocation() {
-		Location unspecifiedLocation = this.getLocations().get(UNSPECIFIED_LOCATION_DOMAINID);
+		Location unspecifiedLocation =  Location.staticGetLocationDao().findByDomainId(this, UNSPECIFIED_LOCATION_DOMAINID);
 		if (unspecifiedLocation == null) {
 			unspecifiedLocation = createUnspecifiedLocation(UNSPECIFIED_LOCATION_DOMAINID);
 		}
