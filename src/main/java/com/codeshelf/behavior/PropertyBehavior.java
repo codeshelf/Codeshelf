@@ -23,41 +23,6 @@ import com.codeshelf.validation.InputValidationException;
 public class PropertyBehavior{
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(PropertyBehavior.class);
 	
-	public final static String						BAYCHANG			= "BAYCHANG";
-	public final static String						Default_BAYCHANG	= "BayChange";
-	public final static String						RPEATPOS			= "RPEATPOS";
-	public final static String						Default_RPEATPOS	= "ContainerOnly";
-	public final static String						WORKSEQR			= "WORKSEQR";
-	public final static String						Default_WORKSEQR	= "BayDistance";
-	public final static String						LIGHTSEC			= "LIGHTSEC";
-	public final static String						Default_LIGHTSEC	= "7";
-	public final static String						LIGHTCLR			= "LIGHTCLR";
-	public final static String						Default_LIGHTCLR	= "Red";
-	public final static String						CROSSBCH			= "CROSSBCH";
-	public final static String						Default_CROSSBCH	= "false";
-	public final static String						AUTOSHRT			= "AUTOSHRT";
-	public final static String						Default_AUTOSHRT	= "true";
-	public final static String						LOCAPICK			= "LOCAPICK";
-	public final static String						Default_LOCAPICK	= "false";
-	public final static String						EACHMULT			= "EACHMULT";
-	public final static String						Default_EACHMULT	= "false";
-	public final static String						PICKINFO			= "PICKINFO";
-	public final static String						Default_PICKINFO	= "SKU";
-	public final static String						CNTRTYPE			= "CNTRTYPE";
-	public final static String						Default_CNTRTYPE	= "Order";
-	public final static String						SCANPICK			= "SCANPICK";
-	public final static String						Default_SCANPICK	= "Disabled";
-	public final static String						PICKMULT			= "PICKMULT";
-	public final static String						Default_PICKMULT	= "false";
-	public final static String						INVTMENU			= "INVTMENU";
-	public final static String						Default_INVTMENU	= "false";
-	public final static String						BADGEAUTH			= "BADGEAUTH";
-	public final static String						Default_BADGEAUTH	= "false";
-	public final static String						PRODUCTION			= "PRODUCTION";
-	public final static String						Default_PRODUCTION	= "false";
-	public final static String						ORDERSUB			= "ORDERSUB";
-	public final static String						Default_ORDERSUB	= "Disabled";
-	
 	public static String getProperty(Facility facility, FacilityPropertyType type){
 		FacilityProperty property = retrieveProperty(facility, type);
 		if (property == null) {
@@ -93,7 +58,7 @@ public class PropertyBehavior{
 		if (validationResult != null) {
 			LOGGER.warn("Property validation rejection: " + validationResult);
 			DefaultErrors errors = new DefaultErrors(PropertyBehavior.class);
-			String instruction = type.name() + " valid values: " + validInputValues(type);
+			String instruction = type.name() + " valid values: " + type.getValidValues();
 			errors.rejectValue(value, instruction, ErrorCode.FIELD_INVALID); // "{0} invalid. {1}"
 			throw new InputValidationException(errors);
 		}
@@ -360,7 +325,8 @@ public class PropertyBehavior{
 	}
 	
 	private static String validate_ordersub(String inValue) {
-		if (Default_ORDERSUB.equalsIgnoreCase(inValue)) {
+		String defaultORDERSUB = FacilityPropertyType.ORDERSUB.getDefaultValue();
+		if (defaultORDERSUB.equalsIgnoreCase(inValue)) {
 			return inValue;
 		}
 		String parts[] = inValue.split("-");
@@ -415,52 +381,9 @@ public class PropertyBehavior{
 		if (inValue.isEmpty())
 			return ("Empty string");
 		if (inCanonicalForm == null) { // no likely match found. For now the description lists the valid values.
-			return ("Valid values:  " + validInputValues(type));
+			return ("Valid values:  " + type.getValidValues());
 		}
 
 		return returnValue;
-	}
-
-	private static String validInputValues(FacilityPropertyType type) {
-		// Find out which one we are
-		String myName = type.name();
-		if (myName.equals(BAYCHANG))
-			return "None, BayChange, BayChangeExceptAcrossAisle, PathSegmentChange";
-		else if (myName.equals(RPEATPOS))
-			return "None, ContainerOnly, ContainerAndCount";
-		else if (myName.equals(WORKSEQR))
-			return "BayDistance, WorkSequence";
-		else if (myName.equals(LIGHTSEC))
-			return "number between 2 and 30";
-		else if (myName.equals(LIGHTCLR))
-			return "Red, Green, Blue, Cyan, Orange, Magenta, White";
-		else if (myName.equals(CROSSBCH))
-			return "true, false";
-		else if (myName.equals(AUTOSHRT))
-			return "true, false";
-		else if (myName.equals(LOCAPICK))
-			return "true, false";
-		else if (myName.equals(EACHMULT))
-			return "true, false";
-		else if (myName.equals(PICKINFO))
-			return "SKU, Description, Both";
-		else if (myName.equals(CNTRTYPE))
-			return "Order, Container";
-		else if (myName.equals(SCANPICK))
-			return "Disabled, SKU, UPC";
-		else if (myName.equals(PICKMULT))
-			return "true, false";
-		else if (myName.equals(INVTMENU))
-			return "true, false";
-		else if (myName.equals(BADGEAUTH))
-			return "true, false";
-		else if (myName.equals(PRODUCTION))
-			return "true, false";
-		else if (myName.equals(ORDERSUB))
-			return "Disabled, <start>-<end>";
-		else {
-			LOGGER.error("new DomainObjectProperty: " + myName + " has no validInputValues implementation");
-		}
-		return null;
 	}
 }

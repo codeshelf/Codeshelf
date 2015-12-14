@@ -132,7 +132,8 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		this.locaPick = PropertyBehavior.getPropertyAsBoolean(facility, FacilityPropertyType.LOCAPICK);
 		this.scanPick = false;
 		String scanPickProp = PropertyBehavior.getProperty(facility, FacilityPropertyType.SCANPICK);
-		if (!PropertyBehavior.Default_SCANPICK.equals(scanPickProp)) {
+		String defaultScanpick = FacilityPropertyType.SCANPICK.getDefaultValue();
+		if (!defaultScanpick.equals(scanPickProp)) {
 			this.scanPick = true;
 		}
 
