@@ -712,7 +712,7 @@ public class WorkBehavior implements IApiBehavior {
 	 * and trusting that it sends nothing if there are none
 	 */
 	private void notifyRemoveOrderFromCart(OrderHeader inOrder, Che inChe) {
-		LOGGER.info("Order: {} removed from cart:{}", inOrder.getOrderId(), inChe.getDomainId());
+		LOGGER.info("Order: {} removed from cart:{}/{}", inOrder.getOrderId(), inChe.getDomainId(), inChe.getDeviceGuidStrNoPrefix());
 		// This is the PFSWeb variant. 
 		try {
 			Optional<IFacilityEdiExporter> theService = getFacilityEdiExporter(inOrder.getFacility());
