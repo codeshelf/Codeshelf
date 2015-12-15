@@ -1,13 +1,11 @@
 package com.codeshelf.behavior;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
-
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
 
 import org.hibernate.Criteria;
 import org.hibernate.Query;
@@ -15,7 +13,6 @@ import org.hibernate.Session;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.transform.AliasToBeanResultTransformer;
-import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,8 +30,14 @@ import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
-import com.google.common.collect.ImmutableList;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 public class NotificationBehavior implements IApiBehavior{
 	
@@ -155,24 +158,39 @@ public class NotificationBehavior implements IApiBehavior{
 			}
 		}
 	}
-	
+
+	public List<PickRate> getPickRate(Interval createdTime){
+		return getPickRate(ImmutableSet.of(WorkerEvent.EventType.COMPLETE, WorkerEvent.EventType.SHORT),
+			               ImmutableSet.of("workerId"),
+			               createdTime);
+	}
 	@SuppressWarnings("unchecked")
-	public List<PickRate> getPickRate(DateTime startDateTime, DateTime endDateTime){
+	public List<PickRate> getPickRate(Set<WorkerEvent.EventType> types, Set<String> groupPropertyNames, Interval createdTime){
+		Preconditions.checkArgument(groupPropertyNames.size() > 0, "must group pick rates by at least one property");
+		List<String> selectProperties = new ArrayList<>();
+		for (String groupPropertyName : groupPropertyNames) {
+			String selectClause = String.format("%s as %s", groupPropertyName, groupPropertyName);
+			selectProperties.add(selectClause);
+		}
+		String selectClause = Joiner.on(",").join(selectProperties);
+		String groupByClause = Joiner.on(",").join(groupPropertyNames);
 		Session session = TenantPersistenceService.getInstance().getSession();
-		Query query = session.createQuery("SELECT workerId as workerId"
+		Query query = session.createQuery("SELECT "
+				+                    selectClause
 				+ "                 ,HOUR(created) as hour"
 				+ "                 ,count(*) as picks"
 				//+ "                 ,sum(workInstruction.actualQuantity) as quantity" TODO should denormalize into workerevent
 				+ "           FROM WorkerEvent"
 				+ "          WHERE eventType IN (:includedEventTypes)"
 				+ "            AND created BETWEEN :startDateTime AND :endDateTime"
-				+ "       GROUP BY workerId,"
-				+ "                HOUR(created)"
+				+ "       GROUP BY "
+				+                  groupByClause
+				+ "                ,HOUR(created)"
 				+ "       ORDER BY HOUR(created)"
 				);
-		query.setParameterList("includedEventTypes", ImmutableList.of(WorkerEvent.EventType.COMPLETE, WorkerEvent.EventType.SHORT));
-		Timestamp startTimestamp = new Timestamp(startDateTime.getMillis());
-		Timestamp endTimestamp = new Timestamp(endDateTime.getMillis());
+		query.setParameterList("includedEventTypes", types);
+		Timestamp startTimestamp = new Timestamp(createdTime.getStartMillis());
+		Timestamp endTimestamp = new Timestamp(createdTime.getEndMillis());
 		query.setParameter("startDateTime", startTimestamp); //use setParameter instead of set timestamp so that it goes through the UTC conversion before hitting db
 		query.setParameter("endDateTime", endTimestamp);
 		query.setResultTransformer(new AliasToBeanResultTransformer(PickRate.class));

@@ -2,6 +2,7 @@ package com.codeshelf.behavior;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -12,33 +13,91 @@ import org.junit.Test;
 import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.behavior.NotificationBehavior.WorkerEventTypeGroup;
 import com.codeshelf.generators.WorkInstructionGenerator;
+import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.testframework.HibernateTest;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 
 public class NotificationServiceTest extends HibernateTest {
 
 	private DateTime eventTime = new DateTime(1955, 11, 12, 10, 04, 00, 00, DateTimeZone.forID("US/Central"));  //lightning will strike the clock tower in back to the future
+
+	@Test
+	public void hourlyRatesGroupedByEventType() {
+		this.getTenantPersistenceService().beginTransaction();
+		NotificationBehavior behavior = new NotificationBehavior();
+		Che che = getTestChe();
+		behavior.saveEvent(createEvent(eventTime, WorkerEvent.EventType.COMPLETE, che));
+		behavior.saveEvent(createEvent(eventTime, WorkerEvent.EventType.SHORT, che));
+		behavior.saveEvent(createEvent(eventTime.plus(1), WorkerEvent.EventType.COMPLETE, che));
+		behavior.saveEvent(createEvent(eventTime.plus(1), WorkerEvent.EventType.SHORT, che));
+		Interval betweenTimes = new Interval(eventTime.minus(1), eventTime.plus(2)); 
+		List<PickRate> pickRates = behavior.getPickRate(ImmutableSet.of(WorkerEvent.EventType.COMPLETE, WorkerEvent.EventType.SHORT), ImmutableSet.of("workerId", "eventType"), betweenTimes);
+		Assert.assertEquals(2, pickRates.size());
+		for (PickRate pickRate : pickRates) {
+			Assert.assertEquals(2, pickRate.getPicks().intValue());
+		}
+		this.getTenantPersistenceService().commitTransaction();
+				
+	}
+
+	@Test
+	public void hourlyRatesGroupedByPurposeEventType() {
+		this.getTenantPersistenceService().beginTransaction();
+		NotificationBehavior behavior = new NotificationBehavior();
+		Che che = getTestChe();
+		Facility facility = getFacility();
+		Set<EventType> types = ImmutableSet.of(WorkerEvent.EventType.COMPLETE, WorkerEvent.EventType.SHORT, WorkerEvent.EventType.SKIP_ITEM_SCAN);
+		Set<WiPurpose> purposes= ImmutableSet.of(WiPurpose.WiPurposeOutboundPick, WiPurpose.WiPurposePutWallPut);
+		Set<Worker> workers = ImmutableSet.of(createWorker(facility, "badge1"), createWorker(facility, "badge2"));
+		@SuppressWarnings("unchecked")
+		Set<List<Object>> combos = Sets.cartesianProduct(types, purposes, workers);
+		int count = 0;
+		for (List<Object> combo : combos) {
+			behavior.saveEvent(createEvent(eventTime.plus(count++), 
+											(WorkerEvent.EventType)combo.get(0),
+											 (WiPurpose)combo.get(1),
+											 (Worker) combo.get(2),
+											 che));
+			
+		}
+		Interval betweenTimes = new Interval(eventTime.minus(1), eventTime.plus(count + 1)); 
+		List<PickRate> pickRates = behavior.getPickRate(types, ImmutableSet.of("workerId", "eventType", "purpose"), betweenTimes);
+		Assert.assertEquals(combos.size(), pickRates.size());
+		for (PickRate pickRate : pickRates) {
+			Assert.assertEquals(1, pickRate.getPicks().intValue());
+		}
+		this.getTenantPersistenceService().commitTransaction();
+				
+	}
+
+	
 	
 	@Test
-	public void testGroupByType() {
-		DateTime eventTime2 = new DateTime(eventTime.getMillis() + 5);
-		DateTime eventTime3 = new DateTime(eventTime.getMillis() + 10);
-		DateTime eventTime4 = new DateTime(eventTime.getMillis() + 15);
+	public void testWorkerEventsGroupByType() {
 		this.getTenantPersistenceService().beginTransaction();
 		Che che = getTestChe();
 		
-		NotificationBehavior service = new NotificationBehavior();
-		service.saveEvent(createEvent(eventTime, WorkerEvent.EventType.COMPLETE, che));
-		service.saveEvent(createEvent(eventTime2, WorkerEvent.EventType.COMPLETE, che));
-		service.saveEvent(createEvent(eventTime3, WorkerEvent.EventType.SHORT, che));
-		service.saveEvent(createEvent(eventTime4, WorkerEvent.EventType.SKIP_ITEM_SCAN, che));
+		NotificationBehavior behavior = new NotificationBehavior();
+		DateTime eventTime2 = new DateTime(eventTime.getMillis() + 5);
+		DateTime eventTime3 = new DateTime(eventTime.getMillis() + 10);
+		DateTime eventTime4 = new DateTime(eventTime.getMillis() + 15);
+		behavior.saveEvent(createEvent(eventTime, WorkerEvent.EventType.COMPLETE, che));
+		behavior.saveEvent(createEvent(eventTime2, WorkerEvent.EventType.COMPLETE, che));
+		behavior.saveEvent(createEvent(eventTime3, WorkerEvent.EventType.SHORT, che));
+		behavior.saveEvent(createEvent(eventTime4, WorkerEvent.EventType.SKIP_ITEM_SCAN, che));
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		List<WorkerEventTypeGroup> groupedCounts = service.groupWorkerEventsByType(getFacility(), new Interval(eventTime.minus(1), eventTime4.plus(1)), false);
+		List<WorkerEventTypeGroup> groupedCounts = behavior.groupWorkerEventsByType(getFacility(), new Interval(eventTime.minus(1), eventTime4.plus(1)), false);
 		Assert.assertEquals(3, groupedCounts.size());
 		Map<WorkerEvent.EventType, Long> expectedValues = ImmutableMap.of(
 			WorkerEvent.EventType.COMPLETE, 2L,
@@ -105,12 +164,12 @@ public class NotificationServiceTest extends HibernateTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		NotificationBehavior service = new NotificationBehavior();
-		storePickEvent(service, che, eventTime);
+		NotificationBehavior behavior = new NotificationBehavior();
+		storePickEvent(behavior, che, eventTime);
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		List<PickRate> pickRates = service.getPickRate(startTime, endTime);
+		List<PickRate> pickRates = behavior.getPickRate(ImmutableSet.of(EventType.COMPLETE, EventType.SHORT), ImmutableSet.of("workerId"), new Interval(startTime, endTime));
 		Assert.assertEquals(numResults, pickRates.size());
 		this.getTenantPersistenceService().commitTransaction();
 		
@@ -127,6 +186,18 @@ public class NotificationServiceTest extends HibernateTest {
 		event.setLocation(persistedWI.getPickInstruction());
 		return event;
 	}
+	private WorkerEvent createEvent(DateTime eventTime, EventType eventType, WiPurpose wiPurpose, Worker worker, Che che) {
+		WorkerEvent event = new WorkerEvent(eventTime, eventType, che, worker.getDomainId());
+		event.setPurpose(wiPurpose.name());
+		return event;
+	}
+
+	private Worker createWorker(Facility facility, String domainId) {
+		Worker worker = new Worker(facility, domainId);
+		Worker.staticGetDao().store(worker);
+		return worker;
+	}
+
 
 	private WorkInstruction createShortWorkInstruction(Che inChe, String inWorkerId) {
 		WorkInstructionGenerator wiGenerator = new WorkInstructionGenerator();

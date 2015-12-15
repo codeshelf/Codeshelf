@@ -38,6 +38,7 @@ import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.exception.ConstraintViolationException;
 import org.joda.time.DateTime;
+import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -498,8 +499,10 @@ public class FacilityResource {
 		@QueryParam("endTimestamp") TimestampParam endDateParam) {
 		ErrorResponse errors = new ErrorResponse();
 		try {
-			List<PickRate> pickRates = notificationService.getPickRate(new DateTime(startDateParam.getValue()),
-				new DateTime(endDateParam.getValue()));
+			List<PickRate> pickRates = notificationService.getPickRate(
+				new Interval(new DateTime(startDateParam.getValue()),
+							 new DateTime(endDateParam.getValue())));
+				
 			return BaseResponse.buildResponse(pickRates);
 		} catch (Exception e) {
 			return errors.processException(e);
