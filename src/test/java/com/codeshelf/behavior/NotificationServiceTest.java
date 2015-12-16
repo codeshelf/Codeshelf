@@ -21,7 +21,6 @@ import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.testframework.HibernateTest;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
@@ -40,7 +39,7 @@ public class NotificationServiceTest extends HibernateTest {
 		behavior.saveEvent(createEvent(eventTime.plus(1), WorkerEvent.EventType.COMPLETE, che));
 		behavior.saveEvent(createEvent(eventTime.plus(1), WorkerEvent.EventType.SHORT, che));
 		Interval betweenTimes = new Interval(eventTime.minus(1), eventTime.plus(2)); 
-		List<PickRate> pickRates = behavior.getPickRate(ImmutableSet.of(WorkerEvent.EventType.COMPLETE, WorkerEvent.EventType.SHORT), ImmutableSet.of("workerId", "eventType"), betweenTimes);
+		List<PickRate> pickRates = behavior.getPickRate(ImmutableSet.of(WorkerEvent.EventType.COMPLETE, WorkerEvent.EventType.SHORT), ImmutableSet.of("workerId", "eventType"), null, betweenTimes);
 		Assert.assertEquals(2, pickRates.size());
 		for (PickRate pickRate : pickRates) {
 			Assert.assertEquals(2, pickRate.getPicks().intValue());
@@ -70,7 +69,7 @@ public class NotificationServiceTest extends HibernateTest {
 			
 		}
 		Interval betweenTimes = new Interval(eventTime.minus(1), eventTime.plus(count + 1)); 
-		List<PickRate> pickRates = behavior.getPickRate(types, ImmutableSet.of("workerId", "eventType", "purpose"), betweenTimes);
+		List<PickRate> pickRates = behavior.getPickRate(types, ImmutableSet.of("workerId", "eventType", "purpose"), null,  betweenTimes);
 		Assert.assertEquals(combos.size(), pickRates.size());
 		for (PickRate pickRate : pickRates) {
 			Assert.assertEquals(1, pickRate.getPicks().intValue());
@@ -169,7 +168,7 @@ public class NotificationServiceTest extends HibernateTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		List<PickRate> pickRates = behavior.getPickRate(ImmutableSet.of(EventType.COMPLETE, EventType.SHORT), ImmutableSet.of("workerId"), new Interval(startTime, endTime));
+		List<PickRate> pickRates = behavior.getPickRate(ImmutableSet.of(EventType.COMPLETE, EventType.SHORT), ImmutableSet.of("workerId"), null, new Interval(startTime, endTime));
 		Assert.assertEquals(numResults, pickRates.size());
 		this.getTenantPersistenceService().commitTransaction();
 		

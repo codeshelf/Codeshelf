@@ -83,6 +83,7 @@ public class NotificationBehavior implements IApiBehavior{
 		event.setParent(device.getFacility());
 		event.setDevicePersistentId(device.getPersistentId().toString());
 		
+		event.setPurpose(wi.getPurpose().name());
 		event.setCreated(wi.getCompleted());
 		event.setEventType(type);
 		event.setWorkerId(wi.getPickerId());
@@ -159,13 +160,14 @@ public class NotificationBehavior implements IApiBehavior{
 		}
 	}
 
-	public List<PickRate> getPickRate(Interval createdTime){
+	public List<PickRate> getPickRate(Set<String> purposes, Interval createdTime){
 		return getPickRate(ImmutableSet.of(WorkerEvent.EventType.COMPLETE, WorkerEvent.EventType.SHORT),
 			               ImmutableSet.of("workerId"),
+			               purposes,
 			               createdTime);
 	}
 	@SuppressWarnings("unchecked")
-	public List<PickRate> getPickRate(Set<WorkerEvent.EventType> types, Set<String> groupPropertyNames, Interval createdTime){
+	public List<PickRate> getPickRate(Set<WorkerEvent.EventType> types, Set<String> groupPropertyNames, Set<String> purposes, Interval createdTime){
 		Preconditions.checkArgument(groupPropertyNames.size() > 0, "must group pick rates by at least one property");
 		List<String> selectProperties = new ArrayList<>();
 		for (String groupPropertyName : groupPropertyNames) {
@@ -182,6 +184,7 @@ public class NotificationBehavior implements IApiBehavior{
 				//+ "                 ,sum(workInstruction.actualQuantity) as quantity" TODO should denormalize into workerevent
 				+ "           FROM WorkerEvent"
 				+ "          WHERE eventType IN (:includedEventTypes)"
+				+              ((purposes != null && purposes.size() > 0) ? " AND purpose IN (:purposes)" : "") 
 				+ "            AND created BETWEEN :startDateTime AND :endDateTime"
 				+ "       GROUP BY "
 				+                  groupByClause
@@ -193,6 +196,9 @@ public class NotificationBehavior implements IApiBehavior{
 		Timestamp endTimestamp = new Timestamp(createdTime.getEndMillis());
 		query.setParameter("startDateTime", startTimestamp); //use setParameter instead of set timestamp so that it goes through the UTC conversion before hitting db
 		query.setParameter("endDateTime", endTimestamp);
+		if (purposes != null) {
+			query.setParameterList("purposes", purposes);
+		}
 		query.setResultTransformer(new AliasToBeanResultTransformer(PickRate.class));
 		List<PickRate> results = query.list();
  		return results;
