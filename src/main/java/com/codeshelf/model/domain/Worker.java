@@ -116,6 +116,20 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	private List<WorkerHourlyMetric>	workerMetrics;
 
+	public Worker() {
+		
+	}
+	
+	public Worker(Facility facility, String domainId) {
+		super(domainId);
+		setParent(facility);
+		setLastName(domainId);
+		setActive(true);
+		setUpdated(new Timestamp(System.currentTimeMillis()));
+
+	}
+
+	
 	@Override
 	public String getDefaultDomainIdPrefix() {
 		return "W";

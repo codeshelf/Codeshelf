@@ -1,5 +1,7 @@
 package com.codeshelf.api.responses;
 
+import com.codeshelf.model.domain.WorkerEvent.EventType;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -7,6 +9,12 @@ public class PickRate {
 	@Getter @Setter
 	private String workerId;
 
+	@Getter @Setter
+	private EventType eventType;
+
+	@Getter @Setter
+	private String purpose;
+	
 	@Getter @Setter
 	private Integer hour;
 	
