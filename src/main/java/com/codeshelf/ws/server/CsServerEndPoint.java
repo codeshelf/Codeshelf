@@ -179,11 +179,10 @@ public class CsServerEndPoint {
 						} catch (RuntimeException e) {
 							LOGGER.error("Unexpected exception during message handling: " + message, e);
 						} finally {
-							if (needTransaction)
+							if (needTransaction) {
 								TenantPersistenceService.getInstance().rollbackTransaction();
-							if (setUserContext != null || setTenantContext != null) {
-								CodeshelfSecurityManager.removeContext();
 							}
+							CodeshelfSecurityManager.removeContextIfPresent();
 						}
 					}
 				};
@@ -211,9 +210,7 @@ public class CsServerEndPoint {
 		} catch (RuntimeException e) {
 			LOGGER.error("Unexpected exception during message handling: " + message, e);
 		} finally {
-			if (setUserContext != null || setTenantContext != null) {
-				CodeshelfSecurityManager.removeContext();
-			}
+			CodeshelfSecurityManager.removeContextIfPresent();
 		}
 	}
 
