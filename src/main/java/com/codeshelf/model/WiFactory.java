@@ -37,6 +37,8 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.util.SequenceNumber;
 import com.google.common.base.Strings;
 
+import lombok.Getter;
+
 /**
  * This generates work instructions
  * First the new housekeeping work instructions. Then normal and shorts also.
@@ -47,15 +49,21 @@ public class WiFactory {
 
 	// For now, a public enum, but not stored on the WI. Just passed along in create methods so that we know what the location and/or order location mean.
 	public enum WiPurpose {
-		WiPurposeUnknown,
-		WiPurposeHousekeep,
-		WiPurposeOutboundPick, // this is still multipurpose: SKU-pick, detail-pick, and pick-to-order.
-		WiPurposePutWallPut,
-		WiPurposeSkuWallPut,
-		WiPurposeCrossBatchPut,
-		WiPurposeReplenishPut,
-		WiPurposeRestockPut,
-		WiPurposePalletizerPut
+		WiPurposeUnknown("Unknown"),
+		WiPurposeHousekeep("Housekeeping"),
+		WiPurposeOutboundPick("Pick Outbound"), // this is still multipurpose: SKU-pick, detail-pick, and pick-to-order.
+		WiPurposePutWallPut("Put Put Wall"),
+		WiPurposeSkuWallPut("Put Sku Wall"),
+		WiPurposeCrossBatchPut("Put Crossbatch"),
+		WiPurposeReplenishPut("Put Replenish"),
+		WiPurposeRestockPut("Put Restock"),
+		WiPurposePalletizerPut("Put Palletizer");
+
+		@Getter
+		private String displayName;
+		private WiPurpose(String displayName) {
+			this.displayName = displayName;
+		}
 	}
 
 	// IMPORTANT. This should be synched with LightService.defaultLedsToLight

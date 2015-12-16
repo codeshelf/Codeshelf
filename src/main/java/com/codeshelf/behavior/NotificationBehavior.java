@@ -11,6 +11,7 @@ import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.criterion.Projections;
+import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.transform.AliasToBeanResultTransformer;
 import org.joda.time.Interval;
@@ -196,7 +197,7 @@ public class NotificationBehavior implements IApiBehavior{
 		Timestamp endTimestamp = new Timestamp(createdTime.getEndMillis());
 		query.setParameter("startDateTime", startTimestamp); //use setParameter instead of set timestamp so that it goes through the UTC conversion before hitting db
 		query.setParameter("endDateTime", endTimestamp);
-		if (purposes != null) {
+		if (purposes != null && purposes.size() > 0) {
 			query.setParameterList("purposes", purposes);
 		}
 		query.setResultTransformer(new AliasToBeanResultTransformer(PickRate.class));
@@ -230,4 +231,15 @@ public class NotificationBehavior implements IApiBehavior{
         	criteria.setResultTransformer(new AliasToBeanResultTransformer(WorkerEventTypeGroup.class));
         	return criteria.list();
     }
+
+	public List<String> getDistinct(Facility facility, String name) {
+		Set<WorkerEvent.EventType> types = ImmutableSet.of(EventType.COMPLETE, EventType.SHORT);
+		@SuppressWarnings("unchecked")
+		List<String> result = (List<String>) WorkerEvent.staticGetDao().createCriteria()
+			.add(Property.forName("parent").eq(facility))
+			.add(Property.forName("eventType").in(types))
+			.setProjection(Projections.distinct(Property.forName(name)))
+			.list();
+		return result;
+	}
 }

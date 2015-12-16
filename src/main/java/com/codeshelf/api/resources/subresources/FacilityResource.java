@@ -76,6 +76,7 @@ import com.codeshelf.edi.ICsvWorkerImporter;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.DataPurgeParameters;
+import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ExtensionPoint;
@@ -92,15 +93,31 @@ import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.sun.jersey.api.core.ResourceContext;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
+import lombok.Getter;
 import lombok.Setter;
 
 public class FacilityResource {
+
+	public class Option {
+
+		@Getter
+		private String value;
+		@Getter
+		private String label;
+
+		public Option(String input, String displayName) {
+			this.value = input;
+			this.label = displayName;
+		}
+
+	}
 
 	private static final Logger							LOGGER			= LoggerFactory.getLogger(FacilityResource.class);
 
@@ -503,6 +520,29 @@ public class FacilityResource {
 		}
 	}
 
+	@GET
+	@Path("pickrate/search")
+	@RequiresPermissions("event:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response pickRatePurposes() {
+		ErrorResponse errors = new ErrorResponse();
+		try {
+			List<String> purposes = notificationService.getDistinct(facility, "purpose");
+			List<Option> options = new ArrayList<>();
+			for (String purpose : purposes) {
+				if (purpose == null) {
+					continue;
+				}
+				String displayName = WiPurpose.valueOf(purpose).getDisplayName();
+				options.add(new Option(purpose, displayName));
+			}
+			return BaseResponse.buildResponse(ImmutableMap.of("purpose", options));
+		} catch (Exception e) {
+			return errors.processException(e);
+		}
+	}
+
+	
 	@POST
 	@Path("/process_script")
 	@RequiresPermissions("che:simulate")
