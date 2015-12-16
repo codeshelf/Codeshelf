@@ -101,6 +101,10 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private String							location;
 
+	@Column(nullable = true)
+	@Getter @Setter
+	@JsonProperty
+	private String							purpose;
 
 	public WorkerEvent() {
 		setCreated(new Timestamp(System.currentTimeMillis()));

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+    <changeSet author="pmonteiro (generated)" id="1450210628707-2">
+        <addColumn tableName="event_worker">
+            <column name="purpose" type="varchar(255)"/>
+        </addColumn>
+<!-- to update data
+        <sql>
+        update ${database.defaultSchemaName}.event_worker ew set purpose = (select  purpose from pfsweb.work_instruction as wi where wi.persistentid = ew.work_instruction_persistentid limit 1)
+        </sql>
+-->
+        <rollback>
+            <dropColumn columnName="purpose"
+                        tableName="person"/>
+        </rollback>
+    </changeSet>
+</databaseChangeLog>
