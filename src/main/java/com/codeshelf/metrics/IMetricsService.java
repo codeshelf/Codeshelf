@@ -1,6 +1,7 @@
 package com.codeshelf.metrics;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
@@ -15,6 +16,7 @@ public interface IMetricsService extends CodeshelfService {
 	
 	Counter createCounter(MetricsGroup group, String metricName);
 	Timer createTimer(MetricsGroup group, String metricName);
+	Meter createMeter(MetricsGroup group, String metricName);
 
 	MetricRegistry getMetricsRegistry();
 	HealthCheckRegistry getHealthCheckRegistry();

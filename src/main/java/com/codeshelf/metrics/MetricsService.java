@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
@@ -119,6 +120,27 @@ public class MetricsService extends AbstractCodeshelfIdleService implements IMet
 		}
 		return null;
 	}
+	
+	@Override
+	public Meter createMeter(MetricsGroup group, String metricName) {
+		String fullName = getFullName(group, metricName);
+		try {
+			Meter meter = getMetricsRegistry().getMeters().get(fullName);
+			if (meter != null) {
+				// return existing metric
+				//LOGGER.warn("Unable to add metric "+fullName+".  Metric already exists.");
+				return meter;
+			}
+			// create and register new metric
+			meter = getMetricsRegistry().meter(fullName);
+			LOGGER.debug("Added meter " + fullName);
+			return meter;
+		} catch (Exception e) {
+			LOGGER.error("Failed to add meter " + fullName, e);
+		}
+		return null;
+	}
+
 	// static convenience methods, may block until initialized
 	
 	/*

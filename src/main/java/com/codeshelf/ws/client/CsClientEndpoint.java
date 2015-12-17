@@ -2,6 +2,7 @@ package com.codeshelf.ws.client;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.Set;
 
 import javax.websocket.ClientEndpoint;
@@ -23,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.Meter;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
@@ -34,7 +36,16 @@ import com.codeshelf.ws.protocol.message.KeepAlive;
 import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.request.DeviceRequestABC;
 import com.codeshelf.ws.protocol.request.RequestABC;
+import com.codeshelf.ws.protocol.response.ComputeWorkResponse;
+import com.codeshelf.ws.protocol.response.GetOrderDetailWorkResponse;
+import com.codeshelf.ws.protocol.response.GetPutWallInstructionResponse;
+import com.codeshelf.ws.protocol.response.InfoResponse;
+import com.codeshelf.ws.protocol.response.LinkRemoteCheResponse;
+import com.codeshelf.ws.protocol.response.PalletizerItemResponse;
+import com.codeshelf.ws.protocol.response.PalletizerRemoveOrderResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
+import com.codeshelf.ws.protocol.response.TapeLocationDecodingResponse;
+import com.codeshelf.ws.protocol.response.VerifyBadgeResponse;
 import com.google.inject.Inject;
 
 @ClientEndpoint(encoders = { JsonEncoder.class }, decoders = { JsonDecoder.class })
@@ -48,7 +59,20 @@ public class CsClientEndpoint {
 	private Counter					sessionStartCounter	= null;
 	private Counter					sessionEndCounter	= null;
 	private Counter					sessionErrorCounter	= null;
+	private Meter					verifyBadgeMeter 	= null;
+	private Meter					computeWorkMeter 	= null;
+	//private Meter					getWorkMeter		= null;
+	private Meter					orderDetailWorkMeter= null;
+	private Meter					putWallInstructionMeter	= null;
+	private Meter					tapeDecodingMeter	= null;
+	private Meter					infoMeter			= null;
+	private Meter					palletizerItemMeter	= null;
+	private Meter					palletizerRemoveMeter	= null;
+	private Meter					linkRemoteChe		= null;
 	private IMetricsService			metricsService		= null;
+	
+	@SuppressWarnings("rawtypes")
+	private HashMap<Class, Meter>	classToMeterHash	= new HashMap<>();
 
 	// static settable (reset between tests)
 	@Setter
@@ -84,6 +108,8 @@ public class CsClientEndpoint {
 	
 	private long					lastConnectionAttempt = 0;	
 	private int						reconnectDelayMs = 0;
+	
+	private HashMap<String, Long>	requestTimes	= new HashMap<>();
 
 	
 	public CsClientEndpoint() {
@@ -101,10 +127,30 @@ public class CsClientEndpoint {
 	private void initMetrics() {
 		if (metricsService == null) {
 			metricsService = MetricsService.getInstance();
-			messageCounter = metricsService.createCounter(MetricsGroup.WSS, "messages.received");
-			sessionStartCounter = metricsService.createCounter(MetricsGroup.WSS, "sessions.started");
-			sessionEndCounter = metricsService.createCounter(MetricsGroup.WSS, "sessions.ended");
-			sessionErrorCounter = metricsService.createCounter(MetricsGroup.WSS, "sessions.errors");
+			messageCounter			= metricsService.createCounter(MetricsGroup.WSS, "messages.received");
+			sessionStartCounter		= metricsService.createCounter(MetricsGroup.WSS, "sessions.started");
+			sessionEndCounter		= metricsService.createCounter(MetricsGroup.WSS, "sessions.ended");
+			sessionErrorCounter		= metricsService.createCounter(MetricsGroup.WSS, "sessions.errors");
+			verifyBadgeMeter		= metricsService.createMeter(MetricsGroup.WSS, "responses.verify-badge");
+			computeWorkMeter		= metricsService.createMeter(MetricsGroup.WSS, "responses.compute-work");
+			//getWorkMeter			= metricsService.createMeter(MetricsGroup.WSS, "responses.get-work");
+			orderDetailWorkMeter	= metricsService.createMeter(MetricsGroup.WSS, "responses.order-detail-work");
+			putWallInstructionMeter	= metricsService.createMeter(MetricsGroup.WSS, "responses.put-wall-instruction");
+			tapeDecodingMeter		= metricsService.createMeter(MetricsGroup.WSS, "responses.tape-decoding");
+			infoMeter				= metricsService.createMeter(MetricsGroup.WSS, "responses.info");
+			palletizerItemMeter		= metricsService.createMeter(MetricsGroup.WSS, "responses.palletizer-item");
+			palletizerRemoveMeter	= metricsService.createMeter(MetricsGroup.WSS, "responses.palletizer-remove");
+			linkRemoteChe			= metricsService.createMeter(MetricsGroup.WSS, "responses.link-remote-che");
+			
+			classToMeterHash.put(VerifyBadgeResponse.class, verifyBadgeMeter);
+			classToMeterHash.put(ComputeWorkResponse.class, computeWorkMeter);
+			classToMeterHash.put(GetOrderDetailWorkResponse.class, orderDetailWorkMeter);
+			classToMeterHash.put(GetPutWallInstructionResponse.class, putWallInstructionMeter);
+			classToMeterHash.put(TapeLocationDecodingResponse.class, tapeDecodingMeter);
+			classToMeterHash.put(InfoResponse.class, infoMeter);
+			classToMeterHash.put(PalletizerItemResponse.class, palletizerItemMeter);
+			classToMeterHash.put(PalletizerRemoveOrderResponse.class, palletizerRemoveMeter);
+			classToMeterHash.put(LinkRemoteCheResponse.class, linkRemoteChe);
 		}
 	}
 
@@ -143,7 +189,7 @@ public class CsClientEndpoint {
 				ResponseABC response = (ResponseABC) message;
 				messageProcessor.handleResponse(null, response);
 				messageCoordinator.unregisterRequest(response);
-
+				updateResponseMetrics((ResponseABC)message);
 			} else if (message instanceof RequestABC) {
 				RequestABC request = (RequestABC) message;
 				LOGGER.debug("Request received: " + request);
@@ -175,6 +221,21 @@ public class CsClientEndpoint {
 			disconnect();
 		} catch (IOException e) {
 			LOGGER.error("Unexpected exception disconnecting from server", e);
+		}
+	}
+	
+	private void updateResponseMetrics(ResponseABC response){
+		Long requestTime = requestTimes.remove(response.getRequestId());
+		long duration = 0;
+		if (requestTime != null){
+			duration = System.currentTimeMillis() - requestTime;
+		} else {
+			LOGGER.error("Could not find request time for {}. Saving duration 0.", response.getClass().getName());
+		}
+		Meter meter = classToMeterHash.get(response.getClass());
+		if (meter != null) {
+			LOGGER.info("Logging duration {} for response {}", duration, response.getClass().getSimpleName());
+			meter.mark(duration);
 		}
 	}
 
@@ -276,6 +337,7 @@ public class CsClientEndpoint {
 					LOGGER.info("Request sent: {}", message);
 				}
 			}
+			requestTimes.put(message.getMessageId(), System.currentTimeMillis());
 			session.getBasicRemote().sendObject(message);
 			this.messageSent();
 			return true;
