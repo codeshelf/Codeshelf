@@ -2329,6 +2329,10 @@ public class WorkBehavior implements IApiBehavior {
 				if (worker == null) {
 					//Authentication + unknown worker = failed
 					LOGGER.warn("Badge verification failed for unknown badge " + badge);
+				} else if (!worker.getActive()){
+					//Authentication + inactive worker = failed
+					LOGGER.warn("Badge verification failed for inactive badge " + badge);
+					worker = null;
 				} else {
 					//Authentication + known worker = succeeded
 				}
@@ -2342,6 +2346,9 @@ public class WorkBehavior implements IApiBehavior {
 					worker.setDomainId(badge);
 					worker.setUpdated(new Timestamp(System.currentTimeMillis()));
 					LOGGER.info("During badge verification created new Worker " + badge);
+				} else if (!worker.getActive()){
+					//No authentication + inactive worker = succeeded + reactivate worker
+					worker.setActive(true);
 				} else {
 					//No authentication + known worker = succeeded
 				}

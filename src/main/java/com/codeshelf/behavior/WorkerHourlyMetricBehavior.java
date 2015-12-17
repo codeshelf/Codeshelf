@@ -44,6 +44,9 @@ public class WorkerHourlyMetricBehavior implements IApiBehavior{
 			LOGGER.warn("Trying to update metrics for non-existent worker {}", pickerId);
 			return;
 		}
+		if (!worker.getActive()){
+			LOGGER.warn("Trying to update metrics for inactive worker {}", pickerId);
+		}
 		boolean completeEvent = type == EventType.COMPLETE, shortEvent = type == EventType.SHORT;
 		if (!completeEvent && !shortEvent){
 			LOGGER.warn("Trying to update metrics for an unexpected event type {}", type);
