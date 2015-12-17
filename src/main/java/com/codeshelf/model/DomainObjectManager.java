@@ -4,14 +4,14 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import lombok.Getter;
 
 import org.hibernate.Criteria;
+import org.hibernate.Query;
+import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Disjunction;
 import org.hibernate.criterion.Restrictions;
@@ -34,7 +34,7 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Resolution;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
-import com.google.common.collect.ImmutableList;
+import com.codeshelf.persistence.TenantPersistenceService;
 
 /**
  * This class assists with object reporting and object purging
@@ -388,56 +388,24 @@ public class DomainObjectManager {
 		// Time this routine as this might be a bit slow
 		long startMillis = System.currentTimeMillis();
 
-		List<UUID> returnList = new ArrayList<UUID>();
-
-		UUID facilityUUID = getFacility().getPersistentId();
 		// The main concern is that we should not purge the container if there are any remaining ContainerUses
 		// Containers have an active flag. So, if inactive, probably worth purging anyway.
 
-		// We cannot limit the returned containers because we have no easy way to find the subset that do not have containerUse pointing at them. 
-		List<Container> cntrs = Container.staticGetDao()
-			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID)));
-
-		Map<UUID, Container> referencedMap = new HashMap<UUID, Container>();
-
-		LOGGER.info("examining ContainerUses linked to containers");
-		// ContainerUse. Can not limit, or we would make incorrect decisions about which were deleteable.
-		Criteria crit = ContainerUse.staticGetDao().createCriteria();
-		crit.createAlias("parent", "p");
-		crit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
-		List<ContainerUse> uses = ContainerUse.staticGetDao().findByCriteriaQuery(crit);
-
-		// Add each container that ContainerUse references to map
-		for (ContainerUse cntrUse : uses) {
-			Container referencedCntr = cntrUse.getParent();
-			if (!referencedMap.containsKey(referencedCntr.getPersistentId())) {
-				referencedMap.put(referencedCntr.getPersistentId(), referencedCntr);
-			}
-		}
-
-		LOGGER.info("examining WorkInstructions linked to containers");
-		Criteria crit2 = WorkInstruction.staticGetDao().createCriteria();
-		crit2.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByCriteriaQuery(crit2);
-
-		// Add each container that the work instruction references to map
-		for (WorkInstruction wi : wis) {
-			Container referencedCntr = wi.getContainer();
-			if (!referencedMap.containsKey(referencedCntr.getPersistentId())) {
-				referencedMap.put(referencedCntr.getPersistentId(), referencedCntr);
-			}
-		}
-
-		for (Container cntr : cntrs) {
-			if (!referencedMap.containsKey(cntr.getPersistentId())) // This container had no containerUses and no work instructions
-				// nothing references it. Add it UUID to the list
-				returnList.add(cntr.getPersistentId());
-		}
+		Session session = TenantPersistenceService.getInstance().getSession();
+		Query query = session.createQuery(
+			"SELECT c.persistentId\n" + 
+			"FROM Container c\n" + 
+			"	LEFT JOIN c.uses cu\n" + 
+			"	LEFT JOIN c.workInstructions wi\n" + 
+			"WHERE c.parent = :facility AND cu.persistentId IS NULL AND wi.persistentId IS NULL\n");
+		query.setParameter("facility", getFacility());
+		@SuppressWarnings("unchecked")
+		List<UUID> results = query.list();
 		long endMillis = System.currentTimeMillis();
-		if (startMillis - endMillis > 1000)
-			LOGGER.info("Took {}ms to determine that {} containers should be deleted", startMillis - endMillis, returnList.size());
-
-		return returnList;
+		if (endMillis - startMillis > 1000){
+			LOGGER.info("Took {}ms to determine that {} containers should be deleted", endMillis - startMillis , results.size());
+		}
+		return results;
 	}
 
 	/**
@@ -451,12 +419,12 @@ public class DomainObjectManager {
 			LOGGER.error("Limiting container delete batch size to {}. Called for {}.", MAX_CNTR_PURGE, wantToPurge);
 		}
 		int deletedCount = 0;
-		for (UUID cntrUuid : cntrUuids) {
+		List<Container> containers = Container.staticGetDao().findByPersistentIdList(cntrUuids);
+		for (Container cntr : containers) {
 			// just protection against bad call
 			if (deletedCount > willPurge)
 				break;
 			try {
-				Container cntr = Container.staticGetDao().findByPersistentId(cntrUuid);
 				if (cntr != null) {
 					Container.staticGetDao().delete(cntr);
 					// This could fail! Make a new ContainerUse or WorkInstruction for a container after the uuid list was created.
@@ -645,23 +613,13 @@ public class DomainObjectManager {
 		// Trying to speed up by not relying quite so much on the hibernate delete cascade.
 		// Result: not much improvement in time. But much nicer logging about the process. (changed to debug logging now)
 		LOGGER.debug("Phase 2 of order purge: assemble list of details for these orders");
-
 		List<OrderDetail> details = OrderDetail.staticGetDao().findByParentPersistentIdList(orderUuids);
 
 		LOGGER.debug("Phase 3 of order purge: assemble work instructions from the details");
-		/*
-		List<WorkInstruction> wis = new ArrayList<WorkInstruction>();
-		for (OrderDetail detail : details) {
-			List<WorkInstruction> oneOrderWis = detail.getWorkInstructions();
-			wis.addAll(oneOrderWis);
-		}
-		*/
-		List<UUID> detailUuids = new ArrayList<UUID>();
-		for (OrderDetail detail : details) {
-			detailUuids.add(detail.getPersistentId());
-		}
-		List<WorkInstruction> wis = findByDetailPersistentIdList(detailUuids);
-
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.in("orderDetail", details));
+		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByFilter(filterParams);
+		
 		LOGGER.debug("Phase 4 of order purge: delete the assembled work instructions, which delinks from details and che.");
 		safelyDeleteWorkInstructionList(wis);
 
