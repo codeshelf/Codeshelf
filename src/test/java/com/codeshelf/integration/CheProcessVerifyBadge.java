@@ -178,4 +178,24 @@ public class CheProcessVerifyBadge extends ServerTest {
 		}
 		return workers.get(0);
 	}
+	
+	@Test
+	public void testNoAuthenticationInactiveWorker(){
+		init(false);
+		this.getTenantPersistenceService().beginTransaction();
+		Worker worker1 = createWorker(getFacility(), "Last Name 1", WORKER1);
+		worker1.setActive(false);
+		Worker.staticGetDao().store(worker1);
+		this.getTenantPersistenceService().commitTransaction();
+		
+		this.startSiteController();
+		
+		PickSimulator picker1 = waitAndGetPickerForProcessType(this, cheGuid1, "CHE_SETUPORDERS");		
+		picker1.loginAndSetup(WORKER1);
+		
+		this.getTenantPersistenceService().beginTransaction();
+		worker1 = Worker.findWorker(getFacility(), WORKER1);
+		Assert.assertTrue(worker1.getActive());
+		this.getTenantPersistenceService().commitTransaction();
+	}
 }

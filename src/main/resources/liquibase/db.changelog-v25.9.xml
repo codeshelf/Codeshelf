@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog 
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog" 
+	logicalFilePath="db.changelog-v25.9.xml"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+	<changeSet author="ilya (generated)" id="1450210628708-1">
+	    <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="work_instruction" indexName="work_instruction_container_persistentid_idx" /></not>
+        </preConditions>
+        <createIndex indexName="work_instruction_container_persistentid_idx" tableName="work_instruction">
+	   		<column name="container_persistentid"/>
+	    </createIndex>
+	</changeSet>
+	<changeSet author="ilya (generated)" id="1450210628708-2">
+	    <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="order_detail" indexName="order_detail_parent_persistentid_idx" /></not>
+        </preConditions>
+	    <createIndex indexName="order_detail_parent_persistentid_idx" tableName="order_detail">
+	   		<column name="parent_persistentid"/>
+	    </createIndex>
+	</changeSet>
+	<changeSet author="ilya (generated)" id="1450210628708-3">
+	    <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="container_use" indexName="container_use_parent_persistentid_idx" /></not>
+        </preConditions>
+	    <createIndex indexName="container_use_parent_persistentid_idx" tableName="container_use">
+	   		<column name="parent_persistentid"/>
+	    </createIndex>
+	</changeSet>
+</databaseChangeLog>

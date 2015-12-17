@@ -191,19 +191,9 @@ public class Worker extends DomainObjectTreeABC<Facility> implements Validatable
 	}
 
 	public static Worker findWorker(Facility facility, String badgeId) {
-		return findWorker(facility, badgeId, null);
-	}
-
-	//TODO now that badges are unique in Tenant, do we still need 'skipWorker' field
-	public static Worker findWorker(Facility facility, String badgeId, UUID skipWorker) {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", facility));
 		filterParams.add(Restrictions.eq("domainId", badgeId));
-		filterParams.add(Restrictions.eq("active", true));
-		if (skipWorker != null) {
-			//Ignore provided Worker when needed
-			filterParams.add(Restrictions.ne("persistentId", skipWorker));
-		}
 		List<Worker> workers = staticGetDao().findByFilter(filterParams);
 		if (workers == null || workers.isEmpty()) {
 			return null;

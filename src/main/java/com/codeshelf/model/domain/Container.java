@@ -79,6 +79,11 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
 	private List<ContainerUse>	uses = new ArrayList<ContainerUse>();
+	
+	@OneToMany(mappedBy = "container")
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+	@Getter
+	private List<WorkInstruction>	workInstructions = new ArrayList<WorkInstruction>();
 
 	public Container() {
 	}
