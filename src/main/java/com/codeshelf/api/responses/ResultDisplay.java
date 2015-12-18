@@ -14,6 +14,9 @@ public class ResultDisplay<T> {
 	private String[] sortedBy;
 	
 	private Collection<T> results;
+
+	@Getter
+	private String next;
 	
 	public ResultDisplay() {
 		this(0);
@@ -31,6 +34,12 @@ public class ResultDisplay<T> {
 	public ResultDisplay(Long total, Collection<T> resultSet) {
 		this.explicitTotal = total;
 		this.results = resultSet;
+	}
+
+	public ResultDisplay(Long total, Collection<T> resultSet, String nextToken) {
+		this.explicitTotal = total;
+		this.results = resultSet;
+		this.next = nextToken;
 	}
 
 	public ResultDisplay(Collection<T> resultSet) {
