@@ -19,6 +19,7 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
+import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest;
 import com.codeshelf.ws.protocol.response.ComputeWorkResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
@@ -57,6 +58,8 @@ public class ComputeWorkCommand extends CommandABC {
 
 	@Override
 	public ResponseABC exec() {
+		//TODO: the following line is for testing metrics. Remove ASAP
+		ThreadUtils.sleep(1000);
 		ComputeWorkResponse response = new ComputeWorkResponse();
 		response.setPurpose(request.getPurpose());
 		String cheId = request.getDeviceId();

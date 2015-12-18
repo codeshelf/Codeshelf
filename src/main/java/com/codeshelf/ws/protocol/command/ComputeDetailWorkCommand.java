@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.protocol.request.ComputeDetailWorkRequest;
 import com.codeshelf.ws.protocol.response.GetOrderDetailWorkResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
@@ -32,8 +31,6 @@ public class ComputeDetailWorkCommand extends CommandABC {
 
 	@Override
 	public ResponseABC exec() {
-		//TODO: the following line is for testing metrics. Remove ASAP
-		ThreadUtils.sleep(1000);
 		GetOrderDetailWorkResponse response = null;
 		String cheId = request.getDeviceId();
 		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
