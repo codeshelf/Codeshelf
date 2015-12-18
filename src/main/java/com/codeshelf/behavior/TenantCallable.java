@@ -62,7 +62,7 @@ public class TenantCallable implements Callable<BatchReport> {
 	 * This always logs. Called this way at start and end and upon exception
 	 */
 	private void saveReport(BatchReport report) {
-		LOGGER.info("Saving batch report {}", report);
+		LOGGER.debug("Saving batch report {}", report);
 		//persistenceService.saveOrUpdate(report);
 	}
 
@@ -75,7 +75,7 @@ public class TenantCallable implements Callable<BatchReport> {
 		if (lastLoggedTimeMs == 0) // a rather weak one-time initialization
 			lastLoggedTimeMs = nowMs;
 		if (nowMs - lastLoggedTimeMs > 10000) {
-			LOGGER.info("Batch {}. Saving batch report {}", batchNumber, report);
+			LOGGER.debug("Batch {}. Saving batch report {}", batchNumber, report);
 			lastLoggedTimeMs = nowMs;
 		}
 		//persistenceService.saveOrUpdate(report);

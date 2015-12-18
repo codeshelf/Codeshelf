@@ -30,7 +30,7 @@ public abstract class HealthCheckRefreshJob extends AbstractFacilityJob {
 		TenantPersistenceService persistenceService = TenantPersistenceService.getInstance();
 		UserContext systemUser = CodeshelfSecurityManager.getUserContextSYSTEM();
 		callable = new TenantCallable(persistenceService, tenant, systemUser, new HealthCheckRefreshProcessor(facility));
-		LOGGER.info("Starting {} health check job", checkName);
+		LOGGER.debug("Starting {} health check job", checkName);
 		callable.call();
 		return null;
 	}
