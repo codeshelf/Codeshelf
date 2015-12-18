@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.websocket.ClientEndpoint;
 import javax.websocket.CloseReason;
@@ -24,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codahale.metrics.Counter;
-import com.codahale.metrics.Meter;
+import com.codahale.metrics.Timer;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
@@ -59,20 +60,20 @@ public class CsClientEndpoint {
 	private Counter					sessionStartCounter	= null;
 	private Counter					sessionEndCounter	= null;
 	private Counter					sessionErrorCounter	= null;
-	private Meter					verifyBadgeMeter 	= null;
-	private Meter					computeWorkMeter 	= null;
-	//private Meter					getWorkMeter		= null;
-	private Meter					orderDetailWorkMeter= null;
-	private Meter					putWallInstructionMeter	= null;
-	private Meter					tapeDecodingMeter	= null;
-	private Meter					infoMeter			= null;
-	private Meter					palletizerItemMeter	= null;
-	private Meter					palletizerRemoveMeter	= null;
-	private Meter					linkRemoteChe		= null;
+	private Timer					verifyBadgeTimer 	= null;
+	private Timer					computeWorkTimer 	= null;
+	//private Timer					getWorkTimer		= null;
+	private Timer					orderDetailWorkTimer= null;
+	private Timer					putWallInstructionTimer	= null;
+	private Timer					tapeDecodingTimer	= null;
+	private Timer					infoTimer			= null;
+	private Timer					palletizerItemTimer	= null;
+	private Timer					palletizerRemoveTimer	= null;
+	private Timer					linkRemoteChe		= null;
 	private IMetricsService			metricsService		= null;
 	
 	@SuppressWarnings("rawtypes")
-	private HashMap<Class, Meter>	classToMeterHash	= new HashMap<>();
+	private HashMap<Class, Timer>	classToTimerHash	= new HashMap<>();
 
 	// static settable (reset between tests)
 	@Setter
@@ -131,26 +132,26 @@ public class CsClientEndpoint {
 			sessionStartCounter		= metricsService.createCounter(MetricsGroup.WSS, "sessions.started");
 			sessionEndCounter		= metricsService.createCounter(MetricsGroup.WSS, "sessions.ended");
 			sessionErrorCounter		= metricsService.createCounter(MetricsGroup.WSS, "sessions.errors");
-			verifyBadgeMeter		= metricsService.createMeter(MetricsGroup.WSS, "responses.verify-badge");
-			computeWorkMeter		= metricsService.createMeter(MetricsGroup.WSS, "responses.compute-work");
-			//getWorkMeter			= metricsService.createMeter(MetricsGroup.WSS, "responses.get-work");
-			orderDetailWorkMeter	= metricsService.createMeter(MetricsGroup.WSS, "responses.order-detail-work");
-			putWallInstructionMeter	= metricsService.createMeter(MetricsGroup.WSS, "responses.put-wall-instruction");
-			tapeDecodingMeter		= metricsService.createMeter(MetricsGroup.WSS, "responses.tape-decoding");
-			infoMeter				= metricsService.createMeter(MetricsGroup.WSS, "responses.info");
-			palletizerItemMeter		= metricsService.createMeter(MetricsGroup.WSS, "responses.palletizer-item");
-			palletizerRemoveMeter	= metricsService.createMeter(MetricsGroup.WSS, "responses.palletizer-remove");
-			linkRemoteChe			= metricsService.createMeter(MetricsGroup.WSS, "responses.link-remote-che");
+			verifyBadgeTimer		= metricsService.createTimer(MetricsGroup.WSS, "responses.verify-badge");
+			computeWorkTimer		= metricsService.createTimer(MetricsGroup.WSS, "responses.compute-work");
+			//getWorkTimer			= metricsService.createTimer(MetricsGroup.WSS, "responses.get-work");
+			orderDetailWorkTimer	= metricsService.createTimer(MetricsGroup.WSS, "responses.order-detail-work");
+			putWallInstructionTimer	= metricsService.createTimer(MetricsGroup.WSS, "responses.put-wall-instruction");
+			tapeDecodingTimer		= metricsService.createTimer(MetricsGroup.WSS, "responses.tape-decoding");
+			infoTimer				= metricsService.createTimer(MetricsGroup.WSS, "responses.info");
+			palletizerItemTimer		= metricsService.createTimer(MetricsGroup.WSS, "responses.palletizer-item");
+			palletizerRemoveTimer	= metricsService.createTimer(MetricsGroup.WSS, "responses.palletizer-remove");
+			linkRemoteChe			= metricsService.createTimer(MetricsGroup.WSS, "responses.link-remote-che");
 			
-			classToMeterHash.put(VerifyBadgeResponse.class, verifyBadgeMeter);
-			classToMeterHash.put(ComputeWorkResponse.class, computeWorkMeter);
-			classToMeterHash.put(GetOrderDetailWorkResponse.class, orderDetailWorkMeter);
-			classToMeterHash.put(GetPutWallInstructionResponse.class, putWallInstructionMeter);
-			classToMeterHash.put(TapeLocationDecodingResponse.class, tapeDecodingMeter);
-			classToMeterHash.put(InfoResponse.class, infoMeter);
-			classToMeterHash.put(PalletizerItemResponse.class, palletizerItemMeter);
-			classToMeterHash.put(PalletizerRemoveOrderResponse.class, palletizerRemoveMeter);
-			classToMeterHash.put(LinkRemoteCheResponse.class, linkRemoteChe);
+			classToTimerHash.put(VerifyBadgeResponse.class, verifyBadgeTimer);
+			classToTimerHash.put(ComputeWorkResponse.class, computeWorkTimer);
+			classToTimerHash.put(GetOrderDetailWorkResponse.class, orderDetailWorkTimer);
+			classToTimerHash.put(GetPutWallInstructionResponse.class, putWallInstructionTimer);
+			classToTimerHash.put(TapeLocationDecodingResponse.class, tapeDecodingTimer);
+			classToTimerHash.put(InfoResponse.class, infoTimer);
+			classToTimerHash.put(PalletizerItemResponse.class, palletizerItemTimer);
+			classToTimerHash.put(PalletizerRemoveOrderResponse.class, palletizerRemoveTimer);
+			classToTimerHash.put(LinkRemoteCheResponse.class, linkRemoteChe);
 		}
 	}
 
@@ -232,10 +233,10 @@ public class CsClientEndpoint {
 		} else {
 			LOGGER.error("Could not find request time for {}. Saving duration 0.", response.getClass().getName());
 		}
-		Meter meter = classToMeterHash.get(response.getClass());
-		if (meter != null) {
+		Timer timer = classToTimerHash.get(response.getClass());
+		if (timer != null) {
 			LOGGER.info("Logging duration {} for response {}", duration, response.getClass().getSimpleName());
-			meter.mark(duration);
+			timer.update(duration, TimeUnit.MILLISECONDS);
 		}
 	}
 
