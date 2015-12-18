@@ -70,8 +70,10 @@ import com.codeshelf.ws.protocol.request.PalletizerNewOrderRequest;
 import com.codeshelf.ws.protocol.request.PalletizerRemoveOrderRequest;
 import com.codeshelf.ws.protocol.request.SkuWallLocationDisambiguationRequest;
 import com.codeshelf.ws.protocol.request.VerifyBadgeRequest;
+import com.codeshelf.ws.protocol.response.CompleteWorkInstructionResponse;
 import com.codeshelf.ws.protocol.response.FailureResponse;
 import com.codeshelf.ws.protocol.response.GetPutWallInstructionResponse;
+import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.protocol.response.VerifyBadgeResponse;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -91,6 +93,8 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	static final String									DEVICETYPE_CHE_SETUPORDERS	= "CHE_SETUPORDERS";
 	static final String									DEVICETYPE_CHE_LINESCAN		= "CHE_LINESCAN";
 	static final String									DEVICETYPE_CHE_PALLETIZER	= "CHE_PALLETIZER";
+
+	static final String									WI_COMPLETE_FAIL				= "WI_COMPLETE_FAIL";
 
 	private TwoKeyMap<UUID, NetGuid, INetworkDevice>	mDeviceMap;
 
@@ -1288,8 +1292,17 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		return device;
 	}
 
-	public void processWorkInstructionCompletedResponse(UUID workInstructionId) {
+	public void processWorkInstructionCompletedResponse(CompleteWorkInstructionResponse response) {
+		if (response.getStatus() == ResponseStatus.Success) {
 		// do nothing
+		}
+		else {
+			// DEV-1331 v26 improvement. Force the CHE back to compute so we do not get a whole string of bad ones.
+			NetGuid logicsGuid = new NetGuid(response.getNetworkGuid());
+			CheDeviceLogic logic = this.getCheDeviceByNetGuid(logicsGuid);
+			// A kludge. Not removing. But trigger the need to START and recompute again just like after a stolen container.
+			logic.removeStolenCntr(WI_COMPLETE_FAIL);
+		}
 	}
 
 	public void processInventoryScanRespose(String inResponseMessage) {
