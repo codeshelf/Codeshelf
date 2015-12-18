@@ -712,7 +712,10 @@ public class WorkBehavior implements IApiBehavior {
 	 * and trusting that it sends nothing if there are none
 	 */
 	private void notifyRemoveOrderFromCart(OrderHeader inOrder, Che inChe) {
-		LOGGER.info("Order: {} removed from cart:{}/{}", inOrder.getOrderId(), inChe.getDomainId(), inChe.getDeviceGuidStrNoPrefix());
+		LOGGER.info("Order: {} removed from cart:{}/{}",
+			inOrder.getOrderId(),
+			inChe.getDomainId(),
+			inChe.getDeviceGuidStrNoPrefix());
 		// This is the PFSWeb variant. 
 		try {
 			Optional<IFacilityEdiExporter> theService = getFacilityEdiExporter(inOrder.getFacility());
@@ -793,7 +796,8 @@ public class WorkBehavior implements IApiBehavior {
 						incomingWI);
 					// No point in throwing here. A throw would return response.fail to site controller and CHE screen, but there is nothing
 					// the CHE/worker can do about it. Let's just succeed.
-					return;
+					// return;
+					throw new IllegalArgumentException("completeWorkInstruction()"); // DEV-1331 let's throw
 				}
 				if (!storedWi.isHousekeeping()) {
 					new NotificationBehavior().saveFinishedWI(storedWi);
@@ -1612,10 +1616,10 @@ public class WorkBehavior implements IApiBehavior {
 		}
 		// DEV-1370 Restrictions.in( empty list) results in a SQL error. Avoid
 		if (neededDomainIds.isEmpty()) {
-			LOGGER.error("bailing out of prefetchContainers whne the container list is empty");			
+			LOGGER.error("bailing out of prefetchContainers whne the container list is empty");
 			return containersHash; // This use to throw. Now return more elegantly. This is empty.
 		}
-		
+
 		//Search for those containers 
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", facility));
@@ -1640,7 +1644,8 @@ public class WorkBehavior implements IApiBehavior {
 		LocationAlias alias = null;
 		for (Container container : inContainerList) {
 			OrderHeader order = container.getCurrentOrderHeader();
-			if (order != null && (order.getOrderType() == OrderTypeEnum.OUTBOUND || order.getOrderType() == OrderTypeEnum.REPLENISH)) {
+			if (order != null
+					&& (order.getOrderType() == OrderTypeEnum.OUTBOUND || order.getOrderType() == OrderTypeEnum.REPLENISH)) {
 				for (OrderDetail orderDetail : order.getOrderDetails()) {
 					preferredLocationStr = orderDetail.getPreferredLocation();
 					if (!Strings.isNullOrEmpty(preferredLocationStr) && !preferredLocations.containsKey(preferredLocationStr)) {
@@ -2329,7 +2334,7 @@ public class WorkBehavior implements IApiBehavior {
 				if (worker == null) {
 					//Authentication + unknown worker = failed
 					LOGGER.warn("Badge verification failed for unknown badge " + badge);
-				} else if (!worker.getActive()){
+				} else if (!worker.getActive()) {
 					//Authentication + inactive worker = failed
 					LOGGER.warn("Badge verification failed for inactive badge " + badge);
 					worker = null;
@@ -2346,7 +2351,7 @@ public class WorkBehavior implements IApiBehavior {
 					worker.setDomainId(badge);
 					worker.setUpdated(new Timestamp(System.currentTimeMillis()));
 					LOGGER.info("During badge verification created new Worker " + badge);
-				} else if (!worker.getActive()){
+				} else if (!worker.getActive()) {
 					//No authentication + inactive worker = succeeded + reactivate worker
 					worker.setActive(true);
 				} else {

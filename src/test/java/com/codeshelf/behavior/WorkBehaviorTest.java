@@ -261,11 +261,14 @@ public class WorkBehaviorTest extends ServerTest {
 
 		try {
 			workService.completeWorkInstruction(cheId, wiToRecord);
-			// Now errors instead of throw
-			// Assert.fail("recordCompletedWorkInstruction should have thrown an exception if WI cannot be found");
+			// DEV-1331 throws again
+			Assert.fail("recordCompletedWorkInstruction should have thrown an exception if WI cannot be found");
 		} catch (InputValidationException e) {
 			Assert.assertNotNull(e.getErrors().getFieldErrors("persistentId"));
 			Assert.assertFalse(e.getErrors().getFieldErrors("persistentId").isEmpty());
+		}
+		catch (IllegalArgumentException e2) {
+			// do nothing
 		}
 		verify(WorkInstruction.staticGetDao(), never()).store(any(WorkInstruction.class));
 

@@ -18,6 +18,7 @@ import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.model.OrderStatusEnum;
+import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
@@ -528,7 +529,7 @@ public class CheProcessPickExceptions extends ServerTest {
 		LOGGER.info("5: What happens if picker 1 then tries to complete the pick? Picker1's che was notified the cntr was stolen away, so it warns and goes to setup state.");
 		picker.pickItemAuto();
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
-	
+
 		LOGGER.info("5b: But two STARTs needed, to go through the recompute and get the feedback right.");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
@@ -561,7 +562,7 @@ public class CheProcessPickExceptions extends ServerTest {
 
 		picker.logout();
 		picker2.logout();
-		
+
 		// For DEV-1370. At PFSWeb, worker got far ahead of computeWork response, so got out of state. In the end
 		// was able to submit get work for an empty cart, which led to a SQL error. Try to replicate.
 		LOGGER.info("7: Empty compute work scenarios");
@@ -572,17 +573,17 @@ public class CheProcessPickExceptions extends ServerTest {
 		picker2.scanCommand("CANCEL");
 		picker2.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
 
-		LOGGER.info("7b: Force to state, then start. This does not send the request either");		
+		LOGGER.info("7b: Force to state, then start. This does not send the request either");
 		CheDeviceLogic logic = picker2.getCheDeviceLogic();
 		logic.testOnlySetState(CheStateEnum.SETUP_SUMMARY);
 		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 		picker2.scanCommand("START");
 		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
-		
+
 		picker2.logout();
 
 	}
-	
+
 	/**
 	 * The more normal case of picker being in the middle of picking to other orders, as an order is stolen to another cart. 
 	 * At the end of the SKU pick or multi-pick, forces to setup state to deal with it. 
@@ -662,7 +663,6 @@ public class CheProcessPickExceptions extends ServerTest {
 		picker.logout();
 		picker2.logout();
 	}
-
 
 	/**
 	 * Shows that we get new persistent ID for work instruction when setting up cart again.
@@ -770,7 +770,7 @@ public class CheProcessPickExceptions extends ServerTest {
 		//Item 5 is out of stock and item 6 is case only.
 		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
-				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
+				+ "2,D301,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
 				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
 				+ "4,D401,Test Item 4,1,EA,6/25/14 12:00,66\r\n" //
 				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
@@ -785,7 +785,8 @@ public class CheProcessPickExceptions extends ServerTest {
 		// Order 1 has two items in stock (Item 1 and Item 2)
 		String csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,11111,11111,1,Test Item 1,2,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,22222,22222,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+				+ "\r\n1,USF314,COSTCO,22222,22222,2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
+				+ "\r\n1,USF314,COSTCO,33333,33333,4,Test Item 4,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvOrders);
 		commitTransaction();
 
@@ -797,31 +798,63 @@ public class CheProcessPickExceptions extends ServerTest {
 		picker.loginAndSetup("Picker #1");
 		picker.setupOrderIdAsContainer("11111", "1");
 		picker.setupOrderIdAsContainer("22222", "2");
+		picker.setupOrderIdAsContainer("33333", "3");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 		picker.scanLocation("D301");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		List<WorkInstruction> wis = picker.getAllPicksList();
+		this.logWiList(wis);
 
 		LOGGER.info("1b: Get the site controller job for this first computation");
 		WorkInstruction wi = picker.getFirstActivePick();
+		UUID uuid1 = wi.getPersistentId();
 		int button = picker.buttonFor(wi);
 		int quantity = wi.getPlanQuantity();
 
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 
-		LOGGER.info("2: START, don't wait, force the state change");
+		LOGGER.info("2: START, but force the old UUID onto the work instruction, faking still having the old.");
 		// In production it happens like this: start, slow computing. Reset CHE, goes back a state (avoids being stuck if the message would never come.)
 		// Then START, waiting for response, the first response finally comes. Completes the first job. In the mean time,
-		// the server has redone the work instruction. That response goes to site controller, but sc will not absorbe
+		// the server has redone the work instruction. That response goes to site controller, but sc will not absorb
 		// the new plans while in pick state.
-		CheDeviceLogic logic = picker.getCheDeviceLogic();
 		picker.scanCommand("START");
-		logic.testOnlySetState(CheStateEnum.DO_PICK);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		wis = picker.getAllPicksList();
+		this.logWiList(wis);
+		WorkInstruction wi2 = picker.getFirstActivePick();
+		UUID uuid2 = wi2.getPersistentId();
+		Assert.assertNotEquals(uuid1, uuid2);
+		// here is the big fake. The button press will get the container ID, then iterate active picks looking for matching container.
+		// So attempt change the persistent ID in site controller memory for that. Need to get the actual WI reference in the list.
+		wi2.setPersistentId(uuid1); // might not work. Saw it not work once.  A different reference obtained via picker
+
+		// go more directly at the reference we want
+		CheDeviceLogic logic = picker.getCheDeviceLogic();
+		List<WorkInstruction> wisReference = logic.getActivePickWiList();
+		for (WorkInstruction wi3 : wisReference) {
+			wi3.setPersistentId(uuid1); // Works!  Yields the error.
+		}
 
 		LOGGER.info("3: This pick should send old wi to server");
 		picker.pick(button, quantity);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		picker.logCheDisplay(); // No error shown. Just moved onto the next job.
 
+		LOGGER.info("3b: And the next pick is refused, sending to summary state instead");
+		// Would be nice if it did not wait for the next pick. But we do not know how long before the response comes back.
+		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+
+		LOGGER.info("4: Verify that server did not complete the first job");
+		beginTransaction();
+		facility = facility.reload();
+		WorkInstruction wi2b = WorkInstruction.staticGetDao().findByPersistentId(uuid2.toString());
+		Assert.assertNotNull(wi2b);
+		Assert.assertNotEquals(WorkInstructionStatusEnum.COMPLETE, wi2b.getStatus());
+		commitTransaction();
 		picker.logout();
 	}
 

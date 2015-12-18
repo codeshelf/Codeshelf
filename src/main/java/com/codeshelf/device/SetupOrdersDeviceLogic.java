@@ -1081,22 +1081,27 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	// --------------------------------------------------------------------------
 	/**  DEV-1347
 	 *   Remove the containers known to have been stolen, then go to summary state so all work is recomputed without those
+	 *   OR if the mStolenCntrs has value WI_COMPLETE_FAIL, then don't remove any orders, but still signal for the recompute, etc.
 	 */
 	private void adjustForStolenCntrs() {
 		if (mStolenCntrs.size() == 0) {
 			LOGGER.error("adjustForStolenCntrs() not called as expected");
 		}
 		// adjust all. We will be entering SETUP_SUMMARY now, so all will be recomputed
-		
+
 		//   Java 8 this approach is cool!   mPositionToContainerMap.entrySet().removeIf(e-> <boolean expression> );
-		LOGGER.warn("removing containers stolen by other cart(s):{}. Will then need to recompute.", mStolenCntrs);
-		for (Iterator<Map.Entry<String, String>> it = mPositionToContainerMap.entrySet().iterator(); it.hasNext();) {
-			Map.Entry<String, String> entry = it.next();
-			if (mStolenCntrs.contains(entry.getValue())) {
-				it.remove();
+		if (mStolenCntrs.size() == 1 && mStolenCntrs.get(0).equals(CsDeviceManager.WI_COMPLETE_FAIL)) {
+			LOGGER.warn("Signaling the need to recompute because a work instruction did not complete at the server.");
+		} else {
+			LOGGER.warn("removing containers stolen by other cart(s):{}. Will then need to recompute.", mStolenCntrs);
+			for (Iterator<Map.Entry<String, String>> it = mPositionToContainerMap.entrySet().iterator(); it.hasNext();) {
+				Map.Entry<String, String> entry = it.next();
+				if (mStolenCntrs.contains(entry.getValue())) {
+					it.remove();
+				}
 			}
 		}
-		
+
 		// pretty kludgy flag. Test START from SETUP_SUMMARY it needs to ask all from the server again. Necessary to get our feedback right.
 		mContainerToWorkInstructionCountMap = null;
 
@@ -2810,15 +2815,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			LOGGER.warn("Ignore button because no order/container associated to button. But refreshing the displays."); // DEV-1318
 			setState(mCheStateEnum);
 			return;
-		} else if (this.mStolenCntrs.contains(containerId)) {
+		} else if (this.mStolenCntrs.contains(containerId) || this.mStolenCntrs.contains(CsDeviceManager.WI_COMPLETE_FAIL)) {
 			// DEV-1347. Refuse to complete this job is the container was just stolen by another CHE, as the server's work instruction will not match
 			// This is the worst case of being in the middle of a pick concerning the stolen container. Usually dealt with between picks without confusing the worker much.
-			LOGGER.warn("Not completing job for {} because it was taken by another cart", containerId);
+			// Or the unfortunately common case of the pick just after a pick did not complete on the server. DEV-1331
+			LOGGER.warn("Not completing job for {} because it was taken by another cart, or job is stale", containerId);
 			// Recover is not too elegant.
 			for (WorkInstruction wi : mActivePickWiList) {
 				clearLedAndPosConControllersForWi(wi);
 			}
-			setState(CheStateEnum.SETUP_SUMMARY);			
+			setState(CheStateEnum.SETUP_SUMMARY);
 		} else {
 			WorkInstruction wi = getWorkInstructionForContainerId(containerId);
 			if (wi == null) {

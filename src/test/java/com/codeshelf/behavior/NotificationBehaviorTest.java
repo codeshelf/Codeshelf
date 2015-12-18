@@ -1,16 +1,25 @@
 package com.codeshelf.behavior;
 
+import static org.mockito.Mockito.mock;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.Mockito;
 
+import com.codeshelf.api.resources.subresources.WorkerResource;
+import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.PickRate;
+import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.behavior.NotificationBehavior.WorkerEventTypeGroup;
 import com.codeshelf.generators.WorkInstructionGenerator;
 import com.codeshelf.model.WiFactory.WiPurpose;
@@ -21,14 +30,68 @@ import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.testframework.HibernateTest;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
+import com.sun.jersey.api.representation.Form;
 
-public class NotificationServiceTest extends HibernateTest {
+public class NotificationBehaviorTest extends HibernateTest {
 
-	private DateTime eventTime = new DateTime(1955, 11, 12, 10, 04, 00, 00, DateTimeZone.forID("US/Central"));  //lightning will strike the clock tower in back to the future
+	private static final String DEFAULT_WORKER = "worker";
+	
+	private final DateTime eventTime = new DateTime(1955, 11, 12, 10, 04, 00, 00, DateTimeZone.forID("US/Central"));  //lightning will strike the clock tower in back to the future
 
+	@Test
+	public void pagePastEventsInOrder() throws Exception {
+		this.getTenantPersistenceService().beginTransaction();
+		Che che = getTestChe();
+		Worker worker = createWorker(che.getFacility(), DEFAULT_WORKER);
+		NotificationBehavior behavior = new NotificationBehavior();
+
+		//even when inserted out of order
+		int lastEventAddition = 2;
+		List<WorkerEvent> events = ImmutableList.of(
+			createEvent(eventTime.plus(lastEventAddition), WorkerEvent.EventType.COMPLETE, che),
+			createEvent(eventTime.plus(1), WorkerEvent.EventType.COMPLETE, che),
+			createEvent(eventTime, WorkerEvent.EventType.COMPLETE, che)
+		);
+		for (WorkerEvent workerEvent : events) {
+			behavior.saveEvent(workerEvent);
+		}
+
+		
+		WorkerResource workerResource = new WorkerResource(behavior);
+		workerResource.setWorker(worker);
+		
+		
+		Form originalForm = new Form();
+		originalForm.add("limit", "1");
+		originalForm.add("created", new Interval(eventTime.minusDays(14), eventTime.plus(lastEventAddition)).toString());
+		UriInfo uriInfo = mock(UriInfo.class);
+		Mockito.when(uriInfo.getQueryParameters()).thenReturn(originalForm);
+		int counter = 0;
+		for (WorkerEvent event : events) {
+			Response response = workerResource.getEvents(uriInfo);
+			@SuppressWarnings("unchecked")
+			ResultDisplay<EventDisplay> results = (ResultDisplay<EventDisplay>) response.getEntity();
+			Assert.assertEquals(3, results.getTotal());
+			Assert.assertEquals("On iteration " + counter, originalForm.getFirst("limit"), String.valueOf(results.getResults().size()));
+			Assert.assertEquals("On iteration " + counter, event.getCreated(), results.getResults().iterator().next().getCreatedAt());
+			
+			Form nextForm = new Form();
+			nextForm.putSingle("next", results.getNext());
+			uriInfo = mock(UriInfo.class);
+			Mockito.when(uriInfo.getQueryParameters()).thenReturn(nextForm);
+			counter++;
+		}
+		Response response = workerResource.getEvents(uriInfo);
+		@SuppressWarnings("unchecked")
+		ResultDisplay<EventDisplay> results = (ResultDisplay<EventDisplay>) response.getEntity();
+		Assert.assertEquals(0, results.getResults().size());
+		this.getTenantPersistenceService().commitTransaction();
+	}
+	
 	@Test
 	public void hourlyRatesGroupedByEventType() {
 		this.getTenantPersistenceService().beginTransaction();
@@ -176,9 +239,9 @@ public class NotificationServiceTest extends HibernateTest {
 
 	private WorkerEvent createEvent(DateTime eventTime, WorkerEvent.EventType eventType, Che che) {
 		
-		WorkerEvent event = new WorkerEvent(eventTime, eventType, che, "worker");
+		WorkerEvent event = new WorkerEvent(eventTime, eventType, che, DEFAULT_WORKER);
 
-		WorkInstruction wi = createShortWorkInstruction(che, "worker");
+		WorkInstruction wi = createShortWorkInstruction(che, DEFAULT_WORKER);
 		WorkInstruction.staticGetDao().store(wi);
 		WorkInstruction persistedWI = WorkInstruction.staticGetDao().findByDomainId(wi.getParent(), wi.getDomainId());
 		event.setWorkInstructionId(persistedWI.getPersistentId());

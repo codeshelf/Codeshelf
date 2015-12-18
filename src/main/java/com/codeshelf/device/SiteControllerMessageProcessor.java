@@ -140,9 +140,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			// Handler for WI Completion
 			else if (response instanceof CompleteWorkInstructionResponse) {
 				CompleteWorkInstructionResponse workResponse = (CompleteWorkInstructionResponse) response;
-				if (response.getStatus() == ResponseStatus.Success) {
-					this.deviceManager.processWorkInstructionCompletedResponse(workResponse.getWorkInstructionId());
-				}
+				this.deviceManager.processWorkInstructionCompletedResponse(workResponse);
 			}
 			//////////////////////////////////////////
 			// Handler for Get Order Detail Work-- LINE_SCAN work flow
@@ -196,31 +194,33 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 						devodingResponse.getDecodedLocation());
 				}
 			}
-			
+
 			else if (response instanceof InfoResponse) {
 				InfoResponse infoResponse = (InfoResponse) response;
 				if (response.getStatus() == ResponseStatus.Success) {
 					this.deviceManager.processInfoResponse(infoResponse.getNetworkGuid(), infoResponse.getInfo());
 				}
 			}
-			
+
 			else if (response instanceof PalletizerItemResponse) {
 				PalletizerItemResponse palletizerResponse = (PalletizerItemResponse) response;
 				if (response.getStatus() == ResponseStatus.Success) {
-					this.deviceManager.processPalletizerItemResponse(palletizerResponse.getNetworkGuid(), palletizerResponse.getInfo());
+					this.deviceManager.processPalletizerItemResponse(palletizerResponse.getNetworkGuid(),
+						palletizerResponse.getInfo());
 				}
 			}
-			
+
 			else if (response instanceof PalletizerRemoveOrderResponse) {
 				PalletizerRemoveOrderResponse palletizerRemoveResponse = (PalletizerRemoveOrderResponse) response;
 				if (response.getStatus() == ResponseStatus.Success) {
-					this.deviceManager.processPalletizerRemoveResponse(palletizerRemoveResponse.getNetworkGuid(), palletizerRemoveResponse.getError());
+					this.deviceManager.processPalletizerRemoveResponse(palletizerRemoveResponse.getNetworkGuid(),
+						palletizerRemoveResponse.getError());
 				}
 			}
-			
+
 			else if (response instanceof GenericDeviceResponse) {
 			}
-			
+
 			// Handle server-side errors
 			else if (response instanceof FailureResponse) {
 				FailureResponse failureResponse = (FailureResponse) response;

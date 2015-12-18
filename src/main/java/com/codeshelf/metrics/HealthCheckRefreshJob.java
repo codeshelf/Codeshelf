@@ -16,11 +16,11 @@ import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.security.UserContext;
 
 public abstract class HealthCheckRefreshJob extends AbstractFacilityJob {
-	private static final Logger LOGGER	= LoggerFactory.getLogger(HealthCheckRefreshJob.class);
-	private TenantCallable callable;
-	
-	private String checkName;
-	
+	private static final Logger	LOGGER	= LoggerFactory.getLogger(HealthCheckRefreshJob.class);
+	private TenantCallable		callable;
+
+	private String				checkName;
+
 	public HealthCheckRefreshJob() {
 		this.checkName = getClass().getSimpleName();
 	}
@@ -41,27 +41,35 @@ public abstract class HealthCheckRefreshJob extends AbstractFacilityJob {
 			callable.cancel();
 		}
 	}
-	
+
 	protected abstract void check(Facility facility) throws Exception;
-	
+
 	protected void saveResults(Facility facility, boolean success, String message) {
 		String jobName = getClass().getSimpleName();
-		String logMessage = String.format("Job %s completed %ssuccessfully for facility %s: %s", jobName, success ? "":"un", facility.getDomainId(), message);
-		if (success){
-			LOGGER.info(logMessage);
-		} else {
-			LOGGER.warn(logMessage);
+		String logMessage = String.format("Job %s completed %ssuccessfully for facility %s: %s",
+			jobName,
+			success ? "" : "un",
+			facility.getDomainId(),
+			message);
+
+		// DEV-1387 don't spam on jobs that don't need it. Is production is the classic one.
+		if (!CodeshelfHealthCheck.OK.equals(message)) {
+			if (success) {
+				LOGGER.info(logMessage);
+			} else {
+				LOGGER.warn(logMessage);
+			}
 		}
 		CachedHealthCheckResults.saveJobResult(jobName, facility, success, message);
 	}
-	
-	public class HealthCheckRefreshProcessor extends SingleBatchProcessorABC{
-		protected Facility facility;
-		
+
+	public class HealthCheckRefreshProcessor extends SingleBatchProcessorABC {
+		protected Facility	facility;
+
 		public HealthCheckRefreshProcessor(Facility facility) {
 			this.facility = facility;
 		}
-		
+
 		@Override
 		public int doBatch(int batchCount) throws Exception {
 			Facility reloadedFacility = facility.reload();
@@ -70,12 +78,13 @@ public abstract class HealthCheckRefreshJob extends AbstractFacilityJob {
 				setDone(true);
 				return 1;
 			} else {
-				LoggerFactory.getLogger(this.getClass())
-					.warn("facility {} no longer exists for healthcheck job {} exiting batch", facility, this);
+				LoggerFactory.getLogger(this.getClass()).warn("facility {} no longer exists for healthcheck job {} exiting batch",
+					facility,
+					this);
 				setDone(true);
 				return 1;
 			}
 		}
 	}
-	
+
 }
