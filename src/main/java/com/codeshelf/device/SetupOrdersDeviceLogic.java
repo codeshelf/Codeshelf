@@ -2619,9 +2619,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		EventType eventType = EventType.COMPLETE;
 		if (getCheStateEnum() == CheStateEnum.DO_PUT) {
 			if (inWi.getOrderDetail() == null) {
-				eventType = EventType.SKUWALL_PUT;
+				eventType = EventType.COMPLETE;
 			} else {
-				eventType = EventType.PUTWALL_PUT;
+				eventType = EventType.COMPLETE;
 			}
 		}
 		notifyWiVerb(inWi, eventType, kLogAsInfo);

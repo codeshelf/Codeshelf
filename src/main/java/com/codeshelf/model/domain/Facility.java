@@ -1532,7 +1532,7 @@ public class Facility extends Location {
 
 		filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", this));
-		filterParams.add(Restrictions.eq("eventType", EventType.PALLETIZER_PUT));
+		filterParams.add(Restrictions.eq("purpose", WiPurpose.WiPurposePalletizerPut.name()));
 		filterParams.add(Restrictions.ge("created", startUtc));
 		filterParams.add(Restrictions.le("created", endUtc));
 		int palletizerPutsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
@@ -1540,7 +1540,7 @@ public class Facility extends Location {
 
 		filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", this));
-		filterParams.add(Restrictions.eq("eventType", EventType.PUTWALL_PUT));
+		filterParams.add(Restrictions.eq("purpose", WiPurpose.WiPurposePutWallPut.name()));
 		filterParams.add(Restrictions.ge("created", startUtc));
 		filterParams.add(Restrictions.le("created", endUtc));
 		int putwallPutsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
@@ -1548,7 +1548,7 @@ public class Facility extends Location {
 
 		filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", this));
-		filterParams.add(Restrictions.eq("eventType", EventType.SKUWALL_PUT));
+		filterParams.add(Restrictions.eq("purpose", WiPurpose.WiPurposeSkuWallPut.name()));
 		filterParams.add(Restrictions.ge("created", startUtc));
 		filterParams.add(Restrictions.le("created", endUtc));
 		int skuwallPutsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
