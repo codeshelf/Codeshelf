@@ -40,7 +40,16 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 	}
 
 	public enum EventType {
-		LOGIN, LOGOUT, SKIP_ITEM_SCAN, BUTTON, WI, SHORT, SHORT_AHEAD, COMPLETE, CANCEL_PUT, DETAIL_WI_MISMATCHED, PALLETIZER_PUT, PUTWALL_PUT, SKUWALL_PUT, LOW;
+		LOGIN,
+		LOGOUT,
+		SKIP_ITEM_SCAN,
+		BUTTON,
+		SHORT,
+		SHORT_AHEAD,
+		COMPLETE,
+		CANCEL_PUT,
+		DETAIL_WI_MISMATCHED,
+		LOW;
 		
 		public String getName() {
 			return name();
