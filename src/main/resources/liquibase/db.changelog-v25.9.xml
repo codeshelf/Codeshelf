@@ -29,4 +29,20 @@
 	   		<column name="parent_persistentid"/>
 	    </createIndex>
 	</changeSet>
+	<changeSet author="ilya (generated)" id="1450210628708-4">
+	    <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="order_header" indexName="order_header_container_use_persistentid_idx" /></not>
+        </preConditions>
+	    <createIndex indexName="order_header_container_use_persistentid_idx" tableName="order_header">
+	   		<column name="container_use_persistentid"/>
+	    </createIndex>
+	</changeSet>
+	<changeSet author="ilya (generated)" id="1450210628708-5">
+	    <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="container_use" indexName="container_use_order_header_persistentid_idx" /></not>
+        </preConditions>
+	    <createIndex indexName="container_use_order_header_persistentid_idx" tableName="container_use">
+	   		<column name="order_header_persistentid"/>
+	    </createIndex>
+	</changeSet>
 </databaseChangeLog>
