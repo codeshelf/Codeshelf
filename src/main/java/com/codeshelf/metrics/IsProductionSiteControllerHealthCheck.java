@@ -19,8 +19,9 @@ public class IsProductionSiteControllerHealthCheck extends CodeshelfHealthCheck 
 		if (mDeviceManager.getProductionValue()) {
 			return Result.healthy("Connected to production facility.");
 		} else {
-			// Not unhealthy. Just the answer to IsProduction
-			return unhealthy("Not connected to production facility.");
+			// Not unhealthy. Just the answer to IsProduction.
+			// But send our flag that means it is ok. This prevents the logs spamming test and stage every two minutes.
+			return unhealthy(CodeshelfHealthCheck.OK);
 		}
 	}
 
