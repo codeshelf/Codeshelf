@@ -19,9 +19,9 @@ import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.IntervalParam;
 import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.ResultDisplay;
+import com.codeshelf.behavior.NotificationBehavior;
 import com.codeshelf.behavior.OrderBehavior;
 import com.codeshelf.behavior.OrderBehavior.OrderDetailView;
-import com.codeshelf.behavior.WorkHistoryBehavior;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
 import com.google.common.collect.ImmutableMap;
@@ -37,12 +37,12 @@ public class OrdersResource {
 	@Setter
 	private Facility facility;
 
-	private WorkHistoryBehavior workHistoryBehavior;
+	private NotificationBehavior notificationBehavior;
 	
 	@Inject 
-	public OrdersResource(OrderBehavior orderService, WorkHistoryBehavior workHistoryBehavior) {
+	public OrdersResource(OrderBehavior orderService, NotificationBehavior notificationBehavior) {
 		this.orderService = orderService;
-		this.workHistoryBehavior = workHistoryBehavior;
+		this.notificationBehavior = notificationBehavior;
 	}
 
 	@GET
@@ -108,7 +108,7 @@ public class OrdersResource {
 	@Path("/{orderId}/events")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getOrderEvents(@PathParam("orderId") String orderDomainId) {
-		List<EventDisplay> results= this.workHistoryBehavior.getOrderEventsForOrderId(facility, orderDomainId);
+		List<EventDisplay> results= this.notificationBehavior.getOrderEventsForOrderId(facility, orderDomainId);
 		return BaseResponse.buildResponse(results);
 	}
 

@@ -25,7 +25,7 @@ import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.resources.subresources.CheResource;
 import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.ResultDisplay;
-import com.codeshelf.behavior.WorkHistoryBehavior;
+import com.codeshelf.behavior.NotificationBehavior;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.ws.server.CsServerEndPoint;
 import com.google.inject.Inject;
@@ -35,7 +35,7 @@ import com.sun.jersey.api.core.ResourceContext;
 public class ChesResource {
 	@Context
 	private ResourceContext resourceContext;
-	private WorkHistoryBehavior workHistoryBehavior;
+	private NotificationBehavior notificationBehavior;
 	private static ScriptEngine engine;
 
 	static {
@@ -45,8 +45,8 @@ public class ChesResource {
 	}
 
 	@Inject
-	ChesResource(WorkHistoryBehavior workHistoryBehavior) {
-		this.workHistoryBehavior = workHistoryBehavior;
+	ChesResource(NotificationBehavior notificationBehavior) {
+		this.notificationBehavior = notificationBehavior;
 	}
 	
 	@GET
@@ -88,7 +88,7 @@ public class ChesResource {
 	@Path("/{id}/events")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getEvents(@PathParam("id") UUIDParam uuidParam, @QueryParam("limit") Integer limit) {
-		ResultDisplay<EventDisplay> results = this.workHistoryBehavior.getEventsForCheId(uuidParam, limit);
+		ResultDisplay<EventDisplay> results = this.notificationBehavior.getEventsForCheId(uuidParam, limit);
 		return BaseResponse.buildResponse(results);
 	}
 

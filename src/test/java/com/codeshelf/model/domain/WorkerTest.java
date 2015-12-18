@@ -7,10 +7,12 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.resources.WorkersResource;
@@ -21,9 +23,9 @@ import com.codeshelf.behavior.NotificationBehavior;
 import com.codeshelf.behavior.OrderBehavior;
 import com.codeshelf.behavior.UiUpdateBehavior;
 import com.codeshelf.behavior.WorkBehavior;
-import com.codeshelf.behavior.WorkHistoryBehavior;
 import com.codeshelf.testframework.HibernateTest;
 import com.google.inject.Provider;
+import com.sun.jersey.api.representation.Form;
 
 public class WorkerTest extends HibernateTest {
 	private FacilityResource facilityResource;
@@ -192,12 +194,22 @@ public class WorkerTest extends HibernateTest {
 	@Test
 	public void getWorkerEvents() throws Exception {
 		this.getTenantPersistenceService().beginTransaction();
+		
+		
+		
 		Worker worker1 = createWorkerObject(true, "FirstName_1", "LastName_1", null, "abc123", null, null);
 		Response response = workersResource.createWorker(worker1);
 		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
 		
+		
+		Form form = new Form();
+		form.add("limit", "1");
 		WorkerResource workerResource = getWorkerResource(worker1);
-		workerResource.getEvents(15);
+		UriInfo uriInfo = mock(UriInfo.class);
+		Mockito.when(uriInfo.getQueryParameters()).thenReturn(form);
+		workerResource.getEvents(uriInfo);
+
+		
 		this.getTenantPersistenceService().commitTransaction();
 	}
 	
@@ -227,7 +239,7 @@ public class WorkerTest extends HibernateTest {
 	}
 
 	private WorkerResource getWorkerResource(Worker worker) throws Exception {
-		WorkerResource workerResource = new WorkerResource(new WorkHistoryBehavior());
+		WorkerResource workerResource = new WorkerResource(new NotificationBehavior());
 		workerResource.setWorker(worker);
 		return workerResource;
 	}
