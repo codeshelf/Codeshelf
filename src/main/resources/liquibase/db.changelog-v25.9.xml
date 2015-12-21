@@ -45,4 +45,13 @@
 	   		<column name="order_header_persistentid"/>
 	    </createIndex>
 	</changeSet>
+	<changeSet author="ilya (generated)" id="1450210628708-6">
+	    <preConditions onFail="MARK_RAN">
+            <not><indexExists tableName="work_instruction" indexName="work_instruction_assigned_che_persistentid_idx" /></not>
+        </preConditions>
+	    <createIndex indexName="work_instruction_assigned_che_persistentid_idx" tableName="work_instruction">
+	   		<column name="assigned_che_persistentid"/>
+	    </createIndex>
+	</changeSet>
+	
 </databaseChangeLog>
