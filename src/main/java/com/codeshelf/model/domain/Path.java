@@ -28,8 +28,10 @@ import javax.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.hibernate.Criteria;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +41,7 @@ import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.util.CompareNullChecker;
+import com.codeshelf.validation.InputValidationException;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -69,8 +72,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 
 	private static final Logger			LOGGER						= LoggerFactory.getLogger(Path.class);
 
-	// The path description.
-	@Column(nullable = false)
+	// Optional path name
 	@Getter
 	@Setter
 	@JsonProperty
@@ -98,7 +100,6 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	private Map<Integer, PathSegment>	segments					= new HashMap<Integer, PathSegment>();
 
 	public Path() {
-		description = "";
 		travelDir = TravelDirectionEnum.FORWARD;
 	}
 
@@ -506,5 +507,28 @@ public class Path extends DomainObjectTreeABC<Facility> {
 			script.append(String.format("- %.2f %.2f %.2f %.2f ", segment.getStartPosX(), segment.getStartPosY(), segment.getEndPosX(), segment.getEndPosY()));
 		}
 		return script.toString();
+	}
+	
+	public String getPathNameUi() {
+		return description == null ? "" : description;
+	}
+	
+	public void setPathNameUi(String inPathName) {
+		if (inPathName == null || inPathName.isEmpty()){
+			inPathName = null;
+		} else {
+			Criteria criteria = Path.staticGetDao().createCriteria();
+			criteria.add(Restrictions.eq("parent", getParent()));
+			criteria.add(Restrictions.ne("persistentId", getPersistentId()));
+			criteria.add(Restrictions.eq("description", inPathName));
+			int pathsWithSameDescription = Path.staticGetDao().countByCriteriaQuery(criteria);
+			if (pathsWithSameDescription > 0){
+				String error = "Path " + inPathName + " already exists";
+				LOGGER.warn(error);
+				throw new InputValidationException(this, error);
+			}
+		}
+		LOGGER.info("Setting description for path {} to {}.", getFullDomainId(), inPathName);
+		setDescription(inPathName);
 	}
 }
