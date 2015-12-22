@@ -22,6 +22,7 @@ editFacility F1 :site :channel
 createDummyOutline 1
 setProperty scanpick UPC
 setProperty invtmenu true
+setProperty pickmult true
 sftp Orders	:sftphost 22 :sftpuser :sftppass in/ilya out/ilya/archive
 sftp Wi 	:sftphost 22 :sftpuser :sftppass out/ilya
 importAisles aisles
@@ -31,7 +32,7 @@ setWall A2 skuwall
 setController LocX24   lights  :contr1 1 tiersInAisle
 setController LocX26   lights  0x000000AB 1 tiersInAisle
 setController A3.B1.T1 poscons 0x000000AA 1 tiersInAisle
-setPosconToBay A3.B3 0x000000AA 98 A3.B4 0x000000AA 99 A1.B2 0x000000DB 11 A2.B2 0x000000DB 1
+setPosconToBay A3.B3 0x000000AA 98 A3.B4 0x000000AA 99 A1.B2 0x000000DB 9 A2.B2 0x000000DB 11
 setPoscons A3.B1.T1 1 forward A3.B2.T1 5 forward A3.B3.T1 9 forward A3.B4.T1 13 forward
 createChe 0x000000A4 blue LINE_SCAN CHE_A4 CODECORPS3600
 createChe :che1 green SETUP_ORDERS CHE_A ORIGINALSERIAL
@@ -43,6 +44,8 @@ defPath p2 - 2.60 7.40 5.28 7.40
 assignPathSgmToAisle p1 0 A1
 assignPathSgmToAisle p1 2 A2
 assignPathSgmToAisle p2 0 A3
+setPathName p1 Frozen Food
+setPathName p2
 assignTapeToTier 0007 A1.B2.T1 0027 A2.B1.T1 000X A2.B2.T1
 deleteAllExtensionPoints
 addExtensionPoint extensionBean OrderImportBeanTransformation active
@@ -61,7 +64,7 @@ And one more multi line comment here
 STEP palletizer
 SITE 
 waitForDevices :chePall
-defCheUseRadio cheC :chePall
+defChe cheC :chePall
 logout cheC
 login cheC Ilya1 PALLETIZER_SCAN_ITEM
 //Remove pallets, if any are loaded

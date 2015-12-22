@@ -531,5 +531,6 @@ public class Path extends DomainObjectTreeABC<Facility> {
 		}
 		LOGGER.info("Setting description for path {} to {}.", getFullDomainId(), inPathName);
 		setPathName(inPathName);
+		Path.staticGetDao().store(this);
 	}
 }

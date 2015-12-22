@@ -43,7 +43,6 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.ScannerTypeEnum;
 import com.codeshelf.model.domain.Tier;
-import com.codeshelf.model.domain.Vertex;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.ExtensionPointEngine;
@@ -74,8 +73,9 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_CREATE_CHE = "createChe <che> <color> <mode> [name] [scannerType]";
 	private final static String TEMPLATE_DELETE_CHES = "deleteChes (<ches>)";
 	private final static String TEMPLATE_DELETE_ALL_PATHS = "deleteAllPaths";
-	private final static String TEMPLATE_DEF_PATH = "defPath <pathName> (segments '-' <start x> <start y> <end x> <end y>)";
-	private final static String TEMPLATE_ASSIGN_PATH_SGM_AISLE = "assignPathSgmToAisle <pathName> <segment id> <aisle name>";
+	private final static String TEMPLATE_DEF_PATH = "defPath <path> (segments '-' <start x> <start y> <end x> <end y>)";
+	private final static String TEMPLATE_SET_PATH_NAME = "setPathName <path> [path name>]";
+	private final static String TEMPLATE_ASSIGN_PATH_SGM_AISLE = "assignPathSgmToAisle <path> <segment id> <aisle name>";
 	private final static String TEMPLATE_ASSIGN_TAPE_TO_TIER = "assignTapeToTier (assignments <tape id> <tier name>)";
 	private final static String TEMPLATE_DELETE_ALL_EXTENSIONS = "deleteAllExtensionPoints";
 	private final static String TEMPLATE_DELETE_EXTENSION = "deleteExtensionPoint <type>";
@@ -187,6 +187,8 @@ public class ScriptServerRunner {
 			processDeleteAllPathsCommand(parts);
 		} else if (command.equalsIgnoreCase("defPath")) {
 			processDefinePathCommand(parts);
+		} else if (command.equalsIgnoreCase("setPathName")) {
+			processSetPathNameCommand(parts);
 		} else if (command.equalsIgnoreCase("assignPathSgmToAisle")) {
 			processAsignPathSegmentToAisleCommand(parts);
 		} else if (command.equalsIgnoreCase("assignTapeToTier")) {
@@ -205,7 +207,7 @@ public class ScriptServerRunner {
 		} else if  (command.equalsIgnoreCase("togglePutWall")) {
 			throw new Exception("Command togglePutWall has been deprecated due to an addition of Sku Walls. Instead, use " + TEMPLATE_SET_WALL);
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, deleteOrders, importOrders, importAisles, importLocations, importInventory, importWorkers, setController, setPoscons, setPosconToBay, setWall, createChe, deleteChes, deleteAllPaths, defPath, assignPathSgmToAisle, assignTapeToTier, deleteAllExtensionPoints, deleteExtensionPoint, addExtensionPoint, waitSeconds, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, deleteOrders, importOrders, importAisles, importLocations, importInventory, importWorkers, setController, setPoscons, setPosconToBay, setWall, createChe, deleteChes, deleteAllPaths, defPath, setPathName, assignPathSgmToAisle, assignTapeToTier, deleteAllExtensionPoints, deleteExtensionPoint, addExtensionPoint, waitSeconds, //]");
 		}
 	}
 
@@ -244,15 +246,11 @@ public class ScriptServerRunner {
 		if (facilitySize < 1) {
 			throw new Exception("Invalid facility size " + facilitySize + ".");
 		}
-		List<Vertex> vertices = facility.getVertices();
-		while (!vertices.isEmpty()){
-			Vertex.staticGetDao().delete(vertices.remove(0));
-		}
 		double anchorX = -122.271673679351807, anchorY = 37.8032855078260113, sideX = 0.00020 * facilitySize, sideY = 0.00016 * facilitySize;
-		facility.createVertex("V0", "GPS", anchorX, anchorY, 0);
-		facility.createVertex("V1", "GPS", anchorX, anchorY - sideY, 1);
-		facility.createVertex("V2", "GPS", anchorX + sideX, anchorY - sideY, 2);
-		facility.createVertex("V3", "GPS", anchorX + sideX, anchorY, 3);
+		facility.createOrUpdateVertex("V0", "GPS", anchorX, anchorY, 0);
+		facility.createOrUpdateVertex("V1", "GPS", anchorX, anchorY - sideY, 1);
+		facility.createOrUpdateVertex("V2", "GPS", anchorX + sideX, anchorY - sideY, 2);
+		facility.createOrUpdateVertex("V3", "GPS", anchorX + sideX, anchorY, 3);
 	}
 
 	/**
@@ -558,16 +556,16 @@ public class ScriptServerRunner {
 
 	/**
 	 * Expects to see command
-	 * defPath <pathName> (segments '-' <start x> <start y> <end x> <end y>)
+	 * defPath <path> (segments '-' <start x> <start y> <end x> <end y>)
 	 * @throws Exception 
 	 */
 	private void processDefinePathCommand(String parts[]) throws Exception {
 		if (parts.length < 7 || (parts.length - 2) % 5 != 0 ){
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_DEF_PATH);
 		}
-		String pathName = parts[1];
-		if (paths.containsKey(pathName)) {
-			throw new Exception("Path " + pathName + " has already been defined in this script");
+		String pathId = parts[1];
+		if (paths.containsKey(pathId)) {
+			throw new Exception("Path " + pathId + " has already been defined in this script");
 		}
 		Path path = facility.createPath("");
 		int totalSegnemts = (parts.length - 2) / 5;
@@ -584,27 +582,49 @@ public class ScriptServerRunner {
 			Point tail = new Point(PositionTypeEnum.METERS_FROM_PARENT, endX, endY, 0.0);
 			path.createPathSegment(segNum, head, tail);
 		}
-		paths.put(pathName, path);
+		paths.put(pathId, path);
+	}
+	
+	/**
+	 * Expects to see command
+	 * defPath <path> [path name]
+	 * @throws Exception 
+	 */
+	private void processSetPathNameCommand(String parts[]) throws Exception {
+		if (parts.length < 2){
+			throwIncorrectNumberOfArgumentsException(TEMPLATE_SET_PATH_NAME);
+		}
+		String pathId = parts[1];
+		Path path = paths.get(pathId);
+		StringBuilder nameBuilder = new StringBuilder();
+		for (int i = 2; i < parts.length; i++) {
+			nameBuilder.append(parts[i]).append(" ");
+		}
+		String name = nameBuilder.toString();
+		if (!name.isEmpty()) {
+			name = name.substring(0, name.length() - 1);
+		}
+		path.setPathNameUi(name);
 	}
 
 	/**
 	 * Expects to see command
-	 * assignPathSgmToAisle <pathName> <segment id> <aisle name>
+	 * assignPathSgmToAisle <path> <segment id> <aisle name>
 	 * @throws Exception 
 	 */
 	private void processAsignPathSegmentToAisleCommand(String parts[]) throws Exception {
 		if (parts.length != 4){
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_ASSIGN_PATH_SGM_AISLE);
 		}
-		String pathName = parts[1], aisleName= parts[3];
-		Path path = paths.get(pathName);
+		String pathId = parts[1], aisleName= parts[3];
+		Path path = paths.get(pathId);
 		if (path == null) {
-			throw new Exception("Path " + pathName + " has not been defined in this script");
+			throw new Exception("Path " + pathId + " has not been defined in this script");
 		}
 		int segmentId = Integer.parseInt(parts[2]);
 		PathSegment segment = path.getPathSegment(segmentId);
 		if (segment == null) {
-			throw new Exception("Path " + pathName + " does not have segment " + segmentId);
+			throw new Exception("Path " + pathId + " does not have segment " + segmentId);
 		}
 		Aisle aisle = findAisle(aisleName);
 		aisle.associatePathSegment(segment);
@@ -719,7 +739,7 @@ public class ScriptServerRunner {
 		}
 		String type = parts[1], host = parts[2], port = parts[3], username = parts[4], password = parts[5];
 		if ("**********".equals(password)){
-			throw new Exception("You used the password placeholder '**********' from the scripting documentation. If your server password actually is '**********', you are now stuck because I wanted to put this error message here");
+			throw new Exception("You used the SFTP password placeholder '**********' from the scripting documentation. If your server password actually is '**********', you are now stuck because I wanted to put this error message here");
 		}
 		boolean orders = false;
 		if ("orders".equalsIgnoreCase(type)){
