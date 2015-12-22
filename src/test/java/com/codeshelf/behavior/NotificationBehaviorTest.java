@@ -244,7 +244,7 @@ public class NotificationBehaviorTest extends HibernateTest {
 		WorkInstruction wi = createShortWorkInstruction(che, DEFAULT_WORKER);
 		WorkInstruction.staticGetDao().store(wi);
 		WorkInstruction persistedWI = WorkInstruction.staticGetDao().findByDomainId(wi.getParent(), wi.getDomainId());
-		event.setWorkInstructionId(persistedWI.getPersistentId());
+		event.setWorkInstruction(persistedWI);
 		event.setLocation(persistedWI.getPickInstruction());
 		return event;
 	}

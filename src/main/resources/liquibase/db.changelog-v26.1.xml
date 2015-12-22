@@ -8,4 +8,14 @@
     <changeSet author="ilya (generated)" id="1450733772165-2">
         <dropNotNullConstraint columnDataType="varchar(255)" columnName="description" tableName="path"/>
     </changeSet>
+    <changeSet author="ilya (generated)" id="1450733772165-3">
+        <addColumn tableName="work_instruction">
+            <column name="path_name" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="ilya (generated)" id="1450808997812-2">
+        <addColumn tableName="event_worker">
+            <column name="path_name" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

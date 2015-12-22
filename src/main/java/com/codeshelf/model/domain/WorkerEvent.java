@@ -97,7 +97,7 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 
 	@Column(nullable = true, name = "work_instruction_persistentid")
 	@Type(type="com.codeshelf.persistence.DialectUUIDType")
-	@Getter @Setter
+	@Getter
 	private UUID 							workInstructionId;
 
 	@Column(nullable = true, name = "description")
@@ -114,6 +114,11 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 	@Getter @Setter
 	@JsonProperty
 	private String							purpose;
+	
+	@Column(nullable = true, name = "path_name")
+	@Getter @Setter
+	@JsonProperty
+	private String							pathName;
 
 	public WorkerEvent() {
 		setCreated(new Timestamp(System.currentTimeMillis()));
@@ -170,5 +175,10 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 	
 	public String toString() {
 		return String.format("%s(facility: %s, eventType: %s, persistentId: %s", this.getClass().getSimpleName(), getParent(), eventType, getPersistentId());
+	}
+	
+	public void setWorkInstruction(WorkInstruction wi) {
+		workInstructionId = wi.getPersistentId();
+		setPathName(wi.getPathName());
 	}
 }

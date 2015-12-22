@@ -268,6 +268,11 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	@Setter
 	@JsonProperty
 	private WiPurpose					purpose				= null;
+	
+	@Column(nullable = true, name = "path_name")
+	@Getter @Setter
+	@JsonProperty
+	private String						pathName;
 
 	@Transient
 	@Getter

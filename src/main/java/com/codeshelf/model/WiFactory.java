@@ -185,6 +185,7 @@ public class WiFactory {
 		resultWi.setContainer(inContainer);
 		resultWi.setLocation(inLocation);
 		resultWi.setLocationId(inLocation.getFullDomainId());
+		resultWi.setPathName(inLocation.getAssociatedPathNameUI());
 		LocationAlias locAlias = inLocation.getPrimaryAlias();
 		if (inOrderDetail.isPreferredDetail()) {
 			resultWi.doSetPickInstruction(inOrderDetail.getPreferredLocation());

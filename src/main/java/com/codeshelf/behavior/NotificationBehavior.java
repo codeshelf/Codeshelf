@@ -96,7 +96,7 @@ public class NotificationBehavior implements IApiBehavior{
 		event.setCreated(wi.getCompleted());
 		event.setEventType(type);
 		event.setWorkerId(wi.getPickerId());
-		event.setWorkInstructionId(wi.getPersistentId());
+		event.setWorkInstruction(wi);
 		event.setLocation(wi.getPickInstruction());
 		OrderDetail orderDetail = wi.getOrderDetail();
 		if (orderDetail != null) {
@@ -150,7 +150,7 @@ public class NotificationBehavior implements IApiBehavior{
 					throw new NullPointerException(String.format("Work instruction does not exist for this persistentId: %s", workInstructionId.toString()));
 					// would get NPE just below in wi.getOrderDetail();
 				}
-				event.setWorkInstructionId(wi.getPersistentId());
+				event.setWorkInstruction(wi);
 				event.setLocation(wi.getPickInstruction());
 				OrderDetail orderDetail = wi.getOrderDetail();
 				if (orderDetail != null) {

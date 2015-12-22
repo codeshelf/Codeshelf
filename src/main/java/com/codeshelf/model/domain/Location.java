@@ -693,6 +693,11 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 		}
 		return "";
 	}
+	
+	public String getAssociatedPathNameUI(){
+		Path path = getAssociatedPath();
+		return path == null ? null : path.getPathNameUi();
+	}
 
 	/**
 	 * This gets the associated channel. Or if indirect via getEffectiveController, then parenthesis around it.
@@ -1653,5 +1658,4 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			locName = getNominalLocationIdExcludeBracket();
 		return locName;
 	}
-
 }

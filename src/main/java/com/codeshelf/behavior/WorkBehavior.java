@@ -1035,6 +1035,7 @@ public class WorkBehavior implements IApiBehavior {
 			WiPurpose.WiPurposeSkuWallPut,
 			false,
 			new Timestamp(System.currentTimeMillis()));
+		wi.setPathName(locationInWall.getAssociatedPathNameUI());
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		wiResultList.add(wi);
 		skuWallInstructions.workInstructions = wiResultList;

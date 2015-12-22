@@ -73,10 +73,11 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	private static final Logger			LOGGER						= LoggerFactory.getLogger(Path.class);
 
 	// Optional path name
+	@Column(name="description")
 	@Getter
 	@Setter
 	@JsonProperty
-	private String						description;
+	private String						pathName;
 
 	@Column(nullable = false,name="travel_dir")
 	@Getter
@@ -510,7 +511,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 	}
 	
 	public String getPathNameUi() {
-		return description == null ? "" : description;
+		return pathName == null ? getDomainId() : pathName;
 	}
 	
 	public void setPathNameUi(String inPathName) {
@@ -520,7 +521,7 @@ public class Path extends DomainObjectTreeABC<Facility> {
 			Criteria criteria = Path.staticGetDao().createCriteria();
 			criteria.add(Restrictions.eq("parent", getParent()));
 			criteria.add(Restrictions.ne("persistentId", getPersistentId()));
-			criteria.add(Restrictions.eq("description", inPathName));
+			criteria.add(Restrictions.eq("pathName", inPathName));
 			int pathsWithSameDescription = Path.staticGetDao().countByCriteriaQuery(criteria);
 			if (pathsWithSameDescription > 0){
 				String error = "Path " + inPathName + " already exists";
@@ -529,6 +530,6 @@ public class Path extends DomainObjectTreeABC<Facility> {
 			}
 		}
 		LOGGER.info("Setting description for path {} to {}.", getFullDomainId(), inPathName);
-		setDescription(inPathName);
+		setPathName(inPathName);
 	}
 }

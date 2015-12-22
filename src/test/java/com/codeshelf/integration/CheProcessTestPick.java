@@ -56,6 +56,7 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
@@ -1633,8 +1634,51 @@ public class CheProcessTestPick extends ServerTest {
 		UUID siteconFirstWi3 = siteconWiList3.get(0).getPersistentId();
 		Assert.assertEquals(serverFirstWi3, siteconFirstWi3); // same persistentId		
 		commitTransaction();
-
-
 	}
 
+	@Test
+	public void testPathName() throws IOException{
+		Facility facility = setUpSimpleNoSlotFacility();
+		setUpSmallInventoryAndOrders(facility);
+
+		LOGGER.info("1: Assign a name to path");
+		beginTransaction();
+		Path path1 = Path.staticGetDao().findByDomainId(getFacility(), "F1.1");
+		Assert.assertNotNull(path1);
+		path1.setPathName("Frozen Food");
+		commitTransaction();
+		
+		LOGGER.info("2: Load order on CHE");
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+		picker.setupContainer("12345", "1");
+		picker.startAndSkipReview("D301", 5000, 3000);
+
+		LOGGER.info("3: Verify that the created WIs show the set path name");
+		beginTransaction();
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("parent", getFacility()));
+		filterParams.add(Restrictions.eq("pathName", "Frozen Food"));
+		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByFilter(filterParams);
+		Assert.assertTrue(wis.size() >= 3);
+		commitTransaction();
+		
+		LOGGER.info("4: Short an item to generate an event");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 4000);
+		picker.buttonPress(1, 0);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 4000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		ThreadUtils.sleep(1000);
+		
+		LOGGER.info("4: Verify that the created SHORT event also shows the set path name");
+		beginTransaction();
+		filterParams.add(Restrictions.eq("eventType", EventType.SHORT));
+		List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
+		Assert.assertEquals(1, events.size());
+		commitTransaction();
+	}
 }
