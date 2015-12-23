@@ -1681,4 +1681,33 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(1, events.size());
 		commitTransaction();
 	}
+	
+	@Test
+	public void testScanPosconToPick() throws IOException{
+		Facility facility = setUpSimpleNoSlotFacility();
+		beginTransaction();
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "UPC");
+		commitTransaction();
+		setUpSmallInventoryAndOrders(facility);
+
+		LOGGER.info("1: Load order on CHE and get to DO_PICK state");
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+		picker.setupContainer("12345", "2");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		picker.scanSomething("1522");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		
+		LOGGER.info("2: Scan the poscon the order is on, and verify that CHE moves on to the next item");
+		picker.scanPosition("2");
+		picker.logCheDisplay();
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+
+	}
+
 }

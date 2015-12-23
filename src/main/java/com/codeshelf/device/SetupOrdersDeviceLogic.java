@@ -1810,10 +1810,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				// At any time during the pick we can change locations.
 				if (inScanPrefixStr.equals(LOCATION_PREFIX) || inScanPrefixStr.equals(TAPE_PREFIX)) {
 					processLocationScan(inScanPrefixStr, inContent);
+				} else if (inScanPrefixStr.equals(POSITION_PREFIX)) {
+					processPosconScanToPick(inScanPrefixStr, inContent);
+				} else {
+					// DEV-1295.  If the user scanned something, at minimum redraw stuff.
+					// But more importantly, what this is multi-pick not needing another scan, but worker scans a different item?
+					processPickVerifyScan(inScanPrefixStr, inContent);
 				}
-				// DEV-1295.  If the user scanned something, at minimum redraw stuff.
-				// But more importantly, what this is multi-pick not needing another scan, but worker scans a different item?
-				processPickVerifyScan(inScanPrefixStr, inContent);
 				break;
 
 			case SCAN_SOMETHING:
@@ -1890,7 +1893,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 
 	}
-
+	
 	/**
 	 * Use the configuration system to return custom setup MSG. Defaults to "SCAN ORDER"
 	 */
@@ -2038,6 +2041,20 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		setState(CheStateEnum.SETUP_SUMMARY);
 	}
 
+	private void processPosconScanToPick(String inScanPrefixStr, String inContent){
+		try {
+			byte position = Byte.parseByte(inContent);
+			Byte displayedValue = getLastSentPositionControllerDisplayValue(position);
+			if (displayedValue != null){
+				processButtonPress((int)position, (int)displayedValue);
+			} else {
+				LOGGER.warn("Ignoring {}{} scan, as could not retrieve the displayed value", inScanPrefixStr, inContent);
+			}
+		} catch (NumberFormatException e){
+			LOGGER.warn("Unable to parse {}{} into a byte poscon id", inScanPrefixStr, inContent);
+		}
+	}
+	
 	/**
 	 * A series of private functions giving the overall state of the setup
 	 * How many jobs on not being done for this setup? Includes uncompleted wi other paths, and details with no wi made
