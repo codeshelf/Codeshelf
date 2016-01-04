@@ -3,12 +3,15 @@ package com.codeshelf.integration;
 import java.io.IOException;
 import java.util.List;
 
+import org.hibernate.Criteria;
+import org.hibernate.criterion.Property;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.NotificationBehavior;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WorkInstructionStatusEnum;
@@ -21,6 +24,7 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
@@ -126,6 +130,21 @@ public class CheProcessPalletizer extends ServerTest{
 		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi12.getStatus());
 		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi21.getStatus());
 		Assert.assertEquals(WorkInstructionStatusEnum.INPROGRESS, wi22.getStatus());
+
+		
+		LOGGER.info("3d: Verify Work Events - three completed");
+		Criteria criteria = WorkerEvent.staticGetDao()
+		.createCriteria()
+		.add(Property.forName("parent").eq(facility))
+		.add(Property.forName("eventType").eq(WorkerEvent.EventType.COMPLETE));
+		
+		List<WorkerEvent> workerEvents = criteria.list();
+		Assert.assertEquals(3, workerEvents.size());
+		for (WorkerEvent workerEvent : workerEvents) {
+			Assert.assertEquals(WorkerEvent.EventType.COMPLETE, workerEvent.getEventType());
+		}
+		LOGGER.info(criteria.list().toString());
+
 		commitTransaction();	
 	}
 	

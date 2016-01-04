@@ -31,12 +31,14 @@ import lombok.Setter;
 
 public class PalletizerBehavior implements IApiBehavior{
 	private LightBehavior lightService;
+	private NotificationBehavior notificationBehavior;
 	
 	private static final Logger			LOGGER					= LoggerFactory.getLogger(WorkBehavior.class);
 	
 	@Inject
-	public PalletizerBehavior(LightBehavior inLightService) {
+	public PalletizerBehavior(LightBehavior inLightService, NotificationBehavior notificationBehavior) {
 		this.lightService = inLightService;
+		this.notificationBehavior = notificationBehavior;
 	}
 
 	public PalletizerInfo processPalletizerItemRequest(Che che, String itemId){
@@ -249,6 +251,11 @@ public class PalletizerBehavior implements IApiBehavior{
 		detail.setStatus(OrderStatusEnum.COMPLETE);
 		WorkInstruction.staticGetDao().store(wi);
 		OrderDetail.staticGetDao().store(detail);
+		
+		if (!wi.isHousekeeping()) {
+			notificationBehavior.saveFinishedWI(wi);
+		}
+
 	}
 	
 	public static class PalletizerInfo {
