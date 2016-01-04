@@ -34,8 +34,8 @@ setController LocX26   lights  0x000000AB 1 tiersInAisle
 setController A3.B1.T1 poscons 0x000000AA 1 tiersInAisle
 setPosconToBay A3.B3 0x000000AA 98 A3.B4 0x000000AA 99 A1.B2 0x000000DB 9 A2.B2 0x000000DB 11
 setPoscons A3.B1.T1 1 forward A3.B2.T1 5 forward A3.B3.T1 9 forward A3.B4.T1 13 forward
-createChe 0x000000A4 blue LINE_SCAN CHE_A4 CODECORPS3600
-createChe :che1 green SETUP_ORDERS CHE_A ORIGINALSERIAL
+createChe 0x000000A4 blue LINE_SCAN CHE_A4 CODECORPS3600 LABEL_V1
+createChe :che1 green SETUP_ORDERS CHE_A ORIGINALSERIAL POSCON_V1
 createChe :che2 cyan SETUP_ORDERS CHE_B
 createChe :chePall orange PALLETIZER CHE_C
 deleteAllPaths

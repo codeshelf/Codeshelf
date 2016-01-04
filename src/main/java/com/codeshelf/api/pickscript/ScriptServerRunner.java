@@ -32,6 +32,7 @@ import com.codeshelf.model.PositionTypeEnum;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Che.CheLightingEnum;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
@@ -70,7 +71,7 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_SET_POSCONS = "setPoscons (assignments <tier> <startIndex> <'forward'/'reverse'>)";
 	private final static String TEMPLATE_SET_POSCON_TO_BAY = "setPosconToBay (assignments <bay name> <controller> <poscon id>)";
 	private final static String TEMPLATE_SET_WALL = "setWall <aisle> <off/putwall/skuwall>";
-	private final static String TEMPLATE_CREATE_CHE = "createChe <che> <color> <mode> [name] [scannerType]";
+	private final static String TEMPLATE_CREATE_CHE = "createChe <che> <color> <mode> [name] [scannerType] [cheLighting]";
 	private final static String TEMPLATE_DELETE_CHES = "deleteChes (<ches>)";
 	private final static String TEMPLATE_DELETE_ALL_PATHS = "deleteAllPaths";
 	private final static String TEMPLATE_DEF_PATH = "defPath <path> (segments '-' <start x> <start y> <end x> <end y>)";
@@ -483,27 +484,29 @@ public class ScriptServerRunner {
 
 	/**
 	 * Expects to see command
-	 * createChe <che> <color> <mode> [name] [scannerType]
+	 * createChe <che> <color> <mode> [name] [scannerType] [cheLighting]
 	 * @throws Exception 
 	 */
 	private void processCreateCheCommand(String parts[]) throws Exception {
-		if (parts.length < 4 || parts.length > 6){
+		if (parts.length < 4 || parts.length > 7){
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_CREATE_CHE);
 		}
 		String controllerId = parts[1], color = parts[2].toUpperCase(), mode = parts[3];
 		String domainId = parts.length >= 5 ? parts[4] : controllerId;
-		String scannerType = parts.length == 6 ? parts[5] : "ORIGINALSERIAL";
+		String scannerType = parts.length >= 6 ? parts[5] : "ORIGINALSERIAL";
+		String cheLighting = parts.length == 7 ? parts[6] : "POSCON_V1";
 		//Confirm that the provided enum values are valid
 		ColorEnum.valueOf(color);
 		ProcessMode.valueOf(mode);
 		ScannerTypeEnum.valueOf(scannerType);
+		CheLightingEnum.valueOf(cheLighting);
 		
 		//Create or update CHE
 		Che che = Che.staticGetDao().findByDomainId(facility.getNetworks().get(0), domainId);
 		if (che == null) {
-			uiUpdateBehavior.addChe(facility.getPersistentId().toString(), domainId, null, color, controllerId, mode, scannerType);
+			uiUpdateBehavior.addChe(facility.getPersistentId().toString(), domainId, null, color, controllerId, mode, scannerType, cheLighting);
 		} else {
-			uiUpdateBehavior.updateChe(che.getPersistentId().toString(), domainId, null, color, controllerId, mode, scannerType);
+			uiUpdateBehavior.updateChe(che.getPersistentId().toString(), domainId, null, color, controllerId, mode, scannerType, cheLighting);
 		}
 	}
 

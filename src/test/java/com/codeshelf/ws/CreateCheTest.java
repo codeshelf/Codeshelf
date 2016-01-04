@@ -46,7 +46,7 @@ public class CreateCheTest extends MockDaoTest {
 		Facility.staticGetDao().store(facility);		
 		
 		UiUpdateBehavior service = new UiUpdateBehavior();
-		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL");
+		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL", "POSCON_V1");
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -66,7 +66,7 @@ public class CreateCheTest extends MockDaoTest {
 		Facility.staticGetDao().store(facility);		
 		
 		UiUpdateBehavior service = new UiUpdateBehavior();
-		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL");
+		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL", "POSCON_V1");
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
@@ -274,7 +274,7 @@ public class CreateCheTest extends MockDaoTest {
 		this.getTenantPersistenceService().beginTransaction();
 		Che che = createTestChe("0x00000002");
 		UiUpdateBehavior service = new UiUpdateBehavior();
-		service.updateChe(che.getPersistentId().toString(),"Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL");
+		service.updateChe(che.getPersistentId().toString(),"Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL", "POSCON_V1");
 		java.util.UUID cheid = che.getPersistentId();
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -295,24 +295,24 @@ public class CreateCheTest extends MockDaoTest {
 		UiUpdateBehavior service = new UiUpdateBehavior();
 		String persistentId = che.getPersistentId().toString();
 		//Update che successfully
-		service.updateChe(persistentId, "Test Device", "Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL");
+		service.updateChe(persistentId, "Test Device", "Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL", "POSCON_V1");
 		//Fail to update name
-		service.updateChe(persistentId, "", "Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL");
+		service.updateChe(persistentId, "", "Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL", "POSCON_V1");
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 		//Fail to update description
-		service.updateChe(persistentId, "Test Device", null, "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL");
+		service.updateChe(persistentId, "Test Device", null, "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL", "POSCON_V1");
 		Assert.assertEquals(che.getDescription(), "Description");
 		//Fail to update color
-		service.updateChe(persistentId, "Test Device", "Description", "yellow", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL");
+		service.updateChe(persistentId, "Test Device", "Description", "yellow", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL", "POSCON_V1");
 		Assert.assertEquals(che.getColor(), ColorEnum.ORANGE);
 		//Fail to update controller id
-		service.updateChe(persistentId, "Test Device", "Description", "orange", "0x00000099x", "SETUP_ORDERS", "ORIGINALSERIAL");
+		service.updateChe(persistentId, "Test Device", "Description", "orange", "0x00000099x", "SETUP_ORDERS", "ORIGINALSERIAL", "POSCON_V1");
 		Assert.assertEquals(che.getDeviceGuidStr(), "0x00000099");
 		//Fail to update process mode
-		service.updateChe(persistentId, "Test Device Changed", "Description", "orange", "0x00000099x", "SETUP_ORDERSX", "ORIGINALSERIAL");
+		service.updateChe(persistentId, "Test Device Changed", "Description", "orange", "0x00000099x", "SETUP_ORDERSX", "ORIGINALSERIAL", "POSCON_V1");
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 		//Fail to update scanner type
-		service.updateChe(persistentId, "Test Device Changed", "Description", "orange", "0x00000099x", "SETUP_ORDERS", "ORIGINALSERIALX");
+		service.updateChe(persistentId, "Test Device Changed", "Description", "orange", "0x00000099x", "SETUP_ORDERS", "ORIGINALSERIALX", "POSCON_V1");
 		Assert.assertEquals(che.getDomainId(), "Test Device");
 
 		this.getTenantPersistenceService().commitTransaction();

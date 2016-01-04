@@ -114,7 +114,15 @@ public class Che extends WirelessDeviceABC {
 	@Getter
 	@Setter
 	private Worker					worker;
+	
+	@Column(nullable = false, name = "che_lighting")
+	@Enumerated(value = EnumType.STRING)
+	@Getter
+	@Setter
+	@JsonProperty
+	private CheLightingEnum			cheLighting;
 
+	public enum CheLightingEnum  {POSCON_V1, LABEL_V1, NOLIGHTING};
 
 	public Che(String domainId) {
 		this();
@@ -125,6 +133,7 @@ public class Che extends WirelessDeviceABC {
 		super();
 		color = ColorEnum.BLUE;
 		scannerType = ScannerTypeEnum.ORIGINALSERIAL;
+		cheLighting = CheLightingEnum.POSCON_V1;
 	}
 
 	@SuppressWarnings("unchecked")

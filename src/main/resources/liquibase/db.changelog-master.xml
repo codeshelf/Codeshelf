@@ -91,4 +91,5 @@
     <include file="db.changelog-v25.9.xml" relativeToChangelogFile="true" />
     
     <include file="db.changelog-v26.1.xml" relativeToChangelogFile="true" />
+    <include file="db.changelog-v26.2.xml" relativeToChangelogFile="true" />
 </databaseChangeLog>
