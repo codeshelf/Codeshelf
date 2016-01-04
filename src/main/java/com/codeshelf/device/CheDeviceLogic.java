@@ -41,6 +41,7 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ScannerTypeEnum;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.model.domain.Che.CheLightingEnum;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -236,9 +237,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Getter
 	@Setter
 	private ScannerTypeEnum							mScannerTypeEnum						= ScannerTypeEnum.ORIGINALSERIAL;
+	
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private CheLightingEnum							mCheLightingEnum						= CheLightingEnum.POSCON_V1;
 
 	@Accessors(prefix = "m") @Getter @Setter
-	private Boolean									mReplenishRun								 = false;
+	private Boolean									mReplenishRun							= false;
 
 	/**
 	 * We have only one inventory state, not two. Essentially another state by whether or not we think we have a valid
@@ -392,8 +398,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		mAllPicksWiList = new ArrayList<WorkInstruction>();
 		mActivePickWiList = new ArrayList<WorkInstruction>();
 		mLastScreenDisplayLines = new ArrayList<String>(); // and preinitialize to lines 1-4
-		if (che != null && che.getScannerType() != null)
-			setScannerTypeEnum(che.getScannerType());
+		if (che != null){
+			if (che.getScannerType() != null){
+				setScannerTypeEnum(che.getScannerType());
+			}
+			if (che.getCheLighting() != null){
+				setCheLightingEnum(che.getCheLighting());
+			}
+		}
 		for (int n = 0; n <= 3; n++) {
 			mLastScreenDisplayLines.add(" ");
 		}
