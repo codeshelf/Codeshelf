@@ -127,10 +127,10 @@ public class CheProcessPalletizer extends ServerTest{
 
 		
 		LOGGER.info("3b: Verify Order Details - three completed, another in progress");
-		OrderDetail d10010001 = findPalletizerDetail(h1001, "10010001");
-		OrderDetail d10010002 = findPalletizerDetail(h1001, "10010002");
-		OrderDetail d10020001 = findPalletizerDetail(h1002, "10020001");
-		OrderDetail d10020002 = findPalletizerDetail(h1002, "10020002");
+		OrderDetail d10010001 = h1001.getOrderDetail("10010001");
+		OrderDetail d10010002 = h1001.getOrderDetail("10010002");
+		OrderDetail d10020001 = h1002.getOrderDetail("10020001");
+		OrderDetail d10020002 = h1002.getOrderDetail("10020002");
 		Assert.assertNotNull("Didn't find detail 10010001", d10010001);
 		Assert.assertNotNull("Didn't find detail 10010002", d10010002);
 		Assert.assertNotNull("Didn't find detail 10020001", d10020001);
@@ -197,7 +197,7 @@ public class CheProcessPalletizer extends ServerTest{
 		Assert.assertTrue(h1001.getActive());
 		
 		LOGGER.info("4b: Verify Order Detail - completed and inactive");
-		OrderDetail d10010001 = findPalletizerDetail(h1001, "10010001");
+		OrderDetail d10010001 = h1001.getOrderDetail("10010001");
 		Assert.assertNotNull("Didn't find detail 10010001", d10010001);
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, d10010001.getStatus());
 		Assert.assertTrue(d10010001.getActive());
@@ -315,14 +315,5 @@ public class CheProcessPalletizer extends ServerTest{
 			}
 		}
 		return null;
-	}
-	
-	private OrderDetail findPalletizerDetail(OrderHeader order, String itemId) {
-		for (OrderDetail detail : order.getOrderDetails()){
-			if (detail.getDomainId().startsWith("PD_" + itemId + "_")){
-				return detail;
-			}
-		}
-		return null;
-	}
+	}	
 }

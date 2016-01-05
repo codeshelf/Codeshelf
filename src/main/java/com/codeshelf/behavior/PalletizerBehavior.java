@@ -79,7 +79,7 @@ public class PalletizerBehavior implements IApiBehavior{
 			if (itemMaster == null) {
 				itemMaster = facility.createItemMaster(itemId, null, uomMaster);
 			}			
-			detail = new OrderDetail("PD_" + itemId + "_" + System.currentTimeMillis(), itemMaster, 1);
+			detail = new OrderDetail(itemId, itemMaster, 1);
 			detail.setUomMaster(uomMaster);
 			order.addOrderDetail(detail);
 			UomMaster.staticGetDao().store(uomMaster);
