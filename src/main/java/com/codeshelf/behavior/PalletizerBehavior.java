@@ -22,6 +22,7 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.util.UomNormalizer;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -68,8 +69,14 @@ public class PalletizerBehavior implements IApiBehavior{
 		ItemMaster itemMaster = null;
 		UomMaster uomMaster = null;
 		if (detail == null) {
-			uomMaster = facility.createUomMaster("EA");
-			itemMaster = facility.createItemMaster(itemId, null, uomMaster);
+			uomMaster = facility.getUomMaster(UomNormalizer.EACH);
+			if (uomMaster == null) {
+				uomMaster = facility.createUomMaster(UomNormalizer.EACH);
+			}
+			itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, itemId);
+			if (itemMaster == null) {
+				itemMaster = facility.createItemMaster(itemId, null, uomMaster);
+			}
 			detail = new OrderDetail(itemId, itemMaster, 1);
 			detail.setUomMaster(uomMaster);
 			order.addOrderDetail(detail);
@@ -192,7 +199,7 @@ public class PalletizerBehavior implements IApiBehavior{
 		if (orderLocations == null || orderLocations.isEmpty()) {
 			return "No Pallets In " + locationStr;
 		}
-		deactivateAndIlluminateOrders(che, orderLocations);
+		deactivateAndIlluminateOrders(che, orderLocations, null);
 		return null;
 	}
 	
@@ -204,15 +211,15 @@ public class PalletizerBehavior implements IApiBehavior{
 			LOGGER.warn("Order {} not found for palletizer removal", storeId);
 			return "Pallet " + storeId + " Not Found"; 
 		}
-		order.setDomainId(license);
+		order.setDomainId(license + "_" + System.currentTimeMillis());
 		
 		//Should be just one order location
 		List<OrderLocation> orderLocations = order.getActiveOrderLocations();
-		deactivateAndIlluminateOrders(che, orderLocations);
+		deactivateAndIlluminateOrders(che, orderLocations, license);
 		return null;		
 	}
 	
-	private void deactivateAndIlluminateOrders(Che che, List<OrderLocation> orderLocations) {
+	private void deactivateAndIlluminateOrders(Che che, List<OrderLocation> orderLocations, String license) {
 		List<Location> locations = Lists.newArrayList();
 		for (OrderLocation orderLocation : orderLocations) {
 			locations.add(orderLocation.getLocation());
@@ -225,6 +232,12 @@ public class PalletizerBehavior implements IApiBehavior{
 				detail.setActive(false);
 				detail.setStatus(OrderStatusEnum.COMPLETE);
 				OrderDetail.staticGetDao().store(detail);
+				if (license != null) {
+					for (WorkInstruction wi : detail.getWorkInstructions()){
+						wi.setContainerId(license);
+						WorkInstruction.staticGetDao().store(wi);
+					}
+				}
 			}
 			orderLocation.setActive(false);
 			OrderHeader.staticGetDao().store(order);

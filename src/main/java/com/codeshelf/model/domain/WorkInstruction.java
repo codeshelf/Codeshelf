@@ -107,6 +107,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	// Denormalized for serialized WIs at the site controller.
 	@Column(nullable = false, name = "container_id")
 	@Getter
+	@Setter
 	@JsonProperty
 	private String						containerId;
 
