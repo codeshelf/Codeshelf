@@ -30,14 +30,13 @@ public class PalletizerCompleteWiCommand extends CommandABC{
 	public ResponseABC exec() {
 		String cheId = request.getDeviceId();
 		UUID wiId = request.getWiId();
-		String userId = request.getUserId();
 		Boolean shorted = request.getShorted();
 		LOGGER.info("Palletizer Complete Wi with wi {}, shorted = {} on che {} request ", wiId, shorted, cheId);
 		GenericDeviceResponse response = new GenericDeviceResponse();
 		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
 		if (che!=null) {
 			String networkGuid = che.getDeviceNetGuid().getHexStringNoPrefix();
-			palletizerService.completeWi(wiId, userId, shorted);
+			palletizerService.completeWi(wiId, shorted);
 			response.setNetworkGuid(networkGuid);
 			response.setStatus(ResponseStatus.Success);
 			return response;

@@ -1,10 +1,13 @@
 package com.codeshelf.integration;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.Criteria;
+import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Property;
+import org.hibernate.criterion.Restrictions;
 import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.joda.time.Interval;
@@ -17,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
@@ -28,6 +32,7 @@ import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.Che.ProcessMode;
+import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 
@@ -203,6 +208,17 @@ public class CheProcessPalletizer extends ServerTest{
 		WorkInstruction wi = wis.get(0);
 		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi.getStatus());
 		Assert.assertEquals("10019991", wi.getContainerId());
+		
+		LOGGER.info("4d: Verify WorkerEvent - created, completed, and referencing the correct Detail");
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("purpose", WiPurpose.WiPurposePalletizerPut.name()));
+		filterParams.add(Restrictions.eq("parent", facility));
+		List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
+		Assert.assertEquals(1, events.size());
+		WorkerEvent event = events.get(0);
+		Assert.assertEquals(EventType.COMPLETE, event.getEventType());
+		OrderDetail eventDetail = OrderDetail.staticGetDao().findByPersistentId(event.getOrderDetailId());
+		Assert.assertEquals(d10010001, eventDetail);
 		commitTransaction();
 	}
 	
@@ -299,5 +315,5 @@ public class CheProcessPalletizer extends ServerTest{
 			}
 		}
 		return null;
-	}
+	}	
 }
