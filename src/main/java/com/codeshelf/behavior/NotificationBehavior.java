@@ -2,6 +2,8 @@ package com.codeshelf.behavior;
 
 import static com.codeshelf.model.dao.GenericDaoABC.countCriteria;
 
+import java.io.IOException;
+import java.net.URL;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -11,6 +13,7 @@ import java.util.UUID;
 
 import org.hibernate.Criteria;
 import org.hibernate.Query;
+import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Order;
@@ -18,7 +21,12 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.transform.AliasToBeanResultTransformer;
+import org.hibernate.type.UUIDCharType;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.joda.time.Duration;
 import org.joda.time.Interval;
+import org.joda.time.Period;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,15 +45,18 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
+import com.codeshelf.persistence.DialectUUIDType;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.io.Resources;
 import com.google.inject.Inject;
 
 import lombok.Getter;
@@ -211,6 +222,20 @@ public class NotificationBehavior implements IApiBehavior{
 		query.setResultTransformer(new AliasToBeanResultTransformer(PickRate.class));
 		List<PickRate> results = query.list();
  		return results;
+	}
+	
+	
+	public List<?> facilityPickRateHistogram(Facility facility, Interval completedInterval, Period createdBin) throws IOException {
+		URL url = Resources.getResource(this.getClass(), "./facilityPickRate.sql");
+		String sqlText = Resources.toString(url, Charsets.UTF_8);
+		Session session = TenantPersistenceService.getInstance().getSession();
+		SQLQuery query = session.createSQLQuery(sqlText/*.replace('\n', ' ')*/);
+		int numBins = Math.round(completedInterval.toDurationMillis() / createdBin.toStandardDuration().getMillis());
+		query.setParameter("facilityId", facility.getPersistentId(),  new DialectUUIDType());
+		query.setParameter("startDateTime", new Timestamp(completedInterval.getStart().getMillis()));
+		query.setParameter("endDateTime", new Timestamp(completedInterval.getEnd().getMillis()));
+		query.setParameter("numBins", numBins);
+		return query.list();
 	}
 
 	@ToString

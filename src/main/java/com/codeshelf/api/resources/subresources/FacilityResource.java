@@ -37,6 +37,8 @@ import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.exception.ConstraintViolationException;
+import org.joda.time.Duration;
+import org.joda.time.Period;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -542,6 +544,22 @@ public class FacilityResource {
 		}
 	}
 
+	@GET
+	@Path("pickrate/histogram")
+	@RequiresPermissions("event:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response pickRateHistogram(@QueryParam("created") IntervalParam createdInterval, @QueryParam("createdBin") String binPeriod) {
+		ErrorResponse errors = new ErrorResponse();
+		try {
+			Period bin = Period.parse(MoreObjects.firstNonNull(binPeriod, "PT5M"));  
+			List<?> results = notificationService.facilityPickRateHistogram(facility, createdInterval.getValue(), bin);
+			return BaseResponse.buildResponse(results);
+		} catch (Exception e) {
+			return errors.processException(e);
+		}
+	}
+	
+	
 	
 	@POST
 	@Path("/process_script")
