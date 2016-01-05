@@ -787,6 +787,21 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		boolean skipQtyDisplay = WiPurpose.WiPurposeSkuWallPut.equals(wi.getPurpose()) || replenish;
 
 		String[] pickInfoLines = { "", "", "" };
+		
+		String quantity = "", displayDescription = wi.getDescription();
+		if (displayDescription == null) {
+			displayDescription = "";
+		}
+		if (!planQtyStr.isEmpty() && !skipQtyDisplay) {
+			quantity = "QTY " + planQtyStr;
+			displayDescription = planQtyStr + " " + displayDescription;
+			//If this CHE has 'LABEL' lighting mode, get the position ID to display on the CHE screen.
+			if (getCheLightingEnum() == CheLightingEnum.LABEL_V1){
+				String position = "At " + getPosconIndexOfWi(wi) + " - ";
+				quantity = position + quantity;
+				displayDescription = position + displayDescription;
+			}
+		}
 
 		if ("Both".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
 			//First line is SKU, 2nd line is desc + qty if >= 99
@@ -799,12 +814,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			}
 
 			pickInfoLines[0] = info;
-
-			String displayDescription = wi.getDescription();
-			if (!planQtyStr.isEmpty() && !skipQtyDisplay) {
-				displayDescription = planQtyStr + " " + displayDescription;
-			}
-
+			
 			//Add description
 			int charPos = 0;
 			for (int line = 1; line < 3; line++) {
@@ -816,15 +826,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			}
 
 		} else if ("Description".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
-
-			String displayDescription = wi.getDescription();
-			if (displayDescription == null) {
-				displayDescription = "";
-			}
-			if (!planQtyStr.isEmpty() && !skipQtyDisplay) {
-				displayDescription = planQtyStr + " " + displayDescription;
-			}
-
 			int pos = 0;
 			for (int line = 0; line < 3; line++) {
 				if (pos < displayDescription.length()) {
@@ -851,11 +852,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			}
 
 			pickInfoLines[0] = info;
-
-			String quantity = "";
-			if (!planQtyStr.isEmpty() && !skipQtyDisplay) {
-				quantity = "QTY " + planQtyStr;
-			}
 
 			//Make sure we do not exceed 40 chars
 			if (quantity.length() > 40) {
@@ -1936,7 +1932,10 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			lightWiPosConLocations(firstWi);
 
 			// This can be elaborate. For setup_Orders work mode, as poscons complete their work, they show their status.
-			doPosConDisplaysforActiveWis();
+			//Do not light Poscons if CHE is in LABEL lighting mode
+			if (getCheLightingEnum() != CheLightingEnum.LABEL_V1){
+				doPosConDisplaysforActiveWis();
+			}
 			// If and when we do simultaneous picks, we will deal with the entire mActivePickWiList instead of only firstWI.
 		}
 	}
