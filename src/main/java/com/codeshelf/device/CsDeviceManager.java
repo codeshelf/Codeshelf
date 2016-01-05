@@ -641,15 +641,15 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		clientEndpoint.sendMessage(req);
 	}
 
-	public void palletizerItemRequest(String cheGuid, String chePersistentId, String item) {
-		LOGGER.debug("palletizerItemRequest: Che={};  Item={};", cheGuid, item);
-		PalletizerItemRequest req = new PalletizerItemRequest(chePersistentId, item);
+	public void palletizerItemRequest(String cheGuid, String chePersistentId, String item, String userId) {
+		LOGGER.debug("palletizerItemRequest: Che={};  Item={}; UserId={}", cheGuid, item, userId);
+		PalletizerItemRequest req = new PalletizerItemRequest(chePersistentId, item, userId);
 		clientEndpoint.sendMessage(req);
 	}
 
-	public void palletizerNewOrderRequest(String cheGuid, String chePersistentId, String item, String location) {
-		LOGGER.debug("palletizerNewOrderRequest: Che={}, Item={}, Location={}", cheGuid, item, location);
-		PalletizerNewOrderRequest req = new PalletizerNewOrderRequest(chePersistentId, item, location);
+	public void palletizerNewOrderRequest(String cheGuid, String chePersistentId, String item, String location, String userId) {
+		LOGGER.debug("palletizerNewOrderRequest: Che={}, Item={}, Location={}, UserId={}", cheGuid, item, location, userId);
+		PalletizerNewOrderRequest req = new PalletizerNewOrderRequest(chePersistentId, item, location, userId);
 		clientEndpoint.sendMessage(req);
 	}
 

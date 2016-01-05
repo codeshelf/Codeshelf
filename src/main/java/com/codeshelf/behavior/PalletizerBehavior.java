@@ -40,7 +40,7 @@ public class PalletizerBehavior implements IApiBehavior{
 		this.lightService = inLightService;
 	}
 
-	public PalletizerInfo processPalletizerItemRequest(Che che, String itemId){
+	public PalletizerInfo processPalletizerItemRequest(Che che, String itemId, String userId){
 		Facility facility = che.getFacility();
 		String storeId = generatePalletizerStoreId(itemId);
 		PalletizerInfo info = new PalletizerInfo();
@@ -101,11 +101,12 @@ public class PalletizerBehavior implements IApiBehavior{
 			null,
 			location
 			);
+		wi.setPickerId(userId);
 		info.setWi(wi);
 		return info;
 	}
 	
-	public PalletizerInfo processPalletizerNewOrderRequest(Che che, String itemId, String locationStr){
+	public PalletizerInfo processPalletizerNewOrderRequest(Che che, String itemId, String locationStr, String userId){
 		Facility facility = che.getFacility();
 		String storeId = generatePalletizerStoreId(itemId);
 		PalletizerInfo info = new PalletizerInfo();
@@ -140,7 +141,7 @@ public class PalletizerBehavior implements IApiBehavior{
 		} else {
 			LOGGER.warn("Somewhy processPalletizerNewLocationRequest() was called for an item {} that already has an order with an active location", itemId);
 		}
-		return processPalletizerItemRequest(che, itemId);
+		return processPalletizerItemRequest(che, itemId, userId);
 	}
 	private String generatePalletizerStoreId(String itemId){
 		if (itemId == null) {

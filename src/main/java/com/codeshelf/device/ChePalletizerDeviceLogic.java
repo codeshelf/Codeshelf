@@ -257,7 +257,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 	private void processItemScan(String scanPrefix, String scanBody) {
 		if (isEmpty(scanPrefix)){
 			setState(CheStateEnum.PALLETIZER_PROCESSING);
-			mDeviceManager.palletizerItemRequest(getGuidNoPrefix(), getPersistentId().toString(), scanBody);
+			mDeviceManager.palletizerItemRequest(getGuidNoPrefix(), getPersistentId().toString(), scanBody, getUserId());
 		} else {
 			String scan = scanPrefix + scanBody;
 			LOGGER.warn("Item scan {} must not have a prefix", scan);
@@ -282,7 +282,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 		if (TAPE_PREFIX.equalsIgnoreCase(scanPrefix)) {
 			scanBody = scanPrefix + scanBody;
 		}
-		mDeviceManager.palletizerNewOrderRequest(getGuidNoPrefix(), getPersistentId().toString(), getInfo().getItem(), scanBody);
+		mDeviceManager.palletizerNewOrderRequest(getGuidNoPrefix(), getPersistentId().toString(), getInfo().getItem(), scanBody, getUserId());
 	}
 	
 	@Override
