@@ -1238,7 +1238,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	/**
 	 */
 	private boolean selectNextActivePicks() {
-		boolean doMultipleWiPicks = mDeviceManager.getPickMultValue(); // DEV-451
+		boolean doMultipleWiPicks = mDeviceManager.getPickMultValue(getCheLightingEnum()); // DEV-451
 
 		boolean result = false;
 		mActivePickWiList.clear(); // repopulate from mAllPicksWiList.
@@ -2665,7 +2665,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// If PICKMULT if on, there still might be other jobs in active pick list. If off, there should not be
 		if (mActivePickWiList.size() > 0) {
 			// If there's more active picks then show them.
-			if (!mDeviceManager.getPickMultValue()) {
+			if (!mDeviceManager.getPickMultValue(getCheLightingEnum())) {
 				LOGGER.error("Simultaneous work instructions turned off currently, so unexpected case in processNormalPick");
 				// let's log the first just for fun
 				LOGGER.error("first wi from processNormalPick error jsut before is: {}", mActivePickWiList.get(0));
@@ -2678,7 +2678,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	}
 
 	private void doNextItemWithPossibleFlashingThread(boolean housekeeping) {
-		if (mDeviceManager.getPickMultValue() && !housekeeping) {
+		if (mDeviceManager.getPickMultValue(getCheLightingEnum()) && !housekeeping) {
 			Thread doNextItemThread = new Thread(new Runnable() {
 				@Override
 				public void run() {

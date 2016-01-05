@@ -41,6 +41,7 @@ import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.model.domain.Che.CheLightingEnum;
 import com.codeshelf.util.PcapRecord;
 import com.codeshelf.util.PcapRingBuffer;
 import com.codeshelf.util.TwoKeyMap;
@@ -179,7 +180,10 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		return true;
 	}
 
-	public boolean getPickMultValue() {
+	public boolean getPickMultValue(CheLightingEnum	cheLightingEnum) {
+		if (cheLightingEnum == CheLightingEnum.LABEL_V1){
+			return false;
+		}
 		return this.pickMultValue;
 	}
 
