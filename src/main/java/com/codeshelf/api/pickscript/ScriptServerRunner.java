@@ -249,10 +249,10 @@ public class ScriptServerRunner {
 			Vertex.staticGetDao().delete(vertices.remove(0));
 		}
 		double anchorX = -122.271673679351807, anchorY = 37.8032855078260113, sideX = 0.00020 * facilitySize, sideY = 0.00016 * facilitySize;
-		facility.createVertex("V0", "GPS", anchorX, anchorY, 0);
-		facility.createVertex("V1", "GPS", anchorX, anchorY - sideY, 1);
-		facility.createVertex("V2", "GPS", anchorX + sideX, anchorY - sideY, 2);
-		facility.createVertex("V3", "GPS", anchorX + sideX, anchorY, 3);
+		facility.createOrUpdateVertex("V0", "GPS", anchorX, anchorY, 0);
+		facility.createOrUpdateVertex("V1", "GPS", anchorX, anchorY - sideY, 1);
+		facility.createOrUpdateVertex("V2", "GPS", anchorX + sideX, anchorY - sideY, 2);
+		facility.createOrUpdateVertex("V3", "GPS", anchorX + sideX, anchorY, 3);
 	}
 
 	/**

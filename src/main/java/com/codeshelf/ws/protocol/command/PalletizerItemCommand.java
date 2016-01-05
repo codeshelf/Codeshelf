@@ -31,12 +31,13 @@ public class PalletizerItemCommand extends CommandABC{
 	public ResponseABC exec() {
 		String cheId = request.getDeviceId();
 		String item = request.getItem();
+		String userId = request.getUserId();
 		LOGGER.info("Palletizer Item {} request for {}", item, cheId);
 		PalletizerItemResponse response = new PalletizerItemResponse();
 		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
 		if (che!=null) {
 			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();
-			PalletizerInfo info = palletizerService.processPalletizerItemRequest(che, item);
+			PalletizerInfo info = palletizerService.processPalletizerItemRequest(che, item, userId);
 			response.setInfo(info);
 			response.setNetworkGuid(networkGuid);
 			response.setStatus(ResponseStatus.Success);

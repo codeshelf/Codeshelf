@@ -611,6 +611,22 @@ public class Facility extends Location {
 		Vertex.staticGetDao().store(vertex);
 	}
 
+	public void createOrUpdateVertex(final String inDomainId,
+		final String inPosTypeByStr,
+		final Double inPosX,
+		final Double inPosY,
+		final Integer inDrawOrder) {
+
+		Vertex vertex = Vertex.staticGetDao().findByDomainId(this, inDomainId);
+		if (vertex == null) {
+			createVertex(inDomainId, inPosTypeByStr, inPosX, inPosY, inDrawOrder);
+		} else {
+			vertex.setPoint(new Point(PositionTypeEnum.valueOf(inPosTypeByStr), inPosX, inPosY, null));
+			vertex.setDrawOrder(inDrawOrder);
+			Vertex.staticGetDao().store(vertex);
+		}
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inLocation

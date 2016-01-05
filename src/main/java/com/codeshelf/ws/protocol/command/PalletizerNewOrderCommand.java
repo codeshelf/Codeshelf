@@ -32,12 +32,13 @@ public class PalletizerNewOrderCommand extends CommandABC {
 		String cheId = request.getDeviceId();
 		String location = request.getLocation();
 		String item = request.getItem();
+		String userId = request.getUserId();
 		LOGGER.info("Palletizer New Order {} for Item {} on che {} request ", item, cheId);
 		PalletizerItemResponse response = new PalletizerItemResponse();
 		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
 		if (che!=null) {
 			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();
-			PalletizerInfo info = palletizerService.processPalletizerNewOrderRequest(che, item, location);
+			PalletizerInfo info = palletizerService.processPalletizerNewOrderRequest(che, item, location, userId);
 			response.setInfo(info);
 			response.setNetworkGuid(networkGuid);
 			response.setStatus(ResponseStatus.Success);

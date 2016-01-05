@@ -11,7 +11,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.behavior.NotificationBehavior;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WorkInstructionStatusEnum;
@@ -87,6 +86,14 @@ public class CheProcessPalletizer extends ServerTest{
 		LOGGER.info("1: Open two pallets");
 		openNewPallet("10010001", "L%Slot1111", "Slot1111");
 		openNewPallet("10020001", "%000000020010", "Tier112");
+		
+		LOGGER.info("1a: Verify that the WIs have the correct PickerId");
+		beginTransaction();
+		List<WorkInstruction> wis = WorkInstruction.staticGetDao().getAll();
+		for (WorkInstruction wi : wis) {
+			Assert.assertEquals("Worker1", wi.getPickerId());
+		}
+		commitTransaction();
 
 		LOGGER.info("2: Put item in pallet 1001, scan item for pallet 1002, but don't complete it");
 		picker.scanSomething("10010002");
@@ -181,6 +188,13 @@ public class CheProcessPalletizer extends ServerTest{
 		Assert.assertNotNull("Didn't find detail 10010001", d10010001);
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, d10010001.getStatus());
 		Assert.assertFalse(d10010001.getActive());
+		
+		LOGGER.info("4c: Verify WorkInstructions - completed and having correct container id");
+		List<WorkInstruction> wis = d10010001.getWorkInstructions();
+		Assert.assertFalse(wis.isEmpty());
+		WorkInstruction wi = wis.get(0);
+		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi.getStatus());
+		Assert.assertEquals("10019991", wi.getContainerId());
 		commitTransaction();
 	}
 	
