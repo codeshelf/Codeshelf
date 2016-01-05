@@ -2,6 +2,7 @@ package com.codeshelf.api.resources.subresources;
 
 
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -37,8 +38,9 @@ import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.exception.ConstraintViolationException;
-import org.joda.time.Duration;
+import org.joda.time.Interval;
 import org.joda.time.Period;
+import org.joda.time.format.ISOPeriodFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,6 +66,7 @@ import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.api.responses.WorkerDisplay;
 import com.codeshelf.behavior.NotificationBehavior;
+import com.codeshelf.behavior.NotificationBehavior.BinValue;
 import com.codeshelf.behavior.NotificationBehavior.WorkerEventTypeGroup;
 import com.codeshelf.behavior.OrderBehavior;
 import com.codeshelf.behavior.ProductivitySummaryList;
@@ -106,6 +109,26 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class FacilityResource {
+
+	public class HistogramResult {
+		
+		@Getter
+		private Date startTime;
+		@Getter
+		private Date endTime;
+		@Getter
+		private String binInterval; //ISO
+		@Getter
+		private List<BinValue<BigInteger>> bins;
+		
+		public HistogramResult(Interval window, Period bin, List<BinValue<BigInteger>> values) {
+			this.startTime = window.getStart().toDate();
+			this.endTime = window.getEnd().toDate();
+			this.binInterval = bin.toString(ISOPeriodFormat.standard());
+			this.bins = values;
+		}
+
+	}
 
 	public class Option {
 
@@ -552,8 +575,9 @@ public class FacilityResource {
 		ErrorResponse errors = new ErrorResponse();
 		try {
 			Period bin = Period.parse(MoreObjects.firstNonNull(binPeriod, "PT5M"));  
-			List<?> results = notificationService.facilityPickRateHistogram(facility, createdInterval.getValue(), bin);
-			return BaseResponse.buildResponse(results);
+			List<BinValue<BigInteger>> values = notificationService.facilityPickRateHistogram(facility, createdInterval.getValue(), bin);
+			HistogramResult result = new HistogramResult(createdInterval.getValue(), bin, values);
+			return BaseResponse.buildResponse(result);
 		} catch (Exception e) {
 			return errors.processException(e);
 		}

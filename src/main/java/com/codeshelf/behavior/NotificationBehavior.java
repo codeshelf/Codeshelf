@@ -3,9 +3,11 @@ package com.codeshelf.behavior;
 import static com.codeshelf.model.dao.GenericDaoABC.countCriteria;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URL;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
@@ -21,10 +23,8 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.transform.AliasToBeanResultTransformer;
-import org.hibernate.type.UUIDCharType;
+import org.hibernate.transform.BasicTransformerAdapter;
 import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Duration;
 import org.joda.time.Interval;
 import org.joda.time.Period;
 import org.slf4j.Logger;
@@ -48,6 +48,7 @@ import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.persistence.DialectUUIDType;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Function;
@@ -64,6 +65,25 @@ import lombok.Setter;
 import lombok.ToString;
 
 public class NotificationBehavior implements IApiBehavior{
+	public class BinValue<T> {
+
+		@Getter
+		private Date start;
+		
+		@JsonIgnore
+		private Period interval;
+		
+		@Getter
+		private T value;
+
+		public BinValue(DateTime binStart, Period interval, T value) {
+			this.start = binStart.toDate();
+			this.interval = interval;
+			this.value = value;
+		}
+	}
+
+
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(NotificationBehavior.class);
 	
 	private static final EnumSet<WorkerEvent.EventType>	SAVE_ONLY	= EnumSet.of(EventType.SKIP_ITEM_SCAN,
@@ -225,7 +245,8 @@ public class NotificationBehavior implements IApiBehavior{
 	}
 	
 	
-	public List<?> facilityPickRateHistogram(Facility facility, Interval completedInterval, Period createdBin) throws IOException {
+	@SuppressWarnings("unchecked")
+	public List<BinValue<BigInteger>> facilityPickRateHistogram(Facility facility, final Interval completedInterval, final Period createdBin) throws IOException {
 		URL url = Resources.getResource(this.getClass(), "./facilityPickRate.sql");
 		String sqlText = Resources.toString(url, Charsets.UTF_8);
 		Session session = TenantPersistenceService.getInstance().getSession();
@@ -235,7 +256,18 @@ public class NotificationBehavior implements IApiBehavior{
 		query.setParameter("startDateTime", new Timestamp(completedInterval.getStart().getMillis()));
 		query.setParameter("endDateTime", new Timestamp(completedInterval.getEnd().getMillis()));
 		query.setParameter("numBins", numBins);
-		return query.list();
+		query.setResultTransformer(new BasicTransformerAdapter() {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public Object transformTuple(Object[] tuple, String[] aliases) {
+				
+				int binNumber = (Integer) tuple[0];
+				BigInteger binValue = (BigInteger) tuple[1];
+				return new BinValue<BigInteger>(completedInterval.getStart().plus(createdBin.multipliedBy(binNumber)), createdBin, binValue);
+			}
+		});
+		return query.list();	
 	}
 
 	@ToString
