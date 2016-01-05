@@ -159,7 +159,10 @@ public class PalletizerBehavior implements IApiBehavior{
 	
 	private OrderHeader getActivePalletizerOrder(Facility facility, String itemId) {
 		String storeId = generatePalletizerStoreId(itemId);
-		Map<String, Object> params = ImmutableMap.<String, Object> of("facilityId", facility.getPersistentId(), "partialDomainId", "P_" + storeId + "%");
+		Map<String, Object> params = ImmutableMap.<String, Object> of(
+			"facilityId", facility.getPersistentId(), 
+			"partialDomainId", "P_" + storeId + "%",
+			"notStatus", OrderStatusEnum.COMPLETE);
 		List<OrderHeader> orders = OrderHeader.staticGetDao().findByFilter("orderHeadersByFacilityAndPartialDomainId", params);
 		return orders.isEmpty() ? null : orders.get(0);
 	}

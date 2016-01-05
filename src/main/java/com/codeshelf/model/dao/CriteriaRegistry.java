@@ -4,7 +4,9 @@ import java.sql.Timestamp;
 import java.util.Map;
 import java.util.UUID;
 
+import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 
@@ -160,9 +162,11 @@ public class CriteriaRegistry {
 				"theId", UUID.class)); //the UI dynamically sets the "parent" with theId
 
 		indexedCriteria.put("orderHeadersByFacilityAndPartialDomainId",
-			new TypedCriteria("from OrderHeader where active = true and parent.persistentId = :facilityId and domainId LIKE :partialDomainId",
-					"facilityId", UUID.class,
-					"partialDomainId", String.class));
+			new TypedCriteria("from OrderHeader where active = true and status != :notStatus and parent.persistentId = :facilityId and domainId LIKE :partialDomainId",
+				ImmutableMap.<String, Class<?>>of("facilityId", UUID.class,
+								"partialDomainId", String.class,
+								"notStatus", OrderStatusEnum.class)));	
+
 
 		indexedCriteria.put("orderHeadersByFacilityAndType",
 			new TypedCriteria("from OrderHeader where active = true and parent.persistentId = :facilityId and orderType = :orderType",
