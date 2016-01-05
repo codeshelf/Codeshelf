@@ -78,7 +78,8 @@ public class PalletizerBehavior implements IApiBehavior{
 			itemMaster = ItemMaster.staticGetDao().findByDomainId(facility, itemId);
 			if (itemMaster == null) {
 				itemMaster = facility.createItemMaster(itemId, null, uomMaster);
-			}			detail = new OrderDetail(itemId, itemMaster, 1);
+			}			
+			detail = new OrderDetail("PD_" + itemId + "_" + System.currentTimeMillis(), itemMaster, 1);
 			detail.setUomMaster(uomMaster);
 			order.addOrderDetail(detail);
 			UomMaster.staticGetDao().store(uomMaster);
@@ -235,7 +236,7 @@ public class PalletizerBehavior implements IApiBehavior{
 				detail.setStatus(OrderStatusEnum.COMPLETE);
 				OrderDetail.staticGetDao().store(detail);
 				for (WorkInstruction wi : detail.getWorkInstructions()){
-					wi.setStatus(WorkInstructionStatusEnum.COMPLETE);
+					completeWi(wi.getPersistentId(), false);
 					if (license != null) {
 						wi.setContainerId(license);
 					}
@@ -247,7 +248,7 @@ public class PalletizerBehavior implements IApiBehavior{
 		lightService.lightLocationServerCall(locations, che.getColor());
 	}
 	
-	public void completeWi(UUID wiId, String userId, Boolean shorted) {
+	public void completeWi(UUID wiId, Boolean shorted) {
 		WorkInstruction wi = WorkInstruction.staticGetDao().findByPersistentId(wiId);
 		if (wi == null) {
 			LOGGER.error("Palletizer Complete Wi Error: Did not find Wi " + wiId);
@@ -255,7 +256,6 @@ public class PalletizerBehavior implements IApiBehavior{
 		}
 		Timestamp now = new Timestamp(System.currentTimeMillis());
 		wi.setActualQuantity(Boolean.TRUE.equals(shorted) ? 0 : 1);
-		wi.setPickerId(userId);
 		wi.setCompleted(now);
 		wi.setStatus(WorkInstructionStatusEnum.COMPLETE);
 		OrderDetail detail = wi.getOrderDetail();

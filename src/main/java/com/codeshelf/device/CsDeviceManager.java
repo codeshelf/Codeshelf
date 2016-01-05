@@ -571,10 +571,9 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	public void completePalletizerWi(final String inCheId,
 		final UUID inPersistentId,
 		final UUID wiId,
-		final String userId,
 		final Boolean shorted) {
 		LOGGER.debug("Complete Palletizer WI: Che={}; WI={}; Short={}", inCheId, wiId, shorted);
-		PalletizerCompleteWiRequest req = new PalletizerCompleteWiRequest(inPersistentId.toString(), wiId, userId, shorted);
+		PalletizerCompleteWiRequest req = new PalletizerCompleteWiRequest(inPersistentId.toString(), wiId, shorted);
 		clientEndpoint.sendMessage(req);
 	}
 

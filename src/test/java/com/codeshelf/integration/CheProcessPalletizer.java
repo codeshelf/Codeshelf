@@ -1,10 +1,13 @@
 package com.codeshelf.integration;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.hibernate.Criteria;
+import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Property;
+import org.hibernate.criterion.Restrictions;
 import org.joda.time.DateTime;
 import org.joda.time.Days;
 import org.joda.time.Interval;
@@ -17,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WorkInstructionStatusEnum;
+import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
@@ -28,6 +32,7 @@ import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.Che.ProcessMode;
+import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 
@@ -122,10 +127,10 @@ public class CheProcessPalletizer extends ServerTest{
 
 		
 		LOGGER.info("3b: Verify Order Details - three completed, another in progress");
-		OrderDetail d10010001 = h1001.getOrderDetail("10010001");
-		OrderDetail d10010002 = h1001.getOrderDetail("10010002");
-		OrderDetail d10020001 = h1002.getOrderDetail("10020001");
-		OrderDetail d10020002 = h1002.getOrderDetail("10020002");
+		OrderDetail d10010001 = findPalletizerDetail(h1001, "10010001");
+		OrderDetail d10010002 = findPalletizerDetail(h1001, "10010002");
+		OrderDetail d10020001 = findPalletizerDetail(h1002, "10020001");
+		OrderDetail d10020002 = findPalletizerDetail(h1002, "10020002");
 		Assert.assertNotNull("Didn't find detail 10010001", d10010001);
 		Assert.assertNotNull("Didn't find detail 10010002", d10010002);
 		Assert.assertNotNull("Didn't find detail 10020001", d10020001);
@@ -152,6 +157,7 @@ public class CheProcessPalletizer extends ServerTest{
 		.add(Property.forName("parent").eq(facility))
 		.add(Property.forName("eventType").eq(WorkerEvent.EventType.COMPLETE));
 		
+		@SuppressWarnings("unchecked")
 		List<WorkerEvent> workerEvents = criteria.list();
 		Assert.assertEquals(3, workerEvents.size());
 		for (WorkerEvent workerEvent : workerEvents) {
@@ -191,7 +197,7 @@ public class CheProcessPalletizer extends ServerTest{
 		Assert.assertTrue(h1001.getActive());
 		
 		LOGGER.info("4b: Verify Order Detail - completed and inactive");
-		OrderDetail d10010001 = h1001.getOrderDetail("10010001");
+		OrderDetail d10010001 = findPalletizerDetail(h1001, "10010001");
 		Assert.assertNotNull("Didn't find detail 10010001", d10010001);
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, d10010001.getStatus());
 		Assert.assertTrue(d10010001.getActive());
@@ -202,6 +208,17 @@ public class CheProcessPalletizer extends ServerTest{
 		WorkInstruction wi = wis.get(0);
 		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi.getStatus());
 		Assert.assertEquals("10019991", wi.getContainerId());
+		
+		LOGGER.info("4d: Verify WorkerEvent - created, completed, and referencing the correct Detail");
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("purpose", WiPurpose.WiPurposePalletizerPut.name()));
+		filterParams.add(Restrictions.eq("parent", facility));
+		List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
+		Assert.assertEquals(1, events.size());
+		WorkerEvent event = events.get(0);
+		Assert.assertEquals(EventType.COMPLETE, event.getEventType());
+		OrderDetail eventDetail = OrderDetail.staticGetDao().findByPersistentId(event.getOrderDetailId());
+		Assert.assertEquals(d10010001, eventDetail);
 		commitTransaction();
 	}
 	
@@ -295,6 +312,15 @@ public class CheProcessPalletizer extends ServerTest{
 			String domainId = order.getDomainId();
 			if (domainId.startsWith(orderId) || domainId.startsWith("P_" + orderId)){
 				return order;
+			}
+		}
+		return null;
+	}
+	
+	private OrderDetail findPalletizerDetail(OrderHeader order, String itemId) {
+		for (OrderDetail detail : order.getOrderDetails()){
+			if (detail.getDomainId().startsWith("PD_" + itemId + "_")){
+				return detail;
 			}
 		}
 		return null;

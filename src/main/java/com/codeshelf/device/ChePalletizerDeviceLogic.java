@@ -169,7 +169,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 				if (YES_COMMAND.equalsIgnoreCase(inScanStr)) {
 					WorkInstruction wi = getInfo().getWi();
 					if (wi != null) {
-						mDeviceManager.completePalletizerWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi.getPersistentId(), mUserId, true);
+						mDeviceManager.completePalletizerWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi.getPersistentId(), true);
 						notifyWiVerb(wi, WorkerEvent.EventType.SHORT, kLogAsWarn);
 					}
 					setState(CheStateEnum.PALLETIZER_SCAN_ITEM);
@@ -311,7 +311,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 			LOGGER.warn("Palletizer PUT button press without a saved WI");
 			return;
 		}
-		mDeviceManager.completePalletizerWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi.getPersistentId(), mUserId, false);
+		mDeviceManager.completePalletizerWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi.getPersistentId(), false);
 		notifyWiVerb(wi, WorkerEvent.EventType.COMPLETE, kLogAsInfo);
 	}
 	
