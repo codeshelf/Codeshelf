@@ -227,11 +227,8 @@ public class PalletizerBehavior implements IApiBehavior{
 			locations.add(orderLocation.getLocation());
 			OrderHeader order = orderLocation.getParent();
 			order.setStatus(OrderStatusEnum.COMPLETE);
-			order.setActive(false);
-			order.setActive(false);
 			List<OrderDetail> details = order.getOrderDetails();
 			for (OrderDetail detail : details) {
-				detail.setActive(false);
 				detail.setStatus(OrderStatusEnum.COMPLETE);
 				OrderDetail.staticGetDao().store(detail);
 				for (WorkInstruction wi : detail.getWorkInstructions()){
@@ -242,9 +239,7 @@ public class PalletizerBehavior implements IApiBehavior{
 					WorkInstruction.staticGetDao().store(wi);
 				}
 			}
-			orderLocation.setActive(false);
 			OrderHeader.staticGetDao().store(order);
-			OrderLocation.staticGetDao().store(orderLocation);
 		}
 		lightService.lightLocationServerCall(locations, che.getColor());
 	}

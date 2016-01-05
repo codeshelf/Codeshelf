@@ -5,6 +5,9 @@ import java.util.List;
 
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Property;
+import org.joda.time.DateTime;
+import org.joda.time.Days;
+import org.joda.time.Interval;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -113,6 +116,10 @@ public class CheProcessPalletizer extends ServerTest{
 		Assert.assertNotNull("Didn't find order 1002", h1002);
 		Assert.assertEquals(OrderStatusEnum.RELEASED, h1001.getStatus());
 		Assert.assertEquals(OrderStatusEnum.RELEASED, h1002.getStatus());
+		Interval today = new Interval(DateTime.now().withTimeAtStartOfDay(), Days.ONE);
+		Assert.assertTrue(today.contains(h1001.getDueDate().getTime()));		
+		Assert.assertTrue(today.contains(h1002.getDueDate().getTime()));		
+
 		
 		LOGGER.info("3b: Verify Order Details - three completed, another in progress");
 		OrderDetail d10010001 = h1001.getOrderDetail("10010001");
@@ -181,13 +188,13 @@ public class CheProcessPalletizer extends ServerTest{
 		OrderHeader h1001 = findPalletizerOrderHeader(facility, "1001");
 		Assert.assertNotNull("Didn't find order 1001", h1001);
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, h1001.getStatus());
-		Assert.assertFalse(h1001.getActive());
+		Assert.assertTrue(h1001.getActive());
 		
 		LOGGER.info("4b: Verify Order Detail - completed and inactive");
 		OrderDetail d10010001 = h1001.getOrderDetail("10010001");
 		Assert.assertNotNull("Didn't find detail 10010001", d10010001);
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, d10010001.getStatus());
-		Assert.assertFalse(d10010001.getActive());
+		Assert.assertTrue(d10010001.getActive());
 		
 		LOGGER.info("4c: Verify WorkInstructions - completed and having correct container id");
 		List<WorkInstruction> wis = d10010001.getWorkInstructions();

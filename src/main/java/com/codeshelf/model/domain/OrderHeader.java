@@ -35,6 +35,7 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,14 +79,8 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	}
 
 	public static OrderHeader createEmptyOrderHeader(Facility inFacility, String inOrderId) {
-		OrderHeader header = new OrderHeader();
-		header.setDomainId(inOrderId);
-		header.setOrderType(OrderTypeEnum.OUTBOUND);
+		OrderHeader header = new OrderHeader(inFacility, inOrderId, OrderTypeEnum.OUTBOUND);
 		header.setStatus(OrderStatusEnum.RELEASED);
-		header.setPickStrategy(PickStrategyEnum.SERIAL);
-		header.setActive(Boolean.TRUE);
-		header.setUpdated(new Timestamp(System.currentTimeMillis()));
-		header.setParent(inFacility);
 		OrderHeader.staticGetDao().store(header);
 		return header;
 	}
@@ -241,6 +236,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		this.orderType = orderType;
 		status = OrderStatusEnum.CREATED;
 		pickStrategy = PickStrategyEnum.SERIAL;
+		dueDate = new Timestamp(DateTime.now().withHourOfDay(23).withMinuteOfHour(59).withSecondOfMinute(59).getMillis());
 		updated = new Timestamp(System.currentTimeMillis());
 	}
 
