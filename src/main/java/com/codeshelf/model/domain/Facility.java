@@ -626,7 +626,7 @@ public class Facility extends Location {
 			Vertex.staticGetDao().store(vertex);
 		}
 	}
-
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inLocation

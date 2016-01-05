@@ -3,6 +3,8 @@ package com.codeshelf.integration;
 import java.io.IOException;
 import java.util.List;
 
+import org.hibernate.Criteria;
+import org.hibernate.criterion.Property;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,6 +23,7 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
@@ -83,6 +86,14 @@ public class CheProcessPalletizer extends ServerTest{
 		LOGGER.info("1: Open two pallets");
 		openNewPallet("10010001", "L%Slot1111", "Slot1111");
 		openNewPallet("10020001", "%000000020010", "Tier112");
+		
+		LOGGER.info("1a: Verify that the WIs have the correct PickerId");
+		beginTransaction();
+		List<WorkInstruction> wis = WorkInstruction.staticGetDao().getAll();
+		for (WorkInstruction wi : wis) {
+			Assert.assertEquals("Worker1", wi.getPickerId());
+		}
+		commitTransaction();
 
 		LOGGER.info("2: Put item in pallet 1001, scan item for pallet 1002, but don't complete it");
 		picker.scanSomething("10010002");
@@ -126,6 +137,22 @@ public class CheProcessPalletizer extends ServerTest{
 		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi12.getStatus());
 		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi21.getStatus());
 		Assert.assertEquals(WorkInstructionStatusEnum.INPROGRESS, wi22.getStatus());
+
+		
+		LOGGER.info("3d: Verify Work Events - three completed");
+		Criteria criteria = WorkerEvent.staticGetDao()
+		.createCriteria()
+		.add(Property.forName("parent").eq(facility))
+		.add(Property.forName("eventType").eq(WorkerEvent.EventType.COMPLETE));
+		
+		@SuppressWarnings("unchecked")
+		List<WorkerEvent> workerEvents = criteria.list();
+		Assert.assertEquals(3, workerEvents.size());
+		for (WorkerEvent workerEvent : workerEvents) {
+			Assert.assertEquals(WorkerEvent.EventType.COMPLETE, workerEvent.getEventType());
+		}
+		LOGGER.info(criteria.list().toString());
+
 		commitTransaction();	
 	}
 	
@@ -162,6 +189,13 @@ public class CheProcessPalletizer extends ServerTest{
 		Assert.assertNotNull("Didn't find detail 10010001", d10010001);
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, d10010001.getStatus());
 		Assert.assertFalse(d10010001.getActive());
+		
+		LOGGER.info("4c: Verify WorkInstructions - completed and having correct container id");
+		List<WorkInstruction> wis = d10010001.getWorkInstructions();
+		Assert.assertFalse(wis.isEmpty());
+		WorkInstruction wi = wis.get(0);
+		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi.getStatus());
+		Assert.assertEquals("10019991", wi.getContainerId());
 		commitTransaction();
 	}
 	

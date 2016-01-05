@@ -32,12 +32,14 @@ import lombok.Setter;
 
 public class PalletizerBehavior implements IApiBehavior{
 	private LightBehavior lightService;
+	private NotificationBehavior notificationBehavior;
 	
 	private static final Logger			LOGGER					= LoggerFactory.getLogger(WorkBehavior.class);
 	
 	@Inject
-	public PalletizerBehavior(LightBehavior inLightService) {
+	public PalletizerBehavior(LightBehavior inLightService, NotificationBehavior notificationBehavior) {
 		this.lightService = inLightService;
+		this.notificationBehavior = notificationBehavior;
 	}
 
 	public PalletizerInfo processPalletizerItemRequest(Che che, String itemId, String userId){
@@ -233,11 +235,12 @@ public class PalletizerBehavior implements IApiBehavior{
 				detail.setActive(false);
 				detail.setStatus(OrderStatusEnum.COMPLETE);
 				OrderDetail.staticGetDao().store(detail);
-				if (license != null) {
-					for (WorkInstruction wi : detail.getWorkInstructions()){
+				for (WorkInstruction wi : detail.getWorkInstructions()){
+					wi.setStatus(WorkInstructionStatusEnum.COMPLETE);
+					if (license != null) {
 						wi.setContainerId(license);
-						WorkInstruction.staticGetDao().store(wi);
 					}
+					WorkInstruction.staticGetDao().store(wi);
 				}
 			}
 			orderLocation.setActive(false);
@@ -263,6 +266,11 @@ public class PalletizerBehavior implements IApiBehavior{
 		detail.setStatus(OrderStatusEnum.COMPLETE);
 		WorkInstruction.staticGetDao().store(wi);
 		OrderDetail.staticGetDao().store(detail);
+		
+		if (!wi.isHousekeeping()) {
+			notificationBehavior.saveFinishedWI(wi);
+		}
+
 	}
 	
 	public static class PalletizerInfo {
