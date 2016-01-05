@@ -1,0 +1,30 @@
+var :chePall 0x0000000AA
+
+STEP setup
+SERVER
+createChe :chePall orange PALLETIZER CHE_C
+importAisles aisles
+importLocations locations
+setWall Aisle1 putwall
+setWall A2 skuwall
+
+SITE
+//waitForDevices :chePall
+defChe cheC :chePall
+logout cheC
+login cheC Ilya1 PALLETIZER_SCAN_ITEM
+
+//Put Items
+scan cheC 10010001 PALLETIZER_NEW_ORDER
+scan cheC L%LocX25_1 PALLETIZER_PUT_ITEM
+scan cheC 10020001 PALLETIZER_NEW_ORDER
+scan cheC L%A1.B2.T1.S3 PALLETIZER_PUT_ITEM
+scan cheC 10010002 PALLETIZER_PUT_ITEM
+
+//Close first pallet
+scan cheC X%REMOVE PALLETIZER_REMOVE
+scan cheC 1001-98989898-PALLET PALLETIZER_SCAN_ITEM
+
+//Close second pallet
+scan cheC X%REMOVE PALLETIZER_REMOVE
+scan cheC L%A1.B2.T1.S3 PALLETIZER_SCAN_ITEM
