@@ -1327,7 +1327,7 @@ public class WorkBehavior implements IApiBehavior {
 			}
 			Collections.sort(preferredInstructions, new GroupAndSortCodeComparator());
 			if (preferredInstructions.size() > 0) {
-				preferredInstructions = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, preferredInstructions);
+				preferredInstructions = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, inChe, preferredInstructions);
 			}
 
 			return preferredInstructions;
@@ -1366,7 +1366,7 @@ public class WorkBehavior implements IApiBehavior {
 
 		// Now our wrappedRouteWiList is ordered correctly but is missing HouseKeepingInstructions
 		if (wrappedRouteWiList.size() > 0) {
-			wrappedRouteWiList = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, wrappedRouteWiList);
+			wrappedRouteWiList = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, inChe, wrappedRouteWiList);
 		}
 
 		// Remove timer that used to be here. See ComputeWorkCommand for more complete handling

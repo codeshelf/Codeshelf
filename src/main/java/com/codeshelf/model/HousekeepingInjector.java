@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.model.domain.Bay;
+import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Che.CheLightingEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.PathSegment;
@@ -259,16 +261,21 @@ public class HousekeepingInjector {
 	 * @param inSortedWiList
 	 * @return
 	 */
-	public static List<WorkInstruction> addHouseKeepingAndSaveSort(Facility inFacility, List<WorkInstruction> inSortedWiList) {
+	public static List<WorkInstruction> addHouseKeepingAndSaveSort(Facility inFacility, Che che, List<WorkInstruction> inSortedWiList) {
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		WorkInstruction lastWi = null;
+		//DEV-1390 - Do not create housekeeping is CHE is not set to broadcast to Poscons - there'd be no way to contiue past those.
+		boolean skipHousekeeping = che.getCheLighting() == CheLightingEnum.LABEL_V1 || che.getCheLighting() == CheLightingEnum.NOLIGHTING;
 		BayChangeChoice bayChangeChoice = getBayChangeChoice(inFacility);
 		RepeatPosChoice repeatPosChoice = getRepeatPosChoice(inFacility);
 		for (WorkInstruction wi : inSortedWiList) {
-			List<WorkInstructionTypeEnum> theHousekeepingTypeList = wisNeedHouseKeepingBetween(lastWi,
-				wi,
-				bayChangeChoice,
-				repeatPosChoice);
+			List<WorkInstructionTypeEnum> theHousekeepingTypeList = new ArrayList<>();
+			if (!skipHousekeeping) {
+				theHousekeepingTypeList = wisNeedHouseKeepingBetween(lastWi,
+					wi,
+					bayChangeChoice,
+					repeatPosChoice);
+			}
 			// returns null if nothing to do. If non-null, then at lease one in the list.
 			if (theHousekeepingTypeList != null) {
 				for (WorkInstructionTypeEnum theType : theHousekeepingTypeList) {

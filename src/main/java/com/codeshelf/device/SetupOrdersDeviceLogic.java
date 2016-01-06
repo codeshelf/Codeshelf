@@ -34,6 +34,7 @@ import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Che.CheLightingEnum;
 import com.codeshelf.model.domain.Location;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
@@ -2044,14 +2045,25 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private void processPosconScanToPick(String inScanPrefixStr, String inContent){
 		try {
 			byte position = Byte.parseByte(inContent);
-			Byte displayedValue = getLastSentPositionControllerDisplayValue(position);
-			if (displayedValue != null){
-				processButtonPress((int)position, (int)displayedValue);
+			//Try to retrieve the displayed value to allow for shorts
+			Integer value = null;
+			if (getCheLightingEnum() == CheLightingEnum.LABEL_V1){
+				//If the CHE is in LABEL light mode, Poscons will be blank, so read planed quantity from the WI
+				String containerId = mPositionToContainerMap.get(inContent);
+				WorkInstruction wi = getWorkInstructionForContainerId(containerId);
+				if (wi == null){
+					LOGGER.warn("Ignoring {}{} scan, as could not retrieve the work instruction at that position", inScanPrefixStr, inContent);
+					return;
+				}
+				value = wi.getPlanQuantity();
 			} else {
-				LOGGER.warn("Ignoring {}{} scan, as could not retrieve the displayed value", inScanPrefixStr, inContent);
+				Byte displayedValue = getLastSentPositionControllerDisplayValue(position);
+				value = displayedValue == null ? null : displayedValue.intValue();
 			}
+			//Simulate button press
+			processButtonPress((int)position, value);
 		} catch (NumberFormatException e){
-			LOGGER.warn("Unable to parse {}{} into a byte poscon id", inScanPrefixStr, inContent);
+			LOGGER.error("Ignoring {}{} scan as could not parse it as byte", inScanPrefixStr, inContent);
 		}
 	}
 	

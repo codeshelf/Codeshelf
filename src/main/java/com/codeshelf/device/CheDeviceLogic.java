@@ -238,11 +238,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Setter
 	private ScannerTypeEnum							mScannerTypeEnum						= ScannerTypeEnum.ORIGINALSERIAL;
 	
-	@Accessors(prefix = "m")
-	@Getter
-	@Setter
-	private CheLightingEnum							mCheLightingEnum						= CheLightingEnum.POSCON_V1;
-
 	@Accessors(prefix = "m") @Getter @Setter
 	private Boolean									mReplenishRun							= false;
 
@@ -1932,10 +1927,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			lightWiPosConLocations(firstWi);
 
 			// This can be elaborate. For setup_Orders work mode, as poscons complete their work, they show their status.
-			//Do not light Poscons if CHE is in LABEL lighting mode
-			if (getCheLightingEnum() != CheLightingEnum.LABEL_V1){
-				doPosConDisplaysforActiveWis();
-			}
+			doPosConDisplaysforActiveWis();
 			// If and when we do simultaneous picks, we will deal with the entire mActivePickWiList instead of only firstWI.
 		}
 	}
