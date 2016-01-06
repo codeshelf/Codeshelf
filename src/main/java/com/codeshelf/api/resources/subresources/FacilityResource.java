@@ -63,7 +63,6 @@ import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.api.responses.WorkerDisplay;
 import com.codeshelf.behavior.NotificationBehavior;
-import com.codeshelf.behavior.NotificationBehavior.BinValue;
 import com.codeshelf.behavior.NotificationBehavior.HistogramResult;
 import com.codeshelf.behavior.NotificationBehavior.WorkerEventTypeGroup;
 import com.codeshelf.behavior.OrderBehavior;
@@ -546,21 +545,34 @@ public class FacilityResource {
 	}
 
 	@GET
-	@Path("pickrate/histogram")
+	@Path("picks/histogram")
 	@RequiresPermissions("event:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response pickRateHistogram(@QueryParam("created") IntervalParam createdInterval, @QueryParam("createdBin") String binPeriod) {
+	public Response pickHistogram(@QueryParam("created") IntervalParam createdInterval, @QueryParam("createdBin") String binPeriod) {
 		ErrorResponse errors = new ErrorResponse();
 		try {
 			Period bin = Period.parse(MoreObjects.firstNonNull(binPeriod, "PT5M"));  
-			List<BinValue> values = notificationService.facilityPickRateHistogram(facility, createdInterval.getValue(), bin);
-			HistogramResult result = new HistogramResult(createdInterval.getValue(), bin, values);
+			HistogramResult result = notificationService.facilityPickRateHistogram(createdInterval.getValue(), bin, facility);
 			return BaseResponse.buildResponse(result);
 		} catch (Exception e) {
 			return errors.processException(e);
 		}
 	}
 	
+	@GET
+	@Path("picks/workers/histogram")
+	@RequiresPermissions("event:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response workersPickHistogram(@QueryParam("created") IntervalParam createdInterval, @QueryParam("createdBin") String binPeriod) {
+		ErrorResponse errors = new ErrorResponse();
+		try {
+			Period bin = Period.parse(MoreObjects.firstNonNull(binPeriod, "PT5M"));  
+			List<HistogramResult> result = notificationService.workersPickHistogram(createdInterval.getValue(), bin, facility);
+			return BaseResponse.buildResponse(result);
+		} catch (Exception e) {
+			return errors.processException(e);
+		}
+	}
 	
 	
 	@POST
