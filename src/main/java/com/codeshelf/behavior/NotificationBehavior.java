@@ -2,15 +2,21 @@ package com.codeshelf.behavior;
 
 import static com.codeshelf.model.dao.GenericDaoABC.countCriteria;
 
+import java.io.IOException;
+import java.math.BigInteger;
+import java.net.URL;
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.EnumSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import org.hibernate.Criteria;
 import org.hibernate.Query;
+import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Order;
@@ -18,7 +24,11 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.transform.AliasToBeanResultTransformer;
+import org.hibernate.transform.BasicTransformerAdapter;
+import org.joda.time.DateTime;
 import org.joda.time.Interval;
+import org.joda.time.Period;
+import org.joda.time.format.ISOPeriodFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,15 +47,19 @@ import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
+import com.codeshelf.persistence.DialectUUIDType;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.io.Resources;
 import com.google.inject.Inject;
 
 import lombok.Getter;
@@ -53,6 +67,61 @@ import lombok.Setter;
 import lombok.ToString;
 
 public class NotificationBehavior implements IApiBehavior{
+	
+	public static class HistogramResult {
+		@Getter
+		private long total;
+		@Getter
+		private Date startTime;
+		@Getter
+		private Date endTime;
+		@Getter
+		private String binInterval; //ISO
+		@Getter
+		private List<BinValue> bins;
+		
+		public HistogramResult(Interval window, Period bin, List<BinValue> values) {
+			this.startTime = window.getStart().toDate();
+			this.endTime = window.getEnd().toDate();
+			this.binInterval = bin.toString(ISOPeriodFormat.standard());
+			this.bins = values;
+			this.total = sumValues(values);
+		}
+
+		private long sumValues(List<BinValue> values) {
+			long sum = 0;
+			for (BinValue binValue : values) {
+				sum += binValue.getValue().longValue();
+			}
+			return sum;
+		}
+
+	}
+	
+	public static class BinValue {
+
+		@Getter
+		private Date start;
+		
+		@JsonIgnore
+		private Period interval;
+		
+		@Getter
+		private BigInteger value;
+
+		public BinValue(DateTime binStart, Period interval, BigInteger value) {
+			this.start = binStart.toDate();
+			this.interval = interval;
+			this.value = value;
+		}
+
+		public static BinValue missing(DateTime binStart, Period interval) {
+			//TODO indicate missing with missing field?
+			return new BinValue(binStart,  interval, BigInteger.ZERO);
+		}
+	}
+
+
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(NotificationBehavior.class);
 	
 	private static final EnumSet<WorkerEvent.EventType>	SAVE_ONLY	= EnumSet.of(EventType.SKIP_ITEM_SCAN,
@@ -212,7 +281,99 @@ public class NotificationBehavior implements IApiBehavior{
 		List<PickRate> results = query.list();
  		return results;
 	}
+	
+	
 
+	public HistogramResult facilityPickRateHistogram(final Interval createdInterval, final Period binWidth, Facility facility) throws IOException {
+		String sqlWhereClause = 
+				  " parent_persistentid = :facilityId"
+				+ " and created between :startDateTime and :endDateTime";
+		SQLQuery query = createPickRateHistogramQuery(binWidth, sqlWhereClause);
+		query.setParameter("facilityId", facility.getPersistentId(),  new DialectUUIDType());
+		query.setParameter("startDateTime", new Timestamp(createdInterval.getStart().getMillis()));
+		query.setParameter("endDateTime", new Timestamp(createdInterval.getEnd().getMillis()));
+		List<BinValue> binValues = executeHistogramQuery(query, createdInterval, binWidth);	
+		HistogramResult result = new HistogramResult(createdInterval, binWidth, binValues);
+		return result;
+	}
+
+	public List<HistogramResult> workersPickHistogram(final Interval createdInterval, final Period binWidth, Facility facility) {
+		@SuppressWarnings("unchecked")
+		List<String> workerIds = WorkerEvent.staticGetDao().createCriteria()
+				.setProjection(Projections.distinct(Projections.property("workerId")))
+				.add(Property.forName("parent").eq(facility))
+				.add(GenericDaoABC.createIntervalRestriction("created", createdInterval))
+				.list();
+		ArrayList<HistogramResult> workerHistograms = new ArrayList<HistogramResult>();
+		for (String workerId : workerIds) {
+			workerHistograms.add(workerPickRateHistogram(createdInterval, binWidth, facility, workerId));
+		}
+		return workerHistograms;
+	}
+	
+	private HistogramResult workerPickRateHistogram(final Interval createdInterval, final Period binWidth, Facility facility, String badgeId) {
+		String sqlWhereClause = 
+				  " parent_persistentid = :facilityId"
+                + " and worker_id = :workerId"
+				+ " and created between :startDateTime and :endDateTime";
+		SQLQuery query = createPickRateHistogramQuery(binWidth, sqlWhereClause);
+		query.setParameter("facilityId", facility.getPersistentId(),  new DialectUUIDType());
+		query.setParameter("workerId", badgeId);
+		query.setParameter("startDateTime", new Timestamp(createdInterval.getStart().getMillis()));
+		query.setParameter("endDateTime", new Timestamp(createdInterval.getEnd().getMillis()));
+		List<BinValue> binValues = executeHistogramQuery(query, createdInterval, binWidth);	
+		HistogramResult result = new HistogramResult(createdInterval, binWidth, binValues);
+		return result;
+		
+	}
+	
+	private List<BinValue> executeHistogramQuery(SQLQuery query, final Interval completedInterval, final Period binWidth) {
+		query.setResultTransformer(new BasicTransformerAdapter() {
+			private static final long serialVersionUID = 1L;
+
+			@Override
+			public Object transformTuple(Object[] tuple, String[] aliases) {
+				
+				int binNumber = (Integer) tuple[0];
+				BigInteger binValue = (BigInteger) tuple[1];
+				return new BinValue(completedInterval.getStart().plus(binWidth.multipliedBy(binNumber)), binWidth, binValue);
+			}
+		});
+		
+		
+		List<BinValue> withMissingValues = new ArrayList<>();
+		@SuppressWarnings("unchecked")
+		LinkedList<BinValue> dbValues = new LinkedList<>(query.list());
+		DateTime binStart = completedInterval.getStart();
+		while(binStart.isBefore(completedInterval.getEnd())) {
+			if(!dbValues.isEmpty() 
+ 				&& binStart.getMillis() == dbValues.peek().getStart().getTime()) {
+				withMissingValues.add(dbValues.poll());
+			} else {
+				withMissingValues.add(BinValue.missing(binStart, binWidth));
+			}
+			binStart = binStart.plus(binWidth);
+		}
+		return withMissingValues;
+	}
+
+		
+	private SQLQuery createPickRateHistogramQuery(Period binWidth, String sqlWhereClause) {
+		URL url = Resources.getResource(this.getClass(), "./facilityPickRate.sql");
+		String sqlTemplate;
+		try {
+			sqlTemplate = Resources.toString(url, Charsets.UTF_8);
+		} catch (IOException e) {
+			throw new RuntimeException("unable to convert:" + url, e);
+		}
+		String sqlQuery = String.format(sqlTemplate, sqlWhereClause);
+		Session session = TenantPersistenceService.getInstance().getSession();
+		SQLQuery query = session.createSQLQuery(sqlQuery);
+		query.setParameter("binWidth", binWidth.toStandardSeconds().getSeconds());
+		return query;
+	}
+	
+	
 	@ToString
 	public static class WorkerEventTypeGroup {
 		@Getter @Setter

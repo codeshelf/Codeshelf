@@ -37,6 +37,7 @@ import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.exception.ConstraintViolationException;
+import org.joda.time.Period;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,6 +63,7 @@ import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.api.responses.WorkerDisplay;
 import com.codeshelf.behavior.NotificationBehavior;
+import com.codeshelf.behavior.NotificationBehavior.HistogramResult;
 import com.codeshelf.behavior.NotificationBehavior.WorkerEventTypeGroup;
 import com.codeshelf.behavior.OrderBehavior;
 import com.codeshelf.behavior.ProductivitySummaryList;
@@ -542,6 +544,36 @@ public class FacilityResource {
 		}
 	}
 
+	@GET
+	@Path("picks/histogram")
+	@RequiresPermissions("event:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response pickHistogram(@QueryParam("created") IntervalParam createdInterval, @QueryParam("createdBin") String binPeriod) {
+		ErrorResponse errors = new ErrorResponse();
+		try {
+			Period bin = Period.parse(MoreObjects.firstNonNull(binPeriod, "PT5M"));  
+			HistogramResult result = notificationService.facilityPickRateHistogram(createdInterval.getValue(), bin, facility);
+			return BaseResponse.buildResponse(result);
+		} catch (Exception e) {
+			return errors.processException(e);
+		}
+	}
+	
+	@GET
+	@Path("picks/workers/histogram")
+	@RequiresPermissions("event:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response workersPickHistogram(@QueryParam("created") IntervalParam createdInterval, @QueryParam("createdBin") String binPeriod) {
+		ErrorResponse errors = new ErrorResponse();
+		try {
+			Period bin = Period.parse(MoreObjects.firstNonNull(binPeriod, "PT5M"));  
+			List<HistogramResult> result = notificationService.workersPickHistogram(createdInterval.getValue(), bin, facility);
+			return BaseResponse.buildResponse(result);
+		} catch (Exception e) {
+			return errors.processException(e);
+		}
+	}
+	
 	
 	@POST
 	@Path("/process_script")
