@@ -2,6 +2,7 @@ package com.codeshelf.behavior;
 
 import static org.mockito.Mockito.mock;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -12,6 +13,8 @@ import javax.ws.rs.core.UriInfo;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
+import org.joda.time.Period;
+import org.joda.time.PeriodType;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -40,16 +43,17 @@ public class NotificationBehaviorTest extends HibernateTest {
 
 	private static final String DEFAULT_WORKER = "worker";
 	
-	private final DateTime eventTime = new DateTime(1955, 11, 12, 10, 04, 00, 00, DateTimeZone.forID("US/Central"));  //lightning will strike the clock tower in back to the future
+	private final DateTime eventTime = new DateTime(1955, 11, 12, 22, 04, 00, 00, DateTimeZone.forID("US/Central"));  //lightning will strike the clock tower in back to the future
 
-	/*
-	@Test
+	
+	/*@Test
+	
 	public void facilityPickRateHistogram() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
 		NotificationBehavior behavior = new NotificationBehavior();
 		Che che = getTestChe();
 		behavior.saveEvent(createEvent(eventTime, WorkerEvent.EventType.COMPLETE, che));
-		List<?> pickRates = behavior.facilityPickRateHistogram();
+		List<?> pickRates = behavior.facilityPickRateHistogram(che.getFacility(), new Interval(eventTime.minusHours(1), eventTime.plusHours(1)), Period.minutes(5));
 		Assert.assertNotEquals(0, pickRates.size());
 		Assert.assertEquals(24, pickRates.size());
 	}*/

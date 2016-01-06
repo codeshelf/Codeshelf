@@ -9,6 +9,8 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -27,6 +29,7 @@ import org.hibernate.transform.BasicTransformerAdapter;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
 import org.joda.time.Period;
+import org.joda.time.format.ISOPeriodFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +68,28 @@ import lombok.Setter;
 import lombok.ToString;
 
 public class NotificationBehavior implements IApiBehavior{
-	public class BinValue<T> {
+	
+	public static class HistogramResult {
+		
+		@Getter
+		private Date startTime;
+		@Getter
+		private Date endTime;
+		@Getter
+		private String binInterval; //ISO
+		@Getter
+		private List<BinValue> bins;
+		
+		public HistogramResult(Interval window, Period bin, List<BinValue> values) {
+			this.startTime = window.getStart().toDate();
+			this.endTime = window.getEnd().toDate();
+			this.binInterval = bin.toString(ISOPeriodFormat.standard());
+			this.bins = values;
+		}
+
+	}
+	
+	public static class BinValue {
 
 		@Getter
 		private Date start;
@@ -74,12 +98,17 @@ public class NotificationBehavior implements IApiBehavior{
 		private Period interval;
 		
 		@Getter
-		private T value;
+		private BigInteger value;
 
-		public BinValue(DateTime binStart, Period interval, T value) {
+		public BinValue(DateTime binStart, Period interval, BigInteger value) {
 			this.start = binStart.toDate();
 			this.interval = interval;
 			this.value = value;
+		}
+
+		public static BinValue missing(DateTime binStart, Period interval) {
+			//TODO indicate missing with missing field?
+			return new BinValue(binStart,  interval, BigInteger.ZERO);
 		}
 	}
 
@@ -246,16 +275,20 @@ public class NotificationBehavior implements IApiBehavior{
 	
 	
 	@SuppressWarnings("unchecked")
-	public List<BinValue<BigInteger>> facilityPickRateHistogram(Facility facility, final Interval completedInterval, final Period createdBin) throws IOException {
+	public List<BinValue> facilityPickRateHistogram(Facility facility, final Interval completedInterval, final Period binWidth) throws IOException {
+		String sqlWhereClause = 
+				  " parent_persistentid = :facilityId"
+				+ " and created between :startDateTime and :endDateTime"
+                + " ";
 		URL url = Resources.getResource(this.getClass(), "./facilityPickRate.sql");
-		String sqlText = Resources.toString(url, Charsets.UTF_8);
+		String sqlTemplate = Resources.toString(url, Charsets.UTF_8);
+		String sqlQuery = String.format(sqlTemplate, sqlWhereClause);
 		Session session = TenantPersistenceService.getInstance().getSession();
-		SQLQuery query = session.createSQLQuery(sqlText/*.replace('\n', ' ')*/);
-		int numBins = Math.round(completedInterval.toDurationMillis() / createdBin.toStandardDuration().getMillis());
+		SQLQuery query = session.createSQLQuery(sqlQuery);
 		query.setParameter("facilityId", facility.getPersistentId(),  new DialectUUIDType());
 		query.setParameter("startDateTime", new Timestamp(completedInterval.getStart().getMillis()));
 		query.setParameter("endDateTime", new Timestamp(completedInterval.getEnd().getMillis()));
-		query.setParameter("numBins", numBins);
+		query.setParameter("binWidth", binWidth.toStandardSeconds().getSeconds());
 		query.setResultTransformer(new BasicTransformerAdapter() {
 			private static final long serialVersionUID = 1L;
 
@@ -264,10 +297,24 @@ public class NotificationBehavior implements IApiBehavior{
 				
 				int binNumber = (Integer) tuple[0];
 				BigInteger binValue = (BigInteger) tuple[1];
-				return new BinValue<BigInteger>(completedInterval.getStart().plus(createdBin.multipliedBy(binNumber)), createdBin, binValue);
+				return new BinValue(completedInterval.getStart().plus(binWidth.multipliedBy(binNumber)), binWidth, binValue);
 			}
 		});
-		return query.list();	
+		
+		
+		List<BinValue> withMissingValues = new ArrayList<>();
+		LinkedList<BinValue> dbValues = new LinkedList<>(query.list());
+		DateTime binStart = completedInterval.getStart();
+		while(binStart.isBefore(completedInterval.getEnd())) {
+			if(!dbValues.isEmpty() 
+ 				&& binStart.getMillis() == dbValues.peek().getStart().getTime()) {
+				withMissingValues.add(dbValues.poll());
+			} else {
+				withMissingValues.add(BinValue.missing(binStart, binWidth));
+			}
+			binStart = binStart.plus(binWidth);
+		}
+		return withMissingValues;	
 	}
 
 	@ToString
