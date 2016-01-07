@@ -73,9 +73,9 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_CREATE_CHE = "createChe <che> <color> <mode> [name] [scannerType] [cheLighting]";
 	private final static String TEMPLATE_DELETE_CHES = "deleteChes (<ches>)";
 	private final static String TEMPLATE_DELETE_ALL_PATHS = "deleteAllPaths";
-	private final static String TEMPLATE_DEF_PATH = "defPath <path> (segments '-' <start x> <start y> <end x> <end y>)";
-	private final static String TEMPLATE_SET_PATH_NAME = "setPathName <path> [path name>]";
-	private final static String TEMPLATE_ASSIGN_PATH_SGM_AISLE = "assignPathSgmToAisle <path> <segment id> <aisle name>";
+	private final static String TEMPLATE_DEF_PATH = "defPath <path id> (segments '-' <start x> <start y> <end x> <end y>)";
+	private final static String TEMPLATE_SET_PATH_NAME = "setPathName <path id> [path name (spaces allowed)]";
+	private final static String TEMPLATE_ASSIGN_PATH_SGM_AISLE = "assignPathSgmToAisle <pathid > <segment id> <aisle name>";
 	private final static String TEMPLATE_ASSIGN_TAPE_TO_TIER = "assignTapeToTier (assignments <tape id> <tier name>)";
 	private final static String TEMPLATE_DELETE_ALL_EXTENSIONS = "deleteAllExtensionPoints";
 	private final static String TEMPLATE_DELETE_EXTENSION = "deleteExtensionPoint <type>";
@@ -588,7 +588,7 @@ public class ScriptServerRunner {
 	
 	/**
 	 * Expects to see command
-	 * defPath <path> [path name]
+	 * defPath <path> <path name (spaces allowed)>
 	 * @throws Exception 
 	 */
 	private void processSetPathNameCommand(String parts[]) throws Exception {
