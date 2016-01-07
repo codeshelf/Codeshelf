@@ -1,10 +1,12 @@
 package com.codeshelf.behavior;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +25,6 @@ import com.codeshelf.model.domain.OrderLocation;
 import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.util.UomNormalizer;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
@@ -160,11 +161,11 @@ public class PalletizerBehavior implements IApiBehavior{
 	
 	private OrderHeader getActivePalletizerOrder(Facility facility, String itemId) {
 		String storeId = generatePalletizerStoreId(itemId);
-		Map<String, Object> params = ImmutableMap.<String, Object> of(
-			"facilityId", facility.getPersistentId(), 
-			"partialDomainId", "P_" + storeId + "%",
-			"notStatus", OrderStatusEnum.COMPLETE);
-		List<OrderHeader> orders = OrderHeader.staticGetDao().findByFilter("orderHeadersByFacilityAndPartialDomainId", params);
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("parent", facility));
+		filterParams.add(Restrictions.ilike("domainId", "P_" + storeId + "%"));
+		filterParams.add(Restrictions.ne("status", OrderStatusEnum.COMPLETE));
+		List<OrderHeader> orders = OrderHeader.staticGetDao().findByFilter(filterParams);
 		return orders.isEmpty() ? null : orders.get(0);
 	}
 	
