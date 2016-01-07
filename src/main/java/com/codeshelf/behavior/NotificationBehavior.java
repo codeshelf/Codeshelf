@@ -359,13 +359,14 @@ public class NotificationBehavior implements IApiBehavior{
 
 		
 	private SQLQuery createPickRateHistogramQuery(Period binWidth, String sqlWhereClause) {
-		URL url = Resources.getResource(this.getClass(), "./facilityPickRate.sql");
-		String sqlTemplate;
-		try {
-			sqlTemplate = Resources.toString(url, Charsets.UTF_8);
-		} catch (IOException e) {
-			throw new RuntimeException("unable to convert:" + url, e);
-		}
+		
+		String sqlTemplate =  "select bin, count(bin) as value from ( "
+  + " select CAST(floor(extract(epoch from (created - CAST(:startDateTime AS TIMESTAMP)))  / :binWidth) AS integer) as bin "
+  + "    from event_worker "
+  + "   where %s "
+  + ") AS event_bin "
+  + "GROUP BY event_bin.bin "
+  + "ORDER BY event_bin.bin";
 		String sqlQuery = String.format(sqlTemplate, sqlWhereClause);
 		Session session = TenantPersistenceService.getInstance().getSession();
 		SQLQuery query = session.createSQLQuery(sqlQuery);
