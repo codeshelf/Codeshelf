@@ -41,6 +41,7 @@ import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Che.CheLightingEnum;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
@@ -1707,7 +1708,54 @@ public class CheProcessTestPick extends ServerTest {
 		picker.scanPosition("2");
 		picker.logCheDisplay();
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
-
 	}
 
+	@Test
+	public void testLabelLighting() throws IOException{
+		LOGGER.info("1: Set up facility, orders, set one CHE to have LABEL lighting mode");
+		Facility facility = setUpSimpleNoSlotFacility();
+		beginTransaction();
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "UPC");
+		Che che1 = getChe1();
+		che1.setCheLighting(CheLightingEnum.LABEL_V1);
+		Che.staticGetDao().store(che1);
+		commitTransaction();
+		setUpSmallInventoryAndOrders(facility);
+		
+		startSiteController();
+		
+		LOGGER.info("2: Set up 2 CHEs with a single orders each");
+		PickSimulator picker1 = createPickSim(cheGuid1);
+		PickSimulator picker2 = createPickSim(cheGuid2);
+		picker1.loginAndSetup("Picker #1");
+		picker2.loginAndSetup("Picker #2");
+		picker1.setupContainer("12345", "1");
+		picker2.setupContainer("11111", "1");
+		
+		LOGGER.info("3: Assert that the LABEL CHE does not light up its Poscins during container setup while the normal CHE does");
+		Assert.assertNull(picker1.getLastSentPositionControllerDisplayValue(1));
+		Assert.assertNotNull(picker2.getLastSentPositionControllerDisplayValue(1));
+		
+		LOGGER.info("4: Compute work for both CHEs and verify that they both have instructions on path");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		Assert.assertEquals("1 order\n3 jobs\n\nSTART (or SETUP)\n", picker1.getLastCheDisplay());
+		Assert.assertEquals("1 order\n4 jobs     1 other\n\nSTART (or SETUP)\n", picker2.getLastCheDisplay());
+		
+		LOGGER.info("5: Assert that the LABEL CHE does not light up its Poscins during setup summary while the normal CHE does");
+		Assert.assertNull(picker1.getLastSentPositionControllerDisplayValue(1));
+		Assert.assertNotNull(picker2.getLastSentPositionControllerDisplayValue(1));
+		
+		LOGGER.info("6: Start work on both CHEs");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		LOGGER.info("7: Assert that the LABEL CHE does not light up its Poscins during picking while the normal CHE does");
+		Assert.assertNull(picker1.getLastSentPositionControllerDisplayValue(1));
+		Assert.assertNotNull(picker2.getLastSentPositionControllerDisplayValue(1));
+	}
 }
