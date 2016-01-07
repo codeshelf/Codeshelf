@@ -4,7 +4,6 @@ import static com.codeshelf.model.dao.GenericDaoABC.countCriteria;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.URL;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -45,6 +44,7 @@ import com.codeshelf.model.domain.DomainObjectABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.persistence.DialectUUIDType;
@@ -52,14 +52,12 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.base.Charsets;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.io.Resources;
 import com.google.inject.Inject;
 
 import lombok.Getter;
@@ -76,7 +74,7 @@ public class NotificationBehavior implements IApiBehavior{
 		@Getter
 		private Date endTime;
 		@Getter
-		private String binInterval; //ISO
+		private String binInterval; //ISO Period
 		@Getter
 		private List<BinValue> bins;
 		
@@ -96,6 +94,33 @@ public class NotificationBehavior implements IApiBehavior{
 			return sum;
 		}
 
+	}
+	
+	
+	private static class WorkerEventHistogram {
+		private static class ShortWorker {
+			@Getter
+			private String domainId;
+			@Getter
+			private String name;
+			
+			public ShortWorker(Worker worker) {
+				super();
+				this.domainId = worker.getDomainId();
+				this.name = worker.getWorkerNameUI();
+			}
+		}
+		
+		@Getter
+		ShortWorker worker;
+		
+		@Getter
+		HistogramResult events;
+		
+		public WorkerEventHistogram(Worker worker, HistogramResult histogramResult) {
+			this.worker = new ShortWorker(worker);
+			this.events = histogramResult;
+		}
 	}
 	
 	public static class BinValue {
@@ -297,16 +322,24 @@ public class NotificationBehavior implements IApiBehavior{
 		return result;
 	}
 
-	public List<HistogramResult> workersPickHistogram(final Interval createdInterval, final Period binWidth, Facility facility) {
-		@SuppressWarnings("unchecked")
-		List<String> workerIds = WorkerEvent.staticGetDao().createCriteria()
+	public List<WorkerEventHistogram> workersPickHistogram(final Interval createdInterval, final Period binWidth, Facility facility) {
+		DetachedCriteria distinctWorkers = DetachedCriteria.forClass(WorkerEvent.class)
 				.setProjection(Projections.distinct(Projections.property("workerId")))
 				.add(Property.forName("parent").eq(facility))
-				.add(GenericDaoABC.createIntervalRestriction("created", createdInterval))
-				.list();
-		ArrayList<HistogramResult> workerHistograms = new ArrayList<HistogramResult>();
-		for (String workerId : workerIds) {
-			workerHistograms.add(workerPickRateHistogram(createdInterval, binWidth, facility, workerId));
+				.add(GenericDaoABC.createIntervalRestriction("created", createdInterval));
+		
+    	Criteria workerCriteria = Worker.staticGetDao().createCriteria();
+       	workerCriteria.add(Property.forName("parent").eq(facility))
+       				  .add(Property.forName("domainId").in(distinctWorkers));
+		
+		@SuppressWarnings("unchecked")
+		List<Worker> workers = workerCriteria.list();
+		
+		ArrayList<WorkerEventHistogram> workerHistograms = new ArrayList<WorkerEventHistogram>();
+		for (Worker worker : workers) {
+			workerHistograms.add(
+				new WorkerEventHistogram(worker, workerPickRateHistogram(createdInterval, binWidth, facility, worker.getDomainId()))
+			);
 		}
 		return workerHistograms;
 	}

@@ -567,7 +567,7 @@ public class FacilityResource {
 		ErrorResponse errors = new ErrorResponse();
 		try {
 			Period bin = Period.parse(MoreObjects.firstNonNull(binPeriod, "PT5M"));  
-			List<HistogramResult> result = notificationService.workersPickHistogram(createdInterval.getValue(), bin, facility);
+			List<?> result = notificationService.workersPickHistogram(createdInterval.getValue(), bin, facility);
 			return BaseResponse.buildResponse(result);
 		} catch (Exception e) {
 			return errors.processException(e);
