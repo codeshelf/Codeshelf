@@ -2,7 +2,6 @@ package com.codeshelf.behavior;
 
 import static org.mockito.Mockito.mock;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -13,8 +12,6 @@ import javax.ws.rs.core.UriInfo;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
-import org.joda.time.Period;
-import org.joda.time.PeriodType;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;

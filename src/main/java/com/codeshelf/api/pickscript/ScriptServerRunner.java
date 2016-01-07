@@ -14,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.api.resources.subresources.EDIGatewaysResource;
-import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.behavior.UiUpdateBehavior;
 import com.codeshelf.device.ScriptSiteRunner;
 import com.codeshelf.edi.EdiExportService;
@@ -263,12 +262,11 @@ public class ScriptServerRunner {
 		if (parts.length != 3){
 			throwIncorrectNumberOfArgumentsException(TEMPLATE_SET_PROPERTY);
 		}
-		String name = parts[1].toUpperCase();
-		FacilityPropertyType type = FacilityPropertyType.valueOf(name);
-		if (type == null) {
+		String name = parts[1].toUpperCase(), value = parts[2]; 
+		if (FacilityPropertyType.valueOf(name) == null) {
 			throw new Exception("Property " + name + " doesn't exist");
 		}
-		PropertyBehavior.setProperty(facility, type, parts[2]);
+		uiUpdateBehavior.updateFacilityProperty(facilityId.toString(), name, value);
 	}
 
 	/**

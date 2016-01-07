@@ -20,6 +20,7 @@ import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.message.NetworkStatusMessage;
 import com.codeshelf.ws.protocol.message.PosConLightAddressesMessage;
 import com.codeshelf.ws.protocol.message.PosConSetupMessage;
+import com.codeshelf.ws.protocol.message.PropertyChangeMessage;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
 import com.codeshelf.ws.protocol.request.PingRequest;
@@ -277,6 +278,8 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				this.deviceManager.processPosConLightAddresses(msg);
 			} else if (message instanceof DisconnectSiteControllerMessage) {
 				this.deviceManager.disconnected();
+			} else if (message instanceof PropertyChangeMessage) {
+				updateProperty((PropertyChangeMessage)message);
 			}
 		} finally {
 			this.clearDeviceContext();
@@ -326,5 +329,41 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 
 	private void clearDeviceContext() {
 		ContextLogging.clearNetGuid();
+	}
+	
+	private void updateProperty(PropertyChangeMessage message){
+		boolean siteControllerProperty = true;
+		String value = message.getValue();
+		switch (message.getType()){
+			case AUTOSHRT:
+				deviceManager.setAutoShortValue(Boolean.parseBoolean(value));
+				break;
+			case PICKINFO:
+				deviceManager.setPickInfoValue(value);
+				break;
+			case PICKMULT:
+				deviceManager.setPickMultValue(Boolean.parseBoolean(value));
+				break;
+			case CNTRTYPE:
+				deviceManager.setContainerTypeValue(value);
+				break;
+			case SCANPICK:
+				deviceManager.setScanTypeValue(value);
+				break;
+			case WORKSEQR:
+				deviceManager.setSequenceKind(value);
+				break;
+			case PRODUCTION:
+				deviceManager.setProductionValue(Boolean.parseBoolean(value));
+				break;
+			case ORDERSUB:
+				deviceManager.setOrdersubValue(value);
+				break;
+			default:
+				siteControllerProperty = true;
+		}
+		if (siteControllerProperty){
+			LOGGER.info("Updating SiteController-important property {} to {}", message.getType(), value);
+		}
 	}
 }

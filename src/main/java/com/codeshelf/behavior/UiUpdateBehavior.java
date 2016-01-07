@@ -41,9 +41,11 @@ import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 import com.codeshelf.ws.protocol.message.PosConSetupMessage;
+import com.codeshelf.ws.protocol.message.PropertyChangeMessage;
 import com.codeshelf.ws.protocol.message.PosConLightAddressesMessage;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.Strings;
+import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -55,7 +57,11 @@ public class UiUpdateBehavior implements IApiBehavior {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(UiUpdateBehavior.class);
 
-	public UiUpdateBehavior() {
+	private WebSocketManagerService webSocketManagerService;
+	
+	@Inject
+	public UiUpdateBehavior(WebSocketManagerService webSocketManagerService) {
+		this.webSocketManagerService = webSocketManagerService;
 	}
 
 	public Item storeItem(String facilityId,
@@ -360,6 +366,7 @@ public class UiUpdateBehavior implements IApiBehavior {
 		}
 		FacilityPropertyType type = FacilityPropertyType.valueOf(name);
 		PropertyBehavior.setProperty(facility, type, value);
+		webSocketManagerService.sendMessage(facility.getSiteControllerUsers(), new PropertyChangeMessage(type, value));
 	}
 
 }

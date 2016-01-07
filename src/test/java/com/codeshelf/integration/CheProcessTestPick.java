@@ -1231,7 +1231,7 @@ public class CheProcessTestPick extends ServerTest {
 	@Test
 	public void testDefaultProcessMode() {
 		beginTransaction();
-		UiUpdateBehavior service = new UiUpdateBehavior();
+		UiUpdateBehavior service = new UiUpdateBehavior(webSocketManagerService);
 		Facility facility = getFacility();
 		CodeshelfNetwork network = this.getNetwork();
 		Che che = network.createChe("0x00000004", new NetGuid("0x00000004"));

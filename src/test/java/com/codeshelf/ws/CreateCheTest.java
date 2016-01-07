@@ -45,7 +45,7 @@ public class CreateCheTest extends MockDaoTest {
 		Facility facility = createFacility();
 		Facility.staticGetDao().store(facility);		
 		
-		UiUpdateBehavior service = new UiUpdateBehavior();
+		UiUpdateBehavior service = new UiUpdateBehavior(webSocketManagerService);
 		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL", "POSCON_V1");
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -65,7 +65,7 @@ public class CreateCheTest extends MockDaoTest {
 		Facility facility = createFacility();
 		Facility.staticGetDao().store(facility);		
 		
-		UiUpdateBehavior service = new UiUpdateBehavior();
+		UiUpdateBehavior service = new UiUpdateBehavior(webSocketManagerService);
 		UUID cheid = service.addChe(facility.getPersistentId().toString(), "Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL", "POSCON_V1");
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -273,7 +273,7 @@ public class CreateCheTest extends MockDaoTest {
 	public void cheUpdateFromUISuccess() {
 		this.getTenantPersistenceService().beginTransaction();
 		Che che = createTestChe("0x00000002");
-		UiUpdateBehavior service = new UiUpdateBehavior();
+		UiUpdateBehavior service = new UiUpdateBehavior(webSocketManagerService);
 		service.updateChe(che.getPersistentId().toString(),"Test Device", "Updated Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL", "POSCON_V1");
 		java.util.UUID cheid = che.getPersistentId();
 		this.getTenantPersistenceService().commitTransaction();
@@ -292,7 +292,7 @@ public class CreateCheTest extends MockDaoTest {
 	public void cheUpdateFromUIFail() {
 		this.getTenantPersistenceService().beginTransaction();
 		Che che = createTestChe("0x00000003");
-		UiUpdateBehavior service = new UiUpdateBehavior();
+		UiUpdateBehavior service = new UiUpdateBehavior(webSocketManagerService);
 		String persistentId = che.getPersistentId().toString();
 		//Update che successfully
 		service.updateChe(persistentId, "Test Device", "Description", "orange", "0x00000099", "SETUP_ORDERS", "ORIGINALSERIAL", "POSCON_V1");

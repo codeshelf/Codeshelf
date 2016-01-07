@@ -44,7 +44,7 @@ public class WorkerTest extends HibernateTest {
 			notificaitonService, 
 			webSocketManagerService,
 			null,
-			new UiUpdateBehavior(), 
+			new UiUpdateBehavior(webSocketManagerService), 
 			anyProvider, 
 			anyProvider, 
 			anyProvider, 

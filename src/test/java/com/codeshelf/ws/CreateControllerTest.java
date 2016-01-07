@@ -21,7 +21,7 @@ public class CreateControllerTest extends HibernateTest{
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = getFacility();
 		Facility.staticGetDao().store(facility);
-		UiUpdateBehavior service = new UiUpdateBehavior();
+		UiUpdateBehavior service = new UiUpdateBehavior(webSocketManagerService);
 		UUID controllerId = service.addController(facility.getPersistentId().toString(), "1a", "Poscons");
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -38,7 +38,7 @@ public class CreateControllerTest extends HibernateTest{
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = createFacility();
 		Facility.staticGetDao().store(facility);
-		UiUpdateBehavior service = new UiUpdateBehavior();
+		UiUpdateBehavior service = new UiUpdateBehavior(webSocketManagerService);
 		UUID controllerId = service.addController(facility.getPersistentId().toString(), "1a", "Poscons");
 		this.getTenantPersistenceService().commitTransaction();
 
@@ -62,7 +62,7 @@ public class CreateControllerTest extends HibernateTest{
 		this.getTenantPersistenceService().beginTransaction();
 		Facility facility = setUpFacilityWithAisles();
 		Facility.staticGetDao().store(facility);
-		UiUpdateBehavior service = new UiUpdateBehavior();
+		UiUpdateBehavior service = new UiUpdateBehavior(webSocketManagerService);
 		UUID controllerId = service.addController(facility.getPersistentId().toString(), "1a", "Poscons");
 		LedController controller = LedController.staticGetDao().findByPersistentId(controllerId);
 		//Retrieve an aisle and an unrelated tier
