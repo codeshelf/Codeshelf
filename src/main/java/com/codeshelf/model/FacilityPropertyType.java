@@ -3,7 +3,7 @@ package com.codeshelf.model;
 import lombok.Getter;
 
 public enum FacilityPropertyType {
-	AUTOSHRT("true","On CHE setup, if there is no product known by the system, shall the system immediately short and not present those work instructions. Some sites may like this off, making the worker locate and update the item location immediately.", "true, false."),
+	AUTOSHRT("true","On CHE setup, if there is no product known by the system, system will immediately short and not present those work instructions. Some sites may like this off, making the worker locate and update the item location immediately.", "true, false."),
 	BADGEAUTH("false","If true, only registered Workers will be able to log into CHEs. If false, creates default accounts for new badges.", "true, false."),
 	BAYCHANG("BayChange","Determine under what conditions the CHE should get a bay change housekeeping work instruction.", "None, Baychange, BaychangeExceptAcrossAisle, PathSegmentChange."),
 	RPEATPOS("ContainerOnly","Determine under what conditions the CHE should get a repeat position housekeeping work instruction.", "None, ContainerOnly, ContainerAndCount."),	
