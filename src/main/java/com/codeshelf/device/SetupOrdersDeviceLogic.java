@@ -2489,7 +2489,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processContainerPosition(COMMAND_PREFIX, inScanStr);
 				break;
 
-			case SETUP_SUMMARY:
+			case SETUP_SUMMARY:				
 				// Normally, start work here would hit the default case below, calling start work() which queries to server again
 				// ultimately coming back to SETUP_SUMMARY state. However, if okToStartWithoutLocation, then start scan moves us forward
 				boolean reverseOrderFromLastTime = getMReversePickOrder() != reverse;

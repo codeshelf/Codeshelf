@@ -2241,6 +2241,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			LOGGER.error("enterLinkedState failed to find the device");
 			return;
 		}
+		if (linkedDevice.getCheLightingEnum() == CheLightingEnum.NOLIGHTING){
+			LOGGER.warn("Remote CHE " + linkedDevice.getMyGuidStr() + " has lighting mode NOLIGHTING. Will behave as if it was POSCON");
+		}
 		// Is this is primary "link" transaction? Place the notify here.
 		notifyLink(linkedDevice.getGuid());
 

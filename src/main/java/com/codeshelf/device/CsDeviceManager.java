@@ -983,6 +983,9 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			if (verified == null) {
 				verified = false;
 			}
+			if (cheDevice.getCheLightingEnum() == CheLightingEnum.NOLIGHTING){
+				LOGGER.warn("CHE " + cheDevice.getMyGuidStr() + " has lighting mode NOLIGHTING. Will behave as if it was POSCON");
+			}
 			setWorkerNameFromGuid(cheDevice.getGuid(), response.getWorkerNameUI());
 			cheDevice.processResultOfVerifyBadge(verified, response.getWorkerId());
 			setCheNameFromGuid(new NetGuid(cheGuid), response.getCheName());
