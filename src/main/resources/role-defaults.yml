@@ -64,11 +64,13 @@ Dashboard:
 # All roles beginning with "Cs" are special restricted roles that cannot be assigned by non-Codeshelf users 
 CsDeveloper:
   - "che:simulate"
+  - "jmx:edit"
 CsSimulate:
   - "che:simulate"
 CsSupport:
   - "ws:login"
   - "ux:*" 
+  - "jmx:edit"
   - "companion:*"
   - "che:create,edit,delete"
   - "param:*"

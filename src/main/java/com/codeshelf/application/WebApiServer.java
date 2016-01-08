@@ -31,6 +31,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
+import org.jminix.console.servlet.MiniConsoleServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +45,7 @@ import com.codeshelf.device.RadioServlet;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.metrics.ServiceStatusHealthCheck;
 import com.codeshelf.security.AuthFilter;
+import com.codeshelf.security.AuthzFilter;
 import com.codeshelf.ws.server.CsServerEndPoint;
 import com.google.inject.Inject;
 import com.google.inject.servlet.GuiceFilter;
@@ -66,6 +68,7 @@ public class WebApiServer {
 		boolean enableSchemaManagement = Boolean.getBoolean("adminserver.schemamanagement");
 		boolean enableApi = Boolean.getBoolean("adminserver.api.enable");
 		boolean enableManagerApi = Boolean.getBoolean("adminserver.manager.enable");
+		boolean enableJMX = Boolean.getBoolean("adminserver.jmx.enable");
 		boolean enableWebSockets = Boolean.getBoolean("adminserver.websockets.enable");
 		String staticContentPath = System.getProperty("webapp.content.path");
 
@@ -105,6 +108,9 @@ public class WebApiServer {
 			        wscontainer.addEndpoint(CsServerEndPoint.class);
 				}
 
+				if(enableJMX) {
+					contexts.addHandler(createJMXHandler());
+				}
 		        // embedded static content web server (enabled in dev environment only)
 		        if(staticContentPath != null) {
 					ResourceHandler resourceHandler = new ResourceHandler();
@@ -260,6 +266,21 @@ public class WebApiServer {
 		rc.getProperties().put(ResourceConfig.PROPERTY_RESOURCE_FILTER_FACTORIES, filters);
 		ServletContainer container = new ServletContainer(rc);
 		context.addServlet(new ServletHolder(container), "/*");
+		return context;
+	}
+	
+	private Handler createJMXHandler() {
+		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
+		
+		context.setContextPath("/jmx");
+		// can't seem to inject both APIs in different handlers, Guice gets confused.. hm
+		//FilterHolder jerseyGuiceFilter = new FilterHolder(new GuiceFilter());
+		context.addFilter(CORSFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+		context.addFilter(AuthFilter.class, "/*", EnumSet.allOf(DispatcherType.class));
+		FilterHolder authzFilter = new FilterHolder(AuthzFilter.class);
+		authzFilter.setInitParameter("permission", "jmx:edit");
+		context.addFilter(authzFilter, "/*", EnumSet.allOf(DispatcherType.class));
+		context.addServlet(new ServletHolder(new MiniConsoleServlet()), "/*");
 		return context;
 	}
 	
