@@ -27,7 +27,6 @@ import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
-import org.hibernate.criterion.SimpleExpression;
 import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -365,12 +364,12 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		return total;
 	}
 
-	public static SimpleExpression createSubstringRestriction(String propertyName, String substring) {
-		SimpleExpression property = null;
+	public static Criterion createSubstringRestriction(String propertyName, String substring) {
+		Criterion property = null;
 		if (substring != null && substring.indexOf('*') >= 0) {
-			property = Property.forName(propertyName).like(substring.replace('*', '%'));
+			property = Restrictions.ilike(propertyName, substring.replace('*', '%'));
 		} else {
-			property = Property.forName(propertyName).eq(substring);
+			property = Restrictions.ilike(propertyName, substring);
 		}
 		return property;
 	}
