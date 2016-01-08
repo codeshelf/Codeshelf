@@ -101,6 +101,16 @@ configuration:
     - name: org.apache
       level: warn
 
+            #the jmx console app logger
+    - name: org.jminix
+      level: warn
+
+    - name: org.restlet
+      level: warn
+
+    - name: .LogService
+      level: warn
+      
     - name: com.mchange
       level: warn
 
@@ -112,6 +122,12 @@ configuration:
       
     - name: com.codeshelf.edi
       level: info # this is a convenient server log 'heartbeat'
+
+    - name: com.codeshelf.behavior
+      level: info # this allows manipulation by jmx
+
+    - name: com.codeshelf.behavior.WorkBehavior
+      level: info # this allows manipulation by jmx
       
     - name: org.eclipse.jetty.util.log
       level: warn # don't log init
