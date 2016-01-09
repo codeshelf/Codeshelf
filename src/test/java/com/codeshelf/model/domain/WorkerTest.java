@@ -219,25 +219,53 @@ public class WorkerTest extends HibernateTest {
 			
 		//Save two workers
 		Worker worker1 = createWorkerObject(true, "FirstName_1", "LastName_1", null, "abc123", null, null);
-		Response response = workersResource.createWorker(worker1);
-		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
-		
 		Worker worker2 = createWorkerObject(true, "FirstName_2", "LastName_2", null, "def456", null, null);
-		response = workersResource.createWorker(worker2);
-		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		saveWorker(worker1);
+		saveWorker(worker2);
 
 		//Retrieve the saved Workers in Facility.
-		response = workersResource.getAllWorkers(null, 20);
+		Response response = workersResource.getAllWorkers(null, 20);
 		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
 		@SuppressWarnings("unchecked")
 		ArrayList<Worker> workers = new ArrayList<>(((ResultDisplay<Worker>)response.getEntity()).getResults());
+
 		//Note that the order of Workers is defaulted by badgeId
 		compareWorkers(worker1, workers.get(0));
 		compareWorkers(worker2, workers.get(1));
 		
+
+		
 		this.getTenantPersistenceService().commitTransaction();
 	}
 
+	@Test
+	public void searchWorkersCaseInsensitive() {
+		beginTransaction();
+		
+		//Save two workers
+		Worker worker1 = createWorkerObject(true, "FirstName_1", "LastName_1", null, "abc123", null, null);
+		Worker worker2 = createWorkerObject(true, "FirstName_2", "LastName_2", null, "def456", null, null);
+		saveWorker(worker1);
+		saveWorker(worker2);
+		
+		
+		Response response = workersResource.getAllWorkers("*ABC*", 20);
+
+		//Search by case insensitive
+		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		@SuppressWarnings("unchecked")
+		ArrayList<Worker> foundWorkers = new ArrayList<>(((ResultDisplay<Worker>)response.getEntity()).getResults());
+		Assert.assertEquals(1,  foundWorkers.size());
+		compareWorkers(worker1, foundWorkers.get(0));
+		commitTransaction();
+	}
+
+	private void saveWorker(Worker worker) {
+		Response response = workersResource.createWorker(worker);
+		Assert.assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+		
+	}
+	
 	private WorkerResource getWorkerResource(Worker worker) throws Exception {
 		WorkerResource workerResource = new WorkerResource(new NotificationBehavior());
 		workerResource.setWorker(worker);
