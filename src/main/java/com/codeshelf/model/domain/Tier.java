@@ -308,16 +308,14 @@ public class Tier extends Location {
 		}
 	}
 
-	public void offSetTierLeds(int offset) {
+	public void offSetTierLeds(int offset) throws IllegalArgumentException{
 		LedController ledController = this.getLedController();
 		if (ledController == null) {
-			LOGGER.warn("Failed to set LED offset on " + this + ": Tier has no LedController.");
-			return;
+			throw new IllegalArgumentException("Failed to set LED offset on " + this + ": Tier has no LedController.");
 		}
 		if (ledController.getDeviceType() != DeviceType.Lights) {
-			LOGGER.warn("Failed to set LED offset on " + this + ": LedController " + ledController
-					+ " is not of device type Lights.");
-			return;
+			throw new IllegalArgumentException(
+				"Failed to set LED offset on " + this + ": LedController " + ledController + " is not of device type Lights.");
 		}
 
 		LOGGER.info("Offsetting first/last LED by {} for each slot in {}", offset, this);
