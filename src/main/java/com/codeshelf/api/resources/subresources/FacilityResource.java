@@ -32,7 +32,6 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.commons.beanutils.BeanMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
@@ -54,10 +53,12 @@ import com.codeshelf.api.pickscript.ScriptServerRunner;
 import com.codeshelf.api.pickscript.ScriptSiteCallPool;
 import com.codeshelf.api.pickscript.ScriptStepParser;
 import com.codeshelf.api.pickscript.ScriptStepParser.StepPart;
+import com.codeshelf.api.resources.ChesResource;
 import com.codeshelf.api.resources.ExtensionPointsResource;
 import com.codeshelf.api.resources.OrdersResource;
 import com.codeshelf.api.resources.WorkersResource;
 import com.codeshelf.api.responses.EventDisplay;
+import com.codeshelf.api.responses.FacilityShort;
 import com.codeshelf.api.responses.ItemDisplay;
 import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.api.responses.ResultDisplay;
@@ -80,7 +81,6 @@ import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.DataPurgeParameters;
 import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.dao.GenericDaoABC;
-import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.FacilityMetric;
@@ -169,6 +169,12 @@ public class FacilityResource {
 		this.workerImporterProvider = workerImporterProvider;
 	}
 
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response get() {
+		return BaseResponse.buildResponse(new FacilityShort(facility));
+	}
+
 	@Path("/import")
 	public ImportResource getImportResource() throws Exception {
 		ImportResource r = resourceContext.getResource(ImportResource.class);
@@ -186,6 +192,13 @@ public class FacilityResource {
 	@Path("/workers")
 	public WorkersResource getWorkersResource() throws Exception {
 		WorkersResource r = resourceContext.getResource(WorkersResource.class);
+		r.setFacility(facility);
+		return r;
+	}
+
+	@Path("/ches")
+	public ChesResource getAllChesInFacility() {
+		ChesResource r = resourceContext.getResource(ChesResource.class);
 		r.setFacility(facility);
 		return r;
 	}
@@ -369,19 +382,6 @@ public class FacilityResource {
 			filterName);
 
 		return BaseResponse.buildResponse(summary);
-	}
-
-	@GET
-	@Path("/ches")
-	@RequiresPermissions("che:edit")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getAllChesInFacility() {
-		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", facility));
-		Criteria cheCriteria = Che.staticGetDao().createCriteria();
-		cheCriteria.createCriteria("parent", "network").add(Restrictions.eq("parent", facility));
-		List<Che> ches = Che.staticGetDao().findByCriteriaQuery(cheCriteria);
-		return BaseResponse.buildResponse(ches);
 	}
 
 
