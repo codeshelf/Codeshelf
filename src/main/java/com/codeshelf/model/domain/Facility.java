@@ -162,6 +162,13 @@ public class Facility extends Location {
 		setParent(this);
 	}
 
+	public Facility(String domainId) {
+		super(domainId, Point.getZeroPoint());
+		//Since all Domain Tree obects now have to have a parent, set Facility as it's own parent.
+		//Make sure not to fall into any endless loops with this
+		setParent(this);
+	}
+
 	@Override
 	public Facility getFacility() {
 		return this;
@@ -419,22 +426,27 @@ public class Facility extends Location {
 		return 0.0;
 	}
 
+	private CodeshelfNetwork getPrimaryNetwork() {
+		CodeshelfNetwork network = this.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		return network;
+	}
+	
 	@JsonProperty("primaryChannel")
 	public Short getPrimaryChannel() {
-		CodeshelfNetwork network = this.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		CodeshelfNetwork network = getPrimaryNetwork();
 		return network.getChannel();
 	}
 
 	@JsonProperty("primaryChannel")
 	public void setPrimaryChannel(Short channel) {
-		CodeshelfNetwork network = this.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		CodeshelfNetwork network = getPrimaryNetwork();
 		network.setChannel(channel);
 		network.getDao().store(network);
 	}
 
 	@JsonProperty("primarySiteControllerId")
 	public String getPrimarySiteControllerId() {
-		CodeshelfNetwork network = this.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		CodeshelfNetwork network = getPrimaryNetwork();
 		Collection<SiteController> siteControllers = network.getSiteControllers().values();
 		if (siteControllers.size() > 1) {
 			LOGGER.warn("Multiple site controllers found but expected no more than one for facility: {}", this);
@@ -450,7 +462,7 @@ public class Facility extends Location {
 	@JsonProperty("primarySiteControllerId")
 	public void setPrimarySiteControllerId(String siteControllerId) {
 		if (!Strings.isNullOrEmpty(siteControllerId)) {
-			CodeshelfNetwork network = this.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+			CodeshelfNetwork network = getPrimaryNetwork();
 			Collection<SiteController> siteControllers = network.getSiteControllers().values();
 			if (siteControllers.size() > 1) {
 				LOGGER.warn("Multiple site controllers found but expected no more than one for facility: {}", this);
@@ -1061,8 +1073,7 @@ public class Facility extends Location {
 	 */
 	public int countLedControllers() {
 		int result = 0;
-
-		CodeshelfNetwork network = getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		CodeshelfNetwork network = getPrimaryNetwork();
 		if (network == null)
 			return result;
 		Map<String, LedController> controllerMap = network.getLedControllers();
