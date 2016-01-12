@@ -1,6 +1,7 @@
 package com.codeshelf.api.resources;
 
 import java.util.List;
+import java.util.UUID;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -16,12 +17,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.hibernate.criterion.Property;
 import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.api.BaseResponse;
-import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.resources.subresources.FacilityResource;
 import com.codeshelf.api.responses.FacilityShort;
@@ -30,6 +31,7 @@ import com.codeshelf.model.domain.Point;
 import com.codeshelf.scheduler.ApplicationSchedulerService;
 import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.ws.server.WebSocketManagerService;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
 
@@ -48,10 +50,22 @@ public class FacilitiesResource {
 		this.applicationSchedulerService = applicationSchedulerService;
 	}
 	
-	@Path("{id}")
+	@Path("/{id}")
 	@RequiresPermissions("companion:view")
-	public FacilityResource getFacility(@PathParam("id") UUIDParam uuidParam) throws Exception {
-		Facility facility = Facility.staticGetDao().findByPersistentId(uuidParam.getValue());
+	public FacilityResource getFacility(@PathParam("id") String idParam) throws Exception {
+		Facility facility = null;
+		try {
+			UUID uuid = UUID.fromString(idParam);
+			facility = Facility.staticGetDao().findByPersistentId(uuid);
+		} catch(Exception e) {
+			List<Facility> facilities = Facility.staticGetDao().findByFilter(
+				ImmutableList.of(Property.forName("domainId").eq(idParam)));
+			if (facilities.size() == 1) {
+				facility = facilities.get(0);
+			} else if (facilities.size() != 1) {
+				throw new WebApplicationException(Response.Status.INTERNAL_SERVER_ERROR);
+			}
+		}
 		if (facility == null) {
 			throw new WebApplicationException(Response.Status.NOT_FOUND);
 		}
