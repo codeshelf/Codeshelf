@@ -4,9 +4,7 @@ import java.sql.Timestamp;
 import java.util.Map;
 import java.util.UUID;
 
-import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.OrderTypeEnum;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 

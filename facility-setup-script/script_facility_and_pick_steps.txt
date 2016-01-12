@@ -5,7 +5,9 @@ var :channel	8
 var :che1 		0x0000009B
 var :che2 		0x000000ED
 var :chePall	0x0000009D
+var :chePos		0x000000DB
 var :contr1 	0x00000064
+var :contr2 	0x000001D8
 var :sftphost	sftp.codeshelf.com
 var :sftpuser	test
 var :sftppass	**********
@@ -29,9 +31,9 @@ importLocations locations
 setWall Aisle1 putwall
 setWall A2 skuwall
 setController LocX24   lights  :contr1 1 tiersInAisle
-setController LocX26   lights  0x000000AB 1 tiersInAisle
+setController LocX26   lights  :contr2 1 tiersInAisle
 setController A3.B1.T1 poscons 0x000000AA 1 tiersInAisle
-setPosconToBay A3.B3 0x000000AA 98 A3.B4 0x000000AA 99 A1.B2 0x000000DB 11 A2.B2 0x000000DB 1
+setPosconToBay A3.B3 0x000000AA 98 A3.B4 0x000000AA 99 A1.B2 :chePos 11 A2.B2 :chePos 1
 setPoscons A3.B1.T1 1 forward A3.B2.T1 5 forward A3.B3.T1 9 forward A3.B4.T1 13 forward
 createChe 0x000000A4 blue LINE_SCAN CHE_A4 CODECORPS3600
 createChe :che1 green SETUP_ORDERS CHE_A ORIGINALSERIAL
@@ -78,7 +80,7 @@ scan cheC 10010002 PALLETIZER_PUT_ITEM
 
 STEP put wall
 SITE
-waitForDevices :che1 :che2 :contr1 0x0000000AB
+waitForDevices :che1 :che2 :contr1 :contr2
 defChe cheA :che1
 defCheUseRadio cheB :che2 cheC :chePall
 logout cheA cheB cheC

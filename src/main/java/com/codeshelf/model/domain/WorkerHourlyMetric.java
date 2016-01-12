@@ -69,7 +69,7 @@ public class WorkerHourlyMetric extends DomainObjectTreeABC<Worker>{
 		setSessionActive(true);
 		setHourTimestamp(TimeUtils.truncateTimeToHour(sessionStart));
 		setLastSessionStart(sessionStart);
-		setDomainId(getDefaultDomainIdPrefix() + "_" + worker.getDomainId() + "_" + getHourTimestamp());
+		setDomainId(getDefaultDomainIdPrefix() + "_" + worker.getDomainId() + "_" + getHourTimestamp() + "_" + System.currentTimeMillis());
 		WorkerHourlyMetric.staticGetDao().store(this);
 	}
 	

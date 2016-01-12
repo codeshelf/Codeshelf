@@ -118,14 +118,14 @@ public class PalletizerBehavior implements IApiBehavior{
 		info.setOrderFound(false);
 		Location location = facility.findSubLocationById(locationStr);
 		if (location == null) {
-			LOGGER.error("Could not find location {}", locationStr);
+			LOGGER.warn("Could not find location {}", locationStr);
 			info.setErrorMessage1("Not found: " + locationStr);
 			info.setErrorMessage2("Scan another location");
 			return info;
 		}
 		String existingStoreId = getPalletizerStoreIdAtLocation(location);
 		if (existingStoreId != null){
-			LOGGER.error("Palletizer Location {} occupied with {}", location.getBestUsableLocationName(), existingStoreId);
+			LOGGER.warn("Palletizer Location {} already occupied with {}", location.getBestUsableLocationName(), existingStoreId);
 			info.setErrorMessage1("Busy: " + location.getBestUsableLocationName());
 			info.setErrorMessage2("Remove " + existingStoreId + " First");
 			return info;
