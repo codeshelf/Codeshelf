@@ -27,6 +27,10 @@ public class FacilityShort {
 	
 	@Getter
 	private String timeZoneDisplay;
+
+	public FacilityShort(Facility facility) {
+		this(facility.getDomainId(), facility.getPersistentId(), facility.getDescription(), facility.getTimeZone());
+	}
 	
 	public FacilityShort(String domainId, UUID persistentId, String description, TimeZone timeZone) {
 		this.domainId = domainId;
