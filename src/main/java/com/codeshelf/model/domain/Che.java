@@ -124,9 +124,10 @@ public class Che extends WirelessDeviceABC {
 
 	public enum CheLightingEnum  {POSCON_V1, LABEL_V1, NOLIGHTING};
 
-	public Che(String domainId) {
+	public Che(String domainId, int deviceGuid) {
 		this();
 		setDomainId(domainId);
+		setDeviceGuidStr(Integer.toHexString(deviceGuid));
 	}
 
 	public Che() {

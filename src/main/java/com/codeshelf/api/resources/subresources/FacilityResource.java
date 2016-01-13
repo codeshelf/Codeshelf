@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 
 import javax.script.ScriptException;
@@ -32,7 +33,6 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.commons.beanutils.BeanMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
@@ -54,10 +54,12 @@ import com.codeshelf.api.pickscript.ScriptServerRunner;
 import com.codeshelf.api.pickscript.ScriptSiteCallPool;
 import com.codeshelf.api.pickscript.ScriptStepParser;
 import com.codeshelf.api.pickscript.ScriptStepParser.StepPart;
+import com.codeshelf.api.resources.ChesResource;
 import com.codeshelf.api.resources.ExtensionPointsResource;
 import com.codeshelf.api.resources.OrdersResource;
 import com.codeshelf.api.resources.WorkersResource;
 import com.codeshelf.api.responses.EventDisplay;
+import com.codeshelf.api.responses.FacilityShort;
 import com.codeshelf.api.responses.ItemDisplay;
 import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.api.responses.ResultDisplay;
@@ -80,7 +82,6 @@ import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.DataPurgeParameters;
 import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.dao.GenericDaoABC;
-import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.FacilityMetric;
@@ -169,6 +170,12 @@ public class FacilityResource {
 		this.workerImporterProvider = workerImporterProvider;
 	}
 
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response get() {
+		return BaseResponse.buildResponse(new FacilityShort(facility));
+	}
+
 	@Path("/import")
 	public ImportResource getImportResource() throws Exception {
 		ImportResource r = resourceContext.getResource(ImportResource.class);
@@ -186,6 +193,13 @@ public class FacilityResource {
 	@Path("/workers")
 	public WorkersResource getWorkersResource() throws Exception {
 		WorkersResource r = resourceContext.getResource(WorkersResource.class);
+		r.setFacility(facility);
+		return r;
+	}
+
+	@Path("/ches")
+	public ChesResource getAllChesInFacility() {
+		ChesResource r = resourceContext.getResource(ChesResource.class);
 		r.setFacility(facility);
 		return r;
 	}
@@ -371,19 +385,6 @@ public class FacilityResource {
 		return BaseResponse.buildResponse(summary);
 	}
 
-	@GET
-	@Path("/ches")
-	@RequiresPermissions("che:edit")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getAllChesInFacility() {
-		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", facility));
-		Criteria cheCriteria = Che.staticGetDao().createCriteria();
-		cheCriteria.createCriteria("parent", "network").add(Restrictions.eq("parent", facility));
-		List<Che> ches = Che.staticGetDao().findByCriteriaQuery(cheCriteria);
-		return BaseResponse.buildResponse(ches);
-	}
-
 
 	@GET
 	@Path("events")
@@ -429,25 +430,27 @@ public class FacilityResource {
 
 			if (!Strings.isNullOrEmpty(itemId)) {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
-				ResultDisplay<BeanMap> result = new ResultDisplay<>();
+				List<BeanMap> eventBeans = new ArrayList<>();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
 					ItemDisplay itemDisplayKey = new ItemDisplay(eventDisplay);
 					if (itemId.equals(itemDisplayKey.getItemId()) && location.equals(itemDisplayKey.getLocation())) {
-						result.add(new BeanMap(eventDisplay));
+						eventBeans.add(new BeanMap(eventDisplay));
 					}
 				}
+				ResultDisplay<BeanMap> result = new ResultDisplay<>(eventBeans);
 				return BaseResponse.buildResponse(result);
 			} else if (!Strings.isNullOrEmpty(workerId)) {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
-				ResultDisplay<BeanMap> result = new ResultDisplay<>();
+				List<BeanMap> eventBeans = new ArrayList<>();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
 					WorkerDisplay workerDisplayKey = new WorkerDisplay(eventDisplay);
 					if (workerId.equals(workerDisplayKey.getId())) {
-						result.add(new BeanMap(eventDisplay));
+						eventBeans.add(new BeanMap(eventDisplay));
 					}
 				}
+				ResultDisplay<BeanMap> result = new ResultDisplay<>(eventBeans);
 				return BaseResponse.buildResponse(result);
 			}
 
@@ -461,13 +464,15 @@ public class FacilityResource {
 					issuesByItem.put(itemDisplayKey, count + 1);
 				}
 
-				ResultDisplay<Map<Object, Object>> result = new ResultDisplay<>(ItemDisplay.ItemComparator);
+				//
+				TreeSet<Map<Object, Object>> issues = new TreeSet<>(ItemDisplay.ItemComparator);
 				for (Map.Entry<ItemDisplay, Integer> issuesByItemEntry : issuesByItem.entrySet()) {
 					Map<Object, Object> values = new HashMap<>();
 					values.putAll(new BeanMap(issuesByItemEntry.getKey()));
 					values.put("count", issuesByItemEntry.getValue());
-					result.add(values);
+					issues.add(values);
 				}
+				ResultDisplay<Map<Object, Object>> result = new ResultDisplay<>(issues);
 				return BaseResponse.buildResponse(result);
 			} else if ("worker".equals(groupBy)) {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
@@ -479,26 +484,28 @@ public class FacilityResource {
 					issuesByWorker.put(workerDisplayKey, count + 1);
 				}
 
-				ResultDisplay<Map<Object, Object>> result = new ResultDisplay<>(WorkerDisplay.ItemComparator);
+				TreeSet<Map<Object, Object>> issues = new TreeSet<>(WorkerDisplay.ItemComparator);
 				for (Map.Entry<WorkerDisplay, Integer> issuesByWorkerEntry : issuesByWorker.entrySet()) {
 					Map<Object, Object> values = new HashMap<>();
 					values.putAll(new BeanMap(issuesByWorkerEntry.getKey()));
 					values.put("count", issuesByWorkerEntry.getValue());
-					result.add(values);
+					issues.add(values);
 				}
+				ResultDisplay<Map<Object, Object>> result = new ResultDisplay<>(issues);
 				return BaseResponse.buildResponse(result);
 			} else if ("type".equals(groupBy)) {
 				
 				List<WorkerEventTypeGroup> issuesByType = notificationService.groupWorkerEventsByType(facility, created.getValue(), resolved);
-				ResultDisplay<WorkerEventTypeGroup> result = new ResultDisplay<>(issuesByType.size());
-				result.addAll(issuesByType);
+				ResultDisplay<WorkerEventTypeGroup> result = new ResultDisplay<>(issuesByType);
 				return BaseResponse.buildResponse(result);
 			} else {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
-				ResultDisplay<BeanMap> result = new ResultDisplay<>(events.size());
+				List<BeanMap> eventBeans = new ArrayList<>();
 				for (WorkerEvent event : events) {
-					result.add(new BeanMap(EventDisplay.createEventDisplay(event)));
+					eventBeans.add(new BeanMap(EventDisplay.createEventDisplay(event)));
 				}
+				ResultDisplay<BeanMap> result = new ResultDisplay<>(eventBeans);
+
 				return BaseResponse.buildResponse(result);
 			}
 

@@ -1,5 +1,6 @@
 package com.codeshelf.api.resources;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -59,7 +60,7 @@ public class OrdersResource {
 	public Response getOrders(@QueryParam("status") String status, @QueryParam("orderId") String orderIdValue, @QueryParam("properties") List<String> propertyNamesList, @QueryParam("limit") Integer limit) {
 		String[] propertyNames = propertyNamesList.toArray(new String[]{});
 
-		ResultDisplay<Map<String, Object>> results = new ResultDisplay<>();
+		ResultDisplay<Map<String, Object>> results = new ResultDisplay<Map<String, Object>>(new ArrayList<Map<String, Object>>());
 		if (orderIdValue != null) {
 			results = this.orderService.findOrderHeadersForOrderId(facility, propertyNames, orderIdValue, limit);
 		} else if (status != null) {

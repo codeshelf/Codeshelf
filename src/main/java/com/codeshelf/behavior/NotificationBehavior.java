@@ -31,7 +31,6 @@ import org.joda.time.format.ISOPeriodFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.api.responses.ResultDisplay;
@@ -54,7 +53,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.MoreObjects;
+import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
@@ -446,18 +445,21 @@ public class NotificationBehavior implements IApiBehavior{
 		return result;
 	}
 
-	public ResultDisplay<EventDisplay> getEventsForCheId(UUIDParam uuidParam, Integer limit) {
-		limit = MoreObjects.firstNonNull(limit, 15);
+	public ResultDisplay<EventDisplay> getEventsForChe(Che che, Optional<Interval> created, Optional<Integer> limit) {
+		int limitValue = limit.or(15);
 		
 		
 		Criteria criteria = WorkerEvent.staticGetDao()
 		.createCriteria()
-		.add(Property.forName("devicePersistentId").eq(uuidParam.toString()));
+		.add(Property.forName("devicePersistentId").eq(che.getPersistentId().toString()));
+		if (created.isPresent()) {
+			criteria.add(GenericDaoABC.createIntervalRestriction("created", created.get()));
+		}
 		long total = countCriteria(criteria);
 		
 		criteria
 		.addOrder(Order.desc("created"))
-		.setMaxResults(limit);
+		.setMaxResults(limitValue);
 		@SuppressWarnings("unchecked")
 		List<WorkerEvent> entities = criteria.list();
 

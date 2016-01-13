@@ -8,23 +8,28 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-
-import lombok.Setter;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.ErrorResponse;
+import com.codeshelf.api.resources.EventsResource;
 import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Container;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.google.inject.Inject;
+import com.sun.jersey.api.core.ResourceContext;
+
+import lombok.Setter;
 
 public class CheResource {
+	@Context
+	private ResourceContext								resourceContext;
 
 	@Setter
 	private Che che;
@@ -35,6 +40,21 @@ public class CheResource {
 	public CheResource(WorkBehavior workService) {
 		this.workService = workService;
 	}
+	
+	@GET
+	@RequiresPermissions("che:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response get() {
+		return BaseResponse.buildResponse(che);
+	}
+	
+	@Path("/events")
+	public EventsResource getEvents() {
+		EventsResource r = resourceContext.getResource(EventsResource.class);
+		r.setChe(che);
+		return r;
+	}
+
 	
 	@GET
 	@Path("/computeinstructions")

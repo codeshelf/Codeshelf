@@ -125,22 +125,22 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 	}
 
 	public WorkerEvent(DateTime created, WorkerEvent.EventType eventType, Che che, String workerId) {
-		setCreated(new Timestamp(created.getMillis()));
+		setParent(che.getFacility());
 		setDeviceGuid(che.getDeviceGuidStr());
 		setDevicePersistentId(che.getPersistentId().toString());
+		setCreated(new Timestamp(created.getMillis()));
 		setEventType(eventType);
-		setParent(che.getFacility());
 		setWorkerId(workerId);
 		generateDomainId();
 	}
 
 	public WorkerEvent(WorkerEvent.EventType eventType, Facility facility, String workerId, String description) {
-		setCreated(new Timestamp(System.currentTimeMillis()));
-		setEventType(eventType);
 		setParent(facility);
-		setWorkerId(workerId);
 		setDevicePersistentId("");
 		setDeviceGuid("");
+		setCreated(new Timestamp(System.currentTimeMillis()));
+		setEventType(eventType);
+		setWorkerId(workerId);
 		setDescription(description);
 		generateDomainId();
 	}
