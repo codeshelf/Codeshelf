@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Vector;
 
@@ -23,6 +24,7 @@ import com.jcraft.jsch.ChannelSftp.LsEntry;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
+import com.jcraft.jsch.SftpATTRS;
 import com.jcraft.jsch.SftpException;
 import com.jcraft.jsch.SftpStatVFS;
 
@@ -137,7 +139,6 @@ public abstract class SftpGateway extends EdiGateway {
 
 	}
 
-	
 	protected void disconnect() {
 		if (channel == null) {
 			LOGGER.warn("disconnect() was called, but there is no channel. this is probably a bug. {}", toSftpChannelDebug());
@@ -262,5 +263,40 @@ public abstract class SftpGateway extends EdiGateway {
 			issues.add("Export/Archive directory can only hold " + availFiles + " more files instead of the required " + minAvailableFiles);
 		}
 		return issues;
+	}
+	
+	public List<String> retrieveOldProcessedFilesList(Date purgeThreshold) {
+		ArrayList<String> filesToDelete = new ArrayList<>();
+		try {
+			SftpConfiguration conf = getConfiguration();
+			String processedPath = (this instanceof SftpOrderGateway) ? conf.getArchivePath() : conf.getExportPath();
+			ChannelSftp sftp = connect();
+			Vector<?> fileList = sftp.ls(processedPath);
+			if (fileList == null) {
+				return filesToDelete;
+			}
+			if (!processedPath.endsWith("/")){
+				processedPath += "/";
+			}
+			for (Object file : fileList){
+				if (file instanceof LsEntry) {
+					LsEntry lsEntry = (LsEntry) file;
+					SftpATTRS attrs = lsEntry.getAttrs();
+					Date modified = new Date(attrs.getMTime() * 1000L);
+					if(attrs.isReg() && modified.before(purgeThreshold)) {
+						// regular file (not a folder or link etc) AND created after purge threshold date
+						filesToDelete.add(processedPath + lsEntry.getFilename());
+					} else {
+						LOGGER.debug("skipping non-file: {}",lsEntry.getLongname());
+					}
+				}
+			}
+			return filesToDelete;
+		} catch(SftpException | IOException e) {
+			LOGGER.error("Unable to retrieve old export file list", e);
+			return filesToDelete;
+		} finally {
+ 			disconnect();
+		}
 	}
 }
