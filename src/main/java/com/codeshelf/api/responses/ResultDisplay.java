@@ -1,8 +1,6 @@
 package com.codeshelf.api.responses;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.TreeSet;
 
 import lombok.Getter;
 
@@ -17,25 +15,6 @@ public class ResultDisplay<T> {
 
 	@Getter
 	private String next;
-	
-	public ResultDisplay() {
-		this(0);
-	}
-	
-	public ResultDisplay(long explicitTotal) {
-		this(explicitTotal, new ArrayList<T>());
-	}
-	
-	public ResultDisplay(FieldComparator<T> comparator) {
-		this(null, new TreeSet<>(comparator));
-		this.sortedBy = comparator.getSortedBy();
-	}
-
-	public ResultDisplay(Integer total, Collection<T> resultSet) {
-		this.explicitTotal = new Long(total);
-		this.results = resultSet;
-	}
-
 	
 	public ResultDisplay(Long total, Collection<T> resultSet) {
 		this.explicitTotal = total;
@@ -70,17 +49,4 @@ public class ResultDisplay<T> {
 	public Collection<T> getResults() {
 		return results;
 	}
-	
-	public void add(T value) {
-		@SuppressWarnings("unused")
-		boolean ret = results.add(value);
-	}
-
-
-	public void addAll(Collection<T> values) {
-		@SuppressWarnings("unused")
-		boolean ret = results.addAll(values);
-		
-	}
-
 }

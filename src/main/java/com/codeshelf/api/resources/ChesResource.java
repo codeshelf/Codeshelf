@@ -61,7 +61,7 @@ public class ChesResource {
 		} else {
 			ches = Che.staticGetDao().getAll();
 		}
-		return BaseResponse.buildResponse(new ResultDisplay<Che>(ches.size(), ches));
+		return BaseResponse.buildResponse(new ResultDisplay<Che>(ches));
 	}
 
 	@Path("/{id}")

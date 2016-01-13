@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 
 import javax.script.ScriptException;
@@ -429,25 +430,27 @@ public class FacilityResource {
 
 			if (!Strings.isNullOrEmpty(itemId)) {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
-				ResultDisplay<BeanMap> result = new ResultDisplay<>();
+				List<BeanMap> eventBeans = new ArrayList<>();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
 					ItemDisplay itemDisplayKey = new ItemDisplay(eventDisplay);
 					if (itemId.equals(itemDisplayKey.getItemId()) && location.equals(itemDisplayKey.getLocation())) {
-						result.add(new BeanMap(eventDisplay));
+						eventBeans.add(new BeanMap(eventDisplay));
 					}
 				}
+				ResultDisplay<BeanMap> result = new ResultDisplay<>(eventBeans);
 				return BaseResponse.buildResponse(result);
 			} else if (!Strings.isNullOrEmpty(workerId)) {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
-				ResultDisplay<BeanMap> result = new ResultDisplay<>();
+				List<BeanMap> eventBeans = new ArrayList<>();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
 					WorkerDisplay workerDisplayKey = new WorkerDisplay(eventDisplay);
 					if (workerId.equals(workerDisplayKey.getId())) {
-						result.add(new BeanMap(eventDisplay));
+						eventBeans.add(new BeanMap(eventDisplay));
 					}
 				}
+				ResultDisplay<BeanMap> result = new ResultDisplay<>(eventBeans);
 				return BaseResponse.buildResponse(result);
 			}
 
@@ -461,13 +464,15 @@ public class FacilityResource {
 					issuesByItem.put(itemDisplayKey, count + 1);
 				}
 
-				ResultDisplay<Map<Object, Object>> result = new ResultDisplay<>(ItemDisplay.ItemComparator);
+				//
+				TreeSet<Map<Object, Object>> issues = new TreeSet<>(ItemDisplay.ItemComparator);
 				for (Map.Entry<ItemDisplay, Integer> issuesByItemEntry : issuesByItem.entrySet()) {
 					Map<Object, Object> values = new HashMap<>();
 					values.putAll(new BeanMap(issuesByItemEntry.getKey()));
 					values.put("count", issuesByItemEntry.getValue());
-					result.add(values);
+					issues.add(values);
 				}
+				ResultDisplay<Map<Object, Object>> result = new ResultDisplay<>(issues);
 				return BaseResponse.buildResponse(result);
 			} else if ("worker".equals(groupBy)) {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
@@ -479,26 +484,28 @@ public class FacilityResource {
 					issuesByWorker.put(workerDisplayKey, count + 1);
 				}
 
-				ResultDisplay<Map<Object, Object>> result = new ResultDisplay<>(WorkerDisplay.ItemComparator);
+				TreeSet<Map<Object, Object>> issues = new TreeSet<>(WorkerDisplay.ItemComparator);
 				for (Map.Entry<WorkerDisplay, Integer> issuesByWorkerEntry : issuesByWorker.entrySet()) {
 					Map<Object, Object> values = new HashMap<>();
 					values.putAll(new BeanMap(issuesByWorkerEntry.getKey()));
 					values.put("count", issuesByWorkerEntry.getValue());
-					result.add(values);
+					issues.add(values);
 				}
+				ResultDisplay<Map<Object, Object>> result = new ResultDisplay<>(issues);
 				return BaseResponse.buildResponse(result);
 			} else if ("type".equals(groupBy)) {
 				
 				List<WorkerEventTypeGroup> issuesByType = notificationService.groupWorkerEventsByType(facility, created.getValue(), resolved);
-				ResultDisplay<WorkerEventTypeGroup> result = new ResultDisplay<>(issuesByType.size());
-				result.addAll(issuesByType);
+				ResultDisplay<WorkerEventTypeGroup> result = new ResultDisplay<>(issuesByType);
 				return BaseResponse.buildResponse(result);
 			} else {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
-				ResultDisplay<BeanMap> result = new ResultDisplay<>(events.size());
+				List<BeanMap> eventBeans = new ArrayList<>();
 				for (WorkerEvent event : events) {
-					result.add(new BeanMap(EventDisplay.createEventDisplay(event)));
+					eventBeans.add(new BeanMap(EventDisplay.createEventDisplay(event)));
 				}
+				ResultDisplay<BeanMap> result = new ResultDisplay<>(eventBeans);
+
 				return BaseResponse.buildResponse(result);
 			}
 
