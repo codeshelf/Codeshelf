@@ -30,6 +30,12 @@ public class ResultDisplay<T> {
 		this(null, new TreeSet<>(comparator));
 		this.sortedBy = comparator.getSortedBy();
 	}
+
+	public ResultDisplay(Integer total, Collection<T> resultSet) {
+		this.explicitTotal = new Long(total);
+		this.results = resultSet;
+	}
+
 	
 	public ResultDisplay(Long total, Collection<T> resultSet) {
 		this.explicitTotal = total;

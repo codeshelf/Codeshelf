@@ -1,5 +1,6 @@
 package com.codeshelf.api.resources;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -23,7 +24,9 @@ import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Restrictions;
 
+import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.resources.subresources.CheResource;
+import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.ws.server.CsServerEndPoint;
@@ -49,16 +52,16 @@ public class ChesResource {
 	@GET
 	@RequiresPermissions("che:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public List<Che> getChes() {
+	public Response getChes() {
+		List<Che> ches = new ArrayList<>();
 		if(facility != null) {
 			Criteria cheCriteria = Che.staticGetDao().createCriteria();
 			cheCriteria.createCriteria("parent", "network").add(Restrictions.eq("parent", facility));
-			List<Che> ches = Che.staticGetDao().findByCriteriaQuery(cheCriteria);
-			return ches;
+			ches = Che.staticGetDao().findByCriteriaQuery(cheCriteria);
 		} else {
-			List<Che> ches = Che.staticGetDao().getAll();
-			return ches;
+			ches = Che.staticGetDao().getAll();
 		}
+		return BaseResponse.buildResponse(new ResultDisplay<Che>(ches.size(), ches));
 	}
 
 	@Path("/{id}")
