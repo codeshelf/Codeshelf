@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.edi.EdiFileWriteException;
+import com.codeshelf.edi.SftpConfiguration;
 import com.codeshelf.model.domain.DropboxGateway;
 import com.codeshelf.model.domain.EdiGateway;
 import com.codeshelf.model.domain.Facility;
@@ -60,18 +61,21 @@ public class PurgeProcessorEdiFiles implements BatchProcessor {
 			retrieveFiles();
 			purgePhase = EdiFilesPurgePhase.PurgeSftpOrders;
 		} else if (purgePhase == EdiFilesPurgePhase.PurgeSftpOrders){
+			LOGGER.info(sftpOrdersToPurge.size() + " files left to purge");
 			if (sftpOrdersToPurge.isEmpty()) {
 				purgePhase = EdiFilesPurgePhase.PurgeSftpWIs;
 			} else {
 				filesDeleted += deleteSftpFiles(sftpOrderGateway, sftpOrdersToPurge);
 			}
 		} else if (purgePhase == EdiFilesPurgePhase.PurgeSftpWIs) {
+			LOGGER.info(sftpWisToPurge.size() + " files left to purge");
 			if (sftpWisToPurge.isEmpty()) {
 				purgePhase = EdiFilesPurgePhase.PurgeDropboxOrders;
 			} else {
 				filesDeleted += deleteSftpFiles(sftpWiGateway, sftpWisToPurge);
 			}
 		} else if (purgePhase == EdiFilesPurgePhase.PurgeDropboxOrders) {
+			LOGGER.info(dropboxOrdersToPurge.size() + " files left to purge");
 			if (dropboxOrdersToPurge.isEmpty()) {
 				purgePhase = EdiFilesPurgePhase.PurgeDone;
 			} else {
@@ -96,10 +100,14 @@ public class PurgeProcessorEdiFiles implements BatchProcessor {
 			if (gateway.isActive() && gateway.isLinked()) {
 				if (gateway instanceof SftpOrderGateway){
 					sftpOrderGateway = (SftpOrderGateway) gateway;
-					sftpOrdersToPurge = sftpOrderGateway.retrieveOldProcessedFilesList(purgeThreshold);
+					SftpConfiguration conf = sftpOrderGateway.getConfiguration();
+					sftpOrdersToPurge.clear();
+					sftpOrdersToPurge.addAll(sftpOrderGateway.retrieveOldProcessedFilesList(conf.getImportPath(), purgeThreshold));
+					sftpOrdersToPurge.addAll(sftpOrderGateway.retrieveOldProcessedFilesList(conf.getArchivePath(), purgeThreshold));
 				} else if (gateway instanceof SftpWiGateway) {
 					sftpWiGateway = (SftpWiGateway) gateway;
-					sftpWisToPurge = sftpWiGateway.retrieveOldProcessedFilesList(purgeThreshold);
+					SftpConfiguration conf = sftpWiGateway.getConfiguration();
+					sftpWisToPurge = sftpWiGateway.retrieveOldProcessedFilesList(conf.getExportPath(), purgeThreshold);
 				} else if (gateway instanceof DropboxGateway) {
 					dropboxOrderGateway = (DropboxGateway) gateway;
 					dropboxOrdersToPurge = dropboxOrderGateway.retrieveOldProcessedFilesList(purgeThreshold);

@@ -265,18 +265,16 @@ public abstract class SftpGateway extends EdiGateway {
 		return issues;
 	}
 	
-	public List<String> retrieveOldProcessedFilesList(Date purgeThreshold) {
+	public List<String> retrieveOldProcessedFilesList(String path, Date purgeThreshold) {
 		ArrayList<String> filesToDelete = new ArrayList<>();
 		try {
-			SftpConfiguration conf = getConfiguration();
-			String processedPath = (this instanceof SftpOrderGateway) ? conf.getArchivePath() : conf.getExportPath();
 			ChannelSftp sftp = connect();
-			Vector<?> fileList = sftp.ls(processedPath);
+			Vector<?> fileList = sftp.ls(path);
 			if (fileList == null) {
 				return filesToDelete;
 			}
-			if (!processedPath.endsWith("/")){
-				processedPath += "/";
+			if (!path.endsWith("/")){
+				path += "/";
 			}
 			for (Object file : fileList){
 				if (file instanceof LsEntry) {
@@ -285,15 +283,15 @@ public abstract class SftpGateway extends EdiGateway {
 					Date modified = new Date(attrs.getMTime() * 1000L);
 					if(attrs.isReg() && modified.before(purgeThreshold)) {
 						// regular file (not a folder or link etc) AND created after purge threshold date
-						filesToDelete.add(processedPath + lsEntry.getFilename());
+						filesToDelete.add(path + lsEntry.getFilename());
 					} else {
-						LOGGER.debug("skipping non-file: {}",lsEntry.getLongname());
+						LOGGER.debug("skipping file or directory: {}",lsEntry.getLongname());
 					}
 				}
 			}
 			return filesToDelete;
 		} catch(SftpException | IOException e) {
-			LOGGER.error("Unable to retrieve old export file list", e);
+			LOGGER.error("Unable to retrieve old files list " + path, e);
 			return filesToDelete;
 		} finally {
  			disconnect();
