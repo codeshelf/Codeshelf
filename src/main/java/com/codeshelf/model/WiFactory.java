@@ -153,7 +153,19 @@ public class WiFactory {
 		final Timestamp inTime,
 		Container inContainer,
 		Location inLocation) throws DaoException {
-		return createWorkInstruction(inStatus, inType, purpose, inOrderDetail, inChe, inTime, inContainer, inLocation, true);
+		return createWorkInstruction(inStatus, inType, purpose, inOrderDetail, inChe, inTime, inContainer, inLocation, true, null);
+	}
+	
+	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
+		WorkInstructionTypeEnum inType,
+		WiPurpose purpose,
+		OrderDetail inOrderDetail,
+		Che inChe,
+		final Timestamp inTime,
+		Container inContainer,
+		Location inLocation,
+		ColorEnum color) throws DaoException {
+		return createWorkInstruction(inStatus, inType, purpose, inOrderDetail, inChe, inTime, inContainer, inLocation, true, color);
 	}
 
 	/**
@@ -165,6 +177,8 @@ public class WiFactory {
 	 * @param inTime
 	 * @param inContainer
 	 * @param inLocation
+	 * @param linkInstructionToDetail
+	 * @param colorOverride - if not null, this color is used instead of CHE's color
 	 * @return
 	 */
 	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
@@ -175,7 +189,8 @@ public class WiFactory {
 		final Timestamp inTime,
 		Container inContainer,
 		Location inLocation,
-		boolean linkInstructionToDetail) throws DaoException {
+		boolean linkInstructionToDetail,
+		ColorEnum colorOverride) throws DaoException {
 
 		WorkInstruction resultWi = createWorkInstruction(inStatus, inType, purpose, inOrderDetail, inChe, inTime, linkInstructionToDetail);
 		if (resultWi == null) { //no more work to do
@@ -196,7 +211,7 @@ public class WiFactory {
 		}
 
 		boolean isInventoryPickInstruction = false;
-		ColorEnum cheColor = inChe.getColor();
+		ColorEnum cheColor = colorOverride == null ? inChe.getColor() : colorOverride;
 
 		// Set the LED lighting pattern for this WI.
 		if (inStatus == WorkInstructionStatusEnum.SHORT) {

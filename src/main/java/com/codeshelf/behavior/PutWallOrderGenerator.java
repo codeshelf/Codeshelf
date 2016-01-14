@@ -87,7 +87,8 @@ public class PutWallOrderGenerator {
 						theTime, 
 						container, 
 						location == null ? facility : location,
-						false);
+						false,
+						null);
 					if (wi != null) {
 						wiHashThisWallAndRun.put(wiKey, wi);
 					}
