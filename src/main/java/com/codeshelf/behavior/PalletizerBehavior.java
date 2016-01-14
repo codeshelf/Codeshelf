@@ -2,6 +2,7 @@ package com.codeshelf.behavior;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -10,6 +11,7 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WiFactory;
 import com.codeshelf.model.WorkInstructionStatusEnum;
@@ -32,10 +34,12 @@ import lombok.Getter;
 import lombok.Setter;
 
 public class PalletizerBehavior implements IApiBehavior{
+	private static final Logger			LOGGER					= LoggerFactory.getLogger(WorkBehavior.class);
+	
 	private LightBehavior lightService;
 	private NotificationBehavior notificationBehavior;
+	private HashMap<UUID, ColorEnum> cheColor = new HashMap<>();
 	
-	private static final Logger			LOGGER					= LoggerFactory.getLogger(WorkBehavior.class);
 	
 	@Inject
 	public PalletizerBehavior(LightBehavior inLightService, NotificationBehavior notificationBehavior) {
@@ -102,7 +106,8 @@ public class PalletizerBehavior implements IApiBehavior{
 			che,
 			new Timestamp(System.currentTimeMillis()),
 			null,
-			location
+			location,
+			getCheColor(che)
 			);
 		wi.setPickerId(userId);
 		info.setWi(wi);
@@ -246,7 +251,7 @@ public class PalletizerBehavior implements IApiBehavior{
 			}
 			OrderHeader.staticGetDao().store(order);
 		}
-		lightService.lightLocationServerCall(locations, che.getColor());
+		lightService.lightLocationServerCall(locations, getCheColor(che));
 	}
 	
 	public void completeWi(UUID wiId, Boolean shorted) {
@@ -269,6 +274,24 @@ public class PalletizerBehavior implements IApiBehavior{
 			notificationBehavior.saveFinishedWI(wi);
 		}
 
+	}
+	
+	private ColorEnum getCheColor(Che che) {
+		UUID uuid = che.getPersistentId();
+		ColorEnum green = ColorEnum.GREEN, magenta = ColorEnum.MAGENTA;
+		if (cheColor.containsKey(uuid)){
+			ColorEnum prevColor = cheColor.get(uuid);
+			if (prevColor == green){
+				cheColor.put(uuid, magenta);
+				return magenta;
+			} else {
+				cheColor.put(uuid, green);
+				return green;
+			}
+		} else {
+			cheColor.put(uuid, green);
+			return green;
+		}
 	}
 	
 	public static class PalletizerInfo {
