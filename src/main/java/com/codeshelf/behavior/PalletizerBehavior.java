@@ -107,7 +107,7 @@ public class PalletizerBehavior implements IApiBehavior{
 			new Timestamp(System.currentTimeMillis()),
 			null,
 			location,
-			getCheColor(che)
+			getNextCheColor(che)
 			);
 		wi.setPickerId(userId);
 		info.setWi(wi);
@@ -251,7 +251,7 @@ public class PalletizerBehavior implements IApiBehavior{
 			}
 			OrderHeader.staticGetDao().store(order);
 		}
-		lightService.lightLocationServerCall(locations, getCheColor(che));
+		lightService.lightLocationServerCall(locations, getNextCheColor(che));
 	}
 	
 	public void completeWi(UUID wiId, Boolean shorted) {
@@ -276,7 +276,7 @@ public class PalletizerBehavior implements IApiBehavior{
 
 	}
 	
-	private ColorEnum getCheColor(Che che) {
+	private ColorEnum getNextCheColor(Che che) {
 		UUID uuid = che.getPersistentId();
 		ColorEnum green = ColorEnum.GREEN, magenta = ColorEnum.MAGENTA;
 		if (cheColor.containsKey(uuid)){
