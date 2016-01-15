@@ -13,6 +13,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -22,12 +23,15 @@ import javax.ws.rs.core.UriInfo;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.joda.time.DateTime;
 import org.joda.time.Interval;
+import org.joda.time.Period;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.ErrorResponse;
+import com.codeshelf.api.BaseResponse.IntervalParam;
 import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.behavior.NotificationBehavior;
+import com.codeshelf.behavior.NotificationBehavior.HistogramResult;
 import com.codeshelf.model.dao.PageQuery;
 import com.codeshelf.model.domain.Worker;
 import com.google.common.base.MoreObjects;
@@ -113,8 +117,6 @@ public class WorkerResource {
 			parametersToUse = requestParameters;
 		}
 		
-		//expects pseudo param moniker "<" + timestamp;
-		//set default if it doesn't exist
 		DateTime now = DateTime.now();
 		parametersToUse.putSingle("created", 
 			MoreObjects.firstNonNull(parametersToUse.getFirst("created"), new Interval(now.minusDays(14), now).toString()));
@@ -131,6 +133,20 @@ public class WorkerResource {
 		return BaseResponse.buildResponse(results);
 	}
 
+	@GET
+	@Path("/events/histogram")
+	@RequiresPermissions("worker:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getEventHistogram(@QueryParam("created") IntervalParam createdInterval, @QueryParam("createdBin") String binPeriod) throws Exception {
+			ErrorResponse errors = new ErrorResponse();
+			try {
+				Period bin = Period.parse(MoreObjects.firstNonNull(binPeriod, "PT5M"));  
+				HistogramResult result = notificationBehavior.workerPickRateHistogram(createdInterval.getValue(), bin, worker);
+				return BaseResponse.buildResponse(result);
+			} catch (Exception e) {
+				return errors.processException(e);
+			}
+		}
 
 	
 }
