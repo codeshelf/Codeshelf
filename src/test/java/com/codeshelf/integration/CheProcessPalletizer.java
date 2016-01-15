@@ -397,22 +397,22 @@ public class CheProcessPalletizer extends ServerTest {
 	 * Not all that clever to distinguish different orders for the same store. Returns the first uncompleted, or the most recent completed.
 	 */
 	private OrderHeader findPalletizerOrderHeader(Facility facility, String orderId) {
-		OrderHeader orderCandidate = null;
 		List<OrderHeader> orders = OrderHeader.staticGetDao().findByParent(facility);
+		OrderHeader latestCompleteOrder = null, latestIncompleteOrder = null;
 		for (OrderHeader order : orders) {
 			String domainId = order.getDomainId();
 			if (domainId.startsWith(orderId) || domainId.startsWith("P_" + orderId)) {
-				if (orderCandidate == null)
-				orderCandidate = order;
-				else if (orderCandidate.getStatus() == OrderStatusEnum.COMPLETE && order.getStatus() != OrderStatusEnum.COMPLETE)
-					orderCandidate = order;
-				else if (orderCandidate.getStatus() == OrderStatusEnum.COMPLETE) {
-					// both complete. Which is older?
-					if (order.getDueDate().after(orderCandidate.getDueDate()))
-						orderCandidate = order;
+				if (order.getStatus() == OrderStatusEnum.COMPLETE){
+					if (latestCompleteOrder == null || order.getUpdated().after(latestCompleteOrder.getUpdated())) {
+						latestCompleteOrder = order;
+					}
+				} else {
+					if (latestIncompleteOrder == null || order.getUpdated().after(latestIncompleteOrder.getUpdated())) {
+						latestIncompleteOrder = order;
+					}
 				}
 			}
 		}
-		return orderCandidate;
+		return latestIncompleteOrder != null ? latestIncompleteOrder : latestCompleteOrder;
 	}
 }
