@@ -36,43 +36,38 @@ import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 
-public class CheProcessPalletizer extends ServerTest{
+public class CheProcessPalletizer extends ServerTest {
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessPalletizer.class);
 	private static final int	WAIT_TIME	= 4000;
-	
-	private PickSimulator picker;
-	
+
+	private PickSimulator		picker;
+
 	@Before
-	public void init() throws IOException{
+	public void init() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
-		
+
 		LOGGER.info("1: Set up facility");
 		Facility facility = getFacility();
 		//1 Aisle, 1 Bay, 2 Tiers
-		String aislesCsvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\n" + 
-				"Aisle,A1,,,,,tierB1S1Side,2.85,5,X,20\n" + 
-				"Bay,B1,100,,,,,,,,\n" + 
-				"Tier,T1,100,4,32,0,,,,,\n" +  
-				"Tier,T2,100,0,32,0,,,,,";
+		String aislesCsvString = "binType,nominalDomainId,lengthCm,slotsInTier,ledCountInTier,tierFloorCm,controllerLED,anchorX,anchorY,orientXorY,depthCm\n"
+				+ "Aisle,A1,,,,,tierB1S1Side,2.85,5,X,20\n"
+				+ "Bay,B1,100,,,,,,,,\n"
+				+ "Tier,T1,100,4,32,0,,,,,\n"
+				+ "Tier,T2,100,0,32,0,,,,,";
 		importAislesData(facility, aislesCsvString);
-		
-		String locationsCsvString = "mappedLocationId,locationAlias\n" + 
-				"A1.B1,Bay11\n" +
-				"A1.B1.T1,Tier111\n" + 
-				"A1.B1.T1.S1,Slot1111\n" + 
-				"A1.B1.T1.S2,Slot1112\n" + 
-				"A1.B1.T1.S3,Slot1113\n" + 
-				"A1.B1.T1.S4,Slot1114\n" +
-				"A1.B1.T2,Tier112";
-		importLocationAliasesData(facility, locationsCsvString);		
-		
+
+		String locationsCsvString = "mappedLocationId,locationAlias\n" + "A1.B1,Bay11\n" + "A1.B1.T1,Tier111\n"
+				+ "A1.B1.T1.S1,Slot1111\n" + "A1.B1.T1.S2,Slot1112\n" + "A1.B1.T1.S3,Slot1113\n" + "A1.B1.T1.S4,Slot1114\n"
+				+ "A1.B1.T2,Tier112";
+		importLocationAliasesData(facility, locationsCsvString);
+
 		Aisle a1 = Aisle.staticGetDao().findByDomainId(facility, "A1");
 		Bay b1 = Bay.staticGetDao().findByDomainId(a1, "B1");
 		Tier t111 = Tier.staticGetDao().findByDomainId(b1, "T1");
 		Tier t112 = Tier.staticGetDao().findByDomainId(b1, "T2");
 		t111.setTapeIdUi("0001");
 		t112.setTapeIdUi("0002");
-		
+
 		CodeshelfNetwork network = getNetwork();
 		Che che1 = network.getChe(cheId1);
 		Assert.assertNotNull(che1);
@@ -81,20 +76,20 @@ public class CheProcessPalletizer extends ServerTest{
 		Che.staticGetDao().store(che1);
 
 		this.getTenantPersistenceService().commitTransaction();
-		
+
 		startSiteController();
 		picker = createPickSim(cheGuid1);
 		picker.login("Worker1");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
 		Assert.assertEquals("Scan Item\n\n\n\n", picker.getLastCheDisplay());
 	}
-	
+
 	@Test
-	public void testPut(){
+	public void testPut() {
 		LOGGER.info("1: Open two pallets");
 		openNewPallet("10010001", "L%Slot1111", "Slot1111");
 		openNewPallet("10020001", "%000000020010", "Tier112");
-		
+
 		LOGGER.info("1a: Verify that the WIs have the correct PickerId");
 		beginTransaction();
 		List<WorkInstruction> wis = WorkInstruction.staticGetDao().getAll();
@@ -110,7 +105,7 @@ public class CheProcessPalletizer extends ServerTest{
 		picker.scanSomething("10020002");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
 		Assert.assertEquals("Tier112\nItem: 10020002\nStore: 1002\nScan Next Item\n", picker.getLastCheDisplay());
-		
+
 		LOGGER.info("3: Verify DB objects");
 		beginTransaction();
 		Facility facility = getFacility();
@@ -122,10 +117,9 @@ public class CheProcessPalletizer extends ServerTest{
 		Assert.assertEquals(OrderStatusEnum.RELEASED, h1001.getStatus());
 		Assert.assertEquals(OrderStatusEnum.RELEASED, h1002.getStatus());
 		Interval today = new Interval(DateTime.now().withTimeAtStartOfDay(), Days.ONE);
-		Assert.assertTrue(today.contains(h1001.getDueDate().getTime()));		
-		Assert.assertTrue(today.contains(h1002.getDueDate().getTime()));		
+		Assert.assertTrue(today.contains(h1001.getDueDate().getTime()));
+		Assert.assertTrue(today.contains(h1002.getDueDate().getTime()));
 
-		
 		LOGGER.info("3b: Verify Order Details - three completed, another in progress");
 		OrderDetail d10010001 = h1001.getOrderDetail("10010001");
 		OrderDetail d10010002 = h1001.getOrderDetail("10010002");
@@ -139,7 +133,7 @@ public class CheProcessPalletizer extends ServerTest{
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, d10010002.getStatus());
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, d10020001.getStatus());
 		Assert.assertEquals(OrderStatusEnum.INPROGRESS, d10020002.getStatus());
-		
+
 		LOGGER.info("3c: Verify Work Instructions - three completed, another in progress");
 		WorkInstruction wi11 = d10010001.getWorkInstructions().get(0);
 		WorkInstruction wi12 = d10010002.getWorkInstructions().get(0);
@@ -150,13 +144,12 @@ public class CheProcessPalletizer extends ServerTest{
 		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi21.getStatus());
 		Assert.assertEquals(WorkInstructionStatusEnum.INPROGRESS, wi22.getStatus());
 
-		
 		LOGGER.info("3d: Verify Work Events - three completed");
 		Criteria criteria = WorkerEvent.staticGetDao()
-		.createCriteria()
-		.add(Property.forName("parent").eq(facility))
-		.add(Property.forName("eventType").eq(WorkerEvent.EventType.COMPLETE));
-		
+			.createCriteria()
+			.add(Property.forName("parent").eq(facility))
+			.add(Property.forName("eventType").eq(WorkerEvent.EventType.COMPLETE));
+
 		@SuppressWarnings("unchecked")
 		List<WorkerEvent> workerEvents = criteria.list();
 		Assert.assertEquals(3, workerEvents.size());
@@ -165,28 +158,28 @@ public class CheProcessPalletizer extends ServerTest{
 		}
 		LOGGER.info(criteria.list().toString());
 
-		commitTransaction();	
+		commitTransaction();
 	}
-	
+
 	@Test
-	public void testCloseByLicense(){
+	public void testCloseByLicense() {
 		LOGGER.info("1: Open a pallet");
 		openNewPallet("10010001", "L%Slot1111", "Slot1111");
-		
+
 		LOGGER.info("2: Scan REMOVE, and a license coressponding to the pallet");
 		picker.scanCommand("REMOVE");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_REMOVE, WAIT_TIME);
 		Assert.assertEquals("Scan License\nOr Location\nTo Close Pallet\nCANCEL to exit\n", picker.getLastCheDisplay());
-		
+
 		picker.scanSomething("10019991");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
 		Assert.assertEquals("Scan Item\n\n\n\n", picker.getLastCheDisplay());
-		
+
 		LOGGER.info("3: Try to put another item from that pallet. Verify that the pallet was not found");
 		picker.scanSomething("10010003");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_NEW_ORDER, WAIT_TIME);
 		Assert.assertEquals("Scan New Location\nFor Store 1001\n\nOr Scan Another Item\n", picker.getLastCheDisplay());
-		
+
 		LOGGER.info("4: Verify DB objects");
 		beginTransaction();
 		Facility facility = getFacility();
@@ -195,20 +188,20 @@ public class CheProcessPalletizer extends ServerTest{
 		Assert.assertNotNull("Didn't find order 1001", h1001);
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, h1001.getStatus());
 		Assert.assertTrue(h1001.getActive());
-		
+
 		LOGGER.info("4b: Verify Order Detail - completed and inactive");
 		OrderDetail d10010001 = h1001.getOrderDetail("10010001");
 		Assert.assertNotNull("Didn't find detail 10010001", d10010001);
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, d10010001.getStatus());
 		Assert.assertTrue(d10010001.getActive());
-		
+
 		LOGGER.info("4c: Verify WorkInstructions - completed and having correct container id");
 		List<WorkInstruction> wis = d10010001.getWorkInstructions();
 		Assert.assertFalse(wis.isEmpty());
 		WorkInstruction wi = wis.get(0);
 		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi.getStatus());
 		Assert.assertEquals("10019991", wi.getContainerId());
-		
+
 		LOGGER.info("4d: Verify WorkerEvent - created, completed, and referencing the correct Detail");
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("purpose", WiPurpose.WiPurposePalletizerPut.name()));
@@ -221,29 +214,29 @@ public class CheProcessPalletizer extends ServerTest{
 		Assert.assertEquals(d10010001, eventDetail);
 		commitTransaction();
 	}
-	
+
 	@Test
-	public void testCloseByLocation(){
+	public void testCloseByLocation() {
 		LOGGER.info("1: Open a pallet");
 		openNewPallet("10010001", "L%Slot1111", "Slot1111");
-		
+
 		LOGGER.info("2: Scan REMOVE, and a location with an existing pallet");
 		picker.scanCommand("REMOVE");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_REMOVE, WAIT_TIME);
 		Assert.assertEquals("Scan License\nOr Location\nTo Close Pallet\nCANCEL to exit\n", picker.getLastCheDisplay());
-		
+
 		picker.scanLocation("Slot1111");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
 		Assert.assertEquals("Scan Item\n\n\n\n", picker.getLastCheDisplay());
-		
+
 		LOGGER.info("3: Try to put another item from that pallet. Verify that the pallet was not found");
 		picker.scanSomething("10010003");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_NEW_ORDER, WAIT_TIME);
 		Assert.assertEquals("Scan New Location\nFor Store 1001\n\nOr Scan Another Item\n", picker.getLastCheDisplay());
 	}
-	
+
 	@Test
-	public void testCloseNothing(){
+	public void testCloseNothing() {
 		LOGGER.info("1: Try to close a non-open pallet with a license");
 		picker.scanCommand("REMOVE");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_REMOVE, WAIT_TIME);
@@ -251,34 +244,122 @@ public class CheProcessPalletizer extends ServerTest{
 		picker.scanSomething("10010001");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_REMOVE, WAIT_TIME);
 		Assert.assertEquals("Pallet 1001 Not Found\nCANCEL TO CONTINUE\n\n\n", picker.getLastCheDisplay());
-		
+
 		LOGGER.info("2: Try to close a pallet in an empty location");
 		picker.scanLocation("Tier111");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_REMOVE, WAIT_TIME);
 		Assert.assertEquals("No Pallets In Tier111\nCANCEL TO CONTINUE\n\n\n", picker.getLastCheDisplay());
 	}
-	
+
 	@Test
-	public void testNewPalletLocationBusy(){
+	public void testNewPalletLocationBusy() {
 		LOGGER.info("1: Open a pallet");
 		openNewPallet("10010001", "L%Slot1111", "Slot1111");
-		
+
 		LOGGER.info("2: Scan item from another pallet");
 		picker.scanSomething("10020001");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_NEW_ORDER, WAIT_TIME);
 		Assert.assertEquals("Scan New Location\nFor Store 1002\n\nOr Scan Another Item\n", picker.getLastCheDisplay());
-		
+
 		LOGGER.info("3: Try to put it in the already occupied location");
 		picker.scanSomething("%000000010010");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_NEW_ORDER, WAIT_TIME);
 		Assert.assertEquals("Busy: Slot1111\nRemove 1001 First\n\nCANCEL TO CONTINUE\n", picker.getLastCheDisplay());
 	}
-	
+
 	@Test
-	public void testDamaged(){		
+	public void testReusePalletLocation() {
+		// For DEV-1429
+		LOGGER.info("1a: Open a pallet");
+		openNewPallet("10010001", "L%Slot1111", "Slot1111");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+
+		LOGGER.info("1b: Add two more cartons");
+		picker.scanSomething("10010002");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+		picker.scanSomething("10010003");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+
+		LOGGER.info("2: Close the pallet, adding a license plate");
+		picker.scanCommand("REMOVE");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_REMOVE, WAIT_TIME);
+		picker.scanSomething("1001aaaa");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
+
+		LOGGER.info("2: Let's see if all completed, even though we did not push the poscon button on last one.");
+
+		beginTransaction();
+		Facility facility = getFacility();
+		OrderHeader h1001 = findPalletizerOrderHeader(facility, "1001");
+		Assert.assertNotNull("Didn't find order 1001", h1001);
+		OrderDetail d10010001 = h1001.getOrderDetail("10010001");
+		OrderDetail d10010002 = h1001.getOrderDetail("10010002");
+		OrderDetail d10010003 = h1001.getOrderDetail("10010003");
+		Assert.assertNotNull("Didn't find detail 10010001", d10010001);
+		Assert.assertNotNull("Didn't find detail 10010002", d10010002);
+		Assert.assertNotNull("Didn't find detail 10010003", d10010003);
+
+		WorkInstruction wi11 = d10010001.getWorkInstructions().get(0);
+		WorkInstruction wi12 = d10010002.getWorkInstructions().get(0);
+		WorkInstruction wi13 = d10010002.getWorkInstructions().get(0);
+		Assert.assertNotNull(wi11);
+		Assert.assertNotNull(wi12);
+		Assert.assertNotNull(wi13);
+		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi11.getStatus());
+		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi12.getStatus());
+		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi13.getStatus());
+
+		commitTransaction();
+
+		LOGGER.info("3: Now open a new pallet for the same store at the same location.");
+		picker.scanSomething("10010004");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_NEW_ORDER, WAIT_TIME);
+		picker.scanSomething("L%Slot1111");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+
+		LOGGER.info("3b: Add one more that should complete the first.");
+		picker.scanSomething("10010005");
+
+		LOGGER.info("4: Close the pallet, via position scan");
+		picker.scanCommand("REMOVE");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_REMOVE, WAIT_TIME);
+		LOGGER.info(picker.getLastCheDisplay());
+		picker.scanSomething("L%Slot1111");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+		LOGGER.info(picker.getLastCheDisplay());
+		LOGGER.info("4b: BUG here. Should be SCAN_ITEM as after license plate? But sometimes is PUT_ITEM");
+
+		beginTransaction();
+		h1001 = OrderHeader.staticGetDao().reload(h1001);
+		facility = facility.reload();
+		OrderHeader h1001b = findPalletizerOrderHeader(facility, "1001");
+		Assert.assertNotNull(h1001b);
+		Assert.assertEquals(h1001, h1001b);
+		LOGGER.info("4c: BUG here. Should be different order header since we are on a different pallet");
+
+		OrderDetail d10010004 = h1001b.getOrderDetail("10010004");
+		Assert.assertNull(d10010004);
+		LOGGER.info("4d: BUG here. Should have the detail, etc.");
+
+		if (d10010004 != null) {
+			WorkInstruction wi14 = d10010004.getWorkInstructions().get(0);
+			Assert.assertNotNull(wi14);
+			Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi14.getStatus());
+		}
+		OrderDetail d10010005 = h1001b.getOrderDetail("10010005");
+		if (d10010005 != null) {
+		WorkInstruction wi15 = d10010005.getWorkInstructions().get(0);
+		Assert.assertNotNull(wi15);
+		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi15.getStatus());}
+		commitTransaction();
+
+	}
+
+	@Test
+	public void testDamaged() {
 		LOGGER.info("1: Scan item, open pallet");
 		openNewPallet("10010001", "L%Slot1111", "Slot1111");
-		
+
 		LOGGER.info("2: Scan SHORT, but scan NO at confirmation");
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_DAMAGED, WAIT_TIME);
@@ -286,7 +367,7 @@ public class CheProcessPalletizer extends ServerTest{
 		picker.scanCommand("NO");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
 		Assert.assertEquals("Slot1111\nItem: 10010001\nStore: 1001\nScan Next Item\n", picker.getLastCheDisplay());
-		
+
 		LOGGER.info("3: Scan SHORT, and confrm");
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_DAMAGED, WAIT_TIME);
@@ -295,25 +376,38 @@ public class CheProcessPalletizer extends ServerTest{
 		picker.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
 		Assert.assertEquals("Scan Item\n\n\n\n", picker.getLastCheDisplay());
 	}
-	
-	private void openNewPallet(String item, String location, String locationName){
+
+	private void openNewPallet(String item, String location, String locationName) {
 		String store = item.substring(0, 4);
 		picker.scanSomething(item);
 		picker.waitForCheState(CheStateEnum.PALLETIZER_NEW_ORDER, WAIT_TIME);
 		Assert.assertEquals("Scan New Location\nFor Store " + store + "\n\nOr Scan Another Item\n", picker.getLastCheDisplay());
 		picker.scanSomething(location);
 		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
-		Assert.assertEquals(locationName + "\nItem: " + item + "\nStore: " + store + "\nScan Next Item\n", picker.getLastCheDisplay());
+		Assert.assertEquals(locationName + "\nItem: " + item + "\nStore: " + store + "\nScan Next Item\n",
+			picker.getLastCheDisplay());
 	}
-	
+
+	/**
+	 * Not all that clever to distinguish different orders for the same store. Returns the first uncompleted, or the most recent completed.
+	 */
 	private OrderHeader findPalletizerOrderHeader(Facility facility, String orderId) {
+		OrderHeader orderCandidate = null;
 		List<OrderHeader> orders = OrderHeader.staticGetDao().findByParent(facility);
 		for (OrderHeader order : orders) {
 			String domainId = order.getDomainId();
-			if (domainId.startsWith(orderId) || domainId.startsWith("P_" + orderId)){
-				return order;
+			if (domainId.startsWith(orderId) || domainId.startsWith("P_" + orderId)) {
+				if (orderCandidate == null)
+				orderCandidate = order;
+				else if (orderCandidate.getStatus() == OrderStatusEnum.COMPLETE && order.getStatus() != OrderStatusEnum.COMPLETE)
+					orderCandidate = order;
+				else if (orderCandidate.getStatus() == OrderStatusEnum.COMPLETE) {
+					// both complete. Which is older?
+					if (orderCandidate.getDueDate().after(order.getDueDate()))
+						orderCandidate = order;
+				}
 			}
 		}
-		return null;
-	}	
+		return orderCandidate;
+	}
 }
