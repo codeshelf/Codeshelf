@@ -311,6 +311,7 @@ public class NotificationBehavior implements IApiBehavior{
 	public HistogramResult facilityPickRateHistogram(final Interval createdInterval, final Period binWidth, Facility facility) throws IOException {
 		String sqlWhereClause = 
 				  " parent_persistentid = :facilityId"
+				+ " and event_type = 'COMPLETE'"
 				+ " and created between :startDateTime and :endDateTime";
 		SQLQuery query = createPickRateHistogramQuery(binWidth, sqlWhereClause);
 		query.setParameter("facilityId", facility.getPersistentId(),  new DialectUUIDType());
@@ -342,10 +343,15 @@ public class NotificationBehavior implements IApiBehavior{
 		}
 		return workerHistograms;
 	}
+
+	public HistogramResult workerPickRateHistogram(final Interval createdInterval, final Period binWidth, Worker worker) {
+		return workerPickRateHistogram(createdInterval, binWidth, worker.getFacility(), worker.getDomainId());
+	}
 	
 	private HistogramResult workerPickRateHistogram(final Interval createdInterval, final Period binWidth, Facility facility, String badgeId) {
 		String sqlWhereClause = 
 				  " parent_persistentid = :facilityId"
+				+ " and event_type = 'COMPLETE'"
                 + " and worker_id = :workerId"
 				+ " and created between :startDateTime and :endDateTime";
 		SQLQuery query = createPickRateHistogramQuery(binWidth, sqlWhereClause);
