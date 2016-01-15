@@ -213,6 +213,11 @@ public class CheProcessPalletizer extends ServerTest {
 		OrderDetail eventDetail = OrderDetail.staticGetDao().findByPersistentId(event.getOrderDetailId());
 		Assert.assertEquals(d10010001, eventDetail);
 		commitTransaction();
+		
+		LOGGER.info("5: Place item at the same location");
+		picker.scanLocation("Slot1111");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+		Assert.assertEquals("Slot1111\nItem: 10010003\nStore: 1001\nScan Next Item\n", picker.getLastCheDisplay());
 	}
 
 	@Test
@@ -233,6 +238,10 @@ public class CheProcessPalletizer extends ServerTest {
 		picker.scanSomething("10010003");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_NEW_ORDER, WAIT_TIME);
 		Assert.assertEquals("Scan New Location\nFor Store 1001\n\nOr Scan Another Item\n", picker.getLastCheDisplay());
+		
+		LOGGER.info("4: Place item at the same location");
+		picker.scanLocation("Slot1111");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
 	}
 
 	@Test
@@ -319,42 +328,36 @@ public class CheProcessPalletizer extends ServerTest {
 
 		LOGGER.info("3b: Add one more that should complete the first.");
 		picker.scanSomething("10010005");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
 
 		LOGGER.info("4: Close the pallet, via position scan");
 		picker.scanCommand("REMOVE");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_REMOVE, WAIT_TIME);
 		LOGGER.info(picker.getLastCheDisplay());
 		picker.scanSomething("L%Slot1111");
-
-		/*
 		picker.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
 		LOGGER.info(picker.getLastCheDisplay());
-		LOGGER.info("4b: BUG here. Should be SCAN_ITEM as after license plate? But sometimes is PUT_ITEM");
 
 		beginTransaction();
+		LOGGER.info("5: Retrieve old and new orders");
 		h1001 = OrderHeader.staticGetDao().reload(h1001);
 		facility = facility.reload();
 		OrderHeader h1001b = findPalletizerOrderHeader(facility, "1001");
 		Assert.assertNotNull(h1001b);
 		Assert.assertNotEquals(h1001, h1001b);
-		LOGGER.info("4c: BUG here. Should be different order header since we are on a different pallet");
 
 		OrderDetail d10010004 = h1001b.getOrderDetail("10010004");
-		Assert.assertNull(d10010004);
-		LOGGER.info("4d: BUG here. Should have the detail, etc.");
-
-		if (d10010004 != null) {
-			WorkInstruction wi14 = d10010004.getWorkInstructions().get(0);
-			Assert.assertNotNull(wi14);
-			Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi14.getStatus());
-		}
+		Assert.assertNotNull(d10010004);
+		WorkInstruction wi14 = d10010004.getWorkInstructions().get(0);
+		Assert.assertNotNull(wi14);
+		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi14.getStatus());
 		OrderDetail d10010005 = h1001b.getOrderDetail("10010005");
 		if (d10010005 != null) {
-		WorkInstruction wi15 = d10010005.getWorkInstructions().get(0);
-		Assert.assertNotNull(wi15);
-		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi15.getStatus());}
+			WorkInstruction wi15 = d10010005.getWorkInstructions().get(0);
+			Assert.assertNotNull(wi15);
+			Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi15.getStatus());
+		}
 		commitTransaction();
-		 */
 	}
 
 	@Test

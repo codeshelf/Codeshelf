@@ -2227,7 +2227,7 @@ public class WorkBehavior implements IApiBehavior {
 
 		if (!skipDeleteNew) {
 			// if this order took the place of another order, we have to delete the other order's OrderLocation
-			List<OrderLocation> olList = OrderLocation.findOrderLocationsAtLocation(location, facility, false);
+			List<OrderLocation> olList = OrderLocation.findOrderLocationsAtLocation(location, facility);
 			for (OrderLocation ol2 : olList) {
 				OrderHeader order2 = ol2.getParent();
 				whatWeDid = whatWeDid + String.format("Removed order %s from %s. ", order2.getDomainId(), locationId);
