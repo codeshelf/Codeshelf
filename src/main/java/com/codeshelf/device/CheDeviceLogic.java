@@ -2028,11 +2028,18 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				clearAllPosconsOnThisDevice();
 				setState(CheStateEnum.DO_PICK);
 			} else {
-				// user "errors" are logged as warn. Progamming errors are logged as error
-				LOGGER.warn(errorStr); // TODO get this to the CHE display
-				invalidScanMsg(mCheStateEnum);
-				verifyWi = wi;
-				sendDisplayWorkInstruction(getOneActiveWorkInstruction());
+				if ((this instanceof SetupOrdersDeviceLogic) && isSubstitutionAllowed()){
+					SetupOrdersDeviceLogic ordersChe = ((SetupOrdersDeviceLogic) this);
+					ordersChe.setSubstitutionScan(inScanStr);
+					ordersChe.setRememberPreSubstitutionState(CheStateEnum.SCAN_SOMETHING);
+					setState(CheStateEnum.SUBSTITUTION_CONFIRM);
+				} else {
+					// user "errors" are logged as warn. Progamming errors are logged as error
+					LOGGER.warn(errorStr); // TODO get this to the CHE display
+					invalidScanMsg(mCheStateEnum);
+					verifyWi = wi;
+					sendDisplayWorkInstruction(getOneActiveWorkInstruction());
+				}
 			}
 		} else {
 			// Want some feedback here. Tell the user to scan something
@@ -2079,6 +2086,15 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			// Just redraw current screen?
 			setState(getCheStateEnum());
 		}
+	}
+
+	private boolean isSubstitutionAllowed(){
+		for (WorkInstruction wi : getActivePickWiList()){
+			if (wi.getSubstituteAllowed()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public void processResultOfVerifyBadge(Boolean verified, String workerId) {

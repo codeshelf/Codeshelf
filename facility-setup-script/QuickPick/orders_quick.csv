@@ -1,4 +1,4 @@
-orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,gtin,destinationid,shipperId,customerId,dueDate
-1111,1,ItemS1,ItemS1 Description XXXXXXXXXXXXXXXX,3,each,LocX24,1111,10,,1,10,20,
-1111,2,ItemS2,ItemS2 Description XXXXXXXXXXXXXXXX,4,each,LocX25,1111,2,,1,10,20,
-1111,3,ItemS3,ItemS3 Description XXXXXXXXXXXXXXXX,5,each,LocX26,1111,1,,1,10,20,12/31/14 12:00 PM
+orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,gtin,destinationid,shipperId,customerId,dueDate,substituteAllowed
+1111,1,ItemS1,ItemS1 Description XXXXXXXXXXXXXXXX,3,each,LocX24,1111,10,,1,10,20,,TRUE
+1111,2,ItemS2,ItemS2 Description XXXXXXXXXXXXXXXX,4,each,LocX25,1111,2,,1,10,20,,
+1111,3,ItemS3,ItemS3 Description XXXXXXXXXXXXXXXX,5,each,LocX26,1111,1,,1,10,20,12/31/14 12:00 PM,TRUE

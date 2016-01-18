@@ -129,6 +129,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Getter
 	@Setter
 	private int									mRememberPriorShorts					= 0;
+	
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private String								mSubstitutionScan						= null;
+
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private CheStateEnum						mRememberPreSubstitutionState			= CheStateEnum.SCAN_SOMETHING;
 
 	private String								mLastAssignedPoscon						= null;
 
@@ -430,6 +440,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					sendDisplayCommand(LOW_CONFIRM_MSG, YES_NO_MSG);
 					break;
 				default:
+					break;
+					
+				case SUBSTITUTION_CONFIRM:
+					WorkInstruction activeWi = getOneActiveWorkInstruction();
+					if (activeWi == null) {
+						LOGGER.warn("Somehow got null from getOneActiveWorkInstruction() when entering the SUBSTITUTION_CONFIRM state");
+						sendDisplayCommand("Substitute " + getSubstitutionScan() + "?", EMPTY_MSG);
+					} else {
+						sendDisplayCommand("Substitute " + getSubstitutionScan(), "For " + getOneActiveWorkInstruction().getItemId() + "?");
+					}
 					break;
 			}
 		} finally {
@@ -799,6 +819,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(getRememberEnteringLowState());
 				break;
 
+			case SUBSTITUTION_CONFIRM:
+				setSubstitutionScan(null);
+				setState(getRememberPreSubstitutionState());
+				break;
+				
 			default:
 				//Reset ourselves
 				//Ideally we shouldn't have to clear poscons here
@@ -892,6 +917,15 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					notifyWiVerb(getOneActiveWorkInstruction(), EventType.LOW, false);
 				}
 				setState(getRememberEnteringLowState());
+				break;
+
+			case SUBSTITUTION_CONFIRM:
+				if (YES_COMMAND.equalsIgnoreCase(inScanStr)) {
+					
+				} else {
+					setSubstitutionScan(null);
+					setState(getRememberPreSubstitutionState());
+				}
 				break;
 
 			default:
