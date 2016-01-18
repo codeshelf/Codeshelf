@@ -213,7 +213,7 @@ public class CheProcessPalletizer extends ServerTest {
 		OrderDetail eventDetail = OrderDetail.staticGetDao().findByPersistentId(event.getOrderDetailId());
 		Assert.assertEquals(d10010001, eventDetail);
 		commitTransaction();
-		
+
 		LOGGER.info("5: Place item at the same location");
 		picker.scanLocation("Slot1111");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
@@ -238,7 +238,7 @@ public class CheProcessPalletizer extends ServerTest {
 		picker.scanSomething("10010003");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_NEW_ORDER, WAIT_TIME);
 		Assert.assertEquals("Scan New Location\nFor Store 1001\n\nOr Scan Another Item\n", picker.getLastCheDisplay());
-		
+
 		LOGGER.info("4: Place item at the same location");
 		picker.scanLocation("Slot1111");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
@@ -352,11 +352,11 @@ public class CheProcessPalletizer extends ServerTest {
 		Assert.assertNotNull(wi14);
 		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi14.getStatus());
 		OrderDetail d10010005 = h1001b.getOrderDetail("10010005");
-		if (d10010005 != null) {
-			WorkInstruction wi15 = d10010005.getWorkInstructions().get(0);
-			Assert.assertNotNull(wi15);
-			Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi15.getStatus());
-		}
+		Assert.assertNotNull(d10010005);
+		WorkInstruction wi15 = d10010005.getWorkInstructions().get(0);
+		Assert.assertNotNull(wi15);
+		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi15.getStatus());
+
 		commitTransaction();
 	}
 
@@ -402,7 +402,7 @@ public class CheProcessPalletizer extends ServerTest {
 		for (OrderHeader order : orders) {
 			String domainId = order.getDomainId();
 			if (domainId.startsWith(orderId) || domainId.startsWith("P_" + orderId)) {
-				if (order.getStatus() == OrderStatusEnum.COMPLETE){
+				if (order.getStatus() == OrderStatusEnum.COMPLETE) {
 					if (latestCompleteOrder == null || order.getUpdated().after(latestCompleteOrder.getUpdated())) {
 						latestCompleteOrder = order;
 					}
