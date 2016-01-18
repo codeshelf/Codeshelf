@@ -159,6 +159,12 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Setter
 	@JsonProperty
 	private Boolean							needsScan					= false;
+	
+	@Column(nullable = false, name = "substitute_allowed")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Boolean							substituteAllowed			= false;
 
 	public OrderDetail() {
 		this(null, null, 0);

@@ -274,6 +274,12 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	@Getter @Setter
 	@JsonProperty
 	private String						pathName;
+	
+	@Column(nullable = false, name = "substitute_allowed")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Boolean						substituteAllowed	= false;
 
 	@Transient
 	@Getter

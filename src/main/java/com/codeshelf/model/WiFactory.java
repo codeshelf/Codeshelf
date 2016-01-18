@@ -339,6 +339,7 @@ public class WiFactory {
 			resultWi.setActualQuantity(0);
 			resultWi.setAssigned(inTime);
 			resultWi.setPurpose(purpose);
+			resultWi.setSubstituteAllowed(inOrderDetail.getSubstituteAllowed());
 			
 			// set gtin field on work instruction based on order detail
 			resultWi.setGtin(null);

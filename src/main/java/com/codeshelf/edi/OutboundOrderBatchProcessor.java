@@ -1264,6 +1264,9 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		} catch (NumberFormatException e) {
 			LOGGER.warn("bad or missing value in min or max quantity field for " + detailId);
 		}
+		
+		boolean substituteAllowed = "true".equalsIgnoreCase(inCsvBean.getSubstituteAllowed());
+		result.setSubstituteAllowed(substituteAllowed);
 
 		if (result.getQuantity() == null || result.getQuantity() <= 0) {
 			result.setActive(false);
