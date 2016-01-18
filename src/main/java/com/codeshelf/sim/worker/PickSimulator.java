@@ -49,6 +49,15 @@ public class PickSimulator {
 			throw new IllegalArgumentException("No che found with guid: " + cheGuid);
 		}
 	}
+	
+	private String getDeviceLogableName(){
+		CheDeviceLogic cheDevice = this.getDeviceToAsk();
+		if (cheDevice != null)
+			return cheDevice.getGuidNoPrefix(); // not great, but ok
+		else
+			return "";
+	}
+	
 
 	private int getWaitTime() {
 		return useRadio ? 6000 : 4000;
@@ -589,6 +598,7 @@ public class PickSimulator {
 
 	public String getLastCheDisplay() {
 		StringBuffer s = new StringBuffer();
+		s.append(getDeviceLogableName() + "screen \n");
 		for (int i = 1; i <= 4; i++) {
 			s.append(getLastCheDisplayString(i).trim()).append("\n");
 		}

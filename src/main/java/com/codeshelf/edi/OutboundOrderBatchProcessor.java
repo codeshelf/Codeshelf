@@ -293,7 +293,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 								&& line.getParentOrderType() != OrderTypeEnum.REPLENISH) {
 							line.setActive(false);
 							OrderDetail.staticGetDao().store(line);
-							LOGGER.info("Deactivating order item " + line);
+							LOGGER.warn("Deactivating order line that is not in this import " + line);
 							this.orderChangeMap.put(line.getOrderId(), true);
 						}
 						// reset empty order flag
