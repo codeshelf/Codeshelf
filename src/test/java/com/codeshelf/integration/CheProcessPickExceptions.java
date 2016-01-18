@@ -378,14 +378,16 @@ public class CheProcessPickExceptions extends ServerTest {
 		List<WorkInstruction> wis = picker.getServerVersionAllPicksList();
 		Assert.assertEquals(2, wis.size());
 		UUID wi1aId = wis.get(0).getPersistentId();
-		UUID detail1a = wis.get(0).getOrderDetail().getPersistentId();
+		UUID detail1_1a = wis.get(0).getOrderDetail().getPersistentId();
 		UUID wi2aId = wis.get(1).getPersistentId();
 		commitTransaction();
 
-		LOGGER.info("3: Import the orders again. Count changed on item 1. Description change on item 2. But the order details IDs are different.");
+		LOGGER.info("3: Import the orders again. This file has two lines, separate detail IDs for 11111, testItem 1, each. And just a different detail ID line for 22222");
+		// Since 22222.1 is not represented in this file, that detail will be inactivated. Later, if it completes, will get a WARN for completing inactive order.
 		beginTransaction();
 		facility = facility.reload();
 		String csvOrders2 = "preAssignedContainerId,orderId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
+				+ "\r\n11111,11111,11111.1,1,Test Item 1,2,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n11111,11111,11111.2,1,Test Item 1,3,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				+ "\r\n22222,22222,22222.2,2,Description Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 		importOrdersData(facility, csvOrders2);
@@ -396,13 +398,13 @@ public class CheProcessPickExceptions extends ServerTest {
 		List<WorkInstruction> wis2 = picker.getServerVersionAllPicksList();
 		Assert.assertEquals(2, wis2.size());
 		UUID wi1bId = wis2.get(0).getPersistentId();
-		UUID detail1b = wis2.get(0).getOrderDetail().getPersistentId();
+		UUID detail1_1b = wis2.get(0).getOrderDetail().getPersistentId();
 		UUID wi2bId = wis2.get(1).getPersistentId();
 		commitTransaction();
 
 		Assert.assertEquals(wi1aId, wi1bId);
 		Assert.assertEquals(wi2aId, wi2bId);
-		Assert.assertEquals(detail1a, detail1b); // This is fairly amazing. Different domain ID, but we followed our business rule of same order/item/uom to call it the same one
+		Assert.assertEquals(detail1_1a, detail1_1b); // This is fairly amazing. Different domain ID, but we followed our business rule of same order/item/uom to call it the same one
 
 		LOGGER.info("5: Complete the pick. Should be no server-side errors");
 		picker.pickItemAuto();
@@ -413,24 +415,30 @@ public class CheProcessPickExceptions extends ServerTest {
 		LOGGER.info("6: Check displays. Is the order done");
 		picker.assertPosconDisplayOc(1); // sort of a bug here. site controller thinks it is done, but we only picked two of three
 		picker.assertPosconDisplayOc(2);
+
 		beginTransaction();
 		facility = facility.reload();
-		OrderHeader oh = OrderHeader.staticGetDao().findByDomainId(facility, "11111");
-		Assert.assertNotNull(oh);
-		List<OrderDetail> details = oh.getOrderDetails();
-		// TODO
-		// DEV-1323 change. Used to just change the detailID. Now gets a new one, so size is 2 instead of 1 as before.
-		// The first detail is still COMPLETE. Active? No! Due to the fact that this detail is not represented for the order in this file. Odd case. 
+		OrderHeader oh1 = OrderHeader.staticGetDao().findByDomainId(facility, "11111");
+		Assert.assertNotNull(oh1);
+		List<OrderDetail> details = oh1.getOrderDetails();
 		Assert.assertEquals(2, details.size());
-		OrderDetail detail1 = oh.getOrderDetail("11111.1");
-		Assert.assertNotNull(detail1);
-		Assert.assertEquals(OrderStatusEnum.COMPLETE, detail1.getStatus());
-		Assert.assertFalse(detail1.getActive()); // maybe a bug.
+		OrderDetail detail1a = oh1.getOrderDetail("11111.1");
+		Assert.assertNotNull(detail1a);
+		Assert.assertEquals(OrderStatusEnum.COMPLETE, detail1a.getStatus());
+		Assert.assertTrue(detail1a.getActive()); // This still active as it was represented in the latest file
 
-		OrderDetail detail2 = oh.getOrderDetail("11111.2");
-		Assert.assertNotNull(detail2);
-		Assert.assertEquals(OrderStatusEnum.RELEASED, detail2.getStatus());
-		Assert.assertTrue(detail2.getActive());
+		OrderHeader oh2 = OrderHeader.staticGetDao().findByDomainId(facility, "22222");
+		OrderDetail detail2a = oh2.getOrderDetail("22222.1"); // This API still finds inactive orders
+		Assert.assertNotNull(detail2a);
+		detail2a = OrderDetail.staticGetDao().findByDomainId(oh2, "22222.1");
+		Assert.assertNotNull(detail2a);
+		Assert.assertEquals(OrderStatusEnum.COMPLETE, detail2a.getStatus()); // bug? depends on server side handling
+		Assert.assertFalse(detail2a.getActive()); // inactive as it was not represented in latest file
+
+		OrderDetail detail2b = oh2.getOrderDetail("22222.2");
+		Assert.assertNotNull(detail2b);
+		Assert.assertEquals(OrderStatusEnum.RELEASED, detail2b.getStatus());
+		Assert.assertTrue(detail2b.getActive());
 		commitTransaction();
 
 		LOGGER.info("7: START again");
@@ -443,6 +451,110 @@ public class CheProcessPickExceptions extends ServerTest {
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
+		picker.logout();
+	}
+
+	/**
+	 * Trying to replicate what seemed to stop us during Walmart trial
+	 */
+	@Test
+	public final void doubleDetailId() throws IOException {
+
+		// set up data for pick scenario
+		Facility facility = setUpSimpleNoSlotFacility();
+
+		// We are going to put everything in A1 and A2 since they are on the same path.
+		//Item 5 is out of stock and item 6 is case only.
+		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
+				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
+				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
+				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
+				+ "4,D401,Test Item 4,1,EA,6/25/14 12:00,66\r\n" //
+				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
+		beginTransaction();
+		importInventoryData(facility, csvInventory);
+		PropertyBehavior.turnOffHK(facility);
+		commitTransaction();
+
+		this.startSiteController();
+
+		beginTransaction();
+		facility = facility.reload();
+		// Dallas trial used the config. We can do it by order line to set scan needed.
+		String csvOrders = "preAssignedContainerId,orderId,orderDetailId,itemId,gtin, description,quantity,uom,needsScan"
+				+ "\r\n11111,11111,11111.1,sku1,gtin1,Test Item 1,2,each,Y"
+				+ "\r\n11111,11111,11111.2,sku1,gtin1,Test Item 1,3,each,Y"
+				+ "\r\n22222,22222,22222.1,sku1,gtin1,Test Item 1,1,each,Y"
+				+ "\r\n22222,22222,22222.2,sku2,gtin2,Description Item 2,1,each,Y";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+
+		PickSimulator picker = createPickSim(cheGuid1);
+
+		LOGGER.info("1: set up cart with two orders and start");
+		picker.loginAndSetup("Picker #1");
+		picker.setupOrderIdAsContainer("11111", "1");
+		picker.setupOrderIdAsContainer("22222", "2");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		LOGGER.info(picker.getLastCheDisplay());
+
+		picker.scanLocation("D301");
+		// picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 3000); 
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000); // Wrong
+		LOGGER.info(picker.getLastCheDisplay());
+
+		// Remove these next two blocks, and undo the if (false)
+
+		picker.scanLocation("D301");
+		// picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 3000);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000); // Wrong
+		LOGGER.info(picker.getLastCheDisplay());
+
+		// START is getting us there
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000); // Wrong
+		LOGGER.info(picker.getLastCheDisplay());
+
+		if (false) {
+
+			LOGGER.info("2: Pick, scanning each.Should be no server-side errors");
+			picker.scanSomething("gtin1");
+			picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+			LOGGER.info(picker.getLastCheDisplay());
+			// proceed in exquisite detail to try to find and localize any bug. Instead of pickItemAuto();
+
+			WorkInstruction wi = picker.getFirstActivePick();
+			int button = picker.buttonFor(wi);
+			int quantity = wi.getPlanQuantity();
+			picker.pick(button, quantity);
+			picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+			LOGGER.info(picker.getLastCheDisplay());
+
+			wi = picker.getFirstActivePick();
+			button = picker.buttonFor(wi);
+			quantity = wi.getPlanQuantity();
+			picker.pick(button, quantity);
+			picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+			LOGGER.info(picker.getLastCheDisplay());
+
+			wi = picker.getFirstActivePick();
+			button = picker.buttonFor(wi);
+			quantity = wi.getPlanQuantity();
+			picker.pick(button, quantity);
+			picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 3000);
+			LOGGER.info(picker.getLastCheDisplay());
+
+			picker.scanSomething("gtin2");
+			picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+
+			wi = picker.getFirstActivePick();
+			button = picker.buttonFor(wi);
+			quantity = wi.getPlanQuantity();
+			picker.pick(button, quantity);
+			picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+			LOGGER.info(picker.getLastCheDisplay());
+		}
 		picker.logout();
 	}
 

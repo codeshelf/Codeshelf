@@ -612,13 +612,14 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Override
 	public String toString() {
 		//  originally @ToString(of = { "status", "quantity", "itemMaster", "uomMaster", "active" }, callSuper = true, doNotUseGetters = true)
-		return String.format("OrderDetail:(order:%s; sku:%s; uom:%s; quant:%d; status:%s; active:%b )",
+		return String.format("OrderDetail:(order:%s; sku:%s; uom:%s; quant:%d; status:%s; active:%b; detailId:%s )",
 			getOrderId(),
 			getItemMasterId(),
 			getUomMasterId(),
 			getQuantity(),
 			getDetailStatusName(),
-			getActive());
+			getActive(),
+			getDomainId());
 	}
 	
 	public int getActualPickedItems(){
