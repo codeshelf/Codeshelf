@@ -131,18 +131,18 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		LOGGER.info("3a: Remove order 44444");
 		picker.scanCommand("INFO");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
-		picker.logCheDisplay();
+		picker.logLastCheDisplay();;
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == Byte.valueOf("44"));
 
 		LOGGER.info("3a1: Can you just press the button? No");
 		picker.pick(3, 44);
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
-		picker.logCheDisplay();
+		picker.logLastCheDisplay();;
 
 		LOGGER.info("3a2: Can you scan the button position? No.");
 		picker.scanPosition("3");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECTION_INVALID, 3000);
-		picker.logCheDisplay();
+		picker.logLastCheDisplay();;
 
 		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
@@ -150,7 +150,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		LOGGER.info("3a3: Can you scan the orderID at this point? Not for info. Only to try to move it.");
 		picker.scanSomething("44444");
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 3000);
-		picker.logCheDisplay();
+		picker.logLastCheDisplay();;
 
 		LOGGER.info("3a3: cancel should work here, but doesn't. Still on CONTAINER_POSITION");
 		picker.scanCommand("CANCEL");
@@ -169,12 +169,12 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		LOGGER.info("3b1: remove the order by scanning the order after info");
 		picker.scanCommand("INFO");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
-		picker.logCheDisplay();
+		picker.logLastCheDisplay();;
 
 		LOGGER.info("3b2: Can you scan the orderID at this point? Not for info. Only to try to move it.");
 		picker.scanSomething("44444");
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 3000);
-		picker.logCheDisplay();
+		picker.logLastCheDisplay();;
 
 		LOGGER.info("4: no files produced. Check that");		
 		beginTransaction();
@@ -314,7 +314,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		LOGGER.info("4: Start, getting the first pick");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
-		LOGGER.info(picker.getLastCheDisplay());
+		picker.logLastCheDisplay();
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 		// Look in console for line like this. No easy way to get it for unit test
@@ -500,7 +500,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		LOGGER.info("4: Start, getting the first pick");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
-		LOGGER.info(picker.getLastCheDisplay());
+		picker.logLastCheDisplay();
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 		// Look in console for line like this. No easy way to get it for unit test
@@ -539,7 +539,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		LOGGER.info("6d: Start, getting the first pick");
 		picker2.scanCommand("START");
 		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
-		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.logLastCheDisplay();
 		picker2.scanCommand("START");
 		picker2.waitForCheState(CheStateEnum.DO_PICK, 3000);
 		wiList = picker2.getAllPicksList();
@@ -547,11 +547,11 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		Assert.assertEquals(2, wiList.size());
 
 		LOGGER.info("7a: Complete this first pick, for 22222. That should complete the order. 2 picks, both attributed to CHE2");
-		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.logLastCheDisplay();
 		picker2.pickItemAuto();
 
 		LOGGER.info("7: Complete this pick for 11111. That should complete the order. 4 picks, all attributed to CHE2");
-		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.getLastCheDisplay();
 		picker2.pickItemAuto();
 		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 
@@ -673,7 +673,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		LOGGER.info("4: Start, getting the first pick");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
-		LOGGER.info(picker.getLastCheDisplay());
+		picker.logLastCheDisplay();
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
@@ -731,7 +731,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		LOGGER.info("7d: Start, getting the first pick");
 		picker2.scanCommand("START");
 		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
-		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.logLastCheDisplay();
 		picker2.scanCommand("START");
 		picker2.waitForCheState(CheStateEnum.DO_PICK, 3000);
 		wiList = picker2.getAllPicksList();
@@ -739,11 +739,11 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		Assert.assertEquals(5, wiList.size()); // the same 6 jobs other cart had, except no 44444 job.
 
 		LOGGER.info("8a: Complete the pick. Not shorted.");
-		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.logLastCheDisplay();
 		picker2.pickItemAuto();
 
 		LOGGER.info("8b: Complete picking. Except short the very last one. All attributed to CHE2");
-		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.logLastCheDisplay();
 		picker2.pickItemAuto();
 		picker2.pickItemAuto();
 		picker2.pickItemAuto(); // this completes order 22222
@@ -751,7 +751,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 
 		LOGGER.info("8c: Screen state right before shorting");
 		picker2.waitForCheState(CheStateEnum.DO_PICK, 3000);
-		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.logLastCheDisplay();
 
 		wi = picker2.getActivePick();
 		button = picker2.buttonFor(wi);
@@ -866,7 +866,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		LOGGER.info("4: Start, getting the first pick");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
-		LOGGER.info(picker.getLastCheDisplay());
+		picker.logLastCheDisplay();
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
