@@ -26,5 +26,9 @@ public class NetChannelValue extends NBitInteger {
 	public NetChannelValue(final byte inNewValue) {
 		super(CHANNEL_ENERGY_BITS, inNewValue);
 	}
+	
+	public NetChannelValue(final short inNewValue) {
+		super(CHANNEL_ENERGY_BITS, inNewValue);
+	}
 
 }

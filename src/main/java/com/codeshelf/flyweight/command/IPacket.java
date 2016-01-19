@@ -14,15 +14,16 @@ import com.codeshelf.flyweight.controller.INetworkDevice;
  *  @author jeffw
  */
 public interface IPacket {
-
-	byte PACKET_VERSION_0 = 0;
+	
+	byte PACKET_VERSION_0 = 1;
+	byte PACKET_VERSION_1 = 1;
 
 	// Packet header structure sizes.  (See Packet.java)
 	byte	PROTOCOL_VERSION_BITS	= 2;
 	byte	ACK_REQUIRED_BITS		= 1;
 	byte	RESERVED_HEADER_BITS	= 1;
 	byte	NETWORK_NUMBER_BITS		= 4;
-	byte	ADDRESS_BITS			= 8;
+	byte	ADDRESS_BITS			= 16;
 
 	byte	NETWORK_NUM_SPACING_BITS	= 4;
 	byte	ADDRESS_SPACING_BITS		= 0;
@@ -33,10 +34,10 @@ public interface IPacket {
 	int		ACK_DATA_BYTES	= 8;
 
 	//NetAddress	GATEWAY_ADDRESS				= new NetAddress((byte) 0x0);
-	byte	GATEWAY_ADDRESS		= 0x00;
+	byte	GATEWAY_ADDRESS		= 0x0000;
 	// Broadcast address is all 1's for each address bit.
 	//NetAddress	BROADCAST_ADDRESS			= new NetAddress((byte) (Math.pow(2, ADDRESS_BITS) - 1));
-	byte	BROADCAST_ADDRESS	= (byte) (Math.pow(2, ADDRESS_BITS) - 1);
+	short	BROADCAST_ADDRESS	= (short) 0xffff; //(Math.pow(2, ADDRESS_BITS) - 1);
 
 	// This is the network ID used to send network mgmt commands to all devices on a channel regardless of network ID.
 	byte	BROADCAST_NETWORK_ID	= (byte) (Math.pow(2, NETWORK_NUMBER_BITS) - 1);
@@ -45,11 +46,11 @@ public interface IPacket {
 	//NetworkId	BROADCAST_NETWORK_ID		= new NetworkId((byte) (Math.pow(2, NETWORK_NUMBER_BITS) - 1));
 	//NetworkId	DEFAULT_NETWORK_ID			= new NetworkId((byte) 0x01);
 	//NetworkId	ZERO_NETWORK_ID				= new NetworkId((byte) 0x00);
-
+	
 	byte	SMAC_FRAME_BYTES	= 2;
 	byte	MAX_PACKET_BYTES	= 125 - SMAC_FRAME_BYTES;
-
-	byte PACKET_HEADER_BYTES = 4;
+	
+	byte PACKET_HEADER_BYTES = 6;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -250,5 +251,29 @@ public interface IPacket {
 	 * Get the lqi of the packet
 	 */
 	byte getLQI();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the maximum packet payload for packet
+	 */
+	byte getMaxPacketBytes();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the header byte count
+	 */
+	byte getHeaderByteCount();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the packet version
+	 */
+	PacketVersion getPacketVersion();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Set the packet version
+	 */
+	void setPacketVersion(PacketVersion packetVersion);
 
 }

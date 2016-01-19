@@ -62,7 +62,7 @@ public final class FTDIInterface extends SerialInterfaceABC {
 	//	private static final int BAUD_416667 = 416667;
 	//	private static final int BAUD_625000 = 625000;
 	private static final int	BAUD_1250000			= 1250000;
-	private static final int	DEFAULT_BUFFER_SIZE		= Packet.MAX_PACKET_BYTES * 200;
+	private static final int	DEFAULT_BUFFER_SIZE		= IPacket.MAX_PACKET_BYTES * 200;
 	private static final int	DEFAULT_SLEEP_MILLIS	= 1;//25;
 	//private static final int	VID					= 0x0403;
 	//private static final int	GW_PID				= 0xada8;
@@ -396,10 +396,9 @@ public final class FTDIInterface extends SerialInterfaceABC {
 		long startTime = System.currentTimeMillis();
 		int bytesWritten = 0;
 		try {
-			//			long now = System.currentTimeMillis();
+			//long now = System.currentTimeMillis();
 			bytesWritten = mJD2XXInterface.write(inBytes, 0, inLength);
-			//			System.out.println("Frame: " + inLength + " delay: " + (System.currentTimeMillis() - now));
-		
+			//System.out.println("Frame: " + inLength + " delay: " + (System.currentTimeMillis() - now));
 		} catch (IOException e) {
 			LOGGER.error("Failed to send data", e);
 			resetInterface();

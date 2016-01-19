@@ -27,11 +27,11 @@ public final class NetAddress extends NBitInteger {
 	 *  @throws OutOfRangeException
 	 */
 
-	public NetAddress(final byte inNewValue) {
+	public NetAddress(final short inNewValue) {
 		super(IPacket.ADDRESS_BITS, inNewValue);
 	}
 
-	@Override
+	//@Override
 	public String toString() {
 		return Integer.toHexString(getValue());
 	}

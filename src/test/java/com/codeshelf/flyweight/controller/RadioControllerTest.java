@@ -52,7 +52,7 @@ public final class RadioControllerTest extends MinimalTest {
 	}
 
 	private void assertDeviceNetAddress(INetworkDevice testDevice, int expectedValue) {
-		Short valueDevice1 = testDevice.getAddress().getValue();
+		Integer valueDevice1 = testDevice.getAddress().getValue();
 		Assert.assertEquals(expectedValue, valueDevice1.intValue());
 	}
 

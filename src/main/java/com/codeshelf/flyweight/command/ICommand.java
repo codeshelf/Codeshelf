@@ -17,7 +17,7 @@ public interface ICommand {
 	// See CommandABC for header description.
 	byte	COMMAND_HEADER_BYTES	= 1;
 
-	byte	MAX_COMMAND_BYTES		= IPacket.MAX_PACKET_BYTES - IPacket.PACKET_HEADER_BYTES;
+	byte	MAX_COMMAND_BYTES		= (byte) (IPacket.MAX_PACKET_BYTES - IPacket.PACKET_HEADER_BYTES);
 
 	// --------------------------------------------------------------------------
 	/**

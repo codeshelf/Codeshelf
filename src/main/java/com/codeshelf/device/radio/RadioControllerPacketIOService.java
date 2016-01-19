@@ -104,19 +104,23 @@ public class RadioControllerPacketIOService {
 						IPacket packet = null;
 						packet = gatewayInterface.receivePacket(networkId);
 
-						if (packet != null) {
-							// Hand packet off to handler service
-							boolean success = packetHandlerService.handleInboundPacket(packet);
-							//LOGGER.info("Inbound packet={}; didGetHandled={}", packet, success);
-							if (!success) {
-
-								LOGGER.warn("PacketHandlerService failed to accept packet. Pausing packet reads to retry handlePacket. Packet={}",
-									packet);
-								// We will stop reading and try to handle this
-								// packet with an exponential backoff of up to
-								// 500ms
-								this.retryHandlePacketWithExponentialBackoff(packet);
+						if (packet.getPacketVersion().getValue() == (int) IPacket.PACKET_VERSION_1) {
+							if (packet != null) {
+								// Hand packet off to handler service
+								boolean success = packetHandlerService.handleInboundPacket(packet);
+								//LOGGER.info("Inbound packet={}; didGetHandled={}", packet, success);
+								if (!success) {
+	
+									LOGGER.warn("PacketHandlerService failed to accept packet. Pausing packet reads to retry handlePacket. Packet={}",
+										packet);
+									// We will stop reading and try to handle this
+									// packet with an exponential backoff of up to
+									// 500ms
+									this.retryHandlePacketWithExponentialBackoff(packet);
+								}
 							}
+						} else {
+							//LOGGER.error("******* Got packet of wrong type!");
 						}
 					}
 				} catch (Exception e) {

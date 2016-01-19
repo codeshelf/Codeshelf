@@ -140,7 +140,7 @@ public class NBitIntegerSaTest extends MinimalTest {
 
 			try {
 				@SuppressWarnings("unused")
-				short value = testInt.getValue();
+				int value = testInt.getValue();
 				Assert.fail();
 			} catch (OutOfRangeException e) {
 				// Expected condition.

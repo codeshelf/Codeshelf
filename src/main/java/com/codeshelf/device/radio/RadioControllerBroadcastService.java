@@ -56,8 +56,8 @@ public class RadioControllerBroadcastService {
 					broadcastNetworkId,
 					RadioController.PRIVATE_GUID,
 					radioController.getRadioChannel(),
-					new NetChannelValue((byte) 0),
-					new NetChannelValue((byte) 0));
+					new NetChannelValue((short) 0),
+					new NetChannelValue((short) 0));
 
 				radioController.sendNetMgmtCommand(netCheck, broadcastAddress);
 

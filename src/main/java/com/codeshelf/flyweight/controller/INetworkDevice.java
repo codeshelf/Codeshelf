@@ -6,6 +6,7 @@
 package com.codeshelf.flyweight.controller;
 
 import com.codeshelf.device.DeviceRestartCauseEnum;
+import com.codeshelf.flyweight.bitfields.NBitInteger;
 import com.codeshelf.flyweight.command.CommandControlButton;
 import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
@@ -224,4 +225,16 @@ public interface INetworkDevice {
 	 * Set last packet sent
 	 */
 	void setLastSentPacket(IPacket inPacket);
+	
+	/**
+	 * Get the packet version
+	 * @return packet version
+	 */
+	NBitInteger getPacketVersion();
+	
+	/**
+	 * Set packet type
+	 * @param inPacketType
+	 */
+	void setPacketVersion(NBitInteger inPacketVersion);
 }

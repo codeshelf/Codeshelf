@@ -22,12 +22,12 @@ import java.io.Serializable;
 
 public class NBitInteger implements Serializable {
 
-	private static final byte	MAXBITWIDTH			= 8;
-	private static final short	MASKING_BITS		= 0x00ff;
+	private static final byte	MAXBITWIDTH			= 16;
+	private static final int	MASKING_BITS		= 0x0000ffff;
 
 	private static final long	serialVersionUID	= -4389961963517642151L;
 
-	private short				mValue;
+	private int					mValue;
 	private byte				mBitCount;
 
 	// --------------------------------------------------------------------------
@@ -73,6 +73,28 @@ public class NBitInteger implements Serializable {
 			setValue(inNewValue);
 		}
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 *  Creates an n-bit integer.
+	 * 
+	 *  @param inBitWidth
+	 *  @param inNewValue
+	 *  @throws IllegalBoundsException - this is a checked exception.  Creating a class that you can't fit is a big problem, 
+	 *										and the programmer should discover this.
+	 *  @throws OutOfRangeException - this is an unchecked exception.  If this were a checked exception it would propogate tons 
+	 *										of try..catch blocks all over the code that really aren't able to deal with this kind 
+	 *										of exception.  It seems better to find this in unit testing instead.
+	 */
+	public NBitInteger(final byte inBitWidth, final short inNewValue) {
+
+		if ((inBitWidth < 0) || (inBitWidth > MAXBITWIDTH)) {
+			throw new IllegalBoundsException("Incorrect bit width.");
+		} else {
+			mBitCount = inBitWidth;
+			setValue(inNewValue);
+		}
+	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -80,7 +102,7 @@ public class NBitInteger implements Serializable {
 	 *  @param inNewValue	The new value we're trying to store.
 	 *  @return	True if it is within range.
 	 */
-	private boolean isInRange(short inNewValue) {
+	private boolean isInRange(int inNewValue) {
 		return ((inNewValue >= 0) && (inNewValue < Math.pow(2, mBitCount)));
 	}
 
@@ -91,7 +113,22 @@ public class NBitInteger implements Serializable {
 	 * @throws OutOfRangeException if the value is not between the minimum and maximum value.
 	 */
 	public final void setValue(byte inNewValue) {
-		short convertedValue = (short) (inNewValue & MASKING_BITS);
+		int convertedValue = (int) (inNewValue & MASKING_BITS);
+		if (isInRange(convertedValue)) {
+			mValue = convertedValue;
+		} else {
+			throw new OutOfRangeException("Value is out of range.");
+		}
+	}
+	
+	/**
+	 * Sets a new value for the integer.
+	 * 
+	 * @param inNewValue The new value.
+	 * @throws OutOfRangeException if the value is not between the minimum and maximum value.
+	 */
+	public final void setValue(short inNewValue) {
+		int convertedValue = (int) (inNewValue & MASKING_BITS);
 		if (isInRange(convertedValue)) {
 			mValue = convertedValue;
 		} else {
@@ -102,7 +139,7 @@ public class NBitInteger implements Serializable {
 	/**
 	 * @return The current value.
 	 */
-	public final short getValue() {
+	public final int getValue() {
 		if (mValue == -1) {
 			throw new OutOfRangeException("Value is out of range.");
 		} else {

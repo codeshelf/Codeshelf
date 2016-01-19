@@ -30,13 +30,13 @@ import com.codeshelf.flyweight.controller.INetworkDevice;
  *  2. You're creating a new packet from scratch, and you have the addresses and command to go with it.
  *  	There is no packet factory for this case - you create the command ad-hoc.	 /**
  * 
- * The format of a ver 1.0 packet stream is:
+ * The format of a ver 2.0 packet stream is:
  * 
  *   2b - Packet format version
  *   1b - Packet type (std or ack)
  *   5b - Network ID
- *   1B - Src address
- *	 1B - Dst address
+ *   2B - Src address
+ *	 2B - Dst address
  *   1B - Ack Id (if ack wanted on std packet then non-zero)
  *	 nB - Command data
  *	
@@ -74,6 +74,9 @@ public final class Packet implements IPacket {
 	@Setter
 	private Boolean					mRequiresAck;
 
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
 	private PacketVersion			mPacketVersion	= new PacketVersion(IPacket.PACKET_VERSION_0);
 	private NBitInteger				mPacketType;
 	private NBitInteger				mReservedHeaderBits;
@@ -210,6 +213,11 @@ public final class Packet implements IPacket {
 			inInputStream.readNBitInteger(mSrcAddr);
 			inInputStream.readNBitInteger(mDstAddr);
 			mAckId = inInputStream.readByte();
+			
+			if (mPacketVersion.getValue() != (int) IPacket.PACKET_VERSION_1) {
+				mCommand = null;
+				return;
+			}
 			if (mPacketType.getValue() == IPacket.STD_PACKET) {
 				mCommand = CommandFactory.createCommand(inInputStream, this.packetPayloadSize(inFrameSize));
 			} else {
@@ -437,4 +445,21 @@ public final class Packet implements IPacket {
 	public byte getLQI() {
 		return mLQI;
 	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the maximum packet payload for packet
+	 */
+	public byte getMaxPacketBytes() {
+		return MAX_PACKET_BYTES;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the maximum packet payload for packet
+	 */
+	public byte getHeaderByteCount() {
+		return PACKET_HEADER_BYTES;
+	}
+	
 }

@@ -50,6 +50,7 @@ public class RadioControllerPacketSchedulerService {
 
 	private static final int													ACK_SEND_RETRY_COUNT			= 20;																	// matching v16. Used to be 20.
 	private static final long													MAX_PACKET_AGE_MILLIS			= 8000;
+	private static final int													MAX_RESENDS_WITOUT_ACK			= 10;
 
 	// DEV-1240 These yield log info messages when hit 
 	private static final int													ACK_LOG_MANY_RETRY_1			= 8;
@@ -72,6 +73,9 @@ public class RadioControllerPacketSchedulerService {
 																													MAP_LOAD_FACTOR,
 																													MAP_CONCURRENCY_LEVEL);
 	private final ConcurrentHashMap<NetAddress, Integer>						mDeviceBlockingPeekCount		= new ConcurrentHashMap<NetAddress, Integer>(MAP_INIT_SIZE,
+																													MAP_LOAD_FACTOR,
+																													MAP_CONCURRENCY_LEVEL);
+	private final ConcurrentHashMap<NetAddress, Integer>						mDeviceSendWithoutAckCount		= new ConcurrentHashMap<NetAddress, Integer>(MAP_INIT_SIZE,
 																													MAP_LOAD_FACTOR,
 																													MAP_CONCURRENCY_LEVEL);
 
@@ -136,6 +140,10 @@ public class RadioControllerPacketSchedulerService {
 		if (deque == null) {
 			deque = new ConcurrentLinkedDeque<IPacket>();
 			mPendingPacketsMap.put(deviceAddr, deque);
+		}
+		
+		if (!mDeviceSendWithoutAckCount.contains(deviceAddr)) {
+			mDeviceSendWithoutAckCount.put(deviceAddr, 0);
 		}
 
 		// Add new packet to the end of the queue
@@ -219,6 +227,7 @@ public class RadioControllerPacketSchedulerService {
 		}
 
 		mLastDeviceAckId.put(deviceAddr, inAckNum);
+		mDeviceSendWithoutAckCount.put(deviceAddr, 0);
 	}
 
 	// --------------------------------------------------------------------------
@@ -229,7 +238,10 @@ public class RadioControllerPacketSchedulerService {
 	 * @param inAckNum - Ack number of packet
 	 */
 	public void markPacketAsAcked(INetworkDevice inDevice, byte inAckNum) {
-		mLastDeviceAckId.put(inDevice.getAddress(), inAckNum);
+		NetAddress deviceAddr = inDevice.getAddress();
+		
+		mLastDeviceAckId.put(deviceAddr, inAckNum);
+		mDeviceSendWithoutAckCount.put(deviceAddr, 0);
 	}
 
 	// --------------------------------------------------------------------------
@@ -480,16 +492,24 @@ public class RadioControllerPacketSchedulerService {
 			}
 		}
 		
+		// If we have sent more than MAX_RESENDS_WITHOUT_ACK without an ack from device do not send to device
+		int resendCount = mDeviceSendWithoutAckCount.get(inDevice.getAddress());
+		if (resendCount >= MAX_RESENDS_WITOUT_ACK) {
+			LOGGER.warn("Skipping device. Sent {} packets without ACK", resendCount);
+			return false;
+		}
+		
+		// Check sending timings
 		IPacket lastPacketSent = inDevice.getLastSentPacket();
 		if(lastPacketSent != null) {
+			// Get requested delay from last packet sent
 			packetDelayRequirement = lastPacketSent.getCommand().getResendDelay();
 		}
 
 		lastReceivedTime = 0; //inDevice.getLastPacketReceivedTime();
 		lastSentTime = Math.max(inDevice.getLastPacketSentTime(), mLastNetCheckSentTime);
 		minDifference = Math.min(currTime - lastReceivedTime, currTime - lastSentTime);
-		//5
-		//LOGGER.warn("LS: {}, LR: {}, LNChk: {}, Min Diff: {}", inDevice.getLastPacketSentTime(), inDevice.getLastPacketReceivedTime(),mLastNetCheckSentTime, minDifference);
+		
 		if (isNextPacketAssocCmd(inDevice)) {
 			if (minDifference < DEVICE_ASSOC_SPACING_MILLIS) {
 				return false;
@@ -503,7 +523,6 @@ public class RadioControllerPacketSchedulerService {
 				return true;
 			}
 		}
-
 	}
 
 	private boolean isNextPacketAssocCmd(INetworkDevice inDevice) {
