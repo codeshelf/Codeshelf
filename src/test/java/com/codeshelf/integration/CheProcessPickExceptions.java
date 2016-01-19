@@ -458,7 +458,6 @@ public class CheProcessPickExceptions extends ServerTest {
 	 * Trying to replicate what seemed to stop us during Walmart trial. DEV-1415
 	 * Unable to. This does separate picks for the duplicate order lines as intended, without needing new scan.
 	 */
-	@SuppressWarnings("unused")
 	@Test
 	public final void doubleDetailId() throws IOException {
 
