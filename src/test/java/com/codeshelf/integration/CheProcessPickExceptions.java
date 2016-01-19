@@ -455,8 +455,10 @@ public class CheProcessPickExceptions extends ServerTest {
 	}
 
 	/**
-	 * Trying to replicate what seemed to stop us during Walmart trial
+	 * Trying to replicate what seemed to stop us during Walmart trial. DEV-1415
+	 * Unable to. This does separate picks for the duplicate order lines as intended, without needing new scan.
 	 */
+	@SuppressWarnings("unused")
 	@Test
 	public final void doubleDetailId() throws IOException {
 
@@ -466,11 +468,11 @@ public class CheProcessPickExceptions extends ServerTest {
 		// We are going to put everything in A1 and A2 since they are on the same path.
 		//Item 5 is out of stock and item 6 is case only.
 		String csvInventory = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
-				+ "1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
-				+ "2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
-				+ "3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
-				+ "4,D401,Test Item 4,1,EA,6/25/14 12:00,66\r\n" //
-				+ "6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
+				+ "sku1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
+				+ "sku2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
+				+ "sku3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
+				+ "sku4,D401,Test Item 4,1,EA,6/25/14 12:00,66\r\n" //
+				+ "sku6,D403,Test Item 6,1,EA,6/25/14 12:00,3\r\n";//
 		beginTransaction();
 		importInventoryData(facility, csvInventory);
 		PropertyBehavior.turnOffHK(facility);
@@ -497,64 +499,83 @@ public class CheProcessPickExceptions extends ServerTest {
 		picker.setupOrderIdAsContainer("22222", "2");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
-		LOGGER.info(picker.getLastCheDisplay());
+		picker.logLastCheDisplay();
 
 		picker.scanLocation("D301");
-		// picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 3000); 
-		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000); // Wrong
-		LOGGER.info(picker.getLastCheDisplay());
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 3000);
+		picker.logLastCheDisplay();
 
-		// Remove these next two blocks, and undo the if (false)
+		LOGGER.info("2: Pick, scanning each. At Walmart, the first pick worked, then stuck on the second.");
+		picker.scanSomething("gtin1");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		picker.logLastCheDisplay();
+		// proceed in exquisite detail to try to find and localize any bug. Instead of pickItemAuto();
 
-		picker.scanLocation("D301");
-		// picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 3000);
-		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000); // Wrong
-		LOGGER.info(picker.getLastCheDisplay());
+		WorkInstruction wi = picker.getFirstActivePick();
+		int button = picker.buttonFor(wi);
+		int quantity = wi.getPlanQuantity();
+		picker.pick(button, quantity);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		picker.logLastCheDisplay();
 
-		// START is getting us there
-		picker.scanCommand("START");
-		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000); // Wrong
-		LOGGER.info(picker.getLastCheDisplay());
+		LOGGER.info("3: After the first pick, scan location/tape again. Scan START/START would be equivalent. Needs scan again if user does this.");
+		// curious!  The scan location variant stays on the 301 pick, but start/start goes to 302. Change to testVariable = true;
+		// If testVariable = true, CORRECTLY does all the sku1 picks first, then sku2.
+		// If testVariable = false, INCORRECTLY switches back and forth. START should have remembered we were at D301.
+		
+		boolean testVariable = false;
+		if (testVariable) {
+			picker.scanLocation("D301");
+		} else {
+			picker.scanCommand("START");
+			picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+			picker.scanCommand("START");
+		}
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 3000);
+		picker.logLastCheDisplay();
 
-		if (false) {
+		if (testVariable) {
+			picker.scanSomething("gtin1");
+		} else {
+			picker.scanSomething("gtin2");
+		}
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		picker.logLastCheDisplay();
 
-			LOGGER.info("2: Pick, scanning each.Should be no server-side errors");
+		wi = picker.getFirstActivePick();
+		button = picker.buttonFor(wi);
+		quantity = wi.getPlanQuantity();
+		picker.pick(button, quantity);
+		if (testVariable) {
+			picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+			picker.logLastCheDisplay();
+		} else {
+			picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 3000);
+			picker.logLastCheDisplay();
 			picker.scanSomething("gtin1");
 			picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-			LOGGER.info(picker.getLastCheDisplay());
-			// proceed in exquisite detail to try to find and localize any bug. Instead of pickItemAuto();
-
-			WorkInstruction wi = picker.getFirstActivePick();
-			int button = picker.buttonFor(wi);
-			int quantity = wi.getPlanQuantity();
-			picker.pick(button, quantity);
-			picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-			LOGGER.info(picker.getLastCheDisplay());
-
-			wi = picker.getFirstActivePick();
-			button = picker.buttonFor(wi);
-			quantity = wi.getPlanQuantity();
-			picker.pick(button, quantity);
-			picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-			LOGGER.info(picker.getLastCheDisplay());
-
-			wi = picker.getFirstActivePick();
-			button = picker.buttonFor(wi);
-			quantity = wi.getPlanQuantity();
-			picker.pick(button, quantity);
-			picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 3000);
-			LOGGER.info(picker.getLastCheDisplay());
-
-			picker.scanSomething("gtin2");
-			picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-
-			wi = picker.getFirstActivePick();
-			button = picker.buttonFor(wi);
-			quantity = wi.getPlanQuantity();
-			picker.pick(button, quantity);
-			picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
-			LOGGER.info(picker.getLastCheDisplay());
+			picker.logLastCheDisplay();
 		}
+
+		wi = picker.getFirstActivePick();
+		button = picker.buttonFor(wi);
+		quantity = wi.getPlanQuantity();
+		picker.pick(button, quantity);
+		if (testVariable) {
+			picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 3000);
+			picker.logLastCheDisplay();
+			picker.scanSomething("gtin2");
+		}
+		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
+		picker.logLastCheDisplay();
+
+		wi = picker.getFirstActivePick();
+		button = picker.buttonFor(wi);
+		quantity = wi.getPlanQuantity();
+		picker.pick(button, quantity);
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		picker.logLastCheDisplay();
+
 		picker.logout();
 	}
 
