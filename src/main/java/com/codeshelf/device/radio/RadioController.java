@@ -913,27 +913,28 @@ public class RadioController implements IRadioController {
 		return mNextAddress;
 		*/
 
+		// FIXME - huffa this is broken. Need to not make 255 / 254 static. Should be based on the net address size 
 		NetGuid theGuid = inNetworkDevice.getGuid();
 		// we want the last byte. Jeff says negative is ok as -110 is x97 and is interpreted in the air protocol as positive up to 255.
 		byte[] theBytes = theGuid.getParamValueAsByteArray();
 		int guidByteSize = NetGuid.NET_GUID_BYTES;
-		NetAddress returnAddress = new NetAddress(theBytes[guidByteSize - 1]);
+		NetAddress returnAddress = new NetAddress((short)(theBytes[guidByteSize - 1] & 0xff));
 		// Now we must see if this is already in the map
 		boolean done = false;
 		boolean wentAround = false;
 		while (!done) {
 			// Do not allow a device to have the net address 255 which is used as the broadcast address!
 			// Do not allow a device to have the net address 0 which is used as the controller address!
-			if ((returnAddress.getValue() != 0xff) && (returnAddress.getValue() != 0x00)
+			if ((returnAddress.getValue() != 0xffff) && (returnAddress.getValue() != 0x0000)
 					&& (!mDeviceNetAddrMap.containsKey(returnAddress)))
 				done = true;
 			else {
 				// we would like unsigned byte
-				short unsignedValue = returnAddress.getValue();
-				if (unsignedValue >= 255) {
+				int unsignedValue = returnAddress.getValue();
+				if (unsignedValue >= 0xffff) {
 					if (wentAround) { // some looping error, or we are full up. Bail
 						LOGGER.error("mDeviceNetAddrMap is full! Or getBestNetAddressForDevice has loop error. Giving out duplicate of fe (254) net address");
-						returnAddress.setValue((byte) 254);
+						returnAddress.setValue((byte) (0xffff - 1));
 						return returnAddress; // or throw?
 					}
 					unsignedValue = 1;
@@ -941,7 +942,7 @@ public class RadioController implements IRadioController {
 				} else {
 					unsignedValue++;
 				}
-				returnAddress.setValue((byte) unsignedValue);
+				returnAddress.setValue((short) unsignedValue);
 			}
 		}
 		return returnAddress;
