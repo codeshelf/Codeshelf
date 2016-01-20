@@ -105,21 +105,6 @@ public class NBitInteger implements Serializable {
 	private boolean isInRange(int inNewValue) {
 		return ((inNewValue >= 0) && (inNewValue < Math.pow(2, mBitCount)));
 	}
-
-	/**
-	 * Sets a new value for the integer.
-	 * 
-	 * @param inNewValue The new value.
-	 * @throws OutOfRangeException if the value is not between the minimum and maximum value.
-	 */
-//	public final void setValue(byte inNewValue) {
-//		int convertedValue = (int) (inNewValue & MASKING_BITS);
-//		if (isInRange(convertedValue)) {
-//			mValue = convertedValue;
-//		} else {
-//			throw new OutOfRangeException("Value is out of range.");
-//		}
-//	}
 	
 	/**
 	 * Sets a new value for the integer.
@@ -128,7 +113,7 @@ public class NBitInteger implements Serializable {
 	 * @throws OutOfRangeException if the value is not between the minimum and maximum value.
 	 */
 	public final void setValue(short inNewValue) {
-		int convertedValue = (int) (inNewValue & 0xff);
+		int convertedValue = (int) inNewValue & 0xFFFF;
 		if (isInRange(convertedValue)) {
 			mValue = convertedValue;
 		} else {

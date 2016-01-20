@@ -162,7 +162,7 @@ public final class BitFieldInputStream {
 	 */
 	public void readNBitInteger(NBitInteger inNBitInt) throws IOException {
 
-		byte newValue = 0;
+		short newValue = 0;
 		// Since we build the buffer from the MSB we need to know the largest (leftmost) bit position with which to start given the largest NBit integer possible.
 		//final int maskStarter = 0x01 << (inNBitInt.getBitLen() - 1);
 
