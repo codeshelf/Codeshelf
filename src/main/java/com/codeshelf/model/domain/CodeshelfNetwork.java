@@ -11,8 +11,6 @@ import java.util.Map;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -47,7 +45,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 
 @Entity
-@Table(name = "network",uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid"})}) // only one network per facility is supported currently
+@Table(name = "network",uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainId"})}) // only one network per facility is supported currently
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -102,25 +100,19 @@ public class CodeshelfNetwork extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private boolean						connected;
 
-	// The owning facility.
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
 	@Getter
-	@Setter
-	private Facility					parent;
-	
-	@Getter
-    @OneToMany(mappedBy = "parent",targetEntity=Che.class, orphanRemoval=true)
+    @OneToMany(mappedBy = "parent",orphanRemoval=true)
     @MapKey(name = "domainId")
 	@JsonProperty
 	private Map<String, Che>			ches				= new HashMap<String, Che>();
 
 	@Getter
-	@OneToMany(mappedBy = "parent",targetEntity=LedController.class, orphanRemoval=true)
+	@OneToMany(mappedBy = "parent",orphanRemoval=true)
 	@MapKey(name = "domainId")
 	@JsonProperty
 	private Map<String, LedController>	ledControllers		= new HashMap<String, LedController>();
 
-	@OneToMany(mappedBy = "parent",targetEntity=SiteController.class, orphanRemoval=true)
+	@OneToMany(mappedBy = "parent",orphanRemoval=true)
 	@MapKey(name = "domainId")
 	@Getter
 	@JsonProperty

@@ -1,8 +1,8 @@
 package com.codeshelf.api.resources.subresources;
 
+
 import java.io.InputStream;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 
 import javax.script.ScriptException;
@@ -32,12 +33,11 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.commons.beanutils.BeanMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.shiro.authz.annotation.RequiresPermissions;
-import org.hibernate.Criteria;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.exception.ConstraintViolationException;
-import org.joda.time.DateTime;
+import org.joda.time.Period;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,14 +54,18 @@ import com.codeshelf.api.pickscript.ScriptServerRunner;
 import com.codeshelf.api.pickscript.ScriptSiteCallPool;
 import com.codeshelf.api.pickscript.ScriptStepParser;
 import com.codeshelf.api.pickscript.ScriptStepParser.StepPart;
+import com.codeshelf.api.resources.ChesResource;
 import com.codeshelf.api.resources.ExtensionPointsResource;
 import com.codeshelf.api.resources.OrdersResource;
+import com.codeshelf.api.resources.WorkersResource;
 import com.codeshelf.api.responses.EventDisplay;
+import com.codeshelf.api.responses.FacilityShort;
 import com.codeshelf.api.responses.ItemDisplay;
 import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.api.responses.WorkerDisplay;
 import com.codeshelf.behavior.NotificationBehavior;
+import com.codeshelf.behavior.NotificationBehavior.HistogramResult;
 import com.codeshelf.behavior.NotificationBehavior.WorkerEventTypeGroup;
 import com.codeshelf.behavior.OrderBehavior;
 import com.codeshelf.behavior.ProductivitySummaryList;
@@ -76,11 +80,11 @@ import com.codeshelf.edi.ICsvWorkerImporter;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.DataPurgeParameters;
-import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.WiFactory.WiPurpose;
+import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.FacilityMetric;
-import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.scheduler.ApplicationSchedulerService;
@@ -92,15 +96,31 @@ import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.sun.jersey.api.core.ResourceContext;
 import com.sun.jersey.multipart.FormDataMultiPart;
 
+import lombok.Getter;
 import lombok.Setter;
 
 public class FacilityResource {
+
+	public class Option {
+
+		@Getter
+		private String value;
+		@Getter
+		private String label;
+
+		public Option(String input, String displayName) {
+			this.value = input;
+			this.label = displayName;
+		}
+
+	}
 
 	private static final Logger							LOGGER			= LoggerFactory.getLogger(FacilityResource.class);
 
@@ -150,6 +170,12 @@ public class FacilityResource {
 		this.workerImporterProvider = workerImporterProvider;
 	}
 
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response get() {
+		return BaseResponse.buildResponse(new FacilityShort(facility));
+	}
+
 	@Path("/import")
 	public ImportResource getImportResource() throws Exception {
 		ImportResource r = resourceContext.getResource(ImportResource.class);
@@ -164,6 +190,21 @@ public class FacilityResource {
 		return r;
 	}
 
+	@Path("/workers")
+	public WorkersResource getWorkersResource() throws Exception {
+		WorkersResource r = resourceContext.getResource(WorkersResource.class);
+		r.setFacility(facility);
+		return r;
+	}
+
+	@Path("/ches")
+	public ChesResource getAllChesInFacility() {
+		ChesResource r = resourceContext.getResource(ChesResource.class);
+		r.setFacility(facility);
+		return r;
+	}
+
+	
 	@Path("/test")
 	public TestResource getTestResource() throws Exception {
 		TestResource r = resourceContext.getResource(TestResource.class);
@@ -344,56 +385,6 @@ public class FacilityResource {
 		return BaseResponse.buildResponse(summary);
 	}
 
-	@GET
-	@Path("/ches")
-	@RequiresPermissions("che:edit")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getAllChesInFacility() {
-		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", facility));
-		Criteria cheCriteria = Che.staticGetDao().createCriteria();
-		cheCriteria.createCriteria("parent", "network").add(Restrictions.eq("parent", facility));
-		List<Che> ches = Che.staticGetDao().findByCriteriaQuery(cheCriteria);
-		return BaseResponse.buildResponse(ches);
-	}
-
-	@GET
-	@Path("/workers")
-	@RequiresPermissions("worker:view")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getAllWorkersInFacility() {
-		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", facility));
-		List<Worker> workers = Worker.staticGetDao().findByFilter(filterParams);
-		return BaseResponse.buildResponse(workers);
-	}
-
-	@POST
-	@Path("/workers")
-	@RequiresPermissions("worker:edit")
-	@Consumes(MediaType.APPLICATION_JSON)
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response createWorker(Worker worker) {
-		ErrorResponse errors = new ErrorResponse();
-		try {
-			worker.setFacility(facility);
-			worker.generateDomainId();
-			if (worker.getActive() == null) {
-				worker.setActive(true);
-			}
-			worker.setUpdated(new Timestamp(System.currentTimeMillis()));
-			if (!worker.isValid(errors)) {
-				errors.setStatus(Status.BAD_REQUEST);
-				return errors.buildResponse();
-			}
-			UUID id = worker.getPersistentId();
-			Worker.staticGetDao().store(worker);
-			Worker createdWorker = Worker.staticGetDao().findByPersistentId(id);
-			return BaseResponse.buildResponse(createdWorker);
-		} catch (Exception e) {
-			return errors.processException(e);
-		}
-	}
 
 	@GET
 	@Path("events")
@@ -403,12 +394,13 @@ public class FacilityResource {
 		@QueryParam("itemId") String itemId,
 		@QueryParam("location") String location,
 		@QueryParam("workerId") String workerId,
+		@QueryParam("created") IntervalParam created,
 		@QueryParam("groupBy") String groupBy,
 		@QueryParam("resolved") Boolean resolved) {
 		ErrorResponse errors = new ErrorResponse();
 		try {
 			List<Criterion> filterParams = new ArrayList<Criterion>();
-			filterParams.add(Restrictions.eq("facility", facility));
+			filterParams.add(Restrictions.eq("parent", facility));
 			//If any "type" parameters are provided, filter accordingly
 			List<WorkerEvent.EventType> typeList = Lists.newArrayList();
 			for (EventTypeParam type : typeParamList) {
@@ -417,7 +409,7 @@ public class FacilityResource {
 				}
 			}
 			if (!typeList.isEmpty()) {
-				filterParams.add(Restrictions.in("eventType", typeList));
+				filterParams.add(Restrictions.in("eventType", typeList)); // empty .in() guard present
 			}
 
 			if (!Strings.isNullOrEmpty(itemId)) {
@@ -432,28 +424,33 @@ public class FacilityResource {
 					filterParams.add(Restrictions.isNull("resolution"));
 				}
 			}
+			if (created != null) {
+				filterParams.add(GenericDaoABC.createIntervalRestriction("created", created.getValue()));
+			}
 
 			if (!Strings.isNullOrEmpty(itemId)) {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
-				ResultDisplay result = new ResultDisplay();
+				List<BeanMap> eventBeans = new ArrayList<>();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
 					ItemDisplay itemDisplayKey = new ItemDisplay(eventDisplay);
 					if (itemId.equals(itemDisplayKey.getItemId()) && location.equals(itemDisplayKey.getLocation())) {
-						result.add(new BeanMap(eventDisplay));
+						eventBeans.add(new BeanMap(eventDisplay));
 					}
 				}
+				ResultDisplay<BeanMap> result = new ResultDisplay<>(eventBeans);
 				return BaseResponse.buildResponse(result);
 			} else if (!Strings.isNullOrEmpty(workerId)) {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
-				ResultDisplay result = new ResultDisplay();
+				List<BeanMap> eventBeans = new ArrayList<>();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
 					WorkerDisplay workerDisplayKey = new WorkerDisplay(eventDisplay);
 					if (workerId.equals(workerDisplayKey.getId())) {
-						result.add(new BeanMap(eventDisplay));
+						eventBeans.add(new BeanMap(eventDisplay));
 					}
 				}
+				ResultDisplay<BeanMap> result = new ResultDisplay<>(eventBeans);
 				return BaseResponse.buildResponse(result);
 			}
 
@@ -467,13 +464,15 @@ public class FacilityResource {
 					issuesByItem.put(itemDisplayKey, count + 1);
 				}
 
-				ResultDisplay result = new ResultDisplay(ItemDisplay.ItemComparator);
+				//
+				TreeSet<Map<Object, Object>> issues = new TreeSet<>(ItemDisplay.ItemComparator);
 				for (Map.Entry<ItemDisplay, Integer> issuesByItemEntry : issuesByItem.entrySet()) {
 					Map<Object, Object> values = new HashMap<>();
 					values.putAll(new BeanMap(issuesByItemEntry.getKey()));
 					values.put("count", issuesByItemEntry.getValue());
-					result.add(values);
+					issues.add(values);
 				}
+				ResultDisplay<Map<Object, Object>> result = new ResultDisplay<>(issues);
 				return BaseResponse.buildResponse(result);
 			} else if ("worker".equals(groupBy)) {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
@@ -485,25 +484,28 @@ public class FacilityResource {
 					issuesByWorker.put(workerDisplayKey, count + 1);
 				}
 
-				ResultDisplay result = new ResultDisplay(WorkerDisplay.ItemComparator);
+				TreeSet<Map<Object, Object>> issues = new TreeSet<>(WorkerDisplay.ItemComparator);
 				for (Map.Entry<WorkerDisplay, Integer> issuesByWorkerEntry : issuesByWorker.entrySet()) {
 					Map<Object, Object> values = new HashMap<>();
 					values.putAll(new BeanMap(issuesByWorkerEntry.getKey()));
 					values.put("count", issuesByWorkerEntry.getValue());
-					result.add(values);
+					issues.add(values);
 				}
+				ResultDisplay<Map<Object, Object>> result = new ResultDisplay<>(issues);
 				return BaseResponse.buildResponse(result);
 			} else if ("type".equals(groupBy)) {
-				List<WorkerEventTypeGroup> issuesByType = notificationService.groupWorkerEventsByType(facility, resolved);
-				ResultDisplay result = new ResultDisplay(issuesByType.size());
-				result.addAll(issuesByType);
+				
+				List<WorkerEventTypeGroup> issuesByType = notificationService.groupWorkerEventsByType(facility, created.getValue(), resolved);
+				ResultDisplay<WorkerEventTypeGroup> result = new ResultDisplay<>(issuesByType);
 				return BaseResponse.buildResponse(result);
 			} else {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
-				ResultDisplay result = new ResultDisplay(events.size());
+				List<BeanMap> eventBeans = new ArrayList<>();
 				for (WorkerEvent event : events) {
-					result.add(new BeanMap(EventDisplay.createEventDisplay(event)));
+					eventBeans.add(new BeanMap(EventDisplay.createEventDisplay(event)));
 				}
+				ResultDisplay<BeanMap> result = new ResultDisplay<>(eventBeans);
+
 				return BaseResponse.buildResponse(result);
 			}
 
@@ -517,18 +519,69 @@ public class FacilityResource {
 	@Path("pickrate")
 	@RequiresPermissions("event:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response pickRate(@QueryParam("startTimestamp") TimestampParam startDateParam,
-		@QueryParam("endTimestamp") TimestampParam endDateParam) {
+	public Response pickRate(@QueryParam("purpose") Set<String> purposes, @QueryParam("createdInterval") IntervalParam createdInterval) {
 		ErrorResponse errors = new ErrorResponse();
 		try {
-			List<PickRate> pickRates = notificationService.getPickRate(new DateTime(startDateParam.getValue()),
-				new DateTime(endDateParam.getValue()));
+			List<PickRate> pickRates = notificationService.getPickRate(purposes, createdInterval.getValue());
 			return BaseResponse.buildResponse(pickRates);
 		} catch (Exception e) {
 			return errors.processException(e);
 		}
 	}
 
+	@GET
+	@Path("pickrate/search")
+	@RequiresPermissions("event:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response pickRatePurposes() {
+		ErrorResponse errors = new ErrorResponse();
+		try {
+			List<String> purposes = notificationService.getDistinct(facility, "purpose");
+			List<Option> options = new ArrayList<>();
+			for (String purpose : purposes) {
+				if (purpose == null) {
+					continue;
+				}
+				String displayName = WiPurpose.valueOf(purpose).getDisplayName();
+				options.add(new Option(purpose, displayName));
+			}
+			return BaseResponse.buildResponse(ImmutableMap.of("purpose", options));
+		} catch (Exception e) {
+			return errors.processException(e);
+		}
+	}
+
+	@GET
+	@Path("picks/histogram")
+	@RequiresPermissions("event:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response pickHistogram(@QueryParam("created") IntervalParam createdInterval, @QueryParam("createdBin") String binPeriod) {
+		ErrorResponse errors = new ErrorResponse();
+		try {
+			Period bin = Period.parse(MoreObjects.firstNonNull(binPeriod, "PT5M"));  
+			HistogramResult result = notificationService.facilityPickRateHistogram(createdInterval.getValue(), bin, facility);
+			return BaseResponse.buildResponse(result);
+		} catch (Exception e) {
+			return errors.processException(e);
+		}
+	}
+	
+	@GET
+	@Path("picks/workers/histogram")
+	@RequiresPermissions("event:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response workersPickHistogram(@QueryParam("created") IntervalParam createdInterval, @QueryParam("createdBin") String binPeriod) {
+		ErrorResponse errors = new ErrorResponse();
+		try {
+			Period bin = Period.parse(MoreObjects.firstNonNull(binPeriod, "PT5M"));  
+			List<?> result = notificationService.workersPickHistogram(createdInterval.getValue(), bin, facility);
+			return BaseResponse.buildResponse(result);
+		} catch (Exception e) {
+			return errors.processException(e);
+		}
+	}
+	
+	
 	@POST
 	@Path("/process_script")
 	@RequiresPermissions("che:simulate")

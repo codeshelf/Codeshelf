@@ -20,6 +20,7 @@ import com.codeshelf.ws.protocol.message.MessageABC;
 import com.codeshelf.ws.protocol.message.NetworkStatusMessage;
 import com.codeshelf.ws.protocol.message.PosConLightAddressesMessage;
 import com.codeshelf.ws.protocol.message.PosConSetupMessage;
+import com.codeshelf.ws.protocol.message.PropertyChangeMessage;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
 import com.codeshelf.ws.protocol.request.PingRequest;
@@ -121,11 +122,12 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			// Handler for Compute Work and Get Work
 			else if (response instanceof ComputeWorkResponse) {
 				ComputeWorkResponse computeWorkResponse = (ComputeWorkResponse) response;
-				if (computeWorkResponse.getPurpose() == ComputeWorkPurpose.COMPUTE_WORK || computeWorkResponse.getPathChanged()) {
+				if (computeWorkResponse.getPurpose() == ComputeWorkPurpose.COMPUTING_WORK || computeWorkResponse.getPathChanged()) {
 					if (response.getStatus() == ResponseStatus.Success) {
 						this.deviceManager.processComputeWorkResponse(computeWorkResponse.getNetworkGuid(),
 							computeWorkResponse.getTotalGoodWorkInstructions(),
-							computeWorkResponse.getContainerToWorkInstructionCountMap());
+							computeWorkResponse.getContainerToWorkInstructionCountMap(),
+							computeWorkResponse.getReplenishRun());
 					}
 				} else {
 					if (response.getStatus() == ResponseStatus.Success) {
@@ -139,9 +141,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			// Handler for WI Completion
 			else if (response instanceof CompleteWorkInstructionResponse) {
 				CompleteWorkInstructionResponse workResponse = (CompleteWorkInstructionResponse) response;
-				if (response.getStatus() == ResponseStatus.Success) {
-					this.deviceManager.processWorkInstructionCompletedResponse(workResponse.getWorkInstructionId());
-				}
+				this.deviceManager.processWorkInstructionCompletedResponse(workResponse);
 			}
 			//////////////////////////////////////////
 			// Handler for Get Order Detail Work-- LINE_SCAN work flow
@@ -195,31 +195,33 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 						devodingResponse.getDecodedLocation());
 				}
 			}
-			
+
 			else if (response instanceof InfoResponse) {
 				InfoResponse infoResponse = (InfoResponse) response;
 				if (response.getStatus() == ResponseStatus.Success) {
 					this.deviceManager.processInfoResponse(infoResponse.getNetworkGuid(), infoResponse.getInfo());
 				}
 			}
-			
+
 			else if (response instanceof PalletizerItemResponse) {
 				PalletizerItemResponse palletizerResponse = (PalletizerItemResponse) response;
 				if (response.getStatus() == ResponseStatus.Success) {
-					this.deviceManager.processPalletizerItemResponse(palletizerResponse.getNetworkGuid(), palletizerResponse.getInfo());
+					this.deviceManager.processPalletizerItemResponse(palletizerResponse.getNetworkGuid(),
+						palletizerResponse.getInfo());
 				}
 			}
-			
+
 			else if (response instanceof PalletizerRemoveOrderResponse) {
 				PalletizerRemoveOrderResponse palletizerRemoveResponse = (PalletizerRemoveOrderResponse) response;
 				if (response.getStatus() == ResponseStatus.Success) {
-					this.deviceManager.processPalletizerRemoveResponse(palletizerRemoveResponse.getNetworkGuid(), palletizerRemoveResponse.getError());
+					this.deviceManager.processPalletizerRemoveResponse(palletizerRemoveResponse.getNetworkGuid(),
+						palletizerRemoveResponse.getError());
 				}
 			}
-			
+
 			else if (response instanceof GenericDeviceResponse) {
 			}
-			
+
 			// Handle server-side errors
 			else if (response instanceof FailureResponse) {
 				FailureResponse failureResponse = (FailureResponse) response;
@@ -276,6 +278,8 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				this.deviceManager.processPosConLightAddresses(msg);
 			} else if (message instanceof DisconnectSiteControllerMessage) {
 				this.deviceManager.disconnected();
+			} else if (message instanceof PropertyChangeMessage) {
+				updateProperty((PropertyChangeMessage)message);
 			}
 		} finally {
 			this.clearDeviceContext();
@@ -325,5 +329,41 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 
 	private void clearDeviceContext() {
 		ContextLogging.clearNetGuid();
+	}
+	
+	private void updateProperty(PropertyChangeMessage message){
+		boolean siteControllerProperty = true;
+		String value = message.getValue();
+		switch (message.getType()){
+			case AUTOSHRT:
+				deviceManager.setAutoShortValue(Boolean.parseBoolean(value));
+				break;
+			case PICKINFO:
+				deviceManager.setPickInfoValue(value);
+				break;
+			case PICKMULT:
+				deviceManager.setPickMultValue(Boolean.parseBoolean(value));
+				break;
+			case CNTRTYPE:
+				deviceManager.setContainerTypeValue(value);
+				break;
+			case SCANPICK:
+				deviceManager.setScanTypeValue(value);
+				break;
+			case WORKSEQR:
+				deviceManager.setSequenceKind(value);
+				break;
+			case PRODUCTION:
+				deviceManager.setProductionValue(Boolean.parseBoolean(value));
+				break;
+			case ORDERSUB:
+				deviceManager.setOrdersubValue(value);
+				break;
+			default:
+				siteControllerProperty = true;
+		}
+		if (siteControllerProperty){
+			LOGGER.info("Updating SiteController-important property {} to {}", message.getType(), value);
+		}
 	}
 }

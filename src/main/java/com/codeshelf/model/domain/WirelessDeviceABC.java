@@ -10,8 +10,6 @@ import java.util.Arrays;
 import javax.persistence.Column;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.MappedSuperclass;
 import javax.persistence.Transient;
 
@@ -47,12 +45,6 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 	public static final int						PUBLIC_KEY_BYTES	= 8;
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(WirelessDeviceABC.class);
-
-	// The owning network. 
-	@ManyToOne(optional = false, fetch=FetchType.EAGER)
-	@Getter
-	@Setter
-	protected CodeshelfNetwork		parent;
 
 	@Column(nullable = false,name="device_guid")
 	@Getter

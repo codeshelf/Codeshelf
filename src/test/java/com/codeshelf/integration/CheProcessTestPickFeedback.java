@@ -866,7 +866,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 
 		LOGGER.info("2a: Complete the job");
 		picker.pick(1, 1);
-		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.waitInSameState(CheStateEnum.DO_PICK, 1000);
 
 		LOGGER.info("2b: see pick count: 2 for next job. This is what we sent out");
 		Assert.assertEquals(2, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
@@ -996,7 +996,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 
 		LOGGER.info("3a: Complete the first poscon");
 		picker.pick(1, 1);
-		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.waitInSameState(CheStateEnum.DO_PICK, 1000);
 
 		LOGGER.info("3b: Poscon 1 gets the next job, poscon 2 remains oc. 3 still null/blank");
 		ThreadUtils.sleep(1000);
@@ -1015,7 +1015,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 
 		LOGGER.info("4a: Complete the job on first poscon");
 		picker.pick(1, 1);
-		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.waitInSameState(CheStateEnum.DO_PICK, 1000);
 
 		LOGGER.info("4b: 3 gets the next jobs, poscon 2 remains oc. 1 is blank");
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
@@ -1033,14 +1033,14 @@ public class CheProcessTestPickFeedback extends ServerTest {
 
 		LOGGER.info("5a: Complete the job on first poscon. Now 1 is blank. Next job on 3");
 		picker.pick(1, 5);
-		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.waitInSameState(CheStateEnum.DO_PICK, 1000);
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());
 
 		LOGGER.info("5b: Complete the job on poscon3. Last jobs are simultaneous 1,3");
 		picker.pick(3, 1);
-		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.waitInSameState(CheStateEnum.DO_PICK, 1000);
 
 		LOGGER.info("6a: Poscon 1 and 3 gets the next jobs, poscon 2 remains oc.");
 		Assert.assertEquals(5, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());

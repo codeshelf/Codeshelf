@@ -27,7 +27,6 @@ import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
-import com.codeshelf.util.ThreadUtils;
 
 /**
   *
@@ -453,7 +452,10 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		picker.inventoryViaTape("gtin2c", "L%D303"); // 
 
 		// probably need to wait here to allow the transactions to complete.
-		ThreadUtils.sleep(4000);
+		long t1 = System.currentTimeMillis();
+		waitForItemLocation(facility, "gtin2c", "D303", 4000);
+		long t2 = System.currentTimeMillis();
+		LOGGER.info ("Took {}ms for tape inventory updates to persist.", t2 - t1);  // Used to do a hard wait of 4000ms. Got 263 ms on JR's airbook.
 
 		beginTransaction();
 		facility = Facility.staticGetDao().reload(facility);
@@ -524,8 +526,9 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		picker.inventoryViaTape("12345678901234567", "L%D301"); // 
 		picker.inventoryViaTape("12345678901334567", "L%D302"); // 
 
-		// probably need to wait here to allow the transactions to complete.
-		ThreadUtils.sleep(4000);
+		// Need to wait here to allow the transactions to complete.
+		waitForItemLocation(facility, "12345678901334567", "D302", 4000);
+
 
 		LOGGER.info("1b: We should have two item masters, and two gtin now");
 		beginTransaction();
@@ -678,8 +681,8 @@ public class OutboundOrdersWithGtinTest extends ServerTest {
 		picker.inventoryViaTape("000123456788", "L%D301"); // 
 		picker.inventoryViaTape("000123456789", "L%D302"); // 
 
-		// probably need to wait here to allow the transactions to complete.
-		ThreadUtils.sleep(4000);
+		// Need to wait here to allow the transactions to complete.
+		waitForItemLocation(facility, "000123456789", "D302", 4000);
 
 		LOGGER.info("2: Load the orders file that had those two truncated. Do they match up?");
 		beginTransaction();

@@ -1,0 +1,12 @@
+STEP
+SERVER
+importOrders replenish
+
+SITE
+defChe che1 0x000000ED
+logout che1
+loginSetup che1 Worker1
+setupCart che1 gtin7
+scan che1 X%START SETUP_SUMMARY
+scan che1 X%START
+pickAll

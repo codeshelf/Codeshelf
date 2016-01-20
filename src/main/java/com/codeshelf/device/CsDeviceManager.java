@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +41,7 @@ import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.model.domain.Che.CheLightingEnum;
 import com.codeshelf.util.PcapRecord;
 import com.codeshelf.util.PcapRingBuffer;
 import com.codeshelf.util.TwoKeyMap;
@@ -69,8 +71,10 @@ import com.codeshelf.ws.protocol.request.PalletizerNewOrderRequest;
 import com.codeshelf.ws.protocol.request.PalletizerRemoveOrderRequest;
 import com.codeshelf.ws.protocol.request.SkuWallLocationDisambiguationRequest;
 import com.codeshelf.ws.protocol.request.VerifyBadgeRequest;
+import com.codeshelf.ws.protocol.response.CompleteWorkInstructionResponse;
 import com.codeshelf.ws.protocol.response.FailureResponse;
 import com.codeshelf.ws.protocol.response.GetPutWallInstructionResponse;
+import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.protocol.response.VerifyBadgeResponse;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -91,9 +95,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	static final String									DEVICETYPE_CHE_LINESCAN		= "CHE_LINESCAN";
 	static final String									DEVICETYPE_CHE_PALLETIZER	= "CHE_PALLETIZER";
 
+	static final String									WI_COMPLETE_FAIL				= "WI_COMPLETE_FAIL";
+
 	private TwoKeyMap<UUID, NetGuid, INetworkDevice>	mDeviceMap;
 
 	private Map<NetGuid, CheData>						mDeviceDataMap;
+
+	private Map<String, String>							mTotalCntrVsDeviceMap;
 
 	@Getter
 	private IRadioController							radioController;
@@ -133,7 +141,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	@Getter
 	@Setter
 	private String										sequenceKind				= "BayDistance";
-	
+
 	@Getter
 	@Setter
 	private String										ordersubValue				= "Disabled";
@@ -150,6 +158,8 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		mDeviceMap = new TwoKeyMap<UUID, NetGuid, INetworkDevice>();
 
 		mDeviceDataMap = new HashMap<NetGuid, CheData>();
+
+		mTotalCntrVsDeviceMap = new HashMap<String, String>();
 
 		username = System.getProperty("websocket.username");
 		password = System.getProperty("websocket.password");
@@ -170,7 +180,10 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		return true;
 	}
 
-	public boolean getPickMultValue() {
+	public boolean getPickMultValue(CheLightingEnum	cheLightingEnum) {
+		if (cheLightingEnum == CheLightingEnum.LABEL_V1){
+			return false;
+		}
 		return this.pickMultValue;
 	}
 
@@ -381,8 +394,84 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	}
 
 	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.codeshelf.device.CsDeviceManager#requestCheWork(java.lang.String, java.lang.String, java.lang.String)
+	/* 
+	 * For DEV-1347 find in our local storage. Or find by asking each device logic
+	 * Return null if not found
+	 */
+	private String findDeviceNameWithContainer(String inOrderCntrId) {
+		return mTotalCntrVsDeviceMap.get(inOrderCntrId);
+	}
+
+	private void removeOldAndRememberNew(final String inCheId, final Map<String, String> positionToContainerMap) {
+		if (inCheId == null || positionToContainerMap == null) {
+			LOGGER.error("removeOldAndRememberNew had null input");
+			return;
+		}
+
+		// remove old
+		//   Java 8 this approach is cool!   mTotalCntrVsDeviceMap.entrySet().removeIf(e-> <boolean expression> );
+		LOGGER.debug("mTotalCntrVsDeviceMap removing all values for {}", inCheId);
+		for (Iterator<Map.Entry<String, String>> it = mTotalCntrVsDeviceMap.entrySet().iterator(); it.hasNext();) {
+			Map.Entry<String, String> entry = it.next();
+			if (inCheId.equals(entry.getValue())) {
+				it.remove();
+			}
+		}
+
+		// put back new
+		for (Map.Entry<String, String> entry : positionToContainerMap.entrySet()) {
+			LOGGER.debug("mTotalCntrVsDeviceMap.put {}/{}", entry.getValue(), inCheId);
+			mTotalCntrVsDeviceMap.put(entry.getValue(), inCheId);
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	/* 
+	 * For DEV-1347 this is where we find the device logic and tell it to remove that cntr/order from its positionToContainerMap
+	 */
+	private void tellDeviceRemoveCntr(final String inCheGuid, final String inCntr) {
+		// The value is as "000001bf"
+		CheDeviceLogic logic = this.getCheDeviceByControllerId(inCheGuid);
+		if (logic == null) {
+			LOGGER.error("Expected to find deviceLogic for {}", inCheGuid);
+		} else {
+			logic.removeStolenCntr(inCntr);
+		}
+
+	}
+
+	// --------------------------------------------------------------------------
+	/* 
+	 * For DEV-1347 if another CHE puts the container on, remove from other CHE.
+	 * This is the "simple" use case. Might be overly simple. What if two CHE are running the same order for picks on different routes? 
+	 * If so, this implementation is wrong. (mTotalCntrVsDeviceMap says only one CHE at a time as the container.) To support that, change
+	 * mTotalCntrVsDeviceMap to mTotalCntrOnRouteVsDeviceMap, keyed by Cntr and route or area.
+	 */
+	private void evaluateContainerConflictsAndRememberNew(final String inCheId, final Map<String, String> positionToContainerMap) {
+
+		// 1) Iterate over the new container assignments. We care if any are on another CHE. No op necessary if on this CHE.	
+		for (Map.Entry<String, String> entry : positionToContainerMap.entrySet()) {
+			String deviceName = findDeviceNameWithContainer(entry.getValue());
+			if (deviceName != null && !deviceName.equals(inCheId)) {
+				LOGGER.warn("Removing {} from {} as we are adding it to {} at position {}",
+					entry.getValue(),
+					deviceName,
+					inCheId,
+					entry.getKey());
+				// Tell the device to remove this container. And remove from our map
+				tellDeviceRemoveCntr(deviceName, entry.getValue());
+				mTotalCntrVsDeviceMap.remove(entry.getValue());
+			}
+		}
+
+		// 2) Replace all of this CHEs entries with this map's values. Not necessary if just using the individual device logic data.
+		// See findDeviceNameWithContainer() for what we are doing.
+		removeOldAndRememberNew(inCheId, positionToContainerMap);
+	}
+
+	// --------------------------------------------------------------------------
+	/* This is the "Computing Work" call
+	 * 
 	 */
 	public void computeCheWork(final String inCheId,
 		final UUID inPersistentId,
@@ -391,7 +480,12 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		// DEV-1331 part 2 logging . need the guid
 		LOGGER.info("COMPUTE_WORK from {}", inCheId);
 		String cheId = inPersistentId.toString();
-		ComputeWorkRequest req = new ComputeWorkRequest(ComputeWorkPurpose.COMPUTE_WORK,
+
+		// DEV-1347 we are sending this request to server, locking in these containers to a device.  If another device has a contaienr,
+		// can we pull it off?
+		evaluateContainerConflictsAndRememberNew(inCheId, positionToContainerMap);
+
+		ComputeWorkRequest req = new ComputeWorkRequest(ComputeWorkPurpose.COMPUTING_WORK,
 			cheId,
 			null,
 			positionToContainerMap,
@@ -436,13 +530,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 	public void sendNotificationMessage(final NotificationMessage message) {
 		//no longer sending worker events messages.  Using completeWorkInstruction on WorkBehavior instead
-		if(!WorkerEvent.EventType.COMPLETE.equals(message.getEventType())
-		    && !WorkerEvent.EventType.SHORT.equals(message.getEventType())) {
+		if (!WorkerEvent.EventType.COMPLETE.equals(message.getEventType())
+				&& !WorkerEvent.EventType.SHORT.equals(message.getEventType())) {
 			LOGGER.debug("Notify: Device={}; type={}", message.getDevicePersistentId(), message.getEventType());
 			clientEndpoint.sendMessage(message);
 		}
 	}
-	
+
 	public void sendLogoutRequest(final String inCheId, final UUID inPersistentId, final String workerId) {
 		LOGGER.debug("Logout: Che={};", inCheId);
 		String cheId = inPersistentId.toString();
@@ -450,7 +544,6 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		req.setDeviceId(cheId);
 		clientEndpoint.sendMessage(req);
 	}
-
 
 	// --------------------------------------------------------------------------
 	/* (non-Javadoc)
@@ -465,7 +558,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		// DEV-1331 part 2 logging . need the guid
 		LOGGER.info("GET_WORK from {}; Loc={}", inCheId, inLocationId);
 		String cheId = inPersistentId.toString();
-		ComputeWorkRequest req = new ComputeWorkRequest(ComputeWorkPurpose.GET_WORK,
+		ComputeWorkRequest req = new ComputeWorkRequest(ComputeWorkPurpose.GETTING_WORK,
 			cheId,
 			inLocationId,
 			positionToContainerMap,
@@ -486,10 +579,9 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	public void completePalletizerWi(final String inCheId,
 		final UUID inPersistentId,
 		final UUID wiId,
-		final String userId,
 		final Boolean shorted) {
 		LOGGER.debug("Complete Palletizer WI: Che={}; WI={}; Short={}", inCheId, wiId, shorted);
-		PalletizerCompleteWiRequest req = new PalletizerCompleteWiRequest(inPersistentId.toString(), wiId, userId, shorted);
+		PalletizerCompleteWiRequest req = new PalletizerCompleteWiRequest(inPersistentId.toString(), wiId, shorted);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -552,15 +644,15 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		clientEndpoint.sendMessage(req);
 	}
 
-	public void palletizerItemRequest(String cheGuid, String chePersistentId, String item) {
-		LOGGER.debug("palletizerItemRequest: Che={};  Item={};", cheGuid, item);
-		PalletizerItemRequest req = new PalletizerItemRequest(chePersistentId, item);
+	public void palletizerItemRequest(String cheGuid, String chePersistentId, String item, String userId) {
+		LOGGER.debug("palletizerItemRequest: Che={};  Item={}; UserId={}", cheGuid, item, userId);
+		PalletizerItemRequest req = new PalletizerItemRequest(chePersistentId, item, userId);
 		clientEndpoint.sendMessage(req);
 	}
 
-	public void palletizerNewOrderRequest(String cheGuid, String chePersistentId, String item, String location) {
-		LOGGER.debug("palletizerNewOrderRequest: Che={}, Item={}, Location={}", cheGuid, item, location);
-		PalletizerNewOrderRequest req = new PalletizerNewOrderRequest(chePersistentId, item, location);
+	public void palletizerNewOrderRequest(String cheGuid, String chePersistentId, String item, String location, String userId) {
+		LOGGER.debug("palletizerNewOrderRequest: Che={}, Item={}, Location={}, UserId={}", cheGuid, item, location, userId);
+		PalletizerNewOrderRequest req = new PalletizerNewOrderRequest(chePersistentId, item, location, userId);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -891,6 +983,9 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			if (verified == null) {
 				verified = false;
 			}
+			if (cheDevice.getCheLightingEnum() == CheLightingEnum.NOLIGHTING){
+				LOGGER.warn("CHE " + cheDevice.getMyGuidStr() + " has lighting mode NOLIGHTING. Will behave as if it was POSCON");
+			}
 			setWorkerNameFromGuid(cheDevice.getGuid(), response.getWorkerNameUI());
 			cheDevice.processResultOfVerifyBadge(verified, response.getWorkerId());
 			setCheNameFromGuid(new NetGuid(cheGuid), response.getCheName());
@@ -901,10 +996,12 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 	public void processComputeWorkResponse(String networkGuid,
 		Integer workInstructionCount,
-		Map<String, WorkInstructionCount> containerToWorkInstructionCountMap) {
+		Map<String, WorkInstructionCount> containerToWorkInstructionCountMap,
+		boolean isReplenishRun) {
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			LOGGER.info("accepting server's work instruction counts, but not the wis, into device {}", cheDevice.getGuidNoPrefix());
+			cheDevice.setReplenishRun(isReplenishRun);
 			cheDevice.processWorkInstructionCounts(workInstructionCount, containerToWorkInstructionCountMap);
 		} else {
 			LOGGER.warn("Unable to assign work count to CHE id={} CHE not found", networkGuid);
@@ -1201,8 +1298,17 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		return device;
 	}
 
-	public void processWorkInstructionCompletedResponse(UUID workInstructionId) {
+	public void processWorkInstructionCompletedResponse(CompleteWorkInstructionResponse response) {
+		if (response.getStatus() == ResponseStatus.Success) {
 		// do nothing
+		}
+		else {
+			// DEV-1331 v26 improvement. Force the CHE back to compute so we do not get a whole string of bad ones.
+			NetGuid logicsGuid = new NetGuid(response.getNetworkGuid());
+			CheDeviceLogic logic = this.getCheDeviceByNetGuid(logicsGuid);
+			// A kludge. Not removing. But trigger the need to START and recompute again just like after a stolen container.
+			logic.removeStolenCntr(WI_COMPLETE_FAIL);
+		}
 	}
 
 	public void processInventoryScanRespose(String inResponseMessage) {
@@ -1228,7 +1334,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			}
 		}
 	}
-
+	
 	@Override
 	public void capture(byte[] packet) {
 		PcapRecord pcap = new PcapRecord(packet);

@@ -9,9 +9,11 @@ public class IsProductionServerHealthCheck extends HealthCheckRefreshJob {
 	protected void check(Facility facility) throws Exception {
 		boolean production = PropertyBehavior.getPropertyAsBoolean(facility, FacilityPropertyType.PRODUCTION);
 		if (production) {
-			saveResults(facility, true, "Production");
+			// No need to spam the logs
+			saveResults(facility, true, CodeshelfHealthCheck.OK);
 		} else {
-			saveResults(facility, false, "Not Production");
+			// No need to spam the logs
+			saveResults(facility, false, CodeshelfHealthCheck.OK);
 		}
 	}
 }

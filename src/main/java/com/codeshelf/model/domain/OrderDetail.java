@@ -22,6 +22,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -58,7 +59,7 @@ import com.google.common.collect.Sets;
  */
 
 @Entity
-@Table(name = "order_detail")
+@Table(name = "order_detail", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -73,12 +74,6 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	private static final Logger				LOGGER						= LoggerFactory.getLogger(OrderDetail.class);
 
 	private static final Comparator<String>	asciiAlphanumericComparator	= new ASCIIAlphanumericComparator();
-
-	// The owning order header.
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private OrderHeader						parent;
 
 	// The collective order status.
 	@Column(nullable = false)
@@ -164,6 +159,12 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Setter
 	@JsonProperty
 	private Boolean							needsScan					= false;
+	
+	@Column(nullable = false, name = "substitute_allowed")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Boolean							substituteAllowed			= false;
 
 	public OrderDetail() {
 		this(null, null, 0);
@@ -460,14 +461,14 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	}
 
 	public String getGroupUi() {
-		OrderGroup theGroup = parent.getOrderGroup();
+		OrderGroup theGroup = getParent().getOrderGroup();
 		if (theGroup == null)
 			return "";
 		return theGroup.getDomainId();
 	}
 
 	public String getOrderLocationAliasIds() {
-		return parent.getOrderLocationAliasIds();
+		return getParent().getOrderLocationAliasIds();
 	}
 
 	/**
@@ -611,13 +612,14 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	@Override
 	public String toString() {
 		//  originally @ToString(of = { "status", "quantity", "itemMaster", "uomMaster", "active" }, callSuper = true, doNotUseGetters = true)
-		return String.format("OrderDetail:(order:%s; sku:%s; uom:%s; quant:%d; status:%s; active:%b )",
+		return String.format("OrderDetail:(order:%s; sku:%s; uom:%s; quant:%d; status:%s; active:%b; detailId:%s )",
 			getOrderId(),
 			getItemMasterId(),
 			getUomMasterId(),
 			getQuantity(),
 			getDetailStatusName(),
-			getActive());
+			getActive(),
+			getDomainId());
 	}
 	
 	public int getActualPickedItems(){

@@ -250,25 +250,25 @@ public class WorkBehavior implements IApiBehavior {
 		//Determine if there are any non-Replenish orders on the che
 		for (Container container : containerList) {
 			OrderHeader order = container.getCurrentOrderHeader();
-			if (order != null && order.getOrderType() != OrderTypeEnum.REPLENISH){
+			if (order != null && order.getOrderType() != OrderTypeEnum.REPLENISH) {
 				replenishOnly = false;
 			}
 		}
 		//If yes, remove all Replenish orders from the list
-		if (!replenishOnly){
+		if (!replenishOnly) {
 			for (Iterator<Container> containerIterator = containerList.iterator(); containerIterator.hasNext();) {
-			    Container container = containerIterator.next();
-			    OrderHeader order = container.getCurrentOrderHeader();
-			    if (order != null && order.getOrderType() == OrderTypeEnum.REPLENISH) {
-			    	//Safely remove current container from the list
-			    	containerIterator.remove();
-			    }
+				Container container = containerIterator.next();
+				OrderHeader order = container.getCurrentOrderHeader();
+				if (order != null && order.getOrderType() == OrderTypeEnum.REPLENISH) {
+					//Safely remove current container from the list
+					containerIterator.remove();
+				}
 			}
 		}
-		
+
 		Timestamp theTime = now();
 		// Get all of the OUTBOUND work instructions.
-		WorkList workList = generateOutboundInstructions(facility, inChe, containerList, theTime);
+		WorkList workList = generateOutboundAndReplenishInstructions(facility, inChe, containerList, theTime);
 		//wiResultList.addAll(generateOutboundInstructions(facility, inChe, containerList, theTime));
 
 		// Get all of the CROSS work instructions.
@@ -712,7 +712,10 @@ public class WorkBehavior implements IApiBehavior {
 	 * and trusting that it sends nothing if there are none
 	 */
 	private void notifyRemoveOrderFromCart(OrderHeader inOrder, Che inChe) {
-		LOGGER.info("Order: {} removed from cart:{}", inOrder.getOrderId(), inChe.getDomainId());
+		LOGGER.info("Order: {} removed from cart:{}/{}",
+			inOrder.getOrderId(),
+			inChe.getDomainId(),
+			inChe.getDeviceGuidStrNoPrefix());
 		// This is the PFSWeb variant. 
 		try {
 			Optional<IFacilityEdiExporter> theService = getFacilityEdiExporter(inOrder.getFacility());
@@ -783,15 +786,18 @@ public class WorkBehavior implements IApiBehavior {
 					String orderId = incomingWI.getContainerId();
 					String cheName = che.getDomainId();
 					String guidStr = che.getDeviceGuidStrNoPrefix();
+					String verb = incomingWI.getStatusString(); // either COMPLETE or SHORT
 					// happens only if site controller completed a work instruction that server recently deleted
-					LOGGER.error("Cannot complete work instruction for order/cntr:{} from {}/{} because server could not find it in database {}",
+					LOGGER.error("Cannot {} work instruction for order/cntr:{} from {}/{} because server could not find it in database {}",
+						verb,
 						orderId,
 						cheName,
 						guidStr,
 						incomingWI);
 					// No point in throwing here. A throw would return response.fail to site controller and CHE screen, but there is nothing
 					// the CHE/worker can do about it. Let's just succeed.
-					return;
+					// return;
+					throw new IllegalArgumentException("completeWorkInstruction()"); // DEV-1331 let's throw
 				}
 				if (!storedWi.isHousekeeping()) {
 					new NotificationBehavior().saveFinishedWI(storedWi);
@@ -890,7 +896,7 @@ public class WorkBehavior implements IApiBehavior {
 
 		Facility inFacility = inChe.getFacility();
 		String workSeqr = PropertyBehavior.getProperty(inFacility, FacilityPropertyType.WORKSEQR);
-		SingleWorkItem workItem = makeWIForOutbound(orderDetail,
+		SingleWorkItem workItem = makeWIForOutboundOrReplenish(orderDetail,
 			inChe,
 			null,
 			null,
@@ -1029,6 +1035,7 @@ public class WorkBehavior implements IApiBehavior {
 			WiPurpose.WiPurposeSkuWallPut,
 			false,
 			new Timestamp(System.currentTimeMillis()));
+		wi.setPathName(locationInWall.getAssociatedPathNameUI());
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		wiResultList.add(wi);
 		skuWallInstructions.workInstructions = wiResultList;
@@ -1320,7 +1327,7 @@ public class WorkBehavior implements IApiBehavior {
 			}
 			Collections.sort(preferredInstructions, new GroupAndSortCodeComparator());
 			if (preferredInstructions.size() > 0) {
-				preferredInstructions = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, preferredInstructions);
+				preferredInstructions = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, inChe, preferredInstructions);
 			}
 
 			return preferredInstructions;
@@ -1359,7 +1366,7 @@ public class WorkBehavior implements IApiBehavior {
 
 		// Now our wrappedRouteWiList is ordered correctly but is missing HouseKeepingInstructions
 		if (wrappedRouteWiList.size() > 0) {
-			wrappedRouteWiList = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, wrappedRouteWiList);
+			wrappedRouteWiList = HousekeepingInjector.addHouseKeepingAndSaveSort(facility, inChe, wrappedRouteWiList);
 		}
 
 		// Remove timer that used to be here. See ComputeWorkCommand for more complete handling
@@ -1525,7 +1532,7 @@ public class WorkBehavior implements IApiBehavior {
 	 * @param inTime
 	 * @return
 	 */
-	private WorkList generateOutboundInstructions(final Facility facility,
+	private WorkList generateOutboundAndReplenishInstructions(final Facility facility,
 		final Che inChe,
 		final List<Container> inContainerList,
 		final Timestamp inTime) {
@@ -1549,7 +1556,7 @@ public class WorkBehavior implements IApiBehavior {
 					if (orderDetail.getQuantity() > 0) {
 						try {
 							// Pass facility as the default location of a short WI..
-							SingleWorkItem workItem = makeWIForOutbound(orderDetail,
+							SingleWorkItem workItem = makeWIForOutboundOrReplenish(orderDetail,
 								inChe,
 								container,
 								inTime,
@@ -1608,10 +1615,16 @@ public class WorkBehavior implements IApiBehavior {
 		for (Entry<String, String> e : positionToContainerMap.entrySet()) {
 			neededDomainIds.add(e.getValue());
 		}
+		// DEV-1370 Restrictions.in( empty list) results in a SQL error. Avoid
+		if (neededDomainIds.isEmpty()) {
+			LOGGER.error("bailing out of prefetchContainers whne the container list is empty");
+			return containersHash; // This use to throw. Now return more elegantly. This is empty.
+		}
+
 		//Search for those containers 
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", facility));
-		filterParams.add(Restrictions.in("domainId", neededDomainIds));
+		filterParams.add(Restrictions.in("domainId", neededDomainIds)); // empty .in() guard present
 		List<Container> containers = Container.staticGetDao().findByFilter(filterParams);
 		//Hash the results
 		for (Container container : containers) {
@@ -1632,7 +1645,8 @@ public class WorkBehavior implements IApiBehavior {
 		LocationAlias alias = null;
 		for (Container container : inContainerList) {
 			OrderHeader order = container.getCurrentOrderHeader();
-			if (order != null && order.getOrderType().equals(OrderTypeEnum.OUTBOUND)) {
+			if (order != null
+					&& (order.getOrderType() == OrderTypeEnum.OUTBOUND || order.getOrderType() == OrderTypeEnum.REPLENISH)) {
 				for (OrderDetail orderDetail : order.getOrderDetails()) {
 					preferredLocationStr = orderDetail.getPreferredLocation();
 					if (!Strings.isNullOrEmpty(preferredLocationStr) && !preferredLocations.containsKey(preferredLocationStr)) {
@@ -1740,7 +1754,7 @@ public class WorkBehavior implements IApiBehavior {
 	 * The result is a SingleWorkItem, which has the WI created, or reference to OrderDetail it could not make an order for.
 	 * From DEV-724, give out work from the path the CHE is on only.
 	 */
-	private SingleWorkItem makeWIForOutbound(final OrderDetail inOrderDetail,
+	private SingleWorkItem makeWIForOutboundOrReplenish(final OrderDetail inOrderDetail,
 		final Che inChe,
 		final Container inContainer,
 		final Timestamp inTime,
@@ -1752,6 +1766,8 @@ public class WorkBehavior implements IApiBehavior {
 		SingleWorkItem resultWork = new SingleWorkItem();
 		ItemMaster itemMaster = inOrderDetail.getItemMaster();
 
+		WiPurpose purpose = inOrderDetail.getParentOrderType() == OrderTypeEnum.REPLENISH ? WiPurpose.WiPurposeReplenishPut
+				: WiPurpose.WiPurposeOutboundPick;
 		// DEV-637 note: The code here only works if there is inventory on a path. If the detail has a workSequence,
 		// we can make the work instruction anyway.
 		Location location = null;
@@ -1797,7 +1813,6 @@ public class WorkBehavior implements IApiBehavior {
 			}
 		}
 		if (location == null) {
-
 			// Need to improve? Do we already have a short WI for this order detail? If so, do we really want to make another?
 			// This should be moderately rare, although it happens in our test case over and over. User has to scan order/container to cart to make this happen.
 			deleteExistingShortWiToFacility(inOrderDetail);
@@ -1806,7 +1821,7 @@ public class WorkBehavior implements IApiBehavior {
 				// If there is no location to send the Selector then create a PLANNED, SHORT WI for this order detail.
 				resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.SHORT,
 					WorkInstructionTypeEnum.ACTUAL,
-					WiPurpose.WiPurposeOutboundPick,
+					purpose,
 					inOrderDetail,
 					inChe,
 					inTime,
@@ -1826,7 +1841,7 @@ public class WorkBehavior implements IApiBehavior {
 		} else {
 			resultWi = WiFactory.createWorkInstruction(WorkInstructionStatusEnum.NEW,
 				WorkInstructionTypeEnum.PLAN,
-				WiPurpose.WiPurposeOutboundPick,
+				purpose,
 				inOrderDetail,
 				inChe,
 				inTime,
@@ -1973,7 +1988,7 @@ public class WorkBehavior implements IApiBehavior {
 
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("assignedChe", inChe));
-		filterParams.add(Restrictions.in("type", wiTypes));
+		filterParams.add(Restrictions.in("type", wiTypes)); // empty .in() guard not needed here
 		if (getBeforePosition) {
 			filterParams.add(Restrictions.le("posAlongPath", inFromStartingPosition));
 		} else {
@@ -2212,7 +2227,7 @@ public class WorkBehavior implements IApiBehavior {
 
 		if (!skipDeleteNew) {
 			// if this order took the place of another order, we have to delete the other order's OrderLocation
-			List<OrderLocation> olList = OrderLocation.findOrderLocationsAtLocation(location, facility, false);
+			List<OrderLocation> olList = OrderLocation.findOrderLocationsAtLocation(location, facility);
 			for (OrderLocation ol2 : olList) {
 				OrderHeader order2 = ol2.getParent();
 				whatWeDid = whatWeDid + String.format("Removed order %s from %s. ", order2.getDomainId(), locationId);
@@ -2320,6 +2335,10 @@ public class WorkBehavior implements IApiBehavior {
 				if (worker == null) {
 					//Authentication + unknown worker = failed
 					LOGGER.warn("Badge verification failed for unknown badge " + badge);
+				} else if (!worker.getActive()) {
+					//Authentication + inactive worker = failed
+					LOGGER.warn("Badge verification failed for inactive badge " + badge);
+					worker = null;
 				} else {
 					//Authentication + known worker = succeeded
 				}
@@ -2327,13 +2346,15 @@ public class WorkBehavior implements IApiBehavior {
 				if (worker == null) {
 					//No authentication + unknown worker = succeeded + new worker
 					worker = new Worker();
-					worker.setFacility(facility);
+					worker.setParent(facility);
 					worker.setActive(true);
 					worker.setLastName(badge);
-					worker.setBadgeId(badge);
-					worker.generateDomainId();
+					worker.setDomainId(badge);
 					worker.setUpdated(new Timestamp(System.currentTimeMillis()));
 					LOGGER.info("During badge verification created new Worker " + badge);
+				} else if (!worker.getActive()) {
+					//No authentication + inactive worker = succeeded + reactivate worker
+					worker.setActive(true);
 				} else {
 					//No authentication + known worker = succeeded
 				}

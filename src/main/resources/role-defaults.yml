@@ -10,7 +10,7 @@ Inventory:
 Maintenance:
   - "ws:login"
   - "ux:*" 
-  - "che:create,edit,delete"
+  - "che:*"
   - "path:*"
   - "light:*"
 Upload:
@@ -26,9 +26,9 @@ Admin:
   - "ws:login"
   - "ux:*" 
   - "companion:*"
-  - "che:create,edit,delete"
+  - "che:*"
   - "param:*"
-  - "facility:edit"
+  - "facility:*"
   - "path:*"
   - "light:*"
   - "inventory:*"
@@ -64,11 +64,13 @@ Dashboard:
 # All roles beginning with "Cs" are special restricted roles that cannot be assigned by non-Codeshelf users 
 CsDeveloper:
   - "che:simulate"
+  - "jmx:edit"
 CsSimulate:
   - "che:simulate"
 CsSupport:
   - "ws:login"
   - "ux:*" 
+  - "jmx:edit"
   - "companion:*"
   - "che:create,edit,delete"
   - "param:*"

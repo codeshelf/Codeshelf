@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -107,7 +108,27 @@ public class TenantsResource {
 		}
 	}
 	
-
+	@Path("{id}")
+	@DELETE
+	@RequiresPermissions("tenant:edit")
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	public Response deleteTenant(@PathParam("id") Integer id) {
+		try {
+			Tenant tenant = TenantManagerService.getInstance().getTenant(id);
+			if(tenant != null) {
+				ITenantManagerService manager = TenantManagerService.getInstance();
+				manager.deleteTenant(tenant);
+				return Response.status(Status.OK).build(); 
+			} else {
+				return Response.status(Status.NOT_FOUND).build();
+			}
+		} catch (Exception e) {
+			LOGGER.error("Unexpected exception",e);
+			return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+		}
+	}
+	
 	/***** REST API methods above ^^^ private methods below ****/
 		
 	private Tenant updateTenantFromParams(Tenant tenant, MultivaluedMap<String, String> tenantParams) {

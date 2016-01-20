@@ -161,9 +161,9 @@ public class CriteriaRegistry {
 
 		indexedCriteria.put("orderHeadersByFacilityAndPartialDomainId",
 			new TypedCriteria("from OrderHeader where active = true and parent.persistentId = :facilityId and domainId LIKE :partialDomainId",
-					"facilityId", UUID.class,
-					"partialDomainId", String.class));
-
+				"facilityId", UUID.class,
+				"partialDomainId", String.class));
+		
 		indexedCriteria.put("orderHeadersByFacilityAndType",
 			new TypedCriteria("from OrderHeader where active = true and parent.persistentId = :facilityId and orderType = :orderType",
 				"facilityId", UUID.class,

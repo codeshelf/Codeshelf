@@ -14,6 +14,7 @@ import javax.persistence.FetchType;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -47,7 +48,7 @@ import com.google.common.base.Strings;
  */
 
 @Entity
-@Table(name = "item")
+@Table(name = "item", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -61,12 +62,6 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Item.class);
-
-	// The owning location.
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private ItemMaster			parent;
 
 	// The stored location.
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
@@ -151,7 +146,7 @@ public class Item extends DomainObjectTreeABC<ItemMaster> {
 	}
 
 	public String getItemId() {
-		return parent.getItemId();
+		return getParent().getItemId();
 	}
 
 	public void setStoredLocation(final Location inStoredLocation) {

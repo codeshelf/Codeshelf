@@ -8,9 +8,8 @@ package com.codeshelf.model.domain;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -36,7 +35,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 
 @Entity
-@Table(name = "item_ddc_group")
+@Table(name = "item_ddc_group", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -50,12 +49,6 @@ public class ItemDdcGroup extends DomainObjectTreeABC<Location> {
 
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ItemDdcGroup.class);
-
-	// The parent location.
-	@ManyToOne(optional = false,fetch=FetchType.LAZY)
-	@Getter 
-	@Setter
-	private Location			parent;
 
 	// The start position of this DDC group along the pick path.
 	@Column(nullable = true,name="start_pos_along_path")

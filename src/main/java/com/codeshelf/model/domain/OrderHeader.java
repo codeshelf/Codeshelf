@@ -25,6 +25,7 @@ import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -34,6 +35,7 @@ import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +61,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 
 @Entity
-@Table(name = "order_header")
+@Table(name = "order_header", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -77,14 +79,8 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	}
 
 	public static OrderHeader createEmptyOrderHeader(Facility inFacility, String inOrderId) {
-		OrderHeader header = new OrderHeader();
-		header.setDomainId(inOrderId);
-		header.setOrderType(OrderTypeEnum.OUTBOUND);
+		OrderHeader header = new OrderHeader(inFacility, inOrderId, OrderTypeEnum.OUTBOUND);
 		header.setStatus(OrderStatusEnum.RELEASED);
-		header.setPickStrategy(PickStrategyEnum.SERIAL);
-		header.setActive(Boolean.TRUE);
-		header.setUpdated(new Timestamp(System.currentTimeMillis()));
-		header.setParent(inFacility);
 		OrderHeader.staticGetDao().store(header);
 		return header;
 	}
@@ -130,12 +126,6 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	}
 
 	private static final Logger			LOGGER			= LoggerFactory.getLogger(OrderHeader.class);
-
-	// The parent facility.
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private Facility					parent;
 
 	// The order type.
 	@Column(nullable = false, name = "order_type")
@@ -246,6 +236,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 		this.orderType = orderType;
 		status = OrderStatusEnum.CREATED;
 		pickStrategy = PickStrategyEnum.SERIAL;
+		dueDate = new Timestamp(DateTime.now().withHourOfDay(23).withMinuteOfHour(59).withSecondOfMinute(59).getMillis());
 		updated = new Timestamp(System.currentTimeMillis());
 	}
 
@@ -404,7 +395,7 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	}
 
 	public OrderLocation getOrderLocation(String inOrderLocationId) {
-		return orderLocations.get(inOrderLocationId);
+		return OrderLocation.staticGetDao().findByDomainId(this, inOrderLocationId);
 	}
 
 	public void removeOrderLocation(OrderLocation inOrderLocation) {

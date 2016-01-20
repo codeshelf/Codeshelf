@@ -105,10 +105,10 @@ public class Facility extends Location {
 	@MapKey(name = "domainId")
 	private Map<String, ContainerKind>		containerKinds	= new HashMap<String, ContainerKind>();
 
-	@OneToMany(mappedBy = "parent", targetEntity = EdiGateway.class, orphanRemoval = true)
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
-	private List<IEdiGateway>				ediGateways		= new ArrayList<IEdiGateway>();
+	private List<EdiGateway>				ediGateways		= new ArrayList<EdiGateway>();
 
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	@MapKey(name = "domainId")
@@ -126,16 +126,16 @@ public class Facility extends Location {
 	@MapKey(name = "domainId")
 	private Map<String, UomMaster>			uomMasters		= new HashMap<String, UomMaster>();
 
-	@OneToMany(mappedBy = "facility", orphanRemoval = true)
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	private List<Worker>					workers;
 
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	private List<ImportReceipt>				dataImportReceipts;
 
-	@OneToMany(mappedBy = "facility", orphanRemoval = true)
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	private List<WorkerEvent>				workerEvents;
 
-	@OneToMany(mappedBy = "facility", orphanRemoval = true)
+	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	private List<Resolution>				resolutions;
 
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
@@ -148,9 +148,8 @@ public class Facility extends Location {
 	private List<FacilityMetric>			faciiltyMetrics;
 	
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
-	@MapKey(name = "name")
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-	private Map<String, FacilityProperty>	facilityProperties	= new HashMap<String, FacilityProperty>();
+	private List<FacilityProperty>	facilityProperties;
 	
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	private List<ScheduledJob>			scheduledJobs;
@@ -158,6 +157,16 @@ public class Facility extends Location {
 
 	public Facility() {
 		super();
+		//Since all Domain Tree obects now have to have a parent, set Facility as it's own parent.
+		//Make sure not to fall into any endless loops with this
+		setParent(this);
+	}
+
+	public Facility(String domainId) {
+		super(domainId, Point.getZeroPoint());
+		//Since all Domain Tree obects now have to have a parent, set Facility as it's own parent.
+		//Make sure not to fall into any endless loops with this
+		setParent(this);
 	}
 
 	@Override
@@ -271,7 +280,7 @@ public class Facility extends Location {
 		}
 	}
 
-	public void addEdiGateway(IEdiGateway inEdiGateway) {
+	public void addEdiGateway(EdiGateway inEdiGateway) {
 		Facility previousFacility = inEdiGateway.getParent();
 		if (previousFacility == null) {
 			ediGateways.add(inEdiGateway);
@@ -282,7 +291,7 @@ public class Facility extends Location {
 		}
 	}
 
-	public void removeEdiGateway(IEdiGateway inEdiGateway) {
+	public void removeEdiGateway(EdiGateway inEdiGateway) {
 		if (this.ediGateways.contains(inEdiGateway)) {
 			inEdiGateway.setParent(null);
 			ediGateways.remove(inEdiGateway);
@@ -338,7 +347,7 @@ public class Facility extends Location {
 	}
 
 	public UomMaster getUomMaster(String inUomMasterId) {
-		return uomMasters.get(inUomMasterId);
+		return UomMaster.staticGetDao().findByDomainId(this, inUomMasterId);
 	}
 
 	/*
@@ -417,22 +426,27 @@ public class Facility extends Location {
 		return 0.0;
 	}
 
+	private CodeshelfNetwork getPrimaryNetwork() {
+		CodeshelfNetwork network = this.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		return network;
+	}
+	
 	@JsonProperty("primaryChannel")
 	public Short getPrimaryChannel() {
-		CodeshelfNetwork network = this.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		CodeshelfNetwork network = getPrimaryNetwork();
 		return network.getChannel();
 	}
 
 	@JsonProperty("primaryChannel")
 	public void setPrimaryChannel(Short channel) {
-		CodeshelfNetwork network = this.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		CodeshelfNetwork network = getPrimaryNetwork();
 		network.setChannel(channel);
 		network.getDao().store(network);
 	}
 
 	@JsonProperty("primarySiteControllerId")
 	public String getPrimarySiteControllerId() {
-		CodeshelfNetwork network = this.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		CodeshelfNetwork network = getPrimaryNetwork();
 		Collection<SiteController> siteControllers = network.getSiteControllers().values();
 		if (siteControllers.size() > 1) {
 			LOGGER.warn("Multiple site controllers found but expected no more than one for facility: {}", this);
@@ -448,7 +462,7 @@ public class Facility extends Location {
 	@JsonProperty("primarySiteControllerId")
 	public void setPrimarySiteControllerId(String siteControllerId) {
 		if (!Strings.isNullOrEmpty(siteControllerId)) {
-			CodeshelfNetwork network = this.getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+			CodeshelfNetwork network = getPrimaryNetwork();
 			Collection<SiteController> siteControllers = network.getSiteControllers().values();
 			if (siteControllers.size() > 1) {
 				LOGGER.warn("Multiple site controllers found but expected no more than one for facility: {}", this);
@@ -608,7 +622,23 @@ public class Facility extends Location {
 
 		Vertex.staticGetDao().store(vertex);
 	}
+	
+	public void createOrUpdateVertex(final String inDomainId,
+		final String inPosTypeByStr,
+		final Double inPosX,
+		final Double inPosY,
+		final Integer inDrawOrder) {
 
+		Vertex vertex = Vertex.staticGetDao().findByDomainId(this, inDomainId);
+		if (vertex == null) {
+			createVertex(inDomainId, inPosTypeByStr, inPosX, inPosY, inDrawOrder);
+		} else {
+			vertex.setPoint(new Point(PositionTypeEnum.valueOf(inPosTypeByStr), inPosX, inPosY, null));
+			vertex.setDrawOrder(inDrawOrder);
+			Vertex.staticGetDao().store(vertex);
+		}
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * @param inLocation
@@ -1043,8 +1073,7 @@ public class Facility extends Location {
 	 */
 	public int countLedControllers() {
 		int result = 0;
-
-		CodeshelfNetwork network = getNetwork(CodeshelfNetwork.DEFAULT_NETWORK_NAME);
+		CodeshelfNetwork network = getPrimaryNetwork();
 		if (network == null)
 			return result;
 		Map<String, LedController> controllerMap = network.getLedControllers();
@@ -1187,16 +1216,6 @@ public class Facility extends Location {
 		return null;
 	}
 
-	@Override
-	public void setParent(Location inParent) {
-		if (inParent != null) {
-			String msg = "tried to set Facility " + this.getDomainId() + " parent to non-null " + inParent.getClassName() + " "
-					+ inParent.getDomainId();
-			LOGGER.error(msg);
-			throw new UnsupportedOperationException(msg);
-		}
-	}
-
 	public UomMaster createUomMaster(String inDomainId) {
 		UomMaster uomMaster = UomMaster.staticGetDao().findByDomainId(this, inDomainId);
 		if (uomMaster == null) {
@@ -1238,7 +1257,7 @@ public class Facility extends Location {
 	}
 
 	synchronized public Location getUnspecifiedLocation() {
-		Location unspecifiedLocation = this.getLocations().get(UNSPECIFIED_LOCATION_DOMAINID);
+		Location unspecifiedLocation =  Location.staticGetLocationDao().findByDomainId(this, UNSPECIFIED_LOCATION_DOMAINID);
 		if (unspecifiedLocation == null) {
 			unspecifiedLocation = createUnspecifiedLocation(UNSPECIFIED_LOCATION_DOMAINID);
 		}
@@ -1455,8 +1474,8 @@ public class Facility extends Location {
 		wiStatuses.add(WorkInstructionStatusEnum.SHORT);
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", this));
-		filterParams.add(Restrictions.in("status", wiStatuses));
-		filterParams.add(Restrictions.in("type", wiTypes));
+		filterParams.add(Restrictions.in("status", wiStatuses)); // empty .in() guard not needed here
+		filterParams.add(Restrictions.in("type", wiTypes)); // empty .in() guard not needed here
 		filterParams.add(Restrictions.ge("completed", startUtc));
 		filterParams.add(Restrictions.le("completed", endUtc));
 		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByFilter(filterParams);
@@ -1531,7 +1550,7 @@ public class Facility extends Location {
 
 	private void computeEventMetrics(FacilityMetric metric, Timestamp startUtc, Timestamp endUtc) {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", this));
+		filterParams.add(Restrictions.eq("parent", this));
 		filterParams.add(Restrictions.eq("eventType", EventType.SKIP_ITEM_SCAN));
 		filterParams.add(Restrictions.ge("created", startUtc));
 		filterParams.add(Restrictions.le("created", endUtc));
@@ -1539,24 +1558,24 @@ public class Facility extends Location {
 		metric.setSkipScanEvents(skipEventsCount);
 
 		filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", this));
-		filterParams.add(Restrictions.eq("eventType", EventType.PALLETIZER_PUT));
+		filterParams.add(Restrictions.eq("parent", this));
+		filterParams.add(Restrictions.eq("purpose", WiPurpose.WiPurposePalletizerPut.name()));
 		filterParams.add(Restrictions.ge("created", startUtc));
 		filterParams.add(Restrictions.le("created", endUtc));
 		int palletizerPutsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
 		metric.setPalletizerPuts(palletizerPutsCount);
 
 		filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", this));
-		filterParams.add(Restrictions.eq("eventType", EventType.PUTWALL_PUT));
+		filterParams.add(Restrictions.eq("parent", this));
+		filterParams.add(Restrictions.eq("purpose", WiPurpose.WiPurposePutWallPut.name()));
 		filterParams.add(Restrictions.ge("created", startUtc));
 		filterParams.add(Restrictions.le("created", endUtc));
 		int putwallPutsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
 		metric.setPutWallPuts(putwallPutsCount);
 
 		filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", this));
-		filterParams.add(Restrictions.eq("eventType", EventType.SKUWALL_PUT));
+		filterParams.add(Restrictions.eq("parent", this));
+		filterParams.add(Restrictions.eq("purpose", WiPurpose.WiPurposeSkuWallPut.name()));
 		filterParams.add(Restrictions.ge("created", startUtc));
 		filterParams.add(Restrictions.le("created", endUtc));
 		int skuwallPutsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);

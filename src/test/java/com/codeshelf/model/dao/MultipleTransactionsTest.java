@@ -61,12 +61,11 @@ public class MultipleTransactionsTest extends HibernateTest{
 		
 		LOGGER.info("Create worker in the new transaction");
 		final Worker worker = new Worker();
-		worker.setFacility(facility);
+		worker.setParent(facility);
 		worker.setLastName("WorkerLast");
-		worker.setBadgeId("WorkerId");
+		worker.setDomainId("WorkerId");
 		worker.setActive(true);
 		worker.setUpdated(new Timestamp(System.currentTimeMillis()));
-		worker.generateDomainId();
 		new SideTransaction<Void>() {
 			@Override
 			public Void task(Session session) {

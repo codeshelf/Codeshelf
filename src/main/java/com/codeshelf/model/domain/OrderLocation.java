@@ -15,6 +15,7 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -45,11 +46,11 @@ import com.google.common.collect.Lists;
  */
 
 @Entity
-@Table(name = "order_location")
+@Table(name = "order_location", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-@ToString(of = { "location", "parent", "active" }, callSuper = true, doNotUseGetters = true)
+@ToString(of = { "location", "active" }, callSuper = true, doNotUseGetters = true)
 public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 
 	public static class OrderLocationDao extends GenericDaoABC<OrderLocation> implements ITypedDao<OrderLocation> {
@@ -78,12 +79,6 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	@Setter
 	@JsonProperty
 	private Timestamp			updated;
-
-	// The owning order.
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private OrderHeader			parent;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -144,31 +139,27 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	 * Helper method. This has a bad query. This assumes it is in a tenant transaction.
 	 * Somewaht similar to OrderLocationCsvImporter.deleteLocation.
 	 */
-	public static List<OrderLocation> findOrderLocationsAtLocation(final Location inLocation, final Facility inFacility, final boolean activeOnly) {
+	public static List<OrderLocation> findOrderLocationsAtLocation(final Location inLocation, final Facility inFacility) {
 		Map<String, Object> filterArgs = ImmutableMap.<String, Object> of(
 			"facilityId", inFacility.getPersistentId(),
 			"locationId", inLocation.getPersistentId());
 		List<OrderLocation> orderLocations = null;
-		if (activeOnly){
-			orderLocations = OrderLocation.staticGetDao().findByFilter("orderLocationByFacilityAndLocationActive", filterArgs);
-		} else {
-			orderLocations = OrderLocation.staticGetDao().findByFilter("orderLocationByFacilityAndLocationAll", filterArgs);
-		}
+		orderLocations = OrderLocation.staticGetDao().findByFilter("orderLocationByFacilityAndLocationAll", filterArgs);
 		return orderLocations;
 	}
 	
-	public static List<OrderLocation> findOrderLocationsAtLocationAndChildren(Location inLocation, Facility inFacility, boolean activeOnly) {
+	public static List<OrderLocation> findOrderLocationsAtLocationAndChildren(Location inLocation, Facility inFacility) {
 		List<OrderLocation> orderLocations = Lists.newArrayList();
-		findOrderLocationsAtLocationAndChildrenHelper(orderLocations, inLocation, inFacility, activeOnly);
+		findOrderLocationsAtLocationAndChildrenHelper(orderLocations, inLocation, inFacility);
 		return orderLocations;
 	}
 	
-	private static void findOrderLocationsAtLocationAndChildrenHelper(List<OrderLocation> accumulator, Location inLocation, Facility inFacility, boolean activeOnly) {
-		List<OrderLocation> orderLocations = findOrderLocationsAtLocation(inLocation, inFacility, activeOnly);
+	private static void findOrderLocationsAtLocationAndChildrenHelper(List<OrderLocation> accumulator, Location inLocation, Facility inFacility) {
+		List<OrderLocation> orderLocations = findOrderLocationsAtLocation(inLocation, inFacility);
 		accumulator.addAll(orderLocations);
 		List<Location> children = inLocation.getChildren();
 		for (Location child : children) {
-			findOrderLocationsAtLocationAndChildrenHelper(accumulator, child, inFacility, activeOnly);
+			findOrderLocationsAtLocationAndChildrenHelper(accumulator, child, inFacility);
 		}
 	}
 }

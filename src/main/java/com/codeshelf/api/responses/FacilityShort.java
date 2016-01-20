@@ -1,6 +1,7 @@
 package com.codeshelf.api.responses;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.UUID;
@@ -26,13 +27,17 @@ public class FacilityShort {
 	
 	@Getter
 	private String timeZoneDisplay;
+
+	public FacilityShort(Facility facility) {
+		this(facility.getDomainId(), facility.getPersistentId(), facility.getDescription(), facility.getTimeZone());
+	}
 	
 	public FacilityShort(String domainId, UUID persistentId, String description, TimeZone timeZone) {
 		this.domainId = domainId;
 		this.persistentId = persistentId;
 		this.description = description;
 		this.utcOffset = new Duration(timeZone.getRawOffset()).getStandardMinutes();
-		this.timeZoneDisplay = timeZone.getDisplayName();
+		this.timeZoneDisplay = timeZone.getDisplayName(timeZone.inDaylightTime(new Date()), TimeZone.SHORT);
 	}
 	
 	public static List<FacilityShort> generateList(List<Facility> facilities){

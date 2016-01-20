@@ -11,6 +11,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 import javax.persistence.Column;
@@ -752,5 +755,62 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 	 */
 	public void sendWorkInstructionsToHost(final String exportMessage) {
 		// Do nothing at DropBox (for now).
+	}
+	
+	public List<String> retrieveOldProcessedFilesList(Date purgeThreshold) {
+		ArrayList<String> directoryList = new ArrayList<>();
+		directoryList.add(getFacilityImportSubDirProcessedPath(IMPORT_ORDERS_PATH));
+		directoryList.add(getFacilityImportSubDirProcessedPath(IMPORT_AISLES_PATH));
+		directoryList.add(getFacilityImportSubDirProcessedPath(IMPORT_BATCHES_PATH));
+		directoryList.add(getFacilityImportSubDirProcessedPath(IMPORT_INVENTORY_PATH));
+		directoryList.add(getFacilityImportSubDirProcessedPath(IMPORT_LOCATIONS_PATH));
+		directoryList.add(getFacilityImportSubDirProcessedPath(IMPORT_SLOTTING_PATH));
+		ArrayList<String> filesToDelete = new ArrayList<>();
+		DbxClient client = getClient();
+		if (client == null) {
+			LOGGER.warn("Unable to retrieve DropBox client");
+			return filesToDelete;
+		}
+		for (String directory : directoryList){
+			try {
+				DbxEntry.WithChildren listing = client.getMetadataWithChildren(directory);
+				for (DbxEntry child : listing.children) {
+					if (child.isFile()){
+						Date modified = child.asFile().lastModified;
+						if (modified.before(purgeThreshold)){
+							filesToDelete.add(child.path);
+						}
+					}
+				}
+
+			} catch (DbxException e){
+				LOGGER.warn("Unable to retrieve old DropBox files from: " + directory, e);
+			}
+		}
+		return filesToDelete;
+	}
+		
+	/**
+	 * This function deleted first @batchSize files from the @files list
+	 */
+	public int deleteFileBatch(List<String> files, int batchSize){
+		int deleted = 0;
+		DbxClient client = getClient();
+		if (client == null) {
+			LOGGER.warn("Unable to retrieve DropBox client");
+			return 0;
+		}
+		int filesLeftToDelete = (batchSize < files.size()) ? batchSize : files.size();
+		String fileName = null;
+		for (; filesLeftToDelete > 0; filesLeftToDelete--){
+			try {
+				fileName = files.remove(0);
+				client.delete(fileName);
+				deleted++;
+			} catch (DbxException e) {
+				LOGGER.warn("Unable to delete DropBox file " + fileName, e);
+			}
+		}
+		return deleted;
 	}
 }

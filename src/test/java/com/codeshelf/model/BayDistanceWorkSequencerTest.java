@@ -30,6 +30,10 @@ public class BayDistanceWorkSequencerTest extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		beginTransaction();
+		importInventory(facility);
+		commitTransaction();
+
+		beginTransaction();
 		String preferences[] = {"","","",""};
 		List<WorkInstruction> instructions = common(facility, preferences);
 
@@ -46,6 +50,10 @@ public class BayDistanceWorkSequencerTest extends ServerTest {
 		//Default Item pick order: I3(D303, [2])->I2(D302, [1])->I1(D301, [0])->I4(D401, [3])
 		Facility facility = setUpSimpleNoSlotFacility();
 
+		beginTransaction();
+		importInventory(facility);
+		commitTransaction();
+		
 		beginTransaction();
 		String preferences[] = {"1","2","3","4"};
 		List<WorkInstruction> instructions = common(facility, preferences);
@@ -69,10 +77,15 @@ public class BayDistanceWorkSequencerTest extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		beginTransaction();
+		importInventory(facility);
+		commitTransaction();
+
+		beginTransaction();
 		facility = facility.reload();
 		String preferences[] = {"","","","2"};
 		List<WorkInstruction> instructions = common(facility, preferences);
 
+		facility = facility.reload();
 		WorkInstructionSequencerABC sequencer = getWorkSequenceSequencer(facility);
 		List<WorkInstruction> sorted = sequencer.sort(facility, instructions);
 
@@ -86,6 +99,10 @@ public class BayDistanceWorkSequencerTest extends ServerTest {
 		//Default Item pick order: I3(D303, [2])->I2(D302, [1])->I1(D301, [0])->I4(D401, [3])
 		Facility facility = setUpSimpleNoSlotFacility();
 		
+		beginTransaction();
+		importInventory(facility);
+		commitTransaction();
+
 		beginTransaction();
 		facility = facility.reload();
 		String preferences[] = {"1","2","3","4"};
@@ -110,6 +127,10 @@ public class BayDistanceWorkSequencerTest extends ServerTest {
 		Facility facility = setUpSimpleNoSlotFacility();
 
 		beginTransaction();
+		importInventory(facility);
+		commitTransaction();
+
+		beginTransaction();
 		facility = facility.reload();
 		String preferences[] = {"","2","","4"};
 		List<WorkInstruction> instructions = common(facility, preferences);
@@ -131,6 +152,10 @@ public class BayDistanceWorkSequencerTest extends ServerTest {
 		//Combined Path order: [A3.B3, A3.B2, A3.B1, A1.B3, A2.B3, A1.B2, A2.B2, A1.B1, A2.B1]
 		//Default Item pick order: I3(D303, [2])->I2(D302, [1])->I1(D301, [0])->I4(D401, [3])
 		Facility facility = setUpSimpleNoSlotFacility();
+
+		beginTransaction();
+		importInventory(facility);
+		commitTransaction();
 
 		beginTransaction();
 		facility = facility.reload();
@@ -158,17 +183,18 @@ public class BayDistanceWorkSequencerTest extends ServerTest {
 		commitTransaction();
 	}
 
-	private List<WorkInstruction> common(Facility facility, String[] preffernces) throws IOException{
-		//Combined Path order: [A3.B3, A3.B2, A3.B1, A1.B3, A2.B3, A1.B2, A2.B2, A1.B1, A2.B1]
-		//Default Item pick order: I3(D303)->I2(D302)->I1(D301)->I4(D401)
-		
+	private void importInventory(Facility facility){
 		String csvString = "itemId,locationId,description,quantity,uom,inventoryDate,cmFromLeft\r\n" //
 				+ "I1,D301,Test Item 1,6,EA,6/25/14 12:00,135\r\n" //
 				+ "I2,D302,Test Item 2,6,EA,6/25/14 12:00,8\r\n" //
 				+ "I3,D303,Test Item 3,6,EA,6/25/14 12:00,55\r\n" //
 				+ "I4,D401,Test Item 4,6,EA,6/25/14 12:00,66\r\n";
-		importInventoryData(facility, csvString);
-
+		importInventoryData(facility, csvString);		
+	}
+	
+	private List<WorkInstruction> common(Facility facility, String[] preffernces) throws IOException{
+		//Combined Path order: [A3.B3, A3.B2, A3.B1, A1.B3, A2.B3, A1.B2, A2.B2, A1.B1, A2.B1]
+		//Default Item pick order: I3(D303)->I2(D302)->I1(D301)->I4(D401)
 		String csvString2 = "orderId,orderGroupId,preAssignedContainerId,orderDetailId,itemId,description,quantity,uom,orderDate,dueDate,workSequence\r\n"
 				+ "1,G1,1,101,I1,Test Item 1,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,"+preffernces[0]+"\r\n"
 				+ "1,G1,1,102,I2,Test Item 2,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,"+preffernces[1]+"\r\n"

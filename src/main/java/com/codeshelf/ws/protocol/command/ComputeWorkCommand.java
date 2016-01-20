@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.behavior.WorkBehavior;
+import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.Che;
@@ -56,7 +57,6 @@ public class ComputeWorkCommand extends CommandABC {
 
 	@Override
 	public ResponseABC exec() {
-		long start  = System.currentTimeMillis();
 		ComputeWorkResponse response = new ComputeWorkResponse();
 		response.setPurpose(request.getPurpose());
 		String cheId = request.getDeviceId();
@@ -122,8 +122,8 @@ public class ComputeWorkCommand extends CommandABC {
 			response.setTotalGoodWorkInstructions(getTotalGoodWorkInstructionsCount(containerToCountMap));
 			response.setNetworkGuid(networkGuid);
 			response.setPathChanged(pathChanged.get());
+			response.setReplenishRun(isReplenishRun(instructionsOnPath));
 			response.setStatus(ResponseStatus.Success);
-			System.out.println("Compute Work Done in " + (System.currentTimeMillis() - start));
 			return response;
 		}
 		response.setStatusMessage("Can't find CHE with id " + cheId);
@@ -234,5 +234,20 @@ public class ComputeWorkCommand extends CommandABC {
 		}
 		return total;
 	}
-
+	
+	private boolean isReplenishRun(List<WorkInstruction> wis){
+		boolean isHkOnly = false;
+		for(WorkInstruction wi : wis){
+			if (!wi.isHousekeeping()){
+				isHkOnly = false;
+			}
+			if (!wi.isHousekeeping() && wi.getPurpose() != WiPurpose.WiPurposeReplenishPut){
+				return false;
+			}
+		}
+		if (isHkOnly || wis.isEmpty()){
+			return false;
+		}
+		return true;
+	}
 }

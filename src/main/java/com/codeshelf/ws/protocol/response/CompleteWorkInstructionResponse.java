@@ -5,7 +5,7 @@ import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
 
-public class CompleteWorkInstructionResponse extends ResponseABC {
+public class CompleteWorkInstructionResponse extends DeviceResponseABC {
 	@Getter @Setter
 	UUID workInstructionId;
 }

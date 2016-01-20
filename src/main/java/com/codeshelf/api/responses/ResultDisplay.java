@@ -1,44 +1,37 @@
 package com.codeshelf.api.responses;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeSet;
 
 import lombok.Getter;
 
-public class ResultDisplay {
+public class ResultDisplay<T> {
 
-	private final Integer explicitTotal;
+	private final Long explicitTotal;
 	
 	@Getter
 	private String[] sortedBy;
 	
+	private Collection<T> results;
+
 	@Getter
-	private Collection<Object> results;
+	private String next;
 	
-	public ResultDisplay(FieldComparator<Map<Object,Object>> comparator) {
-		this(null, new TreeSet<>(comparator));
-		this.sortedBy = comparator.getSortedBy();
-	}
-
-	
-	public ResultDisplay(int explicitTotal) {
-		this(explicitTotal, new ArrayList<Map<Object, Object>>());
-	}
-	
-	public ResultDisplay() {
-		this(null, new ArrayList<Map<Object, Object>>());
-	}
-
-	
-	private ResultDisplay(Integer total, Collection<Map<Object, Object>> resultSet) {
+	public ResultDisplay(Long total, Collection<T> resultSet) {
 		this.explicitTotal = total;
-		this.results = new ArrayList<Object>(resultSet);
+		this.results = resultSet;
 	}
 
-	public int getTotal() {
+	public ResultDisplay(Long total, Collection<T> resultSet, String nextToken) {
+		this.explicitTotal = total;
+		this.results = resultSet;
+		this.next = nextToken;
+	}
+
+	public ResultDisplay(Collection<T> resultSet) {
+		this(new Long(resultSet.size()), resultSet);
+	}
+
+	public long getTotal() {
 		if(explicitTotal != null) {
 			return explicitTotal;
 		} else {
@@ -46,16 +39,14 @@ public class ResultDisplay {
 		}
 	}
 	
-	public void add(Map<Object, Object> values) {
-		@SuppressWarnings("unused")
-		boolean ret = results.add(values);
+	/**
+	 * The size of the actual results, not the total possible for the result
+	 */
+	public int size() {
+		return results.size();
 	}
-
-
-	public void addAll(List<?> values) {
-		@SuppressWarnings("unused")
-		boolean ret = results.addAll(values);
-		
+	
+	public Collection<T> getResults() {
+		return results;
 	}
-
 }

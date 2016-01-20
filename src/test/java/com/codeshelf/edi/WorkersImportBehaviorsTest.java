@@ -132,10 +132,6 @@ public class WorkersImportBehaviorsTest extends ServerTest {
 		Assert.assertFalse(worker1a.getActive());
 		Assert.assertEquals("Smith 01",  worker1a.getLastName());
 
-		Worker worker1b = Worker.findWorker(facility, "Badge_01");
-		Assert.assertNull(worker1b);
-		commitTransaction();
-
 		LOGGER.info("4: Reimport the same file. Show that it makes the worker active again.");		
 		beginTransaction();
 		facility = facility.reload();

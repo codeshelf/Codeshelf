@@ -15,9 +15,8 @@ import java.util.TimeZone;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -43,7 +42,7 @@ import com.google.gson.annotations.Expose;
  *
  */
 @Entity
-@Table(name = "work_instruction_bean")
+@Table(name = "work_instruction_bean", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -55,10 +54,6 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 	
 	// Potentially missing fields: description, gtin.  lotId is probably superfluous.
 	// Note that for bean export, null field will export as "null" instead of "". We want "". See handling on pickerId
-
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
-	@Getter @Setter
-	protected Facility		parent;
 
 	@Column(nullable = false)
 	@Getter @Setter
@@ -161,7 +156,7 @@ public class WorkInstructionCsvBean extends DomainObjectTreeABC<Facility>{
 	};
 	
 	public WorkInstructionCsvBean(WorkInstruction inWi) {
-		setDomainId(getDefaultDomainIdPrefix() + "_" + System.currentTimeMillis());
+		setDomainId(getDefaultDomainIdPrefix() + "_" + inWi.getPersistentId() + "_" + System.currentTimeMillis());
 		setParent(inWi.getFacility());
 		setActive(true);
 		setUpdated(new Timestamp(System.currentTimeMillis()));

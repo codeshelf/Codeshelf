@@ -8,9 +8,8 @@ package com.codeshelf.model.domain;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -39,7 +38,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 
 @Entity
-@Table(name = "vertex")
+@Table(name = "vertex", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -53,12 +52,6 @@ public class Vertex extends DomainObjectTreeABC<Location> {
 
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Vertex.class);
-
-	// The owning location.
-	@ManyToOne(optional = false,fetch=FetchType.LAZY)
-	@Getter
-	@Setter
-	private Location			parent;
 
 	@NonNull
 	@Getter

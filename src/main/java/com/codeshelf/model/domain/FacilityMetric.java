@@ -5,9 +5,8 @@ import java.sql.Timestamp;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -22,7 +21,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "facility_metric")
+@Table(name = "facility_metric", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -32,11 +31,6 @@ public class FacilityMetric extends DomainObjectTreeABC<Facility>{
 			return FacilityMetric.class;
 		}
 	}
-
-	@ManyToOne(optional = false, fetch=FetchType.EAGER)
-	@Getter
-	@Setter
-	protected Facility	parent;
 
 	@Column(nullable = false)
 	@Getter

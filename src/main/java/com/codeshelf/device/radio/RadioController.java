@@ -763,7 +763,7 @@ public class RadioController implements IRadioController {
 		// Already in guid context from handleInbountPacket, so do not need rememberThenSetNetGuid
 		// String rememberedGuid = ContextLogging.rememberThenSetNetGuid(device.getGuid());
 		try {
-			LOGGER.info("ACKing packet: ackId={}; netId={}; srcAddr={}", inAckId, inNetId, inSrcAddr);
+			LOGGER.debug("ACKing packet: ackId={}; netId={}; srcAddr={}", inAckId, inNetId, inSrcAddr);
 			device.setLastIncomingAckId(inAckId);
 
 			CommandControlAck ackCmd = new CommandControlAck(NetEndpoint.PRIMARY_ENDPOINT, inAckId);

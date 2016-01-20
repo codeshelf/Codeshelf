@@ -75,7 +75,7 @@ public enum ScheduledJobType {
 			true,
 			ScheduledJobCategory.EDI,
 			ScheduledJobCategory.CHECK),
-	EdiPurge(NotImplementedJob.class,
+	EdiPurge(EdiFilesPurgeJob.class,
 			"Clean old files out of EDI directories.",
 			"0 0 2 * * ?",
 			false,

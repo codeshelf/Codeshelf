@@ -576,6 +576,7 @@ public class PickSimulator {
 		return deviceToAsk.getRecentCheDisplayString(lineIndex);
 	}
 
+	/*Will rename, and perhaps retire this*/
 	public void logCheDisplay() {
 		// each line below may get the linked screen line. So the effect is logging the linked screen. 
 		// No need for another getDeviceToAsk() call.
@@ -587,12 +588,33 @@ public class PickSimulator {
 			getLastCheDisplayString(4));
 	}
 
+	/** 
+	 * Gives almost exactly what the screen got.
+	 * Used in some tests to check screens.
+	 */
 	public String getLastCheDisplay() {
 		StringBuffer s = new StringBuffer();
 		for (int i = 1; i <= 4; i++) {
 			s.append(getLastCheDisplayString(i).trim()).append("\n");
 		}
 		return s.toString();
+	}
+
+	private String getDeviceGuid() {
+		CheDeviceLogic device = this.getCheDeviceLogic();
+		if (device != null)
+			return device.getGuidNoPrefix();
+		else
+			return "??";
+	}
+
+	/** 
+	 * Intended to give a "pleasing" representation of the screen in console or Kibana
+	 * May change over time. Do not use in tests to check screens
+	 */
+	public void logLastCheDisplay() {
+		String s = getDeviceGuid() + "\n" + getLastCheDisplay();
+		LOGGER.info(s);
 	}
 
 	public void forceDeviceToMatchManagerConfiguration() {

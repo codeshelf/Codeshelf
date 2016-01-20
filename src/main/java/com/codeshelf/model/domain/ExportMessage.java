@@ -7,9 +7,8 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -27,7 +26,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "export_message")
+@Table(name = "export_message", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -40,11 +39,6 @@ public class ExportMessage extends DomainObjectTreeABC<Facility>{
 	
 	public enum ExportMessageType {ORDER_ON_CART_ADDED, ORDER_ON_CART_FINISHED}
 	//private static final Logger		LOGGER				= LoggerFactory.getLogger(ExportMessage.class);
-	
-	@ManyToOne(optional = false, fetch=FetchType.EAGER)
-	@Getter
-	@Setter
-	protected Facility			parent;
 	
 	@Column(nullable = false)
 	@Getter
@@ -110,7 +104,7 @@ public class ExportMessage extends DomainObjectTreeABC<Facility>{
 		setActive(true);
 		setOrderId(message.getOrderId());
 		setCheGuid(message.getCheGuid());
-		setDomainId(getDefaultDomainIdPrefix() + "_" + System.currentTimeMillis());
+		setDomainId(getDefaultDomainIdPrefix() + "_" + message.getOrderId() + "_" + System.currentTimeMillis());
 		if (message instanceof OrderOnCartAddedExportMessage) {
 			setType(ExportMessageType.ORDER_ON_CART_ADDED);
 		} else if (message instanceof OrderOnCartFinishedExportMessage) {

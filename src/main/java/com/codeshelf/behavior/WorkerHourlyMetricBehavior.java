@@ -18,6 +18,7 @@ public class WorkerHourlyMetricBehavior implements IApiBehavior{
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(WorkerHourlyMetricBehavior.class);
 	
 	public void metricOpenSession(Worker worker) {
+		/*
 		Timestamp loginTime = worker.getLastLogin();
 		//Try to find a metric for this hour
 		WorkerHourlyMetric metric = worker.getHourlyMetric(loginTime);
@@ -30,19 +31,26 @@ public class WorkerHourlyMetricBehavior implements IApiBehavior{
 			metric.setLastSessionStart(loginTime);
 			metric.setSessionActive(true);
 		}
+		*/
 	}
 	
 	public void metricCloseSession(Worker worker){
+		/*
 		Timestamp logoutTime = worker.getLastLogout();
 		WorkerHourlyMetric metric = produceMetric(worker, logoutTime);
 		updateMetricDuration(metric, logoutTime);
+		*/
 	}
 
 	public void recordEvent(Facility facility, String pickerId, EventType type) {
+		/*
 		Worker worker = Worker.findWorker(facility, pickerId);
 		if (worker == null) {
 			LOGGER.warn("Trying to update metrics for non-existent worker {}", pickerId);
 			return;
+		}
+		if (!worker.getActive()){
+			LOGGER.warn("Trying to update metrics for inactive worker {}", pickerId);
 		}
 		boolean completeEvent = type == EventType.COMPLETE, shortEvent = type == EventType.SHORT;
 		if (!completeEvent && !shortEvent){
@@ -57,6 +65,7 @@ public class WorkerHourlyMetricBehavior implements IApiBehavior{
 			metric.setShorts(metric.getShorts() + 1);
 		}
 		WorkerHourlyMetric.staticGetDao().store(metric);
+		*/
 	}
 
 	
@@ -65,6 +74,7 @@ public class WorkerHourlyMetricBehavior implements IApiBehavior{
 	 * Thus function retrieves or generates a Mertic for the requested hour
 	 * It will also fill in metrics between the last metric with an active session, and the requested time 
 	 */
+	@SuppressWarnings("unused")
 	private WorkerHourlyMetric produceMetric(Worker worker, Timestamp time) {
 		Timestamp loginTime = worker.getLastLogin();
 		WorkerHourlyMetric metric = worker.getHourlyMetric(time);

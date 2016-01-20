@@ -15,14 +15,17 @@ import com.codeshelf.edi.CrossBatchCsvImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.FacilityPropertyType;
+import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Item;
+import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.Location;
+import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
@@ -41,8 +44,8 @@ public abstract class ServerTest extends HibernateTest {
 	public boolean ephemeralServicesShouldStartAutomatically() {
 		return true;
 	}
-	
-	protected final int FLASH_VALUE = 21; //BLINK_FREQ						= (byte) 0x20 = 32; //  x15 = 21
+
+	protected final int	FLASH_VALUE	= 21;	//BLINK_FREQ						= (byte) 0x20 = 32; //  x15 = 21
 
 	// various server utilities
 	protected Facility setUpSimpleNoSlotFacility() {
@@ -213,7 +216,9 @@ public abstract class ServerTest extends HibernateTest {
 		CodeshelfNetwork network = getNetwork();
 		LedController controller1 = network.findOrCreateLedController("LED1", new NetGuid("0x00000011"));
 
-		PropertyBehavior.setProperty(getFacility(), FacilityPropertyType.WORKSEQR, WorkInstructionSequencerType.BayDistance.toString());
+		PropertyBehavior.setProperty(getFacility(),
+			FacilityPropertyType.WORKSEQR,
+			WorkInstructionSequencerType.BayDistance.toString());
 		commitTransaction();
 
 		beginTransaction();
@@ -414,6 +419,78 @@ public abstract class ServerTest extends HibernateTest {
 			Assert.fail(String.format("Did not encounter requested object in %dms after %d checks.", maxTimeToWaitMillis, count));
 			return null;
 		}
+	}
+
+	/**
+	 * Wait to find the named order header having this status
+	 */
+	public void waitForOrderStatus(Facility inFacility,
+		String orderId,
+		OrderStatusEnum expectedStatus,
+		boolean expectedActive,
+		long millisToWait) {
+		ThreadUtils.sleep(250);
+		long start = System.currentTimeMillis();
+		OrderHeader resultOrder = null;
+		while (System.currentTimeMillis() - start < millisToWait) {
+
+			beginTransaction();
+			inFacility = inFacility.reload();
+			OrderHeader order = OrderHeader.staticGetDao().findByDomainId(inFacility, orderId);
+			if (order != null) {
+				OrderStatusEnum status = order.getStatus();
+				if (expectedStatus == null || expectedStatus.equals(status)) {
+					if (expectedActive == order.getActive())
+						resultOrder = order;
+				}
+			}
+			commitTransaction();
+
+			if (resultOrder != null) {
+				return; // Could change the function to return the order header
+			}
+			ThreadUtils.sleep(200); // retry every 200ms
+		}
+		Assert.fail(String.format("Order did not reach desired state in %dms.", millisToWait));
+	}
+
+	/**
+	 * This is about waiting for a specific item to be made and persist
+	 * This must not be called in a transaction as it does its own transactions
+	 * Can we generalize with a callable?
+	 * NULL locationName is ok. If so, just match the itemId, and trust it will be unique. Not too carefully checked, but it will log an error
+	 */
+	public void waitForItemLocation(Facility inFacility, String itemId, String locationName, long millisToWait) {
+		ThreadUtils.sleep(250);
+		long start = System.currentTimeMillis();
+		Item resultItem = null;
+		while (System.currentTimeMillis() - start < millisToWait) {
+
+			beginTransaction();
+			inFacility = inFacility.reload();
+			ItemMaster master = ItemMaster.staticGetDao().findByDomainId(inFacility, itemId);
+			if (master != null) {
+				// Is there an item at the location?
+				List<Item> items = master.getItems();
+				for (Item item : items) {
+					if (locationName == null || item.getItemLocationName().equals(locationName)) {
+						if (resultItem == null) {
+							resultItem = item;
+						} else {
+							LOGGER.error("Expected unique item in waitForItemLocation(). Found extra match");
+						}
+					}
+				}
+			}
+			commitTransaction();
+
+			if (resultItem != null) {
+				return; // Could change the function to return the item
+			}
+			ThreadUtils.sleep(200); // retry every 200ms
+		}
+		Assert.fail(String.format("Did not encounter Item in %dms.", millisToWait));
+
 	}
 
 	public void verifyCheDisplay(PickSimulator picker, String exp1, String exp2, String exp3, String exp4) {

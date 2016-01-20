@@ -308,10 +308,16 @@ public class Tier extends Location {
 		}
 	}
 
-	/**
-	 * DEV-1312 kludge to offset leds for each slot in a tier.
-	 */
-	public void offSetTierLeds(int offset) {
+	public void offSetTierLeds(int offset) throws IllegalArgumentException{
+		LedController ledController = this.getLedController();
+		if (ledController == null) {
+			throw new IllegalArgumentException("Failed to set LED offset on " + this + ": Tier has no LedController.");
+		}
+		if (ledController.getDeviceType() != DeviceType.Lights) {
+			throw new IllegalArgumentException(
+				"Failed to set LED offset on " + this + ": LedController " + ledController + " is not of device type Lights.");
+		}
+
 		LOGGER.info("Offsetting first/last LED by {} for each slot in {}", offset, this);
 		List<Slot> slotList = this.getActiveChildrenAtLevel(Slot.class);
 		if (slotList.size() == 0) {
@@ -320,7 +326,11 @@ public class Tier extends Location {
 		// Don't really need to sort these as we do something common for each regardless. But follow the pattern.
 		Collections.sort(slotList, new SlotIDComparator());
 
-		// adjust first and last for each slot. Don't worry about the tier values?
+		//Adjust first and last LED of this entire Tier
+		setFirstLedNumAlongPath((short)(getFirstLedNumAlongPath() + offset)); 
+		setLastLedNumAlongPath((short)(getLastLedNumAlongPath() + offset));
+		
+		// adjust first and last for each slot.
 		ListIterator<Slot> li = null;
 		li = slotList.listIterator();
 		while (li.hasNext()) {
@@ -352,13 +362,8 @@ public class Tier extends Location {
 			return;
 		}
 		if (ledController.getDeviceType() != DeviceType.Poscons) {
-			// DEV-1312 kludge for Loreal pilot
-			if (ledController.getDeviceType() == DeviceType.Lights) {
-				offSetTierLeds(startingIndex);
-			} else {
-				LOGGER.warn("Failed to set poscons on " + this + ": LedController " + ledController
-						+ " is not of device type Poscon.");
-			}
+			LOGGER.warn("Failed to set poscons on " + this + ": LedController " + ledController
+					+ " is not of device type Poscon.");
 			return;
 		}
 

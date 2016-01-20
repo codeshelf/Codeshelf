@@ -5,9 +5,8 @@ import java.sql.Timestamp;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -23,7 +22,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "worker_hourly_metric")
+@Table(name = "worker_hourly_metric", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -33,10 +32,6 @@ public class WorkerHourlyMetric extends DomainObjectTreeABC<Worker>{
 			return WorkerHourlyMetric.class;
 		}
 	}
-
-	@ManyToOne(optional = false, fetch=FetchType.EAGER)
-	@Getter @Setter	@JsonProperty
-	protected Worker	parent;
 	
 	@Column(nullable = false, name = "hour_timestamp")
 	@Getter @Setter	@JsonProperty
@@ -74,7 +69,7 @@ public class WorkerHourlyMetric extends DomainObjectTreeABC<Worker>{
 		setSessionActive(true);
 		setHourTimestamp(TimeUtils.truncateTimeToHour(sessionStart));
 		setLastSessionStart(sessionStart);
-		setDomainId(getDefaultDomainIdPrefix() + "_" + worker.getDomainId() + "_" + getHourTimestamp());
+		setDomainId(getDefaultDomainIdPrefix() + "_" + worker.getDomainId() + "_" + getHourTimestamp() + "_" + System.currentTimeMillis());
 		WorkerHourlyMetric.staticGetDao().store(this);
 	}
 	

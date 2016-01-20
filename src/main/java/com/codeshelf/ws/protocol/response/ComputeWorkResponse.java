@@ -15,7 +15,7 @@ import com.codeshelf.ws.protocol.request.ComputeWorkRequest.ComputeWorkPurpose;
 
 public class ComputeWorkResponse extends DeviceResponseABC {
 	@Getter @Setter
-	private ComputeWorkPurpose purpose = ComputeWorkPurpose.COMPUTE_WORK;
+	private ComputeWorkPurpose purpose = ComputeWorkPurpose.COMPUTING_WORK;
 	
 	@Getter @Setter
 	Integer	totalGoodWorkInstructions = null;
@@ -29,6 +29,9 @@ public class ComputeWorkResponse extends DeviceResponseABC {
 	
 	@Getter @Setter
 	private Boolean pathChanged = false;
+	
+	@Getter @Setter
+	private Boolean replenishRun = false;
 
 	public void addWorkInstructionCount(String containerId, WorkInstructionCount workInstructionCount) {
 		containerToWorkInstructionCountMap.put(containerId, workInstructionCount);

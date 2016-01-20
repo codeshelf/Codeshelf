@@ -4,15 +4,16 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 import lombok.Getter;
 
 import org.hibernate.Criteria;
+import org.hibernate.Query;
+import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.Disjunction;
 import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +34,7 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Resolution;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
-import com.google.common.collect.ImmutableList;
+import com.codeshelf.persistence.TenantPersistenceService;
 
 /**
  * This class assists with object reporting and object purging
@@ -61,7 +62,7 @@ public class DomainObjectManager {
 		}
 	}
 
-	private Timestamp getDaysOldTimeStamp(int daysOldToCount) {
+	public static Timestamp getDaysOldTimeStamp(int daysOldToCount) {
 		// Get our reference timestamp relative to now.
 		// One minute after the days counter to make unit tests that set things 2 days old return those on a 2 days old criteria.
 		Calendar cal = Calendar.getInstance();
@@ -107,21 +108,13 @@ public class DomainObjectManager {
 		// Work Instructions
 		Criteria totalWisCrit = WorkInstruction.staticGetDao().createCriteria();
 		totalWisCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-
-		Criteria archiveableWisCrit = WorkInstruction.staticGetDao().createCriteria();
-		archiveableWisCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		archiveableWisCrit.add(Restrictions.lt("created", desiredTime));
-
+		Criteria archiveableWisCrit = getWiPurgeCriterion(desiredTime, facilityUUID);
 		reportables.add(getArchivableString("WorkInstruction", totalWisCrit, archiveableWisCrit, WorkInstruction.staticGetDao()));
 
 		// Orders
 		Criteria totalOrdersCrit = OrderHeader.staticGetDao().createCriteria();
 		totalOrdersCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-
-		Criteria archiveableOrderCrit = OrderHeader.staticGetDao().createCriteria();
-		archiveableOrderCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		archiveableOrderCrit.add(Restrictions.lt("dueDate", desiredTime));
-
+		Criteria archiveableOrderCrit = getOrderPurgeCriterion(desiredTime, facilityUUID);
 		reportables.add(getArchivableString("Order", totalOrdersCrit, archiveableOrderCrit, OrderHeader.staticGetDao()));
 
 		// Order Details
@@ -135,6 +128,16 @@ public class DomainObjectManager {
 		archiveableDetailsCrit.add(Restrictions.lt("p.dueDate", desiredTime));
 
 		reportables.add(getArchivableString("OrderDetail", totalDetailsCrit, archiveableDetailsCrit, OrderDetail.staticGetDao()));
+
+		// Replenish Order Details
+		Criteria totalReplenishDetailsCrit = OrderDetail.staticGetDao().createCriteria();
+		totalReplenishDetailsCrit.createAlias("parent", "p");
+		totalReplenishDetailsCrit.add(Restrictions.eq("p.orderType", OrderTypeEnum.REPLENISH));
+		Criteria archiveableReplenishDetailsCrit = getReplenishDetailsPurgeCriterion(desiredTime, facilityUUID);
+		reportables.add(getArchivableString("ReplenOrderDetail",
+			totalReplenishDetailsCrit,
+			archiveableReplenishDetailsCrit,
+			OrderDetail.staticGetDao()));
 
 		// ContainerUse
 		Criteria totalUsesCrit = ContainerUse.staticGetDao().createCriteria();
@@ -153,31 +156,19 @@ public class DomainObjectManager {
 		// ImportReceipts
 		Criteria totalReceiptCrit = ImportReceipt.staticGetDao().createCriteria();
 		totalReceiptCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-
-		Criteria archiveableReceiptCrit = ImportReceipt.staticGetDao().createCriteria();
-		archiveableReceiptCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		archiveableReceiptCrit.add(Restrictions.lt("received", desiredTime));
-
+		Criteria archiveableReceiptCrit = getImportReceiptPurgeCriterion(desiredTime, facilityUUID);
 		reportables.add(getArchivableString("ImportReceipt", totalReceiptCrit, archiveableReceiptCrit, ImportReceipt.staticGetDao()));
 
 		// ExportMessages
 		Criteria totalMessageCrit = ExportMessage.staticGetDao().createCriteria();
 		totalMessageCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-
-		Criteria archiveableMessageCrit = ExportMessage.staticGetDao().createCriteria();
-		archiveableMessageCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		archiveableMessageCrit.add(Restrictions.lt("created", desiredTime));
-
+		Criteria archiveableMessageCrit = getExportMessagePurgeCriterion(desiredTime, facilityUUID);
 		reportables.add(getArchivableString("ExportMessage", totalMessageCrit, archiveableMessageCrit, ExportMessage.staticGetDao()));
 
 		// WorkInstructionBeans
 		Criteria totalBeanCrit = WorkInstructionCsvBean.staticGetDao().createCriteria();
 		totalBeanCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-
-		Criteria archiveableBeanCrit = WorkInstructionCsvBean.staticGetDao().createCriteria();
-		archiveableBeanCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		archiveableBeanCrit.add(Restrictions.lt("updated", desiredTime));
-
+		Criteria archiveableBeanCrit = getWiBeanPurgeCriterion(desiredTime, facilityUUID);
 		reportables.add(getArchivableString("WorkInstructionBean",
 			totalBeanCrit,
 			archiveableBeanCrit,
@@ -185,12 +176,8 @@ public class DomainObjectManager {
 
 		// WorkerEvents
 		Criteria totalEventCrit = WorkerEvent.staticGetDao().createCriteria();
-		totalEventCrit.add(Restrictions.eq("facility.persistentId", facilityUUID));
-
-		Criteria archiveableEventCrit = WorkerEvent.staticGetDao().createCriteria();
-		archiveableEventCrit.add(Restrictions.eq("facility.persistentId", facilityUUID));
-		archiveableEventCrit.add(Restrictions.lt("created", desiredTime));
-
+		totalEventCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		Criteria archiveableEventCrit = getWorkerEventPurgeCriterion(desiredTime, facilityUUID);
 		reportables.add(getArchivableString("WorkerEvent", totalEventCrit, archiveableEventCrit, WorkerEvent.staticGetDao()));
 
 		// Objects where it is not easy to know how many will be be deleted until all of the above purges are done
@@ -226,16 +213,57 @@ public class DomainObjectManager {
 	}
 
 	/**
+	 * The common criterion for Order purge. 
+	 */
+	private Criteria getOrderPurgeCriterion(Timestamp desiredTime, UUID facilityUUID) {
+		Criteria orderCrit = OrderHeader.staticGetDao().createCriteria();
+		orderCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		orderCrit.add(Restrictions.lt("dueDate", desiredTime));
+		return orderCrit;
+	}
+
+	/**
 	 * This returns the full list of UUIDs of OrderHeaders whose dueDate is older than daysOld before now.
 	 */
 	public List<UUID> getOrderUuidsToPurge(int daysOld) {
 		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
 		UUID facilityUUID = getFacility().getPersistentId();
-		Criteria orderCrit = OrderHeader.staticGetDao().createCriteria();
-		orderCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		orderCrit.add(Restrictions.lt("dueDate", desiredTime));
+		Criteria orderCrit = getOrderPurgeCriterion(desiredTime, facilityUUID);
 		List<UUID> uuidList = OrderHeader.staticGetDao().getUUIDListByCriteriaQuery(orderCrit);
 		return uuidList;
+	}
+
+	/**
+	 * The common criterion for replenish details purge. 
+	 */
+	private Criteria getReplenishDetailsPurgeCriterion(Timestamp desiredTime, UUID facilityUUID) {
+		Criteria detailsCrit = OrderDetail.staticGetDao().createCriteria();
+		detailsCrit.createAlias("parent", "p");
+		detailsCrit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
+		detailsCrit.add(Restrictions.eq("p.orderType", OrderTypeEnum.REPLENISH));
+		detailsCrit.add(Restrictions.lt("updated", desiredTime));
+		return detailsCrit;
+	}
+
+	/**
+	 * This returns the full list of UUIDs of OrderDetails from Replenish orders whose 'updated' value is older than daysOld before now.
+	 */
+	public List<UUID> getReplenishDetailsUuidsToPurge(int daysOld) {
+		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
+		UUID facilityUUID = getFacility().getPersistentId();
+		Criteria detailsCrit = getReplenishDetailsPurgeCriterion(desiredTime, facilityUUID);
+		List<UUID> uuidList = OrderDetail.staticGetDao().getUUIDListByCriteriaQuery(detailsCrit);
+		return uuidList;
+	}
+
+	/**
+	 * The common criterion for WorkerEvent purge. 
+	 */
+	private Criteria getWorkerEventPurgeCriterion(Timestamp desiredTime, UUID facilityUUID) {
+		Criteria eventCrit = WorkerEvent.staticGetDao().createCriteria();
+		eventCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		eventCrit.add(Restrictions.lt("created", desiredTime));
+		return eventCrit;
 	}
 
 	/**
@@ -244,24 +272,58 @@ public class DomainObjectManager {
 	public List<UUID> getWorkerEventUuidsToPurge(int daysOld) {
 		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
 		UUID facilityUUID = getFacility().getPersistentId();
-		Criteria eventCrit = WorkerEvent.staticGetDao().createCriteria();
-		eventCrit.add(Restrictions.eq("facility.persistentId", facilityUUID));
-		eventCrit.add(Restrictions.lt("created", desiredTime));
+		Criteria eventCrit = getWorkerEventPurgeCriterion(desiredTime, facilityUUID);
 		List<UUID> uuidList = WorkerEvent.staticGetDao().getUUIDListByCriteriaQuery(eventCrit);
 		return uuidList;
 	}
 
+	/**
+	 * The common criterion for WorkInstructionCsvBean purge. 
+	 */
+	private Criteria getWiBeanPurgeCriterion(Timestamp desiredTime, UUID facilityUUID) {
+		Criteria eventCrit = WorkInstructionCsvBean.staticGetDao().createCriteria();
+		eventCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		eventCrit.add(Restrictions.lt("updated", desiredTime));
+		return eventCrit;
+	}
+	
 	/**
 	 * This returns the full list of UUIDs of WorkInstructionCsvBean whose update date is older than daysOld before now.
 	 */
 	public List<UUID> getWorkInstructionCsvBeanUuidsToPurge(int daysOld) {
 		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
 		UUID facilityUUID = getFacility().getPersistentId();
-		Criteria eventCrit = WorkInstructionCsvBean.staticGetDao().createCriteria();
-		eventCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		eventCrit.add(Restrictions.lt("updated", desiredTime));
+		Criteria eventCrit = getWiBeanPurgeCriterion(desiredTime, facilityUUID);
 		List<UUID> uuidList = WorkInstructionCsvBean.staticGetDao().getUUIDListByCriteriaQuery(eventCrit);
 		return uuidList;
+	}
+
+	/**
+	 * Common criterion for ExportMessage. Only complexity here is that prior to v24, export message objects did not have a created time.
+	 * Therefore, add null to this criterion
+	 */
+	private Criteria getExportMessagePurgeCriterion(Timestamp desiredTime, UUID facilityUUID) {
+		Criteria msgCrit = ExportMessage.staticGetDao().createCriteria();
+		
+		/*  This works */
+		// warning .eq("created", null) does not work. Use isNull()
+		Disjunction or = Restrictions.disjunction();
+		or.add(Restrictions.isNull("created"));
+		or.add(Restrictions.lt("created", desiredTime));
+		msgCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		msgCrit.add(or);
+		// */
+		
+		/* This also works
+		// Expression :  (c1 OR c2) AND (c3) 
+		Criterion c1 = Restrictions.isNull("created");
+		Criterion c2 = Restrictions.lt("created", desiredTime);
+		Criterion c3 = Restrictions.eq("parent.persistentId", facilityUUID);
+		Criterion c4 = Restrictions.and(Restrictions.or(c1, c2), c3);
+		msgCrit.add(c4);
+		*/
+		
+		return msgCrit;
 	}
 
 	/**
@@ -270,11 +332,19 @@ public class DomainObjectManager {
 	public List<UUID> getExportMessageUuidsToPurge(int daysOld) {
 		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
 		UUID facilityUUID = getFacility().getPersistentId();
-		Criteria eventCrit = ExportMessage.staticGetDao().createCriteria();
-		eventCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		eventCrit.add(Restrictions.lt("created", desiredTime));
-		List<UUID> uuidList = ExportMessage.staticGetDao().getUUIDListByCriteriaQuery(eventCrit);
+		Criteria msgCrit = getExportMessagePurgeCriterion(desiredTime, facilityUUID);
+		List<UUID> uuidList = ExportMessage.staticGetDao().getUUIDListByCriteriaQuery(msgCrit);
 		return uuidList;
+	}
+
+	/**
+	 * The common criterion for WorkInstructionCsvBean purge. 
+	 */
+	private Criteria getImportReceiptPurgeCriterion(Timestamp desiredTime, UUID facilityUUID) {
+		Criteria receiptCrit = ImportReceipt.staticGetDao().createCriteria();
+		receiptCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		receiptCrit.add(Restrictions.lt("received", desiredTime));
+		return receiptCrit;
 	}
 
 	/**
@@ -283,11 +353,19 @@ public class DomainObjectManager {
 	public List<UUID> getImportReceiptUuidsToPurge(int daysOld) {
 		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
 		UUID facilityUUID = getFacility().getPersistentId();
-		Criteria eventCrit = ImportReceipt.staticGetDao().createCriteria();
-		eventCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		eventCrit.add(Restrictions.lt("received", desiredTime));
-		List<UUID> uuidList = ImportReceipt.staticGetDao().getUUIDListByCriteriaQuery(eventCrit);
+		Criteria receiptCrit = getImportReceiptPurgeCriterion(desiredTime, facilityUUID);
+		List<UUID> uuidList = ImportReceipt.staticGetDao().getUUIDListByCriteriaQuery(receiptCrit);
 		return uuidList;
+	}
+
+	/**
+	 * The common criterion for WorkInstructionCsvBean purge. 
+	 */
+	private Criteria getWiPurgeCriterion(Timestamp desiredTime, UUID facilityUUID) {
+		Criteria wiCrit = WorkInstruction.staticGetDao().createCriteria();
+		wiCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
+		wiCrit.add(Restrictions.lt("created", desiredTime));
+		return wiCrit;
 	}
 
 	/**
@@ -296,9 +374,7 @@ public class DomainObjectManager {
 	public List<UUID> getWorkInstructionUuidsToPurge(int daysOld) {
 		Timestamp desiredTime = getDaysOldTimeStamp(daysOld);
 		UUID facilityUUID = getFacility().getPersistentId();
-		Criteria wiCrit = WorkInstruction.staticGetDao().createCriteria();
-		wiCrit.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		wiCrit.add(Restrictions.lt("created", desiredTime));
+		Criteria wiCrit = getWiPurgeCriterion(desiredTime, facilityUUID);
 		List<UUID> uuidList = WorkInstruction.staticGetDao().getUUIDListByCriteriaQuery(wiCrit);
 		return uuidList;
 	}
@@ -312,56 +388,24 @@ public class DomainObjectManager {
 		// Time this routine as this might be a bit slow
 		long startMillis = System.currentTimeMillis();
 
-		List<UUID> returnList = new ArrayList<UUID>();
-
-		UUID facilityUUID = getFacility().getPersistentId();
 		// The main concern is that we should not purge the container if there are any remaining ContainerUses
 		// Containers have an active flag. So, if inactive, probably worth purging anyway.
 
-		// We cannot limit the returned containers because we have no easy way to find the subset that do not have containerUse pointing at them. 
-		List<Container> cntrs = Container.staticGetDao()
-			.findByFilter(ImmutableList.<Criterion> of(Restrictions.eq("parent.persistentId", facilityUUID)));
-
-		Map<UUID, Container> referencedMap = new HashMap<UUID, Container>();
-
-		LOGGER.info("examining ContainerUses linked to containers");
-		// ContainerUse. Can not limit, or we would make incorrect decisions about which were deleteable.
-		Criteria crit = ContainerUse.staticGetDao().createCriteria();
-		crit.createAlias("parent", "p");
-		crit.add(Restrictions.eq("p.parent.persistentId", facilityUUID));
-		List<ContainerUse> uses = ContainerUse.staticGetDao().findByCriteriaQuery(crit);
-
-		// Add each container that ContainerUse references to map
-		for (ContainerUse cntrUse : uses) {
-			Container referencedCntr = cntrUse.getParent();
-			if (!referencedMap.containsKey(referencedCntr.getPersistentId())) {
-				referencedMap.put(referencedCntr.getPersistentId(), referencedCntr);
-			}
-		}
-
-		LOGGER.info("examining WorkInstructions linked to containers");
-		Criteria crit2 = WorkInstruction.staticGetDao().createCriteria();
-		crit2.add(Restrictions.eq("parent.persistentId", facilityUUID));
-		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByCriteriaQuery(crit2);
-
-		// Add each container that the work instruction references to map
-		for (WorkInstruction wi : wis) {
-			Container referencedCntr = wi.getContainer();
-			if (!referencedMap.containsKey(referencedCntr.getPersistentId())) {
-				referencedMap.put(referencedCntr.getPersistentId(), referencedCntr);
-			}
-		}
-
-		for (Container cntr : cntrs) {
-			if (!referencedMap.containsKey(cntr.getPersistentId())) // This container had no containerUses and no work instructions
-				// nothing references it. Add it UUID to the list
-				returnList.add(cntr.getPersistentId());
-		}
+		Session session = TenantPersistenceService.getInstance().getSession();
+		Query query = session.createQuery(
+			"SELECT c.persistentId\n" + 
+			"FROM Container c\n" + 
+			"	LEFT JOIN c.uses cu\n" + 
+			"	LEFT JOIN c.workInstructions wi\n" + 
+			"WHERE c.parent = :facility AND cu.persistentId IS NULL AND wi.persistentId IS NULL\n");
+		query.setParameter("facility", getFacility());
+		@SuppressWarnings("unchecked")
+		List<UUID> results = query.list();
 		long endMillis = System.currentTimeMillis();
-		if (startMillis - endMillis > 1000)
-			LOGGER.info("Took {}ms to determine that {} containers should be deleted", startMillis - endMillis, returnList.size());
-
-		return returnList;
+		if (endMillis - startMillis > 1000){
+			LOGGER.info("Took {}ms to determine that {} containers should be deleted", endMillis - startMillis , results.size());
+		}
+		return results;
 	}
 
 	/**
@@ -375,12 +419,12 @@ public class DomainObjectManager {
 			LOGGER.error("Limiting container delete batch size to {}. Called for {}.", MAX_CNTR_PURGE, wantToPurge);
 		}
 		int deletedCount = 0;
-		for (UUID cntrUuid : cntrUuids) {
+		List<Container> containers = Container.staticGetDao().findByPersistentIdList(cntrUuids);
+		for (Container cntr : containers) {
 			// just protection against bad call
 			if (deletedCount > willPurge)
 				break;
 			try {
-				Container cntr = Container.staticGetDao().findByPersistentId(cntrUuid);
 				if (cntr != null) {
 					Container.staticGetDao().delete(cntr);
 					// This could fail! Make a new ContainerUse or WorkInstruction for a container after the uuid list was created.
@@ -491,29 +535,6 @@ public class DomainObjectManager {
 	public int purgeSomeWiCsvBeans(List<UUID> wiBeanUuids) {
 		final int MAX_WIBEAN_PURGE = 500;
 		return simplePurge(wiBeanUuids, MAX_WIBEAN_PURGE, WorkInstructionCsvBean.staticGetDao());
-		/*
-		int wantToPurge = wiBeanUuids.size();
-		int willPurge = Math.min(wantToPurge, MAX_WIBEAN_PURGE);
-		if (wantToPurge > MAX_WIBEAN_PURGE) {
-			LOGGER.error("Limiting work instruction csv bean delete batch size to {}. Called for {}.", MAX_WIBEAN_PURGE, wantToPurge);
-		}
-		int deletedCount = 0;
-		for (UUID wiBeanUuid : wiBeanUuids) {
-			// just protection against bad call
-			if (deletedCount > willPurge)
-				break;
-			try {
-				WorkInstructionCsvBean bean = WorkInstructionCsvBean.staticGetDao().findByPersistentId(wiBeanUuid);
-				if (bean != null) {
-					WorkInstructionCsvBean.staticGetDao().delete(bean);
-					deletedCount++;
-				}
-			} catch (DaoException e) {
-				LOGGER.error("purgeSomeWiCsvBeans", e);
-			}
-		}
-		return deletedCount;
-		*/
 	}
 
 	/**
@@ -548,11 +569,32 @@ public class DomainObjectManager {
 			return Collections.<WorkInstruction> emptyList(); //empty WHERE X IN () causes syntax issue in postgres
 		} else {
 			Criteria criteria = WorkInstruction.staticGetDao().createCriteria();
-			criteria.add(Restrictions.in("orderDetail.persistentId", inIdList));
+			criteria.add(Restrictions.in("orderDetail.persistentId", inIdList)); // empty .in() guard present
 			@SuppressWarnings("unchecked")
 			List<WorkInstruction> wiResultsList = (List<WorkInstruction>) criteria.list();
 			return wiResultsList;
 		}
+	}
+
+	public int purgeSomeReplenishDetails(List<UUID> detailUuids) {
+		final int MAX_DETAIL_PURGE = 500;
+		int wantToPurge = detailUuids.size();
+		int willPurge = Math.min(wantToPurge, MAX_DETAIL_PURGE);
+		if (wantToPurge > MAX_DETAIL_PURGE) {
+			LOGGER.error("Limiting replenishDetail delete batch size to {}. Called for {}.", MAX_DETAIL_PURGE, wantToPurge);
+		}
+		List<UUID> uuidsToPurge = detailUuids.subList(0, willPurge);
+		LOGGER.debug("Phase 1 of Replenish detail purge: retrieve details and wis to purge.");
+		List<OrderDetail> details = OrderDetail.staticGetDao().findByPersistentIdList(uuidsToPurge);
+		List<WorkInstruction> wis = findByDetailPersistentIdList(uuidsToPurge);
+
+		LOGGER.debug("Phase 2 of Replenish detail purge: delete the assembled work instructions, which delinks from details and che.");
+		safelyDeleteWorkInstructionList(wis);
+
+		LOGGER.debug("Phase 3 of Replenish detail purge: delete the details");
+		int deletedDetailCount = safelyDeleteDetailsList(details);
+
+		return deletedDetailCount;
 	}
 
 	/**
@@ -571,23 +613,13 @@ public class DomainObjectManager {
 		// Trying to speed up by not relying quite so much on the hibernate delete cascade.
 		// Result: not much improvement in time. But much nicer logging about the process. (changed to debug logging now)
 		LOGGER.debug("Phase 2 of order purge: assemble list of details for these orders");
-
 		List<OrderDetail> details = OrderDetail.staticGetDao().findByParentPersistentIdList(orderUuids);
 
 		LOGGER.debug("Phase 3 of order purge: assemble work instructions from the details");
-		/*
-		List<WorkInstruction> wis = new ArrayList<WorkInstruction>();
-		for (OrderDetail detail : details) {
-			List<WorkInstruction> oneOrderWis = detail.getWorkInstructions();
-			wis.addAll(oneOrderWis);
-		}
-		*/
-		List<UUID> detailUuids = new ArrayList<UUID>();
-		for (OrderDetail detail : details) {
-			detailUuids.add(detail.getPersistentId());
-		}
-		List<WorkInstruction> wis = findByDetailPersistentIdList(detailUuids);
-
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.in("orderDetail", details));
+		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByFilter(filterParams);
+		
 		LOGGER.debug("Phase 4 of order purge: delete the assembled work instructions, which delinks from details and che.");
 		safelyDeleteWorkInstructionList(wis);
 
@@ -640,7 +672,7 @@ public class DomainObjectManager {
 			LOGGER.info("deleted {} WorkInstructions ", deletedCount);
 	}
 
-	private void safelyDeleteDetailsList(List<OrderDetail> detailsList) {
+	private int safelyDeleteDetailsList(List<OrderDetail> detailsList) {
 		int deletedCount = 0;
 
 		for (OrderDetail detail : detailsList) {
@@ -662,6 +694,7 @@ public class DomainObjectManager {
 		}
 		if (deletedCount % 100 != 0)
 			LOGGER.info("deleted {} OrderDetails ", deletedCount);
+		return deletedCount;
 	}
 
 	private int floorDays(int daysOldToCount) {

@@ -3,10 +3,9 @@ package com.codeshelf.model.domain;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -23,22 +22,17 @@ import lombok.Setter;
 import lombok.ToString;
 
 @Entity
-@Table(name = "facility_property")
+@Table(name = "facility_property", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-@ToString(of = {"parent", "name", "value"})
+@ToString(of = {"name", "value"})
 public class FacilityProperty extends DomainObjectTreeABC<Facility>{
 	public static class FacilityPropertyDao extends GenericDaoABC<FacilityProperty> implements ITypedDao<FacilityProperty> {
 		public final Class<FacilityProperty> getDaoClass() {
 			return FacilityProperty.class;
 		}
 	}
-	
-	@ManyToOne(optional = false, fetch=FetchType.EAGER)
-	@Getter
-	@Setter
-	private Facility	parent;
 	
 	@Column(nullable = false)
 	@Getter
@@ -64,7 +58,7 @@ public class FacilityProperty extends DomainObjectTreeABC<Facility>{
 	}
 	
 	public FacilityProperty(Facility facility, FacilityPropertyType type){
-		parent = facility;
+		setParent(facility);
 		name = type.name();
 		value = type.getDefaultValue();
 		description = type.getDescription();
@@ -88,7 +82,7 @@ public class FacilityProperty extends DomainObjectTreeABC<Facility>{
 
 	@Override
 	public Facility getFacility() {
-		return parent;
+		return getParent();
 	}
 	
 	public void updateDefaultValue(){

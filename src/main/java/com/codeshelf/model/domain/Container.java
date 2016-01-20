@@ -16,6 +16,7 @@ import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -41,7 +42,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 
 @Entity
-@Table(name = "container")
+@Table(name = "container", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -74,15 +75,15 @@ public class Container extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private Timestamp updated;
 
-	// The parent facility.
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
-	@Getter
-	private Facility parent;
-
 	@OneToMany(mappedBy = "parent")
 	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 	@Getter
 	private List<ContainerUse>	uses = new ArrayList<ContainerUse>();
+	
+	@OneToMany(mappedBy = "container")
+	@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+	@Getter
+	private List<WorkInstruction>	workInstructions = new ArrayList<WorkInstruction>();
 
 	public Container() {
 	}
@@ -117,10 +118,6 @@ public class Container extends DomainObjectTreeABC<Facility> {
 
 	public Facility getFacility() {
 		return getParent();
-	}
-
-	public void setParent(Facility inParent) {
-		parent = inParent;
 	}
 
 	public List<? extends IDomainObject> getChildren() {

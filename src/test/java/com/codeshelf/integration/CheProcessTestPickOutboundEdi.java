@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -23,6 +24,7 @@ import com.codeshelf.edi.IEdiExportGateway;
 import com.codeshelf.edi.IFacilityEdiExporter;
 import com.codeshelf.edi.SftpConfiguration;
 import com.codeshelf.edi.WorkInstructionCsvBean;
+import com.codeshelf.model.DomainObjectManager;
 import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.WorkInstructionSequencerType;
 import com.codeshelf.model.domain.ExportMessage;
@@ -129,18 +131,18 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		LOGGER.info("3a: Remove order 44444");
 		picker.scanCommand("INFO");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
-		picker.logCheDisplay();
+		picker.logLastCheDisplay();;
 		Assert.assertTrue(picker.getLastSentPositionControllerDisplayValue((byte) 3) == Byte.valueOf("44"));
 
 		LOGGER.info("3a1: Can you just press the button? No");
 		picker.pick(3, 44);
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
-		picker.logCheDisplay();
+		picker.logLastCheDisplay();;
 
 		LOGGER.info("3a2: Can you scan the button position? No.");
 		picker.scanPosition("3");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECTION_INVALID, 3000);
-		picker.logCheDisplay();
+		picker.logLastCheDisplay();;
 
 		picker.scanCommand("CANCEL");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
@@ -148,7 +150,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		LOGGER.info("3a3: Can you scan the orderID at this point? Not for info. Only to try to move it.");
 		picker.scanSomething("44444");
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 3000);
-		picker.logCheDisplay();
+		picker.logLastCheDisplay();;
 
 		LOGGER.info("3a3: cancel should work here, but doesn't. Still on CONTAINER_POSITION");
 		picker.scanCommand("CANCEL");
@@ -167,12 +169,12 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		LOGGER.info("3b1: remove the order by scanning the order after info");
 		picker.scanCommand("INFO");
 		picker.waitForCheState(CheStateEnum.CONTAINER_SELECT, 3000);
-		picker.logCheDisplay();
+		picker.logLastCheDisplay();;
 
 		LOGGER.info("3b2: Can you scan the orderID at this point? Not for info. Only to try to move it.");
 		picker.scanSomething("44444");
 		picker.waitForCheState(CheStateEnum.CONTAINER_POSITION, 3000);
-		picker.logCheDisplay();
+		picker.logLastCheDisplay();;
 
 		LOGGER.info("4: no files produced. Check that");		
 		beginTransaction();
@@ -312,7 +314,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		LOGGER.info("4: Start, getting the first pick");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
-		LOGGER.info(picker.getLastCheDisplay());
+		picker.logLastCheDisplay();
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 		// Look in console for line like this. No easy way to get it for unit test
@@ -498,7 +500,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		LOGGER.info("4: Start, getting the first pick");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
-		LOGGER.info(picker.getLastCheDisplay());
+		picker.logLastCheDisplay();
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 		// Look in console for line like this. No easy way to get it for unit test
@@ -537,7 +539,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		LOGGER.info("6d: Start, getting the first pick");
 		picker2.scanCommand("START");
 		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
-		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.logLastCheDisplay();
 		picker2.scanCommand("START");
 		picker2.waitForCheState(CheStateEnum.DO_PICK, 3000);
 		wiList = picker2.getAllPicksList();
@@ -545,11 +547,11 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		Assert.assertEquals(2, wiList.size());
 
 		LOGGER.info("7a: Complete this first pick, for 22222. That should complete the order. 2 picks, both attributed to CHE2");
-		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.logLastCheDisplay();
 		picker2.pickItemAuto();
 
 		LOGGER.info("7: Complete this pick for 11111. That should complete the order. 4 picks, all attributed to CHE2");
-		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.getLastCheDisplay();
 		picker2.pickItemAuto();
 		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
 
@@ -671,7 +673,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		LOGGER.info("4: Start, getting the first pick");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
-		LOGGER.info(picker.getLastCheDisplay());
+		picker.logLastCheDisplay();
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
@@ -729,7 +731,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		LOGGER.info("7d: Start, getting the first pick");
 		picker2.scanCommand("START");
 		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
-		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.logLastCheDisplay();
 		picker2.scanCommand("START");
 		picker2.waitForCheState(CheStateEnum.DO_PICK, 3000);
 		wiList = picker2.getAllPicksList();
@@ -737,11 +739,11 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		Assert.assertEquals(5, wiList.size()); // the same 6 jobs other cart had, except no 44444 job.
 
 		LOGGER.info("8a: Complete the pick. Not shorted.");
-		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.logLastCheDisplay();
 		picker2.pickItemAuto();
 
 		LOGGER.info("8b: Complete picking. Except short the very last one. All attributed to CHE2");
-		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.logLastCheDisplay();
 		picker2.pickItemAuto();
 		picker2.pickItemAuto();
 		picker2.pickItemAuto(); // this completes order 22222
@@ -749,7 +751,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 
 		LOGGER.info("8c: Screen state right before shorting");
 		picker2.waitForCheState(CheStateEnum.DO_PICK, 3000);
-		LOGGER.info(picker2.getLastCheDisplay());
+		picker2.logLastCheDisplay();
 
 		wi = picker2.getActivePick();
 		button = picker2.buttonFor(wi);
@@ -864,7 +866,7 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		LOGGER.info("4: Start, getting the first pick");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
-		LOGGER.info(picker.getLastCheDisplay());
+		picker.logLastCheDisplay();
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 
@@ -1097,8 +1099,29 @@ public class CheProcessTestPickOutboundEdi extends ServerTest {
 		for (ExportMessage exMes : exportList) {
 			validateExportMessage(exMes);
 		}
+
+		LOGGER.info("5a: Check export message object purge. Set up null timestamp to mimic v23");		
+		// Just part of DEV-1361. These are the only tests that produce ExportMessage objects in our normal way. Test the purge
+		// Before v24, export message had no timestamp field, so on data conversion, it converted to null. Purge those.
+		ExportMessage changedMes = exportList.get(0);
+		Assert.assertNotNull(changedMes.getCreated());
 		
+		changedMes.setCreated(null);
+		// changedMes.setCreated(DomainObjectManager.getDaysOldTimeStamp(3));
+		
+		ExportMessage.staticGetDao().store(changedMes);
 		commitTransaction();
+		
+		LOGGER.info("5b: Call the export message purge. Should see the one message purge with the null time stamp.");
+		beginTransaction();
+		facility = facility.reload();
+		DomainObjectManager doManager = new DomainObjectManager(facility);
+		workService.reportAchiveables(2, facility);
+		List<UUID> exportMessagesToPurge = doManager.getExportMessageUuidsToPurge(2);
+		Assert.assertEquals(1, exportMessagesToPurge.size());
+		Assert.assertEquals(1, doManager.purgeSomeExportMessages(exportMessagesToPurge));
+		commitTransaction();
+		
 
 	}
 

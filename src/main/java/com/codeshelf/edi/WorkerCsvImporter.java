@@ -90,7 +90,7 @@ public class WorkerCsvImporter extends CsvImporter<WorkerCsvBean> implements ICs
 		// But leave other facility workers alone.
 		UUID facilityUUID = inFacility.getPersistentId();
 		Criteria criteria = Worker.staticGetDao().createCriteria();
-		criteria.add(Restrictions.eq("facility.persistentId", facilityUUID));
+		criteria.add(Restrictions.eq("parent.persistentId", facilityUUID));
 		criteria.add(Restrictions.eq("active", true));
 
 		List<Worker> workers = Worker.staticGetDao().findByCriteriaQuery(criteria);
@@ -137,7 +137,7 @@ public class WorkerCsvImporter extends CsvImporter<WorkerCsvBean> implements ICs
 		if (result == null) {
 			// create a new worker
 			result = new Worker();
-			result.setBadgeId(badgeId); // sets domainId
+			result.setDomainId(badgeId); // sets domainId
 			isNewWorker = true;
 		}
 
@@ -165,7 +165,7 @@ public class WorkerCsvImporter extends CsvImporter<WorkerCsvBean> implements ICs
 			}
 		}
 
-		result.setFacility(newFacility);
+		result.setParent(newFacility);
 		result.setFirstName(newFirst);
 		// If last name field is missing or blank, force the badgeId there
 		if (newLast != null && !newLast.isEmpty())
@@ -183,7 +183,7 @@ public class WorkerCsvImporter extends CsvImporter<WorkerCsvBean> implements ICs
 		}
 
 		try {
-			if (result.getBadgeField() == null || result.getDomainId() == null)
+			if (result.getDomainId() == null || result.getDomainId() == null)
 				LOGGER.error("storing bad worker. How?");
 			Worker.staticGetDao().store(result);
 		} catch (DaoException e) {

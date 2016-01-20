@@ -37,6 +37,8 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.util.SequenceNumber;
 import com.google.common.base.Strings;
 
+import lombok.Getter;
+
 /**
  * This generates work instructions
  * First the new housekeeping work instructions. Then normal and shorts also.
@@ -47,15 +49,21 @@ public class WiFactory {
 
 	// For now, a public enum, but not stored on the WI. Just passed along in create methods so that we know what the location and/or order location mean.
 	public enum WiPurpose {
-		WiPurposeUnknown,
-		WiPurposeHousekeep,
-		WiPurposeOutboundPick, // this is still multipurpose: SKU-pick, detail-pick, and pick-to-order.
-		WiPurposePutWallPut,
-		WiPurposeSkuWallPut,
-		WiPurposeCrossBatchPut,
-		WiPurposeReplenishPut,
-		WiPurposeRestockPut,
-		WiPurposePalletizerPut
+		WiPurposeUnknown("Unknown"),
+		WiPurposeHousekeep("Housekeeping"),
+		WiPurposeOutboundPick("Pick Outbound"), // this is still multipurpose: SKU-pick, detail-pick, and pick-to-order.
+		WiPurposePutWallPut("Put Put Wall"),
+		WiPurposeSkuWallPut("Put Sku Wall"),
+		WiPurposeCrossBatchPut("Put Crossbatch"),
+		WiPurposeReplenishPut("Put Replenish"),
+		WiPurposeRestockPut("Put Restock"),
+		WiPurposePalletizerPut("Put Palletizer");
+
+		@Getter
+		private String displayName;
+		private WiPurpose(String displayName) {
+			this.displayName = displayName;
+		}
 	}
 
 	// IMPORTANT. This should be synched with LightService.defaultLedsToLight
@@ -145,7 +153,19 @@ public class WiFactory {
 		final Timestamp inTime,
 		Container inContainer,
 		Location inLocation) throws DaoException {
-		return createWorkInstruction(inStatus, inType, purpose, inOrderDetail, inChe, inTime, inContainer, inLocation, true);
+		return createWorkInstruction(inStatus, inType, purpose, inOrderDetail, inChe, inTime, inContainer, inLocation, true, null);
+	}
+	
+	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
+		WorkInstructionTypeEnum inType,
+		WiPurpose purpose,
+		OrderDetail inOrderDetail,
+		Che inChe,
+		final Timestamp inTime,
+		Container inContainer,
+		Location inLocation,
+		ColorEnum color) throws DaoException {
+		return createWorkInstruction(inStatus, inType, purpose, inOrderDetail, inChe, inTime, inContainer, inLocation, true, color);
 	}
 
 	/**
@@ -157,6 +177,8 @@ public class WiFactory {
 	 * @param inTime
 	 * @param inContainer
 	 * @param inLocation
+	 * @param linkInstructionToDetail
+	 * @param colorOverride - if not null, this color is used instead of CHE's color
 	 * @return
 	 */
 	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
@@ -167,7 +189,8 @@ public class WiFactory {
 		final Timestamp inTime,
 		Container inContainer,
 		Location inLocation,
-		boolean linkInstructionToDetail) throws DaoException {
+		boolean linkInstructionToDetail,
+		ColorEnum colorOverride) throws DaoException {
 
 		WorkInstruction resultWi = createWorkInstruction(inStatus, inType, purpose, inOrderDetail, inChe, inTime, linkInstructionToDetail);
 		if (resultWi == null) { //no more work to do
@@ -177,6 +200,7 @@ public class WiFactory {
 		resultWi.setContainer(inContainer);
 		resultWi.setLocation(inLocation);
 		resultWi.setLocationId(inLocation.getFullDomainId());
+		resultWi.setPathName(inLocation.getAssociatedPathNameUI());
 		LocationAlias locAlias = inLocation.getPrimaryAlias();
 		if (inOrderDetail.isPreferredDetail()) {
 			resultWi.doSetPickInstruction(inOrderDetail.getPreferredLocation());
@@ -187,7 +211,7 @@ public class WiFactory {
 		}
 
 		boolean isInventoryPickInstruction = false;
-		ColorEnum cheColor = inChe.getColor();
+		ColorEnum cheColor = colorOverride == null ? inChe.getColor() : colorOverride;
 
 		// Set the LED lighting pattern for this WI.
 		if (inStatus == WorkInstructionStatusEnum.SHORT) {
@@ -315,6 +339,7 @@ public class WiFactory {
 			resultWi.setActualQuantity(0);
 			resultWi.setAssigned(inTime);
 			resultWi.setPurpose(purpose);
+			resultWi.setSubstituteAllowed(inOrderDetail.getSubstituteAllowed());
 			
 			// set gtin field on work instruction based on order detail
 			resultWi.setGtin(null);

@@ -1,6 +1,9 @@
 package com.codeshelf.api.resources;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 
 import javax.script.ScriptEngine;
@@ -18,23 +21,70 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.hibernate.Criteria;
+import org.hibernate.criterion.Restrictions;
 
-import com.codeshelf.api.BaseResponse.UUIDParam;
+import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.resources.subresources.CheResource;
+import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Facility;
 import com.codeshelf.ws.server.CsServerEndPoint;
 import com.sun.jersey.api.core.ResourceContext;
+
+import lombok.Setter;
 
 @Path("/ches")
 public class ChesResource {
 	@Context
 	private ResourceContext resourceContext;
+
+	@Setter
+	private Facility facility;
 	private static ScriptEngine engine;
 
 	static {
 		ScriptEngineManager factory = new ScriptEngineManager();
 		engine = factory.getEngineByName("groovy");
 
+	}
+
+	@GET
+	@RequiresPermissions("che:view")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getChes() {
+		List<Che> ches = new ArrayList<>();
+		if(facility != null) {
+			Criteria cheCriteria = Che.staticGetDao().createCriteria();
+			cheCriteria.createCriteria("parent", "network").add(Restrictions.eq("parent", facility));
+			ches = Che.staticGetDao().findByCriteriaQuery(cheCriteria);
+		} else {
+			ches = Che.staticGetDao().getAll();
+		}
+		return BaseResponse.buildResponse(new ResultDisplay<Che>(ches));
+	}
+
+	@Path("/{id}")
+	public CheResource findChe(@PathParam("id") String idParam) throws Exception {
+		Che che = null;
+		try {
+			UUID uuid = UUID.fromString(idParam);
+			che = Che.staticGetDao().findByPersistentId(uuid);
+		} catch(Exception e) {
+			Criteria cheCriteria = Che.staticGetDao().createCriteria()
+					.add(Restrictions.eq("domainId", idParam));
+			cheCriteria.createCriteria("parent", "network")
+				.add(Restrictions.eq("parent", facility));
+			List<Che> ches = Che.staticGetDao().findByCriteriaQuery(cheCriteria);
+
+			che = ches.get(0);
+		}
+		if (che == null) {
+			throw new WebApplicationException(Response.Status.NOT_FOUND);
+		}
+		CheResource r = resourceContext.getResource(CheResource.class);
+	    r.setChe(che);
+	    return r;
 	}
 	
 	@GET
@@ -58,18 +108,5 @@ public class ChesResource {
 		bindings.put("pools", CsServerEndPoint.getDevicePools());
 		return engine.eval(script, bindings);
 	}
-
 	
-	@Path("{id}")
-	@RequiresPermissions("companion:view")
-	public CheResource findChe(@PathParam("id") UUIDParam uuidParam) throws Exception {
-		Che che = Che.staticGetDao().findByPersistentId(uuidParam.getValue());
-		if (che == null) {
-			throw new WebApplicationException(Response.Status.NOT_FOUND);
-		}
-		CheResource r = resourceContext.getResource(CheResource.class);
-	    r.setChe(che);
-	    return r;
-	}
-
 }

@@ -79,11 +79,12 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public void persistDataReceipt() {
 		beginTransaction();
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 		ICsvOrderImporter subject = createOrderImporter();
 		BatchResult<?> batchResult = new BatchResult<Object>();
 		batchResult.setCompleted(new Date());
 		batchResult.setReceived(new Date());
-		subject.persistDataReceipt(getFacility(),
+		subject.persistDataReceipt(facility,
 			"testUser",
 			"testfilename",
 			System.currentTimeMillis(),
@@ -847,7 +848,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	public final void testImportEmptyQuantityAsZero() throws IOException {
 		// create facility
 		getTenantPersistenceService().beginTransaction();
-		Facility facility = createFacility();
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 		this.getTenantPersistenceService().commitTransaction();
 
 		// import files
@@ -869,7 +870,7 @@ public class OutboundOrderImporterTest extends ServerTest {
 	@Test
 	public final void testImportAlphaQuantityAsZero() throws IOException {
 		getTenantPersistenceService().beginTransaction();
-		Facility facility = createFacility();
+		Facility facility = Facility.staticGetDao().findByPersistentId(this.facilityId);
 		getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();

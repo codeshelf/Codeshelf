@@ -75,20 +75,13 @@ public class LocationAlias extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private Timestamp			updated;
 
-	// The owning facility.
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private Facility			parent;
-
 	public LocationAlias() {
 	}
 
 	public LocationAlias(Facility facility, String domainId, Location mappedLocation) {
 		super(domainId);
-		this.parent = facility;
+		setParent(facility);
 		this.mappedLocation = mappedLocation;
-		this.parent = facility;
 	}
 
 	@SuppressWarnings("unchecked")

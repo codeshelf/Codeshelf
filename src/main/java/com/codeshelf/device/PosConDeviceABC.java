@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import org.slf4j.Logger;
@@ -21,6 +22,7 @@ import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.model.domain.Che.CheLightingEnum;
 import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
 
@@ -30,6 +32,11 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 	@Accessors(prefix = "m")
 	@Getter
 	private Map<Byte, PosControllerInstr>	mPosToLastSetIntrMap;
+	
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private CheLightingEnum							mCheLightingEnum						= CheLightingEnum.POSCON_V1;
 
 	public PosConDeviceABC(UUID inPersistentId, NetGuid inGuid, CsDeviceManager inDeviceManager, IRadioController inRadioController) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
@@ -62,7 +69,11 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 	}
 
 	protected void sendPositionControllerInstructions(List<PosControllerInstr> inInstructions) {
-
+		if (getCheLightingEnum() == CheLightingEnum.LABEL_V1){
+			LOGGER.info("Not sending PosCon commands, as this device has lighting mode " + getCheLightingEnum());
+			return;
+		}
+		
 		if (inInstructions.isEmpty()) {
 			LOGGER.error("sendPositionControllerInstructions called for empty instructions");
 			return;

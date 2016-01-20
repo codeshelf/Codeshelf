@@ -236,7 +236,7 @@ public class DataArchiving extends ServerTest {
 		// for every work instruction that we set to old above, find its event(s) and set to old
 		for (WorkInstruction wi : wis) {
 			Criteria eventCrit = WorkerEvent.staticGetDao().createCriteria();
-			eventCrit.add(Restrictions.eq("workInstruction", wi));
+			eventCrit.add(Restrictions.eq("workInstructionId", wi.getPersistentId()));
 			List<WorkerEvent> events = WorkerEvent.staticGetDao().findByCriteriaQuery(eventCrit);
 			for (WorkerEvent event : events) {
 				event.setCreated(desiredTime);

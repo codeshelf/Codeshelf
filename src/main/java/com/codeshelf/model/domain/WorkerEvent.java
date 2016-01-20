@@ -5,18 +5,13 @@ import java.util.UUID;
 
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
-import javax.persistence.ConstraintMode;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
-import javax.persistence.ForeignKey;
-import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-
-import lombok.Getter;
-import lombok.Setter;
+import javax.persistence.UniqueConstraint;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -29,12 +24,15 @@ import com.codeshelf.persistence.TenantPersistenceService;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import lombok.Getter;
+import lombok.Setter;
+
 @Entity
-@Table(name = "event_worker")
+@Table(name = "event_worker", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class WorkerEvent extends DomainObjectABC {
+public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 	public static class WorkerEventDao extends GenericDaoABC<WorkerEvent> implements ITypedDao<WorkerEvent> {
 		public final Class<WorkerEvent> getDaoClass() {
 			return WorkerEvent.class;
@@ -42,7 +40,16 @@ public class WorkerEvent extends DomainObjectABC {
 	}
 
 	public enum EventType {
-		LOGIN, LOGOUT, SKIP_ITEM_SCAN, BUTTON, WI, SHORT, SHORT_AHEAD, COMPLETE, CANCEL_PUT, DETAIL_WI_MISMATCHED, PALLETIZER_PUT, PUTWALL_PUT, SKUWALL_PUT, LOW;
+		LOGIN,
+		LOGOUT,
+		SKIP_ITEM_SCAN,
+		BUTTON,
+		SHORT,
+		SHORT_AHEAD,
+		COMPLETE,
+		CANCEL_PUT,
+		DETAIL_WI_MISMATCHED,
+		LOW;
 		
 		public String getName() {
 			return name();
@@ -53,10 +60,6 @@ public class WorkerEvent extends DomainObjectABC {
 		return TenantPersistenceService.getInstance().getDao(WorkerEvent.class);
 	}
 
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Setter
-	private Facility						facility;
-
 	@ManyToOne(optional = true, fetch = FetchType.LAZY)
 	@Getter @Setter
 	private Resolution						resolution;
@@ -64,13 +67,13 @@ public class WorkerEvent extends DomainObjectABC {
 	@Column(nullable = false)
 	@Getter @Setter
 	@JsonProperty
-	private Timestamp created;
+	private Timestamp 						created;
 
 	@Column(nullable = false, name = "event_type")
 	@Enumerated(EnumType.STRING)
 	@Getter @Setter
 	@JsonProperty
-	private WorkerEvent.EventType						eventType;
+	private WorkerEvent.EventType			eventType;
 
 	@Column(nullable = false, name = "device_persistentid")
 	@Getter @Setter
@@ -92,45 +95,59 @@ public class WorkerEvent extends DomainObjectABC {
 	@Getter @Setter
 	private UUID							orderDetailId;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "work_instruction_persistentid", foreignKey=@ForeignKey(name="none", value=ConstraintMode.NO_CONSTRAINT ))
+	@Column(nullable = true, name = "work_instruction_persistentid")
 	@Type(type="com.codeshelf.persistence.DialectUUIDType")
-	@Getter @Setter
-	private WorkInstruction							workInstruction;
-
-	@Column(nullable = true, name = "work_instruction_persistentid", insertable=false, updatable=false)
-	@Type(type="com.codeshelf.persistence.DialectUUIDType")
-	@Getter @Setter
-	private UUID 		workInstructionId;
+	@Getter
+	private UUID 							workInstructionId;
 
 	@Column(nullable = true, name = "description")
 	@Getter
 	@JsonProperty
 	private String							description;
+	
+	@Column(nullable = true)
+	@Getter @Setter
+	@JsonProperty
+	private String							location;
+
+	@Column(nullable = true)
+	@Getter @Setter
+	@JsonProperty
+	private String							purpose;
+	
+	@Column(nullable = true, name = "path_name")
+	@Getter @Setter
+	@JsonProperty
+	private String							pathName;
 
 	public WorkerEvent() {
 		setCreated(new Timestamp(System.currentTimeMillis()));
 	}
 
 	public WorkerEvent(DateTime created, WorkerEvent.EventType eventType, Che che, String workerId) {
-		setCreated(new Timestamp(created.getMillis()));
+		setParent(che.getFacility());
 		setDeviceGuid(che.getDeviceGuidStr());
 		setDevicePersistentId(che.getPersistentId().toString());
+		setCreated(new Timestamp(created.getMillis()));
 		setEventType(eventType);
-		setFacility(che.getFacility());
 		setWorkerId(workerId);
 		generateDomainId();
 	}
 
 	public WorkerEvent(WorkerEvent.EventType eventType, Facility facility, String workerId, String description) {
-		setCreated(new Timestamp(System.currentTimeMillis()));
-		setEventType(eventType);
-		setFacility(facility);
-		setWorkerId(workerId);
+		setParent(facility);
 		setDevicePersistentId("");
 		setDeviceGuid("");
+		setCreated(new Timestamp(System.currentTimeMillis()));
+		setEventType(eventType);
+		setWorkerId(workerId);
 		setDescription(description);
 		generateDomainId();
+	}
+	
+	@Override
+	public Facility getFacility() {
+		return getParent();
 	}
 	
 	public void setDescription(String description){
@@ -151,13 +168,17 @@ public class WorkerEvent extends DomainObjectABC {
 		return staticGetDao();
 	}
 
-	@Override
-	public Facility getFacility() {
-		return facility;
-	}
-
 	public void generateDomainId(){
 		String domainId = getDefaultDomainIdPrefix() + "_" + getDeviceGuid() + "_" + getEventType() + "_" + getCreated().getTime();
 		setDomainId(domainId);
+	}
+	
+	public String toString() {
+		return String.format("%s(facility: %s, eventType: %s, persistentId: %s", this.getClass().getSimpleName(), getParent(), eventType, getPersistentId());
+	}
+	
+	public void setWorkInstruction(WorkInstruction wi) {
+		workInstructionId = wi.getPersistentId();
+		setPathName(wi.getPathName());
 	}
 }

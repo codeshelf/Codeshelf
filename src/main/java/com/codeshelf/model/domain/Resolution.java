@@ -5,9 +5,8 @@ import java.sql.Timestamp;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -22,21 +21,17 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
-@Table(name = "resolution")
+@Table(name = "resolution", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Resolution extends DomainObjectABC {
+public class Resolution extends DomainObjectTreeABC<Facility> {
 	public static class ResolutionDao extends GenericDaoABC<Resolution> implements ITypedDao<Resolution> {
 		public final Class<Resolution> getDaoClass() {
 			return Resolution.class;
 		}
 	}
 	
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Setter
-	private Facility						facility;
-
 	@Column(nullable = false)
 	@Getter @Setter
 	@JsonProperty
@@ -64,6 +59,6 @@ public class Resolution extends DomainObjectABC {
 
 	@Override
 	public Facility getFacility() {
-		return facility;
+		return getParent();
 	}
 }

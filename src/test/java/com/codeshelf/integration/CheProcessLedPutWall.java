@@ -20,6 +20,7 @@ import com.codeshelf.model.domain.Slot;
 import com.codeshelf.model.domain.Tier;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
+import com.codeshelf.util.ThreadUtils;
 
 public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessLedPutWall.class);
@@ -166,6 +167,7 @@ public class CheProcessLedPutWall extends CheProcessPutWallSuper {
 		picker1.waitForCheState(CheStateEnum.CONTAINER_SELECT, WAIT_TIME);
 
 		// Verify that orders 11114, 11115 have order locations in put wall, but not 11116
+		ThreadUtils.sleep(1000);
 		beginTransaction();
 		assertOrderLocation("11118", "P14", "Put Wall: WALL1 - P14");
 		assertOrderLocation("11115", "P15", "Put Wall: WALL2 - P15");

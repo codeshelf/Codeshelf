@@ -21,6 +21,7 @@ import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Che.CheLightingEnum;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.ContainerUse;
@@ -40,9 +41,11 @@ import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 import com.codeshelf.ws.protocol.message.PosConSetupMessage;
+import com.codeshelf.ws.protocol.message.PropertyChangeMessage;
 import com.codeshelf.ws.protocol.message.PosConLightAddressesMessage;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.Strings;
+import com.google.inject.Inject;
 
 // --------------------------------------------------------------------------
 /**
@@ -54,7 +57,11 @@ public class UiUpdateBehavior implements IApiBehavior {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(UiUpdateBehavior.class);
 
-	public UiUpdateBehavior() {
+	private WebSocketManagerService webSocketManagerService;
+	
+	@Inject
+	public UiUpdateBehavior(WebSocketManagerService webSocketManagerService) {
+		this.webSocketManagerService = webSocketManagerService;
 	}
 
 	public Item storeItem(String facilityId,
@@ -117,11 +124,12 @@ public class UiUpdateBehavior implements IApiBehavior {
 		final String colorStr,
 		final String controllerId,
 		final String processModeStr,
-		final String scannerTypeStr) {
+		final String scannerTypeStr,
+		final String cheLighting) {
 		Facility facility = Facility.staticGetDao().findByPersistentId(facilityPersistentId);
 		Che che = new Che();
 		che.setParent(facility.getNetworks().get(0));
-		return updateCheHelper(che, domainId, description, colorStr, controllerId, processModeStr, scannerTypeStr);
+		return updateCheHelper(che, domainId, description, colorStr, controllerId, processModeStr, scannerTypeStr, cheLighting);
 	}
 
 	// --------------------------------------------------------------------------
@@ -135,14 +143,15 @@ public class UiUpdateBehavior implements IApiBehavior {
 		final String colorStr,
 		final String controllerId,
 		final String processModeStr,
-		final String scannerTypeStr) {
+		final String scannerTypeStr,
+		final String cheLightingStr) {
 		Che che = Che.staticGetDao().findByPersistentId(cheId);
 
 		if (che == null) {
 			LOGGER.error("Could not find che {0}", cheId);
 			return;
 		}
-		updateCheHelper(che, domainId, description, colorStr, controllerId, processModeStr, scannerTypeStr);
+		updateCheHelper(che, domainId, description, colorStr, controllerId, processModeStr, scannerTypeStr, cheLightingStr);
 	}
 	
 	private UUID updateCheHelper(final Che che,
@@ -151,7 +160,8 @@ public class UiUpdateBehavior implements IApiBehavior {
 		final String colorStr,
 		final String controllerId,
 		final String processModeStr,
-		final String scannerTypeStr) {
+		final String scannerTypeStr,
+		final String cheLightingStr) {
 		ProcessMode processMode = ProcessMode.getMode(processModeStr);
 		if (processMode == null) {
 			LOGGER.error("Provide a valid processMode [SETUP_ORDERS,LINE_SCAN]");
@@ -162,7 +172,14 @@ public class UiUpdateBehavior implements IApiBehavior {
 			LOGGER.error("Provide a valid scannerType [ORIGINALSERIAL,CODECORPS3600]");
 			return null;
 		}
-
+		CheLightingEnum cheLighting = null;
+		try {
+			cheLighting = CheLightingEnum.valueOf(cheLightingStr);
+		} catch (Exception e) {
+			LOGGER.error("Provide a valid cheLighting [POSCON_V1,LABEL_V1,NOLIGHTING]");
+			return null;
+		}
+		
 		try {
 			ColorEnum color = ColorEnum.valueOf(colorStr.toUpperCase());
 			che.setColor(color);
@@ -176,6 +193,7 @@ public class UiUpdateBehavior implements IApiBehavior {
 		}
 		che.setProcessMode(processMode);
 		che.setScannerType(scannerType);
+		che.setCheLighting(cheLighting);
 		try {
 			// Perhaps this should be at ancestor level. CHE changes this field only. LED controller changes domain ID and controller ID.
 			NetGuid currentGuid = che.getDeviceNetGuid();
@@ -348,6 +366,7 @@ public class UiUpdateBehavior implements IApiBehavior {
 		}
 		FacilityPropertyType type = FacilityPropertyType.valueOf(name);
 		PropertyBehavior.setProperty(facility, type, value);
+		webSocketManagerService.sendMessage(facility.getSiteControllerUsers(), new PropertyChangeMessage(type, value));
 	}
 
 }

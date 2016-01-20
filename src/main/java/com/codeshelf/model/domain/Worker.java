@@ -8,10 +8,9 @@ import java.util.UUID;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -35,12 +34,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
-@Table(name = "worker")
+@Table(name = "worker", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
-public class Worker extends DomainObjectABC implements Validatable {
+public class Worker extends DomainObjectTreeABC<Facility> implements Validatable {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(Worker.class);
 	
 	public static class WorkerDao extends GenericDaoABC<Worker> implements ITypedDao<Worker> {
@@ -52,11 +51,6 @@ public class Worker extends DomainObjectABC implements Validatable {
 	public static ITypedDao<Worker> staticGetDao() {
 		return TenantPersistenceService.getInstance().getDao(Worker.class);
 	}
-
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private Facility	facility;
 
 	@Column(nullable = false)
 	@Getter
@@ -81,11 +75,6 @@ public class Worker extends DomainObjectABC implements Validatable {
 	@Setter
 	@JsonProperty
 	private String		middleInitial;
-
-	@Column(nullable = false, name = "badge_id")
-	// @Getter @Setter Temporary for v21. Keep the database field, but migrate to using domainId for badgeId
-	@JsonProperty
-	private String		badgeId;
 
 	@Column(nullable = true, name = "group_name")
 	@Getter
@@ -127,6 +116,20 @@ public class Worker extends DomainObjectABC implements Validatable {
 	@OneToMany(mappedBy = "parent", orphanRemoval = true)
 	private List<WorkerHourlyMetric>	workerMetrics;
 
+	public Worker() {
+		
+	}
+	
+	public Worker(Facility facility, String domainId) {
+		super(domainId);
+		setParent(facility);
+		setLastName(domainId);
+		setActive(true);
+		setUpdated(new Timestamp(System.currentTimeMillis()));
+
+	}
+
+	
 	@Override
 	public String getDefaultDomainIdPrefix() {
 		return "W";
@@ -138,80 +141,38 @@ public class Worker extends DomainObjectABC implements Validatable {
 		return staticGetDao();
 	}
 
-	/*
 	@Override
 	public Facility getFacility() {
-		return facility;
+		return getParent();
 	}
-	*/
-
-	public void generateDomainId() {
-		// v21 domainId same as badge
-		// only null badgeId from unit test
-		if (badgeId == null) {
-			setDomainId("bad_worker_domain_id"); 
-			return;
-		}
-		
-		if (!badgeId.equals(getDomainId())) {
-			LOGGER.error("worker.generateDomainId() case found");
-			setDomainId(badgeId);
-		}
 	
-		/*
-		String domainId = getDefaultDomainIdPrefix() + "-" + lastName;
-		if (firstName != null) {
-			domainId += "-" + firstName;
-		}
-		setDomainId(domainId);
-		*/
-	}
-
 	@Override
 	public boolean isValid(ErrorResponse errors) {
-		getDomainId();
 		boolean allOK = true;
 		if (lastName == null || "".equals(lastName)) {
 			errors.addErrorMissingBodyParam("lastName");
 			allOK = false;
 		}
-		if (badgeId == null || "".equals(badgeId)) {
-			errors.addErrorMissingBodyParam("badgeId");
+		if (getDomainId() == null || "".equals(getDomainId())) {
+			errors.addErrorMissingBodyParam("domainId");
 			allOK = false;
 		}
 		if (active == null) {
 			errors.addErrorMissingBodyParam("active");
 			allOK = false;
-		} else {
-			//If (active == null), the validation will fail. No need to check for badge uniqueness
-			if (!isBadgeUnique()) {
-				errors.addError("Active worker with badge " + badgeId + " already exists");
-				allOK = false;
-			}
 		}
 		return allOK;
 	}
 
 	public void update(Worker updatedWorker) {
+		setDomainId(updatedWorker.getDomainId());
 		firstName = updatedWorker.getFirstName();
 		lastName = updatedWorker.getLastName();
 		middleInitial = updatedWorker.getMiddleInitial();
 		active = updatedWorker.getActive();
-		badgeId = updatedWorker.getBadgeId();
 		groupName = updatedWorker.getGroupName();
 		hrId = updatedWorker.getHrId();
 		updated = new Timestamp(System.currentTimeMillis());
-		generateDomainId();
-	}
-
-	private boolean isBadgeUnique() {
-		//Allow saving inactive workers with non-unique badges
-		if (!active) {
-			return true;
-		}
-		//Try to find another active worker with the same badge
-		Worker matchingWorker = findWorker(facility, badgeId, getPersistentId());
-		return matchingWorker == null;
 	}
 
 	/**
@@ -230,18 +191,9 @@ public class Worker extends DomainObjectABC implements Validatable {
 	}
 
 	public static Worker findWorker(Facility facility, String badgeId) {
-		return findWorker(facility, badgeId, null);
-	}
-
-	public static Worker findWorker(Facility facility, String badgeId, UUID skipWorker) {
 		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", facility));
+		filterParams.add(Restrictions.eq("parent", facility));
 		filterParams.add(Restrictions.eq("domainId", badgeId));
-		filterParams.add(Restrictions.eq("active", true));
-		if (skipWorker != null) {
-			//Ignore provided Worker when needed
-			filterParams.add(Restrictions.ne("persistentId", skipWorker));
-		}
 		List<Worker> workers = staticGetDao().findByFilter(filterParams);
 		if (workers == null || workers.isEmpty()) {
 			return null;
@@ -258,22 +210,9 @@ public class Worker extends DomainObjectABC implements Validatable {
 		if (!lastName.isEmpty()) {
 			return lastName;
 		}
-		return getBadgeId();
-	}
-
-	public String getBadgeId() {
 		return getDomainId();
 	}
-	
-	public String getBadgeField() { // temporary. Fetch the data of the old badge field
-		return badgeId;
-	}
 
-	public void setBadgeId(String inBadgeId) {
-		badgeId = inBadgeId; // temporary.
-		setDomainId(inBadgeId);
-	}
-	
 	public WorkerHourlyMetric getHourlyMetric(Timestamp timestamp){
 		//If this function is hurting performance, it can be changed to make a direct DB call for the metric object. 
 		long requestedTime = timestamp.getTime();
@@ -301,5 +240,5 @@ public class Worker extends DomainObjectABC implements Validatable {
 			}
 		}
 		return latestMetric;
-	}
+	}	
 }

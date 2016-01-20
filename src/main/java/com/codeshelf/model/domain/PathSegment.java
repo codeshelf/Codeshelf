@@ -11,10 +11,9 @@ import java.util.List;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -42,7 +41,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 
 @Entity
-@Table(name = "path_segment")
+@Table(name = "path_segment", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -57,11 +56,6 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	public static final String	DOMAIN_PREFIX	= "SEG";
 
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(PathSegment.class);
-
-	// The owning path.
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	private Path				parent;
 
 	// The order of this path segment in the path (from the tail/origin).
 	@NonNull
@@ -146,7 +140,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	}
 
 	public void setParent(Path inParent) {
-		parent = inParent;
+		super.setParent(inParent);
 		computePathDistance();
 	}
 
@@ -155,9 +149,7 @@ public class PathSegment extends DomainObjectTreeABC<Path> {
 	}
 
 	public String getParentPathID() {
-		if (this.parent == null)
-			return null;
-		return parent.getDomainId();
+		return getParent().getDomainId();
 	}
 
 	public void setStartPoint(final Point inPoint) {

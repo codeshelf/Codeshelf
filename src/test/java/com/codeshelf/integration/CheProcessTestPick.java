@@ -41,6 +41,7 @@ import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.Che.CheLightingEnum;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Container;
@@ -56,6 +57,7 @@ import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.Point;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
@@ -1230,7 +1232,7 @@ public class CheProcessTestPick extends ServerTest {
 	@Test
 	public void testDefaultProcessMode() {
 		beginTransaction();
-		UiUpdateBehavior service = new UiUpdateBehavior();
+		UiUpdateBehavior service = new UiUpdateBehavior(webSocketManagerService);
 		Facility facility = getFacility();
 		CodeshelfNetwork network = this.getNetwork();
 		Che che = network.createChe("0x00000004", new NetGuid("0x00000004"));
@@ -1314,7 +1316,7 @@ public class CheProcessTestPick extends ServerTest {
 
 		LOGGER.info("6: Ensure that the currect Detail-WI-Mismatch events were created due to some work aldeady been done to the changed details");
 		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("facility", getFacility()));
+		filterParams.add(Restrictions.eq("parent", getFacility()));
 		filterParams.add(Restrictions.eq("eventType", WorkerEvent.EventType.DETAIL_WI_MISMATCHED));
 		List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
 		Assert.assertEquals(2, events.size());
@@ -1633,8 +1635,127 @@ public class CheProcessTestPick extends ServerTest {
 		UUID siteconFirstWi3 = siteconWiList3.get(0).getPersistentId();
 		Assert.assertEquals(serverFirstWi3, siteconFirstWi3); // same persistentId		
 		commitTransaction();
-
-
 	}
 
+	@Test
+	public void testPathName() throws IOException{
+		Facility facility = setUpSimpleNoSlotFacility();
+		setUpSmallInventoryAndOrders(facility);
+
+		LOGGER.info("1: Assign a name to path");
+		beginTransaction();
+		Path path1 = Path.staticGetDao().findByDomainId(getFacility(), "F1.1");
+		Assert.assertNotNull(path1);
+		path1.setPathName("Frozen Food");
+		commitTransaction();
+		
+		LOGGER.info("2: Load order on CHE");
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+		picker.setupContainer("12345", "1");
+		picker.startAndSkipReview("D301", 5000, 3000);
+
+		LOGGER.info("3: Verify that the created WIs show the set path name");
+		beginTransaction();
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("parent", getFacility()));
+		filterParams.add(Restrictions.eq("pathName", "Frozen Food"));
+		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByFilter(filterParams);
+		Assert.assertTrue(wis.size() >= 3);
+		commitTransaction();
+		
+		LOGGER.info("4: Short an item to generate an event");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 4000);
+		picker.buttonPress(1, 0);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 4000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		ThreadUtils.sleep(1000);
+		
+		LOGGER.info("4: Verify that the created SHORT event also shows the set path name");
+		beginTransaction();
+		filterParams.add(Restrictions.eq("eventType", EventType.SHORT));
+		List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
+		Assert.assertEquals(1, events.size());
+		commitTransaction();
+	}
+	
+	@Test
+	public void testScanPosconToPick() throws IOException{
+		Facility facility = setUpSimpleNoSlotFacility();
+		beginTransaction();
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "UPC");
+		commitTransaction();
+		setUpSmallInventoryAndOrders(facility);
+
+		LOGGER.info("1: Load order on CHE and get to DO_PICK state");
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+		picker.setupContainer("12345", "2");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		picker.scanSomething("1522");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		
+		LOGGER.info("2: Scan the poscon the order is on, and verify that CHE moves on to the next item");
+		picker.scanPosition("2");
+		picker.logCheDisplay();
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+	}
+
+	@Test
+	public void testLabelLighting() throws IOException{
+		LOGGER.info("1: Set up facility, orders, set one CHE to have LABEL lighting mode");
+		Facility facility = setUpSimpleNoSlotFacility();
+		beginTransaction();
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "UPC");
+		Che che1 = getChe1();
+		che1.setCheLighting(CheLightingEnum.LABEL_V1);
+		Che.staticGetDao().store(che1);
+		commitTransaction();
+		setUpSmallInventoryAndOrders(facility);
+		
+		startSiteController();
+		
+		LOGGER.info("2: Set up 2 CHEs with a single orders each");
+		PickSimulator picker1 = createPickSim(cheGuid1);
+		PickSimulator picker2 = createPickSim(cheGuid2);
+		picker1.loginAndSetup("Picker #1");
+		picker2.loginAndSetup("Picker #2");
+		picker1.setupContainer("12345", "1");
+		picker2.setupContainer("11111", "1");
+		
+		LOGGER.info("3: Assert that the LABEL CHE does not light up its Poscins during container setup while the normal CHE does");
+		Assert.assertNull(picker1.getLastSentPositionControllerDisplayValue(1));
+		Assert.assertNotNull(picker2.getLastSentPositionControllerDisplayValue(1));
+		
+		LOGGER.info("4: Compute work for both CHEs and verify that they both have instructions on path");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		Assert.assertEquals("1 order\n3 jobs\n\nSTART (or SETUP)\n", picker1.getLastCheDisplay());
+		Assert.assertEquals("1 order\n4 jobs     1 other\n\nSTART (or SETUP)\n", picker2.getLastCheDisplay());
+		
+		LOGGER.info("5: Assert that the LABEL CHE does not light up its Poscins during setup summary while the normal CHE does");
+		Assert.assertNull(picker1.getLastSentPositionControllerDisplayValue(1));
+		Assert.assertNotNull(picker2.getLastSentPositionControllerDisplayValue(1));
+		
+		LOGGER.info("6: Start work on both CHEs");
+		picker1.scanCommand("START");
+		picker1.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		picker2.scanCommand("START");
+		picker2.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		LOGGER.info("7: Assert that the LABEL CHE does not light up its Poscins during picking while the normal CHE does");
+		Assert.assertNull(picker1.getLastSentPositionControllerDisplayValue(1));
+		Assert.assertNotNull(picker2.getLastSentPositionControllerDisplayValue(1));
+	}
 }

@@ -7,8 +7,6 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
@@ -27,7 +25,8 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "scheduled_job", uniqueConstraints={
-		@UniqueConstraint(columnNames= {"parent_persistentid", "type"})
+		@UniqueConstraint(columnNames= {"parent_persistentid", "type"}),
+		@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})
 })
 public class ScheduledJob extends DomainObjectTreeABC<Facility> {
 	static final private Logger	LOGGER						= LoggerFactory.getLogger(ScheduledJob.class);
@@ -37,11 +36,6 @@ public class ScheduledJob extends DomainObjectTreeABC<Facility> {
 			return ScheduledJob.class;
 		}
 	}
-	// The parent facility.
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private Facility					parent;
 
 	@Column(nullable = false, name = "type")
 	@Enumerated(value = EnumType.STRING)

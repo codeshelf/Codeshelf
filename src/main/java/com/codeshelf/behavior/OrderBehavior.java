@@ -8,22 +8,17 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-
 import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.hibernate.Criteria;
-import org.hibernate.FetchMode;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.SimpleExpression;
@@ -32,10 +27,12 @@ import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.behavior.ProductivitySummaryList.StatusSummary;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
@@ -44,6 +41,10 @@ import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.util.CompareNullChecker;
 import com.codeshelf.util.UomNormalizer;
 import com.google.common.base.Strings;
+
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Functionality that reports and manipulates the Orders model (ie. OrderHeader, OrderGroups and OrderDetails).
@@ -75,6 +76,10 @@ public class OrderBehavior implements IApiBehavior {
 		@Setter
 		private int				planQuantity;
 		@Getter
+		@Setter
+		private String			preferredLocation
+;
+		@Getter
 		private OrderStatusEnum	status;
 
 		public void setStatusEnum(OrderStatusEnum statusEnum) {
@@ -85,6 +90,24 @@ public class OrderBehavior implements IApiBehavior {
 			status = OrderStatusEnum.valueOf(statusString);
 		}
 
+		public String getGtin() {
+			//TODO hopefully fast enough
+			@SuppressWarnings("unchecked")
+			List<Object> results = Gtin.staticGetDao().createCriteria()
+				.createAlias("parent", "im")
+				.createAlias("uomMaster", "um")
+				.add(Property.forName("im.domainId").eq(getItemId()))
+				.add(Property.forName("um.domainId").eq(UomNormalizer.normalizeString(getUom())))
+				.setProjection(Property.forName("domainId"))
+				.setCacheable(true)
+				.setMaxResults(1)
+				.list();
+			if (results.size() > 0) {
+				return (String) results.get(0);
+			} else {
+				return "";
+			}
+		}
 	}
 
 	public static class ItemView {
@@ -140,33 +163,47 @@ public class OrderBehavior implements IApiBehavior {
 		return result;
 	}
 	
-	public List<Map<String, Object>> findOrderHeadersForStatus(Facility facility,
+	public ResultDisplay<Map<String, Object>> findOrderHeadersForStatus(Facility facility,
 		String[] propertyNames,
 		OrderStatusEnum[] orderStatusEnums) {
 		Criteria criteria = orderHeaderCriteria(facility).add(Property.forName("status").in(orderStatusEnums));
 		@SuppressWarnings("unchecked")
 		List<OrderHeader> results = (List<OrderHeader>) criteria.list();
-		return toPropertiesView(results, propertyNames);
+		return new ResultDisplay<Map<String, Object>>(toPropertiesView(results, propertyNames));
 
 	}
 
-	public List<Map<String, Object>> findOrderHeadersForOrderId(Facility facility, String[] propertyNames, String orderId) {
-
+	public ResultDisplay<Map<String, Object>> findOrderHeadersForOrderId(Facility facility, String[] propertyNames, String orderId, Integer limit) {
+		final String orderIdPropertyName = "domainId"; 
 		SimpleExpression orderIdProperty = null;
 		if (orderId != null && orderId.indexOf('*') >= 0) {
-			orderIdProperty = Property.forName("domainId").like(orderId.replace('*', '%'));
+			orderIdProperty = Property.forName(orderIdPropertyName).like(orderId.replace('*', '%'));
 		} else {
-			orderIdProperty = Property.forName("domainId").eq(orderId);
+			orderIdProperty = Property.forName(orderIdPropertyName).eq(orderId);
 		}
 
-		Criteria criteria = orderHeaderCriteria(facility).add(orderIdProperty);
-		@SuppressWarnings("unchecked")
+		Criteria criteria = orderHeaderCriteria(facility)
+				.add(orderIdProperty);
+		
+		//Turn into a count query
+		Criteria countCriteria = criteria.setProjection(Projections.rowCount());
+		Long total = (Long) countCriteria.uniqueResult();
+
+		//Turn back into entity query
+		criteria.setProjection(null);
+		criteria.setResultTransformer(Criteria.ROOT_ENTITY);
+		criteria.addOrder(Order.desc(orderIdPropertyName));
+		if (limit != null) {
+			criteria.setMaxResults(limit);
+		}
+		
+			@SuppressWarnings("unchecked")
 		//long start = System.currentTimeMillis();
-		List<OrderHeader> joined = (List<OrderHeader>) criteria.list();
-		Set<OrderHeader> results = new HashSet<>(joined);
+		List<OrderHeader> results = (List<OrderHeader>) criteria.list();
 		//long stop = System.currentTimeMillis();
 		//System.out.println("Fetch " + results.size() + " " + (start-stop));
-		return toPropertiesView(results, propertyNames);
+		ResultDisplay<Map<String, Object>> resultDisplay = new ResultDisplay<Map<String, Object>>(total, toPropertiesView(results, propertyNames));
+		return resultDisplay;
 	}
 
 	private List<Map<String, Object>> toPropertiesView(Collection<?> results, String[] propertyNames) {
@@ -199,9 +236,10 @@ public class OrderBehavior implements IApiBehavior {
 	private Criteria orderHeaderCriteria(Facility facility) {
 		Criteria criteria = OrderHeader.staticGetDao()
 			.createCriteria()
-			.setFetchMode("orderDetails", FetchMode.JOIN)
-			.setFetchMode("containerUse", FetchMode.JOIN)
-			.setFetchMode("containerUse.parent", FetchMode.JOIN)
+			//Remove eager fetch that produces multiple entities in the list
+			//.setFetchMode("orderDetails", FetchMode.JOIN)
+			//.setFetchMode("containerUse", FetchMode.JOIN)
+			//.setFetchMode("containerUse.parent", FetchMode.JOIN)
 			.add(Property.forName("parent").eq(facility));
 		return criteria;
 
@@ -209,6 +247,8 @@ public class OrderBehavior implements IApiBehavior {
 
 	@SuppressWarnings("unchecked")
 	public List<OrderDetailView> getOrderDetailsForOrderId(Facility facility, String orderDomainId) {
+		//NOTE: gtin retrieved in the OrderDetailView not sure how to join it in well in Criteria
+		
 		return (List<OrderDetailView>) OrderDetail.staticGetDao()
 			.createCriteria()
 			.createAlias("itemMaster", "im")
@@ -222,6 +262,7 @@ public class OrderBehavior implements IApiBehavior {
 				.add(Projections.property("description").as("description"))
 				.add(Projections.property("quantity").as("planQuantity"))
 				.add(Projections.property("status").as("statusEnum"))
+				.add(Projections.property("preferredLocation").as("preferredLocation"))
 				.add(Projections.property("im.domainId"), "itemId")
 				.add(Projections.property("um.domainId").as("uom"))
 				.add(Projections.property("order.domainId").as("orderId")))
@@ -230,6 +271,7 @@ public class OrderBehavior implements IApiBehavior {
 			.list();
 	}
 
+	
 	public List<OrderDetailView> findOrderDetailsForStatus(Session session, UUID facilityUUID, OrderStatusEnum orderStatusEnum) {
 		@SuppressWarnings("unchecked")
 		List<OrderDetailView> result = session.createQuery(

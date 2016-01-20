@@ -163,7 +163,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		} else {
 			LOGGER.debug("Loading line items for {} orders.", orderHeaderCache.size());
 			Criteria criteria = OrderDetail.staticGetDao().createCriteria();
-			criteria.add(Restrictions.in("parent", orderHeaderCache.getAll()));
+			criteria.add(Restrictions.in("parent", orderHeaderCache.getAll())); // empty .in() guard present
 			List<OrderDetail> orderDetails = OrderDetail.staticGetDao().findByCriteriaQuery(criteria);
 			for (OrderDetail line : orderDetails) {
 				Map<String, OrderDetail> l = this.orderlineMap.get(line.getOrderId());
@@ -183,7 +183,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		} else {
 			LOGGER.debug("Loading container use for {} orders.", orderHeaderCache.size());
 			Criteria criteria = ContainerUse.staticGetDao().createCriteria();
-			criteria.add(Restrictions.in("orderHeader", orderHeaderCache.getAll()));
+			criteria.add(Restrictions.in("orderHeader", orderHeaderCache.getAll())); // empty .in() guard present
 			List<ContainerUse> containerUses = ContainerUse.staticGetDao().findByCriteriaQuery(criteria);
 			for (ContainerUse cu : containerUses) {
 				this.containerUseMap.put(cu.getOrderHeader().getOrderId(), cu);
@@ -196,12 +196,13 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		// this process only deals with data directly related to the order batch.
 		HashSet<String> containerIds = batch.getContainerIds();
 		this.containerMap = new HashMap<String, Container>();
-		Criteria criteria = Container.staticGetDao().createCriteria();
-		criteria.add(Restrictions.in("domainId", containerIds));
-		List<Container> containers = Container.staticGetDao().findByCriteriaQuery(criteria);
-		this.containerMap = new HashMap<String, Container>();
-		for (Container container : containers) {
-			containerMap.put(container.getDomainId(), container);
+		if (!containerIds.isEmpty()) {
+			Criteria criteria = Container.staticGetDao().createCriteria();
+			criteria.add(Restrictions.in("domainId", containerIds)); // empty .in() guard present
+			List<Container> containers = Container.staticGetDao().findByCriteriaQuery(criteria);
+			for (Container container : containers) {
+				containerMap.put(container.getDomainId(), container);
+			}
 		}
 
 		// This marks the end of the prefetch process. Let's log what it took.
@@ -288,10 +289,11 @@ public class OutboundOrderBatchProcessor implements Runnable {
 				for (Map<String, OrderDetail> orderlines : allOrderLines) {
 					for (OrderDetail line : orderlines.values()) {
 						// deactivate out-dated items
-						if (line.getActive() == true && !line.getUpdated().equals(processTime) && line.getParentOrderType() != OrderTypeEnum.REPLENISH) {
+						if (line.getActive() == true && !line.getUpdated().equals(processTime)
+								&& line.getParentOrderType() != OrderTypeEnum.REPLENISH) {
 							line.setActive(false);
 							OrderDetail.staticGetDao().store(line);
-							LOGGER.info("Deactivating order item " + line);
+							LOGGER.warn("Deactivating order line that is not in this import " + line);
 							this.orderChangeMap.put(line.getOrderId(), true);
 						}
 						// reset empty order flag
@@ -592,7 +594,7 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		String orderId = inCsvBean.getOrderId();
 		result = this.orderHeaderCache.get(orderId);
 		OrderTypeEnum type = OrderTypeEnum.OUTBOUND;
-		if ("replenish".equalsIgnoreCase(inCsvBean.operationType)){
+		if ("replenish".equalsIgnoreCase(inCsvBean.operationType)) {
 			type = OrderTypeEnum.REPLENISH;
 		}
 		if (result == null) {
@@ -1095,12 +1097,16 @@ public class OutboundOrderBatchProcessor implements Runnable {
 			detailId = genItemUomKey(inItemMaster, inUomMaster);
 		}
 
-		if (inOrder.getOrderType() == OrderTypeEnum.REPLENISH){
+		if (inOrder.getOrderType() == OrderTypeEnum.REPLENISH) {
 			//DEV-1307 REPLENISH orders
-			result = findReplenishOrderDetail(inFacility, inOrder.getOrderId(), inItemMaster, inUomMaster, inCsvBean.getLocationId());
+			result = findReplenishOrderDetail(inFacility,
+				inOrder.getOrderId(),
+				inItemMaster,
+				inUomMaster,
+				inCsvBean.getLocationId());
 			if (result != null) {
 				result.reevaluateStatus();
-				if (result.getStatus() == OrderStatusEnum.COMPLETE){
+				if (result.getStatus() == OrderStatusEnum.COMPLETE) {
 					result = null;
 				}
 			}
@@ -1258,6 +1264,9 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		} catch (NumberFormatException e) {
 			LOGGER.warn("bad or missing value in min or max quantity field for " + detailId);
 		}
+		
+		boolean substituteAllowed = "true".equalsIgnoreCase(inCsvBean.getSubstituteAllowed());
+		result.setSubstituteAllowed(substituteAllowed);
 
 		if (result.getQuantity() == null || result.getQuantity() <= 0) {
 			result.setActive(false);
@@ -1316,8 +1325,12 @@ public class OutboundOrderBatchProcessor implements Runnable {
 		}
 		return domainMatch;
 	}
-	
-	private OrderDetail findReplenishOrderDetail(Facility facility, String orderId, ItemMaster item, UomMaster uom, String prefLocStr) {
+
+	private OrderDetail findReplenishOrderDetail(Facility facility,
+		String orderId,
+		ItemMaster item,
+		UomMaster uom,
+		String prefLocStr) {
 		Map<String, OrderDetail> itemMap = this.orderlineMap.get(orderId);
 		if (itemMap == null || itemMap.isEmpty()) {
 			return null;
@@ -1327,7 +1340,8 @@ public class OutboundOrderBatchProcessor implements Runnable {
 			String detPrefLocStr = detail.getPreferredLocation();
 			Location detPrefLoc = detPrefLocStr == null ? null : facility.findSubLocationById(detPrefLocStr);
 			Location prefLoc = prefLocStr == null ? null : facility.findSubLocationById(prefLocStr);
-			boolean prefLocationMatch = (prefLocStr == null && detPrefLocStr == null) || (prefLocStr != null && prefLocStr.equals(detPrefLocStr)) || (prefLoc != null && prefLoc.equals(detPrefLoc));
+			boolean prefLocationMatch = (prefLocStr == null && detPrefLocStr == null)
+					|| (prefLocStr != null && prefLocStr.equals(detPrefLocStr)) || (prefLoc != null && prefLoc.equals(detPrefLoc));
 			if (detail.getItemMaster().equals(item) && detail.getUomMaster().equalsNormalized(uom) && prefLocationMatch) {
 				return detail;
 			}

@@ -25,6 +25,7 @@ import javax.script.ScriptException;
 
 import org.apache.commons.lang.math.RandomUtils;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
@@ -329,6 +330,7 @@ public class FacilityAccumulatingExporterTest extends HibernateTest {
 		commitTransaction();
 	}
 
+	@Ignore
 	@Test
 	public void workInstructionExportingIsNotBlocked() throws IOException, InterruptedException, TimeoutException {
 

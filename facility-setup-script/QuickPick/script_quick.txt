@@ -15,7 +15,8 @@ logout che
 loginSetup che worker
 setupCart che 1111
 scan che X%START SETUP_SUMMARY
-scan che X%START SCAN_SOMETHING
+scan che X%START 
+waitForState che SCAN_SOMETHING DO_PICK
 
 STEP Pick order
 SITE

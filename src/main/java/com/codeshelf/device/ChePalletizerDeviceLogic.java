@@ -169,7 +169,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 				if (YES_COMMAND.equalsIgnoreCase(inScanStr)) {
 					WorkInstruction wi = getInfo().getWi();
 					if (wi != null) {
-						mDeviceManager.completePalletizerWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi.getPersistentId(), mUserId, true);
+						mDeviceManager.completePalletizerWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi.getPersistentId(), true);
 						notifyWiVerb(wi, WorkerEvent.EventType.SHORT, kLogAsWarn);
 					}
 					setState(CheStateEnum.PALLETIZER_SCAN_ITEM);
@@ -257,7 +257,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 	private void processItemScan(String scanPrefix, String scanBody) {
 		if (isEmpty(scanPrefix)){
 			setState(CheStateEnum.PALLETIZER_PROCESSING);
-			mDeviceManager.palletizerItemRequest(getGuidNoPrefix(), getPersistentId().toString(), scanBody);
+			mDeviceManager.palletizerItemRequest(getGuidNoPrefix(), getPersistentId().toString(), scanBody, getUserId());
 		} else {
 			String scan = scanPrefix + scanBody;
 			LOGGER.warn("Item scan {} must not have a prefix", scan);
@@ -282,7 +282,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 		if (TAPE_PREFIX.equalsIgnoreCase(scanPrefix)) {
 			scanBody = scanPrefix + scanBody;
 		}
-		mDeviceManager.palletizerNewOrderRequest(getGuidNoPrefix(), getPersistentId().toString(), getInfo().getItem(), scanBody);
+		mDeviceManager.palletizerNewOrderRequest(getGuidNoPrefix(), getPersistentId().toString(), getInfo().getItem(), scanBody, getUserId());
 	}
 	
 	@Override
@@ -311,8 +311,8 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 			LOGGER.warn("Palletizer PUT button press without a saved WI");
 			return;
 		}
-		mDeviceManager.completePalletizerWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi.getPersistentId(), mUserId, false);
-		notifyWiVerb(wi, WorkerEvent.EventType.PALLETIZER_PUT, kLogAsInfo);
+		mDeviceManager.completePalletizerWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi.getPersistentId(), false);
+		notifyWiVerb(wi, WorkerEvent.EventType.COMPLETE, kLogAsInfo);
 	}
 	
 	private void clearAffectedLedAndPoscons(){

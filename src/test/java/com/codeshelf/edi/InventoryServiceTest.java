@@ -30,7 +30,7 @@ public class InventoryServiceTest extends ServerTest {
 
 
 	private UUID facilityId;
-	private UiUpdateBehavior uiUpdate = new UiUpdateBehavior();
+	private UiUpdateBehavior uiUpdate = new UiUpdateBehavior(webSocketManagerService);
 	
 	@Before
 	public void initTest() throws IOException {

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog 
+	xmlns="http://www.liquibase.org/xml/ns/dbchangelog" 
+	logicalFilePath="db.changelog-v26.3.xml"
+	xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+    <changeSet author="ilya (generated)" id="1453148150978-3">
+        <addColumn tableName="order_detail">
+            <column name="substitute_allowed" type="boolean" value="false"/>
+        </addColumn>
+        <addColumn tableName="work_instruction">
+            <column name="substitute_allowed" type="boolean" value="false"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="ilya (generated)" id="1453148517795-3">
+        <addNotNullConstraint columnDataType="boolean" columnName="substitute_allowed" tableName="order_detail"/>
+        <addNotNullConstraint columnDataType="boolean" columnName="substitute_allowed" tableName="work_instruction"/>
+    </changeSet>
+</databaseChangeLog>

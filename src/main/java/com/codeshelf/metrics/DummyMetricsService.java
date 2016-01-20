@@ -1,6 +1,7 @@
 package com.codeshelf.metrics;
 
 import com.codahale.metrics.Counter;
+import com.codahale.metrics.Meter;
 import com.codahale.metrics.Metric;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Timer;
@@ -46,4 +47,8 @@ public class DummyMetricsService extends AbstractCodeshelfIdleService implements
 		return null;
 	}
 
+	@Override
+	public Meter createMeter(MetricsGroup group, String metricName) {
+		return null;
+	}
 }

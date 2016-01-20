@@ -77,7 +77,7 @@ public class WorkInstructionGenerator {
 		Aisle aisle=facility.createAisle("A99", Point.getZeroPoint(), Point.getZeroPoint());
 		Aisle.staticGetDao().store(aisle);
 		Container container = 	
-				new Container("CONTID",
+				new Container("CONTID" + System.currentTimeMillis(),
 							  facility.getContainerKind(ContainerKind.DEFAULT_CONTAINER_KIND),
 							  true);
 		container.setParent(facility);

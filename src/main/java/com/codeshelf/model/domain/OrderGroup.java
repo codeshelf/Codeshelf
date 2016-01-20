@@ -16,11 +16,10 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -47,7 +46,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 
 @Entity
-@Table(name = "order_group")
+@Table(name = "order_group", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -64,12 +63,6 @@ public class OrderGroup extends DomainObjectTreeABC<Facility> {
 	public final static String			DEFAULT_ORDER_GROUP_DESC_PREFIX	= "Order group - ";
 
 	private static final Logger			LOGGER							= LoggerFactory.getLogger(OrderGroup.class);
-
-	// The parent facility.
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
-	@Getter
-	@Setter
-	private Facility					parent;
 
 	// The collective order status.
 	@Column(nullable = false)

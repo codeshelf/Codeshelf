@@ -20,6 +20,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotNull;
 
 import lombok.Getter;
@@ -52,7 +53,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 
 @Entity
-@Table(name = "che"/*,uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"}),@UniqueConstraint(columnNames = {"device_guid"})}*/)
+@Table(name = "che", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"}),@UniqueConstraint(columnNames = {"parent_persistentid", "device_guid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -113,17 +114,27 @@ public class Che extends WirelessDeviceABC {
 	@Getter
 	@Setter
 	private Worker					worker;
+	
+	@Column(nullable = false, name = "che_lighting")
+	@Enumerated(value = EnumType.STRING)
+	@Getter
+	@Setter
+	@JsonProperty
+	private CheLightingEnum			cheLighting;
 
+	public enum CheLightingEnum  {POSCON_V1, LABEL_V1, NOLIGHTING};
 
-	public Che(String domainId) {
+	public Che(String domainId, int deviceGuid) {
 		this();
 		setDomainId(domainId);
+		setDeviceGuidStr(Integer.toHexString(deviceGuid));
 	}
 
 	public Che() {
 		super();
 		color = ColorEnum.BLUE;
 		scannerType = ScannerTypeEnum.ORIGINALSERIAL;
+		cheLighting = CheLightingEnum.POSCON_V1;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -196,7 +207,7 @@ public class Che extends WirelessDeviceABC {
 		// Delete any planned WIs for this CHE.
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("assignedChe.persistentId", getPersistentId()));
-		filterParams.add(Restrictions.in("type", wiTypes));
+		filterParams.add(Restrictions.in("type", wiTypes)); // empty .in() guard not needed here
 		List<WorkInstruction> wis = WorkInstruction.staticGetDao().findByFilter(filterParams);
 		for (WorkInstruction wi : wis) {
 			try {

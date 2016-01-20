@@ -41,6 +41,7 @@ import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.ScannerTypeEnum;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.model.domain.Che.CheLightingEnum;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -236,6 +237,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Getter
 	@Setter
 	private ScannerTypeEnum							mScannerTypeEnum						= ScannerTypeEnum.ORIGINALSERIAL;
+	
+	@Accessors(prefix = "m") @Getter @Setter
+	private Boolean									mReplenishRun							= false;
 
 	/**
 	 * We have only one inventory state, not two. Essentially another state by whether or not we think we have a valid
@@ -389,8 +393,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		mAllPicksWiList = new ArrayList<WorkInstruction>();
 		mActivePickWiList = new ArrayList<WorkInstruction>();
 		mLastScreenDisplayLines = new ArrayList<String>(); // and preinitialize to lines 1-4
-		if (che != null && che.getScannerType() != null)
-			setScannerTypeEnum(che.getScannerType());
+		if (che != null){
+			if (che.getScannerType() != null){
+				setScannerTypeEnum(che.getScannerType());
+			}
+			if (che.getCheLighting() != null){
+				setCheLightingEnum(che.getCheLighting());
+			}
+		}
 		for (int n = 0; n <= 3; n++) {
 			mLastScreenDisplayLines.add(" ");
 		}
@@ -768,9 +778,25 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	private void sendDisplayWorkInstruction(WorkInstruction wi) {
 		String planQtyStr = getWICountStringForCheDisplay(wi);
-		boolean skipQtyDisplay = WiPurpose.WiPurposeSkuWallPut.equals(wi.getPurpose());
+		boolean replenish = WiPurpose.WiPurposeReplenishPut.equals(wi.getPurpose());
+		boolean skipQtyDisplay = WiPurpose.WiPurposeSkuWallPut.equals(wi.getPurpose()) || replenish;
 
 		String[] pickInfoLines = { "", "", "" };
+		
+		String quantity = "", displayDescription = wi.getDescription();
+		if (displayDescription == null) {
+			displayDescription = "";
+		}
+		if (!planQtyStr.isEmpty() && !skipQtyDisplay) {
+			quantity = "QTY " + planQtyStr;
+			displayDescription = planQtyStr + " " + displayDescription;
+			//If this CHE has 'LABEL' lighting mode, get the position ID to display on the CHE screen.
+			if (getCheLightingEnum() == CheLightingEnum.LABEL_V1){
+				String position = "At " + getPosconIndexOfWi(wi) + " - ";
+				quantity = position + quantity;
+				displayDescription = position + displayDescription;
+			}
+		}
 
 		if ("Both".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
 			//First line is SKU, 2nd line is desc + qty if >= 99
@@ -783,12 +809,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			}
 
 			pickInfoLines[0] = info;
-
-			String displayDescription = wi.getDescription();
-			if (!planQtyStr.isEmpty() && !skipQtyDisplay) {
-				displayDescription = planQtyStr + " " + displayDescription;
-			}
-
+			
 			//Add description
 			int charPos = 0;
 			for (int line = 1; line < 3; line++) {
@@ -800,15 +821,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			}
 
 		} else if ("Description".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
-
-			String displayDescription = wi.getDescription();
-			if (displayDescription == null) {
-				displayDescription = "";
-			}
-			if (!planQtyStr.isEmpty() && !skipQtyDisplay) {
-				displayDescription = planQtyStr + " " + displayDescription;
-			}
-
 			int pos = 0;
 			for (int line = 0; line < 3; line++) {
 				if (pos < displayDescription.length()) {
@@ -836,11 +848,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 
 			pickInfoLines[0] = info;
 
-			String quantity = "";
-			if (!planQtyStr.isEmpty() && !skipQtyDisplay) {
-				quantity = "QTY " + planQtyStr;
-			}
-
 			//Make sure we do not exceed 40 chars
 			if (quantity.length() > 40) {
 				LOGGER.warn("Truncating WI Qty that exceeds 40 chars {}", wi);
@@ -848,6 +855,14 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			}
 
 			pickInfoLines[1] = quantity;
+		}
+		
+		if (replenish) {
+			pickInfoLines[0] = "Replen " + pickInfoLines[0];
+			if (pickInfoLines[0].length() > 40){
+				pickInfoLines[0] = pickInfoLines[0].substring(0, 40);
+				LOGGER.warn("Truncating top line due to Replen addition", wi);
+			}
 		}
 
 		// get "DECREMENT POSITION" or other instruction
@@ -2013,11 +2028,18 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				clearAllPosconsOnThisDevice();
 				setState(CheStateEnum.DO_PICK);
 			} else {
-				// user "errors" are logged as warn. Progamming errors are logged as error
-				LOGGER.warn(errorStr); // TODO get this to the CHE display
-				invalidScanMsg(mCheStateEnum);
-				verifyWi = wi;
-				sendDisplayWorkInstruction(getOneActiveWorkInstruction());
+				if ((this instanceof SetupOrdersDeviceLogic) && isSubstitutionAllowed()){
+					SetupOrdersDeviceLogic ordersChe = ((SetupOrdersDeviceLogic) this);
+					ordersChe.setSubstitutionScan(inScanStr);
+					ordersChe.setRememberPreSubstitutionState(CheStateEnum.SCAN_SOMETHING);
+					setState(CheStateEnum.SUBSTITUTION_CONFIRM);
+				} else {
+					// user "errors" are logged as warn. Progamming errors are logged as error
+					LOGGER.warn(errorStr); // TODO get this to the CHE display
+					invalidScanMsg(mCheStateEnum);
+					verifyWi = wi;
+					sendDisplayWorkInstruction(getOneActiveWorkInstruction());
+				}
 			}
 		} else {
 			// Want some feedback here. Tell the user to scan something
@@ -2064,6 +2086,15 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			// Just redraw current screen?
 			setState(getCheStateEnum());
 		}
+	}
+
+	private boolean isSubstitutionAllowed(){
+		for (WorkInstruction wi : getActivePickWiList()){
+			if (wi.getSubstituteAllowed()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public void processResultOfVerifyBadge(Boolean verified, String workerId) {
@@ -2225,6 +2256,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (linkedDevice == null) {
 			LOGGER.error("enterLinkedState failed to find the device");
 			return;
+		}
+		if (linkedDevice.getCheLightingEnum() == CheLightingEnum.NOLIGHTING){
+			LOGGER.warn("Remote CHE " + linkedDevice.getMyGuidStr() + " has lighting mode NOLIGHTING. Will behave as if it was POSCON");
 		}
 		// Is this is primary "link" transaction? Place the notify here.
 		notifyLink(linkedDevice.getGuid());
@@ -2425,5 +2459,9 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Override
 	public byte getScannerTypeCode() {
 		return getScannerTypeEnum().getValue();
+	}
+
+	protected void removeStolenCntr(String inCntr) {
+		LOGGER.error("need override for removeCntr()");		
 	}
 }

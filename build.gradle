@@ -38,7 +38,7 @@ tasks.clean.dependsOn(cleanLegacy)
 repositories {
 	mavenCentral()
 	maven { url "http://iron-io.github.io/maven/repository" }
-
+  maven { url "http://maven.restlet.com" } 
     //    maven { url "https://clojars.org/repo" }
 
 }
@@ -136,8 +136,9 @@ dependencies {
 			'org.mockito:mockito-core:1.9.5',
 
 			'org.quartz-scheduler:quartz:2.2.1',
+      'org.jminix:jminix:1.2.0',
 
-			// manually update
+      // manually update
 			files('lib/dist/classindex-3.3.jar'), // needs to be in fixed location for eclipse annotation processing
 			files('lib/dist/JD2XX.jar') // our library for interacting with FTDI USB-Serial interface
 

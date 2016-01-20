@@ -80,5 +80,29 @@ public class Slot extends Location {
 	    	return (Slot) location;
 	    }
 		throw new RuntimeException("Location is not a slot");
-	}		
+	}
+	
+	public void setSlotLeds(String firstLedStr, String lastLedStr) throws IllegalArgumentException {
+		short firstLed = parseShort(firstLedStr);
+		short lastLed = parseShort(lastLedStr);
+		if (firstLed > lastLed) {
+			throw new IllegalArgumentException("First led id " + firstLed + " is larger than last id " + lastLed);
+		}
+		Location tier = getParent();
+		short tierFirstLed = tier.getFirstLedNumAlongPath();
+		short tierLastLed = tier.getLastLedNumAlongPath();
+		if (tierFirstLed > firstLed || tierLastLed < lastLed){
+			throw new IllegalArgumentException(String.format("Provided interval %d-%d does not fit within current Tier's bounds %d-%d", firstLed, lastLed, tierFirstLed, tierLastLed));
+		}
+		setFirstLedNumAlongPath(firstLed);
+		setLastLedNumAlongPath(lastLed);
+	}
+	
+	private short parseShort(String value) throws IllegalArgumentException{
+		try {
+			return Short.parseShort(value);
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException("Could not parse '" + value + "' as a Short");
+		}
+	}
 }

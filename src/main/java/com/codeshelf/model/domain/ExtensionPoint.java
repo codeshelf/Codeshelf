@@ -7,9 +7,8 @@ package com.codeshelf.model.domain;
 import javax.persistence.Cacheable;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -25,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
-@Table(name = "extension_point")
+@Table(name = "extension_point", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -42,12 +41,6 @@ public class ExtensionPoint extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private boolean	active=true;
 
-	// The owning facility.
-	@ManyToOne(optional = false, fetch=FetchType.LAZY)
-	@Getter @Setter
-	@JsonProperty
-	private Facility parent;
-	
 	// The extension point this script instance implements.
 	@Column(nullable = false)
 	@Getter @Setter

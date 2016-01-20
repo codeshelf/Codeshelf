@@ -24,6 +24,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.MapKey;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -55,7 +56,7 @@ import com.google.common.base.Joiner;
  */
 
 @Entity
-@Table(name = "item_master")
+@Table(name = "item_master", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -70,12 +71,6 @@ public class ItemMaster extends DomainObjectTreeABC<Facility> {
 	private static final Logger				LOGGER						= LoggerFactory.getLogger(ItemMaster.class);
 
 	private static final Comparator<String>	asciiAlphanumericComparator	= new ASCIIAlphanumericComparator();
-
-	// The parent facility.
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private Facility						parent;
 
 	// The description.
 	@Column(nullable = true)

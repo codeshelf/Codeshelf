@@ -23,7 +23,6 @@ import org.hibernate.Query;
 import org.hibernate.QueryParameterException;
 import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
-import org.hibernate.criterion.MatchMode;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
@@ -150,11 +149,15 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 * @see com.codeshelf.model.dao.IGenericDao#findByIdList(java.util.List)
 	 */
 	public final List<T> findByPersistentIdList(List<UUID> inIdList) {
-		Session session = getCurrentSession();
-		Criteria criteria = session.createCriteria(getDaoClass());
-		criteria.add(Restrictions.in("persistentId", inIdList));
-		List<T> methodResultsList = (List<T>) criteria.list();
-		return methodResultsList;
+		if (inIdList != null && inIdList.isEmpty()) {
+			return Collections.<T> emptyList(); //empty WHERE X IN () causes syntax issue in postgres
+		} else {
+			Session session = getCurrentSession();
+			Criteria criteria = session.createCriteria(getDaoClass());
+			criteria.add(Restrictions.in("persistentId", inIdList)); // empty .in() guard present
+			List<T> methodResultsList = (List<T>) criteria.list();
+			return methodResultsList;
+		}
 	}
 
 	/**
@@ -162,11 +165,11 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	 */
 	public final List<T> findByParentPersistentIdList(List<UUID> inIdList) {
 		if (inIdList != null && inIdList.isEmpty()) {
-			return Collections.<T>emptyList(); //empty WHERE X IN () causes syntax issue in postgres
+			return Collections.<T> emptyList(); //empty WHERE X IN () causes syntax issue in postgres
 		} else {
 			Session session = getCurrentSession();
 			Criteria criteria = session.createCriteria(getDaoClass());
-			criteria.add(Restrictions.in("parent.persistentId", inIdList));
+			criteria.add(Restrictions.in("parent.persistentId", inIdList)); // empty .in() guard present
 			List<T> methodResultsList = (List<T>) criteria.list();
 			return methodResultsList;
 		}
@@ -298,7 +301,7 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		Number value = (Number) criteria.uniqueResult();
 		return value.intValue();
 	}
-	
+
 	@Override
 	public final int countByFilter(List<Criterion> inFilter) {
 		Session session = getCurrentSession();
@@ -311,13 +314,12 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 		return value.intValue();
 	}
 
-
 	@Override
 	public List<UUID> getUUIDListByCriteriaQuery(Criteria criteria) {
-		
-		criteria.setProjection( Projections.projectionList().add( Projections.property("persistentId"), "persistentId"));
 
-		List<UUID> ids=criteria.list();
+		criteria.setProjection(Projections.projectionList().add(Projections.property("persistentId"), "persistentId"));
+
+		List<UUID> ids = criteria.list();
 		return ids;
 	}
 
@@ -349,14 +351,31 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 					+ clazz.getSimpleName());
 		}
 	}
-	
-	public static Criterion createSubstringRestriction(String propertyName, String substring) {
-		return Restrictions.ilike(propertyName, substring, MatchMode.ANYWHERE);
+
+	//side effect of changing the query temporarily since cloning isn't really supported
+	public static long countCriteria(Criteria criteria) {
+		//Turn into a count query
+		Criteria countCriteria = criteria.setProjection(Projections.rowCount());
+		Long total = (Long) countCriteria.uniqueResult();
+
+		//Turn back into entity query
+		criteria.setProjection(null);
+		criteria.setResultTransformer(Criteria.ROOT_ENTITY);
+		return total;
 	}
-	
+
+	public static Criterion createSubstringRestriction(String propertyName, String substring) {
+		Criterion property = null;
+		if (substring != null && substring.indexOf('*') >= 0) {
+			property = Restrictions.ilike(propertyName, substring.replace('*', '%'));
+		} else {
+			property = Restrictions.ilike(propertyName, substring);
+		}
+		return property;
+	}
+
 	public static Criterion createIntervalRestriction(String propertyName, Interval interval) {
-		return Property.forName(propertyName).between(
-			new Timestamp(interval.getStartMillis()),
+		return Property.forName(propertyName).between(new Timestamp(interval.getStartMillis()),
 			new Timestamp(interval.getEndMillis()));
 	}
 }

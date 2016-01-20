@@ -17,6 +17,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import javax.persistence.UniqueConstraint;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -65,7 +66,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 
 @Entity
-@Table(name = "work_instruction")
+@Table(name = "work_instruction", uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"})})
 @Cacheable
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -81,12 +82,6 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 
 	@SuppressWarnings("unused")
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(WorkInstruction.class);
-
-	// The parent is the facility
-	@ManyToOne(optional = false, fetch = FetchType.LAZY)
-	@Getter
-	@Setter
-	private Facility					parent;
 
 	// Type.
 	@Column(nullable = false)
@@ -112,6 +107,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	// Denormalized for serialized WIs at the site controller.
 	@Column(nullable = false, name = "container_id")
 	@Getter
+	@Setter
 	@JsonProperty
 	private String						containerId;
 
@@ -273,6 +269,17 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	@Setter
 	@JsonProperty
 	private WiPurpose					purpose				= null;
+	
+	@Column(nullable = true, name = "path_name")
+	@Getter @Setter
+	@JsonProperty
+	private String						pathName;
+	
+	@Column(nullable = false, name = "substitute_allowed")
+	@Getter
+	@Setter
+	@JsonProperty
+	private Boolean						substituteAllowed	= false;
 
 	@Transient
 	@Getter

@@ -8,13 +8,22 @@ import java.util.UUID;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.scheduler.DataPurgeJob;
+import com.codeshelf.security.CodeshelfSecurityManager;
+import com.codeshelf.security.UserContext;
 import com.codeshelf.testframework.HibernateTest;
+import com.codeshelf.util.TimeUtils;
 
 public class DomainObjectManagerTest extends HibernateTest {
-
+	private static final Logger	LOGGER		= LoggerFactory.getLogger(DomainObjectManagerTest.class);
+	
 	/**
 	 * This used to fail under postgres with a SQL syntax exception like WHERE X IN ()
 	 * But not under H2
@@ -81,7 +90,46 @@ public class DomainObjectManagerTest extends HibernateTest {
 		beginTransaction();
 		Assert.assertNull(OrderHeader.staticGetDao().findByPersistentId(ohId));		
 		commitTransaction();
-
+	}
+	
+	@Test
+	public void testPurgeReplenishOrderDetails() throws Exception{
+		beginTransaction();
+		Facility facility = getFacility();
+		commitTransaction();
+		
+		beginTransaction();
+		LOGGER.info("1: Create 1 replenish order with 3 details");
+		facility = facility.reload();
+		String ordersCsv = "orderId,itemId,quantity,uom,locationId,preAssignedContainerId,workSequence,operationType\n" + 
+				"gtin1,Item1,1,each,LocX26,gtin1,0,replenish\n" + 
+				"gtin1,Item1,1,each,LocX27,gtin1,0,replenish\n" + 
+				"gtin1,Item1,1,each,LocX28,gtin1,0,replenish\n";
+		importOrdersData(facility, ordersCsv);
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "gtin1");
+		Assert.assertNotNull(order);
+		List<OrderDetail> details = order.getOrderDetails();
+		Assert.assertEquals(3, details.size());
+		LOGGER.info("2: Make 2 details older, so that they fit the purge params");
+		details.get(0).setUpdated(new Timestamp(System.currentTimeMillis() - 30 * TimeUtils.MILLISECOUNDS_IN_DAY));
+		details.get(1).setUpdated(new Timestamp(System.currentTimeMillis() - 15 * TimeUtils.MILLISECOUNDS_IN_DAY));
+		details.get(2).setUpdated(new Timestamp(System.currentTimeMillis() - 25 * TimeUtils.MILLISECOUNDS_IN_DAY));
+		commitTransaction();
+		
+		LOGGER.info("3: Run the purge");
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+		UserContext userContexr = CodeshelfSecurityManager.getCurrentUserContext();
+		DataPurgeJob purgeJob = new DataPurgeJob();
+		purgeJob.doFacilityExecute(tenant, facility);
+		CodeshelfSecurityManager.setContext(userContexr, tenant);	//Running the DataPurgeJob above disrupts Tenant setting
+		
+		LOGGER.info("4: Ensure that only 1 detail remains");
+		beginTransaction();
+		order = OrderHeader.staticGetDao().findByDomainId(facility, "gtin1");
+		Assert.assertNotNull(order);
+		details = order.getOrderDetails();
+		Assert.assertEquals(1, details.size());
+		commitTransaction();
 	}
 
 }
