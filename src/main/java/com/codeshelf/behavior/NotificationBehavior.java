@@ -171,6 +171,8 @@ public class NotificationBehavior implements IApiBehavior{
 			type = EventType.COMPLETE;
 		} else if(wi.getStatus().equals(WorkInstructionStatusEnum.SHORT))  {
 			type = EventType.SHORT;
+		} else if(wi.getStatus().equals(WorkInstructionStatusEnum.SUBSTITUTION))  {
+			type = EventType.SUBSTITUTION;
 		} else {
 			return;
 		}

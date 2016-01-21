@@ -68,6 +68,7 @@ public class WiSetSummary implements Comparable<WiSetSummary> {
 				shortCount++;
 				break;
 			case COMPLETE:
+			case SUBSTITUTION:
 				completeCount++;
 				break;
 			case REVERT:

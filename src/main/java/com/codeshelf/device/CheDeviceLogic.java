@@ -780,13 +780,23 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		String planQtyStr = getWICountStringForCheDisplay(wi);
 		boolean replenish = WiPurpose.WiPurposeReplenishPut.equals(wi.getPurpose());
 		boolean skipQtyDisplay = WiPurpose.WiPurposeSkuWallPut.equals(wi.getPurpose()) || replenish;
+		String pickinfoProp = mDeviceManager.getPickInfoValue();
 
 		String[] pickInfoLines = { "", "", "" };
 		
+		String substitution = wi.getSubstitution();
 		String quantity = "", displayDescription = wi.getDescription();
 		if (displayDescription == null) {
 			displayDescription = "";
 		}
+
+		String sku = substitution == null ? wi.getItemId() : substitution;
+		//Make sure we do not exceed 40 chars
+		if (sku.length() > 40) {
+			LOGGER.info("Truncating WI SKU that exceeds 40 chars {}", wi);
+			sku = sku.substring(0, 40);
+		}
+
 		if (!planQtyStr.isEmpty() && !skipQtyDisplay) {
 			quantity = "QTY " + planQtyStr;
 			displayDescription = planQtyStr + " " + displayDescription;
@@ -798,17 +808,23 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			}
 		}
 
-		if ("Both".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
-			//First line is SKU, 2nd line is desc + qty if >= 99
-			String info = wi.getItemId();
+		if ("SKU".equalsIgnoreCase(pickinfoProp) || substitution != null){
+			//DEFAULT TO SKU
+			//First line is SKU, 2nd line is QTY
+
+			pickInfoLines[0] = sku;
 
 			//Make sure we do not exceed 40 chars
-			if (info.length() > 40) {
-				LOGGER.warn("Truncating WI SKU that exceeds 40 chars {}", wi);
-				info = info.substring(0, 40);
+			if (quantity.length() > 40) {
+				LOGGER.info("Truncating WI Qty that exceeds 40 chars {}", wi);
+				quantity = quantity.substring(0, 40);
 			}
 
-			pickInfoLines[0] = info;
+			pickInfoLines[1] = quantity;
+		} else if ("Both".equalsIgnoreCase(pickinfoProp)) {
+			//First line is SKU, 2nd line is desc + qty if >= 99
+
+			pickInfoLines[0] = sku;
 			
 			//Add description
 			int charPos = 0;
@@ -820,7 +836,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				}
 			}
 
-		} else if ("Description".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
+		} else if ("Description".equalsIgnoreCase(pickinfoProp)) {
 			int pos = 0;
 			for (int line = 0; line < 3; line++) {
 				if (pos < displayDescription.length()) {
@@ -835,33 +851,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				int toGet = Math.min(20, displayDescription.length() - pos);
 				pickInfoLines[2] += displayDescription.substring(pos, pos + toGet);
 			}
-		} else {
-			//DEFAULT TO SKU
-			//First line is SKU, 2nd line is QTY if >= 99
-			String info = wi.getItemId();
-
-			//Make sure we do not exceed 40 chars
-			if (info.length() > 40) {
-				LOGGER.warn("Truncating WI SKU that exceeds 40 chars {}", wi);
-				info = info.substring(0, 40);
-			}
-
-			pickInfoLines[0] = info;
-
-			//Make sure we do not exceed 40 chars
-			if (quantity.length() > 40) {
-				LOGGER.warn("Truncating WI Qty that exceeds 40 chars {}", wi);
-				quantity = quantity.substring(0, 40);
-			}
-
-			pickInfoLines[1] = quantity;
 		}
 		
 		if (replenish) {
 			pickInfoLines[0] = "Replen " + pickInfoLines[0];
 			if (pickInfoLines[0].length() > 40){
 				pickInfoLines[0] = pickInfoLines[0].substring(0, 40);
-				LOGGER.warn("Truncating top line due to Replen addition", wi);
+				LOGGER.info("Truncating top line due to Replen addition", wi);
 			}
 		}
 
@@ -2075,11 +2071,19 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				clearAllPosconsOnThisDevice();
 				setState(CheStateEnum.DO_PICK);
 			} else {
-				notifyExtraInfo("Unanticipated extra scan; incorrect item/UPC. Changing state back", kLogAsWarn);
+				if ((this instanceof SetupOrdersDeviceLogic) && isSubstitutionAllowed()){
+					SetupOrdersDeviceLogic ordersChe = ((SetupOrdersDeviceLogic) this);
+					ordersChe.setSubstitutionScan(inScanStr);
+					ordersChe.setRememberPreSubstitutionState(CheStateEnum.SCAN_SOMETHING);
+					setState(CheStateEnum.SUBSTITUTION_CONFIRM);
+				} else {
 
-				// Still a problem here. Worker had done a scan and did not need another, then scanned wrong one. We want to basically forget
-				// The worker had done the good scan. However, that is remembered by the complete work instruction, so it cannot be forgotten.
-				setState(CheStateEnum.SCAN_SOMETHING);
+					notifyExtraInfo("Unanticipated extra scan; incorrect item/UPC. Changing state back", kLogAsWarn);
+	
+					// Still a problem here. Worker had done a scan and did not need another, then scanned wrong one. We want to basically forget
+					// The worker had done the good scan. However, that is remembered by the complete work instruction, so it cannot be forgotten.
+					setState(CheStateEnum.SCAN_SOMETHING);
+				}
 
 			}
 		} else {

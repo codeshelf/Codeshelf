@@ -453,17 +453,24 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	 */
 	public void reevaluateStatus() {
 		setStatus(OrderStatusEnum.COMPLETE);
+		boolean anySubstitutions = false;
 		for (OrderDetail detail : getOrderDetails()) {
 			if (!detail.getActive()) {
 				continue;
 			}
-			if (detail.getStatus().equals(OrderStatusEnum.SHORT)) {
+			OrderStatusEnum detailStatus = detail.getStatus();
+			if (detailStatus == OrderStatusEnum.SHORT) {
 				setStatus(OrderStatusEnum.SHORT);
 				break;
-			} else if (!detail.getStatus().equals(OrderStatusEnum.COMPLETE)) {
+			} else if (detailStatus == OrderStatusEnum.SUBSTITUTION) {
+				anySubstitutions = true;
+			} else if (detailStatus != OrderStatusEnum.COMPLETE) {
 				setStatus(OrderStatusEnum.INPROGRESS);
 				break;
 			}
+		}
+		if (getStatus() == OrderStatusEnum.COMPLETE && anySubstitutions) {
+			setStatus(OrderStatusEnum.SUBSTITUTION);
 		}
 		try {
 			getDao().store(this);

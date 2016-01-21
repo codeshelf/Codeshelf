@@ -1472,6 +1472,7 @@ public class Facility extends Location {
 		List<WorkInstructionStatusEnum> wiStatuses = new ArrayList<>();
 		wiStatuses.add(WorkInstructionStatusEnum.COMPLETE);
 		wiStatuses.add(WorkInstructionStatusEnum.SHORT);
+		wiStatuses.add(WorkInstructionStatusEnum.SUBSTITUTION);
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", this));
 		filterParams.add(Restrictions.in("status", wiStatuses)); // empty .in() guard not needed here

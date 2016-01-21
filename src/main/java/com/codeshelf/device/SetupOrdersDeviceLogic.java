@@ -443,6 +443,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 					
 				case SUBSTITUTION_CONFIRM:
+					clearAllPosconsOnThisDevice();
 					WorkInstruction activeWi = getOneActiveWorkInstruction();
 					if (activeWi == null) {
 						LOGGER.warn("Somehow got null from getOneActiveWorkInstruction() when entering the SUBSTITUTION_CONFIRM state");
@@ -921,11 +922,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case SUBSTITUTION_CONFIRM:
 				if (YES_COMMAND.equalsIgnoreCase(inScanStr)) {
-					
+					doShortsAndSubstitutionsAheads(getOneActiveWorkInstruction(), getSubstitutionScan());
+					setState(CheStateEnum.DO_PICK);
 				} else {
-					setSubstitutionScan(null);
 					setState(getRememberPreSubstitutionState());
 				}
+				setSubstitutionScan(null);
 				break;
 
 			default:
@@ -974,7 +976,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private boolean feedbackCountersValid() {
 		return mContainerToWorkInstructionCountMap != null;
 	}
-
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * call the short transaction
@@ -1031,7 +1033,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			// Depends on AUTOSHRT parameter
 			if (autoShortOn) {
-				doShortAheads(wi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
+				doShortsAndSubstitutionsAheads(wi, null); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
 			}
 		}
 		// If AUTOSHRT if off, there still might be other jobs in active pick list. If on, any remaining there would be shorted and removed.
@@ -1391,10 +1393,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * The inShortWi was just shorted.
-	 * Compare later wis to that. If the same product, short those also, removing unnecessary housekeeping work instructions
+	 * This function is called in 2 situatinos:
+	 * 
+	 * 1)The inChangedWi was just shorted. Leave "substitution" param null.
+	 *   Compare later wis to that. If the same product, short those also, removing unnecessary housekeeping work instructions
+	 * 
+	 * 2)The inChangedWi is being substituted. Provide "substitution" param.
+	 *   For it and all upcoming wis with matching itemId:
+	 *     *If the wi has substitutionAllowed, set the "substitution" value
+	 *     *Otherwise, short the wi
 	 */
-	private void doShortAheads(final WorkInstruction inShortWi) {
+	private void doShortsAndSubstitutionsAheads(final WorkInstruction inChangedWi, String substitution) {
 		// Look for more wis in the CHE's job list that must short also if this one did.
 		// Short and notify them, and remove so the worker will not encounter them.
 		// Also remove unnecessary repeats and bay changes. The algorithm for housekeep removal is:
@@ -1404,30 +1413,36 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		// Warning: for simultaneous work instructions, "short ahead" might actually be behind in the sequence. So we need to iterate the activePickList always.
 
-		Integer laterCount = 0;
 		Integer toShortCount = 0;
+		Integer substitutedCount = 0;
 		Integer removeHousekeepCount = 0;
 
 		// Algorithm. Assemble what we want to short
 		List<WorkInstruction> toShortList = new ArrayList<WorkInstruction>();
+		
 		// Find short aheads from the active picks first, which might have lower sort values.
 		// If we are shorting the inShortWi, there should be no housekeeps in the active pick list.
 		for (WorkInstruction wi : getActivePickWiList()) {
 			if (wi.isHousekeeping()) {
 				LOGGER.error("unanticipated housekeeping WI in mActivePickWiList in doShortAheads");
 			}
-			if (!wi.equals(inShortWi))
-				if (sameProductLotEtc(wi, inShortWi)) {
-					toShortCount++;
-					toShortList.add(wi);
-				}
+			boolean substituteThisWi = substitution != null && wi.getSubstituteAllowed();
+			//if (!wi.equals(inChangedWi) && sameProductLotEtc(wi, inChangedWi) && !substituteThisWi){
+			if (sameProductLotEtc(wi, inChangedWi) && !substituteThisWi){
+				//Short the WI
+				toShortCount++;
+				toShortList.add(wi);
+			}
 		}
+		
 		// Now look for later work instructions to short, and remove housekeeps as necessary.
 		WorkInstruction prevWi = null;
 		for (WorkInstruction wi : mAllPicksWiList) {
-			if (laterWi(wi, inShortWi)) {
-				laterCount++;
-				if (sameProductLotEtc(wi, inShortWi)) {
+			if (sameProductLotEtc(wi, inChangedWi)) {
+				if (substitution != null && wi.getSubstituteAllowed()){
+					substitutedCount++;
+					wi.setSubstitution(substitution);						
+				} else if (laterWi(wi, inChangedWi)) {
 					// might be already in the list from above
 					if (!toShortList.contains(wi)) {
 						toShortCount++;
@@ -1448,17 +1463,22 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		for (WorkInstruction wi : toShortList) {
 			// Short aheads will always set the actual pick quantity to zero.
 			notifyWiVerb(wi, WorkerEvent.EventType.SHORT_AHEAD, kLogAsWarn);
+			//Clear the substitution field, if any for WIs with 0 items picked
+			wi.setSubstitution(null);
 			doShortTransaction(wi, 0);
 		}
 
 		// Let's only report all this if there is a short ahead. We do not need to see in the log that we considered after every short.
 		if (toShortCount > 0) {
-			String reportShortAheadDetails = "Considered " + laterCount + " later jobs for short-ahead.";
+			String reportShortAheadDetails = "";
 			if (toShortCount > 0)
 				reportShortAheadDetails += " Shorted " + toShortCount + " more.";
 			if (removeHousekeepCount > 0)
 				reportShortAheadDetails += " Also removed " + removeHousekeepCount + " housekeeping instructions.";
 			LOGGER.info(reportShortAheadDetails);
+		}
+		if (substitutedCount > 0){
+			LOGGER.info("Set substitution field to " + substitution + " in " + substitutedCount + " upcoming jobs");
 		}
 
 	}
@@ -2677,8 +2697,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Override
 	protected void processNormalPick(WorkInstruction inWi, Integer inQuantity) {
 		inWi.setCompleteState(mUserId, inQuantity);
-
-		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
+		
 		EventType eventType = EventType.COMPLETE;
 		if (getCheStateEnum() == CheStateEnum.DO_PUT) {
 			if (inWi.getOrderDetail() == null) {
@@ -2687,6 +2706,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				eventType = EventType.COMPLETE;
 			}
 		}
+		
+		if (inWi.getSubstitution() != null){
+			inWi.setStatus(WorkInstructionStatusEnum.SUBSTITUTION);
+			eventType = EventType.SUBSTITUTION;
+		}
+		
+		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
 		notifyWiVerb(inWi, eventType, kLogAsInfo);
 
 		mActivePickWiList.remove(inWi);
@@ -3220,7 +3246,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				if (wiMatchesItemLocation(matchSku, matchPickLocation, wi)) {
 					WorkInstructionStatusEnum theStatus = wi.getStatus();
 					// Short or complete must have been scanned.
-					if (theStatus.equals(WorkInstructionStatusEnum.COMPLETE) || theStatus.equals(WorkInstructionStatusEnum.SHORT))
+					if (theStatus == WorkInstructionStatusEnum.COMPLETE || theStatus == WorkInstructionStatusEnum.SHORT || theStatus == WorkInstructionStatusEnum.SUBSTITUTION)
 						return true;
 				}
 		}

@@ -457,6 +457,7 @@ public class CheProcessPickExceptions extends ServerTest {
 	/**
 	 * Trying to replicate what seemed to stop us during Walmart trial
 	 */
+	@SuppressWarnings("unused")
 	@Test
 	public final void doubleDetailId() throws IOException {
 

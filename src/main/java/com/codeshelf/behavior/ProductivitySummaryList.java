@@ -49,6 +49,7 @@ public class ProductivitySummaryList {
 					inprogress += subtotal;
 					break;
 				case COMPLETE:
+				case SUBSTITUTION:
 					complete += subtotal;
 					break;
 				case SHORT:

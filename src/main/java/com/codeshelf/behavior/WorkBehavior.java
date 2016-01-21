@@ -928,7 +928,7 @@ public class WorkBehavior implements IApiBehavior {
 			//and saving
 			for (WorkInstruction wi : orderDetail.getWorkInstructions()) {
 				//As of DEV-603 we are only adding completed WIs to the list
-				if (WorkInstructionStatusEnum.COMPLETE == wi.getStatus()) {
+				if (WorkInstructionStatusEnum.COMPLETE == wi.getStatus() || WorkInstructionStatusEnum.SUBSTITUTION == wi.getStatus()) {
 					LOGGER.info("Not Adding already complete WIs to list _2_; orderDetail={}", orderDetail);
 					// wiResultList.add(wi);
 					// This is not likely to matter for line_scan process
@@ -1578,7 +1578,7 @@ public class WorkBehavior implements IApiBehavior {
 								//and saving
 								for (WorkInstruction wi : orderDetail.getWorkInstructions()) {
 									//As of DEV-603 we are only adding completed WIs to the list
-									if (WorkInstructionStatusEnum.COMPLETE == wi.getStatus()) {
+									if (WorkInstructionStatusEnum.COMPLETE == wi.getStatus() || WorkInstructionStatusEnum.SUBSTITUTION == wi.getStatus()) {
 										LOGGER.info("Adding already complete WIs to list; orderDetail={}", orderDetail);
 										wiResultList.add(wi);
 										// If changed, only testCartSetupFeedback fails
@@ -1865,7 +1865,8 @@ public class WorkBehavior implements IApiBehavior {
 		//Filter out complete WI's
 		Iterator<WorkInstruction> iter = allWIs.iterator();
 		while (iter.hasNext()) {
-			if (iter.next().getStatus() == WorkInstructionStatusEnum.COMPLETE) {
+			WorkInstructionStatusEnum status = iter.next().getStatus();
+			if (status == WorkInstructionStatusEnum.COMPLETE || status == WorkInstructionStatusEnum.SUBSTITUTION) {
 				iter.remove();
 			}
 		}
@@ -2068,6 +2069,7 @@ public class WorkBehavior implements IApiBehavior {
 		}
 		storedWi.setStarted(updatedWi.getStarted());
 		storedWi.setCompleted(updatedWi.getCompleted());
+		storedWi.setSubstitution(updatedWi.getSubstitution());
 		WorkInstruction.staticGetDao().store(storedWi);
 
 		// Find the order detail for this WI and mark it.

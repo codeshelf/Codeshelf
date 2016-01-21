@@ -261,10 +261,6 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			return "";
 	}
 
-	public String getDetailStatusName() {
-		return getStatus().getName();
-	}
-
 	public String getShipperId() {
 		// can an OrderDetail not have a parent? In the OrderDetailTest it can
 		OrderHeader oh = getParent();
@@ -293,11 +289,11 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 		for (WorkInstruction wi : getWorkInstructions()) {
 			if (returnStr.isEmpty())
 				if (wi.getStatus() == WorkInstructionStatusEnum.SHORT)
-					returnStr = WorkInstructionStatusEnum.SHORT.getName();
+					returnStr = WorkInstructionStatusEnum.SHORT.name();
 				else {
 					returnStr = wi.getPickInstruction();
-					if (wi.getStatus() == WorkInstructionStatusEnum.COMPLETE)
-						returnStr = returnStr + " (" + WorkInstructionStatusEnum.COMPLETE.getName() + ")";
+					if (wi.getStatus() == WorkInstructionStatusEnum.COMPLETE || wi.getStatus() == WorkInstructionStatusEnum.SUBSTITUTION)
+						returnStr = returnStr + " (" + wi.getStatus().name() + ")";
 				}
 			else if (wi.getStatus() != WorkInstructionStatusEnum.SHORT) { // don't pile on extra SHORT if multiple SHORT WIs
 				returnStr = returnStr + ", " + wi.getPickInstruction();
@@ -348,7 +344,8 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 	private List<String> getPickableWorkInstructions() {
 		ImmutableSet<WorkInstructionStatusEnum> pickableWiSet = Sets.immutableEnumSet(WorkInstructionStatusEnum.NEW,
 			WorkInstructionStatusEnum.INPROGRESS,
-			WorkInstructionStatusEnum.COMPLETE);
+			WorkInstructionStatusEnum.COMPLETE,
+			WorkInstructionStatusEnum.SUBSTITUTION);
 		List<String> pickableWiLocations = new ArrayList<String>();
 		for (WorkInstruction wi : getWorkInstructions()) {
 			if (pickableWiSet.contains(wi.getStatus())) {
@@ -515,18 +512,18 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 
 		int qtyPicked = 0;
 		boolean anyToPick = false;
+		boolean anySubstitutions = false;
 		for (WorkInstruction sumWi : getWorkInstructions()) {
 			WorkInstructionStatusEnum status = sumWi.getStatus();
-			if (status.equals(WorkInstructionStatusEnum.COMPLETE) || status.equals(WorkInstructionStatusEnum.SHORT)) {
-
+			if (status == WorkInstructionStatusEnum.COMPLETE || status == WorkInstructionStatusEnum.SHORT || status == WorkInstructionStatusEnum.SUBSTITUTION) {
 				qtyPicked += sumWi.getActualQuantity();
-			} else if (status.equals(WorkInstructionStatusEnum.INPROGRESS) || status.equals(WorkInstructionStatusEnum.NEW)) {
-
+			} else if (status == WorkInstructionStatusEnum.INPROGRESS || status == WorkInstructionStatusEnum.NEW) {
 				anyToPick |= true;
 			}
+			anySubstitutions |= status == WorkInstructionStatusEnum.SUBSTITUTION;
 		}
 		if (qtyPicked >= getMinQuantity()) {
-			setStatus(OrderStatusEnum.COMPLETE);
+			setStatus(anySubstitutions ? OrderStatusEnum.SUBSTITUTION : OrderStatusEnum.COMPLETE);
 		} else if (anyToPick) {
 			setStatus(OrderStatusEnum.INPROGRESS);
 		} else {
@@ -617,7 +614,7 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			getItemMasterId(),
 			getUomMasterId(),
 			getQuantity(),
-			getDetailStatusName(),
+			getStatus().name(),
 			getActive(),
 			getDomainId());
 	}

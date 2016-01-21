@@ -183,6 +183,7 @@ public class ComputeWorkCommand extends CommandABC {
 				} else {
 					switch (wiStatus) {
 						case COMPLETE:
+						case SUBSTITUTION:
 							// What happens if server does not increment Complete? Only fails ComputWorkCommandTest. Apparently not needed.
 							count.incrementCompleteCount();
 							break;

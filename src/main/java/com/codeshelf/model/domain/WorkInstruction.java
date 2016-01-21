@@ -281,11 +281,17 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	@JsonProperty
 	private Boolean						substituteAllowed	= false;
 
+	@Column(nullable = true)
+	@Getter
+	@Setter
+	@JsonProperty
+	private String						substitution		= null;
+
 	@Transient
 	@Getter
 	@Setter
 	private boolean						alreadyShorted		= false;
-
+	
 	public WorkInstruction() {
 	}
 
@@ -301,19 +307,20 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 	public final String getDefaultDomainIdPrefix() {
 		return "WI";
 	}
-
+	
 	public void setCompleteState(String inPickerId, int inQuantity) {
-		setActualQuantity(inQuantity);
-		setPickerId(inPickerId);
-		setCompleted(new Timestamp(System.currentTimeMillis()));
-		setStatus(WorkInstructionStatusEnum.COMPLETE);
+		setFinishedState(inPickerId, inQuantity, WorkInstructionStatusEnum.COMPLETE);
 	}
 
 	public void setShortState(String inPickerId, int inQuantity) {
+		setFinishedState(inPickerId, inQuantity, WorkInstructionStatusEnum.SHORT);
+	}
+	
+	public void setFinishedState(String inPickerId, int inQuantity, WorkInstructionStatusEnum inState) {
 		setActualQuantity(inQuantity);
 		setPickerId(inPickerId);
 		setCompleted(new Timestamp(System.currentTimeMillis()));
-		setStatus(WorkInstructionStatusEnum.SHORT);
+		setStatus(inState);		
 	}
 
 	// Denormalized for serialized WIs at the site controller.
@@ -610,7 +617,7 @@ public class WorkInstruction extends DomainObjectTreeABC<Facility> {
 		// getStatus works fine, except when the status is null. As in logging WI on the site controller side. Just don't throw if null.
 		WorkInstructionStatusEnum theStatus = this.getStatus();
 		if (theStatus != null)
-			return theStatus.getName();
+			return theStatus.name();
 		else
 			return "";
 	}

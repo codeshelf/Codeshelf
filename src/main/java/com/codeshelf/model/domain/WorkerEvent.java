@@ -49,7 +49,8 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 		COMPLETE,
 		CANCEL_PUT,
 		DETAIL_WI_MISMATCHED,
-		LOW;
+		LOW,
+		SUBSTITUTION;
 		
 		public String getName() {
 			return name();
