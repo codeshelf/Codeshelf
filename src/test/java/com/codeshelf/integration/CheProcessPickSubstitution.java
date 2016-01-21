@@ -1,6 +1,7 @@
 package com.codeshelf.integration;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -225,6 +226,84 @@ public class CheProcessPickSubstitution extends ServerTest{
 		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi2.getStatus());
 		Assert.assertNull(wi2.getSubstitution());
 		commitTransaction();		
+	}
+	
+	/**
+	 * Single order, 1 item, 3 units. Pick 1 (short), restart run, Substitute 1 (short, wi still comes out as sunstitute)
+	 */
+	@Test
+	public void testSubstitutionSingle4() throws IOException {
+		LOGGER.info("1: Import orders, substitution allowed");
+		beginTransaction();
+		Facility facility = getFacility();
+		String csvOrders = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,substituteAllowed\n" + 
+				"1111,1,ItemS1,ItemS1 Description 1,3,each,LocX24,1111,1,true";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+
+		LOGGER.info("2: Setup order on CHE and start pick");
+		picker.loginAndSetup("Worker1");
+		picker.setupContainer("1111", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		verifyCheDisplay(picker, "1 order", "1 job", "", "START (or SETUP)");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		verifyCheDisplay(picker, "LocX24", "ItemS1", "QTY 3", "SCAN SKU NEEDED");
+		
+		LOGGER.info("3: Short-pick 1 unit");
+		picker.scanSomething("ItemS1");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 4000);
+		picker.pick(1, 1);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 4000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		verifyCheDisplay(picker, "1 order", "0 jobs", "0 done     1 short", "SETUP");
+		
+		LOGGER.info("4: Restart pick and short-substitute 1 unit");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		verifyCheDisplay(picker, "LocX24", "ItemS1", "QTY 2", "SCAN SKU NEEDED");
+		picker.scanSomething(SUBSTITUTION_1);
+		picker.waitForCheState(CheStateEnum.SUBSTITUTION_CONFIRM, 4000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 4000);
+		picker.pick(1, 1);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 4000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		verifyCheDisplay(picker, "1 order", "0 jobs", "0 done     2 short", "SETUP");
+		
+		//Wait until pick propagates through the server
+		ThreadUtils.sleep(500);
+		
+		LOGGER.info("5: Verify DB state");
+		beginTransaction();
+		facility = facility.reload();
+		OrderHeader order1 = OrderHeader.staticGetDao().findByDomainId(facility, "1111");
+		Assert.assertEquals(OrderStatusEnum.SUBSTITUTION, order1.getStatus());
+		
+		OrderDetail detail1 = order1.getOrderDetail("1");
+		Assert.assertEquals(OrderStatusEnum.SUBSTITUTION, detail1.getStatus());
+		
+		List<WorkInstruction> wis = detail1.getWorkInstructions();
+		Assert.assertEquals(2, wis.size());
+		for (WorkInstruction wi : wis) {
+			if (wi.getPlanQuantity() == 3)  {
+				Assert.assertEquals(WorkInstructionStatusEnum.SHORT, wi.getStatus());
+				Assert.assertNull(wi.getSubstitution());
+			} else if (wi.getPlanQuantity() == 2){
+				Assert.assertEquals(WorkInstructionStatusEnum.SUBSTITUTION, wi.getStatus());
+				Assert.assertEquals(SUBSTITUTION_1, wi.getSubstitution());
+			} else {
+				Assert.fail("Unexpexted WI " + wi);
+			}
+		}
+		commitTransaction();
 	}
 	
 	/**
@@ -731,7 +810,7 @@ public class CheProcessPickSubstitution extends ServerTest{
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, order1.getStatus());
 		Assert.assertEquals(OrderStatusEnum.SUBSTITUTION, order2.getStatus());
 		Assert.assertEquals(OrderStatusEnum.SUBSTITUTION, order3.getStatus());
-		Assert.assertEquals(OrderStatusEnum.SHORT, order4.getStatus());
+		Assert.assertEquals(OrderStatusEnum.SUBSTITUTION, order4.getStatus());
 		Assert.assertEquals(OrderStatusEnum.SHORT, order5.getStatus());
 		
 		OrderDetail detail1 = order1.getOrderDetail("1111.1");
@@ -742,7 +821,7 @@ public class CheProcessPickSubstitution extends ServerTest{
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, detail1.getStatus());
 		Assert.assertEquals(OrderStatusEnum.SUBSTITUTION, detail2.getStatus());
 		Assert.assertEquals(OrderStatusEnum.SUBSTITUTION, detail3.getStatus());
-		Assert.assertEquals(OrderStatusEnum.SHORT, detail4.getStatus());
+		Assert.assertEquals(OrderStatusEnum.SUBSTITUTION, detail4.getStatus());
 		Assert.assertEquals(OrderStatusEnum.SHORT, detail5.getStatus());
 		
 		WorkInstruction wi1 = detail1.getWorkInstructions().get(0);
@@ -753,7 +832,7 @@ public class CheProcessPickSubstitution extends ServerTest{
 		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi1.getStatus());
 		Assert.assertEquals(WorkInstructionStatusEnum.SUBSTITUTION, wi2.getStatus());
 		Assert.assertEquals(WorkInstructionStatusEnum.SUBSTITUTION, wi3.getStatus());
-		Assert.assertEquals(WorkInstructionStatusEnum.SHORT, wi4.getStatus());
+		Assert.assertEquals(WorkInstructionStatusEnum.SUBSTITUTION, wi4.getStatus());	//This WI is a shorted substitution. COmes out as substitution
 		Assert.assertEquals(WorkInstructionStatusEnum.SHORT, wi5.getStatus());
 		Assert.assertNull(wi1.getSubstitution());
 		Assert.assertEquals(SUBSTITUTION_1, wi2.getSubstitution());

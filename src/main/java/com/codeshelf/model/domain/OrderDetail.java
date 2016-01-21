@@ -522,8 +522,10 @@ public class OrderDetail extends DomainObjectTreeABC<OrderHeader> {
 			}
 			anySubstitutions |= status == WorkInstructionStatusEnum.SUBSTITUTION;
 		}
-		if (qtyPicked >= getMinQuantity()) {
-			setStatus(anySubstitutions ? OrderStatusEnum.SUBSTITUTION : OrderStatusEnum.COMPLETE);
+		if (anySubstitutions){
+			setStatus(OrderStatusEnum.SUBSTITUTION);
+		} else if (qtyPicked >= getMinQuantity()) {
+			setStatus(OrderStatusEnum.COMPLETE);
 		} else if (anyToPick) {
 			setStatus(OrderStatusEnum.INPROGRESS);
 		} else {

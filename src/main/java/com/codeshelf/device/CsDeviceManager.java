@@ -41,6 +41,7 @@ import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.model.domain.Che.CheLightingEnum;
 import com.codeshelf.util.PcapRecord;
 import com.codeshelf.util.PcapRingBuffer;
@@ -530,9 +531,11 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 	public void sendNotificationMessage(final NotificationMessage message) {
 		//no longer sending worker events messages.  Using completeWorkInstruction on WorkBehavior instead
-		if (!WorkerEvent.EventType.COMPLETE.equals(message.getEventType())
-				&& !WorkerEvent.EventType.SHORT.equals(message.getEventType())) {
-			LOGGER.debug("Notify: Device={}; type={}", message.getDevicePersistentId(), message.getEventType());
+		EventType type = message.getEventType();
+		if (type != WorkerEvent.EventType.COMPLETE 
+				&& type != WorkerEvent.EventType.SUBSTITUTION
+				&& type != WorkerEvent.EventType.SHORT) {
+			LOGGER.debug("Notify: Device={}; type={}", message.getDevicePersistentId(), type);
 			clientEndpoint.sendMessage(message);
 		}
 	}
