@@ -2028,7 +2028,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				clearAllPosconsOnThisDevice();
 				setState(CheStateEnum.DO_PICK);
 			} else {
-				if ((this instanceof SetupOrdersDeviceLogic) && isSubstitutionAllowed()){
+				if ((this instanceof SetupOrdersDeviceLogic) && isSubstitutionAllowed() && !inScanStr.contains("%")){
 					SetupOrdersDeviceLogic ordersChe = ((SetupOrdersDeviceLogic) this);
 					ordersChe.setSubstitutionScan(inScanStr);
 					ordersChe.setRememberPreSubstitutionState(CheStateEnum.SCAN_SOMETHING);
@@ -2075,7 +2075,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				clearAllPosconsOnThisDevice();
 				setState(CheStateEnum.DO_PICK);
 			} else {
-				if ((this instanceof SetupOrdersDeviceLogic) && isSubstitutionAllowed()){
+				if ((this instanceof SetupOrdersDeviceLogic) && isSubstitutionAllowed() && !inScanStr.contains("%")){
 					SetupOrdersDeviceLogic ordersChe = ((SetupOrdersDeviceLogic) this);
 					ordersChe.setSubstitutionScan(inScanStr);
 					ordersChe.setRememberPreSubstitutionState(CheStateEnum.SCAN_SOMETHING);
