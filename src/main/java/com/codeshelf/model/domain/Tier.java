@@ -29,6 +29,7 @@ import com.codeshelf.model.TierBayComparable;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -355,14 +356,20 @@ public class Tier extends Location {
 		setPoscons(startingIndex, false);
 	}
 
-	public void setPoscons(int startingIndex, boolean reverseOrder) {
+	public void setPoscons(int startingIndex, boolean reverseOrder) throws InputValidationException{
 		LedController ledController = this.getLedController();
 		if (ledController == null) {
-			LOGGER.warn("Failed to set poscons on " + this + ": Tier has no LedController.");
+			// Change this to give good UI feedback
+			/*
+			DefaultErrors errors = new DefaultErrors(Item.class);
+			errors.reject(ErrorCode.FIELD_GENERAL,"Failed to set poscons on " + this.getBestUsableLocationName() + ": Tier has no direct device controller.");
+			throw new InputValidationException(errors);
+			*/
+			LOGGER.warn("Failed to set poscons on " + this.getBestUsableLocationName() + ": Tier has no direct device controller.");
 			return;
 		}
 		if (ledController.getDeviceType() != DeviceType.Poscons) {
-			LOGGER.warn("Failed to set poscons on " + this + ": LedController " + ledController
+			LOGGER.warn("Failed to set poscons on " + this.getBestUsableLocationName() + ": controller " + ledController
 					+ " is not of device type Poscon.");
 			return;
 		}
