@@ -25,6 +25,7 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
+import com.codeshelf.util.ThreadUtils;
 
 /**
  * This replicates the essence of a few situation seen in production.
@@ -416,6 +417,9 @@ public class CheProcessPickExceptions extends ServerTest {
 		picker.assertPosconDisplayOc(1); // sort of a bug here. site controller thinks it is done, but we only picked two of three
 		picker.assertPosconDisplayOc(2);
 
+		//Wait for pick to propagate through server
+		ThreadUtils.sleep(500);
+		
 		beginTransaction();
 		facility = facility.reload();
 		OrderHeader oh1 = OrderHeader.staticGetDao().findByDomainId(facility, "11111");
