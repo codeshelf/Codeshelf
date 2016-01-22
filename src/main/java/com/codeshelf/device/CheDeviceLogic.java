@@ -2096,10 +2096,18 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 	}
 
+	/**
+	 * Determine if any wis in the active list or later ones that much the active list have substituteAllowed = true 
+	 */
 	private boolean isSubstitutionAllowed(){
 		for (WorkInstruction wi : getActivePickWiList()){
 			if (wi.getSubstituteAllowed()) {
 				return true;
+			}
+			for (WorkInstruction wi2 : mAllPicksWiList) {
+				if (sameProductLotEtc(wi2, wi) && laterWi(wi2, wi) && wi2.getSubstituteAllowed()){
+					return true;
+				}
 			}
 		}
 		return false;
@@ -2115,6 +2123,44 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Override
 	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, String cheName, byte[] linkedToCheGuid) {
 		// TODO update internals
+
+		return false;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * The inShortWi was just shorted.
+	 * Is inProposedWi later in sequence?
+	 */
+	protected Boolean laterWi(final WorkInstruction inProposedWi, final WorkInstruction inCurrentWi) {
+		String proposedSort = inProposedWi.getGroupAndSortCode();
+		String currentSort = inCurrentWi.getGroupAndSortCode();
+		if (proposedSort == null) {
+			LOGGER.error("laterWiSameProduct has wi with no sort code");
+			return false;
+		}
+		if (currentSort.compareTo(proposedSort) < 0)
+			return true;
+
+		return false;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The inShortWi was just shorted.
+	 * Is inProposedWi equivalent enough that it should also short?
+	 */
+	protected Boolean sameProductLotEtc(final WorkInstruction inProposedWi, WorkInstruction inCurrentWi) {
+		// Initially, just look at the denormalized item Id.
+		String currentId = inCurrentWi.getItemId();
+		String proposedId = inProposedWi.getItemId();
+		if (currentId == null || proposedId == null) {
+			LOGGER.error("sameProductLotEtc has null value");
+			return false;
+		}
+		if (currentId.compareTo(proposedId) == 0) {
+			return true;
+		}
 
 		return false;
 	}

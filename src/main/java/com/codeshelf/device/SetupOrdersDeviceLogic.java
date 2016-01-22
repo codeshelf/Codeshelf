@@ -923,7 +923,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			case SUBSTITUTION_CONFIRM:
 				if (YES_COMMAND.equalsIgnoreCase(inScanStr)) {
 					doShortsAndSubstitutionsAheads(getOneActiveWorkInstruction(), getSubstitutionScan());
-					setState(CheStateEnum.DO_PICK);
+					if (mActivePickWiList.isEmpty()) {
+						WorkInstruction upcomingWi = mAllPicksWiList.get(0);
+						doNextItemWithPossibleFlashingThread(upcomingWi.isHousekeeping());
+					} else {
+						showActivePicks();
+					}
+					//setState(CheStateEnum.DO_PICK);
 				} else {
 					setState(getRememberPreSubstitutionState());
 				}
@@ -1033,7 +1039,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			// Depends on AUTOSHRT parameter
 			if (autoShortOn) {
-				doShortsAndSubstitutionsAheads(wi, null); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
+				doShortsAheads(wi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
 			}
 		}
 		// If AUTOSHRT if off, there still might be other jobs in active pick list. If on, any remaining there would be shorted and removed.
@@ -1323,44 +1329,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * The inShortWi was just shorted.
-	 * Is inProposedWi later in sequence?
-	 */
-	private Boolean laterWi(final WorkInstruction inProposedWi, final WorkInstruction inShortWi) {
-		String proposedSort = inProposedWi.getGroupAndSortCode();
-		String shortedSort = inShortWi.getGroupAndSortCode();
-		if (proposedSort == null) {
-			LOGGER.error("laterWiSameProduct has wi with no sort code");
-			return false;
-		}
-		if (shortedSort.compareTo(proposedSort) < 0)
-			return true;
-
-		return false;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * The inShortWi was just shorted.
-	 * Is inProposedWi equivalent enough that it should also short?
-	 */
-	private Boolean sameProductLotEtc(final WorkInstruction inProposedWi, WorkInstruction inShortWi) {
-		// Initially, just look at the denormalized item Id.
-		String shortId = inShortWi.getItemId();
-		String proposedId = inProposedWi.getItemId();
-		if (shortId == null || proposedId == null) {
-			LOGGER.error("sameProductLotEtc has null value");
-			return false;
-		}
-		if (shortId.compareTo(proposedId) == 0) {
-			return true;
-		}
-
-		return false;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
 	 * Is this an uncompleted housekeeping WI, that if just ahead of a short-ahead job is no longer needed?
 	 * Calling context is just ahead of short-ahead, so this does not need to try to check that. But knowing that, can look for other possible errors.
 	 */
@@ -1391,6 +1359,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
 	}
 
+	private void doShortsAheads(final WorkInstruction inChangedWi) {
+		doShortsAndSubstitutionsAheads(inChangedWi, null);
+	}
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * This function is called in 2 situatinos:

@@ -1,6 +1,6 @@
 orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,gtin,substituteAllowed
-1111,1,ItemS1,,11,each,LocX24,1111,1,,TRUE
-1111,2,ItemS1,,22,each,LocX24,1111,2,,
+1111,1,ItemS1,,11,each,LocX24,1111,1,,
+1111,2,ItemS1,,22,each,LocX24,1111,2,,TRUE
 1111,3,ItemS1,,33,each,LocX24,1111,3,,TRUE
 1111,4,ItemS1,,44,each,LocX24,1111,4,,TRUE
 1111,5,ItemS1,,55,each,LocX24,1111,5,,
