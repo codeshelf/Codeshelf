@@ -1470,7 +1470,8 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_C);
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_B, picker.getLastSentPositionControllerMaxQty((byte) 1));
-		picker.buttonPress(1, 0);
+		// picker.buttonPress(1, 0);
+		picker.buttonPress(1,PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 
 		// The main purpose of the test.
 		LOGGER.info("7: verify the correct quantity on position 2, and nothing on position 1");
@@ -1525,9 +1526,13 @@ public class CheProcessTestPickFeedback extends ServerTest {
 
 		LOGGER.info("4: When picking for order 2, press button for order 1, ensure that nothing changes");
 		Assert.assertEquals(22, (int) picker.getLastSentPositionControllerDisplayValue(2));
-		picker.buttonPress(1);
+		picker.buttonPress(1); // this form works, but might be fragile. What came on the button?
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		Assert.assertEquals(22, (int) picker.getLastSentPositionControllerDisplayValue(2));
+
+		LOGGER.info("4b: User erroneously presses the OC button. No harm. See the WARN in the log.");
+		picker.buttonPress(1, PosControllerInstr.BITENCODED_SEGMENTS_CODE); // This is how it really comes.
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 
 		LOGGER.info("5: Pick first item in order 1, ensure that Housekeeping comes up on poscon 2");
 		picker.buttonPress(2);
@@ -1536,13 +1541,13 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_R, picker.getLastSentPositionControllerMinQty((byte) 2));
 
 		LOGGER.info("6: Press poscon 1, ensure that nothing changes");
-		picker.buttonPress(1);
+		picker.buttonPress(1); // probably impossible. If nothing on 1, button press will not come.
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, picker.getLastSentPositionControllerDisplayValue(2));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_R, picker.getLastSentPositionControllerMinQty((byte) 2));
 
 		LOGGER.info("7: Press poscon 2, ensure that the second item in order 2 is displayed");
-		picker.buttonPress(2);
+		picker.buttonPress(2, PosControllerInstr.BITENCODED_SEGMENTS_CODE); // as it really happens
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		Assert.assertEquals(33, (int) picker.getLastSentPositionControllerDisplayValue(2));
 

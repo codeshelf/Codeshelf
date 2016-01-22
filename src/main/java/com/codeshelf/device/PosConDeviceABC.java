@@ -27,16 +27,16 @@ import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
 
 public abstract class PosConDeviceABC extends DeviceLogicABC {
-	private static final Logger				LOGGER	= LoggerFactory.getLogger(PosConDeviceABC.class);
+	private static final Logger				LOGGER				= LoggerFactory.getLogger(PosConDeviceABC.class);
 
 	@Accessors(prefix = "m")
 	@Getter
 	private Map<Byte, PosControllerInstr>	mPosToLastSetIntrMap;
-	
+
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private CheLightingEnum							mCheLightingEnum						= CheLightingEnum.POSCON_V1;
+	private CheLightingEnum					mCheLightingEnum	= CheLightingEnum.POSCON_V1;
 
 	public PosConDeviceABC(UUID inPersistentId, NetGuid inGuid, CsDeviceManager inDeviceManager, IRadioController inRadioController) {
 		super(inPersistentId, inGuid, inDeviceManager, inRadioController);
@@ -69,11 +69,11 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 	}
 
 	protected void sendPositionControllerInstructions(List<PosControllerInstr> inInstructions) {
-		if (getCheLightingEnum() == CheLightingEnum.LABEL_V1){
+		if (getCheLightingEnum() == CheLightingEnum.LABEL_V1) {
 			LOGGER.info("Not sending PosCon commands, as this device has lighting mode " + getCheLightingEnum());
 			return;
 		}
-		
+
 		if (inInstructions.isEmpty()) {
 			LOGGER.error("sendPositionControllerInstructions called for empty instructions");
 			return;
@@ -359,19 +359,20 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 				String forContainer = getButtonPurpose(buttonNum);
 				String reasonBadButtonPress = tellIfNotLegitimateButtonPress(buttonNum, showingQuantity);
 				if (!reasonBadButtonPress.isEmpty()) {
-					LOGGER.info(reasonBadButtonPress);					
-				}
-				else if (forContainer != null)
+					LOGGER.info(reasonBadButtonPress);
+				} else if (forContainer != null)
 					LOGGER.info("Button #{} pressed with quantity {} for order/cntr:{}", buttonNum, showingQuantity, forContainer);
 				else
 					LOGGER.info("Button #{} pressed with quantity {}", buttonNum, showingQuantity);
 			} else {
+				boolean housekeepButtonPress = false;
 				String display = "unexpected value " + showingQuantity;
 				// DEV-1287 getLastSentPositionControllerDisplayValue may return null. Don't NPE by directly assigning it to a byte
 				Byte displayedByteValue = getLastSentPositionControllerDisplayValue((byte) buttonNum);
 				if (displayedByteValue == null) {
 					display = "??";
-					LOGGER.error("unhandled value in notifyButton. showingQuantity is {}, but getLast returns null", showingQuantity);
+					LOGGER.error("unhandled value in notifyButton. showingQuantity is {}, but getLast returns null",
+						showingQuantity);
 				} else {
 					byte displayedValue = displayedByteValue;
 					if (displayedValue == PosControllerInstr.BITENCODED_SEGMENTS_CODE) {
@@ -387,11 +388,26 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 								&& min == PosControllerInstr.BITENCODED_TRIPLE_DASH) {
 							display = "triple dash";
 						} else if (max == PosControllerInstr.BITENCODED_LED_O && min == PosControllerInstr.BITENCODED_LED_C) {
-							display = "OC (order complete)";
+							display = "'oc' (order complete)";
+						} else if (max == PosControllerInstr.BITENCODED_LED_B && min == PosControllerInstr.BITENCODED_LED_C) {
+							display = "'bc' (bay change)";
+							housekeepButtonPress = true;
+						} else if (max == 0 && min == PosControllerInstr.BITENCODED_LED_R) {
+							display = "'r' (repeat)";
+							housekeepButtonPress = true;
+						} else if (max == 0 && min == PosControllerInstr.BITENCODED_DIGITS[0]) {
+							display = "leading zero digits";
+							// should see this only on order feedback. No button press needed for this.
+						} else if (max == 0&& min == PosControllerInstr.BITENCODED_LED_E) {
+							display = "'E' (error)";
 						}
 					}
 				}
-				LOGGER.warn("Button #{} pressed with {}", buttonNum, display);
+				// DEV-1437. BayChange and RepeatContainer button presses are valid. Do those as info and not warn.
+				if (housekeepButtonPress)
+					LOGGER.info("Button #{} pressed with {}", buttonNum, display);
+				else
+					LOGGER.warn("Button #{} pressed with {}", buttonNum, display); // if "unexpected segmented value" almost worthy of an error. How would we get anything else?
 			}
 
 		} finally {
@@ -463,7 +479,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
 		}
 	}
-	
+
 	//--------------------------
 	/**
 	 * CHE_DISPLAY notifies
