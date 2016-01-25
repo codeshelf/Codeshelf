@@ -200,9 +200,11 @@ public class ImportResource {
 		try {
 			ArrayList<Criterion> filter = Lists.newArrayList();
 			filter.add(Restrictions.eq("parent", facility));
-			Interval receivedInterval = received.getValue();
-			if (receivedInterval != null) {
-				filter.add(createIntervalRestriction("received", receivedInterval));
+			if (received !=null) {
+				Interval receivedInterval = received.getValue();
+				if (receivedInterval != null) {
+					filter.add(createIntervalRestriction("received", receivedInterval));
+				}
 			}
 			if (!Strings.isNullOrEmpty(orderIds)) {
 				filter.add(createSubstringRestriction("orderIds", orderIds));
