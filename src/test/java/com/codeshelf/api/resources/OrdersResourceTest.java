@@ -302,7 +302,10 @@ public class OrdersResourceTest extends ServerTest {
 		OrderStatusEnum status789d = oh789d.getStatus();
 		OrderStatusEnum status123d = oh123d.getStatus();
 		Assert.assertEquals(OrderStatusEnum.RELEASED, status789d);
-		LOGGER.info("For the moment, INPROGRESS. But will be RELEASED once the delete happens in the new API");
+		// DEV-1444/DEV-1441
+		// For the moment, INPROGRESS, which is wrong. But due to DEV-1444, it shows the order was not deleted then reimported.
+		// After DEV-1444 fix, this will not prove deletion happened.
+		
 		Assert.assertEquals(OrderStatusEnum.INPROGRESS, status123d);
 		commitTransaction();
 
