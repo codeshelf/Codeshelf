@@ -21,7 +21,6 @@ import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 
 public class OrderReimportTest extends ServerTest {
-	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(OrderReimportTest.class);
 
 	@Test
