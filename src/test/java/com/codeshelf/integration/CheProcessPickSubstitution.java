@@ -730,7 +730,11 @@ public class CheProcessPickSubstitution extends ServerTest{
 	}
 	
 	/**
-	 * Five (sequential-pick) orders. Pick first, substitute second (without it asking for verification), substitute third for something else, short fourth by some amount, auto-short fifth
+	 * Five (sequential-pick) orders. 
+	 * Pick first.
+	 * Substitute second (without it asking for verification).
+	 * Substitute third for something else and short by some amount. This will not auto-short fourth.
+	 * Short fourth completely. This should auto-short fifth.
 	 */
 	@Test
 	public void testSubstitutionSequential2() throws IOException {
@@ -777,24 +781,33 @@ public class CheProcessPickSubstitution extends ServerTest{
 		picker.waitInSameState(CheStateEnum.DO_PICK, 400);
 		verifyCheDisplay(picker, "LocX24", SUBSTITUTION_1, "QTY 21", "");
 		
-		LOGGER.info("5: Substitute third item for something else");
+		LOGGER.info("5: Substitute third item for something else, and short by some amount");
 		picker.scanSomething(SUBSTITUTION_2);
 		picker.waitForCheState(CheStateEnum.SUBSTITUTION_CONFIRM, 4000);
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		verifyCheDisplay(picker, "LocX24", SUBSTITUTION_2, "QTY 21", "");
-		picker.pickItemAuto();
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SHORT_PICK, 4000);
+		picker.pick(3, 3);
+		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 4000);
+		picker.scanCommand("YES");
 		picker.waitInSameState(CheStateEnum.DO_PICK, 400);
 		verifyCheDisplay(picker, "LocX24", SUBSTITUTION_2, "QTY 16", "");
 		
-		LOGGER.info("6: Short the fourth item by some amount. Should also auto-short the fifth");
+		LOGGER.info("6: Short the fourth item completely. Should also auto-short the fifth");
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 4000);
-		picker.pick(4, 3);
+		picker.pick(4, 0);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 4000);
 		picker.scanCommand("YES");
+		//picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		//verifyCheDisplay(picker, "LocX24", SUBSTITUTION_2, "QTY 9", "");
+		
+		//LOGGER.info("7: Pick the fifth item");
+		//picker.pickItemAuto();
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
-		verifyCheDisplay(picker, "5 orders", "0 jobs", "3 done     2 short", "SETUP");
+		verifyCheDisplay(picker, "5 orders", "0 jobs", "2 done     3 short", "SETUP");
 		
 		//Wait until picks propagate through the server
 		ThreadUtils.sleep(500);
@@ -810,7 +823,7 @@ public class CheProcessPickSubstitution extends ServerTest{
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, order1.getStatus());
 		Assert.assertEquals(OrderStatusEnum.SUBSTITUTION, order2.getStatus());
 		Assert.assertEquals(OrderStatusEnum.SUBSTITUTION, order3.getStatus());
-		Assert.assertEquals(OrderStatusEnum.SUBSTITUTION, order4.getStatus());
+		Assert.assertEquals(OrderStatusEnum.SHORT, order4.getStatus());
 		Assert.assertEquals(OrderStatusEnum.SHORT, order5.getStatus());
 		
 		OrderDetail detail1 = order1.getOrderDetail("1111.1");
@@ -821,7 +834,7 @@ public class CheProcessPickSubstitution extends ServerTest{
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, detail1.getStatus());
 		Assert.assertEquals(OrderStatusEnum.SUBSTITUTION, detail2.getStatus());
 		Assert.assertEquals(OrderStatusEnum.SUBSTITUTION, detail3.getStatus());
-		Assert.assertEquals(OrderStatusEnum.SUBSTITUTION, detail4.getStatus());
+		Assert.assertEquals(OrderStatusEnum.SHORT, detail4.getStatus());
 		Assert.assertEquals(OrderStatusEnum.SHORT, detail5.getStatus());
 		
 		WorkInstruction wi1 = detail1.getWorkInstructions().get(0);
@@ -832,7 +845,7 @@ public class CheProcessPickSubstitution extends ServerTest{
 		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi1.getStatus());
 		Assert.assertEquals(WorkInstructionStatusEnum.SUBSTITUTION, wi2.getStatus());
 		Assert.assertEquals(WorkInstructionStatusEnum.SUBSTITUTION, wi3.getStatus());
-		Assert.assertEquals(WorkInstructionStatusEnum.SUBSTITUTION, wi4.getStatus());	//This WI is a shorted substitution. COmes out as substitution
+		Assert.assertEquals(WorkInstructionStatusEnum.SHORT, wi4.getStatus());	//This WI is a shorted substitution. COmes out as substitution
 		Assert.assertEquals(WorkInstructionStatusEnum.SHORT, wi5.getStatus());
 		Assert.assertNull(wi1.getSubstitution());
 		Assert.assertEquals(SUBSTITUTION_1, wi2.getSubstitution());

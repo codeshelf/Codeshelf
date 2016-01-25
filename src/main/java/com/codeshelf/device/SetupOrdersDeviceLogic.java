@@ -1038,7 +1038,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			clearLedAndPosConControllersForWi(wi); // wrong? What about any short aheads?
 
 			// Depends on AUTOSHRT parameter
-			if (autoShortOn) {
+			//Also, if the current WI is being substituted, don't auto-short following WIs
+			if (autoShortOn && (inPicked == 0 || wi.getSubstitution() == null)) {
 				doShortsAheads(wi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
 			}
 		}

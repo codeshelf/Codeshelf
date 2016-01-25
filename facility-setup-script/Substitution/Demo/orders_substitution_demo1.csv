@@ -1,0 +1,13 @@
+orderId,orderDetailId,itemId,quantity,uom,locationId,preAssignedContainerId,workSequence,substituteAllowed
+1111,1,ItemS1,5,each,LocX24,1111,1,
+1111,2,ItemS2,10,each,LocX24,1111,2,TRUE
+1111,3,ItemS3,15,each,LocX24,1111,3,TRUE
+1111,4,ItemM1,20,each,LocX24,1111,4,
+2222,5,ItemM1,25,each,LocX24,2222,5,
+1111,6,ItemM2,30,each,LocX24,1111,6,TRUE
+2222,7,ItemM2,35,each,LocX24,2222,7,TRUE
+1111,8,ItemM3,5,each,LocX24,1111,8,TRUE
+2222,9,ItemM3,7,each,LocX24,2222,9,TRUE
+1111,10,ItemM4,50,each,LocX24,1111,10,
+2222,11,ItemM4,55,each,LocX24,2222,11,TRUE
+3333,12,ItemM4,60,each,LocX24,3333,12,
