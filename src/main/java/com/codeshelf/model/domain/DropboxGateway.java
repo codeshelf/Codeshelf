@@ -20,7 +20,6 @@ import java.util.Locale;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.Transient;
 
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;

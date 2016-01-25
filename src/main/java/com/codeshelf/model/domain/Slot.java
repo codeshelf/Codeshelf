@@ -17,6 +17,8 @@ import com.codeshelf.model.SlotComparable;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.util.FormUtility;
+import com.codeshelf.validation.ErrorCode;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
 // --------------------------------------------------------------------------
@@ -86,13 +88,14 @@ public class Slot extends Location {
 		short firstLed = parseShort(firstLedStr);
 		short lastLed = parseShort(lastLedStr);
 		if (firstLed > lastLed) {
-			throw new IllegalArgumentException("First led id " + firstLed + " is larger than last id " + lastLed);
+			FormUtility.throwUiValidationException("LED Values", "First led id " + firstLed + " is larger than last id " + lastLed, ErrorCode.FIELD_INVALID);
 		}
 		Location tier = getParent();
 		short tierFirstLed = tier.getFirstLedNumAlongPath();
 		short tierLastLed = tier.getLastLedNumAlongPath();
 		if (tierFirstLed > firstLed || tierLastLed < lastLed){
-			throw new IllegalArgumentException(String.format("Provided interval %d-%d does not fit within current Tier's bounds %d-%d", firstLed, lastLed, tierFirstLed, tierLastLed));
+			String error = String.format("Provided interval [%d, %d] does not fit within current Tier's bounds [%d, %d]", firstLed, lastLed, tierFirstLed, tierLastLed);
+			FormUtility.throwUiValidationException("LED Values", error, ErrorCode.FIELD_INVALID);
 		}
 		setFirstLedNumAlongPath(firstLed);
 		setLastLedNumAlongPath(lastLed);
