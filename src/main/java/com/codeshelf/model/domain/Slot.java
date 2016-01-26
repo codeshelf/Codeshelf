@@ -74,6 +74,30 @@ public class Slot extends Location {
 		return true;
 	}
 	
+	@Override
+	public String getMetersFromLeft() {
+		// nearly cloned from Bay.getMetersFromLeft()
+		Aisle aisle = this.getParentAtLevel(Aisle.class);
+		Tier tier = this.getParentAtLevel(Tier.class);
+		if (aisle == null || tier == null || aisle.getPathSegment()== null)
+			return "";
+		boolean leftB1S1 = aisle.isLeftSideTowardB1S1();
+		boolean pathFromAnchor = aisle.isPathIncreasingFromAnchor();
+		Double tierValue = tier.getPosAlongPath();
+		Double slotValue = this.getPosAlongPath();
+		// Hurts to think about it, but it comes down to this simple difference
+		if (leftB1S1 != pathFromAnchor) {
+			tierValue = tierValue + tier.getLocationWidthMeters();
+			slotValue = slotValue + this.getLocationWidthMeters();
+		}
+		// depending on how the user set up the path relative to aisle, values could be not quite exact.
+		Double diff = Math.abs(tierValue - slotValue);
+		if (diff < .01)
+			return "0";
+		return String.format("%.2f", diff);
+	}
+
+	
 	public static Slot as(Location location) {
 		if (location==null) {
 			return null;

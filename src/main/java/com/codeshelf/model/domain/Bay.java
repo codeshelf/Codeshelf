@@ -136,12 +136,13 @@ public class Bay extends Location {
 		Double bayValue = this.getPosAlongPath();
 		// Hurts to think about it, but it comes down to this simple difference
 		if (leftB1S1 != pathFromAnchor) {
-			aisleValue = aisleValue - aisle.getLocationWidthMeters();
-			bayValue = bayValue - this.getLocationWidthMeters();
+			aisleValue = aisleValue + aisle.getLocationWidthMeters();
+			bayValue = bayValue + this.getLocationWidthMeters();
 		}
-		if (aisleValue == bayValue)
-			return "0";
+		// depending on how the user set up the path relative to aisle, values could be not quite exact.
 		Double diff = Math.abs(aisleValue - bayValue);
+		if (diff < .01)
+			return "0";
 		return String.format("%.2f", diff);
 	}
 
