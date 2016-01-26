@@ -1524,9 +1524,13 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_O, picker.getLastSentPositionControllerMaxQty((byte) 1));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_C, picker.getLastSentPositionControllerMinQty((byte) 1));
 
+		LOGGER.info("3b: As if the poscon missed the messages and is still showing 1, use presses again. See the WARN in the log.");
+		picker.buttonPress(1, 1); 
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
 		LOGGER.info("4: When picking for order 2, press button for order 1, ensure that nothing changes");
 		Assert.assertEquals(22, (int) picker.getLastSentPositionControllerDisplayValue(2));
-		picker.buttonPress(1); // this form works, but might be fragile. What came on the button?
+		picker.buttonPress(1); // this form works to simulate "oc" press, but might be fragile. What came on the button?
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		Assert.assertEquals(22, (int) picker.getLastSentPositionControllerDisplayValue(2));
 
