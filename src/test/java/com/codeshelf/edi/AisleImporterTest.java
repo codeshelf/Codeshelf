@@ -2770,10 +2770,11 @@ public class AisleImporterTest extends MockDaoTest {
 		Assert.assertEquals("", aisle31.getMetersFromLeft());
 		Assert.assertEquals("", aisle32.getMetersFromLeft());
 		Assert.assertEquals("1.15", bayA32B1.getMetersFromLeft());
-		Assert.assertEquals("2.82", bayA31B1.getMetersFromLeft());
-		Assert.assertEquals("2.82", tierA31B1T1.getMetersFromLeft());
+		Assert.assertEquals("0", bayA31B1.getMetersFromLeft());
+		Assert.assertEquals("0", tierA31B1T1.getMetersFromLeft());
 		Assert.assertEquals("1.15", tierA32B1T1.getMetersFromLeft());
-		Assert.assertEquals("", slotA32B1T1S1.getMetersFromLeft());
+		Assert.assertEquals("0.92", slotA32B1T1S1.getMetersFromLeft());
+		Assert.assertEquals("0", slotA32B1T1S5.getMetersFromLeft());
 
 
 		this.getTenantPersistenceService().commitTransaction();
