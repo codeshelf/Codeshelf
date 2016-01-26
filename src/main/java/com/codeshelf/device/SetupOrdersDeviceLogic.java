@@ -129,7 +129,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Getter
 	@Setter
 	private int									mRememberPriorShorts					= 0;
-	
+
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
@@ -441,7 +441,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 				default:
 					break;
-					
+
 				case SUBSTITUTION_CONFIRM:
 					clearAllPosconsOnThisDevice();
 					WorkInstruction activeWi = getOneActiveWorkInstruction();
@@ -449,7 +449,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 						LOGGER.warn("Somehow got null from getOneActiveWorkInstruction() when entering the SUBSTITUTION_CONFIRM state");
 						sendDisplayCommand("Substitute " + getSubstitutionScan() + "?", EMPTY_MSG);
 					} else {
-						sendDisplayCommand("Substitute " + getSubstitutionScan(), "For " + getOneActiveWorkInstruction().getItemId() + "?");
+						sendDisplayCommand("Substitute " + getSubstitutionScan(), "For "
+								+ getOneActiveWorkInstruction().getItemId() + "?");
 					}
 					break;
 			}
@@ -824,7 +825,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setSubstitutionScan(null);
 				setState(getRememberPreSubstitutionState());
 				break;
-				
+
 			default:
 				//Reset ourselves
 				//Ideally we shouldn't have to clear poscons here
@@ -982,7 +983,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private boolean feedbackCountersValid() {
 		return mContainerToWorkInstructionCountMap != null;
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * call the short transaction
@@ -1363,7 +1364,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private void doShortsAheads(final WorkInstruction inChangedWi) {
 		doShortsAndSubstitutionsAheads(inChangedWi, null);
 	}
-	
+
 	// --------------------------------------------------------------------------
 	/**
 	 * This function is called in 2 situatinos:
@@ -1392,7 +1393,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		// Algorithm. Assemble what we want to short
 		List<WorkInstruction> toShortList = new ArrayList<WorkInstruction>();
-		
+
 		// Find short aheads from the active picks first, which might have lower sort values.
 		// If we are shorting the inShortWi, there should be no housekeeps in the active pick list.
 		for (WorkInstruction wi : getActivePickWiList()) {
@@ -1401,20 +1402,20 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 			boolean substituteThisWi = substitution != null && wi.getSubstituteAllowed();
 			//if (!wi.equals(inChangedWi) && sameProductLotEtc(wi, inChangedWi) && !substituteThisWi){
-			if (sameProductLotEtc(wi, inChangedWi) && !substituteThisWi){
+			if (sameProductLotEtc(wi, inChangedWi) && !substituteThisWi) {
 				//Short the WI
 				toShortCount++;
 				toShortList.add(wi);
 			}
 		}
-		
+
 		// Now look for later work instructions to short, and remove housekeeps as necessary.
 		WorkInstruction prevWi = null;
 		for (WorkInstruction wi : mAllPicksWiList) {
 			if (sameProductLotEtc(wi, inChangedWi)) {
-				if (substitution != null && wi.getSubstituteAllowed()){
+				if (substitution != null && wi.getSubstituteAllowed()) {
 					substitutedCount++;
-					wi.setSubstitution(substitution);						
+					wi.setSubstitution(substitution);
 				} else if (laterWi(wi, inChangedWi)) {
 					// might be already in the list from above
 					if (!toShortList.contains(wi)) {
@@ -1450,7 +1451,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				reportShortAheadDetails += " Also removed " + removeHousekeepCount + " housekeeping instructions.";
 			LOGGER.info(reportShortAheadDetails);
 		}
-		if (substitutedCount > 0){
+		if (substitutedCount > 0) {
 			LOGGER.info("Set substitution field to " + substitution + " in " + substitutedCount + " upcoming jobs");
 		}
 
@@ -1921,7 +1922,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 
 	}
-	
+
 	/**
 	 * Use the configuration system to return custom setup MSG. Defaults to "SCAN ORDER"
 	 */
@@ -2069,17 +2070,19 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		setState(CheStateEnum.SETUP_SUMMARY);
 	}
 
-	private void processPosconScanToPick(String inScanPrefixStr, String inContent){
+	private void processPosconScanToPick(String inScanPrefixStr, String inContent) {
 		try {
 			byte position = Byte.parseByte(inContent);
 			//Try to retrieve the displayed value to allow for shorts
 			Integer value = null;
-			if (getCheLightingEnum() == CheLightingEnum.LABEL_V1){
+			if (getCheLightingEnum() == CheLightingEnum.LABEL_V1) {
 				//If the CHE is in LABEL light mode, Poscons will be blank, so read planed quantity from the WI
 				String containerId = mPositionToContainerMap.get(inContent);
 				WorkInstruction wi = getWorkInstructionForContainerId(containerId);
-				if (wi == null){
-					LOGGER.warn("Ignoring {}{} scan, as could not retrieve the work instruction at that position", inScanPrefixStr, inContent);
+				if (wi == null) {
+					LOGGER.warn("Ignoring {}{} scan, as could not retrieve the work instruction at that position",
+						inScanPrefixStr,
+						inContent);
 					return;
 				}
 				value = wi.getPlanQuantity();
@@ -2088,12 +2091,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				value = displayedValue == null ? null : displayedValue.intValue();
 			}
 			//Simulate button press
-			processButtonPress((int)position, value);
-		} catch (NumberFormatException e){
+			processButtonPress((int) position, value);
+		} catch (NumberFormatException e) {
 			LOGGER.error("Ignoring {}{} scan as could not parse it as byte", inScanPrefixStr, inContent);
 		}
 	}
-	
+
 	/**
 	 * A series of private functions giving the overall state of the setup
 	 * How many jobs on not being done for this setup? Includes uncompleted wi other paths, and details with no wi made
@@ -2516,7 +2519,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processContainerPosition(COMMAND_PREFIX, inScanStr);
 				break;
 
-			case SETUP_SUMMARY:				
+			case SETUP_SUMMARY:
 				// Normally, start work here would hit the default case below, calling start work() which queries to server again
 				// ultimately coming back to SETUP_SUMMARY state. However, if okToStartWithoutLocation, then start scan moves us forward
 				boolean reverseOrderFromLastTime = getMReversePickOrder() != reverse;
@@ -2670,7 +2673,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Override
 	protected void processNormalPick(WorkInstruction inWi, Integer inQuantity) {
 		inWi.setCompleteState(mUserId, inQuantity);
-		
+
 		EventType eventType = EventType.COMPLETE;
 		if (getCheStateEnum() == CheStateEnum.DO_PUT) {
 			if (inWi.getOrderDetail() == null) {
@@ -2679,12 +2682,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				eventType = EventType.COMPLETE;
 			}
 		}
-		
-		if (inWi.getSubstitution() != null){
+
+		if (inWi.getSubstitution() != null) {
 			inWi.setStatus(WorkInstructionStatusEnum.SUBSTITUTION);
 			eventType = EventType.SUBSTITUTION;
 		}
-		
+
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
 		notifyWiVerb(inWi, eventType, kLogAsInfo);
 
@@ -2864,7 +2867,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.CONTAINER_SELECT);
 				return;
 			default: {
-				LOGGER.warn("Unexpected button press ignored. OR invalid pick() call by some unit test.");
+				// See a few of these if the poscon clear did not take, the user presses that button again.
+				// But most are the user pressing "oc" or dashes, etc. Just noise.
+				// Try to log the ones distinctively that might show an error. Filter for "ignored with value"
+				if (inQuantity != null && inQuantity > 0 && inQuantity < 10)
+					LOGGER.warn("Unexpected button press ignored with value {}", inQuantity);
+				else
+					LOGGER.warn("Unexpected button press ignored."); // don't represent the value here. Complicated if a bit encoded one.
 				// We want to ignore the button press, but force out starting poscon situation again.
 				setState(mCheStateEnum);
 				return;
@@ -2892,7 +2901,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (wi == null) {
 				// DEV-1318 Most likely cause of no work instruction is it was just completed, but the poscon message did not get through to the poscon
 				// Therefore, user is pressing the button again. Let's make sure we send out the poscon again and not just silently ignore button press
-				LOGGER.warn("Not processing button because no work instruction remains at that position. But refreshing the displays.");
+				// Most are the user pressing "oc" or dashes, etc. Just noise.
+				// Try to log the ones distinctively that might show an error. Filter for "ignored with value"
+				if (inQuantity != null && inQuantity > 0 && inQuantity < 10) {
+					LOGGER.warn("Button {} has no workinstruction. Press ignored with value {}", inButtonNum, inQuantity);
+					// This is the likely bug of poscon clear did not happen. Should be no way a poscon has a count without a work instruction.
+				} else {
+					LOGGER.warn("Not processing button because no work instruction remains at that position. But refreshing the displays.");
+				}
 				setState(mCheStateEnum);
 				return;
 			} else if (wi.isHousekeeping()) {
@@ -3219,7 +3235,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				if (wiMatchesItemLocation(matchSku, matchPickLocation, wi)) {
 					WorkInstructionStatusEnum theStatus = wi.getStatus();
 					// Short or complete must have been scanned.
-					if (theStatus == WorkInstructionStatusEnum.COMPLETE || theStatus == WorkInstructionStatusEnum.SHORT || theStatus == WorkInstructionStatusEnum.SUBSTITUTION)
+					if (theStatus == WorkInstructionStatusEnum.COMPLETE || theStatus == WorkInstructionStatusEnum.SHORT
+							|| theStatus == WorkInstructionStatusEnum.SUBSTITUTION)
 						return true;
 				}
 		}
