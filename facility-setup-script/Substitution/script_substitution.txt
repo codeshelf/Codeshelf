@@ -5,7 +5,7 @@ SERVER
 setProperty pickmult false
 setProperty WORKSEQR WorkSequence
 deleteAllExtensionPoints
-deleteOrders 1111 2222
+deleteOrders 1111 2222 3333
 importOrders orders_substitution
 
 SITE

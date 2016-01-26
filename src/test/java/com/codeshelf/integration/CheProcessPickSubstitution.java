@@ -138,7 +138,7 @@ public class CheProcessPickSubstitution extends ServerTest{
 		verifyCheDisplay(picker, "Substitute " + SUBSTITUTION_1, "For ItemS1?", "", "");
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		verifyCheDisplay(picker, "LocX24", SUBSTITUTION_1, "QTY 3", "");
+		verifyCheDisplay(picker, "SUBSTITUTION", SUBSTITUTION_1, "QTY 3", "");
 		picker.pickItemAuto();
 		
 		
@@ -376,13 +376,13 @@ public class CheProcessPickSubstitution extends ServerTest{
 		picker.waitForCheState(CheStateEnum.SUBSTITUTION_CONFIRM, 4000);
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		verifyCheDisplay(picker, "LocX24", SUBSTITUTION_1, "QTY 18", "");
+		verifyCheDisplay(picker, "SUBSTITUTION", SUBSTITUTION_1, "QTY 18", "");
 		picker.pick(1, 3);
 		picker.waitInSameState(CheStateEnum.DO_PICK, 500);
-		verifyCheDisplay(picker, "LocX24", SUBSTITUTION_1, "QTY 15", "");
+		verifyCheDisplay(picker, "SUBSTITUTION", SUBSTITUTION_1, "QTY 15", "");
 		picker.pick(2, 6);
 		picker.waitInSameState(CheStateEnum.DO_PICK, 500);
-		verifyCheDisplay(picker, "LocX24", SUBSTITUTION_1, "QTY 9", "");
+		verifyCheDisplay(picker, "SUBSTITUTION", SUBSTITUTION_1, "QTY 9", "");
 		picker.pick(3, 9);
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		
@@ -472,7 +472,7 @@ public class CheProcessPickSubstitution extends ServerTest{
 		picker.waitForCheState(CheStateEnum.SUBSTITUTION_CONFIRM, 4000);
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		verifyCheDisplay(picker, "LocX24", SUBSTITUTION_1, "QTY 15", "");
+		verifyCheDisplay(picker, "SUBSTITUTION", SUBSTITUTION_1, "QTY 15", "");
 		picker.pick(2, 6);
 		picker.waitInSameState(CheStateEnum.DO_PICK, 500);
 		picker.pick(3, 9);
@@ -535,7 +535,7 @@ public class CheProcessPickSubstitution extends ServerTest{
 		picker.waitForCheState(CheStateEnum.SUBSTITUTION_CONFIRM, 4000);
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		verifyCheDisplay(picker, "LocX24", SUBSTITUTION_1, "QTY 6", "");
+		verifyCheDisplay(picker, "SUBSTITUTION", SUBSTITUTION_1, "QTY 6", "");
 		picker.pick(2, 6);
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		
@@ -664,7 +664,7 @@ public class CheProcessPickSubstitution extends ServerTest{
 		picker.waitForCheState(CheStateEnum.SUBSTITUTION_CONFIRM, 4000);
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		verifyCheDisplay(picker, "LocX24", SUBSTITUTION_1, "QTY 18", "");
+		verifyCheDisplay(picker, "SUBSTITUTION", SUBSTITUTION_1, "QTY 18", "");
 		picker.pickItemAuto();
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 		verifyCheDisplay(picker, "LocX25", "ItemS2", "QTY 12", "SCAN SKU NEEDED");
@@ -674,21 +674,24 @@ public class CheProcessPickSubstitution extends ServerTest{
 		picker.waitForCheState(CheStateEnum.SUBSTITUTION_CONFIRM, 4000);
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		verifyCheDisplay(picker, "LocX25", SUBSTITUTION_2, "QTY 12", "");
+		verifyCheDisplay(picker, "SUBSTITUTION", SUBSTITUTION_2, "QTY 12", "");
 		picker.pickItemAuto();
 		
 		LOGGER.info("5: Pick remaining items without confirmations");
 		picker.waitInSameState(CheStateEnum.DO_PICK, 400);
-		verifyCheDisplay(picker, "LocX24", SUBSTITUTION_1, "QTY 15", "");
+		verifyCheDisplay(picker, "SUBSTITUTION", SUBSTITUTION_1, "QTY 15", "");
 		picker.pickItemAuto();
 		picker.waitInSameState(CheStateEnum.DO_PICK, 400);
-		verifyCheDisplay(picker, "LocX25", SUBSTITUTION_2, "QTY 8", "");
+		verifyCheDisplay(picker, "SUBSTITUTION", SUBSTITUTION_2, "QTY 8", "");
 		picker.pickItemAuto();
 		picker.waitInSameState(CheStateEnum.DO_PICK, 400);
-		verifyCheDisplay(picker, "LocX24", SUBSTITUTION_1, "QTY 9", "");
+		verifyCheDisplay(picker, "SUBSTITUTION", SUBSTITUTION_1, "QTY 9", "");
 		picker.pickItemAuto();
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		verifyCheDisplay(picker, "3 orders", "0 jobs", "5 done", "SETUP");
+		
+		//Wait until picks propagate through the server
+		ThreadUtils.sleep(500);
 		
 		LOGGER.info("6: Verify DB state");
 		beginTransaction();
@@ -776,24 +779,24 @@ public class CheProcessPickSubstitution extends ServerTest{
 		picker.waitForCheState(CheStateEnum.SUBSTITUTION_CONFIRM, 4000);
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		verifyCheDisplay(picker, "LocX24", SUBSTITUTION_1, "QTY 24", "");
+		verifyCheDisplay(picker, "SUBSTITUTION", SUBSTITUTION_1, "QTY 24", "");
 		picker.pickItemAuto();
 		picker.waitInSameState(CheStateEnum.DO_PICK, 400);
-		verifyCheDisplay(picker, "LocX24", SUBSTITUTION_1, "QTY 21", "");
+		verifyCheDisplay(picker, "SUBSTITUTION", SUBSTITUTION_1, "QTY 21", "");
 		
 		LOGGER.info("5: Substitute third item for something else, and short by some amount");
 		picker.scanSomething(SUBSTITUTION_2);
 		picker.waitForCheState(CheStateEnum.SUBSTITUTION_CONFIRM, 4000);
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		verifyCheDisplay(picker, "LocX24", SUBSTITUTION_2, "QTY 21", "");
+		verifyCheDisplay(picker, "SUBSTITUTION", SUBSTITUTION_2, "QTY 21", "");
 		picker.scanCommand("SHORT");
 		picker.waitForCheState(CheStateEnum.SHORT_PICK, 4000);
 		picker.pick(3, 3);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 4000);
 		picker.scanCommand("YES");
 		picker.waitInSameState(CheStateEnum.DO_PICK, 400);
-		verifyCheDisplay(picker, "LocX24", SUBSTITUTION_2, "QTY 16", "");
+		verifyCheDisplay(picker, "SUBSTITUTION", SUBSTITUTION_2, "QTY 16", "");
 		
 		LOGGER.info("6: Short the fourth item completely. Should also auto-short the fifth");
 		picker.scanCommand("SHORT");
@@ -801,11 +804,6 @@ public class CheProcessPickSubstitution extends ServerTest{
 		picker.pick(4, 0);
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 4000);
 		picker.scanCommand("YES");
-		//picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
-		//verifyCheDisplay(picker, "LocX24", SUBSTITUTION_2, "QTY 9", "");
-		
-		//LOGGER.info("7: Pick the fifth item");
-		//picker.pickItemAuto();
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		verifyCheDisplay(picker, "5 orders", "0 jobs", "2 done     3 short", "SETUP");
 		

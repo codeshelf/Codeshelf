@@ -22,6 +22,7 @@ import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.model.domain.Che.CheLightingEnum;
 import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
@@ -265,6 +266,9 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 					orderId,
 					inWi.getItemId(),
 					inWi.getPickInstruction());
+			if (inVerb == EventType.SUBSTITUTION){
+				logSubstitutionEvent(inWi, needWarn);
+			}
 		} finally {
 			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
 			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
@@ -275,6 +279,20 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 			message.setWorkInstructionId(inWi.getPersistentId());
 		}
 		mDeviceManager.sendNotificationMessage(message);
+	}
+	
+	private void logSubstitutionEvent(WorkInstruction wi, boolean needWarn) {
+		String substitution = wi.getSubstitution();
+		if (substitution == null) {
+			LOGGER.warn("Invoked logSubstitutionEvent() where wi.getSubstitution() is NULL");
+			return;
+		}
+		String message = String.format("SUBSTITUTING %d units of %s for desired %d units of %s", wi.getActualQuantity(), wi.getSubstitution(), wi.getPlanQuantity(), wi.getItemId());
+		if (needWarn) {
+			LOGGER.warn(message);
+		} else {
+			LOGGER.info(message);
+		}
 	}
 
 	protected void notifyOrderToPutWall(String orderId, String locationName) {

@@ -78,6 +78,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					OR_START_WORK_MSG						= cheLine("OR START WORK");
 	protected static final String					SELECT_POSITION_MSG						= cheLine("SELECT POSITION");
 	protected static final String					SHORT_PICK_CONFIRM_MSG					= cheLine("CONFIRM SHORT");
+	protected static final String					AMOUNT_CONFIRM_MSG						= cheLine("CONFIRM AMOUNT");
 	protected static final String					LOW_CONFIRM_MSG							= cheLine("CONFIRM LOW");
 	public static final String						YES_NO_MSG								= cheLine("SCAN YES OR NO");						// public for test
 	protected static final String					NO_CONTAINERS_SETUP_MSG					= cheLine("NO SETUP CONTAINERS");
@@ -870,7 +871,12 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (cleanedPickInstructions.length() > 19) {
 			cleanedPickInstructions = cleanedPickInstructions.substring(0, 19);
 		}
-
+		
+		//If performing a substitution, replace the top line (location) with the word "SUBSTITUTION"
+		if (substitution != null) {
+			cleanedPickInstructions = "SUBSTITUTION";
+		}
+		
 		sendDisplayCommand(cleanedPickInstructions, pickInfoLines[0], pickInfoLines[1], pickInfoLines[2]);
 
 	}
@@ -881,7 +887,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	private String getFourthLineDisplay(WorkInstruction wi) {
 		if (CheStateEnum.SHORT_PICK == mCheStateEnum || CheStateEnum.SHORT_PUT == mCheStateEnum) {
-			return "DECREMENT POSITION";
+			if (wi.getSubstitution() != null) {
+				return "SET AMOUNT";
+			} else {
+				return "DECREMENT POSITION";
+			}
 		} else if (CheStateEnum.SCAN_SOMETHING == mCheStateEnum) {
 			// kind of funny. States are uniformly defined, so this works even from wrong object
 			ScanNeededToVerifyPick scanVerification = getScanVerificationTypeEnum();
@@ -1941,9 +1951,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		byte planQuantityForPositionController = byteValueForPositionDisplay(inWi.getPlanQuantity());
 		byte minQuantityForPositionController = byteValueForPositionDisplay(inWi.getPlanMinQuantity());
 		byte maxQuantityForPositionController = byteValueForPositionDisplay(inWi.getPlanMaxQuantity());
-		if (getCheStateEnum() == CheStateEnum.SHORT_PICK)
+		if (getCheStateEnum() == CheStateEnum.SHORT_PICK) {
 			minQuantityForPositionController = byteValueForPositionDisplay(0); // allow shorts to decrement on position controller down to zero
-
+			if (inWi.getSubstitution() != null) {
+				maxQuantityForPositionController = 99;	//When changing the substitution amount, allow values higher than originally planed
+			}
+		}
+		
 		byte freq = PosControllerInstr.BLINK_FREQ;
 		byte brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
 		if (this.getCheStateEnum().equals(CheStateEnum.SCAN_SOMETHING)) { // a little weak feedback that the poscon button press will not work

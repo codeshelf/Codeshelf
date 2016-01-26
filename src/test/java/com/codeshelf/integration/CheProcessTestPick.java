@@ -1285,7 +1285,7 @@ public class CheProcessTestPick extends ServerTest {
 		wi = picker.getActivePick();
 		Assert.assertEquals("Item3", wi.getItemId());
 		Assert.assertEquals(21, (int) wi.getPlanQuantity());
-		picker.pick(1, 22);
+		picker.pick(1, 21);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		LOGGER.info("3: Pick the 3rd item. It will not be changed, so don't worry about what it is.");
 		picker.pickItemAuto();
@@ -1322,7 +1322,7 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(2, events.size());
 		ArrayList<String> expectedEvents = new ArrayList<>();
 		expectedEvents.add("OrderDetail 349 changed from Item2-a to Item2-cs. Already picked 22 items.");
-		expectedEvents.add("OrderDetail 351 changed from Item3-a to Item1-a. Already picked 22 items.");
+		expectedEvents.add("OrderDetail 351 changed from Item3-a to Item1-a. Already picked 21 items.");
 		for (WorkerEvent event : events) {
 			Assert.assertTrue(expectedEvents.contains(event.getDescription()));
 			expectedEvents.remove(event.getDescription());

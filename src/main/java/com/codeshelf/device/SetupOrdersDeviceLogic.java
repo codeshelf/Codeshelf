@@ -303,7 +303,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					if (isSameState) {
 						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 					}
-					sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
+					WorkInstruction currentWi = getOneActiveWorkInstruction();
+					if (currentWi.getSubstitution() == null) {
+						sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
+					} else {
+						sendDisplayCommand(AMOUNT_CONFIRM_MSG, YES_NO_MSG);
+					}
 					break;
 
 				case SHORT_PICK:
@@ -1033,8 +1038,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (!wi.isHousekeeping()) {
 				housekeeping = false;
 			}
-			notifyWiVerb(wi, WorkerEvent.EventType.SHORT, kLogAsWarn);
+			
 			doShortTransaction(wi, inPicked);
+			
+			EventType eventType = wi.getSubstitution() == null ? EventType.SHORT : EventType.SUBSTITUTION; 
+			notifyWiVerb(wi, eventType, kLogAsWarn);
 
 			clearLedAndPosConControllersForWi(wi); // wrong? What about any short aheads?
 
@@ -2916,7 +2924,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				// version 2.0 sends value of 0.
 				processNormalPick(wi, 0);
 			} else {
-				if (inQuantity >= wi.getPlanMinQuantity()) {
+				if (inQuantity == wi.getPlanMinQuantity()) {
 					processNormalPick(wi, inQuantity);
 				} else {
 					// More kludge for count > 99 case
