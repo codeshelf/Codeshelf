@@ -1430,7 +1430,8 @@ public class Facility extends Location {
 		cal.add(Calendar.DATE, 1);
 		Timestamp metricsCollectionEndUTC = new Timestamp(cal.getTimeInMillis());
 
-		FacilityMetric metric = getMetrics(metricsCollectionStartUTC);
+		String metricDomainId = FacilityMetric.generateDomainId(this, dateLocalUI);
+		FacilityMetric metric = FacilityMetric.staticGetDao().findByDomainId(this, metricDomainId);
 		if (metric != null && !forceRecalculate) {
 			LOGGER.info("Returning previously saved FacilityMetrics value for {} ", metricsCollectionStartUTC);
 			return metric;
@@ -1438,12 +1439,12 @@ public class Facility extends Location {
 		if (metric == null) {
 			metric = new FacilityMetric();
 			metric.setParent(this);
-			metric.setDate(metricsCollectionStartUTC);
 		}
+		metric.setDate(metricsCollectionStartUTC);
 		metric.setUpdated(new Timestamp(System.currentTimeMillis()));
 		metric.setTz(cal.getTimeZone().getID());
 		metric.setDateLocalUI(dateLocalUI);
-		metric.setDomainId(metric.getDefaultDomainIdPrefix() + "-" + getDomainId() + "-" + metric.getDateLocalUI());
+		metric.setDomainId(metricDomainId);
 
 		boolean goodData = computeWiMetricsSuccess(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
 		if (goodData){
@@ -1570,25 +1571,4 @@ public class Facility extends Location {
 		int skuwallPutsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
 		metric.setSkuWallPuts(skuwallPutsCount);
 	}
-
-	private FacilityMetric getMetrics(Timestamp date) {
-		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("parent", this));
-		filterParams.add(Restrictions.eq("date", date));
-		List<FacilityMetric> metrics = FacilityMetric.staticGetDao().findByFilter(filterParams);
-		FacilityMetric metric = null;
-		if (metrics.size() == 1) {
-			metric = metrics.get(0);
-		} else if (metrics.size() > 1) {
-			LOGGER.warn("Found more than one FacilityMertic for facility " + getDomainId() + " at " + date + ". Using latest one.");
-			Timestamp latestTs = new Timestamp(0);
-			for (FacilityMetric metricCheck : metrics) {
-				if (metricCheck.getUpdated().after(latestTs)) {
-					metric = metricCheck;
-				}
-			}
-		}
-		return metric;
-	}	
-
 }
