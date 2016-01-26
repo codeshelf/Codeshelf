@@ -82,8 +82,8 @@ public class EventResource {
 	public Response createReplenishOrderForEvent() {
 		try {
 			EventType type = event.getEventType();
-			if (type != EventType.SHORT && type != EventType.SHORT_AHEAD && type != EventType.LOW){
-				throw new Exception(type + " event is illegal for replenishing. Call on SHORT or LOW events");
+			if (type != EventType.SHORT && type != EventType.SHORT_AHEAD && type != EventType.LOW && type != EventType.SUBSTITUTION){
+				throw new Exception(type + " event is illegal for replenishing. Call on SHORT, LOW or SUBSTITUTION events");
 			}
 			OrderDetail detail = OrderDetail.staticGetDao().findByPersistentId(event.getOrderDetailId());
 			if (detail == null) {
