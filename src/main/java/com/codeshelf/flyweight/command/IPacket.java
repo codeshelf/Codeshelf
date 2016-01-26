@@ -17,6 +17,7 @@ public interface IPacket {
 	
 	byte PACKET_VERSION_0 = 1;
 	byte PACKET_VERSION_1 = 1;
+	short CRC_PLOY = 0x1021;
 
 	// Packet header structure sizes.  (See Packet.java)
 	byte	PROTOCOL_VERSION_BITS	= 2;
@@ -24,6 +25,7 @@ public interface IPacket {
 	byte	RESERVED_HEADER_BITS	= 1;
 	byte	NETWORK_NUMBER_BITS		= 4;
 	byte	ADDRESS_BITS			= 16;
+	byte	CRC_BITS				= 16;
 
 	byte	NETWORK_NUM_SPACING_BITS	= 4;
 	byte	ADDRESS_SPACING_BITS		= 0;
@@ -50,8 +52,7 @@ public interface IPacket {
 	byte	SMAC_FRAME_BYTES	= 2;
 	byte	MAX_PACKET_BYTES	= 125 - SMAC_FRAME_BYTES;
 	
-	byte PACKET_HEADER_BYTES = 6;
-
+	byte PACKET_HEADER_BYTES = 8;
 	// --------------------------------------------------------------------------
 	/**
 	 *  This function serializes the packet to an output stream.
@@ -275,5 +276,10 @@ public interface IPacket {
 	 * Set the packet version
 	 */
 	void setPacketVersion(PacketVersion packetVersion);
-
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the bytes of the payload (everything after ackid)
+	 */
+	public byte[] getPayloadBytes();
 }

@@ -6,7 +6,9 @@
 
 package com.codeshelf.flyweight.command;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -91,6 +93,7 @@ public final class Packet implements IPacket {
 	private volatile AckStateEnum	mAckState;
 	private byte[]					mAckData;
 	private byte					mLQI;
+	private short					mCrc;
 
 	// --------------------------------------------------------------------------
 	/**
@@ -183,6 +186,7 @@ public final class Packet implements IPacket {
 			inBitFieldOutputStream.writeNBitInteger(mSrcAddr);
 			inBitFieldOutputStream.writeNBitInteger(mDstAddr);
 			inBitFieldOutputStream.writeByte(mAckId);
+			inBitFieldOutputStream.writeShort(mCrc);
 		} catch (IOException e) {
 			LOGGER.error("", e);
 		}
@@ -212,7 +216,8 @@ public final class Packet implements IPacket {
 			inInputStream.readNBitInteger(mNetworkId);
 			inInputStream.readNBitInteger(mSrcAddr);
 			inInputStream.readNBitInteger(mDstAddr);
-			mAckId = inInputStream.readByte();
+			mAckId	= inInputStream.readByte();
+			mCrc	= inInputStream.readShort();
 			
 			if (mPacketVersion.getValue() != (int) IPacket.PACKET_VERSION_1) {
 				mCommand = null;
@@ -462,4 +467,27 @@ public final class Packet implements IPacket {
 		return PACKET_HEADER_BYTES;
 	}
 	
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the bytes of the payload (everything after ackid)
+	 */
+	public byte[] getPayloadBytes(){
+		byte[] packetBytes;
+		byte[] payloadBytes;
+		
+		ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
+		BitFieldOutputStream bitFieldOutStream = new BitFieldOutputStream(byteArrayStream);
+		byteArrayStream.reset();
+		this.toStream(bitFieldOutStream);
+		
+		packetBytes = byteArrayStream.toByteArray();
+		
+		if (packetBytes == null){
+			return null;
+		}
+		
+		payloadBytes = Arrays.copyOfRange(packetBytes, IPacket.PACKET_HEADER_BYTES, packetBytes.length - 1);
+		
+		return payloadBytes;
+	}
 }
