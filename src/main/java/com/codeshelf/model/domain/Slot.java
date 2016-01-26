@@ -79,7 +79,7 @@ public class Slot extends Location {
 		// nearly cloned from Bay.getMetersFromLeft()
 		Aisle aisle = this.getParentAtLevel(Aisle.class);
 		Tier tier = this.getParentAtLevel(Tier.class);
-		if (aisle == null || aisle == null || aisle.getPathSegment()== null)
+		if (aisle == null || tier == null || aisle.getPathSegment()== null)
 			return "";
 		boolean leftB1S1 = aisle.isLeftSideTowardB1S1();
 		boolean pathFromAnchor = aisle.isPathIncreasingFromAnchor();
