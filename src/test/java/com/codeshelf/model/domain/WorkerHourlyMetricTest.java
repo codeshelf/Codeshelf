@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ public class WorkerHourlyMetricTest extends HibernateTest{
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(WorkerHourlyMetricTest.class);
 	
+	@Ignore
 	@Test
 	public void testDurationAccumulator(){
 		Timestamp now = new Timestamp(System.currentTimeMillis());
@@ -79,6 +81,7 @@ public class WorkerHourlyMetricTest extends HibernateTest{
 		commitTransaction();
 	}
 	
+	@Ignore
 	@Test
 	public void testMetricBackfilling(){
 		Timestamp now = new Timestamp(System.currentTimeMillis());
