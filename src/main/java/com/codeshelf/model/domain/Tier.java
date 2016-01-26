@@ -309,13 +309,14 @@ public class Tier extends Location {
 		}
 	}
 
-	public void offSetTierLeds(int offset) throws IllegalArgumentException{
+	public void offSetTierLeds(int offset) throws IllegalArgumentException {
 		LedController ledController = this.getLedController();
 		if (ledController == null) {
 			throw new IllegalArgumentException("Failed to set LED offset on " + this + ": Tier has no LedController.");
 		}
 		if (ledController.getDeviceType() != DeviceType.Lights) {
-			FormUtility.throwUiValidationException("LED Offset", "Failed to set LED offset on " + this + ": LedController " + ledController + " is not of device type Lights.", ErrorCode.FIELD_INVALID);
+			FormUtility.throwUiValidationException("LED Offset", "Failed to set LED offset on " + this + ": LedController "
+					+ ledController + " is not of device type Lights.", ErrorCode.FIELD_INVALID);
 		}
 
 		LOGGER.info("Offsetting first/last LED by {} for each slot in {}", offset, this);
@@ -327,14 +328,15 @@ public class Tier extends Location {
 		Collections.sort(slotList, new SlotIDComparator());
 
 		//Adjust first and last LED of this entire Tier
-		short tierNewFirstLed = (short)(getFirstLedNumAlongPath() + offset);
-		short tierNewLastLed = (short)(getLastLedNumAlongPath() + offset);
-		if (tierNewFirstLed < 0 || tierNewLastLed < 0 || tierNewFirstLed > tierNewLastLed){
-			FormUtility.throwUiValidationException("LED Offset", "Invalid Tier LED interval: [" + tierNewFirstLed + ", " + tierNewLastLed + "].", ErrorCode.FIELD_INVALID);
+		short tierNewFirstLed = (short) (getFirstLedNumAlongPath() + offset);
+		short tierNewLastLed = (short) (getLastLedNumAlongPath() + offset);
+		if (tierNewFirstLed < 0 || tierNewLastLed < 0 || tierNewFirstLed > tierNewLastLed) {
+			FormUtility.throwUiValidationException("LED Offset", "Invalid Tier LED interval: [" + tierNewFirstLed + ", "
+					+ tierNewLastLed + "].", ErrorCode.FIELD_INVALID);
 		}
-		setFirstLedNumAlongPath(tierNewFirstLed); 
+		setFirstLedNumAlongPath(tierNewFirstLed);
 		setLastLedNumAlongPath(tierNewLastLed);
-		
+
 		// adjust first and last for each slot.
 		ListIterator<Slot> li = null;
 		li = slotList.listIterator();
@@ -360,13 +362,15 @@ public class Tier extends Location {
 		setPoscons(startingIndex, false);
 	}
 
-	public void setPoscons(int startingIndex, boolean reverseOrder) throws InputValidationException{
+	public void setPoscons(int startingIndex, boolean reverseOrder) throws InputValidationException {
 		LedController ledController = this.getLedController();
 		if (ledController == null) {
-			FormUtility.throwUiValidationException("Start Index", "Failed to set poscons on " + this.getBestUsableLocationName() + ": Tier has no direct device controller.", ErrorCode.FIELD_INVALID);
+			FormUtility.throwUiValidationException("Start Index", "Failed to set poscons on " + this.getBestUsableLocationName()
+					+ ": Tier has no direct device controller.", ErrorCode.FIELD_INVALID);
 		}
 		if (ledController.getDeviceType() != DeviceType.Poscons) {
-			String error = "Failed to set poscons on " + this.getBestUsableLocationName() + ": controller " + ledController + " is not of device type Poscon.";
+			String error = "Failed to set poscons on " + this.getBestUsableLocationName() + ": controller " + ledController
+					+ " is not of device type Poscon.";
 			FormUtility.throwUiValidationException("Start Index", error, ErrorCode.FIELD_INVALID);
 		}
 
@@ -410,6 +414,15 @@ public class Tier extends Location {
 	@Override
 	public boolean isTier() {
 		return true;
+	}
+
+	@Override
+	public String getMetersFromLeft() {
+		// Tier value same as its parent bay value, at least for now.
+		Bay bay = this.getParentAtLevel(Bay.class);
+		if (bay == null)
+			return "";
+		return bay.getMetersFromLeft();
 	}
 
 	public static Tier as(Location location) {

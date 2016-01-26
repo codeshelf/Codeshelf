@@ -1514,6 +1514,17 @@ public abstract class Location extends DomainObjectTreeABC<Location> {
 			child.getStoredItemsInLocationAndChildren(itemAccumulator);
 		}
 	}
+	
+	/**
+	 * Overrides needed
+	 * Returns a string to two decimal points, with leading zero if less than one meter. Or just "0" for the 0.00 value.
+	 * The behavior is is generally to take the meters along path value for the left edge of this location, 
+	 * and the value for the left edge of a parent location. The absolute value will give the answer. 
+	 * An undefined would be "" (blank). A "0" will mean a well defined value, such as the value of left-most slot on a tier.
+	 */
+	public String getMetersFromLeft(){
+		return "";
+	}
 
 	public List<Item> getStoredItemsInLocationAndChildren() {
 		List<Item> itemsInLocation = Lists.newArrayList();
