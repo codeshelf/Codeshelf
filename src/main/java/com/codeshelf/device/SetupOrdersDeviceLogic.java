@@ -449,13 +449,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 				case SUBSTITUTION_CONFIRM:
 					clearAllPosconsOnThisDevice();
+					line1 = StringUtils.substring("Substitute " + getSubstitutionScan(), 0, 40);
 					WorkInstruction activeWi = getOneActiveWorkInstruction();
 					if (activeWi == null) {
-						LOGGER.warn("Somehow got null from getOneActiveWorkInstruction() when entering the SUBSTITUTION_CONFIRM state");
-						sendDisplayCommand("Substitute " + getSubstitutionScan() + "?", EMPTY_MSG);
+						LOGGER.warn(
+							"Somehow got null from getOneActiveWorkInstruction() when entering the SUBSTITUTION_CONFIRM state");
+						sendDisplayCommand(line1, "?");
 					} else {
-						sendDisplayCommand("Substitute " + getSubstitutionScan(), "For "
-								+ getOneActiveWorkInstruction().getItemId() + "?");
+						sendDisplayCommand(line1, "For " + getOneActiveWorkInstruction().getItemId() + "?");
 					}
 					break;
 			}
