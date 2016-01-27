@@ -26,11 +26,11 @@ public final class CommandAssocCheck extends CommandAssocABC {
 	public static final int		DEVICE_VERSION_BYTES	= 8;
 
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(CommandAssocCheck.class);
-	private int					mRestartDataLen			= 2;
 
 	private byte				mBatteryLevel;
 	private byte				mRestartCause;
-	private byte[]				mRestartData			= new byte[mRestartDataLen];
+	private byte				mRcmRegister0;
+	private byte				mRcmRegister1;
 	private int					mRestartPC;
 
 	// --------------------------------------------------------------------------
@@ -73,7 +73,8 @@ public final class CommandAssocCheck extends CommandAssocABC {
 		try {
 			inOutputStream.writeByte(mBatteryLevel);
 			inOutputStream.writeByte(mRestartCause);
-			inOutputStream.writeBytes(mRestartData, mRestartDataLen);
+			inOutputStream.writeByte(mRcmRegister0);
+			inOutputStream.writeByte(mRcmRegister0);
 			inOutputStream.writeInt(mRestartPC);
 		} catch (IOException e) {
 			LOGGER.error("CommandAssociateCheck.doToStream", e);
@@ -91,7 +92,8 @@ public final class CommandAssocCheck extends CommandAssocABC {
 		try {
 			mBatteryLevel = inInputStream.readByte();
 			mRestartCause = inInputStream.readByte();
-			inInputStream.readBytes(mRestartData, mRestartDataLen);
+			mRcmRegister0 = inInputStream.readByte();
+			mRcmRegister1 = inInputStream.readByte();
 			mRestartPC = inInputStream.readInt();
 
 			if (mBatteryLevel < 0) {
@@ -128,8 +130,13 @@ public final class CommandAssocCheck extends CommandAssocABC {
 		return mRestartCause;
 	}
 
-	public byte[] getRestartData() {
-		return mRestartData;
+	public byte[] getRcmData() {
+		byte[] rcmBytes = new byte[2];
+		
+		rcmBytes[0] = mRcmRegister0;
+		rcmBytes[1] = mRcmRegister1;
+		
+		return rcmBytes;
 	}
 
 	public int getRestartPC() {
