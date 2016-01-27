@@ -2,6 +2,7 @@ package com.codeshelf.api.resources.subresources;
 
 import java.io.StringReader;
 import java.sql.Timestamp;
+import java.util.UUID;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -26,6 +27,7 @@ import com.codeshelf.model.domain.UomMaster;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.security.CodeshelfSecurityManager;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
@@ -85,25 +87,29 @@ public class EventResource {
 			if (type != EventType.SHORT && type != EventType.SHORT_AHEAD && type != EventType.LOW && type != EventType.SUBSTITUTION){
 				throw new Exception(type + " event is illegal for replenishing. Call on SHORT, LOW or SUBSTITUTION events");
 			}
-			OrderDetail detail = OrderDetail.staticGetDao().findByPersistentId(event.getOrderDetailId());
-			if (detail == null) {
-				throw new Exception("Unable to find associated OrderDetail for this event");
+			UUID orderDetailId = event.getOrderDetailId(); 
+			if (orderDetailId != null) {
+				OrderDetail detail = OrderDetail.staticGetDao().findByPersistentId(orderDetailId);
+				if (detail != null) {
+					ItemMaster itemMaster = detail.getItemMaster();
+					UomMaster uom = detail.getUomMaster();
+					Gtin gtin = itemMaster.getGtinForUom(uom);
+					String scannableId = gtin == null ? itemMaster.getDomainId() : gtin.getDomainId();
+					String location = event.getLocation();
+					if (location == null){
+						location = "";
+					}
+					String orders = String.format(
+							"orderId,itemId,quantity,uom,locationId,preAssignedContainerId,workSequence,operationType\n" + 
+							"%s,%s,1,%s,%s,%s,0,replenish",
+							scannableId, itemMaster.getDomainId(), uom.getDomainId(), location, scannableId);
+					ICsvOrderImporter orderImporter = orderImporterProvider.get();
+					orderImporter.importOrdersFromCsvStream(new StringReader(orders), event.getFacility(), new Timestamp(System.currentTimeMillis()));
+					return BaseResponse.buildResponse(ImmutableMap.of("scannableId", scannableId));
+				}
 			}
-			ItemMaster itemMaster = detail.getItemMaster();
-			UomMaster uom = detail.getUomMaster();
-			Gtin gtin = itemMaster.getGtinForUom(uom);
-			String scannableId = gtin == null ? itemMaster.getDomainId() : gtin.getDomainId();
-			String location = event.getLocation();
-			if (location == null){
-				location = "";
-			}
-			String orders = String.format(
-					"orderId,itemId,quantity,uom,locationId,preAssignedContainerId,workSequence,operationType\n" + 
-					"%s,%s,1,%s,%s,%s,0,replenish",
-					scannableId, itemMaster.getDomainId(), uom.getDomainId(), location, scannableId);
-			ICsvOrderImporter orderImporter = orderImporterProvider.get();
-			orderImporter.importOrdersFromCsvStream(new StringReader(orders), event.getFacility(), new Timestamp(System.currentTimeMillis()));
-			return BaseResponse.buildResponse(scannableId);
+			 ErrorResponse response = new ErrorResponse("Unable to find associated OrderDetail for this event");
+			 return response.buildResponse();
 		} catch (Exception e) {
 			return new ErrorResponse().processException(e);
 		}		
