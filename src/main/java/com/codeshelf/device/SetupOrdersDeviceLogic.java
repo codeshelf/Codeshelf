@@ -1041,14 +1041,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			
 			doShortTransaction(wi, inPicked);
 			
-			EventType eventType = wi.getSubstitution() == null ? EventType.SHORT : EventType.SUBSTITUTION; 
+			EventType eventType = EventType.SHORT; 
 			notifyWiVerb(wi, eventType, kLogAsWarn);
 
 			clearLedAndPosConControllersForWi(wi); // wrong? What about any short aheads?
 
 			// Depends on AUTOSHRT parameter
-			//Also, if the current WI is being substituted, don't auto-short following WIs
-			if (autoShortOn && (inPicked == 0 || wi.getSubstitution() == null)) {
+			if (autoShortOn) {
 				doShortsAheads(wi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
 			}
 		}
@@ -1095,7 +1094,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (inScanStr.equals(YES_COMMAND)) {
 			WorkInstruction wi = mShortPickWi;
 			if (wi != null) {
-				processShortPickYes(wi, mShortPickQty);
+				if (wi.getSubstitution() != null && mShortPickQty != 0){
+					processNormalPick(wi, mShortPickQty);
+				} else {
+					processShortPickYes(wi, mShortPickQty);
+				}
 			}
 		} else {
 			// Just return to showing the active picks or puts.

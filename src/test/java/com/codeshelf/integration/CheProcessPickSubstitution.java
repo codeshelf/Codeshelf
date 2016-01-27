@@ -262,7 +262,7 @@ public class CheProcessPickSubstitution extends ServerTest{
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		verifyCheDisplay(picker, "1 order", "0 jobs", "0 done     1 short", "SETUP");
 		
-		LOGGER.info("4: Restart pick and short-substitute 1 unit");
+		LOGGER.info("4: Restart pick and short-substitute 1 unit - doesn't count as short");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 		verifyCheDisplay(picker, "LocX24", "ItemS1", "QTY 2", "SCAN SKU NEEDED");
@@ -276,7 +276,7 @@ public class CheProcessPickSubstitution extends ServerTest{
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 4000);
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
-		verifyCheDisplay(picker, "1 order", "0 jobs", "0 done     2 short", "SETUP");
+		verifyCheDisplay(picker, "1 order", "0 jobs", "1 done     1 short", "SETUP");
 		
 		//Wait until pick propagates through the server
 		ThreadUtils.sleep(500);
@@ -784,7 +784,7 @@ public class CheProcessPickSubstitution extends ServerTest{
 		picker.waitInSameState(CheStateEnum.DO_PICK, 400);
 		verifyCheDisplay(picker, "SUBSTITUTION", SUBSTITUTION_1, "QTY 21", "");
 		
-		LOGGER.info("5: Substitute third item for something else, and short by some amount");
+		LOGGER.info("5: Substitute third item for something else, and short by some amount - doesn't count as short");
 		picker.scanSomething(SUBSTITUTION_2);
 		picker.waitForCheState(CheStateEnum.SUBSTITUTION_CONFIRM, 4000);
 		picker.scanCommand("YES");
@@ -805,7 +805,7 @@ public class CheProcessPickSubstitution extends ServerTest{
 		picker.waitForCheState(CheStateEnum.SHORT_PICK_CONFIRM, 4000);
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
-		verifyCheDisplay(picker, "5 orders", "0 jobs", "2 done     3 short", "SETUP");
+		verifyCheDisplay(picker, "5 orders", "0 jobs", "3 done     2 short", "SETUP");
 		
 		//Wait until picks propagate through the server
 		ThreadUtils.sleep(500);

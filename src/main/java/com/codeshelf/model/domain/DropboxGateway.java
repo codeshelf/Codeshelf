@@ -777,12 +777,8 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 	
 	public List<String> retrieveOldProcessedFilesList(Date purgeThreshold) {
 		ArrayList<String> directoryList = new ArrayList<>();
+		directoryList.add(getFacilityImportSubDirPath(IMPORT_ORDERS_PATH));
 		directoryList.add(getFacilityImportSubDirProcessedPath(IMPORT_ORDERS_PATH));
-		directoryList.add(getFacilityImportSubDirProcessedPath(IMPORT_AISLES_PATH));
-		directoryList.add(getFacilityImportSubDirProcessedPath(IMPORT_BATCHES_PATH));
-		directoryList.add(getFacilityImportSubDirProcessedPath(IMPORT_INVENTORY_PATH));
-		directoryList.add(getFacilityImportSubDirProcessedPath(IMPORT_LOCATIONS_PATH));
-		directoryList.add(getFacilityImportSubDirProcessedPath(IMPORT_SLOTTING_PATH));
 		ArrayList<String> filesToDelete = new ArrayList<>();
 		DbxClient client = getClient();
 		if (client == null) {

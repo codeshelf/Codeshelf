@@ -1532,11 +1532,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 * Update the WI fields, and call out to mDeviceManager to share it back to the server.
 	 */
 	protected void doShortTransaction(final WorkInstruction inWi, final Integer inActualPickQuantity) {
-		WorkInstructionStatusEnum status = WorkInstructionStatusEnum.SHORT;
-		if (inWi.getSubstitution() != null && inActualPickQuantity > 0){
-			status = WorkInstructionStatusEnum.SUBSTITUTION;
-		}
-		inWi.setFinishedState(mUserId, inActualPickQuantity, status);
+		inWi.setShortState(mUserId, inActualPickQuantity);
 
 		// normal short will be in mActivePickWiList.
 		// short-aheads will not be.
