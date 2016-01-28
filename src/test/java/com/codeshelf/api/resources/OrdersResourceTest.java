@@ -52,7 +52,7 @@ public class OrdersResourceTest extends ServerTest {
 			null,
 			null);
 		resource.setFacility(facility);
-		resource.uploadOrders(new ByteArrayInputStream(orders.getBytes("UTF-8")), Mockito.mock(FormDataContentDisposition.class));
+		resource.uploadOrders(new ByteArrayInputStream(orders.getBytes("UTF-8")), Mockito.mock(FormDataContentDisposition.class), false);
 		commitTransaction();
 
 		beginTransaction();
@@ -87,7 +87,8 @@ public class OrdersResourceTest extends ServerTest {
 			null);
 		resource.setFacility(facility);
 		Response response = resource.uploadOrders(new ByteArrayInputStream(orders.getBytes("UTF-8")),
-			Mockito.mock(FormDataContentDisposition.class));
+			Mockito.mock(FormDataContentDisposition.class),
+			false);
 		commitTransaction();
 		Assert.assertEquals(200, response.getStatus());
 
@@ -110,7 +111,8 @@ public class OrdersResourceTest extends ServerTest {
 			null);
 		resource2.setFacility(facility);
 		Response response2 = resource2.uploadOrders(new ByteArrayInputStream(orders.getBytes("UTF-8")),
-			Mockito.mock(FormDataContentDisposition.class));
+			Mockito.mock(FormDataContentDisposition.class),
+			false);
 		commitTransaction();
 		Assert.assertEquals(200, response2.getStatus());
 
@@ -149,7 +151,8 @@ public class OrdersResourceTest extends ServerTest {
 			null);
 		resource.setFacility(facility);
 		Response response = resource.uploadOrders(new ByteArrayInputStream(orders.getBytes("UTF-8")),
-			Mockito.mock(FormDataContentDisposition.class));
+			Mockito.mock(FormDataContentDisposition.class),
+			false);
 		commitTransaction();
 		Assert.assertEquals(200, response.getStatus());
 
@@ -180,7 +183,8 @@ public class OrdersResourceTest extends ServerTest {
 			null);
 		resource2.setFacility(facility);
 		Response response2 = resource2.uploadOrders(new ByteArrayInputStream(orders.getBytes("UTF-8")),
-			Mockito.mock(FormDataContentDisposition.class));
+			Mockito.mock(FormDataContentDisposition.class),
+			false);
 		commitTransaction();
 		Assert.assertEquals(200, response2.getStatus());
 
@@ -225,7 +229,8 @@ public class OrdersResourceTest extends ServerTest {
 			null);
 		resource.setFacility(facility);
 		Response response = resource.uploadOrders(new ByteArrayInputStream(orders1.getBytes("UTF-8")),
-			Mockito.mock(FormDataContentDisposition.class));
+			Mockito.mock(FormDataContentDisposition.class),
+			false);
 		commitTransaction();
 		Assert.assertEquals(200, response.getStatus());
 
@@ -248,7 +253,8 @@ public class OrdersResourceTest extends ServerTest {
 			null);
 		resource2.setFacility(facility);
 		Response response2 = resource2.uploadOrders(new ByteArrayInputStream(orders2.getBytes("UTF-8")),
-			Mockito.mock(FormDataContentDisposition.class));
+			Mockito.mock(FormDataContentDisposition.class),
+			false);
 		commitTransaction();
 		Assert.assertEquals(200, response2.getStatus());
 
@@ -290,7 +296,8 @@ public class OrdersResourceTest extends ServerTest {
 			null);
 		resource3.setFacility(facility);
 		Response response3 = resource3.uploadOrders(new ByteArrayInputStream(orders2.getBytes("UTF-8")),
-			Mockito.mock(FormDataContentDisposition.class));
+			Mockito.mock(FormDataContentDisposition.class),
+			false);
 		commitTransaction();
 		Assert.assertEquals(200, response3.getStatus());
 

@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -153,14 +155,13 @@ public class ImportResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response uploadOrders(
         @FormDataParam("file") InputStream fileInputStream,
-        @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
-	
-		
+        @FormDataParam("file") FormDataContentDisposition contentDispositionHeader,
+        @FormDataParam("deleteOldOrders") @DefaultValue(value = "false") boolean deleteOldOrders) {
 		try {
 			long receivedTime = System.currentTimeMillis();
 			Reader reader = new InputStreamReader(fileInputStream);
 			
-			BatchResult<Object> results = this.outboundOrderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
+			BatchResult<Object> results = this.outboundOrderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()), deleteOldOrders);
 			String username = CodeshelfSecurityManager.getCurrentUserContext().getUsername();
 			this.outboundOrderImporter.persistDataReceipt(facility, username, contentDispositionHeader.getFileName(), receivedTime, EdiTransportType.APP, results);
 			return BaseResponse.buildResponse(results, Status.OK);				

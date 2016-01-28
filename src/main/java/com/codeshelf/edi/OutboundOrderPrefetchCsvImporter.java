@@ -13,9 +13,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -34,6 +36,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.util.DateTimeParser;
@@ -122,10 +125,11 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	}
 	
 	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.codeshelf.edi.ICsvImporter#importOrdersFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
-	 */
 	public final BatchResult<Object> importOrdersFromCsvStream(Reader inCsvReader, Facility facility, Timestamp inProcessTime) {
+		return importOrdersFromCsvStream(inCsvReader, facility, inProcessTime, false);
+	}
+	
+	public final BatchResult<Object> importOrdersFromCsvStream(Reader inCsvReader, Facility facility, Timestamp inProcessTime, boolean deleteOldOrders) {
 
 		this.startTime = System.currentTimeMillis();
 		this.spentDoingExtensionsMs = 0;
@@ -247,15 +251,15 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		}
 
 		List<OutboundOrderCsvBean> originalBeanList = toCsvBean(inCsvReader, OutboundOrderCsvBean.class);
-		BatchResult<Object> batchResult = importOrdersFromBeanList(originalBeanList, facility, inProcessTime, true);
+		BatchResult<Object> batchResult = importOrdersFromBeanList(originalBeanList, facility, inProcessTime, deleteOldOrders, true);
 		return batchResult;
 	}
 	
-	public final BatchResult<Object> importOrdersFromBeanList(List<OutboundOrderCsvBean> originalBeanList, Facility facility, Timestamp inProcessTime){
-		return importOrdersFromBeanList(originalBeanList, facility, inProcessTime, false);
+	public final BatchResult<Object> importOrdersFromBeanList(List<OutboundOrderCsvBean> originalBeanList, Facility facility, Timestamp inProcessTime, boolean deleteOldOrders){
+		return importOrdersFromBeanList(originalBeanList, facility, inProcessTime, deleteOldOrders, false);
 	}
 	
-	private final BatchResult<Object> importOrdersFromBeanList(List<OutboundOrderCsvBean> originalBeanList, Facility facility, Timestamp inProcessTime, boolean alreadyInitialized){
+	private final BatchResult<Object> importOrdersFromBeanList(List<OutboundOrderCsvBean> originalBeanList, Facility facility, Timestamp inProcessTime, boolean deleteOldOrders, boolean alreadyInitialized){
 		this.startTime = System.currentTimeMillis();
 		BatchResult<Object> batchResult = new BatchResult<Object>();
 		batchResult.setReceived(new Date(startTime));
@@ -364,6 +368,10 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			}
 		}
 
+		if (deleteOldOrders) {
+			deleteOldOrders(facility.getPersistentId(), orderIds);
+		}
+		
 		// load order queue
 		int numBatches = 1;
 		OutboundOrderBatch combinedBatch = new OutboundOrderBatch(numBatches);
@@ -452,5 +460,30 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	protected Set<EventTag> getEventTagsForImporter() {
 		return EnumSet.of(EventTag.IMPORT, EventTag.ORDER_OUTBOUND);
 	}
-
+	
+	private void deleteOldOrders(final UUID facilityId, final Set<String> orderIds) {
+		Runnable deleteOrdersRunnable = new Runnable() {
+			@Override
+			public void run() {
+				TenantPersistenceService.getInstance().beginTransaction();
+				Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
+				for (String orderId : orderIds) {
+					OrderHeader oldOrder = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
+					if (oldOrder != null) {
+						LOGGER.info("Deleting old order {} during its re-importing", orderId);
+						OrderHeader.deleteOrder(oldOrder);
+					}
+				}
+				TenantPersistenceService.getInstance().commitTransaction();
+			}
+		};
+		ExecutorService executor = Executors.newFixedThreadPool(1);
+		executor.execute(deleteOrdersRunnable);
+		executor.shutdown();
+		try {
+			executor.awaitTermination(2, TimeUnit.MINUTES);
+		} catch (InterruptedException e) {
+			LOGGER.error("Timeout exception while trying to delete orders before re-importing");
+		}
+	}
 }

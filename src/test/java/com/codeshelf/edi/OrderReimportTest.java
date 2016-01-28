@@ -1,7 +1,10 @@
 package com.codeshelf.edi;
 
 import java.io.IOException;
+import java.io.StringReader;
+import java.sql.Timestamp;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
 
@@ -680,6 +683,60 @@ public class OrderReimportTest extends ServerTest {
 		assertEquals(2, details.size());
 		assertEquals(2, countActive(details));
 
+		commitTransaction();
+	}
+	
+	@Test
+	public void orderReimportWithDeletions() throws IOException{
+		beginTransaction();
+		Facility facility = getFacility();
+		commitTransaction();
+		
+		LOGGER.info("1. Import original order");
+		beginTransaction();
+		facility = facility.reload();
+		ICsvOrderImporter importer = createOrderImporter();
+		String csvString = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId\n" + 
+				"1111,1,ItemS1,,11,each,LocX24,1111\n";
+		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, new Timestamp(System.currentTimeMillis()), false);
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "1111");
+		Assert.assertNotNull(order);
+		OrderDetail detail = order.getOrderDetail("1");
+		Assert.assertNotNull(detail);
+		Assert.assertEquals("ItemS1", detail.getItemMasterId());
+		UUID orderId = order.getPersistentId();
+		long orderVersion = order.getVersion();
+		commitTransaction();
+		
+		LOGGER.info("2. Re-Import original order without setting a deletion flag");
+		beginTransaction();
+		facility = facility.reload();
+		csvString = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId\n" + 
+				"1111,1,ItemS2,,11,each,LocX24,1111\n";
+		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, new Timestamp(System.currentTimeMillis()), false);
+		order = OrderHeader.staticGetDao().findByDomainId(facility, "1111");
+		Assert.assertNotNull(order);
+		Assert.assertEquals(orderId, order.getPersistentId());
+		Assert.assertTrue(order.getVersion() > orderVersion);
+		orderVersion = order.getVersion();
+		detail = order.getOrderDetail("1");
+		Assert.assertNotNull(detail);
+		Assert.assertEquals("ItemS2", detail.getItemMasterId());
+		commitTransaction();
+		
+		LOGGER.info("3. Re-Import original order with a set deletion flag");
+		beginTransaction();
+		facility = facility.reload();
+		csvString = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId\n" + 
+				"1111,1,ItemS3,,11,each,LocX24,1111\n";
+		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, new Timestamp(System.currentTimeMillis()), true);
+		order = OrderHeader.staticGetDao().findByDomainId(facility, "1111");
+		Assert.assertNotNull(order);
+		Assert.assertNotEquals(orderId, order.getPersistentId());
+		Assert.assertTrue(order.getVersion() < orderVersion);
+		detail = order.getOrderDetail("1");
+		Assert.assertNotNull(detail);
+		Assert.assertEquals("ItemS3", detail.getItemMasterId());
 		commitTransaction();
 	}
 

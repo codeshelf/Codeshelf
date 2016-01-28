@@ -125,9 +125,12 @@ public class EdiImportServiceTest extends MockDaoTest {
 			}
 
 			@Override
-			public BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) throws IOException {
+			public BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader, Facility inFacility,	Timestamp inProcessTime) throws IOException {
+				return importOrdersFromCsvStream(inCsvStreamReader, inFacility, inProcessTime, false);
+			}
+			
+			@Override
+			public BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime, boolean deleteOldOrders) throws IOException {
 				BatchResult<Object> result = new BatchResult<Object>();
 				result.addViolation("bad", "bad", "msg");
 				return result;
@@ -145,10 +148,9 @@ public class EdiImportServiceTest extends MockDaoTest {
 			}
 
 			@Override
-			public BatchResult<Object> importOrdersFromBeanList(List<OutboundOrderCsvBean> originalBeanList, Facility facility,	Timestamp inProcessTime) {
+			public BatchResult<Object> importOrdersFromBeanList(List<OutboundOrderCsvBean> originalBeanList, Facility facility,	Timestamp inProcessTime, boolean deleteOldOrders) {
 				return null;
 			}
-
 		};
 	}
 }

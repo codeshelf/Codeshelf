@@ -114,7 +114,7 @@ public class EventResource {
 					ArrayList<OutboundOrderCsvBean> orderBeanList = new ArrayList<>(1);
 					orderBeanList.add(orderBean);
 					ICsvOrderImporter orderImporter = orderImporterProvider.get();
-					orderImporter.importOrdersFromBeanList(orderBeanList, event.getFacility(), new Timestamp(System.currentTimeMillis()));
+					orderImporter.importOrdersFromBeanList(orderBeanList, event.getFacility(), new Timestamp(System.currentTimeMillis()), false);
 					
 					return BaseResponse.buildResponse(ImmutableMap.of("scannableId", scannableId));
 				}
