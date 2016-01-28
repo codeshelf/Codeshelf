@@ -144,6 +144,11 @@ public class EdiImportServiceTest extends MockDaoTest {
 				
 			}
 
+			@Override
+			public BatchResult<Object> importOrdersFromBeanList(List<OutboundOrderCsvBean> originalBeanList, Facility facility,	Timestamp inProcessTime) {
+				return null;
+			}
+
 		};
 	}
 }

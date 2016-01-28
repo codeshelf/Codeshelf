@@ -8,6 +8,7 @@ package com.codeshelf.edi;
 import java.io.IOException;
 import java.io.Reader;
 import java.sql.Timestamp;
+import java.util.List;
 
 import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.model.domain.Facility;
@@ -20,6 +21,8 @@ import com.codeshelf.validation.BatchResult;
 public interface ICsvOrderImporter {
 
 	BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) throws IOException;
+	
+	BatchResult<Object> importOrdersFromBeanList(List<OutboundOrderCsvBean> originalBeanList, Facility facility, Timestamp inProcessTime);
 
 	// here for easier testablity
 	int toInteger(final String inString);

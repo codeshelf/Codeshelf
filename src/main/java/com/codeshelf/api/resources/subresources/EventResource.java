@@ -1,7 +1,7 @@
 package com.codeshelf.api.resources.subresources;
 
-import java.io.StringReader;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.UUID;
 
 import javax.ws.rs.GET;
@@ -19,6 +19,8 @@ import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.edi.ICsvOrderImporter;
+import com.codeshelf.edi.OutboundOrderCsvBean;
+import com.codeshelf.model.OrderTypeEnum;
 import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.ItemMaster;
 import com.codeshelf.model.domain.OrderDetail;
@@ -99,12 +101,21 @@ public class EventResource {
 					if (location == null){
 						location = "";
 					}
-					String orders = String.format(
-							"orderId,itemId,quantity,uom,locationId,preAssignedContainerId,workSequence,operationType\n" + 
-							"%s,%s,1,%s,%s,%s,0,replenish",
-							scannableId, itemMaster.getDomainId(), uom.getDomainId(), location, scannableId);
+					OutboundOrderCsvBean orderBean = new OutboundOrderCsvBean();
+					orderBean.setLineNumber(1);
+					orderBean.setOrderId(scannableId);
+					orderBean.setItemId(itemMaster.getDomainId());
+					orderBean.setQuantity("1");
+					orderBean.setUom(uom.getDomainId());
+					orderBean.setLocationId(location);
+					orderBean.setPreAssignedContainerId(scannableId);
+					orderBean.setWorkSequence("0");
+					orderBean.setOperationType(OrderTypeEnum.REPLENISH.name());
+					ArrayList<OutboundOrderCsvBean> orderBeanList = new ArrayList<>(1);
+					orderBeanList.add(orderBean);
 					ICsvOrderImporter orderImporter = orderImporterProvider.get();
-					orderImporter.importOrdersFromCsvStream(new StringReader(orders), event.getFacility(), new Timestamp(System.currentTimeMillis()));
+					orderImporter.importOrdersFromBeanList(orderBeanList, event.getFacility(), new Timestamp(System.currentTimeMillis()));
+					
 					return BaseResponse.buildResponse(ImmutableMap.of("scannableId", scannableId));
 				}
 			}

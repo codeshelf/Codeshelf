@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.sql.Timestamp;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
@@ -298,6 +299,11 @@ public class DropboxRealTest extends ServerTest {
 				@Override
 				public void setTruncatedGtins(boolean value) {
 					// stub. Don't need to implement					
+				}
+				
+				@Override
+				public BatchResult<Object> importOrdersFromBeanList(List<OutboundOrderCsvBean> originalBeanList, Facility facility, Timestamp inProcessTime) {
+					return null;
 				}
 				
 				
