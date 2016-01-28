@@ -5,10 +5,12 @@ import java.util.UUID;
 
 import lombok.Getter;
 
+import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Resolution;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
 
 public class EventDisplay {
@@ -43,6 +45,10 @@ public class EventDisplay {
 
 	@Getter
 	private String	orderId;
+
+	
+	@Getter
+	private String deviceName;
 
 	@Getter
 	private String deviceGuid;
@@ -80,11 +86,19 @@ public class EventDisplay {
 			wi = WorkInstruction.staticGetDao().findByPersistentId(workInstructionId);
 		}
 		
+		Che che = null;
+		String devicePersistentId = Strings.emptyToNull(event.getDevicePersistentId());
+		if (devicePersistentId != null) {
+			UUID uuid = UUID.fromString(devicePersistentId);
+			che = Che.staticGetDao().findByPersistentId(uuid);
+		}
+		
 		Worker worker = Worker.findWorker(event.getFacility(), event.getWorkerId());
-		return new EventDisplay(event, wi, worker);
+		return new EventDisplay(event, wi, worker, che);
 	}
 
-	private EventDisplay(WorkerEvent event, WorkInstruction wi, Worker worker) {
+	private EventDisplay(WorkerEvent event, WorkInstruction wi, Worker worker, Che che) {
+		Che cheToUse = che;
 		if (wi != null) {
 			itemId = wi.getItemId();
 			itemDescription = wi.getItemMaster().getDescription();
@@ -93,7 +107,7 @@ public class EventDisplay {
 			wiPlanQuantity = wi.getPlanQuantity();
 			wiActualQuantity = wi.getActualQuantity();
 			orderId = wi.getOrderId();
-			deviceGuid = wi.getAssignedChe().getDeviceGuidStr();
+			cheToUse = MoreObjects.firstNonNull(cheToUse, wi.getAssignedChe());
 		}
 
 		if (worker != null) {
@@ -102,10 +116,15 @@ public class EventDisplay {
 				Strings.nullToEmpty(worker.getMiddleInitial()));
 		}
 		
+		if (cheToUse != null) {
+			deviceGuid = che.getDeviceGuidStr();
+			devicePersistentId = event.getDevicePersistentId();
+			deviceName = che.getDomainId();
+		}
+		
 		persistentId = event.getPersistentId();
 		type = event.getEventType();
 		createdAt = event.getCreated();
-		devicePersistentId = event.getDevicePersistentId();
 		workerId = event.getWorkerId();
 		orderDetailId = event.getOrderDetailId();
 		workInstructionId = event.getWorkInstructionId();
