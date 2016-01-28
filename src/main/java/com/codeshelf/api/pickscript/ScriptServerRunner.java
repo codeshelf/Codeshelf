@@ -62,6 +62,7 @@ public class ScriptServerRunner {
 	private final static String TEMPLATE_SET_PROPERTY = "setProperty <name> <value>";
 	private final static String TEMPLATE_DELETE_ORDERS = "deleteOrders <filename>";
 	private final static String TEMPLATE_IMPORT_ORDERS = "importOrders <orders>";
+	private final static String TEMPLATE_IMPORT_ORDERS_DELETION = "importOrdersWithDeletion <orders>";
 	private final static String TEMPLATE_IMPORT_AISLES = "importAisles <filename>";
 	private final static String TEMPLATE_IMPORT_LOCATIONS = "importLocations <filename>";
 	private final static String TEMPLATE_IMPORT_INVENTORY = "importInventory <filename>";
@@ -162,7 +163,9 @@ public class ScriptServerRunner {
 		} else if (command.equalsIgnoreCase("deleteOrders")) {
 			processDeleteOrdersCommand(parts);
 		} else if (command.equalsIgnoreCase("importOrders")) {
-			processImportOrdersCommand(parts);
+			processImportOrdersCommand(parts, false);
+		} else if (command.equalsIgnoreCase("importOrdersWithDeletion")) {
+			processImportOrdersCommand(parts, true);
 		} else if (command.equalsIgnoreCase("importAisles")) {
 			processImportAislesCommand(parts);
 		} else if (command.equalsIgnoreCase("importLocations")) {
@@ -207,7 +210,7 @@ public class ScriptServerRunner {
 		} else if  (command.equalsIgnoreCase("togglePutWall")) {
 			throw new Exception("Command togglePutWall has been deprecated due to an addition of Sku Walls. Instead, use " + TEMPLATE_SET_WALL);
 		} else {
-			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, deleteOrders, importOrders, importAisles, importLocations, importInventory, importWorkers, setController, setPoscons, setPosconToBay, setWall, createChe, deleteChes, deleteAllPaths, defPath, setPathName, assignPathSgmToAisle, assignTapeToTier, deleteAllExtensionPoints, deleteExtensionPoint, addExtensionPoint, waitSeconds, //]");
+			throw new Exception("Invalid command '" + command + "'. Expected [editFacility, createDummyOutline, setProperty, deleteOrders, importOrders, importOrdersWithDeletion, importAisles, importLocations, importInventory, importWorkers, setController, setPoscons, setPosconToBay, setWall, createChe, deleteChes, deleteAllPaths, defPath, setPathName, assignPathSgmToAisle, assignTapeToTier, deleteAllExtensionPoints, deleteExtensionPoint, addExtensionPoint, waitSeconds, //]");
 		}
 	}
 
@@ -292,17 +295,23 @@ public class ScriptServerRunner {
 	/**
 	 * Expects to see command
 	 * importOrders <filename>
+	 * or
+	 * importOrdersWithDeletion <filename>
 	 * @throws Exception 
 	 */
-	private void processImportOrdersCommand(String parts[]) throws Exception {
+	private void processImportOrdersCommand(String parts[], boolean deleteOldOrders) throws Exception {
 		if (parts.length != 2){
-			throwIncorrectNumberOfArgumentsException(TEMPLATE_IMPORT_ORDERS);
+			if (deleteOldOrders){
+				throwIncorrectNumberOfArgumentsException(TEMPLATE_IMPORT_ORDERS_DELETION);
+			} else {
+				throwIncorrectNumberOfArgumentsException(TEMPLATE_IMPORT_ORDERS);
+			}
 		}
 		String filename = parts[1];
 		InputStreamReader reader = readFile(filename);
 		long receivedTime = System.currentTimeMillis();
 		ICsvOrderImporter orderImporter = orderImporterProvider.get();
-		BatchResult<Object> results = orderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
+		BatchResult<Object> results = orderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()), deleteOldOrders);
 		String username = CodeshelfSecurityManager.getCurrentUserContext().getUsername();
 		orderImporter.persistDataReceipt(facility, username, filename + ".csv", receivedTime, EdiTransportType.SCRIPT, results);
 	}
