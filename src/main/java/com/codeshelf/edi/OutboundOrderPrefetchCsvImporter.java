@@ -467,23 +467,39 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			public void run() {
 				TenantPersistenceService.getInstance().beginTransaction();
 				Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
+				int counter = 1, total = orderIds.size();
 				for (String orderId : orderIds) {
-					OrderHeader oldOrder = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
-					if (oldOrder != null) {
-						LOGGER.info("Deleting old order {} during its re-importing", orderId);
-						OrderHeader.deleteOrder(oldOrder);
+					try {
+						OrderHeader oldOrder = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
+						if (oldOrder != null) {
+							LOGGER.info("Deleting old order {} ({}/{}) during its re-importing", orderId, counter++, total);
+							OrderHeader.staticGetDao().delete(oldOrder);
+						}
+					} catch (Exception e) {
+						LOGGER.warn("Unable to delete order " + orderId + " during re-importing", e);
+					}
+					if (Thread.interrupted()) {
+						break;	// Executor has asked us to stop
 					}
 				}
 				TenantPersistenceService.getInstance().commitTransaction();
 			}
 		};
 		ExecutorService executor = Executors.newFixedThreadPool(1);
+		LOGGER.info("Start order deletion thread");
 		executor.execute(deleteOrdersRunnable);
 		executor.shutdown();
 		try {
-			executor.awaitTermination(2, TimeUnit.MINUTES);
-		} catch (InterruptedException e) {
-			LOGGER.error("Timeout exception while trying to delete orders before re-importing");
+			LOGGER.info("Await order deletion thread termination");
+			boolean ternimated = executor.awaitTermination(3, TimeUnit.MINUTES);
+			if (!ternimated){
+				executor.shutdownNow();
+				LOGGER.warn("Timeout exception while trying to delete orders before re-importing. Interrupting order deletion.");
+				
+			}
+		} catch (InterruptedException e){
+			LOGGER.warn("Order deletion thread interrupted while awaiting termination", e);
 		}
+		LOGGER.info("Order delition completed");
 	}
 }
