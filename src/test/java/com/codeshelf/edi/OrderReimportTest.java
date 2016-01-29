@@ -740,6 +740,42 @@ public class OrderReimportTest extends ServerTest {
 		commitTransaction();
 	}
 
+	@Test
+	public void orderReimportWithDeletionsFail() throws IOException{
+		beginTransaction();
+		Facility facility = getFacility();
+		commitTransaction();
+		
+		LOGGER.info("1. Import original order");
+		beginTransaction();
+		facility = facility.reload();
+		ICsvOrderImporter importer = createOrderImporter();
+		String csvString = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId\n" + 
+				"1111,1,ItemS1,,11,each,LocX24,1111\n";
+		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, new Timestamp(System.currentTimeMillis()), false);
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "1111");
+		Assert.assertNotNull(order);
+		UUID orderId = order.getPersistentId();
+		long orderVersion = order.getVersion();
+		commitTransaction();
+		
+		LOGGER.info("2. Re-import order with deletion, but use test feature to make deletion crash. Ensure that the importing still went ahead");
+		beginTransaction();
+		facility = facility.reload();
+		importer.makeOrderDeletionFail(true);
+		csvString = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId\n" + 
+				"1111,1,ItemS2,,11,each,LocX24,1111\n";
+		importer.importOrdersFromCsvStream(new StringReader(csvString), facility, new Timestamp(System.currentTimeMillis()), true);
+		order = OrderHeader.staticGetDao().findByDomainId(facility, "1111");
+		Assert.assertNotNull(order);
+		Assert.assertEquals(orderId, order.getPersistentId());
+		Assert.assertTrue(order.getVersion() > orderVersion);
+		OrderDetail detail = order.getOrderDetail("1");
+		Assert.assertNotNull(detail);
+		Assert.assertEquals("ItemS2", detail.getItemMasterId());
+		commitTransaction();
+	}
+	
 	private static int countActive(List<OrderDetail> details) {
 		int num = 0;
 		if (details != null) {

@@ -151,6 +151,10 @@ public class EdiImportServiceTest extends MockDaoTest {
 			public BatchResult<Object> importOrdersFromBeanList(List<OutboundOrderCsvBean> originalBeanList, Facility facility,	Timestamp inProcessTime, boolean deleteOldOrders) {
 				return null;
 			}
+
+			@Override
+			public void makeOrderDeletionFail(boolean fail) {
+			}
 		};
 	}
 }

@@ -88,10 +88,19 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	@Getter
 	boolean												truncatedGtins			= false;
 
+	//Used for testing purpose to simulate errors in the OrderDeletion thread
+	@Setter
+	@Getter
+	boolean												makeOldOrderDeletionFail= false;
+
 	@Inject
 	public OutboundOrderPrefetchCsvImporter(final EventProducer inProducer) {
 		super(inProducer);
 		mDateTimeParser = new DateTimeParser();
+	}
+	
+	public void makeOrderDeletionFail(boolean fail){
+		this.makeOldOrderDeletionFail = fail;
 	}
 
 	/** --------------------------------------------------------------------------
@@ -470,6 +479,9 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 				int counter = 1, total = orderIds.size();
 				for (String orderId : orderIds) {
 					try {
+						if (makeOldOrderDeletionFail){
+							throw new Exception("Order Deletion Test-Triggered Error");
+						}
 						OrderHeader oldOrder = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
 						if (oldOrder != null) {
 							LOGGER.info("Deleting old order {} ({}/{}) during its re-importing", orderId, counter++, total);

@@ -308,6 +308,10 @@ public class DropboxRealTest extends ServerTest {
 				@Override
 				public BatchResult<Object> importOrdersFromBeanList(List<OutboundOrderCsvBean> originalBeanList, Facility facility, Timestamp inProcessTime, boolean deleteOldOrders) {
 					return null;
+				}
+
+				@Override
+				public void makeOrderDeletionFail(boolean fail) {
 				}				
 			};
 

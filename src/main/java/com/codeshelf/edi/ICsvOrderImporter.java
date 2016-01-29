@@ -32,5 +32,6 @@ public interface ICsvOrderImporter {
 	void setTruncatedGtins(boolean value);
 	
 	void persistDataReceipt(Facility facility, String username, String filename, long receivedTime, EdiTransportType tranportType, BatchResult<?> result);
-
+	
+	void makeOrderDeletionFail(boolean fail);
 }
