@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.ws.rs.core.MultivaluedMap;
+
 import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.SQLQuery;
@@ -29,6 +31,7 @@ import org.joda.time.format.ISOPeriodFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.api.BaseResponse.IntervalParam;
 import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.PickRate;
 import com.codeshelf.flyweight.command.NetGuid;
@@ -51,6 +54,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableSet;
@@ -62,6 +66,26 @@ import lombok.Setter;
 import lombok.ToString;
 
 public class NotificationBehavior implements IApiBehavior{
+	
+	public static class HistogramParams {
+		@Getter
+		private Interval createdInterval;
+		
+		@Getter
+		private Period bin;
+		
+		public HistogramParams(MultivaluedMap<String, String> multivaluedMap) {
+			createdInterval = new IntervalParam(multivaluedMap.getFirst("created")).getValue();
+			
+			String binPeriod = multivaluedMap.getFirst("createdBin");
+			bin = Period.parse(MoreObjects.firstNonNull(binPeriod, "PT5M"));  
+		}
+		
+		public HistogramParams(Interval createdInterval, Period bin) {
+			this.createdInterval = createdInterval;
+			this.bin = bin;
+		}
+	}
 	
 	public static class HistogramResult {
 		@Getter
@@ -306,28 +330,12 @@ public class NotificationBehavior implements IApiBehavior{
 		List<PickRate> results = query.list();
  		return results;
 	}
-	
-	
 
-	public HistogramResult facilityPickRateHistogram(final Interval createdInterval, final Period binWidth, Facility facility) throws IOException {
-		String sqlWhereClause = 
-				  " parent_persistentid = :facilityId"
-				+ " and event_type = 'COMPLETE'"
-				+ " and created between :startDateTime and :endDateTime";
-		SQLQuery query = createPickRateHistogramQuery(binWidth, sqlWhereClause);
-		query.setParameter("facilityId", facility.getPersistentId(),  new DialectUUIDType());
-		query.setParameter("startDateTime", new Timestamp(createdInterval.getStart().getMillis()));
-		query.setParameter("endDateTime", new Timestamp(createdInterval.getEnd().getMillis()));
-		List<BinValue> binValues = executeHistogramQuery(query, createdInterval, binWidth);	
-		HistogramResult result = new HistogramResult(createdInterval, binWidth, binValues);
-		return result;
-	}
-
-	public List<WorkerEventHistogram> workersPickHistogram(final Interval createdInterval, final Period binWidth, Facility facility) {
+	public List<WorkerEventHistogram> workersPickHistogram(HistogramParams params, Facility facility) {
 		DetachedCriteria distinctWorkers = DetachedCriteria.forClass(WorkerEvent.class)
 				.setProjection(Projections.distinct(Projections.property("workerId")))
 				.add(Property.forName("parent").eq(facility))
-				.add(GenericDaoABC.createIntervalRestriction("created", createdInterval));
+				.add(GenericDaoABC.createIntervalRestriction("created", params.getCreatedInterval()));
 		
     	Criteria workerCriteria = Worker.staticGetDao().createCriteria();
        	workerCriteria.add(Property.forName("parent").eq(facility))
@@ -339,31 +347,69 @@ public class NotificationBehavior implements IApiBehavior{
 		ArrayList<WorkerEventHistogram> workerHistograms = new ArrayList<WorkerEventHistogram>();
 		for (Worker worker : workers) {
 			workerHistograms.add(
-				new WorkerEventHistogram(worker, workerPickRateHistogram(createdInterval, binWidth, facility, worker.getDomainId()))
+				new WorkerEventHistogram(worker, workerPickRateHistogram(params, facility, worker.getDomainId()))
 			);
 		}
 		return workerHistograms;
 	}
 
-	public HistogramResult workerPickRateHistogram(final Interval createdInterval, final Period binWidth, Worker worker) {
-		return workerPickRateHistogram(createdInterval, binWidth, worker.getFacility(), worker.getDomainId());
+	public HistogramResult pickRateHistogram(HistogramParams params, Che che) {
+		return chePickRateHistogram(params, che.getFacility(), che.getPersistentId());
 	}
+
 	
-	private HistogramResult workerPickRateHistogram(final Interval createdInterval, final Period binWidth, Facility facility, String badgeId) {
-		String sqlWhereClause = 
-				  " parent_persistentid = :facilityId"
-				+ " and event_type = 'COMPLETE'"
-                + " and worker_id = :workerId"
-				+ " and created between :startDateTime and :endDateTime";
-		SQLQuery query = createPickRateHistogramQuery(binWidth, sqlWhereClause);
-		query.setParameter("facilityId", facility.getPersistentId(),  new DialectUUIDType());
-		query.setParameter("workerId", badgeId);
-		query.setParameter("startDateTime", new Timestamp(createdInterval.getStart().getMillis()));
-		query.setParameter("endDateTime", new Timestamp(createdInterval.getEnd().getMillis()));
+	public HistogramResult pickRateHistogram(HistogramParams params, Worker worker) {
+		return workerPickRateHistogram(params, worker.getFacility(), worker.getDomainId());
+	}
+
+	public HistogramResult pickRateHistogram(HistogramParams params, Facility facility) throws IOException {
+		String sqlWhereClause = toSqlWhereClause(null);
+
+		final Period binWidth = params.getBin();
+		final Interval createdInterval = params.getCreatedInterval();
+		SQLQuery query = createPickRateHistogramQuery(facility, createdInterval, binWidth, sqlWhereClause);
+		
+		
 		List<BinValue> binValues = executeHistogramQuery(query, createdInterval, binWidth);	
 		HistogramResult result = new HistogramResult(createdInterval, binWidth, binValues);
 		return result;
+	}
+	
+	private HistogramResult chePickRateHistogram(final HistogramParams params, Facility facility, UUID persistentId) {
+		String sqlWhereClause = toSqlWhereClause("device_persistentid = :chePersistentId");
+
+		final Period binWidth = params.getBin();
+		final Interval createdInterval = params.getCreatedInterval();
+		SQLQuery query = createPickRateHistogramQuery(facility, createdInterval, binWidth, sqlWhereClause);
 		
+		query.setParameter("chePersistentId", persistentId.toString());
+		
+		List<BinValue> binValues = executeHistogramQuery(query, createdInterval, binWidth);	
+		HistogramResult result = new HistogramResult(createdInterval, binWidth, binValues);
+		return result;
+	}
+	
+	private HistogramResult workerPickRateHistogram(final HistogramParams params, Facility facility, String badgeId) {
+		String sqlWhereClause = toSqlWhereClause("worker_id = :workerId");
+
+		final Period binWidth = params.getBin();
+		final Interval createdInterval = params.getCreatedInterval();
+		SQLQuery query = createPickRateHistogramQuery(facility, createdInterval, binWidth, sqlWhereClause);
+		
+		query.setParameter("workerId", badgeId);
+		
+		List<BinValue> binValues = executeHistogramQuery(query, createdInterval, binWidth);	
+		HistogramResult result = new HistogramResult(createdInterval, binWidth, binValues);
+		return result;
+	}
+
+	private String toSqlWhereClause(String whereClause) {
+		String sqlWhereClause = 
+				  " parent_persistentid = :facilityId"
+				+ " and event_type = 'COMPLETE'"
+				+ " and created between :startDateTime and :endDateTime"
+                + ((whereClause != null) ? " and " + whereClause : "");
+		return sqlWhereClause;
 	}
 	
 	private List<BinValue> executeHistogramQuery(SQLQuery query, final Interval completedInterval, final Period binWidth) {
@@ -397,7 +443,7 @@ public class NotificationBehavior implements IApiBehavior{
 	}
 
 		
-	private SQLQuery createPickRateHistogramQuery(Period binWidth, String sqlWhereClause) {
+	private SQLQuery createPickRateHistogramQuery(Facility facility, Interval createdInterval, Period binWidth, String sqlWhereClause) {
 		
 		String sqlTemplate =  "select bin, count(bin) as value from ( "
   + " select CAST(floor(extract(epoch from (created - CAST(:startDateTime AS TIMESTAMP)))  / :binWidth) AS integer) as bin "
@@ -409,6 +455,9 @@ public class NotificationBehavior implements IApiBehavior{
 		String sqlQuery = String.format(sqlTemplate, sqlWhereClause);
 		Session session = TenantPersistenceService.getInstance().getSession();
 		SQLQuery query = session.createSQLQuery(sqlQuery);
+		query.setParameter("facilityId", facility.getPersistentId(),  new DialectUUIDType());
+		query.setParameter("startDateTime", new Timestamp(createdInterval.getStart().getMillis()));
+		query.setParameter("endDateTime", new Timestamp(createdInterval.getEnd().getMillis()));
 		query.setParameter("binWidth", binWidth.toStandardSeconds().getSeconds());
 		return query;
 	}

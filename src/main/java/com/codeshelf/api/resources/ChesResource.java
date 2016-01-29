@@ -1,6 +1,5 @@
 package com.codeshelf.api.resources;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -97,23 +96,6 @@ public class ChesResource {
 		return BaseResponse.buildResponse(results);
 	}
 
-	@GET
-	@RequiresPermissions("che:view")
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response getChes() {
-		List<Che> ches = new ArrayList<>();
-		if(facility != null) {
-			Criteria cheCriteria = Che.staticGetDao().createCriteria();
-			cheCriteria.createCriteria("parent", "network").add(Restrictions.eq("parent", facility));
-			ches = Che.staticGetDao().findByCriteriaQuery(cheCriteria);
-		} else {
-			ches = Che.staticGetDao().getAll();
-		}
-		return BaseResponse.buildResponse(new ResultDisplay<Che>(ches));
-	}
-
-	
-	
 	@GET
 	@Path("/pools")
 	@Produces(MediaType.APPLICATION_JSON)
