@@ -1,9 +1,6 @@
 package com.codeshelf.api.resources;
 
-import static com.codeshelf.model.dao.GenericDaoABC.countCriteria;
-
 import java.sql.Timestamp;
-import java.util.List;
 import java.util.UUID;
 
 import javax.ws.rs.Consumes;
@@ -31,7 +28,6 @@ import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Worker;
-import com.google.common.base.MoreObjects;
 import com.sun.jersey.api.core.ResourceContext;
 
 @Path("/workers")
@@ -69,24 +65,17 @@ public class WorkersResource {
 	@GET
 	@RequiresPermissions("worker:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getAllWorkers(@QueryParam("badgeId") String badgeId, @QueryParam("limit") Integer limit) {
+	public Response getAllWorkers(@QueryParam("badgeId") String domainId, @QueryParam("limit") Integer limit) {
 		Criteria criteria= Worker.staticGetDao().createCriteria();
 
 		if (facility != null) {
 			criteria.add(Property.forName("parent").eq(facility));
 		}
-		if (badgeId !=  null) {
-			criteria.add(GenericDaoABC.createSubstringRestriction("domainId", badgeId));
+		if (domainId !=  null) {
+			criteria.add(GenericDaoABC.createSubstringRestriction("domainId", domainId));
 		}
-			
-		long total = countCriteria(criteria);
-		limit = MoreObjects.firstNonNull(limit, 15);
-		criteria
-		.addOrder(Order.asc("domainId"))
-		.setMaxResults(limit);
-		@SuppressWarnings("unchecked")
-		List<Worker> entities = criteria.list();
-		return BaseResponse.buildResponse(new ResultDisplay<>(total, entities));
+		ResultDisplay<Worker> results = Worker.staticGetDao().findByCriteriaQueryPartial(criteria, Order.asc("domainId"), limit);
+		return BaseResponse.buildResponse(results);
 	}
 	
 	@POST

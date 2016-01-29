@@ -31,10 +31,12 @@ import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.util.ConverterProvider;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
@@ -296,10 +298,27 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 	}
 
 	@Override
+	public ResultDisplay<T> findByCriteriaQueryPartial(Criteria criteria, Order order, int limit) {
+		long total = countByCriteriaQuery(criteria);
+		limit = MoreObjects.firstNonNull(limit, 15);
+		criteria
+		.addOrder(order)
+		.setMaxResults(limit);
+		List<T> results = criteria.list();
+		return new ResultDisplay<>(total, results);
+	}
+
+	
+	@Override
 	public final int countByCriteriaQuery(Criteria criteria) {
-		criteria.setProjection(Projections.rowCount());
-		Number value = (Number) criteria.uniqueResult();
-		return value.intValue();
+		//Turn into a count query
+		Criteria countCriteria = criteria.setProjection(Projections.rowCount());
+		Long total = (Long) countCriteria.uniqueResult();
+
+		//Turn back into entity query
+		criteria.setProjection(null);
+		criteria.setResultTransformer(Criteria.ROOT_ENTITY);
+		return total.intValue();
 	}
 
 	@Override
@@ -350,18 +369,6 @@ public abstract class GenericDaoABC<T extends IDomainObject> implements ITypedDa
 			throw new DaoException("unexpected class used with DAO - expected " + expectedClass.getSimpleName() + " but got "
 					+ clazz.getSimpleName());
 		}
-	}
-
-	//side effect of changing the query temporarily since cloning isn't really supported
-	public static long countCriteria(Criteria criteria) {
-		//Turn into a count query
-		Criteria countCriteria = criteria.setProjection(Projections.rowCount());
-		Long total = (Long) countCriteria.uniqueResult();
-
-		//Turn back into entity query
-		criteria.setProjection(null);
-		criteria.setResultTransformer(Criteria.ROOT_ENTITY);
-		return total;
 	}
 
 	public static Criterion createSubstringRestriction(String propertyName, String substring) {

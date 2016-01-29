@@ -26,8 +26,8 @@ import org.joda.time.Interval;
 import org.joda.time.Period;
 
 import com.codeshelf.api.BaseResponse;
-import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.BaseResponse.IntervalParam;
+import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.behavior.NotificationBehavior;

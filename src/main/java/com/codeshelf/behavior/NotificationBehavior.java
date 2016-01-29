@@ -1,7 +1,5 @@
 package com.codeshelf.behavior;
 
-import static com.codeshelf.model.dao.GenericDaoABC.countCriteria;
-
 import java.io.IOException;
 import java.math.BigInteger;
 import java.sql.Timestamp;
@@ -464,15 +462,8 @@ public class NotificationBehavior implements IApiBehavior{
 		if (created.isPresent()) {
 			criteria.add(GenericDaoABC.createIntervalRestriction("created", created.get()));
 		}
-		long total = countCriteria(criteria);
-		
-		criteria
-		.addOrder(Order.desc("created"))
-		.setMaxResults(limitValue);
-		@SuppressWarnings("unchecked")
-		List<WorkerEvent> entities = criteria.list();
-
-		return new ResultDisplay<>(total, mapToEventDisplay(entities));
+		ResultDisplay<WorkerEvent> workerEvents = WorkerEvent.staticGetDao().findByCriteriaQueryPartial(criteria, Order.desc("created"), limitValue);
+		return new ResultDisplay<>(workerEvents.getTotal(), mapToEventDisplay(new ArrayList<WorkerEvent>(workerEvents.getResults())));
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -497,7 +488,7 @@ public class NotificationBehavior implements IApiBehavior{
 		
 		Criteria criteria = WorkerEvent.staticGetDao().createCriteria();
 		criteria = query.toFilterCriteria(criteria);
-		long total = countCriteria(criteria);
+		long total = WorkerEvent.staticGetDao().countByCriteriaQuery(criteria);
 		criteria = query.toLimitedCriteria(criteria);
 		@SuppressWarnings("unchecked")
 		List<WorkerEvent> entities = criteria.list();
