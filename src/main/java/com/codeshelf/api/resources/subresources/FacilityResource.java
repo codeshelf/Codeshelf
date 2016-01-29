@@ -27,8 +27,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.beanutils.BeanMap;
 import org.apache.commons.io.IOUtils;
@@ -37,7 +39,6 @@ import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.exception.ConstraintViolationException;
-import org.joda.time.Period;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,9 +63,9 @@ import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.FacilityShort;
 import com.codeshelf.api.responses.ItemDisplay;
 import com.codeshelf.api.responses.PickRate;
-import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.api.responses.WorkerDisplay;
 import com.codeshelf.behavior.NotificationBehavior;
+import com.codeshelf.behavior.NotificationBehavior.HistogramParams;
 import com.codeshelf.behavior.NotificationBehavior.HistogramResult;
 import com.codeshelf.behavior.NotificationBehavior.WorkerEventTypeGroup;
 import com.codeshelf.behavior.OrderBehavior;
@@ -82,6 +83,7 @@ import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.DataPurgeParameters;
 import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.dao.GenericDaoABC;
+import com.codeshelf.model.dao.ResultDisplay;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.FacilityMetric;
@@ -555,11 +557,12 @@ public class FacilityResource {
 	@Path("picks/histogram")
 	@RequiresPermissions("event:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response pickHistogram(@QueryParam("created") IntervalParam createdInterval, @QueryParam("createdBin") String binPeriod) {
+	public Response pickHistogram(@Context UriInfo uriInfo) throws Exception {
 		ErrorResponse errors = new ErrorResponse();
 		try {
-			Period bin = Period.parse(MoreObjects.firstNonNull(binPeriod, "PT5M"));  
-			HistogramResult result = notificationService.facilityPickRateHistogram(createdInterval.getValue(), bin, facility);
+			MultivaluedMap<String, String> queryParams = uriInfo.getQueryParameters();
+			HistogramParams params = new HistogramParams(queryParams);  
+			HistogramResult result = notificationService.pickRateHistogram(params, facility);
 			return BaseResponse.buildResponse(result);
 		} catch (Exception e) {
 			return errors.processException(e);
@@ -570,11 +573,12 @@ public class FacilityResource {
 	@Path("picks/workers/histogram")
 	@RequiresPermissions("event:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response workersPickHistogram(@QueryParam("created") IntervalParam createdInterval, @QueryParam("createdBin") String binPeriod) {
+	public Response workersPickHistogram(@Context UriInfo uriInfo) throws Exception {
 		ErrorResponse errors = new ErrorResponse();
 		try {
-			Period bin = Period.parse(MoreObjects.firstNonNull(binPeriod, "PT5M"));  
-			List<?> result = notificationService.workersPickHistogram(createdInterval.getValue(), bin, facility);
+			MultivaluedMap<String, String> queryParams = uriInfo.getQueryParameters();
+			HistogramParams params = new HistogramParams(queryParams);   
+			List<?> result = notificationService.workersPickHistogram(params, facility);
 			return BaseResponse.buildResponse(result);
 		} catch (Exception e) {
 			return errors.processException(e);

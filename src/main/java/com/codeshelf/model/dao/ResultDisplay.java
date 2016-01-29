@@ -1,4 +1,4 @@
-package com.codeshelf.api.responses;
+package com.codeshelf.model.dao;
 
 import java.util.Collection;
 

@@ -52,6 +52,7 @@ public interface ITypedDao<T> {
 	Class<T> getDaoClass();
 
 	List<T> findByCriteriaQuery(Criteria criteria);
+	ResultDisplay<T> findByCriteriaQueryPartial(Criteria criteria, Order order, int limit);
 	
 	int countByCriteriaQuery(Criteria criteria);
 	int countByFilter(List<Criterion> inFilter);
@@ -59,6 +60,7 @@ public interface ITypedDao<T> {
 	List<UUID> getUUIDListByCriteriaQuery(Criteria criteria);
 
 	Criteria createCriteria();
+
 
 	
 }

@@ -18,9 +18,6 @@ import java.util.UUID;
 
 import javax.persistence.Column;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import org.apache.commons.lang.NotImplementedException;
 import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
@@ -29,10 +26,14 @@ import org.hibernate.criterion.Order;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.IDaoListener;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.dao.ResultDisplay;
 import com.codeshelf.model.domain.DomainObjectTreeABC;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.IDomainObjectTree;
 import com.eaio.uuid.UUIDGen;
+
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * @author jeffw
@@ -224,6 +225,11 @@ public class MockDao<T extends IDomainObject> implements ITypedDao<T> {
 			}
 		}
 		return result;
+	}
+
+	@Override
+	public ResultDisplay<T> findByCriteriaQueryPartial(Criteria criteria, Order order, int limit) {
+		throw new NotImplementedException();
 	}
 
 }
