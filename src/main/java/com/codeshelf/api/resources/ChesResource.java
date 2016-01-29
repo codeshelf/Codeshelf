@@ -29,8 +29,8 @@ import org.hibernate.criterion.Restrictions;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.resources.subresources.CheResource;
-import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.model.dao.GenericDaoABC;
+import com.codeshelf.model.dao.ResultDisplay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.ws.server.CsServerEndPoint;

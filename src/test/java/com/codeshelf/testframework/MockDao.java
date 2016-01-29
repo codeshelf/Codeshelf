@@ -23,10 +23,10 @@ import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Order;
 
-import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.model.dao.DaoException;
 import com.codeshelf.model.dao.IDaoListener;
 import com.codeshelf.model.dao.ITypedDao;
+import com.codeshelf.model.dao.ResultDisplay;
 import com.codeshelf.model.domain.DomainObjectTreeABC;
 import com.codeshelf.model.domain.IDomainObject;
 import com.codeshelf.model.domain.IDomainObjectTree;

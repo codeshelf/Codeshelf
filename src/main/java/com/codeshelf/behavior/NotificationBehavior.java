@@ -31,11 +31,11 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.PickRate;
-import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.PageQuery;
+import com.codeshelf.model.dao.ResultDisplay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.DomainObjectABC;
 import com.codeshelf.model.domain.Facility;

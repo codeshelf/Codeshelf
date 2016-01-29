@@ -13,7 +13,6 @@ import org.hibernate.Criteria;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Order;
 
-import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.model.domain.IDomainObject;
 
 /**

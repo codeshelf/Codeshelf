@@ -28,10 +28,10 @@ import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.behavior.ProductivitySummaryList.StatusSummary;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.OrderStatusEnum;
+import com.codeshelf.model.dao.ResultDisplay;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.ItemMaster;
