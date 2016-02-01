@@ -2073,7 +2073,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				return;
 			}
 			// only reevaluate if the wi needs a scan
-			if (!wi.getNeedsScan()) {
+			if (!wi.getNeedsScan() && !wi.getSubstituteAllowed()) {
 				setState(getCheStateEnum()); // forces redraw
 				return;
 			}

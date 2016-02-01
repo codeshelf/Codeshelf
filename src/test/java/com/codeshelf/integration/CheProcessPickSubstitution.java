@@ -307,6 +307,38 @@ public class CheProcessPickSubstitution extends ServerTest{
 	}
 	
 	/**
+	 * Simple substitution. Scan verification is not required.
+	 */
+	@Test
+	public void testSubstitutionSingle5() throws IOException {
+		LOGGER.info("1: Import orders, substitution allowed");
+		beginTransaction();
+		Facility facility = getFacility();
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "Disabled");
+		String csvOrders = "orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence,substituteAllowed\n" + 
+				"1111,1,ItemS1,ItemS1 Description,3,each,LocX24,1111,1,true"; 
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+
+		LOGGER.info("2: Setup order on CHE and start pick");
+		picker.loginAndSetup("Worker1");
+		picker.setupContainer("1111", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		
+		LOGGER.info("3: Scan substitution barcode, confirm substitution");
+		picker.scanSomething(SUBSTITUTION_1);
+		picker.waitForCheState(CheStateEnum.SUBSTITUTION_CONFIRM, 4000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+	}
+
+	
+	/**
 	 * Three (multi-pick) orders for item. Substitution not allowed on any. Incorrect scan. Then correct scan.
 	 */
 	@Test
