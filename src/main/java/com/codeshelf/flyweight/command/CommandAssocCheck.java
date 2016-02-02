@@ -59,7 +59,9 @@ public final class CommandAssocCheck extends CommandAssocABC {
 	@Override
 	public String doToString() {
 		return Integer.toHexString(ASSOC_CHECK_COMMAND) + " CHECK" + super.doToString() + " batt= " + mBatteryLevel + "reboot= "
-				+ mRestartCause;
+				+ mRestartCause + " sys stat0=0x" + Integer.toHexString(mRcmRegister0 & 0xff)
+				+ " sys stat1=0x" + Integer.toHexString(mRcmRegister1 & 0xff)
+				+ " pc=0x" + Integer.toHexString(mRestartPC);
 	}
 
 	/* --------------------------------------------------------------------------

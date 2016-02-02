@@ -158,13 +158,9 @@ public interface INetworkDevice {
 	 */
 	public String getDeviceType();
 
-	//public short getHardwareVersion();
+	public void setHardwareVersion(byte[] hardwareVersion);
 
-	public void setHardwareVersion(short hardwareVersion);
-
-	//public short getFirmwareVersion();
-
-	public void setFirmwareVersion(short firmwareVersion);
+	public void setFirmwareVersion(byte[] firmwareVersion);
 
 	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, String cheName, byte[] associatedToCheGuid);
 	

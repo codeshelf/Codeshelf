@@ -25,11 +25,14 @@ public final class CommandAssocReq extends CommandAssocABC {
 
 	public static final int		ASSOC_REQ_BYTES	= 2;
 
+	public static final int		ASSOC_REQ_HW_VER_LEN = 4;	// 4 bytes
+	public static final int		ASSOC_REQ_FW_VER_LEN = 4;	// 4 bytes
+	
 	private static final Logger	LOGGER			= LoggerFactory.getLogger(CommandAssocReq.class);
 
 	//Note these need to be treated as unsigned
-	private short				hardwareVersion;
-	private short				firmwareVersion;
+	private byte[]				hardwareVersion;
+	private byte[]				firmwareVersion;
 	private byte				radioProtocolVersion;
 	private byte				systemStatus;
 
@@ -39,8 +42,8 @@ public final class CommandAssocReq extends CommandAssocABC {
 	 *  @param inDatagramBytes
 	 *  @param inEndpoint
 	 */
-	public CommandAssocReq(short hardwareVersion,
-		short firmwareVersion,
+	public CommandAssocReq(byte[] hardwareVersion,
+		byte[] firmwareVersion,
 		byte radioProtocolVersion,
 		byte systemStatus,
 		final String inRemoteGUID) {
@@ -48,6 +51,20 @@ public final class CommandAssocReq extends CommandAssocABC {
 
 		this.hardwareVersion = hardwareVersion;
 		this.firmwareVersion = firmwareVersion;
+		this.radioProtocolVersion = radioProtocolVersion;
+		this.systemStatus = systemStatus;
+
+	}
+	
+	public CommandAssocReq(byte hardwareVersion,
+		byte firmwareVersion,
+		byte radioProtocolVersion,
+		byte systemStatus,
+		final String inRemoteGUID) {
+		super(new NetCommandId(ASSOC_REQ_COMMAND), inRemoteGUID);
+
+		this.hardwareVersion = new byte[] {hardwareVersion};
+		this.firmwareVersion = new byte[] {firmwareVersion};
 		this.radioProtocolVersion = radioProtocolVersion;
 		this.systemStatus = systemStatus;
 
@@ -67,8 +84,8 @@ public final class CommandAssocReq extends CommandAssocABC {
 	 */
 	@Override
 	public String doToString() {
-		return Integer.toHexString(ASSOC_REQ_COMMAND) + " REQ" + super.doToString() + " hw=" + (hardwareVersion & 0xffff) + " fw="
-				+ (firmwareVersion & 0xffff) + " rp=" + (radioProtocolVersion & 0xff) + " sys stat=0x"
+		return Integer.toHexString(ASSOC_REQ_COMMAND) + " REQ" + super.doToString() + " hw=" + hardwareVersion.toString() + " fw="
+				+ firmwareVersion.toString() + " rp=" + (radioProtocolVersion & 0xff) + " sys stat=0x"
 				+ Integer.toHexString(systemStatus & 0xff);
 	}
 
@@ -82,8 +99,8 @@ public final class CommandAssocReq extends CommandAssocABC {
 
 		try {
 			// Write the device version.
-			inOutputStream.writeShort(hardwareVersion);
-			inOutputStream.writeShort(firmwareVersion);
+			inOutputStream.writeBytes(hardwareVersion);
+			inOutputStream.writeBytes(firmwareVersion);
 			inOutputStream.writeByte(radioProtocolVersion);
 			inOutputStream.writeByte(systemStatus);
 		} catch (IOException e) {
@@ -101,11 +118,13 @@ public final class CommandAssocReq extends CommandAssocABC {
 
 		try {
 			// Read the hw,fw,rp and system status register
-			if (inInputStream.readableBytes() >= 2) {
-				hardwareVersion = inInputStream.readShort();
+			if (inInputStream.readableBytes() >= 4) {
+				hardwareVersion = new byte[ASSOC_REQ_HW_VER_LEN];
+				inInputStream.readBytes(hardwareVersion, ASSOC_REQ_HW_VER_LEN);
 			}
-			if (inInputStream.readableBytes() >= 2) {
-				firmwareVersion = inInputStream.readShort();
+			if (inInputStream.readableBytes() >= 4) {
+				firmwareVersion = new byte[ASSOC_REQ_FW_VER_LEN];
+				inInputStream.readBytes(firmwareVersion, ASSOC_REQ_FW_VER_LEN);
 			}
 			if (inInputStream.readableBytes() >= 1) {
 				radioProtocolVersion = inInputStream.readByte();
@@ -127,11 +146,11 @@ public final class CommandAssocReq extends CommandAssocABC {
 		return super.doComputeCommandSize() + ASSOC_REQ_BYTES;
 	}
 
-	public short getHardwareVersion() {
+	public byte[] getHardwareVersion() {
 		return hardwareVersion;
 	}
 
-	public short getFirmwareVersion() {
+	public byte[] getFirmwareVersion() {
 		return firmwareVersion;
 	}
 

@@ -99,6 +99,7 @@ local NET_CHECK_TYPES = { [1] = "Req", [2] = "Resp"}
 
 local ASSOC_CMDS = {[0] = "AssocReq", [1] = "AssocResp", [2] = "AssocCheck", [3] = "AssocACK" }
 local ASSOC_RESTART_CAUSES = {[0] = "Unknown", [1] = "User Restart", [2] = "Hard Fault", [3] = "WatchDog Timeout", [4] = "Response Timeout", [5] = "Tx Buffer Full", [6] = "Rx Buffer Full", [7] = "SMAC Error", [9] = "Other", [10] = "Power On"}
+local ASSOC_SCANNER_TYPES = {[0] = "Wired", [1] = "CC3600"}
 
 local CONTROL_CMDS = {[0] = "Scan", [1] = "Message", [2] = "LED", [3] = "Set PosCtl", [4] = "Clr PosCtl", [5] = "Button", [6] = "Message Single", [7] = "Clear Display", [10] = "CMD Ack" }
 local EFFECTS = {[0] = "Solid", [1] = "Flash", [2] = "Error", [3] = "Motel" }
@@ -109,6 +110,7 @@ fwfields.f_packet_header = ProtoField.uint16("flyweight.header", "Header", base.
 fwfields.f_src_addr = ProtoField.uint16("flyweight.source", "Src", base.HEX)
 fwfields.f_dst_addr = ProtoField.uint16("flyweight.dest", "Dst", base.HEX)
 fwfields.f_ackid = ProtoField.uint16("flyweight.ackid", "AckID", base.DEC)
+fwfields.f_crc = ProtoField.uint16("flyweight.crc", "CRC", base.HEX)
 
 fwfields.f_packet_header_ver = ProtoField.uint8("flyweight.version" , "Packet Version", base.DEC, VER_BITS, 0xc0)
 fwfields.f_packet_header_type = ProtoField.uint8("flyweight.type" , "Packet Type", base.DEC,TYPE_BITS, 0x20)
@@ -128,13 +130,22 @@ fwfields.f_netmgmt_lqi = ProtoField.uint8("flyweight.netmgt.lqi" , "LQI", base.D
 
 fwfields.f_assoc_cmd = ProtoField.uint8("flyweight.assoc.cmd" , "Type", base.DEC, ASSOC_CMDS)
 fwfields.f_assoc_guid = ProtoField.string("flyweight.assoc.guid" , "GUID", ftypes.STRING)
+
+fwfields.f_assoc_req_hw_ver = ProtoField.string("flyweight.assoc.req.hwver" , "Hardware Ver", ftypes.STRING)
+fwfields.f_assoc_req_fw_ver = ProtoField.string("flyweight.assoc.req.fwver" , "Firmware Ver", ftypes.STRING)
+fwfields.f_assoc_req_proto_ver = ProtoField.uint8("flyweight.assoc.req.protover" , "Proto Ver", base.DEC)
+fwfields.f_assoc_req_rcm_0 = ProtoField.uint8("flyweight.assoc.req.rcm0" , "RCM Reg 0", base.HEX)
+
 fwfields.f_assoc_resp_addr = ProtoField.uint8("flyweight.assoc.resp.addr" , "Assigned Addr", base.DEC)
 fwfields.f_assoc_resp_netid = ProtoField.uint8("flyweight.assoc.resp.netid" , "Assigned NetId", base.DEC, NET_IDS, 0x0f)
 fwfields.f_assoc_resp_sleep_sec = ProtoField.uint8("flyweight.assoc.resp.sleep" , "Sleep Sec", base.DEC)
+fwfields.f_assoc_resp_scanner = ProtoField.uint8("flyweight.assoc.resp.scanner", "Scanner Type", base.DEC, ASSOC_SCANNER_TYPES)
 
 fwfields.f_assoc_batt_lvl = ProtoField.uint8("flyweight.assoc.chck.battlvl" , "Batt Lvl", base.DEC)
 fwfields.f_assoc_restart_cause = ProtoField.uint8("flyweight.assoc.chck.restartcause" , "Restart Cause", base.DEC, ASSOC_RESTART_CAUSES)
-fwfields.f_assoc_restart_data = ProtoField.uint8("flyweight.assoc.chck.restartdata" , "Restart Data", base.DEC)
+fwfields.f_assoc_restart_data = ProtoField.uint8("flyweight.assoc.chck.restartdata" , "Restart Data", base.HEX)
+fwfields.f_assoc_rcm_0 = ProtoField.uint8("flyweight.assoc.chck.rcm0" , "RCM Reg 0", base.HEX)
+fwfields.f_assoc_rcm_1 = ProtoField.uint8("flyweight.assoc.chck.rcm1" , "RCM Reg 1", base.HEX)
 fwfields.f_assoc_restart_pc = ProtoField.uint8("flyweight.assoc.chck.restartpc" , "Restart PC", base.DEC)
 
 fwfields.f_info_cmd = ProtoField.uint8("flyweight.info.cmd" , "Type", base.DEC)
@@ -253,9 +264,10 @@ function flyweightproto.dissector(tvb, pkt, root)
 	  flyweight_tree:add_packet_field(fwfields.f_src_addr, tvb:range(3,2), ENC_BIG_ENDIAN)
 	  flyweight_tree:add_packet_field(fwfields.f_dst_addr, tvb:range(5,2), ENC_BIG_ENDIAN)
 	  flyweight_tree:add_packet_field(fwfields.f_ackid, tvb:range(7,1), ENC_BIG_ENDIAN)
+	  flyweight_tree:add_packet_field(fwfields.f_crc, tvb:range(8,2), ENC_BIG_ENDIAN)
 	
-	  flyweight_tree:add_packet_field(fwfields.f_command_group, tvb:range(8,1), ENC_BIG_ENDIAN)
-	  flyweight_tree:add_packet_field(fwfields.f_command_ep, tvb:range(8,1), ENC_BIG_ENDIAN)
+	  flyweight_tree:add_packet_field(fwfields.f_command_group, tvb:range(10,1), ENC_BIG_ENDIAN)
+	  flyweight_tree:add_packet_field(fwfields.f_command_ep, tvb:range(10,1), ENC_BIG_ENDIAN)
 	  
 	  local src_addr = tvb:range(3,2):uint()
 	  if src_addr == 0x0000 then
@@ -284,8 +296,8 @@ function flyweightproto.dissector(tvb, pkt, root)
 	  if packet_type == 1 then
 	    pkt.cols.info= "Ack Packet Id: "..ackid
 	  else
-	    --local cmd_group = bit32.arshift(bit32.band(tvb:range(8,1):uint(), 0xf0), 4)
-	    local cmd_group = math.floor(tvb:range(8,1):uint() / 16)
+	    --local cmd_group = bit32.arshift(bit32.band(tvb:range(10,1):uint(), 0xf0), 4)
+	    local cmd_group = math.floor(tvb:range(10,1):uint() / 16)
 	    if cmd_group == 0 then
 	      netmgmtv2(tvb, pkt, root, flyweight_tree)
 	    elseif cmd_group == 1 then
@@ -340,33 +352,33 @@ end
 -- Parse netmgmt command
 function netmgmtv2(tvb, pkt, root, flyweight_tree)
 
-  local netmgmt_tree = flyweight_tree:add_packet_field(fwfields.f_netmgmt_id, tvb:range(9,1), ENC_BIG_ENDIAN)
+  local netmgmt_tree = flyweight_tree:add_packet_field(fwfields.f_netmgmt_id, tvb:range(11,1), ENC_BIG_ENDIAN)
   
-  local netmgmt_cmd = tvb:range(9,1):uint()
+  local netmgmt_cmd = tvb:range(11,1):uint()
   
   if netmgmt_cmd == 0 then
-    netmgmt_tree:add_packet_field(fwfields.f_netmgmt_type, tvb:range(10,1), ENC_BIG_ENDIAN)
+    netmgmt_tree:add_packet_field(fwfields.f_netmgmt_type, tvb:range(12,1), ENC_BIG_ENDIAN)
     pkt.cols.info = "NetSetup"
   
     local data_dissector = Dissector.get("data")
     data_dissector:call(tvb(9):tvb(), pkt, root)
   elseif netmgmt_cmd == 1 then
-    netmgmt_tree:add_packet_field(fwfields.f_netmgmt_type, tvb:range(10,1), ENC_BIG_ENDIAN)
-    netmgmt_tree:add_packet_field(fwfields.f_netmgmt_netid, tvb:range(11,1), ENC_BIG_ENDIAN)
-    netmgmt_tree:add_packet_field(fwfields.f_netmgmt_guid, tvb:range(12,8), ENC_BIG_ENDIAN)
-    netmgmt_tree:add_packet_field(fwfields.f_netmgmt_channel, tvb:range(20,1), ENC_BIG_ENDIAN)
-    netmgmt_tree:add_packet_field(fwfields.f_netmgmt_energy, tvb:range(21,1), ENC_BIG_ENDIAN)
-    netmgmt_tree:add_packet_field(fwfields.f_netmgmt_lqi, tvb:range(22,1), ENC_BIG_ENDIAN)
+    netmgmt_tree:add_packet_field(fwfields.f_netmgmt_type, tvb:range(12,1), ENC_BIG_ENDIAN)
+    netmgmt_tree:add_packet_field(fwfields.f_netmgmt_netid, tvb:range(13,1), ENC_BIG_ENDIAN)
+    netmgmt_tree:add_packet_field(fwfields.f_netmgmt_guid, tvb:range(14,8), ENC_BIG_ENDIAN)
+    netmgmt_tree:add_packet_field(fwfields.f_netmgmt_channel, tvb:range(22,1), ENC_BIG_ENDIAN)
+    netmgmt_tree:add_packet_field(fwfields.f_netmgmt_energy, tvb:range(23,1), ENC_BIG_ENDIAN)
+    netmgmt_tree:add_packet_field(fwfields.f_netmgmt_lqi, tvb:range(24,1), ENC_BIG_ENDIAN)
     pkt.cols.info = "NetCheck (Beacon)" 
 
     local data_dissector = Dissector.get("data")
-    data_dissector:call(tvb(21):tvb(), pkt, root)
+    data_dissector:call(tvb(25):tvb(), pkt, root)
   elseif netmgmt_cmd == 2 then
-    netmgmt_tree:add_packet_field(fwfields.f_netmgmt_type, tvb:range(10,1), ENC_BIG_ENDIAN)
+    netmgmt_tree:add_packet_field(fwfields.f_netmgmt_type, tvb:range(12,1), ENC_BIG_ENDIAN)
     pkt.cols.info = "Net Intf Test"
 
     local data_dissector = Dissector.get("data")
-    data_dissector:call(tvb(9):tvb(), pkt, root)
+    data_dissector:call(tvb(13):tvb(), pkt, root)
   end
     
 end
@@ -389,13 +401,14 @@ function assocv1(tvb, pkt, root, flyweight_tree)
     addr_map[f_assoc_resp_addr().value] = guid
     assoc_tree:add_packet_field(fwfields.f_assoc_resp_netid, tvb:range(17,1), ENC_BIG_ENDIAN)
     pkt.cols.info:append(" net: "..f_assoc_resp_netid().display)
-    assoc_tree:add_packet_field(fwfields.f_assoc_resp_sleep_sec, tvb:range(18,1), ENC_BIG_ENDIAN)
+    assoc_tree:add_packet_field(fwfields.f_assoc_resp_sleep_sec, tvb:range(18,2), ENC_BIG_ENDIAN)
+    assoc_tree:add_packet_field(fwfields.f_assoc_resp_scanner, tvb:range(19,1), ENC_BIG_ENDIAN)
   elseif assoc_cmd == 2 then
     pkt.cols.info = "AssocCheck".." GUID: "..guid
     assoc_tree:add_packet_field(fwfields.f_assoc_batt_lvl, tvb:range(16,1), ENC_BIG_ENDIAN)
     assoc_tree:add_packet_field(fwfields.f_assoc_restart_cause, tvb:range(17,1), ENC_BIG_ENDIAN)
     assoc_tree:add_packet_field(fwfields.f_assoc_restart_data, tvb:range(18,2), ENC_BIG_ENDIAN)
-    assoc_tree:add_packet_field(fwfields.f_assoc_restart_pc, tvb:range(19,1), ENC_BIG_ENDIAN)
+    assoc_tree:add_packet_field(fwfields.f_assoc_restart_pc, tvb:range(20,4), ENC_BIG_ENDIAN)
   elseif assoc_cmd == 3 then
     pkt.cols.info = "AssocAck".." GUID: "..guid
   end
@@ -405,28 +418,34 @@ end
 -- Parse assoc v2 command
 function assocv2(tvb, pkt, root, flyweight_tree)
 
-  local assoc_tree = flyweight_tree:add_packet_field(fwfields.f_assoc_cmd, tvb:range(9,1), ENC_BIG_ENDIAN)
-  assoc_tree:add_packet_field(fwfields.f_assoc_guid, tvb:range(10,8), ENC_BIG_ENDIAN)
+  local assoc_tree = flyweight_tree:add_packet_field(fwfields.f_assoc_cmd, tvb:range(11,1), ENC_BIG_ENDIAN)
+  assoc_tree:add_packet_field(fwfields.f_assoc_guid, tvb:range(12,8), ENC_BIG_ENDIAN)
   
-  local assoc_cmd = tvb:range(9,1):uint()
-  local guid = tvb:range(10,8):string()
-  
+  local assoc_cmd = tvb:range(11,1):uint()
+  local guid = tvb:range(12,8):string()
+ 
   if assoc_cmd == 0 then
     pkt.cols.info = "AssocReq".." GUID: "..guid
+    assoc_tree:add_packet_field(fwfields.f_assoc_req_hw_ver, tvb:range(20,4), ENC_BIG_ENDIAN)
+    assoc_tree:add_packet_field(fwfields.f_assoc_req_fw_ver, tvb:range(24,4), ENC_BIG_ENDIAN)
+    assoc_tree:add_packet_field(fwfields.f_assoc_req_proto_ver, tvb:range(28,1), ENC_BIG_ENDIAN)
+    assoc_tree:add_packet_field(fwfields.f_assoc_req_rcm_0, tvb:range(29,1), ENC_BIG_ENDIAN)
   elseif assoc_cmd == 1 then
     pkt.cols.info = "AssocResp".." GUID: "..guid
-    assoc_tree:add_packet_field(fwfields.f_assoc_resp_addr, tvb:range(18,1), ENC_BIG_ENDIAN)
+    assoc_tree:add_packet_field(fwfields.f_assoc_resp_addr, tvb:range(20,2), ENC_BIG_ENDIAN)
     pkt.cols.info:append(" assigned addr: "..f_assoc_resp_addr().display)
     addr_map[f_assoc_resp_addr().value] = guid
-    assoc_tree:add_packet_field(fwfields.f_assoc_resp_netid, tvb:range(19,1), ENC_BIG_ENDIAN)
+    assoc_tree:add_packet_field(fwfields.f_assoc_resp_netid, tvb:range(22,1), ENC_BIG_ENDIAN)
     pkt.cols.info:append(" net: "..f_assoc_resp_netid().display)
-    assoc_tree:add_packet_field(fwfields.f_assoc_resp_sleep_sec, tvb:range(20,1), ENC_BIG_ENDIAN)
+    assoc_tree:add_packet_field(fwfields.f_assoc_resp_sleep_sec, tvb:range(23,2), ENC_BIG_ENDIAN)
+    assoc_tree:add_packet_field(fwfields.f_assoc_resp_scanner, tvb:range(25,1), ENC_BIG_ENDIAN)
   elseif assoc_cmd == 2 then
     pkt.cols.info = "AssocCheck".." GUID: "..guid
-    assoc_tree:add_packet_field(fwfields.f_assoc_batt_lvl, tvb:range(18,1), ENC_BIG_ENDIAN)
-    assoc_tree:add_packet_field(fwfields.f_assoc_restart_cause, tvb:range(19,1), ENC_BIG_ENDIAN)
-    assoc_tree:add_packet_field(fwfields.f_assoc_restart_data, tvb:range(20,2), ENC_BIG_ENDIAN)
-    assoc_tree:add_packet_field(fwfields.f_assoc_restart_pc, tvb:range(21,1), ENC_BIG_ENDIAN)
+    assoc_tree:add_packet_field(fwfields.f_assoc_batt_lvl, tvb:range(20,1), ENC_BIG_ENDIAN)
+    assoc_tree:add_packet_field(fwfields.f_assoc_restart_cause, tvb:range(21,1), ENC_BIG_ENDIAN)
+    assoc_tree:add_packet_field(fwfields.f_assoc_rcm_0 , tvb:range(22,1), ENC_BIG_ENDIAN)
+    assoc_tree:add_packet_field(fwfields.f_assoc_rcm_0 , tvb:range(23,1), ENC_BIG_ENDIAN)
+    assoc_tree:add_packet_field(fwfields.f_assoc_restart_pc, tvb:range(24,4), ENC_BIG_ENDIAN)
   elseif assoc_cmd == 3 then
     pkt.cols.info = "AssocAck".." GUID: "..guid
   end
@@ -446,10 +465,10 @@ end
 -- Parse info v2 command
 function infov2(tvb, pkt, root, flyweight_tree)
 
-  local info_tree = flyweight_tree:add_packet_field(fwfields.f_info_cmd, tvb:range(9,1), ENC_BIG_ENDIAN)
+  local info_tree = flyweight_tree:add_packet_field(fwfields.f_info_cmd, tvb:range(11,1), ENC_BIG_ENDIAN)
   
   local data_dissector = Dissector.get("data")
-  data_dissector:call(tvb(9):tvb(), pkt, root)
+  data_dissector:call(tvb(11):tvb(), pkt, root)
   
 end
 
@@ -531,73 +550,73 @@ end
 -- Parse control v2 command
 function controlv2(tvb, pkt, root, flyweight_tree)
 
-  local control_tree = flyweight_tree:add_packet_field(fwfields.f_control_cmd, tvb:range(9,1), ENC_BIG_ENDIAN)
+  local control_tree = flyweight_tree:add_packet_field(fwfields.f_control_cmd, tvb:range(11,1), ENC_BIG_ENDIAN)
    
-  local control_cmd = tvb:range(9,1):uint()
+  local control_cmd = tvb:range(11,1):uint()
   
   if control_cmd == 0 then
     pkt.cols.info = "Scan"
     local data_dissector = Dissector.get("data")
-    data_dissector:call(tvb(8):tvb(), pkt, root)
+    data_dissector:call(tvb(10):tvb(), pkt, root)
   elseif control_cmd == 1 then
     pkt.cols.info = "Message"
     local data_dissector = Dissector.get("data")
-    data_dissector:call(tvb(8):tvb(), pkt, root)
+    data_dissector:call(tvb(10):tvb(), pkt, root)
   elseif control_cmd == 2 then
     pkt.cols.info = "LED"
-    control_tree:add_packet_field(fwfields.f_control_led_chan, tvb:range(8,1), ENC_BIG_ENDIAN)
+    control_tree:add_packet_field(fwfields.f_control_led_chan, tvb:range(10,1), ENC_BIG_ENDIAN)
     pkt.cols.info:append(" chan: "..f_control_led_chan_field().display)
-    control_tree:add_packet_field(fwfields.f_control_led_effect, tvb:range(9,1), ENC_BIG_ENDIAN)
+    control_tree:add_packet_field(fwfields.f_control_led_effect, tvb:range(11,1), ENC_BIG_ENDIAN)
     pkt.cols.info:append(" effect: "..f_control_led_effect_field().display)
-    local sample_tree = control_tree:add_packet_field(fwfields.f_control_led_samples, tvb:range(10,1), ENC_BIG_ENDIAN)
+    local sample_tree = control_tree:add_packet_field(fwfields.f_control_led_samples, tvb:range(12,1), ENC_BIG_ENDIAN)
     pkt.cols.info:append(" count: "..f_control_led_samples_field().display)
-    local samples = tvb:range(10,1):uint()
+    local samples = tvb:range(12,1):uint()
     for sample = 0, samples - 1, 1 do
       local offset = sample * 5
-      sample_tree:add_packet_field(fwfields.f_control_led_pos, tvb:range(offset + 11,2), ENC_BIG_ENDIAN)
-      sample_tree:add_packet_field(fwfields.f_control_led_red, tvb:range(offset + 13,1), ENC_BIG_ENDIAN)
-      sample_tree:add_packet_field(fwfields.f_control_led_green, tvb:range(offset + 14,1), ENC_BIG_ENDIAN)
-      sample_tree:add_packet_field(fwfields.f_control_led_blue, tvb:range(offset + 15,1), ENC_BIG_ENDIAN)
+      sample_tree:add_packet_field(fwfields.f_control_led_pos, tvb:range(offset + 13,2), ENC_BIG_ENDIAN)
+      sample_tree:add_packet_field(fwfields.f_control_led_red, tvb:range(offset + 15,1), ENC_BIG_ENDIAN)
+      sample_tree:add_packet_field(fwfields.f_control_led_green, tvb:range(offset + 16,1), ENC_BIG_ENDIAN)
+      sample_tree:add_packet_field(fwfields.f_control_led_blue, tvb:range(offset + 18,1), ENC_BIG_ENDIAN)
     end
   elseif control_cmd == 3 then
     pkt.cols.info = "Set Pos Controller"
-    local sample_tree = control_tree:add_packet_field(fwfields.f_control_pos_samples, tvb:range(8,1), ENC_BIG_ENDIAN)
+    local sample_tree = control_tree:add_packet_field(fwfields.f_control_pos_samples, tvb:range(10,1), ENC_BIG_ENDIAN)
     pkt.cols.info:append(" count: "..f_control_pos_samples_field().display)
-    local samples = tvb:range(10,1):uint()
+    local samples = tvb:range(12,1):uint()
     for sample = 0, samples - 1, 1 do
       local offset = sample * 4
-      sample_tree:add_packet_field(fwfields.f_control_pos_num, tvb:range(offset + 9,1), ENC_BIG_ENDIAN)
-      sample_tree:add_packet_field(fwfields.f_control_pos_reqval, tvb:range(offset + 10,1), ENC_BIG_ENDIAN)
-      sample_tree:add_packet_field(fwfields.f_control_pos_minval, tvb:range(offset + 11,1), ENC_BIG_ENDIAN)
-      sample_tree:add_packet_field(fwfields.f_control_pos_maxval, tvb:range(offset + 12,1), ENC_BIG_ENDIAN)
-      sample_tree:add_packet_field(fwfields.f_control_pos_pwmfreq, tvb:range(offset + 13,1), ENC_BIG_ENDIAN)
-      sample_tree:add_packet_field(fwfields.f_control_pos_pwmduty, tvb:range(offset + 14,1), ENC_BIG_ENDIAN)
+      sample_tree:add_packet_field(fwfields.f_control_pos_num, tvb:range(offset + 11,1), ENC_BIG_ENDIAN)
+      sample_tree:add_packet_field(fwfields.f_control_pos_reqval, tvb:range(offset + 12,1), ENC_BIG_ENDIAN)
+      sample_tree:add_packet_field(fwfields.f_control_pos_minval, tvb:range(offset + 13,1), ENC_BIG_ENDIAN)
+      sample_tree:add_packet_field(fwfields.f_control_pos_maxval, tvb:range(offset + 14,1), ENC_BIG_ENDIAN)
+      sample_tree:add_packet_field(fwfields.f_control_pos_pwmfreq, tvb:range(offset + 15,1), ENC_BIG_ENDIAN)
+      sample_tree:add_packet_field(fwfields.f_control_pos_pwmduty, tvb:range(offset + 16,1), ENC_BIG_ENDIAN)
     end
   elseif control_cmd == 4 then
     pkt.cols.info = "Clr Pos Controller"
     local data_dissector = Dissector.get("data")
-    data_dissector:call(tvb(8):tvb(), pkt, root)
+    data_dissector:call(tvb(10):tvb(), pkt, root)
   elseif control_cmd == 5 then
     pkt.cols.info = "Button"
     local data_dissector = Dissector.get("data")
-    data_dissector:call(tvb(8):tvb(), pkt, root)
+    data_dissector:call(tvb(10):tvb(), pkt, root)
   elseif control_cmd == 6 then
     pkt.cols.info = "Message Single"
-    control_tree:add_packet_field(fwfields.f_msgone_font, tvb:range(8, 1), ENC_BIG_ENDIAN)
-    control_tree:add_packet_field(fwfields.f_msgone_x, tvb:range(9, 2), ENC_BIG_ENDIAN)
-    control_tree:add_packet_field(fwfields.f_msgone_y, tvb:range(11, 2), ENC_BIG_ENDIAN)
-    local message_len = tvb:range(13,1):uint()
-    control_tree:add_packet_field(fwfields.f_msgone_msg, tvb:range(14, message_len), ENC_BIG_ENDIAN)
+    control_tree:add_packet_field(fwfields.f_msgone_font, tvb:range(10, 1), ENC_BIG_ENDIAN)
+    control_tree:add_packet_field(fwfields.f_msgone_x, tvb:range(11, 2), ENC_BIG_ENDIAN)
+    control_tree:add_packet_field(fwfields.f_msgone_y, tvb:range(13, 2), ENC_BIG_ENDIAN)
+    local message_len = tvb:range(15,1):uint()
+    control_tree:add_packet_field(fwfields.f_msgone_msg, tvb:range(16, message_len), ENC_BIG_ENDIAN)
     local data_dissector = Dissector.get("data")
    elseif control_cmd == 7 then
     pkt.cols.info = "Clear Display"
     local data_dissector = Dissector.get("data")
-    data_dissector:call(tvb(8):tvb(), pkt, root)
+    data_dissector:call(tvb(10):tvb(), pkt, root)
    elseif control_cmd == 10 then
    	local ack_id = tvb:range(8,1):uint()
    	pkt.cols.info = "CMD Ack "..ack_id
    	control_tree:add_packet_field(fwfields.f_control_ack_num, tvb:range(8, 1), ENC_BIG_ENDIAN)
-    control_tree:add_packet_field(fwfields.f_control_ack_lqi, tvb:range(9, 1), ENC_BIG_ENDIAN)
+    control_tree:add_packet_field(fwfields.f_control_ack_lqi, tvb:range(11, 1), ENC_BIG_ENDIAN)
   end
 
 end
