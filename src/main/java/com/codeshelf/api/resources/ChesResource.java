@@ -88,7 +88,8 @@ public class ChesResource {
 		if (searchId !=  null) {
 			criteria.add(Restrictions.disjunction(
 				GenericDaoABC.createSubstringRestriction("domainId", searchId),
-				Restrictions.sqlRestriction("encode(device_guid, 'hex') ILIKE ?", searchId.replace('*',  '%'), StringType.INSTANCE)));
+				//lowercase like compatible with h2 and postgres
+				Restrictions.sqlRestriction("encode(device_guid, 'hex') LIKE ?", searchId.toLowerCase().replace('*',  '%'), StringType.INSTANCE)));
 		}
 
 		if (facility != null) {
