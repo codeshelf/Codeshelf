@@ -25,6 +25,7 @@ import org.hibernate.Criteria;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.type.StringType;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.resources.subresources.CheResource;
@@ -85,7 +86,9 @@ public class ChesResource {
 		Criteria criteria= Che.staticGetDao().createCriteria();
 
 		if (searchId !=  null) {
-			criteria.add(GenericDaoABC.createSubstringRestriction("domainId", searchId));
+			criteria.add(Restrictions.disjunction(
+				GenericDaoABC.createSubstringRestriction("domainId", searchId),
+				Restrictions.sqlRestriction("encode(device_guid, 'hex') ILIKE ?", searchId.replace('*',  '%'), StringType.INSTANCE)));
 		}
 
 		if (facility != null) {
