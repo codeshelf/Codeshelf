@@ -13,11 +13,15 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.api.resources.subresources.ImportResource;
 import com.codeshelf.behavior.OrderBehavior;
+import com.codeshelf.behavior.PropertyBehavior;
+import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.edi.OutboundOrderPrefetchCsvImporter;
 import com.codeshelf.event.EventProducer;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 import com.sun.jersey.core.header.FormDataContentDisposition;
 
@@ -121,24 +125,25 @@ public class OrdersResourceTest extends ServerTest {
 		facility = facility.reload();
 		OrderHeader oh2 = OrderHeader.staticGetDao().findByDomainId(facility, "123");
 		OrderStatusEnum status2 = oh2.getStatus();
-		LOGGER.info("bug here! changed to INPROGRESS. Why? Should still be complete");
-		Assert.assertEquals(OrderStatusEnum.INPROGRESS, status2);
+		Assert.assertEquals(OrderStatusEnum.RELEASED, status2);
 		commitTransaction();
 
 	}
 
 	@Test
 	public void testDoubleImportOrdersAfterChange() throws UnsupportedEncodingException {
-		String orders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+		String orders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,locationId,workSequence"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,LocA,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,LocB,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,LocC,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,LocD,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,LocE,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,LocF,0";
 
 		beginTransaction();
 		Facility facility = getFacility();
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
 		commitTransaction();
 
 		LOGGER.info("1: import the orders");
@@ -156,21 +161,26 @@ public class OrdersResourceTest extends ServerTest {
 		commitTransaction();
 		Assert.assertEquals(200, response.getStatus());
 
-		LOGGER.info("2: tweak a few orders, completing");
-		beginTransaction();
-		facility = facility.reload();
-		OrderHeader oh1 = OrderHeader.staticGetDao().findByDomainId(facility, "123");
-		OrderStatusEnum status1 = oh1.getStatus();
-		Assert.assertEquals(OrderStatusEnum.RELEASED, status1);
-		oh1.setStatus(OrderStatusEnum.COMPLETE);
-		commitTransaction();
-
-		beginTransaction();
-		facility = facility.reload();
-		OrderHeader oh2 = OrderHeader.staticGetDao().findByDomainId(facility, "123");
-		OrderStatusEnum status2 = oh2.getStatus();
-		Assert.assertEquals(OrderStatusEnum.COMPLETE, status2);
-		commitTransaction();
+		LOGGER.info("2: Complete order");
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker1");
+		picker.setupContainer("123", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.logCheDisplay();
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.pickItemAuto();
+		picker.waitInSameState(CheStateEnum.DO_PICK, 500);
+		picker.pickItemAuto();
+		picker.waitInSameState(CheStateEnum.DO_PICK, 500);
+		picker.pickItemAuto();
+		picker.waitInSameState(CheStateEnum.DO_PICK, 500);
+		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		
+		waitForOrderStatus(facility, "123", OrderStatusEnum.COMPLETE, true, 1000);
 
 		LOGGER.info("3: Import again. This looks like different file with exact same content. Should act the same as if the same file");
 		// Notice that it does not overwrite the completed order.
@@ -193,7 +203,7 @@ public class OrdersResourceTest extends ServerTest {
 		OrderHeader oh3 = OrderHeader.staticGetDao().findByDomainId(facility, "123");
 		OrderStatusEnum status3 = oh3.getStatus();
 		LOGGER.info("same bug here! changed to INPROGRESS. Why? Should still be complete");
-		Assert.assertEquals(OrderStatusEnum.INPROGRESS, status3);
+		Assert.assertEquals(OrderStatusEnum.COMPLETE, status3);
 		commitTransaction();
 
 	}
@@ -207,16 +217,18 @@ public class OrdersResourceTest extends ServerTest {
 				+ "\r\n1,USF314,COSTCO,789,789,10706961,Sun Ripened Dried Tomato Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
 				+ "\r\n1,USF314,COSTCO,120,931,10706962,Sun Ripened Dried Tomato Pesto 24oz,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
 
-		String orders2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
-				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0"
-				+ "\r\n1,USF314,COSTCO,456,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,0";
+		String orders2 = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,locationId,workSequence"
+				+ "\r\n1,USF314,COSTCO,123,123,10700589,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,LocA,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10706952,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,LocB,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10706962,Authentic Pizza Sauces,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,LocC,0"
+				+ "\r\n1,USF314,COSTCO,123,123,10100250,Organic Fire-Roasted Red Bell Peppers,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,LocD,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10711111,Napa Valley Bistro - Jalape������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������o Stuffed Olives,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,LocE,0"
+				+ "\r\n1,USF314,COSTCO,456,456,10722222,Italian Homemade Style Basil Pesto,1,each,2012-09-26 11:31:01,2012-09-26 11:31:02,LocF,0";
 
 		beginTransaction();
 		Facility facility = getFacility();
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
 		commitTransaction();
 
 		LOGGER.info("1: import the first orders file");
@@ -269,21 +281,26 @@ public class OrdersResourceTest extends ServerTest {
 		Assert.assertEquals(OrderStatusEnum.RELEASED, status123);
 		commitTransaction();
 
-		LOGGER.info("3: tweak a order 123, completing");
-		beginTransaction();
-		facility = facility.reload();
-		OrderHeader oh123b = OrderHeader.staticGetDao().findByDomainId(facility, "123");
-		OrderStatusEnum status123b = oh123b.getStatus();
-		Assert.assertEquals(OrderStatusEnum.RELEASED, status123b);
-		oh123b.setStatus(OrderStatusEnum.COMPLETE);
-		commitTransaction();
-
-		beginTransaction();
-		facility = facility.reload();
-		OrderHeader oh123c = OrderHeader.staticGetDao().findByDomainId(facility, "123");
-		OrderStatusEnum status123c = oh123c.getStatus();
-		Assert.assertEquals(OrderStatusEnum.COMPLETE, status123c);
-		commitTransaction();
+		LOGGER.info("3: Complete order 123");
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker1");
+		picker.setupContainer("123", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.logCheDisplay();
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.pickItemAuto();
+		picker.waitInSameState(CheStateEnum.DO_PICK, 500);
+		picker.pickItemAuto();
+		picker.waitInSameState(CheStateEnum.DO_PICK, 500);
+		picker.pickItemAuto();
+		picker.waitInSameState(CheStateEnum.DO_PICK, 500);
+		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		
+		waitForOrderStatus(facility, "123", OrderStatusEnum.COMPLETE, true, 1000);
 
 		LOGGER.info("4: Import using the other API");
 		// TODO change 
@@ -309,11 +326,7 @@ public class OrdersResourceTest extends ServerTest {
 		OrderStatusEnum status789d = oh789d.getStatus();
 		OrderStatusEnum status123d = oh123d.getStatus();
 		Assert.assertEquals(OrderStatusEnum.RELEASED, status789d);
-		// DEV-1444/DEV-1441
-		// For the moment, INPROGRESS, which is wrong. But due to DEV-1444, it shows the order was not deleted then reimported.
-		// After DEV-1444 fix, this will not prove deletion happened.
-		
-		Assert.assertEquals(OrderStatusEnum.INPROGRESS, status123d);
+		Assert.assertEquals(OrderStatusEnum.COMPLETE, status123d);
 		commitTransaction();
 
 	}

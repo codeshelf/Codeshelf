@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheStateEnum;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
@@ -22,6 +23,7 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
+import com.codeshelf.util.ThreadUtils;
 
 public class OrderReimportTest extends ServerTest {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(OrderReimportTest.class);
@@ -163,9 +165,7 @@ public class OrderReimportTest extends ServerTest {
 		facility = facility.reload();
 		OrderHeader order2 = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
 
-		LOGGER.error("BUG here. Reimport exact same file led to status going from RELEASED to INPROGRESS");
-		// Also seen in DEV-1441 work.
-		Assert.assertEquals(OrderStatusEnum.INPROGRESS, order2.getStatus());
+		Assert.assertEquals(OrderStatusEnum.RELEASED, order2.getStatus());
 		Assert.assertTrue(order2.getActive());
 		Assert.assertEquals(order1, order2);
 		commitTransaction();
@@ -183,7 +183,6 @@ public class OrderReimportTest extends ServerTest {
 		facility = facility.reload();
 		OrderHeader order3 = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
 
-		LOGGER.error("BUG. If one line changed trivially, changes INPROGRESS back to RELEASED");
 		Assert.assertEquals(OrderStatusEnum.RELEASED, order3.getStatus());
 		Assert.assertTrue(order3.getActive());
 		Assert.assertEquals(order3, order2);
@@ -244,10 +243,7 @@ public class OrderReimportTest extends ServerTest {
 		picker.pick(1, 1);
 
 		// Give a little time for the transaction to fully complete on server side.
-		beginTransaction();
-		facility = facility.reload();
 		this.waitForOrderStatus(facility, "12345", OrderStatusEnum.INPROGRESS, true, 4000);
-		commitTransaction();
 
 		// Change one line in the order. Just the count for item 1522
 		beginTransaction();
@@ -258,11 +254,10 @@ public class OrderReimportTest extends ServerTest {
 		importOrdersData(facility, csvOrders3);
 		commitTransaction();
 
-		LOGGER.error("BUG. If one line changed trivially, changes INPROGRESS back to RELEASED");
 		beginTransaction();
 		facility = facility.reload();
-		LOGGER.error("BUG. Obviously order is in progress. Import with a change in unpicked line caused the order to go back to released state.");
-		this.waitForOrderStatus(facility, "12345", OrderStatusEnum.RELEASED, true, 4000);
+		order1 = OrderHeader.staticGetDao().findByDomainId(facility, "12345");
+		assertEquals(OrderStatusEnum.SHORT, order1.getStatus());
 		commitTransaction();
 	}
 
@@ -558,7 +553,7 @@ public class OrderReimportTest extends ServerTest {
 		csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				//				+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				//				+ "\r\n1,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+				+ "\r\n1,USF314,COSTCO,12345,12345,1622,SJJ BPP,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 
 		facility = Facility.staticGetDao().reload(facility);
 		importOrdersData(facility, csvOrders);
@@ -575,7 +570,7 @@ public class OrderReimportTest extends ServerTest {
 		assertEquals(true, order.getActive());
 
 		details = order.getOrderDetails();
-		assertEquals(2, details.size());
+		assertEquals(3, details.size());
 		assertEquals(1, countActive(details));
 
 		commitTransaction();
@@ -663,7 +658,7 @@ public class OrderReimportTest extends ServerTest {
 		csvOrders = "orderGroupId,shipmentId,customerId,preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,workSequence"
 				+ "\r\n1,USF314,COSTCO,12345,12345,1123,12/16 oz Bowl Lids -PLA Compostable,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
 				//				+ "\r\n1,USF314,COSTCO,12345,12345,1493,PARK RANGER Doll,1,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0"
-				+ "\r\n1,USF314,COSTCO,12345,12345,1522,SJJ BPP,3,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
+				+ "\r\n1,USF314,COSTCO,12345,12345,1622,SJJ BPP,3,each,2012-09-26 11:31:01,2012-09-26 11:31:03,0";
 
 		facility = Facility.staticGetDao().reload(facility);
 		importOrdersData(facility, csvOrders);
@@ -680,7 +675,7 @@ public class OrderReimportTest extends ServerTest {
 		assertEquals(true, order.getActive());
 
 		details = order.getOrderDetails();
-		assertEquals(2, details.size());
+		assertEquals(3, details.size());
 		assertEquals(2, countActive(details));
 
 		commitTransaction();
@@ -769,6 +764,7 @@ public class OrderReimportTest extends ServerTest {
 		order = OrderHeader.staticGetDao().findByDomainId(facility, "1111");
 		Assert.assertNotNull(order);
 		Assert.assertEquals(orderId, order.getPersistentId());
+		//Assert that the order was NOT deleted due to a triggered error
 		Assert.assertTrue(order.getVersion() > orderVersion);
 		OrderDetail detail = order.getOrderDetail("1");
 		Assert.assertNotNull(detail);
@@ -786,5 +782,83 @@ public class OrderReimportTest extends ServerTest {
 		}
 		return num;
 	}
-
+	
+	private static final String REIMPORT_TEST_ORDER_CSV = "" +
+			"orderId,orderDetailId,itemId,quantity,uom,locationId,preAssignedContainerId,substituteAllowed,workSequence\n" + 
+			"1111,1,ItemS1,11,each,LocX24,1111,true,1\n" +
+			"1111,2,ItemS2,22,each,LocX25,1111,true,2\n" +
+			"1111,3,ItemS3,33,each,LocX26,1111,true,3\n";
+	
+	/**
+	 * Re-import order without changes
+	 */
+	@Test
+	public void orderReimportStatusTest1() throws IOException{
+		beginTransaction();
+		Facility facility = getFacility();
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
+		commitTransaction();
+		
+		beginTransaction();
+		facility = facility.reload();
+		importOrdersData(facility, REIMPORT_TEST_ORDER_CSV);
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "1111");
+		Assert.assertEquals(OrderStatusEnum.RELEASED, order.getStatus());
+		OrderDetail detail = order.getOrderDetail("1");
+		Assert.assertEquals(OrderStatusEnum.RELEASED, detail.getStatus());
+		commitTransaction();
+		
+		beginTransaction();
+		facility = facility.reload();
+		importOrdersData(facility, REIMPORT_TEST_ORDER_CSV);
+		order = OrderHeader.staticGetDao().findByDomainId(facility, "1111");
+		Assert.assertEquals(OrderStatusEnum.RELEASED, order.getStatus());
+		detail = order.getOrderDetail("1");
+		Assert.assertEquals(OrderStatusEnum.RELEASED, detail.getStatus());
+		commitTransaction();
+	}
+	
+	/**
+	 * Re-import order with some substitutions
+	 */
+	@Test
+	public void orderReimportStatusTest2() throws IOException{
+		beginTransaction();
+		Facility facility = getFacility();
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
+		commitTransaction();
+		
+		beginTransaction();
+		facility = facility.reload();
+		importOrdersData(facility, REIMPORT_TEST_ORDER_CSV);
+		commitTransaction();
+		
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+		picker.setupContainer("1111", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.scanSomething("SubstituteItemId");
+		picker.waitForCheState(CheStateEnum.SUBSTITUTION_CONFIRM, 4000000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.pickItemAuto();
+		picker.waitInSameState(CheStateEnum.DO_PICK, 1000);
+		
+		ThreadUtils.sleep(500);
+		
+		beginTransaction();
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "1111");
+		Assert.assertEquals(OrderStatusEnum.INPROGRESS, order.getStatus());
+		OrderDetail detail = order.getOrderDetail("1");
+		Assert.assertEquals(OrderStatusEnum.SUBSTITUTION, detail.getStatus());
+		commitTransaction();
+	}
+	
+	
 }
