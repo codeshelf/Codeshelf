@@ -44,12 +44,12 @@ public final class CommandControlTest extends MinimalTest {
 	private static final Byte	FREQ					= 4;
 	private static final Byte	DUTYCYCLE				= 5;
 
-	private static final byte[]	REQUEST_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, CommandControlButton.SET_POSCONTROLLER, INSTRUCTION_CNT, POS_NUM, REQ_VALUE, MIN_VALUE,
+	private static final byte[]	REQUEST_PACKET_IN_DATA	= { 0x41, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x0, 0x31, CommandControlButton.SET_POSCONTROLLER, INSTRUCTION_CNT, POS_NUM, REQ_VALUE, MIN_VALUE,
 			MAX_VALUE, FREQ, DUTYCYCLE					};
-	private static final byte[]	REQUEST_PACKET_OUT_DATA	= { 0x01, 0x00, 0x08, 0x00, 0x31, CommandControlButton.SET_POSCONTROLLER, INSTRUCTION_CNT, POS_NUM, REQ_VALUE, MIN_VALUE,
+	private static final byte[]	REQUEST_PACKET_OUT_DATA	= { 0x41, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x0, 0x31, CommandControlButton.SET_POSCONTROLLER, INSTRUCTION_CNT, POS_NUM, REQ_VALUE, MIN_VALUE,
 			MAX_VALUE, FREQ, DUTYCYCLE					};
 
-	private static final byte[]	BUTTON_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, CommandControlButton.BUTTON, POS_NUM, REQ_VALUE, MIN_VALUE,
+	private static final byte[]	BUTTON_PACKET_IN_DATA	= { 0x41, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x0, 0x31, CommandControlButton.BUTTON, POS_NUM, REQ_VALUE, MIN_VALUE,
 		MAX_VALUE, FREQ, DUTYCYCLE };
 
 	protected ICommand createCommandABC() throws Exception {
