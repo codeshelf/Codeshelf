@@ -6,6 +6,8 @@
 
 package com.codeshelf.device.radio;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -912,19 +914,27 @@ public class RadioController implements IRadioController {
 		mNextAddress++;
 		return mNextAddress;
 		*/
-
-		// FIXME - huffa this is broken. Need to not make 255 / 254 static. Should be based on the net address size 
+ 
 		NetGuid theGuid = inNetworkDevice.getGuid();
-		// we want the last byte. Jeff says negative is ok as -110 is x97 and is interpreted in the air protocol as positive up to 255.
+		// we want the two byte. Jeff says negative is ok as -110 is x97 and is interpreted in the air protocol as positive up to 255.
+		
+		// We want to 
 		byte[] theBytes = theGuid.getParamValueAsByteArray();
 		int guidByteSize = NetGuid.NET_GUID_BYTES;
-		NetAddress returnAddress = new NetAddress((short)(theBytes[guidByteSize - 1] & 0xff));
+		
+		ByteBuffer bb = ByteBuffer.allocate(IPacket.ADDRESS_BITS/8);	// Number of bytes in a net address
+		bb.order(ByteOrder.BIG_ENDIAN);
+		bb.put(theBytes[theBytes.length-2]);
+		bb.put(theBytes[theBytes.length-1]);
+		short byteAddress = bb.getShort(0);
+		
+		NetAddress returnAddress = new NetAddress(byteAddress);
 		// Now we must see if this is already in the map
 		boolean done = false;
 		boolean wentAround = false;
 		while (!done) {
-			// Do not allow a device to have the net address 255 which is used as the broadcast address!
-			// Do not allow a device to have the net address 0 which is used as the controller address!
+			// Do not allow a device to have the net address 0xffff which is used as the broadcast address!
+			// Do not allow a device to have the net address 0x0 which is used as the controller address!
 			if ((returnAddress.getValue() != 0xffff) && (returnAddress.getValue() != 0x0000)
 					&& (!mDeviceNetAddrMap.containsKey(returnAddress)))
 				done = true;
