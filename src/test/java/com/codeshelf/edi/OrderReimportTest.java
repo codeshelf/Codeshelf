@@ -860,5 +860,97 @@ public class OrderReimportTest extends ServerTest {
 		commitTransaction();
 	}
 	
+	/**
+	 * Add line to already completed (or in-progress) order. Order should become "released" again
+	 */
+	@Test
+	public void orderReimportStatusTest3() throws IOException{
+		beginTransaction();
+		Facility facility = getFacility();
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
+		commitTransaction();
+		
+		beginTransaction();
+		facility = facility.reload();
+		importOrdersData(facility, REIMPORT_TEST_ORDER_CSV);
+		commitTransaction();
+		
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+		picker.setupContainer("1111", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.pickItemAuto();
+		picker.waitInSameState(CheStateEnum.DO_PICK, 300);
+		picker.pickItemAuto();
+		picker.waitInSameState(CheStateEnum.DO_PICK, 300);
+		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		
+		waitForOrderStatus(facility, "1111", OrderStatusEnum.COMPLETE, true, 1000);
+		
+		beginTransaction();
+		facility = facility.reload();
+		String updatedOrdersCsv = REIMPORT_TEST_ORDER_CSV + 
+				"1111,4,ItemS4,44,each,LocX27,1111,true,4\n";
+		importOrdersData(facility, updatedOrdersCsv);
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "1111");
+		Assert.assertEquals(OrderStatusEnum.RELEASED, order.getStatus());
+		OrderDetail detailOld = order.getOrderDetail("2");
+		Assert.assertEquals(OrderStatusEnum.COMPLETE, detailOld.getStatus());
+		OrderDetail detailNew = order.getOrderDetail("4");
+		Assert.assertEquals(OrderStatusEnum.RELEASED, detailNew.getStatus());
+		commitTransaction();
+	}
+	
+	/**
+	 * Increase qty for one item in a completed order, making it short
+	 */
+	@Test
+	public void orderReimportStatusTest4() throws IOException{
+		beginTransaction();
+		Facility facility = getFacility();
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
+		commitTransaction();
+		
+		beginTransaction();
+		facility = facility.reload();
+		importOrdersData(facility, REIMPORT_TEST_ORDER_CSV);
+		commitTransaction();
+		
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+		picker.setupContainer("1111", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.pickItemAuto();
+		picker.waitInSameState(CheStateEnum.DO_PICK, 300);
+		picker.pickItemAuto();
+		picker.waitInSameState(CheStateEnum.DO_PICK, 300);
+		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		
+		waitForOrderStatus(facility, "1111", OrderStatusEnum.COMPLETE, true, 1000);
+		
+		beginTransaction();
+		facility = facility.reload();
+		String updatedOrdersCsv = "" +
+				"orderId,orderDetailId,itemId,quantity,uom,locationId,preAssignedContainerId,substituteAllowed,workSequence\n" + 
+				"1111,1,ItemS1,99,each,LocX24,1111,true,1\n" +
+				"1111,2,ItemS2,22,each,LocX25,1111,true,2\n" +
+				"1111,3,ItemS3,33,each,LocX26,1111,true,3\n";
+		importOrdersData(facility, updatedOrdersCsv);
+		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "1111");
+		Assert.assertEquals(OrderStatusEnum.SHORT, order.getStatus());
+		commitTransaction();
+	}
 	
 }
