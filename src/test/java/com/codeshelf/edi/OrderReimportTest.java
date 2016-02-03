@@ -23,7 +23,6 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
-import com.codeshelf.util.ThreadUtils;
 
 public class OrderReimportTest extends ServerTest {
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(OrderReimportTest.class);
@@ -800,6 +799,7 @@ public class OrderReimportTest extends ServerTest {
 		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
 		commitTransaction();
 		
+		LOGGER.info("1. Import original order");
 		beginTransaction();
 		facility = facility.reload();
 		importOrdersData(facility, REIMPORT_TEST_ORDER_CSV);
@@ -809,6 +809,7 @@ public class OrderReimportTest extends ServerTest {
 		Assert.assertEquals(OrderStatusEnum.RELEASED, detail.getStatus());
 		commitTransaction();
 		
+		LOGGER.info("2. Re-import unchanged order");
 		beginTransaction();
 		facility = facility.reload();
 		importOrdersData(facility, REIMPORT_TEST_ORDER_CSV);
@@ -830,11 +831,13 @@ public class OrderReimportTest extends ServerTest {
 		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
 		commitTransaction();
 		
+		LOGGER.info("1. Import original order");
 		beginTransaction();
 		facility = facility.reload();
 		importOrdersData(facility, REIMPORT_TEST_ORDER_CSV);
 		commitTransaction();
 		
+		LOGGER.info("2. Complete order");
 		startSiteController();
 		PickSimulator picker = createPickSim(cheGuid1);
 		picker.loginAndSetup("Picker #1");
@@ -850,12 +853,24 @@ public class OrderReimportTest extends ServerTest {
 		picker.pickItemAuto();
 		picker.waitInSameState(CheStateEnum.DO_PICK, 1000);
 		
-		ThreadUtils.sleep(500);
+		waitForOrderStatus(facility, "1111", OrderStatusEnum.INPROGRESS, true, 2000);
 		
+		LOGGER.info("3. Verify order and detai status, and reimport unchanged order");
 		beginTransaction();
+		facility = facility.reload();
 		OrderHeader order = OrderHeader.staticGetDao().findByDomainId(facility, "1111");
 		Assert.assertEquals(OrderStatusEnum.INPROGRESS, order.getStatus());
 		OrderDetail detail = order.getOrderDetail("1");
+		Assert.assertEquals(OrderStatusEnum.SUBSTITUTION, detail.getStatus());
+		importOrdersData(facility, REIMPORT_TEST_ORDER_CSV);
+		commitTransaction();
+		
+		LOGGER.info("4. Assert that statuses did not change");
+		beginTransaction();
+		facility = facility.reload();
+		order = OrderHeader.staticGetDao().findByDomainId(facility, "1111");
+		Assert.assertEquals(OrderStatusEnum.INPROGRESS, order.getStatus());
+		detail = order.getOrderDetail("1");
 		Assert.assertEquals(OrderStatusEnum.SUBSTITUTION, detail.getStatus());
 		commitTransaction();
 	}
@@ -871,11 +886,13 @@ public class OrderReimportTest extends ServerTest {
 		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
 		commitTransaction();
 		
+		LOGGER.info("1. Import original order");
 		beginTransaction();
 		facility = facility.reload();
 		importOrdersData(facility, REIMPORT_TEST_ORDER_CSV);
 		commitTransaction();
 		
+		LOGGER.info("2. Complete order");
 		startSiteController();
 		PickSimulator picker = createPickSim(cheGuid1);
 		picker.loginAndSetup("Picker #1");
@@ -891,8 +908,9 @@ public class OrderReimportTest extends ServerTest {
 		picker.pickItemAuto();
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		
-		waitForOrderStatus(facility, "1111", OrderStatusEnum.COMPLETE, true, 1000);
+		waitForOrderStatus(facility, "1111", OrderStatusEnum.COMPLETE, true, 2000);
 		
+		LOGGER.info("3. Re-import order with one extra line. Assert that order status is now RELEASED.");
 		beginTransaction();
 		facility = facility.reload();
 		String updatedOrdersCsv = REIMPORT_TEST_ORDER_CSV + 
@@ -918,11 +936,13 @@ public class OrderReimportTest extends ServerTest {
 		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
 		commitTransaction();
 		
+		LOGGER.info("1. Import original order");
 		beginTransaction();
 		facility = facility.reload();
 		importOrdersData(facility, REIMPORT_TEST_ORDER_CSV);
 		commitTransaction();
 		
+		LOGGER.info("2. Complete order");
 		startSiteController();
 		PickSimulator picker = createPickSim(cheGuid1);
 		picker.loginAndSetup("Picker #1");
@@ -938,8 +958,9 @@ public class OrderReimportTest extends ServerTest {
 		picker.pickItemAuto();
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		
-		waitForOrderStatus(facility, "1111", OrderStatusEnum.COMPLETE, true, 1000);
+		waitForOrderStatus(facility, "1111", OrderStatusEnum.COMPLETE, true, 2000);
 		
+		LOGGER.info("3. Re-import order larger quantity for one item. Assert that order status is now SHORT.");
 		beginTransaction();
 		facility = facility.reload();
 		String updatedOrdersCsv = "" +
@@ -952,5 +973,4 @@ public class OrderReimportTest extends ServerTest {
 		Assert.assertEquals(OrderStatusEnum.SHORT, order.getStatus());
 		commitTransaction();
 	}
-	
 }

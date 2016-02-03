@@ -831,6 +831,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setSubstitutionScan(null);
 				setState(getRememberPreSubstitutionState());
 				break;
+				
+			case SHORT_PICK:
+				setState(CheStateEnum.DO_PICK);
+				break;
 
 			default:
 				//Reset ourselves
@@ -1667,7 +1671,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 						LOGGER.warn("Probable test error. Don't short a housekeeping. User error if happening in production");
 						invalidScanMsg(mCheStateEnum); // Invalid to short a housekeep
 					} else {
-						setState(CheStateEnum.SHORT_PICK); // flashes all poscons with active jobs
+						if (getCheLightingEnum() == CheLightingEnum.LABEL_V1) {
+							setState(CheStateEnum.SCAN_SOMETHING_SHORT);//With Label-lighting CHEs, auto-short by 0
+						} else {
+							setState(CheStateEnum.SHORT_PICK); // flashes all poscons with active jobs
+						}
 					}
 				} else {
 					// Stay in the same state - the scan made no sense.

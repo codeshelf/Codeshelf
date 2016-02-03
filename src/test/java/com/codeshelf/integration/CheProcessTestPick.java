@@ -1741,8 +1741,8 @@ public class CheProcessTestPick extends ServerTest {
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		picker2.scanCommand("START");
 		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
-		Assert.assertEquals("1 order\n3 jobs\n\nSTART (or SETUP)\n", picker1.getLastCheDisplay());
-		Assert.assertEquals("1 order\n4 jobs     1 other\n\nSTART (or SETUP)\n", picker2.getLastCheDisplay());
+		verifyCheDisplay(picker1, "1 order", "3 jobs", "", "START (or SETUP)");
+		verifyCheDisplay(picker2, "1 order", "4 jobs     1 other", "", "START (or SETUP)");
 		
 		LOGGER.info("5: Assert that the LABEL CHE does not light up its Poscins during setup summary while the normal CHE does");
 		Assert.assertNull(picker1.getLastSentPositionControllerDisplayValue(1));
@@ -1757,5 +1757,64 @@ public class CheProcessTestPick extends ServerTest {
 		LOGGER.info("7: Assert that the LABEL CHE does not light up its Poscins during picking while the normal CHE does");
 		Assert.assertNull(picker1.getLastSentPositionControllerDisplayValue(1));
 		Assert.assertNotNull(picker2.getLastSentPositionControllerDisplayValue(1));
+	}
+	
+	@Test
+	public void testLabelLightingShort() throws IOException{
+		LOGGER.info("1: Set up facility, orders, set one CHE to have LABEL lighting mode");
+		Facility facility = setUpSimpleNoSlotFacility();
+		beginTransaction();
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "UPC");
+		Che che1 = getChe1();
+		che1.setCheLighting(CheLightingEnum.LABEL_V1);
+		Che.staticGetDao().store(che1);
+		commitTransaction();
+		setUpSmallInventoryAndOrders(facility);
+		
+		startSiteController();
+		
+		LOGGER.info("2: Set up 2 CHE with order");
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+		picker.setupContainer("12345", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		LOGGER.info("3: Short item without confirmarion scan (old behavior)");
+		UUID wi1Id = picker.getActivePick().getPersistentId();
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING_SHORT, 4000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		LOGGER.info("4: Short item after confirmarion scan, auto-short by 0 (label-che-only behavior)");
+		UUID wi2Id = picker.getActivePick().getPersistentId();
+		picker.scanSomething(picker.getActivePick().getItemId());
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING_SHORT, 4000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		LOGGER.info("5: Pick last item normally, complete the order");
+		picker.scanSomething(picker.getActivePick().getItemId());
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+
+		waitForOrderStatus(facility, "12345", OrderStatusEnum.SHORT, true, 2000);
+		
+		LOGGER.info("6: Assert that first two items were shorted correctly");
+		beginTransaction();
+		WorkInstruction wi1 = WorkInstruction.staticGetDao().findByPersistentId(wi1Id);
+		Assert.assertEquals(WorkInstructionStatusEnum.SHORT, wi1.getStatus());
+		Assert.assertEquals((Integer)0, wi1.getActualQuantity());
+		
+		WorkInstruction wi2 = WorkInstruction.staticGetDao().findByPersistentId(wi2Id);
+		Assert.assertEquals(WorkInstructionStatusEnum.SHORT, wi2.getStatus());
+		Assert.assertEquals((Integer)0, wi2.getActualQuantity());
+		commitTransaction();
 	}
 }
