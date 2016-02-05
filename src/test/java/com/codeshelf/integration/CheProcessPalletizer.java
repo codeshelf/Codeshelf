@@ -35,6 +35,7 @@ import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
+import com.codeshelf.util.ThreadUtils;
 
 public class CheProcessPalletizer extends ServerTest {
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessPalletizer.class);
@@ -105,7 +106,10 @@ public class CheProcessPalletizer extends ServerTest {
 		picker.scanSomething("10020002");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
 		Assert.assertEquals("Tier112\nItem: 10020002\nStore: 1002\nScan Next Item\n", picker.getLastCheDisplay());
+		picker.buttonPress(1);
 
+		ThreadUtils.sleep(700);
+		
 		LOGGER.info("3: Verify DB objects");
 		beginTransaction();
 		Facility facility = getFacility();
@@ -120,7 +124,7 @@ public class CheProcessPalletizer extends ServerTest {
 		Assert.assertTrue(today.contains(h1001.getDueDate().getTime()));
 		Assert.assertTrue(today.contains(h1002.getDueDate().getTime()));
 
-		LOGGER.info("3b: Verify Order Details - three completed, another in progress");
+		LOGGER.info("3b: Verify Order Details - four completed");
 		OrderDetail d10010001 = h1001.getOrderDetail("10010001");
 		OrderDetail d10010002 = h1001.getOrderDetail("10010002");
 		OrderDetail d10020001 = h1002.getOrderDetail("10020001");
@@ -132,9 +136,9 @@ public class CheProcessPalletizer extends ServerTest {
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, d10010001.getStatus());
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, d10010002.getStatus());
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, d10020001.getStatus());
-		Assert.assertEquals(OrderStatusEnum.INPROGRESS, d10020002.getStatus());
+		Assert.assertEquals(OrderStatusEnum.COMPLETE, d10020002.getStatus());
 
-		LOGGER.info("3c: Verify Work Instructions - three completed, another in progress");
+		LOGGER.info("3c: Verify Work Instructions - four completed");
 		WorkInstruction wi11 = d10010001.getWorkInstructions().get(0);
 		WorkInstruction wi12 = d10010002.getWorkInstructions().get(0);
 		WorkInstruction wi21 = d10020001.getWorkInstructions().get(0);
@@ -142,9 +146,9 @@ public class CheProcessPalletizer extends ServerTest {
 		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi11.getStatus());
 		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi12.getStatus());
 		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi21.getStatus());
-		Assert.assertEquals(WorkInstructionStatusEnum.INPROGRESS, wi22.getStatus());
+		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi22.getStatus());
 
-		LOGGER.info("3d: Verify Work Events - three completed");
+		LOGGER.info("3d: Verify Work Events - four completed");
 		Criteria criteria = WorkerEvent.staticGetDao()
 			.createCriteria()
 			.add(Property.forName("parent").eq(facility))
@@ -152,11 +156,7 @@ public class CheProcessPalletizer extends ServerTest {
 
 		@SuppressWarnings("unchecked")
 		List<WorkerEvent> workerEvents = criteria.list();
-		Assert.assertEquals(3, workerEvents.size());
-		for (WorkerEvent workerEvent : workerEvents) {
-			Assert.assertEquals(WorkerEvent.EventType.COMPLETE, workerEvent.getEventType());
-		}
-		LOGGER.info(criteria.list().toString());
+		Assert.assertEquals(4, workerEvents.size());
 
 		commitTransaction();
 	}
@@ -380,6 +380,58 @@ public class CheProcessPalletizer extends ServerTest {
 		picker.scanCommand("YES");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
 		Assert.assertEquals("Scan Item\n\n\n\n", picker.getLastCheDisplay());
+	}
+	
+	@Test
+	public void testMultiCheOperations() {
+		LOGGER.info("1. Create and login to second che");
+		beginTransaction();
+		Che che2 = getNetwork().getChe(cheId2);
+		che2.setProcessMode(ProcessMode.PALLETIZER);
+		Che.staticGetDao().store(che2);
+		commitTransaction();
+		ThreadUtils.sleep(500);
+		
+		PickSimulator picker2 = createPickSim(cheGuid2);
+		picker2.login("Worker2");
+		picker2.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
+		
+		LOGGER.info("2. Open pallet on first che");
+		openNewPallet("10010001", "L%Slot1111", "Slot1111");
+		
+		LOGGER.info("3. Place 2 items into the same pallet on second che");
+		picker2.scanSomething("10010002");
+		picker2.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+		picker2.scanSomething("10010003");
+		picker2.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+		
+		LOGGER.info("4. Close pallet from the first che");
+		picker.scanCommand("REMOVE");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_REMOVE, WAIT_TIME);
+		picker.scanSomething("10019991");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
+		
+		LOGGER.info("5. Complete the last item of the second che");
+		picker2.buttonPress(1);
+		picker2.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
+		
+		ThreadUtils.sleep(500);
+		
+		LOGGER.info("6. Verify that the order and details were completed");
+		beginTransaction();
+		Facility facility = getFacility().reload();
+		OrderHeader order = findPalletizerOrderHeader(facility, "10019991");
+		Assert.assertEquals(OrderStatusEnum.COMPLETE, order.getStatus());
+		OrderDetail detail1 = order.getOrderDetail("10010001");
+		OrderDetail detail2 = order.getOrderDetail("10010002");
+		OrderDetail detail3 = order.getOrderDetail("10010003");
+		Assert.assertNotNull("Detail 10010001 not found", detail1);
+		Assert.assertNotNull("Detail 10010002 not found", detail2);
+		Assert.assertNotNull("Detail 10010003 not found", detail3);
+		Assert.assertEquals(OrderStatusEnum.COMPLETE, detail1.getStatus());
+		Assert.assertEquals(OrderStatusEnum.COMPLETE, detail2.getStatus());
+		Assert.assertEquals(OrderStatusEnum.COMPLETE, detail3.getStatus());
+		commitTransaction();
 	}
 
 	private void openNewPallet(String item, String location, String locationName) {

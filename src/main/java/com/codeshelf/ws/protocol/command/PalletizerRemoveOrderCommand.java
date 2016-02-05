@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.behavior.PalletizerBehavior;
+import com.codeshelf.behavior.PalletizerBehavior.PalletizerRemoveInfo;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.ws.protocol.request.PalletizerRemoveOrderRequest;
 import com.codeshelf.ws.protocol.response.PalletizerRemoveOrderResponse;
@@ -35,9 +36,9 @@ public class PalletizerRemoveOrderCommand extends CommandABC{
 		PalletizerRemoveOrderResponse response = new PalletizerRemoveOrderResponse();
 		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
 		if (che!=null) {
-			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();
-			String error = palletizerService.removeOrder(che, prefix, scan);
-			response.setError(error);
+			String networkGuid = che.getDeviceNetGuid().getHexStringNoPrefix();
+			PalletizerRemoveInfo info = palletizerService.removeOrder(che, prefix, scan);
+			response.setInfo(info);
 			response.setNetworkGuid(networkGuid);
 			response.setStatus(ResponseStatus.Success);
 			return response;

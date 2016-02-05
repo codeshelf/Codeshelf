@@ -9,7 +9,9 @@ import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.behavior.PalletizerBehavior;
 import com.codeshelf.behavior.PalletizerBehavior.PalletizerInfo;
+import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.domain.Che;
@@ -30,7 +32,10 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 	
 	@Accessors(prefix = "m")
 	@Getter
-	private PalletizerInfo						mInfo		 = new PalletizerInfo();
+	private PalletizerInfo						mInfo		= new PalletizerInfo();
+	
+	private ColorEnum							mPallerizerColor	= ColorEnum.GREEN;
+	
 	
 	public ChePalletizerDeviceLogic(UUID inPersistentId,
 		NetGuid inGuid,
@@ -149,6 +154,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 				break;
 
 			case REMOVE_COMMAND:
+				completeCurrentWi();
 				setState(CheStateEnum.PALLETIZER_REMOVE);
 				clearItemInfo();
 				break;
@@ -169,7 +175,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 				if (YES_COMMAND.equalsIgnoreCase(inScanStr)) {
 					WorkInstruction wi = getInfo().getWi();
 					if (wi != null) {
-						mDeviceManager.completePalletizerWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi.getPersistentId(), true);
+						mDeviceManager.completePalletizerItem(getGuid().getHexStringNoPrefix(), getPersistentId(), getInfo(), true, getUserId());
 						notifyWiVerb(wi, WorkerEvent.EventType.SHORT, kLogAsWarn);
 					}
 					setState(CheStateEnum.PALLETIZER_SCAN_ITEM);
@@ -256,8 +262,20 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 	
 	private void processItemScan(String scanPrefix, String scanBody) {
 		if (isEmpty(scanPrefix)){
-			setState(CheStateEnum.PALLETIZER_PROCESSING);
-			mDeviceManager.palletizerItemRequest(getGuidNoPrefix(), getPersistentId().toString(), scanBody, getUserId());
+			String orderId = PalletizerBehavior.generatePalletizerStoreId(scanBody);
+			PalletizerInfo cachedInfo = null;
+			synchronized (mDeviceManager.getPalletizerCache()) {
+				cachedInfo = mDeviceManager.getPalletizerCache().get(orderId);				
+			}
+			if (cachedInfo == null) {
+				setState(CheStateEnum.PALLETIZER_PROCESSING);
+				mDeviceManager.palletizerItemRequest(getGuidNoPrefix(), getPersistentId().toString(), scanBody, getUserId());
+			} else {
+				cachedInfo.setItem(scanBody);
+				cachedInfo.setCached(true);
+				setItemInfo(cachedInfo);
+				setState(CheStateEnum.PALLETIZER_PUT_ITEM);
+			}
 		} else {
 			String scan = scanPrefix + scanBody;
 			LOGGER.warn("Item scan {} must not have a prefix", scan);
@@ -306,13 +324,9 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 	}
 	
 	private void completeCurrentWi(){
-		WorkInstruction wi = getInfo().getWi();
-		if (wi == null) {
-			LOGGER.warn("Palletizer PUT button press without a saved WI");
-			return;
+		if (getInfo().getItem() != null){
+			mDeviceManager.completePalletizerItem(getGuid().getHexStringNoPrefix(), getPersistentId(), getInfo(), false, getUserId());
 		}
-		mDeviceManager.completePalletizerWi(getGuid().getHexStringNoPrefix(), getPersistentId(), wi.getPersistentId(), false);
-		notifyWiVerb(wi, WorkerEvent.EventType.COMPLETE, kLogAsInfo);
 	}
 	
 	private void clearAffectedLedAndPoscons(){
@@ -348,6 +362,9 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 		}
 		setItemInfo(info);
 		if (info.isOrderFound()) {
+			synchronized (mDeviceManager.getPalletizerCache()) {
+				mDeviceManager.getPalletizerCache().put(mInfo.getOrderId(), mInfo);
+			}
 			setState(CheStateEnum.PALLETIZER_PUT_ITEM);
 		} else {
 			setState(CheStateEnum.PALLETIZER_NEW_ORDER);
@@ -381,6 +398,7 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 		WorkInstruction wi = info.getWi();
 		forceClearOtherPosConControllersForThisCheDevice();
 		if (wi != null) {
+			setLedColor(wi);
 			lightWiLocations(wi);
 			lightWiPosConLocations(wi);
 		} else {
@@ -391,7 +409,28 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 		instructions.add(new PosControllerInstr((byte)1,qty,qty,qty,PosControllerInstr.SOLID_FREQ, PosControllerInstr.BRIGHT_DUTYCYCLE));
 		sendPositionControllerInstructions(instructions);
 	}
-		
+	
+	/**
+	 * Alternates Palletizer LEDs between GREEN and MAGENTA
+	 */
+	private void setLedColor(WorkInstruction wi) {
+		String ledStream = wi.getLedCmdStream();
+		if (ledStream == null || ledStream.isEmpty() || ledStream.equals("[]")) {
+			return;
+		}
+		byte color[] = LedSample.convertColorToBytes(mPallerizerColor);
+		mPallerizerColor = mPallerizerColor == ColorEnum.GREEN ? ColorEnum.MAGENTA : ColorEnum.GREEN;
+		List<LedCmdGroup> ledGroups = LedCmdGroupSerializer.deserializeLedCmdString(ledStream);
+		for (LedCmdGroup ledGroup : ledGroups){
+			for (LedSample ledSample : ledGroup.getLedSampleList()){
+				ledSample.setRed(color[0]);
+				ledSample.setGreen(color[1]);
+				ledSample.setBlue(color[2]);
+			}
+		}
+		wi.setLedCmdStream(LedCmdGroupSerializer.serializeLedCmdString(ledGroups));
+	}
+			
 	private boolean isEmpty(String str){
 		return (str == null) ? true : str.isEmpty();
 	}

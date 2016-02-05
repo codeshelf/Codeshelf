@@ -215,7 +215,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				PalletizerRemoveOrderResponse palletizerRemoveResponse = (PalletizerRemoveOrderResponse) response;
 				if (response.getStatus() == ResponseStatus.Success) {
 					this.deviceManager.processPalletizerRemoveResponse(palletizerRemoveResponse.getNetworkGuid(),
-						palletizerRemoveResponse.getError());
+						palletizerRemoveResponse.getInfo());
 				}
 			}
 

@@ -42,7 +42,7 @@ import com.codeshelf.ws.protocol.command.ObjectGetCommand;
 import com.codeshelf.ws.protocol.command.ObjectMethodCommand;
 import com.codeshelf.ws.protocol.command.FacilityPropertiesCommand;
 import com.codeshelf.ws.protocol.command.ObjectUpdateCommand;
-import com.codeshelf.ws.protocol.command.PalletizerCompleteWiCommand;
+import com.codeshelf.ws.protocol.command.PalletizerCompleteItemCommand;
 import com.codeshelf.ws.protocol.command.PalletizerItemCommand;
 import com.codeshelf.ws.protocol.command.PalletizerNewOrderCommand;
 import com.codeshelf.ws.protocol.command.PalletizerRemoveOrderCommand;
@@ -75,7 +75,7 @@ import com.codeshelf.ws.protocol.request.ObjectGetRequest;
 import com.codeshelf.ws.protocol.request.ObjectMethodRequest;
 import com.codeshelf.ws.protocol.request.FacilityPropertiesRequest;
 import com.codeshelf.ws.protocol.request.ObjectUpdateRequest;
-import com.codeshelf.ws.protocol.request.PalletizerCompleteWiRequest;
+import com.codeshelf.ws.protocol.request.PalletizerCompleteItemRequest;
 import com.codeshelf.ws.protocol.request.PalletizerItemRequest;
 import com.codeshelf.ws.protocol.request.PalletizerNewOrderRequest;
 import com.codeshelf.ws.protocol.request.PalletizerRemoveOrderRequest;
@@ -314,8 +314,8 @@ public class ServerMessageProcessor implements IMessageProcessor {
 			command = new PalletizerRemoveOrderCommand(csSession, (PalletizerRemoveOrderRequest) request, behaviorFactory.getInstance(PalletizerBehavior.class));
 			palletizerRemoveOrderCounter.inc();
 			applicationRequestCounter.inc();
-		} else if (request instanceof PalletizerCompleteWiRequest) {
-			command = new PalletizerCompleteWiCommand(csSession, (PalletizerCompleteWiRequest) request, behaviorFactory.getInstance(PalletizerBehavior.class));
+		} else if (request instanceof PalletizerCompleteItemRequest) {
+			command = new PalletizerCompleteItemCommand(csSession, (PalletizerCompleteItemRequest) request, behaviorFactory.getInstance(PalletizerBehavior.class));
 			palletizerCompleteWiCounter.inc();
 			applicationRequestCounter.inc();
 		} else if (request instanceof LogoutRequest) {

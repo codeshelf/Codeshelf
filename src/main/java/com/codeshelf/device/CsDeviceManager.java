@@ -17,12 +17,14 @@ import java.util.UUID;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.behavior.InfoBehavior.InfoPackage;
 import com.codeshelf.behavior.PalletizerBehavior.PalletizerInfo;
+import com.codeshelf.behavior.PalletizerBehavior.PalletizerRemoveInfo;
 import com.codeshelf.device.PosControllerInstr.PosConInstrGroupSerializer;
 import com.codeshelf.flyweight.bitfields.OutOfRangeException;
 import com.codeshelf.flyweight.command.CommandControlPosconBroadcast;
@@ -66,7 +68,7 @@ import com.codeshelf.ws.protocol.request.InventoryLightLocationRequest;
 import com.codeshelf.ws.protocol.request.InventoryUpdateRequest;
 import com.codeshelf.ws.protocol.request.LoginRequest;
 import com.codeshelf.ws.protocol.request.LogoutRequest;
-import com.codeshelf.ws.protocol.request.PalletizerCompleteWiRequest;
+import com.codeshelf.ws.protocol.request.PalletizerCompleteItemRequest;
 import com.codeshelf.ws.protocol.request.PalletizerItemRequest;
 import com.codeshelf.ws.protocol.request.PalletizerNewOrderRequest;
 import com.codeshelf.ws.protocol.request.PalletizerRemoveOrderRequest;
@@ -96,13 +98,17 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	static final String									DEVICETYPE_CHE_LINESCAN		= "CHE_LINESCAN";
 	static final String									DEVICETYPE_CHE_PALLETIZER	= "CHE_PALLETIZER";
 
-	static final String									WI_COMPLETE_FAIL				= "WI_COMPLETE_FAIL";
+	static final String									WI_COMPLETE_FAIL			= "WI_COMPLETE_FAIL";
 
 	private TwoKeyMap<UUID, NetGuid, INetworkDevice>	mDeviceMap;
 
 	private Map<NetGuid, CheData>						mDeviceDataMap;
 
 	private Map<String, String>							mTotalCntrVsDeviceMap;
+
+	@Accessors(prefix = "m")
+	@Getter
+	private HashMap<String, PalletizerInfo>				mPalletizerCache			= new HashMap<>();
 
 	@Getter
 	private IRadioController							radioController;
@@ -250,6 +256,15 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		for (INetworkDevice theDevice : mDeviceMap.values()) {
 			if (theDevice instanceof CheDeviceLogic)
 				aList.add((CheDeviceLogic) theDevice);
+		}
+		return aList;
+	}
+
+	public final List<ChePalletizerDeviceLogic> getPalletizers() {
+		ArrayList<ChePalletizerDeviceLogic> aList = new ArrayList<ChePalletizerDeviceLogic>();
+		for (INetworkDevice theDevice : mDeviceMap.values()) {
+			if (theDevice instanceof ChePalletizerDeviceLogic)
+				aList.add((ChePalletizerDeviceLogic) theDevice);
 		}
 		return aList;
 	}
@@ -579,12 +594,13 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		clientEndpoint.sendMessage(req);
 	}
 
-	public void completePalletizerWi(final String inCheId,
-		final UUID inPersistentId,
-		final UUID wiId,
-		final Boolean shorted) {
-		LOGGER.debug("Complete Palletizer WI: Che={}; WI={}; Short={}", inCheId, wiId, shorted);
-		PalletizerCompleteWiRequest req = new PalletizerCompleteWiRequest(inPersistentId.toString(), wiId, shorted);
+	public void completePalletizerItem(final String inCheId,
+		final UUID cheId,
+		final PalletizerInfo info,
+		final Boolean shorted,
+		final String userId) {
+		LOGGER.debug("Complete Palletizer Item: Item={}; Che={}; Short={}; UserId={}", info.getItem(), inCheId, shorted, userId);
+		PalletizerCompleteItemRequest req = new PalletizerCompleteItemRequest(cheId.toString(), info, shorted, userId);
 		clientEndpoint.sendMessage(req);
 	}
 
@@ -1108,11 +1124,17 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		}
 	}
 
-	public void processPalletizerRemoveResponse(String networkGuid, String error) {
+	public void processPalletizerRemoveResponse(String networkGuid, PalletizerRemoveInfo info) {
+		synchronized (getPalletizerCache()) {
+			for (String order : info.getOrders()){
+				getPalletizerCache().remove(order);
+			}
+		}
+		
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			if (cheDevice instanceof ChePalletizerDeviceLogic) {
-				((ChePalletizerDeviceLogic) cheDevice).processRemoveResponse(error);
+				((ChePalletizerDeviceLogic) cheDevice).processRemoveResponse(info.getError());
 			} else {
 				LOGGER.warn("Device is not ChePalletizerDeviceLogic in processRemoveResponse. CHE id={}", networkGuid);
 			}
@@ -1277,7 +1299,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			NetEndpoint.PRIMARY_ENDPOINT);
 		radioController.sendCommand(command, device.getAddress(), true);
 	}
-
+	
 	public void processPosConControllerListMessage(PosControllerInstrList instructionList) {
 		HashSet<PosManagerDeviceLogic> controllers = new HashSet<>();
 		for (PosControllerInstr instruction : instructionList.getInstructions()) {
