@@ -1115,6 +1115,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 		CheDeviceLogic cheDevice = getCheDeviceFromPrefixHexString("0x" + networkGuid);
 		if (cheDevice != null) {
 			if (cheDevice instanceof ChePalletizerDeviceLogic) {
+				// Not symmetrical. Could add to cache here, but it is done in the cheDevice
 				((ChePalletizerDeviceLogic) cheDevice).processItemResponse(info);
 			} else {
 				LOGGER.warn("Device is not ChePalletizerDeviceLogic in processInfoResponse. CHE id={}", networkGuid);
@@ -1127,6 +1128,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	public void processPalletizerRemoveResponse(String networkGuid, PalletizerRemoveInfo info) {
 		synchronized (getPalletizerCache()) {
 			for (String order : info.getOrders()){
+				// could log the remove from cache here.
 				getPalletizerCache().remove(order);
 			}
 		}

@@ -43,6 +43,9 @@ public class CheProcessPalletizer extends ServerTest {
 
 	private PickSimulator		picker;
 
+	/**
+	 * This init() sets up the facility with palletizer slots, and che1 and "picker" for the che that is set to palletizer process
+	 */
 	@Before
 	public void init() throws IOException {
 		this.getTenantPersistenceService().beginTransaction();
@@ -109,7 +112,7 @@ public class CheProcessPalletizer extends ServerTest {
 		picker.buttonPress(1);
 
 		ThreadUtils.sleep(700);
-		
+
 		LOGGER.info("3: Verify DB objects");
 		beginTransaction();
 		Facility facility = getFacility();
@@ -381,7 +384,7 @@ public class CheProcessPalletizer extends ServerTest {
 		picker.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
 		Assert.assertEquals("Scan Item\n\n\n\n", picker.getLastCheDisplay());
 	}
-	
+
 	@Test
 	public void testMultiCheOperations() {
 		LOGGER.info("1. Create and login to second che");
@@ -391,32 +394,32 @@ public class CheProcessPalletizer extends ServerTest {
 		Che.staticGetDao().store(che2);
 		commitTransaction();
 		ThreadUtils.sleep(500);
-		
+
 		PickSimulator picker2 = createPickSim(cheGuid2);
 		picker2.login("Worker2");
 		picker2.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
-		
+
 		LOGGER.info("2. Open pallet on first che");
 		openNewPallet("10010001", "L%Slot1111", "Slot1111");
-		
+
 		LOGGER.info("3. Place 2 items into the same pallet on second che");
 		picker2.scanSomething("10010002");
 		picker2.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
 		picker2.scanSomething("10010003");
 		picker2.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
-		
+
 		LOGGER.info("4. Close pallet from the first che");
 		picker.scanCommand("REMOVE");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_REMOVE, WAIT_TIME);
 		picker.scanSomething("10019991");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
-		
+
 		LOGGER.info("5. Complete the last item of the second che");
 		picker2.buttonPress(1);
 		picker2.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
-		
+
 		ThreadUtils.sleep(500);
-		
+
 		LOGGER.info("6. Verify that the order and details were completed");
 		beginTransaction();
 		Facility facility = getFacility().reload();
@@ -432,6 +435,109 @@ public class CheProcessPalletizer extends ServerTest {
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, detail2.getStatus());
 		Assert.assertEquals(OrderStatusEnum.COMPLETE, detail3.getStatus());
 		commitTransaction();
+	}
+
+	/**
+	 * Not so much of a unit test enforced with asserts. Rather, an exercise to follow how it is logged. In logs see
+	 * "No cached location for 1001. Query to server." and 
+	 * "Using cached location Slot1111 for 1001"
+	 */
+	@Test
+	public void testCacheMultiChe() {
+		LOGGER.info("1. Create and login to second che");
+		beginTransaction();
+		Che che2 = getNetwork().getChe(cheId2);
+		che2.setProcessMode(ProcessMode.PALLETIZER);
+		Che.staticGetDao().store(che2);
+		commitTransaction();
+		ThreadUtils.sleep(500);
+
+		PickSimulator picker2 = createPickSim(cheGuid2);
+		picker2.login("Worker2");
+		picker2.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
+
+		LOGGER.info("2a. Open pallet on first che. Scan the item");
+		picker.scanSomething("10010001");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_NEW_ORDER, WAIT_TIME);
+		LOGGER.info("2b. Scan the pallet location to complete the open as well as carton plan");
+		picker.scanSomething("L%Slot1111");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+
+		LOGGER.info("2c. Open another pallet on first che. Scan the item");
+		picker.scanSomething("10020001");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_NEW_ORDER, WAIT_TIME);
+		LOGGER.info("2b. Scan the pallet location to complete the open as well as carton plan");
+		picker.scanSomething("L%Slot1114");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+
+		LOGGER.info("3a. Place an item on the same pallet with second che.");
+		picker2.scanSomething("10010002");
+		picker2.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+		LOGGER.info("3b.  Place another item on the same pallet with second che.");
+		picker2.scanSomething("10010003");
+		picker2.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+
+		LOGGER.info("4a. Place an item on the same pallet with first che. .");
+		picker.scanSomething("10010004");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+		LOGGER.info("4b.  Place another item on the same pallet with first che.");
+		picker.scanSomething("10010005");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+
+		LOGGER.info("5. Complete the last item of the second che");
+		picker2.buttonPress(1);
+		picker2.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
+
+		LOGGER.info("6. Close  the 1001 pallet from the first che");
+		picker.scanCommand("REMOVE");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_REMOVE, WAIT_TIME);
+		picker.scanSomething("10019991");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
+
+		LOGGER.info("7. Verify that the order and details were completed");
+		Facility facility = this.getFacility();
+		beginTransaction();
+		facility = facility.reload();
+		OrderHeader order = findPalletizerOrderHeader(facility, "10019991");
+		commitTransaction();
+		this.waitForOrderStatus(facility, order, OrderStatusEnum.COMPLETE, true, WAIT_TIME);
+
+		LOGGER.info("8. Place a 1002 item with second che.");
+		picker2.scanSomething("10020012");
+		picker2.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+
+		LOGGER.info("9 : Open 1001 store again at another location");
+		// see  "No cached location for 1001. Query to server." as the close had cleared the cache value.
+		picker.scanSomething("10010011");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_NEW_ORDER, WAIT_TIME);
+		LOGGER.info("9b. Scan the pallet location to complete the open as well as carton plan");
+		picker.scanSomething("L%Slot1112");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+
+		LOGGER.info("9c. Place 1002 item on the same pallet with first che.");
+		picker.scanSomething("10020013");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+
+		LOGGER.info("10a. Close 1001 pallet from the first che");
+		picker.scanCommand("REMOVE");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_REMOVE, WAIT_TIME);
+		picker.scanSomething("10019992");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
+
+		LOGGER.info("10b. Close 1002 pallet from the first che");
+		picker.scanCommand("REMOVE");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_REMOVE, WAIT_TIME);
+		picker.scanSomething("10029992");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
+
+		LOGGER.info("11. Mostly giving time for transactions to complete.");
+		beginTransaction();
+		facility = facility.reload();
+		OrderHeader order3 = findPalletizerOrderHeader(facility, "10019992");
+		OrderHeader order4 = findPalletizerOrderHeader(facility, "10029992");
+		commitTransaction();
+		this.waitForOrderStatus(facility, order3, OrderStatusEnum.COMPLETE, true, WAIT_TIME);
+		this.waitForOrderStatus(facility, order4, OrderStatusEnum.COMPLETE, true, WAIT_TIME);
 	}
 
 	private void openNewPallet(String item, String location, String locationName) {
