@@ -254,8 +254,12 @@ public class RadioController implements IRadioController {
 			LOGGER.info("Trying to set radio channel={}", inChannel);
 			mChannelSelected = true;
 			mRadioChannel = inChannel;
+			
+			// Remove this in v26. Just yield the WARN "Could not find device with net address: ff", then exited. Nothing broadcast here.
+			/* 
 			CommandNetMgmtSetup netSetupCmd = new CommandNetMgmtSetup(packetIOService.getNetworkId(), mRadioChannel);
 			sendCommand(netSetupCmd, broadcastService.getBroadcastAddress(), false);
+			*/
 			LOGGER.info("Radio channel={}", inChannel);
 		}
 	}
@@ -382,7 +386,7 @@ public class RadioController implements IRadioController {
 		device = this.mDeviceNetAddrMap.get(inDstAddr);
 
 		if (device == null) {
-			LOGGER.warn("Could not find device with net addres: {}", inDstAddr);
+			LOGGER.warn("Could not find device with net address: {}", inDstAddr, new RuntimeException("stack trace for this"));
 			return;
 		}
 

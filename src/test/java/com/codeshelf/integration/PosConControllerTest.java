@@ -38,7 +38,6 @@ public class PosConControllerTest extends ServerTest{
 	@Test
 	public final void changeLedControllerType() throws IOException{
 		UUID facilityId = null;
-		String newControllerId = "10000001";
 		
 		//Create facility
 		//TenantPersistenceService.getInstance().beginTransaction();
@@ -47,25 +46,24 @@ public class PosConControllerTest extends ServerTest{
 		//TenantPersistenceService.getInstance().commitTransaction();
 		
 		super.startSiteController();
-		waitAndGetAisleDeviceLogic(this, new NetGuid(DEF_CONTROLLER_ID));
+		// Test framework had set up 3 ledcons. Use them
 		
 		//Get and modify controller
 		TenantPersistenceService.getInstance().beginTransaction();
-		LedController controller = getController(facilityId, DEF_CONTROLLER_ID);
-		Assert.assertEquals(controller.getDomainId(), DEF_CONTROLLER_ID);
+		LedController controller = getController(facilityId, ledconId1);
 		Assert.assertEquals(DeviceType.Lights, controller.getDeviceType());
-		controller.updateFromUI(newControllerId, "Poscons");
+		controller.updateFromUI(ledconId1, "Poscons");
 		TenantPersistenceService.getInstance().commitTransaction();
 		
 		//Confirm the change through DB access
 		TenantPersistenceService.getInstance().beginTransaction();
-		controller = getController(facilityId, newControllerId);
-		Assert.assertEquals(controller.getDomainId(), newControllerId);
+		controller = getController(facilityId, ledconId1);
+		Assert.assertEquals(controller.getDomainId(), ledconId1);
 		Assert.assertEquals(DeviceType.Poscons, controller.getDeviceType());
 		TenantPersistenceService.getInstance().commitTransaction();
 		
 		//Confirm the change through site controller
-		waitAndGetPosConController(this, new NetGuid(newControllerId));
+		waitAndGetPosConController(this, new NetGuid(ledconId1));
 	}
 	
 	@Test
