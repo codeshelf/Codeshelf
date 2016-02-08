@@ -145,14 +145,14 @@ public abstract class FrameworkTest implements IntegrationTest {
 	@Getter
 	protected static NetGuid						cheGuid3					= new NetGuid("0x00009999");
 
-	// aisle controllers
-	protected static String							ledconId1					= "LEDCCON1";
+	// aisle controllers. Notice that we follow the convention of naming ledcon controllers similar to the guid
+	protected static String							ledconId1					= "00009981";
 	@Getter
 	protected static NetGuid						ledconGuid1					= new NetGuid("0x00009981");
-	protected static String							ledconId2					= "LEDCCON2";
+	protected static String							ledconId2					= "0009982";
 	@Getter
 	protected static NetGuid						ledconGuid2					= new NetGuid("0x00009982");
-	protected static String							ledconId3					= "LEDCCON3";
+	protected static String							ledconId3					= "00009983";
 	@Getter
 	protected static NetGuid						ledconGuid3					= new NetGuid("0x00009983");
 
