@@ -26,6 +26,7 @@ import com.codeshelf.model.domain.Bay;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.model.domain.LedController;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Tier;
@@ -78,6 +79,11 @@ public class CheProcessPalletizer extends ServerTest {
 		Assert.assertEquals(cheGuid1, che1.getDeviceNetGuid()); // just checking since we use cheGuid1 to get the picker.
 		che1.setProcessMode(ProcessMode.PALLETIZER);
 		Che.staticGetDao().store(che1);
+		
+		LedController ledcon = network.findLedController(ledconId1);
+		a1.setLedController(ledcon);
+		a1.setLedChannel((short)1);
+		Aisle.staticGetDao().store(a1);
 
 		this.getTenantPersistenceService().commitTransaction();
 

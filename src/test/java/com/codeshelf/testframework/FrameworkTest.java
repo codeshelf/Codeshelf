@@ -145,6 +145,18 @@ public abstract class FrameworkTest implements IntegrationTest {
 	@Getter
 	protected static NetGuid						cheGuid3					= new NetGuid("0x00009999");
 
+	// aisle controllers
+	protected static String							ledconId1					= "LEDCCON1";
+	@Getter
+	protected static NetGuid						ledconGuid1					= new NetGuid("0x00009981");
+	protected static String							ledconId2					= "LEDCCON2";
+	@Getter
+	protected static NetGuid						ledconGuid2					= new NetGuid("0x00009982");
+	protected static String							ledconId3					= "LEDCCON3";
+	@Getter
+	protected static NetGuid						ledconGuid3					= new NetGuid("0x00009983");
+
+	
 	// site controller services
 	private static CsClientEndpoint					staticClientEndpoint;
 	private static ClientConnectionManagerService	staticClientConnectionManagerService;
@@ -669,10 +681,13 @@ public abstract class FrameworkTest implements IntegrationTest {
 		che2.setDomainId(cheId2);
 		this.che2PersistentId = che2.getPersistentId();
 
-		// CreateFacility makes 2 CHE by default, which is fine for smaller sites. Need 3 for some tests.
 		Che che3 = network.createChe(cheId3, cheGuid3);
-		che3.setColor(ColorEnum.WHITE);
+		che3.setColor(ColorEnum.GREEN);
 		this.che3PersistentId = che3.getPersistentId();
+		
+		network.findOrCreateLedController(ledconId1, ledconGuid1);
+		network.findOrCreateLedController(ledconId2, ledconGuid2);
+		network.findOrCreateLedController(ledconId3, ledconGuid3);
 
 		if (!inTransaction)
 			this.getTenantPersistenceService().commitTransaction();
