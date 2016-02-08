@@ -160,7 +160,7 @@ public class ImportResource {
 			long receivedTime = System.currentTimeMillis();
 			Reader reader = new InputStreamReader(fileInputStream);
 			
-			BatchResult<Object> results = this.outboundOrderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()), deleteOldOrders);
+			BatchResult<Object> results = this.outboundOrderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(receivedTime), deleteOldOrders);
 			String username = CodeshelfSecurityManager.getCurrentUserContext().getUsername();
 			this.outboundOrderImporter.persistDataReceipt(facility, username, contentDispositionHeader.getFileName(), receivedTime, EdiTransportType.APP, results);
 			return BaseResponse.buildResponse(results, Status.OK);				
