@@ -179,6 +179,11 @@ public class Facility extends Location {
 		return true;
 	}
 
+	public boolean isProduction() {
+		boolean production = PropertyBehavior.getPropertyAsBoolean(this, FacilityPropertyType.PRODUCTION);
+		return production;
+	}
+	
 	public List<Path> getPaths() {
 		return new ArrayList<Path>(this.paths.values());
 	}
