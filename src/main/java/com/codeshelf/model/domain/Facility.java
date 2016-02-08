@@ -1314,6 +1314,17 @@ public class Facility extends Location {
 		return facility;
 	}
 
+	/**
+	 * This function expects an active transaction
+	 */
+	public static boolean facilityExists(String domainId){
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("domainId", domainId));
+		filterParams.add(Restrictions.eq("active", true));
+		List<Facility> facilities = Facility.staticGetDao().findByFilter(filterParams);
+		return !facilities.isEmpty();
+	}
+	
 	// convenience method
 	public Facility reload() {
 		return Facility.staticGetDao().reload(this);
