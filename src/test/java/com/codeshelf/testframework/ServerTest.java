@@ -422,8 +422,23 @@ public abstract class ServerTest extends HibernateTest {
 	}
 
 	/**
-	 * Wait to find the named order header having this status
+	 * Wait until this order header has this status
 	 */
+	public void waitForOrderStatus(Facility inFacility,
+		OrderHeader order,
+		OrderStatusEnum expectedStatus,
+		boolean expectedActive,
+		long millisToWait) {
+		if (order == null) {
+			LOGGER.error("Bad call to waitForOrderStatus");
+			return;
+		}
+		waitForOrderStatus(inFacility, order.getOrderId(), expectedStatus, expectedActive, millisToWait);
+	}
+
+	/**
+	* Wait to find the named order header having this status
+	*/
 	public void waitForOrderStatus(Facility inFacility,
 		String orderId,
 		OrderStatusEnum expectedStatus,
@@ -432,11 +447,12 @@ public abstract class ServerTest extends HibernateTest {
 		ThreadUtils.sleep(250);
 		long start = System.currentTimeMillis();
 		OrderHeader resultOrder = null;
+		OrderHeader order = null;
 		while (System.currentTimeMillis() - start < millisToWait) {
 
 			beginTransaction();
 			inFacility = inFacility.reload();
-			OrderHeader order = OrderHeader.staticGetDao().findByDomainId(inFacility, orderId);
+			order = OrderHeader.staticGetDao().findByDomainId(inFacility, orderId);
 			if (order != null) {
 				OrderStatusEnum status = order.getStatus();
 				if (expectedStatus == null || expectedStatus.equals(status)) {
@@ -451,7 +467,13 @@ public abstract class ServerTest extends HibernateTest {
 			}
 			ThreadUtils.sleep(200); // retry every 200ms
 		}
-		Assert.fail(String.format("Order did not reach desired state in %dms.", millisToWait));
+		String statusStr = "";
+		if (order == null)
+			statusStr = "null";
+		else {
+			statusStr = order.getStatus().toString(); // not in a transaction. Think it is ok.
+		}
+		Assert.fail(String.format("Order did not reach desired state in %dms. Status:%s", millisToWait, statusStr));
 	}
 
 	/**

@@ -180,7 +180,7 @@ public class OrdersResourceTest extends ServerTest {
 		picker.pickItemAuto();
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		
-		waitForOrderStatus(facility, "123", OrderStatusEnum.COMPLETE, true, 2000);
+		waitForOrderStatus(facility, "123", OrderStatusEnum.COMPLETE, true, 4000);
 
 		LOGGER.info("3: Import again. This looks like different file with exact same content. Should act the same as if the same file");
 		// Notice that it does not overwrite the completed order.

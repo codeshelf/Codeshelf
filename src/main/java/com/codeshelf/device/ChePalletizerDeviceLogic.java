@@ -268,9 +268,11 @@ public class ChePalletizerDeviceLogic extends CheDeviceLogic{
 				cachedInfo = mDeviceManager.getPalletizerCache().get(orderId);				
 			}
 			if (cachedInfo == null) {
+				LOGGER.info("No cached location for {}. Query to server.", orderId);
 				setState(CheStateEnum.PALLETIZER_PROCESSING);
 				mDeviceManager.palletizerItemRequest(getGuidNoPrefix(), getPersistentId().toString(), scanBody, getUserId());
 			} else {
+				LOGGER.info("Using cached location {} for {}", cachedInfo.getLocation(), orderId);
 				cachedInfo.setItem(scanBody);
 				cachedInfo.setCached(true);
 				setItemInfo(cachedInfo);
