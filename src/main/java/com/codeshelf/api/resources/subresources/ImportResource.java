@@ -159,7 +159,9 @@ public class ImportResource {
 		try {
 			long receivedTime = System.currentTimeMillis();
 			Reader reader = new InputStreamReader(fileInputStream);
-			
+			if(facility.isProduction() && deleteOldOrders) {
+				return new ErrorResponse("unable to delete orders in production facility").buildResponse();
+			}
 			BatchResult<Object> results = this.outboundOrderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(receivedTime), deleteOldOrders);
 			String username = CodeshelfSecurityManager.getCurrentUserContext().getUsername();
 			this.outboundOrderImporter.persistDataReceipt(facility, username, contentDispositionHeader.getFileName(), receivedTime, EdiTransportType.APP, results);
