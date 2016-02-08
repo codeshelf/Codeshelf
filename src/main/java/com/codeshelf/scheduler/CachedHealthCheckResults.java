@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.persistence.TenantPersistenceService;
 
 public class CachedHealthCheckResults {
 	private static CachedHealthCheckResults instance = null;
@@ -35,7 +36,7 @@ public class CachedHealthCheckResults {
 	    	if (!facilityResult.success) {
 	    		success = false;
 	    	}
-	    	combinedMessage.append(String.format("Facility %s - %s: %s. ", facilityResult.facilityId, facilityResult.success ? "PASS" : "FAIL", facilityResult.message));
+	    	combinedMessage.append(String.format("Facility %s.%s - %s: %s. ", facilityResult.tenantId, facilityResult.facilityId, facilityResult.success ? "PASS" : "FAIL", facilityResult.message));
 	    	if (repeatingMessage == null) {
 	    		repeatingMessage = facilityResult.message;
 	    	} else if (!repeatingMessage.equals(facilityResult.message)){
@@ -61,15 +62,18 @@ public class CachedHealthCheckResults {
 			facilityResults = new HashMap<>();
 			getInstance().jobResults.put(jobName, facilityResults);
 		}
-		facilityResults.put(facility.getPersistentId(), new FacilityResult(facility.getDomainId(), success, message));
+		String tenantId = TenantPersistenceService.getInstance().getCurrentTenantIdentifier();
+		facilityResults.put(facility.getPersistentId(), new FacilityResult(tenantId, facility.getDomainId(), success, message));
 	}
 	
 	private static class FacilityResult{
 		private boolean success;
+		private String tenantId;
 		private String facilityId;
 		private String message;
 		
-		public FacilityResult(String facilityId, boolean success, String message) {
+		public FacilityResult(String tenantId, String facilityId, boolean success, String message) {
+			this.tenantId = tenantId;
 			this.facilityId = facilityId;
 			this.success = success;
 			this.message = message;
