@@ -98,7 +98,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	static final String									DEVICETYPE_CHE_LINESCAN		= "CHE_LINESCAN";
 	static final String									DEVICETYPE_CHE_PALLETIZER	= "CHE_PALLETIZER";
 
-	static final String									WI_COMPLETE_FAIL			= "WI_COMPLETE_FAIL";
+	static final String									WI_COMPLETE_FAIL			= "WI_COMPLETE_FAIL";										
 
 	private TwoKeyMap<UUID, NetGuid, INetworkDevice>	mDeviceMap;
 
@@ -115,6 +115,12 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 
 	@Getter
 	private PcapRingBuffer								pcapBuffer;
+	
+	@Getter @Setter
+	private String										tenantName;
+
+	@Getter @Setter
+	private String										facilityDomainId;
 
 	@Getter
 	private String										username;

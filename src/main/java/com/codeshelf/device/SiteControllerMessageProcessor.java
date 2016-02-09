@@ -85,6 +85,8 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 						LOGGER.info("Attached to network " + network.getDomainId());
 						attached = true;
 
+						deviceManager.setTenantName(loginResponse.getTenantName());
+						deviceManager.setFacilityDomainId(loginResponse.getFacilityDomainId());
 						// DEV-582 hook up to AUTOSHRT parameter
 						deviceManager.setAutoShortValue(loginResponse.isAutoShortValue());
 						deviceManager.setPickInfoValue(loginResponse.getPickInfoValue());

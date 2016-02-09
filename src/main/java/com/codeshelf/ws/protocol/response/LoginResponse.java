@@ -58,6 +58,10 @@ public class LoginResponse extends ResponseABC {
 
 	@Getter
 	@Setter
+	String				facilityDomainId;
+
+	@Getter
+	@Setter
 	String				ordersubValue;
 
 	public LoginResponse() {

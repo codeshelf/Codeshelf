@@ -136,6 +136,8 @@ public class LoginCommand extends CommandABC {
 							LOGGER.warn("Site Controller logging in: {}", authUser);
 
 							Facility facility = network.getParent();
+							response.setFacilityDomainId(facility.getDomainId());
+							
 							String valueStr = PropertyBehavior.getProperty(facility, FacilityPropertyType.AUTOSHRT);
 							response.setAutoShortValue(Boolean.parseBoolean(valueStr));
 
