@@ -137,7 +137,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 			sampleList.add(sample);
 			for (short channel = 1; channel <= kNumChannelsOnAislController; channel++) {
 				ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, sampleList);
-				mRadioController.sendCommand(command, getAddress(), true);
+				sendRadioControllerCommand(command, true);
 			}
 		}
 		mDeviceLedPosMap.clear();
@@ -429,10 +429,6 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 
 		// New to V5. We are seeing that the aisle controller can only handle 22 ledCmds at once, at least with our simple cases.
 		// New to V9. split commands up by color.
-		//		if (false && (!splitLargeLedSendsIntoPartials || sentCount <= kMaxLedCmdSendAtATime)) {
-		//			ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, samples);
-		//			mRadioController.sendCommand(command, getAddress(), true);
-		//		} else {
 		int partialCount = 0;
 		List<LedSample> partialSamples = new ArrayList<LedSample>();
 		final int blackColorValue = 6; // ColorNum.BLACK;// BLACK	= 6;
@@ -445,7 +441,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 			if (colorChanged || partialCount == kMaxLedCmdSendAtATime) {
 				logSampleSend(partialSamples);
 				ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, partialSamples);
-				mRadioController.sendCommand(command, getAddress(), true);
+				sendRadioControllerCommand(command, true);
 
 				partialCount = 0;
 				// we have to leave the old reference to partialSamples as that is floating off in a command.
@@ -468,7 +464,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		if (partialCount > 0) { // send the final leftovers
 			logSampleSend(partialSamples);
 			ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, partialSamples);
-			mRadioController.sendCommand(command, getAddress(), true);
+			sendRadioControllerCommand(command, true);
 
 			// same as above. Wait after last partial
 			if (kDelayMillisBetweenPartialSends > 0)

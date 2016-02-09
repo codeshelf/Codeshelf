@@ -11,9 +11,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.behavior.PropertyBehavior;
+import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.edi.CrossBatchCsvImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WorkInstructionSequencerType;
@@ -543,6 +545,14 @@ public abstract class ServerTest extends HibernateTest {
 
 	protected PickSimulator createPickSim(NetGuid cheGuid) {
 		return new PickSimulator(this.getDeviceManager(), cheGuid);
+	}
+
+	protected void setResendQueueing(boolean inShouldReQueueAsIfAssociated) {
+		CsDeviceManager devman = this.getDeviceManager();
+		Assert.assertNotNull(devman);
+		IRadioController rc = devman.getRadioController();
+		Assert.assertNotNull(rc);
+		rc.setResendQueueing(inShouldReQueueAsIfAssociated);
 	}
 
 }

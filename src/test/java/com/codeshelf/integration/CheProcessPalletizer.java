@@ -450,6 +450,11 @@ public class CheProcessPalletizer extends ServerTest {
 	 */
 	@Test
 	public void testCacheMultiChe() {
+		
+		// This somewhat kludgy block expands test coverage significantly.
+		// See lots of WARN about "resend number" in the logs.
+		setResendQueueing(true);
+		
 		LOGGER.info("1. Create and login to second che");
 		beginTransaction();
 		Che che2 = getNetwork().getChe(cheId2);
@@ -544,6 +549,10 @@ public class CheProcessPalletizer extends ServerTest {
 		commitTransaction();
 		this.waitForOrderStatus(facility, order3, OrderStatusEnum.COMPLETE, true, WAIT_TIME);
 		this.waitForOrderStatus(facility, order4, OrderStatusEnum.COMPLETE, true, WAIT_TIME);
+		
+		// not that it matters, but restore the radioController state
+		setResendQueueing(false);
+
 	}
 
 	private void openNewPallet(String item, String location, String locationName) {
