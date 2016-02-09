@@ -413,6 +413,12 @@ public class CheProcessPalletizer extends ServerTest {
 		picker2.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
 		picker2.scanSomething("10010003");
 		picker2.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+		
+		LOGGER.info("3b. Verify the flashing color on the light tube");
+		/*
+		LedSimulator ledsim = createLedSim(ledconGuid1);
+		*/
+	
 
 		LOGGER.info("4. Close pallet from the first che");
 		picker.scanCommand("REMOVE");
