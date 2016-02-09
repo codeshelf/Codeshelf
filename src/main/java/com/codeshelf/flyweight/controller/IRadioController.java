@@ -23,6 +23,8 @@ public interface IRadioController extends Runnable {
 	 *  @param inSrcAddr	The source address that sent the command.
 	 */
 	void receiveCommand(ICommand inCommand, NetAddress inSrcAddr);
+	
+	boolean testingResendQueueing();
 
 	// --------------------------------------------------------------------------
 	/**
@@ -114,5 +116,7 @@ public interface IRadioController extends Runnable {
 	NetGuid getNetGuidFromNetAddress(byte networkAddr);
 	
 	NetGuid getNetGuidFromNetAddress(NetAddress netAddress);
+
+	void setResendQueueing(boolean inShouldReQueueAsIfAssociated);
 
 }

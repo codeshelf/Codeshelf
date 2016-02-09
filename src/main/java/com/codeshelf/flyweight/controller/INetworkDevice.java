@@ -7,6 +7,7 @@ package com.codeshelf.flyweight.controller;
 
 import com.codeshelf.device.DeviceRestartCauseEnum;
 import com.codeshelf.flyweight.command.CommandControlButton;
+import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetGuid;
@@ -224,4 +225,10 @@ public interface INetworkDevice {
 	 * Set last packet sent
 	 */
 	void setLastSentPacket(IPacket inPacket);
+	
+	/**
+	 * Bottleneck to tell this device to send the command through. Typically does not actually try to send if device is not associated yet.
+	 */
+	public void sendRadioControllerCommand(ICommand inCommand, boolean inAckRequested);
+
 }

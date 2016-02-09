@@ -29,6 +29,7 @@ import com.codeshelf.device.PosControllerInstr.PosConInstrGroupSerializer;
 import com.codeshelf.flyweight.bitfields.OutOfRangeException;
 import com.codeshelf.flyweight.command.CommandControlPosconBroadcast;
 import com.codeshelf.flyweight.command.CommandControlPosconSetup;
+import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.command.NetworkId;
@@ -1303,9 +1304,9 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 			LOGGER.warn("Unable to light poscon addresses on device {}. Device {} is not a PosConDeviceABC", controllerGuid, device);
 			return;
 		}
-		CommandControlPosconBroadcast command = new CommandControlPosconBroadcast(CommandControlPosconBroadcast.POS_SHOW_ADDR,
+		ICommand command = new CommandControlPosconBroadcast(CommandControlPosconBroadcast.POS_SHOW_ADDR,
 			NetEndpoint.PRIMARY_ENDPOINT);
-		radioController.sendCommand(command, device.getAddress(), true);
+		device.sendRadioControllerCommand(command, true);
 	}
 	
 	public void processPosConControllerListMessage(PosControllerInstrList instructionList) {

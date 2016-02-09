@@ -76,7 +76,11 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	 * This can happen after an incorrect setup as a PosCon controller
 	 */
 	public void connectedToServer() {
-		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT, "LED Controller", "Connected", "Incorrect Configuration!", "This is not LED controller");
+		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT,
+			"LED Controller",
+			"Connected",
+			"Incorrect Configuration!",
+			"This is not LED controller");
 		sendRadioControllerCommand(command, true);
 	}
 
@@ -135,7 +139,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 			sampleList.add(sample);
 			for (short channel = 1; channel <= kNumChannelsOnAislController; channel++) {
 				ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, sampleList);
-				mRadioController.sendCommand(command, getAddress(), true);
+				sendRadioControllerCommand(command, true);
 			}
 		}
 		mDeviceLedPosMap.clear();
@@ -274,20 +278,21 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		if (inMilliseconds > mExpectedExpireMilliseconds)
 			mExpectedExpireMilliseconds = inMilliseconds;
 	}
-/*
-	private void clearLightsIfThisLooksLikeLastExpiry() {
-		// This is flawed. Therefore not referenced.
-		long currentMillis = System.currentTimeMillis();
-		if (currentMillis > mExpectedExpireMilliseconds) {
-			LOGGER.info("clearLightsIfThisLooksLikeLastExpiry fired.");
-			clearExtraLedsFromMap();
-			updateLeds();
+
+	/*
+		private void clearLightsIfThisLooksLikeLastExpiry() {
+			// This is flawed. Therefore not referenced.
+			long currentMillis = System.currentTimeMillis();
+			if (currentMillis > mExpectedExpireMilliseconds) {
+				LOGGER.info("clearLightsIfThisLooksLikeLastExpiry fired.");
+				clearExtraLedsFromMap();
+				updateLeds();
+			}
+			else { // temporary
+				LOGGER.info("clearLightsIfThisLooksLikeLastExpiry  does not look like last.");	
+			}
 		}
-		else { // temporary
-			LOGGER.info("clearLightsIfThisLooksLikeLastExpiry  does not look like last.");	
-		}
-	}
-*/
+	*/
 	// --------------------------------------------------------------------------
 	/**
 	 * This should fire once after the input duration seconds. On firing, clear out extra LED lights and refresh the aisle lights.
@@ -371,6 +376,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	protected void notifyLeds(String ledSummary) {
 		notifyDisplayTag(ledSummary, "CHE_DISPLAY Lights");
 	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * Light all of the LEDs required.
@@ -427,10 +433,6 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 
 		// New to V5. We are seeing that the aisle controller can only handle 22 ledCmds at once, at least with our simple cases.
 		// New to V9. split commands up by color.
-		//		if (false && (!splitLargeLedSendsIntoPartials || sentCount <= kMaxLedCmdSendAtATime)) {
-		//			ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, samples);
-		//			mRadioController.sendCommand(command, getAddress(), true);
-		//		} else {
 		int partialCount = 0;
 		List<LedSample> partialSamples = new ArrayList<LedSample>();
 		final int blackColorValue = 6; // ColorNum.BLACK;// BLACK	= 6;
@@ -443,7 +445,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 			if (colorChanged || partialCount == kMaxLedCmdSendAtATime) {
 				logSampleSend(partialSamples);
 				ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, partialSamples);
-				mRadioController.sendCommand(command, getAddress(), true);
+				sendRadioControllerCommand(command, true);
 
 				partialCount = 0;
 				// we have to leave the old reference to partialSamples as that is floating off in a command.
@@ -466,7 +468,7 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 		if (partialCount > 0) { // send the final leftovers
 			logSampleSend(partialSamples);
 			ICommand command = new CommandControlLed(NetEndpoint.PRIMARY_ENDPOINT, channel, EffectEnum.FLASH, partialSamples);
-			mRadioController.sendCommand(command, getAddress(), true);
+			sendRadioControllerCommand(command, true);
 
 			// same as above. Wait after last partial
 			if (kDelayMillisBetweenPartialSends > 0)
@@ -495,7 +497,33 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	}
 
 	@Override
-	public byte getScannerTypeCode() {		
+	public byte getScannerTypeCode() {
 		return ScannerTypeEnum.scannerTypeToByte(ScannerTypeEnum.INVALID);
 	}
+
+	/**
+	 * These APIs used only for testing.
+	 */
+	public boolean positionHasColor(int inPosition, ColorEnum inColor) {
+		// Check all stored LED commands for CHEs
+		for (Map.Entry<NetGuid, List<LedCmd>> entry : mDeviceLedPosMap.entrySet()) {
+			for (LedCmd ledCmd : entry.getValue()) {
+				if (ledCmd.getPosition() == inPosition && ledCmd.getColor() == inColor)
+					return true;
+			}
+		}
+		return false;
+	}
+
+	public boolean positionHasAnyColor(int inPosition) {
+		// Check all stored LED commands for CHEs
+		for (Map.Entry<NetGuid, List<LedCmd>> entry : mDeviceLedPosMap.entrySet()) {
+			for (LedCmd ledCmd : entry.getValue()) {
+				if (ledCmd.getPosition() == inPosition)
+					return true;
+			}
+		}
+		return false;
+	}
+
 }

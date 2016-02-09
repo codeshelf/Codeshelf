@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,6 +100,9 @@ public class RadioController implements IRadioController {
 	private final Map<NetAddress, INetworkDevice>		mDeviceNetAddrMap			= Maps.newConcurrentMap();
 
 	private volatile boolean							mRunning					= false;
+
+	@Setter
+	private boolean										resendQueueing				= false;
 
 	// Services
 	private final RadioControllerInboundPacketService	packetHandlerService;
@@ -254,7 +258,7 @@ public class RadioController implements IRadioController {
 			LOGGER.info("Trying to set radio channel={}", inChannel);
 			mChannelSelected = true;
 			mRadioChannel = inChannel;
-			
+
 			// Remove this in v26. Just yield the WARN "Could not find device with net address: ff", then exited. Nothing broadcast here.
 			/* 
 			CommandNetMgmtSetup netSetupCmd = new CommandNetMgmtSetup(packetIOService.getNetworkId(), mRadioChannel);
@@ -1022,5 +1026,13 @@ public class RadioController implements IRadioController {
 			return device.getGuid();
 		} // else
 		return null;
+	}
+
+	/**
+	 * Unit tests generally correctly know the device is not associated to running radio controller, so the sends do not queue to packetScheduler etc.
+	 * This allows better testing.
+	 */
+	public boolean testingResendQueueing() {
+		return resendQueueing;
 	}
 }
