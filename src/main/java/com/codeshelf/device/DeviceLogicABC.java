@@ -17,6 +17,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import com.codeshelf.application.ContextLogging;
 import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
@@ -24,7 +25,6 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.INetworkDevice;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
-import com.codeshelf.util.ContextLoggingUtils;
 
 /**
  * @author jeffw
@@ -258,10 +258,10 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	// --------------------------------------------------------------------------
 	public void notifyAssociate(String inputString) {
 		try {
-			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Associate");
+			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Associate");
 			LOGGER.info(inputString);
 		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLogging.THREAD_CONTEXT_TAGS_KEY);
 		}
 	}
 }

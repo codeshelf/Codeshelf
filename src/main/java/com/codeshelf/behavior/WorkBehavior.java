@@ -34,6 +34,7 @@ import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.application.ContextLogging;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.OrderLocationFeedbackMessage;
 import com.codeshelf.edi.EdiExportService;
@@ -82,7 +83,6 @@ import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.util.CompareNullChecker;
-import com.codeshelf.util.ContextLoggingUtils;
 import com.codeshelf.util.UomNormalizer;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.validation.ErrorCode;
@@ -2169,13 +2169,13 @@ public class WorkBehavior implements IApiBehavior {
 	 */
 	private void logInContext(String tag, String msg, boolean warnNeeded) {
 		try {
-			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY, tag);
+			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, tag);
 			if (warnNeeded)
 				LOGGER.warn(msg);
 			else
 				LOGGER.info(msg);
 		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLogging.THREAD_CONTEXT_TAGS_KEY);
 		}
 	}
 

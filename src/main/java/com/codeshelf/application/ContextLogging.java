@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.NetGuid;
-import com.codeshelf.util.ContextLoggingUtils;
 
 /*
  * static class for setting various ThreadContext values for logging.
@@ -19,6 +18,13 @@ import com.codeshelf.util.ContextLoggingUtils;
 public class ContextLogging {
 	private static final Logger				LOGGER	= LoggerFactory.getLogger(ContextLogging.class);
 
+	public static final String				THREAD_CONTEXT_WORKER_KEY			= "worker";
+	public static final String				THREAD_CONTEXT_TAGS_KEY				= "tags";
+	public static final String				THREAD_CONTEXT_NETGUID_KEY			= "netguid";
+	public static final String				THREAD_CONTEXT_USER_KEY				= "user";
+	public static final String				THREAD_CONTEXT_TENANT_KEY			= "tenant";
+	public static final String				THREAD_CONTEXT_FACILITY_KEY			= "facility";
+	
 	private ContextLogging() {
 	}
 
@@ -29,15 +35,15 @@ public class ContextLogging {
 	}
 
 	static public void setNetGuid(String guidStr) {
-		ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_NETGUID_KEY, guidStr);
+		ThreadContext.put(THREAD_CONTEXT_NETGUID_KEY, guidStr);
 	}
 
 	static public void clearNetGuid() {
-		ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_NETGUID_KEY);
+		ThreadContext.remove(THREAD_CONTEXT_NETGUID_KEY);
 	}
 
 	public static String getNetGuid() {
-		return ThreadContext.get(ContextLoggingUtils.THREAD_CONTEXT_NETGUID_KEY);
+		return ThreadContext.get(THREAD_CONTEXT_NETGUID_KEY);
 	}
 
 	/**
@@ -73,5 +79,14 @@ public class ContextLogging {
 		else
 			setNetGuid(guidStr);
 	}
-
+	
+	static public void setTenantAndFacility(String tenantName, String facilityDomainId){
+		ThreadContext.put(THREAD_CONTEXT_TENANT_KEY, tenantName);
+		ThreadContext.put(THREAD_CONTEXT_FACILITY_KEY, facilityDomainId);
+	}
+	
+	static public void clearTenantAndFacility(){
+		ThreadContext.remove(THREAD_CONTEXT_TENANT_KEY);
+		ThreadContext.remove(THREAD_CONTEXT_FACILITY_KEY);		
+	}
 }

@@ -327,10 +327,12 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 		if (device != null) {
 			ContextLogging.setNetGuid(device.getGuid());
 		}
+		ContextLogging.setTenantAndFacility(deviceManager.getTenantName(), deviceManager.getFacilityDomainId());
 	}
 
 	private void clearDeviceContext() {
 		ContextLogging.clearNetGuid();
+		ContextLogging.clearTenantAndFacility();
 	}
 	
 	private void updateProperty(PropertyChangeMessage message){

@@ -36,8 +36,8 @@ import org.apache.shiro.web.mgt.WebSecurityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.application.ContextLogging;
 import com.codeshelf.manager.Tenant;
-import com.codeshelf.util.ContextLoggingUtils;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 
@@ -126,12 +126,12 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager impleme
 
 	public static UserContext getCurrentUserContext() {
 		UserContext user = null;
-		Object uObj = ThreadContext.get(ContextLoggingUtils.THREAD_CONTEXT_USER_KEY);
+		Object uObj = ThreadContext.get(ContextLogging.THREAD_CONTEXT_USER_KEY);
 		if(uObj != null) {
 			if(uObj instanceof UserContext) {
 				user = (UserContext) uObj;
 			} else {
-				LOGGER.error("Value {} on ThreadContext was not a UserContext but a {}",ContextLoggingUtils.THREAD_CONTEXT_USER_KEY,
+				LOGGER.error("Value {} on ThreadContext was not a UserContext but a {}",ContextLogging.THREAD_CONTEXT_USER_KEY,
 					uObj.getClass().getCanonicalName());
 			}
 		}
@@ -140,12 +140,12 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager impleme
 
 	public static Tenant getCurrentTenant() {
 		Tenant tenant = null;
-		Object uObj = ThreadContext.get(ContextLoggingUtils.THREAD_CONTEXT_TENANT_KEY);
+		Object uObj = ThreadContext.get(ContextLogging.THREAD_CONTEXT_TENANT_KEY);
 		if(uObj != null) {
 			if(uObj instanceof Tenant) {
 				tenant = (Tenant) uObj;
 			} else {
-				LOGGER.error("Value {} on ThreadContext was not a Tenant but a {}",ContextLoggingUtils.THREAD_CONTEXT_TENANT_KEY,
+				LOGGER.error("Value {} on ThreadContext was not a Tenant but a {}",ContextLogging.THREAD_CONTEXT_TENANT_KEY,
 					uObj.getClass().getCanonicalName());
 			}
 		}
@@ -170,10 +170,10 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager impleme
 		if(oldTenant != null && !oldTenant.equals(tenant)) {
 			LOGGER.error("setContext {} called but there was already a current tenant {}",tenant,oldTenant.getId());
 		}
-		ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_USER_KEY,user);
-		ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_TENANT_KEY,tenant);
+		ThreadContext.put(ContextLogging.THREAD_CONTEXT_USER_KEY,user);
+		ThreadContext.put(ContextLogging.THREAD_CONTEXT_TENANT_KEY,tenant);
 		if(user != null) {
-			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_USER_KEY,user.getUsername());
+			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_USER_KEY,user.getUsername());
 		}
 	}
 
@@ -193,9 +193,9 @@ public class CodeshelfSecurityManager extends AuthorizingSecurityManager impleme
 	public static void removeContextIfPresent() {
 		// Remove both the User and Shiro Subject from ThreadContext if present.
 		ThreadContext.remove(ThreadContext.SUBJECT_KEY); // TODO: merge User and Subject somehow
-		ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_USER_KEY);
-		ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_TENANT_KEY);
-		org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_USER_KEY);
+		ThreadContext.remove(ContextLogging.THREAD_CONTEXT_USER_KEY);
+		ThreadContext.remove(ContextLogging.THREAD_CONTEXT_TENANT_KEY);
+		org.apache.logging.log4j.ThreadContext.remove(ContextLogging.THREAD_CONTEXT_USER_KEY);
 	}
 
 	public static boolean authorizeAnnotatedClass(Class<?> clazz) throws AuthorizationException {
