@@ -23,6 +23,7 @@ public class ContextLogging {
 	public static final String				THREAD_CONTEXT_NETGUID_KEY			= "netguid";
 	public static final String				THREAD_CONTEXT_USER_KEY				= "user";
 	public static final String				THREAD_CONTEXT_TENANT_KEY			= "tenant";
+	public static final String				THREAD_CONTEXT_TENANT_NAME_KEY		= "tenant_name";
 	public static final String				THREAD_CONTEXT_FACILITY_KEY			= "facility";
 	
 	public static final String				TAG_CHE_WORK_INSTRUCTION			= "CHE_EVENT Work_Instruction";
@@ -95,8 +96,15 @@ public class ContextLogging {
 			setNetGuid(guidStr);
 	}
 	
-	static public void setTenantAndFacility(String tenantId, String facilityId) {
-		ThreadContext.put(ContextLogging.THREAD_CONTEXT_TENANT_KEY, tenantId);
+	static public void setTenantNameAndFacilityId(String tenantName, String facilityId) {
+		ThreadContext.put(ContextLogging.THREAD_CONTEXT_TENANT_NAME_KEY, tenantName);
 		ThreadContext.put(ContextLogging.THREAD_CONTEXT_FACILITY_KEY, facilityId);
+	}
+	
+	static public void setTag(String tagId, String tagValue) {
+		if (tagValue == null || tagValue.isEmpty()) {
+			ThreadContext.remove(tagId);
+		}
+		ThreadContext.put(tagId, tagValue);
 	}
 }

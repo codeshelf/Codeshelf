@@ -87,7 +87,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 
 						deviceManager.setTenantName(loginResponse.getTenantName());
 						deviceManager.setFacilityDomainId(loginResponse.getFacilityDomainId());
-						ContextLogging.setTenantAndFacility(deviceManager.getTenantName(), deviceManager.getFacilityDomainId());
+						ContextLogging.setTenantNameAndFacilityId(deviceManager.getTenantName(), deviceManager.getFacilityDomainId());
 						
 						// DEV-582 hook up to AUTOSHRT parameter
 						deviceManager.setAutoShortValue(loginResponse.isAutoShortValue());
