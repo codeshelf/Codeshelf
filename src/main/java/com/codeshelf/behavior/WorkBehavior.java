@@ -82,6 +82,7 @@ import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.util.CompareNullChecker;
+import com.codeshelf.util.ContextLoggingUtils;
 import com.codeshelf.util.UomNormalizer;
 import com.codeshelf.validation.BatchResult;
 import com.codeshelf.validation.ErrorCode;
@@ -100,9 +101,6 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 public class WorkBehavior implements IApiBehavior {
-
-	private static final String					THREAD_CONTEXT_TAGS_KEY	= "tags";										// duplicated in CheDeviceLogic. Need a common place
-
 	private static Double						BAY_ALIGNMENT_FUDGE		= 0.25;
 
 	private static final Logger					LOGGER					= LoggerFactory.getLogger(WorkBehavior.class);
@@ -2171,13 +2169,13 @@ public class WorkBehavior implements IApiBehavior {
 	 */
 	private void logInContext(String tag, String msg, boolean warnNeeded) {
 		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, tag);
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY, tag);
 			if (warnNeeded)
 				LOGGER.warn(msg);
 			else
 				LOGGER.info(msg);
 		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY);
 		}
 	}
 

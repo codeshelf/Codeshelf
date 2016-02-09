@@ -24,6 +24,7 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.model.domain.Che.CheLightingEnum;
+import com.codeshelf.util.ContextLoggingUtils;
 import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.ws.protocol.message.NotificationMessage;
 
@@ -251,8 +252,8 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		String orderId = inWi.getContainerId(); // We really want order ID, but site controller only has this denormalized
 
 		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Work_Instruction");
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Work_Instruction");
 			// Pretty goofy code duplication, but can avoid some run time execution if loglevel would not result in this logging
 			if (needWarn)
 				LOGGER.warn("{} for order/cntr:{} item:{} location:{}",
@@ -270,8 +271,8 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 				logSubstitutionEvent(inWi, needWarn);
 			}
 		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY);
 		}
 
 		NotificationMessage message = new NotificationMessage(Che.class, getPersistentId(), getMyGuidStr(), getUserId(), inVerb);
@@ -297,23 +298,23 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 
 	protected void notifyOrderToPutWall(String orderId, String locationName) {
 		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Order_Into_Wall");
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Order_Into_Wall");
 			LOGGER.info("Put order/cntr:{} into put wall location:{}", orderId, locationName);
 		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY);
 		}
 	}
 
 	protected void notifyRemoveOrderFromChe(String orderId, Byte orderPositionOnChe) {
 		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Remove_Order_Che");
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Remove_Order_Che");
 			LOGGER.info("Removed order/cntr:{} from position:{}", orderId, orderPositionOnChe);
 		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY);
 		}
 	}
 
@@ -321,12 +322,12 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		// VERBS initially are LOGIN, LOGOUT, BEGIN, SETUP, START_PATH, COMPLETE_PATH
 
 		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Worker_Action");
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Worker_Action");
 			LOGGER.info(inVerb);
 		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY);
 		}
 
 	}
@@ -337,42 +338,42 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 			listsize = inWorkItemList.size();
 
 		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Plans_Response");
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Plans_Response");
 			LOGGER.info("{} work instructions in " + wallType + " response", listsize);
 		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY);
 		}
 	}
 
 	protected void notifyPutWallItem(String itemOrUpd, String wallname) {
 		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Plans_Request");
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Plans_Request");
 			LOGGER.info("Request plans for item:{} in put wall:{}", itemOrUpd, wallname);
 		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY);
 		}
 
 	}
 
 	protected void notifyScanInventoryUpdate(String locationStr, String itemOrGtin) {
 		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Inventory_Update");
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Inventory_Update");
 			LOGGER.info("Inventory update for item/gtin:{} to location:{}", itemOrGtin, locationStr);
 		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY);
 		}
 	}
 
 	protected void notifyButton(int buttonNum, int showingQuantity) {
 		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Button");
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Button");
 			if (showingQuantity >= 0) {
 				String forContainer = getButtonPurpose(buttonNum);
 				String reasonBadButtonPress = tellIfNotLegitimateButtonPress(buttonNum, showingQuantity);
@@ -429,8 +430,8 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 			}
 
 		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY);
 		}
 
 		/* Remove--we do not need button presses in our database.
@@ -445,12 +446,12 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 
 	protected void notifyOffCheButton(int buttonNum, int showingQuantity, String fromGuidId) {
 		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Button_Press");
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Button_Press");
 			LOGGER.info("Wall Button #{} device:{} pressed with quantity {}", buttonNum, fromGuidId, showingQuantity);
 		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY);
 		}
 	}
 
@@ -461,12 +462,12 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		}
 		int displayCount = wi.getPlanQuantity();
 		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Button_Display");
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Button_Display");
 			LOGGER.info("Button #{} device:{} will show count:{} for active job", posconIndex, controllerId, displayCount);
 		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY);
 		}
 	}
 
@@ -475,26 +476,26 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 
 		// new
 		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Scan");
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Scan");
 			LOGGER.info(theScan);
 		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY);
 		}
 	}
 
 	protected void notifyExtraInfo(String theInfo, boolean needWarn) {
 		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Information");
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Information");
 			if (needWarn)
 				LOGGER.warn(theInfo);
 			else
 				LOGGER.info(theInfo);
 		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY);
 		}
 	}
 
@@ -504,26 +505,26 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 	 */
 	protected void notifyDisplayTag(String logStr, String tagName) {
 		boolean guidChange = false;
-		String loggerNetGuid = org.apache.logging.log4j.ThreadContext.get(THREAD_CONTEXT_NETGUID_KEY);
+		String loggerNetGuid = org.apache.logging.log4j.ThreadContext.get(ContextLoggingUtils.THREAD_CONTEXT_NETGUID_KEY);
 
 		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, tagName);
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY, getUserId());
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY, tagName);
 
 			// A kludge to cover up some sloppiness of lack of logging context. And also, even without sloppiness, some cases happen
 			// somewhat independent of a transaction context
 
 			String myGuid = this.getMyGuidStr();
 			if (!myGuid.equals(loggerNetGuid)) {
-				org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_NETGUID_KEY, myGuid);
+				org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_NETGUID_KEY, myGuid);
 				guidChange = true;
 			}
 			LOGGER.info(logStr);
 		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_WORKER_KEY);
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_WORKER_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY);
 			if (guidChange)
-				org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_NETGUID_KEY, loggerNetGuid);
+				org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_NETGUID_KEY, loggerNetGuid);
 		}
 	}
 
