@@ -32,14 +32,12 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.domain.ScannerTypeEnum;
 import com.codeshelf.util.CompareNullChecker;
+import com.codeshelf.util.ContextLoggingUtils;
 
 public class AisleDeviceLogic extends DeviceLogicABC {
 
 	private static final Logger	LOGGER							= LoggerFactory.getLogger(AisleDeviceLogic.class);
 	private static int			kNumChannelsOnAislController	= 2;												// We expect 4 ultimately. Just matching what was there.
-
-	private static final String				THREAD_CONTEXT_TAGS_KEY				= "tags";
-	private static final String				THREAD_CONTEXT_NETGUID_KEY			= "netguid";						// clone from private ContextLogging variable
 
 	@Accessors(prefix = "m")
 	protected class LedCmd {
@@ -349,24 +347,24 @@ public class AisleDeviceLogic extends DeviceLogicABC {
 	 */
 	protected void notifyDisplayTag(String logStr, String tagName) {
 		boolean guidChange = false;
-		String loggerNetGuid = org.apache.logging.log4j.ThreadContext.get(THREAD_CONTEXT_NETGUID_KEY);
+		String loggerNetGuid = org.apache.logging.log4j.ThreadContext.get(ContextLoggingUtils.THREAD_CONTEXT_NETGUID_KEY);
 
 		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, tagName);
+			org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY, tagName);
 
 			// A kludge to cover up some sloppiness of lack of logging context. And also, even without sloppiness, some cases happen
 			// somewhat independent of a transaction context
 
 			String myGuid = this.getMyGuidStr();
 			if (!myGuid.equals(loggerNetGuid)) {
-				org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_NETGUID_KEY, myGuid);
+				org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_NETGUID_KEY, myGuid);
 				guidChange = true;
 			}
 			LOGGER.info(logStr);
 		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_TAGS_KEY);
 			if (guidChange)
-				org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_NETGUID_KEY, loggerNetGuid);
+				org.apache.logging.log4j.ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_NETGUID_KEY, loggerNetGuid);
 		}
 	}
 

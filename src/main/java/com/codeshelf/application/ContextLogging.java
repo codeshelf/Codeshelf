@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.util.ContextLoggingUtils;
 
 /*
  * static class for setting various ThreadContext values for logging.
@@ -17,7 +18,6 @@ import com.codeshelf.flyweight.command.NetGuid;
  */
 public class ContextLogging {
 	private static final Logger				LOGGER	= LoggerFactory.getLogger(ContextLogging.class);
-	private static final String	NETGUID_KEY	= "netguid";
 
 	private ContextLogging() {
 	}
@@ -29,15 +29,15 @@ public class ContextLogging {
 	}
 
 	static public void setNetGuid(String guidStr) {
-		ThreadContext.put(NETGUID_KEY, guidStr);
+		ThreadContext.put(ContextLoggingUtils.THREAD_CONTEXT_NETGUID_KEY, guidStr);
 	}
 
 	static public void clearNetGuid() {
-		ThreadContext.remove(NETGUID_KEY);
+		ThreadContext.remove(ContextLoggingUtils.THREAD_CONTEXT_NETGUID_KEY);
 	}
 
 	public static String getNetGuid() {
-		return ThreadContext.get(NETGUID_KEY);
+		return ThreadContext.get(ContextLoggingUtils.THREAD_CONTEXT_NETGUID_KEY);
 	}
 
 	/**
