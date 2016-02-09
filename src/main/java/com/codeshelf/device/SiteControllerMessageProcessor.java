@@ -327,12 +327,14 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 		if (device != null) {
 			ContextLogging.setNetGuid(device.getGuid());
 		}
-		ContextLogging.setTenantAndFacility(deviceManager.getTenantName(), deviceManager.getFacilityDomainId());
+		ContextLogging.setTag(ContextLogging.THREAD_CONTEXT_TENANT_KEY, deviceManager.getTenantName());
+		ContextLogging.setTag(ContextLogging.THREAD_CONTEXT_FACILITY_KEY, deviceManager.getFacilityDomainId());
 	}
 
 	private void clearDeviceContext() {
 		ContextLogging.clearNetGuid();
-		ContextLogging.clearTenantAndFacility();
+		ContextLogging.clearTag(ContextLogging.THREAD_CONTEXT_TENANT_KEY);
+		ContextLogging.clearTag(ContextLogging.THREAD_CONTEXT_FACILITY_KEY);
 	}
 	
 	private void updateProperty(PropertyChangeMessage message){

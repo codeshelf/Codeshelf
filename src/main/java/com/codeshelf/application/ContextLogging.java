@@ -80,13 +80,19 @@ public class ContextLogging {
 			setNetGuid(guidStr);
 	}
 	
-	static public void setTenantAndFacility(String tenantName, String facilityDomainId){
-		ThreadContext.put(THREAD_CONTEXT_TENANT_KEY, tenantName);
-		ThreadContext.put(THREAD_CONTEXT_FACILITY_KEY, facilityDomainId);
+	static public String getTag(String tagId) {
+		return ThreadContext.get(tagId);
 	}
 	
-	static public void clearTenantAndFacility(){
-		ThreadContext.remove(THREAD_CONTEXT_TENANT_KEY);
-		ThreadContext.remove(THREAD_CONTEXT_FACILITY_KEY);		
+	static public void clearTag(String tagId) {
+		ThreadContext.remove(tagId);
+	}
+	
+	static public void setTag(String tagId, String tagValue) {
+		if (tagValue == null || tagValue.isEmpty()){
+			ThreadContext.remove(tagId);
+		} else {
+			ThreadContext.put(tagId, tagValue);
+		}
 	}
 }
