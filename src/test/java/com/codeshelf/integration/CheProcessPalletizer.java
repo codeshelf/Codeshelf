@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.CheStateEnum;
+import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WiFactory.WiPurpose;
@@ -34,6 +35,7 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.Che.ProcessMode;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
+import com.codeshelf.sim.worker.LedSimulator;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
@@ -405,6 +407,10 @@ public class CheProcessPalletizer extends ServerTest {
 		picker2.login("Worker2");
 		picker2.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
 
+		LOGGER.info("3b. Verify no flashing on tube at the first position");
+		LedSimulator ledsim = createLedSim(ledconGuid1);
+		ledsim.assertNoLedColor(1);
+
 		LOGGER.info("2. Open pallet on first che");
 		openNewPallet("10010001", "L%Slot1111", "Slot1111");
 
@@ -415,10 +421,7 @@ public class CheProcessPalletizer extends ServerTest {
 		picker2.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
 		
 		LOGGER.info("3b. Verify the flashing color on the light tube");
-		/*
-		LedSimulator ledsim = createLedSim(ledconGuid1);
-		*/
-	
+		ledsim.assertLedColor(1, ColorEnum.GREEN);
 
 		LOGGER.info("4. Close pallet from the first che");
 		picker.scanCommand("REMOVE");

@@ -31,6 +31,7 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.sim.worker.LedSimulator;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.util.ThreadUtils;
 
@@ -545,6 +546,10 @@ public abstract class ServerTest extends HibernateTest {
 
 	protected PickSimulator createPickSim(NetGuid cheGuid) {
 		return new PickSimulator(this.getDeviceManager(), cheGuid);
+	}
+
+	protected LedSimulator createLedSim(NetGuid deviceGuid) {
+		return new LedSimulator(this.getDeviceManager(), deviceGuid);
 	}
 
 	protected void setResendQueueing(boolean inShouldReQueueAsIfAssociated) {
