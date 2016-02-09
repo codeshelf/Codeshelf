@@ -253,7 +253,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 
 		try {
 			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Work_Instruction");
+			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, ContextLogging.TAG_CHE_WORK_INSTRUCTION);
 			// Pretty goofy code duplication, but can avoid some run time execution if loglevel would not result in this logging
 			if (needWarn)
 				LOGGER.warn("{} for order/cntr:{} item:{} location:{}",
@@ -299,7 +299,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 	protected void notifyOrderToPutWall(String orderId, String locationName) {
 		try {
 			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Order_Into_Wall");
+			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, ContextLogging.TAG_CHE_ORDER_INTO_WALL);
 			LOGGER.info("Put order/cntr:{} into put wall location:{}", orderId, locationName);
 		} finally {
 			org.apache.logging.log4j.ThreadContext.remove(ContextLogging.THREAD_CONTEXT_WORKER_KEY);
@@ -310,7 +310,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 	protected void notifyRemoveOrderFromChe(String orderId, Byte orderPositionOnChe) {
 		try {
 			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Remove_Order_Che");
+			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, ContextLogging.TAG_CHE_REMOVE_ORDER_CHE);
 			LOGGER.info("Removed order/cntr:{} from position:{}", orderId, orderPositionOnChe);
 		} finally {
 			org.apache.logging.log4j.ThreadContext.remove(ContextLogging.THREAD_CONTEXT_WORKER_KEY);
@@ -323,7 +323,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 
 		try {
 			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Worker_Action");
+			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, ContextLogging.TAG_CHE_WORKER_ACTION);
 			LOGGER.info(inVerb);
 		} finally {
 			org.apache.logging.log4j.ThreadContext.remove(ContextLogging.THREAD_CONTEXT_WORKER_KEY);
@@ -339,7 +339,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 
 		try {
 			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Plans_Response");
+			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, ContextLogging.TAG_CHE_WALL_PLANS_RESPONSE);
 			LOGGER.info("{} work instructions in " + wallType + " response", listsize);
 		} finally {
 			org.apache.logging.log4j.ThreadContext.remove(ContextLogging.THREAD_CONTEXT_WORKER_KEY);
@@ -350,7 +350,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 	protected void notifyPutWallItem(String itemOrUpd, String wallname) {
 		try {
 			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Plans_Request");
+			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, ContextLogging.TAG_CHE_WALL_PLANS_REQUEST);
 			LOGGER.info("Request plans for item:{} in put wall:{}", itemOrUpd, wallname);
 		} finally {
 			org.apache.logging.log4j.ThreadContext.remove(ContextLogging.THREAD_CONTEXT_WORKER_KEY);
@@ -362,7 +362,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 	protected void notifyScanInventoryUpdate(String locationStr, String itemOrGtin) {
 		try {
 			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Inventory_Update");
+			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, ContextLogging.TAG_CHE_INVENTORY_UPDATE);
 			LOGGER.info("Inventory update for item/gtin:{} to location:{}", itemOrGtin, locationStr);
 		} finally {
 			org.apache.logging.log4j.ThreadContext.remove(ContextLogging.THREAD_CONTEXT_WORKER_KEY);
@@ -373,7 +373,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 	protected void notifyButton(int buttonNum, int showingQuantity) {
 		try {
 			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Button");
+			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, ContextLogging.TAG_CHE_BUTTON);
 			if (showingQuantity >= 0) {
 				String forContainer = getButtonPurpose(buttonNum);
 				String reasonBadButtonPress = tellIfNotLegitimateButtonPress(buttonNum, showingQuantity);
@@ -447,7 +447,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 	protected void notifyOffCheButton(int buttonNum, int showingQuantity, String fromGuidId) {
 		try {
 			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Button_Press");
+			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, ContextLogging.TAG_CHE_WALL_BUTTON_PRESS);
 			LOGGER.info("Wall Button #{} device:{} pressed with quantity {}", buttonNum, fromGuidId, showingQuantity);
 		} finally {
 			org.apache.logging.log4j.ThreadContext.remove(ContextLogging.THREAD_CONTEXT_WORKER_KEY);
@@ -463,7 +463,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		int displayCount = wi.getPlanQuantity();
 		try {
 			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Wall_Button_Display");
+			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, ContextLogging.TAG_CHE_WALL_BUTTON_DISPLAY);
 			LOGGER.info("Button #{} device:{} will show count:{} for active job", posconIndex, controllerId, displayCount);
 		} finally {
 			org.apache.logging.log4j.ThreadContext.remove(ContextLogging.THREAD_CONTEXT_WORKER_KEY);
@@ -477,7 +477,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 		// new
 		try {
 			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Scan");
+			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, ContextLogging.TAG_CHE_SCAN);
 			LOGGER.info(theScan);
 		} finally {
 			org.apache.logging.log4j.ThreadContext.remove(ContextLogging.THREAD_CONTEXT_WORKER_KEY);
@@ -488,7 +488,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 	protected void notifyExtraInfo(String theInfo, boolean needWarn) {
 		try {
 			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_WORKER_KEY, getUserId());
-			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Information");
+			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, ContextLogging.TAG_CHE_INFORMATION);
 			if (needWarn)
 				LOGGER.warn(theInfo);
 			else

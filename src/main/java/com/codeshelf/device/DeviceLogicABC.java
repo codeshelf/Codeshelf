@@ -258,7 +258,7 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	// --------------------------------------------------------------------------
 	public void notifyAssociate(String inputString) {
 		try {
-			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Associate");
+			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, ContextLogging.TAG_CHE_ASSOCIATE);
 			LOGGER.info(inputString);
 		} finally {
 			org.apache.logging.log4j.ThreadContext.remove(ContextLogging.THREAD_CONTEXT_TAGS_KEY);

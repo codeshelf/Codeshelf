@@ -25,6 +25,21 @@ public class ContextLogging {
 	public static final String				THREAD_CONTEXT_TENANT_KEY			= "tenant";
 	public static final String				THREAD_CONTEXT_FACILITY_KEY			= "facility";
 	
+	public static final String				TAG_CHE_WORK_INSTRUCTION			= "CHE_EVENT Work_Instruction";
+	public static final String				TAG_CHE_ORDER_INTO_WALL				= "CHE_EVENT Order_Into_Wall";
+	public static final String				TAG_CHE_REMOVE_ORDER_CHE			= "CHE_EVENT Remove_Order_Che";
+	public static final String				TAG_CHE_WORKER_ACTION				= "CHE_EVENT Worker Action";
+	public static final String				TAG_CHE_WALL_PLANS_RESPONSE			= "CHE_EVENT Wall_Plans_Response";
+	public static final String				TAG_CHE_WALL_PLANS_REQUEST			= "CHE_EVENT Wall_Plans_Request";
+	public static final String				TAG_CHE_INVENTORY_UPDATE			= "CHE_EVENT Inventory_Update";
+	public static final String				TAG_CHE_BUTTON						= "CHE_EVENT Button";
+	public static final String				TAG_CHE_WALL_BUTTON_PRESS			= "CHE_EVENT Wall_Button_Press";
+	public static final String				TAG_CHE_WALL_BUTTON_DISPLAY			= "CHE_EVENT Wall_Button_Display";
+	public static final String				TAG_CHE_SCAN						= "CHE_EVENT Scan";
+	public static final String				TAG_CHE_INFORMATION					= "CHE_EVENT Information";
+	public static final String				TAG_CHE_ASSOCIATE					= "CHE_EVENT Associate";
+	
+	
 	private ContextLogging() {
 	}
 
@@ -80,19 +95,8 @@ public class ContextLogging {
 			setNetGuid(guidStr);
 	}
 	
-	static public String getTag(String tagId) {
-		return ThreadContext.get(tagId);
-	}
-	
-	static public void clearTag(String tagId) {
-		ThreadContext.remove(tagId);
-	}
-	
-	static public void setTag(String tagId, String tagValue) {
-		if (tagValue == null || tagValue.isEmpty()){
-			ThreadContext.remove(tagId);
-		} else {
-			ThreadContext.put(tagId, tagValue);
-		}
+	static public void setTenantAndFacility(String tenantId, String facilityId) {
+		ThreadContext.put(ContextLogging.THREAD_CONTEXT_TENANT_KEY, tenantId);
+		ThreadContext.put(ContextLogging.THREAD_CONTEXT_FACILITY_KEY, facilityId);
 	}
 }

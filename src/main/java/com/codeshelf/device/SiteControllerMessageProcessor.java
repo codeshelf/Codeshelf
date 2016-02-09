@@ -87,6 +87,8 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 
 						deviceManager.setTenantName(loginResponse.getTenantName());
 						deviceManager.setFacilityDomainId(loginResponse.getFacilityDomainId());
+						ContextLogging.setTenantAndFacility(deviceManager.getTenantName(), deviceManager.getFacilityDomainId());
+						
 						// DEV-582 hook up to AUTOSHRT parameter
 						deviceManager.setAutoShortValue(loginResponse.isAutoShortValue());
 						deviceManager.setPickInfoValue(loginResponse.getPickInfoValue());
@@ -327,14 +329,10 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 		if (device != null) {
 			ContextLogging.setNetGuid(device.getGuid());
 		}
-		ContextLogging.setTag(ContextLogging.THREAD_CONTEXT_TENANT_KEY, deviceManager.getTenantName());
-		ContextLogging.setTag(ContextLogging.THREAD_CONTEXT_FACILITY_KEY, deviceManager.getFacilityDomainId());
 	}
 
 	private void clearDeviceContext() {
 		ContextLogging.clearNetGuid();
-		ContextLogging.clearTag(ContextLogging.THREAD_CONTEXT_TENANT_KEY);
-		ContextLogging.clearTag(ContextLogging.THREAD_CONTEXT_FACILITY_KEY);
 	}
 	
 	private void updateProperty(PropertyChangeMessage message){

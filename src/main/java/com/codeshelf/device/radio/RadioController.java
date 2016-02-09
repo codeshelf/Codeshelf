@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.application.ContextLogging;
-import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.device.DeviceRestartCauseEnum;
 import com.codeshelf.flyweight.bitfields.NBitInteger;
 import com.codeshelf.flyweight.bitfields.OutOfRangeException;
@@ -799,16 +798,9 @@ public class RadioController implements IRadioController {
 		INetworkDevice device = this.mDeviceNetAddrMap.get(packetSourceAddress);
 		// null device is a possibility here. Therefore, somewhat unusual handling of rememberedGuid
 		String rememberedGuid = ContextLogging.getNetGuid();
-		String remeberedTenantId = ContextLogging.getTag(ContextLogging.THREAD_CONTEXT_TENANT_KEY);
-		String remeberedFacilityDomainId = ContextLogging.getTag(ContextLogging.THREAD_CONTEXT_FACILITY_KEY);
 		if (device != null) {
 			rememberedGuid = ContextLogging.rememberThenSetNetGuid(device.getGuid());
 			device.setLastPacketReceivedTime(System.currentTimeMillis());
-			CsDeviceManager deviceManager = device.getDeviceManager();
-			if (deviceManager != null) {
-				ContextLogging.setTag(ContextLogging.THREAD_CONTEXT_TENANT_KEY, deviceManager.getTenantName());
-				ContextLogging.setTag(ContextLogging.THREAD_CONTEXT_FACILITY_KEY, deviceManager.getFacilityDomainId());
-			}
 		}
 
 		try {
@@ -839,8 +831,6 @@ public class RadioController implements IRadioController {
 			//			}
 		} finally {
 			ContextLogging.restoreNetGuid(rememberedGuid);
-			ContextLogging.setTag(ContextLogging.THREAD_CONTEXT_TENANT_KEY, remeberedTenantId);
-			ContextLogging.setTag(ContextLogging.THREAD_CONTEXT_FACILITY_KEY, remeberedFacilityDomainId);
 		}
 
 	}
