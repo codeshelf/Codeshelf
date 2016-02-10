@@ -1817,4 +1817,90 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals((Integer)0, wi2.getActualQuantity());
 		commitTransaction();
 	}
+	
+	/**
+	 * DEV-1473 - corrupted scans sometimes look like tape scans (EX: "%KIPSCAN")
+	 */
+	@Test
+	public void testBadTapeScan1() throws IOException{
+		LOGGER.info("1: Set up facility and a WorkSequence order.");
+		Facility facility = setUpSimpleNoSlotFacility();
+		beginTransaction();
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "UPC");
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
+		commitTransaction();
+
+		beginTransaction();
+		facility = facility.reload();
+		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n11111,11111,Item 1,Test Item 1,1,each,locationA,1";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+		
+		startSiteController();
+		
+		LOGGER.info("2: Load order on CHE.");
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+		picker.setupContainer("11111", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		verifyCheDisplay(picker, "1 order", "1 job", "", "START (or SETUP)");
+		
+		LOGGER.info("3: Scan bad tape id. Assert that nothing happens.");
+		picker.scanSomething("%KIPSCAN");
+		picker.waitInSameState(CheStateEnum.SETUP_SUMMARY, 1000);
+		
+		LOGGER.info("4: Scan good tape id. Assert that pick begins.");
+		picker.scanSomething("%000000010100");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		verifyCheDisplay(picker, "locationA", "Item 1", "QTY 1", "SCAN UPC NEEDED");
+	}
+	
+	/**
+	 * DEV-1473 - corrupted scans sometimes look like tape scans (EX: "%KIPSCAN")
+	 */
+	@Test
+	public void testBadTapeScan2() throws IOException{
+		LOGGER.info("1: Set up facility and a WorkSequence order.");
+		Facility facility = setUpSimpleNoSlotFacility();
+		beginTransaction();
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "UPC");
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
+		commitTransaction();
+
+		beginTransaction();
+		facility = facility.reload();
+		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n11111,11111,Item 1,Test Item 1,1,each,locationA,1";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+		
+		startSiteController();
+		
+		LOGGER.info("2: Load order on CHE.");
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+		picker.setupContainer("11111", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		LOGGER.info("3: Scan good tape id. Assert that che correctly goes to recompute work.");
+		picker.scanSomething("%000000010100");
+		picker.waitForCheState(CheStateEnum.GET_WORK, 4000);
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		verifyCheDisplay(picker, "locationA", "Item 1", "QTY 1", "SCAN UPC NEEDED");
+		
+		LOGGER.info("4: Scan bad tape id. Assert that che treats it like a bad scan.");
+		picker.scanSomething("%KIPSCAN");
+		picker.waitInSameState(CheStateEnum.SCAN_SOMETHING, 1000);
+		verifyCheDisplay(picker, "locationA", "Item 1", "QTY 1", "SCAN Item 1");
+		
+		LOGGER.info("5: Return to SETUP_SUMMARY. Assert that the bad location scan was not saved over the good one.");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		verifyCheDisplay(picker, "1 order  %000000010100", "1 job", "", "START (or SETUP)");
+	}
 }

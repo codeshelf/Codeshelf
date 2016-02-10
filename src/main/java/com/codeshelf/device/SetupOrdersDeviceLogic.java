@@ -30,6 +30,7 @@ import com.codeshelf.flyweight.command.CommandControlPosconBroadcast;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
+import com.codeshelf.model.CodeshelfTape;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
@@ -1805,12 +1806,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr) || TAPE_PREFIX.equals(inScanPrefixStr)) {
 			if (TAPE_PREFIX.equals(inScanPrefixStr)) {
 				inScanStr = inScanPrefixStr + inScanStr;
+				CodeshelfTape tape = CodeshelfTape.scan(inScanStr);
+				if (tape == null) {
+					LOGGER.info("Tried to parse " + inScanStr + " as a Codeshelf Tape scan, but failed. Ignoring it.");
+					return;
+				}
 			}
+			
 			// DEV-836, 837. From what states shall we allow this?
 			ledControllerClearLeds();
 			mLocationId = inScanStr; // let's remember where user scanned.
 
-			// TODO Codeshelf tape
 			// Careful. Later, codeshelf tape scan. Need to get the interpretted position back from server.
 			LOGGER.info("processLocationScan {}. About to call requestWorkAndSetGetWorkState", inScanStr);
 			requestWorkAndSetGetWorkState(inScanStr, false);
