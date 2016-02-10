@@ -72,8 +72,6 @@ import com.google.common.base.Strings;
 public class CheProcessTestPick extends ServerTest {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessTestPick.class);
-
-	
 	
 	@Override
 	public void doAfter() {
@@ -1887,9 +1885,10 @@ public class CheProcessTestPick extends ServerTest {
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 		
-		LOGGER.info("3: Scan good tape id. Assert that che correctly goes to recompute work.");
+		LOGGER.info("3: Scan good tape id. Assert that che correctly processes is correctly.");
 		picker.scanSomething("%000000010100");
-		picker.waitForCheState(CheStateEnum.GET_WORK, 4000);
+		//Unfortunately, time spent in GET_WORK state can be too short to test here. 
+		//Use the fact that the CHE is not complaining about bad item scan as verification that the scan was processed correctly
 		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
 		verifyCheDisplay(picker, "locationA", "Item 1", "QTY 1", "SCAN UPC NEEDED");
 		

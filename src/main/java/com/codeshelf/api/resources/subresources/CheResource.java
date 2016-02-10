@@ -20,7 +20,6 @@ import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.CSVParam;
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.resources.EventsResource;
-import com.codeshelf.application.ServerCodeshelfApplication;
 import com.codeshelf.behavior.NotificationBehavior;
 import com.codeshelf.behavior.NotificationBehavior.HistogramParams;
 import com.codeshelf.behavior.NotificationBehavior.HistogramResult;
