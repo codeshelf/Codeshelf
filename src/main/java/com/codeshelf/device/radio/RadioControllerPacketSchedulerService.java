@@ -448,7 +448,7 @@ public class RadioControllerPacketSchedulerService {
 	 *		Packet to send
 	 */
 	private void sendPacket(IPacket inPacket) {
-		//LOGGER.info("Sending packet {}", inPacket.toString());
+		LOGGER.info("Sending packet {}", inPacket.toString());
 		try {
 			packetIOService.handleOutboundPacket(inPacket);
 		} finally {

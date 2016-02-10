@@ -8,6 +8,7 @@ package com.codeshelf.device.radio;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -19,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.application.ContextLogging;
 import com.codeshelf.device.DeviceRestartCauseEnum;
+import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.bitfields.NBitInteger;
 import com.codeshelf.flyweight.bitfields.OutOfRangeException;
 import com.codeshelf.flyweight.command.CommandAssocABC;
@@ -29,6 +31,10 @@ import com.codeshelf.flyweight.command.CommandAssocResp;
 import com.codeshelf.flyweight.command.CommandControlABC;
 import com.codeshelf.flyweight.command.CommandControlAck;
 import com.codeshelf.flyweight.command.CommandControlButton;
+import com.codeshelf.flyweight.command.CommandControlPosconDisplayAddress;
+import com.codeshelf.flyweight.command.CommandControlPosconLedBroadcast;
+import com.codeshelf.flyweight.command.CommandControlPosconSetupStart;
+import com.codeshelf.flyweight.command.CommandControlPosconSetupStop;
 import com.codeshelf.flyweight.command.CommandControlScan;
 import com.codeshelf.flyweight.command.CommandNetMgmtABC;
 import com.codeshelf.flyweight.command.CommandNetMgmtIntfTest;
@@ -36,6 +42,7 @@ import com.codeshelf.flyweight.command.CommandNetMgmtSetup;
 import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
+import com.codeshelf.flyweight.command.NetCommandId;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.command.NetworkId;
@@ -729,7 +736,19 @@ public class RadioController implements IRadioController {
 					LOGGER.info("Device associated={}; Req={}", foundDevice.getGuid().getHexStringNoPrefix(), inCommand);
 					ackCmd = new CommandAssocAck(uid, new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, status));
 					sendCommandFrontQueue(ackCmd, inSrcAddr, false);
-					networkDeviceBecameActive(foundDevice, restartEnum);
+					//networkDeviceBecameActive(foundDevice, restartEnum);
+					
+					//CommandControlPosconSetupStart dispAddrCmd = new CommandControlPosconSetupStart(NetEndpoint.PRIMARY_ENDPOINT);
+					//CommandControlPosconDisplayAddress dispAddrCmd = new CommandControlPosconDisplayAddress(NetEndpoint.PRIMARY_ENDPOINT, PosControllerInstr.POSITION_ALL);
+					//sendCommand(dispAddrCmd, inSrcAddr, true);
+					
+					//CommandControlPosconSetupStop stopcmd = new CommandControlPosconSetupStop(NetEndpoint.PRIMARY_ENDPOINT, PosControllerInstr.POSITION_ALL);
+					//sendCommand(stopcmd, inSrcAddr, true);
+					BitSet bitset = new BitSet();
+					bitset.set(9);
+					bitset.set(0);
+					CommandControlPosconLedBroadcast cmd = new CommandControlPosconLedBroadcast(NetEndpoint.PRIMARY_ENDPOINT, (byte)0, (byte)20, (byte)0, (byte)0, bitset);
+					sendCommand(cmd, inSrcAddr, true);
 				}
 			} finally {
 				// ContextLogging.restoreNetGuid(rememberedGuid);

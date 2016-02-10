@@ -456,7 +456,7 @@ public final class Packet implements IPacket {
 	 * Get the maximum packet payload for packet
 	 */
 	public byte getMaxPacketBytes() {
-		return MAX_PACKET_BYTES;
+		return MAX_PACKET_BYTES - PACKET_HEADER_BYTES;
 	}
 	
 	// --------------------------------------------------------------------------

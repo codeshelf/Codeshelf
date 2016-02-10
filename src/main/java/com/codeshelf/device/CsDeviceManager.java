@@ -26,7 +26,7 @@ import com.codeshelf.behavior.PalletizerBehavior.PalletizerInfo;
 import com.codeshelf.device.PosControllerInstr.PosConInstrGroupSerializer;
 import com.codeshelf.flyweight.bitfields.OutOfRangeException;
 import com.codeshelf.flyweight.command.CommandControlPosconBroadcast;
-import com.codeshelf.flyweight.command.CommandControlPosconSetup;
+import com.codeshelf.flyweight.command.CommandControlPosconSetupStart;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.command.NetworkId;
@@ -1255,7 +1255,7 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	 * Tell device to put all PosCons in the Setup mode
 	 */
 	public void putPosConsInSetupMode(PosConDeviceABC device) {
-		CommandControlPosconSetup command = new CommandControlPosconSetup(NetEndpoint.PRIMARY_ENDPOINT);
+		CommandControlPosconSetupStart command = new CommandControlPosconSetupStart(NetEndpoint.PRIMARY_ENDPOINT);
 		radioController.sendCommand(command, device.getAddress(), true);
 	}
 
