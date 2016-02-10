@@ -1,5 +1,6 @@
 package com.codeshelf.api.resources.subresources;
 
+import javax.websocket.server.PathParam;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -12,11 +13,14 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.CSVParam;
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.resources.EventsResource;
+import com.codeshelf.application.ServerCodeshelfApplication;
 import com.codeshelf.behavior.NotificationBehavior;
 import com.codeshelf.behavior.NotificationBehavior.HistogramParams;
 import com.codeshelf.behavior.NotificationBehavior.HistogramResult;
@@ -29,6 +33,9 @@ import com.sun.jersey.api.core.ResourceContext;
 import lombok.Setter;
 
 public class CheResource {
+
+	private static final Logger		LOGGER	= LoggerFactory.getLogger(CheResource.class);
+
 	@Context
 	private ResourceContext								resourceContext;
 
@@ -90,4 +97,13 @@ public class CheResource {
 			return errors.processException(e);
 		} 
 	}
+	
+	@POST
+	@Path("/commands/{commandName}")
+	@RequiresPermissions("che:commands")
+	@Produces(MediaType.APPLICATION_JSON)
+	public void cheCommand(@PathParam("commandName") String commandName) throws Exception {
+		LOGGER.info("command {} for che {}", commandName, this.che);
+	}
+	
 }
