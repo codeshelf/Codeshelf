@@ -39,9 +39,9 @@ public class ThreadLoggingTest {
 		ContextLogging.setTag(ContextLogging.THREAD_CONTEXT_NETGUID_KEY, "Main Thread");
 		LOGGER.info("Main Thread Start");
 		new LogThread("Thread 1").start();
-		ThreadUtils.sleep(600);
+		ThreadUtils.sleep(300);
 		new LogThread("Thread 2").start();
-		ThreadUtils.sleep(600);
+		ThreadUtils.sleep(300);
 		LOGGER.info("Main Thread Done");
 	}
 
@@ -55,7 +55,7 @@ public class ThreadLoggingTest {
 		ContextLogging.setTag(ContextLogging.THREAD_CONTEXT_NETGUID_KEY, "Main Thread");
 		LOGGER.info("Main Thread Start");
 		new LogRecursiveThread().start();
-		ThreadUtils.sleep(1000);
+		ThreadUtils.sleep(300);
 		LOGGER.info("Main Thread Done");
 
 	}
@@ -84,7 +84,7 @@ public class ThreadLoggingTest {
 			ContextLogging.setTag(ContextLogging.THREAD_CONTEXT_NETGUID_KEY, threadName);
 			LOGGER.info(threadName + " start");
 			new LogThread("Thread B").start();
-			ThreadUtils.sleep(200);
+			ThreadUtils.sleep(100);
 			LOGGER.info(threadName + " done");
 			ContextLogging.setTag(ContextLogging.THREAD_CONTEXT_NETGUID_KEY, null);
 		}
