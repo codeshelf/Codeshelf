@@ -172,15 +172,15 @@ public class OrdersResourceTest extends ServerTest {
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		picker.pickItemAuto();
-		picker.waitInSameState(CheStateEnum.DO_PICK, 500);
+		picker.waitInSameState(CheStateEnum.DO_PICK, 700);
 		picker.pickItemAuto();
-		picker.waitInSameState(CheStateEnum.DO_PICK, 500);
+		picker.waitInSameState(CheStateEnum.DO_PICK, 700);
 		picker.pickItemAuto();
-		picker.waitInSameState(CheStateEnum.DO_PICK, 500);
+		picker.waitInSameState(CheStateEnum.DO_PICK, 700);
 		picker.pickItemAuto();
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		
-		waitForOrderStatus(facility, "123", OrderStatusEnum.COMPLETE, true, 4000);
+		waitForOrderStatus(facility, "123", OrderStatusEnum.COMPLETE, true, 5000);
 
 		LOGGER.info("3: Import again. This looks like different file with exact same content. Should act the same as if the same file");
 		// Notice that it does not overwrite the completed order.
