@@ -19,6 +19,8 @@ import org.hibernate.SQLQuery;
 import org.hibernate.Session;
 import org.hibernate.criterion.DetachedCriteria;
 import org.hibernate.criterion.Order;
+import org.hibernate.criterion.Criterion;
+import org.hibernate.criterion.ProjectionList;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
 import org.hibernate.criterion.Restrictions;
@@ -66,27 +68,27 @@ import lombok.Setter;
 import lombok.ToString;
 
 public class NotificationBehavior implements IApiBehavior{
-	
+
 	public static class HistogramParams {
 		@Getter
 		private Interval createdInterval;
-		
+
 		@Getter
 		private Period bin;
-		
+
 		public HistogramParams(MultivaluedMap<String, String> multivaluedMap) {
 			createdInterval = new IntervalParam(multivaluedMap.getFirst("created")).getValue();
-			
+
 			String binPeriod = multivaluedMap.getFirst("createdBin");
-			bin = Period.parse(MoreObjects.firstNonNull(binPeriod, "PT5M"));  
+			bin = Period.parse(MoreObjects.firstNonNull(binPeriod, "PT5M"));
 		}
-		
+
 		public HistogramParams(Interval createdInterval, Period bin) {
 			this.createdInterval = createdInterval;
 			this.bin = bin;
 		}
 	}
-	
+
 	public static class HistogramResult {
 		@Getter
 		private long total;
@@ -98,7 +100,7 @@ public class NotificationBehavior implements IApiBehavior{
 		private String binInterval; //ISO Period
 		@Getter
 		private List<BinValue> bins;
-		
+
 		public HistogramResult(Interval window, Period bin, List<BinValue> values) {
 			this.startTime = window.getStart().toDate();
 			this.endTime = window.getEnd().toDate();
@@ -116,42 +118,42 @@ public class NotificationBehavior implements IApiBehavior{
 		}
 
 	}
-	
-	
+
+
 	private static class WorkerEventHistogram {
 		private static class ShortWorker {
 			@Getter
 			private String domainId;
 			@Getter
 			private String name;
-			
+
 			public ShortWorker(Worker worker) {
 				super();
 				this.domainId = worker.getDomainId();
 				this.name = worker.getWorkerNameUI();
 			}
 		}
-		
+
 		@Getter
 		ShortWorker worker;
-		
+
 		@Getter
 		HistogramResult events;
-		
+
 		public WorkerEventHistogram(Worker worker, HistogramResult histogramResult) {
 			this.worker = new ShortWorker(worker);
 			this.events = histogramResult;
 		}
 	}
-	
+
 	public static class BinValue {
 
 		@Getter
 		private Date start;
-		
+
 		@JsonIgnore
 		private Period interval;
-		
+
 		@Getter
 		private BigInteger value;
 
@@ -169,20 +171,20 @@ public class NotificationBehavior implements IApiBehavior{
 
 
 	private static final Logger			LOGGER				= LoggerFactory.getLogger(NotificationBehavior.class);
-	
+
 	private static final EnumSet<WorkerEvent.EventType>	SAVE_ONLY	= EnumSet.of(EventType.SKIP_ITEM_SCAN,
 																		EventType.SHORT,
 																		EventType.COMPLETE,
 																		EventType.DETAIL_WI_MISMATCHED,
 																		EventType.LOW,
 																		EventType.SUBSTITUTION);
-	
+
 	private final WorkerHourlyMetricBehavior	workerHourlyMetricBehavior = new WorkerHourlyMetricBehavior();
-	
+
 	@Inject
 	public NotificationBehavior() {
 	}
-	
+
 	public WorkerEvent saveEvent(WorkerEvent event) {
 		WorkerEvent.staticGetDao().store(event);
 		return event;
@@ -202,35 +204,27 @@ public class NotificationBehavior implements IApiBehavior{
 		if (!SAVE_ONLY.contains(type)) {
 			return;
 		}
-	
+
 		LOGGER.info("Saving WorkerEvent {} from {} for {}", type, wi.getAssignedChe(), wi.getPickerId());
 		WorkerEvent event = new WorkerEvent();
 		Che device = wi.getAssignedChe();
 		event.setDeviceGuid(device.getDeviceGuidStr());
 		event.setParent(device.getFacility());
 		event.setDevicePersistentId(device.getPersistentId().toString());
-		
-		event.setPurpose(wi.getPurpose().name());
-		event.setCreated(wi.getCompleted());
 		event.setEventType(type);
-		event.setWorkerId(wi.getPickerId());
+
 		event.setWorkInstruction(wi);
-		event.setLocation(wi.getPickInstruction());
-		OrderDetail orderDetail = wi.getOrderDetail();
-		if (orderDetail != null) {
-			event.setOrderDetailId(orderDetail.getPersistentId());
-		}
 		event.generateDomainId();
 		WorkerEvent existingEventWithSameDomain = WorkerEvent.staticGetDao().findByDomainId(device.getFacility(), event.getDomainId());
 		if (existingEventWithSameDomain == null){
 			WorkerEvent.staticGetDao().store(event);
 			//Save Complete or Short event into WorkerHourlyMetric
-			workerHourlyMetricBehavior.recordEvent(wi.getFacility(), wi.getPickerId(), type);			
+			workerHourlyMetricBehavior.recordEvent(wi.getFacility(), wi.getPickerId(), type);
 		} else {
 			LOGGER.warn("Event " + event.getDomainId() + " already exists. Not creating another one.");
 		}
 	}
-	
+
 	public void saveEvent(NotificationMessage message) {
 		if (!SAVE_ONLY.contains(message.getEventType())) {
 			return;
@@ -254,11 +248,7 @@ public class NotificationBehavior implements IApiBehavior{
 			event.setDeviceGuid(new NetGuid(message.getNetGuidStr()).toString());
 			event.setParent(device.getFacility());
 			event.setDevicePersistentId(device.getPersistentId().toString());
-			
-			event.setCreated(new Timestamp(message.getTimestamp()));
-			event.setEventType(message.getEventType());
-			event.setWorkerId(message.getWorkerId());
-			
+
 			UUID workInstructionId = message.getWorkInstructionId();
 			if (workInstructionId != null) {
 				WorkInstruction wi = WorkInstruction.staticGetDao().findByPersistentId(workInstructionId);
@@ -269,13 +259,12 @@ public class NotificationBehavior implements IApiBehavior{
 					// would get NPE just below in wi.getOrderDetail();
 				}
 				event.setWorkInstruction(wi);
-				event.setLocation(wi.getPickInstruction());
-				OrderDetail orderDetail = wi.getOrderDetail();
-				if (orderDetail != null) {
-					event.setOrderDetailId(orderDetail.getPersistentId());
-				}
 			}
-			
+			//created time is based on the message
+			event.setCreated(new Timestamp(message.getTimestamp()));
+			event.setEventType(message.getEventType());
+			event.setWorkerId(message.getWorkerId());
+
 			event.generateDomainId();
 			WorkerEvent.staticGetDao().store(event);
 			TenantPersistenceService.getInstance().commitTransaction();
@@ -311,7 +300,7 @@ public class NotificationBehavior implements IApiBehavior{
 				//+ "                 ,sum(workInstruction.actualQuantity) as quantity" TODO should denormalize into workerevent
 				+ "           FROM WorkerEvent"
 				+ "          WHERE eventType IN (:includedEventTypes)"
-				+              ((purposes != null && purposes.size() > 0) ? " AND purpose IN (:purposes)" : "") 
+				+              ((purposes != null && purposes.size() > 0) ? " AND purpose IN (:purposes)" : "")
 				+ "            AND created BETWEEN :startDateTime AND :endDateTime"
 				+ "       GROUP BY "
 				+                  groupByClause
@@ -336,14 +325,14 @@ public class NotificationBehavior implements IApiBehavior{
 				.setProjection(Projections.distinct(Projections.property("workerId")))
 				.add(Property.forName("parent").eq(facility))
 				.add(GenericDaoABC.createIntervalRestriction("created", params.getCreatedInterval()));
-		
+
     	Criteria workerCriteria = Worker.staticGetDao().createCriteria();
        	workerCriteria.add(Property.forName("parent").eq(facility))
        				  .add(Property.forName("domainId").in(distinctWorkers));
-		
+
 		@SuppressWarnings("unchecked")
 		List<Worker> workers = workerCriteria.list();
-		
+
 		ArrayList<WorkerEventHistogram> workerHistograms = new ArrayList<WorkerEventHistogram>();
 		for (Worker worker : workers) {
 			workerHistograms.add(
@@ -357,7 +346,7 @@ public class NotificationBehavior implements IApiBehavior{
 		return chePickRateHistogram(params, che.getFacility(), che.getPersistentId());
 	}
 
-	
+
 	public HistogramResult pickRateHistogram(HistogramParams params, Worker worker) {
 		return workerPickRateHistogram(params, worker.getFacility(), worker.getDomainId());
 	}
@@ -368,70 +357,70 @@ public class NotificationBehavior implements IApiBehavior{
 		final Period binWidth = params.getBin();
 		final Interval createdInterval = params.getCreatedInterval();
 		SQLQuery query = createPickRateHistogramQuery(facility, createdInterval, binWidth, sqlWhereClause);
-		
-		
-		List<BinValue> binValues = executeHistogramQuery(query, createdInterval, binWidth);	
+
+
+		List<BinValue> binValues = executeHistogramQuery(query, createdInterval, binWidth);
 		HistogramResult result = new HistogramResult(createdInterval, binWidth, binValues);
 		return result;
 	}
-	
+
 	private HistogramResult chePickRateHistogram(final HistogramParams params, Facility facility, UUID persistentId) {
 		String sqlWhereClause = toSqlWhereClause("device_persistentid = :chePersistentId");
 
 		final Period binWidth = params.getBin();
 		final Interval createdInterval = params.getCreatedInterval();
 		SQLQuery query = createPickRateHistogramQuery(facility, createdInterval, binWidth, sqlWhereClause);
-		
+
 		query.setParameter("chePersistentId", persistentId.toString());
-		
-		List<BinValue> binValues = executeHistogramQuery(query, createdInterval, binWidth);	
+
+		List<BinValue> binValues = executeHistogramQuery(query, createdInterval, binWidth);
 		HistogramResult result = new HistogramResult(createdInterval, binWidth, binValues);
 		return result;
 	}
-	
+
 	private HistogramResult workerPickRateHistogram(final HistogramParams params, Facility facility, String badgeId) {
 		String sqlWhereClause = toSqlWhereClause("worker_id = :workerId");
 
 		final Period binWidth = params.getBin();
 		final Interval createdInterval = params.getCreatedInterval();
 		SQLQuery query = createPickRateHistogramQuery(facility, createdInterval, binWidth, sqlWhereClause);
-		
+
 		query.setParameter("workerId", badgeId);
-		
-		List<BinValue> binValues = executeHistogramQuery(query, createdInterval, binWidth);	
+
+		List<BinValue> binValues = executeHistogramQuery(query, createdInterval, binWidth);
 		HistogramResult result = new HistogramResult(createdInterval, binWidth, binValues);
 		return result;
 	}
 
 	private String toSqlWhereClause(String whereClause) {
-		String sqlWhereClause = 
+		String sqlWhereClause =
 				  " parent_persistentid = :facilityId"
 				+ " and event_type = 'COMPLETE'"
 				+ " and created between :startDateTime and :endDateTime"
                 + ((whereClause != null) ? " and " + whereClause : "");
 		return sqlWhereClause;
 	}
-	
+
 	private List<BinValue> executeHistogramQuery(SQLQuery query, final Interval completedInterval, final Period binWidth) {
 		query.setResultTransformer(new BasicTransformerAdapter() {
 			private static final long serialVersionUID = 1L;
 
 			@Override
 			public Object transformTuple(Object[] tuple, String[] aliases) {
-				
+
 				int binNumber = (Integer) tuple[0];
 				BigInteger binValue = (BigInteger) tuple[1];
 				return new BinValue(completedInterval.getStart().plus(binWidth.multipliedBy(binNumber)), binWidth, binValue);
 			}
 		});
-		
-		
+
+
 		List<BinValue> withMissingValues = new ArrayList<>();
 		@SuppressWarnings("unchecked")
 		LinkedList<BinValue> dbValues = new LinkedList<>(query.list());
 		DateTime binStart = completedInterval.getStart();
 		while(binStart.isBefore(completedInterval.getEnd())) {
-			if(!dbValues.isEmpty() 
+			if(!dbValues.isEmpty()
  				&& binStart.getMillis() == dbValues.peek().getStart().getTime()) {
 				withMissingValues.add(dbValues.poll());
 			} else {
@@ -442,9 +431,9 @@ public class NotificationBehavior implements IApiBehavior{
 		return withMissingValues;
 	}
 
-		
+
 	private SQLQuery createPickRateHistogramQuery(Facility facility, Interval createdInterval, Period binWidth, String sqlWhereClause) {
-		
+
 		String sqlTemplate =  "select bin, count(bin) as value from ( "
   + " select CAST(floor(extract(epoch from (created - CAST(:startDateTime AS TIMESTAMP)))  / :binWidth) AS integer) as bin "
   + "    from event_worker "
@@ -461,34 +450,95 @@ public class NotificationBehavior implements IApiBehavior{
 		query.setParameter("binWidth", binWidth.toStandardSeconds().getSeconds());
 		return query;
 	}
-	
-	
+
+
 	@ToString
 	public static class WorkerEventTypeGroup {
 		@Getter @Setter
 		WorkerEvent.EventType eventType;
+
+		@Getter @Setter
+		String workerId;
+
+		@Getter @Setter
+		long count;
+	}
+	
+	@ToString
+	public static class ItemEventTypeGroup {
+		@Getter @Setter
+		WorkerEvent.EventType eventType;
+
+		@Getter @Setter
+		String itemId;
+
+		@Getter @Setter
+		String itemGtin;
+
+		@Getter @Setter
+		String itemUom;
+
+		@Getter @Setter
+		String itemDescription;
+
+		@Getter @Setter
+		String location;
 		
 		@Getter @Setter
 		long count;
 	}
 
-	@SuppressWarnings("unchecked")
-	public List<WorkerEventTypeGroup> groupWorkerEventsByType(Facility facility, Interval createdInterval, boolean resolved) {
-        Criteria criteria = WorkerEvent.staticGetDao().createCriteria();
-        criteria.setProjection(Projections.projectionList()
-        		.add(Projections.groupProperty("eventType"), "eventType")
-        		.add(Projections.rowCount(), "count"))
-        	.add(Restrictions.eq("parent", facility))
-        	.add(GenericDaoABC.createIntervalRestriction("created", createdInterval));
-        	if (resolved){
-        		criteria.add(Restrictions.isNotNull("resolution"));
-        	} else {
-        		criteria.add(Restrictions.isNull("resolution"));
-        	}
+	public List<Criterion> toFilterList(Facility facility, Interval createdInterval, List<EventType> typeList, Boolean resolved) {
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("parent", facility));
 
-        	criteria.setResultTransformer(new AliasToBeanResultTransformer(WorkerEventTypeGroup.class));
-        	return criteria.list();
+		if (!typeList.isEmpty()) {
+			filterParams.add(Restrictions.in("eventType", typeList)); // empty .in() guard present
+		}
+
+		//If "resolved" parameter not provided, return, both, resolved and unresolved events
+		if (resolved != null) {
+			if (resolved) {
+				filterParams.add(Restrictions.isNotNull("resolution"));
+			} else {
+				filterParams.add(Restrictions.isNull("resolution"));
+			}
+		}
+		if (createdInterval != null) {
+			filterParams.add(GenericDaoABC.createIntervalRestriction("created", createdInterval));
+		}
+		return filterParams;
+	}
+
+	public List<WorkerEventTypeGroup> groupWorkerEventsByType(List<Criterion> filters) {
+		return groupWorkerEvents(filters, new String[] {"eventType"}, WorkerEventTypeGroup.class);
     }
+
+	public List<WorkerEventTypeGroup> groupWorkerEventsByTypeAndWorker(List<Criterion> filters) {
+		return groupWorkerEvents(filters, new String[] {"eventType", "workerId"}, WorkerEventTypeGroup.class);
+    }
+
+	public List<ItemEventTypeGroup> groupWorkerEventsByTypeAndItem(List<Criterion> filters) {
+		return groupWorkerEvents(filters, new String[] {"eventType", "itemId", "location", "itemUom", "itemGtin"}, ItemEventTypeGroup.class);
+	}
+
+	@SuppressWarnings("unchecked")
+	public <T> List<T> groupWorkerEvents(List<Criterion> filters, String[] groupProperties, Class<T> returnType) {
+        Criteria criteria = WorkerEvent.staticGetDao().createCriteria();
+        for (Criterion criterion : filters) {
+			criteria.add(criterion);
+		}
+
+        ProjectionList 	projectionsList = Projections.projectionList();
+        projectionsList.add(Projections.rowCount(), "count");
+        for (String groupProperty : groupProperties) {
+        	projectionsList.add(Projections.groupProperty(groupProperty), groupProperty);
+		}
+        criteria.setProjection(projectionsList);
+        criteria.setResultTransformer(new AliasToBeanResultTransformer(returnType));
+        return criteria.list();
+    }
+
 
 	public List<String> getDistinct(Facility facility, String name) {
 		Set<WorkerEvent.EventType> types = ImmutableSet.of(EventType.COMPLETE, EventType.SHORT);
@@ -503,8 +553,8 @@ public class NotificationBehavior implements IApiBehavior{
 
 	public ResultDisplay<EventDisplay> getEventsForChe(Che che, Optional<Interval> created, Optional<Integer> limit) {
 		int limitValue = limit.or(15);
-		
-		
+
+
 		Criteria criteria = WorkerEvent.staticGetDao()
 		.createCriteria()
 		.add(Property.forName("devicePersistentId").eq(che.getPersistentId().toString()));
@@ -514,7 +564,7 @@ public class NotificationBehavior implements IApiBehavior{
 		ResultDisplay<WorkerEvent> workerEvents = WorkerEvent.staticGetDao().findByCriteriaQueryPartial(criteria, Order.desc("created"), limitValue);
 		return new ResultDisplay<>(workerEvents.getTotal(), mapToEventDisplay(new ArrayList<WorkerEvent>(workerEvents.getResults())));
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public List<EventDisplay> getOrderEventsForOrderId(Facility facility, String orderDomainId) {
 		DetachedCriteria detailUUIDs = DetachedCriteria.forClass(OrderDetail.class)
@@ -523,7 +573,7 @@ public class NotificationBehavior implements IApiBehavior{
 				.add(Property.forName("order.parent").eq(facility))
 				.add(Property.forName("active").eq(true))
 				.setProjection(Property.forName("persistentId"));
-		
+
 		List<WorkerEvent> entities =  WorkerEvent.staticGetDao()
 				.createCriteria()
 				.add(Property.forName("orderDetailId").in(detailUUIDs))
@@ -534,7 +584,7 @@ public class NotificationBehavior implements IApiBehavior{
 
 
 	public ResultDisplay<EventDisplay> getEventsForWorkerId(PageQuery query) throws JsonProcessingException {
-		
+
 		Criteria criteria = WorkerEvent.staticGetDao().createCriteria();
 		criteria = query.toFilterCriteria(criteria);
 		long total = WorkerEvent.staticGetDao().countByCriteriaQuery(criteria);
@@ -544,7 +594,7 @@ public class NotificationBehavior implements IApiBehavior{
 		String nextToken =query.getNextQueryToken();
 		return new ResultDisplay<>(total, mapToEventDisplay(entities), nextToken);
 	}
-	
+
 
 	private List<EventDisplay> mapToEventDisplay(List<WorkerEvent> workerEvents) {
 		//Lazily convert worker event to event for display
