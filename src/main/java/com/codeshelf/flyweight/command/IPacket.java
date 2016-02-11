@@ -236,6 +236,48 @@ public interface IPacket {
 	 * Set that the packet requires an acknowledgment 
 	 * @param requiresAck
 	 */
-	void setRequiresAck(Boolean requiresAck);
+	//void setRequiresAck(Boolean requiresAck);
 
+	// --------------------------------------------------------------------------
+	/**
+	 * Set the LQI of the packet 
+	 * @param lqi
+	 */
+	//void setLQI(byte lqi);
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the lqi of the packet
+	 */
+	//byte getLQI();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the maximum packet payload for packet
+	 */
+	//byte getMaxPacketBytes();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the header byte count
+	 */
+	//byte getHeaderByteCount();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the packet version
+	 */
+	//PacketVersion getPacketVersion();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Set the packet version
+	 */
+	//void setPacketVersion(PacketVersion packetVersion);
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the bytes of the payload (everything after ackid)
+	 */
+	//public byte[] getPayloadBytes();
 }

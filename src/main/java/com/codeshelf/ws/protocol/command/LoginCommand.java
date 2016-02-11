@@ -159,6 +159,8 @@ public class LoginCommand extends CommandABC<LoginRequest> {
 							String ordersubValue = PropertyBehavior.getProperty(facility, FacilityPropertyType.ORDERSUB);
 							response.setOrdersubValue(ordersubValue);
 
+							String protocol = PropertyBehavior.getProperty(facility, FacilityPropertyType.PROTOCOL);
+							response.setProtocol(protocol);
 						} else { //ui client user
 							response.setAutoShortValue(false); // not read by client. No need to look it up.
 

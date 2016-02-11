@@ -77,6 +77,9 @@ public class RadioController implements IRadioController {
 
 	@Getter
 	private final IGatewayInterface						gatewayInterface;
+	
+	@Getter @Setter
+	private String 										protocol					= "1";
 
 	private volatile boolean							mShouldRun					= true;
 

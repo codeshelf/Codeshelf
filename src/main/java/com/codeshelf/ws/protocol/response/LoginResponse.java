@@ -64,6 +64,10 @@ public class LoginResponse extends ResponseABC {
 	@Setter
 	String				ordersubValue;
 
+	@Getter
+	@Setter
+	String				protocol;
+
 	public LoginResponse() {
 	}
 

@@ -73,6 +73,11 @@ public final class Packet implements IPacket {
 	@Getter
 	@Setter
 	private Boolean					mRequiresAck;
+	
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private String					mProtocol;
 
 	private PacketVersion			mPacketVersion	= new PacketVersion(IPacket.PACKET_VERSION_0);
 	private NBitInteger				mPacketType;

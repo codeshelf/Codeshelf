@@ -16,6 +16,7 @@ import com.codeshelf.flyweight.command.NetworkId;
  */
 public interface IRadioController extends Runnable {
 
+	void setProtocol(String protocol);
 	// --------------------------------------------------------------------------
 	/**
 	 *  Receive the next command from the controller.

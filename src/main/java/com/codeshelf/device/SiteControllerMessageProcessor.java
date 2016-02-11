@@ -100,6 +100,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 						deviceManager.setScanTypeValue(loginResponse.getScanTypeValue());
 						deviceManager.setSequenceKind(loginResponse.getSequenceKind());
 						deviceManager.setOrdersubValue(loginResponse.getOrdersubValue());
+						deviceManager.getRadioController().setProtocol(loginResponse.getProtocol());
 						// attached has the huge side effect of getting all CHEs and setting up device logic for them. Better have the config values first.
 						deviceManager.attached(network);
 					} else {
@@ -363,6 +364,9 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				break;
 			case ORDERSUB:
 				deviceManager.setOrdersubValue(value);
+				break;
+			case PROTOCOL:
+				deviceManager.getRadioController().setProtocol(value);
 				break;
 			default:
 				siteControllerProperty = true;
