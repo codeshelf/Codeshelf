@@ -128,9 +128,9 @@ public class PalletizerBehavior implements IApiBehavior{
 			info.setErrorMessage2("Scan another location");
 			return info;
 		}
-		String existingStoreId = getPalletizerStoreIdAtLocation(location);
+		String existingStoreId = getOpenPalletizerStoreIdAtLocation(location);
 		if (existingStoreId != null){
-			LOGGER.warn("Palletizer Location {} already occupied with {}", location.getBestUsableLocationName(), existingStoreId);
+			LOGGER.warn("Palletizer Location {} already occupied with open pallet {}", location.getBestUsableLocationName(), existingStoreId);
 			info.setErrorMessage1("Busy: " + location.getBestUsableLocationName());
 			info.setErrorMessage2("Remove " + existingStoreId + " First");
 			return info;
@@ -174,20 +174,22 @@ public class PalletizerBehavior implements IApiBehavior{
 		return orders.isEmpty() ? null : orders.get(0);
 	}
 	
-	private String getPalletizerStoreIdAtLocation(Location location) {
+	private String getOpenPalletizerStoreIdAtLocation(Location location) {
 		if (location == null) {
 			return null;
 		}
-		List<OrderLocation> existingOrdersLocations = OrderLocation.findOrderLocationsAtLocation(location, location.getFacility(), true);
+		List<OrderLocation> existingOrdersLocations = OrderLocation.findOrderLocationsAtLocation(location, location.getFacility());
 		if (existingOrdersLocations.isEmpty()) {
 			return null;
 		}
-		OrderHeader order = existingOrdersLocations.get(0).getParent();
-		String orderId = order.getDomainId();
-		if (!orderId.startsWith("P_")){
-			return null;
+		for (OrderLocation orderLocation : existingOrdersLocations) {
+			OrderHeader order = orderLocation.getParent();
+			String orderId = order.getDomainId();
+			if (order.getActive() && order.getStatus() != OrderStatusEnum.COMPLETE && orderId.startsWith("P_")) {
+				return orderId.length() >= 6 ? orderId.substring(2, 6) : orderId.substring(2);
+			}
 		}
-		return orderId.length() >= 6 ? orderId.substring(2, 6) : orderId.substring(2);
+		return null;
 	}
 	
 	public String removeOrder(Che che, String prefix, String scan) {
@@ -207,7 +209,7 @@ public class PalletizerBehavior implements IApiBehavior{
 		if (location == null) {
 			return locationStr + " not found";
 		}
-		List<OrderLocation> orderLocations = OrderLocation.findOrderLocationsAtLocationAndChildren(location, facility, true);
+		List<OrderLocation> orderLocations = OrderLocation.findOrderLocationsAtLocationAndChildren(location, facility);
 		if (orderLocations == null || orderLocations.isEmpty()) {
 			return "No Pallets In " + locationStr;
 		}

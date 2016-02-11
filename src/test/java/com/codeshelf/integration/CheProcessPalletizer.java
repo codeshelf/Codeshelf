@@ -220,6 +220,11 @@ public class CheProcessPalletizer extends ServerTest{
 		OrderDetail eventDetail = OrderDetail.staticGetDao().findByPersistentId(event.getOrderDetailId());
 		Assert.assertEquals(d10010001, eventDetail);
 		commitTransaction();
+		
+		LOGGER.info("5: Place item at the same location");
+		picker.scanLocation("Slot1111");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+		Assert.assertEquals("Slot1111\nItem: 10010003\nStore: 1001\nScan Next Item\n", picker.getLastCheDisplay());
 	}
 	
 	@Test
@@ -240,6 +245,10 @@ public class CheProcessPalletizer extends ServerTest{
 		picker.scanSomething("10010003");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_NEW_ORDER, WAIT_TIME);
 		Assert.assertEquals("Scan New Location\nFor Store 1001\n\nOr Scan Another Item\n", picker.getLastCheDisplay());
+		
+		LOGGER.info("4: Place item at the same location");
+		picker.scanLocation("Slot1111");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
 	}
 	
 	@Test
@@ -275,6 +284,88 @@ public class CheProcessPalletizer extends ServerTest{
 	}
 	
 	@Test
+	public void testReusePalletLocation() {
+		// For DEV-1429
+		LOGGER.info("1a: Open a pallet");
+		openNewPallet("10010001", "L%Slot1111", "Slot1111");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+	
+		LOGGER.info("1b: Add two more cartons");
+		picker.scanSomething("10010002");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+		picker.scanSomething("10010003");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+	
+		LOGGER.info("2: Close the pallet, adding a license plate");
+		picker.scanCommand("REMOVE");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_REMOVE, WAIT_TIME);
+		picker.scanSomething("1001aaaa");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
+	
+		LOGGER.info("2: Let's see if all completed, even though we did not push the poscon button on last one.");
+	
+		beginTransaction();
+		Facility facility = getFacility();
+		OrderHeader h1001 = findPalletizerOrderHeader(facility, "1001");
+		Assert.assertNotNull("Didn't find order 1001", h1001);
+		OrderDetail d10010001 = h1001.getOrderDetail("10010001");
+		OrderDetail d10010002 = h1001.getOrderDetail("10010002");
+		OrderDetail d10010003 = h1001.getOrderDetail("10010003");
+		Assert.assertNotNull("Didn't find detail 10010001", d10010001);
+		Assert.assertNotNull("Didn't find detail 10010002", d10010002);
+		Assert.assertNotNull("Didn't find detail 10010003", d10010003);
+	
+		WorkInstruction wi11 = d10010001.getWorkInstructions().get(0);
+		WorkInstruction wi12 = d10010002.getWorkInstructions().get(0);
+		WorkInstruction wi13 = d10010002.getWorkInstructions().get(0);
+		Assert.assertNotNull(wi11);
+		Assert.assertNotNull(wi12);
+		Assert.assertNotNull(wi13);
+		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi11.getStatus());
+		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi12.getStatus());
+		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi13.getStatus());
+	
+		commitTransaction();
+	
+		LOGGER.info("3: Now open a new pallet for the same store at the same location.");
+		picker.scanSomething("10010004");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_NEW_ORDER, WAIT_TIME);
+		picker.scanSomething("L%Slot1111");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+	
+		LOGGER.info("3b: Add one more that should complete the first.");
+		picker.scanSomething("10010005");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
+	
+		LOGGER.info("4: Close the pallet, via position scan");
+		picker.scanCommand("REMOVE");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_REMOVE, WAIT_TIME);
+		LOGGER.info(picker.getLastCheDisplay());
+		picker.scanSomething("L%Slot1111");
+		picker.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
+		
+		beginTransaction();
+		LOGGER.info("5: Retrieve old and new orders");
+		h1001 = OrderHeader.staticGetDao().reload(h1001);
+		facility = facility.reload();
+		OrderHeader h1001b = findPalletizerOrderHeader(facility, "1001");
+		Assert.assertNotNull(h1001b);
+		Assert.assertNotEquals(h1001, h1001b);
+		OrderDetail d10010004 = h1001b.getOrderDetail("10010004");
+		Assert.assertNotNull(d10010004);
+		WorkInstruction wi14 = d10010004.getWorkInstructions().get(0);
+		Assert.assertNotNull(wi14);
+		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi14.getStatus());
+		OrderDetail d10010005 = h1001b.getOrderDetail("10010005");
+		if (d10010005 != null) {
+			WorkInstruction wi15 = d10010005.getWorkInstructions().get(0);
+			Assert.assertNotNull(wi15);
+			Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, wi15.getStatus());
+		}
+		commitTransaction();
+	}
+	
+	@Test
 	public void testDamaged(){		
 		LOGGER.info("1: Scan item, open pallet");
 		openNewPallet("10010001", "L%Slot1111", "Slot1111");
@@ -306,14 +397,26 @@ public class CheProcessPalletizer extends ServerTest{
 		Assert.assertEquals(locationName + "\nItem: " + item + "\nStore: " + store + "\nScan Next Item\n", picker.getLastCheDisplay());
 	}
 	
+	/**
+	 * Not all that clever to distinguish different orders for the same store. Returns the first uncompleted, or the most recent completed.
+	 */
 	private OrderHeader findPalletizerOrderHeader(Facility facility, String orderId) {
 		List<OrderHeader> orders = OrderHeader.staticGetDao().findByParent(facility);
+		OrderHeader latestCompleteOrder = null, latestIncompleteOrder = null;
 		for (OrderHeader order : orders) {
 			String domainId = order.getDomainId();
-			if (domainId.startsWith(orderId) || domainId.startsWith("P_" + orderId)){
-				return order;
+			if (domainId.startsWith(orderId) || domainId.startsWith("P_" + orderId)) {
+				if (order.getStatus() == OrderStatusEnum.COMPLETE){
+					if (latestCompleteOrder == null || order.getUpdated().after(latestCompleteOrder.getUpdated())) {
+						latestCompleteOrder = order;
+					}
+				} else {
+					if (latestIncompleteOrder == null || order.getUpdated().after(latestIncompleteOrder.getUpdated())) {
+						latestIncompleteOrder = order;
+					}
+				}
 			}
 		}
-		return null;
-	}	
+		return latestIncompleteOrder != null ? latestIncompleteOrder : latestCompleteOrder;
+	}
 }

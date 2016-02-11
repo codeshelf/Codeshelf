@@ -139,31 +139,26 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 	 * Helper method. This has a bad query. This assumes it is in a tenant transaction.
 	 * Somewaht similar to OrderLocationCsvImporter.deleteLocation.
 	 */
-	public static List<OrderLocation> findOrderLocationsAtLocation(final Location inLocation, final Facility inFacility, final boolean activeOnly) {
+	public static List<OrderLocation> findOrderLocationsAtLocation(final Location inLocation, final Facility inFacility) {
 		Map<String, Object> filterArgs = ImmutableMap.<String, Object> of(
 			"facilityId", inFacility.getPersistentId(),
 			"locationId", inLocation.getPersistentId());
-		List<OrderLocation> orderLocations = null;
-		if (activeOnly){
-			orderLocations = OrderLocation.staticGetDao().findByFilter("orderLocationByFacilityAndLocationActive", filterArgs);
-		} else {
-			orderLocations = OrderLocation.staticGetDao().findByFilter("orderLocationByFacilityAndLocationAll", filterArgs);
-		}
+		List<OrderLocation> orderLocations = OrderLocation.staticGetDao().findByFilter("orderLocationByFacilityAndLocationAll", filterArgs);
 		return orderLocations;
 	}
 	
-	public static List<OrderLocation> findOrderLocationsAtLocationAndChildren(Location inLocation, Facility inFacility, boolean activeOnly) {
+	public static List<OrderLocation> findOrderLocationsAtLocationAndChildren(Location inLocation, Facility inFacility) {
 		List<OrderLocation> orderLocations = Lists.newArrayList();
-		findOrderLocationsAtLocationAndChildrenHelper(orderLocations, inLocation, inFacility, activeOnly);
+		findOrderLocationsAtLocationAndChildrenHelper(orderLocations, inLocation, inFacility);
 		return orderLocations;
 	}
 	
-	private static void findOrderLocationsAtLocationAndChildrenHelper(List<OrderLocation> accumulator, Location inLocation, Facility inFacility, boolean activeOnly) {
-		List<OrderLocation> orderLocations = findOrderLocationsAtLocation(inLocation, inFacility, activeOnly);
+	private static void findOrderLocationsAtLocationAndChildrenHelper(List<OrderLocation> accumulator, Location inLocation, Facility inFacility) {
+		List<OrderLocation> orderLocations = findOrderLocationsAtLocation(inLocation, inFacility);
 		accumulator.addAll(orderLocations);
 		List<Location> children = inLocation.getChildren();
 		for (Location child : children) {
-			findOrderLocationsAtLocationAndChildrenHelper(accumulator, child, inFacility, activeOnly);
+			findOrderLocationsAtLocationAndChildrenHelper(accumulator, child, inFacility);
 		}
 	}
 }
