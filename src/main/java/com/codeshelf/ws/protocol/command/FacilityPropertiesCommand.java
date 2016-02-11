@@ -15,15 +15,12 @@ import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
 @RequiresPermissions("ux:get")
-public class FacilityPropertiesCommand extends CommandABC {
+public class FacilityPropertiesCommand extends CommandABC<FacilityPropertiesRequest> {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(FacilityPropertiesCommand.class);
-
-	private FacilityPropertiesRequest request;
 		
 	public FacilityPropertiesCommand(WebSocketConnection connection, FacilityPropertiesRequest request) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 	}
 	
 	@Override

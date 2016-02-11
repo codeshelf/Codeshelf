@@ -13,14 +13,11 @@ import com.codeshelf.ws.protocol.response.VerifyBadgeResponse;
 import com.codeshelf.ws.server.WebSocketConnection;
 
 @RequiresPermissions("che:verifybadge")
-public class VerifyBadgeCommand extends CommandABC {
-
-	private VerifyBadgeRequest	request;
+public class VerifyBadgeCommand extends CommandABC<VerifyBadgeRequest> {
 	private WorkBehavior			workService;
 
 	public VerifyBadgeCommand(WebSocketConnection connection, VerifyBadgeRequest request, WorkBehavior workService) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 		this.workService = workService;
 	}
 

@@ -181,6 +181,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 		LOGGER.info("Request received for processing: {}", request);
 
 		requestCounter.inc();
+		@SuppressWarnings("rawtypes")
 		CommandABC command = null;
 		ResponseABC response = null;
 
@@ -335,7 +336,7 @@ public class ServerMessageProcessor implements IMessageProcessor {
 				CodeshelfSecurityManager.authorizeAnnotatedClass(command.getClass());
 
 				// execute command and generate response to be sent to client
-				response = command.exec();
+				response = command.run();
 				if (response != null) {
 					// automatically tie response to request
 					response.setRequestId(request.getMessageId());

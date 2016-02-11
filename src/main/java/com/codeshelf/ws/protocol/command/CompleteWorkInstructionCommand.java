@@ -16,22 +16,19 @@ import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
 @RequiresPermissions("wi:complete")
-public class CompleteWorkInstructionCommand extends CommandABC {
+public class CompleteWorkInstructionCommand extends CommandABC<CompleteWorkInstructionRequest> {
 
 	private static final Logger						LOGGER	= LoggerFactory.getLogger(CompleteWorkInstructionCommand.class);
-
-	final private CompleteWorkInstructionRequest	request;
 
 	final private WorkBehavior						workBehavior;
 
 	public CompleteWorkInstructionCommand(WebSocketConnection connection,
 		CompleteWorkInstructionRequest request,
 		WorkBehavior workService) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 		this.workBehavior = workService;
 	}
-
+	
 	@Override
 	public ResponseABC exec() {
 		UUID cheId = UUID.fromString(request.getDeviceId());

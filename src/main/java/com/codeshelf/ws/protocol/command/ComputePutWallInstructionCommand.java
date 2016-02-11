@@ -16,18 +16,15 @@ import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
 @RequiresPermissions("wi:get")
-public class ComputePutWallInstructionCommand extends CommandABC {
+public class ComputePutWallInstructionCommand extends CommandABC<ComputePutWallInstructionRequest> {
 	private static final Logger					LOGGER	= LoggerFactory.getLogger(ComputeWorkCommand.class);
-
-	private ComputePutWallInstructionRequest	request;
 
 	private WorkBehavior							workService;
 
 	public ComputePutWallInstructionCommand(WebSocketConnection connection,
 		ComputePutWallInstructionRequest request,
 		WorkBehavior workService) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 		this.workService = workService;
 	}
 

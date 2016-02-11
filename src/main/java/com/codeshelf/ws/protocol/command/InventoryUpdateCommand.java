@@ -16,17 +16,15 @@ import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
 @RequiresPermissions("che:inventory")		// TODO: ensure cart user has this right
-public class InventoryUpdateCommand extends CommandABC {
+public class InventoryUpdateCommand extends CommandABC<InventoryUpdateRequest> {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ComputeWorkCommand.class);
 
-	private InventoryUpdateRequest request;
 	private InventoryBehavior inventoryService;
 	private WorkBehavior workService;
 	
 	public InventoryUpdateCommand(WebSocketConnection connection, InventoryUpdateRequest request, InventoryBehavior inventoryService, WorkBehavior workService) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 		this.inventoryService = inventoryService;
 		this.workService = workService;
 	}

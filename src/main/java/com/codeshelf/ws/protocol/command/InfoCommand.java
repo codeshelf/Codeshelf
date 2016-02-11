@@ -14,14 +14,12 @@ import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
-public class InfoCommand extends CommandABC{
+public class InfoCommand extends CommandABC<InfoRequest>{
 	private static final Logger	LOGGER = LoggerFactory.getLogger(InfoCommand.class);
 	final private InfoBehavior infoService;
-	private InfoRequest request;
 	
 	public InfoCommand(WebSocketConnection connection, InfoRequest request, InfoBehavior infoService) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 		this.infoService = infoService;
 	}
 

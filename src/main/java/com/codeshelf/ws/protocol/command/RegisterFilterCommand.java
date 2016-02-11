@@ -33,15 +33,12 @@ import com.codeshelf.ws.server.WebSocketConnection;
 */
 
 @RequiresPermissions("ux:filter")
-public class RegisterFilterCommand extends CommandABC {
+public class RegisterFilterCommand extends CommandABC<RegisterFilterRequest> {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(RegisterFilterCommand.class);
 
-	private RegisterFilterRequest request;
-
 	public RegisterFilterCommand(WebSocketConnection session, RegisterFilterRequest request) {
-		super(session);
-		this.request = request;
+		super(session, request);
 	}
 	
 	@Override

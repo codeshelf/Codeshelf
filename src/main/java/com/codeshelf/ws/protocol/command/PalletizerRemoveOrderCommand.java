@@ -14,16 +14,13 @@ import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
-public class PalletizerRemoveOrderCommand extends CommandABC{
+public class PalletizerRemoveOrderCommand extends CommandABC<PalletizerRemoveOrderRequest>{
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(PalletizerRemoveOrderCommand.class);
-
-	private PalletizerRemoveOrderRequest	request;
 
 	private PalletizerBehavior				palletizerService;
 
 	public PalletizerRemoveOrderCommand(WebSocketConnection connection, PalletizerRemoveOrderRequest request, PalletizerBehavior palletizerService) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 		this.palletizerService = palletizerService;
 	}
 

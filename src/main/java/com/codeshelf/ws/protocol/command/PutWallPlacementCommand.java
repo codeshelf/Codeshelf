@@ -13,14 +13,11 @@ import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
 @RequiresPermissions("che:pick")
-public class PutWallPlacementCommand extends CommandABC{
-	private PutWallPlacementRequest request;
-	
+public class PutWallPlacementCommand extends CommandABC<PutWallPlacementRequest>{
 	private WorkBehavior	workService;
 	
 	public PutWallPlacementCommand(WebSocketConnection connection, PutWallPlacementRequest request, WorkBehavior workService) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 		this.workService = workService;
 	}
 

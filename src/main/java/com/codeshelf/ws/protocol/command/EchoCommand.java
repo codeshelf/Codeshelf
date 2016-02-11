@@ -8,20 +8,18 @@ import com.codeshelf.ws.protocol.response.EchoResponse;
 import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.server.WebSocketConnection;
 
-public class EchoCommand extends CommandABC {
+public class EchoCommand extends CommandABC<EchoRequest> {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(EchoCommand.class);
-	EchoRequest mRequest;
 	
 	public EchoCommand(WebSocketConnection connection, EchoRequest request) {
-		super(connection);
-		mRequest = request;
+		super(connection, request);
 	}
 
 	@Override
 	public ResponseABC exec() {
 		LOGGER.info("Executing "+this);
 		// send the same message back to the client
-		return new EchoResponse(mRequest.getMessage());
+		return new EchoResponse(request.getMessage());
 	}
 }

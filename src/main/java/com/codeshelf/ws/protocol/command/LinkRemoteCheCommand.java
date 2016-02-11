@@ -14,16 +14,13 @@ import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
-public class LinkRemoteCheCommand extends CommandABC {
+public class LinkRemoteCheCommand extends CommandABC<LinkRemoteCheRequest> {
 	private static final Logger			LOGGER	= LoggerFactory.getLogger(ComputeWorkCommand.class);
-
-	private LinkRemoteCheRequest	request;
 
 	private WorkBehavior					workService;
 
 	public LinkRemoteCheCommand(WebSocketConnection connection, LinkRemoteCheRequest request, WorkBehavior workService) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 		this.workService = workService;
 	}
 

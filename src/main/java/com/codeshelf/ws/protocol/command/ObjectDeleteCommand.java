@@ -16,15 +16,12 @@ import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
 @RequiresPermissions("ux:delete")
-public class ObjectDeleteCommand extends CommandABC {
+public class ObjectDeleteCommand extends CommandABC<ObjectDeleteRequest> {
 	
 	private static final Logger	LOGGER = LoggerFactory.getLogger(ObjectDeleteCommand.class);
-
-	private ObjectDeleteRequest	request;
 	
 	public ObjectDeleteCommand(WebSocketConnection connection, ObjectDeleteRequest request) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 	}
 	
 	@Override

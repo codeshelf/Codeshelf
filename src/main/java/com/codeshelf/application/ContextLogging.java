@@ -101,6 +101,10 @@ public class ContextLogging {
 		ThreadContext.put(ContextLogging.THREAD_CONTEXT_FACILITY_KEY, facilityId);
 	}
 	
+	static public String getTag(String tagId) {
+		return ThreadContext.get(tagId);
+	}
+	
 	static public void setTag(String tagId, String tagValue) {
 		if (tagValue == null || tagValue.isEmpty()) {
 			ThreadContext.remove(tagId);

@@ -6,13 +6,10 @@ import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
-public class PingCommand extends CommandABC {
+public class PingCommand extends CommandABC<PingRequest> {
 
-	private PingRequest request;
-	
 	public PingCommand(WebSocketConnection connection, PingRequest pingRequest) {
-		super(connection);
-		this.request = pingRequest;
+		super(connection, pingRequest);
 	}
 
 	@Override
