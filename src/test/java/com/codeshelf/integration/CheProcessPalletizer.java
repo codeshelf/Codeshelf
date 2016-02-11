@@ -306,8 +306,7 @@ public class CheProcessPalletizer extends ServerTest {
 		picker.scanSomething("1001aaaa");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
 
-		LOGGER.info("2: Let's see if all completed, even though we did not push the poscon button on last one.");
-
+		LOGGER.info("3: Let's see if all completed, even though we did not push the poscon button on last one.");
 		beginTransaction();
 		Facility facility = getFacility();
 		OrderHeader h1001 = findPalletizerOrderHeader(facility, "1001");
@@ -336,7 +335,7 @@ public class CheProcessPalletizer extends ServerTest {
 		picker.waitForCheState(CheStateEnum.PALLETIZER_NEW_ORDER, WAIT_TIME);
 		picker.scanSomething("L%Slot1111");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
-
+		
 		LOGGER.info("3b: Add one more that should complete the first.");
 		picker.scanSomething("10010005");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_PUT_ITEM, WAIT_TIME);
@@ -347,7 +346,6 @@ public class CheProcessPalletizer extends ServerTest {
 		LOGGER.info(picker.getLastCheDisplay());
 		picker.scanSomething("L%Slot1111");
 		picker.waitForCheState(CheStateEnum.PALLETIZER_SCAN_ITEM, WAIT_TIME);
-		LOGGER.info(picker.getLastCheDisplay());
 
 		beginTransaction();
 		LOGGER.info("5: Retrieve old and new orders");

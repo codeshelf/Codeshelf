@@ -143,8 +143,7 @@ public class OrderLocation extends DomainObjectTreeABC<OrderHeader> {
 		Map<String, Object> filterArgs = ImmutableMap.<String, Object> of(
 			"facilityId", inFacility.getPersistentId(),
 			"locationId", inLocation.getPersistentId());
-		List<OrderLocation> orderLocations = null;
-		orderLocations = OrderLocation.staticGetDao().findByFilter("orderLocationByFacilityAndLocationAll", filterArgs);
+		List<OrderLocation> orderLocations = OrderLocation.staticGetDao().findByFilter("orderLocationByFacilityAndLocationAll", filterArgs);
 		return orderLocations;
 	}
 	
