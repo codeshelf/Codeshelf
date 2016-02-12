@@ -400,8 +400,7 @@ public class FacilityResource {
 		@QueryParam("location") String location,
 		@QueryParam("workerId") String workerId,
 		@QueryParam("created") IntervalParam created,
-		@QueryParam("groupBy") String groupBy,
-		@QueryParam("resolved") Boolean resolved) {
+		@QueryParam("groupBy") String groupBy) {
 		Stopwatch total = Stopwatch.createStarted();
 
 		ErrorResponse errors = new ErrorResponse();
@@ -421,17 +420,15 @@ public class FacilityResource {
 			}
 
 			if (!Strings.isNullOrEmpty(itemId)) {
-				//do by filter param but for now needs to be manually filtered
+				filterParams.add(Restrictions.eq("itemId", itemId));
+			}
+			if (!Strings.isNullOrEmpty(location)) {
+				filterParams.add(Restrictions.eq("location", location));
+			}
+			if (!Strings.isNullOrEmpty(workerId)) {
+				filterParams.add(Restrictions.eq("workerId", workerId));
 			}
 
-			//If "resolved" parameter not provided, return, both, resolved and unresolved events
-			if (resolved != null) {
-				if (resolved) {
-					filterParams.add(Restrictions.isNotNull("resolution"));
-				} else {
-					filterParams.add(Restrictions.isNull("resolution"));
-				}
-			}
 			if (created != null) {
 				filterParams.add(GenericDaoABC.createIntervalRestriction("created", createdInterval));
 			}
@@ -441,10 +438,7 @@ public class FacilityResource {
 				List<BeanMap> eventBeans = new ArrayList<>();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
-					ItemDisplay itemDisplayKey = new ItemDisplay(eventDisplay);
-					if (itemId.equals(itemDisplayKey.getItemId()) && location.equals(itemDisplayKey.getLocation())) {
-						eventBeans.add(new BeanMap(eventDisplay));
-					}
+					eventBeans.add(new BeanMap(eventDisplay));
 				}
 				ResultDisplay<BeanMap> result = new ResultDisplay<>(eventBeans);
 				return BaseResponse.buildResponse(result);
@@ -453,10 +447,7 @@ public class FacilityResource {
 				List<BeanMap> eventBeans = new ArrayList<>();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
-					WorkerDisplay workerDisplayKey = new WorkerDisplay(eventDisplay);
-					if (workerId.equals(workerDisplayKey.getId())) {
-						eventBeans.add(new BeanMap(eventDisplay));
-					}
+					eventBeans.add(new BeanMap(eventDisplay));
 				}
 				ResultDisplay<BeanMap> result = new ResultDisplay<>(eventBeans);
 				return BaseResponse.buildResponse(result);
