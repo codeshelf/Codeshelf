@@ -22,6 +22,7 @@ import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.EdiTransportType;
+import com.codeshelf.model.ReplenishItem;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.validation.BatchResult;
@@ -154,6 +155,12 @@ public class EdiImportServiceTest extends MockDaoTest {
 
 			@Override
 			public void makeOrderDeletionFail(boolean fail) {
+			}
+
+			@Override
+			public String createReplenishOrderForItem(Facility facility, ReplenishItem item) {
+				// TODO Auto-generated method stub
+				return null;
 			}
 		};
 	}

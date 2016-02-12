@@ -18,6 +18,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Type;
 import org.joda.time.DateTime;
 
+import com.codeshelf.model.ReplenishItem;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
@@ -216,4 +217,13 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 			setOrderDetailId(orderDetail.getPersistentId());
 		}
 	}
+
+	public ReplenishItem toReplenishItem() {
+		 ReplenishItem replenItem = new ReplenishItem();
+		 replenItem.setItemId(this.getItemId());
+		 replenItem.setGtin(this.getItemGtin());
+		 replenItem.setUom(this.getItemUom());
+		 replenItem.setLocation(this.getLocation());
+		 return replenItem;		
+		}
 }

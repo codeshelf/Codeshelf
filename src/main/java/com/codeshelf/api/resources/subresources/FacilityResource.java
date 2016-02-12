@@ -83,6 +83,7 @@ import com.codeshelf.edi.ICsvWorkerImporter;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.DataPurgeParameters;
+import com.codeshelf.model.ReplenishItem;
 import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ResultDisplay;
@@ -91,6 +92,7 @@ import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.FacilityMetric;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.scheduler.ApplicationSchedulerService;
 import com.codeshelf.scheduler.CachedHealthCheckResults;
@@ -760,4 +762,44 @@ public class FacilityResource {
 			return new ErrorResponse().processException(e);
 		}
 	}
+
+	/*
+	 * count:6
+		location:
+		uom:EA
+		description:
+		gtin:
+		c	lass:com.codeshelf.api.responses.ItemDisplay
+		itemId:6135710
+		type:SHORT*/
+	@POST
+	@Path("replenish")
+	@RequiresPermissions("event:edit")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response createReplenishOrderForEvent(@FormParam("type") EventTypeParam typeParam, 
+												 @FormParam("itemId") String itemId,	
+												 @FormParam("gtin") String gtin,
+												 @FormParam("uom") String uom,
+												 @FormParam("location") String location) {
+		try {
+			EventType type = typeParam.getValue();
+			if (type != EventType.SHORT && type != EventType.SHORT_AHEAD && type != EventType.LOW && type != EventType.SUBSTITUTION){
+				throw new Exception(type + " event is illegal for replenishing. Call on SHORT, LOW or SUBSTITUTION events");
+
+			
+			}
+			
+			ReplenishItem item = new ReplenishItem();
+			item.setGtin(gtin);
+			item.setItemId(itemId);
+			item.setLocation(location);
+			item.setUom(uom);
+			item.setLocation(location);
+			String scannableId = orderImporterProvider.get().createReplenishOrderForItem(this.facility, item);
+			return BaseResponse.buildResponse(ImmutableMap.of("scannableId", scannableId));
+		} catch (Exception e) {
+			return new ErrorResponse().processException(e);
+		}		
+	}
+
 }

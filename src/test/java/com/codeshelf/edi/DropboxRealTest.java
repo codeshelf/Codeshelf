@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.EdiTransportType;
+import com.codeshelf.model.ReplenishItem;
 import com.codeshelf.model.domain.DropboxGateway;
 import com.codeshelf.model.domain.Facility;
 // import com.codeshelf.model.domain.LedController;
@@ -312,6 +313,12 @@ public class DropboxRealTest extends ServerTest {
 
 				@Override
 				public void makeOrderDeletionFail(boolean fail) {
+				}
+
+				@Override
+				public String createReplenishOrderForItem(Facility facility, ReplenishItem item) {
+					// TODO Auto-generated method stub
+					return null;
 				}				
 			};
 
