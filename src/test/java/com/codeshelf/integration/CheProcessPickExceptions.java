@@ -976,13 +976,8 @@ public class CheProcessPickExceptions extends ServerTest {
 
 		LOGGER.info("3: This pick should send old wi to server");
 		picker.pick(button, quantity);
-		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
-		picker.logCheDisplay(); // No error shown. Just moved onto the next job.
-
-		LOGGER.info("3b: And the next pick is refused, sending to summary state instead");
-		// Would be nice if it did not wait for the next pick. But we do not know how long before the response comes back.
-		picker.pickItemAuto();
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		picker.logCheDisplay(); // No error shown. Just moved onto the next job.
 
 		LOGGER.info("4: Verify that server did not complete the first job");
 		beginTransaction();

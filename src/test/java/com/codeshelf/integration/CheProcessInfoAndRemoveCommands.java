@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheStateEnum;
-import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.model.DeviceType;
 import com.codeshelf.model.FacilityPropertyType;
@@ -133,12 +132,10 @@ public class CheProcessInfoAndRemoveCommands extends ServerTest{
 		LOGGER.info("5a: Go to SETUP_SUMMARY, and, once again, verity that only one order remains");
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
-		LOGGER.info("5b: Assert that poscons 1 and 3 are empty, and 2 shows -- for the remaining, but fake order");
+		LOGGER.info("5b: Assert that poscons 1 and 3 are empty, and 2 shows bright flashing 0 for the remaining, but fake order at position 2");
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue(1));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue(3));
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2),PosControllerInstr.BITENCODED_SEGMENTS_CODE);
-		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
-		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2),ZERO);
 	}
 	
 	@Test

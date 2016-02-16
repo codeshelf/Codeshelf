@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
-import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
@@ -189,11 +188,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 
 		//Confirm nothing on PosCon1
 		Byte posConValue1 = picker2.getLastSentPositionControllerDisplayValue((byte) 1);
-		Byte posConValueMin1 = picker2.getLastSentPositionControllerMinQty((byte)1);
-		Byte posConValueMax1 = picker2.getLastSentPositionControllerMaxQty((byte)1);
-		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, posConValue1);
-		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_DASH, posConValueMin1);
-		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_DASH, posConValueMax1);
+		Assert.assertEquals(ZERO, posConValue1);
 	}
 
 	@Test
@@ -217,11 +212,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 
 		//Confirm nothing on PosCon1
 		Byte posConValue3 = picker2.getLastSentPositionControllerDisplayValue((byte) 3);
-		Byte posConValueMin3 = picker2.getLastSentPositionControllerMinQty((byte)3);
-		Byte posConValueMax3 = picker2.getLastSentPositionControllerMaxQty((byte)3);
-		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, posConValue3);
-		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_DASH, posConValueMin3);
-		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_DASH, posConValueMax3);
+		Assert.assertEquals(ZERO, posConValue3);
 	}
 
 
@@ -243,11 +234,7 @@ public class CheProcessPutWallSlowPick extends CheProcessPutWallSuper{
 
 		//Confirm nothing on PosCon2
 		Byte posConValue2 = picker2.getLastSentPositionControllerDisplayValue((byte) 2);
-		Byte posConValueMin2 = picker2.getLastSentPositionControllerMinQty((byte)2);
-		Byte posConValueMax2 = picker2.getLastSentPositionControllerMaxQty((byte)2);
-		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, posConValue2);
-		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_DASH, posConValueMin2);
-		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_DASH, posConValueMax2);
+		Assert.assertEquals(ZERO, posConValue2);
 	}
 
 	@Test

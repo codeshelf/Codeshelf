@@ -753,11 +753,9 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(0, picker.countActiveJobs());
 
 		//Make sure position display controllers show proper feedback
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
-		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_DASH);
-		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_DASH);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.SOLID_FREQ);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.DIM_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), ZERO);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.BLINK_FREQ);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.BRIGHT_DUTYCYCLE);
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
 
 		// Back to our main test
@@ -1901,5 +1899,54 @@ public class CheProcessTestPick extends ServerTest {
 		picker.scanCommand("START");
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		verifyCheDisplay(picker, "1 order  %000000010100", "1 job", "", "START (or SETUP)");
+	}
+	
+	@Test
+	public void testBadOrderSetupSummary() throws IOException{
+		byte one = 1, two = 2;
+		
+		LOGGER.info("1: Setup facility");
+		Facility facility = setUpSimpleNoSlotFacility();
+		beginTransaction();
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "UPC");
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
+		commitTransaction();
+
+		beginTransaction();
+		facility = facility.reload();
+		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n11111,11111,Item 1,Test Item 1,1,each,locationA,1";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+		
+		startSiteController();
+
+		LOGGER.info("2: Load one real and one fake order on cart");
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+		picker.setupContainer("11111", "1");
+		picker.setupContainer("22222", "2");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		
+		LOGGER.info("3: Veritfy that real orders shows proper feedback, and fake one is flashing 0");
+		Assert.assertEquals(1, (int)picker.getLastSentPositionControllerDisplayValue(one));
+		Assert.assertEquals(PosControllerInstr.BRIGHT_DUTYCYCLE, picker.getLastSentPositionControllerDisplayDutyCycle(one));
+		Assert.assertEquals(PosControllerInstr.SOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq(one));
+		Assert.assertEquals(0, (int)picker.getLastSentPositionControllerDisplayValue(two));
+		Assert.assertEquals(PosControllerInstr.BRIGHT_DUTYCYCLE, picker.getLastSentPositionControllerDisplayDutyCycle(two));
+		Assert.assertEquals(PosControllerInstr.BLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq(two));
+		
+		LOGGER.info("4: Logout and login again");
+		picker.logout();
+		picker.login("Worker1");
+		
+		LOGGER.info("5: Veritfy that real orders still shows proper feedback, and fake one is now a solid dim 0");
+		Assert.assertEquals(1, (int)picker.getLastSentPositionControllerDisplayValue(one));
+		Assert.assertEquals(PosControllerInstr.BRIGHT_DUTYCYCLE, picker.getLastSentPositionControllerDisplayDutyCycle(one));
+		Assert.assertEquals(PosControllerInstr.SOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq(one));
+		Assert.assertEquals(0, (int)picker.getLastSentPositionControllerDisplayValue(two));
+		Assert.assertEquals(PosControllerInstr.DIM_DUTYCYCLE, picker.getLastSentPositionControllerDisplayDutyCycle(two));
+		Assert.assertEquals(PosControllerInstr.SOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq(two));
 	}
 }

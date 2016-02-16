@@ -150,6 +150,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	private boolean								mSetupMixHasPutwall						= false;
 	private boolean								mSetupMixHasCntrOrder					= false;
+	
+	//This field indicates whether SETUP_SUMMARY was reached from container setup or from elsewhere
+	private boolean								mPostSetupSummary						= false;
 
 	private static int							BAY_COMPLETE_CODE						= 1;
 	private static int							REPEAT_CONTAINER_CODE					= 2;
@@ -471,7 +474,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	@Override
 	protected void processCommandScan(final String inScanStr) {
-
+		mPostSetupSummary = false;
+		
 		switch (inScanStr) {
 
 			case LOGOUT_COMMAND:
@@ -2393,12 +2397,21 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (wiCount == null) {
 				//TODO send a special code for this?
 				//Right now it matches "done for now" feedback
-				instructions.add(new PosControllerInstr(position,
-					PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-					PosControllerInstr.BITENCODED_LED_DASH,
-					PosControllerInstr.BITENCODED_LED_DASH,
-					PosControllerInstr.SOLID_FREQ.byteValue(),
-					PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
+				if (mPostSetupSummary){
+					instructions.add(new PosControllerInstr(position,
+						(byte)0,
+						(byte)0,
+						(byte)0,
+						PosControllerInstr.BLINK_FREQ.byteValue(),
+						PosControllerInstr.BRIGHT_DUTYCYCLE.byteValue()));
+				} else {
+					instructions.add(new PosControllerInstr(position,
+						(byte)0,
+						(byte)0,
+						(byte)0,
+						PosControllerInstr.SOLID_FREQ.byteValue(),
+						PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
+				}
 				LOGGER.info("Position {} got no WIs. Causes: no path defined, unknown container id, no inventory", position);
 			} else {
 				byte count = (byte) wiCount.getGoodCount();
@@ -2487,6 +2500,71 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			clearOnePosconOnThisDevice(inPosition);
 		}
 	}
+	
+	/**
+	 * @return - Returns the PosControllerInstr for the position given the count if any is warranted. Null otherwise.
+	 */
+	public PosControllerInstr getCartRunFeedbackInstructionForCount(WorkInstructionCount wiCount, byte position) {
+		//if wiCount is null then the server did have any WIs for the order.
+		//this is an "unknown" order id
+		if (wiCount == null) {
+			//Unknown order id matches "done for now" - dim, solid, dashes
+			return new PosControllerInstr(position,
+				(byte)0,
+				(byte)0,
+				(byte)0,
+				PosControllerInstr.SOLID_FREQ.byteValue(),
+				PosControllerInstr.DIM_DUTYCYCLE.byteValue());
+		} else {
+			byte count = (byte) wiCount.getGoodCount();
+			// Caller (in SetupOrdersDeviceLogic) just logged, so we do not need to log again here. Caller also logged the pick count.
+			if (count == 0) { // nothing else to do from this cart setup.
+				// Indicate short this path, work other paths, or both.
+				if (wiCount.hasShortsThisPath() && wiCount.hasWorkOtherPaths()) {
+					//If there any bad counts then we are "done for now" - dim, solid, dashes
+					return new PosControllerInstr(position,
+						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+						PosControllerInstr.BITENCODED_TRIPLE_DASH,
+						PosControllerInstr.BITENCODED_TRIPLE_DASH,
+						PosControllerInstr.SOLID_FREQ.byteValue(),
+						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
+				} else if (wiCount.hasShortsThisPath()) {
+					return new PosControllerInstr(position,
+						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+						PosControllerInstr.BITENCODED_TOP_BOTTOM,
+						PosControllerInstr.BITENCODED_TOP_BOTTOM,
+						PosControllerInstr.SOLID_FREQ.byteValue(),
+						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
+				} else if (wiCount.hasWorkOtherPaths()) {
+					return new PosControllerInstr(position,
+						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+						PosControllerInstr.BITENCODED_LED_DASH,
+						PosControllerInstr.BITENCODED_LED_DASH,
+						PosControllerInstr.SOLID_FREQ.byteValue(),
+						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
+				} else {
+					if (wiCount.getCompleteCount() == 0) {
+						// This should not be possible (unless we only had a single HK WI, which would be a bug)
+						// However, restart on a route after completing all work for an order comes back this way. Server could return the count
+						// but does not. Treat it as order complete. The corresponding case  in setupOrdersDeviceLogic is demonstrated 
+						// in cheProcessPutWall.orderWallRemoveOrder(); Don't know if any case hits this in CheDeviceLogic.
+						LOGGER.debug("WorkInstructionCount has no counts {};", wiCount);
+					}
+					//Ready for packout - solid, dim, "oc"
+					return new PosControllerInstr(position,
+						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+						PosControllerInstr.BITENCODED_LED_C,
+						PosControllerInstr.BITENCODED_LED_O,
+						PosControllerInstr.SOLID_FREQ.byteValue(),
+						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
+				}
+			} else {
+				//No feedback is count > 0
+				return null;
+			}
+		}
+	}
+
 
 	// --------------------------------------------------------------------------
 	/**
@@ -2572,6 +2650,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			//Anywhere else we can start work if there's anything setup
 			case CONTAINER_SELECT:
+				mPostSetupSummary = true;
+				//Continue on to default:
 			default:
 				if (mPositionToContainerMap.values().size() > 0) {
 					startWork(inScanStr);

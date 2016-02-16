@@ -37,6 +37,7 @@ import com.codeshelf.util.ThreadUtils;
 
 public abstract class ServerTest extends HibernateTest {
 	private final static Logger	LOGGER	= LoggerFactory.getLogger(ServerTest.class);
+	public static final Byte ZERO = 0;
 
 	@Override
 	Type getFrameworkType() {
