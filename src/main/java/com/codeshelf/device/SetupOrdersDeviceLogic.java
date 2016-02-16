@@ -150,7 +150,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	private boolean								mSetupMixHasPutwall						= false;
 	private boolean								mSetupMixHasCntrOrder					= false;
-	
+
 	//This field indicates whether SETUP_SUMMARY was reached from container setup or from elsewhere
 	private boolean								mPostSetupSummary						= false;
 
@@ -456,8 +456,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					line1 = StringUtils.substring("Substitute " + getSubstitutionScan(), 0, 40);
 					WorkInstruction activeWi = getOneActiveWorkInstruction();
 					if (activeWi == null) {
-						LOGGER.warn(
-							"Somehow got null from getOneActiveWorkInstruction() when entering the SUBSTITUTION_CONFIRM state");
+						LOGGER.warn("Somehow got null from getOneActiveWorkInstruction() when entering the SUBSTITUTION_CONFIRM state");
 						sendDisplayCommand(line1, "?");
 					} else {
 						sendDisplayCommand(line1, "For " + getOneActiveWorkInstruction().getItemId() + "?");
@@ -475,7 +474,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Override
 	protected void processCommandScan(final String inScanStr) {
 		mPostSetupSummary = false;
-		
+
 		switch (inScanStr) {
 
 			case LOGOUT_COMMAND:
@@ -836,7 +835,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setSubstitutionScan(null);
 				setState(getRememberPreSubstitutionState());
 				break;
-				
+
 			case SHORT_PICK:
 				setState(CheStateEnum.DO_PICK);
 				break;
@@ -1048,10 +1047,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (!wi.isHousekeeping()) {
 				housekeeping = false;
 			}
-			
+
 			doShortTransaction(wi, inPicked);
-			
-			EventType eventType = EventType.SHORT; 
+
+			EventType eventType = EventType.SHORT;
 			notifyWiVerb(wi, eventType, kLogAsWarn);
 
 			clearLedAndPosConControllersForWi(wi); // wrong? What about any short aheads?
@@ -1104,7 +1103,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (inScanStr.equals(YES_COMMAND)) {
 			WorkInstruction wi = mShortPickWi;
 			if (wi != null) {
-				if (wi.getSubstitution() != null && mShortPickQty != 0){
+				if (wi.getSubstitution() != null && mShortPickQty != 0) {
 					processNormalPick(wi, mShortPickQty);
 				} else {
 					processShortPickYes(wi, mShortPickQty);
@@ -1385,6 +1384,20 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private void doShortsAheads(final WorkInstruction inChangedWi) {
 		doShortsAndSubstitutionsAheads(inChangedWi, null);
 	}
+	
+	/**
+	 * wiAlreadyDone() returns true for short or complete. If so, should not consider this for substitute ahead or short ahead
+	 */
+	private boolean wiAlreadyDone(WorkInstruction inWi){
+		if (inWi == null) {
+			LOGGER.error("null value in wiAlreadyDone");
+			return true; // The safe return value
+		}
+		WorkInstructionStatusEnum status = inWi.getStatus();
+		if (status.equals(WorkInstructionStatusEnum.COMPLETE) || status.equals(WorkInstructionStatusEnum.SHORT))
+			return true;
+		return false;
+	}
 
 	// --------------------------------------------------------------------------
 	/**
@@ -1418,6 +1431,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// Find short aheads from the active picks first, which might have lower sort values.
 		// If we are shorting the inShortWi, there should be no housekeeps in the active pick list.
 		for (WorkInstruction wi : getActivePickWiList()) {
+			if (wiAlreadyDone(wi)) {
+				continue;
+			}
 			if (wi.isHousekeeping()) {
 				LOGGER.error("unanticipated housekeeping WI in mActivePickWiList in doShortAheads");
 			}
@@ -1433,6 +1449,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// Now look for later work instructions to short, and remove housekeeps as necessary.
 		WorkInstruction prevWi = null;
 		for (WorkInstruction wi : mAllPicksWiList) {
+			if (wiAlreadyDone(wi)) {
+				prevWi = wi; // must do this which is normally done at the end of the loop
+				continue;
+			}
 			if (sameProductLotEtc(wi, inChangedWi)) {
 				if (substitution != null && wi.getSubstituteAllowed()) {
 					substitutedCount++;
@@ -1816,7 +1836,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					return;
 				}
 			}
-			
+
 			// DEV-836, 837. From what states shall we allow this?
 			ledControllerClearLeds();
 			mLocationId = inScanStr; // let's remember where user scanned.
@@ -2397,18 +2417,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (wiCount == null) {
 				//TODO send a special code for this?
 				//Right now it matches "done for now" feedback
-				if (mPostSetupSummary){
+				if (mPostSetupSummary) {
 					instructions.add(new PosControllerInstr(position,
-						(byte)0,
-						(byte)0,
-						(byte)0,
+						(byte) 0,
+						(byte) 0,
+						(byte) 0,
 						PosControllerInstr.BLINK_FREQ.byteValue(),
 						PosControllerInstr.BRIGHT_DUTYCYCLE.byteValue()));
 				} else {
 					instructions.add(new PosControllerInstr(position,
-						(byte)0,
-						(byte)0,
-						(byte)0,
+						(byte) 0,
+						(byte) 0,
+						(byte) 0,
 						PosControllerInstr.SOLID_FREQ.byteValue(),
 						PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
 				}
@@ -2500,7 +2520,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			clearOnePosconOnThisDevice(inPosition);
 		}
 	}
-	
+
 	/**
 	 * @return - Returns the PosControllerInstr for the position given the count if any is warranted. Null otherwise.
 	 */
@@ -2510,9 +2530,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (wiCount == null) {
 			//Unknown order id matches "done for now" - dim, solid, dashes
 			return new PosControllerInstr(position,
-				(byte)0,
-				(byte)0,
-				(byte)0,
+				(byte) 0,
+				(byte) 0,
+				(byte) 0,
 				PosControllerInstr.SOLID_FREQ.byteValue(),
 				PosControllerInstr.DIM_DUTYCYCLE.byteValue());
 		} else {
@@ -2564,7 +2584,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			}
 		}
 	}
-
 
 	// --------------------------------------------------------------------------
 	/**
