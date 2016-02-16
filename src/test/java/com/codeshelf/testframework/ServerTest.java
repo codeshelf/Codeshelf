@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 
 import org.junit.Assert;
@@ -19,6 +20,7 @@ import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WorkInstructionSequencerType;
+import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -422,6 +424,40 @@ public abstract class ServerTest extends HibernateTest {
 			Assert.fail(String.format("Did not encounter requested object in %dms after %d checks.", maxTimeToWaitMillis, count));
 			return null;
 		}
+	}
+
+	/**
+	 * Wait until this workInstruction has this status
+	 */
+	public void waitForWorkInstructionStatus(Facility inFacility,
+		UUID workInstructionReference,
+		WorkInstructionStatusEnum expectedStatus,
+		long millisToWait) {
+
+		WorkInstruction resultWi = null;
+		ThreadUtils.sleep(250);
+		long start = System.currentTimeMillis();
+		String statusStr = "null";
+		while (System.currentTimeMillis() - start < millisToWait) {
+			beginTransaction();
+			inFacility = inFacility.reload();
+			WorkInstruction wi = WorkInstruction.staticGetDao().findByPersistentId(workInstructionReference);
+			if (wi != null) {
+				WorkInstructionStatusEnum status = wi.getStatus();
+				if (expectedStatus == null || expectedStatus.equals(status)) {
+					resultWi = wi;
+				}
+				else 
+					statusStr = wi.getStatusString();
+			}
+			commitTransaction();
+
+			if (resultWi != null) {
+				return; // Could change the function to return the WI
+			}
+			ThreadUtils.sleep(200); // retry every 200ms
+		}
+		Assert.fail(String.format("Work Instructions did not reach desired state in %dms. Status:%s", millisToWait, statusStr));
 	}
 
 	/**
