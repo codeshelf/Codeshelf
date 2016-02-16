@@ -30,10 +30,10 @@ public class PalletizerCompleteItemCommand extends CommandABC<PalletizerComplete
 		PalletizerInfo info = request.getInfo();
 		Boolean shorted = request.getShorted();
 		String userId = request.getUserId();
-		LOGGER.info("Palletizer Complete Item {}, shorted = {} on che {} by {}", info.getItem(), shorted, cheId, userId);
 		GenericDeviceResponse response = new GenericDeviceResponse();
 		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
 		if (che!=null) {
+			LOGGER.info("Palletizer Complete Item {}, shorted = {} on che {} by {}", info.getItem(), shorted, che.getDeviceGuidStr(), userId);
 			String networkGuid = che.getDeviceNetGuid().getHexStringNoPrefix();
 			palletizerBehavior.completeItem(che, info, shorted, userId);
 			response.setNetworkGuid(networkGuid);

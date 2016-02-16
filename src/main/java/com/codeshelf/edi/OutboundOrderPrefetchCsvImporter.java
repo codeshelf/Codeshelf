@@ -32,6 +32,8 @@ import com.codeshelf.model.domain.ImportReceipt;
 import com.codeshelf.model.domain.ImportStatus;
 import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.model.FacilityPropertyType;
+import com.codeshelf.model.OrderTypeEnum;
+import com.codeshelf.model.ReplenishItem;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
@@ -42,6 +44,7 @@ import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.util.DateTimeParser;
 import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.validation.BatchResult;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 
 public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderCsvBean> implements ICsvOrderImporter {
@@ -513,5 +516,30 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			LOGGER.warn("Order deletion thread interrupted while awaiting termination", e);
 		}
 		LOGGER.info("Order delition completed");
+	}
+
+	@Override
+	public String createReplenishOrderForItem(Facility facility, ReplenishItem item) {
+		String gtin = item.getGtin();
+		String itemId = item.getItemId();
+		String uom = Strings.nullToEmpty(item.getUom());
+		
+		String scannableId = Strings.emptyToNull(gtin) == null ? itemId : gtin;
+		String location = Strings.nullToEmpty(item.getLocation());
+
+		OutboundOrderCsvBean orderBean = new OutboundOrderCsvBean();
+		orderBean.setLineNumber(1);
+		orderBean.setOrderId(scannableId);
+		orderBean.setItemId(itemId);
+		orderBean.setQuantity("1");
+		orderBean.setUom(uom);
+		orderBean.setLocationId(location);
+		orderBean.setPreAssignedContainerId(scannableId);
+		orderBean.setWorkSequence("0");
+		orderBean.setOperationType(OrderTypeEnum.REPLENISH.name());
+		ArrayList<OutboundOrderCsvBean> orderBeanList = new ArrayList<>(1);
+		orderBeanList.add(orderBean);
+		this.importOrdersFromBeanList(orderBeanList, facility, new Timestamp(System.currentTimeMillis()), false);
+		return scannableId;
 	}
 }

@@ -7,36 +7,25 @@ import lombok.Getter;
 
 import org.apache.commons.lang.ObjectUtils;
 
+import com.codeshelf.behavior.NotificationBehavior.ItemEventTypeGroup;
 import com.google.common.base.Strings;
 
 @EqualsAndHashCode(of={"itemId", "uom", "location"})
 public class ItemDisplay implements Comparable<ItemDisplay> {
-	
-	public static final FieldComparator<Map<Object, Object>>	ItemComparator = new FieldComparator<Map<Object, Object>>() {
 
+	public static final FieldComparator<Map<Object, Object>>	ItemComparator = new FieldComparator<Map<Object, Object>>() {
 		@Getter
-		private String[] sortedBy = {"itemId", "uom", "location"};
-		
-		@Override
-		public int compare(Map<Object, Object> record1, Map<Object, Object> record2) {
-			int value = 0;
-			
-			for (String sortField : sortedBy) {
-				Comparable<?> item1 = (Comparable<?>) record1.get(sortField);
-				Comparable<?> item2 = (Comparable<?>) record2.get(sortField);
-				value =  ObjectUtils.compare(item1, item2);
-				if (value != 0) {
-					break;
-				}
-			}
-			return value;
-		}
+		private String[] sortedBy = {"count", "itemId", "uom", "location"};
+
 		
 	};
 
 	@Getter
 	private String itemId;
-	
+
+	@Getter
+	private String gtin;
+
 	@Getter
 	private String uom;
 	
@@ -49,9 +38,18 @@ public class ItemDisplay implements Comparable<ItemDisplay> {
 
 	public ItemDisplay(EventDisplay eventDisplay) {
 		this.itemId = Strings.nullToEmpty(eventDisplay.getItemId());
+		this.location = Strings.nullToEmpty(eventDisplay.getItemLocation());
+		this.gtin = Strings.nullToEmpty(eventDisplay.getItemGtin());
 		this.uom = Strings.nullToEmpty(eventDisplay.getItemUom());
 		this.description = Strings.nullToEmpty(eventDisplay.getItemDescription());
-		this.location = Strings.nullToEmpty(eventDisplay.getItemLocation());
+	}
+
+	public ItemDisplay(ItemEventTypeGroup groupedEvent) {
+		this.itemId = Strings.nullToEmpty(groupedEvent.getItemId());
+		this.location = Strings.nullToEmpty(groupedEvent.getLocation());
+		this.gtin = Strings.nullToEmpty(groupedEvent.getItemGtin());
+		this.uom = Strings.nullToEmpty(groupedEvent.getItemUom());
+		this.description = Strings.nullToEmpty(groupedEvent.getItemDescription());
 	}
 
 	@Override
