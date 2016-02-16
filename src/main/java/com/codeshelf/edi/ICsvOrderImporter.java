@@ -11,6 +11,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 import com.codeshelf.model.EdiTransportType;
+import com.codeshelf.model.ReplenishItem;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.validation.BatchResult;
 
@@ -27,6 +28,12 @@ public interface ICsvOrderImporter {
 	BatchResult<Object> importOrdersFromBeanList(List<OutboundOrderCsvBean> originalBeanList, Facility facility, Timestamp inProcessTime, boolean deleteOldOrders);
 
 	// here for easier testablity
+
+	/**
+	 * @return scannable order id (itemId or gtin)
+	 */
+	String  createReplenishOrderForItem(Facility facility, ReplenishItem item);
+
 	int toInteger(final String inString);
 	
 	void setTruncatedGtins(boolean value);
@@ -34,4 +41,5 @@ public interface ICsvOrderImporter {
 	void persistDataReceipt(Facility facility, String username, String filename, long receivedTime, EdiTransportType tranportType, BatchResult<?> result);
 	
 	void makeOrderDeletionFail(boolean fail);
+
 }

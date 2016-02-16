@@ -12,7 +12,6 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.api.resources.subresources.EventResource;
 import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheStateEnum;
 import com.codeshelf.edi.ICsvOrderImporter;
@@ -28,7 +27,6 @@ import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
 import com.codeshelf.util.ThreadUtils;
-import com.google.inject.Provider;
 
 public class CheProcessReplen extends ServerTest{
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(CheProcessReplen.class);
@@ -172,16 +170,10 @@ public class CheProcessReplen extends ServerTest{
 				Assert.assertEquals(3, shortEvents.size());
 			}
 		}
-		Provider<ICsvOrderImporter> orderImporterProvider = new Provider<ICsvOrderImporter>() {
-			@Override
-			public ICsvOrderImporter get() {
-				return createOrderImporter();
-			}
-		};
-		EventResource eventResource = new EventResource(orderImporterProvider);
+
+		ICsvOrderImporter orderImporter = createOrderImporter();
 		for (WorkerEvent event : shortEvents){
-			eventResource.setEvent(event);
-			eventResource.createReplenishOrderForEvent();
+			orderImporter.createReplenishOrderForItem(facility, event.toReplenishItem());
 		}
 		List<Criterion> orderParams = new ArrayList<Criterion>();
 		orderParams.add(Restrictions.eq("orderType", OrderTypeEnum.REPLENISH));

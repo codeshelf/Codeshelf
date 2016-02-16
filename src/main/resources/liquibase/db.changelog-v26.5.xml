@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.2.xsd http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd">
+    <changeSet author="pmonteiro (generated)" id="1455229195449-5">
+        <addColumn tableName="event_worker">
+            <column name="item_description" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="pmonteiro (generated)" id="1455229195449-6">
+        <addColumn tableName="event_worker">
+            <column name="item_gtin" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="pmonteiro (generated)" id="1455229195449-7">
+        <addColumn tableName="event_worker">
+            <column name="item_id" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="pmonteiro (generated)" id="1455229195449-8">
+        <addColumn tableName="event_worker">
+            <column name="item_uom" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+<!-- to update data
+     <sql>
+     set search_path to ${database.defaultSchemaName};
+WITH event_item AS (SELECT wi.persistentid, item_id, gtin as item_gtin, wi.description as item_description, uom_master.domainid as item_uom
+     FROM work_instruction wi
+          LEFT JOIN order_detail od ON wi.order_detail_persistentid = od.persistentid
+          LEFT JOIN uom_master ON od.uom_master_persistentid = uom_master.persistentid)
+
+UPDATE event_worker
+ SET item_id = i.item_id, item_gtin= NULLIF(i.item_gtin, ''), item_description = NULLIF(i.item_description, ''), item_uom = NULLIF(i.item_uom, '')
+ FROM event_item as i
+ WHERE event_worker.work_instruction_persistentid = i.persistentid;
+        </sql>
+-->
+
+</databaseChangeLog>

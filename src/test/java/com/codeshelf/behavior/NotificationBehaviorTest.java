@@ -9,6 +9,7 @@ import java.util.Set;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.hibernate.criterion.Criterion;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Interval;
@@ -29,6 +30,7 @@ import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
 import com.codeshelf.model.domain.WorkerEvent.EventType;
+import static com.codeshelf.model.domain.WorkerEvent.EventType.*;
 import com.codeshelf.testframework.HibernateTest;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -172,28 +174,30 @@ public class NotificationBehaviorTest extends HibernateTest {
 		this.getTenantPersistenceService().commitTransaction();
 
 		this.getTenantPersistenceService().beginTransaction();
-		List<WorkerEventTypeGroup> groupedCounts = behavior.groupWorkerEventsByType(getFacility(), new Interval(eventTime.minus(1), eventTime4.plus(1)), false);
+
+		List<Criterion> filterList = behavior.toFilterList(getFacility(), new Interval(eventTime.minus(1), eventTime4.plus(1)), ImmutableList.of(COMPLETE, SHORT, SKIP_ITEM_SCAN), false);
+		List<WorkerEventTypeGroup> groupedCounts = behavior.groupWorkerEventsByType(filterList);
 		Assert.assertEquals(3, groupedCounts.size());
 		Map<WorkerEvent.EventType, Long> expectedValues = ImmutableMap.of(
 			WorkerEvent.EventType.COMPLETE, 2L,
 			WorkerEvent.EventType.SHORT, 1L,
 			WorkerEvent.EventType.SKIP_ITEM_SCAN, 1L
 		);
-		
-		
+
+
 		for (WorkerEventTypeGroup workerEventTypeGroup : groupedCounts) {
 			Assert.assertEquals(expectedValues.get(workerEventTypeGroup.getEventType()).longValue(), workerEventTypeGroup.getCount());
 		}
 		this.getTenantPersistenceService().commitTransaction();
 	}
-	
-	
+
+
 	@Test
 	public void testMessageOnStartDate() {
 		DateTime startTime = eventTime;
 		DateTime endTime = eventTime.plus(1);
 		testDateBoundaries(eventTime, startTime, endTime, 1);
-		
+
 	}
 
 	@Test
