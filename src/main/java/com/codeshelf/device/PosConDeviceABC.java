@@ -71,7 +71,7 @@ public abstract class PosConDeviceABC extends DeviceLogicABC {
 	}
 
 	protected void sendPositionControllerInstructions(List<PosControllerInstr> inInstructions) {
-		ThreadUtils.sleep(400);
+		//ThreadUtils.sleep(400);
 		if (getCheLightingEnum() == CheLightingEnum.LABEL_V1) {
 			LOGGER.info("Not sending PosCon commands, as this device has lighting mode " + getCheLightingEnum());
 			return;
