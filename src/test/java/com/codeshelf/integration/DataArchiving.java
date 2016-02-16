@@ -486,7 +486,7 @@ public class DataArchiving extends ServerTest {
 		int quantity = wi.getPlanQuantity();
 		picker.pick(button, quantity);
 
-		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		LOGGER.info(picker.getLastCheDisplay());
 		allWiList = picker.getAllPicksList();
 		this.logWiList(allWiList);
