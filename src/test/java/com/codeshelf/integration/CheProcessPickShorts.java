@@ -714,10 +714,9 @@ public class CheProcessPickShorts extends ServerTest {
 		serverWi = WorkInstruction.staticGetDao().findByPersistentId(wi3.getPersistentId());
 		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, serverWi.getStatus());
 		
-		// BUG HERE! wi5 used to be complete, but turned into SHORT.
+		// DEV-1491 BUG was here. wi5 used to be complete, but turned into SHORT.
 		serverWi = WorkInstruction.staticGetDao().findByPersistentId(wi5.getPersistentId());
-		// Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, serverWi.getStatus());
-		Assert.assertEquals(WorkInstructionStatusEnum.SHORT, serverWi.getStatus()); // incorrect. Reproduces DEV-1491
+		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, serverWi.getStatus());
 
 		serverWi = WorkInstruction.staticGetDao().findByPersistentId(secondItemWi.getPersistentId());
 		Assert.assertEquals(WorkInstructionStatusEnum.COMPLETE, serverWi.getStatus());
@@ -741,12 +740,10 @@ public class CheProcessPickShorts extends ServerTest {
 		picker.waitForCheState(CheStateEnum.DO_PICK, WAIT_TIME);
 
 		List<WorkInstruction> siteconWis = picker.getAllPicksList();
-		// Assert.assertEquals(5, siteconWis.size());
-		Assert.assertEquals(6, siteconWis.size()); // incorrect. Just a consequence of DEV-1491 bug above
+		Assert.assertEquals(5, siteconWis.size());
 		
 		/*
-		Note: this test is also generating/reproducing these errors that we have had a hard time tracking down.
-		Do not fix in v25. Or at least check master first. Might be fixed already in master.
+		Note: this test also generating these errors before the DEV-1491 fix.
 		[ERROR] bad calling context 1 for unCompletedUnneededHousekeep 
 		[ERROR] decrementGoodCountAndIncrementShortCount() got the good count negative. How?
 		*/

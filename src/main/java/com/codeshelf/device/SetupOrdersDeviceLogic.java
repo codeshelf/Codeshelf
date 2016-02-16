@@ -1349,6 +1349,20 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
 	}
 
+	/**
+	 * wiAlreadyDone() returns true for short or complete. If so, should not consider this for substitute ahead or short ahead
+	 */
+	private boolean wiAlreadyDone(WorkInstruction inWi){
+		if (inWi == null) {
+			LOGGER.error("null value in wiAlreadyDone");
+			return true; // The safe return value
+		}
+		WorkInstructionStatusEnum status = inWi.getStatus();
+		if (status.equals(WorkInstructionStatusEnum.COMPLETE) || status.equals(WorkInstructionStatusEnum.SHORT))
+			return true;
+		return false;
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 * The inShortWi was just shorted.
@@ -1373,6 +1387,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// Find short aheads from the active picks first, which might have lower sort values.
 		// If we are shorting the inShortWi, there should be no housekeeps in the active pick list.
 		for (WorkInstruction wi : getActivePickWiList()) {
+			if (wiAlreadyDone(wi)) {
+				continue;
+			}
 			if (wi.isHousekeeping()) {
 				LOGGER.error("unanticipated housekeeping WI in mActivePickWiList in doShortAheads");
 			}
@@ -1385,6 +1402,10 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		// Now look for later work instructions to short, and remove housekeeps as necessary.
 		WorkInstruction prevWi = null;
 		for (WorkInstruction wi : mAllPicksWiList) {
+			if (wiAlreadyDone(wi)) {
+				prevWi = wi; // must do this which is normally done at the end of the loop
+				continue;
+			}
 			if (laterWi(wi, inShortWi)) {
 				laterCount++;
 				if (sameProductLotEtc(wi, inShortWi)) {
