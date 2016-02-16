@@ -205,7 +205,6 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 		workInstructionId = wi.getPersistentId();
 		setPathName(wi.getPathName());
 		setPurpose(wi.getPurpose().name());
-		setCreated(wi.getCompleted());
 		setWorkerId(wi.getPickerId());
 		setLocation(wi.getPickInstruction());
 		setItemId(wi.getItemId());
@@ -216,6 +215,10 @@ public class WorkerEvent extends DomainObjectTreeABC<Facility> {
 		if (orderDetail != null) {
 			setOrderDetailId(orderDetail.getPersistentId());
 		}
+		if (getCreated() == null) { //if explicitly set prior don't overwrite
+			setCreated(wi.getCompleted());
+		}
+
 	}
 
 	public ReplenishItem toReplenishItem() {
