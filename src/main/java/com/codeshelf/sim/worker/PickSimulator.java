@@ -576,7 +576,13 @@ public class PickSimulator {
 		return deviceToAsk.getRecentCheDisplayString(lineIndex);
 	}
 
-	public void logCheDisplay() {
+	/**
+	 * Stub this so test may be merged back to v25
+	 */
+	public void logLastCheDisplay() {
+		logCheDisplay();
+	}
+		public void logCheDisplay() {
 		// each line below may get the linked screen line. So the effect is logging the linked screen. 
 		// No need for another getDeviceToAsk() call.
 		LOGGER.info("{} SCREEN Line1:{} Line2:{} Line3:{} Line4:{}",
