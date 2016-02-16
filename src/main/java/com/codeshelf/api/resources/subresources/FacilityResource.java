@@ -693,11 +693,16 @@ public class FacilityResource {
 		TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 		
 		//Test if Site Controller is running
-		new ActiveSiteControllerHealthCheck(webSocketManagerService).check(facility);
-		Result siteHealth = CachedHealthCheckResults.getJobResult(ActiveSiteControllerHealthCheck.class.getSimpleName());
-		if (!siteHealth.isHealthy()) {
-			errorMesage.setMessageError("Site controller problem: " + siteHealth.getMessage());
-			return errorMesage;
+		try {
+			persistence.beginTransaction();
+			new ActiveSiteControllerHealthCheck(webSocketManagerService).check(facility);
+			Result siteHealth = CachedHealthCheckResults.getJobResult(ActiveSiteControllerHealthCheck.class.getSimpleName());
+			if (!siteHealth.isHealthy()) {
+				errorMesage.setMessageError("Site controller problem: " + siteHealth.getMessage());
+				return errorMesage;
+			}
+		} finally {
+			persistence.rollbackTransaction();
 		}
 		
 		persistence.beginTransaction();
