@@ -1384,24 +1384,25 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	private void doShortsAheads(final WorkInstruction inChangedWi) {
 		doShortsAndSubstitutionsAheads(inChangedWi, null);
 	}
-	
+
 	/**
-	 * wiAlreadyDone() returns true for short or complete. If so, should not consider this for substitute ahead or short ahead
+	 * wiAlreadyDone() returns true for short or complete or substitute. If so, should not consider this for substitute ahead or short ahead
 	 */
-	private boolean wiAlreadyDone(WorkInstruction inWi){
+	private boolean wiAlreadyDone(WorkInstruction inWi) {
 		if (inWi == null) {
 			LOGGER.error("null value in wiAlreadyDone");
 			return true; // The safe return value
 		}
 		WorkInstructionStatusEnum status = inWi.getStatus();
-		if (status.equals(WorkInstructionStatusEnum.COMPLETE) || status.equals(WorkInstructionStatusEnum.SHORT))
+		if (status.equals(WorkInstructionStatusEnum.COMPLETE) || status.equals(WorkInstructionStatusEnum.SHORT)
+				| status.equals(WorkInstructionStatusEnum.SUBSTITUTION))
 			return true;
 		return false;
 	}
 
 	// --------------------------------------------------------------------------
 	/**
-	 * This function is called in 2 situatinos:
+	 * This function is called in 2 situations:
 	 * 
 	 * 1)The inChangedWi was just shorted. Leave "substitution" param null.
 	 *   Compare later wis to that. If the same product, short those also, removing unnecessary housekeeping work instructions
