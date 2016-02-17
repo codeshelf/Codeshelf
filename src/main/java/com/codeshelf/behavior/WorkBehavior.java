@@ -283,7 +283,6 @@ public class WorkBehavior implements IApiBehavior {
 				theTime);
 			workList.getInstructions().addAll(slowPutWallInstructions);
 		}
-
 		//Filter,Sort, and save actionsable WI's
 		//TODO Consider doing this in getWork?
 		//sortAndSaveActionableWIs(facility, wiResultList);
@@ -901,7 +900,8 @@ public class WorkBehavior implements IApiBehavior {
 			inFacility,
 			inFacility.getPaths(),
 			workSeqr,
-			null);
+			null,
+			inFacility.getUnspecifiedLocation());
 		WorkInstruction aWi = null;
 		// workItem will contain an Instruction if an item was found on some path or an OrderDetail if it was not.
 		// In LinePick, we are OK with items without a location. So, if does return with OrderDetail, just create an Instruction manually.
@@ -912,7 +912,8 @@ public class WorkBehavior implements IApiBehavior {
 				orderDetail,
 				inChe,
 				null,
-				true); // Could be normal WI, or a short WI
+				true,
+				inChe.getFacility().getUnspecifiedLocation()); // Could be normal WI, or a short WI
 		} else {
 			aWi = workItem.getInstruction();
 		}
@@ -1536,6 +1537,7 @@ public class WorkBehavior implements IApiBehavior {
 		final Timestamp inTime) {
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		List<OrderDetail> uncompletedDetails = new ArrayList<OrderDetail>();
+		Location unspecifiedLocation = inChe.getFacility().getUnspecifiedLocation();
 
 		// To proceed, there should container use linked to outbound order
 		// We want to add all orders represented in the container list because these containers (or for Accu, fake containers representing the order) were scanned for this CHE to do.
@@ -1561,7 +1563,8 @@ public class WorkBehavior implements IApiBehavior {
 								facility,
 								facility.getPaths(),
 								workSeqr,
-								prefetchedPreferredLocations); // Could be normal WI, or a short WI
+								prefetchedPreferredLocations,
+								unspecifiedLocation); // Could be normal WI, or a short WI
 							if (workItem.getDetail() != null) {
 								uncompletedDetails.add(workItem.getDetail());
 							}
@@ -1599,7 +1602,6 @@ public class WorkBehavior implements IApiBehavior {
 				}
 			}
 		}
-		//return wiResultList;
 		WorkList workList = new WorkList();
 		workList.setInstructions(wiResultList);
 		workList.setDetails(uncompletedDetails);
@@ -1759,7 +1761,9 @@ public class WorkBehavior implements IApiBehavior {
 		final Facility inFacility,
 		final List<Path> paths,
 		final String workSeqr,
-		final HashMap<String, Location> prefetchedPreferredLocations) throws DaoException {
+		final HashMap<String, Location> prefetchedPreferredLocations,
+		final Location unspecifiedLocation) throws DaoException {
+		
 		WorkInstruction resultWi = null;
 		SingleWorkItem resultWork = new SingleWorkItem();
 		ItemMaster itemMaster = inOrderDetail.getItemMaster();
@@ -1780,7 +1784,7 @@ public class WorkBehavior implements IApiBehavior {
 						location = prefetchedPreferredLocations.get(preferredLocationStr);
 					}
 					if (location == null) {
-						location = inFacility.getUnspecifiedLocation();
+						location = unspecifiedLocation;
 					} else if (!location.isActive()) {
 						LOGGER.warn("Unexpected inactive location for preferred Location: {}", location);
 						location = inFacility.getUnspecifiedLocation();
@@ -1824,7 +1828,10 @@ public class WorkBehavior implements IApiBehavior {
 					inChe,
 					inTime,
 					inContainer,
-					inFacility);
+					inFacility,
+					true,
+					unspecifiedLocation,
+					null);
 				if (resultWi != null) {
 					resultWi.setPlanQuantity(0);
 					resultWi.setPlanMinQuantity(0);
@@ -1844,7 +1851,10 @@ public class WorkBehavior implements IApiBehavior {
 				inChe,
 				inTime,
 				inContainer,
-				location);
+				location,
+				true,
+				unspecifiedLocation,
+				null);
 			resultWork.addInstruction(resultWi);
 
 		}

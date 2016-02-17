@@ -103,8 +103,9 @@ public class PalletizerBehavior implements IApiBehavior{
 			new Timestamp(System.currentTimeMillis()),
 			null,
 			location,
-			che.getColor()
-			);
+			true,
+			facility.getUnspecifiedLocation(),
+			che.getColor());
 		wi.setPickerId(userId);
 		info.setWi(wi);
 		return info;

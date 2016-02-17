@@ -5,7 +5,7 @@ SERVER
 setProperty pickmult true
 setProperty WORKSEQR WorkSequence
 deleteAllExtensionPoints
-deleteOrders 1111
+deleteOrders 1111 2222
 importOrders orders_quick
 
 SITE
@@ -13,7 +13,7 @@ waitForDevices :che
 defChe che :che
 logout che
 loginSetup che worker
-setupCart che 1111
+setupCart che 1111 2222
 scan che X%START SETUP_SUMMARY
 scan che X%START 
 waitForState che SCAN_SOMETHING DO_PICK
