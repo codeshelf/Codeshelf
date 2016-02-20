@@ -109,10 +109,37 @@ public interface IRadioController extends Runnable {
 	boolean isRunning();
 	
 	IGatewayInterface getGatewayInterface();
-
 	
 	NetGuid getNetGuidFromNetAddress(byte networkAddr);
 	
 	NetGuid getNetGuidFromNetAddress(NetAddress netAddress);
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Get broadcast network Id for radio controller
+	 * @return
+	 */
+	NetworkId getBroadcastNetworkId();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Get zero network Id for radio controller
+	 * @return
+	 */
+	NetworkId getZeroNetworkId();
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Get broadcast address for radio controller
+	 * @return
+	 */
+	NetAddress getBroadcastAddress();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Get broadcast address for radio controller
+	 * @return
+	 */
+	NetAddress getServerAddress();
 
 }

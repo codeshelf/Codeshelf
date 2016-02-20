@@ -31,7 +31,6 @@ public abstract class CommandControlABC extends ExtendedCommandABC {
 	protected static final int	DEFAULT_RESEND_DELAY		= 0;
 
 	public static final int		COMMAND_CONTROL_HDR_BYTES	= 1;
-	public static final int		MAX_CONTROL_BYTES			= ICommand.MAX_COMMAND_BYTES - COMMAND_CONTROL_HDR_BYTES;
 
 	public static final byte	SCAN						= 0;
 	public static final byte	MESSAGE						= 1;

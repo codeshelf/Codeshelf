@@ -11,6 +11,7 @@ import com.codeshelf.flyweight.command.CommandGroupEnum;
 import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetworkId;
 import com.codeshelf.flyweight.controller.IGatewayInterface;
+import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.metrics.MetricsGroup;
 import com.codeshelf.metrics.MetricsService;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -31,6 +32,7 @@ public class RadioControllerPacketIOService {
 																						.setPriority(Thread.MAX_PRIORITY)
 																						.build());
 
+	private final IRadioController						radioController;
 	private final IGatewayInterface						gatewayInterface;
 	private final RadioControllerInboundPacketService	packetHandlerService;
 
@@ -38,9 +40,10 @@ public class RadioControllerPacketIOService {
 	private volatile boolean							isShutdown				= false;
 	private PacketReader								packetReader;
 
-	public RadioControllerPacketIOService(IGatewayInterface gatewayInterface,
+	public RadioControllerPacketIOService(IRadioController inRadioController, IGatewayInterface gatewayInterface,
 		RadioControllerInboundPacketService packetHandlerService) {
 		super();
+		this.radioController = inRadioController;
 		this.gatewayInterface = gatewayInterface;
 		this.packetHandlerService = packetHandlerService;
 	}
@@ -102,25 +105,21 @@ public class RadioControllerPacketIOService {
 						// Blocks and waits for packet
 						// TODO Move gatewayInterface away from polling.
 						IPacket packet = null;
-						packet = gatewayInterface.receivePacket(networkId);
+						packet = gatewayInterface.receivePacket(networkId, radioController.getBroadcastNetworkId(), radioController.getZeroNetworkId());
 
-						if (packet.getPacketVersion().getValue() == (int) IPacket.PACKET_VERSION_1) {
-							if (packet != null) {
-								// Hand packet off to handler service
-								boolean success = packetHandlerService.handleInboundPacket(packet);
-								//LOGGER.info("Inbound packet={}; didGetHandled={}", packet, success);
-								if (!success) {
-	
-									LOGGER.warn("PacketHandlerService failed to accept packet. Pausing packet reads to retry handlePacket. Packet={}",
-										packet);
-									// We will stop reading and try to handle this
-									// packet with an exponential backoff of up to
-									// 500ms
-									this.retryHandlePacketWithExponentialBackoff(packet);
-								}
+						if (packet != null) {
+							// Hand packet off to handler service
+							boolean success = packetHandlerService.handleInboundPacket(packet);
+							//LOGGER.info("Inbound packet={}; didGetHandled={}", packet, success);
+							if (!success) {
+
+								LOGGER.warn("PacketHandlerService failed to accept packet. Pausing packet reads to retry handlePacket. Packet={}",
+									packet);
+								// We will stop reading and try to handle this
+								// packet with an exponential backoff of up to
+								// 500ms
+								this.retryHandlePacketWithExponentialBackoff(packet);
 							}
-						} else {
-							//LOGGER.error("******* Got packet of wrong type!");
 						}
 					}
 				} catch (Exception e) {

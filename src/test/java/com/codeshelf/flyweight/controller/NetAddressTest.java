@@ -26,8 +26,8 @@ public final class NetAddressTest extends MinimalTest {
 
 
 //		try {
-		new NetAddress(IPacket.GATEWAY_ADDRESS);
-		new NetAddress(IPacket.BROADCAST_ADDRESS);
+		//new NetAddress(IPacket.GATEWAY_ADDRESS);
+		//new NetAddress(IPacket.BROADCAST_ADDRESS);
 			
 			// Expected result.
 		//		} catch (OutOfRangeException e) {

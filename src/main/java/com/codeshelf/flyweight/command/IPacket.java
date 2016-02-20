@@ -15,44 +15,28 @@ import com.codeshelf.flyweight.controller.INetworkDevice;
  */
 public interface IPacket {
 	
-	byte PACKET_VERSION_0 = 1;
-	byte PACKET_VERSION_1 = 1;
-	short CRC_PLOY = 0x1021;
-
-	// Packet header structure sizes.  (See Packet.java)
 	byte	PROTOCOL_VERSION_BITS	= 2;
-	byte	ACK_REQUIRED_BITS		= 1;
-	byte	RESERVED_HEADER_BITS	= 1;
-	byte	NETWORK_NUMBER_BITS		= 4;
-	byte	ADDRESS_BITS			= 16;
-	byte	CRC_BITS				= 16;
-
-	byte	NETWORK_NUM_SPACING_BITS	= 4;
-	byte	ADDRESS_SPACING_BITS		= 0;
-
-	byte	STD_PACKET		= 0;
-	byte	ACK_PACKET		= 1;
-	byte	EMPTY_ACK_ID	= 0;
-	int		ACK_DATA_BYTES	= 8;
-
-	//NetAddress	GATEWAY_ADDRESS				= new NetAddress((byte) 0x0);
-	byte	GATEWAY_ADDRESS		= 0x0000;
-	// Broadcast address is all 1's for each address bit.
-	//NetAddress	BROADCAST_ADDRESS			= new NetAddress((byte) (Math.pow(2, ADDRESS_BITS) - 1));
-	short	BROADCAST_ADDRESS	= (short) 0xffff; //(Math.pow(2, ADDRESS_BITS) - 1);
-
-	// This is the network ID used to send network mgmt commands to all devices on a channel regardless of network ID.
-	byte	BROADCAST_NETWORK_ID	= (byte) (Math.pow(2, NETWORK_NUMBER_BITS) - 1);
-	byte	DEFAULT_NETWORK_ID		= (byte) 0x01;
-	byte	ZERO_NETWORK_ID			= (byte) 0x00;
-	//NetworkId	BROADCAST_NETWORK_ID		= new NetworkId((byte) (Math.pow(2, NETWORK_NUMBER_BITS) - 1));
-	//NetworkId	DEFAULT_NETWORK_ID			= new NetworkId((byte) 0x01);
-	//NetworkId	ZERO_NETWORK_ID				= new NetworkId((byte) 0x00);
+	byte	PACKET_VERSION_0 = 0;
+	byte	PACKET_VERSION_1 = 1;
+	byte 	DEFAULT_PROTOCOL_VERSION = PACKET_VERSION_0;
 	
 	byte	SMAC_FRAME_BYTES	= 2;
 	byte	MAX_PACKET_BYTES	= 125 - SMAC_FRAME_BYTES;
 	
-	byte PACKET_HEADER_BYTES = 8;
+
+	// Packet header structure sizes.  (See Packet.java)
+
+	/**
+	 * Note about NETWORK_NUMBER_BITS
+	 * 
+	 * This is referenced all the way to the CodeshelfNetwork object which
+	 * assumes this will always be a static value. Until that is fixed this
+	 * must always be four bits
+	 */
+	byte	NETWORK_NUMBER_BITS		= 4;
+	byte	NETWORK_NUM_SPACING_BITS	= 4;
+	//byte	ADDRESS_SPACING_BITS		= 0;
+	
 	// --------------------------------------------------------------------------
 	/**
 	 *  This function serializes the packet to an output stream.
@@ -65,7 +49,7 @@ public interface IPacket {
 	 *  This function takes a serialization string of a raw command (from network transmission) and sets the packet structures.
 	 *  @param inInputStream
 	 */
-	void fromStream(BitFieldInputStream inInputStream, int inFrameSize);
+	boolean fromStream(BitFieldInputStream inInputStream, int inFrameSize);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -282,4 +266,10 @@ public interface IPacket {
 	 * Get the bytes of the payload (everything after ackid)
 	 */
 	public byte[] getPayloadBytes();
+
+	// --------------------------------------------------------------------------
+	/**
+	 * Get empty ack id
+	 */
+	public byte getEmptyAckId();
 }

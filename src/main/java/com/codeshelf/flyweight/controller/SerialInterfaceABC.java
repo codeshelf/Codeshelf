@@ -28,7 +28,7 @@ import com.codeshelf.flyweight.command.CommandGroupEnum;
 import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetworkId;
-import com.codeshelf.flyweight.command.Packet;
+import com.codeshelf.flyweight.command.PacketFactory;
 
 /**
  * --------------------------------------------------------------------------
@@ -60,10 +60,14 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 	private boolean					mIsStartingInterface;
 	@SuppressWarnings("unused")
 	private boolean					mPause					= false;
+	private byte					mProtocolVersion		= IPacket.DEFAULT_PROTOCOL_VERSION;
 	
 	//private static final int							REPORT_INTERVAL_SECS	= 60 * 5;
 	//private final ScheduledExecutorService				radioReportService = Executors.newScheduledThreadPool(1);
 	//private radioTrafficCollector						mRadioStats;
+	
+	// Factories
+	private PacketFactory			mPacketFactory			= new PacketFactory();
 
 	// --------------------------------------------------------------------------
 	/**
@@ -79,7 +83,9 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 	 * (non-Javadoc)
 	 * @see com.codeshelf.flyweight.controller.IGatewayInterface#startInterface()
 	 */
-	public final void startInterface() {
+	public final void startInterface(byte inProtocolVersion) {
+		mProtocolVersion = inProtocolVersion;
+		
 		mShouldRun = true;
 
 		boolean isSetup = false;
@@ -149,7 +155,7 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 					LOGGER.error("", e);
 				}
 				doResetInterface();
-				startInterface();
+				startInterface(mProtocolVersion);
 			}
 		}
 	}
@@ -183,10 +189,12 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * 
+	 *  radioController.getBroadcastAddress(), radioController.getZeroNetworkId()
 	 */
-	public final IPacket receivePacket(NetworkId inMyNetworkId) {
-
+	public final IPacket receivePacket(NetworkId inMyNetworkId, NetworkId inBroadcastNetworkId,
+		NetworkId inZeroNetworkId) {
+		
+		boolean successfulRead = false;
 		IPacket result = null;
 		IPacket packet = null;
 
@@ -208,20 +216,32 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 			BitFieldInputStream inputStream = new BitFieldInputStream(byteArray, true);
 
 			// Receive the next packet.
-			packet = new Packet();
+			// TODO - needs to be based on the incoming packet version
+			packet = mPacketFactory.getPacketForProtocol(mProtocolVersion);
+
 			if (nextFrameArray.length > 0) {
 				// Do not include LQI as packet data
-				packet.fromStream(inputStream, nextFrameArray.length - LQI_SIZE);
-				//RadioStats.updateRcvdStats(nextFrameArray.length);
+				successfulRead = packet.fromStream(inputStream, nextFrameArray.length - LQI_SIZE);
+
+				if(!successfulRead) {
+					LOGGER.debug("Received packet of wrong version. Dropping.");
+					return null;
+				}
 				
+				//RadioStats.updateRcvdStats(nextFrameArray.length);
 				// LQI of packet is in the last byte of the frame
-				byte lqi = nextFrameArray[nextFrameArray.length - LQI_SIZE];
-				packet.setLQI(lqi);
+				
+				// TODO - Using this condition to test if we are using a KW2 radio
+				// This is mostly incorrect, but works because KW2 radio only handles proto v1 atm.
+				if (mProtocolVersion == IPacket.PACKET_VERSION_1) {
+					byte lqi = nextFrameArray[nextFrameArray.length - LQI_SIZE];
+					packet.setLQI(lqi);
+				}
 			}
 
 			if ((packet.getNetworkId().equals(inMyNetworkId))
-					|| (packet.getNetworkId().equals(new NetworkId(IPacket.ZERO_NETWORK_ID)))
-					|| (packet.getNetworkId().equals(new NetworkId(IPacket.BROADCAST_NETWORK_ID)))) {
+					|| (packet.getNetworkId().equals(inZeroNetworkId))
+					|| (packet.getNetworkId().equals(inBroadcastNetworkId))) {
 				result = packet;
 
 				//				if (LOGGER.isInfoEnabled()) {
@@ -476,7 +496,12 @@ public abstract class SerialInterfaceABC implements IGatewayInterface {
 		//			mSerialOutputStream.write(IGatewayInterface.END);
 		//			mSerialOutputStream.flush();
 		buffer[bufPos++] = IGatewayInterface.END;
-		buffer[bufPos++] = IGatewayInterface.END; // XXX HUFFA - used for KW2 Gateway buffer issues.
+		
+		if (mProtocolVersion == IPacket.PACKET_VERSION_1) {
+			// FIXME HUFFA - This conditional statement won't be accurate going forward.
+			// I'm using it to test if we are using a KW2 gateway which currently only supports ver1
+			buffer[bufPos++] = IGatewayInterface.END; // XXX HUFFA - used for KW2 Gateway buffer issues.
+		}
 		//		buffer[bufPos+1] = IGatewayInterface.END;
 
 		//clrRTS();

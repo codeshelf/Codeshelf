@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.bitfields.BitFieldInputStream;
 import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
+import com.codeshelf.flyweight.controller.INetworkDevice;
 
 // --------------------------------------------------------------------------
 /**
@@ -228,6 +229,15 @@ public abstract class CommandABC implements ICommand {
 	 */
 	private NetEndpoint getNetEndpoint() {
 		return mNetEndpoint;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the resend delay time in ms for this command
+	 */
+	public int getMaxCommandBytes(INetworkDevice inDevice) {
+		PacketFactory packetFactory = new PacketFactory();
+		return packetFactory.getPayloadSizeForDevice(inDevice);
 	}
 
 }

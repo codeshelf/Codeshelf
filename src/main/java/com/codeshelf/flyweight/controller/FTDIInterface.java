@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.IPacket;
-import com.codeshelf.flyweight.command.Packet;
 
 /**
  * --------------------------------------------------------------------------

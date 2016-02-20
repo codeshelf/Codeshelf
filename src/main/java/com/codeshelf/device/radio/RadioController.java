@@ -14,13 +14,14 @@ import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.application.ContextLogging;
 import com.codeshelf.device.DeviceRestartCauseEnum;
-import com.codeshelf.device.PosControllerInstr;
 import com.codeshelf.flyweight.bitfields.NBitInteger;
 import com.codeshelf.flyweight.bitfields.OutOfRangeException;
 import com.codeshelf.flyweight.command.CommandAssocABC;
@@ -31,10 +32,6 @@ import com.codeshelf.flyweight.command.CommandAssocResp;
 import com.codeshelf.flyweight.command.CommandControlABC;
 import com.codeshelf.flyweight.command.CommandControlAck;
 import com.codeshelf.flyweight.command.CommandControlButton;
-import com.codeshelf.flyweight.command.CommandControlPosconDisplayAddress;
-import com.codeshelf.flyweight.command.CommandControlPosconLedBroadcast;
-import com.codeshelf.flyweight.command.CommandControlPosconSetupStart;
-import com.codeshelf.flyweight.command.CommandControlPosconSetupStop;
 import com.codeshelf.flyweight.command.CommandControlScan;
 import com.codeshelf.flyweight.command.CommandNetMgmtABC;
 import com.codeshelf.flyweight.command.CommandNetMgmtIntfTest;
@@ -42,11 +39,12 @@ import com.codeshelf.flyweight.command.CommandNetMgmtSetup;
 import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
-import com.codeshelf.flyweight.command.NetCommandId;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.command.NetworkId;
-import com.codeshelf.flyweight.command.Packet;
+import com.codeshelf.flyweight.command.PacketFactory;
+import com.codeshelf.flyweight.command.PacketV0;
+import com.codeshelf.flyweight.command.PacketV1;
 import com.codeshelf.flyweight.controller.IGatewayInterface;
 import com.codeshelf.flyweight.controller.INetworkDevice;
 import com.codeshelf.flyweight.controller.IRadioController;
@@ -88,7 +86,24 @@ public class RadioController implements IRadioController {
 
 	private volatile boolean							mShouldRun					= true;
 
-	private final NetAddress							mServerAddress				= new NetAddress(IPacket.GATEWAY_ADDRESS);
+	@Accessors(prefix = "m")
+	@Getter
+	private final NetAddress							mServerAddress;
+	
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private NetAddress									mBroadcastAddress;
+
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private NetworkId									mBroadcastNetworkId;
+	
+	@Accessors(prefix = "m")
+	@Getter
+	@Setter
+	private NetworkId									mZeroNetworkId;
 
 	// We iterate over this list often, but write almost never. It needs to be thread-safe so we chose to make writes slow and reads lock-free.
 	private final List<IRadioControllerEventListener>	mEventListeners				= new CopyOnWriteArrayList<>();
@@ -114,6 +129,10 @@ public class RadioController implements IRadioController {
 	private final RadioControllerPacketIOService		packetIOService;
 	private final RadioControllerBroadcastService		broadcastService;
 	private final RadioControllerPacketSchedulerService	packetSchedulerService;
+	
+	// Factories
+	PacketFactory 										packetFactory = new PacketFactory();
+	byte												mProtocolVersion = IPacket.PACKET_VERSION_0;
 
 	/**
 	 * @param inSessionManager
@@ -122,6 +141,17 @@ public class RadioController implements IRadioController {
 	@Inject
 	public RadioController(final IGatewayInterface inGatewayInterface) {
 		this.gatewayInterface = inGatewayInterface;
+		
+		// TODO - Ilya / huffa - need to make sure "mProtocolVersion" is set correctly
+		if (mProtocolVersion == IPacket.PACKET_VERSION_1) {
+			this.mBroadcastAddress = PacketV1.BROADCAST_ADDRESS;
+			this.mBroadcastNetworkId = PacketV1.BROADCAST_NETWORK_ID;
+			this.mServerAddress = PacketV1.GATEWAY_ADDRESS;
+		} else {
+			this.mBroadcastAddress = PacketV0.BROADCAST_ADDRESS;
+			this.mBroadcastNetworkId = PacketV0.BROADCAST_NETWORK_ID;
+			this.mServerAddress = PacketV0.GATEWAY_ADDRESS;	
+		}
 
 		for (byte channel = 0; channel < MAX_CHANNELS; channel++) {
 			mChannelInfo[channel] = new ChannelInfo();
@@ -130,7 +160,7 @@ public class RadioController implements IRadioController {
 
 		// Create Services
 		this.packetHandlerService = new RadioControllerInboundPacketService(this);
-		this.packetIOService = new RadioControllerPacketIOService(inGatewayInterface, packetHandlerService);
+		this.packetIOService = new RadioControllerPacketIOService(this, inGatewayInterface, packetHandlerService);
 		this.broadcastService = new RadioControllerBroadcastService(this, NETCHECK_RATE_MILLIS);
 		this.packetSchedulerService = new RadioControllerPacketSchedulerService(packetIOService);
 	}
@@ -204,7 +234,7 @@ public class RadioController implements IRadioController {
 		Thread interfaceStarterThread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				gatewayInterface.startInterface();
+				gatewayInterface.startInterface(mProtocolVersion);
 			}
 		}, STARTER_THREAD_NAME);
 		interfaceStarterThread.setPriority(STARTER_THREAD_PRIORITY);
@@ -362,7 +392,7 @@ public class RadioController implements IRadioController {
 			return;
 		}
 
-		packet = new Packet(inCommand, inNetworkId, mServerAddress, inDstAddr, inAckRequested);
+		packet = packetFactory.getPacketForProtocol(mProtocolVersion, inCommand, inNetworkId, mServerAddress, inDstAddr, inAckRequested);
 		packet.setDevice(device);
 
 		if (inAckRequested) {
@@ -395,8 +425,8 @@ public class RadioController implements IRadioController {
 			return;
 		}
 
-		packet = new Packet(inCommand, inNetworkId, mServerAddress, inDstAddr, inAckRequested);
-
+		packet = packetFactory.getPacketForProtocol(mProtocolVersion, inCommand, inNetworkId, mServerAddress, inDstAddr, inAckRequested);
+		
 		if (packet != null) {
 			packet.setDevice(device);
 
@@ -419,8 +449,8 @@ public class RadioController implements IRadioController {
 			return;
 		}
 
-		packet = new Packet(inCommand, inNetworkId, mServerAddress, inDstAddr, inAckRequested);
-
+		packet = packetFactory.getPacketForProtocol(mProtocolVersion, inCommand, inNetworkId, mServerAddress, inDstAddr, inAckRequested);
+		
 		if (packet != null) {
 			packet.setDevice(device);
 
@@ -436,7 +466,7 @@ public class RadioController implements IRadioController {
 	public final void sendNetMgmtCommand(ICommand inCommand, NetAddress inDstAddr) {
 		IPacket packet = null;
 
-		packet = new Packet(inCommand, packetIOService.getNetworkId(), mServerAddress, inDstAddr, false);
+		packet = packetFactory.getPacketForProtocol(mProtocolVersion, inCommand, packetIOService.getNetworkId(), mServerAddress, inDstAddr, false);
 
 		if (packet != null) {
 			packetSchedulerService.addNetMgmtPacketToSchedule(packet);
@@ -736,19 +766,8 @@ public class RadioController implements IRadioController {
 					LOGGER.info("Device associated={}; Req={}", foundDevice.getGuid().getHexStringNoPrefix(), inCommand);
 					ackCmd = new CommandAssocAck(uid, new NBitInteger(CommandAssocAck.ASSOCIATE_STATE_BITS, status));
 					sendCommandFrontQueue(ackCmd, inSrcAddr, false);
-					//networkDeviceBecameActive(foundDevice, restartEnum);
+					networkDeviceBecameActive(foundDevice, restartEnum);
 					
-					//CommandControlPosconSetupStart dispAddrCmd = new CommandControlPosconSetupStart(NetEndpoint.PRIMARY_ENDPOINT);
-					//CommandControlPosconDisplayAddress dispAddrCmd = new CommandControlPosconDisplayAddress(NetEndpoint.PRIMARY_ENDPOINT, PosControllerInstr.POSITION_ALL);
-					//sendCommand(dispAddrCmd, inSrcAddr, true);
-					
-					//CommandControlPosconSetupStop stopcmd = new CommandControlPosconSetupStop(NetEndpoint.PRIMARY_ENDPOINT, PosControllerInstr.POSITION_ALL);
-					//sendCommand(stopcmd, inSrcAddr, true);
-					BitSet bitset = new BitSet();
-					bitset.set(9);
-					bitset.set(0);
-					CommandControlPosconLedBroadcast cmd = new CommandControlPosconLedBroadcast(NetEndpoint.PRIMARY_ENDPOINT, (byte)0, (byte)20, (byte)0, (byte)0, bitset);
-					sendCommand(cmd, inSrcAddr, true);
 				}
 			} finally {
 				// ContextLogging.restoreNetGuid(rememberedGuid);
@@ -788,8 +807,8 @@ public class RadioController implements IRadioController {
 			device.setLastIncomingAckId(inAckId);
 
 			CommandControlAck ackCmd = new CommandControlAck(NetEndpoint.PRIMARY_ENDPOINT, inAckId);
-			IPacket ackPacket = new Packet(ackCmd, packetIOService.getNetworkId(), mServerAddress, device.getAddress(), false);
 
+			IPacket ackPacket = packetFactory.getPacketForProtocol(mProtocolVersion, ackCmd, packetIOService.getNetworkId(), mServerAddress, device.getAddress(), false);
 			//ackPacket.setPacketType(IPacket.ACK_PACKET);
 
 			packetSchedulerService.addAckPacketToSchedule(ackPacket, device);
@@ -823,7 +842,7 @@ public class RadioController implements IRadioController {
 			//			} else {
 			// If the inbound packet had an ACK ID then respond with an ACK ID.
 			boolean shouldActOnCommand = true;
-			if (packet.getAckId() != IPacket.EMPTY_ACK_ID) {
+			if (packet.getAckId() != packet.getEmptyAckId()) {
 				if (device == null) {
 					//LOGGER.warn("Ignoring packet with device with unknown address={}", packetSourceAddress);
 					return;
@@ -933,6 +952,7 @@ public class RadioController implements IRadioController {
 		mNextAddress++;
 		return mNextAddress;
 		*/
+		NetAddress returnAddress;
  
 		NetGuid theGuid = inNetworkDevice.getGuid();
 		// we want the two byte. Jeff says negative is ok as -110 is x97 and is interpreted in the air protocol as positive up to 255.
@@ -941,13 +961,21 @@ public class RadioController implements IRadioController {
 		byte[] theBytes = theGuid.getParamValueAsByteArray();
 		int guidByteSize = NetGuid.NET_GUID_BYTES;
 		
-		ByteBuffer bb = ByteBuffer.allocate(IPacket.ADDRESS_BITS/8);	// Number of bytes in a net address
+		byte addressBits = packetFactory.getAddressBitsForProtocol(mProtocolVersion);
+		int netAddressBytes = addressBits/8;
+		ByteBuffer bb = ByteBuffer.allocate(netAddressBytes);	// Number of bytes in a net address
 		bb.order(ByteOrder.BIG_ENDIAN);
-		bb.put(theBytes[theBytes.length-2]);
-		bb.put(theBytes[theBytes.length-1]);
-		short byteAddress = bb.getShort(0);
+		for(int i=netAddressBytes; i > 0; i-- ) {
+			bb.put(theBytes[theBytes.length-i]);
+		}
 		
-		NetAddress returnAddress = new NetAddress(byteAddress);
+		if (netAddressBytes == 2) {
+			short byteAddress = bb.getShort(0);
+			returnAddress = new NetAddress(byteAddress, addressBits);
+		} else {
+			returnAddress = new NetAddress((byte)theBytes[guidByteSize - 1], addressBits);
+		}
+		
 		// Now we must see if this is already in the map
 		boolean done = false;
 		boolean wentAround = false;
@@ -1038,7 +1066,8 @@ public class RadioController implements IRadioController {
 
 	@Override
 	public NetGuid getNetGuidFromNetAddress(byte networkAddr) {
-		return getNetGuidFromNetAddress(new NetAddress(networkAddr));
+		// FIXME huffa - this is broke
+		return getNetGuidFromNetAddress(new NetAddress(networkAddr, (byte)8));
 	}
 
 	@Override

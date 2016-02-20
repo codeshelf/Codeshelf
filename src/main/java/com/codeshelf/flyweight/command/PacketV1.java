@@ -62,9 +62,50 @@ import com.codeshelf.flyweight.controller.INetworkDevice;
  *
  */
 
-public final class Packet implements IPacket {
+public final class PacketV1 implements IPacket {
 
-	private static final Logger		LOGGER			= LoggerFactory.getLogger(Packet.class);
+	private static final Logger		LOGGER			= LoggerFactory.getLogger(PacketV1.class);
+	
+	// Packet header structure sizes.  (See Packet.java)
+	public final static byte	PROTOCOL_VERSION		= IPacket.PACKET_VERSION_1;
+	public final static byte	PROTOCOL_VERSION_BITS	= 2;
+	public final static byte	ACK_REQUIRED_BITS		= 1;
+	public final static byte	RESERVED_HEADER_BITS	= 1;
+	public final static byte	NETWORK_NUMBER_BITS		= 4;
+	public final static byte	ADDRESS_BITS			= 16;
+	public final static byte	CRC_BITS				= 16;
+	
+	public final static byte	NETWORK_NUM_SPACING_BITS	= 4;
+	public final static byte	ADDRESS_SPACING_BITS		= 0;
+
+	public final static byte	STD_PACKET		= 0;
+	public final static byte	ACK_PACKET		= 1;
+	public final static byte	EMPTY_ACK_ID	= 0;
+	public final static int		ACK_DATA_BYTES	= 8;
+	
+	public final static short CRC_PLOY = 0x1021;
+
+	public static final NetAddress	GATEWAY_ADDRESS				= new NetAddress((short) 0x0000, ADDRESS_BITS);
+	//byte	GATEWAY_ADDRESS		= 0x0000;
+	// Broadcast address is all 1's for each address bit.
+	public static final NetAddress	BROADCAST_ADDRESS			= new NetAddress((short) (Math.pow(2, ADDRESS_BITS) - 1), ADDRESS_BITS);
+	//short	BROADCAST_ADDRESS	= (short) 0xffff; //(Math.pow(2, ADDRESS_BITS) - 1);
+
+	// This is the network ID used to send network mgmt commands to all devices on a channel regardless of network ID.
+	//byte	BROADCAST_NETWORK_ID	= (byte) (Math.pow(2, NETWORK_NUMBER_BITS) - 1);
+	//byte	DEFAULT_NETWORK_ID		= (byte) 0x01;
+	//byte	ZERO_NETWORK_ID			= (byte) 0x00;
+	
+	// XXX huffa - should not be static final. need to fix
+	public static final NetworkId	BROADCAST_NETWORK_ID		= new NetworkId((byte) (Math.pow(2, NETWORK_NUMBER_BITS) - 1));
+	public static final NetworkId	DEFAULT_NETWORK_ID			= new NetworkId((byte) 0x01);
+	public static final NetworkId	ZERO_NETWORK_ID				= new NetworkId((byte) 0x00);
+	
+	byte	SMAC_FRAME_BYTES	= 2;
+	byte	PACKET_SIZE			= 125;
+	byte	MAX_PACKET_BYTES	= (byte) (PACKET_SIZE - SMAC_FRAME_BYTES);
+	
+	byte PACKET_HEADER_BYTES = 8;
 	
 	@Accessors(prefix = "m")
 	@Getter
@@ -79,7 +120,7 @@ public final class Packet implements IPacket {
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private PacketVersion			mPacketVersion	= new PacketVersion(IPacket.PACKET_VERSION_0);
+	private PacketVersion			mPacketVersion	= new PacketVersion(PROTOCOL_VERSION, PROTOCOL_VERSION_BITS);
 	private NBitInteger				mPacketType;
 	private NBitInteger				mReservedHeaderBits;
 	private NetworkId				mNetworkId;
@@ -103,15 +144,15 @@ public final class Packet implements IPacket {
 	 *  @param inDstAddr
 	 *  @throws NullPointerException
 	 */
-	public Packet(final ICommand inCommand,
+	public PacketV1(final ICommand inCommand,
 		final NetworkId inNetworkId,
 		final NetAddress inSrcAddr,
 		final NetAddress inDstAddr,
 		final boolean inAckRequested) {
 
 		mNetworkId = inNetworkId;
-		mPacketType = new NBitInteger(IPacket.ACK_REQUIRED_BITS, STD_PACKET);
-		mReservedHeaderBits = new NBitInteger(IPacket.RESERVED_HEADER_BITS, (byte) 0);
+		mPacketType = new NBitInteger(ACK_REQUIRED_BITS, STD_PACKET);
+		mReservedHeaderBits = new NBitInteger(RESERVED_HEADER_BITS, (byte) 0);
 
 		if (inCommand == null)
 			throw new NullPointerException("inCommand is null");
@@ -125,7 +166,7 @@ public final class Packet implements IPacket {
 		mCommand = inCommand;
 		mSrcAddr = inSrcAddr;
 		mDstAddr = inDstAddr;
-		mAckId = IPacket.EMPTY_ACK_ID;
+		mAckId = EMPTY_ACK_ID;
 		mAckState = AckStateEnum.INVALID;
 		mSendCount = 0;
 		mCreateTimeMillis = System.currentTimeMillis();
@@ -137,13 +178,13 @@ public final class Packet implements IPacket {
 	 * This is how we create a packet object when we only have it's raw data from the input stream.
 	 *  @param inInputStream
 	 */
-	public Packet() {
-		mPacketVersion = new PacketVersion(IPacket.PACKET_VERSION_0);
-		mReservedHeaderBits = new NBitInteger(IPacket.RESERVED_HEADER_BITS, (byte) 0);
-		mNetworkId = new NetworkId(IPacket.BROADCAST_NETWORK_ID);
-		mSrcAddr = new NetAddress(IPacket.BROADCAST_ADDRESS);
-		mDstAddr = new NetAddress(IPacket.BROADCAST_ADDRESS);
-		mPacketType = new NBitInteger(IPacket.ACK_REQUIRED_BITS, STD_PACKET);
+	public PacketV1() {
+		mPacketVersion = new PacketVersion(PROTOCOL_VERSION, PROTOCOL_VERSION_BITS);
+		mReservedHeaderBits = new NBitInteger(RESERVED_HEADER_BITS, (byte) 0);
+		mNetworkId = BROADCAST_NETWORK_ID;
+		mSrcAddr = new NetAddress((short)0x0000, ADDRESS_BITS);
+		mDstAddr = new NetAddress((short)0x0000, ADDRESS_BITS);
+		mPacketType = new NBitInteger(ACK_REQUIRED_BITS, STD_PACKET);
 	}
 
 	/* --------------------------------------------------------------------------
@@ -206,11 +247,16 @@ public final class Packet implements IPacket {
 	 *  @param inInputStream
 	 */
 	@Override
-	public void fromStream(BitFieldInputStream inInputStream, int inFrameSize) {
+	public boolean fromStream(BitFieldInputStream inInputStream, int inFrameSize) {
 
 		try {
-			//mSize = inInputStream.readByte();
 			inInputStream.readNBitInteger(mPacketVersion);
+			
+			if (mPacketVersion.getValue() != (int) PROTOCOL_VERSION) {
+				mCommand = null;
+				return false;
+			}
+			
 			inInputStream.readNBitInteger(mPacketType);
 			inInputStream.readNBitInteger(mReservedHeaderBits);
 			inInputStream.readNBitInteger(mNetworkId);
@@ -219,20 +265,19 @@ public final class Packet implements IPacket {
 			mAckId	= inInputStream.readByte();
 			mCrc	= inInputStream.readShort();
 			
-			if (mPacketVersion.getValue() != (int) IPacket.PACKET_VERSION_1) {
-				mCommand = null;
-				return;
-			}
-			if (mPacketType.getValue() == IPacket.STD_PACKET) {
+			if (mPacketType.getValue() == STD_PACKET) {
 				mCommand = CommandFactory.createCommand(inInputStream, this.packetPayloadSize(inFrameSize));
 			} else {
-				mAckData = new byte[IPacket.ACK_DATA_BYTES];
+				mAckData = new byte[ACK_DATA_BYTES];
 				inInputStream.readByte();	// Read out command byte and disregard
-				inInputStream.readBytes(mAckData, IPacket.ACK_DATA_BYTES);
+				inInputStream.readBytes(mAckData, ACK_DATA_BYTES);
 			}
 			mCreateTimeMillis = System.currentTimeMillis();
+			return true;
+			
 		} catch (IOException e) {
 			LOGGER.error("", e);
+			return false;
 		}
 	}
 
@@ -418,10 +463,10 @@ public final class Packet implements IPacket {
 	@Override
 	public byte getPacketType() {
 		// This bit of weirdness is to deal with the lack of unsigned bytes in Java.
-		if (mPacketType.getValue() == IPacket.ACK_PACKET) {
-			return IPacket.ACK_PACKET;
+		if (mPacketType.getValue() == ACK_PACKET) {
+			return ACK_PACKET;
 		} else {
-			return IPacket.STD_PACKET;
+			return STD_PACKET;
 		}
 	}
 
@@ -456,7 +501,7 @@ public final class Packet implements IPacket {
 	 * Get the maximum packet payload for packet
 	 */
 	public byte getMaxPacketBytes() {
-		return MAX_PACKET_BYTES - PACKET_HEADER_BYTES;
+		return (byte) (MAX_PACKET_BYTES - PACKET_HEADER_BYTES);
 	}
 	
 	// --------------------------------------------------------------------------
@@ -486,8 +531,16 @@ public final class Packet implements IPacket {
 			return null;
 		}
 		
-		payloadBytes = Arrays.copyOfRange(packetBytes, IPacket.PACKET_HEADER_BYTES, packetBytes.length - 1);
+		payloadBytes = Arrays.copyOfRange(packetBytes, PACKET_HEADER_BYTES, packetBytes.length - 1);
 		
 		return payloadBytes;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Get empty ack id 
+	 */
+	public byte getEmptyAckId() {
+		return EMPTY_ACK_ID;
 	}
 }

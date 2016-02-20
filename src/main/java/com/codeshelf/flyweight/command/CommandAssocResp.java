@@ -55,7 +55,7 @@ public final class CommandAssocResp extends CommandAssocABC {
 		final NetAddress inAddressToAssign,
 		final short inSleepSeconds) {
 		super(new NetCommandId(ASSOC_RESP_COMMAND), inUniqueID);
-		mAddressSpacing = new NBitInteger((byte) IPacket.ADDRESS_SPACING_BITS, (byte) 0);
+		mAddressSpacing = new NBitInteger((byte)0, (byte) 0);
 		mAddressAssigned = inAddressToAssign;
 		mNetworkSpacing = new NBitInteger((byte) IPacket.NETWORK_NUM_SPACING_BITS, (byte) 0);
 		mNetworkId = inNetworkId;
@@ -67,11 +67,6 @@ public final class CommandAssocResp extends CommandAssocABC {
 	 */
 	public CommandAssocResp() {
 		super(new NetCommandId(ASSOC_RESP_COMMAND));
-		mAddressSpacing = new NBitInteger((byte) IPacket.ADDRESS_SPACING_BITS);
-		mAddressAssigned = new NetAddress(IPacket.BROADCAST_ADDRESS);
-		mNetworkSpacing = new NBitInteger((byte) IPacket.NETWORK_NUM_SPACING_BITS);
-		mNetworkId = new NetworkId(IPacket.BROADCAST_NETWORK_ID);
-		mSleepSeconds = 0;
 	}
 
 	/* --------------------------------------------------------------------------

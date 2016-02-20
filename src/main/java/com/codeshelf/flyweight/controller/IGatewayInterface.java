@@ -22,12 +22,12 @@ public interface IGatewayInterface {
 
 	// Due to SLIP protocol, the max frame size could be 2x the data, plus the END flag.
 	int		MAX_FRAME_BYTES	= IPacket.MAX_PACKET_BYTES * 2 + 1;
-
+	
 	// --------------------------------------------------------------------------
 	/**
-	 *  Start the interface before use.
+	 *  Start the interface before use with protocol version.
 	 */
-	void startInterface();
+	void startInterface(byte inProtocolVersion);
 	
 	// --------------------------------------------------------------------------
 	/**
@@ -54,13 +54,13 @@ public interface IGatewayInterface {
 	 *  @param inPacket	The packet to send.
 	 */
 	void sendPacket(IPacket inPacket);
-
+	
 	// --------------------------------------------------------------------------
 	/**
 	 *  Read a packet from the interface.
 	 *  @return	The packet read from the interface.
 	 */
-	IPacket receivePacket(NetworkId inMyNetworkId);
+	IPacket receivePacket(NetworkId inMyNetworkId, NetworkId inBroadcastNetworkId, NetworkId inZeroNetworkId);
 	
 	void setPacketListener(PacketCaptureListener listener);
 	

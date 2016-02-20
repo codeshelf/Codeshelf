@@ -131,13 +131,6 @@ public abstract class WirelessDeviceABC extends DomainObjectTreeABC<CodeshelfNet
 			return theGuid.getHexStringNoPrefix();
 		}
 	}
-	public void setNetAddress(NetAddress inNetworkAddress) {
-		networkAddress = (byte) inNetworkAddress.getValue();
-	}
-
-	public NetAddress getNetAddress() {
-		return new NetAddress(networkAddress);
-	}
 
 	public boolean doesMatch(NetGuid inGuid) {
 		return Arrays.equals(deviceGuid, inGuid.getParamValueAsByteArray());

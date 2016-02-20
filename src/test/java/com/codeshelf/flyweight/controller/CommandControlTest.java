@@ -16,6 +16,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.codeshelf.device.PosControllerInstr;
+import com.codeshelf.device.radio.RadioController;
 import com.codeshelf.flyweight.bitfields.BitFieldInputStream;
 import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
 import com.codeshelf.flyweight.command.CommandControlButton;
@@ -26,7 +27,7 @@ import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetworkId;
-import com.codeshelf.flyweight.command.Packet;
+import com.codeshelf.flyweight.command.PacketV0;
 import com.codeshelf.testframework.MinimalTest;
 
 public final class CommandControlTest extends MinimalTest {
@@ -44,6 +45,8 @@ public final class CommandControlTest extends MinimalTest {
 	private static final Byte	FREQ					= 4;
 	private static final Byte	DUTYCYCLE				= 5;
 
+	/*
+	// PacketV1 Data
 	private static final byte[]	REQUEST_PACKET_IN_DATA	= { 0x41, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x0, 0x31, CommandControlButton.SET_POSCONTROLLER, INSTRUCTION_CNT, POS_NUM, REQ_VALUE, MIN_VALUE,
 			MAX_VALUE, FREQ, DUTYCYCLE					};
 	private static final byte[]	REQUEST_PACKET_OUT_DATA	= { 0x41, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x0, 0x31, CommandControlButton.SET_POSCONTROLLER, INSTRUCTION_CNT, POS_NUM, REQ_VALUE, MIN_VALUE,
@@ -51,6 +54,16 @@ public final class CommandControlTest extends MinimalTest {
 
 	private static final byte[]	BUTTON_PACKET_IN_DATA	= { 0x41, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x0, 0x31, CommandControlButton.BUTTON, POS_NUM, REQ_VALUE, MIN_VALUE,
 		MAX_VALUE, FREQ, DUTYCYCLE };
+	 */
+	
+	private static final byte[]	REQUEST_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, CommandControlButton.SET_POSCONTROLLER, INSTRUCTION_CNT, POS_NUM, REQ_VALUE, MIN_VALUE,
+			MAX_VALUE, FREQ, DUTYCYCLE					};
+	private static final byte[]	REQUEST_PACKET_OUT_DATA	= { 0x01, 0x00, 0x08, 0x00, 0x31, CommandControlButton.SET_POSCONTROLLER, INSTRUCTION_CNT, POS_NUM, REQ_VALUE, MIN_VALUE,
+			MAX_VALUE, FREQ, DUTYCYCLE					};
+
+	private static final byte[]	BUTTON_PACKET_IN_DATA	= { 0x01, 0x00, 0x01, 0x00, 0x31, CommandControlButton.BUTTON, POS_NUM, REQ_VALUE, MIN_VALUE,
+		MAX_VALUE, FREQ, DUTYCYCLE };
+	
 
 	protected ICommand createCommandABC() throws Exception {
 		return new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT, TEST_MSG1, TEST_MSG2, TEST_MSG3, TEST_MSG4);
@@ -63,7 +76,7 @@ public final class CommandControlTest extends MinimalTest {
 		BitFieldInputStream inputStream = new BitFieldInputStream(byteArray, true);
 
 		// Create the packet from the input stream.
-		IPacket packet = new Packet();
+		IPacket packet = new PacketV0();
 		packet.fromStream(inputStream, REQUEST_PACKET_IN_DATA.length);
 
 		// Get the command from the packet.
@@ -91,6 +104,8 @@ public final class CommandControlTest extends MinimalTest {
 
 		ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
 		BitFieldOutputStream outputStream = new BitFieldOutputStream(byteArray);
+		
+		IRadioController radioController = new RadioController(null);
 
 		// Create a new command.
 		List<PosControllerInstr> instructions = new ArrayList<PosControllerInstr>();
@@ -105,11 +120,11 @@ public final class CommandControlTest extends MinimalTest {
 		NetAddress srcAddr;
 		NetAddress dstAddr;
 
-		srcAddr = new NetAddress(IPacket.GATEWAY_ADDRESS);
-		dstAddr = new NetAddress(IPacket.ADDRESS_BITS);
+		srcAddr = radioController.getServerAddress();
+		dstAddr = new NetAddress((byte)0x08, PacketV0.ADDRESS_BITS);
 
 		// Create a new packet to send to the output stream.
-		IPacket packet = new Packet(command, networkId, srcAddr, dstAddr, false);
+		IPacket packet = new PacketV0(command, networkId, srcAddr, dstAddr, false);
 
 		// Stream the packet out.
 		packet.toStream(outputStream);
@@ -127,7 +142,7 @@ public final class CommandControlTest extends MinimalTest {
 		BitFieldInputStream inputStream = new BitFieldInputStream(byteArray, true);
 
 		// Create the packet from the input stream.
-		IPacket packet = new Packet();
+		IPacket packet = new PacketV0();
 		packet.fromStream(inputStream, REQUEST_PACKET_IN_DATA.length);
 
 		// Get the command from the packet.

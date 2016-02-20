@@ -19,8 +19,8 @@ public class PacketVersion extends NBitInteger {
 	 *  @throws OutOfRangeException
 	 */
 
-	public PacketVersion(final byte inNewValue) { // OutOfRangeException {
-		super(IPacket.PROTOCOL_VERSION_BITS, inNewValue);
+	public PacketVersion(final byte inNewValue, final byte inValueBitLength) { // OutOfRangeException {
+		super(inValueBitLength, inNewValue);
 	}
 
 }

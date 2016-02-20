@@ -17,7 +17,7 @@ public final class NetAddress extends NBitInteger {
 	 *  @throws OutOfRangeException
 	 */
 	public NetAddress() {
-		super(IPacket.ADDRESS_BITS);
+		super((byte) 0);
 	}
 
 	/** 
@@ -27,8 +27,19 @@ public final class NetAddress extends NBitInteger {
 	 *  @throws OutOfRangeException
 	 */
 
-	public NetAddress(final short inNewValue) {
-		super(IPacket.ADDRESS_BITS, inNewValue);
+	public NetAddress(final short inNewValue, final byte inValueBitLength) {
+		super(inValueBitLength, inNewValue);
+	}
+	
+	/** 
+	 *  --------------------------------------------------------------------------
+	 *  Create an n-bit integer that represents a network address.
+	 *  @param inNewValue
+	 *  @throws OutOfRangeException
+	 */
+	
+	public NetAddress(final byte inNewValue, final byte inValueBitLength) {
+		super(inValueBitLength, inNewValue);
 	}
 
 	//@Override

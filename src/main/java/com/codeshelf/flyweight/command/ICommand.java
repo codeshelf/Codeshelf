@@ -7,6 +7,7 @@ package com.codeshelf.flyweight.command;
 
 import com.codeshelf.flyweight.bitfields.BitFieldInputStream;
 import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
+import com.codeshelf.flyweight.controller.INetworkDevice;
 
 // --------------------------------------------------------------------------
 /**
@@ -16,8 +17,6 @@ public interface ICommand {
 
 	// See CommandABC for header description.
 	byte	COMMAND_HEADER_BYTES	= 1;
-
-	byte	MAX_COMMAND_BYTES		= (byte) (IPacket.MAX_PACKET_BYTES - IPacket.PACKET_HEADER_BYTES);
 
 	// --------------------------------------------------------------------------
 	/**
@@ -88,4 +87,10 @@ public interface ICommand {
 	 * Get the resend delay time in ms for this command
 	 */
 	int getResendDelay();
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * Get the resend delay time in ms for this command
+	 */
+	int getMaxCommandBytes(INetworkDevice inDevice);	
 }

@@ -21,7 +21,6 @@ import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetworkId;
-import com.codeshelf.flyweight.command.Packet;
 import com.codeshelf.flyweight.controller.IGatewayInterface;
 import com.codeshelf.flyweight.controller.TcpClientInterface;
 
@@ -62,7 +61,7 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 	public DeviceEmbeddedABC(final String inGUID, final String inServerName) {
 		mGUID = inGUID;
 		mServerName = inServerName;
-		mNetworkId = new NetworkId(IPacket.DEFAULT_NETWORK_ID);
+		//mNetworkId = new NetworkId(IPacket.DEFAULT_NETWORK_ID);
 	}
 
 	abstract void processControlCmd(CommandControlABC inCommand);
@@ -99,55 +98,55 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 	 */
 	private void startPacketReceivers() {
 
-		Thread gwThread = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				while (mShouldRun) {
-					try {
-						if (!mGatewayInterface.isStarted()) {
-							mGatewayInterface.startInterface();
-							if (mGatewayInterface.isStarted()) {
-								ICommand command = new CommandAssocReq(HARDWARE_VERSION,
-									FIRMWARE_VERSION,
-									RADIOPROTOCOL_VERSION,
-									RESET_REASON_POWERON,
-									mGUID);
-								IPacket packet = new Packet(command,
-									new NetworkId(IPacket.BROADCAST_NETWORK_ID),
-									new NetAddress(IPacket.BROADCAST_ADDRESS),
-									new NetAddress(IPacket.GATEWAY_ADDRESS),
-									false);
-								command.setPacket(packet);
-								sendPacket(packet);
-							} else {
-								try {
-									Thread.sleep(CTRL_START_DELAY_MILLIS);
-								} catch (InterruptedException e) {
-									LOGGER.error("", e);
-								}
-							}
-						} else {
-							IPacket packet = mGatewayInterface.receivePacket(mNetworkId);
-							if ((packet != null)
-									&& ((packet.getDstAddr().equals(new NetAddress(IPacket.BROADCAST_ADDRESS)) || (packet.getDstAddr().equals(mNetAddress))))) {
-								//putPacketInRcvQueue(packet);
-								if (packet.getPacketType() == IPacket.ACK_PACKET) {
-									LOGGER.info("Packet acked RECEIVED: " + packet.toString());
-									//									processAckPacket(packet);
-								} else {
-									receiveCommand(packet.getCommand(), packet.getSrcAddr());
-								}
-							}
-						}
-					} catch (RuntimeException e) {
-						LOGGER.error("", e);
-					}
-				}
-			}
-		},
-			RECEIVER_THREAD_NAME + ": " + mGatewayInterface.getClass().getSimpleName());
-		gwThread.setPriority(Thread.MIN_PRIORITY);
-		gwThread.start();
+//		Thread gwThread = new Thread(new Runnable() {
+//			@Override
+//			public void run() {
+//				while (mShouldRun) {
+//					try {
+//						if (!mGatewayInterface.isStarted()) {
+//							mGatewayInterface.startInterface();
+//							if (mGatewayInterface.isStarted()) {
+//								ICommand command = new CommandAssocReq(HARDWARE_VERSION,
+//									FIRMWARE_VERSION,
+//									RADIOPROTOCOL_VERSION,
+//									RESET_REASON_POWERON,
+//									mGUID);
+//								IPacket packet = new Packet(command,
+//									//new NetworkId(IPacket.BROADCAST_NETWORK_ID),
+//									new NetAddress(IPacket.BROADCAST_ADDRESS),
+//									new NetAddress(IPacket.GATEWAY_ADDRESS),
+//									false);
+//								command.setPacket(packet);
+//								sendPacket(packet);
+//							} else {
+//								try {
+//									Thread.sleep(CTRL_START_DELAY_MILLIS);
+//								} catch (InterruptedException e) {
+//									LOGGER.error("", e);
+//								}
+//							}
+//						} else {
+//							IPacket packet = mGatewayInterface.receivePacket(mNetworkId);
+//							if ((packet != null)
+//									&& ((packet.getDstAddr().equals(new NetAddress(IPacket.BROADCAST_ADDRESS)) || (packet.getDstAddr().equals(mNetAddress))))) {
+//								//putPacketInRcvQueue(packet);
+//								if (packet.getPacketType() == IPacket.ACK_PACKET) {
+//									LOGGER.info("Packet acked RECEIVED: " + packet.toString());
+//									//									processAckPacket(packet);
+//								} else {
+//									receiveCommand(packet.getCommand(), packet.getSrcAddr());
+//								}
+//							}
+//						}
+//					} catch (RuntimeException e) {
+//						LOGGER.error("", e);
+//					}
+//				}
+//			}
+//		},
+//			RECEIVER_THREAD_NAME + ": " + mGatewayInterface.getClass().getSimpleName());
+//		gwThread.setPriority(Thread.MIN_PRIORITY);
+//		gwThread.start();
 	}
 
 	// --------------------------------------------------------------------------

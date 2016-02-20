@@ -13,6 +13,7 @@ import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.codeshelf.device.radio.RadioController;
 import com.codeshelf.flyweight.bitfields.BitFieldInputStream;
 import com.codeshelf.flyweight.bitfields.BitFieldOutputStream;
 import com.codeshelf.flyweight.command.CommandControlDisplayMessage;
@@ -21,7 +22,7 @@ import com.codeshelf.flyweight.command.IPacket;
 import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetworkId;
-import com.codeshelf.flyweight.command.Packet;
+import com.codeshelf.flyweight.command.PacketV0;
 import com.codeshelf.testframework.MinimalTest;
 
 /** --------------------------------------------------------------------------
@@ -30,8 +31,11 @@ import com.codeshelf.testframework.MinimalTest;
  */
 public final class PacketTest extends MinimalTest {
 
-	private static final byte[]			PACKET_OUT_DATA		= { 0x41, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x0, 0x31, 0x1, 0x5, 0x54, 0x45, 0x53, 0x54, 0x31, 0x5, 0x54, 0x45, 0x53, 0x54, 0x32, 0x5, 0x54, 0x45, 0x53, 0x54, 0x33, 0x5, 0x54, 0x45, 0x53, 0x54, 0x34};
-	private static final byte[]			PACKET_IN_DATA		= { 0x41, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x0, 0x31, 0x1, 0x5, 0x54, 0x45, 0x53, 0x54, 0x31, 0x5, 0x54, 0x45, 0x53, 0x54, 0x32, 0x5, 0x54, 0x45, 0x53, 0x54, 0x33, 0x5, 0x54, 0x45, 0x53, 0x54, 0x34};
+	//private static final byte[]			PACKET_OUT_DATA		= { 0x41, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x0, 0x31, 0x1, 0x5, 0x54, 0x45, 0x53, 0x54, 0x31, 0x5, 0x54, 0x45, 0x53, 0x54, 0x32, 0x5, 0x54, 0x45, 0x53, 0x54, 0x33, 0x5, 0x54, 0x45, 0x53, 0x54, 0x34};
+	//private static final byte[]			PACKET_IN_DATA		= { 0x41, 0x0, 0x0, 0x0, 0x10, 0x0, 0x0, 0x0, 0x31, 0x1, 0x5, 0x54, 0x45, 0x53, 0x54, 0x31, 0x5, 0x54, 0x45, 0x53, 0x54, 0x32, 0x5, 0x54, 0x45, 0x53, 0x54, 0x33, 0x5, 0x54, 0x45, 0x53, 0x54, 0x34};
+	
+	private static final byte[]			PACKET_IN_DATA		= { 0x01, 0x00, 0x01, 0x00, 0x31, 0x01, 0x05, 0x54, 0x45, 0x53, 0x54, 0x31, 0x05, 0x54, 0x45, 0x53, 0x54, 0x32, 0x05, 0x54, 0x45, 0x53, 0x54, 0x33, 0x05, 0x54, 0x45, 0x53, 0x54, 0x34 };
+	private static final byte[]			PACKET_OUT_DATA		= { 0x01, 0x00, 0x08, 0x00, 0x31, 0x01, 0x05, 0x54, 0x45, 0x53, 0x54, 0x31, 0x05, 0x54, 0x45, 0x53, 0x54, 0x32, 0x05, 0x54, 0x45, 0x53, 0x54, 0x33, 0x05, 0x54, 0x45, 0x53, 0x54, 0x34 };
 	
 	private static final String			TEST_MSG1			= "TEST1";
 	private static final String			TEST_MSG2			= "TEST2";
@@ -49,29 +53,30 @@ public final class PacketTest extends MinimalTest {
 		IPacket packet;
 
 		NetworkId networkId = new NetworkId((byte) 1);
+		IRadioController radioController = new RadioController(null);
 		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT, TEST_MSG1, TEST_MSG2, TEST_MSG3, TEST_MSG4);
-		NetAddress srcAddr = new NetAddress(IPacket.GATEWAY_ADDRESS);
-		NetAddress destAddr = new NetAddress(IPacket.BROADCAST_ADDRESS);
+		NetAddress srcAddr = radioController.getServerAddress();
+		NetAddress destAddr = radioController.getBroadcastAddress();
 
-		packet = new Packet(command, networkId, srcAddr, destAddr, false);
+		packet = new PacketV0(command, networkId, srcAddr, destAddr, false);
 		// OK, expected case.
 
 		try {
-			packet = new Packet(null, networkId, srcAddr, destAddr, false);
+			packet = new PacketV0(null, networkId, srcAddr, destAddr, false);
 			Assert.fail();
 		} catch (NullPointerException e) {
 			// Expected case.
 		}
 
 		try {
-			packet = new Packet(command, networkId, null, destAddr, false);
+			packet = new PacketV0(command, networkId, null, destAddr, false);
 			Assert.fail();
 		} catch (NullPointerException e) {
 			// Expected case.
 		}
 
 		try {
-			packet = new Packet(command, networkId, srcAddr, null, false);
+			packet = new PacketV0(command, networkId, srcAddr, null, false);
 			Assert.fail();
 		} catch (NullPointerException e) {
 			// Expected case.
@@ -89,7 +94,7 @@ public final class PacketTest extends MinimalTest {
 		BitFieldInputStream inputStream = new BitFieldInputStream(byteArray, true);
 
 		// Create the packet from the input stream.
-		IPacket packet = new Packet();
+		IPacket packet = new PacketV0();
 		packet.fromStream(inputStream, PACKET_IN_DATA.length);
 
 		// Get the command from the packet.
@@ -116,6 +121,8 @@ public final class PacketTest extends MinimalTest {
 
 		ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
 		BitFieldOutputStream outputStream = new BitFieldOutputStream(byteArray);
+		
+		IRadioController radioController = new RadioController(null);
 
 		// Create a new command.
 		ICommand command = new CommandControlDisplayMessage(NetEndpoint.PRIMARY_ENDPOINT, TEST_MSG1, TEST_MSG2, TEST_MSG3, TEST_MSG4);
@@ -127,11 +134,11 @@ public final class PacketTest extends MinimalTest {
 		NetAddress srcAddr;
 		NetAddress dstAddr;
 
-		srcAddr = new NetAddress(IPacket.GATEWAY_ADDRESS);
-		dstAddr = new NetAddress(IPacket.ADDRESS_BITS);
+		srcAddr = radioController.getServerAddress();
+		dstAddr = new NetAddress((byte) 0x08, PacketV0.ADDRESS_BITS);
 
 		// Create a new packet to send to the output stream.
-		IPacket packet = new Packet(command, networkId, srcAddr, dstAddr, false);
+		IPacket packet = new PacketV0(command, networkId, srcAddr, dstAddr, false);
 
 		// Stream the packet out.
 		packet.toStream(outputStream);
