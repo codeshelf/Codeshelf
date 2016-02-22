@@ -8,7 +8,6 @@ package com.codeshelf.device.radio;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.BitSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -132,7 +131,7 @@ public class RadioController implements IRadioController {
 	
 	// Factories
 	PacketFactory 										packetFactory = new PacketFactory();
-	byte												mProtocolVersion = IPacket.PACKET_VERSION_0;
+	byte												mProtocolVersion = IPacket.PACKET_VERSION_1;
 
 	/**
 	 * @param inSessionManager

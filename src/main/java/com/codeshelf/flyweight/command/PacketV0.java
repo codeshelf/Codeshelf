@@ -31,14 +31,13 @@ import com.codeshelf.flyweight.controller.INetworkDevice;
  *  	The Packet constructor can build the packet directly from the stream.
  *  2. You're creating a new packet from scratch, and you have the addresses and command to go with it.
  *  	There is no packet factory for this case - you create the command ad-hoc.	 /**
- * 
- * The format of a ver 2.0 packet stream is:
+ *
  * 
  *   2b - Packet format version
  *   1b - Packet type (std or ack)
  *   5b - Network ID
- *   2B - Src address
- *	 2B - Dst address
+ *   1B - Src address
+ *	 1B - Dst address
  *   1B - Ack Id (if ack wanted on std packet then non-zero)
  *	 nB - Command data
  *	
@@ -97,10 +96,10 @@ public final class PacketV0 implements IPacket {
 	public static final NetworkId	ZERO_NETWORK_ID				= new NetworkId((byte) 0x00);
 	
 	byte	SMAC_FRAME_BYTES	= 2;
-	byte	PACKET_SIZE			= 125;
+	byte	PACKET_SIZE			= 125; 
 	byte	MAX_PACKET_BYTES	= (byte) (PACKET_SIZE - SMAC_FRAME_BYTES);
 	
-	byte PACKET_HEADER_BYTES = 8;
+	byte PACKET_HEADER_BYTES = 4;
 	
 	@Accessors(prefix = "m")
 	@Getter

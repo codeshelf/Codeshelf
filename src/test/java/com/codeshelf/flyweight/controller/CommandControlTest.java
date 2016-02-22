@@ -120,7 +120,7 @@ public final class CommandControlTest extends MinimalTest {
 		NetAddress srcAddr;
 		NetAddress dstAddr;
 
-		srcAddr = radioController.getServerAddress();
+		srcAddr = new NetAddress((byte)0x00, PacketV0.ADDRESS_BITS);
 		dstAddr = new NetAddress((byte)0x08, PacketV0.ADDRESS_BITS);
 
 		// Create a new packet to send to the output stream.
