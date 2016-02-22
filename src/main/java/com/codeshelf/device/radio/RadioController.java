@@ -123,6 +123,9 @@ public class RadioController implements IRadioController {
 
 	private volatile boolean							mRunning					= false;
 
+	@Setter
+	private boolean										resendQueueing				= false;
+
 	// Services
 	private final RadioControllerInboundPacketService	packetHandlerService;
 	private final RadioControllerPacketIOService		packetIOService;
@@ -292,8 +295,12 @@ public class RadioController implements IRadioController {
 			LOGGER.info("Trying to set radio channel={}", inChannel);
 			mChannelSelected = true;
 			mRadioChannel = inChannel;
+
+			// Remove this in v26. Just yield the WARN "Could not find device with net address: ff", then exited. Nothing broadcast here.
+			/* 
 			CommandNetMgmtSetup netSetupCmd = new CommandNetMgmtSetup(packetIOService.getNetworkId(), mRadioChannel);
 			sendCommand(netSetupCmd, broadcastService.getBroadcastAddress(), false);
+			*/
 			LOGGER.info("Radio channel={}", inChannel);
 		}
 	}
@@ -420,7 +427,7 @@ public class RadioController implements IRadioController {
 		device = this.mDeviceNetAddrMap.get(inDstAddr);
 
 		if (device == null) {
-			LOGGER.warn("Could not find device with net addres: {}", inDstAddr);
+			LOGGER.warn("Could not find device with net address: {}", inDstAddr, new RuntimeException("stack trace for this"));
 			return;
 		}
 
@@ -1076,5 +1083,13 @@ public class RadioController implements IRadioController {
 			return device.getGuid();
 		} // else
 		return null;
+	}
+
+	/**
+	 * Unit tests generally correctly know the device is not associated to running radio controller, so the sends do not queue to packetScheduler etc.
+	 * This allows better testing.
+	 */
+	public boolean testingResendQueueing() {
+		return resendQueueing;
 	}
 }

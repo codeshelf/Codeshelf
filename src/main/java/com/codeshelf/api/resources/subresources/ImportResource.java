@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -153,14 +154,15 @@ public class ImportResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response uploadOrders(
         @FormDataParam("file") InputStream fileInputStream,
-        @FormDataParam("file") FormDataContentDisposition contentDispositionHeader) {
-	
-		
+        @FormDataParam("file") FormDataContentDisposition contentDispositionHeader,
+        @FormDataParam("deleteOldOrders") @DefaultValue(value = "false") boolean deleteOldOrders) {
 		try {
 			long receivedTime = System.currentTimeMillis();
 			Reader reader = new InputStreamReader(fileInputStream);
-			
-			BatchResult<Object> results = this.outboundOrderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(System.currentTimeMillis()));
+			if(facility.isProduction() && deleteOldOrders) {
+				return new ErrorResponse("unable to delete orders in production facility").buildResponse();
+			}
+			BatchResult<Object> results = this.outboundOrderImporter.importOrdersFromCsvStream(reader, facility, new Timestamp(receivedTime), deleteOldOrders);
 			String username = CodeshelfSecurityManager.getCurrentUserContext().getUsername();
 			this.outboundOrderImporter.persistDataReceipt(facility, username, contentDispositionHeader.getFileName(), receivedTime, EdiTransportType.APP, results);
 			return BaseResponse.buildResponse(results, Status.OK);				
@@ -200,9 +202,11 @@ public class ImportResource {
 		try {
 			ArrayList<Criterion> filter = Lists.newArrayList();
 			filter.add(Restrictions.eq("parent", facility));
-			Interval receivedInterval = received.getValue();
-			if (receivedInterval != null) {
-				filter.add(createIntervalRestriction("received", receivedInterval));
+			if (received !=null) {
+				Interval receivedInterval = received.getValue();
+				if (receivedInterval != null) {
+					filter.add(createIntervalRestriction("received", receivedInterval));
+				}
 			}
 			if (!Strings.isNullOrEmpty(orderIds)) {
 				filter.add(createSubstringRestriction("orderIds", orderIds));

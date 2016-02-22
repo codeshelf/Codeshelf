@@ -72,8 +72,6 @@ import com.google.common.base.Strings;
 public class CheProcessTestPick extends ServerTest {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessTestPick.class);
-
-	
 	
 	@Override
 	public void doAfter() {
@@ -755,11 +753,9 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(0, picker.countActiveJobs());
 
 		//Make sure position display controllers show proper feedback
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
-		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_DASH);
-		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 1), PosControllerInstr.BITENCODED_LED_DASH);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.SOLID_FREQ);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.DIM_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), ZERO);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 1), PosControllerInstr.BLINK_FREQ);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 1), PosControllerInstr.BRIGHT_DUTYCYCLE);
 		Assert.assertFalse(picker.hasLastSentInstruction((byte) 2));
 
 		// Back to our main test
@@ -1285,7 +1281,7 @@ public class CheProcessTestPick extends ServerTest {
 		wi = picker.getActivePick();
 		Assert.assertEquals("Item3", wi.getItemId());
 		Assert.assertEquals(21, (int) wi.getPlanQuantity());
-		picker.pick(1, 22);
+		picker.pick(1, 21);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		LOGGER.info("3: Pick the 3rd item. It will not be changed, so don't worry about what it is.");
 		picker.pickItemAuto();
@@ -1322,7 +1318,7 @@ public class CheProcessTestPick extends ServerTest {
 		Assert.assertEquals(2, events.size());
 		ArrayList<String> expectedEvents = new ArrayList<>();
 		expectedEvents.add("OrderDetail 349 changed from Item2-a to Item2-cs. Already picked 22 items.");
-		expectedEvents.add("OrderDetail 351 changed from Item3-a to Item1-a. Already picked 22 items.");
+		expectedEvents.add("OrderDetail 351 changed from Item3-a to Item1-a. Already picked 21 items.");
 		for (WorkerEvent event : events) {
 			Assert.assertTrue(expectedEvents.contains(event.getDescription()));
 			expectedEvents.remove(event.getDescription());
@@ -1741,8 +1737,8 @@ public class CheProcessTestPick extends ServerTest {
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
 		picker2.scanCommand("START");
 		picker2.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
-		Assert.assertEquals("1 order\n3 jobs\n\nSTART (or SETUP)\n", picker1.getLastCheDisplay());
-		Assert.assertEquals("1 order\n4 jobs     1 other\n\nSTART (or SETUP)\n", picker2.getLastCheDisplay());
+		verifyCheDisplay(picker1, "1 order", "3 jobs", "", "START (or SETUP)");
+		verifyCheDisplay(picker2, "1 order", "4 jobs     1 other", "", "START (or SETUP)");
 		
 		LOGGER.info("5: Assert that the LABEL CHE does not light up its Poscins during setup summary while the normal CHE does");
 		Assert.assertNull(picker1.getLastSentPositionControllerDisplayValue(1));
@@ -1757,5 +1753,200 @@ public class CheProcessTestPick extends ServerTest {
 		LOGGER.info("7: Assert that the LABEL CHE does not light up its Poscins during picking while the normal CHE does");
 		Assert.assertNull(picker1.getLastSentPositionControllerDisplayValue(1));
 		Assert.assertNotNull(picker2.getLastSentPositionControllerDisplayValue(1));
+	}
+	
+	@Test
+	public void testLabelLightingShort() throws IOException{
+		LOGGER.info("1: Set up facility, orders, set one CHE to have LABEL lighting mode");
+		Facility facility = setUpSimpleNoSlotFacility();
+		beginTransaction();
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "UPC");
+		Che che1 = getChe1();
+		che1.setCheLighting(CheLightingEnum.LABEL_V1);
+		Che.staticGetDao().store(che1);
+		commitTransaction();
+		setUpSmallInventoryAndOrders(facility);
+		
+		startSiteController();
+		
+		LOGGER.info("2: Set up 2 CHE with order");
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+		picker.setupContainer("12345", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		LOGGER.info("3: Short item without confirmarion scan (old behavior)");
+		UUID wi1Id = picker.getActivePick().getPersistentId();
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING_SHORT, 4000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		LOGGER.info("4: Short item after confirmarion scan, auto-short by 0 (label-che-only behavior)");
+		UUID wi2Id = picker.getActivePick().getPersistentId();
+		picker.scanSomething(picker.getActivePick().getItemId());
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.scanCommand("SHORT");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING_SHORT, 4000);
+		picker.scanCommand("YES");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		LOGGER.info("5: Pick last item normally, complete the order");
+		picker.scanSomething(picker.getActivePick().getItemId());
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+
+		waitForOrderStatus(facility, "12345", OrderStatusEnum.SHORT, true, 2000);
+		
+		LOGGER.info("6: Assert that first two items were shorted correctly");
+		beginTransaction();
+		WorkInstruction wi1 = WorkInstruction.staticGetDao().findByPersistentId(wi1Id);
+		Assert.assertEquals(WorkInstructionStatusEnum.SHORT, wi1.getStatus());
+		Assert.assertEquals((Integer)0, wi1.getActualQuantity());
+		
+		WorkInstruction wi2 = WorkInstruction.staticGetDao().findByPersistentId(wi2Id);
+		Assert.assertEquals(WorkInstructionStatusEnum.SHORT, wi2.getStatus());
+		Assert.assertEquals((Integer)0, wi2.getActualQuantity());
+		commitTransaction();
+	}
+	
+	/**
+	 * DEV-1473 - corrupted scans sometimes look like tape scans (EX: "%KIPSCAN")
+	 */
+	@Test
+	public void testBadTapeScan1() throws IOException{
+		LOGGER.info("1: Set up facility and a WorkSequence order.");
+		Facility facility = setUpSimpleNoSlotFacility();
+		beginTransaction();
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "UPC");
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
+		commitTransaction();
+
+		beginTransaction();
+		facility = facility.reload();
+		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n11111,11111,Item 1,Test Item 1,1,each,locationA,1";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+		
+		startSiteController();
+		
+		LOGGER.info("2: Load order on CHE.");
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+		picker.setupContainer("11111", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		verifyCheDisplay(picker, "1 order", "1 job", "", "START (or SETUP)");
+		
+		LOGGER.info("3: Scan bad tape id. Assert that nothing happens.");
+		picker.scanSomething("%KIPSCAN");
+		picker.waitInSameState(CheStateEnum.SETUP_SUMMARY, 1000);
+		
+		LOGGER.info("4: Scan good tape id. Assert that pick begins.");
+		picker.scanSomething("%000000010100");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		verifyCheDisplay(picker, "locationA", "Item 1", "QTY 1", "SCAN UPC NEEDED");
+	}
+	
+	/**
+	 * DEV-1473 - corrupted scans sometimes look like tape scans (EX: "%KIPSCAN")
+	 */
+	@Test
+	public void testBadTapeScan2() throws IOException{
+		LOGGER.info("1: Set up facility and a WorkSequence order.");
+		Facility facility = setUpSimpleNoSlotFacility();
+		beginTransaction();
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "UPC");
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
+		commitTransaction();
+
+		beginTransaction();
+		facility = facility.reload();
+		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n11111,11111,Item 1,Test Item 1,1,each,locationA,1";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+		
+		startSiteController();
+		
+		LOGGER.info("2: Load order on CHE.");
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+		picker.setupContainer("11111", "1");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		
+		LOGGER.info("3: Scan good tape id. Assert that che correctly processes is correctly.");
+		picker.scanSomething("%000000010100");
+		//Unfortunately, time spent in GET_WORK state can be too short to test here. 
+		//Use the fact that the CHE is not complaining about bad item scan as verification that the scan was processed correctly
+		picker.waitForCheState(CheStateEnum.SCAN_SOMETHING, 4000);
+		verifyCheDisplay(picker, "locationA", "Item 1", "QTY 1", "SCAN UPC NEEDED");
+		
+		LOGGER.info("4: Scan bad tape id. Assert that che treats it like a bad scan.");
+		picker.scanSomething("%KIPSCAN");
+		picker.waitInSameState(CheStateEnum.SCAN_SOMETHING, 1000);
+		verifyCheDisplay(picker, "locationA", "Item 1", "QTY 1", "SCAN Item 1");
+		
+		LOGGER.info("5: Return to SETUP_SUMMARY. Assert that the bad location scan was not saved over the good one.");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		verifyCheDisplay(picker, "1 order  %000000010100", "1 job", "", "START (or SETUP)");
+	}
+	
+	@Test
+	public void testBadOrderSetupSummary() throws IOException{
+		byte one = 1, two = 2;
+		
+		LOGGER.info("1: Setup facility");
+		Facility facility = setUpSimpleNoSlotFacility();
+		beginTransaction();
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.SCANPICK, "UPC");
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
+		commitTransaction();
+
+		beginTransaction();
+		facility = facility.reload();
+		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,locationId,workSequence"
+				+ "\r\n11111,11111,Item 1,Test Item 1,1,each,locationA,1";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+		
+		startSiteController();
+
+		LOGGER.info("2: Load one real and one fake order on cart");
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Picker #1");
+		picker.setupContainer("11111", "1");
+		picker.setupContainer("22222", "2");
+		picker.scanCommand("START");
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		
+		LOGGER.info("3: Veritfy that real orders shows proper feedback, and fake one is flashing 0");
+		Assert.assertEquals(1, (int)picker.getLastSentPositionControllerDisplayValue(one));
+		Assert.assertEquals(PosControllerInstr.BRIGHT_DUTYCYCLE, picker.getLastSentPositionControllerDisplayDutyCycle(one));
+		Assert.assertEquals(PosControllerInstr.SOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq(one));
+		Assert.assertEquals(0, (int)picker.getLastSentPositionControllerDisplayValue(two));
+		Assert.assertEquals(PosControllerInstr.BRIGHT_DUTYCYCLE, picker.getLastSentPositionControllerDisplayDutyCycle(two));
+		Assert.assertEquals(PosControllerInstr.BLINK_FREQ, picker.getLastSentPositionControllerDisplayFreq(two));
+		
+		LOGGER.info("4: Logout and login again");
+		picker.logout();
+		picker.login("Worker1");
+		
+		LOGGER.info("5: Veritfy that real orders still shows proper feedback, and fake one is now a solid dim 0");
+		Assert.assertEquals(1, (int)picker.getLastSentPositionControllerDisplayValue(one));
+		Assert.assertEquals(PosControllerInstr.BRIGHT_DUTYCYCLE, picker.getLastSentPositionControllerDisplayDutyCycle(one));
+		Assert.assertEquals(PosControllerInstr.SOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq(one));
+		Assert.assertEquals(0, (int)picker.getLastSentPositionControllerDisplayValue(two));
+		Assert.assertEquals(PosControllerInstr.DIM_DUTYCYCLE, picker.getLastSentPositionControllerDisplayDutyCycle(two));
+		Assert.assertEquals(PosControllerInstr.SOLID_FREQ, picker.getLastSentPositionControllerDisplayFreq(two));
 	}
 }

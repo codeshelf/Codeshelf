@@ -32,19 +32,16 @@ import com.codeshelf.ws.server.WebSocketConnection;
 import com.codeshelf.ws.server.WebSocketManagerService;
 import com.google.common.base.Strings;
 
-public class LoginCommand extends CommandABC {
+public class LoginCommand extends CommandABC<LoginRequest> {
 
 	private static final Logger		LOGGER	= LoggerFactory.getLogger(LoginCommand.class);
-
-	private LoginRequest			loginRequest;
 
 	private ObjectChangeBroadcaster	objectChangeBroadcaster;
 
 	private WebSocketManagerService sessionManager;
 
 	public LoginCommand(WebSocketConnection wsConnection, LoginRequest loginRequest, ObjectChangeBroadcaster objectChangeBroadcaster, WebSocketManagerService sessionManager) {
-		super(wsConnection);
-		this.loginRequest = loginRequest;
+		super(wsConnection, loginRequest);
 		this.objectChangeBroadcaster = objectChangeBroadcaster;
 		this.sessionManager = sessionManager;
 	}
@@ -54,10 +51,10 @@ public class LoginCommand extends CommandABC {
 		LoginResponse response = new LoginResponse();
 		String tenantName = null;
 		try {
-			String cstoken = loginRequest.getCstoken();
-			String username = loginRequest.getUserId();
-			String password = loginRequest.getPassword();
-			String version = loginRequest.getClientVersion();
+			String cstoken = request.getCstoken();
+			String username = request.getUserId();
+			String password = request.getPassword();
+			String version = request.getClientVersion();
 
 			if (wsConnection != null) {
 				TokenSession tokenSession = null;
@@ -136,6 +133,8 @@ public class LoginCommand extends CommandABC {
 							LOGGER.warn("Site Controller logging in: {}", authUser);
 
 							Facility facility = network.getParent();
+							response.setFacilityDomainId(facility.getDomainId());
+							
 							String valueStr = PropertyBehavior.getProperty(facility, FacilityPropertyType.AUTOSHRT);
 							response.setAutoShortValue(Boolean.parseBoolean(valueStr));
 
@@ -160,6 +159,8 @@ public class LoginCommand extends CommandABC {
 							String ordersubValue = PropertyBehavior.getProperty(facility, FacilityPropertyType.ORDERSUB);
 							response.setOrdersubValue(ordersubValue);
 
+							String protocol = PropertyBehavior.getProperty(facility, FacilityPropertyType.PROTOCOL);
+							response.setProtocol(protocol);
 						} else { //ui client user
 							response.setAutoShortValue(false); // not read by client. No need to look it up.
 

@@ -8,8 +8,10 @@ package com.codeshelf.edi;
 import java.io.IOException;
 import java.io.Reader;
 import java.sql.Timestamp;
+import java.util.List;
 
 import com.codeshelf.model.EdiTransportType;
+import com.codeshelf.model.ReplenishItem;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.validation.BatchResult;
 
@@ -20,12 +22,24 @@ import com.codeshelf.validation.BatchResult;
 public interface ICsvOrderImporter {
 
 	BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime) throws IOException;
+	
+	BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime, boolean deleteOldOrders) throws IOException;
+	
+	BatchResult<Object> importOrdersFromBeanList(List<OutboundOrderCsvBean> originalBeanList, Facility facility, Timestamp inProcessTime, boolean deleteOldOrders);
 
 	// here for easier testablity
+
+	/**
+	 * @return scannable order id (itemId or gtin)
+	 */
+	String  createReplenishOrderForItem(Facility facility, ReplenishItem item);
+
 	int toInteger(final String inString);
 	
 	void setTruncatedGtins(boolean value);
 	
 	void persistDataReceipt(Facility facility, String username, String filename, long receivedTime, EdiTransportType tranportType, BatchResult<?> result);
+	
+	void makeOrderDeletionFail(boolean fail);
 
 }

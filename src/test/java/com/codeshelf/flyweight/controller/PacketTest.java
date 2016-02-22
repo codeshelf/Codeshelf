@@ -122,6 +122,7 @@ public final class PacketTest extends MinimalTest {
 		ByteArrayOutputStream byteArray = new ByteArrayOutputStream();
 		BitFieldOutputStream outputStream = new BitFieldOutputStream(byteArray);
 		
+		@SuppressWarnings("unused")
 		IRadioController radioController = new RadioController(null);
 
 		// Create a new command.

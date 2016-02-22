@@ -187,6 +187,8 @@ public class PropertyBehavior{
 				return validate_boolean(trimmedValue);
 			case PRODUCTION:
 				return validate_boolean(trimmedValue);
+			case PROTOCOL:
+				return validate_protocol(trimmedValue);
 			case ORDERSUB:
 				return validate_ordersub(trimmedValue);
 			case TIMEZONE:
@@ -343,6 +345,13 @@ public class PropertyBehavior{
 				return start + "-" + end;
 			}
 		} catch (NumberFormatException e) {
+		}
+		return null;
+	}
+	
+	private static String validate_protocol(String inValue) {
+		if ("1".equals(inValue) || "2".equals(inValue)){
+			return inValue;
 		}
 		return null;
 	}

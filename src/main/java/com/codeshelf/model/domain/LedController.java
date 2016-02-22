@@ -40,7 +40,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 
 @Entity
-@Table(name = "led_controller",uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"}),@UniqueConstraint(columnNames = {"device_guid"})})
+@Table(name = "led_controller",uniqueConstraints = {@UniqueConstraint(columnNames = {"parent_persistentid", "domainid"}),@UniqueConstraint(columnNames = {"parent_persistentid", "device_guid"})})
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class LedController extends WirelessDeviceABC {
 

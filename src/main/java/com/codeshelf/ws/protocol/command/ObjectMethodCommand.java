@@ -24,15 +24,12 @@ import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
 @RequiresPermissions("ux:method")
-public class ObjectMethodCommand extends CommandABC {
+public class ObjectMethodCommand extends CommandABC<ObjectMethodRequest> {
 
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ObjectMethodCommand.class);
 
-	private ObjectMethodRequest	request;
-
 	public ObjectMethodCommand(WebSocketConnection connection, ObjectMethodRequest request) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 	}
 
 	@Override

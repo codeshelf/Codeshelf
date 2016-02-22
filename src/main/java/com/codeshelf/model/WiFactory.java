@@ -134,17 +134,6 @@ public class WiFactory {
 	}
 
 	// --------------------------------------------------------------------------
-	/**
-	 * Create a work instruction for and order item quantity picked into a container at a location.
-	 * @param inStatus
-	 * @param inType
-	 * @param inOrderDetail
-	 * @param inChe
-	 * @param inTime
-	 * @param inContainer
-	 * @param inLocation
-	 * @return
-	 */
 	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
 		WorkInstructionTypeEnum inType,
 		WiPurpose purpose,
@@ -153,7 +142,8 @@ public class WiFactory {
 		final Timestamp inTime,
 		Container inContainer,
 		Location inLocation) throws DaoException {
-		return createWorkInstruction(inStatus, inType, purpose, inOrderDetail, inChe, inTime, inContainer, inLocation, true, null);
+		Location unspecifiedLocation = inLocation.getFacility().getUnspecifiedLocation();
+		return createWorkInstruction(inStatus, inType, purpose, inOrderDetail, inChe, inTime, inContainer, inLocation, true, unspecifiedLocation, null);
 	}
 	
 	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
@@ -164,35 +154,11 @@ public class WiFactory {
 		final Timestamp inTime,
 		Container inContainer,
 		Location inLocation,
-		ColorEnum color) throws DaoException {
-		return createWorkInstruction(inStatus, inType, purpose, inOrderDetail, inChe, inTime, inContainer, inLocation, true, color);
-	}
-
-	/**
-	 * Create a work instruction for and order item quantity picked into a container at a location.
-	 * @param inStatus
-	 * @param inType
-	 * @param inOrderDetail
-	 * @param inChe
-	 * @param inTime
-	 * @param inContainer
-	 * @param inLocation
-	 * @param linkInstructionToDetail
-	 * @param colorOverride - if not null, this color is used instead of CHE's color
-	 * @return
-	 */
-	public static WorkInstruction createWorkInstruction(WorkInstructionStatusEnum inStatus,
-		WorkInstructionTypeEnum inType,
-		WiPurpose purpose,
-		OrderDetail inOrderDetail,
-		Che inChe,
-		final Timestamp inTime,
-		Container inContainer,
-		Location inLocation,
 		boolean linkInstructionToDetail,
+		Location unspecifiedLocation,
 		ColorEnum colorOverride) throws DaoException {
-
-		WorkInstruction resultWi = createWorkInstruction(inStatus, inType, purpose, inOrderDetail, inChe, inTime, linkInstructionToDetail);
+		
+		WorkInstruction resultWi = createWorkInstruction(inStatus, inType, purpose, inOrderDetail, inChe, inTime, linkInstructionToDetail, unspecifiedLocation);
 		if (resultWi == null) { //no more work to do
 			return null;
 		}
@@ -209,7 +175,6 @@ public class WiFactory {
 		} else {
 			resultWi.doSetPickInstruction(resultWi.getLocationId());
 		}
-
 		boolean isInventoryPickInstruction = false;
 		ColorEnum cheColor = colorOverride == null ? inChe.getColor() : colorOverride;
 
@@ -246,8 +211,7 @@ public class WiFactory {
 				}
 			}
 		}
-		Facility facility = inOrderDetail.getParent().getFacility();
-		if (inLocation.isFacility() || facility.getUnspecifiedLocation().equals(inLocation)) {
+		if (inLocation.isFacility() || unspecifiedLocation.equals(inLocation)) {
 			//consider inLocation.getPathSegment() == null ; Note that the getWork by location queries for > posAlongPath
 			resultWi.setPosAlongPath(0.0);
 		} else {
@@ -273,7 +237,8 @@ public class WiFactory {
 		OrderDetail inOrderDetail,
 		Che inChe,
 		final Timestamp inTime,
-		boolean linkInstructionToDetail) throws DaoException {
+		boolean linkInstructionToDetail,
+		Location unspecifiedLocation) throws DaoException {
 		Facility facility = inOrderDetail.getFacility();
 		Integer qtyToPick = inOrderDetail.getQuantity();
 		Integer minQtyToPick = inOrderDetail.getMinQuantity();
@@ -348,7 +313,6 @@ public class WiFactory {
 				// set needs scan field based on order detail
 				resultWi.setNeedsScan(inOrderDetail.getNeedsScan());
 			}			
-
 			// DEV-592 comments. Usually resultWi is newly made, but if setting up the CHE again, or another CHE, it may be the same old WI.
 			// If the same old one, already the orderDetail and facility relationship is correct. The CHE might be correct, or not if now going to a different one.
 			// Important: 	inChe.addWorkInstruction(resultWi) will fail if the wi is currently on another CHE.
@@ -364,8 +328,7 @@ public class WiFactory {
 				}
 
 			}
-
-			resultWi.setLocation(inOrderDetail.getFacility().getUnspecifiedLocation());
+			resultWi.setLocation(unspecifiedLocation);
 			String preferredLocation = inOrderDetail.getPreferredLocation();
 			resultWi.setLocationId(Strings.nullToEmpty(preferredLocation));
 			resultWi.setContainer(null);
@@ -381,7 +344,6 @@ public class WiFactory {
 				// pickInstruction is not nullable, so must set to something, even if still blank.
 				resultWi.doSetPickInstruction(locStr);
 			}
-
 			WorkInstruction.staticGetDao().store(resultWi);
 		}
 		return resultWi;

@@ -2,16 +2,27 @@ package com.codeshelf.api.responses;
 
 import java.sql.Timestamp;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
-import lombok.Getter;
-
+import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.Resolution;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.google.common.base.MoreObjects;
 import com.google.common.base.Strings;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+
+import lombok.Getter;
 
 public class EventDisplay {
+
+	private static Cache<String, Worker> cache = CacheBuilder.newBuilder()
+			.maximumSize(500)
+			.expireAfterAccess(5, TimeUnit.MINUTES)
+			.build();
+
 	//Event Fields
 	@Getter
 	private UUID 							persistentId;
@@ -33,6 +44,9 @@ public class EventDisplay {
 	private String itemLocation;
 
 	@Getter
+	private String itemGtin;
+
+	@Getter
 	private Integer wiPlanQuantity;
 
 	@Getter
@@ -43,6 +57,10 @@ public class EventDisplay {
 
 	@Getter
 	private String	orderId;
+
+
+	@Getter
+	private String deviceName;
 
 	@Getter
 	private String deviceGuid;
@@ -72,28 +90,47 @@ public class EventDisplay {
 	@Getter
 	private String resolvedBy;
 
+
+
 	public static EventDisplay createEventDisplay(WorkerEvent event) {
 		WorkInstruction wi = null;
-		
+
 		UUID workInstructionId = event.getWorkInstructionId();
 		if (workInstructionId != null) {
 			wi = WorkInstruction.staticGetDao().findByPersistentId(workInstructionId);
 		}
+
+		Che che = null;
+		String devicePersistentId = Strings.emptyToNull(event.getDevicePersistentId());
+		if (devicePersistentId != null) {
+			UUID uuid = UUID.fromString(devicePersistentId);
+			che = Che.staticGetDao().findByPersistentId(uuid);
+		}
 		
-		Worker worker = Worker.findWorker(event.getFacility(), event.getWorkerId());
-		return new EventDisplay(event, wi, worker);
+		//Stopwatch findWorker = Stopwatch.createStarted();
+		String key = event.getFacility().getDomainId()+event.getWorkerId();
+		Worker worker = cache.getIfPresent(key);
+		if(worker == null) {
+			worker = Worker.findWorker(event.getFacility(), event.getWorkerId());
+			cache.put(key,  worker);
+
+		}
+
+		return new EventDisplay(event, wi, worker, che);
 	}
 
-	private EventDisplay(WorkerEvent event, WorkInstruction wi, Worker worker) {
+	private EventDisplay(WorkerEvent event, WorkInstruction wi, Worker worker, Che che) {
+		Che cheToUse = che;
 		if (wi != null) {
 			itemId = wi.getItemId();
 			itemDescription = wi.getItemMaster().getDescription();
 			itemUom = wi.getUomMasterId();
 			itemLocation = wi.getPickInstruction();
+			itemGtin = wi.getGtin();
 			wiPlanQuantity = wi.getPlanQuantity();
 			wiActualQuantity = wi.getActualQuantity();
 			orderId = wi.getOrderId();
-			deviceGuid = wi.getAssignedChe().getDeviceGuidStr();
+			cheToUse = MoreObjects.firstNonNull(cheToUse, wi.getAssignedChe());
 		}
 
 		if (worker != null) {
@@ -101,11 +138,16 @@ public class EventDisplay {
 				Strings.nullToEmpty(worker.getFirstName()),
 				Strings.nullToEmpty(worker.getMiddleInitial()));
 		}
-		
+
+		if (cheToUse != null) {
+			deviceGuid = che.getDeviceGuidStr();
+			devicePersistentId = event.getDevicePersistentId();
+			deviceName = che.getDomainId();
+		}
+
 		persistentId = event.getPersistentId();
 		type = event.getEventType();
 		createdAt = event.getCreated();
-		devicePersistentId = event.getDevicePersistentId();
 		workerId = event.getWorkerId();
 		orderDetailId = event.getOrderDetailId();
 		workInstructionId = event.getWorkInstructionId();

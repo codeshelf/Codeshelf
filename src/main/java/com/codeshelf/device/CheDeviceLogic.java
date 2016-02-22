@@ -78,6 +78,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected static final String					OR_START_WORK_MSG						= cheLine("OR START WORK");
 	protected static final String					SELECT_POSITION_MSG						= cheLine("SELECT POSITION");
 	protected static final String					SHORT_PICK_CONFIRM_MSG					= cheLine("CONFIRM SHORT");
+	protected static final String					AMOUNT_CONFIRM_MSG						= cheLine("CONFIRM AMOUNT");
 	protected static final String					LOW_CONFIRM_MSG							= cheLine("CONFIRM LOW");
 	public static final String						YES_NO_MSG								= cheLine("SCAN YES OR NO");						// public for test
 	protected static final String					NO_CONTAINERS_SETUP_MSG					= cheLine("NO SETUP CONTAINERS");
@@ -780,13 +781,23 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		String planQtyStr = getWICountStringForCheDisplay(wi);
 		boolean replenish = WiPurpose.WiPurposeReplenishPut.equals(wi.getPurpose());
 		boolean skipQtyDisplay = WiPurpose.WiPurposeSkuWallPut.equals(wi.getPurpose()) || replenish;
+		String pickinfoProp = mDeviceManager.getPickInfoValue();
 
 		String[] pickInfoLines = { "", "", "" };
 		
+		String substitution = wi.getSubstitution();
 		String quantity = "", displayDescription = wi.getDescription();
 		if (displayDescription == null) {
 			displayDescription = "";
 		}
+
+		String sku = substitution == null ? wi.getItemId() : substitution;
+		//Make sure we do not exceed 40 chars
+		if (sku.length() > 40) {
+			LOGGER.info("Truncating WI SKU that exceeds 40 chars {}", wi);
+			sku = sku.substring(0, 40);
+		}
+
 		if (!planQtyStr.isEmpty() && !skipQtyDisplay) {
 			quantity = "QTY " + planQtyStr;
 			displayDescription = planQtyStr + " " + displayDescription;
@@ -798,17 +809,23 @@ public class CheDeviceLogic extends PosConDeviceABC {
 			}
 		}
 
-		if ("Both".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
-			//First line is SKU, 2nd line is desc + qty if >= 99
-			String info = wi.getItemId();
+		if ("SKU".equalsIgnoreCase(pickinfoProp) || substitution != null){
+			//DEFAULT TO SKU
+			//First line is SKU, 2nd line is QTY
+
+			pickInfoLines[0] = sku;
 
 			//Make sure we do not exceed 40 chars
-			if (info.length() > 40) {
-				LOGGER.warn("Truncating WI SKU that exceeds 40 chars {}", wi);
-				info = info.substring(0, 40);
+			if (quantity.length() > 40) {
+				LOGGER.info("Truncating WI Qty that exceeds 40 chars {}", wi);
+				quantity = quantity.substring(0, 40);
 			}
 
-			pickInfoLines[0] = info;
+			pickInfoLines[1] = quantity;
+		} else if ("Both".equalsIgnoreCase(pickinfoProp)) {
+			//First line is SKU, 2nd line is desc + qty if >= 99
+
+			pickInfoLines[0] = sku;
 			
 			//Add description
 			int charPos = 0;
@@ -820,7 +837,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				}
 			}
 
-		} else if ("Description".equalsIgnoreCase(mDeviceManager.getPickInfoValue())) {
+		} else if ("Description".equalsIgnoreCase(pickinfoProp)) {
 			int pos = 0;
 			for (int line = 0; line < 3; line++) {
 				if (pos < displayDescription.length()) {
@@ -835,33 +852,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				int toGet = Math.min(20, displayDescription.length() - pos);
 				pickInfoLines[2] += displayDescription.substring(pos, pos + toGet);
 			}
-		} else {
-			//DEFAULT TO SKU
-			//First line is SKU, 2nd line is QTY if >= 99
-			String info = wi.getItemId();
-
-			//Make sure we do not exceed 40 chars
-			if (info.length() > 40) {
-				LOGGER.warn("Truncating WI SKU that exceeds 40 chars {}", wi);
-				info = info.substring(0, 40);
-			}
-
-			pickInfoLines[0] = info;
-
-			//Make sure we do not exceed 40 chars
-			if (quantity.length() > 40) {
-				LOGGER.warn("Truncating WI Qty that exceeds 40 chars {}", wi);
-				quantity = quantity.substring(0, 40);
-			}
-
-			pickInfoLines[1] = quantity;
 		}
 		
 		if (replenish) {
 			pickInfoLines[0] = "Replen " + pickInfoLines[0];
 			if (pickInfoLines[0].length() > 40){
 				pickInfoLines[0] = pickInfoLines[0].substring(0, 40);
-				LOGGER.warn("Truncating top line due to Replen addition", wi);
+				LOGGER.info("Truncating top line due to Replen addition", wi);
 			}
 		}
 
@@ -874,7 +871,12 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		if (cleanedPickInstructions.length() > 19) {
 			cleanedPickInstructions = cleanedPickInstructions.substring(0, 19);
 		}
-
+		
+		//If performing a substitution, replace the top line (location) with the word "SUBSTITUTION"
+		if (substitution != null) {
+			cleanedPickInstructions = "SUBSTITUTION";
+		}
+		
 		sendDisplayCommand(cleanedPickInstructions, pickInfoLines[0], pickInfoLines[1], pickInfoLines[2]);
 
 	}
@@ -885,7 +887,11 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	 */
 	private String getFourthLineDisplay(WorkInstruction wi) {
 		if (CheStateEnum.SHORT_PICK == mCheStateEnum || CheStateEnum.SHORT_PUT == mCheStateEnum) {
-			return "DECREMENT POSITION";
+			if (wi.getSubstitution() != null) {
+				return "SET AMOUNT";
+			} else {
+				return "DECREMENT POSITION";
+			}
 		} else if (CheStateEnum.SCAN_SOMETHING == mCheStateEnum) {
 			// kind of funny. States are uniformly defined, so this works even from wrong object
 			ScanNeededToVerifyPick scanVerification = getScanVerificationTypeEnum();
@@ -1055,70 +1061,6 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	protected void adjustStateForCheconReset() {
 		// Do nothing, as this is really an abstract class. 
 		// Could handle verifying badge state here I suppose
-	}
-
-	/**
-	 * @return - Returns the PosControllerInstr for the position given the count if any is warranted. Null otherwise.
-	 */
-	public PosControllerInstr getCartRunFeedbackInstructionForCount(WorkInstructionCount wiCount, byte position) {
-		//if wiCount is null then the server did have any WIs for the order.
-		//this is an "unknown" order id
-		if (wiCount == null) {
-			//Unknown order id matches "done for now" - dim, solid, dashes
-			return new PosControllerInstr(position,
-				PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-				PosControllerInstr.BITENCODED_LED_DASH,
-				PosControllerInstr.BITENCODED_LED_DASH,
-				PosControllerInstr.SOLID_FREQ.byteValue(),
-				PosControllerInstr.DIM_DUTYCYCLE.byteValue());
-		} else {
-			byte count = (byte) wiCount.getGoodCount();
-			// Caller (in SetupOrdersDeviceLogic) just logged, so we do not need to log again here. Caller also logged the pick count.
-			if (count == 0) { // nothing else to do from this cart setup.
-				// Indicate short this path, work other paths, or both.
-				if (wiCount.hasShortsThisPath() && wiCount.hasWorkOtherPaths()) {
-					//If there any bad counts then we are "done for now" - dim, solid, dashes
-					return new PosControllerInstr(position,
-						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-						PosControllerInstr.BITENCODED_TRIPLE_DASH,
-						PosControllerInstr.BITENCODED_TRIPLE_DASH,
-						PosControllerInstr.SOLID_FREQ.byteValue(),
-						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
-				} else if (wiCount.hasShortsThisPath()) {
-					return new PosControllerInstr(position,
-						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-						PosControllerInstr.BITENCODED_TOP_BOTTOM,
-						PosControllerInstr.BITENCODED_TOP_BOTTOM,
-						PosControllerInstr.SOLID_FREQ.byteValue(),
-						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
-				} else if (wiCount.hasWorkOtherPaths()) {
-					return new PosControllerInstr(position,
-						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-						PosControllerInstr.BITENCODED_LED_DASH,
-						PosControllerInstr.BITENCODED_LED_DASH,
-						PosControllerInstr.SOLID_FREQ.byteValue(),
-						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
-				} else {
-					if (wiCount.getCompleteCount() == 0) {
-						// This should not be possible (unless we only had a single HK WI, which would be a bug)
-						// However, restart on a route after completing all work for an order comes back this way. Server could return the count
-						// but does not. Treat it as order complete. The corresponding case  in setupOrdersDeviceLogic is demonstrated 
-						// in cheProcessPutWall.orderWallRemoveOrder(); Don't know if any case hits this in CheDeviceLogic.
-						LOGGER.debug("WorkInstructionCount has no counts {};", wiCount);
-					}
-					//Ready for packout - solid, dim, "oc"
-					return new PosControllerInstr(position,
-						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-						PosControllerInstr.BITENCODED_LED_C,
-						PosControllerInstr.BITENCODED_LED_O,
-						PosControllerInstr.SOLID_FREQ.byteValue(),
-						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
-				}
-			} else {
-				//No feedback is count > 0
-				return null;
-			}
-		}
 	}
 
 	// --------------------------------------------------------------------------
@@ -1941,9 +1883,13 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		byte planQuantityForPositionController = byteValueForPositionDisplay(inWi.getPlanQuantity());
 		byte minQuantityForPositionController = byteValueForPositionDisplay(inWi.getPlanMinQuantity());
 		byte maxQuantityForPositionController = byteValueForPositionDisplay(inWi.getPlanMaxQuantity());
-		if (getCheStateEnum() == CheStateEnum.SHORT_PICK)
+		if (getCheStateEnum() == CheStateEnum.SHORT_PICK) {
 			minQuantityForPositionController = byteValueForPositionDisplay(0); // allow shorts to decrement on position controller down to zero
-
+			if (inWi.getSubstitution() != null) {
+				maxQuantityForPositionController = 99;	//When changing the substitution amount, allow values higher than originally planed
+			}
+		}
+		
 		byte freq = PosControllerInstr.BLINK_FREQ;
 		byte brightness = PosControllerInstr.BRIGHT_DUTYCYCLE;
 		if (this.getCheStateEnum().equals(CheStateEnum.SCAN_SOMETHING)) { // a little weak feedback that the poscon button press will not work
@@ -2028,7 +1974,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				clearAllPosconsOnThisDevice();
 				setState(CheStateEnum.DO_PICK);
 			} else {
-				if ((this instanceof SetupOrdersDeviceLogic) && isSubstitutionAllowed()){
+				if ((this instanceof SetupOrdersDeviceLogic) && isSubstitutionAllowed() && !inScanStr.contains("%")){
 					SetupOrdersDeviceLogic ordersChe = ((SetupOrdersDeviceLogic) this);
 					ordersChe.setSubstitutionScan(inScanStr);
 					ordersChe.setRememberPreSubstitutionState(CheStateEnum.SCAN_SOMETHING);
@@ -2063,7 +2009,7 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				return;
 			}
 			// only reevaluate if the wi needs a scan
-			if (!wi.getNeedsScan()) {
+			if (!wi.getNeedsScan() && !wi.getSubstituteAllowed()) {
 				setState(getCheStateEnum()); // forces redraw
 				return;
 			}
@@ -2075,11 +2021,19 @@ public class CheDeviceLogic extends PosConDeviceABC {
 				clearAllPosconsOnThisDevice();
 				setState(CheStateEnum.DO_PICK);
 			} else {
-				notifyExtraInfo("Unanticipated extra scan; incorrect item/UPC. Changing state back", kLogAsWarn);
+				if ((this instanceof SetupOrdersDeviceLogic) && isSubstitutionAllowed() && !inScanStr.contains("%")){
+					SetupOrdersDeviceLogic ordersChe = ((SetupOrdersDeviceLogic) this);
+					ordersChe.setSubstitutionScan(inScanStr);
+					ordersChe.setRememberPreSubstitutionState(CheStateEnum.SCAN_SOMETHING);
+					setState(CheStateEnum.SUBSTITUTION_CONFIRM);
+				} else {
 
-				// Still a problem here. Worker had done a scan and did not need another, then scanned wrong one. We want to basically forget
-				// The worker had done the good scan. However, that is remembered by the complete work instruction, so it cannot be forgotten.
-				setState(CheStateEnum.SCAN_SOMETHING);
+					notifyExtraInfo("Unanticipated extra scan; incorrect item/UPC. Changing state back", kLogAsWarn);
+	
+					// Still a problem here. Worker had done a scan and did not need another, then scanned wrong one. We want to basically forget
+					// The worker had done the good scan. However, that is remembered by the complete work instruction, so it cannot be forgotten.
+					setState(CheStateEnum.SCAN_SOMETHING);
+				}
 
 			}
 		} else {
@@ -2088,10 +2042,18 @@ public class CheDeviceLogic extends PosConDeviceABC {
 		}
 	}
 
+	/**
+	 * Determine if any wis in the active list or later ones that much the active list have substituteAllowed = true 
+	 */
 	private boolean isSubstitutionAllowed(){
 		for (WorkInstruction wi : getActivePickWiList()){
 			if (wi.getSubstituteAllowed()) {
 				return true;
+			}
+			for (WorkInstruction wi2 : mAllPicksWiList) {
+				if (sameProductLotEtc(wi2, wi) && laterWi(wi2, wi) && wi2.getSubstituteAllowed()){
+					return true;
+				}
 			}
 		}
 		return false;
@@ -2107,6 +2069,44 @@ public class CheDeviceLogic extends PosConDeviceABC {
 	@Override
 	public boolean needUpdateCheDetails(NetGuid cheDeviceGuid, String cheName, byte[] linkedToCheGuid) {
 		// TODO update internals
+
+		return false;
+	}
+	
+	// --------------------------------------------------------------------------
+	/**
+	 * The inShortWi was just shorted.
+	 * Is inProposedWi later in sequence?
+	 */
+	protected Boolean laterWi(final WorkInstruction inProposedWi, final WorkInstruction inCurrentWi) {
+		String proposedSort = inProposedWi.getGroupAndSortCode();
+		String currentSort = inCurrentWi.getGroupAndSortCode();
+		if (proposedSort == null) {
+			LOGGER.error("laterWiSameProduct has wi with no sort code");
+			return false;
+		}
+		if (currentSort.compareTo(proposedSort) < 0)
+			return true;
+
+		return false;
+	}
+
+	// --------------------------------------------------------------------------
+	/**
+	 * The inShortWi was just shorted.
+	 * Is inProposedWi equivalent enough that it should also short?
+	 */
+	protected Boolean sameProductLotEtc(final WorkInstruction inProposedWi, WorkInstruction inCurrentWi) {
+		// Initially, just look at the denormalized item Id.
+		String currentId = inCurrentWi.getItemId();
+		String proposedId = inProposedWi.getItemId();
+		if (currentId == null || proposedId == null) {
+			LOGGER.error("sameProductLotEtc has null value");
+			return false;
+		}
+		if (currentId.compareTo(proposedId) == 0) {
+			return true;
+		}
 
 		return false;
 	}

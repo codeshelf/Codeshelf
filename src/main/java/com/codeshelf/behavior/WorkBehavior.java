@@ -34,6 +34,7 @@ import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.application.ContextLogging;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.OrderLocationFeedbackMessage;
 import com.codeshelf.edi.EdiExportService;
@@ -100,9 +101,6 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 
 public class WorkBehavior implements IApiBehavior {
-
-	private static final String					THREAD_CONTEXT_TAGS_KEY	= "tags";										// duplicated in CheDeviceLogic. Need a common place
-
 	private static Double						BAY_ALIGNMENT_FUDGE		= 0.25;
 
 	private static final Logger					LOGGER					= LoggerFactory.getLogger(WorkBehavior.class);
@@ -285,7 +283,6 @@ public class WorkBehavior implements IApiBehavior {
 				theTime);
 			workList.getInstructions().addAll(slowPutWallInstructions);
 		}
-
 		//Filter,Sort, and save actionsable WI's
 		//TODO Consider doing this in getWork?
 		//sortAndSaveActionableWIs(facility, wiResultList);
@@ -903,7 +900,8 @@ public class WorkBehavior implements IApiBehavior {
 			inFacility,
 			inFacility.getPaths(),
 			workSeqr,
-			null);
+			null,
+			inFacility.getUnspecifiedLocation());
 		WorkInstruction aWi = null;
 		// workItem will contain an Instruction if an item was found on some path or an OrderDetail if it was not.
 		// In LinePick, we are OK with items without a location. So, if does return with OrderDetail, just create an Instruction manually.
@@ -914,7 +912,8 @@ public class WorkBehavior implements IApiBehavior {
 				orderDetail,
 				inChe,
 				null,
-				true); // Could be normal WI, or a short WI
+				true,
+				inChe.getFacility().getUnspecifiedLocation()); // Could be normal WI, or a short WI
 		} else {
 			aWi = workItem.getInstruction();
 		}
@@ -928,7 +927,7 @@ public class WorkBehavior implements IApiBehavior {
 			//and saving
 			for (WorkInstruction wi : orderDetail.getWorkInstructions()) {
 				//As of DEV-603 we are only adding completed WIs to the list
-				if (WorkInstructionStatusEnum.COMPLETE == wi.getStatus()) {
+				if (WorkInstructionStatusEnum.COMPLETE == wi.getStatus() || WorkInstructionStatusEnum.SUBSTITUTION == wi.getStatus()) {
 					LOGGER.info("Not Adding already complete WIs to list _2_; orderDetail={}", orderDetail);
 					// wiResultList.add(wi);
 					// This is not likely to matter for line_scan process
@@ -1538,6 +1537,7 @@ public class WorkBehavior implements IApiBehavior {
 		final Timestamp inTime) {
 		List<WorkInstruction> wiResultList = new ArrayList<WorkInstruction>();
 		List<OrderDetail> uncompletedDetails = new ArrayList<OrderDetail>();
+		Location unspecifiedLocation = inChe.getFacility().getUnspecifiedLocation();
 
 		// To proceed, there should container use linked to outbound order
 		// We want to add all orders represented in the container list because these containers (or for Accu, fake containers representing the order) were scanned for this CHE to do.
@@ -1563,7 +1563,8 @@ public class WorkBehavior implements IApiBehavior {
 								facility,
 								facility.getPaths(),
 								workSeqr,
-								prefetchedPreferredLocations); // Could be normal WI, or a short WI
+								prefetchedPreferredLocations,
+								unspecifiedLocation); // Could be normal WI, or a short WI
 							if (workItem.getDetail() != null) {
 								uncompletedDetails.add(workItem.getDetail());
 							}
@@ -1578,7 +1579,7 @@ public class WorkBehavior implements IApiBehavior {
 								//and saving
 								for (WorkInstruction wi : orderDetail.getWorkInstructions()) {
 									//As of DEV-603 we are only adding completed WIs to the list
-									if (WorkInstructionStatusEnum.COMPLETE == wi.getStatus()) {
+									if (WorkInstructionStatusEnum.COMPLETE == wi.getStatus() || WorkInstructionStatusEnum.SUBSTITUTION == wi.getStatus()) {
 										LOGGER.info("Adding already complete WIs to list; orderDetail={}", orderDetail);
 										wiResultList.add(wi);
 										// If changed, only testCartSetupFeedback fails
@@ -1601,7 +1602,6 @@ public class WorkBehavior implements IApiBehavior {
 				}
 			}
 		}
-		//return wiResultList;
 		WorkList workList = new WorkList();
 		workList.setInstructions(wiResultList);
 		workList.setDetails(uncompletedDetails);
@@ -1761,7 +1761,9 @@ public class WorkBehavior implements IApiBehavior {
 		final Facility inFacility,
 		final List<Path> paths,
 		final String workSeqr,
-		final HashMap<String, Location> prefetchedPreferredLocations) throws DaoException {
+		final HashMap<String, Location> prefetchedPreferredLocations,
+		final Location unspecifiedLocation) throws DaoException {
+		
 		WorkInstruction resultWi = null;
 		SingleWorkItem resultWork = new SingleWorkItem();
 		ItemMaster itemMaster = inOrderDetail.getItemMaster();
@@ -1782,7 +1784,7 @@ public class WorkBehavior implements IApiBehavior {
 						location = prefetchedPreferredLocations.get(preferredLocationStr);
 					}
 					if (location == null) {
-						location = inFacility.getUnspecifiedLocation();
+						location = unspecifiedLocation;
 					} else if (!location.isActive()) {
 						LOGGER.warn("Unexpected inactive location for preferred Location: {}", location);
 						location = inFacility.getUnspecifiedLocation();
@@ -1826,7 +1828,10 @@ public class WorkBehavior implements IApiBehavior {
 					inChe,
 					inTime,
 					inContainer,
-					inFacility);
+					inFacility,
+					true,
+					unspecifiedLocation,
+					null);
 				if (resultWi != null) {
 					resultWi.setPlanQuantity(0);
 					resultWi.setPlanMinQuantity(0);
@@ -1846,7 +1851,10 @@ public class WorkBehavior implements IApiBehavior {
 				inChe,
 				inTime,
 				inContainer,
-				location);
+				location,
+				true,
+				unspecifiedLocation,
+				null);
 			resultWork.addInstruction(resultWi);
 
 		}
@@ -1865,7 +1873,8 @@ public class WorkBehavior implements IApiBehavior {
 		//Filter out complete WI's
 		Iterator<WorkInstruction> iter = allWIs.iterator();
 		while (iter.hasNext()) {
-			if (iter.next().getStatus() == WorkInstructionStatusEnum.COMPLETE) {
+			WorkInstructionStatusEnum status = iter.next().getStatus();
+			if (status == WorkInstructionStatusEnum.COMPLETE || status == WorkInstructionStatusEnum.SUBSTITUTION) {
 				iter.remove();
 			}
 		}
@@ -2068,6 +2077,7 @@ public class WorkBehavior implements IApiBehavior {
 		}
 		storedWi.setStarted(updatedWi.getStarted());
 		storedWi.setCompleted(updatedWi.getCompleted());
+		storedWi.setSubstitution(updatedWi.getSubstitution());
 		WorkInstruction.staticGetDao().store(storedWi);
 
 		// Find the order detail for this WI and mark it.
@@ -2169,13 +2179,13 @@ public class WorkBehavior implements IApiBehavior {
 	 */
 	private void logInContext(String tag, String msg, boolean warnNeeded) {
 		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, tag);
+			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, tag);
 			if (warnNeeded)
 				LOGGER.warn(msg);
 			else
 				LOGGER.info(msg);
 		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLogging.THREAD_CONTEXT_TAGS_KEY);
 		}
 	}
 

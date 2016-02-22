@@ -35,6 +35,7 @@ public final class CommandControlClearPosController extends CommandControlABC {
 	private static final Logger		LOGGER					= LoggerFactory.getLogger(CommandControlClearPosController.class);
 
 	private static final Integer	REQUEST_COMMAND_BYTES	= 1;
+	private static final Integer	RESEND_DELAY			= 60;
 
 	@Accessors(prefix = "m")
 	@Getter
@@ -114,6 +115,6 @@ public final class CommandControlClearPosController extends CommandControlABC {
 	*  @return
 	*/
 	public int getResendDelay() {
-		return DEFAULT_RESEND_DELAY;
+		return RESEND_DELAY;
 	}
 }

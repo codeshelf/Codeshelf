@@ -17,8 +17,30 @@ import com.codeshelf.flyweight.command.NetGuid;
  */
 public class ContextLogging {
 	private static final Logger				LOGGER	= LoggerFactory.getLogger(ContextLogging.class);
-	private static final String	NETGUID_KEY	= "netguid";
 
+	public static final String				THREAD_CONTEXT_WORKER_KEY			= "worker";
+	public static final String				THREAD_CONTEXT_TAGS_KEY				= "tags";
+	public static final String				THREAD_CONTEXT_NETGUID_KEY			= "netguid";
+	public static final String				THREAD_CONTEXT_USER_KEY				= "user";
+	public static final String				THREAD_CONTEXT_TENANT_KEY			= "tenant";
+	public static final String				THREAD_CONTEXT_TENANT_NAME_KEY		= "tenant_name";
+	public static final String				THREAD_CONTEXT_FACILITY_KEY			= "facility";
+	
+	public static final String				TAG_CHE_WORK_INSTRUCTION			= "CHE_EVENT Work_Instruction";
+	public static final String				TAG_CHE_ORDER_INTO_WALL				= "CHE_EVENT Order_Into_Wall";
+	public static final String				TAG_CHE_REMOVE_ORDER_CHE			= "CHE_EVENT Remove_Order_Che";
+	public static final String				TAG_CHE_WORKER_ACTION				= "CHE_EVENT Worker Action";
+	public static final String				TAG_CHE_WALL_PLANS_RESPONSE			= "CHE_EVENT Wall_Plans_Response";
+	public static final String				TAG_CHE_WALL_PLANS_REQUEST			= "CHE_EVENT Wall_Plans_Request";
+	public static final String				TAG_CHE_INVENTORY_UPDATE			= "CHE_EVENT Inventory_Update";
+	public static final String				TAG_CHE_BUTTON						= "CHE_EVENT Button";
+	public static final String				TAG_CHE_WALL_BUTTON_PRESS			= "CHE_EVENT Wall_Button_Press";
+	public static final String				TAG_CHE_WALL_BUTTON_DISPLAY			= "CHE_EVENT Wall_Button_Display";
+	public static final String				TAG_CHE_SCAN						= "CHE_EVENT Scan";
+	public static final String				TAG_CHE_INFORMATION					= "CHE_EVENT Information";
+	public static final String				TAG_CHE_ASSOCIATE					= "CHE_EVENT Associate";
+	
+	
 	private ContextLogging() {
 	}
 
@@ -29,15 +51,15 @@ public class ContextLogging {
 	}
 
 	static public void setNetGuid(String guidStr) {
-		ThreadContext.put(NETGUID_KEY, guidStr);
+		ThreadContext.put(THREAD_CONTEXT_NETGUID_KEY, guidStr);
 	}
 
 	static public void clearNetGuid() {
-		ThreadContext.remove(NETGUID_KEY);
+		ThreadContext.remove(THREAD_CONTEXT_NETGUID_KEY);
 	}
 
 	public static String getNetGuid() {
-		return ThreadContext.get(NETGUID_KEY);
+		return ThreadContext.get(THREAD_CONTEXT_NETGUID_KEY);
 	}
 
 	/**
@@ -73,5 +95,20 @@ public class ContextLogging {
 		else
 			setNetGuid(guidStr);
 	}
-
+	
+	static public void setTenantNameAndFacilityId(String tenantName, String facilityId) {
+		ThreadContext.put(ContextLogging.THREAD_CONTEXT_TENANT_NAME_KEY, tenantName);
+		ThreadContext.put(ContextLogging.THREAD_CONTEXT_FACILITY_KEY, facilityId);
+	}
+	
+	static public String getTag(String tagId) {
+		return ThreadContext.get(tagId);
+	}
+	
+	static public void setTag(String tagId, String tagValue) {
+		if (tagValue == null || tagValue.isEmpty()) {
+			ThreadContext.remove(tagId);
+		}
+		ThreadContext.put(tagId, tagValue);
+	}
 }

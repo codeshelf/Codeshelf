@@ -18,6 +18,7 @@ public enum FacilityPropertyType {
 	PICKINFO("SKU","The secondary information shown on the CHE during a pick, below the location.", "SKU, Description, Both."),
 	PICKMULT("false","If true, get simultaneous pick instructions to several position controllers for a single SKU/location.", "true, false."),
 	PRODUCTION("false","If true, Codeshelf monitoring aggressively alerts on failures. If false, monitoring does not alert.", "true, false."),
+	PROTOCOL("1","Site Controller radio protocol version.", "1, 2"),
 	SCANPICK("Disabled","Enabling will require the picker to scan the picked item before placing in a container. Specify if the picker should scan the item SKU or UPC.", "Disabled, SKU, UPC."),	
 	TIMEZONE("US/Pacific","Facility local timezone. Must be a valid Java TimeZone ID. Some US timezones for quick refference: US/Eastern, US/Central, US/Mountain, US/Pacific.", " valid timezone name."),
 	WORKSEQR("BayDistance","When a CHE is set up and work instructions created, what sort algorithm should be used.", "BayDistance, WorkSequence.");

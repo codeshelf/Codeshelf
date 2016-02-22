@@ -17,4 +17,9 @@
         <addNotNullConstraint columnDataType="boolean" columnName="substitute_allowed" tableName="order_detail"/>
         <addNotNullConstraint columnDataType="boolean" columnName="substitute_allowed" tableName="work_instruction"/>
     </changeSet>
+    <changeSet author="ilya (generated)" id="1453232247687-2">
+        <addColumn tableName="work_instruction">
+            <column name="substitution" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>

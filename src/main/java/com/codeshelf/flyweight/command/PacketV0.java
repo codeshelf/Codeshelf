@@ -115,7 +115,8 @@ public final class PacketV0 implements IPacket {
 	@Getter
 	@Setter
 	private PacketVersion			mPacketVersion	= new PacketVersion(PROTOCOL_VERSION, PROTOCOL_VERSION_BITS);
-	private NBitInteger				mPacketType;
+
+private NBitInteger				mPacketType;
 	private NBitInteger				mReservedHeaderBits;
 	private NetworkId				mNetworkId;
 	private NetAddress				mSrcAddr;

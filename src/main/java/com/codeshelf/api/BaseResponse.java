@@ -1,6 +1,9 @@
 package com.codeshelf.api;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import javax.ws.rs.WebApplicationException;
@@ -139,6 +142,23 @@ public abstract class BaseResponse {
 		}
 	}
 
+	public static class CSVParam extends AbstractParam<List<String>> {
+
+		public CSVParam(String str) {
+			super(str);
+		}
+
+		@Override
+		protected List<String> parse(String param) {
+			if (param != null) {
+				return Arrays.asList(param.split("\\s*,\\s*")); // this trims out white space
+			} else {
+				return new ArrayList<String>();
+			}
+		}
+	}
+	
+	
 	public static class EventTypeParam extends AbstractParam<WorkerEvent.EventType> {
 
 		public EventTypeParam(String str) {

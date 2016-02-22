@@ -26,10 +26,8 @@ import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
 @RequiresPermissions("wi:get")
-public class ComputeWorkCommand extends CommandABC {
+public class ComputeWorkCommand extends CommandABC<ComputeWorkRequest> {
 	private static final Logger	LOGGER								= LoggerFactory.getLogger(ComputeWorkCommand.class);
-
-	private ComputeWorkRequest	request;
 
 	private WorkBehavior		workService;
 
@@ -50,8 +48,7 @@ public class ComputeWorkCommand extends CommandABC {
 	}
 
 	public ComputeWorkCommand(WebSocketConnection connection, ComputeWorkRequest request, WorkBehavior workService) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 		this.workService = workService;
 	}
 
@@ -183,6 +180,7 @@ public class ComputeWorkCommand extends CommandABC {
 				} else {
 					switch (wiStatus) {
 						case COMPLETE:
+						case SUBSTITUTION:
 							// What happens if server does not increment Complete? Only fails ComputWorkCommandTest. Apparently not needed.
 							count.incrementCompleteCount();
 							break;

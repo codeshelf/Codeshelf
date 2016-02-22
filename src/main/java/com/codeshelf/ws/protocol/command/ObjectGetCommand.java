@@ -18,15 +18,12 @@ import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
 @RequiresPermissions("ux:get")
-public class ObjectGetCommand extends CommandABC {
+public class ObjectGetCommand extends CommandABC<ObjectGetRequest> {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(ObjectGetCommand.class);
-
-	private ObjectGetRequest request;
 	
 	public ObjectGetCommand(WebSocketConnection connection, ObjectGetRequest request) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 	}
 
 	@Override

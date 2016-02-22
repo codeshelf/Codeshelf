@@ -13,9 +13,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -30,15 +32,19 @@ import com.codeshelf.model.domain.ImportReceipt;
 import com.codeshelf.model.domain.ImportStatus;
 import com.codeshelf.model.EdiTransportType;
 import com.codeshelf.model.FacilityPropertyType;
+import com.codeshelf.model.OrderTypeEnum;
+import com.codeshelf.model.ReplenishItem;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.OrderDetail;
 import com.codeshelf.model.domain.OrderGroup;
 import com.codeshelf.model.domain.OrderHeader;
+import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.service.ExtensionPointType;
 import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.util.DateTimeParser;
 import com.codeshelf.util.ThreadUtils;
 import com.codeshelf.validation.BatchResult;
+import com.google.common.base.Strings;
 import com.google.inject.Inject;
 
 public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderCsvBean> implements ICsvOrderImporter {
@@ -85,10 +91,19 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	@Getter
 	boolean												truncatedGtins			= false;
 
+	//Used for testing purpose to simulate errors in the OrderDeletion thread
+	@Setter
+	@Getter
+	boolean												makeOldOrderDeletionFail= false;
+
 	@Inject
 	public OutboundOrderPrefetchCsvImporter(final EventProducer inProducer) {
 		super(inProducer);
 		mDateTimeParser = new DateTimeParser();
+	}
+	
+	public void makeOrderDeletionFail(boolean fail){
+		this.makeOldOrderDeletionFail = fail;
 	}
 
 	/** --------------------------------------------------------------------------
@@ -99,22 +114,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		spentDoingExtensionsMs += System.currentTimeMillis() - inTimeStampBeforeExtension;
 	}
 
-	// --------------------------------------------------------------------------
-	/* (non-Javadoc)
-	 * @see com.codeshelf.edi.ICsvImporter#importOrdersFromCsvStream(java.io.InputStreamReader, com.codeshelf.model.domain.Facility)
-	 */
-	public final BatchResult<Object> importOrdersFromCsvStream(Reader inCsvReader, Facility facility, Timestamp inProcessTime) {
-
-		this.startTime = System.currentTimeMillis();
-		this.spentDoingExtensionsMs = 0;
-		BatchResult<Object> batchResult = new BatchResult<Object>();
-		batchResult.setReceived(new Date(startTime));
-		batchResult.setCompleted(new Date(startTime));
-
-		// make sure the facility is up-to-date
-		facility = facility.reload();
-
-		// initialize scripting service
+	private void initImporter(Facility facility, BatchResult<Object> results){
 		try {
 			long timeBeforeExtension = System.currentTimeMillis();
 			extensionPointService = ExtensionPointEngine.getInstance(facility);
@@ -122,12 +122,10 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		} catch (Exception e) {
 			LOGGER.error("Failed to initialize extension point service", e);
 		}
-		
 		List<String> failedExtensions = extensionPointService.getFailedExtensions();
 		for (String e : failedExtensions) {
-			batchResult.addViolation("ExtensionService", null, "Extension failed to load and was deactivated: " + e);
+			results.addViolation("ExtensionService", null, "Extension failed to load and was deactivated: " + e);
 		}
-
 		// Get our LOCAPICK and SCANPICK configuration values. It will not change during importing one file.
 		this.locaPick = PropertyBehavior.getPropertyAsBoolean(facility, FacilityPropertyType.LOCAPICK);
 		this.scanPick = false;
@@ -136,7 +134,26 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 		if (!defaultScanpick.equals(scanPickProp)) {
 			this.scanPick = true;
 		}
+	}
+	
+	// --------------------------------------------------------------------------
+	public final BatchResult<Object> importOrdersFromCsvStream(Reader inCsvReader, Facility facility, Timestamp inProcessTime) {
+		return importOrdersFromCsvStream(inCsvReader, facility, inProcessTime, false);
+	}
+	
+	public final BatchResult<Object> importOrdersFromCsvStream(Reader inCsvReader, Facility facility, Timestamp inProcessTime, boolean deleteOldOrders) {
 
+		this.startTime = System.currentTimeMillis();
+		this.spentDoingExtensionsMs = 0;
+		BatchResult<Object> batchResultErrors = new BatchResult<Object>();
+		batchResultErrors.setReceived(new Date(startTime));
+		batchResultErrors.setCompleted(new Date(startTime));
+
+		// make sure the facility is up-to-date
+		facility = facility.reload();
+
+		initImporter(facility, batchResultErrors);
+		
 		// DEV-978 extension point can fully supply the header.  However, that should not be done with OrderImportHeaderTransformation
 		// Note: this works by passing in a good java string that is empty, and getting back a non-empty string.
 		String extensionSuppliedHeader = "";
@@ -154,14 +171,14 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 					if (extensionSuppliedHeader.isEmpty()) {
 						// we called the header and nothing got done. As the extension was in effect, we must assume the file itself has no header.
 						LOGGER.warn("OrderImportCreateHeader in effect, but did not produce a header. Skipping this orders file.");
-						return batchResult;
+						return batchResultErrors;
 					}
 
 					addToExtensionMsFromTimeBefore(timeBeforeExtension);
 				} catch (Exception e) {
 					LOGGER.error("Extension failed to supply order file header", e);
-					batchResult.addViolation("OrderImportCreateHeader Script", null, e.getMessage());
-					return batchResult;
+					batchResultErrors.addViolation("OrderImportCreateHeader Script", null, e.getMessage());
+					return batchResultErrors;
 				}
 			}
 		}
@@ -187,8 +204,8 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 					buffer.append(transformedHeader);
 				} catch (Exception e) {
 					LOGGER.error("Failed to transform order file header", e);
-					batchResult.addViolation("OrderImportHeaderTransformation Script", null, e.getMessage());
-					return batchResult;
+					batchResultErrors.addViolation("OrderImportHeaderTransformation Script", null, e.getMessage());
+					return batchResultErrors;
 				}
 			} else {
 				try {
@@ -202,7 +219,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 					buffer.append(header);
 				} catch (Exception e) {
 					LOGGER.error("Failed to read order file header", e);
-					return batchResult;
+					return batchResultErrors;
 				}
 			}
 			// process file body
@@ -221,8 +238,8 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 					}
 				} catch (Exception e) {
 					LOGGER.error("Exception during OrderImportLineTransformation", e);
-					batchResult.addViolation("OrderImportLineTransformation Script", null, e.getMessage());
-					return batchResult;
+					batchResultErrors.addViolation("OrderImportLineTransformation Script", null, e.getMessage());
+					return batchResultErrors;
 				}
 			} else {
 				// use order lines as-is
@@ -233,7 +250,7 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 					}
 				} catch (Exception e) {
 					LOGGER.error("Failed to read order file line", e);
-					return batchResult;
+					return batchResultErrors;
 				}
 			}
 			try {
@@ -245,14 +262,31 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			inCsvReader = new StringReader(buffer.toString());
 		}
 
+		List<OutboundOrderCsvBean> originalBeanList = toCsvBean(inCsvReader, OutboundOrderCsvBean.class);
+		BatchResult<Object> batchResult = importOrdersFromBeanList(originalBeanList, facility, inProcessTime, deleteOldOrders, true);
+		return batchResult;
+	}
+	
+	public final BatchResult<Object> importOrdersFromBeanList(List<OutboundOrderCsvBean> originalBeanList, Facility facility, Timestamp inProcessTime, boolean deleteOldOrders){
+		return importOrdersFromBeanList(originalBeanList, facility, inProcessTime, deleteOldOrders, false);
+	}
+	
+	private final BatchResult<Object> importOrdersFromBeanList(List<OutboundOrderCsvBean> originalBeanList, Facility facility, Timestamp inProcessTime, boolean deleteOldOrders, boolean alreadyInitialized){
+		this.startTime = System.currentTimeMillis();
+		BatchResult<Object> batchResult = new BatchResult<Object>();
+		batchResult.setReceived(new Date(startTime));
+		batchResult.setCompleted(new Date(startTime));
+
 		int numOrders = 0;
 		int numLineItems = 0;
-
-		List<OutboundOrderCsvBean> originalBeanList = toCsvBean(inCsvReader, OutboundOrderCsvBean.class);
-
+		
 		if (originalBeanList.size() == 0) {
 			LOGGER.info("Nothing to process.  Order file is empty.");
 			return null;
+		}
+		
+		if (!alreadyInitialized){
+			initImporter(facility, batchResult);
 		}
 
 		// From v20 DEV-1075
@@ -346,6 +380,10 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 			}
 		}
 
+		if (deleteOldOrders) {
+			deleteOldOrders(facility.getPersistentId(), orderIds);
+		}
+		
 		// load order queue
 		int numBatches = 1;
 		OutboundOrderBatch combinedBatch = new OutboundOrderBatch(numBatches);
@@ -434,5 +472,74 @@ public class OutboundOrderPrefetchCsvImporter extends CsvImporter<OutboundOrderC
 	protected Set<EventTag> getEventTagsForImporter() {
 		return EnumSet.of(EventTag.IMPORT, EventTag.ORDER_OUTBOUND);
 	}
+	
+	private void deleteOldOrders(final UUID facilityId, final Set<String> orderIds) {
+		Runnable deleteOrdersRunnable = new Runnable() {
+			@Override
+			public void run() {
+				TenantPersistenceService.getInstance().beginTransaction();
+				Facility facility = Facility.staticGetDao().findByPersistentId(facilityId);
+				int counter = 1, total = orderIds.size();
+				for (String orderId : orderIds) {
+					try {
+						if (makeOldOrderDeletionFail){
+							throw new Exception("Order Deletion Test-Triggered Error");
+						}
+						OrderHeader oldOrder = OrderHeader.staticGetDao().findByDomainId(facility, orderId);
+						if (oldOrder != null) {
+							LOGGER.info("Deleting old order {} ({}/{}) during its re-importing", orderId, counter++, total);
+							OrderHeader.staticGetDao().delete(oldOrder);
+						}
+					} catch (Exception e) {
+						LOGGER.warn("Unable to delete order " + orderId + " during re-importing", e);
+					}
+					if (Thread.interrupted()) {
+						break;	// Executor has asked us to stop
+					}
+				}
+				TenantPersistenceService.getInstance().commitTransaction();
+			}
+		};
+		ExecutorService executor = Executors.newFixedThreadPool(1);
+		LOGGER.info("Start order deletion thread");
+		executor.execute(deleteOrdersRunnable);
+		executor.shutdown();
+		try {
+			LOGGER.info("Await order deletion thread termination");
+			boolean ternimated = executor.awaitTermination(3, TimeUnit.MINUTES);
+			if (!ternimated){
+				executor.shutdownNow();
+				LOGGER.warn("Timeout exception while trying to delete orders before re-importing. Interrupting order deletion.");
+				
+			}
+		} catch (InterruptedException e){
+			LOGGER.warn("Order deletion thread interrupted while awaiting termination", e);
+		}
+		LOGGER.info("Order delition completed");
+	}
 
+	@Override
+	public String createReplenishOrderForItem(Facility facility, ReplenishItem item) {
+		String gtin = item.getGtin();
+		String itemId = item.getItemId();
+		String uom = Strings.nullToEmpty(item.getUom());
+		
+		String scannableId = Strings.emptyToNull(gtin) == null ? itemId : gtin;
+		String location = Strings.nullToEmpty(item.getLocation());
+
+		OutboundOrderCsvBean orderBean = new OutboundOrderCsvBean();
+		orderBean.setLineNumber(1);
+		orderBean.setOrderId(scannableId);
+		orderBean.setItemId(itemId);
+		orderBean.setQuantity("1");
+		orderBean.setUom(uom);
+		orderBean.setLocationId(location);
+		orderBean.setPreAssignedContainerId(scannableId);
+		orderBean.setWorkSequence("0");
+		orderBean.setOperationType(OrderTypeEnum.REPLENISH.name());
+		ArrayList<OutboundOrderCsvBean> orderBeanList = new ArrayList<>(1);
+		orderBeanList.add(orderBean);
+		this.importOrdersFromBeanList(orderBeanList, facility, new Timestamp(System.currentTimeMillis()), false);
+		return scannableId;
+	}
 }

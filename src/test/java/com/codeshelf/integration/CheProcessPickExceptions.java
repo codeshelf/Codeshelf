@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import com.codeshelf.behavior.PropertyBehavior;
 import com.codeshelf.device.CheDeviceLogic;
 import com.codeshelf.device.CheStateEnum;
+import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.Facility;
@@ -25,6 +26,7 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.testframework.ServerTest;
+import com.codeshelf.util.ThreadUtils;
 
 /**
  * This replicates the essence of a few situation seen in production.
@@ -416,6 +418,9 @@ public class CheProcessPickExceptions extends ServerTest {
 		picker.assertPosconDisplayOc(1); // sort of a bug here. site controller thinks it is done, but we only picked two of three
 		picker.assertPosconDisplayOc(2);
 
+		//Wait for pick to propagate through server
+		ThreadUtils.sleep(500);
+		
 		beginTransaction();
 		facility = facility.reload();
 		OrderHeader oh1 = OrderHeader.staticGetDao().findByDomainId(facility, "11111");
@@ -974,11 +979,12 @@ public class CheProcessPickExceptions extends ServerTest {
 		picker.pick(button, quantity);
 		picker.waitForCheState(CheStateEnum.DO_PICK, 3000);
 		picker.logCheDisplay(); // No error shown. Just moved onto the next job.
-
+		
 		LOGGER.info("3b: And the next pick is refused, sending to summary state instead");
 		// Would be nice if it did not wait for the next pick. But we do not know how long before the response comes back.
 		picker.pickItemAuto();
 		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 3000);
+		picker.logCheDisplay(); // No error shown. Just moved onto the next job.
 
 		LOGGER.info("4: Verify that server did not complete the first job");
 		beginTransaction();
@@ -1094,5 +1100,55 @@ public class CheProcessPickExceptions extends ServerTest {
 		commitTransaction();
 
 		picker.logout();
+	}
+	
+	/**
+	 * One item picked on cart. One is ready to be picked. Remove both during re-importing
+	 */
+	@Test
+	public void reimportRemoveAlreadyPickedDetail() throws IOException{
+		LOGGER.info("1. Setup facility and import order with 2 details.");
+		Facility facility = setUpSimpleNoSlotFacility();
+		
+		beginTransaction();
+		facility = facility.reload();
+		PropertyBehavior.turnOffHK(facility);
+		PropertyBehavior.setProperty(facility, FacilityPropertyType.WORKSEQR, "WorkSequence");
+		commitTransaction();
+		
+		beginTransaction();
+		facility = facility.reload();
+		// Outbound order. No group. Using 5 digit order number and preassigned container number.
+		// Order 1 has two items in stock (Item 1 and Item 2)
+		String csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,locationId,workSequence"
+				+ "\r\n11111,11111,1,Test Item 1,2,each,2012-09-26,2012-09-26,Loc1,0"
+				+ "\r\n11111,11111,2,Test Item 2,1,each,2012-09-26,2012-09-26,Loc2,0";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+
+		LOGGER.info("2. Pick first detail, get second detail ready to pick.");
+		startSiteController();
+		PickSimulator picker = createPickSim(cheGuid1);
+		picker.loginAndSetup("Worker1");
+		picker.setupContainer("11111", "1");
+		picker.start(CheStateEnum.SETUP_SUMMARY, 4000);
+		verifyCheDisplay(picker, "1 order", "2 jobs", "", "START (or SETUP)");
+		picker.start(CheStateEnum.DO_PICK, 4000);
+		verifyCheDisplay(picker, "Loc1", "1", "QTY 2", "");
+		picker.pickItemAuto();
+		verifyCheDisplay(picker, "Loc2", "2", "QTY 1", "");
+		
+		LOGGER.info("3. Re-import order, removing both details.");
+		ThreadUtils.sleep(500);
+		beginTransaction();
+		csvOrders = "preAssignedContainerId,orderId,itemId,description,quantity,uom,orderDate,dueDate,locationId,workSequence"
+				+ "\r\n11111,11111,3,Test Item 3,3,each,2012-09-26,2012-09-26,Loc3,0";
+		importOrdersData(facility, csvOrders);
+		commitTransaction();
+		
+		LOGGER.info("4. Pick second detail. Note the WARN message in the log.");
+		picker.pickItemAuto();
+		picker.waitForCheState(CheStateEnum.SETUP_SUMMARY, 4000);
+		verifyCheDisplay(picker, "1 order", "0 jobs", "2 done", "SETUP");
 	}
 }

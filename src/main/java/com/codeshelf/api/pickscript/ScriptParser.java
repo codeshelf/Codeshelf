@@ -210,7 +210,8 @@ public class ScriptParser {
 					String command = parts[0];
 					if (command.equalsIgnoreCase("importAisles") || command.equalsIgnoreCase("importLocations")
 							|| command.equalsIgnoreCase("importInventory") || command.equalsIgnoreCase("importOrders")
-							|| command.equalsIgnoreCase("importWorkers") || command.equalsIgnoreCase("addExtensionPoint")) {
+							|| command.equalsIgnoreCase("importOrdersWithDeletion")||
+							command.equalsIgnoreCase("importWorkers") || command.equalsIgnoreCase("addExtensionPoint")) {
 						if (parts.length > 1){
 							requiredFiles.add(parts[1]);
 						}

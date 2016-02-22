@@ -22,6 +22,7 @@ import com.codeshelf.metrics.DummyMetricsService;
 import com.codeshelf.metrics.IMetricsService;
 import com.codeshelf.metrics.MetricsService;
 import com.codeshelf.model.EdiTransportType;
+import com.codeshelf.model.ReplenishItem;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.testframework.MockDaoTest;
 import com.codeshelf.validation.BatchResult;
@@ -125,9 +126,12 @@ public class EdiImportServiceTest extends MockDaoTest {
 			}
 
 			@Override
-			public BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader,
-				Facility inFacility,
-				Timestamp inProcessTime) throws IOException {
+			public BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader, Facility inFacility,	Timestamp inProcessTime) throws IOException {
+				return importOrdersFromCsvStream(inCsvStreamReader, inFacility, inProcessTime, false);
+			}
+			
+			@Override
+			public BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader, Facility inFacility, Timestamp inProcessTime, boolean deleteOldOrders) throws IOException {
 				BatchResult<Object> result = new BatchResult<Object>();
 				result.addViolation("bad", "bad", "msg");
 				return result;
@@ -144,6 +148,20 @@ public class EdiImportServiceTest extends MockDaoTest {
 				
 			}
 
+			@Override
+			public BatchResult<Object> importOrdersFromBeanList(List<OutboundOrderCsvBean> originalBeanList, Facility facility,	Timestamp inProcessTime, boolean deleteOldOrders) {
+				return null;
+			}
+
+			@Override
+			public void makeOrderDeletionFail(boolean fail) {
+			}
+
+			@Override
+			public String createReplenishOrderForItem(Facility facility, ReplenishItem item) {
+				// TODO Auto-generated method stub
+				return null;
+			}
 		};
 	}
 }

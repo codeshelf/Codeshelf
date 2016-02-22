@@ -314,7 +314,6 @@ public class OutboundOrderBatchProcessor implements Runnable {
 							if (!order.getActive() || order.getStatus() != OrderStatusEnum.RELEASED) {
 								LOGGER.info("Order " + order + " reactivated. Status set to 'released'.");
 								order.setActive(true);
-								order.setStatus(OrderStatusEnum.RELEASED);
 								OrderHeader.staticGetDao().store(order);
 								// TODO: check if order was on cart or (partially) picked and create event
 							}
@@ -448,6 +447,13 @@ public class OutboundOrderBatchProcessor implements Runnable {
 					importer.updateSlottedItem(false, itemBean, location, inEdiProcessTime, itemMaster, uomMaster);
 				}
 			}
+		}
+		try {
+			order.setUpdated(inEdiProcessTime);
+			order.reevaluateOrderAndDetails();
+			OrderHeader.staticGetDao().store(order);
+		} catch (DaoException e) {
+			LOGGER.error("updateOrderHeader", e);
 		}
 		return order;
 	}
@@ -655,9 +661,9 @@ public class OutboundOrderBatchProcessor implements Runnable {
 			inOrderGroup.addOrderHeader(result);
 			result.setOrderGroup(inOrderGroup);
 		}
+		
 		try {
-			result.setUpdated(inEdiProcessTime);
-			result.reevaluateOrderAndDetails();
+			//Don't evaluate status until OrderDetails have been added
 			OrderHeader.staticGetDao().store(result);
 		} catch (DaoException e) {
 			LOGGER.error("updateOrderHeader", e);

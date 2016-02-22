@@ -1,26 +1,30 @@
 package com.codeshelf.api.resources.subresources;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import javax.websocket.server.PathParam;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.apache.shiro.authz.annotation.RequiresPermissions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.codeshelf.api.BaseResponse;
+import com.codeshelf.api.BaseResponse.CSVParam;
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.resources.EventsResource;
+import com.codeshelf.behavior.NotificationBehavior;
+import com.codeshelf.behavior.NotificationBehavior.HistogramParams;
+import com.codeshelf.behavior.NotificationBehavior.HistogramResult;
 import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.model.domain.Che;
-import com.codeshelf.model.domain.Container;
-import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
@@ -28,17 +32,22 @@ import com.sun.jersey.api.core.ResourceContext;
 import lombok.Setter;
 
 public class CheResource {
+
+	private static final Logger		LOGGER	= LoggerFactory.getLogger(CheResource.class);
+
 	@Context
 	private ResourceContext								resourceContext;
 
 	@Setter
 	private Che che;
 	
-	private WorkBehavior workService;
+	private WorkBehavior workBehavior;
+	private NotificationBehavior notificationBehavior;
 	
 	@Inject
-	public CheResource(WorkBehavior workService) {
-		this.workService = workService;
+	public CheResource(WorkBehavior workService, NotificationBehavior notificationBehavior) {
+		this.workBehavior = workService;
+		this.notificationBehavior = notificationBehavior;
 	}
 	
 	@GET
@@ -54,30 +63,46 @@ public class CheResource {
 		r.setChe(che);
 		return r;
 	}
-
 	
 	@GET
-	@Path("/computeinstructions")
-	@RequiresPermissions("wi:compute")
+	@Path("/events/histogram")
+	@RequiresPermissions("worker:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response computeWorkInstructions(@QueryParam("containers") List<String> containers) {
+	public Response getEventHistogram(@Context UriInfo uriInfo) throws Exception {
+		ErrorResponse errors = new ErrorResponse();
+		try {
+			MultivaluedMap<String, String> queryParams = uriInfo.getQueryParameters();
+			HistogramParams params = new HistogramParams(queryParams);   
+			HistogramResult result = notificationBehavior.pickRateHistogram(params, che);
+			return BaseResponse.buildResponse(result);
+		} catch (Exception e) {
+			return errors.processException(e);
+		}
+	}
+
+
+	
+	@POST
+	@Path("/workinstructions/compute")
+	@RequiresPermissions("che:simulate")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response computeWorkInstructions(@FormParam("containers") CSVParam containers) {
 		ErrorResponse errors = new ErrorResponse();
 
 		try {
-			Facility facility = che.getFacility();
-			Map<String, String> validContainers = new HashMap<String,String>();
-			int position = 1;
-			for (String containerId : containers) {
-				Container container = Container.staticGetDao().findByDomainId(facility, containerId);
-				if (container != null) {
-					validContainers.put(Integer.toString(position),containerId);
-					position++;
-				}
-			}
-			WorkList workList = workService.computeWorkInstructions(che, validContainers);
+			WorkList workList = workBehavior.setUpCheContainerFromString(che, containers.getRawValue());
 			return BaseResponse.buildResponse(workList);
 		} catch (Exception e) {
 			return errors.processException(e);
 		} 
 	}
+	
+	@POST
+	@Path("/commands/{commandName}")
+	@RequiresPermissions("che:commands")
+	@Produces(MediaType.APPLICATION_JSON)
+	public void cheCommand(@PathParam("commandName") String commandName) throws Exception {
+		LOGGER.info("command {} for che {}", commandName, this.che);
+	}
+	
 }

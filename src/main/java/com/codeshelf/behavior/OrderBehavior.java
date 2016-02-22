@@ -18,6 +18,7 @@ import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.hibernate.Criteria;
 import org.hibernate.Query;
 import org.hibernate.Session;
+import org.hibernate.criterion.CriteriaSpecification;
 import org.hibernate.criterion.Order;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Property;
@@ -27,10 +28,10 @@ import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.behavior.ProductivitySummaryList.StatusSummary;
 import com.codeshelf.manager.Tenant;
 import com.codeshelf.model.OrderStatusEnum;
+import com.codeshelf.model.dao.ResultDisplay;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.Gtin;
 import com.codeshelf.model.domain.ItemMaster;
@@ -41,6 +42,7 @@ import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.util.CompareNullChecker;
 import com.codeshelf.util.UomNormalizer;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableMap;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -169,7 +171,7 @@ public class OrderBehavior implements IApiBehavior {
 		Criteria criteria = orderHeaderCriteria(facility).add(Property.forName("status").in(orderStatusEnums));
 		@SuppressWarnings("unchecked")
 		List<OrderHeader> results = (List<OrderHeader>) criteria.list();
-		return new ResultDisplay<Map<String, Object>>(toPropertiesView(results, propertyNames));
+		return new ResultDisplay<Map<String, Object>>(toOrderPropertiesView(results, propertyNames));
 
 	}
 
@@ -202,28 +204,32 @@ public class OrderBehavior implements IApiBehavior {
 		List<OrderHeader> results = (List<OrderHeader>) criteria.list();
 		//long stop = System.currentTimeMillis();
 		//System.out.println("Fetch " + results.size() + " " + (start-stop));
-		ResultDisplay<Map<String, Object>> resultDisplay = new ResultDisplay<Map<String, Object>>(total, toPropertiesView(results, propertyNames));
+			
+		List<Map<String, Object>> propertiesView = toOrderPropertiesView(results, propertyNames);
+		ResultDisplay<Map<String, Object>> resultDisplay = new ResultDisplay<Map<String, Object>>(total, propertiesView);
 		return resultDisplay;
 	}
 
-	private List<Map<String, Object>> toPropertiesView(Collection<?> results, String[] propertyNames) {
+	private List<Map<String, Object>> toOrderPropertiesView(Collection<OrderHeader> results, String[] propertyNames) {
 		PropertyUtilsBean propertyUtils = new PropertyUtilsBean();
 		ArrayList<Map<String, Object>> viewResults = new ArrayList<Map<String, Object>>();
-		//long start = System.currentTimeMillis();
-
-		for (Object object : results) {
+		for (OrderHeader orderHeader: results) {
 			Map<String, Object> propertiesMap = new HashMap<>();
 			for (String propertyName : propertyNames) {
 				try {
-					Object resultObject = propertyUtils.getProperty(object, propertyName);
+					Object resultObject = propertyUtils.getProperty(orderHeader, propertyName);
 					propertiesMap.put(propertyName, resultObject);
 				} catch (NoSuchMethodException e) {
 					// Minor problem. UI hierarchical view asks for same data field name for all object types in the view. Not really an error in most cases
-					LOGGER.debug("no property " + propertyName + " on object: " + object);
+					LOGGER.debug("no property " + propertyName + " on object: " + orderHeader);
 				} catch (Exception e) {
-					LOGGER.warn("unexpected exception for property " + propertyName + " object: " + object, e);
+					LOGGER.warn("unexpected exception for property " + propertyName + " object: " + orderHeader, e);
 				}
 			}
+
+			//add lines and quantity summaries
+			propertiesMap.putAll(findLinesAndQuantities(orderHeader));
+			
 			viewResults.add(propertiesMap);
 		}
 
@@ -231,6 +237,37 @@ public class OrderBehavior implements IApiBehavior {
 		//System.out.println("TRANSFORM " +(stop-start));
 		return viewResults;
 
+	}
+
+	private Map<String, Object> findLinesAndQuantities(OrderHeader orderHeader) {
+		@SuppressWarnings("unchecked")
+		List<Map<String, Object>> results = OrderDetail.staticGetDao().createCriteria()
+			.setProjection(Projections.projectionList()
+				.add(Projections.count("status").as("totalLines"))
+				.add(Projections.sum("quantity").as("totalQuantity"))
+				.add(Projections.groupProperty("parent"))
+				.add(Projections.groupProperty("status"), "status"))
+			.add(Property.forName("parent").eq(orderHeader))
+			.setResultTransformer(CriteriaSpecification.ALIAS_TO_ENTITY_MAP)
+			.list();
+		
+		long quantitySum = 0;
+		long linesSum = 0;
+		long completeQuantity = 0;
+		long completeLines = 0;
+		for (Map<String, Object> statusResult : results) {
+			quantitySum += (Long) statusResult.get("totalQuantity");
+			linesSum += (Long) statusResult.get("totalLines");
+			Object status = statusResult.get("status");
+			if (OrderStatusEnum.COMPLETE.equals(status)) {
+				completeQuantity = (Long) statusResult.get("totalQuantity");
+				completeLines = (Long) statusResult.get("totalLines");
+			}
+		}
+		return ImmutableMap.<String, Object>of("totalQuantity", quantitySum,
+								"totalLines", linesSum,
+								"completeLines", completeLines,
+								"completeQuantity", completeQuantity);
 	}
 
 	private Criteria orderHeaderCriteria(Facility facility) {

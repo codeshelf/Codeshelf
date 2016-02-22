@@ -27,8 +27,10 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.UriInfo;
 
 import org.apache.commons.beanutils.BeanMap;
 import org.apache.commons.io.IOUtils;
@@ -37,7 +39,7 @@ import org.hibernate.Session;
 import org.hibernate.criterion.Criterion;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.exception.ConstraintViolationException;
-import org.joda.time.Period;
+import org.joda.time.Interval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,10 +64,11 @@ import com.codeshelf.api.responses.EventDisplay;
 import com.codeshelf.api.responses.FacilityShort;
 import com.codeshelf.api.responses.ItemDisplay;
 import com.codeshelf.api.responses.PickRate;
-import com.codeshelf.api.responses.ResultDisplay;
 import com.codeshelf.api.responses.WorkerDisplay;
 import com.codeshelf.behavior.NotificationBehavior;
+import com.codeshelf.behavior.NotificationBehavior.HistogramParams;
 import com.codeshelf.behavior.NotificationBehavior.HistogramResult;
+import com.codeshelf.behavior.NotificationBehavior.ItemEventTypeGroup;
 import com.codeshelf.behavior.NotificationBehavior.WorkerEventTypeGroup;
 import com.codeshelf.behavior.OrderBehavior;
 import com.codeshelf.behavior.ProductivitySummaryList;
@@ -80,12 +83,16 @@ import com.codeshelf.edi.ICsvWorkerImporter;
 import com.codeshelf.manager.User;
 import com.codeshelf.metrics.ActiveSiteControllerHealthCheck;
 import com.codeshelf.model.DataPurgeParameters;
+import com.codeshelf.model.ReplenishItem;
 import com.codeshelf.model.WiFactory.WiPurpose;
 import com.codeshelf.model.dao.GenericDaoABC;
+import com.codeshelf.model.dao.ResultDisplay;
 import com.codeshelf.model.domain.ExtensionPoint;
 import com.codeshelf.model.domain.Facility;
 import com.codeshelf.model.domain.FacilityMetric;
+import com.codeshelf.model.domain.Worker;
 import com.codeshelf.model.domain.WorkerEvent;
+import com.codeshelf.model.domain.WorkerEvent.EventType;
 import com.codeshelf.persistence.TenantPersistenceService;
 import com.codeshelf.scheduler.ApplicationSchedulerService;
 import com.codeshelf.scheduler.CachedHealthCheckResults;
@@ -93,8 +100,8 @@ import com.codeshelf.service.ExtensionPointEngine;
 import com.codeshelf.service.ParameterSetBeanABC;
 import com.codeshelf.ws.protocol.message.ScriptMessage;
 import com.codeshelf.ws.server.WebSocketManagerService;
-import com.google.common.base.MoreObjects;
 import com.google.common.base.Optional;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -395,10 +402,12 @@ public class FacilityResource {
 		@QueryParam("location") String location,
 		@QueryParam("workerId") String workerId,
 		@QueryParam("created") IntervalParam created,
-		@QueryParam("groupBy") String groupBy,
-		@QueryParam("resolved") Boolean resolved) {
+		@QueryParam("groupBy") String groupBy) {
+		Stopwatch total = Stopwatch.createStarted();
+
 		ErrorResponse errors = new ErrorResponse();
 		try {
+			Interval createdInterval = created.getValue();
 			List<Criterion> filterParams = new ArrayList<Criterion>();
 			filterParams.add(Restrictions.eq("parent", facility));
 			//If any "type" parameters are provided, filter accordingly
@@ -413,19 +422,17 @@ public class FacilityResource {
 			}
 
 			if (!Strings.isNullOrEmpty(itemId)) {
-				//do by filter param but for now needs to be manually filtered
+				filterParams.add(Restrictions.eq("itemId", itemId));
+			}
+			if (!Strings.isNullOrEmpty(location)) {
+				filterParams.add(Restrictions.eq("location", location));
+			}
+			if (!Strings.isNullOrEmpty(workerId)) {
+				filterParams.add(Restrictions.eq("workerId", workerId));
 			}
 
-			//If "resolved" parameter not provided, return, both, resolved and unresolved events
-			if (resolved != null) {
-				if (resolved) {
-					filterParams.add(Restrictions.isNotNull("resolution"));
-				} else {
-					filterParams.add(Restrictions.isNull("resolution"));
-				}
-			}
 			if (created != null) {
-				filterParams.add(GenericDaoABC.createIntervalRestriction("created", created.getValue()));
+				filterParams.add(GenericDaoABC.createIntervalRestriction("created", createdInterval));
 			}
 
 			if (!Strings.isNullOrEmpty(itemId)) {
@@ -433,10 +440,7 @@ public class FacilityResource {
 				List<BeanMap> eventBeans = new ArrayList<>();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
-					ItemDisplay itemDisplayKey = new ItemDisplay(eventDisplay);
-					if (itemId.equals(itemDisplayKey.getItemId()) && location.equals(itemDisplayKey.getLocation())) {
-						eventBeans.add(new BeanMap(eventDisplay));
-					}
+					eventBeans.add(new BeanMap(eventDisplay));
 				}
 				ResultDisplay<BeanMap> result = new ResultDisplay<>(eventBeans);
 				return BaseResponse.buildResponse(result);
@@ -445,58 +449,42 @@ public class FacilityResource {
 				List<BeanMap> eventBeans = new ArrayList<>();
 				for (WorkerEvent event : events) {
 					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
-					WorkerDisplay workerDisplayKey = new WorkerDisplay(eventDisplay);
-					if (workerId.equals(workerDisplayKey.getId())) {
-						eventBeans.add(new BeanMap(eventDisplay));
-					}
+					eventBeans.add(new BeanMap(eventDisplay));
 				}
 				ResultDisplay<BeanMap> result = new ResultDisplay<>(eventBeans);
 				return BaseResponse.buildResponse(result);
 			}
-
 			if ("item".equals(groupBy)) {
-				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
-				Map<ItemDisplay, Integer> issuesByItem = new HashMap<>();
-				for (WorkerEvent event : events) {
-					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
-					ItemDisplay itemDisplayKey = new ItemDisplay(eventDisplay);
-					Integer count = MoreObjects.firstNonNull(issuesByItem.get(itemDisplayKey), 0);
-					issuesByItem.put(itemDisplayKey, count + 1);
-				}
-
-				//
+				List<ItemEventTypeGroup> groupedEvents = notificationService.groupWorkerEventsByTypeAndItem(filterParams);
 				TreeSet<Map<Object, Object>> issues = new TreeSet<>(ItemDisplay.ItemComparator);
-				for (Map.Entry<ItemDisplay, Integer> issuesByItemEntry : issuesByItem.entrySet()) {
+				for (ItemEventTypeGroup groupedEvent : groupedEvents) {
+					ItemDisplay display = new ItemDisplay(groupedEvent);
 					Map<Object, Object> values = new HashMap<>();
-					values.putAll(new BeanMap(issuesByItemEntry.getKey()));
-					values.put("count", issuesByItemEntry.getValue());
+					values.putAll(new BeanMap(display));
+					values.put("count", groupedEvent.getCount());
 					issues.add(values);
 				}
 				ResultDisplay<Map<Object, Object>> result = new ResultDisplay<>(issues);
 				return BaseResponse.buildResponse(result);
 			} else if ("worker".equals(groupBy)) {
-				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
-				Map<WorkerDisplay, Integer> issuesByWorker = new HashMap<>();
-				for (WorkerEvent event : events) {
-					EventDisplay eventDisplay = EventDisplay.createEventDisplay(event);
-					WorkerDisplay workerDisplayKey = new WorkerDisplay(eventDisplay);
-					Integer count = MoreObjects.firstNonNull(issuesByWorker.get(workerDisplayKey), 0);
-					issuesByWorker.put(workerDisplayKey, count + 1);
-				}
 
+				List<WorkerEventTypeGroup> groupedEvents = notificationService.groupWorkerEventsByTypeAndWorker(filterParams);
 				TreeSet<Map<Object, Object>> issues = new TreeSet<>(WorkerDisplay.ItemComparator);
-				for (Map.Entry<WorkerDisplay, Integer> issuesByWorkerEntry : issuesByWorker.entrySet()) {
+				for (WorkerEventTypeGroup groupedEvent : groupedEvents) {
+					Worker worker = Worker.findWorker(facility, groupedEvent.getWorkerId());
+					WorkerDisplay display = new WorkerDisplay(worker);
 					Map<Object, Object> values = new HashMap<>();
-					values.putAll(new BeanMap(issuesByWorkerEntry.getKey()));
-					values.put("count", issuesByWorkerEntry.getValue());
+					values.putAll(new BeanMap(display));
+					values.put("count", groupedEvent.getCount());
 					issues.add(values);
+
 				}
 				ResultDisplay<Map<Object, Object>> result = new ResultDisplay<>(issues);
 				return BaseResponse.buildResponse(result);
 			} else if ("type".equals(groupBy)) {
-				
-				List<WorkerEventTypeGroup> issuesByType = notificationService.groupWorkerEventsByType(facility, created.getValue(), resolved);
-				ResultDisplay<WorkerEventTypeGroup> result = new ResultDisplay<>(issuesByType);
+
+				List<WorkerEventTypeGroup> issuesByType = notificationService.groupWorkerEventsByType(filterParams);
+				ResultDisplay<WorkerEventTypeGroup> result = new ResultDisplay<WorkerEventTypeGroup>(issuesByType);
 				return BaseResponse.buildResponse(result);
 			} else {
 				List<WorkerEvent> events = WorkerEvent.staticGetDao().findByFilter(filterParams);
@@ -512,6 +500,9 @@ public class FacilityResource {
 		} catch (Exception e) {
 			errors.processException(e);
 			return errors.buildResponse();
+		}
+		finally {
+			LOGGER.trace("searchEvents total: " +  total.stop().toString());
 		}
 	}
 
@@ -555,11 +546,12 @@ public class FacilityResource {
 	@Path("picks/histogram")
 	@RequiresPermissions("event:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response pickHistogram(@QueryParam("created") IntervalParam createdInterval, @QueryParam("createdBin") String binPeriod) {
+	public Response pickHistogram(@Context UriInfo uriInfo) throws Exception {
 		ErrorResponse errors = new ErrorResponse();
 		try {
-			Period bin = Period.parse(MoreObjects.firstNonNull(binPeriod, "PT5M"));  
-			HistogramResult result = notificationService.facilityPickRateHistogram(createdInterval.getValue(), bin, facility);
+			MultivaluedMap<String, String> queryParams = uriInfo.getQueryParameters();
+			HistogramParams params = new HistogramParams(queryParams);  
+			HistogramResult result = notificationService.pickRateHistogram(params, facility);
 			return BaseResponse.buildResponse(result);
 		} catch (Exception e) {
 			return errors.processException(e);
@@ -570,11 +562,12 @@ public class FacilityResource {
 	@Path("picks/workers/histogram")
 	@RequiresPermissions("event:view")
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response workersPickHistogram(@QueryParam("created") IntervalParam createdInterval, @QueryParam("createdBin") String binPeriod) {
+	public Response workersPickHistogram(@Context UriInfo uriInfo) throws Exception {
 		ErrorResponse errors = new ErrorResponse();
 		try {
-			Period bin = Period.parse(MoreObjects.firstNonNull(binPeriod, "PT5M"));  
-			List<?> result = notificationService.workersPickHistogram(createdInterval.getValue(), bin, facility);
+			MultivaluedMap<String, String> queryParams = uriInfo.getQueryParameters();
+			HistogramParams params = new HistogramParams(queryParams);   
+			List<?> result = notificationService.workersPickHistogram(params, facility);
 			return BaseResponse.buildResponse(result);
 		} catch (Exception e) {
 			return errors.processException(e);
@@ -700,11 +693,16 @@ public class FacilityResource {
 		TenantPersistenceService persistence = TenantPersistenceService.getInstance();
 		
 		//Test if Site Controller is running
-		new ActiveSiteControllerHealthCheck(webSocketManagerService).check(facility);
-		Result siteHealth = CachedHealthCheckResults.getJobResult(ActiveSiteControllerHealthCheck.class.getSimpleName());
-		if (!siteHealth.isHealthy()) {
-			errorMesage.setMessageError("Site controller problem: " + siteHealth.getMessage());
-			return errorMesage;
+		try {
+			persistence.beginTransaction();
+			new ActiveSiteControllerHealthCheck(webSocketManagerService).check(facility);
+			Result siteHealth = CachedHealthCheckResults.getJobResult(ActiveSiteControllerHealthCheck.class.getSimpleName());
+			if (!siteHealth.isHealthy()) {
+				errorMesage.setMessageError("Site controller problem: " + siteHealth.getMessage());
+				return errorMesage;
+			}
+		} finally {
+			persistence.rollbackTransaction();
 		}
 		
 		persistence.beginTransaction();
@@ -769,4 +767,44 @@ public class FacilityResource {
 			return new ErrorResponse().processException(e);
 		}
 	}
+
+	/*
+	 * count:6
+		location:
+		uom:EA
+		description:
+		gtin:
+		c	lass:com.codeshelf.api.responses.ItemDisplay
+		itemId:6135710
+		type:SHORT*/
+	@POST
+	@Path("replenish")
+	@RequiresPermissions("event:edit")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response createReplenishOrderForEvent(@FormParam("type") EventTypeParam typeParam, 
+												 @FormParam("itemId") String itemId,	
+												 @FormParam("gtin") String gtin,
+												 @FormParam("uom") String uom,
+												 @FormParam("location") String location) {
+		try {
+			EventType type = typeParam.getValue();
+			if (type != EventType.SHORT && type != EventType.SHORT_AHEAD && type != EventType.LOW && type != EventType.SUBSTITUTION){
+				throw new Exception(type + " event is illegal for replenishing. Call on SHORT, LOW or SUBSTITUTION events");
+
+			
+			}
+			
+			ReplenishItem item = new ReplenishItem();
+			item.setGtin(gtin);
+			item.setItemId(itemId);
+			item.setLocation(location);
+			item.setUom(uom);
+			item.setLocation(location);
+			String scannableId = orderImporterProvider.get().createReplenishOrderForItem(this.facility, item);
+			return BaseResponse.buildResponse(ImmutableMap.of("scannableId", scannableId));
+		} catch (Exception e) {
+			return new ErrorResponse().processException(e);
+		}		
+	}
+
 }

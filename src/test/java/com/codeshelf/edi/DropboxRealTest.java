@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.sql.Timestamp;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.model.EdiTransportType;
+import com.codeshelf.model.ReplenishItem;
 import com.codeshelf.model.domain.DropboxGateway;
 import com.codeshelf.model.domain.Facility;
 // import com.codeshelf.model.domain.LedController;
@@ -269,10 +271,14 @@ public class DropboxRealTest extends ServerTest {
 				public int toInteger(final String inString) {
 					return 0;
 				}
+				
 				@Override
-				public BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader,
-					Facility inFacility,
-					Timestamp inProcessTime) throws IOException {
+				public BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader, Facility inFacility,	Timestamp inProcessTime) throws IOException {
+					return importOrdersFromCsvStream(inCsvStreamReader, inFacility, inProcessTime, false);
+				}
+
+				@Override
+				public BatchResult<Object> importOrdersFromCsvStream(Reader inCsvStreamReader, Facility inFacility,	Timestamp inProcessTime, boolean deleteOldOrders) throws IOException {
 
 					BatchResult<Object> result = mCsvOrderImporter.importOrdersFromCsvStream(inCsvStreamReader, inFacility, inProcessTime);
 					LOGGER.info("Anonymous Order Importer just finished");
@@ -300,7 +306,20 @@ public class DropboxRealTest extends ServerTest {
 					// stub. Don't need to implement					
 				}
 				
-				
+				@Override
+				public BatchResult<Object> importOrdersFromBeanList(List<OutboundOrderCsvBean> originalBeanList, Facility facility, Timestamp inProcessTime, boolean deleteOldOrders) {
+					return null;
+				}
+
+				@Override
+				public void makeOrderDeletionFail(boolean fail) {
+				}
+
+				@Override
+				public String createReplenishOrderForItem(Facility facility, ReplenishItem item) {
+					// TODO Auto-generated method stub
+					return null;
+				}				
 			};
 
 			LOGGER.info("START dbx getUpdatesFromHost for DBX02");

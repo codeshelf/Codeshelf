@@ -15,7 +15,6 @@ import com.codeshelf.flyweight.command.NetworkId;
  *  @author jeffw
  */
 public interface IRadioController extends Runnable {
-
 	// --------------------------------------------------------------------------
 	/**
 	 *  Receive the next command from the controller.
@@ -23,6 +22,8 @@ public interface IRadioController extends Runnable {
 	 *  @param inSrcAddr	The source address that sent the command.
 	 */
 	void receiveCommand(ICommand inCommand, NetAddress inSrcAddr);
+	
+	boolean testingResendQueueing();
 
 	// --------------------------------------------------------------------------
 	/**
@@ -114,6 +115,8 @@ public interface IRadioController extends Runnable {
 	
 	NetGuid getNetGuidFromNetAddress(NetAddress netAddress);
 
+	void setResendQueueing(boolean inShouldReQueueAsIfAssociated);
+	
 	// --------------------------------------------------------------------------
 	/**
 	 * Get broadcast network Id for radio controller
@@ -141,5 +144,4 @@ public interface IRadioController extends Runnable {
 	 * @return
 	 */
 	NetAddress getServerAddress();
-
 }

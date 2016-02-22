@@ -30,6 +30,7 @@ import com.codeshelf.flyweight.command.CommandControlPosconBroadcast;
 import com.codeshelf.flyweight.command.NetEndpoint;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.IRadioController;
+import com.codeshelf.model.CodeshelfTape;
 import com.codeshelf.model.WorkInstructionCount;
 import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.WorkInstructionTypeEnum;
@@ -129,7 +130,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	@Getter
 	@Setter
 	private int									mRememberPriorShorts					= 0;
-	
+
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
@@ -149,6 +150,9 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	private boolean								mSetupMixHasPutwall						= false;
 	private boolean								mSetupMixHasCntrOrder					= false;
+
+	//This field indicates whether SETUP_SUMMARY was reached from container setup or from elsewhere
+	private boolean								mPostSetupSummary						= false;
 
 	private static int							BAY_COMPLETE_CODE						= 1;
 	private static int							REPEAT_CONTAINER_CODE					= 2;
@@ -303,7 +307,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					if (isSameState) {
 						this.showCartRunFeedbackIfNeeded(PosControllerInstr.POSITION_ALL);
 					}
-					sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
+					WorkInstruction currentWi = getOneActiveWorkInstruction();
+					if (currentWi.getSubstitution() == null) {
+						sendDisplayCommand(SHORT_PICK_CONFIRM_MSG, YES_NO_MSG);
+					} else {
+						sendDisplayCommand(AMOUNT_CONFIRM_MSG, YES_NO_MSG);
+					}
 					break;
 
 				case SHORT_PICK:
@@ -441,14 +450,16 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 					break;
 				default:
 					break;
-					
+
 				case SUBSTITUTION_CONFIRM:
+					clearAllPosconsOnThisDevice();
+					line1 = StringUtils.substring("Substitute " + getSubstitutionScan(), 0, 40);
 					WorkInstruction activeWi = getOneActiveWorkInstruction();
 					if (activeWi == null) {
 						LOGGER.warn("Somehow got null from getOneActiveWorkInstruction() when entering the SUBSTITUTION_CONFIRM state");
-						sendDisplayCommand("Substitute " + getSubstitutionScan() + "?", EMPTY_MSG);
+						sendDisplayCommand(line1, "?");
 					} else {
-						sendDisplayCommand("Substitute " + getSubstitutionScan(), "For " + getOneActiveWorkInstruction().getItemId() + "?");
+						sendDisplayCommand(line1, "For " + getOneActiveWorkInstruction().getItemId() + "?");
 					}
 					break;
 			}
@@ -462,6 +473,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	 */
 	@Override
 	protected void processCommandScan(final String inScanStr) {
+		mPostSetupSummary = false;
 
 		switch (inScanStr) {
 
@@ -823,7 +835,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setSubstitutionScan(null);
 				setState(getRememberPreSubstitutionState());
 				break;
-				
+
+			case SHORT_PICK:
+				setState(CheStateEnum.DO_PICK);
+				break;
+
 			default:
 				//Reset ourselves
 				//Ideally we shouldn't have to clear poscons here
@@ -921,11 +937,18 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			case SUBSTITUTION_CONFIRM:
 				if (YES_COMMAND.equalsIgnoreCase(inScanStr)) {
-					
+					doShortsAndSubstitutionsAheads(getOneActiveWorkInstruction(), getSubstitutionScan());
+					if (mActivePickWiList.isEmpty()) {
+						WorkInstruction upcomingWi = mAllPicksWiList.get(0);
+						doNextItemWithPossibleFlashingThread(upcomingWi.isHousekeeping());
+					} else {
+						showActivePicks();
+					}
+					//setState(CheStateEnum.DO_PICK);
 				} else {
-					setSubstitutionScan(null);
 					setState(getRememberPreSubstitutionState());
 				}
+				setSubstitutionScan(null);
 				break;
 
 			default:
@@ -1024,14 +1047,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (!wi.isHousekeeping()) {
 				housekeeping = false;
 			}
-			notifyWiVerb(wi, WorkerEvent.EventType.SHORT, kLogAsWarn);
+
 			doShortTransaction(wi, inPicked);
+
+			EventType eventType = EventType.SHORT;
+			notifyWiVerb(wi, eventType, kLogAsWarn);
 
 			clearLedAndPosConControllersForWi(wi); // wrong? What about any short aheads?
 
 			// Depends on AUTOSHRT parameter
 			if (autoShortOn) {
-				doShortAheads(wi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
+				doShortsAheads(wi); // Jobs for the same product on the cart should automatically short, and not subject the user to them.
 			}
 		}
 		// If AUTOSHRT if off, there still might be other jobs in active pick list. If on, any remaining there would be shorted and removed.
@@ -1077,7 +1103,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (inScanStr.equals(YES_COMMAND)) {
 			WorkInstruction wi = mShortPickWi;
 			if (wi != null) {
-				processShortPickYes(wi, mShortPickQty);
+				if (wi.getSubstitution() != null && mShortPickQty != 0) {
+					processNormalPick(wi, mShortPickQty);
+				} else {
+					processShortPickYes(wi, mShortPickQty);
+				}
 			}
 		} else {
 			// Just return to showing the active picks or puts.
@@ -1321,44 +1351,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 	// --------------------------------------------------------------------------
 	/**
-	 * The inShortWi was just shorted.
-	 * Is inProposedWi later in sequence?
-	 */
-	private Boolean laterWi(final WorkInstruction inProposedWi, final WorkInstruction inShortWi) {
-		String proposedSort = inProposedWi.getGroupAndSortCode();
-		String shortedSort = inShortWi.getGroupAndSortCode();
-		if (proposedSort == null) {
-			LOGGER.error("laterWiSameProduct has wi with no sort code");
-			return false;
-		}
-		if (shortedSort.compareTo(proposedSort) < 0)
-			return true;
-
-		return false;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
-	 * The inShortWi was just shorted.
-	 * Is inProposedWi equivalent enough that it should also short?
-	 */
-	private Boolean sameProductLotEtc(final WorkInstruction inProposedWi, WorkInstruction inShortWi) {
-		// Initially, just look at the denormalized item Id.
-		String shortId = inShortWi.getItemId();
-		String proposedId = inProposedWi.getItemId();
-		if (shortId == null || proposedId == null) {
-			LOGGER.error("sameProductLotEtc has null value");
-			return false;
-		}
-		if (shortId.compareTo(proposedId) == 0) {
-			return true;
-		}
-
-		return false;
-	}
-
-	// --------------------------------------------------------------------------
-	/**
 	 * Is this an uncompleted housekeeping WI, that if just ahead of a short-ahead job is no longer needed?
 	 * Calling context is just ahead of short-ahead, so this does not need to try to check that. But knowing that, can look for other possible errors.
 	 */
@@ -1389,12 +1381,38 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
 	}
 
+	private void doShortsAheads(final WorkInstruction inChangedWi) {
+		doShortsAndSubstitutionsAheads(inChangedWi, null);
+	}
+
+	/**
+	 * wiAlreadyDone() returns true for short or complete or substitute. If so, should not consider this for substitute ahead or short ahead
+	 */
+	private boolean wiAlreadyDone(WorkInstruction inWi) {
+		if (inWi == null) {
+			LOGGER.error("null value in wiAlreadyDone");
+			return true; // The safe return value
+		}
+		WorkInstructionStatusEnum status = inWi.getStatus();
+		if (status.equals(WorkInstructionStatusEnum.COMPLETE) || status.equals(WorkInstructionStatusEnum.SHORT)
+				| status.equals(WorkInstructionStatusEnum.SUBSTITUTION))
+			return true;
+		return false;
+	}
+
 	// --------------------------------------------------------------------------
 	/**
-	 * The inShortWi was just shorted.
-	 * Compare later wis to that. If the same product, short those also, removing unnecessary housekeeping work instructions
+	 * This function is called in 2 situations:
+	 * 
+	 * 1)The inChangedWi was just shorted. Leave "substitution" param null.
+	 *   Compare later wis to that. If the same product, short those also, removing unnecessary housekeeping work instructions
+	 * 
+	 * 2)The inChangedWi is being substituted. Provide "substitution" param.
+	 *   For it and all upcoming wis with matching itemId:
+	 *     *If the wi has substitutionAllowed, set the "substitution" value
+	 *     *Otherwise, short the wi
 	 */
-	private void doShortAheads(final WorkInstruction inShortWi) {
+	private void doShortsAndSubstitutionsAheads(final WorkInstruction inChangedWi, String substitution) {
 		// Look for more wis in the CHE's job list that must short also if this one did.
 		// Short and notify them, and remove so the worker will not encounter them.
 		// Also remove unnecessary repeats and bay changes. The algorithm for housekeep removal is:
@@ -1404,30 +1422,43 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 		// Warning: for simultaneous work instructions, "short ahead" might actually be behind in the sequence. So we need to iterate the activePickList always.
 
-		Integer laterCount = 0;
 		Integer toShortCount = 0;
+		Integer substitutedCount = 0;
 		Integer removeHousekeepCount = 0;
 
 		// Algorithm. Assemble what we want to short
 		List<WorkInstruction> toShortList = new ArrayList<WorkInstruction>();
+
 		// Find short aheads from the active picks first, which might have lower sort values.
 		// If we are shorting the inShortWi, there should be no housekeeps in the active pick list.
 		for (WorkInstruction wi : getActivePickWiList()) {
+			if (wiAlreadyDone(wi)) {
+				continue;
+			}
 			if (wi.isHousekeeping()) {
 				LOGGER.error("unanticipated housekeeping WI in mActivePickWiList in doShortAheads");
 			}
-			if (!wi.equals(inShortWi))
-				if (sameProductLotEtc(wi, inShortWi)) {
-					toShortCount++;
-					toShortList.add(wi);
-				}
+			boolean substituteThisWi = substitution != null && wi.getSubstituteAllowed();
+			//if (!wi.equals(inChangedWi) && sameProductLotEtc(wi, inChangedWi) && !substituteThisWi){
+			if (sameProductLotEtc(wi, inChangedWi) && !substituteThisWi) {
+				//Short the WI
+				toShortCount++;
+				toShortList.add(wi);
+			}
 		}
+
 		// Now look for later work instructions to short, and remove housekeeps as necessary.
 		WorkInstruction prevWi = null;
 		for (WorkInstruction wi : mAllPicksWiList) {
-			if (laterWi(wi, inShortWi)) {
-				laterCount++;
-				if (sameProductLotEtc(wi, inShortWi)) {
+			if (wiAlreadyDone(wi)) {
+				prevWi = wi; // must do this which is normally done at the end of the loop
+				continue;
+			}
+			if (sameProductLotEtc(wi, inChangedWi)) {
+				if (substitution != null && wi.getSubstituteAllowed()) {
+					substitutedCount++;
+					wi.setSubstitution(substitution);
+				} else if (laterWi(wi, inChangedWi)) {
 					// might be already in the list from above
 					if (!toShortList.contains(wi)) {
 						toShortCount++;
@@ -1448,17 +1479,22 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		for (WorkInstruction wi : toShortList) {
 			// Short aheads will always set the actual pick quantity to zero.
 			notifyWiVerb(wi, WorkerEvent.EventType.SHORT_AHEAD, kLogAsWarn);
+			//Clear the substitution field, if any for WIs with 0 items picked
+			wi.setSubstitution(null);
 			doShortTransaction(wi, 0);
 		}
 
 		// Let's only report all this if there is a short ahead. We do not need to see in the log that we considered after every short.
 		if (toShortCount > 0) {
-			String reportShortAheadDetails = "Considered " + laterCount + " later jobs for short-ahead.";
+			String reportShortAheadDetails = "";
 			if (toShortCount > 0)
 				reportShortAheadDetails += " Shorted " + toShortCount + " more.";
 			if (removeHousekeepCount > 0)
 				reportShortAheadDetails += " Also removed " + removeHousekeepCount + " housekeeping instructions.";
 			LOGGER.info(reportShortAheadDetails);
+		}
+		if (substitutedCount > 0) {
+			LOGGER.info("Set substitution field to " + substitution + " in " + substitutedCount + " upcoming jobs");
 		}
 
 	}
@@ -1661,7 +1697,11 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 						LOGGER.warn("Probable test error. Don't short a housekeeping. User error if happening in production");
 						invalidScanMsg(mCheStateEnum); // Invalid to short a housekeep
 					} else {
-						setState(CheStateEnum.SHORT_PICK); // flashes all poscons with active jobs
+						if (getCheLightingEnum() == CheLightingEnum.LABEL_V1) {
+							setState(CheStateEnum.SCAN_SOMETHING_SHORT);//With Label-lighting CHEs, auto-short by 0
+						} else {
+							setState(CheStateEnum.SHORT_PICK); // flashes all poscons with active jobs
+						}
 					}
 				} else {
 					// Stay in the same state - the scan made no sense.
@@ -1791,12 +1831,17 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		if (LOCATION_PREFIX.equals(inScanPrefixStr) || TAPE_PREFIX.equals(inScanPrefixStr)) {
 			if (TAPE_PREFIX.equals(inScanPrefixStr)) {
 				inScanStr = inScanPrefixStr + inScanStr;
+				CodeshelfTape tape = CodeshelfTape.scan(inScanStr);
+				if (tape == null) {
+					LOGGER.info("Tried to parse " + inScanStr + " as a Codeshelf Tape scan, but failed. Ignoring it.");
+					return;
+				}
 			}
+
 			// DEV-836, 837. From what states shall we allow this?
 			ledControllerClearLeds();
 			mLocationId = inScanStr; // let's remember where user scanned.
 
-			// TODO Codeshelf tape
 			// Careful. Later, codeshelf tape scan. Need to get the interpretted position back from server.
 			LOGGER.info("processLocationScan {}. About to call requestWorkAndSetGetWorkState", inScanStr);
 			requestWorkAndSetGetWorkState(inScanStr, false);
@@ -1928,7 +1973,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 
 	}
-	
+
 	/**
 	 * Use the configuration system to return custom setup MSG. Defaults to "SCAN ORDER"
 	 */
@@ -2076,17 +2121,19 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		setState(CheStateEnum.SETUP_SUMMARY);
 	}
 
-	private void processPosconScanToPick(String inScanPrefixStr, String inContent){
+	private void processPosconScanToPick(String inScanPrefixStr, String inContent) {
 		try {
 			byte position = Byte.parseByte(inContent);
 			//Try to retrieve the displayed value to allow for shorts
 			Integer value = null;
-			if (getCheLightingEnum() == CheLightingEnum.LABEL_V1){
+			if (getCheLightingEnum() == CheLightingEnum.LABEL_V1) {
 				//If the CHE is in LABEL light mode, Poscons will be blank, so read planed quantity from the WI
 				String containerId = mPositionToContainerMap.get(inContent);
 				WorkInstruction wi = getWorkInstructionForContainerId(containerId);
-				if (wi == null){
-					LOGGER.warn("Ignoring {}{} scan, as could not retrieve the work instruction at that position", inScanPrefixStr, inContent);
+				if (wi == null) {
+					LOGGER.warn("Ignoring {}{} scan, as could not retrieve the work instruction at that position",
+						inScanPrefixStr,
+						inContent);
 					return;
 				}
 				value = wi.getPlanQuantity();
@@ -2095,12 +2142,12 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				value = displayedValue == null ? null : displayedValue.intValue();
 			}
 			//Simulate button press
-			processButtonPress((int)position, value);
-		} catch (NumberFormatException e){
+			processButtonPress((int) position, value);
+		} catch (NumberFormatException e) {
 			LOGGER.error("Ignoring {}{} scan as could not parse it as byte", inScanPrefixStr, inContent);
 		}
 	}
-	
+
 	/**
 	 * A series of private functions giving the overall state of the setup
 	 * How many jobs on not being done for this setup? Includes uncompleted wi other paths, and details with no wi made
@@ -2371,12 +2418,21 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (wiCount == null) {
 				//TODO send a special code for this?
 				//Right now it matches "done for now" feedback
-				instructions.add(new PosControllerInstr(position,
-					PosControllerInstr.BITENCODED_SEGMENTS_CODE,
-					PosControllerInstr.BITENCODED_LED_DASH,
-					PosControllerInstr.BITENCODED_LED_DASH,
-					PosControllerInstr.SOLID_FREQ.byteValue(),
-					PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
+				if (mPostSetupSummary) {
+					instructions.add(new PosControllerInstr(position,
+						(byte) 0,
+						(byte) 0,
+						(byte) 0,
+						PosControllerInstr.BLINK_FREQ.byteValue(),
+						PosControllerInstr.BRIGHT_DUTYCYCLE.byteValue()));
+				} else {
+					instructions.add(new PosControllerInstr(position,
+						(byte) 0,
+						(byte) 0,
+						(byte) 0,
+						PosControllerInstr.SOLID_FREQ.byteValue(),
+						PosControllerInstr.DIM_DUTYCYCLE.byteValue()));
+				}
 				LOGGER.info("Position {} got no WIs. Causes: no path defined, unknown container id, no inventory", position);
 			} else {
 				byte count = (byte) wiCount.getGoodCount();
@@ -2466,6 +2522,70 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 		}
 	}
 
+	/**
+	 * @return - Returns the PosControllerInstr for the position given the count if any is warranted. Null otherwise.
+	 */
+	public PosControllerInstr getCartRunFeedbackInstructionForCount(WorkInstructionCount wiCount, byte position) {
+		//if wiCount is null then the server did have any WIs for the order.
+		//this is an "unknown" order id
+		if (wiCount == null) {
+			//Unknown order id matches "done for now" - dim, solid, dashes
+			return new PosControllerInstr(position,
+				(byte) 0,
+				(byte) 0,
+				(byte) 0,
+				PosControllerInstr.SOLID_FREQ.byteValue(),
+				PosControllerInstr.DIM_DUTYCYCLE.byteValue());
+		} else {
+			byte count = (byte) wiCount.getGoodCount();
+			// Caller (in SetupOrdersDeviceLogic) just logged, so we do not need to log again here. Caller also logged the pick count.
+			if (count == 0) { // nothing else to do from this cart setup.
+				// Indicate short this path, work other paths, or both.
+				if (wiCount.hasShortsThisPath() && wiCount.hasWorkOtherPaths()) {
+					//If there any bad counts then we are "done for now" - dim, solid, dashes
+					return new PosControllerInstr(position,
+						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+						PosControllerInstr.BITENCODED_TRIPLE_DASH,
+						PosControllerInstr.BITENCODED_TRIPLE_DASH,
+						PosControllerInstr.SOLID_FREQ.byteValue(),
+						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
+				} else if (wiCount.hasShortsThisPath()) {
+					return new PosControllerInstr(position,
+						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+						PosControllerInstr.BITENCODED_TOP_BOTTOM,
+						PosControllerInstr.BITENCODED_TOP_BOTTOM,
+						PosControllerInstr.SOLID_FREQ.byteValue(),
+						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
+				} else if (wiCount.hasWorkOtherPaths()) {
+					return new PosControllerInstr(position,
+						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+						PosControllerInstr.BITENCODED_LED_DASH,
+						PosControllerInstr.BITENCODED_LED_DASH,
+						PosControllerInstr.SOLID_FREQ.byteValue(),
+						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
+				} else {
+					if (wiCount.getCompleteCount() == 0) {
+						// This should not be possible (unless we only had a single HK WI, which would be a bug)
+						// However, restart on a route after completing all work for an order comes back this way. Server could return the count
+						// but does not. Treat it as order complete. The corresponding case  in setupOrdersDeviceLogic is demonstrated 
+						// in cheProcessPutWall.orderWallRemoveOrder(); Don't know if any case hits this in CheDeviceLogic.
+						LOGGER.debug("WorkInstructionCount has no counts {};", wiCount);
+					}
+					//Ready for packout - solid, dim, "oc"
+					return new PosControllerInstr(position,
+						PosControllerInstr.BITENCODED_SEGMENTS_CODE,
+						PosControllerInstr.BITENCODED_LED_C,
+						PosControllerInstr.BITENCODED_LED_O,
+						PosControllerInstr.SOLID_FREQ.byteValue(),
+						PosControllerInstr.DIM_DUTYCYCLE.byteValue());
+				}
+			} else {
+				//No feedback is count > 0
+				return null;
+			}
+		}
+	}
+
 	// --------------------------------------------------------------------------
 	/**
 	 *
@@ -2523,7 +2643,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				processContainerPosition(COMMAND_PREFIX, inScanStr);
 				break;
 
-			case SETUP_SUMMARY:				
+			case SETUP_SUMMARY:
 				// Normally, start work here would hit the default case below, calling start work() which queries to server again
 				// ultimately coming back to SETUP_SUMMARY state. However, if okToStartWithoutLocation, then start scan moves us forward
 				boolean reverseOrderFromLastTime = getMReversePickOrder() != reverse;
@@ -2550,6 +2670,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 
 			//Anywhere else we can start work if there's anything setup
 			case CONTAINER_SELECT:
+				mPostSetupSummary = true;
+				//Continue on to default:
 			default:
 				if (mPositionToContainerMap.values().size() > 0) {
 					startWork(inScanStr);
@@ -2678,7 +2800,6 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 	protected void processNormalPick(WorkInstruction inWi, Integer inQuantity) {
 		inWi.setCompleteState(mUserId, inQuantity);
 
-		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
 		EventType eventType = EventType.COMPLETE;
 		if (getCheStateEnum() == CheStateEnum.DO_PUT) {
 			if (inWi.getOrderDetail() == null) {
@@ -2687,6 +2808,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				eventType = EventType.COMPLETE;
 			}
 		}
+
+		if (inWi.getSubstitution() != null) {
+			inWi.setStatus(WorkInstructionStatusEnum.SUBSTITUTION);
+			eventType = EventType.SUBSTITUTION;
+		}
+
+		mDeviceManager.completeWi(getGuid().getHexStringNoPrefix(), getPersistentId(), inWi);
 		notifyWiVerb(inWi, eventType, kLogAsInfo);
 
 		mActivePickWiList.remove(inWi);
@@ -2865,7 +2993,13 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				setState(CheStateEnum.CONTAINER_SELECT);
 				return;
 			default: {
-				LOGGER.warn("Unexpected button press ignored. OR invalid pick() call by some unit test.");
+				// See a few of these if the poscon clear did not take, the user presses that button again.
+				// But most are the user pressing "oc" or dashes, etc. Just noise.
+				// Try to log the ones distinctively that might show an error. Filter for "ignored with value"
+				if (inQuantity != null && inQuantity > 0 && inQuantity < 10)
+					LOGGER.warn("Unexpected button press ignored with value {}", inQuantity);
+				else
+					LOGGER.warn("Unexpected button press ignored."); // don't represent the value here. Complicated if a bit encoded one.
 				// We want to ignore the button press, but force out starting poscon situation again.
 				setState(mCheStateEnum);
 				return;
@@ -2893,7 +3027,14 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 			if (wi == null) {
 				// DEV-1318 Most likely cause of no work instruction is it was just completed, but the poscon message did not get through to the poscon
 				// Therefore, user is pressing the button again. Let's make sure we send out the poscon again and not just silently ignore button press
-				LOGGER.warn("Not processing button because no work instruction remains at that position. But refreshing the displays.");
+				// Most are the user pressing "oc" or dashes, etc. Just noise.
+				// Try to log the ones distinctively that might show an error. Filter for "ignored with value"
+				if (inQuantity != null && inQuantity > 0 && inQuantity < 10) {
+					LOGGER.warn("Button {} has no workinstruction. Press ignored with value {}", inButtonNum, inQuantity);
+					// This is the likely bug of poscon clear did not happen. Should be no way a poscon has a count without a work instruction.
+				} else {
+					LOGGER.warn("Not processing button because no work instruction remains at that position. But refreshing the displays.");
+				}
 				setState(mCheStateEnum);
 				return;
 			} else if (wi.isHousekeeping()) {
@@ -2901,7 +3042,7 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				// version 2.0 sends value of 0.
 				processNormalPick(wi, 0);
 			} else {
-				if (inQuantity >= wi.getPlanMinQuantity()) {
+				if (inQuantity == wi.getPlanMinQuantity()) {
 					processNormalPick(wi, inQuantity);
 				} else {
 					// More kludge for count > 99 case
@@ -3220,7 +3361,8 @@ public class SetupOrdersDeviceLogic extends CheDeviceLogic {
 				if (wiMatchesItemLocation(matchSku, matchPickLocation, wi)) {
 					WorkInstructionStatusEnum theStatus = wi.getStatus();
 					// Short or complete must have been scanned.
-					if (theStatus.equals(WorkInstructionStatusEnum.COMPLETE) || theStatus.equals(WorkInstructionStatusEnum.SHORT))
+					if (theStatus == WorkInstructionStatusEnum.COMPLETE || theStatus == WorkInstructionStatusEnum.SHORT
+							|| theStatus == WorkInstructionStatusEnum.SUBSTITUTION)
 						return true;
 				}
 		}

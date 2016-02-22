@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.behavior.PalletizerBehavior;
+import com.codeshelf.behavior.PalletizerBehavior.PalletizerRemoveInfo;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.ws.protocol.request.PalletizerRemoveOrderRequest;
 import com.codeshelf.ws.protocol.response.PalletizerRemoveOrderResponse;
@@ -13,16 +14,13 @@ import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
-public class PalletizerRemoveOrderCommand extends CommandABC{
+public class PalletizerRemoveOrderCommand extends CommandABC<PalletizerRemoveOrderRequest>{
 	private static final Logger	LOGGER		= LoggerFactory.getLogger(PalletizerRemoveOrderCommand.class);
-
-	private PalletizerRemoveOrderRequest	request;
 
 	private PalletizerBehavior				palletizerService;
 
 	public PalletizerRemoveOrderCommand(WebSocketConnection connection, PalletizerRemoveOrderRequest request, PalletizerBehavior palletizerService) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 		this.palletizerService = palletizerService;
 	}
 
@@ -35,9 +33,9 @@ public class PalletizerRemoveOrderCommand extends CommandABC{
 		PalletizerRemoveOrderResponse response = new PalletizerRemoveOrderResponse();
 		Che che = Che.staticGetDao().findByPersistentId(UUID.fromString(cheId));
 		if (che!=null) {
-			String networkGuid =  che.getDeviceNetGuid().getHexStringNoPrefix();
-			String error = palletizerService.removeOrder(che, prefix, scan);
-			response.setError(error);
+			String networkGuid = che.getDeviceNetGuid().getHexStringNoPrefix();
+			PalletizerRemoveInfo info = palletizerService.removeOrder(che, prefix, scan);
+			response.setInfo(info);
 			response.setNetworkGuid(networkGuid);
 			response.setStatus(ResponseStatus.Success);
 			return response;

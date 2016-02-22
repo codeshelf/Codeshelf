@@ -1,0 +1,5 @@
+orderId,orderDetailId,itemId,quantity,uom,locationId,preAssignedContainerId,workSequence,substituteAllowed
+1111,1,ItemS1,5,each,LocX24,1111,1,
+2222,2,ItemS1,10,each,LocX24,2222,2,TRUE
+3333,3,ItemS1,15,each,LocX24,3333,3,TRUE
+3333,4,ItemS2,20,each,LocX24,3333,4,

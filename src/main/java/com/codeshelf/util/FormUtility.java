@@ -10,6 +10,11 @@ import javax.ws.rs.core.MultivaluedMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.model.domain.Item;
+import com.codeshelf.validation.DefaultErrors;
+import com.codeshelf.validation.ErrorCode;
+import com.codeshelf.validation.InputValidationException;
+
 public class FormUtility {
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(FormUtility.class);
 	private FormUtility() {}
@@ -49,4 +54,10 @@ public class FormUtility {
 	
 		return error ? null : result;
 	};
+	
+	public static void throwUiValidationException(String fieldName, Object error, ErrorCode errorCode){
+		DefaultErrors errors = new DefaultErrors(Item.class);
+		errors.rejectValue(fieldName, error, errorCode);
+		throw new InputValidationException(errors);
+	}
 }

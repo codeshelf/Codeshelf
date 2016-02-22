@@ -10,13 +10,11 @@ import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
-public class LogoutCommand extends CommandABC{
-	private LogoutRequest		request;
+public class LogoutCommand extends CommandABC<LogoutRequest>{
 	private WorkBehavior		workBehavior;
 
 	public LogoutCommand(WebSocketConnection connection, LogoutRequest request, WorkBehavior workBehavior) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 		this.workBehavior = workBehavior;
 	}
 

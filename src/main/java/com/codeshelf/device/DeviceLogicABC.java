@@ -17,6 +17,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import com.codeshelf.application.ContextLogging;
 import com.codeshelf.flyweight.bitfields.NBitInteger;
 import com.codeshelf.flyweight.command.ICommand;
 import com.codeshelf.flyweight.command.IPacket;
@@ -30,11 +31,7 @@ import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
  * @author jeffw
  *
  */
-public abstract class DeviceLogicABC implements INetworkDevice {
-	protected static final String				THREAD_CONTEXT_WORKER_KEY			= "worker";
-	protected static final String				THREAD_CONTEXT_TAGS_KEY				= "tags";
-	protected static final String				THREAD_CONTEXT_NETGUID_KEY			= "netguid";
-	
+public abstract class DeviceLogicABC implements INetworkDevice {	
 	private static final Logger		LOGGER								= LoggerFactory.getLogger(DeviceLogicABC.class);
 
 	private byte					STARTING_ACK_NUM		= 1;
@@ -170,12 +167,19 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	 * A bottleneck for command so we can look at timing or whatever
 	 * Send the command to the the getAddress() of this device
 	 */
-	public void sendRadioControllerCommand(ICommand inCommand, boolean inAckRequested) {
-		if (this.isDeviceAssociated()) {
-			//waitLongEnough();
+	private void sendRadioControllerCommand(ICommand inCommand, NetAddress inDstAddr, boolean inAckRequested) {
+		if (this.isDeviceAssociated() || mRadioController.testingResendQueueing()) {
 			setLastRadioCommandSendForThisDevice(System.currentTimeMillis());
-			mRadioController.sendCommand(inCommand, getAddress(), inAckRequested);
+			mRadioController.sendCommand(inCommand, inDstAddr, inAckRequested);
 		}
+	}
+
+	/**
+	 * A bottleneck for command so we can look at timing or whatever
+	 * Send the command to the the getAddress() of this device
+	 */
+	public void sendRadioControllerCommand(ICommand inCommand, boolean inAckRequested) {
+		sendRadioControllerCommand(inCommand, getAddress(), inAckRequested);
 	}
 
 	/**
@@ -260,10 +264,10 @@ public abstract class DeviceLogicABC implements INetworkDevice {
 	// --------------------------------------------------------------------------
 	public void notifyAssociate(String inputString) {
 		try {
-			org.apache.logging.log4j.ThreadContext.put(THREAD_CONTEXT_TAGS_KEY, "CHE_EVENT Associate");
+			org.apache.logging.log4j.ThreadContext.put(ContextLogging.THREAD_CONTEXT_TAGS_KEY, ContextLogging.TAG_CHE_ASSOCIATE);
 			LOGGER.info(inputString);
 		} finally {
-			org.apache.logging.log4j.ThreadContext.remove(THREAD_CONTEXT_TAGS_KEY);
+			org.apache.logging.log4j.ThreadContext.remove(ContextLogging.THREAD_CONTEXT_TAGS_KEY);
 		}
 	}
 }

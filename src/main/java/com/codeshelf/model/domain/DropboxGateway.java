@@ -9,6 +9,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.SocketTimeoutException;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -99,6 +100,9 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 	@Setter
 	@JsonProperty
 	private String				dbCursor;
+	
+	//@Transient
+	private static int			consecutiveTimeouts = 0;
 
 	public DropboxGateway() {
 		super();
@@ -181,7 +185,6 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 			return false;
 		} 
 		if (!testConnection()){
-			LOGGER.warn("Dropbox connection error");
 			return false;
 		}
 
@@ -214,7 +217,22 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 		try {
 			DbxClient client = getClient();
 			if(client != null) {
-				DbxAccountInfo info = client.getAccountInfo();
+				DbxAccountInfo info = null;
+				try {
+					info = client.getAccountInfo();
+					consecutiveTimeouts = 0;
+				} catch (Exception e) {
+					//Suppress SocketTimeoutException warning unless encountered several consecutive timeouts
+					if (e instanceof SocketTimeoutException){
+						if (consecutiveTimeouts++ >= 3) {
+							throw e;
+						} else {
+							LOGGER.info("Dropbox connectivity check failed - connection timeout");
+							return false; 
+						}
+					}
+					throw e;
+				}
 				if (info == null) {
 					LOGGER.warn("Dropbox connectivity check failed, account info null");
 					return false;
@@ -759,12 +777,8 @@ public class DropboxGateway extends EdiGateway implements IEdiImportGateway{
 	
 	public List<String> retrieveOldProcessedFilesList(Date purgeThreshold) {
 		ArrayList<String> directoryList = new ArrayList<>();
+		directoryList.add(getFacilityImportSubDirPath(IMPORT_ORDERS_PATH));
 		directoryList.add(getFacilityImportSubDirProcessedPath(IMPORT_ORDERS_PATH));
-		directoryList.add(getFacilityImportSubDirProcessedPath(IMPORT_AISLES_PATH));
-		directoryList.add(getFacilityImportSubDirProcessedPath(IMPORT_BATCHES_PATH));
-		directoryList.add(getFacilityImportSubDirProcessedPath(IMPORT_INVENTORY_PATH));
-		directoryList.add(getFacilityImportSubDirProcessedPath(IMPORT_LOCATIONS_PATH));
-		directoryList.add(getFacilityImportSubDirProcessedPath(IMPORT_SLOTTING_PATH));
 		ArrayList<String> filesToDelete = new ArrayList<>();
 		DbxClient client = getClient();
 		if (client == null) {

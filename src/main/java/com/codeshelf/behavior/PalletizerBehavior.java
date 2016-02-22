@@ -2,7 +2,6 @@ package com.codeshelf.behavior;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -11,7 +10,6 @@ import org.hibernate.criterion.Restrictions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.codeshelf.flyweight.command.ColorEnum;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WiFactory;
 import com.codeshelf.model.WorkInstructionStatusEnum;
@@ -38,8 +36,6 @@ public class PalletizerBehavior implements IApiBehavior{
 	
 	private LightBehavior lightService;
 	private NotificationBehavior notificationBehavior;
-	private HashMap<UUID, ColorEnum> cheColor = new HashMap<>();
-	
 	
 	@Inject
 	public PalletizerBehavior(LightBehavior inLightService, NotificationBehavior notificationBehavior) {
@@ -107,8 +103,9 @@ public class PalletizerBehavior implements IApiBehavior{
 			new Timestamp(System.currentTimeMillis()),
 			null,
 			location,
-			getCheColor(che)
-			);
+			true,
+			facility.getUnspecifiedLocation(),
+			che.getColor());
 		wi.setPickerId(userId);
 		info.setWi(wi);
 		return info;
@@ -151,7 +148,8 @@ public class PalletizerBehavior implements IApiBehavior{
 		}
 		return processPalletizerItemRequest(che, itemId, userId);
 	}
-	private String generatePalletizerStoreId(String itemId){
+	
+	public static String generatePalletizerStoreId(String itemId){
 		if (itemId == null) {
 			return null;
 		}
@@ -162,6 +160,14 @@ public class PalletizerBehavior implements IApiBehavior{
 		String storeId = generatePalletizerStoreId(itemId);
 		String orderId = "P_" + storeId + "-" + location + "-" + System.currentTimeMillis();
 		return orderId;
+	}
+	
+	private String getStoreIdFromOrder(OrderHeader order){
+		String orderId = order.getDomainId();
+		if (orderId.startsWith("P_")){
+			orderId = orderId.substring(2);
+		}
+		return generatePalletizerStoreId(orderId);
 	}
 	
 	private OrderHeader getActivePalletizerOrder(Facility facility, String itemId) {
@@ -192,74 +198,101 @@ public class PalletizerBehavior implements IApiBehavior{
 		return null;
 	}
 	
-	public String removeOrder(Che che, String prefix, String scan) {
+	public PalletizerRemoveInfo removeOrder(Che che, String prefix, String scan) {
 		if (prefix == null || prefix.isEmpty()) {
 			return removeOrderByLicense(che, scan);
 		} else if ("%".equalsIgnoreCase(prefix) || "L%".equalsIgnoreCase(prefix)) {
 			return removeOrderByLocation(che, prefix, scan); 
 		} else {
-			return "Bad scan " + prefix + scan;
+			return new PalletizerRemoveInfo("Bad scan " + prefix + scan);
 		}
 	} 
 	
-	private String removeOrderByLocation(Che che, String prefix, String scan) {
+	private PalletizerRemoveInfo removeOrderByLocation(Che che, String prefix, String scan) {
 		String locationStr = "%".equals(prefix) ? prefix + scan : scan;
 		Facility facility = che.getFacility();
 		Location location = facility.findSubLocationById(locationStr);
 		if (location == null) {
-			return locationStr + " not found";
+			return new PalletizerRemoveInfo(locationStr + " not found");
 		}
 		List<OrderLocation> orderLocations = OrderLocation.findOrderLocationsAtLocationAndChildren(location, facility);
 		if (orderLocations == null || orderLocations.isEmpty()) {
-			return "No Pallets In " + locationStr;
+			return new PalletizerRemoveInfo("No Pallets In " + locationStr);
 		}
-		deactivateAndIlluminateOrders(che, orderLocations, null);
-		return null;
+		List<String> orders = deactivateAndIlluminateOrders(che, orderLocations, null);
+		PalletizerRemoveInfo result = new PalletizerRemoveInfo();
+		result.setOrders(orders);
+		return result;
 	}
 	
-	private String removeOrderByLicense(Che che, String license){
+	private PalletizerRemoveInfo removeOrderByLicense(Che che, String license){
 		Facility facility = che.getFacility();
 		String storeId = license.length() >= 4 ? license.substring(0, 4) : license;
 		OrderHeader order = getActivePalletizerOrder(facility, license);
 		if (order == null) {
 			LOGGER.warn("Order {} not found for palletizer removal", storeId);
-			return "Pallet " + storeId + " Not Found"; 
+			return new PalletizerRemoveInfo("Pallet " + storeId + " Not Found");
 		}
 		order.setDomainId(license + "_" + System.currentTimeMillis());
 		
 		//Should be just one order location
 		List<OrderLocation> orderLocations = order.getActiveOrderLocations();
-		deactivateAndIlluminateOrders(che, orderLocations, license);
-		return null;		
+		List<String> orders = deactivateAndIlluminateOrders(che, orderLocations, license);
+		PalletizerRemoveInfo result = new PalletizerRemoveInfo();
+		result.setOrders(orders);
+		return result;	
 	}
 	
-	private void deactivateAndIlluminateOrders(Che che, List<OrderLocation> orderLocations, String license) {
+	private List<String> deactivateAndIlluminateOrders(Che che, List<OrderLocation> orderLocations, String license) {
 		List<Location> locations = Lists.newArrayList();
+		List<String> orders = Lists.newArrayList();
 		for (OrderLocation orderLocation : orderLocations) {
-			locations.add(orderLocation.getLocation());
 			OrderHeader order = orderLocation.getParent();
+			if (order.getStatus() == OrderStatusEnum.COMPLETE){
+				continue;
+			}
+			locations.add(orderLocation.getLocation());
 			order.setStatus(OrderStatusEnum.COMPLETE);
 			List<OrderDetail> details = order.getOrderDetails();
 			for (OrderDetail detail : details) {
 				detail.setStatus(OrderStatusEnum.COMPLETE);
 				OrderDetail.staticGetDao().store(detail);
 				for (WorkInstruction wi : detail.getWorkInstructions()){
-					completeWi(wi.getPersistentId(), false);
+					completeWi(wi, false);
 					if (license != null) {
 						wi.setContainerId(license);
 					}
 					WorkInstruction.staticGetDao().store(wi);
 				}
 			}
+			orders.add(getStoreIdFromOrder(order));
 			OrderHeader.staticGetDao().store(order);
 		}
-		lightService.lightLocationServerCall(locations, getCheColor(che));
+		lightService.lightLocationServerCall(locations, che.getColor());
+		return orders;
 	}
 	
-	public void completeWi(UUID wiId, Boolean shorted) {
-		WorkInstruction wi = WorkInstruction.staticGetDao().findByPersistentId(wiId);
-		if (wi == null) {
-			LOGGER.error("Palletizer Complete Wi Error: Did not find Wi " + wiId);
+	public void completeItem(Che che, PalletizerInfo info, Boolean shorted, String userId) {
+		UUID wiId = info.getWi().getPersistentId();
+		if (info.isCached()) {
+			PalletizerInfo nonCachedInfo = processPalletizerItemRequest(che, info.getItem(), userId);
+			if (!nonCachedInfo.isOrderFound()){
+				LOGGER.warn("Unable to complete Palletizer item {} using cached info", info.getItem());
+				return;
+			}
+			completeWi(nonCachedInfo.getWi(), shorted);
+		} else {
+			WorkInstruction wi = WorkInstruction.staticGetDao().findByPersistentId(wiId);
+			if (wi == null) {
+				LOGGER.error("Palletizer Complete Wi Error: Did not find Wi " + wiId);	
+			} else {
+				completeWi(wi, shorted);
+			}
+		}
+	}
+	
+	private void completeWi(WorkInstruction wi, Boolean shorted) {
+		if (wi.getStatus() == WorkInstructionStatusEnum.COMPLETE){
 			return;
 		}
 		Timestamp now = new Timestamp(System.currentTimeMillis());
@@ -274,26 +307,7 @@ public class PalletizerBehavior implements IApiBehavior{
 		
 		if (!wi.isHousekeeping()) {
 			notificationBehavior.saveFinishedWI(wi);
-		}
-
-	}
-	
-	private ColorEnum getCheColor(Che che) {
-		UUID uuid = che.getPersistentId();
-		ColorEnum green = ColorEnum.GREEN, magenta = ColorEnum.MAGENTA;
-		if (cheColor.containsKey(uuid)){
-			ColorEnum prevColor = cheColor.get(uuid);
-			if (prevColor == green){
-				cheColor.put(uuid, magenta);
-				return magenta;
-			} else {
-				cheColor.put(uuid, green);
-				return green;
-			}
-		} else {
-			cheColor.put(uuid, green);
-			return green;
-		}
+		}		
 	}
 	
 	public static class PalletizerInfo {
@@ -320,5 +334,24 @@ public class PalletizerBehavior implements IApiBehavior{
 		@Getter 
 		@Setter
 		private String errorMessage1, errorMessage2;
+		
+		@Getter 
+		@Setter
+		private boolean cached = false;
+	}
+	
+	public static class PalletizerRemoveInfo {
+		@Getter @Setter
+		private String error;
+		
+		@Getter @Setter
+		private List<String> orders = new ArrayList<>();
+		
+		public PalletizerRemoveInfo() {
+		}
+		
+		public PalletizerRemoveInfo(String error) {
+			this.error = error;
+		}		
 	}
 }

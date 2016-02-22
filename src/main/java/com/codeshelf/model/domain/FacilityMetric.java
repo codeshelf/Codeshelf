@@ -26,6 +26,8 @@ import lombok.Setter;
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonAutoDetect(getterVisibility = JsonAutoDetect.Visibility.NONE)
 public class FacilityMetric extends DomainObjectTreeABC<Facility>{
+	private static final String DOMAIN_PREFIX = "Metric";
+	
 	public static class FacilityMetricDao extends GenericDaoABC<FacilityMetric> implements ITypedDao<FacilityMetric> {
 		public final Class<FacilityMetric> getDaoClass() {
 			return FacilityMetric.class;
@@ -137,7 +139,7 @@ public class FacilityMetric extends DomainObjectTreeABC<Facility>{
 	
 	@Override
 	public String getDefaultDomainIdPrefix() {
-		return "Metric";
+		return DOMAIN_PREFIX;
 	}
 
 	@Override
@@ -153,5 +155,9 @@ public class FacilityMetric extends DomainObjectTreeABC<Facility>{
 	@Override
 	public Facility getFacility() {
 		return getParent();
+	}
+	
+	public static String generateDomainId(Facility facility, String localMidnight){
+		return DOMAIN_PREFIX + "-" + facility.getDomainId() + "-" + localMidnight;
 	}
 }

@@ -14,16 +14,14 @@ import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
 @RequiresPermissions("light:use")
-public class InventoryLightLocationCommand extends CommandABC {
+public class InventoryLightLocationCommand extends CommandABC<InventoryLightLocationRequest> {
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ComputeWorkCommand.class);
 
-	private InventoryLightLocationRequest request;
 	private InventoryBehavior inventoryService;
 	
 	public InventoryLightLocationCommand(WebSocketConnection connection, InventoryLightLocationRequest request, InventoryBehavior inventoryService) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 		this.inventoryService = inventoryService;
 	}
 

@@ -88,6 +88,9 @@ public class FacilitiesResource {
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public Response addFacility(@FormParam("domainId") String domainId, @FormParam("description") String description) {
+		if (Facility.facilityExists(domainId)) {
+			return new ErrorResponse("Active Facility " + domainId + " already exists in this tenant.").buildResponse();
+		}
 		Facility facility = Facility.createFacility(domainId, description, Point.getZeroPoint());
 		return BaseResponse.buildResponse(facility);
 	}

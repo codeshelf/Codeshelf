@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.CommandAssocABC;
 import com.codeshelf.flyweight.command.CommandAssocAck;
-import com.codeshelf.flyweight.command.CommandAssocReq;
 import com.codeshelf.flyweight.command.CommandAssocResp;
 import com.codeshelf.flyweight.command.CommandControlABC;
 import com.codeshelf.flyweight.command.ICommand;
@@ -36,14 +35,19 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 
 	private static final Logger	LOGGER					= LoggerFactory.getLogger(DeviceEmbeddedABC.class);
 
+	@SuppressWarnings("unused")
 	private static final String	RECEIVER_THREAD_NAME	= "Packet Receiver";
 
 	private static final long	CTRL_START_DELAY_MILLIS	= 200;
 
+	@SuppressWarnings("unused")
 	private static final byte	HARDWARE_VERSION		= 0x01;
+	@SuppressWarnings("unused")
 	private static final byte	FIRMWARE_VERSION		= 0x01;
+	@SuppressWarnings("unused")
 	private static final byte	RADIOPROTOCOL_VERSION	= 0x01;
 
+	@SuppressWarnings("unused")
 	private static final byte	RESET_REASON_POWERON	= 0x00;
 
 	private IGatewayInterface	mGatewayInterface;
@@ -156,6 +160,7 @@ public abstract class DeviceEmbeddedABC implements IEmbeddedDevice {
 	 *  @param inCommand   The command just received.
 	 *  @param inSrcAddr   The address is was received from.
 	 */
+	@SuppressWarnings("unused")
 	private void receiveCommand(final ICommand inCommand, final NetAddress inSrcAddr) {
 
 		if (inCommand != null) {

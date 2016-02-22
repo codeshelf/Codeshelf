@@ -20,17 +20,14 @@ import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
 @RequiresPermissions("ux:update")
-public class ObjectUpdateCommand extends CommandABC {
+public class ObjectUpdateCommand extends CommandABC<ObjectUpdateRequest> {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(ObjectUpdateCommand.class);
 
-	private ObjectUpdateRequest	request;
-	
 	private PropertyUtilsBean propertyUtil = new PropertyUtilsBean();
 	
 	public ObjectUpdateCommand(WebSocketConnection connection, ObjectUpdateRequest request) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })

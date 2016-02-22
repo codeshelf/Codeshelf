@@ -553,11 +553,8 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		Assert.assertEquals("1", getSummaryScreenOrderCount(picker1));
 		Assert.assertEquals("1", getSummaryScreenJobCount(picker1));
 		// Summary screen does not show any error.
-		// poscon 2 shows "--" which may be ambiguous. Same a no orders on this path, but are on other paths. Good to show something anyway.
-		Assert.assertEquals(picker1.getLastSentPositionControllerDisplayValue((byte) 2),
-			PosControllerInstr.BITENCODED_SEGMENTS_CODE);
-		Assert.assertEquals(picker1.getLastSentPositionControllerMinQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
-		Assert.assertEquals(picker1.getLastSentPositionControllerMaxQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
+		// poscon 2 shows 0 for a non-existing order id
+		Assert.assertEquals(picker1.getLastSentPositionControllerDisplayValue((byte) 2),ZERO);
 
 		LOGGER.info("2: Scan Start. Ready to do our one job");
 		picker1.scanCommand("START");
@@ -566,20 +563,14 @@ public class CheProcessSummaryState extends CheProcessPutWallSuper {
 		this.logWiList(wis);
 		Assert.assertEquals(1, wis.size());
 		Assert.assertEquals(toByte(5), picker1.getLastSentPositionControllerDisplayValue((byte) 1));
-		// continue showing feedback on position 2, even as we are doing the one
-		Assert.assertEquals(picker1.getLastSentPositionControllerDisplayValue((byte) 2),
-			PosControllerInstr.BITENCODED_SEGMENTS_CODE);
-		Assert.assertEquals(picker1.getLastSentPositionControllerMinQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
-		Assert.assertEquals(picker1.getLastSentPositionControllerMaxQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
+		// continue showing feedback on position 2 for non-existing order, even as we are doing the one
+		Assert.assertEquals(picker1.getLastSentPositionControllerDisplayValue((byte) 2), ZERO);
 
 		LOGGER.info("2b: Scan Start. Back to summary.");
 		picker1.scanCommand("START");
 		picker1.waitForCheState(CheStateEnum.SETUP_SUMMARY, WAIT_TIME);
 		picker1.logCheDisplay(); // Look in log to see what we have
-		Assert.assertEquals(picker1.getLastSentPositionControllerDisplayValue((byte) 2),
-			PosControllerInstr.BITENCODED_SEGMENTS_CODE);
-		Assert.assertEquals(picker1.getLastSentPositionControllerMinQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
-		Assert.assertEquals(picker1.getLastSentPositionControllerMaxQty((byte) 2), PosControllerInstr.BITENCODED_LED_DASH);
+		Assert.assertEquals(picker1.getLastSentPositionControllerDisplayValue((byte) 2), ZERO);
 	}
 
 	@Test

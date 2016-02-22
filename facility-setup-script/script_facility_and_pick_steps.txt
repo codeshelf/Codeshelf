@@ -56,8 +56,7 @@ addExtensionPoint extensionLine OrderImportLineTransformation active
 
 SERVER
 importInventory inventory
-deleteOrders 26768709 26768711 26768712 26768717 26768718 26768719 26768720
-importOrders orders_10
+importOrdersWithDeletion orders_10
 
 /*
 And one more multi line comment here

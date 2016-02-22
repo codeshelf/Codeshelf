@@ -64,6 +64,15 @@ public class PickSimulator {
 		loginStates.add(CheStateEnum.PALLETIZER_SCAN_ITEM);
 		waitForCheStates(loginStates, getWaitTime());
 	}
+	
+	public void start() {
+		scanCommand("START");
+	}
+	
+	public void start(CheStateEnum state, int timeoutInMillis) {
+		start();
+		waitForCheState(state, timeoutInMillis);
+	}
 
 	public void loginAndSetup(String pickerId) {
 		waitForCheState(CheStateEnum.IDLE, getWaitTime());

@@ -13,15 +13,12 @@ import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
 @RequiresPermissions("path:create")
-public class CreatePathCommand extends CommandABC {
+public class CreatePathCommand extends CommandABC<CreatePathRequest> {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(CreatePathCommand.class);
-
-	CreatePathRequest request;
 	
 	public CreatePathCommand(WebSocketConnection connection, CreatePathRequest request) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 	}
 
 	@Override

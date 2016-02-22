@@ -7,30 +7,15 @@ import lombok.Getter;
 
 import org.apache.commons.lang.ObjectUtils;
 
+import com.codeshelf.model.domain.Worker;
 import com.google.common.base.Strings;
 
 @EqualsAndHashCode(of={"name", "id"})
 public class WorkerDisplay implements Comparable<WorkerDisplay> {
 	
 	public static final FieldComparator<Map<Object, Object>>	ItemComparator = new FieldComparator<Map<Object, Object>>() {
-
 		@Getter
-		private String[] sortedBy = {"name", "id"};
-		
-		@Override
-		public int compare(Map<Object, Object> record1, Map<Object, Object> record2) {
-			int value = 0;
-			
-			for (String sortField : sortedBy) {
-				Comparable<?> item1 = (Comparable<?>) record1.get(sortField);
-				Comparable<?> item2 = (Comparable<?>) record2.get(sortField);
-				value =  ObjectUtils.compare(item1, item2);
-				if (value != 0) {
-					break;
-				}
-			}
-			return value;
-		}
+		private String[] sortedBy = {"count", "name", "id"};
 		
 	};
 
@@ -43,6 +28,16 @@ public class WorkerDisplay implements Comparable<WorkerDisplay> {
 	public WorkerDisplay(EventDisplay eventDisplay) {
 		this.id = Strings.nullToEmpty(eventDisplay.getWorkerId());
 		this.name = Strings.nullToEmpty(eventDisplay.getWorkerName());
+	}
+
+	public WorkerDisplay(Worker worker) {
+		if (worker != null) {
+			this.id = Strings.nullToEmpty(worker.getDomainId());
+			this.name = Strings.nullToEmpty(worker.getWorkerNameUI());
+		} else {
+			this.id = "";
+			this.name= "";
+		}
 	}
 
 	@Override

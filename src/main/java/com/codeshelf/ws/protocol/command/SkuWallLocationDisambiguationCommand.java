@@ -15,15 +15,13 @@ import com.codeshelf.ws.protocol.response.ResponseABC;
 import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
-public class SkuWallLocationDisambiguationCommand extends CommandABC {
-	private SkuWallLocationDisambiguationRequest request;
+public class SkuWallLocationDisambiguationCommand extends CommandABC<SkuWallLocationDisambiguationRequest> {
 	private InventoryBehavior inventoryService;
 	private WorkBehavior workService;
 	
 	
 	public SkuWallLocationDisambiguationCommand(WebSocketConnection connection, SkuWallLocationDisambiguationRequest request, InventoryBehavior inventoryService, WorkBehavior workService) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 		this.inventoryService = inventoryService;
 		this.workService = workService;
 	}

@@ -23,6 +23,7 @@ import java.io.Serializable;
 public class NBitInteger implements Serializable {
 
 	private static final byte	MAXBITWIDTH			= 16;
+	@SuppressWarnings("unused")
 	private static final int	MASKING_BITS		= 0x0000ffff;
 
 	private static final long	serialVersionUID	= -4389961963517642151L;

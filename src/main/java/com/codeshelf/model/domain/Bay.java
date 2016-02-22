@@ -125,6 +125,27 @@ public class Bay extends Location {
 		return true;
 	}
 
+	@Override
+	public String getMetersFromLeft() {
+		Aisle aisle = this.getParentAtLevel(Aisle.class);
+		if (aisle == null || aisle.getPathSegment()== null)
+			return "";
+		boolean leftB1S1 = aisle.isLeftSideTowardB1S1();
+		boolean pathFromAnchor = aisle.isPathIncreasingFromAnchor();
+		Double aisleValue = aisle.getPosAlongPath();
+		Double bayValue = this.getPosAlongPath();
+		// Hurts to think about it, but it comes down to this simple difference
+		if (leftB1S1 != pathFromAnchor) {
+			aisleValue = aisleValue + aisle.getLocationWidthMeters();
+			bayValue = bayValue + this.getLocationWidthMeters();
+		}
+		// depending on how the user set up the path relative to aisle, values could be not quite exact.
+		Double diff = Math.abs(aisleValue - bayValue);
+		if (diff < .01)
+			return "0";
+		return String.format("%.2f", diff);
+	}
+
 	public static Bay as(Location location) {
 		if (location == null) {
 			return null;

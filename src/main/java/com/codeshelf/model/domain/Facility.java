@@ -179,6 +179,11 @@ public class Facility extends Location {
 		return true;
 	}
 
+	public boolean isProduction() {
+		boolean production = PropertyBehavior.getPropertyAsBoolean(this, FacilityPropertyType.PRODUCTION);
+		return production;
+	}
+	
 	public List<Path> getPaths() {
 		return new ArrayList<Path>(this.paths.values());
 	}
@@ -1314,6 +1319,17 @@ public class Facility extends Location {
 		return facility;
 	}
 
+	/**
+	 * This function expects an active transaction
+	 */
+	public static boolean facilityExists(String domainId){
+		List<Criterion> filterParams = new ArrayList<Criterion>();
+		filterParams.add(Restrictions.eq("domainId", domainId));
+		filterParams.add(Restrictions.eq("active", true));
+		List<Facility> facilities = Facility.staticGetDao().findByFilter(filterParams);
+		return !facilities.isEmpty();
+	}
+	
 	// convenience method
 	public Facility reload() {
 		return Facility.staticGetDao().reload(this);
@@ -1441,7 +1457,8 @@ public class Facility extends Location {
 		cal.add(Calendar.DATE, 1);
 		Timestamp metricsCollectionEndUTC = new Timestamp(cal.getTimeInMillis());
 
-		FacilityMetric metric = getMetrics(metricsCollectionStartUTC);
+		String metricDomainId = FacilityMetric.generateDomainId(this, dateLocalUI);
+		FacilityMetric metric = FacilityMetric.staticGetDao().findByDomainId(this, metricDomainId);
 		if (metric != null && !forceRecalculate) {
 			LOGGER.info("Returning previously saved FacilityMetrics value for {} ", metricsCollectionStartUTC);
 			return metric;
@@ -1449,12 +1466,12 @@ public class Facility extends Location {
 		if (metric == null) {
 			metric = new FacilityMetric();
 			metric.setParent(this);
-			metric.setDate(metricsCollectionStartUTC);
 		}
+		metric.setDate(metricsCollectionStartUTC);
 		metric.setUpdated(new Timestamp(System.currentTimeMillis()));
 		metric.setTz(cal.getTimeZone().getID());
 		metric.setDateLocalUI(dateLocalUI);
-		metric.setDomainId(metric.getDefaultDomainIdPrefix() + "-" + getDomainId() + "-" + metric.getDateLocalUI());
+		metric.setDomainId(metricDomainId);
 
 		boolean goodData = computeWiMetricsSuccess(metric, metricsCollectionStartUTC, metricsCollectionEndUTC);
 		if (goodData){
@@ -1472,6 +1489,7 @@ public class Facility extends Location {
 		List<WorkInstructionStatusEnum> wiStatuses = new ArrayList<>();
 		wiStatuses.add(WorkInstructionStatusEnum.COMPLETE);
 		wiStatuses.add(WorkInstructionStatusEnum.SHORT);
+		wiStatuses.add(WorkInstructionStatusEnum.SUBSTITUTION);
 		List<Criterion> filterParams = new ArrayList<Criterion>();
 		filterParams.add(Restrictions.eq("parent", this));
 		filterParams.add(Restrictions.in("status", wiStatuses)); // empty .in() guard not needed here
@@ -1581,25 +1599,4 @@ public class Facility extends Location {
 		int skuwallPutsCount = WorkerEvent.staticGetDao().countByFilter(filterParams);
 		metric.setSkuWallPuts(skuwallPutsCount);
 	}
-
-	private FacilityMetric getMetrics(Timestamp date) {
-		List<Criterion> filterParams = new ArrayList<Criterion>();
-		filterParams.add(Restrictions.eq("parent", this));
-		filterParams.add(Restrictions.eq("date", date));
-		List<FacilityMetric> metrics = FacilityMetric.staticGetDao().findByFilter(filterParams);
-		FacilityMetric metric = null;
-		if (metrics.size() == 1) {
-			metric = metrics.get(0);
-		} else if (metrics.size() > 1) {
-			LOGGER.warn("Found more than one FacilityMertic for facility " + getDomainId() + " at " + date + ". Using latest one.");
-			Timestamp latestTs = new Timestamp(0);
-			for (FacilityMetric metricCheck : metrics) {
-				if (metricCheck.getUpdated().after(latestTs)) {
-					metric = metricCheck;
-				}
-			}
-		}
-		return metric;
-	}	
-
 }

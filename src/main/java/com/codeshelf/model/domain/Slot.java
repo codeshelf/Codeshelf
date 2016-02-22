@@ -17,6 +17,8 @@ import com.codeshelf.model.SlotComparable;
 import com.codeshelf.model.dao.GenericDaoABC;
 import com.codeshelf.model.dao.ITypedDao;
 import com.codeshelf.persistence.TenantPersistenceService;
+import com.codeshelf.util.FormUtility;
+import com.codeshelf.validation.ErrorCode;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
 // --------------------------------------------------------------------------
@@ -72,6 +74,30 @@ public class Slot extends Location {
 		return true;
 	}
 	
+	@Override
+	public String getMetersFromLeft() {
+		// nearly cloned from Bay.getMetersFromLeft()
+		Aisle aisle = this.getParentAtLevel(Aisle.class);
+		Tier tier = this.getParentAtLevel(Tier.class);
+		if (aisle == null || tier == null || aisle.getPathSegment()== null)
+			return "";
+		boolean leftB1S1 = aisle.isLeftSideTowardB1S1();
+		boolean pathFromAnchor = aisle.isPathIncreasingFromAnchor();
+		Double tierValue = tier.getPosAlongPath();
+		Double slotValue = this.getPosAlongPath();
+		// Hurts to think about it, but it comes down to this simple difference
+		if (leftB1S1 != pathFromAnchor) {
+			tierValue = tierValue + tier.getLocationWidthMeters();
+			slotValue = slotValue + this.getLocationWidthMeters();
+		}
+		// depending on how the user set up the path relative to aisle, values could be not quite exact.
+		Double diff = Math.abs(tierValue - slotValue);
+		if (diff < .01)
+			return "0";
+		return String.format("%.2f", diff);
+	}
+
+	
 	public static Slot as(Location location) {
 		if (location==null) {
 			return null;
@@ -86,13 +112,14 @@ public class Slot extends Location {
 		short firstLed = parseShort(firstLedStr);
 		short lastLed = parseShort(lastLedStr);
 		if (firstLed > lastLed) {
-			throw new IllegalArgumentException("First led id " + firstLed + " is larger than last id " + lastLed);
+			FormUtility.throwUiValidationException("LED Values", "First led id " + firstLed + " is larger than last id " + lastLed, ErrorCode.FIELD_INVALID);
 		}
 		Location tier = getParent();
 		short tierFirstLed = tier.getFirstLedNumAlongPath();
 		short tierLastLed = tier.getLastLedNumAlongPath();
 		if (tierFirstLed > firstLed || tierLastLed < lastLed){
-			throw new IllegalArgumentException(String.format("Provided interval %d-%d does not fit within current Tier's bounds %d-%d", firstLed, lastLed, tierFirstLed, tierLastLed));
+			String error = String.format("Provided interval [%d, %d] does not fit within current Tier's bounds [%d, %d]", firstLed, lastLed, tierFirstLed, tierLastLed);
+			FormUtility.throwUiValidationException("LED Values", error, ErrorCode.FIELD_INVALID);
 		}
 		setFirstLedNumAlongPath(firstLed);
 		setLastLedNumAlongPath(lastLed);

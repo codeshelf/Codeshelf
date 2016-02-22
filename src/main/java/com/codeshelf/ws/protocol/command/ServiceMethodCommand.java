@@ -22,19 +22,16 @@ import com.codeshelf.ws.server.WebSocketConnection;
 import com.google.common.base.Strings;
 
 @RequiresPermissions("ux:method")
-public class ServiceMethodCommand extends CommandABC {
+public class ServiceMethodCommand extends CommandABC<ServiceMethodRequest> {
 
 	private static final Logger	LOGGER = LoggerFactory.getLogger(ServiceMethodCommand.class);
-
-	private ServiceMethodRequest	request;
 
 	private BehaviorFactory	behaviorFactory;
 
 	private ConvertUtilsBean	converter;
 
 	public ServiceMethodCommand(WebSocketConnection connection, ServiceMethodRequest request, BehaviorFactory serviceFactory, ConvertUtilsBean converter) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 		this.behaviorFactory = serviceFactory;
 		this.converter = converter;
 	}

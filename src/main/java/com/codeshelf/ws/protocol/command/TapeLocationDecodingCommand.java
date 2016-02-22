@@ -13,13 +13,10 @@ import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.protocol.response.TapeLocationDecodingResponse;
 import com.codeshelf.ws.server.WebSocketConnection;
 
-public class TapeLocationDecodingCommand extends CommandABC{
-	private TapeLocationDecodingRequest request;
-	
+public class TapeLocationDecodingCommand extends CommandABC<TapeLocationDecodingRequest>{
 	
 	public TapeLocationDecodingCommand(WebSocketConnection connection, TapeLocationDecodingRequest request) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 	}
 
 	@Override

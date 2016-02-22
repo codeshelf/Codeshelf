@@ -1,0 +1,5 @@
+orderId,orderDetailId,itemId,description,quantity,uom,locationId,preAssignedContainerId,workSequence
+1111,1,ItemS1,celery ,5,each,LocX24,1111,1
+1111,2,ItemS1,white bread,10,each,LocX24,1111,2
+1111,3,ItemS1,rye bread,15,each,LocX24,1111,3
+1111,4,ItemS2,tomatoes,20,each,LocX24,1111,4

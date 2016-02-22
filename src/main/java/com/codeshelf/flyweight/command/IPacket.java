@@ -222,7 +222,7 @@ public interface IPacket {
 	 * Set that the packet requires an acknowledgment 
 	 * @param requiresAck
 	 */
-	void setRequiresAck(Boolean requiresAck);
+	//void setRequiresAck(Boolean requiresAck);
 
 	// --------------------------------------------------------------------------
 	/**

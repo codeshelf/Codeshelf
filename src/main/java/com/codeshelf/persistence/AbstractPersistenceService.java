@@ -37,6 +37,9 @@ import org.hibernate.stat.Statistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.codeshelf.application.ContextLogging;
+import com.codeshelf.manager.Tenant;
+import com.codeshelf.security.CodeshelfSecurityManager;
 import com.codeshelf.service.AbstractCodeshelfIdleService;
 
 public abstract class AbstractPersistenceService extends AbstractCodeshelfIdleService implements PersistenceService {
@@ -121,7 +124,7 @@ public abstract class AbstractPersistenceService extends AbstractCodeshelfIdleSe
 		
 	}
 
-	protected static Transaction beginTransaction(Session session) {
+	protected Transaction beginTransaction(Session session) {
 		if(session==null)
 			return null;
 		
@@ -134,6 +137,10 @@ public abstract class AbstractPersistenceService extends AbstractCodeshelfIdleSe
 			}
 		} // else we will begin new transaction
 		Transaction txBegun = session.beginTransaction();
+		Tenant tenant = CodeshelfSecurityManager.getCurrentTenant();
+		if (tenant != null){
+			ContextLogging.setTag(ContextLogging.THREAD_CONTEXT_TENANT_NAME_KEY, tenant.getName());
+		}
 		return txBegun;
 	}
 	
@@ -165,6 +172,7 @@ public abstract class AbstractPersistenceService extends AbstractCodeshelfIdleSe
 				LOGGER.error("tried to close inactive transaction", new Exception("tried to close inactive transaction"));
 			}
 		}
+		ContextLogging.setTag(ContextLogging.THREAD_CONTEXT_TENANT_NAME_KEY, null);
 	}
 
 	@Override
@@ -178,6 +186,7 @@ public abstract class AbstractPersistenceService extends AbstractCodeshelfIdleSe
 				LOGGER.error("tried to roll back inactive transaction", new Exception("tried to roll back inactive transaction"));
 			}
 		}
+		ContextLogging.setTag(ContextLogging.THREAD_CONTEXT_TENANT_NAME_KEY, null);
 	}
 	
 	@Override

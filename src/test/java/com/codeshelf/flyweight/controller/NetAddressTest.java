@@ -8,8 +8,6 @@ package com.codeshelf.flyweight.controller;
 
 import org.junit.Test;
 
-import com.codeshelf.flyweight.command.IPacket;
-import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.testframework.MinimalTest;
 
 /** --------------------------------------------------------------------------

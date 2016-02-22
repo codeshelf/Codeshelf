@@ -15,17 +15,14 @@ import com.codeshelf.ws.protocol.response.ResponseStatus;
 import com.codeshelf.ws.server.WebSocketConnection;
 
 @RequiresPermissions("wi:get")
-public class ComputeDetailWorkCommand extends CommandABC {
+public class ComputeDetailWorkCommand extends CommandABC<ComputeDetailWorkRequest> {
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(ComputeWorkCommand.class);
-
-	private ComputeDetailWorkRequest request;
 
 	private WorkBehavior	workService;
 	
 	public ComputeDetailWorkCommand(WebSocketConnection connection, ComputeDetailWorkRequest request, WorkBehavior workService) {
-		super(connection);
-		this.request = request;
+		super(connection, request);
 		this.workService = workService;
 	}
 

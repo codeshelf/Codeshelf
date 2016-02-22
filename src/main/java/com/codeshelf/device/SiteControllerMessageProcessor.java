@@ -85,6 +85,10 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 						LOGGER.info("Attached to network " + network.getDomainId());
 						attached = true;
 
+						deviceManager.setTenantName(loginResponse.getTenantName());
+						deviceManager.setFacilityDomainId(loginResponse.getFacilityDomainId());
+						ContextLogging.setTenantNameAndFacilityId(deviceManager.getTenantName(), deviceManager.getFacilityDomainId());
+						
 						// DEV-582 hook up to AUTOSHRT parameter
 						deviceManager.setAutoShortValue(loginResponse.isAutoShortValue());
 						deviceManager.setPickInfoValue(loginResponse.getPickInfoValue());
@@ -215,7 +219,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				PalletizerRemoveOrderResponse palletizerRemoveResponse = (PalletizerRemoveOrderResponse) response;
 				if (response.getStatus() == ResponseStatus.Success) {
 					this.deviceManager.processPalletizerRemoveResponse(palletizerRemoveResponse.getNetworkGuid(),
-						palletizerRemoveResponse.getError());
+						palletizerRemoveResponse.getInfo());
 				}
 			}
 
@@ -295,6 +299,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 			// But we run the risk of losing information about new request types that do not log well. We might need to add
 			// a RequestABC function asking just that: "do you log well? or do you want this lousy logging?"
 			LOGGER.debug("Request received for processing: {}", request);
+			@SuppressWarnings("rawtypes")
 			CommandABC command = null;
 			ResponseABC response = null;
 
@@ -307,7 +312,7 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				return null;
 			}
 			// execute command and generate response to be sent to client
-			response = command.exec();
+			response = command.run();
 			if (response != null) {
 				// automatically tie response to request
 				response.setRequestId(request.getMessageId());
@@ -358,6 +363,8 @@ public class SiteControllerMessageProcessor implements IMessageProcessor {
 				break;
 			case ORDERSUB:
 				deviceManager.setOrdersubValue(value);
+				break;
+			case PROTOCOL:
 				break;
 			default:
 				siteControllerProperty = true;

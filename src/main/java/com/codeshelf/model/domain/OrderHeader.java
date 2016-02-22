@@ -452,18 +452,44 @@ public class OrderHeader extends DomainObjectTreeABC<Facility> {
 	 * Reevaluate the order status based on the status of child order details
 	 */
 	public void reevaluateStatus() {
-		setStatus(OrderStatusEnum.COMPLETE);
+		int total = 0, complete = 0, substitution = 0, released = 0, created = 0, shorts = 0;
 		for (OrderDetail detail : getOrderDetails()) {
 			if (!detail.getActive()) {
 				continue;
 			}
-			if (detail.getStatus().equals(OrderStatusEnum.SHORT)) {
-				setStatus(OrderStatusEnum.SHORT);
-				break;
-			} else if (!detail.getStatus().equals(OrderStatusEnum.COMPLETE)) {
-				setStatus(OrderStatusEnum.INPROGRESS);
-				break;
+			total++;
+			OrderStatusEnum detailStatus = detail.getStatus();
+			switch (detailStatus) {
+				case COMPLETE:
+					complete++;
+					break;
+				case SUBSTITUTION:
+					substitution++;
+					break;
+				case RELEASED:
+					released++;
+					break;
+				case CREATED:
+					created++;
+					break;
+				case SHORT:
+					shorts++;
+					break;
+				default:
 			}
+		}
+		if (released > 0) {
+			setStatus(OrderStatusEnum.RELEASED);
+		} else if (created == total){
+			setStatus(OrderStatusEnum.CREATED);
+		} else if (shorts > 0) {
+			setStatus(OrderStatusEnum.SHORT);
+		} else if (complete == total){
+			setStatus(OrderStatusEnum.COMPLETE);
+		} else if (complete + substitution == total) {
+			setStatus(OrderStatusEnum.SUBSTITUTION);
+		} else {
+			setStatus(OrderStatusEnum.INPROGRESS);
 		}
 		try {
 			getDao().store(this);

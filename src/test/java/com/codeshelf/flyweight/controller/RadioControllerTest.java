@@ -23,6 +23,7 @@ import com.codeshelf.testframework.MinimalTest;
 
 public final class RadioControllerTest extends MinimalTest {
 
+	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(RadioControllerTest.class);
 
 	private void addMockDevice(IRadioController radioController, String inGuid) {

@@ -65,6 +65,7 @@ public class PutWallOrderGenerator {
 		LOGGER.info("generateWIsForWall for {}, orders number considered {}", wallId, orders.size());
 		HashMap<String, WorkInstruction> wiHashThisWallAndRun = new HashMap<String, WorkInstruction>();
 		Facility facility = che.getFacility();
+		Location unspecifiedLocation = facility.getUnspecifiedLocation();
 		//Retrieve or create a new container for this wall
 		Container container = getContainerForWall(facility, wallId, theTime);
 		//Iterate over all details within all orders in a current wall
@@ -88,6 +89,7 @@ public class PutWallOrderGenerator {
 						container, 
 						location == null ? facility : location,
 						false,
+						unspecifiedLocation,
 						null);
 					if (wi != null) {
 						wiHashThisWallAndRun.put(wiKey, wi);

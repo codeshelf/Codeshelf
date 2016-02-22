@@ -1,0 +1,14 @@
+var :che1 		0x00000195
+
+STEP
+SERVER
+deleteAllExtensionPoints
+importOrdersWithDeletion orders
+
+SITE
+defChe che1 :che1
+logout che1
+loginSetup che1 Worker
+setParams pickSpeed=0.3
+setupCart che1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 6666 33330002 55550025 77770001 88880002 66660026 44440010 44440009 99990004 7777efgh 66660022 99990005 8888 4444efgh 99990006 44440014 99990010 88880003 66660027 77770002
+

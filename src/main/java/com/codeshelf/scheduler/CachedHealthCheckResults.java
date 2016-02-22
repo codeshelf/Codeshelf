@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import com.codahale.metrics.health.HealthCheck.Result;
 import com.codeshelf.model.domain.Facility;
+import com.codeshelf.persistence.TenantPersistenceService;
 
 public class CachedHealthCheckResults {
 	private static CachedHealthCheckResults instance = null;
@@ -26,16 +27,20 @@ public class CachedHealthCheckResults {
 			return null;
 		}
 		Iterator<UUID> facilityIterator = facilityResults.keySet().iterator();
-		boolean success = true, sameMessage = true, singleFacility = facilityResults.size() == 1;
+		boolean success = true, nonProductionErrorsEncountered = false, sameMessage = true, singleFacility = facilityResults.size() == 1;
 		String repeatingMessage = null;
 		StringBuilder combinedMessage = new StringBuilder();
 	    while (facilityIterator.hasNext()) {
 	    	UUID facilityPersId = facilityIterator.next();
 	    	FacilityResult facilityResult = facilityResults.get(facilityPersId);
 	    	if (!facilityResult.success) {
-	    		success = false;
+	    		if (facilityResult.isProduction){
+	    			success = false;
+	    		} else {
+	    			nonProductionErrorsEncountered = true;
+	    		}
 	    	}
-	    	combinedMessage.append(String.format("Facility %s - %s: %s. ", facilityResult.facilityId, facilityResult.success ? "PASS" : "FAIL", facilityResult.message));
+	    	combinedMessage.append(String.format("Facility %s.%s - %s: %s. ", facilityResult.tenantId, facilityResult.facilityId, facilityResult.success ? "PASS" : "FAIL", facilityResult.message));
 	    	if (repeatingMessage == null) {
 	    		repeatingMessage = facilityResult.message;
 	    	} else if (!repeatingMessage.equals(facilityResult.message)){
@@ -46,12 +51,15 @@ public class CachedHealthCheckResults {
 	    if (!combinedMessageStr.isEmpty()) {
 	    	combinedMessageStr = combinedMessageStr.substring(0, combinedMessageStr.length()-1);
 	    }
+		String errorMessage = (singleFacility || !sameMessage) ? combinedMessageStr : "Multiple Facilities: " + repeatingMessage;
 	    if (success) {
-	    	return Result.healthy("Pass");
-	    } else if (singleFacility || !sameMessage){
-	    	return Result.unhealthy(combinedMessageStr);
+	    	if (nonProductionErrorsEncountered) {
+	    		return Result.healthy("Non-production error(s) found: " + errorMessage);
+	    	} else {
+	    		return Result.healthy("Pass");
+	    	}
 	    } else {
-	    	return Result.unhealthy("Multiple Facilities: " + repeatingMessage);
+	    	return Result.unhealthy(combinedMessageStr);
 	    }
 	}
 	
@@ -61,17 +69,22 @@ public class CachedHealthCheckResults {
 			facilityResults = new HashMap<>();
 			getInstance().jobResults.put(jobName, facilityResults);
 		}
-		facilityResults.put(facility.getPersistentId(), new FacilityResult(facility.getDomainId(), success, message));
+		String tenantId = TenantPersistenceService.getInstance().getCurrentTenantIdentifier();
+		facilityResults.put(facility.getPersistentId(), new FacilityResult(tenantId, facility.getDomainId(), success, facility.isProduction(), message));
 	}
 	
 	private static class FacilityResult{
 		private boolean success;
+		private boolean isProduction;
+		private String tenantId;
 		private String facilityId;
 		private String message;
 		
-		public FacilityResult(String facilityId, boolean success, String message) {
+		public FacilityResult(String tenantId, String facilityId, boolean success, boolean isProduction, String message) {
+			this.tenantId = tenantId;
 			this.facilityId = facilityId;
 			this.success = success;
+			this.isProduction = isProduction;
 			this.message = message;
 		}
 	}

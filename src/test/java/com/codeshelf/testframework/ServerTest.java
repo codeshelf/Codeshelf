@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 
 import org.junit.Assert;
@@ -11,12 +12,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.behavior.PropertyBehavior;
+import com.codeshelf.device.CsDeviceManager;
 import com.codeshelf.edi.CrossBatchCsvImporter;
 import com.codeshelf.edi.ICsvCrossBatchImporter;
 import com.codeshelf.flyweight.command.NetGuid;
+import com.codeshelf.flyweight.controller.IRadioController;
 import com.codeshelf.model.FacilityPropertyType;
 import com.codeshelf.model.OrderStatusEnum;
 import com.codeshelf.model.WorkInstructionSequencerType;
+import com.codeshelf.model.WorkInstructionStatusEnum;
 import com.codeshelf.model.domain.Aisle;
 import com.codeshelf.model.domain.Che;
 import com.codeshelf.model.domain.CodeshelfNetwork;
@@ -29,11 +33,13 @@ import com.codeshelf.model.domain.OrderHeader;
 import com.codeshelf.model.domain.Path;
 import com.codeshelf.model.domain.PathSegment;
 import com.codeshelf.model.domain.WorkInstruction;
+import com.codeshelf.sim.worker.LedSimulator;
 import com.codeshelf.sim.worker.PickSimulator;
 import com.codeshelf.util.ThreadUtils;
 
 public abstract class ServerTest extends HibernateTest {
 	private final static Logger	LOGGER	= LoggerFactory.getLogger(ServerTest.class);
+	public static final Byte ZERO = 0;
 
 	@Override
 	Type getFrameworkType() {
@@ -422,8 +428,57 @@ public abstract class ServerTest extends HibernateTest {
 	}
 
 	/**
-	 * Wait to find the named order header having this status
+	 * Wait until this workInstruction has this status
 	 */
+	public void waitForWorkInstructionStatus(Facility inFacility,
+		UUID workInstructionReference,
+		WorkInstructionStatusEnum expectedStatus,
+		long millisToWait) {
+
+		WorkInstruction resultWi = null;
+		ThreadUtils.sleep(250);
+		long start = System.currentTimeMillis();
+		String statusStr = "null";
+		while (System.currentTimeMillis() - start < millisToWait) {
+			beginTransaction();
+			inFacility = inFacility.reload();
+			WorkInstruction wi = WorkInstruction.staticGetDao().findByPersistentId(workInstructionReference);
+			if (wi != null) {
+				WorkInstructionStatusEnum status = wi.getStatus();
+				if (expectedStatus == null || expectedStatus.equals(status)) {
+					resultWi = wi;
+				}
+				else 
+					statusStr = wi.getStatusString();
+			}
+			commitTransaction();
+
+			if (resultWi != null) {
+				return; // Could change the function to return the WI
+			}
+			ThreadUtils.sleep(200); // retry every 200ms
+		}
+		Assert.fail(String.format("Work Instructions did not reach desired state in %dms. Status:%s", millisToWait, statusStr));
+	}
+
+	/**
+	 * Wait until this order header has this status
+	 */
+	public void waitForOrderStatus(Facility inFacility,
+		OrderHeader order,
+		OrderStatusEnum expectedStatus,
+		boolean expectedActive,
+		long millisToWait) {
+		if (order == null) {
+			LOGGER.error("Bad call to waitForOrderStatus");
+			return;
+		}
+		waitForOrderStatus(inFacility, order.getOrderId(), expectedStatus, expectedActive, millisToWait);
+	}
+
+	/**
+	* Wait to find the named order header having this status
+	*/
 	public void waitForOrderStatus(Facility inFacility,
 		String orderId,
 		OrderStatusEnum expectedStatus,
@@ -432,11 +487,12 @@ public abstract class ServerTest extends HibernateTest {
 		ThreadUtils.sleep(250);
 		long start = System.currentTimeMillis();
 		OrderHeader resultOrder = null;
+		OrderHeader order = null;
 		while (System.currentTimeMillis() - start < millisToWait) {
 
 			beginTransaction();
 			inFacility = inFacility.reload();
-			OrderHeader order = OrderHeader.staticGetDao().findByDomainId(inFacility, orderId);
+			order = OrderHeader.staticGetDao().findByDomainId(inFacility, orderId);
 			if (order != null) {
 				OrderStatusEnum status = order.getStatus();
 				if (expectedStatus == null || expectedStatus.equals(status)) {
@@ -451,7 +507,13 @@ public abstract class ServerTest extends HibernateTest {
 			}
 			ThreadUtils.sleep(200); // retry every 200ms
 		}
-		Assert.fail(String.format("Order did not reach desired state in %dms.", millisToWait));
+		String statusStr = "";
+		if (order == null)
+			statusStr = "null";
+		else {
+			statusStr = order.getStatus().toString(); // not in a transaction. Think it is ok.
+		}
+		Assert.fail(String.format("Order did not reach desired state in %dms. Status:%s", millisToWait, statusStr));
 	}
 
 	/**
@@ -521,6 +583,18 @@ public abstract class ServerTest extends HibernateTest {
 
 	protected PickSimulator createPickSim(NetGuid cheGuid) {
 		return new PickSimulator(this.getDeviceManager(), cheGuid);
+	}
+
+	protected LedSimulator createLedSim(NetGuid deviceGuid) {
+		return new LedSimulator(this.getDeviceManager(), deviceGuid);
+	}
+
+	protected void setResendQueueing(boolean inShouldReQueueAsIfAssociated) {
+		CsDeviceManager devman = this.getDeviceManager();
+		Assert.assertNotNull(devman);
+		IRadioController rc = devman.getRadioController();
+		Assert.assertNotNull(rc);
+		rc.setResendQueueing(inShouldReQueueAsIfAssociated);
 	}
 
 }

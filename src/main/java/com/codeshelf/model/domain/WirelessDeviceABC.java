@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.codeshelf.application.ContextLogging;
-import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.flyweight.controller.NetworkDeviceStateEnum;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;

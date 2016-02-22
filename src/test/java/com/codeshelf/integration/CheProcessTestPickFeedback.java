@@ -34,7 +34,6 @@ import com.codeshelf.util.ThreadUtils;
  *
  */
 public class CheProcessTestPickFeedback extends ServerTest {
-
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(CheProcessTestPickFeedback.class);
 
 	public CheProcessTestPickFeedback() {
@@ -170,12 +169,10 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2), PosControllerInstr.BRIGHT_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 2), PosControllerInstr.BLINK_FREQ);
 
-		//Case 3: Unknown order id so display dim, solid, --
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
-		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
-		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 3), PosControllerInstr.DIM_DUTYCYCLE);
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 3), PosControllerInstr.SOLID_FREQ);
+		//Case 3: Unknown order id so display bright, flashing, 0
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), ZERO);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 3), PosControllerInstr.BRIGHT_DUTYCYCLE);
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 3), PosControllerInstr.BLINK_FREQ);
 
 		//Case 4: One immediate short so display dim, solid --
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 4), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
@@ -208,10 +205,8 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		//Make sure position 2 shows the proper item count for picking
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue(), 1);
 
-		//Case 3: Unknown order id so display dim, solid, --
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
-		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
-		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
+		//Case 3: Unknown order id so display dim, solid, 0
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), ZERO);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 3), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 3), PosControllerInstr.SOLID_FREQ);
 
@@ -482,10 +477,8 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 2));
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 5));
 
-		LOGGER.info("1b: Position 3 has unknown order id so display dim, solid, --");
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
-		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
-		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
+		LOGGER.info("1b: Position 3 has unknown order id so display solid dim 0");
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), ZERO);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 3), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 3), PosControllerInstr.SOLID_FREQ);
 
@@ -527,10 +520,8 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		LOGGER.info("2d: position 2 has the next active job. Show the count");
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue(), 1);
 
-		LOGGER.info("2e: position 3 still showing -- for unknown order");
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
-		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
-		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
+		LOGGER.info("2e: position 3 still showing dim-0 for unknown order");
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), ZERO);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 3), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 3), PosControllerInstr.SOLID_FREQ);
 
@@ -577,10 +568,8 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		//5 should stay empty
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 5));
 
-		//Case 3: Unknown order id so display dim, solid, --
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
-		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
-		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
+		//Case 3: Unknown order id so display dim, solid 0
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), ZERO);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 3), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 3), PosControllerInstr.SOLID_FREQ);
 
@@ -610,10 +599,8 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		//Make sure position 2 shows the proper item count for picking
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2).intValue(), 1);
 
-		//Case 3: Unknown order id so display dim, solid, --
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
-		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
-		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
+		//Case 3: Unknown order id so display dim, solid, 0
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), ZERO);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 3), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 3), PosControllerInstr.SOLID_FREQ);
 
@@ -653,10 +640,8 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 2), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 2), PosControllerInstr.SOLID_FREQ);
 
-		//Case 3: Unknown order id so display dim, solid, --
-		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
-		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
-		Assert.assertEquals(picker.getLastSentPositionControllerMaxQty((byte) 3), PosControllerInstr.BITENCODED_LED_DASH);
+		//Case 3: Unknown order id so display bright, dim solid, 0
+		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 3), ZERO);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayDutyCycle((byte) 3), PosControllerInstr.DIM_DUTYCYCLE);
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayFreq((byte) 3), PosControllerInstr.SOLID_FREQ);
 
@@ -1018,6 +1003,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		picker.waitInSameState(CheStateEnum.DO_PICK, 1000);
 
 		LOGGER.info("4b: 3 gets the next jobs, poscon 2 remains oc. 1 is blank");
+		ThreadUtils.sleep(400);
 		Assert.assertNull(picker.getLastSentPositionControllerDisplayValue((byte) 1));
 		Assert.assertEquals(1, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 2), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
@@ -1043,6 +1029,7 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		picker.waitInSameState(CheStateEnum.DO_PICK, 1000);
 
 		LOGGER.info("6a: Poscon 1 and 3 gets the next jobs, poscon 2 remains oc.");
+		ThreadUtils.sleep(300);
 		Assert.assertEquals(5, picker.getLastSentPositionControllerDisplayValue((byte) 1).intValue());
 		// same bug was here
 		Assert.assertEquals(4, picker.getLastSentPositionControllerDisplayValue((byte) 3).intValue());
@@ -1470,7 +1457,8 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertEquals(picker.getLastSentPositionControllerDisplayValue((byte) 1), PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 		Assert.assertEquals(picker.getLastSentPositionControllerMinQty((byte) 1), PosControllerInstr.BITENCODED_LED_C);
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_B, picker.getLastSentPositionControllerMaxQty((byte) 1));
-		picker.buttonPress(1, 0);
+		// picker.buttonPress(1, 0);
+		picker.buttonPress(1,PosControllerInstr.BITENCODED_SEGMENTS_CODE);
 
 		// The main purpose of the test.
 		LOGGER.info("7: verify the correct quantity on position 2, and nothing on position 1");
@@ -1523,11 +1511,19 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_O, picker.getLastSentPositionControllerMaxQty((byte) 1));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_C, picker.getLastSentPositionControllerMinQty((byte) 1));
 
+		LOGGER.info("3b: As if the poscon missed the messages and is still showing 1, use presses again. See the WARN in the log.");
+		picker.buttonPress(1, 1); 
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
+
 		LOGGER.info("4: When picking for order 2, press button for order 1, ensure that nothing changes");
 		Assert.assertEquals(22, (int) picker.getLastSentPositionControllerDisplayValue(2));
-		picker.buttonPress(1);
+		picker.buttonPress(1); // this form works to simulate "oc" press, but might be fragile. What came on the button?
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		Assert.assertEquals(22, (int) picker.getLastSentPositionControllerDisplayValue(2));
+
+		LOGGER.info("4b: User erroneously presses the OC button. No harm. See the WARN in the log.");
+		picker.buttonPress(1, PosControllerInstr.BITENCODED_SEGMENTS_CODE); // This is how it really comes.
+		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 
 		LOGGER.info("5: Pick first item in order 1, ensure that Housekeeping comes up on poscon 2");
 		picker.buttonPress(2);
@@ -1536,13 +1532,13 @@ public class CheProcessTestPickFeedback extends ServerTest {
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_R, picker.getLastSentPositionControllerMinQty((byte) 2));
 
 		LOGGER.info("6: Press poscon 1, ensure that nothing changes");
-		picker.buttonPress(1);
+		picker.buttonPress(1); // probably impossible. If nothing on 1, button press will not come.
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		Assert.assertEquals(PosControllerInstr.BITENCODED_SEGMENTS_CODE, picker.getLastSentPositionControllerDisplayValue(2));
 		Assert.assertEquals(PosControllerInstr.BITENCODED_LED_R, picker.getLastSentPositionControllerMinQty((byte) 2));
 
 		LOGGER.info("7: Press poscon 2, ensure that the second item in order 2 is displayed");
-		picker.buttonPress(2);
+		picker.buttonPress(2, PosControllerInstr.BITENCODED_SEGMENTS_CODE); // as it really happens
 		picker.waitForCheState(CheStateEnum.DO_PICK, 4000);
 		Assert.assertEquals(33, (int) picker.getLastSentPositionControllerDisplayValue(2));
 
