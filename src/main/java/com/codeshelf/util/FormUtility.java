@@ -14,6 +14,7 @@ import com.codeshelf.model.domain.Item;
 import com.codeshelf.validation.DefaultErrors;
 import com.codeshelf.validation.ErrorCode;
 import com.codeshelf.validation.InputValidationException;
+import com.google.common.base.Joiner;
 
 public class FormUtility {
 	private static final Logger	LOGGER				= LoggerFactory.getLogger(FormUtility.class);
@@ -34,9 +35,8 @@ public class FormUtility {
 					LOGGER.error("no values for key {}", key); // this shouldn't happen
 					error = true;
 					break;
-				} else if (values.size() != 1) {
-					LOGGER.warn("multiple values for key {}", key); // bad form input 
-					error = true;
+				} else if (values.size() > 1) {
+					result.put(key, Joiner.on(",").join(values)); 
 					break;
 				} else {
 					result.put(key, values.get(0).trim()); // ok field
