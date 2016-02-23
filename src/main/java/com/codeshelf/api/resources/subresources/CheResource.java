@@ -1,5 +1,7 @@
 package com.codeshelf.api.resources.subresources;
 
+import java.util.UUID;
+
 import javax.websocket.server.PathParam;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
@@ -18,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.api.BaseResponse;
 import com.codeshelf.api.BaseResponse.CSVParam;
+import com.codeshelf.api.BaseResponse.UUIDParam;
 import com.codeshelf.api.ErrorResponse;
 import com.codeshelf.api.resources.EventsResource;
 import com.codeshelf.behavior.NotificationBehavior;
@@ -25,6 +28,7 @@ import com.codeshelf.behavior.NotificationBehavior.HistogramParams;
 import com.codeshelf.behavior.NotificationBehavior.HistogramResult;
 import com.codeshelf.behavior.WorkBehavior;
 import com.codeshelf.model.domain.Che;
+import com.codeshelf.model.domain.WorkInstruction;
 import com.codeshelf.model.domain.WorkPackage.WorkList;
 import com.google.inject.Inject;
 import com.sun.jersey.api.core.ResourceContext;
@@ -96,6 +100,25 @@ public class CheResource {
 			return errors.processException(e);
 		} 
 	}
+	
+	@POST
+	@Path("/workinstructions/complete")
+	@RequiresPermissions("che:simulate")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response computeWorkInstructions(@FormParam("wiPersistentId") UUIDParam wiPersistentId, @FormParam("workerBadgeId") String workerBadgeId) {
+		ErrorResponse errors = new ErrorResponse();
+
+		try {
+			UUID wiId = wiPersistentId.getValue();
+			WorkInstruction wi = WorkInstruction.staticGetDao().findByPersistentId(wiId);
+			wi.setCompleteState(workerBadgeId, wi.getPlanQuantity());
+			WorkInstruction updatedWi = workBehavior.completeWorkInstruction(che.getPersistentId(), wi);
+			return BaseResponse.buildResponse(updatedWi);
+		} catch (Exception e) {
+			return errors.processException(e);
+		} 
+	}
+	
 	
 	@POST
 	@Path("/commands/{commandName}")
