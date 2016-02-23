@@ -46,8 +46,7 @@ public abstract class CommandControlABC extends ExtendedCommandABC {
 	public static final byte	CREATE_SCAN					= 11;
 	public static final byte	CREATE_BUTTON				= 12;
 	public static final byte	POSCON_DSP_ADDRESS			= 13;
-	public static final byte	POSCON_SETUP_STOP			= 14;
-	public static final byte	POSCON_LED_BROADCAST		= 15;
+	public static final byte	POSCON_LED_BROADCAST		= 14;
 
 	// --------------------------------------------------------------------------
 	/**
