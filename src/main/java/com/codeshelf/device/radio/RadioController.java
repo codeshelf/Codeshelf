@@ -87,17 +87,17 @@ public class RadioController implements IRadioController {
 
 	@Accessors(prefix = "m")
 	@Getter
-	private final NetAddress							mServerAddress;
+	private NetAddress									mServerAddress				= PacketV0.GATEWAY_ADDRESS;
 	
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private NetAddress									mBroadcastAddress;
+	private NetAddress									mBroadcastAddress			= PacketV0.BROADCAST_ADDRESS;;
 
 	@Accessors(prefix = "m")
 	@Getter
 	@Setter
-	private NetworkId									mBroadcastNetworkId;
+	private NetworkId									mBroadcastNetworkId			= PacketV0.BROADCAST_NETWORK_ID;
 	
 	@Accessors(prefix = "m")
 	@Getter
@@ -134,7 +134,7 @@ public class RadioController implements IRadioController {
 	
 	// Factories
 	PacketFactory 										packetFactory = new PacketFactory();
-	byte												mProtocolVersion = IPacket.PACKET_VERSION_1;
+	byte												mProtocolVersion = IPacket.PACKET_VERSION_0;
 
 	/**
 	 * @param inSessionManager
@@ -144,17 +144,6 @@ public class RadioController implements IRadioController {
 	public RadioController(final IGatewayInterface inGatewayInterface) {
 		this.gatewayInterface = inGatewayInterface;
 		
-		// TODO - Ilya / huffa - need to make sure "mProtocolVersion" is set correctly
-		if (mProtocolVersion == IPacket.PACKET_VERSION_1) {
-			this.mBroadcastAddress = PacketV1.BROADCAST_ADDRESS;
-			this.mBroadcastNetworkId = PacketV1.BROADCAST_NETWORK_ID;
-			this.mServerAddress = PacketV1.GATEWAY_ADDRESS;
-		} else {
-			this.mBroadcastAddress = PacketV0.BROADCAST_ADDRESS;
-			this.mBroadcastNetworkId = PacketV0.BROADCAST_NETWORK_ID;
-			this.mServerAddress = PacketV0.GATEWAY_ADDRESS;	
-		}
-
 		for (byte channel = 0; channel < MAX_CHANNELS; channel++) {
 			mChannelInfo[channel] = new ChannelInfo();
 			mChannelInfo[channel].setChannelEnergy((short) MAX_CHANNEL_VALUE);
@@ -165,6 +154,21 @@ public class RadioController implements IRadioController {
 		this.packetIOService = new RadioControllerPacketIOService(this, inGatewayInterface, packetHandlerService);
 		this.broadcastService = new RadioControllerBroadcastService(this, NETCHECK_RATE_MILLIS);
 		this.packetSchedulerService = new RadioControllerPacketSchedulerService(packetIOService);
+	}
+	
+	@Override
+	public void setProtocolVersion(String protocol) {
+		if ("1".equals(protocol)) {
+			mProtocolVersion = IPacket.PACKET_VERSION_1;
+			this.mBroadcastAddress = PacketV1.BROADCAST_ADDRESS;
+			this.mBroadcastNetworkId = PacketV1.BROADCAST_NETWORK_ID;
+			this.mServerAddress = PacketV1.GATEWAY_ADDRESS;
+		} else {
+			mProtocolVersion = IPacket.PACKET_VERSION_0;
+			this.mBroadcastAddress = PacketV0.BROADCAST_ADDRESS;
+			this.mBroadcastNetworkId = PacketV0.BROADCAST_NETWORK_ID;
+			this.mServerAddress = PacketV0.GATEWAY_ADDRESS;	
+		}
 	}
 
 	@Override
@@ -678,8 +682,8 @@ public class RadioController implements IRadioController {
 					assignCmd.setScannerType(foundDevice.getScannerTypeCode());
 
 					this.sendAssociationCommand(assignCmd,
-						broadcastService.getBroadcastNetworkId(),
-						broadcastService.getBroadcastAddress(),
+						mBroadcastNetworkId,
+						mBroadcastAddress,
 						foundDevice.getGuid(),
 						false);
 

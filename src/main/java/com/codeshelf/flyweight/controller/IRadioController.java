@@ -144,4 +144,9 @@ public interface IRadioController extends Runnable {
 	 * @return
 	 */
 	NetAddress getServerAddress();
+	
+	/**
+	 * Set radio protocol version between 1 and 2
+	 */
+	public void setProtocolVersion(String protocol);
 }

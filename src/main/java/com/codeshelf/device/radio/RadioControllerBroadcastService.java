@@ -9,9 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import com.codeshelf.flyweight.command.CommandNetMgmtCheck;
 import com.codeshelf.flyweight.command.ICommand;
-import com.codeshelf.flyweight.command.NetAddress;
 import com.codeshelf.flyweight.command.NetChannelValue;
-import com.codeshelf.flyweight.command.NetworkId;
 import com.codeshelf.flyweight.controller.IRadioController;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
@@ -25,9 +23,6 @@ public class RadioControllerBroadcastService {
 
 	private final ScheduledExecutorService	scheduleExecutorService	= Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("radio-broadcast-thread")
 																		.build());
-	private final NetworkId					broadcastNetworkId;
-	private final NetAddress				broadcastAddress;
-
 	private final IRadioController			radioController;
 	private final long						broadcastRateMs;
 
@@ -35,8 +30,6 @@ public class RadioControllerBroadcastService {
 		super();
 		this.radioController = radioController;
 		this.broadcastRateMs = broadcastRateMs;
-		this.broadcastNetworkId = radioController.getBroadcastNetworkId();
-		this.broadcastAddress = radioController.getBroadcastAddress();
 	}
 
 	public void start() {
@@ -54,13 +47,13 @@ public class RadioControllerBroadcastService {
 		public void run() {
 			try {
 				ICommand netCheck = new CommandNetMgmtCheck(CommandNetMgmtCheck.NETCHECK_REQ,
-					broadcastNetworkId,
+					radioController.getBroadcastNetworkId(),
 					RadioController.PRIVATE_GUID,
 					radioController.getRadioChannel(),
 					new NetChannelValue((short) 0),
 					new NetChannelValue((short) 0));
 
-				radioController.sendNetMgmtCommand(netCheck, broadcastAddress);
+				radioController.sendNetMgmtCommand(netCheck, radioController.getBroadcastAddress());
 
 			} catch (Exception e) {
 				LOGGER.error("Broadcast Error ", e);
@@ -69,13 +62,4 @@ public class RadioControllerBroadcastService {
 		}
 
 	}
-
-	public NetworkId getBroadcastNetworkId() {
-		return broadcastNetworkId;
-	}
-
-	public NetAddress getBroadcastAddress() {
-		return broadcastAddress;
-	}
-
 }

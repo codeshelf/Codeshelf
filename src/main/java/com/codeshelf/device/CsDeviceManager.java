@@ -26,7 +26,6 @@ import com.codeshelf.behavior.InfoBehavior.InfoPackage;
 import com.codeshelf.behavior.PalletizerBehavior.PalletizerInfo;
 import com.codeshelf.behavior.PalletizerBehavior.PalletizerRemoveInfo;
 import com.codeshelf.device.PosControllerInstr.PosConInstrGroupSerializer;
-import com.codeshelf.flyweight.bitfields.NBitInteger;
 import com.codeshelf.flyweight.bitfields.OutOfRangeException;
 import com.codeshelf.flyweight.command.CommandControlPosconBroadcast;
 import com.codeshelf.flyweight.command.CommandControlPosconSetupStart;
@@ -164,10 +163,6 @@ public class CsDeviceManager implements IRadioControllerEventListener, WebSocket
 	@Getter
 	CsClientEndpoint									clientEndpoint;
 	
-	@Getter
-	@Setter
-	private NBitInteger									protocolVersion;
-
 	@Inject
 	public CsDeviceManager(final IRadioController inRadioController, final CsClientEndpoint clientEndpoint) {
 		this.clientEndpoint = clientEndpoint;

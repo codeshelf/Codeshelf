@@ -350,7 +350,7 @@ public class PropertyBehavior{
 	}
 	
 	private static String validate_protocol(String inValue) {
-		if ("1".equals(inValue) || "2".equals(inValue)){
+		if ("0".equals(inValue) || "1".equals(inValue)){
 			return inValue;
 		}
 		return null;
