@@ -10,6 +10,7 @@ import static org.mockito.Mockito.mock;
 import java.util.UUID;
 
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -22,10 +23,17 @@ import com.codeshelf.flyweight.command.NetGuid;
 import com.codeshelf.testframework.MinimalTest;
 
 public final class RadioControllerTest extends MinimalTest {
-
+	private IRadioController radioController = null;
+	
 	@SuppressWarnings("unused")
 	private static final Logger	LOGGER	= LoggerFactory.getLogger(RadioControllerTest.class);
 
+	@Before
+	public void init(){
+		radioController = new RadioController(Mockito.mock(IGatewayInterface.class));
+		radioController.setProtocolVersion("1");
+	}
+	
 	private void addMockDevice(IRadioController radioController, String inGuid) {
 		INetworkDevice device = new CheDeviceLogic(UUID.randomUUID(),
 			new NetGuid(inGuid),
@@ -135,7 +143,6 @@ public final class RadioControllerTest extends MinimalTest {
 
 	@Test
 	public void testRadioController2() {
-		IRadioController radioController = new RadioController(Mockito.mock(IGatewayInterface.class));
 		addMockDevice(radioController, "0x90002");
 		addMockDevice(radioController, "0x90001");
 		addMockDevice(radioController, "0x9FFFF");
@@ -181,7 +188,6 @@ public final class RadioControllerTest extends MinimalTest {
 	@Test
 	public void testRadioController3() {
 		// Check our 00 cases.
-		IRadioController radioController = new RadioController(Mockito.mock(IGatewayInterface.class));
 		addMockDevice(radioController, "0x70000");
 		addMockDevice(radioController, "0x80000");
 		addMockDevice(radioController, "0x90000");
@@ -211,7 +217,6 @@ public final class RadioControllerTest extends MinimalTest {
 	@Test
 	public void testRadioController5() {
 		// Check wrapping search
-		IRadioController radioController = new RadioController(Mockito.mock(IGatewayInterface.class));
 		addMockDevice(radioController, "0x70001"); // gives out 1
 		addMockDevice(radioController, "0x70002");// gives out 2
 		// skip 3
@@ -235,7 +240,6 @@ public final class RadioControllerTest extends MinimalTest {
 		
 		// Check the very full cases
 		// Fill up bottom 300 and top 300 addresses
-		IRadioController radioController = new RadioController(Mockito.mock(IGatewayInterface.class));
 
 		// This is going to fill up 1-10,11.20, etc. but skip over 0a, ob, oc, etc.
 		add10MockDevices(radioController, 10001); // yields "0x101" though "0x110"
